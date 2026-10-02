@@ -40,7 +40,7 @@ Der Postgres-Hub wird erst gebaut, wenn E-SOZ-01 entschieden ist (siehe Phasen).
 ### ADR-02 · TypeScript durchgehend · ⬜
 Eine Sprache für Kern, API, Web und MCP-Server. Begründung: bestehende Logik (`pokedex-core.js`, `finanz-core.js`) ist bereits JavaScript und wird ohne Sprachwechsel übernommen.
 
-Ausnahme: `build_pokedex.py` und `foto_import.py` bleiben Python (73 Tests, bewährte Datenquellen). Sie schreiben später in die Datenbank statt in JSON, werden aber nicht neu geschrieben.
+Ausnahme: `build_pokedex.py` und `foto_import.py` bleiben Python (73 Tests, bewährte Datenquellen). Sie schreiben weiter in den Vault (`Pokedex-Baum.json`, Fotos) und werden nicht neu geschrieben.
 
 ### ADR-03 · `core` mit Repository-Interface · ⬜
 `packages/core` enthält reine Logik ohne I/O und greift über Schnittstellen wie `ExemplarRepo`, `ArtRepo`, `WunschlisteRepo` auf Daten zu. Zwei Adapter:
