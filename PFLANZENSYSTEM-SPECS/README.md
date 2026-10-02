@@ -2,6 +2,8 @@
 
 Stand: 2026-10-02 · Ableitung aus dem **Ist-Zustand** des Vaults (Dashboard, Notizen, Skripte, Hook, Tests, vorhandene Design-Specs). Kein Neuentwurf: beschrieben wird, was das System heute tut, was geplant ist und wo Ist und Doku auseinanderlaufen.
 
+> **Hinweis (2026-10-02):** Diese Spec beschreibt den **Prototyp** (Obsidian-Vault, Ist-Zustand). Das Produkt ist die eigene Web-App; ihre Anforderungen stehen in [`../PRODUKT-SPECS/`](../PRODUKT-SPECS/README.md). Soziales, Business Case, Zielarchitektur und Equipment (`11` bis `13`) sind dort überarbeitet; hier gelten sie nur noch als Entwurf aus der Vault-Sicht.
+
 ## Dateien
 
 | Datei | Inhalt |
@@ -17,12 +19,14 @@ Stand: 2026-10-02 · Ableitung aus dem **Ist-Zustand** des Vaults (Dashboard, No
 | [08-Monitoring-Sensorik.md](08-Monitoring-Sensorik.md) | Epic MON: Bot-Erinnerungen, Gießen, Sensoren (**geplant**) |
 | [09-Querschnitt-Qualitaet.md](09-Querschnitt-Qualitaet.md) | Epic QS: nicht-funktionale Anforderungen, Prinzipien-Check |
 | [11-Soziales.md](11-Soziales.md) | Epic SOZ: Freunde, Feed „Neu bei Freunden", Tauschen (**geplant**) |
+| [13-Equipment-und-Affiliate.md](13-Equipment-und-Affiliate.md) | Epic EQU: Equipment/Lampen tracken, Bedarf ableiten, Affiliate-Empfehlungen (**geplant**) |
+| [12-Business-Case.md](12-Business-Case.md) | Produktstufen: für uns, trägt sich selbst, Gewinn; Annahmen und Messgrößen |
 | [10-Luecken-und-Backlog.md](10-Luecken-und-Backlog.md) | Befunde (Ist ≠ Doku, Defekte, Datenlücken) und priorisiertes Backlog |
 | [12-Zielarchitektur-AI-first.md](12-Zielarchitektur-AI-first.md) | Zielarchitektur: AI-first, Tech-Stack, Hub-Vorschlag zu E-SOZ-01 (**Entwurf**) |
 
 ## Konventionen
 
-- **Akteure:** *Pflanzenhalter* (der Nutzer), *Freund* (anderer Pflanzenhalter, nur Epic SOZ), *Claude* (Assistent in Claude Code oder Chat), *System* (Hook, Skript, Dataview-Block, Bot). Siehe `00-Systemueberblick.md`.
+- **Akteure:** *Pflanzenhalter* (der Nutzer), *Freund* (anderer Pflanzenhalter, nur Epic SOZ), *Betreiber* (wer das System betreibt und Partnerprogramme führt, nur Epic EQU), *Claude* (Assistent in Claude Code oder Chat), *System* (Hook, Skript, Dataview-Block, Bot). Siehe `00-Systemueberblick.md`.
 - **IDs:** `US-<EPIC>-nn` Userstory, `FR-<EPIC>-nn` funktionale Anforderung, `DM-nn` Datenmodell, `NFR-nn` nicht-funktional. IDs sind stabil, nicht neu nummerieren.
 - **Status je Story/Anforderung:**
   - ✅ umgesetzt und im Vault vorhanden
@@ -44,8 +48,9 @@ Stand: 2026-10-02 · Ableitung aus dem **Ist-Zustand** des Vaults (Dashboard, No
 | POK Pokédex | 13 | 12 | 1 | 0 |
 | MON Monitoring | 7 | 0 | 0 | 7 |
 | SOZ Soziales | 13 | 0 | 0 | 13 |
+| EQU Equipment | 12 | 0 | 0 | 12 |
 | QS Querschnitt | 6 | 4 | 2 | 0 |
-| **Summe** | **71** | **45** | **6** | **20** |
+| **Summe** | **83** | **45** | **6** | **32** |
 
 ## Kennzahlen des Ist-Zustands (2026-10-02)
 

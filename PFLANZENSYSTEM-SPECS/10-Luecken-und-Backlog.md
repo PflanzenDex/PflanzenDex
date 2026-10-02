@@ -23,6 +23,7 @@ Befunde aus der Analyse (2026-10-02). Jeder Befund nennt Beleg und Wirkung. „D
 | B-15 | Hinweis | Zwei archivierte Notizen (`Basilikum`, `Efeutute`) sind im alten Einzeldatei-Format (Art + Exemplar vermischt). | `04-Archive/Pflanzen/` | Unkritisch (außerhalb der Queries). |
 | B-16 | Hinweis | Das Dashboard-Frontmatter fehlen `tags` (Pokédex-Notiz hat `pflanzen`, `dashboard`). | Dashboard-Kopf | Auffindbarkeit nur über den Pfad. |
 | B-17 | Lücke | Keine soziale Schicht: kein Freundeskreis, kein Feed, kein Tauschen. Austauschtechnik nicht entschieden (E-SOZ-01). | Epic SOZ (`11-Soziales.md`) | Stecklinge werden nur von Hand archiviert, ohne Herkunft und Angebot. |
+| B-18 | Lücke | Kein Equipment-Tracking: Lampen existieren nur als vier Stufen-Strings, Zubehör und Verbrauchsmaterial sind nicht erfasst, Messung der Lampenleistung fehlt (FR-LIC-06). | Epic EQU (`13-Equipment-und-Affiliate.md`) | Kein Gerätebestand, keine Lücken-/Nachkauf-Ableitung, keine Grundlage für Empfehlungen. |
 
 ## Backlog (priorisiert)
 
@@ -39,6 +40,7 @@ Priorität = Nutzen ÷ Aufwand. **P1** sofort sinnvoll, **P2** wenn Zeit, **P3**
 | P2 | B-07 | Lampenstufen zentral definieren (z. B. in `Lampen-Zuordnung.md`-Frontmatter oder `pflanzen-core.js`) und von allen Blöcken lesen. | mittel | LIC |
 | P2 | MON | **Phase 1 des Monitorings:** `Giess_Intervall_Tage`/`Giesslog` ins Schema, `pflanzen_status.py`, Bot-Job, `/gegossen`. Abhängig von B-02 (gemeinsame Phasenlogik). | groß | Epic MON |
 | P3 | SOZ | **Soziales:** erst E-SOZ-01 entscheiden, dann `soziales-core.js` (Freigabe, Feed-Ableitung, Tauschzustände) mit Tests, danach Hub und Dashboard-Blöcke. Abhängig von B-02 (Kernlogik) und für Benachrichtigung von MON. | groß | Epic SOZ |
+| P3 | EQU | **Equipment:** Datenmodell DM-E1…E3, `Lampe_Stufe` an B-07 anbinden, Erfassen/Bedarf/Kosten (US-EQU-01…09) in Stufe 1; Empfehlungen (US-EQU-10/11) erst Stufe 2 nach Rechtsprüfung. Abhängig von B-02 und B-07. | mittel–groß | Epic EQU |
 | P3 | B-09 | Übergang „Gekauft ✔" → vorbefüllte Art-Vorlage; Abgleich Wunschliste ↔ `Arten.md`. | mittel | US-WUN-05 |
 | P3 | B-08 | Behandlungen mit stabiler ID oder Index-Prüfung gegen Inhalt (Datum+Grund) absichern. | klein | FR-BEH-02 |
 | P3 | B-06 | `foto_import.py` auf YAML-Parser umstellen oder Format-Annahme dokumentieren. | klein | FR-WAC-06 |
@@ -54,7 +56,8 @@ Priorität = Nutzen ÷ Aufwand. **P1** sofort sinnvoll, **P2** wenn Zeit, **P3**
 3. **Lichtübersicht** für Stecklinge: Artwert (jetzt) oder Lampe 1 (FR-LIC-05)?
 4. **Schwierigkeit:** Zahl oder Text als führende Skala (B-05)?
 5. **E-SOZ-01:** Austauschschicht für Freunde, Feed und Tausch (Bot als Hub, eigener Server, dateibasierter Sync); weitere Fragen in `11-Soziales.md`.
-6. Die Fragen aus `08-Monitoring-Sensorik.md` (MQTT-Broker, Funk oder Kabel, Pilotpflanzen, Meldehäufigkeit).
+6. Die Stufen und Entscheidungen aus `12-Business-Case.md` (eigene App oder Plugin, Verkauf, Beitrag oder Abo).
+7. Die Fragen aus `08-Monitoring-Sensorik.md` (MQTT-Broker, Funk oder Kabel, Pilotpflanzen, Meldehäufigkeit).
 
 ## Nicht-Ziele (bewusst nicht im Backlog)
 

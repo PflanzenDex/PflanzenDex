@@ -1,0 +1,81 @@
+# PflanzenDex – Produktspezifikation (Web-App)
+
+Stand: 2026-10-02 · **Entwurf.** Nichts davon ist umgesetzt. Diese Spec beschreibt die **eigene Web-App** als Produkt. Der Obsidian-Vault (`../PFLANZENSYSTEM-SPECS/`) war der **Prototyp**: Er hat gezeigt, was funktioniert, und ist hier Referenz und Datenquelle, nicht Architekturvorgabe.
+
+## Wie sich diese Spec zum Prototyp verhält
+
+| | Prototyp (`PFLANZENSYSTEM-SPECS/`) | Produkt (diese Spec) |
+|---|---|---|
+| Nutzer | eine Person | viele Personen mit Konten |
+| Speicher | Markdown + Frontmatter im Vault | serverseitige Datenhaltung, technikneutral beschrieben |
+| Oberfläche | Dataview-Dashboard in Obsidian | Web-App, mobile-first |
+| Eingabe | Klick-Formulare, Claude in Claude Code | Formulare **und** KI-Assistent in der App |
+| Sozial | nicht vorhanden | Kernfunktion |
+| Aussage | Ist-Zustand, abgeleitet aus dem Code | Soll-Zustand, Anforderungen an das Produkt |
+
+Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wachstumstrend, Vergeilung, Lampenlogik, Pokédex, Wunschliste-Puffer). Was nicht übernommen wird: Dateinamen, Wikilinks, Frontmatter-Schlüssel, Dataview, `processFrontMatter`, `post-commit`-Hook.
+
+## Dateien
+
+| Datei | Inhalt |
+|---|---|
+| [00-Produktueberblick.md](00-Produktueberblick.md) | Vision, Zielgruppe, Akteure, Prinzipien, Domänenmodell, Glossar |
+| [01-Konten-und-Onboarding.md](01-Konten-und-Onboarding.md) | Epic ACC: Konto, Anmeldung, Profil, Import aus dem Prototyp |
+| [02-Bestand.md](02-Bestand.md) | Epic BES: Artenkatalog, Exemplare, Steckling, Archiv |
+| [03-Licht-und-Standorte.md](03-Licht-und-Standorte.md) | Epic LIC: Lichtzonen, Standorte, Verteilung, Position |
+| [04-Pflegephasen.md](04-Pflegephasen.md) | Epic PHA: Ruhe-/Wachstumsphase, Standortabgleich |
+| [05-Wachstum-und-Fotos.md](05-Wachstum-und-Fotos.md) | Epic WAC: Messung, Trend, Vergeilung, Fotos |
+| [06-Behandlungen.md](06-Behandlungen.md) | Epic BEH: Schädlinge, Krankheiten, Kuren |
+| [07-Wunschliste.md](07-Wunschliste.md) | Epic WUN: Kaufkandidaten, Puffer, Weg zur Pflanze |
+| [08-Pokedex.md](08-Pokedex.md) | Epic POK: Sammelkarten, Taxonomie, Meilensteine |
+| [09-Erinnerungen-und-Sensorik.md](09-Erinnerungen-und-Sensorik.md) | Epic MON: Benachrichtigungen, Gießen, Sensoren |
+| [10-Soziales.md](10-Soziales.md) | Epic SOZ: Freunde, Feed, Tauschen |
+| [11-Equipment-und-Empfehlungen.md](11-Equipment-und-Empfehlungen.md) | Epic EQU: Equipment, Bedarf, Affiliate |
+| [12-KI-Assistent.md](12-KI-Assistent.md) | Epic KI: Pflege per Sprache, Profile, Foto-Bewertung |
+| [13-Business-Case.md](13-Business-Case.md) | Stufen: für uns, trägt sich selbst, Gewinn |
+| [14-Querschnitt.md](14-Querschnitt.md) | Epic QS: Datenschutz, Sicherheit, Mobile, Qualität |
+| [15-Migration-vom-Prototyp.md](15-Migration-vom-Prototyp.md) | Epic MIG: Daten aus dem Vault übernehmen |
+| [16-Releases-und-Entscheidungen.md](16-Releases-und-Entscheidungen.md) | Release-Schnitt, offene Entscheidungen, Nicht-Ziele |
+
+## Konventionen
+
+- **Akteure:** *Pflanzenhalter*, *Freund*, *Betreiber*, *KI-Assistent*, *System*. Siehe `00-Produktueberblick.md`.
+- **IDs:** `US-<EPIC>-nn`, `FR-<EPIC>-nn`, `DM-<EPIC>-nn`, `NFR-nn`. Stories, die aus dem Prototyp stammen, **behalten ihre ID** (z. B. `US-PHA-01`), damit man vergleichen kann. Neue Stories bekommen die nächste freie Nummer. IDs nicht neu nummerieren.
+- **Status** (Produkt): ⬜ geplant, 🟨 in Arbeit, ✅ umgesetzt. Aktuell ist **alles ⬜**.
+- **Prototyp-Spalte** je Story: `✅` im Prototyp erprobt, `🟡` im Prototyp teilweise, `neu` nicht im Prototyp. Sie sagt, wie gut das Verhalten schon belegt ist, nicht ob die Web-App es kann.
+- **Akzeptanzkriterien** in Gegeben/Wenn/Dann-Kurzform. Sie sind als Tests gedacht (NFR-QS-08).
+- **Technikneutral:** Die Spec nennt Verhalten, Daten und Grenzen, keine Frameworks. Technikentscheidungen stehen in `16-Releases-und-Entscheidungen.md` (E-nn).
+- **Keine erfundenen Zahlen:** Schwellen und Beträge sind Annahmen und als solche markiert.
+
+## Status-Übersicht
+
+| Epic | Stories | aus dem Prototyp erprobt | neu |
+|---|---|---|---|
+| ACC Konten | 5 | 0 | 5 |
+| BES Bestand | 8 | 8 | 0 |
+| LIC Licht und Standorte | 5 | 4 | 1 |
+| PHA Pflegephasen | 4 | 4 | 0 |
+| WAC Wachstum/Fotos | 6 | 6 | 0 |
+| BEH Behandlungen | 4 | 4 | 0 |
+| WUN Wunschliste | 5 | 5 | 0 |
+| POK Pokédex | 10 | 10 | 0 |
+| MON Erinnerungen/Sensorik | 8 | 0 | 8 |
+| SOZ Soziales | 13 | 0 | 13 |
+| EQU Equipment | 12 | 0 | 12 |
+| KI Assistent | 6 | 3 | 3 |
+| QS Querschnitt | 7 | 6 | 1 |
+| MIG Migration | 3 | 0 | 3 |
+| **Summe** | **96** | **50** | **46** |
+
+## Ablösung bestehender Dokumente
+
+Diese Dokumente in `PFLANZENSYSTEM-SPECS/` sind **fachlich gültig, aber technisch überholt**, soweit sie den Vault als Wahrheit annehmen. Maßgeblich ist ab jetzt diese Spec:
+
+| Altes Dokument | Wird ersetzt durch | Was überholt ist |
+|---|---|---|
+| `11-Soziales.md` | `10-Soziales.md` | „Hub", Vault als Wahrheit (FR-SOZ-02), Frontmatter-Felder |
+| `12-Business-Case.md` | `13-Business-Case.md` | Stufe 1 in Obsidian, Obsidian-Hürde |
+| `12-Zielarchitektur-AI-first.md` | `16-Releases-und-Entscheidungen.md` | ADR-01 (Vault bleibt Wahrheit), Markdown-Adapter, US-ARC-05 |
+| `13-Equipment-und-Affiliate.md` | `11-Equipment-und-Empfehlungen.md` | Equipment-Notizen im Vault, `processFrontMatter` |
+
+Übernommen aus der Zielarchitektur bleiben: die Leitprinzipien P-01 bis P-06 (siehe `00-Produktueberblick.md`), Mandantenfähigkeit von Anfang an, PWA als erste Oberfläche und „Specs sind ausführbar".

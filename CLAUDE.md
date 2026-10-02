@@ -10,7 +10,7 @@ Start with `PFLANZENSYSTEM-SPECS/README.md` (index, status overview, key finding
 
 ## Spec conventions (keep when editing)
 
-- One file per epic: BES (inventory), LIC (lights), PHA (care phases), WAC (growth/photos), BEH (treatments), WUN (wishlist), POK (Pokédex), MON (monitoring, planned only), QS (cross-cutting/NFRs). `10-Luecken-und-Backlog.md` holds findings `B-nn` and the prioritized backlog.
+- One file per epic: BES (inventory), LIC (lights), PHA (care phases), WAC (growth/photos), BEH (treatments), WUN (wishlist), POK (Pokédex), MON (monitoring, planned only), SOZ (social, planned only), EQU (equipment and affiliate, planned only), QS (cross-cutting/NFRs). `10-Luecken-und-Backlog.md` holds findings `B-nn` and the prioritized backlog.
 - IDs are stable and must never be renumbered: `US-<EPIC>-nn` user story, `FR-<EPIC>-nn` functional requirement, `DM-nn` data model, `NFR-nn` non-functional.
 - Status markers: ✅ implemented, 🟡 partial/known deviation, ⬜ planned only. If you change a status, also update the status table in `README.md`.
 - Acceptance criteria use a short Given/When/Then form.
