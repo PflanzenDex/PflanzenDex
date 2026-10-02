@@ -45,7 +45,8 @@ Akzeptanzkriterien: siehe US-WAC-06 (nur sichtbar Prüfbares, Vorschlag für Qua
 
 ### US-KI-05 · Recherche auf Zuruf (Wunschliste, Equipment) · ⬜ (Prototyp ✅)
 Akzeptanzkriterien:
-- Wunschkandidaten nach US-WUN-04, Equipment-Vorschläge nach FR-EQU-09.
+- Wunschkandidaten nach US-WUN-04, Equipment-Vorschläge nach FR-EQU-09, Vorschläge aus dem Katalog nach US-ENT-08 (Operation `vorschlaege`, keine eigene Bewertung).
+- Art-Merkmale für Entdecken (DM-ENT-01) recherchiert die KI nur mit Quelle und als `KI-erstellt, ungeprüft` (FR-BES-06).
 - Bild-URLs, Quellen und Lizenzen werden auf Erreichbarkeit geprüft, nicht geraten.
 - Ergebnisse sind Entwürfe; Übernahme einzeln.
 

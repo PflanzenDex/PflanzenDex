@@ -95,6 +95,7 @@ Akzeptanzkriterien:
 | Prüfstatus | Aufzählung | `kuratiert`, `geprüft`, `KI-erstellt, ungeprüft` |
 | Quelle | Text/Link | Herkunft der Angaben |
 | Bild, Bildquelle, Lizenz | | Wikipedia/Commons mit Lizenz |
+| Merkmale (optional) | | Luftfeuchte, Temperatur min., Wuchsgröße, Giftig für Haustiere, je mit Quelle; für Entdecken (DM-ENT-01) |
 
 ### DM-BES-02 Exemplar
 

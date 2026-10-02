@@ -36,6 +36,7 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 | [14-Querschnitt.md](14-Querschnitt.md) | Epic QS: Datenschutz, Sicherheit, Mobile, Qualität |
 | [15-Migration-vom-Prototyp.md](15-Migration-vom-Prototyp.md) | Epic MIG: Daten aus dem Vault übernehmen |
 | [16-Releases-und-Entscheidungen.md](16-Releases-und-Entscheidungen.md) | Release-Schnitt, offene Entscheidungen, Nicht-Ziele |
+| [17-Entdecken.md](17-Entdecken.md) | Epic ENT: Swipe-Vorschläge aus dem Katalog, passend zu Licht und Gedeihendem, füllen die Wunschliste |
 
 ## Konventionen
 
@@ -65,7 +66,8 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 | KI Assistent | 6 | 3 | 3 |
 | QS Querschnitt | 7 | 6 | 1 |
 | MIG Migration | 3 | 0 | 3 |
-| **Summe** | **96** | **50** | **46** |
+| ENT Entdecken | 8 | 0 | 8 |
+| **Summe** | **104** | **50** | **54** |
 
 ## Ablösung bestehender Dokumente
 

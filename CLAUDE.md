@@ -4,28 +4,49 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repository is
 
-So far this repo holds **only a requirements specification** (German), in `PFLANZENSYSTEM-SPECS/`. There is no code, no build, and no tests here yet. The specs describe a plant-care system as it exists today in a separate **Obsidian vault**: an Obsidian dashboard built from `dataviewjs` blocks, scripts in `scripts/pflanzen/`, a `post-commit` hook, and design specs in `docs/superpowers/specs/`. Those vault paths are referenced throughout the specs but are **not in this repo**. Don't look for them here, and don't assume they exist next to this repo.
+This repo is a **spec repository only** (German): no code, no build, no tests. App code is planned for a separate repo (decision E-05 in `PRODUKT-SPECS/16-Releases-und-Entscheidungen.md`). There are two spec sets:
 
-Start with `PFLANZENSYSTEM-SPECS/README.md` (index, status overview, key findings). Then read `00-Systemueberblick.md` (architecture, data model DM-01…DM-06, glossary).
+| Folder | Describes | Status semantics |
+|---|---|---|
+| `PRODUKT-SPECS/` | **The product:** the PflanzenDex web app (multi-user, mobile-first PWA, shared species catalog, social, AI assistant). This is the authoritative spec for new work. | Everything ⬜ (planned). Each story also carries a "Prototyp" column (✅/🟡 tried in the vault, or `neu`). |
+| `PFLANZENSYSTEM-SPECS/` | **The prototype:** the as-is state of a single-user Obsidian vault (`dataviewjs` dashboard, `scripts/pflanzen/`, `post-commit` hook). Its `11`–`13` are superseded by `PRODUKT-SPECS` (see the replacement table in `PRODUKT-SPECS/README.md`). | ✅/🟡/⬜ = implemented in the vault, derived from vault code. |
+
+The vault paths referenced in the prototype specs (`02-Areas/…`, `scripts/pflanzen/…`, `docs/superpowers/specs/…`) are **not in this repo**.
+
+Start with `PRODUKT-SPECS/README.md` (index, conventions, replacement table), then `PRODUKT-SPECS/00-Produktueberblick.md` (principles P-01…P-11, domain model, glossary) and `16-Releases-und-Entscheidungen.md` (release cut R0–R6, open decisions E-nn, non-goals).
 
 ## Spec conventions (keep when editing)
 
-- One file per epic: BES (inventory), LIC (lights), PHA (care phases), WAC (growth/photos), BEH (treatments), WUN (wishlist), POK (Pokédex), MON (monitoring, planned only), SOZ (social, planned only), EQU (equipment and affiliate, planned only), QS (cross-cutting/NFRs). `10-Luecken-und-Backlog.md` holds findings `B-nn` and the prioritized backlog.
-- IDs are stable and must never be renumbered: `US-<EPIC>-nn` user story, `FR-<EPIC>-nn` functional requirement, `DM-nn` data model, `NFR-nn` non-functional.
-- Status markers: ✅ implemented, 🟡 partial/known deviation, ⬜ planned only. If you change a status, also update the status table in `README.md`.
-- Acceptance criteria use a short Given/When/Then form.
-- When sources conflict, this order wins: vault code, then the vault's `CLAUDE.md`, then the design specs.
-- The specs are written in German, so write new content in German with the same terminology (Art, Exemplar, Steckling, Pflegephase, Vergeilung, Gefangen, Puffer …; see the glossary in `00`).
+- **New features go into `PRODUKT-SPECS/`.** Only touch `PFLANZENSYSTEM-SPECS/` to correct the description of the vault's actual state.
+- Product IDs: `US-<EPIC>-nn`, `FR-<EPIC>-nn`, `DM-<EPIC>-nn`, `NFR-nn`, decisions `E-nn`. Stories taken over from the prototype **keep their prototype ID** so the two can be compared. IDs are never renumbered.
+- Product epics: ACC, BES, LIC, PHA, WAC, BEH, WUN, POK, MON, SOZ, EQU, KI, QS, MIG, ENT (`17-Entdecken.md`, swipe suggestions from the catalog into the wishlist).
+- When adding a product epic: new numbered file, then update the file and status tables in `PRODUKT-SPECS/README.md`, cross-reference the affected epics, add glossary terms to `00`, and place it in the release cut in `16`.
+- Product specs are **technology-neutral**: behavior, data and limits. Technology choices belong in `16` as decisions.
+- Acceptance criteria use a short Gegeben/Wenn/Dann form and are meant to become tests (P-06).
+- Write in German and use the glossary terms (Art, Exemplar, Steckling, Lichtzone, Pflegephase, Vergeilung, Gefangen, Puffer, Wunsch …).
+- Numbers that are not measured or sourced must be marked as assumptions ("Annahme", "Startwert").
 
-## Architecture of the described system (big picture)
+## Principles that shape every requirement
 
-- **Art vs. Exemplar:** an *Art* (species) note holds the knowledge, one note per species. An *Exemplar* note is one pot and holds only the values that differ from its Art. Lookup rule: an Exemplar field overrides the Art field of the same name (`p[k] ?? art[k]`).
-- **Inputs go through UI, never raw YAML:** buttons and forms write frontmatter via `app.fileManager.processFrontMatter`. Everything derivable (ownership, phases, trends, lamp distribution) is computed live on render, so no second copy exists.
-- **Pokédex pipeline:** `Arten.md` (hand-curated) is the input. Committing it fires the `post-commit` hook, which runs `build_pokedex.py` (OpenTree → Wikidata → Wikipedia → GBIF). That writes `Pokedex-Baum.json` (generated only, atomic writes, exit code 2 on network failure). `pokedex-core.js` holds pure logic and `pokedex.css` holds the styling. Ownership ("gefangen") is derived from the Exemplar notes and is never stored.
-- **Lamp strings (DM-05) are hardcoded character-for-character** in several places. Any change has to be made everywhere (B-07).
-- **Tests in the vault:** `node --test scripts/pflanzen/pokedex-core.test.js` and `pytest scripts/pflanzen/test_build_pokedex.py`. The care dashboard logic has no tests. Backlog item B-02 proposes extracting it into `pflanzen-core.js`, which is also a prerequisite for the MON bot.
-- **Obsidian constraints (NFR-09):** expand UI inline instead of using `position: fixed`, and assign handlers directly instead of delegating through `closest()`. After editing external JS/CSS, reload the note.
+From `PRODUKT-SPECS/00-Produktueberblick.md`:
 
-## Design principles that drive requirements
+- **P-01:** the AI judges, the code computes and writes.
+- **P-03:** writes go only through validating operations.
+- **P-04/P-05:** multi-tenant from day one, and private by default.
+- **P-08:** no invented numbers. Compare against the user's own history or citable sources (GBIF, Wikipedia), and show "unbekannt" when a value is unknown.
+- **P-09:** every view says what to do next.
+- **P-10:** nothing disappears silently.
 
-These come from the vault's `System-Design-Prinzipien.md`, summarized in `09-Querschnitt-Qualitaet.md`. Never invent numbers: compare only against your own history or citable sources, and show "unbekannt" when a value is unknown. Never drop records silently. Every block must say what to do next. The human supplies only what only a human can supply. Raw sensor data must never enter the git-synced vault.
+Recurring consequences:
+
+- No comparisons against species averages.
+- Etiolated growth ("Vergeilung") never counts as success.
+- Leaderboards and rankings between friends are excluded.
+- Affiliate recommendations appear only for a derived need and are always labeled (EQU).
+
+## Domain big picture
+
+- **Art vs. Exemplar:** an Art (species) lives once in a shared catalog. An Exemplar is one pot owned by a user. An Exemplar field overrides the same field on its Art.
+- **Lichtzone / Standort:** light zones and locations are entities. Zone 1 is cutting light; zones 2–4 are for adult plants.
+- **Derived data:** Pokédex ownership ("gefangen"), care phases, growth trends and zone distribution are derived live and never stored.
+- **Pokédex catalog:** built by a background job (OpenTree → Wikidata → Wikipedia → GBIF). The prototype's `build_pokedex.py` (73 tests) and `pokedex-core.js` (66 tests) are reuse candidates (E-01).

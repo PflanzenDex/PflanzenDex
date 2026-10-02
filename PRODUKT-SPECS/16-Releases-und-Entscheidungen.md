@@ -11,12 +11,14 @@ Grundsatz: Jedes Release ist für die drei Start-Nutzer **nutzbar**. Reihenfolge
 | **R0 Fundament** | Konten, Einladungszugang, Standorte/Lichtzonen, Artenkatalog (Import von `Arten.md` und Art-Notizen), Exemplare, Import-Werkzeug mit Trockenlauf | ACC, BES, LIC (05), MIG | Daten der drei sind in der App, lesbar |
 | **R1 Parität** | Phasen, Messen mit Foto, Trend/Vergeilung, Behandlungen, Wunschliste, Pokédex (Karten, Besitz, Rang, Meilensteine), „Heute"-Liste, PWA | PHA, WAC, BEH, WUN, POK, LIC, QS-07 | Alles, was der Vault heute kann, ist in der App; Umschalten möglich |
 | **R2 Soziales** | Freunde, Freigabe, Feed „Neu bei Freunden", Sammlung vergleichen | SOZ (01–07) | Neuzugänge der Freunde sichtbar |
-| **R3 Tausch und Erinnerungen** | Angebote, Tauschbörse, Übergabe, Benachrichtigungen, Gießprotokoll | SOZ (08–13), MON (01–05, 08) | Erster echter Tausch; Bindung durch Erinnerungen |
+| **R3 Tausch und Erinnerungen** | Angebote, Tauschbörse, Übergabe, Benachrichtigungen, Gießprotokoll | SOZ (08–13), MON (01–05, 08), ENT (01–07) | Erster echter Tausch; Bindung durch Erinnerungen und Entdecken |
 | **R4 KI-Assistent** | Pflege per Sprache, Tagesstatus, Artprofil, Foto-Bewertung, Recherche | KI | Eingabe ohne Formulare; Katalog wächst |
 | **R5 Equipment** | Equipment, Lichtzonen-Bindung, Bedarf, danach Empfehlungen | EQU | Grundlage für Stufe 2 |
 | **R6 Sensorik** | Sensor-Pilot, Klima, Aggregate | MON (06, 07) | später, nach Hardware-Entscheidung |
 
 Hinweis: R4 (KI) steht bewusst **nach** R1 bis R3. Die KI erleichtert die Eingabe, ist aber nicht die Voraussetzung, den Vault abzulösen (FR-KI-05). Verschieben lässt sie sich vor R3, wenn der Aufwand klein bleibt, weil der Katalog sie früh braucht (Artprofil, US-KI-03).
+
+Hinweis: ENT (Entdecken) braucht nur R1 (Katalog, Pokédex, Wunschliste, Messungen) und keine Freunde; es kann auch direkt nach R1 kommen. Die Art-Merkmale (DM-ENT-01) wachsen mit dem Katalog, KI-gestützt ab R4 (US-ENT-08). Ohne Merkmale funktionieren die Anteile Platz, Pokédex, Nähe und Vorlieben bereits.
 
 ## Technik-Entwurf (Vorschlag, noch nicht entschieden)
 

@@ -62,7 +62,7 @@ Akzeptanzkriterien:
 Akzeptanzkriterien:
 - Tipp öffnet die Karte oder eine Detailansicht: größeres Bild, voller deutscher Name, voller Kurztext, Gattung, Fangstatus, Exemplarzahl, Sortenchips, Quelllink, und der Link zum Artprofil.
 - Höchstens eine Detailansicht offen; Schließen ist eindeutig.
-- Bei Fehlend: Aktionen „auf die Wunschliste" (US-WUN) und, falls ein Freund sie hat, „Freund hat sie" (US-SOZ-07).
+- Bei Fehlend: Aktionen „auf die Wunschliste" (US-WUN, `Quelle: Pokédex`; zählt als Ja für Entdecken, US-ENT-05) und, falls ein Freund sie hat, „Freund hat sie" (US-SOZ-07).
 
 ### US-POK-10 · Sammler-Rang und Fortschritt · ⬜ (Prototyp ✅)
 Akzeptanzkriterien:

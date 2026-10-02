@@ -93,3 +93,5 @@ Technikneutral. Jede Entität gehört einem Konto, außer dem Artenkatalog.
 | Tausch | Anfrage → Zusage → beidseitig bestätigte Übergabe; Besitz wechselt. |
 | Herkunft | Vermerk, von wem und wann ein Exemplar kam. |
 | Bedarf | Aus eigenen Daten abgeleitete Lücke (Lampe fehlt, Vorrat leer), Grundlage für Empfehlungen. |
+| Vorschlag / Stapel | Art aus dem Katalog, die Entdecken als Karte anbietet (Ja/Nein/Später); ein Stapel ist eine begrenzte Folge davon (Epic ENT). Nicht zu verwechseln mit einer Equipment-Empfehlung. |
+| Gedeiht | Aktives Exemplar mit ≥ 2 Messungen, Gesamtrate > 0 und letzter Qualität `Gesund`; Grundlage für Vorschläge (Epic ENT). |
