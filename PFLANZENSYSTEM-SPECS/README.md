@@ -16,11 +16,12 @@ Stand: 2026-10-02 · Ableitung aus dem **Ist-Zustand** des Vaults (Dashboard, No
 | [07-Pokedex.md](07-Pokedex.md) | Epic POK: Sammelkarten, Taxonomie-Baum, Meilensteine |
 | [08-Monitoring-Sensorik.md](08-Monitoring-Sensorik.md) | Epic MON: Bot-Erinnerungen, Gießen, Sensoren (**geplant**) |
 | [09-Querschnitt-Qualitaet.md](09-Querschnitt-Qualitaet.md) | Epic QS: nicht-funktionale Anforderungen, Prinzipien-Check |
+| [11-Soziales.md](11-Soziales.md) | Epic SOZ: Freunde, Feed „Neu bei Freunden", Tauschen (**geplant**) |
 | [10-Luecken-und-Backlog.md](10-Luecken-und-Backlog.md) | Befunde (Ist ≠ Doku, Defekte, Datenlücken) und priorisiertes Backlog |
 
 ## Konventionen
 
-- **Akteure:** *Pflanzenhalter* (der Nutzer), *Claude* (Assistent in Claude Code oder Chat), *System* (Hook, Skript, Dataview-Block, Bot). Siehe `00-Systemueberblick.md`.
+- **Akteure:** *Pflanzenhalter* (der Nutzer), *Freund* (anderer Pflanzenhalter, nur Epic SOZ), *Claude* (Assistent in Claude Code oder Chat), *System* (Hook, Skript, Dataview-Block, Bot). Siehe `00-Systemueberblick.md`.
 - **IDs:** `US-<EPIC>-nn` Userstory, `FR-<EPIC>-nn` funktionale Anforderung, `DM-nn` Datenmodell, `NFR-nn` nicht-funktional. IDs sind stabil, nicht neu nummerieren.
 - **Status je Story/Anforderung:**
   - ✅ umgesetzt und im Vault vorhanden
@@ -41,8 +42,9 @@ Stand: 2026-10-02 · Ableitung aus dem **Ist-Zustand** des Vaults (Dashboard, No
 | WUN Wunschliste | 5 | 4 | 1 | 0 |
 | POK Pokédex | 13 | 12 | 1 | 0 |
 | MON Monitoring | 7 | 0 | 0 | 7 |
+| SOZ Soziales | 13 | 0 | 0 | 13 |
 | QS Querschnitt | 6 | 4 | 2 | 0 |
-| **Summe** | **58** | **45** | **6** | **7** |
+| **Summe** | **71** | **45** | **6** | **20** |
 
 ## Kennzahlen des Ist-Zustands (2026-10-02)
 

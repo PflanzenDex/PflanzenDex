@@ -11,6 +11,7 @@ Leitprinzip aus `03-Resources/Processes/System-Design-Prinzipien.md`: Der Mensch
 | Akteur | Rolle |
 |---|---|
 | **Pflanzenhalter** | Der Nutzer. Stellt Pflanzen um, misst, bewertet Vergeilung, kauft, pflegt `Arten.md` und `Wunschliste.md`, liest gegen, was Claude recherchiert. |
+| **Freund** | Anderer Pflanzenhalter mit bestätigter Freundschaft (Epic SOZ, geplant). Sieht nur freigegebene Exemplare, kann Angebote anfragen. |
 | **Claude** | Recherchiert Art-Notizen aus der Prompt-Vorlage, recherchiert Wunschlisten-Kandidaten, bewertet Fotos qualitativ, kuratiert `Arten.md`, führt Skripte aus. Committet nicht (macht der Nutzer). |
 | **System** | `post-commit`-Hook, `build_pokedex.py`, `foto_import.py`, `dataviewjs`-Blöcke in Obsidian, künftig der Telegram-Bot. |
 
@@ -50,7 +51,7 @@ Leitprinzip aus `03-Resources/Processes/System-Design-Prinzipien.md`: Der Mensch
  .git/hooks/post-commit  → build_pokedex.py, wenn Arten.md im Commit geändert
 ```
 
-Geplant, nicht vorhanden: Bot-Job `pflanzen_status.py`, `Sensor-Status.md`, MQTT/ESPHome-Pfad (siehe `08-Monitoring-Sensorik.md`).
+Geplant, nicht vorhanden: Bot-Job `pflanzen_status.py`, `Sensor-Status.md`, MQTT/ESPHome-Pfad (siehe `08-Monitoring-Sensorik.md`); Austauschschicht („Hub") für Freunde, Feed und Tauschen mit `soziales-core.js` (siehe `11-Soziales.md`, Technik offen).
 
 ## Datenmodell
 
@@ -114,6 +115,10 @@ Die Strings sind in Dashboard, Lampen-Zuordnung, Wunschliste und Vorlagen **iden
 - `Arten.md`: Array `Arten` mit `Name` (Gattung + Epitheton), `Deutsch`, `Schwierigkeit` (1–3), `Lampe` (2–4), optional `Notiz`.
 - `Pokedex-Baum.json`: `ordnungen → familien → gattungen → arten`, je Gattung `arten_anzahl_gattung`, je Art `wiki_titel`, `kurztext`, `bild`, `bild_quelle`, `schwierigkeit`, `lampe`, `ott_id`; Meta `stand`, `fehler`, `hinweis`.
 
+### DM-07 Soziale Erweiterungen (geplant)
+
+Exemplar-Felder `Teilen`, `Teilen_Fotos` (Freigabe, Standard privat) und `Herkunft` (nach Tausch); Hub-Datensätze Freundschaft, Angebot, Tauschvorgang. Details in `11-Soziales.md` (DM-S1 bis DM-S5).
+
 ## Glossar
 
 | Begriff | Bedeutung |
@@ -125,4 +130,6 @@ Die Strings sind in Dashboard, Lampen-Zuordnung, Wunschliste und Vorlagen **iden
 | Kennzeichen | Wäscheklammer am Topf, trennt Exemplare derselben Art. |
 | Puffer | Mindestzahl offener Wunschlisten-Kandidaten je Lampenstufe (2). |
 | Gefangen | Art ist im Pokédex besessen: Exemplar in `Meine Pflanzen/` verweist auf eine Art-Notiz mit passendem `Lateinischer_Name`. |
+| Freund / Hub | Bestätigter anderer Halter / Austauschschicht zwischen den Vaults (Epic SOZ, geplant). |
+| Tausch | Anfrage → Zusage → beidseitig bestätigte Übergabe; der Geber archiviert, der Empfänger legt einen Steckling oder eine Pflanze mit `Herkunft` an. |
 | Artenarm | Gattung mit höchstens 10 Arten laut GBIF; Badge auf der Art-Karte. |

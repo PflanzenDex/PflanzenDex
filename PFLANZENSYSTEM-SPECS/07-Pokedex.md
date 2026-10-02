@@ -143,5 +143,5 @@ Ist: 215 Arten (Stand Baum 2026-09-29), 0 Fehler. Die Erweiterung ist reine Kura
 | FR-POK-08 | Keine erfundenen Zahlen: Artenzahl aus GBIF, Fangdatum aus eigenen Daten, „unbekannt" statt Raten. | ✅ |
 | FR-POK-09 | Sorten/Cultivars erhalten keinen eigenen Katalog-Slot (keine botanische Taxonomie/Anreicherung möglich). | ✅ |
 | FR-POK-10 | Familien-Icon-Zuordnung steht in `FAMILY_ICON_KEY` (`pokedex-core.js`). | ✅ |
-| FR-POK-11 | Out of Scope: SVG-Baum, Verknüpfung mit der Wunschliste, IUCN-Status, Sound/Animationen über CSS hinaus. | ✅ (bewusst) |
+| FR-POK-11 | Out of Scope: SVG-Baum, Verknüpfung mit der Wunschliste, IUCN-Status, Sound/Animationen über CSS hinaus. Soziale Vergleiche (Freunde-Sammlung, „fehlt dir") gehören in Epic SOZ (US-SOZ-07), nicht in den Pokédex-Code. | ✅ (bewusst) |
 | FR-POK-12 | `Arten.md` und `Wunschliste.md` (Kandidaten) teilen keine Daten, auch wenn Arten überlappen (z. B. `Philodendron hederaceum`, `Aglaonema commutatum`). | 🟡 (B-09) |

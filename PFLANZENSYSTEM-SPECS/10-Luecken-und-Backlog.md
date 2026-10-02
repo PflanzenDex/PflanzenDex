@@ -21,6 +21,7 @@ Befunde aus der Analyse (2026-10-02). Jeder Befund nennt Beleg und Wirkung. „D
 | B-13 | Daten | `Hippeastrum` (Amaryllis) und `Parodia sp.` haben kein Artepitheton; **2 von 13 Arten zählen nicht als gefangen** (Pokédex warnt). | Art-Notizen | Bewusst so; Handlung: Epitheton ergänzen, sobald bekannt (`Parodia sp.`: Verdacht *P. leninghausii*, im Katalog steht nur *Parodia magnifica*). |
 | B-14 | Lücke | Pflege-Erinnerungen und Gießprotokoll fehlen (Epic MON). | keine Treffer für `pflanzen_status`/`Giesslog` | Pull-System. |
 | B-15 | Hinweis | Zwei archivierte Notizen (`Basilikum`, `Efeutute`) sind im alten Einzeldatei-Format (Art + Exemplar vermischt). | `04-Archive/Pflanzen/` | Unkritisch (außerhalb der Queries). |
+| B-17 | Lücke | Keine soziale Schicht: kein Freundeskreis, kein Feed, kein Tauschen. Austauschtechnik nicht entschieden (E-SOZ-01). | Epic SOZ (`11-Soziales.md`) | Stecklinge werden nur von Hand archiviert, ohne Herkunft und Angebot. |
 | B-16 | Hinweis | Das Dashboard-Frontmatter fehlen `tags` (Pokédex-Notiz hat `pflanzen`, `dashboard`). | Dashboard-Kopf | Auffindbarkeit nur über den Pfad. |
 
 ## Backlog (priorisiert)
@@ -37,6 +38,7 @@ Priorität = Nutzen ÷ Aufwand. **P1** sofort sinnvoll, **P2** wenn Zeit, **P3**
 | P2 | B-05 | Eine Skala für `Schwierigkeit` festlegen (Vorschlag: Zahl 1–3 überall, Text als Anzeige) und Art-Vorlage, Wunschliste und Dashboard angleichen. | mittel | DM-01/04/06 |
 | P2 | B-07 | Lampenstufen zentral definieren (z. B. in `Lampen-Zuordnung.md`-Frontmatter oder `pflanzen-core.js`) und von allen Blöcken lesen. | mittel | LIC |
 | P2 | MON | **Phase 1 des Monitorings:** `Giess_Intervall_Tage`/`Giesslog` ins Schema, `pflanzen_status.py`, Bot-Job, `/gegossen`. Abhängig von B-02 (gemeinsame Phasenlogik). | groß | Epic MON |
+| P3 | SOZ | **Soziales:** erst E-SOZ-01 entscheiden, dann `soziales-core.js` (Freigabe, Feed-Ableitung, Tauschzustände) mit Tests, danach Hub und Dashboard-Blöcke. Abhängig von B-02 (Kernlogik) und für Benachrichtigung von MON. | groß | Epic SOZ |
 | P3 | B-09 | Übergang „Gekauft ✔" → vorbefüllte Art-Vorlage; Abgleich Wunschliste ↔ `Arten.md`. | mittel | US-WUN-05 |
 | P3 | B-08 | Behandlungen mit stabiler ID oder Index-Prüfung gegen Inhalt (Datum+Grund) absichern. | klein | FR-BEH-02 |
 | P3 | B-06 | `foto_import.py` auf YAML-Parser umstellen oder Format-Annahme dokumentieren. | klein | FR-WAC-06 |
@@ -51,8 +53,9 @@ Priorität = Nutzen ÷ Aufwand. **P1** sofort sinnvoll, **P2** wenn Zeit, **P3**
 2. **Wachstum für Stecklinge** sichtbar lassen oder ausblenden (FR-WAC-05)?
 3. **Lichtübersicht** für Stecklinge: Artwert (jetzt) oder Lampe 1 (FR-LIC-05)?
 4. **Schwierigkeit:** Zahl oder Text als führende Skala (B-05)?
-5. Die Fragen aus `08-Monitoring-Sensorik.md` (MQTT-Broker, Funk oder Kabel, Pilotpflanzen, Meldehäufigkeit).
+5. **E-SOZ-01:** Austauschschicht für Freunde, Feed und Tausch (Bot als Hub, eigener Server, dateibasierter Sync); weitere Fragen in `11-Soziales.md`.
+6. Die Fragen aus `08-Monitoring-Sensorik.md` (MQTT-Broker, Funk oder Kabel, Pilotpflanzen, Meldehäufigkeit).
 
 ## Nicht-Ziele (bewusst nicht im Backlog)
 
-Automatische Bewässerung, Foto-basierte Höhen-/Feuchteschätzung, soziale Vergleichszahlen im Pokédex, Cultivar-Slots, SVG-Baum, Cloud-Dienste.
+Automatische Bewässerung, Foto-basierte Höhen-/Feuchteschätzung, Bestenlisten und Rangvergleiche zwischen Freunden (Fakten ja, Wertung nein; US-SOZ-07), Cultivar-Slots, SVG-Baum, Cloud-Dienste ohne Entscheidung zu E-SOZ-01.

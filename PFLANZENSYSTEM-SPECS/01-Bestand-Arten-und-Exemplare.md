@@ -70,6 +70,8 @@ Akzeptanzkriterien:
 - Alle Dashboard-Queries sind auf `02-Areas/Pflanzen/Meine Pflanzen` begrenzt, daher verschwindet das Exemplar automatisch aus Verteilung, Phasen, Wachstum, Behandlungen und Pokédex-Besitz, ohne weitere Filterlogik.
 - Archivierte Exemplare zählen im Pokédex nicht als gefangen.
 
+Mit Epic SOZ (geplant) archiviert die Übergabe eines Tauschs das Exemplar automatisch mit `Archiviert_Grund: "Getauscht mit …"` (US-SOZ-11); ein erhaltenes Exemplar trägt `Herkunft` (DM-S4).
+
 Hinweis: Das Verschieben ist manuell; es gibt keinen Button. Zwei archivierte Notizen liegen vor (`Basilikum`, `Efeutute`), beide noch im alten Format (Art und Exemplar in einer Datei).
 
 ### US-BES-08 · Unvollständige Notizen erkennen · 🟡
