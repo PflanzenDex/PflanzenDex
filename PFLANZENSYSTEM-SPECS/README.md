@@ -18,6 +18,7 @@ Stand: 2026-10-02 · Ableitung aus dem **Ist-Zustand** des Vaults (Dashboard, No
 | [09-Querschnitt-Qualitaet.md](09-Querschnitt-Qualitaet.md) | Epic QS: nicht-funktionale Anforderungen, Prinzipien-Check |
 | [11-Soziales.md](11-Soziales.md) | Epic SOZ: Freunde, Feed „Neu bei Freunden", Tauschen (**geplant**) |
 | [10-Luecken-und-Backlog.md](10-Luecken-und-Backlog.md) | Befunde (Ist ≠ Doku, Defekte, Datenlücken) und priorisiertes Backlog |
+| [12-Zielarchitektur-AI-first.md](12-Zielarchitektur-AI-first.md) | Zielarchitektur: AI-first, Tech-Stack, Hub-Vorschlag zu E-SOZ-01 (**Entwurf**) |
 
 ## Konventionen
 
