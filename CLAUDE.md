@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repository is
 
-This repo is a **spec repository only** (German): no code, no build, no tests. App code is planned for a separate repo (decision E-05 in `PRODUKT-SPECS/16-Releases-und-Entscheidungen.md`). There are two spec sets:
+This repo holds the **specs** (German) and, as decided in E-05 (`PRODUKT-SPECS/16-Releases-und-Entscheidungen.md`), will also hold the **app code under `/app`** and the process documentation (principles register, ADRs, runbooks, pitfalls) under `/Docs`, next to it. Right now only the specs exist: no code, no build, no tests yet. The specs stay in `PRODUKT-SPECS/` and `PFLANZENSYSTEM-SPECS/`. There are two spec sets:
 
 | Folder | Describes | Status semantics |
 |---|---|---|

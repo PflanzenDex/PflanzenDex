@@ -120,8 +120,8 @@ Akzeptanzkriterien:
 - **Definition of Ready:** Eine Story darf begonnen werden, wenn Kriterien prüfbar formuliert sind (Gegeben/Wenn/Dann), Abhängigkeiten in `16-…` geklärt sind und offene Entscheidungen (E-nn) entschieden sind.
 - **Definition of Done:** FR-QG-10.
 - **Review (zweistufig, optional ab R1):** erst **blind** durch einen Agenten, der das Prinzipienregister nicht kennt, danach Fehleranalyse (`review-failure-analysis`), die für jeden Fund „warum besser, woran messbar, wie prüfbar" festhält und dem Maintainer **zur Bestätigung** vorlegt. Compliance-Review gegen bekannte Prinzipien nur auf Wunsch oder vor Releases (Muster Tombola, E-18).
-- **Entscheidungen als ADR:** Wird ein E-nn entschieden, entsteht ein Eintrag unter `docs/entscheidungen/NNNN-titel.md` (Kontext, Entscheidung, Folgen); die Zeile in `16-…` verweist darauf.
-- **Stolperfallen-Register:** Wiederkehrende Fehler (Zeitzonen, Fehlertexte, Testsynchronisation) stehen als kurze Einträge unter `docs/stolperfallen/` und werden bei einem Fund ergänzt (Muster `common-pitfalls`). Aus Einträgen, die sich prüfen lassen, werden Gates.
+- **Entscheidungen als ADR:** Wird ein E-nn entschieden, entsteht ein Eintrag unter `Docs/entscheidungen/NNNN-titel.md` (Kontext, Entscheidung, Folgen); die Zeile in `16-…` verweist darauf.
+- **Stolperfallen-Register:** Wiederkehrende Fehler (Zeitzonen, Fehlertexte, Testsynchronisation) stehen als kurze Einträge unter `Docs/stolperfallen/` und werden bei einem Fund ergänzt (Muster `common-pitfalls`). Aus Einträgen, die sich prüfen lassen, werden Gates.
 - **Dokumentationsprozess:** Code-Änderung ohne passende Spec- oder Doku-Änderung fällt im Review auf; Doku-Commits tragen `docs:`; Doku wird mit Markdown-Lint und Link-Prüfung gegated (QG-U2).
 
 ### US-DEV-06 · Release-Prozess · ⬜
@@ -168,7 +168,7 @@ Als **Betreiber** will ich wissen, wenn etwas nicht stimmt, bevor Nutzer es meld
 Akzeptanzkriterien:
 - Gesundheits-Endpunkt (API, Datenbank, Job-Warteschlange, Objektspeicher) mit Version; wird vom Deploy und vom Monitoring abgefragt.
 - Fehler und fehlgeschlagene Jobs erzeugen eine **Betreibermeldung** (NFR-18) ohne Nutzerdaten im Klartext.
-- Runbooks unter `docs/betrieb/` für: Backup einspielen, Rückfall, Migration schlägt fehl, Foto-Speicher voll, KI-Schnittstelle gestört oder missbraucht (Verbindung sperren), Erinnerungen laufen nicht, DSGVO-Löschung, Sicherheitsvorfall.
+- Runbooks unter `Docs/betrieb/` für: Backup einspielen, Rückfall, Migration schlägt fehl, Foto-Speicher voll, KI-Schnittstelle gestört oder missbraucht (Verbindung sperren), Erinnerungen laufen nicht, DSGVO-Löschung, Sicherheitsvorfall.
 - Ein Ausfall einer externen Quelle oder der KI beeinträchtigt keine Kernfunktion (NFR-17, FR-KI-05).
 - Betriebskennzahlen: Verfügbarkeit, Fehlerrate, Laufzeit der Jobs, Kosten je Konto (NFR-16).
 
@@ -184,6 +184,7 @@ Akzeptanzkriterien:
 | FR-DEV-06 | Release-Notizen und nutzerseitiger Changelog sind zweisprachig vorbereitet (Deutsch zuerst); Texte liegen in Übersetzungsdateien, nicht im Code (NFR-14). | ⬜ |
 | FR-DEV-07 | Jeder Release erhält ein **Datenstand-Etikett** für Katalog und Taxonomie-Baum (Datum, Anzahl Arten, Fehlerzahl). | ⬜ |
 | FR-DEV-08 | Geplante Agenten und Routinen laufen mit minimalen Rechten (nur Lesen, Bericht schreiben); Deploy- und Geheimnisrechte hat nur der Release-Workflow. | ⬜ |
+| FR-DEV-09 | **Ein Repo für Spec, Code und Doku (E-05):** Code liegt unter `/app`, Prozess-Dokumentation unter `/Docs`, die Specs in `PRODUKT-SPECS/`. Das `Makefile` im Wurzelverzeichnis ruft in `app/` hinein. CI-Jobs und Release laufen mit Pfadfiltern; reine `docs:`-Commits erzeugen keinen Release (FR-QG-14). `CODEOWNERS` trennt die Bereiche (US-DEV-08). | ⬜ |
 
 ## Beobachtungen aus Tombola (nicht übernommen oder zu beachten)
 
