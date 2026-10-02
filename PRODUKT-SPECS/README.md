@@ -21,7 +21,7 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 |---|---|
 | [00-Produktueberblick.md](00-Produktueberblick.md) | Vision, Zielgruppe, Akteure, Prinzipien, Domänenmodell, Glossar |
 | [01-Konten-und-Onboarding.md](01-Konten-und-Onboarding.md) | Epic ACC: Konto, Anmeldung, Profil, Import aus dem Prototyp |
-| [02-Bestand.md](02-Bestand.md) | Epic BES: Artenkatalog, Exemplare, Steckling, Archiv |
+| [02-Bestand.md](02-Bestand.md) | Epic BES: Artenkatalog, Pflegeprofil, Prüfung, Exemplare, Steckling, Archiv |
 | [03-Licht-und-Standorte.md](03-Licht-und-Standorte.md) | Epic LIC: Lichtzonen, Standorte, Verteilung, Position |
 | [04-Pflegephasen.md](04-Pflegephasen.md) | Epic PHA: Ruhe-/Wachstumsphase, Standortabgleich |
 | [05-Wachstum-und-Fotos.md](05-Wachstum-und-Fotos.md) | Epic WAC: Messung, Trend, Vergeilung, Fotos |
@@ -55,7 +55,7 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 | Epic | Stories | aus dem Prototyp erprobt | neu |
 |---|---|---|---|
 | ACC Konten | 5 | 0 | 5 |
-| BES Bestand | 8 | 8 | 0 |
+| BES Bestand | 10 | 8 | 2 |
 | LIC Licht und Standorte | 5 | 4 | 1 |
 | PHA Pflegephasen | 4 | 4 | 0 |
 | WAC Wachstum/Fotos | 6 | 6 | 0 |
@@ -71,7 +71,7 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 | ENT Entdecken | 8 | 0 | 8 |
 | QG Quality Gates | 8 | 0 | 8 |
 | DEV Entwicklungsprozess | 9 | 0 | 9 |
-| **Summe** | **125** | **50** | **75** |
+| **Summe** | **127** | **50** | **77** |
 
 ## Ablösung bestehender Dokumente
 

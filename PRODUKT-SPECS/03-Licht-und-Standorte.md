@@ -21,7 +21,7 @@ Diese vier gelten als Voreinstellung für neue Konten. Der Halter kann Namen und
 Als **Pflanzenhalter** will ich, dass jede Art anhand ihres biologischen Bedarfs einer Zone zugeordnet ist, damit sie wächst und nicht nur überlebt.
 
 Akzeptanzkriterien:
-- Das Artprofil trägt genau eine Ziel-Lichtzone (aus den Zonen 2–4 der Voreinstellung) und den Lux-Bedarf für maximales Wachstum als ganze Zahl.
+- Der Katalog trägt den Lux-Bedarf für maximales Wachstum als ganze Zahl und eine Standard-Stufe 2–4 der Voreinstellung. Die Zone des Kontos wird daraus abgeleitet (FR-BES-10) und kann im Pflegeprofil überschrieben werden (US-BES-09).
 - Die Zuordnung folgt dem Sättigungspunkt der Photosynthese.
 - Stecklingslicht ist **nie** Zielzone für Erwachsene.
 - Hochstufen nur, wenn der Bedarf mindestens 80 % der Lux-Decke der aktuellen Stufe erreicht. Liegt der Bedarf mehr als 30 % unter der Decke, bleibt die Art dort (mehr Licht bringt Stress).

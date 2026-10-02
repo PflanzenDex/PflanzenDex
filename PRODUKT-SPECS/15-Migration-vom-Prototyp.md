@@ -33,7 +33,7 @@ Akzeptanzkriterien:
 
 | Prototyp | Produkt | Anmerkung |
 |---|---|---|
-| Art-Notiz (`Arten/<Art>.md`) | Art im Katalog (DM-BES-01) | Status `kuratiert`; gleiche Art mehrerer Nutzer wird zu einem Katalogeintrag (E-02) |
+| Art-Notiz (`Arten/<Art>.md`) | Art im Katalog (DM-BES-01) | Status `kuratiert`; Der Import legt die Art nur an, wenn sie im Katalog fehlt; vorhandene Arten werden referenziert, abweichende Texte nicht zusammengeführt (E-02) |
 | Körper der Art-Notiz | Botanische Story, Pflege, Rückschnitt, Tipps, Erfolgskriterien | in Felder aufgeteilt |
 | Exemplar-Notiz | Exemplar (DM-BES-02) | `Art` (Wikilink) wird zum Verweis; Dateiname wird Name nach DM-BES-03 |
 | `Kennzeichen`, `Standort_Aktuell`, `Gefangen_Am`, `Status`, `Licht_Hardware` | Kennzeichen, Standort, Gefangen_Am, Status, Lichtzone-Override | |

@@ -57,6 +57,7 @@ Technikneutral. Jede Entität gehört einem Konto, außer dem Artenkatalog.
 | **Konto / Profil** | Person, Anzeigename, Einstellungen, Zeitzone | ACC |
 | **Art** (Katalog) | Wissen zu einer Pflanzenart, gemeinsam für alle Nutzer, mit Herkunft und Prüfstatus | BES, POK |
 | **Exemplar** | Ein Topf einer Art im Besitz eines Halters | BES |
+| **Pflegeprofil** | Kontoeigene Abweichungen von den Katalogwerten einer Art (Soll-Standorte, Zone, Ruhephase, Gießintervalle) | BES |
 | **Standort** | Benannter Platz des Halters (Schrank 2, Fensterbank Süd), einer Lichtzone zugeordnet | LIC |
 | **Lichtzone** | Lichtstufe mit Lux-Decke und Position; Voreinstellung vier Stufen, anpassbar | LIC |
 | **Messung** | Zeitpunkt, Wert, Qualität, Notiz, Foto an einem Exemplar | WAC |
@@ -71,7 +72,7 @@ Technikneutral. Jede Entität gehört einem Konto, außer dem Artenkatalog.
 
 **Wichtigste Modellentscheidungen gegenüber dem Prototyp:**
 
-- **Artenkatalog ist gemeinsam**, nicht je Nutzer. Der Prototyp pflegt 13 Art-Notizen allein; viele Nutzer sollen das nicht jeder neu erzeugen. Persönliche Abweichungen (Soll-Standorte, Lichtzone) liegen am Exemplar bzw. am Pflegeprofil des Nutzers (E-02).
+- **Artenkatalog ist gemeinsam**, nicht je Nutzer. Der Prototyp pflegt 13 Art-Notizen allein; viele Nutzer sollen das nicht jeder neu erzeugen. Persönliche Abweichungen (Soll-Standorte, Lichtzone, Ruhephase) liegen im **Pflegeprofil** des Nutzers (DM-BES-04) bzw. am Exemplar (E-02, entschieden).
 - **Standorte und Lichtzonen sind Entitäten**, keine Texte. Das beendet den exakten Text-Match (FR-PHA-03) und die hartkodierten Lampen-Strings (B-07).
 - **`Schwierigkeit` ist eine Zahl 1–3** mit Anzeigetext (löst B-05).
 - **Zeiten sind in der Zeitzone des Nutzers** (löst B-01).
@@ -97,4 +98,6 @@ Technikneutral. Jede Entität gehört einem Konto, außer dem Artenkatalog.
 | KI-Client / Verbindung | Der KI-Assistent des Halters und seine Freigabe mit Rechten `lesen`, `Entwürfe anlegen`, `schreiben` (Epic KI). |
 | Auftrag (KI) | Aus der App angestoßene Aufgabe, die der verbundene KI-Client abholt und als Entwurf beantwortet (US-KI-08). |
 | Entwurf | KI-Ergebnis, das erst nach Prüfung des Halters zählt (US-KI-09). |
+| Pflegeprofil | Kontoeigene Abweichungen von den Katalogwerten einer Art; privat (DM-BES-04). |
+| Vorschlag (Katalog) | Von einem Nutzer vorgeschlagene Art, nur für ihn sichtbar, bis ein Prüfer sie freigibt (US-BES-10). Nicht zu verwechseln mit einem Vorschlag in Entdecken. |
 | Gedeiht | Aktives Exemplar mit ≥ 2 Messungen, Gesamtrate > 0 und letzter Qualität `Gesund`; Grundlage für Vorschläge (Epic ENT). |

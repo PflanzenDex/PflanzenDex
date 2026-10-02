@@ -25,7 +25,7 @@ Akzeptanzkriterien:
 - Ein Katalogeintrag hat `Name` (Gattung + Epitheton), `Deutsch`, `Schwierigkeit` (1–3), `Lichtzone` (2–4), optional `Notiz`. Pflichtfelder sind validiert.
 - Namen werden normiert (`ficus BENJAMINA` → `Ficus benjamina`), Duplikate entfallen, ungültige Ratings lösen eine Warnung aus, Hybridzeichen und Sorten-Zusätze gehören nicht in den Katalog (US-POK-06).
 - Der Katalog wächst in Batches (Zielumfang 600+ Arten; Sammelgattungen mit 10–20 Arten, sonst 1–3 je Gattung); jeder Batch wird gegengelesen und ist ohne „fertigen" Katalog nutzbar (Prototyp 🟡: 215 Arten).
-- Nutzervorschläge (US-BES-01) landen in einer Prüfliste des Betreibers.
+- Nutzervorschläge (US-BES-01) landen in der Prüfliste des Betreibers (US-BES-10) und zählen erst nach der Freigabe.
 
 ### US-POK-03 · Taxonomie und Anreicherung automatisch bauen · ⬜ (Prototyp ✅)
 Als **System** will ich aus dem Katalog den Baum samt Wikipedia-Daten und Gattungs-Artenzahl erzeugen.
