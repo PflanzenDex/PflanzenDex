@@ -28,15 +28,16 @@ Technikneutral begründet; Konkretes steht in den Entscheidungen.
 |---|---|---|
 | Sprache | TypeScript durchgehend | Eine Sprache für Fachlogik, API und Web. Die Prototyp-Logik (`pokedex-core.js`, `finanz-core.js`) ist bereits JavaScript und lässt sich übernehmen. |
 | Struktur | Fachlogik als eigenes Paket **ohne I/O**, API, Web, später KI-Schicht; Monorepo | P-02: Ein Kern, viele Oberflächen. |
-| Datenhaltung | Relationale Datenbank (z. B. PostgreSQL), Mandantentrennung durch Konto-Kennung und Zeilenebene-Regeln | P-04. Die Domäne ist relational (Exemplar → Messung, Freundschaft, Tausch). |
+| Datenhaltung | PostgreSQL, selbst betrieben; Mandantentrennung durch Konto-Kennung und Zeilenebene-Regeln, die über eine **Sitzungsvariable je Transaktion** (Konto-Kennung) greifen, nicht über ein anbieterspezifisches Konzept. Zugriff nur über die API und die Operationen-Schicht, nie direkt aus dem Browser | P-04. Die Domäne ist relational (Exemplar → Messung, Freundschaft, Tausch). Läuft auf jedem PostgreSQL. |
 | Speicher-Abstraktion | Fachlogik greift über Repository-Schnittstellen zu | austauschbarer Speicher, testbar ohne Datenbank |
-| Web | Mobile-first-PWA | P-11: Foto, Messen und Gießen am Handy; native App nur bei nachgewiesenem Bedarf |
-| Anmeldung | etablierter Dienst, nicht selbst gebaut | NFR-10 |
+| Hosting | Selbstbetrieb auf einem Server eines EU-Anbieters mit Docker (Compose), kein Kubernetes. Anbieter offen: EU-Unternehmen bevorzugt, nicht verlangt | Betrieb einfach halten (R-01); keine Fremdabos für Datenbank und Anmeldung |
+| Web | Mobile-first-PWA; **Vorschlag React** (Vite, PWA) als Client der eigenen API, ohne serverseitiges Rendering (Anwendung hinter Anmeldung). Teamerfahrung: Angular und React, etwas Next. Angular wäre gleichwertig | P-11: Foto, Messen und Gießen am Handy; native App nur bei nachgewiesenem Bedarf |
+| Anmeldung | Selbst gehosteter, etablierter OAuth-/OIDC-Server (Kandidaten Keycloak, Zitadel; Wahl nach Spike TE-15), zugleich Autorisierungsserver für KI-Verbindungen (E-03, FR-KI-13); nicht selbst gebaut | NFR-10 |
 | Medien | Objektspeicher; Verkleinern und EXIF/GPS-Entfernung serverseitig | übernimmt `foto_import.py` |
 | KI | Keine eingebaute KI. Offene Schnittstelle für KI-Clients des Halters (Vorschlag: MCP-Server) als dünner Adapter über die validierenden Operationen; Anmeldung je Nutzer mit Rechten, serverseitig erzwungene Entwürfe, Rate-Limits, Protokoll | KI-R1, KI-R7, KI-R8 |
-| Jobs | Warteschlange für Erinnerungen, Katalog-Aufbau, Foto-Verarbeitung | |
+| Jobs | Warteschlange auf PostgreSQL (kein zusätzlicher Dienst) für Erinnerungen, Katalog-Aufbau, Foto-Verarbeitung | einfacher Betrieb (R-01) |
 | Push | Web-Push; Telegram optional | ersetzt den geplanten Bot |
-| Pokédex-Aufbau | Python-Skript des Prototyps weiter nutzen (73 Tests) oder nach TypeScript portieren | E-01 |
+| Pokédex-Aufbau | Python-Skript des Prototyps (73 Tests) bleibt als **isolierter Job** mit dem Vertrag AB-4 (schreibt nur den Baum-Speicher). Die Logik `pokedex-core.js` (66 Tests) geht nach `core`. Port nach TypeScript später, abgesichert durch Vergleich mit der Ausgabe des Python-Skripts (Soll-Datei) | E-01 |
 | Tests | Unit-Tests der Fachlogik, End-to-End-Tests für Kernabläufe; Akzeptanzkriterien als Tests | P-06 |
 
 Bewusst nicht gewählt (Vorschläge der früheren Skizze, weiterhin Alternativen): PocketBase (schnellster Prototyp, skaliert schlechter), Local-first-Sync (nur falls Offline-Betrieb hartes Muss wird).
@@ -47,9 +48,9 @@ Die verbindlichen Qualitätsschranken zu diesem Entwurf (Hooks, CI, Strukturrege
 
 | ID | Frage | Vorschlag / Stand | Blockiert |
 |---|---|---|---|
-| E-01 | **Technik und Hosting:** Stack, Datenbank, Hosting-Anbieter (EU), Wiederverwendung der Prototyp-Skripte (Pokédex, Foto) | siehe Technik-Entwurf; Entscheidung vor R0 | R0 |
+| E-01 | **Technik und Hosting:** Stack, Datenbank, Hosting-Anbieter (EU), Wiederverwendung der Prototyp-Skripte (Pokédex, Foto) | **Teilweise entschieden (2026-10-02):** TypeScript, Monorepo mit I/O-freiem `core`, PostgreSQL mit Sitzungsvariablen-Regeln, Warteschlange auf PostgreSQL, Selbstbetrieb (Docker auf EU-Server), Pokédex-Python bleibt isolierter Job. **Vorschlag:** React (Vite, PWA). **Offen:** Hosting-Anbieter | R0 |
 | E-02 | **Artenkatalog:** gemeinsam (Vorschlag) oder je Nutzer? Wer prüft Profile? Wie kommen persönliche Abweichungen (Soll-Standorte, Zone) ans Exemplar bzw. Pflegeprofil? | gemeinsamer Katalog mit Prüfstatus; Abweichungen am Pflegeprofil des Nutzers | R0 |
-| E-03 | **Anmeldeverfahren und Dienst** (Passwort, Magic Link, Drittanbieter) | Etablierter Dienst; Wahl nach Kosten und Datenschutz **und** Eignung als OAuth-Autorisierungsserver für den KI-Zugang (E-04, FR-KI-13): Client-ID-Metadata-Dokumente (optional Dynamic Client Registration), PKCE, Resource-Indicators, eigene Scopes mit Zustimmungsseite, Widerruf, Betrieb in der EU | R0 |
+| E-03 | **Anmeldeverfahren und Dienst** (Passwort, Magic Link, Drittanbieter) | Etablierter, selbst gehosteter Dienst (E-01); Wahl nach Kosten, Datenschutz und Eignung als OAuth-Autorisierungsserver für den KI-Zugang (E-04, FR-KI-13): Dynamic Client Registration oder Client-ID-Metadata-Dokumente (CIMD wünschenswert; Claude registriert sich per DCR), PKCE, Resource-Indicators, eigene Scopes mit Zustimmungsseite, Widerruf. Kandidaten Keycloak, Zitadel; Entscheidung nach Spike (TE-15) | R0 |
 | E-04 | **KI-Zugang:** Protokoll der Schnittstelle, Anmeldeverfahren der Verbindung, Rechte-Modell, Rate-Limits. Kein Anbieter-Vertrag und keine KI-Auftragsverarbeitung beim Betreiber (Weg A + B, siehe `12`). | **Im Grundsatz entschieden (2026-10-02):** Rechte als Scopes `lesen`/`Entwürfe`/`schreiben`, Voreinstellung `Entwürfe`, Klassen je Operation (FR-KI-12); Autorisierungsserver ist der Anmeldedienst aus E-03; keine Freundesdaten über Verbindungen. **Vorschlag, nicht widersprochen:** MCP über Streamable HTTP als Adapter über den Operationen, keine persönlichen Zugriffstoken. **Offen:** Test an realen Clients (Claude, ChatGPT; Gemini ungeprüft) vor R4 | R4 (Auswahlkriterien für E-03 schon vor R0) |
 | E-05 | **Code-Ablage:** eigenes Repo für die App; dieses Repo bleibt Spec-Ablage | eigenes Repo | R0 |
 | E-06 | **PWA oder native App** | PWA zuerst | R1 |
@@ -73,6 +74,7 @@ Automatische Bewässerung, Foto-basierte Höhen-/Feuchteschätzung, Bestenlisten
 | R-02 | Die KI schreibt Werte außerhalb des Schemas. | KI-R1: nur validierende Operationen. |
 | R-07 | Prompt-Injection: Texte in Daten (Notizen, Freundesdaten) steuern den Client eines Halters. | KI-R9, FR-KI-07, Rechte-Whitelist FR-KI-10, Entwurfspflicht FR-KI-08. |
 | R-08 | Qualität schwankt je Client und Modell; wir kontrollieren weder Prompt noch Modell. | Vertragstests statt Prompt-Tests (FR-KI-03), Entwürfe mit Prüfung (KI-R3), Quellenpflicht. |
+| R-09 | Selbstbetrieb: Updates, Backups, Sicherheit und Monitoring liegen beim Team. | Ein Host, Docker Compose, automatische Sicherheitsupdates; Backup und Wiederherstellungstest vor R1 (NFR-15, US-DEV-09); Runbooks; Spike und Betriebskosten früh messen (NFR-16). |
 | R-03 | Zwei Wahrheiten (Vault und App) laufen auseinander. | Nach dem Wechsel gilt nur die App; Vault bleibt unverändert (US-MIG-03). |
 | R-04 | Fachlogik wird in Oberfläche und Erinnerungsjob zweimal geschrieben (im Prototyp B-02). | P-02; Test, dass „Heute", Erinnerung und KI dieselbe `status`-Funktion nutzen. |
 | R-05 | Datenschutz: Standort, Fotos und Wohnumfeld sind sensibel. | FR-SOZ-01, EXIF/GPS entfernen, Standard privat. |
