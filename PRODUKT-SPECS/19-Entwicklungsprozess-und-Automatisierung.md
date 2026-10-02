@@ -1,6 +1,6 @@
-# 18 – Epic DEV: Entwicklungsprozess und Automatisierung
+# 19 – Epic DEV: Entwicklungsprozess und Automatisierung
 
-Stand: 2026-10-02 · **Entwurf.** Ergänzt `17-Architektur-und-Quality-Gates.md`. Dort steht, **was** geprüft wird. Hier steht, **wie** es ausgelöst, betrieben und in einen Arbeitsablauf gebracht wird: Task-Runner, Hooks, Routinen, Skills, Prozess, Release, Migrationen, paralleles Arbeiten, Betrieb.
+Stand: 2026-10-02 · **Entwurf.** Ergänzt `18-Architektur-und-Quality-Gates.md`. Dort steht, **was** geprüft wird. Hier steht, **wie** es ausgelöst, betrieben und in einen Arbeitsablauf gebracht wird: Task-Runner, Hooks, Routinen, Skills, Prozess, Release, Migrationen, paralleles Arbeiten, Betrieb.
 
 Vorbild ist das Regelwerk des Projekts AdventskalenderTombola (`~/root/Code-Root/AdventskalenderTombola/`: `Makefile`, `.husky/`, `.github/workflows/`, `.agents/`, `.claude/`, `Docs/dods/`, `Docs/documentation/strategy/process/`). Abschnitt „Beobachtungen aus Tombola" nennt, was **nicht** übernommen wird.
 

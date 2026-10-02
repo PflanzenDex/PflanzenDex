@@ -15,7 +15,7 @@ Akzeptanzkriterien:
 ### US-WUN-02 · Vor leerer Liste gewarnt werden · ⬜ (Prototyp ✅)
 Akzeptanzkriterien:
 - Je Zone 2–4 sollen mindestens **2** offene Kandidaten vorliegen (Puffer, einstellbar).
-- Unterschreitet eine Zone den Puffer, erscheint eine Warnung „Nachschub nötig: <Zone> (N offene Kandidaten)" mit der Aktion „Vorschläge holen" (US-WUN-04).
+- Unterschreitet eine Zone den Puffer, erscheint eine Warnung „Nachschub nötig: <Zone> (N offene Kandidaten)" mit den Aktionen „Entdecken für <Zone>" (US-ENT-07) und „Vorschläge holen" (US-WUN-04).
 - Die Warnung kann als Erinnerung kommen (US-MON-01).
 
 ### US-WUN-03 · Kauf festhalten · ⬜ (Prototyp ✅)
@@ -45,7 +45,9 @@ Akzeptanzkriterien:
 
 ### DM-WUN-01 Wunsch
 
-`Name`, `Deutsch`, `Art?` (Verweis in den Katalog), `Ziel_Lichtzone`, `Schwierigkeit` (Zahl 1–3), `Begründung`, `Bild`, `Bildquelle`, `Lizenz`, `Typ` (`Pflanze` | `Equipment`), `Status` (`Wunschliste` | `Gekauft` | `Verworfen`), `Exemplar?` (Verweis nach Kauf).
+`Name`, `Deutsch`, `Art?` (Verweis in den Katalog), `Ziel_Lichtzone`, `Schwierigkeit` (Zahl 1–3), `Begründung`, `Bild`, `Bildquelle`, `Lizenz`, `Typ` (`Pflanze` | `Equipment`), `Status` (`Wunschliste` | `Gekauft` | `Verworfen`), `Exemplar?` (Verweis nach Kauf), `Quelle` und `Entschieden_Am` (DM-ENT-02).
+
+Neue Wünsche entstehen auch per Ja/Nein in Entdecken (`17-Entdecken.md`); `Verworfen` ist dort eine eigene Entscheidung und Lernsignal (US-ENT-05).
 
 ## Anforderungen
 

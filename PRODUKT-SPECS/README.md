@@ -36,8 +36,9 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 | [14-Querschnitt.md](14-Querschnitt.md) | Epic QS: Datenschutz, Sicherheit, Mobile, Qualität |
 | [15-Migration-vom-Prototyp.md](15-Migration-vom-Prototyp.md) | Epic MIG: Daten aus dem Vault übernehmen |
 | [16-Releases-und-Entscheidungen.md](16-Releases-und-Entscheidungen.md) | Release-Schnitt, Technik-Entwurf, offene Entscheidungen, Nicht-Ziele |
-| [18-Entwicklungsprozess-und-Automatisierung.md](18-Entwicklungsprozess-und-Automatisierung.md) | Epic DEV: Task-Runner, Hooks, Routinen, Skills, Prozess, Release, Migrationen, Betrieb |
-| [17-Architektur-und-Quality-Gates.md](17-Architektur-und-Quality-Gates.md) | Epic QG: Hooks, CI, Strukturregeln, Architekturgrenzen, Datenschutz-Gates, DoD |
+| [17-Entdecken.md](17-Entdecken.md) | Epic ENT: Swipe-Vorschläge aus dem Katalog, passend zu Licht und Gedeihendem, füllen die Wunschliste |
+| [18-Architektur-und-Quality-Gates.md](18-Architektur-und-Quality-Gates.md) | Epic QG: Hooks, CI, Strukturregeln, Architekturgrenzen, Komplexität, Datenschutz-Gates, DoD |
+| [19-Entwicklungsprozess-und-Automatisierung.md](19-Entwicklungsprozess-und-Automatisierung.md) | Epic DEV: Task-Runner, Hooks, Routinen, Skills, Prozess, Release, Migrationen, Betrieb |
 
 ## Konventionen
 
@@ -67,9 +68,10 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 | KI Assistent | 6 | 3 | 3 |
 | QS Querschnitt | 7 | 6 | 1 |
 | MIG Migration | 3 | 0 | 3 |
+| ENT Entdecken | 8 | 0 | 8 |
 | QG Quality Gates | 8 | 0 | 8 |
 | DEV Entwicklungsprozess | 9 | 0 | 9 |
-| **Summe** | **113** | **50** | **63** |
+| **Summe** | **121** | **50** | **71** |
 
 ## Ablösung bestehender Dokumente
 

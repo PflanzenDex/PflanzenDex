@@ -1,8 +1,8 @@
-# 17 – Architektur und Quality Gates
+# 18 – Architektur und Quality Gates
 
 Stand: 2026-10-02 · **Entwurf.** Erweitert den Technik-Entwurf aus `16-Releases-und-Entscheidungen.md` um verbindliche **Qualitätsschranken** (Quality Gates). Vorbild ist das Regelwerk des Projekts AdventskalenderTombola (`~/root/Code-Root/AdventskalenderTombola/`): Git-Hooks, CI-Pipeline, Strukturprüfer, Architekturgrenzen, Coverage-Schwellen, Prinzipienregister und Definition-of-Done-Listen.
 
-Grundsatz: **Eine Regel, die nur in einem Dokument steht, ist ein Wunsch. Eine Regel, die ein Skript prüft und die den Merge blockiert, ist ein Gate.** Gates entstehen schrittweise (US-QG-06), nicht alle vor dem ersten Code. **Wie** Gates ausgelöst und betrieben werden (Task-Runner, Hooks, Routinen, Skills, Prozess, Release), steht in `18-Entwicklungsprozess-und-Automatisierung.md`.
+Grundsatz: **Eine Regel, die nur in einem Dokument steht, ist ein Wunsch. Eine Regel, die ein Skript prüft und die den Merge blockiert, ist ein Gate.** Gates entstehen schrittweise (US-QG-06), nicht alle vor dem ersten Code. **Wie** Gates ausgelöst und betrieben werden (Task-Runner, Hooks, Routinen, Skills, Prozess, Release), steht in `19-Entwicklungsprozess-und-Automatisierung.md`.
 
 ## Was übernommen wird, was nicht
 
