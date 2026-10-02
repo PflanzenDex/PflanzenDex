@@ -39,6 +39,8 @@ Technikneutral begründet; Konkretes steht in den Entscheidungen.
 
 Bewusst nicht gewählt (Vorschläge der früheren Skizze, weiterhin Alternativen): PocketBase (schnellster Prototyp, skaliert schlechter), Local-first-Sync (nur falls Offline-Betrieb hartes Muss wird).
 
+Die verbindlichen Qualitätsschranken zu diesem Entwurf (Hooks, CI, Strukturregeln, Architekturgrenzen, Datenschutz-Gates, Definition of Done) stehen in `17-Architektur-und-Quality-Gates.md`. Weitere Entscheidungen E-13 bis E-18 dort.
+
 ## Offene Entscheidungen
 
 | ID | Frage | Vorschlag / Stand | Blockiert |

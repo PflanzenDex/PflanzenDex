@@ -35,7 +35,9 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 | [13-Business-Case.md](13-Business-Case.md) | Stufen: für uns, trägt sich selbst, Gewinn |
 | [14-Querschnitt.md](14-Querschnitt.md) | Epic QS: Datenschutz, Sicherheit, Mobile, Qualität |
 | [15-Migration-vom-Prototyp.md](15-Migration-vom-Prototyp.md) | Epic MIG: Daten aus dem Vault übernehmen |
-| [16-Releases-und-Entscheidungen.md](16-Releases-und-Entscheidungen.md) | Release-Schnitt, offene Entscheidungen, Nicht-Ziele |
+| [16-Releases-und-Entscheidungen.md](16-Releases-und-Entscheidungen.md) | Release-Schnitt, Technik-Entwurf, offene Entscheidungen, Nicht-Ziele |
+| [18-Entwicklungsprozess-und-Automatisierung.md](18-Entwicklungsprozess-und-Automatisierung.md) | Epic DEV: Task-Runner, Hooks, Routinen, Skills, Prozess, Release, Migrationen, Betrieb |
+| [17-Architektur-und-Quality-Gates.md](17-Architektur-und-Quality-Gates.md) | Epic QG: Hooks, CI, Strukturregeln, Architekturgrenzen, Datenschutz-Gates, DoD |
 
 ## Konventionen
 
@@ -65,7 +67,9 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 | KI Assistent | 6 | 3 | 3 |
 | QS Querschnitt | 7 | 6 | 1 |
 | MIG Migration | 3 | 0 | 3 |
-| **Summe** | **96** | **50** | **46** |
+| QG Quality Gates | 8 | 0 | 8 |
+| DEV Entwicklungsprozess | 9 | 0 | 9 |
+| **Summe** | **113** | **50** | **63** |
 
 ## Ablösung bestehender Dokumente
 
