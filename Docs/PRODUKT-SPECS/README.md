@@ -4,7 +4,7 @@ Stand: 2026-10-02 · **Entwurf.** Nichts davon ist umgesetzt. Diese Spec beschre
 
 ## Wie sich diese Spec zum Prototyp verhält
 
-| | Prototyp (`PFLANZENSYSTEM-SPECS/`) | Produkt (diese Spec) |
+| | Prototyp (`Docs/PFLANZENSYSTEM-SPECS/`) | Produkt (diese Spec) |
 |---|---|---|
 | Nutzer | eine Person | viele Personen mit Konten |
 | Speicher | Markdown + Frontmatter im Vault | serverseitige Datenhaltung, technikneutral beschrieben |
@@ -75,7 +75,7 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 
 ## Ablösung bestehender Dokumente
 
-Diese Dokumente in `PFLANZENSYSTEM-SPECS/` sind **fachlich gültig, aber technisch überholt**, soweit sie den Vault als Wahrheit annehmen. Maßgeblich ist ab jetzt diese Spec:
+Diese Dokumente in `Docs/PFLANZENSYSTEM-SPECS/` sind **fachlich gültig, aber technisch überholt**, soweit sie den Vault als Wahrheit annehmen. Maßgeblich ist ab jetzt diese Spec:
 
 | Altes Dokument | Wird ersetzt durch | Was überholt ist |
 |---|---|---|

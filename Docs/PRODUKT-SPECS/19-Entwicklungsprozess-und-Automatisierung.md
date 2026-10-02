@@ -57,7 +57,7 @@ Akzeptanzkriterien (Git-Hooks, verwaltet über ein Werkzeug wie Husky, installie
 Akzeptanzkriterien (Agent-Hooks, Claude Code `settings.json` im Repo):
 - **`Stop`-Hook (nur Meldung, blockiert nie):** Wenn in der Sitzung Code geändert wurde und `make ci` oder `make gates` danach nicht lief, erscheint ein Hinweis an den Menschen (Muster: der `review_analysis.py`-Hook in Tombola, der nur eine Systemmeldung zeigt und das Modell nicht umlenkt).
 - **`PreToolUse`-Wächter:** Änderungen an Gate-Konfigurationen (`.husky/`, Workflows, Coverage-/Komplexitätsschwellen, Basislisten) verlangen eine ausdrückliche Bestätigung des Menschen. Das setzt `US-QG-07` technisch durch („der Agent senkt keine Schwelle, um einen Fehlschlag zu umgehen").
-- **`PostToolUse`-Hook:** formatiert geänderte Dateien (Prettier) und startet bei Änderungen in `PRODUKT-SPECS/` die Spec-Prüfung (`spec-check`) als Meldung.
+- **`PostToolUse`-Hook:** formatiert geänderte Dateien (Prettier) und startet bei Änderungen in `Docs/PRODUKT-SPECS/` die Spec-Prüfung (`spec-check`) als Meldung.
 - Hooks haben eigene Tests (Beispiel Tombola: `review_analysis_test.py`) und eine Zeitgrenze; ein hängender Hook darf die Sitzung nicht blockieren.
 - Die Berechtigungsliste (`permissions.allow`) enthält nur lesende und gate-nahe Befehle (`make ci`, `git status`, …), keine Schreib- oder Deploy-Befehle.
 
@@ -184,7 +184,7 @@ Akzeptanzkriterien:
 | FR-DEV-06 | Release-Notizen und nutzerseitiger Changelog sind zweisprachig vorbereitet (Deutsch zuerst); Texte liegen in Übersetzungsdateien, nicht im Code (NFR-14). | ⬜ |
 | FR-DEV-07 | Jeder Release erhält ein **Datenstand-Etikett** für Katalog und Taxonomie-Baum (Datum, Anzahl Arten, Fehlerzahl). | ⬜ |
 | FR-DEV-08 | Geplante Agenten und Routinen laufen mit minimalen Rechten (nur Lesen, Bericht schreiben); Deploy- und Geheimnisrechte hat nur der Release-Workflow. | ⬜ |
-| FR-DEV-09 | **Ein Repo für Spec, Code und Doku (E-05):** Code liegt unter `/app`, Prozess-Dokumentation unter `/Docs`, die Specs in `PRODUKT-SPECS/`. Das `Makefile` im Wurzelverzeichnis ruft in `app/` hinein. CI-Jobs und Release laufen mit Pfadfiltern; reine `docs:`-Commits erzeugen keinen Release (FR-QG-14). `CODEOWNERS` trennt die Bereiche (US-DEV-08). | ⬜ |
+| FR-DEV-09 | **Ein Repo für Spec, Code und Doku (E-05):** Code liegt unter `/app`, alle Dokumentation unter `/Docs` (Specs in `Docs/PRODUKT-SPECS/`, Prozess-Dokumentation daneben). Das `Makefile` im Wurzelverzeichnis ruft in `app/` hinein. CI-Jobs und Release laufen mit Pfadfiltern; reine `docs:`-Commits erzeugen keinen Release (FR-QG-14). `CODEOWNERS` trennt die Bereiche (US-DEV-08). | ⬜ |
 
 ## Beobachtungen aus Tombola (nicht übernommen oder zu beachten)
 

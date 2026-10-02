@@ -90,7 +90,7 @@ Akzeptanzkriterien:
 Als **Entwickler (oder KI)** will ich von jeder Story zu ihren Tests und zurück kommen (P-06).
 
 Akzeptanzkriterien:
-- Jede Story in `PRODUKT-SPECS/` mit Status ✅ hat mindestens einen Test, dessen Name die Story-ID trägt (z. B. `US-PHA-01`).
+- Jede Story in `Docs/PRODUKT-SPECS/` mit Status ✅ hat mindestens einen Test, dessen Name die Story-ID trägt (z. B. `US-PHA-01`).
 - Ein Test, der eine unbekannte oder ⬜-Story-ID nennt, wird gemeldet (Hinweis, kein Fehler).
 - Das Skript prüft zusätzlich die Konsistenz der Spec selbst: IDs eindeutig, Status-Übersicht in `README.md` stimmt mit den Dateien überein, Verweise auf `US-/FR-/DM-/E-`IDs zeigen auf vorhandene Einträge (Verweise auf IDs des Prototyp-Ordners sind als solche markiert und ausgenommen).
 - Eine Änderung an Fachlogik ohne grünen Story-Test gilt nicht als fertig (DoD, FR-QG-10).
@@ -140,7 +140,7 @@ Akzeptanzkriterien:
 |---|---|---|
 | FR-QG-01 | Lokal und in CI laufen **dieselben** Befehle (`make`/`npm`-Ziele). Es gibt keine CI-only-Logik außer Zusatzdiensten (Datenbank, Browser). | ⬜ |
 | FR-QG-02 | Der Branch-Schutz für `main` verlangt einen einzigen Sammelstatus; nur Merges mit grünem Status und ohne direkte Pushes. | ⬜ |
-| FR-QG-03 | **Doku und Spec sind Gate-Gegenstand:** Skript validiert `PRODUKT-SPECS/` (IDs eindeutig, Zähler in `README.md`, Verweise auflösbar) und ein Link-Prüfer die Markdown-Links (QG-U2). | ⬜ |
+| FR-QG-03 | **Doku und Spec sind Gate-Gegenstand:** Skript validiert `Docs/PRODUKT-SPECS/` (IDs eindeutig, Zähler in `README.md`, Verweise auflösbar) und ein Link-Prüfer die Markdown-Links (QG-U2). | ⬜ |
 | FR-QG-04 | **Strukturregeln (Vorschlag, anzupassen an E-01):** (a) Fachlogik als eigenes Paket `core` mit Unterordnern je Epic; (b) Tests liegen neben dem Code als `<name>.test.ts`; (c) jedes Verzeichnis mit Code hat einen `index.ts` als einzige öffentliche Schnittstelle; (d) keine losen Dateien in Code-Gruppen (Komponenten, Hooks, Services); (e) Dateinamen nach Muster (PascalCase Komponenten, `useX` Hooks, `xService`). Prüfbar durch ein Skript mit Tests. | ⬜ |
 | FR-QG-05 | **Architekturgrenzen (maschinell):** (AB-1) `core` importiert nichts aus API, Web, Datenbank, Dateisystem oder Netz (NFR-ARC-01 der früheren Skizze); (AB-2) Web importiert nur die öffentliche Schnittstelle (`index.ts`) von `core`, nie interne Dateien; (AB-3) die KI-Schicht ruft nur validierende Operationen der Fachlogik, nie Repositories oder die Datenbank direkt (KI-R1); (AB-4) der Pokédex-Aufbau-Job schreibt nur in seinen Baum-Speicher; (AB-5) soziale Module lesen fremde Konten nur über die Freigabe-Schicht. Altlasten nur über die Ausnahmeliste (US-QG-03). | ⬜ |
 | FR-QG-06 | Das Rückverfolgbarkeits-Skript (US-QG-04) hat eigene Tests und läuft in CI; Format des Test-Namens: `US-XXX-nn` im Titel. | ⬜ |
