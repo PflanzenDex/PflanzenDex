@@ -21,8 +21,8 @@ Befunde aus der Analyse (2026-10-02). Jeder Befund nennt Beleg und Wirkung. „D
 | B-13 | Daten | `Hippeastrum` (Amaryllis) und `Parodia sp.` haben kein Artepitheton; **2 von 13 Arten zählen nicht als gefangen** (Pokédex warnt). | Art-Notizen | Bewusst so; Handlung: Epitheton ergänzen, sobald bekannt (`Parodia sp.`: Verdacht *P. leninghausii*, im Katalog steht nur *Parodia magnifica*). |
 | B-14 | Lücke | Pflege-Erinnerungen und Gießprotokoll fehlen (Epic MON). | keine Treffer für `pflanzen_status`/`Giesslog` | Pull-System. |
 | B-15 | Hinweis | Zwei archivierte Notizen (`Basilikum`, `Efeutute`) sind im alten Einzeldatei-Format (Art + Exemplar vermischt). | `04-Archive/Pflanzen/` | Unkritisch (außerhalb der Queries). |
-| B-17 | Lücke | Keine soziale Schicht: kein Freundeskreis, kein Feed, kein Tauschen. Austauschtechnik nicht entschieden (E-SOZ-01). | Epic SOZ (`11-Soziales.md`) | Stecklinge werden nur von Hand archiviert, ohne Herkunft und Angebot. |
 | B-16 | Hinweis | Das Dashboard-Frontmatter fehlen `tags` (Pokédex-Notiz hat `pflanzen`, `dashboard`). | Dashboard-Kopf | Auffindbarkeit nur über den Pfad. |
+| B-17 | Lücke | Keine soziale Schicht: kein Freundeskreis, kein Feed, kein Tauschen. Austauschtechnik nicht entschieden (E-SOZ-01). | Epic SOZ (`11-Soziales.md`) | Stecklinge werden nur von Hand archiviert, ohne Herkunft und Angebot. |
 
 ## Backlog (priorisiert)
 
