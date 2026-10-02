@@ -27,7 +27,7 @@ Start-Nutzer: die drei Personen aus dem Prototyp-Kreis.
 | **Pflanzenhalter** | Nutzer mit Konto. Pflegt Sammlung, misst, wünscht, tauscht. |
 | **Freund** | Anderer Pflanzenhalter mit bestätigter Freundschaft. Sieht nur Freigegebenes. |
 | **Betreiber** | Wer die App betreibt: Hosting, Katalogpflege, Partnerprogramme, Moderation. |
-| **KI-Assistent** | Nimmt Freitext und Fotos entgegen, schlägt vor, recherchiert. Ruft ausschließlich validierende Operationen auf. |
+| **KI-Client** | Der KI-Assistent des Halters (beliebiger Anbieter), verbunden über die offene Schnittstelle. Nimmt Freitext und Fotos entgegen, schlägt vor, recherchiert. Ruft ausschließlich freigegebene, validierende Operationen auf; Ergebnisse sind Entwürfe. Die App betreibt selbst keine KI. |
 | **System** | Hintergrundjobs: Erinnerungen, Katalog-Anreicherung, Foto-Verarbeitung, Sensor-Auswertung. |
 
 ## Produktprinzipien
@@ -37,7 +37,7 @@ Aus den Prinzipien des Prototyps und der Zielarchitektur-Skizze. Sie gelten für
 | ID | Prinzip |
 |---|---|
 | P-01 | **Die KI urteilt, der Code rechnet und schreibt.** Phasen, Raten, Zählungen, Namensregel, Validierung sind deterministische, getestete Logik. Das Modell wird nie als Rechner benutzt. |
-| P-02 | **Ein Kern, viele Oberflächen.** Web, KI-Assistent, Benachrichtigungen und spätere Clients nutzen dieselbe Fachlogik. Keine Kopie der Phasenlogik (im Prototyp Befund B-02). |
+| P-02 | **Ein Kern, viele Oberflächen.** Web, KI-Client, Benachrichtigungen und spätere Clients nutzen dieselbe Fachlogik. Keine Kopie der Phasenlogik (im Prototyp Befund B-02). |
 | P-03 | **Schreiben nur über validierende Operationen.** Auch die KI darf nichts außerhalb des Schemas schreiben. Ungültiges wird abgelehnt, nicht korrigiert. |
 | P-04 | **Mandantenfähig von Anfang an.** Jede nutzerbezogene Zeile gehört einem Konto; Nutzer A sieht nie Daten von Nutzer B ohne Freigabe. |
 | P-05 | **Privat als Standard.** Nichts verlässt das Konto ohne ausdrückliche Freigabe. |
@@ -94,4 +94,7 @@ Technikneutral. Jede Entität gehört einem Konto, außer dem Artenkatalog.
 | Herkunft | Vermerk, von wem und wann ein Exemplar kam. |
 | Bedarf | Aus eigenen Daten abgeleitete Lücke (Lampe fehlt, Vorrat leer), Grundlage für Empfehlungen. |
 | Vorschlag / Stapel | Art aus dem Katalog, die Entdecken als Karte anbietet (Ja/Nein/Später); ein Stapel ist eine begrenzte Folge davon (Epic ENT). Nicht zu verwechseln mit einer Equipment-Empfehlung. |
+| KI-Client / Verbindung | Der KI-Assistent des Halters und seine Freigabe mit Rechten `lesen`, `Entwürfe anlegen`, `schreiben` (Epic KI). |
+| Auftrag (KI) | Aus der App angestoßene Aufgabe, die der verbundene KI-Client abholt und als Entwurf beantwortet (US-KI-08). |
+| Entwurf | KI-Ergebnis, das erst nach Prüfung des Halters zählt (US-KI-09). |
 | Gedeiht | Aktives Exemplar mit ≥ 2 Messungen, Gesamtrate > 0 und letzter Qualität `Gesund`; Grundlage für Vorschläge (Epic ENT). |

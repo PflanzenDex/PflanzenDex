@@ -11,7 +11,7 @@ Als **Pflanzenhalter** will ich für ein neues Exemplar die passende Art finden,
 
 Akzeptanzkriterien:
 - Gegeben die Suche nach lateinischem oder deutschem Namen, wenn die Art im Katalog steht, dann sehe ich ihr Profil (Felder aus DM-BES-01) und wähle sie.
-- Gegeben eine Art, die nicht im Katalog steht, wenn ich „Art vorschlagen" wähle, dann erzeugt der KI-Assistent (US-KI-03) einen Profilvorschlag mit allen Pflichtfeldern, den ich prüfe und bestätige. Er erscheint im Katalog mit Status `KI-erstellt, ungeprüft`.
+- Gegeben eine Art, die nicht im Katalog steht, wenn ich „Art vorschlagen" wähle, dann kann ich ein Profil im Formular mit allen Pflichtfeldern anlegen (der Weg ohne KI, FR-KI-05) oder die Recherche an meinen KI-Client übergeben (Auftrag, US-KI-08); dessen Ergebnis kommt als Entwurf (US-KI-03, US-KI-09), den ich prüfe und bestätige. Das Profil erscheint im Katalog mit Status `KI-erstellt, ungeprüft` bzw. `ungeprüft`, solange kein Prüfer es bestätigt hat (FR-BES-06).
 - Eine Art ohne Epitheton (nur Gattung) wird als Eintrag erlaubt, zählt aber nicht als Pokédex-Fang (siehe US-POK-06).
 - Dubletten (gleicher normierter Name) werden erkannt und auf die vorhandene Art verwiesen.
 

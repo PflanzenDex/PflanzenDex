@@ -103,7 +103,7 @@ Akzeptanzkriterien:
   | `date-and-timezone` | lokales Datum und Zeitzone (NFR-08, Ursache von B-01) |
   | `photo-pipeline` | Foto-Verarbeitung und EXIF-Test (US-WAC-06) |
   | `catalog-batch` | Katalog-Batch (20–40 Arten) anlegen, Aufbau laufen lassen, Warnungen prüfen (US-POK-02) |
-  | `prompt-regression` | Prompt ändern und Regression anhand fester Beispiele prüfen (FR-KI-03) |
+  | `ki-tool-contract` | Operation für die KI-Schnittstelle freigeben oder ändern: Beschreibung, Schema, Fehlercodes, Vertragstest, Whitelist (FR-KI-03, FR-KI-10) |
   | `release-checklist` | Release vorbereiten und prüfen (US-DEV-06) |
   | `story-test-protocol` | manuelles Testprotokoll für Abläufe, die Tests nicht abdecken (Muster `ticket-test-protocol` aus Tombola) |
   | `recap-and-learnings` | nach einer Aufgabe Lehren extrahieren und ins Prinzipienregister oder Skills überführen |
@@ -168,7 +168,7 @@ Als **Betreiber** will ich wissen, wenn etwas nicht stimmt, bevor Nutzer es meld
 Akzeptanzkriterien:
 - Gesundheits-Endpunkt (API, Datenbank, Job-Warteschlange, Objektspeicher) mit Version; wird vom Deploy und vom Monitoring abgefragt.
 - Fehler und fehlgeschlagene Jobs erzeugen eine **Betreibermeldung** (NFR-18) ohne Nutzerdaten im Klartext.
-- Runbooks unter `docs/betrieb/` für: Backup einspielen, Rückfall, Migration schlägt fehl, Foto-Speicher voll, KI-Anbieter ausgefallen, Erinnerungen laufen nicht, DSGVO-Löschung, Sicherheitsvorfall.
+- Runbooks unter `docs/betrieb/` für: Backup einspielen, Rückfall, Migration schlägt fehl, Foto-Speicher voll, KI-Schnittstelle gestört oder missbraucht (Verbindung sperren), Erinnerungen laufen nicht, DSGVO-Löschung, Sicherheitsvorfall.
 - Ein Ausfall einer externen Quelle oder der KI beeinträchtigt keine Kernfunktion (NFR-17, FR-KI-05).
 - Betriebskennzahlen: Verfügbarkeit, Fehlerrate, Laufzeit der Jobs, Kosten je Konto (NFR-16).
 
@@ -208,5 +208,5 @@ Aus dem Lesen des Tombola-Repos. Sie zeigen, was schon ein gutes Regelwerk umgeh
 | Vor R1 | Komplexitäts-Gates (QG-K) mit Basisliste; `pre-commit`; `post-merge`-Hinweise; Release-Kette (semantic-release, Smoke-Test, Rückfall); Migrations-Test mit Prototyp-Testdaten; Betriebs-Basis (Gesundheits-Endpunkt, Backup + Wiederherstellungstest) |
 | Vor R2 | Skills `tenant-isolation-test`, `privacy-whitelist`; Routinen: nächtliche Suite, Sicherheits-Audit; Feature-Flags für Soziales |
 | Vor R3 | Erinnerungs-Job-Monitoring; Routine Kostenbericht |
-| Vor R4 | Skill `prompt-regression`; KI-Kosten-Routine |
+| Vor R4 | Skill `ki-tool-contract`; Routine Auswertung der Verbindungs-Last |
 | Danach | Review-Zyklus (blind + Fehleranalyse), geplante Agenten, Gate-Gesundheitsbericht |

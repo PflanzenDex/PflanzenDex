@@ -8,7 +8,7 @@ Abgrenzung zu EQU: Ein **Vorschlag** ist eine Art aus dem Katalog, keine Produkt
 
 ## Problem
 
-1. **Nachschub ist Arbeit:** Bei „Nachschub nötig" (US-WUN-02) muss der Halter eine Recherche anstoßen und jeden Vorschlag einzeln prüfen (US-WUN-04). Das kostet KI-Aufrufe (US-KI-06) und Zeit.
+1. **Nachschub ist Arbeit:** Bei „Nachschub nötig" (US-WUN-02) muss der Halter eine Recherche anstoßen und jeden Vorschlag einzeln prüfen (US-WUN-04). Das braucht einen verbundenen KI-Client (US-KI-08) und Zeit.
 2. **Der Katalog bleibt ungenutzt:** Hunderte Arten mit Bild und Text stehen im Pokédex, aber nichts führt sie gezielt zur Wunschliste.
 3. **Ablehnungen gehen verloren:** Was der Halter nicht will, wird heute nirgends gelernt.
 
@@ -92,13 +92,13 @@ Akzeptanzkriterien:
 - Die Puffer-Warnung (US-WUN-02) bietet neben „Vorschläge holen" (KI-Recherche, US-WUN-04) die Aktion „Entdecken für <Zone>", die einen Stapel mit Filter auf diese Zone öffnet.
 - Reicht der Katalog für die Zone nicht (weniger Kandidaten als der Puffer nach Filtern), sagt die Ansicht das und bietet die KI-Recherche bzw. „Art vorschlagen" (US-BES-01) an. Neu recherchierte Arten gehen über den Katalog (US-POK-02), nicht an ihm vorbei.
 
-### US-ENT-08 · Vorschläge über den KI-Assistenten · ⬜ neu
+### US-ENT-08 · Vorschläge über den KI-Client · ⬜ neu
 Als **Pflanzenhalter** will ich fragen können „Was passt als Nächstes zu mir?" und dieselben Vorschläge bekommen wie in der Ansicht.
 
 Akzeptanzkriterien:
-- Der Assistent ruft die Operation `vorschlaege` auf und gibt Reihenfolge und Gründe wieder; er bewertet nicht selbst (KI-R1, KI-R2).
-- „Ja" oder „Nein" im Gespräch ruft `entscheiden` auf, mit derselben Wirkung wie US-ENT-04.
-- Ergänzt der Assistent Wissen zur Art, kennzeichnet er, was nicht aus dem Katalog stammt (KI-R5).
+- Der KI-Client ruft die Operation `vorschlaege` auf und gibt Reihenfolge und Gründe wieder; er bewertet nicht selbst (KI-R1, KI-R2).
+- „Ja" oder „Nein" im Gespräch ruft `entscheiden` auf (Recht „schreiben", sonst Entwurf), mit derselben Wirkung wie US-ENT-04.
+- Ergänzt der Client Wissen zur Art, kennzeichnet er, was nicht aus dem Katalog stammt (KI-R5).
 - Entdecken funktioniert vollständig ohne KI (FR-KI-05).
 
 ## Datenmodell
@@ -131,7 +131,7 @@ Optionale Katalogfelder. Weil der Katalog gemeinsam ist, profitieren alle Nutzer
 
 | ID | Anforderung | Status |
 |---|---|---|
-| FR-ENT-01 | Auswahl, Bewertung, Gründe und Vorlieben sind reine Fachlogik ohne I/O mit Tests (P-02, P-06). Ansicht, KI-Assistent und spätere Clients nutzen dieselbe Logik. | ⬜ |
+| FR-ENT-01 | Auswahl, Bewertung, Gründe und Vorlieben sind reine Fachlogik ohne I/O mit Tests (P-02, P-06). Ansicht, KI-Client und spätere Clients nutzen dieselbe Logik. | ⬜ |
 | FR-ENT-02 | **Bewertung** je Kandidat = Produkt der Vorliebe-Faktoren (US-ENT-05) × Summe der Anteile: **Platz** (Zone mit wenigen Exemplaren, US-LIC-02), **Nähe zu Gedeihendem** (gleiche Gattung > Familie > Ordnung wie ein Exemplar, das gedeiht; gleiche Zone; passende Merkmale aus DM-ENT-01), **Pokédex** (neue Familie/Ordnung oder fehlende Art eines offenen Meilensteins, US-POK-11), **Wachstum** (Schwierigkeit höchstens eine Stufe über dem Schwersten, das gedeiht). Gewichte sind Startwerte (Annahme) und konfigurierbar. | ⬜ |
 | FR-ENT-03 | Nähe zu Exemplaren, die **kümmern**, gibt keinen Bonus. Ohne Messdaten zählt ein Exemplar nur als Besitz, nicht als Erfolg. Kein Vergleich mit Artdurchschnitten (P-08). | ⬜ |
 | FR-ENT-04 | Unbekannte Merkmale wirken neutral: kein Bonus, kein Abzug, sichtbar als „unbekannt". | ⬜ |

@@ -56,7 +56,7 @@ Akzeptanzkriterien:
 | ID | Anforderung | Status |
 |---|---|---|
 | NFR-01 | **Datenformat:** Felder haben feste, validierte Typen (Zahl, Datum, Aufzählung). Freitext trägt nur Inhalt, keine Logik. | ⬜ |
-| NFR-02 | **Eingabe ohne Datei-Editieren:** Alles geht über Formulare, Buttons oder den KI-Assistenten. | ⬜ |
+| NFR-02 | **Eingabe ohne Datei-Editieren:** Alles geht über Formulare, Buttons oder den KI-Client des Halters. | ⬜ |
 | NFR-03 | **Single Source:** Artwissen steht einmal im Katalog; Exemplare tragen nur Abweichungen. | ⬜ |
 | NFR-04 | **Live-Ableitung:** Besitz, Verteilung, Phasen, Trends werden aus Rohdaten berechnet; keine zweite Kopie wird nachgepflegt. | ⬜ |
 | NFR-05 | **Keine erfundenen Zahlen** (P-08). | ⬜ |
@@ -70,7 +70,7 @@ Akzeptanzkriterien:
 | NFR-13 | **Barrierefreiheit:** Bedienung per Tastatur, Kontraste, Alternativtexte für Fotos (Art/Exemplarname). Status nie nur über Farbe oder Emoji. | ⬜ |
 | NFR-14 | **Sprache:** Oberfläche zunächst Deutsch; Anzeige `TT.MM.JJJJ`, Speicherung ISO. Texte sind austauschbar (spätere Übersetzung). | ⬜ |
 | NFR-15 | **Backups und Wiederherstellung:** regelmäßige Sicherung der Nutzerdaten und Fotos, Wiederherstellung getestet. | ⬜ |
-| NFR-16 | **Kosten im Blick:** Betriebskosten (Hosting, Speicher, KI-Aufrufe) werden gemessen und je Nutzer ausgewiesen, damit `13-Business-Case.md` auf Daten beruht. | ⬜ |
+| NFR-16 | **Kosten im Blick:** Betriebskosten (Hosting, Speicher, Last durch KI-Verbindungen) werden gemessen und je Nutzer ausgewiesen, damit `13-Business-Case.md` auf Daten beruht. | ⬜ |
 | NFR-17 | **Externe Quellen** (Wikipedia, Wikidata, GBIF, OpenTree) werden gedrosselt und gecacht abgefragt; Ausfall einer Quelle blockiert keine Nutzerfunktion. | ⬜ |
 | NFR-18 | **Beobachtbarkeit:** Fehler und fehlgeschlagene Jobs sind sichtbar (Log, Alarm an Betreiber), ohne Nutzerdaten im Klartext zu protokollieren. | ⬜ |
 

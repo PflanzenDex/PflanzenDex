@@ -55,3 +55,4 @@ Akzeptanzkriterien:
 | FR-ACC-02 | Jede nutzerbezogene Zeile trägt die Konto-Kennung ab der ersten Version (P-04, NFR-09). | ⬜ |
 | FR-ACC-03 | Passwörter und Anmeldedaten werden nie selbst gespeichert, wenn ein etablierter Dienst sie verwaltet (NFR-10). | ⬜ |
 | FR-ACC-04 | Minderjährige: Altersgrenze und Hinweise klären, bevor die App öffentlich wird (NFR-11). | ⬜ |
+| FR-ACC-05 | Der Anmeldedienst muss zugleich als Autorisierungsserver für KI-Verbindungen taugen (OAuth mit eigenen Scopes, Zustimmungsseite, Widerruf; E-03, FR-KI-13). | ⬜ |

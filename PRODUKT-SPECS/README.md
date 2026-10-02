@@ -9,7 +9,7 @@ Stand: 2026-10-02 · **Entwurf.** Nichts davon ist umgesetzt. Diese Spec beschre
 | Nutzer | eine Person | viele Personen mit Konten |
 | Speicher | Markdown + Frontmatter im Vault | serverseitige Datenhaltung, technikneutral beschrieben |
 | Oberfläche | Dataview-Dashboard in Obsidian | Web-App, mobile-first |
-| Eingabe | Klick-Formulare, Claude in Claude Code | Formulare **und** KI-Assistent in der App |
+| Eingabe | Klick-Formulare, Claude in Claude Code | Formulare **und** der KI-Client des Halters über eine offene Schnittstelle |
 | Sozial | nicht vorhanden | Kernfunktion |
 | Aussage | Ist-Zustand, abgeleitet aus dem Code | Soll-Zustand, Anforderungen an das Produkt |
 
@@ -31,7 +31,7 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 | [09-Erinnerungen-und-Sensorik.md](09-Erinnerungen-und-Sensorik.md) | Epic MON: Benachrichtigungen, Gießen, Sensoren |
 | [10-Soziales.md](10-Soziales.md) | Epic SOZ: Freunde, Feed, Tauschen |
 | [11-Equipment-und-Empfehlungen.md](11-Equipment-und-Empfehlungen.md) | Epic EQU: Equipment, Bedarf, Affiliate |
-| [12-KI-Assistent.md](12-KI-Assistent.md) | Epic KI: Pflege per Sprache, Profile, Foto-Bewertung |
+| [12-KI-Assistent.md](12-KI-Assistent.md) | Epic KI: KI-Zugang über offene Schnittstelle, Aufträge, Entwürfe, Pflege per Sprache, Profile, Foto-Bewertung |
 | [13-Business-Case.md](13-Business-Case.md) | Stufen: für uns, trägt sich selbst, Gewinn |
 | [14-Querschnitt.md](14-Querschnitt.md) | Epic QS: Datenschutz, Sicherheit, Mobile, Qualität |
 | [15-Migration-vom-Prototyp.md](15-Migration-vom-Prototyp.md) | Epic MIG: Daten aus dem Vault übernehmen |
@@ -42,7 +42,7 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 
 ## Konventionen
 
-- **Akteure:** *Pflanzenhalter*, *Freund*, *Betreiber*, *KI-Assistent*, *System*. Siehe `00-Produktueberblick.md`.
+- **Akteure:** *Pflanzenhalter*, *Freund*, *Betreiber*, *KI-Client*, *System*. Siehe `00-Produktueberblick.md`.
 - **IDs:** `US-<EPIC>-nn`, `FR-<EPIC>-nn`, `DM-<EPIC>-nn`, `NFR-nn`. Stories, die aus dem Prototyp stammen, **behalten ihre ID** (z. B. `US-PHA-01`), damit man vergleichen kann. Neue Stories bekommen die nächste freie Nummer. IDs nicht neu nummerieren.
 - **Status** (Produkt): ⬜ geplant, 🟨 in Arbeit, ✅ umgesetzt. Aktuell ist **alles ⬜**.
 - **Prototyp-Spalte** je Story: `✅` im Prototyp erprobt, `🟡` im Prototyp teilweise, `neu` nicht im Prototyp. Sie sagt, wie gut das Verhalten schon belegt ist, nicht ob die Web-App es kann.
@@ -65,13 +65,13 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 | MON Erinnerungen/Sensorik | 8 | 0 | 8 |
 | SOZ Soziales | 13 | 0 | 13 |
 | EQU Equipment | 12 | 0 | 12 |
-| KI Assistent | 6 | 3 | 3 |
+| KI Zugang | 10 | 3 | 7 |
 | QS Querschnitt | 7 | 6 | 1 |
 | MIG Migration | 3 | 0 | 3 |
 | ENT Entdecken | 8 | 0 | 8 |
 | QG Quality Gates | 8 | 0 | 8 |
 | DEV Entwicklungsprozess | 9 | 0 | 9 |
-| **Summe** | **121** | **50** | **71** |
+| **Summe** | **125** | **50** | **75** |
 
 ## Ablösung bestehender Dokumente
 

@@ -163,7 +163,7 @@ Jedes Produktprinzip aus `00-Produktueberblick.md` bekommt mindestens ein Gate, 
 
 | Prinzip | Gate |
 |---|---|
-| P-01 KI urteilt, Code rechnet | AB-3, QG-T1 (Fachlogik-Coverage), Prompt-Regressionstests (FR-KI-03) |
+| P-01 KI urteilt, Code rechnet | AB-3, QG-T1 (Fachlogik-Coverage), Vertragstests der KI-Schnittstelle (FR-KI-03) |
 | P-02 Ein Kern, viele Oberflächen | AB-1, AB-2, Test „Heute"/Erinnerung/KI nutzen dieselbe `status`-Funktion (R-04 in `16-…`) |
 | P-03 Validierende Operationen | AB-3, Test je schreibende Operation: ungültige Eingabe schreibt nichts (FR-KI-02) |
 | P-04 Mandantenfähig | QG-D1 |
@@ -196,7 +196,7 @@ Gates folgen den Releases aus `16-…` und kommen **vor** dem Code, den sie sch�
 | R1 | QG-T1 (Fachlogik), QG-T2, QG-T3 (R1-Abläufe), QG-D3, QG-D4, Lighthouse/axe als Bericht, QG-S2, QG-S3 |
 | R2 | QG-D1, QG-D2 vor dem ersten sozialen Endpunkt |
 | R3 | Atomaritäts-Test der Übergabe (FR-SOZ-05), Zustellungs-Idempotenz (FR-MON-02) |
-| R4 | Prompt-Regressionstests, AB-3, Kostenlimit-Tests (US-KI-06) |
+| R4 | Vertragstests der Schnittstelle (FR-KI-03), Rechte-/Entwurfs-Tests (FR-KI-08), Mandanten- und Whitelist-Test für Verbindungen (FR-KI-04, FR-KI-10), Rate-Limit-Tests (US-KI-06), AB-3 |
 | R5 | Test „Provisionstabelle ändert Reihenfolge nicht" (FR-EQU-06), Kennzeichnungs-Test (FR-EQU-05) |
 
 Reihenfolge der Datenschutz-Gates ist bewusst: **QG-D1 und QG-D2 stehen, bevor der erste Freund etwas sieht.**

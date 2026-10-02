@@ -19,7 +19,7 @@ Für Pflanzensammler mit mehr als etwa 10 Pflanzen (siehe `00-Produktueberblick.
 2. Misst Erfolg an eigenen Daten (Messungen, Fotos, Trend).
 3. Belohnt das Sammeln (Pokédex, Meilensteine).
 4. Macht Neuzugänge und Stecklingstausch im Freundeskreis sichtbar und sauber.
-5. Nimmt Eingaben per Sprache und Foto entgegen (KI-Assistent).
+5. Nimmt Eingaben per Sprache und Foto entgegen, über den eigenen KI-Client des Halters (offene Schnittstelle, kein Anbieter-Zwang).
 
 Abgrenzung: Anfänger-Apps (Gießerinnerung, Pflanzenbestimmung) bedienen eine andere Zielgruppe. Konkurrenz ist Alltagswerkzeug: Tabellen, Notiz-Apps, Messenger-Gruppen, Kleinanzeigen.
 
@@ -34,7 +34,7 @@ Erfolgskriterien (Annahmen, vor Beginn bestätigen):
 
 Was dafür gebaut werden muss: Releases R0 bis R2 (Fundament, Parität, Soziales); Erinnerungen (R3) erhöhen die Bindung, sind aber keine Bedingung für den Start.
 
-Kosten: Entwicklungszeit; Hosting, Foto-Speicher und KI-Aufrufe für drei Konten (sehr gering, aber **zu messen**, NFR-16); Domain. Keine Einnahmen.
+Kosten: Entwicklungszeit; Hosting, Foto-Speicher und Last durch KI-Verbindungen für drei Konten (sehr gering, aber **zu messen**, NFR-16); Domain. Keine Einnahmen.
 
 Ausstiegssignale: Nach 8 Wochen nutzt höchstens eine Person das Social-Feature → Tauschen überdenken. Wechselt jemand nach Parität nicht in die App → die Ursache vor dem weiteren Ausbau klären.
 
@@ -42,17 +42,17 @@ Ausstiegssignale: Nach 8 Wochen nutzt höchstens eine Person das Social-Feature 
 
 Voraussetzung: Stufe 1 bestanden **und** weitere Nutzer außerhalb der drei, die ohne Einladung durch uns bleiben. Datenschutzerklärung, Impressum, Löschkonzept stehen (NFR-11).
 
-Laufende Kosten (zu ermitteln, nicht geschätzt): Hosting, Datenbank, Foto-Speicher, KI-Aufrufe je Nutzer, Push, Domain, E-Mail, Backups, externe Quellen (Wikipedia/GBIF/OpenTree, bisher kostenlos mit Drosselung), ggf. Zahlungsabwicklung.
+Laufende Kosten (zu ermitteln, nicht geschätzt): Hosting, Datenbank, Foto-Speicher, Last der KI-Verbindungen je Nutzer, Push, Domain, E-Mail, Backups, externe Quellen (Wikipedia/GBIF/OpenTree, bisher kostenlos mit Drosselung), ggf. Zahlungsabwicklung.
 
 Einnahmequellen in Reihenfolge der Eignung:
 
 | Quelle | Passung | Hinweis |
 |---|---|---|
-| **Freiwilliger Beitrag / kleines Abo** („Unterstützer") | passt zu einer kleinen Community | Gegenleistung: mehr Foto-Speicher, mehr KI-Aufrufe, Sensor-Anbindung (MON), Export. Kernfunktionen bleiben frei, sonst bricht der Tausch weg. |
+| **Freiwilliger Beitrag / kleines Abo** („Unterstützer") | passt zu einer kleinen Community | Gegenleistung: mehr Foto-Speicher, höhere Rate-Limits der KI-Verbindung, Sensor-Anbindung (MON), Export. Kernfunktionen bleiben frei, sonst bricht der Tausch weg. |
 | **Affiliate-Links** (Lampen, Substrat, Sensoren) | passt: Die App kennt Lichtzonen, Wunschliste und Gerätebestand | nur gekennzeichnet und nur zu abgeleitetem Bedarf; Regeln in `11-Equipment-und-Empfehlungen.md` (FR-EQU-03 bis -10) |
 | **Shop-/Gärtnerei-Partner** über „Fehlt dir"-Arten | passt, braucht Nutzerzahl | erst ab messbarem Traffic |
 
-KI-Kosten sind ein neuer Posten, der mit der Nutzerzahl wächst. Er wird über Tageslimits je Konto (US-KI-06) und das Abo-Modell begrenzt.
+KI-Kosten entstehen beim Halter (eigener KI-Client), nicht beim Betreiber; bei uns fällt nur die Last der Schnittstelle an, begrenzt durch Rate-Limits je Verbindung (US-KI-06). Ein eingebauter Chat mit Betreiber-Kontingent würde das ändern (E-19).
 
 Break-even-Rechnung (Platzhalter): `zahlende_Nutzer × Preis × (1 − Gebühren) ≥ laufende_Kosten`. Die Zahlen werden in Stufe 1 gemessen, nicht angenommen.
 
@@ -73,7 +73,7 @@ Nur möglich, wenn Nutzerzahl und Bindung weit über Stufe 2 liegen. Optionen, j
 | Aufwand: Aus dem Vault-Prototyp wird ein Produkt (Konten, Betrieb, Datenschutz) | Projekt versandet | Kleinste Releases, jedes nutzbar; Betrieb einfach halten (E-01) |
 | Netzwerkeffekt fehlt (Feed leer bei 1–2 Freunden) | Social wirkt tot | Mit Freundeskreis starten; Wert auch ohne Freunde (Pokédex, Pflege) |
 | Zielgruppe zahlt wenig | Stufe 2 scheitert | Kosten niedrig halten, kein Abo-Zwang für Kernfunktionen |
-| KI-Kosten steigen schneller als Einnahmen | Verlust je Nutzer | Limits, Messung je Konto (NFR-16), manuelle Wege immer verfügbar (FR-KI-05) |
+| Last der KI-Verbindungen wächst schneller als Einnahmen; Nutzer ohne bezahlten KI-Client sehen weniger Wert | Verlust je Nutzer bzw. schwächeres Wertversprechen 5 | Rate-Limits je Verbindung, Messung (NFR-16), manuelle Wege immer verfügbar (FR-KI-05); E-19 prüft später einen eingebauten Chat |
 | Datenschutz und Standort/Fotos | Vertrauensverlust, Bußgeld | Privat als Standard (FR-SOZ-01), EXIF/GPS entfernen, DSGVO-Konzept vor dem ersten Externen |
 | Tausch rechtlich (Artenschutz, Pflanzengesundheit) | Haftung | Hinweise (FR-SOZ-09), kein Versand/Verkauf in Stufe 1–2 |
 | Katalogqualität (KI-erstellte Profile mit Fehlern) | falsche Pflegehinweise | Prüfstatus (FR-BES-06), Quellen, Betreiber-Prüfliste |
@@ -83,7 +83,7 @@ Nur möglich, wenn Nutzerzahl und Bindung weit über Stufe 2 liegen. Optionen, j
 Gesammelt in `16-Releases-und-Entscheidungen.md`. Für den Case relevant:
 
 1. **E-01 Technik und Hosting** (Kosten und Betriebsaufwand der Stufen 1 und 2).
-2. **E-04 KI-Anbieter und Kostenmodell.**
+2. **E-04 KI-Zugang (Schnittstelle statt eingebautem Anbieter) und E-19 eingebauter Chat.**
 3. **E-07 Verkauf erlauben** (Stufe 3).
 4. **E-08 Freiwilliger Beitrag oder Abo** (Stufe 2).
 

@@ -28,7 +28,7 @@ Als **Pflanzenhalter** will ich Vorschläge, die zur Zone passen.
 
 Akzeptanzkriterien:
 - Anfrage: Zielzone, Anzahl, Ausschluss (Bestand und bestehende Kandidaten werden automatisch ausgeschlossen).
-- Der KI-Assistent (US-KI-05) liefert Vorschläge, bei denen der botanische Lichtbedarf zur Zone **passt** (nicht nur toleriert), mit kurzer Begründung (CAM, Herkunft, Blattmorphologie).
+- Der KI-Client des Halters liefert über US-KI-05 (Weg A) oder einen Auftrag (US-KI-08) Entwürfe, bei denen der botanische Lichtbedarf zur Zone **passt** (nicht nur toleriert), mit kurzer Begründung (CAM, Herkunft, Blattmorphologie).
 - Bild und Bildquelle werden auf Erreichbarkeit und Lizenz geprüft, nicht geraten; Bilder werden mit Quelle gesichert.
 - Vorschläge erscheinen als Entwurf; der Halter übernimmt oder verwirft einzeln.
 
