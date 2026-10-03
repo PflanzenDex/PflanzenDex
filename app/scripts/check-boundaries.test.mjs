@@ -3,7 +3,13 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
-import { checkProject, importsOf } from "./check-boundaries.mjs";
+import {
+  checkProject,
+  hasMarker,
+  importsOf,
+  KNOWN_EXCEPTIONS,
+  markersOf,
+} from "./check-boundaries.mjs";
 
 function project(files) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "boundaries-"));
@@ -135,5 +141,52 @@ describe("Architekturgrenzen (US-QG-03)", () => {
         .sort(),
       ["a", "b", "c", "d"],
     );
+  });
+
+  it("AB-6: Web importiert API oder Datenbank", () => {
+    for (const spec of ["@pflanzendex/api", "@pflanzendex/db"]) {
+      const v = checkProject(
+        project({
+          ...clean,
+          "packages/web/src/b.ts": `import { z } from "${spec}";\nexport { z };\n`,
+        }),
+      );
+      assert.match(v[0] ?? "", /^AB-6 packages\/web\/src\/b\.ts:1 /);
+    }
+  });
+  it("MK-1: Marker ohne Grund ist ein Fehler, mit Grund nicht", () => {
+    const v = checkProject(
+      project({ ...clean, "packages/api/src/m.ts": "// MAX_LINES_IGNORE:\nexport const m = 1;\n" }),
+    );
+    assert.match(v[0] ?? "", /^MK-1 packages\/api\/src\/m\.ts:1 /);
+    assert.deepEqual(
+      checkProject(
+        project({
+          ...clean,
+          "packages/api/src/m.ts": "// MAX_LINES_IGNORE: generierte Datei\nexport const m = 1;\n",
+        }),
+      ),
+      [],
+    );
+  });
+  it("Marker gilt nur in den ersten 5 Zeilen", () => {
+    assert.equal(hasMarker("\n\n\n\n\n// STRUCTURE_IGNORE: x\n", "STRUCTURE_IGNORE"), false);
+    assert.deepEqual(markersOf("/* STRUCTURE_IGNORE: Altlast */\n"), [
+      { name: "STRUCTURE_IGNORE", reason: "Altlast" },
+    ]);
+  });
+  it("ST-c: STRUCTURE_IGNORE mit Grund nimmt die Datei aus", () => {
+    assert.deepEqual(
+      checkProject(
+        project({
+          ...clean,
+          "packages/core/src/plan/regel.ts": "// STRUCTURE_IGNORE: Altlast\nexport const r = 1;\n",
+        }),
+      ),
+      [],
+    );
+  });
+  it("EX-1: Ausnahmeliste des Projekts enthält nur Einträge mit Grund", () => {
+    assert.ok(KNOWN_EXCEPTIONS.every((e) => e.reason?.trim()));
   });
 });
