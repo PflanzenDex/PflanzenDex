@@ -3,6 +3,7 @@
     "Arten: Du kannst im Artenkatalog nach Pflanzen suchen, ihr Profil ansehen und eine fehlende Art als Vorschlag anlegen.",
     "Licht: Unter „Standorte und Licht“ ermittelst du, welcher Lichtzone eine Art nach ihrem Lux-Bedarf zugeordnet wird. Stecklingslicht ist nie das Ziel für erwachsene Pflanzen.",
     "Bestand: Zu einer gewählten Art legst du jetzt ein Exemplar an. Der Name entsteht nach der Namensregel, das Fangdatum ist dein heutiges Datum.",
-    "Pflegephasen: Du siehst jetzt für jedes Exemplar, in welcher Phase es heute sein sollte (Ruhe- oder Wachstumsphase), berechnet aus dem Zeitraum seiner Art und deinem heutigen Datum. Der Soll-Standort bleibt noch unbekannt."
+    "Pflegephasen: Du siehst jetzt für jedes Exemplar, in welcher Phase es heute sein sollte (Ruhe- oder Wachstumsphase), berechnet aus dem Zeitraum seiner Art und deinem heutigen Datum. Der Soll-Standort bleibt noch unbekannt.",
+    "Bestand: Jedes Exemplar erscheint jetzt als Karte mit Art, Lichtzone, Status und Standort. Foto, letzte Messung und offene Behandlungen siehst du dort, sobald es Messungen und Behandlungen gibt."
   ]
 }

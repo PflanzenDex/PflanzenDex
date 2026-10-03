@@ -1,5 +1,5 @@
 import type { Pool } from "pg";
-import { FIXTURES_BESTAND } from "./bestand/index.ts";
+import { FIXTURE_ART_ID, FIXTURES_BESTAND } from "./bestand/index.ts";
 import { FIXTURES_KATALOG } from "./katalog/index.ts";
 import { FIXTURES_KERN, mitKonto, type Fixtures } from "./kern/index.ts";
 import { FIXTURES_KONTO } from "./konto/index.ts";
@@ -28,3 +28,36 @@ export const schreibenInDieRollentabelle = (pool: Pool, konto: string) =>
   mitKonto(pool, konto, (c) =>
     c.query("insert into konto_rolle (konto, rolle) values ($1, 'betreiber')", [konto]),
   );
+
+// Feste Beispielart für Tabellen, die per Fremdschlüssel auf den Katalog zeigen (AB-10, globale Referenztabelle `art`).
+// Sie gehört einem eigenen Konto und ist ein privater Vorschlag, sieht also niemand sonst. Idempotent und bleibt stehen:
+// ein Konto-Löschen darf wegen `on delete restrict` keine benutzte Art mitnehmen.
+const FIXTURE_ART_KONTO = "00000000-0000-4000-8000-00000000fa02";
+
+export async function legeFixtureArtAn(pool: Pool): Promise<string> {
+  // Jede Anweisung ist für sich wiederholbar (on conflict do nothing), parallele Testdateien stören sich nicht.
+  await pool.query("insert into konto (id) values ($1) on conflict do nothing", [
+    FIXTURE_ART_KONTO,
+  ]);
+  await pool.query(
+    `insert into pruefvorgang (konto_id, objekt_art, objekt_id, status)
+     values ($1, 'art', $2, 'vorschlag') on conflict do nothing`,
+    [FIXTURE_ART_KONTO, FIXTURE_ART_ID],
+  );
+  await pool.query(
+    `insert into art (id, gattung, lateinischer_name, schwierigkeit, standard_stufe, lichtbedarf_lux,
+       wachstumsmass, vergeilung_anzeichen, erfolgskriterien, erstellt_von)
+     values ($1, 'Fixtureus', 'Fixtureus mandantentest', 1, 2, 100, 'hoehe', 'v', 'e', 'nutzer')
+     on conflict do nothing`,
+    [FIXTURE_ART_ID],
+  );
+  return FIXTURE_ART_ID;
+}
+
+/** Löschen einer Art mit Eigentümerrechten und als Anwendung (AB-9: Tests fremder Module schreiben kein SQL auf `art`). */
+export const loescheArt = (pool: Pool, artId: string) =>
+  pool.query("delete from art where id = $1", [artId]);
+export const loescheArtAlsAnwendung = (pool: Pool, konto: string, artId: string) =>
+  mitKonto(pool, konto, (c) => c.query("delete from art where id = $1", [artId]));
+export const artExistiert = async (pool: Pool, artId: string) =>
+  ((await pool.query("select 1 from art where id = $1", [artId])).rowCount ?? 0) === 1;

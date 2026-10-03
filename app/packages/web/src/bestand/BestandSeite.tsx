@@ -1,18 +1,19 @@
 import "./bestand.css";
 import { useCallback, useEffect, useState } from "react";
-import type { Art, Exemplar, LichtStandort } from "@pflanzendex/core";
+import type { Art, Exemplar, ExemplarKarte, LichtStandort } from "@pflanzendex/core";
 import { ladeStandorte } from "../licht";
 import type { ApiFehler } from "../kern";
 import { AnlegenFormular, type AnlegenEingabe } from "./anlegen-formular";
 import { BestandListe } from "./bestand-liste";
-import { ladeExemplare, legeExemplarAn } from "./exemplare-api";
+import { legeExemplarAn } from "./exemplare-api";
+import { ladeKarten } from "./karten-api";
 
 type Token = () => Promise<string | undefined>;
 const ANMELDEN: ApiFehler = { code: "zugriff.nicht_angemeldet", text: "Bitte melde dich neu an." };
 type Daten =
   | { art: "laedt" }
   | { art: "fehler"; fehler: ApiFehler }
-  | { art: "da"; exemplare: readonly Exemplar[]; standorte: readonly LichtStandort[] };
+  | { art: "da"; karten: readonly ExemplarKarte[]; standorte: readonly LichtStandort[] };
 
 /** Lädt Exemplare und Standorte; scheitert eines, scheitert das Laden als Ganzes (nichts halb anzeigen). */
 function useBestand(api: string, token: Token, neuLaden: number) {
@@ -22,11 +23,11 @@ function useBestand(api: string, token: Token, neuLaden: number) {
     void (async () => {
       const t = await token();
       if (!t) return aktuell && setDaten({ art: "fehler", fehler: ANMELDEN });
-      const [e, s] = await Promise.all([ladeExemplare(api, t), ladeStandorte(api, t)]);
+      const [e, s] = await Promise.all([ladeKarten(api, t), ladeStandorte(api, t)]);
       if (!aktuell) return;
       if (!e.ok) return setDaten({ art: "fehler", fehler: e.fehler });
       if (!s.ok) return setDaten({ art: "fehler", fehler: s.fehler });
-      setDaten({ art: "da", exemplare: e.wert, standorte: s.wert });
+      setDaten({ art: "da", karten: e.wert, standorte: s.wert });
     })();
     return () => {
       aktuell = false;
@@ -97,11 +98,7 @@ export function BestandSeite(props: {
       {daten.art === "da" && !neueArt && (
         <>
           {angelegt && <Angelegt exemplar={angelegt} />}
-          <BestandListe
-            exemplare={daten.exemplare}
-            standorte={daten.standorte}
-            onArtWaehlen={props.onArtWaehlen}
-          />
+          <BestandListe karten={daten.karten} onArtWaehlen={props.onArtWaehlen} />
         </>
       )}
     </div>

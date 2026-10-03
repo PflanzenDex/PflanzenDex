@@ -46,7 +46,7 @@ function fakeServer(kontoStatus = 200) {
       const pfad = new URL(String(url)).pathname;
       if (pfad === "/konto") return antwort(kontoStatus, konto);
       if (pfad === "/arten") return antwort(200, { arten: [] });
-      if (pfad === "/exemplare") return antwort(200, { exemplare: [] });
+      if (pfad === "/exemplare/karten") return antwort(200, { karten: [] });
       if (pfad === "/standorte") return antwort(200, { standorte: [] });
       if (pfad === "/lichtzonen") return antwort(200, { zonen: [] });
       if (pfad === "/hinweise") return antwort(200, { hinweise: [] });
@@ -117,7 +117,7 @@ describe("US-ACC-01 App", () => {
         const pfad = new URL(String(url)).pathname;
         if (pfad === "/konto") return antwort(200, konto);
         if (pfad === "/standorte") return antwort(200, { standorte: [] });
-        if (pfad === "/exemplare") return antwort(200, { exemplare: [] });
+        if (pfad === "/exemplare/karten") return antwort(200, { karten: [] });
         const art = {
           id: "a1",
           lateinischerName: "Dracaena trifasciata",

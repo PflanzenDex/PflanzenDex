@@ -5,7 +5,8 @@
 // A module folder is `packages/<core|db|api|web>/src/<name>/` with an `index.ts` as its public interface (variant A).
 // The rules apply to every folder that carries the name of a module below; without such folders the gate is idle.
 // The cut follows ADR 0003 with the owner decisions O-1 (pflege and wachstum merged, medien and jobs live in `kern`)
-// and O-2 (foreign keys across modules only tenant-safe as (konto_id, id) on allowed dependencies).
+// and O-2 (foreign keys across modules only tenant-safe as (konto_id, id) on allowed dependencies, plus the one
+// registered exception below for global reference tables).
 // `dependsOn` is the dependency matrix: `A -> B` may be imported only if B is listed for A. A new edge changes this
 // file in the same PR; cycles are always an error (AB-8). `epics` maps epics to modules (report only, QG-T4).
 
@@ -43,7 +44,7 @@ const MODULES = [
     epics: ["BES"],
     tables: ["exemplar", "pflegeprofil", "exemplar_herkunft"],
     dependsOn: ["kern", "katalog", "licht"],
-    ports: ["SollStandortQuelle"],
+    ports: ["SollStandortQuelle", "MessungsQuelle", "BehandlungsQuelle"],
   },
   {
     name: "monitoring",
@@ -128,6 +129,21 @@ const UNMODULED_FOLDERS = {};
 // entry that no longer applies is an error (ratchet). Empty: web/licht has its index.ts and is imported via it.
 const MODULE_FOLDERS_IN_TRANSITION = {};
 
+// Global reference tables (AB-10, ADR 0003 O-2): tables without `konto_id` (a justified entry in OHNE_KONTO_KENNUNG,
+// db/src/kern/schema.ts) that other modules may point to with a plain foreign key on `(id)`. Allowed only from a module
+// that may depend on the owner according to the matrix above, with `on delete restrict`. Why: a rule that exists only
+// in a document is a wish (Docs/principles/README.md); the database guarantees integrity (PRIN-006, P-04 testable)
+// and deleting a species in use fails instead of leaving a dangling reference (P-10). Every entry needs a reason; the
+// list grows only through review (EX-1 principle: registered, justified, narrow). Only `art`: `art_name` and
+// `art_version` are details of a species, nothing outside `katalog` should point to them.
+const GLOBAL_REFERENCE_TABLES = {
+  art: {
+    owner: "katalog",
+    reason:
+      "The shared species catalog (E-02) has no konto_id by design, so the tenant-safe (konto_id, id) form cannot exist; Exemplare and later wishes point to a species, and the database must refuse unknown species and the deletion of species in use.",
+  },
+};
+
 const KERN = "kern";
 
 export const MODULE_CONFIG = {
@@ -136,4 +152,5 @@ export const MODULE_CONFIG = {
   LEGACY_MIGRATIONS,
   UNMODULED_FOLDERS,
   MODULE_FOLDERS_IN_TRANSITION,
+  GLOBAL_REFERENCE_TABLES,
 };
