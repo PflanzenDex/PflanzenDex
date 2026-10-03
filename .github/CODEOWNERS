@@ -1,0 +1,18 @@
+# Besitzer je Bereich (US-DEV-08, FR-DEV-09). Änderungen an dieser Datei sind review-pflichtig.
+# Die letzte passende Regel gewinnt. Bis ein Team existiert, ist @MaxNize überall Besitzer;
+# beim Wachsen des Teams pro Epic/Ordner den jeweiligen Besitzer eintragen.
+
+*                                   @MaxNize
+
+/.github/CODEOWNERS                 @MaxNize
+/.github/workflows/                 @MaxNize
+/Makefile                           @MaxNize
+/scripts/                           @MaxNize
+
+/app/packages/core/                 @MaxNize
+/app/packages/api/                  @MaxNize
+/app/packages/web/                  @MaxNize
+
+/Docs/PRODUKT-SPECS/                @MaxNize
+/Docs/PFLANZENSYSTEM-SPECS/         @MaxNize
+/Docs/betrieb/                      @MaxNize

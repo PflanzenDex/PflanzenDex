@@ -3,7 +3,7 @@
 APP := app
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test gates ci clean
+.PHONY: help setup dev lint format typecheck test gates ci worktree clean
 
 help: ## Alle Ziele mit einem Satz
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -31,6 +31,9 @@ gates: ## Schnelle Gates: Lint, Typen, Architekturgrenzen, Format
 
 ci: ## Alle Gates in der Reihenfolge der CI, bricht beim ersten Fehler ab
 	cd $(APP) && npm run ci
+
+worktree: ## Neuer Worktree + Branch (BRANCH=feat/x) mit eigenen Ports (US-DEV-08)
+	scripts/worktree-new.sh "$(BRANCH)"
 
 clean: ## Build-Ausgaben und node_modules entfernen
 	cd $(APP) && rm -rf node_modules packages/*/node_modules packages/*/dist
