@@ -30,7 +30,8 @@
     "knip": "knip",
     "audit": "npm audit --audit-level=high",
     "skills": "node scripts/check-skills.mjs",
-    "release-tags": "node scripts/check-release-tags.mjs"
+    "release-tags": "node scripts/check-release-tags.mjs",
+    "changelog": "node scripts/check-changelog.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",
