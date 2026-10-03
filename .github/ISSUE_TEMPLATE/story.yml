@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        New features start in `Docs/PRODUKT-SPECS/` (a story with Given/When/Then criteria); the issue comes second.
+        New features start in `Docs/PRODUCT-SPECS/` (a story with Given/When/Then criteria); the issue comes second.
   - type: input
     id: id
     attributes:
@@ -17,14 +17,14 @@ body:
     id: release
     attributes:
       label: Release
-      options: [R0 Fundament, R1 Parität, R2 Soziales, R3 Tausch und Erinnerungen, R4 KI-Zugang, R5 Equipment, R6 Sensorik]
+      options: [R0 Foundation, R1 Parity, R2 Social, R3 Swapping and reminders, R4 AI access, R5 Equipment, R6 Sensors]
     validations:
       required: true
   - type: textarea
     id: criteria
     attributes:
       label: Description and acceptance criteria
-      description: copied unchanged from the spec (German); if they differ, the spec wins
+      description: copied unchanged from the spec; if they differ, the spec wins
     validations:
       required: true
   - type: textarea

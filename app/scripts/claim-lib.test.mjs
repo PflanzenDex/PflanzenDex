@@ -14,7 +14,7 @@ import {
 
 const story = {
   number: 62,
-  title: "US-BES-06 · Exemplar löschen oder zusammenführen",
+  title: "US-BES-06 · Delete or merge specimen",
   labels: [{ name: "story" }],
   assignees: [],
 };
@@ -22,8 +22,8 @@ const story = {
 test("US-DEV-08: story ID, key, slug, branch and scope derive from the issue title", () => {
   assert.equal(storyIdOf(story.title), "US-BES-06");
   assert.equal(claimKey(story), "bes-06");
-  assert.equal(slugOf(story.title), "exemplar-loeschen-oder");
-  assert.equal(branchName(story), "feat/bes-06-exemplar-loeschen-oder");
+  assert.equal(slugOf(story.title), "delete-or-merge-specimen");
+  assert.equal(branchName(story), "feat/bes-06-delete-or-merge-specimen");
   assert.equal(scopeOf(story), "bes");
 });
 
@@ -77,10 +77,10 @@ test("US-DEV-08: ALLOW_PRIOR_WORK waives merged PRs but never open ones", () => 
 });
 
 test("US-DEV-08: an origin branch with the story ID blocks, a similar ID does not", () => {
-  const branches = ["feat/bes-06-loeschen", "feat/bes-060-other", "feat/us-bes-07-x"];
+  const branches = ["feat/bes-06-remove", "feat/bes-060-other", "feat/us-bes-07-x"];
   const found = findConflicts({ issue: story, prs: [], branches });
   assert.equal(found.length, 1);
-  assert.match(found[0].text, /feat\/bes-06-loeschen/);
+  assert.match(found[0].text, /feat\/bes-06-remove/);
 });
 
 test("US-DEV-08: the stale limit is a setting with a documented start value of 48 hours", () => {
@@ -90,9 +90,9 @@ test("US-DEV-08: the stale limit is a setting with a documented start value of 4
 });
 
 test("US-DEV-08: the claim key of a branch name, with or without US-/FR- prefix", () => {
-  assert.equal(keyOfBranch("feat/wac-01-messung"), "wac-01");
-  assert.equal(keyOfBranch("feat/us-wac-01-messung"), "wac-01");
+  assert.equal(keyOfBranch("feat/wac-01-measurement"), "wac-01");
+  assert.equal(keyOfBranch("feat/us-wac-01-measurement"), "wac-01");
   assert.equal(keyOfBranch("chore/issue-243-claim"), "issue-243");
-  assert.equal(keyOfBranch("feat/gate-global-referenz"), null);
+  assert.equal(keyOfBranch("feat/gate-global-reference"), null);
   assert.equal(keyOfBranch("dev"), null);
 });

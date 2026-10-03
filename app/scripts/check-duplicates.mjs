@@ -1,5 +1,5 @@
 // Duplicate detection (QG-K4) with Fallow `dupes`. Thresholds live once in quality-limits.json ("duplicates", FR-QG-18).
-// Two runs: the whole project is only reported (informational), the diff against the base is blocking (B auf Diff):
+// Two runs: the whole project is only reported (informational), the diff against the base is blocking (B on diff):
 // a clone group with at least `minOccurrences` instances that touches a file changed since the base fails the check.
 // Base: DUPLICATES_BASE, else origin/$GITHUB_BASE_REF (CI pull request), else origin/dev.
 import fs from "node:fs";

@@ -1,7 +1,7 @@
 # 0001 · Public repo with rulesets instead of a private repo without branch protection
 
 - **Status:** accepted (2026-10-03)
-- **Changes:** E-13 (`Docs/PRODUKT-SPECS/18-Architektur-und-Quality-Gates.md`), FR-QG-02, US-QG-02
+- **Changes:** E-13 (`Docs/PRODUCT-SPECS/18-Architecture-and-Quality-Gates.md`), FR-QG-02, US-QG-02
 - **Affects:** license, security features, Actions minutes
 
 ## Context

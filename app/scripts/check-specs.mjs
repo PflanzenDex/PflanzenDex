@@ -29,7 +29,7 @@ export function findProblems(files) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const dir = fileURLToPath(new URL("../../Docs/PRODUKT-SPECS/", import.meta.url));
+  const dir = fileURLToPath(new URL("../../Docs/PRODUCT-SPECS/", import.meta.url));
   const files = Object.fromEntries(
     fs
       .readdirSync(dir)

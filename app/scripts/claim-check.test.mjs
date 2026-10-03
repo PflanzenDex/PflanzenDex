@@ -15,14 +15,14 @@ function client(issues, { offline = false } = {}) {
 }
 const issue = (assignees) => ({
   number: 62,
-  title: "US-BES-06 · Exemplar löschen",
+  title: "US-BES-06 · Delete specimen",
   assignees: assignees.map((login) => ({ login })),
 });
 
 test("US-DEV-08: a branch without story ID passes without asking GitHub", async () => {
   const v = await checkBranch(
     client([], { offline: true }),
-    "feat/gate-global-referenz",
+    "feat/gate-global-reference",
     "worktree",
   );
   assert.deepEqual(v, { ok: true, message: null });
@@ -76,7 +76,7 @@ test("US-DEV-08: run aborts the push when one pushed branch belongs to somebody 
 
 test("US-DEV-08: the handoff text has the four parts and closes the issue", () => {
   const body = handoffBody(
-    { number: 62, title: "US-BES-06 · Exemplar löschen", url: "https://x/62" },
+    { number: 62, title: "US-BES-06 · Delete specimen", url: "https://x/62" },
     "feat/bes-06-x",
     "max",
   );

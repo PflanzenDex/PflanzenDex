@@ -1,4 +1,4 @@
-// Check 7: Ablauf gegen Zitadel v4 (DCR-Client, Auth-Code + PKCE, resource, Scopes, Token-Format, Refresh, Widerruf).
+// Check 7: flow against Zitadel v4 (DCR client, auth code + PKCE, resource, scopes, token format, refresh, revocation).
 import { chromium } from "playwright";
 import fs from "node:fs";
 import { pkce, decode, listener, token, mcp, discover, register } from "./oauth-lib.mjs";
@@ -20,27 +20,27 @@ async function authorize(scope, resource, tag) {
     if (await page.locator('input[name="loginName"]:visible').count()) { await page.fill('input[name="loginName"]:visible', USER); await page.locator('button[type=submit]', { hasText: "Weiter" }).click(); continue; }
     const txt = (await page.locator("body").innerText()).replace(/\s+/g, " ").slice(0, 300);
     await page.screenshot({ path: `out/${tag}-step${i}.png`, fullPage: true });
-    console.log(`  Schritt ${i}: ${u.slice(0, 100)} | ${txt}`);
+    console.log(`  Step ${i}: ${u.slice(0, 100)} | ${txt}`);
     const btn = page.locator('button[type=submit]:has-text("Zulassen"), button[type=submit]:has-text("Akzeptieren"), button:has-text("Weiter")'); if (await btn.count()) await btn.first().click();
   }
   const res = await L.next(); if (res.timeout) { res.url = page.url(); await page.screenshot({ path: `out/${tag}-9-timeout.png`, fullPage: true }); }
   await page.close(); return { res, verifier: p.verifier, state };
 }
 const exchange = (a, resource) => a.res.code ? token(meta, { grant_type: "authorization_code", code: a.res.code, redirect_uri: L.redirect, client_id: cid, code_verifier: a.verifier, ...(resource ? { resource } : {}) }) : Promise.resolve({ j: {}, error: a.res });
-const show = (t) => { const at = t.j?.access_token || ""; const d = decode(at); return d ? { format: "JWT", aud: d.aud, scope: d.scope, azp: d.azp, client_id: d.client_id, iss: d.iss, exp_in: d.exp - d.iat } : { format: at ? "opak/verschlüsselt" : "kein Token", len: at.length, scope_response: t.j?.scope, err: t.error || t.j?.error }; };
+const show = (t) => { const at = t.j?.access_token || ""; const d = decode(at); return d ? { format: "JWT", aud: d.aud, scope: d.scope, azp: d.azp, client_id: d.client_id, iss: d.iss, exp_in: d.exp - d.iat } : { format: at ? "opaque/encrypted" : "kein Token", len: at.length, scope_response: t.j?.scope, err: t.error || t.j?.error }; };
 console.log("\n[A] resource + Scope pflanzen:read");
-let a = await authorize("openid offline_access pflanzen:read", RES, "ZA"); console.log("  Redirect-Parameter:", JSON.stringify({ ...a.res, code: a.res.code ? "…" : undefined }));
+let a = await authorize("openid offline_access pflanzen:read", RES, "ZA"); console.log("  Redirect parameters:", JSON.stringify({ ...a.res, code: a.res.code ? "…" : undefined }));
 let t = await exchange(a, RES); console.log("  Token:", JSON.stringify(show(t))); console.log("  Token-Antwort-Felder:", Object.keys(t.j || {}).join(","), "| scope:", t.j?.scope);
 const refresh = t.j?.refresh_token; const at = t.j?.access_token;
 if (at && fs.existsSync("../zitadel/secrets/admin.pat")) {
   const pat = fs.readFileSync("../zitadel/secrets/admin.pat", "utf8").trim();
   const ir = await fetch(meta.introspection_endpoint, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", authorization: `Bearer ${pat}` }, body: new URLSearchParams({ token: at }) });
-  const ij = await ir.json().catch(() => ({})); console.log("  Introspektion (mit Service-User-PAT) ->", ir.status, JSON.stringify({ active: ij.active, scope: ij.scope, aud: ij.aud, client_id: ij.client_id, azp: ij.azp, sub: ij.sub?.slice(0, 8) }));
+  const ij = await ir.json().catch(() => ({})); console.log("  Introspection (with service user PAT) ->", ir.status, JSON.stringify({ active: ij.active, scope: ij.scope, aud: ij.aud, client_id: ij.client_id, azp: ij.azp, sub: ij.sub?.slice(0, 8) }));
 }
 let r1 = await mcp(RES, at, "tools/call", { name: "status", arguments: {} }); console.log("  MCP (aud-Modus)   ->", r1.status, r1.body.slice(0, 70));
 console.log("\n[B] falsche resource");
 a = await authorize("openid pflanzen:read", "http://localhost:9999/falsch", "ZB"); t = await exchange(a, "http://localhost:9999/falsch"); console.log("  ->", JSON.stringify(show(t)));
-console.log("\n[C] Refresh und Widerruf");
+console.log("\n[C] Refresh and revocation");
 if (refresh) {
   const rf = await token(meta, { grant_type: "refresh_token", refresh_token: refresh, client_id: cid }); console.log("  Refresh           ->", rf.status, "neues Refresh-Token verschieden:", rf.j.refresh_token && rf.j.refresh_token !== refresh);
   const rv = await fetch(meta.revocation_endpoint, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token: rf.j.refresh_token || refresh, client_id: cid, token_type_hint: "refresh_token" }) }); console.log("  Revoke            ->", rv.status);

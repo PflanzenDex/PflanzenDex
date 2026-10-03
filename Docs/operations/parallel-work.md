@@ -56,7 +56,7 @@ The ranges are an assumption (starting values). With 500 slots per service colli
 ## Owners and number assignment
 
 - `.github/CODEOWNERS` names an owner per folder; changes to it require review.
-- `make gates` includes `check-specs`: duplicate file numbers in `Docs/PRODUKT-SPECS/` and IDs defined twice (`US-/FR-/DM-/E-`) fail the run. Whoever adds a number checks the highest free number on the current `origin/dev`; on a conflict the later PR rebases and renumbers (IDs of existing entries are never renumbered).
+- `make gates` includes `check-specs`: duplicate file numbers in `Docs/PRODUCT-SPECS/` and IDs defined twice (`US-/FR-/DM-/E-`) fail the run. Whoever adds a number checks the highest free number on the current `origin/dev`; on a conflict the later PR rebases and renumbers (IDs of existing entries are never renumbered).
 
 ## Rules for agents
 
