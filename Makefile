@@ -9,13 +9,22 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup skills-check dev lint format typecheck test gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test
+.PHONY: help setup dev lint format typecheck test gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint release release-dry-run skills-check
 
 help: ## Alle Ziele mit einem Satz
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
 
 setup: ## Abhängigkeiten installieren (npm ci, ohne Lockfile npm install)
 	cd $(APP) && if [ -f package-lock.json ]; then npm ci; else npm install; fi
+	$(if $(CI),,$(MAKE) hooks)
+
+hooks: ## Enable the git hooks in .githooks/ (commit-msg, pre-commit, pre-push, hints)
+	git config core.hooksPath .githooks
+
+commitlint: ## Check a commit message or PR title (MSG="feat(pha): …"), QG-C1
+	@# MSG reaches the shell as an environment variable, never through $$(MSG) expansion: PR titles are untrusted input.
+	@test -n "$$MSG" || { echo 'usage: make commitlint MSG="feat(pha): …"' >&2; exit 2; }
+	@cd $(APP) && printf '%s\n' "$$MSG" | npx --no-install commitlint
 
 dev: ## API und Web lokal starten
 	cd $(APP) && npm run dev
@@ -60,6 +69,14 @@ gates: ## Schnelle Gates: Lint, Typen, Architekturgrenzen, Format
 
 ci: $(if $(CI),,db-up) ## Alle Gates in der Reihenfolge der CI, bricht beim ersten Fehler ab
 	cd $(APP) && npm run ci
+
+release: ## Version, tag and GitHub release from the commits (CI on main only, US-DEV-06)
+	@test -n "$(CI)" || { echo "release only runs in CI; locally use: make release-dry-run" >&2; exit 2; }
+	cd $(APP) && npx --no-install semantic-release
+
+release-dry-run: ## Show the next version and notes without publishing (BRANCH=dev)
+	cd $(APP) && GITHUB_TOKEN="$${GITHUB_TOKEN:-$$(gh auth token)}" npx --no-install semantic-release \
+		--dry-run --no-ci --branches "$${BRANCH:-$$(git branch --show-current)}"
 
 worktree: ## Neuer Worktree + Branch (BRANCH=feat/x) mit eigenen Ports (US-DEV-08)
 	scripts/worktree-new.sh "$(BRANCH)"
