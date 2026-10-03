@@ -2,7 +2,7 @@
   "name": "@pflanzendex/web",
   "private": true,
   "type": "module",
-  "description": "Mobile-first-PWA (React, Vite); importiert core nur über die öffentliche Schnittstelle",
+  "description": "Mobile-first PWA (React, Vite); imports core only through its public interface",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

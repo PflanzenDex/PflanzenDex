@@ -1,6 +1,6 @@
-# Besitzer je Bereich (US-DEV-08, FR-DEV-09). Änderungen an dieser Datei sind review-pflichtig.
-# Die letzte passende Regel gewinnt. Bis ein Team existiert, ist @MaxNize überall Besitzer;
-# beim Wachsen des Teams pro Epic/Ordner den jeweiligen Besitzer eintragen.
+# Owners per area (US-DEV-08, FR-DEV-09). Changes to this file require review.
+# The last matching rule wins. Until there is a team, @MaxNize owns everything;
+# as the team grows, add an owner per epic or folder.
 
 *                                   @MaxNize
 
@@ -15,4 +15,4 @@
 
 /Docs/PRODUKT-SPECS/                @MaxNize
 /Docs/PFLANZENSYSTEM-SPECS/         @MaxNize
-/Docs/betrieb/                      @MaxNize
+/Docs/operations/                      @MaxNize

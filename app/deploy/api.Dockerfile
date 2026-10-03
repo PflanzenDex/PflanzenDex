@@ -1,5 +1,5 @@
-# API-Image (TE-03). Build-Kontext ist `app/`. Reproduzierbar: Basis-Image nach Hauptversion, `npm ci` nach Lockfile.
-# `core` wird als TypeScript-Quelle exportiert, daher läuft die API über tsx (kein eigener Build-Schritt vorhanden).
+# API image (TE-03). Build context is `app/`. Reproducible: base image pinned to a major version, `npm ci` from the lock file.
+# `core` is exported as TypeScript source, so the API runs through tsx (there is no separate build step).
 FROM node:24-alpine
 WORKDIR /srv/app
 COPY package.json package-lock.json ./

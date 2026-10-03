@@ -27,11 +27,10 @@ const clean = {
   "packages/web/src/a.ts": 'import { x } from "@pflanzendex/core";\nexport const y = x;\n',
 };
 
-describe("Architekturgrenzen (US-QG-03)", () => {
-  it("sauberes Projekt hat keine Verstöße", () =>
-    assert.deepEqual(checkProject(project(clean)), []));
+describe("architecture boundaries (US-QG-03)", () => {
+  it("a clean project has no violations", () => assert.deepEqual(checkProject(project(clean)), []));
 
-  it("AB-1: core importiert ein Node-Modul", () => {
+  it("AB-1: core imports a Node module", () => {
     const v = checkProject(
       project({
         ...clean,
@@ -41,7 +40,7 @@ describe("Architekturgrenzen (US-QG-03)", () => {
     assert.equal(v.length, 1);
     assert.match(v[0], /^AB-1 packages\/core\/src\/meta\/x\.ts:1 /);
   });
-  it("AB-1: core importiert ein Fremdpaket außerhalb der Allowlist", () => {
+  it("AB-1: core imports a third-party package outside the allowlist", () => {
     const v = checkProject(
       project({
         ...clean,
@@ -50,19 +49,19 @@ describe("Architekturgrenzen (US-QG-03)", () => {
     );
     assert.match(v[0] ?? "", /^AB-1 .*hono/);
   });
-  it("AB-1: core importiert ein anderes Paket des Monorepos", () => {
+  it("AB-1: core imports another package of the monorepo", () => {
     const v = checkProject(
       project({ ...clean, "packages/core/src/meta/x.ts": 'export * from "@pflanzendex/web";\n' }),
     );
-    assert.match(v[0] ?? "", /^AB-1 .*anderes Paket/);
+    assert.match(v[0] ?? "", /^AB-1 .*other package/);
   });
-  it("AB-1: relativer Import verlässt core", () => {
+  it("AB-1: a relative import leaves core", () => {
     const v = checkProject(
       project({ ...clean, "packages/core/src/meta/x.ts": 'import "../../../api/src/app";\n' }),
     );
-    assert.match(v[0] ?? "", /^AB-1 .*verlässt core/);
+    assert.match(v[0] ?? "", /^AB-1 .*leaves core/);
   });
-  it("AB-1: Testdateien in core dürfen vitest importieren, sonst nichts", () => {
+  it("AB-1: test files in core may import vitest, nothing else", () => {
     assert.deepEqual(
       checkProject(
         project({
@@ -80,7 +79,7 @@ describe("Architekturgrenzen (US-QG-03)", () => {
     );
     assert.match(v[0] ?? "", /^AB-1 /);
   });
-  it("AB-2: tiefer Import in core aus Web oder API", () => {
+  it("AB-2: deep import into core from web or API", () => {
     const v = checkProject(
       project({
         ...clean,
@@ -90,7 +89,7 @@ describe("Architekturgrenzen (US-QG-03)", () => {
     );
     assert.match(v[0] ?? "", /^AB-2 packages\/api\/src\/a\.ts:1 /);
   });
-  it("AB-2: relativer Import greift in core hinein", () => {
+  it("AB-2: a relative import reaches into core", () => {
     const v = checkProject(
       project({
         ...clean,
@@ -100,15 +99,15 @@ describe("Architekturgrenzen (US-QG-03)", () => {
     );
     assert.match(v[0] ?? "", /^AB-2 /);
   });
-  it("ST-c: Verzeichnis mit Code ohne index.ts", () => {
+  it("ST-c: directory with code but without index.ts", () => {
     const v = checkProject(
       project({ ...clean, "packages/core/src/plan/regel.ts": "export const r = 1;\n" }),
     );
     assert.deepEqual(v, [
-      "ST-c packages/core/src/plan/index.ts fehlt: jedes Verzeichnis mit Code braucht einen index.ts als öffentliche Schnittstelle",
+      "ST-c packages/core/src/plan/index.ts missing: every directory with code needs an index.ts as its public interface",
     ]);
   });
-  it("ST-c: Verzeichnis nur mit Testdateien braucht keinen index.ts", () => {
+  it("ST-c: a directory with only test files needs no index.ts", () => {
     assert.deepEqual(
       checkProject(
         project({
@@ -120,7 +119,7 @@ describe("Architekturgrenzen (US-QG-03)", () => {
       [],
     );
   });
-  it("Kommentare mit Import-Text lösen keinen Verstoß aus", () => {
+  it("comments containing import text trigger no violation", () => {
     assert.deepEqual(
       checkProject(
         project({
@@ -132,7 +131,7 @@ describe("Architekturgrenzen (US-QG-03)", () => {
       [],
     );
   });
-  it("erkennt dynamische und require-Importe", () => {
+  it("detects dynamic and require imports", () => {
     assert.deepEqual(
       importsOf(
         'const a = await import("a");\nconst b = require("b");\nimport "c";\nexport * from "d";',
@@ -143,7 +142,7 @@ describe("Architekturgrenzen (US-QG-03)", () => {
     );
   });
 
-  it("AB-6: Web importiert API oder Datenbank", () => {
+  it("AB-6: web imports API or database", () => {
     for (const spec of ["@pflanzendex/api", "@pflanzendex/db"]) {
       const v = checkProject(
         project({
@@ -154,7 +153,7 @@ describe("Architekturgrenzen (US-QG-03)", () => {
       assert.match(v[0] ?? "", /^AB-6 packages\/web\/src\/b\.ts:1 /);
     }
   });
-  it("MK-1: Marker ohne Grund ist ein Fehler, mit Grund nicht", () => {
+  it("MK-1: a marker without a reason is an error, with a reason it is not", () => {
     const v = checkProject(
       project({ ...clean, "packages/api/src/m.ts": "// MAX_LINES_IGNORE:\nexport const m = 1;\n" }),
     );
@@ -163,30 +162,30 @@ describe("Architekturgrenzen (US-QG-03)", () => {
       checkProject(
         project({
           ...clean,
-          "packages/api/src/m.ts": "// MAX_LINES_IGNORE: generierte Datei\nexport const m = 1;\n",
+          "packages/api/src/m.ts": "// MAX_LINES_IGNORE: generated file\nexport const m = 1;\n",
         }),
       ),
       [],
     );
   });
-  it("Marker gilt nur in den ersten 5 Zeilen", () => {
+  it("a marker only counts in the first 5 lines", () => {
     assert.equal(hasMarker("\n\n\n\n\n// STRUCTURE_IGNORE: x\n", "STRUCTURE_IGNORE"), false);
-    assert.deepEqual(markersOf("/* STRUCTURE_IGNORE: Altlast */\n"), [
-      { name: "STRUCTURE_IGNORE", reason: "Altlast" },
+    assert.deepEqual(markersOf("/* STRUCTURE_IGNORE: legacy */\n"), [
+      { name: "STRUCTURE_IGNORE", reason: "legacy" },
     ]);
   });
-  it("ST-c: STRUCTURE_IGNORE mit Grund nimmt die Datei aus", () => {
+  it("ST-c: STRUCTURE_IGNORE with a reason exempts the file", () => {
     assert.deepEqual(
       checkProject(
         project({
           ...clean,
-          "packages/core/src/plan/regel.ts": "// STRUCTURE_IGNORE: Altlast\nexport const r = 1;\n",
+          "packages/core/src/plan/regel.ts": "// STRUCTURE_IGNORE: legacy\nexport const r = 1;\n",
         }),
       ),
       [],
     );
   });
-  it("EX-1: Ausnahmeliste des Projekts enthält nur Einträge mit Grund", () => {
+  it("EX-1: the project exception list only has entries with a reason", () => {
     assert.ok(KNOWN_EXCEPTIONS.every((e) => e.reason?.trim()));
   });
 });

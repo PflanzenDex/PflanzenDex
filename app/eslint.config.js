@@ -5,12 +5,12 @@ import tseslint from "typescript-eslint";
 import fs from "node:fs";
 import { walkCode, hasMarker } from "./scripts/check-boundaries.mjs";
 
-// Dateien mit `MAX_LINES_IGNORE: <Grund>` in den ersten 5 Zeilen sind von max-lines ausgenommen (US-QG-03).
+// Files with `MAX_LINES_IGNORE: <reason>` in their first 5 lines are exempt from max-lines (US-QG-03).
 const maxLinesIgnored = walkCode("packages")
   .filter((f) => hasMarker(fs.readFileSync(f, "utf8"), "MAX_LINES_IGNORE"))
   .map((f) => f.split("\\").join("/"));
 
-// Schwellen (Startwerte, Annahme; E-15): Dateilänge ≤ 200, Komplexität ≤ 15, in `core` ≤ 10.
+// Thresholds (starting values, assumptions; E-15): file length ≤ 200, complexity ≤ 15, in `core` ≤ 10.
 export default defineConfig([
   { ignores: ["**/dist/**", "**/node_modules/**", "**/coverage/**"] },
   js.configs.recommended,

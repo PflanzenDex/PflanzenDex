@@ -1,4 +1,4 @@
 import { defineConfig } from "vitest/config";
 
-// Die Tests teilen sich eine Datenbank und legen kurzzeitig Tabellen an: Dateien laufen nacheinander.
+// The tests share one database and create tables temporarily, so files run one after another.
 export default defineConfig({ test: { fileParallelism: false, testTimeout: 20000 } });

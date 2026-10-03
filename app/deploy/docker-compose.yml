@@ -1,4 +1,4 @@
-# Lokal und Staging (E-01: ein Host, Docker Compose). Alle Werte kommen aus der Umgebung, siehe .env.example.
+# Local and staging (E-01: one host, Docker Compose). All values come from the environment, see .env.example.
 # Start: docker compose --env-file deploy/.env -f deploy/docker-compose.yml up -d --build
 name: pflanzendex
 services:

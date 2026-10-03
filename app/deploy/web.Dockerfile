@@ -1,4 +1,4 @@
-# Web-Image (TE-03): Vite-Build, ausgeliefert als statische Dateien. Build-Kontext ist `app/`.
+# Web image (TE-03): Vite build, served as static files. Build context is `app/`.
 FROM node:24-alpine AS build
 WORKDIR /srv/app
 COPY package.json package-lock.json ./

@@ -119,8 +119,8 @@ Akzeptanzkriterien:
 - **Definition of Ready:** Eine Story darf begonnen werden, wenn Kriterien prüfbar formuliert sind (Gegeben/Wenn/Dann), Abhängigkeiten in `16-…` geklärt sind und offene Entscheidungen (E-nn) entschieden sind.
 - **Definition of Done:** FR-QG-10.
 - **Review (zweistufig, optional ab R1):** erst **blind** durch einen Agenten, der das Prinzipienregister nicht kennt, danach Fehleranalyse (`review-failure-analysis`), die für jeden Fund „warum besser, woran messbar, wie prüfbar" festhält und dem Maintainer **zur Bestätigung** vorlegt. Compliance-Review gegen bekannte Prinzipien nur auf Wunsch oder vor Releases (Muster Tombola, E-18).
-- **Entscheidungen als ADR:** Wird ein E-nn entschieden, entsteht ein Eintrag unter `Docs/entscheidungen/NNNN-titel.md` (Kontext, Entscheidung, Folgen); die Zeile in `16-…` verweist darauf.
-- **Stolperfallen-Register:** Wiederkehrende Fehler (Zeitzonen, Fehlertexte, Testsynchronisation) stehen als kurze Einträge unter `Docs/stolperfallen/` und werden bei einem Fund ergänzt (Muster `common-pitfalls`). Aus Einträgen, die sich prüfen lassen, werden Gates.
+- **Entscheidungen als ADR:** Wird ein E-nn entschieden, entsteht ein Eintrag unter `Docs/decisions/NNNN-title.md` (Kontext, Entscheidung, Folgen); die Zeile in `16-…` verweist darauf.
+- **Stolperfallen-Register:** Wiederkehrende Fehler (Zeitzonen, Fehlertexte, Testsynchronisation) stehen als kurze Einträge unter `Docs/pitfalls/` und werden bei einem Fund ergänzt (Muster `common-pitfalls`). Aus Einträgen, die sich prüfen lassen, werden Gates.
 - **Dokumentationsprozess:** Code-Änderung ohne passende Spec- oder Doku-Änderung fällt im Review auf; Doku-Commits tragen `docs:`; Doku wird mit Markdown-Lint und Link-Prüfung gegated (QG-U2).
 
 ### US-DEV-06 · Release-Prozess · ⬜
@@ -167,7 +167,7 @@ Als **Betreiber** will ich wissen, wenn etwas nicht stimmt, bevor Nutzer es meld
 Akzeptanzkriterien:
 - Gesundheits-Endpunkt (API, Datenbank, Job-Warteschlange, Objektspeicher) mit Version; wird vom Deploy und vom Monitoring abgefragt.
 - Fehler und fehlgeschlagene Jobs erzeugen eine **Betreibermeldung** (NFR-18) ohne Nutzerdaten im Klartext.
-- Runbooks unter `Docs/betrieb/` für: Backup einspielen, Rückfall, Migration schlägt fehl, Foto-Speicher voll, KI-Schnittstelle gestört oder missbraucht (Verbindung sperren), Erinnerungen laufen nicht, DSGVO-Löschung, Sicherheitsvorfall.
+- Runbooks unter `Docs/operations/` für: Backup einspielen, Rückfall, Migration schlägt fehl, Foto-Speicher voll, KI-Schnittstelle gestört oder missbraucht (Verbindung sperren), Erinnerungen laufen nicht, DSGVO-Löschung, Sicherheitsvorfall.
 - Ein Ausfall einer externen Quelle oder der KI beeinträchtigt keine Kernfunktion (NFR-17, FR-KI-05).
 - Betriebskennzahlen: Verfügbarkeit, Fehlerrate, Laufzeit der Jobs, Kosten je Konto (NFR-16).
 
