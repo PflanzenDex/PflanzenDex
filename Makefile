@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check changelog-check
 
 help: ## Alle Ziele mit einem Satz
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -25,6 +25,9 @@ commitlint: ## Check a commit message or PR title (MSG="feat(pha): …"), QG-C1
 	@# MSG reaches the shell as an environment variable, never through $$(MSG) expansion: PR titles are untrusted input.
 	@test -n "$$MSG" || { echo 'usage: make commitlint MSG="feat(pha): …"' >&2; exit 2; }
 	@cd $(APP) && printf '%s\n' "$$MSG" | npx --no-install commitlint
+
+changelog-check: ## PR changelog gate (QG-U3); env PR_TITLE, PR_BODY, PR_BASE_SHA, PR_BASE_REF
+	@cd $(APP) && npm run --silent changelog
 
 dev: ## API und Web lokal starten
 	cd $(APP) && npm run dev

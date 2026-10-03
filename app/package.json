@@ -27,7 +27,8 @@
     "ci": "npm run gates && npm run coverage && npm run build",
     "knip": "knip",
     "audit": "npm audit --audit-level=high",
-    "skills": "node scripts/check-skills.mjs"
+    "skills": "node scripts/check-skills.mjs",
+    "changelog": "node scripts/check-changelog.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",
