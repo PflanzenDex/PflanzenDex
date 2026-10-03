@@ -43,4 +43,12 @@ make ci      # alle Gates: Lint, Typen, Grenzen, Format, Tests, Build
 - **Einzige Ausnahme vom Mandantenschutz:** Prüfer lesen die Prüfliste (`pruefvorgang`, nur Metadaten). Der Mandantentest beweist, dass ein Betreiber in allen anderen Tabellen nichts Fremdes sieht (`pruefung.test.ts`).
 - **Grenze:** Der Artenkatalog (Tabelle `art`) entsteht erst mit BES-01. Dort muss die Art-Tabelle auf `pruefvorgang` verweisen (`objekt_art = 'art'`), die Sichtbarkeit (Vorschlag nur für den Ersteller, FR-BES-11) selbst regeln und Freigabe nur bei vollständigen Pflichtfeldern zulassen (FR-BES-14); Zusammenführen und Hinweise an den Ersteller gehören zu BES-10. Eine KI-Verbindung bekommt nie eine Rolle und kann daher nicht freigeben (FR-BES-06).
 
+## Standorte und Lichtzonen (US-LIC-05)
+
+- **Daten:** Tabellen `lichtzone` und `standort` (Migration 0004), beide mit Mandantenschutz und Namen je Konto eindeutig (ohne Beachtung der Schreibweise). Der Standort verweist über einen zusammengesetzten Fremdschlüssel `(konto_id, lichtzone_id)` auf die Zone: Eine Zone eines anderen Kontos lässt sich nicht zuordnen, Umbenennen ändert keine Zuordnung. Ein Standort ohne Zone ist zulässig und erscheint in `GET /hinweise`.
+- **Operationen (`core/operationen/licht`):** `lichtzone.anlegen|aendern|loeschen|voreinstellung`, `standort.einrichten|aendern`. Schreiben nur über `fuehreAus` mit Kopfzeile `Idempotency-Key`; der Wiederholungsschutz liegt in der Tabelle `idempotenz` (24 Stunden, Annahme).
+- **API:** `GET/POST /lichtzonen`, `PUT/DELETE /lichtzonen/:id`, `POST /lichtzonen/voreinstellung`, `GET/POST /standorte`, `PUT /standorte/:id`, `GET /hinweise`. Fehler: `{ fehler: { code, text, details?, daten? } }`.
+- **Grenze (Zone löschen):** Der Port `ZonenNutzung` fragt alle Quellen, wer eine Zone belegt. Heute gibt es nur die Quelle „Standorte“; Exemplare und Arten entstehen mit BES. **BES muss je eine Quelle ergänzen** (Parameter `zusaetzlicheNutzung` von `lichtRouten`), sonst blieben sie beim Löschen unbemerkt. Der Mechanismus ist mit einer Attrappe getestet. Standorte lassen sich noch nicht löschen (kein Kriterium).
+- **Hinweise:** Die zentrale Hinweis-Seite (US-BES-08) gibt es noch nicht; LIC-05 zeigt seine Hinweise auf der eigenen Seite und liefert sie über `standortHinweise`.
+
 **Betrieb (TE-03):** Container, Compose, Sicherung und Deploy liegen unter `deploy/`; Anleitung in `Docs/betrieb/staging-deploy-und-backup.md`. Ziele: `make deploy`, `make backup`, `make restore-test`.
