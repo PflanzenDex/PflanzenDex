@@ -13,17 +13,18 @@ const ANMELDEN: ApiFehler = { code: "zugriff.nicht_angemeldet", text: "Bitte mel
 type Daten =
   { art: "laedt" } | { art: "fehler"; fehler: ApiFehler } | { art: "da"; ansicht: MessAnsicht };
 
+async function ladeDaten(api: string, token: Token, exemplarId: string): Promise<Daten> {
+  const t = await token();
+  if (!t) return { art: "fehler", fehler: ANMELDEN };
+  const r = await ladeMessAnsicht(api, t, exemplarId);
+  return r.ok ? { art: "da", ansicht: r.wert } : { art: "fehler", fehler: r.fehler };
+}
+
 function useAnsicht(api: string, token: Token, exemplarId: string, neuLaden: number) {
   const [daten, setDaten] = useState<Daten>({ art: "laedt" });
   useEffect(() => {
     let aktuell = true;
-    void (async () => {
-      const t = await token();
-      if (!t) return aktuell && setDaten({ art: "fehler", fehler: ANMELDEN });
-      const r = await ladeMessAnsicht(api, t, exemplarId);
-      if (aktuell)
-        setDaten(r.ok ? { art: "da", ansicht: r.wert } : { art: "fehler", fehler: r.fehler });
-    })();
+    void ladeDaten(api, token, exemplarId).then((d) => aktuell && setDaten(d));
     return () => {
       aktuell = false;
     };
