@@ -1,22 +1,11 @@
-<<<<<<< HEAD
 // Architecture boundaries and structure (FR-QG-04, FR-QG-05), with rule ID and path in every message.
 //   AB-1  `core` imports nothing from API, web, database, file system or network
 //   AB-2  API and web import `core` only through its public interface (package root)
 //   AB-6  web imports neither API nor database (NFR-ARC-01 of the earlier draft: HTTP only)
-//   MK-1  marker STRUCTURE_IGNORE / MAX_LINES_IGNORE (first 5 lines) without a reason
+//   MK-1  marker STRUCTURE_IGNORE / MAX_LINES_IGNORE / COMPLEXITY_IGNORE (first 5 lines) without a reason
 //   EX-1  entry in KNOWN_EXCEPTIONS without a reason
 //   ST-c  every directory with code in `core` has an `index.ts`
 // Known, deliberately accepted legacy belongs in KNOWN_EXCEPTIONS (with a reason; the list may only shrink).
-=======
-// Architekturgrenzen und Struktur (FR-QG-04, FR-QG-05), mit Regel-ID und Pfad in jeder Meldung.
-//   AB-1  `core` importiert nichts aus API, Web, Datenbank, Dateisystem oder Netz
-//   AB-2  API und Web importieren `core` nur über die öffentliche Schnittstelle (Paketwurzel)
-//   AB-6  Web importiert weder API noch Datenbank (NFR-ARC-01 der früheren Skizze: nur über HTTP)
-//   MK-1  Marker STRUCTURE_IGNORE / MAX_LINES_IGNORE / COMPLEXITY_IGNORE (erste 5 Zeilen) ohne Grund
-//   EX-1  Eintrag in KNOWN_EXCEPTIONS ohne Grund
-//   ST-c  jedes Verzeichnis mit Code in `core` hat einen `index.ts`
-// Bekannte, bewusst akzeptierte Altlasten gehören in KNOWN_EXCEPTIONS (mit Begründung; darf nur kürzer werden).
->>>>>>> refs/remotes/origin/dev
 import fs from "node:fs";
 import path from "node:path";
 import { builtinModules } from "node:module";
@@ -26,13 +15,8 @@ export const CORE_ALLOWED_IMPORTS = []; // third-party packages allowed in core 
 export const CORE_TEST_ALLOWED_IMPORTS = ["vitest"];
 export const KNOWN_EXCEPTIONS = []; // entries: { rule, file, reason }
 
-<<<<<<< HEAD
-export const MARKERS = ["STRUCTURE_IGNORE", "MAX_LINES_IGNORE"];
-// Markers in the first 5 lines: { name, reason } (empty reason = marker without a reason = error MK-1).
-=======
 export const MARKERS = ["STRUCTURE_IGNORE", "MAX_LINES_IGNORE", "COMPLEXITY_IGNORE"];
-// Marker in den ersten 5 Zeilen: { name, reason } (reason leer = Marker ohne Grund = Fehler MK-1).
->>>>>>> refs/remotes/origin/dev
+// Markers in the first 5 lines: { name, reason } (empty reason = marker without a reason = error MK-1).
 export function markersOf(src) {
   const head = src.split("\n").slice(0, 5).join("\n");
   return MARKERS.flatMap((name) => {

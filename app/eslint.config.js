@@ -8,9 +8,7 @@ import security from "eslint-plugin-security";
 import { minimatch } from "minimatch";
 import { walkCode, hasMarker } from "./scripts/check-boundaries.mjs";
 
-<<<<<<< HEAD
 // Files with `MAX_LINES_IGNORE: <reason>` in their first 5 lines are exempt from max-lines (US-QG-03).
-=======
 // Thresholds live once in quality-limits.json (FR-QG-16); per-area overrides are merged over `default`.
 const limits = JSON.parse(
   fs.readFileSync(new URL("./quality-limits.json", import.meta.url), "utf8"),
@@ -58,15 +56,11 @@ const complexityIgnored = walkCode("packages")
   .filter((f) => hasMarker(fs.readFileSync(f, "utf8"), "COMPLEXITY_IGNORE"))
   .map((f) => f.split("\\").join("/"));
 
-// Dateien mit `MAX_LINES_IGNORE: <Grund>` in den ersten 5 Zeilen sind von max-lines ausgenommen (US-QG-03).
->>>>>>> refs/remotes/origin/dev
 const maxLinesIgnored = walkCode("packages")
   .filter((f) => hasMarker(fs.readFileSync(f, "utf8"), "MAX_LINES_IGNORE"))
   .map((f) => f.split("\\").join("/"));
 
-<<<<<<< HEAD
 // Thresholds (starting values, assumptions; E-15): file length ≤ 200, complexity ≤ 15, in `core` ≤ 10.
-=======
 // Local-date handling (NFR-08): UTC slicing of ISO strings yields the wrong day around midnight (US-QG-05, D4/B-01).
 const utcDateSlice = (method, args) =>
   `CallExpression[callee.property.name='${method}'][callee.object.callee.property.name='toISOString']${args}`;
@@ -75,8 +69,6 @@ const noUtcDateSlice = ["slice", "substring", "substr"].map((m) => ({
   message:
     "Do not derive a calendar date via toISOString().slice(0, 10): that is the UTC day. Use the local-date helpers (NFR-08).",
 }));
-
->>>>>>> refs/remotes/origin/dev
 export default defineConfig([
   { ignores: ["**/dist/**", "**/node_modules/**", "**/coverage/**"] },
   js.configs.recommended,

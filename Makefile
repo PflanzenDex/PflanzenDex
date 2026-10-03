@@ -38,14 +38,10 @@ format: ## Apply Prettier formatting
 typecheck: ## Strict TypeScript in all packages
 	cd $(APP) && npm run typecheck
 
-<<<<<<< HEAD
-db-up: ## Start the test database (PostgreSQL 16 in Docker) unless it is running
-=======
 docs-check: ## Lint markdown and check relative links (QG-U2)
 	cd $(APP) && npm run docs
 
-db-up: ## Test-Datenbank (PostgreSQL 16 in Docker) starten, falls sie nicht läuft
->>>>>>> refs/remotes/origin/dev
+db-up: ## Start the test database (PostgreSQL 16 in Docker) unless it is running
 	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) \
 		-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pflanzendex_test -p 127.0.0.1:$(DB_PORT):5432 postgres:16-alpine >/dev/null
 	@until docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test; do sleep 1; done
@@ -68,15 +64,6 @@ auth-down: ## Remove the auth server and mail catcher
 test: $(if $(CI),,db-up) ## Unit and database tests of all packages and check scripts
 	cd $(APP) && npm run test
 
-<<<<<<< HEAD
-gates: ## Fast gates: lint, types, architecture boundaries, format
-	cd $(APP) && npm run gates
-
-ci: $(if $(CI),,db-up) ## All gates in CI order, stops at the first failure
-	cd $(APP) && npm run ci
-
-worktree: ## New worktree and branch (BRANCH=feat/x) with its own ports (US-DEV-08)
-=======
 coverage: $(if $(CI),,db-up) ## Run all tests with coverage, then the ratchet check (thresholds: app/coverage-thresholds.json)
 	cd $(APP) && npm run coverage
 
@@ -101,7 +88,7 @@ audit: ## Known high-severity vulnerabilities in dependencies (npm audit, QG-S2)
 gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundaries, unused code, format
 	cd $(APP) && npm run gates
 
-ci: secrets workflows $(if $(CI),,db-up) ## Alle Gates in der Reihenfolge der CI, bricht beim ersten Fehler ab
+ci: secrets workflows $(if $(CI),,db-up) ## All gates in CI order, stops at the first failure
 	cd $(APP) && npm run ci
 
 release: ## Version, tag and GitHub release from the commits (CI on main only, US-DEV-06)
@@ -112,8 +99,7 @@ release-dry-run: ## Show the next version and notes without publishing (BRANCH=d
 	cd $(APP) && GITHUB_TOKEN="$${GITHUB_TOKEN:-$$(gh auth token)}" npx --no-install semantic-release \
 		--dry-run --no-ci --branches "$${BRANCH:-$$(git branch --show-current)}"
 
-worktree: ## Neuer Worktree + Branch (BRANCH=feat/x) mit eigenen Ports (US-DEV-08)
->>>>>>> refs/remotes/origin/dev
+worktree: ## New worktree and branch (BRANCH=feat/x) with its own ports (US-DEV-08)
 	scripts/worktree-new.sh "$(BRANCH)"
 
 clean: ## Remove build output and node_modules

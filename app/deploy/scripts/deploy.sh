@@ -1,23 +1,5 @@
 #!/usr/bin/env bash
-<<<<<<< HEAD
-# Staging deploy from main (TE-03): fetches origin/main, builds the images, restarts, waits for /health.
-# Usage on the host, in the checkout:  make deploy     (or deploy/scripts/deploy.sh [ref], default origin/main)
-set -euo pipefail
-cd "$(dirname "$0")/.."
-
-ref="${1:-origin/main}"
-if [ ! -f .env ]; then echo "ERROR: deploy/.env is missing (template: .env.example)" >&2; exit 1; fi
-
-git fetch --quiet origin
-git checkout --quiet --detach "$ref"
-GIT_SHA="$(git rev-parse --short HEAD)"
-export GIT_SHA
-
-compose=(docker compose --env-file .env -f docker-compose.yml)
-# Before a migration a backup would come first (US-DEV-07); without migrations only if the DB is running.
-if "${compose[@]}" ps --status running --services 2> /dev/null | grep -qx db; then ./scripts/backup.sh; fi
-=======
-# Staging-Deploy (TE-03, US-DEV-06): fetches origin/main, builds the images, restarts, waits for health,
+# Staging deploy (TE-03, US-DEV-06): fetches origin/main, builds images, restarts, waits for health,
 # runs the smoke test and rolls back to the previous ref automatically if it fails.
 # Usage on the host, in the checkout:  make deploy   (or deploy/scripts/deploy.sh [ref], default origin/main)
 # Deploying stays a deliberate step (E-14); nothing in CI calls this script.
@@ -25,7 +7,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 compose=(docker compose --env-file .env -f docker-compose.yml)
->>>>>>> refs/remotes/origin/dev
 
 # Builds and starts <ref>, waits for api health, then smoke-tests it. Returns non-zero on any failure.
 deploy_ref() {
@@ -56,7 +37,7 @@ smoke_base_url() {
 
 main() {
   local ref="${1:-origin/main}"
-  if [ ! -f .env ]; then echo "FEHLER: deploy/.env fehlt (Vorlage: .env.example)" >&2; exit 1; fi
+  if [ ! -f .env ]; then echo "ERROR: deploy/.env is missing (template: .env.example)" >&2; exit 1; fi
 
   git fetch --quiet --tags origin
   local previous
@@ -67,22 +48,15 @@ main() {
 
   if deploy_ref "$ref"; then echo "Deploy ok: $APP_VERSION ($GIT_SHA, $ref)"; exit 0; fi
 
-  echo "FEHLER: Deploy von $ref fehlgeschlagen; Rollback auf $previous" >&2
+  echo "ERROR: deploy of $ref failed; rolling back to $previous" >&2
   if deploy_ref "$previous"; then
-    echo "ROLLBACK ok: wieder auf $APP_VERSION ($GIT_SHA). Deploy von $ref ist NICHT live. Datenbankmigrationen werden nicht zurückgedreht (Backup: scripts/restore.sh)." >&2
+    echo "ROLLBACK ok: back to $APP_VERSION ($GIT_SHA). Deploy of $ref is NOT live. Database migrations are not rolled back (backup: scripts/restore.sh)." >&2
   else
-    echo "ROLLBACK FEHLGESCHLAGEN: manuell eingreifen (Docs/operations/release-and-rollback.md)." >&2
+    echo "ROLLBACK FAILED: manual intervention required (Docs/operations/release-and-rollback.md)." >&2
   fi
-<<<<<<< HEAD
-  sleep 2
-done
-echo "ERROR: api did not become healthy; logs: ${compose[*]} logs api" >&2
-exit 1
-=======
   exit 1
 }
 
 # The script file may change on checkout; bash has read the whole body above, and exits before reading on.
 main "$@"
 exit $?
->>>>>>> refs/remotes/origin/dev
