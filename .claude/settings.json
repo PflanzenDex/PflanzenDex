@@ -28,10 +28,12 @@
       "Bash(gh pr merge:*)",
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
-      "Read(./app/deploy/.env)",
-      "Read(./app/dev/.env)",
-      "Read(./.env)",
-      "Read(./.env.*)"
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Read(**/.env.*.local)",
+      "Edit(**/.env)",
+      "Edit(**/.env.local)",
+      "Edit(**/.env.*.local)"
     ]
   },
   "hooks": {

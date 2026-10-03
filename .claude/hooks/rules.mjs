@@ -54,12 +54,75 @@ export function stripText(command) {
     .replace(/"(?:[^"\\]|\\.)*"/g, '""');
 }
 
+// Adding a dependency (a package name after install/add). Bare `npm ci` and `npm install` are fine.
+const ADD_DEPENDENCY = /\b(?:npm\s+(?:install|i|add)|pnpm\s+(?:add|install|i)|yarn\s+add)(?:\s+-\S+)*\s+[^-\s|;&]/;
+const ADD_DEPENDENCY_REASON =
+  "New dependencies need a justification (supply chain, knip, bundle size). Say why the package is needed and why no existing one fits.";
+
+// Worktree-local throwaway directories that `rm -rf` may delete without asking.
+const THROWAWAY_DIRS = new Set(["node_modules", "dist", "coverage", ".cache"]);
+
+function isThrowawayTarget(target) {
+  if (!target || /^[/~$]/.test(target) || /[`()]/.test(target)) return false;
+  const parts = target.split("/").filter((part) => part && part !== ".");
+  return parts.length > 0 && !parts.includes("..") && THROWAWAY_DIRS.has(parts[parts.length - 1]);
+}
+
+function commandSegments(command) {
+  return command.split(/[;&|\n]+/).map((segment) => segment.trim().split(/\s+/).filter(Boolean));
+}
+
+function removesOutsideThrowaway(tokens) {
+  if (tokens[0] !== "rm") return false;
+  const recursive = tokens.slice(1).some((t) => t === "--recursive" || /^-[a-zA-Z]*[rR]/.test(t));
+  if (!recursive) return false;
+  const targets = tokens.slice(1).filter((t) => !t.startsWith("-"));
+  return targets.length === 0 || !targets.every(isThrowawayTarget);
+}
+
+function discardsWork(tokens) {
+  if (tokens[0] !== "git") return false;
+  const subIndex = tokens.findIndex((t, i) => i > 0 && !t.startsWith("-"));
+  if (subIndex < 0) return false;
+  const rest = tokens.slice(subIndex + 1);
+  switch (tokens[subIndex]) {
+    case "reset":
+      return rest.includes("--hard");
+    case "clean":
+      return rest.some((t) => t === "--force" || /^-[a-zA-Z]*f/.test(t));
+    case "checkout":
+      return rest.includes(".");
+    case "restore": {
+      const stagedOnly = rest.includes("--staged") && !rest.includes("--worktree") && !rest.includes("-W");
+      return !stagedOnly && rest.includes(".");
+    }
+    default:
+      return false;
+  }
+}
+
 export function judgeCommand(rawCommand) {
   const command = stripText(rawCommand);
   for (const [pattern, reason] of FORBIDDEN_COMMANDS) if (pattern.test(command)) return { decision: "deny", reason };
   for (const [pattern, reason] of CONFIRM_COMMANDS) if (pattern.test(command)) return { decision: "ask", reason };
+  if (ADD_DEPENDENCY.test(command)) return { decision: "ask", reason: ADD_DEPENDENCY_REASON };
+  const segments = commandSegments(command);
+  if (segments.some(removesOutsideThrowaway)) {
+    return { decision: "ask", reason: "`rm -rf` outside node_modules, dist, coverage and .cache can destroy work. Confirm the exact path." };
+  }
+  if (segments.some(discardsWork)) {
+    return { decision: "ask", reason: "This discards uncommitted work (reset --hard, clean -f, checkout/restore of the whole tree). Commit or stash first, or confirm." };
+  }
   return null;
 }
+
+// Migrations that exist are applied or about to be: their checksum must not change (forward-only, US-DEV-07).
+export function isMigrationFile(relativePath) {
+  return /^app\/packages\/db\/migrations\/[^/]+\.sql$/.test(relativePath);
+}
+
+export const MIGRATION_REASON =
+  "Applied migrations are immutable (forward-only, checksummed). Add a new numbered migration instead of editing this file (US-DEV-07).";
 
 // Files whose changes count as "code" for the Stop reminder.
 export function isCodePath(relativePath) {
