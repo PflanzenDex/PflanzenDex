@@ -17,9 +17,10 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "boundaries": "node scripts/check-boundaries.mjs",
     "specs": "node scripts/check-specs.mjs",
+    "docs": "cd .. && npx markdownlint-cli2 \"Docs/**/*.md\" \"CLAUDE.md\" --config \".markdownlint-cli2.jsonc\" && cd app && node scripts/check-links.mjs",
     "test": "npm run test --workspaces --if-present && node --test \"scripts/**/*.test.mjs\"",
     "build": "npm run build --workspaces --if-present",
-    "gates": "npm run lint && npm run typecheck && npm run boundaries && npm run specs && npm run format:check",
+    "gates": "npm run lint && npm run typecheck && npm run boundaries && npm run specs && npm run format:check && npm run docs",
     "ci": "npm run gates && npm run test && npm run build"
   },
   "devDependencies": {
@@ -28,6 +29,7 @@
     "concurrently": "^10.0.5",
     "eslint": "^10.12.0",
     "globals": "^17.13.0",
+    "markdownlint-cli2": "^0.23.3",
     "prettier": "^3.9.9",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.0",

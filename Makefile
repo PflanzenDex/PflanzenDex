@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test
+.PHONY: help setup dev lint format typecheck test gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test docs-check
 
 help: ## Alle Ziele mit einem Satz
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -28,6 +28,9 @@ format: ## Prettier schreibt die Formatierung
 
 typecheck: ## TypeScript strict in allen Paketen
 	cd $(APP) && npm run typecheck
+
+docs-check: ## Lint markdown and check relative links (QG-U2)
+	cd $(APP) && npm run docs
 
 db-up: ## Test-Datenbank (PostgreSQL 16 in Docker) starten, falls sie nicht läuft
 	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) \

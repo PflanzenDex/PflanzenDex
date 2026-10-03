@@ -1,0 +1,5 @@
+node_modules/**
+Docs/spikes/**
+Docs/testprotokolle/**
+Docs/ROADMAP.md
+app/**/CHANGELOG.md
