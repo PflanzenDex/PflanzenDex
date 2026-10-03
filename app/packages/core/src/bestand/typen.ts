@@ -47,10 +47,14 @@ export interface Exemplar extends ExemplarZeile {
   readonly behandlungen: readonly never[];
 }
 
+/** Beim Anlegen sind nur diese beiden Status möglich; ohne Angabe gilt `pflanze` (US-BES-04). */
+export const ANLEGE_STATUS = ["pflanze", "steckling"] as const;
+export type AnlegeStatus = (typeof ANLEGE_STATUS)[number];
+
 export type ExemplarWerte = Pick<
   ExemplarZeile,
   "artId" | "name" | "kennzeichen" | "standortId" | "gefangenAm"
->;
+> & { readonly status?: AnlegeStatus };
 
 /** Jeder Aufruf gilt nur für das Konto `nutzerId` (P-04). Der Name ist je Konto eindeutig (ohne Schreibweise). */
 export interface ExemplarSpeicher {
@@ -71,6 +75,11 @@ export interface ExemplarSpeicher {
     grund: string,
     datum: string,
   ): Promise<ExemplarZeile | "nicht_gefunden" | "bereits_archiviert">;
+  /** Steckling wird Pflanze (US-BES-04); jedes andere Exemplar bleibt unverändert und meldet `kein_steckling`. */
+  eintopfen(
+    nutzerId: string,
+    id: string,
+  ): Promise<ExemplarZeile | "nicht_gefunden" | "kein_steckling">;
   /** Stellt den Status vor der Archivierung wieder her und löscht Datum und Grund (US-BES-07). */
   wiederherstellen(
     nutzerId: string,
@@ -90,4 +99,9 @@ export interface ArtQuelle {
  */
 export interface SollStandortQuelle {
   sollStandort(nutzerId: string, art: Art, heute: string): Promise<string | null>;
+  /**
+   * Standort der Wachstumsphase, auch wenn die Art heute in der Ruhephase ist (US-BES-04: so steht ein Steckling),
+   * oder `null` für „unbekannt“.
+   */
+  wachstumsStandort(nutzerId: string, art: Art): Promise<string | null>;
 }

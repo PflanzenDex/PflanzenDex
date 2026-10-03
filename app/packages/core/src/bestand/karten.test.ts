@@ -127,6 +127,38 @@ describe("US-BES-06 Karte: Name, Art, Lichtzone, Status, Standort", () => {
   });
 });
 
+describe("US-BES-04 Karte: Steckling steht unter Stecklingslicht", () => {
+  it("US-BES-04: ein Steckling zeigt die niedrigste Zone als Lichtzone, auch ohne Zone am Standort", async () => {
+    await lege("anna", "Steckling", { standortId: kiste, status: "steckling" });
+    const [karte] = await exemplarKarten(abhaengigkeiten(), "anna", HEUTE);
+    expect(karte).toMatchObject({ status: "steckling", standort: "Kiste", lichtzone: "Zone 3" });
+  });
+
+  it("US-BES-04: ein Steckling an einem Standort höherer Zone zeigt trotzdem die niedrigste Zone", async () => {
+    const hoch = await licht
+      .zonenAdapter()
+      .anlegen("anna", { name: "Zone 4", luxDecke: 50000, ppfd: null, reihenfolge: null });
+    const zonenId = typeof hoch === "string" ? "" : hoch.id;
+    const s = await licht
+      .standortAdapter()
+      .anlegen("anna", { name: "Oben", lichtzoneId: zonenId, art: "innen" });
+    const oben = typeof s === "string" ? "" : s.id;
+    exemplare = new ExemplareImSpeicher({ anna: [oben] });
+    await lege("anna", "Steckling", { standortId: oben, status: "steckling" });
+    await lege("anna", "Pflanze", { standortId: oben, status: "pflanze" });
+    const karten = await exemplarKarten(abhaengigkeiten(), "anna", HEUTE);
+    expect(karten.find((k) => k.name === "Steckling")?.lichtzone).toBe("Zone 3");
+    expect(karten.find((k) => k.name === "Pflanze")?.lichtzone).toBe("Zone 4");
+  });
+
+  it("US-BES-04: ohne Zonen bleibt die Lichtzone des Stecklings unbekannt (P-08)", async () => {
+    licht.zonen.length = 0;
+    await lege("anna", "Steckling", { status: "steckling" });
+    const [karte] = await exemplarKarten(abhaengigkeiten(), "anna", HEUTE);
+    expect(karte?.lichtzone).toBeNull();
+  });
+});
+
 describe("US-BES-06 Karte: letzte Messung und Foto", () => {
   it("ohne Messung: keine Messung, kein Foto (Platzhalter), nichts erfunden", async () => {
     await lege("anna", "Bogenhanf");

@@ -1,0 +1,233 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/packages/core
+
+ ❯ src/bestand/steckling.test.ts (2 tests | 1 failed) 12ms
+   ❯ US-BES-04 Stecklingslicht (2)
+     × US-BES-04: Stecklingslicht ist die niedrigste Zone des Kontos, unabhängig von der Reihenfolge der Liste 9ms
+ ❯ src/bestand/eintopfen.test.ts (7 tests | 4 failed) 33ms
+   ❯ US-BES-04 Eingetopft (7)
+     × US-BES-04: ein Steckling wird eine Pflanze, alles andere bleibt unverändert 18ms
+     × US-BES-04: eine Pflanze ist kein Steckling, der Status bleibt und nichts wird geschrieben 5ms
+     × US-BES-04: ein archivierter Steckling wird nicht eingetopft 2ms
+     × US-BES-04: ein Steckling eines anderen Kontos sieht aus wie ein unbekannter (P-04) 3ms
+ ❯ src/bestand/karten.test.ts (21 tests | 2 failed) 36ms
+   ❯ US-BES-04 Karte: Steckling steht unter Stecklingslicht (3)
+     × US-BES-04: ein Steckling zeigt die niedrigste Zone als Lichtzone, auch ohne Zone am Standort 14ms
+     × US-BES-04: ein Steckling an einem Standort höherer Zone zeigt trotzdem die niedrigste Zone 1ms
+ ❯ src/bestand/anlegen.test.ts (29 tests | 3 failed) 71ms
+   ❯ US-BES-04 Steckling anlegen (5)
+     × US-BES-04: ein Steckling bekommt den Standort der Wachstumsphase, nicht den Soll-Standort der Ruhephase 9ms
+     × US-BES-04: ohne bekannten Wachstums-Standort bleibt der Standort des Stecklings unbekannt (P-08) 4ms
+     × US-BES-04: „archiviert“ und unbekannte Status werden beim Anlegen abgelehnt, nichts wird geschrieben 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-04 Steckling anlegen > US-BES-04: ein Steckling bekommt den Standort der Wachstumsphase, nicht den Soll-Standort der Ruhephase
+AssertionError: expected false to match object { status: 'steckling', …(1) }
+
+- Expected:
+{
+  "standortId": "44444444-4444-4444-8444-444444444444",
+  "status": "steckling",
+}
+
++ Received:
+false
+
+ ❯ src/bestand/anlegen.test.ts:206:28
+    204|     const soll = new SollStandortStub(FREMD_STANDORT, STANDORT);
+    205|     const r = await anlegen({ status: "steckling" }, { soll });
+    206|     expect(r.ok && r.wert).toMatchObject({ status: "steckling", stando…
+       |                            ^
+    207|     expect(soll.wachstumsAufrufe).toEqual([{ nutzerId: "anna", artId: …
+    208|     expect(soll.aufrufe).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-04 Steckling anlegen > US-BES-04: ohne bekannten Wachstums-Standort bleibt der Standort des Stecklings unbekannt (P-08)
+AssertionError: expected { …(11) } to match object { status: 'steckling', …(1) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "standortId": null,
+-   "status": "steckling",
++   "status": "pflanze",
+  }
+
+ ❯ src/bestand/anlegen.test.ts:221:28
+    219|   it("US-BES-04: ohne bekannten Wachstums-Standort bleibt der Standort…
+    220|     const r = await anlegen({ status: "steckling" });
+    221|     expect(r.ok && r.wert).toMatchObject({ status: "steckling", stando…
+       |                            ^
+    222|   });
+    223|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-04 Steckling anlegen > US-BES-04: „archiviert“ und unbekannte Status werden beim Anlegen abgelehnt, nichts wird geschrieben
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/bestand/anlegen.test.ts:236:20
+    234|     for (const status of ["archiviert", "tot", 3]) {
+    235|       const r = await anlegen({ status });
+    236|       expect(r.ok).toBe(false);
+       |                    ^
+    237|       expect(!r.ok && r.fehler.details).toEqual([{ feld: "status", cod…
+    238|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/bestand/eintopfen.test.ts > US-BES-04 Eingetopft > US-BES-04: ein Steckling wird eine Pflanze, alles andere bleibt unverändert
+AssertionError: expected false to deeply equal { …(9) }
+
+- Expected:
+{
+  "archiviertAm": null,
+  "archiviertGrund": null,
+  "artId": "11111111-1111-4111-8111-111111111111",
+  "gefangenAm": "2026-09-01",
+  "id": "00000000-0000-4000-8000-000000000001",
+  "kennzeichen": null,
+  "name": "Bogenhanf",
+  "standortId": null,
+  "status": "pflanze",
+}
+
++ Received:
+false
+
+ ❯ src/bestand/eintopfen.test.ts:51:28
+     49|     const steckling = await lege("anna", "Bogenhanf", "steckling");
+     50|     const r = await eintopfen(steckling.id);
+     51|     expect(r.ok && r.wert).toEqual({ ...steckling, status: "pflanze" }…
+       |                            ^
+     52|   });
+     53|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/bestand/eintopfen.test.ts > US-BES-04 Eingetopft > US-BES-04: eine Pflanze ist kein Steckling, der Status bleibt und nichts wird geschrieben
+AssertionError: expected 'exemplar.nicht_gefunden' to be 'exemplar.kein_steckling' // Object.is equality
+
+Expected: "exemplar.kein_steckling"
+Received: "exemplar.nicht_gefunden"
+
+ ❯ src/bestand/eintopfen.test.ts:58:36
+     56|     const vorher = exemplare.schreibzugriffe;
+     57|     const r = await eintopfen(pflanze.id);
+     58|     expect(!r.ok && r.fehler.code).toBe("exemplar.kein_steckling");
+       |                                    ^
+     59|     expect(exemplare.schreibzugriffe).toBe(vorher);
+     60|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/bestand/eintopfen.test.ts > US-BES-04 Eingetopft > US-BES-04: ein archivierter Steckling wird nicht eingetopft
+AssertionError: expected 'exemplar.nicht_gefunden' to be 'exemplar.kein_steckling' // Object.is equality
+
+Expected: "exemplar.kein_steckling"
+Received: "exemplar.nicht_gefunden"
+
+ ❯ src/bestand/eintopfen.test.ts:66:36
+     64|     await exemplare.archivieren("anna", steckling.id, "abgegeben", "20…
+     65|     const r = await eintopfen(steckling.id);
+     66|     expect(!r.ok && r.fehler.code).toBe("exemplar.kein_steckling");
+       |                                    ^
+     67|     expect((await exemplare.finde("anna", steckling.id))?.status).toBe…
+     68|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/bestand/eintopfen.test.ts > US-BES-04 Eingetopft > US-BES-04: ein Steckling eines anderen Kontos sieht aus wie ein unbekannter (P-04)
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/bestand/eintopfen.test.ts:76:22
+     74|     expect((await exemplare.finde("ben", fremd.id))?.status).toBe("ste…
+     75|     const eigen = await eintopfen(fremd.id, { kontext: ben });
+     76|     expect(eigen.ok).toBe(true);
+       |                      ^
+     77|   });
+     78|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/bestand/karten.test.ts > US-BES-04 Karte: Steckling steht unter Stecklingslicht > US-BES-04: ein Steckling zeigt die niedrigste Zone als Lichtzone, auch ohne Zone am Standort
+AssertionError: expected { …(11) } to match object { status: 'steckling', …(2) }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "lichtzone": "Zone 3",
++   "lichtzone": null,
+    "standort": "Kiste",
+    "status": "steckling",
+  }
+
+ ❯ src/bestand/karten.test.ts:134:19
+    132|     await lege("anna", "Steckling", { standortId: kiste, status: "stec…
+    133|     const [karte] = await exemplarKarten(abhaengigkeiten(), "anna", HE…
+    134|     expect(karte).toMatchObject({ status: "steckling", standort: "Kist…
+       |                   ^
+    135|   });
+    136|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/bestand/karten.test.ts > US-BES-04 Karte: Steckling steht unter Stecklingslicht > US-BES-04: ein Steckling an einem Standort höherer Zone zeigt trotzdem die niedrigste Zone
+AssertionError: expected 'Zone 4' to be 'Zone 3' // Object.is equality
+
+Expected: "Zone 3"
+Received: "Zone 4"
+
+ ❯ src/bestand/karten.test.ts:150:67
+    148|     await lege("anna", "Pflanze", { standortId: oben, status: "pflanze…
+    149|     const karten = await exemplarKarten(abhaengigkeiten(), "anna", HEU…
+    150|     expect(karten.find((k) => k.name === "Steckling")?.lichtzone).toBe…
+       |                                                                   ^
+    151|     expect(karten.find((k) => k.name === "Pflanze")?.lichtzone).toBe("…
+    152|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/bestand/steckling.test.ts > US-BES-04 Stecklingslicht > US-BES-04: Stecklingslicht ist die niedrigste Zone des Kontos, unabhängig von der Reihenfolge der Liste
+AssertionError: expected undefined to be 'a' // Object.is equality
+
+- Expected:
+"a"
+
++ Received:
+undefined
+
+ ❯ src/bestand/steckling.test.ts:14:77
+     12| describe("US-BES-04 Stecklingslicht", () => {
+     13|   it("US-BES-04: Stecklingslicht ist die niedrigste Zone des Kontos, u…
+     14|     expect(stecklingslicht([zone("c", 3), zone("a", 1), zone("b", 2)])…
+       |                                                                             ^
+     15|   });
+     16|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  4 failed | 3 passed (7)
+      Tests  10 failed | 90 passed (100)
+   Start at  21:57:07
+   Duration  377ms (transform 63%, import 19%, tests 17%, worker 2%)
+

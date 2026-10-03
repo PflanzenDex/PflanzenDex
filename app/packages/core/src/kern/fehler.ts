@@ -21,6 +21,7 @@ export const FEHLERTEXTE = {
   "exemplar.nicht_gefunden": "Dieses Exemplar gibt es nicht.",
   "exemplar.bereits_archiviert": "Dieses Exemplar ist schon archiviert.",
   "exemplar.nicht_archiviert": "Dieses Exemplar ist nicht archiviert.",
+  "exemplar.kein_steckling": "Dieses Exemplar ist kein Steckling und muss nicht eingetopft werden.",
   "exemplar.archiviert":
     "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her, dann kannst du damit arbeiten.",
   "standort.name_vergeben": "Einen Standort mit diesem Namen gibt es schon.",

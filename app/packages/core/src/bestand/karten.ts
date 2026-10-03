@@ -10,6 +10,7 @@ import type {
   OffeneBehandlung,
 } from "./karten-typen";
 import { artAnzeigename } from "./name";
+import { stecklingslicht } from "./steckling";
 import { istAktiv, type ArtQuelle, type ExemplarSpeicher, type ExemplarZeile } from "./typen";
 
 export interface KartenAbhaengigkeiten {
@@ -84,6 +85,8 @@ export async function exemplarKarten(
   const artNamen = new Map(
     artIds.map((id, i) => [id, arten[i] ? artAnzeigename(arten[i]) : null] as const),
   );
+  // Ein Steckling steht unter Stecklingslicht, egal wo sein Standort sonst liegt (US-BES-04).
+  const licht = stecklingslicht(zonen)?.name ?? null;
   const karte = (z: ExemplarZeile): ExemplarKarte => {
     const standort = standorte.find((s) => s.id === z.standortId);
     return {
@@ -92,7 +95,10 @@ export async function exemplarKarten(
       artName: artNamen.get(z.artId) ?? null,
       status: z.status,
       standort: standort?.name ?? null,
-      lichtzone: zonen.find((l) => l.id === standort?.lichtzoneId)?.name ?? null,
+      lichtzone:
+        z.status === "steckling"
+          ? licht
+          : (zonen.find((l) => l.id === standort?.lichtzoneId)?.name ?? null),
       gefangenAm: z.gefangenAm,
       ...messungsAnzeige(messungen.get(z.id)),
       ...behandlungsAnzeige(behandlungen.get(z.id) ?? [], heute),

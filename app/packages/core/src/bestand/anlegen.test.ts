@@ -198,3 +198,44 @@ describe("US-BES-02 Konto, Idempotenz und Anmeldung (P-03, P-04)", () => {
     expect(await exemplarLaden(exemplare, "anna", "kaktus")).toBeNull();
   });
 });
+
+describe("US-BES-04 Steckling anlegen", () => {
+  it("US-BES-04: ein Steckling bekommt den Standort der Wachstumsphase, nicht den Soll-Standort der Ruhephase", async () => {
+    const soll = new SollStandortStub(FREMD_STANDORT, STANDORT);
+    const r = await anlegen({ status: "steckling" }, { soll });
+    expect(r.ok && r.wert).toMatchObject({ status: "steckling", standortId: STANDORT });
+    expect(soll.wachstumsAufrufe).toEqual([{ nutzerId: "anna", artId: ART }]);
+    expect(soll.aufrufe).toEqual([]);
+  });
+
+  it("US-BES-04: ein gewählter Standort geht dem Wachstums-Standort vor", async () => {
+    const r = await anlegen(
+      { status: "steckling", standortId: STANDORT },
+      { soll: new SollStandortStub(null, "ignoriert") },
+    );
+    expect(r.ok && r.wert.standortId).toBe(STANDORT);
+  });
+
+  it("US-BES-04: ohne bekannten Wachstums-Standort bleibt der Standort des Stecklings unbekannt (P-08)", async () => {
+    const r = await anlegen({ status: "steckling" });
+    expect(r.ok && r.wert).toMatchObject({ status: "steckling", standortId: null });
+  });
+
+  it("US-BES-04: ohne Angabe oder mit „pflanze“ bleibt es eine Pflanze und der Soll-Standort gilt", async () => {
+    for (const eingabe of [{}, { status: "pflanze" }]) {
+      const soll = new SollStandortStub(STANDORT, "anderer");
+      const r = await anlegen({ ...eingabe, kennzeichen: `k${++zaehler}` }, { soll });
+      expect(r.ok && r.wert).toMatchObject({ status: "pflanze", standortId: STANDORT });
+      expect(soll.wachstumsAufrufe).toEqual([]);
+    }
+  });
+
+  it("US-BES-04: „archiviert“ und unbekannte Status werden beim Anlegen abgelehnt, nichts wird geschrieben", async () => {
+    for (const status of ["archiviert", "tot", 3]) {
+      const r = await anlegen({ status });
+      expect(r.ok).toBe(false);
+      expect(!r.ok && r.fehler.details).toEqual([{ feld: "status", code: "eingabe.ungueltig" }]);
+    }
+    expect(exemplare.schreibzugriffe).toBe(0);
+  });
+});

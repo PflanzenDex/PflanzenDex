@@ -85,7 +85,7 @@ export class ExemplareImSpeicher implements ExemplarSpeicher {
     const zeile: ExemplarZeile = {
       ...w,
       id: `00000000-0000-4000-8000-${String(this.zeilen.length + 1).padStart(12, "0")}`,
-      status: "pflanze",
+      status: w.status ?? "pflanze",
       archiviertAm: null,
       archiviertGrund: null,
     };
@@ -121,6 +121,13 @@ export class ExemplareImSpeicher implements ExemplarSpeicher {
     return r as ExemplarZeile;
   }
 
+  async eintopfen(nutzerId: string, id: string) {
+    const z = await this.finde(nutzerId, id);
+    if (!z) return "nicht_gefunden" as const;
+    if (z.status !== "steckling") return "kein_steckling" as const;
+    return this.ersetze(nutzerId, id, { status: "pflanze" }) as ExemplarZeile;
+  }
+
   async wiederherstellen(nutzerId: string, id: string) {
     const z = await this.finde(nutzerId, id);
     if (!z) return "nicht_gefunden" as const;
@@ -138,7 +145,17 @@ export class ExemplareImSpeicher implements ExemplarSpeicher {
 export class SollStandortStub implements SollStandortQuelle {
   readonly aufrufe: { nutzerId: string; artId: string; heute: string }[] = [];
 
-  constructor(private readonly antwort: string | null) {}
+  readonly wachstumsAufrufe: { nutzerId: string; artId: string }[] = [];
+
+  constructor(
+    private readonly antwort: string | null,
+    private readonly wachstum: string | null = null,
+  ) {}
+
+  async wachstumsStandort(nutzerId: string, art: Art): Promise<string | null> {
+    this.wachstumsAufrufe.push({ nutzerId, artId: art.id });
+    return this.wachstum;
+  }
 
   async sollStandort(nutzerId: string, art: Art, heute: string): Promise<string | null> {
     this.aufrufe.push({ nutzerId, artId: art.id, heute });

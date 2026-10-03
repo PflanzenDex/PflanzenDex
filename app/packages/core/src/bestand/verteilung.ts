@@ -2,6 +2,7 @@
 // Dieselbe Zählung dient später der Wunschlisten-Priorisierung (Exemplar-Ebene, nur Zonen 2 bis 4).
 import { zoneAbleiten, type LichtStandort, type Lichtzone } from "../licht";
 import type { Art } from "../katalog";
+import { stecklingslicht } from "./steckling";
 import { verteilungsHinweis } from "./verteilung-hinweis";
 import type { NichtGezaehlt, Verteilung, VerteilungsAbhaengigkeiten } from "./verteilung-typen";
 import { istAktiv, type ExemplarZeile } from "./typen";
@@ -34,7 +35,7 @@ function platzVon(z: ExemplarZeile, k: Kontext): Platz {
   const standort = k.standorte.find((s) => s.id === z.standortId);
   const eigene = k.zonen.find((l) => l.id === standort?.lichtzoneId);
   if (!eigene) return zoneDerArt(k.arten.get(z.artId), k.zonen);
-  return eigene.id === k.zonen[0]?.id ? "stecklingslicht" : eigene;
+  return eigene.id === stecklingslicht(k.zonen)?.id ? "stecklingslicht" : eigene;
 }
 
 const duennsteZonen = (zonen: readonly { zone: Lichtzone; anzahl: number }[]): Lichtzone[] => {

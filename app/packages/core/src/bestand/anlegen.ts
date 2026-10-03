@@ -8,11 +8,12 @@ import {
   ok,
   oderNull,
   textFeld,
+  wahlFeld,
   zeitzoneFeld,
 } from "../kern";
 import { mitAbleitungen } from "./lesen";
 import { artAnzeigename, exemplarName } from "./name";
-import { EXEMPLAR_GRENZEN } from "./typen";
+import { ANLEGE_STATUS, EXEMPLAR_GRENZEN } from "./typen";
 import type { ArtQuelle, ExemplarSpeicher, SollStandortQuelle } from "./typen";
 
 export interface AnlegenAbhaengigkeiten {
@@ -29,13 +30,15 @@ const schema = objekt({
   zeitzone: zeitzoneFeld("zeitzone"),
   kennzeichen: oderNull(textFeld("kennzeichen", EXEMPLAR_GRENZEN.kennzeichen)),
   standortId: oderNull(kennungFeld("standortId")),
+  status: oderNull(wahlFeld("status", ANLEGE_STATUS)),
 });
 
 /**
  * Legt ein Exemplar an (US-BES-02): Pflicht ist die Art. Der Name steht vor dem Speichern fest (DM-BES-03); ist er
  * vergeben, wird nichts geschrieben und der Fehler nennt die vorhandenen Exemplare der Art (FR-BES-03, P-10).
  * `Gefangen_Am` ist das heutige Datum in der Zeitzone des Nutzers (FR-BES-04). Der Standort ist der gewählte, sonst
- * der Soll-Standort aus dem Port, sonst unbekannt (P-08).
+ * der Soll-Standort aus dem Port, sonst unbekannt (P-08). Ein Steckling (`status: "steckling"`, US-BES-04) steht am
+ * Standort der Wachstumsphase, auch wenn die Art gerade ruht; ohne Angabe ist das Exemplar eine Pflanze.
  */
 export const exemplarAnlegen = (deps: AnlegenAbhaengigkeiten) =>
   definiereOperation({
@@ -46,14 +49,19 @@ export const exemplarAnlegen = (deps: AnlegenAbhaengigkeiten) =>
       if (!art) return fehlgeschlagen(fehler("art.nicht_gefunden"));
       const heute = heuteLokal(deps.uhr(), eingabe.zeitzone);
       const name = exemplarName(artAnzeigename(art), eingabe.kennzeichen);
+      const status = eingabe.status ?? "pflanze";
       const standortId =
-        eingabe.standortId ?? (await deps.sollStandort.sollStandort(nutzerId, art, heute));
+        eingabe.standortId ??
+        (status === "steckling"
+          ? await deps.sollStandort.wachstumsStandort(nutzerId, art)
+          : await deps.sollStandort.sollStandort(nutzerId, art, heute));
       const r = await deps.exemplare.anlegen(nutzerId, {
         artId: art.id,
         name,
         kennzeichen: eingabe.kennzeichen,
         standortId,
         gefangenAm: heute,
+        status,
       });
       if (r === "standort_unbekannt") return fehlgeschlagen(fehler("standort.nicht_gefunden"));
       if (r !== "name_vergeben") return ok(mitAbleitungen(r));
