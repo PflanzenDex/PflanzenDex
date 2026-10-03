@@ -3,6 +3,8 @@
 //   AB-13  a migration creates or changes a table that no module owns
 //   AB-14  a migration names its module (file name `NNNN_<module>_<name>.sql` and first line `-- modul: <module>`)
 //          and touches only the tables of that module and of `kern`; applied files are never renamed (LEGACY_MIGRATIONS)
+//   AB-10  a foreign key in a migration to a registered global reference table (GLOBAL_REFERENCE_TABLES) needs an
+//          allowed dependency on its owner, a plain `(id)` target and `on delete restrict`
 import fs from "node:fs";
 import path from "node:path";
 import { locate, moduleOf } from "./check-modules.mjs";
@@ -72,6 +74,27 @@ function touchProblem({ add, cfg }, { file, declared, line }, table) {
     );
 }
 
+const REFERENCES = /\breferences ([a-z_]\w*)([^,]*)/g;
+
+/** AB-10 on the SQL text: references to a global reference table (the live schema is checked in modul-schema.ts). */
+function referenceProblems({ add, cfg }, { file, declared, line }, stmt) {
+  const globals = cfg.GLOBAL_REFERENCE_TABLES ?? {};
+  for (const m of stmt.matchAll(REFERENCES)) {
+    const entry = globals[m[1]];
+    if (!entry || declared.includes(entry.owner)) continue; // inside the owner module the rule does not apply
+    const from = declared[0];
+    const where = `foreign key to global reference table ${m[1]}`;
+    const deps = cfg.MODULES.find((x) => x.name === from)?.dependsOn ?? [];
+    if (from !== entry.owner && !deps.includes(entry.owner))
+      add("AB-10", file, line, `${from} -> ${entry.owner}: ${where} without an allowed dependency`);
+    if (!entry.reason?.trim()) add("AB-10", file, line, `${where} has no reason in the register`);
+    if (m[2].match(/^ ?\(([^)]*)\)/)?.[1].trim() !== "id")
+      add("AB-10", file, line, `${from} -> ${entry.owner}: ${where} only as a plain (id) target`);
+    if (!/\bon delete restrict\b/.test(m[2]))
+      add("AB-10", file, line, `${from} -> ${entry.owner}: ${where} needs on delete restrict`);
+  }
+}
+
 function declaredModules(name, cfg) {
   if (name in cfg.LEGACY_MIGRATIONS) return cfg.LEGACY_MIGRATIONS[name];
   const rest = name.match(/^\d{4}_(.+)\.sql$/)?.[1] ?? "";
@@ -101,13 +124,38 @@ function checkMigration(ctx, file) {
         `first line must be "-- modul: ${declared[0]}" (found ${first ?? "none"})`,
       );
   }
-  for (const stmt of statements(text))
+  for (const stmt of statements(text)) {
+    referenceProblems(ctx, { file, declared, line: stmt.line }, stmt.text);
     for (const re of TOUCHES)
       for (const m of stmt.text.matchAll(re)) touchProblem(ctx, { file, declared, ...stmt }, m[1]);
+  }
+}
+
+/** AB-10, register part: every GLOBAL_REFERENCE_TABLES entry has a reason and names the module that owns the table. */
+function checkGlobalTables({ appDir, add, cfg }) {
+  const file = path.join(appDir, "modules.config.mjs");
+  const owners = tableOwners(cfg);
+  for (const [table, entry] of Object.entries(cfg.GLOBAL_REFERENCE_TABLES ?? {})) {
+    if (!entry.reason?.trim())
+      add(
+        "AB-10",
+        file,
+        0,
+        `global reference table ${table} has no reason (GLOBAL_REFERENCE_TABLES)`,
+      );
+    if (owners.get(table) !== entry.owner)
+      add(
+        "AB-10",
+        file,
+        0,
+        `global reference table ${table}: owner ${entry.owner} does not own it (${owners.get(table) ?? "no module"})`,
+      );
+  }
 }
 
 export function checkMigrations(ctx) {
   const { appDir, add, cfg } = ctx;
+  checkGlobalTables(ctx);
   const dir = path.join(appDir, "packages", "db", "migrations");
   if (!fs.existsSync(dir)) return;
   const files = fs.readdirSync(dir).filter((f) => f.endsWith(".sql"));

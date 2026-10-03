@@ -5,7 +5,8 @@
 //   AB-11  `kern` imports no domain module
 //   AB-12  no coupling upwards (reverse of an allowed edge) and no module importing all others
 //   AB-13  register consistency: unique names, known dependencies, one owner per table, no code outside a module
-// AB-9 (SQL on foreign tables) and AB-14 (migrations) live in check-modules-sql.mjs; AB-10 in db/src/modul-schema.ts.
+// AB-9 (SQL on foreign tables), AB-14 (migrations) and AB-10 (global reference tables: register entries, references) live in check-modules-sql.mjs;
+// AB-10 on the live schema in db/src/kern/modul-schema.ts.
 // Folders named like a module are checked as soon as they exist; without them the checks are idle.
 import fs from "node:fs";
 import path from "node:path";
