@@ -1,9 +1,12 @@
 # Ein Einstieg für alle Aufgaben (US-DEV-01). Lokal und in der CI laufen dieselben Ziele (FR-QG-01).
 # Das Makefile enthält keine Fachlogik, nur Aufrufe; ein Fehler bricht ab und wird nie verdeckt (D-05).
 APP := app
+# Test-Datenbank (E-01: PostgreSQL in Docker). In der CI stellt der Workflow sie als Dienst bereit.
+DB_CONTAINER := pflanzendex-test-db
+DB_PORT := 54329
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test gates ci clean deploy backup restore-test
+.PHONY: help setup dev lint format typecheck test gates ci clean db-up db-down migrate deploy backup restore-test
 
 help: ## Alle Ziele mit einem Satz
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -23,13 +26,24 @@ format: ## Prettier schreibt die Formatierung
 typecheck: ## TypeScript strict in allen Paketen
 	cd $(APP) && npm run typecheck
 
-test: ## Unit-Tests aller Pakete und der Prüfskripte
+db-up: ## Test-Datenbank (PostgreSQL 16 in Docker) starten, falls sie nicht läuft
+	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) \
+		-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pflanzendex_test -p 127.0.0.1:$(DB_PORT):5432 postgres:16-alpine >/dev/null
+	@until docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test; do sleep 1; done
+
+db-down: ## Test-Datenbank entfernen
+	-docker rm -f $(DB_CONTAINER)
+
+migrate: ## Migrationen anwenden (DATABASE_URL, sonst die Test-Datenbank)
+	cd $(APP) && npm run migrate -w @pflanzendex/db
+
+test: $(if $(CI),,db-up) ## Unit- und Datenbanktests aller Pakete und der Prüfskripte
 	cd $(APP) && npm run test
 
 gates: ## Schnelle Gates: Lint, Typen, Architekturgrenzen, Format
 	cd $(APP) && npm run gates
 
-ci: ## Alle Gates in der Reihenfolge der CI, bricht beim ersten Fehler ab
+ci: $(if $(CI),,db-up) ## Alle Gates in der Reihenfolge der CI, bricht beim ersten Fehler ab
 	cd $(APP) && npm run ci
 
 clean: ## Build-Ausgaben und node_modules entfernen

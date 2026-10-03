@@ -1,6 +1,9 @@
 // Architekturgrenzen und Struktur (FR-QG-04, FR-QG-05), mit Regel-ID und Pfad in jeder Meldung.
 //   AB-1  `core` importiert nichts aus API, Web, Datenbank, Dateisystem oder Netz
 //   AB-2  API und Web importieren `core` nur über die öffentliche Schnittstelle (Paketwurzel)
+//   AB-6  Web importiert weder API noch Datenbank (NFR-ARC-01 der früheren Skizze: nur über HTTP)
+//   MK-1  Marker STRUCTURE_IGNORE / MAX_LINES_IGNORE (erste 5 Zeilen) ohne Grund
+//   EX-1  Eintrag in KNOWN_EXCEPTIONS ohne Grund
 //   ST-c  jedes Verzeichnis mit Code in `core` hat einen `index.ts`
 // Bekannte, bewusst akzeptierte Altlasten gehören in KNOWN_EXCEPTIONS (mit Begründung; darf nur kürzer werden).
 import fs from "node:fs";
@@ -11,6 +14,18 @@ import { fileURLToPath } from "node:url";
 export const CORE_ALLOWED_IMPORTS = []; // erlaubte Fremdpakete in core (bewusst leer; später z. B. zod)
 export const CORE_TEST_ALLOWED_IMPORTS = ["vitest"];
 export const KNOWN_EXCEPTIONS = []; // Einträge: { rule, file, reason }
+
+export const MARKERS = ["STRUCTURE_IGNORE", "MAX_LINES_IGNORE"];
+// Marker in den ersten 5 Zeilen: { name, reason } (reason leer = Marker ohne Grund = Fehler MK-1).
+export function markersOf(src) {
+  const head = src.split("\n").slice(0, 5).join("\n");
+  return MARKERS.flatMap((name) => {
+    const m = head.match(new RegExp(`\\b${name}\\b(?::[ \\t]*([^\\n]*))?`));
+    return m ? [{ name, reason: (m[1] ?? "").replace(/\*\/\s*$/, "").trim() }] : [];
+  });
+}
+export const hasMarker = (src, name) =>
+  markersOf(src).some((m) => m.name === name && m.reason !== "");
 
 const isTest = (f) => /\.test\.(ts|tsx|mjs)$/.test(f);
 const CODE = /\.(ts|tsx)$/;
@@ -23,6 +38,8 @@ function walk(dir) {
     return e.isDirectory() ? walk(p) : [p];
   });
 }
+
+export const walkCode = (dir) => walk(dir).filter((f) => CODE.test(f));
 
 function stripComments(src) {
   return src
@@ -98,6 +115,14 @@ function checkConsumers(appDir, add) {
       for (const { spec, line } of importsOf(fs.readFileSync(file, "utf8"))) {
         const problem = consumerImportProblem(spec, file, coreRoot);
         if (problem) add("AB-2", file, line, problem);
+        const web = pkg === "web" && /^@pflanzendex\/(api|db)(\/|$)/.test(spec);
+        if (web)
+          add(
+            "AB-6",
+            file,
+            line,
+            `Import "${spec}": Web spricht mit API und Datenbank nur über HTTP`,
+          );
       }
     }
   }
@@ -105,7 +130,9 @@ function checkConsumers(appDir, add) {
 
 function checkStructure(appDir, add) {
   const coreSrc = path.join(appDir, "packages", "core", "src");
-  const codeFiles = walk(coreSrc).filter((f) => CODE.test(f) && !isTest(f));
+  const codeFiles = walk(coreSrc).filter(
+    (f) => CODE.test(f) && !isTest(f) && !hasMarker(fs.readFileSync(f, "utf8"), "STRUCTURE_IGNORE"),
+  );
   for (const dir of new Set(codeFiles.map((f) => path.dirname(f)))) {
     if (!fs.existsSync(path.join(dir, "index.ts")))
       add(
@@ -115,6 +142,13 @@ function checkStructure(appDir, add) {
         "fehlt: jedes Verzeichnis mit Code braucht einen index.ts als öffentliche Schnittstelle",
       );
   }
+}
+
+function checkMarkers(appDir, add) {
+  for (const file of walk(path.join(appDir, "packages")).filter((f) => CODE.test(f)))
+    for (const m of markersOf(fs.readFileSync(file, "utf8")))
+      if (!m.reason)
+        add("MK-1", file, 1, `Marker ${m.name} ohne Grund (Format "${m.name}: <Grund>")`);
 }
 
 export function checkProject(appDir) {
@@ -127,6 +161,10 @@ export function checkProject(appDir) {
   checkCore(appDir, add);
   checkConsumers(appDir, add);
   checkStructure(appDir, add);
+  checkMarkers(appDir, add);
+  for (const e of KNOWN_EXCEPTIONS)
+    if (!e.reason?.trim())
+      out.push(`EX-1 ${e.file} Ausnahme für ${e.rule} ohne Grund in KNOWN_EXCEPTIONS`);
   return out;
 }
 
