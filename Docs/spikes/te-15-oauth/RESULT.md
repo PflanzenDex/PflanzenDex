@@ -1,105 +1,105 @@
-# Spike TE-15: OAuth-Autorisierungsserver für den KI-Zugang (MCP)
+# Spike TE-15: OAuth authorization server for AI access (MCP)
 
-Stand: 2026-10-03 · Ticket TE-15 · Absicherung der Entscheidungen E-03 (Anmeldedienst) und E-04 (KI-Zugang).
+As of: 2026-10-03 · Ticket TE-15 · Backs decisions E-03 (sign-in service) and E-04 (AI access).
 
-## Kurzfassung
+## Summary
 
-- **Empfehlung und Entscheidung: Keycloak** (selbst gehostet) als Anmeldedienst und OAuth-Autorisierungsserver. Von den zwei getesteten Kandidaten erfüllt nur Keycloak unser Rechte-Modell (eigene Scopes mit Step-up, `resource`/Audience, Zustimmung, Domain-Beschränkung der Registrierung, JWT-Token).
-- **Nicht nachgewiesen:** Die Verbindung mit den echten Clients. **Claude** scheiterte beim Verbinden über die Client-ID-Metadata-Variante (CIMD) an einer Keycloak-Ablehnung (Ursache eingegrenzt, nicht behoben). **ChatGPT** und **Claude Code** wurden nicht getestet. Das ist ein offener Punkt, kein Erfolg (Folgeticket TE-16).
-- **Zwei Keycloak-Funktionen, auf die wir bauen, sind in 26.8.0 noch „experimentell":** `cimd` und `resource-indicators`. Das ist ein Betriebs- und Änderungsrisiko.
-- Der Spike wurde auf Wunsch des Projektverantwortlichen an dieser Stelle beendet; die unten genannten Lücken sind bewusst offen geblieben.
+- **Recommendation and decision: Keycloak** (self-hosted) as sign-in service and OAuth authorization server. Of the two candidates tested, only Keycloak meets our permission model (own scopes with step-up, `resource`/audience, consent, domain restriction of registration, JWT tokens).
+- **Not proven:** the connection with the real clients. **Claude** failed to connect via the Client ID Metadata Document variant (CIMD) because of a Keycloak rejection (cause narrowed down, not fixed). **ChatGPT** and **Claude Code** were not tested. This is an open point, not a success (follow-up ticket TE-16).
+- **Two Keycloak features we build on are still "experimental" in 26.8.0:** `cimd` and `resource-indicators`. This is an operations and change risk.
+- The spike was ended at this point at the request of the project owner; the gaps named below were deliberately left open.
 
-## Aufbau
+## Setup
 
-Alles selbst gehostet per Docker, Wegwerf-Setup in diesem Ordner:
+Everything self-hosted via Docker, throwaway setup in this folder:
 
-| Teil | Inhalt |
+| Part | Content |
 |---|---|
-| `keycloak/` | Keycloak 26.8.0 mit `--features=cimd,resource-indicators`, `start-dev`, H2 |
-| `zitadel/` | Zitadel v4.19.4 nach dem offiziellen Compose-Setup (Traefik, API, Login-UI, Postgres) |
-| `mcp-test-server/` | Minimaler MCP-Server (Streamable HTTP, SDK 1.32.0) als OAuth Resource Server: Protected Resource Metadata (RFC 9728), JWT-Prüfung (Issuer, Audience), drei Tools mit den Klassen `lesen`, `Entwurf`, `schreiben`, Step-up per `403 insufficient_scope` |
-| `checks/` | Prüfskripte: Discovery und DCR, vollständiger Ablauf mit Browser-Login (Playwright), CIMD-Simulation, Policies |
+| `keycloak/` | Keycloak 26.8.0 with `--features=cimd,resource-indicators`, `start-dev`, H2 |
+| `zitadel/` | Zitadel v4.19.4 following the official Compose setup (Traefik, API, login UI, Postgres) |
+| `mcp-test-server/` | Minimal MCP server (Streamable HTTP, SDK 1.32.0) as OAuth resource server: Protected Resource Metadata (RFC 9728), JWT validation (issuer, audience), three tools with the classes `lesen` (read), `Entwurf` (draft), `schreiben` (write), step-up via `403 insufficient_scope` |
+| `checks/` | Check scripts: discovery and DCR, full flow with browser login (Playwright), CIMD simulation, policies |
 
-Getestet wurde zuerst lokal, danach über öffentliche Quick-Tunnel (Cloudflare) mit den echten Clients.
+Tested first locally, then through public quick tunnels (Cloudflare) with the real clients.
 
-## Ergebnis je Kriterium
+## Result per criterion
 
-| Kriterium | Keycloak 26.8.0 | Zitadel v4.19.4 |
+| Criterion | Keycloak 26.8.0 | Zitadel v4.19.4 |
 |---|---|---|
-| Discovery | RFC 8414 und OIDC | nur OIDC (reicht laut MCP-Spec) |
-| PKCE | S256 und `plain` beworben | nur S256 |
-| Anonyme DCR (RFC 7591) | ja; **Domain-Beschränkung** über Policy „Trusted Hosts" (`client-uris-must-match`) | ja; **keine Beschränkung der Redirect-Hosts**, auch `http://evil.example.org/cb` wurde akzeptiert |
-| Unbekannte Felder in DCR | **400** (`UnrecognizedPropertyException`, Issue #53363, offen) | werden ignoriert (RFC 7591 §2) |
-| CIMD | ja (experimentell); sauberes Dokument akzeptiert; **Dokument mit ChatGPT-typischem Feld `token_endpoint_auth_methods_supported` abgelehnt**; **Dokument mit Grant `jwt-bearer` (wie Claudes echtes Dokument) abgelehnt** | nicht vorhanden |
-| `resource` (RFC 8707) | ja, mit Feature `resource-indicators`; falsche `resource` → `invalid_target`; `aud` = MCP-URL | wird akzeptiert und **ignoriert** (Token auch bei falscher `resource`) |
-| Eigene Scopes, Step-up | ja; `pflanzen:read/draft/write`; `403 insufficient_scope` → erneute Autorisierung liefert höheres Recht | eigene Scopes nicht belegt: Token-Antwort ohne `scope`-Feld, Inhalt des opaken Tokens nicht prüfbar |
-| `iss`-Parameter (RFC 9207) | ja | nicht beworben |
-| Consent | Seite vorhanden (deutsch), **aber ohne Auswahl einzelner Scopes** („Ja"/„Nein") | **keine Zustimmungsseite** |
-| Token | JWT, 5 Minuten, Prüfung per JWKS | opak (Introspektion mit eigener API-Anwendung nötig, nicht ausprobiert) |
-| Refresh | Rotation (neues Refresh-Token), Widerruf wirksam (`invalid_grant`) | Rotation, Widerruf wirksam (`invalid_request`) |
-| Betrieb | 1 Container (plus Datenbank in Produktion), ca. 800 MiB RAM im Dev-Modus, Start 10 s, Image 474 MB | 4 Container (Proxy, API, Login-UI, Postgres), zusammen ca. 360 MiB RAM |
-| Oberfläche | Login und Zustimmung auf Deutsch, Theme anpassbar | Login auf Deutsch |
+| Discovery | RFC 8414 and OIDC | OIDC only (sufficient per MCP spec) |
+| PKCE | S256 and `plain` advertised | S256 only |
+| Anonymous DCR (RFC 7591) | yes; **domain restriction** via the "Trusted Hosts" policy (`client-uris-must-match`) | yes; **no restriction of redirect hosts**, even `http://evil.example.org/cb` was accepted |
+| Unknown fields in DCR | **400** (`UnrecognizedPropertyException`, issue #53363, open) | ignored (RFC 7591 §2) |
+| CIMD | yes (experimental); clean document accepted; **document with the ChatGPT-typical field `token_endpoint_auth_methods_supported` rejected**; **document with grant `jwt-bearer` (like Claude's real document) rejected** | not available |
+| `resource` (RFC 8707) | yes, with feature `resource-indicators`; wrong `resource` → `invalid_target`; `aud` = MCP URL | accepted and **ignored** (token issued even with wrong `resource`) |
+| Own scopes, step-up | yes; `pflanzen:read/draft/write`; `403 insufficient_scope` → new authorization yields the higher permission | own scopes not proven: token response without `scope` field, content of the opaque token not verifiable |
+| `iss` parameter (RFC 9207) | yes | not advertised |
+| Consent | page exists (German), **but without selection of individual scopes** ("Ja"/"Nein") | **no consent page** |
+| Token | JWT, 5 minutes, validation via JWKS | opaque (introspection with an own API application needed, not tried) |
+| Refresh | rotation (new refresh token), revocation effective (`invalid_grant`) | rotation, revocation effective (`invalid_request`) |
+| Operations | 1 container (plus database in production), approx. 800 MiB RAM in dev mode, start 10 s, image 474 MB | 4 containers (proxy, API, login UI, Postgres), together approx. 360 MiB RAM |
+| UI | login and consent in German, theme customizable | login in German |
 
-![Zustimmungsseite von Keycloak](consent-keycloak.png)
+![Keycloak consent page](consent-keycloak.png)
 
-## Befunde zu Keycloak (Konfiguration, die man kennen muss)
+## Findings on Keycloak (configuration you need to know)
 
-1. **Audience nur über Mapper:** Die Funktion `resource-indicators` engt die Audience nur auf Werte ein, die schon als Kandidaten im Token stehen. Der MCP-Server muss als Client mit Attribut `resource_url` registriert sein **und** an den `pflanzen:*`-Scopes hängt ein Audience-Mapper. Ohne Mapper: `invalid_target`. Ohne `resource`-Parameter steht die Client-ID statt der URL in `aud` (der Server lehnt das ab, gewollt).
-2. **Registrierung absichern:** Standardmäßig blockiert „Trusted Hosts" jede anonyme DCR. Für öffentliche Clients wird die Prüfung der Absender-IP abgeschaltet und stattdessen `client-uris-must-match` mit den Domains `claude.ai`, `chatgpt.com` gesetzt. Dann sind nur Clients mit Redirect-URIs auf diesen Domains registrierbar.
-3. **Scopes:** Die drei Scopes müssen als optionale Realm-Scopes angelegt und in der Policy „Allowed Client Scopes" erlaubt sein. Der Consent zeigt sonst zusätzlich Standard-Scopes („Benutzerprofil", „Nutzerrollen", „E-Mail"), die wir für diese Clients ausblenden würden.
-4. **Zustimmung ist alles oder nichts.** Eine Abwahl einzelner Rechte, wie in US-KI-07 beschrieben, geht mit dem Standard nicht. Dafür braucht es ein eigenes Consent-Theme bzw. einen eigenen Zustimmungsschritt, oder die Story wird angepasst.
-5. **PKCE `plain`** wird mitbeworben. ChatGPT verlangt S256; die Beschränkung auf S256 sollte per Client-Policy erzwungen werden.
-6. **CIMD-Policy:** Konfiguriert über Client-Policy-Profil (`client-id-metadata-document`: `cimd-allow-permitted-domains`, `cimd-resource-indicator-allow-list`, …) und Bedingung `client-id-uri`. Die Domains gelten für **alle** URL-Felder des Dokuments, nicht nur für die Client-ID.
+1. **Audience only via mapper:** the `resource-indicators` feature narrows the audience only to values that are already candidates in the token. The MCP server must be registered as a client with the attribute `resource_url` **and** an audience mapper must hang on the `pflanzen:*` scopes. Without mapper: `invalid_target`. Without the `resource` parameter the client ID instead of the URL ends up in `aud` (the server rejects this, intended).
+2. **Securing registration:** by default "Trusted Hosts" blocks every anonymous DCR. For public clients the check of the sender IP is switched off and `client-uris-must-match` with the domains `claude.ai`, `chatgpt.com` is set instead. Then only clients with redirect URIs on these domains can be registered.
+3. **Scopes:** the three scopes must be created as optional realm scopes and allowed in the "Allowed Client Scopes" policy. Otherwise the consent additionally shows default scopes ("Benutzerprofil", "Nutzerrollen", "E-Mail") that we would hide for these clients.
+4. **Consent is all or nothing.** Deselecting individual permissions, as described in US-KI-07, is not possible with the default. This needs an own consent theme or an own consent step, or the story is adapted.
+5. **PKCE `plain`** is advertised as well. ChatGPT requires S256; the restriction to S256 should be enforced via a client policy.
+6. **CIMD policy:** configured via a client policy profile (`client-id-metadata-document`: `cimd-allow-permitted-domains`, `cimd-resource-indicator-allow-list`, …) and the condition `client-id-uri`. The domains apply to **all** URL fields of the document, not only to the client ID.
 
-## Befunde zu den echten Clients
+## Findings on the real clients
 
-- **Claude (claude.ai, Custom Connector):** Claudes Server holte `initialize` und die Protected Resource Metadata (beides korrekt beantwortet), der Login-Versuch endete in Keycloak mit „invalid request" (Ereignis `LOGIN_ERROR`, `client_policy_error`). Claude verwendete offenbar die Client-ID `https://claude.ai/oauth/mcp-oauth-client-metadata` (CIMD; aus dem Fehlerbild geschlossen, die Anfrage selbst war in den Logs nicht sichtbar). Deren öffentliches Dokument deklariert `token_endpoint_auth_method: none` **und** den Grant `urn:ietf:params:oauth:grant-type:jwt-bearer`. Eine Kopie dieses Dokuments, nur mit dem Grant `jwt-bearer` als Unterschied, löst denselben Fehler aus. Das Executor-Flag `accept-public-client-with-confidential-client-only-grant` hätte das nach der Beschreibung im Quellcode ändern sollen, hatte in den Tests aber keine Wirkung. **Ob der Wert in der Policy tatsächlich gespeichert wurde, ist ungeklärt** (die abgefragte Konfiguration enthielt den Schlüssel nicht). Nicht getestet: die Claude-Option „automatisch registrieren" (DCR) und „eigener OAuth-Client".
-- **ChatGPT:** nicht getestet. Simulation: Ein CIMD-Dokument mit `token_endpoint_auth_methods_supported` scheitert in Keycloak 26.8.0 mit „Client Metadata fetch failed" (Ursache im Log: `UnrecognizedPropertyException`). Das Keycloak-Issue #51039 zu genau diesem Fall ist geschlossen, der Fix wirkt in dieser Version nicht. Laut OpenAI-Doku unterstützt ChatGPT auch DCR und vorab registrierte Clients; ob ChatGPTs DCR-Body das Feld enthält, ist unbekannt.
-- **Claude Code:** nicht getestet.
+- **Claude (claude.ai, custom connector):** Claude's server fetched `initialize` and the Protected Resource Metadata (both answered correctly); the login attempt ended in Keycloak with "invalid request" (event `LOGIN_ERROR`, `client_policy_error`). Claude apparently used the client ID `https://claude.ai/oauth/mcp-oauth-client-metadata` (CIMD; inferred from the error pattern, the request itself was not visible in the logs). Its public document declares `token_endpoint_auth_method: none` **and** the grant `urn:ietf:params:oauth:grant-type:jwt-bearer`. A copy of this document, differing only in the grant `jwt-bearer`, triggers the same error. The executor flag `accept-public-client-with-confidential-client-only-grant` should have changed that according to the description in the source code, but had no effect in the tests. **Whether the value was actually stored in the policy is unresolved** (the queried configuration did not contain the key). Not tested: Claude's option "register automatically" (DCR) and "own OAuth client".
+- **ChatGPT:** not tested. Simulation: a CIMD document with `token_endpoint_auth_methods_supported` fails in Keycloak 26.8.0 with "Client Metadata fetch failed" (cause in the log: `UnrecognizedPropertyException`). Keycloak issue #51039 about exactly this case is closed; the fix does not take effect in this version. According to the OpenAI docs ChatGPT also supports DCR and pre-registered clients; whether ChatGPT's DCR body contains the field is unknown.
+- **Claude Code:** not tested.
 
-## Nicht geprüft
+## Not checked
 
-Ory Hydra (nur mit eigener Login- und Nutzerverwaltung), Authentik, Gemini und weitere Clients, Introspektion bei Zitadel, Dauerbetrieb und Upgrade-Verhalten, Theme-Anpassung, Lasttests, Ausfall- und Backup-Verhalten von Keycloak.
+Ory Hydra (only with own login and user management), Authentik, Gemini and further clients, introspection with Zitadel, long-running operation and upgrade behavior, theme customization, load tests, failure and backup behavior of Keycloak.
 
-## Bewertung und Empfehlung
+## Assessment and recommendation
 
-Keycloak ist der einzige Kandidat, mit dem unser Rechte-Modell (Scopes, Step-up, Audience, Zustimmung, kontrollierte Registrierung) ohne Eigenbau-Schicht funktioniert. Zitadel scheidet nach dem Test aus: eigene Scopes nicht belegt, `resource` wird ignoriert, keine Zustimmung, offene Registrierung ohne Host-Beschränkung, opake Token.
+Keycloak is the only candidate with which our permission model (scopes, step-up, audience, consent, controlled registration) works without a custom-built layer. Zitadel drops out after the test: own scopes not proven, `resource` is ignored, no consent, open registration without host restriction, opaque tokens.
 
-Preis der Entscheidung für Keycloak:
+Price of the decision for Keycloak:
 
-- **Experimentelle Features** (`cimd`, `resource-indicators`) in der Produktion; Updates sind sorgfältig zu testen.
-- **Client-Kompatibilität offen:** Die zwei wichtigsten Clients konnten nicht erfolgreich verbunden werden. Mögliche Wege (in dieser Reihenfolge prüfen): Claude über DCR statt CIMD; ChatGPT über einen **vorab registrierten gemeinsamen Client** (Redirect-Muster `https://chatgpt.com/connector/oauth/*` und der stabile URI); ein kleiner Proxy, der DCR-Bodies von unbekannten Feldern bereinigt; Fix oder Patch bei Keycloak (Issues #53363, #51039).
-- **Zustimmung ohne Abwahl:** US-KI-07 anpassen oder ein eigenes Consent-Theme bauen.
-- **Betrieb:** ein zusätzlicher Dienst mit Java-Laufzeit, Backups und Updates (Risiko R-09 in `16`).
+- **Experimental features** (`cimd`, `resource-indicators`) in production; updates have to be tested carefully.
+- **Client compatibility open:** the two most important clients could not be connected successfully. Possible ways (check in this order): Claude via DCR instead of CIMD; ChatGPT via a **pre-registered shared client** (redirect pattern `https://chatgpt.com/connector/oauth/*` and the stable URI); a small proxy that strips unknown fields from DCR bodies; fix or patch at Keycloak (issues #53363, #51039).
+- **Consent without deselection:** adapt US-KI-07 or build an own consent theme.
+- **Operations:** one additional service with a Java runtime, backups and updates (risk R-09 in `16`).
 
-## Folgen für Spec und Backlog
+## Consequences for spec and backlog
 
-- E-03: Keycloak als Anmeldedienst im Grundsatz entschieden (Spec `16`, Ticket #22).
-- E-04: offener Punkt „Test an realen Clients" bleibt, jetzt mit konkretem Stand (Spec `16`, Ticket #23).
-- Neues Ticket **TE-16**: Anbindung von Claude und ChatGPT an Keycloak nachweisen (Folgearbeit aus diesem Spike).
-- Spec `12`, offene Fragen: Zustimmung ohne Abwahl einzelner Rechte.
-- Keine Termine, keine Zahlen ohne Messung: Die Betriebskennzahlen oben stammen aus dem Dev-Modus mit einem Nutzer und sind nicht auf Produktion übertragbar.
+- E-03: Keycloak as sign-in service decided in principle (spec `16`, ticket #22).
+- E-04: open point "test with real clients" remains, now with a concrete state (spec `16`, ticket #23).
+- New ticket **TE-16**: prove the connection of Claude and ChatGPT to Keycloak (follow-up work from this spike).
+- Spec `12`, open questions: consent without deselection of individual permissions.
+- No dates, no numbers without measurement: the operating figures above come from dev mode with one user and cannot be transferred to production.
 
-## Reproduktion
+## Reproduction
 
 ```bash
-# Keycloak (Hostname bei Tunnel-Tests per KC_HOSTNAME setzen)
+# Keycloak (set the hostname for tunnel tests via KC_HOSTNAME)
 cd keycloak && docker compose -p te15-kc up -d
 cd ../checks && npm install && npx playwright install chromium
 node setup-keycloak.mjs && node 02-kc-policies.mjs && node 03-kc-resource.mjs http://localhost:18081/mcp && node 05-kc-audience.mjs
-# MCP-Testserver
+# MCP test server
 cd ../mcp-test-server && npm install && AS_ISSUER=http://localhost:18080/realms/pflanzendex RESOURCE_URL=http://localhost:18081/mcp node server.mjs
-# Ablauf-Test (anderes Terminal)
+# Flow test (other terminal)
 cd ../checks && node 04-flow-keycloak.mjs
 ```
 
-Für Tests mit Cloud-Clients braucht es öffentliche HTTPS-Adressen für Keycloak und den MCP-Server. In dieser Umgebung funktionierte `cloudflared` nur im Docker-Container mit `--dns 1.1.1.1` (der DNS-Resolver des WSL löste die SRV-Einträge von Cloudflare nicht auf). Admin- und Testpasswörter in `checks/11-kc-harden.mjs` sind Zufallswerte, die in einer nicht eingecheckten Datei landen.
+Tests with cloud clients need public HTTPS addresses for Keycloak and the MCP server. In this environment `cloudflared` worked only in the Docker container with `--dns 1.1.1.1` (WSL's DNS resolver did not resolve Cloudflare's SRV records). Admin and test passwords in `checks/11-kc-harden.mjs` are random values that end up in an uncommitted file.
 
-## Quellen
+## Sources
 
-- MCP-Spezifikation, Abschnitt Authorization: https://modelcontextprotocol.io/specification/latest/basic/authorization
-- Keycloak, MCP als Autorisierungsserver: https://www.keycloak.org/securing-apps/mcp-authz-server
-- Keycloak Issues: #51039 (CIMD, geschlossen), #53363 (DCR mit unbekannten Feldern, offen)
+- MCP specification, Authorization section: https://modelcontextprotocol.io/specification/latest/basic/authorization
+- Keycloak, MCP as authorization server: https://www.keycloak.org/securing-apps/mcp-authz-server
+- Keycloak issues: #51039 (CIMD, closed), #53363 (DCR with unknown fields, open)
 - Zitadel, Dynamic Client Registration: https://zitadel.com/docs/guides/integrate/dynamic-client-registration
-- OpenAI, OAuth-Anforderungen für Konnektoren: https://developers.openai.com/plugins/build/auth
-- Claude, Custom Connectors: https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp
+- OpenAI, OAuth requirements for connectors: https://developers.openai.com/plugins/build/auth
+- Claude, custom connectors: https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp

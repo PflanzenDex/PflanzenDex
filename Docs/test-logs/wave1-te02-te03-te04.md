@@ -1,32 +1,32 @@
-# Testprotokoll — Welle 1: TE-04, TE-02, TE-03 (gegen `dev`)
+# Test log — Wave 1: TE-04, TE-02, TE-03 (against `dev`)
 
-**PRs:** [#185](https://github.com/PflanzenDex/PflanzenDex/pull/185) (TE-04, `feat/te-04-operationen`), [#186](https://github.com/PflanzenDex/PflanzenDex/pull/186) (TE-02, `feat/te-02-db-mandanten`), [#187](https://github.com/PflanzenDex/PflanzenDex/pull/187) (TE-03, `feat/te-03-deploy`), alle mit Ziel `dev`
-**Getestet auf:** lokaler Integrationsstand `docs/testprotokoll-wave1` = `origin/dev` @ `eb03231` + die drei PR-Branches (Merge-Reihenfolge #185, #186, #187), Stand `f55b1d7`. Nur lokal gemerged, nichts auf die PR-Branches gepusht.
-**Umgebung:** WSL2/Linux, Node 24, Docker Compose, Datum 2026-10-03; Stack aus #187 mit `SITE_ADDRESS=localhost`, `HTTPS_PORT=8443`, Wegwerf-Passwort in einer nicht eingecheckten `.env`
-**Methode:** Zusammenführen der drei Branches, `make ci`, gezielte Testläufe (Mandantentest, Operationen), `make restore-test`, Compose-Stack bauen und starten, Playwright-Screenshots (Desktop 1440×900, Mobil 375×812). Screenshots in `wave1/`.
+**PRs:** [#185](https://github.com/PflanzenDex/PflanzenDex/pull/185) (TE-04, `feat/te-04-operationen`), [#186](https://github.com/PflanzenDex/PflanzenDex/pull/186) (TE-02, `feat/te-02-db-mandanten`), [#187](https://github.com/PflanzenDex/PflanzenDex/pull/187) (TE-03, `feat/te-03-deploy`), all targeting `dev`
+**Tested on:** local integration state `docs/testprotokoll-wave1` = `origin/dev` @ `eb03231` + the three PR branches (merge order #185, #186, #187), state `f55b1d7`. Merged only locally, nothing pushed to the PR branches.
+**Environment:** WSL2/Linux, Node 24, Docker Compose, date 2026-10-03; stack from #187 with `SITE_ADDRESS=localhost`, `HTTPS_PORT=8443`, throwaway password in an uncommitted `.env`
+**Method:** merge the three branches, `make ci`, targeted test runs (tenant test, operations), `make restore-test`, build and start the Compose stack, Playwright screenshots (desktop 1440×900, mobile 375×812). Screenshots in `wave1/`. The code blocks are verbatim outputs of the time (German names) and unchanged.
 
-Legende: ✅ wie erwartet · ⚠️ funktioniert, aber Auffälligkeit · ❌ Fehler · ⏭️ nicht geprüft
+Legend: ✅ as expected · ⚠️ works, but with a finding · ❌ error · ⏭️ not checked
 
 ---
 
-## 0. Zusammenführen der drei Branches
+## 0. Merging the three branches
 
-**Erwartet:** Die drei PRs lassen sich ohne Konflikt auf `dev` vereinen.
+**Expected:** the three PRs can be combined on `dev` without conflict.
 
-**Beobachtet:**
-- ✅ #185 (TE-04) gemerged ohne Konflikt.
-- ✅ #186 (TE-02) gemerged ohne Konflikt (nach #185).
-- ⚠️ #187 (TE-03) **Konflikt in zwei Dateien** (nach #185 und #186):
-  - `Makefile`: beide Seiten ändern die `.PHONY`-Zeile (#186: `db-up db-down migrate`, #187: `deploy backup restore-test`).
-  - `app/README.md`: #186 fügt den Abschnitt „Datenbank und Mandantentrennung (TE-02)“ an, #187 den Absatz „Betrieb (TE-03)“, beide an derselben Stelle am Dateiende.
-  - Beide Konflikte sind rein additiv. Für den Test wurden sie durch **Vereinigung beider Seiten** aufgelöst (`.PHONY` mit allen sechs Zielen; beide Textblöcke untereinander). Der Konflikt ist nicht still gelöst: die zuletzt gemergte PR muss ihn vor dem Merge selbst auflösen (Rebase auf `dev` nach dem Merge der anderen).
+**Observed:**
+- ✅ #185 (TE-04) merged without conflict.
+- ✅ #186 (TE-02) merged without conflict (after #185).
+- ⚠️ #187 (TE-03) **conflict in two files** (after #185 and #186):
+  - `Makefile`: both sides change the `.PHONY` line (#186: `db-up db-down migrate`, #187: `deploy backup restore-test`).
+  - `app/README.md`: #186 appends the section "Datenbank und Mandantentrennung (TE-02)", #187 the paragraph "Betrieb (TE-03)", both at the same place at the end of the file.
+  - Both conflicts are purely additive. For the test they were resolved by **uniting both sides** (`.PHONY` with all six targets; both text blocks one below the other). The conflict is not resolved silently: the PR merged last has to resolve it itself before the merge (rebase onto `dev` after the other one is merged).
 
-## 1. Gates: `make ci` (alle drei PRs zusammen)
+## 1. Gates: `make ci` (all three PRs together)
 
-**Erwartet:** Lint, Typprüfung, Architekturgrenzen, Format, Tests und Build laufen grün.
+**Expected:** lint, type check, architecture boundaries, format, tests and build run green.
 
-**Beobachtet:**
-- ✅ `make ci` Exit-Code 0 (Test-Datenbank vorhanden, `make ci` nutzt sie).
+**Observed:**
+- ✅ `make ci` exit code 0 (test database present, `make ci` uses it).
 
 ```text
 > eslint .                                   (ohne Meldung)
@@ -42,11 +42,11 @@ vite v8.3.2 building client environment for production...
 ✓ 27 modules transformed. ✓ built in 137ms
 ```
 
-## 2. TE-04 (#185): Schicht validierender Operationen
+## 2. TE-04 (#185): layer of validating operations
 
-**Erwartet:** Operationen validieren die Eingabe vor jedem Schreiben (P-03), sind idempotent über einen Schlüssel je Nutzer, liefern Fehlercodes `<domäne>.<grund>` und prüfen den Zugriff zentral.
+**Expected:** operations validate the input before every write (P-03), are idempotent via a key per user, deliver error codes `<domain>.<reason>` and check access centrally.
 
-**Beobachtet** (`vitest --reporter=verbose` in `packages/core`, 26 Tests grün, Auszug):
+**Observed** (`vitest --reporter=verbose` in `packages/core`, 26 tests green, excerpt):
 
 ```text
 ✓ Operationen: Idempotenz > legt bei gültiger Eingabe genau einen Eintrag an
@@ -63,14 +63,14 @@ vite v8.3.2 building client environment for production...
 Test Files 3 passed (3)   Tests 26 passed (26)
 ```
 
-- ✅ Alle genannten Eigenschaften sind durch ausgeführte Tests belegt; `core` bleibt frei von Node-/Fremdimporten (Grenzprüfung grün).
-- ⚠️ Die Operationen arbeiten gegen Ports mit einem Speicher im Test (`testhilfe.ts`). Eine Anbindung an die Datenbank aus #186 (Idempotenzschlüssel, `mitKonto`) gibt es in dieser Welle noch nicht und wurde nicht geprüft. Die API (`/health`) nutzt die Schicht noch nicht.
+- ✅ All named properties are proven by executed tests; `core` stays free of Node/foreign imports (boundary check green).
+- ⚠️ The operations work against ports with an in-memory store in the test (`testhilfe.ts`). A connection to the database from #186 (idempotency key, `mitKonto`) does not exist in this wave yet and was not checked. The API (`/health`) does not use the layer yet.
 
-## 3. TE-02 (#186): Mandantengrundlage, RLS, Zwei-Konten-Testrahmen
+## 3. TE-02 (#186): tenant foundation, RLS, two-account test harness
 
-**Erwartet:** Jede nutzerbezogene Tabelle ist per Row-Level-Security getrennt; Konto A sieht und ändert nichts von Konto B; eine neue Tabelle ohne Schutz lässt den Test scheitern; Migrationen nur vorwärts mit Prüfsumme.
+**Expected:** every user-related table is separated by row-level security; account A sees and changes nothing of account B; a new table without protection makes the test fail; migrations forward only with checksum.
 
-**Beobachtet** (`vitest --reporter=verbose` in `packages/db`, 13 Tests grün):
+**Observed** (`vitest --reporter=verbose` in `packages/db`, 13 tests green):
 
 ```text
 ✓ Mandantentrennung > Konto A liest und ändert nichts von Konto B (und umgekehrt), für jede Tabelle mit Konto-Kennung
@@ -89,14 +89,14 @@ Test Files 3 passed (3)   Tests 26 passed (26)
 Test Files 2 passed (2)   Tests 13 passed (13)
 ```
 
-- ✅ Mandantentest einschließlich der „Gegenproben“ (defekter Schutz, fehlende Fixture) bestanden gegen echtes PostgreSQL 16 (Container `pflanzendex-test-db`).
-- ⚠️ Die Tests laufen gegen eine bereits laufende Test-Datenbank; ein Kaltstart (`make db-down`, dann `make ci`) wurde nicht gesondert durchgespielt.
+- ✅ Tenant test including the "control checks" (broken protection, missing fixture) passed against real PostgreSQL 16 (container `pflanzendex-test-db`).
+- ⚠️ The tests run against an already running test database; a cold start (`make db-down`, then `make ci`) was not played through separately.
 
-## 4. TE-03 (#187): Container, Compose, Backup/Restore, Runbook
+## 4. TE-03 (#187): containers, Compose, backup/restore, runbook
 
-### 4.1 Wiederherstellungstest `make restore-test`
+### 4.1 Restore test `make restore-test`
 
-**Erwartet:** Wegwerf-Postgres, 500 Testzeilen sichern, in zweite Datenbank einspielen, Zeilenzahl und Prüfsumme gleich; Betriebsdatenbank unberührt.
+**Expected:** throwaway Postgres, back up 500 test rows, restore into a second database, row count and checksum equal; production database untouched.
 
 ```text
 $ make restore-test
@@ -108,11 +108,11 @@ Wiederhergestellt aus …/pflanzendex-20261003T081918Z.dump
 OK: Wiederherstellungstest bestanden (500:853278bed16baa13e8a09dc798bbb906)
 ```
 
-**Beobachtet:** ✅ Exit-Code 0, 500 Zeilen mit gleicher Prüfsumme.
+**Observed:** ✅ exit code 0, 500 rows with equal checksum.
 
-### 4.2 Compose-Stack (Build und Start)
+### 4.2 Compose stack (build and start)
 
-**Erwartet:** `docker compose … up -d --build` baut `api` und `web`, startet `db`, `api`, `web`, `proxy`; `api` und `db` werden „healthy“; die Datenbank ist nicht veröffentlicht.
+**Expected:** `docker compose … up -d --build` builds `api` and `web`, starts `db`, `api`, `web`, `proxy`; `api` and `db` become "healthy"; the database is not published.
 
 ```text
 NAME                  STATUS                    PORTS
@@ -122,52 +122,52 @@ pflanzendex-proxy-1   Up 22 seconds             … 0.0.0.0:8080->80/tcp, 0.0.0.
 pflanzendex-web-1     Up 33 seconds             80/tcp, …
 ```
 
-**Beobachtet:**
-- ✅ Build und Start fehlerfrei; die Datenbank ist nur im Compose-Netz (Port 5432 nicht auf den Host veröffentlicht).
-- ✅ `curl -k https://localhost:8443/health` → `HTTP/2 200`, Body `{"status":"ok","produkt":"PflanzenDex","version":"f55b1d7"}` (`version` = Commit des Builds, `GIT_SHA` über die `.env`).
-- ⚠️ `http://localhost:8080/health` antwortet `308` auf `https://localhost/health` **ohne Port 8443**. Nur bei der lokalen Nicht-Standard-Port-Konfiguration relevant, auf Staging mit 80/443 unkritisch; im Runbook erwähnenswert.
-- ⚠️ **Die Datenbank im Stack ist leer** (`\dt` → „Did not find any relations“). Weder `api` noch `deploy.sh` wenden die Migrationen aus #186 an (`make migrate` gibt es nur gegen `DATABASE_URL`). Solange die API die DB nicht nutzt, folgenlos; vor der ersten datenbankabhängigen Funktion braucht das Deploy einen Migrationsschritt (das Runbook erwähnt „Migrationen“ nur als offenen Punkt).
+**Observed:**
+- ✅ Build and start without errors; the database is only in the Compose network (port 5432 not published to the host).
+- ✅ `curl -k https://localhost:8443/health` → `HTTP/2 200`, Body `{"status":"ok","produkt":"PflanzenDex","version":"f55b1d7"}` (`version` = commit of the build, `GIT_SHA` via the `.env`).
+- ⚠️ `http://localhost:8080/health` answers `308` to `https://localhost/health` **without port 8443**. Relevant only with the local non-standard port configuration, uncritical on staging with 80/443; worth mentioning in the runbook.
+- ⚠️ **The database in the stack is empty** (`\dt` → "Did not find any relations"). Neither `api` nor `deploy.sh` apply the migrations from #186 (`make migrate` exists only against `DATABASE_URL`). Without consequence as long as the API does not use the DB; before the first database-dependent function the deploy needs a migration step (the runbook mentions "migrations" only as an open point).
 
-### 4.3 /health über HTTPS (Desktop 1440×900)
+### 4.3 /health over HTTPS (desktop 1440×900)
 
-**Erwartet:** JSON mit Status, Produktname, Version über HTTPS.
+**Expected:** JSON with status, product name, version over HTTPS.
 
 ![/health Desktop](wave1/01-health-desktop.png)
 
-**Beobachtet:**
-- ✅ Status 200, Inhalt wie oben.
-- ⚠️ Das Zertifikat stammt von der internen CA von Caddy (`localhost`); der Browser meldet `ERR_CERT_AUTHORITY_INVALID`. Der Screenshot entstand mit `ignoreHTTPSErrors`. Erwartet bei `localhost`; ein öffentlich vertrauenswürdiges Zertifikat setzt Domain und DNS voraus (siehe 4.5).
+**Observed:**
+- ✅ Status 200, content as above.
+- ⚠️ The certificate comes from Caddy's internal CA (`localhost`); the browser reports `ERR_CERT_AUTHORITY_INVALID`. The screenshot was taken with `ignoreHTTPSErrors`. Expected for `localhost`; a publicly trusted certificate presupposes domain and DNS (see 4.5).
 
-### 4.4 Web-App (Desktop und Mobil)
+### 4.4 Web app (desktop and mobile)
 
-**Erwartet:** Die statische PWA wird über den Proxy ausgeliefert.
+**Expected:** the static PWA is delivered via the proxy.
 
 ![Web Desktop](wave1/02-web-desktop.png)
-![Web Mobil 375×812](wave1/03-web-mobil.png)
+![Web mobile 375×812](wave1/03-web-mobil.png)
 
-**Beobachtet:**
-- ✅ Status 200, Titel „PflanzenDex“, Überschrift „PflanzenDex“, keine Konsolenfehler und keine Seitenfehler.
-- ⚠️ Die Seite ist ein reines Gerüst (unformatierte Überschrift, sonst leer). Das ist für TE-01/TE-03 erwartet, aber es gibt noch keine bedienbare Oberfläche; ein Mobil-/Layout-Urteil ist nicht möglich.
+**Observed:**
+- ✅ Status 200, title "PflanzenDex", heading "PflanzenDex", no console errors and no page errors.
+- ⚠️ The page is a pure scaffold (unformatted heading, otherwise empty). That is expected for TE-01/TE-03, but there is no operable interface yet; a mobile/layout judgment is not possible.
 
-### 4.5 Nicht ausgeführt
+### 4.5 Not executed
 
-- ⏭️ `make deploy` / `deploy.sh` (holt `origin/main`; ein Deploy von `main` ist mangels Inhalt nicht sinnvoll und hätte den Host verändert).
-- ⏭️ `make backup` gegen den laufenden Stack (nur im Wiederherstellungstest 4.1 mit demselben Skript `backup.sh` indirekt ausgeführt).
-- ⏭️ `BACKUP_REMOTE` (rsync an zweiten Ort): kein Ziel vorhanden.
-- ⏭️ Erreichbarkeit von außen mit öffentlichem Zertifikat: keine Domain (laut Runbook offen).
-- ⏭️ `restore.sh` über die Betriebsdatenbank (`CONFIRM=ja`).
+- ⏭️ `make deploy` / `deploy.sh` (fetches `origin/main`; a deploy of `main` makes no sense for lack of content and would have changed the host).
+- ⏭️ `make backup` against the running stack (executed only indirectly in the restore test 4.1 with the same script `backup.sh`).
+- ⏭️ `BACKUP_REMOTE` (rsync to a second place): no target available.
+- ⏭️ Reachability from outside with a public certificate: no domain (open according to the runbook).
+- ⏭️ `restore.sh` over the production database (`CONFIRM=ja`).
 
-## 5. Aufräumen
+## 5. Clean-up
 
-- ✅ Alle von mir gestarteten Compose-Container, Volumes und das Netz (`pflanzendex_*`) entfernt (`down -v`); die temporäre `app/deploy/.env` gelöscht.
-- Der bereits vorher laufende Container `pflanzendex-test-db` (Test-Datenbank aus `make db-up`) und fremde Container wurden nicht angefasst.
+- ✅ All Compose containers, volumes and the network (`pflanzendex_*`) started by me removed (`down -v`); the temporary `app/deploy/.env` deleted.
+- The container `pflanzendex-test-db` that was already running before (test database from `make db-up`) and foreign containers were not touched.
 
-## 6. Empfehlung
+## 6. Recommendation
 
-| PR | Empfehlung | Begründung |
+| PR | Recommendation | Reasoning |
 | --- | --- | --- |
-| #185 TE-04 | **mergen** | Tests belegen Validierung, Idempotenz, Fehlercodes und Zugriffscheck; keine Konflikte; `make ci` grün. Anbindung an die DB folgt später. |
-| #186 TE-02 | **mergen** | Generischer Mandantentest inkl. Gegenproben grün gegen echtes PostgreSQL; Migrationswerkzeug verhält sich wie spezifiziert; keine Konflikte. |
-| #187 TE-03 | **mergen, nach Auflösung des Konflikts** | Stack baut und startet, `/health` über HTTPS liefert Version, DB nicht veröffentlicht, Restore-Test bestanden. Vor dem Merge: Konflikt in `Makefile` und `app/README.md` mit #186 lösen (additiv, siehe 0). Offene Punkte (Migrationsschritt im Deploy, Domain, `BACKUP_REMOTE`) sind im Runbook teils benannt und blockieren nicht. |
+| #185 TE-04 | **merge** | Tests prove validation, idempotency, error codes and access check; no conflicts; `make ci` green. Connection to the DB follows later. |
+| #186 TE-02 | **merge** | Generic tenant test incl. control checks green against real PostgreSQL; migration tool behaves as specified; no conflicts. |
+| #187 TE-03 | **merge, after resolving the conflict** | Stack builds and starts, `/health` over HTTPS delivers the version, DB not published, restore test passed. Before the merge: resolve the conflict in `Makefile` and `app/README.md` with #186 (additive, see 0). Open points (migration step in the deploy, domain, `BACKUP_REMOTE`) are partly named in the runbook and do not block. |
 
-Reihenfolge: #185 und #186 zuerst, dann #187 auf `dev` rebasen.
+Order: #185 and #186 first, then rebase #187 onto `dev`.

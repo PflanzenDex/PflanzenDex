@@ -1,91 +1,93 @@
-# Testprotokoll: US-LIC-05 Standorte und Lichtzonen verwalten (Issue #69)
+# Test log: US-LIC-05 Manage locations and light zones (issue #69)
 
-**Branch:** `feat/lic-05-standorte` (gestapelt auf `feat/acc-01-anmeldung` #192, mit `feat/te-08-betreiber` #191 hineingemergt)
-**Umgebung:** WSL2/Linux, Node 24, Docker; PostgreSQL 16 in eigenem Container (Port 54431 aus `worktree-env.mjs`), API Port 54931, Web (Vite) Port 55431, Keycloak 26.8 (`make auth-up`, für den Test wurde die Weiterleitungs-Adresse des Web-Clients zur Laufzeit per Admin-API um Port 55431 ergänzt, nicht im Repo); Browser Chromium über Playwright; Datum 2026-10-03.
-**Methode:** `make ci`, danach Bedienung von Hand (Playwright-Skript) gegen den echten Keycloak mit Testkonto `mara@example.test`. Screenshots Desktop 1440×900 und Mobil 375×812 in `lic-05/`.
+**Branch:** `feat/lic-05-standorte` (stacked on `feat/acc-01-anmeldung` #192, with `feat/te-08-betreiber` #191 merged in)
+**Environment:** WSL2/Linux, Node 24, Docker; PostgreSQL 16 in its own container (port 54431 from `worktree-env.mjs`), API port 54931, web (Vite) port 55431, Keycloak 26.8 (`make auth-up`; for the test the redirect address of the web client was extended by port 55431 at runtime via the admin API, not in the repo); browser Chromium via Playwright; date 2026-10-03.
+**Method:** `make ci`, then manual operation (Playwright script) against the real Keycloak with test account `mara@example.test`. Screenshots desktop 1440×900 and mobile 375×812 in `lic-05/`. The app UI is German; quoted UI texts are given verbatim.
 
-Legende: ✅ wie erwartet · ⚠️ funktioniert, aber Auffälligkeit · ❌ Fehler · ⏭️ nicht geprüft
+Legend: ✅ as expected · ⚠️ works, but with a finding · ❌ error · ⏭️ not checked
+
+Note: the code was renamed to English after this test (e.g. table `lichtzone` is now `light_zone`, error code `lichtzone.nicht_gefunden` is now `light_zone.not_found`); the log keeps the names of the time of the test in prose where it quotes UI or screenshot content.
 
 ---
 
 ## 0. Gates
 
-**Erwartet:** `make ci` grün.
+**Expected:** `make ci` green.
 
-**Beobachtet:**
+**Observed:**
 
-- ✅ `npm run ci` Exit-Code 0 (Lint, Typen, Grenzen, Spec-Prüfung, Format, Tests, Build) mit eigener Test-Datenbank.
-- ✅ Der generische Mandantentest deckt `lichtzone`, `standort` und `idempotenz` ab (Fixtures in `fixtures.ts`).
+- ✅ `npm run ci` exit code 0 (lint, types, boundaries, spec check, format, tests, build) with its own test database.
+- ✅ The generic tenant test covers `lichtzone`, `standort` and `idempotenz` (fixtures in `fixtures.ts`).
 
-## 1. Kriterium: Standort hat Name, Lichtzone und Art; beliebig viele je Zone
+## 1. Criterion: a location has name, light zone and kind; any number per zone
 
-**Erwartet:** Standorte anlegen mit Name, Zone, innen/außen; mehrere Standorte pro Zone; Zone eines fremden Kontos nicht zuordenbar.
+**Expected:** create locations with name, zone, indoor/outdoor; several locations per zone; a zone of a foreign account cannot be assigned.
 
-**Beobachtet:**
+**Observed:**
 
-- ✅ „Fensterbank“ (Lampe 2, innen) und „Balkon“ (ohne Zone, außen) angelegt (`03-standorte-hinweis-*.png`).
-- ✅ Tests: drei Standorte in einer Zone (core, db); fremde Zone liefert `lichtzone.nicht_gefunden` bzw. 404 (API-Test, zusammengesetzter Fremdschlüssel in der Datenbank).
-- ✅ Doppelter Standortname wird abgelehnt (API 409, DB-Test); in der Oberfläche nur für Zonen von Hand gesehen (`07-name-vergeben-*.png`).
-- ⏭️ Fehlermeldung bei doppeltem Standortnamen in der Oberfläche: nicht von Hand ausgelöst.
+- ✅ "Fensterbank" (lamp 2, indoor) and "Balkon" (without zone, outdoor) created (`03-locations-hint-*.png`).
+- ✅ Tests: three locations in one zone (core, db); a foreign zone yields `lichtzone.nicht_gefunden` or 404 (API test, composite foreign key in the database).
+- ✅ A duplicate location name is rejected (API 409, DB test); in the UI seen manually only for zones (`07-name-taken-*.png`).
+- ⏭️ Error message for a duplicate location name in the UI: not triggered manually.
 
-## 2. Kriterium: Lichtzone hat Name, Lux-Decke, optional PPFD, Reihenfolge
+## 2. Criterion: a light zone has name, lux ceiling, optional PPFD, order
 
-**Erwartet:** Anlegen, Ändern, Umbenennen; Werte außerhalb der Grenzen abgelehnt; fehlender PPFD erscheint als „unbekannt“ (P-08).
+**Expected:** create, change, rename; values outside the limits rejected; a missing PPFD appears as "unbekannt" (P-08).
 
-**Beobachtet:**
+**Observed:**
 
-- ✅ Voreinstellung übernommen: Lampe 1 bis 4 mit 1.500 / 15.000 / 100.000 / 110.000 Lux und PPFD 36 / 300 / 1.600 / 2.000 (`02-voreinstellung-*.png`); Zahlen aus der Spezifikation.
-- ✅ Zone „Lampe 2“ in „Unterholz“ umbenannt (`05-umbenannt-*.png`).
-- ✅ Ungültige Eingaben (leerer Name, Lux 0 oder 1,5, PPFD negativ) werden in core und API mit 400 und Feldnamen abgelehnt; die Datenbank hat zusätzlich Prüfregeln.
-- ⚠️ Die Grenzen (Lux 1 bis 200.000, PPFD 1 bis 3.000, Name 60 Zeichen) sind **Annahmen** (Startwerte), nicht belegt.
-- ⏭️ Die Anzeige „PPFD unbekannt“ ist nur per Komponententest belegt, nicht im Browser.
+- ✅ Default adopted: lamp 1 to 4 with 1,500 / 15,000 / 100,000 / 110,000 lux and PPFD 36 / 300 / 1,600 / 2,000 (`02-default-*.png`); numbers from the specification.
+- ✅ Zone "Lampe 2" renamed to "Unterholz" (`05-renamed-*.png`).
+- ✅ Invalid input (empty name, lux 0 or 1.5, negative PPFD) is rejected in core and API with 400 and field names; the database additionally has check rules.
+- ⚠️ The limits (lux 1 to 200,000, PPFD 1 to 3,000, name 60 characters) are **assumptions** (starting values), not proven.
+- ⏭️ The display "PPFD unbekannt" is proven only by a component test, not in the browser.
 
-## 3. Kriterium: Zone löschen, die genutzt wird, wird abgelehnt und nennt, wer sie nutzt
+## 3. Criterion: deleting a zone that is used is rejected and names who uses it
 
-**Erwartet:** Ablehnung mit Liste der Nutzer; nach Freigabe ist Löschen möglich.
+**Expected:** rejection with a list of users; after release deleting is possible.
 
-**Beobachtet:**
+**Observed:**
 
-- ✅ „Lampe 2“ löschen → Bestätigung → Meldung „Diese Lichtzone wird noch genutzt …“ mit „Standort: Fensterbank“; die Zone bleibt (`04-loeschen-abgelehnt-*.png`).
-- ✅ Ungenutzte Zone „Lampe 4“ ließ sich löschen (im Browser; Folgebild nicht gespeichert).
-- ✅ Mechanismus für Exemplare und Arten über den Port `ZonenNutzung` mit Attrappe getestet: alle Nutzer werden genannt, nichts wird gelöscht.
-- ⚠️ **Grenze:** Exemplare und Arten gibt es noch nicht; real prüft das Löschen nur Standorte. BES muss die Quellen ergänzen (siehe `app/README.md`). Die Anzeige von „Exemplar:“ und „Art:“ in der Oberfläche ist nur per Komponententest belegt.
-- ✅ Rückfall: Der Fremdschlüssel verhindert das Löschen auch bei einer neu entstandenen Nutzung (DB-Test).
+- ✅ Delete "Lampe 2" → confirmation → message "Diese Lichtzone wird noch genutzt …" with "Standort: Fensterbank"; the zone stays (`04-delete-rejected-*.png`).
+- ✅ The unused zone "Lampe 4" could be deleted (in the browser; follow-up image not saved).
+- ✅ Mechanism for specimens and species via the port `ZonenNutzung` (now `ZoneUsage`) tested with a dummy: all users are named, nothing is deleted.
+- ⚠️ **Limit:** specimens and species do not exist yet; in reality deleting checks only locations. BES has to add the sources (see `app/README.md`). The display of "Exemplar:" and "Art:" in the UI is proven only by a component test.
+- ✅ Fallback: the foreign key prevents deleting even with a newly arisen usage (DB test).
 
-## 4. Kriterium: Umbenennen verändert keine Zuordnungen
+## 4. Criterion: renaming changes no assignments
 
-**Erwartet:** Verweis über Kennung.
+**Expected:** reference via id.
 
-**Beobachtet:**
+**Observed:**
 
-- ✅ Nach dem Umbenennen von „Lampe 2“ in „Unterholz“ zeigt „Fensterbank“ weiter „Unterholz · innen“ (`05-umbenannt-*.png`); Tests in core und db prüfen dieselbe Kennung.
-- ✅ Standort umbenennen lässt Zone und Art unberührt (core-Test).
+- ✅ After renaming "Lampe 2" to "Unterholz", "Fensterbank" still shows "Unterholz · innen" (`05-renamed-*.png`); tests in core and db check the same id.
+- ✅ Renaming a location leaves zone and kind untouched (core test).
 
-## 5. Kriterium: Standorte ohne Zone erscheinen in „Hinweise“
+## 5. Criterion: locations without a zone appear in "Hinweise"
 
-**Erwartet:** Hinweis mit nächster Handlung (P-09); verschwindet nach Zuordnung.
+**Expected:** hint with next action (P-09); disappears after assignment.
 
-**Beobachtet:**
+**Observed:**
 
-- ✅ „Balkon“ ohne Zone → Block „Hinweise“: „Der Standort „Balkon“ hat noch keine Lichtzone. Weise dem Standort eine Lichtzone zu.“ (`03-…`); Knopf „Lichtzone zuweisen“.
-- ✅ Nach Zuordnung zu Lampe 3 verschwindet der Block (`06-zugewiesen-*.png`).
-- ⚠️ Die zentrale „Hinweise“-Seite gehört zu US-BES-08 und existiert noch nicht; der Hinweis erscheint auf der Seite der Story und über `GET /hinweise`.
+- ✅ "Balkon" without zone → block "Hinweise": "Der Standort „Balkon" hat noch keine Lichtzone. Weise dem Standort eine Lichtzone zu." (`03-…`); button "Lichtzone zuweisen".
+- ✅ After assignment to lamp 3 the block disappears (`06-assigned-*.png`).
+- ⚠️ The central "Hinweise" page belongs to US-BES-08 and does not exist yet; the hint appears on the page of the story and via `GET /hinweise` (now `GET /hints`).
 
-## 6. Mandantentrennung und Wiederholungsschutz
+## 6. Tenant isolation and repeat guard
 
-- ✅ API-Test: Konto B sieht Zonen/Standorte von Konto A nicht und kann sie weder ändern noch löschen (404) noch zuordnen.
-- ✅ Gleicher `Idempotency-Key` legt nichts doppelt an; ohne Schlüssel 400; zwei parallele `beginne`-Aufrufe ergeben genau einen Treffer (DB-Test).
-- ⏭️ Zwei Browser-Konten gleichzeitig: nicht von Hand geprüft.
+- ✅ API test: account B does not see zones/locations of account A and can neither change nor delete (404) nor assign them.
+- ✅ The same `Idempotency-Key` creates nothing twice; without a key 400; two parallel `begin` calls yield exactly one hit (DB test).
+- ⏭️ Two browser accounts simultaneously: not checked manually.
 
-## 7. Mobil (375 px) und Bedienung
+## 7. Mobile (375 px) and operation
 
-- ✅ Alle Zustände mobil als Screenshot; Schaltflächen und Eingaben 48 px hoch; kein horizontales Scrollen (Dokumentbreite 360 px bei 375 px Fenster).
-- ⚠️ Die Ansicht ist lang, weil jede Zone zwei Knöpfe untereinander zeigt; Verdichten wäre Folgearbeit.
-- ⚠️ Im Browser traten zwei Konsolenmeldungen auf, die nicht ausgewertet wurden (vermutlich das fehlende `favicon.ico`, bekannt aus ACC-01).
-- ⏭️ Keine Kontrastmessung, kein Test mit Bildschirmleser, kein Dunkelmodus-Screenshot.
+- ✅ All states as a mobile screenshot; buttons and inputs 48 px high; no horizontal scrolling (document width 360 px at a 375 px window).
+- ⚠️ The view is long because each zone shows two buttons one below the other; condensing would be follow-up work.
+- ⚠️ In the browser two console messages occurred that were not evaluated (presumably the missing `favicon.ico`, known from ACC-01).
+- ⏭️ No contrast measurement, no screen reader test, no dark mode screenshot.
 
-## Offene Punkte
+## Open points
 
-- Standorte lassen sich nicht löschen (kein Kriterium); sobald Exemplare einen Standort nutzen, braucht das Löschen denselben Nutzungsport.
-- Das Verschieben der Reihenfolge geschieht über eine Zahl, nicht per Ziehen.
-- Der Test lief mit angepasster Weiterleitungs-Adresse im lokalen Keycloak; das Realm-Export im Repo kennt nur Port 5173.
+- Locations cannot be deleted (no criterion); as soon as specimens use a location, deleting needs the same usage port.
+- Moving the order happens via a number, not by dragging.
+- The test ran with an adjusted redirect address in the local Keycloak; the realm export in the repo knows only port 5173.
