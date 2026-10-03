@@ -123,13 +123,13 @@ Akzeptanzkriterien:
 - **Stolperfallen-Register:** Wiederkehrende Fehler (Zeitzonen, Fehlertexte, Testsynchronisation) stehen als kurze Einträge unter `Docs/stolperfallen/` und werden bei einem Fund ergänzt (Muster `common-pitfalls`). Aus Einträgen, die sich prüfen lassen, werden Gates.
 - **Dokumentationsprozess:** Code-Änderung ohne passende Spec- oder Doku-Änderung fällt im Review auf; Doku-Commits tragen `docs:`; Doku wird mit Markdown-Lint und Link-Prüfung gegated (QG-U2).
 
-### US-DEV-06 · Release-Prozess · ⬜
+### US-DEV-06 · Release-Prozess · 🟨
 Als **Betreiber** will ich Releases, die klein, nachvollziehbar und rückholbar sind.
 
 Akzeptanzkriterien:
 - **Versionierung:** SemVer, automatisch aus Conventional Commits (semantic-release oder gleichwertig, E-13). `0.x` bis zur Parität (R1), `1.0.0` mit der ersten Freigabe für Fremde (Stufe 2). Kein manuelles Setzen von Versionsnummern.
 - **Auslöser und Kette:** Ein Release ist der Merge von `dev` nach `main` per Pull-Request mit voller Suite. Der Release-Workflow läuft auf `main` **nur für Commits mit grünem `ci-status`** (Muster: `workflow_run` auf „CI Pipeline" mit Statusprüfung), danach erst der Deploy. Eine rote CI bricht beides ab, ohne Version zu erzeugen. Nach dem Release wird `main` in `dev` zurückgemergt, damit Changelog- und Versions-Commits die Branches nicht auseinanderlaufen lassen.
-- **Ergebnis eines Releases:** Git-Tag, `CHANGELOG.md`, Release-Notizen aus den Commits, Container-Abbild, Datenbank-Migrationen (US-DEV-07), Katalog-/Baum-Stand (versioniert, getrennt vom Code, US-POK-03).
+- **Ergebnis eines Releases:** Git-Tag, Release-Notizen aus den Commits als GitHub-Release (statt `CHANGELOG.md` im Repo, ADR [0002](../decisions/0002-release-from-tags.md)), Container-Abbild, Datenbank-Migrationen (US-DEV-07), Katalog-/Baum-Stand (versioniert, getrennt vom Code, US-POK-03).
 - **Version sichtbar:** Die Version steht in der App (Fußzeile/Über-Seite), in Fehlerberichten und im Gesundheits-Endpunkt. Eine Quelle (Tag), keine zweite Pflege (Muster `sync_version.py`, aber ohne Schreiben in versionierte Dateien).
 - **Nutzerseitiger Changelog:** Für `feat:` und `fix:` verlangt QG-U3 einen kurzen deutschen Eintrag („Neu in dieser Version"), den die App anzeigt. Für interne Änderungen genügt `[skip-changelog]`.
 - **Zuschnitt:** Release-Inhalte folgen R0 bis R6 (`16-…`). Ein Release ist erst freigegeben, wenn die Kernabläufe seines Zuschnitts grün sind (FR-QG-08) und, bei sozialen Releases, QG-D1/QG-D2 stehen.
