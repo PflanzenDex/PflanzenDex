@@ -8,7 +8,15 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { fetchBranches, fetchIssue, fetchPrs, me, realClient } from "./claim-client.mjs";
 import { branchName, findConflicts } from "./claim-lib.mjs";
-import { handoffBody, prTitle, pushClaimBranch, setProjectStatus } from "./claim-steps.mjs";
+import { preflight, PreflightFailed } from "./claim-preflight.mjs";
+import {
+  handoffBody,
+  prTitle,
+  pushClaimBranch,
+  setProjectStatus,
+  STATUS_IN_PROGRESS,
+  STATUS_TODO,
+} from "./claim-steps.mjs";
 
 export class ClaimRefused extends Error {
   constructor(findings) {
@@ -17,7 +25,7 @@ export class ClaimRefused extends Error {
   }
 }
 
-async function assertFree(client, number, env) {
+async function assertFree(client, number, env, login) {
   const [issue, prs, branches] = await Promise.all([
     fetchIssue(client, number),
     fetchPrs(client),
@@ -25,12 +33,13 @@ async function assertFree(client, number, env) {
   ]);
   if (issue.state !== "OPEN")
     throw new ClaimRefused([{ text: `issue #${number} is ${issue.state}` }]);
+  // The caller's own assignment is a half claim of an earlier run: continue, do not refuse.
   const findings = findConflicts({
     issue,
     prs,
     branches,
     allowPrior: env.ALLOW_PRIOR_WORK === "1",
-  });
+  }).filter((f) => !(f.kind === "assignee" && f.login === login));
   const branch = branchName(issue);
   if (branches.includes(branch)) findings.push({ text: `branch origin/${branch} exists` });
   if (findings.length) throw new ClaimRefused(findings);
@@ -50,44 +59,84 @@ async function assign(client, issue, login) {
   }
 }
 
-export async function claim(client, number, { env = {}, log = console.log } = {}) {
-  await client.run("git", ["fetch", "--quiet", "--prune", "origin"]);
-  const issue = await assertFree(client, number, env);
-  const login = await me(client);
-  await assign(client, issue, login);
-  log(`Assigned #${number} to @${login}`);
+async function projectStatus(client, issue, status, log) {
   try {
     const owner = (
       await client.run("gh", ["repo", "view", "--json", "owner", "-q", ".owner.login"])
     ).trim();
-    await setProjectStatus(client, issue.url, owner);
-    log("Project status: In Progress");
+    await setProjectStatus(client, issue.url, owner, status);
+    log(`Project status: ${status}`);
   } catch (e) {
     log(`WARNING: project status not set (${e.message}); set it by hand on the board`);
   }
+}
+
+/** Runs the undo steps in reverse, each best effort, so the original error stays the one reported. */
+async function rollBack(undo, log) {
+  for (const [label, step] of undo.reverse()) {
+    try {
+      await step();
+      log(`Rolled back: ${label}`);
+    } catch (e) {
+      log(`WARNING: could not roll back "${label}" (${e.message}); undo it by hand`);
+    }
+  }
+}
+
+/**
+ * Atomic claim: preflight first, then the branch is pushed (the step that fails most often), then the
+ * assignee, status and draft PR. Any failure undoes what was written; a re-run starts clean.
+ */
+export async function claim(
+  client,
+  number,
+  { env = {}, log = console.log, preflight: check = preflight } = {},
+) {
+  await client.run("git", ["fetch", "--quiet", "--prune", "origin"]);
+  await check(client);
+  const login = await me(client);
+  const issue = await assertFree(client, number, env, login);
   const branch = branchName(issue);
-  await pushClaimBranch(client, issue, branch);
-  log(`Pushed origin/${branch}`);
-  const file = path.join(mkdtempSync(path.join(tmpdir(), "claim-")), "body.md");
-  writeFileSync(file, handoffBody(issue, branch, login));
-  const url = (
-    await client.run("gh", [
-      "pr",
-      "create",
-      "--draft",
-      "--base",
-      "dev",
-      "--head",
-      branch,
-      "--title",
-      prTitle(issue),
-      "--body-file",
-      file,
-    ])
-  ).trim();
-  log(`Draft PR: ${url}`);
-  log(`Next: make worktree BRANCH=${branch}`);
-  return { branch, url };
+  const undo = [];
+  try {
+    await pushClaimBranch(client, issue, branch);
+    undo.push([
+      `branch origin/${branch}`,
+      () => client.run("git", ["push", "origin", "--delete", branch]),
+    ]);
+    log(`Pushed origin/${branch}`);
+    await assign(client, issue, login);
+    undo.push([
+      `assignee of #${number}`,
+      () => client.run("gh", ["issue", "edit", String(number), "--remove-assignee", "@me"]),
+    ]);
+    log(`Assigned #${number} to @${login}`);
+    await projectStatus(client, issue, STATUS_IN_PROGRESS, log);
+    undo.push(["project status", () => projectStatus(client, issue, STATUS_TODO, log)]);
+    const file = path.join(mkdtempSync(path.join(tmpdir(), "claim-")), "body.md");
+    writeFileSync(file, handoffBody(issue, branch, login));
+    const url = (
+      await client.run("gh", [
+        "pr",
+        "create",
+        "--draft",
+        "--base",
+        "dev",
+        "--head",
+        branch,
+        "--title",
+        prTitle(issue),
+        "--body-file",
+        file,
+      ])
+    ).trim();
+    log(`Draft PR: ${url}`);
+    log(`Next: make worktree BRANCH=${branch}`);
+    return { branch, url };
+  } catch (e) {
+    await rollBack(undo, log);
+    throw e;
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
@@ -97,7 +146,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     process.exit(2);
   }
   claim(realClient(), number, { env: process.env }).catch((e) => {
-    if (e instanceof ClaimRefused) {
+    if (e instanceof PreflightFailed) {
+      console.error(
+        `claim not started for #${number}: preflight failed, nothing was written.\n${e.message}`,
+      );
+    } else if (e instanceof ClaimRefused) {
       console.error(`claim refused for #${number}: someone may already work on it.\n${e.message}`);
       console.error("Ask the owner, or let the claim go stale (make board) before taking over.");
     } else {

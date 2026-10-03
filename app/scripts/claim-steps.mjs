@@ -5,6 +5,7 @@ import { branchName, claimKey, scopeOf, storyIdOf } from "./claim-lib.mjs";
 export const PROJECT_NUMBER = "2"; // "PflanzenDex Roadmap"
 export const STATUS_FIELD = "Status";
 export const STATUS_IN_PROGRESS = "In Progress";
+export const STATUS_TODO = "Todo";
 
 /** Sets the project status of an issue; reads item, field and option ids at run time. */
 export async function setProjectStatus(client, issueUrl, owner, status = STATUS_IN_PROGRESS) {

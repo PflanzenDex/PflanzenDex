@@ -1,0 +1,36 @@
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/issue-250/app/packages/web
+ ❯ src/bestand/karten.test.tsx (19 tests | 2 failed) 111ms
+   ❯ US-BES-06 Karte: letzte Messung (5)
+     × zeigt Wert, Qualität und Datum der letzten Messung; der Wert hat die Einheit cm (US-WAC-01) 16ms
+     × ein ganzer Wert wird ohne Nachkommastelle gezeigt 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Karte: letzte Messung > zeigt Wert, Qualität und Datum der letzten Messung; der Wert hat die Einheit cm (US-WAC-01)
+AssertionError: expected '<section aria-labelledby="bestand-tit…' to contain '12,5 cm'
+Expected: "12,5 cm"
+Received: "<section aria-labelledby="bestand-titel"><h1 id="bestand-titel">Bestand</h1><ul class="karten-raster"><li class="exemplar-karte"><div class="karte-foto platzhalter"><span>Noch kein Foto</span></div><h2>Bogenhanf</h2><p class="leise">Art: Bogenhanf</p><p class="leise">Lichtzone: Zone 3 · Status: Pflanze</p><p class="leise">Standort: Regal Süd</p><p>Letzte Messung: <strong class="qualitaet-gesund">Gesund</strong> am 01.10.2026</p><p class="leise">keine offene Behandlung</p></li></ul><div class="aktionen"><button type="button" class="primaer">Weiteres Exemplar: Art wählen</button></div></section>"
+ ❯ src/bestand/karten.test.tsx:102:15
+    100|     ]);
+    101|     expect(h).toContain("Letzte Messung: ");
+    102|     expect(h).toContain("12,5 cm");
+       |               ^
+    103|     expect(h).toContain(">Gesund</strong> am 01.10.2026");
+    104|     expect(h).not.toContain("noch keine Messung");
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Karte: letzte Messung > ein ganzer Wert wird ohne Nachkommastelle gezeigt
+AssertionError: expected '<section aria-labelledby="bestand-tit…' to contain '14 cm'
+Expected: "14 cm"
+Received: "<section aria-labelledby="bestand-titel"><h1 id="bestand-titel">Bestand</h1><ul class="karten-raster"><li class="exemplar-karte"><div class="karte-foto platzhalter"><span>Noch kein Foto</span></div><h2>Bogenhanf</h2><p class="leise">Art: Bogenhanf</p><p class="leise">Lichtzone: Zone 3 · Status: Pflanze</p><p class="leise">Standort: Regal Süd</p><p>Letzte Messung: <strong class="qualitaet-gesund">Gesund</strong> am 01.10.2026</p><p class="leise">keine offene Behandlung</p></li></ul><div class="aktionen"><button type="button" class="primaer">Weiteres Exemplar: Art wählen</button></div></section>"
+ ❯ src/bestand/karten.test.tsx:111:15
+    109|       karte({ letzteMessung: { datum: "2026-10-01", wert: 14, qualitae…
+    110|     ]);
+    111|     expect(h).toContain("14 cm");
+       |               ^
+    112|   });
+    113|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+ Test Files  1 failed | 20 passed (21)
+      Tests  2 failed | 170 passed (172)
+   Start at  21:43:11
+   Duration  2.63s (environment 35%, tests 34%, transform 18%, import 12%)
+    Isolate  21 workers spawned · ~465ms startup each (spawn + environment, per file)
+             at least ~423ms faster with isolate: false — reuses workers across files instead of one per file

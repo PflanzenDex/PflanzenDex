@@ -1,5 +1,5 @@
 import type { SpecimenCard, MeasurementQuality } from "@pflanzendex/core";
-import { UNKNOWN, dateText } from "./text";
+import { UNKNOWN, dateText, valueText } from "./text";
 
 const STATUS_TEXT = {
   plant: "Pflanze",
@@ -42,7 +42,7 @@ function Measurement({ card }: { card: SpecimenCard }) {
   return (
     <>
       <p>
-        Letzte Messung:{" "}
+        Letzte Messung: {valueText(m.value)} ·{" "}
         <strong className={`quality-${m.quality}`}>{QUALITY_TEXT[m.quality]}</strong> am{" "}
         {dateText(m.date)}
       </p>

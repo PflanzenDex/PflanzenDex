@@ -7,6 +7,8 @@ export type MeasurementQuality = (typeof MEASUREMENT_QUALITIES)[number];
 export interface LastMeasurement {
   /** Lokales Kalenderdatum `JJJJ-MM-TT` (NFR-08). */
   readonly date: string;
+  /** In the unit of the species' growth measure (cm), as measured. */
+  readonly value: number;
   readonly quality: MeasurementQuality;
   readonly note: string | null;
 }

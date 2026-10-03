@@ -84,7 +84,11 @@ export function findConflicts({ issue, prs, branches, allowPrior = false }) {
   const key = claimKey(issue);
   const found = [];
   for (const a of issue.assignees ?? []) {
-    found.push({ kind: "assignee", text: `issue #${issue.number} is assigned to @${a.login}` });
+    found.push({
+      kind: "assignee",
+      login: a.login,
+      text: `issue #${issue.number} is assigned to @${a.login}`,
+    });
   }
   for (const pr of prs.filter((p) => prReferences(p, issue))) {
     const state = prState(pr);

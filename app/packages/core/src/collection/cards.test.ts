@@ -170,13 +170,14 @@ describe("US-BES-06 card: last measurement and photo", () => {
     const e = await create("anna", "Bogenhanf");
     const measurements = new MeasurementsStub({
       [e.id]: {
-        last: { date: "2026-10-01", quality: "healthy", note: "Neues Blatt." },
+        last: { date: "2026-10-01", value: 12.5, quality: "healthy", note: "Neues Blatt." },
         photo: { url: "/medien/alt.jpg", date: "2026-09-20" },
       },
     });
     const [card] = await specimenCards(dependencies({ measurements }), "anna", TODAY);
     expect(card?.lastMeasurement).toEqual({
       date: "2026-10-01",
+      value: 12.5,
       quality: "healthy",
       note: "Neues Blatt.",
     });
@@ -187,7 +188,7 @@ describe("US-BES-06 card: last measurement and photo", () => {
     const e = await create("anna", "Bogenhanf");
     const measurements = new MeasurementsStub({
       [e.id]: {
-        last: { date: "2026-10-02", quality: "etiolated", note: null },
+        last: { date: "2026-10-02", value: 9, quality: "etiolated", note: null },
         photo: null,
       },
     });

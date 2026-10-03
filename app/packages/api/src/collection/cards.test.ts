@@ -174,7 +174,7 @@ describe("US-BES-06 Karten: Inhalt", () => {
     const id = e.body["id"] as string;
     measurementsFor = {
       [id]: {
-        last: { date: "2026-10-01", quality: "etiolated", note: "Streckt sich." },
+        last: { date: "2026-10-01", value: 12.5, quality: "etiolated", note: "Streckt sich." },
         photo: { url: "/medien/x.jpg", date: "2026-09-28" },
       },
     };
@@ -186,7 +186,12 @@ describe("US-BES-06 Karten: Inhalt", () => {
     };
     const berlin = (await cards(subA)).body["cards"].find((k: { id: string }) => k.id === id);
     expect(berlin).toMatchObject({
-      lastMeasurement: { date: "2026-10-01", quality: "etiolated", note: "Streckt sich." },
+      lastMeasurement: {
+        date: "2026-10-01",
+        value: 12.5,
+        quality: "etiolated",
+        note: "Streckt sich.",
+      },
       photo: { url: "/medien/x.jpg", date: "2026-09-28" },
       treatment: {
         reason: "Neem spritzen",

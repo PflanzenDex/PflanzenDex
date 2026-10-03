@@ -17,14 +17,14 @@ make board               # who works on what (optional: MILESTONE="R0 Fundament"
 - a PR (open or merged) references the issue (`Closes #n`) or carries the story ID in title or branch,
 - a branch on `origin` carries the story ID.
 
-Otherwise it assigns you, sets the project status "In Progress" (field and option ids are read at run time), pushes the branch with one empty commit (made without touching your working tree) and opens a draft PR against `dev` whose text has a `## Handoff` section (task, done, missing, verification, next steps). Keep that section current; whoever takes over reads it first. The PR title must be completed by the author (`gh api -X PATCH` edits it; `gh pr edit` fails with Projects classic). If another person claimed the issue at the same moment, the later claim steps back.
+Before any write a preflight checks that `node_modules` exists (`make setup`) and that `origin/dev` has a `Makefile` (no ancient checkout). Otherwise it pushes the branch with one empty commit (made without touching your working tree), assigns you, sets the project status "In Progress" (field and option ids are read at run time) and opens a draft PR against `dev` whose text has a `## Handoff` section (task, done, missing, verification, next steps). Keep that section current; whoever takes over reads it first. The PR title must be completed by the author (`gh api -X PATCH` edits it; `gh pr edit` fails with Projects classic). If another person claimed the issue at the same moment, the later claim steps back and deletes its branch. The claim is atomic: if a step fails, the steps already done are undone (branch deleted, assignee removed, status back to "Todo"); an issue assigned to you without a branch or PR (half claim of an older run) is continued by a re-run.
 
 **Branch naming rule:** `<type>/<epic>-<nn>-<slug>`, e.g. `feat/wac-01-messung`. The story ID is written without `US-`/`FR-`, the slug is up to four words of the issue title, lower case, at most 30 characters. Type: `fix` for label `bug`, `chore` for label `enabler`, otherwise `feat`. Issues without a story ID use `issue-<n>`, e.g. `chore/issue-243-claim-check`. Matching is by this key, so `feat/us-wac-01-x` and `feat/wac-01-y` count as the same story.
 
 Exceptions, all explicit:
 
 - `ALLOW_PRIOR_WORK=1 make claim ISSUE=<n>` waives merged PRs only (follow-up work on a story). Assignee, open PR and live branch are never waived.
-- `SKIP_CLAIM_CHECK=1` skips the claim check of `make worktree` and of the pre-push hook. Use it only for branches that are not a story.
+- `SKIP_CLAIM_CHECK=1` skips the claim check of `make worktree`. Use it only for branches that are not a story.
 - To take over a story, ask the assignee or unassign them on the issue; `make board` marks claims without a commit for `CLAIM_STALE_HOURS` hours (starting value 48, an assumption) as `STALE`.
 
 `make board` flags: `STALE` (see above), `DOUBLE` (more than one assignee, live branch or open PR for one story) and `NO-CLAIM` (a branch or PR exists, but nobody is assigned). Branches whose PR is merged or closed do not count as live.
@@ -37,7 +37,7 @@ Limits: the check needs `gh` and network; offline it warns and lets go. It is a 
 make worktree BRANCH=feat/<task>
 ```
 
-`make worktree` first runs the claim check (`app/scripts/claim-check.mjs`): a branch with a story ID is refused when the story belongs to somebody else or has not been claimed (`make claim` first). If the branch already exists on `origin` (made by `make claim`), the worktree continues it. The pre-push hook runs the same check for every pushed branch: a story owned by someone else aborts the push, an unclaimed one only warns.
+`make worktree` first runs the claim check (`app/scripts/claim-check.mjs`): a branch with a story ID is refused when the story belongs to somebody else or has not been claimed (`make claim` first). If the branch already exists on `origin` (made by `make claim`), the worktree continues it. There is no check on push: anyone with access may push to a branch.
 
 This calls `scripts/worktree-new.sh`: it fetches `origin/dev`, creates the branch and a worktree under `.worktrees/<branch>/` (slashes become dashes) and writes `.env.worktree`. Then change into that directory and run `make setup` there. Two sessions never write into the same directory; `.worktrees/` and `.env.worktree` are ignored by git.
 

@@ -238,3 +238,38 @@ describe("US-WAC-01 Systemuhr", () => {
     expect(measurement["date"]).toBe(localToday(new Date(), "UTC"));
   });
 });
+
+describe("US-WAC-01 last measurement on the specimen card (US-BES-06)", () => {
+  const cardOf = async (sub: string, id: string) =>
+    (await call(sub, "GET", "/specimens/cards?timeZone=Europe%2FBerlin")).body["cards"].find(
+      (k: { id: string }) => k.id === id,
+    );
+
+  it("without an own measurement: no measurement yet (unknown, P-08)", async () => {
+    const id = await newSpecimen(subA, "Cardempty");
+    expect(await cardOf(subA, id)).toMatchObject({ lastMeasurement: null, photo: null });
+  });
+
+  it("the card shows value, date, quality and note of the last measurement, the photo stays null", async () => {
+    const id = await newSpecimen(subA, "Cardfull");
+    await measure(subA, id, { value: 10, date: "2026-09-20" });
+    await measure(subA, id, {
+      value: 14.5,
+      date: "2026-10-01",
+      quality: "etiolated",
+      note: "lang",
+    });
+    expect(await cardOf(subA, id)).toMatchObject({
+      lastMeasurement: { date: "2026-10-01", value: 14.5, quality: "etiolated", note: "lang" },
+      photo: null,
+    });
+  });
+
+  it("tenant: the card of an account never carries a measurement of another", async () => {
+    const annas = await newSpecimen(subA, "Carda");
+    const bens = await newSpecimen(subB, "Cardb");
+    await measure(subA, annas, { value: 21 });
+    expect(await cardOf(subB, bens)).toMatchObject({ lastMeasurement: null });
+    expect(await cardOf(subB, annas)).toBeUndefined();
+  });
+});
