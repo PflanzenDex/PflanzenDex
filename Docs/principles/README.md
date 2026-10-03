@@ -75,5 +75,6 @@ Section contents:
 | PRIN-007 | Stable error codes                                       | checked  |
 | PRIN-008 | Spec file numbers and IDs are unique                     | gated    |
 | PRIN-009 | Conventional Commits                                     | observed |
+| PRIN-010 | A story is claimed before work starts                    | checked  |
 
 Not yet in the register: AB-3 to AB-5 (no code to check yet), the P-01 to P-11 mapping of spec 18 beyond the rules above.
