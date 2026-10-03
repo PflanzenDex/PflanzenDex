@@ -4,6 +4,7 @@ import type { Pool } from "pg";
 import { produktTitel } from "@pflanzendex/core";
 import { authentifizierung } from "./auth/middleware";
 import type { TokenPruefer } from "./auth/token";
+import { ARTEN_PFADE, artenRouten } from "./arten-routen";
 import { kontoRouten } from "./konto-routen";
 import { LICHT_PFADE, lichtRouten } from "./licht-routen";
 
@@ -36,6 +37,8 @@ export function createApp(opt: AppOptionen = {}): Hono {
     app.route("/konto", kontoRouten(opt.pool));
     for (const pfad of LICHT_PFADE) app.use(pfad, auth).use(`${pfad}/*`, auth);
     app.route("/", lichtRouten(opt.pool));
+    for (const pfad of ARTEN_PFADE) app.use(pfad, auth).use(`${pfad}/*`, auth);
+    app.route("/", artenRouten(opt.pool));
   }
   return app;
 }

@@ -13,6 +13,9 @@ export const FEHLERTEXTE = {
   "pruefung.nicht_gefunden": "Diesen Prüfvorgang gibt es nicht.",
   "pruefung.status_unzulaessig": "Dieser Vorgang ist schon entschieden.",
   "pruefung.grund_fehlt": "Zum Zurückweisen gehört ein Grund, den der Ersteller sehen kann.",
+  "art.dublette":
+    "Diese Art gibt es schon (gleicher Name oder Synonym). Wähle die vorhandene Art, statt eine zweite anzulegen.",
+  "art.nicht_gefunden": "Diese Art gibt es nicht.",
   "standort.name_vergeben": "Einen Standort mit diesem Namen gibt es schon.",
   "standort.nicht_gefunden": "Diesen Standort gibt es nicht.",
   "lichtzone.name_vergeben": "Eine Lichtzone mit diesem Namen gibt es schon.",

@@ -25,7 +25,7 @@ const NETZ_FEHLER: ApiFehler = {
   text: "Der Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.",
 };
 
-async function aufruf<T>(
+export async function aufruf<T>(
   abruf: Abruf,
   url: string,
   token: string,

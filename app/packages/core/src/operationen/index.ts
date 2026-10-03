@@ -41,5 +41,26 @@ export type {
   ZonenSpeicher,
   ZonenWerte,
 } from "./licht";
+export {
+  ART_GRENZEN,
+  WACHSTUMSMASSE,
+  artHinweise,
+  artLaden,
+  artSuchen,
+  artVorschlagen,
+  normalisiere,
+  parseLateinisch,
+} from "./art";
+export type {
+  Art,
+  ArtHinweis,
+  ArtName,
+  ArtSpeicher,
+  ArtTreffer,
+  ArtWerte,
+  LateinischerName,
+  NamensFeld,
+  Wachstumsmass,
+} from "./art";
 export { standortAnlegen } from "./beispiel";
 export type { Standort, StandortSpeicher } from "./beispiel";

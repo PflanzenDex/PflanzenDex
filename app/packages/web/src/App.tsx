@@ -2,16 +2,18 @@ import { useState } from "react";
 import { Fehler, KontoAnsicht, Laedt, Willkommen } from "./auth/ansichten";
 import { apiUrl } from "./auth/konto-api";
 import { useSitzung } from "./auth/sitzung";
+import { ArtenSeite } from "./arten/ArtenSeite";
 import { LichtSeite } from "./licht/LichtSeite";
 import { Navigation, type Ansicht } from "./navigation";
 import "./stil.css";
 import "./licht/licht.css";
+import "./arten/arten.css";
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
 
 export function App() {
   const s = useSitzung();
-  const [ansicht, setAnsicht] = useState<Ansicht>("licht");
+  const [ansicht, setAnsicht] = useState<Ansicht>("arten");
   const z = s.zustand;
   return (
     <main className="seite">
@@ -34,8 +36,10 @@ export function App() {
               onUeberallAbmelden={() => void s.ueberallAbmelden()}
               {...(z.fehler ? { fehler: z.fehler } : {})}
             />
-          ) : (
+          ) : ansicht === "licht" ? (
             <LichtSeite api={api} token={s.token} />
+          ) : (
+            <ArtenSeite api={api} token={s.token} />
           )}
         </div>
       )}

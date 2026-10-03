@@ -1,0 +1,112 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-ae388dc8f4158b101/app/packages/db
+
+ ❯ src/mandant.test.ts (10 tests | 3 failed) 1604ms
+   ❯ Mandantentrennung über alle Tabellen (6)
+     × das Schema hat keine Tabelle ohne Konto-Kennung und keine ohne erzwungene Zeilenregel 8ms
+     × eine neue Tabelle ohne Konto-Kennung fällt auf 20ms
+     × eine Tabelle mit Konto-Kennung, aber ohne Zeilenregel, fällt auf 7ms
+ ❯ src/art.test.ts (13 tests | 1 failed) 344ms
+   ❯ Artenkatalog: Suche und Dubletten (3)
+     × findet über lateinischen, deutschen Namen und Synonym und nennt den Treffer (Sansevieria -> Dracaena) 29ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/art.test.ts > Artenkatalog: Suche und Dubletten > findet über lateinischen, deutschen Namen und Synonym und nennt den Treffer (Sansevieria -> Dracaena)
+AssertionError: expected undefined to match object { feld: 'deutsch' }
+
+- Expected:
+{
+  "feld": "deutsch",
+}
+
++ Received:
+undefined
+
+ ❯ src/art.test.ts:206:40
+    204|     const t = async (s: string) => (await arten.suche(ben, norm(s)))[0…
+    205|     expect(await t(w.lateinischerName)).toMatchObject({ feld: "lateini…
+    206|     expect(await t(name("bogenhanf"))).toMatchObject({ feld: "deutsch"…
+       |                                        ^
+    207|     expect(await t(name("sansevieria"))).toMatchObject({
+    208|       feld: "synonym",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/mandant.test.ts > Mandantentrennung über alle Tabellen > das Schema hat keine Tabelle ohne Konto-Kennung und keine ohne erzwungene Zeilenregel
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "Tabelle art: keine Konto-Kennung (Spalte konto_id, FR-ACC-02); ohne Konto nur mit Eintrag in OHNE_KONTO_KENNUNG",
++   "Tabelle art_name: keine Konto-Kennung (Spalte konto_id, FR-ACC-02); ohne Konto nur mit Eintrag in OHNE_KONTO_KENNUNG",
++ ]
+
+ ❯ src/mandant.test.ts:29:47
+     27|
+     28|   it("das Schema hat keine Tabelle ohne Konto-Kennung und keine ohne e…
+     29|     expect(await findeSchemaVerstoesse(pool)).toEqual([]);
+       |                                               ^
+     30|   });
+     31|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/mandant.test.ts > Mandantentrennung über alle Tabellen > eine neue Tabelle ohne Konto-Kennung fällt auf
+AssertionError: expected [ …(3) ] to deeply equal [ StringContaining "vergessen" ]
+
+- Expected
++ Received
+
+  [
+-   StringContaining "vergessen",
++   "Tabelle art: keine Konto-Kennung (Spalte konto_id, FR-ACC-02); ohne Konto nur mit Eintrag in OHNE_KONTO_KENNUNG",
++   "Tabelle art_name: keine Konto-Kennung (Spalte konto_id, FR-ACC-02); ohne Konto nur mit Eintrag in OHNE_KONTO_KENNUNG",
++   "Tabelle vergessen: keine Konto-Kennung (Spalte konto_id, FR-ACC-02); ohne Konto nur mit Eintrag in OHNE_KONTO_KENNUNG",
+  ]
+
+ ❯ src/mandant.test.ts:38:26
+     36|       await client.query("create table vergessen (id serial primary ke…
+     37|       const verstoesse = await findeSchemaVerstoesse(client);
+     38|       expect(verstoesse).toEqual([expect.stringContaining("vergessen")…
+       |                          ^
+     39|       expect(verstoesse[0]).toContain("Konto-Kennung");
+     40|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/mandant.test.ts > Mandantentrennung über alle Tabellen > eine Tabelle mit Konto-Kennung, aber ohne Zeilenregel, fällt auf
+AssertionError: expected [ …(3) ] to deeply equal [ StringContaining "offen" ]
+
+- Expected
++ Received
+
+  [
+-   StringContaining "offen",
++   "Tabelle art: keine Konto-Kennung (Spalte konto_id, FR-ACC-02); ohne Konto nur mit Eintrag in OHNE_KONTO_KENNUNG",
++   "Tabelle art_name: keine Konto-Kennung (Spalte konto_id, FR-ACC-02); ohne Konto nur mit Eintrag in OHNE_KONTO_KENNUNG",
++   "Tabelle offen: Zeilenregel fehlt oder wird nicht erzwungen (nach create table: select mandantenschutz('offen'))",
+  ]
+
+ ❯ src/mandant.test.ts:52:26
+     50|       await client.query("create table offen (konto_id uuid not null r…
+     51|       const verstoesse = await findeSchemaVerstoesse(client);
+     52|       expect(verstoesse).toEqual([expect.stringContaining("offen")]);
+       |                          ^
+     53|       expect(verstoesse[0]).toContain("Zeilenregel");
+     54|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed | 4 passed (6)
+      Tests  4 failed | 56 passed (60)
+   Start at  11:49:11
+   Duration  3.85s (tests 89%, import 6%, transform 4%, worker 1%)
+
+    Isolate  6 workers spawned · ~86ms startup each (spawn + environment, per file)
+             at least ~429ms faster with isolate: false — reuses workers across files instead of one per file
+

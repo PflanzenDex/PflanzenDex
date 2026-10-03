@@ -1,6 +1,7 @@
-export type Ansicht = "licht" | "konto";
+export type Ansicht = "arten" | "licht" | "konto";
 
 const EINTRAEGE: { id: Ansicht; text: string }[] = [
+  { id: "arten", text: "Arten" },
   { id: "licht", text: "Standorte und Licht" },
   { id: "konto", text: "Konto" },
 ];
