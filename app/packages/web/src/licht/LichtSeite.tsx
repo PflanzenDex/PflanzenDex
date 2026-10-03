@@ -1,12 +1,27 @@
 import "./licht.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LichtAnsicht, type LichtAktionen } from "./licht-ansicht";
-import { erzeugeSchreiben, ladeLicht, type ApiFehler, type LichtDaten } from "./licht-api";
+import {
+  erzeugeSchreiben,
+  ladeAbleitung,
+  ladeLicht,
+  type AbleitungsAnfrage,
+  type ApiFehler,
+  type LichtDaten,
+} from "./licht-api";
 
 type Zustand =
   { art: "laedt" } | { art: "fehler"; fehler: ApiFehler } | { art: "bereit"; daten: LichtDaten };
 
 type Token = () => Promise<string | undefined>;
+
+const NICHT_ANGEMELDET = { code: "zugriff.nicht_angemeldet", text: "Bitte melde dich neu an." };
+
+async function ableiten(api: string, token: Token, a: AbleitungsAnfrage) {
+  const t = await token();
+  if (t) return ladeAbleitung(api, t, a);
+  return { ok: false as const, fehler: NICHT_ANGEMELDET };
+}
 
 function baueAktionen(
   api: string,
@@ -34,6 +49,7 @@ function baueAktionen(
     },
     standortAnlegen: (e) => schreibe("POST", "/standorte", e),
     standortAendern: (id, e) => schreibe("PUT", `/standorte/${id}`, e),
+    zoneAbleiten: (a) => ableiten(api, token, a),
   };
 }
 

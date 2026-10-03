@@ -1,3 +1,4 @@
+import { AbleitungsFormular, type Ableiten } from "./ableitung-ansicht";
 import type { ApiFehler, LichtDaten } from "./licht-api";
 import { StandortFormular, StandortKarte, type StandortEingabe } from "./standorte-ansicht";
 import { ZonenFormular, ZonenKarte, type ZonenEingabe } from "./zonen-ansicht";
@@ -11,6 +12,7 @@ export interface LichtAktionen {
   voreinstellung: () => Fehler;
   standortAnlegen: (e: StandortEingabe) => Fehler;
   standortAendern: (id: string, e: StandortEingabe) => Fehler;
+  zoneAbleiten: Ableiten;
 }
 
 /** Hinweise (US-BES-08): jeder Hinweis nennt, was zu tun ist (P-09). */
@@ -103,6 +105,19 @@ function Standorte(props: { daten: LichtDaten; aktionen: LichtAktionen }) {
   );
 }
 
+function Zuordnung({ aktionen }: { aktionen: LichtAktionen }) {
+  return (
+    <section aria-labelledby="zuordnung">
+      <h2 id="zuordnung">Zone einer Art ermitteln</h2>
+      <p className="leise">
+        Die Zone folgt dem Lux-Bedarf der Art und deinen Lichtzonen. Stecklingslicht ist nie das
+        Ziel für erwachsene Pflanzen.
+      </p>
+      <AbleitungsFormular onAbleiten={aktionen.zoneAbleiten} />
+    </section>
+  );
+}
+
 export function LichtAnsicht(props: {
   daten: LichtDaten;
   aktionen: LichtAktionen;
@@ -122,6 +137,7 @@ export function LichtAnsicht(props: {
       <Hinweise daten={props.daten} />
       <Zonen daten={props.daten} aktionen={props.aktionen} />
       <Standorte daten={props.daten} aktionen={props.aktionen} />
+      <Zuordnung aktionen={props.aktionen} />
     </div>
   );
 }

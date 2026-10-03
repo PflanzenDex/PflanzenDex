@@ -17,7 +17,7 @@ Diese vier gelten als Voreinstellung für neue Konten. Der Halter kann Namen und
 
 ## Userstories
 
-### US-LIC-01 · Art der richtigen Lichtzone zuordnen · ⬜ (Prototyp ✅)
+### US-LIC-01 · Art der richtigen Lichtzone zuordnen · 🟨 (Prototyp ✅)
 
 Als **Pflanzenhalter** will ich, dass jede Art anhand ihres biologischen Bedarfs einer Zone zugeordnet ist, damit sie wächst und nicht nur überlebt.
 

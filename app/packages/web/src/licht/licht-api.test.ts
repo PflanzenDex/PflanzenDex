@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { erzeugeSchreiben, ladeLicht } from "./licht-api";
+import { erzeugeSchreiben, ladeAbleitung, ladeLicht } from "./licht-api";
 
 const antwort = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -48,5 +48,23 @@ describe("US-LIC-05 Client der Licht-API", () => {
     }) as unknown as typeof fetch;
     const r = await ladeLicht("http://api", "t", abruf);
     expect(!r.ok && r.fehler.code).toBe("netz.nicht_erreichbar");
+  });
+});
+
+describe("US-LIC-01 Ableitung laden", () => {
+  it("ruft die Ableitung mit den Angaben der Art ab", async () => {
+    const abruf = vi.fn(
+      async () => new Response(JSON.stringify({ art: "unbekannt", grund: "kein_bedarf" })),
+    );
+    const r = await ladeAbleitung(
+      "/api",
+      "t",
+      { lichtbedarfLux: 15000, standardStufe: 2, weichesBlatt: true },
+      abruf as unknown as typeof fetch,
+    );
+    expect(r.ok).toBe(true);
+    expect(String((abruf.mock.calls[0] as unknown[])[0])).toBe(
+      "/api/lichtzonen/ableitung?lichtbedarfLux=15000&standardStufe=2&weichesBlatt=true",
+    );
   });
 });

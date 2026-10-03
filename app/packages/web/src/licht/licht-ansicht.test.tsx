@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { LichtAnsicht, type LichtAktionen } from "./licht-ansicht";
 import type { LichtDaten } from "./licht-api";
 import { FehlerMeldung } from "./meldung";
+import { ableitungText } from "./text";
 
 // React trennt benachbarte Textteile beim Serverrendern mit Kommentaren; für Textprüfungen entfernen wir sie.
 const renderToString = (e: Parameters<typeof rendere>[0]) => rendere(e).replaceAll("<!-- -->", "");
@@ -14,6 +15,7 @@ const aktionen: LichtAktionen = {
   voreinstellung: nichts,
   standortAnlegen: nichts,
   standortAendern: nichts,
+  zoneAbleiten: async () => ({ ok: true, wert: { art: "unbekannt", grund: "kein_bedarf" } }),
 };
 const zone = { id: "z1", name: "Lampe 2", luxDecke: 15000, ppfd: 300, reihenfolge: 2 };
 const leer: LichtDaten = { zonen: [], standorte: [], hinweise: [] };
@@ -108,5 +110,27 @@ describe("US-LIC-05 Fehlermeldung beim Löschen einer genutzten Zone", () => {
       />,
     );
     expect(h).toContain("Bitte prüfe: Lux-Decke.");
+  });
+});
+
+describe("US-LIC-01 Ansicht Zone ermitteln", () => {
+  it("bietet Lux-Bedarf, Standard-Stufe und den C3-Hinweis an und erklärt, wozu", () => {
+    const h = html(leer);
+    expect(h).toContain("Zone einer Art ermitteln");
+    expect(h).toContain("Lux-Bedarf der Art (Lux)");
+    expect(h).toContain("Stufe 4");
+    expect(h).toContain("Sonnenliebende C3-Pflanze mit weichem Blatt");
+    expect(h).toContain("Stecklingslicht ist nie das Ziel");
+  });
+
+  it("US-LIC-01 Ergebnistexte: Zone mit Begründung, unbekannt mit nächster Handlung (P-08, P-09)", () => {
+    const z = { id: "z2", name: "Lampe 2", luxDecke: 15000, ppfd: 300, reihenfolge: 2 };
+    expect(ableitungText({ art: "zone", zone: z, stufe: 2, grund: "weiches_blatt" })).toEqual({
+      titel: "Lichtzone: Lampe 2",
+      grund: expect.stringContaining("nicht automatisch"),
+    });
+    const u = ableitungText({ art: "unbekannt", grund: "kein_bedarf" });
+    expect(u.titel).toBe("Lichtzone: unbekannt");
+    expect(u.grund).toContain("Trage ihn im Katalog ein");
   });
 });
