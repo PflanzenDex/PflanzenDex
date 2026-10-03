@@ -1,7 +1,12 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { Pool } from "pg";
-import { produktTitel, type SollStandortQuelle } from "@pflanzendex/core";
+import {
+  produktTitel,
+  type BehandlungsQuelle,
+  type MessungsQuelle,
+  type SollStandortQuelle,
+} from "@pflanzendex/core";
 import { authentifizierung, kontoRouten, type TokenPruefer } from "./konto";
 import { EXEMPLARE_PFADE, exemplareRouten } from "./bestand";
 import { ARTEN_PFADE, artenRouten } from "./katalog";
@@ -21,6 +26,9 @@ export type AppOptionen = {
   uhr?: () => Date;
   /** Soll-Standort für neue Exemplare; `pflege` (PHA) liefert ihn, bis dahin ist der Standort unbekannt. */
   sollStandort?: SollStandortQuelle;
+  /** Messungen und Behandlungen für die Exemplar-Karten (US-BES-06); `pflege` (WAC, BEH) liefert sie, bis dahin sind die Karten leer. */
+  messungen?: MessungsQuelle;
+  behandlungen?: BehandlungsQuelle;
 };
 
 export function createApp(opt: AppOptionen = {}): Hono {
@@ -51,6 +59,8 @@ export function createApp(opt: AppOptionen = {}): Hono {
       exemplareRouten(opt.pool, {
         ...(opt.uhr ? { uhr: opt.uhr } : {}),
         ...(opt.sollStandort ? { sollStandort: opt.sollStandort } : {}),
+        ...(opt.messungen ? { messungen: opt.messungen } : {}),
+        ...(opt.behandlungen ? { behandlungen: opt.behandlungen } : {}),
       }),
     );
   }
