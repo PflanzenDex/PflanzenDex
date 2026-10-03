@@ -72,9 +72,9 @@ Akzeptanzkriterien:
 - Notiz der letzten Messung einklappbar. Klick auf das Foto öffnet es groß.
 - Raster passt sich der Bildschirmbreite an (Handy: eine bis zwei Spalten).
 
-Stand der Umsetzung: Karten mit Name, Art, Lichtzone (die des Standorts), Status und Standort; „unbekannt“, wenn etwas fehlt (P-08). Letzte Messung (Qualität, Datum), einklappbare Notiz, Foto mit Link auf die große Ansicht und offene Behandlung mit „überfällig seit N Tg. / heute fällig / in N Tg.“ und „+N weitere“ sind in Kern, API und Oberfläche fertig und getestet, **zeigen aber nichts**, bis `pflege` die Ports `MessungsQuelle` (WAC) und `BehandlungsQuelle` (BEH) umsetzt: bis dahin steht dort „Noch kein Foto“, „noch keine Messung“ und „keine offene Behandlung“. Vergeilt/dünn wird nie als Erfolg gezeigt. **Offen:** die Zone eines Steckling-Overrides (BES-04), archivierte Exemplare ausblenden (BES-07).
+Stand der Umsetzung: Karten mit Name, Art, Lichtzone (die des Standorts), Status und Standort; „unbekannt“, wenn etwas fehlt (P-08). Letzte Messung (Qualität, Datum), einklappbare Notiz, Foto mit Link auf die große Ansicht und offene Behandlung mit „überfällig seit N Tg. / heute fällig / in N Tg.“ und „+N weitere“ sind in Kern, API und Oberfläche fertig und getestet, **zeigen aber nichts**, bis `pflege` die Ports `MessungsQuelle` (WAC) und `BehandlungsQuelle` (BEH) umsetzt: bis dahin steht dort „Noch kein Foto“, „noch keine Messung“ und „keine offene Behandlung“. Vergeilt/dünn wird nie als Erfolg gezeigt. **Offen:** die Zone eines Steckling-Overrides (BES-04). Archivierte Exemplare blendet BES-07 aus.
 
-### US-BES-07 · Eingegangene oder abgegebene Pflanze archivieren · ⬜ (Prototyp ✅)
+### US-BES-07 · Eingegangene oder abgegebene Pflanze archivieren · 🟨 (Prototyp ✅)
 
 Als **Pflanzenhalter** will ich ein Exemplar aus den Auswertungen nehmen, ohne seine Historie zu verlieren.
 
@@ -83,6 +83,8 @@ Akzeptanzkriterien:
 - „Archivieren" mit Grund (`eingegangen`, `abgegeben`, `getauscht`, `verschenkt`, `verkauft`, frei) setzt `Status: Archiviert`, `Archiviert_Am` und `Archiviert_Grund`.
 - Archivierte Exemplare fehlen in Verteilung, Phasen, Wachstum, Behandlungen, Pokédex-Besitz und Heute-Liste, bleiben aber mit Historie einsehbar und lassen sich wiederherstellen.
 - Bei Tausch erfolgt die Archivierung automatisch (US-SOZ-11).
+
+Stand der Umsetzung: „Archivieren“ (Karte im Reiter Bestand) mit Grund aus der Liste (`eingegangen`, `abgegeben`, `getauscht`, `verschenkt`, `verkauft`) oder frei setzt Status, `Archiviert_Am` (lokales Kalenderdatum der Gerätezeitzone, NFR-08) und `Archiviert_Grund`; ein zweites Archivieren ändert beides nicht (P-10). Archivierte Exemplare fehlen in der Liste, in den BES-06-Karten (die Ports für Messungen und Behandlungen erfahren ihre Kennungen nicht), in den Pflegephasen und beim Messen (Messen wird mit `exemplar.archiviert` abgelehnt); sie bleiben über `GET /exemplare/:id` und den Abschnitt „Archiv“ einsehbar (Art, Datum, Grund) und lassen sich wiederherstellen (Status wie vor der Archivierung, ein Steckling bleibt Steckling). Der Name eines archivierten Exemplars bleibt belegt (Annahme, damit das Wiederherstellen nie kollidiert; ein neues Exemplar der Art braucht dann ein Kennzeichen). **Offen:** die automatische Archivierung beim Tausch (SOZ-11) und die Auswertungen, die es noch nicht gibt (Verteilung, Behandlungen, Pokédex-Besitz, Heute-Liste); sie müssen mit `istAktiv` filtern. Die Messreihe eines archivierten Exemplars ist über die API noch lesbar, in der Oberfläche aber nicht erreichbar.
 
 ### US-BES-08 · Unvollständige Daten erkennen · ⬜ (Prototyp 🟡)
 

@@ -5,6 +5,7 @@
     "Bestand: Zu einer gewählten Art legst du jetzt ein Exemplar an. Der Name entsteht nach der Namensregel, das Fangdatum ist dein heutiges Datum.",
     "Pflegephasen: Du siehst jetzt für jedes Exemplar, in welcher Phase es heute sein sollte (Ruhe- oder Wachstumsphase), berechnet aus dem Zeitraum seiner Art und deinem heutigen Datum. Der Soll-Standort bleibt noch unbekannt.",
     "Bestand: Jedes Exemplar erscheint jetzt als Karte mit Art, Lichtzone, Status und Standort. Foto, letzte Messung und offene Behandlungen siehst du dort, sobald es Messungen und Behandlungen gibt.",
-    "Wachstum: Im Bestand erfasst du je Exemplar eine Messung mit Messwert, Qualität und Notiz, auch nachträglich mit einem früheren Datum."
+    "Wachstum: Im Bestand erfasst du je Exemplar eine Messung mit Messwert, Qualität und Notiz, auch nachträglich mit einem früheren Datum.",
+    "Bestand: Ein eingegangenes oder abgegebenes Exemplar archivierst du mit einem Grund. Es verschwindet aus Liste und Auswertungen, seine Historie bleibt, und im Archiv holst du es jederzeit zurück."
   ]
 }
