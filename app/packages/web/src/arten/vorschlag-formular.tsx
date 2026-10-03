@@ -2,7 +2,8 @@ import { useState, type FormEvent } from "react";
 import type { ApiFehler } from "../licht/licht-api";
 import { dublette, formularZuEingabe } from "./formular";
 import { WeitereAngaben } from "./weitere-angaben";
-import { FELDER, SCHWIERIGKEIT, WACHSTUM } from "./text";
+import { Pflichtfelder } from "./pflichtfelder";
+import { FELDER } from "./text";
 
 function Fehlerbox(props: { fehler: ApiFehler; onVorhandene: (id: string) => void }) {
   const vorhandene = dublette(props.fehler);
@@ -54,71 +55,7 @@ export function VorschlagFormular(props: {
       </p>
       <p className="leise">Pflichtfelder sind mit * markiert.</p>
       <form className="formular" onSubmit={(e) => void senden(e)} aria-label="Art vorschlagen">
-        <label>
-          Lateinischer Name *
-          <input
-            name="lateinischerName"
-            required
-            maxLength={120}
-            defaultValue={props.start ?? ""}
-            autoComplete="off"
-            placeholder="z. B. Dracaena trifasciata"
-          />
-          <span className="leise">Gattung, Epitheton, Sorte nur in Anführungszeichen.</span>
-        </label>
-        <label>
-          Schwierigkeit *
-          <select name="schwierigkeit" required defaultValue="">
-            <option value="">Bitte wählen</option>
-            {Object.entries(SCHWIERIGKEIT).map(([zahl, text]) => (
-              <option key={zahl} value={zahl}>
-                {text}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Standard-Stufe (Lichtzone) *
-          <select name="standardStufe" required defaultValue="">
-            <option value="">Bitte wählen</option>
-            {[2, 3, 4].map((s) => (
-              <option key={s} value={s}>
-                Stufe {s}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Lichtbedarf für maximales Wachstum (Lux) *
-          <input
-            name="lichtbedarfLux"
-            required
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={200000}
-            step={1}
-          />
-        </label>
-        <label>
-          Wachstumsmaß *
-          <select name="wachstumsmass" required defaultValue="">
-            <option value="">Bitte wählen</option>
-            {Object.entries(WACHSTUM).map(([wert, text]) => (
-              <option key={wert} value={wert}>
-                {text}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="breit">
-          Vergeilung-Anzeichen *
-          <textarea name="vergeilungAnzeichen" required maxLength={1000} rows={3} />
-        </label>
-        <label className="breit">
-          Erfolgskriterien *
-          <textarea name="erfolgskriterien" required maxLength={1000} rows={3} />
-        </label>
+        <Pflichtfelder start={props.start ?? ""} />
         <WeitereAngaben />
         {fehler && <Fehlerbox fehler={fehler} onVorhandene={props.onVorhandene} />}
         <div className="aktionen">

@@ -7,7 +7,6 @@ export type { LateinischerName } from "./name";
 export { ART_GRENZEN, WACHSTUMSMASSE } from "./typen";
 export type {
   Art,
-  ArtAnlage,
   ArtName,
   ArtSpeicher,
   ArtTreffer,

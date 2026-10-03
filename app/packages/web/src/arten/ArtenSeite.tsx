@@ -1,14 +1,57 @@
-import { useCallback, useEffect, useState } from "react";
-import type { Art, ArtTreffer } from "@pflanzendex/core";
+import { useState } from "react";
+import type { Art } from "@pflanzendex/core";
 import type { ApiFehler } from "../licht/licht-api";
-import { ladeArt, schlageVor, sucheArten } from "./arten-api";
+import { schlageVor } from "./arten-api";
+import { ANMELDEN, useProfil, useSuche, type Profil } from "./arten-hooks";
 import { ArtProfil } from "./profil-ansicht";
 import { ArtSuche } from "./suche-ansicht";
 import { VorschlagFormular } from "./vorschlag-formular";
 
-type Ansicht = { art: "suche" } | { art: "vorschlag" } | { art: "profil"; id: string };
-type Profil = { art: "laedt" } | { art: "fehler"; fehler: ApiFehler } | { art: "da"; wert: Art };
-const ANMELDEN: ApiFehler = { code: "zugriff.nicht_angemeldet", text: "Bitte melde dich neu an." };
+type Ansicht = { art: "suche" } | { art: "vorschlag" } | { art: "profil" };
+
+function Gewaehlt({ art }: { art: Art }) {
+  return (
+    <p role="status" className="hinweis">
+      Gewählt: <i>{art.lateinischerName}</i>. Das Exemplar dazu legst du an, sobald es diese
+      Funktion gibt (US-BES-02).
+    </p>
+  );
+}
+
+function ProfilSeite(props: {
+  profil: Profil;
+  neu: boolean;
+  onWaehlen: (a: Art) => void;
+  onZurueck: () => void;
+}) {
+  const { profil } = props;
+  return (
+    <>
+      {props.neu && (
+        <p role="status" className="hinweis">
+          Dein Vorschlag ist gespeichert und liegt in der Prüfliste.
+        </p>
+      )}
+      {profil.art === "laedt" && <p role="status">Art wird geladen …</p>}
+      {profil.art === "fehler" && (
+        <p role="alert" className="warnung">
+          {profil.fehler.text}
+        </p>
+      )}
+      {profil.art === "da" ? (
+        <ArtProfil
+          art={profil.wert}
+          onWaehlen={() => props.onWaehlen(profil.wert)}
+          onZurueck={props.onZurueck}
+        />
+      ) : (
+        <button type="button" className="sekundaer" onClick={props.onZurueck}>
+          Zurück zur Suche
+        </button>
+      )}
+    </>
+  );
+}
 
 /**
  * Art im Katalog suchen, ansehen, wählen oder vorschlagen (US-BES-01). „Wählen“ merkt sich die Art; das Exemplar
@@ -18,80 +61,42 @@ export function ArtenSeite(props: { api: string; token: () => Promise<string | u
   const { api, token } = props;
   const [ansicht, setAnsicht] = useState<Ansicht>({ art: "suche" });
   const [suchtext, setSuchtext] = useState("");
-  const [treffer, setTreffer] = useState<readonly ArtTreffer[]>([]);
-  const [laedt, setLaedt] = useState(true);
-  const [fehler, setFehler] = useState<ApiFehler | null>(null);
-  const [profil, setProfil] = useState<Profil>({ art: "laedt" });
   const [gewaehlt, setGewaehlt] = useState<Art | null>(null);
   const [neu, setNeu] = useState(false);
+  const suche = useSuche(api, token, suchtext, ansicht.art);
+  const { profil, lade } = useProfil(api, token);
 
-  useEffect(() => {
-    let aktuell = true;
-    setLaedt(true);
-    const timer = setTimeout(
-      () =>
-        void (async () => {
-          const t = await token();
-          const r = t
-            ? await sucheArten(api, t, suchtext)
-            : { ok: false as const, fehler: ANMELDEN };
-          if (!aktuell) return;
-          if (r.ok) setTreffer(r.wert);
-          setFehler(r.ok ? null : r.fehler);
-          setLaedt(false);
-        })(),
-      suchtext ? 250 : 0,
-    );
-    return () => {
-      aktuell = false;
-      clearTimeout(timer);
-    };
-  }, [api, token, suchtext, ansicht.art]);
-
-  const oeffne = useCallback(
-    async (id: string) => {
-      setAnsicht({ art: "profil", id });
-      setProfil({ art: "laedt" });
-      const t = await token();
-      const r = t ? await ladeArt(api, t, id) : { ok: false as const, fehler: ANMELDEN };
-      setProfil(r.ok ? { art: "da", wert: r.wert } : { art: "fehler", fehler: r.fehler });
-    },
-    [api, token],
-  );
-
+  const oeffne = (id: string) => {
+    setAnsicht({ art: "profil" });
+    void lade(id);
+  };
   async function senden(eingabe: Record<string, unknown>): Promise<ApiFehler | null> {
     const t = await token();
     const r = t ? await schlageVor(api, t, eingabe) : { ok: false as const, fehler: ANMELDEN };
     if (!r.ok) return r.fehler;
     setNeu(true);
-    void oeffne(r.wert.id);
+    oeffne(r.wert.id);
     return null;
   }
-
   const zurueck = () => {
     setNeu(false);
     setAnsicht({ art: "suche" });
   };
   return (
     <div className="licht arten">
-      {gewaehlt && (
-        <p role="status" className="hinweis">
-          Gewählt: <i>{gewaehlt.lateinischerName}</i>. Das Exemplar dazu legst du an, sobald es
-          diese Funktion gibt (US-BES-02).
-        </p>
-      )}
-      {fehler && ansicht.art === "suche" && (
+      {gewaehlt && <Gewaehlt art={gewaehlt} />}
+      {suche.fehler && ansicht.art === "suche" && (
         <p role="alert" className="warnung">
-          {fehler.text}
+          {suche.fehler.text}
         </p>
       )}
       {ansicht.art === "suche" && (
         <ArtSuche
           suchtext={suchtext}
-          treffer={treffer}
-          laedt={laedt}
+          treffer={suche.treffer}
+          laedt={suche.laedt}
           onSuche={setSuchtext}
-          onOeffnen={(id) => void oeffne(id)}
+          onOeffnen={oeffne}
           onVorschlagen={() => setAnsicht({ art: "vorschlag" })}
         />
       )}
@@ -100,34 +105,11 @@ export function ArtenSeite(props: { api: string; token: () => Promise<string | u
           start={suchtext}
           onSenden={senden}
           onAbbrechen={zurueck}
-          onVorhandene={(id) => void oeffne(id)}
+          onVorhandene={oeffne}
         />
       )}
       {ansicht.art === "profil" && (
-        <>
-          {neu && (
-            <p role="status" className="hinweis">
-              Dein Vorschlag ist gespeichert und liegt in der Prüfliste.
-            </p>
-          )}
-          {profil.art === "laedt" && <p role="status">Art wird geladen …</p>}
-          {profil.art === "fehler" && (
-            <p role="alert" className="warnung">
-              {profil.fehler.text}
-            </p>
-          )}
-          {profil.art === "da" ? (
-            <ArtProfil
-              art={profil.wert}
-              onWaehlen={() => setGewaehlt(profil.wert)}
-              onZurueck={zurueck}
-            />
-          ) : (
-            <button type="button" className="sekundaer" onClick={zurueck}>
-              Zurück zur Suche
-            </button>
-          )}
-        </>
+        <ProfilSeite profil={profil} neu={neu} onWaehlen={setGewaehlt} onZurueck={zurueck} />
       )}
     </div>
   );

@@ -140,7 +140,7 @@ describe("US-BES-01 Formular „Art vorschlagen“ (Weg ohne KI)", () => {
       "vergeilungAnzeichen",
       "erfolgskriterien",
     ])
-      expect(h).toMatch(new RegExp(`name="${name}"[^>]*required|required=""[^>]*name="${name}"`));
+      expect(h.split("<").find((tag) => tag.includes(`name="${name}"`))).toContain("required");
   });
 
   it("übernimmt den Suchtext als Namen und erklärt Sichtbarkeit und Prüfung", () => {

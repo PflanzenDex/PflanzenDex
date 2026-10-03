@@ -192,3 +192,35 @@ describe("Hinweise zu einer Art (P-09, FR-BES-11)", () => {
     });
   });
 });
+
+describe("US-BES-01 weitere Randfälle", () => {
+  it.each([[["a"]], ["kein Array"], [Array.from({ length: 21 }, (_, i) => `Name ${i}x`)], [[5]]])(
+    "ungültige Synonyme %j werden abgelehnt",
+    async (synonyme) => {
+      const r = await vorschlagen({ ...profil, synonyme });
+      expect(!r.ok && r.fehler.details?.map((d) => d.feld)).toEqual(["synonyme"]);
+    },
+  );
+
+  it("leere Synonyme und doppelte Namen zählen einmal", async () => {
+    const r = await vorschlagen({
+      ...profil,
+      synonyme: ["Dracaena  trifasciata", "Dracaena trifasciata"],
+    });
+    expect(r.ok && r.wert.synonyme).toHaveLength(2);
+  });
+
+  it("eine ungültige Kennung ist keine Art, kein Serverfehler", async () => {
+    expect(await artLaden(speicher, "anna", "kein-uuid")).toBeNull();
+  });
+
+  it("Hinweise: zurückgewiesen nennt die nächste Handlung, freigegeben mit Epitheton hat keine", async () => {
+    const r = await vorschlagen(profil);
+    if (!r.ok) throw new Error("Vorschlag fehlgeschlagen");
+    expect(
+      artHinweise({ ...r.wert, pruefstatus: "zurueckgewiesen" })[0]?.naechsteHandlung,
+    ).toContain("erneut");
+    expect(artHinweise({ ...r.wert, pruefstatus: "ki_ungeprueft" })).toHaveLength(1);
+    expect(artHinweise({ ...r.wert, pruefstatus: "geprueft" })).toEqual([]);
+  });
+});

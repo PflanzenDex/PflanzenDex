@@ -27,7 +27,7 @@ export function artenRouten(pool: Pool): Hono<AuthEnv> {
     return art ? c.json(art) : c.json(fehlerKoerper(fehler("art.nicht_gefunden")), 404);
   });
   routen.post("/arten", async (c) =>
-    schreibe(c, deps, artVorschlagen(arten), await koerper(c), 201),
+    schreibe(c, deps, artVorschlagen(arten), { eingabe: await koerper(c), erfolg: 201 }),
   );
   return routen;
 }

@@ -13,7 +13,7 @@ import { IdempotenzPostgres, StandortePostgres, ZonenPostgres } from "@pflanzend
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import type { AuthEnv } from "./auth/middleware";
-import { koerper, schreibe as schreibeMit, type Ctx } from "./route-hilfen";
+import { koerper, schreibe as schreibeMit, type Antwortform, type Ctx } from "./route-hilfen";
 
 /** Pfade, die der Anmeldeschutz (Bearer-Token) abdecken muss. */
 export const LICHT_PFADE = ["/lichtzonen", "/standorte", "/hinweise"] as const;
@@ -39,17 +39,24 @@ export function lichtRouten(
     c: Ctx,
     op: Operation<E, A>,
     eingabe: unknown,
-    erfolg: 200 | 201 = 200,
-    huelle?: (wert: A) => object,
-  ) => schreibeMit(c, deps, op, eingabe, erfolg, huelle);
+    form: Omit<Antwortform<A>, "eingabe"> = {},
+  ) => schreibeMit(c, deps, op, { ...form, eingabe });
   const mitId = async (c: Ctx) => ({ ...(await koerper(c)), id: c.req.param("id") });
 
   routen.get("/lichtzonen", async (c) => c.json({ zonen: await zonen.liste(c.get("konto").id) }));
   routen.post("/lichtzonen/voreinstellung", async (c) =>
-    schreibe(c, lichtzoneVoreinstellung(zonen), {}, 201, (zonenListe) => ({ zonen: zonenListe })),
+    schreibe(
+      c,
+      lichtzoneVoreinstellung(zonen),
+      {},
+      {
+        erfolg: 201,
+        huelle: (zonenListe) => ({ zonen: zonenListe }),
+      },
+    ),
   );
   routen.post("/lichtzonen", async (c) =>
-    schreibe(c, lichtzoneAnlegen(zonen), await koerper(c), 201),
+    schreibe(c, lichtzoneAnlegen(zonen), await koerper(c), { erfolg: 201 }),
   );
   routen.put("/lichtzonen/:id", async (c) => schreibe(c, lichtzoneAendern(zonen), await mitId(c)));
   routen.delete("/lichtzonen/:id", async (c) =>
@@ -62,7 +69,7 @@ export function lichtRouten(
     c.json({ standorte: await standorte.liste(c.get("konto").id) }),
   );
   routen.post("/standorte", async (c) =>
-    schreibe(c, standortEinrichten(standorte), await koerper(c), 201),
+    schreibe(c, standortEinrichten(standorte), await koerper(c), { erfolg: 201 }),
   );
   routen.put("/standorte/:id", async (c) =>
     schreibe(c, standortAendern(standorte), await mitId(c)),

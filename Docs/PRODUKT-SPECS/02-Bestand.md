@@ -6,7 +6,7 @@ Prototyp-Bezug: Epic BES (`../PFLANZENSYSTEM-SPECS/01-Bestand-Arten-und-Exemplar
 
 ## Userstories
 
-### US-BES-01 · Art aus dem Katalog wählen oder neu anlegen · ⬜ (Prototyp ✅)
+### US-BES-01 · Art aus dem Katalog wählen oder neu anlegen · 🟨 (Prototyp ✅)
 Als **Pflanzenhalter** will ich für ein neues Exemplar die passende Art finden, damit Pflege, Licht und Erfolgskriterien feststehen, bevor ich den Topf anlege.
 
 Akzeptanzkriterien:
@@ -160,16 +160,16 @@ Kontoeigene Abweichungen von den Katalogwerten einer Art. Privat, nie Teil einer
 | ID | Anforderung | Status |
 |---|---|---|
 | FR-BES-01 | Art (Wissen) und Exemplar (Topf) sind getrennte Entitäten; Exemplare tragen nur individuelle Felder. | ⬜ |
-| FR-BES-02 | Der Artenkatalog ist gemeinsam; Änderungen daran sind Betreiber- oder Prüf-Aktionen, Nutzer können Vorschläge machen (E-02). | ⬜ |
-| FR-BES-03 | Namenskonflikte werden vor jeder Änderung geprüft, es entsteht kein Teilzustand. | ⬜ |
+| FR-BES-02 | Der Artenkatalog ist gemeinsam; Änderungen daran sind Betreiber- oder Prüf-Aktionen, Nutzer können Vorschläge machen (E-02). | 🟨 |
+| FR-BES-03 | Namenskonflikte werden vor jeder Änderung geprüft, es entsteht kein Teilzustand. | 🟨 |
 | FR-BES-04 | `Gefangen_Am` wird mit dem lokalen Datum des Nutzers belegt (NFR-08). | ⬜ |
-| FR-BES-05 | Ein Artprofil verlangt vollständige Pflichtfelder (DM-BES-01) einschließlich Wachstumsmaß, Vergeilung-Anzeichen und Erfolgskriterien. Die Lichtzone folgt dem Sättigungspunkt, nicht dem Überleben (US-LIC-01). | ⬜ |
+| FR-BES-05 | Ein Artprofil verlangt vollständige Pflichtfelder (DM-BES-01) einschließlich Wachstumsmaß, Vergeilung-Anzeichen und Erfolgskriterien. Die Lichtzone folgt dem Sättigungspunkt, nicht dem Überleben (US-LIC-01). | 🟨 |
 | FR-BES-06 | Ein KI-erstelltes Profil ist als solches gekennzeichnet, bis ein Mensch es geprüft hat. Die KI darf kein Profil als `geprüft` markieren (US-KI-03). | ⬜ |
 | FR-BES-07 | Eine Wachstumsmaß-Dimension je Art ist fix und erscheint als Eingabe im Messformular. | ⬜ |
 | FR-BES-08 | Art-Sicht (Katalog, Lichtübersicht) und Exemplar-Sicht (Phasen, Wachstum, Behandlungen, Karten) bleiben getrennt benannt. | ⬜ |
 | FR-BES-09 | **Drei Schichten:** Katalog-Art (gemeinsam, nur Prüfer ändern), Pflegeprofil (Konto × Art, DM-BES-04), Exemplar. Es gilt Exemplar vor Pflegeprofil vor Katalog. **Nur im Katalog änderbar:** Namen, Taxonomie, Wachstumsmaß, Vergeilung-Anzeichen, Erfolgskriterien, Story, Bild, Merkmale, Schwierigkeit. **Im Pflegeprofil überschreibbar:** Soll-Standorte, Lichtzone, Ruhephase, Gießintervalle, eigene Hinweise. | ⬜ |
 | FR-BES-10 | **Zone ableiten statt verlinken:** Der Katalog trägt Lux-Bedarf und Standard-Stufe. Die Zone des Kontos folgt aus dem Lux-Bedarf und den Zonen des Kontos nach der Regel aus US-LIC-01 (80-%- und 30-%-Grenzen) und ist als reine Logik mit Tests umgesetzt. Ein Override im Pflegeprofil hat Vorrang. | ⬜ |
-| FR-BES-11 | **Sichtbarkeit:** Nutzer-Vorschläge (`Vorschlag`) sind nur für den Ersteller sichtbar, bis ein Prüfer sie freigibt (US-BES-10). Betreiber-Batches sind sofort sichtbar und gekennzeichnet. Exemplare einer noch privaten Art lassen sich nicht teilen (US-SOZ-04) und zählen nicht im Pokédex. Bei Freigabe oder Zusammenführung werden Verweise umgehängt, nichts geht verloren. | ⬜ |
+| FR-BES-11 | **Sichtbarkeit:** Nutzer-Vorschläge (`Vorschlag`) sind nur für den Ersteller sichtbar, bis ein Prüfer sie freigibt (US-BES-10). Betreiber-Batches sind sofort sichtbar und gekennzeichnet. Exemplare einer noch privaten Art lassen sich nicht teilen (US-SOZ-04) und zählen nicht im Pokédex. Bei Freigabe oder Zusammenführung werden Verweise umgehängt, nichts geht verloren. | 🟨 |
 | FR-BES-12 | **Änderungen am Katalog** sind versioniert. Ändert sich ein wirkungsrelevantes Feld (Ruhephase, Lux-Bedarf, Standard-Stufe), erhalten Halter, die den Wert nicht überschrieben haben, einen Hinweis (P-10). | ⬜ |
 | FR-BES-13 | **Wachstumsmaß gesperrt:** Sobald ein Konto eine Messung zur Art hat, ist das Wachstumsmaß nicht mehr änderbar. Eine Änderung ist nur durch den Betreiber mit Umrechnung der Messreihen möglich (FR-BES-07). | ⬜ |
 | FR-BES-14 | **Prüfung:** `geprüft` setzt vollständige Pflichtfelder (FR-BES-05) und Quellen für Lichtbedarf und Ruhephase voraus. Prüfer ist zunächst der Betreiber; weitere Prüfer sind eine Rolle (TE-08). Beiträge von Nutzern zum Katalog brauchen eine Rechteeinräumung in den Nutzungsbedingungen (E-12). | ⬜ |

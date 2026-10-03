@@ -8,19 +8,25 @@ export interface LateinischerName {
   readonly anzeige: string;
 }
 
-// Gattung, optional Epitheton, optional Sorte nur in Anführungszeichen. `var.`, `subsp.` und `f.` gehören zum
-// Exemplar (Zusatz, DM-BES-02) und nicht in den Art-Namen; sie lassen sich hier nicht schreiben.
-const NAME = /^([\p{L}-]{2,40})(?:\s+([\p{L}-]{2,40}))?(?:\s+['‘"„]([^'’"“”‘„]{1,60})['’"“”])?$/u;
+// Die Sorte steht nur in Anführungszeichen am Ende. `var.`, `subsp.` und `f.` gehören zum Exemplar
+// (Zusatz, DM-BES-02) und nicht in den Art-Namen; sie lassen sich hier nicht schreiben.
+const SORTE = /\s+['‘"„]([^'’"“”‘„]{1,60})['’"“”]$/u;
+const WORT = /^[\p{L}-]{2,40}$/u;
 
 const grossAnfang = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 
+const worteGueltig = (w: string[]) => w.length <= 2 && w.every((x) => WORT.test(x));
+
 /** Zerlegt einen lateinischen Namen; `null`, wenn er nicht dem Muster entspricht. */
 export function parseLateinisch(text: string): LateinischerName | null {
-  const m = NAME.exec(text.trim().replace(/\s+/g, " "));
-  if (!m) return null;
-  const gattung = grossAnfang(m[1] ?? "");
-  const epitheton = m[2] ? m[2].toLowerCase() : null;
-  const sorte = m[3]?.trim() || null;
+  let rest = text.trim().replace(/\s+/g, " ");
+  const sorte = SORTE.exec(rest)?.[1]?.trim() || null;
+  if (sorte) rest = rest.replace(SORTE, "");
+  const worte = rest.split(" ");
+  const [g, e] = worte;
+  if (!worteGueltig(worte) || !g) return null;
+  const gattung = grossAnfang(g);
+  const epitheton = e ? e.toLowerCase() : null;
   const anzeige = [gattung, epitheton, sorte && `'${sorte}'`].filter(Boolean).join(" ");
   return { gattung, epitheton, sorte, anzeige };
 }

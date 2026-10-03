@@ -5,6 +5,12 @@ import { fehlerKoerper, statusFuer } from "./fehler-http";
 
 export type Ctx = Context<AuthEnv>;
 
+export interface Antwortform<A> {
+  readonly eingabe: unknown;
+  readonly erfolg?: 200 | 201;
+  readonly huelle?: (wert: A) => object;
+}
+
 /**
  * Einziger Schreibweg der Routen (P-03): die Operation prüft Eingabe, Zugriff und Wiederholungsschutz
  * (`Idempotency-Key`). Fehler werden mit stabilem Code und Text beantwortet, nie mit der Ursache.
@@ -13,13 +19,11 @@ export async function schreibe<E, A>(
   c: Ctx,
   deps: Abhaengigkeiten,
   op: Operation<E, A>,
-  eingabe: unknown,
-  erfolg: 200 | 201 = 200,
-  huelle: (wert: A) => object = (w) => w as object,
+  form: Antwortform<A>,
 ) {
   const r = await fuehreAus(op, deps, {
     kontext: { nutzerId: c.get("konto").id },
-    eingabe,
+    eingabe: form.eingabe,
     idempotenzSchluessel: c.req.header("idempotency-key") || undefined,
   });
   if (!r.ok) {
@@ -27,7 +31,7 @@ export async function schreibe<E, A>(
       console.error("Operation fehlgeschlagen", r.fehler.ursache);
     return c.json(fehlerKoerper(r.fehler), statusFuer(r.fehler));
   }
-  return c.json(huelle(r.wert), erfolg);
+  return c.json(form.huelle ? form.huelle(r.wert) : (r.wert as object), form.erfolg ?? 200);
 }
 
 /** Der JSON-Körper als Objekt; alles andere zählt als leer und scheitert an der Eingabeprüfung. */

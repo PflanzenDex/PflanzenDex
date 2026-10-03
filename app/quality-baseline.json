@@ -3,13 +3,6 @@
   "entries": [
     {
       "rule": "max-params",
-      "file": "packages/api/src/licht-routen.ts",
-      "function": "schreibe",
-      "value": 5,
-      "date": "2026-10-03"
-    },
-    {
-      "rule": "max-params",
       "file": "packages/core/src/operationen/operation.ts",
       "function": "ausfuehrenGeschuetzt",
       "value": 5,
