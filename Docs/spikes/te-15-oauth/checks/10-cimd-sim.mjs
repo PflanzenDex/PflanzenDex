@@ -1,4 +1,4 @@
-// Check 10: Keycloak akzeptiert eine URL-Client-ID (CIMD)? Variante mit und ohne ChatGPT-typischem Zusatzfeld.
+// Check 10: does Keycloak accept a URL client ID (CIMD)? Variant with and without the field typical for ChatGPT.
 import { chromium } from "playwright";
 import { discover, pkce } from "./oauth-lib.mjs";
 const ISSUER = process.env.ISSUER, MCP = process.env.MCP_ORIGIN; const meta = await discover(ISSUER);

@@ -1,6 +1,6 @@
-# Zitadel für Spike TE-15
+# Zitadel for spike TE-15
 
-Offizielles Compose-Setup (Apache-2.0) wird nicht kopiert, sondern geholt:
+The official Compose setup (Apache-2.0) is not copied but fetched:
 
 ```bash
 for f in docker-compose.yml .env.example; do
@@ -13,6 +13,6 @@ sed -e 's/^ZITADEL_VERSION=.*/ZITADEL_VERSION=v4.19.4/' \
 docker compose -p te15-zit --env-file .env -f compose.yaml -f compose.spike.yaml up -d
 ```
 
-`compose.spike.yaml` legt beim ersten Start einen Maschinen-Admin mit Token an (`/zitadel/bootstrap/admin.pat`).
-Danach DCR einschalten: `PUT /v2/settings/security` mit `{"dynamicClientRegistration":{"enabled":true,"allowUnauthenticated":true}}`.
-Standard-Admin der Instanz: `zitadel-admin@zitadel.localhost` / `Password1!` (nur lokal).
+`compose.spike.yaml` creates a machine admin with token on first start (`/zitadel/bootstrap/admin.pat`).
+Then switch DCR on: `PUT /v2/settings/security` mit `{"dynamicClientRegistration":{"enabled":true,"allowUnauthenticated":true}}`.
+Default admin of the instance: `zitadel-admin@zitadel.localhost` / `Password1!` (local only).

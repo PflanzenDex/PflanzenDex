@@ -138,5 +138,5 @@ export function prettierCanFormat(relativePath) {
 }
 
 export function isSpecPath(relativePath) {
-  return relativePath.startsWith("Docs/PRODUKT-SPECS/");
+  return relativePath.startsWith("Docs/PRODUCT-SPECS/");
 }

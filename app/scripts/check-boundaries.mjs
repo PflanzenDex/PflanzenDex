@@ -152,8 +152,9 @@ function checkMarkers(appDir, add) {
 // Without a register the module rules are off (the CLI below passes modules.config.mjs).
 const NO_MODULES = {
   MODULES: [],
-  KERN: "kern",
+  KERNEL: "kernel",
   LEGACY_MIGRATIONS: {},
+  LEGACY_TABLE_NAMES: {},
   UNMODULED_FOLDERS: {},
   MODULE_FOLDERS_IN_TRANSITION: {},
 };
@@ -189,6 +190,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     process.exit(1);
   }
   console.log("Architecture boundaries and structure: no violations.");
-  const kern = kernelExports({ appDir, cfg: MODULE_CONFIG, h: { stripComments } });
-  console.log(`Kernel exports (${MODULE_CONFIG.KERN}, a measure, no threshold): ${kern}`);
+  const kernel = kernelExports({ appDir, cfg: MODULE_CONFIG, h: { stripComments } });
+  console.log(`Kernel exports (${MODULE_CONFIG.KERNEL}, a measure, no threshold): ${kernel}`);
 }

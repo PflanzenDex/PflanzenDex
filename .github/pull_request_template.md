@@ -20,8 +20,8 @@ Closes #
 - [ ] Errors handled (stable `error_code`), nothing swallowed silently (P-10)
 - [ ] Input validated, no secrets in code, access and tenant isolation checked (P-04)
 - [ ] Module boundaries respected, no magic strings
-- [ ] `feat:`/`fix:` PR: short German entry in `app/packages/web/src/neuigkeiten/neuigkeiten.de.json` ("Neu in dieser Version"), or `[skip-changelog]` in the title/description for internal changes (QG-U3)
-- [ ] Spec status and counters in `Docs/PRODUKT-SPECS/README.md` updated in this PR
+- [ ] `feat:`/`fix:` PR: short German entry in `app/packages/web/src/news/news.de.json` ("Neu in dieser Version"), or `[skip-changelog]` in the title/description for internal changes (QG-U3)
+- [ ] Spec status and counters in `Docs/PRODUCT-SPECS/README.md` updated in this PR
 - [ ] `make ci` green locally
 
 ## AI involvement

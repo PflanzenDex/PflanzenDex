@@ -12,6 +12,6 @@ export type ModuleConfig = {
   UNMODULED_FOLDERS: Record<string, string>;
   MODULE_FOLDERS_IN_TRANSITION: Record<string, string>;
   GLOBAL_REFERENCE_TABLES: Record<string, GlobalReferenceTable>;
-  KERN: string;
+  KERNEL: string;
 };
 export const MODULE_CONFIG: ModuleConfig;

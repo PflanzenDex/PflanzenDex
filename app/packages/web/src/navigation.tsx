@@ -1,23 +1,23 @@
-export type Ansicht = "arten" | "bestand" | "pflegephasen" | "licht" | "konto";
+export type View = "species" | "collection" | "carePhases" | "light" | "account";
 
-const EINTRAEGE: { id: Ansicht; text: string }[] = [
-  { id: "arten", text: "Arten" },
-  { id: "bestand", text: "Bestand" },
-  { id: "pflegephasen", text: "Pflegephasen" },
-  { id: "licht", text: "Standorte und Licht" },
-  { id: "konto", text: "Konto" },
+const ENTRIES: { id: View; text: string }[] = [
+  { id: "species", text: "Arten" },
+  { id: "collection", text: "Bestand" },
+  { id: "carePhases", text: "Pflegephasen" },
+  { id: "light", text: "Standorte und Licht" },
+  { id: "account", text: "Konto" },
 ];
 
-export function Navigation(props: { aktiv: Ansicht; onWechsel: (a: Ansicht) => void }) {
+export function Navigation(props: { active: View; onSwitch: (a: View) => void }) {
   return (
     <nav aria-label="Hauptnavigation" className="navigation">
-      {EINTRAEGE.map((e) => (
+      {ENTRIES.map((e) => (
         <button
           key={e.id}
           type="button"
-          className={e.id === props.aktiv ? "tab aktiv" : "tab"}
-          aria-current={e.id === props.aktiv ? "page" : undefined}
-          onClick={() => props.onWechsel(e.id)}
+          className={e.id === props.active ? "tab active" : "tab"}
+          aria-current={e.id === props.active ? "page" : undefined}
+          onClick={() => props.onSwitch(e.id)}
         >
           {e.text}
         </button>

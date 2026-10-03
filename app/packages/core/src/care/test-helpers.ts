@@ -1,0 +1,60 @@
+import type { SpeciesSource, SpecimenStore, SpecimenRow } from "../collection";
+import type { Species, GrowthMeasure } from "../catalog";
+import type { MeasurementStore, MeasurementValues, MeasurementRow } from "./types";
+
+/** Specimens per account (tests of `care` only, no product code); each has the species `species-1`. */
+export class SpecimenStub implements Pick<SpecimenStore, "find"> {
+  /** `archived` names the IDs that are archived (US-BES-07). */
+  constructor(
+    private readonly ownership: Readonly<Record<string, readonly string[]>>,
+    private readonly archived: readonly string[] = [],
+  ) {}
+
+  async find(userId: string, id: string): Promise<SpecimenRow | null> {
+    if (!this.ownership[userId]?.includes(id)) return null;
+    const away = this.archived.includes(id);
+    return {
+      id,
+      speciesId: "species-1",
+      name: "Bogenhanf",
+      marker: null,
+      locationId: null,
+      status: away ? "archived" : "plant",
+      caughtAt: "2026-10-01",
+      archivedAt: away ? "2026-10-02" : null,
+      archivedReason: away ? "eingegangen" : null,
+    };
+  }
+}
+
+/** A single species with the desired growth measure; `null` means "species not visible". */
+export const speciesStub = (growthMeasure: GrowthMeasure | null): SpeciesSource => ({
+  find: async () => (growthMeasure ? ({ id: "species-1", growthMeasure } as Species) : null),
+});
+
+/** In-memory adapter for tests only; the real adapter lives in `db`. */
+export class InMemoryMeasurements implements MeasurementStore {
+  readonly rows: (MeasurementRow & { userId: string })[] = [];
+  writes = 0;
+
+  constructor(private readonly ownership: Readonly<Record<string, readonly string[]>>) {}
+
+  async list(userId: string, specimenId: string): Promise<readonly MeasurementRow[]> {
+    return this.rows
+      .map((z, i) => ({ z, i }))
+      .filter(({ z }) => z.userId === userId && z.specimenId === specimenId)
+      .sort((a, b) => b.z.date.localeCompare(a.z.date) || b.i - a.i)
+      .map(({ z: { userId: owner, ...row } }) => {
+        void owner;
+        return row;
+      });
+  }
+
+  async create(userId: string, w: MeasurementValues): Promise<MeasurementRow | "specimen_unknown"> {
+    this.writes += 1;
+    if (!this.ownership[userId]?.includes(w.specimenId)) return "specimen_unknown";
+    const row: MeasurementRow = { ...w, id: `m${this.rows.length + 1}` };
+    this.rows.push({ ...row, userId });
+    return row;
+  }
+}

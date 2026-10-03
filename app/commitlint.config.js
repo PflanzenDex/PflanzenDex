@@ -1,7 +1,7 @@
 // Commit messages (QG-C1, US-DEV-02): Conventional Commits with scopes from the epics.
 // Used by the `commit-msg` hook and for the PR title in CI (the squash turns the title into the commit message).
 
-// Product epics (Docs/PRODUKT-SPECS/README.md) and the process epics QG/DEV, lower case.
+// Product epics (Docs/PRODUCT-SPECS/README.md) and the process epics QG/DEV, lower case.
 export const EPIC_SCOPES = [
   "acc",
   "bes",

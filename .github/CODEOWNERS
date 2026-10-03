@@ -15,8 +15,8 @@
 /app/packages/api/                  @MaxNize
 /app/packages/web/                  @MaxNize
 
-/Docs/PRODUKT-SPECS/                @MaxNize
-/Docs/PFLANZENSYSTEM-SPECS/         @MaxNize
+/Docs/PRODUCT-SPECS/                @MaxNize
+/Docs/PLANT-SYSTEM-SPECS/         @MaxNize
 /Docs/betrieb/                      @MaxNize
 /Docs/operations/                   @MaxNize
 

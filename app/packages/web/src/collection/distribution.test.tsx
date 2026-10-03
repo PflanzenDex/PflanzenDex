@@ -1,0 +1,165 @@
+// @vitest-environment jsdom
+import { cleanup, render, screen, within } from "@testing-library/react";
+import type { LightZone, Distribution } from "@pflanzendex/core";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { CollectionPage } from "./CollectionPage";
+import { loadDistribution } from "./distribution-api";
+import { DistributionView } from "./distribution-view";
+
+const response = (status: number, body: unknown) =>
+  Promise.resolve(new Response(JSON.stringify(body), { status }));
+const zone = (n: number): LightZone => ({
+  id: `z${n}`,
+  name: `Lampe ${n}`,
+  luxCeiling: 1000 * n,
+  ppfd: null,
+  sortOrder: n,
+});
+const distribution = (extra: Partial<Distribution> = {}): Distribution => ({
+  zones: [
+    { zone: zone(2), count: 3 },
+    { zone: zone(3), count: 1 },
+    { zone: zone(4), count: 1 },
+  ],
+  thinnest: [zone(3), zone(4)],
+  notCounted: { cuttingLight: 0, archived: 0, zoneUnknown: 0 },
+  hint: {
+    text: "Lampe 3 und Lampe 4 sind gleich dünn besetzt (je 1).",
+    nextAction: "Setze Arten für diese Zonen auf die Wunschliste.",
+  },
+  ...extra,
+});
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+describe("US-LIC-02 client of the distribution API", () => {
+  it("loads the distribution with bearer token", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () =>
+      response(200, { distribution: distribution() }),
+    );
+    const r = await loadDistribution("http://api", "tok", fetchFn);
+    expect(r).toMatchObject({ ok: true, value: { thinnest: [{ id: "z3" }, { id: "z4" }] } });
+    const [url, init] = fetchFn.mock.calls[0] ?? [];
+    expect(String(url)).toBe("http://api/specimens/distribution");
+    expect((init?.headers as Record<string, string>)["Authorization"]).toBe("Bearer tok");
+  });
+
+  it("a server error stays an error with code, no empty distribution (P-10)", async () => {
+    const error = { code: "server.error", text: "Nicht ladbar." };
+    const fetchFn = vi.fn<typeof fetch>(async () => response(500, { error }));
+    expect(await loadDistribution("http://api", "tok", fetchFn)).toMatchObject({
+      ok: false,
+      error: { code: "server.error" },
+    });
+  });
+});
+
+describe("US-LIC-02 view of the distribution", () => {
+  it("shows the number of specimens per zone 2 to 4 and marks the thinnest zones", () => {
+    render(<DistributionView distribution={distribution()} />);
+    const list = screen.getByRole("list", { name: "Exemplare je Lichtzone" });
+    const rows = within(list).getAllByRole("listitem");
+    expect(rows.map((z) => z.textContent)).toEqual([
+      expect.stringContaining("Lampe 2: 3 Exemplare"),
+      expect.stringContaining("Lampe 3: 1 Exemplar"),
+      expect.stringContaining("Lampe 4: 1 Exemplar"),
+    ]);
+    expect(rows[1]?.textContent).toContain("dünnste Zone");
+    expect(rows[0]?.textContent).not.toContain("dünnste Zone");
+  });
+
+  it("names the thinnest zone and the next action (P-09), with a tie with a hint to the wishlist", () => {
+    render(<DistributionView distribution={distribution()} />);
+    expect(screen.getByText(/Lampe 3 und Lampe 4 sind gleich dünn besetzt/)).toBeTruthy();
+    expect(screen.getByText(/auf die Wunschliste/)).toBeTruthy();
+  });
+
+  it("explains that cutting light does not count and names the specimens that were not counted (P-10)", () => {
+    render(
+      <DistributionView
+        distribution={distribution({
+          notCounted: { cuttingLight: 2, archived: 1, zoneUnknown: 3 },
+        })}
+      />,
+    );
+    const rest = screen.getByText(/Nicht mitgezählt/);
+    expect(rest.textContent).toContain("2 unter Stecklingslicht");
+    expect(rest.textContent).toContain("1 archiviert");
+    expect(rest.textContent).toContain("3 mit unbekannter Zone");
+  });
+
+  it("shows nothing about the not counted when everything is counted", () => {
+    render(<DistributionView distribution={distribution()} />);
+    expect(screen.queryByText(/Nicht mitgezählt/)).toBeNull();
+  });
+
+  it("without zones for adults: no list, only a hint with action", () => {
+    render(
+      <DistributionView
+        distribution={distribution({
+          zones: [],
+          thinnest: [],
+          hint: {
+            text: "Es gibt keine Lichtzone für erwachsene Pflanzen.",
+            nextAction: "Lege mindestens zwei Lichtzonen an.",
+          },
+        })}
+      />,
+    );
+    expect(screen.queryByRole("list", { name: "Exemplare je Lichtzone" })).toBeNull();
+    expect(screen.getByText(/Lege mindestens zwei Lichtzonen an/)).toBeTruthy();
+  });
+});
+
+describe("US-LIC-02 collection page shows the distribution", () => {
+  const page = () => (
+    <CollectionPage
+      api="http://api"
+      token={async () => "tok"}
+      newSpecies={null}
+      onSpeciesChoose={vi.fn()}
+      onCompleted={vi.fn()}
+    />
+  );
+
+  it("loads cards, locations and distribution and shows the distribution above the list", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => {
+        const path = new URL(String(url)).pathname;
+        if (path === "/specimens/distribution")
+          return response(200, { distribution: distribution() });
+        if (path === "/locations") return response(200, { locations: [] });
+        if (path === "/specimens/archived") return response(200, { archived: [] });
+        return response(200, { cards: [] });
+      }),
+    );
+    render(page());
+    expect(
+      await screen.findByRole("heading", { name: "Verteilung auf die Lichtzonen" }),
+    ).toBeTruthy();
+    expect(screen.getByText(/Lampe 3 und Lampe 4 sind gleich dünn besetzt/)).toBeTruthy();
+  });
+
+  it('if the distribution fails, nothing is shown half: error text and "Erneut laden"', async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => {
+        const path = new URL(String(url)).pathname;
+        if (path === "/specimens/distribution")
+          return response(500, {
+            error: { code: "server.error", text: "Verteilung nicht ladbar." },
+          });
+        if (path === "/locations") return response(200, { locations: [] });
+        if (path === "/specimens/archived") return response(200, { archived: [] });
+        return response(200, { cards: [] });
+      }),
+    );
+    render(page());
+    expect((await screen.findByRole("alert")).textContent).toContain("Verteilung nicht ladbar.");
+    expect(screen.getByRole("button", { name: "Erneut laden" })).toBeTruthy();
+  });
+});

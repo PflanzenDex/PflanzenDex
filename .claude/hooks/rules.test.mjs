@@ -29,7 +29,7 @@ test("US-QG-07: gate configs need a human confirmation, ordinary code does not",
   ]) {
     assert.equal(isGateFile(f), true, f);
   }
-  for (const f of ["app/packages/core/src/index.ts", "Docs/PRODUKT-SPECS/02-Bestand.md", "app/README.md"]) {
+  for (const f of ["app/packages/core/src/index.ts", "Docs/PRODUCT-SPECS/02-Collection.md", "app/README.md"]) {
     assert.equal(isGateFile(f), false, f);
   }
 });

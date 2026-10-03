@@ -1,8 +1,8 @@
-// Öffentliche Schnittstelle von `core`: Andere Pakete importieren nur von hier (AB-2).
-// Jedes Modul hat unter `src/<modul>/index.ts` seine eigene öffentliche Schnittstelle (ADR 0003).
-export * from "./kern";
-export * from "./konto";
-export * from "./katalog";
-export * from "./licht";
-export * from "./bestand";
-export * from "./pflege";
+// Public interface of `core`: other packages import only from here (AB-2).
+// Every module has its own public interface under `src/<module>/index.ts` (ADR 0003).
+export * from "./kernel";
+export * from "./account";
+export * from "./catalog";
+export * from "./light";
+export * from "./collection";
+export * from "./care";
