@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test gates ci worktree clean db-up db-down migrate deploy backup restore-test
+.PHONY: help setup release release-dry-run dev lint format typecheck test gates ci worktree clean db-up db-down migrate deploy backup restore-test
 
 help: ## Alle Ziele mit einem Satz
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -48,6 +48,14 @@ gates: ## Schnelle Gates: Lint, Typen, Architekturgrenzen, Format
 
 ci: $(if $(CI),,db-up) ## Alle Gates in der Reihenfolge der CI, bricht beim ersten Fehler ab
 	cd $(APP) && npm run ci
+
+release: ## Version, Tag und GitHub-Release aus den Commits (nur in der CI auf main, US-DEV-06)
+	@test -n "$(CI)" || { echo "release läuft nur in der CI; lokal: make release-dry-run" >&2; exit 2; }
+	cd $(APP) && npx --no-install semantic-release
+
+release-dry-run: ## Nächste Version und Notizen anzeigen, ohne etwas zu veröffentlichen (BRANCH=dev)
+	cd $(APP) && GITHUB_TOKEN="$${GITHUB_TOKEN:-$$(gh auth token)}" npx --no-install semantic-release \
+		--dry-run --no-ci --branches "$${BRANCH:-$$(git branch --show-current)}"
 
 worktree: ## Neuer Worktree + Branch (BRANCH=feat/x) mit eigenen Ports (US-DEV-08)
 	scripts/worktree-new.sh "$(BRANCH)"

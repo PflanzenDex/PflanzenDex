@@ -1,0 +1,43 @@
+# Release (US-DEV-06, QG-R1, FR-QG-14): läuft nur, wenn die CI für einen Push auf `main` grün war.
+# Eine rote CI erzeugt keine Version. Ein Deploy ist ein eigener, bewusster Schritt (E-14), nicht Teil hiervon.
+name: Release
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # Tag und GitHub-Release
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      # semantic-release prüft selbst, dass der Commit noch die Spitze von `main` ist; sonst bricht es ohne Release ab.
+      - run: git checkout -B main
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - run: make release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
