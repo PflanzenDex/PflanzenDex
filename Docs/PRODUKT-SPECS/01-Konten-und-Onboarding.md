@@ -6,7 +6,7 @@ Im Prototyp gab es kein Konto. Alles in diesem Epic ist neu.
 
 ## Userstories
 
-### US-ACC-01 · Registrieren und anmelden · ⬜ neu
+### US-ACC-01 · Registrieren und anmelden · ✅ neu
 Als **Pflanzenhalter** will ich mir ein Konto anlegen und mich sicher anmelden.
 
 Akzeptanzkriterien:
@@ -51,8 +51,8 @@ Akzeptanzkriterien:
 
 | ID | Anforderung | Status |
 |---|---|---|
-| FR-ACC-01 | Kontodaten (E-Mail, Anzeigename) sind getrennt von Sammlungsdaten gespeichert und nur dem Konto selbst zugänglich. | ⬜ |
+| FR-ACC-01 | Kontodaten (E-Mail, Anzeigename) sind getrennt von Sammlungsdaten gespeichert und nur dem Konto selbst zugänglich. | ✅ |
 | FR-ACC-02 | Jede nutzerbezogene Zeile trägt die Konto-Kennung ab der ersten Version (P-04, NFR-09). | ⬜ |
-| FR-ACC-03 | Passwörter und Anmeldedaten werden nie selbst gespeichert, wenn ein etablierter Dienst sie verwaltet (NFR-10). | ⬜ |
+| FR-ACC-03 | Passwörter und Anmeldedaten werden nie selbst gespeichert, wenn ein etablierter Dienst sie verwaltet (NFR-10). | ✅ |
 | FR-ACC-04 | Minderjährige: Altersgrenze und Hinweise klären, bevor die App öffentlich wird (NFR-11). | ⬜ |
 | FR-ACC-05 | Der Anmeldedienst muss zugleich als Autorisierungsserver für KI-Verbindungen taugen (OAuth mit eigenen Scopes, Zustimmungsseite, Widerruf; E-03, FR-KI-13). | ⬜ |

@@ -4,4 +4,5 @@ import type { Fixtures } from "./trennung.ts";
 // Eine neue Tabelle ohne Eintrag hier lässt den generischen Mandantentest scheitern (FR-QG-07).
 export const FIXTURES: Fixtures = {
   konto: () => ({}),
+  kontodaten: () => ({ email: "test@example.test" }),
 };

@@ -11,9 +11,13 @@
   "dependencies": {
     "@hono/node-server": "^2.1.3",
     "@pflanzendex/core": "*",
-    "hono": "^4.13.12"
+    "@pflanzendex/db": "*",
+    "hono": "^4.13.12",
+    "jose": "^6.2.12",
+    "pg": "^8.23.1"
   },
   "devDependencies": {
+    "@types/pg": "^8.23.1",
     "tsx": "^4.23.15"
   }
 }
