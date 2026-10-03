@@ -1,7 +1,7 @@
 import { serve } from "@hono/node-server";
 import { oeffnePool, testDatenbankUrl } from "@pflanzendex/db";
 import { createApp } from "./app";
-import { erstelleTokenPruefer } from "./auth/token";
+import { erstelleTokenPruefer } from "./konto";
 
 // Konfiguration nur aus der Umgebung (keine Geheimnisse im Repo). Die Voreinstellungen passen zu `make auth-up`.
 const issuer = process.env["OIDC_ISSUER"] ?? "http://localhost:18081/realms/pflanzendex";
@@ -10,7 +10,8 @@ const app = createApp({
     issuer,
     audience: process.env["OIDC_AUDIENCE"] ?? "pflanzendex-api",
   }),
-  version: process.env["GIT_SHA"],
+  version: process.env["APP_VERSION"],
+  commit: process.env["GIT_SHA"],
   pool: oeffnePool(process.env["DATABASE_URL"] ?? testDatenbankUrl()),
   webUrsprung: process.env["WEB_URSPRUNG"] ?? "http://localhost:5173",
 });

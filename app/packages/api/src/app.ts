@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { Pool } from "pg";
-import { produktTitel } from "@pflanzendex/core";
-import { authentifizierung } from "./auth/middleware";
-import type { TokenPruefer } from "./auth/token";
-import { kontoRouten } from "./konto-routen";
-import { LICHT_PFADE, lichtRouten } from "./licht-routen";
+import { produktTitel, type SollStandortQuelle } from "@pflanzendex/core";
+import { authentifizierung, kontoRouten, type TokenPruefer } from "./konto";
+import { EXEMPLARE_PFADE, exemplareRouten } from "./bestand";
+import { ARTEN_PFADE, artenRouten } from "./katalog";
+import { LICHT_PFADE, lichtRouten } from "./licht";
 
 export type AppOptionen = {
   /** Prüft Access-Tokens des Anmeldedienstes; ohne Angabe gibt es keine geschützten Routen. */
@@ -13,12 +13,19 @@ export type AppOptionen = {
   pool?: Pool;
   /** Ursprung der Web-App für CORS (die API setzt keine Cookies, die Anmeldung läuft per Bearer-Token). */
   webUrsprung?: string;
-  /** Kurzer Commit-Hash des laufenden Stands (aus dem Build, nicht geheim). */
+  /** Version des laufenden Stands: `git describe --tags --always`, z. B. v0.1.0 oder v0.1.0-3-gabc1234 (aus dem Build, nicht geheim). */
   version?: string | undefined;
+  /** Kurzer Commit-Hash des laufenden Stands (aus dem Build, nicht geheim). */
+  commit?: string | undefined;
+  /** Die Uhr für „heute“ (NFR-08); ohne Angabe die Systemzeit. */
+  uhr?: () => Date;
+  /** Soll-Standort für neue Exemplare; `pflege` (PHA) liefert ihn, bis dahin ist der Standort unbekannt. */
+  sollStandort?: SollStandortQuelle;
 };
 
 export function createApp(opt: AppOptionen = {}): Hono {
   const version = opt.version ?? "unbekannt";
+  const commit = opt.commit ?? "unbekannt";
   const app = new Hono();
   if (opt.webUrsprung)
     app.use(
@@ -28,7 +35,7 @@ export function createApp(opt: AppOptionen = {}): Hono {
         allowHeaders: ["Authorization", "Content-Type", "Idempotency-Key"],
       }),
     );
-  app.get("/health", (c) => c.json({ status: "ok", produkt: produktTitel(), version }));
+  app.get("/health", (c) => c.json({ status: "ok", produkt: produktTitel(), version, commit }));
   if (opt.pruefer && opt.pool) {
     const auth = authentifizierung(opt.pruefer, opt.pool);
     app.use("/konto", auth);
@@ -36,6 +43,16 @@ export function createApp(opt: AppOptionen = {}): Hono {
     app.route("/konto", kontoRouten(opt.pool));
     for (const pfad of LICHT_PFADE) app.use(pfad, auth).use(`${pfad}/*`, auth);
     app.route("/", lichtRouten(opt.pool));
+    for (const pfad of ARTEN_PFADE) app.use(pfad, auth).use(`${pfad}/*`, auth);
+    app.route("/", artenRouten(opt.pool));
+    for (const pfad of EXEMPLARE_PFADE) app.use(pfad, auth).use(`${pfad}/*`, auth);
+    app.route(
+      "/",
+      exemplareRouten(opt.pool, {
+        ...(opt.uhr ? { uhr: opt.uhr } : {}),
+        ...(opt.sollStandort ? { sollStandort: opt.sollStandort } : {}),
+      }),
+    );
   }
   return app;
 }

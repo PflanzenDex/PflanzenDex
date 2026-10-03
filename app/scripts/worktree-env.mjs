@@ -1,10 +1,10 @@
-// Eindeutige Ressourcen je Worktree (US-DEV-08): Port und Datenbankname werden deterministisch
-// aus dem Branch-Namen abgeleitet, damit parallele Läufe nie dieselbe Test-Datenbank oder denselben Port teilen.
-// Aufruf: node app/scripts/worktree-env.mjs <branch>   -> gibt KEY=WERT-Zeilen aus (für .env.worktree)
+// Unique resources per worktree (US-DEV-08): port and database name are derived deterministically
+// from the branch name, so parallel runs never share a test database or a port.
+// Usage: node app/scripts/worktree-env.mjs <branch>   -> prints KEY=VALUE lines (for .env.worktree)
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
-export const PORT_BASE = 54400; // Annahme: Bereich 54400-55899 ist frei; fester Port 54329 bleibt dem Hauptverzeichnis
+export const PORT_BASE = 54400; // assumption: range 54400-55899 is free; the fixed port 54329 stays with the main checkout
 export const PORT_SLOTS = 500;
 
 export function slug(branch) {
@@ -16,7 +16,7 @@ export function slug(branch) {
 }
 
 export function worktreeEnv(branch) {
-  if (!branch || !branch.trim()) throw new Error("Branch-Name fehlt");
+  if (!branch || !branch.trim()) throw new Error("branch name missing");
   const hash = createHash("sha256").update(branch).digest();
   const slot = hash.readUInt32BE(0) % PORT_SLOTS;
   return {

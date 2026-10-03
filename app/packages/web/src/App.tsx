@@ -1,17 +1,29 @@
 import { useState } from "react";
-import { Fehler, KontoAnsicht, Laedt, Willkommen } from "./auth/ansichten";
-import { apiUrl } from "./auth/konto-api";
-import { useSitzung } from "./auth/sitzung";
-import { LichtSeite } from "./licht/LichtSeite";
+import type { Art } from "@pflanzendex/core";
+import { BestandSeite } from "./bestand";
+import { Fehler, KontoAnsicht, Laedt, Willkommen, apiUrl, useSitzung } from "./konto";
+import { LichtSeite } from "./licht";
+import { ArtenSeite } from "./katalog";
 import { Navigation, type Ansicht } from "./navigation";
 import "./stil.css";
-import "./licht/licht.css";
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
 
+const version = (import.meta.env as Record<string, string | undefined>)["VITE_APP_VERSION"];
+
 export function App() {
   const s = useSitzung();
-  const [ansicht, setAnsicht] = useState<Ansicht>("licht");
+  const [ansicht, setAnsicht] = useState<Ansicht>("arten");
+  // Die gewählte Art wandert vom Katalog zum Bestand: die App verdrahtet beide Module (US-BES-02).
+  const [neueArt, setNeueArt] = useState<Art | null>(null);
+  const waehle = (art: Art) => {
+    setNeueArt(art);
+    setAnsicht("bestand");
+  };
+  const zumKatalog = () => {
+    setNeueArt(null);
+    setAnsicht("arten");
+  };
   const z = s.zustand;
   return (
     <main className="seite">
@@ -34,11 +46,22 @@ export function App() {
               onUeberallAbmelden={() => void s.ueberallAbmelden()}
               {...(z.fehler ? { fehler: z.fehler } : {})}
             />
-          ) : (
+          ) : ansicht === "licht" ? (
             <LichtSeite api={api} token={s.token} />
+          ) : ansicht === "bestand" ? (
+            <BestandSeite
+              api={api}
+              token={s.token}
+              neueArt={neueArt}
+              onArtWaehlen={zumKatalog}
+              onAbgeschlossen={() => setNeueArt(null)}
+            />
+          ) : (
+            <ArtenSeite api={api} token={s.token} onWaehlen={waehle} />
           )}
         </div>
       )}
+      <footer className="versionsfuss">Version {version || "unbekannt"}</footer>
     </main>
   );
 }

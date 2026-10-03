@@ -119,3 +119,19 @@ button:focus-visible {
     grid-auto-columns: 1fr;
   }
 }
+
+.versionsfuss {
+  margin-top: 2rem;
+  font-size: 0.75rem;
+  opacity: 0.6;
+  text-align: center;
+}
+
+/* Hauptnavigation: bei schmalen Bildschirmen umbrechen statt waagerecht zu scrollen (vier Reiter ab BES-02). */
+.navigation {
+  flex-wrap: wrap;
+}
+.tab {
+  flex: 1 1 auto;
+  padding: 0 12px;
+}

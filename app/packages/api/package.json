@@ -2,7 +2,7 @@
   "name": "@pflanzendex/api",
   "private": true,
   "type": "module",
-  "description": "HTTP-API: ruft nur die öffentliche Schnittstelle von core auf",
+  "description": "HTTP API: calls core only through its public interface",
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "typecheck": "tsc --noEmit -p .",
