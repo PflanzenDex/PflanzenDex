@@ -1,6 +1,6 @@
 # PflanzenDex – Roadmap und Backlog-Analyse
 
-Stand: 2026-10-03 · erzeugt aus den GitHub-Tickets (Quelle: Issues, Meilensteine, „Blocked by“), Specs in `Docs/PRODUKT-SPECS/` (Stand: Commit `ccceadd`). **Die Specs bleiben maßgeblich**; Tickets und diese Roadmap sind eine Planungssicht darauf.
+Stand: 2026-10-03 · erzeugt aus den GitHub-Tickets (Quelle: Issues, Meilensteine, „Blocked by“), Specs in `Docs/PRODUKT-SPECS/` (Stand: Commit `de5e6a0`). **Die Specs bleiben maßgeblich**; Tickets und diese Roadmap sind eine Planungssicht darauf.
 
 - GitHub-Projekt: [PflanzenDex Roadmap](https://github.com/orgs/PflanzenDex/projects/2) (privat; Felder Release, Typ, Epic, Größe, Welle)
 - Tickets: [alle Issues](https://github.com/PflanzenDex/PflanzenDex/issues) · Meilensteine: [R0…R6, Stufe 2](https://github.com/PflanzenDex/PflanzenDex/milestones)
@@ -8,7 +8,7 @@ Stand: 2026-10-03 · erzeugt aus den GitHub-Tickets (Quelle: Issues, Meilenstein
 
 ## Was die Analyse zeigt
 
-1. **Alles hängt an wenigen Entscheidungen.** E-01 (Technik und Hosting) blockiert transitiv 135 von 156 anderen Tickets. E-05 (Code-Ablage) und E-02 (Artenkatalog) sind entschieden, E-01 ist teilweise entschieden (offen: Hosting-Anbieter), E-03 (Anmeldedienst) wartet auf den Spike `TE-15`.
+1. **Alles hängt an wenigen Entscheidungen.** E-01 (Technik und Hosting) blockiert transitiv 135 von 156 anderen Tickets. E-05 (Code-Ablage) und E-02 (Artenkatalog) sind entschieden, E-01 ist teilweise entschieden (offen: Hosting-Anbieter), E-03 (Anmeldedienst) ist nach dem Spike `TE-15` im Grundsatz entschieden (Keycloak); die Client-Anbindung ist mit `TE-16` noch nachzuweisen.
 2. **R0 ist größer, als der Release-Schnitt wirkt.** Neben den fachlichen Stories verlangen `18`/`19`, dass CI, Hooks, Struktur-/Grenzprüfung, Spec-Check, Task-Runner und Skills **vor** dem ersten Fachcode stehen: 11 Prozess-Tickets in R0.
 3. **Die Datenbasis-Kette ist der Engpass:** `TE-01 → TE-02 (DB + Mandantentrennung) → TE-08 (Betreiberrolle) → BES-01 → BES-02`. Danach öffnen sich fast alle Epics gleichzeitig.
 4. **Spec-Konflikte und Lücken** sind mit dem Label `spec-lücke` markiert (Abschnitt unten).
@@ -86,7 +86,7 @@ Tickets, auf die die meisten anderen transitiv warten:
 | [#37](https://github.com/PflanzenDex/PflanzenDex/issues/37) `E-18` Review-Automatik | offen | Stufe 3 / später | – |
 | [#173](https://github.com/PflanzenDex/PflanzenDex/issues/173) `E-19` Eingebauter KI-Chat (BYOK) | offen | Stufe 3 / später | – |
 
-Offene Entscheidungen in sinnvoller Reihenfolge: **E-01** (Hosting-Anbieter) und **E-03** (nach Spike `TE-15`), **E-15, E-16** (Schwellenwerte, statische Analyse), **E-14, E-06** vor R1, **E-10, E-11** vor R3, **E-04** (Test an realen Clients) vor R4, **E-12, E-08, E-17** vor Stufe 2, **E-09** vor R6.
+Offene Entscheidungen in sinnvoller Reihenfolge: **E-01** (Hosting-Anbieter), **E-14, E-06** vor R1, **E-10, E-11** vor R3, **E-04** (Test an realen Clients, `TE-16`) vor R4, **E-12, E-08, E-17** vor Stufe 2, **E-09** vor R6.
 
 ## Abhängigkeiten im Überblick
 
