@@ -7,8 +7,8 @@ paths:
 
 - No I/O: no imports from API, web, db, the file system or the network (AB-1). Time, randomness and storage come in as parameters or ports.
 - Pure functions. Derived data (care phase, "gefangen", trends) is computed on demand, never stored (P-01).
-- Writes are operations defined with `definiereOperation` and run through `fuehreAus` (P-03). Invalid input writes nothing.
-- Domain errors carry a stable code `<domain>.<reason>` and a German text in `FEHLERTEXTE` (FR-QG-11). Never throw bare strings; never swallow errors (P-10).
+- Writes are operations defined with `defineOperation` and run through `execute` (P-03). Invalid input writes nothing.
+- Domain errors carry a stable code `<domain>.<reason>` and a German text in `ERROR_TEXTS` (FR-QG-11). Never throw bare strings; never swallow errors (P-10).
 - Unknown values stay "unbekannt", never an invented number (P-08).
 - Cyclomatic complexity <= 10 and files <= 200 lines (`app/eslint.config.js`); split instead of raising limits.
 - Every directory with code has an `index.ts` as its public interface (ST-c); other packages import only `@pflanzendex/core`.

@@ -1,13 +1,13 @@
 ---
 paths:
-  - "Docs/PRODUKT-SPECS/**"
+  - "Docs/PRODUCT-SPECS/**"
 ---
 
 # Rules for the product specs
 
-- Write in German and use the glossary terms from `00-Produktueberblick.md` (Art, Exemplar, Steckling, Lichtzone, Pflegephase, Vergeilung, Gefangen, Puffer, Wunsch, ...).
+- Write in German and use the glossary terms from `00-Product-Overview.md` (Art, Exemplar, Steckling, Lichtzone, Pflegephase, Vergeilung, Gefangen, Puffer, Wunsch, ...).
 - IDs (`US-<EPIC>-nn`, `FR-`, `DM-`, `NFR-`, `E-nn`) are never renumbered or reused. Stories taken from the prototype keep their prototype ID.
-- Specs are technology-neutral: behavior, data and limits. Technology choices are decisions in `16-Releases-und-Entscheidungen.md`.
+- Specs are technology-neutral: behavior, data and limits. Technology choices are decisions in `16-Releases-and-Decisions.md`.
 - Acceptance criteria use Gegeben/Wenn/Dann and are meant to become tests (P-06).
 - Numbers that are neither measured nor sourced are marked "Annahme" or "Startwert".
 - Status symbols: ⬜ planned, 🟨 in progress, ✅ done. Change the status and the counters in `README.md` in the same PR as the code.

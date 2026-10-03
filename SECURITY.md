@@ -15,4 +15,4 @@ The code on `main` and `dev` and the hosted instance. Out of scope: spike code u
 
 ## Checks already in place
 
-Secret scanning with push protection, dependency alerts, static analysis and tenant isolation tests (QG-S1 to QG-S3 and QG-D1 in `Docs/PRODUKT-SPECS/18-Architektur-und-Quality-Gates.md`).
+Secret scanning with push protection, dependency alerts, static analysis and tenant isolation tests (QG-S1 to QG-S3 and QG-D1 in `Docs/PRODUCT-SPECS/18-Architecture-and-Quality-Gates.md`).

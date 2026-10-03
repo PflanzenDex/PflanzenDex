@@ -21,7 +21,7 @@ function walkDir(dir) {
       entry === "node_modules" ||
       entry.startsWith(".") ||
       fullPath.includes("/Docs/spikes/") ||
-      fullPath.includes("/Docs/testprotokolle/") ||
+      fullPath.includes("/Docs/test-logs/") ||
       fullPath.includes("/ROADMAP.md") ||
       (fullPath.includes("/app/") && fullPath.endsWith("/CHANGELOG.md"))
     ) {
