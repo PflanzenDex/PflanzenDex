@@ -2,7 +2,7 @@
   "name": "pflanzendex",
   "private": true,
   "type": "module",
-  "description": "PflanzenDex: Web-App für Pflanzensammler (Monorepo: core, api, web)",
+  "description": "PflanzenDex: web app for plant collectors (monorepo: core, db, api, web)",
   "workspaces": [
     "packages/*"
   ],

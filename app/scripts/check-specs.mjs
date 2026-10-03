@@ -1,5 +1,5 @@
-// Spec-Konsistenz (FR-QG-03, US-DEV-08): doppelte Dateinummern und doppelt definierte IDs werden abgelehnt.
-// Definition einer ID: Überschrift `### US-…` oder Tabellenzeile `| FR-… |` / `| DM-… |` / `| E-nn |` am Zeilenanfang.
+// Spec consistency (FR-QG-03, US-DEV-08): duplicate file numbers and IDs defined twice are rejected.
+// An ID is defined by a heading `### US-…` or a table row `| FR-… |` / `| DM-… |` / `| E-nn |` at the start of a line.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,14 +14,14 @@ export function findProblems(files) {
     if (m) byNumber.set(m[1], [...(byNumber.get(m[1]) ?? []), path.basename(f)]);
   }
   for (const [n, names] of byNumber)
-    if (names.length > 1) problems.push(`Dateinummer ${n} doppelt vergeben: ${names.join(", ")}`);
+    if (names.length > 1) problems.push(`file number ${n} used twice: ${names.join(", ")}`);
   const seen = new Map();
   for (const [f, text] of Object.entries(files)) {
     text.split("\n").forEach((line, i) => {
       const id = line.match(DEF)?.[1];
       if (!id) return;
       const where = `${path.basename(f)}:${i + 1}`;
-      if (seen.has(id)) problems.push(`ID ${id} doppelt definiert: ${seen.get(id)} und ${where}`);
+      if (seen.has(id)) problems.push(`ID ${id} defined twice: ${seen.get(id)} and ${where}`);
       else seen.set(id, where);
     });
   }
@@ -40,7 +40,5 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const problems = findProblems(files);
   problems.forEach((p) => console.error(`check-specs: ${p}`));
   if (problems.length) process.exit(1);
-  console.log(
-    `check-specs: ${Object.keys(files).length} Dateien, keine doppelten Nummern oder IDs`,
-  );
+  console.log(`check-specs: ${Object.keys(files).length} files, no duplicate numbers or IDs`);
 }
