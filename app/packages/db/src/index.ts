@@ -5,3 +5,6 @@ export { findeSchemaVerstoesse, mandantenTabellen, OHNE_KONTO_KENNUNG } from "./
 export { pruefeMandantentrennung, type Fixtures } from "./trennung.ts";
 export { oeffnePool, testDatenbankUrl } from "./verbindung.ts";
 export { PruefungPostgres } from "./pruefung.ts";
+export { ZonenPostgres } from "./licht-zonen.ts";
+export { StandortePostgres } from "./licht-standorte.ts";
+export { IdempotenzPostgres } from "./idempotenz.ts";

@@ -6,5 +6,8 @@ import type { Fixtures } from "./trennung.ts";
 export const FIXTURES: Fixtures = {
   konto: () => ({}),
   kontodaten: () => ({ email: "test@example.test" }),
+  lichtzone: () => ({ name: "Lampe 2", lux_decke: 15000, reihenfolge: 2 }),
+  standort: () => ({ name: "Regal", art: "innen" }),
+  idempotenz: () => ({ operation: "test.test", schluessel: "k1", fingerabdruck: "{}" }),
   pruefvorgang: () => ({ objekt_art: "art", objekt_id: randomUUID(), status: "vorschlag" }),
 };
