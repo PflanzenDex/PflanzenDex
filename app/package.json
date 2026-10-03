@@ -1,0 +1,35 @@
+{
+  "name": "pflanzendex",
+  "private": true,
+  "type": "module",
+  "description": "PflanzenDex: Web-App für Pflanzensammler (Monorepo: core, api, web)",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": "^22.12.0 || ^24.0.0 || >=26.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev -w @pflanzendex/api\" \"npm run dev -w @pflanzendex/web\"",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "boundaries": "node scripts/check-boundaries.mjs",
+    "test": "npm run test --workspaces --if-present && node --test \"scripts/**/*.test.mjs\"",
+    "build": "npm run build --workspaces --if-present",
+    "gates": "npm run lint && npm run typecheck && npm run boundaries && npm run format:check",
+    "ci": "npm run gates && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.4",
+    "concurrently": "^10.0.5",
+    "eslint": "^10.12.0",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.3"
+  }
+}

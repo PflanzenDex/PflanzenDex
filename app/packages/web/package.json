@@ -1,0 +1,23 @@
+{
+  "name": "@pflanzendex/web",
+  "private": true,
+  "type": "module",
+  "description": "Mobile-first-PWA (React, Vite); importiert core nur über die öffentliche Schnittstelle",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@pflanzendex/core": "*",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "vite": "^8.3.2"
+  }
+}

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repository is
 
-This repo holds the **specs** (German) and, as decided in E-05 (`Docs/PRODUKT-SPECS/16-Releases-und-Entscheidungen.md`), will also hold the **app code under `/app`**. All documentation lives under `/Docs`: the two spec sets below and, next to them, the process documentation (principles register, ADRs, runbooks, pitfalls: `Docs/prinzipien/`, `Docs/entscheidungen/`, `Docs/betrieb/`, `Docs/stolperfallen/`). Right now only the specs exist: no code, no build, no tests yet. There are two spec sets:
+This repo holds the **specs** (German) and, as decided in E-05 (`Docs/PRODUKT-SPECS/16-Releases-und-Entscheidungen.md`), will also hold the **app code under `/app`**. All documentation lives under `/Docs`: the two spec sets below and, next to them, the process documentation (principles register, ADRs, runbooks, pitfalls: `Docs/prinzipien/`, `Docs/entscheidungen/`, `Docs/betrieb/`, `Docs/stolperfallen/`). `app/` holds the TypeScript monorepo skeleton (`core`, `api`, `web`; see `app/README.md`). All tasks go through the root `Makefile`: `make help` lists them, `make ci` runs every gate (lint, typecheck, architecture boundaries, format, tests, build). There are two spec sets:
 
 | Folder | Describes | Status semantics |
 |---|---|---|

@@ -1,0 +1,78 @@
+# CI (E-13, FR-QG-01/02, FR-DEV-09): Die Jobs rufen dieselben `make`-Ziele auf wie ein Entwickler lokal.
+# Pfadfilter: Die App-Suite läuft nur, wenn `app/`, das Makefile oder die Workflows betroffen sind.
+# `ci-status` ist der Sammelstatus; ohne Branch-Schutz (privates Repo, Free-Plan) prüft ihn der Release-Workflow.
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: filter
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          base="$PUSH_BEFORE"
+          if [ "$EVENT" = "pull_request" ]; then base="$PR_BASE"; fi
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            echo "app=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if git diff --name-only "$base" HEAD | grep -qE '^(app/|Makefile$|\.github/|\.nvmrc$)'; then
+            echo "app=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "app=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  app:
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - run: make ci
+
+  ci-status:
+    needs: [changes, app]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - env:
+          CHANGES: ${{ needs.changes.result }}
+          APP: ${{ needs.app.result }}
+        run: |
+          for r in "$CHANGES" "$APP"; do
+            case "$r" in
+              success | skipped) ;;
+              *) echo "Fehlgeschlagen: $r"; exit 1 ;;
+            esac
+          done
+          echo "ci-status: grün"
