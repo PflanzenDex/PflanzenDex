@@ -58,10 +58,10 @@ export function createApp(opt: AppOptionen = {}): Hono {
     app.route(
       "/",
       exemplareRouten(opt.pool, {
-        ...(opt.uhr ? { uhr: opt.uhr } : {}),
-        ...(opt.sollStandort ? { sollStandort: opt.sollStandort } : {}),
-        ...(opt.messungen ? { messungen: opt.messungen } : {}),
-        ...(opt.behandlungen ? { behandlungen: opt.behandlungen } : {}),
+        uhr: opt.uhr,
+        sollStandort: opt.sollStandort,
+        messungen: opt.messungen,
+        behandlungen: opt.behandlungen,
       }),
     );
     for (const pfad of PFLEGEPHASEN_PFADE) app.use(pfad, auth).use(`${pfad}/*`, auth);

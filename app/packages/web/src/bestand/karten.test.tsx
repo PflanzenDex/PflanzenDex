@@ -1,8 +1,8 @@
+import { readFileSync } from "node:fs";
 import { renderToString as rendere } from "react-dom/server";
 import type { ExemplarKarte } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";
 import { BestandListe } from "./bestand-liste";
-import css from "./bestand.css?raw";
 import { ladeKarten } from "./karten-api";
 
 // React trennt benachbarte Textteile beim Serverrendern mit Kommentaren; für Textprüfungen entfernen wir sie.
@@ -24,6 +24,8 @@ const karte = (extra: Partial<ExemplarKarte> = {}): ExemplarKarte => ({
   weitereBehandlungen: 0,
   ...extra,
 });
+// Der sichtbare Text ohne Markup.
+const sichtbar = (h: string) => h.replace(/<[^>]+>/g, "");
 const html = (karten: ExemplarKarte[]) =>
   renderToString(<BestandListe karten={karten} onArtWaehlen={vi.fn()} />);
 
@@ -96,7 +98,7 @@ describe("US-BES-06 Karte: letzte Messung", () => {
     const h = html([
       karte({ letzteMessung: { datum: "2026-10-01", qualitaet: "gesund", notiz: null } }),
     ]);
-    expect(h).toContain("Letzte Messung: Gesund am 01.10.2026");
+    expect(sichtbar(h)).toContain("Letzte Messung: Gesund am 01.10.2026");
     expect(h).not.toContain("noch keine Messung");
   });
 
@@ -104,7 +106,7 @@ describe("US-BES-06 Karte: letzte Messung", () => {
     const h = html([
       karte({ letzteMessung: { datum: "2026-10-01", qualitaet: "vergeilt", notiz: null } }),
     ]);
-    expect(h).toContain("Letzte Messung: Vergeilt/dünn am 01.10.2026");
+    expect(sichtbar(h)).toContain("Letzte Messung: Vergeilt/dünn am 01.10.2026");
     expect(h).toContain("kein Erfolgssignal");
     expect(h).toContain("qualitaet-vergeilt");
     expect(h).not.toContain("qualitaet-gesund");
@@ -161,6 +163,7 @@ describe("US-BES-06 Raster und Bedienung", () => {
   });
 
   it("das Raster passt sich der Breite an: eine bis zwei Spalten auf dem Handy, mehr auf breiten Schirmen", () => {
+    const css = readFileSync("src/bestand/bestand.css", "utf8");
     expect(css).toContain(".karten-raster");
     expect(css).toContain(
       "grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr))",

@@ -29,13 +29,13 @@ export const EXEMPLARE_PFADE = ["/exemplare"] as const;
 
 export type ExemplareOptionen = {
   /** Soll-Standort je Art und Tag; setzt `pflege` um (PHA), bis dahin kennt niemand einen (P-08). */
-  sollStandort?: SollStandortQuelle;
+  sollStandort?: SollStandortQuelle | undefined;
   /** Die Uhr für „heute“ (NFR-08); Tests setzen sie fest. */
-  uhr?: () => Date;
+  uhr?: (() => Date) | undefined;
   /** Letzte Messung und jüngstes Foto je Exemplar; setzt `pflege` (WAC) um, bis dahin gibt es keine (US-BES-06). */
-  messungen?: MessungsQuelle;
+  messungen?: MessungsQuelle | undefined;
   /** Offene Behandlungen je Exemplar; setzt `pflege` (BEH) um, bis dahin gibt es keine (US-BES-06). */
-  behandlungen?: BehandlungsQuelle;
+  behandlungen?: BehandlungsQuelle | undefined;
 };
 
 /**

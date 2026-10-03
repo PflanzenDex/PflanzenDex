@@ -1,4 +1,3 @@
-import type { LichtStandort } from "@pflanzendex/core";
 import type { ApiFehler } from "../kern";
 
 /** P-08: Was fehlt, heißt „unbekannt“ und wird nie mit einem Wert gefüllt. */
@@ -9,9 +8,6 @@ export function datumText(iso: string): string {
   const [jahr, monat, tag] = iso.split("-");
   return `${tag}.${monat}.${jahr}`;
 }
-
-export const standortText = (standorte: readonly LichtStandort[], id: string | null): string =>
-  id === null ? UNBEKANNT : (standorte.find((s) => s.id === id)?.name ?? UNBEKANNT);
 
 export interface Namenskonflikt {
   name: string;

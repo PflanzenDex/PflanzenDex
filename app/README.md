@@ -91,6 +91,14 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Web:** tab "Pflegephasen", with an empty state that says what to do next (P-09).
 - **Limits:** the target location per phase belongs to the keeper's care profile (BES-09, missing), so `sollStandortId` is always `null` ("unbekannt", P-08); `SollStandortQuelle` (FR-PHA-05) is not implemented yet. A dormancy period on the Exemplar itself (override) does not exist. The E2E flow with an Exemplar waits for a fillable species catalog; E2E covers the empty state.
 
+## Exemplar cards (US-BES-06)
+
+- **What:** `GET /exemplare/karten?zeitzone=Europe/Berlin` returns one derived card per own Exemplar (no table, no migration): name, Art name, status, location, light zone (the zone of the location; a zone override on the Exemplar comes with BES-04), last measurement, photo, and the earliest open treatment with "+N weitere". A missing or unknown time zone is `eingabe.ungueltig` (400); "today" is the local date in that zone (NFR-08). The route sits before `/exemplare/:id`.
+- **Ports (module `bestand`, registered in `modules.config.mjs`):** `MessungsQuelle` (last measurement and youngest photo per Exemplar, to be implemented by `pflege`/WAC) and `BehandlungsQuelle` (open treatments, `pflege`/BEH). Both are asked once for all own Exemplar ids, never for foreign ones. Until they exist, `KEINE_MESSUNGEN` and `KEINE_BEHANDLUNGEN` answer empty: cards show "Noch kein Foto", "noch keine Messung", "keine offene Behandlung". `createApp` takes `messungen` and `behandlungen` options for them.
+- **Unknown stays unknown (P-08):** an Art the account cannot see, a location without zone or a missing location is `null` and shown as "unbekannt". Etiolated growth ("Vergeilt/dünn") is shown as a warning, never as success.
+- **Web:** tab "Bestand" shows the cards in a grid (`repeat(auto-fill, minmax(min(100%, 16rem), 1fr))`: one column on narrow phones, more when there is room); the note of the last measurement is a native `<details>`; the photo is a link that opens it large.
+- **Limits:** photo, measurement and treatment data appear only once WAC and BEH implement the ports (the card logic is tested with stubs); archived Exemplare are not hidden yet (BES-07).
+
 **Operations (TE-03):** containers, Compose, backup and deploy live in `deploy/`; see the runbook `Docs/operations/staging-deploy-and-backup.md`. Targets: `make deploy`, `make backup`, `make restore-test`.
 
 ## End-to-end tests (QG-T3, QG-U1)
