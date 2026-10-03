@@ -25,17 +25,31 @@
     "ci": "npm run gates && npm run test && npm run build"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "@commitlint/lint": "^21.2.3",
+    "@commitlint/load": "^21.2.3",
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.4",
     "concurrently": "^10.0.5",
+    "conventional-changelog-conventionalcommits": "^9.3.1",
     "eslint": "^10.12.0",
     "eslint-plugin-security": "^4.2.0",
     "eslint-plugin-sonarjs": "^4.2.2",
     "globals": "^17.13.0",
+    "lint-staged": "^17.6.0",
     "minimatch": "^10.2.6",
     "prettier": "^3.9.9",
+    "semantic-release": "^25.0.9",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.0",
     "vitest": "^5.0.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs}": [
+      "prettier --write",
+      "eslint --max-warnings=0 --no-warn-ignored"
+    ],
+    "*.{json,md,css,html,yml,yaml}": "prettier --write"
   }
 }
