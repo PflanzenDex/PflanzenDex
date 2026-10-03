@@ -4,6 +4,7 @@ import { FIXTURES_KATALOG } from "./katalog/index.ts";
 import { FIXTURES_KERN, mitKonto, type Fixtures } from "./kern/index.ts";
 import { FIXTURES_KONTO } from "./konto/index.ts";
 import { FIXTURES_LICHT } from "./licht/index.ts";
+import { FIXTURES_PFLEGE } from "./pflege/index.ts";
 
 // Je Tabelle mit Konto-Kennung ein Beispiel für die übrigen Spalten (ohne Kennung, die setzt der Test).
 // Die Einträge liegen im jeweiligen Modul; hier werden sie gesammelt. Eine neue Tabelle ohne Eintrag
@@ -14,6 +15,7 @@ export const FIXTURES: Fixtures = {
   ...FIXTURES_KATALOG,
   ...FIXTURES_LICHT,
   ...FIXTURES_BESTAND,
+  ...FIXTURES_PFLEGE,
 };
 
 // Testhilfen für Tabellen eines anderen Moduls (AB-9): Tests eines Moduls schreiben kein SQL auf fremde Tabellen,

@@ -99,6 +99,16 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Web:** tab "Bestand" shows the cards in a grid (`repeat(auto-fill, minmax(min(100%, 16rem), 1fr))`: one column on narrow phones, more when there is room); the note of the last measurement is a native `<details>`; the photo is a link that opens it large.
 - **Limits:** photo, measurement and treatment data appear only once WAC and BEH implement the ports (the card logic is tested with stubs); archived Exemplare are not hidden yet (BES-07).
 
+## Measurements (US-WAC-01)
+
+- **Module:** `pflege` (owner decision O-1: PHA, BEH and WAC live in one module; `core/src/pflege`, `db/src/pflege`, `api/src/pflege`, `web/src/pflege`). It depends on `kern`, `katalog` and `bestand` (all listed in `modules.config.mjs`).
+- **Data:** migration 0010 (`-- modul: pflege`): table `messung` with `konto_id` and a row rule (generic tenant test plus fixture `FIXTURES_PFLEGE`), `datum` as `date` (read back as text, NFR-08), `wert` as `numeric(7, 1)` (grid 0.5, nothing is rounded silently), `qualitaet` (`gesund`, `vergeilt`), optional `notiz`, `bewertung_durch` (`halter`; `ki_uebernommen` is reserved for the AI path). The Exemplar is referenced through the composite foreign key `messung_exemplar (konto_id, exemplar_id)`; migration 0009 (`-- modul: bestand`) only adds the target `unique (konto_id, id)` on `exemplar` (AB-14).
+- **Generic tenant test:** fixtures may now be async and receive `{ kontoId, abfrage }` (`FixtureKontext` in `db/src/kern/trennung.ts`), so a table that points at another row of the same account can create it first. `legeFixtureExemplarAn` (module `bestand`) does that for `messung` without SQL on a foreign table (AB-9).
+- **Operation:** `messung.erfassen` (`core/src/pflege`). Input: `exemplarId`, `zeitzone`, `wert` (finite number from 0 to 10000 in steps of 0.5; the bounds are assumptions), optional `datum` (a real calendar day, default `heuteLokal(uhr, zeitzone)`, not after today in the user's zone: an assumption), optional `qualitaet` (default `gesund`), optional `notiz` (1 to 1000 characters). Invalid input writes nothing; a foreign or unknown Exemplar is `exemplar.nicht_gefunden`; replays with the same `Idempotency-Key` write once (US-QS-03). The view `messAnsicht` is derived (P-01): growth measure of the species ("unbekannt" if the species is not visible), all measurements (newest first), the last one and its quality.
+- **API:** `GET /exemplare/:id/messungen` (foreign or unknown Exemplar: 404), `POST /exemplare/:id/messungen` (`Idempotency-Key`; body `wert`, `zeitzone`, optional `datum`, `qualitaet`, `notiz`; 201).
+- **Web:** button "Messen" on each Exemplar card in the Bestand tab opens the measuring view (the app wires `bestand` and `pflege`, the modules do not know each other).
+- **Limits:** no photo (needs the media processing, FR-WAC-09, US-WAC-05), no rate and trend (US-WAC-03, US-WAC-04), no editing or deleting of a measurement, no reminder for old measurements (FR-WAC-08). `Exemplar.messreihe` in the `bestand` view stays an empty list; the measurements are read through their own route.
+
 **Operations (TE-03):** containers, Compose, backup and deploy live in `deploy/`; see the runbook `Docs/operations/staging-deploy-and-backup.md`. Targets: `make deploy`, `make backup`, `make restore-test`.
 
 ## End-to-end tests (QG-T3, QG-U1)

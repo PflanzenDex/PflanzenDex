@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Art } from "@pflanzendex/core";
-import { BestandSeite } from "./bestand";
+import { BestandBereich } from "./bestand-bereich";
 import { Fehler, KontoAnsicht, Laedt, Willkommen, apiUrl, useSitzung } from "./konto";
 import { LichtSeite } from "./licht";
 import { ArtenSeite } from "./katalog";
@@ -52,7 +52,7 @@ export function App() {
           ) : ansicht === "pflegephasen" ? (
             <PflegephasenSeite api={api} token={s.token} />
           ) : ansicht === "bestand" ? (
-            <BestandSeite
+            <BestandBereich
               api={api}
               token={s.token}
               neueArt={neueArt}

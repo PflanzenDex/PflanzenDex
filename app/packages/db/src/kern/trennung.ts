@@ -1,17 +1,31 @@
-import type { Pool } from "pg";
+import type { Pool, PoolClient } from "pg";
 import { mitKonto } from "./mandant.ts";
 import { mandantenTabellen, type MandantenTabelle } from "./schema.ts";
 
-/** Beispielwerte je Tabelle für die Spalten außer der Konto-Kennung. */
-export type Fixtures = Record<string, () => Record<string, unknown>>;
+/** Womit eine Fixture ihre Voraussetzungen anlegen kann: die Kennung des Kontos und dessen Sitzung (P-04). */
+export interface FixtureKontext {
+  readonly kontoId: string;
+  readonly abfrage: PoolClient;
+}
+
+/**
+ * Beispielwerte je Tabelle für die Spalten außer der Konto-Kennung. Verweist die Tabelle auf eine andere Zeile des
+ * Kontos (zusammengesetzter Fremdschlüssel), legt die Fixture diese über den Kontext an und liefert ihre Kennung.
+ */
+export type Fixtures = Record<
+  string,
+  (kontext: FixtureKontext) => Record<string, unknown> | Promise<Record<string, unknown>>
+>;
 
 const q = (name: string) => `"${name.replaceAll('"', '""')}"`;
 
 async function einfuegen(pool: Pool, t: MandantenTabelle, kontoId: string, fx: Fixtures) {
-  const werte = { ...fx[t.name]?.(), [t.kennung]: kontoId };
-  const spalten = Object.keys(werte);
-  const sql = `insert into ${q(t.name)} (${spalten.map(q).join(", ")}) values (${spalten.map((_, i) => `$${i + 1}`).join(", ")})`;
-  await mitKonto(pool, kontoId, (c) => c.query(sql, Object.values(werte)));
+  await mitKonto(pool, kontoId, async (c) => {
+    const werte = { ...(await fx[t.name]?.({ kontoId, abfrage: c })), [t.kennung]: kontoId };
+    const spalten = Object.keys(werte);
+    const sql = `insert into ${q(t.name)} (${spalten.map(q).join(", ")}) values (${spalten.map((_, i) => `$${i + 1}`).join(", ")})`;
+    await c.query(sql, Object.values(werte));
+  });
 }
 
 async function zaehle(pool: Pool, t: MandantenTabelle, kontoId: string): Promise<number> {

@@ -76,7 +76,11 @@ function Behandlung({ karte }: { karte: ExemplarKarte }) {
 }
 
 /** Eine Exemplar-Karte (US-BES-06): Zustand und Handlungsbedarf auf einen Blick, nur aus abgeleiteten Daten. */
-export function ExemplarKarteAnsicht({ karte }: { karte: ExemplarKarte }) {
+export function ExemplarKarteAnsicht(props: {
+  karte: ExemplarKarte;
+  onMessen?: ((e: { id: string; name: string }) => void) | undefined;
+}) {
+  const { karte, onMessen } = props;
   return (
     <li className="exemplar-karte">
       <Foto karte={karte} />
@@ -88,6 +92,18 @@ export function ExemplarKarteAnsicht({ karte }: { karte: ExemplarKarte }) {
       <p className="leise">Standort: {karte.standort ?? UNBEKANNT}</p>
       <Messung karte={karte} />
       <Behandlung karte={karte} />
+      {onMessen && (
+        <div className="aktionen">
+          <button
+            type="button"
+            className="sekundaer"
+            aria-label={`Messen: ${karte.name}`}
+            onClick={() => onMessen(karte)}
+          >
+            Messen
+          </button>
+        </div>
+      )}
     </li>
   );
 }

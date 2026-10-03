@@ -194,6 +194,8 @@ describe("Modulgrenzen gegen die echte Datenbank (AB-10, AB-13)", () => {
         /^AB-10 globale Referenztabelle exemplar: nur Tabellen mit begründeter Ausnahme/,
       ),
       expect.stringMatching(/^AB-10 Fremdschlüssel exemplar_art/),
+      // `messung` (pflege) verweist auf `exemplar`; gilt `exemplar` als globale Referenztabelle, ist das ein Verstoß.
+      expect.stringMatching(/^AB-10 Fremdschlüssel messung_exemplar/),
     ]);
     expect(await findeSchemaVerstoesse(pool, mit({ art: { ...art, owner: "licht" } }))).toEqual([
       expect.stringMatching(/^AB-10 globale Referenztabelle art: Besitzer licht stimmt nicht/),
