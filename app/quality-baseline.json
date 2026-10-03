@@ -26,7 +26,7 @@
       "rule": "max-lines-per-function",
       "file": "packages/web/src/licht/LichtSeite.tsx",
       "function": "LichtSeite",
-      "value": 65,
+      "value": 62,
       "date": "2026-10-03"
     },
     {

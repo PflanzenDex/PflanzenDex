@@ -1,4 +1,4 @@
-import type { Hinweis, LichtStandort, Lichtzone, ZonenNutzer } from "@pflanzendex/core";
+import type { Ableitung, Hinweis, LichtStandort, Lichtzone, ZonenNutzer } from "@pflanzendex/core";
 
 import {
   aufruf,
@@ -8,7 +8,7 @@ import {
   type Schreiben as KernSchreiben,
 } from "../kern";
 
-export type { Hinweis, LichtStandort, Lichtzone, ZonenNutzer };
+export type { Ableitung, Hinweis, LichtStandort, Lichtzone, ZonenNutzer };
 
 type Abruf = typeof fetch;
 
@@ -55,3 +55,24 @@ export async function ladeStandorte(
 
 export const erzeugeSchreiben = (api: string, token: string, abruf: Abruf = fetch): Schreiben =>
   erzeugeKern<ZonenNutzer>(api, token, abruf);
+
+export interface AbleitungsAnfrage {
+  lichtbedarfLux: number;
+  standardStufe: number;
+  weichesBlatt: boolean;
+}
+
+/** US-LIC-01: Zone der Art, abgeleitet aus dem Lux-Bedarf nach den Zonen des Kontos (nie gespeichert). */
+export async function ladeAbleitung(
+  api: string,
+  token: string,
+  a: AbleitungsAnfrage,
+  abruf: Abruf = fetch,
+): Promise<Antwort<Ableitung>> {
+  const q = new URLSearchParams({
+    lichtbedarfLux: String(a.lichtbedarfLux),
+    standardStufe: String(a.standardStufe),
+    weichesBlatt: String(a.weichesBlatt),
+  });
+  return aufruf<Ableitung, ZonenNutzer>(abruf, `${api}/lichtzonen/ableitung?${q}`, token);
+}

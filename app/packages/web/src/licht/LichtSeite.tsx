@@ -1,10 +1,26 @@
 import "./licht.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LichtAnsicht, type LichtAktionen } from "./licht-ansicht";
-import { erzeugeSchreiben, ladeLicht, type ApiFehler, type LichtDaten } from "./licht-api";
+import {
+  erzeugeSchreiben,
+  ladeAbleitung,
+  ladeLicht,
+  type AbleitungsAnfrage,
+  type ApiFehler,
+  type LichtDaten,
+} from "./licht-api";
 
+type Token = () => Promise<string | undefined>;
 type Zustand =
   { art: "laedt" } | { art: "fehler"; fehler: ApiFehler } | { art: "bereit"; daten: LichtDaten };
+
+const NICHT_ANGEMELDET = { code: "zugriff.nicht_angemeldet", text: "Bitte melde dich neu an." };
+
+async function ableiten(api: string, token: Token, a: AbleitungsAnfrage) {
+  const t = await token();
+  if (t) return ladeAbleitung(api, t, a);
+  return { ok: false as const, fehler: NICHT_ANGEMELDET };
+}
 
 /** Lädt die Daten und verbindet die Ansicht mit der API; nach jedem Schreiben wird neu geladen (nie geraten). */
 export function LichtSeite(props: { api: string; token: () => Promise<string | undefined> }) {
@@ -14,11 +30,7 @@ export function LichtSeite(props: { api: string; token: () => Promise<string | u
 
   const lade = useCallback(async () => {
     const t = await token();
-    if (!t)
-      return setZ({
-        art: "fehler",
-        fehler: { code: "zugriff.nicht_angemeldet", text: "Bitte melde dich neu an." },
-      });
+    if (!t) return setZ({ art: "fehler", fehler: NICHT_ANGEMELDET });
     const r = await ladeLicht(api, t);
     setZ(r.ok ? { art: "bereit", daten: r.wert } : { art: "fehler", fehler: r.fehler });
   }, [api, token]);
@@ -27,7 +39,7 @@ export function LichtSeite(props: { api: string; token: () => Promise<string | u
   const aktionen = useMemo<LichtAktionen>(() => {
     const schreibe = async (methode: "POST" | "PUT" | "DELETE", pfad: string, body?: unknown) => {
       const t = await token();
-      if (!t) return { code: "zugriff.nicht_angemeldet", text: "Bitte melde dich neu an." };
+      if (!t) return NICHT_ANGEMELDET;
       const r = await erzeugeSchreiben(api, t)(methode, pfad, body);
       if (!r.ok) return r.fehler;
       setLetzterFehler(undefined);
@@ -45,6 +57,7 @@ export function LichtSeite(props: { api: string; token: () => Promise<string | u
       },
       standortAnlegen: (e) => schreibe("POST", "/standorte", e),
       standortAendern: (id, e) => schreibe("PUT", `/standorte/${id}`, e),
+      zoneAbleiten: (a) => ableiten(api, token, a),
     };
   }, [api, token, lade]);
 
