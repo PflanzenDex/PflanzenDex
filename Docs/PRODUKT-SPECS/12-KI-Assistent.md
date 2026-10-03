@@ -147,3 +147,4 @@ Eingebauter Chat mit Betreiber-Kontingent (E-19), Betreiber-Abrechnung von KI-Au
 2. **Eingebauter Chat (E-19):** später ergänzen, wenn Weg A und B nicht reichen?
 3. **Freundesdaten über KI:** später öffnen? Wenn ja, mit welchen Schutzmaßnahmen gegen Injection (FR-KI-07)?
 4. Wie viele Clients sollen vor R4 real getestet werden (FR-KI-06)?
+5. **Zustimmung ohne Abwahl einzelner Rechte:** Keycloaks Standard-Zustimmungsseite kennt nur „Ja" oder „Nein" für alle angefragten Scopes (Spike TE-15). US-KI-07 verlangt die Abwahl einzelner Rechte. Entweder ein eigener Zustimmungsschritt (Theme oder eigener Dialog) oder Anpassung der Story.
