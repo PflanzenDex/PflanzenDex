@@ -9,6 +9,7 @@ import {
   fehler,
   heuteLokal,
   istZeitzone,
+  zonenVerteilung,
   type BehandlungsQuelle,
   type MessungsQuelle,
   type SollStandortQuelle,
@@ -60,6 +61,12 @@ export function exemplareRouten(pool: Pool, opt: ExemplareOptionen = {}): Hono<A
     messungen: opt.messungen ?? KEINE_MESSUNGEN,
     behandlungen: opt.behandlungen ?? KEINE_BEHANDLUNGEN,
   };
+  const verteilungDeps = {
+    exemplare,
+    arten: kartenDeps.arten,
+    standorte: kartenDeps.standorte,
+    zonen: kartenDeps.zonen,
+  };
   const routen = new Hono<AuthEnv>();
 
   routen.get("/exemplare", async (c) =>
@@ -75,6 +82,10 @@ export function exemplareRouten(pool: Pool, opt: ExemplareOptionen = {}): Hono<A
     const karten = await exemplarKarten(kartenDeps, c.get("konto").id, heuteLokal(uhr(), zeitzone));
     return c.json({ karten });
   });
+  // US-LIC-02: Verteilung auf die Zonen 2 bis 4; wie „karten“ vor `/exemplare/:id`, nur Daten des eigenen Kontos (P-04).
+  routen.get("/exemplare/verteilung", async (c) =>
+    c.json({ verteilung: await zonenVerteilung(verteilungDeps, c.get("konto").id) }),
+  );
   routen.get("/exemplare/:id", async (c) => {
     const e = await exemplarLaden(exemplare, c.get("konto").id, c.req.param("id"));
     return e ? c.json(e) : c.json(fehlerKoerper(fehler("exemplar.nicht_gefunden")), 404);

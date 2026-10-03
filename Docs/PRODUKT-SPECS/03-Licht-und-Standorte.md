@@ -29,7 +29,7 @@ Akzeptanzkriterien:
 - Hochstufen nur, wenn der Bedarf mindestens 80 % der Lux-Decke der aktuellen Stufe erreicht. Liegt der Bedarf mehr als 30 % unter der Decke, bleibt die Art dort (mehr Licht bringt Stress).
 - C3-Pflanzen mit weichem Blatt („sonnenliebend") werden nicht automatisch in die starke Zone eingestuft.
 
-### US-LIC-02 · Wissen, wo noch Platz ist · ⬜ (Prototyp ✅)
+### US-LIC-02 · Wissen, wo noch Platz ist · 🟨 (Prototyp ✅)
 
 Als **Pflanzenhalter** will ich die Verteilung meiner Exemplare auf die Zonen sehen.
 
@@ -79,11 +79,11 @@ Akzeptanzkriterien:
 
 ## Anforderungen
 
-| ID        | Anforderung                                                                                                                                                                            | Status                                                                                        |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| FR-LIC-01 | Lichtzonen sind Daten des Kontos mit Voreinstellung, nicht hartkodiert; Zählung, Wunschliste und Empfehlungen lesen sie zentral (löst B-07).                                           | 🟨 Daten und Voreinstellung (LIC-05); Lesen durch Zählung, Wunschliste und Empfehlungen folgt |
-| FR-LIC-02 | Die Lichtzone eines Exemplars überschreibt die der Art (Steckling → Stecklingslicht).                                                                                                  | ⬜                                                                                            |
-| FR-LIC-03 | Fehlt der Lux-Bedarf, entfällt die Art in der Lichtübersicht und erscheint in „Hinweise".                                                                                              | ⬜                                                                                            |
-| FR-LIC-04 | Verteilung und Wunschlisten-Priorisierung nutzen dieselbe Zählung (Exemplar-Ebene, nur Zonen 2–4).                                                                                     | ⬜                                                                                            |
-| FR-LIC-05 | Die Lichtübersicht (Art-Sicht) nutzt den Lux-Bedarf der Art auch für Stecklinge; die Verteilung (Exemplar-Sicht) respektiert den Override. Beabsichtigt und in der Oberfläche erklärt. | ⬜                                                                                            |
-| FR-LIC-06 | Eine gemessene Lichtstärke je Lampe (Handy-App) kann pro Gerät hinterlegt werden (US-EQU-03). Fehlt sie, gilt die Angabe der Zone, gekennzeichnet als „nicht gemessen".                | ⬜                                                                                            |
+| ID        | Anforderung                                                                                                                                                                            | Status                                                                                                                |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| FR-LIC-01 | Lichtzonen sind Daten des Kontos mit Voreinstellung, nicht hartkodiert; Zählung, Wunschliste und Empfehlungen lesen sie zentral (löst B-07).                                           | 🟨 Daten und Voreinstellung (LIC-05); Lesen durch Zählung, Wunschliste und Empfehlungen folgt                         |
+| FR-LIC-02 | Die Lichtzone eines Exemplars überschreibt die der Art (Steckling → Stecklingslicht).                                                                                                  | 🟨 In der Verteilung (LIC-02): Zone des Standorts, Status Steckling; ein eigenes Zonenfeld am Exemplar folgt (BES-04) |
+| FR-LIC-03 | Fehlt der Lux-Bedarf, entfällt die Art in der Lichtübersicht und erscheint in „Hinweise".                                                                                              | ⬜                                                                                                                    |
+| FR-LIC-04 | Verteilung und Wunschlisten-Priorisierung nutzen dieselbe Zählung (Exemplar-Ebene, nur Zonen 2–4).                                                                                     | 🟨 Zählung als wiederverwendbare Funktion (LIC-02); die Wunschliste (WUN) nutzt sie noch nicht                        |
+| FR-LIC-05 | Die Lichtübersicht (Art-Sicht) nutzt den Lux-Bedarf der Art auch für Stecklinge; die Verteilung (Exemplar-Sicht) respektiert den Override. Beabsichtigt und in der Oberfläche erklärt. | ⬜                                                                                                                    |
+| FR-LIC-06 | Eine gemessene Lichtstärke je Lampe (Handy-App) kann pro Gerät hinterlegt werden (US-EQU-03). Fehlt sie, gilt die Angabe der Zone, gekennzeichnet als „nicht gemessen".                | ⬜                                                                                                                    |

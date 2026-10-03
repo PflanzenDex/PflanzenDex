@@ -1,0 +1,327 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-aa345f9a9b5e7ab4d/.worktrees/feat-lic-02-wissen-wo-noch-platz/app/packages/core
+
+ ❯ src/bestand/verteilung.test.ts (12 tests | 12 failed) 16ms
+   ❯ US-LIC-02 Zählung je Zone 2 bis 4 auf Exemplar-Ebene (6)
+     × zählt die Exemplare je Zone 2 bis 4 in der Reihenfolge der Zonen, auch Zonen mit null 7ms
+     × die Zone des Exemplars (über seinen Standort) geht der Zone der Art vor 1ms
+     × ohne Zone am Exemplar gilt die aus dem Lux-Bedarf abgeleitete Zone der Art 1ms
+     × Stecklingslicht zählt nicht: Status Steckling und Standort in der niedrigsten Zone 1ms
+     × archivierte Exemplare zählen nicht und werden ausgewiesen (nichts verschwindet still) 1ms
+     × ein Exemplar, dessen Art nicht lesbar ist und das keine Zone hat, heißt „Zone unbekannt“ (P-08) 1ms
+   ❯ US-LIC-02 dünnste Zone und Gleichstand (5)
+     × nennt die dünnste Zone und sagt, was als Nächstes zu tun ist (P-09) 1ms
+     × bei Gleichstand nennt sie alle Gleichplatzierten und verweist auf die Wunschliste 1ms
+     × bei Gleichstand aller drei Zonen stehen alle drei in der Liste 1ms
+     × ohne gezählte Exemplare gibt es keine dünnste Zone, sondern einen Hinweis auf das nächste Exemplar 1ms
+     × ohne Zonen für Erwachsene (weniger als zwei Lichtzonen) sagt der Hinweis, Zonen anzulegen 0ms
+   ❯ US-LIC-02 Mandant: nur eigene Exemplare und Zonen (1)
+     × zählt nur die Exemplare des fragenden Kontos und kennt keine fremden Zonen 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 Zählung je Zone 2 bis 4 auf Exemplar-Ebene > zählt die Exemplare je Zone 2 bis 4 in der Reihenfolge der Zonen, auch Zonen mit null
+AssertionError: expected [] to deeply equal [ [ 'Lampe 2', 1 ], …(2) ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "Lampe 2",
+-     1,
+-   ],
+-   [
+-     "Lampe 3",
+-     2,
+-   ],
+-   [
+-     "Lampe 4",
+-     0,
+-   ],
+- ]
++ []
+
+ ❯ src/bestand/verteilung.test.ts:92:36
+     90|     await lege("anna", "Regal");
+     91|     await lege("anna", "Regal");
+     92|     expect(await anzahlen("anna")).toEqual([
+       |                                    ^
+     93|       ["Lampe 2", 1],
+     94|       ["Lampe 3", 2],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 Zählung je Zone 2 bis 4 auf Exemplar-Ebene > die Zone des Exemplars (über seinen Standort) geht der Zone der Art vor
+AssertionError: expected [] to deeply equal [ [ 'Lampe 2', +0 ], …(2) ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "Lampe 2",
+-     0,
+-   ],
+-   [
+-     "Lampe 3",
+-     0,
+-   ],
+-   [
+-     "Lampe 4",
+-     1,
+-   ],
+- ]
++ []
+
+ ❯ src/bestand/verteilung.test.ts:102:36
+    100|     // Die Art gehört nach Lampe 2, das Exemplar steht aber unter Lamp…
+    101|     await lege("anna", "Wüstenbank", { artId: ART_NIEDRIG });
+    102|     expect(await anzahlen("anna")).toEqual([
+       |                                    ^
+    103|       ["Lampe 2", 0],
+    104|       ["Lampe 3", 0],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 Zählung je Zone 2 bis 4 auf Exemplar-Ebene > ohne Zone am Exemplar gilt die aus dem Lux-Bedarf abgeleitete Zone der Art
+AssertionError: expected [] to deeply equal [ [ 'Lampe 2', 1 ], …(2) ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "Lampe 2",
+-     1,
+-   ],
+-   [
+-     "Lampe 3",
+-     1,
+-   ],
+-   [
+-     "Lampe 4",
+-     0,
+-   ],
+- ]
++ []
+
+ ❯ src/bestand/verteilung.test.ts:112:36
+    110|     await lege("anna", null, { artId: ART_NIEDRIG });
+    111|     await lege("anna", "Kiste", { artId: ART_HOCH }); // Standort ohne…
+    112|     expect(await anzahlen("anna")).toEqual([
+       |                                    ^
+    113|       ["Lampe 2", 1],
+    114|       ["Lampe 3", 1],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 Zählung je Zone 2 bis 4 auf Exemplar-Ebene > Stecklingslicht zählt nicht: Status Steckling und Standort in der niedrigsten Zone
+AssertionError: expected [] to deeply equal [ +0, +0, +0 ]
+
+- Expected
++ Received
+
+- [
+-   0,
+-   0,
+-   0,
+- ]
++ []
+
+ ❯ src/bestand/verteilung.test.ts:123:42
+    121|     await lege("anna", "Steckling-Ecke");
+    122|     const v = await zonenVerteilung(deps(), "anna");
+    123|     expect(v.zonen.map((z) => z.anzahl)).toEqual([0, 0, 0]);
+       |                                          ^
+    124|     expect(v.nichtGezaehlt.stecklingslicht).toBe(2);
+    125|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 Zählung je Zone 2 bis 4 auf Exemplar-Ebene > archivierte Exemplare zählen nicht und werden ausgewiesen (nichts verschwindet still)
+AssertionError: expected [] to deeply equal [ +0, +0, +0 ]
+
+- Expected
++ Received
+
+- [
+-   0,
+-   0,
+-   0,
+- ]
++ []
+
+ ❯ src/bestand/verteilung.test.ts:130:42
+    128|     await lege("anna", "Regal", { status: "archiviert" });
+    129|     const v = await zonenVerteilung(deps(), "anna");
+    130|     expect(v.zonen.map((z) => z.anzahl)).toEqual([0, 0, 0]);
+       |                                          ^
+    131|     expect(v.nichtGezaehlt.archiviert).toBe(1);
+    132|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 Zählung je Zone 2 bis 4 auf Exemplar-Ebene > ein Exemplar, dessen Art nicht lesbar ist und das keine Zone hat, heißt „Zone unbekannt“ (P-08)
+AssertionError: expected [] to deeply equal [ +0, +0, +0 ]
+
+- Expected
++ Received
+
+- [
+-   0,
+-   0,
+-   0,
+- ]
++ []
+
+ ❯ src/bestand/verteilung.test.ts:137:42
+    135|     await lege("anna", null, { artId: ART_FREMD });
+    136|     const v = await zonenVerteilung(deps(), "anna");
+    137|     expect(v.zonen.map((z) => z.anzahl)).toEqual([0, 0, 0]);
+       |                                          ^
+    138|     expect(v.nichtGezaehlt.zoneUnbekannt).toBe(1);
+    139|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 dünnste Zone und Gleichstand > nennt die dünnste Zone und sagt, was als Nächstes zu tun ist (P-09)
+AssertionError: expected [] to deeply equal [ 'Lampe 4' ]
+
+- Expected
++ Received
+
+- [
+-   "Lampe 4",
+- ]
++ []
+
+ ❯ src/bestand/verteilung.test.ts:150:43
+    148|     await lege("anna", "Wüstenbank");
+    149|     const v = await zonenVerteilung(deps(), "anna");
+    150|     expect(v.duennste.map((z) => z.name)).toEqual(["Lampe 4"]);
+       |                                           ^
+    151|     expect(v.hinweis.text).toContain("Lampe 4");
+    152|     expect(v.hinweis.naechsteHandlung).not.toBe("");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 dünnste Zone und Gleichstand > bei Gleichstand nennt sie alle Gleichplatzierten und verweist auf die Wunschliste
+AssertionError: expected [] to deeply equal [ 'Lampe 3', 'Lampe 4' ]
+
+- Expected
++ Received
+
+- [
+-   "Lampe 3",
+-   "Lampe 4",
+- ]
++ []
+
+ ❯ src/bestand/verteilung.test.ts:161:43
+    159|     await lege("anna", "Wüstenbank");
+    160|     const v = await zonenVerteilung(deps(), "anna");
+    161|     expect(v.duennste.map((z) => z.name)).toEqual(["Lampe 3", "Lampe 4…
+       |                                           ^
+    162|     expect(v.hinweis.text).toContain("Lampe 3 und Lampe 4");
+    163|     expect(v.hinweis.naechsteHandlung).toContain("Wunschliste");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 dünnste Zone und Gleichstand > bei Gleichstand aller drei Zonen stehen alle drei in der Liste
+AssertionError: expected [] to deeply equal [ 'Lampe 2', 'Lampe 3', 'Lampe 4' ]
+
+- Expected
++ Received
+
+- [
+-   "Lampe 2",
+-   "Lampe 3",
+-   "Lampe 4",
+- ]
++ []
+
+ ❯ src/bestand/verteilung.test.ts:171:43
+    169|     await lege("anna", "Wüstenbank");
+    170|     const v = await zonenVerteilung(deps(), "anna");
+    171|     expect(v.duennste.map((z) => z.name)).toEqual(["Lampe 2", "Lampe 3…
+       |                                           ^
+    172|     expect(v.hinweis.text).toContain("Lampe 2, Lampe 3 und Lampe 4");
+    173|     expect(v.hinweis.naechsteHandlung).toContain("Wunschliste");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 dünnste Zone und Gleichstand > ohne gezählte Exemplare gibt es keine dünnste Zone, sondern einen Hinweis auf das nächste Exemplar
+AssertionError: expected '' to contain 'Noch kein Exemplar'
+
+- Expected
++ Received
+
+- Noch kein Exemplar
+
+ ❯ src/bestand/verteilung.test.ts:179:28
+    177|     const v = await zonenVerteilung(deps(), "anna");
+    178|     expect(v.duennste).toEqual([]);
+    179|     expect(v.hinweis.text).toContain("Noch kein Exemplar");
+       |                            ^
+    180|     expect(v.hinweis.naechsteHandlung).toContain("Exemplar");
+    181|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 dünnste Zone und Gleichstand > ohne Zonen für Erwachsene (weniger als zwei Lichtzonen) sagt der Hinweis, Zonen anzulegen
+AssertionError: expected '' to contain 'Lichtzone'
+
+- Expected
++ Received
+
+- Lichtzone
+
+ ❯ src/bestand/verteilung.test.ts:188:40
+    186|     expect(v.zonen).toEqual([]);
+    187|     expect(v.duennste).toEqual([]);
+    188|     expect(v.hinweis.naechsteHandlung).toContain("Lichtzone");
+       |                                        ^
+    189|   });
+    190| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 Mandant: nur eigene Exemplare und Zonen > zählt nur die Exemplare des fragenden Kontos und kennt keine fremden Zonen
+AssertionError: expected [] to deeply equal [ [ 'Lampe 2', +0 ], …(2) ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "Lampe 2",
+-     0,
+-   ],
+-   [
+-     "Lampe 3",
+-     1,
+-   ],
+-   [
+-     "Lampe 4",
+-     0,
+-   ],
+- ]
++ []
+
+ ❯ src/bestand/verteilung.test.ts:203:36
+    201|     await lege("ben", "Bens Regal");
+    202|     await lege("ben", "Bens Regal");
+    203|     expect(await anzahlen("anna")).toEqual([
+       |                                    ^
+    204|       ["Lampe 2", 0],
+    205|       ["Lampe 3", 1],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed (12)
+   Start at  19:47:32
+   Duration  212ms (transform 72%, import 14%, tests 12%, worker 2%)
+

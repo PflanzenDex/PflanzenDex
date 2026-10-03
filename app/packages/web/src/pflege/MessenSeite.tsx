@@ -1,7 +1,7 @@
 import "./pflege.css";
 import { useCallback, useEffect, useState } from "react";
 import type { MessAnsicht } from "@pflanzendex/core";
-import type { ApiFehler } from "../kern";
+import { LadeFehler, type ApiFehler } from "../kern";
 import { MessenFormular } from "./messen-formular";
 import { MessungListe } from "./messung-liste";
 import { erfasseMessung, ladeMessAnsicht, type MessungEingabe } from "./messungen-api";
@@ -64,14 +64,7 @@ export function MessenSeite(props: {
         <h1 id="messen-titel">Messen: {exemplar.name}</h1>
         {daten.art === "laedt" && <p role="status">Messungen werden geladen …</p>}
         {daten.art === "fehler" && (
-          <div role="alert" className="warnung">
-            <p>{daten.fehler.text}</p>
-            <div className="aktionen">
-              <button type="button" className="sekundaer" onClick={() => setNeuLaden((n) => n + 1)}>
-                Erneut laden
-              </button>
-            </div>
-          </div>
+          <LadeFehler fehler={daten.fehler} onNeuLaden={() => setNeuLaden((n) => n + 1)} />
         )}
         {daten.art === "da" && (
           <>
