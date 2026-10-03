@@ -34,6 +34,14 @@ export type MeasurementValues = Omit<MeasurementRow, "id">;
 export interface MeasurementStore {
   /** All measurements of the specimen, newest first (date, with the same date the one recorded last). */
   list(userId: string, specimenId: string): Promise<readonly MeasurementRow[]>;
+  /**
+   * The last measurement of each named specimen of the account (latest date, with the same date the one recorded
+   * last); specimens without a measurement or of another account are missing from the answer.
+   */
+  lastFor(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, MeasurementRow>>;
   /** All or nothing; a specimen of another account counts as unknown and writes nothing. */
   create(userId: string, values: MeasurementValues): Promise<MeasurementRow | "specimen_unknown">;
 }

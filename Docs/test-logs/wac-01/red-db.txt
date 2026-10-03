@@ -1,0 +1,40 @@
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/issue-250/app/packages/db
+ ❯ src/pflege/messungen.test.ts (9 tests | 2 failed) 196ms
+   ❯ US-WAC-01 letzte Messung je Exemplar (für die Karten, US-BES-06) (3)
+     × liefert je Exemplar die jüngste Messung; bei gleichem Datum die zuletzt erfasste 29ms
+     × Mandant: Ben fragt nach Annas Exemplar und bekommt nichts; Anna sieht Bens Messung nicht 16ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/pflege/messungen.test.ts > US-WAC-01 letzte Messung je Exemplar (für die Karten, US-BES-06) > liefert je Exemplar die jüngste Messung; bei gleichem Datum die zuletzt erfasste
+AssertionError: expected +0 to be 1 // Object.is equality
+- Expected
++ Received
+- 1
++ 0
+ ❯ src/pflege/messungen.test.ts:129:20
+    127|     );
+    128|     const r = await messungen.letzteJe(anna, [e]);
+    129|     expect(r.size).toBe(1);
+       |                    ^
+    130|     expect(r.get(e)).toMatchObject({ datum: "2026-10-02", wert: 9.5, q…
+    131|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+ FAIL  src/pflege/messungen.test.ts > US-WAC-01 letzte Messung je Exemplar (für die Karten, US-BES-06) > Mandant: Ben fragt nach Annas Exemplar und bekommt nichts; Anna sieht Bens Messung nicht
+AssertionError: expected +0 to be 1 // Object.is equality
+- Expected
++ Received
+- 1
++ 0
+ ❯ src/pflege/messungen.test.ts:145:65
+    143|     expect((await messungen.letzteJe(ben, [e])).size).toBe(0);
+    144|     expect((await messungen.letzteJe(anna, [exemplarBen])).size).toBe(…
+    145|     expect((await messungen.letzteJe(ben, [exemplarBen])).size).toBe(1…
+       |                                                                 ^
+    146|   });
+    147| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+ Test Files  1 failed | 8 passed (9)
+      Tests  2 failed | 101 passed (103)
+   Start at  21:43:02
+   Duration  5.61s (tests 89%, import 7%, transform 4%, worker 1%)
+    Isolate  9 workers spawned · ~93ms startup each (spawn + environment, per file)
+             at least ~745ms faster with isolate: false — reuses workers across files instead of one per file

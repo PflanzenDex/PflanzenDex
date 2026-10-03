@@ -11,7 +11,13 @@ import { authentication, accountRoutes, type TokenVerifier } from "./account";
 import { SPECIMEN_PATHS, specimenRoutes } from "./collection";
 import { SPECIES_PATHS, speciesRoutes } from "./catalog";
 import { LIGHT_PATHS, lightRoutes } from "./light";
-import { CARE_PATHS, CARE_PHASES_PATHS, careRoutes, carePhasesRoutes } from "./care";
+import {
+  CARE_PATHS,
+  CARE_PHASES_PATHS,
+  careRoutes,
+  carePhasesRoutes,
+  measurementSourceFor,
+} from "./care";
 
 export type AppOptions = {
   /** Verifies access tokens of the sign-in service; without it there are no protected routes. */
@@ -27,7 +33,7 @@ export type AppOptions = {
   clock?: () => Date;
   /** Target location for new specimens; `care` (PHA) supplies it, until then the location is unknown. */
   targetLocation?: TargetLocationSource;
-  /** Measurements and treatments for the specimen cards (US-BES-06); `care` (WAC, BEH) supplies them, until then the cards are empty. */
+  /** Measurements and treatments for the specimen cards (US-BES-06); without it `care` supplies the measurements (WAC-01), the treatments are still missing (BEH). */
   measurements?: MeasurementSource;
   treatments?: TreatmentSource;
 };
@@ -68,7 +74,7 @@ export function createApp(opt: AppOptions = {}): Hono {
       specimenRoutes(opt.pool, {
         clock: opt.clock,
         targetLocation: opt.targetLocation,
-        measurements: opt.measurements,
+        measurements: opt.measurements ?? measurementSourceFor(opt.pool),
         treatments: opt.treatments,
       }),
     );

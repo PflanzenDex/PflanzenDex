@@ -39,6 +39,25 @@ export class MeasurementsPostgres {
     return r.rows;
   }
 
+  /**
+   * The latest measurement per specimen (date, with the same date the one recorded last); one query for all IDs.
+   * Foreign IDs return nothing: the row rules of the account hide them (P-04).
+   */
+  async lastFor(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, MeasurementRow>> {
+    if (specimenIds.length === 0) return new Map();
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<MeasurementRow>(
+        `select distinct on (specimen_id) ${COLUMNS} from measurement where specimen_id = any($1)
+         order by specimen_id, date desc, created_at desc, id`,
+        [specimenIds],
+      ),
+    );
+    return new Map(r.rows.map((z) => [z.specimenId, z]));
+  }
+
   /** One statement: all or nothing. */
   async create(userId: string, w: MeasurementValues): Promise<MeasurementRow | "specimen_unknown"> {
     try {

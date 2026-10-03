@@ -194,7 +194,12 @@ describe("US-BES-06 cards on the collection page", () => {
       ...cardFrom(specimen({ locationId: "s1" })),
       lightZone: "Zone 3",
       photo: { url: "https://medien.test/x.jpg", date: "2026-09-28" },
-      lastMeasurement: { date: "2026-10-01", quality: "etiolated", note: "Streckt sich." },
+      lastMeasurement: {
+        date: "2026-10-01",
+        value: 12.5,
+        quality: "etiolated",
+        note: "Streckt sich.",
+      },
       treatment: {
         reason: "Neem spritzen",
         dueDate: { kind: "overdue", days: 1, text: "überfällig seit 1 Tg." },

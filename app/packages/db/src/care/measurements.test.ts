@@ -117,3 +117,33 @@ describe("US-WAC-01 measurements in the database", () => {
     expect(r.rowCount).toBe(0);
   });
 });
+
+describe("US-WAC-01 last measurement per specimen (for the cards, US-BES-06)", () => {
+  it("returns the latest measurement per specimen; with the same date the one recorded last", async () => {
+    const e = await specimen(anna, "Last plant");
+    await measurements.create(anna, values({ specimenId: e, date: "2026-09-01", value: 8 }));
+    await measurements.create(anna, values({ specimenId: e, date: "2026-10-02", value: 9 }));
+    await measurements.create(
+      anna,
+      values({ specimenId: e, date: "2026-10-02", value: 9.5, quality: "etiolated" }),
+    );
+    const r = await measurements.lastFor(anna, [e]);
+    expect(r.size).toBe(1);
+    expect(r.get(e)).toMatchObject({ date: "2026-10-02", value: 9.5, quality: "etiolated" });
+  });
+
+  it("a specimen without a measurement is missing; without IDs the answer is empty", async () => {
+    const empty = await specimen(anna, "Without measurement");
+    expect((await measurements.lastFor(anna, [empty])).size).toBe(0);
+    expect((await measurements.lastFor(anna, [])).size).toBe(0);
+  });
+
+  it("tenant: Ben asks for Anna's specimen and gets nothing; Anna does not see Ben's measurement", async () => {
+    const e = await specimen(anna, "Anna's last");
+    await measurements.create(anna, values({ specimenId: e }));
+    await measurements.create(ben, values({ specimenId: specimenBen }));
+    expect((await measurements.lastFor(ben, [e])).size).toBe(0);
+    expect((await measurements.lastFor(anna, [specimenBen])).size).toBe(0);
+    expect((await measurements.lastFor(ben, [specimenBen])).size).toBe(1);
+  });
+});
