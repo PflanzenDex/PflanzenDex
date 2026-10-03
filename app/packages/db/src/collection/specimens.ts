@@ -23,6 +23,12 @@ const COLUMNS = `id, species_id as "speciesId", name, marker, location_id as "lo
   to_char(caught_at, 'YYYY-MM-DD') as "caughtAt", to_char(archived_at, 'YYYY-MM-DD') as "archivedAt",
   archived_reason as "archivedReason"`;
 
+export interface MarkerAssignment {
+  readonly specimenId: string;
+  readonly name: string;
+  readonly marker: string;
+}
+
 const UNIQUE = "23505";
 const FOREIGN_KEY = "23503";
 const pgError = (e: unknown) => e as { code?: string; constraint?: string };
@@ -55,7 +61,11 @@ export class SpecimenPostgres {
   async create(
     userId: string,
     w: SpecimenValues,
-  ): Promise<SpecimenRow | "name_taken" | "location_unknown"> {
+    assignments: readonly MarkerAssignment[] = [],
+  ): Promise<
+    SpecimenRow | "name_taken" | "marker_taken" | "location_unknown" | "specimen_unknown"
+  > {
+    void assignments; // skeleton for the red run (US-BES-03)
     try {
       const r = await withAccount(this.pool, userId, (c) =>
         c.query<SpecimenRow>(
@@ -72,6 +82,16 @@ export class SpecimenPostgres {
         return "location_unknown";
       throw e;
     }
+  }
+
+  /** Skeleton for the red run (US-BES-03). */
+  async mark(
+    userId: string,
+    id: string,
+    w: { readonly name: string; readonly marker: string },
+  ): Promise<SpecimenRow | "not_found" | "archived" | "name_taken" | "marker_taken"> {
+    void [userId, id, w];
+    return "not_found";
   }
 
   /**

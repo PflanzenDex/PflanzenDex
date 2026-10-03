@@ -10,7 +10,14 @@ type FetchFn = typeof fetch;
 export async function createSpecimen(
   api: string,
   token: string,
-  input: { speciesId: string; marker?: string; locationId?: string; status?: "cutting" },
+  input: {
+    speciesId: string;
+    marker?: string;
+    /** Markers for existing specimens that have none yet, from the 3rd specimen on (US-BES-03). */
+    markers?: { specimenId: string; marker: string }[];
+    locationId?: string;
+    status?: "cutting";
+  },
   fetchFn: FetchFn = fetch,
 ): Promise<Response<Specimen>> {
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -34,4 +41,15 @@ export async function repotSpecimen(
     {},
   );
   return r.ok ? { ok: true, value: r.value as Specimen } : r;
+}
+
+/** Skeleton for the red run (US-BES-03). */
+export async function markSpecimen(
+  api: string,
+  token: string,
+  input: { id: string; marker: string },
+  fetchFn: FetchFn = fetch,
+): Promise<Response<Specimen>> {
+  void [api, token, input, fetchFn];
+  return { ok: false, error: { code: "system.unexpected", text: "Nicht umgesetzt." } };
 }

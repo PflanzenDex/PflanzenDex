@@ -55,15 +55,39 @@ export type SpecimenValues = Pick<
   "speciesId" | "name" | "marker" | "locationId" | "caughtAt"
 > & { readonly status?: CreateStatus };
 
+/**
+ * An existing specimen that receives its marker together with a new one (US-BES-03: from the third specimen on every
+ * specimen has a marker). `name` is the new name per DM-BES-03.
+ */
+export interface MarkerAssignment {
+  readonly specimenId: string;
+  readonly name: string;
+  readonly marker: string;
+}
+
 /** Every call applies only to the account `userId` (P-04). The name is unique per account (case-insensitive). */
 export interface SpecimenStore {
   list(userId: string): Promise<readonly SpecimenRow[]>;
   find(userId: string, id: string): Promise<SpecimenRow | null>;
-  /** All or nothing; with a taken name or a foreign location nothing is written (FR-BES-03). */
+  /**
+   * All or nothing; with a taken name, a taken marker (per species, case-insensitive), a foreign location or an
+   * unknown specimen in `assignments` nothing is written (FR-BES-03, US-BES-03). The `assignments` are written in
+   * the same transaction as the new specimen.
+   */
   create(
     userId: string,
     values: SpecimenValues,
-  ): Promise<SpecimenRow | "name_taken" | "location_unknown">;
+    assignments?: readonly MarkerAssignment[],
+  ): Promise<SpecimenRow | "name_taken" | "marker_taken" | "location_unknown" | "specimen_unknown">;
+  /**
+   * Sets marker and name of one specimen in one statement (US-BES-03); the ID and everything else stay. An archived
+   * specimen stays unchanged (its name stays taken, US-BES-07); a taken marker or name changes nothing.
+   */
+  mark(
+    userId: string,
+    id: string,
+    values: { readonly name: string; readonly marker: string },
+  ): Promise<SpecimenRow | "not_found" | "archived" | "name_taken" | "marker_taken">;
   /**
    * Sets status, date and reason in one statement (US-BES-07). An already archived specimen stays unchanged, so that
    * date and reason of the first archiving are not overwritten (P-10).

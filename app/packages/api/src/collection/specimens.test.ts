@@ -154,7 +154,7 @@ describe("US-BES-02 create and view specimen", () => {
     const duplicate = await create(subA, { speciesId });
     expect(duplicate).toMatchObject({
       status: 409,
-      body: { error: { code: "specimen.name_taken" } },
+      body: { error: { code: "specimen.marker_required" } },
     });
     expect(duplicate.body["error"].data.existing).toEqual([
       { id: first.body["id"], name: `Yucca ${run}` },

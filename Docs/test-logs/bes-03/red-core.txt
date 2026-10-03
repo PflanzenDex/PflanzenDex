@@ -1,0 +1,507 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex.worktrees/bes-03/app/packages/core
+
+ ❯ src/collection/cards.test.ts (22 tests | 1 failed) 27ms
+   ❯ US-BES-06 Karte: Name, Art, Lichtzone, Status, Standort (5)
+     × US-BES-03 carries species id and marker, so that the form can ask for missing markers 7ms
+ ❯ src/collection/create.test.ts (29 tests | 2 failed) 43ms
+   ❯ US-BES-02 the name is fixed before saving (DM-BES-03, FR-BES-03) (4)
+     × if the name already exists, nothing changes and the error names the naming rule 8ms
+     × the same marker is not allowed twice per species (case-insensitive), without change 1ms
+ ❯ src/collection/markers.test.ts (15 tests | 9 failed) 44ms
+   ❯ US-BES-03 naming rule DM-BES-03: first and second specimen (5)
+     × the 2nd specimen without a marker is an error without change, even if the plain name is free 6ms
+     × a duplicate marker of the species (case-insensitive) is an error without change 3ms
+   ❯ US-BES-03 from the 3rd specimen on every specimen has its own marker (7)
+     × asks for the missing marker of the plain specimen before saving, and writes nothing 1ms
+     × with the missing marker all three are saved together; ids stay, the old names change 3ms
+     × a 3rd specimen without its own marker is rejected and the plain one is not renamed 1ms
+     × empty, duplicate or colliding markers in the answer: error, nothing changes 2ms
+     × an answer for a specimen that is not missing a marker is rejected 1ms
+     × two accounts: a specimen of another account cannot receive a marker 3ms
+   ❯ US-BES-03 archived specimens do not count and keep their name (US-BES-07) (3)
+     × the marker of an archived specimen stays taken 1ms
+ ❯ src/collection/mark.test.ts (20 tests | 13 failed) 48ms
+   ❯ US-BES-03 rename: give or change a marker (6)
+     × gives the plain specimen a marker; the name follows the naming rule 23ms
+     × changes an existing marker 2ms
+     × renaming changes no references: id, species, location, status and date stay 3ms
+     × the same marker again, or only in other case, is allowed for the specimen itself 2ms
+     × the marker is trimmed 1ms
+     × the same marker at another species is allowed 1ms
+   ❯ US-BES-03 rename: duplicate or empty is an error without change (9)
+     × a marker of another specimen of the species (case-insensitive) is rejected 2ms
+     × the marker of an archived specimen stays taken 2ms
+     × an archived specimen is not renamed (its name stays, US-BES-07) 1ms
+     × a species the account may not see: species.not_found, nothing written 1ms
+   ❯ US-BES-03 rename: accounts, idempotency, sign-in (5)
+     × a specimen of another account looks like an unknown one and stays unchanged (P-04) 1ms
+     × two accounts may use the same marker for the same species 1ms
+     × an unknown specimen: specimen.not_found 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 25 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/cards.test.ts > US-BES-06 Karte: Name, Art, Lichtzone, Status, Standort > US-BES-03 carries species id and marker, so that the form can ask for missing markers
+AssertionError: expected [ [ undefined, undefined ], …(1) ] to deeply equal [ [ …(2) ], [ …(2) ] ]
+
+- Expected
++ Received
+
+  [
+    [
+-     "11111111-1111-4111-8111-111111111111",
+-     null,
++     undefined,
++     undefined,
+    ],
+    [
+-     "11111111-1111-4111-8111-111111111111",
+-     "rot",
++     undefined,
++     undefined,
+    ],
+  ]
+
+ ❯ src/collection/cards.test.ts:107:55
+    105|     await create("anna", "Bogenhanf – rot", { marker: "rot" });
+    106|     const cards = await specimenCards(dependencies(), "anna", TODAY);
+    107|     expect(cards.map((k) => [k.speciesId, k.marker])).toEqual([
+       |                                                       ^
+    108|       [SPECIES, null],
+    109|       [SPECIES, "rot"],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/25]⎯
+
+ FAIL  src/collection/create.test.ts > US-BES-02 the name is fixed before saving (DM-BES-03, FR-BES-03) > if the name already exists, nothing changes and the error names the naming rule
+AssertionError: expected 'specimen.name_taken' to be 'specimen.marker_required' // Object.is equality
+
+Expected: "specimen.marker_required"
+Received: "specimen.name_taken"
+
+ ❯ src/collection/create.test.ts:146:35
+    144|     const r = await create({});
+    145|     // US-BES-03: a further specimen needs a marker; the error still n…
+    146|     expect(!r.ok && r.error.code).toBe("specimen.marker_required");
+       |                                   ^
+    147|     expect(!r.ok && r.error.data).toMatchObject({
+    148|       name: "Bogenhanf",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/25]⎯
+
+ FAIL  src/collection/create.test.ts > US-BES-02 the name is fixed before saving (DM-BES-03, FR-BES-03) > the same marker is not allowed twice per species (case-insensitive), without change
+AssertionError: expected 'specimen.name_taken' to be 'specimen.marker_taken' // Object.is equality
+
+Expected: "specimen.marker_taken"
+Received: "specimen.name_taken"
+
+ ❯ src/collection/create.test.ts:164:35
+    162|     await create({ marker: "rot" });
+    163|     const r = await create({ marker: "ROT" });
+    164|     expect(!r.ok && r.error.code).toBe("specimen.marker_taken");
+       |                                   ^
+    165|     expect(specimens.rows).toHaveLength(1);
+    166|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/25]⎯
+
+ FAIL  src/collection/mark.test.ts > US-BES-03 rename: give or change a marker > gives the plain specimen a marker; the name follows the naming rule
+AssertionError: expected false to match object { name: 'Bogenhanf – rot', …(1) }
+
+- Expected:
+{
+  "marker": "rot",
+  "name": "Bogenhanf – rot",
+}
+
++ Received:
+false
+
+ ❯ src/collection/mark.test.ts:68:29
+     66|   it("gives the plain specimen a marker; the name follows the naming r…
+     67|     const r = await mark(idOf("Bogenhanf"), "rot");
+     68|     expect(r.ok && r.value).toMatchObject({ name: "Bogenhanf – rot", m…
+       |                             ^
+     69|   });
+     70|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/25]⎯
+
+ FAIL  src/collection/mark.test.ts > US-BES-03 rename: give or change a marker > changes an existing marker
+AssertionError: expected false to be 'Bogenhanf – blau' // Object.is equality
+
+- Expected:
+"Bogenhanf – blau"
+
++ Received:
+false
+
+ ❯ src/collection/mark.test.ts:73:34
+     71|   it("changes an existing marker", async () => {
+     72|     const r = await mark(idOf("Bogenhanf – Klammer"), "blau");
+     73|     expect(r.ok && r.value.name).toBe("Bogenhanf – blau");
+       |                                  ^
+     74|   });
+     75|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/25]⎯
+
+ FAIL  src/collection/mark.test.ts > US-BES-03 rename: give or change a marker > renaming changes no references: id, species, location, status and date stay
+AssertionError: expected 'Bogenhanf' to be 'Bogenhanf – rot' // Object.is equality
+
+Expected: "Bogenhanf – rot"
+Received: "Bogenhanf"
+
+ ❯ src/collection/mark.test.ts:88:25
+     86|       caughtAt: before?.caughtAt,
+     87|     });
+     88|     expect(after?.name).toBe("Bogenhanf – rot");
+       |                         ^
+     89|   });
+     90|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/25]⎯
+
+ FAIL  src/collection/mark.test.ts > US-BES-03 rename: give or change a marker > the same marker again, or only in other case, is allowed for the specimen itself
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/collection/mark.test.ts:93:44
+     91|   it("the same marker again, or only in other case, is allowed for the…
+     92|     const id = idOf("Bogenhanf – Klammer");
+     93|     expect((await mark(id, "klammer")).ok).toBe(true);
+       |                                            ^
+     94|     expect(specimens.rows.find((z) => z.id === id)?.name).toBe("Bogenh…
+     95|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/25]⎯
+
+ FAIL  src/collection/mark.test.ts > US-BES-03 rename: give or change a marker > the marker is trimmed
+AssertionError: expected false to be 'rot' // Object.is equality
+
+- Expected:
+"rot"
+
++ Received:
+false
+
+ ❯ src/collection/mark.test.ts:99:36
+     97|   it("the marker is trimmed", async () => {
+     98|     const r = await mark(idOf("Bogenhanf"), "  rot  ");
+     99|     expect(r.ok && r.value.marker).toBe("rot");
+       |                                    ^
+    100|   });
+    101|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/25]⎯
+
+ FAIL  src/collection/mark.test.ts > US-BES-03 rename: give or change a marker > the same marker at another species is allowed
+AssertionError: expected false to be 'Aloe – klammer' // Object.is equality
+
+- Expected:
+"Aloe – klammer"
+
++ Received:
+false
+
+ ❯ src/collection/mark.test.ts:105:34
+    103|     await create({ speciesId: OTHER_SPECIES });
+    104|     const r = await mark(idOf("Aloe"), "klammer");
+    105|     expect(r.ok && r.value.name).toBe("Aloe – klammer");
+       |                                  ^
+    106|   });
+    107| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/25]⎯
+
+ FAIL  src/collection/mark.test.ts > US-BES-03 rename: duplicate or empty is an error without change > a marker of another specimen of the species (case-insensitive) is rejected
+AssertionError: expected 'system.unexpected' to be 'specimen.marker_taken' // Object.is equality
+
+Expected: "specimen.marker_taken"
+Received: "system.unexpected"
+
+ ❯ src/collection/mark.test.ts:125:35
+    123|     const before = snapshot();
+    124|     const r = await mark(idOf("Bogenhanf"), "KLAMMER");
+    125|     expect(!r.ok && r.error.code).toBe("specimen.marker_taken");
+       |                                   ^
+    126|     expect(specimens.rows).toEqual(before);
+    127|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/25]⎯
+
+ FAIL  src/collection/mark.test.ts > US-BES-03 rename: duplicate or empty is an error without change > the marker of an archived specimen stays taken
+AssertionError: expected 'system.unexpected' to be 'specimen.marker_taken' // Object.is equality
+
+Expected: "specimen.marker_taken"
+Received: "system.unexpected"
+
+ ❯ src/collection/mark.test.ts:144:35
+    142|     );
+    143|     const r = await mark(idOf("Bogenhanf"), "Klammer");
+    144|     expect(!r.ok && r.error.code).toBe("specimen.marker_taken");
+       |                                   ^
+    145|   });
+    146|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/25]⎯
+
+ FAIL  src/collection/mark.test.ts > US-BES-03 rename: duplicate or empty is an error without change > an archived specimen is not renamed (its name stays, US-BES-07)
+AssertionError: expected 'system.unexpected' to be 'specimen.archived' // Object.is equality
+
+Expected: "specimen.archived"
+Received: "system.unexpected"
+
+ ❯ src/collection/mark.test.ts:160:35
+    158|     const before = snapshot();
+    159|     const r = await mark(id, "blau");
+    160|     expect(!r.ok && r.error.code).toBe("specimen.archived");
+       |                                   ^
+    161|     expect(specimens.rows).toEqual(before);
+    162|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/25]⎯
+
+ FAIL  src/collection/mark.test.ts > US-BES-03 rename: duplicate or empty is an error without change > a species the account may not see: species.not_found, nothing written
+AssertionError: expected 'system.unexpected' to be 'species.not_found' // Object.is equality
+
+Expected: "species.not_found"
+Received: "system.unexpected"
+
+ ❯ src/collection/mark.test.ts:175:35
+    173|     const before = snapshot();
+    174|     const r = await mark(typeof row === "object" ? row.id : "", "x");
+    175|     expect(!r.ok && r.error.code).toBe("species.not_found");
+       |                                   ^
+    176|     expect(specimens.rows).toEqual(before);
+    177|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/25]⎯
+
+ FAIL  src/collection/mark.test.ts > US-BES-03 rename: accounts, idempotency, sign-in > a specimen of another account looks like an unknown one and stays unchanged (P-04)
+AssertionError: expected 'system.unexpected' to be 'specimen.not_found' // Object.is equality
+
+Expected: "specimen.not_found"
+Received: "system.unexpected"
+
+ ❯ src/collection/mark.test.ts:186:35
+    184|     const before = snapshot();
+    185|     const r = await mark(foreign, "rot");
+    186|     expect(!r.ok && r.error.code).toBe("specimen.not_found");
+       |                                   ^
+    187|     expect(specimens.rows).toEqual(before);
+    188|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/25]⎯
+
+ FAIL  src/collection/mark.test.ts > US-BES-03 rename: accounts, idempotency, sign-in > two accounts may use the same marker for the same species
+AssertionError: expected false to be 'Bogenhanf – rot' // Object.is equality
+
+- Expected:
+"Bogenhanf – rot"
+
++ Received:
+false
+
+ ❯ src/collection/mark.test.ts:194:34
+    192|     await create({ marker: "rot" }, ben);
+    193|     const r = await mark(idOf("Bogenhanf"), "rot");
+    194|     expect(r.ok && r.value.name).toBe("Bogenhanf – rot");
+       |                                  ^
+    195|   });
+    196|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/25]⎯
+
+ FAIL  src/collection/mark.test.ts > US-BES-03 rename: accounts, idempotency, sign-in > an unknown specimen: specimen.not_found
+AssertionError: expected 'system.unexpected' to be 'specimen.not_found' // Object.is equality
+
+Expected: "specimen.not_found"
+Received: "system.unexpected"
+
+ ❯ src/collection/mark.test.ts:199:35
+    197|   it("an unknown specimen: specimen.not_found", async () => {
+    198|     const r = await mark("99999999-9999-4999-8999-999999999999", "rot"…
+    199|     expect(!r.ok && r.error.code).toBe("specimen.not_found");
+       |                                   ^
+    200|   });
+    201|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/25]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 naming rule DM-BES-03: first and second specimen > the 2nd specimen without a marker is an error without change, even if the plain name is free
+AssertionError: expected false to be 'specimen.marker_required' // Object.is equality
+
+- Expected:
+"specimen.marker_required"
+
++ Received:
+false
+
+ ❯ src/collection/markers.test.ts:67:35
+     65|     const before = specimens.rows.map((z) => ({ ...z }));
+     66|     const r = await create({});
+     67|     expect(!r.ok && r.error.code).toBe("specimen.marker_required");
+       |                                   ^
+     68|     expect(specimens.rows).toEqual(before);
+     69|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/25]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 naming rule DM-BES-03: first and second specimen > a duplicate marker of the species (case-insensitive) is an error without change
+AssertionError: expected 'specimen.name_taken' to be 'specimen.marker_taken' // Object.is equality
+
+Expected: "specimen.marker_taken"
+Received: "specimen.name_taken"
+
+ ❯ src/collection/markers.test.ts:76:35
+     74|     const before = specimens.rows.map((z) => ({ ...z }));
+     75|     const r = await create({ marker: "KLAMMER" });
+     76|     expect(!r.ok && r.error.code).toBe("specimen.marker_taken");
+       |                                   ^
+     77|     expect(specimens.rows).toEqual(before);
+     78|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/25]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 from the 3rd specimen on every specimen has its own marker > asks for the missing marker of the plain specimen before saving, and writes nothing
+AssertionError: expected false to be 'specimen.markers_missing' // Object.is equality
+
+- Expected:
+"specimen.markers_missing"
+
++ Received:
+false
+
+ ❯ src/collection/markers.test.ts:97:35
+     95|     const writes = specimens.writes;
+     96|     const r = await create({ marker: "rot" });
+     97|     expect(!r.ok && r.error.code).toBe("specimen.markers_missing");
+       |                                   ^
+     98|     expect(!r.ok && r.error.data).toMatchObject({
+     99|       missing: [{ id: idOf("Bogenhanf"), name: "Bogenhanf" }],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/25]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 from the 3rd specimen on every specimen has its own marker > with the missing marker all three are saved together; ids stay, the old names change
+AssertionError: expected [ 'Bogenhanf', …(2) ] to deeply equal [ 'Bogenhanf – blau', …(2) ]
+
+- Expected
++ Received
+
+  [
+-   "Bogenhanf – blau",
++   "Bogenhanf",
+    "Bogenhanf – Klammer",
+    "Bogenhanf – rot",
+  ]
+
+ ❯ src/collection/markers.test.ts:109:21
+    107|     const r = await create({ marker: "rot", markers: [{ specimenId: fi…
+    108|     expect(r.ok && r.value.name).toBe("Bogenhanf – rot");
+    109|     expect(names()).toEqual(["Bogenhanf – blau", "Bogenhanf – Klammer"…
+       |                     ^
+    110|     expect(idOf("Bogenhanf – blau")).toBe(first);
+    111|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/25]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 from the 3rd specimen on every specimen has its own marker > a 3rd specimen without its own marker is rejected and the plain one is not renamed
+AssertionError: expected 'specimen.name_taken' to be 'specimen.marker_required' // Object.is equality
+
+Expected: "specimen.marker_required"
+Received: "specimen.name_taken"
+
+ ❯ src/collection/markers.test.ts:115:35
+    113|   it("a 3rd specimen without its own marker is rejected and the plain …
+    114|     const r = await create({ markers: [{ specimenId: idOf("Bogenhanf")…
+    115|     expect(!r.ok && r.error.code).toBe("specimen.marker_required");
+       |                                   ^
+    116|     expect(names()).toEqual(["Bogenhanf", "Bogenhanf – Klammer"]);
+    117|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/25]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 from the 3rd specimen on every specimen has its own marker > empty, duplicate or colliding markers in the answer: error, nothing changes
+AssertionError: expected false to be 'input.invalid' // Object.is equality
+
+- Expected:
+"input.invalid"
+
++ Received:
+false
+
+ ❯ src/collection/markers.test.ts:137:37
+    135|     for (const [, input, code] of cases) {
+    136|       const r = await create(input);
+    137|       expect(!r.ok && r.error.code).toBe(code);
+       |                                     ^
+    138|       expect(specimens.rows).toEqual(before);
+    139|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/25]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 from the 3rd specimen on every specimen has its own marker > an answer for a specimen that is not missing a marker is rejected
+AssertionError: expected false to be 'specimen.not_found' // Object.is equality
+
+- Expected:
+"specimen.not_found"
+
++ Received:
+false
+
+ ❯ src/collection/markers.test.ts:145:35
+    143|     const marked = idOf("Bogenhanf – Klammer");
+    144|     const r = await create({ marker: "rot", markers: [{ specimenId: ma…
+    145|     expect(!r.ok && r.error.code).toBe("specimen.not_found");
+       |                                   ^
+    146|     expect(names()).toEqual(["Bogenhanf", "Bogenhanf – Klammer"]);
+    147|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/25]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 from the 3rd specimen on every specimen has its own marker > two accounts: a specimen of another account cannot receive a marker
+AssertionError: expected false to be 'specimen.not_found' // Object.is equality
+
+- Expected:
+"specimen.not_found"
+
++ Received:
+false
+
+ ❯ src/collection/markers.test.ts:153:35
+    151|     const foreign = specimens.rows.find((z) => z.userId === "ben")?.id…
+    152|     const r = await create({ marker: "rot", markers: [{ specimenId: fo…
+    153|     expect(!r.ok && r.error.code).toBe("specimen.not_found");
+       |                                   ^
+    154|     expect(specimens.rows.find((z) => z.id === foreign)?.name).toBe("B…
+    155|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/25]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 archived specimens do not count and keep their name (US-BES-07) > the marker of an archived specimen stays taken
+AssertionError: expected 'specimen.name_taken' to be 'specimen.marker_taken' // Object.is equality
+
+Expected: "specimen.marker_taken"
+Received: "specimen.name_taken"
+
+ ❯ src/collection/markers.test.ts:185:35
+    183|     await archive(idOf("Bogenhanf – rot"));
+    184|     const r = await create({ marker: "ROT" });
+    185|     expect(!r.ok && r.error.code).toBe("specimen.marker_taken");
+       |                                   ^
+    186|   });
+    187| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/25]⎯
+
+
+ Test Files  4 failed | 5 passed (9)
+      Tests  25 failed | 111 passed (136)
+   Start at  01:29:58
+   Duration  398ms (transform 70%, import 17%, tests 11%, worker 2%)
+

@@ -13,6 +13,8 @@ const response = (status: number, body: unknown) =>
 const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   id: "e1",
   name: "Bogenhanf",
+  speciesId: "a1",
+  marker: null,
   speciesName: "Bogenhanf",
   status: "plant",
   location: "Regal Süd",

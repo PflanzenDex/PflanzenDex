@@ -142,7 +142,8 @@ describe("US-BES-02 the name is fixed before saving (DM-BES-03, FR-BES-03)", () 
     await create({});
     const before = specimens.rows.map((z) => ({ ...z }));
     const r = await create({});
-    expect(!r.ok && r.error.code).toBe("specimen.name_taken");
+    // US-BES-03: a further specimen needs a marker; the error still names the existing ones.
+    expect(!r.ok && r.error.code).toBe("specimen.marker_required");
     expect(!r.ok && r.error.data).toMatchObject({
       name: "Bogenhanf",
       existing: [{ name: "Bogenhanf" }],
@@ -160,7 +161,7 @@ describe("US-BES-02 the name is fixed before saving (DM-BES-03, FR-BES-03)", () 
   it("the same marker is not allowed twice per species (case-insensitive), without change", async () => {
     await create({ marker: "rot" });
     const r = await create({ marker: "ROT" });
-    expect(!r.ok && r.error.code).toBe("specimen.name_taken");
+    expect(!r.ok && r.error.code).toBe("specimen.marker_taken");
     expect(specimens.rows).toHaveLength(1);
   });
 

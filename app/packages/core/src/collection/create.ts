@@ -64,6 +64,8 @@ export const specimenCreate = (deps: CreateDependencies) =>
         status,
       });
       if (r === "location_unknown") return failed(appError("location.not_found"));
+      if (r === "marker_taken" || r === "specimen_unknown")
+        return failed(appError("system.unexpected"));
       if (r !== "name_taken") return ok(withDerivations(r));
       const existing = (await deps.specimens.list(userId))
         .filter((z) => z.speciesId === species.id)
