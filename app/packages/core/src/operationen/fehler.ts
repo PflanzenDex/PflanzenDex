@@ -9,6 +9,10 @@ export const FEHLERTEXTE = {
   "idempotenz.laeuft_noch": "Dieselbe Aktion läuft noch. Bitte warte einen Moment.",
   "system.unerwartet":
     "Es ist ein unerwarteter Fehler aufgetreten. Bitte versuche es später erneut.",
+  "pruefung.bereits_vorhanden": "Für dieses Objekt läuft schon eine Prüfung.",
+  "pruefung.nicht_gefunden": "Diesen Prüfvorgang gibt es nicht.",
+  "pruefung.status_unzulaessig": "Dieser Vorgang ist schon entschieden.",
+  "pruefung.grund_fehlt": "Zum Zurückweisen gehört ein Grund, den der Ersteller sehen kann.",
   "standort.name_vergeben": "Einen Standort mit diesem Namen gibt es schon.",
 } as const;
 

@@ -12,6 +12,7 @@ const app = createApp({
   }),
   pool: oeffnePool(process.env["DATABASE_URL"] ?? testDatenbankUrl()),
   webUrsprung: process.env["WEB_URSPRUNG"] ?? "http://localhost:5173",
+  version: process.env["GIT_SHA"],
 });
 
 const port = Number(process.env["PORT"] ?? 3000);

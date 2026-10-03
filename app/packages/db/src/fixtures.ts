@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Fixtures } from "./trennung.ts";
 
 // Je Tabelle mit Konto-Kennung ein Beispiel für die übrigen Spalten (ohne Kennung, die setzt der Test).
@@ -5,4 +6,5 @@ import type { Fixtures } from "./trennung.ts";
 export const FIXTURES: Fixtures = {
   konto: () => ({}),
   kontodaten: () => ({ email: "test@example.test" }),
+  pruefvorgang: () => ({ objekt_art: "art", objekt_id: randomUUID(), status: "vorschlag" }),
 };
