@@ -38,7 +38,7 @@ Wo läuft welches Gate? **B** = blockiert, **R** = nur Bericht (Ratchet-Phase).
 | QG-C7 | Abhängigkeiten | CI | deptry-Äquivalent (`knip`/`depcheck`) | keine ungenutzten oder undeklarierten Pakete | B |
 | QG-K1 | Zyklomatische Komplexität je Funktion | pre-push + CI | ESLint `complexity` (Tombola: Ruff-mccabe 15) | Allgemein ≤ 15, Fachlogik `core` ≤ 10 (Annahme) | B |
 | QG-K2 | Kognitive Komplexität, Länge, Tiefe | CI | ESLint (`sonarjs`) oder Fallow `health` | kognitiv ≤ 30 allgemein, ≤ 15 in `core` (Annahme); Funktion ≤ 60 Zeilen, Verschachtelung ≤ 4, Parameter ≤ 4 (Annahme) | B auf Diff, R gesamt |
-| QG-K3 | Risiko = Komplexität × fehlende Tests (CRAP) | PR | Fallow `health` oder gleichwertig | CRAP ≤ 450 je Funktion (Tombola-Wert); komplexe Funktion ohne Test fällt durch | B auf Diff |
+| QG-K3 | Risiko = Komplexität × fehlende Tests (CRAP) | PR | Fallow `health` oder gleichwertig (**umgesetzt:** `make crap`, Skript `check-crap.mjs` mit Fallow `health` und der Coverage aus QG-T1; Schwelle genau einmal im Skript) | CRAP ≤ 450 je Funktion (Tombola-Wert, Startwert als Annahme); komplexe Funktion ohne Test fällt durch | B auf Diff |
 | QG-K4 | Duplikate | PR | Fallow `duplicates` | ab 3 gleichen Fragmenten (Tombola: `minOccurrences 3`) | B auf Diff |
 | QG-T1 | Unit-Tests Fachlogik | CI | Vitest | Coverage der Fachlogik ≥ 90 % Zeilen (Annahme), Gesamt ≥ 80 % (Annahme), nur anheben | B |
 | QG-T2 | Integrationstests | CI | Vitest + echte Test-DB | Kernabläufe aus FR-QG-08 grün | B |
