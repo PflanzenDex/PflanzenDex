@@ -51,4 +51,11 @@ make ci      # alle Gates: Lint, Typen, Grenzen, Format, Tests, Build
 - **Grenze (Zone löschen):** Der Port `ZonenNutzung` fragt alle Quellen, wer eine Zone belegt. Heute gibt es nur die Quelle „Standorte“; Exemplare und Arten entstehen mit BES. **BES muss je eine Quelle ergänzen** (Parameter `zusaetzlicheNutzung` von `lichtRouten`), sonst blieben sie beim Löschen unbemerkt. Der Mechanismus ist mit einer Attrappe getestet. Standorte lassen sich noch nicht löschen (kein Kriterium).
 - **Hinweise:** Die zentrale Hinweis-Seite (US-BES-08) gibt es noch nicht; LIC-05 zeigt seine Hinweise auf der eigenen Seite und liefert sie über `standortHinweise`.
 
+## End-to-End-Tests (QG-T3, QG-U1)
+
+- **Ziel:** `make e2e` startet Test-Datenbank und Keycloak (`db-up`, `auth-up`), wendet die Migrationen an und lässt Playwright laufen (Paket `packages/e2e`; API und Web startet Playwright selbst). Braucht Docker. Projekte: `mobil` (Pixel 7) und `desktop`.
+- **Wann:** nicht bei jedem PR auf `dev`, sondern bei PRs `dev`→`main`, nächtlich und manuell (`ci.yml`, `nightly.yml`; E-13/E-15). Fehlschläge brechen den Job ab; der Bericht liegt als Artefakt `e2e-report`.
+- **Abgedeckt:** Anmeldung gegen den echten Keycloak (US-ACC-01) und Standorte/Lichtzonen (US-LIC-05). Die Testkonten legt der Test über die Admin-API von Keycloak an; die Registrierung mit Mailbestätigung bleibt manuell belegt (`Docs/testprotokolle/acc-01.md`).
+- **Barrierefreiheit:** axe läuft in den Tests als Bericht (Anhang `axe-*.json`, Zusammenfassung des Jobs) und lässt nie einen Test scheitern (FR-QG-09). Lighthouse fehlt noch.
+
 **Betrieb (TE-03):** Container, Compose, Sicherung und Deploy liegen unter `deploy/`; Anleitung in `Docs/betrieb/staging-deploy-und-backup.md`. Ziele: `make deploy`, `make backup`, `make restore-test`.

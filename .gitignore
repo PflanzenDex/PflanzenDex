@@ -10,3 +10,5 @@ coverage/
 .env.worktree
 .claude/settings.local.json
 .cache/
+app/packages/e2e/test-results/
+app/packages/e2e/playwright-report/
