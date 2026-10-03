@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   MAX_CRAP,
+  readMaxCrap,
   mergeCoverage,
   fallowArgs,
   findOffenders,
@@ -82,4 +83,10 @@ test("resolveBase prefers the PR base branch, falls back to dev, and to null if 
     resolveBase({}, () => false),
     null,
   );
+});
+
+test("the threshold is read from quality-limits.json", () => {
+  assert.equal(typeof MAX_CRAP, "number");
+  const file = new URL("../quality-limits.json", import.meta.url);
+  assert.equal(readMaxCrap(file), MAX_CRAP);
 });
