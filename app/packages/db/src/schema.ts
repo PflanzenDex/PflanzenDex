@@ -3,6 +3,8 @@ import type { Pool, PoolClient } from "pg";
 // Tabellen ohne Konto-Kennung, jeweils mit Begründung. Wächst nur bewusst und mit Review (FR-ACC-02, P-05).
 export const OHNE_KONTO_KENNUNG: Record<string, string> = {
   schema_migrations: "Werkzeug-Verwaltung des Migrationswerkzeugs, keine Nutzerdaten",
+  konto_rolle:
+    "Rollenvergabe ist Sache des Betreibers der Installation: die Anwendungsrolle hat keine Rechte auf die Tabelle und liest nur die eigene Rolle über rollen_des_kontos() (TE-08)",
   // Der gemeinsame Artenkatalog (BES) trägt keine Konto-Kennung; er wird hier mit Begründung eingetragen.
 };
 

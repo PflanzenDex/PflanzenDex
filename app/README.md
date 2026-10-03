@@ -26,3 +26,10 @@ make ci      # alle Gates: Lint, Typen, Grenzen, Format, Tests, Build
 - **Migrationen:** SQL-Dateien in `packages/db/migrations/`, nur vorwärts, mit Prüfsumme (eine angewendete Datei darf sich nicht ändern). Anwenden: `make migrate`.
 - **Neue nutzerbezogene Tabelle:** Spalte `konto_id uuid not null references konto(id) on delete cascade`, danach `select mandantenschutz('tabelle');` und ein Eintrag in `packages/db/src/fixtures.ts`. Fehlt eines davon, scheitert der generische Test (`mandant.test.ts`). Tabellen ohne Konto (z. B. Artenkatalog) brauchen einen begründeten Eintrag in `OHNE_KONTO_KENNUNG`.
 - **Zugriff:** nur über `mitKonto(pool, kontoId, …)`: Transaktion, Rolle `pflanzendex_app` (ohne BYPASSRLS), Sitzungsvariable `app.konto_id` nur für diese Transaktion.
+
+## Betreiber-Rolle und Prüfstatus (TE-08)
+
+- **Rollen:** Tabelle `konto_rolle` (`betreiber`, `pruefer`), vergeben nur per Verwaltungszugang, nie über die Anwendung (die Anwendungsrolle hat keine Rechte auf die Tabelle; sie liest nur die eigene Rolle über `rollen_des_kontos()`). Die Rolle gibt keinen Zugriff auf fremde Inhalte (P-04).
+- **Prüfstatus:** Tabelle `pruefvorgang` (Ersteller = `konto_id`, Objekt als `objekt_art` + `objekt_id`, Status `vorschlag`, `ki_ungeprueft`, `kuratiert`, `geprueft`, `zurueckgewiesen`). Operationen in `core`: `katalog.vorschlagen` (jeder), `katalog.kuratieren` und `katalog.pruefen` (nur Prüfer). Ein Auslöser in der Datenbank erzwingt dieselben Rechte zusätzlich.
+- **Einzige Ausnahme vom Mandantenschutz:** Prüfer lesen die Prüfliste (`pruefvorgang`, nur Metadaten). Der Mandantentest beweist, dass ein Betreiber in allen anderen Tabellen nichts Fremdes sieht (`pruefung.test.ts`).
+- **Grenze:** Der Artenkatalog (Tabelle `art`) entsteht erst mit BES-01. Dort muss die Art-Tabelle auf `pruefvorgang` verweisen (`objekt_art = 'art'`), die Sichtbarkeit (Vorschlag nur für den Ersteller, FR-BES-11) selbst regeln und Freigabe nur bei vollständigen Pflichtfeldern zulassen (FR-BES-14); Zusammenführen und Hinweise an den Ersteller gehören zu BES-10. Eine KI-Verbindung bekommt nie eine Rolle und kann daher nicht freigeben (FR-BES-06).
