@@ -1,0 +1,12 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreExportsUsedInFile": true,
+  "ignoreDependencies": [
+    "@commitlint/cli",
+    "lint-staged",
+    "semantic-release",
+    "conventional-changelog-conventionalcommits",
+    "@semantic-release/commit-analyzer"
+  ],
+  "ignore": ["scripts/coverage-config.d.mts"]
+}
