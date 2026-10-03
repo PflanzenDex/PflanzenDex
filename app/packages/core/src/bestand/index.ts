@@ -6,6 +6,13 @@ export { artAnzeigename, exemplarName } from "./name";
 export { KEIN_SOLL_STANDORT } from "./soll-standort";
 export { KEINE_BEHANDLUNGEN, KEINE_MESSUNGEN, exemplarKarten, faelligkeit } from "./karten";
 export type { KartenAbhaengigkeiten } from "./karten";
+export { zonenVerteilung } from "./verteilung";
+export type {
+  NichtGezaehlt,
+  Verteilung,
+  VerteilungsAbhaengigkeiten,
+  ZonenZaehlung,
+} from "./verteilung";
 export { MESS_QUALITAETEN } from "./karten-typen";
 export type {
   BehandlungsQuelle,
