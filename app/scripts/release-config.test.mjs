@@ -1,4 +1,4 @@
-// Tests für die Versionsregeln (US-DEV-06, FR-QG-14): welcher Commit welchen Release auslöst.
+// Tests for the version rules (US-DEV-06, FR-QG-14): which commit triggers which release.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { analyzeCommits } from "@semantic-release/commit-analyzer";
@@ -15,27 +15,27 @@ const releaseFor = (...messages) =>
     cwd: process.cwd(),
   });
 
-test("US-DEV-06: feat erzeugt Minor, fix und fix(deps) erzeugen Patch", async () => {
-  assert.equal(await releaseFor("feat(pha): Phase ableiten"), "minor");
-  assert.equal(await releaseFor("fix(bes): Namensregel"), "patch");
+test("US-DEV-06: feat triggers a minor, fix and fix(deps) trigger a patch", async () => {
+  assert.equal(await releaseFor("feat(pha): derive care phase"), "minor");
+  assert.equal(await releaseFor("fix(bes): Steckling naming rule"), "patch");
   assert.equal(await releaseFor("fix(deps): update dependency hono to v4.14.0"), "patch");
 });
 
-test("US-DEV-06: docs, chore, ci und chore(deps) erzeugen keinen Release (FR-DEV-09)", async () => {
+test("US-DEV-06: docs, chore, ci and chore(deps) trigger no release (FR-DEV-09)", async () => {
   assert.equal(
-    await releaseFor("docs: Roadmap", "chore(deps): update vitest", "ci(qg): Job ergänzt"),
+    await releaseFor("docs: update roadmap", "chore(deps): update vitest", "ci(qg): add job"),
     null,
   );
 });
 
-test("US-DEV-06: Breaking Change hebt vor 1.0 nur die Minor-Version", async () => {
-  assert.equal(await releaseFor("feat(api)!: Pfade umbenannt"), "minor");
+test("US-DEV-06: before 1.0 a breaking change only bumps the minor version", async () => {
+  assert.equal(await releaseFor("feat(api)!: rename paths"), "minor");
   assert.equal(
-    await releaseFor("fix(db): Spalte entfernt\n\nBREAKING CHANGE: alte Spalte entfällt"),
+    await releaseFor("fix(db): drop column\n\nBREAKING CHANGE: the old column is gone"),
     "minor",
   );
 });
 
-test("US-DEV-06: Releases nur von main", () => {
+test("US-DEV-06: releases only from main", () => {
   assert.deepEqual(config.branches, ["main"]);
 });

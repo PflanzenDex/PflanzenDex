@@ -49,11 +49,11 @@ gates: ## Schnelle Gates: Lint, Typen, Architekturgrenzen, Format
 ci: $(if $(CI),,db-up) ## Alle Gates in der Reihenfolge der CI, bricht beim ersten Fehler ab
 	cd $(APP) && npm run ci
 
-release: ## Version, Tag und GitHub-Release aus den Commits (nur in der CI auf main, US-DEV-06)
-	@test -n "$(CI)" || { echo "release läuft nur in der CI; lokal: make release-dry-run" >&2; exit 2; }
+release: ## Version, tag and GitHub release from the commits (CI on main only, US-DEV-06)
+	@test -n "$(CI)" || { echo "release only runs in CI; locally use: make release-dry-run" >&2; exit 2; }
 	cd $(APP) && npx --no-install semantic-release
 
-release-dry-run: ## Nächste Version und Notizen anzeigen, ohne etwas zu veröffentlichen (BRANCH=dev)
+release-dry-run: ## Show the next version and notes without publishing (BRANCH=dev)
 	cd $(APP) && GITHUB_TOKEN="$${GITHUB_TOKEN:-$$(gh auth token)}" npx --no-install semantic-release \
 		--dry-run --no-ci --branches "$${BRANCH:-$$(git branch --show-current)}"
 
