@@ -79,8 +79,10 @@ function Behandlung({ karte }: { karte: ExemplarKarte }) {
 export function ExemplarKarteAnsicht(props: {
   karte: ExemplarKarte;
   onMessen?: ((e: { id: string; name: string }) => void) | undefined;
+  /** Öffnet das Archivieren (US-BES-07). */
+  onArchivieren?: ((e: { id: string; name: string }) => void) | undefined;
 }) {
-  const { karte, onMessen } = props;
+  const { karte, onMessen, onArchivieren } = props;
   return (
     <li className="exemplar-karte">
       <Foto karte={karte} />
@@ -92,16 +94,28 @@ export function ExemplarKarteAnsicht(props: {
       <p className="leise">Standort: {karte.standort ?? UNBEKANNT}</p>
       <Messung karte={karte} />
       <Behandlung karte={karte} />
-      {onMessen && (
+      {(onMessen || onArchivieren) && (
         <div className="aktionen">
-          <button
-            type="button"
-            className="sekundaer"
-            aria-label={`Messen: ${karte.name}`}
-            onClick={() => onMessen(karte)}
-          >
-            Messen
-          </button>
+          {onMessen && (
+            <button
+              type="button"
+              className="sekundaer"
+              aria-label={`Messen: ${karte.name}`}
+              onClick={() => onMessen(karte)}
+            >
+              Messen
+            </button>
+          )}
+          {onArchivieren && (
+            <button
+              type="button"
+              className="sekundaer"
+              aria-label={`Archivieren: ${karte.name}`}
+              onClick={() => onArchivieren(karte)}
+            >
+              Archivieren
+            </button>
+          )}
         </div>
       )}
     </li>

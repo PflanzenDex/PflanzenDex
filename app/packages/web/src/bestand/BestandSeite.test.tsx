@@ -57,6 +57,7 @@ function fakeServer(opts: { exemplare?: Exemplar[]; anlegen?: () => Promise<Resp
       return antwort(201, neu);
     }
     if (pfad === "/standorte") return antwort(200, { standorte: [standort] });
+    if (pfad === "/exemplare/archiv") return antwort(200, { archiv: [] });
     return antwort(200, { karten: exemplare.map(karteVon) });
   });
   vi.stubGlobal("fetch", abruf);
@@ -98,11 +99,16 @@ describe("US-BES-02 Seite Bestand", () => {
   it("scheitert eine der beiden Abfragen, wird nichts halb angezeigt", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn<typeof fetch>(async (url) =>
-        new URL(String(url)).pathname === "/standorte"
-          ? antwort(500, { fehler: { code: "server.fehler", text: "Standorte nicht ladbar." } })
-          : antwort(200, { karten: [karteVon(exemplar())] }),
-      ),
+      vi.fn<typeof fetch>(async (url) => {
+        const pfad = new URL(String(url)).pathname;
+        if (pfad === "/standorte")
+          return antwort(500, {
+            fehler: { code: "server.fehler", text: "Standorte nicht ladbar." },
+          });
+        return pfad === "/exemplare/archiv"
+          ? antwort(200, { archiv: [] })
+          : antwort(200, { karten: [karteVon(exemplar())] });
+      }),
     );
     render(seite());
     expect((await screen.findByRole("alert")).textContent).toContain("Standorte nicht ladbar.");
@@ -195,11 +201,13 @@ describe("US-BES-06 Karten auf der Seite Bestand", () => {
     };
     vi.stubGlobal(
       "fetch",
-      vi.fn<typeof fetch>(async (url) =>
-        new URL(String(url)).pathname === "/standorte"
-          ? antwort(200, { standorte: [standort] })
-          : antwort(200, { karten: [karte] }),
-      ),
+      vi.fn<typeof fetch>(async (url) => {
+        const pfad = new URL(String(url)).pathname;
+        if (pfad === "/standorte") return antwort(200, { standorte: [standort] });
+        return pfad === "/exemplare/archiv"
+          ? antwort(200, { archiv: [] })
+          : antwort(200, { karten: [karte] });
+      }),
     );
     render(seite());
     expect(await screen.findByText("Lichtzone: Zone 3 · Status: Pflanze")).toBeTruthy();

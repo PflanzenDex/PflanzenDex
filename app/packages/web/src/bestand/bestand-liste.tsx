@@ -7,6 +7,8 @@ export function BestandListe(props: {
   onArtWaehlen: () => void;
   /** Öffnet die Messansicht; die App verdrahtet `bestand` mit `pflege` (US-WAC-01). */
   onMessen?: (e: { id: string; name: string }) => void;
+  /** Öffnet das Archivieren eines Exemplars (US-BES-07). */
+  onArchivieren?: (e: { id: string; name: string }) => void;
 }) {
   return (
     <section aria-labelledby="bestand-titel">
@@ -16,7 +18,12 @@ export function BestandListe(props: {
       ) : (
         <ul className="karten-raster">
           {props.karten.map((k) => (
-            <ExemplarKarteAnsicht key={k.id} karte={k} onMessen={props.onMessen} />
+            <ExemplarKarteAnsicht
+              key={k.id}
+              karte={k}
+              onMessen={props.onMessen}
+              onArchivieren={props.onArchivieren}
+            />
           ))}
         </ul>
       )}

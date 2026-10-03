@@ -94,3 +94,18 @@ a.karte-foto:focus-visible {
   outline: 3px solid var(--text);
   outline-offset: 2px;
 }
+
+/* Archiv (US-BES-07): derselbe Kartenstil, nur abgesetzt unter der Liste. */
+.archiv {
+  margin-top: 24px;
+}
+.archiv h2 {
+  margin: 0 0 4px;
+}
+.archiv .leise {
+  margin: 0 0 12px;
+}
+.archiv .exemplar-karte h3 {
+  font-size: 1.1rem;
+  margin: 0;
+}
