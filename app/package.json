@@ -16,7 +16,7 @@
     "format:check": "prettier --check .",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "boundaries": "node scripts/check-boundaries.mjs",
-    "specs": "node scripts/check-specs.mjs",
+    "specs": "node scripts/check-specs.mjs && node scripts/check-traceability.mjs",
     "test": "npm run test --workspaces --if-present && node --test \"scripts/**/*.test.mjs\" \"../.claude/hooks/*.test.mjs\"",
     "build": "npm run build --workspaces --if-present",
     "gates": "npm run lint && npm run typecheck && npm run boundaries && npm run knip && npm run specs && npm run skills && npm run format:check",
