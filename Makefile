@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint release release-dry-run
+.PHONY: help setup dev lint format typecheck test gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check
 
 help: ## Alle Ziele mit einem Satz
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -61,10 +61,25 @@ auth-down: ## Anmeldedienst und Mail-Fänger entfernen
 test: $(if $(CI),,db-up) ## Unit- und Datenbanktests aller Pakete und der Prüfskripte
 	cd $(APP) && npm run test
 
-gates: ## Schnelle Gates: Lint, Typen, Architekturgrenzen, Format
+spec-check: ## Spec consistency and story-to-test traceability (QG-T4)
+	cd $(APP) && npm run specs
+
+skills-check: ## Check agent skills in .agents/skills (trigger, paths, check command, links; US-DEV-04)
+	cd $(APP) && npm run skills
+
+secrets: ## Secret scan over the full git history (gitleaks, QG-S1)
+	scripts/gitleaks.sh
+
+workflows: ## Lint GitHub workflows (actionlint)
+	scripts/actionlint.sh
+
+audit: ## Known high-severity vulnerabilities in dependencies (npm audit, QG-S2)
+	cd $(APP) && npm run audit
+
+gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundaries, unused code, format
 	cd $(APP) && npm run gates
 
-ci: $(if $(CI),,db-up) ## Alle Gates in der Reihenfolge der CI, bricht beim ersten Fehler ab
+ci: secrets workflows $(if $(CI),,db-up) ## Alle Gates in der Reihenfolge der CI, bricht beim ersten Fehler ab
 	cd $(APP) && npm run ci
 
 release: ## Version, tag and GitHub release from the commits (CI on main only, US-DEV-06)

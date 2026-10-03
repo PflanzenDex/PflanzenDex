@@ -2,7 +2,7 @@
 //   AB-1  `core` importiert nichts aus API, Web, Datenbank, Dateisystem oder Netz
 //   AB-2  API und Web importieren `core` nur über die öffentliche Schnittstelle (Paketwurzel)
 //   AB-6  Web importiert weder API noch Datenbank (NFR-ARC-01 der früheren Skizze: nur über HTTP)
-//   MK-1  Marker STRUCTURE_IGNORE / MAX_LINES_IGNORE (erste 5 Zeilen) ohne Grund
+//   MK-1  Marker STRUCTURE_IGNORE / MAX_LINES_IGNORE / COMPLEXITY_IGNORE (erste 5 Zeilen) ohne Grund
 //   EX-1  Eintrag in KNOWN_EXCEPTIONS ohne Grund
 //   ST-c  jedes Verzeichnis mit Code in `core` hat einen `index.ts`
 // Bekannte, bewusst akzeptierte Altlasten gehören in KNOWN_EXCEPTIONS (mit Begründung; darf nur kürzer werden).
@@ -15,11 +15,12 @@ export const CORE_ALLOWED_IMPORTS = []; // erlaubte Fremdpakete in core (bewusst
 export const CORE_TEST_ALLOWED_IMPORTS = ["vitest"];
 export const KNOWN_EXCEPTIONS = []; // Einträge: { rule, file, reason }
 
-export const MARKERS = ["STRUCTURE_IGNORE", "MAX_LINES_IGNORE"];
+export const MARKERS = ["STRUCTURE_IGNORE", "MAX_LINES_IGNORE", "COMPLEXITY_IGNORE"];
 // Marker in den ersten 5 Zeilen: { name, reason } (reason leer = Marker ohne Grund = Fehler MK-1).
 export function markersOf(src) {
   const head = src.split("\n").slice(0, 5).join("\n");
   return MARKERS.flatMap((name) => {
+    // eslint-disable-next-line security/detect-non-literal-regexp -- `name` comes from the constant MARKERS list
     const m = head.match(new RegExp(`\\b${name}\\b(?::[ \\t]*([^\\n]*))?`));
     return m ? [{ name, reason: (m[1] ?? "").replace(/\*\/\s*$/, "").trim() }] : [];
   });
