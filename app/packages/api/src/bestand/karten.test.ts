@@ -98,6 +98,11 @@ beforeAll(async () => {
   appOhnePorts = createApp({ pruefer, pool, uhr: () => JETZT });
 });
 afterAll(async () => {
+  // Erst die Exemplare: der Verweis auf die Art ist on delete restrict (AB-10).
+  await pool.query(
+    "delete from exemplar where konto_id in (select id from konto where subjekt = any($1))",
+    [[subA, subB]],
+  );
   await pool.query(
     `delete from art where id in (select objekt_id from pruefvorgang
        where konto_id in (select id from konto where subjekt = any($1)))`,
