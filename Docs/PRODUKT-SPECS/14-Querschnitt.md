@@ -62,7 +62,7 @@ Akzeptanzkriterien:
 | NFR-05 | **Keine erfundenen Zahlen** (P-08). | ⬜ |
 | NFR-06 | **Kein stilles Verschwinden** (P-10). | ⬜ |
 | NFR-07 | **Handlungsanweisung statt Datenfriedhof** (P-09). | ⬜ |
-| NFR-08 | **Zeitzonen:** Alle Kalenderdaten sind lokale Daten des Nutzers; Phasenberechnung und Erinnerungen nutzen die Zeitzone des Nutzerprofils. Keine Verschiebung durch UTC (löst B-01). | ⬜ |
+| NFR-08 | **Zeitzonen:** Alle Kalenderdaten sind lokale Daten des Nutzers; Phasenberechnung und Erinnerungen nutzen die Zeitzone des Nutzerprofils. Keine Verschiebung durch UTC (löst B-01). | 🟨 |
 | NFR-09 | **Mandantentrennung:** Test, dass Nutzer A niemals Daten von Nutzer B abfragen oder ändern kann, ohne Freundschaft und Freigabe (P-04). | ⬜ |
 | NFR-10 | **Sicherheit:** Anmeldung über einen etablierten Dienst, nicht selbst gebaut (E-03). Sitzungen widerrufbar. Eingaben validiert, Dateiuploads auf Typ und Größe geprüft. | ⬜ |
 | NFR-11 | **Datenschutz (DSGVO):** Rechtsgrundlagen und Einwilligungen dokumentiert, Hosting in der EU (Annahme, E-01), Auftragsverarbeiter benannt, Löschkonzept, Datenexport. Datenschutzerklärung und Impressum vor dem ersten externen Nutzer. | ⬜ |

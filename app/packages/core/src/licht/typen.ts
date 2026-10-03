@@ -75,8 +75,9 @@ export interface ZonenNutzer {
 }
 
 /**
- * Port „Nutzung der Zone“: Jede Quelle nennt, wer eine Zone belegt. Standorte liefert `db`; Exemplare und Arten
- * gibt es erst mit BES. Dort muss je eine Quelle ergänzt werden, sonst blieben sie beim Löschen unbemerkt.
+ * Port „Nutzung der Zone“: Jede Quelle nennt, wer eine Zone belegt. Standorte liefert `db`. Arten und Exemplare
+ * verlinken (noch) keine Zone; sobald ein Feld des Moduls `bestand` auf eine Zone zeigt (BES-04, BES-09), setzt
+ * `bestand` diesen Port für seine Tabelle um, sonst bliebe die Nutzung beim Löschen unbemerkt.
  */
 export interface ZonenNutzung {
   nutzer(nutzerId: string, lichtzoneId: string): Promise<readonly ZonenNutzer[]>;

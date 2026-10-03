@@ -16,6 +16,9 @@ export const FEHLERTEXTE = {
   "art.dublette":
     "Diese Art gibt es schon (gleicher Name oder Synonym). Wähle die vorhandene Art, statt eine zweite anzulegen.",
   "art.nicht_gefunden": "Diese Art gibt es nicht.",
+  "exemplar.name_vergeben":
+    "Ein Exemplar mit diesem Namen gibt es schon. Gib ein Kennzeichen an (zum Beispiel eine Farbe), damit du die Töpfe unterscheiden kannst.",
+  "exemplar.nicht_gefunden": "Dieses Exemplar gibt es nicht.",
   "standort.name_vergeben": "Einen Standort mit diesem Namen gibt es schon.",
   "standort.nicht_gefunden": "Diesen Standort gibt es nicht.",
   "lichtzone.name_vergeben": "Eine Lichtzone mit diesem Namen gibt es schon.",
