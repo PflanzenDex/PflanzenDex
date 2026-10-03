@@ -1,9 +1,15 @@
 # Ein Einstieg für alle Aufgaben (US-DEV-01). Lokal und in der CI laufen dieselben Ziele (FR-QG-01).
 # Das Makefile enthält keine Fachlogik, nur Aufrufe; ein Fehler bricht ab und wird nie verdeckt (D-05).
 APP := app
+# Test-Datenbank (E-01: PostgreSQL in Docker). In der CI stellt der Workflow sie als Dienst bereit.
+# Im Worktree (US-DEV-08) liefert .env.worktree einen eigenen Port; sonst bleibt es beim festen Port 54329.
+-include .env.worktree
+DB_PORT := $(or $(PFLANZENDEX_TEST_DB_PORT),54329)
+DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
+export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test gates ci worktree clean
+.PHONY: help setup dev lint format typecheck test gates ci worktree clean db-up db-down migrate
 
 help: ## Alle Ziele mit einem Satz
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -23,13 +29,24 @@ format: ## Prettier schreibt die Formatierung
 typecheck: ## TypeScript strict in allen Paketen
 	cd $(APP) && npm run typecheck
 
-test: ## Unit-Tests aller Pakete und der Prüfskripte
+db-up: ## Test-Datenbank (PostgreSQL 16 in Docker) starten, falls sie nicht läuft
+	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) \
+		-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pflanzendex_test -p 127.0.0.1:$(DB_PORT):5432 postgres:16-alpine >/dev/null
+	@until docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test; do sleep 1; done
+
+db-down: ## Test-Datenbank entfernen
+	-docker rm -f $(DB_CONTAINER)
+
+migrate: ## Migrationen anwenden (DATABASE_URL, sonst die Test-Datenbank)
+	cd $(APP) && npm run migrate -w @pflanzendex/db
+
+test: $(if $(CI),,db-up) ## Unit- und Datenbanktests aller Pakete und der Prüfskripte
 	cd $(APP) && npm run test
 
 gates: ## Schnelle Gates: Lint, Typen, Architekturgrenzen, Format
 	cd $(APP) && npm run gates
 
-ci: ## Alle Gates in der Reihenfolge der CI, bricht beim ersten Fehler ab
+ci: $(if $(CI),,db-up) ## Alle Gates in der Reihenfolge der CI, bricht beim ersten Fehler ab
 	cd $(APP) && npm run ci
 
 worktree: ## Neuer Worktree + Branch (BRANCH=feat/x) mit eigenen Ports (US-DEV-08)
