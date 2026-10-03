@@ -122,7 +122,7 @@ Akzeptanzkriterien:
 - Der Agent führt vor „fertig" `make ci` (oder das Äquivalent) aus und berichtet Ergebnis ehrlich (Pass/Fail), nicht nur „sollte laufen".
 - Der Agent committet nicht ungefragt; er ändert keine Gates oder Schwellen, um einen Fehlschlag zu umgehen (Ausnahmen brauchen Begründung im PR).
 
-### US-QG-08 · Komplexität bleibt beherrschbar · ⬜
+### US-QG-08 · Komplexität bleibt beherrschbar · 🟨
 Als **Entwickler** will ich, dass Code nicht unbemerkt unlesbar wird, weil Komplexität das teuerste Qualitätsproblem ist: Sie macht Tests schwer, Änderungen riskant und KI-Änderungen unzuverlässig.
 
 Akzeptanzkriterien:
@@ -153,8 +153,8 @@ Akzeptanzkriterien:
 | FR-QG-13 | **Koppelung an Schwellen-Quellen:** Zahlen in der Spec (Puffer 2, Trend ±10 %, Rang-Schwellen, Artenarm 10) und im Code stammen aus einer Quelle; ein Test prüft, dass Code-Konstanten und Spec übereinstimmen oder die Spec auf die Konstante verweist. | ⬜ |
 | FR-QG-14 | **Release:** Version und Changelog entstehen automatisch aus Conventional Commits, nur nach grüner CI auf `main`. Ein Deploy ist ein bewusster Schritt (Freigabe), kein Seiteneffekt eines Merges (E-14). | ⬜ |
 | FR-QG-15 | **Abhängigkeiten:** Automatische Updates (Dependabot oder gleichwertig) laufen durch die volle Suite; Auto-Merge nur bei grünem Status und nicht bei Hauptversionssprüngen. | ⬜ |
-| FR-QG-16 | **Komplexitätsgrenzen** stehen in einer Konfiguration (nicht in der Doku verstreut) und sind pro Bereich überschreibbar (`core` strenger). Werte in diesem Dokument sind Annahmen, die Startwerte kommen aus der ersten Messung (E-15). | ⬜ |
-| FR-QG-17 | **Basisliste (Ratchet):** Bekannte Überschreitungen stehen in einer Datei mit Pfad, Funktion, Wert und Datum; ein Gate schlägt fehl, wenn die Liste **wächst** oder ein Eintrag nicht mehr nötig ist (dann muss er gestrichen werden). | ⬜ |
+| FR-QG-16 | **Komplexitätsgrenzen** stehen in einer Konfiguration (nicht in der Doku verstreut) und sind pro Bereich überschreibbar (`core` strenger). Werte in diesem Dokument sind Annahmen, die Startwerte kommen aus der ersten Messung (E-15). | 🟨 |
+| FR-QG-17 | **Basisliste (Ratchet):** Bekannte Überschreitungen stehen in einer Datei mit Pfad, Funktion, Wert und Datum; ein Gate schlägt fehl, wenn die Liste **wächst** oder ein Eintrag nicht mehr nötig ist (dann muss er gestrichen werden). | 🟨 |
 | FR-QG-18 | **Doku und Gate dürfen nicht auseinanderlaufen:** Schwellenwerte (Coverage, Komplexität, Dateilänge) stehen genau einmal in der Gate-Konfiguration; Doku und DoD verweisen darauf, statt Zahlen zu wiederholen (Befund aus Tombola: DoD nennt Coverage ≥ 70 %, CI erzwingt 75 %). Ein Test oder Skript prüft, dass in der DoD keine abweichende Zahl steht. | ⬜ |
 
 ## Abgleich mit den Architekturprinzipien
