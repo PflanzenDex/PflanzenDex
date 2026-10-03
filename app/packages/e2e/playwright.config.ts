@@ -22,7 +22,8 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: "npm run dev -w @pflanzendex/api",
+      // no `tsx watch`: a restart in the middle of a run would kill the API under test
+      command: "npm exec -w @pflanzendex/api -- tsx src/main.ts",
       cwd: "../..",
       url: "http://localhost:3000/health",
       reuseExistingServer: !inCi,

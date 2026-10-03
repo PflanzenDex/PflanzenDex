@@ -1,5 +1,5 @@
 import { axeBericht } from "../support/axe";
-import { anmelden, expect, test } from "../support/fixtures";
+import { anmeldenBeiLicht, expect, test } from "../support/fixtures";
 
 // Kernablauf R1: Standorte und Lichtzonen einrichten (US-LIC-05), angemeldet, gegen echte API und Datenbank.
 test.describe("US-LIC-05 Standorte und Lichtzonen", () => {
@@ -7,7 +7,7 @@ test.describe("US-LIC-05 Standorte und Lichtzonen", () => {
     page,
     konto,
   }, info) => {
-    await anmelden(page, konto);
+    await anmeldenBeiLicht(page, konto);
     await expect(page.getByText("Noch keine Lichtzonen.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Standard-Lampen übernehmen" })).toBeVisible();
     await expect(page.getByText("Noch keine Standorte.")).toBeVisible();
@@ -18,7 +18,7 @@ test.describe("US-LIC-05 Standorte und Lichtzonen", () => {
     page,
     konto,
   }, info) => {
-    await anmelden(page, konto);
+    await anmeldenBeiLicht(page, konto);
     await page.getByRole("button", { name: "Standard-Lampen übernehmen" }).click();
     await expect(page.getByRole("heading", { level: 3, name: "Lampe 2" })).toBeVisible();
     await expect(page.getByText("bis 15.000 Lux")).toBeVisible();
@@ -43,7 +43,7 @@ test.describe("US-LIC-05 Standorte und Lichtzonen", () => {
     page,
     konto,
   }) => {
-    await anmelden(page, konto);
+    await anmeldenBeiLicht(page, konto);
     await page.getByText("Neuer Standort").click();
     const formular = page.getByRole("form", { name: "Standort anlegen" });
     await formular.getByLabel("Name").fill("Regal");
@@ -53,7 +53,7 @@ test.describe("US-LIC-05 Standorte und Lichtzonen", () => {
   });
 
   test("US-LIC-05 eigene Lichtzone anlegen", async ({ page, konto }) => {
-    await anmelden(page, konto);
+    await anmeldenBeiLicht(page, konto);
     const formular = page.getByRole("form", { name: "Lichtzone anlegen" });
     await formular.getByLabel("Name").fill("Fensterbank");
     await formular.getByLabel("Lux-Decke (Lux)").fill("8000");

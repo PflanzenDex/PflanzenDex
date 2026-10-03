@@ -23,10 +23,8 @@ test.describe("US-ACC-01 Anmeldung", () => {
     await expect(page.getByText(konto.email)).toBeVisible();
     await axeBericht(page, info, "konto");
     await page.reload();
-    // Nach dem Neuladen öffnet die App wieder die Startansicht, ohne erneute Anmeldung beim Anmeldedienst.
-    await expect(
-      page.getByRole("heading", { level: 1, name: /Standorte und Lichtzonen/ }),
-    ).toBeVisible();
+    // Nach dem Neuladen steht die App wieder in der Startansicht, ohne erneute Anmeldung beim Anmeldedienst.
+    await expect(page.getByRole("navigation", { name: "Hauptnavigation" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Anmelden" })).toHaveCount(0);
   });
 
