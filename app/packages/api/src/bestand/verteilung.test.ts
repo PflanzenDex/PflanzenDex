@@ -67,7 +67,7 @@ const exemplar = async (sub: string, name: string, artId: string, standortId?: s
     await rufe(sub, "POST", "/exemplare", {
       zeitzone: "Europe/Berlin",
       artId,
-      name,
+      kennzeichen: name,
       ...(standortId ? { standortId } : {}),
     })
   ).body["id"] as string;
@@ -143,12 +143,12 @@ describe("US-LIC-02 Verteilung: Zählung und dünnste Zone", () => {
   it("Status Steckling und archiviert werden nicht gezählt, aber ausgewiesen", async () => {
     await pool.query(
       `update exemplar set status = 'steckling'
-        where konto_id = (select id from konto where subjekt = $1) and name = $2`,
+        where konto_id = (select id from konto where subjekt = $1) and kennzeichen = $2`,
       [subA, `A1 ${lauf}`],
     );
     await pool.query(
       `update exemplar set status = 'archiviert'
-        where konto_id = (select id from konto where subjekt = $1) and name = $2`,
+        where konto_id = (select id from konto where subjekt = $1) and kennzeichen = $2`,
       [subA, `A3 ${lauf}`],
     );
     const r = await verteilung(subA);

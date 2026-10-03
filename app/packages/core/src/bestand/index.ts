@@ -11,8 +11,9 @@ export type {
   NichtGezaehlt,
   Verteilung,
   VerteilungsAbhaengigkeiten,
+  VerteilungsHinweis,
   ZonenZaehlung,
-} from "./verteilung";
+} from "./verteilung-typen";
 export { MESS_QUALITAETEN } from "./karten-typen";
 export type {
   BehandlungsQuelle,

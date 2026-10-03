@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { Art, Exemplar, ExemplarKarte } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BestandSeite } from "./BestandSeite";
+import { LEERE_VERTEILUNG } from "./verteilung-testhilfe";
 
 const antwort = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -55,6 +56,7 @@ function fakeServer(opts: { exemplare?: Exemplar[]; anlegen?: () => Promise<Resp
       return antwort(201, neu);
     }
     if (pfad === "/standorte") return antwort(200, { standorte: [standort] });
+    if (pfad === "/exemplare/verteilung") return antwort(200, LEERE_VERTEILUNG);
     return antwort(200, { karten: exemplare.map(karteVon) });
   });
   vi.stubGlobal("fetch", abruf);
@@ -99,7 +101,7 @@ describe("US-BES-02 Seite Bestand", () => {
       vi.fn<typeof fetch>(async (url) =>
         new URL(String(url)).pathname === "/standorte"
           ? antwort(500, { fehler: { code: "server.fehler", text: "Standorte nicht ladbar." } })
-          : antwort(200, { karten: [karteVon(exemplar())] }),
+          : antwort(200, { karten: [karteVon(exemplar())], ...LEERE_VERTEILUNG }),
       ),
     );
     render(seite());
@@ -196,7 +198,7 @@ describe("US-BES-06 Karten auf der Seite Bestand", () => {
       vi.fn<typeof fetch>(async (url) =>
         new URL(String(url)).pathname === "/standorte"
           ? antwort(200, { standorte: [standort] })
-          : antwort(200, { karten: [karte] }),
+          : antwort(200, { karten: [karte], ...LEERE_VERTEILUNG }),
       ),
     );
     render(seite());
