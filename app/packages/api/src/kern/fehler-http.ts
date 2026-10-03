@@ -17,6 +17,7 @@ const STATUS: Partial<Record<Fehlercode, Status>> = {
   "exemplar.bereits_archiviert": 409,
   "exemplar.nicht_archiviert": 409,
   "exemplar.archiviert": 409,
+  "exemplar.kein_steckling": 409,
   "lichtzone.name_vergeben": 409,
   "standort.name_vergeben": 409,
   "lichtzone.in_benutzung": 409,

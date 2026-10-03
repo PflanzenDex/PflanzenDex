@@ -210,3 +210,58 @@ describe("US-BES-07 Archivieren in der Datenbank", () => {
     expect(await exemplare.anlegen(anna, { ...werte, name: "archiv name" })).toBe("name_vergeben");
   });
 });
+
+describe("US-BES-04 Steckling in der Datenbank", () => {
+  it("US-BES-04: legt einen Steckling mit Status steckling an; ohne Angabe bleibt es eine Pflanze", async () => {
+    const steckling = await exemplare.anlegen(anna, {
+      ...werte,
+      name: "Steckling Anlegen",
+      status: "steckling",
+    });
+    expect(steckling).toMatchObject({ name: "Steckling Anlegen", status: "steckling" });
+    const pflanze = await exemplare.anlegen(anna, { ...werte, name: "Pflanze Anlegen" });
+    expect(pflanze).toMatchObject({ status: "pflanze" });
+  });
+
+  it("US-BES-04: Eintopfen macht aus einem Steckling eine Pflanze und lässt alles andere stehen", async () => {
+    const z = await exemplare.anlegen(anna, {
+      ...werte,
+      name: "Steckling Eintopfen",
+      status: "steckling",
+    });
+    if (typeof z === "string") throw new Error(z);
+    const r = await exemplare.eintopfen(anna, z.id);
+    expect(r).toEqual({ ...z, status: "pflanze" });
+    expect(await exemplare.finde(anna, z.id)).toEqual({ ...z, status: "pflanze" });
+  });
+
+  it("US-BES-04: eine Pflanze und ein archivierter Steckling melden kein_steckling und bleiben unverändert", async () => {
+    const pflanze = await exemplare.anlegen(anna, { ...werte, name: "Pflanze Topf" });
+    const arch = await exemplare.anlegen(anna, {
+      ...werte,
+      name: "Steckling Archiv",
+      status: "steckling",
+    });
+    if (typeof pflanze === "string" || typeof arch === "string") throw new Error("anlegen");
+    await exemplare.archivieren(anna, arch.id, "abgegeben", "2026-10-03");
+    expect(await exemplare.eintopfen(anna, pflanze.id)).toBe("kein_steckling");
+    expect(await exemplare.eintopfen(anna, arch.id)).toBe("kein_steckling");
+    expect((await exemplare.finde(anna, arch.id))?.status).toBe("archiviert");
+    expect(await exemplare.finde(anna, pflanze.id)).toEqual(pflanze);
+  });
+
+  it("US-BES-04, P-04: ein anderes Konto kann den Steckling nicht eintopfen und sieht ihn nicht", async () => {
+    const z = await exemplare.anlegen(anna, {
+      ...werte,
+      name: "Steckling Fremd",
+      status: "steckling",
+    });
+    if (typeof z === "string") throw new Error(z);
+    expect(await exemplare.eintopfen(ben, z.id)).toBe("nicht_gefunden");
+    expect((await exemplare.finde(anna, z.id))?.status).toBe("steckling");
+  });
+
+  it("US-BES-04: eine unbekannte Kennung ist nicht gefunden", async () => {
+    expect(await exemplare.eintopfen(anna, randomUUID())).toBe("nicht_gefunden");
+  });
+});

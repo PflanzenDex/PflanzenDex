@@ -3,6 +3,7 @@ import {
   KEINE_MESSUNGEN,
   KEIN_SOLL_STANDORT,
   exemplarAnlegen,
+  exemplarEintopfen,
   exemplarKarten,
   exemplarLaden,
   exemplareListe,
@@ -41,7 +42,7 @@ export type ExemplareOptionen = {
 };
 
 /**
- * Exemplare (US-BES-02, US-BES-07). Schreiben geht nur über `exemplar.anlegen`, `.archivieren` und `.wiederherstellen`
+ * Exemplare (US-BES-02, US-BES-04, US-BES-07). Schreiben geht nur über `exemplar.anlegen`, `.eintopfen`, `.archivieren` und `.wiederherstellen`
  * (P-03, mit `Idempotency-Key`); Listen und Karten zeigen keine archivierten Exemplare, `/exemplare/archiv` schon. Lesen liefert nur
  * Exemplare des eigenen Kontos, ein fremdes oder unbekanntes Exemplar sieht gleich aus: 404 (P-04).
  */
@@ -55,6 +56,7 @@ export function exemplareRouten(pool: Pool, opt: ExemplareOptionen = {}): Hono<A
     sollStandort: opt.sollStandort ?? KEIN_SOLL_STANDORT,
     uhr,
   });
+  const eintopfen = exemplarEintopfen({ exemplare });
   const kartenDeps = {
     exemplare,
     arten: new ArtPostgres(pool),
@@ -96,6 +98,10 @@ export function exemplareRouten(pool: Pool, opt: ExemplareOptionen = {}): Hono<A
   });
   routen.post("/exemplare", async (c) =>
     schreibe(c, deps, anlegen, { eingabe: await koerper(c), erfolg: 201 }),
+  );
+  // US-BES-04: aus dem Steckling wird eine Pflanze; nur der Status ändert sich (P-03, mit `Idempotency-Key`).
+  routen.post("/exemplare/:id/eintopfen", async (c) =>
+    schreibe(c, deps, eintopfen, { eingabe: { exemplarId: c.req.param("id") } }),
   );
   return routen;
 }

@@ -1,0 +1,120 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/packages/api
+
+stderr | src/bestand/steckling.test.ts > US-BES-04 Steckling anlegen und eintopfen > US-BES-04: ohne Angabe ist das neue Exemplar eine Pflanze
+Operation fehlgeschlagen error: invalid input syntax for type uuid: "wird-bei-steckling-nicht-gefragt"
+    at /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/node_modules/pg/lib/client.js:694:17
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at mitKonto (/home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/packages/db/src/kern/mandant.ts:21:22)
+    at ExemplarePostgres.anlegen (/home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/packages/db/src/bestand/exemplare.ts:60:17)
+    at Object.ausfuehren (/home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/packages/core/src/bestand/anlegen.ts:58:17)
+    at ausfuehrenGeschuetzt (/home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/packages/core/src/kern/operation.ts:55:16)
+    at schreibe (/home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/packages/api/src/kern/route-hilfen.ts:24:13)
+    at dispatch (file:///home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/node_modules/hono/dist/compose.js:35:11)
+    at /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/packages/api/src/konto/auth/middleware.ts:28:5
+    at dispatch (file:///home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/node_modules/hono/dist/compose.js:35:11) {
+  length: 164,
+  severity: 'ERROR',
+  code: '22P02',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: "unnamed portal parameter $5 = '...'",
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'uuid.c',
+  line: '133',
+  routine: 'string_to_uuid'
+}
+
+stderr | src/bestand/steckling.test.ts > US-BES-04 Steckling anlegen und eintopfen > US-BES-04: eine Pflanze eintopfen: 409 kein_steckling, der Status bleibt
+Operation fehlgeschlagen error: invalid input syntax for type uuid: "wird-bei-steckling-nicht-gefragt"
+    at /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/node_modules/pg/lib/client.js:694:17
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at mitKonto (/home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/packages/db/src/kern/mandant.ts:21:22)
+    at ExemplarePostgres.anlegen (/home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/packages/db/src/bestand/exemplare.ts:60:17)
+    at Object.ausfuehren (/home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/packages/core/src/bestand/anlegen.ts:58:17)
+    at ausfuehrenGeschuetzt (/home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/packages/core/src/kern/operation.ts:55:16)
+    at schreibe (/home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/packages/api/src/kern/route-hilfen.ts:24:13)
+    at dispatch (file:///home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/node_modules/hono/dist/compose.js:35:11)
+    at /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/packages/api/src/konto/auth/middleware.ts:28:5
+    at dispatch (file:///home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/node_modules/hono/dist/compose.js:35:11) {
+  length: 164,
+  severity: 'ERROR',
+  code: '22P02',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: "unnamed portal parameter $5 = '...'",
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'uuid.c',
+  line: '133',
+  routine: 'string_to_uuid'
+}
+
+ ❯ src/bestand/steckling.test.ts (9 tests | 6 failed) 641ms
+   ❯ US-BES-04 Steckling anlegen und eintopfen (6)
+     × US-BES-04: ein Steckling steht unter Stecklingslicht und zählt nicht in der Verteilung; Eintopfen holt ihn zurück 140ms
+     × US-BES-04: ohne Angabe ist das neue Exemplar eine Pflanze 49ms
+     × US-BES-04: eine Pflanze eintopfen: 409 kein_steckling, der Status bleibt 41ms
+     × US-BES-04: ein archivierter Steckling wird nicht eingetopft (409) 56ms
+     × US-BES-04: derselbe Idempotency-Key wiederholt die erste Antwort 41ms
+   ❯ US-BES-04 Mandantentrennung (P-04) (1)
+     × US-BES-04: ein fremder Steckling lässt sich nicht eintopfen (404 wie unbekannt) 41ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/bestand/steckling.test.ts > US-BES-04 Steckling anlegen und eintopfen > US-BES-04: ein Steckling steht unter Stecklingslicht und zählt nicht in der Verteilung; Eintopfen holt ihn zurück
+ FAIL  src/bestand/steckling.test.ts > US-BES-04 Steckling anlegen und eintopfen > US-BES-04: eine Pflanze eintopfen: 409 kein_steckling, der Status bleibt
+ FAIL  src/bestand/steckling.test.ts > US-BES-04 Steckling anlegen und eintopfen > US-BES-04: ein archivierter Steckling wird nicht eingetopft (409)
+ FAIL  src/bestand/steckling.test.ts > US-BES-04 Steckling anlegen und eintopfen > US-BES-04: derselbe Idempotency-Key wiederholt die erste Antwort
+ FAIL  src/bestand/steckling.test.ts > US-BES-04 Mandantentrennung (P-04) > US-BES-04: ein fremder Steckling lässt sich nicht eintopfen (404 wie unbekannt)
+SyntaxError: Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/bestand/steckling.test.ts > US-BES-04 Steckling anlegen und eintopfen > US-BES-04: ohne Angabe ist das neue Exemplar eine Pflanze
+AssertionError: expected { status: 500, …(1) } to match object { status: 201, …(1) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "body": {
+-     "status": "pflanze",
++     "fehler": {
++       "code": "system.unerwartet",
++       "text": "Es ist ein unerwarteter Fehler aufgetreten. Bitte versuche es später erneut.",
++     },
+    },
+-   "status": 201,
++   "status": 500,
+  }
+
+ ❯ src/bestand/steckling.test.ts:163:15
+    161|     const art = await neueArt(subA);
+    162|     const r = await anlegen(subA, art, { kennzeichen: "pflanze" });
+    163|     expect(r).toMatchObject({ status: 201, body: { status: "pflanze" }…
+       |               ^
+    164|   });
+    165|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 3 passed (9)
+   Start at  21:58:48
+   Duration  1.12s (tests 65%, transform 24%, import 10%, worker 1%)
+

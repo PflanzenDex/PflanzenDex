@@ -16,7 +16,7 @@ export interface ExemplarZeile {
 export type ExemplarWerte = Pick<
   ExemplarZeile,
   "artId" | "name" | "kennzeichen" | "standortId" | "gefangenAm"
->;
+> & { readonly status?: "pflanze" | "steckling" };
 
 // `date` kommt als Text zurück: der Treiber würde daraus ein `Date` in der Zeitzone des Servers machen (NFR-08).
 const SPALTEN = `id, art_id as "artId", name, kennzeichen, standort_id as "standortId", status,
@@ -59,9 +59,17 @@ export class ExemplarePostgres {
     try {
       const r = await mitKonto(this.pool, nutzerId, (c) =>
         c.query<ExemplarZeile>(
-          `insert into exemplar (konto_id, art_id, name, kennzeichen, standort_id, gefangen_am)
-           values ($1, $2, $3, $4, $5, $6) returning ${SPALTEN}`,
-          [nutzerId, w.artId, w.name, w.kennzeichen, w.standortId, w.gefangenAm],
+          `insert into exemplar (konto_id, art_id, name, kennzeichen, standort_id, gefangen_am, status)
+           values ($1, $2, $3, $4, $5, $6, $7) returning ${SPALTEN}`,
+          [
+            nutzerId,
+            w.artId,
+            w.name,
+            w.kennzeichen,
+            w.standortId,
+            w.gefangenAm,
+            w.status ?? "pflanze",
+          ],
         ),
       );
       return r.rows[0] as ExemplarZeile;
@@ -72,6 +80,18 @@ export class ExemplarePostgres {
         return "standort_unbekannt";
       throw e;
     }
+  }
+
+  /**
+   * Eine Anweisung: nur ein Steckling wird zur Pflanze (US-BES-04). Pflanzen und archivierte Exemplare bleiben
+   * unverändert und melden `kein_steckling`; fremde Exemplare sieht die Zeilenregel nicht.
+   */
+  async eintopfen(
+    nutzerId: string,
+    id: string,
+  ): Promise<ExemplarZeile | "nicht_gefunden" | "kein_steckling"> {
+    const sql = `update exemplar set status = 'pflanze' where id = $1 and status = 'steckling' returning ${SPALTEN}`;
+    return this.aendere(nutzerId, { sql, parameter: [id] }, "kein_steckling");
   }
 
   /**
