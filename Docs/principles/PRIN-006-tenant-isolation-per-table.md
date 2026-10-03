@@ -15,7 +15,7 @@ The suite checks every table in the schema: without an account column or without
 
 ## Checked by
 
-`app/packages/db/src/mandant.test.ts`, fixtures in `app/packages/db/src/fixtures.ts`.
+`app/packages/db/src/kern/mandant.test.ts`, fixtures in `app/packages/db/src/fixtures.ts` (aggregates `FIXTURES_<MODULE>` from `db/src/<module>/fixtures.ts`; add the entry in the module that owns the table).
 
 ## Gate
 

@@ -2,11 +2,9 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { Pool } from "pg";
 import { produktTitel } from "@pflanzendex/core";
-import { authentifizierung } from "./auth/middleware";
-import type { TokenPruefer } from "./auth/token";
-import { ARTEN_PFADE, artenRouten } from "./arten-routen";
-import { kontoRouten } from "./konto-routen";
-import { LICHT_PFADE, lichtRouten } from "./licht-routen";
+import { authentifizierung, kontoRouten, type TokenPruefer } from "./konto";
+import { ARTEN_PFADE, artenRouten } from "./katalog";
+import { LICHT_PFADE, lichtRouten } from "./licht";
 
 export type AppOptionen = {
   /** Prüft Access-Tokens des Anmeldedienstes; ohne Angabe gibt es keine geschützten Routen. */
