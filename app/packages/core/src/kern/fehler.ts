@@ -19,6 +19,10 @@ export const FEHLERTEXTE = {
   "exemplar.name_vergeben":
     "Ein Exemplar mit diesem Namen gibt es schon. Gib ein Kennzeichen an (zum Beispiel eine Farbe), damit du die Töpfe unterscheiden kannst.",
   "exemplar.nicht_gefunden": "Dieses Exemplar gibt es nicht.",
+  "exemplar.bereits_archiviert": "Dieses Exemplar ist schon archiviert.",
+  "exemplar.nicht_archiviert": "Dieses Exemplar ist nicht archiviert.",
+  "exemplar.archiviert":
+    "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her, dann kannst du damit arbeiten.",
   "standort.name_vergeben": "Einen Standort mit diesem Namen gibt es schon.",
   "standort.nicht_gefunden": "Diesen Standort gibt es nicht.",
   "lichtzone.name_vergeben": "Eine Lichtzone mit diesem Namen gibt es schon.",

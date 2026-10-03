@@ -133,3 +133,80 @@ describe("US-BES-02 Exemplare in der Datenbank", () => {
     await expect(loescheArtAlsAnwendung(pool, anna, art)).rejects.toMatchObject({ code: "42501" });
   });
 });
+
+describe("US-BES-07 Archivieren in der Datenbank", () => {
+  const lege = async (konto: string, name: string) => {
+    const z = await exemplare.anlegen(konto, { ...werte, name });
+    if (typeof z === "string") throw new Error(z);
+    return z;
+  };
+
+  it("US-BES-07: setzt Status, Datum und Grund; das Datum bleibt das Kalenderdatum (NFR-08)", async () => {
+    const vorher = process.env["TZ"];
+    process.env["TZ"] = "Pacific/Kiritimati";
+    try {
+      const z = await lege(anna, "Archiv Datum");
+      const r = await exemplare.archivieren(anna, z.id, "eingegangen", "2026-01-01");
+      expect(r).toMatchObject({
+        status: "archiviert",
+        archiviertAm: "2026-01-01",
+        archiviertGrund: "eingegangen",
+      });
+      expect(await exemplare.finde(anna, z.id)).toEqual(r);
+    } finally {
+      if (vorher === undefined) delete process.env["TZ"];
+      else process.env["TZ"] = vorher;
+    }
+  });
+
+  it("US-BES-07: ein zweites Archivieren ändert Datum und Grund nicht (P-10)", async () => {
+    const z = await lege(anna, "Archiv Zweimal");
+    await exemplare.archivieren(anna, z.id, "eingegangen", "2026-10-01");
+    expect(await exemplare.archivieren(anna, z.id, "verkauft", "2026-10-03")).toBe(
+      "bereits_archiviert",
+    );
+    expect(await exemplare.finde(anna, z.id)).toMatchObject({
+      archiviertAm: "2026-10-01",
+      archiviertGrund: "eingegangen",
+    });
+  });
+
+  it("US-BES-07: Wiederherstellen setzt den vorherigen Status und löscht Datum und Grund", async () => {
+    const z = await lege(anna, "Archiv Zurück");
+    await mitKonto(pool, anna, (c) =>
+      c.query("update exemplar set status = 'steckling' where id = $1", [z.id]),
+    );
+    await exemplare.archivieren(anna, z.id, "abgegeben", "2026-10-01");
+    expect(await exemplare.wiederherstellen(anna, z.id)).toMatchObject({
+      status: "steckling",
+      archiviertAm: null,
+      archiviertGrund: null,
+    });
+    expect(await exemplare.wiederherstellen(anna, z.id)).toBe("nicht_archiviert");
+  });
+
+  it("US-BES-07, P-04: ein anderes Konto kann weder archivieren noch wiederherstellen", async () => {
+    const z = await lege(anna, "Archiv Mandant");
+    expect(await exemplare.archivieren(ben, z.id, "verkauft", "2026-10-03")).toBe("nicht_gefunden");
+    await exemplare.archivieren(anna, z.id, "verkauft", "2026-10-03");
+    expect(await exemplare.wiederherstellen(ben, z.id)).toBe("nicht_gefunden");
+    expect(await exemplare.finde(anna, z.id)).toMatchObject({ status: "archiviert" });
+  });
+
+  it("US-BES-07: Status, Datum und Grund gehören zusammen (die Datenbank erzwingt es)", async () => {
+    const z = await lege(anna, "Archiv Check");
+    const setze = (sql: string) => mitKonto(pool, anna, (c) => c.query(sql, [z.id]));
+    await expect(
+      setze("update exemplar set status = 'archiviert' where id = $1"),
+    ).rejects.toMatchObject({ code: "23514" });
+    await expect(
+      setze("update exemplar set archiviert_grund = 'x' where id = $1"),
+    ).rejects.toMatchObject({ code: "23514" });
+  });
+
+  it("US-BES-07: ein archivierter Name bleibt belegt, das Wiederherstellen kollidiert also nie", async () => {
+    const z = await lege(anna, "Archiv Name");
+    await exemplare.archivieren(anna, z.id, "verkauft", "2026-10-03");
+    expect(await exemplare.anlegen(anna, { ...werte, name: "archiv name" })).toBe("name_vergeben");
+  });
+});

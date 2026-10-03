@@ -14,11 +14,16 @@ let messungen: MessungenImSpeicher;
 let idem: SpeicherImSpeicher;
 let zaehler = 0;
 
-const erfasse = (eingabe: unknown, kontext = anna, schluessel = `k${++zaehler}`) =>
+const erfasse = (
+  eingabe: unknown,
+  kontext = anna,
+  schluessel = `k${++zaehler}`,
+  archiviert: readonly string[] = [],
+) =>
   fuehreAus(
     messungErfassen({
       messungen,
-      exemplare: new ExemplareStub({ anna: [E1], ben: [E2] }),
+      exemplare: new ExemplareStub({ anna: [E1], ben: [E2] }, archiviert),
       uhr: () => JETZT,
     }),
     { idempotenz: idem },
@@ -211,5 +216,13 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(await ansicht("ben", E1)).toBeNull();
     expect(await ansicht("anna", "00000000-0000-4000-8000-0000000000ff")).toBeNull();
     expect(await ansicht("anna", "kein-id")).toBeNull();
+  });
+});
+
+describe("US-BES-07 Messen: archivierte Exemplare", () => {
+  it("ein archiviertes Exemplar wird nicht gemessen (fehlt in Wachstum), es wird nichts geschrieben", async () => {
+    const r = await erfasse(eingabe(), anna, "archiv", [E1]);
+    expect(r).toMatchObject({ ok: false, fehler: { code: "exemplar.archiviert" } });
+    expect(messungen.schreibzugriffe).toBe(0);
   });
 });

@@ -24,6 +24,7 @@ import {
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import { fehlerKoerper, koerper, schreibe, type AuthEnv } from "../kern";
+import { archivRouten } from "./archiv-routen";
 
 /** Pfade, die der Anmeldeschutz (Bearer-Token) abdecken muss. */
 export const EXEMPLARE_PFADE = ["/exemplare"] as const;
@@ -40,7 +41,8 @@ export type ExemplareOptionen = {
 };
 
 /**
- * Exemplare (US-BES-02). Schreiben geht nur über `exemplar.anlegen` (P-03, mit `Idempotency-Key`); Lesen liefert nur
+ * Exemplare (US-BES-02, US-BES-07). Schreiben geht nur über `exemplar.anlegen`, `.archivieren` und `.wiederherstellen`
+ * (P-03, mit `Idempotency-Key`); Listen und Karten zeigen keine archivierten Exemplare, `/exemplare/archiv` schon. Lesen liefert nur
  * Exemplare des eigenen Kontos, ein fremdes oder unbekanntes Exemplar sieht gleich aus: 404 (P-04).
  */
 export function exemplareRouten(pool: Pool, opt: ExemplareOptionen = {}): Hono<AuthEnv> {
@@ -82,6 +84,8 @@ export function exemplareRouten(pool: Pool, opt: ExemplareOptionen = {}): Hono<A
     const karten = await exemplarKarten(kartenDeps, c.get("konto").id, heuteLokal(uhr(), zeitzone));
     return c.json({ karten });
   });
+  // Archiv, Archivieren und Wiederherstellen (US-BES-07); vor `/exemplare/:id`.
+  routen.route("/", archivRouten(pool, uhr));
   // US-LIC-02: Verteilung auf die Zonen 2 bis 4; wie „karten“ vor `/exemplare/:id`, nur Daten des eigenen Kontos (P-04).
   routen.get("/exemplare/verteilung", async (c) =>
     c.json({ verteilung: await zonenVerteilung(verteilungDeps, c.get("konto").id) }),

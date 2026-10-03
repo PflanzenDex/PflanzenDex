@@ -50,6 +50,7 @@ export const messungErfassen = (deps: ErfassenAbhaengigkeiten) =>
     ausfuehren: async ({ nutzerId }, eingabe) => {
       const exemplar = await deps.exemplare.finde(nutzerId, eingabe.exemplarId);
       if (!exemplar) return fehlgeschlagen(fehler("exemplar.nicht_gefunden"));
+      if (exemplar.status === "archiviert") return fehlgeschlagen(fehler("exemplar.archiviert"));
       const heute = heuteLokal(deps.uhr(), eingabe.zeitzone);
       const datum = eingabe.datum ?? heute;
       if (datum > heute) return zukunft;

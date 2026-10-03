@@ -130,6 +130,7 @@ describe("US-LIC-02 Seite Bestand zeigt die Verteilung", () => {
         const pfad = new URL(String(url)).pathname;
         if (pfad === "/exemplare/verteilung") return antwort(200, { verteilung: verteilung() });
         if (pfad === "/standorte") return antwort(200, { standorte: [] });
+        if (pfad === "/exemplare/archiv") return antwort(200, { archiv: [] });
         return antwort(200, { karten: [] });
       }),
     );
@@ -150,6 +151,7 @@ describe("US-LIC-02 Seite Bestand zeigt die Verteilung", () => {
             fehler: { code: "server.fehler", text: "Verteilung nicht ladbar." },
           });
         if (pfad === "/standorte") return antwort(200, { standorte: [] });
+        if (pfad === "/exemplare/archiv") return antwort(200, { archiv: [] });
         return antwort(200, { karten: [] });
       }),
     );

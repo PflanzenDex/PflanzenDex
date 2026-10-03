@@ -4,7 +4,7 @@ import { zoneAbleiten, type LichtStandort, type Lichtzone } from "../licht";
 import type { Art } from "../katalog";
 import { verteilungsHinweis } from "./verteilung-hinweis";
 import type { NichtGezaehlt, Verteilung, VerteilungsAbhaengigkeiten } from "./verteilung-typen";
-import type { ExemplarZeile } from "./typen";
+import { istAktiv, type ExemplarZeile } from "./typen";
 
 type Platz = Lichtzone | "stecklingslicht" | "archiviert" | "unbekannt";
 
@@ -25,11 +25,11 @@ function zoneDerArt(art: Art | null | undefined, zonen: readonly Lichtzone[]): P
 }
 
 /**
- * Wohin ein Exemplar zählt (FR-LIC-02): Steckling und Archiv zuerst, dann die Zone seines Standorts (Exemplar vor
+ * Wohin ein Exemplar zählt (FR-LIC-02): Steckling und Archiv zuerst (`istAktiv`, dieselbe Regel wie in Liste und Karten, US-BES-07), dann die Zone seines Standorts (Exemplar vor
  * Art), sonst die abgeleitete Zone der Art. Die niedrigste Zone des Kontos ist das Stecklingslicht.
  */
 function platzVon(z: ExemplarZeile, k: Kontext): Platz {
-  if (z.status === "archiviert") return "archiviert";
+  if (!istAktiv(z)) return "archiviert";
   if (z.status === "steckling") return "stecklingslicht";
   const standort = k.standorte.find((s) => s.id === z.standortId);
   const eigene = k.zonen.find((l) => l.id === standort?.lichtzoneId);

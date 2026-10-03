@@ -48,6 +48,7 @@ function fakeServer(kontoStatus = 200) {
       if (pfad === "/konto") return antwort(kontoStatus, konto);
       if (pfad === "/arten") return antwort(200, { arten: [] });
       if (pfad === "/exemplare/karten") return antwort(200, { karten: [] });
+      if (pfad === "/exemplare/archiv") return antwort(200, { archiv: [] });
       if (pfad === "/exemplare/verteilung") return antwort(200, LEERE_VERTEILUNG);
       if (pfad === "/standorte") return antwort(200, { standorte: [] });
       if (pfad === "/lichtzonen") return antwort(200, { zonen: [] });
@@ -120,6 +121,7 @@ describe("US-ACC-01 App", () => {
         if (pfad === "/konto") return antwort(200, konto);
         if (pfad === "/standorte") return antwort(200, { standorte: [] });
         if (pfad === "/exemplare/karten") return antwort(200, { karten: [] });
+        if (pfad === "/exemplare/archiv") return antwort(200, { archiv: [] });
         if (pfad === "/exemplare/verteilung") return antwort(200, LEERE_VERTEILUNG);
         const art = {
           id: "a1",

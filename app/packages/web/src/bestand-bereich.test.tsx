@@ -40,6 +40,7 @@ describe("US-WAC-01 Bestand verdrahtet mit Messen", () => {
       vi.fn<typeof fetch>(async (url) => {
         const pfad = new URL(String(url)).pathname;
         if (pfad === "/standorte") return antwort(200, { standorte: [] });
+        if (pfad === "/exemplare/archiv") return antwort(200, { archiv: [] });
         if (pfad === "/exemplare/verteilung") return antwort(200, LEERE_VERTEILUNG);
         if (pfad === "/exemplare/e1/messungen") return antwort(200, leereAnsicht);
         return antwort(200, { karten: [karte] });

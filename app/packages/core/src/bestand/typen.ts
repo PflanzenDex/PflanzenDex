@@ -8,6 +8,7 @@ export type ExemplarStatus = (typeof EXEMPLAR_STATUS)[number];
 export const EXEMPLAR_GRENZEN = {
   kennzeichen: { min: 1, max: 40 },
   name: { min: 1, max: 250 },
+  archivGrund: { min: 1, max: 250 },
 } as const;
 
 /** Was gespeichert wird. Messreihe und Behandlungsliste sind abgeleitet und kommen nicht hierher (P-01). */
@@ -21,7 +22,24 @@ export interface ExemplarZeile {
   readonly status: ExemplarStatus;
   /** Lokales Kalenderdatum `JJJJ-MM-TT` (NFR-08). */
   readonly gefangenAm: string | null;
+  /** Lokales Kalenderdatum der Archivierung (NFR-08); `null`, solange das Exemplar nicht archiviert ist (US-BES-07). */
+  readonly archiviertAm: string | null;
+  /** Grund der Archivierung (`eingegangen`, `abgegeben`, … oder frei); `null`, solange nicht archiviert. */
+  readonly archiviertGrund: string | null;
 }
+
+/** Archivierte Exemplare fehlen in allen Listen und Auswertungen (US-BES-07); jede Auswertung filtert damit. */
+export const istAktiv = (zeile: Pick<ExemplarZeile, "status">): boolean =>
+  zeile.status !== "archiviert";
+
+/** Die Gründe, die die Oberfläche anbietet; jeder andere Text ist ebenso gültig (frei, US-BES-07). */
+export const ARCHIV_GRUENDE = [
+  "eingegangen",
+  "abgegeben",
+  "getauscht",
+  "verschenkt",
+  "verkauft",
+] as const;
 
 /** Ein Exemplar mit den abgeleiteten Listen. Beide sind leer, bis WAC und BEH Daten liefern (nie gespeichert). */
 export interface Exemplar extends ExemplarZeile {
@@ -43,6 +61,21 @@ export interface ExemplarSpeicher {
     nutzerId: string,
     werte: ExemplarWerte,
   ): Promise<ExemplarZeile | "name_vergeben" | "standort_unbekannt">;
+  /**
+   * Setzt Status, Datum und Grund in einer Anweisung (US-BES-07). Ein bereits archiviertes Exemplar bleibt unverändert,
+   * damit Datum und Grund der ersten Archivierung nicht überschrieben werden (P-10).
+   */
+  archivieren(
+    nutzerId: string,
+    id: string,
+    grund: string,
+    datum: string,
+  ): Promise<ExemplarZeile | "nicht_gefunden" | "bereits_archiviert">;
+  /** Stellt den Status vor der Archivierung wieder her und löscht Datum und Grund (US-BES-07). */
+  wiederherstellen(
+    nutzerId: string,
+    id: string,
+  ): Promise<ExemplarZeile | "nicht_gefunden" | "nicht_archiviert">;
 }
 
 /** Nur das Lesen einer sichtbaren Art; `ArtSpeicher` aus `katalog` erfüllt den Port. */

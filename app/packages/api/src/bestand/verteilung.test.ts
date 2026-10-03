@@ -147,7 +147,7 @@ describe("US-LIC-02 Verteilung: Zählung und dünnste Zone", () => {
       [subA, `A1 ${lauf}`],
     );
     await pool.query(
-      `update exemplar set status = 'archiviert'
+      `update exemplar set status = 'archiviert', archiviert_am = '2026-10-03', archiviert_grund = 'verkauft'
         where konto_id = (select id from konto where subjekt = $1) and kennzeichen = $2`,
       [subA, `A3 ${lauf}`],
     );

@@ -10,6 +10,8 @@ export interface ExemplarZeile {
   readonly standortId: string | null;
   readonly status: "pflanze" | "steckling" | "archiviert";
   readonly gefangenAm: string | null;
+  readonly archiviertAm: string | null;
+  readonly archiviertGrund: string | null;
 }
 export type ExemplarWerte = Pick<
   ExemplarZeile,
@@ -18,7 +20,8 @@ export type ExemplarWerte = Pick<
 
 // `date` kommt als Text zurück: der Treiber würde daraus ein `Date` in der Zeitzone des Servers machen (NFR-08).
 const SPALTEN = `id, art_id as "artId", name, kennzeichen, standort_id as "standortId", status,
-  to_char(gefangen_am, 'YYYY-MM-DD') as "gefangenAm"`;
+  to_char(gefangen_am, 'YYYY-MM-DD') as "gefangenAm", to_char(archiviert_am, 'YYYY-MM-DD') as "archiviertAm",
+  archiviert_grund as "archiviertGrund"`;
 
 const EINDEUTIG = "23505";
 const FREMDSCHLUESSEL = "23503";
@@ -69,5 +72,44 @@ export class ExemplarePostgres {
         return "standort_unbekannt";
       throw e;
     }
+  }
+
+  /**
+   * Eine Anweisung: Status, Datum, Grund und der Status von vorher. Nur ein nicht archiviertes Exemplar wird geändert,
+   * ein zweites Archivieren lässt Datum und Grund der ersten stehen (P-10). Fremde Exemplare sieht die Zeilenregel nicht.
+   */
+  async archivieren(
+    nutzerId: string,
+    id: string,
+    grund: string,
+    datum: string,
+  ): Promise<ExemplarZeile | "nicht_gefunden" | "bereits_archiviert"> {
+    const sql = `update exemplar set status_vor_archiv = status, status = 'archiviert', archiviert_am = $2,
+         archiviert_grund = $3 where id = $1 and status <> 'archiviert' returning ${SPALTEN}`;
+    return this.aendere(nutzerId, { sql, parameter: [id, datum, grund] }, "bereits_archiviert");
+  }
+
+  /** Setzt den Status von vor der Archivierung zurück (ohne Angabe: Pflanze) und löscht Datum und Grund. */
+  async wiederherstellen(
+    nutzerId: string,
+    id: string,
+  ): Promise<ExemplarZeile | "nicht_gefunden" | "nicht_archiviert"> {
+    const sql = `update exemplar set status = coalesce(status_vor_archiv, 'pflanze'), status_vor_archiv = null,
+         archiviert_am = null, archiviert_grund = null where id = $1 and status = 'archiviert' returning ${SPALTEN}`;
+    return this.aendere(nutzerId, { sql, parameter: [id] }, "nicht_archiviert");
+  }
+
+  /** Führt die Änderung aus (`$1` ist die Kennung); ändert sie nichts, entscheidet eine Abfrage zwischen „gibt es nicht“ und `sonst`. */
+  private async aendere<S extends string>(
+    nutzerId: string,
+    anweisung: { sql: string; parameter: readonly unknown[] },
+    sonst: S,
+  ): Promise<ExemplarZeile | "nicht_gefunden" | S> {
+    return mitKonto(this.pool, nutzerId, async (c) => {
+      const r = await c.query<ExemplarZeile>(anweisung.sql, [...anweisung.parameter]);
+      if (r.rows[0]) return r.rows[0];
+      const da = await c.query("select 1 from exemplar where id = $1", [anweisung.parameter[0]]);
+      return da.rowCount ? sonst : "nicht_gefunden";
+    });
   }
 }

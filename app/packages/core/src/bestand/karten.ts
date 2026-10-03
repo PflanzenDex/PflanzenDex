@@ -10,7 +10,7 @@ import type {
   OffeneBehandlung,
 } from "./karten-typen";
 import { artAnzeigename } from "./name";
-import type { ArtQuelle, ExemplarSpeicher, ExemplarZeile } from "./typen";
+import { istAktiv, type ArtQuelle, type ExemplarSpeicher, type ExemplarZeile } from "./typen";
 
 export interface KartenAbhaengigkeiten {
   readonly exemplare: ExemplarSpeicher;
@@ -70,7 +70,8 @@ export async function exemplarKarten(
   nutzerId: string,
   heute: string,
 ): Promise<readonly ExemplarKarte[]> {
-  const zeilen = await deps.exemplare.liste(nutzerId);
+  // Archivierte Exemplare haben keine Karte, und die Ports erfahren ihre Kennungen nicht (US-BES-07).
+  const zeilen = (await deps.exemplare.liste(nutzerId)).filter(istAktiv);
   const ids = zeilen.map((z) => z.id);
   const artIds = [...new Set(zeilen.map((z) => z.artId))];
   const [standorte, zonen, arten, messungen, behandlungen] = await Promise.all([

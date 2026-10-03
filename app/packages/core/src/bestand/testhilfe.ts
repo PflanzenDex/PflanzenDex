@@ -86,9 +86,51 @@ export class ExemplareImSpeicher implements ExemplarSpeicher {
       ...w,
       id: `00000000-0000-4000-8000-${String(this.zeilen.length + 1).padStart(12, "0")}`,
       status: "pflanze",
+      archiviertAm: null,
+      archiviertGrund: null,
     };
     this.zeilen.push({ ...zeile, nutzerId });
     return zeile;
+  }
+
+  /** Status vor der Archivierung je Zeile (der echte Adapter hält ihn in einer Spalte). */
+  private readonly vorher = new Map<string, ExemplarZeile["status"]>();
+
+  private ersetze(nutzerId: string, id: string, neu: Partial<ExemplarZeile>) {
+    const i = this.zeilen.findIndex((z) => z.nutzerId === nutzerId && z.id === id);
+    const alt = this.zeilen[i];
+    if (!alt) return null;
+    this.schreibzugriffe += 1;
+    const zeile = { ...alt, ...neu };
+    this.zeilen[i] = zeile;
+    const { nutzerId: besitzer, ...ohne } = zeile;
+    void besitzer;
+    return ohne;
+  }
+
+  async archivieren(nutzerId: string, id: string, grund: string, datum: string) {
+    const z = await this.finde(nutzerId, id);
+    if (!z) return "nicht_gefunden" as const;
+    if (z.status === "archiviert") return "bereits_archiviert" as const;
+    this.vorher.set(id, z.status);
+    const r = this.ersetze(nutzerId, id, {
+      status: "archiviert",
+      archiviertAm: datum,
+      archiviertGrund: grund,
+    });
+    return r as ExemplarZeile;
+  }
+
+  async wiederherstellen(nutzerId: string, id: string) {
+    const z = await this.finde(nutzerId, id);
+    if (!z) return "nicht_gefunden" as const;
+    if (z.status !== "archiviert") return "nicht_archiviert" as const;
+    const r = this.ersetze(nutzerId, id, {
+      status: this.vorher.get(id) ?? "pflanze",
+      archiviertAm: null,
+      archiviertGrund: null,
+    });
+    return r as ExemplarZeile;
   }
 }
 
