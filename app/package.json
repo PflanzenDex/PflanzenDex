@@ -29,7 +29,8 @@
     "ci": "npm run gates && npm run coverage && npm run build",
     "knip": "knip",
     "audit": "npm audit --audit-level=high",
-    "skills": "node scripts/check-skills.mjs"
+    "skills": "node scripts/check-skills.mjs",
+    "release-tags": "node scripts/check-release-tags.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",
@@ -37,6 +38,7 @@
     "@commitlint/lint": "^21.2.3",
     "@commitlint/load": "^21.2.3",
     "@eslint/js": "^10.0.1",
+    "@semantic-release/commit-analyzer": "^13.0.1",
     "@types/node": "^26.6.4",
     "@vitest/coverage-v8": "^5.0.3",
     "concurrently": "^10.0.5",
