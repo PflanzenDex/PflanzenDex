@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# US-DEV-02: nur geänderte Dateien, nur Schnelles (Prettier, ESLint). Fachliche Gates laufen im pre-push und in der CI.
+. "$(dirname "$0")/_lib.sh"
+need_setup
+cd "$app" && npx --no-install lint-staged

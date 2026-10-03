@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+# US-QG-01: schnelle Gates vor dem Push. Umgehen mit --no-verify ist möglich, aber die CI wiederholt alles (D-02).
+. "$(dirname "$0")/_lib.sh"
+need_setup
+cd "$root" && make gates || {
+  echo "Push abgebrochen: ein Gate ist rot. Erneut prüfen mit: make gates" >&2
+  exit 1
+}

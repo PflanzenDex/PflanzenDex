@@ -9,13 +9,22 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test gates ci worktree clean db-up db-down migrate deploy backup restore-test
+.PHONY: help setup hooks commitlint dev lint format typecheck test gates ci worktree clean db-up db-down migrate deploy backup restore-test
 
 help: ## Alle Ziele mit einem Satz
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
 
-setup: ## Abhängigkeiten installieren (npm ci, ohne Lockfile npm install)
+setup: ## Abhängigkeiten installieren (npm ci, ohne Lockfile npm install) und Git-Hooks aktivieren
 	cd $(APP) && if [ -f package-lock.json ]; then npm ci; else npm install; fi
+	$(if $(CI),,$(MAKE) hooks)
+
+hooks: ## Git-Hooks aus .githooks/ aktivieren (commit-msg, pre-commit, pre-push, Hinweise)
+	git config core.hooksPath .githooks
+
+commitlint: ## Commit-Nachricht oder PR-Titel prüfen (MSG="feat(pha): …"), QG-C1
+	@# MSG kommt als Umgebungsvariable in die Shell, nie über $$(MSG)-Expansion: PR-Titel sind fremde Eingaben.
+	@test -n "$$MSG" || { echo 'Aufruf: make commitlint MSG="feat(pha): …"' >&2; exit 2; }
+	@cd $(APP) && printf '%s\n' "$$MSG" | npx --no-install commitlint
 
 dev: ## API und Web lokal starten
 	cd $(APP) && npm run dev

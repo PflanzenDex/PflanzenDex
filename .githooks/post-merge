@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# US-DEV-02: weist auf Folgeschritte hin, führt nichts aus.
+. "$(dirname "$0")/_lib.sh"
+node "$app/scripts/git-hook-hints.mjs" ORIG_HEAD HEAD 2>/dev/null || true

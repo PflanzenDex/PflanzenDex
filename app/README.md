@@ -17,6 +17,7 @@ make ci      # alle Gates: Lint, Typen, Grenzen, Format, Tests, Build
 
 - **Node:** Version 24 (`.nvmrc`). Vitest 5 unterstützt die ungeraden Node-Versionen (z. B. 25) nicht offiziell.
 - **TypeScript 6.0.x** ist bewusst gepinnt: `typescript-eslint` unterstützt TypeScript 7 noch nicht (Peer-Bereich `<6.1`).
+- **Git-Hooks** (US-DEV-02, aktiviert durch `make setup` bzw. `make hooks`): `commit-msg` prüft Conventional Commits (`commitlint.config.js`), `pre-commit` formatiert und lintet nur geänderte Dateien (`lint-staged`), `pre-push` führt `make gates` aus (gemessen: etwa 5 s). Nach Merge oder Branch-Wechsel erscheinen Hinweise auf `make setup` oder `make migrate`.
 - **Grenzprüfung:** `npm run boundaries` (Skript und Tests in `scripts/`); Meldungen nennen Regel-ID, Datei und Zeile.
 - **Schwellen** (Startwerte, Annahme, E-15): Dateilänge ≤ 200, Komplexität ≤ 15, in `core` ≤ 10 (`eslint.config.js`).
 

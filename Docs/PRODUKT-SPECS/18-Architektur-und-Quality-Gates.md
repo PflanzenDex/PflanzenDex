@@ -57,7 +57,7 @@ Wo läuft welches Gate? **B** = blockiert, **R** = nur Bericht (Ratchet-Phase).
 
 ## Userstories
 
-### US-QG-01 · Fehler früh und lokal finden · ⬜
+### US-QG-01 · Fehler früh und lokal finden · 🟨
 Als **Entwickler** will ich, dass die schnellen Prüfungen vor dem Push laufen, damit CI selten die Überraschung ist.
 
 Akzeptanzkriterien:
