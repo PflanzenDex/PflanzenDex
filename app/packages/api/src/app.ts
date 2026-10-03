@@ -12,13 +12,16 @@ export type AppOptionen = {
   pool?: Pool;
   /** Ursprung der Web-App für CORS (die API setzt keine Cookies, die Anmeldung läuft per Bearer-Token). */
   webUrsprung?: string;
+  /** Kurzer Commit-Hash des laufenden Stands (aus dem Build, nicht geheim). */
+  version?: string | undefined;
 };
 
 export function createApp(opt: AppOptionen = {}): Hono {
+  const version = opt.version ?? "unbekannt";
   const app = new Hono();
   if (opt.webUrsprung)
     app.use("*", cors({ origin: opt.webUrsprung, allowHeaders: ["Authorization"] }));
-  app.get("/health", (c) => c.json({ status: "ok", produkt: produktTitel() }));
+  app.get("/health", (c) => c.json({ status: "ok", produkt: produktTitel(), version }));
   if (opt.pruefer && opt.pool) {
     const auth = authentifizierung(opt.pruefer, opt.pool);
     app.use("/konto", auth);

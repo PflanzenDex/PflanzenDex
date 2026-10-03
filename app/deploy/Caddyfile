@@ -1,0 +1,12 @@
+# Reverse-Proxy mit automatischem Zertifikat (Let's Encrypt). Die Adresse kommt aus der Umgebung (.env).
+# Lokal: SITE_ADDRESS=localhost (Caddy nutzt dann seine interne CA, kein öffentliches Zertifikat).
+{$SITE_ADDRESS} {
+	encode zstd gzip
+	@api path /health /api/*
+	handle @api {
+		reverse_proxy api:3000
+	}
+	handle {
+		reverse_proxy web:8080
+	}
+}

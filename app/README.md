@@ -35,3 +35,12 @@ make ci      # alle Gates: Lint, Typen, Grenzen, Format, Tests, Build
 - **Kontoanlage:** `findeOderLegeKonto` (db) ist der eigene Weg für die erste Anmeldung: Die Regeln `anmeldung_*` an `konto` zeigen und erlauben nur die Zeile des geprüften Subjekts (`app.subjekt`). Kein BYPASSRLS.
 - **Web:** `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID`, `VITE_API_URL` überschreiben die Voreinstellungen. „Auf allen Geräten abmelden“ ruft die Account-API von Keycloak (`DELETE /account/sessions`).
 - **Tests ohne Keycloak:** Token-, Middleware- und Oberflächentests laufen ohne Anmeldedienst (lokal erzeugte Schlüssel). Der Ablauf gegen Keycloak ist manuell geprüft: `Docs/testprotokolle/acc-01.md`.
+
+## Betreiber-Rolle und Prüfstatus (TE-08)
+
+- **Rollen:** Tabelle `konto_rolle` (`betreiber`, `pruefer`), vergeben nur per Verwaltungszugang, nie über die Anwendung (die Anwendungsrolle hat keine Rechte auf die Tabelle; sie liest nur die eigene Rolle über `rollen_des_kontos()`). Die Rolle gibt keinen Zugriff auf fremde Inhalte (P-04).
+- **Prüfstatus:** Tabelle `pruefvorgang` (Ersteller = `konto_id`, Objekt als `objekt_art` + `objekt_id`, Status `vorschlag`, `ki_ungeprueft`, `kuratiert`, `geprueft`, `zurueckgewiesen`). Operationen in `core`: `katalog.vorschlagen` (jeder), `katalog.kuratieren` und `katalog.pruefen` (nur Prüfer). Ein Auslöser in der Datenbank erzwingt dieselben Rechte zusätzlich.
+- **Einzige Ausnahme vom Mandantenschutz:** Prüfer lesen die Prüfliste (`pruefvorgang`, nur Metadaten). Der Mandantentest beweist, dass ein Betreiber in allen anderen Tabellen nichts Fremdes sieht (`pruefung.test.ts`).
+- **Grenze:** Der Artenkatalog (Tabelle `art`) entsteht erst mit BES-01. Dort muss die Art-Tabelle auf `pruefvorgang` verweisen (`objekt_art = 'art'`), die Sichtbarkeit (Vorschlag nur für den Ersteller, FR-BES-11) selbst regeln und Freigabe nur bei vollständigen Pflichtfeldern zulassen (FR-BES-14); Zusammenführen und Hinweise an den Ersteller gehören zu BES-10. Eine KI-Verbindung bekommt nie eine Rolle und kann daher nicht freigeben (FR-BES-06).
+
+**Betrieb (TE-03):** Container, Compose, Sicherung und Deploy liegen unter `deploy/`; Anleitung in `Docs/betrieb/staging-deploy-und-backup.md`. Ziele: `make deploy`, `make backup`, `make restore-test`.

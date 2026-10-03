@@ -10,6 +10,7 @@ const app = createApp({
     issuer,
     audience: process.env["OIDC_AUDIENCE"] ?? "pflanzendex-api",
   }),
+  version: process.env["GIT_SHA"],
   pool: oeffnePool(process.env["DATABASE_URL"] ?? testDatenbankUrl()),
   webUrsprung: process.env["WEB_URSPRUNG"] ?? "http://localhost:5173",
 });
