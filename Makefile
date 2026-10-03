@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check
 
 help: ## Alle Ziele mit einem Satz
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -60,6 +60,9 @@ auth-down: ## Anmeldedienst und Mail-Fänger entfernen
 
 test: $(if $(CI),,db-up) ## Unit- und Datenbanktests aller Pakete und der Prüfskripte
 	cd $(APP) && npm run test
+
+coverage: $(if $(CI),,db-up) ## Run all tests with coverage, then the ratchet check (thresholds: app/coverage-thresholds.json)
+	cd $(APP) && npm run coverage
 
 spec-check: ## Spec consistency and story-to-test traceability (QG-T4)
 	cd $(APP) && npm run specs
