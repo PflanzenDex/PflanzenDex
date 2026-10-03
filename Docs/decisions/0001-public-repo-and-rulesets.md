@@ -16,15 +16,15 @@ The repo is **public**. Rulesets live as code in `.github/rulesets/` and are app
 
 Each protected branch has two rulesets, so that the hard rules never have exceptions while the review rule can:
 
-| Ruleset | Target | Rules | Bypass |
-|---|---|---|---|
-| `main-protection` | `main` | required check `ci-status`; CodeQL code scanning results (no new high or higher security alerts, no errors); no force push, no deletion | none |
-| `main-review` | `main` | PR only; 1 approval from a human who is not the last pusher; stale approvals dismissed on new pushes; unresolved review threads block; code-owner review; merge commit only (E-13) | repository admins, **only when merging a PR** |
-| `dev-protection` | `dev` | like `main-protection` | none |
-| `dev-review` | `dev` | like `main-review`, but squash (feature branches) and merge commit (only for the back-merge `main` → `dev` after a release or hotfix) | repository admins, only when merging a PR |
-| `release-tags` | tags `v*` | tags are immutable (no move, no delete); creating them stays possible for the release workflow | none |
+| Ruleset           | Target    | Rules                                                                                                                                                                              | Bypass                                        |
+| ----------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `main-protection` | `main`    | required check `ci-status`; CodeQL code scanning results (no new high or higher security alerts, no errors); no force push, no deletion                                            | none                                          |
+| `main-review`     | `main`    | PR only; 1 approval from a human who is not the last pusher; stale approvals dismissed on new pushes; unresolved review threads block; code-owner review; merge commit only (E-13) | repository admins, **only when merging a PR** |
+| `dev-protection`  | `dev`     | like `main-protection`                                                                                                                                                             | none                                          |
+| `dev-review`      | `dev`     | like `main-review`, but squash (feature branches) and merge commit (only for the back-merge `main` → `dev` after a release or hotfix)                                              | repository admins, only when merging a PR     |
+| `release-tags`    | tags `v*` | tags are immutable (no move, no delete); creating them stays possible for the release workflow                                                                                     | none                                          |
 
-**Self-merge (amended 2026-10-03):** repository admins may merge their own PRs without an approval ("bypass rules" when merging, or `gh pr merge --admin`). The bypass mode is `pull_request`: it never allows direct pushes, and `ci-status` stays mandatory because it lives in the `*-protection` rulesets without bypass. Non-admins still need an approval. Agents never merge (`AGENTS.md`, Claude Code hook).
+**Self-merge (amended 2026-10-03):** repository admins may merge their own PRs without an approval ("bypass rules" when merging, or `gh pr merge --admin`). The bypass mode is `pull_request`: it never allows direct pushes, and `ci-status` stays mandatory because it lives in the `*-protection` rulesets without bypass. Non-admins still need an approval. Agents merge into `dev` only under the conditions of ADR 0005 and never into `main`.
 
 **Agent configuration:** `CLAUDE.md`, `AGENTS.md`, `.claude/`, `.agents/`, `.githooks/` and `.github/rulesets/` have code owners (`.github/CODEOWNERS`); with code-owner review required, a non-admin's change to what agents read or may do needs an owner's approval.
 
