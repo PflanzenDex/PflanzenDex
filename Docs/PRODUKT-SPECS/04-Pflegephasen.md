@@ -6,7 +6,7 @@ Prototyp-Bezug: Epic PHA. Unterschied: Standorte sind Entitäten, kein Textvergl
 
 ## Userstories
 
-### US-PHA-01 · Sehen, in welcher Phase jede Pflanze sein sollte · ⬜ (Prototyp ✅)
+### US-PHA-01 · Sehen, in welcher Phase jede Pflanze sein sollte · 🟨 (Prototyp ✅)
 
 Als **Pflanzenhalter** will ich je Exemplar die erwartete Phase und den Soll-Standort sehen, damit ich Winter- und Sommerumzüge nicht vergesse.
 
@@ -15,6 +15,8 @@ Akzeptanzkriterien:
 - Gelistet wird jedes aktive Exemplar (nicht Steckling, nicht archiviert), dessen Art (oder Exemplar) einen Ruhephasen-Zeitraum hat.
 - Phase = Ruhephase, wenn das heutige Datum **in der Zeitzone des Nutzers** im Intervall `Von…Bis` liegt, sonst Wachstumsphase. Das Intervall darf über den Jahreswechsel gehen (z. B. 11-01 bis 03-15).
 - Soll-Standort = der dem Exemplar (oder der Art) für diese Phase zugeordnete Standort.
+
+Stand der Umsetzung: Liste, Ruhephasen-Zeitraum der Art, Zeitzone des Nutzers (vorerst vom Gerät, bis das Profil eine kennt, US-ACC-02) und Jahreswechsel sind umgesetzt. Es fehlen der Soll-Standort je Phase (Pflegeprofil des Halters, US-BES-09: bis dahin „unbekannt“, nie erfunden, P-08) und ein Ruhephasen-Zeitraum am Exemplar selbst (nur der der Art zählt). Der Ablauf mit einem Exemplar im Browser-Test (E2E) fehlt, bis der Artenkatalog gefüllt werden kann (US-BES-01); die Phasenableitung deckt der API-Test gegen die Datenbank ab.
 
 ### US-PHA-02 · Abweichungen zuerst sehen · ⬜ (Prototyp ✅)
 
@@ -49,6 +51,6 @@ Akzeptanzkriterien:
 | FR-PHA-01 | `Ruhephase_Von/Bis` sind Monat-Tag-Werte. Arten ohne echte Ruhephase tragen trotzdem Werte (Beginn der Verlangsamung) und gleiche Standorte in beiden Phasen, dann gibt es nie eine Abweichung. | ⬜                                                                                    |
 | FR-PHA-02 | Das Exemplar trägt genau ein manuell gepflegtes Standortfeld (Ist). Soll-Standorte je Phase gehören zum Pflegeprofil der Art des Halters.                                                       | ⬜                                                                                    |
 | FR-PHA-03 | Standortvergleich über Kennung. Tippfehler sind nicht mehr möglich, weil nur Auswahl erlaubt ist (löst das Prototyp-Risiko aus FR-PHA-03).                                                      | ⬜                                                                                    |
-| FR-PHA-04 | Stecklinge sind ausgenommen.                                                                                                                                                                    | ⬜                                                                                    |
+| FR-PHA-04 | Stecklinge sind ausgenommen.                                                                                                                                                                    | ✅                                                                                    |
 | FR-PHA-05 | Das Anlegen belegt den Standort phasengerecht (US-BES-02).                                                                                                                                      | ⬜ (Port `SollStandortQuelle` in `bestand` steht, die Umsetzung durch `pflege` fehlt) |
 | FR-PHA-06 | Am Tag des Phasenwechsels erinnert das System, wenn Exemplare noch am alten Standort stehen (US-MON-02). Die Berechnung ist dieselbe wie in dieser Epic (FR-MON-03).                            | ⬜                                                                                    |

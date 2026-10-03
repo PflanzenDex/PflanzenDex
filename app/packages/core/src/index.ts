@@ -5,3 +5,4 @@ export * from "./konto";
 export * from "./katalog";
 export * from "./licht";
 export * from "./bestand";
+export * from "./pflege";
