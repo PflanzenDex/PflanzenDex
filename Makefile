@@ -6,7 +6,7 @@ DB_CONTAINER := pflanzendex-test-db
 DB_PORT := 54329
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test gates ci clean db-up db-down migrate
+.PHONY: help setup dev lint format typecheck test gates ci clean db-up db-down migrate deploy backup restore-test
 
 help: ## Alle Ziele mit einem Satz
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -48,3 +48,12 @@ ci: $(if $(CI),,db-up) ## Alle Gates in der Reihenfolge der CI, bricht beim erst
 
 clean: ## Build-Ausgaben und node_modules entfernen
 	cd $(APP) && rm -rf node_modules packages/*/node_modules packages/*/dist
+
+deploy: ## Staging aus origin/main bauen und starten (auf dem Host, braucht app/deploy/.env)
+	$(APP)/deploy/scripts/deploy.sh
+
+backup: ## Datenbank sichern (app/deploy/backups)
+	$(APP)/deploy/scripts/backup.sh
+
+restore-test: ## Wiederherstellungstest in Wegwerf-Container (braucht Docker)
+	$(APP)/deploy/scripts/restore-test.sh
