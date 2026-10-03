@@ -2,6 +2,13 @@
 # US-QG-01: fast gates before pushing. --no-verify skips this, but CI repeats every check (D-02).
 . "$(dirname "$0")/_lib.sh"
 need_setup
+# US-DEV-08: stop a push onto a story that someone else has claimed (opt-out: SKIP_CLAIM_CHECK=1).
+# Offline or without gh the check only warns. The hook gets the pushed refs on stdin.
+refs="$(cat)"
+printf '%s\n' "$refs" | node "$app/scripts/claim-check.mjs" pre-push || {
+  echo "Push aborted: the story belongs to someone else. See: make board" >&2
+  exit 1
+}
 cd "$root" && make gates || {
   echo "Push aborted: a gate failed. Re-run with: make gates" >&2
   exit 1

@@ -3,7 +3,7 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { findeSchemaVerstoesse, mitKonto, migriere, pruefeMandantentrennung } from "./index.ts";
 import { oeffnePool } from "./verbindung.ts";
-import { FIXTURES } from "../fixtures.ts";
+import { FIXTURES, legeFixtureArtAn } from "../fixtures.ts";
 import { MODULE_CONFIG as REGISTER } from "../../../../modules.config.mjs";
 
 // Testrahmen mit zwei Konten (QG-D1, NFR-09, FR-ACC-02). Läuft gegen eine echte PostgreSQL (`make db-up`).
@@ -14,6 +14,7 @@ const kontoB = randomUUID();
 beforeAll(async () => {
   pool = oeffnePool();
   await migriere(pool);
+  await legeFixtureArtAn(pool);
 });
 afterAll(async () => {
   await pool.query("delete from konto where id = any($1)", [[kontoA, kontoB]]);

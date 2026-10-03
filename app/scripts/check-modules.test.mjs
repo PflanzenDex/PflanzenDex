@@ -302,6 +302,77 @@ describe("module boundaries (FR-QG-19)", () => {
     });
   });
 
+  describe("AB-10 foreign keys to global reference tables (ADR 0003 O-2)", () => {
+    const GLOBAL = { art: { owner: "katalog", reason: "shared catalog without konto_id" } };
+    const withCatalog = (global = GLOBAL) =>
+      cfg({
+        MODULES: [
+          ...CFG.MODULES.map((m) =>
+            m.name === "bestand" ? { ...m, dependsOn: [...m.dependsOn, "katalog"] } : m,
+          ),
+          { name: "katalog", epics: [], tables: ["art"], dependsOn: ["kern"], ports: [] },
+        ],
+        GLOBAL_REFERENCE_TABLES: global,
+      });
+    const mig = (module, sql, name = `0005_${module}_x.sql`) => ({
+      [`packages/db/migrations/${name}`]: `-- modul: ${module}\n${sql}`,
+    });
+    const FK =
+      "alter table topf add foreign key (art_id) references art (id) on delete restrict;\n";
+    const katalogIdx = { [idx("katalog")]: "export const a = 1;\n" };
+    const go = (files, c = withCatalog()) => run({ ...katalogIdx, ...files }, c);
+
+    it("AB-10: a plain (id) foreign key with on delete restrict from an allowed module passes", () => {
+      assert.deepEqual(go(mig("bestand", FK)), []);
+      assert.deepEqual(
+        go(
+          mig(
+            "bestand",
+            "create table topf (art_id uuid references art(id) on delete restrict);\n",
+          ),
+        ),
+        [],
+      );
+    });
+    it("AB-10: a dependency that the matrix does not allow fails with the edge", () => {
+      const v = go(mig("pflege", FK.replace("topf", "gabe")));
+      assert.match(
+        v.join("\n"),
+        /^AB-10 .*0005_pflege_x\.sql:2 pflege -> katalog: .*without an allowed dependency/m,
+      );
+    });
+    it("AB-10: a table that is not registered as global is not covered by the exception", () => {
+      const v = go(mig("bestand", FK), withCatalog({}));
+      assert.deepEqual(v, []); // the text gate leaves it to the schema check (modul-schema.ts: plain (id) fails there)
+      assert.deepEqual(
+        checkProject(
+          project({ ...clean, ...katalogIdx }),
+          withCatalog({ topf: GLOBAL.art }),
+        ).filter((x) => /owner katalog does not own/.test(x)).length,
+        1,
+      );
+    });
+    it("AB-10: an entry without a reason is an error", () => {
+      const v = go({}, withCatalog({ art: { owner: "katalog", reason: " " } }));
+      assert.match(
+        v.join("\n"),
+        /^AB-10 modules\.config\.mjs global reference table art has no reason/m,
+      );
+      const w = go(mig("bestand", FK), withCatalog({ art: { owner: "katalog", reason: "" } }));
+      assert.match(w.join("\n"), /:2 foreign key to global reference table art has no reason/);
+    });
+    it("AB-10: a missing on delete restrict fails", () => {
+      const v = go(mig("bestand", FK.replace(" on delete restrict", "")));
+      assert.match(v.join("\n"), /^AB-10 .*:2 bestand -> katalog: .*needs on delete restrict/m);
+      const c = go(mig("bestand", FK.replace("restrict", "cascade")));
+      assert.match(c.join("\n"), /needs on delete restrict/);
+    });
+    it("AB-10: a composite or non-id target fails", () => {
+      const v = go(mig("bestand", FK.replace("(id)", "(konto_id, id)")));
+      assert.match(v.join("\n"), /only as a plain \(id\) target/);
+    });
+  });
+
   describe("AB-14 migrations name their module", () => {
     const mig = (name, sql) => ({ [`packages/db/migrations/${name}`]: sql });
     it("a migration with module in name and first line, touching its own tables, passes", () => {

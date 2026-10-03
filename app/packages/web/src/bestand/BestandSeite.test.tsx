@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { Art, Exemplar } from "@pflanzendex/core";
+import type { Art, Exemplar, ExemplarKarte } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BestandSeite } from "./BestandSeite";
 
@@ -24,6 +24,19 @@ const exemplar = (extra: Partial<Exemplar> = {}): Exemplar => ({
   behandlungen: [],
   ...extra,
 });
+const karteVon = (e: Exemplar): ExemplarKarte => ({
+  id: e.id,
+  name: e.name,
+  artName: "Bogenhanf",
+  status: e.status,
+  standort: e.standortId === "s1" ? "Regal Süd" : null,
+  lichtzone: null,
+  gefangenAm: e.gefangenAm,
+  foto: null,
+  letzteMessung: null,
+  behandlung: null,
+  weitereBehandlungen: 0,
+});
 const standort = { id: "s1", name: "Regal Süd", lichtzoneId: null, art: "innen" as const };
 
 function fakeServer(opts: { exemplare?: Exemplar[]; anlegen?: () => Promise<Response> } = {}) {
@@ -42,7 +55,7 @@ function fakeServer(opts: { exemplare?: Exemplar[]; anlegen?: () => Promise<Resp
       return antwort(201, neu);
     }
     if (pfad === "/standorte") return antwort(200, { standorte: [standort] });
-    return antwort(200, { exemplare });
+    return antwort(200, { karten: exemplare.map(karteVon) });
   });
   vi.stubGlobal("fetch", abruf);
   return { abruf, posts };
@@ -86,7 +99,7 @@ describe("US-BES-02 Seite Bestand", () => {
       vi.fn<typeof fetch>(async (url) =>
         new URL(String(url)).pathname === "/standorte"
           ? antwort(500, { fehler: { code: "server.fehler", text: "Standorte nicht ladbar." } })
-          : antwort(200, { exemplare: [exemplar()] }),
+          : antwort(200, { karten: [karteVon(exemplar())] }),
       ),
     );
     render(seite());
@@ -162,5 +175,41 @@ describe("US-BES-02 Seite Bestand", () => {
     rerender(seite({ neueArt: null }));
     expect((await screen.findByRole("status")).textContent).toContain("ist angelegt");
     expect(screen.getByRole("status").textContent).toContain("Der Standort ist unbekannt");
+  });
+});
+
+describe("US-BES-06 Karten auf der Seite Bestand", () => {
+  it("zeigt Messung, Notiz (einklappbar), Foto-Link und Behandlung aus der Karten-API", async () => {
+    const karte: ExemplarKarte = {
+      ...karteVon(exemplar({ standortId: "s1" })),
+      lichtzone: "Zone 3",
+      foto: { url: "https://medien.test/x.jpg", datum: "2026-09-28" },
+      letzteMessung: { datum: "2026-10-01", qualitaet: "vergeilt", notiz: "Streckt sich." },
+      behandlung: {
+        grund: "Neem spritzen",
+        faelligkeit: { art: "ueberfaellig", tage: 1, text: "überfällig seit 1 Tg." },
+      },
+      weitereBehandlungen: 2,
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) =>
+        new URL(String(url)).pathname === "/standorte"
+          ? antwort(200, { standorte: [standort] })
+          : antwort(200, { karten: [karte] }),
+      ),
+    );
+    render(seite());
+    expect(await screen.findByText("Lichtzone: Zone 3 · Status: Pflanze")).toBeTruthy();
+    const foto = screen.getByRole("link", { name: "Foto von Bogenhanf groß öffnen" });
+    expect(foto.getAttribute("href")).toBe("https://medien.test/x.jpg");
+    expect(screen.getByText(/kein Erfolgssignal/)).toBeTruthy();
+    expect(screen.getByText("überfällig seit 1 Tg.")).toBeTruthy();
+    expect(screen.getByText(/\+2 weitere/)).toBeTruthy();
+    const details = screen.getByText("Notiz der Messung").closest("details");
+    expect(details?.open).toBe(false);
+    await userEvent.click(screen.getByText("Notiz der Messung"));
+    expect(details?.open).toBe(true);
+    expect(screen.getByText("Streckt sich.")).toBeTruthy();
   });
 });

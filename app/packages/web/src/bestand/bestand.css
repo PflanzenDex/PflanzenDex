@@ -13,3 +13,84 @@
 .bestand .hinweis {
   margin-bottom: 16px;
 }
+
+/* Exemplar-Karten (US-BES-06): eine Spalte auf schmalen Handys, zwei und mehr, sobald Platz ist. */
+.karten-raster {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.exemplar-karte {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 12px;
+  background: var(--karte);
+  border: 1px solid var(--rand);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.exemplar-karte h2 {
+  font-size: 1.1rem;
+  margin: 8px 0 0;
+}
+.exemplar-karte p {
+  margin: 0;
+}
+.karte-foto {
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--grund);
+}
+.karte-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+a.karte-foto:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+.platzhalter {
+  aspect-ratio: auto;
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--rand);
+  color: var(--leise);
+}
+.qualitaet-gesund {
+  color: var(--text);
+}
+.qualitaet-vergeilt,
+.faellig-ueberfaellig {
+  color: var(--text);
+  background: var(--warn-grund);
+  border-bottom: 2px solid var(--warn-rand);
+  padding: 0 4px;
+}
+.faellig-ueberfaellig {
+  font-weight: 700;
+}
+.qualitaet-hinweis {
+  padding: 6px 8px;
+  background: var(--warn-grund);
+  border-left: 4px solid var(--warn-rand);
+  font-size: 0.9rem;
+}
+.notiz summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.notiz summary:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}

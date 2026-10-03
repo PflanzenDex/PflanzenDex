@@ -27,8 +27,9 @@ const fehler = (e: unknown) => e as { code?: string; constraint?: string };
 /**
  * Adapter für Exemplare; jeder Aufruf läuft als Konto des Aufrufers unter den Zeilenregeln (P-04). Der Standort
  * hängt über den zusammengesetzten Fremdschlüssel (konto_id, standort_id) am eigenen Konto. Die Art hat keinen
- * Fremdschlüssel: der Katalog trägt keine Konto-Kennung, AB-10 erlaubt nur `(konto_id, id)`; die Operation in `core`
- * prüft stattdessen, dass das Konto die Art sehen darf, und die Anwendung kann Arten nicht löschen.
+ * Die Art hängt über einen einfachen Fremdschlüssel `exemplar_art` (on delete restrict) am Katalog: `art` ist als
+ * globale Referenztabelle registriert (AB-10, ADR 0003 O-2). Die Datenbank garantiert, dass die Art existiert und
+ * nicht gelöscht wird; ob das Konto sie sehen darf (freigegeben oder eigener Vorschlag), prüft die Operation in `core`.
  */
 export class ExemplarePostgres {
   constructor(private readonly pool: Pool) {}

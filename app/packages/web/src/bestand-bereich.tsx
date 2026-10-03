@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Art, Exemplar } from "@pflanzendex/core";
+import type { Art } from "@pflanzendex/core";
 import { BestandSeite } from "./bestand";
 import { MessenSeite } from "./pflege";
 
@@ -16,7 +16,7 @@ export function BestandBereich(props: {
   onArtWaehlen: () => void;
   onAbgeschlossen: () => void;
 }) {
-  const [messen, setMessen] = useState<Exemplar | null>(null);
+  const [messen, setMessen] = useState<{ id: string; name: string } | null>(null);
   return messen ? (
     <MessenSeite
       api={props.api}

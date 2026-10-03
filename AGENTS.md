@@ -7,7 +7,8 @@ Rules for AI agents (Claude Code, Codex, Copilot, …) working in this repo. Hum
 1. Find the story or requirement in `Docs/PRODUKT-SPECS/` (IDs `US-…`, `FR-…`). No spec entry, no code: propose the spec change first.
 2. Path-scoped rules for each package, the specs and the CI files are in `.claude/rules/*.md` (Claude Code loads them when you touch matching files; read them if you use another tool).
 3. Check `.agents/skills/` for a playbook that fits the task (`spec-to-tests`, `add-core-operation`, …) and follow it instead of improvising.
-4. Work in your own worktree and branch from `dev`: `make worktree BRANCH=feat/<epic>-<nn>-<topic>`. Never work in a directory another session uses.
+4. Before every story or enabler, claim it: `make claim ISSUE=<n>`. It refuses (exit 1) when the issue has an assignee, a PR references it or an origin branch carries its story ID; otherwise it assigns you, sets the board status, pushes the branch and opens a draft PR with a "Handoff" section. `make board` shows who works on what. Never start a story that someone else has claimed; ask them (US-DEV-08).
+5. Work in your own worktree and branch from `dev`: `make worktree BRANCH=<branch printed by make claim>` (the claim check runs again; opt-out only with an explicit `SKIP_CLAIM_CHECK=1`). Keep the "Handoff" section of the draft PR current. Never work in a directory another session uses.
 
 ## While you work
 

@@ -1,0 +1,60 @@
+    195|     });
+    196|     const [karte] = await exemplarKarten(abhaengigkeiten({ behandlunge…
+    197|     expect(karte?.behandlung).toEqual({
+       |                               ^
+    198|       grund: "Wurzelfäule behandeln",
+    199|       faelligkeit: { art: "ueberfaellig", tage: 3, text: "überfällig s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/18]⎯
+
+ FAIL  core/src/bestand/karten.test.ts > US-BES-06 Karte: offene Behandlung > bei mehreren zeigt sie die am frühesten fällige und zählt die übrigen als „+N weitere“
+AssertionError: expected undefined to match object { grund: 'Neem spritzen', …(1) }
+
+- Expected:
+{
+  "faelligkeit": {
+    "text": "heute fällig",
+  },
+  "grund": "Neem spritzen",
+}
+
++ Received:
+undefined
+
+ ❯ core/src/bestand/karten.test.ts:214:31
+    212|     });
+    213|     const [karte] = await exemplarKarten(abhaengigkeiten({ behandlunge…
+    214|     expect(karte?.behandlung).toMatchObject({
+       |                               ^
+    215|       grund: "Neem spritzen",
+    216|       faelligkeit: { text: "heute fällig" },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/18]⎯
+
+ FAIL  core/src/bestand/karten.test.ts > US-BES-06 Mandant: nur eigene Exemplare > ein Konto sieht nur Karten seiner Exemplare und keine Daten fremder Standorte
+AssertionError: expected [] to deeply equal [ 'Annas Pflanze' ]
+
+- Expected
++ Received
+
+- [
+-   "Annas Pflanze",
+- ]
++ []
+
+ ❯ core/src/bestand/karten.test.ts:228:38
+    226|     const annas = await exemplarKarten(abhaengigkeiten(), "anna", HEUT…
+    227|     const bens = await exemplarKarten(abhaengigkeiten(), "ben", HEUTE);
+    228|     expect(annas.map((k) => k.name)).toEqual(["Annas Pflanze"]);
+       |                                      ^
+    229|     expect(bens.map((k) => k.name)).toEqual(["Bens Pflanze"]);
+    230|     expect(bens[0]?.standort).toBe("Fensterbank");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/18]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  18 failed (18)
+   Start at  15:22:29
+   Duration  273ms (transform 68%, import 15%, tests 15%, worker 2%)
+

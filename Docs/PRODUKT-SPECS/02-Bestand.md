@@ -61,7 +61,7 @@ Akzeptanzkriterien:
 - Spalten: Art, botanischer Name, Lichtzone, Gießregel, Substrat, Rückschnitt, Erfolgskriterien, Schwierigkeit.
 - Nur Arten mit mindestens einem aktiven Exemplar. Sortiert nach `Schwierigkeit` (Zahl 1–3, Anzeige Einfach/Medium/Schwer).
 
-### US-BES-06 · Exemplare als Karten sehen · ⬜ (Prototyp ✅)
+### US-BES-06 · Exemplare als Karten sehen · 🟨 (Prototyp ✅)
 
 Als **Pflanzenhalter** will ich jedes Exemplar als Karte sehen, damit ich Zustand und Handlungsbedarf auf einen Blick erfasse.
 
@@ -71,6 +71,8 @@ Akzeptanzkriterien:
 - Offene Behandlung: Grund, Fälligkeit (überfällig seit N Tg. / heute / in N Tg.), bei mehreren „+N weitere".
 - Notiz der letzten Messung einklappbar. Klick auf das Foto öffnet es groß.
 - Raster passt sich der Bildschirmbreite an (Handy: eine bis zwei Spalten).
+
+Stand der Umsetzung: Karten mit Name, Art, Lichtzone (die des Standorts), Status und Standort; „unbekannt“, wenn etwas fehlt (P-08). Letzte Messung (Qualität, Datum), einklappbare Notiz, Foto mit Link auf die große Ansicht und offene Behandlung mit „überfällig seit N Tg. / heute fällig / in N Tg.“ und „+N weitere“ sind in Kern, API und Oberfläche fertig und getestet, **zeigen aber nichts**, bis `pflege` die Ports `MessungsQuelle` (WAC) und `BehandlungsQuelle` (BEH) umsetzt: bis dahin steht dort „Noch kein Foto“, „noch keine Messung“ und „keine offene Behandlung“. Vergeilt/dünn wird nie als Erfolg gezeigt. **Offen:** die Zone eines Steckling-Overrides (BES-04), archivierte Exemplare ausblenden (BES-07).
 
 ### US-BES-07 · Eingegangene oder abgegebene Pflanze archivieren · ⬜ (Prototyp ✅)
 

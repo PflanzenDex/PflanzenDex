@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migriere, mitKonto, oeffnePool } from "../kern/index.ts";
+import { artExistiert, legeFixtureArtAn, loescheArt, loescheArtAlsAnwendung } from "../fixtures.ts";
 import { StandortePostgres } from "../licht/index.ts";
 import { ExemplarePostgres } from "./index.ts";
 
@@ -11,9 +12,15 @@ let exemplare: ExemplarePostgres;
 let standorte: StandortePostgres;
 const anna = randomUUID();
 const ben = randomUUID();
-const art = randomUUID();
-const werte = {
-  artId: art,
+let art = "";
+const werte: {
+  artId: string;
+  name: string;
+  kennzeichen: null;
+  standortId: null;
+  gefangenAm: string;
+} = {
+  artId: "",
   name: "Bogenhanf",
   kennzeichen: null,
   standortId: null,
@@ -23,6 +30,8 @@ const werte = {
 beforeAll(async () => {
   pool = oeffnePool();
   await migriere(pool);
+  art = await legeFixtureArtAn(pool);
+  werte.artId = art;
   exemplare = new ExemplarePostgres(pool);
   standorte = new StandortePostgres(pool);
   for (const id of [anna, ben])
@@ -101,5 +110,26 @@ describe("US-BES-02 Exemplare in der Datenbank", () => {
         ),
       ),
     ).rejects.toThrow();
+  });
+
+  it("US-BES-02, AB-10: der Fremdschlüssel greift, eine unbekannte Art lässt sich nicht eintragen", async () => {
+    await expect(
+      exemplare.anlegen(anna, { ...werte, name: "Ohne Art", artId: randomUUID() }),
+    ).rejects.toMatchObject({ code: "23503", constraint: "exemplar_art" });
+    expect((await exemplare.liste(anna)).map((z) => z.name)).not.toContain("Ohne Art");
+  });
+
+  it("US-BES-02, AB-10, P-10: eine benutzte Art lässt sich nicht löschen (on delete restrict), auch nicht mit Eigentümerrechten", async () => {
+    const z = await exemplare.anlegen(anna, { ...werte, name: "Benutzt" });
+    expect(typeof z).toBe("object");
+    await expect(loescheArt(pool, art)).rejects.toMatchObject({
+      code: "23503",
+      constraint: "exemplar_art",
+    });
+    expect(await artExistiert(pool, art)).toBe(true);
+  });
+
+  it("US-BES-02, AB-10: die Anwendungsrolle darf Arten weiterhin nicht löschen", async () => {
+    await expect(loescheArtAlsAnwendung(pool, anna, art)).rejects.toMatchObject({ code: "42501" });
   });
 });
