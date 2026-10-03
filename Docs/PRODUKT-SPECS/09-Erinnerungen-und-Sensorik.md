@@ -74,7 +74,7 @@ Akzeptanzkriterien:
 
 ## Anforderungen
 
-### Daten (DM-MON-01)
+### DM-MON-01 Daten
 
 `Giess_Intervall_Tage` je Art: `{Wachstum, Ruhe}`; `Giessprotokoll` je Exemplar: `{Datum, Quelle}`; `Sensor`: `{Kennung, Typ, Exemplar? oder Bereich, Kalibrierung, Schwellen}`; `Messreihe`: Rohwerte außerhalb der Nutzerdaten, aggregiert in `Sensorstatus`.
 
