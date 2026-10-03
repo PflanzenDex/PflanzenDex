@@ -112,7 +112,7 @@ test("US-DEV-08: losing the race for the assignee steps back and deletes its own
   await assert.rejects(claim(client, 62, quiet), /claimed #62 first/);
   assert.ok(client.calls.some((c) => c.includes("--remove-assignee")));
   assert.ok(
-    client.calls.some((c) => /git push origin --delete feat\/bes-06-exemplar-loeschen/.test(c)),
+    client.calls.some((c) => /git push origin --delete feat\/bes-06-delete-specimen/.test(c)),
   );
   assert.ok(!client.calls.some((c) => c.startsWith("gh pr create")));
 });
@@ -135,19 +135,19 @@ test("US-DEV-08: a failing PR creation rolls back assignee, status and branch", 
   await assert.rejects(claim(client, 62, quiet), /gh down/);
   const all = client.calls.join("\n");
   assert.match(all, /--remove-assignee @me/);
-  assert.match(all, /git push origin --delete feat\/bes-06-exemplar-loeschen/);
+  assert.match(all, /git push origin --delete feat\/bes-06-delete-specimen/);
   assert.match(all, /item-edit .*--single-select-option-id T/);
 });
 
 test("US-DEV-08: re-running after a half claim of the caller continues", async () => {
   const mine = { ...issue, assignees: [{ login: "max" }] };
   const result = await claim(fake({ issues: [mine] }), 62, quiet);
-  assert.equal(result.branch, "feat/bes-06-exemplar-loeschen");
+  assert.equal(result.branch, "feat/bes-06-delete-specimen");
 });
 
 test("US-DEV-08: a half claim of the caller with a branch on origin is still refused", async () => {
   const mine = { ...issue, assignees: [{ login: "max" }] };
-  const branches = "sha1\trefs/heads/feat/bes-06-exemplar-loeschen\n";
+  const branches = "sha1\trefs/heads/feat/bes-06-delete-specimen\n";
   await assert.rejects(claim(fake({ issues: [mine], branches }), 62, quiet), ClaimRefused);
 });
 
