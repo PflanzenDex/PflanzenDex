@@ -34,7 +34,7 @@ export function HintsPage(props: {
 
 function HintList(props: { hints: readonly SpecimenHint[]; onOpen: (t: HintTarget) => void }) {
   return (
-    <section aria-labelledby="hints-title" className="hints">
+    <section aria-labelledby="hints-title" className="specimen-hints">
       <h1 id="hints-title">Hinweise</h1>
       {props.hints.length === 0 ? (
         <p>Keine Hinweise: Jedes Exemplar hat eine Art, einen Standort und eine Lichtzone.</p>

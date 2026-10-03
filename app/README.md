@@ -128,7 +128,7 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 
 - **What:** `GET /specimens/hints` returns `{ hints }`, derived live (no table, no migration, P-01): per active specimen of the own account one hint for each gap, `location_missing`, `location_without_zone` (names the location) and `species_missing` (a species the account cannot read; the database already forbids a specimen without species). Archived specimens never appear (`isActive`, US-BES-07), cuttings are checked like plants. Every hint has `text` and `nextAction` (P-09), sorted by specimen name. The route sits before `/specimens/:id`. `specimenHints` lives in `core/src/collection`, reads through the existing ports (`SpecimenStore`, `SpeciesSource`, `LightLocationStore`); no new module edge.
 - **Web:** tab "Hinweise" (`HintsPage` in the `collection` module); a button per hint leads to "Bestand" or "Standorte und Licht" (the app maps the target to a tab, the modules do not know each other). The note "mit unbekannter Zone" of the light distribution points to this tab (P-10).
-- **Limits:** the tab shows no count badge; the central "Heute" list (TE-07) and the deviations (QS-04) do not exist yet and must treat incomplete specimens the same way (listed or counted with a note). Missing lux need of a species (FR-LIC-03) has no hint yet.
+- **Limits:** no operation changes the location of an existing specimen yet (BES-03/PHA-03), so "Standort fehlt" names its action but the app cannot do it; the tab shows no count badge; the central "Heute" list (TE-07) and the deviations (QS-04) do not exist yet and must treat incomplete specimens the same way (listed or counted with a note). Missing lux need of a species (FR-LIC-03) has no hint yet.
 
 ## Measurements (US-WAC-01)
 
