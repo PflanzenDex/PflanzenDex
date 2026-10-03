@@ -43,7 +43,7 @@ Akzeptanzkriterien:
 - Die Ziele laufen auf Linux, macOS und unter WSL; Pfadunterschiede (Python- oder Node-Aufruf, Virtualenv-Verzeichnisse) werden **an einer Stelle** aufgelöst, nicht dreifach (Befund aus Tombola).
 - Das Makefile enthält keine Fachlogik, nur Aufrufe. Alles Nichttriviale liegt in Skripten (`scripts/`) mit Tests.
 
-### US-DEV-02 · Hooks fangen früh, ohne zu nerven · ⬜
+### US-DEV-02 · Hooks fangen früh, ohne zu nerven · 🟨
 Als **Entwickler** will ich Prüfungen genau dann, wenn sie am billigsten sind.
 
 Akzeptanzkriterien (Git-Hooks, verwaltet über ein Werkzeug wie Husky, installiert durch `make setup`):
