@@ -73,6 +73,7 @@ skills-check: ## Check agent skills in .agents/skills (trigger, paths, check com
 lighthouse: ## Lighthouse CI on the built web app, mobile, report only (QG-U1); report in app/packages/web/.lighthouseci
 	cd $(APP) && npm run build -w @pflanzendex/web && npm run lighthouse -w @pflanzendex/web
 	scripts/lighthouse-summary.sh | tee $(APP)/packages/web/.lighthouseci/summary.md
+
 release-tags-check: ## All v* tags come from the release workflow, no hand-set version (FR-DEV-05; needs gh auth)
 	cd $(APP) && npm run release-tags
 
