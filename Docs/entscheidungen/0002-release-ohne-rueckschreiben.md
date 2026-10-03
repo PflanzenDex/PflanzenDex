@@ -13,7 +13,7 @@ US-DEV-06 nennt als Ergebnis eines Releases Git-Tag, `CHANGELOG.md` und Release-
 - **Werkzeug:** semantic-release (`app/release.config.js`), ein Paket, ein Release-Strang, nur Branch `main`.
 - **Auslöser:** `.github/workflows/release.yml` per `workflow_run` auf „CI", nur bei `success` und Ereignis `push` auf `main`. Ist `main` inzwischen weiter, bricht semantic-release ohne Release ab.
 - **Ergebnis:** Tag `vX.Y.Z` (unveränderlich durch das Ruleset `release-tags`) und GitHub-Release mit deutschen Abschnitten (Neu, Behoben, Schneller). **Kein** `CHANGELOG.md` und kein Versionsfeld in `package.json`. Die GitHub-Releases sind das Änderungsprotokoll, die Version kommt zur Build-Zeit aus `git describe`.
-- **0.x:** Startpunkt ist das Tag `v0.0.0` auf dem ersten Commit von `main`. Breaking Changes heben die Minor-Version (`VOR_1_0` in der Konfiguration). 1.0.0 entsteht bewusst, indem ein PR diese Regel entfernt (erste Freigabe für Fremde, Stufe 2).
+- **0.x:** Startpunkt ist das Tag `v0.0.0` auf dem Stand von `main` vor dem ersten Release (`ecf6780`). Breaking Changes heben die Minor-Version (`VOR_1_0` in der Konfiguration). 1.0.0 entsteht bewusst, indem ein PR diese Regel entfernt (erste Freigabe für Fremde, Stufe 2).
 - **Kein Release:** `docs`, `chore` (auch `chore(deps)` für Entwicklungswerkzeuge), `ci`, `test`, `refactor`, `build`, `style`. Laufzeit-Abhängigkeiten (`fix(deps)`) erzeugen einen Patch.
 - **Vorschau:** `make release-dry-run` (Branch muss auf `origin` existieren).
 
