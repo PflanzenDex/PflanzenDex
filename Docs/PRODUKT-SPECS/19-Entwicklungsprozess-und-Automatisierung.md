@@ -43,7 +43,7 @@ Akzeptanzkriterien:
 - Die Ziele laufen auf Linux, macOS und unter WSL; Pfadunterschiede (Python- oder Node-Aufruf, Virtualenv-Verzeichnisse) werden **an einer Stelle** aufgelöst, nicht dreifach (Befund aus Tombola).
 - Das Makefile enthält keine Fachlogik, nur Aufrufe. Alles Nichttriviale liegt in Skripten (`scripts/`) mit Tests.
 
-### US-DEV-02 · Hooks fangen früh, ohne zu nerven · ⬜
+### US-DEV-02 · Hooks fangen früh, ohne zu nerven · 🟨
 Als **Entwickler** will ich Prüfungen genau dann, wenn sie am billigsten sind.
 
 Akzeptanzkriterien (Git-Hooks, verwaltet über ein Werkzeug wie Husky, installiert durch `make setup`):
@@ -81,7 +81,7 @@ Akzeptanzkriterien: Jede Routine steht in der Tabelle mit Auslöser, Besitzer, A
 
 - Wiederkehrende Agentenaufgaben (z. B. wöchentlicher Gate-Gesundheitsbericht) dürfen als **geplanter Agent** laufen; sie schreiben nur Berichte und öffnen Vorschläge, sie ändern keine Gates.
 
-### US-DEV-04 · Skills und Playbooks für wiederkehrende Aufgaben · ⬜
+### US-DEV-04 · Skills und Playbooks für wiederkehrende Aufgaben · 🟨
 Als **Entwickler (und KI)** will ich für wiederkehrende Aufgaben eine bewährte Anleitung, statt jedes Mal zu improvisieren.
 
 Akzeptanzkriterien:
@@ -123,13 +123,13 @@ Akzeptanzkriterien:
 - **Stolperfallen-Register:** Wiederkehrende Fehler (Zeitzonen, Fehlertexte, Testsynchronisation) stehen als kurze Einträge unter `Docs/stolperfallen/` und werden bei einem Fund ergänzt (Muster `common-pitfalls`). Aus Einträgen, die sich prüfen lassen, werden Gates.
 - **Dokumentationsprozess:** Code-Änderung ohne passende Spec- oder Doku-Änderung fällt im Review auf; Doku-Commits tragen `docs:`; Doku wird mit Markdown-Lint und Link-Prüfung gegated (QG-U2).
 
-### US-DEV-06 · Release-Prozess · ⬜
+### US-DEV-06 · Release-Prozess · 🟨
 Als **Betreiber** will ich Releases, die klein, nachvollziehbar und rückholbar sind.
 
 Akzeptanzkriterien:
 - **Versionierung:** SemVer, automatisch aus Conventional Commits (semantic-release oder gleichwertig, E-13). `0.x` bis zur Parität (R1), `1.0.0` mit der ersten Freigabe für Fremde (Stufe 2). Kein manuelles Setzen von Versionsnummern.
 - **Auslöser und Kette:** Ein Release ist der Merge von `dev` nach `main` per Pull-Request mit voller Suite. Der Release-Workflow läuft auf `main` **nur für Commits mit grünem `ci-status`** (Muster: `workflow_run` auf „CI Pipeline" mit Statusprüfung), danach erst der Deploy. Eine rote CI bricht beides ab, ohne Version zu erzeugen. Nach dem Release wird `main` in `dev` zurückgemergt, damit Changelog- und Versions-Commits die Branches nicht auseinanderlaufen lassen.
-- **Ergebnis eines Releases:** Git-Tag, `CHANGELOG.md`, Release-Notizen aus den Commits, Container-Abbild, Datenbank-Migrationen (US-DEV-07), Katalog-/Baum-Stand (versioniert, getrennt vom Code, US-POK-03).
+- **Ergebnis eines Releases:** Git-Tag, Release-Notizen aus den Commits als GitHub-Release (statt `CHANGELOG.md` im Repo, ADR [0002](../decisions/0002-release-from-tags.md)), Container-Abbild, Datenbank-Migrationen (US-DEV-07), Katalog-/Baum-Stand (versioniert, getrennt vom Code, US-POK-03).
 - **Version sichtbar:** Die Version steht in der App (Fußzeile/Über-Seite), in Fehlerberichten und im Gesundheits-Endpunkt. Eine Quelle (Tag), keine zweite Pflege (Muster `sync_version.py`, aber ohne Schreiben in versionierte Dateien).
 - **Nutzerseitiger Changelog:** Für `feat:` und `fix:` verlangt QG-U3 einen kurzen deutschen Eintrag („Neu in dieser Version"), den die App anzeigt. Für interne Änderungen genügt `[skip-changelog]`.
 - **Zuschnitt:** Release-Inhalte folgen R0 bis R6 (`16-…`). Ein Release ist erst freigegeben, wenn die Kernabläufe seines Zuschnitts grün sind (FR-QG-08) und, bei sozialen Releases, QG-D1/QG-D2 stehen.
@@ -178,8 +178,8 @@ Akzeptanzkriterien:
 | FR-DEV-01 | `make ci` ≙ CI-Jobs. Ein Test oder Skript vergleicht die Ziele im Makefile mit den Workflow-Jobs und schlägt bei Abweichung an (verhindert Drift, vgl. FR-QG-01). | ⬜ |
 | FR-DEV-02 | Hooks, Skills, Routinen und Prozess sind **Teil des Repos** und per Pull-Request änderbar; keine Einstellungen nur auf einzelnen Rechnern. | ⬜ |
 | FR-DEV-03 | Jede Routine in US-DEV-03 ist als Workflow oder geplanter Job im Repo definiert und hat einen Besitzer. | ⬜ |
-| FR-DEV-04 | Das Prinzipienregister (US-QG-06) wird von einem Skript validiert und von Review und Fehleranalyse gepflegt. | ⬜ |
-| FR-DEV-05 | Versionen entstehen nur aus Commits (SemVer); ein manuell gesetzter Tag oder eine manuell geänderte Version fällt in CI auf. | ⬜ |
+| FR-DEV-04 | Das Prinzipienregister (US-QG-06) wird von einem Skript validiert und von Review und Fehleranalyse gepflegt. | 🟨 |
+| FR-DEV-05 | Versionen entstehen nur aus Commits (SemVer); ein manuell gesetzter Tag oder eine manuell geänderte Version fällt in CI auf. | ✅ |
 | FR-DEV-06 | Release-Notizen und nutzerseitiger Changelog sind zweisprachig vorbereitet (Deutsch zuerst); Texte liegen in Übersetzungsdateien, nicht im Code (NFR-14). | ⬜ |
 | FR-DEV-07 | Jeder Release erhält ein **Datenstand-Etikett** für Katalog und Taxonomie-Baum (Datum, Anzahl Arten, Fehlerzahl). | ⬜ |
 | FR-DEV-08 | Geplante Agenten und Routinen laufen mit minimalen Rechten (nur Lesen, Bericht schreiben); Deploy- und Geheimnisrechte hat nur der Release-Workflow. | ⬜ |

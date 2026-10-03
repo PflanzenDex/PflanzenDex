@@ -9,13 +9,22 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check
 
 help: ## Alle Ziele mit einem Satz
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
 
 setup: ## Abhängigkeiten installieren (npm ci, ohne Lockfile npm install)
 	cd $(APP) && if [ -f package-lock.json ]; then npm ci; else npm install; fi
+	$(if $(CI),,$(MAKE) hooks)
+
+hooks: ## Enable the git hooks in .githooks/ (commit-msg, pre-commit, pre-push, hints)
+	git config core.hooksPath .githooks
+
+commitlint: ## Check a commit message or PR title (MSG="feat(pha): …"), QG-C1
+	@# MSG reaches the shell as an environment variable, never through $$(MSG) expansion: PR titles are untrusted input.
+	@test -n "$$MSG" || { echo 'usage: make commitlint MSG="feat(pha): …"' >&2; exit 2; }
+	@cd $(APP) && printf '%s\n' "$$MSG" | npx --no-install commitlint
 
 dev: ## API und Web lokal starten
 	cd $(APP) && npm run dev
@@ -28,6 +37,9 @@ format: ## Prettier schreibt die Formatierung
 
 typecheck: ## TypeScript strict in allen Paketen
 	cd $(APP) && npm run typecheck
+
+docs-check: ## Lint markdown and check relative links (QG-U2)
+	cd $(APP) && npm run docs
 
 db-up: ## Test-Datenbank (PostgreSQL 16 in Docker) starten, falls sie nicht läuft
 	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) \
@@ -52,11 +64,40 @@ auth-down: ## Anmeldedienst und Mail-Fänger entfernen
 test: $(if $(CI),,db-up) ## Unit- und Datenbanktests aller Pakete und der Prüfskripte
 	cd $(APP) && npm run test
 
-gates: ## Schnelle Gates: Lint, Typen, Architekturgrenzen, Format
+coverage: $(if $(CI),,db-up) ## Run all tests with coverage, then the ratchet check (thresholds: app/coverage-thresholds.json)
+	cd $(APP) && npm run coverage
+
+spec-check: ## Spec consistency and story-to-test traceability (QG-T4)
+	cd $(APP) && npm run specs
+
+skills-check: ## Check agent skills in .agents/skills (trigger, paths, check command, links; US-DEV-04)
+	cd $(APP) && npm run skills
+
+release-tags-check: ## All v* tags come from the release workflow, no hand-set version (FR-DEV-05; needs gh auth)
+	cd $(APP) && npm run release-tags
+
+secrets: ## Secret scan over the full git history (gitleaks, QG-S1)
+	scripts/gitleaks.sh
+
+workflows: ## Lint GitHub workflows (actionlint)
+	scripts/actionlint.sh
+
+audit: ## Known high-severity vulnerabilities in dependencies (npm audit, QG-S2)
+	cd $(APP) && npm run audit
+
+gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundaries, unused code, format
 	cd $(APP) && npm run gates
 
-ci: $(if $(CI),,db-up) ## Alle Gates in der Reihenfolge der CI, bricht beim ersten Fehler ab
+ci: secrets workflows $(if $(CI),,db-up) ## Alle Gates in der Reihenfolge der CI, bricht beim ersten Fehler ab
 	cd $(APP) && npm run ci
+
+release: ## Version, tag and GitHub release from the commits (CI on main only, US-DEV-06)
+	@test -n "$(CI)" || { echo "release only runs in CI; locally use: make release-dry-run" >&2; exit 2; }
+	cd $(APP) && npx --no-install semantic-release
+
+release-dry-run: ## Show the next version and notes without publishing (BRANCH=dev)
+	cd $(APP) && GITHUB_TOKEN="$${GITHUB_TOKEN:-$$(gh auth token)}" npx --no-install semantic-release \
+		--dry-run --no-ci --branches "$${BRANCH:-$$(git branch --show-current)}"
 
 worktree: ## Neuer Worktree + Branch (BRANCH=feat/x) mit eigenen Ports (US-DEV-08)
 	scripts/worktree-new.sh "$(BRANCH)"

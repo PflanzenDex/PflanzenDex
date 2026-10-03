@@ -1,0 +1,64 @@
+# Routines (US-DEV-03, FR-DEV-03): nightly full suite on `dev` plus the dependency audit.
+# Owner: maintainers. On failure: an issue labelled `nightly` (later failures comment on it instead of opening duplicates).
+# Scheduled workflows only run from the default branch, so this starts once it has reached `main`.
+name: Nightly
+
+on:
+  schedule:
+    - cron: "23 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pflanzendex_test
+        ports: ["54329:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - run: make ci
+      - run: make audit
+      - run: make release-tags-check
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  report:
+    needs: suite
+    if: failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          nr="$(gh issue list --label nightly --state open --json number --jq '.[0].number')"
+          if [ -n "$nr" ]; then
+            gh issue comment "$nr" --body "Failed again: $RUN_URL"
+          else
+            gh issue create --label nightly --title "Nightly suite on dev is failing" \
+              --body "The nightly full suite (make ci, make audit) on \`dev\` failed: $RUN_URL"
+          fi

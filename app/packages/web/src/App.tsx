@@ -11,6 +11,8 @@ import "./arten/arten.css";
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
 
+const version = (import.meta.env as Record<string, string | undefined>)["VITE_APP_VERSION"];
+
 export function App() {
   const s = useSitzung();
   const [ansicht, setAnsicht] = useState<Ansicht>("arten");
@@ -43,6 +45,7 @@ export function App() {
           )}
         </div>
       )}
+      <footer className="versionsfuss">Version {version || "unbekannt"}</footer>
     </main>
   );
 }
