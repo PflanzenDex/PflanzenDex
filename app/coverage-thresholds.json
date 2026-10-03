@@ -7,13 +7,23 @@
       "functions": 96,
       "statements": 96
     },
-    "api": null,
+    "api": {
+      "lines": 97,
+      "branches": 86,
+      "functions": 94,
+      "statements": 96
+    },
     "web": {
       "lines": 34,
       "branches": 43,
       "functions": 36,
       "statements": 34
     },
-    "db": null
+    "db": {
+      "lines": 95,
+      "branches": 90,
+      "functions": 99,
+      "statements": 95
+    }
   }
 }
