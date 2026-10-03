@@ -40,7 +40,7 @@ export const fetchPrs = (client) =>
     "--limit",
     "300",
     "--json",
-    "number,title,body,state,isDraft,headRefName,mergedAt,author,commits",
+    "number,title,body,state,isDraft,headRefName,mergedAt",
   ]);
 
 /** Branch names on origin (without refs/heads/), main and dev excluded. */

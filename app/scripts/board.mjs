@@ -18,10 +18,9 @@ export function buildRows({ items, prs, branchDates, now, staleHours }) {
     );
     const openHeads = new Set(open.map((p) => p.headRefName));
     const branches = Object.keys(branchDates).filter(
-      (b) => hasKey(b, key) && (openHeads.has(b) || !finished.has(b)),
+      (b) => openHeads.has(b) || (hasKey(b, key) && !finished.has(b)),
     );
-    const prDates = open.map((p) => p.commits?.at(-1)?.committedDate);
-    const last = latest([...branches.map((b) => branchDates[b]), ...prDates]);
+    const last = latest(branches.map((b) => branchDates[b]));
     const assignees = issue.assignees.map((a) => a.login);
     const age = last ? ageHours(last, now) : null;
     const claimAge = ageHours(last ?? issue.updatedAt, now);

@@ -23,10 +23,11 @@ test("US-DEV-08: an active claim shows assignee, open draft PR and commit age wi
       state: "OPEN",
       isDraft: true,
       headRefName: "feat/wac-01-messung",
-      commits: [{ committedDate: hoursAgo(5) }],
     },
   ];
-  const [r] = rows([item(11, "US-WAC-01", ["konradhe14"])], prs, {});
+  const [r] = rows([item(11, "US-WAC-01", ["konradhe14"])], prs, {
+    "feat/wac-01-messung": hoursAgo(5),
+  });
   assert.deepEqual([r.assignees, r.prs, r.age, r.flags], [["konradhe14"], ["#7 draft"], 5, []]);
 });
 
