@@ -134,10 +134,21 @@ Akzeptanzkriterien:
 
 ## Datenmodell
 
-- **DM-KI-01 Verbindung:** `Konto`, `Client_Name`, `Rechte` (`lesen | entwürfe | schreiben`), `Erstellt_Am`, `Letzte_Nutzung`, `Widerrufen_Am?`.
-- **DM-KI-02 Auftrag:** `Konto`, `Typ`, `Bezug` (Verweis), `Status` (`offen | in Arbeit | erledigt | abgelehnt | abgelaufen`), `Erstellt_Am`, `Verbindung?`, `Entwurf?`.
-- **DM-KI-03 Entwurf:** `Konto`, `Typ`, `Bezug`, `Inhalt` (nach dem Schema der Zieloperation), `Quelle`, `Verbindung`, `Status` (`offen | übernommen | verworfen | abgelaufen`), `Erstellt_Am`.
-- **DM-KI-04 Protokolleintrag:** `Konto`, `Verbindung`, `Operation`, `Zeit`, `Wirkung`, `Rückgängig_Am?`.
+### DM-KI-01 Verbindung
+
+`Konto`, `Client_Name`, `Rechte` (`lesen | entwürfe | schreiben`), `Erstellt_Am`, `Letzte_Nutzung`, `Widerrufen_Am?`.
+
+### DM-KI-02 Auftrag
+
+`Konto`, `Typ`, `Bezug` (Verweis), `Status` (`offen | in Arbeit | erledigt | abgelehnt | abgelaufen`), `Erstellt_Am`, `Verbindung?`, `Entwurf?`.
+
+### DM-KI-03 Entwurf
+
+`Konto`, `Typ`, `Bezug`, `Inhalt` (nach dem Schema der Zieloperation), `Quelle`, `Verbindung`, `Status` (`offen | übernommen | verworfen | abgelaufen`), `Erstellt_Am`.
+
+### DM-KI-04 Protokolleintrag
+
+`Konto`, `Verbindung`, `Operation`, `Zeit`, `Wirkung`, `Rückgängig_Am?`.
 
 ## Anforderungen
 

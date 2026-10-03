@@ -29,7 +29,7 @@
     "crap": "node scripts/check-crap.mjs",
     "ci": "npm run gates && npm run coverage && npm run crap && npm run build",
     "knip": "knip",
-    "audit": "npm audit --audit-level=high",
+    "audit": "node scripts/check-audit.mjs",
     "skills": "node scripts/check-skills.mjs",
     "duplicates": "node scripts/check-duplicates.mjs",
     "release-tags": "node scripts/check-release-tags.mjs",
