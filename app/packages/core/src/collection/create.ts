@@ -13,8 +13,16 @@ import {
 } from "../kernel";
 import { withDerivations } from "./read";
 import { speciesDisplayName, specimenName } from "./name";
+import { markerAnswersField, planMarkers } from "./markers";
 import { CREATE_STATUS, SPECIMEN_LIMITS } from "./types";
 import type { SpeciesSource, SpecimenStore, TargetLocationSource } from "./types";
+
+/** What the store can refuse besides a taken name (which also reports the existing specimens). */
+const REFUSED = {
+  marker_taken: "specimen.marker_taken",
+  location_unknown: "location.not_found",
+  specimen_unknown: "specimen.not_found",
+} as const;
 
 export interface CreateDependencies {
   readonly specimens: SpecimenStore;
@@ -29,6 +37,8 @@ const schema = shape({
   speciesId: idField("speciesId"),
   timeZone: timeZoneField("timeZone"),
   marker: orNull(textField("marker", SPECIMEN_LIMITS.marker)),
+  // Markers for existing specimens without one, from the 3rd specimen on (US-BES-03).
+  markers: markerAnswersField,
   locationId: orNull(idField("locationId")),
   status: orNull(choiceField("status", CREATE_STATUS)),
 });
@@ -48,28 +58,32 @@ export const specimenCreate = (deps: CreateDependencies) =>
       const species = await deps.species.find(userId, input.speciesId);
       if (!species) return failed(appError("species.not_found"));
       const today = localToday(deps.clock(), input.timeZone);
-      const name = specimenName(speciesDisplayName(species), input.marker);
+      const speciesName = speciesDisplayName(species);
+      const name = specimenName(speciesName, input.marker);
+      const siblings = (await deps.specimens.list(userId)).filter(
+        (z) => z.speciesId === species.id,
+      );
+      const plan = planMarkers({
+        speciesName,
+        marker: input.marker,
+        answers: input.markers,
+        siblings,
+      });
+      if (plan.kind === "failed") return failed(plan.error);
       const status = input.status ?? "plant";
       const locationId =
         input.locationId ??
         (status === "cutting"
           ? await deps.targetLocation.growthLocation(userId, species)
           : await deps.targetLocation.targetLocation(userId, species, today));
-      const r = await deps.specimens.create(userId, {
-        speciesId: species.id,
-        name,
-        marker: input.marker,
-        locationId,
-        caughtAt: today,
-        status,
-      });
-      if (r === "location_unknown") return failed(appError("location.not_found"));
-      if (r === "marker_taken" || r === "specimen_unknown")
-        return failed(appError("system.unexpected"));
-      if (r !== "name_taken") return ok(withDerivations(r));
-      const existing = (await deps.specimens.list(userId))
-        .filter((z) => z.speciesId === species.id)
-        .map(({ id, name: n }) => ({ id, name: n }));
+      const r = await deps.specimens.create(
+        userId,
+        { speciesId: species.id, name, marker: input.marker, locationId, caughtAt: today, status },
+        plan.assignments,
+      );
+      if (typeof r === "object") return ok(withDerivations(r));
+      if (r !== "name_taken") return failed(appError(REFUSED[r]));
+      const existing = siblings.map(({ id, name: n }) => ({ id, name: n }));
       return failed(appError("specimen.name_taken", { data: { name, existing } }));
     },
   });

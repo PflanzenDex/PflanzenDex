@@ -42,8 +42,8 @@ afterAll(async () => {
 
 describe("US-BES-03 the marker is unique per species and account (case-insensitive)", () => {
   it("a second specimen with the same marker is refused even under another name", async () => {
-    await made(anna, "Kennz A rot", "rot");
-    expect(await specimens.create(anna, values("Kennz A anders", "ROT"))).toBe("marker_taken");
+    await made(anna, "Kennz A rot", "kra");
+    expect(await specimens.create(anna, values("Kennz A anders", "KRA"))).toBe("marker_taken");
     expect(await names(anna)).toEqual(["Kennz A rot"]);
   });
 
@@ -76,7 +76,7 @@ describe("US-BES-03 create with markers for existing specimens is all or nothing
     const eins = await made(anna, "Zurueck");
     await made(anna, "Zurueck – belegt", "belegt");
     const r = await specimens.create(anna, values("Zurueck – belegt", "x"), [
-      { specimenId: eins.id, name: "Zurueck – eins", marker: "eins" },
+      { specimenId: eins.id, name: "Zurueck – zeins", marker: "zeins" },
     ]);
     expect(r).toBe("name_taken");
     expect(await specimens.find(anna, eins.id)).toMatchObject({ name: "Zurueck", marker: null });
@@ -106,14 +106,14 @@ describe("US-BES-03 create with markers for existing specimens is all or nothing
 describe("US-BES-03 rename in the database", () => {
   it("sets marker and name, id and the rest stay", async () => {
     const z = await made(anna, "Umbenennen");
-    const r = await specimens.mark(anna, z.id, { name: "Umbenennen – rot", marker: "rot" });
-    expect(r).toEqual({ ...z, name: "Umbenennen – rot", marker: "rot" });
+    const r = await specimens.mark(anna, z.id, { name: "Umbenennen – rot", marker: "urot" });
+    expect(r).toEqual({ ...z, name: "Umbenennen – rot", marker: "urot" });
   });
 
   it("a taken marker (case-insensitive) or name changes nothing", async () => {
-    await made(anna, "Beleg – rot", "rot");
+    await made(anna, "Beleg – rot", "brot");
     const z = await made(anna, "Beleg");
-    expect(await specimens.mark(anna, z.id, { name: "Beleg – ROT", marker: "ROT" })).toBe(
+    expect(await specimens.mark(anna, z.id, { name: "Beleg – anders", marker: "BROT" })).toBe(
       "marker_taken",
     );
     await made(anna, "Beleg – blau");
@@ -124,10 +124,12 @@ describe("US-BES-03 rename in the database", () => {
   });
 
   it("the specimen's own marker may change case", async () => {
-    const z = await made(anna, "Gross – rot", "rot");
-    expect(await specimens.mark(anna, z.id, { name: "Gross – Rot", marker: "Rot" })).toMatchObject({
-      marker: "Rot",
-    });
+    const z = await made(anna, "Gross – rot", "grot");
+    expect(await specimens.mark(anna, z.id, { name: "Gross – Rot", marker: "GROT" })).toMatchObject(
+      {
+        marker: "GROT",
+      },
+    );
   });
 
   it("an archived specimen is not renamed", async () => {

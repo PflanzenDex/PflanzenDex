@@ -146,8 +146,8 @@ describe("US-BES-03 rename via the API", () => {
 
   it("empty or duplicate marker: error, nothing changed", async () => {
     const speciesId = await newSpecies(subA, `Yucca${run} delta`, `Yucca ${run}`);
-    await create(subA, { speciesId, marker: "rot" });
     const z = await create(subA, { speciesId });
+    await create(subA, { speciesId, marker: "rot" });
     const id = z.body["id"] as string;
     expect(await mark(subA, id, "  ")).toMatchObject({
       status: 400,

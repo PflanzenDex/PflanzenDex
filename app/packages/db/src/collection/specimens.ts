@@ -33,6 +33,17 @@ const UNIQUE = "23505";
 const FOREIGN_KEY = "23503";
 const pgError = (e: unknown) => e as { code?: string; constraint?: string };
 
+/** A specimen of `assignments` that is unknown, foreign, archived or already has a marker: the transaction is undone. */
+class UnknownSpecimen extends Error {}
+
+/** Which unique rule a failed write violated: the name per account or the marker per species (US-BES-03). */
+function takenBy(e: unknown): "name_taken" | "marker_taken" | null {
+  if (pgError(e).code !== UNIQUE) return null;
+  const constraint = pgError(e).constraint;
+  if (constraint === "specimen_name_per_account") return "name_taken";
+  return constraint === "specimen_marker_per_species" ? "marker_taken" : null;
+}
+
 /**
  * Adapter for specimens; every call runs as the account of the caller under the row rules (P-04). The location hangs on
  * the own account through the composite foreign key (account_id, location_id). The species hangs on the catalog through
@@ -57,7 +68,11 @@ export class SpecimenPostgres {
     return r.rows[0] ?? null;
   }
 
-  /** One statement: all or nothing. The database decides name uniqueness, not a prior query. */
+  /**
+   * All or nothing in one transaction: first the markers of the existing specimens (US-BES-03), then the new
+   * specimen. The database decides uniqueness of name and marker, not a prior query; a rename touches only an
+   * active specimen that has no marker yet, otherwise nothing is written and the answer is `specimen_unknown`.
+   */
   async create(
     userId: string,
     w: SpecimenValues,
@@ -65,33 +80,51 @@ export class SpecimenPostgres {
   ): Promise<
     SpecimenRow | "name_taken" | "marker_taken" | "location_unknown" | "specimen_unknown"
   > {
-    void assignments; // skeleton for the red run (US-BES-03)
     try {
-      const r = await withAccount(this.pool, userId, (c) =>
-        c.query<SpecimenRow>(
+      return await withAccount(this.pool, userId, async (c) => {
+        for (const a of assignments) {
+          const done = await c.query(
+            `update specimen set name = $2, marker = $3
+             where id = $1 and status <> 'archived' and marker is null`,
+            [a.specimenId, a.name, a.marker],
+          );
+          if (!done.rowCount) throw new UnknownSpecimen();
+        }
+        const r = await c.query<SpecimenRow>(
           `insert into specimen (account_id, species_id, name, marker, location_id, caught_at, status)
            values ($1, $2, $3, $4, $5, $6, $7) returning ${COLUMNS}`,
           [userId, w.speciesId, w.name, w.marker, w.locationId, w.caughtAt, w.status ?? "plant"],
-        ),
-      );
-      return r.rows[0] as SpecimenRow;
+        );
+        return r.rows[0] as SpecimenRow;
+      });
     } catch (e) {
-      if (pgError(e).code === UNIQUE && pgError(e).constraint === "specimen_name_per_account")
-        return "name_taken";
+      if (e instanceof UnknownSpecimen) return "specimen_unknown";
+      const taken = takenBy(e);
+      if (taken) return taken;
       if (pgError(e).code === FOREIGN_KEY && pgError(e).constraint === "specimen_location")
         return "location_unknown";
       throw e;
     }
   }
 
-  /** Skeleton for the red run (US-BES-03). */
+  /**
+   * One statement: marker and name of one active specimen (US-BES-03); id, species, location, date and status stay.
+   * An archived specimen stays unchanged (its name stays taken, US-BES-07); a foreign one is invisible (P-04).
+   */
   async mark(
     userId: string,
     id: string,
     w: { readonly name: string; readonly marker: string },
   ): Promise<SpecimenRow | "not_found" | "archived" | "name_taken" | "marker_taken"> {
-    void [userId, id, w];
-    return "not_found";
+    const sql = `update specimen set name = $2, marker = $3 where id = $1 and status <> 'archived'
+         returning ${COLUMNS}`;
+    try {
+      return await this.change(userId, { sql, parameter: [id, w.name, w.marker] }, "archived");
+    } catch (e) {
+      const taken = takenBy(e);
+      if (taken) return taken;
+      throw e;
+    }
   }
 
   /**
