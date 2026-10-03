@@ -23,7 +23,11 @@ test.describe("US-ACC-01 Anmeldung", () => {
     await expect(page.getByText(konto.email)).toBeVisible();
     await axeBericht(page, info, "konto");
     await page.reload();
-    await expect(page.getByRole("button", { name: "Abmelden", exact: true })).toBeVisible();
+    // Nach dem Neuladen öffnet die App wieder die Startansicht, ohne erneute Anmeldung beim Anmeldedienst.
+    await expect(
+      page.getByRole("heading", { level: 1, name: /Standorte und Lichtzonen/ }),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Anmelden" })).toHaveCount(0);
   });
 
   test("US-ACC-01 falsche Anmeldedaten bleiben beim Anmeldedienst und lassen niemanden in die App", async ({
