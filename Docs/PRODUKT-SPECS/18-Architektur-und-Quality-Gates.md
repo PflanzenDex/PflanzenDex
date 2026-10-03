@@ -104,7 +104,7 @@ Akzeptanzkriterien:
 - QG-D3: Ein Testbild mit EXIF-GPS wird hochgeladen; das gespeicherte Bild enthält keine EXIF-Daten und die lange Seite ist ≤ 1600 px (US-WAC-06).
 - QG-D4: Ein Test belegt, dass Datum und Phasenberechnung in der Zeitzone des Nutzers laufen (NFR-08); eine Lint-Regel verbietet `toISOString().slice(0, 10)` für Kalenderdaten (Ursache von B-01 im Prototyp).
 
-### US-QG-06 · Gates reifen, statt zu blockieren, was niemand erfüllen kann · ⬜
+### US-QG-06 · Gates reifen, statt zu blockieren, was niemand erfüllen kann · 🟨
 Als **Team** will ich neue Regeln einführen, ohne die Arbeit zu stoppen.
 
 Akzeptanzkriterien:
