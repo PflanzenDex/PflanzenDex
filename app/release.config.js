@@ -21,6 +21,8 @@ const SECTIONS = [
 ];
 
 export default {
+  // Fest statt aus dem lokalen `origin` abgeleitet: lokale Remote-URLs unterscheiden sich je Rechner.
+  repositoryUrl: "https://github.com/PflanzenDex/PflanzenDex.git",
   branches: ["main"],
   tagFormat: "v${version}",
   plugins: [
