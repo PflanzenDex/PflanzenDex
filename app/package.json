@@ -16,23 +16,49 @@
     "format:check": "prettier --check .",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "boundaries": "node scripts/check-boundaries.mjs",
-    "specs": "node scripts/check-specs.mjs",
+    "baseline": "node scripts/check-baseline.mjs",
+    "health": "node scripts/health-summary.mjs",
     "docs": "cd .. && npx markdownlint-cli2 \"Docs/**/*.md\" \"CLAUDE.md\" --config \".markdownlint-cli2.jsonc\" && cd app && node scripts/check-links.mjs",
-    "test": "npm run test --workspaces --if-present && node --test \"scripts/**/*.test.mjs\"",
+    "specs": "node scripts/check-specs.mjs && node scripts/check-traceability.mjs",
+    "principles": "node scripts/check-principles.mjs",
+    "test": "npm run test --workspaces --if-present && node --test \"scripts/**/*.test.mjs\" \"../.claude/hooks/*.test.mjs\"",
+    "coverage": "npm run test --workspaces --if-present -- --coverage && node --test \"scripts/**/*.test.mjs\" \"../.claude/hooks/*.test.mjs\" && node scripts/check-coverage-ratchet.mjs",
     "build": "npm run build --workspaces --if-present",
-    "gates": "npm run lint && npm run typecheck && npm run boundaries && npm run specs && npm run format:check && npm run docs",
-    "ci": "npm run gates && npm run test && npm run build"
+    "gates": "npm run lint && npm run typecheck && npm run boundaries && npm run baseline && npm run knip && npm run specs && npm run principles && npm run skills && npm run format:check && npm run docs",
+    "ci": "npm run gates && npm run coverage && npm run build",
+    "knip": "knip",
+    "audit": "npm audit --audit-level=high",
+    "skills": "node scripts/check-skills.mjs"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "@commitlint/lint": "^21.2.3",
+    "@commitlint/load": "^21.2.3",
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.4",
+    "@vitest/coverage-v8": "^5.0.3",
     "concurrently": "^10.0.5",
+    "conventional-changelog-conventionalcommits": "^9.3.1",
     "eslint": "^10.12.0",
+    "eslint-plugin-security": "^4.2.0",
+    "eslint-plugin-sonarjs": "^4.2.2",
     "globals": "^17.13.0",
+    "lint-staged": "^17.6.0",
+    "knip": "^6.39.0",
+    "minimatch": "^10.2.6",
     "markdownlint-cli2": "^0.23.3",
     "prettier": "^3.9.9",
+    "semantic-release": "^25.0.9",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.0",
     "vitest": "^5.0.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs}": [
+      "prettier --write",
+      "eslint --max-warnings=0 --no-warn-ignored"
+    ],
+    "*.{json,md,css,html,yml,yaml}": "prettier --write"
   }
 }

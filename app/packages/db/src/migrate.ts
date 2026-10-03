@@ -23,6 +23,7 @@ const pruefsumme = (inhalt: string) => createHash("sha256").update(inhalt).diges
 export async function migriere(pool: Pool, optionen: MigrationsOptionen = {}): Promise<string[]> {
   const verzeichnis = optionen.verzeichnis ?? MIGRATIONS_VERZEICHNIS;
   const tabelle = optionen.tabelle ?? MIGRATIONS_TABELLE;
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- directory comes from a constant or the caller, never from user input
   const dateien = readdirSync(verzeichnis)
     .filter((d) => d.endsWith(".sql"))
     .sort();
@@ -35,6 +36,7 @@ export async function migriere(pool: Pool, optionen: MigrationsOptionen = {}): P
     );
     const bekannt = await ladeBekannte(client, tabelle);
     for (const name of dateien) {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- file name from the directory listing above
       const inhalt = readFileSync(join(verzeichnis, name), "utf8");
       const alt = bekannt.get(name);
       if (alt === undefined) {

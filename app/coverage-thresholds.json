@@ -1,0 +1,19 @@
+{
+  "_comment": "Single source of truth for coverage thresholds (FR-QG-18, E-15). Ratchet: values are only raised, never lowered without a reason in the PR. null = not measured yet.",
+  "packages": {
+    "core": {
+      "lines": 98,
+      "branches": 89,
+      "functions": 96,
+      "statements": 96
+    },
+    "api": null,
+    "web": {
+      "lines": 34,
+      "branches": 43,
+      "functions": 36,
+      "statements": 34
+    },
+    "db": null
+  }
+}
