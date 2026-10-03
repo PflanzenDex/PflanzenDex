@@ -45,6 +45,8 @@ const ROUTEN: Record<string, Route> = {
   "GET /lichtzonen": (d) => antwort(200, { zonen: d.zonen }),
   "GET /standorte": (d) => antwort(200, { standorte: d.standorte }),
   "GET /hinweise": () => antwort(200, { hinweise: [] }),
+  "GET /lichtzonen/ableitung": () =>
+    antwort(200, { art: "zone", zone, stufe: 2, grund: "standard" }),
 };
 
 function fakeServer(start: { zonen?: unknown[]; standorte?: unknown[] } = {}) {
@@ -205,5 +207,30 @@ describe("US-LIC-05 Seite Standorte und Lichtzonen", () => {
       lichtzoneId: "z1",
       art: "aussen",
     });
+  });
+});
+
+describe("US-LIC-01 Zone einer Art ermitteln auf der Seite", () => {
+  it("fragt die Ableitung der API ab und zeigt Zone und Grund", async () => {
+    const { aufrufe } = fakeServer({ zonen: [zone] });
+    render(<LichtSeite api="http://api" token={async () => "tok"} />);
+    await screen.findByRole("heading", { name: "Lampe 2" });
+    await userEvent.type(screen.getByLabelText("Lux-Bedarf der Art (Lux)"), "15000");
+    await userEvent.click(screen.getByRole("button", { name: "Zone ermitteln" }));
+    expect(await screen.findByText("Lichtzone: Lampe 2")).toBeTruthy();
+    const get = aufrufe.find((a) => a.url === "/lichtzonen/ableitung");
+    expect(get?.methode).toBe("GET");
+  });
+
+  it("ohne Anmeldung beim Ermitteln: Fehlertext statt Aufruf der API", async () => {
+    fakeServer({ zonen: [zone] });
+    let angemeldet = true;
+    const token = async () => (angemeldet ? "tok" : undefined);
+    render(<LichtSeite api="http://api" token={token} />);
+    await screen.findByRole("heading", { name: "Lampe 2" });
+    angemeldet = false;
+    await userEvent.type(screen.getByLabelText("Lux-Bedarf der Art (Lux)"), "15000");
+    await userEvent.click(screen.getByRole("button", { name: "Zone ermitteln" }));
+    expect((await screen.findAllByText("Bitte melde dich neu an.")).length).toBeGreaterThan(0);
   });
 });
