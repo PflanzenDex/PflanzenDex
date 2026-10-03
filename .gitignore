@@ -9,3 +9,4 @@ coverage/
 .worktrees/
 .env.worktree
 .claude/settings.local.json
+.cache/

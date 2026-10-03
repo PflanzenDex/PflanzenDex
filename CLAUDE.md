@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
-The rules for agents (workflow, gates you must not weaken, definition of done) are in `AGENTS.md`, imported above. Playbooks for recurring tasks live in `.agents/skills/` (linked from `.claude/skills/`); the hooks in `.claude/settings.json` enforce the guardrails.
+The rules for agents (workflow, gates you must not weaken, definition of done) are in `AGENTS.md`, imported above. Playbooks for recurring tasks live in `.agents/skills/` (linked from `.claude/skills/`); path-scoped rules per package, specs and CI files are in `.claude/rules/` (loaded when matching files are touched); the hooks in `.claude/settings.json` enforce the guardrails.
 
 ## What this repository is
 

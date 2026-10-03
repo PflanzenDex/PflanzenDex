@@ -13,7 +13,7 @@ A release is the pull request `dev` -> `main` (E-13). Releases are small, tracea
 4. Backup: run `make backup` on the host right before the release and confirm the dump is readable; `make restore-test` proves a restore works. Runbook: `Docs/betrieb/staging-deploy-und-backup.md`.
 5. Feature flags: US-DEV-06 requires switches for social features (R2, R3), AI (R4) and recommendations (R5). They are not implemented yet; until then, such code must not be reachable in a release, and the PR description states what is unreachable.
 6. Changelog and privacy gates: user-facing `feat:`/`fix:` entries are present (QG-U3) and the privacy gates (QG-D1, QG-D2) are green where the release touches social data. Gates that do not exist yet are named in the PR as open, not skipped silently.
-7. Preview: once `make release-dry-run` exists (planned in US-DEV-06), run it and paste version and notes into the PR. Until then, state the expected version bump from the commit types.
+7. Preview: run `make release-dry-run BRANCH=dev` and paste version and notes into the PR; it needs a GitHub token (`gh auth login`). Also run `make secrets` for the secret scan over the full history.
 8. Open the PR `dev` -> `main` and merge it as a merge commit (not squash, not rebase), so `main` keeps the history of `dev`. The release workflow runs on `main` only for commits with green CI.
 9. Deploy deliberately (E-14), then smoke-test `/health` and one core flow. If it fails, roll back to the previous commit (`app/deploy/scripts/deploy.sh <previous commit>`); data problems follow the restore runbook.
 10. Back-merge: after the release merge `main` into `dev` by pull request, so version and changelog commits do not make the branches diverge.
@@ -23,6 +23,8 @@ A release is the pull request `dev` -> `main` (E-13). Releases are small, tracea
 
 ```bash
 make ci
+make release-dry-run
+make secrets
 ```
 
 Expected: every gate green on the exact commit that is released; steps 3 to 7 answered in the PR description.

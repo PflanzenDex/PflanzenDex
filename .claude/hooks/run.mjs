@@ -9,8 +9,10 @@ import path from "node:path";
 import {
   isCodePath,
   isGateFile,
+  isMigrationFile,
   isSpecPath,
   judgeCommand,
+  MIGRATION_REASON,
   prettierCanFormat,
   ranGates,
 } from "./rules.mjs";
@@ -41,6 +43,7 @@ const stateFile = () => path.join(run("git", ["rev-parse", "--absolute-git-dir"]
 const handlers = {
   "guard-edit"() {
     const file = relative(input.tool_input?.file_path ?? input.tool_input?.notebook_path);
+    if (isMigrationFile(file) && fs.existsSync(path.join(root, file))) return preToolUse("deny", MIGRATION_REASON);
     if (isGateFile(file)) {
       preToolUse("ask", `${file} defines a gate, threshold or exception list. Agents change it only after a human confirms, and never to turn a red run green (US-QG-07).`);
     }

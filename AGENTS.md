@@ -5,8 +5,9 @@ Rules for AI agents (Claude Code, Codex, Copilot, …) working in this repo. Hum
 ## Before you start
 
 1. Find the story or requirement in `Docs/PRODUKT-SPECS/` (IDs `US-…`, `FR-…`). No spec entry, no code: propose the spec change first.
-2. Check `.agents/skills/` for a playbook that fits the task (`spec-to-tests`, `add-core-operation`, …) and follow it instead of improvising.
-3. Work in your own worktree and branch from `dev`: `make worktree BRANCH=feat/<epic>-<nn>-<topic>`. Never work in a directory another session uses.
+2. Path-scoped rules for each package, the specs and the CI files are in `.claude/rules/*.md` (Claude Code loads them when you touch matching files; read them if you use another tool).
+3. Check `.agents/skills/` for a playbook that fits the task (`spec-to-tests`, `add-core-operation`, …) and follow it instead of improvising.
+4. Work in your own worktree and branch from `dev`: `make worktree BRANCH=feat/<epic>-<nn>-<topic>`. Never work in a directory another session uses.
 
 ## While you work
 
