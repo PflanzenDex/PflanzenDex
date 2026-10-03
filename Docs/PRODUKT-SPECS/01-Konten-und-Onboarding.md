@@ -28,7 +28,7 @@ Akzeptanzkriterien:
 Als **Pflanzenhalter** will ich schnell zur ersten Pflanze kommen.
 
 Akzeptanzkriterien:
-- Der Einstieg fragt: Standorte (wo stehen Pflanzen), Lichtzonen (Voreinstellung vier Stufen übernehmen oder anpassen), erste Pflanze, optional Import aus dem Prototyp (Epic MIG).
+- Der Einstieg fragt: Standorte (wo stehen Pflanzen), Lichtzonen (Voreinstellung vier Stufen übernehmen oder anpassen), erste Pflanze.
 - Jeder Schritt ist überspringbar; die App ist danach nutzbar. Fehlende Angaben werden später als Hinweis angezeigt, nie als Fehler.
 - Ohne Pflanze zeigt die Startseite eine klare nächste Handlung statt einer leeren Seite.
 

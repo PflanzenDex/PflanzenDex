@@ -20,7 +20,7 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 | Datei | Inhalt |
 |---|---|
 | [00-Produktueberblick.md](00-Produktueberblick.md) | Vision, Zielgruppe, Akteure, Prinzipien, Domänenmodell, Glossar |
-| [01-Konten-und-Onboarding.md](01-Konten-und-Onboarding.md) | Epic ACC: Konto, Anmeldung, Profil, Import aus dem Prototyp |
+| [01-Konten-und-Onboarding.md](01-Konten-und-Onboarding.md) | Epic ACC: Konto, Anmeldung, Profil, Einladung |
 | [02-Bestand.md](02-Bestand.md) | Epic BES: Artenkatalog, Pflegeprofil, Prüfung, Exemplare, Steckling, Archiv |
 | [03-Licht-und-Standorte.md](03-Licht-und-Standorte.md) | Epic LIC: Lichtzonen, Standorte, Verteilung, Position |
 | [04-Pflegephasen.md](04-Pflegephasen.md) | Epic PHA: Ruhe-/Wachstumsphase, Standortabgleich |
@@ -34,7 +34,7 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 | [12-KI-Assistent.md](12-KI-Assistent.md) | Epic KI: KI-Zugang über offene Schnittstelle, Aufträge, Entwürfe, Pflege per Sprache, Profile, Foto-Bewertung |
 | [13-Business-Case.md](13-Business-Case.md) | Stufen: für uns, trägt sich selbst, Gewinn |
 | [14-Querschnitt.md](14-Querschnitt.md) | Epic QS: Datenschutz, Sicherheit, Mobile, Qualität |
-| [15-Migration-vom-Prototyp.md](15-Migration-vom-Prototyp.md) | Epic MIG: Daten aus dem Vault übernehmen |
+| [15-Migration-vom-Prototyp.md](15-Migration-vom-Prototyp.md) | Epic MIG: **entfallen** (kein Import aus dem Vault, IDs reserviert) |
 | [16-Releases-und-Entscheidungen.md](16-Releases-und-Entscheidungen.md) | Release-Schnitt, Technik-Entwurf, offene Entscheidungen, Nicht-Ziele |
 | [17-Entdecken.md](17-Entdecken.md) | Epic ENT: Swipe-Vorschläge aus dem Katalog, passend zu Licht und Gedeihendem, füllen die Wunschliste |
 | [18-Architektur-und-Quality-Gates.md](18-Architektur-und-Quality-Gates.md) | Epic QG: Hooks, CI, Strukturregeln, Architekturgrenzen, Komplexität, Datenschutz-Gates, DoD |
@@ -67,11 +67,11 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 | EQU Equipment | 12 | 0 | 12 |
 | KI Zugang | 10 | 3 | 7 |
 | QS Querschnitt | 7 | 6 | 1 |
-| MIG Migration | 3 | 0 | 3 |
+| MIG Migration (entfallen) | 0 | 0 | 0 |
 | ENT Entdecken | 8 | 0 | 8 |
 | QG Quality Gates | 8 | 0 | 8 |
 | DEV Entwicklungsprozess | 9 | 0 | 9 |
-| **Summe** | **127** | **50** | **77** |
+| **Summe** | **124** | **50** | **74** |
 
 ## Ablösung bestehender Dokumente
 

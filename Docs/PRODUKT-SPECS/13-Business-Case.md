@@ -69,7 +69,7 @@ Nur möglich, wenn Nutzerzahl und Bindung weit über Stufe 2 liegen. Optionen, j
 
 | Risiko | Wirkung | Gegenmaßnahme |
 |---|---|---|
-| **Neubau ohne Parität:** Die drei nutzen den Vault weiter, weil die App weniger kann | Stufe 1 scheitert | Release R1 hat Parität als Ziel; Prototyp und App laufen parallel, Import (Epic MIG), Wechsel erst nach Vergleich |
+| **Neubau ohne Parität:** Die drei nutzen den Vault weiter, weil die App weniger kann | Stufe 1 scheitert | Release R1 hat Parität als Ziel; Prototyp und App laufen parallel, Wechsel erst nach Bestätigung des Halters; Neu-Erfassung statt Import (Risiko R-10 in `16`) |
 | Aufwand: Aus dem Vault-Prototyp wird ein Produkt (Konten, Betrieb, Datenschutz) | Projekt versandet | Kleinste Releases, jedes nutzbar; Betrieb einfach halten (E-01) |
 | Netzwerkeffekt fehlt (Feed leer bei 1–2 Freunden) | Social wirkt tot | Mit Freundeskreis starten; Wert auch ohne Freunde (Pokédex, Pflege) |
 | Zielgruppe zahlt wenig | Stufe 2 scheitert | Kosten niedrig halten, kein Abo-Zwang für Kernfunktionen |

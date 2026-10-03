@@ -34,7 +34,6 @@ Akzeptanzkriterien:
   | `gates` | alle schnellen Gates (QG-C, QG-K, QG-S1), identisch zu Pre-push |
   | `ci` | **alle** Gates in der Reihenfolge der CI, bricht beim ersten Fehler ab |
   | `db-migrate`, `db-reset`, `db-seed` | Datenbank (siehe US-DEV-07) |
-  | `import-vault` | Prototyp-Import mit Trockenlauf (Epic MIG) |
   | `pokedex-build` | Taxonomie-Aufbau (US-POK-03) |
   | `release-dry-run` | zeigt die nächste Version und die Notizen, ohne etwas zu veröffentlichen |
   | `clean`, `clean-ports` | Aufräumen |
@@ -69,7 +68,7 @@ Akzeptanzkriterien: Jede Routine steht in der Tabelle mit Auslöser, Besitzer, A
 | Routine | Auslöser | Besitzer | Ausgabe | Scheitern |
 |---|---|---|---|---|
 | Abhängigkeits-Updates (gruppiert: Patch, Minor, Dev) | wöchentlich (Dependabot oder gleichwertig) | Maintainer | PR mit voller Suite | Auto-Merge nur bei grünem Status, nicht bei Hauptversionssprüngen (FR-QG-15) |
-| Volle Suite auf `main` inkl. End-to-End | nächtlich | CI | Statusmeldung | Meldung an Maintainer, Ticket |
+| Volle Suite auf `dev` inkl. End-to-End | nächtlich | CI | Statusmeldung | Meldung an Maintainer, Ticket |
 | Sicherheits-Audit (neue Schwachstellen ohne Code-Änderung) | wöchentlich | CI | Bericht (QG-S2) | hohe Funde blockieren den nächsten Release |
 | Drift-Test externer Quellen (Wikipedia, Wikidata, GBIF, OpenTree) | wöchentlich | CI | Vertragstests gegen die APIs, Meldung bei Formatänderung (NFR-17) | Pokédex-Aufbau bleibt auf dem letzten guten Stand (US-POK-03) |
 | Pokédex-Aufbau | bei Katalogänderung, zusätzlich wöchentlich | System | neuer Baum oder unveränderter Stand | Fehlerliste, nie Teilergebnis |
@@ -115,7 +114,7 @@ Akzeptanzkriterien:
 Als **Team** will ich einen festen Weg von der Idee bis zum Merge, der zur Spec passt.
 
 Akzeptanzkriterien:
-- **Lebenszyklus einer Story:** ⬜ geplant → 🟨 in Arbeit (Branch existiert) → ✅ umgesetzt (gemergt, Test mit Story-ID vorhanden und grün). Der Spec-Status und die Zähler in `README.md` werden **im selben PR** geändert (FR-QG-03, QG-U2 prüft das).
+- **Lebenszyklus einer Story:** ⬜ geplant → 🟨 in Arbeit (Branch existiert) → ✅ umgesetzt (in `dev` gemergt, Test mit Story-ID vorhanden und grün). Der Spec-Status und die Zähler in `README.md` werden **im selben PR** geändert (FR-QG-03, QG-U2 prüft das).
 - **Ablauf:** Story lesen → Tests aus den Kriterien ableiten (Skill `spec-to-tests`) → implementieren → `make ci` grün → PR mit Beschreibung (Story-IDs, Abweichungen von der Spec) → Review → Merge.
 - **Definition of Ready:** Eine Story darf begonnen werden, wenn Kriterien prüfbar formuliert sind (Gegeben/Wenn/Dann), Abhängigkeiten in `16-…` geklärt sind und offene Entscheidungen (E-nn) entschieden sind.
 - **Definition of Done:** FR-QG-10.
@@ -129,14 +128,14 @@ Als **Betreiber** will ich Releases, die klein, nachvollziehbar und rückholbar 
 
 Akzeptanzkriterien:
 - **Versionierung:** SemVer, automatisch aus Conventional Commits (semantic-release oder gleichwertig, E-13). `0.x` bis zur Parität (R1), `1.0.0` mit der ersten Freigabe für Fremde (Stufe 2). Kein manuelles Setzen von Versionsnummern.
-- **Auslöser und Kette:** Release läuft **nur nach grüner CI auf `main`** (Muster: `workflow_run` auf „CI Pipeline" mit Statusprüfung), danach erst der Deploy. Eine rote CI bricht beides ab, ohne Version zu erzeugen.
+- **Auslöser und Kette:** Ein Release ist der Merge von `dev` nach `main` per Pull-Request mit voller Suite. Der Release-Workflow läuft auf `main` **nur für Commits mit grünem `ci-status`** (Muster: `workflow_run` auf „CI Pipeline" mit Statusprüfung), danach erst der Deploy. Eine rote CI bricht beides ab, ohne Version zu erzeugen. Nach dem Release wird `main` in `dev` zurückgemergt, damit Changelog- und Versions-Commits die Branches nicht auseinanderlaufen lassen.
 - **Ergebnis eines Releases:** Git-Tag, `CHANGELOG.md`, Release-Notizen aus den Commits, Container-Abbild, Datenbank-Migrationen (US-DEV-07), Katalog-/Baum-Stand (versioniert, getrennt vom Code, US-POK-03).
 - **Version sichtbar:** Die Version steht in der App (Fußzeile/Über-Seite), in Fehlerberichten und im Gesundheits-Endpunkt. Eine Quelle (Tag), keine zweite Pflege (Muster `sync_version.py`, aber ohne Schreiben in versionierte Dateien).
 - **Nutzerseitiger Changelog:** Für `feat:` und `fix:` verlangt QG-U3 einen kurzen deutschen Eintrag („Neu in dieser Version"), den die App anzeigt. Für interne Änderungen genügt `[skip-changelog]`.
 - **Zuschnitt:** Release-Inhalte folgen R0 bis R6 (`16-…`). Ein Release ist erst freigegeben, wenn die Kernabläufe seines Zuschnitts grün sind (FR-QG-08) und, bei sozialen Releases, QG-D1/QG-D2 stehen.
 - **Funktionsschalter (Feature-Flags):** Soziale Funktionen (R2, R3), KI (R4) und Empfehlungen (R5) lassen sich pro Konto oder global abschalten. Das erlaubt, Code früh auszuliefern und die Funktion erst für die drei Start-Nutzer zu öffnen.
 - **Deploy:** bewusste Freigabe (E-14), danach automatischer **Smoke-Test** gegen den Gesundheits-Endpunkt und einen Kernablauf (Anmelden, Heute-Liste); schlägt er fehl, **automatischer Rückfall** auf die vorige Version.
-- **Rückfall und Hotfix:** Der vorige Container bleibt verfügbar; ein Hotfix ist ein normaler PR mit voller Suite, nur kleiner Zuschnitt, nicht an den Gates vorbei.
+- **Rückfall und Hotfix:** Der vorige Container bleibt verfügbar; ein Hotfix ist ein Branch von `main`, per PR mit voller Suite nach `main`, nur kleiner Zuschnitt, nicht an den Gates vorbei; danach Rück-Merge nach `dev`.
 - **Release-Checkliste** (Skill `release-checklist`): CI grün, Migrationen geprüft und Backup frisch, Changelog vollständig, Feature-Flags gesetzt, Datenschutz-Gates grün, Rückfallplan bekannt, Betreiber informiert.
 - `make release-dry-run` zeigt Version und Notizen, ohne zu veröffentlichen.
 
@@ -146,7 +145,7 @@ Als **Betreiber** will ich Schema-Änderungen ohne Datenverlust und ohne Ausfall
 Akzeptanzkriterien:
 - Migrationen sind versioniert, im Repo, und laufen automatisch beim Deploy vor dem Start der neuen Version.
 - **Vorwärtskompatibel (Expand/Contract):** Eine Migration ändert nie so, dass die **vorige** App-Version bricht; Spalten werden erst ergänzt, dann genutzt, dann in einem späteren Release entfernt. Dadurch funktioniert der Rückfall (US-DEV-06).
-- Jede Migration hat einen Test auf einer Datenbank mit realistischen Daten (Testdatensatz auf Basis der Prototyp-Daten, 13 Arten, 17 Exemplare, Messreihen; Muster: Testdaten-Skript in Tombola).
+- Jede Migration hat einen Test auf einer Datenbank mit realistischen Daten (Testdatensatz in der Größenordnung der Prototyp-Daten, 13 Arten, 17 Exemplare, Messreihen (als Fixture, kein Import); Muster: Testdaten-Skript in Tombola).
 - Vor jeder Migration in Produktion existiert eine frische, **wiederherstellbare** Sicherung (NFR-15).
 - Zeilenebene-Regeln der Mandantentrennung (NFR-09) werden mit migriert und durch QG-D1 geprüft; eine Migration, die eine Regel entfernt, schlägt QG-D1 fehl.
 
@@ -198,7 +197,7 @@ Aus dem Lesen des Tombola-Repos. Sie zeigen, was schon ein gutes Regelwerk umgeh
 | Der Skill `pre-commit-quality_check` enthält nur vage Schritte, keine Befehle. | US-DEV-04: Skill ohne Prüfbefehl ist unfertig. |
 | Mehrere Dateien wurden nur geteilt, um die 200-Zeilen-Grenze zu halten (Kommentare in `pyproject.toml`, Routen-Dateien). | US-QG-08: Komplexität und Länge sind getrennte Befunde. |
 | Der Release-Strang hat zwei Werkzeuge (npm und Python) für zwei Pakete. | Bei uns ein Paket, ein Werkzeug (E-13). |
-| Feature→`dev`-PRs bekommen keine volle CI (bewusst, Kosten), nur Abhängigkeits-PRs. | Kleinteam-Variante: volle Suite auf PRs nach `main`, Pre-push lokal (E-13). |
+| Feature→`dev`-PRs bekommen keine volle CI (bewusst, Kosten), nur Abhängigkeits-PRs. | E-13: PRs nach `dev` bekommen schnelle Gates und Unit/Integration, PRs von `dev` nach `main` die volle Suite; Pre-push lokal. |
 | Jira-Statuspflege (TEST STATE, Done) ist eigener Prozess. | Entfällt: Der Spec-Status ersetzt das Ticket (US-DEV-05). Falls später Tickets, dort dieselbe Regel. |
 
 ## Reihenfolge der Einführung

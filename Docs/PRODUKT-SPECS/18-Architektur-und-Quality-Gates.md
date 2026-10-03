@@ -42,7 +42,7 @@ Wo läuft welches Gate? **B** = blockiert, **R** = nur Bericht (Ratchet-Phase).
 | QG-K4 | Duplikate | PR | Fallow `duplicates` | ab 3 gleichen Fragmenten (Tombola: `minOccurrences 3`) | B auf Diff |
 | QG-T1 | Unit-Tests Fachlogik | CI | Vitest | Coverage der Fachlogik ≥ 90 % Zeilen (Annahme), Gesamt ≥ 80 % (Annahme), nur anheben | B |
 | QG-T2 | Integrationstests | CI | Vitest + echte Test-DB | Kernabläufe aus FR-QG-08 grün | B |
-| QG-T3 | End-to-End | PR auf `main` | Playwright mobil + Desktop | Kernabläufe R1 aus `16-…` grün | B |
+| QG-T3 | End-to-End | PR `dev`→`main` | Playwright mobil + Desktop | Kernabläufe R1 aus `16-…` grün | B |
 | QG-T4 | Spec-Rückverfolgbarkeit | CI | Skript (FR-QG-06) | jede ✅-Story hat Test mit Story-ID | B |
 | QG-S1 | Secret-Scan | CI | grep-Regeln + Gitleaks | keine Schlüssel, Tokens, Partner-IDs im Repo | B |
 | QG-S2 | Abhängigkeits-Audit | CI | `npm audit` / OSV-Scanner | keine bekannten hohen Schwachstellen ohne dokumentierte Ausnahme | B |
@@ -50,7 +50,7 @@ Wo läuft welches Gate? **B** = blockiert, **R** = nur Bericht (Ratchet-Phase).
 | QG-D1 | Mandantentrennung | CI | Integrationstest (FR-QG-07) | Nutzer A liest/ändert nie Daten von B | B |
 | QG-D2 | Freigabe-Whitelist | CI | Vertragstest (FR-QG-07) | soziale Ausgaben enthalten nur freigegebene Felder | B |
 | QG-D3 | Foto-Bereinigung | CI | Test mit Bild mit EXIF/GPS | gespeichertes Bild hat keine EXIF/GPS-Daten | B |
-| QG-U1 | Performance und Barrierefreiheit | PR auf `main` | Lighthouse CI, axe in Playwright | Mobil-Werte ≥ Schwelle aus FR-QG-09 | R, dann B |
+| QG-U1 | Performance und Barrierefreiheit | PR `dev`→`main` | Lighthouse CI, axe in Playwright | Mobil-Werte ≥ Schwelle aus FR-QG-09 | R, dann B |
 | QG-U2 | Doku-Prüfung | CI | markdownlint, Link-Prüfer, Spec-Konsistenz (FR-QG-03) | keine toten Links, IDs eindeutig, Zähler stimmen | B |
 | QG-U3 | Changelog | PR | Skript | `feat:`/`fix:` braucht Eintrag oder `[skip-changelog]` | B |
 | QG-R1 | Release | `main` | semantic-release | nur nach grüner CI, nie manuell | B |
@@ -67,12 +67,12 @@ Akzeptanzkriterien:
 - Dieselben Befehle gibt es als `make`-/`npm`-Ziele (`lint`, `test`, `ci`), damit lokal und CI dasselbe ausführen (FR-QG-01).
 
 ### US-QG-02 · CI entscheidet über den Merge · ⬜
-Als **Entwickler** will ich, dass ein Merge in `main` nur mit grüner Pipeline möglich ist.
+Als **Entwickler** will ich, dass ein Release (Merge von `dev` nach `main`) nur mit grüner Pipeline erfolgt.
 
 Akzeptanzkriterien:
 - Jobs: Schnell-Checks (Secrets), Lint/Typen/Struktur/Grenzen, Tests mit Coverage, Sicherheitsprüfung, Integration, End-to-End, Lighthouse, Doku (QG-S1 bis QG-U3).
-- Ein Sammelstatus „ci-status" ist die einzige Pflichtprüfung des Branch-Schutzes (FR-QG-02); einzelne Jobs können umorganisiert werden, ohne den Schutz zu ändern.
-- **Scope-Steuerung** (aus Tombola): Die volle Suite läuft bei PRs nach `main`, bei manuellem Start und bei Abhängigkeits-Updates; Feature-Branches bekommen die schnellen Gates lokal und per Pre-Push. Das spart Laufzeit, ohne `main` zu gefährden.
+- Ein Sammelstatus „ci-status" ist die einzige Pflichtprüfung (FR-QG-02); einzelne Jobs können umorganisiert werden, ohne die Regel zu ändern. Das Repo ist privat auf dem Free-Plan, dort gibt es keinen Branch-Schutz: Der Release-Workflow prüft den Status, nicht der Merge.
+- **Scope-Steuerung** (Vorschlag, mit E-13): PRs auf `dev` bekommen die schnellen Gates plus Unit- und Integrationstests; die **volle Suite** (End-to-End, Lighthouse, Audits) läuft bei PRs von `dev` nach `main`, nächtlich auf `dev`, bei manuellem Start und bei Abhängigkeits-Updates; Feature-Branches bekommen die schnellen Gates lokal und per Pre-Push. Das spart Actions-Minuten (Free-Plan: 2.000 pro Monat, Annahme: ausreichend, zu messen), ohne `main` zu gefährden.
 - Neue Pushes brechen laufende Läufe derselben Ref ab (Concurrency).
 - Jeder Job hat ein Zeitlimit; Überschreitung ist ein Fehler, kein stilles Hängen.
 - Fehlermeldungen nennen die verletzte Regel und die Datei (nicht nur „failed").
@@ -139,13 +139,13 @@ Akzeptanzkriterien:
 | ID | Anforderung | Status |
 |---|---|---|
 | FR-QG-01 | Lokal und in CI laufen **dieselben** Befehle (`make`/`npm`-Ziele). Es gibt keine CI-only-Logik außer Zusatzdiensten (Datenbank, Browser). | ⬜ |
-| FR-QG-02 | Der Branch-Schutz für `main` verlangt einen einzigen Sammelstatus; nur Merges mit grünem Status und ohne direkte Pushes. | ⬜ |
+| FR-QG-02 | Ein einziger Sammelstatus „ci-status" ist die Pflichtprüfung. Solange der Plan keinen Branch-Schutz erlaubt (privates Repo, Free-Plan), erzwingt der Release-Workflow ihn (nur grüne Commits werden released und deployed) und ein Wächter-Workflow meldet Direkt-Pushes auf `main` und `dev`. Mit Branch-Schutz (z. B. nach Planwechsel) gilt er zusätzlich für Merges nach `dev` und `main`. | ⬜ |
 | FR-QG-03 | **Doku und Spec sind Gate-Gegenstand:** Skript validiert `Docs/PRODUKT-SPECS/` (IDs eindeutig, Zähler in `README.md`, Verweise auflösbar) und ein Link-Prüfer die Markdown-Links (QG-U2). | ⬜ |
 | FR-QG-04 | **Strukturregeln (Vorschlag, anzupassen an E-01):** (a) Fachlogik als eigenes Paket `core` mit Unterordnern je Epic; (b) Tests liegen neben dem Code als `<name>.test.ts`; (c) jedes Verzeichnis mit Code hat einen `index.ts` als einzige öffentliche Schnittstelle; (d) keine losen Dateien in Code-Gruppen (Komponenten, Hooks, Services); (e) Dateinamen nach Muster (PascalCase Komponenten, `useX` Hooks, `xService`). Prüfbar durch ein Skript mit Tests. | ⬜ |
 | FR-QG-05 | **Architekturgrenzen (maschinell):** (AB-1) `core` importiert nichts aus API, Web, Datenbank, Dateisystem oder Netz (NFR-ARC-01 der früheren Skizze); (AB-2) Web importiert nur die öffentliche Schnittstelle (`index.ts`) von `core`, nie interne Dateien; (AB-3) die KI-Schicht ruft nur validierende Operationen der Fachlogik, nie Repositories oder die Datenbank direkt (KI-R1); (AB-4) der Pokédex-Aufbau-Job schreibt nur in seinen Baum-Speicher; (AB-5) soziale Module lesen fremde Konten nur über die Freigabe-Schicht. Altlasten nur über die Ausnahmeliste (US-QG-03). | ⬜ |
 | FR-QG-06 | Das Rückverfolgbarkeits-Skript (US-QG-04) hat eigene Tests und läuft in CI; Format des Test-Namens: `US-XXX-nn` im Titel. | ⬜ |
 | FR-QG-07 | **Datenschutz-Gates:** (a) Mandantentest für jede Operation; (b) Whitelist-Vertragstests für alle sozialen und Partner-Ausgaben; (c) Foto-Test mit EXIF/GPS; (d) Test, dass Partner-IDs nie in Nutzerexport und Nutzerdaten auftauchen (FR-EQU-04). | ⬜ |
-| FR-QG-08 | **Kernabläufe für Integration und E2E** (an Releases gekoppelt): R0: Konto → Standort → Exemplar → Import (Trockenlauf, idempotent); R1: Messen mit Foto → Trend → „Heute"-Liste → Pokédex-Fang; R2: Freigabe → Freund sieht Exemplar → Feed; R3: Angebot → Anfrage → Zusage → Übergabe (atomar, FR-SOZ-05). | ⬜ |
+| FR-QG-08 | **Kernabläufe für Integration und E2E** (an Releases gekoppelt): R0: Konto → Standort → Art → Exemplar anlegen (Namensregel, Steckling); R1: Messen mit Foto → Trend → „Heute"-Liste → Pokédex-Fang; R2: Freigabe → Freund sieht Exemplar → Feed; R3: Angebot → Anfrage → Zusage → Übergabe (atomar, FR-SOZ-05). | ⬜ |
 | FR-QG-09 | **Performance/Barrierefreiheit:** Mobil-Läufe (Lighthouse CI und axe) mit Startschwellen als Bericht; vor R1-Abschluss auf blockierend setzen. Zahlenwerte werden aus der ersten Messung abgeleitet und nur angehoben (Annahme, nicht vorab festgelegt). | ⬜ |
 | FR-QG-10 | **Definition of Done (global):** (1) Story und Akzeptanzkriterien existieren; (2) Code ist auf ein Kriterium rückführbar; (3) Tests stammen aus den Kriterien (Happy Path, Randfälle, Fehlerfälle, Sicherheitspfade); (4) Fehler sind behandelt, nichts wird still verschluckt; (5) Eingaben validiert, keine Geheimnisse im Code, Zugriff geprüft; (6) Modulgrenzen eingehalten; (7) keine Magic Strings, Konstanten zentral; (8) Datenschutz-Gates grün; (9) alle Gates grün; (10) Spec-Status und Zähler angepasst. | ⬜ |
 | FR-QG-11 | **Fehlerbehandlung:** Domänenfehler tragen einen stabilen `error_code` (`<domäne>.<grund>`); Oberfläche und KI übersetzen nach Code, zeigen nie rohe Fehlermeldungen. Ein Gate prüft, dass jeder Code einen Text hat und jede Domänenausnahme einen Code trägt. | ⬜ |
@@ -179,7 +179,7 @@ Jedes Produktprinzip aus `00-Produktueberblick.md` bekommt mindestens ein Gate, 
 
 | ID | Frage | Vorschlag / Stand |
 |---|---|---|
-| E-13 | **CI-Plattform und Branch-Modell:** GitHub Actions mit `dev`→`main` wie in Tombola oder nur `main` mit kurzlebigen Branches? | Kleinteam: nur `main`, PRs mit voller Suite; ein zweiter Branch lohnt erst mit mehr Beteiligten |
+| E-13 | **CI-Plattform und Branch-Modell:** GitHub Actions mit `dev`→`main` wie in Tombola oder nur `main` mit kurzlebigen Branches? | **Entschieden (2026-10-03):** GitHub Actions; zwei dauerhafte Branches: `main` = fertiges, freigegebenes Produkt, `dev` = Entwicklungsstand. Änderungen entstehen auf dedizierten kurzlebigen Branches und kommen per PR nach `dev`; `dev` sammelt bis zum Release und geht dann per PR nach `main`. Repo bleibt privat (kein Branch-Schutz, FR-QG-02 angepasst). **Vorschlag, noch nicht bestätigt:** Scope der CI siehe US-QG-02; Squash-Merge nach `dev`, Merge-Commit von `dev` nach `main` (jeder Commit zählt im Changelog); Rück-Merge `main`→`dev` nach dem Release; Hotfix als Branch von `main` mit Rück-Merge; Standard-Branch des Repos `dev` |
 | E-14 | **Deploy-Freigabe:** Automatisch nach grünem `main` oder bewusste Freigabe? | bewusst (Release-Tag), bis Betrieb eingespielt ist |
 | E-15 | **Schwellenwerte** (Coverage, Dateilänge, Pre-push-Zeitbudget, Lighthouse) | Startwerte aus erster Messung, danach Ratchet; Zahlen in diesem Dokument sind Annahmen |
 | E-16 | **Statische Analyse:** Fallow-Äquivalent für TypeScript (ungenutzte Exporte, Duplikate, Komplexität) und Semgrep ja/nein | zunächst `knip` + ESLint-Security; Wiederbewertung nach R1 |

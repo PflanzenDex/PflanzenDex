@@ -19,12 +19,19 @@ Start with `Docs/PRODUKT-SPECS/README.md` (index, conventions, replacement table
 
 - **New features go into `Docs/PRODUKT-SPECS/`.** Only touch `Docs/PFLANZENSYSTEM-SPECS/` to correct the description of the vault's actual state.
 - Product IDs: `US-<EPIC>-nn`, `FR-<EPIC>-nn`, `DM-<EPIC>-nn`, `NFR-nn`, decisions `E-nn`. Stories taken over from the prototype **keep their prototype ID** so the two can be compared. IDs are never renumbered.
-- Product epics: ACC, BES, LIC, PHA, WAC, BEH, WUN, POK, MON, SOZ, EQU, KI, QS, MIG, ENT (`17-Entdecken.md`, swipe suggestions from the catalog into the wishlist).
+- Product epics: ACC, BES, LIC, PHA, WAC, BEH, WUN, POK, MON, SOZ, EQU, KI, QS, ENT (`17-Entdecken.md`, swipe suggestions from the catalog into the wishlist).
 - When adding a product epic: new numbered file, then update the file and status tables in `Docs/PRODUKT-SPECS/README.md`, cross-reference the affected epics, add glossary terms to `00`, and place it in the release cut in `16`.
 - Product specs are **technology-neutral**: behavior, data and limits. Technology choices belong in `16` as decisions.
 - Acceptance criteria use a short Gegeben/Wenn/Dann form and are meant to become tests (P-06).
 - Write in German and use the glossary terms (Art, Exemplar, Steckling, Lichtzone, Pflegephase, Vergeilung, Gefangen, Puffer, Wunsch …).
 - Numbers that are not measured or sourced must be marked as assumptions ("Annahme", "Startwert").
+
+## Git workflow (E-13)
+
+- `main` holds the finished, released product; `dev` holds the current development state. Neither gets direct commits.
+- Every change lives on a dedicated short-lived branch (one task, one worktree) and enters `dev` through a pull request. `dev` collects changes until a release; then `dev` goes into `main` through a pull request.
+- Commit messages follow Conventional Commits (type and scope from the epics, e.g. `feat(soz)`), `docs:` for documentation. Spec status and counters in `Docs/PRODUKT-SPECS/README.md` change in the same PR as the code.
+- The product epic MIG (import from the vault) was dropped; its IDs stay reserved.
 
 ## Principles that shape every requirement
 
