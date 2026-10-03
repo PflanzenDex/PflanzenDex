@@ -33,6 +33,7 @@
     "skills": "node scripts/check-skills.mjs",
     "duplicates": "node scripts/check-duplicates.mjs",
     "release-tags": "node scripts/check-release-tags.mjs",
+    "e2e": "npm run e2e -w @pflanzendex/e2e",
     "changelog": "node scripts/check-changelog.mjs"
   },
   "devDependencies": {

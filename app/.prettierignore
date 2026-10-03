@@ -3,3 +3,5 @@ dist
 coverage
 package-lock.json
 .lighthouseci
+test-results
+playwright-report

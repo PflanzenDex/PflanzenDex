@@ -28,6 +28,7 @@ Abgrenzung: Anfänger-Apps (Gießerinnerung, Pflanzenbestimmung) bedienen eine a
 ### Stufe 1 · Für uns (Ziel: dauerhaft genutzt, Kosten niedrig)
 
 Erfolgskriterien (Annahmen, vor Beginn bestätigen):
+
 - Alle drei **wechseln vom Vault in die App** (Parität der Kernfunktionen, siehe `16-Releases-und-Entscheidungen.md` R1) und nutzen sie **mindestens wöchentlich**, auch ohne Erinnerung.
 - Mindestens **ein echter Tausch** läuft vollständig über die App.
 - Der Feed „Neu bei Freunden" wird geöffnet, ohne dass jemand daran erinnert.
@@ -46,11 +47,11 @@ Laufende Kosten (zu ermitteln, nicht geschätzt): Hosting, Datenbank, Foto-Speic
 
 Einnahmequellen in Reihenfolge der Eignung:
 
-| Quelle | Passung | Hinweis |
-|---|---|---|
-| **Freiwilliger Beitrag / kleines Abo** („Unterstützer") | passt zu einer kleinen Community | Gegenleistung: mehr Foto-Speicher, höhere Rate-Limits der KI-Verbindung, Sensor-Anbindung (MON), Export. Kernfunktionen bleiben frei, sonst bricht der Tausch weg. |
-| **Affiliate-Links** (Lampen, Substrat, Sensoren) | passt: Die App kennt Lichtzonen, Wunschliste und Gerätebestand | nur gekennzeichnet und nur zu abgeleitetem Bedarf; Regeln in `11-Equipment-und-Empfehlungen.md` (FR-EQU-03 bis -10) |
-| **Shop-/Gärtnerei-Partner** über „Fehlt dir"-Arten | passt, braucht Nutzerzahl | erst ab messbarem Traffic |
+| Quelle                                                  | Passung                                                        | Hinweis                                                                                                                                                            |
+| ------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Freiwilliger Beitrag / kleines Abo** („Unterstützer") | passt zu einer kleinen Community                               | Gegenleistung: mehr Foto-Speicher, höhere Rate-Limits der KI-Verbindung, Sensor-Anbindung (MON), Export. Kernfunktionen bleiben frei, sonst bricht der Tausch weg. |
+| **Affiliate-Links** (Lampen, Substrat, Sensoren)        | passt: Die App kennt Lichtzonen, Wunschliste und Gerätebestand | nur gekennzeichnet und nur zu abgeleitetem Bedarf; Regeln in `11-Equipment-und-Empfehlungen.md` (FR-EQU-03 bis -10)                                                |
+| **Shop-/Gärtnerei-Partner** über „Fehlt dir"-Arten      | passt, braucht Nutzerzahl                                      | erst ab messbarem Traffic                                                                                                                                          |
 
 KI-Kosten entstehen beim Halter (eigener KI-Client), nicht beim Betreiber; bei uns fällt nur die Last der Schnittstelle an, begrenzt durch Rate-Limits je Verbindung (US-KI-06). Ein eingebauter Chat mit Betreiber-Kontingent würde das ändern (E-19).
 
@@ -67,16 +68,16 @@ Nur möglich, wenn Nutzerzahl und Bindung weit über Stufe 2 liegen. Optionen, j
 
 ## Risiken
 
-| Risiko | Wirkung | Gegenmaßnahme |
-|---|---|---|
-| **Neubau ohne Parität:** Die drei nutzen den Vault weiter, weil die App weniger kann | Stufe 1 scheitert | Release R1 hat Parität als Ziel; Prototyp und App laufen parallel, Wechsel erst nach Bestätigung des Halters; Neu-Erfassung statt Import (Risiko R-10 in `16`) |
-| Aufwand: Aus dem Vault-Prototyp wird ein Produkt (Konten, Betrieb, Datenschutz) | Projekt versandet | Kleinste Releases, jedes nutzbar; Betrieb einfach halten (E-01) |
-| Netzwerkeffekt fehlt (Feed leer bei 1–2 Freunden) | Social wirkt tot | Mit Freundeskreis starten; Wert auch ohne Freunde (Pokédex, Pflege) |
-| Zielgruppe zahlt wenig | Stufe 2 scheitert | Kosten niedrig halten, kein Abo-Zwang für Kernfunktionen |
-| Last der KI-Verbindungen wächst schneller als Einnahmen; Nutzer ohne bezahlten KI-Client sehen weniger Wert | Verlust je Nutzer bzw. schwächeres Wertversprechen 5 | Rate-Limits je Verbindung, Messung (NFR-16), manuelle Wege immer verfügbar (FR-KI-05); E-19 prüft später einen eingebauten Chat |
-| Datenschutz und Standort/Fotos | Vertrauensverlust, Bußgeld | Privat als Standard (FR-SOZ-01), EXIF/GPS entfernen, DSGVO-Konzept vor dem ersten Externen |
-| Tausch rechtlich (Artenschutz, Pflanzengesundheit) | Haftung | Hinweise (FR-SOZ-09), kein Versand/Verkauf in Stufe 1–2 |
-| Katalogqualität (KI-erstellte Profile mit Fehlern) | falsche Pflegehinweise | Prüfstatus (FR-BES-06), Quellen, Betreiber-Prüfliste |
+| Risiko                                                                                                      | Wirkung                                              | Gegenmaßnahme                                                                                                                                                  |
+| ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Neubau ohne Parität:** Die drei nutzen den Vault weiter, weil die App weniger kann                        | Stufe 1 scheitert                                    | Release R1 hat Parität als Ziel; Prototyp und App laufen parallel, Wechsel erst nach Bestätigung des Halters; Neu-Erfassung statt Import (Risiko R-10 in `16`) |
+| Aufwand: Aus dem Vault-Prototyp wird ein Produkt (Konten, Betrieb, Datenschutz)                             | Projekt versandet                                    | Kleinste Releases, jedes nutzbar; Betrieb einfach halten (E-01)                                                                                                |
+| Netzwerkeffekt fehlt (Feed leer bei 1–2 Freunden)                                                           | Social wirkt tot                                     | Mit Freundeskreis starten; Wert auch ohne Freunde (Pokédex, Pflege)                                                                                            |
+| Zielgruppe zahlt wenig                                                                                      | Stufe 2 scheitert                                    | Kosten niedrig halten, kein Abo-Zwang für Kernfunktionen                                                                                                       |
+| Last der KI-Verbindungen wächst schneller als Einnahmen; Nutzer ohne bezahlten KI-Client sehen weniger Wert | Verlust je Nutzer bzw. schwächeres Wertversprechen 5 | Rate-Limits je Verbindung, Messung (NFR-16), manuelle Wege immer verfügbar (FR-KI-05); E-19 prüft später einen eingebauten Chat                                |
+| Datenschutz und Standort/Fotos                                                                              | Vertrauensverlust, Bußgeld                           | Privat als Standard (FR-SOZ-01), EXIF/GPS entfernen, DSGVO-Konzept vor dem ersten Externen                                                                     |
+| Tausch rechtlich (Artenschutz, Pflanzengesundheit)                                                          | Haftung                                              | Hinweise (FR-SOZ-09), kein Versand/Verkauf in Stufe 1–2                                                                                                        |
+| Katalogqualität (KI-erstellte Profile mit Fehlern)                                                          | falsche Pflegehinweise                               | Prüfstatus (FR-BES-06), Quellen, Betreiber-Prüfliste                                                                                                           |
 
 ## Entscheidungen, die diesen Case bestimmen
 
@@ -89,12 +90,12 @@ Gesammelt in `16-Releases-und-Entscheidungen.md`. Für den Case relevant:
 
 ## Messgrößen
 
-| Größe | Stufe | Wie gemessen |
-|---|---|---|
-| Wöchentlich aktive Konten | 1 | Anmeldungen und Aktionen, ohne Inhalte auszuwerten |
-| Wechsel vom Vault in die App | 1 | alle drei nutzen die App für die tägliche Pflege |
-| Abgeschlossene Tausche | 1, 2 | Tausch mit Status `übergeben` |
-| Kosten je aktivem Konto (Hosting, Speicher, KI) | 1, 2 | Betreiber-Messung (NFR-16) |
-| Neue Konten ohne Einladung durch uns | 2 | Registrierungen (US-ACC-05 nach Öffnung) |
-| Zahlende Nutzer, laufende Kosten | 2 | Zahlungsanbieter, Rechnungen |
-| Wiederkehrrate nach 4 Wochen | 2, 3 | Konto-Aktivität |
+| Größe                                           | Stufe | Wie gemessen                                       |
+| ----------------------------------------------- | ----- | -------------------------------------------------- |
+| Wöchentlich aktive Konten                       | 1     | Anmeldungen und Aktionen, ohne Inhalte auszuwerten |
+| Wechsel vom Vault in die App                    | 1     | alle drei nutzen die App für die tägliche Pflege   |
+| Abgeschlossene Tausche                          | 1, 2  | Tausch mit Status `übergeben`                      |
+| Kosten je aktivem Konto (Hosting, Speicher, KI) | 1, 2  | Betreiber-Messung (NFR-16)                         |
+| Neue Konten ohne Einladung durch uns            | 2     | Registrierungen (US-ACC-05 nach Öffnung)           |
+| Zahlende Nutzer, laufende Kosten                | 2     | Zahlungsanbieter, Rechnungen                       |
+| Wiederkehrrate nach 4 Wochen                    | 2, 3  | Konto-Aktivität                                    |

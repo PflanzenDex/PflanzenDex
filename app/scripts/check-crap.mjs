@@ -9,8 +9,12 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-/** The one place for the threshold (FR-QG-18). Tombola value; a function above it fails. */
-export const MAX_CRAP = 450;
+/** The threshold lives in quality-limits.json (`crap.max`, FR-QG-16/18); a function above it fails. */
+export function readMaxCrap(file = new URL("../quality-limits.json", import.meta.url)) {
+  return JSON.parse(fs.readFileSync(file, "utf8")).crap.max;
+}
+
+export const MAX_CRAP = readMaxCrap();
 
 /** Merge Istanbul coverage maps; the keys are absolute file paths, so a plain merge is lossless. */
 export function mergeCoverage(maps) {

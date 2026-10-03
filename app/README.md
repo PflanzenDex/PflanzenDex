@@ -84,3 +84,10 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Limits:** no editing, renaming, deleting or archiving (BES-03, BES-07); the Kennzeichen rule from the third Exemplar on (ask for missing marks) belongs to US-BES-03; Zusatz, zone override, Herkunft and sharing fields of DM-BES-02 are missing; no Exemplar hints yet (BES-08).
 
 **Operations (TE-03):** containers, Compose, backup and deploy live in `deploy/`; see the runbook `Docs/operations/staging-deploy-and-backup.md`. Targets: `make deploy`, `make backup`, `make restore-test`.
+
+## End-to-end tests (QG-T3, QG-U1)
+
+- **Target:** `make e2e` starts the test database and Keycloak (`db-up`, `auth-up`), applies the migrations and runs Playwright (package `packages/e2e`; Playwright starts API and web itself). Needs Docker. Projects: `mobil` (Pixel 7) and `desktop`.
+- **When:** not on every PR into `dev`, but on PRs `dev` to `main`, nightly and manually (`ci.yml`, `nightly.yml`; E-13/E-15). Failures fail the job; the report is the artifact `e2e-report`.
+- **Covered:** sign-in against the real Keycloak (US-ACC-01) and locations/light zones (US-LIC-05). Test accounts are created through the Keycloak admin API; registration with mail confirmation stays documented manually (`Docs/testprotokolle/acc-01.md`).
+- **Accessibility:** axe runs inside the tests as a report (attachment `axe-*.json`, job summary) and never fails a test (FR-QG-09).
