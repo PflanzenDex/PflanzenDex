@@ -1,0 +1,19 @@
+{
+  "name": "@pflanzendex/api",
+  "private": true,
+  "type": "module",
+  "description": "HTTP-API: ruft nur die öffentliche Schnittstelle von core auf",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.3",
+    "@pflanzendex/core": "*",
+    "hono": "^4.13.12"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}

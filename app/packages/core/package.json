@@ -1,0 +1,13 @@
+{
+  "name": "@pflanzendex/core",
+  "private": true,
+  "type": "module",
+  "description": "Fachlogik ohne I/O (P-02): reine Funktionen, keine Importe aus API, Web, Datenbank, Dateisystem oder Netz (AB-1)",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run"
+  }
+}
