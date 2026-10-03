@@ -27,7 +27,7 @@ IDs are never renumbered.
 - **Symptom:** Two spec files carry the same number, or the same ID is defined in two places; references become ambiguous.
 - **Cause:** Parallel sessions (worktrees) each pick the next free number independently.
 - **Fix:** Check the next free number against `origin/dev` right before creating a file; resolve duplicates in the PR that merges second.
-- **Can it become a gate?** Already is: `app/scripts/check-specs.mjs` in `make gates` (principle PR-008).
+- **Can it become a gate?** Already is: `app/scripts/check-specs.mjs` in `make gates` (principle PRIN-008).
 - **Source:** US-DEV-08 in `Docs/PRODUKT-SPECS/19-Entwicklungsprozess-und-Automatisierung.md`.
 
 ## PF-003 Definition of Done and CI disagree on a number

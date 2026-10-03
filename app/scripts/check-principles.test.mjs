@@ -12,7 +12,7 @@ const entry = (meta, sections) =>
   Object.entries(sections)
     .map(([h, b]) => `## ${h}\n${b}\n`)
     .join("\n");
-const base = { id: "PR-001", title: "T", maturity: "observed", spec: "[P-02]" };
+const base = { id: "PRIN-001", title: "T", maturity: "observed", spec: "[P-02]" };
 const gatedSections = {
   "Why it is better": "x",
   "How it is measured": "x",
@@ -23,21 +23,24 @@ const gatedSections = {
 const check = (name, text) => findProblems({ [name]: text }, env);
 
 test("US-QG-06: a complete gated entry passes", () => {
-  assert.deepEqual(check("PR-001-a.md", entry({ ...base, maturity: "gated" }, gatedSections)), []);
+  assert.deepEqual(
+    check("PRIN-001-a.md", entry({ ...base, maturity: "gated" }, gatedSections)),
+    [],
+  );
 });
 test("US-QG-06: an observed entry needs only the why", () => {
-  assert.deepEqual(check("PR-001-a.md", entry(base, { "Why it is better": "x" })), []);
+  assert.deepEqual(check("PRIN-001-a.md", entry(base, { "Why it is better": "x" })), []);
 });
 test("US-QG-06: incomplete frontmatter and unknown maturity are rejected", () => {
   assert.match(
-    check("PR-001-a.md", entry({ id: "PR-001" }, {}))[0],
-    /^PR-1 .*title, maturity, spec/,
+    check("PRIN-001-a.md", entry({ id: "PRIN-001" }, {}))[0],
+    /^PRIN-1 .*title, maturity, spec/,
   );
   assert.match(
-    check("PR-001-a.md", entry({ ...base, maturity: "done" }, gatedSections))[0],
-    /^PR-1 .*unknown maturity/,
+    check("PRIN-001-a.md", entry({ ...base, maturity: "done" }, gatedSections))[0],
+    /^PRIN-1 .*unknown maturity/,
   );
-  assert.match(check("PR-001-a.md", "no frontmatter")[0], /^PR-1/);
+  assert.match(check("PRIN-001-a.md", "no frontmatter")[0], /^PRIN-1/);
 });
 test("US-QG-06: required sections per maturity level", () => {
   const cases = {
@@ -49,7 +52,7 @@ test("US-QG-06: required sections per maturity level", () => {
     const sections = Object.fromEntries(
       Object.entries(gatedSections).filter(([h]) => !needed.includes(h)),
     );
-    const p = check("PR-001-a.md", entry({ ...base, maturity }, sections));
+    const p = check("PRIN-001-a.md", entry({ ...base, maturity }, sections));
     for (const n of needed)
       assert.ok(
         p.some((x) => x.includes(`"${n}"`)),
@@ -58,22 +61,22 @@ test("US-QG-06: required sections per maturity level", () => {
   }
   const empty = { ...gatedSections, Gate: "  " };
   assert.match(
-    check("PR-001-a.md", entry({ ...base, maturity: "gated" }, empty))[0],
-    /^PR-3 .*"Gate"/,
+    check("PRIN-001-a.md", entry({ ...base, maturity: "gated" }, empty))[0],
+    /^PRIN-3 .*"Gate"/,
   );
 });
 test("US-QG-06: ids must be unique and match the file name", () => {
   const text = entry(base, { "Why it is better": "x" });
-  const p = findProblems({ "PR-001-a.md": text, "PR-001-b.md": text }, env);
-  assert.match(p[0], /^PR-2 .*also used/);
-  assert.match(check("PR-009-a.md", text)[0], /^PR-2 .*must start with "PR-001-"/);
+  const p = findProblems({ "PRIN-001-a.md": text, "PRIN-001-b.md": text }, env);
+  assert.match(p[0], /^PRIN-2 .*also used/);
+  assert.match(check("PRIN-009-a.md", text)[0], /^PRIN-2 .*must start with "PRIN-001-"/);
 });
 test("US-QG-06: missing repo paths and make targets are reported", () => {
   const s = { ...gatedSections, "Checked by": "`app/nope.mjs`", Gate: "`make nothing`" };
-  const p = check("PR-001-a.md", entry({ ...base, maturity: "gated" }, s));
+  const p = check("PRIN-001-a.md", entry({ ...base, maturity: "gated" }, s));
   assert.equal(p.length, 2);
-  assert.match(p[0], /^PR-4 .*path app\/nope\.mjs/);
-  assert.match(p[1], /^PR-4 .*make nothing/);
+  assert.match(p[0], /^PRIN-4 .*path app\/nope\.mjs/);
+  assert.match(p[1], /^PRIN-4 .*make nothing/);
 });
 test("US-QG-06: the real register in this repo is valid", () => {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");

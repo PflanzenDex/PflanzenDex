@@ -1,8 +1,8 @@
 // Validates the principles register in Docs/principles (US-QG-06, FR-DEV-04).
-//   PR-1  frontmatter incomplete (id, title, maturity, spec) or maturity unknown
-//   PR-2  id duplicated, or file name does not start with the id
-//   PR-3  a section required for the maturity level is missing or empty
-//   PR-4  a repo path or make target in "Checked by" / "Gate" does not exist
+//   PRIN-1  frontmatter incomplete (id, title, maturity, spec) or maturity unknown
+//   PRIN-2  id duplicated, or file name does not start with the id
+//   PRIN-3  a section required for the maturity level is missing or empty
+//   PRIN-4  a repo path or make target in "Checked by" / "Gate" does not exist
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -49,7 +49,7 @@ export function referencesOf(body) {
   });
 }
 
-// files: { "PR-001-x.md": text }; env: { exists(path), makeTargets: string[] }
+// files: { "PRIN-001-x.md": text }; env: { exists(path), makeTargets: string[] }
 export function findProblems(files, env) {
   const problems = [];
   const ids = new Map();
@@ -57,19 +57,21 @@ export function findProblems(files, env) {
     const { meta, sections } = parseEntry(text);
     const missing = ["id", "title", "maturity", "spec"].filter((k) => !meta[k]);
     if (missing.length) {
-      problems.push(`PR-1 ${name}: frontmatter lacks ${missing.join(", ")}`);
+      problems.push(`PRIN-1 ${name}: frontmatter lacks ${missing.join(", ")}`);
       continue;
     }
     if (!LEVELS.includes(meta.maturity))
-      problems.push(`PR-1 ${name}: unknown maturity "${meta.maturity}"`);
+      problems.push(`PRIN-1 ${name}: unknown maturity "${meta.maturity}"`);
     if (ids.has(meta.id))
-      problems.push(`PR-2 ${name}: id ${meta.id} also used in ${ids.get(meta.id)}`);
+      problems.push(`PRIN-2 ${name}: id ${meta.id} also used in ${ids.get(meta.id)}`);
     else ids.set(meta.id, name);
     if (!name.startsWith(`${meta.id}-`) || !name.endsWith(".md"))
-      problems.push(`PR-2 ${name}: file name must start with "${meta.id}-"`);
+      problems.push(`PRIN-2 ${name}: file name must start with "${meta.id}-"`);
     for (const key of REQUIRED[meta.maturity] ?? []) {
       if (!sections[SECTIONS[key]])
-        problems.push(`PR-3 ${name}: "${SECTIONS[key]}" is required at maturity ${meta.maturity}`);
+        problems.push(
+          `PRIN-3 ${name}: "${SECTIONS[key]}" is required at maturity ${meta.maturity}`,
+        );
     }
     for (const key of ["checkedBy", "gate"]) {
       for (const ref of referencesOf(sections[SECTIONS[key]] ?? "")) {
@@ -77,7 +79,7 @@ export function findProblems(files, env) {
           ref.kind === "make" ? env.makeTargets.includes(ref.value) : env.exists(ref.value);
         if (!ok)
           problems.push(
-            `PR-4 ${name}: ${SECTIONS[key]} references missing ${ref.kind} ${ref.value}`,
+            `PRIN-4 ${name}: ${SECTIONS[key]} references missing ${ref.kind} ${ref.value}`,
           );
       }
     }
@@ -90,7 +92,7 @@ export function run(root) {
   const files = Object.fromEntries(
     fs
       .readdirSync(dir)
-      .filter((f) => /^PR-.*\.md$/.test(f))
+      .filter((f) => /^PRIN-.*\.md$/.test(f))
       .map((f) => [f, fs.readFileSync(path.join(dir, f), "utf8")]),
   );
   const makefile = fs.readFileSync(path.join(root, "Makefile"), "utf8");
