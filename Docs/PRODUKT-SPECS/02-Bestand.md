@@ -15,13 +15,15 @@ Akzeptanzkriterien:
 - Eine Art ohne Epitheton (nur Gattung) wird als Eintrag erlaubt, zählt aber nicht als Pokédex-Fang (siehe US-POK-06).
 - Dubletten (gleicher normierter Name oder Synonym) werden erkannt und auf die vorhandene Art verwiesen. Die Suche findet auch Synonyme (z. B. *Sansevieria* → *Dracaena*).
 
-### US-BES-02 · Exemplar anlegen · ⬜ (Prototyp ✅)
+### US-BES-02 · Exemplar anlegen · 🟨 (Prototyp ✅)
 Als **Pflanzenhalter** will ich ein Exemplar mit wenigen Angaben anlegen.
 
 Akzeptanzkriterien:
 - Pflicht: Art. Vorbelegt: Name nach Namensregel (DM-BES-03), Standort nach der heutigen Phase (siehe `US-PHA-01`), `Gefangen_Am` = heutiges **lokales** Datum, leere Messreihe und Behandlungsliste.
 - Standort = Soll-Standort der Wachstumsphase, außer heute liegt in der Ruhephase und ein Ruhestandort existiert.
 - Der Name steht vor dem Speichern fest. Existiert er schon, wird nichts verändert und die Namensregel wird angewendet (US-BES-03).
+
+Stand der Umsetzung: Anlegen mit Art, Namen nach Namensregel, lokalem `Gefangen_Am`, optionalem Kennzeichen und gewähltem Standort; Messreihe und Behandlungsliste sind leer abgeleitet. **Offen:** Der Soll-Standort der Phase kommt über den Port `SollStandortQuelle`, den `pflege` (PHA, US-PHA-01) und das Pflegeprofil (US-BES-09) erst umsetzen. Bis dahin ist der Standort „unbekannt“, solange der Halter keinen wählt (P-08). Die Kennzeichen-Regeln ab dem dritten Exemplar (US-BES-03) fehlen.
 
 ### US-BES-03 · Mehrere Exemplare einer Art unterscheiden · ⬜ (Prototyp ✅)
 Als **Pflanzenhalter** will ich mehrere Töpfe derselben Art unterscheiden, damit jedes Exemplar eine eigene Historie hat.
@@ -159,10 +161,10 @@ Kontoeigene Abweichungen von den Katalogwerten einer Art. Privat, nie Teil einer
 
 | ID | Anforderung | Status |
 |---|---|---|
-| FR-BES-01 | Art (Wissen) und Exemplar (Topf) sind getrennte Entitäten; Exemplare tragen nur individuelle Felder. | ⬜ |
+| FR-BES-01 | Art (Wissen) und Exemplar (Topf) sind getrennte Entitäten; Exemplare tragen nur individuelle Felder. | 🟨 |
 | FR-BES-02 | Der Artenkatalog ist gemeinsam; Änderungen daran sind Betreiber- oder Prüf-Aktionen, Nutzer können Vorschläge machen (E-02). | 🟨 |
 | FR-BES-03 | Namenskonflikte werden vor jeder Änderung geprüft, es entsteht kein Teilzustand. | 🟨 |
-| FR-BES-04 | `Gefangen_Am` wird mit dem lokalen Datum des Nutzers belegt (NFR-08). | ⬜ |
+| FR-BES-04 | `Gefangen_Am` wird mit dem lokalen Datum des Nutzers belegt (NFR-08). | ✅ |
 | FR-BES-05 | Ein Artprofil verlangt vollständige Pflichtfelder (DM-BES-01) einschließlich Wachstumsmaß, Vergeilung-Anzeichen und Erfolgskriterien. Die Lichtzone folgt dem Sättigungspunkt, nicht dem Überleben (US-LIC-01). | 🟨 |
 | FR-BES-06 | Ein KI-erstelltes Profil ist als solches gekennzeichnet, bis ein Mensch es geprüft hat. Die KI darf kein Profil als `geprüft` markieren (US-KI-03). | ⬜ |
 | FR-BES-07 | Eine Wachstumsmaß-Dimension je Art ist fix und erscheint als Eingabe im Messformular. | ⬜ |

@@ -27,9 +27,9 @@ export const LICHT_PFADE = ["/lichtzonen", "/standorte", "/hinweise"] as const;
  * Standorte und Lichtzonen (US-LIC-05). Schreibzugriffe laufen nur über die Operationen von `core`
  * (Validierung, Wiederholungsschutz per `Idempotency-Key`), Lesezugriffe über die Adapter unter `mitKonto`.
  *
- * Grenze: Arten verlinken keine Zone (der Katalog trägt nur den Lux-Bedarf, die Zone wird abgeleitet, FR-BES-10),
- * brauchen also keine Quelle. Exemplare (BES-02) und Pflegeprofile (DM-BES-04) schon: `zusaetzlicheNutzung` nimmt
- * ihre Quellen auf; bis dahin prüft „Zone löschen“ nur Standorte.
+ * Grenze: Arten und Exemplare (BES-02) verlinken keine Zone, brauchen also keine Quelle: ein Exemplar erreicht eine Zone
+ * nur über seinen Standort, den die Standort-Quelle schon meldet. Wer als Erstes ein Feld auf eine Zone zeigen lässt
+ * (Zonen-Override der Stecklinge BES-04, Pflegeprofil BES-09), liefert seine Quelle über `zusaetzlicheNutzung`.
  */
 export function lichtRouten(
   pool: Pool,

@@ -1,4 +1,5 @@
 import type { Pool } from "pg";
+import { FIXTURES_BESTAND } from "./bestand/index.ts";
 import { FIXTURES_KATALOG } from "./katalog/index.ts";
 import { FIXTURES_KERN, mitKonto, type Fixtures } from "./kern/index.ts";
 import { FIXTURES_KONTO } from "./konto/index.ts";
@@ -12,6 +13,7 @@ export const FIXTURES: Fixtures = {
   ...FIXTURES_KONTO,
   ...FIXTURES_KATALOG,
   ...FIXTURES_LICHT,
+  ...FIXTURES_BESTAND,
 };
 
 // Testhilfen für Tabellen eines anderen Moduls (AB-9): Tests eines Moduls schreiben kein SQL auf fremde Tabellen,

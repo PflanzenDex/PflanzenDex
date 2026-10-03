@@ -1,0 +1,59 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-a3653eab2e6c5cb97/app/packages/db
+
+ ❯ src/kern/mandant.test.ts (11 tests | 2 failed) 886ms
+   ❯ Mandantentrennung über alle Tabellen (7)
+     × Konto A liest und ändert nichts von Konto B (und umgekehrt), für jede Tabelle mit Konto-Kennung 257ms
+     × eine geschützte Tabelle ohne Fixture lässt den generischen Test scheitern 266ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/kern/mandant.test.ts > Mandantentrennung über alle Tabellen > Konto A liest und ändert nichts von Konto B (und umgekehrt), für jede Tabelle mit Konto-Kennung
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "exemplar: keine Fixture in fixtures.ts: Tabelle ist nicht in den Mandantentest aufgenommen",
++ ]
+
+ ❯ src/kern/mandant.test.ts:26:22
+     24|   it("Konto A liest und ändert nichts von Konto B (und umgekehrt), für…
+     25|     const probleme = await pruefeMandantentrennung(pool, FIXTURES, kon…
+     26|     expect(probleme).toEqual([]);
+       |                      ^
+     27|   });
+     28|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/kern/mandant.test.ts > Mandantentrennung über alle Tabellen > eine geschützte Tabelle ohne Fixture lässt den generischen Test scheitern
+AssertionError: expected [ …(2) ] to deeply equal [ StringContaining "neu" ]
+
+- Expected
++ Received
+
+  [
+-   StringContaining "neu",
++   "exemplar: keine Fixture in fixtures.ts: Tabelle ist nicht in den Mandantentest aufgenommen",
++   "neu: keine Fixture in fixtures.ts: Tabelle ist nicht in den Mandantentest aufgenommen",
+  ]
+
+ ❯ src/kern/mandant.test.ts:73:24
+     71|       await client.query("commit");
+     72|       const probleme = await pruefeMandantentrennung(pool, FIXTURES, k…
+     73|       expect(probleme).toEqual([expect.stringContaining("neu")]);
+       |                        ^
+     74|     } finally {
+     75|       client.release();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)
+   Start at  15:01:09
+   Duration  1.14s (tests 84%, transform 12%, import 4%)
+

@@ -36,7 +36,9 @@ describe("US-BES-01 Client der Arten-API", () => {
   });
 
   it("die Seite beginnt mit der Suche und lädt, ohne etwas zu erfinden", () => {
-    const h = renderToString(<ArtenSeite api="http://api" token={async () => "tok"} />);
+    const h = renderToString(
+      <ArtenSeite api="http://api" token={async () => "tok"} onWaehlen={vi.fn()} />,
+    );
     expect(h).toContain("Art wählen");
     expect(h).toContain("Suche läuft");
   });

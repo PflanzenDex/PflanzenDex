@@ -1,11 +1,5 @@
-import { ganzzahlFeld, kennungFeld, objekt, textFeld, wahlFeld, type Fehlerdetail } from "../kern";
+import { ganzzahlFeld, kennungFeld, objekt, oderNull, textFeld, wahlFeld } from "../kern";
 import { GRENZEN, STANDORT_ARTEN } from "./typen";
-
-/** Fehlt der Wert (undefined oder null), ist er „nicht angegeben“ (null). */
-export function oderNull<T>(pruefe: (wert: unknown) => T | Fehlerdetail) {
-  return (wert: unknown): T | Fehlerdetail | null =>
-    wert === undefined || wert === null ? null : pruefe(wert);
-}
 
 const zonenFelder = {
   name: textFeld("name", GRENZEN.name),

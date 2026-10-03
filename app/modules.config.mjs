@@ -43,7 +43,7 @@ const MODULES = [
     epics: ["BES"],
     tables: ["exemplar", "pflegeprofil", "exemplar_herkunft"],
     dependsOn: ["kern", "katalog", "licht"],
-    ports: [],
+    ports: ["SollStandortQuelle"],
   },
   {
     name: "monitoring",

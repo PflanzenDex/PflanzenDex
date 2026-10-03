@@ -4,3 +4,4 @@ export * from "./kern";
 export * from "./konto";
 export * from "./katalog";
 export * from "./licht";
+export * from "./bestand";

@@ -42,5 +42,5 @@ Akzeptanzkriterien:
 | FR-PHA-02 | Das Exemplar trägt genau ein manuell gepflegtes Standortfeld (Ist). Soll-Standorte je Phase gehören zum Pflegeprofil der Art des Halters. | ⬜ |
 | FR-PHA-03 | Standortvergleich über Kennung. Tippfehler sind nicht mehr möglich, weil nur Auswahl erlaubt ist (löst das Prototyp-Risiko aus FR-PHA-03). | ⬜ |
 | FR-PHA-04 | Stecklinge sind ausgenommen. | ⬜ |
-| FR-PHA-05 | Das Anlegen belegt den Standort phasengerecht (US-BES-02). | ⬜ |
+| FR-PHA-05 | Das Anlegen belegt den Standort phasengerecht (US-BES-02). | ⬜ (Port `SollStandortQuelle` in `bestand` steht, die Umsetzung durch `pflege` fehlt) |
 | FR-PHA-06 | Am Tag des Phasenwechsels erinnert das System, wenn Exemplare noch am alten Standort stehen (US-MON-02). Die Berechnung ist dieselbe wie in dieser Epic (FR-MON-03). | ⬜ |

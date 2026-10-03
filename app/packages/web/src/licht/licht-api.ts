@@ -43,5 +43,15 @@ export async function ladeLicht(
   };
 }
 
+/** Nur die Standorte des Kontos, z. B. zur Auswahl in anderen Modulen (Exemplar anlegen). */
+export async function ladeStandorte(
+  api: string,
+  token: string,
+  abruf: Abruf = fetch,
+): Promise<KernAntwort<readonly LichtStandort[]>> {
+  const r = await aufruf<{ standorte: LichtStandort[] }>(abruf, `${api}/standorte`, token);
+  return r.ok ? { ok: true, wert: r.wert.standorte } : r;
+}
+
 export const erzeugeSchreiben = (api: string, token: string, abruf: Abruf = fetch): Schreiben =>
   erzeugeKern<ZonenNutzer>(api, token, abruf);
