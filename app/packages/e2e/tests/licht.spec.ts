@@ -36,6 +36,7 @@ test.describe("US-LIC-05 Standorte und Lichtzonen", () => {
 
     // Nichts geht still verloren (P-10): nach dem Neuladen stehen die Daten aus der Datenbank wieder da.
     await page.reload();
+    await page.getByRole("button", { name: "Standorte und Licht" }).click();
     await expect(page.getByRole("heading", { level: 3, name: "Balkon" })).toBeVisible();
   });
 
