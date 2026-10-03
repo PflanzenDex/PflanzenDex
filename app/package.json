@@ -18,13 +18,15 @@
     "boundaries": "node scripts/check-boundaries.mjs",
     "specs": "node scripts/check-specs.mjs",
     "test": "npm run test --workspaces --if-present && node --test \"scripts/**/*.test.mjs\"",
+    "coverage": "npm run test --workspaces --if-present -- --coverage && node --test \"scripts/**/*.test.mjs\" && node scripts/check-coverage-ratchet.mjs",
     "build": "npm run build --workspaces --if-present",
     "gates": "npm run lint && npm run typecheck && npm run boundaries && npm run specs && npm run format:check",
-    "ci": "npm run gates && npm run test && npm run build"
+    "ci": "npm run gates && npm run coverage && npm run build"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.4",
+    "@vitest/coverage-v8": "^5.0.3",
     "concurrently": "^10.0.5",
     "eslint": "^10.12.0",
     "globals": "^17.13.0",
