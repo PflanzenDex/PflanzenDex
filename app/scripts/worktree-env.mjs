@@ -4,8 +4,8 @@
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
-const PORT_BASE = 54400; // Annahme: Bereich 54400-55899 ist frei; fester Port 54329 bleibt dem Hauptverzeichnis
-const PORT_SLOTS = 500;
+export const PORT_BASE = 54400; // Annahme: Bereich 54400-55899 ist frei; fester Port 54329 bleibt dem Hauptverzeichnis
+export const PORT_SLOTS = 500;
 
 export function slug(branch) {
   return branch

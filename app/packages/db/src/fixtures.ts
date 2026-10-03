@@ -1,7 +1,13 @@
+import { randomUUID } from "node:crypto";
 import type { Fixtures } from "./trennung.ts";
 
 // Je Tabelle mit Konto-Kennung ein Beispiel für die übrigen Spalten (ohne Kennung, die setzt der Test).
 // Eine neue Tabelle ohne Eintrag hier lässt den generischen Mandantentest scheitern (FR-QG-07).
 export const FIXTURES: Fixtures = {
   konto: () => ({}),
+  kontodaten: () => ({ email: "test@example.test" }),
+  lichtzone: () => ({ name: "Lampe 2", lux_decke: 15000, reihenfolge: 2 }),
+  standort: () => ({ name: "Regal", art: "innen" }),
+  idempotenz: () => ({ operation: "test.test", schluessel: "k1", fingerabdruck: "{}" }),
+  pruefvorgang: () => ({ objekt_art: "art", objekt_id: randomUUID(), status: "vorschlag" }),
 };

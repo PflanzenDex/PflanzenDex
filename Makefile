@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup secrets workflows audit dev lint format typecheck test gates ci worktree clean db-up db-down migrate deploy backup restore-test
+.PHONY: help setup dev lint format typecheck test gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test secrets workflows audit
 
 help: ## Alle Ziele mit einem Satz
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -39,6 +39,15 @@ db-down: ## Test-Datenbank entfernen
 
 migrate: ## Migrationen anwenden (DATABASE_URL, sonst die Test-Datenbank)
 	cd $(APP) && npm run migrate -w @pflanzendex/db
+
+auth-up: ## Anmeldedienst (Keycloak) und Mail-Fänger starten; Admin-Passwort in app/dev/.env (nicht im Repo)
+	@test -f $(APP)/dev/.env || echo "KC_ADMIN_PASSWORD=$$(head -c 18 /dev/urandom | base64 | tr -dc A-Za-z0-9)" > $(APP)/dev/.env
+	docker compose -f $(APP)/dev/compose.yaml --env-file $(APP)/dev/.env up -d
+	@for i in $$(seq 60); do curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && break; sleep 2; done; curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null || { echo "Keycloak antwortet nicht"; exit 1; }
+	@echo "Keycloak: http://localhost:18081 (Realm pflanzendex), Mails: http://localhost:18025"
+
+auth-down: ## Anmeldedienst und Mail-Fänger entfernen
+	-docker compose -f $(APP)/dev/compose.yaml --env-file $(APP)/dev/.env down -v
 
 test: $(if $(CI),,db-up) ## Unit- und Datenbanktests aller Pakete und der Prüfskripte
 	cd $(APP) && npm run test

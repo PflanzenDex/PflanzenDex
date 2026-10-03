@@ -1,0 +1,146 @@
+/* Standorte und Lichtzonen (US-LIC-05): mobil zuerst, ab 768px zwei Spalten für Formulare. */
+.rahmen {
+  width: 100%;
+  max-width: 720px;
+}
+.rahmen .karte {
+  max-width: none;
+}
+.navigation {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.tab {
+  flex: 1;
+  background: transparent;
+  color: var(--text);
+  border-color: var(--rand);
+}
+.tab.aktiv {
+  border-color: var(--gruen);
+  background: var(--karte);
+}
+.licht {
+  background: var(--karte);
+  border: 1px solid var(--rand);
+  border-radius: 16px;
+  padding: 24px 16px;
+}
+.licht h2 {
+  margin: 28px 0 12px;
+  font-size: 1.2rem;
+}
+.liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.eintrag {
+  border: 1px solid var(--rand);
+  border-radius: 12px;
+  padding: 14px 14px 16px;
+}
+.eintrag h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.leise {
+  margin: 2px 0 0;
+  color: var(--leise);
+  font-size: 0.95rem;
+}
+.eintrag .aktionen {
+  margin-top: 12px;
+}
+.formular {
+  display: grid;
+  gap: 14px;
+}
+.formular label {
+  display: grid;
+  gap: 4px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+input,
+select {
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 2px solid var(--rand);
+  background: var(--grund);
+  color: var(--text);
+  font: inherit;
+  font-weight: 400;
+  width: 100%;
+}
+input:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+.neu {
+  margin-top: 16px;
+  border: 1px dashed var(--rand);
+  border-radius: 12px;
+  padding: 4px 14px 14px;
+}
+.neu summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+.leer {
+  padding: 14px;
+  border: 1px dashed var(--rand);
+  border-radius: 12px;
+  color: var(--leise);
+}
+.leer p {
+  margin: 0;
+}
+.hinweise {
+  margin-top: 20px;
+  padding: 4px 16px 12px;
+  background: var(--warn-grund);
+  border: 1px solid var(--warn-rand);
+  border-radius: 12px;
+}
+.hinweise ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.nutzer {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+.warnung p {
+  margin: 0 0 4px;
+}
+.gefahr {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--warn-rand);
+}
+@media (min-width: 768px) {
+  .licht {
+    padding: 28px;
+  }
+  .formular {
+    grid-template-columns: 1fr 1fr;
+  }
+  .formular .aktionen,
+  .formular .warnung {
+    grid-column: 1 / -1;
+  }
+  .eintrag .aktionen {
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+  }
+}

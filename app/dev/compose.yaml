@@ -1,0 +1,25 @@
+# Lokaler Anmeldedienst (E-03: Keycloak, selbst gehostet) samt Mail-Fänger für die Bestätigungsmail.
+# Nur für die Entwicklung: start-dev mit H2. Zugangsdaten kommen aus der Umgebung (siehe `make auth-up`), nie aus dem Repo.
+name: pflanzendex-auth
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.0
+    container_name: pflanzendex-keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:?Passwort fehlt, bitte make auth-up benutzen}
+      KC_HOSTNAME: http://localhost:18081
+      KC_HTTP_PORT: "8080"
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "127.0.0.1:18081:8080"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+    depends_on:
+      - mailpit
+  mailpit:
+    image: axllent/mailpit:v1.21
+    container_name: pflanzendex-mailpit
+    ports:
+      - "127.0.0.1:18025:8025"
