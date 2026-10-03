@@ -1,4 +1,4 @@
-# Lokal und Staging (E-01: ein Host, Docker Compose). Alle Werte kommen aus der Umgebung, siehe .env.example.
+# Local and staging (E-01: one host, Docker Compose). All values come from the environment, see .env.example.
 # Start: docker compose --env-file deploy/.env -f deploy/docker-compose.yml up -d --build
 name: pflanzendex
 services:
@@ -22,6 +22,7 @@ services:
       dockerfile: deploy/api.Dockerfile
       args:
         GIT_SHA: ${GIT_SHA:-unbekannt}
+        APP_VERSION: ${APP_VERSION:-unbekannt}
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
@@ -38,6 +39,8 @@ services:
     build:
       context: ..
       dockerfile: deploy/web.Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-unbekannt}
     restart: unless-stopped
   proxy:
     image: caddy:2-alpine

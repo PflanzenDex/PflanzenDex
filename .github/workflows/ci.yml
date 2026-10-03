@@ -1,6 +1,6 @@
-# CI (E-13, FR-QG-01/02, FR-DEV-09): Die Jobs rufen dieselben `make`-Ziele auf wie ein Entwickler lokal.
-# Pfadfilter: Die App-Suite läuft nur, wenn `app/`, das Makefile oder die Workflows betroffen sind.
-# `ci-status` ist der Sammelstatus; ohne Branch-Schutz (privates Repo, Free-Plan) prüft ihn der Release-Workflow.
+# CI (E-13, FR-QG-01/02, FR-DEV-09): the jobs call the same `make` targets a developer runs locally.
+# Path filter: the app suite only runs when `app/`, the Makefile or the workflows change.
+# `ci-status` is the aggregate status and the only required check in the rulesets (ADR 0001).
 name: CI
 
 on:
@@ -51,7 +51,7 @@ jobs:
     if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Datenbanktests (TE-02): echte PostgreSQL wie im Betrieb (E-01); Port wie in `make db-up`.
+    # Database tests (TE-02): real PostgreSQL as in production (E-01); same port as `make db-up`.
     services:
       postgres:
         image: postgres:16-alpine
@@ -162,7 +162,7 @@ jobs:
           for r in "$CHANGES" "$APP" "$PR_TITLE" "$CHANGELOG" "$DEPENDENCY_REVIEW" "$AUDIT"; do
             case "$r" in
               success | skipped) ;;
-              *) echo "Fehlgeschlagen: $r"; exit 1 ;;
+              *) echo "failed: $r"; exit 1 ;;
             esac
           done
-          echo "ci-status: grün"
+          echo "ci-status: green"

@@ -8,7 +8,7 @@ The rules for agents (workflow, gates you must not weaken, definition of done) a
 
 ## What this repository is
 
-This repo holds the **specs** (German) and, as decided in E-05 (`Docs/PRODUKT-SPECS/16-Releases-und-Entscheidungen.md`), will also hold the **app code under `/app`**. All documentation lives under `/Docs`: the two spec sets below and, next to them, the process documentation (principles register, ADRs, runbooks, pitfalls: `Docs/prinzipien/`, `Docs/entscheidungen/`, `Docs/betrieb/`, `Docs/stolperfallen/`). `app/` holds the TypeScript monorepo skeleton (`core`, `api`, `web`; see `app/README.md`). All tasks go through the root `Makefile`: `make help` lists them, `make ci` runs every gate (lint, typecheck, architecture boundaries, format, tests, build). There are two spec sets:
+This repo holds the **specs** (German) and, as decided in E-05 (`Docs/PRODUKT-SPECS/16-Releases-und-Entscheidungen.md`), will also hold the **app code under `/app`**. All documentation lives under `/Docs`: the two spec sets below and, next to them, the process documentation (principles register, ADRs, runbooks, pitfalls: `Docs/principles/`, `Docs/decisions/`, `Docs/operations/`, `Docs/pitfalls/`). `app/` holds the TypeScript monorepo skeleton (`core`, `api`, `web`; see `app/README.md`). All tasks go through the root `Makefile`: `make help` lists them, `make ci` runs every gate (lint, typecheck, architecture boundaries, format, tests, build). There are two spec sets:
 
 | Folder | Describes | Status semantics |
 |---|---|---|
@@ -18,6 +18,12 @@ This repo holds the **specs** (German) and, as decided in E-05 (`Docs/PRODUKT-SP
 The vault paths referenced in the prototype specs (`02-Areas/…`, `scripts/pflanzen/…`, `docs/superpowers/specs/…`) are **not in this repo**.
 
 Start with `Docs/PRODUKT-SPECS/README.md` (index, conventions, replacement table), then `Docs/PRODUKT-SPECS/00-Produktueberblick.md` (principles P-01…P-11, domain model, glossary) and `16-Releases-und-Entscheidungen.md` (release cut R0–R6, open decisions E-nn, non-goals).
+
+## Language
+
+- **German:** product specs (`Docs/PRODUKT-SPECS/`, `Docs/PFLANZENSYSTEM-SPECS/`), the glossary, domain code identifiers (`konto`, `exemplar`, `mitKonto`, …), the app UI and the roadmap issues that mirror the specs.
+- **English:** everything in the tooling and process layer: scripts, workflows, Makefile, hooks, config comments, `app/README.md`, ADRs, runbooks, PR/issue templates, labels, branch names, commit messages, PR titles and descriptions.
+- Never mix languages within one file. When you touch a tooling file that is still German, translate it completely. Dated records (`Docs/spikes/`, `Docs/testprotokolle/`) stay as written.
 
 ## Spec conventions (keep when editing)
 

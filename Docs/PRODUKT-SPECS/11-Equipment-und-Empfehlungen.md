@@ -109,9 +109,9 @@ Akzeptanzkriterien:
 
 | Feld | Pflicht | Bedeutung |
 |---|---|---|
-| `Typ` | ja | `Lampe | Zeitschaltuhr | Sensor | Lüftung | Pumpe | Topf | Substrat | Dünger | Pflanzenmittel | Sonstiges` |
+| `Typ` | ja | `Lampe \| Zeitschaltuhr \| Sensor \| Lüftung \| Pumpe \| Topf \| Substrat \| Dünger \| Pflanzenmittel \| Sonstiges` |
 | `Bezeichnung` | ja | Anzeigename, eindeutig |
-| `Status` | ja | `aktiv | defekt | ausgemustert` (bei Verbrauchsmaterial nicht verwendet) |
+| `Status` | ja | `aktiv \| defekt \| ausgemustert` (bei Verbrauchsmaterial nicht verwendet) |
 | `Hersteller`, `Modell` | nein | Freitext |
 | `Produktkennung` | nein | GTIN/EAN oder Hersteller + Modell; **keine URL** |
 | `Preis_EUR`, `Gekauft_Am`, `In_Betrieb_Seit`, `Pruefintervall_Tage` | nein | |
