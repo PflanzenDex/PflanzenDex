@@ -68,8 +68,11 @@ export function useSitzung() {
     };
   }, [mgr, lade]);
 
+  const token = useCallback(async () => (await mgr.getUser())?.access_token, [mgr]);
+
   return {
     zustand,
+    token,
     neuLaden: lade,
     anmelden: () => {
       window.sessionStorage.removeItem(MERKER);

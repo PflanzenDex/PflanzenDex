@@ -16,5 +16,30 @@ export type {
   IdempotenzSpeicher,
   Kontext,
 } from "./ports";
+export {
+  LICHT_GRENZEN,
+  STANDORT_ARTEN,
+  ZONEN_VOREINSTELLUNG,
+  lichtzoneAendern,
+  lichtzoneAnlegen,
+  lichtzoneLoeschen,
+  lichtzoneVoreinstellung,
+  standortAendern,
+  standortEinrichten,
+  standortHinweise,
+} from "./licht";
+export type {
+  Hinweis,
+  LichtStandort,
+  LichtStandortSpeicher,
+  Lichtzone,
+  StandortArt,
+  StandortWerte,
+  ZonenNutzer,
+  ZonenNutzerArt,
+  ZonenNutzung,
+  ZonenSpeicher,
+  ZonenWerte,
+} from "./licht";
 export { standortAnlegen } from "./beispiel";
 export type { Standort, StandortSpeicher } from "./beispiel";
