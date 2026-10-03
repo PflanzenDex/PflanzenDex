@@ -1,30 +1,30 @@
 <!--
-Titel = Commit-Nachricht nach dem Squash: Conventional Commits mit Epic-Scope, z. B. `feat(pha): Phase aus Messung ableiten (US-PHA-02)`.
-Ein PR, eine Aufgabe, ein Branch (E-13, US-DEV-08).
+The title becomes the commit message after the squash: Conventional Commits with an epic scope,
+e.g. `feat(pha): derive care phase from measurement (US-PHA-02)`. One PR, one task, one branch (E-13, US-DEV-08).
 -->
 
 Closes #
 
-## Was und warum
+## What and why
 
-<!-- Story-/FR-IDs, die dieser PR umsetzt; Abweichungen von der Spec mit Grund. -->
+<!-- Story/FR IDs this PR implements; deviations from the spec with the reason. -->
 
-## Testnachweis
+## Test evidence
 
-<!-- Welche Tests stammen aus welchen Akzeptanzkriterien (Story-ID im Testnamen, P-06)? Ergebnis von `make ci` ehrlich: Pass oder Fail, nicht „sollte laufen" (D-05). -->
+<!-- Which tests come from which acceptance criteria (story ID in the test name, P-06)? Report the result of `make ci` honestly: pass or fail, never "should work" (D-05). -->
 
 ## Definition of Done (FR-QG-10)
 
-- [ ] Story und Akzeptanzkriterien existieren; der Code ist auf ein Kriterium rückführbar
-- [ ] Tests aus den Kriterien (Happy Path, Randfälle, Fehlerfälle, Sicherheitspfade) mit Story-ID im Namen
-- [ ] Fehler behandelt (stabiler `error_code`), nichts still verschluckt (P-10)
-- [ ] Eingaben validiert, keine Geheimnisse im Code, Zugriff und Mandantentrennung geprüft (P-04)
-- [ ] Modulgrenzen eingehalten, keine Magic Strings
-- [ ] Spec-Status und Zähler in `Docs/PRODUKT-SPECS/README.md` im selben PR angepasst
-- [ ] `make ci` lokal grün
+- [ ] Story and acceptance criteria exist; the code traces back to a criterion
+- [ ] Tests derived from the criteria (happy path, edge cases, error cases, security paths) with the story ID in the name
+- [ ] Errors handled (stable `error_code`), nothing swallowed silently (P-10)
+- [ ] Input validated, no secrets in code, access and tenant isolation checked (P-04)
+- [ ] Module boundaries respected, no magic strings
+- [ ] Spec status and counters in `Docs/PRODUKT-SPECS/README.md` updated in this PR
+- [ ] `make ci` green locally
 
-## KI-Beteiligung
+## AI involvement
 
-<!-- Hat ein Agent Code oder Text erzeugt? Welcher, und was hat der Mensch selbst geprüft? Gates oder Schwellen geändert? Dann hier begründen (US-QG-07). -->
+<!-- Did an agent write code or text? Which one, and what did a human verify? Were gates or thresholds changed? Then justify it here (US-QG-07). -->
 
-- [ ] Kein Gate, keine Schwelle und keine Ausnahmeliste gelockert, oder Begründung steht oben
+- [ ] No gate, threshold or exception list was loosened, or the justification is above

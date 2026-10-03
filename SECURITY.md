@@ -1,20 +1,18 @@
-# Sicherheit
+# Security
 
-PflanzenDex speichert Standorte, Fotos und Wohnumfeld seiner Nutzer (R-05). Wir nehmen Meldungen ernst.
+PflanzenDex stores its users' locations, photos and home surroundings (R-05). We take reports seriously.
 
-## Schwachstelle melden
+## Reporting a vulnerability
 
-Bitte **nicht** als öffentliches Issue. Stattdessen privat über
-[GitHub: Sicherheitslücke melden](https://github.com/PflanzenDex/PflanzenDex/security/advisories/new).
+Please do **not** open a public issue. Report it privately via
+[GitHub: report a vulnerability](https://github.com/PflanzenDex/PflanzenDex/security/advisories/new).
 
-Hilfreich sind: betroffene Komponente oder Endpunkt, Schritte zum Nachstellen, mögliche Auswirkung. Wir bestätigen den Eingang innerhalb von 7 Tagen (Startwert, Annahme) und melden uns mit einer Einschätzung.
+Helpful details: affected component or endpoint, steps to reproduce, possible impact. We confirm receipt within 7 days (starting value, an assumption) and follow up with an assessment.
 
-*Please report vulnerabilities privately via the link above, not as a public issue. English is fine.*
+## Scope
 
-## Geltungsbereich
+The code on `main` and `dev` and the hosted instance. Out of scope: spike code under `Docs/spikes/` (local experiments with throwaway credentials).
 
-Der Code auf `main` und `dev` sowie die betriebene Instanz. Nicht im Geltungsbereich: Spike-Code unter `Docs/spikes/` (nur lokale Versuche mit Wegwerf-Zugangsdaten).
+## Checks already in place
 
-## Was im Repo schon geprüft wird
-
-Secret-Scanning mit Push-Schutz, Abhängigkeitswarnungen, statische Analyse und Mandantentrennungstests (QG-S1 bis QG-S3, QG-D1 in `Docs/PRODUKT-SPECS/18-Architektur-und-Quality-Gates.md`).
+Secret scanning with push protection, dependency alerts, static analysis and tenant isolation tests (QG-S1 to QG-S3 and QG-D1 in `Docs/PRODUKT-SPECS/18-Architektur-und-Quality-Gates.md`).

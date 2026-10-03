@@ -1,15 +1,15 @@
-# Mitarbeiten
+# Contributing
 
-Kurzfassung für Menschen und Agenten. Die Regeln selbst stehen in den Specs, hier nur der Weg.
+Short version for humans and agents. The rules themselves live in the specs; this file only shows the path.
 
-1. **Spec zuerst.** Jede Änderung gehört zu einer Story oder Anforderung in `Docs/PRODUKT-SPECS/` (Einstieg `README.md`). Fehlt sie, zuerst die Spec ergänzen.
-2. **Ein Task, ein Branch, ein Worktree** (E-13, US-DEV-08): `make worktree BRANCH=feat/pha-02-phase`. Branches starten von `dev`.
-3. **Tests aus den Akzeptanzkriterien**, Story-ID im Testnamen (P-06).
-4. **`make ci`** lokal grün, bevor der PR geöffnet wird. `make help` listet alle Ziele.
-5. **PR nach `dev`** mit Titel nach Conventional Commits (`feat(pha): …`, `fix(bes): …`, `docs: …`); er wird beim Squash zur Commit-Nachricht. Vorlage ausfüllen, Spec-Status im selben PR anpassen.
-6. **Merge** nur mit grünem `ci-status` und einer Freigabe durch einen anderen Menschen (Rulesets, ADR 0001). Kein Direkt-Push auf `dev` oder `main`.
-7. **Release:** PR `dev` → `main` als Merge-Commit; Version und Notizen entstehen automatisch (US-DEV-06).
+1. **Spec first.** Every change belongs to a story or requirement in `Docs/PRODUKT-SPECS/` (start with `README.md`). If it is missing, extend the spec first. Specs are written in German; tooling, process docs, commits and PRs in English.
+2. **One task, one branch, one worktree** (E-13, US-DEV-08): `make worktree BRANCH=feat/pha-02-care-phase`. Branches start from `dev`.
+3. **Tests from the acceptance criteria**, with the story ID in the test name (P-06).
+4. **`make ci`** green locally before opening the PR. `make help` lists all targets.
+5. **PR into `dev`** with a Conventional Commits title (`feat(pha): …`, `fix(bes): …`, `docs: …`); the squash turns it into the commit message. Fill in the template and update the spec status in the same PR.
+6. **Merge** only with a green `ci-status` and an approval from another human (rulesets, ADR 0001). No direct pushes to `dev` or `main`.
+7. **Release:** PR `dev` → `main` as a merge commit; version and notes are generated automatically (US-DEV-06).
 
-Gates, Schwellen und Ausnahmelisten werden nicht gelockert, um einen roten Lauf grün zu bekommen. Ist eine Regel falsch, wird sie in einem eigenen PR mit Begründung geändert (US-QG-07).
+Gates, thresholds and exception lists are never loosened to turn a red run green. If a rule is wrong, change it in its own PR with a justification (US-QG-07).
 
-Sicherheitslücken bitte privat melden: `SECURITY.md`.
+Report security issues privately: see `SECURITY.md`.
