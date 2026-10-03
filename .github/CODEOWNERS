@@ -1,11 +1,16 @@
 # Owners per area (US-DEV-08, FR-DEV-09). Changes to this file require review.
 # The last matching rule wins. Until there is a team, @MaxNize owns everything;
 # as the team grows, add an owner per epic or folder.
+<<<<<<< HEAD
+=======
+# Rulesets require a code-owner review (admins may bypass via PR, ADR 0001).
+>>>>>>> refs/remotes/origin/dev
 
 *                                   @MaxNize
 
 /.github/CODEOWNERS                 @MaxNize
 /.github/workflows/                 @MaxNize
+/.github/rulesets/                  @konradhe14 @MaxNize @NiklasKoch-14
 /Makefile                           @MaxNize
 /scripts/                           @MaxNize
 
@@ -15,4 +20,16 @@
 
 /Docs/PRODUKT-SPECS/                @MaxNize
 /Docs/PFLANZENSYSTEM-SPECS/         @MaxNize
+<<<<<<< HEAD
 /Docs/operations/                      @MaxNize
+=======
+/Docs/betrieb/                      @MaxNize
+/Docs/operations/                   @MaxNize
+
+# Agent instructions and guardrails: what AI agents read and may do. Never changed without a human owner's review.
+/CLAUDE.md                          @konradhe14 @MaxNize @NiklasKoch-14
+/AGENTS.md                          @konradhe14 @MaxNize @NiklasKoch-14
+/.claude/                           @konradhe14 @MaxNize @NiklasKoch-14
+/.agents/                           @konradhe14 @MaxNize @NiklasKoch-14
+/.githooks/                         @konradhe14 @MaxNize @NiklasKoch-14
+>>>>>>> refs/remotes/origin/dev

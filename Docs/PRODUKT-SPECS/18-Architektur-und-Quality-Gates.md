@@ -57,7 +57,7 @@ Wo läuft welches Gate? **B** = blockiert, **R** = nur Bericht (Ratchet-Phase).
 
 ## Userstories
 
-### US-QG-01 · Fehler früh und lokal finden · ⬜
+### US-QG-01 · Fehler früh und lokal finden · 🟨
 Als **Entwickler** will ich, dass die schnellen Prüfungen vor dem Push laufen, damit CI selten die Überraschung ist.
 
 Akzeptanzkriterien:
@@ -71,7 +71,7 @@ Als **Entwickler** will ich, dass ein Release (Merge von `dev` nach `main`) nur 
 
 Akzeptanzkriterien:
 - Jobs: Schnell-Checks (Secrets), Lint/Typen/Struktur/Grenzen, Tests mit Coverage, Sicherheitsprüfung, Integration, End-to-End, Lighthouse, Doku (QG-S1 bis QG-U3).
-- Ein Sammelstatus „ci-status" ist die einzige Pflichtprüfung (FR-QG-02); einzelne Jobs können umorganisiert werden, ohne die Regel zu ändern. Das Repo ist privat auf dem Free-Plan, dort gibt es keinen Branch-Schutz: Der Release-Workflow prüft den Status, nicht der Merge.
+- Ein Sammelstatus „ci-status" ist die einzige Pflichtprüfung (FR-QG-02); einzelne Jobs können umorganisiert werden, ohne die Regel zu ändern. Seit 2026-10-03 ist das Repo öffentlich und Rulesets schützen `main` und `dev` (ADR [0001](../decisions/0001-public-repo-and-rulesets.md)): Merge nur per Pull-Request mit grünem „ci-status" und einer Freigabe durch einen Menschen, der nicht Autor ist; zusätzlich prüft der Release-Workflow den Status.
 - **Scope-Steuerung** (E-13): PRs auf `dev` bekommen die schnellen Gates plus Unit- und Integrationstests; die **volle Suite** (End-to-End, Lighthouse, Audits) läuft bei PRs von `dev` nach `main`, nächtlich auf `dev`, bei manuellem Start und bei Abhängigkeits-Updates; Feature-Branches bekommen die schnellen Gates lokal und per Pre-Push. Das spart Actions-Minuten (Free-Plan: 2.000 pro Monat, Annahme: ausreichend, zu messen), ohne `main` zu gefährden.
 - Neue Pushes brechen laufende Läufe derselben Ref ab (Concurrency).
 - Jeder Job hat ein Zeitlimit; Überschreitung ist ein Fehler, kein stilles Hängen.
@@ -86,7 +86,7 @@ Akzeptanzkriterien:
 - Bekannte, bewusst akzeptierte Altlasten stehen in einer expliziten Ausnahmeliste im Skript, **mit Kommentar warum**; neue Einträge sind nicht erlaubt (nur Reviewer mit Begründung). Die Liste darf nur kürzer werden.
 - Ausnahme je Datei per Marker in den ersten 5 Zeilen (`STRUCTURE_IGNORE: <Grund>`, `MAX_LINES_IGNORE: <Grund>`); ein Marker ohne Grund ist selbst ein Fehler.
 
-### US-QG-04 · Spec, Code und Test hängen sichtbar zusammen · ⬜
+### US-QG-04 · Spec, Code und Test hängen sichtbar zusammen · 🟨
 Als **Entwickler (oder KI)** will ich von jeder Story zu ihren Tests und zurück kommen (P-06).
 
 Akzeptanzkriterien:
@@ -104,7 +104,7 @@ Akzeptanzkriterien:
 - QG-D3: Ein Testbild mit EXIF-GPS wird hochgeladen; das gespeicherte Bild enthält keine EXIF-Daten und die lange Seite ist ≤ 1600 px (US-WAC-06).
 - QG-D4: Ein Test belegt, dass Datum und Phasenberechnung in der Zeitzone des Nutzers laufen (NFR-08); eine Lint-Regel verbietet `toISOString().slice(0, 10)` für Kalenderdaten (Ursache von B-01 im Prototyp).
 
-### US-QG-06 · Gates reifen, statt zu blockieren, was niemand erfüllen kann · ⬜
+### US-QG-06 · Gates reifen, statt zu blockieren, was niemand erfüllen kann · 🟨
 Als **Team** will ich neue Regeln einführen, ohne die Arbeit zu stoppen.
 
 Akzeptanzkriterien:
@@ -113,7 +113,7 @@ Akzeptanzkriterien:
 - Coverage-Schwellen werden knapp **unter** den aktuellen Wert gesetzt und nur angehoben (Ratchet), nie gesenkt ohne Begründung im PR.
 - Ein Gate, das in drei Monaten keinen Fehler fand, wird auf Nutzen geprüft, nicht blind behalten.
 
-### US-QG-07 · KI-Agenten arbeiten innerhalb derselben Gates · ⬜
+### US-QG-07 · KI-Agenten arbeiten innerhalb derselben Gates · 🟨
 Als **Entwickler** will ich, dass auch Claude (oder andere Agenten) an dieselben Regeln gebunden sind.
 
 Akzeptanzkriterien:
@@ -122,7 +122,7 @@ Akzeptanzkriterien:
 - Der Agent führt vor „fertig" `make ci` (oder das Äquivalent) aus und berichtet Ergebnis ehrlich (Pass/Fail), nicht nur „sollte laufen".
 - Der Agent committet nicht ungefragt; er ändert keine Gates oder Schwellen, um einen Fehlschlag zu umgehen (Ausnahmen brauchen Begründung im PR).
 
-### US-QG-08 · Komplexität bleibt beherrschbar · ⬜
+### US-QG-08 · Komplexität bleibt beherrschbar · 🟨
 Als **Entwickler** will ich, dass Code nicht unbemerkt unlesbar wird, weil Komplexität das teuerste Qualitätsproblem ist: Sie macht Tests schwer, Änderungen riskant und KI-Änderungen unzuverlässig.
 
 Akzeptanzkriterien:
@@ -139,11 +139,11 @@ Akzeptanzkriterien:
 | ID | Anforderung | Status |
 |---|---|---|
 | FR-QG-01 | Lokal und in CI laufen **dieselben** Befehle (`make`/`npm`-Ziele). Es gibt keine CI-only-Logik außer Zusatzdiensten (Datenbank, Browser). | ⬜ |
-| FR-QG-02 | Ein einziger Sammelstatus „ci-status" ist die Pflichtprüfung. Solange der Plan keinen Branch-Schutz erlaubt (privates Repo, Free-Plan), erzwingt der Release-Workflow ihn (nur grüne Commits werden released und deployed) und ein Wächter-Workflow meldet Direkt-Pushes auf `main` und `dev`. Mit Branch-Schutz (z. B. nach Planwechsel) gilt er zusätzlich für Merges nach `dev` und `main`. | ⬜ |
+| FR-QG-02 | Ein einziger Sammelstatus „ci-status" ist die Pflichtprüfung. Rulesets (versioniert unter `.github/rulesets/`, angewendet mit `scripts/rulesets-apply.sh`) verlangen ihn für jeden Merge nach `dev` und `main`, dazu eine Freigabe durch einen Menschen, der nicht Autor ist, und erlauben weder Direkt-Push, Force-Push noch Löschen. Der Release-Workflow released und deployt zusätzlich nur Commits mit grünem Status (ADR [0001](../decisions/0001-public-repo-and-rulesets.md)). | ⬜ |
 | FR-QG-03 | **Doku und Spec sind Gate-Gegenstand:** Skript validiert `Docs/PRODUKT-SPECS/` (IDs eindeutig, Zähler in `README.md`, Verweise auflösbar) und ein Link-Prüfer die Markdown-Links (QG-U2). | ⬜ |
 | FR-QG-04 | **Strukturregeln (Vorschlag, anzupassen an E-01):** (a) Fachlogik als eigenes Paket `core` mit Unterordnern je Epic; (b) Tests liegen neben dem Code als `<name>.test.ts`; (c) jedes Verzeichnis mit Code hat einen `index.ts` als einzige öffentliche Schnittstelle; (d) keine losen Dateien in Code-Gruppen (Komponenten, Hooks, Services); (e) Dateinamen nach Muster (PascalCase Komponenten, `useX` Hooks, `xService`). Prüfbar durch ein Skript mit Tests. | ⬜ |
 | FR-QG-05 | **Architekturgrenzen (maschinell):** (AB-1) `core` importiert nichts aus API, Web, Datenbank, Dateisystem oder Netz (NFR-ARC-01 der früheren Skizze); (AB-2) Web importiert nur die öffentliche Schnittstelle (`index.ts`) von `core`, nie interne Dateien; (AB-3) die KI-Schicht ruft nur validierende Operationen der Fachlogik, nie Repositories oder die Datenbank direkt (KI-R1); (AB-4) der Pokédex-Aufbau-Job schreibt nur in seinen Baum-Speicher; (AB-5) soziale Module lesen fremde Konten nur über die Freigabe-Schicht. Altlasten nur über die Ausnahmeliste (US-QG-03). | ⬜ |
-| FR-QG-06 | Das Rückverfolgbarkeits-Skript (US-QG-04) hat eigene Tests und läuft in CI; Format des Test-Namens: `US-XXX-nn` im Titel. | ⬜ |
+| FR-QG-06 | Das Rückverfolgbarkeits-Skript (US-QG-04) hat eigene Tests und läuft in CI; Format des Test-Namens: `US-XXX-nn` im Titel. | ✅ |
 | FR-QG-07 | **Datenschutz-Gates:** (a) Mandantentest für jede Operation; (b) Whitelist-Vertragstests für alle sozialen und Partner-Ausgaben; (c) Foto-Test mit EXIF/GPS; (d) Test, dass Partner-IDs nie in Nutzerexport und Nutzerdaten auftauchen (FR-EQU-04). | ⬜ |
 | FR-QG-08 | **Kernabläufe für Integration und E2E** (an Releases gekoppelt): R0: Konto → Standort → Art → Exemplar anlegen (Namensregel, Steckling); R1: Messen mit Foto → Trend → „Heute"-Liste → Pokédex-Fang; R2: Freigabe → Freund sieht Exemplar → Feed; R3: Angebot → Anfrage → Zusage → Übergabe (atomar, FR-SOZ-05). | ⬜ |
 | FR-QG-09 | **Performance/Barrierefreiheit:** Mobil-Läufe (Lighthouse CI und axe) mit Startschwellen als Bericht; vor R1-Abschluss auf blockierend setzen. Zahlenwerte werden aus der ersten Messung abgeleitet und nur angehoben (Annahme, nicht vorab festgelegt). | ⬜ |
@@ -153,8 +153,8 @@ Akzeptanzkriterien:
 | FR-QG-13 | **Koppelung an Schwellen-Quellen:** Zahlen in der Spec (Puffer 2, Trend ±10 %, Rang-Schwellen, Artenarm 10) und im Code stammen aus einer Quelle; ein Test prüft, dass Code-Konstanten und Spec übereinstimmen oder die Spec auf die Konstante verweist. | ⬜ |
 | FR-QG-14 | **Release:** Version und Changelog entstehen automatisch aus Conventional Commits, nur nach grüner CI auf `main`. Ein Deploy ist ein bewusster Schritt (Freigabe), kein Seiteneffekt eines Merges (E-14). | ⬜ |
 | FR-QG-15 | **Abhängigkeiten:** Automatische Updates (Dependabot oder gleichwertig) laufen durch die volle Suite; Auto-Merge nur bei grünem Status und nicht bei Hauptversionssprüngen. | ⬜ |
-| FR-QG-16 | **Komplexitätsgrenzen** stehen in einer Konfiguration (nicht in der Doku verstreut) und sind pro Bereich überschreibbar (`core` strenger). Werte in diesem Dokument sind Annahmen, die Startwerte kommen aus der ersten Messung (E-15). | ⬜ |
-| FR-QG-17 | **Basisliste (Ratchet):** Bekannte Überschreitungen stehen in einer Datei mit Pfad, Funktion, Wert und Datum; ein Gate schlägt fehl, wenn die Liste **wächst** oder ein Eintrag nicht mehr nötig ist (dann muss er gestrichen werden). | ⬜ |
+| FR-QG-16 | **Komplexitätsgrenzen** stehen in einer Konfiguration (nicht in der Doku verstreut) und sind pro Bereich überschreibbar (`core` strenger). Werte in diesem Dokument sind Annahmen, die Startwerte kommen aus der ersten Messung (E-15). | 🟨 |
+| FR-QG-17 | **Basisliste (Ratchet):** Bekannte Überschreitungen stehen in einer Datei mit Pfad, Funktion, Wert und Datum; ein Gate schlägt fehl, wenn die Liste **wächst** oder ein Eintrag nicht mehr nötig ist (dann muss er gestrichen werden). | 🟨 |
 | FR-QG-18 | **Doku und Gate dürfen nicht auseinanderlaufen:** Schwellenwerte (Coverage, Komplexität, Dateilänge) stehen genau einmal in der Gate-Konfiguration; Doku und DoD verweisen darauf, statt Zahlen zu wiederholen (Befund aus Tombola: DoD nennt Coverage ≥ 70 %, CI erzwingt 75 %). Ein Test oder Skript prüft, dass in der DoD keine abweichende Zahl steht. | ⬜ |
 
 ## Abgleich mit den Architekturprinzipien
@@ -179,7 +179,7 @@ Jedes Produktprinzip aus `00-Produktueberblick.md` bekommt mindestens ein Gate, 
 
 | ID | Frage | Vorschlag / Stand |
 |---|---|---|
-| E-13 | **CI-Plattform und Branch-Modell:** GitHub Actions mit `dev`→`main` wie in Tombola oder nur `main` mit kurzlebigen Branches? | **Entschieden (2026-10-03):** GitHub Actions; zwei dauerhafte Branches: `main` = fertiges, freigegebenes Produkt, `dev` = Entwicklungsstand. Änderungen entstehen auf dedizierten kurzlebigen Branches und kommen per PR nach `dev`; `dev` sammelt bis zum Release und geht dann per PR nach `main`. Repo bleibt privat (kein Branch-Schutz, FR-QG-02 angepasst). **Bestätigt (2026-10-03):** CI-Scope siehe US-QG-02; Squash-Merge nach `dev`, Merge-Commit von `dev` nach `main` (jeder Commit zählt im Changelog); Rück-Merge `main`→`dev` nach dem Release; Hotfix als Branch von `main` mit Rück-Merge; Standard-Branch des Repos bleibt `main` (`Closes #n` schließt Tickets damit erst beim Release) |
+| E-13 | **CI-Plattform und Branch-Modell:** GitHub Actions mit `dev`→`main` wie in Tombola oder nur `main` mit kurzlebigen Branches? | **Entschieden (2026-10-03):** GitHub Actions; zwei dauerhafte Branches: `main` = fertiges, freigegebenes Produkt, `dev` = Entwicklungsstand. Änderungen entstehen auf dedizierten kurzlebigen Branches und kommen per PR nach `dev`; `dev` sammelt bis zum Release und geht dann per PR nach `main`. Repo öffentlich mit Rulesets statt privat ohne Branch-Schutz (**geändert 2026-10-03**, ADR [0001](../decisions/0001-public-repo-and-rulesets.md), FR-QG-02). **Bestätigt (2026-10-03):** CI-Scope siehe US-QG-02; Squash-Merge nach `dev`, Merge-Commit von `dev` nach `main` (jeder Commit zählt im Changelog); Rück-Merge `main`→`dev` nach dem Release; Hotfix als Branch von `main` mit Rück-Merge; Standard-Branch des Repos bleibt `main` (`Closes #n` schließt Tickets damit erst beim Release) |
 | E-14 | **Deploy-Freigabe:** Automatisch nach grünem `main` oder bewusste Freigabe? | bewusst (Release-Tag), bis Betrieb eingespielt ist |
 | E-15 | **Schwellenwerte** (Coverage, Dateilänge, Pre-push-Zeitbudget, Lighthouse) | **Entschieden (2026-10-03):** Code-Metriken (Dateilänge ≤ 200, zyklomatische Komplexität ≤ 15, in `core` ≤ 10, kognitive ≤ 30 bzw. ≤ 15) gelten ab dem ersten Commit als harte Grenzen, da es keine Altlasten gibt (Startwerte, Annahme). Coverage: `core` ≥ 90 % von Anfang an, Gesamt zunächst nur für neuen und geänderten Code, danach Ratchet. Lighthouse und axe: Bericht bis Ende R1, danach blockierend mit gemessener Basislinie. Pre-push-Budget (60 s) wird nach TE-01 und US-DEV-01 gemessen. Alle Werte stehen genau einmal in der Gate-Konfiguration (FR-QG-18) |
 | E-16 | **Statische Analyse:** Fallow-Äquivalent für TypeScript (ungenutzte Exporte, Duplikate, Komplexität) und Semgrep ja/nein | **Entschieden (2026-10-03):** zunächst `knip` + ESLint-Security; Wiederbewertung (Fallow, Semgrep) nach R1 |

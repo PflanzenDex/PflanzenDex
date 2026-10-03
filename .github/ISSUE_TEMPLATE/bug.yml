@@ -1,0 +1,34 @@
+name: Bug
+description: Something behaves differently than the spec describes.
+labels: [bug]
+body:
+  - type: input
+    id: spec
+    attributes:
+      label: Affected story or requirement
+      description: ID from Docs/PRODUKT-SPECS, e.g. US-PHA-02 or FR-WAC-03
+      placeholder: US-…
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Given / When / Then
+      description: Starting state, action, expected and actual result. This becomes the regression test (P-06).
+      value: |
+        Given:
+        When:
+        Then expected:
+        Actual:
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: shown in the app footer and by the health endpoint
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Device, browser, screenshots. No real location data or photos with GPS metadata (P-05).

@@ -11,7 +11,8 @@ COPY tsconfig.base.json ./
 COPY packages/core packages/core
 COPY packages/api packages/api
 ARG GIT_SHA=unbekannt
-ENV NODE_ENV=production GIT_SHA=$GIT_SHA PORT=3000
+ARG APP_VERSION=unbekannt
+ENV NODE_ENV=production GIT_SHA=$GIT_SHA APP_VERSION=$APP_VERSION PORT=3000
 USER node
 EXPOSE 3000
 WORKDIR /srv/app/packages/api

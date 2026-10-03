@@ -168,7 +168,21 @@ describe("architecture boundaries (US-QG-03)", () => {
       [],
     );
   });
+<<<<<<< HEAD
   it("a marker only counts in the first 5 lines", () => {
+=======
+  it("MK-1: COMPLEXITY_IGNORE needs a reason too", () => {
+    const v = checkProject(
+      project({
+        ...clean,
+        "packages/api/src/m.ts": "// COMPLEXITY_IGNORE:\nexport const m = 1;\n",
+      }),
+    );
+    assert.match(v[0] ?? "", /^MK-1 packages\/api\/src\/m\.ts:1 /);
+    assert.equal(hasMarker("// COMPLEXITY_IGNORE: parser table\n", "COMPLEXITY_IGNORE"), true);
+  });
+  it("Marker gilt nur in den ersten 5 Zeilen", () => {
+>>>>>>> refs/remotes/origin/dev
     assert.equal(hasMarker("\n\n\n\n\n// STRUCTURE_IGNORE: x\n", "STRUCTURE_IGNORE"), false);
     assert.deepEqual(markersOf("/* STRUCTURE_IGNORE: legacy */\n"), [
       { name: "STRUCTURE_IGNORE", reason: "legacy" },
