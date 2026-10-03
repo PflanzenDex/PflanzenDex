@@ -27,6 +27,15 @@ make ci      # alle Gates: Lint, Typen, Grenzen, Format, Tests, Build
 - **Neue nutzerbezogene Tabelle:** Spalte `konto_id uuid not null references konto(id) on delete cascade`, danach `select mandantenschutz('tabelle');` und ein Eintrag in `packages/db/src/fixtures.ts`. Fehlt eines davon, scheitert der generische Test (`mandant.test.ts`). Tabellen ohne Konto (z. B. Artenkatalog) brauchen einen begründeten Eintrag in `OHNE_KONTO_KENNUNG`.
 - **Zugriff:** nur über `mitKonto(pool, kontoId, …)`: Transaktion, Rolle `pflanzendex_app` (ohne BYPASSRLS), Sitzungsvariable `app.konto_id` nur für diese Transaktion.
 
+## Anmeldung (US-ACC-01, E-03)
+
+- **Anmeldedienst lokal:** `make auth-up` startet Keycloak 26.8 (Port 18081, Realm `pflanzendex`, Import aus `app/dev/keycloak/pflanzendex-realm.json`) und einen Mail-Fänger (Mailpit, http://localhost:18025). Das Admin-Passwort erzeugt das Ziel zufällig in `app/dev/.env` (nicht im Repo). `make auth-down` entfernt beides samt Daten.
+- **Ablauf:** Die Web-App leitet per OIDC-Code-Ablauf mit PKCE zu Keycloak (Anmeldung und Registrierung dort, Deutsch). Keycloak verlangt zuerst die E-Mail-Bestätigung, danach die Passwortvergabe (Richtlinie: mindestens 10 Zeichen). Passwörter liegen nie bei uns (FR-ACC-03).
+- **API:** `Authorization: Bearer <Access-Token>`; geprüft werden Signatur (JWKS), Aussteller und Ziel `pflanzendex-api`. Jede Anfrage setzt das Konto über `mitKonto`. `GET /konto` liefert die eigenen Kontodaten. Umgebung: `OIDC_ISSUER`, `OIDC_AUDIENCE`, `DATABASE_URL`, `WEB_URSPRUNG`.
+- **Kontoanlage:** `findeOderLegeKonto` (db) ist der eigene Weg für die erste Anmeldung: Die Regeln `anmeldung_*` an `konto` zeigen und erlauben nur die Zeile des geprüften Subjekts (`app.subjekt`). Kein BYPASSRLS.
+- **Web:** `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID`, `VITE_API_URL` überschreiben die Voreinstellungen. „Auf allen Geräten abmelden“ ruft die Account-API von Keycloak (`DELETE /account/sessions`).
+- **Tests ohne Keycloak:** Token-, Middleware- und Oberflächentests laufen ohne Anmeldedienst (lokal erzeugte Schlüssel). Der Ablauf gegen Keycloak ist manuell geprüft: `Docs/testprotokolle/acc-01.md`.
+
 ## Betreiber-Rolle und Prüfstatus (TE-08)
 
 - **Rollen:** Tabelle `konto_rolle` (`betreiber`, `pruefer`), vergeben nur per Verwaltungszugang, nie über die Anwendung (die Anwendungsrolle hat keine Rechte auf die Tabelle; sie liest nur die eigene Rolle über `rollen_des_kontos()`). Die Rolle gibt keinen Zugriff auf fremde Inhalte (P-04).
