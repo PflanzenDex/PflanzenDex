@@ -63,3 +63,29 @@ test.describe("US-LIC-05 Standorte und Lichtzonen", () => {
     await expect(page.getByText("bis 8.000 Lux")).toBeVisible();
   });
 });
+
+test.describe("US-LIC-01 Zone der Art ermitteln", () => {
+  test("US-LIC-01 leitet die Zone aus Lux-Bedarf und Standard-Stufe ab und erklärt das Ergebnis", async ({
+    page,
+    konto,
+  }) => {
+    await anmeldenBeiLicht(page, konto);
+    await page.getByRole("button", { name: "Standard-Lampen übernehmen" }).click();
+    await expect(page.getByRole("heading", { level: 3, name: "Lampe 2" })).toBeVisible();
+
+    const formular = page.getByRole("form", { name: "Zone ermitteln" });
+    await formular.getByLabel("Lux-Bedarf der Art (Lux)").fill("15000");
+    await formular.getByRole("button", { name: "Zone ermitteln" }).click();
+    await expect(formular.getByText("Lichtzone: Lampe 2")).toBeVisible();
+
+    await formular.getByLabel("Lux-Bedarf der Art (Lux)").fill("100000");
+    await formular.getByLabel("Sonnenliebende C3-Pflanze mit weichem Blatt").check();
+    await formular.getByRole("button", { name: "Zone ermitteln" }).click();
+    await expect(formular.getByText("Lichtzone: Lampe 2")).toBeVisible();
+    await expect(formular.getByText(/nicht automatisch in eine stärkere Zone/)).toBeVisible();
+
+    await formular.getByLabel("Sonnenliebende C3-Pflanze mit weichem Blatt").uncheck();
+    await formular.getByRole("button", { name: "Zone ermitteln" }).click();
+    await expect(formular.getByText("Lichtzone: Lampe 4")).toBeVisible();
+  });
+});

@@ -207,3 +207,43 @@ describe("US-LIC-05 Mandantentrennung über die API (P-04)", () => {
     });
   });
 });
+
+describe("US-LIC-01 Zone der Art ableiten", () => {
+  const abfrage = (lux: number | string, stufe: number | string, weich = false) =>
+    `/lichtzonen/ableitung?lichtbedarfLux=${lux}&standardStufe=${stufe}${weich ? "&weichesBlatt=true" : ""}`;
+
+  it("ohne Token: 401", async () => {
+    expect((await rufe(null, "GET", abfrage(15000, 2))).status).toBe(401);
+  });
+
+  it("leitet aus Lux-Bedarf, Standard-Stufe und den Zonen des Kontos die Zone ab", async () => {
+    const sub = `licht-${randomUUID()}`;
+    await rufe(sub, "POST", "/lichtzonen/voreinstellung", {});
+    const r = await rufe(sub, "GET", abfrage(15000, 2));
+    expect(r).toMatchObject({
+      status: 200,
+      body: { art: "zone", stufe: 2, zone: { name: "Lampe 2" }, grund: "standard" },
+    });
+    expect((await rufe(sub, "GET", abfrage(100000, 2, true))).body).toMatchObject({
+      zone: { name: "Lampe 2" },
+      grund: "weiches_blatt",
+    });
+    await pool.query("delete from konto where subjekt = $1", [sub]);
+  });
+
+  it("Konto ohne Zonen: Zone unbekannt statt geraten; fremde Zonen bleiben unsichtbar (P-04)", async () => {
+    const leer = `licht-${randomUUID()}`;
+    const r = await rufe(leer, "GET", abfrage(15000, 2));
+    expect(r).toMatchObject({ status: 200, body: { art: "unbekannt" } });
+    await pool.query("delete from konto where subjekt = $1", [leer]);
+  });
+
+  it("ungültige Angaben: 400 mit den betroffenen Feldern", async () => {
+    const r = await rufe(subA, "GET", abfrage("abc", 1));
+    expect(r.status).toBe(400);
+    expect(r.body["fehler"].details.map((d: { feld: string }) => d.feld)).toEqual([
+      "lichtbedarfLux",
+      "standardStufe",
+    ]);
+  });
+});

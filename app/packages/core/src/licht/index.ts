@@ -21,3 +21,5 @@ export type {
   ZonenSpeicher,
   ZonenWerte,
 } from "./typen";
+export { ABSTAND_MAX, HOCHSTUFEN_AB, zoneAbleiten, zoneAbleitenGeprueft } from "./ableiten";
+export type { Ableitung, AbleitungsEingabe, AbleitungsGrund } from "./ableiten";

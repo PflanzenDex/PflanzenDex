@@ -6,6 +6,7 @@ import {
   standortAendern,
   standortEinrichten,
   standortHinweise,
+  zoneAbleitenGeprueft,
   type Operation,
   type ZonenNutzung,
 } from "@pflanzendex/core";
@@ -13,6 +14,7 @@ import { IdempotenzPostgres, StandortePostgres, ZonenPostgres } from "@pflanzend
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import {
+  fehlerKoerper,
   koerper,
   schreibe as schreibeMit,
   type Antwortform,
@@ -22,6 +24,19 @@ import {
 
 /** Pfade, die der Anmeldeschutz (Bearer-Token) abdecken muss. */
 export const LICHT_PFADE = ["/lichtzonen", "/standorte", "/hinweise"] as const;
+
+async function ableitung(c: Ctx, zonen: ZonenPostgres) {
+  const zahl = (name: string) => Number(c.req.query(name) ?? Number.NaN);
+  const r = zoneAbleitenGeprueft(
+    {
+      lichtbedarfLux: zahl("lichtbedarfLux"),
+      standardStufe: zahl("standardStufe"),
+      weichesBlatt: c.req.query("weichesBlatt") === "true",
+    },
+    await zonen.liste(c.get("konto").id),
+  );
+  return r.ok ? c.json(r.wert) : c.json(fehlerKoerper(r.fehler), 400);
+}
 
 /**
  * Standorte und Lichtzonen (US-LIC-05). Schreibzugriffe laufen nur über die Operationen von `core`
@@ -49,6 +64,8 @@ export function lichtRouten(
   const mitId = async (c: Ctx) => ({ ...(await koerper(c)), id: c.req.param("id") });
 
   routen.get("/lichtzonen", async (c) => c.json({ zonen: await zonen.liste(c.get("konto").id) }));
+  // US-LIC-01: Zone der Art, abgeleitet aus Lux-Bedarf und Standard-Stufe nach den Zonen des Kontos (FR-BES-10).
+  routen.get("/lichtzonen/ableitung", (c) => ableitung(c, zonen));
   routen.post("/lichtzonen/voreinstellung", async (c) =>
     schreibe(
       c,
