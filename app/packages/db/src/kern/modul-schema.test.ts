@@ -176,4 +176,28 @@ describe("Modulgrenzen gegen die echte Datenbank (AB-10, AB-13)", () => {
     );
     expect(v).toEqual([expect.stringMatching(/^AB-10 .*exemplar -> art.*on delete restrict/)]);
   });
+
+  it("AB-10: ein Registereintrag muss begründet sein, eine Tabelle ohne Konto-Kennung mit Ausnahme betreffen und dem Besitzer gehören", async () => {
+    const mit = (g: NonNullable<ModulRegister["GLOBAL_REFERENCE_TABLES"]>) => ({
+      ...mitTestModulen([]),
+      GLOBAL_REFERENCE_TABLES: g,
+    });
+    const art = { owner: "katalog", reason: "Katalog" };
+    expect(await findeSchemaVerstoesse(pool, mit({ art: { ...art, reason: " " } }))).toEqual([
+      expect.stringMatching(/^AB-10 globale Referenztabelle art: ohne Begründung/),
+      expect.stringMatching(/^AB-10 Fremdschlüssel exemplar_art .*ohne Begründung/),
+    ]);
+    expect(
+      await findeSchemaVerstoesse(pool, mit({ exemplar: { owner: "bestand", reason: "x" } })),
+    ).toEqual([
+      expect.stringMatching(
+        /^AB-10 globale Referenztabelle exemplar: nur Tabellen mit begründeter Ausnahme/,
+      ),
+      expect.stringMatching(/^AB-10 Fremdschlüssel exemplar_art/),
+    ]);
+    expect(await findeSchemaVerstoesse(pool, mit({ art: { ...art, owner: "licht" } }))).toEqual([
+      expect.stringMatching(/^AB-10 globale Referenztabelle art: Besitzer licht stimmt nicht/),
+      expect.stringMatching(/^AB-10 Fremdschlüssel exemplar_art/),
+    ]);
+  });
 });

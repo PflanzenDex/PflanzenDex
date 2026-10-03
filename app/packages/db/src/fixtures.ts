@@ -35,31 +35,22 @@ export const schreibenInDieRollentabelle = (pool: Pool, konto: string) =>
 const FIXTURE_ART_KONTO = "00000000-0000-4000-8000-00000000fa02";
 
 export async function legeFixtureArtAn(pool: Pool): Promise<string> {
-  const client = await pool.connect();
-  try {
-    await client.query("begin");
-    await client.query("insert into konto (id) values ($1) on conflict do nothing", [
-      FIXTURE_ART_KONTO,
-    ]);
-    await client.query(
-      `insert into pruefvorgang (konto_id, objekt_art, objekt_id, status)
-       values ($1, 'art', $2, 'vorschlag') on conflict do nothing`,
-      [FIXTURE_ART_KONTO, FIXTURE_ART_ID],
-    );
-    await client.query(
-      `insert into art (id, gattung, lateinischer_name, schwierigkeit, standard_stufe, lichtbedarf_lux,
-         wachstumsmass, vergeilung_anzeichen, erfolgskriterien, erstellt_von)
-       values ($1, 'Fixtureus', 'Fixtureus mandantentest', 1, 2, 100, 'hoehe', 'v', 'e', 'nutzer')
-       on conflict do nothing`,
-      [FIXTURE_ART_ID],
-    );
-    await client.query("commit");
-  } catch (e) {
-    await client.query("rollback");
-    throw e;
-  } finally {
-    client.release();
-  }
+  // Jede Anweisung ist für sich wiederholbar (on conflict do nothing), parallele Testdateien stören sich nicht.
+  await pool.query("insert into konto (id) values ($1) on conflict do nothing", [
+    FIXTURE_ART_KONTO,
+  ]);
+  await pool.query(
+    `insert into pruefvorgang (konto_id, objekt_art, objekt_id, status)
+     values ($1, 'art', $2, 'vorschlag') on conflict do nothing`,
+    [FIXTURE_ART_KONTO, FIXTURE_ART_ID],
+  );
+  await pool.query(
+    `insert into art (id, gattung, lateinischer_name, schwierigkeit, standard_stufe, lichtbedarf_lux,
+       wachstumsmass, vergeilung_anzeichen, erfolgskriterien, erstellt_von)
+     values ($1, 'Fixtureus', 'Fixtureus mandantentest', 1, 2, 100, 'hoehe', 'v', 'e', 'nutzer')
+     on conflict do nothing`,
+    [FIXTURE_ART_ID],
+  );
   return FIXTURE_ART_ID;
 }
 
