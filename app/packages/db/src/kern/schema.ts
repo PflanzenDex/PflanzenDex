@@ -81,5 +81,23 @@ export async function findeSchemaVerstoesse(
   const mandant = zeilen.map(verstoss).filter((v): v is string => v !== null);
   if (!register) return mandant;
   const namen = zeilen.map((z) => z.name);
-  return [...mandant, ...modulVerstoesse(namen, await ladeFremdschluessel(db), register)];
+  return [
+    ...mandant,
+    ...globaleReferenzProbleme(register),
+    ...modulVerstoesse(namen, await ladeFremdschluessel(db), register),
+  ];
+}
+
+/** Eine globale Referenztabelle (AB-10) ist eine Tabelle ohne Konto-Kennung mit begründeter Ausnahme, sonst nichts. */
+function globaleReferenzProbleme(register: ModulRegister): string[] {
+  return Object.entries(register.GLOBAL_REFERENCE_TABLES ?? {}).flatMap(([tabelle, e]) => {
+    const problem = (text: string) => [`AB-10 globale Referenztabelle ${tabelle}: ${text}`];
+    if (!e.reason?.trim()) return problem("ohne Begründung (GLOBAL_REFERENCE_TABLES)");
+    if (!(tabelle in OHNE_KONTO_KENNUNG))
+      return problem("nur Tabellen mit begründeter Ausnahme in OHNE_KONTO_KENNUNG sind erlaubt");
+    const besitzer = register.MODULES.find((m) => m.tables.includes(tabelle))?.name;
+    return besitzer === e.owner
+      ? []
+      : problem(`Besitzer ${e.owner} stimmt nicht mit dem Modulregister überein (${besitzer})`);
+  });
 }

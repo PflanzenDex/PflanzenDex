@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { mitKonto, migriere, oeffnePool, pruefeMandantentrennung } from "../kern/index.ts";
 import {
   FIXTURES,
+  legeFixtureArtAn,
   lesenDerRollentabelle,
   schreibenInDieRollentabelle,
   vergibRolle,
@@ -143,6 +144,7 @@ describe("P-04: der Betreiber sieht keine Inhalte anderer Konten", () => {
     const [a, b] = [randomUUID(), randomUUID()];
     await mitKonto(pool, a, (c) => c.query("insert into konto (id) values ($1)", [a]));
     await vergibRolle(pool, a, "betreiber");
+    await legeFixtureArtAn(pool);
     const probleme = await pruefeMandantentrennung(pool, FIXTURES, a, b);
     // Einzige Ausnahme, bewusst: Prüfer lesen die Prüfliste (Art, Kennung und Status des Objekts, kein Inhalt).
     expect(probleme.filter((p) => !p.startsWith("pruefvorgang:"))).toEqual([]);
