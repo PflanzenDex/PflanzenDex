@@ -4,11 +4,11 @@
 
 Die IDs bleiben **reserviert** und werden nicht neu vergeben (Konvention: IDs werden nie neu nummeriert). Die Stories zählen nicht in die Status-Übersicht der `README.md`.
 
-| ID | Frühere Bedeutung | Status |
-|---|---|---|
-| US-MIG-01 | Vault-Daten importieren (Trockenlauf, idempotent, Fehlerbericht) | ⛔ entfallen |
-| US-MIG-02 | Standorte, Lichtzonen und Skalen angleichen | ⛔ entfallen |
-| US-MIG-03 | Parallelbetrieb und Umschalten (Vergleichsansicht Prototyp vs. App) | ⛔ entfallen |
+| ID                      | Frühere Bedeutung                                                          | Status       |
+| ----------------------- | -------------------------------------------------------------------------- | ------------ |
+| US-MIG-01               | Vault-Daten importieren (Trockenlauf, idempotent, Fehlerbericht)           | ⛔ entfallen |
+| US-MIG-02               | Standorte, Lichtzonen und Skalen angleichen                                | ⛔ entfallen |
+| US-MIG-03               | Parallelbetrieb und Umschalten (Vergleichsansicht Prototyp vs. App)        | ⛔ entfallen |
 | FR-MIG-01 bis FR-MIG-04 | Import-Werkzeug, nur eigenes Konto, Quelle unangetastet, tolerantes Parsen | ⛔ entfallen |
 
 ## Folgen der Entscheidung

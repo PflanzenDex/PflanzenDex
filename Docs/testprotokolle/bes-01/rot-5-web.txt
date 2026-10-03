@@ -1,0 +1,25 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-ae388dc8f4158b101/app/packages/web
+
+ ❯ src/arten/arten-ansicht.test.tsx (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/arten/arten-ansicht.test.tsx [ src/arten/arten-ansicht.test.tsx ]
+Error: Cannot find module './profil-ansicht' imported from /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-ae388dc8f4158b101/app/packages/web/src/arten/arten-ansicht.test.tsx
+ ❯ src/arten/arten-ansicht.test.tsx:4:1
+      2| import type { Art, ArtTreffer } from "@pflanzendex/core";
+      3| import { describe, expect, it, vi } from "vitest";
+      4| import { ArtProfil } from "./profil-ansicht";
+       | ^
+      5| import { ArtSuche } from "./suche-ansicht";
+      6| import { VorschlagFormular } from "./vorschlag-formular";
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  11:51:25
+   Duration  143ms (worker 95%, environment 5%)
+

@@ -1,5 +1,5 @@
-# Lokaler Anmeldedienst (E-03: Keycloak, selbst gehostet) samt Mail-Fänger für die Bestätigungsmail.
-# Nur für die Entwicklung: start-dev mit H2. Zugangsdaten kommen aus der Umgebung (siehe `make auth-up`), nie aus dem Repo.
+# Local auth server (E-03: self-hosted Keycloak) plus a mail catcher for the confirmation email.
+# Development only: start-dev with H2. Credentials come from the environment (see `make auth-up`), never from the repo.
 name: pflanzendex-auth
 services:
   keycloak:

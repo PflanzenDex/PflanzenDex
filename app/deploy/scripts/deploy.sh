@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Staging-Deploy (TE-03, US-DEV-06): fetches origin/main, builds the images, restarts, waits for health,
+# Staging deploy (TE-03, US-DEV-06): fetches origin/main, builds images, restarts, waits for health,
 # runs the smoke test and rolls back to the previous ref automatically if it fails.
 # Usage on the host, in the checkout:  make deploy   (or deploy/scripts/deploy.sh [ref], default origin/main)
 # Deploying stays a deliberate step (E-14); nothing in CI calls this script.
@@ -37,7 +37,7 @@ smoke_base_url() {
 
 main() {
   local ref="${1:-origin/main}"
-  if [ ! -f .env ]; then echo "FEHLER: deploy/.env fehlt (Vorlage: .env.example)" >&2; exit 1; fi
+  if [ ! -f .env ]; then echo "ERROR: deploy/.env is missing (template: .env.example)" >&2; exit 1; fi
 
   git fetch --quiet --tags origin
   local previous
@@ -48,11 +48,11 @@ main() {
 
   if deploy_ref "$ref"; then echo "Deploy ok: $APP_VERSION ($GIT_SHA, $ref)"; exit 0; fi
 
-  echo "FEHLER: Deploy von $ref fehlgeschlagen; Rollback auf $previous" >&2
+  echo "ERROR: deploy of $ref failed; rolling back to $previous" >&2
   if deploy_ref "$previous"; then
-    echo "ROLLBACK ok: wieder auf $APP_VERSION ($GIT_SHA). Deploy von $ref ist NICHT live. Datenbankmigrationen werden nicht zurückgedreht (Backup: scripts/restore.sh)." >&2
+    echo "ROLLBACK ok: back to $APP_VERSION ($GIT_SHA). Deploy of $ref is NOT live. Database migrations are not rolled back (backup: scripts/restore.sh)." >&2
   else
-    echo "ROLLBACK FEHLGESCHLAGEN: manuell eingreifen (Docs/operations/release-and-rollback.md)." >&2
+    echo "ROLLBACK FAILED: manual intervention required (Docs/operations/release-and-rollback.md)." >&2
   fi
   exit 1
 }

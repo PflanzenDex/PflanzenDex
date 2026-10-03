@@ -1,6 +1,6 @@
-# CI (E-13, FR-QG-01/02, FR-DEV-09): Die Jobs rufen dieselben `make`-Ziele auf wie ein Entwickler lokal.
-# Pfadfilter: Die App-Suite läuft nur, wenn `app/`, das Makefile oder die Workflows betroffen sind.
-# `ci-status` ist der Sammelstatus; ohne Branch-Schutz (privates Repo, Free-Plan) prüft ihn der Release-Workflow.
+# CI (E-13, FR-QG-01/02, FR-DEV-09): the jobs call the same `make` targets a developer runs locally.
+# Path filter: the app suite only runs when `app/`, the Makefile or the workflows change.
+# `ci-status` is the aggregate status and the only required check in the rulesets (ADR 0001).
 name: CI
 
 on:
@@ -51,7 +51,7 @@ jobs:
     if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Datenbanktests (TE-02): echte PostgreSQL wie im Betrieb (E-01); Port wie in `make db-up`.
+    # Database tests (TE-02): real PostgreSQL as in production (E-01); same port as `make db-up`.
     services:
       postgres:
         image: postgres:16-alpine
@@ -106,6 +106,34 @@ jobs:
       - run: make setup
       - run: make audit
 
+  # QG-U1 (report only, E-15): Lighthouse on the built web app for release PRs into `main` and manual dispatch; otherwise nightly (nightly.yml).
+  # Never fails the build: no thresholds until the first baseline exists.
+  lighthouse:
+    needs: changes
+    if: (github.event_name == 'pull_request' && github.base_ref == 'main') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - run: make lighthouse
+        continue-on-error: true
+      - if: always()
+        run: cat app/packages/web/.lighthouseci/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: app/packages/web/.lighthouseci
+          if-no-files-found: ignore
+
   # QG-T3 + QG-U1 (axe, report only): Playwright against the real stack, mobile and desktop. Release PRs into `main` and manual runs only (E-15).
   e2e:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.base_ref == 'main')
@@ -159,8 +187,29 @@ jobs:
           MSG: ${{ github.event.pull_request.title }}
         run: make commitlint
 
+  # QG-U3: `feat:`/`fix:` PRs need a German entry in the user changelog or `[skip-changelog]`.
+  changelog:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      # Title and body only as environment variables, never inline in the command (script injection).
+      - env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_BASE_REF: ${{ github.base_ref }}
+        run: make changelog-check
+
   ci-status:
-    needs: [changes, app, pr-title, dependency-review, audit, e2e]
+    needs: [changes, app, pr-title, changelog, dependency-review, audit, lighthouse, e2e]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -169,14 +218,16 @@ jobs:
           CHANGES: ${{ needs.changes.result }}
           APP: ${{ needs.app.result }}
           PR_TITLE: ${{ needs.pr-title.result }}
+          CHANGELOG: ${{ needs.changelog.result }}
           DEPENDENCY_REVIEW: ${{ needs.dependency-review.result }}
           AUDIT: ${{ needs.audit.result }}
+          LIGHTHOUSE: ${{ needs.lighthouse.result }}
           E2E: ${{ needs.e2e.result }}
         run: |
-          for r in "$CHANGES" "$APP" "$PR_TITLE" "$DEPENDENCY_REVIEW" "$AUDIT" "$E2E"; do
+          for r in "$CHANGES" "$APP" "$PR_TITLE" "$CHANGELOG" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E"; do
             case "$r" in
               success | skipped) ;;
-              *) echo "Fehlgeschlagen: $r"; exit 1 ;;
+              *) echo "failed: $r"; exit 1 ;;
             esac
           done
-          echo "ci-status: grün"
+          echo "ci-status: green"

@@ -1,22 +1,26 @@
-// Architekturgrenzen und Struktur (FR-QG-04, FR-QG-05), mit Regel-ID und Pfad in jeder Meldung.
-//   AB-1  `core` importiert nichts aus API, Web, Datenbank, Dateisystem oder Netz
-//   AB-2  API und Web importieren `core` nur über die öffentliche Schnittstelle (Paketwurzel)
-//   AB-6  Web importiert weder API noch Datenbank (NFR-ARC-01 der früheren Skizze: nur über HTTP)
-//   MK-1  Marker STRUCTURE_IGNORE / MAX_LINES_IGNORE / COMPLEXITY_IGNORE (erste 5 Zeilen) ohne Grund
-//   EX-1  Eintrag in KNOWN_EXCEPTIONS ohne Grund
-//   ST-c  jedes Verzeichnis mit Code in `core` hat einen `index.ts`
-// Bekannte, bewusst akzeptierte Altlasten gehören in KNOWN_EXCEPTIONS (mit Begründung; darf nur kürzer werden).
+// Architecture boundaries and structure (FR-QG-04, FR-QG-05), with rule ID and path in every message.
+//   AB-1  `core` imports nothing from API, web, database, file system or network
+//   AB-2  API and web import `core` only through its public interface (package root)
+//   AB-6  web imports neither API nor database (NFR-ARC-01 of the earlier draft: HTTP only)
+//   MK-1  marker STRUCTURE_IGNORE / MAX_LINES_IGNORE / COMPLEXITY_IGNORE (first 5 lines) without a reason
+//   EX-1  entry in KNOWN_EXCEPTIONS without a reason
+//   AB-7..AB-14  module boundaries (FR-QG-19): check-modules.mjs, check-modules-sql.mjs, register modules.config.mjs
+//   ST-c  every directory with code in `core` has an `index.ts`
+// Known, deliberately accepted legacy belongs in KNOWN_EXCEPTIONS (with a reason; the list may only shrink).
 import fs from "node:fs";
 import path from "node:path";
 import { builtinModules } from "node:module";
 import { fileURLToPath } from "node:url";
+import { MODULE_CONFIG } from "../modules.config.mjs";
+import { checkModules } from "./check-modules.mjs";
+import { checkAdapterSql, checkMigrations, kernelExports } from "./check-modules-sql.mjs";
 
-export const CORE_ALLOWED_IMPORTS = []; // erlaubte Fremdpakete in core (bewusst leer; später z. B. zod)
+export const CORE_ALLOWED_IMPORTS = []; // third-party packages allowed in core (empty on purpose; later e.g. zod)
 export const CORE_TEST_ALLOWED_IMPORTS = ["vitest"];
-export const KNOWN_EXCEPTIONS = []; // Einträge: { rule, file, reason }
+export const KNOWN_EXCEPTIONS = []; // entries: { rule, file, reason }
 
 export const MARKERS = ["STRUCTURE_IGNORE", "MAX_LINES_IGNORE", "COMPLEXITY_IGNORE"];
-// Marker in den ersten 5 Zeilen: { name, reason } (reason leer = Marker ohne Grund = Fehler MK-1).
+// Markers in the first 5 lines: { name, reason } (empty reason = marker without a reason = error MK-1).
 export function markersOf(src) {
   const head = src.split("\n").slice(0, 5).join("\n");
   return MARKERS.flatMap((name) => {
@@ -42,7 +46,7 @@ function walk(dir) {
 
 export const walkCode = (dir) => walk(dir).filter((f) => CODE.test(f));
 
-function stripComments(src) {
+export function stripComments(src) {
   return src
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))
     .split("\n")
@@ -73,17 +77,15 @@ const isRelative = (spec) => spec.startsWith("./") || spec.startsWith("../");
 function coreImportProblem(spec, file, coreRoot, allowed) {
   if (isRelative(spec)) {
     const target = path.resolve(path.dirname(file), spec);
-    return path.relative(coreRoot, target).startsWith("..")
-      ? `Import "${spec}" verlässt core`
-      : null;
+    return path.relative(coreRoot, target).startsWith("..") ? `Import "${spec}" leaves core` : null;
   }
   if (isBuiltin(spec))
-    return `Import "${spec}" (Node-Modul: Dateisystem, Netz oder Prozess) ist in core verboten`;
+    return `Import "${spec}" (Node module: file system, network or process) is forbidden in core`;
   if (spec.startsWith("@pflanzendex/"))
-    return `Import "${spec}" (anderes Paket) ist in core verboten`;
+    return `Import "${spec}" (other package) is forbidden in core`;
   return allowed.includes(spec)
     ? null
-    : `Import "${spec}" ist in core nicht erlaubt (Allowlist CORE_ALLOWED_IMPORTS)`;
+    : `Import "${spec}" is not allowed in core (allowlist CORE_ALLOWED_IMPORTS)`;
 }
 
 function checkCore(appDir, add) {
@@ -101,9 +103,9 @@ function checkCore(appDir, add) {
 
 function consumerImportProblem(spec, file, coreRoot) {
   if (/^@pflanzendex\/core\/.+/.test(spec))
-    return `Tiefer Import "${spec}": nur "@pflanzendex/core" ist die öffentliche Schnittstelle`;
+    return `Deep import "${spec}": only "@pflanzendex/core" is the public interface`;
   if (isRelative(spec) && path.resolve(path.dirname(file), spec).startsWith(coreRoot + path.sep))
-    return `Relativer Import "${spec}" greift in core hinein: nur "@pflanzendex/core" erlaubt`;
+    return `Relative import "${spec}" reaches into core: only "@pflanzendex/core" is allowed`;
   return null;
 }
 
@@ -118,12 +120,7 @@ function checkConsumers(appDir, add) {
         if (problem) add("AB-2", file, line, problem);
         const web = pkg === "web" && /^@pflanzendex\/(api|db)(\/|$)/.test(spec);
         if (web)
-          add(
-            "AB-6",
-            file,
-            line,
-            `Import "${spec}": Web spricht mit API und Datenbank nur über HTTP`,
-          );
+          add("AB-6", file, line, `Import "${spec}": web talks to API and database only over HTTP`);
       }
     }
   }
@@ -140,7 +137,7 @@ function checkStructure(appDir, add) {
         "ST-c",
         path.join(dir, "index.ts"),
         0,
-        "fehlt: jedes Verzeichnis mit Code braucht einen index.ts als öffentliche Schnittstelle",
+        "missing: every directory with code needs an index.ts as its public interface",
       );
   }
 }
@@ -149,10 +146,18 @@ function checkMarkers(appDir, add) {
   for (const file of walk(path.join(appDir, "packages")).filter((f) => CODE.test(f)))
     for (const m of markersOf(fs.readFileSync(file, "utf8")))
       if (!m.reason)
-        add("MK-1", file, 1, `Marker ${m.name} ohne Grund (Format "${m.name}: <Grund>")`);
+        add("MK-1", file, 1, `Marker ${m.name} without a reason (format "${m.name}: <reason>")`);
 }
 
-export function checkProject(appDir) {
+// Without a register the module rules are off (the CLI below passes modules.config.mjs).
+const NO_MODULES = {
+  MODULES: [],
+  KERN: "kern",
+  LEGACY_MIGRATIONS: {},
+  UNMODULED_FOLDERS: {},
+  MODULE_FOLDERS_IN_TRANSITION: {},
+};
+export function checkProject(appDir, cfg = NO_MODULES) {
   const out = [];
   const add = (rule, file, line, msg) => {
     const rel = path.relative(appDir, file).split(path.sep).join("/");
@@ -163,21 +168,27 @@ export function checkProject(appDir) {
   checkConsumers(appDir, add);
   checkStructure(appDir, add);
   checkMarkers(appDir, add);
+  const ctx = { appDir, add, cfg, h: { walk, walkCode, importsOf, stripComments, CODE } };
+  checkModules(ctx);
+  checkAdapterSql(ctx);
+  checkMigrations(ctx);
   for (const e of KNOWN_EXCEPTIONS)
     if (!e.reason?.trim())
-      out.push(`EX-1 ${e.file} Ausnahme für ${e.rule} ohne Grund in KNOWN_EXCEPTIONS`);
+      out.push(`EX-1 ${e.file} exception for ${e.rule} without a reason in KNOWN_EXCEPTIONS`);
   return out;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const appDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-  const violations = checkProject(appDir);
+  const violations = checkProject(appDir, MODULE_CONFIG);
   if (violations.length) {
     console.error(violations.join("\n"));
     console.error(
-      `\n${violations.length} Verstoß/Verstöße gegen Architekturgrenzen oder Struktur. Aufruf zum Wiederholen: npm run boundaries`,
+      `\n${violations.length} architecture boundary or structure violation(s). Re-run with: npm run boundaries`,
     );
     process.exit(1);
   }
-  console.log("Architekturgrenzen und Struktur: keine Verstöße.");
+  console.log("Architecture boundaries and structure: no violations.");
+  const kern = kernelExports({ appDir, cfg: MODULE_CONFIG, h: { stripComments } });
+  console.log(`Kernel exports (${MODULE_CONFIG.KERN}, a measure, no threshold): ${kern}`);
 }

@@ -1,0 +1,25 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-a3653eab2e6c5cb97/app/packages/web
+
+ ❯ src/bestand/exemplare.test.tsx (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/bestand/exemplare.test.tsx [ src/bestand/exemplare.test.tsx ]
+Error: Cannot find module './exemplare-api' imported from /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-a3653eab2e6c5cb97/app/packages/web/src/bestand/exemplare.test.tsx
+ ❯ src/bestand/exemplare.test.tsx:4:1
+      2| import type { Art, Exemplar } from "@pflanzendex/core";
+      3| import { describe, expect, it, vi } from "vitest";
+      4| import { legeExemplarAn, ladeExemplare } from "./exemplare-api";
+       | ^
+      5| import { AnlegenFormular } from "./anlegen-formular";
+      6| import { BestandListe } from "./bestand-liste";
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  15:03:21
+   Duration  176ms (worker 94%, environment 6%)
+

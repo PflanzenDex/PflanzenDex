@@ -1,0 +1,37 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-ae388dc8f4158b101/app/packages/core
+
+ ❯ src/operationen/art/name.test.ts (0 test)
+ ❯ src/operationen/art/vorschlagen.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/operationen/art/name.test.ts [ src/operationen/art/name.test.ts ]
+Error: Cannot find module './name' imported from /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-ae388dc8f4158b101/app/packages/core/src/operationen/art/name.test.ts
+ ❯ src/operationen/art/name.test.ts:2:1
+      1| import { describe, expect, it } from "vitest";
+      2| import { normalisiere, parseLateinisch } from "./name";
+       | ^
+      3|
+      4| describe("US-BES-01 lateinischer Name (DM-BES-01: Gattung + Epitheton,…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/operationen/art/vorschlagen.test.ts [ src/operationen/art/vorschlagen.test.ts ]
+Error: Cannot find module './index' imported from /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-ae388dc8f4158b101/app/packages/core/src/operationen/art/vorschlagen.test.ts
+ ❯ src/operationen/art/vorschlagen.test.ts:4:1
+      2| import { fuehreAus } from "../operation";
+      3| import { SpeicherImSpeicher } from "../testhilfe";
+      4| import { artHinweis, artLaden, artSuchen, artVorschlagen } from "./ind…
+       | ^
+      5| import { ArtImSpeicher } from "./testhilfe";
+      6|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  no tests
+   Start at  11:45:25
+   Duration  179ms (worker 96%, environment 4%)
+
