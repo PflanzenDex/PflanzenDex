@@ -24,8 +24,6 @@ const karte = (extra: Partial<ExemplarKarte> = {}): ExemplarKarte => ({
   weitereBehandlungen: 0,
   ...extra,
 });
-// Der sichtbare Text ohne Markup.
-const sichtbar = (h: string) => h.replace(/<[^>]+>/g, "");
 const html = (karten: ExemplarKarte[]) =>
   renderToString(<BestandListe karten={karten} onArtWaehlen={vi.fn()} />);
 
@@ -98,7 +96,8 @@ describe("US-BES-06 Karte: letzte Messung", () => {
     const h = html([
       karte({ letzteMessung: { datum: "2026-10-01", qualitaet: "gesund", notiz: null } }),
     ]);
-    expect(sichtbar(h)).toContain("Letzte Messung: Gesund am 01.10.2026");
+    expect(h).toContain("Letzte Messung: ");
+    expect(h).toContain(">Gesund</strong> am 01.10.2026");
     expect(h).not.toContain("noch keine Messung");
   });
 
@@ -106,7 +105,8 @@ describe("US-BES-06 Karte: letzte Messung", () => {
     const h = html([
       karte({ letzteMessung: { datum: "2026-10-01", qualitaet: "vergeilt", notiz: null } }),
     ]);
-    expect(sichtbar(h)).toContain("Letzte Messung: Vergeilt/dünn am 01.10.2026");
+    expect(h).toContain("Letzte Messung: ");
+    expect(h).toContain(">Vergeilt/dünn</strong> am 01.10.2026");
     expect(h).toContain("kein Erfolgssignal");
     expect(h).toContain("qualitaet-vergeilt");
     expect(h).not.toContain("qualitaet-gesund");
