@@ -27,33 +27,33 @@ Quelle: Tombola-Repo (Flask/React, Jira, Mehr-Team). PflanzenDex ist (Annahme) T
 
 Wo läuft welches Gate? **B** = blockiert, **R** = nur Bericht (Ratchet-Phase).
 
-| ID    | Gate                                         | Stufe           | Werkzeug (Vorschlag)                                                  | Schwelle / Regel                                                                                                      | Wirkung              |
-| ----- | -------------------------------------------- | --------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| QG-C1 | Commit-Nachricht                             | `commit-msg`    | commitlint                                                            | Conventional Commits, Typ aus fester Liste, Kopfzeile ≤ 100 Zeichen, kein Punkt, Typ klein                            | B                    |
-| QG-C2 | Lint                                         | pre-push + CI   | ESLint (+ Prettier)                                                   | keine Fehler; `max-lines` 200 (Tests ausgenommen)                                                                     | B                    |
-| QG-C3 | Typen                                        | pre-push + CI   | `tsc --noEmit`, strict                                                | keine Fehler; kein `any` ohne Marker                                                                                  | B                    |
-| QG-C4 | Struktur                                     | pre-push + CI   | eigenes Skript (wie `check-component-structure`)                      | Regeln aus FR-QG-04                                                                                                   | B                    |
-| QG-C5 | Architekturgrenzen                           | pre-push + CI   | Import-Grenzen-Prüfer                                                 | Regeln aus FR-QG-05                                                                                                   | B                    |
-| QG-C6 | Tote Dinge und Duplikate                     | PR              | Fallow oder gleichwertig (ungenutzte Exporte, Duplikate, Komplexität) | auf geänderten Dateien blockierend, Gesamtbericht informativ                                                          | B auf Diff, R gesamt |
-| QG-C7 | Abhängigkeiten                               | CI              | deptry-Äquivalent (`knip`/`depcheck`)                                 | keine ungenutzten oder undeklarierten Pakete                                                                          | B                    |
-| QG-K1 | Zyklomatische Komplexität je Funktion        | pre-push + CI   | ESLint `complexity` (Tombola: Ruff-mccabe 15)                         | Allgemein ≤ 15, Fachlogik `core` ≤ 10 (Annahme)                                                                       | B                    |
-| QG-K2 | Kognitive Komplexität, Länge, Tiefe          | CI              | ESLint (`sonarjs`) oder Fallow `health`                               | kognitiv ≤ 30 allgemein, ≤ 15 in `core` (Annahme); Funktion ≤ 60 Zeilen, Verschachtelung ≤ 4, Parameter ≤ 4 (Annahme) | B auf Diff, R gesamt |
-| QG-K3 | Risiko = Komplexität × fehlende Tests (CRAP) | PR              | Fallow `health` oder gleichwertig                                     | CRAP ≤ 450 je Funktion (Tombola-Wert); komplexe Funktion ohne Test fällt durch                                        | B auf Diff           |
-| QG-K4 | Duplikate                                    | PR              | Fallow `duplicates`                                                   | ab 3 gleichen Fragmenten (Tombola: `minOccurrences 3`)                                                                | B auf Diff           |
-| QG-T1 | Unit-Tests Fachlogik                         | CI              | Vitest                                                                | Coverage der Fachlogik ≥ 90 % Zeilen (Annahme), Gesamt ≥ 80 % (Annahme), nur anheben                                  | B                    |
-| QG-T2 | Integrationstests                            | CI              | Vitest + echte Test-DB                                                | Kernabläufe aus FR-QG-08 grün                                                                                         | B                    |
-| QG-T3 | End-to-End                                   | PR `dev`→`main` | Playwright mobil + Desktop                                            | Kernabläufe R1 aus `16-…` grün                                                                                        | B                    |
-| QG-T4 | Spec-Rückverfolgbarkeit                      | CI              | Skript (FR-QG-06)                                                     | jede ✅-Story hat Test mit Story-ID                                                                                   | B                    |
-| QG-S1 | Secret-Scan                                  | CI              | grep-Regeln + Gitleaks                                                | keine Schlüssel, Tokens, Partner-IDs im Repo                                                                          | B                    |
-| QG-S2 | Abhängigkeits-Audit                          | CI              | `npm audit` / OSV-Scanner                                             | keine bekannten hohen Schwachstellen ohne dokumentierte Ausnahme                                                      | B                    |
-| QG-S3 | Statische Sicherheitsanalyse                 | CI              | ESLint-Security-Regeln / Semgrep                                      | keine Treffer mittel+                                                                                                 | B                    |
-| QG-D1 | Mandantentrennung                            | CI              | Integrationstest (FR-QG-07)                                           | Nutzer A liest/ändert nie Daten von B                                                                                 | B                    |
-| QG-D2 | Freigabe-Whitelist                           | CI              | Vertragstest (FR-QG-07)                                               | soziale Ausgaben enthalten nur freigegebene Felder                                                                    | B                    |
-| QG-D3 | Foto-Bereinigung                             | CI              | Test mit Bild mit EXIF/GPS                                            | gespeichertes Bild hat keine EXIF/GPS-Daten                                                                           | B                    |
-| QG-U1 | Performance und Barrierefreiheit             | PR `dev`→`main` | Lighthouse CI, axe in Playwright                                      | Mobil-Werte ≥ Schwelle aus FR-QG-09                                                                                   | R, dann B            |
-| QG-U2 | Doku-Prüfung                                 | CI              | markdownlint, Link-Prüfer, Spec-Konsistenz (FR-QG-03)                 | keine toten Links, IDs eindeutig, Zähler stimmen                                                                      | B                    |
-| QG-U3 | Changelog                                    | PR              | Skript                                                                | `feat:`/`fix:` braucht Eintrag oder `[skip-changelog]`                                                                | B                    |
-| QG-R1 | Release                                      | `main`          | semantic-release                                                      | nur nach grüner CI, nie manuell                                                                                       | B                    |
+| ID | Gate | Stufe | Werkzeug (Vorschlag) | Schwelle / Regel | Wirkung |
+|---|---|---|---|---|---|
+| QG-C1 | Commit-Nachricht | `commit-msg` | commitlint | Conventional Commits, Typ aus fester Liste, Kopfzeile ≤ 100 Zeichen, kein Punkt, Typ klein | B |
+| QG-C2 | Lint | pre-push + CI | ESLint (+ Prettier) | keine Fehler; `max-lines` 200 (Tests ausgenommen) | B |
+| QG-C3 | Typen | pre-push + CI | `tsc --noEmit`, strict | keine Fehler; kein `any` ohne Marker | B |
+| QG-C4 | Struktur | pre-push + CI | eigenes Skript (wie `check-component-structure`) | Regeln aus FR-QG-04 | B |
+| QG-C5 | Architekturgrenzen | pre-push + CI | Import-Grenzen-Prüfer | Regeln aus FR-QG-05 | B |
+| QG-C6 | Tote Dinge und Duplikate | PR | Fallow oder gleichwertig (ungenutzte Exporte, Duplikate, Komplexität) | auf geänderten Dateien blockierend, Gesamtbericht informativ | B auf Diff, R gesamt |
+| QG-C7 | Abhängigkeiten | CI | deptry-Äquivalent (`knip`/`depcheck`) | keine ungenutzten oder undeklarierten Pakete | B |
+| QG-K1 | Zyklomatische Komplexität je Funktion | pre-push + CI | ESLint `complexity` (Tombola: Ruff-mccabe 15) | Allgemein ≤ 15, Fachlogik `core` ≤ 10 (Annahme) | B |
+| QG-K2 | Kognitive Komplexität, Länge, Tiefe | CI | ESLint (`sonarjs`) oder Fallow `health` | kognitiv ≤ 30 allgemein, ≤ 15 in `core` (Annahme); Funktion ≤ 60 Zeilen, Verschachtelung ≤ 4, Parameter ≤ 4 (Annahme) | B auf Diff, R gesamt |
+| QG-K3 | Risiko = Komplexität × fehlende Tests (CRAP) | PR | Fallow `health` oder gleichwertig (**umgesetzt:** `make crap`, Skript `check-crap.mjs` mit Fallow `health` und der Coverage aus QG-T1; Schwelle genau einmal im Skript) | CRAP ≤ 450 je Funktion (Tombola-Wert, Startwert als Annahme); komplexe Funktion ohne Test fällt durch | B auf Diff |
+| QG-K4 | Duplikate | PR | Fallow `duplicates` | ab 3 gleichen Fragmenten (Tombola: `minOccurrences 3`) | B auf Diff |
+| QG-T1 | Unit-Tests Fachlogik | CI | Vitest | Coverage der Fachlogik ≥ 90 % Zeilen (Annahme), Gesamt ≥ 80 % (Annahme), nur anheben | B |
+| QG-T2 | Integrationstests | CI | Vitest + echte Test-DB | Kernabläufe aus FR-QG-08 grün | B |
+| QG-T3 | End-to-End | PR `dev`→`main` | Playwright mobil + Desktop | Kernabläufe R1 aus `16-…` grün | B |
+| QG-T4 | Spec-Rückverfolgbarkeit | CI | Skript (FR-QG-06) | jede ✅-Story hat Test mit Story-ID | B |
+| QG-S1 | Secret-Scan | CI | grep-Regeln + Gitleaks | keine Schlüssel, Tokens, Partner-IDs im Repo | B |
+| QG-S2 | Abhängigkeits-Audit | CI | `npm audit` / OSV-Scanner | keine bekannten hohen Schwachstellen ohne dokumentierte Ausnahme | B |
+| QG-S3 | Statische Sicherheitsanalyse | CI | ESLint-Security-Regeln / Semgrep | keine Treffer mittel+ | B |
+| QG-D1 | Mandantentrennung | CI | Integrationstest (FR-QG-07) | Nutzer A liest/ändert nie Daten von B | B |
+| QG-D2 | Freigabe-Whitelist | CI | Vertragstest (FR-QG-07) | soziale Ausgaben enthalten nur freigegebene Felder | B |
+| QG-D3 | Foto-Bereinigung | CI | Test mit Bild mit EXIF/GPS | gespeichertes Bild hat keine EXIF/GPS-Daten | B |
+| QG-U1 | Performance und Barrierefreiheit | PR `dev`→`main` | Lighthouse CI, axe in Playwright | Mobil-Werte ≥ Schwelle aus FR-QG-09 | R, dann B |
+| QG-U2 | Doku-Prüfung | CI | markdownlint, Link-Prüfer, Spec-Konsistenz (FR-QG-03) | keine toten Links, IDs eindeutig, Zähler stimmen | B |
+| QG-U3 | Changelog | PR | Skript | `feat:`/`fix:` braucht Eintrag oder `[skip-changelog]` | B |
+| QG-R1 | Release | `main` | semantic-release | nur nach grüner CI, nie manuell | B |
 
 ## Userstories
 
@@ -143,6 +143,7 @@ Als **Entwickler** will ich, dass Code nicht unbemerkt unlesbar wird, weil Kompl
 Akzeptanzkriterien:
 
 - QG-K1 bis QG-K4 laufen in CI; QG-K1 zusätzlich im Pre-push (schnell, nur ESLint).
+- **QG-K4 umgesetzt** (`make duplicates`, Teil von `make gates`): Fallow `dupes` mit den Werten aus `app/quality-limits.json` (Abschnitt `duplicates`: ab 3 Kopien, mindestens 50 Tokens und 5 Zeilen, Modus `mild`; Startwerte, Annahme). Blockierend ist eine Klongruppe, die eine seit dem Basis-Branch geänderte Datei berührt; der Gesamtbestand wird nur berichtet. Tests sind ausgenommen (Fallow-Standard). Gemessene Basislinie: 0 Gruppen ab 3 Kopien, 1 Gruppe mit 2 Kopien, 0,64 % duplizierte Zeilen.
 - **Fachlogik strenger:** In `core` (Phasen, Trend, Meilensteine, Tauschzustände, Erinnerungen) gelten die engeren Grenzen, weil sie rein und leicht zu zerlegen ist. Eine Funktion, die die Grenze reißt, wird zerlegt, nicht ausgenommen.
 - **Diff-Prinzip:** Blockierend ist nur, was der PR **verschlechtert** (neue oder geänderte Funktionen über der Grenze). Bestehende Überschreitungen stehen in einer Basisliste, die nur kürzer werden darf (Ratchet, US-QG-06). So lässt sich das Gate ab Tag 1 scharf schalten.
 - **CRAP statt reiner Komplexität:** Eine komplexe Funktion ist erlaubt, wenn sie gut getestet ist; sie ist es nicht, wenn sie komplex **und** ungetestet ist. Das koppelt Komplexitätsgate und Coverage (QG-T1).

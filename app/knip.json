@@ -5,7 +5,8 @@
     "@commitlint/cli",
     "lint-staged",
     "semantic-release",
-    "conventional-changelog-conventionalcommits"
+    "conventional-changelog-conventionalcommits",
+    "fallow"
   ],
   "ignore": ["scripts/coverage-config.d.mts", "modules.config.d.mts"]
 }
