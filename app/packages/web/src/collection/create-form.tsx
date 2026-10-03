@@ -6,14 +6,9 @@ import {
   type LightLocation,
 } from "@pflanzendex/core";
 import type { ApiError } from "../kernel";
+import { collectInput, isError, type CreateInput } from "./create-input";
+import { MarkerFields, markerRule, type Sibling } from "./marker-fields";
 import { nameConflict } from "./text";
-
-export interface CreateInput {
-  marker?: string;
-  locationId?: string;
-  /** Only "cutting" is sent; without a value the specimen is a plant (US-BES-04). */
-  status?: "cutting";
-}
 
 function ErrorBox({ error }: { error: ApiError }) {
   const conflict = nameConflict(error);
@@ -32,32 +27,9 @@ function ErrorBox({ error }: { error: ApiError }) {
   );
 }
 
-function Fields(props: {
-  name: string;
-  marker: string;
-  onMarker: (k: string) => void;
-  locations: readonly LightLocation[];
-}) {
+function OtherFields(props: { locations: readonly LightLocation[] }) {
   return (
     <>
-      <p className="name-preview" aria-live="polite">
-        Name: {props.name}
-      </p>
-      <label>
-        Kennzeichen (optional)
-        <input
-          name="marker"
-          value={props.marker}
-          maxLength={40}
-          autoComplete="off"
-          placeholder="zum Beispiel rot"
-          onChange={(e) => props.onMarker(e.target.value)}
-        />
-      </label>
-      <p className="quiet">
-        Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen
-        die Töpfe.
-      </p>
       <label className="check">
         <input type="checkbox" name="cutting" />
         Das ist ein Steckling
@@ -84,63 +56,91 @@ function Fields(props: {
   );
 }
 
+function Buttons(props: { running: boolean; onCancel: () => void }) {
+  return (
+    <div className="actions">
+      <button type="submit" className="primary" disabled={props.running}>
+        Exemplar anlegen
+      </button>
+      <button type="button" className="secondary" onClick={props.onCancel}>
+        Zurück zur Art
+      </button>
+    </div>
+  );
+}
+
+function Heading({ species }: { species: Species }) {
+  return (
+    <>
+      <h1 id="create-title">Exemplar anlegen</h1>
+      <p className="lead">
+        Art: <i>{species.latinName}</i>
+        {species.germanName ? ` (${species.germanName})` : ""}
+      </p>
+    </>
+  );
+}
+
 /**
- * Create specimen (US-BES-02): only the species is required. The name is fixed before saving and is already shown
- * here (DM-BES-03). The location is unknown until the keeper chooses one, since a target location is supplied only by the
- * care phase (PHA); none of it is invented (P-08).
+ * Create specimen (US-BES-02, US-BES-03): only the species is required for the first specimen. The name is fixed
+ * before saving and is already shown here (DM-BES-03). From the second specimen on the marker is required (preset
+ * "Klammer"); from the third on the form asks for the markers that existing specimens still miss, before it saves.
+ * The location is unknown until the keeper chooses one, since a target location is supplied only by the care phase
+ * (PHA); none of it is invented (P-08).
  */
 export function CreateForm(props: {
   species: Species;
+  /** The active specimens of this species (from the cards). */
+  siblings: readonly Sibling[];
   locations: readonly LightLocation[];
   onSend: (input: CreateInput) => Promise<ApiError | null>;
   onCancel: () => void;
   errorStart?: ApiError;
 }) {
-  const [marker, setMarker] = useState("");
+  const rule = markerRule(props.siblings);
+  const [marker, setMarker] = useState(rule.required ? rule.preset : "");
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [error, setError] = useState<ApiError | null>(props.errorStart ?? null);
   const [running, setRunning] = useState(false);
-  const name = specimenName(speciesDisplayName(props.species), marker.trim() || null);
+  const speciesName = speciesDisplayName(props.species);
   async function send(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const locationId = String(f.get("locationId") ?? "");
-    const cutting = f.get("cutting") !== null;
+    const input = collectInput({ marker, answers, data: new FormData(e.currentTarget) }, rule);
+    if (isError(input)) return setError(input);
     setRunning(true);
-    setError(
-      await props.onSend({
-        ...(marker.trim() ? { marker: marker.trim() } : {}),
-        ...(locationId ? { locationId } : {}),
-        ...(cutting ? { status: "cutting" as const } : {}),
-      }),
-    );
+    setError(await props.onSend(input));
     setRunning(false);
   }
   return (
     <section aria-labelledby="create-title">
-      <h1 id="create-title">Exemplar anlegen</h1>
-      <p className="lead">
-        Art: <i>{props.species.latinName}</i>
-        {props.species.germanName ? ` (${props.species.germanName})` : ""}
-      </p>
-      <form className="form" onSubmit={(e) => void send(e)} aria-label="Exemplar anlegen">
-        <Fields
-          name={name}
+      <Heading species={props.species} />
+      <form
+        className="form"
+        noValidate
+        onSubmit={(e) => void send(e)}
+        aria-label="Exemplar anlegen"
+      >
+        <p className="name-preview" aria-live="polite">
+          Name: {specimenName(speciesName, marker.trim() || null)}
+        </p>
+        <MarkerFields
+          speciesName={speciesName}
+          required={rule.required}
+          missing={rule.missing}
           marker={marker}
           onMarker={(k) => {
             setMarker(k);
             setError(null);
           }}
-          locations={props.locations}
+          answers={answers}
+          onAnswer={(id, k) => {
+            setAnswers({ ...answers, [id]: k });
+            setError(null);
+          }}
         />
+        <OtherFields locations={props.locations} />
         {error && <ErrorBox error={error} />}
-        <div className="actions">
-          <button type="submit" className="primary" disabled={running}>
-            Exemplar anlegen
-          </button>
-          <button type="button" className="secondary" onClick={props.onCancel}>
-            Zurück zur Art
-          </button>
-        </div>
+        <Buttons running={running} onCancel={props.onCancel} />
       </form>
     </section>
   );

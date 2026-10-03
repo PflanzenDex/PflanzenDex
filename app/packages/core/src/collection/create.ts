@@ -45,7 +45,9 @@ const schema = shape({
 
 /**
  * Creates a specimen (US-BES-02): the species is required. The name is fixed before saving (DM-BES-03); if it is
- * taken, nothing is written and the error names the existing specimens of the species (FR-BES-03, P-10).
+ * taken, nothing is written and the error names the existing specimens of the species (FR-BES-03, P-10). A further
+ * specimen needs a marker, and from the third active one on the active specimens without a marker need one too
+ * (`markers`); `planMarkers` decides, the store writes everything or nothing (US-BES-03).
  * `caught_at` is today's date in the user's time zone (FR-BES-04). The location is the chosen one, else
  * the target location from the port, else unknown (P-08). A cutting (`status: "cutting"`, US-BES-04) stands at the
  * location of the growth phase, even when the species is dormant right now; without a value the specimen is a plant.

@@ -18,7 +18,7 @@ const species = {
 const card = (id: string, name: string, status: SpecimenCard["status"]): SpecimenCard => ({
   id,
   name,
-  speciesId: "a1",
+  speciesId: "other",
   marker: null,
   speciesName: "Bogenhanf",
   status,

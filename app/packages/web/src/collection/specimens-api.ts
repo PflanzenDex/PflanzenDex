@@ -43,13 +43,17 @@ export async function repotSpecimen(
   return r.ok ? { ok: true, value: r.value as Specimen } : r;
 }
 
-/** Skeleton for the red run (US-BES-03). */
+/** Gives a specimen a marker or changes it (US-BES-03). The repeat-guard key is created per call. */
 export async function markSpecimen(
   api: string,
   token: string,
   input: { id: string; marker: string },
   fetchFn: FetchFn = fetch,
 ): Promise<Response<Specimen>> {
-  void [api, token, input, fetchFn];
-  return { ok: false, error: { code: "system.unexpected", text: "Nicht umgesetzt." } };
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/specimens/${encodeURIComponent(input.id)}/marker`,
+    { marker: input.marker },
+  );
+  return r.ok ? { ok: true, value: r.value as Specimen } : r;
 }
