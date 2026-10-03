@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ExemplarePostgres } from "../bestand/index.ts";
+import { legeFixtureArtAn } from "../fixtures.ts";
 import { migriere, mitKonto, oeffnePool } from "../kern/index.ts";
 import { MessungenPostgres } from "./index.ts";
 
@@ -12,6 +13,7 @@ const anna = randomUUID();
 const ben = randomUUID();
 let exemplarAnna = "";
 let exemplarBen = "";
+let art = "";
 const werte = (extra: Record<string, unknown> = {}) => ({
   exemplarId: exemplarAnna,
   datum: "2026-10-03",
@@ -24,7 +26,7 @@ const werte = (extra: Record<string, unknown> = {}) => ({
 
 async function exemplar(konto: string, name: string): Promise<string> {
   const z = await new ExemplarePostgres(pool).anlegen(konto, {
-    artId: randomUUID(),
+    artId: art,
     name,
     kennzeichen: null,
     standortId: null,
@@ -37,6 +39,7 @@ async function exemplar(konto: string, name: string): Promise<string> {
 beforeAll(async () => {
   pool = oeffnePool();
   await migriere(pool);
+  art = await legeFixtureArtAn(pool);
   messungen = new MessungenPostgres(pool);
   for (const id of [anna, ben])
     await mitKonto(pool, id, (c) => c.query("insert into konto (id) values ($1)", [id]));

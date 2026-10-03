@@ -6,16 +6,18 @@ import { BestandBereich } from "./bestand-bereich";
 
 const antwort = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
-const exemplar = {
+const karte = {
   id: "e1",
-  artId: "a1",
   name: "Bogenhanf",
-  kennzeichen: null,
-  standortId: null,
+  artName: "Bogenhanf",
   status: "pflanze",
+  standort: null,
+  lichtzone: null,
   gefangenAm: "2026-10-03",
-  messreihe: [],
-  behandlungen: [],
+  foto: null,
+  letzteMessung: null,
+  behandlung: null,
+  weitereBehandlungen: 0,
 };
 const leereAnsicht = {
   exemplarId: "e1",
@@ -38,7 +40,7 @@ describe("US-WAC-01 Bestand verdrahtet mit Messen", () => {
         const pfad = new URL(String(url)).pathname;
         if (pfad === "/standorte") return antwort(200, { standorte: [] });
         if (pfad === "/exemplare/e1/messungen") return antwort(200, leereAnsicht);
-        return antwort(200, { exemplare: [exemplar] });
+        return antwort(200, { karten: [karte] });
       }),
     );
     render(
