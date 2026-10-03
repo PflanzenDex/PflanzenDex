@@ -41,7 +41,7 @@ Akzeptanzkriterien (Namensregel DM-BES-03):
 - Kennzeichen sind je Art eindeutig (Groß-/Kleinschreibung egal); doppelt oder leer ist ein Fehler ohne Änderung.
 - Anders als im Prototyp ist der Name keine Datei: Umbenennen ändert keine Verweise.
 
-### US-BES-04 · Steckling anlegen und eintopfen · ⬜ (Prototyp ✅)
+### US-BES-04 · Steckling anlegen und eintopfen · 🟨 (Prototyp ✅)
 
 Als **Pflanzenhalter** will ich einen Steckling getrennt führen, damit er unter Stecklingslicht steht und nicht im Phasen-Tracker oder der Lichtverteilung erscheint.
 

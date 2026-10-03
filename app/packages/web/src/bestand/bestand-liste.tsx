@@ -9,6 +9,8 @@ export function BestandListe(props: {
   onMessen?: (e: { id: string; name: string }) => void;
   /** Öffnet das Archivieren eines Exemplars (US-BES-07). */
   onArchivieren?: (e: { id: string; name: string }) => void;
+  /** Topft einen Steckling ein (US-BES-04). */
+  onEintopfen?: (e: { id: string; name: string }) => void;
 }) {
   return (
     <section aria-labelledby="bestand-titel">
@@ -23,6 +25,7 @@ export function BestandListe(props: {
               karte={k}
               onMessen={props.onMessen}
               onArchivieren={props.onArchivieren}
+              onEintopfen={props.onEintopfen}
             />
           ))}
         </ul>

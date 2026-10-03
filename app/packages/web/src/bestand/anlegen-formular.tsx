@@ -6,6 +6,8 @@ import { namenskonflikt } from "./text";
 export interface AnlegenEingabe {
   kennzeichen?: string;
   standortId?: string;
+  /** Nur „steckling“ wird gesendet; ohne Angabe ist das Exemplar eine Pflanze (US-BES-04). */
+  status?: "steckling";
 }
 
 function Fehlerbox({ fehler }: { fehler: ApiFehler }) {
@@ -51,6 +53,14 @@ function Felder(props: {
         Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen
         die Töpfe.
       </p>
+      <label className="haken">
+        <input type="checkbox" name="steckling" />
+        Das ist ein Steckling
+      </label>
+      <p className="leise">
+        Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der
+        Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.
+      </p>
       <label>
         Standort
         <select name="standortId" defaultValue="">
@@ -89,11 +99,13 @@ export function AnlegenFormular(props: {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const standortId = String(f.get("standortId") ?? "");
+    const steckling = f.get("steckling") !== null;
     setLaeuft(true);
     setFehler(
       await props.onSenden({
         ...(kennzeichen.trim() ? { kennzeichen: kennzeichen.trim() } : {}),
         ...(standortId ? { standortId } : {}),
+        ...(steckling ? { status: "steckling" as const } : {}),
       }),
     );
     setLaeuft(false);

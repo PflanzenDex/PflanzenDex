@@ -81,8 +81,11 @@ export function ExemplarKarteAnsicht(props: {
   onMessen?: ((e: { id: string; name: string }) => void) | undefined;
   /** Öffnet das Archivieren (US-BES-07). */
   onArchivieren?: ((e: { id: string; name: string }) => void) | undefined;
+  /** Topft einen Steckling ein (US-BES-04); nur Stecklinge bekommen den Knopf. */
+  onEintopfen?: ((e: { id: string; name: string }) => void) | undefined;
 }) {
-  const { karte, onMessen, onArchivieren } = props;
+  const { karte, onMessen, onArchivieren, onEintopfen } = props;
+  const eintopfen = karte.status === "steckling" ? onEintopfen : undefined;
   return (
     <li className="exemplar-karte">
       <Foto karte={karte} />
@@ -94,7 +97,7 @@ export function ExemplarKarteAnsicht(props: {
       <p className="leise">Standort: {karte.standort ?? UNBEKANNT}</p>
       <Messung karte={karte} />
       <Behandlung karte={karte} />
-      {(onMessen || onArchivieren) && (
+      {(onMessen || onArchivieren || eintopfen) && (
         <div className="aktionen">
           {onMessen && (
             <button
@@ -104,6 +107,16 @@ export function ExemplarKarteAnsicht(props: {
               onClick={() => onMessen(karte)}
             >
               Messen
+            </button>
+          )}
+          {eintopfen && (
+            <button
+              type="button"
+              className="sekundaer"
+              aria-label={`Eingetopft: ${karte.name}`}
+              onClick={() => eintopfen(karte)}
+            >
+              Eingetopft
             </button>
           )}
           {onArchivieren && (

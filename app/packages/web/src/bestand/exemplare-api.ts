@@ -10,7 +10,7 @@ type Abruf = typeof fetch;
 export async function legeExemplarAn(
   api: string,
   token: string,
-  eingabe: { artId: string; kennzeichen?: string; standortId?: string },
+  eingabe: { artId: string; kennzeichen?: string; standortId?: string; status?: "steckling" },
   abruf: Abruf = fetch,
 ): Promise<Antwort<Exemplar>> {
   const zeitzone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -18,5 +18,20 @@ export async function legeExemplarAn(
     ...eingabe,
     zeitzone,
   });
+  return r.ok ? { ok: true, wert: r.wert as Exemplar } : r;
+}
+
+/** Topft einen Steckling ein (US-BES-04): aus dem Steckling wird eine Pflanze. Der Schlüssel entsteht je Aufruf. */
+export async function topfeEin(
+  api: string,
+  token: string,
+  id: string,
+  abruf: Abruf = fetch,
+): Promise<Antwort<Exemplar>> {
+  const r = await erzeugeSchreiben(api, token, abruf)(
+    "POST",
+    `/exemplare/${encodeURIComponent(id)}/eintopfen`,
+    {},
+  );
   return r.ok ? { ok: true, wert: r.wert as Exemplar } : r;
 }

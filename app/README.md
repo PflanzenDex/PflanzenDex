@@ -84,6 +84,14 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Web:** tab "Bestand"; "Diese Art wählen" in the catalog opens the form for that species (the app wires `katalog` and `bestand`, the modules do not know each other).
 - **Limits:** no editing, renaming, deleting or archiving (BES-03, BES-07); the Kennzeichen rule from the third Exemplar on (ask for missing marks) belongs to US-BES-03; Zusatz, zone override, Herkunft and sharing fields of DM-BES-02 are missing; no Exemplar hints yet (BES-08).
 
+## Steckling anlegen und eintopfen (US-BES-04)
+
+- **Data:** no migration. `status` already knew `steckling` (0007). Cutting light is **derived** (P-01): the lowest zone of the account (`stecklingslicht` in `core/src/bestand/steckling.ts`, the same rule as the count in `zonenVerteilung`), so there is no stored zone override to delete when potting.
+- **Operations:** `exemplar.anlegen` takes an optional `status` (`pflanze` default, or `steckling`; anything else is 400 `eingabe.ungueltig`). A Steckling without a chosen location gets the location of the growth phase from the port `SollStandortQuelle.wachstumsStandort` (also in the rest phase), a Pflanze the Soll-Standort as before; without an answer the location stays "unbekannt" (P-08). `exemplar.eintopfen` (input `exemplarId`) turns a Steckling into a Pflanze in one statement; a Pflanze or archived Exemplar stays unchanged (`exemplar.kein_steckling` 409), a foreign or unknown one is 404 `exemplar.nicht_gefunden` (P-04).
+- **API:** `POST /exemplare` accepts `status`; `POST /exemplare/:id/eintopfen` (`Idempotency-Key`, empty body). The card shows the lowest zone as Lichtzone for a Steckling; the phase list and the zone distribution already left cuttings out.
+- **Web:** checkbox "Das ist ein Steckling" in the form, button "Eingetopft" on Steckling cards, message and error text after the action (P-09, P-10).
+- **Limits:** the feed event "Eingetopft" for shared Exemplare needs SOZ and sharing, which do not exist yet; there is no per-Exemplar zone field (BES-04 in DM-BES-02) because the zone of a Steckling is derived. Without a pflege adapter for `wachstumsStandort` the location of a Steckling stays "unbekannt" unless the owner picks one.
+
 ## Pflegephasen (US-PHA-01)
 
 - **Derived, never stored (P-01):** `pflegephasenListe` (`core/src/pflege`) reads the Exemplare and their species and computes the phase per request: rest phase when today (`heuteLokal(uhr, zeitzone)`, the user's time zone, NFR-08) lies in the species' `Von…Bis` (month-day, both ends inclusive, may span the new year), otherwise growth phase. Only Exemplare with status `pflanze` whose species has a dormancy period are listed (cuttings and archived ones are not).
