@@ -13,7 +13,7 @@ import {
 import { IdempotenzPostgres, StandortePostgres, ZonenPostgres } from "@pflanzendex/db";
 import { Hono, type Context } from "hono";
 import type { Pool } from "pg";
-import type { AuthEnv } from "../konto";
+import type { AuthEnv } from "../kern";
 import { fehlerKoerper, statusFuer } from "../kern";
 
 /** Pfade, die der Anmeldeschutz (Bearer-Token) abdecken muss. */

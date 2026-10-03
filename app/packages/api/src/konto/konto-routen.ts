@@ -2,7 +2,7 @@ import { darfMitFreundenTeilen } from "@pflanzendex/core";
 import { mitKonto } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import type { AuthEnv } from "./auth/middleware";
+import type { AuthEnv } from "../kern";
 
 /** Eigene Kontodaten (FR-ACC-01): E-Mail und Anzeigename kommen aus dem geprüften Token und werden aktuell gehalten. */
 export function kontoRouten(pool: Pool): Hono<AuthEnv> {

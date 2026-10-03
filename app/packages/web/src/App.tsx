@@ -3,7 +3,6 @@ import { Fehler, KontoAnsicht, Laedt, Willkommen, apiUrl, useSitzung } from "./k
 import { LichtSeite } from "./licht";
 import { Navigation, type Ansicht } from "./navigation";
 import "./stil.css";
-import "./licht/licht.css";
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
 

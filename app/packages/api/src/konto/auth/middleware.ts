@@ -1,11 +1,9 @@
-import { darfMitFreundenTeilen, kontoAusAnspruechen, type Kontodaten } from "@pflanzendex/core";
+import { darfMitFreundenTeilen, kontoAusAnspruechen } from "@pflanzendex/core";
 import { findeOderLegeKonto } from "@pflanzendex/db";
 import type { MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
+import type { AuthEnv } from "../../kern";
 import type { TokenPruefer } from "./token";
-
-export type AnfrageKonto = { id: string; daten: Kontodaten };
-export type AuthEnv = { Variables: { konto: AnfrageKonto } };
 
 const nichtAngemeldet = (c: Parameters<MiddlewareHandler>[0]) =>
   c.json({ fehler: { code: "nicht_angemeldet" } }, 401, {
