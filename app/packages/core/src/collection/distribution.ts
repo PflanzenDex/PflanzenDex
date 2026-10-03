@@ -2,6 +2,7 @@
 // The same count will later serve the wishlist prioritization (specimen level, zones 2 to 4 only).
 import { zoneDerive, type LightLocation, type LightZone } from "../light";
 import type { Species } from "../catalog";
+import { cuttingLight } from "./cutting-light";
 import { distributionHint } from "./distribution-hint";
 import type { NotCounted, Distribution, DistributionDependencies } from "./distribution-types";
 import { isActive, type SpecimenRow } from "./types";
@@ -39,7 +40,7 @@ function placeFrom(z: SpecimenRow, k: Context): Place {
   const location = k.locations.find((s) => s.id === z.locationId);
   const own = k.zones.find((l) => l.id === location?.lightZoneId);
   if (!own) return zoneSpecies(k.species.get(z.speciesId), k.zones);
-  return own.id === k.zones[0]?.id ? "cuttingLight" : own;
+  return own.id === cuttingLight(k.zones)?.id ? "cuttingLight" : own;
 }
 
 const thinnestZones = (zones: readonly { zone: LightZone; count: number }[]): LightZone[] => {

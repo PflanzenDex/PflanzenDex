@@ -16,7 +16,7 @@ export interface SpecimenRow {
 export type SpecimenValues = Pick<
   SpecimenRow,
   "speciesId" | "name" | "marker" | "locationId" | "caughtAt"
->;
+> & { readonly status?: "plant" | "cutting" };
 
 // `date` comes back as text: the driver would turn it into a `Date` in the server's time zone (NFR-08).
 const COLUMNS = `id, species_id as "speciesId", name, marker, location_id as "locationId", status,
@@ -59,9 +59,9 @@ export class SpecimenPostgres {
     try {
       const r = await withAccount(this.pool, userId, (c) =>
         c.query<SpecimenRow>(
-          `insert into specimen (account_id, species_id, name, marker, location_id, caught_at)
-           values ($1, $2, $3, $4, $5, $6) returning ${COLUMNS}`,
-          [userId, w.speciesId, w.name, w.marker, w.locationId, w.caughtAt],
+          `insert into specimen (account_id, species_id, name, marker, location_id, caught_at, status)
+           values ($1, $2, $3, $4, $5, $6, $7) returning ${COLUMNS}`,
+          [userId, w.speciesId, w.name, w.marker, w.locationId, w.caughtAt, w.status ?? "plant"],
         ),
       );
       return r.rows[0] as SpecimenRow;
@@ -72,6 +72,15 @@ export class SpecimenPostgres {
         return "location_unknown";
       throw e;
     }
+  }
+
+  /**
+   * One statement: only a cutting becomes a plant (US-BES-04). Plants and archived specimens stay unchanged and report
+   * `not_a_cutting`; foreign specimens are invisible to the row rule.
+   */
+  async repot(userId: string, id: string): Promise<SpecimenRow | "not_found" | "not_a_cutting"> {
+    const sql = `update specimen set status = 'plant' where id = $1 and status = 'cutting' returning ${COLUMNS}`;
+    return this.change(userId, { sql, parameter: [id] }, "not_a_cutting");
   }
 
   /**

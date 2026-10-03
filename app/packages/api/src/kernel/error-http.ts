@@ -15,6 +15,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "species.duplicate": 409,
   "specimen.name_taken": 409,
   "specimen.already_archived": 409,
+  "specimen.not_a_cutting": 409,
   "specimen.not_archived": 409,
   "specimen.archived": 409,
   "light_zone.name_taken": 409,

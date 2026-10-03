@@ -33,6 +33,31 @@
   border-radius: 12px;
   overflow-wrap: anywhere;
 }
+/* A tick box sits in front of its text and keeps a comfortable target (US-BES-04). */
+.form label.check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+}
+.form label.check input {
+  width: 24px;
+  min-height: 24px;
+  height: 24px;
+  flex: none;
+  accent-color: var(--gruen);
+}
+/* Up to three actions per card: they wrap as whole buttons instead of breaking inside a word. */
+.specimen-card .actions {
+  display: flex;
+  flex-wrap: wrap;
+}
+.specimen-card .actions button {
+  flex: 1 1 auto;
+  padding: 0 14px;
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
 .specimen-card h2 {
   font-size: 1.1rem;
   margin: 8px 0 0;

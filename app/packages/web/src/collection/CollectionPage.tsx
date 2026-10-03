@@ -9,12 +9,15 @@ import { CollectionList } from "./collection-list";
 import { createSpecimen } from "./specimens-api";
 import { SIGN_IN, useCollection, type Data, type Token } from "./use-collection";
 import { useArchive } from "./use-archive";
+import { useRepot } from "./use-repot";
 import { DistributionView } from "./distribution-view";
 
 function Created({ specimen }: { specimen: Specimen }) {
   return (
     <p role="status" className="hint">
-      Exemplar „{specimen.name}“ ist angelegt.
+      {specimen.status === "cutting" ? "Steckling" : "Exemplar"} „{specimen.name}“ ist angelegt.
+      {specimen.status === "cutting" &&
+        " Er steht unter Stecklingslicht; tippe auf der Karte „Eingetopft“, sobald du ihn eintopfst."}
       {specimen.locationId === null &&
         " Der Standort ist unbekannt, denn ein Soll-Standort steht erst mit den Pflegephasen fest."}
     </p>
@@ -40,6 +43,7 @@ export function CollectionPage(props: {
   const data = useCollection(api, token, reload);
   const afterAction = useCallback(() => setReload((n) => n + 1), []);
   const archived = useArchive(api, token, afterAction);
+  const potted = useRepot(api, token, afterAction);
   const send = useCallback(
     async (input: CreateInput): Promise<ApiError | null> => {
       const t = await token();
@@ -47,12 +51,13 @@ export function CollectionPage(props: {
       const r = await createSpecimen(api, t, { speciesId: newSpecies.id, ...input });
       if (!r.ok) return r.error;
       archived.setMessage(null);
+      potted.setMessage(null);
       setCreated(r.value);
       afterAction();
       onCompleted();
       return null;
     },
-    [api, token, newSpecies, onCompleted, afterAction, archived],
+    [api, token, newSpecies, onCompleted, afterAction, archived, potted],
   );
   return (
     <div className="light collection">
@@ -74,7 +79,7 @@ export function CollectionPage(props: {
         />
       )}
       {data.kind === "da" && !newSpecies && !archived.open && (
-        <List data={data} archived={archived} created={created} props={props} />
+        <List data={data} archived={archived} potted={potted} created={created} props={props} />
       )}
     </div>
   );
@@ -83,22 +88,25 @@ export function CollectionPage(props: {
 function List(p: {
   data: Extract<Data, { kind: "da" }>;
   archived: ReturnType<typeof useArchive>;
+  potted: ReturnType<typeof useRepot>;
   created: Specimen | null;
   props: Parameters<typeof CollectionPage>[0];
 }) {
-  const { data, archived } = p;
+  const { data, archived, potted } = p;
+  const message = archived.message ?? potted.message;
+  const error = archived.error ?? potted.error;
   return (
     <>
-      {archived.message ? (
+      {message ? (
         <p role="status" className="hint">
-          {archived.message}
+          {message}
         </p>
       ) : (
         p.created && <Created specimen={p.created} />
       )}
-      {archived.error && (
+      {error && (
         <div role="alert" className="warning">
-          <p>{archived.error.text}</p>
+          <p>{error.text}</p>
         </div>
       )}
       <DistributionView distribution={data.distribution} />
@@ -107,7 +115,12 @@ function List(p: {
         onSpeciesChoose={p.props.onSpeciesChoose}
         onArchive={(e) => {
           archived.setMessage(null);
+          potted.setMessage(null);
           archived.setOpen(e);
+        }}
+        onRepot={(e) => {
+          archived.setMessage(null);
+          void potted.repot(e);
         }}
         {...(p.props.onMeasure ? { onMeasure: p.props.onMeasure } : {})}
       />

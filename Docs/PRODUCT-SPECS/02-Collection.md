@@ -41,7 +41,7 @@ Acceptance criteria (naming rule DM-BES-03):
 - Markers are unique per species (case-insensitive); duplicate or empty is an error without change.
 - Unlike in the prototype the name is not a file: renaming changes no references.
 
-### US-BES-04 · Create a cutting and pot it · ⬜ (prototype ✅)
+### US-BES-04 · Create a cutting and pot it · 🟨 (prototype ✅)
 
 As a **plant keeper** I want to keep a cutting separately, so that it stands under cutting light and does not appear in the phase tracker or the light distribution.
 

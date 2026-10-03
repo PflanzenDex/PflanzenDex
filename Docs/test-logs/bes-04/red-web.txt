@@ -1,0 +1,1469 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/packages/web
+
+ ❯ src/bestand/steckling.test.tsx (8 tests | 7 failed) 5061ms
+   ❯ US-BES-04 Client der Exemplar-API (3)
+     × US-BES-04: topft mit Bearbeiter-Token und frischem Idempotency-Key ein 4ms
+     × US-BES-04: ein Serverfehler bleibt ein Fehler mit Code (P-10) 1ms
+   ❯ US-BES-04 Steckling anlegen im Formular (2)
+     × US-BES-04: ohne Häkchen bleibt es eine Pflanze, das Häkchen sendet status steckling 1022ms
+     × US-BES-04: das Formular erklärt, was ein Steckling bedeutet (P-09) 1004ms
+   ❯ US-BES-04 Eingetopft auf der Karte (3)
+     × US-BES-04: nur ein Steckling hat „Eingetopft“ 1005ms
+     × US-BES-04: Eingetopft sendet die Anfrage, lädt neu und sagt, wie es weitergeht (P-09) 1005ms
+     × US-BES-04: scheitert das Eintopfen, bleibt die Karte und der Fehlertext steht da (P-10) 1005ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/bestand/steckling.test.tsx > US-BES-04 Client der Exemplar-API > US-BES-04: topft mit Bearbeiter-Token und frischem Idempotency-Key ein
+TypeError: topfeEin is not a function
+ ❯ src/bestand/steckling.test.tsx:81:21
+     79|   it("US-BES-04: topft mit Bearbeiter-Token und frischem Idempotency-K…
+     80|     const abruf = vi.fn<typeof fetch>(async () => antwort(200, { id: "…
+     81|     const r = await topfeEin("http://api", "tok", "e1", abruf);
+       |                     ^
+     82|     const [url, init] = abruf.mock.calls[0] ?? [];
+     83|     expect(String(url)).toBe("http://api/exemplare/e1/eintopfen");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/bestand/steckling.test.tsx > US-BES-04 Client der Exemplar-API > US-BES-04: ein Serverfehler bleibt ein Fehler mit Code (P-10)
+TypeError: topfeEin is not a function
+ ❯ src/bestand/steckling.test.tsx:93:18
+     91|     const fehler = { code: "exemplar.kein_steckling", text: "Kein Stec…
+     92|     const abruf = vi.fn<typeof fetch>(async () => antwort(409, { fehle…
+     93|     expect(await topfeEin("http://api", "tok", "e1", abruf)).toMatchOb…
+       |                  ^
+     94|       ok: false,
+     95|       fehler: { code: "exemplar.kein_steckling" },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  src/bestand/steckling.test.tsx > US-BES-04 Steckling anlegen im Formular > US-BES-04: ohne Häkchen bleibt es eine Pflanze, das Häkchen sendet status steckling
+TestingLibraryElementError: Unable to find role="checkbox" and name `/Das ist ein Steckling/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"licht bestand"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"anlegen-titel"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"anlegen-titel"[39m
+        [36m>[39m
+          [0mExemplar anlegen[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"lead"[39m
+        [36m>[39m
+          [0mArt: [0m
+          [36m<i>[39m
+            [0mDracaena trifasciata[0m
+          [36m</i>[39m
+          [0m (Bogenhanf)[0m
+        [36m</p>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Exemplar anlegen"[39m
+          [33mclass[39m=[32m"formular"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"namensvorschau"[39m
+          [36m>[39m
+            [0mName: [0m
+            [0mBogenhanf[0m
+          [36m</p>[39m
+          [36m<label>[39m
+            [0mKennzeichen (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"40"[39m
+              [33mname[39m=[32m"kennzeichen"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel rot"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"leise"[39m
+          [36m>[39m
+            [0mNur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.[0m
+          [36m</p>[39m
+          [36m<label>[39m
+            [0mStandort[0m
+            [36m<select[39m
+              [33mname[39m=[32m"standortId"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mselected[39m=[32m""[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mStandort noch unbekannt[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"leise"[39m
+          [36m>[39m
+            [0mOhne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"aktionen"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primaer"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mExemplar anlegen[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sekundaer"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mZurück zur Art[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"licht bestand"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"anlegen-titel"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"anlegen-titel"[39m
+        [36m>[39m
+          [0mExemplar anlegen[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"lead"[39m
+        [36m>[39m
+          [0mArt: [0m
+          [36m<i>[39m
+            [0mDracaena trifasciata[0m
+          [36m</i>[39m
+          [0m (Bogenhanf)[0m
+        [36m</p>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Exemplar anlegen"[39m
+          [33mclass[39m=[32m"formular"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"namensvorschau"[39m
+          [36m>[39m
+            [0mName: [0m
+            [0mBogenhanf[0m
+          [36m</p>[39m
+          [36m<label>[39m
+            [0mKennzeichen (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"40"[39m
+              [33mname[39m=[32m"kennzeichen"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel rot"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"leise"[39m
+          [36m>[39m
+            [0mNur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.[0m
+          [36m</p>[39m
+          [36m<label>[39m
+            [0mStandort[0m
+            [36m<select[39m
+              [33mname[39m=[32m"standortId"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mselected[39m=[32m""[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mStandort noch unbekannt[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"leise"[39m
+          [36m>[39m
+            [0mOhne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"aktionen"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primaer"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mExemplar anlegen[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sekundaer"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mZurück zur Art[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/bestand/steckling.test.tsx:104:32
+    102|     const { posts } = fakeServer();
+    103|     render(seite(art));
+    104|     const haken = await screen.findByRole("checkbox", { name: /Das ist…
+       |                                ^
+    105|     expect((haken as HTMLInputElement).checked).toBe(false);
+    106|     await userEvent.click(screen.getByRole("button", { name: "Exemplar…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  src/bestand/steckling.test.tsx > US-BES-04 Steckling anlegen im Formular > US-BES-04: das Formular erklärt, was ein Steckling bedeutet (P-09)
+TestingLibraryElementError: Unable to find an element with the text: /Stecklingslicht/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"licht bestand"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"anlegen-titel"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"anlegen-titel"[39m
+        [36m>[39m
+          [0mExemplar anlegen[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"lead"[39m
+        [36m>[39m
+          [0mArt: [0m
+          [36m<i>[39m
+            [0mDracaena trifasciata[0m
+          [36m</i>[39m
+          [0m (Bogenhanf)[0m
+        [36m</p>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Exemplar anlegen"[39m
+          [33mclass[39m=[32m"formular"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"namensvorschau"[39m
+          [36m>[39m
+            [0mName: [0m
+            [0mBogenhanf[0m
+          [36m</p>[39m
+          [36m<label>[39m
+            [0mKennzeichen (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"40"[39m
+              [33mname[39m=[32m"kennzeichen"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel rot"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"leise"[39m
+          [36m>[39m
+            [0mNur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.[0m
+          [36m</p>[39m
+          [36m<label>[39m
+            [0mStandort[0m
+            [36m<select[39m
+              [33mname[39m=[32m"standortId"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mselected[39m=[32m""[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mStandort noch unbekannt[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"leise"[39m
+          [36m>[39m
+            [0mOhne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"aktionen"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primaer"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mExemplar anlegen[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sekundaer"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mZurück zur Art[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"licht bestand"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"anlegen-titel"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"anlegen-titel"[39m
+        [36m>[39m
+          [0mExemplar anlegen[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"lead"[39m
+        [36m>[39m
+          [0mArt: [0m
+          [36m<i>[39m
+            [0mDracaena trifasciata[0m
+          [36m</i>[39m
+          [0m (Bogenhanf)[0m
+        [36m</p>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Exemplar anlegen"[39m
+          [33mclass[39m=[32m"formular"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"namensvorschau"[39m
+          [36m>[39m
+            [0mName: [0m
+            [0mBogenhanf[0m
+          [36m</p>[39m
+          [36m<label>[39m
+            [0mKennzeichen (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"40"[39m
+              [33mname[39m=[32m"kennzeichen"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel rot"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"leise"[39m
+          [36m>[39m
+            [0mNur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.[0m
+          [36m</p>[39m
+          [36m<label>[39m
+            [0mStandort[0m
+            [36m<select[39m
+              [33mname[39m=[32m"standortId"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mselected[39m=[32m""[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mStandort noch unbekannt[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"leise"[39m
+          [36m>[39m
+            [0mOhne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"aktionen"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primaer"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mExemplar anlegen[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sekundaer"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mZurück zur Art[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/bestand/steckling.test.tsx:118:35
+    116|     fakeServer();
+    117|     render(seite(art));
+    118|     const hinweis = (await screen.findByText(/Stecklingslicht/)).textC…
+       |                                   ^
+    119|     expect(hinweis).toContain("Phasen");
+    120|     expect(hinweis).toContain("Lichtverteilung");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  src/bestand/steckling.test.tsx > US-BES-04 Eingetopft auf der Karte > US-BES-04: nur ein Steckling hat „Eingetopft“
+TestingLibraryElementError: Unable to find role="button" and name "Eingetopft: Ableger"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"licht bestand"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"verteilung-titel"[39m
+        [33mclass[39m=[32m"verteilung"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mid[39m=[32m"verteilung-titel"[39m
+        [36m>[39m
+          [0mVerteilung auf die Lichtzonen[0m
+        [36m</h2>[39m
+        [36m<p>[39m
+          [0mEs gibt keine Lichtzone für erwachsene Pflanzen.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"naechste-handlung"[39m
+        [36m>[39m
+          [0mLege unter „Licht“ mindestens zwei Lichtzonen an.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"leise"[39m
+        [36m>[39m
+          [0mStecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"bestand-titel"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"bestand-titel"[39m
+        [36m>[39m
+          [0mBestand[0m
+        [36m</h1>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"karten-raster"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"exemplar-karte"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"karte-foto platzhalter"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mNoch kein Foto[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<h2>[39m
+              [0mAbleger[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mArt: [0m
+              [0mBogenhanf[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mLichtzone: [0m
+              [0mLampe 1[0m
+              [0m · Status: [0m
+              [0mSteckling[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0munbekannt[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mnoch keine Messung[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mkeine offene Behandlung[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"aktionen"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Archivieren: Ableger"[39m
+                [33mclass[39m=[32m"sekundaer"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mArchivieren[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"exemplar-karte"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"karte-foto platzhalter"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mNoch kein Foto[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<h2>[39m
+              [0mAlte Pflanze[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mArt: [0m
+              [0mBogenhanf[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mLichtzone: [0m
+              [0munbekannt[0m
+              [0m · Status: [0m
+              [0mPflanze[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0munbekannt[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mnoch keine Messung[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mkeine offene Behandlung[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"aktionen"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Archivieren: Alte Pflanze"[39m
+                [33mclass[39m=[32m"sekundaer"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mArchivieren[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"aktionen"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primaer"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mWeiteres Exemplar: Art wählen[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"licht bestand"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"verteilung-titel"[39m
+        [33mclass[39m=[32m"verteilung"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mid[39m=[32m"verteilung-titel"[39m
+        [36m>[39m
+          [0mVerteilung auf die Lichtzonen[0m
+        [36m</h2>[39m
+        [36m<p>[39m
+          [0mEs gibt keine Lichtzone für erwachsene Pflanzen.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"naechste-handlung"[39m
+        [36m>[39m
+          [0mLege unter „Licht“ mindestens zwei Lichtzonen an.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"leise"[39m
+        [36m>[39m
+          [0mStecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"bestand-titel"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"bestand-titel"[39m
+        [36m>[39m
+          [0mBestand[0m
+        [36m</h1>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"karten-raster"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"exemplar-karte"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"karte-foto platzhalter"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mNoch kein Foto[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<h2>[39m
+              [0mAbleger[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mArt: [0m
+              [0mBogenhanf[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mLichtzone: [0m
+              [0mLampe 1[0m
+              [0m · Status: [0m
+              [0mSteckling[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0munbekannt[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mnoch keine Messung[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mkeine offene Behandlung[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"aktionen"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Archivieren: Ableger"[39m
+                [33mclass[39m=[32m"sekundaer"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mArchivieren[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"exemplar-karte"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"karte-foto platzhalter"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mNoch kein Foto[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<h2>[39m
+              [0mAlte Pflanze[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mArt: [0m
+              [0mBogenhanf[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mLichtzone: [0m
+              [0munbekannt[0m
+              [0m · Status: [0m
+              [0mPflanze[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0munbekannt[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mnoch keine Messung[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mkeine offene Behandlung[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"aktionen"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Archivieren: Alte Pflanze"[39m
+                [33mclass[39m=[32m"sekundaer"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mArchivieren[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"aktionen"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primaer"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mWeiteres Exemplar: Art wählen[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/bestand/steckling.test.tsx:128:25
+    126|     fakeServer();
+    127|     render(seite());
+    128|     expect(await screen.findByRole("button", { name: "Eingetopft: Able…
+       |                         ^
+    129|     expect(screen.queryByRole("button", { name: "Eingetopft: Alte Pfla…
+    130|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  src/bestand/steckling.test.tsx > US-BES-04 Eingetopft auf der Karte > US-BES-04: Eingetopft sendet die Anfrage, lädt neu und sagt, wie es weitergeht (P-09)
+TestingLibraryElementError: Unable to find role="button" and name "Eingetopft: Ableger"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"licht bestand"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"verteilung-titel"[39m
+        [33mclass[39m=[32m"verteilung"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mid[39m=[32m"verteilung-titel"[39m
+        [36m>[39m
+          [0mVerteilung auf die Lichtzonen[0m
+        [36m</h2>[39m
+        [36m<p>[39m
+          [0mEs gibt keine Lichtzone für erwachsene Pflanzen.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"naechste-handlung"[39m
+        [36m>[39m
+          [0mLege unter „Licht“ mindestens zwei Lichtzonen an.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"leise"[39m
+        [36m>[39m
+          [0mStecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"bestand-titel"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"bestand-titel"[39m
+        [36m>[39m
+          [0mBestand[0m
+        [36m</h1>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"karten-raster"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"exemplar-karte"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"karte-foto platzhalter"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mNoch kein Foto[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<h2>[39m
+              [0mAbleger[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mArt: [0m
+              [0mBogenhanf[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mLichtzone: [0m
+              [0mLampe 1[0m
+              [0m · Status: [0m
+              [0mSteckling[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0munbekannt[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mnoch keine Messung[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mkeine offene Behandlung[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"aktionen"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Archivieren: Ableger"[39m
+                [33mclass[39m=[32m"sekundaer"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mArchivieren[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"exemplar-karte"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"karte-foto platzhalter"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mNoch kein Foto[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<h2>[39m
+              [0mAlte Pflanze[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mArt: [0m
+              [0mBogenhanf[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mLichtzone: [0m
+              [0munbekannt[0m
+              [0m · Status: [0m
+              [0mPflanze[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0munbekannt[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mnoch keine Messung[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mkeine offene Behandlung[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"aktionen"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Archivieren: Alte Pflanze"[39m
+                [33mclass[39m=[32m"sekundaer"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mArchivieren[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"aktionen"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primaer"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mWeiteres Exemplar: Art wählen[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"licht bestand"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"verteilung-titel"[39m
+        [33mclass[39m=[32m"verteilung"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mid[39m=[32m"verteilung-titel"[39m
+        [36m>[39m
+          [0mVerteilung auf die Lichtzonen[0m
+        [36m</h2>[39m
+        [36m<p>[39m
+          [0mEs gibt keine Lichtzone für erwachsene Pflanzen.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"naechste-handlung"[39m
+        [36m>[39m
+          [0mLege unter „Licht“ mindestens zwei Lichtzonen an.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"leise"[39m
+        [36m>[39m
+          [0mStecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"bestand-titel"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"bestand-titel"[39m
+        [36m>[39m
+          [0mBestand[0m
+        [36m</h1>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"karten-raster"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"exemplar-karte"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"karte-foto platzhalter"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mNoch kein Foto[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<h2>[39m
+              [0mAbleger[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mArt: [0m
+              [0mBogenhanf[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mLichtzone: [0m
+              [0mLampe 1[0m
+              [0m · Status: [0m
+              [0mSteckling[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0munbekannt[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mnoch keine Messung[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mkeine offene Behandlung[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"aktionen"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Archivieren: Ableger"[39m
+                [33mclass[39m=[32m"sekundaer"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mArchivieren[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"exemplar-karte"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"karte-foto platzhalter"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mNoch kein Foto[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<h2>[39m
+              [0mAlte Pflanze[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mArt: [0m
+              [0mBogenhanf[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mLichtzone: [0m
+              [0munbekannt[0m
+              [0m · Status: [0m
+              [0mPflanze[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0munbekannt[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mnoch keine Messung[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mkeine offene Behandlung[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"aktionen"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Archivieren: Alte Pflanze"[39m
+                [33mclass[39m=[32m"sekundaer"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mArchivieren[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"aktionen"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primaer"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mWeiteres Exemplar: Art wählen[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/bestand/steckling.test.tsx:135:40
+    133|     const { posts } = fakeServer();
+    134|     render(seite());
+    135|     await userEvent.click(await screen.findByRole("button", { name: "E…
+       |                                        ^
+    136|     await vi.waitFor(() => expect(posts).toHaveLength(1));
+    137|     expect(posts[0]).toMatchObject({ pfad: "/exemplare/e1/eintopfen", …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  src/bestand/steckling.test.tsx > US-BES-04 Eingetopft auf der Karte > US-BES-04: scheitert das Eintopfen, bleibt die Karte und der Fehlertext steht da (P-10)
+TestingLibraryElementError: Unable to find role="button" and name "Eingetopft: Ableger"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"licht bestand"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"verteilung-titel"[39m
+        [33mclass[39m=[32m"verteilung"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mid[39m=[32m"verteilung-titel"[39m
+        [36m>[39m
+          [0mVerteilung auf die Lichtzonen[0m
+        [36m</h2>[39m
+        [36m<p>[39m
+          [0mEs gibt keine Lichtzone für erwachsene Pflanzen.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"naechste-handlung"[39m
+        [36m>[39m
+          [0mLege unter „Licht“ mindestens zwei Lichtzonen an.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"leise"[39m
+        [36m>[39m
+          [0mStecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"bestand-titel"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"bestand-titel"[39m
+        [36m>[39m
+          [0mBestand[0m
+        [36m</h1>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"karten-raster"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"exemplar-karte"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"karte-foto platzhalter"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mNoch kein Foto[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<h2>[39m
+              [0mAbleger[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mArt: [0m
+              [0mBogenhanf[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mLichtzone: [0m
+              [0mLampe 1[0m
+              [0m · Status: [0m
+              [0mSteckling[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0munbekannt[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mnoch keine Messung[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mkeine offene Behandlung[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"aktionen"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Archivieren: Ableger"[39m
+                [33mclass[39m=[32m"sekundaer"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mArchivieren[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"exemplar-karte"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"karte-foto platzhalter"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mNoch kein Foto[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<h2>[39m
+              [0mAlte Pflanze[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mArt: [0m
+              [0mBogenhanf[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mLichtzone: [0m
+              [0munbekannt[0m
+              [0m · Status: [0m
+              [0mPflanze[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0munbekannt[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mnoch keine Messung[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mkeine offene Behandlung[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"aktionen"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Archivieren: Alte Pflanze"[39m
+                [33mclass[39m=[32m"sekundaer"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mArchivieren[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"aktionen"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primaer"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mWeiteres Exemplar: Art wählen[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"licht bestand"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"verteilung-titel"[39m
+        [33mclass[39m=[32m"verteilung"[39m
+      [36m>[39m
+        [36m<h2[39m
+          [33mid[39m=[32m"verteilung-titel"[39m
+        [36m>[39m
+          [0mVerteilung auf die Lichtzonen[0m
+        [36m</h2>[39m
+        [36m<p>[39m
+          [0mEs gibt keine Lichtzone für erwachsene Pflanzen.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"naechste-handlung"[39m
+        [36m>[39m
+          [0mLege unter „Licht“ mindestens zwei Lichtzonen an.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"leise"[39m
+        [36m>[39m
+          [0mStecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.[0m
+        [36m</p>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"bestand-titel"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"bestand-titel"[39m
+        [36m>[39m
+          [0mBestand[0m
+        [36m</h1>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"karten-raster"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"exemplar-karte"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"karte-foto platzhalter"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mNoch kein Foto[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<h2>[39m
+              [0mAbleger[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mArt: [0m
+              [0mBogenhanf[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mLichtzone: [0m
+              [0mLampe 1[0m
+              [0m · Status: [0m
+              [0mSteckling[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0munbekannt[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mnoch keine Messung[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mkeine offene Behandlung[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"aktionen"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Archivieren: Ableger"[39m
+                [33mclass[39m=[32m"sekundaer"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mArchivieren[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"exemplar-karte"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"karte-foto platzhalter"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mNoch kein Foto[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<h2>[39m
+              [0mAlte Pflanze[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mArt: [0m
+              [0mBogenhanf[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mLichtzone: [0m
+              [0munbekannt[0m
+              [0m · Status: [0m
+              [0mPflanze[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0munbekannt[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mnoch keine Messung[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mkeine offene Behandlung[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"aktionen"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Archivieren: Alte Pflanze"[39m
+                [33mclass[39m=[32m"sekundaer"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mArchivieren[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"aktionen"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primaer"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mWeiteres Exemplar: Art wählen[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/bestand/steckling.test.tsx:157:40
+    155|     });
+    156|     render(seite());
+    157|     await userEvent.click(await screen.findByRole("button", { name: "E…
+       |                                        ^
+    158|     expect((await screen.findByRole("alert")).textContent).toContain("…
+    159|     expect(screen.getByRole("button", { name: "Eingetopft: Ableger" })…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 1 passed (8)
+   Start at  22:00:20
+   Duration  6.21s (tests 83%, environment 9%, transform 4%, import 3%)
+

@@ -78,8 +78,11 @@ export function SpecimenCardView(props: {
   onMeasure?: ((e: { id: string; name: string }) => void) | undefined;
   /** Opens the archiving (US-BES-07). */
   onArchive?: ((e: { id: string; name: string }) => void) | undefined;
+  /** Repots a cutting (US-BES-04); only cuttings get the button. */
+  onRepot?: ((e: { id: string; name: string }) => void) | undefined;
 }) {
-  const { card, onMeasure, onArchive } = props;
+  const { card, onMeasure, onArchive, onRepot } = props;
+  const repot = card.status === "cutting" ? onRepot : undefined;
   return (
     <li className="specimen-card">
       <Photo card={card} />
@@ -91,7 +94,7 @@ export function SpecimenCardView(props: {
       <p className="quiet">Standort: {card.location ?? UNKNOWN}</p>
       <Measurement card={card} />
       <Treatment card={card} />
-      {(onMeasure || onArchive) && (
+      {(onMeasure || onArchive || repot) && (
         <div className="actions">
           {onMeasure && (
             <button
@@ -101,6 +104,16 @@ export function SpecimenCardView(props: {
               onClick={() => onMeasure(card)}
             >
               Messen
+            </button>
+          )}
+          {repot && (
+            <button
+              type="button"
+              className="secondary"
+              aria-label={`Eingetopft: ${card.name}`}
+              onClick={() => repot(card)}
+            >
+              Eingetopft
             </button>
           )}
           {onArchive && (

@@ -87,7 +87,7 @@ export class InMemorySpecimens implements SpecimenStore {
     const row: SpecimenRow = {
       ...w,
       id: `00000000-0000-4000-8000-${String(this.rows.length + 1).padStart(12, "0")}`,
-      status: "plant",
+      status: w.status ?? "plant",
       archivedAt: null,
       archivedReason: null,
     };
@@ -123,6 +123,13 @@ export class InMemorySpecimens implements SpecimenStore {
     return r as SpecimenRow;
   }
 
+  async repot(userId: string, id: string) {
+    const z = await this.find(userId, id);
+    if (!z) return "not_found" as const;
+    if (z.status !== "cutting") return "not_a_cutting" as const;
+    return this.replace(userId, id, { status: "plant" }) as SpecimenRow;
+  }
+
   async restore(userId: string, id: string) {
     const z = await this.find(userId, id);
     if (!z) return "not_found" as const;
@@ -139,8 +146,17 @@ export class InMemorySpecimens implements SpecimenStore {
 /** Target-location stub: remembers the calls so tests can check what the port learns. */
 export class TargetLocationStub implements TargetLocationSource {
   readonly calls: { userId: string; speciesId: string; today: string }[] = [];
+  readonly growthCalls: { userId: string; speciesId: string }[] = [];
 
-  constructor(private readonly response: string | null) {}
+  constructor(
+    private readonly response: string | null,
+    private readonly growth: string | null = null,
+  ) {}
+
+  async growthLocation(userId: string, species: Species): Promise<string | null> {
+    this.growthCalls.push({ userId, speciesId: species.id });
+    return this.growth;
+  }
 
   async targetLocation(userId: string, species: Species, today: string): Promise<string | null> {
     this.calls.push({ userId, speciesId: species.id, today });

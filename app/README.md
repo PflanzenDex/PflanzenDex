@@ -84,6 +84,14 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Web:** tab "Bestand"; "Diese Art wählen" in the catalog opens the form for that species (the app wires `catalog` and `collection`, the modules do not know each other).
 - **Limits:** no editing, renaming, deleting or archiving (BES-03, BES-07); the marker rule from the third specimen on (ask for missing marks) belongs to US-BES-03; addition, zone override, provenance and sharing fields of DM-BES-02 are missing; no specimen hints yet (BES-08).
 
+## Create a cutting and pot it (US-BES-04)
+
+- **Data:** no migration. `status` already knew `cutting` (0007, renamed in 0012). Cutting light is **derived** (P-01): the lowest zone of the account (`cuttingLight` in `core/src/collection/cutting-light.ts`, the same rule as the count in `zoneDistribution`), so there is no stored zone override to delete when potting.
+- **Operations:** `specimen.create` takes an optional `status` (`plant` default, or `cutting`; anything else is 400 `input.invalid`). A cutting without a chosen location gets the location of the growth phase from the port `TargetLocationSource.growthLocation` (also in the dormancy phase), a plant the target location as before; without an answer the location stays "unknown" (P-08). `specimen.repot` (input `specimenId`) turns a cutting into a plant in one statement; a plant or archived specimen stays unchanged (`specimen.not_a_cutting` 409), a foreign or unknown one is 404 `specimen.not_found` (P-04).
+- **API:** `POST /specimens` accepts `status`; `POST /specimens/:id/repot` (`Idempotency-Key`, empty body). The card shows the lowest zone as light zone for a cutting; the phase list and the zone distribution already left cuttings out.
+- **Web:** checkbox "Das ist ein Steckling" in the form, button "Eingetopft" on cutting cards, message and error text after the action (P-09, P-10).
+- **Limits:** the feed event "Eingetopft" for shared specimens needs SOZ and sharing, which do not exist yet; there is no per-specimen zone field (BES-04 in DM-BES-02) because the zone of a cutting is derived. Without a `care` adapter for `growthLocation` the location of a cutting stays "unknown" unless the owner picks one.
+
 ## Care phases (US-PHA-01)
 
 - **Derived, never stored (P-01):** `carePhasesList` (`core/src/care`) reads the specimens and their species and computes the phase per request: rest phase when today (`localToday(uhr, timeZone)`, the user's time zone, NFR-08) lies in the species' `Von…Bis` (month-day, both ends inclusive, may span the new year), otherwise growth phase. Only specimens with status `plant` whose species has a dormancy period are listed (cuttings and archived ones are not).

@@ -19,6 +19,7 @@ export const ERROR_TEXTS = {
   "specimen.name_taken":
     "Ein Exemplar mit diesem Namen gibt es schon. Gib ein Kennzeichen an (zum Beispiel eine Farbe), damit du die Töpfe unterscheiden kannst.",
   "specimen.not_found": "Dieses Exemplar gibt es nicht.",
+  "specimen.not_a_cutting": "Dieses Exemplar ist kein Steckling und muss nicht eingetopft werden.",
   "specimen.already_archived": "Dieses Exemplar ist schon archiviert.",
   "specimen.not_archived": "Dieses Exemplar ist nicht archiviert.",
   "specimen.archived":

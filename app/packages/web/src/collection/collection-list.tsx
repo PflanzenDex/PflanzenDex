@@ -9,6 +9,8 @@ export function CollectionList(props: {
   onMeasure?: (e: { id: string; name: string }) => void;
   /** Opens the archiving of a specimen (US-BES-07). */
   onArchive?: (e: { id: string; name: string }) => void;
+  /** Repots a cutting (US-BES-04). */
+  onRepot?: (e: { id: string; name: string }) => void;
 }) {
   return (
     <section aria-labelledby="collection-title">
@@ -23,6 +25,7 @@ export function CollectionList(props: {
               card={k}
               onMeasure={props.onMeasure}
               onArchive={props.onArchive}
+              onRepot={props.onRepot}
             />
           ))}
         </ul>

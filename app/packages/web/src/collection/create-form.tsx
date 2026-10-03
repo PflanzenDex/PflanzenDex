@@ -11,6 +11,8 @@ import { nameConflict } from "./text";
 export interface CreateInput {
   marker?: string;
   locationId?: string;
+  /** Only "cutting" is sent; without a value the specimen is a plant (US-BES-04). */
+  status?: "cutting";
 }
 
 function ErrorBox({ error }: { error: ApiError }) {
@@ -56,6 +58,14 @@ function Fields(props: {
         Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen
         die Töpfe.
       </p>
+      <label className="check">
+        <input type="checkbox" name="cutting" />
+        Das ist ein Steckling
+      </label>
+      <p className="quiet">
+        Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der
+        Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.
+      </p>
       <label>
         Standort
         <select name="locationId" defaultValue="">
@@ -94,11 +104,13 @@ export function CreateForm(props: {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const locationId = String(f.get("locationId") ?? "");
+    const cutting = f.get("cutting") !== null;
     setRunning(true);
     setError(
       await props.onSend({
         ...(marker.trim() ? { marker: marker.trim() } : {}),
         ...(locationId ? { locationId } : {}),
+        ...(cutting ? { status: "cutting" as const } : {}),
       }),
     );
     setRunning(false);

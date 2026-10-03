@@ -46,10 +46,14 @@ export interface Specimen extends SpecimenRow {
   readonly treatments: readonly never[];
 }
 
+/** At creation only these two statuses are possible; without a value `plant` applies (US-BES-04). */
+export const CREATE_STATUS = ["plant", "cutting"] as const;
+export type CreateStatus = (typeof CREATE_STATUS)[number];
+
 export type SpecimenValues = Pick<
   SpecimenRow,
   "speciesId" | "name" | "marker" | "locationId" | "caughtAt"
->;
+> & { readonly status?: CreateStatus };
 
 /** Every call applies only to the account `userId` (P-04). The name is unique per account (case-insensitive). */
 export interface SpecimenStore {
@@ -70,6 +74,8 @@ export interface SpecimenStore {
     reason: string,
     date: string,
   ): Promise<SpecimenRow | "not_found" | "already_archived">;
+  /** A cutting becomes a plant (US-BES-04); any other specimen stays unchanged and reports `not_a_cutting`. */
+  repot(userId: string, id: string): Promise<SpecimenRow | "not_found" | "not_a_cutting">;
   /** Restores the status from before the archiving and deletes date and reason (US-BES-07). */
   restore(userId: string, id: string): Promise<SpecimenRow | "not_found" | "not_archived">;
 }
@@ -86,4 +92,9 @@ export interface SpeciesSource {
  */
 export interface TargetLocationSource {
   targetLocation(userId: string, species: Species, today: string): Promise<string | null>;
+  /**
+   * Location of the growth phase, even when the species is in dormancy today (US-BES-04: this is where a cutting
+   * stands), or `null` for "unknown".
+   */
+  growthLocation(userId: string, species: Species): Promise<string | null>;
 }
