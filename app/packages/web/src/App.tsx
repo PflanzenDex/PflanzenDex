@@ -1,67 +1,67 @@
 import { useState } from "react";
-import type { Art } from "@pflanzendex/core";
-import { BestandSeite } from "./bestand";
-import { Fehler, KontoAnsicht, Laedt, Willkommen, apiUrl, useSitzung } from "./konto";
-import { LichtSeite } from "./licht";
-import { ArtenSeite } from "./katalog";
-import { Navigation, type Ansicht } from "./navigation";
-import "./stil.css";
+import type { Species } from "@pflanzendex/core";
+import { CollectionPage } from "./collection";
+import { AppError, AccountView, Loading, Welcome, apiUrl, useSession } from "./account";
+import { LightPage } from "./light";
+import { SpeciesPage } from "./catalog";
+import { Navigation, type View } from "./navigation";
+import "./style.css";
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
 
 const version = (import.meta.env as Record<string, string | undefined>)["VITE_APP_VERSION"];
 
 export function App() {
-  const s = useSitzung();
-  const [ansicht, setAnsicht] = useState<Ansicht>("arten");
-  // Die gewählte Art wandert vom Katalog zum Bestand: die App verdrahtet beide Module (US-BES-02).
-  const [neueArt, setNeueArt] = useState<Art | null>(null);
-  const waehle = (art: Art) => {
-    setNeueArt(art);
-    setAnsicht("bestand");
+  const s = useSession();
+  const [view, setView] = useState<View>("species");
+  // The chosen species travels from the catalog to the collection: the app wires both modules (US-BES-02).
+  const [newSpecies, setNewSpecies] = useState<Species | null>(null);
+  const choose = (species: Species) => {
+    setNewSpecies(species);
+    setView("collection");
   };
-  const zumKatalog = () => {
-    setNeueArt(null);
-    setAnsicht("arten");
+  const toTheCatalog = () => {
+    setNewSpecies(null);
+    setView("species");
   };
-  const z = s.zustand;
+  const z = s.state;
   return (
-    <main className="seite">
-      {z.art === "laedt" && <Laedt />}
-      {z.art === "fehler" && <Fehler text={z.text} onNeuLaden={() => void s.neuLaden()} />}
-      {z.art === "abgemeldet" && (
-        <Willkommen
-          onRegistrieren={s.registrieren}
-          onAnmelden={s.anmelden}
-          {...(z.hinweis ? { hinweis: z.hinweis } : {})}
+    <main className="page">
+      {z.kind === "loading" && <Loading />}
+      {z.kind === "error" && <AppError text={z.text} onReload={() => void s.reload()} />}
+      {z.kind === "signedOut" && (
+        <Welcome
+          onRegister={s.register}
+          onSignIn={s.signIn}
+          {...(z.hint ? { hint: z.hint } : {})}
         />
       )}
-      {z.art === "angemeldet" && (
-        <div className="rahmen">
-          <Navigation aktiv={ansicht} onWechsel={setAnsicht} />
-          {ansicht === "konto" ? (
-            <KontoAnsicht
-              konto={z.konto}
-              onAbmelden={s.abmelden}
-              onUeberallAbmelden={() => void s.ueberallAbmelden()}
-              {...(z.fehler ? { fehler: z.fehler } : {})}
+      {z.kind === "signedIn" && (
+        <div className="frame">
+          <Navigation active={view} onSwitch={setView} />
+          {view === "account" ? (
+            <AccountView
+              account={z.account}
+              onSignOut={s.signOut}
+              onEverywhereSignOut={() => void s.everywhereSignOut()}
+              {...(z.error ? { error: z.error } : {})}
             />
-          ) : ansicht === "licht" ? (
-            <LichtSeite api={api} token={s.token} />
-          ) : ansicht === "bestand" ? (
-            <BestandSeite
+          ) : view === "light" ? (
+            <LightPage api={api} token={s.token} />
+          ) : view === "collection" ? (
+            <CollectionPage
               api={api}
               token={s.token}
-              neueArt={neueArt}
-              onArtWaehlen={zumKatalog}
-              onAbgeschlossen={() => setNeueArt(null)}
+              newSpecies={newSpecies}
+              onSpeciesChoose={toTheCatalog}
+              onCompleted={() => setNewSpecies(null)}
             />
           ) : (
-            <ArtenSeite api={api} token={s.token} onWaehlen={waehle} />
+            <SpeciesPage api={api} token={s.token} onChoose={choose} />
           )}
         </div>
       )}
-      <footer className="versionsfuss">Version {version || "unbekannt"}</footer>
+      <footer className="version-footer">Version {version || "unbekannt"}</footer>
     </main>
   );
 }

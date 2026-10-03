@@ -9,12 +9,12 @@ import { MODULE_CONFIG as REAL } from "../modules.config.mjs";
 
 // Module rules AB-7 to AB-14 (FR-QG-19): each rule has a clean case and a violating fixture.
 const CFG = {
-  KERN: "kern",
+  KERNEL: "kernel",
   MODULES: [
-    { name: "kern", epics: [], tables: ["konto"], dependsOn: [], ports: [] },
-    { name: "licht", epics: [], tables: ["zone"], dependsOn: ["kern"], ports: [] },
-    { name: "bestand", epics: [], tables: ["topf"], dependsOn: ["kern", "licht"], ports: [] },
-    { name: "pflege", epics: [], tables: ["gabe"], dependsOn: ["kern", "bestand"], ports: [] },
+    { name: "kernel", epics: [], tables: ["account"], dependsOn: [], ports: [] },
+    { name: "light", epics: [], tables: ["zone"], dependsOn: ["kernel"], ports: [] },
+    { name: "collection", epics: [], tables: ["pot"], dependsOn: ["kernel", "light"], ports: [] },
+    { name: "care", epics: [], tables: ["gabe"], dependsOn: ["kernel", "collection"], ports: [] },
   ],
   LEGACY_MIGRATIONS: {},
   UNMODULED_FOLDERS: {},
@@ -33,11 +33,11 @@ function project(files) {
 }
 const idx = (n) => `packages/core/src/${n}/index.ts`;
 const clean = {
-  [idx("kern")]: "export const k = 1;\n",
-  [idx("licht")]: 'import { k } from "../kern/index.ts";\nexport const l = k;\n',
-  [idx("bestand")]: 'import { l } from "../licht";\nexport const b = l;\n',
-  [idx("pflege")]: 'import { b } from "../bestand/index.ts";\nexport const p = b;\n',
-  "packages/core/src/index.ts": 'export * from "./pflege";\n',
+  [idx("kernel")]: "export const k = 1;\n",
+  [idx("light")]: 'import { k } from "../kernel/index.ts";\nexport const l = k;\n',
+  [idx("collection")]: 'import { l } from "../light";\nexport const b = l;\n',
+  [idx("care")]: 'import { b } from "../collection/index.ts";\nexport const p = b;\n',
+  "packages/core/src/index.ts": 'export * from "./care";\n',
 };
 const run = (files, c = CFG) => checkProject(project({ ...clean, ...files }), c);
 
@@ -62,45 +62,45 @@ describe("module boundaries (FR-QG-19)", () => {
   describe("AB-7 public interface only", () => {
     it("an import of an internal file of another module fails with the edge", () => {
       const v = run({
-        "packages/core/src/pflege/p.ts":
-          'import { x } from "../bestand/intern.ts";\nexport const y = x;\n',
-        "packages/core/src/bestand/intern.ts": "export const x = 1;\n",
+        "packages/core/src/care/p.ts":
+          'import { x } from "../collection/internal.ts";\nexport const y = x;\n',
+        "packages/core/src/collection/internal.ts": "export const x = 1;\n",
       });
       assert.equal(v.length, 1);
-      assert.match(v[0], /^AB-7 packages\/core\/src\/pflege\/p\.ts:1 pflege -> bestand: /);
+      assert.match(v[0], /^AB-7 packages\/core\/src\/care\/p\.ts:1 care -> collection: /);
     });
     it("a root file (barrel, composition root) may not reach into a module either", () => {
-      const v = run({ "packages/core/src/app.ts": 'export * from "./licht/intern.ts";\n' });
-      assert.match(v.join("\n"), /^AB-7 packages\/core\/src\/app\.ts:1 root -> licht: /m);
+      const v = run({ "packages/core/src/app.ts": 'export * from "./light/internal.ts";\n' });
+      assert.match(v.join("\n"), /^AB-7 packages\/core\/src\/app\.ts:1 root -> light: /m);
     });
     it("a module folder without index.ts fails", () => {
-      const files = Object.fromEntries(Object.entries(clean).filter(([k]) => k !== idx("licht")));
+      const files = Object.fromEntries(Object.entries(clean).filter(([k]) => k !== idx("light")));
       const v = checkProject(
-        project({ ...files, "packages/core/src/licht/z.ts": "export const z = 1;\n" }),
+        project({ ...files, "packages/core/src/light/z.ts": "export const z = 1;\n" }),
         CFG,
       );
       assert.ok(
-        v.some((x) => /^AB-7 packages\/core\/src\/licht\/index\.ts /.test(x)),
+        v.some((x) => /^AB-7 packages\/core\/src\/light\/index\.ts /.test(x)),
         v.join("\n"),
       );
     });
     it("test files and testhilfe.ts are exempt from AB-7, but not from the matrix", () => {
       const files = {
-        "packages/core/src/bestand/intern.ts": "export const x = 1;\n",
-        "packages/core/src/bestand/testhilfe.ts": "export const t = 1;\n",
-        "packages/core/src/pflege/p.test.ts":
-          'import { x } from "../bestand/intern.ts";\nexport const y = x;\n',
-        "packages/core/src/pflege/q.test.ts":
-          'import { t } from "../bestand/testhilfe";\nexport const y = t;\n',
+        "packages/core/src/collection/internal.ts": "export const x = 1;\n",
+        "packages/core/src/collection/test-helpers.ts": "export const t = 1;\n",
+        "packages/core/src/care/p.test.ts":
+          'import { x } from "../collection/internal.ts";\nexport const y = x;\n',
+        "packages/core/src/care/q.test.ts":
+          'import { t } from "../collection/test-helpers";\nexport const y = t;\n',
       };
       assert.deepEqual(run(files), []);
       const v = run({
         ...files,
-        "packages/core/src/licht/l.test.ts":
-          'import { x } from "../bestand/intern.ts";\nexport const y = x;\n',
+        "packages/core/src/light/l.test.ts":
+          'import { x } from "../collection/internal.ts";\nexport const y = x;\n',
       });
       assert.ok(
-        v.some((x) => /^AB-12 .*l\.test\.ts:1 licht -> bestand/.test(x)),
+        v.some((x) => /^AB-12 .*l\.test\.ts:1 light -> collection/.test(x)),
         v.join("\n"),
       );
       assert.ok(!v.some((x) => x.startsWith("AB-7")));
@@ -108,7 +108,7 @@ describe("module boundaries (FR-QG-19)", () => {
     it("imports inside one module are free", () => {
       assert.deepEqual(
         run({
-          "packages/core/src/licht/z.ts": 'import { l } from "./index.ts";\nexport const z = l;\n',
+          "packages/core/src/light/z.ts": 'import { l } from "./index.ts";\nexport const z = l;\n',
         }),
         [],
       );
@@ -118,23 +118,23 @@ describe("module boundaries (FR-QG-19)", () => {
   describe("AB-8 dependency matrix and cycles", () => {
     it("an edge outside the matrix fails with rule, file, line and edge", () => {
       const v = run({
-        "packages/core/src/licht/x.ts":
-          '\nimport { p } from "../pflege/index.ts";\nexport const q = p;\n',
+        "packages/core/src/light/x.ts":
+          '\nimport { p } from "../care/index.ts";\nexport const q = p;\n',
       });
-      assert.match(v[0], /^AB-8 packages\/core\/src\/licht\/x\.ts:2 licht -> pflege: /);
+      assert.match(v[0], /^AB-8 packages\/core\/src\/light\/x\.ts:2 light -> care: /);
     });
     it("a cycle in the matrix fails", () => {
       const c = cfg({
         MODULES: [
           { ...CFG.MODULES[0] },
-          { ...CFG.MODULES[1], dependsOn: ["kern", "bestand"] },
-          { ...CFG.MODULES[2], dependsOn: ["kern", "licht"] },
+          { ...CFG.MODULES[1], dependsOn: ["kernel", "collection"] },
+          { ...CFG.MODULES[2], dependsOn: ["kernel", "light"] },
           CFG.MODULES[3],
         ],
       });
       const v = checkProject(project(clean), c);
       assert.ok(
-        v.some((x) => /^AB-8 modules\.config\.mjs cycle (licht|bestand) -> /.test(x)),
+        v.some((x) => /^AB-8 modules\.config\.mjs cycle (light|collection) -> /.test(x)),
         v.join("\n"),
       );
     });
@@ -142,16 +142,16 @@ describe("module boundaries (FR-QG-19)", () => {
       const c = cfg({
         MODULES: [
           CFG.MODULES[0],
-          { ...CFG.MODULES[1], dependsOn: ["kern", "pflege"] },
+          { ...CFG.MODULES[1], dependsOn: ["kernel", "care"] },
           CFG.MODULES[2],
-          { ...CFG.MODULES[3], dependsOn: ["kern", "bestand", "licht"] },
+          { ...CFG.MODULES[3], dependsOn: ["kernel", "collection", "light"] },
         ],
       });
       const v = checkProject(
         project({
           ...clean,
-          "packages/core/src/licht/x.ts":
-            'import { p } from "../pflege/index.ts";\nexport const q = p;\n',
+          "packages/core/src/light/x.ts":
+            'import { p } from "../care/index.ts";\nexport const q = p;\n',
         }),
         c,
       );
@@ -164,7 +164,7 @@ describe("module boundaries (FR-QG-19)", () => {
       const c = cfg({
         MODULES: [
           CFG.MODULES[0],
-          { ...CFG.MODULES[1], dependsOn: ["kern", "licht", "gibtsnicht"] },
+          { ...CFG.MODULES[1], dependsOn: ["kernel", "light", "gibtsnicht"] },
         ],
       });
       const v = checkProject(project({}), c);
@@ -175,33 +175,33 @@ describe("module boundaries (FR-QG-19)", () => {
 
   describe("AB-9 SQL only on own tables", () => {
     const adapter = (sql) => ({
-      "packages/db/src/pflege/index.ts": "export {};\n",
-      "packages/db/src/pflege/gabe.ts": `\nexport const q = \`${sql}\`;\n`,
+      "packages/db/src/care/index.ts": "export {};\n",
+      "packages/db/src/care/gabe.ts": `\nexport const q = \`${sql}\`;\n`,
     });
     it("SQL on a table of another module fails with the edge", () => {
-      const v = run(adapter("select * from gabe join topf on true"));
+      const v = run(adapter("select * from gabe join pot on true"));
       assert.equal(v.length, 1);
       assert.match(
         v[0],
-        /^AB-9 packages\/db\/src\/pflege\/gabe\.ts:2 pflege -> bestand: .*table topf/,
+        /^AB-9 packages\/db\/src\/care\/gabe\.ts:2 care -> collection: .*table pot/,
       );
     });
     it("SQL on own tables and on the kernel is fine", () => {
-      assert.deepEqual(run(adapter("select * from gabe join konto on true")), []);
+      assert.deepEqual(run(adapter("select * from gabe join account on true")), []);
     });
   });
 
   describe("AB-11 the kernel imports no domain module", () => {
     it("kern importing a module fails", () => {
       const v = run({
-        "packages/core/src/kern/x.ts":
-          'import { l } from "../licht/index.ts";\nexport const q = l;\n',
+        "packages/core/src/kernel/x.ts":
+          'import { l } from "../light/index.ts";\nexport const q = l;\n',
       });
-      assert.match(v[0], /^AB-11 packages\/core\/src\/kern\/x\.ts:1 kern -> licht: /);
+      assert.match(v[0], /^AB-11 packages\/core\/src\/kernel\/x\.ts:1 kernel -> light: /);
     });
     it("a kernel with dependencies in the register fails", () => {
       const c = cfg({
-        MODULES: [{ ...CFG.MODULES[0], dependsOn: ["licht"] }, ...CFG.MODULES.slice(1)],
+        MODULES: [{ ...CFG.MODULES[0], dependsOn: ["light"] }, ...CFG.MODULES.slice(1)],
       });
       assert.ok(
         checkProject(project(clean), c).some((x) => /^AB-11 modules\.config\.mjs /.test(x)),
@@ -209,7 +209,7 @@ describe("module boundaries (FR-QG-19)", () => {
     });
     it("reports the number of kernel exports as a measure", () => {
       const dir = project({
-        [idx("kern")]:
+        [idx("kernel")]:
           "export const a = 1;\nexport { b, c } from './x';\nexport type T = string;\n",
       });
       assert.equal(kernelExports({ appDir: dir, cfg: CFG, h: { stripComments: (s) => s } }), 4);
@@ -219,35 +219,38 @@ describe("module boundaries (FR-QG-19)", () => {
   describe("AB-12 only the root couples upwards or imports everything", () => {
     it("an import against an allowed edge (upwards) fails and points to a port", () => {
       const v = run({
-        "packages/core/src/bestand/x.ts":
-          'import { p } from "../pflege/index.ts";\nexport const q = p;\n',
+        "packages/core/src/collection/x.ts":
+          'import { p } from "../care/index.ts";\nexport const q = p;\n',
       });
-      assert.match(v[0], /^AB-12 packages\/core\/src\/bestand\/x\.ts:1 bestand -> pflege: .*port/);
+      assert.match(
+        v[0],
+        /^AB-12 packages\/core\/src\/collection\/x\.ts:1 collection -> care: .*port/,
+      );
     });
     it("a module importing every other module fails, the root may", () => {
       const c = cfg({
         MODULES: CFG.MODULES.map((m) =>
-          m.name === "pflege" ? { ...m, dependsOn: ["kern", "bestand", "licht"] } : m,
+          m.name === "care" ? { ...m, dependsOn: ["kernel", "collection", "light"] } : m,
         ),
       });
       const v = checkProject(
         project({
           ...clean,
-          "packages/core/src/pflege/y.ts":
-            'import { l } from "../licht/index.ts";\nimport { k } from "../kern/index.ts";\nexport const z = [l, k];\n',
+          "packages/core/src/care/y.ts":
+            'import { l } from "../light/index.ts";\nimport { k } from "../kernel/index.ts";\nexport const z = [l, k];\n',
         }),
         c,
       );
       assert.ok(
-        v.some((x) => /^AB-12 .*pflege imports every other module/.test(x)),
+        v.some((x) => /^AB-12 .*care imports every other module/.test(x)),
         v.join("\n"),
       );
       assert.ok(
-        v.some((x) => /^AB-12 modules\.config\.mjs .*pflege may depend on every other/.test(x)),
+        v.some((x) => /^AB-12 modules\.config\.mjs .*care may depend on every other/.test(x)),
       );
       const root = {
         "packages/core/src/index.ts":
-          'export * from "./pflege";\nexport * from "./licht";\nexport * from "./kern";\nexport * from "./bestand";\n',
+          'export * from "./care";\nexport * from "./light";\nexport * from "./kernel";\nexport * from "./collection";\n',
       };
       assert.deepEqual(run(root), []);
     });
@@ -255,10 +258,10 @@ describe("module boundaries (FR-QG-19)", () => {
 
   describe("AB-13 register consistency", () => {
     it("a table with two owners fails", () => {
-      const c = cfg({ MODULES: [CFG.MODULES[0], { ...CFG.MODULES[1], tables: ["konto"] }] });
+      const c = cfg({ MODULES: [CFG.MODULES[0], { ...CFG.MODULES[1], tables: ["account"] }] });
       assert.ok(
         checkProject(project({}), c).some((x) =>
-          /^AB-13 modules\.config\.mjs table konto has two owners/.test(x),
+          /^AB-13 modules\.config\.mjs table account has two owners/.test(x),
         ),
       );
     });
@@ -284,20 +287,20 @@ describe("module boundaries (FR-QG-19)", () => {
     });
     it("a module folder in transition is not checked until the move", () => {
       const files = {
-        "packages/web/src/licht/a.ts": "export const a = 1;\n",
-        "packages/web/src/App.ts": 'import { a } from "./licht/a.ts";\nexport const b = a;\n',
+        "packages/web/src/light/a.ts": "export const a = 1;\n",
+        "packages/web/src/App.ts": 'import { a } from "./light/a.ts";\nexport const b = a;\n',
       };
       assert.ok(run(files).some((x) => /^AB-7 /.test(x)));
-      assert.deepEqual(run(files, cfg({ MODULE_FOLDERS_IN_TRANSITION: { "web/licht": "x" } })), []);
+      assert.deepEqual(run(files, cfg({ MODULE_FOLDERS_IN_TRANSITION: { "web/light": "x" } })), []);
     });
     it("a migration or a table naming no owner fails", () => {
       const v = run({
-        "packages/db/migrations/0005_licht_x.sql":
-          "-- modul: licht\ncreate table waise (id int);\n",
+        "packages/db/migrations/0005_light_x.sql":
+          "-- module: light\ncreate table waise (id int);\n",
       });
       assert.match(
         v[0],
-        /^AB-13 packages\/db\/migrations\/0005_licht_x\.sql:2 table waise belongs to no module/,
+        /^AB-13 packages\/db\/migrations\/0005_light_x\.sql:2 table waise belongs to no module/,
       );
     });
   });
@@ -308,53 +311,53 @@ describe("module boundaries (FR-QG-19)", () => {
       assert.deepEqual(
         run(
           mig(
-            "0005_licht_zone.sql",
-            "-- modul: licht\ncreate table zone (id int);\nalter table konto add column x int;\n",
+            "0005_light_zone.sql",
+            "-- module: light\ncreate table zone (id int);\nalter table account add column x int;\n",
           ),
         ),
         [],
       );
     });
     it("a file name without a registered module fails", () => {
-      const v = run(mig("0005_irgendwas.sql", "-- modul: licht\nselect 1;\n"));
+      const v = run(mig("0005_irgendwas.sql", "-- module: light\nselect 1;\n"));
       assert.match(v[0], /^AB-14 packages\/db\/migrations\/0005_irgendwas\.sql:1 /);
     });
     it("a missing or different first line fails", () => {
       assert.match(
-        run(mig("0005_licht_zone.sql", "create table zone (id int);\n"))[0],
-        /^AB-14 .*:1 first line must be "-- modul: licht"/,
+        run(mig("0005_light_zone.sql", "create table zone (id int);\n"))[0],
+        /^AB-14 .*:1 first line must be "-- module: light"/,
       );
       assert.match(
-        run(mig("0005_licht_zone.sql", "-- modul: bestand\nselect 1;\n"))[0],
-        /^AB-14 .*found bestand/,
+        run(mig("0005_light_zone.sql", "-- module: collection\nselect 1;\n"))[0],
+        /^AB-14 .*found collection/,
       );
     });
     it("changing a table of another module fails with the edge and the line", () => {
       const v = run(
-        mig("0005_licht_zone.sql", "-- modul: licht\n\ncreate unique index i on topf (id);\n"),
+        mig("0005_light_zone.sql", "-- module: light\n\ncreate unique index i on pot (id);\n"),
       );
       assert.match(
         v[0],
-        /^AB-14 packages\/db\/migrations\/0005_licht_zone\.sql:3 licht -> bestand: .*table topf/,
+        /^AB-14 packages\/db\/migrations\/0005_light_zone\.sql:3 light -> collection: .*table pot/,
       );
     });
     it("comments do not count, policies and mandantenschutz() do", () => {
       assert.deepEqual(
         run(
           mig(
-            "0005_licht_zone.sql",
-            "-- modul: licht\n-- alter table topf add x int;\nselect 1;\n",
+            "0005_light_zone.sql",
+            "-- module: light\n-- alter table pot add x int;\nselect 1;\n",
           ),
         ),
         [],
       );
       const v = run(
-        mig("0005_licht_zone.sql", "-- modul: licht\nselect mandantenschutz('topf');\n"),
+        mig("0005_light_zone.sql", "-- module: light\nselect tenant_protection('pot');\n"),
       );
-      assert.match(v[0], /^AB-14 .*:2 licht -> bestand/);
+      assert.match(v[0], /^AB-14 .*:2 light -> collection/);
     });
     it("legacy files are assigned by the register, a renamed one is an error", () => {
-      const c = cfg({ LEGACY_MIGRATIONS: { "0001_alt.sql": ["kern", "licht"] } });
+      const c = cfg({ LEGACY_MIGRATIONS: { "0001_alt.sql": ["kernel", "light"] } });
       assert.deepEqual(
         checkProject(
           project({ ...clean, ...mig("0001_alt.sql", "create table zone (id int);\n") }),

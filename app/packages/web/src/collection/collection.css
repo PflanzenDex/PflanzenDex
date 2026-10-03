@@ -1,0 +1,15 @@
+/* Collection and create specimen (US-BES-02): mobile first; builds on style.css and light.css. */
+.collection h1 {
+  margin: 0 0 8px;
+}
+.name-preview {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--rand);
+  border-radius: 10px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.collection .hint {
+  margin-bottom: 16px;
+}

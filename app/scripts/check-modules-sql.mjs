@@ -1,7 +1,7 @@
 // Module rules for SQL and migrations (FR-QG-19, ADR 0003), called from check-boundaries.mjs.
 //   AB-9   SQL in the adapters of a module (db/src/<module>/) touches only its own tables and those of `kern`
 //   AB-13  a migration creates or changes a table that no module owns
-//   AB-14  a migration names its module (file name `NNNN_<module>_<name>.sql` and first line `-- modul: <module>`)
+//   AB-14  a migration names its module (file name `NNNN_<module>_<name>.sql` and first line `-- module: <module>`)
 //          and touches only the tables of that module and of `kern`; applied files are never renamed (LEGACY_MIGRATIONS)
 import fs from "node:fs";
 import path from "node:path";
@@ -9,6 +9,8 @@ import { locate, moduleOf } from "./check-modules.mjs";
 
 const lineOf = (text, index) => text.slice(0, index).split("\n").length;
 const tableOwners = (cfg) => new Map(cfg.MODULES.flatMap((m) => m.tables.map((t) => [t, m.name])));
+// Applied migrations 0001 to 0007 use the table names from before the English rename (cfg.LEGACY_TABLE_NAMES).
+const currentName = (cfg, table) => cfg.LEGACY_TABLE_NAMES?.[table] ?? table;
 
 const SQL_FROM = /\b(?:from|join|into|update)\s+"?([a-z_][a-z0-9_]*)/gi;
 
@@ -20,7 +22,7 @@ export function checkAdapterSql({ appDir, add, cfg, h }) {
     const src = h.stripComments(fs.readFileSync(file, "utf8"));
     for (const m of src.matchAll(SQL_FROM)) {
       const owner = owners.get(m[1].toLowerCase());
-      if (owner && owner !== own && owner !== cfg.KERN)
+      if (owner && owner !== own && owner !== cfg.KERNEL)
         add(
           "AB-9",
           file,
@@ -37,7 +39,7 @@ const TOUCHES = [
   /\btruncate (?:table )?([a-z_]\w*)/g,
   /\bcreate index .*? on ([a-z_]\w*)/g,
   /\bcreate (?:policy|trigger) .*? on ([a-z_]\w*)/g,
-  /\bmandantenschutz\( ?'([a-z_]\w*)'/g,
+  /\b(?:mandantenschutz|tenant_protection)\( ?'([a-z_]\w*)'/g,
 ];
 const NOISE = new Set(["if", "not", "exists", "only", "unlogged", "unique"]);
 const normalize = (stmt) =>
@@ -61,9 +63,9 @@ function statements(text) {
 }
 
 function touchProblem({ add, cfg }, { file, declared, line }, table) {
-  const owner = tableOwners(cfg).get(table);
+  const owner = tableOwners(cfg).get(currentName(cfg, table));
   if (!owner) return add("AB-13", file, line, `table ${table} belongs to no module (register it)`);
-  if (owner !== cfg.KERN && !declared.includes(owner))
+  if (owner !== cfg.KERNEL && !declared.includes(owner))
     add(
       "AB-14",
       file,
@@ -92,13 +94,13 @@ function checkMigration(ctx, file) {
       "file name must be NNNN_<module>_<name>.sql with a registered module",
     );
   if (!(name in cfg.LEGACY_MIGRATIONS)) {
-    const first = text.split("\n")[0].match(/^--\s*modul:\s*(\S+)\s*$/)?.[1];
+    const first = text.split("\n")[0].match(/^--\s*module:\s*(\S+)\s*$/)?.[1];
     if (first !== declared[0])
       add(
         "AB-14",
         file,
         1,
-        `first line must be "-- modul: ${declared[0]}" (found ${first ?? "none"})`,
+        `first line must be "-- module: ${declared[0]}" (found ${first ?? "none"})`,
       );
   }
   for (const stmt of statements(text))
@@ -126,7 +128,7 @@ const EXPORT_STARS = /\bexport \*/g;
 export function kernelExports({ appDir, cfg, h }) {
   let count = 0;
   for (const pkg of ["core", "db", "api", "web"]) {
-    const file = path.join(appDir, "packages", pkg, "src", cfg.KERN, "index.ts");
+    const file = path.join(appDir, "packages", pkg, "src", cfg.KERNEL, "index.ts");
     if (!fs.existsSync(file)) continue;
     const src = h.stripComments(fs.readFileSync(file, "utf8")).replace(/\s+/g, " ");
     for (const m of src.matchAll(EXPORT_LISTS))

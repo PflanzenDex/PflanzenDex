@@ -101,7 +101,7 @@ describe("architecture boundaries (US-QG-03)", () => {
   });
   it("ST-c: directory with code but without index.ts", () => {
     const v = checkProject(
-      project({ ...clean, "packages/core/src/plan/regel.ts": "export const r = 1;\n" }),
+      project({ ...clean, "packages/core/src/plan/rule.ts": "export const r = 1;\n" }),
     );
     assert.deepEqual(v, [
       "ST-c packages/core/src/plan/index.ts missing: every directory with code needs an index.ts as its public interface",
@@ -112,7 +112,7 @@ describe("architecture boundaries (US-QG-03)", () => {
       checkProject(
         project({
           ...clean,
-          "packages/core/src/plan/regel.test.ts":
+          "packages/core/src/plan/rule.test.ts":
             'import { it } from "vitest";\nit("x", () => {});\n',
         }),
       ),
@@ -189,7 +189,7 @@ describe("architecture boundaries (US-QG-03)", () => {
       checkProject(
         project({
           ...clean,
-          "packages/core/src/plan/regel.ts": "// STRUCTURE_IGNORE: legacy\nexport const r = 1;\n",
+          "packages/core/src/plan/rule.ts": "// STRUCTURE_IGNORE: legacy\nexport const r = 1;\n",
         }),
       ),
       [],

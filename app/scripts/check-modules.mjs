@@ -74,11 +74,11 @@ function checkRegister({ appDir, add, cfg }) {
     for (const d of m.dependsOn)
       if (!names.has(d)) add("AB-13", file, 0, `${m.name} depends on unknown module ${d}`);
       else if (d === m.name) add("AB-8", file, 0, `${m.name} depends on itself`);
-  const kern = cfg.MODULES.find((m) => m.name === cfg.KERN);
-  if (kern?.dependsOn.length)
-    add("AB-11", file, 0, `${cfg.KERN} may depend on no module (${kern.dependsOn.join(", ")})`);
+  const kernel = cfg.MODULES.find((m) => m.name === cfg.KERNEL);
+  if (kernel?.dependsOn.length)
+    add("AB-11", file, 0, `${cfg.KERNEL} may depend on no module (${kernel.dependsOn.join(", ")})`);
   for (const m of cfg.MODULES)
-    if (cfg.MODULES.length > 2 && m.name !== cfg.KERN && m.dependsOn.length >= names.size - 1)
+    if (cfg.MODULES.length > 2 && m.name !== cfg.KERNEL && m.dependsOn.length >= names.size - 1)
       add("AB-12", file, 0, `${m.name} may depend on every other module: only the root may`);
 }
 
@@ -118,13 +118,13 @@ function checkFolders({ appDir, add, cfg, h }) {
 const isTestFile = (f) => /\.test\.[a-z]+$/.test(f);
 const isPublic = (rest) =>
   rest === "" || (!rest.includes("/") && path.parse(rest).name === "index");
-const isTestHelper = (rest) => path.parse(rest).name === "testhilfe";
+const isTestHelper = (rest) => path.parse(rest).name === "test-helpers";
 
 function importProblem(cfg, from, to) {
   const edge = `${from ?? "root"} -> ${to}`;
   if (from === to) return null;
-  if (from === cfg.KERN)
-    return ["AB-11", `${edge}: ${cfg.KERN} imports no domain module (fachfreier Kern)`];
+  if (from === cfg.KERNEL)
+    return ["AB-11", `${edge}: ${cfg.KERNEL} imports no domain module (fachfreier Kern)`];
   if (from === null || depsOf(cfg, from).includes(to)) return null;
   if (depsOf(cfg, to).includes(from))
     return ["AB-12", `${edge}: coupling upwards; define a port in ${from} and wire it in the root`];
@@ -173,7 +173,7 @@ function checkCycles({ appDir, add, cfg }, edges) {
 
 function checkAllModules({ add, cfg }, edges) {
   for (const m of cfg.MODULES) {
-    if (m.name === cfg.KERN || cfg.MODULES.length < 3) continue;
+    if (m.name === cfg.KERNEL || cfg.MODULES.length < 3) continue;
     const used = new Set([...edges.keys()].filter((k) => k.startsWith(`${m.name} `)));
     if (used.size >= cfg.MODULES.length - 1) {
       const where = edges.get([...used][0]);

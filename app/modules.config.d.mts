@@ -10,6 +10,6 @@ export type ModuleConfig = {
   LEGACY_MIGRATIONS: Record<string, string[]>;
   UNMODULED_FOLDERS: Record<string, string>;
   MODULE_FOLDERS_IN_TRANSITION: Record<string, string>;
-  KERN: string;
+  KERNEL: string;
 };
 export const MODULE_CONFIG: ModuleConfig;

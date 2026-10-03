@@ -1,30 +1,30 @@
 import type { Pool } from "pg";
-import { FIXTURES_BESTAND } from "./bestand/index.ts";
-import { FIXTURES_KATALOG } from "./katalog/index.ts";
-import { FIXTURES_KERN, mitKonto, type Fixtures } from "./kern/index.ts";
-import { FIXTURES_KONTO } from "./konto/index.ts";
-import { FIXTURES_LICHT } from "./licht/index.ts";
+import { FIXTURES_COLLECTION } from "./collection/index.ts";
+import { FIXTURES_CATALOG } from "./catalog/index.ts";
+import { FIXTURES_KERNEL, withAccount, type Fixtures } from "./kernel/index.ts";
+import { FIXTURES_ACCOUNT } from "./account/index.ts";
+import { FIXTURES_LIGHT } from "./light/index.ts";
 
-// Je Tabelle mit Konto-Kennung ein Beispiel für die übrigen Spalten (ohne Kennung, die setzt der Test).
-// Die Einträge liegen im jeweiligen Modul; hier werden sie gesammelt. Eine neue Tabelle ohne Eintrag
-// lässt den generischen Mandantentest scheitern (FR-QG-07).
+// One example per table with an account id for the remaining columns (without the id, the test sets it).
+// The entries live in their respective module; they are collected here. A new table without an entry
+// makes the generic tenant test fail (FR-QG-07).
 export const FIXTURES: Fixtures = {
-  ...FIXTURES_KERN,
-  ...FIXTURES_KONTO,
-  ...FIXTURES_KATALOG,
-  ...FIXTURES_LICHT,
-  ...FIXTURES_BESTAND,
+  ...FIXTURES_KERNEL,
+  ...FIXTURES_ACCOUNT,
+  ...FIXTURES_CATALOG,
+  ...FIXTURES_LIGHT,
+  ...FIXTURES_COLLECTION,
 };
 
-// Testhilfen für Tabellen eines anderen Moduls (AB-9): Tests eines Moduls schreiben kein SQL auf fremde Tabellen,
-// sie rufen diese Hilfen hier auf. Die Rollenvergabe ist im Betrieb Sache des Betreibers (TE-08), nicht der Anwendung.
-export const vergibRolle = (pool: Pool, konto: string, rolle: "betreiber" | "pruefer") =>
-  pool.query("insert into konto_rolle (konto, rolle) values ($1, $2)", [konto, rolle]);
+// Test helpers for tables of another module (AB-9): tests of one module write no SQL on foreign tables,
+// they call these helpers. Role assignment is the operator's job in operation (TE-08), not the application's.
+export const assignRole = (pool: Pool, account: string, role: "operator" | "reviewer") =>
+  pool.query("insert into account_role (account, role) values ($1, $2)", [account, role]);
 
-/** Die Anwendungsrolle darf die Rollentabelle weder lesen noch beschreiben (beides muss mit `permission denied` scheitern). */
-export const lesenDerRollentabelle = (pool: Pool, konto: string) =>
-  mitKonto(pool, konto, (c) => c.query("select * from konto_rolle"));
-export const schreibenInDieRollentabelle = (pool: Pool, konto: string) =>
-  mitKonto(pool, konto, (c) =>
-    c.query("insert into konto_rolle (konto, rolle) values ($1, 'betreiber')", [konto]),
+/** The application role may neither read nor write the role table (both must fail with `permission denied`). */
+export const readRoleTable = (pool: Pool, account: string) =>
+  withAccount(pool, account, (c) => c.query("select * from account_role"));
+export const writeInRoleTable = (pool: Pool, account: string) =>
+  withAccount(pool, account, (c) =>
+    c.query("insert into account_role (account, role) values ($1, 'operator')", [account]),
   );

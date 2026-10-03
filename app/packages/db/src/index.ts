@@ -1,6 +1,6 @@
-// Öffentliche Schnittstelle von `db`: sammelt die Schnittstellen der Module (ADR 0003).
-export * from "./kern/index.ts";
-export * from "./konto/index.ts";
-export * from "./katalog/index.ts";
-export * from "./licht/index.ts";
-export * from "./bestand/index.ts";
+// Public interface of `db`: collects the interfaces of the modules (ADR 0003).
+export * from "./kernel/index.ts";
+export * from "./account/index.ts";
+export * from "./catalog/index.ts";
+export * from "./light/index.ts";
+export * from "./collection/index.ts";

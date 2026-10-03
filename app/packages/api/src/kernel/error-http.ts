@@ -1,0 +1,35 @@
+import type { AppError, ErrorCode } from "@pflanzendex/core";
+
+type Status = 400 | 401 | 403 | 404 | 409 | 500;
+
+// Stable mapping of error code -> HTTP status (FR-QG-11). Unknown codes are a server error, never a success.
+const STATUS: Partial<Record<ErrorCode, Status>> = {
+  "input.invalid": 400,
+  "idempotency.key_missing": 400,
+  "access.not_signed_in": 401,
+  "access.denied": 403,
+  "light_zone.not_found": 404,
+  "location.not_found": 404,
+  "species.not_found": 404,
+  "specimen.not_found": 404,
+  "species.duplicate": 409,
+  "specimen.name_taken": 409,
+  "light_zone.name_taken": 409,
+  "location.name_taken": 409,
+  "light_zone.in_use": 409,
+  "light_zone.not_empty": 409,
+  "idempotency.key_conflict": 409,
+  "idempotency.in_progress": 409,
+};
+
+export const statusFor = (f: AppError): Status => STATUS[f.code] ?? 500;
+
+/** Response body: code for programs, text for humans, `data` e.g. with the users of a zone. Never the cause. */
+export const errorBody = (f: AppError) => ({
+  error: {
+    code: f.code,
+    text: f.text,
+    ...(f.details ? { details: f.details } : {}),
+    ...(f.data !== undefined ? { data: f.data } : {}),
+  },
+});

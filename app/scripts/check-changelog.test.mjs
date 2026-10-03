@@ -11,7 +11,7 @@ test("QG-U3: the commit type is read from the title", () => {
 test("QG-U3: feat without an entry fails and names the file and the marker", () => {
   const r = checkChangelog({ title: "feat(pha): add phase", changedFiles: ["app/x.ts"] });
   assert.equal(r.ok, false);
-  assert.match(r.message, /neuigkeiten\.de\.json/);
+  assert.match(r.message, /news\.de\.json/);
   assert.match(r.message, /\[skip-changelog\]/);
 });
 
