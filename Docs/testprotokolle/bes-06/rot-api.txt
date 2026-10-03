@@ -1,0 +1,40 @@
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/bestand/karten.test.ts > US-BES-06 Karten: Mandant > ein Konto sieht nur Karten der eigenen Exemplare; die Ports erfahren nie fremde Kennungen
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ src/bestand/karten.test.ts:191:33
+    189|     gefragt.length = 0;
+    190|     const annas = await karten(subA);
+    191|     expect(annas.body["karten"].map((k: { id: string }) => k.id)).not.…
+       |                                 ^
+    192|     expect(JSON.stringify(annas.body)).not.toContain(`Opuntia ${lauf}`…
+    193|     const fuerBen = await karten(subB);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  src/bestand/karten.test.ts > US-BES-06 Karten: Mandant > ein Konto ohne Exemplare bekommt eine leere Liste
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ src/bestand/karten.test.ts:199:67
+    197|
+    198|   it("ein Konto ohne Exemplare bekommt eine leere Liste", async () => {
+    199|     expect((await karten(`bes6-${randomUUID()}`)).body["karten"]).toEq…
+       |                                                                   ^
+    200|   });
+    201| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 1 passed (9)
+   Start at  15:23:32
+   Duration  1.79s (tests 59%, transform 32%, import 9%)
+

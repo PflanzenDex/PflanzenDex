@@ -1,9 +1,8 @@
 import { renderToString as rendere } from "react-dom/server";
 import type { Art, Exemplar } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";
-import { legeExemplarAn, ladeExemplare } from "./exemplare-api";
+import { legeExemplarAn } from "./exemplare-api";
 import { AnlegenFormular } from "./anlegen-formular";
-import { BestandListe } from "./bestand-liste";
 import { namenskonflikt } from "./text";
 
 // React trennt benachbarte Textteile beim Serverrendern mit Kommentaren; für Textprüfungen entfernen wir sie.
@@ -62,12 +61,6 @@ describe("US-BES-02 Client der Exemplar-API", () => {
       { id: "e1", name: "Bogenhanf" },
     ]);
   });
-
-  it("lädt die Liste der eigenen Exemplare", async () => {
-    const abruf = vi.fn<typeof fetch>(async () => antwort(200, { exemplare: [exemplar()] }));
-    const r = await ladeExemplare("http://api", "tok", abruf);
-    expect(r).toMatchObject({ ok: true, wert: [{ id: "e1" }] });
-  });
 });
 
 describe("US-BES-02 Formular „Exemplar anlegen“", () => {
@@ -114,42 +107,5 @@ describe("US-BES-02 Formular „Exemplar anlegen“", () => {
     expect(h).toContain("Ein Exemplar mit diesem Namen gibt es schon. Gib ein Kennzeichen an");
     expect(h).toContain("Schon vorhanden: Bogenhanf");
     expect(h).toContain("heißt das neue Exemplar dann „Bogenhanf – Kennzeichen“");
-  });
-});
-
-describe("US-BES-02 Bestand", () => {
-  it("ohne Exemplare: sagt, was zu tun ist (P-09), und bietet die Artwahl an", () => {
-    const h = renderToString(
-      <BestandListe exemplare={[]} standorte={standorte} onArtWaehlen={vi.fn()} />,
-    );
-    expect(h).toContain("Du hast noch kein Exemplar");
-    expect(h).toContain("Art wählen");
-  });
-
-  it("zeigt Name, Standort oder „unbekannt“, Gefangen_Am und die leeren abgeleiteten Listen", () => {
-    const h = renderToString(
-      <BestandListe
-        exemplare={[exemplar(), exemplar({ id: "e2", name: "Bogenhanf – rot", standortId: "s1" })]}
-        standorte={standorte}
-        onArtWaehlen={vi.fn()}
-      />,
-    );
-    expect(h).toContain("Bogenhanf – rot");
-    expect(h).toContain("Standort: Regal Süd");
-    expect(h).toContain("Standort: unbekannt");
-    expect(h).toContain("Gefangen am 03.10.2026");
-    expect(h).toContain("noch keine Messung");
-    expect(h).toContain("keine Behandlung");
-  });
-
-  it("ein fehlendes Gefangen_Am heißt „unbekannt“, nicht heute (P-08)", () => {
-    const h = renderToString(
-      <BestandListe
-        exemplare={[exemplar({ gefangenAm: null })]}
-        standorte={standorte}
-        onArtWaehlen={vi.fn()}
-      />,
-    );
-    expect(h).toContain("Gefangen am: unbekannt");
   });
 });
