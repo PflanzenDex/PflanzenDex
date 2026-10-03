@@ -27,7 +27,7 @@ const MODULES = [
   {
     name: "katalog",
     epics: ["BES"],
-    tables: ["art", "art_version", "pruefvorgang"],
+    tables: ["art", "art_name", "art_version", "pruefvorgang"],
     dependsOn: ["kern"],
     ports: [],
   },

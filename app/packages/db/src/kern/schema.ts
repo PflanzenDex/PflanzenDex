@@ -6,8 +6,14 @@ export const OHNE_KONTO_KENNUNG: Record<string, string> = {
   schema_migrations: "Werkzeug-Verwaltung des Migrationswerkzeugs, keine Nutzerdaten",
   konto_rolle:
     "Rollenvergabe ist Sache des Betreibers der Installation: die Anwendungsrolle hat keine Rechte auf die Tabelle und liest nur die eigene Rolle über rollen_des_kontos() (TE-08)",
-  // Der gemeinsame Artenkatalog (BES) trägt keine Konto-Kennung; er wird hier mit Begründung eingetragen.
+  art: "Gemeinsamer Artenkatalog (E-02): Wissen, das allen gehört. Sichtbar sind freigegebene Arten und die eigenen Vorschläge, bestimmt vom Prüfvorgang (art_status(), FR-BES-11); Ändern und Löschen gibt es für die Anwendung nicht (BES-01)",
+  art_name:
+    "Namen und Synonyme einer Art: sichtbar und anlegbar genau wie die zugehörige Art (art_status(), art_eigen())",
 };
+
+// Katalogtabellen ohne Konto-Kennung brauchen trotzdem erzwungene Zeilenregeln: Sie sind nicht mandantengebunden,
+// sondern nach Prüfstatus sichtbar. Ohne Regel wären private Vorschläge für alle lesbar (P-05).
+export const KATALOG_TABELLEN: readonly string[] = ["art", "art_name"];
 
 // Tabellen, deren Konto-Kennung nicht `konto_id` heißt: die Konto-Tabelle ist die Wurzel (`id`).
 export const ANDERE_KENNUNG: Record<string, string> = { konto: "id" };
@@ -49,11 +55,16 @@ export async function mandantenTabellen(db: Abfrage): Promise<MandantenTabelle[]
     .map((z) => ({ name: z.name, kennung: ANDERE_KENNUNG[z.name] ?? "konto_id" }));
 }
 
+const regelFehlt = (z: Zeile) => !z.rls || !z.erzwungen || z.regeln === 0;
+
 function verstoss(z: Zeile): string | null {
-  if (z.name in OHNE_KONTO_KENNUNG) return null;
+  if (z.name in OHNE_KONTO_KENNUNG)
+    return KATALOG_TABELLEN.includes(z.name) && regelFehlt(z)
+      ? `Katalogtabelle ${z.name}: Zeilenregel fehlt oder wird nicht erzwungen (Sichtbarkeit nach Prüfstatus, FR-BES-11)`
+      : null;
   if (!z.hat_kennung)
     return `Tabelle ${z.name}: keine Konto-Kennung (Spalte konto_id, FR-ACC-02); ohne Konto nur mit Eintrag in OHNE_KONTO_KENNUNG`;
-  if (!z.rls || !z.erzwungen || z.regeln === 0)
+  if (regelFehlt(z))
     return `Tabelle ${z.name}: Zeilenregel fehlt oder wird nicht erzwungen (nach create table: select mandantenschutz('${z.name}'))`;
   return null;
 }
