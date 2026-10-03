@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import type { ApiFehler, LichtStandort, Lichtzone } from "./licht-api";
+import { FormularKnoepfe, useSenden } from "./formular";
 import { FehlerMeldung } from "./meldung";
 import { artText, zonenName } from "./text";
 
@@ -18,22 +19,15 @@ export function StandortFormular(props: {
   onAbbrechen?: () => void;
 }) {
   const s = props.start;
-  const [fehler, setFehler] = useState<ApiFehler | null>(null);
-  const [laeuft, setLaeuft] = useState(false);
-  async function senden(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const f = new FormData(form);
-    setLaeuft(true);
-    const fehlerNeu = await props.onSpeichern({
+  const { fehler, laeuft, senden } = useSenden<StandortEingabe>(
+    (f) => ({
       name: String(f.get("name") ?? ""),
       lichtzoneId: String(f.get("lichtzoneId") ?? "") || null,
       art: f.get("art") === "aussen" ? "aussen" : "innen",
-    });
-    setLaeuft(false);
-    setFehler(fehlerNeu);
-    if (!fehlerNeu && !s) form.reset();
-  }
+    }),
+    props.onSpeichern,
+    !s,
+  );
   return (
     <form
       className="formular"
@@ -69,16 +63,11 @@ export function StandortFormular(props: {
         </select>
       </label>
       {fehler && <FehlerMeldung fehler={fehler} />}
-      <div className="aktionen">
-        <button type="submit" className="primaer" disabled={laeuft}>
-          {s ? "Speichern" : "Standort anlegen"}
-        </button>
-        {props.onAbbrechen && (
-          <button type="button" className="sekundaer" onClick={props.onAbbrechen}>
-            Abbrechen
-          </button>
-        )}
-      </div>
+      <FormularKnoepfe
+        beschriftung={s ? "Speichern" : "Standort anlegen"}
+        laeuft={laeuft}
+        onAbbrechen={props.onAbbrechen}
+      />
     </form>
   );
 }
