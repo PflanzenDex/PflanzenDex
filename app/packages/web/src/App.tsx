@@ -1,11 +1,8 @@
 import { useState } from "react";
-import { Fehler, KontoAnsicht, Laedt, Willkommen } from "./auth/ansichten";
-import { apiUrl } from "./auth/konto-api";
-import { useSitzung } from "./auth/sitzung";
-import { LichtSeite } from "./licht/LichtSeite";
+import { Fehler, KontoAnsicht, Laedt, Willkommen, apiUrl, useSitzung } from "./konto";
+import { LichtSeite } from "./licht";
 import { Navigation, type Ansicht } from "./navigation";
 import "./stil.css";
-import "./licht/licht.css";
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
 

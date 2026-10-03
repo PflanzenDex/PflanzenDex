@@ -120,20 +120,13 @@ const LEGACY_MIGRATIONS = {
 };
 
 // Transition (ratchet, may only shrink): folders directly below `packages/<pkg>/src/` that belong to no module yet.
-// Any other folder below `src/` that is neither a module nor listed here fails (AB-13). The move into modules removes
-// entries; an entry whose folder is gone is an error.
-const UNMODULED_FOLDERS = {
-  "core/operationen": "operation engine, to be split into kern, licht and katalog",
-  "core/meta": "product metadata, moves into kern",
-  "web/auth": "sign-in screens, move into konto",
-  "api/auth": "sign-in middleware, moves into konto",
-};
+// Any other folder below `src/` that is neither a module nor listed here fails (AB-13). An entry whose folder is gone
+// is an error. Empty since the move into modules (#227): all code lives in kern, konto, katalog and licht.
+const UNMODULED_FOLDERS = {};
 
-// Module-named folders that exist today but do not meet the rules yet. They are treated like unmoduled folders until
-// the move; an entry whose folder is gone is an error (ratchet).
-const MODULE_FOLDERS_IN_TRANSITION = {
-  "web/licht": "no index.ts yet and imported deeply by App.tsx; moves into the module licht",
-};
+// Module-named folders that exist but do not meet the rules yet; treated like unmoduled folders until fixed, an
+// entry that no longer applies is an error (ratchet). Empty: web/licht has its index.ts and is imported via it.
+const MODULE_FOLDERS_IN_TRANSITION = {};
 
 const KERN = "kern";
 
