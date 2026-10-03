@@ -1,7 +1,12 @@
 import type { Exemplar, LichtStandort } from "@pflanzendex/core";
 import { UNBEKANNT, datumText, standortText } from "./text";
 
-function Karte({ e, standorte }: { e: Exemplar; standorte: readonly LichtStandort[] }) {
+function Karte(props: {
+  e: Exemplar;
+  standorte: readonly LichtStandort[];
+  onMessen: ((e: Exemplar) => void) | undefined;
+}) {
+  const { e, standorte, onMessen } = props;
   return (
     <li className="eintrag">
       <h3>{e.name}</h3>
@@ -13,6 +18,18 @@ function Karte({ e, standorte }: { e: Exemplar; standorte: readonly LichtStandor
         {e.messreihe.length === 0 ? "noch keine Messung" : `${e.messreihe.length} Messungen`} ·{" "}
         {e.behandlungen.length === 0 ? "keine Behandlung" : `${e.behandlungen.length} Behandlungen`}
       </p>
+      {onMessen && (
+        <div className="aktionen">
+          <button
+            type="button"
+            className="sekundaer"
+            aria-label={`Messen: ${e.name}`}
+            onClick={() => onMessen(e)}
+          >
+            Messen
+          </button>
+        </div>
+      )}
     </li>
   );
 }
@@ -22,6 +39,8 @@ export function BestandListe(props: {
   exemplare: readonly Exemplar[];
   standorte: readonly LichtStandort[];
   onArtWaehlen: () => void;
+  /** Öffnet die Messansicht; die App verdrahtet `bestand` mit `pflege` (US-WAC-01). */
+  onMessen?: (e: Exemplar) => void;
 }) {
   return (
     <section aria-labelledby="bestand-titel">
@@ -31,7 +50,7 @@ export function BestandListe(props: {
       ) : (
         <ul className="liste">
           {props.exemplare.map((e) => (
-            <Karte key={e.id} e={e} standorte={props.standorte} />
+            <Karte key={e.id} e={e} standorte={props.standorte} onMessen={props.onMessen} />
           ))}
         </ul>
       )}

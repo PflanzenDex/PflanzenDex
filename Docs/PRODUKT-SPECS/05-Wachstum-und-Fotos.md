@@ -6,7 +6,7 @@ Prototyp-Bezug: Epic WAC. Unterschiede: Messung am Handy mit Kamera, Foto-Verarb
 
 ## Userstories
 
-### US-WAC-01 · Messung erfassen · ⬜ (Prototyp ✅)
+### US-WAC-01 · Messung erfassen · 🟨 (Prototyp ✅)
 
 Als **Pflanzenhalter** will ich eine Messzahl je Exemplar speichern, damit der Verlauf wächst.
 
@@ -17,6 +17,8 @@ Akzeptanzkriterien:
 - Das Datum ist standardmäßig heute in der Zeitzone des Nutzers und änderbar (Nachtragen).
 - Gemessen wird immer dieselbe Dimension an derselben Stelle.
 - Das Speichern ist idempotent (US-QS-03).
+
+Stand der Umsetzung: Die Ansicht „Messen“ je Exemplar zeigt „Was messen?“ (Wachstumsmaß der Art, sonst „unbekannt“), die letzte Messung, die letzte Bewertung, das Eingabeformular und den Verlauf. Eingabe: Zahl im Raster 0,5 cm (Annahme: das Raster gilt auch auf dem Server, damit nichts still gerundet wird), Qualität (voreingestellt `Gesund`), optionale Notiz; Datum standardmäßig heute in der Zeitzone des Geräts (das Profil kennt noch keine, US-ACC-02), änderbar, nicht in der Zukunft (Annahme: ein Tippfehler im Jahr würde jede spätere Rate verfälschen). Ungültige Eingabe schreibt nichts; das Speichern läuft über `messung.erfassen` mit `Idempotency-Key`. **Offen:** das optionale Foto (Medienverarbeitung, FR-WAC-09, US-WAC-05) sowie Rate und Trend in der Ansicht (US-WAC-03, US-WAC-04). Dass immer dieselbe Dimension an derselben Stelle gemessen wird, ist nur als Hinweis im Text und über das Wachstumsmaß der Art abgebildet, nicht erzwungen.
 
 ### US-WAC-02 · Vergeilung beim Messen beurteilen · ⬜ (Prototyp ✅)
 

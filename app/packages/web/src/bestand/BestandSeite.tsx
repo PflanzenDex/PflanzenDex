@@ -55,6 +55,7 @@ export function BestandSeite(props: {
   neueArt: Art | null;
   onArtWaehlen: () => void;
   onAbgeschlossen: () => void;
+  onMessen?: (e: Exemplar) => void;
 }) {
   const { api, token, neueArt, onAbgeschlossen } = props;
   const [neuLaden, setNeuLaden] = useState(0);
@@ -101,6 +102,7 @@ export function BestandSeite(props: {
             exemplare={daten.exemplare}
             standorte={daten.standorte}
             onArtWaehlen={props.onArtWaehlen}
+            {...(props.onMessen ? { onMessen: props.onMessen } : {})}
           />
         </>
       )}

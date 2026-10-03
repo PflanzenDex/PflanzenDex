@@ -6,6 +6,7 @@ import { authentifizierung, kontoRouten, type TokenPruefer } from "./konto";
 import { EXEMPLARE_PFADE, exemplareRouten } from "./bestand";
 import { ARTEN_PFADE, artenRouten } from "./katalog";
 import { LICHT_PFADE, lichtRouten } from "./licht";
+import { PFLEGE_PFADE, pflegeRouten } from "./pflege";
 
 export type AppOptionen = {
   /** Prüft Access-Tokens des Anmeldedienstes; ohne Angabe gibt es keine geschützten Routen. */
@@ -53,6 +54,8 @@ export function createApp(opt: AppOptionen = {}): Hono {
         ...(opt.sollStandort ? { sollStandort: opt.sollStandort } : {}),
       }),
     );
+    for (const pfad of PFLEGE_PFADE) app.use(pfad, auth);
+    app.route("/", pflegeRouten(opt.pool, opt.uhr ? { uhr: opt.uhr } : {}));
   }
   return app;
 }

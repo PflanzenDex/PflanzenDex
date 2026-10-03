@@ -4,3 +4,4 @@ export * from "./konto/index.ts";
 export * from "./katalog/index.ts";
 export * from "./licht/index.ts";
 export * from "./bestand/index.ts";
+export * from "./pflege/index.ts";
