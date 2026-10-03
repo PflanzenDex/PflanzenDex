@@ -1,0 +1,150 @@
+          [36m<button[39m
+            [33mclass[39m=[32m"primaer"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mWeiteres Exemplar: Art wählen[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"licht bestand"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"bestand-titel"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"bestand-titel"[39m
+        [36m>[39m
+          [0mBestand[0m
+        [36m</h1>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"karten-raster"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"exemplar-karte"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"karte-foto platzhalter"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mNoch kein Foto[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<h2>[39m
+              [0mBogenhanf[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mArt: [0m
+              [0mBogenhanf[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mLichtzone: [0m
+              [0munbekannt[0m
+              [0m · Status: [0m
+              [0mPflanze[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0munbekannt[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mnoch keine Messung[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mkeine offene Behandlung[0m
+            [36m</p>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"exemplar-karte"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"karte-foto platzhalter"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mNoch kein Foto[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<h2>[39m
+              [0mBogenhanf – rot[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mArt: [0m
+              [0mBogenhanf[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mLichtzone: [0m
+              [0munbekannt[0m
+              [0m · Status: [0m
+              [0mPflanze[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0munbekannt[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mnoch keine Messung[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"leise"[39m
+            [36m>[39m
+              [0mkeine offene Behandlung[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"aktionen"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primaer"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mWeiteres Exemplar: Art wählen[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/bestand/archiv.test.tsx:220:20
+    218|     render(seite());
+    219|     await userEvent.click(
+    220|       await screen.findByRole("button", { name: "Wiederherstellen: Alt…
+       |                    ^
+    221|     );
+    222|     expect((await screen.findByRole("alert")).textContent).toContain("…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed (10)
+   Start at  19:50:14
+   Duration  8.02s (tests 89%, environment 6%, transform 3%, import 2%)
+

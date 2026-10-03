@@ -20,6 +20,8 @@ const exemplar = (extra: Partial<Exemplar> = {}): Exemplar => ({
   standortId: null,
   status: "pflanze",
   gefangenAm: "2026-10-03",
+  archiviertAm: null,
+  archiviertGrund: null,
   messreihe: [],
   behandlungen: [],
   ...extra,

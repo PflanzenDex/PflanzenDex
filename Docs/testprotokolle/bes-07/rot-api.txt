@@ -1,0 +1,57 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-a32428ec39f8bdc8e/.worktrees/feat-bes-07-eingegangene-oder-abgegebene/app/packages/api
+
+ ❯ src/bestand/archiv.test.ts (13 tests | 10 failed) 182ms
+   ❯ US-BES-07 Anmeldung und Eingabe (5)
+     × ohne Idempotency-Key: 400 mit stabilem Fehlercode 12ms
+     × ohne Grund: 400 mit Detail zum Feld, nichts wird archiviert 22ms
+   ❯ US-BES-07 Archivieren, Listen und Wiederherstellen (6)
+     × setzt Status, lokales Datum und Grund; Listen und Karten blenden das Exemplar aus 16ms
+     × das archivierte Exemplar bleibt ladbar und steht im Archiv (mit Art, Datum, Grund) 11ms
+     × Wiederherstellen bringt das Exemplar in Liste und Karten zurück und löscht Datum und Grund 11ms
+     × doppeltes Archivieren und Wiederherstellen ohne Archiv: 409 mit Fehlercode 11ms
+     × ein archivierter Name bleibt vergeben (409), damit das Wiederherstellen nie kollidiert 10ms
+     × ein archiviertes Exemplar lässt sich nicht messen (409), seine Messreihe bleibt lesbar 16ms
+   ❯ US-BES-07 Mandantentrennung (P-04) (2)
+     × ein fremdes Exemplar lässt sich weder archivieren noch wiederherstellen (404 wie unbekannt) 15ms
+     × das Archiv eines Kontos enthält nichts von einem anderen 11ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/bestand/archiv.test.ts > US-BES-07 Anmeldung und Eingabe > ohne Idempotency-Key: 400 mit stabilem Fehlercode
+ FAIL  src/bestand/archiv.test.ts > US-BES-07 Anmeldung und Eingabe > ohne Grund: 400 mit Detail zum Feld, nichts wird archiviert
+ FAIL  src/bestand/archiv.test.ts > US-BES-07 Archivieren, Listen und Wiederherstellen > setzt Status, lokales Datum und Grund; Listen und Karten blenden das Exemplar aus
+ FAIL  src/bestand/archiv.test.ts > US-BES-07 Archivieren, Listen und Wiederherstellen > das archivierte Exemplar bleibt ladbar und steht im Archiv (mit Art, Datum, Grund)
+ FAIL  src/bestand/archiv.test.ts > US-BES-07 Archivieren, Listen und Wiederherstellen > Wiederherstellen bringt das Exemplar in Liste und Karten zurück und löscht Datum und Grund
+ FAIL  src/bestand/archiv.test.ts > US-BES-07 Archivieren, Listen und Wiederherstellen > doppeltes Archivieren und Wiederherstellen ohne Archiv: 409 mit Fehlercode
+ FAIL  src/bestand/archiv.test.ts > US-BES-07 Archivieren, Listen und Wiederherstellen > ein archivierter Name bleibt vergeben (409), damit das Wiederherstellen nie kollidiert
+ FAIL  src/bestand/archiv.test.ts > US-BES-07 Mandantentrennung (P-04) > ein fremdes Exemplar lässt sich weder archivieren noch wiederherstellen (404 wie unbekannt)
+ FAIL  src/bestand/archiv.test.ts > US-BES-07 Mandantentrennung (P-04) > das Archiv eines Kontos enthält nichts von einem anderen
+SyntaxError: Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/bestand/archiv.test.ts > US-BES-07 Archivieren, Listen und Wiederherstellen > ein archiviertes Exemplar lässt sich nicht messen (409), seine Messreihe bleibt lesbar
+AssertionError: expected 400 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 400
+
+ ❯ src/bestand/archiv.test.ts:205:36
+    203|     const messe = () =>
+    204|       rufe(subA, "POST", `/exemplare/${id}/messungen`, { zeitzone: "Eu…
+    205|     expect((await messe()).status).toBe(201);
+       |                                    ^
+    206|     await archiviere(subA, id);
+    207|     expect(await messe()).toMatchObject({ status: 409, body: { fehler:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 3 passed (13)
+   Start at  19:50:13
+   Duration  670ms (transform 53%, tests 32%, import 14%)
+

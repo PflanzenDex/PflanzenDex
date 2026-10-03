@@ -1,6 +1,10 @@
 // Öffentliche Schnittstelle des Moduls `bestand` (ADR 0003): Exemplare (US-BES-02).
 export { exemplarAnlegen } from "./anlegen";
 export type { AnlegenAbhaengigkeiten } from "./anlegen";
+export { exemplarArchivieren, exemplarWiederherstellen } from "./archivieren";
+export type { ArchivierenAbhaengigkeiten } from "./archivieren";
+export { exemplarArchiv } from "./archiv";
+export type { ArchivAbhaengigkeiten, ArchivEintrag } from "./archiv";
 export { exemplarLaden, exemplareListe } from "./lesen";
 export { artAnzeigename, exemplarName } from "./name";
 export { KEIN_SOLL_STANDORT } from "./soll-standort";
@@ -17,7 +21,7 @@ export type {
   MessungsQuelle,
   OffeneBehandlung,
 } from "./karten-typen";
-export { EXEMPLAR_GRENZEN, EXEMPLAR_STATUS } from "./typen";
+export { ARCHIV_GRUENDE, EXEMPLAR_GRENZEN, EXEMPLAR_STATUS, istAktiv } from "./typen";
 export type {
   ArtQuelle,
   Exemplar,

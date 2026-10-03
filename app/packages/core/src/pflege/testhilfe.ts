@@ -4,18 +4,25 @@ import type { MessungSpeicher, MessungWerte, MessungZeile } from "./typen";
 
 /** Exemplare je Konto (nur Tests von `pflege`, kein Produktcode); jedes hat die Art `art-1`. */
 export class ExemplareStub implements Pick<ExemplarSpeicher, "finde"> {
-  constructor(private readonly besitz: Readonly<Record<string, readonly string[]>>) {}
+  /** `archiviert` nennt die Kennungen, die archiviert sind (US-BES-07). */
+  constructor(
+    private readonly besitz: Readonly<Record<string, readonly string[]>>,
+    private readonly archiviert: readonly string[] = [],
+  ) {}
 
   async finde(nutzerId: string, id: string): Promise<ExemplarZeile | null> {
     if (!this.besitz[nutzerId]?.includes(id)) return null;
+    const weg = this.archiviert.includes(id);
     return {
       id,
       artId: "art-1",
       name: "Bogenhanf",
       kennzeichen: null,
       standortId: null,
-      status: "pflanze",
+      status: weg ? "archiviert" : "pflanze",
       gefangenAm: "2026-10-01",
+      archiviertAm: weg ? "2026-10-02" : null,
+      archiviertGrund: weg ? "eingegangen" : null,
     };
   }
 }

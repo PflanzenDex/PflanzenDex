@@ -10,6 +10,8 @@ export interface ExemplarZeile {
   readonly standortId: string | null;
   readonly status: "pflanze" | "steckling" | "archiviert";
   readonly gefangenAm: string | null;
+  readonly archiviertAm: string | null;
+  readonly archiviertGrund: string | null;
 }
 export type ExemplarWerte = Pick<
   ExemplarZeile,
@@ -69,5 +71,24 @@ export class ExemplarePostgres {
         return "standort_unbekannt";
       throw e;
     }
+  }
+
+  // Skelett für den roten Nachweis (P-06).
+  async archivieren(
+    nutzerId: string,
+    id: string,
+    grund: string,
+    datum: string,
+  ): Promise<ExemplarZeile | "nicht_gefunden" | "bereits_archiviert"> {
+    void [nutzerId, id, grund, datum];
+    throw new Error("nicht umgesetzt");
+  }
+
+  async wiederherstellen(
+    nutzerId: string,
+    id: string,
+  ): Promise<ExemplarZeile | "nicht_gefunden" | "nicht_archiviert"> {
+    void [nutzerId, id];
+    throw new Error("nicht umgesetzt");
   }
 }

@@ -1,0 +1,150 @@
+    163|   });
+    164| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/21]⎯
+ FAIL  src/bestand/archivieren.test.ts > US-BES-07 Wiederherstellen > stellt den Status von vorher wieder her und löscht Datum und Grund
+AssertionError: expected false to match object { status: 'pflanze', …(2) }
+- Expected:
+{
+  "archiviertAm": null,
+  "archiviertGrund": null,
+  "status": "pflanze",
+}
++ Received:
+false
+ ❯ src/bestand/archivieren.test.ts:171:28
+    169|     await archivieren(e.id);
+    170|     const r = await wiederherstellen(e.id);
+    171|     expect(r.ok && r.wert).toMatchObject({
+       |                            ^
+    172|       status: "pflanze",
+    173|       archiviertAm: null,
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/21]⎯
+ FAIL  src/bestand/archivieren.test.ts > US-BES-07 Wiederherstellen > ein Steckling bleibt nach dem Wiederherstellen ein Steckling
+AssertionError: expected false to be 'steckling' // Object.is equality
+- Expected:
+"steckling"
++ Received:
+false
+ ❯ src/bestand/archivieren.test.ts:183:35
+    181|     await archivieren(e.id);
+    182|     const r = await wiederherstellen(e.id);
+    183|     expect(r.ok && r.wert.status).toBe("steckling");
+       |                                   ^
+    184|   });
+    185|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/21]⎯
+ FAIL  src/bestand/archivieren.test.ts > US-BES-07 Wiederherstellen > ein Exemplar, das nicht archiviert ist, lässt sich nicht wiederherstellen
+AssertionError: expected 'system.unerwartet' to be 'exemplar.nicht_archiviert' // Object.is equality
+Expected: "exemplar.nicht_archiviert"
+Received: "system.unerwartet"
+ ❯ src/bestand/archivieren.test.ts:188:54
+    186|   it("ein Exemplar, das nicht archiviert ist, lässt sich nicht wiederh…
+    187|     const e = await lege("anna", "Bogenhanf");
+    188|     expect(fehlerCode(await wiederherstellen(e.id))).toBe("exemplar.ni…
+       |                                                      ^
+    189|     expect(
+    190|       fehlerCode(await wiederherstellen("99999999-9999-4999-8999-99999…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/21]⎯
+ FAIL  src/bestand/archivieren.test.ts > US-BES-07 Archivierte Exemplare fehlen in Listen, bleiben aber einsehbar > die Liste der Exemplare enthält kein archiviertes, das Wiederherstellen bringt es zurück
+AssertionError: expected [ 'Weg', 'Da' ] to deeply equal [ 'Da' ]
+- Expected
++ Received
+  [
++   "Weg",
+    "Da",
+  ]
+ ❯ src/bestand/archivieren.test.ts:200:74
+    198|     await lege("anna", "Da");
+    199|     await archivieren(weg.id);
+    200|     expect((await exemplareListe(exemplare, "anna")).map((x) => x.name…
+       |                                                                          ^
+    201|     await wiederherstellen(weg.id);
+    202|     expect((await exemplareListe(exemplare, "anna")).map((x) => x.name…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/21]⎯
+ FAIL  src/bestand/archivieren.test.ts > US-BES-07 Archivierte Exemplare fehlen in Listen, bleiben aber einsehbar > das einzelne Exemplar bleibt mit Historie ladbar (Datum und Grund sichtbar)
+AssertionError: expected { …(11) } to match object { status: 'archiviert', …(2) }
+(8 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "archiviertGrund": "abgegeben",
++   "archiviertGrund": null,
+    "gefangenAm": "2026-09-01",
+-   "status": "archiviert",
++   "status": "pflanze",
+  }
+ ❯ src/bestand/archivieren.test.ts:208:58
+    206|     const e = await lege("anna", "Bogenhanf");
+    207|     await archivieren(e.id, { grund: "abgegeben" });
+    208|     expect(await exemplarLaden(exemplare, "anna", e.id)).toMatchObject…
+       |                                                          ^
+    209|       status: "archiviert",
+    210|       archiviertGrund: "abgegeben",
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/21]⎯
+ FAIL  src/bestand/archivieren.test.ts > US-BES-07 Archivierte Exemplare fehlen in Listen, bleiben aber einsehbar > das Archiv nennt Name, Art, Datum und Grund, das zuletzt archivierte zuerst
+AssertionError: expected [] to deeply equal [ { …(6) }, ObjectContaining{…} ]
+- Expected
++ Received
+- [
+-   {
+-     "archiviertAm": "2026-10-03",
+-     "archiviertGrund": "verschenkt",
+-     "artName": "Bogenhanf",
+-     "gefangenAm": "2026-09-01",
+-     "id": "00000000-0000-4000-8000-000000000002",
+-     "name": "Neu",
+-   },
+-   ObjectContaining {
+-     "archiviertAm": "2026-10-02",
+-     "id": "00000000-0000-4000-8000-000000000001",
+-   },
+- ]
++ []
+ ❯ src/bestand/archivieren.test.ts:220:64
+    218|     await archivieren(a.id, { grund: "eingegangen", zeitzone: "America…
+    219|     await archivieren(b.id, { grund: "verschenkt" });
+    220|     expect(await exemplarArchiv({ exemplare, arten }, "anna")).toEqual…
+       |                                                                ^
+    221|       {
+    222|         id: b.id,
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/21]⎯
+ FAIL  src/bestand/archivieren.test.ts > US-BES-07 Archivierte Exemplare fehlen in Listen, bleiben aber einsehbar > US-BES-06: Karten blenden archivierte Exemplare aus und fragen die Ports nicht nach ihnen
+AssertionError: expected [ …(2) ] to deeply equal [ Array(1) ]
+- Expected
++ Received
+  [
++   "00000000-0000-4000-8000-000000000001",
+    "00000000-0000-4000-8000-000000000002",
+  ]
+ ❯ src/bestand/archivieren.test.ts:252:37
+    250|       "2026-10-03",
+    251|     );
+    252|     expect(karten.map((k) => k.id)).toEqual([da.id]);
+       |                                     ^
+    253|     expect(messungen.aufrufe[0]?.ids).toEqual([da.id]);
+    254|     expect(behandlungen.aufrufe[0]?.ids).toEqual([da.id]);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/21]⎯
+ FAIL  src/pflege/erfassen.test.ts > US-BES-07 Messen: archivierte Exemplare > ein archiviertes Exemplar wird nicht gemessen (fehlt in Wachstum), es wird nichts geschrieben
+AssertionError: expected { ok: true, wert: { …(7) } } to match object { ok: false, …(1) }
+(8 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "fehler": {
+-     "code": "exemplar.archiviert",
+-   },
+-   "ok": false,
++   "ok": true,
+  }
+ ❯ src/pflege/erfassen.test.ts:225:15
+    223|   it("ein archiviertes Exemplar wird nicht gemessen (fehlt in Wachstum…
+    224|     const r = await erfasse(eingabe(), anna, "archiv", [E1]);
+    225|     expect(r).toMatchObject({ ok: false, fehler: { code: "exemplar.arc…
+       |               ^
+    226|     expect(messungen.schreibzugriffe).toBe(0);
+    227|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/21]⎯
+ Test Files  2 failed (2)
+      Tests  21 failed | 34 passed (55)
+   Start at  19:50:11
+   Duration  283ms (transform 62%, tests 23%, import 13%, worker 2%)
