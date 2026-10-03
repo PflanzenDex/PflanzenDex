@@ -113,7 +113,7 @@ Akzeptanzkriterien:
 - Coverage-Schwellen werden knapp **unter** den aktuellen Wert gesetzt und nur angehoben (Ratchet), nie gesenkt ohne Begründung im PR.
 - Ein Gate, das in drei Monaten keinen Fehler fand, wird auf Nutzen geprüft, nicht blind behalten.
 
-### US-QG-07 · KI-Agenten arbeiten innerhalb derselben Gates · ⬜
+### US-QG-07 · KI-Agenten arbeiten innerhalb derselben Gates · 🟨
 Als **Entwickler** will ich, dass auch Claude (oder andere Agenten) an dieselben Regeln gebunden sind.
 
 Akzeptanzkriterien:

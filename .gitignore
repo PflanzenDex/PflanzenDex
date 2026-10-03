@@ -8,4 +8,5 @@ coverage/
 .DS_Store
 .worktrees/
 .env.worktree
+.claude/settings.local.json
 .cache/

@@ -81,7 +81,7 @@ Akzeptanzkriterien: Jede Routine steht in der Tabelle mit Auslöser, Besitzer, A
 
 - Wiederkehrende Agentenaufgaben (z. B. wöchentlicher Gate-Gesundheitsbericht) dürfen als **geplanter Agent** laufen; sie schreiben nur Berichte und öffnen Vorschläge, sie ändern keine Gates.
 
-### US-DEV-04 · Skills und Playbooks für wiederkehrende Aufgaben · ⬜
+### US-DEV-04 · Skills und Playbooks für wiederkehrende Aufgaben · 🟨
 Als **Entwickler (und KI)** will ich für wiederkehrende Aufgaben eine bewährte Anleitung, statt jedes Mal zu improvisieren.
 
 Akzeptanzkriterien:

@@ -17,12 +17,13 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "boundaries": "node scripts/check-boundaries.mjs",
     "specs": "node scripts/check-specs.mjs",
-    "test": "npm run test --workspaces --if-present && node --test \"scripts/**/*.test.mjs\"",
+    "test": "npm run test --workspaces --if-present && node --test \"scripts/**/*.test.mjs\" \"../.claude/hooks/*.test.mjs\"",
     "build": "npm run build --workspaces --if-present",
-    "gates": "npm run lint && npm run typecheck && npm run boundaries && npm run knip && npm run specs && npm run format:check",
+    "gates": "npm run lint && npm run typecheck && npm run boundaries && npm run knip && npm run specs && npm run skills && npm run format:check",
     "ci": "npm run gates && npm run test && npm run build",
     "knip": "knip",
-    "audit": "npm audit --audit-level=high"
+    "audit": "npm audit --audit-level=high",
+    "skills": "node scripts/check-skills.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",
