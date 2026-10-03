@@ -1,63 +1,63 @@
-# PflanzenDex App
+# PflanzenDex app
 
-Monorepo (npm workspaces) mit vier Paketen. Alle Aufgaben laufen über das `Makefile` im Wurzelverzeichnis des Repos (`make help`).
+Monorepo (npm workspaces) with four packages. Every task runs through the `Makefile` in the repo root (`make help`). Tooling and docs are English; domain code uses the German glossary terms from the specs (`konto`, `exemplar`, `pruefvorgang`, …).
 
-| Paket           | Inhalt                                            | Regel                                                                                                                                                    |
-| --------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/core` | Fachlogik, reine Funktionen                       | importiert nichts aus API, Web, Datenbank, Dateisystem oder Netz (AB-1); jedes Verzeichnis mit Code hat einen `index.ts`                                 |
-| `packages/db`   | PostgreSQL-Schema, Migrationen, Mandantentrennung | nur für `api` bestimmt; `core` und `web` importieren es nicht; jede nutzerbezogene Tabelle trägt `konto_id` und ruft `mandantenschutz()` auf (FR-ACC-02) |
-| `packages/api`  | HTTP-API (Hono)                                   | ruft `core` nur über `@pflanzendex/core` (AB-2)                                                                                                          |
-| `packages/web`  | Mobile-first-PWA (React, Vite)                    | ruft `core` nur über `@pflanzendex/core` (AB-2)                                                                                                          |
+| Package         | Contents                                        | Rule                                                                                                                                        |
+| --------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/core` | Domain logic, pure functions                    | imports nothing from API, web, database, file system or network (AB-1); every directory with code has an `index.ts`                         |
+| `packages/db`   | PostgreSQL schema, migrations, tenant isolation | meant for `api` only; `core` and `web` never import it; every user-owned table carries `konto_id` and calls `mandantenschutz()` (FR-ACC-02) |
+| `packages/api`  | HTTP API (Hono)                                 | calls `core` only through `@pflanzendex/core` (AB-2)                                                                                        |
+| `packages/web`  | Mobile-first PWA (React, Vite)                  | calls `core` only through `@pflanzendex/core` (AB-2)                                                                                        |
 
 ```bash
-make setup   # Abhängigkeiten installieren
-make dev     # API (Port 3000) und Web (Vite) starten
-make ci      # alle Gates: Lint, Typen, Grenzen, Format, Tests, Build
+make setup   # install dependencies
+make dev     # start API (port 3000) and web (Vite)
+make ci      # all gates: lint, types, boundaries, format, tests, build
 ```
 
-- **Node:** Version 24 (`.nvmrc`). Vitest 5 unterstützt die ungeraden Node-Versionen (z. B. 25) nicht offiziell.
-- **TypeScript 6.0.x** ist bewusst gepinnt: `typescript-eslint` unterstützt TypeScript 7 noch nicht (Peer-Bereich `<6.1`).
-- **Grenzprüfung:** `npm run boundaries` (Skript und Tests in `scripts/`); Meldungen nennen Regel-ID, Datei und Zeile.
-- **Schwellen** (Startwerte, Annahme, E-15): Dateilänge ≤ 200, Komplexität ≤ 15, in `core` ≤ 10 (`eslint.config.js`).
+- **Node:** version 24 (`.nvmrc`). Vitest 5 does not officially support odd Node versions (e.g. 25).
+- **TypeScript 6.0.x** is pinned on purpose: `typescript-eslint` does not support TypeScript 7 yet (peer range `<6.1`).
+- **Boundary check:** `npm run boundaries` (script and tests in `scripts/`); messages name the rule ID, file and line.
+- **Thresholds** (starting values, assumptions, E-15): file length ≤ 200, complexity ≤ 15, in `core` ≤ 10 (`eslint.config.js`).
 
-## Datenbank und Mandantentrennung (TE-02)
+## Database and tenant isolation (TE-02)
 
-- **Test-Datenbank:** `make db-up` startet PostgreSQL 16 in Docker (Port 54329; `make test` und `make ci` tun das selbst, in der CI läuft sie als Dienst). Anderer Server: `PFLANZENDEX_TEST_DATABASE_URL`.
-- **Migrationen:** SQL-Dateien in `packages/db/migrations/`, nur vorwärts, mit Prüfsumme (eine angewendete Datei darf sich nicht ändern). Anwenden: `make migrate`.
-- **Neue nutzerbezogene Tabelle:** Spalte `konto_id uuid not null references konto(id) on delete cascade`, danach `select mandantenschutz('tabelle');` und ein Eintrag in `packages/db/src/fixtures.ts`. Fehlt eines davon, scheitert der generische Test (`mandant.test.ts`). Tabellen ohne Konto (z. B. Artenkatalog) brauchen einen begründeten Eintrag in `OHNE_KONTO_KENNUNG`.
-- **Zugriff:** nur über `mitKonto(pool, kontoId, …)`: Transaktion, Rolle `pflanzendex_app` (ohne BYPASSRLS), Sitzungsvariable `app.konto_id` nur für diese Transaktion.
+- **Test database:** `make db-up` starts PostgreSQL 16 in Docker (port 54329; `make test` and `make ci` do this themselves, in CI it runs as a service). Another server: `PFLANZENDEX_TEST_DATABASE_URL`.
+- **Migrations:** SQL files in `packages/db/migrations/`, forward only, with a checksum (an applied file must never change). Apply with `make migrate`.
+- **New user-owned table:** column `konto_id uuid not null references konto(id) on delete cascade`, then `select mandantenschutz('table');` and an entry in `packages/db/src/fixtures.ts`. If any of these is missing, the generic test (`mandant.test.ts`) fails. Tables without an account (e.g. the species catalog) need an entry with a reason in `OHNE_KONTO_KENNUNG`.
+- **Access:** only through `mitKonto(pool, kontoId, …)`: a transaction, role `pflanzendex_app` (without BYPASSRLS), session variable `app.konto_id` for that transaction only.
 
-## Anmeldung (US-ACC-01, E-03)
+## Sign-in (US-ACC-01, E-03)
 
-- **Anmeldedienst lokal:** `make auth-up` startet Keycloak 26.8 (Port 18081, Realm `pflanzendex`, Import aus `app/dev/keycloak/pflanzendex-realm.json`) und einen Mail-Fänger (Mailpit, http://localhost:18025). Das Admin-Passwort erzeugt das Ziel zufällig in `app/dev/.env` (nicht im Repo). `make auth-down` entfernt beides samt Daten.
-- **Ablauf:** Die Web-App leitet per OIDC-Code-Ablauf mit PKCE zu Keycloak (Anmeldung und Registrierung dort, Deutsch). Keycloak verlangt zuerst die E-Mail-Bestätigung, danach die Passwortvergabe (Richtlinie: mindestens 10 Zeichen). Passwörter liegen nie bei uns (FR-ACC-03).
-- **API:** `Authorization: Bearer <Access-Token>`; geprüft werden Signatur (JWKS), Aussteller und Ziel `pflanzendex-api`. Jede Anfrage setzt das Konto über `mitKonto`. `GET /konto` liefert die eigenen Kontodaten. Umgebung: `OIDC_ISSUER`, `OIDC_AUDIENCE`, `DATABASE_URL`, `WEB_URSPRUNG`.
-- **Kontoanlage:** `findeOderLegeKonto` (db) ist der eigene Weg für die erste Anmeldung: Die Regeln `anmeldung_*` an `konto` zeigen und erlauben nur die Zeile des geprüften Subjekts (`app.subjekt`). Kein BYPASSRLS.
-- **Web:** `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID`, `VITE_API_URL` überschreiben die Voreinstellungen. „Auf allen Geräten abmelden“ ruft die Account-API von Keycloak (`DELETE /account/sessions`).
-- **Tests ohne Keycloak:** Token-, Middleware- und Oberflächentests laufen ohne Anmeldedienst (lokal erzeugte Schlüssel). Der Ablauf gegen Keycloak ist manuell geprüft: `Docs/testprotokolle/acc-01.md`.
+- **Local auth server:** `make auth-up` starts Keycloak 26.8 (port 18081, realm `pflanzendex`, imported from `app/dev/keycloak/pflanzendex-realm.json`) and a mail catcher (Mailpit, http://localhost:18025). The target generates a random admin password into `app/dev/.env` (not in the repo). `make auth-down` removes both, including their data.
+- **Flow:** the web app redirects to Keycloak with the OIDC authorization code flow and PKCE (sign-in and registration happen there, in German). Keycloak first requires email confirmation, then setting a password (policy: at least 10 characters). Passwords never reach us (FR-ACC-03).
+- **API:** `Authorization: Bearer <access token>`; signature (JWKS), issuer and audience `pflanzendex-api` are verified. Every request sets the account via `mitKonto`. `GET /konto` returns the caller's own account data. Environment: `OIDC_ISSUER`, `OIDC_AUDIENCE`, `DATABASE_URL`, `WEB_URSPRUNG`.
+- **Account creation:** `findeOderLegeKonto` (db) is the dedicated path for the first sign-in: the `anmeldung_*` policies on `konto` show and allow only the row of the verified subject (`app.subjekt`). No BYPASSRLS.
+- **Web:** `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID` and `VITE_API_URL` override the defaults. "Sign out on all devices" calls the Keycloak account API (`DELETE /account/sessions`).
+- **Tests without Keycloak:** token, middleware and UI tests run without the auth server (locally generated keys). The flow against Keycloak was checked manually: `Docs/testprotokolle/acc-01.md`.
 
-## Betreiber-Rolle und Prüfstatus (TE-08)
+## Operator role and review status (TE-08)
 
-- **Rollen:** Tabelle `konto_rolle` (`betreiber`, `pruefer`), vergeben nur per Verwaltungszugang, nie über die Anwendung (die Anwendungsrolle hat keine Rechte auf die Tabelle; sie liest nur die eigene Rolle über `rollen_des_kontos()`). Die Rolle gibt keinen Zugriff auf fremde Inhalte (P-04).
-- **Prüfstatus:** Tabelle `pruefvorgang` (Ersteller = `konto_id`, Objekt als `objekt_art` + `objekt_id`, Status `vorschlag`, `ki_ungeprueft`, `kuratiert`, `geprueft`, `zurueckgewiesen`). Operationen in `core`: `katalog.vorschlagen` (jeder), `katalog.kuratieren` und `katalog.pruefen` (nur Prüfer). Ein Auslöser in der Datenbank erzwingt dieselben Rechte zusätzlich.
-- **Einzige Ausnahme vom Mandantenschutz:** Prüfer lesen die Prüfliste (`pruefvorgang`, nur Metadaten). Der Mandantentest beweist, dass ein Betreiber in allen anderen Tabellen nichts Fremdes sieht (`pruefung.test.ts`).
-- **Artenkatalog:** Seit BES-01 verweist `art` auf `pruefvorgang` (siehe unten). Freigabe nur bei vollständigen Pflichtfeldern (FR-BES-14), Zusammenführen und Hinweise an den Ersteller gehören zu BES-10. Eine KI-Verbindung bekommt nie eine Rolle und kann daher nicht freigeben (FR-BES-06).
+- **Roles:** table `konto_rolle` (`betreiber`, `pruefer`), granted only through admin access, never through the application (the application role has no rights on the table; it only reads its own role through `rollen_des_kontos()`). A role grants no access to other accounts' content (P-04).
+- **Review status:** table `pruefvorgang` (creator = `konto_id`, object as `objekt_art` + `objekt_id`, status `vorschlag`, `ki_ungeprueft`, `kuratiert`, `geprueft`, `zurueckgewiesen`). Operations in `core`: `katalog.vorschlagen` (anyone), `katalog.kuratieren` and `katalog.pruefen` (reviewers only). A database trigger enforces the same rights as well.
+- **The only exception to tenant isolation:** reviewers read the review queue (`pruefvorgang`, metadata only). The tenant test proves that an operator sees nothing of other accounts in any other table (`pruefung.test.ts`).
+- **Species catalog:** since BES-01, `art` references `pruefvorgang` (see below). Approval only with all required fields filled (FR-BES-14); merging and notes to the creator belong to BES-10. An AI connection never gets a role and therefore cannot approve anything (FR-BES-06).
 
-## Standorte und Lichtzonen (US-LIC-05)
+## Locations and light zones (US-LIC-05)
 
-- **Daten:** Tabellen `lichtzone` und `standort` (Migration 0004), beide mit Mandantenschutz und Namen je Konto eindeutig (ohne Beachtung der Schreibweise). Der Standort verweist über einen zusammengesetzten Fremdschlüssel `(konto_id, lichtzone_id)` auf die Zone: Eine Zone eines anderen Kontos lässt sich nicht zuordnen, Umbenennen ändert keine Zuordnung. Ein Standort ohne Zone ist zulässig und erscheint in `GET /hinweise`.
-- **Operationen (`core/operationen/licht`):** `lichtzone.anlegen|aendern|loeschen|voreinstellung`, `standort.einrichten|aendern`. Schreiben nur über `fuehreAus` mit Kopfzeile `Idempotency-Key`; der Wiederholungsschutz liegt in der Tabelle `idempotenz` (24 Stunden, Annahme).
-- **API:** `GET/POST /lichtzonen`, `PUT/DELETE /lichtzonen/:id`, `POST /lichtzonen/voreinstellung`, `GET/POST /standorte`, `PUT /standorte/:id`, `GET /hinweise`. Fehler: `{ fehler: { code, text, details?, daten? } }`.
-- **Grenze (Zone löschen):** Der Port `ZonenNutzung` fragt alle Quellen, wer eine Zone belegt. Heute gibt es nur die Quelle „Standorte“; Exemplare und Arten entstehen mit BES. **BES muss je eine Quelle ergänzen** (Parameter `zusaetzlicheNutzung` von `lichtRouten`), sonst blieben sie beim Löschen unbemerkt. Der Mechanismus ist mit einer Attrappe getestet. Standorte lassen sich noch nicht löschen (kein Kriterium).
-- **Hinweise:** Die zentrale Hinweis-Seite (US-BES-08) gibt es noch nicht; LIC-05 zeigt seine Hinweise auf der eigenen Seite und liefert sie über `standortHinweise`.
+- **Data:** tables `lichtzone` and `standort` (migration 0004), both with tenant isolation and names unique per account (case-insensitive). A location references its zone through the composite foreign key `(konto_id, lichtzone_id)`: a zone of another account cannot be assigned, and renaming never changes an assignment. A location without a zone is allowed and shows up in `GET /hinweise`.
+- **Operations (`core/operationen/licht`):** `lichtzone.anlegen|aendern|loeschen|voreinstellung`, `standort.einrichten|aendern`. Writes only through `fuehreAus` with the `Idempotency-Key` header; replay protection lives in the `idempotenz` table (24 hours, an assumption).
+- **API:** `GET/POST /lichtzonen`, `PUT/DELETE /lichtzonen/:id`, `POST /lichtzonen/voreinstellung`, `GET/POST /standorte`, `PUT /standorte/:id`, `GET /hinweise`. Errors: `{ fehler: { code, text, details?, daten? } }`.
+- **Limit (deleting a zone):** the `ZonenNutzung` port asks every source which of them uses a zone. Today the only source is "locations"; Exemplare and Arten arrive with BES. **BES has to add one source each** (parameter `zusaetzlicheNutzung` of `lichtRouten`), otherwise they would go unnoticed when a zone is deleted. The mechanism is tested with a stub. Locations cannot be deleted yet (no criterion).
+- **Hints:** the central hints page (US-BES-08) does not exist yet; LIC-05 shows its hints on its own page and provides them through `standortHinweise`.
 
-## Artenkatalog (US-BES-01)
+## Species catalog (US-BES-01)
 
-- **Daten:** Migration 0005: `art` (Profil nach DM-BES-01) und `art_name` (lateinischer, deutscher, englischer Name, Synonyme mit normiertem Suchschlüssel). Jede Art hat genau einen Prüfvorgang (zusammengesetzter Fremdschlüssel `(objekt_art, id)`, `on delete restrict`: Das Löschen eines Kontos nimmt keine Katalogart mit). Der Katalog trägt keine `konto_id`: Beide Tabellen stehen mit Begründung in `OHNE_KONTO_KENNUNG` und zusätzlich in `KATALOG_TABELLEN`, wofür der generische Schematest erzwungene Zeilenregeln verlangt.
-- **Sichtbarkeit (FR-BES-11):** Eine Art sehen alle, wenn ihr Vorgang `kuratiert` oder `geprueft` ist, sonst nur der Ersteller (auch `zurueckgewiesen`). Das entscheidet `art_status()` (`security definer`), weil `pruefvorgang` fremde Vorgänge verbirgt; dafür darf nur die Eigentümerrolle freigegebene Vorgänge lesen (Regel `katalog_freigegeben`). `ki_ungeprueft` bleibt privat, solange kein Betreiber-Batch es anlegt. Die Anwendung hat auf `art` nur `select` und `insert` (Anlegen nur mit eigenem Vorgang); Ändern und Löschen gibt es nicht. Prüfer sehen private Vorschläge noch nicht (Ansicht dazu: BES-10).
-- **Operation:** `art.vorschlagen` (`core/operationen/art`) legt Art, Namen und Prüfvorgang `vorschlag` in einer Transaktion an. Dubletten (gleicher normierter lateinischer Name oder Synonym unter den sichtbaren Arten) liefern `art.dublette` mit der vorhandenen Art; es wird nichts geschrieben. Private Vorschläge verschiedener Konten sind keine Dubletten (sonst verriete der Fehler fremde Daten); BES-10 führt sie zusammen.
-- **Pflichtfelder beim Vorschlag (Annahme):** lateinischer Name, Schwierigkeit 1–3, Standard-Stufe 2–4, Lichtbedarf (Lux), Wachstumsmaß, Vergeilung-Anzeichen, Erfolgskriterien. Alles andere ist optional und heißt ohne Angabe „unbekannt“ (P-08); die Ruhephase gilt nur als Paar. Quelle für Lichtbedarf und Ruhephase verlangt erst die Freigabe (FR-BES-14).
-- **API:** `GET /arten?q=` (Teilwort, ohne Akzente und Groß-/Kleinschreibung, höchstens 50 Treffer, nennt den Namen, über den gefunden wurde), `GET /arten/:id` (fremde und unbekannte Art: 404), `POST /arten` (`Idempotency-Key`).
-- **Grenzen:** Der Katalog ist leer, bis der Katalog-Job (POK-03) oder Betreiber-Batches ihn füllen. Der Auftrag an den KI-Client (US-KI-08) und das Anlegen eines Exemplars (BES-02) fehlen: „Diese Art wählen“ merkt sich die Art nur in der Oberfläche. Bild, Merkmale, Versionen (FR-BES-12) und das Bearbeiten eines eigenen Vorschlags gibt es noch nicht. Arten verlinken keine Lichtzone (FR-BES-10), brauchen also keine Quelle für `ZonenNutzung`; Exemplare und Pflegeprofile schon.
+- **Data:** migration 0005: `art` (profile per DM-BES-01) and `art_name` (Latin, German and English name, synonyms, each with a normalized search key). Every species has exactly one review process (composite foreign key `(objekt_art, id)`, `on delete restrict`: deleting an account never takes a catalog species with it). The catalog has no `konto_id`: both tables are justified entries in `OHNE_KONTO_KENNUNG` and also listed in `KATALOG_TABELLEN`, for which the generic schema test demands enforced row rules.
+- **Visibility (FR-BES-11):** everyone sees a species when its process is `kuratiert` or `geprueft`, otherwise only its creator (also `zurueckgewiesen`). `art_status()` (`security definer`) decides, because `pruefvorgang` hides other accounts processes; for that, only the owner role may read approved processes (policy `katalog_freigegeben`). `ki_ungeprueft` stays private unless an operator batch creates it. The application has only `select` and `insert` on `art` (insert only with an own process); there is no update or delete. Reviewers do not see private proposals yet (that view belongs to BES-10).
+- **Operation:** `art.vorschlagen` (`core/operationen/art`) creates species, names and the `vorschlag` process in one transaction. Duplicates (same normalized Latin name or synonym among the visible species) return `art.dublette` with the existing species and write nothing. Private proposals of different accounts are not duplicates (the error would reveal foreign data); BES-10 merges them.
+- **Required fields of a proposal (assumption):** Latin name, difficulty 1-3, default level 2-4, light need (lux), growth measure, etiolation signs, success criteria. Everything else is optional and shown as "unbekannt" when missing (P-08); the dormancy period only counts as a pair. A source for light need and dormancy is required only for approval (FR-BES-14).
+- **API:** `GET /arten?q=` (partial word, accent- and case-insensitive, at most 50 hits, names the name it matched), `GET /arten/:id` (foreign or unknown species: 404), `POST /arten` (`Idempotency-Key`).
+- **Limits:** the catalog stays empty until the catalog job (POK-03) or operator batches fill it. The hand-over to the AI client (US-KI-08) and creating an Exemplar (BES-02) are missing: "Diese Art wählen" only remembers the species in the UI. Image, traits, versions (FR-BES-12) and editing an own proposal do not exist yet. Species link no light zone (FR-BES-10), so they need no `ZonenNutzung` source; Exemplare and care profiles do.
 
-**Betrieb (TE-03):** Container, Compose, Sicherung und Deploy liegen unter `deploy/`; Anleitung in `Docs/betrieb/staging-deploy-und-backup.md`. Ziele: `make deploy`, `make backup`, `make restore-test`.
+**Operations (TE-03):** containers, Compose, backup and deploy live in `deploy/`; see the runbook `Docs/operations/staging-deploy-and-backup.md`. Targets: `make deploy`, `make backup`, `make restore-test`.

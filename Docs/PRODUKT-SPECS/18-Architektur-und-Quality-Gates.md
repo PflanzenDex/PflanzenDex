@@ -108,7 +108,7 @@ Akzeptanzkriterien:
 Als **Team** will ich neue Regeln einführen, ohne die Arbeit zu stoppen.
 
 Akzeptanzkriterien:
-- Jede Regel lebt im **Prinzipienregister** (`Docs/prinzipien/`) mit Reifegrad `observed → measurable → checked → gated` (Format wie in Tombola: *Warum besser, Woran messbar, Prüfbar durch, Gate, Belege*). Ein Skript validiert das Register (Pflichtfelder, Reifegrad passt zu Feldern).
+- Jede Regel lebt im **Prinzipienregister** (`Docs/principles/`) mit Reifegrad `observed → measurable → checked → gated` (Format wie in Tombola: *Warum besser, Woran messbar, Prüfbar durch, Gate, Belege*). Ein Skript validiert das Register (Pflichtfelder, Reifegrad passt zu Feldern).
 - Ein neues Gate startet als **Bericht** (R) mit gemessener Basislinie und wird erst nach einer vereinbarten Frist **blockierend** (B). Vorbild: Lighthouse bei Tombola war erst Bericht, dann Merge-Gate, nachdem die Werte erreichbar waren.
 - Coverage-Schwellen werden knapp **unter** den aktuellen Wert gesetzt und nur angehoben (Ratchet), nie gesenkt ohne Begründung im PR.
 - Ein Gate, das in drei Monaten keinen Fehler fand, wird auf Nutzen geprüft, nicht blind behalten.
