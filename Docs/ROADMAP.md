@@ -1,6 +1,6 @@
 # PflanzenDex – Roadmap und Backlog-Analyse
 
-Stand: 2026-10-03 · erzeugt aus den GitHub-Tickets (Quelle: Issues, Meilensteine, „Blocked by“), Specs in `Docs/PRODUKT-SPECS/` (Stand: Commit `eed5f48`). **Die Specs bleiben maßgeblich**; Tickets und diese Roadmap sind eine Planungssicht darauf.
+Stand: 2026-10-03 · erzeugt aus den GitHub-Tickets (Quelle: Issues, Meilensteine, „Blocked by“), Specs in `Docs/PRODUKT-SPECS/` (Stand: Commit `fdb4fbe`). **Die Specs bleiben maßgeblich**; Tickets und diese Roadmap sind eine Planungssicht darauf.
 
 - Tickets: [alle Issues](https://github.com/PflanzenDex/PflanzenDex/issues) · Meilensteine: [R0…R6, Stufe 2](https://github.com/PflanzenDex/PflanzenDex/milestones)
 - Umfang: **175 offene Tickets** = 124 Userstories + 19 Entscheidungen + 14 Enabler (nicht in der Spec, abgeleitet) + 18 Sammel-Epics. Entfallen: 5 Tickets (Epic MIG, Import aus dem Vault).
@@ -79,8 +79,8 @@ Tickets, auf die die meisten anderen transitiv warten:
 | [#31](https://github.com/PflanzenDex/PflanzenDex/issues/31) `E-12` Rechtliches vor dem ersten Externen | offen | Stufe 2 – Öffnung für Externe | `TE-11` |
 | [#32](https://github.com/PflanzenDex/PflanzenDex/issues/32) `E-13` CI-Plattform und Branch-Modell | entschieden | R0 Fundament | `DEV-06`, `QG-02` |
 | [#33](https://github.com/PflanzenDex/PflanzenDex/issues/33) `E-14` Deploy-Freigabe | offen | R1 Parität | `DEV-06` |
-| [#34](https://github.com/PflanzenDex/PflanzenDex/issues/34) `E-15` Schwellenwerte der Gates | offen | R0 Fundament | `QG-06` |
-| [#35](https://github.com/PflanzenDex/PflanzenDex/issues/35) `E-16` Statische Analyse (Fallow/Semgrep) | offen | R1 Parität | `QG-08` |
+| [#34](https://github.com/PflanzenDex/PflanzenDex/issues/34) `E-15` Schwellenwerte der Gates | entschieden | R0 Fundament | `QG-06` |
+| [#35](https://github.com/PflanzenDex/PflanzenDex/issues/35) `E-16` Statische Analyse (Fallow/Semgrep) | entschieden | R1 Parität | `QG-08` |
 | [#36](https://github.com/PflanzenDex/PflanzenDex/issues/36) `E-17` Foto-Virenscan | offen | Stufe 2 – Öffnung für Externe | – |
 | [#37](https://github.com/PflanzenDex/PflanzenDex/issues/37) `E-18` Review-Automatik | offen | Stufe 3 / später | – |
 | [#173](https://github.com/PflanzenDex/PflanzenDex/issues/173) `E-19` Eingebauter KI-Chat (BYOK) | offen | Stufe 3 / später | – |
