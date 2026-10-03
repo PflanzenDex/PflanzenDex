@@ -45,7 +45,9 @@ export function referencesOf(body) {
   return tokens.flatMap((t) => {
     const mk = t.match(/^make ([a-z-]+)$/);
     if (mk) return [{ kind: "make", value: mk[1] }];
-    return /^[\w.@-]+(\/[\w.@-]+)+$/.test(t) ? [{ kind: "path", value: t }] : [];
+    const segments = t.split("/");
+    const isPath = segments.length > 1 && segments.every((s) => /^[\w.@-]+$/.test(s));
+    return isPath ? [{ kind: "path", value: t }] : [];
   });
 }
 

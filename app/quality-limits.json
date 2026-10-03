@@ -1,0 +1,14 @@
+{
+  "_comment": "Single source of truth for code metric limits (FR-QG-16, E-15). Values are assumptions until measured. Read by eslint.config.js; per-area overrides are merged over `default`.",
+  "default": {
+    "complexity": 15,
+    "cognitiveComplexity": 30,
+    "maxLines": 200,
+    "maxLinesPerFunction": 60,
+    "maxDepth": 4,
+    "maxParams": 4
+  },
+  "overrides": {
+    "packages/core/**/*.ts": { "complexity": 10, "cognitiveComplexity": 15 }
+  }
+}
