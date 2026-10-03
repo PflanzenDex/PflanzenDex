@@ -38,6 +38,9 @@ jobs:
       - run: make setup
       - run: make ci
       - run: make audit
+      - run: make release-tags-check
+        env:
+          GH_TOKEN: ${{ github.token }}
 
   # QG-T3 + QG-U1 (axe, report only): Playwright against the real stack, mobile and desktop. Nightly on `dev`; manual runs test the dispatched ref.
   e2e:

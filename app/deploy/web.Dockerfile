@@ -9,6 +9,8 @@ RUN npm ci --workspace @pflanzendex/web --include-workspace-root=false
 COPY tsconfig.base.json ./
 COPY packages/core packages/core
 COPY packages/web packages/web
+ARG APP_VERSION=unbekannt
+ENV VITE_APP_VERSION=$APP_VERSION
 RUN npm run build -w @pflanzendex/web
 
 FROM caddy:2-alpine

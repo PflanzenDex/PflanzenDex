@@ -179,7 +179,7 @@ Akzeptanzkriterien:
 | FR-DEV-02 | Hooks, Skills, Routinen und Prozess sind **Teil des Repos** und per Pull-Request änderbar; keine Einstellungen nur auf einzelnen Rechnern. | ⬜ |
 | FR-DEV-03 | Jede Routine in US-DEV-03 ist als Workflow oder geplanter Job im Repo definiert und hat einen Besitzer. | ⬜ |
 | FR-DEV-04 | Das Prinzipienregister (US-QG-06) wird von einem Skript validiert und von Review und Fehleranalyse gepflegt. | 🟨 |
-| FR-DEV-05 | Versionen entstehen nur aus Commits (SemVer); ein manuell gesetzter Tag oder eine manuell geänderte Version fällt in CI auf. | ⬜ |
+| FR-DEV-05 | Versionen entstehen nur aus Commits (SemVer); ein manuell gesetzter Tag oder eine manuell geänderte Version fällt in CI auf. | ✅ |
 | FR-DEV-06 | Release-Notizen und nutzerseitiger Changelog sind zweisprachig vorbereitet (Deutsch zuerst); Texte liegen in Übersetzungsdateien, nicht im Code (NFR-14). | ⬜ |
 | FR-DEV-07 | Jeder Release erhält ein **Datenstand-Etikett** für Katalog und Taxonomie-Baum (Datum, Anzahl Arten, Fehlerzahl). | ⬜ |
 | FR-DEV-08 | Geplante Agenten und Routinen laufen mit minimalen Rechten (nur Lesen, Bericht schreiben); Deploy- und Geheimnisrechte hat nur der Release-Workflow. | ⬜ |

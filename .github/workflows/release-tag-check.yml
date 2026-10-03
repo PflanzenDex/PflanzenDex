@@ -1,0 +1,29 @@
+# Release tag check (FR-DEV-05, ADR 0002): a pushed `v*` tag must come from the release workflow.
+# Detects after the fact (tags cannot be blocked from creation) and fails the run so it shows up in the Actions tab.
+name: Release tag check
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      # Only the check script runs (no dependencies needed). semantic-release creates the release right after the tag,
+      # so the script retries for a short while before it reports a missing release.
+      - run: make release-tags-check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG_CHECK_ATTEMPTS: "12"

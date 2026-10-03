@@ -21,4 +21,4 @@ US-DEV-06 lists git tag, `CHANGELOG.md` and release notes as the result of a rel
 
 - The user-facing change log in the app (QG-U3, FR-DEV-06) does not come from `CHANGELOG.md` but from its own translation files (German first). It gets its own PR.
 - The back-merge `main` → `dev` is still needed after every release (E-13), because `main` holds the merge commits of the release PRs. Version commits cannot cause conflicts because there are none.
-- A manually created `v*` tag is possible (creation is allowed) but immutable and visible in the audit log. An automated check (FR-DEV-05) is still missing.
+- A manually created `v*` tag is possible (creation is allowed) but immutable and visible in the audit log. `make release-tags-check` (FR-DEV-05) runs on every `v*` tag push (`.github/workflows/release-tag-check.yml`) and nightly: every tag must be SemVer, point at a commit on `main` and have a GitHub release by `github-actions[bot]` (seed tag `v0.0.0` exempt), and no `package.json` may carry a `version` field. It detects after the fact (tags cannot be blocked from creation) and fails the run, which the nightly turns into an issue.
