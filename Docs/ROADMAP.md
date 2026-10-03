@@ -1,7 +1,8 @@
 # PflanzenDex – Roadmap und Backlog-Analyse
 
-Stand: 2026-10-03 · erzeugt aus den GitHub-Tickets (Quelle: Issues, Meilensteine, „Blocked by“), Specs in `Docs/PRODUKT-SPECS/` (Stand: Commit `fdb4fbe`). **Die Specs bleiben maßgeblich**; Tickets und diese Roadmap sind eine Planungssicht darauf.
+Stand: 2026-10-03 · erzeugt aus den GitHub-Tickets (Quelle: Issues, Meilensteine, „Blocked by“), Specs in `Docs/PRODUKT-SPECS/` (Stand: Commit `ecf6780`). **Die Specs bleiben maßgeblich**; Tickets und diese Roadmap sind eine Planungssicht darauf.
 
+- GitHub-Projekt: [PflanzenDex Roadmap](https://github.com/orgs/PflanzenDex/projects/2) (privat; Felder Release, Typ, Epic, Größe, Welle)
 - Tickets: [alle Issues](https://github.com/PflanzenDex/PflanzenDex/issues) · Meilensteine: [R0…R6, Stufe 2](https://github.com/PflanzenDex/PflanzenDex/milestones)
 - Umfang: **175 offene Tickets** = 124 Userstories + 19 Entscheidungen + 14 Enabler (nicht in der Spec, abgeleitet) + 18 Sammel-Epics. Entfallen: 5 Tickets (Epic MIG, Import aus dem Vault).
 
