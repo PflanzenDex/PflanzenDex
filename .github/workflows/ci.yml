@@ -106,6 +106,34 @@ jobs:
       - run: make setup
       - run: make audit
 
+  # QG-U1 (report only, E-15): Lighthouse on the built web app for release PRs into `main`; otherwise nightly (nightly.yml).
+  # Never fails the build: no thresholds until the first baseline exists.
+  lighthouse:
+    needs: changes
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - run: make lighthouse
+        continue-on-error: true
+      - if: always()
+        run: cat app/packages/web/.lighthouseci/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: app/packages/web/.lighthouseci
+          if-no-files-found: ignore
+
   # QG-C1 for the PR title: the squash into `dev` and the merge into `main` use it as the commit message.
   pr-title:
     if: github.event_name == 'pull_request'
@@ -125,7 +153,7 @@ jobs:
         run: make commitlint
 
   ci-status:
-    needs: [changes, app, pr-title, dependency-review, audit]
+    needs: [changes, app, pr-title, dependency-review, audit, lighthouse]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -136,8 +164,9 @@ jobs:
           PR_TITLE: ${{ needs.pr-title.result }}
           DEPENDENCY_REVIEW: ${{ needs.dependency-review.result }}
           AUDIT: ${{ needs.audit.result }}
+          LIGHTHOUSE: ${{ needs.lighthouse.result }}
         run: |
-          for r in "$CHANGES" "$APP" "$PR_TITLE" "$DEPENDENCY_REVIEW" "$AUDIT"; do
+          for r in "$CHANGES" "$APP" "$PR_TITLE" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE"; do
             case "$r" in
               success | skipped) ;;
               *) echo "Fehlgeschlagen: $r"; exit 1 ;;

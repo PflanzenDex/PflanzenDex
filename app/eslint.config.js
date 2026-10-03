@@ -70,7 +70,7 @@ const noUtcDateSlice = ["slice", "substring", "substr"].map((m) => ({
 }));
 
 export default defineConfig([
-  { ignores: ["**/dist/**", "**/node_modules/**", "**/coverage/**"] },
+  { ignores: ["**/dist/**", "**/node_modules/**", "**/coverage/**", "**/.lighthouseci/**"] },
   js.configs.recommended,
   tseslint.configs.strict,
   // QG-S3: security rules at error level. detect-object-injection is off: it flags every `obj[key]` and is

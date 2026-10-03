@@ -10,3 +10,4 @@ coverage/
 .env.worktree
 .claude/settings.local.json
 .cache/
+.lighthouseci/

@@ -39,6 +39,32 @@ jobs:
       - run: make ci
       - run: make audit
 
+  # QG-U1 (report only, E-15): Lighthouse on the built web app; never fails the nightly run.
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.ref || 'dev' }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - run: make lighthouse
+        continue-on-error: true
+      - if: always()
+        run: cat app/packages/web/.lighthouseci/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: app/packages/web/.lighthouseci
+          if-no-files-found: ignore
+
   report:
     needs: suite
     if: failure()
