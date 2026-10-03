@@ -38,6 +38,9 @@ jobs:
       - run: make setup
       - run: make ci
       - run: make audit
+      - run: make release-tags-check
+        env:
+          GH_TOKEN: ${{ github.token }}
 
   report:
     needs: suite

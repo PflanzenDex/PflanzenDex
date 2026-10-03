@@ -18,7 +18,7 @@ Each protected branch has two rulesets, so that the hard rules never have except
 
 | Ruleset | Target | Rules | Bypass |
 |---|---|---|---|
-| `main-protection` | `main` | required check `ci-status`; no force push, no deletion | none |
+| `main-protection` | `main` | required check `ci-status`; CodeQL code scanning results (no new high or higher security alerts, no errors); no force push, no deletion | none |
 | `main-review` | `main` | PR only; 1 approval from a human who is not the last pusher; stale approvals dismissed on new pushes; unresolved review threads block; code-owner review; merge commit only (E-13) | repository admins, **only when merging a PR** |
 | `dev-protection` | `dev` | like `main-protection` | none |
 | `dev-review` | `dev` | like `main-review`, but squash (feature branches) and merge commit (only for the back-merge `main` → `dev` after a release or hotfix) | repository admins, only when merging a PR |
