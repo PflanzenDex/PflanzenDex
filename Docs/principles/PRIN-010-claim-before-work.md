@@ -15,7 +15,7 @@ Number of stories with more than one assignee, live branch or open PR, and numbe
 
 ## Checked by
 
-`app/scripts/claim.mjs`, `app/scripts/claim-check.mjs`, `app/scripts/board.mjs` and their tests (`app/scripts/claim.test.mjs`, `app/scripts/claim-check.test.mjs`, `app/scripts/board.test.mjs`). `make claim` refuses a second claim, `make worktree` and the pre-push hook (`.githooks/pre-push`) refuse a story that belongs to somebody else.
+`app/scripts/claim.mjs`, `app/scripts/claim-check.mjs`, `app/scripts/board.mjs` and their tests (`app/scripts/claim.test.mjs`, `app/scripts/claim-check.test.mjs`, `app/scripts/board.test.mjs`). `make claim` checks its preconditions first (`claim-preflight.mjs`), refuses a second claim, undoes its writes when a step fails, `make worktree` and the pre-push hook (`.githooks/pre-push`) refuse a story that belongs to somebody else.
 
 ## Evidence
 
