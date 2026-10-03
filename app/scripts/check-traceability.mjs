@@ -110,7 +110,7 @@ function readTree(root, dir, ok) {
 }
 
 export function run(root) {
-  const specDir = path.join(root, "Docs/PRODUKT-SPECS");
+  const specDir = path.join(root, "Docs/PRODUCT-SPECS");
   const specs = readTree(root, specDir, (p) => p.endsWith(".md"));
   const isTest = (p) => /\.test\.(ts|tsx|mjs)$/.test(p);
   const tests = {

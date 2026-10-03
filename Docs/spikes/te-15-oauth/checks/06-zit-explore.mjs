@@ -1,4 +1,4 @@
-// Erkundung: DCR mit fremder Domain, dann Login-Seite von Zitadel v4 (Felder).
+// Exploration: DCR with a foreign domain, then the login page of Zitadel v4 (fields).
 import { chromium } from "playwright";
 import { discover, register, pkce } from "./oauth-lib.mjs";
 const meta = await discover("http://localhost:18082");

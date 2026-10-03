@@ -15,7 +15,7 @@ A test asserts that every code has the format `<domain>.<reason>` and a non-empt
 
 ## Checked by
 
-`app/packages/core/src/kern/fehler.ts` (definition), `app/packages/core/src/kern/fehler.test.ts` (format test).
+`app/packages/core/src/kernel/error.ts` (definition), `app/packages/core/src/kernel/error.test.ts` (format test).
 
 ## Evidence
 

@@ -1,4 +1,4 @@
-// Audience-Mapper an den pflanzen:*-Scopes, damit der MCP-Server als mögliche Audience im Token steht;
+// Audience mapper on the pflanzen:* scopes so that the MCP server appears as a possible audience in the token;
 // Keycloak (resource-indicators) engt sie dann anhand des resource-Parameters ein.
 import { admin } from "./kc-lib.mjs";
 for (const s of (await admin("/client-scopes")).filter((s) => s.name.startsWith("pflanzen:"))) {

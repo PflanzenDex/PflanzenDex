@@ -1,9 +1,9 @@
-// Richtet den Spike-Realm ein: Realm, Nutzer, Scopes. Idempotent (409 wird toleriert).
+// Sets up the spike realm: realm, users, scopes. Idempotent (409 is tolerated).
 import { admin, KC, REALM } from "./kc-lib.mjs";
 console.log("Keycloak:", KC);
 await admin("", { method: "POST", realm: "", body: { realm: REALM, enabled: true, internationalizationEnabled: true, supportedLocales: ["de", "en"], defaultLocale: "de", registrationAllowed: false } });
 await admin("/users", { method: "POST", body: { username: "alice", enabled: true, email: "alice@example.test", emailVerified: true, firstName: "Alice", lastName: "Test", credentials: [{ type: "password", value: "alice", temporary: false }] } });
-const scopes = { "pflanzen:read": "Pflanzendaten lesen", "pflanzen:draft": "Entwürfe anlegen", "pflanzen:write": "Rückholbare Änderungen schreiben" };
+const scopes = { "pflanzen:read": "Read plant data", "pflanzen:draft": "Create drafts", "pflanzen:write": "Write reversible changes" };
 for (const [name, desc] of Object.entries(scopes)) {
   await admin("/client-scopes", { method: "POST", body: { name, description: desc, protocol: "openid-connect", attributes: { "include.in.token.scope": "true", "display.on.consent.screen": "true", "consent.screen.text": desc } } });
 }

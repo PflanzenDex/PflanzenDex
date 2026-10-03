@@ -24,7 +24,7 @@ Otherwise it assigns you, sets the project status "In Progress" (field and optio
 Exceptions, all explicit:
 
 - `ALLOW_PRIOR_WORK=1 make claim ISSUE=<n>` waives merged PRs only (follow-up work on a story). Assignee, open PR and live branch are never waived.
-- `SKIP_CLAIM_CHECK=1` skips the claim check of `make worktree`. Use it only for branches that are not a story.
+- `SKIP_CLAIM_CHECK=1` skips the claim check of `make worktree` and of the pre-push hook. Use it only for branches that are not a story.
 - To take over a story, ask the assignee or unassign them on the issue; `make board` marks claims without a commit for `CLAIM_STALE_HOURS` hours (starting value 48, an assumption) as `STALE`.
 
 `make board` flags: `STALE` (see above), `DOUBLE` (more than one assignee, live branch or open PR for one story) and `NO-CLAIM` (a branch or PR exists, but nobody is assigned). Branches whose PR is merged or closed do not count as live.
@@ -37,7 +37,7 @@ Limits: the check needs `gh` and network; offline it warns and lets go. It is a 
 make worktree BRANCH=feat/<task>
 ```
 
-`make worktree` first runs the claim check (`app/scripts/claim-check.mjs`): a branch with a story ID is refused when the story belongs to somebody else or has not been claimed (`make claim` first). If the branch already exists on `origin` (made by `make claim`), the worktree continues it. There is no check on push: anyone with access may push to a branch.
+`make worktree` first runs the claim check (`app/scripts/claim-check.mjs`): a branch with a story ID is refused when the story belongs to somebody else or has not been claimed (`make claim` first). If the branch already exists on `origin` (made by `make claim`), the worktree continues it. The pre-push hook runs the same check for every pushed branch: a story owned by someone else aborts the push, an unclaimed one only warns.
 
 This calls `scripts/worktree-new.sh`: it fetches `origin/dev`, creates the branch and a worktree under `.worktrees/<branch>/` (slashes become dashes) and writes `.env.worktree`. Then change into that directory and run `make setup` there. Two sessions never write into the same directory; `.worktrees/` and `.env.worktree` are ignored by git.
 
@@ -56,7 +56,7 @@ The ranges are an assumption (starting values). With 500 slots per service colli
 ## Owners and number assignment
 
 - `.github/CODEOWNERS` names an owner per folder; changes to it require review.
-- `make gates` includes `check-specs`: duplicate file numbers in `Docs/PRODUKT-SPECS/` and IDs defined twice (`US-/FR-/DM-/E-`) fail the run. Whoever adds a number checks the highest free number on the current `origin/dev`; on a conflict the later PR rebases and renumbers (IDs of existing entries are never renumbered).
+- `make gates` includes `check-specs`: duplicate file numbers in `Docs/PRODUCT-SPECS/` and IDs defined twice (`US-/FR-/DM-/E-`) fail the run. Whoever adds a number checks the highest free number on the current `origin/dev`; on a conflict the later PR rebases and renumbers (IDs of existing entries are never renumbered).
 
 ## Rules for agents
 

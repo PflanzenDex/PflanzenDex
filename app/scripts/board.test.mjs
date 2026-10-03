@@ -22,11 +22,11 @@ test("US-DEV-08: an active claim shows assignee, open draft PR and commit age wi
       body: "Closes #11",
       state: "OPEN",
       isDraft: true,
-      headRefName: "feat/wac-01-messung",
+      headRefName: "feat/wac-01-measurement",
     },
   ];
   const [r] = rows([item(11, "US-WAC-01", ["konradhe14"])], prs, {
-    "feat/wac-01-messung": hoursAgo(5),
+    "feat/wac-01-measurement": hoursAgo(5),
   });
   assert.deepEqual([r.assignees, r.prs, r.age, r.flags], [["konradhe14"], ["#7 draft"], 5, []]);
 });
@@ -43,7 +43,7 @@ test("US-DEV-08: an assignee without any branch ages from the last issue update"
 });
 
 test("US-DEV-08: two branches for one story are marked DOUBLE (the wac-01 case)", () => {
-  const dates = { "feat/wac-01-messung": hoursAgo(1), "feat/us-wac-01-konrad": hoursAgo(2) };
+  const dates = { "feat/wac-01-measurement": hoursAgo(1), "feat/us-wac-01-konrad": hoursAgo(2) };
   const [r] = rows([item(11, "US-WAC-01", ["max"])], [], dates);
   assert.deepEqual(r.flags, ["DOUBLE"]);
 });

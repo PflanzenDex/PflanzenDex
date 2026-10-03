@@ -1,0 +1,38 @@
+/* Measure (US-WAC-01): mobile first, builds on style.css and light.css. */
+.measure h1 {
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+}
+.messkopf {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 20px;
+}
+.messkopf dt {
+  font-weight: 600;
+}
+.messkopf dd {
+  margin: 2px 0 0;
+  color: var(--leise);
+}
+.measure textarea {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 2px solid var(--rand);
+  background: var(--grund);
+  color: var(--text);
+  font: inherit;
+  font-weight: 400;
+  width: 100%;
+  resize: vertical;
+}
+.measure textarea:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+.measure .hint {
+  margin: 0 0 16px;
+}
+.measure .actions {
+  margin-top: 16px;
+}

@@ -26,7 +26,7 @@ function run(env, args = ["http://x", "v0.1.0"]) {
   });
 }
 const health = (v) =>
-  JSON.stringify({ status: "ok", produkt: "PflanzenDex", version: v, commit: "abc" });
+  JSON.stringify({ status: "ok", product: "PflanzenDex", version: v, commit: "abc" });
 
 test("ok when version matches and web root is 200", () => {
   const r = run({ STUB_HEALTH: health("v0.1.0") });

@@ -4,7 +4,7 @@
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-export const CHANGELOG_FILE = "app/packages/web/src/neuigkeiten/neuigkeiten.de.json";
+export const CHANGELOG_FILE = "app/packages/web/src/news/news.de.json";
 export const SKIP_MARKER = "[skip-changelog]";
 const USER_FACING_TYPES = new Set(["feat", "fix"]);
 

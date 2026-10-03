@@ -15,8 +15,8 @@ Number of stories with more than one assignee, live branch or open PR, and numbe
 
 ## Checked by
 
-`app/scripts/claim.mjs`, `app/scripts/claim-check.mjs`, `app/scripts/board.mjs` and their tests (`app/scripts/claim.test.mjs`, `app/scripts/claim-check.test.mjs`, `app/scripts/board.test.mjs`). `make claim` refuses a second claim, `make worktree` refuses a story that belongs to somebody else.
+`app/scripts/claim.mjs`, `app/scripts/claim-check.mjs`, `app/scripts/board.mjs` and their tests (`app/scripts/claim.test.mjs`, `app/scripts/claim-check.test.mjs`, `app/scripts/board.test.mjs`). `make claim` refuses a second claim, `make worktree` and the pre-push hook (`.githooks/pre-push`) refuse a story that belongs to somebody else.
 
 ## Evidence
 
-Not yet gated: no CI job requires a claim, and `make worktree` can be skipped with `SKIP_CLAIM_CHECK=1`. The checks need `gh` and network; offline they only warn. The first real use of the tool is the evidence still missing. Becoming a gate would need a CI check that a PR's story is assigned to the PR author (open).
+Not yet gated: no CI job requires a claim, and the pre-push hook can be skipped with `--no-verify` or `SKIP_CLAIM_CHECK=1`. The checks need `gh` and network; offline they only warn. The first real use of the tool is the evidence still missing. Becoming a gate would need a CI check that a PR's story is assigned to the PR author (open).
