@@ -86,7 +86,7 @@ Akzeptanzkriterien:
 - Bekannte, bewusst akzeptierte Altlasten stehen in einer expliziten Ausnahmeliste im Skript, **mit Kommentar warum**; neue Einträge sind nicht erlaubt (nur Reviewer mit Begründung). Die Liste darf nur kürzer werden.
 - Ausnahme je Datei per Marker in den ersten 5 Zeilen (`STRUCTURE_IGNORE: <Grund>`, `MAX_LINES_IGNORE: <Grund>`); ein Marker ohne Grund ist selbst ein Fehler.
 
-### US-QG-04 · Spec, Code und Test hängen sichtbar zusammen · ⬜
+### US-QG-04 · Spec, Code und Test hängen sichtbar zusammen · 🟨
 Als **Entwickler (oder KI)** will ich von jeder Story zu ihren Tests und zurück kommen (P-06).
 
 Akzeptanzkriterien:
@@ -104,7 +104,7 @@ Akzeptanzkriterien:
 - QG-D3: Ein Testbild mit EXIF-GPS wird hochgeladen; das gespeicherte Bild enthält keine EXIF-Daten und die lange Seite ist ≤ 1600 px (US-WAC-06).
 - QG-D4: Ein Test belegt, dass Datum und Phasenberechnung in der Zeitzone des Nutzers laufen (NFR-08); eine Lint-Regel verbietet `toISOString().slice(0, 10)` für Kalenderdaten (Ursache von B-01 im Prototyp).
 
-### US-QG-06 · Gates reifen, statt zu blockieren, was niemand erfüllen kann · ⬜
+### US-QG-06 · Gates reifen, statt zu blockieren, was niemand erfüllen kann · 🟨
 Als **Team** will ich neue Regeln einführen, ohne die Arbeit zu stoppen.
 
 Akzeptanzkriterien:
@@ -113,7 +113,7 @@ Akzeptanzkriterien:
 - Coverage-Schwellen werden knapp **unter** den aktuellen Wert gesetzt und nur angehoben (Ratchet), nie gesenkt ohne Begründung im PR.
 - Ein Gate, das in drei Monaten keinen Fehler fand, wird auf Nutzen geprüft, nicht blind behalten.
 
-### US-QG-07 · KI-Agenten arbeiten innerhalb derselben Gates · ⬜
+### US-QG-07 · KI-Agenten arbeiten innerhalb derselben Gates · 🟨
 Als **Entwickler** will ich, dass auch Claude (oder andere Agenten) an dieselben Regeln gebunden sind.
 
 Akzeptanzkriterien:
@@ -143,7 +143,7 @@ Akzeptanzkriterien:
 | FR-QG-03 | **Doku und Spec sind Gate-Gegenstand:** Skript validiert `Docs/PRODUKT-SPECS/` (IDs eindeutig, Zähler in `README.md`, Verweise auflösbar) und ein Link-Prüfer die Markdown-Links (QG-U2). | ⬜ |
 | FR-QG-04 | **Strukturregeln (Vorschlag, anzupassen an E-01):** (a) Fachlogik als eigenes Paket `core` mit Unterordnern je Epic; (b) Tests liegen neben dem Code als `<name>.test.ts`; (c) jedes Verzeichnis mit Code hat einen `index.ts` als einzige öffentliche Schnittstelle; (d) keine losen Dateien in Code-Gruppen (Komponenten, Hooks, Services); (e) Dateinamen nach Muster (PascalCase Komponenten, `useX` Hooks, `xService`). Prüfbar durch ein Skript mit Tests. | ⬜ |
 | FR-QG-05 | **Architekturgrenzen (maschinell):** (AB-1) `core` importiert nichts aus API, Web, Datenbank, Dateisystem oder Netz (NFR-ARC-01 der früheren Skizze); (AB-2) Web importiert nur die öffentliche Schnittstelle (`index.ts`) von `core`, nie interne Dateien; (AB-3) die KI-Schicht ruft nur validierende Operationen der Fachlogik, nie Repositories oder die Datenbank direkt (KI-R1); (AB-4) der Pokédex-Aufbau-Job schreibt nur in seinen Baum-Speicher; (AB-5) soziale Module lesen fremde Konten nur über die Freigabe-Schicht. Altlasten nur über die Ausnahmeliste (US-QG-03). | ⬜ |
-| FR-QG-06 | Das Rückverfolgbarkeits-Skript (US-QG-04) hat eigene Tests und läuft in CI; Format des Test-Namens: `US-XXX-nn` im Titel. | ⬜ |
+| FR-QG-06 | Das Rückverfolgbarkeits-Skript (US-QG-04) hat eigene Tests und läuft in CI; Format des Test-Namens: `US-XXX-nn` im Titel. | ✅ |
 | FR-QG-07 | **Datenschutz-Gates:** (a) Mandantentest für jede Operation; (b) Whitelist-Vertragstests für alle sozialen und Partner-Ausgaben; (c) Foto-Test mit EXIF/GPS; (d) Test, dass Partner-IDs nie in Nutzerexport und Nutzerdaten auftauchen (FR-EQU-04). | ⬜ |
 | FR-QG-08 | **Kernabläufe für Integration und E2E** (an Releases gekoppelt): R0: Konto → Standort → Art → Exemplar anlegen (Namensregel, Steckling); R1: Messen mit Foto → Trend → „Heute"-Liste → Pokédex-Fang; R2: Freigabe → Freund sieht Exemplar → Feed; R3: Angebot → Anfrage → Zusage → Übergabe (atomar, FR-SOZ-05). | ⬜ |
 | FR-QG-09 | **Performance/Barrierefreiheit:** Mobil-Läufe (Lighthouse CI und axe) mit Startschwellen als Bericht; vor R1-Abschluss auf blockierend setzen. Zahlenwerte werden aus der ersten Messung abgeleitet und nur angehoben (Annahme, nicht vorab festgelegt). | ⬜ |
