@@ -21,11 +21,11 @@ Rules for AI agents (Claude Code, Codex, Copilot, …) working in this repo. Hum
 
 Gate configs (workflows, rulesets, git hooks, `Makefile`, ESLint/knip/commitlint/release configs, check scripts, thresholds, exception lists, `.claude/`) define what "done" means. The Claude Code hooks in `.claude/settings.json` ask a human before you edit them. Never change them to turn a red run green. If a rule is wrong, say so and change it in its own PR with a reason (US-QG-07).
 
-Blocked for agents (and pointless anyway, because CI and the rulesets repeat every check): `--no-verify`, force pushes, pushes to `dev` or `main`, `gh pr merge`, changing `core.hooksPath`, editing rulesets or creating releases by hand.
+Blocked for agents (and pointless anyway, because CI and the rulesets repeat every check): `--no-verify`, force pushes, pushes to `dev` or `main`, calling `gh pr merge` directly, merging into `main`, changing `core.hooksPath`, editing rulesets or creating releases by hand.
 
 ## Before you say "done"
 
 1. `make ci` (or at least `make gates` plus the tests you touched) and report the result honestly: pass or fail, with the failing output. Never "should work" (D-05). The Stop hook reminds you if code changed after the last run.
 2. Update the spec status (⬜ → 🟨 → ✅) and the counters in `Docs/PRODUCT-SPECS/README.md` in the same PR.
 3. Commit only when asked. Conventional Commits with an epic scope (`app/commitlint.config.js`). Open the PR against `dev` and fill in the template, including the "AI involvement" section.
-4. You never merge. A human other than the one who started you approves (ADR 0001).
+4. Merge into `dev` with `make merge PR=<n>` once `ci-status` is green. It refuses unless the PR names a story that exists in `Docs/PRODUCT-SPECS/`, targets `dev`, and changes no gate file; then a human merges (ADR 0005). Releases into `main` stay with a human.
