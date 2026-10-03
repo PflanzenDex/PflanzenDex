@@ -2,77 +2,77 @@ import { Hono, type MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
 import type { Pool } from "pg";
 import {
-  produktTitel,
-  type BehandlungsQuelle,
-  type MessungsQuelle,
-  type SollStandortQuelle,
+  productTitle,
+  type TreatmentSource,
+  type MeasurementSource,
+  type TargetLocationSource,
 } from "@pflanzendex/core";
-import { authentifizierung, kontoRouten, type TokenPruefer } from "./konto";
-import { EXEMPLARE_PFADE, exemplareRouten } from "./bestand";
-import { ARTEN_PFADE, artenRouten } from "./katalog";
-import { LICHT_PFADE, lichtRouten } from "./licht";
-import { PFLEGE_PFADE, PFLEGEPHASEN_PFADE, pflegeRouten, pflegephasenRouten } from "./pflege";
+import { authentication, accountRoutes, type TokenVerifier } from "./account";
+import { SPECIMEN_PATHS, specimenRoutes } from "./collection";
+import { SPECIES_PATHS, speciesRoutes } from "./catalog";
+import { LIGHT_PATHS, lightRoutes } from "./light";
+import { CARE_PATHS, CARE_PHASES_PATHS, careRoutes, carePhasesRoutes } from "./care";
 
-export type AppOptionen = {
-  /** Prüft Access-Tokens des Anmeldedienstes; ohne Angabe gibt es keine geschützten Routen. */
-  pruefer?: TokenPruefer;
+export type AppOptions = {
+  /** Verifies access tokens of the sign-in service; without it there are no protected routes. */
+  reviewer?: TokenVerifier;
   pool?: Pool;
-  /** Ursprung der Web-App für CORS (die API setzt keine Cookies, die Anmeldung läuft per Bearer-Token). */
-  webUrsprung?: string;
-  /** Version des laufenden Stands: `git describe --tags --always`, z. B. v0.1.0 oder v0.1.0-3-gabc1234 (aus dem Build, nicht geheim). */
+  /** Origin of the web app for CORS (the API sets no cookies, sign-in runs via bearer token). */
+  webOrigin?: string;
+  /** Version of the running build: `git describe --tags --always`, e.g. v0.1.0 or v0.1.0-3-gabc1234 (from the build, not secret). */
   version?: string | undefined;
-  /** Kurzer Commit-Hash des laufenden Stands (aus dem Build, nicht geheim). */
+  /** Short commit hash of the running build (from the build, not secret). */
   commit?: string | undefined;
-  /** Die Uhr für „heute“ (NFR-08); ohne Angabe die Systemzeit. */
-  uhr?: () => Date;
-  /** Soll-Standort für neue Exemplare; `pflege` (PHA) liefert ihn, bis dahin ist der Standort unbekannt. */
-  sollStandort?: SollStandortQuelle;
-  /** Messungen und Behandlungen für die Exemplar-Karten (US-BES-06); `pflege` (WAC, BEH) liefert sie, bis dahin sind die Karten leer. */
-  messungen?: MessungsQuelle;
-  behandlungen?: BehandlungsQuelle;
+  /** The clock for "today" (NFR-08); defaults to system time. */
+  clock?: () => Date;
+  /** Target location for new specimens; `care` (PHA) supplies it, until then the location is unknown. */
+  targetLocation?: TargetLocationSource;
+  /** Measurements and treatments for the specimen cards (US-BES-06); `care` (WAC, BEH) supplies them, until then the cards are empty. */
+  measurements?: MeasurementSource;
+  treatments?: TreatmentSource;
 };
 
-/** Das Modul `pflege` (Messungen und Pflegephasen): Anmeldeschutz vor die Pfade, dann die Routen. */
-function bindePflegeEin(app: Hono, pool: Pool, auth: MiddlewareHandler, opt: { uhr?: () => Date }) {
-  for (const pfad of PFLEGE_PFADE) app.use(pfad, auth);
-  app.route("/", pflegeRouten(pool, opt));
-  for (const pfad of PFLEGEPHASEN_PFADE) app.use(pfad, auth).use(`${pfad}/*`, auth);
-  app.route("/", pflegephasenRouten(pool, opt));
+/** The module `care` (measurements and care phases): sign-in guard in front of the paths, then the routes. */
+function bindCareOne(app: Hono, pool: Pool, auth: MiddlewareHandler, opt: { clock?: () => Date }) {
+  for (const path of CARE_PATHS) app.use(path, auth);
+  app.route("/", careRoutes(pool, opt));
+  for (const path of CARE_PHASES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", carePhasesRoutes(pool, opt));
 }
 
-export function createApp(opt: AppOptionen = {}): Hono {
-  const version = opt.version ?? "unbekannt";
-  const commit = opt.commit ?? "unbekannt";
+export function createApp(opt: AppOptions = {}): Hono {
+  const version = opt.version ?? "unknown";
+  const commit = opt.commit ?? "unknown";
   const app = new Hono();
-  if (opt.webUrsprung)
+  if (opt.webOrigin)
     app.use(
       "*",
       cors({
-        origin: opt.webUrsprung,
+        origin: opt.webOrigin,
         allowHeaders: ["Authorization", "Content-Type", "Idempotency-Key"],
       }),
     );
-  app.get("/health", (c) => c.json({ status: "ok", produkt: produktTitel(), version, commit }));
-  if (opt.pruefer && opt.pool) {
-    const auth = authentifizierung(opt.pruefer, opt.pool);
-    app.use("/konto", auth);
-    app.use("/konto/*", auth);
-    app.route("/konto", kontoRouten(opt.pool));
-    for (const pfad of LICHT_PFADE) app.use(pfad, auth).use(`${pfad}/*`, auth);
-    app.route("/", lichtRouten(opt.pool));
-    for (const pfad of ARTEN_PFADE) app.use(pfad, auth).use(`${pfad}/*`, auth);
-    app.route("/", artenRouten(opt.pool));
-    for (const pfad of EXEMPLARE_PFADE) app.use(pfad, auth).use(`${pfad}/*`, auth);
+  app.get("/health", (c) => c.json({ status: "ok", product: productTitle(), version, commit }));
+  if (opt.reviewer && opt.pool) {
+    const auth = authentication(opt.reviewer, opt.pool);
+    app.use("/account", auth);
+    app.use("/account/*", auth);
+    app.route("/account", accountRoutes(opt.pool));
+    for (const path of LIGHT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+    app.route("/", lightRoutes(opt.pool));
+    for (const path of SPECIES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+    app.route("/", speciesRoutes(opt.pool));
+    for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route(
       "/",
-      exemplareRouten(opt.pool, {
-        uhr: opt.uhr,
-        sollStandort: opt.sollStandort,
-        messungen: opt.messungen,
-        behandlungen: opt.behandlungen,
+      specimenRoutes(opt.pool, {
+        clock: opt.clock,
+        targetLocation: opt.targetLocation,
+        measurements: opt.measurements,
+        treatments: opt.treatments,
       }),
     );
-    bindePflegeEin(app, opt.pool, auth, opt.uhr ? { uhr: opt.uhr } : {});
+    bindCareOne(app, opt.pool, auth, opt.clock ? { clock: opt.clock } : {});
   }
   return app;
 }

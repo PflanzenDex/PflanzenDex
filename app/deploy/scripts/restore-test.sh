@@ -24,16 +24,16 @@ done
 export PG_EXEC="docker exec -i $name"
 psql_q() { docker exec "$name" psql -U pdxtest -d "$1" -v ON_ERROR_STOP=1 -tAc "$2"; }
 
-psql_q pdx_source "create table exemplar (id serial primary key, name text not null, notiz text)"
-psql_q pdx_source "insert into exemplar (name, notiz) select 'Pflanze ' || g, repeat('ä', g) from generate_series(1, 500) g"
-expected="$(psql_q pdx_source "select count(*) || ':' || md5(string_agg(name || coalesce(notiz,''), ',' order by id)) from exemplar")"
+psql_q pdx_source "create table specimen (id serial primary key, name text not null, note text)"
+psql_q pdx_source "insert into specimen (name, note) select 'Plant ' || g, repeat('ä', g) from generate_series(1, 500) g"
+expected="$(psql_q pdx_source "select count(*) || ':' || md5(string_agg(name || coalesce(note,''), ',' order by id)) from specimen")"
 
 export BACKUP_DIR="$workdir/backups" BACKUP_REMOTE=""
 ./scripts/backup.sh
 dump="$(ls "$BACKUP_DIR"/pflanzendex-*.dump)"
 ./scripts/restore.sh "$dump" pdx_restored
 
-actual="$(psql_q pdx_restored "select count(*) || ':' || md5(string_agg(name || coalesce(notiz,''), ',' order by id)) from exemplar")"
+actual="$(psql_q pdx_restored "select count(*) || ':' || md5(string_agg(name || coalesce(note,''), ',' order by id)) from specimen")"
 if [ "$expected" != "$actual" ]; then
   echo "ERROR: restore differs (expected $expected, actual $actual)" >&2
   exit 1

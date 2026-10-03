@@ -7,7 +7,7 @@ test("US-DEV-02: changed dependencies and migrations each produce one hint", () 
     hintsFor([
       "app/package-lock.json",
       "app/packages/web/package.json",
-      "app/packages/db/migrations/0003_art.sql",
+      "app/packages/db/migrations/0003_species.sql",
     ]),
     ["Dependencies changed: run make setup", "New migrations: run make migrate"],
   );

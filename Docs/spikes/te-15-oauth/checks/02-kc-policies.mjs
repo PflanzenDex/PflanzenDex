@@ -1,5 +1,5 @@
-// Stellt die anonymen DCR-Policies so ein, wie ein Produktivbetrieb sie bräuchte:
-// Registrierung nur, wenn die Redirect-URIs auf vertrauten Domains liegen (statt Host-Prüfung der Absender-IP).
+// Sets the anonymous DCR policies the way a production operation would need them:
+// registration only if the redirect URIs are on trusted domains (instead of a host check of the sender IP).
 import { admin } from "./kc-lib.mjs";
 const comps = await admin("/components?type=org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy");
 const th = comps.find((c) => c.name === "Trusted Hosts" && c.subType === "anonymous");

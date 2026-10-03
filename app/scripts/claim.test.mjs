@@ -5,7 +5,7 @@ import { claim, ClaimRefused } from "./claim.mjs";
 
 const issue = {
   number: 62,
-  title: "US-BES-06 · Exemplar löschen",
+  title: "US-BES-06 · Delete specimen",
   state: "OPEN",
   url: "https://github.com/o/r/issues/62",
   labels: [{ name: "story" }],
@@ -47,15 +47,15 @@ const quiet = { log() {} };
 test("US-DEV-08: a free story is assigned, set In Progress, pushed and opened as draft PR", async () => {
   const client = fake();
   const result = await claim(client, 62, quiet);
-  assert.equal(result.branch, "feat/bes-06-exemplar-loeschen");
+  assert.equal(result.branch, "feat/bes-06-delete-specimen");
   const all = client.calls.join("\n");
   assert.match(all, /gh issue edit 62 --add-assignee @me/);
   assert.match(
     all,
     /gh project item-edit --id ITEM --project-id PROJ --field-id F --single-select-option-id O/,
   );
-  assert.match(all, /git push origin abc123:refs\/heads\/feat\/bes-06-exemplar-loeschen/);
-  assert.match(all, /gh pr create --draft --base dev --head feat\/bes-06-exemplar-loeschen/);
+  assert.match(all, /git push origin abc123:refs\/heads\/feat\/bes-06-delete-specimen/);
+  assert.match(all, /gh pr create --draft --base dev --head feat\/bes-06-delete-specimen/);
   assert.doesNotMatch(all, /--no-verify|--force/);
   assert.ok(client.calls.every((c) => !c.startsWith("gh issue view") || c.includes("--json")));
 });
@@ -80,7 +80,7 @@ test("US-DEV-08: an origin branch with the story ID refuses the claim", async ()
 });
 
 test("US-DEV-08: the exact branch name already on origin refuses the claim", async () => {
-  const branches = "sha1\trefs/heads/feat/bes-06-exemplar-loeschen\n";
+  const branches = "sha1\trefs/heads/feat/bes-06-delete-specimen\n";
   await assert.rejects(claim(fake({ branches }), 62, quiet), ClaimRefused);
 });
 
@@ -96,5 +96,5 @@ test("US-DEV-08: the draft PR title carries type, epic scope and story ID", asyn
   const client = fake();
   await claim(client, 62, quiet);
   const create = client.calls.find((c) => c.startsWith("gh pr create"));
-  assert.match(create, /--title feat\(bes\): exemplar löschen \(US-BES-06\)/);
+  assert.match(create, /--title feat\(bes\): delete specimen \(US-BES-06\)/);
 });

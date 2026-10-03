@@ -1,123 +1,148 @@
 // Module register (AB-13): the single source for the module boundary checks (AB-7 to AB-14, FR-QG-19, ADR 0003).
-// Read by scripts/check-boundaries.mjs (imports, structure, migrations) and by findeSchemaVerstoesse in db (tables,
+// Read by scripts/check-boundaries.mjs (imports, structure, migrations) and by findSchemaViolations in db (tables,
 // foreign keys). Code that moves into modules only reads this file.
 //
 // A module folder is `packages/<core|db|api|web>/src/<name>/` with an `index.ts` as its public interface (variant A).
 // The rules apply to every folder that carries the name of a module below; without such folders the gate is idle.
-// The cut follows ADR 0003 with the owner decisions O-1 (pflege and wachstum merged, medien and jobs live in `kern`)
-// and O-2 (foreign keys across modules only tenant-safe as (konto_id, id) on allowed dependencies, plus the one
+// The cut follows ADR 0003 with the owner decisions O-1 (care and growth merged, media and jobs live in `kernel`)
+// and O-2 (foreign keys across modules only tenant-safe as (account_id, id) on allowed dependencies, plus the one
 // registered exception below for global reference tables).
 // `dependsOn` is the dependency matrix: `A -> B` may be imported only if B is listed for A. A new edge changes this
 // file in the same PR; cycles are always an error (AB-8). `epics` maps epics to modules (report only, QG-T4).
 
 const MODULES = [
   {
-    name: "kern",
+    name: "kernel",
     epics: ["TE"],
-    tables: ["konto", "idempotenz", "schema_migrations", "medium"],
+    tables: ["account", "idempotency", "schema_migrations", "medium"],
     dependsOn: [],
-    ports: ["DatenQuelle", "IdempotenzSpeicher"],
+    ports: ["DataSource", "IdempotencyStore"],
   },
   {
-    name: "konto",
+    name: "account",
     epics: ["ACC"],
-    tables: ["kontodaten", "konto_rolle", "einladung"],
-    dependsOn: ["kern"],
+    tables: ["account_data", "account_role", "invitation"],
+    dependsOn: ["kernel"],
     ports: [],
   },
   {
-    name: "katalog",
+    name: "catalog",
     epics: ["BES"],
-    tables: ["art", "art_name", "art_version", "pruefvorgang"],
-    dependsOn: ["kern"],
+    tables: ["species", "species_name", "species_version", "review_case"],
+    dependsOn: ["kernel"],
     ports: [],
   },
   {
-    name: "licht",
+    name: "light",
     epics: ["LIC"],
-    tables: ["lichtzone", "standort"],
-    dependsOn: ["kern"],
-    ports: ["ZonenNutzung"],
+    tables: ["light_zone", "location"],
+    dependsOn: ["kernel"],
+    ports: ["ZoneUsage"],
   },
   {
-    name: "bestand",
+    name: "collection",
     epics: ["BES"],
-    tables: ["exemplar", "pflegeprofil", "exemplar_herkunft"],
-    dependsOn: ["kern", "katalog", "licht"],
-    ports: ["SollStandortQuelle", "MessungsQuelle", "BehandlungsQuelle"],
+    tables: ["specimen", "pflegeprofil", "specimen_provenance"],
+    dependsOn: ["kernel", "catalog", "light"],
+    ports: ["TargetLocationSource", "MeasurementSource", "TreatmentSource"],
   },
   {
     name: "monitoring",
     epics: ["MON"],
-    tables: ["erinnerung", "giessprotokoll", "sensor", "messreihe", "zustellkanal"],
-    dependsOn: ["kern", "bestand"],
-    ports: ["AnlassQuelle"],
+    tables: ["reminder", "watering_log", "sensor", "measurements", "delivery_channel"],
+    dependsOn: ["kernel", "collection"],
+    ports: ["OccasionSource"],
   },
   {
-    name: "pflege",
+    name: "care",
     epics: ["PHA", "BEH", "WAC"],
-    tables: ["behandlung", "messung"],
-    dependsOn: ["kern", "katalog", "licht", "bestand", "monitoring"],
+    tables: ["treatment", "measurement"],
+    dependsOn: ["kernel", "catalog", "light", "collection", "monitoring"],
     ports: [],
   },
   {
-    name: "wunschliste",
+    name: "wishlist",
     epics: ["WUN"],
-    tables: ["wunsch"],
-    dependsOn: ["kern", "katalog", "licht", "bestand"],
+    tables: ["wish"],
+    dependsOn: ["kernel", "catalog", "light", "collection"],
     ports: [],
   },
   {
     name: "pokedex",
     epics: ["POK"],
-    tables: ["taxon", "pokedex_stand"],
-    dependsOn: ["kern", "katalog", "bestand"],
+    tables: ["taxon", "pokedex_state"],
+    dependsOn: ["kernel", "catalog", "collection"],
     ports: [],
   },
   {
     name: "equipment",
     epics: ["EQU"],
-    tables: ["equipment", "vorrat", "empfehlung"],
-    dependsOn: ["kern", "licht", "bestand", "wunschliste", "monitoring"],
+    tables: ["equipment", "supply", "recommendation"],
+    dependsOn: ["kernel", "light", "collection", "wishlist", "monitoring"],
     ports: [],
   },
   {
-    name: "sozial",
+    name: "social",
     epics: ["SOZ"],
-    tables: ["freundschaft", "freigabe", "angebot", "tausch", "ereignis"],
-    dependsOn: ["kern", "konto", "katalog", "bestand", "pflege", "pokedex", "monitoring"],
+    tables: ["friendship", "sharing", "offer", "swap", "event"],
+    dependsOn: ["kernel", "account", "catalog", "collection", "care", "pokedex", "monitoring"],
     ports: [],
   },
   {
-    name: "entdecken",
+    name: "discover",
     epics: ["ENT"],
-    tables: ["vorschlag_entscheidung"],
-    dependsOn: ["kern", "katalog", "licht", "bestand", "pflege", "wunschliste", "pokedex"],
+    tables: ["proposal_entscheidung"],
+    dependsOn: ["kernel", "catalog", "light", "collection", "care", "wishlist", "pokedex"],
     ports: [],
   },
   {
-    name: "heute",
+    name: "today",
     epics: [],
     tables: [],
-    dependsOn: ["kern", "licht", "bestand", "pflege", "wunschliste", "monitoring"],
+    dependsOn: ["kernel", "light", "collection", "care", "wishlist", "monitoring"],
     ports: [],
   },
   {
-    name: "ki-zugang",
-    epics: ["KI"],
-    tables: ["verbindung", "auftrag", "entwurf", "ki_protokoll"],
-    dependsOn: ["kern", "konto"],
+    name: "ai-access",
+    epics: ["AI"],
+    tables: ["connection", "task", "draft", "ai_log"],
+    dependsOn: ["kernel", "account"],
     ports: [],
   },
 ];
 
-// The migrations 0001 to 0004 were applied before modules existed and must not be renamed. They name no module in
-// the file name; this map assigns them (AB-14). New migrations carry the module in the name and in the first line.
+// The migrations 0001 to 0011 were applied before the English rename and must not be renamed. They name no (English)
+// module in the file name; this map assigns them (AB-14). 0012 renames the objects of all modules in one go
+// (ADR 0004). New migrations carry the module in the name and in the first line.
 const LEGACY_MIGRATIONS = {
-  "0001_mandantengrundlage.sql": ["kern"],
-  "0002_betreiber_pruefstatus.sql": ["konto", "katalog"],
-  "0003_anmeldung.sql": ["konto"],
-  "0004_lichtzonen_standorte.sql": ["licht", "kern"],
+  "0001_mandantengrundlage.sql": ["kernel"],
+  "0002_betreiber_pruefstatus.sql": ["account", "catalog"],
+  "0003_anmeldung.sql": ["account"],
+  "0004_lichtzonen_standorte.sql": ["light", "kernel"],
+  "0005_katalog_artenkatalog.sql": ["catalog"],
+  "0006_licht_standort_schluessel.sql": ["light"],
+  "0007_bestand_exemplar.sql": ["collection"],
+  "0008_bestand_exemplar_art_fremdschluessel.sql": ["collection"],
+  "0009_bestand_exemplar_schluessel.sql": ["collection"],
+  "0010_pflege_messung.sql": ["care"],
+  "0011_bestand_archiv.sql": ["collection"],
+  "0012_english_names.sql": ["kernel", "account", "catalog", "light", "collection", "care"],
+};
+
+// Table names as the applied migrations 0001 to 0011 wrote them. 0012 renamed them; the migration check maps the old
+// names to the registered ones.
+const LEGACY_TABLE_NAMES = {
+  konto: "account",
+  konto_rolle: "account_role",
+  kontodaten: "account_data",
+  pruefvorgang: "review_case",
+  lichtzone: "light_zone",
+  standort: "location",
+  idempotenz: "idempotency",
+  art: "species",
+  art_name: "species_name",
+  exemplar: "specimen",
+  messung: "measurement",
 };
 
 // Transition (ratchet, may only shrink): folders directly below `packages/<pkg>/src/` that belong to no module yet.
@@ -137,19 +162,20 @@ const MODULE_FOLDERS_IN_TRANSITION = {};
 // list grows only through review (EX-1 principle: registered, justified, narrow). Only `art`: `art_name` and
 // `art_version` are details of a species, nothing outside `katalog` should point to them.
 const GLOBAL_REFERENCE_TABLES = {
-  art: {
-    owner: "katalog",
+  species: {
+    owner: "catalog",
     reason:
-      "The shared species catalog (E-02) has no konto_id by design, so the tenant-safe (konto_id, id) form cannot exist; Exemplare and later wishes point to a species, and the database must refuse unknown species and the deletion of species in use.",
+      "The shared species catalog (E-02) has no account_id by design, so the tenant-safe (account_id, id) form cannot exist; Specimens and later wishes point to a species, and the database must refuse unknown species and the deletion of species in use.",
   },
 };
 
-const KERN = "kern";
+const KERNEL = "kernel";
 
 export const MODULE_CONFIG = {
   MODULES,
-  KERN,
+  KERNEL,
   LEGACY_MIGRATIONS,
+  LEGACY_TABLE_NAMES,
   UNMODULED_FOLDERS,
   MODULE_FOLDERS_IN_TRANSITION,
   GLOBAL_REFERENCE_TABLES,

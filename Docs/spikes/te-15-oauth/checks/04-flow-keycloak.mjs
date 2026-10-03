@@ -1,4 +1,4 @@
-// Check 4: vollständiger Ablauf gegen Keycloak (DCR-Client, Auth-Code + PKCE, resource, Consent, Step-up, Refresh, Widerruf).
+// Check 4: full flow against Keycloak (DCR client, auth code + PKCE, resource, consent, step-up, refresh, revocation).
 import { chromium } from "playwright";
 import fs from "node:fs";
 const ALICE = (() => { try { return JSON.parse(fs.readFileSync(new URL("./secrets/kc.json", import.meta.url))).alice; } catch { return "alice"; } })();
@@ -7,7 +7,7 @@ const ISSUER = process.env.ISSUER || "http://localhost:18080/realms/pflanzendex"
 const RES = process.env.RESOURCE || "http://localhost:18081/mcp";
 fs.mkdirSync("out", { recursive: true });
 const meta = await discover(ISSUER); const L = listener();
-const reg = await register(meta, { client_name: "Spike-Client (Claude-ähnlich)", redirect_uris: [L.redirect], grant_types: ["authorization_code", "refresh_token"], response_types: ["code"], token_endpoint_auth_method: "none", scope: "pflanzen:read pflanzen:draft pflanzen:write offline_access" });
+const reg = await register(meta, { client_name: "Spike client (Claude-like)", redirect_uris: [L.redirect], grant_types: ["authorization_code", "refresh_token"], response_types: ["code"], token_endpoint_auth_method: "none", scope: "pflanzen:read pflanzen:draft pflanzen:write offline_access" });
 console.log("DCR:", reg.status, reg.j.client_id); const cid = reg.j.client_id;
 const browser = await chromium.launch(); const ctx = await browser.newContext({ locale: "de-DE" });
 async function authorize(scope, resource, tag) {
@@ -21,7 +21,7 @@ async function authorize(scope, resource, tag) {
   if (await consent.count()) { console.log('  Consent erkannt');
     await page.screenshot({ path: `out/${tag}-2-consent.png`, fullPage: true });
     const boxes = await page.locator("input[type=checkbox]").count();
-    console.log(`  Consent-Screen: ${boxes} Checkbox(en) (abwählbare Scopes), Text:`, (await page.locator("#kc-oauth, .content-area, body").first().innerText()).replace(/\s+/g, " ").slice(0, 330));
+    console.log(`  Consent-Screen: ${boxes} checkbox(es) (deselectable scopes), text:`, (await page.locator("#kc-oauth, .content-area, body").first().innerText()).replace(/\s+/g, " ").slice(0, 330));
     await consent.first().click();
   } else console.log("  kein Consent-Screen");
   const res = await L.next(); if (res.timeout) { res.url = page.url(); await page.screenshot({ path: `out/${tag}-9-timeout.png`, fullPage: true }); res.title = await page.title(); res.text = (await page.locator('body').innerText()).replace(/\s+/g, ' ').slice(0, 300); }
@@ -36,14 +36,14 @@ console.log("\n[A] Nur lesen, korrekte resource");
 let a = await authorize("pflanzen:read", RES, "A"); console.log("  iss-Parameter im Redirect:", a.res.iss, "| state ok:", a.res.state === a.state);
 let t = await exchange(a, RES); console.log("  Token:", JSON.stringify(show(t))); const tokRead = t.j.access_token; const refresh = t.j.refresh_token;
 let r1 = await mcp(RES, tokRead, "tools/call", { name: "status", arguments: {} }); console.log("  MCP status        ->", r1.status, r1.body.slice(0, 80));
-let r2 = await mcp(RES, tokRead, "tools/call", { name: "gegossen", arguments: { exemplar: "Aloe" } }); console.log("  MCP gegossen      ->", r2.status, r2.www);
+let r2 = await mcp(RES, tokRead, "tools/call", { name: "watered", arguments: { specimen: "Aloe" } }); console.log("  MCP watered      ->", r2.status, r2.www);
 console.log("\n[B] Step-up: lesen + schreiben");
 a = await authorize("pflanzen:read pflanzen:write", RES, "B"); t = await exchange(a, RES); console.log("  Token:", JSON.stringify(show(t)));
-let r3 = await mcp(RES, t.j.access_token, "tools/call", { name: "gegossen", arguments: { exemplar: "Aloe" } }); console.log("  MCP gegossen      ->", r3.status, r3.body.slice(0, 80));
+let r3 = await mcp(RES, t.j.access_token, "tools/call", { name: "watered", arguments: { specimen: "Aloe" } }); console.log("  MCP watered      ->", r3.status, r3.body.slice(0, 80));
 console.log("\n[C] resource-Verhalten");
 a = await authorize("pflanzen:read", "http://localhost:9999/falsch", "C1"); t = await exchange(a, "http://localhost:9999/falsch"); console.log("  falsche resource  ->", a.res.error || t.status, JSON.stringify(t.j.error ? t.j : show(t)).slice(0, 200));
-a = await authorize("pflanzen:read", null, "C2"); t = await exchange(a, null); console.log("  ohne resource     ->", JSON.stringify(show(t)));
-console.log("\n[D] Refresh und Widerruf");
+a = await authorize("pflanzen:read", null, "C2"); t = await exchange(a, null); console.log("  without resource  ->", JSON.stringify(show(t)));
+console.log("\n[D] Refresh and revocation");
 if (refresh) {
   const rf = await token(meta, { grant_type: "refresh_token", refresh_token: refresh, client_id: cid, resource: RES }); console.log("  Refresh           ->", rf.status, "neues Refresh-Token verschieden:", rf.j.refresh_token && rf.j.refresh_token !== refresh, JSON.stringify(show(rf)));
   const rv = await fetch(meta.revocation_endpoint, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token: rf.j.refresh_token || refresh, client_id: cid, token_type_hint: "refresh_token" }) });

@@ -9,7 +9,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p .",
     "test": "vitest run",
-    "migrate": "tsx src/kern/migrate-cli.ts"
+    "migrate": "tsx src/kernel/migrate-cli.ts"
   },
   "dependencies": {
     "pg": "^8.16.3"

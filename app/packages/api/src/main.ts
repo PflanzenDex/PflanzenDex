@@ -1,22 +1,22 @@
 import { serve } from "@hono/node-server";
-import { oeffnePool, testDatenbankUrl } from "@pflanzendex/db";
+import { openPool, testDatabaseUrl } from "@pflanzendex/db";
 import { createApp } from "./app";
-import { erstelleTokenPruefer } from "./konto";
+import { createTokenVerifier } from "./account";
 
-// Konfiguration nur aus der Umgebung (keine Geheimnisse im Repo). Die Voreinstellungen passen zu `make auth-up`.
+// Configuration from the environment only (no secrets in the repo). The defaults match `make auth-up`.
 const issuer = process.env["OIDC_ISSUER"] ?? "http://localhost:18081/realms/pflanzendex";
 const app = createApp({
-  pruefer: erstelleTokenPruefer({
+  reviewer: createTokenVerifier({
     issuer,
     audience: process.env["OIDC_AUDIENCE"] ?? "pflanzendex-api",
   }),
   version: process.env["APP_VERSION"],
   commit: process.env["GIT_SHA"],
-  pool: oeffnePool(process.env["DATABASE_URL"] ?? testDatenbankUrl()),
-  webUrsprung: process.env["WEB_URSPRUNG"] ?? "http://localhost:5173",
+  pool: openPool(process.env["DATABASE_URL"] ?? testDatabaseUrl()),
+  webOrigin: process.env["WEB_ORIGIN"] ?? "http://localhost:5173",
 });
 
 const port = Number(process.env["PORT"] ?? 3000);
 serve({ fetch: app.fetch, port }, (info) => {
-  console.log(`API läuft auf http://localhost:${info.port}`);
+  console.log(`API listening on http://localhost:${info.port}`);
 });

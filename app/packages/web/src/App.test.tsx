@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Der Anmeldedienst ist ein Fremdsystem: UserManager wird ersetzt, App und Module laufen echt.
+// The sign-in service is a foreign system: UserManager is replaced, app and modules run for real.
 const mgr = vi.hoisted(() => ({
   getUser: vi.fn(),
   removeUser: vi.fn(async () => undefined),
@@ -28,32 +28,32 @@ vi.mock("oidc-client-ts", () => ({
 }));
 
 import { App } from "./App";
-import { LEERE_VERTEILUNG } from "./bestand/verteilung-testhilfe";
+import { EMPTY_DISTRIBUTION } from "./collection/distribution-test-helpers";
 
-const konto = {
+const account = {
   id: "1",
   email: "lena@example.test",
-  anzeigename: "Lena",
-  emailBestaetigt: true,
-  darfMitFreundenTeilen: true,
+  displayName: "Lena",
+  emailConfirmed: true,
+  mayShareWithFriends: true,
 };
-const antwort = (status: number, body: unknown = {}) =>
+const response = (status: number, body: unknown = {}) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 
-function fakeServer(kontoStatus = 200) {
+function fakeServer(accountStatus = 200) {
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url) => {
-      const pfad = new URL(String(url)).pathname;
-      if (pfad === "/konto") return antwort(kontoStatus, konto);
-      if (pfad === "/arten") return antwort(200, { arten: [] });
-      if (pfad === "/exemplare/karten") return antwort(200, { karten: [] });
-      if (pfad === "/exemplare/archiv") return antwort(200, { archiv: [] });
-      if (pfad === "/exemplare/verteilung") return antwort(200, LEERE_VERTEILUNG);
-      if (pfad === "/standorte") return antwort(200, { standorte: [] });
-      if (pfad === "/lichtzonen") return antwort(200, { zonen: [] });
-      if (pfad === "/hinweise") return antwort(200, { hinweise: [] });
-      return antwort(404);
+      const path = new URL(String(url)).pathname;
+      if (path === "/account") return response(accountStatus, account);
+      if (path === "/species") return response(200, { species: [] });
+      if (path === "/specimens/cards") return response(200, { cards: [] });
+      if (path === "/specimens/archived") return response(200, { archived: [] });
+      if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
+      if (path === "/locations") return response(200, { locations: [] });
+      if (path === "/light-zones") return response(200, { zones: [] });
+      if (path === "/hints") return response(200, { hints: [] });
+      return response(404);
     }),
   );
 }
@@ -70,7 +70,7 @@ afterEach(() => {
 });
 
 describe("US-ACC-01 App", () => {
-  it("abgemeldet: Willkommensseite mit Konto anlegen und Anmelden, keine Navigation", async () => {
+  it("signed out: welcome page with create account and sign in, no navigation", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue(null);
     render(<App />);
@@ -80,7 +80,7 @@ describe("US-ACC-01 App", () => {
     expect(screen.queryByRole("navigation")).toBeNull();
   });
 
-  it("ein Fehler beim Konto-Laden bietet „Erneut versuchen“ an und lädt dann das Konto", async () => {
+  it('an error while loading the account offers "Erneut versuchen" and then loads the account', async () => {
     fakeServer(500);
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     render(<App />);
@@ -90,20 +90,20 @@ describe("US-ACC-01 App", () => {
     expect(await screen.findByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
   });
 
-  it("angemeldet: startet im Katalog; die Navigation wechselt zwischen allen vier Ansichten", async () => {
+  it("signed in: starts in the catalog; the navigation switches between all four views", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     render(<App />);
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
-    const arten = screen.getByRole("button", { name: "Arten" });
-    expect(arten.getAttribute("aria-current")).toBe("page");
+    const species = screen.getByRole("button", { name: "Arten" });
+    expect(species.getAttribute("aria-current")).toBe("page");
 
     await userEvent.click(screen.getByRole("button", { name: "Bestand" }));
     expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Bestand" }).getAttribute("aria-current")).toBe(
       "page",
     );
-    expect(arten.getAttribute("aria-current")).toBeNull();
+    expect(species.getAttribute("aria-current")).toBeNull();
 
     await userEvent.click(screen.getByRole("button", { name: "Standorte und Licht" }));
     expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
@@ -113,30 +113,33 @@ describe("US-ACC-01 App", () => {
     expect(screen.getByText("lena@example.test")).toBeTruthy();
   });
 
-  it("Art wählen im Katalog führt zum Formular „Exemplar anlegen“; Zurück führt zum Katalog (US-BES-02)", async () => {
+  it('choosing a species in the catalog leads to the form "Exemplar anlegen"; back leads to the catalog (US-BES-02)', async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>(async (url) => {
-        const pfad = new URL(String(url)).pathname;
-        if (pfad === "/konto") return antwort(200, konto);
-        if (pfad === "/standorte") return antwort(200, { standorte: [] });
-        if (pfad === "/exemplare/karten") return antwort(200, { karten: [] });
-        if (pfad === "/exemplare/archiv") return antwort(200, { archiv: [] });
-        if (pfad === "/exemplare/verteilung") return antwort(200, LEERE_VERTEILUNG);
-        const art = {
+        const path = new URL(String(url)).pathname;
+        if (path === "/account") return response(200, account);
+        if (path === "/locations") return response(200, { locations: [] });
+        if (path === "/specimens/cards") return response(200, { cards: [] });
+        if (path === "/specimens/archived") return response(200, { archived: [] });
+        if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
+        const species = {
           id: "a1",
-          lateinischerName: "Dracaena trifasciata",
-          deutscherName: null,
-          synonyme: [],
-          schwierigkeit: 1,
-          standardStufe: 2,
-          lichtbedarfLux: 15000,
-          wachstumsmass: "hoehe",
-          vergeilungAnzeichen: "x",
-          erfolgskriterien: "y",
-          pruefstatus: "geprueft",
+          latinName: "Dracaena trifasciata",
+          germanName: null,
+          synonyms: [],
+          difficulty: 1,
+          standardLevel: 2,
+          lightDemandLux: 15000,
+          growthMeasure: "height",
+          etiolationSigns: "x",
+          successCriteria: "y",
+          reviewStatus: "reviewed",
         };
-        return antwort(200, pfad === "/arten" ? { arten: [{ ...art, treffer: null }] } : art);
+        return response(
+          200,
+          path === "/species" ? { species: [{ ...species, hit: null }] } : species,
+        );
       }),
     );
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
@@ -148,7 +151,7 @@ describe("US-ACC-01 App", () => {
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
   });
 
-  it("am Seitenende steht eine Versionszeile", async () => {
+  it("a version line is at the end of the page", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue(null);
     render(<App />);
