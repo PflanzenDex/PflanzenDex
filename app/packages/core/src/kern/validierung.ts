@@ -1,3 +1,4 @@
+import { istZeitzone } from "./datum";
 import { fehler, type Fehlerdetail } from "./fehler";
 import { fehlgeschlagen, ok, type Ergebnis } from "./ergebnis";
 
@@ -31,6 +32,17 @@ export function ganzzahlFeld(feld: string, grenzen: { min: number; max: number }
 
 export function wahlFeld<const W extends string>(feld: string, erlaubt: readonly W[]) {
   return (wert: unknown): W | Fehlerdetail => erlaubt.find((e) => e === wert) ?? ungueltig(feld);
+}
+
+/** Ein IANA-Zeitzonenname, z. B. `Europe/Berlin` (NFR-08). */
+export function zeitzoneFeld(feld: string) {
+  return (wert: unknown): string | Fehlerdetail => (istZeitzone(wert) ? wert : ungueltig(feld));
+}
+
+/** Fehlt der Wert (undefined oder null), ist er „nicht angegeben“ (null); sonst gilt die Prüfung. */
+export function oderNull<T>(pruefe: (wert: unknown) => T | Fehlerdetail) {
+  return (wert: unknown): T | Fehlerdetail | null =>
+    wert === undefined || wert === null ? null : pruefe(wert);
 }
 
 const KENNUNG = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

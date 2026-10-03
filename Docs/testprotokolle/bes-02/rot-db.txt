@@ -1,0 +1,94 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-a3653eab2e6c5cb97/app/packages/db
+
+ ❯ src/bestand/exemplare.test.ts (6 tests | 5 failed) 184ms
+   ❯ US-BES-02 Exemplare in der Datenbank (6)
+     × legt ein Exemplar mit Vorbelegung an und liest es wieder; Status ist Pflanze 5ms
+     × Gefangen_Am bleibt das gespeicherte Kalenderdatum, unabhängig von Zeitzone des Servers (NFR-08) 3ms
+     × der Name ist je Konto eindeutig (ohne Beachtung der Schreibweise), bei anderen Konten nicht 2ms
+     × ein Standort des eigenen Kontos ist erlaubt, der eines anderen Kontos nicht (Fremdschlüssel (konto_id, id)) 8ms
+     × ein Konto sieht und lädt nur seine eigenen Exemplare (P-04) 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Exemplare in der Datenbank > legt ein Exemplar mit Vorbelegung an und liest es wieder; Status ist Pflanze
+error: relation "exemplar" does not exist
+ ❯ ../../node_modules/pg/lib/client.js:694:17
+ ❯ mitKonto src/kern/mandant.ts:21:22
+     19|     await client.query("set local role pflanzendex_app");
+     20|     await client.query("select set_config('app.konto_id', $1, true)", …
+     21|     const ergebnis = await rumpf(client);
+       |                      ^
+     22|     await client.query("commit");
+     23|     return ergebnis;
+ ❯ ExemplarePostgres.anlegen src/bestand/exemplare.ts:56:17
+ ❯ src/bestand/exemplare.test.ts:44:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Exemplare in der Datenbank > Gefangen_Am bleibt das gespeicherte Kalenderdatum, unabhängig von Zeitzone des Servers (NFR-08)
+error: relation "exemplar" does not exist
+ ❯ ../../node_modules/pg/lib/client.js:694:17
+ ❯ mitKonto src/kern/mandant.ts:21:22
+     19|     await client.query("set local role pflanzendex_app");
+     20|     await client.query("select set_config('app.konto_id', $1, true)", …
+     21|     const ergebnis = await rumpf(client);
+       |                      ^
+     22|     await client.query("commit");
+     23|     return ergebnis;
+ ❯ ExemplarePostgres.anlegen src/bestand/exemplare.ts:56:17
+ ❯ src/bestand/exemplare.test.ts:53:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Exemplare in der Datenbank > der Name ist je Konto eindeutig (ohne Beachtung der Schreibweise), bei anderen Konten nicht
+error: relation "exemplar" does not exist
+ ❯ ../../node_modules/pg/lib/client.js:694:17
+ ❯ mitKonto src/kern/mandant.ts:21:22
+     19|     await client.query("set local role pflanzendex_app");
+     20|     await client.query("select set_config('app.konto_id', $1, true)", …
+     21|     const ergebnis = await rumpf(client);
+       |                      ^
+     22|     await client.query("commit");
+     23|     return ergebnis;
+ ❯ ExemplarePostgres.anlegen src/bestand/exemplare.ts:56:17
+ ❯ src/bestand/exemplare.test.ts:64:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Exemplare in der Datenbank > ein Standort des eigenen Kontos ist erlaubt, der eines anderen Kontos nicht (Fremdschlüssel (konto_id, id))
+error: relation "exemplar" does not exist
+ ❯ ../../node_modules/pg/lib/client.js:694:17
+ ❯ mitKonto src/kern/mandant.ts:21:22
+     19|     await client.query("set local role pflanzendex_app");
+     20|     await client.query("select set_config('app.konto_id', $1, true)", …
+     21|     const ergebnis = await rumpf(client);
+       |                      ^
+     22|     await client.query("commit");
+     23|     return ergebnis;
+ ❯ ExemplarePostgres.anlegen src/bestand/exemplare.ts:56:17
+ ❯ src/bestand/exemplare.test.ts:75:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Exemplare in der Datenbank > ein Konto sieht und lädt nur seine eigenen Exemplare (P-04)
+error: relation "exemplar" does not exist
+ ❯ ../../node_modules/pg/lib/client.js:694:17
+ ❯ mitKonto src/kern/mandant.ts:21:22
+     19|     await client.query("set local role pflanzendex_app");
+     20|     await client.query("select set_config('app.konto_id', $1, true)", …
+     21|     const ergebnis = await rumpf(client);
+       |                      ^
+     22|     await client.query("commit");
+     23|     return ergebnis;
+ ❯ ExemplarePostgres.anlegen src/bestand/exemplare.ts:56:17
+ ❯ src/bestand/exemplare.test.ts:84:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  15:00:56
+   Duration  412ms (tests 57%, transform 31%, import 11%, worker 1%)
+

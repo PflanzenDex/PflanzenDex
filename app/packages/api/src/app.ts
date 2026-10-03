@@ -1,8 +1,9 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { Pool } from "pg";
-import { produktTitel } from "@pflanzendex/core";
+import { produktTitel, type SollStandortQuelle } from "@pflanzendex/core";
 import { authentifizierung, kontoRouten, type TokenPruefer } from "./konto";
+import { EXEMPLARE_PFADE, exemplareRouten } from "./bestand";
 import { ARTEN_PFADE, artenRouten } from "./katalog";
 import { LICHT_PFADE, lichtRouten } from "./licht";
 
@@ -16,6 +17,10 @@ export type AppOptionen = {
   version?: string | undefined;
   /** Kurzer Commit-Hash des laufenden Stands (aus dem Build, nicht geheim). */
   commit?: string | undefined;
+  /** Die Uhr für „heute“ (NFR-08); ohne Angabe die Systemzeit. */
+  uhr?: () => Date;
+  /** Soll-Standort für neue Exemplare; `pflege` (PHA) liefert ihn, bis dahin ist der Standort unbekannt. */
+  sollStandort?: SollStandortQuelle;
 };
 
 export function createApp(opt: AppOptionen = {}): Hono {
@@ -40,6 +45,14 @@ export function createApp(opt: AppOptionen = {}): Hono {
     app.route("/", lichtRouten(opt.pool));
     for (const pfad of ARTEN_PFADE) app.use(pfad, auth).use(`${pfad}/*`, auth);
     app.route("/", artenRouten(opt.pool));
+    for (const pfad of EXEMPLARE_PFADE) app.use(pfad, auth).use(`${pfad}/*`, auth);
+    app.route(
+      "/",
+      exemplareRouten(opt.pool, {
+        ...(opt.uhr ? { uhr: opt.uhr } : {}),
+        ...(opt.sollStandort ? { sollStandort: opt.sollStandort } : {}),
+      }),
+    );
   }
   return app;
 }

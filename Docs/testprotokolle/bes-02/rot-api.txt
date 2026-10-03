@@ -1,0 +1,46 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-a3653eab2e6c5cb97/app/packages/api
+
+ ❯ src/bestand/exemplare.test.ts (14 tests | 14 failed) 147ms
+   ❯ US-BES-02 Anmeldung und Eingabe (6)
+     × GET /exemplare ohne Token: 401 22ms
+     × GET /exemplare/00000000-0000-4000-8000-000000000001 ohne Token: 401 1ms
+     × POST /exemplare ohne Token: 401 1ms
+     × ohne Idempotency-Key: 400 mit stabilem Fehlercode 1ms
+     × ohne Art und Zeitzone: 400 mit den betroffenen Feldern, nichts geschrieben 1ms
+     × eine unbekannte Art: 404 art.nicht_gefunden 1ms
+   ❯ US-BES-02 Exemplar anlegen und ansehen (8)
+     × Pflicht ist die Art: 201 mit Name nach Namensregel, lokalem Gefangen_Am und leeren Listen 15ms
+     × dieselbe Zeit ist in New York noch der Vortag: Gefangen_Am folgt der Zeitzone des Nutzers (FR-BES-04) 6ms
+     × existiert der Name, ist die Antwort 409 und nichts ändert sich; mit Kennzeichen entsteht „Art – Kennzeichen“ 5ms
+     × ein eigener Standort wird übernommen, der eines anderen Kontos abgelehnt (404 standort.nicht_gefunden) 44ms
+     × der private Vorschlag eines anderen Kontos ist keine wählbare Art (P-04) 6ms
+     × ein Konto sieht und lädt keine fremden Exemplare: Liste ohne sie, Einzelabruf 404 6ms
+     × gleicher Wiederholungsschutz-Schlüssel: kein zweites Exemplar, dieselbe Antwort 5ms
+     × ungültige Kennung beim Einzelabruf: 404 statt Serverfehler 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Anmeldung und Eingabe > GET /exemplare ohne Token: 401
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Anmeldung und Eingabe > GET /exemplare/00000000-0000-4000-8000-000000000001 ohne Token: 401
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Anmeldung und Eingabe > POST /exemplare ohne Token: 401
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Anmeldung und Eingabe > ohne Idempotency-Key: 400 mit stabilem Fehlercode
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Anmeldung und Eingabe > ohne Art und Zeitzone: 400 mit den betroffenen Feldern, nichts geschrieben
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Anmeldung und Eingabe > eine unbekannte Art: 404 art.nicht_gefunden
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Exemplar anlegen und ansehen > Pflicht ist die Art: 201 mit Name nach Namensregel, lokalem Gefangen_Am und leeren Listen
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Exemplar anlegen und ansehen > dieselbe Zeit ist in New York noch der Vortag: Gefangen_Am folgt der Zeitzone des Nutzers (FR-BES-04)
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Exemplar anlegen und ansehen > existiert der Name, ist die Antwort 409 und nichts ändert sich; mit Kennzeichen entsteht „Art – Kennzeichen“
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Exemplar anlegen und ansehen > ein eigener Standort wird übernommen, der eines anderen Kontos abgelehnt (404 standort.nicht_gefunden)
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Exemplar anlegen und ansehen > der private Vorschlag eines anderen Kontos ist keine wählbare Art (P-04)
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Exemplar anlegen und ansehen > ein Konto sieht und lädt keine fremden Exemplare: Liste ohne sie, Einzelabruf 404
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Exemplar anlegen und ansehen > gleicher Wiederholungsschutz-Schlüssel: kein zweites Exemplar, dieselbe Antwort
+ FAIL  src/bestand/exemplare.test.ts > US-BES-02 Exemplar anlegen und ansehen > ungültige Kennung beim Einzelabruf: 404 statt Serverfehler
+SyntaxError: Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  14 failed (14)
+   Start at  15:01:57
+   Duration  669ms (transform 57%, tests 26%, import 17%, worker 1%)
+

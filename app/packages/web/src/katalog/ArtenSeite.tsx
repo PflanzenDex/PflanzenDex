@@ -10,15 +10,6 @@ import { VorschlagFormular } from "./vorschlag-formular";
 
 type Ansicht = { art: "suche" } | { art: "vorschlag" } | { art: "profil" };
 
-function Gewaehlt({ art }: { art: Art }) {
-  return (
-    <p role="status" className="hinweis">
-      Gewählt: <i>{art.lateinischerName}</i>. Das Exemplar dazu legst du an, sobald es diese
-      Funktion gibt (US-BES-02).
-    </p>
-  );
-}
-
 function ProfilSeite(props: {
   profil: Profil;
   neu: boolean;
@@ -55,14 +46,17 @@ function ProfilSeite(props: {
 }
 
 /**
- * Art im Katalog suchen, ansehen, wählen oder vorschlagen (US-BES-01). „Wählen“ merkt sich die Art; das Exemplar
- * dazu legt US-BES-02 an, das es noch nicht gibt (die Seite sagt das offen).
+ * Art im Katalog suchen, ansehen, wählen oder vorschlagen (US-BES-01). „Wählen“ meldet die Art nach außen; das
+ * Exemplar dazu legt `bestand` an (US-BES-02), die App verdrahtet beide (`katalog` kennt `bestand` nicht).
  */
-export function ArtenSeite(props: { api: string; token: () => Promise<string | undefined> }) {
-  const { api, token } = props;
+export function ArtenSeite(props: {
+  api: string;
+  token: () => Promise<string | undefined>;
+  onWaehlen: (art: Art) => void;
+}) {
+  const { api, token, onWaehlen } = props;
   const [ansicht, setAnsicht] = useState<Ansicht>({ art: "suche" });
   const [suchtext, setSuchtext] = useState("");
-  const [gewaehlt, setGewaehlt] = useState<Art | null>(null);
   const [neu, setNeu] = useState(false);
   const suche = useSuche(api, token, suchtext, ansicht.art);
   const { profil, lade } = useProfil(api, token);
@@ -85,7 +79,6 @@ export function ArtenSeite(props: { api: string; token: () => Promise<string | u
   };
   return (
     <div className="licht arten">
-      {gewaehlt && <Gewaehlt art={gewaehlt} />}
       {suche.fehler && ansicht.art === "suche" && (
         <p role="alert" className="warnung">
           {suche.fehler.text}
@@ -110,7 +103,7 @@ export function ArtenSeite(props: { api: string; token: () => Promise<string | u
         />
       )}
       {ansicht.art === "profil" && (
-        <ProfilSeite profil={profil} neu={neu} onWaehlen={setGewaehlt} onZurueck={zurueck} />
+        <ProfilSeite profil={profil} neu={neu} onWaehlen={onWaehlen} onZurueck={zurueck} />
       )}
     </div>
   );

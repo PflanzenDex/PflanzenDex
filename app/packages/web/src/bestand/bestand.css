@@ -1,0 +1,15 @@
+/* Bestand und Exemplar anlegen (US-BES-02): mobil zuerst; baut auf stil.css und licht.css auf. */
+.bestand h1 {
+  margin: 0 0 8px;
+}
+.namensvorschau {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--rand);
+  border-radius: 10px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.bestand .hinweis {
+  margin-bottom: 16px;
+}
