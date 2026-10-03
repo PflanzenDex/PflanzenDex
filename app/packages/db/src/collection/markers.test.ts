@@ -3,7 +3,7 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, withAccount, openPool } from "../kernel/index.ts";
 import { createFixtureSpeciesAt } from "../fixtures.ts";
-import { SpecimenPostgres, type SpecimenRow } from "./index.ts";
+import { SpecimenPostgres, type SpecimenRow } from "./specimens.ts";
 
 // US-BES-03: markers per species and renaming (real PostgreSQL, `make db-up`).
 let pool: Pool;
