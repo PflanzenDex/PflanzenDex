@@ -8,7 +8,14 @@ import { fileURLToPath } from "node:url";
 const STORY = /^###\s+(US-([A-Z]+)-\d+)\s+·.*·\s*(⬜|🟨|✅)/u;
 const DEF = /^(?:#{2,4}\s+|\|\s*\*{0,2})((?:US|FR|DM)-[A-Z]+-\d+|E-\d+)\b/;
 const REF = /\b(?:(?:US|FR|DM)-[A-Z]+-\d+|E-\d+)\b/g;
-const TEST_TITLE = /\b(?:describe|it|test)(?:\.\w+)*\s*\(\s*(["'`])((?:\\.|(?!\1).)*)\1/g;
+const TEST_CALL = /\b(?:describe|it|test)(?:\.(?:only|skip|todo))?\(\s*(["'`])/g;
+
+// Text of the string literal that starts right after the opening quote at `start`.
+function literalFrom(text, start, quote) {
+  let end = start;
+  while (end < text.length && text[end] !== quote) end += text[end] === "\\" ? 2 : 1;
+  return text.slice(start, end);
+}
 
 export function parseStories(files) {
   const stories = [];
@@ -23,8 +30,11 @@ export function parseStories(files) {
 export function testedIds(testFiles) {
   const ids = new Set();
   for (const text of Object.values(testFiles))
-    for (const m of text.matchAll(TEST_TITLE))
-      for (const id of m[2].matchAll(/\bUS-[A-Z]+-\d+\b/g)) ids.add(id[0]);
+    for (const m of text.matchAll(TEST_CALL))
+      for (const id of literalFrom(text, m.index + m[0].length, m[1]).matchAll(
+        /\bUS-[A-Z]+-\d+\b/g,
+      ))
+        ids.add(id[0]);
   return ids;
 }
 
