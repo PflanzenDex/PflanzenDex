@@ -106,11 +106,11 @@ jobs:
       - run: make setup
       - run: make audit
 
-  # QG-U1 (report only, E-15): Lighthouse on the built web app for release PRs into `main`; otherwise nightly (nightly.yml).
+  # QG-U1 (report only, E-15): Lighthouse on the built web app for release PRs into `main` and manual dispatch; otherwise nightly (nightly.yml).
   # Never fails the build: no thresholds until the first baseline exists.
   lighthouse:
     needs: changes
-    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    if: (github.event_name == 'pull_request' && github.base_ref == 'main') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
