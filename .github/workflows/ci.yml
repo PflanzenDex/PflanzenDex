@@ -124,8 +124,29 @@ jobs:
           MSG: ${{ github.event.pull_request.title }}
         run: make commitlint
 
+  # QG-U3: `feat:`/`fix:` PRs need a German entry in the user changelog or `[skip-changelog]`.
+  changelog:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      # Title and body only as environment variables, never inline in the command (script injection).
+      - env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_BASE_REF: ${{ github.base_ref }}
+        run: make changelog-check
+
   ci-status:
-    needs: [changes, app, pr-title, dependency-review, audit]
+    needs: [changes, app, pr-title, changelog, dependency-review, audit]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -134,10 +155,11 @@ jobs:
           CHANGES: ${{ needs.changes.result }}
           APP: ${{ needs.app.result }}
           PR_TITLE: ${{ needs.pr-title.result }}
+          CHANGELOG: ${{ needs.changelog.result }}
           DEPENDENCY_REVIEW: ${{ needs.dependency-review.result }}
           AUDIT: ${{ needs.audit.result }}
         run: |
-          for r in "$CHANGES" "$APP" "$PR_TITLE" "$DEPENDENCY_REVIEW" "$AUDIT"; do
+          for r in "$CHANGES" "$APP" "$PR_TITLE" "$CHANGELOG" "$DEPENDENCY_REVIEW" "$AUDIT"; do
             case "$r" in
               success | skipped) ;;
               *) echo "failed: $r"; exit 1 ;;
