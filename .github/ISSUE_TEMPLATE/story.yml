@@ -1,0 +1,36 @@
+name: Story oder Enabler
+description: Arbeitspaket aus der Spec. Die Spec gilt; das Issue verweist nur darauf.
+labels: [story]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Neue Funktionen entstehen zuerst in `Docs/PRODUKT-SPECS/` (Story mit Gegeben/Wenn/Dann-Kriterien), dann das Issue.
+  - type: input
+    id: id
+    attributes:
+      label: Story-ID
+      placeholder: US-XXX-nn
+    validations:
+      required: true
+  - type: dropdown
+    id: release
+    attributes:
+      label: Release
+      options: [R0 Fundament, R1 Parität, R2 Soziales, R3 Tausch und Erinnerungen, R4 KI-Zugang, R5 Equipment, R6 Sensorik]
+    validations:
+      required: true
+  - type: textarea
+    id: kriterien
+    attributes:
+      label: Beschreibung und Akzeptanzkriterien
+      description: unverändert aus der Spec; bei Abweichung gilt die Spec
+    validations:
+      required: true
+  - type: textarea
+    id: abhaengigkeiten
+    attributes:
+      label: Abhängigkeiten
+      value: |
+        **Blockiert durch:**
+        **Blockiert direkt:**

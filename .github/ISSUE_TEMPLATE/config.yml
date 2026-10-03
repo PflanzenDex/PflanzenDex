@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Sicherheitslücke melden
+    url: https://github.com/PflanzenDex/PflanzenDex/security/advisories/new
+    about: Schwachstellen bitte privat melden, nie als öffentliches Issue (SECURITY.md).

@@ -1,0 +1,34 @@
+name: Fehler
+description: Etwas verhält sich anders als in der Spec beschrieben.
+labels: [bug]
+body:
+  - type: input
+    id: spec
+    attributes:
+      label: Betroffene Story oder Anforderung
+      description: ID aus Docs/PRODUKT-SPECS, z. B. US-PHA-02 oder FR-WAC-03
+      placeholder: US-…
+    validations:
+      required: true
+  - type: textarea
+    id: schritte
+    attributes:
+      label: Gegeben / Wenn / Dann
+      description: Ausgangslage, Handlung, erwartetes und tatsächliches Ergebnis. Wird zum Regressionstest (P-06).
+      value: |
+        Gegeben:
+        Wenn:
+        Dann erwartet:
+        Tatsächlich:
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: steht in der App (Fußzeile) oder im Gesundheits-Endpunkt
+  - type: textarea
+    id: kontext
+    attributes:
+      label: Kontext
+      description: Gerät, Browser, Screenshots. Keine echten Standortdaten oder Fotos mit GPS (P-05).

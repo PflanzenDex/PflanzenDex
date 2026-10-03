@@ -29,6 +29,7 @@ Start with `Docs/PRODUKT-SPECS/README.md` (index, conventions, replacement table
 ## Git workflow (E-13)
 
 - `main` holds the finished, released product; `dev` holds the current development state. Neither gets direct commits.
+- The repo is public. Rulesets (`.github/rulesets/`, ADR `Docs/entscheidungen/0001-…`) enforce this: merging into `main`/`dev` needs a PR, a green `ci-status` and one approval from a human other than the last pusher. An agent can open PRs but never merge them. Squash into `dev`, merge commit from `dev` into `main`, so the PR title must be a Conventional Commit.
 - Every change lives on a dedicated short-lived branch (one task, one worktree) and enters `dev` through a pull request. `dev` collects changes until a release; then `dev` goes into `main` through a pull request.
 - Commit messages follow Conventional Commits (type and scope from the epics, e.g. `feat(soz)`), `docs:` for documentation. Spec status and counters in `Docs/PRODUKT-SPECS/README.md` change in the same PR as the code.
 - The product epic MIG (import from the vault) was dropped; its IDs stay reserved.
