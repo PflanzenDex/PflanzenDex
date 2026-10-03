@@ -1,0 +1,85 @@
+# 05 – Epic WAC: Growth, Etiolation and Photos
+
+Goal: success is measured against the **own** history of each plant, not against invented species averages, and length gain caused by lack of light does not count as success.
+
+Prototype reference: epic WAC. Differences: measuring on the phone with a camera, photo processing on the server, AI assessment as a suggestion (epic KI), date in the user's time zone (NFR-08, solves B-01).
+
+## User stories
+
+### US-WAC-01 · Record a measurement · ⬜ (prototype ✅)
+
+As a **plant keeper** I want to save a measured number per specimen, so that the history grows.
+
+Acceptance criteria:
+
+- Per specimen the view shows: "What to measure?" (growth measure of the species), last measurement, rate, trend, last assessment and the input form.
+- Input: number (step 0.5 cm), quality, optional note, optional photo. Non-numeric or negative input is rejected without writing.
+- The date defaults to today in the user's time zone and is changeable (adding retroactively).
+- The same dimension is always measured at the same place.
+- Saving is idempotent (US-QS-03).
+
+### US-WAC-02 · Assess etiolation while measuring · ⬜ (prototype ✅)
+
+Acceptance criteria:
+
+- Choice `Healthy` / `Etiolated/thin` (default `Healthy`).
+- If the species has etiolation signs, they can be shown at the choice field ("how to recognize?").
+- A measurement without quality (imported legacy data) counts as `Healthy`.
+
+### US-WAC-03 · Growth rate and trend against the own average · ⬜ (prototype ✅)
+
+Acceptance criteria:
+
+- Zero measurements: "no measurement yet". One: "1 measurement — no rate yet".
+- From two measurements: overall rate in cm/year = (Δ value / Δ days) × 365 between first and last measurement.
+- From three: trend = last interval rate against the mean of all previous interval rates. Relative deviation > +10 % → faster, < −10 % → slower, otherwise stable. A mean of 0 counts as stable.
+- With two measurements: "from the 3rd measurement you will see a trend here".
+- Two measurements on the same day or in the wrong order (Δ days ≤ 0) yield no rate; before the evaluation the measurements are sorted by date.
+- **No** comparison with a species average (P-08). As soon as enough own data of all users is available, a comparison can be introduced, only with sample size and minimum count (see non-goals in `16-Releases-and-Decisions.md`).
+
+### US-WAC-04 · Etiolation overrides the trend · ⬜ (prototype ✅)
+
+Acceptance criteria:
+
+- If the quality of the last measurement is `Etiolated/thin`, the view shows "Growth etiolated/thin — despite the rate no success signal, see success criteria", regardless of the rate.
+- A rising trend counts as a success signal only together with `Healthy`.
+
+### US-WAC-05 · View history and photos · ⬜ (prototype ✅)
+
+Acceptance criteria:
+
+- History chart per specimen (value over time) with marking of etiolated measurements.
+- Photo series in time order; the specimen card (US-BES-06) shows the latest photo.
+- "Last assessment" shows date and note of the last measurement.
+
+### US-WAC-06 · Have a photo assessed and store it · ⬜ (prototype ✅)
+
+As a **plant keeper** I want to have a photo assessed, so that measured number, judgment and picture belong together.
+
+Acceptance criteria (assessment):
+
+- The keeper measures themselves and supplies the number. The AI assesses the photo **purely qualitatively** against success criteria and etiolation signs of the species and suggests `quality` and a short note (US-KI-04). The keeper accepts, changes or discards the suggestion.
+- The AI assesses only what is visible; no estimation of height, substrate moisture or roots. If the basis is missing, the note stays empty.
+
+Acceptance criteria (processing):
+
+- On upload the image is rotated (EXIF orientation), the long side reduced to at most 1600 px, JPEG quality 82, **EXIF/GPS removed**.
+- The photo belongs to the measurement of the same day; a second photo for the same measurement replaces only after confirmation.
+- Invalid file, too large a file or a missing measurement abort with a clear message.
+
+## Data model
+
+### DM-WAC-01 Measurement
+
+`Specimen`, `Date` (local), `Value` (number, cm or unit of the growth measure), `Quality` (`Healthy` | `Etiolated/thin`), `Note?`, `Photo?`, `Assessed_By` (`Keeper` | `AI suggestion accepted`).
+
+## Requirements
+
+| ID        | Requirement                                                                                                                                                                                    | Status |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| FR-WAC-02 | The rate is a comparison against the **own** history; numbers without a verifiable source are not shown (P-08).                                                                                | ⬜     |
+| FR-WAC-03 | The trend threshold ±10 % is a default, centrally configurable in the logic.                                                                                                                   | ⬜     |
+| FR-WAC-05 | The growth view also shows cuttings, marked "Cutting". (Open question from the prototype, settled here: visible, because cuttings should be measured.)                                         | ⬜     |
+| FR-WAC-07 | More than one measurement on the same day is possible, but yields no rate (Δ days = 0).                                                                                                        | ⬜     |
+| FR-WAC-08 | A too old last measurement (default 30 days, adjustable) creates a reminder (US-MON-04). Cuttings are excluded or have a shorter rhythm (decision open).                                       | ⬜     |
+| FR-WAC-09 | Photos are the property of the user. After processing only the cleaned version exists (no original with GPS).                                                                                  | ⬜     |
