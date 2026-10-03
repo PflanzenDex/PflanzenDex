@@ -1,7 +1,4 @@
-import { definiereOperation } from "../kern/operation";
-import { fehler } from "../kern/fehler";
-import { fehlgeschlagen, ok, type Ergebnis } from "../kern/ergebnis";
-import { objekt } from "../kern/validierung";
+import { definiereOperation, fehler, fehlgeschlagen, ok, type Ergebnis, objekt } from "../kern";
 import { zonenAenderSchema, zonenKennungSchema, zonenSchema } from "./felder";
 import type { Lichtzone, ZonenNutzung, ZonenSpeicher, ZonenWerte } from "./typen";
 

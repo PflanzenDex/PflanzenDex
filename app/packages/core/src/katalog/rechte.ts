@@ -1,4 +1,4 @@
-import type { AngemeldeterKontext } from "../kern/ports";
+import { type AngemeldeterKontext } from "../kern";
 import type { PruefungSpeicher } from "./typen";
 
 /** Prüfer ist, wer Betreiber oder Prüfer ist (FR-BES-14). Ohne Rolle bleibt nur das Vorschlagen. */

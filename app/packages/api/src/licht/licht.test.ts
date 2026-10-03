@@ -3,12 +3,12 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migriere, oeffnePool } from "@pflanzendex/db";
 import { createApp } from "../app";
-import type { TokenPruefer } from "../konto";
 
 // US-LIC-05: Standorte und Lichtzonen über die API (echte PostgreSQL, `make db-up`).
 let pool: Pool;
 const subA = `licht-${randomUUID()}`;
 const subB = `licht-${randomUUID()}`;
+type TokenPruefer = NonNullable<NonNullable<Parameters<typeof createApp>[0]>["pruefer"]>;
 const pruefer: TokenPruefer = async (token) => {
   const [art, sub] = token.split(":");
   return art === "gueltig"

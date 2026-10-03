@@ -1,6 +1,4 @@
-import { definiereOperation } from "../kern/operation";
-import { fehler } from "../kern/fehler";
-import { fehlgeschlagen, ok, type Ergebnis } from "../kern/ergebnis";
+import { definiereOperation, fehler, fehlgeschlagen, ok, type Ergebnis } from "../kern";
 import { standortAenderSchema, standortSchema } from "./felder";
 import type { LichtStandort, LichtStandortSpeicher } from "./typen";
 

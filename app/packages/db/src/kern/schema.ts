@@ -1,4 +1,5 @@
 import type { Pool, PoolClient } from "pg";
+import { ladeFremdschluessel, modulVerstoesse, type ModulRegister } from "./modul-schema.ts";
 
 // Tabellen ohne Konto-Kennung, jeweils mit Begründung. Wächst nur bewusst und mit Review (FR-ACC-02, P-05).
 export const OHNE_KONTO_KENNUNG: Record<string, string> = {
@@ -57,8 +58,17 @@ function verstoss(z: Zeile): string | null {
   return null;
 }
 
-/** Verstöße gegen die Mandantenregeln im Schema; leer heißt in Ordnung. */
-export async function findeSchemaVerstoesse(db: Abfrage): Promise<string[]> {
+/**
+ * Verstöße gegen die Mandantenregeln im Schema; leer heißt in Ordnung. Mit Modulregister (app/modules.config.mjs)
+ * prüft sie zusätzlich die Modulgrenzen: Tabelle ohne Modul (AB-13) und Fremdschlüssel über Modulgrenzen (AB-10).
+ */
+export async function findeSchemaVerstoesse(
+  db: Abfrage,
+  register?: ModulRegister,
+): Promise<string[]> {
   const zeilen = await ladeTabellen(db);
-  return zeilen.map(verstoss).filter((v): v is string => v !== null);
+  const mandant = zeilen.map(verstoss).filter((v): v is string => v !== null);
+  if (!register) return mandant;
+  const namen = zeilen.map((z) => z.name);
+  return [...mandant, ...modulVerstoesse(namen, await ladeFremdschluessel(db), register)];
 }

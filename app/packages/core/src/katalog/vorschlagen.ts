@@ -1,7 +1,13 @@
-import { definiereOperation } from "../kern/operation";
-import { fehler } from "../kern/fehler";
-import { fehlgeschlagen, ok } from "../kern/ergebnis";
-import { bezeichnerFeld, kennungFeld, objekt, wahlFeld } from "../kern/validierung";
+import {
+  definiereOperation,
+  fehler,
+  fehlgeschlagen,
+  ok,
+  bezeichnerFeld,
+  kennungFeld,
+  objekt,
+  wahlFeld,
+} from "../kern";
 import { istPruefer } from "./rechte";
 import { VORSCHLAG_STATUS, type PruefungSpeicher } from "./typen";
 

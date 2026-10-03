@@ -1,5 +1,4 @@
-import { objekt, textFeld, kennungFeld, wahlFeld } from "../kern/validierung";
-import type { Fehlerdetail } from "../kern/fehler";
+import { objekt, textFeld, kennungFeld, wahlFeld, type Fehlerdetail } from "../kern";
 import { GRENZEN, STANDORT_ARTEN } from "./typen";
 
 const ungueltig = (feld: string): Fehlerdetail => ({ feld, code: "eingabe.ungueltig" });

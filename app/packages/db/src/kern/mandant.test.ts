@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { findeSchemaVerstoesse, mitKonto, migriere, pruefeMandantentrennung } from "./index.ts";
 import { oeffnePool } from "./verbindung.ts";
 import { FIXTURES } from "../fixtures.ts";
+import { MODULE_CONFIG as REGISTER } from "../../../../modules.config.mjs";
 
 // Testrahmen mit zwei Konten (QG-D1, NFR-09, FR-ACC-02). Läuft gegen eine echte PostgreSQL (`make db-up`).
 let pool: Pool;
@@ -27,6 +28,10 @@ describe("Mandantentrennung über alle Tabellen", () => {
 
   it("das Schema hat keine Tabelle ohne Konto-Kennung und keine ohne erzwungene Zeilenregel", async () => {
     expect(await findeSchemaVerstoesse(pool)).toEqual([]);
+  });
+
+  it("jede Tabelle gehört einem Modul, kein Fremdschlüssel verletzt die Modulgrenzen (AB-10, AB-13)", async () => {
+    expect(await findeSchemaVerstoesse(pool, REGISTER)).toEqual([]);
   });
 
   it("eine neue Tabelle ohne Konto-Kennung fällt auf", async () => {

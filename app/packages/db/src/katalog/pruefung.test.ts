@@ -2,7 +2,12 @@ import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { mitKonto, migriere, oeffnePool, pruefeMandantentrennung } from "../kern/index.ts";
-import { FIXTURES } from "../fixtures.ts";
+import {
+  FIXTURES,
+  lesenDerRollentabelle,
+  schreibenInDieRollentabelle,
+  vergibRolle,
+} from "../fixtures.ts";
 import { PruefungPostgres } from "./index.ts";
 
 // TE-08: Rollen und Prüfstatus gegen eine echte PostgreSQL; die Rechte gelten auch ohne die Operationen aus `core`.
@@ -28,10 +33,8 @@ beforeAll(async () => {
   speicher = new PruefungPostgres(pool);
   for (const id of alle)
     await mitKonto(pool, id, (c) => c.query("insert into konto (id) values ($1)", [id]));
-  await pool.query(
-    "insert into konto_rolle (konto, rolle) values ($1, 'betreiber'), ($2, 'pruefer')",
-    [betreiber, pruefer],
-  );
+  await vergibRolle(pool, betreiber, "betreiber");
+  await vergibRolle(pool, pruefer, "pruefer");
 });
 afterAll(async () => {
   await pool.query("delete from konto where id = any($1)", [alle]);
@@ -46,14 +49,8 @@ describe("Rollen (FR-BES-14)", () => {
   });
 
   it("die Anwendung kann Rollen weder lesen noch vergeben (kein Selbstzugriff auf die Tabelle)", async () => {
-    await expect(
-      mitKonto(pool, halter, (c) => c.query("select * from konto_rolle")),
-    ).rejects.toThrow(/permission denied/);
-    await expect(
-      mitKonto(pool, halter, (c) =>
-        c.query("insert into konto_rolle (konto, rolle) values ($1, 'betreiber')", [halter]),
-      ),
-    ).rejects.toThrow(/permission denied/);
+    await expect(lesenDerRollentabelle(pool, halter)).rejects.toThrow(/permission denied/);
+    await expect(schreibenInDieRollentabelle(pool, halter)).rejects.toThrow(/permission denied/);
     expect(await speicher.rollen(halter)).toEqual([]);
   });
 });
@@ -145,7 +142,7 @@ describe("P-04: der Betreiber sieht keine Inhalte anderer Konten", () => {
   it("mit Betreiber-Rolle besteht der generische Mandantentest für jede Tabelle außer der Prüfliste", async () => {
     const [a, b] = [randomUUID(), randomUUID()];
     await mitKonto(pool, a, (c) => c.query("insert into konto (id) values ($1)", [a]));
-    await pool.query("insert into konto_rolle (konto, rolle) values ($1, 'betreiber')", [a]);
+    await vergibRolle(pool, a, "betreiber");
     const probleme = await pruefeMandantentrennung(pool, FIXTURES, a, b);
     // Einzige Ausnahme, bewusst: Prüfer lesen die Prüfliste (Art, Kennung und Status des Objekts, kein Inhalt).
     expect(probleme.filter((p) => !p.startsWith("pruefvorgang:"))).toEqual([]);
