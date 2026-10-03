@@ -7,5 +7,6 @@
     "semantic-release",
     "conventional-changelog-conventionalcommits",
     "@semantic-release/commit-analyzer"
-  ]
+  ],
+  "ignore": ["scripts/coverage-config.d.mts"]
 }
