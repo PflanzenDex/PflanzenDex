@@ -14,16 +14,16 @@ export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$
 help: ## Alle Ziele mit einem Satz
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
 
-setup: ## Abhängigkeiten installieren (npm ci, ohne Lockfile npm install) und Git-Hooks aktivieren
+setup: ## Abhängigkeiten installieren (npm ci, ohne Lockfile npm install)
 	cd $(APP) && if [ -f package-lock.json ]; then npm ci; else npm install; fi
 	$(if $(CI),,$(MAKE) hooks)
 
-hooks: ## Git-Hooks aus .githooks/ aktivieren (commit-msg, pre-commit, pre-push, Hinweise)
+hooks: ## Enable the git hooks in .githooks/ (commit-msg, pre-commit, pre-push, hints)
 	git config core.hooksPath .githooks
 
-commitlint: ## Commit-Nachricht oder PR-Titel prüfen (MSG="feat(pha): …"), QG-C1
-	@# MSG kommt als Umgebungsvariable in die Shell, nie über $$(MSG)-Expansion: PR-Titel sind fremde Eingaben.
-	@test -n "$$MSG" || { echo 'Aufruf: make commitlint MSG="feat(pha): …"' >&2; exit 2; }
+commitlint: ## Check a commit message or PR title (MSG="feat(pha): …"), QG-C1
+	@# MSG reaches the shell as an environment variable, never through $$(MSG) expansion: PR titles are untrusted input.
+	@test -n "$$MSG" || { echo 'usage: make commitlint MSG="feat(pha): …"' >&2; exit 2; }
 	@cd $(APP) && printf '%s\n' "$$MSG" | npx --no-install commitlint
 
 dev: ## API und Web lokal starten

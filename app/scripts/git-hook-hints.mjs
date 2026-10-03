@@ -1,16 +1,16 @@
-// Hinweise nach `post-merge`/`post-checkout` (US-DEV-02): nennt nötige Folgeschritte, führt aber nichts selbst aus.
-// Aufruf: node git-hook-hints.mjs <alter-commit> <neuer-commit>
+// Hints after `post-merge`/`post-checkout` (US-DEV-02): names the follow-up steps but never runs them.
+// Usage: node git-hook-hints.mjs <old-commit> <new-commit>
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const RULES = [
   {
     pattern: /^app\/(package-lock\.json|packages\/[^/]+\/package\.json|package\.json)$/,
-    hint: "Abhängigkeiten geändert: make setup",
+    hint: "Dependencies changed: run make setup",
   },
-  { pattern: /^app\/packages\/db\/migrations\//, hint: "Neue Migrationen: make migrate" },
-  { pattern: /^\.githooks\//, hint: "Git-Hooks geändert: make hooks" },
-  { pattern: /^\.nvmrc$/, hint: "Node-Version geändert: siehe .nvmrc" },
+  { pattern: /^app\/packages\/db\/migrations\//, hint: "New migrations: run make migrate" },
+  { pattern: /^\.githooks\//, hint: "Git hooks changed: run make hooks" },
+  { pattern: /^\.nvmrc$/, hint: "Node version changed: see .nvmrc" },
 ];
 
 export function hintsFor(changedFiles) {
@@ -24,8 +24,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (!from || !to || from === to) process.exit(0);
   try {
     const out = execFileSync("git", ["diff", "--name-only", from, to], { encoding: "utf8" });
-    for (const hint of hintsFor(out.split("\n").filter(Boolean))) console.log(`Hinweis: ${hint}`);
+    for (const hint of hintsFor(out.split("\n").filter(Boolean))) console.log(`Hint: ${hint}`);
   } catch {
-    // Ein Hinweis-Hook darf nie einen Checkout oder Merge stören (US-DEV-02).
+    // A hint hook must never get in the way of a checkout or merge (US-DEV-02).
   }
 }

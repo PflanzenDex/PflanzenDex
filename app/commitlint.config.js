@@ -1,7 +1,7 @@
-// Commit-Nachrichten (QG-C1, US-DEV-02): Conventional Commits, Scopes aus den Epics.
-// Gilt für den `commit-msg`-Hook und für den PR-Titel in der CI (er wird beim Squash zur Commit-Nachricht).
+// Commit messages (QG-C1, US-DEV-02): Conventional Commits with scopes from the epics.
+// Used by the `commit-msg` hook and for the PR title in CI (the squash turns the title into the commit message).
 
-// Produkt-Epics (Docs/PRODUKT-SPECS/README.md) und Prozess-Epics QG/DEV, kleingeschrieben.
+// Product epics (Docs/PRODUKT-SPECS/README.md) and the process epics QG/DEV, lower case.
 export const EPIC_SCOPES = [
   "acc",
   "bes",
@@ -20,7 +20,7 @@ export const EPIC_SCOPES = [
   "qg",
   "dev",
 ];
-// Technische Bereiche ohne eigenes Epic: Pakete, Enabler (TE-nn), Betrieb, Doku, Abhängigkeiten, Release.
+// Technical areas without their own epic: packages, enablers (TE-nn), operations, docs, dependencies, release.
 export const TECH_SCOPES = [
   "core",
   "api",
@@ -37,7 +37,7 @@ export const TECH_SCOPES = [
 
 export default {
   extends: ["@commitlint/config-conventional"],
-  // Lokale Merge-Commits (`merge: dev in feat/x`) sind kein Squash-Ergebnis und landen nie so auf `dev`.
+  // Local merge commits (`merge: dev into feat/x`) are not squash results and never land on `dev` like this.
   ignores: [(message) => /^merge[: ]/i.test(message)],
   rules: {
     "type-enum": [
@@ -59,7 +59,7 @@ export default {
     ],
     "scope-enum": [2, "always", [...EPIC_SCOPES, ...TECH_SCOPES]],
     "header-max-length": [2, "always", 100],
-    // Deutsche Betreffzeilen beginnen oft mit einem Substantiv („Phase aus Messung ableiten").
+    // Subjects may start with a capitalized domain term ("Pflegephase from measurement").
     "subject-case": [0],
     "body-max-line-length": [0],
   },

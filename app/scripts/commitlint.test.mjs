@@ -1,4 +1,4 @@
-// Tests für die Commit-Regeln (US-DEV-02, QG-C1): erlaubte und abgelehnte Nachrichten.
+// Tests for the commit rules (US-DEV-02, QG-C1): accepted and rejected messages.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import lint from "@commitlint/lint";
@@ -14,11 +14,11 @@ const check = (message) =>
     ignores: config.ignores,
   });
 
-test("US-DEV-02: Conventional Commit mit Epic-Scope und deutschem Betreff ist gültig", async () => {
+test("US-DEV-02: a Conventional Commit with an epic scope is valid", async () => {
   for (const m of [
-    "feat(pha): Phase aus Messung ableiten (US-PHA-02)",
-    "fix(bes): Namensregel für Stecklinge",
-    "docs: Roadmap aktualisiert",
+    "feat(pha): derive care phase from measurement (US-PHA-02)",
+    "fix(bes): Steckling naming rule",
+    "docs: update roadmap",
     "chore(deps): update dependency vitest to v5.1.0",
   ]) {
     const r = await check(m);
@@ -26,25 +26,25 @@ test("US-DEV-02: Conventional Commit mit Epic-Scope und deutschem Betreff ist g�
   }
 });
 
-test("US-DEV-02: unbekannter Typ, unbekannter Scope und zu lange Kopfzeile werden abgelehnt", async () => {
+test("US-DEV-02: unknown type, unknown scope and an overlong header are rejected", async () => {
   const cases = {
     "update stuff": "type-empty",
-    "feature(pha): neu": "type-enum",
-    "feat(pflanzen): neu": "scope-enum",
+    "feature(pha): new": "type-enum",
+    "feat(plants): new": "scope-enum",
     [`feat(pha): ${"x".repeat(100)}`]: "header-max-length",
-    "feat(pha): Punkt am Ende.": "subject-full-stop",
+    "feat(pha): full stop at the end.": "subject-full-stop",
   };
   for (const [m, rule] of Object.entries(cases)) {
     const r = await check(m);
     assert.equal(r.valid, false, m);
     assert.ok(
       r.errors.some((e) => e.name === rule),
-      `${m}: erwartet ${rule}, erhalten ${r.errors.map((e) => e.name)}`,
+      `${m}: expected ${rule}, got ${r.errors.map((e) => e.name)}`,
     );
   }
 });
 
-test("US-DEV-02: lokale Merge-Commits werden ignoriert", async () => {
-  assert.equal((await check("merge: dev in feat/dev-08-parallel")).valid, true);
+test("US-DEV-02: local merge commits are ignored", async () => {
+  assert.equal((await check("merge: dev into feat/dev-08-parallel")).valid, true);
   assert.equal((await check("Merge branch 'dev' into feat/x")).valid, true);
 });
