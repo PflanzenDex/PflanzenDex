@@ -1,3 +1,4 @@
+import "./licht.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LichtAnsicht, type LichtAktionen } from "./licht-ansicht";
 import { erzeugeSchreiben, ladeLicht, type ApiFehler, type LichtDaten } from "./licht-api";

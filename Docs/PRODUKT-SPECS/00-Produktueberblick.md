@@ -101,3 +101,5 @@ Technikneutral. Jede Entität gehört einem Konto, außer dem Artenkatalog.
 | Pflegeprofil | Kontoeigene Abweichungen von den Katalogwerten einer Art; privat (DM-BES-04). |
 | Vorschlag (Katalog) | Von einem Nutzer vorgeschlagene Art, nur für ihn sichtbar, bis ein Prüfer sie freigibt (US-BES-10). Nicht zu verwechseln mit einem Vorschlag in Entdecken. |
 | Gedeiht | Aktives Exemplar mit ≥ 2 Messungen, Gesamtrate > 0 und letzter Qualität `Gesund`; Grundlage für Vorschläge (Epic ENT). |
+| Modul | Fachlich geschnittener Teil des einen Deployables mit eigener öffentlicher Schnittstelle, eigenen Tabellen und erlaubten Abhängigkeiten (E-20, ADR 0003). Nicht zu verwechseln mit Epic: ein Modul kann mehrere Epics tragen. |
+| Port | Vom besitzenden Modul definierte Schnittstelle, über die ein anderes Modul Daten liefert oder abfragt, statt dessen Tabellen oder Code zu berühren (z. B. `ZonenNutzung`, LIC-05). |

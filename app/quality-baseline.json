@@ -3,28 +3,21 @@
   "entries": [
     {
       "rule": "max-params",
-      "file": "packages/api/src/licht-routen.ts",
-      "function": "schreibe",
-      "value": 5,
-      "date": "2026-10-03"
-    },
-    {
-      "rule": "max-params",
-      "file": "packages/core/src/operationen/operation.ts",
+      "file": "packages/core/src/kern/operation.ts",
       "function": "ausfuehrenGeschuetzt",
       "value": 5,
       "date": "2026-10-03"
     },
     {
       "rule": "max-params",
-      "file": "packages/db/src/trennung.ts",
+      "file": "packages/db/src/kern/trennung.ts",
       "function": "pruefeTabelle",
       "value": 5,
       "date": "2026-10-03"
     },
     {
       "rule": "max-lines-per-function",
-      "file": "packages/web/src/auth/sitzung.ts",
+      "file": "packages/web/src/konto/sitzung.ts",
       "function": "useSitzung",
       "value": 67,
       "date": "2026-10-03"

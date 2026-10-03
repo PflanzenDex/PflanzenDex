@@ -1,0 +1,36 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-ae388dc8f4158b101/app/packages/api
+
+ ❯ src/arten.test.ts (9 tests | 9 failed) 53ms
+   ❯ US-BES-01 Anmeldung und Eingabe (5)
+     × GET /arten ohne Token: 401 21ms
+     × GET /arten/00000000-0000-4000-8000-000000000001 ohne Token: 401 1ms
+     × POST /arten ohne Token: 401 1ms
+     × ohne Idempotency-Key: 400 mit stabilem Fehlercode 1ms
+     × fehlende Pflichtfelder: 400 mit allen betroffenen Feldern 1ms
+   ❯ US-BES-01 Art vorschlagen, suchen und ansehen (4)
+     × der Vorschlag ist 201, trägt den Status vorschlag und ist nur für den Ersteller sichtbar 1ms
+     × Dublette: 409 mit Verweis auf die vorhandene Art; ein anderer Nutzer darf seinen eigenen Vorschlag anlegen 1ms
+     × gleicher Wiederholungsschutz-Schlüssel: kein zweiter Eintrag 1ms
+     × ungültige Kennung: 404 statt Serverfehler 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/arten.test.ts > US-BES-01 Anmeldung und Eingabe > GET /arten ohne Token: 401
+ FAIL  src/arten.test.ts > US-BES-01 Anmeldung und Eingabe > GET /arten/00000000-0000-4000-8000-000000000001 ohne Token: 401
+ FAIL  src/arten.test.ts > US-BES-01 Anmeldung und Eingabe > POST /arten ohne Token: 401
+ FAIL  src/arten.test.ts > US-BES-01 Anmeldung und Eingabe > ohne Idempotency-Key: 400 mit stabilem Fehlercode
+ FAIL  src/arten.test.ts > US-BES-01 Anmeldung und Eingabe > fehlende Pflichtfelder: 400 mit allen betroffenen Feldern
+ FAIL  src/arten.test.ts > US-BES-01 Art vorschlagen, suchen und ansehen > der Vorschlag ist 201, trägt den Status vorschlag und ist nur für den Ersteller sichtbar
+ FAIL  src/arten.test.ts > US-BES-01 Art vorschlagen, suchen und ansehen > Dublette: 409 mit Verweis auf die vorhandene Art; ein anderer Nutzer darf seinen eigenen Vorschlag anlegen
+ FAIL  src/arten.test.ts > US-BES-01 Art vorschlagen, suchen und ansehen > gleicher Wiederholungsschutz-Schlüssel: kein zweiter Eintrag
+ FAIL  src/arten.test.ts > US-BES-01 Art vorschlagen, suchen und ansehen > ungültige Kennung: 404 statt Serverfehler
+SyntaxError: Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed (9)
+   Start at  11:50:11
+   Duration  390ms (transform 63%, import 19%, tests 17%, worker 1%)
+

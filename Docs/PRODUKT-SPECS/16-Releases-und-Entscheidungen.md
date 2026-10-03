@@ -27,7 +27,7 @@ Technikneutral begründet; Konkretes steht in den Entscheidungen.
 | Bereich | Vorschlag | Begründung |
 |---|---|---|
 | Sprache | TypeScript durchgehend | Eine Sprache für Fachlogik, API und Web. Die Prototyp-Logik (`pokedex-core.js`, `finanz-core.js`) ist bereits JavaScript und lässt sich übernehmen. |
-| Struktur | Fachlogik als eigenes Paket **ohne I/O**, API, Web, später KI-Schicht; Monorepo | P-02: Ein Kern, viele Oberflächen. |
+| Struktur | Fachlogik als eigenes Paket **ohne I/O**, API, Web, später KI-Schicht; Monorepo; **Modulith** (E-20): ein Deployable, fachliche Module mit öffentlicher Schnittstelle | P-02: Ein Kern, viele Oberflächen. |
 | Datenhaltung | PostgreSQL, selbst betrieben; Mandantentrennung durch Konto-Kennung und Zeilenebene-Regeln, die über eine **Sitzungsvariable je Transaktion** (Konto-Kennung) greifen, nicht über ein anbieterspezifisches Konzept. Zugriff nur über die API und die Operationen-Schicht, nie direkt aus dem Browser | P-04. Die Domäne ist relational (Exemplar → Messung, Freundschaft, Tausch). Läuft auf jedem PostgreSQL. |
 | Speicher-Abstraktion | Fachlogik greift über Repository-Schnittstellen zu | austauschbarer Speicher, testbar ohne Datenbank |
 | Hosting | Selbstbetrieb auf eigener Hardware (self hosted) mit Docker (Compose), kein Kubernetes. Ein Miet-Anbieter ist **zurückgestellt** und wird vor der Öffnung für Externe (Stufe 2) neu bewertet; Docker hält den Wechsel einfach | Betrieb einfach halten (R-01); keine Fremdabos für Datenbank und Anmeldung; keine Mietkosten in Stufe 1 |
@@ -61,6 +61,7 @@ Die verbindlichen Qualitätsschranken zu diesem Entwurf (Hooks, CI, Strukturrege
 | E-11 | **Stecklinge im Messrhythmus:** ausnehmen oder kürzerer Rhythmus (FR-WAC-08) | offen | R3 |
 | E-12 | **Rechtliches:** Datenschutzerklärung, Impressum, Altersgrenze, Werbekennzeichnung, Artenschutzhinweise; Rechteeinräumung für Katalogbeiträge von Nutzern (E-02, FR-BES-14) | vor dem ersten Externen | Stufe 2 |
 | E-19 | **Eingebauter Chat mit eigenem Schlüssel des Halters (Weg C):** ja/nein/wann; würde Schlüsselverwaltung, anbieterneutralen Adapter und eigene Prompts in die App holen | Zurückgestellt; nach Erfahrung mit Weg A + B entscheiden | später |
+| E-20 | **Modulith:** Das Produkt ist ein modularer Monolith: ein Deployable, eine Datenbank, fachlich geschnittene Module, Zugriff zwischen Modulen nur über deren öffentliche Schnittstelle (Port), eigene Tabellen je Modul, Querschnitt (Operationen-Schicht, Mandant, Fehlercodes) als begrenzter gemeinsamer Kern, Kopplung „nach oben“ nur über Ports und Ereignisse. Keine Microservices. Regeln AB-7 bis AB-14 in `18-…` (Abschnitt „Modulgrenzen“) | **Entschieden (2026-10-03, Projektinhaber): Modulith als Bauform.** **Vorschlag, noch nicht bestätigt:** Modulzuschnitt (17 Module, drei davon technisch), Abhängigkeitsmatrix, Verzeichnisstruktur (Modulordner innerhalb der Schichtenpakete), Fremdschlüssel-Regel und Ereignis-Zustellung; Begründung, Matrix und offene Fragen O-1 bis O-9 im ADR [0003](../decisions/0003-modulith.md). Spätere Herauslösung einzelner Module ist kein Ziel, wird aber offen gehalten. Stories BES-01/-02 werden nach dem bestätigten Zuschnitt gebaut | R0 |
 
 ## Nicht-Ziele (bewusst nicht im Produkt)
 

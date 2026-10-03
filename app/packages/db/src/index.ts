@@ -1,10 +1,6 @@
-export { mitKonto } from "./mandant.ts";
-export { findeOderLegeKonto } from "./anmeldung.ts";
-export { migriere, MIGRATIONS_VERZEICHNIS, type MigrationsOptionen } from "./migrate.ts";
-export { findeSchemaVerstoesse, mandantenTabellen, OHNE_KONTO_KENNUNG } from "./schema.ts";
-export { pruefeMandantentrennung, type Fixtures } from "./trennung.ts";
-export { oeffnePool, testDatenbankUrl } from "./verbindung.ts";
-export { PruefungPostgres } from "./pruefung.ts";
-export { ZonenPostgres } from "./licht-zonen.ts";
-export { StandortePostgres } from "./licht-standorte.ts";
-export { IdempotenzPostgres } from "./idempotenz.ts";
+// Öffentliche Schnittstelle von `db`: sammelt die Schnittstellen der Module (ADR 0003).
+export * from "./kern/index.ts";
+export * from "./konto/index.ts";
+export * from "./katalog/index.ts";
+export * from "./licht/index.ts";
+export * from "./bestand/index.ts";

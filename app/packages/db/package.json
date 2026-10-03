@@ -2,14 +2,14 @@
   "name": "@pflanzendex/db",
   "private": true,
   "type": "module",
-  "description": "Datenzugriff: PostgreSQL-Schema, Migrationen, Mandantentrennung per Zeilenebene-Regeln (FR-ACC-02, NFR-09)",
+  "description": "Data access: PostgreSQL schema, migrations, tenant isolation via row-level security (FR-ACC-02, NFR-09)",
   "exports": {
     ".": "./src/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p .",
     "test": "vitest run",
-    "migrate": "tsx src/migrate-cli.ts"
+    "migrate": "tsx src/kern/migrate-cli.ts"
   },
   "dependencies": {
     "pg": "^8.16.3"

@@ -1,0 +1,481 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-a3653eab2e6c5cb97/app/packages/core
+
+ ❯ src/bestand/name.test.ts (2 tests | 2 failed) 7ms
+   ❯ US-BES-02 Namensregel (DM-BES-03) (2)
+     × das Exemplar heißt wie die Art, mit Kennzeichen „Art – Kennzeichen“ (Gedankenstrich mit Leerzeichen) 5ms
+     × die Art heißt deutsch, sonst lateinisch (nie ein erfundener Name, P-08) 1ms
+ ❯ src/kern/datum.test.ts (4 tests | 4 failed) 9ms
+   ❯ US-BES-02 Gefangen_Am: heutiges lokales Datum (NFR-08, FR-BES-04) (4)
+     × derselbe Zeitpunkt ergibt je nach Zeitzone ein anderes lokales Datum 5ms
+     × die Zeitumstellung (2026-03-29 in Berlin) verschiebt das Kalenderdatum nicht 1ms
+     × das Datum hat immer die Form JJJJ-MM-TT mit führenden Nullen 1ms
+     × erkennt gültige Zeitzonennamen und lehnt alles andere ab 1ms
+ ❯ src/bestand/anlegen.test.ts (24 tests | 22 failed) 25ms
+   ❯ US-BES-02 Exemplar anlegen: Pflicht und Vorbelegung (9)
+     × Pflicht ist nur die Art; mit ihr entsteht ein Exemplar mit allen Vorbelegungen 7ms
+     × ohne Art: abgelehnt, nichts geschrieben (P-03) 3ms
+     × mit ungültiger Art-Kennung: abgelehnt, nichts geschrieben (P-03) 1ms
+     × ohne Zeitzone: abgelehnt, nichts geschrieben (P-03) 1ms
+     × mit unbekannter Zeitzone: abgelehnt, nichts geschrieben (P-03) 1ms
+     × mit leerem Kennzeichen: abgelehnt, nichts geschrieben (P-03) 1ms
+     × mit ungültigem Standort: abgelehnt, nichts geschrieben (P-03) 1ms
+     × eine Art, die es nicht gibt oder die das Konto nicht sehen darf, ist „nicht gefunden“ (P-04) 1ms
+     × leere Messreihe und leere Behandlungsliste sind abgeleitet, nicht gespeichert 1ms
+   ❯ US-BES-02 Gefangen_Am ist das heutige lokale Datum (FR-BES-04, NFR-08) (2)
+     × nach Mitternacht in Berlin, aber noch vor Mitternacht in UTC, gilt das Berliner Datum 1ms
+     × in New York ist es derselbe Zeitpunkt noch der Vortag 0ms
+   ❯ US-BES-02 Standort nach der heutigen Phase (Soll-Standort, FR-PHA-05) (5)
+     × der Standort kommt vom Soll-Standort-Port; er erfährt Art und lokales Datum 0ms
+     × kennt niemand einen Soll-Standort, bleibt der Standort „unbekannt“ (null), er wird nicht erfunden (P-08) 0ms
+     × ein gewählter eigener Standort hat Vorrang vor dem Soll-Standort 0ms
+     × ein fremder oder unbekannter Standort wird abgelehnt, nichts geschrieben 0ms
+     × ein Soll-Standort, den es im Konto nicht (mehr) gibt, wird abgelehnt statt still verworfen (P-10) 0ms
+   ❯ US-BES-02 Der Name steht vor dem Speichern fest (DM-BES-03, FR-BES-03) (4)
+     × existiert der Name schon, ändert sich nichts und der Fehler nennt die Namensregel 1ms
+     × mit Kennzeichen entsteht „Art – Kennzeichen“, das erste Exemplar behält seinen Namen 1ms
+     × dasselbe Kennzeichen ist je Art nicht doppelt erlaubt (Groß-/Kleinschreibung egal), ohne Änderung 0ms
+     × der Name entsteht aus dem lateinischen Namen, wenn die Art keinen deutschen hat 0ms
+   ❯ US-BES-02 Konto, Idempotenz und Anmeldung (P-03, P-04) (4)
+     × jedes Konto hat seine eigenen Exemplare; derselbe Name bei einem anderen Konto ist erlaubt 2ms
+     × derselbe Idempotency-Key legt nicht zweimal an und liefert dasselbe Ergebnis 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 28 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Exemplar anlegen: Pflicht und Vorbelegung > Pflicht ist nur die Art; mit ihr entsteht ein Exemplar mit allen Vorbelegungen
+AssertionError: expected false to match object { …(5) }
+
+- Expected:
+{
+  "artId": "11111111-1111-4111-8111-111111111111",
+  "kennzeichen": null,
+  "name": "Bogenhanf",
+  "standortId": null,
+  "status": "pflanze",
+}
+
++ Received:
+false
+
+ ❯ src/bestand/anlegen.test.ts:54:28
+     52|   it("Pflicht ist nur die Art; mit ihr entsteht ein Exemplar mit allen…
+     53|     const r = await anlegen({});
+     54|     expect(r.ok && r.wert).toMatchObject({
+       |                            ^
+     55|       artId: ART,
+     56|       name: "Bogenhanf",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/28]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Exemplar anlegen: Pflicht und Vorbelegung > ohne Art: abgelehnt, nichts geschrieben (P-03)
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Exemplar anlegen: Pflicht und Vorbelegung > mit ungültiger Art-Kennung: abgelehnt, nichts geschrieben (P-03)
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Exemplar anlegen: Pflicht und Vorbelegung > ohne Zeitzone: abgelehnt, nichts geschrieben (P-03)
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Exemplar anlegen: Pflicht und Vorbelegung > mit unbekannter Zeitzone: abgelehnt, nichts geschrieben (P-03)
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Exemplar anlegen: Pflicht und Vorbelegung > mit leerem Kennzeichen: abgelehnt, nichts geschrieben (P-03)
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Exemplar anlegen: Pflicht und Vorbelegung > mit ungültigem Standort: abgelehnt, nichts geschrieben (P-03)
+AssertionError: expected 'system.unerwartet' to be 'eingabe.ungueltig' // Object.is equality
+
+Expected: "eingabe.ungueltig"
+Received: "system.unerwartet"
+
+ ❯ src/bestand/anlegen.test.ts:73:36
+     71|   ])("%s: abgelehnt, nichts geschrieben (P-03)", async (_fall, eingabe…
+     72|     const r = await anlegen(eingabe);
+     73|     expect(!r.ok && r.fehler.code).toBe("eingabe.ungueltig");
+       |                                    ^
+     74|     expect(exemplare.schreibzugriffe).toBe(0);
+     75|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/28]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Exemplar anlegen: Pflicht und Vorbelegung > eine Art, die es nicht gibt oder die das Konto nicht sehen darf, ist „nicht gefunden“ (P-04)
+AssertionError: expected 'system.unerwartet' to be 'art.nicht_gefunden' // Object.is equality
+
+Expected: "art.nicht_gefunden"
+Received: "system.unerwartet"
+
+ ❯ src/bestand/anlegen.test.ts:80:38
+     78|     for (const artId of ["99999999-9999-4999-8999-999999999999", PRIVA…
+     79|       const r = await anlegen({ artId });
+     80|       expect(!r.ok && r.fehler.code).toBe("art.nicht_gefunden");
+       |                                      ^
+     81|     }
+     82|     expect(exemplare.schreibzugriffe).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/28]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Exemplar anlegen: Pflicht und Vorbelegung > leere Messreihe und leere Behandlungsliste sind abgeleitet, nicht gespeichert
+AssertionError: expected false to match object { messreihe: [], behandlungen: [] }
+
+- Expected:
+{
+  "behandlungen": [],
+  "messreihe": [],
+}
+
++ Received:
+false
+
+ ❯ src/bestand/anlegen.test.ts:88:28
+     86|   it("leere Messreihe und leere Behandlungsliste sind abgeleitet, nich…
+     87|     const r = await anlegen({});
+     88|     expect(r.ok && r.wert).toMatchObject({ messreihe: [], behandlungen…
+       |                            ^
+     89|     const geladen = await exemplarLaden(exemplare, "anna", exemplare.z…
+     90|     expect(geladen).toMatchObject({ messreihe: [], behandlungen: [] });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/28]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Gefangen_Am ist das heutige lokale Datum (FR-BES-04, NFR-08) > nach Mitternacht in Berlin, aber noch vor Mitternacht in UTC, gilt das Berliner Datum
+AssertionError: expected false to be '2026-10-03' // Object.is equality
+
+- Expected:
+"2026-10-03"
+
++ Received:
+false
+
+ ❯ src/bestand/anlegen.test.ts:98:39
+     96|   it("nach Mitternacht in Berlin, aber noch vor Mitternacht in UTC, gi…
+     97|     const r = await anlegen({ zeitzone: "Europe/Berlin" });
+     98|     expect(r.ok && r.wert.gefangenAm).toBe("2026-10-03");
+       |                                       ^
+     99|   });
+    100|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/28]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Gefangen_Am ist das heutige lokale Datum (FR-BES-04, NFR-08) > in New York ist es derselbe Zeitpunkt noch der Vortag
+AssertionError: expected false to be '2026-10-02' // Object.is equality
+
+- Expected:
+"2026-10-02"
+
++ Received:
+false
+
+ ❯ src/bestand/anlegen.test.ts:103:39
+    101|   it("in New York ist es derselbe Zeitpunkt noch der Vortag", async ()…
+    102|     const r = await anlegen({ zeitzone: "America/New_York" });
+    103|     expect(r.ok && r.wert.gefangenAm).toBe("2026-10-02");
+       |                                       ^
+    104|   });
+    105| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/28]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Standort nach der heutigen Phase (Soll-Standort, FR-PHA-05) > der Standort kommt vom Soll-Standort-Port; er erfährt Art und lokales Datum
+AssertionError: expected false to be '44444444-4444-4444-8444-444444444444' // Object.is equality
+
+- Expected:
+"44444444-4444-4444-8444-444444444444"
+
++ Received:
+false
+
+ ❯ src/bestand/anlegen.test.ts:111:39
+    109|     const soll = new SollStandortStub(STANDORT);
+    110|     const r = await anlegen({}, { soll });
+    111|     expect(r.ok && r.wert.standortId).toBe(STANDORT);
+       |                                       ^
+    112|     expect(soll.aufrufe).toEqual([{ nutzerId: "anna", artId: ART, heut…
+    113|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/28]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Standort nach der heutigen Phase (Soll-Standort, FR-PHA-05) > kennt niemand einen Soll-Standort, bleibt der Standort „unbekannt“ (null), er wird nicht erfunden (P-08)
+AssertionError: expected false to be null
+
+- Expected:
+null
+
++ Received:
+false
+
+ ❯ src/bestand/anlegen.test.ts:117:39
+    115|   it("kennt niemand einen Soll-Standort, bleibt der Standort „unbekann…
+    116|     const r = await anlegen({}, { soll: new SollStandortStub(null) });
+    117|     expect(r.ok && r.wert.standortId).toBeNull();
+       |                                       ^
+    118|   });
+    119|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/28]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Standort nach der heutigen Phase (Soll-Standort, FR-PHA-05) > ein gewählter eigener Standort hat Vorrang vor dem Soll-Standort
+AssertionError: expected false to be '44444444-4444-4444-8444-444444444444' // Object.is equality
+
+- Expected:
+"44444444-4444-4444-8444-444444444444"
+
++ Received:
+false
+
+ ❯ src/bestand/anlegen.test.ts:123:39
+    121|     const soll = new SollStandortStub(null);
+    122|     const r = await anlegen({ standortId: STANDORT }, { soll });
+    123|     expect(r.ok && r.wert.standortId).toBe(STANDORT);
+       |                                       ^
+    124|     expect(soll.aufrufe).toEqual([]);
+    125|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/28]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Standort nach der heutigen Phase (Soll-Standort, FR-PHA-05) > ein fremder oder unbekannter Standort wird abgelehnt, nichts geschrieben
+AssertionError: expected 'system.unerwartet' to be 'standort.nicht_gefunden' // Object.is equality
+
+Expected: "standort.nicht_gefunden"
+Received: "system.unerwartet"
+
+ ❯ src/bestand/anlegen.test.ts:129:36
+    127|   it("ein fremder oder unbekannter Standort wird abgelehnt, nichts ges…
+    128|     const r = await anlegen({ standortId: FREMD_STANDORT });
+    129|     expect(!r.ok && r.fehler.code).toBe("standort.nicht_gefunden");
+       |                                    ^
+    130|     expect(exemplare.zeilen).toHaveLength(0);
+    131|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/28]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Standort nach der heutigen Phase (Soll-Standort, FR-PHA-05) > ein Soll-Standort, den es im Konto nicht (mehr) gibt, wird abgelehnt statt still verworfen (P-10)
+AssertionError: expected 'system.unerwartet' to be 'standort.nicht_gefunden' // Object.is equality
+
+Expected: "standort.nicht_gefunden"
+Received: "system.unerwartet"
+
+ ❯ src/bestand/anlegen.test.ts:135:36
+    133|   it("ein Soll-Standort, den es im Konto nicht (mehr) gibt, wird abgel…
+    134|     const r = await anlegen({}, { soll: new SollStandortStub(FREMD_STA…
+    135|     expect(!r.ok && r.fehler.code).toBe("standort.nicht_gefunden");
+       |                                    ^
+    136|     expect(exemplare.zeilen).toHaveLength(0);
+    137|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/28]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Der Name steht vor dem Speichern fest (DM-BES-03, FR-BES-03) > existiert der Name schon, ändert sich nichts und der Fehler nennt die Namensregel
+AssertionError: expected 'system.unerwartet' to be 'exemplar.name_vergeben' // Object.is equality
+
+Expected: "exemplar.name_vergeben"
+Received: "system.unerwartet"
+
+ ❯ src/bestand/anlegen.test.ts:145:36
+    143|     const vorher = structuredClone(exemplare.zeilen);
+    144|     const r = await anlegen({});
+    145|     expect(!r.ok && r.fehler.code).toBe("exemplar.name_vergeben");
+       |                                    ^
+    146|     expect(!r.ok && r.fehler.daten).toMatchObject({
+    147|       name: "Bogenhanf",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/28]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Der Name steht vor dem Speichern fest (DM-BES-03, FR-BES-03) > mit Kennzeichen entsteht „Art – Kennzeichen“, das erste Exemplar behält seinen Namen
+AssertionError: expected false to match object { name: 'Bogenhanf – rot', …(1) }
+
+- Expected:
+{
+  "kennzeichen": "rot",
+  "name": "Bogenhanf – rot",
+}
+
++ Received:
+false
+
+ ❯ src/bestand/anlegen.test.ts:156:28
+    154|     await anlegen({});
+    155|     const r = await anlegen({ kennzeichen: "rot" });
+    156|     expect(r.ok && r.wert).toMatchObject({ name: "Bogenhanf – rot", ke…
+       |                            ^
+    157|     expect(exemplare.zeilen.map((z) => z.name)).toEqual(["Bogenhanf", …
+    158|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/28]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Der Name steht vor dem Speichern fest (DM-BES-03, FR-BES-03) > dasselbe Kennzeichen ist je Art nicht doppelt erlaubt (Groß-/Kleinschreibung egal), ohne Änderung
+AssertionError: expected 'system.unerwartet' to be 'exemplar.name_vergeben' // Object.is equality
+
+Expected: "exemplar.name_vergeben"
+Received: "system.unerwartet"
+
+ ❯ src/bestand/anlegen.test.ts:163:36
+    161|     await anlegen({ kennzeichen: "rot" });
+    162|     const r = await anlegen({ kennzeichen: "ROT" });
+    163|     expect(!r.ok && r.fehler.code).toBe("exemplar.name_vergeben");
+       |                                    ^
+    164|     expect(exemplare.zeilen).toHaveLength(1);
+    165|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/28]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Der Name steht vor dem Speichern fest (DM-BES-03, FR-BES-03) > der Name entsteht aus dem lateinischen Namen, wenn die Art keinen deutschen hat
+AssertionError: expected false to be 'Aloe vera' // Object.is equality
+
+- Expected:
+"Aloe vera"
+
++ Received:
+false
+
+ ❯ src/bestand/anlegen.test.ts:169:33
+    167|   it("der Name entsteht aus dem lateinischen Namen, wenn die Art keine…
+    168|     const r = await anlegen({ artId: ANDERE_ART });
+    169|     expect(r.ok && r.wert.name).toBe("Aloe vera");
+       |                                 ^
+    170|   });
+    171| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/28]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Konto, Idempotenz und Anmeldung (P-03, P-04) > jedes Konto hat seine eigenen Exemplare; derselbe Name bei einem anderen Konto ist erlaubt
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/bestand/anlegen.test.ts:177:18
+    175|     await anlegen({});
+    176|     const b = await anlegen({}, { kontext: ben });
+    177|     expect(b.ok).toBe(true);
+       |                  ^
+    178|     expect(await exemplareListe(exemplare, "anna")).toHaveLength(1);
+    179|     const id = exemplare.zeilen[0]?.id ?? "";
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/28]⎯
+
+ FAIL  src/bestand/anlegen.test.ts > US-BES-02 Konto, Idempotenz und Anmeldung (P-03, P-04) > derselbe Idempotency-Key legt nicht zweimal an und liefert dasselbe Ergebnis
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/bestand/anlegen.test.ts:188:30
+    186|     const noch = await anlegen({}, { schluessel: "gleich" });
+    187|     expect(noch).toEqual(erst);
+    188|     expect(exemplare.zeilen).toHaveLength(1);
+       |                              ^
+    189|   });
+    190|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/28]⎯
+
+ FAIL  src/bestand/name.test.ts > US-BES-02 Namensregel (DM-BES-03) > das Exemplar heißt wie die Art, mit Kennzeichen „Art – Kennzeichen“ (Gedankenstrich mit Leerzeichen)
+AssertionError: expected '' to be 'Bogenhanf' // Object.is equality
+
+- Expected
++ Received
+
+- Bogenhanf
+
+ ❯ src/bestand/name.test.ts:6:45
+      4| describe("US-BES-02 Namensregel (DM-BES-03)", () => {
+      5|   it("das Exemplar heißt wie die Art, mit Kennzeichen „Art – Kennzeich…
+      6|     expect(exemplarName("Bogenhanf", null)).toBe("Bogenhanf");
+       |                                             ^
+      7|     expect(exemplarName("Bogenhanf", "rot")).toBe("Bogenhanf – rot");
+      8|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/28]⎯
+
+ FAIL  src/bestand/name.test.ts > US-BES-02 Namensregel (DM-BES-03) > die Art heißt deutsch, sonst lateinisch (nie ein erfundener Name, P-08)
+AssertionError: expected '' to be 'Bogenhanf' // Object.is equality
+
+- Expected
++ Received
+
+- Bogenhanf
+
+ ❯ src/bestand/name.test.ts:13:7
+     11|     expect(
+     12|       artAnzeigename({ deutscherName: "Bogenhanf", lateinischerName: "…
+     13|     ).toBe("Bogenhanf");
+       |       ^
+     14|     expect(artAnzeigename({ deutscherName: null, lateinischerName: "Dr…
+     15|       "Dracaena trifasciata",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/28]⎯
+
+ FAIL  src/kern/datum.test.ts > US-BES-02 Gefangen_Am: heutiges lokales Datum (NFR-08, FR-BES-04) > derselbe Zeitpunkt ergibt je nach Zeitzone ein anderes lokales Datum
+AssertionError: expected '' to be '2026-10-03' // Object.is equality
+
+- Expected
++ Received
+
+- 2026-10-03
+
+ ❯ src/kern/datum.test.ts:9:53
+      7|
+      8|   it("derselbe Zeitpunkt ergibt je nach Zeitzone ein anderes lokales D…
+      9|     expect(heuteLokal(nachtInUtc, "Europe/Berlin")).toBe("2026-10-03");
+       |                                                     ^
+     10|     expect(heuteLokal(nachtInUtc, "Pacific/Auckland")).toBe("2026-10-0…
+     11|     expect(heuteLokal(nachtInUtc, "America/New_York")).toBe("2026-10-0…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/28]⎯
+
+ FAIL  src/kern/datum.test.ts > US-BES-02 Gefangen_Am: heutiges lokales Datum (NFR-08, FR-BES-04) > die Zeitumstellung (2026-03-29 in Berlin) verschiebt das Kalenderdatum nicht
+AssertionError: expected '' to be '2026-03-29' // Object.is equality
+
+- Expected
++ Received
+
+- 2026-03-29
+
+ ❯ src/kern/datum.test.ts:16:75
+     14|
+     15|   it("die Zeitumstellung (2026-03-29 in Berlin) verschiebt das Kalende…
+     16|     expect(heuteLokal(new Date("2026-03-28T23:30:00Z"), "Europe/Berlin…
+       |                                                                           ^
+     17|     expect(heuteLokal(new Date("2026-03-29T21:59:00Z"), "Europe/Berlin…
+     18|     expect(heuteLokal(new Date("2026-03-29T22:00:00Z"), "Europe/Berlin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/28]⎯
+
+ FAIL  src/kern/datum.test.ts > US-BES-02 Gefangen_Am: heutiges lokales Datum (NFR-08, FR-BES-04) > das Datum hat immer die Form JJJJ-MM-TT mit führenden Nullen
+AssertionError: expected '' to be '2026-01-05' // Object.is equality
+
+- Expected
++ Received
+
+- 2026-01-05
+
+ ❯ src/kern/datum.test.ts:22:75
+     20|
+     21|   it("das Datum hat immer die Form JJJJ-MM-TT mit führenden Nullen", (…
+     22|     expect(heuteLokal(new Date("2026-01-05T12:00:00Z"), "Europe/Berlin…
+       |                                                                           ^
+     23|   });
+     24|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/28]⎯
+
+ FAIL  src/kern/datum.test.ts > US-BES-02 Gefangen_Am: heutiges lokales Datum (NFR-08, FR-BES-04) > erkennt gültige Zeitzonennamen und lehnt alles andere ab
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/kern/datum.test.ts:26:42
+     24|
+     25|   it("erkennt gültige Zeitzonennamen und lehnt alles andere ab", () =>…
+     26|     expect(istZeitzone("Europe/Berlin")).toBe(true);
+       |                                          ^
+     27|     expect(istZeitzone("UTC")).toBe(true);
+     28|     for (const falsch of ["Mars/Olympus", "", "+02:00", "  ", 42, null…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/28]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  28 failed | 2 passed (30)
+   Start at  14:59:34
+   Duration  277ms (transform 67%, tests 15%, import 15%, worker 3%)
+
