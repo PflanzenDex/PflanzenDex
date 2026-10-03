@@ -1,0 +1,60 @@
+  "wert": 14,
+}
++ Received:
+undefined
+ ❯ src/pflege/quelle.test.ts:32:31
+     30|     );
+     31|     const r = await messungsQuelle({ messungen: speicher }).fuer("anna…
+     32|     expect(r.get(E1)?.letzte).toEqual({
+       |                               ^
+     33|       datum: "2026-10-02",
+     34|       wert: 14,
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+ FAIL  src/pflege/quelle.test.ts > US-WAC-01 MessungsQuelle für die Exemplar-Karten (US-BES-06) > bei gleichem Datum gilt die zuletzt erfasste Messung
+AssertionError: expected undefined to be 11.5 // Object.is equality
+- Expected:
+11.5
++ Received:
+undefined
+ ❯ src/pflege/quelle.test.ts:44:36
+     42|     await speicher.anlegen("anna", werte(E1, { wert: 11.5 }));
+     43|     const r = await messungsQuelle({ messungen: speicher }).fuer("anna…
+     44|     expect(r.get(E1)?.letzte.wert).toBe(11.5);
+       |                                    ^
+     45|   });
+     46|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+ FAIL  src/pflege/quelle.test.ts > US-WAC-01 MessungsQuelle für die Exemplar-Karten (US-BES-06) > ein Exemplar ohne Messung fehlt in der Antwort (unbekannt, P-08)
+AssertionError: expected [] to deeply equal [ Array(1) ]
+- Expected
++ Received
+- [
+-   "00000000-0000-4000-8000-000000000001",
+- ]
++ []
+ ❯ src/pflege/quelle.test.ts:50:27
+     48|     await speicher.anlegen("anna", werte(E1));
+     49|     const r = await messungsQuelle({ messungen: speicher }).fuer("anna…
+     50|     expect([...r.keys()]).toEqual([E1]);
+       |                           ^
+     51|   });
+     52|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+ FAIL  src/pflege/quelle.test.ts > US-WAC-01 MessungsQuelle für die Exemplar-Karten (US-BES-06) > das Foto ist null, bis Fotos erfasst werden (US-WAC-03), nie ein erfundener Wert
+AssertionError: expected undefined to be null
+- Expected:
+null
++ Received:
+undefined
+ ❯ src/pflege/quelle.test.ts:56:29
+     54|     await speicher.anlegen("anna", werte(E1));
+     55|     const r = await messungsQuelle({ messungen: speicher }).fuer("anna…
+     56|     expect(r.get(E1)?.foto).toBeNull();
+       |                             ^
+     57|   });
+     58|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+ Test Files  1 failed | 18 passed (19)
+      Tests  4 failed | 247 passed (251)
+   Start at  21:43:01
+   Duration  504ms (transform 65%, import 19%, tests 13%, worker 3%)

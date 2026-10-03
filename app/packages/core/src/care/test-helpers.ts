@@ -50,6 +50,18 @@ export class InMemoryMeasurements implements MeasurementStore {
       });
   }
 
+  async lastFor(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, MeasurementRow>> {
+    const last = new Map<string, MeasurementRow>();
+    for (const id of specimenIds) {
+      const [newest] = await this.list(userId, id);
+      if (newest) last.set(id, newest);
+    }
+    return last;
+  }
+
   async create(userId: string, w: MeasurementValues): Promise<MeasurementRow | "specimen_unknown"> {
     this.writes += 1;
     if (!this.ownership[userId]?.includes(w.specimenId)) return "specimen_unknown";

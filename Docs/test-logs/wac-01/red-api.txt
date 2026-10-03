@@ -1,0 +1,35 @@
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/issue-250/app/packages/api
+ ❯ src/pflege/messungen.test.ts (19 tests | 1 failed) 1493ms
+   ❯ US-WAC-01 letzte Messung auf der Exemplar-Karte (US-BES-06) (3)
+     × die Karte zeigt Wert, Datum, Qualität und Notiz der letzten Messung, das Foto bleibt null 101ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/pflege/messungen.test.ts > US-WAC-01 letzte Messung auf der Exemplar-Karte (US-BES-06) > die Karte zeigt Wert, Datum, Qualität und Notiz der letzten Messung, das Foto bleibt null
+AssertionError: expected { …(11) } to match object { letzteMessung: { …(4) }, foto: null }
+(9 matching properties omitted from actual)
+- Expected
++ Received
+  {
+    "foto": null,
+-   "letzteMessung": {
+-     "datum": "2026-10-01",
+-     "notiz": "lang",
+-     "qualitaet": "vergeilt",
+-     "wert": 14.5,
+-   },
++   "letzteMessung": null,
+  }
+ ❯ src/pflege/messungen.test.ts:265:38
+    263|       notiz: "lang",
+    264|     });
+    265|     expect(await karteVon(subA, id)).toMatchObject({
+       |                                      ^
+    266|       letzteMessung: { datum: "2026-10-01", wert: 14.5, qualitaet: "ve…
+    267|       foto: null,
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed | 10 passed (11)
+      Tests  1 failed | 109 passed (110)
+   Start at  21:43:08
+   Duration  2.02s (tests 61%, transform 26%, import 12%)
+  Transform  transforming modules took 2.63s · 26% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns

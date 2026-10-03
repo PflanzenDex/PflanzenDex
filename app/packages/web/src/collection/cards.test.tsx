@@ -90,18 +90,30 @@ describe("US-BES-06 Karte: letzte Messung", () => {
     expect(html([card()])).toContain("noch keine Messung");
   });
 
-  it("shows quality and date of the last measurement", () => {
+  it("shows value, quality and date of the last measurement; the value has the unit cm (US-WAC-01)", () => {
     const h = html([
-      card({ lastMeasurement: { date: "2026-10-01", quality: "healthy", note: null } }),
+      card({
+        lastMeasurement: { date: "2026-10-01", value: 12.5, quality: "healthy", note: null },
+      }),
     ]);
     expect(h).toContain("Letzte Messung: ");
+    expect(h).toContain("12,5 cm");
     expect(h).toContain(">Gesund</strong> am 01.10.2026");
     expect(h).not.toContain("noch keine Messung");
   });
 
+  it("a whole value is shown without a decimal place", () => {
+    const h = html([
+      card({ lastMeasurement: { date: "2026-10-01", value: 14, quality: "healthy", note: null } }),
+    ]);
+    expect(h).toContain("14 cm");
+  });
+
   it("etiolated/thin is never a success: warning class, no success word, hint to the success criteria", () => {
     const h = html([
-      card({ lastMeasurement: { date: "2026-10-01", quality: "etiolated", note: null } }),
+      card({
+        lastMeasurement: { date: "2026-10-01", value: 12.5, quality: "etiolated", note: null },
+      }),
     ]);
     expect(h).toContain("Letzte Messung: ");
     expect(h).toContain(">Vergeilt/dünn</strong> am 01.10.2026");
@@ -112,12 +124,21 @@ describe("US-BES-06 Karte: letzte Messung", () => {
 
   it("the note is collapsible (closed at first) and missing when there is none", () => {
     const using = html([
-      card({ lastMeasurement: { date: "2026-10-01", quality: "healthy", note: "Neues Blatt." } }),
+      card({
+        lastMeasurement: {
+          date: "2026-10-01",
+          value: 12.5,
+          quality: "healthy",
+          note: "Neues Blatt.",
+        },
+      }),
     ]);
     expect(using).toMatch(/<details(?![^>]*\sopen)[^>]*>\s*<summary[^>]*>Notiz/);
     expect(using).toContain("Neues Blatt.");
     const without = html([
-      card({ lastMeasurement: { date: "2026-10-01", quality: "healthy", note: null } }),
+      card({
+        lastMeasurement: { date: "2026-10-01", value: 12.5, quality: "healthy", note: null },
+      }),
     ]);
     expect(without).not.toContain("<details");
   });

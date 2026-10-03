@@ -9,6 +9,10 @@ export function dateText(iso: string): string {
   return `${tag}.${month}.${jahr}`;
 }
 
+/** "12,5 cm": the growth measures of the species are measured in centimetres (US-WAC-01). */
+export const valueText = (value: number): string =>
+  `${value.toLocaleString("de-DE", { maximumFractionDigits: 1 })} cm`;
+
 export interface NameConflict {
   name: string;
   existing: { id: string; name: string }[];
