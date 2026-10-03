@@ -2,11 +2,14 @@
 # Das Makefile enthält keine Fachlogik, nur Aufrufe; ein Fehler bricht ab und wird nie verdeckt (D-05).
 APP := app
 # Test-Datenbank (E-01: PostgreSQL in Docker). In der CI stellt der Workflow sie als Dienst bereit.
-DB_CONTAINER := pflanzendex-test-db
-DB_PORT := 54329
+# Im Worktree (US-DEV-08) liefert .env.worktree einen eigenen Port; sonst bleibt es beim festen Port 54329.
+-include .env.worktree
+DB_PORT := $(or $(PFLANZENDEX_TEST_DB_PORT),54329)
+DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
+export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test gates ci clean db-up db-down migrate
+.PHONY: help setup dev lint format typecheck test gates ci worktree clean db-up db-down migrate deploy backup restore-test
 
 help: ## Alle Ziele mit einem Satz
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -46,5 +49,17 @@ gates: ## Schnelle Gates: Lint, Typen, Architekturgrenzen, Format
 ci: $(if $(CI),,db-up) ## Alle Gates in der Reihenfolge der CI, bricht beim ersten Fehler ab
 	cd $(APP) && npm run ci
 
+worktree: ## Neuer Worktree + Branch (BRANCH=feat/x) mit eigenen Ports (US-DEV-08)
+	scripts/worktree-new.sh "$(BRANCH)"
+
 clean: ## Build-Ausgaben und node_modules entfernen
 	cd $(APP) && rm -rf node_modules packages/*/node_modules packages/*/dist
+
+deploy: ## Staging aus origin/main bauen und starten (auf dem Host, braucht app/deploy/.env)
+	$(APP)/deploy/scripts/deploy.sh
+
+backup: ## Datenbank sichern (app/deploy/backups)
+	$(APP)/deploy/scripts/backup.sh
+
+restore-test: ## Wiederherstellungstest in Wegwerf-Container (braucht Docker)
+	$(APP)/deploy/scripts/restore-test.sh
