@@ -102,6 +102,14 @@ describe("US-PHA-01 Pflegephasen über die API", () => {
     expect(utc.body["phasen"][0].phase).toBe("wachstum");
   });
 
+  it("US-PHA-01 ohne gesetzte Uhr gilt die Systemzeit", async () => {
+    const echt = createApp({ pruefer, pool });
+    const res = await echt.request("/pflegephasen?zeitzone=UTC", {
+      headers: { authorization: `Bearer gueltig:${subB}` },
+    });
+    expect(res.status).toBe(200);
+  });
+
   it("US-PHA-01 ein anderes Konto sieht die Exemplare nicht (P-04)", async () => {
     const r = await rufe(subB, "GET", "/pflegephasen?zeitzone=UTC");
     expect(r).toMatchObject({ status: 200, body: { phasen: [] } });
