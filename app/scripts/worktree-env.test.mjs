@@ -3,18 +3,18 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { worktreeEnv, slug } from "./worktree-env.mjs";
 
-test("US-DEV-08: gleicher Branch ergibt dieselben Werte", () => {
+test("US-DEV-08: the same branch yields the same values", () => {
   assert.deepEqual(worktreeEnv("feat/a"), worktreeEnv("feat/a"));
 });
 
-test("US-DEV-08: verschiedene Branches ergeben verschiedene Datenbanknamen", () => {
+test("US-DEV-08: different branches yield different database names", () => {
   const names = new Set(
     ["feat/a", "feat/b", "feat-a", "feat_a"].map((b) => worktreeEnv(b).PFLANZENDEX_TEST_DB_NAME),
   );
   assert.equal(names.size, 4);
 });
 
-test("US-DEV-08: Ports liegen im reservierten Bereich und kollidieren nicht mit 54329", () => {
+test("US-DEV-08: ports are in the reserved range and never collide with 54329", () => {
   const e = worktreeEnv("feat/dev-08-parallel");
   for (const k of [
     "PFLANZENDEX_TEST_DB_PORT",
@@ -26,7 +26,7 @@ test("US-DEV-08: Ports liegen im reservierten Bereich und kollidieren nicht mit 
   }
 });
 
-test("US-DEV-08: Datenbankname ist ein gültiger Bezeichner", () => {
+test("US-DEV-08: the database name is a valid identifier", () => {
   assert.match(
     worktreeEnv("Feat/Ä weird name!!").PFLANZENDEX_TEST_DB_NAME,
     /^pflanzendex_[a-z0-9_]+$/,
@@ -34,6 +34,6 @@ test("US-DEV-08: Datenbankname ist ein gültiger Bezeichner", () => {
   assert.equal(slug("feat/te-02"), "feat_te_02");
 });
 
-test("US-DEV-08: leerer Branch bricht ab", () => {
+test("US-DEV-08: an empty branch name aborts", () => {
   assert.throws(() => worktreeEnv(""));
 });

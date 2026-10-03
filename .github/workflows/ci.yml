@@ -1,6 +1,6 @@
-# CI (E-13, FR-QG-01/02, FR-DEV-09): Die Jobs rufen dieselben `make`-Ziele auf wie ein Entwickler lokal.
-# Pfadfilter: Die App-Suite läuft nur, wenn `app/`, das Makefile oder die Workflows betroffen sind.
-# `ci-status` ist der Sammelstatus; ohne Branch-Schutz (privates Repo, Free-Plan) prüft ihn der Release-Workflow.
+# CI (E-13, FR-QG-01/02, FR-DEV-09): the jobs call the same `make` targets a developer runs locally.
+# Path filter: the app suite only runs when `app/`, the Makefile or the workflows change.
+# `ci-status` is the aggregate status and the only required check in the rulesets (ADR 0001).
 name: CI
 
 on:
@@ -51,7 +51,7 @@ jobs:
     if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Datenbanktests (TE-02): echte PostgreSQL wie im Betrieb (E-01); Port wie in `make db-up`.
+    # Database tests (TE-02): real PostgreSQL as in production (E-01); same port as `make db-up`.
     services:
       postgres:
         image: postgres:16-alpine
@@ -152,8 +152,29 @@ jobs:
           MSG: ${{ github.event.pull_request.title }}
         run: make commitlint
 
+  # QG-U3: `feat:`/`fix:` PRs need a German entry in the user changelog or `[skip-changelog]`.
+  changelog:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      # Title and body only as environment variables, never inline in the command (script injection).
+      - env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_BASE_REF: ${{ github.base_ref }}
+        run: make changelog-check
+
   ci-status:
-    needs: [changes, app, pr-title, dependency-review, audit, lighthouse]
+    needs: [changes, app, pr-title, changelog, dependency-review, audit, lighthouse]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -162,14 +183,15 @@ jobs:
           CHANGES: ${{ needs.changes.result }}
           APP: ${{ needs.app.result }}
           PR_TITLE: ${{ needs.pr-title.result }}
+          CHANGELOG: ${{ needs.changelog.result }}
           DEPENDENCY_REVIEW: ${{ needs.dependency-review.result }}
           AUDIT: ${{ needs.audit.result }}
           LIGHTHOUSE: ${{ needs.lighthouse.result }}
         run: |
-          for r in "$CHANGES" "$APP" "$PR_TITLE" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE"; do
+          for r in "$CHANGES" "$APP" "$PR_TITLE" "$CHANGELOG" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE"; do
             case "$r" in
               success | skipped) ;;
-              *) echo "Fehlgeschlagen: $r"; exit 1 ;;
+              *) echo "failed: $r"; exit 1 ;;
             esac
           done
-          echo "ci-status: grün"
+          echo "ci-status: green"

@@ -1,7 +1,7 @@
 import { serve } from "@hono/node-server";
 import { oeffnePool, testDatenbankUrl } from "@pflanzendex/db";
 import { createApp } from "./app";
-import { erstelleTokenPruefer } from "./auth/token";
+import { erstelleTokenPruefer } from "./konto";
 
 // Konfiguration nur aus der Umgebung (keine Geheimnisse im Repo). Die Voreinstellungen passen zu `make auth-up`.
 const issuer = process.env["OIDC_ISSUER"] ?? "http://localhost:18081/realms/pflanzendex";

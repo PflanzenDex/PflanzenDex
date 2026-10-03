@@ -7,5 +7,5 @@
     "semantic-release",
     "conventional-changelog-conventionalcommits"
   ],
-  "ignore": ["scripts/coverage-config.d.mts"]
+  "ignore": ["scripts/coverage-config.d.mts", "modules.config.d.mts"]
 }
