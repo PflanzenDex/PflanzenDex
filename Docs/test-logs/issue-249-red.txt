@@ -1,0 +1,52 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/fix-249/app/packages/web
+
+ ❯ src/style-contrast.test.ts (3 tests | 2 failed) 7ms
+   ❯ Issue #249 footer contrast (3)
+     × Issue #249: the footer does not fade its text with opacity 5ms
+     × Issue #249: footer text reaches 4.5:1 on the page background in the light scheme 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/style-contrast.test.ts > Issue #249 footer contrast > Issue #249: the footer does not fade its text with opacity
+AssertionError: expected '\n  margin-top: 2rem;\n  font-size: 0…' not to match /opacity/
+
+- Expected:
+/opacity/
+
++ Received:
+"
+  margin-top: 2rem;
+  font-size: 0.75rem;
+  opacity: 0.6;
+  text-align: center;
+"
+
+ ❯ src/style-contrast.test.ts:44:28
+     42| describe("Issue #249 footer contrast", () => {
+     43|   it("Issue #249: the footer does not fade its text with opacity", () …
+     44|     expect(footerRule).not.toMatch(/opacity/);
+       |                            ^
+     45|   });
+     46|   it("Issue #249: footer text reaches 4.5:1 on the page background in …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/style-contrast.test.ts > Issue #249 footer contrast > Issue #249: footer text reaches 4.5:1 on the page background in the light scheme
+AssertionError: expected 4.010733812101508 to be greater than or equal to 4.5
+ ❯ src/style-contrast.test.ts:47:32
+     45|   });
+     46|   it("Issue #249: footer text reaches 4.5:1 on the page background in …
+     47|     expect(footerRatio(light)).toBeGreaterThanOrEqual(4.5);
+       |                                ^
+     48|   });
+     49|   it("Issue #249: footer text reaches 4.5:1 on the page background in …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  22:17:46
+   Duration  172ms (transform 43%, import 31%, tests 17%, worker 8%)
+
