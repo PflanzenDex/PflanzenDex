@@ -44,7 +44,7 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 
 - **Akteure:** _Pflanzenhalter_, _Freund_, _Betreiber_, _KI-Client_, _System_. Siehe `00-Produktueberblick.md`.
 - **IDs:** `US-<EPIC>-nn`, `FR-<EPIC>-nn`, `DM-<EPIC>-nn`, `NFR-nn`. Stories, die aus dem Prototyp stammen, **behalten ihre ID** (z. B. `US-PHA-01`), damit man vergleichen kann. Neue Stories bekommen die nächste freie Nummer. IDs nicht neu nummerieren.
-- **Status** (Produkt): ⬜ geplant, 🟨 in Arbeit, ✅ umgesetzt. Aktuell ist alles ⬜ außer `US-ACC-01`, `US-LIC-05`, `FR-ACC-01`, `FR-ACC-03` und `FR-QG-06`, `FR-DEV-05` und `FR-BES-04` (✅), `US-QG-04`, `US-QG-06`, `FR-QG-09`, `FR-QG-19`, `FR-DEV-04`, `US-BES-01`, `US-BES-02`, `FR-BES-01`, `FR-BES-02`, `FR-BES-03`, `FR-BES-05`, `FR-BES-11` und `NFR-08` (🟨; bei `US-BES-01` fehlen der Auftrag an den KI-Client und der Katalog-Aufbau, bei `US-BES-02` der Soll-Standort der Phase (PHA) und die Kennzeichen ab dem dritten Exemplar (BES-03), bei `NFR-08` die Zeitzone im Profil (ACC-02) und die Lint-Regel (QG-D4), bei den `FR-BES` die Prüfer-Seite; bei `US-QG-06`/`FR-DEV-04` stehen Register und Validator, Bericht-vor-blockierend, Ratchet und Nutzenprüfung fehlen) sowie dem, was die Technik-Enabler (TE) bereitstellen.
+- **Status** (Produkt): ⬜ geplant, 🟨 in Arbeit, ✅ umgesetzt. Aktuell ist alles ⬜ außer `US-ACC-01`, `US-LIC-05`, `FR-ACC-01`, `FR-ACC-03` und `FR-QG-06`, `FR-DEV-05` und `FR-BES-04` (✅), `US-QG-03`, `US-QG-04`, `US-QG-06`, `US-QS-03`, `US-DEV-01`, `US-DEV-08`, `FR-QG-09`, `FR-QG-19`, `FR-DEV-04`, `US-BES-01`, `US-BES-02`, `FR-BES-01`, `FR-BES-02`, `FR-BES-03`, `FR-BES-05`, `FR-BES-11` und `NFR-08` (🟨; bei `US-BES-01` fehlen der Auftrag an den KI-Client und der Katalog-Aufbau, bei `US-BES-02` der Soll-Standort der Phase (PHA) und die Kennzeichen ab dem dritten Exemplar (BES-03), bei `NFR-08` die Zeitzone im Profil (ACC-02) und die Lint-Regel (QG-D4), bei den `FR-BES` die Prüfer-Seite; bei `US-QG-06`/`FR-DEV-04` stehen Register und Validator, Bericht-vor-blockierend, Ratchet und Nutzenprüfung fehlen; bei `US-QG-03` fehlt das Struktur-Skript nach FR-QG-04 mit Marker-Ausnahmen, bei `US-QS-03` die Hintergrundjobs und das Nachreichen gepufferter Schreibaktionen, bei `US-DEV-01` fehlen `test-e2e`, `db-seed`, `pokedex-build` und `clean-ports`, bei `US-DEV-08` Besitzer je Epic in `CODEOWNERS`) sowie dem, was die Technik-Enabler (TE) bereitstellen.
 - **Prototyp-Spalte** je Story: `✅` im Prototyp erprobt, `🟡` im Prototyp teilweise, `neu` nicht im Prototyp. Sie sagt, wie gut das Verhalten schon belegt ist, nicht ob die Web-App es kann.
 - **Akzeptanzkriterien** in Gegeben/Wenn/Dann-Kurzform. Sie sind als Tests gedacht (NFR-QS-08).
 - **Technikneutral:** Die Spec nennt Verhalten, Daten und Grenzen, keine Frameworks. Technikentscheidungen stehen in `16-Releases-und-Entscheidungen.md` (E-nn).
@@ -77,11 +77,11 @@ Was aus dem Prototyp übernommen wird: das **fachliche Verhalten** (Phasen, Wach
 
 Diese Dokumente in `Docs/PFLANZENSYSTEM-SPECS/` sind **fachlich gültig, aber technisch überholt**, soweit sie den Vault als Wahrheit annehmen. Maßgeblich ist ab jetzt diese Spec:
 
-| Altes Dokument                   | Wird ersetzt durch                  | Was überholt ist                                            |
-| -------------------------------- | ----------------------------------- | ----------------------------------------------------------- |
-| `11-Soziales.md`                 | `10-Soziales.md`                    | „Hub", Vault als Wahrheit (FR-SOZ-02), Frontmatter-Felder   |
-| `12-Business-Case.md`            | `13-Business-Case.md`               | Stufe 1 in Obsidian, Obsidian-Hürde                         |
-| `12-Zielarchitektur-AI-first.md` | `16-Releases-und-Entscheidungen.md` | ADR-01 (Vault bleibt Wahrheit), Markdown-Adapter, US-ARC-05 |
-| `13-Equipment-und-Affiliate.md`  | `11-Equipment-und-Empfehlungen.md`  | Equipment-Notizen im Vault, `processFrontMatter`            |
+| Altes Dokument                   | Wird ersetzt durch                  | Was überholt ist                                                                                                 |
+| -------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `11-Soziales.md`                 | `10-Soziales.md`                    | „Hub", Vault als Wahrheit (FR-SOZ-02), Frontmatter-Felder                                                        |
+| `12-Business-Case.md`            | `13-Business-Case.md`               | Stufe 1 in Obsidian, Obsidian-Hürde                                                                              |
+| `12-Zielarchitektur-AI-first.md` | `16-Releases-und-Entscheidungen.md` | ADR-01 (Vault bleibt Wahrheit), Markdown-Adapter, Story „Eigene Daten, ohne Plattformzwang“ (ARC-05 im Prototyp) |
+| `13-Equipment-und-Affiliate.md`  | `11-Equipment-und-Empfehlungen.md`  | Equipment-Notizen im Vault, `processFrontMatter`                                                                 |
 
 Übernommen aus der Zielarchitektur bleiben: die Leitprinzipien P-01 bis P-06 (siehe `00-Produktueberblick.md`), Mandantenfähigkeit von Anfang an, PWA als erste Oberfläche und „Specs sind ausführbar".

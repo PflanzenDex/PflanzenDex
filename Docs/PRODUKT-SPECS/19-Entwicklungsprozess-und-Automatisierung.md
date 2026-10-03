@@ -17,7 +17,7 @@ Vorbild ist das Regelwerk des Projekts AdventskalenderTombola (`~/root/Code-Root
 
 ## Userstories
 
-### US-DEV-01 · Ein Einstiegspunkt für alle Aufgaben (Task-Runner) · ⬜
+### US-DEV-01 · Ein Einstiegspunkt für alle Aufgaben (Task-Runner) · 🟨
 
 Als **Entwickler** will ich jede wiederkehrende Aufgabe mit einem Befehl starten und lokal dasselbe ausführen wie die CI.
 
@@ -163,7 +163,7 @@ Akzeptanzkriterien:
 - Vor jeder Migration in Produktion existiert eine frische, **wiederherstellbare** Sicherung (NFR-15).
 - Zeilenebene-Regeln der Mandantentrennung (NFR-09) werden mit migriert und durch QG-D1 geprüft; eine Migration, die eine Regel entfernt, schlägt QG-D1 fehl.
 
-### US-DEV-08 · Paralleles Arbeiten ohne Kollisionen · ⬜
+### US-DEV-08 · Paralleles Arbeiten ohne Kollisionen · 🟨
 
 Als **Team (Menschen und Agenten)** will ich gleichzeitig arbeiten, ohne Dateien gegenseitig zu überschreiben.
 

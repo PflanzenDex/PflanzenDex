@@ -22,7 +22,7 @@ Akzeptanzkriterien:
 - Phase, Rate, Trend, Lichtzonen-Zählung, Priorisierung, Namensregel, Rang, Meilensteine, Tauschzustände und Feed-Ableitung liegen als reine Logik ohne I/O vor und haben Tests.
 - Jede Story mit Status ✅ hat mindestens einen Test, dessen Name die Story-ID trägt (P-06).
 
-### US-QS-03 · Wiederholbar ohne Angst · ⬜ (Prototyp ✅)
+### US-QS-03 · Wiederholbar ohne Angst · 🟨 (Prototyp ✅)
 
 Akzeptanzkriterien:
 
