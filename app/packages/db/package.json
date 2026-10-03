@@ -1,0 +1,21 @@
+{
+  "name": "@pflanzendex/db",
+  "private": true,
+  "type": "module",
+  "description": "Datenzugriff: PostgreSQL-Schema, Migrationen, Mandantentrennung per Zeilenebene-Regeln (FR-ACC-02, NFR-09)",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run",
+    "migrate": "tsx src/migrate-cli.ts"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.5",
+    "tsx": "^4.23.15"
+  }
+}
