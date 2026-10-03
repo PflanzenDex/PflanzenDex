@@ -1,5 +1,5 @@
 import { istKennung } from "../kern";
-import type { Exemplar, ExemplarSpeicher, ExemplarZeile } from "./typen";
+import { istAktiv, type Exemplar, type ExemplarSpeicher, type ExemplarZeile } from "./typen";
 
 /**
  * Hängt die abgeleiteten Listen an (P-01: berechnet, nie gespeichert). Messreihe (WAC) und Behandlungsliste (BEH)
@@ -11,14 +11,15 @@ export const mitAbleitungen = (zeile: ExemplarZeile): Exemplar => ({
   behandlungen: [],
 });
 
+/** Die Liste der aktiven Exemplare; archivierte stehen im Archiv (US-BES-07), nicht hier. */
 export async function exemplareListe(
   speicher: ExemplarSpeicher,
   nutzerId: string,
 ): Promise<readonly Exemplar[]> {
-  return (await speicher.liste(nutzerId)).map(mitAbleitungen);
+  return (await speicher.liste(nutzerId)).filter(istAktiv).map(mitAbleitungen);
 }
 
-/** `null`, wenn es das Exemplar nicht gibt oder es einem anderen Konto gehört (beides sieht gleich aus, P-04). */
+/** Auch ein archiviertes Exemplar bleibt mit Historie ladbar (US-BES-07). `null`, wenn es das Exemplar nicht gibt oder es einem anderen Konto gehört (beides sieht gleich aus, P-04). */
 export async function exemplarLaden(
   speicher: ExemplarSpeicher,
   nutzerId: string,
