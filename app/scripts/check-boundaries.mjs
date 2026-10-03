@@ -4,12 +4,16 @@
 //   AB-6  web imports neither API nor database (NFR-ARC-01 of the earlier draft: HTTP only)
 //   MK-1  marker STRUCTURE_IGNORE / MAX_LINES_IGNORE / COMPLEXITY_IGNORE (first 5 lines) without a reason
 //   EX-1  entry in KNOWN_EXCEPTIONS without a reason
+//   AB-7..AB-14  module boundaries (FR-QG-19): check-modules.mjs, check-modules-sql.mjs, register modules.config.mjs
 //   ST-c  every directory with code in `core` has an `index.ts`
 // Known, deliberately accepted legacy belongs in KNOWN_EXCEPTIONS (with a reason; the list may only shrink).
 import fs from "node:fs";
 import path from "node:path";
 import { builtinModules } from "node:module";
 import { fileURLToPath } from "node:url";
+import { MODULE_CONFIG } from "../modules.config.mjs";
+import { checkModules } from "./check-modules.mjs";
+import { checkAdapterSql, checkMigrations, kernelExports } from "./check-modules-sql.mjs";
 
 export const CORE_ALLOWED_IMPORTS = []; // third-party packages allowed in core (empty on purpose; later e.g. zod)
 export const CORE_TEST_ALLOWED_IMPORTS = ["vitest"];
@@ -42,7 +46,7 @@ function walk(dir) {
 
 export const walkCode = (dir) => walk(dir).filter((f) => CODE.test(f));
 
-function stripComments(src) {
+export function stripComments(src) {
   return src
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))
     .split("\n")
@@ -145,7 +149,15 @@ function checkMarkers(appDir, add) {
         add("MK-1", file, 1, `Marker ${m.name} without a reason (format "${m.name}: <reason>")`);
 }
 
-export function checkProject(appDir) {
+// Without a register the module rules are off (the CLI below passes modules.config.mjs).
+const NO_MODULES = {
+  MODULES: [],
+  KERN: "kern",
+  LEGACY_MIGRATIONS: {},
+  UNMODULED_FOLDERS: {},
+  MODULE_FOLDERS_IN_TRANSITION: {},
+};
+export function checkProject(appDir, cfg = NO_MODULES) {
   const out = [];
   const add = (rule, file, line, msg) => {
     const rel = path.relative(appDir, file).split(path.sep).join("/");
@@ -156,6 +168,10 @@ export function checkProject(appDir) {
   checkConsumers(appDir, add);
   checkStructure(appDir, add);
   checkMarkers(appDir, add);
+  const ctx = { appDir, add, cfg, h: { walk, walkCode, importsOf, stripComments, CODE } };
+  checkModules(ctx);
+  checkAdapterSql(ctx);
+  checkMigrations(ctx);
   for (const e of KNOWN_EXCEPTIONS)
     if (!e.reason?.trim())
       out.push(`EX-1 ${e.file} exception for ${e.rule} without a reason in KNOWN_EXCEPTIONS`);
@@ -164,7 +180,7 @@ export function checkProject(appDir) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const appDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-  const violations = checkProject(appDir);
+  const violations = checkProject(appDir, MODULE_CONFIG);
   if (violations.length) {
     console.error(violations.join("\n"));
     console.error(
@@ -173,4 +189,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     process.exit(1);
   }
   console.log("Architecture boundaries and structure: no violations.");
+  const kern = kernelExports({ appDir, cfg: MODULE_CONFIG, h: { stripComments } });
+  console.log(`Kernel exports (${MODULE_CONFIG.KERN}, a measure, no threshold): ${kern}`);
 }

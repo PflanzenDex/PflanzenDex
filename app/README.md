@@ -17,7 +17,7 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 
 - **Node:** version 24 (`.nvmrc`). Vitest 5 does not officially support odd Node versions (e.g. 25).
 - **TypeScript 6.0.x** is pinned on purpose: `typescript-eslint` does not support TypeScript 7 yet (peer range `<6.1`).
-- **Boundary check:** `npm run boundaries` (script and tests in `scripts/`); messages name the rule ID, file and line.
+- **Boundary check:** `npm run boundaries` (script and tests in `scripts/`); messages name the rule ID, file and line. Module rules AB-7 to AB-14 (FR-QG-19) read the module register `modules.config.mjs`; AB-10 and table ownership run in `findeSchemaVerstoesse` (db tests).
 - **Thresholds** (starting values, assumptions, E-15): file length ≤ 200, complexity ≤ 15, in `core` ≤ 10 (`eslint.config.js`).
 
 ## Database and tenant isolation (TE-02)
