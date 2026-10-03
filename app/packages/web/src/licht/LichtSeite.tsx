@@ -6,6 +6,37 @@ import { erzeugeSchreiben, ladeLicht, type ApiFehler, type LichtDaten } from "./
 type Zustand =
   { art: "laedt" } | { art: "fehler"; fehler: ApiFehler } | { art: "bereit"; daten: LichtDaten };
 
+type Token = () => Promise<string | undefined>;
+
+function baueAktionen(
+  api: string,
+  token: Token,
+  lade: () => Promise<void>,
+  setLetzterFehler: (f: ApiFehler | undefined) => void,
+): LichtAktionen {
+  const schreibe = async (methode: "POST" | "PUT" | "DELETE", pfad: string, body?: unknown) => {
+    const t = await token();
+    if (!t) return { code: "zugriff.nicht_angemeldet", text: "Bitte melde dich neu an." };
+    const r = await erzeugeSchreiben(api, t)(methode, pfad, body);
+    if (!r.ok) return r.fehler;
+    setLetzterFehler(undefined);
+    await lade();
+    return null;
+  };
+  return {
+    zoneAnlegen: (e) => schreibe("POST", "/lichtzonen", e),
+    zoneAendern: (id, e) => schreibe("PUT", `/lichtzonen/${id}`, e),
+    zoneLoeschen: (id) => schreibe("DELETE", `/lichtzonen/${id}`),
+    voreinstellung: async () => {
+      const f = await schreibe("POST", "/lichtzonen/voreinstellung", {});
+      setLetzterFehler(f ?? undefined);
+      return f;
+    },
+    standortAnlegen: (e) => schreibe("POST", "/standorte", e),
+    standortAendern: (id, e) => schreibe("PUT", `/standorte/${id}`, e),
+  };
+}
+
 /** Lädt die Daten und verbindet die Ansicht mit der API; nach jedem Schreiben wird neu geladen (nie geraten). */
 export function LichtSeite(props: { api: string; token: () => Promise<string | undefined> }) {
   const [z, setZ] = useState<Zustand>({ art: "laedt" });
@@ -24,29 +55,10 @@ export function LichtSeite(props: { api: string; token: () => Promise<string | u
   }, [api, token]);
   useEffect(() => void lade(), [lade]);
 
-  const aktionen = useMemo<LichtAktionen>(() => {
-    const schreibe = async (methode: "POST" | "PUT" | "DELETE", pfad: string, body?: unknown) => {
-      const t = await token();
-      if (!t) return { code: "zugriff.nicht_angemeldet", text: "Bitte melde dich neu an." };
-      const r = await erzeugeSchreiben(api, t)(methode, pfad, body);
-      if (!r.ok) return r.fehler;
-      setLetzterFehler(undefined);
-      await lade();
-      return null;
-    };
-    return {
-      zoneAnlegen: (e) => schreibe("POST", "/lichtzonen", e),
-      zoneAendern: (id, e) => schreibe("PUT", `/lichtzonen/${id}`, e),
-      zoneLoeschen: (id) => schreibe("DELETE", `/lichtzonen/${id}`),
-      voreinstellung: async () => {
-        const f = await schreibe("POST", "/lichtzonen/voreinstellung", {});
-        setLetzterFehler(f ?? undefined);
-        return f;
-      },
-      standortAnlegen: (e) => schreibe("POST", "/standorte", e),
-      standortAendern: (id, e) => schreibe("PUT", `/standorte/${id}`, e),
-    };
-  }, [api, token, lade]);
+  const aktionen = useMemo(
+    () => baueAktionen(api, token, lade, setLetzterFehler),
+    [api, token, lade],
+  );
 
   if (z.art === "laedt")
     return (

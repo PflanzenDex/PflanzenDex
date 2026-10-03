@@ -12,3 +12,7 @@ export type {
   MessungZeile,
   Qualitaet,
 } from "./typen";
+export { PFLEGEPHASEN, monatTag, pflegephase } from "./phase";
+export type { Pflegephase } from "./phase";
+export { pflegephasenListe } from "./phasen";
+export type { PhasenAbhaengigkeiten, PhasenZeile } from "./phasen";

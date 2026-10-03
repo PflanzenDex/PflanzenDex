@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { UserManager, WebStorageStateStore, type User } from "oidc-client-ts";
 import { abmeldenUeberall, apiUrl, holeKonto, oidcEinstellungen, type Konto } from "./konto-api";
 
@@ -31,49 +38,25 @@ function verarbeiteRueckkehr(mgr: UserManager): Promise<User | undefined> {
   return mgr.getUser().then((u) => (u && !u.expired ? u : undefined));
 }
 
-export function useSitzung() {
-  const mgr = useMemo(neuerManager, []);
-  const [zustand, setZustand] = useState<Zustand>({ art: "laedt" });
-
-  const lade = useCallback(async () => {
-    setZustand({ art: "laedt" });
-    try {
-      const user = await verarbeiteRueckkehr(mgr);
-      if (!user) {
-        const hinweis = window.sessionStorage.getItem(MERKER) ? "Du bist abgemeldet." : undefined;
-        return setZustand(hinweis ? { art: "abgemeldet", hinweis } : { art: "abgemeldet" });
-      }
-      setZustand({ art: "angemeldet", konto: await holeKonto(apiUrl(env), user.access_token) });
-    } catch (e) {
-      if (e instanceof Error && e.message === "nicht_angemeldet") {
-        await mgr.removeUser();
-        return setZustand({ art: "abgemeldet" });
-      }
-      setZustand({ art: "fehler", text: "Das Konto konnte nicht geladen werden." });
+async function ladeZustand(mgr: UserManager): Promise<Zustand> {
+  try {
+    const user = await verarbeiteRueckkehr(mgr);
+    if (!user) {
+      const hinweis = window.sessionStorage.getItem(MERKER) ? "Du bist abgemeldet." : undefined;
+      return hinweis ? { art: "abgemeldet", hinweis } : { art: "abgemeldet" };
     }
-  }, [mgr]);
+    return { art: "angemeldet", konto: await holeKonto(apiUrl(env), user.access_token) };
+  } catch (e) {
+    if (e instanceof Error && e.message === "nicht_angemeldet") {
+      await mgr.removeUser();
+      return { art: "abgemeldet" };
+    }
+    return { art: "fehler", text: "Das Konto konnte nicht geladen werden." };
+  }
+}
 
-  useEffect(() => {
-    void lade();
-    const beendet = () =>
-      setZustand({
-        art: "abgemeldet",
-        hinweis: "Deine Sitzung wurde beendet. Bitte melde dich neu an.",
-      });
-    mgr.events.addUserSignedOut(beendet);
-    mgr.events.addSilentRenewError(beendet);
-    return () => {
-      mgr.events.removeUserSignedOut(beendet);
-      mgr.events.removeSilentRenewError(beendet);
-    };
-  }, [mgr, lade]);
-
-  const token = useCallback(async () => (await mgr.getUser())?.access_token, [mgr]);
-
+function sitzungsAktionen(mgr: UserManager, setZustand: Dispatch<SetStateAction<Zustand>>) {
   return {
-    zustand,
-    token,
-    neuLaden: lade,
     anmelden: () => {
       window.sessionStorage.removeItem(MERKER);
       void mgr.signinRedirect();
@@ -102,4 +85,34 @@ export function useSitzung() {
       }
     },
   };
+}
+
+export function useSitzung() {
+  const mgr = useMemo(neuerManager, []);
+  const [zustand, setZustand] = useState<Zustand>({ art: "laedt" });
+
+  const lade = useCallback(async () => {
+    setZustand({ art: "laedt" });
+    setZustand(await ladeZustand(mgr));
+  }, [mgr]);
+
+  useEffect(() => {
+    void lade();
+    const beendet = () =>
+      setZustand({
+        art: "abgemeldet",
+        hinweis: "Deine Sitzung wurde beendet. Bitte melde dich neu an.",
+      });
+    mgr.events.addUserSignedOut(beendet);
+    mgr.events.addSilentRenewError(beendet);
+    return () => {
+      mgr.events.removeUserSignedOut(beendet);
+      mgr.events.removeSilentRenewError(beendet);
+    };
+  }, [mgr, lade]);
+
+  const token = useCallback(async () => (await mgr.getUser())?.access_token, [mgr]);
+  const aktionen = useMemo(() => sitzungsAktionen(mgr, setZustand), [mgr]);
+
+  return { zustand, token, neuLaden: lade, ...aktionen };
 }

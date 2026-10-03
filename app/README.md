@@ -20,6 +20,7 @@ Inside each layer package the code is cut into module folders with the same name
 | `katalog` | Review status (`core/src/katalog`, `db/src/katalog`); table `pruefvorgang`                                                                                                          |
 | `licht`   | Light zones and locations (`core/src/licht`, `db/src/licht`, `api/src/licht`, `web/src/licht`); tables `lichtzone`, `standort`                                                      |
 | `bestand` | Exemplare (`core/src/bestand`, `db/src/bestand`, `api/src/bestand`, `web/src/bestand`); table `exemplar`; depends on `kern`, `katalog`, `licht`                                     |
+| `pflege`  | Care phases (`core/src/pflege`, `api/src/pflege`, `web/src/pflege`); no table yet (derived live); depends on `kern`, `katalog`, `licht`, `bestand`, `monitoring` (registered)       |
 
 ```bash
 make setup   # install dependencies
@@ -82,6 +83,13 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **API:** `GET /exemplare`, `GET /exemplare/:id` (foreign or unknown: 404 `exemplar.nicht_gefunden`), `POST /exemplare` (`Idempotency-Key`; body `artId`, `zeitzone`, optional `kennzeichen`, `standortId`). Errors: `exemplar.name_vergeben` 409, `art.nicht_gefunden` and `standort.nicht_gefunden` 404.
 - **Web:** tab "Bestand"; "Diese Art wählen" in the catalog opens the form for that species (the app wires `katalog` and `bestand`, the modules do not know each other).
 - **Limits:** no editing, renaming, deleting or archiving (BES-03, BES-07); the Kennzeichen rule from the third Exemplar on (ask for missing marks) belongs to US-BES-03; Zusatz, zone override, Herkunft and sharing fields of DM-BES-02 are missing; no Exemplar hints yet (BES-08).
+
+## Pflegephasen (US-PHA-01)
+
+- **Derived, never stored (P-01):** `pflegephasenListe` (`core/src/pflege`) reads the Exemplare and their species and computes the phase per request: rest phase when today (`heuteLokal(uhr, zeitzone)`, the user's time zone, NFR-08) lies in the species' `Von…Bis` (month-day, both ends inclusive, may span the new year), otherwise growth phase. Only Exemplare with status `pflanze` whose species has a dormancy period are listed (cuttings and archived ones are not).
+- **API:** `GET /pflegephasen?zeitzone=<IANA name>` returns `{ phasen: [{ exemplarId, name, artId, phase, standortId, sollStandortId }] }` sorted by name; a missing or invalid time zone is 400 `eingabe.ungueltig` with the field `zeitzone`. The time zone comes with the request until the profile has one (US-ACC-02).
+- **Web:** tab "Pflegephasen", with an empty state that says what to do next (P-09).
+- **Limits:** the target location per phase belongs to the keeper's care profile (BES-09, missing), so `sollStandortId` is always `null` ("unbekannt", P-08); `SollStandortQuelle` (FR-PHA-05) is not implemented yet. A dormancy period on the Exemplar itself (override) does not exist. The E2E flow with an Exemplar waits for a fillable species catalog; E2E covers the empty state.
 
 ## Measurements (US-WAC-01)
 

@@ -1,4 +1,10 @@
-import type { MessungZeile, Qualitaet, Wachstumsmass } from "@pflanzendex/core";
+import type {
+  LichtStandort,
+  MessungZeile,
+  Pflegephase,
+  Qualitaet,
+  Wachstumsmass,
+} from "@pflanzendex/core";
 
 /** P-08: Was fehlt, heißt „unbekannt“ und wird nie mit einem Wert gefüllt. */
 export const UNBEKANNT = "unbekannt";
@@ -28,3 +34,11 @@ export const wertText = (wert: number): string =>
 
 export const messungText = (m: MessungZeile): string =>
   `${wertText(m.wert)} am ${datumText(m.datum)}`;
+
+export const PHASENTEXT: Record<Pflegephase, string> = {
+  ruhe: "Ruhephase",
+  wachstum: "Wachstumsphase",
+};
+
+export const standortText = (standorte: readonly LichtStandort[], id: string | null): string =>
+  id === null ? UNBEKANNT : (standorte.find((s) => s.id === id)?.name ?? UNBEKANNT);

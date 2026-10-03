@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, type MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
 import type { Pool } from "pg";
 import { produktTitel, type SollStandortQuelle } from "@pflanzendex/core";
@@ -6,7 +6,7 @@ import { authentifizierung, kontoRouten, type TokenPruefer } from "./konto";
 import { EXEMPLARE_PFADE, exemplareRouten } from "./bestand";
 import { ARTEN_PFADE, artenRouten } from "./katalog";
 import { LICHT_PFADE, lichtRouten } from "./licht";
-import { PFLEGE_PFADE, pflegeRouten } from "./pflege";
+import { PFLEGE_PFADE, PFLEGEPHASEN_PFADE, pflegeRouten, pflegephasenRouten } from "./pflege";
 
 export type AppOptionen = {
   /** Prüft Access-Tokens des Anmeldedienstes; ohne Angabe gibt es keine geschützten Routen. */
@@ -23,6 +23,14 @@ export type AppOptionen = {
   /** Soll-Standort für neue Exemplare; `pflege` (PHA) liefert ihn, bis dahin ist der Standort unbekannt. */
   sollStandort?: SollStandortQuelle;
 };
+
+/** Das Modul `pflege` (Messungen und Pflegephasen): Anmeldeschutz vor die Pfade, dann die Routen. */
+function bindePflegeEin(app: Hono, pool: Pool, auth: MiddlewareHandler, opt: { uhr?: () => Date }) {
+  for (const pfad of PFLEGE_PFADE) app.use(pfad, auth);
+  app.route("/", pflegeRouten(pool, opt));
+  for (const pfad of PFLEGEPHASEN_PFADE) app.use(pfad, auth).use(`${pfad}/*`, auth);
+  app.route("/", pflegephasenRouten(pool, opt));
+}
 
 export function createApp(opt: AppOptionen = {}): Hono {
   const version = opt.version ?? "unbekannt";
@@ -54,8 +62,7 @@ export function createApp(opt: AppOptionen = {}): Hono {
         ...(opt.sollStandort ? { sollStandort: opt.sollStandort } : {}),
       }),
     );
-    for (const pfad of PFLEGE_PFADE) app.use(pfad, auth);
-    app.route("/", pflegeRouten(opt.pool, opt.uhr ? { uhr: opt.uhr } : {}));
+    bindePflegeEin(app, opt.pool, auth, opt.uhr ? { uhr: opt.uhr } : {});
   }
   return app;
 }

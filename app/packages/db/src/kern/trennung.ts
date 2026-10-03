@@ -89,7 +89,13 @@ async function ohneKonto(pool: Pool, t: MandantenTabelle): Promise<string[]> {
   }
 }
 
-async function pruefeTabelle(pool: Pool, t: MandantenTabelle, a: string, b: string, fx: Fixtures) {
+async function pruefeTabelle(
+  pool: Pool,
+  t: MandantenTabelle,
+  konten: readonly [string, string],
+  fx: Fixtures,
+) {
+  const [a, b] = konten;
   if (!(t.name in fx))
     return ["keine Fixture in fixtures.ts: Tabelle ist nicht in den Mandantentest aufgenommen"];
   const probleme: string[] = [];
@@ -137,7 +143,7 @@ export async function pruefeMandantentrennung(
   try {
     for (const t of reihenfolge) {
       if (t.name !== "konto") await legeKontenAn(pool, [kontoA, kontoB]);
-      for (const p of await pruefeTabelle(pool, t, kontoA, kontoB, fixtures))
+      for (const p of await pruefeTabelle(pool, t, [kontoA, kontoB], fixtures))
         probleme.push(`${t.name}: ${p}`);
     }
   } finally {
