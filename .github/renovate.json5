@@ -1,0 +1,51 @@
+// Abhängigkeits-Updates (FR-QG-15, Routine in US-DEV-03). PRs gehen nach `dev` und durchlaufen dieselben Gates
+// wie jeder PR (ci-status + eine menschliche Freigabe, ADR 0001). Auto-Merge greift erst nach der Freigabe.
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:best-practices", // u. a. GitHub Actions und Docker-Abbilder auf Digests pinnen
+    ":semanticCommits",
+    ":semanticCommitScope(deps)",
+    ":timezone(Europe/Berlin)",
+  ],
+  baseBranchPatterns: ["dev"],
+  ignorePaths: ["**/node_modules/**", "Docs/spikes/**"],
+  schedule: ["before 6am on monday"],
+  // Schutz vor kompromittierten Releases: neue Versionen erst nach 3 Tagen (Startwert, Annahme).
+  minimumReleaseAge: "3 days",
+  prConcurrentLimit: 5,
+  labels: ["abhängigkeiten"],
+  dependencyDashboard: true,
+  dependencyDashboardTitle: "Abhängigkeiten: Übersicht (Renovate)",
+  platformAutomerge: true,
+  lockFileMaintenance: { enabled: true, schedule: ["before 6am on monday"], automerge: true },
+  // Sicherheitslücken sofort, ohne Wartezeit und ohne Gruppierung.
+  osvVulnerabilityAlerts: true,
+  vulnerabilityAlerts: { schedule: ["at any time"], minimumReleaseAge: null, labels: ["abhängigkeiten", "sicherheit"] },
+  packageRules: [
+    // Laufzeit-Abhängigkeiten erzeugen einen Patch-Release (`fix(deps)`), Werkzeuge nicht (`chore(deps)`, ADR 0002).
+    { matchDepTypes: ["dependencies"], semanticCommitType: "fix" },
+    {
+      matchDepTypes: ["devDependencies"],
+      matchUpdateTypes: ["minor", "patch", "digest"],
+      groupName: "Entwicklungswerkzeuge (minor/patch)",
+      automerge: true,
+    },
+    {
+      matchDepTypes: ["dependencies"],
+      matchUpdateTypes: ["minor", "patch"],
+      groupName: "Laufzeit (minor/patch)",
+      automerge: true,
+    },
+    { matchManagers: ["github-actions"], groupName: "GitHub Actions", automerge: true },
+    { matchManagers: ["dockerfile", "docker-compose"], matchUpdateTypes: ["minor", "patch", "digest"], groupName: "Container-Abbilder" },
+    // Hauptversionen nie automatisch (FR-QG-15), einzeln und gekennzeichnet.
+    { matchUpdateTypes: ["major"], automerge: false, addLabels: ["major"] },
+    // 0.x-Pakete: Minor kann brechen, wie Major behandeln.
+    { matchCurrentVersion: "/^v?0\\./", matchUpdateTypes: ["minor"], automerge: false },
+    // typescript-eslint unterstützt TypeScript erst bis <6.1 (app/README.md).
+    { matchPackageNames: ["typescript"], allowedVersions: "<6.1" },
+    // PostgreSQL-Hauptversion nur mit Migrationsplan und Wiederherstellungstest (US-DEV-07, NFR-15).
+    { matchPackageNames: ["postgres"], matchUpdateTypes: ["major"], enabled: false },
+  ],
+}
