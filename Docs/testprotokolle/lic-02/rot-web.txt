@@ -1,0 +1,292 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-aa345f9a9b5e7ab4d/.worktrees/feat-lic-02-wissen-wo-noch-platz/app/packages/web
+
+ ❯ src/bestand/verteilung.test.tsx (9 tests | 8 failed) 2100ms
+   ❯ US-LIC-02 Client der Verteilungs-API (2)
+     × lädt die Verteilung mit Bearer-Token 5ms
+     × ein Serverfehler bleibt ein Fehler mit Code, keine leere Verteilung (P-10) 1ms
+   ❯ US-LIC-02 Ansicht der Verteilung (5)
+     × zeigt je Zone 2 bis 4 die Anzahl der Exemplare und markiert die dünnsten Zonen 75ms
+     × nennt die dünnste Zone und die nächste Handlung (P-09), bei Gleichstand mit Hinweis auf die Wunschliste 2ms
+     × erklärt, dass Stecklingslicht nicht zählt, und nennt die nicht gezählten Exemplare (P-10) 1ms
+     × ohne Zonen für Erwachsene: keine Liste, nur Hinweis mit Handlung 2ms
+   ❯ US-LIC-02 Seite Bestand zeigt die Verteilung (2)
+     × lädt Karten, Standorte und Verteilung und zeigt die Verteilung über der Liste 1007ms
+     × scheitert die Verteilung, wird nichts halb angezeigt: Fehlertext und „Erneut laden“ 1003ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/bestand/verteilung.test.tsx > US-LIC-02 Client der Verteilungs-API > lädt die Verteilung mit Bearer-Token
+Error: nicht umgesetzt
+ ❯ ladeVerteilung src/bestand/verteilung-api.ts:10:9
+      8|   _abruf: typeof fetch = fetch,
+      9| ): Promise<Antwort<Verteilung>> {
+     10|   throw new Error("nicht umgesetzt");
+       |         ^
+     11| }
+     12|
+ ❯ src/bestand/verteilung.test.tsx:41:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/bestand/verteilung.test.tsx > US-LIC-02 Client der Verteilungs-API > ein Serverfehler bleibt ein Fehler mit Code, keine leere Verteilung (P-10)
+Error: nicht umgesetzt
+ ❯ ladeVerteilung src/bestand/verteilung-api.ts:10:9
+      8|   _abruf: typeof fetch = fetch,
+      9| ): Promise<Antwort<Verteilung>> {
+     10|   throw new Error("nicht umgesetzt");
+       |         ^
+     11| }
+     12|
+ ❯ src/bestand/verteilung.test.tsx:51:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/bestand/verteilung.test.tsx > US-LIC-02 Ansicht der Verteilung > zeigt je Zone 2 bis 4 die Anzahl der Exemplare und markiert die dünnsten Zonen
+TestingLibraryElementError: Unable to find an accessible element with the role "list" and name "Exemplare je Lichtzone"
+
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/bestand/verteilung.test.tsx:61:26
+     59|   it("zeigt je Zone 2 bis 4 die Anzahl der Exemplare und markiert die …
+     60|     render(<VerteilungAnsicht verteilung={verteilung()} />);
+     61|     const liste = screen.getByRole("list", { name: "Exemplare je Licht…
+       |                          ^
+     62|     const zeilen = within(liste).getAllByRole("listitem");
+     63|     expect(zeilen.map((z) => z.textContent)).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/bestand/verteilung.test.tsx > US-LIC-02 Ansicht der Verteilung > nennt die dünnste Zone und die nächste Handlung (P-09), bei Gleichstand mit Hinweis auf die Wunschliste
+TestingLibraryElementError: Unable to find an element with the text: /Lampe 3 und Lampe 4 sind gleich dünn besetzt/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/bestand/verteilung.test.tsx:74:19
+     72|   it("nennt die dünnste Zone und die nächste Handlung (P-09), bei Glei…
+     73|     render(<VerteilungAnsicht verteilung={verteilung()} />);
+     74|     expect(screen.getByText(/Lampe 3 und Lampe 4 sind gleich dünn bese…
+       |                   ^
+     75|     expect(screen.getByText(/auf die Wunschliste/)).toBeTruthy();
+     76|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/bestand/verteilung.test.tsx > US-LIC-02 Ansicht der Verteilung > erklärt, dass Stecklingslicht nicht zählt, und nennt die nicht gezählten Exemplare (P-10)
+TestingLibraryElementError: Unable to find an element with the text: /Nicht mitgezählt/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/bestand/verteilung.test.tsx:86:25
+     84|       />,
+     85|     );
+     86|     const rest = screen.getByText(/Nicht mitgezählt/);
+       |                         ^
+     87|     expect(rest.textContent).toContain("2 unter Stecklingslicht");
+     88|     expect(rest.textContent).toContain("1 archiviert");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/bestand/verteilung.test.tsx > US-LIC-02 Ansicht der Verteilung > ohne Zonen für Erwachsene: keine Liste, nur Hinweis mit Handlung
+TestingLibraryElementError: Unable to find an element with the text: /Lege mindestens zwei Lichtzonen an/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/bestand/verteilung.test.tsx:111:19
+    109|     );
+    110|     expect(screen.queryByRole("list", { name: "Exemplare je Lichtzone"…
+    111|     expect(screen.getByText(/Lege mindestens zwei Lichtzonen an/)).toB…
+       |                   ^
+    112|   });
+    113| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/bestand/verteilung.test.tsx > US-LIC-02 Seite Bestand zeigt die Verteilung > lädt Karten, Standorte und Verteilung und zeigt die Verteilung über der Liste
+TestingLibraryElementError: Unable to find role="heading" and name "Verteilung auf die Lichtzonen"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"licht bestand"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"bestand-titel"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"bestand-titel"[39m
+        [36m>[39m
+          [0mBestand[0m
+        [36m</h1>[39m
+        [36m<p>[39m
+          [0mDu hast noch kein Exemplar. Wähle zuerst eine Art aus dem Katalog.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"aktionen"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primaer"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mArt wählen[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"licht bestand"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"bestand-titel"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"bestand-titel"[39m
+        [36m>[39m
+          [0mBestand[0m
+        [36m</h1>[39m
+        [36m<p>[39m
+          [0mDu hast noch kein Exemplar. Wähle zuerst eine Art aus dem Katalog.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"aktionen"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primaer"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mArt wählen[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/bestand/verteilung.test.tsx:137:25
+    135|     );
+    136|     render(seite());
+    137|     expect(await screen.findByRole("heading", { name: "Verteilung auf …
+       |                         ^
+    138|     expect(screen.getByText(/Lampe 3 und Lampe 4 sind gleich dünn bese…
+    139|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  src/bestand/verteilung.test.tsx > US-LIC-02 Seite Bestand zeigt die Verteilung > scheitert die Verteilung, wird nichts halb angezeigt: Fehlertext und „Erneut laden“
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"licht bestand"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"bestand-titel"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"bestand-titel"[39m
+        [36m>[39m
+          [0mBestand[0m
+        [36m</h1>[39m
+        [36m<p>[39m
+          [0mDu hast noch kein Exemplar. Wähle zuerst eine Art aus dem Katalog.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"aktionen"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primaer"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mArt wählen[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"licht bestand"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"bestand-titel"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"bestand-titel"[39m
+        [36m>[39m
+          [0mBestand[0m
+        [36m</h1>[39m
+        [36m<p>[39m
+          [0mDu hast noch kein Exemplar. Wähle zuerst eine Art aus dem Katalog.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"aktionen"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primaer"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mArt wählen[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/bestand/verteilung.test.tsx:153:26
+    151|     );
+    152|     render(seite());
+    153|     expect((await screen.findByRole("alert")).textContent).toContain("…
+       |                          ^
+    154|     expect(screen.getByRole("button", { name: "Erneut laden" })).toBeT…
+    155|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 1 passed (9)
+   Start at  19:48:43
+   Duration  3.04s (tests 71%, environment 15%, transform 10%, import 4%)
+

@@ -5,6 +5,7 @@ import type { ArchivEintrag, ExemplarKarte } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { archiviere, ladeArchiv, stelleWiederHer } from "./archiv-api";
 import { BestandSeite } from "./BestandSeite";
+import { LEERE_VERTEILUNG } from "./verteilung-testhilfe";
 
 // US-BES-07: Archivieren und Wiederherstellen in der Oberfläche (jsdom, Server nachgebaut).
 const antwort = (status: number, body: unknown) =>
@@ -59,6 +60,7 @@ function fakeServer(opts: { archivFehler?: Response; startArchiv?: ArchivEintrag
     }
     if (pfad === "/standorte") return antwort(200, { standorte: [] });
     if (pfad === "/exemplare/archiv") return antwort(200, { archiv });
+    if (pfad === "/exemplare/verteilung") return antwort(200, LEERE_VERTEILUNG);
     return antwort(200, { karten });
   });
   vi.stubGlobal("fetch", abruf);

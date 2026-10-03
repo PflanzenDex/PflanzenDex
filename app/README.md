@@ -108,6 +108,14 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Web:** button "Archivieren" on each card opens a form (reason from a list or free text), the section "Archiv" below the list shows reason and date with "Wiederherstellen". Success and errors stay visible (P-09, P-10).
 - **Limits:** the name of an archived Exemplar stays taken (assumption: restoring can then never collide), so a new Exemplar of the same Art needs a Kennzeichen. Archiving on a swap (US-SOZ-11) comes with SOZ. The measurement history of an archived Exemplar is readable over the API but has no screen.
 
+## Zone distribution (US-LIC-02)
+
+- **What:** `GET /exemplare/verteilung` returns `{ verteilung }`, derived live from Exemplare, locations, zones and the species catalog (no table, no migration, P-01): per zone 2 to 4 (every zone except the lowest, which is cutting light) the number of Exemplare, the thinnest zone(s) (all of them on a tie), `nichtGezaehlt` (cutting light, archived, zone unknown) and a `hinweis` with the next action (P-09). The route sits before `/exemplare/:id`. The pure function `zonenVerteilung` lives in `core/src/bestand`; the same count is meant for the wishlist priority (FR-LIC-04).
+- **Zone of an Exemplar (FR-LIC-02):** status `steckling` counts as cutting light; otherwise the zone of its location (Exemplar before Art); without a zone there, the zone derived from the Art's Lux need (`zoneAbleiten`, US-LIC-01). Archived Exemplare are not counted (assumption: they are no longer in the collection) and are reported.
+- **Module placement (ADR 0003, O-4 still open):** the derived light view lives in `bestand`, which may depend on `licht` and `katalog`. No new edge and no port: `ZonenNutzung` answers a different question (who uses a zone before it is deleted).
+- **Web:** section "Verteilung auf die Lichtzonen" above the cards in the tab "Bestand", loaded together with cards and locations (if one request fails, nothing is shown half).
+- **Limits:** the Exemplar has no zone field of its own yet (override comes with BES-04/BES-09), so "Exemplar before Art" works through the location and the status. The catalog has no field for soft-leaved C3 plants, so the derivation never assumes it. The reference to the wishlist on a tie is text only; the wishlist (WUN) does not exist yet.
+
 ## Measurements (US-WAC-01)
 
 - **Module:** `pflege` (owner decision O-1: PHA, BEH and WAC live in one module; `core/src/pflege`, `db/src/pflege`, `api/src/pflege`, `web/src/pflege`). It depends on `kern`, `katalog` and `bestand` (all listed in `modules.config.mjs`).

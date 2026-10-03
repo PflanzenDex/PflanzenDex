@@ -1,0 +1,118 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-aa345f9a9b5e7ab4d/.worktrees/feat-lic-02-wissen-wo-noch-platz/app/packages/api
+
+ ❯ src/bestand/verteilung.test.ts (7 tests | 6 failed) 610ms
+   ❯ US-LIC-02 Verteilung: Anmeldung (2)
+     × die Route „verteilung“ wird nicht als Kennung eines Exemplars gelesen 14ms
+   ❯ US-LIC-02 Verteilung: Zählung und dünnste Zone (3)
+     × zählt je Zone 2 bis 4, nennt die dünnste Zone mit nächster Handlung und lässt Stecklingslicht aus 180ms
+     × ein Exemplar ohne Standort-Zone nimmt die aus dem Lux-Bedarf abgeleitete Zone der Art 37ms
+     × Status Steckling und archiviert werden nicht gezählt, aber ausgewiesen 4ms
+   ❯ US-LIC-02 Verteilung: Mandant (2)
+     × ein Konto sieht nur die Verteilung seiner eigenen Exemplare und Zonen, nie fremde Namen 71ms
+     × ein Konto ohne Zonen bekommt eine leere Verteilung und den Hinweis, Lichtzonen anzulegen 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 Verteilung: Anmeldung > die Route „verteilung“ wird nicht als Kennung eines Exemplars gelesen
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ src/bestand/verteilung.test.ts:107:45
+    105|
+    106|   it("die Route „verteilung“ wird nicht als Kennung eines Exemplars ge…
+    107|     expect((await verteilung(subA)).status).toBe(200);
+       |                                             ^
+    108|   });
+    109| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 Verteilung: Zählung und dünnste Zone > zählt je Zone 2 bis 4, nennt die dünnste Zone mit nächster Handlung und lässt Stecklingslicht aus
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ src/bestand/verteilung.test.ts:123:22
+    121|     await exemplar(subA, `A4 ${lauf}`, niedrig, ecke);
+    122|     const r = await verteilung(subA);
+    123|     expect(r.status).toBe(200);
+       |                      ^
+    124|     expect(zahlen(r)).toEqual([
+    125|       ["Lampe 2", 2],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 Verteilung: Zählung und dünnste Zone > ein Exemplar ohne Standort-Zone nimmt die aus dem Lux-Bedarf abgeleitete Zone der Art
+TypeError: Cannot read properties of undefined (reading 'zonen')
+ ❯ zahlen src/bestand/verteilung.test.ts:77:25
+     75|   ).body["id"] as string;
+     76| const zahlen = (r: Antwort) =>
+     77|   (r.body["verteilung"].zonen as { zone: { name: string }; anzahl: num…
+       |                         ^
+     78|     z.zone.name,
+     79|     z.anzahl,
+ ❯ src/bestand/verteilung.test.ts:138:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 Verteilung: Zählung und dünnste Zone > Status Steckling und archiviert werden nicht gezählt, aber ausgewiesen
+TypeError: Cannot read properties of undefined (reading 'zonen')
+ ❯ zahlen src/bestand/verteilung.test.ts:77:25
+     75|   ).body["id"] as string;
+     76| const zahlen = (r: Antwort) =>
+     77|   (r.body["verteilung"].zonen as { zone: { name: string }; anzahl: num…
+       |                         ^
+     78|     z.zone.name,
+     79|     z.anzahl,
+ ❯ src/bestand/verteilung.test.ts:157:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 Verteilung: Mandant > ein Konto sieht nur die Verteilung seiner eigenen Exemplare und Zonen, nie fremde Namen
+TypeError: Cannot read properties of undefined (reading 'zonen')
+ ❯ zahlen src/bestand/verteilung.test.ts:77:25
+     75|   ).body["id"] as string;
+     76| const zahlen = (r: Antwort) =>
+     77|   (r.body["verteilung"].zonen as { zone: { name: string }; anzahl: num…
+       |                         ^
+     78|     z.zone.name,
+     79|     z.anzahl,
+ ❯ src/bestand/verteilung.test.ts:176:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/bestand/verteilung.test.ts > US-LIC-02 Verteilung: Mandant > ein Konto ohne Zonen bekommt eine leere Verteilung und den Hinweis, Lichtzonen anzulegen
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ src/bestand/verteilung.test.ts:189:22
+    187|   it("ein Konto ohne Zonen bekommt eine leere Verteilung und den Hinwe…
+    188|     const r = await verteilung(`lic2-${randomUUID()}`);
+    189|     expect(r.status).toBe(200);
+       |                      ^
+    190|     expect(r.body["verteilung"].zonen).toEqual([]);
+    191|     expect(r.body["verteilung"].hinweis.naechsteHandlung).toContain("L…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  19:48:09
+   Duration  1.09s (tests 60%, transform 31%, import 8%)
+

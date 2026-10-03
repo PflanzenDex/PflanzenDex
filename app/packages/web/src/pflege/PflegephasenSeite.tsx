@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { LichtStandort, PhasenZeile } from "@pflanzendex/core";
 import { ladeStandorte } from "../licht";
-import type { ApiFehler } from "../kern";
+import { LadeFehler, type ApiFehler } from "../kern";
 import { PhasenListe } from "./phasen-liste";
 import { ladePflegephasen } from "./pflegephasen-api";
 
@@ -36,14 +36,7 @@ export function PflegephasenSeite(props: { api: string; token: Token }) {
     <div className="licht bestand">
       {daten.art === "laedt" && <p role="status">Pflegephasen werden geladen …</p>}
       {daten.art === "fehler" && (
-        <div role="alert" className="warnung">
-          <p>{daten.fehler.text}</p>
-          <div className="aktionen">
-            <button type="button" className="sekundaer" onClick={() => setNeuLaden((n) => n + 1)}>
-              Erneut laden
-            </button>
-          </div>
-        </div>
+        <LadeFehler fehler={daten.fehler} onNeuLaden={() => setNeuLaden((n) => n + 1)} />
       )}
       {daten.art === "da" && <PhasenListe zeilen={daten.zeilen} standorte={daten.standorte} />}
     </div>

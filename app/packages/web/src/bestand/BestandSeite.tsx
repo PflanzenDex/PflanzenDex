@@ -1,7 +1,7 @@
 import "./bestand.css";
 import { useCallback, useState } from "react";
 import type { Art, Exemplar } from "@pflanzendex/core";
-import type { ApiFehler } from "../kern";
+import { LadeFehler, type ApiFehler } from "../kern";
 import { AnlegenFormular, type AnlegenEingabe } from "./anlegen-formular";
 import { ArchivListe } from "./archiv-liste";
 import { ArchivierenFormular } from "./archiv-formular";
@@ -9,6 +9,7 @@ import { BestandListe } from "./bestand-liste";
 import { legeExemplarAn } from "./exemplare-api";
 import { ANMELDEN, useBestand, type Daten, type Token } from "./use-bestand";
 import { useArchivieren } from "./use-archivieren";
+import { VerteilungAnsicht } from "./verteilung-ansicht";
 
 function Angelegt({ exemplar }: { exemplar: Exemplar }) {
   return (
@@ -17,19 +18,6 @@ function Angelegt({ exemplar }: { exemplar: Exemplar }) {
       {exemplar.standortId === null &&
         " Der Standort ist unbekannt, denn ein Soll-Standort steht erst mit den Pflegephasen fest."}
     </p>
-  );
-}
-
-function Ladefehler(props: { fehler: ApiFehler; onNeuLaden: () => void }) {
-  return (
-    <div role="alert" className="warnung">
-      <p>{props.fehler.text}</p>
-      <div className="aktionen">
-        <button type="button" className="sekundaer" onClick={props.onNeuLaden}>
-          Erneut laden
-        </button>
-      </div>
-    </div>
   );
 }
 
@@ -69,7 +57,7 @@ export function BestandSeite(props: {
   return (
     <div className="licht bestand">
       {daten.art === "laedt" && <p role="status">Bestand wird geladen …</p>}
-      {daten.art === "fehler" && <Ladefehler fehler={daten.fehler} onNeuLaden={nachAktion} />}
+      {daten.art === "fehler" && <LadeFehler fehler={daten.fehler} onNeuLaden={nachAktion} />}
       {daten.art === "da" && neueArt && (
         <AnlegenFormular
           art={neueArt}
@@ -113,6 +101,7 @@ function Liste(p: {
           <p>{archiv.fehler.text}</p>
         </div>
       )}
+      <VerteilungAnsicht verteilung={daten.verteilung} />
       <BestandListe
         karten={daten.karten}
         onArtWaehlen={p.props.onArtWaehlen}

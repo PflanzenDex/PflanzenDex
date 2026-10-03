@@ -3,15 +3,13 @@ import {
   KEINE_MESSUNGEN,
   KEIN_SOLL_STANDORT,
   exemplarAnlegen,
-  exemplarArchiv,
-  exemplarArchivieren,
-  exemplarWiederherstellen,
   exemplarKarten,
   exemplarLaden,
   exemplareListe,
   fehler,
   heuteLokal,
   istZeitzone,
+  zonenVerteilung,
   type BehandlungsQuelle,
   type MessungsQuelle,
   type SollStandortQuelle,
@@ -26,6 +24,7 @@ import {
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import { fehlerKoerper, koerper, schreibe, type AuthEnv } from "../kern";
+import { archivRouten } from "./archiv-routen";
 
 /** Pfade, die der Anmeldeschutz (Bearer-Token) abdecken muss. */
 export const EXEMPLARE_PFADE = ["/exemplare"] as const;
@@ -64,8 +63,12 @@ export function exemplareRouten(pool: Pool, opt: ExemplareOptionen = {}): Hono<A
     messungen: opt.messungen ?? KEINE_MESSUNGEN,
     behandlungen: opt.behandlungen ?? KEINE_BEHANDLUNGEN,
   };
-  const archivieren = exemplarArchivieren({ exemplare, uhr });
-  const wiederherstellen = exemplarWiederherstellen({ exemplare });
+  const verteilungDeps = {
+    exemplare,
+    arten: kartenDeps.arten,
+    standorte: kartenDeps.standorte,
+    zonen: kartenDeps.zonen,
+  };
   const routen = new Hono<AuthEnv>();
 
   routen.get("/exemplare", async (c) =>
@@ -81,11 +84,11 @@ export function exemplareRouten(pool: Pool, opt: ExemplareOptionen = {}): Hono<A
     const karten = await exemplarKarten(kartenDeps, c.get("konto").id, heuteLokal(uhr(), zeitzone));
     return c.json({ karten });
   });
-  // Archivierte Exemplare (US-BES-07); ebenfalls vor `/exemplare/:id`.
-  routen.get("/exemplare/archiv", async (c) =>
-    c.json({
-      archiv: await exemplarArchiv({ exemplare, arten: kartenDeps.arten }, c.get("konto").id),
-    }),
+  // Archiv, Archivieren und Wiederherstellen (US-BES-07); vor `/exemplare/:id`.
+  routen.route("/", archivRouten(pool, uhr));
+  // US-LIC-02: Verteilung auf die Zonen 2 bis 4; wie „karten“ vor `/exemplare/:id`, nur Daten des eigenen Kontos (P-04).
+  routen.get("/exemplare/verteilung", async (c) =>
+    c.json({ verteilung: await zonenVerteilung(verteilungDeps, c.get("konto").id) }),
   );
   routen.get("/exemplare/:id", async (c) => {
     const e = await exemplarLaden(exemplare, c.get("konto").id, c.req.param("id"));
@@ -93,14 +96,6 @@ export function exemplareRouten(pool: Pool, opt: ExemplareOptionen = {}): Hono<A
   });
   routen.post("/exemplare", async (c) =>
     schreibe(c, deps, anlegen, { eingabe: await koerper(c), erfolg: 201 }),
-  );
-  routen.post("/exemplare/:id/archivieren", async (c) =>
-    schreibe(c, deps, archivieren, {
-      eingabe: { ...(await koerper(c)), exemplarId: c.req.param("id") },
-    }),
-  );
-  routen.post("/exemplare/:id/wiederherstellen", async (c) =>
-    schreibe(c, deps, wiederherstellen, { eingabe: { exemplarId: c.req.param("id") } }),
   );
   return routen;
 }

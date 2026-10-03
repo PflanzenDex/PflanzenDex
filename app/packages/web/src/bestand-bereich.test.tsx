@@ -3,6 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BestandBereich } from "./bestand-bereich";
+import { LEERE_VERTEILUNG } from "./bestand/verteilung-testhilfe";
 
 const antwort = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -40,6 +41,7 @@ describe("US-WAC-01 Bestand verdrahtet mit Messen", () => {
         const pfad = new URL(String(url)).pathname;
         if (pfad === "/standorte") return antwort(200, { standorte: [] });
         if (pfad === "/exemplare/archiv") return antwort(200, { archiv: [] });
+        if (pfad === "/exemplare/verteilung") return antwort(200, LEERE_VERTEILUNG);
         if (pfad === "/exemplare/e1/messungen") return antwort(200, leereAnsicht);
         return antwort(200, { karten: [karte] });
       }),

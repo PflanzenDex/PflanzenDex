@@ -109,3 +109,42 @@ a.karte-foto:focus-visible {
   font-size: 1.1rem;
   margin: 0;
 }
+
+/* Verteilung auf die Lichtzonen (US-LIC-02): mobil zuerst, eine Spalte; der Balken ist nur Zierde, die Zahl steht im Text. */
+.verteilung {
+  margin-bottom: 20px;
+  padding: 4px 16px 12px;
+  background: var(--karte);
+  border: 1px solid var(--rand);
+  border-radius: 12px;
+}
+.verteilung .naechste-handlung {
+  font-weight: 600;
+}
+.verteilung-liste {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+}
+.verteilung-liste li {
+  display: grid;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+.verteilung-liste .balken {
+  display: block;
+  height: 8px;
+  background: var(--rand);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.verteilung-liste .balken span {
+  display: block;
+  height: 100%;
+  background: var(--gruen);
+}
+.verteilung-liste .duennste .balken span {
+  background: var(--warn-rand);
+}

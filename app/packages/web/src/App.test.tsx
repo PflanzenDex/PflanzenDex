@@ -28,6 +28,7 @@ vi.mock("oidc-client-ts", () => ({
 }));
 
 import { App } from "./App";
+import { LEERE_VERTEILUNG } from "./bestand/verteilung-testhilfe";
 
 const konto = {
   id: "1",
@@ -48,6 +49,7 @@ function fakeServer(kontoStatus = 200) {
       if (pfad === "/arten") return antwort(200, { arten: [] });
       if (pfad === "/exemplare/karten") return antwort(200, { karten: [] });
       if (pfad === "/exemplare/archiv") return antwort(200, { archiv: [] });
+      if (pfad === "/exemplare/verteilung") return antwort(200, LEERE_VERTEILUNG);
       if (pfad === "/standorte") return antwort(200, { standorte: [] });
       if (pfad === "/lichtzonen") return antwort(200, { zonen: [] });
       if (pfad === "/hinweise") return antwort(200, { hinweise: [] });
@@ -120,6 +122,7 @@ describe("US-ACC-01 App", () => {
         if (pfad === "/standorte") return antwort(200, { standorte: [] });
         if (pfad === "/exemplare/karten") return antwort(200, { karten: [] });
         if (pfad === "/exemplare/archiv") return antwort(200, { archiv: [] });
+        if (pfad === "/exemplare/verteilung") return antwort(200, LEERE_VERTEILUNG);
         const art = {
           id: "a1",
           lateinischerName: "Dracaena trifasciata",
