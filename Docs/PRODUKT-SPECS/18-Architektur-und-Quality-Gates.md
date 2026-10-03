@@ -127,6 +127,7 @@ Als **Entwickler** will ich, dass Code nicht unbemerkt unlesbar wird, weil Kompl
 
 Akzeptanzkriterien:
 - QG-K1 bis QG-K4 laufen in CI; QG-K1 zusätzlich im Pre-push (schnell, nur ESLint).
+- **QG-K4 umgesetzt** (`make duplicates`, Teil von `make gates`): Fallow `dupes` mit den Werten aus `app/quality-limits.json` (Abschnitt `duplicates`: ab 3 Kopien, mindestens 50 Tokens und 5 Zeilen, Modus `mild`; Startwerte, Annahme). Blockierend ist eine Klongruppe, die eine seit dem Basis-Branch geänderte Datei berührt; der Gesamtbestand wird nur berichtet. Tests sind ausgenommen (Fallow-Standard). Gemessene Basislinie: 0 Gruppen ab 3 Kopien, 1 Gruppe mit 2 Kopien, 0,64 % duplizierte Zeilen.
 - **Fachlogik strenger:** In `core` (Phasen, Trend, Meilensteine, Tauschzustände, Erinnerungen) gelten die engeren Grenzen, weil sie rein und leicht zu zerlegen ist. Eine Funktion, die die Grenze reißt, wird zerlegt, nicht ausgenommen.
 - **Diff-Prinzip:** Blockierend ist nur, was der PR **verschlechtert** (neue oder geänderte Funktionen über der Grenze). Bestehende Überschreitungen stehen in einer Basisliste, die nur kürzer werden darf (Ratchet, US-QG-06). So lässt sich das Gate ab Tag 1 scharf schalten.
 - **CRAP statt reiner Komplexität:** Eine komplexe Funktion ist erlaubt, wenn sie gut getestet ist; sie ist es nicht, wenn sie komplex **und** ungetestet ist. Das koppelt Komplexitätsgate und Coverage (QG-T1).

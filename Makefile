@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse crap
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse crap duplicates
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -94,6 +94,9 @@ workflows: ## Lint GitHub workflows (actionlint)
 
 audit: ## Known high-severity vulnerabilities in dependencies (npm audit, QG-S2)
 	cd $(APP) && npm run audit
+
+duplicates: ## Clone groups with 3+ copies in changed files block, whole project is reported (QG-K4; base DUPLICATES_BASE, default origin/dev)
+	cd $(APP) && npm run duplicates
 
 gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundaries, unused code, format
 	cd $(APP) && npm run gates
