@@ -21,6 +21,26 @@ export function zahlFeld(feld: string, grenzen: { min: number; max: number }) {
       : ungueltig(feld);
 }
 
+export function wahlFeld<const W extends string>(feld: string, erlaubt: readonly W[]) {
+  return (wert: unknown): W | Fehlerdetail => erlaubt.find((e) => e === wert) ?? ungueltig(feld);
+}
+
+const KENNUNG = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Eine UUID (klein geschrieben zurückgegeben). */
+export function kennungFeld(feld: string) {
+  return (wert: unknown): string | Fehlerdetail =>
+    typeof wert === "string" && KENNUNG.test(wert) ? wert.toLowerCase() : ungueltig(feld);
+}
+
+/** Kleinbuchstaben und Unterstriche, z. B. `art`. */
+export function bezeichnerFeld(feld: string, max: number) {
+  return (wert: unknown): string | Fehlerdetail =>
+    typeof wert === "string" && wert.length <= max && /^[a-z_]+$/.test(wert)
+      ? wert
+      : ungueltig(feld);
+}
+
 type Pruefer = (wert: unknown) => unknown;
 type Geprueft<P extends Record<string, Pruefer>> = {
   [K in keyof P]: Exclude<ReturnType<P[K]>, Fehlerdetail>;
