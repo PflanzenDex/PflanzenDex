@@ -9,7 +9,7 @@ export const MIGRATIONS_VERZEICHNIS = join(
   "..",
   "migrations",
 );
-export const MIGRATIONS_TABELLE = "schema_migrations";
+const MIGRATIONS_TABELLE = "schema_migrations";
 
 export type MigrationsOptionen = { verzeichnis?: string; tabelle?: string };
 

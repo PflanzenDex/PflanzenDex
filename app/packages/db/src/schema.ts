@@ -7,7 +7,7 @@ export const OHNE_KONTO_KENNUNG: Record<string, string> = {
 };
 
 // Tabellen, deren Konto-Kennung nicht `konto_id` heißt: die Konto-Tabelle ist die Wurzel (`id`).
-export const ANDERE_KENNUNG: Record<string, string> = { konto: "id" };
+const ANDERE_KENNUNG: Record<string, string> = { konto: "id" };
 
 export type MandantenTabelle = { name: string; kennung: string };
 

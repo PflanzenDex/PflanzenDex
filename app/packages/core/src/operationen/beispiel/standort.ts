@@ -3,7 +3,7 @@ import { fehler } from "../fehler";
 import { fehlgeschlagen, ok } from "../ergebnis";
 import { objekt, textFeld } from "../validierung";
 
-export const STANDORT_NAME_MAX = 80;
+const STANDORT_NAME_MAX = 80;
 
 export interface Standort {
   readonly id: string;

@@ -61,6 +61,9 @@ jobs:
           --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # secret scan over the full history (QG-S1)
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -69,8 +72,40 @@ jobs:
       - run: make setup
       - run: make ci
 
+  # QG-S2 for dependencies a PR adds or changes: known high-severity vulnerabilities block the merge.
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@v5.0.0
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: never
+
+  # QG-S2 in full: all dependencies, only for release PRs into `main` (E-13); otherwise nightly (nightly.yml).
+  audit:
+    needs: changes
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - run: make audit
+
   ci-status:
-    needs: [changes, app]
+    needs: [changes, app, dependency-review, audit]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -78,8 +113,10 @@ jobs:
       - env:
           CHANGES: ${{ needs.changes.result }}
           APP: ${{ needs.app.result }}
+          DEPENDENCY_REVIEW: ${{ needs.dependency-review.result }}
+          AUDIT: ${{ needs.audit.result }}
         run: |
-          for r in "$CHANGES" "$APP"; do
+          for r in "$CHANGES" "$APP" "$DEPENDENCY_REVIEW" "$AUDIT"; do
             case "$r" in
               success | skipped) ;;
               *) echo "Fehlgeschlagen: $r"; exit 1 ;;
