@@ -8,6 +8,7 @@
     "maxDepth": 4,
     "maxParams": 4
   },
+  "duplicates": { "minOccurrences": 3, "minTokens": 50, "minLines": 5, "mode": "mild" },
   "overrides": {
     "packages/core/**/*.ts": { "complexity": 10, "cognitiveComplexity": 15 }
   }

@@ -6,7 +6,8 @@
     "lint-staged",
     "semantic-release",
     "conventional-changelog-conventionalcommits",
-    "@semantic-release/commit-analyzer"
+    "@semantic-release/commit-analyzer",
+    "fallow"
   ],
   "ignore": ["scripts/coverage-config.d.mts"]
 }

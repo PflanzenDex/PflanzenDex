@@ -23,11 +23,12 @@
     "test": "npm run test --workspaces --if-present && node --test \"scripts/**/*.test.mjs\" \"../.claude/hooks/*.test.mjs\"",
     "coverage": "npm run test --workspaces --if-present -- --coverage && node --test \"scripts/**/*.test.mjs\" \"../.claude/hooks/*.test.mjs\" && node scripts/check-coverage-ratchet.mjs",
     "build": "npm run build --workspaces --if-present",
-    "gates": "npm run lint && npm run typecheck && npm run boundaries && npm run baseline && npm run knip && npm run specs && npm run principles && npm run skills && npm run format:check",
+    "gates": "npm run lint && npm run typecheck && npm run boundaries && npm run baseline && npm run knip && npm run specs && npm run principles && npm run skills && npm run duplicates && npm run format:check",
     "ci": "npm run gates && npm run coverage && npm run build",
     "knip": "knip",
     "audit": "npm audit --audit-level=high",
-    "skills": "node scripts/check-skills.mjs"
+    "skills": "node scripts/check-skills.mjs",
+    "duplicates": "node scripts/check-duplicates.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",
@@ -42,9 +43,10 @@
     "eslint": "^10.12.0",
     "eslint-plugin-security": "^4.2.0",
     "eslint-plugin-sonarjs": "^4.2.2",
+    "fallow": "3.31.0",
     "globals": "^17.13.0",
-    "lint-staged": "^17.6.0",
     "knip": "^6.39.0",
+    "lint-staged": "^17.6.0",
     "minimatch": "^10.2.6",
     "prettier": "^3.9.9",
     "semantic-release": "^25.0.9",
