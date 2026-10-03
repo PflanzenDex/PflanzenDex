@@ -80,7 +80,7 @@ export function ExemplarKarteAnsicht({ karte }: { karte: ExemplarKarte }) {
   return (
     <li className="exemplar-karte">
       <Foto karte={karte} />
-      <h3>{karte.name}</h3>
+      <h2>{karte.name}</h2>
       <p className="leise">Art: {karte.artName ?? UNBEKANNT}</p>
       <p className="leise">
         Lichtzone: {karte.lichtzone ?? UNBEKANNT} · Status: {STATUS_TEXT[karte.status]}

@@ -159,7 +159,7 @@ describe("US-BES-06 Raster und Bedienung", () => {
     const h = html([karte(), karte({ id: "e2", name: "Aloe" })]);
     expect(h.match(/<li class="exemplar-karte/g)).toHaveLength(2);
     expect(h).toContain('<ul class="karten-raster"');
-    expect(h).toContain("<h3");
+    expect(h).toContain("<h2");
   });
 
   it("das Raster passt sich der Breite an: eine bis zwei Spalten auf dem Handy, mehr auf breiten Schirmen", () => {
