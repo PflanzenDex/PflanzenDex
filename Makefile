@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check lighthouse
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check release-tags-check lighthouse
 
 help: ## Alle Ziele mit einem Satz
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -73,6 +73,8 @@ skills-check: ## Check agent skills in .agents/skills (trigger, paths, check com
 lighthouse: ## Lighthouse CI on the built web app, mobile, report only (QG-U1); report in app/packages/web/.lighthouseci
 	cd $(APP) && npm run build -w @pflanzendex/web && npm run lighthouse -w @pflanzendex/web
 	scripts/lighthouse-summary.sh | tee $(APP)/packages/web/.lighthouseci/summary.md
+release-tags-check: ## All v* tags come from the release workflow, no hand-set version (FR-DEV-05; needs gh auth)
+	cd $(APP) && npm run release-tags
 
 secrets: ## Secret scan over the full git history (gitleaks, QG-S1)
 	scripts/gitleaks.sh
