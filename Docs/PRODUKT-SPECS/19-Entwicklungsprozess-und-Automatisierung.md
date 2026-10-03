@@ -43,7 +43,7 @@ Akzeptanzkriterien:
 - Die Ziele laufen auf Linux, macOS und unter WSL; Pfadunterschiede (Python- oder Node-Aufruf, Virtualenv-Verzeichnisse) werden **an einer Stelle** aufgelöst, nicht dreifach (Befund aus Tombola).
 - Das Makefile enthält keine Fachlogik, nur Aufrufe. Alles Nichttriviale liegt in Skripten (`scripts/`) mit Tests.
 
-### US-DEV-02 · Hooks fangen früh, ohne zu nerven · ⬜
+### US-DEV-02 · Hooks fangen früh, ohne zu nerven · 🟨
 Als **Entwickler** will ich Prüfungen genau dann, wenn sie am billigsten sind.
 
 Akzeptanzkriterien (Git-Hooks, verwaltet über ein Werkzeug wie Husky, installiert durch `make setup`):
@@ -81,7 +81,7 @@ Akzeptanzkriterien: Jede Routine steht in der Tabelle mit Auslöser, Besitzer, A
 
 - Wiederkehrende Agentenaufgaben (z. B. wöchentlicher Gate-Gesundheitsbericht) dürfen als **geplanter Agent** laufen; sie schreiben nur Berichte und öffnen Vorschläge, sie ändern keine Gates.
 
-### US-DEV-04 · Skills und Playbooks für wiederkehrende Aufgaben · ⬜
+### US-DEV-04 · Skills und Playbooks für wiederkehrende Aufgaben · 🟨
 Als **Entwickler (und KI)** will ich für wiederkehrende Aufgaben eine bewährte Anleitung, statt jedes Mal zu improvisieren.
 
 Akzeptanzkriterien:
