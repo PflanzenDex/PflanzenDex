@@ -8,9 +8,9 @@ export interface LateinischerName {
   readonly anzeige: string;
 }
 
-// Die Sorte steht nur in Anführungszeichen am Ende. `var.`, `subsp.` und `f.` gehören zum Exemplar
+// Die Sorte steht nur in Anführungszeichen am Ende (Leerraum ist schon zu einem Leerzeichen zusammengefasst). `var.`, `subsp.` und `f.` gehören zum Exemplar
 // (Zusatz, DM-BES-02) und nicht in den Art-Namen; sie lassen sich hier nicht schreiben.
-const SORTE = /\s+['‘"„]([^'’"“”‘„]{1,60})['’"“”]$/u;
+const SORTE = / ['‘"„]([^'’"“”‘„]{1,60})['’"“”]$/u;
 const WORT = /^[\p{L}-]{2,40}$/u;
 
 const grossAnfang = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
@@ -19,7 +19,8 @@ const worteGueltig = (w: string[]) => w.length <= 2 && w.every((x) => WORT.test(
 
 /** Zerlegt einen lateinischen Namen; `null`, wenn er nicht dem Muster entspricht. */
 export function parseLateinisch(text: string): LateinischerName | null {
-  let rest = text.trim().replace(/\s+/g, " ");
+  // Leerraum zuerst zu einzelnen Leerzeichen zusammenfassen (linear, ohne `\s+`-Regex auf Nutzereingabe).
+  let rest = text.split(/\s/u).filter(Boolean).join(" ");
   const sorte = SORTE.exec(rest)?.[1]?.trim() || null;
   if (sorte) rest = rest.replace(SORTE, "");
   const worte = rest.split(" ");
