@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+# US-QG-01: fast gates before pushing. --no-verify skips this, but CI repeats every check (D-02).
+. "$(dirname "$0")/_lib.sh"
+need_setup
+cd "$root" && make gates || {
+  echo "Push aborted: a gate failed. Re-run with: make gates" >&2
+  exit 1
+}
