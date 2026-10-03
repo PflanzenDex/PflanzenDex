@@ -3,6 +3,9 @@ import {
   KEINE_MESSUNGEN,
   KEIN_SOLL_STANDORT,
   exemplarAnlegen,
+  exemplarArchiv,
+  exemplarArchivieren,
+  exemplarWiederherstellen,
   exemplarKarten,
   exemplarLaden,
   exemplareListe,
@@ -39,7 +42,8 @@ export type ExemplareOptionen = {
 };
 
 /**
- * Exemplare (US-BES-02). Schreiben geht nur über `exemplar.anlegen` (P-03, mit `Idempotency-Key`); Lesen liefert nur
+ * Exemplare (US-BES-02, US-BES-07). Schreiben geht nur über `exemplar.anlegen`, `.archivieren` und `.wiederherstellen`
+ * (P-03, mit `Idempotency-Key`); Listen und Karten zeigen keine archivierten Exemplare, `/exemplare/archiv` schon. Lesen liefert nur
  * Exemplare des eigenen Kontos, ein fremdes oder unbekanntes Exemplar sieht gleich aus: 404 (P-04).
  */
 export function exemplareRouten(pool: Pool, opt: ExemplareOptionen = {}): Hono<AuthEnv> {
@@ -60,6 +64,8 @@ export function exemplareRouten(pool: Pool, opt: ExemplareOptionen = {}): Hono<A
     messungen: opt.messungen ?? KEINE_MESSUNGEN,
     behandlungen: opt.behandlungen ?? KEINE_BEHANDLUNGEN,
   };
+  const archivieren = exemplarArchivieren({ exemplare, uhr });
+  const wiederherstellen = exemplarWiederherstellen({ exemplare });
   const routen = new Hono<AuthEnv>();
 
   routen.get("/exemplare", async (c) =>
@@ -75,12 +81,26 @@ export function exemplareRouten(pool: Pool, opt: ExemplareOptionen = {}): Hono<A
     const karten = await exemplarKarten(kartenDeps, c.get("konto").id, heuteLokal(uhr(), zeitzone));
     return c.json({ karten });
   });
+  // Archivierte Exemplare (US-BES-07); ebenfalls vor `/exemplare/:id`.
+  routen.get("/exemplare/archiv", async (c) =>
+    c.json({
+      archiv: await exemplarArchiv({ exemplare, arten: kartenDeps.arten }, c.get("konto").id),
+    }),
+  );
   routen.get("/exemplare/:id", async (c) => {
     const e = await exemplarLaden(exemplare, c.get("konto").id, c.req.param("id"));
     return e ? c.json(e) : c.json(fehlerKoerper(fehler("exemplar.nicht_gefunden")), 404);
   });
   routen.post("/exemplare", async (c) =>
     schreibe(c, deps, anlegen, { eingabe: await koerper(c), erfolg: 201 }),
+  );
+  routen.post("/exemplare/:id/archivieren", async (c) =>
+    schreibe(c, deps, archivieren, {
+      eingabe: { ...(await koerper(c)), exemplarId: c.req.param("id") },
+    }),
+  );
+  routen.post("/exemplare/:id/wiederherstellen", async (c) =>
+    schreibe(c, deps, wiederherstellen, { eingabe: { exemplarId: c.req.param("id") } }),
   );
   return routen;
 }

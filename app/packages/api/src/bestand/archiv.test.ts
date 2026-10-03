@@ -48,7 +48,22 @@ async function rufe(
   });
   return { status: res.status, body: (await res.json()) as Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
-const neueArt = async (sub: string, name: string, deutsch: string) =>
+// Lateinische Namen bestehen nur aus Buchstaben: jede Art bekommt eine eigene Buchstabenfolge.
+const lauf = randomUUID()
+  .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
+  .replace(/-/g, "")
+  .slice(0, 10);
+let artZaehler = 0;
+const eindeutig = (wort: string) => {
+  artZaehler += 1;
+  const nummer = [...String(artZaehler)].map((z) => "abcdefghij"[Number(z)]).join("");
+  return `${wort}${lauf}${nummer}`;
+};
+const neueArt = async (sub: string, wort: string) => {
+  const name = eindeutig(wort);
+  return erzeugeArt(sub, `${name} vera`, name);
+};
+const erzeugeArt = async (sub: string, name: string, deutsch: string) =>
   (
     await rufe(sub, "POST", "/arten", {
       lateinischerName: name,
@@ -110,7 +125,13 @@ describe("US-BES-07 Anmeldung und Eingabe", () => {
   });
 
   it("ohne Idempotency-Key: 400 mit stabilem Fehlercode", async () => {
-    const r = await rufe(subA, "POST", `/exemplare/${E}/archivieren`, {}, null);
+    const r = await rufe(
+      subA,
+      "POST",
+      `/exemplare/${E}/archivieren`,
+      { zeitzone: "Europe/Berlin", grund: "eingegangen" },
+      null,
+    );
     expect(r).toMatchObject({
       status: 400,
       body: { fehler: { code: "idempotenz.schluessel_fehlt" } },
@@ -118,7 +139,7 @@ describe("US-BES-07 Anmeldung und Eingabe", () => {
   });
 
   it("ohne Grund: 400 mit Detail zum Feld, nichts wird archiviert", async () => {
-    const art = await neueArt(subA, `Eingabe ${randomUUID()}`, `Eingabe ${randomUUID()}`);
+    const art = await neueArt(subA, "Eingabe");
     const id = await legeAn(subA, art);
     const r = await archiviere(subA, id, { grund: "  " });
     expect(r).toMatchObject({
@@ -131,7 +152,7 @@ describe("US-BES-07 Anmeldung und Eingabe", () => {
 
 describe("US-BES-07 Archivieren, Listen und Wiederherstellen", () => {
   it("setzt Status, lokales Datum und Grund; Listen und Karten blenden das Exemplar aus", async () => {
-    const art = await neueArt(subA, `Liste ${randomUUID()}`, `Liste ${randomUUID()}`);
+    const art = await neueArt(subA, "Liste");
     const weg = await legeAn(subA, art, "weg");
     const da = await legeAn(subA, art, "da");
     gefragt.length = 0;
@@ -155,7 +176,7 @@ describe("US-BES-07 Archivieren, Listen und Wiederherstellen", () => {
   });
 
   it("das archivierte Exemplar bleibt ladbar und steht im Archiv (mit Art, Datum, Grund)", async () => {
-    const art = await neueArt(subA, `Archiv ${randomUUID()}`, `Archivart ${randomUUID()}`);
+    const art = await neueArt(subA, "Archiv");
     const id = await legeAn(subA, art);
     await archiviere(subA, id, { grund: "abgegeben", zeitzone: "America/New_York" });
     expect(await rufe(subA, "GET", `/exemplare/${id}`)).toMatchObject({
@@ -170,7 +191,7 @@ describe("US-BES-07 Archivieren, Listen und Wiederherstellen", () => {
   });
 
   it("Wiederherstellen bringt das Exemplar in Liste und Karten zurück und löscht Datum und Grund", async () => {
-    const art = await neueArt(subA, `Zurück ${randomUUID()}`, `Zurück ${randomUUID()}`);
+    const art = await neueArt(subA, "Zurück");
     const id = await legeAn(subA, art);
     await archiviere(subA, id);
     expect(await stelleWiederHer(subA, id)).toMatchObject({
@@ -182,7 +203,7 @@ describe("US-BES-07 Archivieren, Listen und Wiederherstellen", () => {
   });
 
   it("doppeltes Archivieren und Wiederherstellen ohne Archiv: 409 mit Fehlercode", async () => {
-    const art = await neueArt(subA, `Zweimal ${randomUUID()}`, `Zweimal ${randomUUID()}`);
+    const art = await neueArt(subA, "Zweimal");
     const id = await legeAn(subA, art);
     expect((await stelleWiederHer(subA, id)).body).toMatchObject({
       fehler: { code: "exemplar.nicht_archiviert" },
@@ -199,7 +220,7 @@ describe("US-BES-07 Archivieren, Listen und Wiederherstellen", () => {
   });
 
   it("ein archivierter Name bleibt vergeben (409), damit das Wiederherstellen nie kollidiert", async () => {
-    const art = await neueArt(subA, `Name ${randomUUID()}`, `Namensart ${randomUUID()}`);
+    const art = await neueArt(subA, "Name");
     const id = await legeAn(subA, art);
     await archiviere(subA, id);
     const nochmal = await rufe(subA, "POST", "/exemplare", {
@@ -213,7 +234,7 @@ describe("US-BES-07 Archivieren, Listen und Wiederherstellen", () => {
   });
 
   it("ein archiviertes Exemplar lässt sich nicht messen (409), seine Messreihe bleibt lesbar", async () => {
-    const art = await neueArt(subA, `Messen ${randomUUID()}`, `Messart ${randomUUID()}`);
+    const art = await neueArt(subA, "Messen");
     const id = await legeAn(subA, art);
     const messe = () =>
       rufe(subA, "POST", `/exemplare/${id}/messungen`, { zeitzone: "Europe/Berlin", wert: 12 });
@@ -231,7 +252,7 @@ describe("US-BES-07 Archivieren, Listen und Wiederherstellen", () => {
 
 describe("US-BES-07 Mandantentrennung (P-04)", () => {
   it("ein fremdes Exemplar lässt sich weder archivieren noch wiederherstellen (404 wie unbekannt)", async () => {
-    const art = await neueArt(subA, `Fremd ${randomUUID()}`, `Fremdart ${randomUUID()}`);
+    const art = await neueArt(subA, "Fremd");
     const annas = await legeAn(subA, art);
     const fremd = await archiviere(subB, annas);
     const unbekannt = await archiviere(subB, "99999999-9999-4999-8999-999999999999");
@@ -247,7 +268,7 @@ describe("US-BES-07 Mandantentrennung (P-04)", () => {
   });
 
   it("das Archiv eines Kontos enthält nichts von einem anderen", async () => {
-    const art = await neueArt(subB, `Archivb ${randomUUID()}`, `Archivbart ${randomUUID()}`);
+    const art = await neueArt(subB, "Archivb");
     const bens = await legeAn(subB, art);
     await archiviere(subB, bens);
     const annas = await rufe(subA, "GET", "/exemplare/archiv");
