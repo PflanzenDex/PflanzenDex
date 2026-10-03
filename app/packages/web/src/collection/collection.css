@@ -13,3 +13,138 @@
 .collection .hint {
   margin-bottom: 16px;
 }
+
+/* Specimen cards (US-BES-06): one column on narrow phones, two and more as soon as there is room. */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.specimen-card {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--rand);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.specimen-card h2 {
+  font-size: 1.1rem;
+  margin: 8px 0 0;
+}
+.specimen-card p {
+  margin: 0;
+}
+.card-photo {
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--grund);
+}
+.card-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+a.card-photo:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+.platzhalter {
+  aspect-ratio: auto;
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--rand);
+  color: var(--leise);
+}
+.quality-healthy {
+  color: var(--text);
+}
+.quality-etiolated,
+.due-overdue {
+  color: var(--text);
+  background: var(--warn-grund);
+  border-bottom: 2px solid var(--warn-rand);
+  padding: 0 4px;
+}
+.due-overdue {
+  font-weight: 700;
+}
+.quality-hint {
+  padding: 6px 8px;
+  background: var(--warn-grund);
+  border-left: 4px solid var(--warn-rand);
+  font-size: 0.9rem;
+}
+.note summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.note summary:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+
+/* Archive (US-BES-07): the same card style, only set apart below the list. */
+.archived {
+  margin-top: 24px;
+}
+.archived h2 {
+  margin: 0 0 4px;
+}
+.archived .quiet {
+  margin: 0 0 12px;
+}
+.archived .specimen-card h3 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+/* Distribution over the light zones (US-LIC-02): mobile first, one column; the bar is only decoration, the number is in the text. */
+.distribution {
+  margin-bottom: 20px;
+  padding: 4px 16px 12px;
+  background: var(--card);
+  border: 1px solid var(--rand);
+  border-radius: 12px;
+}
+.distribution .next-action {
+  font-weight: 600;
+}
+.distribution-list {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+}
+.distribution-list li {
+  display: grid;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+.distribution-list .balken {
+  display: block;
+  height: 8px;
+  background: var(--rand);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.distribution-list .balken span {
+  display: block;
+  height: 100%;
+  background: var(--gruen);
+}
+.distribution-list .thinnest .balken span {
+  background: var(--warn-rand);
+}

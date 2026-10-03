@@ -22,7 +22,7 @@ Acceptance criteria:
 - Phase, rate, trend, light zone counting, prioritization, naming rule, rank, milestones, swap states and feed derivation exist as pure logic without I/O and have tests.
 - Every story with status ✅ has at least one test whose name carries the story ID (P-06).
 
-### US-QS-03 · Repeatable without fear · ⬜ (prototype ✅)
+### US-QS-03 · Repeatable without fear · 🟨 (prototype ✅)
 
 Acceptance criteria:
 

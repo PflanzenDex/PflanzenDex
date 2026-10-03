@@ -1,17 +1,31 @@
-import type { Pool } from "pg";
+import type { Pool, PoolClient } from "pg";
 import { withAccount } from "./tenant.ts";
 import { tenantsTables, type TenantsTableName } from "./schema.ts";
 
-/** Example values per table for the columns other than the account id. */
-export type Fixtures = Record<string, () => Record<string, unknown>>;
+/** What a fixture can create its prerequisites with: the ID of the account and its session (P-04). */
+export interface FixtureContext {
+  readonly accountId: string;
+  readonly query: PoolClient;
+}
+
+/**
+ * Example values per table for the columns except the account ID. If the table references another row of the account
+ * (composite foreign key), the fixture creates it through the context and returns its ID.
+ */
+export type Fixtures = Record<
+  string,
+  (context: FixtureContext) => Record<string, unknown> | Promise<Record<string, unknown>>
+>;
 
 const q = (name: string) => `"${name.replaceAll('"', '""')}"`;
 
 async function insert(pool: Pool, t: TenantsTableName, accountId: string, fx: Fixtures) {
-  const values = { ...fx[t.name]?.(), [t.id]: accountId };
-  const columns = Object.keys(values);
-  const sql = `insert into ${q(t.name)} (${columns.map(q).join(", ")}) values (${columns.map((_, i) => `$${i + 1}`).join(", ")})`;
-  await withAccount(pool, accountId, (c) => c.query(sql, Object.values(values)));
+  await withAccount(pool, accountId, async (c) => {
+    const values = { ...(await fx[t.name]?.({ accountId, query: c })), [t.id]: accountId };
+    const columns = Object.keys(values);
+    const sql = `insert into ${q(t.name)} (${columns.map(q).join(", ")}) values (${columns.map((_, i) => `$${i + 1}`).join(", ")})`;
+    await c.query(sql, Object.values(values));
+  });
 }
 
 async function count(pool: Pool, t: TenantsTableName, accountId: string): Promise<number> {
@@ -73,7 +87,13 @@ async function withoutAccount(pool: Pool, t: TenantsTableName): Promise<string[]
   }
 }
 
-async function checkTableName(pool: Pool, t: TenantsTableName, a: string, b: string, fx: Fixtures) {
+async function checkTableName(
+  pool: Pool,
+  t: TenantsTableName,
+  accounts: readonly [string, string],
+  fx: Fixtures,
+) {
+  const [a, b] = accounts;
   if (!(t.name in fx))
     return ["no fixture in fixtures.ts: table is not included in the tenant test"];
   const problems: string[] = [];
@@ -121,7 +141,7 @@ export async function checkTenantIsolation(
   try {
     for (const t of sortOrder) {
       if (t.name !== "account") await createAccounts(pool, [accountA, accountB]);
-      for (const p of await checkTableName(pool, t, accountA, accountB, fixtures))
+      for (const p of await checkTableName(pool, t, [accountA, accountB], fixtures))
         problems.push(`${t.name}: ${p}`);
     }
   } finally {

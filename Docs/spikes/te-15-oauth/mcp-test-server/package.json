@@ -2,7 +2,7 @@
   "name": "te15-mcp-test-server",
   "private": true,
   "type": "module",
-  "description": "Spike TE-15: minimaler MCP-Server als OAuth Resource Server (Wegwerfcode)",
+  "description": "Spike TE-15: minimal MCP server as OAuth resource server (throwaway code)",
   "scripts": {
     "start": "node server.mjs"
   },

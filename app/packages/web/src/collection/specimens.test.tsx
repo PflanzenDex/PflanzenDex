@@ -1,9 +1,8 @@
 import { renderToString as render } from "react-dom/server";
 import type { Species, Specimen } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";
-import { createSpecimen, loadSpecimens } from "./specimens-api";
+import { createSpecimen } from "./specimens-api";
 import { CreateForm } from "./create-form";
-import { CollectionList } from "./collection-list";
 import { nameConflict } from "./text";
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
@@ -28,6 +27,8 @@ const specimen = (extra: Partial<Specimen> = {}): Specimen => ({
   locationId: null,
   status: "plant",
   caughtAt: "2026-10-03",
+  archivedAt: null,
+  archivedReason: null,
   measurements: [],
   treatments: [],
   ...extra,
@@ -59,12 +60,6 @@ describe("US-BES-02 client of the specimen API", () => {
     const r = await createSpecimen("http://api", "tok", { speciesId: "a1" }, fetchFn);
     expect(r).toMatchObject({ ok: false, error: { code: "specimen.name_taken" } });
     expect(!r.ok && nameConflict(r.error)?.existing).toEqual([{ id: "e1", name: "Bogenhanf" }]);
-  });
-
-  it("loads the list of own specimens", async () => {
-    const fetchFn = vi.fn<typeof fetch>(async () => response(200, { specimens: [specimen()] }));
-    const r = await loadSpecimens("http://api", "tok", fetchFn);
-    expect(r).toMatchObject({ ok: true, value: [{ id: "e1" }] });
   });
 });
 
@@ -112,42 +107,5 @@ describe('US-BES-02 form "Create specimen"', () => {
     expect(h).toContain("Ein Exemplar mit diesem Namen gibt es schon. Gib ein Kennzeichen an");
     expect(h).toContain("Schon vorhanden: Bogenhanf");
     expect(h).toContain("heißt das neue Exemplar dann „Bogenhanf – Kennzeichen“");
-  });
-});
-
-describe("US-BES-02 collection", () => {
-  it("without specimens: says what to do (P-09), and offers the species choice", () => {
-    const h = renderToString(
-      <CollectionList specimens={[]} locations={locations} onSpeciesChoose={vi.fn()} />,
-    );
-    expect(h).toContain("Du hast noch kein Exemplar");
-    expect(h).toContain("Art wählen");
-  });
-
-  it('shows name, location or "unknown", caught_at and the empty derived lists', () => {
-    const h = renderToString(
-      <CollectionList
-        specimens={[specimen(), specimen({ id: "e2", name: "Bogenhanf – rot", locationId: "s1" })]}
-        locations={locations}
-        onSpeciesChoose={vi.fn()}
-      />,
-    );
-    expect(h).toContain("Bogenhanf – rot");
-    expect(h).toContain("Standort: Regal Süd");
-    expect(h).toContain("Standort: unbekannt");
-    expect(h).toContain("Gefangen am 03.10.2026");
-    expect(h).toContain("noch keine Messung");
-    expect(h).toContain("keine Behandlung");
-  });
-
-  it('a missing caught_at means "unknown", not today (P-08)', () => {
-    const h = renderToString(
-      <CollectionList
-        specimens={[specimen({ caughtAt: null })]}
-        locations={locations}
-        onSpeciesChoose={vi.fn()}
-      />,
-    );
-    expect(h).toContain("Gefangen am: unbekannt");
   });
 });

@@ -8,6 +8,7 @@ export type SpecimenStatus = (typeof SPECIMEN_STATUS)[number];
 export const SPECIMEN_LIMITS = {
   marker: { min: 1, max: 40 },
   name: { min: 1, max: 250 },
+  archivedReason: { min: 1, max: 250 },
 } as const;
 
 /** What gets stored. Measurements and treatment list are derived and do not belong here (P-01). */
@@ -21,7 +22,23 @@ export interface SpecimenRow {
   readonly status: SpecimenStatus;
   /** Lokales Kalenderdatum `JJJJ-MM-TT` (NFR-08). */
   readonly caughtAt: string | null;
+  /** Local calendar date of the archiving (NFR-08); `null` as long as the specimen is not archived (US-BES-07). */
+  readonly archivedAt: string | null;
+  /** Reason of the archiving (`received`, `given_away`, … or free); `null` as long as not archived. */
+  readonly archivedReason: string | null;
 }
+
+/** Archived specimens are missing from all lists and evaluations (US-BES-07); every evaluation filters with this. */
+export const isActive = (row: Pick<SpecimenRow, "status">): boolean => row.status !== "archived";
+
+/** The reasons the UI offers; any other text is equally valid (free, US-BES-07). */
+export const ARCHIVED_REASONS = [
+  "eingegangen",
+  "abgegeben",
+  "getauscht",
+  "verschenkt",
+  "verkauft",
+] as const;
 
 /** A specimen with the derived lists. Both are empty until WAC and BEH supply data (never stored). */
 export interface Specimen extends SpecimenRow {
@@ -43,6 +60,18 @@ export interface SpecimenStore {
     userId: string,
     values: SpecimenValues,
   ): Promise<SpecimenRow | "name_taken" | "location_unknown">;
+  /**
+   * Sets status, date and reason in one statement (US-BES-07). An already archived specimen stays unchanged, so that
+   * date and reason of the first archiving are not overwritten (P-10).
+   */
+  archive(
+    userId: string,
+    id: string,
+    reason: string,
+    date: string,
+  ): Promise<SpecimenRow | "not_found" | "already_archived">;
+  /** Restores the status from before the archiving and deletes date and reason (US-BES-07). */
+  restore(userId: string, id: string): Promise<SpecimenRow | "not_found" | "not_archived">;
 }
 
 /** Only reading a visible species; `SpeciesStore` from `catalog` fulfils the port. */

@@ -17,7 +17,7 @@ Everything self-hosted via Docker, throwaway setup in this folder:
 |---|---|
 | `keycloak/` | Keycloak 26.8.0 with `--features=cimd,resource-indicators`, `start-dev`, H2 |
 | `zitadel/` | Zitadel v4.19.4 following the official Compose setup (Traefik, API, login UI, Postgres) |
-| `mcp-test-server/` | Minimal MCP server (Streamable HTTP, SDK 1.32.0) as OAuth resource server: Protected Resource Metadata (RFC 9728), JWT validation (issuer, audience), three tools with the classes `lesen` (read), `Entwurf` (draft), `schreiben` (write), step-up via `403 insufficient_scope` |
+| `mcp-test-server/` | Minimal MCP server (Streamable HTTP, SDK 1.32.0) as OAuth resource server: Protected Resource Metadata (RFC 9728), JWT validation (issuer, audience), three tools with the classes read, draft and write (`status`, `create_draft`, `watered`), step-up via `403 insufficient_scope` |
 | `checks/` | Check scripts: discovery and DCR, full flow with browser login (Playwright), CIMD simulation, policies |
 
 Tested first locally, then through public quick tunnels (Cloudflare) with the real clients.
@@ -46,7 +46,7 @@ Tested first locally, then through public quick tunnels (Cloudflare) with the re
 
 1. **Audience only via mapper:** the `resource-indicators` feature narrows the audience only to values that are already candidates in the token. The MCP server must be registered as a client with the attribute `resource_url` **and** an audience mapper must hang on the `pflanzen:*` scopes. Without mapper: `invalid_target`. Without the `resource` parameter the client ID instead of the URL ends up in `aud` (the server rejects this, intended).
 2. **Securing registration:** by default "Trusted Hosts" blocks every anonymous DCR. For public clients the check of the sender IP is switched off and `client-uris-must-match` with the domains `claude.ai`, `chatgpt.com` is set instead. Then only clients with redirect URIs on these domains can be registered.
-3. **Scopes:** the three scopes must be created as optional realm scopes and allowed in the "Allowed Client Scopes" policy. Otherwise the consent additionally shows default scopes ("Benutzerprofil", "Nutzerrollen", "E-Mail") that we would hide for these clients.
+3. **Scopes:** the three scopes must be created as optional realm scopes and allowed in the "Allowed Client Scopes" policy. Otherwise the consent additionally shows default scopes ("Benutzerprofil", "Nutzerrollen", "E-Mail", as shown by the German Keycloak theme) that we would hide for these clients.
 4. **Consent is all or nothing.** Deselecting individual permissions, as described in US-KI-07, is not possible with the default. This needs an own consent theme or an own consent step, or the story is adapted.
 5. **PKCE `plain`** is advertised as well. ChatGPT requires S256; the restriction to S256 should be enforced via a client policy.
 6. **CIMD policy:** configured via a client policy profile (`client-id-metadata-document`: `cimd-allow-permitted-domains`, `cimd-resource-indicator-allow-list`, …) and the condition `client-id-uri`. The domains apply to **all** URL fields of the document, not only to the client ID.

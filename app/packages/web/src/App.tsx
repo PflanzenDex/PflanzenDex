@@ -1,9 +1,10 @@
 import { useState } from "react";
 import type { Species } from "@pflanzendex/core";
-import { CollectionPage } from "./collection";
+import { CollectionArea } from "./collection-area";
 import { AppError, AccountView, Loading, Welcome, apiUrl, useSession } from "./account";
 import { LightPage } from "./light";
 import { SpeciesPage } from "./catalog";
+import { CarePhasesPage } from "./care";
 import { Navigation, type View } from "./navigation";
 import "./style.css";
 
@@ -48,8 +49,10 @@ export function App() {
             />
           ) : view === "light" ? (
             <LightPage api={api} token={s.token} />
+          ) : view === "carePhases" ? (
+            <CarePhasesPage api={api} token={s.token} />
           ) : view === "collection" ? (
-            <CollectionPage
+            <CollectionArea
               api={api}
               token={s.token}
               newSpecies={newSpecies}

@@ -3,17 +3,27 @@
   "packages": {
     "core": {
       "lines": 98,
-      "branches": 89,
+      "branches": 90,
       "functions": 96,
       "statements": 96
     },
-    "api": null,
-    "web": {
-      "lines": 34,
-      "branches": 43,
-      "functions": 36,
-      "statements": 34
+    "api": {
+      "lines": 97,
+      "branches": 86,
+      "functions": 94,
+      "statements": 96
     },
-    "db": null
+    "web": {
+      "lines": 97,
+      "branches": 86,
+      "functions": 94,
+      "statements": 95
+    },
+    "db": {
+      "lines": 95,
+      "branches": 90,
+      "functions": 99,
+      "statements": 95
+    }
   }
 }

@@ -1,47 +1,4 @@
 {
-  "maxEntries": 6,
-  "entries": [
-    {
-      "rule": "max-params",
-      "file": "packages/core/src/kernel/operation.ts",
-      "function": "runProtected",
-      "value": 5,
-      "date": "2026-10-03"
-    },
-    {
-      "rule": "max-params",
-      "file": "packages/db/src/kernel/isolation.ts",
-      "function": "checkTableName",
-      "value": 5,
-      "date": "2026-10-03"
-    },
-    {
-      "rule": "max-lines-per-function",
-      "file": "packages/web/src/account/session.ts",
-      "function": "useSession",
-      "value": 67,
-      "date": "2026-10-03"
-    },
-    {
-      "rule": "max-lines-per-function",
-      "file": "packages/web/src/light/locations-view.tsx",
-      "function": "LocationForm",
-      "value": 71,
-      "date": "2026-10-03"
-    },
-    {
-      "rule": "max-lines-per-function",
-      "file": "packages/web/src/light/zones-view.tsx",
-      "function": "ZoneForm",
-      "value": 86,
-      "date": "2026-10-03"
-    },
-    {
-      "rule": "max-lines-per-function",
-      "file": "packages/web/src/light/zones-view.tsx",
-      "function": "ZoneCard",
-      "value": 74,
-      "date": "2026-10-03"
-    }
-  ]
+  "maxEntries": 0,
+  "entries": []
 }

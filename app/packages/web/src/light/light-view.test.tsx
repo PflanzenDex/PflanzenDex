@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { LightView, type LightActions } from "./light-view";
 import type { LightData } from "./light-api";
 import { ErrorMessage } from "./message";
+import { derivationText } from "./text";
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
 const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");
@@ -14,6 +15,7 @@ const actions: LightActions = {
   defaults: nothing,
   locationCreate: nothing,
   locationUpdate: nothing,
+  zoneDerive: async () => ({ ok: true, value: { kind: "unknown", reason: "no_need" } }),
 };
 const zone = { id: "z1", name: "Lampe 2", luxCeiling: 15000, ppfd: 300, sortOrder: 2 };
 const empty: LightData = { zones: [], locations: [], hints: [] };
@@ -107,5 +109,27 @@ describe("US-LIC-05 error message when deleting a used zone", () => {
       />,
     );
     expect(h).toContain("Bitte prüfe: Lux-Decke.");
+  });
+});
+
+describe("US-LIC-01 Ansicht Zone ermitteln", () => {
+  it("offers lux need, default level and the C3 hint and explains why", () => {
+    const h = html(empty);
+    expect(h).toContain("Zone einer Art ermitteln");
+    expect(h).toContain("Lux-Bedarf der Art (Lux)");
+    expect(h).toContain("Stufe 4");
+    expect(h).toContain("Sonnenliebende C3-Pflanze mit weichem Blatt");
+    expect(h).toContain("Stecklingslicht ist nie das Ziel");
+  });
+
+  it("US-LIC-01 result texts: zone with reason, unknown with next action (P-08, P-09)", () => {
+    const z = { id: "z2", name: "Lampe 2", luxCeiling: 15000, ppfd: 300, sortOrder: 2 };
+    expect(derivationText({ kind: "zone", zone: z, level: 2, reason: "soft_leaf" })).toEqual({
+      title: "Lichtzone: Lampe 2",
+      reason: expect.stringContaining("nicht automatisch"),
+    });
+    const u = derivationText({ kind: "unknown", reason: "no_need" });
+    expect(u.title).toBe("Lichtzone: unbekannt");
+    expect(u.reason).toContain("Trage ihn im Katalog ein");
   });
 });

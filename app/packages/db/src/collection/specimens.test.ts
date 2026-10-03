@@ -2,6 +2,12 @@ import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, withAccount, openPool } from "../kernel/index.ts";
+import {
+  speciesExists,
+  createFixtureSpeciesAt,
+  deleteSpecies,
+  deleteSpeciesAsApplication,
+} from "../fixtures.ts";
 import { LocationPostgres } from "../light/index.ts";
 import { SpecimenPostgres } from "./index.ts";
 
@@ -11,9 +17,15 @@ let specimens: SpecimenPostgres;
 let locations: LocationPostgres;
 const anna = randomUUID();
 const ben = randomUUID();
-const species = randomUUID();
-const values = {
-  speciesId: species,
+let species = "";
+const values: {
+  speciesId: string;
+  name: string;
+  marker: null;
+  locationId: null;
+  caughtAt: string;
+} = {
+  speciesId: "",
   name: "Bogenhanf",
   marker: null,
   locationId: null,
@@ -23,6 +35,8 @@ const values = {
 beforeAll(async () => {
   pool = openPool();
   await migrate(pool);
+  species = await createFixtureSpeciesAt(pool);
+  values.speciesId = species;
   specimens = new SpecimenPostgres(pool);
   locations = new LocationPostgres(pool);
   for (const id of [anna, ben])
@@ -106,5 +120,103 @@ describe("US-BES-02 specimens in the database", () => {
         ),
       ),
     ).rejects.toThrow();
+  });
+
+  it("US-BES-02, AB-10: the foreign key holds, an unknown species cannot be entered", async () => {
+    await expect(
+      specimens.create(anna, { ...values, name: "Ohne Art", speciesId: randomUUID() }),
+    ).rejects.toMatchObject({ code: "23503", constraint: "specimen_species" });
+    expect((await specimens.list(anna)).map((z) => z.name)).not.toContain("Ohne Art");
+  });
+
+  it("US-BES-02, AB-10, P-10: a used species cannot be deleted (on delete restrict), not even with owner rights", async () => {
+    const z = await specimens.create(anna, { ...values, name: "Benutzt" });
+    expect(typeof z).toBe("object");
+    await expect(deleteSpecies(pool, species)).rejects.toMatchObject({
+      code: "23503",
+      constraint: "specimen_species",
+    });
+    expect(await speciesExists(pool, species)).toBe(true);
+  });
+
+  it("US-BES-02, AB-10: the application role still may not delete species", async () => {
+    await expect(deleteSpeciesAsApplication(pool, anna, species)).rejects.toMatchObject({
+      code: "42501",
+    });
+  });
+});
+
+describe("US-BES-07 archive in the database", () => {
+  const create = async (account: string, name: string) => {
+    const z = await specimens.create(account, { ...values, name });
+    if (typeof z === "string") throw new Error(z);
+    return z;
+  };
+
+  it("US-BES-07: sets status, date and reason; the date stays the calendar date (NFR-08)", async () => {
+    const before = process.env["TZ"];
+    process.env["TZ"] = "Pacific/Kiritimati";
+    try {
+      const z = await create(anna, "Archiv Datum");
+      const r = await specimens.archive(anna, z.id, "eingegangen", "2026-01-01");
+      expect(r).toMatchObject({
+        status: "archived",
+        archivedAt: "2026-01-01",
+        archivedReason: "eingegangen",
+      });
+      expect(await specimens.find(anna, z.id)).toEqual(r);
+    } finally {
+      if (before === undefined) delete process.env["TZ"];
+      else process.env["TZ"] = before;
+    }
+  });
+
+  it("US-BES-07: a second archiving does not change date and reason (P-10)", async () => {
+    const z = await create(anna, "Archiv Zweimal");
+    await specimens.archive(anna, z.id, "eingegangen", "2026-10-01");
+    expect(await specimens.archive(anna, z.id, "verkauft", "2026-10-03")).toBe("already_archived");
+    expect(await specimens.find(anna, z.id)).toMatchObject({
+      archivedAt: "2026-10-01",
+      archivedReason: "eingegangen",
+    });
+  });
+
+  it("US-BES-07: restoring sets the previous status and deletes date and reason", async () => {
+    const z = await create(anna, "Archiv Zurück");
+    await withAccount(pool, anna, (c) =>
+      c.query("update specimen set status = 'cutting' where id = $1", [z.id]),
+    );
+    await specimens.archive(anna, z.id, "abgegeben", "2026-10-01");
+    expect(await specimens.restore(anna, z.id)).toMatchObject({
+      status: "cutting",
+      archivedAt: null,
+      archivedReason: null,
+    });
+    expect(await specimens.restore(anna, z.id)).toBe("not_archived");
+  });
+
+  it("US-BES-07, P-04: another account can neither archive nor restore", async () => {
+    const z = await create(anna, "Archiv Mandant");
+    expect(await specimens.archive(ben, z.id, "verkauft", "2026-10-03")).toBe("not_found");
+    await specimens.archive(anna, z.id, "verkauft", "2026-10-03");
+    expect(await specimens.restore(ben, z.id)).toBe("not_found");
+    expect(await specimens.find(anna, z.id)).toMatchObject({ status: "archived" });
+  });
+
+  it("US-BES-07: status, date and reason belong together (the database enforces it)", async () => {
+    const z = await create(anna, "Archiv Check");
+    const set = (sql: string) => withAccount(pool, anna, (c) => c.query(sql, [z.id]));
+    await expect(
+      set("update specimen set status = 'archived' where id = $1"),
+    ).rejects.toMatchObject({ code: "23514" });
+    await expect(
+      set("update specimen set archived_reason = 'x' where id = $1"),
+    ).rejects.toMatchObject({ code: "23514" });
+  });
+
+  it("US-BES-07: an archived name stays taken, so restoring never collides", async () => {
+    const z = await create(anna, "Archiv Name");
+    await specimens.archive(anna, z.id, "verkauft", "2026-10-03");
+    expect(await specimens.create(anna, { ...values, name: "archiv name" })).toBe("name_taken");
   });
 });

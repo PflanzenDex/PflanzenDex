@@ -88,9 +88,51 @@ export class InMemorySpecimens implements SpecimenStore {
       ...w,
       id: `00000000-0000-4000-8000-${String(this.rows.length + 1).padStart(12, "0")}`,
       status: "plant",
+      archivedAt: null,
+      archivedReason: null,
     };
     this.rows.push({ ...row, userId });
     return row;
+  }
+
+  /** Status before the archiving per row (the real adapter keeps it in a column). */
+  private readonly before = new Map<string, SpecimenRow["status"]>();
+
+  private replace(userId: string, id: string, fresh: Partial<SpecimenRow>) {
+    const i = this.rows.findIndex((z) => z.userId === userId && z.id === id);
+    const alt = this.rows[i];
+    if (!alt) return null;
+    this.writes += 1;
+    const row = { ...alt, ...fresh };
+    this.rows[i] = row;
+    const { userId: owner, ...without } = row;
+    void owner;
+    return without;
+  }
+
+  async archive(userId: string, id: string, reason: string, date: string) {
+    const z = await this.find(userId, id);
+    if (!z) return "not_found" as const;
+    if (z.status === "archived") return "already_archived" as const;
+    this.before.set(id, z.status);
+    const r = this.replace(userId, id, {
+      status: "archived",
+      archivedAt: date,
+      archivedReason: reason,
+    });
+    return r as SpecimenRow;
+  }
+
+  async restore(userId: string, id: string) {
+    const z = await this.find(userId, id);
+    if (!z) return "not_found" as const;
+    if (z.status !== "archived") return "not_archived" as const;
+    const r = this.replace(userId, id, {
+      status: this.before.get(id) ?? "plant",
+      archivedAt: null,
+      archivedReason: null,
+    });
+    return r as SpecimenRow;
   }
 }
 

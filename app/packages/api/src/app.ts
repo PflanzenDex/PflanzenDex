@@ -1,11 +1,17 @@
-import { Hono } from "hono";
+import { Hono, type MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
 import type { Pool } from "pg";
-import { productTitle, type TargetLocationSource } from "@pflanzendex/core";
+import {
+  productTitle,
+  type TreatmentSource,
+  type MeasurementSource,
+  type TargetLocationSource,
+} from "@pflanzendex/core";
 import { authentication, accountRoutes, type TokenVerifier } from "./account";
 import { SPECIMEN_PATHS, specimenRoutes } from "./collection";
 import { SPECIES_PATHS, speciesRoutes } from "./catalog";
 import { LIGHT_PATHS, lightRoutes } from "./light";
+import { CARE_PATHS, CARE_PHASES_PATHS, careRoutes, carePhasesRoutes } from "./care";
 
 export type AppOptions = {
   /** Verifies access tokens of the sign-in service; without it there are no protected routes. */
@@ -21,7 +27,18 @@ export type AppOptions = {
   clock?: () => Date;
   /** Target location for new specimens; `care` (PHA) supplies it, until then the location is unknown. */
   targetLocation?: TargetLocationSource;
+  /** Measurements and treatments for the specimen cards (US-BES-06); `care` (WAC, BEH) supplies them, until then the cards are empty. */
+  measurements?: MeasurementSource;
+  treatments?: TreatmentSource;
 };
+
+/** The module `care` (measurements and care phases): sign-in guard in front of the paths, then the routes. */
+function bindCareOne(app: Hono, pool: Pool, auth: MiddlewareHandler, opt: { clock?: () => Date }) {
+  for (const path of CARE_PATHS) app.use(path, auth);
+  app.route("/", careRoutes(pool, opt));
+  for (const path of CARE_PHASES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", carePhasesRoutes(pool, opt));
+}
 
 export function createApp(opt: AppOptions = {}): Hono {
   const version = opt.version ?? "unknown";
@@ -49,10 +66,13 @@ export function createApp(opt: AppOptions = {}): Hono {
     app.route(
       "/",
       specimenRoutes(opt.pool, {
-        ...(opt.clock ? { clock: opt.clock } : {}),
-        ...(opt.targetLocation ? { targetLocation: opt.targetLocation } : {}),
+        clock: opt.clock,
+        targetLocation: opt.targetLocation,
+        measurements: opt.measurements,
+        treatments: opt.treatments,
       }),
     );
+    bindCareOne(app, opt.pool, auth, opt.clock ? { clock: opt.clock } : {});
   }
   return app;
 }

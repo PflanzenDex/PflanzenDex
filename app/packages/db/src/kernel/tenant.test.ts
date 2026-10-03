@@ -3,7 +3,7 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { findSchemaViolations, withAccount, migrate, checkTenantIsolation } from "./index.ts";
 import { openPool } from "./connection.ts";
-import { FIXTURES } from "../fixtures.ts";
+import { FIXTURES, createFixtureSpeciesAt } from "../fixtures.ts";
 import { MODULE_CONFIG as REGISTER } from "../../../../modules.config.mjs";
 
 // Test harness with two accounts (QG-D1, NFR-09, FR-ACC-02). Runs against a real PostgreSQL (`make db-up`).
@@ -14,6 +14,7 @@ const accountB = randomUUID();
 beforeAll(async () => {
   pool = openPool();
   await migrate(pool);
+  await createFixtureSpeciesAt(pool);
 });
 afterAll(async () => {
   await pool.query("delete from account where id = any($1)", [[accountA, accountB]]);

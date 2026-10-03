@@ -1,3 +1,4 @@
+import { DerivationForm, type Derive } from "./derivation-view";
 import type { ApiError, LightData } from "./light-api";
 import { LocationForm, LocationCard, type LocationInput } from "./locations-view";
 import { ZoneForm, ZoneCard, type ZoneInput } from "./zones-view";
@@ -11,6 +12,7 @@ export interface LightActions {
   defaults: () => AppError;
   locationCreate: (e: LocationInput) => AppError;
   locationUpdate: (id: string, e: LocationInput) => AppError;
+  zoneDerive: Derive;
 }
 
 /** Hints (US-BES-08): every hint says what to do (P-09). */
@@ -103,6 +105,19 @@ function Locations(props: { data: LightData; actions: LightActions }) {
   );
 }
 
+function Assignment({ actions }: { actions: LightActions }) {
+  return (
+    <section aria-labelledby="assignment">
+      <h2 id="assignment">Zone einer Art ermitteln</h2>
+      <p className="quiet">
+        Die Zone folgt dem Lux-Bedarf der Art und deinen Lichtzonen. Stecklingslicht ist nie das
+        Ziel für erwachsene Pflanzen.
+      </p>
+      <DerivationForm onDerive={actions.zoneDerive} />
+    </section>
+  );
+}
+
 export function LightView(props: { data: LightData; actions: LightActions; error?: ApiError }) {
   return (
     <div className="light">
@@ -118,6 +133,7 @@ export function LightView(props: { data: LightData; actions: LightActions; error
       <Hints data={props.data} />
       <Zones data={props.data} actions={props.actions} />
       <Locations data={props.data} actions={props.actions} />
+      <Assignment actions={props.actions} />
     </div>
   );
 }

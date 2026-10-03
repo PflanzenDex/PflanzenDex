@@ -21,3 +21,5 @@ export type {
   ZoneStore,
   ZoneValues,
 } from "./types";
+export { GAP_MAX, PROMOTE_FROM, zoneDerive, zoneDeriveReviewed } from "./derive";
+export type { Derivation, DerivationInput, DerivationReason } from "./derive";

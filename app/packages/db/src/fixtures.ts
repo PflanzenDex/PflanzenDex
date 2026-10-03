@@ -1,9 +1,10 @@
 import type { Pool } from "pg";
-import { FIXTURES_COLLECTION } from "./collection/index.ts";
+import { FIXTURE_SPECIES_ID, FIXTURES_COLLECTION } from "./collection/index.ts";
 import { FIXTURES_CATALOG } from "./catalog/index.ts";
 import { FIXTURES_KERNEL, withAccount, type Fixtures } from "./kernel/index.ts";
 import { FIXTURES_ACCOUNT } from "./account/index.ts";
 import { FIXTURES_LIGHT } from "./light/index.ts";
+import { FIXTURES_CARE } from "./care/index.ts";
 
 // One example per table with an account id for the remaining columns (without the id, the test sets it).
 // The entries live in their respective module; they are collected here. A new table without an entry
@@ -14,6 +15,7 @@ export const FIXTURES: Fixtures = {
   ...FIXTURES_CATALOG,
   ...FIXTURES_LIGHT,
   ...FIXTURES_COLLECTION,
+  ...FIXTURES_CARE,
 };
 
 // Test helpers for tables of another module (AB-9): tests of one module write no SQL on foreign tables,
@@ -28,3 +30,36 @@ export const writeInRoleTable = (pool: Pool, account: string) =>
   withAccount(pool, account, (c) =>
     c.query("insert into account_role (account, role) values ($1, 'operator')", [account]),
   );
+
+// Fixed example species for tables that point to the catalog by foreign key (AB-10, global reference table `species`).
+// It belongs to an own account and is a private proposal, so nobody else sees it. Idempotent and stays in place:
+// deleting an account must not take a used species with it because of `on delete restrict`.
+const FIXTURE_SPECIES_ACCOUNT = "00000000-0000-4000-8000-00000000fa02";
+
+export async function createFixtureSpeciesAt(pool: Pool): Promise<string> {
+  // Every statement is repeatable on its own (on conflict do nothing), parallel test files do not disturb each other.
+  await pool.query("insert into account (id) values ($1) on conflict do nothing", [
+    FIXTURE_SPECIES_ACCOUNT,
+  ]);
+  await pool.query(
+    `insert into review_case (account_id, object_kind, object_id, status)
+     values ($1, 'species', $2, 'proposal') on conflict do nothing`,
+    [FIXTURE_SPECIES_ACCOUNT, FIXTURE_SPECIES_ID],
+  );
+  await pool.query(
+    `insert into species (id, genus, latin_name, difficulty, standard_level, light_demand_lux,
+       growth_measure, etiolation_signs, success_criteria, created_by)
+     values ($1, 'Fixtureus', 'Fixtureus tenant_test', 1, 2, 100, 'height', 'v', 'e', 'user')
+     on conflict do nothing`,
+    [FIXTURE_SPECIES_ID],
+  );
+  return FIXTURE_SPECIES_ID;
+}
+
+/** Deleting a species with owner rights and as the application (AB-9: tests of foreign modules write no SQL on `species`). */
+export const deleteSpecies = (pool: Pool, speciesId: string) =>
+  pool.query("delete from species where id = $1", [speciesId]);
+export const deleteSpeciesAsApplication = (pool: Pool, account: string, speciesId: string) =>
+  withAccount(pool, account, (c) => c.query("delete from species where id = $1", [speciesId]));
+export const speciesExists = async (pool: Pool, speciesId: string) =>
+  ((await pool.query("select 1 from species where id = $1", [speciesId])).rowCount ?? 0) === 1;

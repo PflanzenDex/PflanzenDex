@@ -1,6 +1,6 @@
 :root {
   --grund: #f4f7f2;
-  --karte: #ffffff;
+  --card: #ffffff;
   --text: #1b2a1f;
   --leise: #4f6355;
   --gruen: #2f7d4f;
@@ -12,7 +12,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --grund: #121a14;
-    --karte: #1b261e;
+    --card: #1b261e;
     --text: #e8f1ea;
     --leise: #a9bdae;
     --gruen: #5fbf86;
@@ -43,7 +43,7 @@ body {
 .card {
   width: 100%;
   max-width: 440px;
-  background: var(--karte);
+  background: var(--card);
   border: 1px solid var(--rand);
   border-radius: 16px;
   padding: 24px 20px;

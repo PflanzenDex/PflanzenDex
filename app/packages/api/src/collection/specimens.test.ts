@@ -64,6 +64,11 @@ beforeAll(async () => {
   app = createApp({ reviewer, pool, clock: () => NOW });
 });
 afterAll(async () => {
+  // Specimens first: the reference to the species is on delete restrict (AB-10).
+  await pool.query(
+    "delete from specimen where account_id in (select id from account where subject = any($1))",
+    [[subA, subB]],
+  );
   await pool.query(
     `delete from species where id in (select object_id from review_case
        where account_id in (select id from account where subject = any($1)))`,

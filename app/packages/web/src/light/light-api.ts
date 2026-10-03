@@ -1,4 +1,4 @@
-import type { Hint, LightLocation, LightZone, ZoneUser } from "@pflanzendex/core";
+import type { Derivation, Hint, LightLocation, LightZone, ZoneUser } from "@pflanzendex/core";
 
 import {
   call,
@@ -8,7 +8,7 @@ import {
   type Write as KernelWrite,
 } from "../kernel";
 
-export type { Hint, LightLocation, LightZone, ZoneUser };
+export type { Derivation, Hint, LightLocation, LightZone, ZoneUser };
 
 type FetchFn = typeof fetch;
 
@@ -55,3 +55,24 @@ export async function loadLocations(
 
 export const createWrite = (api: string, token: string, fetchFn: FetchFn = fetch): Write =>
   createKernel<ZoneUser>(api, token, fetchFn);
+
+export interface DerivationRequest {
+  lightDemandLux: number;
+  standardLevel: number;
+  softLeaf: boolean;
+}
+
+/** US-LIC-01: zone of the species, derived from the lux need according to the zones of the account (never stored). */
+export async function loadDerivation(
+  api: string,
+  token: string,
+  a: DerivationRequest,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<Derivation>> {
+  const q = new URLSearchParams({
+    lightDemandLux: String(a.lightDemandLux),
+    standardLevel: String(a.standardLevel),
+    softLeaf: String(a.softLeaf),
+  });
+  return call<Derivation, ZoneUser>(fetchFn, `${api}/light-zones/derivation?${q}`, token);
+}

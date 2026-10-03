@@ -5,7 +5,7 @@ description: Use when an operation, API route or screen needs a new user-visible
 
 # Add an error code
 
-1. Choose `<domain>.<reason>`: lowercase letters and underscores only (`ERROR_CODE_FORMAT` in `app/packages/core/src/kernel/error.ts`), domain = the operation's domain (`location`, `light_zone`), reason in German describing the cause (`name_taken`, `in_use`). Reuse an existing code if the cause is the same.
+1. Choose `<domain>.<reason>`: lowercase letters and underscores only (`ERROR_CODE_FORMAT` in `app/packages/core/src/kernel/error.ts`), domain = the operation's domain (`location`, `light_zone`), reason in English describing the cause (`name_taken`, `in_use`). Reuse an existing code if the cause is the same.
 2. Add the code with a complete German sentence to `ERROR_TEXTS` in `app/packages/core/src/kernel/error.ts`. The text says what happened and what the user can do next (P-09). No technical causes, no stack traces, no foreign data.
 3. Never rename or delete a code: clients, tests and the AI connection depend on it. To change the meaning, add a new code and stop using the old one.
 4. Return it from the operation with `failed(error("<domain>.<reason>"))`; use `details` for field-specific problems and `data` for facts the UI shows (e.g. which entries use a zone, P-10).

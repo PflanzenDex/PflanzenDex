@@ -6,16 +6,37 @@ import {
   locationUpdate,
   locationSetUp,
   locationHints,
+  zoneDeriveReviewed,
   type Operation,
   type ZoneUsage,
 } from "@pflanzendex/core";
 import { IdempotencyPostgres, LocationPostgres, ZonePostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { body, write as writeWith, type ResponseShape, type AuthEnv, type Ctx } from "../kernel";
+import {
+  errorBody,
+  body,
+  write as writeWith,
+  type ResponseShape,
+  type AuthEnv,
+  type Ctx,
+} from "../kernel";
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const LIGHT_PATHS = ["/light-zones", "/locations", "/hints"] as const;
+
+async function derivation(c: Ctx, zones: ZonePostgres) {
+  const numberFormat = (name: string) => Number(c.req.query(name) ?? Number.NaN);
+  const r = zoneDeriveReviewed(
+    {
+      lightDemandLux: numberFormat("lightDemandLux"),
+      standardLevel: numberFormat("standardLevel"),
+      softLeaf: c.req.query("softLeaf") === "true",
+    },
+    await zones.list(c.get("account").id),
+  );
+  return r.ok ? c.json(r.value) : c.json(errorBody(r.error), 400);
+}
 
 /**
  * Locations and light zones (US-LIC-05). Writes go only through the operations of `core`
@@ -40,6 +61,8 @@ export function lightRoutes(pool: Pool, additionalUsage: readonly ZoneUsage[] = 
   const withId = async (c: Ctx) => ({ ...(await body(c)), id: c.req.param("id") });
 
   routes.get("/light-zones", async (c) => c.json({ zones: await zones.list(c.get("account").id) }));
+  // US-LIC-01: zone of the species, derived from lux need and default level according to the zones of the account (FR-BES-10).
+  routes.get("/light-zones/derivation", (c) => derivation(c, zones));
   routes.post("/light-zones/defaults", async (c) =>
     write(
       c,

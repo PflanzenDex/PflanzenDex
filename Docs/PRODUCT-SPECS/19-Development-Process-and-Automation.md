@@ -17,7 +17,7 @@ The model is the rule set of the project AdventskalenderTombola (`~/root/Code-Ro
 
 ## User stories
 
-### US-DEV-01 · One entry point for all tasks (task runner) · ⬜
+### US-DEV-01 · One entry point for all tasks (task runner) · 🟨
 
 As a **developer** I want to start every recurring task with one command and run locally the same thing as CI.
 
@@ -163,7 +163,7 @@ Acceptance criteria:
 - Before every migration in production a fresh, **restorable** backup exists (NFR-15).
 - Row-level rules of the tenant isolation (NFR-09) are migrated along and checked by QG-D1; a migration that removes a rule fails QG-D1.
 
-### US-DEV-08 · Parallel work without collisions · ⬜
+### US-DEV-08 · Parallel work without collisions · 🟨
 
 As a **team (humans and agents)** I want to work simultaneously without overwriting each other's files.
 
@@ -176,6 +176,7 @@ Acceptance criteria:
 - **Number assignment protected:** spec files and IDs (`US-/FR-/DM-/E-`) are assigned centrally; the spec check (QG-U2) rejects duplicate file numbers and duplicate IDs.
 - **Tests not in parallel on shared resources:** a test lock mechanism prevents two runs from using the same database or the same port (pattern `with-test-lock.cjs` in Tombola); unique ports/database names per worktree are an alternative.
 - **Agents:** do not commit unasked, change no foreign files without an assignment and report before writing if a file has changed since reading (the tool already reports that).
+- **One story, one assignee (claim):** whoever starts a story or enabler claims it first with `make claim ISSUE=<n>`. Given the issue has an assignee, an open or merged PR, or a branch on `origin` with the story ID when the claim is made, then it aborts with the finding and writes nothing. Otherwise it sets the assignee and the project status "In Progress", creates the branch and opens a draft PR with a "Handoff" section. `make board` shows per open story the assignee, PR and age of the last commit and marks stale claims (starting value 48 hours without a commit, assumption) and double claims; `make worktree` and the pre-push hook reject stories that belong to someone else. The check is local (no CI gate) and can be bypassed with `--no-verify`; operation: `Docs/operations/parallel-work.md`, principle PRIN-010.
 
 ### US-DEV-09 · Operation: health, alarms, runbooks · ⬜
 

@@ -61,7 +61,7 @@ Acceptance criteria:
 - Columns: species, botanical name, light zone, watering rule, substrate, pruning, success criteria, difficulty.
 - Only species with at least one active specimen. Sorted by `Difficulty` (number 1–3, display Easy/Medium/Hard).
 
-### US-BES-06 · See specimens as cards · ⬜ (prototype ✅)
+### US-BES-06 · See specimens as cards · 🟨 (prototype ✅)
 
 As a **plant keeper** I want to see every specimen as a card, so that I grasp condition and need for action at a glance.
 
@@ -72,7 +72,9 @@ Acceptance criteria:
 - The note of the last measurement is collapsible. Clicking the photo opens it large.
 - The grid adapts to the screen width (phone: one to two columns).
 
-### US-BES-07 · Archive a deceased or given-away plant · ⬜ (prototype ✅)
+State of implementation: cards with name, species, light zone (the one of the location), status and location; "unbekannt" when something is missing (P-08). Last measurement (quality, date), collapsible note, photo with a link to the large view and open treatment with "overdue for N days / due today / in N days" and "+N more" are finished and tested in core, API and UI, **but show nothing** until `care` implements the ports `MeasurementSource` (WAC) and `TreatmentSource` (BEH): until then the cards say "Noch kein Foto", "noch keine Messung" and "keine offene Behandlung". Etiolated/thin is never shown as success. **Open:** the zone of a cutting override (BES-04). Archived specimens are hidden by BES-07.
+
+### US-BES-07 · Archive a deceased or given-away plant · 🟨 (prototype ✅)
 
 As a **plant keeper** I want to take a specimen out of the evaluations without losing its history.
 
@@ -81,6 +83,8 @@ Acceptance criteria:
 - "Archive" with a reason (`died`, `given away`, `swapped`, `gifted`, `sold`, free text) sets `Status: Archived`, `Archived_At` and `Archived_Reason`.
 - Archived specimens are missing from distribution, phases, growth, treatments, Pokédex ownership and today list, but remain viewable with their history and can be restored.
 - On a swap the archiving happens automatically (US-SOZ-11).
+
+State of implementation: "Archivieren" (card in the tab Bestand) with a reason from the list (`eingegangen`, `abgegeben`, `getauscht`, `verschenkt`, `verkauft`) or free text sets the status, `Archived_At` (local calendar date of the device's time zone, NFR-08) and `Archived_Reason`; a second archiving changes neither (P-10). Archived specimens are missing from the list, from the BES-06 cards (the ports for measurements and treatments do not learn their IDs), from the care phases and from measuring (measuring is rejected with `specimen.archived`); they stay viewable through `GET /specimens/:id` and the section "Archiv" (species, date, reason) and can be restored (status as before the archiving, a cutting stays a cutting). The name of an archived specimen stays taken (assumption, so that restoring never collides; a new specimen of the species then needs a marker). **Open:** the automatic archiving on a swap (SOZ-11) and the evaluations that do not exist yet (distribution, treatments, Pokédex ownership, today list); they must filter with `isActive`. The measurement series of an archived specimen is still readable through the API but not reachable in the UI.
 
 ### US-BES-08 · Recognize incomplete data · ⬜ (prototype 🟡)
 
@@ -190,7 +194,7 @@ Account-specific deviations from the catalog values of a species. Private, never
 | FR-BES-07 | One growth measure dimension per species is fixed and appears as an input in the measurement form.                                                                                                                                                                                                                                                                                                                                                     | ⬜     |
 | FR-BES-08 | Species view (catalog, light overview) and specimen view (phases, growth, treatments, cards) stay separately named.                                                                                                                                                                                                                                                                                                                                    | ⬜     |
 | FR-BES-09 | **Three layers:** catalog species (shared, only reviewers change), care profile (account × species, DM-BES-04), specimen. Specimen before care profile before catalog applies. **Changeable only in the catalog:** names, taxonomy, growth measure, etiolation signs, success criteria, story, image, attributes, difficulty. **Overridable in the care profile:** target locations, light zone, dormancy, watering intervals, own hints.            | ⬜     |
-| FR-BES-10 | **Derive the zone instead of linking:** the catalog carries lux demand and default level. The account's zone follows from the lux demand and the account's zones by the rule from US-LIC-01 (80 % and 30 % limits) and is implemented as pure logic with tests. An override in the care profile takes precedence.                                                                                                                                     | ⬜     |
+| FR-BES-10 | **Derive the zone instead of linking:** the catalog carries lux demand and default level. The account's zone follows from the lux demand and the account's zones by the rule from US-LIC-01 (80 % and 30 % limits) and is implemented as pure logic with tests. An override in the care profile takes precedence.                                                                                                                                     | 🟨 Logic (LIC-01); override follows |
 | FR-BES-11 | **Visibility:** user proposals (`Proposal`) are visible only to the creator until a reviewer approves them (US-BES-10). Operator batches are visible immediately and marked. Specimens of a still private species cannot be shared (US-SOZ-04) and do not count in the Pokédex. On approval or merge, references are re-pointed, nothing is lost.                                                                                                    | 🟨     |
 | FR-BES-12 | **Changes to the catalog** are versioned. If an impact-relevant field changes (dormancy, lux demand, default level), keepers who have not overridden the value receive a hint (P-10).                                                                                                                                                                                                                                                                 | ⬜     |
 | FR-BES-13 | **Growth measure locked:** as soon as an account has a measurement for the species, the growth measure can no longer be changed. A change is only possible by the operator with conversion of the measurement series (FR-BES-07).                                                                                                                                                                                                                      | ⬜     |

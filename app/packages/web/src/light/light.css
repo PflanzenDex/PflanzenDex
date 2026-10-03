@@ -19,10 +19,10 @@
 }
 .tab.active {
   border-color: var(--gruen);
-  background: var(--karte);
+  background: var(--card);
 }
 .light {
-  background: var(--karte);
+  background: var(--card);
   border: 1px solid var(--rand);
   border-radius: 16px;
   padding: 24px 16px;

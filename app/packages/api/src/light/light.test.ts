@@ -197,3 +197,43 @@ describe("US-LIC-05 tenant isolation via the API (P-04)", () => {
     });
   });
 });
+
+describe("US-LIC-01 derive the zone of the species", () => {
+  const query = (lux: number | string, level: number | string, soft = false) =>
+    `/light-zones/derivation?lightDemandLux=${lux}&standardLevel=${level}${soft ? "&softLeaf=true" : ""}`;
+
+  it("without token: 401", async () => {
+    expect((await call(null, "GET", query(15000, 2))).status).toBe(401);
+  });
+
+  it("derives the zone from lux need, default level and the zones of the account", async () => {
+    const sub = `licht-${randomUUID()}`;
+    await call(sub, "POST", "/light-zones/defaults", {});
+    const r = await call(sub, "GET", query(15000, 2));
+    expect(r).toMatchObject({
+      status: 200,
+      body: { kind: "zone", level: 2, zone: { name: "Lampe 2" }, reason: "standard" },
+    });
+    expect((await call(sub, "GET", query(100000, 2, true))).body).toMatchObject({
+      zone: { name: "Lampe 2" },
+      reason: "soft_leaf",
+    });
+    await pool.query("delete from account where subject = $1", [sub]);
+  });
+
+  it("Konto ohne Zonen: Zone unbekannt statt geraten; fremde Zonen bleiben unsichtbar (P-04)", async () => {
+    const empty = `licht-${randomUUID()}`;
+    const r = await call(empty, "GET", query(15000, 2));
+    expect(r).toMatchObject({ status: 200, body: { kind: "unknown" } });
+    await pool.query("delete from account where subject = $1", [empty]);
+  });
+
+  it("invalid input: 400 with the affected fields", async () => {
+    const r = await call(subA, "GET", query("abc", 1));
+    expect(r.status).toBe(400);
+    expect(r.body["error"].details.map((d: { field: string }) => d.field)).toEqual([
+      "lightDemandLux",
+      "standardLevel",
+    ]);
+  });
+});

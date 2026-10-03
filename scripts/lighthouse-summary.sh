@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Prints the representative (median) Lighthouse run of app/packages/web/.lighthouseci as a Markdown table (QG-U1, report only).
+# Prints the median score per category of the Lighthouse runs in app/packages/web/.lighthouseci as a Markdown table (QG-U1, report only).
 set -euo pipefail
 dir="$(dirname "$0")/../app/packages/web/.lighthouseci"
-test -f "$dir/manifest.json" || { echo "no Lighthouse manifest in $dir" >&2; exit 1; }
+ls "$dir"/run-*.json >/dev/null 2>&1 || { echo "no Lighthouse reports in $dir" >&2; exit 1; }
 echo "### Lighthouse (mobile, median of runs; report only, no threshold yet, E-15)"
 echo
 echo "| Category | Score |"
 echo "| --- | --- |"
-jq -r '.[] | select(.isRepresentativeRun) | .summary | to_entries[]
-  | "| \(.key) | \((.value * 100) | round) |"' "$dir/manifest.json"
+jq -rs '[.[].categories | to_entries[] | {k: .key, v: .value.score}] | group_by(.k)[]
+  | (map(.v) | sort) as $s | "| \(.[0].k) | \(($s[($s | length) / 2 | floor] * 100) | round) |"' "$dir"/run-*.json

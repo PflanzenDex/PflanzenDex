@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse e2e crap duplicates
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse e2e crap duplicates
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -84,7 +84,8 @@ skills-check: ## Check agent skills in .agents/skills (trigger, paths, check com
 	cd $(APP) && npm run skills
 
 lighthouse: ## Lighthouse CI on the built web app, mobile, report only (QG-U1); report in app/packages/web/.lighthouseci
-	cd $(APP) && npm run build -w @pflanzendex/web && npm run lighthouse -w @pflanzendex/web
+	cd $(APP) && npm run build -w @pflanzendex/web
+	scripts/lighthouse-run.sh
 	scripts/lighthouse-summary.sh | tee $(APP)/packages/web/.lighthouseci/summary.md
 
 release-tags-check: ## All v* tags come from the release workflow, no hand-set version (FR-DEV-05; needs gh auth)
@@ -116,8 +117,14 @@ release-dry-run: ## Show the next version and notes without publishing (BRANCH=d
 	cd $(APP) && GITHUB_TOKEN="$${GITHUB_TOKEN:-$$(gh auth token)}" npx --no-install semantic-release \
 		--dry-run --no-ci --branches "$${BRANCH:-$$(git branch --show-current)}"
 
-worktree: ## New worktree and branch (BRANCH=feat/x) with its own ports (US-DEV-08)
+worktree: ## New worktree and branch (BRANCH=feat/x) with its own ports; claim check first (opt-out SKIP_CLAIM_CHECK=1, US-DEV-08)
 	scripts/worktree-new.sh "$(BRANCH)"
+
+claim: ## Claim a story before working on it (ISSUE=<n>): assignee, status, branch, draft PR; refuses duplicate work (US-DEV-08)
+	cd $(APP) && node scripts/claim.mjs "$(ISSUE)"
+
+board: ## Who works on which open story of the milestone; flags STALE and DOUBLE (CLAIM_STALE_HOURS, US-DEV-08)
+	cd $(APP) && node scripts/board.mjs $(MILESTONE)
 
 clean: ## Remove build output and node_modules
 	cd $(APP) && rm -rf node_modules packages/*/node_modules packages/*/dist

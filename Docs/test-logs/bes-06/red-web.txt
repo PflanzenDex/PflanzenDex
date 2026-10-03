@@ -1,0 +1,150 @@
+     × ein Serverfehler bleibt ein Fehler mit Code, keine leere Liste (P-10) 2ms
+   ❯ US-BES-06 Karte: Inhalt (5)
+     × zeigt Name, Art, Lichtzone, Status und Standort 5ms
+     × fehlende Werte heißen „unbekannt“, nichts wird erfunden (P-08) 1ms
+     × zeigt die Stufen des Status in Worten 1ms
+     × ohne Foto steht ein Platzhalter mit Text, nicht nur ein Bild 1ms
+     × mit Foto: das Bild ist ein Link, der es groß öffnet, mit Beschreibung und Datum 1ms
+   ❯ US-BES-06 Karte: letzte Messung (4)
+     × ohne Messung: „noch keine Messung“ 1ms
+     × zeigt Qualität und Datum der letzten Messung 1ms
+     × Vergeilt/dünn ist nie ein Erfolg: Warnklasse, kein Erfolgswort, Hinweis auf die Erfolgskriterien 1ms
+     × die Notiz ist einklappbar (zu Beginn zu) und fehlt, wenn es keine gibt 1ms
+   ❯ US-BES-06 Karte: offene Behandlung (3)
+     × ohne offene Behandlung: „keine offene Behandlung“ 1ms
+     × zeigt Grund und Fälligkeit, Überfälliges ist hervorgehoben 2ms
+     × bei mehreren steht „+N weitere“, bei einer nicht 1ms
+   ❯ US-BES-06 Raster und Bedienung (4)
+     × ein Raster aus Listeneinträgen, eine Karte je Exemplar, mit Überschrift je Karte 0ms
+     × das Raster passt sich der Breite an: eine bis zwei Spalten auf dem Handy, mehr auf breiten Schirmen 5ms
+     × ohne Exemplare: sagt, was zu tun ist (P-09), und bietet die Artwahl an 1ms
+     × der Knopf für ein weiteres Exemplar bleibt unter den Karten 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Client der Karten-API > lädt die Karten mit Bearer-Token und der Zeitzone des Geräts
+AssertionError: expected { ok: true, wert: [] } to match object { ok: true, wert: [ { id: 'e1' } ] }
+
+- Expected
++ Received
+
+  {
+    "ok": true,
+-   "wert": [
+-     {
+-       "id": "e1",
+-     },
+-   ],
++   "wert": [],
+  }
+
+ ❯ src/bestand/karten.test.tsx:34:15
+     32|     const abruf = vi.fn<typeof fetch>(async () => antwort(200, { karte…
+     33|     const r = await ladeKarten("http://api", "tok", abruf);
+     34|     expect(r).toMatchObject({ ok: true, wert: [{ id: "e1" }] });
+       |               ^
+     35|     const [url, init] = abruf.mock.calls[0] ?? [];
+     36|     const zeitzone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Client der Karten-API > ein Serverfehler bleibt ein Fehler mit Code, keine leere Liste (P-10)
+AssertionError: expected { ok: true, wert: [] } to match object { ok: false, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "fehler": {
+-     "code": "eingabe.ungueltig",
+-   },
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ src/bestand/karten.test.tsx:44:58
+     42|     const fehler = { code: "eingabe.ungueltig", text: "Ungültig." };
+     43|     const abruf = vi.fn<typeof fetch>(async () => antwort(400, { fehle…
+     44|     expect(await ladeKarten("http://api", "tok", abruf)).toMatchObject…
+       |                                                          ^
+     45|       ok: false,
+     46|       fehler: { code: "eingabe.ungueltig" },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Karte: Inhalt > zeigt Name, Art, Lichtzone, Status und Standort
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Karte: Inhalt > fehlende Werte heißen „unbekannt“, nichts wird erfunden (P-08)
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Karte: Inhalt > zeigt die Stufen des Status in Worten
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Karte: Inhalt > ohne Foto steht ein Platzhalter mit Text, nicht nur ein Bild
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Karte: Inhalt > mit Foto: das Bild ist ein Link, der es groß öffnet, mit Beschreibung und Datum
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Karte: letzte Messung > ohne Messung: „noch keine Messung“
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Karte: letzte Messung > zeigt Qualität und Datum der letzten Messung
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Karte: letzte Messung > Vergeilt/dünn ist nie ein Erfolg: Warnklasse, kein Erfolgswort, Hinweis auf die Erfolgskriterien
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Karte: letzte Messung > die Notiz ist einklappbar (zu Beginn zu) und fehlt, wenn es keine gibt
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Karte: offene Behandlung > ohne offene Behandlung: „keine offene Behandlung“
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Karte: offene Behandlung > zeigt Grund und Fälligkeit, Überfälliges ist hervorgehoben
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Karte: offene Behandlung > bei mehreren steht „+N weitere“, bei einer nicht
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Raster und Bedienung > ein Raster aus Listeneinträgen, eine Karte je Exemplar, mit Überschrift je Karte
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Raster und Bedienung > ohne Exemplare: sagt, was zu tun ist (P-09), und bietet die Artwahl an
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Raster und Bedienung > der Knopf für ein weiteres Exemplar bleibt unter den Karten
+TypeError: Cannot read properties of undefined (reading 'length')
+ ❯ BestandListe src/bestand/bestand-liste.tsx:29:24
+     27|     <section aria-labelledby="bestand-titel">
+     28|       <h1 id="bestand-titel">Bestand</h1>
+     29|       {props.exemplare.length === 0 ? (
+       |                        ^
+     30|         <p>Du hast noch kein Exemplar. Wähle zuerst eine Art aus dem K…
+     31|       ) : (
+ ❯ Object.react_stack_bottom_frame ../../node_modules/react-dom/cjs/react-dom-server-legacy.node.development.js:10371:18
+ ❯ renderWithHooks ../../node_modules/react-dom/cjs/react-dom-server-legacy.node.development.js:5361:19
+ ❯ renderElement ../../node_modules/react-dom/cjs/react-dom-server-legacy.node.development.js:5796:23
+ ❯ retryNode ../../node_modules/react-dom/cjs/react-dom-server-legacy.node.development.js:6783:21
+ ❯ performWork ../../node_modules/react-dom/cjs/react-dom-server-legacy.node.development.js:7919:19
+ ❯ startWork ../../node_modules/react-dom/cjs/react-dom-server-legacy.node.development.js:8807:7
+ ❯ renderToStringImpl ../../node_modules/react-dom/cjs/react-dom-server-legacy.node.development.js:8933:7
+ ❯ process.env.NODE_ENV.exports.renderToString ../../node_modules/react-dom/cjs/react-dom-server-legacy.node.development.js:10434:14
+ ❯ renderToString src/bestand/karten.test.tsx:9:62
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  src/bestand/karten.test.tsx > US-BES-06 Raster und Bedienung > das Raster passt sich der Breite an: eine bis zwei Spalten auf dem Handy, mehr auf breiten Schirmen
+AssertionError: expected '/* Bestand und Exemplar anlegen (US-B…' to contain '.karten-raster'
+
+- Expected
++ Received
+
+- .karten-raster
++ /* Bestand und Exemplar anlegen (US-BES-02): mobil zuerst; baut auf stil.css und licht.css auf. */
++ .bestand h1 {
++   margin: 0 0 8px;
++ }
++ .namensvorschau {
++   margin: 0;
++   padding: 12px 14px;
++   border: 1px solid var(--rand);
++   border-radius: 10px;
++   font-weight: 600;
++   overflow-wrap: anywhere;
++ }
++ .bestand .hinweis {
++   margin-bottom: 16px;
++ }
++
+
+ ❯ src/bestand/karten.test.tsx:163:17
+    161|   it("das Raster passt sich der Breite an: eine bis zwei Spalten auf d…
+    162|     const css = readFileSync(new URL("./bestand.css", import.meta.url)…
+    163|     expect(css).toContain(".karten-raster");
+       |                 ^
+    164|     expect(css).toContain("grid-template-columns: repeat(auto-fill, mi…
+    165|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  18 failed (18)
+   Start at  15:24:47
+   Duration  587ms (transform 44%, tests 28%, import 24%, worker 4%)
+

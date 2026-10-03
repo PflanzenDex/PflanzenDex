@@ -10,6 +10,8 @@ export interface SpecimenRow {
   readonly locationId: string | null;
   readonly status: "plant" | "cutting" | "archived";
   readonly caughtAt: string | null;
+  readonly archivedAt: string | null;
+  readonly archivedReason: string | null;
 }
 export type SpecimenValues = Pick<
   SpecimenRow,
@@ -18,17 +20,19 @@ export type SpecimenValues = Pick<
 
 // `date` comes back as text: the driver would turn it into a `Date` in the server's time zone (NFR-08).
 const COLUMNS = `id, species_id as "speciesId", name, marker, location_id as "locationId", status,
-  to_char(caught_at, 'YYYY-MM-DD') as "caughtAt"`;
+  to_char(caught_at, 'YYYY-MM-DD') as "caughtAt", to_char(archived_at, 'YYYY-MM-DD') as "archivedAt",
+  archived_reason as "archivedReason"`;
 
 const UNIQUE = "23505";
 const FOREIGN_KEY = "23503";
 const pgError = (e: unknown) => e as { code?: string; constraint?: string };
 
 /**
- * Adapter for specimens; every call runs as the caller's account under the row rules (P-04). The location
- * hangs on the own account via the composite foreign key (account_id, location_id). The species has no
- * foreign key: the catalog carries no account id, AB-10 allows only `(account_id, id)`; the operation in `core`
- * instead checks that the account may see the species, and the application cannot delete species.
+ * Adapter for specimens; every call runs as the account of the caller under the row rules (P-04). The location hangs on
+ * the own account through the composite foreign key (account_id, location_id). The species hangs on the catalog through
+ * a simple foreign key `specimen_species` (on delete restrict): `species` is registered as a global reference table
+ * (AB-10, ADR 0003 O-2). The database guarantees that the species exists and is not deleted; whether the account may
+ * see it (approved or own proposal) is checked by the operation in `core`.
  */
 export class SpecimenPostgres {
   constructor(private readonly pool: Pool) {}
@@ -68,5 +72,41 @@ export class SpecimenPostgres {
         return "location_unknown";
       throw e;
     }
+  }
+
+  /**
+   * One statement: status, date, reason and the status from before. Only a not yet archived specimen is changed, a
+   * second archiving leaves date and reason of the first (P-10). Foreign specimens are invisible to the row rule.
+   */
+  async archive(
+    userId: string,
+    id: string,
+    reason: string,
+    date: string,
+  ): Promise<SpecimenRow | "not_found" | "already_archived"> {
+    const sql = `update specimen set status_before_archived = status, status = 'archived', archived_at = $2,
+         archived_reason = $3 where id = $1 and status <> 'archived' returning ${COLUMNS}`;
+    return this.change(userId, { sql, parameter: [id, date, reason] }, "already_archived");
+  }
+
+  /** Resets the status from before the archiving (without statement: plant) and deletes date and reason. */
+  async restore(userId: string, id: string): Promise<SpecimenRow | "not_found" | "not_archived"> {
+    const sql = `update specimen set status = coalesce(status_before_archived, 'plant'), status_before_archived = null,
+         archived_at = null, archived_reason = null where id = $1 and status = 'archived' returning ${COLUMNS}`;
+    return this.change(userId, { sql, parameter: [id] }, "not_archived");
+  }
+
+  /** Executes the change (`$1` is the ID); if it changes nothing, a query decides between "does not exist" and `otherwise`. */
+  private async change<S extends string>(
+    userId: string,
+    instruction: { sql: string; parameter: readonly unknown[] },
+    otherwise: S,
+  ): Promise<SpecimenRow | "not_found" | S> {
+    return withAccount(this.pool, userId, async (c) => {
+      const r = await c.query<SpecimenRow>(instruction.sql, [...instruction.parameter]);
+      if (r.rows[0]) return r.rows[0];
+      const da = await c.query("select 1 from specimen where id = $1", [instruction.parameter[0]]);
+      return da.rowCount ? otherwise : "not_found";
+    });
   }
 }

@@ -19,6 +19,10 @@ export const ERROR_TEXTS = {
   "specimen.name_taken":
     "Ein Exemplar mit diesem Namen gibt es schon. Gib ein Kennzeichen an (zum Beispiel eine Farbe), damit du die Töpfe unterscheiden kannst.",
   "specimen.not_found": "Dieses Exemplar gibt es nicht.",
+  "specimen.already_archived": "Dieses Exemplar ist schon archiviert.",
+  "specimen.not_archived": "Dieses Exemplar ist nicht archiviert.",
+  "specimen.archived":
+    "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her, dann kannst du damit arbeiten.",
   "location.name_taken": "Einen Standort mit diesem Namen gibt es schon.",
   "location.not_found": "Diesen Standort gibt es nicht.",
   "light_zone.name_taken": "Eine Lichtzone mit diesem Namen gibt es schon.",

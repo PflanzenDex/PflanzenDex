@@ -17,7 +17,7 @@ These four are the default for new accounts. The keeper can adjust names and val
 
 ## User stories
 
-### US-LIC-01 · Assign a species to the right light zone · ⬜ (prototype ✅)
+### US-LIC-01 · Assign a species to the right light zone · 🟨 (prototype ✅)
 
 As a **plant keeper** I want every species to be assigned to a zone based on its biological demand, so that it grows and does not merely survive.
 
@@ -29,7 +29,7 @@ Acceptance criteria:
 - Move up only if the demand reaches at least 80 % of the lux ceiling of the current level. If the demand is more than 30 % below the ceiling, the species stays there (more light brings stress).
 - C3 plants with soft leaves ("sun-loving") are not automatically classified into the strong zone.
 
-### US-LIC-02 · Know where there is still room · ⬜ (prototype ✅)
+### US-LIC-02 · Know where there is still room · 🟨 (prototype ✅)
 
 As a **plant keeper** I want to see the distribution of my specimens across the zones.
 
@@ -82,8 +82,8 @@ Acceptance criteria:
 | ID        | Requirement                                                                                                                                                                          | Status                                                                                      |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
 | FR-LIC-01 | Light zones are data of the account with a default, not hard-coded; counting, wishlist and recommendations read them centrally (solves B-07).                                        | 🟨 Data and default (LIC-05); reading by counting, wishlist and recommendations follows     |
-| FR-LIC-02 | A specimen's light zone overrides that of the species (cutting → cutting light).                                                                                                     | ⬜                                                                                          |
+| FR-LIC-02 | A specimen's light zone overrides that of the species (cutting → cutting light).                                                                                                     | 🟨 In the distribution (LIC-02): zone of the location, status cutting; an own zone field on the specimen follows (BES-04) |
 | FR-LIC-03 | If the lux demand is missing, the species drops out of the light overview and appears in "Hints".                                                                                    | ⬜                                                                                          |
-| FR-LIC-04 | Distribution and wishlist prioritization use the same counting (specimen level, only zones 2–4).                                                                                     | ⬜                                                                                          |
+| FR-LIC-04 | Distribution and wishlist prioritization use the same counting (specimen level, only zones 2–4).                                                                                     | 🟨 Counting as a reusable function (LIC-02); the wishlist (WUN) does not use it yet |
 | FR-LIC-05 | The light overview (species view) uses the species' lux demand also for cuttings; the distribution (specimen view) respects the override. Intended and explained in the interface.  | ⬜                                                                                          |
 | FR-LIC-06 | A measured light intensity per lamp (phone app) can be stored per device (US-EQU-03). If it is missing, the zone's value applies, marked as "not measured".                          | ⬜                                                                                          |

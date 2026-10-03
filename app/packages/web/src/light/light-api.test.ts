@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createWrite, loadLight } from "./light-api";
+import { createWrite, loadDerivation, loadLight } from "./light-api";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -48,5 +48,23 @@ describe("US-LIC-05 client of the light API", () => {
     }) as unknown as typeof fetch;
     const r = await loadLight("http://api", "t", fetchFn);
     expect(!r.ok && r.error.code).toBe("network.not_reachable");
+  });
+});
+
+describe("US-LIC-01 Ableitung laden", () => {
+  it("calls the derivation with the details of the species", async () => {
+    const fetchFn = vi.fn(
+      async () => new Response(JSON.stringify({ kind: "unknown", reason: "no_need" })),
+    );
+    const r = await loadDerivation(
+      "/api",
+      "t",
+      { lightDemandLux: 15000, standardLevel: 2, softLeaf: true },
+      fetchFn as unknown as typeof fetch,
+    );
+    expect(r.ok).toBe(true);
+    expect(String((fetchFn.mock.calls[0] as unknown[])[0])).toBe(
+      "/api/light-zones/derivation?lightDemandLux=15000&standardLevel=2&softLeaf=true",
+    );
   });
 });

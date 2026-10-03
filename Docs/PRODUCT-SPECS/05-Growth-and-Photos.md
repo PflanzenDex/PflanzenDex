@@ -6,7 +6,7 @@ Prototype reference: epic WAC. Differences: measuring on the phone with a camera
 
 ## User stories
 
-### US-WAC-01 · Record a measurement · ⬜ (prototype ✅)
+### US-WAC-01 · Record a measurement · 🟨 (prototype ✅)
 
 As a **plant keeper** I want to save a measured number per specimen, so that the history grows.
 
@@ -17,6 +17,8 @@ Acceptance criteria:
 - The date defaults to today in the user's time zone and is changeable (adding retroactively).
 - The same dimension is always measured at the same place.
 - Saving is idempotent (US-QS-03).
+
+State of implementation: the view "Measure" per specimen shows "Was messen?" (growth measure of the species, otherwise "unbekannt"), the last measurement, the last assessment, the input form and the course. Input: number on the grid of 0.5 cm (assumption: the grid also applies on the server so that nothing is rounded silently), quality (preset `Gesund`), optional note; the date defaults to today in the device's time zone (the profile has none yet, US-ACC-02), is changeable and not in the future (assumption: a typo in the year would distort every later rate). Invalid input writes nothing; saving goes through `measurement.record` with `Idempotency-Key`. **Open:** the optional photo (media processing, FR-WAC-09, US-WAC-05) as well as rate and trend in the view (US-WAC-03, US-WAC-04). That the same dimension is always measured at the same place exists only as a hint in the text.
 
 ### US-WAC-02 · Assess etiolation while measuring · ⬜ (prototype ✅)
 

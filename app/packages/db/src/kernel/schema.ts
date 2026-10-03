@@ -82,5 +82,23 @@ export async function findSchemaViolations(
   const tenant = rows.map(violation).filter((v): v is string => v !== null);
   if (!register) return tenant;
   const names = rows.map((z) => z.name);
-  return [...tenant, ...moduleViolations(names, await loadForeignKey(db), register)];
+  return [
+    ...tenant,
+    ...globalReferenceProblems(register),
+    ...moduleViolations(names, await loadForeignKey(db), register),
+  ];
+}
+
+/** A global reference table (AB-10) is a table without account ID with a justified exception, nothing else. */
+function globalReferenceProblems(register: ModuleRegister): string[] {
+  return Object.entries(register.GLOBAL_REFERENCE_TABLES ?? {}).flatMap(([tableName, e]) => {
+    const problem = (text: string) => [`AB-10 global reference table ${tableName}: ${text}`];
+    if (!e.reason?.trim()) return problem("without justification (GLOBAL_REFERENCE_TABLES)");
+    if (!(tableName in WITHOUT_ACCOUNT_ID))
+      return problem("only tables with a justified exception in WITHOUT_ACCOUNT_ID are allowed");
+    const owner = register.MODULES.find((m) => m.tables.includes(tableName))?.name;
+    return owner === e.owner
+      ? []
+      : problem(`owner ${e.owner} does not match the module register (${owner})`);
+  });
 }

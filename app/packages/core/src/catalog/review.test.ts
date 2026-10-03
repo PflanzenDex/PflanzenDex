@@ -71,7 +71,7 @@ describe("FR-BES-02 users can only propose", () => {
 
   it("proposing the same object twice fails with review.already_exists", async () => {
     await propose();
-    const r = await propose("anderer");
+    const r = await propose("other");
     expect(!r.ok && r.error.code).toBe("review.already_exists");
   });
 });

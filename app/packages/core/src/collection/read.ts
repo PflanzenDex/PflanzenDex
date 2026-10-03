@@ -1,5 +1,5 @@
 import { isId } from "../kernel";
-import type { Specimen, SpecimenStore, SpecimenRow } from "./types";
+import { isActive, type Specimen, type SpecimenStore, type SpecimenRow } from "./types";
 
 /**
  * Attaches the derived lists (P-01: computed, never stored). Measurements (WAC) and treatment list (BEH)
@@ -11,14 +11,15 @@ export const withDerivations = (row: SpecimenRow): Specimen => ({
   treatments: [],
 });
 
+/** The list of active specimens; archived ones are in the archive (US-BES-07), not here. */
 export async function specimenList(
   store: SpecimenStore,
   userId: string,
 ): Promise<readonly Specimen[]> {
-  return (await store.list(userId)).map(withDerivations);
+  return (await store.list(userId)).filter(isActive).map(withDerivations);
 }
 
-/** `null` if the specimen does not exist or belongs to another account (both look the same, P-04). */
+/** An archived specimen also stays loadable with its history (US-BES-07). `null` if the specimen does not exist or belongs to another account (both look the same, P-04). */
 export async function specimenLoad(
   store: SpecimenStore,
   userId: string,

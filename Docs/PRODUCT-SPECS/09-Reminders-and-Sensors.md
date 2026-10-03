@@ -74,7 +74,7 @@ Acceptance criteria:
 
 ## Requirements
 
-### Data (DM-MON-01)
+### DM-MON-01 Data
 
 `Watering_Interval_Days` per species: `{Growth, Dormancy}`; `Watering_Log` per specimen: `{Date, Source}`; `Sensor`: `{Id, Type, Specimen? or area, Calibration, Thresholds}`; `Measurement_Series`: raw values outside the user data, aggregated into `Sensor_Status`.
 

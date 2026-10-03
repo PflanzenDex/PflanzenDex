@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import type { ApiError, LightLocation, LightZone } from "./light-api";
+import { FormButtons, useSend } from "./form";
 import { ErrorMessage } from "./message";
 import { kindText, zoneName } from "./text";
 
@@ -18,22 +19,15 @@ export function LocationForm(props: {
   onCancel?: () => void;
 }) {
   const s = props.start;
-  const [error, setError] = useState<ApiError | null>(null);
-  const [running, setRunning] = useState(false);
-  async function send(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const f = new FormData(form);
-    setRunning(true);
-    const errorNew = await props.onSave({
+  const { error, running, send } = useSend<LocationInput>(
+    (f) => ({
       name: String(f.get("name") ?? ""),
       lightZoneId: String(f.get("lightZoneId") ?? "") || null,
       kind: f.get("kind") === "outdoor" ? "outdoor" : "indoor",
-    });
-    setRunning(false);
-    setError(errorNew);
-    if (!errorNew && !s) form.reset();
-  }
+    }),
+    props.onSave,
+    !s,
+  );
   return (
     <form
       className="form"
@@ -69,16 +63,11 @@ export function LocationForm(props: {
         </select>
       </label>
       {error && <ErrorMessage error={error} />}
-      <div className="actions">
-        <button type="submit" className="primary" disabled={running}>
-          {s ? "Speichern" : "Standort anlegen"}
-        </button>
-        {props.onCancel && (
-          <button type="button" className="secondary" onClick={props.onCancel}>
-            Abbrechen
-          </button>
-        )}
-      </div>
+      <FormButtons
+        label={s ? "Speichern" : "Standort anlegen"}
+        running={running}
+        onCancel={props.onCancel}
+      />
     </form>
   );
 }

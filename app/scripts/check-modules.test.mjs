@@ -305,6 +305,80 @@ describe("module boundaries (FR-QG-19)", () => {
     });
   });
 
+  describe("AB-10 foreign keys to global reference tables (ADR 0003 O-2)", () => {
+    const GLOBAL = { species: { owner: "catalog", reason: "shared catalog without account_id" } };
+    const withCatalog = (global = GLOBAL) =>
+      cfg({
+        MODULES: [
+          ...CFG.MODULES.map((m) =>
+            m.name === "collection" ? { ...m, dependsOn: [...m.dependsOn, "catalog"] } : m,
+          ),
+          { name: "catalog", epics: [], tables: ["species"], dependsOn: ["kernel"], ports: [] },
+        ],
+        GLOBAL_REFERENCE_TABLES: global,
+      });
+    const mig = (module, sql, name = `0005_${module}_x.sql`) => ({
+      [`packages/db/migrations/${name}`]: `-- module: ${module}\n${sql}`,
+    });
+    const FK =
+      "alter table pot add foreign key (species_id) references species (id) on delete restrict;\n";
+    const catalogIdx = { [idx("catalog")]: "export const a = 1;\n" };
+    const go = (files, c = withCatalog()) => run({ ...catalogIdx, ...files }, c);
+
+    it("AB-10: a plain (id) foreign key with on delete restrict from an allowed module passes", () => {
+      assert.deepEqual(go(mig("collection", FK)), []);
+      assert.deepEqual(
+        go(
+          mig(
+            "collection",
+            "create table pot (species_id uuid references species(id) on delete restrict);\n",
+          ),
+        ),
+        [],
+      );
+    });
+    it("AB-10: a dependency that the matrix does not allow fails with the edge", () => {
+      const v = go(mig("care", FK.replace("pot", "gabe")));
+      assert.match(
+        v.join("\n"),
+        /^AB-10 .*0005_care_x\.sql:2 care -> catalog: .*without an allowed dependency/m,
+      );
+    });
+    it("AB-10: a table that is not registered as global is not covered by the exception", () => {
+      const v = go(mig("collection", FK), withCatalog({}));
+      assert.deepEqual(v, []); // the text gate leaves it to the schema check (module-schema.ts: plain (id) fails there)
+      assert.deepEqual(
+        checkProject(
+          project({ ...clean, ...catalogIdx }),
+          withCatalog({ pot: GLOBAL.species }),
+        ).filter((x) => /owner catalog does not own/.test(x)).length,
+        1,
+      );
+    });
+    it("AB-10: an entry without a reason is an error", () => {
+      const v = go({}, withCatalog({ species: { owner: "catalog", reason: " " } }));
+      assert.match(
+        v.join("\n"),
+        /^AB-10 modules\.config\.mjs global reference table species has no reason/m,
+      );
+      const w = go(
+        mig("collection", FK),
+        withCatalog({ species: { owner: "catalog", reason: "" } }),
+      );
+      assert.match(w.join("\n"), /:2 foreign key to global reference table species has no reason/);
+    });
+    it("AB-10: a missing on delete restrict fails", () => {
+      const v = go(mig("collection", FK.replace(" on delete restrict", "")));
+      assert.match(v.join("\n"), /^AB-10 .*:2 collection -> catalog: .*needs on delete restrict/m);
+      const c = go(mig("collection", FK.replace("restrict", "cascade")));
+      assert.match(c.join("\n"), /needs on delete restrict/);
+    });
+    it("AB-10: a composite or non-id target fails", () => {
+      const v = go(mig("collection", FK.replace("(id)", "(account_id, id)")));
+      assert.match(v.join("\n"), /only as a plain \(id\) target/);
+    });
+  });
+
   describe("AB-14 migrations name their module", () => {
     const mig = (name, sql) => ({ [`packages/db/migrations/${name}`]: sql });
     it("a migration with module in name and first line, touching its own tables, passes", () => {

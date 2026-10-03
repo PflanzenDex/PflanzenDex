@@ -4,3 +4,4 @@ export * from "./account/index.ts";
 export * from "./catalog/index.ts";
 export * from "./light/index.ts";
 export * from "./collection/index.ts";
+export * from "./care/index.ts";

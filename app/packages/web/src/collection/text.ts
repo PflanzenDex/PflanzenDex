@@ -1,4 +1,3 @@
-import type { LightLocation } from "@pflanzendex/core";
 import type { ApiError } from "../kernel";
 
 /** P-08: what is missing is called "unknown" and is never filled with a value. */
@@ -9,9 +8,6 @@ export function dateText(iso: string): string {
   const [jahr, month, tag] = iso.split("-");
   return `${tag}.${month}.${jahr}`;
 }
-
-export const locationText = (locations: readonly LightLocation[], id: string | null): string =>
-  id === null ? UNKNOWN : (locations.find((s) => s.id === id)?.name ?? UNKNOWN);
 
 export interface NameConflict {
   name: string;

@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import type { ApiError, LightZone } from "./light-api";
+import { FormButtons, useSend } from "./form";
 import { ErrorMessage } from "./message";
 import { lux, ppfd } from "./text";
 
@@ -14,26 +15,43 @@ type Save = (e: ZoneInput) => Promise<ApiError | null>;
 
 const numberOrNull = (s: string): number | null => (s.trim() === "" ? null : Number(s));
 
+function NumberField(props: {
+  label: string;
+  name: string;
+  limits: readonly [number, number];
+  value: number | null | undefined;
+  required?: boolean;
+}) {
+  return (
+    <label>
+      {props.label}
+      <input
+        name={props.name}
+        type="number"
+        inputMode="numeric"
+        min={props.limits[0]}
+        max={props.limits[1]}
+        step={1}
+        required={props.required ?? false}
+        defaultValue={props.value ?? ""}
+      />
+    </label>
+  );
+}
+
 /** Form for creating and changing a zone; fields stay in place on an error. */
 export function ZoneForm(props: { start?: LightZone; onSave: Save; onCancel?: () => void }) {
   const z = props.start;
-  const [error, setError] = useState<ApiError | null>(null);
-  const [running, setRunning] = useState(false);
-  async function send(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const f = new FormData(form);
-    setRunning(true);
-    const f2 = await props.onSave({
+  const { error, running, send } = useSend<ZoneInput>(
+    (f) => ({
       name: String(f.get("name") ?? ""),
       luxCeiling: Number(f.get("luxCeiling")),
       ppfd: numberOrNull(String(f.get("ppfd") ?? "")),
       sortOrder: numberOrNull(String(f.get("sortOrder") ?? "")),
-    });
-    setRunning(false);
-    setError(f2);
-    if (!f2 && !z) form.reset();
-  }
+    }),
+    props.onSave,
+    !z,
+  );
   return (
     <form
       className="form"
@@ -50,55 +68,45 @@ export function ZoneForm(props: { start?: LightZone; onSave: Save; onCancel?: ()
           autoComplete="off"
         />
       </label>
-      <label>
-        Lux-Decke (Lux)
-        <input
-          name="luxCeiling"
-          type="number"
-          inputMode="numeric"
-          min={1}
-          max={200000}
-          step={1}
-          required
-          defaultValue={z?.luxCeiling ?? ""}
-        />
-      </label>
-      <label>
-        PPFD, optional (µmol/m²/s)
-        <input
-          name="ppfd"
-          type="number"
-          inputMode="numeric"
-          min={1}
-          max={3000}
-          step={1}
-          defaultValue={z?.ppfd ?? ""}
-        />
-      </label>
-      <label>
-        Reihenfolge, optional
-        <input
-          name="sortOrder"
-          type="number"
-          inputMode="numeric"
-          min={0}
-          max={999}
-          step={1}
-          defaultValue={z?.sortOrder ?? ""}
-        />
-      </label>
+      <NumberField
+        label="Lux-Decke (Lux)"
+        name="luxCeiling"
+        limits={[1, 200000]}
+        value={z?.luxCeiling}
+        required
+      />
+      <NumberField
+        label="PPFD, optional (µmol/m²/s)"
+        name="ppfd"
+        limits={[1, 3000]}
+        value={z?.ppfd}
+      />
+      <NumberField
+        label="Reihenfolge, optional"
+        name="sortOrder"
+        limits={[0, 999]}
+        value={z?.sortOrder}
+      />
       {error && <ErrorMessage error={error} />}
-      <div className="actions">
-        <button type="submit" className="primary" disabled={running}>
-          {z ? "Speichern" : "Zone anlegen"}
-        </button>
-        {props.onCancel && (
-          <button type="button" className="secondary" onClick={props.onCancel}>
-            Abbrechen
-          </button>
-        )}
-      </div>
+      <FormButtons
+        label={z ? "Speichern" : "Zone anlegen"}
+        running={running}
+        onCancel={props.onCancel}
+      />
     </form>
+  );
+}
+
+function DeleteConfirm(props: { name: string; onDelete: () => void; onCancel: () => void }) {
+  return (
+    <div className="actions">
+      <button type="button" className="danger" onClick={props.onDelete}>
+        Ja, „{props.name}“ löschen
+      </button>
+      <button type="button" className="secondary" onClick={props.onCancel}>
+        Abbrechen
+      </button>
+    </div>
   );
 }
 
@@ -132,45 +140,31 @@ export function ZoneCard(props: {
       </p>
       {error && <ErrorMessage error={error} />}
       {mode === "remove" ? (
-        <div className="actions">
-          <button
-            type="button"
-            className="danger"
-            onClick={() =>
-              void props.onDelete().then((f) => {
-                setError(f);
-                if (f) setMode("zeigen");
-              })
-            }
-          >
-            Ja, „{zone.name}“ löschen
-          </button>
-          <button type="button" className="secondary" onClick={() => setMode("zeigen")}>
-            Abbrechen
-          </button>
-        </div>
+        <DeleteConfirm
+          name={zone.name}
+          onDelete={() =>
+            void props.onDelete().then((f) => {
+              setError(f);
+              if (f) setMode("zeigen");
+            })
+          }
+          onCancel={() => setMode("zeigen")}
+        />
       ) : (
         <div className="actions">
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => {
-              setError(null);
-              setMode("update");
-            }}
-          >
-            Ändern
-          </button>
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => {
-              setError(null);
-              setMode("remove");
-            }}
-          >
-            Löschen
-          </button>
+          {(["update", "remove"] as const).map((target) => (
+            <button
+              key={target}
+              type="button"
+              className="secondary"
+              onClick={() => {
+                setError(null);
+                setMode(target);
+              }}
+            >
+              {target === "update" ? "Ändern" : "Löschen"}
+            </button>
+          ))}
         </div>
       )}
     </li>

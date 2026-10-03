@@ -134,10 +134,21 @@ Acceptance criteria:
 
 ## Data model
 
-- **DM-KI-01 Connection:** `Account`, `Client_Name`, `Rights` (`read | drafts | write`), `Created_At`, `Last_Use`, `Revoked_At?`.
-- **DM-KI-02 Task:** `Account`, `Type`, `Reference` (link), `Status` (`open | in progress | done | declined | expired`), `Created_At`, `Connection?`, `Draft?`.
-- **DM-KI-03 Draft:** `Account`, `Type`, `Reference`, `Content` (per the schema of the target operation), `Source`, `Connection`, `Status` (`open | adopted | discarded | expired`), `Created_At`.
-- **DM-KI-04 Log entry:** `Account`, `Connection`, `Operation`, `Time`, `Effect`, `Undone_At?`.
+### DM-KI-01 Connection
+
+`Account`, `Client_Name`, `Rights` (`read | drafts | write`), `Created_At`, `Last_Use`, `Revoked_At?`.
+
+### DM-KI-02 Task
+
+`Account`, `Type`, `Reference` (link), `Status` (`open | in progress | done | declined | expired`), `Created_At`, `Connection?`, `Draft?`.
+
+### DM-KI-03 Draft
+
+`Account`, `Type`, `Reference`, `Content` (per the schema of the target operation), `Source`, `Connection`, `Status` (`open | adopted | discarded | expired`), `Created_At`.
+
+### DM-KI-04 Log entry
+
+`Account`, `Connection`, `Operation`, `Time`, `Effect`, `Undone_At?`.
 
 ## Requirements
 

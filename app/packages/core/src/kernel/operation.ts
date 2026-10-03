@@ -43,12 +43,11 @@ async function runProtected<E, A>(
   op: Operation<E, A>,
   deps: Dependencies,
   key: IdempotencyKey,
-  context: SignedInContext,
-  input: E,
+  run: { readonly context: SignedInContext; readonly input: E },
 ): Promise<Result<A>> {
   let result: Result<A>;
   try {
-    result = await op.run(context, input);
+    result = await op.run(run.context, run.input);
   } catch (cause) {
     await deps.idempotency.discard(key);
     return failed(appError("system.unexpected", { cause }));
@@ -88,5 +87,8 @@ export async function execute<E, A>(
   const begin = await deps.idempotency.begin(key, canonical(input.value));
   if (begin.kind === "repeat") return ok(begin.result as A);
   if (begin.kind !== "fresh") return failed(BEGIN_ERROR[begin.kind]);
-  return runProtected(op, deps, key, authorized.value, input.value);
+  return runProtected(op, deps, key, {
+    context: authorized.value,
+    input: input.value,
+  });
 }

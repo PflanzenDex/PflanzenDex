@@ -1,7 +1,8 @@
--- One-off rename of all database objects from German to English names (ADR 0004).
+-- One-off rename of all database objects from German to English names (ADR 0004). Comes after 0001 to 0011, which
+-- keep the German names they were applied with.
 -- Tables, columns, constraints, indexes, policies, triggers and functions get English names; the stored enum values
 -- (roles, review status, location kind, growth measure, field, specimen status) are converted in place. No data is lost.
--- Applied files 0001 to 0007 stay as they are (forward only); this file is the only place that knows both vocabularies.
+-- Applied files 0001 to 0011 stay as they are (forward only); this file is the only place that knows both vocabularies.
 -- The session variables change as well: `app.konto_id` becomes `app.account_id`, `app.subjekt` becomes `app.subject`.
 
 -- 1. Remove everything that depends on the old names or values: policies, triggers, functions, value checks.
@@ -14,6 +15,7 @@ drop policy mandant on idempotenz;
 drop policy anmeldung_anlegen on konto;
 drop policy anmeldung_lesen on konto;
 drop policy mandant on konto;
+drop policy mandant on messung;
 drop policy mandant on kontodaten;
 drop policy mandant on lichtzone;
 drop policy katalog_freigegeben on pruefvorgang;
@@ -44,6 +46,10 @@ alter table art drop constraint art_wachstumsmass_check;
 alter table art drop constraint art_objekt_art_id_fkey;
 alter table art_name drop constraint art_name_feld_check;
 alter table exemplar drop constraint exemplar_status_check;
+alter table exemplar drop constraint exemplar_status_vor_archiv_check;
+alter table exemplar drop constraint exemplar_archiv_zusammen;
+alter table messung drop constraint messung_qualitaet_check;
+alter table messung drop constraint messung_bewertung_durch_check;
 
 -- The owner must see the rows to convert them: with the policies gone, a forced row security would hide everything.
 alter table pruefvorgang no force row level security;
@@ -51,6 +57,7 @@ alter table standort no force row level security;
 alter table art no force row level security;
 alter table art_name no force row level security;
 alter table exemplar no force row level security;
+alter table messung no force row level security;
 
 -- 2. Convert the stored values.
 update konto_rolle set rolle = case rolle when 'betreiber' then 'operator' when 'pruefer' then 'reviewer' end;
@@ -67,7 +74,12 @@ update art set
 update art_name set feld = case feld
   when 'lateinisch' then 'latin' when 'deutsch' then 'german' when 'englisch' then 'english' else feld end;
 update standort set art = case art when 'innen' then 'indoor' when 'aussen' then 'outdoor' end;
-update exemplar set status = case status when 'pflanze' then 'plant' when 'steckling' then 'cutting' when 'archiviert' then 'archived' end;
+update exemplar set
+  status = case status when 'pflanze' then 'plant' when 'steckling' then 'cutting' when 'archiviert' then 'archived' end,
+  status_vor_archiv = case status_vor_archiv when 'pflanze' then 'plant' when 'steckling' then 'cutting' end;
+update messung set
+  qualitaet = case qualitaet when 'gesund' then 'healthy' when 'vergeilt' then 'etiolated' end,
+  bewertung_durch = case bewertung_durch when 'halter' then 'keeper' when 'ki_uebernommen' then 'ai_adopted' end;
 
 -- 3. Rename tables, columns, constraints and indexes.
 -- tables
@@ -81,6 +93,7 @@ alter table kontodaten rename to account_data;
 alter table lichtzone rename to light_zone;
 alter table pruefvorgang rename to review_case;
 alter table standort rename to location;
+alter table messung rename to measurement;
 
 -- columns
 alter table species rename column objekt_art to object_kind;
@@ -118,6 +131,17 @@ alter table specimen rename column kennzeichen to marker;
 alter table specimen rename column standort_id to location_id;
 alter table specimen rename column gefangen_am to caught_at;
 alter table specimen rename column angelegt_am to created_at;
+alter table specimen rename column archiviert_am to archived_at;
+alter table specimen rename column archiviert_grund to archived_reason;
+alter table specimen rename column status_vor_archiv to status_before_archived;
+alter table measurement rename column konto_id to account_id;
+alter table measurement rename column exemplar_id to specimen_id;
+alter table measurement rename column datum to date;
+alter table measurement rename column wert to value;
+alter table measurement rename column qualitaet to quality;
+alter table measurement rename column notiz to note;
+alter table measurement rename column bewertung_durch to rated_by;
+alter table measurement rename column angelegt_am to created_at;
 alter table idempotency rename column konto_id to account_id;
 alter table idempotency rename column schluessel to key;
 alter table idempotency rename column fingerabdruck to fingerprint;
@@ -209,10 +233,19 @@ alter table specimen rename constraint exemplar_konto_id_fkey to specimen_accoun
 alter table specimen rename constraint exemplar_name_check to specimen_name_check;
 alter table specimen rename constraint exemplar_pkey to specimen_pkey;
 alter table specimen rename constraint exemplar_standort to specimen_location;
+alter table specimen rename constraint exemplar_art to specimen_species;
+alter table specimen rename constraint exemplar_konto_id_id to specimen_account_id_id;
+alter table specimen rename constraint exemplar_archiviert_grund_check to specimen_archived_reason_check;
+alter table measurement rename constraint messung_pkey to measurement_pkey;
+alter table measurement rename constraint messung_konto_id_fkey to measurement_account_id_fkey;
+alter table measurement rename constraint messung_exemplar to measurement_specimen;
+alter table measurement rename constraint messung_wert_check to measurement_value_check;
+alter table measurement rename constraint messung_notiz_check to measurement_note_check;
 
 -- standalone indexes
 alter index art_name_norm rename to species_name_norm;
-alter index exemplar_art rename to specimen_species;
+alter index exemplar_art rename to specimen_species_idx;
+alter index messung_exemplar_datum rename to measurement_specimen_date;
 alter index exemplar_name_je_konto rename to specimen_name_per_account;
 alter index lichtzone_name_je_konto rename to light_zone_name_per_account;
 alter index standort_name_je_konto rename to location_name_per_account;
@@ -232,6 +265,16 @@ alter table species add constraint species_object_kind_id_fkey
   foreign key (object_kind, id) references review_case (object_kind, object_id) on delete restrict;
 alter table species_name add constraint species_name_field_check check (field in ('latin', 'german', 'english', 'synonym'));
 alter table specimen add constraint specimen_status_check check (status in ('plant', 'cutting', 'archived'));
+alter table specimen add constraint specimen_status_before_archived_check
+  check (status_before_archived in ('plant', 'cutting'));
+alter table specimen add constraint specimen_archive_together check (
+  (status = 'archived' and archived_at is not null and archived_reason is not null)
+  or (status <> 'archived' and archived_at is null and archived_reason is null)
+);
+alter table measurement add constraint measurement_quality_check check (quality in ('healthy', 'etiolated'));
+alter table measurement add constraint measurement_rated_by_check check (rated_by in ('keeper', 'ai_adopted'));
+alter table measurement alter column quality set default 'healthy';
+alter table measurement alter column rated_by set default 'keeper';
 alter table species alter column object_kind set default 'species';
 alter table specimen alter column status set default 'plant';
 
@@ -295,6 +338,7 @@ select tenant_protection('account_data');
 select tenant_protection('light_zone');
 select tenant_protection('location');
 select tenant_protection('specimen');
+select tenant_protection('measurement');
 select tenant_protection('idempotency');
 select tenant_protection('review_case');
 

@@ -1,4 +1,4 @@
-// Hilfen für OAuth-Tests: PKCE, Redirect-Listener, JWT-Dekodierung, MCP-Aufrufe.
+// Helpers for OAuth tests: PKCE, redirect listener, JWT decoding, MCP calls.
 import http from "node:http";
 import crypto from "node:crypto";
 export const b64u = (b) => Buffer.from(b).toString("base64url");

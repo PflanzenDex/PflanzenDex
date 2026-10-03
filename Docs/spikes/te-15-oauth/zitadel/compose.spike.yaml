@@ -1,4 +1,4 @@
-# Ergänzung für den Spike: Maschinen-Admin mit Token (nur beim ersten Start wirksam)
+# Addition for the spike: machine admin with token (effective on first start only)
 services:
   zitadel-api:
     environment:

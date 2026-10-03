@@ -2,7 +2,13 @@ import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { withAccount, migrate, openPool, checkTenantIsolation } from "../kernel/index.ts";
-import { FIXTURES, readRoleTable, writeInRoleTable, assignRole } from "../fixtures.ts";
+import {
+  FIXTURES,
+  createFixtureSpeciesAt,
+  readRoleTable,
+  writeInRoleTable,
+  assignRole,
+} from "../fixtures.ts";
 import { ReviewPostgres } from "./index.ts";
 
 // TE-08: roles and review status against a real PostgreSQL; the rights apply even without the operations from `core`.
@@ -142,6 +148,7 @@ describe("P-04: the operator sees no content of other accounts", () => {
     const [a, b] = [randomUUID(), randomUUID()];
     await withAccount(pool, a, (c) => c.query("insert into account (id) values ($1)", [a]));
     await assignRole(pool, a, "operator");
+    await createFixtureSpeciesAt(pool);
     const problems = await checkTenantIsolation(pool, FIXTURES, a, b);
     // The only exception, deliberately: reviewers read the review list (kind, id and status of the object, no content).
     expect(problems.filter((p) => !p.startsWith("review_case:"))).toEqual([]);
