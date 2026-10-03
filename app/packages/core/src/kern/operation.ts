@@ -48,12 +48,11 @@ async function ausfuehrenGeschuetzt<E, A>(
   op: Operation<E, A>,
   deps: Abhaengigkeiten,
   schluessel: IdempotenzSchluessel,
-  kontext: AngemeldeterKontext,
-  eingabe: E,
+  lauf: { readonly kontext: AngemeldeterKontext; readonly eingabe: E },
 ): Promise<Ergebnis<A>> {
   let ergebnis: Ergebnis<A>;
   try {
-    ergebnis = await op.ausfuehren(kontext, eingabe);
+    ergebnis = await op.ausfuehren(lauf.kontext, lauf.eingabe);
   } catch (ursache) {
     await deps.idempotenz.verwerfe(schluessel);
     return fehlgeschlagen(fehler("system.unerwartet", { ursache }));
@@ -93,5 +92,8 @@ export async function fuehreAus<E, A>(
   const beginn = await deps.idempotenz.beginne(schluessel, kanonisch(eingabe.wert));
   if (beginn.art === "wiederholung") return ok(beginn.ergebnis as A);
   if (beginn.art !== "neu") return fehlgeschlagen(BEGINN_FEHLER[beginn.art]);
-  return ausfuehrenGeschuetzt(op, deps, schluessel, berechtigt.wert, eingabe.wert);
+  return ausfuehrenGeschuetzt(op, deps, schluessel, {
+    kontext: berechtigt.wert,
+    eingabe: eingabe.wert,
+  });
 }

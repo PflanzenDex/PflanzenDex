@@ -12,7 +12,7 @@ export function coverageFor(pkg) {
   const thresholds = readThresholds()[pkg] ?? undefined;
   return {
     provider: "v8",
-    reporter: ["text-summary", "json-summary", "lcov"],
+    reporter: ["text-summary", "json-summary", "json", "lcov"],
     reportsDirectory: "coverage",
     include: ["src/**/*.{ts,tsx}"],
     exclude: ["**/*.test.{ts,tsx}", "**/*.d.ts", "src/main.ts", "src/main.tsx"],

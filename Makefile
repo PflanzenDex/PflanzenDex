@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse e2e crap duplicates
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -70,11 +70,23 @@ test: $(if $(CI),,db-up) ## Unit and database tests of all packages and check sc
 coverage: $(if $(CI),,db-up) ## Run all tests with coverage, then the ratchet check (thresholds: app/coverage-thresholds.json)
 	cd $(APP) && npm run coverage
 
+e2e: $(if $(CI),,db-up) auth-up migrate ## End-to-end tests with Playwright, mobile + desktop, axe as report (QG-T3, QG-U1; needs Docker)
+	cd $(APP) && npx --no-install playwright install $(if $(CI),--with-deps) chromium
+	cd $(APP) && npm run e2e
+
+crap: ## CRAP gate on functions in changed files (QG-K3; needs coverage output, run `make coverage` first; `ARGS=--all` for the whole project)
+	cd $(APP) && node scripts/check-crap.mjs $(ARGS)
+
 spec-check: ## Spec consistency and story-to-test traceability (QG-T4)
 	cd $(APP) && npm run specs
 
 skills-check: ## Check agent skills in .agents/skills (trigger, paths, check command, links; US-DEV-04)
 	cd $(APP) && npm run skills
+
+lighthouse: ## Lighthouse CI on the built web app, mobile, report only (QG-U1); report in app/packages/web/.lighthouseci
+	cd $(APP) && npm run build -w @pflanzendex/web
+	scripts/lighthouse-run.sh
+	scripts/lighthouse-summary.sh | tee $(APP)/packages/web/.lighthouseci/summary.md
 
 release-tags-check: ## All v* tags come from the release workflow, no hand-set version (FR-DEV-05; needs gh auth)
 	cd $(APP) && npm run release-tags
@@ -87,6 +99,9 @@ workflows: ## Lint GitHub workflows (actionlint)
 
 audit: ## Known high-severity vulnerabilities in dependencies (npm audit, QG-S2)
 	cd $(APP) && npm run audit
+
+duplicates: ## Clone groups with 3+ copies in changed files block, whole project is reported (QG-K4; base DUPLICATES_BASE, default origin/dev)
+	cd $(APP) && npm run duplicates
 
 gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundaries, unused code, format
 	cd $(APP) && npm run gates

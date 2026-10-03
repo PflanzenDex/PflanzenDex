@@ -4,6 +4,7 @@ import { BestandSeite } from "./bestand";
 import { Fehler, KontoAnsicht, Laedt, Willkommen, apiUrl, useSitzung } from "./konto";
 import { LichtSeite } from "./licht";
 import { ArtenSeite } from "./katalog";
+import { PflegephasenSeite } from "./pflege";
 import { Navigation, type Ansicht } from "./navigation";
 import "./stil.css";
 
@@ -48,6 +49,8 @@ export function App() {
             />
           ) : ansicht === "licht" ? (
             <LichtSeite api={api} token={s.token} />
+          ) : ansicht === "pflegephasen" ? (
+            <PflegephasenSeite api={api} token={s.token} />
           ) : ansicht === "bestand" ? (
             <BestandSeite
               api={api}

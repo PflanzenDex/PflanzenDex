@@ -70,7 +70,7 @@ const noUtcDateSlice = ["slice", "substring", "substr"].map((m) => ({
     "Do not derive a calendar date via toISOString().slice(0, 10): that is the UTC day. Use the local-date helpers (NFR-08).",
 }));
 export default defineConfig([
-  { ignores: ["**/dist/**", "**/node_modules/**", "**/coverage/**"] },
+  { ignores: ["**/dist/**", "**/node_modules/**", "**/coverage/**", "**/.lighthouseci/**"] },
   js.configs.recommended,
   tseslint.configs.strict,
   // QG-S3: security rules at error level. detect-object-injection is off: it flags every `obj[key]` and is
