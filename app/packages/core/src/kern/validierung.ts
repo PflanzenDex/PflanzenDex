@@ -21,11 +21,22 @@ export function zahlFeld(feld: string, grenzen: { min: number; max: number }) {
       : ungueltig(feld);
 }
 
+/** Ganze Zahl innerhalb der Grenzen. */
+export function ganzzahlFeld(feld: string, grenzen: { min: number; max: number }) {
+  return (wert: unknown): number | Fehlerdetail =>
+    typeof wert === "number" && Number.isInteger(wert) && wert >= grenzen.min && wert <= grenzen.max
+      ? wert
+      : ungueltig(feld);
+}
+
 export function wahlFeld<const W extends string>(feld: string, erlaubt: readonly W[]) {
   return (wert: unknown): W | Fehlerdetail => erlaubt.find((e) => e === wert) ?? ungueltig(feld);
 }
 
 const KENNUNG = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export const istKennung = (wert: unknown): wert is string =>
+  typeof wert === "string" && KENNUNG.test(wert);
 
 /** Eine UUID (klein geschrieben zurückgegeben). */
 export function kennungFeld(feld: string) {

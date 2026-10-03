@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import type { Pool } from "pg";
 import { produktTitel } from "@pflanzendex/core";
 import { authentifizierung, kontoRouten, type TokenPruefer } from "./konto";
+import { ARTEN_PFADE, artenRouten } from "./katalog";
 import { LICHT_PFADE, lichtRouten } from "./licht";
 
 export type AppOptionen = {
@@ -37,6 +38,8 @@ export function createApp(opt: AppOptionen = {}): Hono {
     app.route("/konto", kontoRouten(opt.pool));
     for (const pfad of LICHT_PFADE) app.use(pfad, auth).use(`${pfad}/*`, auth);
     app.route("/", lichtRouten(opt.pool));
+    for (const pfad of ARTEN_PFADE) app.use(pfad, auth).use(`${pfad}/*`, auth);
+    app.route("/", artenRouten(opt.pool));
   }
   return app;
 }

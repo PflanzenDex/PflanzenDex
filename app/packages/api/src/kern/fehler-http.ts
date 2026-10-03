@@ -10,6 +10,8 @@ const STATUS: Partial<Record<Fehlercode, Status>> = {
   "zugriff.verweigert": 403,
   "lichtzone.nicht_gefunden": 404,
   "standort.nicht_gefunden": 404,
+  "art.nicht_gefunden": 404,
+  "art.dublette": 409,
   "lichtzone.name_vergeben": 409,
   "standort.name_vergeben": 409,
   "lichtzone.in_benutzung": 409,

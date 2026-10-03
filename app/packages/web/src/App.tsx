@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Fehler, KontoAnsicht, Laedt, Willkommen, apiUrl, useSitzung } from "./konto";
 import { LichtSeite } from "./licht";
+import { ArtenSeite } from "./katalog";
 import { Navigation, type Ansicht } from "./navigation";
 import "./stil.css";
 
@@ -10,7 +11,7 @@ const version = (import.meta.env as Record<string, string | undefined>)["VITE_AP
 
 export function App() {
   const s = useSitzung();
-  const [ansicht, setAnsicht] = useState<Ansicht>("licht");
+  const [ansicht, setAnsicht] = useState<Ansicht>("arten");
   const z = s.zustand;
   return (
     <main className="seite">
@@ -33,8 +34,10 @@ export function App() {
               onUeberallAbmelden={() => void s.ueberallAbmelden()}
               {...(z.fehler ? { fehler: z.fehler } : {})}
             />
-          ) : (
+          ) : ansicht === "licht" ? (
             <LichtSeite api={api} token={s.token} />
+          ) : (
+            <ArtenSeite api={api} token={s.token} />
           )}
         </div>
       )}

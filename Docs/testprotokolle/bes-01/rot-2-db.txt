@@ -1,0 +1,38 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-ae388dc8f4158b101/app/packages/db
+
+ ❯ src/art.test.ts (13 tests | 13 skipped) 194ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/art.test.ts [ src/art.test.ts ]
+TypeError: ArtPostgres is not a constructor
+ ❯ src/art.test.ts:65:11
+     63|   pool = oeffnePool();
+     64|   await migriere(pool);
+     65|   arten = new ArtPostgres(pool);
+       |           ^
+     66|   for (const id of alle)
+     67|     await mitKonto(pool, id, (c) => c.query("insert into konto (id) va…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/art.test.ts [ src/art.test.ts ]
+error: relation "art" does not exist
+ ❯ ../../node_modules/pg-pool/index.js:45:11
+ ❯ src/art.test.ts:71:3
+     69| });
+     70| afterAll(async () => {
+     71|   await pool.query(
+       |   ^
+     72|     "delete from art where id in (select objekt_id from pruefvorgang w…
+     73|     [alle],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 skipped (13)
+   Start at  11:48:04
+   Duration  413ms (tests 61%, transform 26%, import 12%, worker 1%)
+
