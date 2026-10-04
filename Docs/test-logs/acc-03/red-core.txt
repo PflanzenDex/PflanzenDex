@@ -1,0 +1,25 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-03-gefuehrter-einstieg/app
+
+ ❯ packages/core/src/account/onboarding.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/core/src/account/onboarding.test.ts [ packages/core/src/account/onboarding.test.ts ]
+Error: Cannot find module './onboarding' imported from /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-03-gefuehrter-einstieg/app/packages/core/src/account/onboarding.test.ts
+ ❯ packages/core/src/account/onboarding.test.ts:2:1
+      1| import { describe, expect, it } from "vitest";
+      2| import { onboardingHints, onboardingSteps, startAction } from "./onboa…
+       | ^
+      3|
+      4| const NOTHING = { locations: 0, zones: 0, specimens: 0 };
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  16:44:47
+   Duration  146ms (worker 97%, environment 3%)
+
+exit 1

@@ -28,7 +28,7 @@ Acceptance criteria:
 - Notifications can be switched on and off per occasion (US-MON-08).
 - Global switches "Everything private" (US-SOZ-04) and "No recommendations" (US-EQU-11).
 
-### US-ACC-03 · Guided onboarding · ⬜ new
+### US-ACC-03 · Guided onboarding · ✅ new
 
 As a **plant keeper** I want to get to my first plant quickly.
 

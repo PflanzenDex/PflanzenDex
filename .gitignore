@@ -13,3 +13,4 @@ coverage/
 .lighthouseci/
 app/packages/e2e/test-results/
 app/packages/e2e/playwright-report/
+*.tsbuildinfo

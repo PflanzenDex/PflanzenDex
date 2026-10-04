@@ -1,0 +1,201 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-03-gefuehrter-einstieg/app
+
+ ❯ packages/web/src/light/setup-steps.test.tsx (7 tests | 2 failed) 2422ms
+   ❯ US-ACC-03 onboarding steps: locations and light zones (7)
+     × US-ACC-03 zones step: the default levels can be adjusted right here 1007ms
+     × US-ACC-03 zones step: an own zone can be added next to the defaults 1004ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/web/src/light/setup-steps.test.tsx > US-ACC-03 onboarding steps: locations and light zones > US-ACC-03 zones step: the default levels can be adjusted right here
+TestingLibraryElementError: Unable to find role="list" and name "Lichtzonen"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <section
+      class="onboarding-step"
+    >
+      <h2>
+        Wie hell ist es?
+      </h2>
+      <p
+        class="quiet"
+      >
+        Die vier Standard-Lampen passen für den Anfang. Anpassen kannst du sie jederzeit unter „Standorte und Licht“.
+      </p>
+      <ul
+        class="list"
+      >
+        <li
+          class="entry"
+        >
+          <h3>
+            Lampe 2
+          </h3>
+        </li>
+      </ul>
+      <div
+        class="actions"
+      >
+        <button
+          class="primary"
+          type="button"
+        >
+          Weiter
+        </button>
+      </div>
+    </section>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <section
+      class="onboarding-step"
+    >
+      <h2>
+        Wie hell ist es?
+      </h2>
+      <p
+        class="quiet"
+      >
+        Die vier Standard-Lampen passen für den Anfang. Anpassen kannst du sie jederzeit unter „Standorte und Licht“.
+      </p>
+      <ul
+        class="list"
+      >
+        <li
+          class="entry"
+        >
+          <h3>
+            Lampe 2
+          </h3>
+        </li>
+      </ul>
+      <div
+        class="actions"
+      >
+        <button
+          class="primary"
+          type="button"
+        >
+          Weiter
+        </button>
+      </div>
+    </section>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ packages/web/src/light/setup-steps.test.tsx:119:31
+    117|     fakeServer(world);
+    118|     render(<ZonesStep api="http://api" token={token} onNext={() => und…
+    119|     const list = await screen.findByRole("list", { name: "Lichtzonen" …
+       |                               ^
+    120|     await userEvent.click(within(list).getByRole("button", { name: "Än…
+    121|     const lux = screen.getByLabelText("Lux-Decke (Lux)");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  packages/web/src/light/setup-steps.test.tsx > US-ACC-03 onboarding steps: locations and light zones > US-ACC-03 zones step: an own zone can be added next to the defaults
+TestingLibraryElementError: Unable to find an element with the text: Neue Lichtzone. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <section
+      class="onboarding-step"
+    >
+      <h2>
+        Wie hell ist es?
+      </h2>
+      <p
+        class="quiet"
+      >
+        Die vier Standard-Lampen passen für den Anfang. Anpassen kannst du sie jederzeit unter „Standorte und Licht“.
+      </p>
+      <ul
+        class="list"
+      >
+        <li
+          class="entry"
+        >
+          <h3>
+            Lampe 2
+          </h3>
+        </li>
+      </ul>
+      <div
+        class="actions"
+      >
+        <button
+          class="primary"
+          type="button"
+        >
+          Weiter
+        </button>
+      </div>
+    </section>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <section
+      class="onboarding-step"
+    >
+      <h2>
+        Wie hell ist es?
+      </h2>
+      <p
+        class="quiet"
+      >
+        Die vier Standard-Lampen passen für den Anfang. Anpassen kannst du sie jederzeit unter „Standorte und Licht“.
+      </p>
+      <ul
+        class="list"
+      >
+        <li
+          class="entry"
+        >
+          <h3>
+            Lampe 2
+          </h3>
+        </li>
+      </ul>
+      <div
+        class="actions"
+      >
+        <button
+          class="primary"
+          type="button"
+        >
+          Weiter
+        </button>
+      </div>
+    </section>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ packages/web/src/light/setup-steps.test.tsx:137:40
+    135|     fakeServer(world);
+    136|     render(<ZonesStep api="http://api" token={token} onNext={() => und…
+    137|     await userEvent.click(await screen.findByText("Neue Lichtzone"));
+       |                                        ^
+    138|     await userEvent.type(screen.getByLabelText("Name"), "Balkonlampe");
+    139|     await userEvent.type(screen.getByLabelText("Lux-Decke (Lux)"), "30…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  20:06:05
+   Duration  3.25s (tests 76%, environment 17%, import 4%, transform 2%)
+
+exit 1
