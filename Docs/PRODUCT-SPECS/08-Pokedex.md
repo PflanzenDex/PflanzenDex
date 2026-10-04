@@ -45,7 +45,7 @@ Acceptance criteria:
 - Idempotent: same inputs and caches yield identical output.
 - The operator sees a warning when catalog and tree differ in the names.
 
-### US-POK-06 · Derive ownership automatically from my plants · ⬜ (prototype ✅)
+### US-POK-06 · Derive ownership automatically from my plants · 🟨 (prototype ✅)
 
 Acceptance criteria:
 

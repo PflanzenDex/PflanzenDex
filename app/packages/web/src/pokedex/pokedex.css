@@ -1,0 +1,40 @@
+/* Pokédex (US-POK-06): mobile first; builds on the tokens of style.css. */
+.pokedex h1 {
+  margin: 0 0 8px;
+}
+.caught-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: 12px;
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+.caught-card {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--rand);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.caught-card .species {
+  font-weight: 600;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.chip {
+  padding: 2px 10px;
+  border: 1px solid var(--rand);
+  border-radius: 999px;
+  color: var(--leise);
+  font-size: 0.875rem;
+}
