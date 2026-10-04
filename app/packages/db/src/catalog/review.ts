@@ -80,17 +80,45 @@ export class ReviewPostgres {
     proposalId: string,
     targetSpeciesId: string,
   ): Promise<ReviewCase | null> {
-    // Merge a proposal's review_case to point to the target species.
-    // This closes the proposal (sets status to 'reviewed') and re-points the object_id.
-    // The database has already been updated to support re-pointing of specimens, etc.
-    const r = await withAccount(this.pool, userId, (c) =>
-      c.query<ReviewCase>(
+    // Merge a proposal with an existing species by re-pointing all references atomically (P-03, P-10).
+    // All updates happen in one transaction managed by withAccount.
+    return withAccount(this.pool, userId, async (c) => {
+      // Get proposal's current species_id
+      const proposal = await c.query<{ objectId: string }>(
+        `select object_id as "objectId" from review_case
+         where id = $1 and status in ('proposal', 'ai_unreviewed')`,
+        [proposalId],
+      );
+      if (proposal.rows.length === 0) return null;
+      const proposalSpeciesId = proposal.rows[0].objectId;
+
+      // Validate target species exists
+      const target = await c.query<{ id: string }>(`select id from species where id = $1`, [
+        targetSpeciesId,
+      ]);
+      if (target.rows.length === 0) return null;
+
+      // Re-point specimens from proposal species to target (US-BES-02)
+      await c.query(
+        `update specimen set species_id = $1
+         where species_id = $2 and account_id = current_setting('app.account_id')::uuid`,
+        [targetSpeciesId, proposalSpeciesId],
+      );
+
+      // Re-point care_profiles from proposal species to target (US-BES-09)
+      await c.query(
+        `update care_profile set species_id = $1
+         where species_id = $2 and account_id = current_setting('app.account_id')::uuid`,
+        [targetSpeciesId, proposalSpeciesId],
+      );
+
+      // Update review_case to point to target species and mark as reviewed
+      const result = await c.query<ReviewCase>(
         `update review_case set object_id = $2, status = 'reviewed', reviewed_by = $3
-         where id = $1 and status in ('proposal', 'ai_unreviewed')
-         returning ${COLUMNS}`,
+         where id = $1 returning ${COLUMNS}`,
         [proposalId, targetSpeciesId, userId],
-      ),
-    );
-    return r.rows[0] ?? null;
+      );
+      return result.rows[0] ?? null;
+    });
   }
 }
