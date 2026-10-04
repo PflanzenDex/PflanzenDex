@@ -110,7 +110,7 @@ describe("US-ACC-01 App", () => {
     render(<App />);
     expect(await screen.findByRole("heading", { name: "Wo stehen deine Pflanzen?" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Start" }).getAttribute("aria-current")).toBe("page");
-    await userEvent.click(screen.getByRole("button", { name: "Einstieg später fortsetzen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Einstieg beenden" }));
     expect(await screen.findByRole("heading", { name: "Start" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Art im Katalog wählen" }));
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();

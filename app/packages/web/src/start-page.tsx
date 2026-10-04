@@ -9,8 +9,6 @@ import type { View } from "./navigation";
 type Token = () => Promise<string | undefined>;
 type Target = Extract<View, "species" | "light" | "collection" | "hints">;
 
-const HINT_ACTION = { locations: "Standorte anlegen", zones: "Lichtzonen einrichten" } as const;
-
 const key = (accountId: string) => `pflanzendex.onboarding-skipped.${accountId}`;
 
 /** Per-device convenience only: the counts that drive the hints are derived live, so nothing here can go stale. */
@@ -41,7 +39,7 @@ function Overview(props: { counts: OnboardingCounts; onOpen: (t: Target) => void
           <p>{action.nextAction}</p>
           <div className="actions">
             <button type="button" className="primary" onClick={() => props.onOpen("species")}>
-              Art im Katalog wählen
+              {action.actionLabel}
             </button>
           </div>
         </div>
@@ -63,7 +61,7 @@ function Overview(props: { counts: OnboardingCounts; onOpen: (t: Target) => void
               <p className="next-action">{h.nextAction}</p>
               <div className="actions">
                 <button type="button" className="secondary" onClick={() => props.onOpen("light")}>
-                  {HINT_ACTION[h.id]}
+                  {h.actionLabel}
                 </button>
               </div>
             </li>
@@ -83,7 +81,7 @@ function Content(props: {
 }) {
   const { accountId, counts } = props;
   const [skipped, setSkipped] = useState(() => readSkipped(accountId));
-  // Leaving the guide (finished, skipped or "later") is remembered: switching tabs must not bring it back.
+  // Leaving the guide (finished, skipped or ended) is remembered: switching tabs must not bring it back.
   const leave = () => {
     writeSkipped(accountId);
     setSkipped(true);
@@ -96,7 +94,7 @@ function Content(props: {
         counts={counts}
         onChoosePlant={() => props.onOpen("species")}
         onFinish={leave}
-        onLater={leave}
+        onEnd={leave}
       />
     );
   return <Overview counts={counts} onOpen={props.onOpen} />;

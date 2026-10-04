@@ -1,21 +1,23 @@
-import { useState } from "react";
-import { onboardingSteps, type OnboardingCounts, type OnboardingStepId } from "@pflanzendex/core";
+import { useEffect, useRef, useState } from "react";
+import {
+  onboardingSteps,
+  type OnboardingCounts,
+  type OnboardingStep,
+  type OnboardingStepId,
+} from "@pflanzendex/core";
 import { LocationsStep, ZonesStep } from "./light";
 
 type Token = () => Promise<string | undefined>;
 
 /** The last step only names the way to the catalog; creating the specimen is the collection's job (US-BES-02). */
-function FirstPlantStep(props: { onChoose: () => void; onSkip: () => void }) {
-  const text = onboardingSteps({ locations: 0, zones: 0, specimens: 0 }).find(
-    (s) => s.id === "first_plant",
-  )?.nextAction;
+function FirstPlantStep(props: { step: OnboardingStep; onChoose: () => void; onSkip: () => void }) {
   return (
     <section className="onboarding-step">
-      <h2>Deine erste Pflanze</h2>
-      <p className="quiet">{text}</p>
+      <h2 tabIndex={-1}>Deine erste Pflanze</h2>
+      <p className="quiet">{props.step.nextAction}</p>
       <div className="actions">
         <button type="button" className="primary" onClick={props.onChoose}>
-          Art im Katalog wählen
+          {props.step.actionLabel}
         </button>
         <button type="button" className="secondary" onClick={props.onSkip}>
           Überspringen
@@ -35,7 +37,7 @@ export function OnboardingWizard(props: {
   counts: OnboardingCounts;
   onChoosePlant: () => void;
   onFinish: () => void;
-  onLater: () => void;
+  onEnd: () => void;
 }) {
   const steps = onboardingSteps(props.counts);
   const first = Math.max(
@@ -45,18 +47,32 @@ export function OnboardingWizard(props: {
   const [index, setIndex] = useState(first);
   const id: OnboardingStepId = steps[index]?.id ?? "first_plant";
   const next = () => (index + 1 >= steps.length ? props.onFinish() : setIndex(index + 1));
+  // A button that unmounts takes the focus with it: move it to the heading of the new step (not on first render).
+  const box = useRef<HTMLDivElement>(null);
+  const moved = useRef(false);
+  useEffect(() => {
+    if (moved.current) box.current?.querySelector("h2")?.focus();
+    moved.current = true;
+  }, [index]);
   const common = { api: props.api, token: props.token, onNext: next };
   return (
-    <div className="onboarding">
-      <p className="onboarding-progress">{`Schritt ${index + 1} von ${steps.length}`}</p>
+    <div className="onboarding" ref={box}>
+      <p
+        className="onboarding-progress"
+        role="status"
+      >{`Schritt ${index + 1} von ${steps.length}`}</p>
       {id === "locations" && <LocationsStep {...common} />}
       {id === "zones" && <ZonesStep {...common} />}
       {id === "first_plant" && (
-        <FirstPlantStep onChoose={props.onChoosePlant} onSkip={props.onFinish} />
+        <FirstPlantStep
+          step={steps[2] as OnboardingStep}
+          onChoose={props.onChoosePlant}
+          onSkip={props.onFinish}
+        />
       )}
       <div className="actions">
-        <button type="button" className="secondary" onClick={props.onLater}>
-          Einstieg später fortsetzen
+        <button type="button" className="secondary" onClick={props.onEnd}>
+          Einstieg beenden
         </button>
       </div>
     </div>

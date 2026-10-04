@@ -27,6 +27,17 @@ describe("US-ACC-03 guided onboarding", () => {
     expect(a?.nextAction).toMatch(/Art/);
   });
 
+  it("US-ACC-03 every step and hint carries the label of the button that does it, in one place", () => {
+    expect(onboardingSteps(NOTHING).map((s) => s.actionLabel)).toEqual([
+      "Standorte anlegen",
+      "Lichtzonen einrichten",
+      "Art im Katalog wählen",
+    ]);
+    expect(
+      onboardingHints({ locations: 0, zones: 0, specimens: 1 }).map((h) => h.actionLabel),
+    ).toEqual(["Standorte anlegen", "Lichtzonen einrichten"]);
+  });
+
   it("US-ACC-03 with a plant there is no start action anymore", () => {
     expect(startAction({ locations: 0, zones: 0, specimens: 1 })).toBeNull();
   });

@@ -11,6 +11,8 @@ export interface OnboardingStep {
   readonly id: OnboardingStepId;
   readonly done: boolean;
   readonly title: string;
+  /** The label of the button that does it; the only place that spells it. */
+  readonly actionLabel: string;
   /** P-09: every view says what to do next. */
   readonly nextAction: string;
 }
@@ -18,6 +20,7 @@ export interface OnboardingStep {
 export interface OnboardingHint {
   readonly id: "locations" | "zones";
   readonly text: string;
+  readonly actionLabel: string;
   readonly nextAction: string;
 }
 
@@ -28,18 +31,21 @@ export function onboardingSteps(c: OnboardingCounts): readonly OnboardingStep[] 
       id: "locations",
       done: c.locations > 0,
       title: "Standorte",
+      actionLabel: "Standorte anlegen",
       nextAction: "Lege an, wo deine Pflanzen stehen, zum Beispiel Fensterbank oder Balkon.",
     },
     {
       id: "zones",
       done: c.zones > 0,
       title: "Lichtzonen",
+      actionLabel: "Lichtzonen einrichten",
       nextAction: "Übernimm die vier Standardstufen oder passe sie später an.",
     },
     {
       id: "first_plant",
       done: c.specimens > 0,
       title: "Erste Pflanze",
+      actionLabel: "Art im Katalog wählen",
       nextAction: "Wähle im Katalog eine Art und lege dein erstes Exemplar an.",
     },
   ];
@@ -60,7 +66,14 @@ const HINT_TEXT = {
 export function onboardingHints(c: OnboardingCounts): readonly OnboardingHint[] {
   return onboardingSteps(c).flatMap((s) =>
     !s.done && (s.id === "locations" || s.id === "zones")
-      ? [{ id: s.id, text: HINT_TEXT[s.id], nextAction: s.nextAction }]
+      ? [
+          {
+            id: s.id,
+            text: HINT_TEXT[s.id],
+            actionLabel: s.actionLabel,
+            nextAction: s.nextAction,
+          },
+        ]
       : [],
   );
 }

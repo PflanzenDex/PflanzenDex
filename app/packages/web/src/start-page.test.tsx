@@ -91,12 +91,10 @@ describe("US-ACC-03 start page and guided onboarding", () => {
     expect(open).toHaveBeenCalledWith("species");
   });
 
-  it("US-ACC-03 skipping the whole onboarding is remembered per account on this device", async () => {
+  it("US-ACC-03 ending the onboarding is remembered per account on this device", async () => {
     fakeServer({ zones: [], locations: [], cards: [] });
     view();
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Einstieg später fortsetzen" }),
-    );
+    await userEvent.click(await screen.findByRole("button", { name: "Einstieg beenden" }));
     expect(await screen.findByRole("heading", { name: "Start" })).toBeTruthy();
     cleanup();
     view();
@@ -142,6 +140,21 @@ describe("US-ACC-03 start page and guided onboarding", () => {
     view();
     expect((await screen.findByRole("alert")).textContent).toContain("Der Server antwortet nicht.");
     expect(screen.getByRole("button", { name: "Erneut laden" })).toBeTruthy();
+  });
+
+  it("US-ACC-03 focus moves to the heading of the new step and the step is announced politely", async () => {
+    fakeServer({ zones: [], locations: [], cards: [] });
+    view();
+    await userEvent.click(await screen.findByRole("button", { name: "Überspringen" }));
+    const heading = await screen.findByRole("heading", { name: "Wie hell ist es?" });
+    expect(document.activeElement).toBe(heading);
+    expect(heading.getAttribute("tabindex")).toBe("-1");
+    const marker = screen.getByText("Schritt 2 von 3");
+    expect(marker.getAttribute("role")).toBe("status");
+    await userEvent.click(screen.getByRole("button", { name: "Überspringen" }));
+    expect(document.activeElement).toBe(
+      await screen.findByRole("heading", { name: "Deine erste Pflanze" }),
+    );
   });
 
   it("US-ACC-03 a wizard step shows a visible progress marker, not only an aria attribute", async () => {

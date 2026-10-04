@@ -154,3 +154,16 @@ button:focus-visible {
   font-size: 0.875rem;
   font-weight: 600;
 }
+
+.onboarding-step .list,
+.start .cards-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.start .next-step {
+  margin-bottom: 1rem;
+}

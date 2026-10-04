@@ -1,6 +1,6 @@
 {
   "desktop.skip.step1": {
-    "text": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Schritt 1 von 3 | Wo stehen deine Pflanzen? | Lege Standorte an, zum Beispiel Fensterbank oder Balkon. Du kannst das auch später tun. | Name | Lichtzone | Keine Lichtzone (erscheint in den Hinweisen) | Art | innen | außen | Standort anlegen | Überspringen | Einstieg später fortsetzen | Version unbekannt",
+    "text": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Schritt 1 von 3 | Wo stehen deine Pflanzen? | Lege Standorte an, zum Beispiel Fensterbank oder Balkon. Du kannst das auch später tun. | Name | Lichtzone | Keine Lichtzone (erscheint in den Hinweisen) | Art | innen | außen | Standort anlegen | Überspringen | Einstieg beenden | Version unbekannt",
     "progress": "Schritt 1 von 3",
     "progressVisible": true
   },
@@ -39,7 +39,7 @@
     "small": []
   },
   "desktop.full.duplicate": "Einen Standort mit diesem Namen gibt es schon.",
-  "desktop.full.zones": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Schritt 2 von 3 | Wie hell ist es? | Die vier Standard-Lampen passen für den Anfang. Anpassen kannst du sie jederzeit unter „Standorte und Licht“. | Lampe 1 | Lampe 2 | Lampe 3 | Lampe 4 | Fensterbank | Lampe 2 · innen | Ändern | Weiter | Einstieg später fortsetzen | Version unbekannt",
+  "desktop.full.zones": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Schritt 2 von 3 | Wie hell ist es? | Übernimm die vier Standard-Lampen oder passe sie an und lege eigene Zonen an. Ändern kannst du alles später unter „Standorte und Licht“. | Lampe 1 | bis 1.500 Lux · PPFD 36 µmol/m²/s · Platz 1 | Ändern | Löschen | Lampe 2 | bis 15.000 Lux · PPFD 300 µmol/m²/s · Platz 2 | Ändern | Löschen | Lampe 3 | bis 100.000 Lux · PPFD 1.600 µmol/m²/s · Platz 3 | Ändern | Löschen | Lampe 4 | bis 110.000 Lux · PPFD 2.000 µmol/m²/s · Platz",
   "desktop.full.zones.a11y": {
     "violations": [],
     "hscroll": false,
@@ -56,8 +56,20 @@
     "hscroll": false,
     "small": []
   },
+  "desktop.keyboard": [
+    "BUTTON:Überspringen after 5 Tab",
+    "after Enter focus: H2:Wie hell ist es?; marker: Schritt 2 von 3 role=status",
+    "BUTTON:Standard-Lampen übernehmen after 1 Tab",
+    "after Space: zones listed 4",
+    "BUTTON:Weiter after 10 Tab",
+    "after Enter focus: H2:Deine erste Pflanze; marker: Schritt 3 von 3",
+    "BUTTON:Überspringen after 2 Tab",
+    "after skip: start page, alerts 0",
+    "BUTTON:Art im Katalog wählen after 1 Tab",
+    "after Enter: catalog opened"
+  ],
   "mobil.skip.step1": {
-    "text": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Schritt 1 von 3 | Wo stehen deine Pflanzen? | Lege Standorte an, zum Beispiel Fensterbank oder Balkon. Du kannst das auch später tun. | Name | Lichtzone | Keine Lichtzone (erscheint in den Hinweisen) | Art | innen | außen | Standort anlegen | Überspringen | Einstieg später fortsetzen | Version unbekannt",
+    "text": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Schritt 1 von 3 | Wo stehen deine Pflanzen? | Lege Standorte an, zum Beispiel Fensterbank oder Balkon. Du kannst das auch später tun. | Name | Lichtzone | Keine Lichtzone (erscheint in den Hinweisen) | Art | innen | außen | Standort anlegen | Überspringen | Einstieg beenden | Version unbekannt",
     "progress": "Schritt 1 von 3",
     "progressVisible": true
   },
@@ -96,7 +108,7 @@
     "small": []
   },
   "mobil.full.duplicate": "Einen Standort mit diesem Namen gibt es schon.",
-  "mobil.full.zones": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Schritt 2 von 3 | Wie hell ist es? | Die vier Standard-Lampen passen für den Anfang. Anpassen kannst du sie jederzeit unter „Standorte und Licht“. | Lampe 1 | Lampe 2 | Lampe 3 | Lampe 4 | Fensterbank | Lampe 2 · innen | Ändern | Weiter | Einstieg später fortsetzen | Version unbekannt",
+  "mobil.full.zones": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Schritt 2 von 3 | Wie hell ist es? | Übernimm die vier Standard-Lampen oder passe sie an und lege eigene Zonen an. Ändern kannst du alles später unter „Standorte und Licht“. | Lampe 1 | bis 1.500 Lux · PPFD 36 µmol/m²/s · Platz 1 | Ändern | Löschen | Lampe 2 | bis 15.000 Lux · PPFD 300 µmol/m²/s · Platz 2 | Ändern | Löschen | Lampe 3 | bis 100.000 Lux · PPFD 1.600 µmol/m²/s · Platz 3 | Ändern | Löschen | Lampe 4 | bis 110.000 Lux · PPFD 2.000 µmol/m²/s · Platz",
   "mobil.full.zones.a11y": {
     "violations": [],
     "hscroll": false,
@@ -112,5 +124,17 @@
     "violations": [],
     "hscroll": false,
     "small": []
-  }
+  },
+  "mobil.keyboard": [
+    "BUTTON:Überspringen after 5 Tab",
+    "after Enter focus: H2:Wie hell ist es?; marker: Schritt 2 von 3 role=status",
+    "BUTTON:Standard-Lampen übernehmen after 1 Tab",
+    "after Space: zones listed 4",
+    "BUTTON:Weiter after 10 Tab",
+    "after Enter focus: H2:Deine erste Pflanze; marker: Schritt 3 von 3",
+    "BUTTON:Überspringen after 2 Tab",
+    "after skip: start page, alerts 0",
+    "BUTTON:Art im Katalog wählen after 1 Tab",
+    "after Enter: catalog opened"
+  ]
 }

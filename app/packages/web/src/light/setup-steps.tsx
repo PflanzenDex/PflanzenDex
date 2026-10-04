@@ -3,6 +3,7 @@ import { LoadFrame } from "../kernel";
 import { createWrite, loadLight, type ApiError, type LightData } from "./light-api";
 import { LocationCard, LocationForm, type LocationInput } from "./locations-view";
 import { ErrorMessage } from "./message";
+import { ZoneCard, ZoneForm } from "./zones-view";
 import { kindText } from "./text";
 
 type Token = () => Promise<string | undefined>;
@@ -27,7 +28,7 @@ function useSetup(api: string, token: Token, isDone: (d: LightData) => boolean) 
     },
     [api, isDone],
   );
-  const write = async (method: "POST" | "PUT", path: string, body: unknown) => {
+  const write = async (method: "POST" | "PUT" | "DELETE", path: string, body?: unknown) => {
     const t = await token();
     if (!t) return SIGN_IN;
     const r = await createWrite(api, t)(method, path, body);
@@ -43,7 +44,7 @@ const HAS_ZONES = (d: LightData) => d.zones.length > 0;
 function Frame(props: { title: string; intro: string; children: ReactNode }) {
   return (
     <section className="onboarding-step">
-      <h2>{props.title}</h2>
+      <h2 tabIndex={-1}>{props.title}</h2>
       <p className="quiet">{props.intro}</p>
       {props.children}
     </section>
@@ -122,7 +123,7 @@ export function ZonesStep(props: StepProps) {
   return (
     <Frame
       title="Wie hell ist es?"
-      intro="Die vier Standard-Lampen passen für den Anfang. Anpassen kannst du sie jederzeit unter „Standorte und Licht“."
+      intro="Übernimm die vier Standard-Lampen oder passe sie an und lege eigene Zonen an. Ändern kannst du alles später unter „Standorte und Licht“."
     >
       <LoadFrame
         token={props.token}
@@ -135,14 +136,21 @@ export function ZonesStep(props: StepProps) {
             {data.zones.length === 0 ? (
               <DefaultsButton onTake={() => write("POST", "/light-zones/defaults", {})} />
             ) : (
-              <ul className="list">
+              <ul className="list" aria-label="Lichtzonen">
                 {data.zones.map((z) => (
-                  <li key={z.id} className="entry">
-                    <h3>{z.name}</h3>
-                  </li>
+                  <ZoneCard
+                    key={z.id}
+                    zone={z}
+                    onUpdate={(e) => write("PUT", `/light-zones/${z.id}`, e)}
+                    onDelete={() => write("DELETE", `/light-zones/${z.id}`)}
+                  />
                 ))}
               </ul>
             )}
+            <details className="fresh">
+              <summary>Neue Lichtzone</summary>
+              <ZoneForm onSave={(e) => write("POST", "/light-zones", e)} />
+            </details>
             {data.zones.length > 0 && data.locations.length > 0 && (
               <ul className="list" aria-label="Standorte">
                 {data.locations.map((l) => (
