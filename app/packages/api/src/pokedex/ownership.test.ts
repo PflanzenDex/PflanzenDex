@@ -104,7 +104,9 @@ describe("US-POK-06 ownership: sign-in", () => {
 
 describe("US-POK-06 ownership: derived from the specimens", () => {
   it("catches the species of an active specimen, with the cultivar as chip, and not of an archived one", async () => {
-    const plain = await newSpecies(subA, `Opuntia${run} microdasys`);
+    const plain = await newSpecies(subA, `Opuntia${run} microdasys`, {
+      source: "https://example.test/opuntia",
+    });
     const variety = await newSpecies(subA, `Opuntia${run} microdasys 'Albispina'`);
     const gone = await newSpecies(subA, `Aloe${run} vera`);
     await specimen(subA, `Kaktus ${run}`, plain);
@@ -121,6 +123,8 @@ describe("US-POK-06 ownership: derived from the specimens", () => {
     expect(o.caught).toEqual([
       {
         species: `Opuntia${run} microdasys`,
+        speciesId: plain,
+        source: "https://example.test/opuntia",
         genus: `Opuntia${run}`,
         chips: ["'Albispina'"],
         specimenCount: 2,

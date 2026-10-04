@@ -3,6 +3,8 @@ import { browsePokedex, type CaughtSpecies } from "./index";
 
 const card = (species: string, extra: Partial<CaughtSpecies> = {}): CaughtSpecies => ({
   species,
+  speciesId: `id-${species}`,
+  source: null,
   genus: species.split(" ")[0] ?? species,
   chips: [],
   specimenCount: 1,
