@@ -166,6 +166,14 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 
 **Operations (TE-03):** containers, Compose, backup and deploy live in `deploy/`; see the runbook `Docs/operations/staging-deploy-and-backup.md`. Targets: `make deploy`, `make backup`, `make restore-test`.
 
+## Pokédex ownership (US-POK-06)
+
+- **What:** `GET /pokedex/ownership` returns `{ ownership: { caught, unidentified } }`, derived live (no table, no migration, P-01). `speciesKey` (`core/src/pokedex`) takes the first two words of the Latin name, skips the hybrid sign (`Citrus x limon` is `Citrus limon`), lowercases the epithet and returns the addition (`var.`, `subsp.`, `f.`, `'Cultivar'`) as chip. A species is caught when at least one active specimen of the own account refers to it (`isActive`: cuttings count, archived ones do not, US-BES-07). Every caught entry has `species`, `genus`, `chips` and `specimenCount`, sorted by name.
+- **Not counted, but named (P-10):** a specimen whose Latin name has no epithet (`Hippeastrum`, `Parodia sp.`) or whose species the account cannot read lands in `unidentified` with `text` and `nextAction` "Bestimme die Art, dann zählt es." (P-09).
+- **Module:** new `pokedex` module (`core`, `api`, `web`), edges `kernel`, `catalog`, `collection` as registered in `modules.config.mjs`; it reads through the existing ports (`SpecimenStore`, `SpeciesSource`), no new edge.
+- **Web:** tab "Pokédex" (`PokedexPage`): number of caught species, a card per species with genus, chips and number of specimens, and the list "Noch nicht gezählt".
+- **Limits:** the catalog accepts only `Genus epithet 'Cultivar'`, so a chip comes from a cultivar today; `var.`, `subsp.` and `f.` belong to the specimen extra (DM-BES-02), which does not exist yet. There are no collector cards (number, photo, catch date) yet: they need the catalog tree (POK-01, POK-03) and the later stories POK-07 to POK-09.
+
 ## End-to-end tests (QG-T3, QG-U1)
 
 - **Target:** `make e2e` starts the test database and Keycloak (`db-up`, `auth-up`), applies the migrations and runs Playwright (package `packages/e2e`; Playwright starts API and web itself). Needs Docker. Projects: `mobil` (Pixel 7) and `desktop`.

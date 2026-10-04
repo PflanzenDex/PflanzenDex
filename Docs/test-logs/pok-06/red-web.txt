@@ -1,0 +1,163 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/pok-06/app/packages/web
+
+ ❯ src/pokedex/PokedexPage.test.tsx (6 tests | 6 failed) 5170ms
+   ❯ US-POK-06 page of the caught species (6)
+     × US-POK-06 shows every caught species with genus, chip and number of specimens 151ms
+     × US-POK-06 one caught species is written in the singular 1003ms
+     × US-POK-06 an unidentified specimen is named with the action that fixes it (P-09, P-10) 1004ms
+     × US-POK-06 without caught species it says what to do next (P-09) 1003ms
+     × US-POK-06 without sign-in the request to sign in comes and nothing is queried 1003ms
+     × US-POK-06 if loading fails the error stays visible and reload fetches again (P-10) 1003ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pokedex/PokedexPage.test.tsx > US-POK-06 page of the caught species > US-POK-06 shows every caught species with genus, chip and number of specimens
+TestingLibraryElementError: Unable to find an accessible element with the role "status"
+
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pokedex/PokedexPage.test.tsx:42:19
+     40|     fakeServer(() => response(200, { ownership: { caught, unidentified…
+     41|     render(<PokedexPage api="http://api" token={token} />);
+     42|     expect(screen.getByRole("status").textContent).toContain("geladen"…
+       |                   ^
+     43|     expect(await screen.findByRole("heading", { level: 1, name: "Pokéd…
+     44|     expect(screen.getByText("2 Arten gefangen")).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/pokedex/PokedexPage.test.tsx > US-POK-06 page of the caught species > US-POK-06 one caught species is written in the singular
+TestingLibraryElementError: Unable to find an element with the text: 1 Art gefangen. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pokedex/PokedexPage.test.tsx:57:25
+     55|     fakeServer(() => response(200, { ownership: { caught: [caught[0]],…
+     56|     render(<PokedexPage api="http://api" token={token} />);
+     57|     expect(await screen.findByText("1 Art gefangen")).toBeTruthy();
+       |                         ^
+     58|   });
+     59|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/pokedex/PokedexPage.test.tsx > US-POK-06 page of the caught species > US-POK-06 an unidentified specimen is named with the action that fixes it (P-09, P-10)
+TestingLibraryElementError: Unable to find an element with the text: „Amaryllis“ (Hippeastrum) hat noch keine bestimmte Art, das Exemplar zählt noch nicht.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pokedex/PokedexPage.test.tsx:63:25
+     61|     fakeServer(() => response(200, { ownership: { caught: [caught[0]],…
+     62|     render(<PokedexPage api="http://api" token={token} />);
+     63|     expect(await screen.findByText(unidentified[0]!.text)).toBeTruthy(…
+       |                         ^
+     64|     expect(screen.getByText("Bestimme die Art, dann zählt es.")).toBeT…
+     65|     expect(screen.getByRole("heading", { level: 2, name: "Noch nicht g…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/pokedex/PokedexPage.test.tsx > US-POK-06 page of the caught species > US-POK-06 without caught species it says what to do next (P-09)
+TestingLibraryElementError: Unable to find an element with the text: /Noch keine Art gefangen/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pokedex/PokedexPage.test.tsx:71:26
+     69|     fakeServer(() => response(200, { ownership: { caught: [], unidenti…
+     70|     render(<PokedexPage api="http://api" token={token} />);
+     71|     expect((await screen.findByText(/Noch keine Art gefangen/)).textCo…
+       |                          ^
+     72|       "Exemplar",
+     73|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/pokedex/PokedexPage.test.tsx > US-POK-06 page of the caught species > US-POK-06 without sign-in the request to sign in comes and nothing is queried
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pokedex/PokedexPage.test.tsx:80:26
+     78|     const fetchFn = fakeServer(() => response(200, { ownership: { caug…
+     79|     render(<PokedexPage api="http://api" token={async () => undefined}…
+     80|     expect((await screen.findByRole("alert")).textContent).toContain("…
+       |                          ^
+     81|     expect(fetchFn).not.toHaveBeenCalled();
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/pokedex/PokedexPage.test.tsx > US-POK-06 page of the caught species > US-POK-06 if loading fails the error stays visible and reload fetches again (P-10)
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pokedex/PokedexPage.test.tsx:92:26
+     90|     );
+     91|     render(<PokedexPage api="http://api" token={token} />);
+     92|     expect((await screen.findByRole("alert")).textContent).toContain("…
+       |                          ^
+     93|     await userEvent.click(screen.getByRole("button", { name: "Erneut l…
+     94|     expect(await screen.findByText("Citrus limon")).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  10:00:21
+   Duration  6.12s (tests 86%, environment 11%, import 2%)
+
