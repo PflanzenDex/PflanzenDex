@@ -4,41 +4,41 @@ As of: 2026-10-02 · **Draft.** None of it is implemented. This spec describes t
 
 ## How this spec relates to the prototype
 
-|           | Prototype (`Docs/PLANT-SYSTEM-SPECS/`) | Product (this spec)                                        |
-| --------- | -------------------------------------- | ---------------------------------------------------------- |
-| Users     | one person                             | many people with accounts                                  |
-| Storage   | Markdown + frontmatter in the vault    | server-side data storage, described technology-neutrally   |
-| Interface | Dataview dashboard in Obsidian         | web app, mobile-first                                      |
-| Input     | click forms, Claude in Claude Code     | forms **and** the keeper's AI client via an open interface |
-| Social    | not present                            | core feature                                               |
-| Statement | as-is state, derived from the code     | target state, requirements for the product                 |
+|           | Prototype (`Docs/PLANT-SYSTEM-SPECS/`)        | Product (this spec)                                                    |
+| --------- | --------------------------------------------- | ---------------------------------------------------------------------- |
+| Users     | one person                                    | many people with accounts                                              |
+| Storage   | Markdown + frontmatter in the vault           | server-side data storage, described technology-neutrally               |
+| Interface | Dataview dashboard in Obsidian                | web app, mobile-first                                                  |
+| Input     | click forms, Claude in Claude Code            | forms **and** the keeper's AI client via an open interface             |
+| Social    | not present                                   | core feature                                                           |
+| Statement | as-is state, derived from the code            | target state, requirements for the product                             |
 
 What is taken over from the prototype: the **domain behavior** (phases, growth trend, etiolation, lamp logic, Pokédex, wishlist buffer). What is not taken over: file names, wikilinks, frontmatter keys, Dataview, `processFrontMatter`, the `post-commit` hook.
 
 ## Files
 
-| File                                                                                 | Content                                                                                                |
-| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| [00-Product-Overview.md](00-Product-Overview.md)                                     | Vision, target group, actors, principles, domain model, glossary                                       |
-| [01-Accounts-and-Onboarding.md](01-Accounts-and-Onboarding.md)                       | Epic ACC: account, sign-in, profile, invitation                                                        |
-| [02-Collection.md](02-Collection.md)                                                 | Epic BES: species catalog, care profile, review, specimens, cutting, archive                           |
-| [03-Light-and-Locations.md](03-Light-and-Locations.md)                               | Epic LIC: light zones, locations, distribution, position                                               |
-| [04-Care-Phases.md](04-Care-Phases.md)                                               | Epic PHA: dormancy/growth phase, location reconciliation                                               |
-| [05-Growth-and-Photos.md](05-Growth-and-Photos.md)                                   | Epic WAC: measurement, trend, etiolation, photos                                                       |
-| [06-Treatments.md](06-Treatments.md)                                                 | Epic BEH: pests, diseases, courses of treatment                                                        |
-| [07-Wishlist.md](07-Wishlist.md)                                                     | Epic WUN: purchase candidates, buffer, path to the plant                                               |
-| [08-Pokedex.md](08-Pokedex.md)                                                       | Epic POK: collector cards, taxonomy, milestones                                                        |
-| [09-Reminders-and-Sensors.md](09-Reminders-and-Sensors.md)                           | Epic MON: notifications, watering, sensors                                                             |
-| [10-Social.md](10-Social.md)                                                         | Epic SOZ: friends, feed, swapping                                                                      |
-| [11-Equipment-and-Recommendations.md](11-Equipment-and-Recommendations.md)           | Epic EQU: equipment, need, affiliate                                                                   |
-| [12-AI-Assistant.md](12-AI-Assistant.md)                                             | Epic KI: AI access via an open interface, tasks, drafts, care by voice, profiles, photo assessment     |
-| [13-Business-Case.md](13-Business-Case.md)                                           | Stages: for us, pays for itself, profit                                                                |
-| [14-Cross-Cutting.md](14-Cross-Cutting.md)                                           | Epic QS: privacy, security, mobile, quality                                                            |
-| [15-Migration-from-Prototype.md](15-Migration-from-Prototype.md)                     | Epic MIG: **dropped** (no import from the vault, IDs reserved)                                         |
-| [16-Releases-and-Decisions.md](16-Releases-and-Decisions.md)                         | Release cut, technology draft, open decisions, non-goals                                               |
-| [17-Discover.md](17-Discover.md)                                                     | Epic ENT: swipe suggestions from the catalog, matching light and thriving plants, filling the wishlist |
-| [18-Architecture-and-Quality-Gates.md](18-Architecture-and-Quality-Gates.md)         | Epic QG: hooks, CI, structure rules, architecture boundaries, complexity, privacy gates, DoD           |
-| [19-Development-Process-and-Automation.md](19-Development-Process-and-Automation.md) | Epic DEV: task runner, hooks, routines, skills, process, release, migrations, operations               |
+| File                                                                                           | Content                                                                                                      |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [00-Product-Overview.md](00-Product-Overview.md)                                               | Vision, target group, actors, principles, domain model, glossary                                             |
+| [01-Accounts-and-Onboarding.md](01-Accounts-and-Onboarding.md)                                 | Epic ACC: account, sign-in, profile, invitation                                                              |
+| [02-Collection.md](02-Collection.md)                                                           | Epic BES: species catalog, care profile, review, specimens, cutting, archive                                 |
+| [03-Light-and-Locations.md](03-Light-and-Locations.md)                                         | Epic LIC: light zones, locations, distribution, position                                                     |
+| [04-Care-Phases.md](04-Care-Phases.md)                                                         | Epic PHA: dormancy/growth phase, location reconciliation                                                     |
+| [05-Growth-and-Photos.md](05-Growth-and-Photos.md)                                             | Epic WAC: measurement, trend, etiolation, photos                                                             |
+| [06-Treatments.md](06-Treatments.md)                                                           | Epic BEH: pests, diseases, courses of treatment                                                              |
+| [07-Wishlist.md](07-Wishlist.md)                                                               | Epic WUN: purchase candidates, buffer, path to the plant                                                     |
+| [08-Pokedex.md](08-Pokedex.md)                                                                 | Epic POK: collector cards, taxonomy, milestones                                                              |
+| [09-Reminders-and-Sensors.md](09-Reminders-and-Sensors.md)                                     | Epic MON: notifications, watering, sensors                                                                   |
+| [10-Social.md](10-Social.md)                                                                   | Epic SOZ: friends, feed, swapping                                                                            |
+| [11-Equipment-and-Recommendations.md](11-Equipment-and-Recommendations.md)                     | Epic EQU: equipment, need, affiliate                                                                         |
+| [12-AI-Assistant.md](12-AI-Assistant.md)                                                       | Epic KI: AI access via an open interface, tasks, drafts, care by voice, profiles, photo assessment           |
+| [13-Business-Case.md](13-Business-Case.md)                                                     | Stages: for us, pays for itself, profit                                                                      |
+| [14-Cross-Cutting.md](14-Cross-Cutting.md)                                                     | Epic QS: privacy, security, mobile, quality                                                                  |
+| [15-Migration-from-Prototype.md](15-Migration-from-Prototype.md)                               | Epic MIG: **dropped** (no import from the vault, IDs reserved)                                               |
+| [16-Releases-and-Decisions.md](16-Releases-and-Decisions.md)                                   | Release cut, technology draft, open decisions, non-goals                                                     |
+| [17-Discover.md](17-Discover.md)                                                               | Epic ENT: swipe suggestions from the catalog, matching light and thriving plants, filling the wishlist       |
+| [18-Architecture-and-Quality-Gates.md](18-Architecture-and-Quality-Gates.md)                   | Epic QG: hooks, CI, structure rules, architecture boundaries, complexity, privacy gates, DoD                 |
+| [19-Development-Process-and-Automation.md](19-Development-Process-and-Automation.md)           | Epic DEV: task runner, hooks, routines, skills, process, release, migrations, operations                     |
 
 ## Conventions
 
@@ -52,36 +52,36 @@ What is taken over from the prototype: the **domain behavior** (phases, growth t
 
 ## Status overview
 
-| Epic                    | Stories | tried in the prototype | new    |
-| ----------------------- | ------- | ---------------------- | ------ |
-| ACC Accounts            | 5       | 0                      | 5      |
-| BES Collection          | 10      | 8                      | 2      |
-| LIC Light and locations | 5       | 4                      | 1      |
-| PHA Care phases         | 4       | 4                      | 0      |
-| WAC Growth/photos       | 6       | 6                      | 0      |
-| BEH Treatments          | 4       | 4                      | 0      |
-| WUN Wishlist            | 5       | 5                      | 0      |
-| POK Pokédex             | 10      | 10                     | 0      |
-| MON Reminders/sensors   | 8       | 0                      | 8      |
-| SOZ Social              | 13      | 0                      | 13     |
-| EQU Equipment           | 12      | 0                      | 12     |
-| KI AI access            | 10      | 3                      | 7      |
-| QS Cross-cutting        | 7       | 6                      | 1      |
-| MIG Migration (dropped) | 0       | 0                      | 0      |
-| ENT Discover            | 8       | 0                      | 8      |
-| QG Quality gates        | 8       | 0                      | 8      |
-| DEV Development process | 9       | 0                      | 9      |
-| **Total**               | **124** | **50**                 | **74** |
+| Epic                       | Stories | tried in the prototype | new    |
+| -------------------------- | ------- | ---------------------- | ------ |
+| ACC Accounts               | 5       | 0                      | 5      |
+| BES Collection             | 10      | 8                      | 2      |
+| LIC Light and locations    | 5       | 4                      | 1      |
+| PHA Care phases            | 4       | 4                      | 0      |
+| WAC Growth/photos          | 6       | 6                      | 0      |
+| BEH Treatments             | 4       | 4                      | 0      |
+| WUN Wishlist               | 5       | 5                      | 0      |
+| POK Pokédex                | 10      | 10                     | 0      |
+| MON Reminders/sensors      | 8       | 0                      | 8      |
+| SOZ Social                 | 13      | 0                      | 13     |
+| EQU Equipment              | 12      | 0                      | 12     |
+| KI AI access               | 10      | 3                      | 7      |
+| QS Cross-cutting           | 7       | 6                      | 1      |
+| MIG Migration (dropped)    | 0       | 0                      | 0      |
+| ENT Discover               | 8       | 0                      | 8      |
+| QG Quality gates           | 8       | 0                      | 8      |
+| DEV Development process    | 9       | 0                      | 9      |
+| **Total**                  | **124** | **50**                 | **74** |
 
 ## Replacing existing documents
 
 These documents in `Docs/PLANT-SYSTEM-SPECS/` are **valid in terms of domain content but technically outdated** insofar as they assume the vault as the source of truth. From now on this spec is authoritative:
 
-| Old document                         | Is replaced by                        | What is outdated                                                                                              |
-| ------------------------------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `11-Social.md`                       | `10-Social.md`                        | "Hub", vault as truth (FR-SOZ-02), frontmatter fields                                                         |
-| `12-Business-Case.md`                | `13-Business-Case.md`                 | Stage 1 in Obsidian, Obsidian hurdle                                                                          |
-| `12-Target-Architecture-AI-first.md` | `16-Releases-and-Decisions.md`        | ADR-01 (vault stays truth), Markdown adapter, story "Own data, no platform lock-in" (ARC-05 in the prototype) |
-| `13-Equipment-and-Affiliate.md`      | `11-Equipment-and-Recommendations.md` | Equipment notes in the vault, `processFrontMatter`                                                            |
+| Old document                         | Is replaced by                      | What is outdated                                            |
+| ------------------------------------ | ----------------------------------- | ----------------------------------------------------------- |
+| `11-Social.md`                       | `10-Social.md`                      | "Hub", vault as truth (FR-SOZ-02), frontmatter fields       |
+| `12-Business-Case.md`                | `13-Business-Case.md`               | Stage 1 in Obsidian, Obsidian hurdle                        |
+| `12-Target-Architecture-AI-first.md` | `16-Releases-and-Decisions.md`      | ADR-01 (vault stays truth), Markdown adapter, story "Own data, no platform lock-in" (ARC-05 in the prototype) |
+| `13-Equipment-and-Affiliate.md`      | `11-Equipment-and-Recommendations.md` | Equipment notes in the vault, `processFrontMatter`        |
 
 Taken over from the target architecture remain: the guiding principles P-01 to P-06 (see `00-Product-Overview.md`), multi-tenancy from the start, PWA as the first interface and "specs are executable".
