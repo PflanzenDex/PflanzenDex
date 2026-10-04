@@ -1,0 +1,81 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-pok-08-suchen-filtern-sortieren/app
+
+ ❯ packages/api/src/pokedex/ownership.test.ts (11 tests | 2 failed) 1081ms
+   ❯ US-POK-06 ownership: derived from the specimens (4)
+     × catches the species of an active specimen, with the cultivar as chip, and not of an archived one 188ms
+   ❯ US-POK-08 the data the page searches and groups by (2)
+     × US-POK-08 each caught species carries German name and family; the genus species count stays unknown (P-08) 56ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/api/src/pokedex/ownership.test.ts > US-POK-06 ownership: derived from the specimens > catches the species of an active specimen, with the cultivar as chip, and not of an archived one
+AssertionError: expected [ { …(5) } ] to deeply equal [ { …(9) } ]
+
+- Expected
++ Received
+
+@@ -5,14 +5,10 @@
+        "source": "caught_at",
+      },
+      "chips": [
+        "'Albispina'",
+      ],
+-     "familyGerman": null,
+-     "familyLatin": null,
+      "genus": "Opuntianiaamhdfhk",
+-     "genusSpeciesCount": null,
+-     "germanName": "Opuntianiaamhdfhk microdasys",
+      "species": "Opuntianiaamhdfhk microdasys",
+      "specimenCount": 2,
+    },
+  ]
+
+ ❯ packages/api/src/pokedex/ownership.test.ts:121:22
+    119|     expect(r.status).toBe(200);
+    120|     const o = r.body["ownership"];
+    121|     expect(o.caught).toEqual([
+       |                      ^
+    122|       {
+    123|         species: `Opuntia${run} microdasys`,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  packages/api/src/pokedex/ownership.test.ts > US-POK-08 the data the page searches and groups by > US-POK-08 each caught species carries German name and family; the genus species count stays unknown (P-08)
+AssertionError: expected { …(5) } to match object { germanName: 'Geigenfeige', …(3) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "familyGerman": "Maulbeergewächse",
+-   "familyLatin": "Moraceae",
+-   "genusSpeciesCount": null,
+-   "germanName": "Geigenfeige",
++   "caughtDate": {
++     "date": "2026-10-04",
++     "source": "caught_at",
++   },
++   "chips": [],
++   "genus": "Ficusniaamhdfhk",
++   "species": "Ficusniaamhdfhk lyrata",
++   "specimenCount": 1,
+  }
+
+ ❯ packages/api/src/pokedex/ownership.test.ts:238:18
+    236|       (c) => c["species"] === `Ficus${run} lyrata`,
+    237|     );
+    238|     expect(card).toMatchObject({
+       |                  ^
+    239|       germanName: "Geigenfeige",
+    240|       familyLatin: "Moraceae",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)
+   Start at  15:52:16
+   Duration  1.68s (tests 68%, transform 22%, import 9%)
+

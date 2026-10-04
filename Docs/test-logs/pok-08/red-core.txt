@@ -1,0 +1,145 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-pok-08-suchen-filtern-sortieren/app
+
+ ❯ packages/core/src/pokedex/browse.test.ts (10 tests | 10 failed) 10ms
+   ❯ US-POK-08 search, filter, sort (10)
+     × US-POK-08 search is case-insensitive over species name, German name, genus and family 5ms
+     × US-POK-08 an empty search keeps everything and a search without hit is empty 0ms
+     × US-POK-08 filter Caught keeps every card (the page lists caught species only) 0ms
+     × US-POK-08 filter Species-poor keeps genus counts up to 10 and never guesses an unknown count 0ms
+     × US-POK-08 sorted alphabetically by species name 0ms
+     × US-POK-08 sorted by catch date: newest first, without date after 0ms
+     × US-POK-08 sorted by species count ascending, unknown last 0ms
+     × US-POK-08 grouped by family with n / m, m unknown without a tree, unknown family last 0ms
+     × US-POK-08 a flat sort has no groups 0ms
+     × US-POK-08 search and filter apply inside groups 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/core/src/pokedex/browse.test.ts > US-POK-08 search, filter, sort > US-POK-08 search is case-insensitive over species name, German name, genus and family
+TypeError: browsePokedex is not a function
+ ❯ find packages/core/src/pokedex/browse.test.ts:43:13
+     41|   it("US-POK-08 search is case-insensitive over species name, German n…
+     42|     const find = (query: string) =>
+     43|       names(browsePokedex(all, { query, filter: "all", sort: "alphabet…
+       |             ^
+     44|     expect(find("FICUS")).toEqual(["Ficus elastica", "Ficus lyrata"]);
+     45|     expect(find("geigen")).toEqual(["Ficus lyrata"]);
+ ❯ packages/core/src/pokedex/browse.test.ts:44:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  packages/core/src/pokedex/browse.test.ts > US-POK-08 search, filter, sort > US-POK-08 an empty search keeps everything and a search without hit is empty
+TypeError: browsePokedex is not a function
+ ❯ packages/core/src/pokedex/browse.test.ts:53:12
+     51|
+     52|   it("US-POK-08 an empty search keeps everything and a search without …
+     53|     expect(browsePokedex(all, { query: "", filter: "all", sort: "alpha…
+       |            ^
+     54|     expect(browsePokedex(all, { query: "xyz", filter: "all", sort: "al…
+     55|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  packages/core/src/pokedex/browse.test.ts > US-POK-08 search, filter, sort > US-POK-08 filter Caught keeps every card (the page lists caught species only)
+TypeError: browsePokedex is not a function
+ ❯ packages/core/src/pokedex/browse.test.ts:58:12
+     56|
+     57|   it("US-POK-08 filter Caught keeps every card (the page lists caught …
+     58|     expect(browsePokedex(all, { query: "", filter: "caught", sort: "al…
+       |            ^
+     59|   });
+     60|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  packages/core/src/pokedex/browse.test.ts > US-POK-08 search, filter, sort > US-POK-08 filter Species-poor keeps genus counts up to 10 and never guesses an unknown count
+TypeError: browsePokedex is not a function
+ ❯ packages/core/src/pokedex/browse.test.ts:62:15
+     60|
+     61|   it("US-POK-08 filter Species-poor keeps genus counts up to 10 and ne…
+     62|     const r = browsePokedex(all, { query: "", filter: "species_poor", …
+       |               ^
+     63|     expect(names(r.flat)).toEqual(["Aloe vera"]);
+     64|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  packages/core/src/pokedex/browse.test.ts > US-POK-08 search, filter, sort > US-POK-08 sorted alphabetically by species name
+TypeError: browsePokedex is not a function
+ ❯ packages/core/src/pokedex/browse.test.ts:67:18
+     65|
+     66|   it("US-POK-08 sorted alphabetically by species name", () => {
+     67|     expect(names(browsePokedex(all, { query: "", filter: "all", sort: …
+       |                  ^
+     68|       "Aloe vera",
+     69|       "Citrus limon",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  packages/core/src/pokedex/browse.test.ts > US-POK-08 search, filter, sort > US-POK-08 sorted by catch date: newest first, without date after
+TypeError: browsePokedex is not a function
+ ❯ packages/core/src/pokedex/browse.test.ts:76:18
+     74|
+     75|   it("US-POK-08 sorted by catch date: newest first, without date after…
+     76|     expect(names(browsePokedex(all, { query: "", filter: "all", sort: …
+       |                  ^
+     77|       "Ficus elastica",
+     78|       "Ficus lyrata",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  packages/core/src/pokedex/browse.test.ts > US-POK-08 search, filter, sort > US-POK-08 sorted by species count ascending, unknown last
+TypeError: browsePokedex is not a function
+ ❯ packages/core/src/pokedex/browse.test.ts:85:18
+     83|
+     84|   it("US-POK-08 sorted by species count ascending, unknown last", () =…
+     85|     expect(names(browsePokedex(all, { query: "", filter: "all", sort: …
+       |                  ^
+     86|       "Aloe vera",
+     87|       "Citrus limon",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  packages/core/src/pokedex/browse.test.ts > US-POK-08 search, filter, sort > US-POK-08 grouped by family with n / m, m unknown without a tree, unknown family last
+TypeError: browsePokedex is not a function
+ ❯ packages/core/src/pokedex/browse.test.ts:94:15
+     92|
+     93|   it("US-POK-08 grouped by family with n / m, m unknown without a tree…
+     94|     const r = browsePokedex(all, { query: "", filter: "all", sort: "fa…
+       |               ^
+     95|     expect(r.groups.map((g) => [g.family, g.caught, g.total, names(g.s…
+     96|       ["Asphodelaceae", 1, null, ["Aloe vera"]],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  packages/core/src/pokedex/browse.test.ts > US-POK-08 search, filter, sort > US-POK-08 a flat sort has no groups
+TypeError: browsePokedex is not a function
+ ❯ packages/core/src/pokedex/browse.test.ts:104:12
+    102|
+    103|   it("US-POK-08 a flat sort has no groups", () => {
+    104|     expect(browsePokedex(all, { query: "", filter: "all", sort: "catch…
+       |            ^
+    105|   });
+    106|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  packages/core/src/pokedex/browse.test.ts > US-POK-08 search, filter, sort > US-POK-08 search and filter apply inside groups
+TypeError: browsePokedex is not a function
+ ❯ packages/core/src/pokedex/browse.test.ts:108:15
+    106|
+    107|   it("US-POK-08 search and filter apply inside groups", () => {
+    108|     const r = browsePokedex(all, { query: "ficus", filter: "all", sort…
+       |               ^
+    109|     expect(r.groups.map((g) => g.family)).toEqual(["Moraceae"]);
+    110|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed (10)
+   Start at  15:50:53
+   Duration  343ms (transform 73%, import 18%, tests 6%, worker 3%)
+

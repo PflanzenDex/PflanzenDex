@@ -1,0 +1,1812 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-pok-08-suchen-filtern-sortieren/app
+
+ ❯ packages/core/src/pokedex/ownership.test.ts (12 tests | 3 failed) 41ms
+   ❯ US-POK-06 ownership derived from the specimens (11)
+     × US-POK-06 an active specimen catches its species (hybrid sign skipped) 29ms
+     × US-POK-06 variety and plain species merge into one entry with the chip 2ms
+   ❯ US-POK-08 data for search and grouping (1)
+     × US-POK-08 a caught species carries German name and family of its species; the genus species count is unknown (P-08) 2ms
+ ❯ packages/web/src/pokedex/PokedexBrowse.test.tsx (11 tests | 11 failed) 535ms
+   ❯ US-POK-08 search (3)
+     × US-POK-08 finds case-insensitively by species, German name, genus and family 248ms
+     × US-POK-08 without a hit it says 'Keine Art gefunden.' and offers the reset (P-09) 45ms
+     × US-POK-08 shows how many species match 37ms
+   ❯ US-POK-08 filter (3)
+     × US-POK-08 'Alle' and 'Gefangen' are available and the chosen one is marked 39ms
+     × US-POK-08 'Fehlend' is disabled with the reason: there is no catalog tree yet (P-08) 37ms
+     × US-POK-08 'Artenarm' is disabled while no genus species count is known, and works once one is 18ms
+   ❯ US-POK-08 sort (5)
+     × US-POK-08 alphabetical is the default flat list 24ms
+     × US-POK-08 by catch date: newest first, without date last 22ms
+     × US-POK-08 by species count: ascending, and it says the count is unknown for all (P-08) 25ms
+     × US-POK-08 by family: groups with 'n / unbekannt' that collapse and expand 18ms
+     × US-POK-08 a species without a known family is grouped under 'Familie unbekannt', last 20ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/core/src/pokedex/ownership.test.ts > US-POK-06 ownership derived from the specimens > US-POK-06 an active specimen catches its species (hybrid sign skipped)
+AssertionError: expected [ { species: 'Citrus limon', …(4) } ] to deeply equal [ { species: 'Citrus limon', …(8) } ]
+
+- Expected
++ Received
+
+@@ -3,14 +3,10 @@
+      "caughtDate": {
+        "date": "2026-10-01",
+        "source": "created_at",
+      },
+      "chips": [],
+-     "familyGerman": null,
+-     "familyLatin": null,
+      "genus": "Citrus",
+-     "genusSpeciesCount": null,
+-     "germanName": "Bogenhanf",
+      "species": "Citrus limon",
+      "specimenCount": 1,
+    },
+  ]
+
+ ❯ packages/core/src/pokedex/ownership.test.ts:54:22
+     52|     await add("anna", LEMON);
+     53|     const r = await pokedexOwnership(deps(), "anna", TZ);
+     54|     expect(r.caught).toEqual([
+       |                      ^
+     55|       {
+     56|         species: "Citrus limon",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  packages/core/src/pokedex/ownership.test.ts > US-POK-06 ownership derived from the specimens > US-POK-06 variety and plain species merge into one entry with the chip
+AssertionError: expected [ { …(5) } ] to deeply equal [ { …(9) } ]
+
+- Expected
++ Received
+
+@@ -5,14 +5,10 @@
+        "source": "created_at",
+      },
+      "chips": [
+        "var. albispina",
+      ],
+-     "familyGerman": null,
+-     "familyLatin": null,
+      "genus": "Opuntia",
+-     "genusSpeciesCount": null,
+-     "germanName": "Bogenhanf",
+      "species": "Opuntia microdasys",
+      "specimenCount": 2,
+    },
+  ]
+
+ ❯ packages/core/src/pokedex/ownership.test.ts:92:22
+     90|     await add("anna", OPUNTIA);
+     91|     const r = await pokedexOwnership(deps(), "anna", TZ);
+     92|     expect(r.caught).toEqual([
+       |                      ^
+     93|       {
+     94|         species: "Opuntia microdasys",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  packages/core/src/pokedex/ownership.test.ts > US-POK-08 data for search and grouping > US-POK-08 a caught species carries German name and family of its species; the genus species count is unknown (P-08)
+AssertionError: expected { species: 'Ficus lyrata', …(4) } to match object { germanName: 'Geigenfeige', …(3) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "familyGerman": "Maulbeergewächse",
+-   "familyLatin": "Moraceae",
+-   "genusSpeciesCount": null,
+-   "germanName": "Geigenfeige",
++   "caughtDate": {
++     "date": "2026-10-01",
++     "source": "created_at",
++   },
++   "chips": [],
++   "genus": "Ficus",
++   "species": "Ficus lyrata",
++   "specimenCount": 1,
+  }
+
+ ❯ packages/core/src/pokedex/ownership.test.ts:178:25
+    176|     await add("anna", ficus);
+    177|     const r = await pokedexOwnership({ specimens, species: own }, "ann…
+    178|     expect(r.caught[0]).toMatchObject({
+       |                         ^
+    179|       germanName: "Geigenfeige",
+    180|       familyLatin: "Moraceae",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  packages/web/src/pokedex/PokedexBrowse.test.tsx > US-POK-08 search > US-POK-08 finds case-insensitively by species, German name, genus and family
+TestingLibraryElementError: Unable to find an accessible element with the role "searchbox" and name `/Suche/`
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Pokédex":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Pokédex":
+  [36m<h1[39m
+    [33mid[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "Gefangene Arten":
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Gefangene Arten"[39m
+    [33mclass[39m=[32m"caught-grid"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pokedex"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"pokedex-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"pokedex-title"[39m
+        [36m>[39m
+          [0mPokédex[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0m3 Arten gefangen[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33maria-label[39m=[32m"Gefangene Arten"[39m
+          [33mclass[39m=[32m"caught-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus lyrata[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen 05.03.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus elastica[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen ≈ 01.08.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mAloe vera[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mAloe[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mDatum unbekannt[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ search packages/web/src/pokedex/PokedexBrowse.test.tsx:58:56
+     56|     return s ? [s.textContent] : [];
+     57|   });
+     58| const search = (text: string) => userEvent.type(screen.getByRole("sear…
+       |                                                        ^
+     59| const sortBy = (label: string) =>
+     60|   userEvent.selectOptions(screen.getByRole("combobox", { name: "Sortie…
+ ❯ packages/web/src/pokedex/PokedexBrowse.test.tsx:70:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  packages/web/src/pokedex/PokedexBrowse.test.tsx > US-POK-08 search > US-POK-08 without a hit it says 'Keine Art gefunden.' and offers the reset (P-09)
+TestingLibraryElementError: Unable to find an accessible element with the role "searchbox" and name `/Suche/`
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Pokédex":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Pokédex":
+  [36m<h1[39m
+    [33mid[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "Gefangene Arten":
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Gefangene Arten"[39m
+    [33mclass[39m=[32m"caught-grid"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pokedex"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"pokedex-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"pokedex-title"[39m
+        [36m>[39m
+          [0mPokédex[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0m3 Arten gefangen[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33maria-label[39m=[32m"Gefangene Arten"[39m
+          [33mclass[39m=[32m"caught-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus lyrata[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen 05.03.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus elastica[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen ≈ 01.08.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mAloe vera[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mAloe[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mDatum unbekannt[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ search packages/web/src/pokedex/PokedexBrowse.test.tsx:58:56
+     56|     return s ? [s.textContent] : [];
+     57|   });
+     58| const search = (text: string) => userEvent.type(screen.getByRole("sear…
+       |                                                        ^
+     59| const sortBy = (label: string) =>
+     60|   userEvent.selectOptions(screen.getByRole("combobox", { name: "Sortie…
+ ❯ packages/web/src/pokedex/PokedexBrowse.test.tsx:82:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  packages/web/src/pokedex/PokedexBrowse.test.tsx > US-POK-08 search > US-POK-08 shows how many species match
+TestingLibraryElementError: Unable to find an accessible element with the role "searchbox" and name `/Suche/`
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Pokédex":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Pokédex":
+  [36m<h1[39m
+    [33mid[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "Gefangene Arten":
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Gefangene Arten"[39m
+    [33mclass[39m=[32m"caught-grid"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pokedex"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"pokedex-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"pokedex-title"[39m
+        [36m>[39m
+          [0mPokédex[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0m3 Arten gefangen[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33maria-label[39m=[32m"Gefangene Arten"[39m
+          [33mclass[39m=[32m"caught-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus lyrata[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen 05.03.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus elastica[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen ≈ 01.08.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mAloe vera[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mAloe[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mDatum unbekannt[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ search packages/web/src/pokedex/PokedexBrowse.test.tsx:58:56
+     56|     return s ? [s.textContent] : [];
+     57|   });
+     58| const search = (text: string) => userEvent.type(screen.getByRole("sear…
+       |                                                        ^
+     59| const sortBy = (label: string) =>
+     60|   userEvent.selectOptions(screen.getByRole("combobox", { name: "Sortie…
+ ❯ packages/web/src/pokedex/PokedexBrowse.test.tsx:91:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  packages/web/src/pokedex/PokedexBrowse.test.tsx > US-POK-08 filter > US-POK-08 'Alle' and 'Gefangen' are available and the chosen one is marked
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Alle"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Pokédex":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Pokédex":
+  [36m<h1[39m
+    [33mid[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "Gefangene Arten":
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Gefangene Arten"[39m
+    [33mclass[39m=[32m"caught-grid"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pokedex"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"pokedex-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"pokedex-title"[39m
+        [36m>[39m
+          [0mPokédex[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0m3 Arten gefangen[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33maria-label[39m=[32m"Gefangene Arten"[39m
+          [33mclass[39m=[32m"caught-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus lyrata[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen 05.03.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus elastica[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen ≈ 01.08.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mAloe vera[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mAloe[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mDatum unbekannt[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ packages/web/src/pokedex/PokedexBrowse.test.tsx:99:24
+     97|   it("US-POK-08 'Alle' and 'Gefangen' are available and the chosen one…
+     98|     await open();
+     99|     const all = screen.getByRole("button", { name: "Alle" });
+       |                        ^
+    100|     expect(all.getAttribute("aria-pressed")).toBe("true");
+    101|     expect(all.classList.contains("selected")).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  packages/web/src/pokedex/PokedexBrowse.test.tsx > US-POK-08 filter > US-POK-08 'Fehlend' is disabled with the reason: there is no catalog tree yet (P-08)
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Fehlend"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Pokédex":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Pokédex":
+  [36m<h1[39m
+    [33mid[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "Gefangene Arten":
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Gefangene Arten"[39m
+    [33mclass[39m=[32m"caught-grid"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pokedex"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"pokedex-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"pokedex-title"[39m
+        [36m>[39m
+          [0mPokédex[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0m3 Arten gefangen[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33maria-label[39m=[32m"Gefangene Arten"[39m
+          [33mclass[39m=[32m"caught-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus lyrata[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen 05.03.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus elastica[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen ≈ 01.08.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mAloe vera[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mAloe[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mDatum unbekannt[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ packages/web/src/pokedex/PokedexBrowse.test.tsx:110:20
+    108|   it("US-POK-08 'Fehlend' is disabled with the reason: there is no cat…
+    109|     await open();
+    110|     expect((screen.getByRole("button", { name: "Fehlend" }) as HTMLBut…
+       |                    ^
+    111|     expect(screen.getByText(/Fehlende Arten brauchen den Katalogaufbau…
+    112|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  packages/web/src/pokedex/PokedexBrowse.test.tsx > US-POK-08 filter > US-POK-08 'Artenarm' is disabled while no genus species count is known, and works once one is
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Artenarm"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Pokédex":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Pokédex":
+  [36m<h1[39m
+    [33mid[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "Gefangene Arten":
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Gefangene Arten"[39m
+    [33mclass[39m=[32m"caught-grid"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pokedex"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"pokedex-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"pokedex-title"[39m
+        [36m>[39m
+          [0mPokédex[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0m1 Art gefangen[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33maria-label[39m=[32m"Gefangene Arten"[39m
+          [33mclass[39m=[32m"caught-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus lyrata[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen 01.01.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ packages/web/src/pokedex/PokedexBrowse.test.tsx:116:20
+    114|   it("US-POK-08 'Artenarm' is disabled while no genus species count is…
+    115|     await open([species("Ficus lyrata")]);
+    116|     expect((screen.getByRole("button", { name: "Artenarm" }) as HTMLBu…
+       |                    ^
+    117|     cleanup();
+    118|     await open();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  packages/web/src/pokedex/PokedexBrowse.test.tsx > US-POK-08 sort > US-POK-08 alphabetical is the default flat list
+AssertionError: expected [ 'Ficus lyrata', …(2) ] to deeply equal [ 'Aloe vera', 'Ficus elastica', …(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Aloe vera",
+-   "Ficus elastica",
+    "Ficus lyrata",
++   "Ficus elastica",
++   "Aloe vera",
+  ]
+
+ ❯ packages/web/src/pokedex/PokedexBrowse.test.tsx:127:21
+    125|   it("US-POK-08 alphabetical is the default flat list", async () => {
+    126|     await open();
+    127|     expect(shown()).toEqual(["Aloe vera", "Ficus elastica", "Ficus lyr…
+       |                     ^
+    128|   });
+    129|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  packages/web/src/pokedex/PokedexBrowse.test.tsx > US-POK-08 sort > US-POK-08 by catch date: newest first, without date last
+TestingLibraryElementError: Unable to find an accessible element with the role "combobox" and name "Sortierung"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Pokédex":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Pokédex":
+  [36m<h1[39m
+    [33mid[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "Gefangene Arten":
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Gefangene Arten"[39m
+    [33mclass[39m=[32m"caught-grid"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pokedex"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"pokedex-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"pokedex-title"[39m
+        [36m>[39m
+          [0mPokédex[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0m3 Arten gefangen[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33maria-label[39m=[32m"Gefangene Arten"[39m
+          [33mclass[39m=[32m"caught-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus lyrata[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen 05.03.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus elastica[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen ≈ 01.08.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mAloe vera[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mAloe[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mDatum unbekannt[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ sortBy packages/web/src/pokedex/PokedexBrowse.test.tsx:60:34
+     58| const search = (text: string) => userEvent.type(screen.getByRole("sear…
+     59| const sortBy = (label: string) =>
+     60|   userEvent.selectOptions(screen.getByRole("combobox", { name: "Sortie…
+       |                                  ^
+     61|
+     62| afterEach(() => {
+ ❯ packages/web/src/pokedex/PokedexBrowse.test.tsx:132:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  packages/web/src/pokedex/PokedexBrowse.test.tsx > US-POK-08 sort > US-POK-08 by species count: ascending, and it says the count is unknown for all (P-08)
+TestingLibraryElementError: Unable to find an accessible element with the role "combobox" and name "Sortierung"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Pokédex":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Pokédex":
+  [36m<h1[39m
+    [33mid[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "Gefangene Arten":
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Gefangene Arten"[39m
+    [33mclass[39m=[32m"caught-grid"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pokedex"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"pokedex-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"pokedex-title"[39m
+        [36m>[39m
+          [0mPokédex[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0m2 Arten gefangen[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33maria-label[39m=[32m"Gefangene Arten"[39m
+          [33mclass[39m=[32m"caught-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus lyrata[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen 01.01.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mAloe vera[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mAloe[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen 01.01.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ sortBy packages/web/src/pokedex/PokedexBrowse.test.tsx:60:34
+     58| const search = (text: string) => userEvent.type(screen.getByRole("sear…
+     59| const sortBy = (label: string) =>
+     60|   userEvent.selectOptions(screen.getByRole("combobox", { name: "Sortie…
+       |                                  ^
+     61|
+     62| afterEach(() => {
+ ❯ packages/web/src/pokedex/PokedexBrowse.test.tsx:138:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+ FAIL  packages/web/src/pokedex/PokedexBrowse.test.tsx > US-POK-08 sort > US-POK-08 by family: groups with 'n / unbekannt' that collapse and expand
+TestingLibraryElementError: Unable to find an accessible element with the role "combobox" and name "Sortierung"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Pokédex":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Pokédex":
+  [36m<h1[39m
+    [33mid[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "Gefangene Arten":
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Gefangene Arten"[39m
+    [33mclass[39m=[32m"caught-grid"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pokedex"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"pokedex-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"pokedex-title"[39m
+        [36m>[39m
+          [0mPokédex[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0m3 Arten gefangen[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33maria-label[39m=[32m"Gefangene Arten"[39m
+          [33mclass[39m=[32m"caught-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus lyrata[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen 05.03.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus elastica[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen ≈ 01.08.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mAloe vera[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mAloe[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mDatum unbekannt[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ sortBy packages/web/src/pokedex/PokedexBrowse.test.tsx:60:34
+     58| const search = (text: string) => userEvent.type(screen.getByRole("sear…
+     59| const sortBy = (label: string) =>
+     60|   userEvent.selectOptions(screen.getByRole("combobox", { name: "Sortie…
+       |                                  ^
+     61|
+     62| afterEach(() => {
+ ❯ packages/web/src/pokedex/PokedexBrowse.test.tsx:145:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+
+ FAIL  packages/web/src/pokedex/PokedexBrowse.test.tsx > US-POK-08 sort > US-POK-08 a species without a known family is grouped under 'Familie unbekannt', last
+TestingLibraryElementError: Unable to find an accessible element with the role "combobox" and name "Sortierung"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Pokédex":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Pokédex":
+  [36m<h1[39m
+    [33mid[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "Gefangene Arten":
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Gefangene Arten"[39m
+    [33mclass[39m=[32m"caught-grid"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pokedex"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"pokedex-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"pokedex-title"[39m
+        [36m>[39m
+          [0mPokédex[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0m4 Arten gefangen[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33maria-label[39m=[32m"Gefangene Arten"[39m
+          [33mclass[39m=[32m"caught-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mCitrus limon[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mCitrus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen 01.01.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus lyrata[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen 05.03.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus elastica[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mFicus[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen ≈ 01.08.2026[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"caught-card"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mAloe vera[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mAloe[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mDatum unbekannt[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0m1 Exemplar[0m
+            [36m</span>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ sortBy packages/web/src/pokedex/PokedexBrowse.test.tsx:60:34
+     58| const search = (text: string) => userEvent.type(screen.getByRole("sear…
+     59| const sortBy = (label: string) =>
+     60|   userEvent.selectOptions(screen.getByRole("combobox", { name: "Sortie…
+       |                                  ^
+     61|
+     62| afterEach(() => {
+ ❯ packages/web/src/pokedex/PokedexBrowse.test.tsx:160:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  14 failed | 9 passed (23)
+   Start at  15:51:59
+   Duration  1.39s (tests 38%, environment 36%, import 14%, transform 11%, worker 1%)
+

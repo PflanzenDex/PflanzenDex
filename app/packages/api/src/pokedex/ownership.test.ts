@@ -44,11 +44,12 @@ const ownership = (sub: string | null, timeZone = "Europe/Berlin") =>
 const caught = (r: Response) =>
   (r.body["ownership"].caught as { species: string }[]).map((c) => c.species);
 
-const newSpecies = async (sub: string, latinName: string) =>
+const newSpecies = async (sub: string, latinName: string, extra: Record<string, unknown> = {}) =>
   (
     await call(sub, "POST", "/species", {
       latinName,
       germanName: latinName,
+      ...extra,
       difficulty: 2,
       standardLevel: 2,
       lightDemandLux: 15000,
@@ -124,6 +125,10 @@ describe("US-POK-06 ownership: derived from the specimens", () => {
         chips: ["'Albispina'"],
         specimenCount: 2,
         caughtDate: { date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), source: "caught_at" },
+        germanName: `Opuntia${run} microdasys`,
+        familyLatin: null,
+        familyGerman: null,
+        genusSpeciesCount: null,
       },
     ]);
     expect(o.unidentified).toEqual([]);
@@ -215,5 +220,30 @@ describe("US-POK-07 catch date through the API", () => {
     };
     expect(own.source).toBe("caught_at");
     expect(own.date).not.toBe("2025-02-03");
+  });
+});
+
+describe("US-POK-08 the data the page searches and groups by", () => {
+  it("US-POK-08 each caught species carries German name and family; the genus species count stays unknown (P-08)", async () => {
+    const fam = await newSpecies(subA, `Ficus${run} lyrata`, {
+      germanName: "Geigenfeige",
+      familyLatin: "Moraceae",
+      familyGerman: "Maulbeergewächse",
+    });
+    await specimen(subA, `Geige ${run}`, fam);
+    const r = await ownership(subA);
+    const card = (r.body["ownership"].caught as Record<string, unknown>[]).find(
+      (c) => c["species"] === `Ficus${run} lyrata`,
+    );
+    expect(card).toMatchObject({
+      germanName: "Geigenfeige",
+      familyLatin: "Moraceae",
+      familyGerman: "Maulbeergewächse",
+      genusSpeciesCount: null,
+    });
+  });
+
+  it("US-POK-08 another account never sees the family of a foreign species (P-04)", async () => {
+    expect(JSON.stringify((await ownership(subB)).body)).not.toContain("Moraceae");
   });
 });
