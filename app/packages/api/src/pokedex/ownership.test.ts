@@ -104,7 +104,9 @@ describe("US-POK-06 ownership: sign-in", () => {
 
 describe("US-POK-06 ownership: derived from the specimens", () => {
   it("catches the species of an active specimen, with the cultivar as chip, and not of an archived one", async () => {
-    const plain = await newSpecies(subA, `Opuntia${run} microdasys`);
+    const plain = await newSpecies(subA, `Opuntia${run} microdasys`, {
+      source: "https://example.test/opuntia",
+    });
     const variety = await newSpecies(subA, `Opuntia${run} microdasys 'Albispina'`);
     const gone = await newSpecies(subA, `Aloe${run} vera`);
     await specimen(subA, `Kaktus ${run}`, plain);
@@ -121,6 +123,8 @@ describe("US-POK-06 ownership: derived from the specimens", () => {
     expect(o.caught).toEqual([
       {
         species: `Opuntia${run} microdasys`,
+        speciesId: plain,
+        source: "https://example.test/opuntia",
         genus: `Opuntia${run}`,
         chips: ["'Albispina'"],
         specimenCount: 2,
@@ -245,5 +249,20 @@ describe("US-POK-08 the data the page searches and groups by", () => {
 
   it("US-POK-08 another account never sees the family of a foreign species (P-04)", async () => {
     expect(JSON.stringify((await ownership(subB)).body)).not.toContain("Moraceae");
+  });
+});
+
+describe("US-POK-09 species ID and source stay with the account that may read the species", () => {
+  it("US-POK-09 two accounts: the private proposal of A, its ID and its source never reach B (P-04)", async () => {
+    const source = `https://example.test/private-${run}`;
+    const id = await newSpecies(subA, `Privata${run} secreta`, { source });
+    await specimen(subA, `Geheim ${run}`, id);
+    const a = JSON.stringify((await ownership(subA)).body);
+    expect(a).toContain(id);
+    expect(a).toContain(source);
+    const b = JSON.stringify((await ownership(subB)).body);
+    expect(b).not.toContain(id);
+    expect(b).not.toContain(source);
+    expect(b).not.toContain(`Privata${run}`);
   });
 });

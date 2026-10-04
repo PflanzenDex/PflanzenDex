@@ -38,8 +38,9 @@ async function readSpecies(
   return new Map(ids.map((id, i) => [id, read[i] ?? null] as const));
 }
 
-/** German name and family shown on the card. */
+/** German name, family and source shown on the card and in the details. */
 interface Details {
+  source: string | null;
   germanName: string | null;
   familyLatin: string | null;
   familyGerman: string | null;
@@ -48,13 +49,14 @@ interface Details {
 const merged = (have: Details, s: Species, plain: boolean): Details => {
   const [first, second] = plain ? [s, have] : [have, s];
   return {
+    source: first.source ?? second.source,
     germanName: first.germanName ?? second.germanName,
     familyLatin: first.familyLatin ?? second.familyLatin,
     familyGerman: first.familyGerman ?? second.familyGerman,
   };
 };
 
-const NONE: Details = { germanName: null, familyLatin: null, familyGerman: null };
+const NONE: Details = { source: null, germanName: null, familyLatin: null, familyGerman: null };
 
 /** Catch date per species key across ALL specimens, archived too (US-POK-07). */
 function catchDates(
@@ -73,6 +75,9 @@ function catchDates(
 }
 
 interface Entry extends Details {
+  /** The plain species (no cultivar chip) represents the card; a cultivar only until a plain one shows up. */
+  speciesId: string;
+  plain: boolean;
   genus: string;
   chips: Set<string>;
   count: number;
@@ -86,6 +91,30 @@ function countable(row: Species | null) {
     : null;
 }
 
+/** The entry of a species after one more specimen of `row` joined it. */
+function addSpecimen(
+  have: Entry | undefined,
+  row: Species,
+  key: { genus: string; chip: string | null },
+): Entry {
+  const entry = have ?? {
+    ...NONE,
+    speciesId: row.id,
+    plain: false,
+    genus: key.genus,
+    chips: new Set(),
+    count: 0,
+  };
+  if (key.chip !== null) entry.chips.add(key.chip);
+  return {
+    ...entry,
+    ...merged(entry, row, key.chip === null),
+    speciesId: key.chip === null && !entry.plain ? row.id : entry.speciesId,
+    plain: entry.plain || key.chip === null,
+    count: entry.count + 1,
+  };
+}
+
 /** Splits the active specimens into caught species (by key) and the ones that cannot count yet (P-10). */
 function collect(rows: readonly SpecimenRow[], read: ReadonlyMap<string, Species | null>) {
   const caught = new Map<string, Entry>();
@@ -97,18 +126,7 @@ function collect(rows: readonly SpecimenRow[], read: ReadonlyMap<string, Species
       open.push(unidentified(z, row?.latinName ?? null));
       continue;
     }
-    const entry = caught.get(key.species) ?? {
-      ...NONE,
-      genus: key.genus,
-      chips: new Set(),
-      count: 0,
-    };
-    if (key.chip !== null) entry.chips.add(key.chip);
-    caught.set(key.species, {
-      ...entry,
-      ...merged(entry, row, key.chip === null),
-      count: entry.count + 1,
-    });
+    caught.set(key.species, addSpecimen(caught.get(key.species), row, key));
   }
   return { caught, open };
 }
@@ -126,6 +144,8 @@ export async function pokedexOwnership(
   const list: CaughtSpecies[] = [...caught]
     .map(([species, e]) => ({
       species,
+      speciesId: e.speciesId,
+      source: e.source,
       genus: e.genus,
       chips: [...e.chips].sort(byName),
       specimenCount: e.count,

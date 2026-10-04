@@ -70,13 +70,15 @@ Acceptance criteria:
 - Sorting: by family (grouped, collapsible with `n / m`), alphabetical, catch date (caught first, newest first, without date after, missing last), species count (ascending, unknown last). Except "Family" a flat grid.
 - No hits: "No species found."
 
-### US-POK-09 · View details of a species · ⬜ (prototype ✅)
+### US-POK-09 · View details of a species · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
 - A tap opens the card or a detail view: larger image, full German name, full short text, genus, catch status, specimen count, cultivar chips, source link, and the link to the species profile.
 - At most one detail view open; closing is unambiguous.
 - For Missing: actions "to the wishlist" (US-WUN, `Source: Pokédex`; counts as yes for Discover, US-ENT-05) and, if a friend has it, "Friend has it" (US-SOZ-07).
+
+Status 🟨: the detail view of caught species is implemented (German name, genus, family, status, specimen count, cultivar chips, catch date, the catalog's source field as link, link to the species profile). Missing: the larger image and the full short text (taxonomy build, US-POK-03; shown as "no image" and "unknown"), the Missing cards and their two actions (no species list of the tree, no wishlist US-WUN, no friends US-SOZ).
 
 ### US-POK-10 · Collector rank and progress · ⬜ (prototype ✅)
 
