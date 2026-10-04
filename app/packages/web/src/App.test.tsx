@@ -66,6 +66,7 @@ function fakeServer(accountStatus = 200) {
       if (path === "/care-profiles") return response(200, { entries: [] });
       if (path === "/hints") return response(200, { hints: [] });
       if (path === "/specimens/hints") return response(200, { hints: SPECIMEN_HINTS });
+      if (path === "/specimens/light-overview") return response(200, { rows: [] });
       return response(404);
     }),
   );

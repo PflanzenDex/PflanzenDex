@@ -25,7 +25,7 @@
 3. Navigate to light overview tab
 4. Verify table displays all 4 rows sorted by lux descending
 
-**Evidence**: 
+**Evidence**:
 - Table header visible: Plant | Zone | Lux-Bedarf | Position
 - Rows in correct order: DirectUnder (100k) → VeryClose (25k) → Close (8k) → Low (1k)
 - Lux values formatted de-DE: "100.000", "25.000", "8.000", "1.000"

@@ -92,8 +92,8 @@ export async function loadLightOverview(
   api: string,
   token: string,
   fetchFn: FetchFn = fetch,
-): Promise<KernelResponse<LightOverview>> {
-  return call<LightOverview>(fetchFn, `${api}/specimens/light-overview`, token);
+): Promise<Response<LightOverview>> {
+  return call<LightOverview, ZoneUser>(fetchFn, `${api}/specimens/light-overview`, token);
 }
 
 /** US-LIC-01: zone of the species, derived from the lux need according to the zones of the account (never stored). */

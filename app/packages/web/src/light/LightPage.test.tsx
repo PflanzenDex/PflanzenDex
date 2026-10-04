@@ -45,6 +45,7 @@ const ROUTES: Record<string, Route> = {
   "GET /light-zones": (d) => response(200, { zones: d.zones }),
   "GET /locations": (d) => response(200, { locations: d.locations }),
   "GET /hints": () => response(200, { hints: [] }),
+  "GET /specimens/light-overview": () => response(200, { rows: [] }),
   "GET /light-zones/derivation": () =>
     response(200, { kind: "zone", zone, level: 2, reason: "standard" }),
 };
