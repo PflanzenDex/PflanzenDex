@@ -145,4 +145,10 @@ describe("US-BES-09 care profile in the database", () => {
     await expect(profiles.update(anna, species, { wateringGrowthDays: 0 })).rejects.toThrow();
     await expect(profiles.update(anna, species, { ownHints: "" })).rejects.toThrow();
   });
+
+  it("US-BES-09 a species that does not exist cannot get a profile: the foreign key refuses it", async () => {
+    await expect(
+      profiles.update(anna, randomUUID(), { wateringGrowthDays: 7 }),
+    ).rejects.toMatchObject({ constraint: "care_profile_species" });
+  });
 });
