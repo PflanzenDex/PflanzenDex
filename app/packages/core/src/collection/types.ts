@@ -84,7 +84,14 @@ export interface SpecimenStore {
     userId: string,
     values: SpecimenValues,
     assignments?: readonly MarkerAssignment[],
-  ): Promise<SpecimenRow | "name_taken" | "marker_taken" | "location_unknown" | "specimen_unknown">;
+  ): Promise<
+    | SpecimenRow
+    | "name_taken"
+    | "marker_taken"
+    | "location_unknown"
+    | "specimen_unknown"
+    | "species_unknown"
+  >;
   /**
    * Sets marker and name of one specimen in one statement (US-BES-03); the ID and everything else stay. An archived
    * specimen stays unchanged (its name stays taken, US-BES-07); a taken marker or name changes nothing.

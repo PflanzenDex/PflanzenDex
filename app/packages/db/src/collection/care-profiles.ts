@@ -1,6 +1,6 @@
 import type { Pool } from "pg";
 import { withAccount } from "../kernel/index.ts";
-import { FOREIGN_KEY, pgError } from "./specimen-shared.ts";
+import { FOREIGN_KEY, SpeciesGone, ensureSpeciesVisible, pgError } from "./specimen-shared.ts";
 
 // Same shape as `CareProfile` in `core` (structurally equal; `db` does not import `core`).
 export interface CareProfileRow {
@@ -56,7 +56,7 @@ export class CareProfilePostgres {
     userId: string,
     speciesId: string,
     changes: CareProfileChanges,
-  ): Promise<CareProfileRow | "location_unknown" | "zone_unknown"> {
+  ): Promise<CareProfileRow | "location_unknown" | "zone_unknown" | "species_unknown"> {
     const named = (Object.keys(COLUMN_OF) as (keyof CareProfileChanges)[]).filter(
       (f) => changes[f] !== undefined,
     );
@@ -68,15 +68,17 @@ export class CareProfilePostgres {
     const placeholders = [marks[values.length], marks[values.length + 1], ...marks.slice(0, -2)];
     const set = [...columns.map((c) => `${c} = excluded.${c}`), "updated_at = now()"].join(", ");
     try {
-      const r = await withAccount(this.pool, userId, (c) =>
-        c.query<CareProfileRow>(
+      return await withAccount(this.pool, userId, async (c) => {
+        const r = await c.query<CareProfileRow>(
           `insert into care_profile (${insertColumns}) values (${placeholders.join(", ")})
            on conflict (account_id, species_id) do update set ${set} returning ${COLUMNS}`,
           [...values, userId, speciesId],
-        ),
-      );
-      return r.rows[0] as CareProfileRow;
+        );
+        await ensureSpeciesVisible(c, speciesId);
+        return r.rows[0] as CareProfileRow;
+      });
     } catch (e) {
+      if (e instanceof SpeciesGone) return "species_unknown";
       if (pgError(e).code === FOREIGN_KEY) {
         const constraint = pgError(e).constraint ?? "";
         if (constraint === "care_profile_light_zone") return "zone_unknown";

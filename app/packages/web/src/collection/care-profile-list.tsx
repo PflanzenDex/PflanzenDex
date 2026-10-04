@@ -6,6 +6,7 @@ import type {
 } from "@pflanzendex/core";
 import type { ApiError } from "../kernel";
 import { CareProfileCard } from "./care-profile-card";
+import { KeptProfileCard } from "./kept-profile-card";
 
 export interface ProfileData {
   readonly entries: readonly CareProfileEntry[];
@@ -52,12 +53,16 @@ export function ProfileList(props: {
         <ul className="cards-grid profile-grid">
           {data.entries.map((entry) => (
             <li key={`${entry.speciesId}:${JSON.stringify(entry.profile)}`}>
-              <CareProfileCard
-                entry={entry}
-                lists={data}
-                busy={write.running}
-                onSave={(changes, success) => props.onSave(entry.speciesId, changes, success)}
-              />
+              {entry.mergedInto ? (
+                <KeptProfileCard entry={entry} lists={data} />
+              ) : (
+                <CareProfileCard
+                  entry={entry}
+                  lists={data}
+                  busy={write.running}
+                  onSave={(changes, success) => props.onSave(entry.speciesId, changes, success)}
+                />
+              )}
             </li>
           ))}
         </ul>

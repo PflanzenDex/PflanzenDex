@@ -276,3 +276,89 @@ describe("US-BES-10 review list and content visibility (FR-BES-11, P-04)", () =>
     });
   });
 });
+
+describe("US-BES-10 a merge and a concurrent write on the proposal (FR-BES-11, P-10)", () => {
+  it("US-BES-10 a specimen created while the merge runs is re-pointed too, never left on the hidden species", async () => {
+    const target = await approved("Race target ");
+    const p = await propose(keeper, "Race proposal ");
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    let inserted: () => void = () => undefined;
+    const insertedSignal = new Promise<void>((resolve) => (inserted = resolve));
+    // The keeper's write is in flight: inserted, not yet committed (it holds a key lock on the species row).
+    const inFlight = withAccount(pool, keeper, async (c) => {
+      await c.query(
+        `insert into specimen (account_id, species_id, name, caught_at, status)
+         values ($1, $2, 'Unterwegs', '2026-10-04', 'plant')`,
+        [keeper, p.speciesId],
+      );
+      inserted();
+      await gate;
+    });
+    await insertedSignal;
+    let done = false;
+    const merging = reviews.merge(reviewer, p.caseId, target.speciesId).then((r) => {
+      done = true;
+      return r;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(done).toBe(false); // the merge waits for the write in flight
+    release();
+    await inFlight;
+    const r = await merging;
+    if (r === null || r === "conflict") throw new Error(String(r));
+    expect(r.moved[0]).toEqual({ kind: "specimen", moved: 1, kept: 0 });
+    expect(await speciesOf(keeper)).toContain(`Unterwegs:${target.speciesId}`);
+  });
+
+  it("US-BES-10 creating a specimen or a profile on an already merged proposal is refused", async () => {
+    const target = await approved("Late target ");
+    const p = await propose(keeper, "Late proposal ");
+    await reviews.merge(operator, p.caseId, target.speciesId);
+    expect(
+      await specimens.create(keeper, {
+        speciesId: p.speciesId,
+        name: "Zu spät",
+        marker: null,
+        locationId: null,
+        caughtAt: "2026-10-04",
+      }),
+    ).toBe("species_unknown");
+    expect(await profiles.update(keeper, p.speciesId, { ownHints: "zu spät" })).toBe(
+      "species_unknown",
+    );
+    expect((await speciesOf(keeper)).some((x) => x.startsWith("Zu spät"))).toBe(false);
+  });
+
+  it("US-BES-10 the merged proposal's own species can be found for its creator, for nobody else", async () => {
+    const target = await approved("Found target ");
+    const p = await propose(keeper, "Found proposal ");
+    await reviews.merge(operator, p.caseId, target.speciesId);
+    expect(await species.mergedInto(keeper, p.speciesId)).toEqual({
+      id: target.speciesId,
+      latinName: target.latinName,
+    });
+    expect(await species.mergedInto(other, p.speciesId)).toBeNull();
+    expect(await species.mergedInto(keeper, target.speciesId)).toBeNull();
+  });
+
+  it("US-BES-10 reviewers cannot read foreign rejected proposals, only open ones", async () => {
+    const open = await propose(keeper, "Open ");
+    const rejected = await propose(keeper, "Rejected foreign ");
+    await reviews.decide(operator, rejected.caseId, "rejected", "Quelle fehlt");
+    expect(await species.findForReview(reviewer, open.speciesId)).not.toBeNull();
+    expect(await species.findForReview(reviewer, rejected.speciesId)).toBeNull();
+    expect(await species.find(reviewer, rejected.speciesId)).toBeNull();
+    expect((await species.search(reviewer, null)).map((s) => s.id)).not.toContain(
+      rejected.speciesId,
+    );
+    const names = await withAccount(pool, reviewer, (c) =>
+      c.query("select 1 from species_name where species_id = $1", [rejected.speciesId]),
+    );
+    expect(names.rowCount).toBe(0);
+    // The creator still reads their rejected proposal.
+    expect(await species.find(keeper, rejected.speciesId)).toMatchObject({
+      reviewStatus: "rejected",
+    });
+  });
+});

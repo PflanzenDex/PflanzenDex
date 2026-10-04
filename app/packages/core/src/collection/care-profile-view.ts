@@ -17,6 +17,18 @@ export interface CareProfileEntry {
   readonly profile: EffectiveProfile;
   /** At least one field deviates from the catalog. */
   readonly deviates: boolean;
+  /**
+   * Set when the species of this profile was a proposal of mine that a reviewer merged into an existing species
+   * (US-BES-10): the profile stayed because I already had one for the target (P-10, nothing disappears silently).
+   */
+  readonly mergedInto: { readonly speciesId: string; readonly speciesName: string } | null;
+  /** What happened and what to do next (P-09); `null` for an ordinary entry. */
+  readonly notice: { readonly text: string; readonly nextAction: string } | null;
+}
+
+/** Port: the species a merged proposal of mine went into. Implemented by the catalog adapter (ADR 0003). */
+export interface MergedSpeciesSource {
+  mergedInto(userId: string, id: string): Promise<{ id: string; latinName: string } | null>;
 }
 
 export interface CareProfileViewDependencies {
@@ -24,6 +36,8 @@ export interface CareProfileViewDependencies {
   readonly species: SpeciesSource;
   readonly profiles: CareProfileReader;
   readonly zones: Pick<ZoneStore, "list">;
+  /** Without it a profile of an invisible species is skipped; with it one of a merged proposal is shown. */
+  readonly merged?: MergedSpeciesSource;
 }
 
 /** The zone the catalog implies (FR-BES-10); "soft leaf" is not in the catalog, it is never assumed. */
@@ -43,6 +57,34 @@ const deviation = (p: CareProfile | undefined) =>
   p !== undefined &&
   Object.entries(p).some(([field, value]) => field !== "speciesId" && value !== null);
 
+/** A profile on a proposal that was merged: shown with the target species, never dropped silently (P-10). */
+async function mergedEntry(
+  deps: CareProfileViewDependencies,
+  userId: string,
+  of: { id: string; profile: CareProfile | null; zones: readonly LightZone[] },
+): Promise<CareProfileEntry[]> {
+  const { id, profile, zones } = of;
+  const target = profile && (await deps.merged?.mergedInto(userId, id));
+  const species = target && (await deps.species.find(userId, target.id));
+  if (!target || !species) return [];
+  const name = speciesDisplayName(species);
+  return [
+    {
+      speciesId: id,
+      speciesName: "Dein zusammengeführter Vorschlag",
+      activeSpecimens: 0,
+      wateringHint: null,
+      profile: effectiveProfile({ species, profile, catalogZoneId: catalogZone(species, zones) }),
+      deviates: deviation(profile),
+      mergedInto: { speciesId: target.id, speciesName: name },
+      notice: {
+        text: `Dein Vorschlag wurde mit „${name}“ zusammengeführt. Für diese Art hattest du schon ein Pflegeprofil, deshalb wurde dieses hier nicht übernommen und bleibt unverändert erhalten.`,
+        nextAction: `Öffne das Pflegeprofil von „${name}“ und übernimm von Hand, was du behalten willst.`,
+      },
+    },
+  ];
+}
+
 export async function careProfileView(
   deps: CareProfileViewDependencies,
   userId: string,
@@ -56,20 +98,30 @@ export async function careProfileView(
   const own = new Map(profiles.map((p) => [p.speciesId, p] as const));
   const ids = [...new Set([...active.map((z) => z.speciesId), ...own.keys()])];
   const found = await Promise.all(ids.map((id) => deps.species.find(userId, id)));
-  const entries = found.flatMap((species, i): CareProfileEntry[] => {
-    const id = ids[i] as string;
-    if (!species) return [];
-    const profile = own.get(id) ?? null;
-    return [
-      {
-        speciesId: id,
-        speciesName: speciesDisplayName(species),
-        activeSpecimens: active.filter((z) => z.speciesId === id).length,
-        wateringHint: species.wateringHint,
-        profile: effectiveProfile({ species, profile, catalogZoneId: catalogZone(species, zones) }),
-        deviates: deviation(profile ?? undefined),
-      },
-    ];
-  });
+  const entries = (
+    await Promise.all(
+      found.map(async (species, i): Promise<CareProfileEntry[]> => {
+        const id = ids[i] as string;
+        const profile = own.get(id) ?? null;
+        if (!species) return await mergedEntry(deps, userId, { id, profile, zones });
+        return [
+          {
+            speciesId: id,
+            speciesName: speciesDisplayName(species),
+            activeSpecimens: active.filter((z) => z.speciesId === id).length,
+            wateringHint: species.wateringHint,
+            profile: effectiveProfile({
+              species,
+              profile,
+              catalogZoneId: catalogZone(species, zones),
+            }),
+            deviates: deviation(profile ?? undefined),
+            mergedInto: null,
+            notice: null,
+          },
+        ];
+      }),
+    )
+  ).flat();
   return entries.sort((a, b) => a.speciesName.localeCompare(b.speciesName, "de"));
 }

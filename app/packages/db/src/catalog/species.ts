@@ -124,6 +124,20 @@ export class SpeciesPostgres {
     return withAccount(this.pool, userId, (c) => load(c, id, VISIBLE));
   }
 
+  /** The species a merged proposal of the account went into (US-BES-10); `null` for everything else. */
+  async mergedInto(userId: string, id: string): Promise<{ id: string; latinName: string } | null> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<{ id: string; latinName: string }>(
+        `select t.id, t.latin_name as "latinName" from review_case v
+           join species t on t.id = v.merged_into
+          where v.object_kind = 'species' and v.object_id = $1 and v.status = 'merged'
+            and v.account_id = current_account()`,
+        [id],
+      ),
+    );
+    return r.rows[0] ?? null;
+  }
+
   /** Reviewers also get foreign open proposals (row rule `reviewer_reads`); everybody else gets what `find` gets. */
   async findForReview(userId: string, id: string): Promise<Species | null> {
     return withAccount(this.pool, userId, (c) => load(c, id, NOT_MERGED));

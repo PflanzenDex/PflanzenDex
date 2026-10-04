@@ -236,4 +236,17 @@ describe("US-BES-01 further edge cases", () => {
     const approved = speciesHints({ ...r.value, reviewStatus: "reviewed" });
     expect(approved.map((h) => h.text).join(" ")).toContain("freigegeben");
   });
+
+  it("US-BES-10 the rejection hint has no doubled period when the reason ends with one", async () => {
+    const r = await propose(profile);
+    if (!r.ok) throw new Error("Proposal failed");
+    const [hint] = speciesHints({
+      ...r.value,
+      reviewStatus: "rejected",
+      reviewReason: "Die Quelle belegt den Lichtbedarf nicht.",
+    });
+    expect(hint?.text).toBe(
+      "Die Prüfung hat dieses Profil nicht freigegeben: Die Quelle belegt den Lichtbedarf nicht. Es bleibt nur für dich sichtbar.",
+    );
+  });
 });

@@ -1,13 +1,41 @@
 -- module: catalog
 -- Review of catalog proposals (US-BES-10, FR-BES-11, FR-BES-14, P-04, P-10).
--- 1. Reviewers may read the content of open proposals (they cannot judge what they cannot see). The species search
+-- 1. Reviewers may read the content of open proposals (not rejected or merged ones) (they cannot judge what they cannot see). The species search
 --    of the application still filters by species_status(), so a reviewer's search lists only approved species and
 --    their own proposals.
 -- 2. A proposal can be merged into an existing species: new status `merged` plus `merged_into`. A merged proposal is
 --    visible to nobody (it is a duplicate); everything that pointed to it was re-pointed in the same transaction.
 
-create policy reviewer_reads on species for select using (is_reviewer());
-create policy reviewer_reads on species_name for select using (is_reviewer());
+-- Only open proposals: a rejected proposal stays private to its creator, a merged one is gone (FR-BES-11).
+create function is_open_proposal(p_species uuid) returns boolean
+language sql stable security definer set search_path = public, pg_temp
+as $$
+  select exists (
+    select from review_case v
+     where v.object_kind = 'species' and v.object_id = p_species and v.status in ('proposal', 'ai_unreviewed'))
+$$;
+revoke all on function is_open_proposal(uuid) from public;
+grant execute on function is_open_proposal(uuid) to pflanzendex_app;
+
+create policy reviewer_reads on species for select using (is_reviewer() and is_open_proposal(id));
+create policy reviewer_reads on species_name for select using (is_reviewer() and is_open_proposal(species_id));
+
+-- A merge locks the species row of the proposal, so a write of the creator that is still in flight (its foreign key
+-- holds a key lock on that row) finishes before the references are re-pointed, and a later one finds the species
+-- hidden (the application re-checks the status after taking that lock). Without it a specimen could be committed
+-- after the re-point and point at a hidden species (P-10). The application role cannot lock rows of `species` itself.
+create function lock_species_for_merge(p_species uuid) returns void
+language plpgsql security definer set search_path = public, pg_temp
+as $$
+begin
+  if not is_reviewer() then
+    raise exception 'Only operators or reviewers merge proposals' using errcode = '42501';
+  end if;
+  perform 1 from species where id = p_species for update;
+end
+$$;
+revoke all on function lock_species_for_merge(uuid) from public;
+grant execute on function lock_species_for_merge(uuid) to pflanzendex_app;
 
 alter table review_case add column merged_into uuid references species (id) on delete restrict;
 alter table review_case drop constraint review_case_status_check;

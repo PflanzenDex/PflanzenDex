@@ -18,7 +18,7 @@ export function speciesHints(species: Species): readonly SpeciesHint[] {
   if (species.reviewStatus === "rejected") {
     hints.push({
       text: `Die Prüfung hat dieses Profil nicht freigegeben${
-        species.reviewReason ? `: ${species.reviewReason}` : ""
+        species.reviewReason ? `: ${species.reviewReason.replace(/[.!?\s]+$/, "")}` : ""
       }. Es bleibt nur für dich sichtbar.`,
       nextAction: "Schlage die Art mit korrigierten Angaben erneut vor.",
     });

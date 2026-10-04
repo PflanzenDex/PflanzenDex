@@ -109,6 +109,13 @@ export class ReviewPostgres {
   ): Promise<MergeOutcome | "conflict" | null> {
     try {
       return await withAccount(this.pool, userId, async (c) => {
+        const proposal = await c.query<{ objectId: string }>(
+          `select object_id as "objectId" from review_case where id = $1 and object_kind = 'species'`,
+          [proposalId],
+        );
+        // Wait for writes of the creator on the proposal that are still in flight, then block new ones.
+        if (proposal.rows[0])
+          await c.query("select lock_species_for_merge($1)", [proposal.rows[0].objectId]);
         const closed = await c.query<ReviewCase>(
           `update review_case set status = 'merged', merged_into = $2
             where id = $1 and object_kind = 'species' and status in ('proposal', 'ai_unreviewed')

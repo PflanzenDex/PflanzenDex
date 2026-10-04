@@ -147,3 +147,44 @@ describe("US-BES-09 zone usage: a zone that a care profile points to is not dele
     expect(await usage.user("ben", "z2")).toEqual([]);
   });
 });
+
+describe("US-BES-10 a care profile kept on a merged proposal does not vanish (FR-BES-11, P-10)", () => {
+  const MERGED = "55555555-5555-4555-8555-555555555555";
+  const merged = {
+    async mergedInto(userId: string, id: string) {
+      return userId === "anna" && id === MERGED
+        ? { id: BOGEN, latinName: "Dracaena trifasciata" }
+        : null;
+    },
+  };
+  const withMerged = (userId = "anna") =>
+    careProfileView(
+      { specimens, species, profiles, zones: zoneStore({ anna: ZONES, ben: ZONES }), merged },
+      userId,
+    );
+
+  it("US-BES-10 shows it with a notice naming the target species and the next action", async () => {
+    await profiles.update("anna", MERGED, { ownHints: "Mein alter Hinweis" });
+    const entries = await withMerged();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      speciesId: MERGED,
+      mergedInto: { speciesId: BOGEN, speciesName: "Bogenhanf" },
+      deviates: true,
+    });
+    expect(entries[0]?.profile.ownHints.own).toBe("Mein alter Hinweis");
+    expect(entries[0]?.notice?.text).toContain("Bogenhanf");
+    expect(entries[0]?.notice?.nextAction).toContain("Pflegeprofil");
+  });
+
+  it("US-BES-10 a profile of a species that is invisible and not merged stays hidden (P-04)", async () => {
+    await profiles.update("ben", MERGED, { ownHints: "x" });
+    expect(await withMerged("ben")).toEqual([]);
+    expect(await view("ben")).toEqual([]);
+  });
+
+  it("US-BES-10 without the merge port an unknown species is skipped as before", async () => {
+    await profiles.update("anna", MERGED, { ownHints: "x" });
+    expect(await view()).toEqual([]);
+  });
+});

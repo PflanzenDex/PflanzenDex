@@ -18,3 +18,20 @@ export const COLUMNS = `id, species_id as "speciesId", name, marker, location_id
 
 export const FOREIGN_KEY = "23503";
 export const pgError = (e: unknown) => e as { code?: string; constraint?: string };
+
+export class SpeciesGone extends Error {}
+
+/**
+ * After a write that references a species: it must still be visible to the account. A merge hides a proposal and
+ * locks its species row first, so a write that waited for that lock sees the hidden species here and rolls back
+ * (FR-BES-11, P-10); a write that came first holds a key lock, the merge waits for it and re-points it.
+ */
+export async function ensureSpeciesVisible(
+  client: {
+    query: (sql: string, values: unknown[]) => Promise<{ rows: { status: string | null }[] }>;
+  },
+  speciesId: string,
+): Promise<void> {
+  const r = await client.query("select species_status($1) as status", [speciesId]);
+  if (r.rows[0]?.status == null) throw new SpeciesGone();
+}
