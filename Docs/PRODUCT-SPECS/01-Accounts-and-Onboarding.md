@@ -24,7 +24,7 @@ As a **plant keeper** I want to set display name, time zone and notifications.
 Acceptance criteria:
 
 - Display name (freely chosen, not unique; friends find each other via invitation, not via name search, see FR-SOZ-08).
-- Time zone, prefilled from the device. Phases, due dates and reminders use it (NFR-08).
+- Time zone, prefilled from the device (the device's zone is only the prefill and the fallback while none is chosen). Phases, due dates and reminders use it (NFR-08).
 - Notifications can be switched on and off per occasion (US-MON-08).
 - Global switches "Everything private" (US-SOZ-04) and "No recommendations" (US-EQU-11).
 

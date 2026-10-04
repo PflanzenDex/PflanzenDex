@@ -10,6 +10,8 @@ let pool: Pool;
 const subA = `api-${randomUUID()}`;
 const subB = `api-${randomUUID()}`;
 const subNoRow = `api-${randomUUID()}`;
+const subFreshPut = `api-${randomUUID()}`;
+const subFreshOther = `api-${randomUUID()}`;
 
 const reviewer: TokenVerifier = async (token) => {
   const [kind, sub] = token.split(":");
@@ -44,7 +46,9 @@ beforeAll(async () => {
   for (const sub of [subA, subB]) await app().request("/account", { headers: as(sub) });
 });
 afterAll(async () => {
-  await pool.query("delete from account where subject = any($1)", [[subA, subB, subNoRow]]);
+  await pool.query("delete from account where subject = any($1)", [
+    [subA, subB, subNoRow, subFreshPut, subFreshOther],
+  ]);
   await pool.end();
 });
 
@@ -71,11 +75,14 @@ describe("US-ACC-02 · GET /account/profile", () => {
     });
   });
 
-  it("403 access.denied with the German text while the account has no data row", async () => {
+  it("a fresh account that reads the profile first gets its row and the defaults, never 403", async () => {
     const res = await app().request("/account/profile", { headers: as(subNoRow) });
-    expect(res.status).toBe(403);
-    expect(await res.json()).toEqual({
-      error: { code: "access.denied", text: "Darauf hast du keinen Zugriff." },
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      displayName: "Lena Test",
+      timeZone: null,
+      everythingPrivate: false,
+      noRecommendations: false,
     });
   });
 });
@@ -144,8 +151,18 @@ describe("US-ACC-02 · PUT /account/profile", () => {
     expect(res.status).toBe(401);
   });
 
-  it("403 for an account without data row", async () => {
-    expect((await put(subNoRow, profile)).status).toBe(403);
+  it("a fresh account that saves the profile first succeeds and the save is kept", async () => {
+    const res = await put(subFreshPut, profile);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ displayName: "Anna", timeZone: "Europe/Berlin" });
+    expect((await read(subFreshPut))["timeZone"]).toBe("Europe/Berlin");
+  });
+
+  it("two fresh accounts: the first save of one never shows up for the other (P-04)", async () => {
+    await put(subFreshPut, { ...profile, displayName: "Fresh One" });
+    const other = await read(subFreshOther);
+    expect(other["displayName"]).toBe("Lena Test");
+    expect(other["timeZone"]).toBeNull();
   });
 
   it("a repeat with the same key and values answers the same and writes once", async () => {

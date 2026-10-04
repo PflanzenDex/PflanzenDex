@@ -4,8 +4,7 @@ import { createWrite, currentTimeZone, type Response } from "../kernel";
 type FetchFn = typeof fetch;
 
 /**
- * Creates a specimen. The device's time zone determines "today" for caught_at (NFR-08); the profile has none yet
- * (US-ACC-02). The repeat-guard key is created per call.
+ * Creates a specimen. The profile's time zone (US-ACC-02; the device's as fallback) determines "today" for caught_at (NFR-08). The repeat-guard key is created per call.
  */
 export async function createSpecimen(
   api: string,

@@ -77,14 +77,26 @@ describe("US-ACC-02 settings page: display name", () => {
     expect(puts[0]?.body["displayName"]).toBe("Anna Beispiel");
   });
 
-  it("US-ACC-02 an empty display name is sent as none", async () => {
-    const puts = fakeServer();
+  it("US-ACC-02 a cleared display name is sent as empty text so the server refuses it and the field is marked", async () => {
+    const puts = fakeServer(PROFILE, () =>
+      response(400, {
+        error: {
+          code: "input.invalid",
+          text: "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
+          details: [{ field: "displayName", code: "input.invalid" }],
+        },
+      }),
+    );
     const user = userEvent.setup();
     show();
-    await user.clear(await screen.findByLabelText("Anzeigename"));
+    const name = await screen.findByLabelText("Anzeigename");
+    await user.clear(name);
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    await screen.findByRole("status");
-    expect(puts[0]?.body["displayName"]).toBeNull();
+    const alert = await screen.findByRole("alert");
+    expect(puts[0]?.body["displayName"]).toBe("");
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+    expect(name.getAttribute("aria-describedby")).toBe(alert.id);
+    expect(screen.getByText(/darf aber nicht leer sein/)).toBeTruthy();
   });
 });
 
@@ -143,6 +155,61 @@ describe("US-ACC-02 settings page: time zone", () => {
     expect(screen.getByLabelText("Anzeigename").getAttribute("aria-invalid")).toBe("false");
     expect((zone as HTMLInputElement).value).toBe("Mars/Olympus");
     expect(currentTimeZone()).not.toBe("Mars/Olympus");
+  });
+
+  const refuse = (field?: string) =>
+    response(400, {
+      error: {
+        code: "input.invalid",
+        text: "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
+        ...(field ? { details: [{ field, code: "input.invalid" }] } : {}),
+      },
+    });
+
+  it("US-ACC-02 a refused field points at the error text (aria-describedby) and gets the focus", async () => {
+    fakeServer(PROFILE, () => refuse("timeZone"));
+    const user = userEvent.setup();
+    show();
+    const zone = await screen.findByLabelText("Zeitzone");
+    await user.clear(zone);
+    await user.type(zone, "Mars/Olympus");
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.id).not.toBe("");
+    expect(zone.getAttribute("aria-describedby")).toBe(alert.id);
+    expect(screen.getByLabelText("Anzeigename").getAttribute("aria-describedby")).toBeNull();
+    expect(document.activeElement).toBe(zone);
+  });
+
+  it("US-ACC-02 with two refused fields the first one in the form gets the focus", async () => {
+    fakeServer(PROFILE, () =>
+      response(400, {
+        error: {
+          code: "input.invalid",
+          text: "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
+          details: [
+            { field: "timeZone", code: "input.invalid" },
+            { field: "displayName", code: "input.invalid" },
+          ],
+        },
+      }),
+    );
+    const user = userEvent.setup();
+    show();
+    const name = await screen.findByLabelText("Anzeigename");
+    await user.type(name, "x");
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await screen.findByRole("alert");
+    expect(document.activeElement).toBe(name);
+  });
+
+  it("US-ACC-02 a refusal without a field moves the focus to the error text", async () => {
+    fakeServer(PROFILE, () => refuse());
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByRole("checkbox", { name: "Tausch" }));
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    expect(document.activeElement).toBe(await screen.findByRole("alert"));
   });
 });
 

@@ -156,6 +156,7 @@ describe("US-ACC-02 · writing rules (P-03, P-04)", () => {
     await save(valid({ displayName: "Anna", accountId: "ben", userId: "ben" }));
     expect(profiles.rows.get("anna")?.displayName).toBe("Anna");
     expect(profiles.rows.get("ben")?.displayName).toBeNull();
+    expect(profiles.writtenFor).toEqual(["anna"]);
   });
 
   it("an account without data row is denied", async () => {

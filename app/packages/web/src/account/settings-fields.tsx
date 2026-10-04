@@ -9,6 +9,10 @@ const OCCASION_TEXT: Record<Occasion, string> = {
   friends: "Freunde",
 };
 
+/** Ids the page uses to move the focus to the first refused field. */
+export const DISPLAY_NAME_ID = "profile-display-name";
+export const TIME_ZONE_ID = "profile-time-zone";
+
 const zones = (): string[] => {
   const all = (Intl as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
   return all ? all("timeZone") : [];
@@ -18,31 +22,39 @@ export function ProfileFields(props: {
   form: AccountProfile;
   set: (change: Partial<AccountProfile>) => void;
   invalid: readonly string[];
+  /** Id of the error text a refused field points at (aria-describedby). */
+  errorId: string;
   fromDevice: boolean;
 }) {
   const { form, set } = props;
+  const mark = (field: string) =>
+    props.invalid.includes(field)
+      ? ({ "aria-invalid": true, "aria-describedby": props.errorId } as const)
+      : ({ "aria-invalid": false } as const);
   return (
     <>
       <label>
         Anzeigename
         <input
+          id={DISPLAY_NAME_ID}
           autoComplete="nickname"
           maxLength={80}
-          aria-invalid={props.invalid.includes("displayName")}
+          {...mark("displayName")}
           value={form.displayName ?? ""}
-          onChange={(e) => set({ displayName: e.target.value === "" ? null : e.target.value })}
+          onChange={(e) => set({ displayName: e.target.value })}
         />
       </label>
       <p className="note">
-        Du kannst jeden Namen wählen, er muss nicht einmalig sein. Freunde finden dich über eine
-        Einladung, nicht über den Namen.
+        Du kannst jeden Namen wählen, er muss nicht einmalig sein, darf aber nicht leer sein.
+        Freunde finden dich über eine Einladung, nicht über den Namen.
       </p>
       <label>
         Zeitzone
         <input
+          id={TIME_ZONE_ID}
           list="time-zones"
           autoComplete="off"
-          aria-invalid={props.invalid.includes("timeZone")}
+          {...mark("timeZone")}
           value={form.timeZone ?? ""}
           onChange={(e) => set({ timeZone: e.target.value === "" ? null : e.target.value })}
         />

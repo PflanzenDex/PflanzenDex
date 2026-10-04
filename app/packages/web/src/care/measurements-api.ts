@@ -33,8 +33,7 @@ export interface Access {
 }
 
 /**
- * Records a measurement. The device's time zone determines "today" (NFR-08); the profile does not know one yet
- * (US-ACC-02). The idempotency key is created per call; sending the same call again does not write twice.
+ * Records a measurement. The profile's time zone (US-ACC-02; the device's as fallback) determines "today" (NFR-08). The idempotency key is created per call; sending the same call again does not write twice.
  */
 export async function recordMeasurement(
   access: Access,
