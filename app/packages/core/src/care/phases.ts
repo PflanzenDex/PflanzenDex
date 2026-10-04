@@ -7,6 +7,7 @@ import {
 } from "../collection";
 import { carePhase, type CarePhase } from "./phase";
 import type { PhaseLocationSource } from "./phase-location";
+import { deviationsFirst } from "./phase-status";
 
 export interface PhasesDependencies {
   readonly specimens: Pick<SpecimenStore, "list">;
@@ -36,7 +37,7 @@ export interface PhasesRow {
 
 /**
  * The rows of the phase list for the local calendar date `today`: what is a plant (not cutting, not archived,
- * FR-PHA-04) and whose species has a dormancy period. Sorted by name. The list (US-PHA-01) and the confirmation of a
+ * FR-PHA-04) and whose species has a dormancy period. Deviations first (US-PHA-02), by name inside a group. The list (US-PHA-01) and the confirmation of a
  * move (US-PHA-03) both use it, so they can never disagree about phase and target.
  */
 export async function phaseRows(
@@ -72,7 +73,7 @@ export async function phaseRows(
       ];
     }),
   );
-  return rows.sort((a, b) => a.name.localeCompare(b.name, "de"));
+  return deviationsFirst(rows.sort((a, b) => a.name.localeCompare(b.name, "de")));
 }
 
 /**

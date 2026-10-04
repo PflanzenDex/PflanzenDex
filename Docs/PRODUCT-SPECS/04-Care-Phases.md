@@ -18,7 +18,7 @@ Acceptance criteria:
 
 State of implementation: list, dormancy period of the species, the user's time zone (from the device for now, until the profile has one, US-ACC-02) and the turn of the year are implemented. The target location per phase comes from the keeper's care profile (US-BES-09; without an entry "unbekannt", never invented, P-08) and the dormancy period of the care profile replaces the one of the species. Missing is a dormancy period on the specimen itself. The flow with a specimen in the browser test (E2E) is missing until the species catalog can be filled (US-BES-01); the API test against the database covers the phase derivation.
 
-### US-PHA-02 · See deviations first · ⬜ (prototype ✅)
+### US-PHA-02 · See deviations first · ✅ (prototype ✅)
 
 As a **plant keeper** I want wrongly placed plants at the top.
 
@@ -26,6 +26,8 @@ Acceptance criteria:
 
 - Deviation = location of the specimen ≠ target location (comparison of the location id, not of the text).
 - Rows with a deviation come before rows without. A specimen without a location is its own warning "Location missing" (US-BES-08), no placeholder text.
+
+State of implementation: the list (`GET /care-phases`) comes sorted in three groups: first the deviations (location id and target location id both known and different, FR-PHA-03), then specimens without a location, then the rest (at the target, or the target is unknown, which is never a deviation, P-08); inside a group by name. The page "Pflegephasen" names the groups ("Weichen vom Soll ab", "Standort fehlt", "Stimmen überein oder Soll unbekannt"), shows "Standort fehlt" instead of a placeholder, says what to do next in every group (P-09) and states when there is no deviation. Specimens without a location rank between deviation and rest because they need action too; this is an interpretation of the criterion (the spec only demands that deviations come first). The central deviation view (US-QS-04) is not part of this story.
 
 ### US-PHA-03 · Confirm the move with a tap · 🟨 (prototype ✅)
 

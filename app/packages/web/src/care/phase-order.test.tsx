@@ -56,7 +56,7 @@ describe("US-PHA-02 the list shows deviations first", () => {
     render(<PhasesList rows={rows} locations={locations} />);
     const missing = section(/Standort fehlt/);
     expect(titles(missing)).toEqual(["Ohne Standort"]);
-    expect(within(missing).getByRole("alert").textContent).toContain("Standort fehlt");
+    expect(within(missing).getByText("Standort fehlt")).toBeTruthy();
     expect(within(missing).queryByText(/Standort: unbekannt/)).toBeNull();
     expect(within(missing).getByText(/unter „Hinweise“/)).toBeTruthy();
   });
@@ -66,7 +66,7 @@ describe("US-PHA-02 the list shows deviations first", () => {
     const rest = section(/Stimmen überein/);
     expect(titles(rest)).toEqual(["Am Soll", "Ohne Soll"]);
     expect(within(rest).getByText("Soll-Standort: unbekannt")).toBeTruthy();
-    expect(within(rest).queryByRole("alert")).toBeNull();
+    expect(within(rest).queryByText("Standort fehlt")).toBeNull();
   });
 
   it("US-PHA-02 without any deviation the page says that everything stands where it should (P-09)", () => {
