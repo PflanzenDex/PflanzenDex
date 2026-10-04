@@ -38,10 +38,14 @@ export interface ReviewStore {
   ): Promise<ReviewCase | "present">;
   /** Reviewers find cases of all accounts (metadata only, never content, P-04), others only their own. */
   find(userId: string, id: string): Promise<ReviewCase | null>;
+  /** List all open review cases (proposal, ai_unreviewed) for reviewers only. */
+  listOpen(userId: string): Promise<readonly ReviewCase[]>;
   decide(
     userId: string,
     id: string,
     status: "reviewed" | "rejected",
     reason: string | null,
   ): Promise<ReviewCase | null>;
+  /** Merge a proposal with an existing species by changing the object_id (US-BES-10). */
+  merge(userId: string, proposalId: string, targetSpeciesId: string): Promise<ReviewCase | null>;
 }

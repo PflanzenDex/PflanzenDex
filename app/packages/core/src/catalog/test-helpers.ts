@@ -33,6 +33,12 @@ export class InMemoryReview implements ReviewStore {
     return this.rows.find((z) => z.id === id && (reviewer || z.creatorId === userId)) ?? null;
   }
 
+  async listOpen(userId: string): Promise<readonly ReviewCase[]> {
+    // In a production DB, would filter by userId permissions; in-memory test returns all
+    void userId;
+    return this.rows.filter((z) => z.status === "proposal" || z.status === "ai_unreviewed");
+  }
+
   async decide(
     userId: string,
     id: string,
@@ -45,5 +51,23 @@ export class InMemoryReview implements ReviewStore {
     const fresh = { ...alt, status, reason, reviewedBy: userId };
     this.rows[i] = fresh;
     return fresh;
+  }
+
+  async merge(
+    userId: string,
+    proposalId: string,
+    targetSpeciesId: string,
+  ): Promise<ReviewCase | null> {
+    const i = this.rows.findIndex((z) => z.id === proposalId);
+    const existing = this.rows[i];
+    if (!existing) return null;
+    const merged = {
+      ...existing,
+      objectId: targetSpeciesId,
+      status: "reviewed" as const,
+      reviewedBy: userId,
+    };
+    this.rows[i] = merged;
+    return merged;
   }
 }

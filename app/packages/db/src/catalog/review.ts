@@ -49,6 +49,17 @@ export class ReviewPostgres {
     return r.rows[0] ?? null;
   }
 
+  async listOpen(userId: string): Promise<readonly ReviewCase[]> {
+    // Reviewers and operators see all open proposals; plant keepers see none (checked in core).
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<ReviewCase>(
+        `select ${COLUMNS} from review_case where status in ('proposal', 'ai_unreviewed') order by created_at desc`,
+        [],
+      ),
+    );
+    return r.rows;
+  }
+
   async decide(
     userId: string,
     id: string,
@@ -59,6 +70,25 @@ export class ReviewPostgres {
       c.query<ReviewCase>(
         `update review_case set status = $2, reason = $3 where id = $1 returning ${COLUMNS}`,
         [id, status, reason],
+      ),
+    );
+    return r.rows[0] ?? null;
+  }
+
+  async merge(
+    userId: string,
+    proposalId: string,
+    targetSpeciesId: string,
+  ): Promise<ReviewCase | null> {
+    // Merge a proposal's review_case to point to the target species.
+    // This closes the proposal (sets status to 'reviewed') and re-points the object_id.
+    // The database has already been updated to support re-pointing of specimens, etc.
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<ReviewCase>(
+        `update review_case set object_id = $2, status = 'reviewed', reviewed_by = $3
+         where id = $1 and status in ('proposal', 'ai_unreviewed')
+         returning ${COLUMNS}`,
+        [proposalId, targetSpeciesId, userId],
       ),
     );
     return r.rows[0] ?? null;

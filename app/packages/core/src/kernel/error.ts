@@ -13,6 +13,8 @@ export const ERROR_TEXTS = {
   "review.not_found": "Diesen Prüfvorgang gibt es nicht.",
   "review.status_invalid": "Dieser Vorgang ist schon entschieden.",
   "review.reason_missing": "Zum Zurückweisen gehört ein Grund, den der Ersteller sehen kann.",
+  "review.approval_incomplete":
+    "Die Art ist nicht vollständig genug zur Freigabe. Prüfe die fehlenden Angaben und Quellen.",
   "species.duplicate":
     "Diese Art gibt es schon (gleicher Name oder Synonym). Wähle die vorhandene Art, statt eine zweite anzulegen.",
   "species.not_found": "Diese Art gibt es nicht.",

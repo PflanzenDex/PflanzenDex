@@ -16,7 +16,7 @@ import {
   careProfileZoneUsageFor,
   specimenRoutes,
 } from "./collection";
-import { SPECIES_PATHS, speciesRoutes } from "./catalog";
+import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import {
   CARE_PATHS,
@@ -97,6 +97,8 @@ export function createApp(opt: AppOptions = {}): Hono {
     app.route("/", lightRoutes(opt.pool, [careProfileZoneUsageFor(opt.pool)]));
     for (const path of SPECIES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", speciesRoutes(opt.pool));
+    for (const path of REVIEW_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+    app.route("/", reviewRoutes(opt.pool));
     for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", specimenRoutes(opt.pool, { clock: opt.clock, ...careSources(opt.pool, opt) }));
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
