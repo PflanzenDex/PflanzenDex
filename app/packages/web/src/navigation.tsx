@@ -7,6 +7,7 @@ export type View =
   | "careProfile"
   | "pokedex"
   | "light"
+  | "review"
   | "account"
   | "settings";
 
@@ -19,14 +20,20 @@ const ENTRIES: { id: View; text: string }[] = [
   { id: "careProfile", text: "Pflegeprofil" },
   { id: "pokedex", text: "Pokédex" },
   { id: "light", text: "Standorte und Licht" },
+  { id: "review", text: "Prüfliste" },
   { id: "account", text: "Konto" },
   { id: "settings", text: "Einstellungen" },
 ];
 
-export function Navigation(props: { active: View; onSwitch: (a: View) => void }) {
+/** The review list is only for operators and reviewers (US-BES-10); everybody else never sees the tab. */
+export function Navigation(props: {
+  active: View;
+  onSwitch: (a: View) => void;
+  reviewer?: boolean;
+}) {
   return (
     <nav aria-label="Hauptnavigation" className="navigation">
-      {ENTRIES.map((e) => (
+      {ENTRIES.filter((e) => e.id !== "review" || props.reviewer).map((e) => (
         <button
           key={e.id}
           type="button"

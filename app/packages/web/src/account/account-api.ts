@@ -8,6 +8,8 @@ export type Account = {
   timeZone: string | null;
   emailConfirmed: boolean;
   mayShareWithFriends: boolean;
+  /** Operator or reviewer: shows the review list of catalog proposals (US-BES-10). */
+  reviewer?: boolean;
 };
 
 export const OCCASIONS = [

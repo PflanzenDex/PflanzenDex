@@ -24,7 +24,9 @@ export class InMemorySpecies implements SpeciesStore {
 
   private visible(userId: string): Row[] {
     return this.rows.filter(
-      (z) => z.creator === userId || ["curated", "reviewed"].includes(z.reviewStatus),
+      (z) =>
+        z.reviewStatus !== "merged" &&
+        (z.creator === userId || ["curated", "reviewed"].includes(z.reviewStatus)),
     );
   }
 
@@ -52,6 +54,16 @@ export class InMemorySpecies implements SpeciesStore {
   async find(userId: string, id: string): Promise<Species | null> {
     const z = this.visible(userId).find((x) => x.id === id);
     return z ? this.asValue(userId, z) : null;
+  }
+
+  /** Roles for `findForReview` (reviewers see foreign proposals). */
+  reviewers: string[] = [];
+
+  async findForReview(userId: string, id: string): Promise<Species | null> {
+    const z = this.rows.find(
+      (x) => x.id === id && (this.reviewers.includes(userId) || this.visible(userId).includes(x)),
+    );
+    return z && z.reviewStatus !== "merged" ? this.asValue(userId, z) : null;
   }
 
   async create(

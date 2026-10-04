@@ -1,7 +1,14 @@
 import type { Pool } from "pg";
 import { withAccount } from "../kernel/index.ts";
 
-import { COLUMNS, FOREIGN_KEY, pgError, type SpecimenRow } from "./specimen-shared.ts";
+import {
+  COLUMNS,
+  FOREIGN_KEY,
+  SpeciesGone,
+  ensureSpeciesVisible,
+  pgError,
+  type SpecimenRow,
+} from "./specimen-shared.ts";
 import { setLocations } from "./specimen-locations.ts";
 
 export type { SpecimenRow };
@@ -63,7 +70,12 @@ export class SpecimenPostgres {
     w: SpecimenValues,
     assignments: readonly MarkerAssignment[] = [],
   ): Promise<
-    SpecimenRow | "name_taken" | "marker_taken" | "location_unknown" | "specimen_unknown"
+    | SpecimenRow
+    | "name_taken"
+    | "marker_taken"
+    | "location_unknown"
+    | "specimen_unknown"
+    | "species_unknown"
   > {
     try {
       return await withAccount(this.pool, userId, async (c) => {
@@ -80,10 +92,12 @@ export class SpecimenPostgres {
            values ($1, $2, $3, $4, $5, $6, $7) returning ${COLUMNS}`,
           [userId, w.speciesId, w.name, w.marker, w.locationId, w.caughtAt, w.status ?? "plant"],
         );
+        await ensureSpeciesVisible(c, w.speciesId);
         return r.rows[0] as SpecimenRow;
       });
     } catch (e) {
       if (e instanceof UnknownSpecimen) return "specimen_unknown";
+      if (e instanceof SpeciesGone) return "species_unknown";
       const taken = takenBy(e);
       if (taken) return taken;
       if (pgError(e).code === FOREIGN_KEY && pgError(e).constraint === "specimen_location")

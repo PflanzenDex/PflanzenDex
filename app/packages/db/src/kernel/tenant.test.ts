@@ -1,7 +1,13 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { findSchemaViolations, withAccount, migrate, checkTenantIsolation } from "./index.ts";
+import {
+  findSchemaViolations,
+  withAccount,
+  asAccount,
+  migrate,
+  checkTenantIsolation,
+} from "./index.ts";
 import { openPool } from "./connection.ts";
 import { FIXTURES, createFixtureSpeciesAt } from "../fixtures.ts";
 import { MODULE_CONFIG as REGISTER } from "../../../../modules.config.mjs";
@@ -19,6 +25,26 @@ beforeAll(async () => {
 afterAll(async () => {
   await pool.query("delete from account where id = any($1)", [[accountA, accountB]]);
   await pool.end();
+});
+
+describe("US-BES-10 switching the account inside a transaction (merge of a proposal)", () => {
+  it("US-BES-10 runs as the other account and restores the caller's account afterwards", async () => {
+    const seen = await withAccount(pool, accountA, async (c) => {
+      const current = () =>
+        c
+          .query<{ id: string }>("select current_setting('app.account_id') as id")
+          .then((r) => r.rows[0]?.id);
+      const inside = await asAccount(c, accountB, current);
+      return { inside, after: await current() };
+    });
+    expect(seen).toEqual({ inside: accountB, after: accountA });
+  });
+
+  it("US-BES-10 refuses an account id that is not a UUID", async () => {
+    await expect(
+      withAccount(pool, accountA, (c) => asAccount(c, "not-a-uuid", async () => 1)),
+    ).rejects.toThrow("Account id is not a UUID");
+  });
 });
 
 describe("tenant isolation across all tables", () => {

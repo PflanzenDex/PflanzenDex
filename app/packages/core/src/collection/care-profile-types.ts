@@ -56,7 +56,7 @@ export interface CareProfileStore {
     userId: string,
     speciesId: string,
     changes: CareProfileChanges,
-  ): Promise<CareProfile | "location_unknown" | "zone_unknown">;
+  ): Promise<CareProfile | "location_unknown" | "zone_unknown" | "species_unknown">;
 }
 
 /** Reading side only; the care phases read the profile through it. */

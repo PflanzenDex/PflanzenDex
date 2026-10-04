@@ -60,6 +60,8 @@ export interface Species extends SpeciesValues {
   /** The caller created the species. */
   readonly own: boolean;
   readonly version: number;
+  /** Why a reviewer rejected the proposal; only its creator gets it (FR-BES-11, US-BES-10). */
+  readonly reviewReason?: string | null;
 }
 
 export interface SpeciesHit extends Species {
@@ -77,6 +79,8 @@ export interface SpeciesStore {
   /** `norm`: normalized search text, `null` lists all visible species. */
   search(userId: string, norm: string | null): Promise<readonly SpeciesHit[]>;
   find(userId: string, id: string): Promise<Species | null>;
+  /** Like `find`, but a reviewer also gets foreign open proposals to judge them (US-BES-10). Others: as `find`. */
+  findForReview(userId: string, id: string): Promise<Species | null>;
   /**
    * Checks duplicates among the visible species and creates species, names and review case (`proposal`) in one
    * step (FR-BES-03: no partial state). With a duplicate nothing is written.
