@@ -10,7 +10,6 @@ import {
   appError,
   localToday,
   isTimeZone,
-  zoneDistribution,
   type TreatmentSource,
   type MeasurementSource,
   type TargetLocationSource,
@@ -26,6 +25,7 @@ import { Hono } from "hono";
 import type { Pool } from "pg";
 import { errorBody, body, write, type AuthEnv } from "../kernel";
 import { archivedRoutes } from "./archived-routes";
+import { derivedRoutes } from "./derived-routes";
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const SPECIMEN_PATHS = ["/specimens"] as const;
@@ -65,12 +65,6 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
     measurements: opt.measurements ?? NO_MEASUREMENTS,
     treatments: opt.treatments ?? NO_TREATMENTS,
   };
-  const distributionDeps = {
-    specimens,
-    species: cardsDeps.species,
-    locations: cardsDeps.locations,
-    zones: cardsDeps.zones,
-  };
   const routes = new Hono<AuthEnv>();
 
   routes.get("/specimens", async (c) =>
@@ -92,10 +86,8 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   });
   // Archive, archive and restore (US-BES-07); before `/specimens/:id`.
   routes.route("/", archivedRoutes(pool, clock));
-  // US-LIC-02: distribution over zones 2 to 4; like "cards" before `/specimens/:id`, only data of the own account (P-04).
-  routes.get("/specimens/distribution", async (c) =>
-    c.json({ distribution: await zoneDistribution(distributionDeps, c.get("account").id) }),
-  );
+  // Distribution (US-LIC-02) and hints (US-BES-08); before `/specimens/:id`.
+  routes.route("/", derivedRoutes(pool));
   routes.get("/specimens/:id", async (c) => {
     const e = await specimenLoad(specimens, c.get("account").id, c.req.param("id"));
     return e ? c.json(e) : c.json(errorBody(appError("specimen.not_found")), 404);

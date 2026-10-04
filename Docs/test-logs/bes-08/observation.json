@@ -1,0 +1,109 @@
+{
+  "dz": [
+    201,
+    {
+      "zones": [
+        {
+          "id": "076c11c0-5e6c-4e01-9d57-9a253d4da83b",
+          "name": "Lampe 1",
+          "luxCeiling": 1500,
+          "ppfd": 36,
+          "sortOrder": 1
+        },
+        {
+          "id": "51e8cde4-cfc7-4733-a7f2-2b346de000b6",
+          "name": "Lampe 2",
+          "luxCeiling": 15000,
+          "ppfd": 300,
+          "sortOrder": 2
+        },
+        {
+          "id": "66d7cec8-25c5-406e-a9a3-a24882a6a650",
+          "name": "Lampe 3",
+          "luxCeiling": 100000,
+          "ppfd": 1600,
+          "sortOrder": 3
+        },
+        {
+          "id": "429e82ca-a501-4302-a1f0-1580d1396380",
+          "name": "Lampe 4",
+          "luxCeiling": 110000,
+          "ppfd": 2000,
+          "sortOrder": 4
+        }
+      ]
+    }
+  ],
+  "sp": "3c45e406-802f-4b92-884d-4d1ad3e2f1d9",
+  "archive": 200,
+  "apiHintsBefore": {
+    "hints": [
+      {
+        "kind": "location_without_zone",
+        "specimenId": "f672cc68-1e00-48ea-9637-1342a69e85f5",
+        "specimenName": "Aloeeccca – in der Kiste",
+        "locationId": "fe3926a7-a304-4c8d-855e-30030577bfd3",
+        "text": "„Aloeeccca – in der Kiste“ steht am Standort „Kiste eccca“, der noch keine Lichtzone hat.",
+        "nextAction": "Weise dem Standort „Kiste eccca“ eine Lichtzone zu."
+      },
+      {
+        "kind": "location_missing",
+        "specimenId": "1f12fe65-b88f-4c4b-a8c3-22fdfd4a6cb3",
+        "specimenName": "Aloeeccca – ohne Standort",
+        "locationId": null,
+        "text": "„Aloeeccca – ohne Standort“ hat noch keinen Standort.",
+        "nextAction": "Weise dem Exemplar einen Standort zu."
+      }
+    ]
+  },
+  "distributionNote-desktop": [
+    "Nicht mitgezählt: 1 archiviert."
+  ],
+  "hintTexts-desktop": [
+    "„Aloeeccca – in der Kiste“ steht am Standort „Kiste eccca“, der noch keine Lichtzone hat.Weise dem Standort „Kiste eccca“ eine Lichtzone zu.Zu Standorte und Licht",
+    "„Aloeeccca – ohne Standort“ hat noch keinen Standort.Weise dem Exemplar einen Standort zu.Zum Bestand"
+  ],
+  "hints-desktop": {
+    "axe": [],
+    "scrollWidth": 1440,
+    "smallTargets": []
+  },
+  "distributionNote-mobile": [
+    "Nicht mitgezählt: 1 archiviert."
+  ],
+  "hintTexts-mobile": [
+    "„Aloeeccca – in der Kiste“ steht am Standort „Kiste eccca“, der noch keine Lichtzone hat.Weise dem Standort „Kiste eccca“ eine Lichtzone zu.Zu Standorte und Licht",
+    "„Aloeeccca – ohne Standort“ hat noch keinen Standort.Weise dem Exemplar einen Standort zu.Zum Bestand"
+  ],
+  "hints-mobile": {
+    "axe": [],
+    "scrollWidth": 375,
+    "smallTargets": []
+  },
+  "assignZone": 200,
+  "hintTextsAfter-desktop": [
+    "„Aloeeccca – ohne Standort“ hat noch keinen Standort.Weise dem Exemplar einen Standort zu.Zum Bestand"
+  ],
+  "hintTextsAfter-mobile": [
+    "„Aloeeccca – ohne Standort“ hat noch keinen Standort.Weise dem Exemplar einen Standort zu.Zum Bestand"
+  ],
+  "benEmpty-desktop": [
+    "Keine Hinweise: Jedes Exemplar hat eine Art, einen Standort und eine Lichtzone."
+  ],
+  "empty-desktop": {
+    "axe": [],
+    "scrollWidth": 1440,
+    "smallTargets": []
+  },
+  "benApiHints": {
+    "hints": []
+  },
+  "benEmpty-mobile": [
+    "Keine Hinweise: Jedes Exemplar hat eine Art, einen Standort und eine Lichtzone."
+  ],
+  "empty-mobile": {
+    "axe": [],
+    "scrollWidth": 375,
+    "smallTargets": []
+  }
+}
