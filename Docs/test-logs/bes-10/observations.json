@@ -1,0 +1,78 @@
+{
+  "roleInserted": " count \n-------\n     7\n(1 row)\n\n",
+  "targetApproved": 200,
+  "proposed": [
+    201,
+    201,
+    201,
+    201
+  ],
+  "specimensOfC": [
+    201,
+    201
+  ],
+  "profileOfC": 200,
+  "maraBeforeSpecimenSpecies": [
+    "C",
+    "C"
+  ],
+  "desktop_maraHasReviewTab": 0,
+  "desktop_maraReviewApi": 403,
+  "desktop_maraApproveApi": 403,
+  "mobile_maraHasReviewTab": 0,
+  "mobile_maraReviewApi": 403,
+  "mobile_maraApproveApi": 403,
+  "summary": "21 offene Vorschläge, der älteste heute. Arbeite die Liste von oben nach unten ab.",
+  "entryHeadings": [
+    "Fixtureus tenant_test",
+    "Echeveria elegans",
+    "Aloe vera",
+    "Sansevieria cylindrica",
+    "Haworthia fasciata",
+    "Echeveria elegans",
+    "Aloe vera",
+    "Sansevieria cylindrica",
+    "Haworthia fasciata",
+    "Echeveria elegans 'Rcfdaca'",
+    "Aloe vera 'Rcfdaca'",
+    "Sansevieria cylindrica",
+    "Haworthia fasciata 'Rcfdaca'",
+    "Echeveria elegans 'Rccaacb'",
+    "Aloe vera 'Rccaacb'",
+    "Sansevieria cylindrica",
+    "Haworthia fasciata 'Rccaacb'",
+    "Echeveria elegans 'Rbaebde'",
+    "Aloe vera 'Rbaebde'",
+    "Sansevieria baebde",
+    "Haworthia fasciata 'Rbaebde'"
+  ],
+  "axe_list_desktop": [],
+  "bApproveDisabled": true,
+  "bIssues": "Freigabe noch nicht möglich:\n\nQuelle fehlt (Pflicht für Lichtbedarf und Ruhephase)",
+  "cDuplicateHint": "Mögliche Dublette: Diese Art gibt es vielleicht schon. Prüfe, ob es dieselbe Pflanze ist.\n\nSansevieria baebde 'Skyline' (gefunden über „Sansevieria baebde 'Skyline'“)Mit Sansevieria baebde 'Skyline' zusammenführen",
+  "approveMessage": "Vorschlag freigegeben. Die Art ist jetzt für alle sichtbar.",
+  "benSeesA": 200,
+  "rejectDisabledWithoutReason": true,
+  "maraSeesReason": [
+    "rejected",
+    "Die Quelle belegt den Lichtbedarf nicht."
+  ],
+  "benSeesD": 404,
+  "mergeMessage": "Vorschlag zusammengeführt. 2 Exemplare übernommen; 1 Pflegeprofil übernommen.",
+  "maraSpecimenSpeciesAfter": [
+    "target",
+    "target"
+  ],
+  "maraProfileAfter": [
+    "target"
+  ],
+  "maraSeesMergedProposal": 404,
+  "maraRejectionHintVisible": 1,
+  "mobileSeed": [
+    201,
+    201
+  ],
+  "axe_list_mobile": [],
+  "mobileHorizontalScroll": false,
+  "mobileSmallTargets": []
+}
