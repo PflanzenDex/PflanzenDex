@@ -1,0 +1,11 @@
+     × a fresh account that reads the profile first gets its row and the defaults, never 403 12ms
+     × a fresh account that saves the profile first succeeds and the save is kept 46ms
+     × two fresh accounts: the first save of one never shows up for the other (P-04) 44ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/account/profile.test.ts > US-ACC-02 · GET /account/profile > a fresh account that reads the profile first gets its row and the defaults, never 403
+AssertionError: expected 403 to be 200 // Object.is equality
+ FAIL  src/account/profile.test.ts > US-ACC-02 · PUT /account/profile > a fresh account that saves the profile first succeeds and the save is kept
+AssertionError: expected 403 to be 200 // Object.is equality
+ FAIL  src/account/profile.test.ts > US-ACC-02 · PUT /account/profile > two fresh accounts: the first save of one never shows up for the other (P-04)
+AssertionError: expected undefined to be 'Lena Test' // Object.is equality
+      Tests  3 failed | 15 passed (18)

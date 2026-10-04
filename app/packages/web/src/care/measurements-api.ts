@@ -1,5 +1,5 @@
 import type { MeasurementView, MeasurementRow, Quality } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../kernel";
+import { call, createWrite, currentTimeZone, type Response } from "../kernel";
 
 type FetchFn = typeof fetch;
 
@@ -33,15 +33,14 @@ export interface Access {
 }
 
 /**
- * Records a measurement. The device's time zone determines "today" (NFR-08); the profile does not know one yet
- * (US-ACC-02). The idempotency key is created per call; sending the same call again does not write twice.
+ * Records a measurement. The profile's time zone (US-ACC-02; the device's as fallback) determines "today" (NFR-08). The idempotency key is created per call; sending the same call again does not write twice.
  */
 export async function recordMeasurement(
   access: Access,
   specimenId: string,
   input: MeasurementInput,
 ): Promise<Response<MeasurementRow>> {
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = currentTimeZone();
   const r = await createWrite(access.api, access.token, access.fetchFn ?? fetch)(
     "POST",
     `/specimens/${encodeURIComponent(specimenId)}/measurements`,

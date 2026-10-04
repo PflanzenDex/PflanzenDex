@@ -72,7 +72,7 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   routes.get("/specimens", async (c) =>
     c.json({ specimens: await specimenList(specimens, c.get("account").id) }),
   );
-  // Before `/specimens/:id`, otherwise "cards" would be read as an ID. "Today" is the local date of the device's time zone (NFR-08).
+  // Before `/specimens/:id`, otherwise "cards" would be read as an ID. "Today" is the local date of the requested time zone (the profile's, US-ACC-02; NFR-08).
   routes.get("/specimens/cards", async (c) => {
     const timeZone = c.req.query("timeZone");
     if (!isTimeZone(timeZone)) {

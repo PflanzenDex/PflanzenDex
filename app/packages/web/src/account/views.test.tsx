@@ -7,6 +7,7 @@ const account: Account = {
   id: "1",
   email: "lena@example.test",
   displayName: "Lena",
+  timeZone: null,
   emailConfirmed: true,
   mayShareWithFriends: true,
 };

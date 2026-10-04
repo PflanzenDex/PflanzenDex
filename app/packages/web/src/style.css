@@ -7,6 +7,7 @@
   --rand: #cfdccf;
   --warn-grund: #fff4d6;
   --warn-rand: #c98a00;
+  --fehler-rand: #b3261e; /* invalid field border; 6.0:1 on --grund, 6.5:1 on white (WCAG 1.4.11 needs 3:1) */
   color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
@@ -19,6 +20,7 @@
     --rand: #2e4034;
     --warn-grund: #3a3012;
     --warn-rand: #e0a92e;
+    --fehler-rand: #ff8a80; /* 7.8:1 on --grund, 6.9:1 on --card */
   }
 }
 * {
@@ -134,4 +136,10 @@ button:focus-visible {
 .tab {
   flex: 1 1 auto;
   padding: 0 12px;
+}
+
+/* A field the server refused (US-ACC-02): visible border, not only the aria state. */
+[aria-invalid="true"] {
+  border: 2px solid var(--fehler-rand);
+  outline-color: var(--fehler-rand);
 }

@@ -1,0 +1,118 @@
+{
+  "desktop": {
+    "initial": {
+      "name": "Erika Testfrau",
+      "tz": "Asia/Tokyo",
+      "hint": 1,
+      "privateChecked": false,
+      "noRec": false,
+      "notifications": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "saveDisabled": false
+    },
+    "layout-initial": {
+      "hScroll": false,
+      "small": []
+    },
+    "axe-initial": [],
+    "afterReload": {
+      "name": "Erika Grünhand",
+      "tz": "Pacific/Kiritimati",
+      "hint": 0
+    },
+    "invalid": {
+      "alert": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
+      "ariaInvalid": "true",
+      "kept": "Mars/Olympus"
+    },
+    "axe-invalid": [],
+    "switchesAfterReload": {
+      "tz": "Europe/Berlin",
+      "treatment": false,
+      "swap": false,
+      "phase": true,
+      "private": true,
+      "noRec": true
+    },
+    "layout-saved": {
+      "hScroll": false,
+      "small": []
+    },
+    "axe-saved": [],
+    "nameAfterSignIn": "Hallo, Erika Grünhand",
+    "requestsWithTimeZone": [
+      "http://localhost:55147/treatments?timeZone=Pacific/Kiritimati",
+      "http://localhost:55147/treatments?timeZone=Pacific/Kiritimati"
+    ],
+    "secondAccount": {
+      "name": "Erika Testfrau",
+      "tz": "Asia/Tokyo",
+      "private": false,
+      "treatment": true
+    }
+  },
+  "mobil": {
+    "initial": {
+      "name": "Erika Testfrau",
+      "tz": "Asia/Tokyo",
+      "hint": 1,
+      "privateChecked": false,
+      "noRec": false,
+      "notifications": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "saveDisabled": false
+    },
+    "layout-initial": {
+      "hScroll": false,
+      "small": []
+    },
+    "axe-initial": [],
+    "afterReload": {
+      "name": "Erika Grünhand",
+      "tz": "Pacific/Kiritimati",
+      "hint": 0
+    },
+    "invalid": {
+      "alert": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
+      "ariaInvalid": "true",
+      "kept": "Mars/Olympus"
+    },
+    "axe-invalid": [],
+    "switchesAfterReload": {
+      "tz": "Europe/Berlin",
+      "treatment": false,
+      "swap": false,
+      "phase": true,
+      "private": true,
+      "noRec": true
+    },
+    "layout-saved": {
+      "hScroll": false,
+      "small": []
+    },
+    "axe-saved": [],
+    "nameAfterSignIn": "Hallo, Erika Grünhand",
+    "requestsWithTimeZone": [
+      "http://localhost:55147/treatments?timeZone=Pacific/Kiritimati",
+      "http://localhost:55147/treatments?timeZone=Pacific/Kiritimati"
+    ],
+    "secondAccount": {
+      "name": "Erika Testfrau",
+      "tz": "Asia/Tokyo",
+      "private": false,
+      "treatment": true
+    }
+  }
+}
