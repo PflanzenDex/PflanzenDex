@@ -8,7 +8,8 @@ export type View =
   | "pokedex"
   | "light"
   | "review"
-  | "account";
+  | "account"
+  | "settings";
 
 const ENTRIES: { id: View; text: string }[] = [
   { id: "species", text: "Arten" },
@@ -21,6 +22,7 @@ const ENTRIES: { id: View; text: string }[] = [
   { id: "light", text: "Standorte und Licht" },
   { id: "review", text: "Prüfliste" },
   { id: "account", text: "Konto" },
+  { id: "settings", text: "Einstellungen" },
 ];
 
 /** The review list is only for operators and reviewers (US-BES-10); everybody else never sees the tab. */

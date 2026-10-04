@@ -7,6 +7,7 @@ import {
   type SetStateAction,
 } from "react";
 import { UserManager, WebStorageStateStore, type User } from "oidc-client-ts";
+import { setProfileTimeZone } from "../kernel";
 import { signOutEverywhere, apiUrl, getAccount, oidcSettings, type Account } from "./account-api";
 
 export type State =
@@ -45,7 +46,10 @@ async function loadState(mgr: UserManager): Promise<State> {
       const hint = window.sessionStorage.getItem(MARKER) ? "Du bist abgemeldet." : undefined;
       return hint ? { kind: "signedOut", hint } : { kind: "signedOut" };
     }
-    return { kind: "signedIn", account: await getAccount(apiUrl(env), user.access_token) };
+    const account = await getAccount(apiUrl(env), user.access_token);
+    // Phases, due dates and "today" are computed in the time zone of the profile (NFR-08, US-ACC-02).
+    setProfileTimeZone(account.timeZone ?? null);
+    return { kind: "signedIn", account };
   } catch (e) {
     if (e instanceof Error && e.message === "not_signed_in") {
       await mgr.removeUser();
@@ -75,6 +79,7 @@ function sessionActions(mgr: UserManager, setState: Dispatch<SetStateAction<Stat
       try {
         if (user) await signOutEverywhere(mgr.settings.authority, user.access_token);
         await mgr.removeUser();
+        setProfileTimeZone(null);
         setState({ kind: "signedOut", hint: "Du bist auf allen Geräten abgemeldet." });
       } catch {
         setState((z) =>

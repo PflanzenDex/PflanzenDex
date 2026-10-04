@@ -1,18 +1,17 @@
 import type { PhasesRow, SwitchedSpecimen } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../kernel";
+import { call, createWrite, currentTimeZone, type Response } from "../kernel";
 
 type FetchFn = typeof fetch;
 
 /**
- * Loads the care phases of the signed-in account (US-PHA-01). The device's time zone determines "today" (NFR-08); the
- * profile does not know one yet (US-ACC-02).
+ * Loads the care phases of the signed-in account (US-PHA-01). The profile's time zone (US-ACC-02; the device's as fallback) determines "today" (NFR-08).
  */
 export async function loadCarePhases(
   api: string,
   token: string,
   fetchFn: FetchFn = fetch,
 ): Promise<Response<readonly PhasesRow[]>> {
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = currentTimeZone();
   const r = await call<{ phases: PhasesRow[] }>(
     fetchFn,
     `${api}/care-phases?timeZone=${encodeURIComponent(timeZone)}`,
@@ -23,7 +22,7 @@ export async function loadCarePhases(
 
 /**
  * "Jetzt umgestellt" (US-PHA-03): the specimens move to the target location of today's phase. The server decides the
- * target (selected, never typed, FR-PHA-03); the device's time zone determines "today" (NFR-08). The repeat-guard key
+ * target (selected, never typed, FR-PHA-03); the profile's time zone (US-ACC-02; the device's as fallback) determines "today" (NFR-08). The repeat-guard key
  * is created per call.
  */
 export async function confirmPhaseSwitch(
@@ -32,7 +31,7 @@ export async function confirmPhaseSwitch(
   specimenIds: readonly string[],
   fetchFn: FetchFn = fetch,
 ): Promise<Response<readonly SwitchedSpecimen[]>> {
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = currentTimeZone();
   const r = await createWrite(api, token, fetchFn)("POST", "/care-phases/confirm", {
     specimenIds,
     timeZone,
