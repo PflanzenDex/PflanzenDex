@@ -39,7 +39,8 @@ async function call(
   });
   return { status: res.status, body: (await res.json()) as Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
-const ownership = (sub: string | null) => call(sub, "GET", "/pokedex/ownership");
+const ownership = (sub: string | null, timeZone = "Europe/Berlin") =>
+  call(sub, "GET", `/pokedex/ownership?timeZone=${encodeURIComponent(timeZone)}`);
 const caught = (r: Response) =>
   (r.body["ownership"].caught as { species: string }[]).map((c) => c.species);
 
@@ -81,6 +82,14 @@ afterAll(async () => {
 });
 
 describe("US-POK-06 ownership: sign-in", () => {
+  it("US-POK-07 without a valid time zone: 400 input.invalid", async () => {
+    for (const path of ["/pokedex/ownership", "/pokedex/ownership?timeZone=Mars%2FBase"]) {
+      const r = await call(subA, "GET", path);
+      expect(r.status).toBe(400);
+      expect(r.body["error"].code).toBe("input.invalid");
+    }
+  });
+
   it("GET /pokedex/ownership without token: 401", async () => {
     expect((await ownership(null)).status).toBe(401);
   });
@@ -114,6 +123,7 @@ describe("US-POK-06 ownership: derived from the specimens", () => {
         genus: `Opuntia${run}`,
         chips: ["'Albispina'"],
         specimenCount: 2,
+        caughtDate: { date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), source: "caught_at" },
       },
     ]);
     expect(o.unidentified).toEqual([]);
@@ -152,5 +162,58 @@ describe("US-POK-06 ownership: derived from the specimens", () => {
     const before = await count();
     await ownership(subA);
     expect((await count()).rows[0].n).toBe(before.rows[0].n);
+  });
+});
+
+describe("US-POK-07 catch date through the API", () => {
+  const datesOf = async (sub: string, species: string, timeZone?: string) =>
+    (
+      (await ownership(sub, timeZone)).body["ownership"].caught as {
+        species: string;
+        caughtDate: unknown;
+      }[]
+    ).find((c) => c.species === species)?.caughtDate;
+
+  it("US-POK-07 earliest across active and archived specimens; creation date is approximate and local", async () => {
+    const lemon = await newSpecies(subA, `Limonia${run} acidissima`);
+    const kept = await specimen(subA, `Limonia neu ${run}`, lemon);
+    const old = await specimen(subA, `Limonia alt ${run}`, lemon);
+    const created = await specimen(subA, `Limonia ohne ${run}`, lemon);
+    await pool.query("update specimen set caught_at = '2026-06-01' where id = $1", [kept]);
+    await pool.query(
+      "update specimen set caught_at = '2025-02-03', status = 'archived', archived_at = '2026-01-01', archived_reason = 'abgegeben' where id = $1",
+      [old],
+    );
+    await pool.query("update specimen set caught_at = null where id = $1", [created]);
+    expect(await datesOf(subA, `Limonia${run} acidissima`)).toEqual({
+      date: "2025-02-03",
+      source: "caught_at",
+    });
+    await pool.query(
+      "update specimen set caught_at = null, status = 'plant', archived_at = null, archived_reason = null where id = $1",
+      [old],
+    );
+    await pool.query("update specimen set created_at = '2024-12-31T23:30:00Z' where id = $1", [
+      old,
+    ]);
+    expect(await datesOf(subA, `Limonia${run} acidissima`, "Europe/Berlin")).toEqual({
+      date: "2025-01-01",
+      source: "created_at",
+    });
+    expect((await datesOf(subA, `Limonia${run} acidissima`, "UTC")) as { date: string }).toEqual({
+      date: "2024-12-31",
+      source: "created_at",
+    });
+  });
+
+  it("US-POK-07 another account sees none of it and its date is its own (P-04)", async () => {
+    const other = await newSpecies(subB, `Limonia${run} acidissima`);
+    await specimen(subB, `Limonia B ${run}`, other);
+    const own = (await datesOf(subB, `Limonia${run} acidissima`)) as {
+      date: string;
+      source: string;
+    };
+    expect(own.source).toBe("caught_at");
+    expect(own.date).not.toBe("2025-02-03");
   });
 });

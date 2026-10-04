@@ -27,6 +27,7 @@ const specimen = (extra: Partial<Specimen> = {}): Specimen => ({
   locationId: null,
   status: "plant",
   caughtAt: "2026-10-03",
+  createdAt: "2026-10-03T08:00:00Z",
   archivedAt: null,
   archivedReason: null,
   measurements: [],
