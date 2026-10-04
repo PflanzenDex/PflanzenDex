@@ -104,10 +104,24 @@ describe("US-ACC-01 App", () => {
     expect(await screen.findByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
   });
 
-  it("signed in: starts in the catalog; the navigation switches between all four views", async () => {
+  it("US-ACC-03 signed in: starts on the start page with the guided onboarding for a new account", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     render(<App />);
+    expect(await screen.findByRole("heading", { name: "Wo stehen deine Pflanzen?" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Start" }).getAttribute("aria-current")).toBe("page");
+    await userEvent.click(screen.getByRole("button", { name: "Einstieg später fortsetzen" }));
+    expect(await screen.findByRole("heading", { name: "Start" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Art im Katalog wählen" }));
+    expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Arten" }).getAttribute("aria-current")).toBe("page");
+  });
+
+  it("signed in: the navigation switches between all views", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "Arten" }));
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
     const species = screen.getByRole("button", { name: "Arten" });
     expect(species.getAttribute("aria-current")).toBe("page");
@@ -177,6 +191,7 @@ describe("US-ACC-01 App", () => {
         const path = new URL(String(url)).pathname;
         if (path === "/account") return response(200, account);
         if (path === "/locations") return response(200, { locations: [] });
+        if (path === "/light-zones") return response(200, { zones: [] });
         if (path === "/specimens/cards") return response(200, { cards: [] });
         if (path === "/specimens/archived") return response(200, { archived: [] });
         if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
@@ -201,6 +216,7 @@ describe("US-ACC-01 App", () => {
     );
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "Arten" }));
     await userEvent.click(await screen.findByRole("button", { name: /Dracaena trifasciata/ }));
     await userEvent.click(await screen.findByRole("button", { name: "Diese Art wählen" }));
     expect(await screen.findByRole("heading", { name: "Exemplar anlegen" })).toBeTruthy();

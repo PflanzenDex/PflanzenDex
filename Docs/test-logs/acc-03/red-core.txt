@@ -1,0 +1,26 @@
++     undefined,
+    ],
+    [
+      "Ficus lyrata",
+-     "https://de.wikipedia.org/wiki/Geigenfeige",
++     undefined,
+    ],
+  ]
+
+ ❯ src/pokedex/ownership.test.ts:242:56
+    240|     await add("anna", without);
+    241|     const r = await pokedexOwnership({ specimens, species: own }, "ann…
+    242|     expect(r.caught.map((c) => [c.species, c.source])).toEqual([
+       |                                                        ^
+    243|       ["Aloe vera", null],
+    244|       ["Ficus lyrata", "https://de.wikipedia.org/wiki/Geigenfeige"],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 13 passed (15)
+   Start at  16:39:08
+   Duration  343ms (transform 66%, import 17%, tests 16%, worker 1%)
+
+exit 

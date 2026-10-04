@@ -15,6 +15,7 @@ import { LightPage } from "./light";
 import { ReviewPage, SpeciesPage } from "./catalog";
 import { CarePhasesPage, TreatmentsPage } from "./care";
 import { PokedexPage } from "./pokedex";
+import { StartPage } from "./start-page";
 import { Navigation, type View } from "./navigation";
 import "./style.css";
 
@@ -35,7 +36,7 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
 
 export function App() {
   const s = useSession();
-  const [view, setView] = useState<View>("species");
+  const [view, setView] = useState<View>("start");
   // The chosen species travels from the catalog to the collection: the app wires both modules (US-BES-02).
   const [newSpecies, setNewSpecies] = useState<Species | null>(null);
   const choose = (species: Species) => {
@@ -69,6 +70,8 @@ export function App() {
               onEverywhereSignOut={() => void s.everywhereSignOut()}
               {...(z.error ? { error: z.error } : {})}
             />
+          ) : view === "start" ? (
+            <StartPage api={api} token={s.token} accountId={z.account.id} onOpen={setView} />
           ) : view === "light" ? (
             <LightPage api={api} token={s.token} onOpenCollection={() => setView("collection")} />
           ) : Simple ? (

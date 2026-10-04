@@ -1,4 +1,5 @@
 export type View =
+  | "start"
   | "species"
   | "collection"
   | "treatments"
@@ -12,6 +13,7 @@ export type View =
   | "settings";
 
 const ENTRIES: { id: View; text: string }[] = [
+  { id: "start", text: "Start" },
   { id: "species", text: "Arten" },
   { id: "collection", text: "Bestand" },
   { id: "treatments", text: "Behandlung" },
