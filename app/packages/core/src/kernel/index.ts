@@ -16,10 +16,11 @@ export {
   choiceField,
   numberField,
   timeZoneField,
+  calendarDateField,
 } from "./validation";
 export type { Schema } from "./validation";
 export { defineOperation, execute } from "./operation";
 export type { Dependencies, Call, Operation } from "./operation";
 export { canonical } from "./canonical";
 export type { SignedInContext, Begin, IdempotencyKey, IdempotencyStore, Context } from "./ports";
-export { localToday, isTimeZone } from "./date";
+export { localToday, isTimeZone, isCalendarDate } from "./date";

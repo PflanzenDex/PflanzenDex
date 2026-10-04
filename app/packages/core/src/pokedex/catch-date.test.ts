@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { InMemorySpecimens, SpeciesStub, testSpecies } from "../collection/test-helpers";
+import { execute } from "../kernel";
+import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
+import { specimenCreate, NO_TARGET_LOCATION } from "../collection";
 import { pokedexOwnership, type OwnershipDependencies } from "./index";
 
 const LEMON = "11111111-1111-4111-8111-111111111111";
@@ -108,5 +111,26 @@ describe("US-POK-07 catch date: earliest across all specimens of the species", (
     await add("ben", { caughtAt: "2020-01-01", createdAt: null });
     await add("anna", { caughtAt: "2026-06-01", createdAt: null });
     expect(await dateOf("anna")).toEqual({ date: "2026-06-01", source: "caught_at" });
+  });
+});
+
+describe("US-POK-07 catch date of a back-dated specimen (FR-BES-04)", () => {
+  it("US-POK-07 a specimen created with a back-dated catch date drives the exact catch date, not the creation date", async () => {
+    const created = await execute(
+      specimenCreate({
+        specimens,
+        species,
+        targetLocation: NO_TARGET_LOCATION,
+        clock: () => new Date("2026-10-02T12:00:00Z"),
+      }),
+      { idempotency: new InMemoryIdempotencyStore() },
+      {
+        context: { userId: "anna" },
+        input: { speciesId: LEMON, timeZone: "Europe/Berlin", catchDate: "2022-02-03" },
+        idempotencyKey: "backdate",
+      },
+    );
+    expect(created.ok).toBe(true);
+    expect(await dateOf("anna")).toEqual({ date: "2022-02-03", source: "caught_at" });
   });
 });
