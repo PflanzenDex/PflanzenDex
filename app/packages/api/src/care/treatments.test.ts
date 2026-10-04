@@ -199,3 +199,72 @@ describe("US-BEH-01 tenant isolation (P-04)", () => {
     expect(r.status).toBe(409);
   });
 });
+
+type ListedTreatment = {
+  id: string;
+  specimenId: string;
+  specimenName: string;
+  reason: string;
+  agent: string | null;
+  dueAt: string;
+  status: { kind: string; text: string };
+};
+const open = async (sub: string | null, zone = "Europe/Berlin") =>
+  call(sub, "GET", `/treatments?timeZone=${encodeURIComponent(zone)}`);
+const listed = async (sub: string): Promise<ListedTreatment[]> =>
+  (await open(sub)).body["treatments"] as ListedTreatment[];
+
+describe("US-BEH-02 open treatments", () => {
+  it("US-BEH-02 GET /treatments without token: 401", async () => {
+    expect((await open(null)).status).toBe(401);
+  });
+
+  it("US-BEH-02 an unknown time zone: 400 input.invalid", async () => {
+    const r = await open(subA, "Mars/Base");
+    expect(r.status).toBe(400);
+    expect(r.body["error"]["code"]).toBe("input.invalid");
+  });
+
+  it("US-BEH-02 lists the own open treatments ascending by date with status, agent or null", async () => {
+    const e = await newSpecimen(subA);
+    await plan(subA, { specimenIds: [e], reason: "Spät", date: "2026-10-20", agent: "Neemöl" });
+    await plan(subA, { specimenIds: [e], reason: "Früh", date: "2026-10-01" });
+    await plan(subA, { specimenIds: [e], reason: "Heute", date: "2026-10-03" });
+    const mine = (await listed(subA)).filter((t) => t.specimenId === e);
+    expect(mine.map((t) => [t.reason, t.agent, t.dueAt, t.status.text])).toEqual([
+      ["Früh", null, "2026-10-01", "überfällig seit 2 Tagen"],
+      ["Heute", null, "2026-10-03", "heute fällig"],
+      ["Spät", "Neemöl", "2026-10-20", "20.10.2026"],
+    ]);
+    const all = (await listed(subA)).map((t) => t.dueAt);
+    expect(all).toEqual([...all].sort());
+  });
+
+  it("US-BEH-02 Anna's treatments never appear for Ben, and the other way round (two accounts, P-04)", async () => {
+    const a = await newSpecimen(subA);
+    const b = await newSpecimen(subB);
+    await plan(subA, { specimenIds: [a], reason: "Nur Anna" });
+    await plan(subB, { specimenIds: [b], reason: "Nur Ben" });
+    expect((await listed(subB)).map((t) => t.reason)).not.toContain("Nur Anna");
+    expect((await listed(subB)).map((t) => t.reason)).toContain("Nur Ben");
+    expect((await listed(subA)).map((t) => t.reason)).not.toContain("Nur Ben");
+  });
+
+  it("US-BEH-02 an archived specimen has no open treatments in the list", async () => {
+    const e = await newSpecimen(subA);
+    await plan(subA, { specimenIds: [e], reason: "Archiviert danach" });
+    await call(subA, "POST", `/specimens/${e}/archive`, {
+      reason: "eingegangen",
+      timeZone: "Europe/Berlin",
+    });
+    expect((await listed(subA)).some((t) => t.specimenId === e)).toBe(false);
+  });
+
+  it("US-BEH-02 an account without specimens gets an empty list", async () => {
+    const fresh = `beh2-${randomUUID()}`;
+    const r = await open(fresh);
+    expect(r.status).toBe(200);
+    expect(r.body["treatments"]).toEqual([]);
+    await pool.query("delete from account where subject = $1", [fresh]);
+  });
+});

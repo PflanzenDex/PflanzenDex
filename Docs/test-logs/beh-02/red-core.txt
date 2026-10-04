@@ -1,0 +1,40 @@
+]
+
++ Received:
+false
+
+ ❯ src/care/treatment-list.test.ts:123:50
+    121|     const { list } = await seeded("ben");
+    122|     const r = await list();
+    123|     expect(r.ok && r.value.map((t) => t.reason)).toEqual(["Fremd"]);
+       |                                                  ^
+    124|   });
+    125|   it("US-BEH-02 an account without open treatments gets an empty list"…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/care/treatment-list.test.ts > US-BEH-02 open treatments list > US-BEH-02 an account without open treatments gets an empty list
+AssertionError: expected false to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+false
+
+ ❯ src/care/treatment-list.test.ts:128:29
+    126|     const treatments = new InMemoryTreatments({});
+    127|     const r = await treatmentOpenList({ specimens, treatments, clock }…
+    128|     expect(r.ok && r.value).toEqual([]);
+       |                             ^
+    129|   });
+    130| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)
+   Start at  08:32:36
+   Duration  282ms (transform 81%, import 13%, tests 5%, worker 1%)
+

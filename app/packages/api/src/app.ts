@@ -63,7 +63,7 @@ function bindCareOne(
   for (const path of CARE_PHASES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", carePhasesRoutes(pool, opt));
   for (const path of TREATMENT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-  app.route("/", treatmentRoutes(pool));
+  app.route("/", treatmentRoutes(pool, opt));
 }
 
 /** What `care` feeds into the collection: target location, measurements and treatments, unless tests replace them. */

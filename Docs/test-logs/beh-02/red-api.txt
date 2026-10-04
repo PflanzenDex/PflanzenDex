@@ -1,0 +1,27 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-af87f9004cdfab07d/app/packages/api
+
+ ❯ src/care/treatments.test.ts (20 tests | 5 failed) 1191ms
+   ❯ US-BEH-02 open treatments (6)
+     × US-BEH-02 an unknown time zone: 400 input.invalid 6ms
+     × US-BEH-02 lists the own open treatments ascending by date with status, agent or null 64ms
+     × US-BEH-02 Anna's treatments never appear for Ben, and the other way round (two accounts, P-04) 64ms
+     × US-BEH-02 an archived specimen has no open treatments in the list 45ms
+     × US-BEH-02 an account without specimens gets an empty list 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/care/treatments.test.ts > US-BEH-02 open treatments > US-BEH-02 an unknown time zone: 400 input.invalid
+ FAIL  src/care/treatments.test.ts > US-BEH-02 open treatments > US-BEH-02 lists the own open treatments ascending by date with status, agent or null
+ FAIL  src/care/treatments.test.ts > US-BEH-02 open treatments > US-BEH-02 Anna's treatments never appear for Ben, and the other way round (two accounts, P-04)
+ FAIL  src/care/treatments.test.ts > US-BEH-02 open treatments > US-BEH-02 an archived specimen has no open treatments in the list
+ FAIL  src/care/treatments.test.ts > US-BEH-02 open treatments > US-BEH-02 an account without specimens gets an empty list
+SyntaxError: Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 15 passed (20)
+   Start at  08:33:49
+   Duration  1.73s (tests 72%, transform 23%, import 5%)
+
