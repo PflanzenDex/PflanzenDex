@@ -25,7 +25,7 @@ const reviewer: TokenVerifier = async (token) => {
 const NOW = new Date("2026-10-31T23:30:00Z");
 type Response = { status: number; body: Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any
 type Plan = Record<string, Partial<Record<CarePhase, string>>>;
-// The care profile (US-BES-09) does not exist yet; the test source plays it. Keyed by species id.
+// The care profile (US-BES-09) does not exist yet; the test source plays it. Keyed by account id, then species id.
 const plan: Record<string, Plan> = {};
 const phaseLocation: PhaseLocationSource = {
   phaseLocation: async (userId, speciesId, phase) => plan[userId]?.[speciesId]?.[phase] ?? null,
@@ -115,7 +115,10 @@ beforeAll(async () => {
   living = await location(subA, `Wohnzimmer ${run}`);
   cold = await location(subA, `Kühler Flur ${run}`);
   foreignLocation = await location(subB, `Bens Flur ${run}`);
-  plan[subA] = { [speciesA]: { dormancy: cold, growth: living } };
+  const owner = await pool.query<{ id: string }>("select id from account where subject = $1", [
+    subA,
+  ]);
+  plan[owner.rows[0]?.id ?? ""] = { [speciesA]: { dormancy: cold, growth: living } };
 });
 afterAll(async () => {
   const subs = [[subA, subB]];

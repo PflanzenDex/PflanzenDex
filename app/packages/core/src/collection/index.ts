@@ -4,7 +4,7 @@ export type { CreateDependencies } from "./create";
 export { specimenMark } from "./mark";
 export type { MarkDependencies } from "./mark";
 export { specimenRepot } from "./repot";
-export { specimenSetLocation } from "./locate";
+export { specimenSetLocation, LOCATE_ERROR } from "./locate";
 export type { LocateDependencies } from "./locate";
 export type { RepotDependencies } from "./repot";
 export { cuttingLight } from "./cutting-light";
