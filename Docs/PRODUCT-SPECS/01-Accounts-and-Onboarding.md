@@ -17,7 +17,7 @@ Acceptance criteria:
 - The sign-in stays on the device but is revocable ("sign out on all devices").
 - Wrong credentials do not reveal whether the email exists.
 
-### US-ACC-02 · Profile and settings · ⬜ new
+### US-ACC-02 · Profile and settings · 🟨 new
 
 As a **plant keeper** I want to set display name, time zone and notifications.
 
