@@ -1,137 +1,62 @@
-import { mayShareWithFriends, validateProfileInput, type AccountProfile } from "@pflanzendex/core";
-import { withAccount } from "@pflanzendex/db";
+import {
+  accountUpdateProfile,
+  appError,
+  defaultNotifications,
+  mayShareWithFriends,
+} from "@pflanzendex/core";
+import { IdempotencyPostgres, ProfilePostgres, withAccount } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import type { AuthEnv } from "../kernel";
+import { body, errorBody, statusFor, write, type AuthEnv } from "../kernel";
 
-/** Own account data (FR-ACC-01): email and display name come from the verified token and are kept current. */
-// eslint-disable-next-line max-lines-per-function
+/**
+ * Own account data (FR-ACC-01): email and confirmation come from the verified token and are kept current. The display
+ * name is taken over from the token only while the user has not chosen one (US-ACC-02), a chosen name is never
+ * overwritten by a sign-in. The profile (US-ACC-02) is written only through `account.update_profile` (P-03, with
+ * `Idempotency-Key`) for the account of the caller (P-04); reading is derived from the same row.
+ */
 export function accountRoutes(pool: Pool): Hono<AuthEnv> {
+  const profiles = new ProfilePostgres(pool);
+  const update = accountUpdateProfile({ profiles });
+  const deps = { idempotency: new IdempotencyPostgres(pool) };
   const routes = new Hono<AuthEnv>();
   routes.get("/", async (c) => {
     const { id, data } = c.get("account");
-    await withAccount(pool, id, (db) =>
-      db.query(
+    const own = await withAccount(pool, id, async (db) => {
+      const r = await db.query<{ display_name: string | null; time_zone: string | null }>(
         `insert into account_data (account_id, email, display_name, email_confirmed)
          values ($1, $2, $3, $4)
          on conflict (account_id) do update
-           set email = excluded.email, display_name = excluded.display_name,
-               email_confirmed = excluded.email_confirmed, updated_at = now()`,
+           set email = excluded.email,
+               display_name = coalesce(account_data.display_name, excluded.display_name),
+               email_confirmed = excluded.email_confirmed, updated_at = now()
+         returning display_name, time_zone`,
         [id, data.email, data.displayName, data.emailConfirmed],
-      ),
-    );
+      );
+      return r.rows[0];
+    });
     return c.json({
       id,
       email: data.email,
-      displayName: data.displayName,
+      displayName: own?.display_name ?? null,
+      timeZone: own?.time_zone ?? null,
       emailConfirmed: data.emailConfirmed,
       mayShareWithFriends: mayShareWithFriends(data),
     });
   });
 
   routes.get("/profile", async (c) => {
-    const { id } = c.get("account");
-    const result = await withAccount(pool, id, async (client) => {
-      const res = await client.query(
-        `select display_name, time_zone, everything_private, no_recommendations, notification_settings
-         from account_data where account_id = $1`,
-        [id],
-      );
-      return res.rows[0];
+    const profile = await profiles.find(c.get("account").id);
+    if (!profile) {
+      const denied = appError("access.denied");
+      return c.json(errorBody(denied), statusFor(denied));
+    }
+    return c.json({
+      ...profile,
+      notifications: { ...defaultNotifications(), ...profile.notifications },
     });
-    if (!result)
-      return c.json(
-        { error: { code: "access.denied", text: "Darauf hast du keinen Zugriff." } },
-        403,
-      );
-    const profile: AccountProfile = {
-      displayName: result.display_name,
-      timeZone: result.time_zone,
-      everythingPrivate: result.everything_private,
-      noRecommendations: result.no_recommendations,
-      notificationSettings: result.notification_settings,
-    };
-    return c.json(profile);
   });
 
-  // eslint-disable-next-line max-lines-per-function
-  routes.put("/profile", async (c) => {
-    const { id } = c.get("account");
-    let input;
-    try {
-      input = await c.req.json();
-    } catch {
-      return c.json(
-        {
-          error: {
-            code: "input.invalid",
-            text: "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
-          },
-        },
-        400,
-      );
-    }
-    const validationResult = validateProfileInput(input);
-    if (!validationResult.ok)
-      return c.json(
-        { error: { code: validationResult.error.code, text: validationResult.error.text } },
-        400,
-      );
-
-    const updates: string[] = [];
-    const values: unknown[] = [id];
-    if (input.displayName !== undefined) {
-      updates.push(`display_name = $${values.length + 1}`);
-      values.push(input.displayName);
-    }
-    if (input.timeZone !== undefined) {
-      updates.push(`time_zone = $${values.length + 1}`);
-      values.push(input.timeZone);
-    }
-    if (input.everythingPrivate !== undefined) {
-      updates.push(`everything_private = $${values.length + 1}`);
-      values.push(input.everythingPrivate);
-    }
-    if (input.noRecommendations !== undefined) {
-      updates.push(`no_recommendations = $${values.length + 1}`);
-      values.push(input.noRecommendations);
-    }
-    if (input.notificationSettings !== undefined) {
-      updates.push(`notification_settings = $${values.length + 1}`);
-      values.push(JSON.stringify(input.notificationSettings));
-    }
-    if (updates.length === 0)
-      return c.json(
-        {
-          error: {
-            code: "input.invalid",
-            text: "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
-          },
-        },
-        400,
-      );
-
-    const result = await withAccount(pool, id, async (client) => {
-      await client.query(
-        `update account_data set ${updates.join(", ")} where account_id = $1`,
-        values,
-      );
-      const res = await client.query(
-        `select display_name, time_zone, everything_private, no_recommendations, notification_settings
-         from account_data where account_id = $1`,
-        [id],
-      );
-      return res.rows[0];
-    });
-    const profile: AccountProfile = {
-      displayName: result.display_name,
-      timeZone: result.time_zone,
-      everythingPrivate: result.everything_private,
-      noRecommendations: result.no_recommendations,
-      notificationSettings: result.notification_settings,
-    };
-    return c.json(profile);
-  });
-
+  routes.put("/profile", async (c) => write(c, deps, update, { input: await body(c) }));
   return routes;
 }

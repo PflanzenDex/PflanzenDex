@@ -22,7 +22,7 @@ export interface CompleteResult {
   readonly treatment: TreatmentRow;
 }
 
-// The device sends the time zone (the profile has none yet, US-ACC-02); it decides which date "today" is.
+// The client sends the time zone (the one of the profile, else the device's, US-ACC-02); it decides which date "today" is.
 const schema = shape({ id: idField("id"), timeZone: timeZoneField("timeZone") });
 
 /**

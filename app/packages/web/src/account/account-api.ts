@@ -1,33 +1,32 @@
 import type { UserManagerSettings } from "oidc-client-ts";
+import { call, createWrite, type Response } from "../kernel";
 
 export type Account = {
   id: string;
   email: string;
   displayName: string | null;
+  timeZone: string | null;
   emailConfirmed: boolean;
   mayShareWithFriends: boolean;
 };
 
-export type NotificationPreference = {
-  enabled: boolean;
-  time?: string;
-};
+export const OCCASIONS = [
+  "phase",
+  "treatment",
+  "measurement",
+  "watering",
+  "swap",
+  "friends",
+] as const;
+export type Occasion = (typeof OCCASIONS)[number];
 
-export type NotificationSettings = {
-  phase?: NotificationPreference;
-  treatment?: NotificationPreference;
-  measurement?: NotificationPreference;
-  watering?: NotificationPreference;
-  swap?: NotificationPreference;
-  friends?: NotificationPreference;
-};
-
+/** Profile and settings (US-ACC-02); the same shape the API returns and takes. */
 export type AccountProfile = {
   displayName: string | null;
   timeZone: string | null;
   everythingPrivate: boolean;
   noRecommendations: boolean;
-  notificationSettings: NotificationSettings | null;
+  notifications: Record<Occasion, boolean>;
 };
 
 type Environment = Record<string, string | undefined>;
@@ -73,38 +72,19 @@ export async function signOutEverywhere(
   if (!res.ok) throw new Error("sign_out_failed");
 }
 
-export async function getProfile(
+export const loadProfile = (
   api: string,
   token: string,
   fetchFn: FetchFn = fetch,
-): Promise<AccountProfile> {
-  const res = await fetchFn(`${api}/account/profile`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (res.status === 401) throw new Error("not_signed_in");
-  if (!res.ok) throw new Error("profile_not_loadable");
-  return (await res.json()) as AccountProfile;
-}
+): Promise<Response<AccountProfile>> => call(fetchFn, `${api}/account/profile`, token);
 
-export async function updateProfile(
+/** Saves the profile as a whole; the repeat-guard key is created per call. */
+export async function saveProfile(
   api: string,
   token: string,
-  updates: Partial<AccountProfile>,
+  profile: AccountProfile,
   fetchFn: FetchFn = fetch,
-): Promise<AccountProfile> {
-  const res = await fetchFn(`${api}/account/profile`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(updates),
-  });
-  if (res.status === 401) throw new Error("not_signed_in");
-  if (res.status === 400) {
-    const error = await res.json();
-    throw new Error(error.error?.code ?? "input_invalid");
-  }
-  if (!res.ok) throw new Error("profile_update_failed");
-  return (await res.json()) as AccountProfile;
+): Promise<Response<AccountProfile>> {
+  const r = await createWrite(api, token, fetchFn)("PUT", "/account/profile", profile);
+  return r.ok ? { ok: true, value: r.value as AccountProfile } : r;
 }

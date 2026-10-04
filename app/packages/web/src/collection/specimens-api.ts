@@ -1,5 +1,5 @@
 import type { Specimen } from "@pflanzendex/core";
-import { createWrite, type Response } from "../kernel";
+import { createWrite, currentTimeZone, type Response } from "../kernel";
 
 type FetchFn = typeof fetch;
 
@@ -20,7 +20,7 @@ export async function createSpecimen(
   },
   fetchFn: FetchFn = fetch,
 ): Promise<Response<Specimen>> {
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = currentTimeZone();
   const r = await createWrite(api, token, fetchFn)("POST", "/specimens", {
     ...input,
     timeZone,

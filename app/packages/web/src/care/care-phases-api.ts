@@ -1,5 +1,5 @@
 import type { PhasesRow, SwitchedSpecimen } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../kernel";
+import { call, createWrite, currentTimeZone, type Response } from "../kernel";
 
 type FetchFn = typeof fetch;
 
@@ -12,7 +12,7 @@ export async function loadCarePhases(
   token: string,
   fetchFn: FetchFn = fetch,
 ): Promise<Response<readonly PhasesRow[]>> {
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = currentTimeZone();
   const r = await call<{ phases: PhasesRow[] }>(
     fetchFn,
     `${api}/care-phases?timeZone=${encodeURIComponent(timeZone)}`,
@@ -32,7 +32,7 @@ export async function confirmPhaseSwitch(
   specimenIds: readonly string[],
   fetchFn: FetchFn = fetch,
 ): Promise<Response<readonly SwitchedSpecimen[]>> {
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = currentTimeZone();
   const r = await createWrite(api, token, fetchFn)("POST", "/care-phases/confirm", {
     specimenIds,
     timeZone,

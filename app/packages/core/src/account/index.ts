@@ -1,9 +1,15 @@
 export { mayShareWithFriends, accountFromClaims } from "./account";
 export type { AccountData } from "./account";
-export { validateProfileInput } from "./profile";
+export {
+  accountUpdateProfile,
+  defaultNotifications,
+  DISPLAY_NAME_LIMITS,
+  NOTIFICATION_OCCASIONS,
+} from "./profile";
 export type {
   AccountProfile,
-  UpdateProfileInput,
-  NotificationSettings,
-  NotificationPreference,
+  NotificationOccasion,
+  NotificationSwitches,
+  ProfileDependencies,
+  ProfileStore,
 } from "./profile";

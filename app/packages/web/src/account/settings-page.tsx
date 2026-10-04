@@ -1,194 +1,84 @@
-import { useEffect, useState } from "react";
-import type { AccountProfile } from "./account-api";
-import { getProfile, updateProfile } from "./account-api";
+import "./settings.css";
+import { useCallback, useState, type FormEvent } from "react";
+import { LoadFrame, SIGN_IN, deviceTimeZone, setProfileTimeZone, type ApiError } from "../kernel";
+import { loadProfile, saveProfile, type AccountProfile } from "./account-api";
+import { ProfileFields, SwitchFields } from "./settings-fields";
 
 type Token = () => Promise<string | undefined>;
 
-const ERROR_TEXTS = {
-  not_signed_in: "Du bist nicht angemeldet.",
-  profile_not_loadable: "Einstellungen konnten nicht geladen werden.",
-  profile_update_failed: "Einstellungen konnten nicht gespeichert werden.",
-  input_invalid: "Ungültige Eingabe.",
-} as const;
-
-type LoadingState = "loading" | "loaded" | "saving" | "error";
-
-function ProfileFields(props: {
-  formData: Partial<AccountProfile>;
-  onChange: (data: Partial<AccountProfile>) => void;
-}) {
-  return (
-    <fieldset>
-      <legend>Profil</legend>
-      <div className="form-group">
-        <label htmlFor="displayName">Anzeigename</label>
-        <input
-          id="displayName"
-          type="text"
-          value={props.formData.displayName ?? ""}
-          onChange={(e) =>
-            props.onChange({
-              ...props.formData,
-              displayName: e.target.value || null,
-            })
-          }
-          placeholder="Dein Name (optional)"
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="timeZone">Zeitzone</label>
-        <input
-          id="timeZone"
-          type="text"
-          value={props.formData.timeZone ?? ""}
-          onChange={(e) =>
-            props.onChange({
-              ...props.formData,
-              timeZone: e.target.value || null,
-            })
-          }
-          placeholder="z.B. Europe/Berlin (optional)"
-        />
-      </div>
-    </fieldset>
-  );
-}
-
-function PrivacyFields(props: {
-  formData: Partial<AccountProfile>;
-  onChange: (data: Partial<AccountProfile>) => void;
-}) {
-  return (
-    <fieldset>
-      <legend>Datenschutz</legend>
-      <div className="form-group">
-        <label htmlFor="everythingPrivate">
-          <input
-            id="everythingPrivate"
-            type="checkbox"
-            checked={props.formData.everythingPrivate ?? false}
-            onChange={(e) =>
-              props.onChange({
-                ...props.formData,
-                everythingPrivate: e.target.checked,
-              })
-            }
-          />
-          Alles privat
-        </label>
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="noRecommendations">
-          <input
-            id="noRecommendations"
-            type="checkbox"
-            checked={props.formData.noRecommendations ?? false}
-            onChange={(e) =>
-              props.onChange({
-                ...props.formData,
-                noRecommendations: e.target.checked,
-              })
-            }
-          />
-          Keine Empfehlungen
-        </label>
-      </div>
-    </fieldset>
-  );
-}
-
-function useSettings(api: string, token: Token) {
-  const [state, setState] = useState<LoadingState>("loading");
-  const [error, setError] = useState<string | null>(null);
-  const [profile, setProfile] = useState<AccountProfile | null>(null);
-  const [formData, setFormData] = useState<Partial<AccountProfile>>({});
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const t = await token();
-        if (!t) {
-          setError(ERROR_TEXTS.not_signed_in ?? null);
-          setState("error");
-          return;
-        }
-        const p = await getProfile(api, t);
-        setProfile(p);
-        setFormData(p);
-        setState("loaded");
-      } catch (err) {
-        const code = err instanceof Error ? err.message : "profile_not_loadable";
-        const errorText =
-          (ERROR_TEXTS as Record<string, string>)[code] ?? ERROR_TEXTS.profile_not_loadable;
-        setError(errorText);
-        setState("error");
-      }
-    };
-    void load();
-  }, [api, token]);
-
-  const handleSave = async () => {
-    if (!profile) return;
-    setState("saving");
-    try {
-      const t = await token();
-      if (!t) {
-        setError(ERROR_TEXTS.not_signed_in ?? null);
-        setState("error");
-        return;
-      }
-      const updated = await updateProfile(api, t, formData);
-      setProfile(updated);
-      setFormData(updated);
-      setState("loaded");
-      setError(null);
-    } catch (err) {
-      const code = err instanceof Error ? err.message : "profile_update_failed";
-      const errorText =
-        (ERROR_TEXTS as Record<string, string>)[code] ?? ERROR_TEXTS.profile_update_failed;
-      setError(errorText);
-      setState("error");
-    }
+/** Saves one profile at a time (a double tap sends one); a refusal stays visible and keeps the input (P-10). */
+function SettingsForm(props: { api: string; token: Token; profile: AccountProfile }) {
+  const [saved, setSaved] = useState(props.profile);
+  const fromDevice = saved.timeZone === null;
+  const [form, setForm] = useState<AccountProfile>({
+    ...props.profile,
+    timeZone: props.profile.timeZone ?? deviceTimeZone(),
+  });
+  const [running, setRunning] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
+  const set = (change: Partial<AccountProfile>) => {
+    setForm((f) => ({ ...f, ...change }));
+    setMessage(null);
   };
+  const dirty = JSON.stringify(form) !== JSON.stringify(saved);
 
-  return { state, error, profile, formData, setFormData, handleSave };
-}
-
-export function SettingsPage(props: { api: string; token: Token }) {
-  const { state, error, profile, formData, setFormData, handleSave } = useSettings(
-    props.api,
-    props.token,
-  );
-  const isDirty = JSON.stringify(profile) !== JSON.stringify(formData);
+  async function send(e: FormEvent) {
+    e.preventDefault();
+    if (running) return;
+    setRunning(true);
+    const t = await props.token();
+    const r = t ? await saveProfile(props.api, t, form) : { ok: false as const, error: SIGN_IN };
+    setRunning(false);
+    setError(r.ok ? null : r.error);
+    setMessage(r.ok ? "Einstellungen gespeichert." : null);
+    if (!r.ok) return;
+    setSaved(r.value);
+    setForm(r.value);
+    setProfileTimeZone(r.value.timeZone);
+  }
 
   return (
-    <section className="card" aria-labelledby="title">
-      <h1 id="title">Einstellungen</h1>
-      {state === "loading" && <p role="status">Einstellungen werden geladen …</p>}
-      {state === "error" && error && (
-        <p role="alert" className="warning">
-          {error}
+    <form className="form" onSubmit={(e) => void send(e)} aria-label="Einstellungen" noValidate>
+      <ProfileFields
+        form={form}
+        set={set}
+        invalid={error?.details?.map((d) => d.field) ?? []}
+        fromDevice={fromDevice}
+      />
+      <SwitchFields form={form} set={set} />
+      {error && (
+        <div role="alert" className="warning">
+          <p>{error.text}</p>
+        </div>
+      )}
+      {message && (
+        <p role="status" className="hint">
+          {message}
         </p>
       )}
-      {state !== "loading" && profile && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            void handleSave();
-          }}
-        >
-          <ProfileFields formData={formData} onChange={setFormData} />
-          <PrivacyFields formData={formData} onChange={setFormData} />
+      <div className="actions">
+        <button type="submit" className="primary" disabled={running || !dirty}>
+          Speichern
+        </button>
+      </div>
+    </form>
+  );
+}
 
-          <div className="actions">
-            <button type="submit" className="primary" disabled={!isDirty || state === "saving"}>
-              {state === "saving" ? "Wird gespeichert …" : "Speichern"}
-            </button>
-          </div>
-        </form>
-      )}
-    </section>
+/**
+ * Profile and settings (US-ACC-02): display name, time zone (prefilled from the device until chosen), a switch per
+ * notification occasion and the two global switches. The page says what happens next (P-09): the hint under the time
+ * zone, the confirmation after saving, the refusal with its reason.
+ */
+export function SettingsPage(props: { api: string; token: Token }) {
+  const load = useCallback((t: string) => loadProfile(props.api, t), [props.api]);
+  return (
+    <div className="light settings">
+      <h1>Einstellungen</h1>
+      <LoadFrame token={props.token} load={load} loadingText="Einstellungen werden geladen …">
+        {(profile) => <SettingsForm api={props.api} token={props.token} profile={profile} />}
+      </LoadFrame>
+    </div>
   );
 }

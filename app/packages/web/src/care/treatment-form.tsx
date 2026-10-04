@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { localToday, TREATMENT_LIMITS } from "@pflanzendex/core";
+import { currentTimeZone } from "../kernel";
 import { checkTreatment, COURSE_START, type TreatmentFields } from "./treatment-input";
 import type { TreatableSpecimen, TreatmentInput } from "./treatments-api";
 
@@ -110,7 +111,7 @@ export function TreatmentForm(props: {
   running: boolean;
   onSend: (input: TreatmentInput) => Promise<boolean>;
 }) {
-  const today = localToday(new Date(), Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const today = localToday(new Date(), currentTimeZone());
   const [fields, setFields] = useState<TreatmentFields>({
     specimenIds: [],
     reason: "",

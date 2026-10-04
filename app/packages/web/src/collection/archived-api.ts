@@ -1,5 +1,5 @@
 import type { ArchivedEntry, SpecimenRow } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../kernel";
+import { call, createWrite, currentTimeZone, type Response } from "../kernel";
 
 type FetchFn = typeof fetch;
 
@@ -23,7 +23,7 @@ export async function archiveSpecimen(
   input: { id: string; reason: string },
   fetchFn: FetchFn = fetch,
 ): Promise<Response<SpecimenRow>> {
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = currentTimeZone();
   const r = await createWrite(api, token, fetchFn)(
     "POST",
     `/specimens/${encodeURIComponent(input.id)}/archive`,

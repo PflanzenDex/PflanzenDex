@@ -1,272 +1,114 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { withAccount, migrate, openPool } from "../kernel/index.ts";
+import { migrate, openPool, withAccount } from "../kernel/index.ts";
+import { findOrCreateAccount, ProfilePostgres } from "./index.ts";
 
-describe("US-ACC-02 · Profile and settings", () => {
-  let pool: Pool;
-  const testAccounts: string[] = [];
+let pool: Pool;
+let profiles: ProfilePostgres;
+const subjects: string[] = [];
 
-  beforeAll(async () => {
-    pool = openPool();
-    await migrate(pool);
-  });
+const NOTIFICATIONS = {
+  phase: true,
+  treatment: false,
+  measurement: true,
+  watering: true,
+  swap: true,
+  friends: true,
+};
+const PROFILE = {
+  displayName: "Anna",
+  timeZone: "Europe/Berlin",
+  everythingPrivate: true,
+  noRecommendations: true,
+  notifications: NOTIFICATIONS,
+};
 
-  afterAll(async () => {
-    if (testAccounts.length > 0) {
-      await pool.query("delete from account where id = any($1)", [testAccounts]);
-    }
-    await pool.end();
-  });
-
-  async function createTestAccount(email: string): Promise<string> {
-    const accountId = randomUUID();
-    testAccounts.push(accountId);
-    await withAccount(pool, accountId, (c) =>
-      c.query("insert into account (id) values ($1)", [accountId]),
+async function newAccount(withData = true): Promise<string> {
+  const subject = `test-${randomUUID()}`;
+  subjects.push(subject);
+  const id = await findOrCreateAccount(pool, subject);
+  if (withData)
+    await withAccount(pool, id, (c) =>
+      c.query("insert into account_data (account_id, email) values ($1, $2)", [
+        id,
+        `${randomUUID()}@example.test`,
+      ]),
     );
-    await withAccount(pool, accountId, (c) =>
-      c.query(`insert into account_data (account_id, email) values ($1, $2)`, [accountId, email]),
+  return id;
+}
+
+beforeAll(async () => {
+  pool = openPool();
+  await migrate(pool);
+  profiles = new ProfilePostgres(pool);
+});
+afterAll(async () => {
+  await pool.query("delete from account where subject = any($1)", [subjects]);
+  await pool.end();
+});
+
+describe("US-ACC-02 · profile in the database", () => {
+  it("a new account starts without name and time zone, private by default, all notifications on", async () => {
+    const id = await newAccount();
+    expect(await profiles.find(id)).toEqual({
+      displayName: null,
+      timeZone: null,
+      everythingPrivate: false,
+      noRecommendations: false,
+      notifications: {},
+    });
+  });
+
+  it("saves and reads back the whole profile", async () => {
+    const id = await newAccount();
+    expect(await profiles.update(id, PROFILE)).toEqual(PROFILE);
+    expect(await profiles.find(id)).toEqual(PROFILE);
+  });
+
+  it("an account without data row has no profile and nothing is written", async () => {
+    const id = await newAccount(false);
+    expect(await profiles.find(id)).toBeNull();
+    expect(await profiles.update(id, PROFILE)).toBeNull();
+  });
+
+  it("the display name is not unique", async () => {
+    const a = await newAccount();
+    const b = await newAccount();
+    await profiles.update(a, PROFILE);
+    expect((await profiles.update(b, PROFILE))?.displayName).toBe("Anna");
+  });
+
+  it("the database refuses a time zone that is obviously no IANA name and a non-object switch list", async () => {
+    const id = await newAccount();
+    await expect(profiles.update(id, { ...PROFILE, timeZone: "+02:00" })).rejects.toThrow(
+      /account_data_time_zone_check/,
     );
-    return accountId;
-  }
-
-  describe("Display name", () => {
-    it("allows setting a display name", async () => {
-      const accountId = await createTestAccount("user1@example.test");
-
-      await withAccount(pool, accountId, async (client) => {
-        await client.query(`update account_data set display_name = $1 where account_id = $2`, [
-          "Alice",
-          accountId,
-        ]);
-        const result = await client.query(
-          `select display_name from account_data where account_id = $1`,
-          [accountId],
-        );
-        expect(result.rows[0].display_name).toBe("Alice");
-      });
-    });
-
-    it("returns null when display name is not set", async () => {
-      const accountId = await createTestAccount("user2@example.test");
-
-      await withAccount(pool, accountId, async (client) => {
-        const result = await client.query(
-          `select display_name from account_data where account_id = $1`,
-          [accountId],
-        );
-        expect(result.rows[0].display_name).toBeNull();
-      });
-    });
-
-    it("isolates display names between accounts", async () => {
-      const account1 = await createTestAccount("account1@example.test");
-      const account2 = await createTestAccount("account2@example.test");
-
-      await withAccount(pool, account1, async (client) => {
-        await client.query(`update account_data set display_name = $1 where account_id = $2`, [
-          "Alice",
-          account1,
-        ]);
-      });
-
-      await withAccount(pool, account2, async (client) => {
-        const result = await client.query(
-          `select display_name from account_data where account_id = $1`,
-          [account2],
-        );
-        expect(result.rows[0].display_name).toBeNull();
-      });
-    });
+    await expect(
+      withAccount(pool, id, (c) =>
+        c.query("update account_data set notification_settings = '[]'::jsonb"),
+      ),
+    ).rejects.toThrow(/notification_settings_check/);
   });
 
-  describe("Time zone", () => {
-    it("allows setting a time zone", async () => {
-      const accountId = await createTestAccount("tz1@example.test");
+  it("two accounts: account B neither reads nor changes the profile of account A (P-04)", async () => {
+    const a = await newAccount();
+    const b = await newAccount();
+    await profiles.update(a, PROFILE);
 
-      await withAccount(pool, accountId, async (client) => {
-        await client.query(`update account_data set time_zone = $1 where account_id = $2`, [
-          "Europe/Berlin",
-          accountId,
-        ]);
-        const result = await client.query(
-          `select time_zone from account_data where account_id = $1`,
-          [accountId],
-        );
-        expect(result.rows[0].time_zone).toBe("Europe/Berlin");
-      });
-    });
+    const seenByB = await profiles.find(b);
+    expect(seenByB?.displayName).toBeNull();
+    expect(seenByB?.everythingPrivate).toBe(false);
 
-    it("returns null when time zone is not set", async () => {
-      const accountId = await createTestAccount("tz2@example.test");
+    // B writes its own profile; A stays as it was.
+    await profiles.update(b, { ...PROFILE, displayName: "Ben", everythingPrivate: false });
+    expect(await profiles.find(a)).toEqual(PROFILE);
 
-      await withAccount(pool, accountId, async (client) => {
-        const result = await client.query(
-          `select time_zone from account_data where account_id = $1`,
-          [accountId],
-        );
-        expect(result.rows[0].time_zone).toBeNull();
-      });
-    });
-
-    it("isolates time zones between accounts", async () => {
-      const account1 = await createTestAccount("tz3@example.test");
-      const account2 = await createTestAccount("tz4@example.test");
-
-      await withAccount(pool, account1, async (client) => {
-        await client.query(`update account_data set time_zone = $1 where account_id = $2`, [
-          "Europe/Berlin",
-          account1,
-        ]);
-      });
-
-      await withAccount(pool, account2, async (client) => {
-        const result = await client.query(
-          `select time_zone from account_data where account_id = $1`,
-          [account2],
-        );
-        expect(result.rows[0].time_zone).toBeNull();
-      });
-    });
-  });
-
-  describe("Everything private switch", () => {
-    it("allows setting everything_private to true", async () => {
-      const accountId = await createTestAccount("priv1@example.test");
-
-      await withAccount(pool, accountId, async (client) => {
-        await client.query(
-          `update account_data set everything_private = true where account_id = $1`,
-          [accountId],
-        );
-        const result = await client.query(
-          `select everything_private from account_data where account_id = $1`,
-          [accountId],
-        );
-        expect(result.rows[0].everything_private).toBe(true);
-      });
-    });
-
-    it("defaults to false for everything_private", async () => {
-      const accountId = await createTestAccount("priv2@example.test");
-
-      await withAccount(pool, accountId, async (client) => {
-        const result = await client.query(
-          `select everything_private from account_data where account_id = $1`,
-          [accountId],
-        );
-        expect(result.rows[0].everything_private).toBe(false);
-      });
-    });
-
-    it("isolates everything_private between accounts", async () => {
-      const account1 = await createTestAccount("priv3@example.test");
-      const account2 = await createTestAccount("priv4@example.test");
-
-      await withAccount(pool, account1, async (client) => {
-        await client.query(
-          `update account_data set everything_private = true where account_id = $1`,
-          [account1],
-        );
-      });
-
-      await withAccount(pool, account2, async (client) => {
-        const result = await client.query(
-          `select everything_private from account_data where account_id = $1`,
-          [account2],
-        );
-        expect(result.rows[0].everything_private).toBe(false);
-      });
-    });
-  });
-
-  describe("No recommendations switch", () => {
-    it("allows setting no_recommendations to true", async () => {
-      const accountId = await createTestAccount("rec1@example.test");
-
-      await withAccount(pool, accountId, async (client) => {
-        await client.query(
-          `update account_data set no_recommendations = true where account_id = $1`,
-          [accountId],
-        );
-        const result = await client.query(
-          `select no_recommendations from account_data where account_id = $1`,
-          [accountId],
-        );
-        expect(result.rows[0].no_recommendations).toBe(true);
-      });
-    });
-
-    it("defaults to false for no_recommendations", async () => {
-      const accountId = await createTestAccount("rec2@example.test");
-
-      await withAccount(pool, accountId, async (client) => {
-        const result = await client.query(
-          `select no_recommendations from account_data where account_id = $1`,
-          [accountId],
-        );
-        expect(result.rows[0].no_recommendations).toBe(false);
-      });
-    });
-
-    it("isolates no_recommendations between accounts", async () => {
-      const account1 = await createTestAccount("rec3@example.test");
-      const account2 = await createTestAccount("rec4@example.test");
-
-      await withAccount(pool, account1, async (client) => {
-        await client.query(
-          `update account_data set no_recommendations = true where account_id = $1`,
-          [account1],
-        );
-      });
-
-      await withAccount(pool, account2, async (client) => {
-        const result = await client.query(
-          `select no_recommendations from account_data where account_id = $1`,
-          [account2],
-        );
-        expect(result.rows[0].no_recommendations).toBe(false);
-      });
-    });
-  });
-
-  describe("Notification settings", () => {
-    it("allows setting notification preferences", async () => {
-      const accountId = await createTestAccount("notif1@example.test");
-
-      const preferences = {
-        phase: { enabled: true, time: "08:00", quietHours: null },
-        treatment: { enabled: true, time: "08:00", quietHours: null },
-        measurement: { enabled: false, time: null, quietHours: null },
-        watering: { enabled: true, time: "08:00", quietHours: null },
-        swap: { enabled: true, time: "08:00", quietHours: null },
-        friends: { enabled: true, time: "08:00", quietHours: null },
-      };
-
-      await withAccount(pool, accountId, async (client) => {
-        await client.query(
-          `update account_data set notification_settings = $1 where account_id = $2`,
-          [JSON.stringify(preferences), accountId],
-        );
-        const result = await client.query(
-          `select notification_settings from account_data where account_id = $1`,
-          [accountId],
-        );
-        expect(result.rows[0].notification_settings).toEqual(preferences);
-      });
-    });
-
-    it("returns null when notification settings are not set", async () => {
-      const accountId = await createTestAccount("notif2@example.test");
-
-      await withAccount(pool, accountId, async (client) => {
-        const result = await client.query(
-          `select notification_settings from account_data where account_id = $1`,
-          [accountId],
-        );
-        expect(result.rows[0].notification_settings).toBeNull();
-      });
-    });
+    // Even a statement that names A's row directly cannot reach it as B (row rule).
+    const touched = await withAccount(pool, b, (c) =>
+      c.query("update account_data set display_name = 'x' where account_id = $1", [a]),
+    );
+    expect(touched.rowCount).toBe(0);
+    expect(await profiles.find(a)).toEqual(PROFILE);
   });
 });
