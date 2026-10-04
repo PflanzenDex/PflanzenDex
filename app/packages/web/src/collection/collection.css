@@ -204,3 +204,43 @@ a.card-photo:focus-visible {
   min-height: 48px;
   font: inherit;
 }
+
+/* Difficulty overview (US-BES-05): eight columns need room, so the table scrolls inside its own frame on a phone. */
+/* The frame is a grid item: without this a wide table would stretch the whole page instead of scrolling. */
+.frame {
+  min-width: 0;
+}
+/* Eight columns: this view gets more width than the 720px column of the other views (US-BES-05). */
+.frame:has(.difficulty-page) {
+  max-width: 1200px;
+}
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--rand);
+  border-radius: 12px;
+  background: var(--card);
+}
+table.difficulty-table {
+  width: 100%;
+  min-width: 40rem;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+table.difficulty-table th,
+table.difficulty-table td {
+  padding: 10px 6px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--rand);
+}
+table.difficulty-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+.table-hint {
+  margin: 0 0 8px;
+}
+@media (min-width: 760px) {
+  .table-hint {
+    display: none;
+  }
+}

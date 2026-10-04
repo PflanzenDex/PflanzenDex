@@ -1,7 +1,7 @@
 import { useState, type ComponentType } from "react";
 import type { Species } from "@pflanzendex/core";
 import { CollectionArea } from "./collection-area";
-import { CareProfilePage, HintsPage } from "./collection";
+import { CareProfilePage, DifficultyPage, HintsPage } from "./collection";
 import {
   AppError,
   AccountView,
@@ -29,6 +29,7 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
   treatments: TreatmentsPage,
   carePhases: CarePhasesPage,
   careProfile: CareProfilePage,
+  difficulty: DifficultyPage,
   pokedex: PokedexPage,
   review: ReviewPage,
   settings: SettingsPage,
