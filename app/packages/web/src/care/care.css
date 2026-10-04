@@ -77,3 +77,6 @@
 .treatments .hint {
   margin: 0 0 16px;
 }
+.treatments .form {
+  grid-template-columns: 1fr;
+}
