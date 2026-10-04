@@ -26,6 +26,7 @@ import type { Pool } from "pg";
 import { errorBody, body, write, type AuthEnv } from "../kernel";
 import { archivedRoutes } from "./archived-routes";
 import { markerRoutes } from "./marker-routes";
+import { locationRoutes } from "./location-routes";
 import { derivedRoutes } from "./derived-routes";
 
 /** Paths the sign-in guard (bearer token) must cover. */
@@ -43,7 +44,7 @@ export type SpecimenOptions = {
 };
 
 /**
- * Specimens (US-BES-02, US-BES-04, US-BES-07). Writing goes only through `specimen.create`, `.repot`, `.archive` and `.restore` (P-03, with
+ * Specimens (US-BES-02, US-BES-04, US-BES-07, US-PHA-03). Writing goes only through `specimen.create`, `.repot`, `.archive`, `.restore` and `.set_location` (P-03, with
  * `Idempotency-Key`); lists and cards show no archived specimens, `/specimens/archived` does. Reading returns only
  * specimens of the own account, a foreign or unknown specimen looks the same: 404 (P-04).
  */
@@ -89,6 +90,8 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   routes.route("/", archivedRoutes(pool, clock));
   // US-BES-03: give a specimen a marker or change it.
   routes.route("/", markerRoutes(pool));
+  // US-PHA-03: set the location of a specimen (BES-08 "location missing").
+  routes.route("/", locationRoutes(pool));
   // Distribution (US-LIC-02) and hints (US-BES-08); before `/specimens/:id`.
   routes.route("/", derivedRoutes(pool));
   routes.get("/specimens/:id", async (c) => {

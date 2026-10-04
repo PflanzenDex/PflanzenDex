@@ -1,8 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { ApiError, Response } from "./api";
 import { LoadError } from "./load-error";
-
-const SIGN_IN: ApiError = { code: "access.not_signed_in", text: "Bitte melde dich neu an." };
+import { SIGN_IN } from "./use-write-action";
 
 type State<T> =
   { kind: "loading" } | { kind: "error"; error: ApiError } | { kind: "loaded"; value: T };
@@ -10,15 +9,17 @@ type State<T> =
 /**
  * Loads one thing for a page and shows what the user needs while it is not there: a status while loading, the error
  * with "Erneut laden" if it fails (P-09, P-10), the content when loaded. Without a token nothing is queried. A late
- * answer of a page that was left is dropped.
+ * answer of a page that was left is dropped. Changing `refresh` loads again and keeps showing the old content until
+ * the new one is there (after a write on the page).
  */
 export function LoadFrame<T>(props: {
   token: () => Promise<string | undefined>;
   load: (token: string) => Promise<Response<T>>;
   loadingText: string;
+  refresh?: number;
   children: (value: T) => ReactNode;
 }) {
-  const { token, load } = props;
+  const { token, load, refresh } = props;
   const [reload, setReload] = useState(0);
   const [state, setState] = useState<State<T>>({ kind: "loading" });
   useEffect(() => {
@@ -33,7 +34,7 @@ export function LoadFrame<T>(props: {
     return () => {
       current = false;
     };
-  }, [token, load, reload]);
+  }, [token, load, reload, refresh]);
   if (state.kind === "loading") return <p role="status">{props.loadingText}</p>;
   if (state.kind === "error")
     return <LoadError error={state.error} onReload={() => setReload((n) => n + 1)} />;

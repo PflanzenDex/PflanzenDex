@@ -33,9 +33,11 @@ const noSpecies = {
 const serverError = { error: { code: "server.error", text: "Der Server antwortet nicht." } };
 
 function fakeServer(hints: () => Promise<Response>) {
-  const fetchFn = vi.fn<typeof fetch>(async (url) =>
-    new URL(String(url)).pathname === "/specimens/hints" ? hints() : response(404, {}),
-  );
+  const fetchFn = vi.fn<typeof fetch>(async (url) => {
+    const path = new URL(String(url)).pathname;
+    if (path === "/locations") return response(200, { locations: [] });
+    return path === "/specimens/hints" ? hints() : response(404, {});
+  });
   vi.stubGlobal("fetch", fetchFn);
   return fetchFn;
 }
@@ -60,7 +62,7 @@ describe("US-BES-08 page of the hints about incomplete specimens", () => {
   });
 
   it("US-BES-08 the action button leads to where the hint is fixed", async () => {
-    fakeServer(() => response(200, { hints: [noLocation, noZone] }));
+    fakeServer(() => response(200, { hints: [noSpecies, noZone] }));
     const open = vi.fn();
     render(<HintsPage api="http://api" token={token} onOpen={open} />);
     await userEvent.click(await screen.findByRole("button", { name: /Standorte und Licht/ }));
@@ -101,7 +103,7 @@ describe("US-BES-08 page of the hints about incomplete specimens", () => {
     const { unmount, container } = render(
       <HintsPage api="http://api" token={token} onOpen={noop} />,
     );
-    await vi.waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(2));
     unmount();
     done(new Response(JSON.stringify({ hints: [noLocation] }), { status: 200 }));
     await new Promise((r) => setTimeout(r, 0));

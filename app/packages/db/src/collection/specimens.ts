@@ -1,27 +1,14 @@
 import type { Pool } from "pg";
 import { withAccount } from "../kernel/index.ts";
 
-// Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
-export interface SpecimenRow {
-  readonly id: string;
-  readonly speciesId: string;
-  readonly name: string;
-  readonly marker: string | null;
-  readonly locationId: string | null;
-  readonly status: "plant" | "cutting" | "archived";
-  readonly caughtAt: string | null;
-  readonly archivedAt: string | null;
-  readonly archivedReason: string | null;
-}
+import { COLUMNS, FOREIGN_KEY, pgError, type SpecimenRow } from "./specimen-shared.ts";
+import { setLocations } from "./specimen-locations.ts";
+
+export type { SpecimenRow };
 export type SpecimenValues = Pick<
   SpecimenRow,
   "speciesId" | "name" | "marker" | "locationId" | "caughtAt"
 > & { readonly status?: "plant" | "cutting" };
-
-// `date` comes back as text: the driver would turn it into a `Date` in the server's time zone (NFR-08).
-const COLUMNS = `id, species_id as "speciesId", name, marker, location_id as "locationId", status,
-  to_char(caught_at, 'YYYY-MM-DD') as "caughtAt", to_char(archived_at, 'YYYY-MM-DD') as "archivedAt",
-  archived_reason as "archivedReason"`;
 
 export interface MarkerAssignment {
   readonly specimenId: string;
@@ -30,8 +17,6 @@ export interface MarkerAssignment {
 }
 
 const UNIQUE = "23505";
-const FOREIGN_KEY = "23503";
-const pgError = (e: unknown) => e as { code?: string; constraint?: string };
 
 /** A specimen of `assignments` that is unknown, foreign, archived or already has a marker: the transaction is undone. */
 class UnknownSpecimen extends Error {}
@@ -149,6 +134,14 @@ export class SpecimenPostgres {
     const sql = `update specimen set status_before_archived = status, status = 'archived', archived_at = $2,
          archived_reason = $3 where id = $1 and status <> 'archived' returning ${COLUMNS}`;
     return this.change(userId, { sql, parameter: [id, date, reason] }, "already_archived");
+  }
+
+  /** All or nothing in one transaction (US-PHA-03); see `setLocations` in `specimen-locations.ts`. */
+  async setLocations(
+    userId: string,
+    assignments: readonly { readonly specimenId: string; readonly locationId: string }[],
+  ): Promise<readonly SpecimenRow[] | "specimen_unknown" | "archived" | "location_unknown"> {
+    return setLocations(this.pool, userId, assignments);
   }
 
   /** Resets the status from before the archiving (without statement: plant) and deletes date and reason. */

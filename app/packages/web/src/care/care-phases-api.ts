@@ -1,5 +1,5 @@
-import type { PhasesRow } from "@pflanzendex/core";
-import { call, type Response } from "../kernel";
+import type { PhasesRow, SwitchedSpecimen } from "@pflanzendex/core";
+import { call, createWrite, type Response } from "../kernel";
 
 type FetchFn = typeof fetch;
 
@@ -19,4 +19,23 @@ export async function loadCarePhases(
     token,
   );
   return r.ok ? { ok: true, value: r.value.phases } : r;
+}
+
+/**
+ * "Jetzt umgestellt" (US-PHA-03): the specimens move to the target location of today's phase. The server decides the
+ * target (selected, never typed, FR-PHA-03); the device's time zone determines "today" (NFR-08). The repeat-guard key
+ * is created per call.
+ */
+export async function confirmPhaseSwitch(
+  api: string,
+  token: string,
+  specimenIds: readonly string[],
+  fetchFn: FetchFn = fetch,
+): Promise<Response<readonly SwitchedSpecimen[]>> {
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const r = await createWrite(api, token, fetchFn)("POST", "/care-phases/confirm", {
+    specimenIds,
+    timeZone,
+  });
+  return r.ok ? { ok: true, value: (r.value as { specimens: SwitchedSpecimen[] }).specimens } : r;
 }

@@ -6,6 +6,7 @@ import {
   type TreatmentSource,
   type MeasurementSource,
   type TargetLocationSource,
+  type PhaseLocationSource,
 } from "@pflanzendex/core";
 import { authentication, accountRoutes, type TokenVerifier } from "./account";
 import { SPECIMEN_PATHS, specimenRoutes } from "./collection";
@@ -36,10 +37,17 @@ export type AppOptions = {
   /** Measurements and treatments for the specimen cards (US-BES-06); without it `care` supplies the measurements (WAC-01), the treatments are still missing (BEH). */
   measurements?: MeasurementSource;
   treatments?: TreatmentSource;
+  /** Location per phase of the keeper (care profile, US-BES-09); without it nobody knows one and a move cannot be confirmed (US-PHA-03). */
+  phaseLocation?: PhaseLocationSource;
 };
 
 /** The module `care` (measurements and care phases): sign-in guard in front of the paths, then the routes. */
-function bindCareOne(app: Hono, pool: Pool, auth: MiddlewareHandler, opt: { clock?: () => Date }) {
+function bindCareOne(
+  app: Hono,
+  pool: Pool,
+  auth: MiddlewareHandler,
+  opt: { clock?: () => Date; phaseLocation?: PhaseLocationSource },
+) {
   for (const path of CARE_PATHS) app.use(path, auth);
   app.route("/", careRoutes(pool, opt));
   for (const path of CARE_PHASES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
@@ -78,7 +86,10 @@ export function createApp(opt: AppOptions = {}): Hono {
         treatments: opt.treatments,
       }),
     );
-    bindCareOne(app, opt.pool, auth, opt.clock ? { clock: opt.clock } : {});
+    bindCareOne(app, opt.pool, auth, {
+      ...(opt.clock ? { clock: opt.clock } : {}),
+      ...(opt.phaseLocation ? { phaseLocation: opt.phaseLocation } : {}),
+    });
   }
   return app;
 }

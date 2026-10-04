@@ -1,0 +1,1570 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex.worktrees/pha-03/app/packages/web
+
+ ❯ src/care/phase-switch.test.tsx (8 tests | 5 failed) 4148ms
+   ❯ US-PHA-03 'Jetzt umgestellt' on the page of the care phases (6)
+     × US-PHA-03 a tap sets the specimen, the row updates at once and the page says what changed 114ms
+     × US-PHA-03 a double tap sends one request: the button is blocked while it runs 1004ms
+     × US-PHA-03 specimens with the same target are confirmed in one step 1002ms
+     × US-PHA-03 a refusal stays visible, the list stays and nothing is claimed (P-10) 1004ms
+     × US-PHA-03 without sign-in the tap asks to sign in and sends nothing 1003ms
+ ❯ src/collection/locate.test.tsx (9 tests | 7 failed) 6133ms
+   ❯ US-PHA-03 set the location from the hint 'location missing' (BES-08) (7)
+     × US-PHA-03 choosing a location and tapping sets it, the hint disappears and the page says what changed 1018ms
+     × US-PHA-03 the location is selected from the own ones, never typed, and nothing is sent before a choice 1004ms
+     × US-PHA-03 a double tap sends one request while it runs 1004ms
+     × US-PHA-03 only the hint 'location missing' offers the choice, the zone hint keeps its link 90ms
+     × US-PHA-03 without any location it says what to do first (P-09) 1002ms
+     × US-PHA-03 a refusal stays visible and the hint stays (P-10) 1004ms
+     × US-PHA-03 without sign-in the tap asks to sign in and sends nothing 1004ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/care/phase-switch.test.tsx > US-PHA-03 'Jetzt umgestellt' on the page of the care phases > US-PHA-03 a tap sets the specimen, the row updates at once and the page says what changed
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Jetzt umgestellt: Bogenhanf"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Pflegephasen":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"care-phases-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Pflegephasen":
+  [36m<h1[39m
+    [33mid[39m=[32m"care-phases-title"[39m
+  [36m/>[39m
+
+  Name "Bogenhanf":
+  [36m<h3 />[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul[39m
+    [33mclass[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"entry"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"care-phases-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"care-phases-title"[39m
+        [36m>[39m
+          [0mPflegephasen[0m
+        [36m</h1>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBogenhanf[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mWohnzimmer[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/care/phase-switch.test.tsx:97:34
+     95|     render(<CarePhasesPage api="http://api" token={token} />);
+     96|     expect(await screen.findByText("Standort: Wohnzimmer")).toBeTruthy…
+     97|     await userEvent.click(screen.getByRole("button", { name: "Jetzt um…
+       |                                  ^
+     98|     expect((await screen.findByRole("status")).textContent).toContain(
+     99|       "„Bogenhanf“ steht jetzt am Standort „Kühler Flur“.",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  src/care/phase-switch.test.tsx > US-PHA-03 'Jetzt umgestellt' on the page of the care phases > US-PHA-03 a double tap sends one request: the button is blocked while it runs
+TestingLibraryElementError: Unable to find role="button" and name "Jetzt umgestellt: Bogenhanf"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"care-phases-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"care-phases-title"[39m
+        [36m>[39m
+          [0mPflegephasen[0m
+        [36m</h1>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBogenhanf[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mWohnzimmer[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"care-phases-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"care-phases-title"[39m
+        [36m>[39m
+          [0mPflegephasen[0m
+        [36m</h1>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBogenhanf[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mWohnzimmer[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/phase-switch.test.tsx:115:33
+    113|     const fetchFn = fakeServer(state);
+    114|     render(<CarePhasesPage api="http://api" token={token} />);
+    115|     const button = await screen.findByRole("button", { name: "Jetzt um…
+       |                                 ^
+    116|     await userEvent.dblClick(button);
+    117|     await vi.waitFor(() => expect(posts(fetchFn)).toHaveLength(1));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  src/care/phase-switch.test.tsx > US-PHA-03 'Jetzt umgestellt' on the page of the care phases > US-PHA-03 specimens with the same target are confirmed in one step
+TestingLibraryElementError: Unable to find role="button" and name "Alle 2 nach Kühler Flur umstellen"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"care-phases-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"care-phases-title"[39m
+        [36m>[39m
+          [0mPflegephasen[0m
+        [36m</h1>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBogenhanf[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mWohnzimmer[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mAloe[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0munbekannt[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mEfeu[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mKaktus[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mWohnzimmer[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"care-phases-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"care-phases-title"[39m
+        [36m>[39m
+          [0mPflegephasen[0m
+        [36m</h1>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBogenhanf[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mWohnzimmer[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mAloe[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0munbekannt[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mEfeu[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mKaktus[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mWohnzimmer[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/phase-switch.test.tsx:150:30
+    148|     const fetchFn = fakeServer(state);
+    149|     render(<CarePhasesPage api="http://api" token={token} />);
+    150|     const all = await screen.findByRole("button", { name: "Alle 2 nach…
+       |                              ^
+    151|     expect(screen.queryByRole("button", { name: /Alle 1 nach/ })).toBe…
+    152|     await userEvent.click(all);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  src/care/phase-switch.test.tsx > US-PHA-03 'Jetzt umgestellt' on the page of the care phases > US-PHA-03 a refusal stays visible, the list stays and nothing is claimed (P-10)
+TestingLibraryElementError: Unable to find role="button" and name "Jetzt umgestellt: Bogenhanf"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"care-phases-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"care-phases-title"[39m
+        [36m>[39m
+          [0mPflegephasen[0m
+        [36m</h1>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBogenhanf[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mWohnzimmer[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"care-phases-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"care-phases-title"[39m
+        [36m>[39m
+          [0mPflegephasen[0m
+        [36m</h1>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBogenhanf[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mWohnzimmer[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/phase-switch.test.tsx:169:20
+    167|     render(<CarePhasesPage api="http://api" token={token} />);
+    168|     await userEvent.click(
+    169|       await screen.findByRole("button", { name: "Jetzt umgestellt: Bog…
+       |                    ^
+    170|     );
+    171|     const alert = await screen.findByRole("alert");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  src/care/phase-switch.test.tsx > US-PHA-03 'Jetzt umgestellt' on the page of the care phases > US-PHA-03 without sign-in the tap asks to sign in and sends nothing
+TestingLibraryElementError: Unable to find role="button" and name "Jetzt umgestellt: Bogenhanf"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"care-phases-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"care-phases-title"[39m
+        [36m>[39m
+          [0mPflegephasen[0m
+        [36m</h1>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBogenhanf[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mWohnzimmer[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"care-phases-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"care-phases-title"[39m
+        [36m>[39m
+          [0mPflegephasen[0m
+        [36m</h1>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBogenhanf[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mWohnzimmer[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/phase-switch.test.tsx:186:33
+    184|       <CarePhasesPage api="http://api" token={async () => (signedIn ? …
+    185|     );
+    186|     const button = await screen.findByRole("button", { name: "Jetzt um…
+       |                                 ^
+    187|     signedIn = false;
+    188|     await userEvent.click(button);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  src/collection/locate.test.tsx > US-PHA-03 set the location from the hint 'location missing' (BES-08) > US-PHA-03 choosing a location and tapping sets it, the hint disappears and the page says what changed
+TestingLibraryElementError: Unable to find a label with the text of: Standort für „Bogenhanf“
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"hints-title"[39m
+        [33mclass[39m=[32m"specimen-hints"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"hints-title"[39m
+        [36m>[39m
+          [0mHinweise[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mDiese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"cards-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"specimen-card"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0m„Bogenhanf“ hat noch keinen Standort.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mWeise dem Exemplar einen Standort zu.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"secondary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mZum Bestand[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"hints-title"[39m
+        [33mclass[39m=[32m"specimen-hints"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"hints-title"[39m
+        [36m>[39m
+          [0mHinweise[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mDiese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"cards-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"specimen-card"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0m„Bogenhanf“ hat noch keinen Standort.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mWeise dem Exemplar einen Standort zu.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"secondary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mZum Bestand[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/locate.test.tsx:87:48
+     85|     const fetchFn = fakeServer(state);
+     86|     render(<HintsPage api="http://api" token={token} onOpen={noop} />);
+     87|     await userEvent.selectOptions(await screen.findByLabelText("Stando…
+       |                                                ^
+     88|     await userEvent.click(screen.getByRole("button", { name: "Standort…
+     89|     expect((await screen.findByRole("status")).textContent).toContain(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  src/collection/locate.test.tsx > US-PHA-03 set the location from the hint 'location missing' (BES-08) > US-PHA-03 the location is selected from the own ones, never typed, and nothing is sent before a choice
+TestingLibraryElementError: Unable to find a label with the text of: Standort für „Bogenhanf“
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"hints-title"[39m
+        [33mclass[39m=[32m"specimen-hints"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"hints-title"[39m
+        [36m>[39m
+          [0mHinweise[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mDiese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"cards-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"specimen-card"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0m„Bogenhanf“ hat noch keinen Standort.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mWeise dem Exemplar einen Standort zu.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"secondary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mZum Bestand[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"hints-title"[39m
+        [33mclass[39m=[32m"specimen-hints"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"hints-title"[39m
+        [36m>[39m
+          [0mHinweise[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mDiese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"cards-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"specimen-card"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0m„Bogenhanf“ hat noch keinen Standort.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mWeise dem Exemplar einen Standort zu.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"secondary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mZum Bestand[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/locate.test.tsx:102:33
+    100|     const fetchFn = fakeServer({ hints: [noLocation] });
+    101|     render(<HintsPage api="http://api" token={token} onOpen={noop} />);
+    102|     const select = await screen.findByLabelText("Standort für „Bogenha…
+       |                                 ^
+    103|     expect(within(select).getAllByRole("option").map((o) => o.textCont…
+    104|       "Standort wählen …",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  src/collection/locate.test.tsx > US-PHA-03 set the location from the hint 'location missing' (BES-08) > US-PHA-03 a double tap sends one request while it runs
+TestingLibraryElementError: Unable to find a label with the text of: Standort für „Bogenhanf“
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"hints-title"[39m
+        [33mclass[39m=[32m"specimen-hints"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"hints-title"[39m
+        [36m>[39m
+          [0mHinweise[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mDiese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"cards-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"specimen-card"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0m„Bogenhanf“ hat noch keinen Standort.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mWeise dem Exemplar einen Standort zu.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"secondary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mZum Bestand[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"hints-title"[39m
+        [33mclass[39m=[32m"specimen-hints"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"hints-title"[39m
+        [36m>[39m
+          [0mHinweise[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mDiese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"cards-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"specimen-card"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0m„Bogenhanf“ hat noch keinen Standort.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mWeise dem Exemplar einen Standort zu.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"secondary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mZum Bestand[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/locate.test.tsx:122:48
+    120|     });
+    121|     render(<HintsPage api="http://api" token={token} onOpen={noop} />);
+    122|     await userEvent.selectOptions(await screen.findByLabelText("Stando…
+       |                                                ^
+    123|     await userEvent.dblClick(screen.getByRole("button", { name: "Stand…
+    124|     await vi.waitFor(() => expect(posts(fetchFn)).toHaveLength(1));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  src/collection/locate.test.tsx > US-PHA-03 set the location from the hint 'location missing' (BES-08) > US-PHA-03 only the hint 'location missing' offers the choice, the zone hint keeps its link
+TestingLibraryElementError: Unable to find an accessible element with the role "combobox"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Hinweise":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"hints-title"[39m
+    [33mclass[39m=[32m"specimen-hints"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Hinweise":
+  [36m<h1[39m
+    [33mid[39m=[32m"hints-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"next-action"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"next-action"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul[39m
+    [33mclass[39m=[32m"cards-grid"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"specimen-card"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"specimen-card"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Zum Bestand":
+  [36m<button[39m
+    [33mclass[39m=[32m"secondary"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Zu Standorte und Licht":
+  [36m<button[39m
+    [33mclass[39m=[32m"secondary"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"hints-title"[39m
+        [33mclass[39m=[32m"specimen-hints"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"hints-title"[39m
+        [36m>[39m
+          [0mHinweise[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mDiese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"cards-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"specimen-card"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0m„Bogenhanf“ hat noch keinen Standort.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mWeise dem Exemplar einen Standort zu.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"secondary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mZum Bestand[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"specimen-card"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0m„Aloe“ steht am Standort „Regal Süd“, der noch keine Lichtzone hat.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mWeise dem Standort „Regal Süd“ eine Lichtzone zu.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"secondary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mZu Standorte und Licht[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:109:15
+ ❯ src/collection/locate.test.tsx:133:19
+    131|     render(<HintsPage api="http://api" token={token} onOpen={noop} />);
+    132|     await screen.findByText(noZone.text);
+    133|     expect(screen.getAllByRole("combobox")).toHaveLength(1);
+       |                   ^
+    134|     expect(screen.getByRole("button", { name: /Standorte und Licht/ })…
+    135|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  src/collection/locate.test.tsx > US-PHA-03 set the location from the hint 'location missing' (BES-08) > US-PHA-03 without any location it says what to do first (P-09)
+TestingLibraryElementError: Unable to find an element with the text: /noch keinen Standort angelegt/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"hints-title"[39m
+        [33mclass[39m=[32m"specimen-hints"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"hints-title"[39m
+        [36m>[39m
+          [0mHinweise[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mDiese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"cards-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"specimen-card"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0m„Bogenhanf“ hat noch keinen Standort.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mWeise dem Exemplar einen Standort zu.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"secondary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mZum Bestand[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"hints-title"[39m
+        [33mclass[39m=[32m"specimen-hints"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"hints-title"[39m
+        [36m>[39m
+          [0mHinweise[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mDiese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"cards-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"specimen-card"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0m„Bogenhanf“ hat noch keinen Standort.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mWeise dem Exemplar einen Standort zu.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"secondary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mZum Bestand[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/locate.test.tsx:140:26
+    138|     fakeServer({ hints: [noLocation], locations: [] });
+    139|     render(<HintsPage api="http://api" token={token} onOpen={noop} />);
+    140|     expect((await screen.findByText(/noch keinen Standort angelegt/)).…
+       |                          ^
+    141|       "Standorte und Licht",
+    142|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  src/collection/locate.test.tsx > US-PHA-03 set the location from the hint 'location missing' (BES-08) > US-PHA-03 a refusal stays visible and the hint stays (P-10)
+TestingLibraryElementError: Unable to find a label with the text of: Standort für „Bogenhanf“
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"hints-title"[39m
+        [33mclass[39m=[32m"specimen-hints"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"hints-title"[39m
+        [36m>[39m
+          [0mHinweise[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mDiese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"cards-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"specimen-card"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0m„Bogenhanf“ hat noch keinen Standort.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mWeise dem Exemplar einen Standort zu.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"secondary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mZum Bestand[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"hints-title"[39m
+        [33mclass[39m=[32m"specimen-hints"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"hints-title"[39m
+        [36m>[39m
+          [0mHinweise[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mDiese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"cards-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"specimen-card"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0m„Bogenhanf“ hat noch keinen Standort.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mWeise dem Exemplar einen Standort zu.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"secondary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mZum Bestand[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/locate.test.tsx:153:48
+    151|     });
+    152|     render(<HintsPage api="http://api" token={token} onOpen={noop} />);
+    153|     await userEvent.selectOptions(await screen.findByLabelText("Stando…
+       |                                                ^
+    154|     await userEvent.click(screen.getByRole("button", { name: "Standort…
+    155|     expect((await screen.findByRole("alert")).textContent).toContain(t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  src/collection/locate.test.tsx > US-PHA-03 set the location from the hint 'location missing' (BES-08) > US-PHA-03 without sign-in the tap asks to sign in and sends nothing
+TestingLibraryElementError: Unable to find a label with the text of: Standort für „Bogenhanf“
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"hints-title"[39m
+        [33mclass[39m=[32m"specimen-hints"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"hints-title"[39m
+        [36m>[39m
+          [0mHinweise[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mDiese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"cards-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"specimen-card"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0m„Bogenhanf“ hat noch keinen Standort.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mWeise dem Exemplar einen Standort zu.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"secondary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mZum Bestand[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"hints-title"[39m
+        [33mclass[39m=[32m"specimen-hints"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"hints-title"[39m
+        [36m>[39m
+          [0mHinweise[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mDiese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.[0m
+        [36m</p>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"cards-grid"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"specimen-card"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0m„Bogenhanf“ hat noch keinen Standort.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mWeise dem Exemplar einen Standort zu.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"secondary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mZum Bestand[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/locate.test.tsx:164:48
+    162|     const fetchFn = fakeServer({ hints: [noLocation] });
+    163|     render(<HintsPage api="http://api" token={async () => (signedIn ? …
+    164|     await userEvent.selectOptions(await screen.findByLabelText("Stando…
+       |                                                ^
+    165|     signedIn = false;
+    166|     await userEvent.click(screen.getByRole("button", { name: "Standort…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  12 failed | 5 passed (17)
+   Start at  02:26:08
+   Duration  6.83s (tests 89%, environment 8%, import 2%, transform 1%)
+
