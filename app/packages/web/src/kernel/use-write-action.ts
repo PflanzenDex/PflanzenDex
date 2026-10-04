@@ -5,7 +5,7 @@ export const SIGN_IN: ApiError = { code: "access.not_signed_in", text: "Bitte me
 
 /**
  * One tap that writes: only one request runs at a time (a double tap sends one), afterwards `after` reloads the page
- * so it shows the new state, and the message says what changed (P-09). A refusal stays visible (P-10) and no message
+ * so it shows the real state, and the message says what changed (P-09). A refusal stays visible (P-10) and no message
  * is shown then. Without a token nothing is sent and the user is asked to sign in again.
  */
 export function useWriteAction(token: () => Promise<string | undefined>, after: () => void) {
@@ -25,7 +25,8 @@ export function useWriteAction(token: () => Promise<string | undefined>, after: 
       setRunning(false);
       setError(r.ok ? null : r.error);
       setMessage(r.ok ? success : null);
-      if (r.ok) after();
+      // Also after a refusal: the page may have been stale (e.g. archived elsewhere), the error stays on screen.
+      after();
     },
     [token, after],
   );

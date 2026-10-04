@@ -27,7 +27,7 @@ Acceptance criteria:
 - Deviation = location of the specimen ≠ target location (comparison of the location id, not of the text).
 - Rows with a deviation come before rows without. A specimen without a location is its own warning "Location missing" (US-BES-08), no placeholder text.
 
-### US-PHA-03 · Confirm the move with a tap · ⬜ (prototype ✅)
+### US-PHA-03 · Confirm the move with a tap · 🟨 (prototype ✅)
 
 As a **plant keeper** I want to tap once after physically moving the plant.
 
@@ -36,6 +36,8 @@ Acceptance criteria:
 - "Moved now" sets the specimen's location to the target location (selected, never typed freely) and updates the row immediately.
 - The action is idempotent; a double tap creates no duplicate entry (US-QS-03).
 - Several specimens with the same target location can be confirmed in one step (new compared to the prototype).
+
+State of implementation: the operation `care.confirm_switch` (`POST /care-phases/confirm`, `Idempotency-Key`, P-03) takes a list of specimen IDs and the device's time zone and sets each specimen's location to the target location of its phase **today** (local calendar date, NFR-08). The target is never taken from the request: it comes from the port `PhaseLocationSource` (the keeper's choice per species and phase), the same source and the same derivation as the list (US-PHA-01), so list and confirmation cannot disagree. All or nothing in one transaction: a foreign or unknown specimen (`specimen.not_found`), an archived one (`specimen.archived`), a cutting or a species without dormancy period (`care.no_phase`, FR-PHA-04) or an unknown target (`care.target_unknown`, never invented, P-08) stops the whole step and names the specimen; a location of another account is refused by the composite foreign key. A specimen already at the target stays as it is and reports `changed: false`; the same key replays the stored answer, so a double tap writes once (US-QS-03). There is no move history to duplicate; the location is the only stored fact. The page "Pflegephasen" shows "Jetzt umgestellt" per row with a deviation, one button "Alle N nach (Standort) umstellen" per target with two or more such rows, blocks the buttons while the request runs, reloads the list afterwards (row and BES-08 hints follow) and keeps a refusal visible (P-10). **The plain location change** the BES-08 hint needs is `specimen.set_location` (`POST /specimens/:id/location`): the location is chosen from the account's own locations in the tab "Hinweise", also for cuttings (BES-04 rules stay: a cutting stays a cutting under cutting light). **Open:** the care profile (US-BES-09) does not exist, so the running app has no target location per phase: the button never appears and the API answers `care.target_unknown` until BES-09 implements the port (tests use a stub source for the whole flow); the screen of the species' care profile itself is BES-09; moving a specimen to a location of the keeper's own choice outside a hint (editing, BES-03) has no screen yet.
 
 ### US-PHA-04 · Foresee the next phase change · ⬜ (prototype ✅)
 

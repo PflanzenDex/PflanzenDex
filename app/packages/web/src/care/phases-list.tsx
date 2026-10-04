@@ -1,4 +1,5 @@
 import type { LightLocation, PhasesRow } from "@pflanzendex/core";
+import "./care.css";
 import { PHASE_TEXT, locationText } from "./text";
 import { needsSwitch, switchGroups, switchedText } from "./phase-groups";
 
@@ -49,7 +50,7 @@ function Groups(props: {
   const groups = switchGroups(props.rows);
   if (groups.length === 0) return null;
   return (
-    <div className="actions">
+    <div className="actions phase-groups">
       {groups.map((g) => {
         const place = locationText(props.locations, g.targetLocationId);
         return (

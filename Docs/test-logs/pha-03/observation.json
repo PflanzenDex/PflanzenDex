@@ -1,0 +1,256 @@
+{
+  "desktop": {
+    "setup": {
+      "rot": "4fc3e449-87f5-41ba-b071-456399e243e6",
+      "blau": "ef8bccb6-3f46-4dd5-b117-917979723cd0",
+      "gruen": "ed6727b8-5a85-4c5e-b8d7-11b9ccb0f077",
+      "kaktus": "971ebb90-5912-4e99-8530-24d6ada6369e",
+      "steckling": "1a065bad-e9d1-4f8f-9663-c14490cb9fcd"
+    },
+    "listButtons": [
+      "Alle 2 nach Wohnzimmer umstellen",
+      "Jetzt umgestellt",
+      "Jetzt umgestellt",
+      "Jetzt umgestellt"
+    ],
+    "listEntries": [
+      "Dracaena winterfest – BlauSoll-Phase heute: WachstumsphaseStandort: Kühler FlurSoll-Standort: WohnzimmerStelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.Jetzt umgestellt",
+      "Dracaena winterfest – RotSoll-Phase heute: WachstumsphaseStandort: Kühler FlurSoll-Standort: WohnzimmerStelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.Jetzt umgestellt",
+      "Opuntia ruhend – KaktusSoll-Phase heute: RuhephaseStandort: WohnzimmerSoll-Standort: Kühler FlurStelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.Jetzt umgestellt"
+    ],
+    "axeList": [],
+    "doubleTapPosts": 1,
+    "afterSingle": "„Opuntia ruhend – Kaktus“ steht jetzt am Standort „Kühler Flur“.",
+    "kaktusNow": true,
+    "groupButton": [
+      "Alle 2 nach Wohnzimmer umstellen"
+    ],
+    "afterGroup": "2 Exemplare stehen jetzt am Standort „Wohnzimmer“.",
+    "groupNow": [
+      true,
+      true
+    ],
+    "buttonsAfter": 0,
+    "repeat": {
+      "specimens": [
+        {
+          "specimenId": "4fc3e449-87f5-41ba-b071-456399e243e6",
+          "locationId": "032c6956-1a80-4177-a0bc-9557ef7d1a1b",
+          "changed": false
+        },
+        {
+          "specimenId": "ef8bccb6-3f46-4dd5-b117-917979723cd0",
+          "locationId": "032c6956-1a80-4177-a0bc-9557ef7d1a1b",
+          "changed": false
+        }
+      ]
+    },
+    "hintTexts": [
+      "„Dracaena winterfest – Blau“ steht am Standort „Wohnzimmer“, der noch keine Lichtzone hat.Weise dem Standort „Wohnzimmer“ eine Lichtzone zu.Zu Standorte und Licht",
+      "„Dracaena winterfest – Rot“ steht am Standort „Wohnzimmer“, der noch keine Lichtzone hat.Weise dem Standort „Wohnzimmer“ eine Lichtzone zu.Zu Standorte und Licht",
+      "„Dracaena winterfest – Steckling“ hat noch keinen Standort.Weise dem Exemplar einen Standort zu.Standort für „Dracaena winterfest – Steckling“Standort wählen …Kühler FlurWohnzimmerStandort setzen",
+      "„Efeutute – Grün“ hat noch keinen Standort.Weise dem Exemplar einen Standort zu.Standort für „Efeutute – Grün“Standort wählen …Kühler FlurWohnzimmerStandort setzen",
+      "„Opuntia ruhend – Kaktus“ steht am Standort „Kühler Flur“, der noch keine Lichtzone hat.Weise dem Standort „Kühler Flur“ eine Lichtzone zu.Zu Standorte und Licht"
+    ],
+    "axeHints": [],
+    "smallTargets": [],
+    "scrollWidth": 1440,
+    "disabledBeforeChoice": true,
+    "afterLocate": "„Efeutute – Grün“ steht jetzt am Standort „Wohnzimmer“.",
+    "hintsAfter": [
+      "„Dracaena winterfest – Blau“ steht am Standort „Wohnzimmer“, der noch keine Lichtzone hat.Weise dem Standort „Wohnzimmer“ eine Lichtzone zu.Zu Standorte und Licht",
+      "„Dracaena winterfest – Rot“ steht am Standort „Wohnzimmer“, der noch keine Lichtzone hat.Weise dem Standort „Wohnzimmer“ eine Lichtzone zu.Zu Standorte und Licht",
+      "„Dracaena winterfest – Steckling“ hat noch keinen Standort.Weise dem Exemplar einen Standort zu.Standort für „Dracaena winterfest – Steckling“Standort wählen …Kühler FlurWohnzimmerStandort setzen",
+      "„Efeutute – Grün“ hat noch keinen Standort.Weise dem Exemplar einen Standort zu.Standort für „Efeutute – Grün“Standort wählen …Kühler FlurWohnzimmerStandort setzen",
+      "„Opuntia ruhend – Kaktus“ steht am Standort „Kühler Flur“, der noch keine Lichtzone hat.Weise dem Standort „Kühler Flur“ eine Lichtzone zu.Zu Standorte und Licht"
+    ],
+    "buttonsFinal": 0,
+    "finalEntries": [
+      "Dracaena winterfest – BlauSoll-Phase heute: WachstumsphaseStandort: WohnzimmerSoll-Standort: Wohnzimmer",
+      "Dracaena winterfest – RotSoll-Phase heute: WachstumsphaseStandort: WohnzimmerSoll-Standort: Wohnzimmer",
+      "Opuntia ruhend – KaktusSoll-Phase heute: RuhephaseStandort: Kühler FlurSoll-Standort: Kühler Flur"
+    ],
+    "refusal": "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her, dann kannst du damit arbeiten.",
+    "refusalStillListed": 3,
+    "benList": {
+      "phases": []
+    },
+    "benConfirmForeign": {
+      "status": 404,
+      "body": {
+        "error": {
+          "code": "specimen.not_found",
+          "text": "Dieses Exemplar gibt es nicht.",
+          "data": {
+            "specimenId": "4fc3e449-87f5-41ba-b071-456399e243e6"
+          }
+        }
+      }
+    },
+    "benLocateForeign": {
+      "status": 404,
+      "body": {
+        "error": {
+          "code": "specimen.not_found",
+          "text": "Dieses Exemplar gibt es nicht."
+        }
+      }
+    },
+    "maraStillAtTarget": true,
+    "benForeignLocationOnOwn": {
+      "status": 404,
+      "body": {
+        "error": {
+          "code": "location.not_found",
+          "text": "Diesen Standort gibt es nicht."
+        }
+      }
+    },
+    "benUnknownTarget": {
+      "entries": [
+        "Bens Pflanze – B1Soll-Phase heute: WachstumsphaseStandort: Bens RegalSoll-Standort: unbekannt"
+      ],
+      "buttons": 0,
+      "confirm": {
+        "status": 409,
+        "body": {
+          "error": {
+            "code": "care.target_unknown",
+            "text": "Für dieses Exemplar ist noch kein Soll-Standort bekannt. Weise den Standort stattdessen selbst zu.",
+            "data": {
+              "specimenId": "9d587043-fbee-47f5-8dff-73d8fb6ff6f5"
+            }
+          }
+        }
+      },
+      "stillAt": true
+    }
+  },
+  "mobile": {
+    "setup": {
+      "rot": "3441a9bd-82a9-4ce5-a50a-2dd8904551ed",
+      "blau": "d8a43de9-c010-450a-bb31-a611f540f116",
+      "gruen": "1e139664-2d1f-4dce-81b9-fb6dea2912c8",
+      "kaktus": "4fc264c2-c8e1-4e7e-874c-11fc3b44b81c",
+      "steckling": "4055a2e8-9876-4eb0-ad33-ca74acfff8aa"
+    },
+    "listButtons": [
+      "Alle 2 nach Wohnzimmer umstellen",
+      "Jetzt umgestellt",
+      "Jetzt umgestellt",
+      "Jetzt umgestellt"
+    ],
+    "listEntries": [
+      "Dracaena winterfest – BlauSoll-Phase heute: WachstumsphaseStandort: Kühler FlurSoll-Standort: WohnzimmerStelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.Jetzt umgestellt",
+      "Dracaena winterfest – RotSoll-Phase heute: WachstumsphaseStandort: Kühler FlurSoll-Standort: WohnzimmerStelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.Jetzt umgestellt",
+      "Opuntia ruhend – KaktusSoll-Phase heute: RuhephaseStandort: WohnzimmerSoll-Standort: Kühler FlurStelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.Jetzt umgestellt"
+    ],
+    "axeList": [],
+    "doubleTapPosts": 1,
+    "afterSingle": "„Opuntia ruhend – Kaktus“ steht jetzt am Standort „Kühler Flur“.",
+    "kaktusNow": true,
+    "groupButton": [
+      "Alle 2 nach Wohnzimmer umstellen"
+    ],
+    "afterGroup": "2 Exemplare stehen jetzt am Standort „Wohnzimmer“.",
+    "groupNow": [
+      true,
+      true
+    ],
+    "buttonsAfter": 0,
+    "repeat": {
+      "specimens": [
+        {
+          "specimenId": "3441a9bd-82a9-4ce5-a50a-2dd8904551ed",
+          "locationId": "5764ebcf-13d6-4416-a3da-cd9bf549086f",
+          "changed": false
+        },
+        {
+          "specimenId": "d8a43de9-c010-450a-bb31-a611f540f116",
+          "locationId": "5764ebcf-13d6-4416-a3da-cd9bf549086f",
+          "changed": false
+        }
+      ]
+    },
+    "hintTexts": [
+      "„Dracaena winterfest – Blau“ steht am Standort „Wohnzimmer“, der noch keine Lichtzone hat.Weise dem Standort „Wohnzimmer“ eine Lichtzone zu.Zu Standorte und Licht",
+      "„Dracaena winterfest – Rot“ steht am Standort „Wohnzimmer“, der noch keine Lichtzone hat.Weise dem Standort „Wohnzimmer“ eine Lichtzone zu.Zu Standorte und Licht",
+      "„Dracaena winterfest – Steckling“ hat noch keinen Standort.Weise dem Exemplar einen Standort zu.Standort für „Dracaena winterfest – Steckling“Standort wählen …Kühler FlurWohnzimmerStandort setzen",
+      "„Efeutute – Grün“ hat noch keinen Standort.Weise dem Exemplar einen Standort zu.Standort für „Efeutute – Grün“Standort wählen …Kühler FlurWohnzimmerStandort setzen",
+      "„Opuntia ruhend – Kaktus“ steht am Standort „Kühler Flur“, der noch keine Lichtzone hat.Weise dem Standort „Kühler Flur“ eine Lichtzone zu.Zu Standorte und Licht"
+    ],
+    "axeHints": [],
+    "smallTargets": [],
+    "scrollWidth": 375,
+    "disabledBeforeChoice": true,
+    "afterLocate": "„Efeutute – Grün“ steht jetzt am Standort „Wohnzimmer“.",
+    "hintsAfter": [
+      "„Dracaena winterfest – Blau“ steht am Standort „Wohnzimmer“, der noch keine Lichtzone hat.Weise dem Standort „Wohnzimmer“ eine Lichtzone zu.Zu Standorte und Licht",
+      "„Dracaena winterfest – Rot“ steht am Standort „Wohnzimmer“, der noch keine Lichtzone hat.Weise dem Standort „Wohnzimmer“ eine Lichtzone zu.Zu Standorte und Licht",
+      "„Dracaena winterfest – Steckling“ hat noch keinen Standort.Weise dem Exemplar einen Standort zu.Standort für „Dracaena winterfest – Steckling“Standort wählen …Kühler FlurWohnzimmerStandort setzen",
+      "„Efeutute – Grün“ hat noch keinen Standort.Weise dem Exemplar einen Standort zu.Standort für „Efeutute – Grün“Standort wählen …Kühler FlurWohnzimmerStandort setzen",
+      "„Opuntia ruhend – Kaktus“ steht am Standort „Kühler Flur“, der noch keine Lichtzone hat.Weise dem Standort „Kühler Flur“ eine Lichtzone zu.Zu Standorte und Licht"
+    ],
+    "buttonsFinal": 0,
+    "finalEntries": [
+      "Dracaena winterfest – BlauSoll-Phase heute: WachstumsphaseStandort: WohnzimmerSoll-Standort: Wohnzimmer",
+      "Dracaena winterfest – RotSoll-Phase heute: WachstumsphaseStandort: WohnzimmerSoll-Standort: Wohnzimmer",
+      "Opuntia ruhend – KaktusSoll-Phase heute: RuhephaseStandort: Kühler FlurSoll-Standort: Kühler Flur"
+    ],
+    "refusal": "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her, dann kannst du damit arbeiten.",
+    "refusalStillListed": 3,
+    "benList": {
+      "phases": []
+    },
+    "benConfirmForeign": {
+      "status": 404,
+      "body": {
+        "error": {
+          "code": "specimen.not_found",
+          "text": "Dieses Exemplar gibt es nicht.",
+          "data": {
+            "specimenId": "3441a9bd-82a9-4ce5-a50a-2dd8904551ed"
+          }
+        }
+      }
+    },
+    "benLocateForeign": {
+      "status": 404,
+      "body": {
+        "error": {
+          "code": "specimen.not_found",
+          "text": "Dieses Exemplar gibt es nicht."
+        }
+      }
+    },
+    "maraStillAtTarget": true,
+    "benForeignLocationOnOwn": {
+      "status": 404,
+      "body": {
+        "error": {
+          "code": "location.not_found",
+          "text": "Diesen Standort gibt es nicht."
+        }
+      }
+    },
+    "benUnknownTarget": {
+      "entries": [
+        "Bens Pflanze – B1Soll-Phase heute: WachstumsphaseStandort: Bens RegalSoll-Standort: unbekannt"
+      ],
+      "buttons": 0,
+      "confirm": {
+        "status": 409,
+        "body": {
+          "error": {
+            "code": "care.target_unknown",
+            "text": "Für dieses Exemplar ist noch kein Soll-Standort bekannt. Weise den Standort stattdessen selbst zu.",
+            "data": {
+              "specimenId": "1407a95c-4800-4c60-9c8e-09ba3770e695"
+            }
+          }
+        }
+      },
+      "stillAt": true
+    }
+  }
+}

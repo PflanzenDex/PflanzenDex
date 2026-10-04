@@ -174,6 +174,25 @@ describe("US-PHA-03 'Jetzt umgestellt' on the page of the care phases", () => {
     expect(screen.getByText("Standort: Wohnzimmer")).toBeTruthy();
   });
 
+  it("US-PHA-03 after a refusal the list is loaded again, a stale row disappears and the error stays", async () => {
+    const text = "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her.";
+    const state = {
+      phases: [row("e1", "Bogenhanf", "s1", "s2")],
+      confirm: async () => {
+        state.phases = []; // archived in the meantime
+        return response(409, { error: { code: "specimen.archived", text } });
+      },
+    };
+    fakeServer(state);
+    render(<CarePhasesPage api="http://api" token={token} />);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Jetzt umgestellt: Bogenhanf" }),
+    );
+    expect((await screen.findByRole("alert")).textContent).toContain(text);
+    await vi.waitFor(() => expect(screen.queryByText("Bogenhanf")).toBeNull());
+    expect(screen.getByRole("alert").textContent).toContain(text);
+  });
+
   it("US-PHA-03 without sign-in the tap asks to sign in and sends nothing", async () => {
     let signedIn = true;
     const fetchFn = fakeServer({

@@ -36,3 +36,8 @@
 .measure .actions {
   margin-top: 16px;
 }
+
+/* "Alle N nach … umstellen" (US-PHA-03) sits above the list with room before the first entry. */
+.phase-groups {
+  margin: 0 0 16px;
+}
