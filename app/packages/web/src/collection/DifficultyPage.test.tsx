@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DifficultyPage } from "./DifficultyPage";
@@ -19,6 +19,10 @@ const row = (extra: Record<string, unknown> = {}) => ({
   difficulty: 1,
   ...extra,
 });
+const cellsOf = (i: number) =>
+  [...(screen.getAllByRole("row")[i] as HTMLElement).querySelectorAll("th,td")].map(
+    (c) => c.textContent,
+  );
 const serverError = { error: { code: "server.error", text: "Der Server antwortet nicht." } };
 
 function fakeServer(rows: () => Promise<Response>) {
@@ -52,9 +56,7 @@ describe("US-BES-05 page of the difficulty overview", () => {
       "Erfolgskriterium",
       "Schwierigkeit",
     ]);
-    const cells = within(screen.getAllByRole("row")[1] as HTMLElement)
-      .getAllByRole("cell")
-      .map((c) => c.textContent);
+    const cells = cellsOf(1);
     expect(cells).toEqual([
       "Bogenhanf",
       "Dracaena trifasciata",
@@ -78,9 +80,7 @@ describe("US-BES-05 page of the difficulty overview", () => {
     );
     render(<DifficultyPage api="http://api" token={token} />);
     await screen.findByRole("table");
-    const cells = within(screen.getAllByRole("row")[1] as HTMLElement)
-      .getAllByRole("cell")
-      .map((c) => c.textContent);
+    const cells = cellsOf(1);
     expect(cells[2]).toBe("unbekannt");
     expect(cells[3]).toBe("unbekannt");
     expect(cells[4]).toBe("unbekannt");

@@ -54,7 +54,7 @@ Acceptance criteria:
 - "Potted" is an action: it sets `Status: Plant`, removes the light zone override, and from then on the light zone of the species applies. A "Potted" event goes into the feed if the specimen is shared.
 - The species keeps its target profile (target light zone, `Light_Lux_Demand`).
 
-### US-BES-05 · Compare species by difficulty · ⬜ (prototype ✅)
+### US-BES-05 · Compare species by difficulty · ✅ (prototype ✅)
 
 As a **plant keeper** I want a table with one row per species, so that I can look up care rules without opening each species.
 
@@ -62,6 +62,8 @@ Acceptance criteria:
 
 - Columns: species, botanical name, light zone, watering rule, substrate, pruning, success criteria, difficulty.
 - Only species with at least one active specimen. Sorted by `Difficulty` (number 1–3, display Easy/Medium/Hard).
+
+State of implementation: complete for the criteria above. The tab "Artenvergleich" (`GET /specimens/difficulty`) shows one row per species with an active specimen (archived ones do not count, US-BES-07), sorted by difficulty ascending and then by botanical name. The light zone is the one derived from the lux demand (FR-LIC-01, never the zone of a location); the watering rule is the catalog's watering hint, not the keeper's own interval from the care profile (US-BES-09). Every value the catalog does not know reads "unbekannt" (P-08). Derived on every request, nothing stored (P-01).
 
 ### US-BES-06 · See specimens as cards · 🟨 (prototype ✅)
 
