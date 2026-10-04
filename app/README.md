@@ -62,7 +62,7 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Operations (`core/src/light`):** `lightZone.create|update|remove|defaults`, `location.setUp|update`. Writes only through `execute` with the `Idempotency-Key` header; replay protection lives in the `idempotency` table (24 hours, an assumption).
 - **API:** `GET/POST /lightZones`, `PUT/DELETE /lightZones/:id`, `POST /lightZones/defaults`, `GET/POST /locations`, `PUT /locations/:id`, `GET /hints`, `GET /lightZones/ableitung?lightDemandLux=&standardLevel=&weichesBlatt=` (US-LIC-01: derives the Lichtzone of a species from its lux need and the account zones, read-only, never stored). Errors: `{ error: { code, text, details?, data? } }`.
 - **Limit (deleting a zone):** the `ZoneUsage` port asks every source which of them uses a zone. Today the only source is "locations". species link no zone (the zone is derived, FR-BES-10). **specimens (BES-02) link no zone either**: they reach one only through their location, which the location source already reports, so no extra source is needed yet. **The first specimen field that points at a zone (the override for cuttings, BES-04, and the care profile, BES-09) has to bring its source** (parameter `additionalUsage` of `lightRoutes`, implemented by `collection` for its own table, never by SQL on `specimen` from `light`), otherwise it would go unnoticed when a zone is deleted. The mechanism is tested with a stub. Locations cannot be deleted yet (no criterion).
-- **Hints:** the central hints page (US-BES-08) does not exist yet; LIC-05 shows its hints on its own page and provides them through `locationHints`.
+- **Hints:** LIC-05 shows its hints (locations without zone) on its own page and provides them through `locationHints` (`GET /hints`). The central page for incomplete specimens is US-BES-08 (below).
 
 ## Species catalog (US-BES-01)
 
@@ -82,7 +82,7 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **measurement series and treatment list:** returned as empty derived lists (`measurements: []`, `treatments: []`), no columns, no tables; WAC and BEH bring their own.
 - **API:** `GET /specimens`, `GET /specimens/:id` (foreign or unknown: 404 `specimen.not_found`), `POST /specimens` (`Idempotency-Key`; body `speciesId`, `timeZone`, optional `marker`, `locationId`). Errors: `specimen.name_taken` 409, `art.not_found` and `location.not_found` 404.
 - **Web:** tab "Bestand"; "Diese Art wählen" in the catalog opens the form for that species (the app wires `catalog` and `collection`, the modules do not know each other).
-- **Limits:** no editing, renaming, deleting or archiving (BES-03, BES-07); the marker rule from the third specimen on (ask for missing marks) belongs to US-BES-03; addition, zone override, provenance and sharing fields of DM-BES-02 are missing; no specimen hints yet (BES-08).
+- **Limits:** no editing, renaming, deleting or archiving (BES-03, BES-07); the marker rule from the third specimen on (ask for missing marks) belongs to US-BES-03; addition, zone override, provenance and sharing fields of DM-BES-02 are missing; hints about incomplete specimens: see US-BES-08 below.
 
 ## Create a cutting and pot it (US-BES-04)
 
@@ -123,6 +123,12 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Module placement (ADR 0003, O-4 still open):** the derived light view lives in `collection`, which may depend on `light` and `catalog`. No new edge and no port: `ZoneUsage` answers a different question (who uses a zone before it is deleted).
 - **Web:** section "Verteilung auf die Lichtzonen" above the cards in the tab "Bestand", loaded together with cards and locations (if one request fails, nothing is shown half).
 - **Limits:** the specimen has no zone field of its own yet (override comes with BES-04/BES-09), so "specimen before Art" works through the location and the status. The catalog has no field for soft-leaved C3 plants, so the derivation never assumes it. The reference to the wishlist on a tie is text only; the wishlist (WUN) does not exist yet.
+
+## Hints about incomplete specimens (US-BES-08)
+
+- **What:** `GET /specimens/hints` returns `{ hints }`, derived live (no table, no migration, P-01): per active specimen of the own account one hint for each gap, `location_missing`, `location_without_zone` (names the location) and `species_missing` (a species the account cannot read; the database already forbids a specimen without species). Archived specimens never appear (`isActive`, US-BES-07), cuttings are checked like plants. Every hint has `text` and `nextAction` (P-09), sorted by specimen name. The route sits before `/specimens/:id`. `specimenHints` lives in `core/src/collection`, reads through the existing ports (`SpecimenStore`, `SpeciesSource`, `LightLocationStore`); no new module edge.
+- **Web:** tab "Hinweise" (`HintsPage` in the `collection` module); a button per hint leads to "Bestand" or "Standorte und Licht" (the app maps the target to a tab, the modules do not know each other). The note "mit unbekannter Zone" of the light distribution points to this tab (P-10).
+- **Limits:** no operation changes the location of an existing specimen yet (BES-03/PHA-03), so "Standort fehlt" names its action but the app cannot do it; the tab shows no count badge; the central "Heute" list (TE-07) and the deviations (QS-04) do not exist yet and must treat incomplete specimens the same way (listed or counted with a note). Missing lux need of a species (FR-LIC-03) has no hint yet.
 
 ## Measurements (US-WAC-01)
 

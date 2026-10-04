@@ -8,6 +8,7 @@
     "Wachstum: Im Bestand erfasst du je Exemplar eine Messung mit Messwert, Qualität und Notiz, auch nachträglich mit einem früheren Datum.",
     "Bestand: Ein eingegangenes oder abgegebenes Exemplar archivierst du mit einem Grund. Es verschwindet aus Liste und Auswertungen, seine Historie bleibt, und im Archiv holst du es jederzeit zurück.",
     "Licht: Im Bestand siehst du jetzt, wie viele Exemplare in jeder Lichtzone stehen und wo noch Platz ist. Bei Gleichstand nennt die Anzeige alle dünnsten Zonen.",
-    "Bestand: Einen Steckling legst du mit dem Häkchen „Das ist ein Steckling“ an. Er steht unter Stecklingslicht und zählt nicht in der Lichtverteilung; mit „Eingetopft“ auf der Karte wird er eine Pflanze."
+    "Bestand: Einen Steckling legst du mit dem Häkchen „Das ist ein Steckling“ an. Er steht unter Stecklingslicht und zählt nicht in der Lichtverteilung; mit „Eingetopft“ auf der Karte wird er eine Pflanze.",
+    "Hinweise: Der neue Reiter „Hinweise“ nennt Exemplare ohne Standort oder an einem Standort ohne Lichtzone und sagt dir, was du dagegen tust. Die Lichtverteilung verweist bei „unbekannter Zone“ dorthin."
   ]
 }

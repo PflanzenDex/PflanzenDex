@@ -1,0 +1,151 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-adf28556cc47dc1d7/app/packages/web
+
+ ❯ src/collection/HintsPage.test.tsx (6 tests | 6 failed) 5100ms
+   ❯ US-BES-08 page of the hints about incomplete specimens (6)
+     × US-BES-08 shows every hint with its text and next action 82ms
+     × US-BES-08 the action button leads to where the hint is fixed 1004ms
+     × US-BES-08 without hints it says so and what the page checks (P-09) 1003ms
+     × US-BES-08 without sign-in the request to sign in comes and nothing is queried 1002ms
+     × US-BES-08 if loading fails the error stays visible and reload fetches the hints (P-10) 1004ms
+     × US-BES-08 a page that was left no longer shows a late answer 1004ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/HintsPage.test.tsx > US-BES-08 page of the hints about incomplete specimens > US-BES-08 shows every hint with its text and next action
+TestingLibraryElementError: Unable to find an accessible element with the role "status"
+
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/collection/HintsPage.test.tsx:54:19
+     52|     fakeServer(() => response(200, { hints: [noLocation, noZone, noSpe…
+     53|     render(<HintsPage api="http://api" token={token} onOpen={noop} />);
+     54|     expect(screen.getByRole("status").textContent).toContain("geladen"…
+       |                   ^
+     55|     expect(await screen.findByText(noLocation.text)).toBeTruthy();
+     56|     expect(screen.getByText(noZone.text)).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/collection/HintsPage.test.tsx > US-BES-08 page of the hints about incomplete specimens > US-BES-08 the action button leads to where the hint is fixed
+TestingLibraryElementError: Unable to find role="button" and name `/Standorte und Licht/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/HintsPage.test.tsx:66:40
+     64|     const open = vi.fn();
+     65|     render(<HintsPage api="http://api" token={token} onOpen={open} />);
+     66|     await userEvent.click(await screen.findByRole("button", { name: /S…
+       |                                        ^
+     67|     expect(open).toHaveBeenLastCalledWith("light");
+     68|     await userEvent.click(screen.getByRole("button", { name: /Zum Best…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/collection/HintsPage.test.tsx > US-BES-08 page of the hints about incomplete specimens > US-BES-08 without hints it says so and what the page checks (P-09)
+TestingLibraryElementError: Unable to find an element with the text: /Keine Hinweise/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/HintsPage.test.tsx:75:26
+     73|     fakeServer(() => response(200, { hints: [] }));
+     74|     render(<HintsPage api="http://api" token={token} onOpen={noop} />);
+     75|     expect((await screen.findByText(/Keine Hinweise/)).textContent).to…
+       |                          ^
+     76|     expect(screen.queryByRole("list")).toBeNull();
+     77|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/collection/HintsPage.test.tsx > US-BES-08 page of the hints about incomplete specimens > US-BES-08 without sign-in the request to sign in comes and nothing is queried
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/HintsPage.test.tsx:82:26
+     80|     const fetchFn = fakeServer(() => response(200, { hints: [] }));
+     81|     render(<HintsPage api="http://api" token={async () => undefined} o…
+     82|     expect((await screen.findByRole("alert")).textContent).toContain("…
+       |                          ^
+     83|     expect(fetchFn).not.toHaveBeenCalled();
+     84|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/collection/HintsPage.test.tsx > US-BES-08 page of the hints about incomplete specimens > US-BES-08 if loading fails the error stays visible and reload fetches the hints (P-10)
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/HintsPage.test.tsx:92:26
+     90|     );
+     91|     render(<HintsPage api="http://api" token={token} onOpen={noop} />);
+     92|     expect((await screen.findByRole("alert")).textContent).toContain("…
+       |                          ^
+     93|     await userEvent.click(screen.getByRole("button", { name: "Erneut l…
+     94|     expect(await screen.findByText(noLocation.text)).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/collection/HintsPage.test.tsx > US-BES-08 page of the hints about incomplete specimens > US-BES-08 a page that was left no longer shows a late answer
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/collection/HintsPage.test.tsx:104:44
+    102|       <HintsPage api="http://api" token={token} onOpen={noop} />,
+    103|     );
+    104|     await vi.waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(1));
+       |                                            ^
+    105|     unmount();
+    106|     done(new Response(JSON.stringify({ hints: [noLocation] }), { statu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  01:01:21
+   Duration  5.67s (tests 91%, environment 7%, import 1%)
+

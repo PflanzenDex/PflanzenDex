@@ -86,7 +86,7 @@ Acceptance criteria:
 
 State of implementation: "Archivieren" (card in the tab Bestand) with a reason from the list (`eingegangen`, `abgegeben`, `getauscht`, `verschenkt`, `verkauft`) or free text sets the status, `Archived_At` (local calendar date of the device's time zone, NFR-08) and `Archived_Reason`; a second archiving changes neither (P-10). Archived specimens are missing from the list, from the BES-06 cards (the ports for measurements and treatments do not learn their IDs), from the care phases and from measuring (measuring is rejected with `specimen.archived`); they stay viewable through `GET /specimens/:id` and the section "Archiv" (species, date, reason) and can be restored (status as before the archiving, a cutting stays a cutting). The name of an archived specimen stays taken (assumption, so that restoring never collides; a new specimen of the species then needs a marker). **Open:** the automatic archiving on a swap (SOZ-11) and the evaluations that do not exist yet (distribution, treatments, Pokédex ownership, today list); they must filter with `isActive`. The measurement series of an archived specimen is still readable through the API but not reachable in the UI.
 
-### US-BES-08 · Recognize incomplete data · ⬜ (prototype 🟡)
+### US-BES-08 · Recognize incomplete data · 🟨 (prototype 🟡)
 
 As a **plant keeper** I want to notice when a specimen is so incomplete that it drops out of evaluations (P-10).
 
@@ -94,6 +94,8 @@ Acceptance criteria:
 
 - A specimen without species, without location or with a location without light zone appears in "Hints" with the action that fixes it.
 - No evaluation hides it silently; it is counted with a note or listed separately.
+
+State of implementation: the tab "Hinweise" (`GET /specimens/hints`, derived live from specimens, locations and the species catalog, nothing stored, P-01) lists every **active** specimen (archived ones are no longer part of the collection, US-BES-07) of the own account (P-04) with a hint per gap: no location (`location_missing`), a location without light zone (`location_without_zone`, names the location) or a species the account cannot read (`species_missing`). Each hint carries the action that fixes it and a button to the tab where it is done (P-09); without hints the page says what it checked. Cuttings are checked like plants. **Species:** the database forbids a specimen without a species (`species_id` is `not null` with a foreign key), so the case can only occur when a species vanishes from the account's view; the hint guards it. **No silent drop-out (P-10):** the light distribution already names what it does not count (cutting light, archived, zone unknown); its note on "unknown zone" now points to "Hinweise", and a test shows that every specimen counted as "zone unknown" has a hint. The cards show "unbekannt" for missing location or zone (BES-06). **Open:** an operation that changes the location of an existing specimen does not exist yet (editing, BES-03/PHA-03), so the hint "no location" names the action but the app cannot do it yet; the central "Heute" list (TE-07) and the QS deviations (QS-04) do not exist yet and must list or count incomplete specimens the same way; the hint "Standort ohne Zone" of LIC-05 stays on its own page (`GET /hints`); care phases skip plants whose species has no dormancy period (FR-PHA-04, by design, not a data gap); hints for a missing lux need of a species (FR-LIC-03) and for an overridden care profile (BES-09) come with those stories.
 
 ### US-BES-09 · Adjust my own care profile per species · ⬜ new
 
