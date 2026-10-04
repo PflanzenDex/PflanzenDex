@@ -1,4 +1,4 @@
-import type { TreatmentRow } from "@pflanzendex/core";
+import type { TreatmentListRow, TreatmentRow } from "@pflanzendex/core";
 import { call, createWrite, type Response } from "../kernel";
 
 type FetchFn = typeof fetch;
@@ -44,4 +44,19 @@ export async function planTreatments(
     ...(course ? { count: course.count, intervalDays: course.intervalDays } : {}),
   });
   return r.ok ? { ok: true, value: (r.value as { treatments: TreatmentRow[] }).treatments } : r;
+}
+
+/** The open treatments of the account, earliest first, with status for the device's local "today" (US-BEH-02, NFR-08). */
+export async function loadOpenTreatments(
+  api: string,
+  token: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<readonly TreatmentListRow[]>> {
+  const timeZone = encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const r = await call<{ treatments: TreatmentListRow[] }>(
+    fetchFn,
+    `${api}/treatments?timeZone=${timeZone}`,
+    token,
+  );
+  return r.ok ? { ok: true, value: r.value.treatments } : r;
 }

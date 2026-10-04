@@ -157,6 +157,13 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Web:** button "Messen" on each specimen card in the Bestand tab opens the measuring view (the app wires `collection` and `care`, the modules do not know each other).
 - **Limits:** no photo (needs the media processing, FR-WAC-09, US-WAC-05), no rate and trend (US-WAC-03, US-WAC-04), no editing or deleting of a measurement, no reminder for old measurements (FR-WAC-08). `Specimen.measurements` in the `collection` view stays an empty list; the measurements are read through their own route.
 
+## Open treatments (US-BEH-02)
+
+- **What:** `GET /treatments?timeZone=Europe/Berlin` (module `care`, read only, no table, no migration) returns the open treatments of the own active specimens, earliest first: `id`, `specimenId`, `specimenName`, `reason`, `agent` (or `null`, shown as "—"), `dueAt` and a derived `status` (`kind` overdue/today/soon/later, `days`, German `text`). A missing or unknown time zone is `input.invalid` (400); "today" is the local date in that zone (NFR-08).
+- **Core:** `treatmentOpenList` reuses `SpecimenStore.list` (filtered with `isActive`) and `TreatmentStore.open`, so no new store method exists and archived specimens never reach the store; `treatmentStatus` is pure calendar arithmetic.
+- **Web:** the page "Behandlung" shows the list above the planning form and loads it again after a successful plan. Empty state "Keine offenen Behandlungen."; with overdue or due-today dates a sentence says to treat those first (P-09).
+- **Limits:** no ticking off (US-BEH-03), no editing or deleting of a date, no reminder (US-MON-03), no central "Heute" list (TE-07).
+
 **Operations (TE-03):** containers, Compose, backup and deploy live in `deploy/`; see the runbook `Docs/operations/staging-deploy-and-backup.md`. Targets: `make deploy`, `make backup`, `make restore-test`.
 
 ## End-to-end tests (QG-T3, QG-U1)

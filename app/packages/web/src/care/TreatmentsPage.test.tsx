@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TreatmentsPage } from "./TreatmentsPage";
@@ -14,11 +14,13 @@ type Posted = { body: Record<string, unknown>; key: string | undefined };
 function fakeServer(
   specimens: unknown[],
   save?: () => Promise<Response>,
+  open: () => Promise<Response> = () => response(200, { treatments: [] }),
 ): { posts: Posted[]; fetchFn: ReturnType<typeof vi.fn<typeof fetch>> } {
   const posts: Posted[] = [];
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
     const path = new URL(String(url)).pathname;
     if (path === "/specimens") return response(200, { specimens });
+    if (path === "/treatments" && (init?.method ?? "GET") === "GET") return open();
     if (path === "/treatments" && init?.method === "POST") {
       posts.push({
         body: JSON.parse(String(init.body)) as Record<string, unknown>,
@@ -118,5 +120,99 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     await user.click(screen.getByRole("button", { name: "Behandlung speichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("archiviert");
     expect((screen.getByLabelText("Grund") as HTMLInputElement).value).toBe("Wollläuse");
+  });
+});
+
+const due = (
+  id: string,
+  specimenName: string,
+  dueAt: string,
+  kind: string,
+  text: string,
+  agent: string | null = null,
+) => ({
+  id,
+  specimenId: `s-${id}`,
+  specimenName,
+  reason: `Grund ${id}`,
+  agent,
+  dueAt,
+  status: { kind, days: 1, text },
+});
+
+describe("US-BEH-02 offene Behandlungen", () => {
+  it("US-BEH-02 shows plant, reason, agent or a dash, due date and status in the order of the server", async () => {
+    fakeServer([specimen("e1", "Bogenhanf")], undefined, () =>
+      response(200, {
+        treatments: [
+          due("a", "Aloe", "2026-10-01", "overdue", "überfällig seit 2 Tagen", "Neemöl"),
+          due("b", "Bogenhanf", "2026-10-03", "today", "heute fällig"),
+          due("c", "Efeu", "2026-10-20", "later", "20.10.2026"),
+        ],
+      }),
+    );
+    show();
+    const list = await screen.findByRole("list", { name: "Offene Behandlungen" });
+    const items = within(list).getAllByRole("listitem");
+    expect(items).toHaveLength(3);
+    expect(items[0]?.textContent).toContain("Aloe");
+    expect(items[0]?.textContent).toContain("Grund a");
+    expect(items[0]?.textContent).toContain("Neemöl");
+    expect(items[0]?.textContent).toContain("01.10.2026");
+    expect(items[0]?.textContent).toContain("überfällig seit 2 Tagen");
+    expect(items[1]?.textContent).toContain("Mittel: —");
+    expect(items[1]?.textContent).toContain("heute fällig");
+    expect(items[2]?.textContent).toContain("20.10.2026");
+  });
+
+  it('US-BEH-02 without open treatments it says "Keine offenen Behandlungen." and what to do next (P-09)', async () => {
+    fakeServer([specimen("e1", "Bogenhanf")]);
+    show();
+    expect(await screen.findByText("Keine offenen Behandlungen.")).toBeTruthy();
+    expect(screen.getByText(/Plane unten einen Termin/)).toBeTruthy();
+  });
+
+  it("US-BEH-02 says what to do next when something is overdue (P-09)", async () => {
+    fakeServer([specimen("e1", "Bogenhanf")], undefined, () =>
+      response(200, {
+        treatments: [
+          due("a", "Aloe", "2026-10-01", "overdue", "überfällig seit 2 Tagen"),
+          due("b", "Efeu", "2026-10-02", "overdue", "überfällig seit 1 Tag"),
+          due("c", "Efeu", "2026-10-03", "today", "heute fällig"),
+        ],
+      }),
+    );
+    show();
+    expect(await screen.findByText(/2 Termine sind überfällig, 1 ist heute fällig/)).toBeTruthy();
+  });
+
+  it("US-BEH-02 asks with the time zone of the device and shows a load error with a reload", async () => {
+    const { fetchFn } = fakeServer([specimen("e1", "Bogenhanf")], undefined, () =>
+      response(500, { error: { code: "server.error", text: "Fehler." } }),
+    );
+    show();
+    expect(await screen.findByRole("button", { name: "Erneut laden" })).toBeTruthy();
+    const asked = fetchFn.mock.calls.map(([url]) => String(url));
+    expect(asked.some((u) => u.includes("/treatments?timeZone="))).toBe(true);
+  });
+
+  it("US-BEH-02 reloads the list after planning, so the new date shows at once", async () => {
+    let state: unknown[] = [];
+    fakeServer(
+      [specimen("e1", "Bogenhanf")],
+      async () => {
+        state = [due("n", "Bogenhanf", "2026-10-10", "later", "10.10.2026")];
+        return response(201, { treatments: [{}] });
+      },
+      () => response(200, { treatments: state }),
+    );
+    const user = userEvent.setup();
+    show();
+    await screen.findByText("Keine offenen Behandlungen.");
+    await user.click(await screen.findByRole("checkbox", { name: "Bogenhanf" }));
+    await user.type(screen.getByLabelText("Grund"), "Wollläuse");
+    await user.click(screen.getByRole("button", { name: "Behandlung speichern" }));
+    expect(await screen.findByRole("list", { name: "Offene Behandlungen" })).toBeTruthy();
+    expect(screen.queryByText("Keine offenen Behandlungen.")).toBeNull();
   });
 });

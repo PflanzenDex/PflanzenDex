@@ -29,5 +29,12 @@ export { treatmentSource } from "./treatment-source";
 export type { TreatmentSourceDependencies } from "./treatment-source";
 export { TREATMENT_LIMITS, COURSE_DEFAULTS } from "./treatment-types";
 export type { TreatmentRow, TreatmentValues, TreatmentStore } from "./treatment-types";
+export { treatmentOpenList, treatmentStatus } from "./treatment-list";
+export type {
+  TreatmentListDependencies,
+  TreatmentListRow,
+  TreatmentStatus,
+  TreatmentStatusKind,
+} from "./treatment-list";
 export { phaseStatus } from "./phase-status";
 export type { PhaseStatus } from "./phase-status";
