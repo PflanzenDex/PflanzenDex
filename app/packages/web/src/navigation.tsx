@@ -7,7 +7,8 @@ export type View =
   | "careProfile"
   | "pokedex"
   | "light"
-  | "account";
+  | "account"
+  | "settings";
 
 const ENTRIES: { id: View; text: string }[] = [
   { id: "species", text: "Arten" },
@@ -19,6 +20,7 @@ const ENTRIES: { id: View; text: string }[] = [
   { id: "pokedex", text: "Pokédex" },
   { id: "light", text: "Standorte und Licht" },
   { id: "account", text: "Konto" },
+  { id: "settings", text: "Einstellungen" },
 ];
 
 export function Navigation(props: { active: View; onSwitch: (a: View) => void }) {

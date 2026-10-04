@@ -109,3 +109,148 @@ describe("sharing with friends only with a confirmed email address (US-ACC-01)",
     expect(res.status).toBe(200);
   });
 });
+
+describe("US-ACC-02: Profile and settings", () => {
+  function app() {
+    return createApp({ reviewer, pool });
+  }
+
+  it("GET /account/profile: returns profile settings", async () => {
+    const res = await app().request("/account/profile", {
+      ...using(`valid:${sub1}:yes`),
+    });
+    expect(res.status).toBe(200);
+    const profile = await res.json();
+    expect(profile).toHaveProperty("displayName");
+    expect(profile).toHaveProperty("timeZone");
+    expect(profile).toHaveProperty("everythingPrivate");
+    expect(profile).toHaveProperty("noRecommendations");
+  });
+
+  it("GET /account/profile: 401 without authentication", async () => {
+    const res = await app().request("/account/profile");
+    expect(res.status).toBe(401);
+  });
+
+  it("PUT /account/profile: updates display name", async () => {
+    const auth = using(`valid:${sub1}:yes`);
+    const res = await app().request("/account/profile", {
+      method: "PUT",
+      body: JSON.stringify({ displayName: "Test User" }),
+      headers: {
+        ...auth.headers,
+        "Content-Type": "application/json",
+      },
+    });
+    expect(res.status).toBe(200);
+    const profile = await res.json();
+    expect(profile.displayName).toBe("Test User");
+  });
+
+  it("PUT /account/profile: updates time zone", async () => {
+    const auth = using(`valid:${sub1}:yes`);
+    const res = await app().request("/account/profile", {
+      method: "PUT",
+      body: JSON.stringify({ timeZone: "Europe/Berlin" }),
+      headers: {
+        ...auth.headers,
+        "Content-Type": "application/json",
+      },
+    });
+    expect(res.status).toBe(200);
+    const profile = await res.json();
+    expect(profile.timeZone).toBe("Europe/Berlin");
+  });
+
+  it("PUT /account/profile: rejects invalid time zone", async () => {
+    const auth = using(`valid:${sub1}:yes`);
+    const res = await app().request("/account/profile", {
+      method: "PUT",
+      body: JSON.stringify({ timeZone: "Invalid/Zone" }),
+      headers: {
+        ...auth.headers,
+        "Content-Type": "application/json",
+      },
+    });
+    expect(res.status).toBe(400);
+    const error = await res.json();
+    expect(error.error.code).toBe("input.invalid");
+  });
+
+  it("PUT /account/profile: updates privacy switches", async () => {
+    const auth = using(`valid:${sub1}:yes`);
+    const res = await app().request("/account/profile", {
+      method: "PUT",
+      body: JSON.stringify({ everythingPrivate: true, noRecommendations: true }),
+      headers: {
+        ...auth.headers,
+        "Content-Type": "application/json",
+      },
+    });
+    expect(res.status).toBe(200);
+    const profile = await res.json();
+    expect(profile.everythingPrivate).toBe(true);
+    expect(profile.noRecommendations).toBe(true);
+  });
+
+  it("PUT /account/profile: 401 without authentication", async () => {
+    const res = await app().request("/account/profile", {
+      method: "PUT",
+      body: JSON.stringify({ displayName: "Test" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("PUT /account/profile: two accounts isolated", async () => {
+    // Account 1 updates
+    const auth1 = using(`valid:${sub1}:yes`);
+    const res1 = await app().request("/account/profile", {
+      method: "PUT",
+      body: JSON.stringify({ displayName: "Account One" }),
+      headers: {
+        ...auth1.headers,
+        "Content-Type": "application/json",
+      },
+    });
+    expect(res1.status).toBe(200);
+
+    // Account 2 retrieves - should not see account 1's data
+    const res2 = await app().request("/account/profile", {
+      ...using(`valid:${sub2}:yes`),
+    });
+    expect(res2.status).toBe(200);
+    const profile2 = await res2.json();
+    expect(profile2.displayName).not.toBe("Account One");
+  });
+
+  it("PUT /account/profile: rejects empty display name", async () => {
+    const auth = using(`valid:${sub1}:yes`);
+    const res = await app().request("/account/profile", {
+      method: "PUT",
+      body: JSON.stringify({ displayName: "" }),
+      headers: {
+        ...auth.headers,
+        "Content-Type": "application/json",
+      },
+    });
+    expect(res.status).toBe(400);
+    const error = await res.json();
+    expect(error.error.code).toBe("input.invalid");
+  });
+
+  it("PUT /account/profile: clears display name with null", async () => {
+    const auth = using(`valid:${sub1}:yes`);
+    const res = await app().request("/account/profile", {
+      method: "PUT",
+      body: JSON.stringify({ displayName: null }),
+      headers: {
+        ...auth.headers,
+        "Content-Type": "application/json",
+      },
+    });
+    expect(res.status).toBe(200);
+    const profile = await res.json();
+    expect(profile.displayName).toBeNull();
+  });
+});

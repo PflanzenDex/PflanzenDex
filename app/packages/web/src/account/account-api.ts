@@ -8,6 +8,28 @@ export type Account = {
   mayShareWithFriends: boolean;
 };
 
+export type NotificationPreference = {
+  enabled: boolean;
+  time?: string;
+};
+
+export type NotificationSettings = {
+  phase?: NotificationPreference;
+  treatment?: NotificationPreference;
+  measurement?: NotificationPreference;
+  watering?: NotificationPreference;
+  swap?: NotificationPreference;
+  friends?: NotificationPreference;
+};
+
+export type AccountProfile = {
+  displayName: string | null;
+  timeZone: string | null;
+  everythingPrivate: boolean;
+  noRecommendations: boolean;
+  notificationSettings: NotificationSettings | null;
+};
+
 type Environment = Record<string, string | undefined>;
 type FetchFn = typeof fetch;
 
@@ -49,4 +71,40 @@ export async function signOutEverywhere(
     headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
   });
   if (!res.ok) throw new Error("sign_out_failed");
+}
+
+export async function getProfile(
+  api: string,
+  token: string,
+  fetchFn: FetchFn = fetch,
+): Promise<AccountProfile> {
+  const res = await fetchFn(`${api}/account/profile`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 401) throw new Error("not_signed_in");
+  if (!res.ok) throw new Error("profile_not_loadable");
+  return (await res.json()) as AccountProfile;
+}
+
+export async function updateProfile(
+  api: string,
+  token: string,
+  updates: Partial<AccountProfile>,
+  fetchFn: FetchFn = fetch,
+): Promise<AccountProfile> {
+  const res = await fetchFn(`${api}/account/profile`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(updates),
+  });
+  if (res.status === 401) throw new Error("not_signed_in");
+  if (res.status === 400) {
+    const error = await res.json();
+    throw new Error(error.error?.code ?? "input_invalid");
+  }
+  if (!res.ok) throw new Error("profile_update_failed");
+  return (await res.json()) as AccountProfile;
 }

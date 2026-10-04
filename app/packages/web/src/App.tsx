@@ -2,7 +2,15 @@ import { useState, type ComponentType } from "react";
 import type { Species } from "@pflanzendex/core";
 import { CollectionArea } from "./collection-area";
 import { CareProfilePage, HintsPage } from "./collection";
-import { AppError, AccountView, Loading, Welcome, apiUrl, useSession } from "./account";
+import {
+  AppError,
+  AccountView,
+  Loading,
+  Welcome,
+  apiUrl,
+  useSession,
+  SettingsPage,
+} from "./account";
 import { LightPage } from "./light";
 import { SpeciesPage } from "./catalog";
 import { CarePhasesPage, TreatmentsPage } from "./care";
@@ -22,6 +30,7 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
   carePhases: CarePhasesPage,
   careProfile: CareProfilePage,
   pokedex: PokedexPage,
+  settings: SettingsPage,
 };
 
 export function App() {
