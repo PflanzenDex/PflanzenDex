@@ -23,3 +23,5 @@ export { phaseSwitchConfirm, MAX_SWITCH } from "./switch";
 export type { SwitchDependencies, SwitchedSpecimen } from "./switch";
 export { carePhasesList } from "./phases";
 export type { PhasesDependencies, PhasesRow } from "./phases";
+export { phaseStatus } from "./phase-status";
+export type { PhaseStatus } from "./phase-status";

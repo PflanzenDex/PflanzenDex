@@ -1,0 +1,1094 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex.worktrees/pha-02/app/packages/web
+
+ ❯ src/care/phase-order.test.tsx (5 tests | 5 failed) 1189ms
+   ❯ US-PHA-02 the list shows deviations first (5)
+     × US-PHA-02 deviations form their own group above the rest and say where to move 137ms
+     × US-PHA-02 a specimen without a location is its own warning 'Standort fehlt', no placeholder text 20ms
+     × US-PHA-02 rows at the target or without a known target come last; an unknown target says 'unbekannt' (P-08) 21ms
+     × US-PHA-02 without any deviation the page says that everything stands where it should (P-09) 5ms
+     × US-PHA-02 the page keeps the order of the server inside the groups 1005ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/care/phase-order.test.tsx > US-PHA-02 the list shows deviations first > US-PHA-02 deviations form their own group above the rest and say where to move
+TestingLibraryElementError: Unable to find an accessible element with the role "region" and name `/Weichen vom Soll ab/`
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Pflegephasen":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"care-phases-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Pflegephasen":
+  [36m<h1[39m
+    [33mid[39m=[32m"care-phases-title"[39m
+  [36m/>[39m
+
+  Name "Falsch":
+  [36m<h3 />[39m
+
+  Name "Ohne Standort":
+  [36m<h3 />[39m
+
+  Name "Am Soll":
+  [36m<h3 />[39m
+
+  Name "Ohne Soll":
+  [36m<h3 />[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul[39m
+    [33mclass[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"entry"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"entry"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"entry"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"entry"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"care-phases-title"[39m
+    [36m>[39m
+      [36m<h1[39m
+        [33mid[39m=[32m"care-phases-title"[39m
+      [36m>[39m
+        [0mPflegephasen[0m
+      [36m</h1>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"list"[39m
+      [36m>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"entry"[39m
+        [36m>[39m
+          [36m<h3>[39m
+            [0mFalsch[0m
+          [36m</h3>[39m
+          [36m<p>[39m
+            [0mSoll-Phase heute: [0m
+            [0mRuhephase[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mStandort: [0m
+            [0mWohnzimmer[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mSoll-Standort: [0m
+            [0mKühler Flur[0m
+          [36m</p>[39m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"entry"[39m
+        [36m>[39m
+          [36m<h3>[39m
+            [0mOhne Standort[0m
+          [36m</h3>[39m
+          [36m<p>[39m
+            [0mSoll-Phase heute: [0m
+            [0mRuhephase[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mStandort: [0m
+            [0munbekannt[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mSoll-Standort: [0m
+            [0mKühler Flur[0m
+          [36m</p>[39m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"entry"[39m
+        [36m>[39m
+          [36m<h3>[39m
+            [0mAm Soll[0m
+          [36m</h3>[39m
+          [36m<p>[39m
+            [0mSoll-Phase heute: [0m
+            [0mRuhephase[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mStandort: [0m
+            [0mKühler Flur[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mSoll-Standort: [0m
+            [0mKühler Flur[0m
+          [36m</p>[39m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"entry"[39m
+        [36m>[39m
+          [36m<h3>[39m
+            [0mOhne Soll[0m
+          [36m</h3>[39m
+          [36m<p>[39m
+            [0mSoll-Phase heute: [0m
+            [0mRuhephase[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mStandort: [0m
+            [0mWohnzimmer[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mSoll-Standort: [0m
+            [0munbekannt[0m
+          [36m</p>[39m
+        [36m</li>[39m
+      [36m</ul>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ section src/care/phase-order.test.tsx:30:42
+     28|   row("Ohne Soll", "s1", null),
+     29| ];
+     30| const section = (name: RegExp) => screen.getByRole("region", { name });
+       |                                          ^
+     31| const titles = (el: HTMLElement) => within(el).getAllByRole("heading",…
+     32|
+ ❯ src/care/phase-order.test.tsx:41:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/care/phase-order.test.tsx > US-PHA-02 the list shows deviations first > US-PHA-02 a specimen without a location is its own warning 'Standort fehlt', no placeholder text
+TestingLibraryElementError: Unable to find an accessible element with the role "region" and name `/Standort fehlt/`
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Pflegephasen":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"care-phases-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Pflegephasen":
+  [36m<h1[39m
+    [33mid[39m=[32m"care-phases-title"[39m
+  [36m/>[39m
+
+  Name "Falsch":
+  [36m<h3 />[39m
+
+  Name "Ohne Standort":
+  [36m<h3 />[39m
+
+  Name "Am Soll":
+  [36m<h3 />[39m
+
+  Name "Ohne Soll":
+  [36m<h3 />[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul[39m
+    [33mclass[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"entry"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"entry"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"entry"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"entry"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"care-phases-title"[39m
+    [36m>[39m
+      [36m<h1[39m
+        [33mid[39m=[32m"care-phases-title"[39m
+      [36m>[39m
+        [0mPflegephasen[0m
+      [36m</h1>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"list"[39m
+      [36m>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"entry"[39m
+        [36m>[39m
+          [36m<h3>[39m
+            [0mFalsch[0m
+          [36m</h3>[39m
+          [36m<p>[39m
+            [0mSoll-Phase heute: [0m
+            [0mRuhephase[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mStandort: [0m
+            [0mWohnzimmer[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mSoll-Standort: [0m
+            [0mKühler Flur[0m
+          [36m</p>[39m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"entry"[39m
+        [36m>[39m
+          [36m<h3>[39m
+            [0mOhne Standort[0m
+          [36m</h3>[39m
+          [36m<p>[39m
+            [0mSoll-Phase heute: [0m
+            [0mRuhephase[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mStandort: [0m
+            [0munbekannt[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mSoll-Standort: [0m
+            [0mKühler Flur[0m
+          [36m</p>[39m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"entry"[39m
+        [36m>[39m
+          [36m<h3>[39m
+            [0mAm Soll[0m
+          [36m</h3>[39m
+          [36m<p>[39m
+            [0mSoll-Phase heute: [0m
+            [0mRuhephase[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mStandort: [0m
+            [0mKühler Flur[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mSoll-Standort: [0m
+            [0mKühler Flur[0m
+          [36m</p>[39m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"entry"[39m
+        [36m>[39m
+          [36m<h3>[39m
+            [0mOhne Soll[0m
+          [36m</h3>[39m
+          [36m<p>[39m
+            [0mSoll-Phase heute: [0m
+            [0mRuhephase[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mStandort: [0m
+            [0mWohnzimmer[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mSoll-Standort: [0m
+            [0munbekannt[0m
+          [36m</p>[39m
+        [36m</li>[39m
+      [36m</ul>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ section src/care/phase-order.test.tsx:30:42
+     28|   row("Ohne Soll", "s1", null),
+     29| ];
+     30| const section = (name: RegExp) => screen.getByRole("region", { name });
+       |                                          ^
+     31| const titles = (el: HTMLElement) => within(el).getAllByRole("heading",…
+     32|
+ ❯ src/care/phase-order.test.tsx:52:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/care/phase-order.test.tsx > US-PHA-02 the list shows deviations first > US-PHA-02 rows at the target or without a known target come last; an unknown target says 'unbekannt' (P-08)
+TestingLibraryElementError: Unable to find an accessible element with the role "region" and name `/Stimmen überein/`
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Pflegephasen":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"care-phases-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Pflegephasen":
+  [36m<h1[39m
+    [33mid[39m=[32m"care-phases-title"[39m
+  [36m/>[39m
+
+  Name "Falsch":
+  [36m<h3 />[39m
+
+  Name "Ohne Standort":
+  [36m<h3 />[39m
+
+  Name "Am Soll":
+  [36m<h3 />[39m
+
+  Name "Ohne Soll":
+  [36m<h3 />[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul[39m
+    [33mclass[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"entry"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"entry"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"entry"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"entry"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"care-phases-title"[39m
+    [36m>[39m
+      [36m<h1[39m
+        [33mid[39m=[32m"care-phases-title"[39m
+      [36m>[39m
+        [0mPflegephasen[0m
+      [36m</h1>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"list"[39m
+      [36m>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"entry"[39m
+        [36m>[39m
+          [36m<h3>[39m
+            [0mFalsch[0m
+          [36m</h3>[39m
+          [36m<p>[39m
+            [0mSoll-Phase heute: [0m
+            [0mRuhephase[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mStandort: [0m
+            [0mWohnzimmer[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mSoll-Standort: [0m
+            [0mKühler Flur[0m
+          [36m</p>[39m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"entry"[39m
+        [36m>[39m
+          [36m<h3>[39m
+            [0mOhne Standort[0m
+          [36m</h3>[39m
+          [36m<p>[39m
+            [0mSoll-Phase heute: [0m
+            [0mRuhephase[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mStandort: [0m
+            [0munbekannt[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mSoll-Standort: [0m
+            [0mKühler Flur[0m
+          [36m</p>[39m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"entry"[39m
+        [36m>[39m
+          [36m<h3>[39m
+            [0mAm Soll[0m
+          [36m</h3>[39m
+          [36m<p>[39m
+            [0mSoll-Phase heute: [0m
+            [0mRuhephase[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mStandort: [0m
+            [0mKühler Flur[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mSoll-Standort: [0m
+            [0mKühler Flur[0m
+          [36m</p>[39m
+        [36m</li>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"entry"[39m
+        [36m>[39m
+          [36m<h3>[39m
+            [0mOhne Soll[0m
+          [36m</h3>[39m
+          [36m<p>[39m
+            [0mSoll-Phase heute: [0m
+            [0mRuhephase[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mStandort: [0m
+            [0mWohnzimmer[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mSoll-Standort: [0m
+            [0munbekannt[0m
+          [36m</p>[39m
+        [36m</li>[39m
+      [36m</ul>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ section src/care/phase-order.test.tsx:30:42
+     28|   row("Ohne Soll", "s1", null),
+     29| ];
+     30| const section = (name: RegExp) => screen.getByRole("region", { name });
+       |                                          ^
+     31| const titles = (el: HTMLElement) => within(el).getAllByRole("heading",…
+     32|
+ ❯ src/care/phase-order.test.tsx:61:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/care/phase-order.test.tsx > US-PHA-02 the list shows deviations first > US-PHA-02 without any deviation the page says that everything stands where it should (P-09)
+TestingLibraryElementError: Unable to find an element with the text: /Keine Abweichung/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"care-phases-title"[39m
+    [36m>[39m
+      [36m<h1[39m
+        [33mid[39m=[32m"care-phases-title"[39m
+      [36m>[39m
+        [0mPflegephasen[0m
+      [36m</h1>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"list"[39m
+      [36m>[39m
+        [36m<li[39m
+          [33mclass[39m=[32m"entry"[39m
+        [36m>[39m
+          [36m<h3>[39m
+            [0mAm Soll[0m
+          [36m</h3>[39m
+          [36m<p>[39m
+            [0mSoll-Phase heute: [0m
+            [0mRuhephase[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mStandort: [0m
+            [0mKühler Flur[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0mSoll-Standort: [0m
+            [0mKühler Flur[0m
+          [36m</p>[39m
+        [36m</li>[39m
+      [36m</ul>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/care/phase-order.test.tsx:70:19
+     68|     render(<PhasesList rows={[row("Am Soll", "s2", "s2")]} locations={…
+     69|     expect(screen.queryByRole("region", { name: /Weichen vom Soll ab/ …
+     70|     expect(screen.getByText(/Keine Abweichung/)).toBeTruthy();
+       |                   ^
+     71|   });
+     72|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/care/phase-order.test.tsx > US-PHA-02 the list shows deviations first > US-PHA-02 the page keeps the order of the server inside the groups
+TestingLibraryElementError: Unable to find role="region" and name `/Weichen vom Soll ab/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"care-phases-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"care-phases-title"[39m
+        [36m>[39m
+          [0mPflegephasen[0m
+        [36m</h1>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions phase-groups"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mAlle 2 nach Kühler Flur umstellen[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mZuerst[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mWohnzimmer[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mStelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Jetzt umgestellt: Zuerst"[39m
+                [33mclass[39m=[32m"primary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mJetzt umgestellt[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mDanach[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mWohnzimmer[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mStelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Jetzt umgestellt: Danach"[39m
+                [33mclass[39m=[32m"primary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mJetzt umgestellt[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mZuletzt[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"care-phases-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"care-phases-title"[39m
+        [36m>[39m
+          [0mPflegephasen[0m
+        [36m</h1>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions phase-groups"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mAlle 2 nach Kühler Flur umstellen[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mZuerst[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mWohnzimmer[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mStelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Jetzt umgestellt: Zuerst"[39m
+                [33mclass[39m=[32m"primary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mJetzt umgestellt[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mDanach[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mWohnzimmer[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"next-action"[39m
+            [36m>[39m
+              [0mStelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Jetzt umgestellt: Danach"[39m
+                [33mclass[39m=[32m"primary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mJetzt umgestellt[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"entry"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mZuletzt[0m
+            [36m</h3>[39m
+            [36m<p>[39m
+              [0mSoll-Phase heute: [0m
+              [0mRuhephase[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mStandort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet"[39m
+            [36m>[39m
+              [0mSoll-Standort: [0m
+              [0mKühler Flur[0m
+            [36m</p>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/phase-order.test.tsx:84:32
+     82|     );
+     83|     render(<CarePhasesPage api="http://api" token={async () => "tok"} …
+     84|     expect(titles(await screen.findByRole("region", { name: /Weichen v…
+       |                                ^
+     85|       "Zuerst",
+     86|       "Danach",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  06:23:40
+   Duration  1.83s (tests 68%, environment 21%, transform 7%, import 5%)
+
