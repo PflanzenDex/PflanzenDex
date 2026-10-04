@@ -8,6 +8,28 @@ export { specimenSetLocation, LOCATE_ERROR } from "./locate";
 export type { LocateDependencies } from "./locate";
 export type { RepotDependencies } from "./repot";
 export { cuttingLight } from "./cutting-light";
+export { careProfileUpdate } from "./care-profile";
+export type { CareProfileDependencies } from "./care-profile";
+export { careProfileView } from "./care-profile-view";
+export type { CareProfileEntry, CareProfileViewDependencies } from "./care-profile-view";
+export { careProfileZoneUsage } from "./care-profile-zone-usage";
+export type { ZoneUsageDependencies } from "./care-profile-zone-usage";
+export { effectiveProfile, effectiveDormancy } from "./effective-profile";
+export type {
+  Dormancy,
+  EffectiveInput,
+  EffectiveProfile,
+  Layered,
+  ValueSource,
+} from "./effective-profile";
+export { CARE_PROFILE_LIMITS, OVERRIDABLE_FIELDS } from "./care-profile-types";
+export type {
+  CareProfile,
+  CareProfileChanges,
+  CareProfileReader,
+  CareProfileStore,
+  OverridableField,
+} from "./care-profile-types";
 export { specimenArchive, specimenRestore } from "./archive";
 export type { ArchiveDependencies } from "./archive";
 export { specimenArchived } from "./archived";

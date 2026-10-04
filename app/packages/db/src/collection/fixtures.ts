@@ -6,6 +6,7 @@ import type { FixtureContext, Fixtures } from "../kernel/index.ts";
 export const FIXTURE_SPECIES_ID = "00000000-0000-4000-8000-00000000fa01";
 export const FIXTURES_COLLECTION: Fixtures = {
   specimen: () => ({ species_id: FIXTURE_SPECIES_ID, name: "Bogenhanf", caught_at: "2026-10-03" }),
+  care_profile: () => ({ species_id: FIXTURE_SPECIES_ID, watering_growth_days: 7 }),
 };
 
 /**

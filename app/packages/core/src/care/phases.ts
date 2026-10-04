@@ -1,5 +1,5 @@
 import { appError, failed, localToday, isTimeZone, ok, type Result } from "../kernel";
-import type { SpeciesSource, SpecimenStore } from "../collection";
+import type { CareProfileReader, SpeciesSource, SpecimenStore } from "../collection";
 import { carePhase, type CarePhase } from "./phase";
 import type { PhaseLocationSource } from "./phase-location";
 
@@ -8,6 +8,8 @@ export interface PhasesDependencies {
   readonly species: SpeciesSource;
   /** Location per phase of the keeper (care profile, US-BES-09); until it exists nobody knows one (P-08). */
   readonly targets: PhaseLocationSource;
+  /** The care profile: its dormancy period replaces the catalog's (US-BES-09, FR-BES-09). */
+  readonly profiles: CareProfileReader;
   /** The clock comes from outside so that "today" is testable (NFR-08). */
   readonly clock: () => Date;
 }

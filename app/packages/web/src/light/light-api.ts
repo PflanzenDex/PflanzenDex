@@ -53,6 +53,16 @@ export async function loadLocations(
   return r.ok ? { ok: true, value: r.value.locations } : r;
 }
 
+/** Only the zones of the account, e.g. for selection in other modules (care profile). */
+export async function loadZones(
+  api: string,
+  token: string,
+  fetchFn: FetchFn = fetch,
+): Promise<KernelResponse<readonly LightZone[]>> {
+  const r = await call<{ zones: LightZone[] }>(fetchFn, `${api}/light-zones`, token);
+  return r.ok ? { ok: true, value: r.value.zones } : r;
+}
+
 export const createWrite = (api: string, token: string, fetchFn: FetchFn = fetch): Write =>
   createKernel<ZoneUser>(api, token, fetchFn);
 

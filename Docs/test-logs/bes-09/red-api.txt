@@ -1,0 +1,268 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex.worktrees/bes-09/app/packages/api
+
+ ❯ src/collection/care-profile.test.ts (15 tests | 14 failed) 1166ms
+   ❯ US-BES-09 care profile through the API (11)
+     × US-BES-09 without token: 401 for reading and writing 17ms
+     × US-BES-09 lists the species with an active specimen with the catalog value and, once set, my deviation 60ms
+     × US-BES-09 reset to catalog per field: null clears only that field, the species is untouched 1ms
+     × US-BES-09 an empty care profile is valid: everything reset, the catalog applies again 1ms
+     × US-BES-09 validation: catalog fields, a typed location, half a dormancy, an empty request: 400 with the field 1ms
+     × US-BES-09 a location or zone of another account is 404 and writes nothing (P-04) 1ms
+     × US-BES-09 a private species of another account looks like an unknown one: 404 1ms
+     × US-BES-09 the same Idempotency-Key answers the same; a different body under it is refused 3ms
+     × US-BES-09 my profile is private: another account sees no deviation and cannot change mine (P-05) 1ms
+     × US-BES-09 the zone of a care profile cannot be deleted unnoticed: 409 light_zone.in_use names the species 39ms
+     × US-BES-09 a species with only archived specimens drops out of the list (US-BES-07) 75ms
+   ❯ US-BES-09 the profile drives phases, moves and new specimens (4)
+     × US-BES-09 end to end: phase list shows my target, 'Jetzt umgestellt' moves, the hint 'location missing' is gone 187ms
+     × US-BES-09 my dormancy period replaces the catalog's: the phase changes on the same day 115ms
+     × US-BES-09 a new specimen without a chosen location is placed at my growth location (US-BES-02, FR-PHA-05) 89ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 care profile through the API > US-BES-09 without token: 401 for reading and writing
+AssertionError: expected 404 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 404
+
+ ❯ src/collection/care-profile.test.ts:121:64
+    119| describe("US-BES-09 care profile through the API", () => {
+    120|   it("US-BES-09 without token: 401 for reading and writing", async () …
+    121|     expect((await call(null, "GET", "/care-profiles")).status).toBe(40…
+       |                                                                ^
+    122|     expect((await put(null, speciesA, { growthLocationId: living })).s…
+    123|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 care profile through the API > US-BES-09 lists the species with an active specimen with the catalog value and, once set, my deviation
+TypeError: Cannot read properties of undefined (reading 'find')
+ ❯ src/collection/care-profile.test.ts:127:42
+    125|   it("US-BES-09 lists the species with an active specimen with the cat…
+    126|     await specimen(subA, speciesA, { marker: "Eins" });
+    127|     const before = (await entries(subA)).find((e) => e.speciesId === s…
+       |                                          ^
+    128|     expect(before).toMatchObject({ activeSpecimens: 1, deviates: false…
+    129|     expect(before?.profile["dormancy"]).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 care profile through the API > US-BES-09 reset to catalog per field: null clears only that field, the species is untouched
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ src/collection/care-profile.test.ts:160:22
+    158|   it("US-BES-09 reset to catalog per field: null clears only that fiel…
+    159|     const r = await put(subA, speciesA, { lightZoneId: null });
+    160|     expect(r.status).toBe(200);
+       |                      ^
+    161|     expect(r.body).toMatchObject({ lightZoneId: null, growthLocationId…
+    162|     const species = await call(subA, "GET", `/species/${speciesA}`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 care profile through the API > US-BES-09 an empty care profile is valid: everything reset, the catalog applies again
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ src/collection/care-profile.test.ts:175:26
+    173|       ownHints: null,
+    174|     });
+    175|     expect(reset.status).toBe(200);
+       |                          ^
+    176|     const e = (await entries(subA)).find((x) => x.speciesId === specie…
+    177|     expect(e?.deviates).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 care profile through the API > US-BES-09 validation: catalog fields, a typed location, half a dormancy, an empty request: 400 with the field
+AssertionError: {"latinName":"Anders"}: expected 404 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 404
+
+ ❯ src/collection/care-profile.test.ts:191:46
+    189|     ]) {
+    190|       const r = await put(subA, speciesA, body);
+    191|       expect(r.status, JSON.stringify(body)).toBe(400);
+       |                                              ^
+    192|       expect(r.body["error"].code).toBe("input.invalid");
+    193|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 care profile through the API > US-BES-09 a location or zone of another account is 404 and writes nothing (P-04)
+TypeError: Cannot read properties of undefined (reading 'code')
+ ❯ src/collection/care-profile.test.ts:198:39
+    196|   it("US-BES-09 a location or zone of another account is 404 and write…
+    197|     const l = await put(subA, speciesA, { growthLocationId: foreignLoc…
+    198|     expect([l.status, l.body["error"].code]).toEqual([404, "location.n…
+       |                                       ^
+    199|     const z = await put(subA, speciesA, { lightZoneId: foreignZone });
+    200|     expect([z.status, z.body["error"].code]).toEqual([404, "light_zone…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 care profile through the API > US-BES-09 a private species of another account looks like an unknown one: 404
+TypeError: Cannot read properties of undefined (reading 'code')
+ ❯ src/collection/care-profile.test.ts:207:39
+    205|   it("US-BES-09 a private species of another account looks like an unk…
+    206|     const r = await put(subA, foreignSpecies, { growthLocationId: livi…
+    207|     expect([r.status, r.body["error"].code]).toEqual([404, "species.no…
+       |                                       ^
+    208|   });
+    209|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 care profile through the API > US-BES-09 the same Idempotency-Key answers the same; a different body under it is refused
+AssertionError: expected [ 404, 404 ] to deeply equal [ 200, 200 ]
+
+- Expected
++ Received
+
+  [
+-   200,
+-   200,
++   404,
++   404,
+  ]
+
+ ❯ src/collection/care-profile.test.ts:214:34
+    212|     const a = await put(subA, speciesA, { wateringDormancyDays: 21 }, …
+    213|     const b = await put(subA, speciesA, { wateringDormancyDays: 21 }, …
+    214|     expect([a.status, b.status]).toEqual([200, 200]);
+       |                                  ^
+    215|     expect(b.body).toEqual(a.body);
+    216|     const c = await put(subA, speciesA, { wateringDormancyDays: 28 }, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 care profile through the API > US-BES-09 my profile is private: another account sees no deviation and cannot change mine (P-05)
+TypeError: Cannot read properties of undefined (reading 'find')
+ ❯ src/collection/care-profile.test.ts:222:34
+    220|
+    221|   it("US-BES-09 my profile is private: another account sees no deviati…
+    222|     expect((await entries(subB)).find((x) => x.speciesId === speciesA)…
+       |                                  ^
+    223|     const own = await newSpecies(subB, `Eigen${run}`);
+    224|     await specimen(subB, own);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 care profile through the API > US-BES-09 the zone of a care profile cannot be deleted unnoticed: 409 light_zone.in_use names the species
+TypeError: Cannot read properties of undefined (reading 'code')
+ ❯ src/collection/care-profile.test.ts:236:51
+    234|     await put(subA, speciesA, { lightZoneId: zoneHigh });
+    235|     const blocked = await call(subA, "DELETE", `/light-zones/${zoneHig…
+    236|     expect([blocked.status, blocked.body["error"].code]).toEqual([409,…
+       |                                                   ^
+    237|     expect(JSON.stringify(blocked.body["error"].data)).toContain(`Wint…
+    238|     await put(subA, speciesA, { lightZoneId: null });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 care profile through the API > US-BES-09 a species with only archived specimens drops out of the list (US-BES-07)
+TypeError: Cannot read properties of undefined (reading 'some')
+ ❯ src/collection/care-profile.test.ts:245:34
+    243|     const lone = await newSpecies(subA, `Archiv${run}`);
+    244|     const z = await specimen(subA, lone);
+    245|     expect((await entries(subA)).some((e) => e.speciesId === lone)).to…
+       |                                  ^
+    246|     await call(subA, "POST", `/specimens/${z["id"]}/archive`, {
+    247|       timeZone: "Europe/Berlin",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 the profile drives phases, moves and new specimens > US-BES-09 end to end: phase list shows my target, 'Jetzt umgestellt' moves, the hint 'location missing' is gone
+AssertionError: expected { …(6) } to match object { locationId: null, …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "locationId": null,
+-   "targetLocationId": "1d8c3372-8d35-4f1d-a905-b35a9e8faebc",
++   "targetLocationId": null,
+  }
+
+ ❯ src/collection/care-profile.test.ts:286:25
+    284|
+    285|     await put(subA, species, { growthLocationId: living, dormancyLocat…
+    286|     expect(await row()).toMatchObject({ locationId: null, targetLocati…
+       |                         ^
+    287|
+    288|     const moved = await call(subA, "POST", "/care-phases/confirm", {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 the profile drives phases, moves and new specimens > US-BES-09 my dormancy period replaces the catalog's: the phase changes on the same day
+AssertionError: expected { …(6) } to match object { phase: 'growth', …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "phase": "growth",
+-   "targetLocationId": "1d8c3372-8d35-4f1d-a905-b35a9e8faebc",
++   "targetLocationId": null,
+  }
+
+ ❯ src/collection/care-profile.test.ts:312:27
+    310|       ).find((p) => p.specimenId === z["id"]);
+    311|     await put(subA, species, { growthLocationId: living, dormancyLocat…
+    312|     expect(await phase()).toMatchObject({ phase: "growth", targetLocat…
+       |                           ^
+    313|     await put(subA, species, { dormancyFrom: "09-01", dormancyUntil: "…
+    314|     expect(await phase()).toMatchObject({ phase: "dormancy", targetLoc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 the profile drives phases, moves and new specimens > US-BES-09 a new specimen without a chosen location is placed at my growth location (US-BES-02, FR-PHA-05)
+AssertionError: expected { …(11) } to match object { Object (locationId) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "locationId": "1d8c3372-8d35-4f1d-a905-b35a9e8faebc",
++   "locationId": null,
+  }
+
+ ❯ src/collection/care-profile.test.ts:330:15
+    328|     await put(subA, species, { growthLocationId: living });
+    329|     const z = await specimen(subA, species, { marker: "Eins" });
+    330|     expect(z).toMatchObject({ locationId: living });
+       |               ^
+    331|   });
+    332| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+
+
+ Test Files  1 failed | 15 passed (16)
+      Tests  14 failed | 147 passed (161)
+   Start at  02:57:17
+   Duration  2.66s (tests 67%, transform 22%, import 11%)
+

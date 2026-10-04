@@ -196,6 +196,7 @@ describe("module boundaries against the real database (AB-10, AB-13)", () => {
       await findSchemaViolations(pool, using({ species: { ...species, reason: " " } })),
     ).toEqual([
       expect.stringMatching(/^AB-10 global reference table species: without justification/),
+      expect.stringMatching(/^AB-10 foreign key care_profile_species .*without justification/),
       expect.stringMatching(/^AB-10 foreign key specimen_species .*without justification/),
     ]);
     expect(

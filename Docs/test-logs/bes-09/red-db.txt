@@ -1,0 +1,245 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex.worktrees/bes-09/app/packages/db
+
+ ❯ src/kernel/module-schema.test.ts (17 tests | 1 failed) 122ms
+   ❯ module boundaries against the real database (AB-10, AB-13) (5)
+     × AB-10: a register entry must be justified, concern a table without account ID with an exception and belong to the owner 9ms
+ ❯ src/collection/care-profiles.test.ts (8 tests | 8 failed) 76ms
+   ❯ US-BES-09 care profile in the database (8)
+     × US-BES-09 the first change creates the profile, later ones change only the named fields 7ms
+     × US-BES-09 null resets exactly that field to the catalog; an empty profile stays valid 4ms
+     × US-BES-09 a location of another account is refused, nothing is written (composite foreign key, P-04) 4ms
+     × US-BES-09 a zone of another account is refused (P-04) 4ms
+     × US-BES-09 the zone override can be set and reset; the profile is private to the account (P-05) 4ms
+     × US-BES-09 two accounts keep separate profiles of the same species 0ms
+     × US-BES-09 the database refuses what the operation would never send (checks) 7ms
+     × US-BES-09 the species in use cannot be deleted (global reference table, on delete restrict) 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/care-profiles.test.ts > US-BES-09 care profile in the database > US-BES-09 the first change creates the profile, later ones change only the named fields
+Error: not implemented
+ ❯ CareProfilePostgres.update src/collection/care-profiles.ts:37:11
+     35|     void speciesId;
+     36|     void changes;
+     37|     throw new Error("not implemented");
+       |           ^
+     38|   }
+     39| }
+ ❯ src/collection/care-profiles.test.ts:47:34
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/collection/care-profiles.test.ts > US-BES-09 care profile in the database > US-BES-09 null resets exactly that field to the catalog; an empty profile stays valid
+Error: not implemented
+ ❯ CareProfilePostgres.update src/collection/care-profiles.ts:37:11
+     35|     void speciesId;
+     36|     void changes;
+     37|     throw new Error("not implemented");
+       |           ^
+     38|   }
+     39| }
+ ❯ src/collection/care-profiles.test.ts:76:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/collection/care-profiles.test.ts > US-BES-09 care profile in the database > US-BES-09 a location of another account is refused, nothing is written (composite foreign key, P-04)
+Error: not implemented
+ ❯ CareProfilePostgres.list src/collection/care-profiles.ts:26:11
+     24|   async list(userId: string): Promise<readonly CareProfileRow[]> {
+     25|     void userId;
+     26|     throw new Error("not implemented");
+       |           ^
+     27|   }
+     28|
+ ❯ src/collection/care-profiles.test.ts:102:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/collection/care-profiles.test.ts > US-BES-09 care profile in the database > US-BES-09 a zone of another account is refused (P-04)
+Error: not implemented
+ ❯ CareProfilePostgres.update src/collection/care-profiles.ts:37:11
+     35|     void speciesId;
+     36|     void changes;
+     37|     throw new Error("not implemented");
+       |           ^
+     38|   }
+     39| }
+ ❯ src/collection/care-profiles.test.ts:114:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/collection/care-profiles.test.ts > US-BES-09 care profile in the database > US-BES-09 the zone override can be set and reset; the profile is private to the account (P-05)
+Error: not implemented
+ ❯ CareProfilePostgres.update src/collection/care-profiles.ts:37:11
+     35|     void speciesId;
+     36|     void changes;
+     37|     throw new Error("not implemented");
+       |           ^
+     38|   }
+     39| }
+ ❯ src/collection/care-profiles.test.ts:119:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  src/collection/care-profiles.test.ts > US-BES-09 care profile in the database > US-BES-09 two accounts keep separate profiles of the same species
+Error: not implemented
+ ❯ CareProfilePostgres.update src/collection/care-profiles.ts:37:11
+     35|     void speciesId;
+     36|     void changes;
+     37|     throw new Error("not implemented");
+       |           ^
+     38|   }
+     39| }
+ ❯ src/collection/care-profiles.test.ts:129:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  src/collection/care-profiles.test.ts > US-BES-09 care profile in the database > US-BES-09 the database refuses what the operation would never send (checks)
+AssertionError: promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ Result {
++   "RowCtor": null,
++   "_parsers": undefined,
++   "_prebuiltEmptyResultObject": null,
++   "_types": TypeOverrides {
++     "_types": {
++       "arrayParser": {
++         "create": [Function create],
++       },
++       "builtins": {
++         "ABSTIME": 702,
++         "ACLITEM": 1033,
++         "BIT": 1560,
++         "BOOL": 16,
++         "BPCHAR": 1042,
++         "BYTEA": 17,
++         "CHAR": 18,
++         "CID": 29,
++         "CIDR": 650,
++         "CIRCLE": 718,
++         "DATE": 1082,
++         "FLOAT4": 700,
++         "FLOAT8": 701,
++         "GTSVECTOR": 3642,
++         "INET": 869,
++         "INT2": 21,
++         "INT4": 23,
++         "INT8": 20,
++         "INTERVAL": 1186,
++         "JSON": 114,
++         "JSONB": 3802,
++         "MACADDR": 829,
++         "MACADDR8": 774,
++         "MONEY": 790,
++         "NUMERIC": 1700,
++         "OID": 26,
++         "PATH": 602,
++         "PG_DEPENDENCIES": 3402,
++         "PG_LSN": 3220,
++         "PG_NDISTINCT": 3361,
++         "PG_NODE_TREE": 194,
++         "POLYGON": 604,
++         "REFCURSOR": 1790,
++         "REGCLASS": 2205,
++         "REGCONFIG": 3734,
++         "REGDICTIONARY": 3769,
++         "REGNAMESPACE": 4089,
++         "REGOPER": 2203,
++         "REGOPERATOR": 2204,
++         "REGPROC": 24,
++         "REGPROCEDURE": 2202,
++         "REGROLE": 4096,
++         "REGTYPE": 2206,
++         "RELTIME": 703,
++         "SMGR": 210,
++         "TEXT": 25,
++         "TID": 27,
++         "TIME": 1083,
++         "TIMESTAMP": 1114,
++         "TIMESTAMPTZ": 1184,
++         "TIMETZ": 1266,
++         "TINTERVAL": 704,
++         "TSQUERY": 3615,
++         "TSVECTOR": 3614,
++         "TXID_SNAPSHOT": 2970,
++         "UUID": 2950,
++         "VARBIT": 1562,
++         "VARCHAR": 1043,
++         "XID": 28,
++         "XML": 142,
++       },
++       "getTypeParser": [Function getTypeParser],
++       "setTypeParser": [Function setTypeParser],
++     },
++     "binary": {},
++     "text": {},
++   },
++   "command": "UPDATE",
++   "fields": [],
++   "oid": null,
++   "rowAsArray": false,
++   "rowCount": 0,
++   "rows": [],
+  }
+
+ ❯ src/collection/care-profiles.test.ts:143:41
+    141|         ]),
+    142|       );
+    143|     await expect(bad({ from: "13-45" })).rejects.toThrow();
+       |                                         ^
+    144|     await expect(bad({ from: "11-01" })).rejects.toThrow(); // from wi…
+    145|     await expect(profiles.update(anna, species, { wateringGrowthDays: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  src/collection/care-profiles.test.ts > US-BES-09 care profile in the database > US-BES-09 the species in use cannot be deleted (global reference table, on delete restrict)
+Error: not implemented
+ ❯ CareProfilePostgres.update src/collection/care-profiles.ts:37:11
+     35|     void speciesId;
+     36|     void changes;
+     37|     throw new Error("not implemented");
+       |           ^
+     38|   }
+     39| }
+ ❯ src/collection/care-profiles.test.ts:150:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  src/kernel/module-schema.test.ts > module boundaries against the real database (AB-10, AB-13) > AB-10: a register entry must be justified, concern a table without account ID with an exception and belong to the owner
+AssertionError: expected [ …(3) ] to deeply equal [ Array(2) ]
+
+- Expected
++ Received
+
+  [
+    "AB-10 global reference table species: without justification (GLOBAL_REFERENCE_TABLES)",
+-   StringMatching /^AB-10 foreign key specimen_species .*without justification/,
++   "AB-10 foreign key care_profile_species (care_profile -> species), collection -> catalog: global reference table species without justification in the module register (GLOBAL_REFERENCE_TABLES)",
++   "AB-10 foreign key specimen_species (specimen -> species), collection -> catalog: global reference table species without justification in the module register (GLOBAL_REFERENCE_TABLES)",
+  ]
+
+ ❯ src/kernel/module-schema.test.ts:197:7
+    195|     expect(
+    196|       await findSchemaViolations(pool, using({ species: { ...species, …
+    197|     ).toEqual([
+       |       ^
+    198|       expect.stringMatching(/^AB-10 global reference table species: wi…
+    199|       expect.stringMatching(/^AB-10 foreign key specimen_species .*wit…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  2 failed | 10 passed (12)
+      Tests  9 failed | 125 passed (134)
+   Start at  02:56:01
+   Duration  4.77s (tests 86%, import 8%, transform 5%, worker 1%)
+
+    Isolate  12 workers spawned · ~64ms startup each (spawn + environment, per file)
+             at least ~702ms faster with isolate: false — reuses workers across files instead of one per file
+
