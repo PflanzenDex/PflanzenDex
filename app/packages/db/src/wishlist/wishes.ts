@@ -1,0 +1,82 @@
+import type { Pool } from "pg";
+import { withAccount } from "../kernel/index.ts";
+
+// Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
+export interface WishRow {
+  readonly id: string;
+  readonly name: string;
+  readonly german: string | null;
+  readonly targetZoneId: string | null;
+  readonly difficulty: number | null;
+  readonly reasoning: string | null;
+  readonly imageUrl: string | null;
+  readonly imageSource: string | null;
+  readonly license: string | null;
+  readonly type: "plant";
+  readonly status: "wishlist" | "bought" | "discarded";
+}
+export type WishValues = Omit<WishRow, "id" | "type" | "status">;
+
+const COLUMNS = `id, name, german, target_zone_id as "targetZoneId", difficulty, reasoning, image_url as "imageUrl",
+  image_source as "imageSource", license, type, status`;
+
+const UNIQUE = "23505";
+const FOREIGN_KEY = "23503";
+
+/**
+ * Adapter for wishes; every call runs as the account of the caller under the row rules (P-04, P-05). The target zone
+ * hangs on the own account through the composite foreign key (account_id, target_zone_id): the zone of another
+ * account is unknown to the database, even if someone guesses its ID.
+ */
+export class WishesPostgres {
+  constructor(private readonly pool: Pool) {}
+
+  async create(userId: string, v: WishValues): Promise<WishRow | "name_taken" | "zone_unknown"> {
+    try {
+      const r = await withAccount(this.pool, userId, (c) =>
+        c.query<WishRow>(
+          `insert into wish (account_id, name, german, target_zone_id, difficulty, reasoning, image_url, image_source, license)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning ${COLUMNS}`,
+          [
+            userId,
+            v.name,
+            v.german,
+            v.targetZoneId,
+            v.difficulty,
+            v.reasoning,
+            v.imageUrl,
+            v.imageSource,
+            v.license,
+          ],
+        ),
+      );
+      return r.rows[0] as WishRow;
+    } catch (e) {
+      const f = e as { code?: string; constraint?: string };
+      if (f.code === UNIQUE && f.constraint === "wish_name") return "name_taken";
+      if (f.code === FOREIGN_KEY && f.constraint === "wish_target_zone") return "zone_unknown";
+      throw e;
+    }
+  }
+
+  /** Open plant wishes (FR-WUN-02), oldest first; the row rules show only the own ones. */
+  async open(userId: string): Promise<readonly WishRow[]> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<WishRow>(
+        `select ${COLUMNS} from wish where status = 'wishlist' and type = 'plant' order by created_at, id`,
+      ),
+    );
+    return r.rows;
+  }
+
+  /** Wishes of any status that point at the zone, by name. */
+  async usingZone(userId: string, zoneId: string): Promise<readonly WishRow[]> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<WishRow>(
+        `select ${COLUMNS} from wish where target_zone_id = $1 order by lower(name), id`,
+        [zoneId],
+      ),
+    );
+    return r.rows;
+  }
+}
