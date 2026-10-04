@@ -7,6 +7,7 @@ import {
   type MeasurementSource,
   type TargetLocationSource,
   type PhaseLocationSource,
+  type ZoneStockSource,
 } from "@pflanzendex/core";
 import { authentication, accountRoutes, type TokenVerifier } from "./account";
 import {
@@ -17,6 +18,8 @@ import {
   specimenRoutes,
 } from "./collection";
 import { SPECIES_PATHS, speciesRoutes } from "./catalog";
+import { WISH_PATHS, wishRoutes, wishZoneUsageFor } from "./wishlist";
+import { zoneStockFor } from "./zone-stock";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import {
   CARE_PATHS,
@@ -49,6 +52,8 @@ export type AppOptions = {
   treatments?: TreatmentSource;
   /** Replaces the care profile as source of the location per phase (tests); without it the keeper's own care profile (US-BES-09) answers. */
   phaseLocation?: PhaseLocationSource;
+  /** Replaces the light distribution as source of the stock per zone for the wishlist (tests); without it `collection` answers (US-LIC-02). */
+  zoneStock?: ZoneStockSource;
 };
 
 /** The module `care` (measurements, care phases and treatments): sign-in guard in front of the paths, then the routes. */
@@ -94,13 +99,18 @@ export function createApp(opt: AppOptions = {}): Hono {
     app.use("/account/*", auth);
     app.route("/account", accountRoutes(opt.pool));
     for (const path of LIGHT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-    app.route("/", lightRoutes(opt.pool, [careProfileZoneUsageFor(opt.pool)]));
+    app.route(
+      "/",
+      lightRoutes(opt.pool, [careProfileZoneUsageFor(opt.pool), wishZoneUsageFor(opt.pool)]),
+    );
     for (const path of SPECIES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", speciesRoutes(opt.pool));
     for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", specimenRoutes(opt.pool, { clock: opt.clock, ...careSources(opt.pool, opt) }));
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", careProfileRoutes(opt.pool));
+    for (const path of WISH_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+    app.route("/", wishRoutes(opt.pool, opt.zoneStock ?? zoneStockFor(opt.pool)));
     bindCareOne(app, opt.pool, auth, {
       ...(opt.clock ? { clock: opt.clock } : {}),
       ...(opt.phaseLocation ? { phaseLocation: opt.phaseLocation } : {}),

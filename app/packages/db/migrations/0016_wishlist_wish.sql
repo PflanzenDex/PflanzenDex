@@ -11,7 +11,7 @@ create table wish (
   -- (starting value), the same as in core.
   name text not null check (char_length(name) between 1 and 120),
   german text check (char_length(german) between 1 and 120),
-  -- Must be a zone of the same account (composite foreign key). null means "unknown" (P-08). A zone in use cannot be
+  -- Must be a zone of the same account (composite foreign key, no cascade). null means "unknown" (P-08). A zone in use cannot be
   -- deleted: nothing disappears silently (P-10).
   target_zone_id uuid,
   -- The same number 1 to 3 everywhere (FR-WUN-04); null means "unknown" (P-08).
@@ -26,7 +26,7 @@ create table wish (
   created_at timestamptz not null default now(),
   check ((image_url is null) = (image_source is null)),
   constraint wish_target_zone foreign key (account_id, target_zone_id)
-    references light_zone (account_id, id) on delete restrict
+    references light_zone (account_id, id)
 );
 create unique index wish_name on wish (account_id, lower(name));
 -- The open candidates of an account, oldest first (US-WUN-01).

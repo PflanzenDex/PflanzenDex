@@ -1,0 +1,76 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex.worktrees/wun-01/app/packages/api
+
+ ❯ src/wishlist/wishlist.test.ts (14 tests | 14 failed) 292ms
+   ❯ US-WUN-01 sign-in and input (3)
+     × GET /wishes/candidates and POST /wishes without a token: 401 3ms
+     × POST /wishes without Idempotency-Key: 400 with a stable code, nothing written 1ms
+     × invalid input: 400 input.invalid naming the field 0ms
+   ❯ US-WUN-01 candidates sorted by the stock of the target zone (5)
+     × lists the open candidates ascending by the specimen count of the target zone, unknown zone last 0ms
+     × an archived specimen no longer counts in the stock (isActive) 0ms
+     × without open candidates: 'Keine offenen Kandidaten in der Wunschliste.' and a next action 0ms
+     × a wish that is no longer open leaves the list (FR-WUN-02) 0ms
+     × a picture is shown with its source 0ms
+   ❯ US-WUN-01 writing a wish (P-03) (2)
+     × the same Idempotency-Key writes once and answers the same 0ms
+     × a duplicate name is refused: 409 wish.name_taken, also in another letter case (FR-WUN-06) 0ms
+   ❯ US-WUN-01 tenant isolation and privacy (P-04, P-05) (3)
+     × another account sees none of my wishes and its stock does not rank mine 0ms
+     × the same name in another account is no duplicate; each account sees its own wish only 0ms
+     × a target zone of another account looks unknown: 404 light_zone.not_found, nothing written 0ms
+   ❯ US-WUN-01 a zone a wish points to cannot be deleted unnoticed (P-10) (1)
+     × DELETE /light-zones/:id answers 409 light_zone.in_use and names the wish 32ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/wishlist/wishlist.test.ts > US-WUN-01 sign-in and input > GET /wishes/candidates and POST /wishes without a token: 401
+ FAIL  src/wishlist/wishlist.test.ts > US-WUN-01 sign-in and input > POST /wishes without Idempotency-Key: 400 with a stable code, nothing written
+ FAIL  src/wishlist/wishlist.test.ts > US-WUN-01 sign-in and input > invalid input: 400 input.invalid naming the field
+ FAIL  src/wishlist/wishlist.test.ts > US-WUN-01 candidates sorted by the stock of the target zone > lists the open candidates ascending by the specimen count of the target zone, unknown zone last
+ FAIL  src/wishlist/wishlist.test.ts > US-WUN-01 candidates sorted by the stock of the target zone > an archived specimen no longer counts in the stock (isActive)
+ FAIL  src/wishlist/wishlist.test.ts > US-WUN-01 candidates sorted by the stock of the target zone > without open candidates: 'Keine offenen Kandidaten in der Wunschliste.' and a next action
+ FAIL  src/wishlist/wishlist.test.ts > US-WUN-01 candidates sorted by the stock of the target zone > a wish that is no longer open leaves the list (FR-WUN-02)
+ FAIL  src/wishlist/wishlist.test.ts > US-WUN-01 candidates sorted by the stock of the target zone > a picture is shown with its source
+ FAIL  src/wishlist/wishlist.test.ts > US-WUN-01 writing a wish (P-03) > the same Idempotency-Key writes once and answers the same
+ FAIL  src/wishlist/wishlist.test.ts > US-WUN-01 writing a wish (P-03) > a duplicate name is refused: 409 wish.name_taken, also in another letter case (FR-WUN-06)
+ FAIL  src/wishlist/wishlist.test.ts > US-WUN-01 tenant isolation and privacy (P-04, P-05) > another account sees none of my wishes and its stock does not rank mine
+ FAIL  src/wishlist/wishlist.test.ts > US-WUN-01 tenant isolation and privacy (P-04, P-05) > the same name in another account is no duplicate; each account sees its own wish only
+ FAIL  src/wishlist/wishlist.test.ts > US-WUN-01 tenant isolation and privacy (P-04, P-05) > a target zone of another account looks unknown: 404 light_zone.not_found, nothing written
+SyntaxError: Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  src/wishlist/wishlist.test.ts > US-WUN-01 a zone a wish points to cannot be deleted unnoticed (P-10) > DELETE /light-zones/:id answers 409 light_zone.in_use and names the wish
+AssertionError: expected { status: 200, …(1) } to match object { status: 409, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "body": {
+-     "error": {
+-       "code": "light_zone.in_use",
+-     },
++     "id": "176ef5aa-7b66-438d-9a91-d8405e6badcb",
+    },
+-   "status": 409,
++   "status": 200,
+  }
+
+ ❯ src/wishlist/wishlist.test.ts:268:15
+    266|   it("DELETE /light-zones/:id answers 409 light_zone.in_use and names …
+    267|     const r = await call(subA, "DELETE", `/light-zones/${zoneA["Lampe …
+    268|     expect(r).toMatchObject({ status: 409, body: { error: { code: "lig…
+       |               ^
+    269|     expect(JSON.stringify(r.body)).toContain(`Cereus ${run}`);
+    270|     expect((await call(subA, "GET", "/light-zones")).body["zones"]).to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  14 failed (14)
+   Start at  10:23:05
+   Duration  843ms (transform 50%, tests 38%, import 12%)
+
