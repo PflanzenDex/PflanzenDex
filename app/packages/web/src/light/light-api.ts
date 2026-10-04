@@ -1,4 +1,12 @@
-import type { Derivation, Hint, LightLocation, LightZone, ZoneUser } from "@pflanzendex/core";
+import type {
+  Derivation,
+  Hint,
+  LightLocation,
+  LightOverview,
+  LightOverviewRow,
+  LightZone,
+  ZoneUser,
+} from "@pflanzendex/core";
 
 import {
   call,
@@ -8,7 +16,15 @@ import {
   type Write as KernelWrite,
 } from "../kernel";
 
-export type { Derivation, Hint, LightLocation, LightZone, ZoneUser };
+export type {
+  Derivation,
+  Hint,
+  LightLocation,
+  LightOverview,
+  LightOverviewRow,
+  LightZone,
+  ZoneUser,
+};
 
 type FetchFn = typeof fetch;
 
@@ -70,6 +86,15 @@ export interface DerivationRequest {
   lightDemandLux: number;
   standardLevel: number;
   softLeaf: boolean;
+}
+
+/** US-LIC-03: species by light hunger with position recommendations (derived, never stored). */
+export async function loadLightOverview(
+  api: string,
+  token: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<LightOverview>> {
+  return call<LightOverview, ZoneUser>(fetchFn, `${api}/specimens/light-overview`, token);
 }
 
 /** US-LIC-01: zone of the species, derived from the lux need according to the zones of the account (never stored). */
