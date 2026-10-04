@@ -1,4 +1,7 @@
-/* Wishlist (US-WUN-01): mobile first; builds on style.css, light.css and collection.css (cards). */
+/* Wishlist (US-WUN-01): mobile first; builds on style.css and light.css. */
+.wishlist-page h1 {
+  margin: 0 0 8px;
+}
 .wishlist-page .candidate-hint p {
   margin: 0;
 }
@@ -6,10 +9,56 @@
   margin-top: 4px;
   font-weight: 600;
 }
+.wish-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.wish-card {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--rand);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.wish-card h2 {
+  font-size: 1.1rem;
+  margin: 8px 0 0;
+}
+.wish-card p {
+  margin: 0;
+}
 .candidate-figure {
   margin: 0;
   display: grid;
   gap: 4px;
+}
+.wish-photo {
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--grund);
+}
+.wish-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.wish-placeholder {
+  aspect-ratio: auto;
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--rand);
+  color: var(--leise);
 }
 .candidate-rank {
   color: var(--leise);
@@ -29,4 +78,12 @@
 }
 .wishlist-page h2#wish-form-title {
   margin-top: 28px;
+}
+.wishlist-page textarea {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 2px solid var(--rand);
+  background: var(--grund);
+  color: var(--text);
+  font: inherit;
 }

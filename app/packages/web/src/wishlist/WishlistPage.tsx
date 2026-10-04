@@ -1,4 +1,3 @@
-import "../collection/collection.css";
 import "./wishlist.css";
 import { useCallback, useState } from "react";
 import type { CandidateList } from "@pflanzendex/core";
@@ -29,7 +28,7 @@ function Body(props: { list: CandidateList; api: string; token: Token; onWritten
         <p className="next-action">{list.hint.nextAction}</p>
       </div>
       {list.candidates.length > 0 && (
-        <ul className="cards-grid" aria-label="Offene Kandidaten">
+        <ul className="wish-grid" aria-label="Offene Kandidaten">
           {list.candidates.map((c, i) => (
             <CandidateCard key={c.id} c={c} rank={i + 1} />
           ))}
@@ -56,7 +55,7 @@ export function WishlistPage(props: { api: string; token: Token }) {
   const load = useCallback((t: string) => loadCandidates(api, t), [api]);
   const reload = useCallback(() => setVersion((n) => n + 1), []);
   return (
-    <div className="light collection wishlist-page">
+    <div className="light wishlist-page">
       <section aria-labelledby="wishlist-title">
         <h1 id="wishlist-title">Wunschliste</h1>
         <p className="quiet">
