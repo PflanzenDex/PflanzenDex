@@ -91,7 +91,7 @@ afterAll(async () => {
       `delete from species where id in (select object_id from review_case where account_id in ${accounts})`,
       subs,
     );
-    await client.query(`delete from review_case where account_id in ${accounts}`, subs);
+    await client.query("set local session_replication_role = default");
     await client.query(`delete from account where id in ${accounts}`, subs);
     await client.query("commit");
   } finally {
@@ -145,6 +145,13 @@ describe("US-BES-10 access (P-04, FR-BES-14)", () => {
     // The operator's search does not list the foreign proposal; it is visible only through the review path.
     const search = await call(subOperator, "GET", `/species?q=${encodeURIComponent(run)}`);
     expect(search.body["species"].map((s: { id: string }) => s.id)).not.toContain(p.speciesId);
+  });
+});
+
+describe("US-BES-10 who is a reviewer", () => {
+  it("US-BES-10 the own account tells the UI whether it may review", async () => {
+    expect((await call(subOperator, "GET", "/account")).body["reviewer"]).toBe(true);
+    expect((await call(subKeeper, "GET", "/account")).body["reviewer"]).toBe(false);
   });
 });
 

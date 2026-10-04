@@ -1,2 +1,3 @@
-// Public interface of the `catalog` module (ADR 0003): page for the species catalog.
+// Public interface of the `catalog` module (ADR 0003): pages for the species catalog and its review.
 export { SpeciesPage } from "./SpeciesPage";
+export { ReviewPage } from "./ReviewPage";

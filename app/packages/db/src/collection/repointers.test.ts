@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, withAccount, openPool } from "../kernel/index.ts";
-import { assignRole, deleteCatalogFixtures, reviewCaseIdOf } from "../fixtures.ts";
+import { assignRole, deleteAccountsWithCatalog, reviewCaseIdOf } from "../fixtures.ts";
 import { ReviewPostgres, SpeciesPostgres } from "../catalog/index.ts";
 import type { SpeciesName, SpeciesValues } from "../catalog/species.ts";
 import { CareProfilePostgres, COLLECTION_REPOINTERS, SpecimenPostgres } from "./index.ts";
@@ -104,8 +104,7 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   const accounts = [keeper, other, operator, reviewer];
-  await deleteCatalogFixtures(pool, accounts);
-  await pool.query("delete from account where id = any($1)", [accounts]);
+  await deleteAccountsWithCatalog(pool, accounts);
   await pool.end();
 });
 

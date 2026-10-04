@@ -6,6 +6,8 @@ export type Account = {
   displayName: string | null;
   emailConfirmed: boolean;
   mayShareWithFriends: boolean;
+  /** Operator or reviewer: shows the review list of catalog proposals (US-BES-10). */
+  reviewer?: boolean;
 };
 
 type Environment = Record<string, string | undefined>;

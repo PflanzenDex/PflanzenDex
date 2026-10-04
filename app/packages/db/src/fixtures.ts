@@ -70,11 +70,12 @@ export const reviewCaseIdOf = async (pool: Pool, objectId: string): Promise<stri
     .rows[0]?.id ?? "";
 
 /**
- * Removes the species and review cases that the given accounts created (and the species they were merged into are
- * left alone). Catalog and review case point to each other (a species needs its case, a merged case names its target),
- * so the foreign keys are switched off for this one cleanup transaction (owner rights, tests only).
+ * Deletes the given accounts together with the species and review cases they created. Catalog and review case point to
+ * each other (a species needs its case, a merged case names its target), so the foreign keys are switched off while
+ * the species go; afterwards the accounts are deleted normally, which cascades to their specimens and care profiles.
+ * One transaction, so no other test ever sees the dangling state (tests only, owner rights).
  */
-export async function deleteCatalogFixtures(
+export async function deleteAccountsWithCatalog(
   pool: Pool,
   accounts: readonly string[],
 ): Promise<void> {
@@ -86,7 +87,8 @@ export async function deleteCatalogFixtures(
       "delete from species where id in (select object_id from review_case where account_id = any($1))",
       [accounts],
     );
-    await client.query("delete from review_case where account_id = any($1)", [accounts]);
+    await client.query("set local session_replication_role = default");
+    await client.query("delete from account where id = any($1)", [accounts]);
     await client.query("commit");
   } catch (error) {
     await client.query("rollback");
