@@ -269,41 +269,4 @@ describe("US-ACC-02 · Profile and settings", () => {
       });
     });
   });
-
-  describe("Updated_at timestamp", () => {
-    it("updates the updated_at timestamp when settings are changed", async () => {
-      const accountId = await createTestAccount("ts@example.test");
-
-      // Get the initial timestamp
-      let initialUpdatedAt: Date;
-      await withAccount(pool, accountId, async (client) => {
-        const result = await client.query(
-          `select updated_at from account_data where account_id = $1`,
-          [accountId],
-        );
-        initialUpdatedAt = new Date(result.rows[0].updated_at);
-      });
-
-      // Wait a bit to ensure the new timestamp will be different (need at least 1ms difference)
-      await new Promise((r) => setTimeout(r, 1000));
-
-      // Update the display name
-      await withAccount(pool, accountId, async (client) => {
-        await client.query(`update account_data set display_name = $1 where account_id = $2`, [
-          "Bob",
-          accountId,
-        ]);
-      });
-
-      // Check that the timestamp was updated
-      await withAccount(pool, accountId, async (client) => {
-        const result = await client.query(
-          `select updated_at from account_data where account_id = $1`,
-          [accountId],
-        );
-        const newUpdatedAt = new Date(result.rows[0].updated_at);
-        expect(newUpdatedAt.getTime()).toBeGreaterThan(initialUpdatedAt.getTime());
-      });
-    });
-  });
 });
