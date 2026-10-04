@@ -54,6 +54,8 @@ describe("US-POK-06 ownership derived from the specimens", () => {
     expect(r.caught).toEqual([
       {
         species: "Citrus limon",
+        speciesId: LEMON,
+        source: null,
         genus: "Citrus",
         chips: [],
         specimenCount: 1,
@@ -92,6 +94,8 @@ describe("US-POK-06 ownership derived from the specimens", () => {
     expect(r.caught).toEqual([
       {
         species: "Opuntia microdasys",
+        speciesId: OPUNTIA,
+        source: null,
         genus: "Opuntia",
         chips: ["var. albispina"],
         specimenCount: 2,
