@@ -1,5 +1,10 @@
 import { appError, failed, localToday, isTimeZone, ok, type Result } from "../kernel";
-import type { SpeciesSource, SpecimenStore } from "../collection";
+import {
+  effectiveDormancy,
+  type CareProfileReader,
+  type SpeciesSource,
+  type SpecimenStore,
+} from "../collection";
 import { carePhase, type CarePhase } from "./phase";
 import type { PhaseLocationSource } from "./phase-location";
 
@@ -8,6 +13,8 @@ export interface PhasesDependencies {
   readonly species: SpeciesSource;
   /** Location per phase of the keeper (care profile, US-BES-09); until it exists nobody knows one (P-08). */
   readonly targets: PhaseLocationSource;
+  /** The care profile: its dormancy period replaces the catalog's (US-BES-09, FR-BES-09). */
+  readonly profiles: CareProfileReader;
   /** The clock comes from outside so that "today" is testable (NFR-08). */
   readonly clock: () => Date;
 }
@@ -38,6 +45,7 @@ export async function phaseRows(
   today: string,
 ): Promise<readonly PhasesRow[]> {
   const active = (await deps.specimens.list(userId)).filter((z) => z.status === "plant");
+  const own = new Map((await deps.profiles.list(userId)).map((p) => [p.speciesId, p] as const));
   const speciesIds = [...new Set(active.map((z) => z.speciesId))];
   const species = new Map(
     await Promise.all(
@@ -47,8 +55,9 @@ export async function phaseRows(
   const rows = await Promise.all(
     active.flatMap((z) => {
       const spec = species.get(z.speciesId);
-      if (!spec?.dormancyFrom || !spec.dormancyUntil) return [];
-      const phase = carePhase(spec.dormancyFrom, spec.dormancyUntil, today);
+      const period = spec ? effectiveDormancy(spec, own.get(z.speciesId) ?? null) : null;
+      if (!period) return [];
+      const phase = carePhase(period.from, period.until, today);
       return [
         deps.targets
           .phaseLocation(userId, z.speciesId, phase)

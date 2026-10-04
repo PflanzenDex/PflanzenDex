@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SpeciesStub, InMemorySpecimens, testSpecies } from "../collection/test-helpers";
 import { NO_PHASE_LOCATION, carePhase, carePhasesList } from "./index";
+import { InMemoryCareProfiles } from "../collection/care-profile-test-helpers";
 import { PhaseLocationStub } from "./test-helpers";
 
 const WINTER = "11111111-1111-4111-8111-111111111111"; // Dormancy 11-01 to 03-15, across the turn of the year
@@ -60,7 +61,18 @@ const list = (
   now: string,
   zone: unknown = "UTC",
   targets: PhaseLocationStub | typeof NO_PHASE_LOCATION = NO_PHASE_LOCATION,
-) => carePhasesList({ specimens, species, targets, clock: () => new Date(now) }, userId, zone);
+) =>
+  carePhasesList(
+    {
+      specimens,
+      species,
+      targets,
+      profiles: new InMemoryCareProfiles(),
+      clock: () => new Date(now),
+    },
+    userId,
+    zone,
+  );
 
 describe("US-PHA-01 Phase eines Exemplars", () => {
   it("US-PHA-01 period within the same year: dormancy at the boundaries and in between, otherwise growth", () => {

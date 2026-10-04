@@ -1,10 +1,12 @@
-export type View = "species" | "collection" | "hints" | "carePhases" | "light" | "account";
+export type View =
+  "species" | "collection" | "hints" | "carePhases" | "careProfile" | "light" | "account";
 
 const ENTRIES: { id: View; text: string }[] = [
   { id: "species", text: "Arten" },
   { id: "collection", text: "Bestand" },
   { id: "hints", text: "Hinweise" },
   { id: "carePhases", text: "Pflegephasen" },
+  { id: "careProfile", text: "Pflegeprofil" },
   { id: "light", text: "Standorte und Licht" },
   { id: "account", text: "Konto" },
 ];

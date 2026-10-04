@@ -1,0 +1,633 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex.worktrees/bes-09/app/packages/web
+
+ ❯ src/collection/care-profile.test.tsx (18 tests | 15 failed) 15096ms
+   ❯ US-BES-09 the care profile page shows the catalog value and my deviation side by side (6)
+     × US-BES-09 shows per species the catalog values and what I can deviate in, and says it is private 1029ms
+     × US-BES-09 shows my deviation where there is one and marks it as mine 1006ms
+     × US-BES-09 the target location is selected from my locations, never typed (FR-PHA-03) 1006ms
+     × US-BES-09 without any location the page says to create one first (P-09) 1004ms
+     × US-BES-09 without a species in the collection the page says what to do next (P-09) 1004ms
+     × US-BES-09 without sign-in nothing is requested and the user is asked to sign in 1004ms
+   ❯ US-BES-09 change my deviation (9)
+     × US-BES-09 choosing a location and saving sends only the changed field and says what changed 1003ms
+     × US-BES-09 watering intervals and own hints are sent as numbers and text 1004ms
+     × US-BES-09 dormancy from/until is chosen as month and day and sent as a pair MM-DD 1003ms
+     × US-BES-09 half a dormancy period is not sent: the page says what is missing 1003ms
+     × US-BES-09 'Auf Katalog zurücksetzen' per field sends null for exactly that field 1003ms
+     × US-BES-09 a field without deviation has nothing to reset: the button is disabled 1003ms
+     × US-BES-09 resetting the dormancy period resets from and until together 1002ms
+     × US-BES-09 a refusal stays visible with the text of the error (P-10) 1003ms
+     × US-BES-09 a double tap on save sends one request 1004ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/care-profile.test.tsx > US-BES-09 the care profile page shows the catalog value and my deviation side by side > US-BES-09 shows per species the catalog values and what I can deviate in, and says it is private
+TestingLibraryElementError: Unable to find role="heading" and name "Bogenhanf"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/care-profile.test.tsx:110:25
+    108|     fakeServer({ entries: [entry()] });
+    109|     open();
+    110|     expect(await screen.findByRole("heading", { name: "Bogenhanf" })).…
+       |                         ^
+    111|     expect(screen.getByText(/2 aktive Exemplare/)).toBeTruthy();
+    112|     expect(screen.getByText("Katalog: Zone 3")).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  src/collection/care-profile.test.tsx > US-BES-09 the care profile page shows the catalog value and my deviation side by side > US-BES-09 shows my deviation where there is one and marks it as mine
+TestingLibraryElementError: Unable to find a label with the text of: Lichtzone für „Bogenhanf“
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/care-profile.test.tsx:132:32
+    130|     });
+    131|     open();
+    132|     const zone = (await screen.findByLabelText("Lichtzone für „Bogenha…
+       |                                ^
+    133|     expect(zone.value).toBe("z2");
+    134|     expect(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  src/collection/care-profile.test.tsx > US-BES-09 the care profile page shows the catalog value and my deviation side by side > US-BES-09 the target location is selected from my locations, never typed (FR-PHA-03)
+TestingLibraryElementError: Unable to find a label with the text of: Soll-Standort Ruhephase für „Bogenhanf“
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/care-profile.test.tsx:144:33
+    142|     fakeServer({ entries: [entry()] });
+    143|     open();
+    144|     const select = await screen.findByLabelText("Soll-Standort Ruhepha…
+       |                                 ^
+    145|     expect(
+    146|       within(select)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  src/collection/care-profile.test.tsx > US-BES-09 the care profile page shows the catalog value and my deviation side by side > US-BES-09 without any location the page says to create one first (P-09)
+TestingLibraryElementError: Unable to find an element with the text: /Lege zuerst unter „Standorte und Licht“ einen Standort an/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/care-profile.test.tsx:162:25
+    160|     fakeServer({ entries: [entry()], locations: [] });
+    161|     open();
+    162|     expect(await screen.findByText(/Lege zuerst unter „Standorte und L…
+       |                         ^
+    163|     expect(screen.queryByLabelText("Soll-Standort Wachstumsphase für „…
+    164|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  src/collection/care-profile.test.tsx > US-BES-09 the care profile page shows the catalog value and my deviation side by side > US-BES-09 without a species in the collection the page says what to do next (P-09)
+TestingLibraryElementError: Unable to find an element with the text: /Lege zuerst im Bestand ein Exemplar an/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/care-profile.test.tsx:169:25
+    167|     fakeServer({ entries: [] });
+    168|     open();
+    169|     expect(await screen.findByText(/Lege zuerst im Bestand ein Exempla…
+       |                         ^
+    170|   });
+    171|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  src/collection/care-profile.test.tsx > US-BES-09 the care profile page shows the catalog value and my deviation side by side > US-BES-09 without sign-in nothing is requested and the user is asked to sign in
+TestingLibraryElementError: Unable to find an element with the text: /melde dich neu an/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/care-profile.test.tsx:175:25
+    173|     const fetchFn = fakeServer({ entries: [entry()] });
+    174|     render(<CareProfilePage api="http://api" token={async () => undefi…
+    175|     expect(await screen.findByText(/melde dich neu an/)).toBeTruthy();
+       |                         ^
+    176|     expect(fetchFn).not.toHaveBeenCalled();
+    177|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  src/collection/care-profile.test.tsx > US-BES-09 change my deviation > US-BES-09 choosing a location and saving sends only the changed field and says what changed
+TestingLibraryElementError: Unable to find role="button" and name "Speichern: Bogenhanf"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/care-profile.test.tsx:193:31
+    191|     const fetchFn = fakeServer(state);
+    192|     open();
+    193|     const save = await screen.findByRole("button", { name: "Speichern:…
+       |                               ^
+    194|     expect((save as HTMLButtonElement).disabled).toBe(true);
+    195|     await userEvent.selectOptions(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  src/collection/care-profile.test.tsx > US-BES-09 change my deviation > US-BES-09 watering intervals and own hints are sent as numbers and text
+TestingLibraryElementError: Unable to find a label with the text of: Gießintervall Wachstumsphase (Tage) für „Bogenhanf“
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/care-profile.test.tsx:213:39
+    211|     const fetchFn = fakeServer({ entries: [entry()] });
+    212|     open();
+    213|     await userEvent.type(await screen.findByLabelText("Gießintervall W…
+       |                                       ^
+    214|     await userEvent.type(screen.getByLabelText("Eigene Hinweise für „B…
+    215|     await userEvent.click(screen.getByRole("button", { name: "Speicher…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  src/collection/care-profile.test.tsx > US-BES-09 change my deviation > US-BES-09 dormancy from/until is chosen as month and day and sent as a pair MM-DD
+TestingLibraryElementError: Unable to find a label with the text of: Ruhephase von (Monat) für „Bogenhanf“
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/care-profile.test.tsx:223:48
+    221|     const fetchFn = fakeServer({ entries: [entry()] });
+    222|     open();
+    223|     await userEvent.selectOptions(await screen.findByLabelText("Ruheph…
+       |                                                ^
+    224|     await userEvent.selectOptions(screen.getByLabelText("Ruhephase von…
+    225|     await userEvent.selectOptions(screen.getByLabelText("Ruhephase bis…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  src/collection/care-profile.test.tsx > US-BES-09 change my deviation > US-BES-09 half a dormancy period is not sent: the page says what is missing
+TestingLibraryElementError: Unable to find a label with the text of: Ruhephase von (Monat) für „Bogenhanf“
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/care-profile.test.tsx:235:48
+    233|     const fetchFn = fakeServer({ entries: [entry()] });
+    234|     open();
+    235|     await userEvent.selectOptions(await screen.findByLabelText("Ruheph…
+       |                                                ^
+    236|     await userEvent.click(screen.getByRole("button", { name: "Speicher…
+    237|     expect((await screen.findByRole("alert")).textContent).toContain(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  src/collection/care-profile.test.tsx > US-BES-09 change my deviation > US-BES-09 'Auf Katalog zurücksetzen' per field sends null for exactly that field
+TestingLibraryElementError: Unable to find role="button" and name "Auf Katalog zurücksetzen: Lichtzone (Bogenhanf)"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/care-profile.test.tsx:253:32
+    251|     const fetchFn = fakeServer({ entries: [own] });
+    252|     open();
+    253|     const reset = await screen.findByRole("button", {
+       |                                ^
+    254|       name: "Auf Katalog zurücksetzen: Lichtzone (Bogenhanf)",
+    255|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  src/collection/care-profile.test.tsx > US-BES-09 change my deviation > US-BES-09 a field without deviation has nothing to reset: the button is disabled
+TestingLibraryElementError: Unable to find role="button" and name "Auf Katalog zurücksetzen: Lichtzone (Bogenhanf)"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/care-profile.test.tsx:266:32
+    264|     fakeServer({ entries: [entry()] });
+    265|     open();
+    266|     const reset = await screen.findByRole("button", {
+       |                                ^
+    267|       name: "Auf Katalog zurücksetzen: Lichtzone (Bogenhanf)",
+    268|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  src/collection/care-profile.test.tsx > US-BES-09 change my deviation > US-BES-09 resetting the dormancy period resets from and until together
+TestingLibraryElementError: Unable to find role="button" and name "Auf Katalog zurücksetzen: Ruhephase (Bogenhanf)"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/care-profile.test.tsx:287:20
+    285|     open();
+    286|     await userEvent.click(
+    287|       await screen.findByRole("button", { name: "Auf Katalog zurückset…
+       |                    ^
+    288|     );
+    289|     await screen.findByRole("status");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  src/collection/care-profile.test.tsx > US-BES-09 change my deviation > US-BES-09 a refusal stays visible with the text of the error (P-10)
+TestingLibraryElementError: Unable to find a label with the text of: Soll-Standort Ruhephase für „Bogenhanf“
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/care-profile.test.tsx:303:20
+    301|     open();
+    302|     await userEvent.selectOptions(
+    303|       await screen.findByLabelText("Soll-Standort Ruhephase für „Bogen…
+       |                    ^
+    304|       "l2",
+    305|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  src/collection/care-profile.test.tsx > US-BES-09 change my deviation > US-BES-09 a double tap on save sends one request
+TestingLibraryElementError: Unable to find a label with the text of: Soll-Standort Wachstumsphase für „Bogenhanf“
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection"[39m
+    [36m>[39m
+      [36m<h1>[39m
+        [0mPflegeprofil[0m
+      [36m</h1>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/care-profile.test.tsx:319:20
+    317|     open();
+    318|     await userEvent.selectOptions(
+    319|       await screen.findByLabelText("Soll-Standort Wachstumsphase für „…
+       |                    ^
+    320|       "l1",
+    321|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  1 failed | 27 passed (28)
+      Tests  15 failed | 226 passed (241)
+   Start at  02:58:56
+   Duration  16.41s (tests 53%, environment 25%, transform 14%, import 8%)
+
+    Isolate  28 workers spawned · ~573ms startup each (spawn + environment, per file)
+             at least ~886ms faster with isolate: false — reuses workers across files instead of one per file
+

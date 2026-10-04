@@ -1,10 +1,15 @@
 import {
-  NO_PHASE_LOCATION,
+  careProfileLocations,
   carePhasesList,
   phaseSwitchConfirm,
   type PhaseLocationSource,
 } from "@pflanzendex/core";
-import { IdempotencyPostgres, SpeciesPostgres, SpecimenPostgres } from "@pflanzendex/db";
+import {
+  CareProfilePostgres,
+  IdempotencyPostgres,
+  SpeciesPostgres,
+  SpecimenPostgres,
+} from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import { body, errorBody, statusFor, write, type AuthEnv } from "../kernel";
@@ -15,7 +20,7 @@ export const CARE_PHASES_PATHS = ["/care-phases"] as const;
 export type CarePhasesOptions = {
   /** The clock for "today" (NFR-08); tests pin it. */
   clock?: () => Date;
-  /** Location per phase of the keeper (care profile, US-BES-09); until it exists nobody knows one (P-08). */
+  /** Replaces the care profile as source of the location per phase (tests); by default it is the keeper's own care profile (US-BES-09). */
   phaseLocation?: PhaseLocationSource | undefined;
 };
 
@@ -26,10 +31,12 @@ export type CarePhasesOptions = {
  * target location is derived on the server, never taken from the request (FR-PHA-03).
  */
 export function carePhasesRoutes(pool: Pool, opt: CarePhasesOptions = {}): Hono<AuthEnv> {
+  const profiles = new CareProfilePostgres(pool);
   const deps = {
     specimens: new SpecimenPostgres(pool),
     species: new SpeciesPostgres(pool),
-    targets: opt.phaseLocation ?? NO_PHASE_LOCATION,
+    profiles,
+    targets: opt.phaseLocation ?? careProfileLocations(profiles),
     clock: opt.clock ?? (() => new Date()),
   };
   const confirm = phaseSwitchConfirm(deps);

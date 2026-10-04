@@ -9,7 +9,13 @@ import {
   type PhaseLocationSource,
 } from "@pflanzendex/core";
 import { authentication, accountRoutes, type TokenVerifier } from "./account";
-import { SPECIMEN_PATHS, specimenRoutes } from "./collection";
+import {
+  CARE_PROFILE_PATHS,
+  SPECIMEN_PATHS,
+  careProfileRoutes,
+  careProfileZoneUsageFor,
+  specimenRoutes,
+} from "./collection";
 import { SPECIES_PATHS, speciesRoutes } from "./catalog";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import {
@@ -18,6 +24,7 @@ import {
   careRoutes,
   carePhasesRoutes,
   measurementSourceFor,
+  targetLocationFor,
 } from "./care";
 
 export type AppOptions = {
@@ -32,12 +39,12 @@ export type AppOptions = {
   commit?: string | undefined;
   /** The clock for "today" (NFR-08); defaults to system time. */
   clock?: () => Date;
-  /** Target location for new specimens; `care` (PHA) supplies it, until then the location is unknown. */
+  /** Replaces the care profile as source of the target location of new specimens (tests). */
   targetLocation?: TargetLocationSource;
   /** Measurements and treatments for the specimen cards (US-BES-06); without it `care` supplies the measurements (WAC-01), the treatments are still missing (BEH). */
   measurements?: MeasurementSource;
   treatments?: TreatmentSource;
-  /** Location per phase of the keeper (care profile, US-BES-09); without it nobody knows one and a move cannot be confirmed (US-PHA-03). */
+  /** Replaces the care profile as source of the location per phase (tests); without it the keeper's own care profile (US-BES-09) answers. */
   phaseLocation?: PhaseLocationSource;
 };
 
@@ -73,7 +80,7 @@ export function createApp(opt: AppOptions = {}): Hono {
     app.use("/account/*", auth);
     app.route("/account", accountRoutes(opt.pool));
     for (const path of LIGHT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-    app.route("/", lightRoutes(opt.pool));
+    app.route("/", lightRoutes(opt.pool, [careProfileZoneUsageFor(opt.pool)]));
     for (const path of SPECIES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", speciesRoutes(opt.pool));
     for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
@@ -81,11 +88,13 @@ export function createApp(opt: AppOptions = {}): Hono {
       "/",
       specimenRoutes(opt.pool, {
         clock: opt.clock,
-        targetLocation: opt.targetLocation,
+        targetLocation: opt.targetLocation ?? targetLocationFor(opt.pool),
         measurements: opt.measurements ?? measurementSourceFor(opt.pool),
         treatments: opt.treatments,
       }),
     );
+    for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+    app.route("/", careProfileRoutes(opt.pool));
     bindCareOne(app, opt.pool, auth, {
       ...(opt.clock ? { clock: opt.clock } : {}),
       ...(opt.phaseLocation ? { phaseLocation: opt.phaseLocation } : {}),

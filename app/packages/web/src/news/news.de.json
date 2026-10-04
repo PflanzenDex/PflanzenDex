@@ -12,6 +12,7 @@
     "Bestand: Mehrere Töpfe derselben Art unterscheidest du mit einem Kennzeichen (zum Beispiel „Klammer“ oder eine Farbe). Ab dem dritten Exemplar fragt dich die App nach den fehlenden Kennzeichen, bevor sie speichert, und auf der Karte änderst du ein Kennzeichen jederzeit. Die Historie bleibt dabei beim Exemplar.",
     "Hinweise: Der neue Reiter „Hinweise“ nennt Exemplare ohne Standort oder an einem Standort ohne Lichtzone und sagt dir, was du dagegen tust. Die Lichtverteilung verweist bei „unbekannter Zone“ dorthin.",
     "Hinweise: Ein Exemplar ohne Standort bekommt seinen Standort jetzt direkt im Reiter „Hinweise“, du wählst ihn aus deinen eigenen Standorten.",
-    "Pflegephasen: Hast du ein Exemplar an den Soll-Standort gestellt, tippst du „Jetzt umgestellt“, auch für mehrere Exemplare auf einmal. Solange kein Soll-Standort bekannt ist, erscheint die Schaltfläche nicht."
+    "Pflegephasen: Hast du ein Exemplar an den Soll-Standort gestellt, tippst du „Jetzt umgestellt“, auch für mehrere Exemplare auf einmal. Solange kein Soll-Standort bekannt ist, erscheint die Schaltfläche nicht.",
+    "Pflegeprofil: Im neuen Reiter „Pflegeprofil“ siehst du je Art den Katalogwert neben deiner Abweichung und passt Soll-Standorte je Phase, Lichtzone, Ruhephase, Gießintervalle und eigene Hinweise an. Der Katalog bleibt unverändert, mit „Auf Katalog zurücksetzen“ gilt wieder der Katalogwert. Damit erscheint in den Pflegephasen auch „Jetzt umgestellt“."
   ]
 }

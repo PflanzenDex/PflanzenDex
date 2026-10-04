@@ -196,6 +196,7 @@ describe("module boundaries against the real database (AB-10, AB-13)", () => {
       await findSchemaViolations(pool, using({ species: { ...species, reason: " " } })),
     ).toEqual([
       expect.stringMatching(/^AB-10 global reference table species: without justification/),
+      expect.stringMatching(/^AB-10 foreign key care_profile_species .*without justification/),
       expect.stringMatching(/^AB-10 foreign key specimen_species .*without justification/),
     ]);
     expect(
@@ -205,6 +206,7 @@ describe("module boundaries against the real database (AB-10, AB-13)", () => {
         /^AB-10 global reference table specimen: only tables with a justified exception/,
       ),
       // `measurement` (care) references `specimen`; if `specimen` counts as a global reference table, that is a violation.
+      expect.stringMatching(/^AB-10 foreign key care_profile_species/),
       expect.stringMatching(/^AB-10 foreign key measurement_specimen/),
       expect.stringMatching(/^AB-10 foreign key specimen_species/),
     ]);
@@ -212,6 +214,7 @@ describe("module boundaries against the real database (AB-10, AB-13)", () => {
       await findSchemaViolations(pool, using({ species: { ...species, owner: "light" } })),
     ).toEqual([
       expect.stringMatching(/^AB-10 global reference table species: owner light does not match/),
+      expect.stringMatching(/^AB-10 foreign key care_profile_species/),
       expect.stringMatching(/^AB-10 foreign key specimen_species/),
     ]);
   });

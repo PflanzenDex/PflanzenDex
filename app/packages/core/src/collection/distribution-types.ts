@@ -1,5 +1,6 @@
 // Distribution of the specimens over the light zones (US-LIC-02, FR-LIC-04): shapes of the derived view.
 import type { LightLocationStore, LightZone, ZoneStore } from "../light";
+import type { CareProfileReader } from "./care-profile-types";
 import type { SpeciesSource, SpecimenStore } from "./types";
 
 export interface ZoneCount {
@@ -34,4 +35,6 @@ export interface DistributionDependencies {
   readonly species: SpeciesSource;
   readonly locations: LightLocationStore;
   readonly zones: ZoneStore;
+  /** My zone override per species (US-BES-09); without it the derived zone of the catalog applies. */
+  readonly profiles?: CareProfileReader;
 }

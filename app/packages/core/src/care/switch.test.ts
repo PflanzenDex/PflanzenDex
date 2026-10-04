@@ -5,6 +5,7 @@ import { InMemoryLight } from "../light/test-helpers";
 import { specimenHints } from "../collection";
 import { InMemorySpecimens, SpeciesStub, testSpecies } from "../collection/test-helpers";
 import { carePhasesList, phaseSwitchConfirm } from "./index";
+import { InMemoryCareProfiles } from "../collection/care-profile-test-helpers";
 import { PhaseLocationStub } from "./test-helpers";
 
 const WINTER = "11111111-1111-4111-8111-111111111111"; // dormancy 11-01 to 03-15
@@ -41,6 +42,7 @@ const deps = (now: string, source: PhaseLocationStub = targets) => ({
   specimens,
   species,
   targets: source,
+  profiles: new InMemoryCareProfiles(),
   clock: () => new Date(now),
 });
 const confirm = (
