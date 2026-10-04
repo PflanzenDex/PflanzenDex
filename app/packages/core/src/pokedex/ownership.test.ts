@@ -54,6 +54,8 @@ describe("US-POK-06 ownership derived from the specimens", () => {
     expect(r.caught).toEqual([
       {
         species: "Citrus limon",
+        speciesId: LEMON,
+        source: null,
         genus: "Citrus",
         chips: [],
         specimenCount: 1,
@@ -92,6 +94,8 @@ describe("US-POK-06 ownership derived from the specimens", () => {
     expect(r.caught).toEqual([
       {
         species: "Opuntia microdasys",
+        speciesId: OPUNTIA,
+        source: null,
         genus: "Opuntia",
         chips: ["var. albispina"],
         specimenCount: 2,
@@ -204,5 +208,49 @@ describe("US-POK-08 data for search and grouping", () => {
     await add("anna", plain);
     const r = await pokedexOwnership({ specimens, species: own }, "anna", TZ);
     expect(r.caught[0]?.germanName).toBe("Hasenöhrchen");
+  });
+  it("US-POK-09 a caught species carries the ID of its species for the profile link; the plain species wins over a cultivar", async () => {
+    const plain = "88888888-8888-4888-8888-888888888888";
+    const named = "99999999-9999-4999-8999-999999999999";
+    const own = new SpeciesStub([
+      { species: testSpecies(named, { latinName: "Opuntia microdasys 'Albispina'" }) },
+      { species: testSpecies(plain, { latinName: "Opuntia microdasys" }) },
+    ]);
+    await add("anna", named);
+    await add("anna", plain);
+    const r = await pokedexOwnership({ specimens, species: own }, "anna", TZ);
+    expect(r.caught[0]?.speciesId).toBe(plain);
+    specimens = new InMemorySpecimens();
+    await add("anna", plain);
+    await add("anna", named);
+    const reverse = await pokedexOwnership({ specimens, species: own }, "anna", TZ);
+    expect(reverse.caught[0]?.speciesId).toBe(plain);
+    const onlyCultivar = await (async () => {
+      specimens = new InMemorySpecimens();
+      await add("anna", named);
+      return pokedexOwnership({ specimens, species: own }, "anna", TZ);
+    })();
+    expect(onlyCultivar.caught[0]?.speciesId).toBe(named);
+  });
+
+  it("US-POK-09 the source of the species is carried; without a source it is unknown (P-08)", async () => {
+    const withSource = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const without = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    const own = new SpeciesStub([
+      {
+        species: testSpecies(withSource, {
+          latinName: "Ficus lyrata",
+          source: "https://de.wikipedia.org/wiki/Geigenfeige",
+        }),
+      },
+      { species: testSpecies(without, { latinName: "Aloe vera", source: null }) },
+    ]);
+    await add("anna", withSource);
+    await add("anna", without);
+    const r = await pokedexOwnership({ specimens, species: own }, "anna", TZ);
+    expect(r.caught.map((c) => [c.species, c.source])).toEqual([
+      ["Aloe vera", null],
+      ["Ficus lyrata", "https://de.wikipedia.org/wiki/Geigenfeige"],
+    ]);
   });
 });

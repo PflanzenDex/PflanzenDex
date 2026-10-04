@@ -22,6 +22,10 @@ export interface CatchDate {
 
 export interface CaughtSpecies {
   readonly species: string;
+  /** ID of the catalog species behind the card (the plain species before a cultivar): target of the profile link (US-POK-09). */
+  readonly speciesId: string;
+  /** Source of the species as the catalog states it; `null` means "unknown" (P-08, US-POK-09). */
+  readonly source: string | null;
   readonly genus: string;
   readonly chips: readonly string[];
   readonly specimenCount: number;

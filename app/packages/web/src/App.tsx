@@ -29,14 +29,28 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
   carePhases: CarePhasesPage,
   careProfile: CareProfilePage,
   difficulty: DifficultyPage,
-  pokedex: PokedexPage,
   review: ReviewPage,
   settings: SettingsPage,
 };
 
+/** The active view; the Pokédex links to a species profile, so the app wires pokedex and catalog (US-POK-09). */
+function useViews() {
+  const [view, setView] = useState<View>("species");
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const openProfile = (id: string) => {
+    setProfileId(id);
+    setView("species");
+  };
+  const switchView = (next: View) => {
+    setProfileId(null);
+    setView(next);
+  };
+  return { view, setView, profileId, openProfile, switchView };
+}
+
 export function App() {
   const s = useSession();
-  const [view, setView] = useState<View>("species");
+  const { view, setView, profileId, openProfile, switchView } = useViews();
   // The chosen species travels from the catalog to the collection: the app wires both modules (US-BES-02).
   const [newSpecies, setNewSpecies] = useState<Species | null>(null);
   const choose = (species: Species) => {
@@ -62,7 +76,7 @@ export function App() {
       )}
       {z.kind === "signedIn" && (
         <div className="frame">
-          <Navigation active={view} onSwitch={setView} reviewer={z.account.reviewer === true} />
+          <Navigation active={view} onSwitch={switchView} reviewer={z.account.reviewer === true} />
           {view === "account" ? (
             <AccountView
               account={z.account}
@@ -72,6 +86,8 @@ export function App() {
             />
           ) : view === "light" ? (
             <LightPage api={api} token={s.token} onOpenCollection={() => setView("collection")} />
+          ) : view === "pokedex" ? (
+            <PokedexPage api={api} token={s.token} onOpenSpecies={openProfile} />
           ) : Simple ? (
             <Simple api={api} token={s.token} />
           ) : view === "hints" ? (
@@ -85,7 +101,7 @@ export function App() {
               onCompleted={() => setNewSpecies(null)}
             />
           ) : (
-            <SpeciesPage api={api} token={s.token} onChoose={choose} />
+            <SpeciesPage api={api} token={s.token} onChoose={choose} openId={profileId} />
           )}
         </div>
       )}

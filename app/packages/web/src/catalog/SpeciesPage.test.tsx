@@ -169,3 +169,12 @@ describe("US-BES-01 Seite Arten", () => {
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
   });
 });
+
+describe("US-POK-09 open a species profile from outside", () => {
+  it("US-POK-09 with openId the page starts on the profile of that species", async () => {
+    fakeServer();
+    render(page({ openId: "a1" }));
+    expect(await screen.findByText(/Bogenhanf/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Zurück zur Suche/ })).toBeTruthy();
+  });
+});

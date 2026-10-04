@@ -1,5 +1,5 @@
 import "./species.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Species } from "@pflanzendex/core";
 import type { ApiError } from "../kernel";
 import { propose } from "./species-api";
@@ -53,14 +53,19 @@ export function SpeciesPage(props: {
   api: string;
   token: () => Promise<string | undefined>;
   onChoose: (species: Species) => void;
+  /** Start on the profile of this species (a link from another area, e.g. the Pokédex, US-POK-09). */
+  openId?: string | null;
 }) {
-  const { api, token, onChoose } = props;
-  const [view, setView] = useState<View>({ kind: "search" });
+  const { api, token, onChoose, openId } = props;
+  const [view, setView] = useState<View>(openId ? { kind: "profile" } : { kind: "search" });
   const [searchText, setSearchText] = useState("");
   const [fresh, setNew] = useState(false);
   const search = useSearch(api, token, searchText, view.kind);
   const { profile, load } = useProfile(api, token);
 
+  useEffect(() => {
+    if (openId) void load(openId);
+  }, [openId, load]);
   const open = (id: string) => {
     setView({ kind: "profile" });
     void load(id);

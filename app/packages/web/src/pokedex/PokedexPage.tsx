@@ -9,8 +9,13 @@ import "./pokedex.css";
  * The species the account has caught (US-POK-06): derived from the active specimens, never stored (P-01). A specimen
  * that does not count yet is named with the action that fixes it (P-09, P-10).
  */
-export function PokedexPage(props: { api: string; token: () => Promise<string | undefined> }) {
-  const { api, token } = props;
+export function PokedexPage(props: {
+  api: string;
+  token: () => Promise<string | undefined>;
+  /** Link from the details to the species profile; the app wires it to the catalog (US-POK-09). */
+  onOpenSpecies?: (id: string) => void;
+}) {
+  const { api, token, onOpenSpecies } = props;
   const load = useCallback((t: string) => loadOwnership(api, t), [api]);
   return (
     <div className="pokedex">
@@ -18,7 +23,7 @@ export function PokedexPage(props: { api: string; token: () => Promise<string | 
         {(ownership: Ownership) => (
           <section aria-labelledby="pokedex-title">
             <h1 id="pokedex-title">Pokédex</h1>
-            <Browse caught={ownership.caught} />
+            <Browse caught={ownership.caught} {...(onOpenSpecies ? { onOpenSpecies } : {})} />
             <Unidentified specimens={ownership.unidentified} />
           </section>
         )}
