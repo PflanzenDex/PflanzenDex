@@ -32,6 +32,8 @@ beforeAll(async () => {
   await admin.query(`grant pflanzendex_app to ${OWNER} with admin option`);
   await admin.query(`create database ${DB} owner ${OWNER}`);
   owner = openPool(scratchUrl());
+  // Idle clients may be cut off when the scratch database is dropped; that is expected, not an error of the test.
+  owner.on("error", () => undefined);
   await migrate(owner);
   for (const id of [keeper, reviewer, other])
     await withAccount(owner, id, (c) => c.query("insert into account (id) values ($1)", [id]));
