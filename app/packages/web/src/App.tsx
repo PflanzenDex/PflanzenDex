@@ -15,6 +15,7 @@ import { LightPage } from "./light";
 import { ReviewPage, SpeciesPage } from "./catalog";
 import { CarePhasesPage, TreatmentsPage } from "./care";
 import { PokedexPage } from "./pokedex";
+import { WishlistPage } from "./wishlist";
 import { StartPage } from "./start-page";
 import { Navigation, type View } from "./navigation";
 import "./style.css";
@@ -30,6 +31,7 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
   carePhases: CarePhasesPage,
   careProfile: CareProfilePage,
   difficulty: DifficultyPage,
+  wishlist: WishlistPage,
   review: ReviewPage,
   settings: SettingsPage,
 };

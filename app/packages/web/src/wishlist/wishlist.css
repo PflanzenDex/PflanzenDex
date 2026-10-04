@@ -1,0 +1,32 @@
+/* Wishlist (US-WUN-01): mobile first; builds on style.css, light.css and collection.css (cards). */
+.wishlist-page .candidate-hint p {
+  margin: 0;
+}
+.wishlist-page .candidate-hint .next-action {
+  margin-top: 4px;
+  font-weight: 600;
+}
+.candidate-figure {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+}
+.candidate-rank {
+  color: var(--leise);
+  font-size: 0.9rem;
+}
+/* The thinnest zone is marked in words and by a border, not by colour alone. */
+.candidate[data-priority="thinnest"] {
+  border-width: 2px;
+  border-color: var(--gruen);
+}
+.candidate[data-priority="zone_unknown"] {
+  border-style: dashed;
+}
+.wishlist-page .form {
+  margin-top: 8px;
+  max-width: 36rem;
+}
+.wishlist-page h2#wish-form-title {
+  margin-top: 28px;
+}

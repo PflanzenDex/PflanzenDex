@@ -6,13 +6,15 @@ Prototype reference: epic WUN. Differences: a purchase leads, guided, to the pla
 
 ## User stories
 
-### US-WUN-01 · See candidates prioritized by space need · ⬜ (prototype ✅)
+### US-WUN-01 · See candidates prioritized by space need · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
 - Open candidates (`Status: Wishlist`) are shown, sorted ascending by the stock of the respective target light zone (specimen count, zones 2–4; unknown zone last).
 - Per candidate: photo with source, "German (name)", target zone with current stock ("— N plants"), difficulty, reasoning, actions.
 - Without open candidates: "No open candidates in the wishlist."
+
+State of implementation: partly done. The tab "Wunschliste" (`GET /wishes/candidates`) lists the open plant wishes (`status = wishlist`) sorted ascending by the specimen count of the target light zone (the same count as the light distribution, US-LIC-02: zones 2–4, `isActive`; ties by zone order, then name); a wish without a zone 2–4 comes last and says so. Each card shows the photo with its source (an https link, no hotlink without source), "German (name)", "zone — N plants", difficulty (Easy/Medium/Hard), reasoning and why it stands there; the list says what to do next (P-09). Unknown values read "unbekannt" (P-08); nothing is compared with an average. A wish is recorded through the validating operation `wish.create` (name required, case-insensitive unique per account, picture only with source, zone only of the own account). Missing: the per-candidate actions (bought, discarded) belong to US-WUN-03 and US-WUN-05, and saving the image locally to US-WUN-04; the species link, the specimen link and the discover source of DM-WUN-01 follow with their stories.
 
 ### US-WUN-02 · Be warned before the list is empty · ⬜ (prototype ✅)
 
