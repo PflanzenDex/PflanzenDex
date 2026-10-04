@@ -18,6 +18,7 @@ import {
 } from "./collection";
 import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
 import { LIGHT_PATHS, lightRoutes } from "./light";
+import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
 import {
   CARE_PATHS,
   CARE_PHASES_PATHS,
@@ -101,6 +102,8 @@ export function createApp(opt: AppOptions = {}): Hono {
     app.route("/", reviewRoutes(opt.pool));
     for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", specimenRoutes(opt.pool, { clock: opt.clock, ...careSources(opt.pool, opt) }));
+    for (const path of POKEDEX_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+    app.route("/", pokedexRoutes(opt.pool));
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", careProfileRoutes(opt.pool));
     bindCareOne(app, opt.pool, auth, {

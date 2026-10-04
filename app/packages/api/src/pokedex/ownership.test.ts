@@ -1,0 +1,156 @@
+import { randomUUID } from "node:crypto";
+import type { Pool } from "pg";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { migrate, openPool } from "@pflanzendex/db";
+import { createApp, type AppOptions } from "../app";
+
+type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
+
+// US-POK-06: ownership derived from the specimens through the API (real PostgreSQL, `make db-up`).
+let pool: Pool;
+const run = randomUUID()
+  .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
+  .replace(/-/g, "")
+  .slice(0, 10);
+const subA = `pok6-${randomUUID()}`;
+const subB = `pok6-${randomUUID()}`;
+const reviewer: TokenVerifier = async (token) => {
+  const [kind, sub] = token.split(":");
+  return kind === "valid"
+    ? { sub, email: `${sub}@example.test`, name: "Test", email_verified: true }
+    : null;
+};
+type Response = { status: number; body: Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any
+let app: ReturnType<typeof createApp>;
+
+async function call(
+  sub: string | null,
+  method: string,
+  path: string,
+  body?: unknown,
+): Promise<Response> {
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (sub) headers["authorization"] = `Bearer valid:${sub}`;
+  if (method !== "GET") headers["idempotency-key"] = randomUUID();
+  const res = await app.request(path, {
+    method: method,
+    headers,
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  return { status: res.status, body: (await res.json()) as Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+const ownership = (sub: string | null) => call(sub, "GET", "/pokedex/ownership");
+const caught = (r: Response) =>
+  (r.body["ownership"].caught as { species: string }[]).map((c) => c.species);
+
+const newSpecies = async (sub: string, latinName: string) =>
+  (
+    await call(sub, "POST", "/species", {
+      latinName,
+      germanName: latinName,
+      difficulty: 2,
+      standardLevel: 2,
+      lightDemandLux: 15000,
+      growthMeasure: "rosette_diameter",
+      etiolationSigns: "Rosette streckt sich.",
+      successCriteria: "Dichte, flache Rosette.",
+    })
+  ).body["id"] as string;
+const specimen = async (sub: string, marker: string, speciesId: string) =>
+  (await call(sub, "POST", "/specimens", { timeZone: "Europe/Berlin", speciesId, marker })).body[
+    "id"
+  ] as string;
+
+beforeAll(async () => {
+  pool = openPool();
+  await migrate(pool);
+  app = createApp({ reviewer, pool });
+});
+afterAll(async () => {
+  await pool.query(
+    "delete from specimen where account_id in (select id from account where subject = any($1))",
+    [[subA, subB]],
+  );
+  await pool.query(
+    `delete from species where id in (select object_id from review_case
+       where account_id in (select id from account where subject = any($1)))`,
+    [[subA, subB]],
+  );
+  await pool.query("delete from account where subject = any($1)", [[subA, subB]]);
+  await pool.end();
+});
+
+describe("US-POK-06 ownership: sign-in", () => {
+  it("GET /pokedex/ownership without token: 401", async () => {
+    expect((await ownership(null)).status).toBe(401);
+  });
+
+  it("US-POK-06 a new account has caught nothing and has nothing to identify", async () => {
+    const r = await ownership(subA);
+    expect(r.status).toBe(200);
+    expect(r.body).toEqual({ ownership: { caught: [], unidentified: [] } });
+  });
+});
+
+describe("US-POK-06 ownership: derived from the specimens", () => {
+  it("catches the species of an active specimen, with the cultivar as chip, and not of an archived one", async () => {
+    const plain = await newSpecies(subA, `Opuntia${run} microdasys`);
+    const variety = await newSpecies(subA, `Opuntia${run} microdasys 'Albispina'`);
+    const gone = await newSpecies(subA, `Aloe${run} vera`);
+    await specimen(subA, `Kaktus ${run}`, plain);
+    await specimen(subA, `Variante ${run}`, variety);
+    const away = await specimen(subA, `Weg ${run}`, gone);
+    const archived = await call(subA, "POST", `/specimens/${away}/archive`, {
+      timeZone: "Europe/Berlin",
+      reason: "abgegeben",
+    });
+    expect(archived.status).toBe(200);
+    const r = await ownership(subA);
+    expect(r.status).toBe(200);
+    const o = r.body["ownership"];
+    expect(o.caught).toEqual([
+      {
+        species: `Opuntia${run} microdasys`,
+        genus: `Opuntia${run}`,
+        chips: ["'Albispina'"],
+        specimenCount: 2,
+      },
+    ]);
+    expect(o.unidentified).toEqual([]);
+  });
+
+  it("a specimen without epithet is not caught and names what to do", async () => {
+    const genusOnly = await newSpecies(subA, `Hippeastrum${run}`);
+    await specimen(subA, `Amaryllis ${run}`, genusOnly);
+    const o = (await ownership(subA)).body["ownership"];
+    expect(o.unidentified).toEqual([
+      expect.objectContaining({
+        latinName: `Hippeastrum${run}`,
+        nextAction: "Bestimme die Art, dann zählt es.",
+      }),
+    ]);
+    expect(o.unidentified[0].text).toContain(`Amaryllis ${run}`);
+    expect(o.caught.map((c: { species: string }) => c.species)).not.toContain(`Hippeastrum${run}`);
+  });
+
+  it("a second account sees none of this and its own appears separately (P-04)", async () => {
+    expect((await ownership(subB)).body["ownership"]).toEqual({ caught: [], unidentified: [] });
+    const lemon = await newSpecies(subB, `Citrus${run} limon`);
+    await specimen(subB, `Zitrone ${run}`, lemon);
+    const b = await ownership(subB);
+    expect(caught(b)).toEqual([`Citrus${run} limon`]);
+    expect(JSON.stringify((await ownership(subA)).body)).not.toContain(`Citrus${run}`);
+    expect(JSON.stringify(b.body)).not.toContain(`Opuntia${run}`);
+  });
+
+  it("the route only reads: nothing is written", async () => {
+    const count = () =>
+      pool.query(
+        "select count(*)::int as n from specimen where account_id in (select id from account where subject = $1)",
+        [subA],
+      );
+    const before = await count();
+    await ownership(subA);
+    expect((await count()).rows[0].n).toBe(before.rows[0].n);
+  });
+});

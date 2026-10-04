@@ -6,6 +6,7 @@ import { AppError, AccountView, Loading, Welcome, apiUrl, useSession } from "./a
 import { LightPage } from "./light";
 import { SpeciesPage } from "./catalog";
 import { CarePhasesPage, TreatmentsPage } from "./care";
+import { PokedexPage } from "./pokedex";
 import { Navigation, type View } from "./navigation";
 import "./style.css";
 
@@ -20,6 +21,7 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
   treatments: TreatmentsPage,
   carePhases: CarePhasesPage,
   careProfile: CareProfilePage,
+  pokedex: PokedexPage,
 };
 
 export function App() {

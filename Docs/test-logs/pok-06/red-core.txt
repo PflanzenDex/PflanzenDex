@@ -1,0 +1,316 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/pok-06/app/packages/core
+
+ ❯ src/pokedex/ownership.test.ts (11 tests | 8 failed) 17ms
+   ❯ US-POK-06 ownership derived from the specimens (11)
+     × US-POK-06 an active specimen catches its species (hybrid sign skipped) 9ms
+     × US-POK-06 a cutting is an active specimen and counts 2ms
+     × US-POK-06 an archived specimen next to an active one of the species does not add to the count 1ms
+     × US-POK-06 variety and plain species merge into one entry with the chip 1ms
+     × US-POK-06 caught species are sorted by name 1ms
+     × US-POK-06 a missing epithet does not count and points out what to do (P-09, P-10) 1ms
+     × US-POK-06 a species the account cannot read does not count and is named, not dropped (P-10) 1ms
+     × US-POK-06 two accounts: only the own specimens count (P-04) 1ms
+ ❯ src/pokedex/species-key.test.ts (6 tests | 5 failed) 17ms
+   ❯ US-POK-06 species key from the Latin name (6)
+     × US-POK-06 takes the first two words and normalizes the case 10ms
+     × US-POK-06 skips the hybrid sign: Citrus x limon is Citrus limon 1ms
+     × US-POK-06 additions do not flow into the species but become the chip 1ms
+     × US-POK-06 a missing epithet gives no species (Hippeastrum, Parodia sp.) 2ms
+     × US-POK-06 surrounding and repeated white space does not matter 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pokedex/ownership.test.ts > US-POK-06 ownership derived from the specimens > US-POK-06 an active specimen catches its species (hybrid sign skipped)
+AssertionError: expected [] to deeply equal [ { species: 'Citrus limon', …(3) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "chips": [],
+-     "genus": "Citrus",
+-     "species": "Citrus limon",
+-     "specimenCount": 1,
+-   },
+- ]
++ []
+
+ ❯ src/pokedex/ownership.test.ts:53:22
+     51|     await add("anna", LEMON);
+     52|     const r = await pokedexOwnership(deps(), "anna");
+     53|     expect(r.caught).toEqual([
+       |                      ^
+     54|       { species: "Citrus limon", genus: "Citrus", chips: [], specimenC…
+     55|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  src/pokedex/ownership.test.ts > US-POK-06 ownership derived from the specimens > US-POK-06 a cutting is an active specimen and counts
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/pokedex/ownership.test.ts:61:61
+     59|   it("US-POK-06 a cutting is an active specimen and counts", async () …
+     60|     await add("anna", LEMON, "cutting");
+     61|     expect((await pokedexOwnership(deps(), "anna")).caught).toHaveLeng…
+       |                                                             ^
+     62|   });
+     63|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  src/pokedex/ownership.test.ts > US-POK-06 ownership derived from the specimens > US-POK-06 an archived specimen next to an active one of the species does not add to the count
+AssertionError: expected undefined to be 1 // Object.is equality
+
+- Expected:
+1
+
++ Received:
+undefined
+
+ ❯ src/pokedex/ownership.test.ts:74:79
+     72|     await add("anna", LEMON);
+     73|     await add("anna", LEMON, "archived");
+     74|     expect((await pokedexOwnership(deps(), "anna")).caught[0]?.specime…
+       |                                                                               ^
+     75|   });
+     76|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  src/pokedex/ownership.test.ts > US-POK-06 ownership derived from the specimens > US-POK-06 variety and plain species merge into one entry with the chip
+AssertionError: expected [] to deeply equal [ { …(4) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "chips": [
+-       "var. albispina",
+-     ],
+-     "genus": "Opuntia",
+-     "species": "Opuntia microdasys",
+-     "specimenCount": 2,
+-   },
+- ]
++ []
+
+ ❯ src/pokedex/ownership.test.ts:81:22
+     79|     await add("anna", OPUNTIA);
+     80|     const r = await pokedexOwnership(deps(), "anna");
+     81|     expect(r.caught).toEqual([
+       |                      ^
+     82|       {
+     83|         species: "Opuntia microdasys",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  src/pokedex/ownership.test.ts > US-POK-06 ownership derived from the specimens > US-POK-06 caught species are sorted by name
+AssertionError: expected [] to deeply equal [ Array(2) ]
+
+- Expected
++ Received
+
+- [
+-   "Citrus limon",
+-   "Opuntia microdasys",
+- ]
++ []
+
+ ❯ src/pokedex/ownership.test.ts:94:83
+     92|     await add("anna", OPUNTIA);
+     93|     await add("anna", LEMON);
+     94|     expect((await pokedexOwnership(deps(), "anna")).caught.map((c) => …
+       |                                                                                   ^
+     95|       "Citrus limon",
+     96|       "Opuntia microdasys",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  src/pokedex/ownership.test.ts > US-POK-06 ownership derived from the specimens > US-POK-06 a missing epithet does not count and points out what to do (P-09, P-10)
+AssertionError: expected [] to deeply equal [ 'Amaryllis', 'Kugel' ]
+
+- Expected
++ Received
+
+- [
+-   "Amaryllis",
+-   "Kugel",
+- ]
++ []
+
+ ❯ src/pokedex/ownership.test.ts:105:55
+    103|     const r = await pokedexOwnership(deps(), "anna");
+    104|     expect(r.caught).toEqual([]);
+    105|     expect(r.unidentified.map((u) => u.specimenName)).toEqual(["Amaryl…
+       |                                                       ^
+    106|     expect(r.unidentified[0]).toMatchObject({
+    107|       latinName: "Hippeastrum",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  src/pokedex/ownership.test.ts > US-POK-06 ownership derived from the specimens > US-POK-06 a species the account cannot read does not count and is named, not dropped (P-10)
+AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+- [
+-   ObjectContaining {
+-     "latinName": null,
+-     "specimenName": "Geige",
+-   },
+- ]
++ []
+
+ ❯ src/pokedex/ownership.test.ts:122:28
+    120|     const r = await pokedexOwnership(deps(), "anna");
+    121|     expect(r.caught).toEqual([]);
+    122|     expect(r.unidentified).toEqual([
+       |                            ^
+    123|       expect.objectContaining({ specimenName: "Geige", latinName: null…
+    124|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  src/pokedex/ownership.test.ts > US-POK-06 ownership derived from the specimens > US-POK-06 two accounts: only the own specimens count (P-04)
+AssertionError: expected [] to deeply equal [ 'Citrus limon' ]
+
+- Expected
++ Received
+
+- [
+-   "Citrus limon",
+- ]
++ []
+
+ ❯ src/pokedex/ownership.test.ts:132:47
+    130|     await add("ben", HIPPEASTRUM, "plant", "Bens Rätsel");
+    131|     const anna = await pokedexOwnership(deps(), "anna");
+    132|     expect(anna.caught.map((c) => c.species)).toEqual(["Citrus limon"]…
+       |                                               ^
+    133|     expect(anna.unidentified).toEqual([]);
+    134|     const ben = await pokedexOwnership(deps(), "ben");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  src/pokedex/species-key.test.ts > US-POK-06 species key from the Latin name > US-POK-06 takes the first two words and normalizes the case
+AssertionError: expected { species: null, genus: null, …(2) } to deeply equal { species: 'Ficus benjamina', …(3) }
+
+- Expected
++ Received
+
+  {
+    "chip": null,
+-   "epithet": "benjamina",
+-   "genus": "Ficus",
+-   "species": "Ficus benjamina",
++   "epithet": null,
++   "genus": null,
++   "species": null,
+  }
+
+ ❯ src/pokedex/species-key.test.ts:6:43
+      4| describe("US-POK-06 species key from the Latin name", () => {
+      5|   it("US-POK-06 takes the first two words and normalizes the case", ()…
+      6|     expect(speciesKey("ficus BENJAMINA")).toEqual({
+       |                                           ^
+      7|       species: "Ficus benjamina",
+      8|       genus: "Ficus",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  src/pokedex/species-key.test.ts > US-POK-06 species key from the Latin name > US-POK-06 skips the hybrid sign: Citrus x limon is Citrus limon
+AssertionError: expected null to be 'Citrus limon' // Object.is equality
+
+- Expected:
+"Citrus limon"
+
++ Received:
+null
+
+ ❯ src/pokedex/species-key.test.ts:15:50
+     13|
+     14|   it("US-POK-06 skips the hybrid sign: Citrus x limon is Citrus limon"…
+     15|     expect(speciesKey("Citrus x limon").species).toBe("Citrus limon");
+       |                                                  ^
+     16|     expect(speciesKey("Citrus × limon").species).toBe("Citrus limon");
+     17|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  src/pokedex/species-key.test.ts > US-POK-06 species key from the Latin name > US-POK-06 additions do not flow into the species but become the chip
+AssertionError: expected null to be 'Opuntia microdasys' // Object.is equality
+
+- Expected:
+"Opuntia microdasys"
+
++ Received:
+null
+
+ ❯ src/pokedex/species-key.test.ts:21:25
+     19|   it("US-POK-06 additions do not flow into the species but become the …
+     20|     const key = speciesKey("Opuntia microdasys var. albispina");
+     21|     expect(key.species).toBe("Opuntia microdasys");
+       |                         ^
+     22|     expect(key.chip).toBe("var. albispina");
+     23|     expect(speciesKey("Ficus lyrata subsp. lyrata").chip).toBe("subsp.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  src/pokedex/species-key.test.ts > US-POK-06 species key from the Latin name > US-POK-06 a missing epithet gives no species (Hippeastrum, Parodia sp.)
+AssertionError: expected { species: null, genus: null, …(2) } to match object { species: null, genus: 'Hippeastrum' }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "genus": "Hippeastrum",
++   "genus": null,
+    "species": null,
+  }
+
+ ❯ src/pokedex/species-key.test.ts:32:39
+     30|
+     31|   it("US-POK-06 a missing epithet gives no species (Hippeastrum, Parod…
+     32|     expect(speciesKey("Hippeastrum")).toMatchObject({ species: null, g…
+       |                                       ^
+     33|     expect(speciesKey("Parodia sp.")).toMatchObject({ species: null, g…
+     34|     expect(speciesKey("Parodia spp.").species).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  src/pokedex/species-key.test.ts > US-POK-06 species key from the Latin name > US-POK-06 surrounding and repeated white space does not matter
+AssertionError: expected null to be 'Citrus limon' // Object.is equality
+
+- Expected:
+"Citrus limon"
+
++ Received:
+null
+
+ ❯ src/pokedex/species-key.test.ts:43:58
+     41|
+     42|   it("US-POK-06 surrounding and repeated white space does not matter",…
+     43|     expect(speciesKey("  Citrus   x   limon  ").species).toBe("Citrus …
+       |                                                          ^
+     44|   });
+     45| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  13 failed | 4 passed (17)
+   Start at  09:57:46
+   Duration  205ms (transform 40%, tests 32%, import 20%, worker 8%)
+
