@@ -1,0 +1,31 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/pok-07/app/packages/web
+
+ ❯ src/pokedex/PokedexPage.test.tsx (10 tests | 1 failed) 358ms
+   ❯ US-POK-07 catch date on the card (4)
+     × US-POK-07 the request carries the time zone of the profile (NFR-08, US-ACC-02) 14ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pokedex/PokedexPage.test.tsx > US-POK-07 catch date on the card > US-POK-07 the request carries the time zone of the profile (NFR-08, US-ACC-02)
+AssertionError: expected 'http://api/pokedex/ownership?timeZone…' to be 'http://api/pokedex/ownership?timeZone…' // Object.is equality
+
+Expected: "http://api/pokedex/ownership?timeZone=Asia%2FTokyo"
+Received: "http://api/pokedex/ownership?timeZone=Europe%2FBerlin"
+
+ ❯ src/pokedex/PokedexPage.test.tsx:138:48
+    136|     render(<PokedexPage api="http://api" token={token} />);
+    137|     await screen.findByText("Citrus limon");
+    138|     expect(String(fetchFn.mock.calls[0]?.[0])).toBe(
+       |                                                ^
+    139|       "http://api/pokedex/ownership?timeZone=Asia%2FTokyo",
+    140|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  15:38:22
+   Duration  1.23s (environment 51%, tests 32%, import 9%, transform 6%, worker 1%)
+

@@ -10,11 +10,23 @@ export interface SpeciesKey {
   readonly chip: string | null;
 }
 
+/**
+ * Catch date of a species (US-POK-07): `caught_at` is the date the keeper gave, `created_at` the local date the first
+ * specimen was created (shown as "≈"), `unknown` has no date. Never guessed (P-08).
+ */
+export interface CatchDate {
+  /** Local calendar date `YYYY-MM-DD` (NFR-08); `null` exactly when `source` is `unknown`. */
+  readonly date: string | null;
+  readonly source: "caught_at" | "created_at" | "unknown";
+}
+
 export interface CaughtSpecies {
   readonly species: string;
   readonly genus: string;
   readonly chips: readonly string[];
   readonly specimenCount: number;
+  /** Earliest date across all active and archived specimens of the species (US-POK-07). */
+  readonly caughtDate: CatchDate;
 }
 
 /** An active specimen that does not count as caught yet, with what fixes it (P-09, P-10). */

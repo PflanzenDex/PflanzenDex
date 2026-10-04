@@ -38,3 +38,6 @@
   color: var(--leise);
   font-size: 0.875rem;
 }
+.caught-card .catch-date {
+  font-size: 0.875rem;
+}

@@ -22,6 +22,8 @@ export interface SpecimenRow {
   readonly status: SpecimenStatus;
   /** Lokales Kalenderdatum `JJJJ-MM-TT` (NFR-08). */
   readonly caughtAt: string | null;
+  /** Moment the specimen was created (ISO 8601, UTC); `null` if unknown. Source of the "≈" catch date (US-POK-07). */
+  readonly createdAt: string | null;
   /** Local calendar date of the archiving (NFR-08); `null` as long as the specimen is not archived (US-BES-07). */
   readonly archivedAt: string | null;
   /** Reason of the archiving (`received`, `given_away`, … or free); `null` as long as not archived. */
