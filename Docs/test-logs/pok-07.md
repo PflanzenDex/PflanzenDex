@@ -64,7 +64,6 @@ Legend: ✅ as expected · ⚠️ works, but something stands out · ❌ error �
 
 ## 6. Open points
 
-
 - Photo (both sources) waits for WAC-05 and POK-03; US-POK-07 stays 🟨 until then.
 - The chip wording "gefangen ≈ 16.08.2026" puts the card text in the page; the full collector card (number, tree order, chip styling) is POK-01.
 - Environment: the first Keycloak start imported a stale `realm.json` that another session had left in the shared scratchpad folder; it was restarted with an own folder. Not a product finding.
