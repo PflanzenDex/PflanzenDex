@@ -6,6 +6,13 @@ export interface SpeciesHint {
   readonly nextAction: string;
 }
 
+/** Linear scan (no regular expression, the text is typed by a reviewer): cuts trailing `.`, `!`, `?` and whitespace. */
+function withoutTrailingPunctuation(text: string): string {
+  let end = text.length;
+  while (end > 0 && ".!? \t\n\r".includes(text.charAt(end - 1))) end -= 1;
+  return text.slice(0, end);
+}
+
 /** Hints on the status and Pokédex effect of a species (FR-BES-11, US-POK-06). Empty if there is nothing to say. */
 export function speciesHints(species: Species): readonly SpeciesHint[] {
   const hints: SpeciesHint[] = [];
@@ -18,7 +25,7 @@ export function speciesHints(species: Species): readonly SpeciesHint[] {
   if (species.reviewStatus === "rejected") {
     hints.push({
       text: `Die Prüfung hat dieses Profil nicht freigegeben${
-        species.reviewReason ? `: ${species.reviewReason.replace(/[.!?\s]+$/, "")}` : ""
+        species.reviewReason ? `: ${withoutTrailingPunctuation(species.reviewReason)}` : ""
       }. Es bleibt nur für dich sichtbar.`,
       nextAction: "Schlage die Art mit korrigierten Angaben erneut vor.",
     });

@@ -249,4 +249,25 @@ describe("US-BES-01 further edge cases", () => {
       "Die Prüfung hat dieses Profil nicht freigegeben: Die Quelle belegt den Lichtbedarf nicht. Es bleibt nur für dich sichtbar.",
     );
   });
+
+  it("US-BES-10 the rejection hint cuts trailing punctuation and whitespace in linear time, whatever the reason holds", async () => {
+    const r = await propose(profile);
+    if (!r.ok) throw new Error("Proposal failed");
+    const text = (reviewReason: string) =>
+      speciesHints({ ...r.value, reviewStatus: "rejected", reviewReason })[0]?.text;
+    const cut = (reason: string) =>
+      `Die Prüfung hat dieses Profil nicht freigegeben: ${reason}. Es bleibt nur für dich sichtbar.`;
+    expect(text("Quelle fehlt")).toBe(cut("Quelle fehlt"));
+    expect(text("Quelle fehlt!?. \t\n")).toBe(cut("Quelle fehlt"));
+    expect(text("Zeile 1.\nZeile 2...")).toBe(cut("Zeile 1.\nZeile 2"));
+    const started = Date.now();
+    for (const filler of ["\t", " ", ".", "\t.", "a\t"]) {
+      const adversarial = `Grund${filler.repeat(200_000)}x`;
+      expect(text(adversarial)).toBe(cut(adversarial));
+      expect(text(`Grund${filler.repeat(200_000)}`)).toBe(
+        cut(filler === "a\t" ? `Grund${"a\t".repeat(199_999)}a` : "Grund"),
+      );
+    }
+    expect(Date.now() - started).toBeLessThan(2000);
+  });
 });
