@@ -12,7 +12,7 @@ export function DifficultyPage(props: { api: string; token: () => Promise<string
   const { api, token } = props;
   const load = useCallback((t: string) => loadDifficulty(api, t), [api]);
   return (
-    <div className="light collection">
+    <div className="light collection difficulty-page">
       <LoadFrame token={token} load={load} loadingText="Artenvergleich wird geladen …">
         {(rows: readonly DifficultyRow[]) => <DifficultyTable rows={rows} />}
       </LoadFrame>
@@ -35,7 +35,8 @@ function DifficultyTable({ rows }: { rows: readonly DifficultyRow[] }) {
             Deine Arten nach Schwierigkeit, die leichtesten zuerst. So schlägst du Pflegeregeln
             nach, ohne jede Art zu öffnen.
           </p>
-          <div className="table-scroll">
+          <p className="quiet table-hint">Die Tabelle lässt sich seitlich scrollen.</p>
+          <div className="table-scroll" role="region" aria-label="Artenvergleich" tabIndex={0}>
             <table className="difficulty-table">
               <thead>
                 <tr>
