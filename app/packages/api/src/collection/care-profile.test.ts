@@ -327,6 +327,19 @@ describe("US-BES-09 the profile drives phases, moves and new specimens", () => {
     expect(bens.every((p) => p.targetLocationId === null)).toBe(true);
   });
 
+  it("US-BES-09 my zone override changes where the species counts in the light distribution (FR-BES-10)", async () => {
+    const species = await newSpecies(subA, `Licht${run}`);
+    await specimen(subA, species, { marker: "Eins" });
+    const cutting = async () =>
+      (await call(subA, "GET", "/specimens/distribution")).body["distribution"].notCounted
+        .cuttingLight as number;
+    const before = await cutting();
+    await put(subA, species, { lightZoneId: zoneLow });
+    expect(await cutting()).toBe(before + 1);
+    await put(subA, species, { lightZoneId: null });
+    expect(await cutting()).toBe(before);
+  });
+
   it("US-BES-09 a new specimen without a chosen location is placed at my growth location (US-BES-02, FR-PHA-05)", async () => {
     const species = await newSpecies(subA, `Neu${run}`);
     await put(subA, species, { growthLocationId: living });

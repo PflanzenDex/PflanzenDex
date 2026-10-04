@@ -173,3 +173,34 @@ a.card-photo:focus-visible {
 .distribution-list .thinnest .balken span {
   background: var(--warn-rand);
 }
+
+/* Own care profile (US-BES-09): catalog value above my deviation, the reset below; wider screens get more columns. */
+.profile-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+}
+.profile-card h2 {
+  margin: 0;
+}
+.profile-row {
+  display: grid;
+  gap: 8px;
+  padding: 12px 0;
+  border-top: 1px solid var(--rand);
+}
+.profile-row p {
+  margin: 0;
+}
+.profile-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.profile-control {
+  display: grid;
+  gap: 8px;
+}
+.profile-card textarea {
+  width: 100%;
+  min-height: 48px;
+  font: inherit;
+}

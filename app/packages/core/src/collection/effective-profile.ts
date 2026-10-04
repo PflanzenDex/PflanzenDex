@@ -1,7 +1,7 @@
 // The effective care profile (FR-BES-09): specimen before care profile before catalog. Pure, derived on every request
 // and never stored (P-01). A value nobody knows stays unknown, it is never invented (P-08).
 import type { Species } from "../catalog";
-import type { CareProfile, CareProfileChanges } from "./care-profile-types";
+import type { CareProfile, CareProfileChanges, OverridableField } from "./care-profile-types";
 
 export type ValueSource = "specimen" | "profile" | "catalog" | "unknown";
 
@@ -41,9 +41,45 @@ export interface EffectiveInput {
   readonly catalogZoneId: string | null;
 }
 
+/** One field: specimen before profile before catalog; nothing known stays `unknown` (P-08). */
+function layer<T>(specimen: T | null, own: T | null, catalog: T | null): Layered<T> {
+  const effective = specimen ?? own ?? catalog;
+  const source: ValueSource =
+    specimen !== null
+      ? "specimen"
+      : own !== null
+        ? "profile"
+        : catalog !== null
+          ? "catalog"
+          : "unknown";
+  return { catalog, own, effective, source };
+}
+
+const pair = (from: string | null | undefined, until: string | null | undefined) =>
+  from && until ? { from, until } : null;
+
 export function effectiveProfile(input: EffectiveInput): EffectiveProfile {
-  void input;
-  throw new Error("not implemented");
+  const { species, profile: p, specimen: s = {} } = input;
+  /** A field the catalog knows nothing about: only the specimen and the profile can say. */
+  const of = <F extends OverridableField>(f: F) =>
+    layer<NonNullable<CareProfile[F]>>(
+      (s[f] ?? null) as NonNullable<CareProfile[F]> | null,
+      (p?.[f] ?? null) as NonNullable<CareProfile[F]> | null,
+      null,
+    );
+  return {
+    growthLocation: of("growthLocationId"),
+    dormancyLocation: of("dormancyLocationId"),
+    lightZone: layer(s.lightZoneId ?? null, p?.lightZoneId ?? null, input.catalogZoneId),
+    dormancy: layer(
+      pair(s.dormancyFrom, s.dormancyUntil),
+      pair(p?.dormancyFrom, p?.dormancyUntil),
+      pair(species.dormancyFrom, species.dormancyUntil),
+    ),
+    wateringGrowthDays: of("wateringGrowthDays"),
+    wateringDormancyDays: of("wateringDormancyDays"),
+    ownHints: of("ownHints"),
+  };
 }
 
 /** The dormancy period that applies (override, else catalog), or `null` when nobody knows one. */
@@ -51,7 +87,8 @@ export function effectiveDormancy(
   species: Pick<Species, "dormancyFrom" | "dormancyUntil">,
   profile: CareProfile | null,
 ): Dormancy | null {
-  void species;
-  void profile;
-  throw new Error("not implemented");
+  return (
+    pair(profile?.dormancyFrom, profile?.dormancyUntil) ??
+    pair(species.dormancyFrom, species.dormancyUntil)
+  );
 }

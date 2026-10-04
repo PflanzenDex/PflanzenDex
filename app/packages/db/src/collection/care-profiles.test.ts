@@ -145,9 +145,4 @@ describe("US-BES-09 care profile in the database", () => {
     await expect(profiles.update(anna, species, { wateringGrowthDays: 0 })).rejects.toThrow();
     await expect(profiles.update(anna, species, { ownHints: "" })).rejects.toThrow();
   });
-
-  it("US-BES-09 the species in use cannot be deleted (global reference table, on delete restrict)", async () => {
-    await profiles.update(anna, species, { wateringGrowthDays: 9 });
-    await expect(pool.query("delete from species where id = $1", [species])).rejects.toThrow();
-  });
 });

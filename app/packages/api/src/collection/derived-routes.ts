@@ -1,5 +1,11 @@
 import { specimenHints, zoneDistribution } from "@pflanzendex/core";
-import { LocationPostgres, SpeciesPostgres, SpecimenPostgres, ZonePostgres } from "@pflanzendex/db";
+import {
+  CareProfilePostgres,
+  LocationPostgres,
+  SpeciesPostgres,
+  SpecimenPostgres,
+  ZonePostgres,
+} from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import type { AuthEnv } from "../kernel";
@@ -15,6 +21,7 @@ export function derivedRoutes(pool: Pool): Hono<AuthEnv> {
     species: new SpeciesPostgres(pool),
     locations: new LocationPostgres(pool),
     zones: new ZonePostgres(pool),
+    profiles: new CareProfilePostgres(pool),
   };
   const routes = new Hono<AuthEnv>();
   routes.get("/specimens/distribution", async (c) =>

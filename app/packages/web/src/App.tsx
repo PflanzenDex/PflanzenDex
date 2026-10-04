@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Species } from "@pflanzendex/core";
 import { CollectionArea } from "./collection-area";
-import { HintsPage } from "./collection";
+import { CareProfilePage, HintsPage } from "./collection";
 import { AppError, AccountView, Loading, Welcome, apiUrl, useSession } from "./account";
 import { LightPage } from "./light";
 import { SpeciesPage } from "./catalog";
@@ -54,6 +54,8 @@ export function App() {
             <HintsPage api={api} token={s.token} onOpen={setView} />
           ) : view === "carePhases" ? (
             <CarePhasesPage api={api} token={s.token} />
+          ) : view === "careProfile" ? (
+            <CareProfilePage api={api} token={s.token} />
           ) : view === "collection" ? (
             <CollectionArea
               api={api}

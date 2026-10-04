@@ -13,11 +13,19 @@ interface Context {
   readonly zones: readonly LightZone[];
   readonly locations: readonly LightLocation[];
   readonly species: ReadonlyMap<string, Species | null>;
+  /** Zone override of the care profile per species (US-BES-09). */
+  readonly overrides: ReadonlyMap<string, string>;
 }
 
 /** Zone from the lux need of the species (US-LIC-01). "Soft leaf" is not yet known by the catalog, it is never assumed. */
-function zoneSpecies(species: Species | null | undefined, zones: readonly LightZone[]): Place {
+function zoneSpecies(
+  species: Species | null | undefined,
+  zones: readonly LightZone[],
+  override?: string,
+): Place {
   if (!species) return "unknown";
+  const own = zones.find((l) => l.id === override);
+  if (own) return own.id === cuttingLight(zones)?.id ? "cuttingLight" : own;
   const a = zoneDerive(
     {
       lightDemandLux: species.lightDemandLux,
@@ -39,7 +47,7 @@ function placeFrom(z: SpecimenRow, k: Context): Place {
   if (z.status === "cutting") return "cuttingLight";
   const location = k.locations.find((s) => s.id === z.locationId);
   const own = k.zones.find((l) => l.id === location?.lightZoneId);
-  if (!own) return zoneSpecies(k.species.get(z.speciesId), k.zones);
+  if (!own) return zoneSpecies(k.species.get(z.speciesId), k.zones, k.overrides.get(z.speciesId));
   return own.id === cuttingLight(k.zones)?.id ? "cuttingLight" : own;
 }
 
@@ -58,10 +66,11 @@ export async function zoneDistribution(
   deps: DistributionDependencies,
   userId: string,
 ): Promise<Distribution> {
-  const [rows, locations, allZones] = await Promise.all([
+  const [rows, locations, allZones, profiles] = await Promise.all([
     deps.specimens.list(userId),
     deps.locations.list(userId),
     deps.zones.list(userId),
+    deps.profiles?.list(userId) ?? [],
   ]);
   const zones = [...allZones].sort((a, b) => a.sortOrder - b.sortOrder);
   const speciesIds = [...new Set(rows.map((z) => z.speciesId))];
@@ -70,6 +79,9 @@ export async function zoneDistribution(
     zones,
     locations,
     species: new Map(speciesIds.map((id, i) => [id, read[i] ?? null] as const)),
+    overrides: new Map(
+      profiles.flatMap((p) => (p.lightZoneId ? [[p.speciesId, p.lightZoneId] as const] : [])),
+    ),
   };
   const count = new Map<string, number>();
   const rest = { cuttingLight: 0, archived: 0, zoneUnknown: 0 };

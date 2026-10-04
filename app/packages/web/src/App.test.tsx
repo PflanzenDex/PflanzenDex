@@ -63,6 +63,7 @@ function fakeServer(accountStatus = 200) {
       if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
       if (path === "/locations") return response(200, { locations: [] });
       if (path === "/light-zones") return response(200, { zones: [] });
+      if (path === "/care-profiles") return response(200, { entries: [] });
       if (path === "/hints") return response(200, { hints: [] });
       if (path === "/specimens/hints") return response(200, { hints: SPECIMEN_HINTS });
       return response(404);
@@ -123,6 +124,18 @@ describe("US-ACC-01 App", () => {
     await userEvent.click(screen.getByRole("button", { name: "Konto" }));
     expect(await screen.findByRole("heading", { name: "Hallo, Lena" })).toBeTruthy();
     expect(screen.getByText("lena@example.test")).toBeTruthy();
+  });
+
+  it("US-BES-09 the tab Pflegeprofil opens the own care profile and says what to do without a species", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "Pflegeprofil" }));
+    expect(await screen.findByRole("heading", { name: "Pflegeprofil" })).toBeTruthy();
+    expect(screen.getByText(/Lege zuerst im Bestand ein Exemplar an/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Pflegeprofil" }).getAttribute("aria-current")).toBe(
+      "page",
+    );
   });
 
   it("US-BES-08 the tab Hinweise lists incomplete specimens and its action leads to the view that fixes it", async () => {
