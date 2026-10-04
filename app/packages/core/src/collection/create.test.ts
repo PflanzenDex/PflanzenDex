@@ -142,7 +142,8 @@ describe("US-BES-02 the name is fixed before saving (DM-BES-03, FR-BES-03)", () 
     await create({});
     const before = specimens.rows.map((z) => ({ ...z }));
     const r = await create({});
-    expect(!r.ok && r.error.code).toBe("specimen.name_taken");
+    // US-BES-03: a further specimen needs a marker; the error still names the existing ones.
+    expect(!r.ok && r.error.code).toBe("specimen.marker_required");
     expect(!r.ok && r.error.data).toMatchObject({
       name: "Bogenhanf",
       existing: [{ name: "Bogenhanf" }],
@@ -160,7 +161,7 @@ describe("US-BES-02 the name is fixed before saving (DM-BES-03, FR-BES-03)", () 
   it("the same marker is not allowed twice per species (case-insensitive), without change", async () => {
     await create({ marker: "rot" });
     const r = await create({ marker: "ROT" });
-    expect(!r.ok && r.error.code).toBe("specimen.name_taken");
+    expect(!r.ok && r.error.code).toBe("specimen.marker_taken");
     expect(specimens.rows).toHaveLength(1);
   });
 
@@ -196,5 +197,46 @@ describe("US-BES-02 account, idempotency and sign-in (P-03, P-04)", () => {
 
   it('loading a specimen with an invalid id is "not found" (null)', async () => {
     expect(await specimenLoad(specimens, "anna", "kaktus")).toBeNull();
+  });
+});
+
+describe("US-BES-04 create a cutting", () => {
+  it("US-BES-04: a cutting gets the location of the growth phase, not the target location of the dormancy", async () => {
+    const target = new TargetLocationStub(FOREIGN_LOCATION, LOCATION);
+    const r = await create({ status: "cutting" }, { target });
+    expect(r.ok && r.value).toMatchObject({ status: "cutting", locationId: LOCATION });
+    expect(target.growthCalls).toEqual([{ userId: "anna", speciesId: SPECIES }]);
+    expect(target.calls).toEqual([]);
+  });
+
+  it("US-BES-04: a chosen location comes before the growth location", async () => {
+    const r = await create(
+      { status: "cutting", locationId: LOCATION },
+      { target: new TargetLocationStub(null, "ignored") },
+    );
+    expect(r.ok && r.value.locationId).toBe(LOCATION);
+  });
+
+  it("US-BES-04: without a known growth location the location of the cutting stays unknown (P-08)", async () => {
+    const r = await create({ status: "cutting" });
+    expect(r.ok && r.value).toMatchObject({ status: "cutting", locationId: null });
+  });
+
+  it("US-BES-04: without a value or with 'plant' it stays a plant and the target location applies", async () => {
+    for (const input of [{}, { status: "plant" }]) {
+      const target = new TargetLocationStub(LOCATION, "other");
+      const r = await create({ ...input, marker: `k${++counter}` }, { target });
+      expect(r.ok && r.value).toMatchObject({ status: "plant", locationId: LOCATION });
+      expect(target.growthCalls).toEqual([]);
+    }
+  });
+
+  it("US-BES-04: 'archived' and unknown statuses are rejected at creation, nothing is written", async () => {
+    for (const status of ["archived", "dead", 3]) {
+      const r = await create({ status });
+      expect(r.ok).toBe(false);
+      expect(!r.ok && r.error.details).toEqual([{ field: "status", code: "input.invalid" }]);
+    }
+    expect(specimens.writes).toBe(0);
   });
 });

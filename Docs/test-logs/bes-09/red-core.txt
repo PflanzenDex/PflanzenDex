@@ -1,0 +1,823 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex.worktrees/bes-09/app/packages/core
+
+ ❯ src/collection/effective-profile.test.ts (6 tests | 6 failed) 9ms
+   ❯ US-BES-09 effective care profile (FR-BES-09: specimen before profile before catalog) (6)
+     × US-BES-09 without a profile the catalog applies and unknown stays unknown (P-08) 5ms
+     × US-BES-09 an empty care profile is valid and equals no profile 1ms
+     × US-BES-09 the care profile takes precedence over the catalog and shows both side by side 1ms
+     × US-BES-09 the specimen takes precedence over the care profile and the catalog 1ms
+     × US-BES-09 a species without dormancy period can get one from the care profile 1ms
+     × US-BES-09 effectiveDormancy: override beats catalog, reset (null) falls back to the catalog 0ms
+ ❯ src/collection/care-profile.test.ts (20 tests | 17 failed) 26ms
+   ❯ US-BES-09 change my care profile (20)
+     × US-BES-09 sets target locations per phase, the zone, dormancy, watering and own hints 7ms
+     × US-BES-09 a change names only some fields: the others stay as they are 2ms
+     × US-BES-09 reset to catalog per field: null clears exactly that field 1ms
+     × US-BES-09 an empty care profile is valid: everything reset leaves a profile without deviation 1ms
+     × US-BES-09 a request that changes nothing is invalid, it is not silently accepted (P-10) 2ms
+     × US-BES-09 only overridable fields can be changed: catalog fields are refused and nothing is written (FR-BES-09) 2ms
+     × US-BES-09 the target location is selected from my locations: a location of another account is refused (FR-PHA-03, P-04) 1ms
+     × US-BES-09 a free-typed location is no ID and is refused 0ms
+     × US-BES-09 the zone override must be one of my zones (P-04) 1ms
+     × US-BES-09 dormancy from/until may span the new year and only counts as a pair 1ms
+     × US-BES-09 dormancy resets as a pair 1ms
+     × US-BES-09 a date that does not exist is refused (13-01, 02-30, text) 0ms
+     × US-BES-09 watering intervals are whole days from 1 to 365 (assumption) 1ms
+     × US-BES-09 own hints are text of 1 to 1000 characters; empty text is refused, null resets 1ms
+     × US-BES-09 an unknown species and a private species of another account are species.not_found (P-04) 1ms
+     × US-BES-09 the same Idempotency-Key writes once (US-QS-03) 1ms
+     × US-BES-09 the profile is private: another account's profile of the same species stays empty (P-05) 1ms
+ ❯ src/collection/care-profile-view.test.ts (8 tests | 8 failed) 14ms
+   ❯ US-BES-09 care profile view: catalog value and my deviation side by side (7)
+     × US-BES-09 lists every species with an active specimen, sorted by name, without a profile the catalog applies 5ms
+     × US-BES-09 shows the catalog value and my deviation next to each other 1ms
+     × US-BES-09 counts only active specimens; a species with only archived specimens drops out (US-BES-07) 1ms
+     × US-BES-09 a species with a deviation stays listed without a specimen, so it can be reset (P-10) 0ms
+     × US-BES-09 a species the account cannot see is left out, also with a profile row (P-04) 0ms
+     × US-BES-09 another account sees neither my specimens nor my deviations (P-04, P-05) 0ms
+     × US-BES-09 a species without lux need has no catalog zone: unknown, never invented (P-08) 0ms
+   ❯ US-BES-09 zone usage: a zone that a care profile points to is not deleted unnoticed (1)
+     × US-BES-09 names the species whose profile uses the zone, only for the own account 4ms
+ ❯ src/care/profile-location.test.ts (12 tests | 9 failed) 67ms
+   ❯ US-BES-09 the care profile feeds the port PhaseLocationSource (FR-PHA-02) (3)
+     × US-BES-09 returns the location the keeper selected for the phase, otherwise unknown (P-08) 9ms
+     × US-BES-09 never answers with the location of another account (P-04, P-05) 3ms
+   ❯ US-BES-09 the care profile feeds the port TargetLocationSource (FR-PHA-05) (4)
+     × US-BES-09 the target of today follows the effective phase, the growth location is always the growth one 1ms
+     × US-BES-09 a species without a dormancy period always counts as growth; a dormancy override moves the day 1ms
+     × US-BES-09 a new specimen of the species is placed at the target location of the profile (US-BES-02) 30ms
+   ❯ US-BES-09 dormancy override changes the phase (FR-PHA-01) (3)
+     × US-BES-09 my own dormancy period replaces the catalog's: the same day is another phase 3ms
+     × US-BES-09 a species without catalog dormancy is listed once I gave it a period 10ms
+     × US-BES-09 another account's dormancy override does not touch my phases (P-05) 2ms
+   ❯ US-BES-09 end to end: adjust profile, target shows in the phase list, move, hint is gone (2)
+     × US-BES-09 the phase list shows the target of the profile, 'Jetzt umgestellt' moves, the hint 'location missing' disappears (BES-08, PHA-03) 3ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 40 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/care/profile-location.test.ts > US-BES-09 the care profile feeds the port PhaseLocationSource (FR-PHA-02) > US-BES-09 returns the location the keeper selected for the phase, otherwise unknown (P-08)
+AssertionError: expected null to be 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' // Object.is equality
+
+- Expected:
+"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+
++ Received:
+null
+
+ ❯ src/care/profile-location.test.ts:81:66
+     79|     await profile("anna", WINTER, { growthLocationId: LIVING });
+     80|     const source = careProfileLocations(profiles);
+     81|     expect(await source.phaseLocation("anna", WINTER, "growth")).toBe(…
+       |                                                                  ^
+     82|     expect(await source.phaseLocation("anna", WINTER, "dormancy")).toB…
+     83|     expect(await source.phaseLocation("anna", NONE, "growth")).toBeNul…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/40]⎯
+
+ FAIL  src/care/profile-location.test.ts > US-BES-09 the care profile feeds the port PhaseLocationSource (FR-PHA-02) > US-BES-09 never answers with the location of another account (P-04, P-05)
+AssertionError: expected null to be 'cccccccc-cccc-4ccc-8ccc-cccccccccccc' // Object.is equality
+
+- Expected:
+"cccccccc-cccc-4ccc-8ccc-cccccccccccc"
+
++ Received:
+null
+
+ ❯ src/care/profile-location.test.ts:90:67
+     88|     const source = careProfileLocations(profiles);
+     89|     expect(await source.phaseLocation("anna", WINTER, "growth")).toBeN…
+     90|     expect(await source.phaseLocation("ben", WINTER, "dormancy")).toBe…
+       |                                                                   ^
+     91|   });
+     92|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/40]⎯
+
+ FAIL  src/care/profile-location.test.ts > US-BES-09 the care profile feeds the port TargetLocationSource (FR-PHA-05) > US-BES-09 the target of today follows the effective phase, the growth location is always the growth one
+AssertionError: expected null to be 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' // Object.is equality
+
+- Expected:
+"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+
++ Received:
+null
+
+ ❯ src/care/profile-location.test.ts:105:71
+    103|     const target = careProfileTargetLocation(profiles);
+    104|     const winter = testSpecies(WINTER, { dormancyFrom: "11-01", dorman…
+    105|     expect(await target.targetLocation("anna", winter, "2026-10-04")).…
+       |                                                                       ^
+    106|     expect(await target.targetLocation("anna", winter, "2026-12-01")).…
+    107|     expect(await target.growthLocation("anna", winter)).toBe(LIVING);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/40]⎯
+
+ FAIL  src/care/profile-location.test.ts > US-BES-09 the care profile feeds the port TargetLocationSource (FR-PHA-05) > US-BES-09 a species without a dormancy period always counts as growth; a dormancy override moves the day
+AssertionError: expected null to be 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' // Object.is equality
+
+- Expected:
+"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+
++ Received:
+null
+
+ ❯ src/care/profile-location.test.ts:114:70
+    112|     const target = careProfileTargetLocation(profiles);
+    113|     const plain = testSpecies(NONE);
+    114|     expect(await target.targetLocation("anna", plain, "2026-12-01")).t…
+       |                                                                      ^
+    115|     await profile("anna", NONE, { dormancyFrom: "11-01", dormancyUntil…
+    116|     expect(await target.targetLocation("anna", plain, "2026-12-01")).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/40]⎯
+
+ FAIL  src/care/profile-location.test.ts > US-BES-09 the care profile feeds the port TargetLocationSource (FR-PHA-05) > US-BES-09 a new specimen of the species is placed at the target location of the profile (US-BES-02)
+AssertionError: expected { …(11) } to match object { Object (locationId) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "locationId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
++   "locationId": null,
+  }
+
+ ❯ src/care/profile-location.test.ts:144:29
+    142|       },
+    143|     );
+    144|     expect(r.ok && r.value).toMatchObject({ locationId: LIVING });
+       |                             ^
+    145|   });
+    146| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/40]⎯
+
+ FAIL  src/care/profile-location.test.ts > US-BES-09 dormancy override changes the phase (FR-PHA-01) > US-BES-09 my own dormancy period replaces the catalog's: the same day is another phase
+AssertionError: expected [ 'growth' ] to deeply equal [ 'dormancy' ]
+
+- Expected
++ Received
+
+  [
+-   "dormancy",
++   "growth",
+  ]
+
+ ❯ src/care/profile-location.test.ts:153:63
+    151|     expect((await list("anna", OCTOBER)).map((r) => r.phase)).toEqual(…
+    152|     await profile("anna", WINTER, { dormancyFrom: "09-01", dormancyUnt…
+    153|     expect((await list("anna", OCTOBER)).map((r) => r.phase)).toEqual(…
+       |                                                               ^
+    154|     await profile("anna", WINTER, { dormancyFrom: null, dormancyUntil:…
+    155|     expect((await list("anna", OCTOBER)).map((r) => r.phase)).toEqual(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/40]⎯
+
+ FAIL  src/care/profile-location.test.ts > US-BES-09 dormancy override changes the phase (FR-PHA-01) > US-BES-09 a species without catalog dormancy is listed once I gave it a period
+AssertionError: expected [] to deeply equal [ [ 'Efeutute', 'dormancy' ] ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "Efeutute",
+-     "dormancy",
+-   ],
+- ]
++ []
+
+ ❯ src/care/profile-location.test.ts:162:74
+    160|     expect(await list("anna", DECEMBER)).toEqual([]);
+    161|     await profile("anna", NONE, { dormancyFrom: "11-01", dormancyUntil…
+    162|     expect((await list("anna", DECEMBER)).map((r) => [r.name, r.phase]…
+       |                                                                          ^
+    163|       ["Efeutute", "dormancy"],
+    164|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/40]⎯
+
+ FAIL  src/care/profile-location.test.ts > US-BES-09 dormancy override changes the phase (FR-PHA-01) > US-BES-09 another account's dormancy override does not touch my phases (P-05)
+AssertionError: expected [ 'growth' ] to deeply equal [ 'dormancy' ]
+
+- Expected
++ Received
+
+  [
+-   "dormancy",
++   "growth",
+  ]
+
+ ❯ src/care/profile-location.test.ts:172:62
+    170|     await profile("ben", WINTER, { dormancyFrom: "09-01", dormancyUnti…
+    171|     expect((await list("anna", OCTOBER)).map((r) => r.phase)).toEqual(…
+    172|     expect((await list("ben", OCTOBER)).map((r) => r.phase)).toEqual([…
+       |                                                              ^
+    173|   });
+    174| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/40]⎯
+
+ FAIL  src/care/profile-location.test.ts > US-BES-09 end to end: adjust profile, target shows in the phase list, move, hint is gone > US-BES-09 the phase list shows the target of the profile, 'Jetzt umgestellt' moves, the hint 'location missing' disappears (BES-08, PHA-03)
+AssertionError: expected [ { …(6) } ] to match object [ { …(3) } ]
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  [
+    {
+      "locationId": null,
+      "specimenId": "00000000-0000-4000-8000-000000000001",
+-     "targetLocationId": "00000000-0000-4000-8000-000000000001",
++     "targetLocationId": null,
+    },
+  ]
+
+ ❯ src/care/profile-location.test.ts:195:41
+    193|
+    194|     await profile("anna", WINTER, { growthLocationId: place });
+    195|     expect(await list("anna", OCTOBER)).toMatchObject([
+       |                                         ^
+    196|       { specimenId: z.id, locationId: null, targetLocationId: place },
+    197|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/40]⎯
+
+ FAIL  src/collection/care-profile-view.test.ts > US-BES-09 care profile view: catalog value and my deviation side by side > US-BES-09 lists every species with an active specimen, sorted by name, without a profile the catalog applies
+Error: not implemented
+ ❯ careProfileView src/collection/care-profile-view.ts:33:9
+     31|   void deps;
+     32|   void userId;
+     33|   throw new Error("not implemented");
+       |         ^
+     34| }
+     35|
+ ❯ view src/collection/care-profile-view.test.ts:53:3
+ ❯ src/collection/care-profile-view.test.ts:67:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/40]⎯
+
+ FAIL  src/collection/care-profile-view.test.ts > US-BES-09 care profile view: catalog value and my deviation side by side > US-BES-09 shows the catalog value and my deviation next to each other
+Error: not implemented
+ ❯ careProfileView src/collection/care-profile-view.ts:33:9
+     31|   void deps;
+     32|   void userId;
+     33|   throw new Error("not implemented");
+       |         ^
+     34| }
+     35|
+ ❯ view src/collection/care-profile-view.test.ts:53:3
+ ❯ src/collection/care-profile-view.test.ts:83:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/40]⎯
+
+ FAIL  src/collection/care-profile-view.test.ts > US-BES-09 care profile view: catalog value and my deviation side by side > US-BES-09 counts only active specimens; a species with only archived specimens drops out (US-BES-07)
+Error: not implemented
+ ❯ careProfileView src/collection/care-profile-view.ts:33:9
+     31|   void deps;
+     32|   void userId;
+     33|   throw new Error("not implemented");
+       |         ^
+     34| }
+     35|
+ ❯ view src/collection/care-profile-view.test.ts:53:3
+ ❯ src/collection/care-profile-view.test.ts:98:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/40]⎯
+
+ FAIL  src/collection/care-profile-view.test.ts > US-BES-09 care profile view: catalog value and my deviation side by side > US-BES-09 a species with a deviation stays listed without a specimen, so it can be reset (P-10)
+Error: not implemented
+ ❯ careProfileView src/collection/care-profile-view.ts:33:9
+     31|   void deps;
+     32|   void userId;
+     33|   throw new Error("not implemented");
+       |         ^
+     34| }
+     35|
+ ❯ view src/collection/care-profile-view.test.ts:53:3
+ ❯ src/collection/care-profile-view.test.ts:104:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/40]⎯
+
+ FAIL  src/collection/care-profile-view.test.ts > US-BES-09 care profile view: catalog value and my deviation side by side > US-BES-09 a species the account cannot see is left out, also with a profile row (P-04)
+Error: not implemented
+ ❯ careProfileView src/collection/care-profile-view.ts:33:9
+     31|   void deps;
+     32|   void userId;
+     33|   throw new Error("not implemented");
+       |         ^
+     34| }
+     35|
+ ❯ view src/collection/care-profile-view.test.ts:53:3
+ ❯ src/collection/care-profile-view.test.ts:113:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/40]⎯
+
+ FAIL  src/collection/care-profile-view.test.ts > US-BES-09 care profile view: catalog value and my deviation side by side > US-BES-09 another account sees neither my specimens nor my deviations (P-04, P-05)
+Error: not implemented
+ ❯ careProfileView src/collection/care-profile-view.ts:33:9
+     31|   void deps;
+     32|   void userId;
+     33|   throw new Error("not implemented");
+       |         ^
+     34| }
+     35|
+ ❯ view src/collection/care-profile-view.test.ts:53:3
+ ❯ src/collection/care-profile-view.test.ts:119:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/40]⎯
+
+ FAIL  src/collection/care-profile-view.test.ts > US-BES-09 care profile view: catalog value and my deviation side by side > US-BES-09 a species without lux need has no catalog zone: unknown, never invented (P-08)
+Error: not implemented
+ ❯ careProfileView src/collection/care-profile-view.ts:33:9
+     31|   void deps;
+     32|   void userId;
+     33|   throw new Error("not implemented");
+       |         ^
+     34| }
+     35|
+ ❯ src/collection/care-profile-view.test.ts:125:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/40]⎯
+
+ FAIL  src/collection/care-profile-view.test.ts > US-BES-09 zone usage: a zone that a care profile points to is not deleted unnoticed > US-BES-09 names the species whose profile uses the zone, only for the own account
+AssertionError: expected [] to deeply equal [ { kind: 'care_profile', …(2) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "id": "11111111-1111-4111-8111-111111111111",
+-     "kind": "care_profile",
+-     "name": "Bogenhanf",
+-   },
+- ]
++ []
+
+ ❯ src/collection/care-profile-view.test.ts:138:44
+    136|     await profiles.update("anna", ALOE, { growthLocationId: LOC });
+    137|     const usage = careProfileZoneUsage({ profiles, species });
+    138|     expect(await usage.user("anna", "z2")).toEqual([
+       |                                            ^
+    139|       { kind: "care_profile", id: BOGEN, name: "Bogenhanf" },
+    140|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 sets target locations per phase, the zone, dormancy, watering and own hints
+AssertionError: expected false to deeply equal { …(9) }
+
+- Expected:
+{
+  "dormancyFrom": "10-15",
+  "dormancyLocationId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "dormancyUntil": "02-28",
+  "growthLocationId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "lightZoneId": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+  "ownHints": "Im Winter fast trocken halten.",
+  "speciesId": "11111111-1111-4111-8111-111111111111",
+  "wateringDormancyDays": 28,
+  "wateringGrowthDays": 7,
+}
+
++ Received:
+false
+
+ ❯ src/collection/care-profile.test.ts:63:29
+     61|       ownHints: "  Im Winter fast trocken halten.  ",
+     62|     });
+     63|     expect(r.ok && r.value).toEqual({
+       |                             ^
+     64|       speciesId: SPECIES,
+     65|       growthLocationId: LOC_A,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 a change names only some fields: the others stay as they are
+AssertionError: expected false to match object { …(3) }
+
+- Expected:
+{
+  "dormancyLocationId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "growthLocationId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "wateringGrowthDays": 7,
+}
+
++ Received:
+false
+
+ ❯ src/collection/care-profile.test.ts:79:29
+     77|     await update({ growthLocationId: LOC_A, wateringGrowthDays: 7 });
+     78|     const r = await update({ dormancyLocationId: LOC_B });
+     79|     expect(r.ok && r.value).toMatchObject({
+       |                             ^
+     80|       growthLocationId: LOC_A,
+     81|       dormancyLocationId: LOC_B,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 reset to catalog per field: null clears exactly that field
+AssertionError: expected false to match object { growthLocationId: null, …(2) }
+
+- Expected:
+{
+  "dormancyFrom": "10-15",
+  "dormancyUntil": "02-28",
+  "growthLocationId": null,
+}
+
++ Received:
+false
+
+ ❯ src/collection/care-profile.test.ts:89:29
+     87|     await update({ growthLocationId: LOC_A, dormancyFrom: "10-15", dor…
+     88|     const r = await update({ growthLocationId: null });
+     89|     expect(r.ok && r.value).toMatchObject({
+       |                             ^
+     90|       growthLocationId: null,
+     91|       dormancyFrom: "10-15",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 an empty care profile is valid: everything reset leaves a profile without deviation
+AssertionError: expected false to match object { growthLocationId: null, …(1) }
+
+- Expected:
+{
+  "growthLocationId": null,
+  "lightZoneId": null,
+}
+
++ Received:
+false
+
+ ❯ src/collection/care-profile.test.ts:99:29
+     97|     await update({ growthLocationId: LOC_A, lightZoneId: ZONE_A });
+     98|     const r = await update({ growthLocationId: null, lightZoneId: null…
+     99|     expect(r.ok && r.value).toMatchObject({ growthLocationId: null, li…
+       |                             ^
+    100|   });
+    101|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 a request that changes nothing is invalid, it is not silently accepted (P-10)
+AssertionError: expected [ 'system.unexpected' ] to deeply equal [ 'input.invalid' ]
+
+- Expected
++ Received
+
+  [
+-   "input.invalid",
++   "system.unexpected",
+  ]
+
+ ❯ src/collection/care-profile.test.ts:104:22
+    102|   it("US-BES-09 a request that changes nothing is invalid, it is not s…
+    103|     const r = await update({});
+    104|     expect(codes(r)).toEqual(["input.invalid"]);
+       |                      ^
+    105|     expect(profiles.writes).toBe(0);
+    106|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 only overridable fields can be changed: catalog fields are refused and nothing is written (FR-BES-09)
+AssertionError: expected [ 'system.unexpected' ] to deeply equal [ 'input.invalid' ]
+
+- Expected
++ Received
+
+  [
+-   "input.invalid",
++   "system.unexpected",
+  ]
+
+ ❯ src/collection/care-profile.test.ts:111:24
+    109|     for (const field of ["latinName", "growthMeasure", "difficulty", "…
+    110|       const r = await update({ growthLocationId: LOC_A, [field]: "x" }…
+    111|       expect(codes(r)).toEqual(["input.invalid"]);
+       |                        ^
+    112|       expect(fields(r)).toEqual([field]);
+    113|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 the target location is selected from my locations: a location of another account is refused (FR-PHA-03, P-04)
+AssertionError: expected [ 'system.unexpected' ] to deeply equal [ 'location.not_found' ]
+
+- Expected
++ Received
+
+  [
+-   "location.not_found",
++   "system.unexpected",
+  ]
+
+ ❯ src/collection/care-profile.test.ts:119:22
+    117|   it("US-BES-09 the target location is selected from my locations: a l…
+    118|     const r = await update({ growthLocationId: LOC_BEN });
+    119|     expect(codes(r)).toEqual(["location.not_found"]);
+       |                      ^
+    120|     expect(profiles.rows).toEqual([]);
+    121|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 a free-typed location is no ID and is refused
+AssertionError: expected [ 'system.unexpected' ] to deeply equal [ 'input.invalid' ]
+
+- Expected
++ Received
+
+  [
+-   "input.invalid",
++   "system.unexpected",
+  ]
+
+ ❯ src/collection/care-profile.test.ts:125:22
+    123|   it("US-BES-09 a free-typed location is no ID and is refused", async …
+    124|     const r = await update({ dormancyLocationId: "Wohnzimmer" });
+    125|     expect(codes(r)).toEqual(["input.invalid"]);
+       |                      ^
+    126|     expect(fields(r)).toEqual(["dormancyLocationId"]);
+    127|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 the zone override must be one of my zones (P-04)
+AssertionError: expected [ 'system.unexpected' ] to deeply equal [ 'light_zone.not_found' ]
+
+- Expected
++ Received
+
+  [
+-   "light_zone.not_found",
++   "system.unexpected",
+  ]
+
+ ❯ src/collection/care-profile.test.ts:131:22
+    129|   it("US-BES-09 the zone override must be one of my zones (P-04)", asy…
+    130|     const r = await update({ lightZoneId: ZONE_BEN });
+    131|     expect(codes(r)).toEqual(["light_zone.not_found"]);
+       |                      ^
+    132|     expect(profiles.rows).toEqual([]);
+    133|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 dormancy from/until may span the new year and only counts as a pair
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/collection/care-profile.test.ts:136:82
+    134|
+    135|   it("US-BES-09 dormancy from/until may span the new year and only cou…
+    136|     expect((await update({ dormancyFrom: "11-01", dormancyUntil: "03-1…
+       |                                                                                  ^
+    137|     const half = await update({ dormancyFrom: "11-01" });
+    138|     expect(codes(half)).toEqual(["input.invalid"]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 dormancy resets as a pair
+AssertionError: expected false to match object { dormancyFrom: null, …(1) }
+
+- Expected:
+{
+  "dormancyFrom": null,
+  "dormancyUntil": null,
+}
+
++ Received:
+false
+
+ ❯ src/collection/care-profile.test.ts:147:29
+    145|     await update({ dormancyFrom: "11-01", dormancyUntil: "03-15" });
+    146|     const r = await update({ dormancyFrom: null, dormancyUntil: null }…
+    147|     expect(r.ok && r.value).toMatchObject({ dormancyFrom: null, dorman…
+       |                             ^
+    148|   });
+    149|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 a date that does not exist is refused (13-01, 02-30, text)
+AssertionError: expected [ 'system.unexpected' ] to deeply equal [ 'input.invalid' ]
+
+- Expected
++ Received
+
+  [
+-   "input.invalid",
++   "system.unexpected",
+  ]
+
+ ❯ src/collection/care-profile.test.ts:152:82
+    150|   it("US-BES-09 a date that does not exist is refused (13-01, 02-30, t…
+    151|     for (const bad of ["13-01", "02-30", "1. Nov", "11-1", 1101])
+    152|       expect(codes(await update({ dormancyFrom: bad, dormancyUntil: "0…
+       |                                                                                  ^
+    153|         "input.invalid",
+    154|       ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 watering intervals are whole days from 1 to 365 (assumption)
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/collection/care-profile.test.ts:158:86
+    156|
+    157|   it("US-BES-09 watering intervals are whole days from 1 to 365 (assum…
+    158|     for (const ok of [1, 365]) expect((await update({ wateringGrowthDa…
+       |                                                                                      ^
+    159|     for (const bad of [0, 366, 2.5, -3, "7", Number.NaN])
+    160|       expect(fields(await update({ wateringDormancyDays: bad }))).toEq…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 own hints are text of 1 to 1000 characters; empty text is refused, null resets
+AssertionError: expected [ 'system.unexpected' ] to deeply equal [ 'input.invalid' ]
+
+- Expected
++ Received
+
+  [
+-   "input.invalid",
++   "system.unexpected",
+  ]
+
+ ❯ src/collection/care-profile.test.ts:164:54
+    162|
+    163|   it("US-BES-09 own hints are text of 1 to 1000 characters; empty text…
+    164|     expect(codes(await update({ ownHints: "   " }))).toEqual(["input.i…
+       |                                                      ^
+    165|     expect(codes(await update({ ownHints: "x".repeat(1001) }))).toEqua…
+    166|     await update({ ownHints: "Bleibt trocken" });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 an unknown species and a private species of another account are species.not_found (P-04)
+AssertionError: expected [ 'system.unexpected' ] to deeply equal [ 'species.not_found' ]
+
+- Expected
++ Received
+
+  [
+-   "species.not_found",
++   "system.unexpected",
+  ]
+
+ ❯ src/collection/care-profile.test.ts:176:28
+    174|       { speciesId: "99999999-9999-4999-8999-999999999999" },
+    175|     );
+    176|     expect(codes(unknown)).toEqual(["species.not_found"]);
+       |                            ^
+    177|     const foreign = await update({ growthLocationId: LOC_A }, { specie…
+    178|     expect(codes(foreign)).toEqual(["species.not_found"]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 the same Idempotency-Key writes once (US-QS-03)
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/collection/care-profile.test.ts:198:29
+    196|     const second = await update({ wateringGrowthDays: 7 }, { key: "sam…
+    197|     expect(second).toEqual(first);
+    198|     expect(profiles.writes).toBe(1);
+       |                             ^
+    199|   });
+    200|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/40]⎯
+
+ FAIL  src/collection/care-profile.test.ts > US-BES-09 change my care profile > US-BES-09 the profile is private: another account's profile of the same species stays empty (P-05)
+AssertionError: expected false to match object { growthLocationId: null }
+
+- Expected:
+{
+  "growthLocationId": null,
+}
+
++ Received:
+false
+
+ ❯ src/collection/care-profile.test.ts:204:33
+    202|     await update({ growthLocationId: LOC_A });
+    203|     const ben = await update({ dormancyLocationId: LOC_BEN }, { user: …
+    204|     expect(ben.ok && ben.value).toMatchObject({ growthLocationId: null…
+       |                                 ^
+    205|     expect(await profiles.list("anna")).toEqual([
+    206|       expect.objectContaining({ growthLocationId: LOC_A, dormancyLocat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/40]⎯
+
+ FAIL  src/collection/effective-profile.test.ts > US-BES-09 effective care profile (FR-BES-09: specimen before profile before catalog) > US-BES-09 without a profile the catalog applies and unknown stays unknown (P-08)
+Error: not implemented
+ ❯ effectiveProfile src/collection/effective-profile.ts:46:9
+     44| export function effectiveProfile(input: EffectiveInput): EffectiveProf…
+     45|   void input;
+     46|   throw new Error("not implemented");
+       |         ^
+     47| }
+     48|
+ ❯ src/collection/effective-profile.test.ts:21:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/40]⎯
+
+ FAIL  src/collection/effective-profile.test.ts > US-BES-09 effective care profile (FR-BES-09: specimen before profile before catalog) > US-BES-09 an empty care profile is valid and equals no profile
+Error: not implemented
+ ❯ effectiveProfile src/collection/effective-profile.ts:46:9
+     44| export function effectiveProfile(input: EffectiveInput): EffectiveProf…
+     45|   void input;
+     46|   throw new Error("not implemented");
+       |         ^
+     47| }
+     48|
+ ❯ src/collection/effective-profile.test.ts:35:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/40]⎯
+
+ FAIL  src/collection/effective-profile.test.ts > US-BES-09 effective care profile (FR-BES-09: specimen before profile before catalog) > US-BES-09 the care profile takes precedence over the catalog and shows both side by side
+Error: not implemented
+ ❯ effectiveProfile src/collection/effective-profile.ts:46:9
+     44| export function effectiveProfile(input: EffectiveInput): EffectiveProf…
+     45|   void input;
+     46|   throw new Error("not implemented");
+       |         ^
+     47| }
+     48|
+ ❯ src/collection/effective-profile.test.ts:42:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/40]⎯
+
+ FAIL  src/collection/effective-profile.test.ts > US-BES-09 effective care profile (FR-BES-09: specimen before profile before catalog) > US-BES-09 the specimen takes precedence over the care profile and the catalog
+Error: not implemented
+ ❯ effectiveProfile src/collection/effective-profile.ts:46:9
+     44| export function effectiveProfile(input: EffectiveInput): EffectiveProf…
+     45|   void input;
+     46|   throw new Error("not implemented");
+       |         ^
+     47| }
+     48|
+ ❯ src/collection/effective-profile.test.ts:67:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/40]⎯
+
+ FAIL  src/collection/effective-profile.test.ts > US-BES-09 effective care profile (FR-BES-09: specimen before profile before catalog) > US-BES-09 a species without dormancy period can get one from the care profile
+Error: not implemented
+ ❯ effectiveDormancy src/collection/effective-profile.ts:56:9
+     54|   void species;
+     55|   void profile;
+     56|   throw new Error("not implemented");
+       |         ^
+     57| }
+     58|
+ ❯ src/collection/effective-profile.test.ts:78:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/40]⎯
+
+ FAIL  src/collection/effective-profile.test.ts > US-BES-09 effective care profile (FR-BES-09: specimen before profile before catalog) > US-BES-09 effectiveDormancy: override beats catalog, reset (null) falls back to the catalog
+Error: not implemented
+ ❯ effectiveDormancy src/collection/effective-profile.ts:56:9
+     54|   void species;
+     55|   void profile;
+     56|   throw new Error("not implemented");
+       |         ^
+     57| }
+     58|
+ ❯ src/collection/effective-profile.test.ts:86:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/40]⎯
+
+
+ Test Files  4 failed | 26 passed (30)
+      Tests  40 failed | 346 passed (386)
+   Start at  02:54:38
+   Duration  877ms (transform 66%, import 19%, tests 12%, worker 3%)
+
+  Transform  transforming modules took 3.30s · 66% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

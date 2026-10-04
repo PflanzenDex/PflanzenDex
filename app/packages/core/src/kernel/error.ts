@@ -18,11 +18,22 @@ export const ERROR_TEXTS = {
   "species.not_found": "Diese Art gibt es nicht.",
   "specimen.name_taken":
     "Ein Exemplar mit diesem Namen gibt es schon. Gib ein Kennzeichen an (zum Beispiel eine Farbe), damit du die Töpfe unterscheiden kannst.",
+  "specimen.marker_taken":
+    "Dieses Kennzeichen gibt es bei dieser Art schon. Wähle ein anderes, damit du die Töpfe unterscheiden kannst.",
+  "specimen.marker_required":
+    "Du hast schon ein Exemplar dieser Art. Gib dem neuen ein Kennzeichen, damit du die Töpfe unterscheiden kannst.",
+  "specimen.markers_missing":
+    "Ab dem dritten Exemplar braucht jedes Exemplar der Art ein Kennzeichen. Vergib die fehlenden Kennzeichen, dann wird gespeichert.",
   "specimen.not_found": "Dieses Exemplar gibt es nicht.",
+  "specimen.not_a_cutting": "Dieses Exemplar ist kein Steckling und muss nicht eingetopft werden.",
   "specimen.already_archived": "Dieses Exemplar ist schon archiviert.",
   "specimen.not_archived": "Dieses Exemplar ist nicht archiviert.",
   "specimen.archived":
     "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her, dann kannst du damit arbeiten.",
+  "care.no_phase":
+    "Dieses Exemplar hat keine Pflegephase (Steckling oder Art ohne Ruhephasen-Zeitraum) und wird nicht umgestellt.",
+  "care.target_unknown":
+    "Für dieses Exemplar ist noch kein Soll-Standort bekannt. Weise den Standort stattdessen selbst zu.",
   "location.name_taken": "Einen Standort mit diesem Namen gibt es schon.",
   "location.not_found": "Diesen Standort gibt es nicht.",
   "light_zone.name_taken": "Eine Lichtzone mit diesem Namen gibt es schon.",

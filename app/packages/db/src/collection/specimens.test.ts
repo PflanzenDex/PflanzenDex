@@ -220,3 +220,58 @@ describe("US-BES-07 archive in the database", () => {
     expect(await specimens.create(anna, { ...values, name: "archiv name" })).toBe("name_taken");
   });
 });
+
+describe("US-BES-04 cutting in the database", () => {
+  it("US-BES-04: creates a cutting with status cutting; without a value it is a plant", async () => {
+    const cutting = await specimens.create(anna, {
+      ...values,
+      name: "Steckling Anlegen",
+      status: "cutting",
+    });
+    expect(cutting).toMatchObject({ name: "Steckling Anlegen", status: "cutting" });
+    const plant = await specimens.create(anna, { ...values, name: "Pflanze Anlegen" });
+    expect(plant).toMatchObject({ status: "plant" });
+  });
+
+  it("US-BES-04: repotting turns a cutting into a plant and leaves everything else alone", async () => {
+    const z = await specimens.create(anna, {
+      ...values,
+      name: "Steckling Eintopfen",
+      status: "cutting",
+    });
+    if (typeof z === "string") throw new Error(z);
+    const r = await specimens.repot(anna, z.id);
+    expect(r).toEqual({ ...z, status: "plant" });
+    expect(await specimens.find(anna, z.id)).toEqual({ ...z, status: "plant" });
+  });
+
+  it("US-BES-04: a plant and an archived cutting report not_a_cutting and stay unchanged", async () => {
+    const plant = await specimens.create(anna, { ...values, name: "Pflanze Topf" });
+    const archived = await specimens.create(anna, {
+      ...values,
+      name: "Steckling Archiv",
+      status: "cutting",
+    });
+    if (typeof plant === "string" || typeof archived === "string") throw new Error("create");
+    await specimens.archive(anna, archived.id, "abgegeben", "2026-10-03");
+    expect(await specimens.repot(anna, plant.id)).toBe("not_a_cutting");
+    expect(await specimens.repot(anna, archived.id)).toBe("not_a_cutting");
+    expect((await specimens.find(anna, archived.id))?.status).toBe("archived");
+    expect(await specimens.find(anna, plant.id)).toEqual(plant);
+  });
+
+  it("US-BES-04, P-04: another account cannot repot the cutting and does not see it", async () => {
+    const z = await specimens.create(anna, {
+      ...values,
+      name: "Steckling Fremd",
+      status: "cutting",
+    });
+    if (typeof z === "string") throw new Error(z);
+    expect(await specimens.repot(ben, z.id)).toBe("not_found");
+    expect((await specimens.find(anna, z.id))?.status).toBe("cutting");
+  });
+
+  it("US-BES-04: an unknown id is not found", async () => {
+    expect(await specimens.repot(anna, randomUUID())).toBe("not_found");
+  });
+});

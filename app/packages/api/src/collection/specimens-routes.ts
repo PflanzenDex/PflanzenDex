@@ -3,13 +3,13 @@ import {
   NO_MEASUREMENTS,
   NO_TARGET_LOCATION,
   specimenCreate,
+  specimenRepot,
   specimenCards,
   specimenLoad,
   specimenList,
   appError,
   localToday,
   isTimeZone,
-  zoneDistribution,
   type TreatmentSource,
   type MeasurementSource,
   type TargetLocationSource,
@@ -25,6 +25,9 @@ import { Hono } from "hono";
 import type { Pool } from "pg";
 import { errorBody, body, write, type AuthEnv } from "../kernel";
 import { archivedRoutes } from "./archived-routes";
+import { markerRoutes } from "./marker-routes";
+import { locationRoutes } from "./location-routes";
+import { derivedRoutes } from "./derived-routes";
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const SPECIMEN_PATHS = ["/specimens"] as const;
@@ -41,7 +44,7 @@ export type SpecimenOptions = {
 };
 
 /**
- * Specimens (US-BES-02, US-BES-07). Writing goes only through `specimen.create`, `.archive` and `.restore` (P-03, with
+ * Specimens (US-BES-02, US-BES-04, US-BES-07, US-PHA-03). Writing goes only through `specimen.create`, `.repot`, `.archive`, `.restore` and `.set_location` (P-03, with
  * `Idempotency-Key`); lists and cards show no archived specimens, `/specimens/archived` does. Reading returns only
  * specimens of the own account, a foreign or unknown specimen looks the same: 404 (P-04).
  */
@@ -55,6 +58,7 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
     targetLocation: opt.targetLocation ?? NO_TARGET_LOCATION,
     clock,
   });
+  const repot = specimenRepot({ specimens });
   const cardsDeps = {
     specimens,
     species: new SpeciesPostgres(pool),
@@ -62,12 +66,6 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
     zones: new ZonePostgres(pool),
     measurements: opt.measurements ?? NO_MEASUREMENTS,
     treatments: opt.treatments ?? NO_TREATMENTS,
-  };
-  const distributionDeps = {
-    specimens,
-    species: cardsDeps.species,
-    locations: cardsDeps.locations,
-    zones: cardsDeps.zones,
   };
   const routes = new Hono<AuthEnv>();
 
@@ -90,16 +88,22 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   });
   // Archive, archive and restore (US-BES-07); before `/specimens/:id`.
   routes.route("/", archivedRoutes(pool, clock));
-  // US-LIC-02: distribution over zones 2 to 4; like "cards" before `/specimens/:id`, only data of the own account (P-04).
-  routes.get("/specimens/distribution", async (c) =>
-    c.json({ distribution: await zoneDistribution(distributionDeps, c.get("account").id) }),
-  );
+  // US-BES-03: give a specimen a marker or change it.
+  routes.route("/", markerRoutes(pool));
+  // US-PHA-03: set the location of a specimen (BES-08 "location missing").
+  routes.route("/", locationRoutes(pool));
+  // Distribution (US-LIC-02) and hints (US-BES-08); before `/specimens/:id`.
+  routes.route("/", derivedRoutes(pool));
   routes.get("/specimens/:id", async (c) => {
     const e = await specimenLoad(specimens, c.get("account").id, c.req.param("id"));
     return e ? c.json(e) : c.json(errorBody(appError("specimen.not_found")), 404);
   });
   routes.post("/specimens", async (c) =>
     write(c, deps, create, { input: await body(c), success: 201 }),
+  );
+  // US-BES-04: a cutting becomes a plant; only the status changes (P-03, with `Idempotency-Key`).
+  routes.post("/specimens/:id/repot", async (c) =>
+    write(c, deps, repot, { input: { specimenId: c.req.param("id") } }),
   );
   return routes;
 }

@@ -1,0 +1,2329 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex.worktrees/bes-03/app/packages/web
+
+ ❯ src/collection/markers.test.tsx (13 tests | 10 failed) 9228ms
+   ❯ US-BES-03 client of the API (2)
+     × marks a specimen with bearer token, marker and a fresh Idempotency-Key 8ms
+   ❯ US-BES-03 form: the marker of the 2nd and 3rd specimen (6)
+     × 2nd specimen: the marker is required and preset to "Klammer", freely changeable 1005ms
+     × 2nd specimen with an empty marker: not sent, the form says why (P-10) 1004ms
+     × the preset is not offered when a specimen already carries it 1004ms
+     × from the 3rd on: asks for the missing marker of the plain specimen before saving 1003ms
+   ❯ US-BES-03 rename: change the marker on the card (5)
+     × renames via the form, says the new name and reloads the list 1004ms
+     × starts with the current marker 1004ms
+     × an empty marker is not sent 1003ms
+     × a duplicate marker shows the server text, nothing is reported as changed 1004ms
+     × cancel goes back to the list without a request 1003ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/markers.test.tsx > US-BES-03 client of the API > marks a specimen with bearer token, marker and a fresh Idempotency-Key
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/collection/markers.test.tsx:81:18
+     79|     const fetchFn = vi.fn<typeof fetch>(async () => response(200, { id…
+     80|     const r = await markSpecimen("http://api", "tok", "e 1", "rot", fe…
+     81|     expect(r.ok).toBe(true);
+       |                  ^
+     82|     const [url, init] = fetchFn.mock.calls[0] ?? [];
+     83|     expect(String(url)).toBe("http://api/specimens/e%201/marker");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/collection/markers.test.tsx > US-BES-03 form: the marker of the 2nd and 3rd specimen > 2nd specimen: the marker is required and preset to "Klammer", freely changeable
+TestingLibraryElementError: Unable to find a label with the text of: Kennzeichen
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="create-title"
+      >
+        <h1
+          id="create-title"
+        >
+          Exemplar anlegen
+        </h1>
+        <p
+          class="lead"
+        >
+          Art: 
+          <i>
+            Dracaena trifasciata
+          </i>
+           (Bogenhanf)
+        </p>
+        <form
+          aria-label="Exemplar anlegen"
+          class="form"
+        >
+          <p
+            aria-live="polite"
+            class="name-preview"
+          >
+            Name: 
+            Bogenhanf
+          </p>
+          <label>
+            Kennzeichen (optional)
+            <input
+              autocomplete="off"
+              maxlength="40"
+              name="marker"
+              placeholder="zum Beispiel rot"
+              value=""
+            />
+          </label>
+          <p
+            class="quiet"
+          >
+            Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.
+          </p>
+          <label
+            class="check"
+          >
+            <input
+              name="cutting"
+              type="checkbox"
+            />
+            Das ist ein Steckling
+          </label>
+          <p
+            class="quiet"
+          >
+            Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.
+          </p>
+          <label>
+            Standort
+            <select
+              name="locationId"
+            >
+              <option
+                selected=""
+                value=""
+              >
+                Standort noch unbekannt
+              </option>
+            </select>
+          </label>
+          <p
+            class="quiet"
+          >
+            Ohne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).
+          </p>
+          <div
+            class="actions"
+          >
+            <button
+              class="primary"
+              type="submit"
+            >
+              Exemplar anlegen
+            </button>
+            <button
+              class="secondary"
+              type="button"
+            >
+              Zurück zur Art
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="create-title"
+      >
+        <h1
+          id="create-title"
+        >
+          Exemplar anlegen
+        </h1>
+        <p
+          class="lead"
+        >
+          Art: 
+          <i>
+            Dracaena trifasciata
+          </i>
+           (Bogenhanf)
+        </p>
+        <form
+          aria-label="Exemplar anlegen"
+          class="form"
+        >
+          <p
+            aria-live="polite"
+            class="name-preview"
+          >
+            Name: 
+            Bogenhanf
+          </p>
+          <label>
+            Kennzeichen (optional)
+            <input
+              autocomplete="off"
+              maxlength="40"
+              name="marker"
+              placeholder="zum Beispiel rot"
+              value=""
+            />
+          </label>
+          <p
+            class="quiet"
+          >
+            Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.
+          </p>
+          <label
+            class="check"
+          >
+            <input
+              name="cutting"
+              type="checkbox"
+            />
+            Das ist ein Steckling
+          </label>
+          <p
+            class="quiet"
+          >
+            Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.
+          </p>
+          <label>
+            Standort
+            <select
+              name="locationId"
+            >
+              <option
+                selected=""
+                value=""
+              >
+                Standort noch unbekannt
+              </option>
+            </select>
+          </label>
+          <p
+            class="quiet"
+          >
+            Ohne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).
+          </p>
+          <div
+            class="actions"
+          >
+            <button
+              class="primary"
+              type="submit"
+            >
+              Exemplar anlegen
+            </button>
+            <button
+              class="secondary"
+              type="button"
+            >
+              Zurück zur Art
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/markers.test.tsx:115:33
+    113|     const posts = fakeServer([card("e1", null)]);
+    114|     render(page({ newSpecies: species }));
+    115|     const field = (await screen.findByLabelText("Kennzeichen")) as HTM…
+       |                                 ^
+    116|     expect(field.value).toBe("Klammer");
+    117|     expect(field.required).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/collection/markers.test.tsx > US-BES-03 form: the marker of the 2nd and 3rd specimen > 2nd specimen with an empty marker: not sent, the form says why (P-10)
+TestingLibraryElementError: Unable to find a label with the text of: Kennzeichen
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="create-title"
+      >
+        <h1
+          id="create-title"
+        >
+          Exemplar anlegen
+        </h1>
+        <p
+          class="lead"
+        >
+          Art: 
+          <i>
+            Dracaena trifasciata
+          </i>
+           (Bogenhanf)
+        </p>
+        <form
+          aria-label="Exemplar anlegen"
+          class="form"
+        >
+          <p
+            aria-live="polite"
+            class="name-preview"
+          >
+            Name: 
+            Bogenhanf
+          </p>
+          <label>
+            Kennzeichen (optional)
+            <input
+              autocomplete="off"
+              maxlength="40"
+              name="marker"
+              placeholder="zum Beispiel rot"
+              value=""
+            />
+          </label>
+          <p
+            class="quiet"
+          >
+            Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.
+          </p>
+          <label
+            class="check"
+          >
+            <input
+              name="cutting"
+              type="checkbox"
+            />
+            Das ist ein Steckling
+          </label>
+          <p
+            class="quiet"
+          >
+            Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.
+          </p>
+          <label>
+            Standort
+            <select
+              name="locationId"
+            >
+              <option
+                selected=""
+                value=""
+              >
+                Standort noch unbekannt
+              </option>
+            </select>
+          </label>
+          <p
+            class="quiet"
+          >
+            Ohne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).
+          </p>
+          <div
+            class="actions"
+          >
+            <button
+              class="primary"
+              type="submit"
+            >
+              Exemplar anlegen
+            </button>
+            <button
+              class="secondary"
+              type="button"
+            >
+              Zurück zur Art
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="create-title"
+      >
+        <h1
+          id="create-title"
+        >
+          Exemplar anlegen
+        </h1>
+        <p
+          class="lead"
+        >
+          Art: 
+          <i>
+            Dracaena trifasciata
+          </i>
+           (Bogenhanf)
+        </p>
+        <form
+          aria-label="Exemplar anlegen"
+          class="form"
+        >
+          <p
+            aria-live="polite"
+            class="name-preview"
+          >
+            Name: 
+            Bogenhanf
+          </p>
+          <label>
+            Kennzeichen (optional)
+            <input
+              autocomplete="off"
+              maxlength="40"
+              name="marker"
+              placeholder="zum Beispiel rot"
+              value=""
+            />
+          </label>
+          <p
+            class="quiet"
+          >
+            Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.
+          </p>
+          <label
+            class="check"
+          >
+            <input
+              name="cutting"
+              type="checkbox"
+            />
+            Das ist ein Steckling
+          </label>
+          <p
+            class="quiet"
+          >
+            Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.
+          </p>
+          <label>
+            Standort
+            <select
+              name="locationId"
+            >
+              <option
+                selected=""
+                value=""
+              >
+                Standort noch unbekannt
+              </option>
+            </select>
+          </label>
+          <p
+            class="quiet"
+          >
+            Ohne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).
+          </p>
+          <div
+            class="actions"
+          >
+            <button
+              class="primary"
+              type="submit"
+            >
+              Exemplar anlegen
+            </button>
+            <button
+              class="secondary"
+              type="button"
+            >
+              Zurück zur Art
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/markers.test.tsx:131:40
+    129|     const posts = fakeServer([card("e1", null)]);
+    130|     render(page({ newSpecies: species }));
+    131|     await userEvent.clear(await screen.findByLabelText("Kennzeichen"));
+       |                                        ^
+    132|     await userEvent.click(screen.getByRole("button", { name: "Exemplar…
+    133|     expect((await screen.findByRole("alert")).textContent).toContain("…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/collection/markers.test.tsx > US-BES-03 form: the marker of the 2nd and 3rd specimen > the preset is not offered when a specimen already carries it
+TestingLibraryElementError: Unable to find a label with the text of: Kennzeichen
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="create-title"
+      >
+        <h1
+          id="create-title"
+        >
+          Exemplar anlegen
+        </h1>
+        <p
+          class="lead"
+        >
+          Art: 
+          <i>
+            Dracaena trifasciata
+          </i>
+           (Bogenhanf)
+        </p>
+        <form
+          aria-label="Exemplar anlegen"
+          class="form"
+        >
+          <p
+            aria-live="polite"
+            class="name-preview"
+          >
+            Name: 
+            Bogenhanf
+          </p>
+          <label>
+            Kennzeichen (optional)
+            <input
+              autocomplete="off"
+              maxlength="40"
+              name="marker"
+              placeholder="zum Beispiel rot"
+              value=""
+            />
+          </label>
+          <p
+            class="quiet"
+          >
+            Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.
+          </p>
+          <label
+            class="check"
+          >
+            <input
+              name="cutting"
+              type="checkbox"
+            />
+            Das ist ein Steckling
+          </label>
+          <p
+            class="quiet"
+          >
+            Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.
+          </p>
+          <label>
+            Standort
+            <select
+              name="locationId"
+            >
+              <option
+                selected=""
+                value=""
+              >
+                Standort noch unbekannt
+              </option>
+            </select>
+          </label>
+          <p
+            class="quiet"
+          >
+            Ohne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).
+          </p>
+          <div
+            class="actions"
+          >
+            <button
+              class="primary"
+              type="submit"
+            >
+              Exemplar anlegen
+            </button>
+            <button
+              class="secondary"
+              type="button"
+            >
+              Zurück zur Art
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="create-title"
+      >
+        <h1
+          id="create-title"
+        >
+          Exemplar anlegen
+        </h1>
+        <p
+          class="lead"
+        >
+          Art: 
+          <i>
+            Dracaena trifasciata
+          </i>
+           (Bogenhanf)
+        </p>
+        <form
+          aria-label="Exemplar anlegen"
+          class="form"
+        >
+          <p
+            aria-live="polite"
+            class="name-preview"
+          >
+            Name: 
+            Bogenhanf
+          </p>
+          <label>
+            Kennzeichen (optional)
+            <input
+              autocomplete="off"
+              maxlength="40"
+              name="marker"
+              placeholder="zum Beispiel rot"
+              value=""
+            />
+          </label>
+          <p
+            class="quiet"
+          >
+            Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.
+          </p>
+          <label
+            class="check"
+          >
+            <input
+              name="cutting"
+              type="checkbox"
+            />
+            Das ist ein Steckling
+          </label>
+          <p
+            class="quiet"
+          >
+            Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.
+          </p>
+          <label>
+            Standort
+            <select
+              name="locationId"
+            >
+              <option
+                selected=""
+                value=""
+              >
+                Standort noch unbekannt
+              </option>
+            </select>
+          </label>
+          <p
+            class="quiet"
+          >
+            Ohne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).
+          </p>
+          <div
+            class="actions"
+          >
+            <button
+              class="primary"
+              type="submit"
+            >
+              Exemplar anlegen
+            </button>
+            <button
+              class="secondary"
+              type="button"
+            >
+              Zurück zur Art
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/markers.test.tsx:140:33
+    138|     fakeServer([card("e1", null), card("e2", "Klammer")]);
+    139|     render(page({ newSpecies: species }));
+    140|     const field = (await screen.findByLabelText("Kennzeichen")) as HTM…
+       |                                 ^
+    141|     expect(field.value).toBe("");
+    142|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/collection/markers.test.tsx > US-BES-03 form: the marker of the 2nd and 3rd specimen > from the 3rd on: asks for the missing marker of the plain specimen before saving
+TestingLibraryElementError: Unable to find a label with the text of: Kennzeichen für „Bogenhanf“
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="create-title"
+      >
+        <h1
+          id="create-title"
+        >
+          Exemplar anlegen
+        </h1>
+        <p
+          class="lead"
+        >
+          Art: 
+          <i>
+            Dracaena trifasciata
+          </i>
+           (Bogenhanf)
+        </p>
+        <form
+          aria-label="Exemplar anlegen"
+          class="form"
+        >
+          <p
+            aria-live="polite"
+            class="name-preview"
+          >
+            Name: 
+            Bogenhanf
+          </p>
+          <label>
+            Kennzeichen (optional)
+            <input
+              autocomplete="off"
+              maxlength="40"
+              name="marker"
+              placeholder="zum Beispiel rot"
+              value=""
+            />
+          </label>
+          <p
+            class="quiet"
+          >
+            Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.
+          </p>
+          <label
+            class="check"
+          >
+            <input
+              name="cutting"
+              type="checkbox"
+            />
+            Das ist ein Steckling
+          </label>
+          <p
+            class="quiet"
+          >
+            Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.
+          </p>
+          <label>
+            Standort
+            <select
+              name="locationId"
+            >
+              <option
+                selected=""
+                value=""
+              >
+                Standort noch unbekannt
+              </option>
+            </select>
+          </label>
+          <p
+            class="quiet"
+          >
+            Ohne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).
+          </p>
+          <div
+            class="actions"
+          >
+            <button
+              class="primary"
+              type="submit"
+            >
+              Exemplar anlegen
+            </button>
+            <button
+              class="secondary"
+              type="button"
+            >
+              Zurück zur Art
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="create-title"
+      >
+        <h1
+          id="create-title"
+        >
+          Exemplar anlegen
+        </h1>
+        <p
+          class="lead"
+        >
+          Art: 
+          <i>
+            Dracaena trifasciata
+          </i>
+           (Bogenhanf)
+        </p>
+        <form
+          aria-label="Exemplar anlegen"
+          class="form"
+        >
+          <p
+            aria-live="polite"
+            class="name-preview"
+          >
+            Name: 
+            Bogenhanf
+          </p>
+          <label>
+            Kennzeichen (optional)
+            <input
+              autocomplete="off"
+              maxlength="40"
+              name="marker"
+              placeholder="zum Beispiel rot"
+              value=""
+            />
+          </label>
+          <p
+            class="quiet"
+          >
+            Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.
+          </p>
+          <label
+            class="check"
+          >
+            <input
+              name="cutting"
+              type="checkbox"
+            />
+            Das ist ein Steckling
+          </label>
+          <p
+            class="quiet"
+          >
+            Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.
+          </p>
+          <label>
+            Standort
+            <select
+              name="locationId"
+            >
+              <option
+                selected=""
+                value=""
+              >
+                Standort noch unbekannt
+              </option>
+            </select>
+          </label>
+          <p
+            class="quiet"
+          >
+            Ohne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).
+          </p>
+          <div
+            class="actions"
+          >
+            <button
+              class="primary"
+              type="submit"
+            >
+              Exemplar anlegen
+            </button>
+            <button
+              class="secondary"
+              type="button"
+            >
+              Zurück zur Art
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/markers.test.tsx:147:35
+    145|     const posts = fakeServer([card("e1", null), card("e2", "Klammer")]…
+    146|     render(page({ newSpecies: species }));
+    147|     const missing = (await screen.findByLabelText("Kennzeichen für „Bo…
+       |                                   ^
+    148|     expect(missing.required).toBe(true);
+    149|     await userEvent.type(screen.getByLabelText("Kennzeichen"), "rot");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/collection/markers.test.tsx > US-BES-03 rename: change the marker on the card > renames via the form, says the new name and reloads the list
+TestingLibraryElementError: Unable to find role="button" and name "Kennzeichen ändern: Bogenhanf"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="distribution-title"
+        class="distribution"
+      >
+        <h2
+          id="distribution-title"
+        >
+          Verteilung auf die Lichtzonen
+        </h2>
+        <p>
+          Es gibt keine Lichtzone für erwachsene Pflanzen.
+        </p>
+        <p
+          class="next-action"
+        >
+          Lege unter „Licht“ mindestens zwei Lichtzonen an.
+        </p>
+        <p
+          class="quiet"
+        >
+          Stecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.
+        </p>
+      </section>
+      <section
+        aria-labelledby="collection-title"
+      >
+        <h1
+          id="collection-title"
+        >
+          Bestand
+        </h1>
+        <ul
+          class="cards-grid"
+        >
+          <li
+            class="specimen-card"
+          >
+            <div
+              class="card-photo platzhalter"
+            >
+              <span>
+                Noch kein Foto
+              </span>
+            </div>
+            <h2>
+              Bogenhanf
+            </h2>
+            <p
+              class="quiet"
+            >
+              Art: 
+              Bogenhanf
+            </p>
+            <p
+              class="quiet"
+            >
+              Lichtzone: 
+              unbekannt
+               · Status: 
+              Pflanze
+            </p>
+            <p
+              class="quiet"
+            >
+              Standort: 
+              unbekannt
+            </p>
+            <p
+              class="quiet"
+            >
+              noch keine Messung
+            </p>
+            <p
+              class="quiet"
+            >
+              keine offene Behandlung
+            </p>
+            <div
+              class="actions"
+            >
+              <button
+                aria-label="Archivieren: Bogenhanf"
+                class="secondary"
+                type="button"
+              >
+                Archivieren
+              </button>
+            </div>
+          </li>
+          <li
+            class="specimen-card"
+          >
+            <div
+              class="card-photo platzhalter"
+            >
+              <span>
+                Noch kein Foto
+              </span>
+            </div>
+            <h2>
+              Bogenhanf – Klammer
+            </h2>
+            <p
+              class="quiet"
+            >
+              Art: 
+              Bogenhanf
+            </p>
+            <p
+              class="quiet"
+            >
+              Lichtzone: 
+              unbekannt
+               · Status: 
+              Pflanze
+            </p>
+            <p
+              class="quiet"
+            >
+              Standort: 
+              unbekannt
+            </p>
+            <p
+              class="quiet"
+            >
+              noch keine Messung
+            </p>
+            <p
+              class="quiet"
+            >
+              keine offene Behandlung
+            </p>
+            <div
+              class="actions"
+            >
+              <button
+                aria-label="Archivieren: Bogenhanf – Klammer"
+                class="secondary"
+                type="button"
+              >
+                Archivieren
+              </button>
+            </div>
+          </li>
+        </ul>
+        <div
+          class="actions"
+        >
+          <button
+            class="primary"
+            type="button"
+          >
+            Weiteres Exemplar: Art wählen
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="distribution-title"
+        class="distribution"
+      >
+        <h2
+          id="distribution-title"
+        >
+          Verteilung auf die Lichtzonen
+        </h2>
+        <p>
+          Es gibt keine Lichtzone für erwachsene Pflanzen.
+        </p>
+        <p
+          class="next-action"
+        >
+          Lege unter „Licht“ mindestens zwei Lichtzonen an.
+        </p>
+        <p
+          class="quiet"
+        >
+          Stecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.
+        </p>
+      </section>
+      <section
+        aria-labelledby="collection-title"
+      >
+        <h1
+          id="collection-title"
+        >
+          Bestand
+        </h1>
+        <ul
+          class="cards-grid"
+        >
+          <li
+            class="specimen-card"
+          >
+            <div
+              class="card-photo platzhalter"
+            >
+              <span>
+                Noch kein Foto
+              </span>
+            </div>
+            <h2>
+              Bogenhanf
+            </h2>
+            <p
+              class="quiet"
+            >
+              Art: 
+              Bogenhanf
+            </p>
+            <p
+              class="quiet"
+            >
+              Lichtzone: 
+              unbekannt
+               · Status: 
+              Pflanze
+            </p>
+            <p
+              class="quiet"
+            >
+              Standort: 
+              unbekannt
+            </p>
+            <p
+              class="quiet"
+            >
+              noch keine Messung
+            </p>
+            <p
+              class="quiet"
+            >
+              keine offene Behandlung
+            </p>
+            <div
+              class="actions"
+            >
+              <button
+                aria-label="Archivieren: Bogenhanf"
+                class="secondary"
+                type="button"
+              >
+                Archivieren
+              </button>
+            </div>
+          </li>
+          <li
+            class="specimen-card"
+          >
+            <div
+              class="card-photo platzhalter"
+            >
+              <span>
+                Noch kein Foto
+              </span>
+            </div>
+            <h2>
+              Bogenhanf – Klammer
+            </h2>
+            <p
+              class="quiet"
+            >
+              Art: 
+              Bogenhanf
+            </p>
+            <p
+              class="quiet"
+            >
+              Lichtzone: 
+              unbekannt
+               · Status: 
+              Pflanze
+            </p>
+            <p
+              class="quiet"
+            >
+              Standort: 
+              unbekannt
+            </p>
+            <p
+              class="quiet"
+            >
+              noch keine Messung
+            </p>
+            <p
+              class="quiet"
+            >
+              keine offene Behandlung
+            </p>
+            <div
+              class="actions"
+            >
+              <button
+                aria-label="Archivieren: Bogenhanf – Klammer"
+                class="secondary"
+                type="button"
+              >
+                Archivieren
+              </button>
+            </div>
+          </li>
+        </ul>
+        <div
+          class="actions"
+        >
+          <button
+            class="primary"
+            type="button"
+          >
+            Weiteres Exemplar: Art wählen
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ open src/collection/markers.test.tsx:178:40
+    176| describe("US-BES-03 rename: change the marker on the card", () => {
+    177|   const open = async () => {
+    178|     await userEvent.click(await screen.findByRole("button", { name: "K…
+       |                                        ^
+    179|   };
+    180|
+ ❯ src/collection/markers.test.tsx:185:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/collection/markers.test.tsx > US-BES-03 rename: change the marker on the card > starts with the current marker
+TestingLibraryElementError: Unable to find role="button" and name "Kennzeichen ändern: Bogenhanf – Klammer"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="distribution-title"
+        class="distribution"
+      >
+        <h2
+          id="distribution-title"
+        >
+          Verteilung auf die Lichtzonen
+        </h2>
+        <p>
+          Es gibt keine Lichtzone für erwachsene Pflanzen.
+        </p>
+        <p
+          class="next-action"
+        >
+          Lege unter „Licht“ mindestens zwei Lichtzonen an.
+        </p>
+        <p
+          class="quiet"
+        >
+          Stecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.
+        </p>
+      </section>
+      <section
+        aria-labelledby="collection-title"
+      >
+        <h1
+          id="collection-title"
+        >
+          Bestand
+        </h1>
+        <ul
+          class="cards-grid"
+        >
+          <li
+            class="specimen-card"
+          >
+            <div
+              class="card-photo platzhalter"
+            >
+              <span>
+                Noch kein Foto
+              </span>
+            </div>
+            <h2>
+              Bogenhanf – Klammer
+            </h2>
+            <p
+              class="quiet"
+            >
+              Art: 
+              Bogenhanf
+            </p>
+            <p
+              class="quiet"
+            >
+              Lichtzone: 
+              unbekannt
+               · Status: 
+              Pflanze
+            </p>
+            <p
+              class="quiet"
+            >
+              Standort: 
+              unbekannt
+            </p>
+            <p
+              class="quiet"
+            >
+              noch keine Messung
+            </p>
+            <p
+              class="quiet"
+            >
+              keine offene Behandlung
+            </p>
+            <div
+              class="actions"
+            >
+              <button
+                aria-label="Archivieren: Bogenhanf – Klammer"
+                class="secondary"
+                type="button"
+              >
+                Archivieren
+              </button>
+            </div>
+          </li>
+        </ul>
+        <div
+          class="actions"
+        >
+          <button
+            class="primary"
+            type="button"
+          >
+            Weiteres Exemplar: Art wählen
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="distribution-title"
+        class="distribution"
+      >
+        <h2
+          id="distribution-title"
+        >
+          Verteilung auf die Lichtzonen
+        </h2>
+        <p>
+          Es gibt keine Lichtzone für erwachsene Pflanzen.
+        </p>
+        <p
+          class="next-action"
+        >
+          Lege unter „Licht“ mindestens zwei Lichtzonen an.
+        </p>
+        <p
+          class="quiet"
+        >
+          Stecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.
+        </p>
+      </section>
+      <section
+        aria-labelledby="collection-title"
+      >
+        <h1
+          id="collection-title"
+        >
+          Bestand
+        </h1>
+        <ul
+          class="cards-grid"
+        >
+          <li
+            class="specimen-card"
+          >
+            <div
+              class="card-photo platzhalter"
+            >
+              <span>
+                Noch kein Foto
+              </span>
+            </div>
+            <h2>
+              Bogenhanf – Klammer
+            </h2>
+            <p
+              class="quiet"
+            >
+              Art: 
+              Bogenhanf
+            </p>
+            <p
+              class="quiet"
+            >
+              Lichtzone: 
+              unbekannt
+               · Status: 
+              Pflanze
+            </p>
+            <p
+              class="quiet"
+            >
+              Standort: 
+              unbekannt
+            </p>
+            <p
+              class="quiet"
+            >
+              noch keine Messung
+            </p>
+            <p
+              class="quiet"
+            >
+              keine offene Behandlung
+            </p>
+            <div
+              class="actions"
+            >
+              <button
+                aria-label="Archivieren: Bogenhanf – Klammer"
+                class="secondary"
+                type="button"
+              >
+                Archivieren
+              </button>
+            </div>
+          </li>
+        </ul>
+        <div
+          class="actions"
+        >
+          <button
+            class="primary"
+            type="button"
+          >
+            Weiteres Exemplar: Art wählen
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/collection/markers.test.tsx:201:40
+    199|     fakeServer([card("e2", "Klammer")]);
+    200|     render(page());
+    201|     await userEvent.click(await screen.findByRole("button", { name: "K…
+       |                                        ^
+    202|     expect(((await screen.findByLabelText("Kennzeichen")) as HTMLInput…
+    203|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/collection/markers.test.tsx > US-BES-03 rename: change the marker on the card > an empty marker is not sent
+TestingLibraryElementError: Unable to find role="button" and name "Kennzeichen ändern: Bogenhanf"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="distribution-title"
+        class="distribution"
+      >
+        <h2
+          id="distribution-title"
+        >
+          Verteilung auf die Lichtzonen
+        </h2>
+        <p>
+          Es gibt keine Lichtzone für erwachsene Pflanzen.
+        </p>
+        <p
+          class="next-action"
+        >
+          Lege unter „Licht“ mindestens zwei Lichtzonen an.
+        </p>
+        <p
+          class="quiet"
+        >
+          Stecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.
+        </p>
+      </section>
+      <section
+        aria-labelledby="collection-title"
+      >
+        <h1
+          id="collection-title"
+        >
+          Bestand
+        </h1>
+        <ul
+          class="cards-grid"
+        >
+          <li
+            class="specimen-card"
+          >
+            <div
+              class="card-photo platzhalter"
+            >
+              <span>
+                Noch kein Foto
+              </span>
+            </div>
+            <h2>
+              Bogenhanf
+            </h2>
+            <p
+              class="quiet"
+            >
+              Art: 
+              Bogenhanf
+            </p>
+            <p
+              class="quiet"
+            >
+              Lichtzone: 
+              unbekannt
+               · Status: 
+              Pflanze
+            </p>
+            <p
+              class="quiet"
+            >
+              Standort: 
+              unbekannt
+            </p>
+            <p
+              class="quiet"
+            >
+              noch keine Messung
+            </p>
+            <p
+              class="quiet"
+            >
+              keine offene Behandlung
+            </p>
+            <div
+              class="actions"
+            >
+              <button
+                aria-label="Archivieren: Bogenhanf"
+                class="secondary"
+                type="button"
+              >
+                Archivieren
+              </button>
+            </div>
+          </li>
+        </ul>
+        <div
+          class="actions"
+        >
+          <button
+            class="primary"
+            type="button"
+          >
+            Weiteres Exemplar: Art wählen
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="distribution-title"
+        class="distribution"
+      >
+        <h2
+          id="distribution-title"
+        >
+          Verteilung auf die Lichtzonen
+        </h2>
+        <p>
+          Es gibt keine Lichtzone für erwachsene Pflanzen.
+        </p>
+        <p
+          class="next-action"
+        >
+          Lege unter „Licht“ mindestens zwei Lichtzonen an.
+        </p>
+        <p
+          class="quiet"
+        >
+          Stecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.
+        </p>
+      </section>
+      <section
+        aria-labelledby="collection-title"
+      >
+        <h1
+          id="collection-title"
+        >
+          Bestand
+        </h1>
+        <ul
+          class="cards-grid"
+        >
+          <li
+            class="specimen-card"
+          >
+            <div
+              class="card-photo platzhalter"
+            >
+              <span>
+                Noch kein Foto
+              </span>
+            </div>
+            <h2>
+              Bogenhanf
+            </h2>
+            <p
+              class="quiet"
+            >
+              Art: 
+              Bogenhanf
+            </p>
+            <p
+              class="quiet"
+            >
+              Lichtzone: 
+              unbekannt
+               · Status: 
+              Pflanze
+            </p>
+            <p
+              class="quiet"
+            >
+              Standort: 
+              unbekannt
+            </p>
+            <p
+              class="quiet"
+            >
+              noch keine Messung
+            </p>
+            <p
+              class="quiet"
+            >
+              keine offene Behandlung
+            </p>
+            <div
+              class="actions"
+            >
+              <button
+                aria-label="Archivieren: Bogenhanf"
+                class="secondary"
+                type="button"
+              >
+                Archivieren
+              </button>
+            </div>
+          </li>
+        </ul>
+        <div
+          class="actions"
+        >
+          <button
+            class="primary"
+            type="button"
+          >
+            Weiteres Exemplar: Art wählen
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ open src/collection/markers.test.tsx:178:40
+    176| describe("US-BES-03 rename: change the marker on the card", () => {
+    177|   const open = async () => {
+    178|     await userEvent.click(await screen.findByRole("button", { name: "K…
+       |                                        ^
+    179|   };
+    180|
+ ❯ src/collection/markers.test.tsx:208:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/collection/markers.test.tsx > US-BES-03 rename: change the marker on the card > a duplicate marker shows the server text, nothing is reported as changed
+TestingLibraryElementError: Unable to find role="button" and name "Kennzeichen ändern: Bogenhanf"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="distribution-title"
+        class="distribution"
+      >
+        <h2
+          id="distribution-title"
+        >
+          Verteilung auf die Lichtzonen
+        </h2>
+        <p>
+          Es gibt keine Lichtzone für erwachsene Pflanzen.
+        </p>
+        <p
+          class="next-action"
+        >
+          Lege unter „Licht“ mindestens zwei Lichtzonen an.
+        </p>
+        <p
+          class="quiet"
+        >
+          Stecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.
+        </p>
+      </section>
+      <section
+        aria-labelledby="collection-title"
+      >
+        <h1
+          id="collection-title"
+        >
+          Bestand
+        </h1>
+        <ul
+          class="cards-grid"
+        >
+          <li
+            class="specimen-card"
+          >
+            <div
+              class="card-photo platzhalter"
+            >
+              <span>
+                Noch kein Foto
+              </span>
+            </div>
+            <h2>
+              Bogenhanf
+            </h2>
+            <p
+              class="quiet"
+            >
+              Art: 
+              Bogenhanf
+            </p>
+            <p
+              class="quiet"
+            >
+              Lichtzone: 
+              unbekannt
+               · Status: 
+              Pflanze
+            </p>
+            <p
+              class="quiet"
+            >
+              Standort: 
+              unbekannt
+            </p>
+            <p
+              class="quiet"
+            >
+              noch keine Messung
+            </p>
+            <p
+              class="quiet"
+            >
+              keine offene Behandlung
+            </p>
+            <div
+              class="actions"
+            >
+              <button
+                aria-label="Archivieren: Bogenhanf"
+                class="secondary"
+                type="button"
+              >
+                Archivieren
+              </button>
+            </div>
+          </li>
+          <li
+            class="specimen-card"
+          >
+            <div
+              class="card-photo platzhalter"
+            >
+              <span>
+                Noch kein Foto
+              </span>
+            </div>
+            <h2>
+              Bogenhanf – Klammer
+            </h2>
+            <p
+              class="quiet"
+            >
+              Art: 
+              Bogenhanf
+            </p>
+            <p
+              class="quiet"
+            >
+              Lichtzone: 
+              unbekannt
+               · Status: 
+              Pflanze
+            </p>
+            <p
+              class="quiet"
+            >
+              Standort: 
+              unbekannt
+            </p>
+            <p
+              class="quiet"
+            >
+              noch keine Messung
+            </p>
+            <p
+              class="quiet"
+            >
+              keine offene Behandlung
+            </p>
+            <div
+              class="actions"
+            >
+              <button
+                aria-label="Archivieren: Bogenhanf – Klammer"
+                class="secondary"
+                type="button"
+              >
+                Archivieren
+              </button>
+            </div>
+          </li>
+        </ul>
+        <div
+          class="actions"
+        >
+          <button
+            class="primary"
+            type="button"
+          >
+            Weiteres Exemplar: Art wählen
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="distribution-title"
+        class="distribution"
+      >
+        <h2
+          id="distribution-title"
+        >
+          Verteilung auf die Lichtzonen
+        </h2>
+        <p>
+          Es gibt keine Lichtzone für erwachsene Pflanzen.
+        </p>
+        <p
+          class="next-action"
+        >
+          Lege unter „Licht“ mindestens zwei Lichtzonen an.
+        </p>
+        <p
+          class="quiet"
+        >
+          Stecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.
+        </p>
+      </section>
+      <section
+        aria-labelledby="collection-title"
+      >
+        <h1
+          id="collection-title"
+        >
+          Bestand
+        </h1>
+        <ul
+          class="cards-grid"
+        >
+          <li
+            class="specimen-card"
+          >
+            <div
+              class="card-photo platzhalter"
+            >
+              <span>
+                Noch kein Foto
+              </span>
+            </div>
+            <h2>
+              Bogenhanf
+            </h2>
+            <p
+              class="quiet"
+            >
+              Art: 
+              Bogenhanf
+            </p>
+            <p
+              class="quiet"
+            >
+              Lichtzone: 
+              unbekannt
+               · Status: 
+              Pflanze
+            </p>
+            <p
+              class="quiet"
+            >
+              Standort: 
+              unbekannt
+            </p>
+            <p
+              class="quiet"
+            >
+              noch keine Messung
+            </p>
+            <p
+              class="quiet"
+            >
+              keine offene Behandlung
+            </p>
+            <div
+              class="actions"
+            >
+              <button
+                aria-label="Archivieren: Bogenhanf"
+                class="secondary"
+                type="button"
+              >
+                Archivieren
+              </button>
+            </div>
+          </li>
+          <li
+            class="specimen-card"
+          >
+            <div
+              class="card-photo platzhalter"
+            >
+              <span>
+                Noch kein Foto
+              </span>
+            </div>
+            <h2>
+              Bogenhanf – Klammer
+            </h2>
+            <p
+              class="quiet"
+            >
+              Art: 
+              Bogenhanf
+            </p>
+            <p
+              class="quiet"
+            >
+              Lichtzone: 
+              unbekannt
+               · Status: 
+              Pflanze
+            </p>
+            <p
+              class="quiet"
+            >
+              Standort: 
+              unbekannt
+            </p>
+            <p
+              class="quiet"
+            >
+              noch keine Messung
+            </p>
+            <p
+              class="quiet"
+            >
+              keine offene Behandlung
+            </p>
+            <div
+              class="actions"
+            >
+              <button
+                aria-label="Archivieren: Bogenhanf – Klammer"
+                class="secondary"
+                type="button"
+              >
+                Archivieren
+              </button>
+            </div>
+          </li>
+        </ul>
+        <div
+          class="actions"
+        >
+          <button
+            class="primary"
+            type="button"
+          >
+            Weiteres Exemplar: Art wählen
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ open src/collection/markers.test.tsx:178:40
+    176| describe("US-BES-03 rename: change the marker on the card", () => {
+    177|   const open = async () => {
+    178|     await userEvent.click(await screen.findByRole("button", { name: "K…
+       |                                        ^
+    179|   };
+    180|
+ ❯ src/collection/markers.test.tsx:219:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/collection/markers.test.tsx > US-BES-03 rename: change the marker on the card > cancel goes back to the list without a request
+TestingLibraryElementError: Unable to find role="button" and name "Kennzeichen ändern: Bogenhanf"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="distribution-title"
+        class="distribution"
+      >
+        <h2
+          id="distribution-title"
+        >
+          Verteilung auf die Lichtzonen
+        </h2>
+        <p>
+          Es gibt keine Lichtzone für erwachsene Pflanzen.
+        </p>
+        <p
+          class="next-action"
+        >
+          Lege unter „Licht“ mindestens zwei Lichtzonen an.
+        </p>
+        <p
+          class="quiet"
+        >
+          Stecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.
+        </p>
+      </section>
+      <section
+        aria-labelledby="collection-title"
+      >
+        <h1
+          id="collection-title"
+        >
+          Bestand
+        </h1>
+        <ul
+          class="cards-grid"
+        >
+          <li
+            class="specimen-card"
+          >
+            <div
+              class="card-photo platzhalter"
+            >
+              <span>
+                Noch kein Foto
+              </span>
+            </div>
+            <h2>
+              Bogenhanf
+            </h2>
+            <p
+              class="quiet"
+            >
+              Art: 
+              Bogenhanf
+            </p>
+            <p
+              class="quiet"
+            >
+              Lichtzone: 
+              unbekannt
+               · Status: 
+              Pflanze
+            </p>
+            <p
+              class="quiet"
+            >
+              Standort: 
+              unbekannt
+            </p>
+            <p
+              class="quiet"
+            >
+              noch keine Messung
+            </p>
+            <p
+              class="quiet"
+            >
+              keine offene Behandlung
+            </p>
+            <div
+              class="actions"
+            >
+              <button
+                aria-label="Archivieren: Bogenhanf"
+                class="secondary"
+                type="button"
+              >
+                Archivieren
+              </button>
+            </div>
+          </li>
+        </ul>
+        <div
+          class="actions"
+        >
+          <button
+            class="primary"
+            type="button"
+          >
+            Weiteres Exemplar: Art wählen
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection"
+    >
+      <section
+        aria-labelledby="distribution-title"
+        class="distribution"
+      >
+        <h2
+          id="distribution-title"
+        >
+          Verteilung auf die Lichtzonen
+        </h2>
+        <p>
+          Es gibt keine Lichtzone für erwachsene Pflanzen.
+        </p>
+        <p
+          class="next-action"
+        >
+          Lege unter „Licht“ mindestens zwei Lichtzonen an.
+        </p>
+        <p
+          class="quiet"
+        >
+          Stecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.
+        </p>
+      </section>
+      <section
+        aria-labelledby="collection-title"
+      >
+        <h1
+          id="collection-title"
+        >
+          Bestand
+        </h1>
+        <ul
+          class="cards-grid"
+        >
+          <li
+            class="specimen-card"
+          >
+            <div
+              class="card-photo platzhalter"
+            >
+              <span>
+                Noch kein Foto
+              </span>
+            </div>
+            <h2>
+              Bogenhanf
+            </h2>
+            <p
+              class="quiet"
+            >
+              Art: 
+              Bogenhanf
+            </p>
+            <p
+              class="quiet"
+            >
+              Lichtzone: 
+              unbekannt
+               · Status: 
+              Pflanze
+            </p>
+            <p
+              class="quiet"
+            >
+              Standort: 
+              unbekannt
+            </p>
+            <p
+              class="quiet"
+            >
+              noch keine Messung
+            </p>
+            <p
+              class="quiet"
+            >
+              keine offene Behandlung
+            </p>
+            <div
+              class="actions"
+            >
+              <button
+                aria-label="Archivieren: Bogenhanf"
+                class="secondary"
+                type="button"
+              >
+                Archivieren
+              </button>
+            </div>
+          </li>
+        </ul>
+        <div
+          class="actions"
+        >
+          <button
+            class="primary"
+            type="button"
+          >
+            Weiteres Exemplar: Art wählen
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ open src/collection/markers.test.tsx:178:40
+    176| describe("US-BES-03 rename: change the marker on the card", () => {
+    177|   const open = async () => {
+    178|     await userEvent.click(await screen.findByRole("button", { name: "K…
+       |                                        ^
+    179|   };
+    180|
+ ❯ src/collection/markers.test.tsx:229:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed | 7 passed (8)
+      Tests  10 failed | 65 passed (75)
+   Start at  01:30:52
+   Duration  10.65s (tests 57%, environment 23%, transform 13%, import 6%)
+

@@ -1,0 +1,90 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-04/app/packages/db
+
+ ❯ src/bestand/exemplare.test.ts (20 tests | 5 failed) 545ms
+   ❯ US-BES-04 Steckling in der Datenbank (5)
+     × US-BES-04: legt einen Steckling mit Status steckling an; ohne Angabe bleibt es eine Pflanze 15ms
+     × US-BES-04: Eintopfen macht aus einem Steckling eine Pflanze und lässt alles andere stehen 5ms
+     × US-BES-04: eine Pflanze und ein archivierter Steckling melden kein_steckling und bleiben unverändert 13ms
+     × US-BES-04, P-04: ein anderes Konto kann den Steckling nicht eintopfen und sieht ihn nicht 5ms
+     × US-BES-04: eine unbekannte Kennung ist nicht gefunden 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/bestand/exemplare.test.ts > US-BES-04 Steckling in der Datenbank > US-BES-04: legt einen Steckling mit Status steckling an; ohne Angabe bleibt es eine Pflanze
+AssertionError: expected { …(9) } to match object { name: 'Steckling Anlegen', …(1) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "name": "Steckling Anlegen",
+-   "status": "steckling",
++   "status": "pflanze",
+  }
+
+ ❯ src/bestand/exemplare.test.ts:221:23
+    219|       status: "steckling",
+    220|     });
+    221|     expect(steckling).toMatchObject({ name: "Steckling Anlegen", statu…
+       |                       ^
+    222|     const pflanze = await exemplare.anlegen(anna, { ...werte, name: "P…
+    223|     expect(pflanze).toMatchObject({ status: "pflanze" });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/bestand/exemplare.test.ts > US-BES-04 Steckling in der Datenbank > US-BES-04: Eintopfen macht aus einem Steckling eine Pflanze und lässt alles andere stehen
+TypeError: exemplare.eintopfen is not a function
+ ❯ src/bestand/exemplare.test.ts:233:31
+    231|     });
+    232|     if (typeof z === "string") throw new Error(z);
+    233|     const r = await exemplare.eintopfen(anna, z.id);
+       |                               ^
+    234|     expect(r).toEqual({ ...z, status: "pflanze" });
+    235|     expect(await exemplare.finde(anna, z.id)).toEqual({ ...z, status: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/bestand/exemplare.test.ts > US-BES-04 Steckling in der Datenbank > US-BES-04: eine Pflanze und ein archivierter Steckling melden kein_steckling und bleiben unverändert
+TypeError: exemplare.eintopfen is not a function
+ ❯ src/bestand/exemplare.test.ts:247:28
+    245|     if (typeof pflanze === "string" || typeof arch === "string") throw…
+    246|     await exemplare.archivieren(anna, arch.id, "abgegeben", "2026-10-0…
+    247|     expect(await exemplare.eintopfen(anna, pflanze.id)).toBe("kein_ste…
+       |                            ^
+    248|     expect(await exemplare.eintopfen(anna, arch.id)).toBe("kein_steckl…
+    249|     expect((await exemplare.finde(anna, arch.id))?.status).toBe("archi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/bestand/exemplare.test.ts > US-BES-04 Steckling in der Datenbank > US-BES-04, P-04: ein anderes Konto kann den Steckling nicht eintopfen und sieht ihn nicht
+TypeError: exemplare.eintopfen is not a function
+ ❯ src/bestand/exemplare.test.ts:260:28
+    258|     });
+    259|     if (typeof z === "string") throw new Error(z);
+    260|     expect(await exemplare.eintopfen(ben, z.id)).toBe("nicht_gefunden"…
+       |                            ^
+    261|     expect((await exemplare.finde(anna, z.id))?.status).toBe("stecklin…
+    262|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/bestand/exemplare.test.ts > US-BES-04 Steckling in der Datenbank > US-BES-04: eine unbekannte Kennung ist nicht gefunden
+TypeError: exemplare.eintopfen is not a function
+ ❯ src/bestand/exemplare.test.ts:265:28
+    263|
+    264|   it("US-BES-04: eine unbekannte Kennung ist nicht gefunden", async ()…
+    265|     expect(await exemplare.eintopfen(anna, randomUUID())).toBe("nicht_…
+       |                            ^
+    266|   });
+    267| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 15 passed (20)
+   Start at  21:57:50
+   Duration  798ms (tests 80%, transform 13%, import 7%)
+

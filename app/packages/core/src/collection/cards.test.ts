@@ -100,6 +100,16 @@ describe("US-BES-06 Karte: Name, Art, Lichtzone, Status, Standort", () => {
     });
   });
 
+  it("US-BES-03 carries species id and marker, so that the form can ask for missing markers", async () => {
+    await create("anna", "Bogenhanf");
+    await create("anna", "Bogenhanf – rot", { marker: "rot" });
+    const cards = await specimenCards(dependencies(), "anna", TODAY);
+    expect(cards.map((k) => [k.speciesId, k.marker])).toEqual([
+      [SPECIES, null],
+      [SPECIES, "rot"],
+    ]);
+  });
+
   it('a location without light zone and a missing location stay "unknown" (null), nothing is invented', async () => {
     await create("anna", "A", { locationId: box });
     await create("anna", "B");
@@ -124,6 +134,38 @@ describe("US-BES-06 Karte: Name, Art, Lichtzone, Status, Standort", () => {
       ]),
     });
     expect((await specimenCards(deps, "anna", TODAY))[0]?.speciesName).toBe("Aloe vera");
+  });
+});
+
+describe("US-BES-04 card: a cutting stands under cutting light", () => {
+  it("US-BES-04: a cutting shows the lowest zone as light zone, even without a zone at the location", async () => {
+    await create("anna", "Steckling", { locationId: box, status: "cutting" });
+    const [card] = await specimenCards(dependencies(), "anna", TODAY);
+    expect(card).toMatchObject({ status: "cutting", location: "Kiste", lightZone: "Zone 3" });
+  });
+
+  it("US-BES-04: a cutting at a location of a higher zone still shows the lowest zone", async () => {
+    const high = await light
+      .zoneAdapter()
+      .create("anna", { name: "Zone 4", luxCeiling: 50000, ppfd: null, sortOrder: null });
+    const zoneId = typeof high === "string" ? "" : high.id;
+    const s = await light
+      .locationAdapter()
+      .create("anna", { name: "Oben", lightZoneId: zoneId, kind: "indoor" });
+    const top = typeof s === "string" ? "" : s.id;
+    specimens = new InMemorySpecimens({ anna: [top] });
+    await create("anna", "Steckling", { locationId: top, status: "cutting" });
+    await create("anna", "Pflanze", { locationId: top, status: "plant" });
+    const cards = await specimenCards(dependencies(), "anna", TODAY);
+    expect(cards.find((k) => k.name === "Steckling")?.lightZone).toBe("Zone 3");
+    expect(cards.find((k) => k.name === "Pflanze")?.lightZone).toBe("Zone 4");
+  });
+
+  it("US-BES-04: without zones the light zone of a cutting stays unknown (P-08)", async () => {
+    light.zones.length = 0;
+    await create("anna", "Steckling", { status: "cutting" });
+    const [card] = await specimenCards(dependencies(), "anna", TODAY);
+    expect(card?.lightZone).toBeNull();
   });
 });
 

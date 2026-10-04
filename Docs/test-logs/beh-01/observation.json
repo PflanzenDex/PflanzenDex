@@ -1,0 +1,200 @@
+{
+  "desktop-setup": {
+    "eins": "Wollpflanze desktop – Eins",
+    "zwei": "Wollpflanze desktop – Zwei",
+    "steck": "Wollpflanze desktop – Steck",
+    "steckStatus": "cutting"
+  },
+  "desktop-form": {
+    "axe": [],
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "small": [
+      {
+        "t": "checkbox",
+        "w": 24,
+        "h": 24
+      },
+      {
+        "t": "checkbox",
+        "w": 24,
+        "h": 24
+      },
+      {
+        "t": "checkbox",
+        "w": 24,
+        "h": 24
+      },
+      {
+        "t": "checkbox",
+        "w": 24,
+        "h": 24
+      }
+    ]
+  },
+  "desktop-empty": {
+    "alert": "Wähle mindestens ein Exemplar, das behandelt wird."
+  },
+  "desktop-noReason": {
+    "alert": "Bitte nenne einen Grund, zum Beispiel Wollläuse."
+  },
+  "desktop-single": {
+    "status": "2 Termine für 2 Exemplare geplant. Den nächsten Termin siehst du auf der Karte im Bestand.",
+    "reasonAfter": ""
+  },
+  "desktop-course": {
+    "count": "3",
+    "interval": "7",
+    "status": "3 Termine für 1 Exemplar geplant. Den nächsten Termin siehst du auf der Karte im Bestand."
+  },
+  "desktop-course-form": {
+    "axe": [],
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "small": [
+      {
+        "t": "checkbox",
+        "w": 24,
+        "h": 24
+      },
+      {
+        "t": "checkbox",
+        "w": 24,
+        "h": 24
+      },
+      {
+        "t": "checkbox",
+        "w": 24,
+        "h": 24
+      },
+      {
+        "t": "checkbox",
+        "w": 24,
+        "h": 24
+      }
+    ]
+  },
+  "desktop-cards": {
+    "axe": [],
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "small": []
+  },
+  "desktop-idempotent": {
+    "first": 201,
+    "again": 201,
+    "sameIds": true
+  },
+  "desktop-archived": {
+    "status": 409,
+    "code": "specimen.archived"
+  },
+  "desktop-foreign": {
+    "status": 404,
+    "code": "specimen.not_found"
+  },
+  "desktop-benCards": false,
+  "desktop-einsAfter": {
+    "treatment": "Wollläuse",
+    "more": 1
+  },
+  "mobile-setup": {
+    "eins": "Wollpflanze mobile – Eins",
+    "zwei": "Wollpflanze mobile – Zwei",
+    "steck": "Wollpflanze mobile – Steck",
+    "steckStatus": "cutting"
+  },
+  "mobile-form": {
+    "axe": [],
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "small": [
+      {
+        "t": "checkbox",
+        "w": 24,
+        "h": 24
+      },
+      {
+        "t": "checkbox",
+        "w": 24,
+        "h": 24
+      },
+      {
+        "t": "checkbox",
+        "w": 24,
+        "h": 24
+      },
+      {
+        "t": "checkbox",
+        "w": 24,
+        "h": 24
+      }
+    ]
+  },
+  "mobile-empty": {
+    "alert": "Wähle mindestens ein Exemplar, das behandelt wird."
+  },
+  "mobile-noReason": {
+    "alert": "Bitte nenne einen Grund, zum Beispiel Wollläuse."
+  },
+  "mobile-single": {
+    "status": "2 Termine für 2 Exemplare geplant. Den nächsten Termin siehst du auf der Karte im Bestand.",
+    "reasonAfter": ""
+  },
+  "mobile-course": {
+    "count": "3",
+    "interval": "7",
+    "status": "3 Termine für 1 Exemplar geplant. Den nächsten Termin siehst du auf der Karte im Bestand."
+  },
+  "mobile-course-form": {
+    "axe": [],
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "small": [
+      {
+        "t": "checkbox",
+        "w": 24,
+        "h": 24
+      },
+      {
+        "t": "checkbox",
+        "w": 24,
+        "h": 24
+      },
+      {
+        "t": "checkbox",
+        "w": 24,
+        "h": 24
+      },
+      {
+        "t": "checkbox",
+        "w": 24,
+        "h": 24
+      }
+    ]
+  },
+  "mobile-cards": {
+    "axe": [],
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "small": []
+  },
+  "mobile-idempotent": {
+    "first": 201,
+    "again": 201,
+    "sameIds": true
+  },
+  "mobile-archived": {
+    "status": 409,
+    "code": "specimen.archived"
+  },
+  "mobile-foreign": {
+    "status": 404,
+    "code": "specimen.not_found"
+  },
+  "mobile-benCards": false,
+  "mobile-einsAfter": {
+    "treatment": "Wollläuse",
+    "more": 1
+  }
+}

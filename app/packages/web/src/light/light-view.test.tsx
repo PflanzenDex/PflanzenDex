@@ -88,6 +88,7 @@ describe("US-LIC-05 error message when deleting a used zone", () => {
             { kind: "location", id: "s1", name: "Regal" },
             { kind: "specimen", id: "e1", name: "Monstera Nr. 1" },
             { kind: "species", id: "a1", name: "Echinopsis" },
+            { kind: "care_profile", id: "a2", name: "Bogenhanf" },
           ],
         }}
       />,
@@ -96,6 +97,7 @@ describe("US-LIC-05 error message when deleting a used zone", () => {
     expect(h).toContain("Standort: Regal");
     expect(h).toContain("Exemplar: Monstera Nr. 1");
     expect(h).toContain("Art: Echinopsis");
+    expect(h).toContain("Pflegeprofil der Art: Bogenhanf"); // US-BES-09: the zone override of a care profile
   });
 
   it("translates complained-about fields into words", () => {

@@ -16,5 +16,25 @@ export type {
 } from "./types";
 export { CARE_PHASES, monthTag, carePhase } from "./phase";
 export type { CarePhase } from "./phase";
+export { NO_PHASE_LOCATION } from "./phase-location";
+export type { PhaseLocationSource } from "./phase-location";
+export { careProfileLocations, careProfileTargetLocation } from "./profile-location";
+export { phaseSwitchConfirm, MAX_SWITCH } from "./switch";
+export type { SwitchDependencies, SwitchedSpecimen } from "./switch";
 export { carePhasesList } from "./phases";
 export type { PhasesDependencies, PhasesRow } from "./phases";
+export { treatmentPlan } from "./treatment-plan";
+export type { PlanDependencies, PlanResult } from "./treatment-plan";
+export { treatmentSource } from "./treatment-source";
+export type { TreatmentSourceDependencies } from "./treatment-source";
+export { TREATMENT_LIMITS, COURSE_DEFAULTS } from "./treatment-types";
+export type { TreatmentRow, TreatmentValues, TreatmentStore } from "./treatment-types";
+export { treatmentOpenList, treatmentStatus } from "./treatment-list";
+export type {
+  TreatmentListDependencies,
+  TreatmentListRow,
+  TreatmentStatus,
+  TreatmentStatusKind,
+} from "./treatment-list";
+export { phaseStatus } from "./phase-status";
+export type { PhaseStatus } from "./phase-status";

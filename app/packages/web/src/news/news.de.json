@@ -7,6 +7,15 @@
     "Bestand: Jedes Exemplar erscheint jetzt als Karte mit Art, Lichtzone, Status und Standort. Die letzte Messung siehst du dort mit Wert, Qualität und Datum; Foto und offene Behandlungen folgen, sobald es sie gibt.",
     "Wachstum: Im Bestand erfasst du je Exemplar eine Messung mit Messwert, Qualität und Notiz, auch nachträglich mit einem früheren Datum.",
     "Bestand: Ein eingegangenes oder abgegebenes Exemplar archivierst du mit einem Grund. Es verschwindet aus Liste und Auswertungen, seine Historie bleibt, und im Archiv holst du es jederzeit zurück.",
-    "Licht: Im Bestand siehst du jetzt, wie viele Exemplare in jeder Lichtzone stehen und wo noch Platz ist. Bei Gleichstand nennt die Anzeige alle dünnsten Zonen."
+    "Licht: Im Bestand siehst du jetzt, wie viele Exemplare in jeder Lichtzone stehen und wo noch Platz ist. Bei Gleichstand nennt die Anzeige alle dünnsten Zonen.",
+    "Bestand: Einen Steckling legst du mit dem Häkchen „Das ist ein Steckling“ an. Er steht unter Stecklingslicht und zählt nicht in der Lichtverteilung; mit „Eingetopft“ auf der Karte wird er eine Pflanze.",
+    "Bestand: Mehrere Töpfe derselben Art unterscheidest du mit einem Kennzeichen (zum Beispiel „Klammer“ oder eine Farbe). Ab dem dritten Exemplar fragt dich die App nach den fehlenden Kennzeichen, bevor sie speichert, und auf der Karte änderst du ein Kennzeichen jederzeit. Die Historie bleibt dabei beim Exemplar.",
+    "Hinweise: Der neue Reiter „Hinweise“ nennt Exemplare ohne Standort oder an einem Standort ohne Lichtzone und sagt dir, was du dagegen tust. Die Lichtverteilung verweist bei „unbekannter Zone“ dorthin.",
+    "Hinweise: Ein Exemplar ohne Standort bekommt seinen Standort jetzt direkt im Reiter „Hinweise“, du wählst ihn aus deinen eigenen Standorten.",
+    "Pflegephasen: Hast du ein Exemplar an den Soll-Standort gestellt, tippst du „Jetzt umgestellt“, auch für mehrere Exemplare auf einmal. Solange kein Soll-Standort bekannt ist, erscheint die Schaltfläche nicht.",
+    "Pflegeprofil: Im neuen Reiter „Pflegeprofil“ siehst du je Art den Katalogwert neben deiner Abweichung und passt Soll-Standorte je Phase, Lichtzone, Ruhephase, Gießintervalle und eigene Hinweise an. Der Katalog bleibt unverändert, mit „Auf Katalog zurücksetzen“ gilt wieder der Katalogwert. Damit erscheint in den Pflegephasen auch „Jetzt umgestellt“.",
+    "Pflegephasen: Pflanzen, die nicht an ihrem Soll-Standort stehen, stehen jetzt oben und sind als Abweichung markiert. Ein Exemplar ohne Standort zeigt „Standort fehlt“ und sagt, wo du ihn setzt; Pflanzen ohne bekannten Soll-Standort zählen nie als Abweichung.",
+    "Behandlung: Unter „Behandlung“ planst du Termine für ein oder mehrere Exemplare mit Grund, Mittel und Datum. Mit „Kur planen“ legst du mehrere Termine im Abstand von einigen Tagen an (voreingestellt 3 Termine, 7 Tage). Den nächsten Termin siehst du auf der Karte im Bestand.",
+    "Behandlung: Unter „Behandlung“ siehst du alle offenen Termine nach Dringlichkeit, mit Exemplar, Grund, Mittel und Fälligkeit („überfällig seit 2 Tagen“, „heute fällig“, „in 3 Tagen“). Ohne offene Termine sagt dir die Seite, wie du einen planst."
   ]
 }

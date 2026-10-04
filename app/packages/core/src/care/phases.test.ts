@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { SpeciesStub, InMemorySpecimens, testSpecies } from "../collection/test-helpers";
-import { carePhase, carePhasesList } from "./index";
+import { NO_PHASE_LOCATION, carePhase, carePhasesList } from "./index";
+import { InMemoryCareProfiles } from "../collection/care-profile-test-helpers";
+import { PhaseLocationStub } from "./test-helpers";
 
 const WINTER = "11111111-1111-4111-8111-111111111111"; // Dormancy 11-01 to 03-15, across the turn of the year
 const SUMMER = "22222222-2222-4222-8222-222222222222"; // Dormancy 06-01 to 08-31, within the same year
@@ -53,8 +55,24 @@ async function collection(
   return store;
 }
 
-const list = (specimens: InMemorySpecimens, userId: string, now: string, zone: unknown = "UTC") =>
-  carePhasesList({ specimens, species, clock: () => new Date(now) }, userId, zone);
+const list = (
+  specimens: InMemorySpecimens,
+  userId: string,
+  now: string,
+  zone: unknown = "UTC",
+  targets: PhaseLocationStub | typeof NO_PHASE_LOCATION = NO_PHASE_LOCATION,
+) =>
+  carePhasesList(
+    {
+      specimens,
+      species,
+      targets,
+      profiles: new InMemoryCareProfiles(),
+      clock: () => new Date(now),
+    },
+    userId,
+    zone,
+  );
 
 describe("US-PHA-01 Phase eines Exemplars", () => {
   it("US-PHA-01 period within the same year: dormancy at the boundaries and in between, otherwise growth", () => {
@@ -104,6 +122,25 @@ describe("US-PHA-01 Phase eines Exemplars", () => {
     ]);
     const r = await list(e, "anna", "2026-12-01T12:00:00Z");
     expect(r.ok && r.value[0]).toMatchObject({ locationId: LOCATION, targetLocationId: null });
+  });
+
+  it("US-PHA-03 the target location is the one of the keeper for today's phase (list and switch agree)", async () => {
+    const WINTER_SPOT = "66666666-6666-4666-8666-666666666666";
+    const SUMMER_SPOT = "77777777-7777-4777-8777-777777777777";
+    const targets = new PhaseLocationStub({
+      anna: { [WINTER]: { dormancy: WINTER_SPOT, growth: SUMMER_SPOT } },
+    });
+    const e = await collection("anna", [
+      { speciesId: WINTER, name: "Bogenhanf", location: LOCATION },
+    ]);
+    const dormant = await list(e, "anna", "2026-12-01T12:00:00Z", "UTC", targets);
+    expect(dormant.ok && dormant.value[0]).toMatchObject({ targetLocationId: WINTER_SPOT });
+    const growing = await list(e, "anna", "2026-07-01T12:00:00Z", "UTC", targets);
+    expect(growing.ok && growing.value[0]).toMatchObject({ targetLocationId: SUMMER_SPOT });
+    // Another account has no care profile entry: unknown, never the foreign one (P-04, P-08).
+    const ben = await collection("ben", [{ speciesId: WINTER, name: "Ben" }]);
+    const other = await list(ben, "ben", "2026-12-01T12:00:00Z", "UTC", targets);
+    expect(other.ok && other.value[0]).toMatchObject({ targetLocationId: null });
   });
 
   it("US-PHA-01 foreign specimens and foreign private species stay invisible (P-04)", async () => {

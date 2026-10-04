@@ -1,0 +1,346 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex.worktrees/pha-03/app/packages/api
+
+ ❯ src/care/phase-switch.test.ts (15 tests | 14 failed) 545ms
+   ❯ US-PHA-03 confirm a move through the API (10)
+     × US-PHA-03 'moved now' sets the location to the target of the local phase, list and hints follow 59ms
+     × US-PHA-03 the date is the local one: in UTC it is still the growth phase 24ms
+     × US-PHA-03 several specimens are confirmed in one step; a double tap with the same key writes once 41ms
+     × US-PHA-03 confirming again with a new key changes nothing (idempotent) 22ms
+     × US-PHA-03 a step with a cutting or a species without dormancy fails as a whole with 409 57ms
+     × US-PHA-03 without a known target nothing is invented: 409 care.target_unknown 19ms
+     × US-PHA-03 an archived specimen is refused with 409 specimen.archived 30ms
+     × US-PHA-03 invalid input: 400; missing key: 400 4ms
+     × US-PHA-03 another account cannot switch the specimen and sees nothing of it (P-04) 19ms
+   ❯ US-PHA-03 set the location of a specimen through the API (BES-08 'location missing') (5)
+     × US-PHA-03 a selected location is set; the hint 'location missing' disappears 25ms
+     × US-PHA-03 setting the same location again is fine (idempotent) 19ms
+     × US-PHA-03 free text: 400, location of another account: 404, foreign specimen: 404 (P-04) 18ms
+     × US-PHA-03 an archived specimen keeps its location: 409 30ms
+     × US-PHA-03 a cutting can be placed and stays a cutting (US-BES-04) 19ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/care/phase-switch.test.ts > US-PHA-03 confirm a move through the API > US-PHA-03 'moved now' sets the location to the target of the local phase, list and hints follow
+AssertionError: expected { …(6) } to match object { locationId: null, …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "locationId": null,
+-   "targetLocationId": "db1b416b-bb02-4e5d-9d45-edad6476b0bb",
++   "targetLocationId": null,
+  }
+
+ ❯ src/care/phase-switch.test.ts:145:84
+    143|     const id = await specimen(subA, speciesA, "eins");
+    144|     expect(await hintKinds(subA, id)).toEqual(["location_missing"]);
+    145|     expect((await phases(subA, "Europe/Berlin")).find((p) => p.specime…
+       |                                                                                    ^
+    146|       locationId: null,
+    147|       targetLocationId: cold,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  src/care/phase-switch.test.ts > US-PHA-03 confirm a move through the API > US-PHA-03 the date is the local one: in UTC it is still the growth phase
+TypeError: Cannot read properties of undefined (reading '0')
+ ❯ src/care/phase-switch.test.ts:166:31
+    164|     const id = await specimen(subA, speciesA, "zwei");
+    165|     const r = await confirm(subA, [id], "UTC");
+    166|     expect(r.body["specimens"][0]).toMatchObject({ locationId: living,…
+       |                               ^
+    167|   });
+    168|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  src/care/phase-switch.test.ts > US-PHA-03 confirm a move through the API > US-PHA-03 several specimens are confirmed in one step; a double tap with the same key writes once
+AssertionError: expected undefined to deeply equal [ { …(3) }, { …(3) } ]
+
+- Expected:
+[
+  {
+    "changed": true,
+    "locationId": "db1b416b-bb02-4e5d-9d45-edad6476b0bb",
+    "specimenId": "2a49385c-ecec-4966-8303-bdaa12adc1f1",
+  },
+  {
+    "changed": true,
+    "locationId": "db1b416b-bb02-4e5d-9d45-edad6476b0bb",
+    "specimenId": "d0dfb1d5-39fd-429a-9c4d-dda2da1bbc26",
+  },
+]
+
++ Received:
+undefined
+
+ ❯ src/care/phase-switch.test.ts:174:37
+    172|     const key = randomUUID();
+    173|     const first = await confirm(subA, [a, b], "Europe/Berlin", key);
+    174|     expect(first.body["specimens"]).toEqual([
+       |                                     ^
+    175|       { specimenId: a, locationId: cold, changed: true },
+    176|       { specimenId: b, locationId: cold, changed: true },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  src/care/phase-switch.test.ts > US-PHA-03 confirm a move through the API > US-PHA-03 confirming again with a new key changes nothing (idempotent)
+AssertionError: expected undefined to deeply equal [ { …(3) } ]
+
+- Expected:
+[
+  {
+    "changed": false,
+    "locationId": "db1b416b-bb02-4e5d-9d45-edad6476b0bb",
+    "specimenId": "500ae4d4-b6c3-4bd7-9f98-a44d034daecc",
+  },
+]
+
++ Received:
+undefined
+
+ ❯ src/care/phase-switch.test.ts:185:33
+    183|     const id = await specimen(subA, speciesA, "fuenf", { locationId: c…
+    184|     const r = await confirm(subA, [id], "Europe/Berlin");
+    185|     expect(r.body["specimens"]).toEqual([{ specimenId: id, locationId:…
+       |                                 ^
+    186|   });
+    187|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  src/care/phase-switch.test.ts > US-PHA-03 confirm a move through the API > US-PHA-03 a step with a cutting or a species without dormancy fails as a whole with 409
+AssertionError: expected 404 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 404
+
+ ❯ src/care/phase-switch.test.ts:194:24
+    192|     for (const bad of [cutting, without]) {
+    193|       const r = await confirm(subA, [plant, bad], "Europe/Berlin");
+    194|       expect(r.status).toBe(409);
+       |                        ^
+    195|       expect(r.body["error"]).toMatchObject({ code: "care.no_phase", d…
+    196|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  src/care/phase-switch.test.ts > US-PHA-03 confirm a move through the API > US-PHA-03 without a known target nothing is invented: 409 care.target_unknown
+AssertionError: expected 404 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 404
+
+ ❯ src/care/phase-switch.test.ts:208:22
+    206|       timeZone: "UTC",
+    207|     }, undefined, appWithoutProfile);
+    208|     expect(r.status).toBe(409);
+       |                      ^
+    209|     expect(r.body["error"].code).toBe("care.target_unknown");
+    210|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  src/care/phase-switch.test.ts > US-PHA-03 confirm a move through the API > US-PHA-03 an archived specimen is refused with 409 specimen.archived
+AssertionError: expected 404 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 404
+
+ ❯ src/care/phase-switch.test.ts:219:22
+    217|     });
+    218|     const r = await confirm(subA, [id]);
+    219|     expect(r.status).toBe(409);
+       |                      ^
+    220|     expect(r.body["error"].code).toBe("specimen.archived");
+    221|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  src/care/phase-switch.test.ts > US-PHA-03 confirm a move through the API > US-PHA-03 invalid input: 400; missing key: 400
+AssertionError: expected { status: 404, body: {} } to match object { status: 400, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "body": {
+-     "error": {
+-       "code": "input.invalid",
+-     },
+-   },
+-   "status": 400,
++   "body": {},
++   "status": 404,
+  }
+
+ ❯ src/care/phase-switch.test.ts:226:17
+    224|     for (const ids of [[], ["x"], "x", undefined]) {
+    225|       const r = await confirm(subA, ids);
+    226|       expect(r).toMatchObject({ status: 400, body: { error: { code: "i…
+       |                 ^
+    227|     }
+    228|     const r = await call(subA, "POST", "/care-phases/confirm", {}, nul…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  src/care/phase-switch.test.ts > US-PHA-03 confirm a move through the API > US-PHA-03 another account cannot switch the specimen and sees nothing of it (P-04)
+TypeError: Cannot read properties of undefined (reading 'code')
+ ❯ src/care/phase-switch.test.ts:236:28
+    234|     const r = await confirm(subB, [id]);
+    235|     expect(r.status).toBe(404);
+    236|     expect(r.body["error"].code).toBe("specimen.not_found");
+       |                            ^
+    237|     expect((await phases(subB)).map((p) => p.specimenId)).not.toContai…
+    238|     expect((await phases(subA)).find((p) => p.specimenId === id)?.loca…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  src/care/phase-switch.test.ts > US-PHA-03 set the location of a specimen through the API (BES-08 'location missing') > US-PHA-03 a selected location is set; the hint 'location missing' disappears
+AssertionError: expected { status: 404, body: {} } to match object { status: 200, body: { …(2) } }
+
+- Expected
++ Received
+
+  {
+-   "body": {
+-     "id": "8e03a524-592a-47ca-a553-fc126dd2092e",
+-     "locationId": "27f46fdf-450d-42ed-940e-1171e254a3d1",
+-   },
+-   "status": 200,
++   "body": {},
++   "status": 404,
+  }
+
+ ❯ src/care/phase-switch.test.ts:247:15
+    245|     expect(await hintKinds(subA, id)).toContain("location_missing");
+    246|     const r = await call(subA, "POST", `/specimens/${id}/location`, { …
+    247|     expect(r).toMatchObject({ status: 200, body: { id, locationId: liv…
+       |               ^
+    248|     expect(await hintKinds(subA, id)).not.toContain("location_missing"…
+    249|     expect((await phases(subA)).find((p) => p.specimenId === id)?.loca…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  src/care/phase-switch.test.ts > US-PHA-03 set the location of a specimen through the API (BES-08 'location missing') > US-PHA-03 setting the same location again is fine (idempotent)
+AssertionError: expected { status: 404, body: {} } to match object { status: 200, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "body": {
+-     "locationId": "27f46fdf-450d-42ed-940e-1171e254a3d1",
+-   },
+-   "status": 200,
++   "body": {},
++   "status": 404,
+  }
+
+ ❯ src/care/phase-switch.test.ts:256:17
+    254|     for (let i = 0; i < 2; i++) {
+    255|       const r = await call(subA, "POST", `/specimens/${id}/location`, …
+    256|       expect(r).toMatchObject({ status: 200, body: { locationId: livin…
+       |                 ^
+    257|     }
+    258|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  src/care/phase-switch.test.ts > US-PHA-03 set the location of a specimen through the API (BES-08 'location missing') > US-PHA-03 free text: 400, location of another account: 404, foreign specimen: 404 (P-04)
+AssertionError: expected { status: 404, body: {} } to match object { status: 400, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "body": {
+-     "error": {
+-       "code": "input.invalid",
+-     },
+-   },
+-   "status": 400,
++   "body": {},
++   "status": 404,
+  }
+
+ ❯ src/care/phase-switch.test.ts:263:18
+    261|     const id = await specimen(subA, speciesA, "vierzehn");
+    262|     const text = await call(subA, "POST", `/specimens/${id}/location`,…
+    263|     expect(text).toMatchObject({ status: 400, body: { error: { code: "…
+       |                  ^
+    264|     const foreign = await call(subA, "POST", `/specimens/${id}/locatio…
+    265|       locationId: foreignLocation,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+ FAIL  src/care/phase-switch.test.ts > US-PHA-03 set the location of a specimen through the API (BES-08 'location missing') > US-PHA-03 an archived specimen keeps its location: 409
+AssertionError: expected { status: 404, body: {} } to match object { status: 409, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "body": {
+-     "error": {
+-       "code": "specimen.archived",
+-     },
+-   },
+-   "status": 409,
++   "body": {},
++   "status": 404,
+  }
+
+ ❯ src/care/phase-switch.test.ts:277:15
+    275|     await call(subA, "POST", `/specimens/${id}/archive`, { reason: "ei…
+    276|     const r = await call(subA, "POST", `/specimens/${id}/location`, { …
+    277|     expect(r).toMatchObject({ status: 409, body: { error: { code: "spe…
+       |               ^
+    278|   });
+    279|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+
+ FAIL  src/care/phase-switch.test.ts > US-PHA-03 set the location of a specimen through the API (BES-08 'location missing') > US-PHA-03 a cutting can be placed and stays a cutting (US-BES-04)
+AssertionError: expected { status: 404, body: {} } to match object { status: 200, body: { …(2) } }
+
+- Expected
++ Received
+
+  {
+-   "body": {
+-     "locationId": "27f46fdf-450d-42ed-940e-1171e254a3d1",
+-     "status": "cutting",
+-   },
+-   "status": 200,
++   "body": {},
++   "status": 404,
+  }
+
+ ❯ src/care/phase-switch.test.ts:283:15
+    281|     const id = await specimen(subA, speciesA, "sechzehn", { status: "c…
+    282|     const r = await call(subA, "POST", `/specimens/${id}/location`, { …
+    283|     expect(r).toMatchObject({ status: 200, body: { status: "cutting", …
+       |               ^
+    284|   });
+    285| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  14 failed | 1 passed (15)
+   Start at  02:26:20
+   Duration  1.02s (tests 58%, transform 33%, import 9%)
+

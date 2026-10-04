@@ -6,17 +6,28 @@ import {
   type TreatmentSource,
   type MeasurementSource,
   type TargetLocationSource,
+  type PhaseLocationSource,
 } from "@pflanzendex/core";
 import { authentication, accountRoutes, type TokenVerifier } from "./account";
-import { SPECIMEN_PATHS, specimenRoutes } from "./collection";
+import {
+  CARE_PROFILE_PATHS,
+  SPECIMEN_PATHS,
+  careProfileRoutes,
+  careProfileZoneUsageFor,
+  specimenRoutes,
+} from "./collection";
 import { SPECIES_PATHS, speciesRoutes } from "./catalog";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import {
   CARE_PATHS,
   CARE_PHASES_PATHS,
+  TREATMENT_PATHS,
   careRoutes,
+  treatmentRoutes,
   carePhasesRoutes,
   measurementSourceFor,
+  treatmentSourceFor,
+  targetLocationFor,
 } from "./care";
 
 export type AppOptions = {
@@ -31,19 +42,37 @@ export type AppOptions = {
   commit?: string | undefined;
   /** The clock for "today" (NFR-08); defaults to system time. */
   clock?: () => Date;
-  /** Target location for new specimens; `care` (PHA) supplies it, until then the location is unknown. */
+  /** Replaces the care profile as source of the target location of new specimens (tests). */
   targetLocation?: TargetLocationSource;
-  /** Measurements and treatments for the specimen cards (US-BES-06); without it `care` supplies the measurements (WAC-01), the treatments are still missing (BEH). */
+  /** Measurements and treatments for the specimen cards (US-BES-06); without it `care` supplies the measurements (WAC-01) and the planned treatments (BEH-01). */
   measurements?: MeasurementSource;
   treatments?: TreatmentSource;
+  /** Replaces the care profile as source of the location per phase (tests); without it the keeper's own care profile (US-BES-09) answers. */
+  phaseLocation?: PhaseLocationSource;
 };
 
-/** The module `care` (measurements and care phases): sign-in guard in front of the paths, then the routes. */
-function bindCareOne(app: Hono, pool: Pool, auth: MiddlewareHandler, opt: { clock?: () => Date }) {
+/** The module `care` (measurements, care phases and treatments): sign-in guard in front of the paths, then the routes. */
+function bindCareOne(
+  app: Hono,
+  pool: Pool,
+  auth: MiddlewareHandler,
+  opt: { clock?: () => Date; phaseLocation?: PhaseLocationSource },
+) {
   for (const path of CARE_PATHS) app.use(path, auth);
   app.route("/", careRoutes(pool, opt));
   for (const path of CARE_PHASES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", carePhasesRoutes(pool, opt));
+  for (const path of TREATMENT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", treatmentRoutes(pool, opt));
+}
+
+/** What `care` feeds into the collection: target location, measurements and treatments, unless tests replace them. */
+function careSources(pool: Pool, opt: AppOptions) {
+  return {
+    targetLocation: opt.targetLocation ?? targetLocationFor(pool),
+    measurements: opt.measurements ?? measurementSourceFor(pool),
+    treatments: opt.treatments ?? treatmentSourceFor(pool),
+  };
 }
 
 export function createApp(opt: AppOptions = {}): Hono {
@@ -65,20 +94,17 @@ export function createApp(opt: AppOptions = {}): Hono {
     app.use("/account/*", auth);
     app.route("/account", accountRoutes(opt.pool));
     for (const path of LIGHT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-    app.route("/", lightRoutes(opt.pool));
+    app.route("/", lightRoutes(opt.pool, [careProfileZoneUsageFor(opt.pool)]));
     for (const path of SPECIES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", speciesRoutes(opt.pool));
     for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-    app.route(
-      "/",
-      specimenRoutes(opt.pool, {
-        clock: opt.clock,
-        targetLocation: opt.targetLocation,
-        measurements: opt.measurements ?? measurementSourceFor(opt.pool),
-        treatments: opt.treatments,
-      }),
-    );
-    bindCareOne(app, opt.pool, auth, opt.clock ? { clock: opt.clock } : {});
+    app.route("/", specimenRoutes(opt.pool, { clock: opt.clock, ...careSources(opt.pool, opt) }));
+    for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+    app.route("/", careProfileRoutes(opt.pool));
+    bindCareOne(app, opt.pool, auth, {
+      ...(opt.clock ? { clock: opt.clock } : {}),
+      ...(opt.phaseLocation ? { phaseLocation: opt.phaseLocation } : {}),
+    });
   }
   return app;
 }

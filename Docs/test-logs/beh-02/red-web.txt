@@ -1,0 +1,909 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-af87f9004cdfab07d/app/packages/web
+
+ ❯ src/care/TreatmentsPage.test.tsx (10 tests | 5 failed) 5592ms
+   ❯ US-BEH-02 offene Behandlungen (5)
+     × US-BEH-02 shows plant, reason, agent or a dash, due date and status in the order of the server 1006ms
+     × US-BEH-02 without open treatments it says "Keine offenen Behandlungen." and what to do next (P-09) 1003ms
+     × US-BEH-02 says what to do next when something is overdue (P-09) 1003ms
+     × US-BEH-02 asks with the time zone of the device and shows a load error with a reload 1004ms
+     × US-BEH-02 reloads the list after planning, so the new date shows at once 1004ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-02 offene Behandlungen > US-BEH-02 shows plant, reason, agent or a dash, due date and status in the order of the server
+TestingLibraryElementError: Unable to find role="list" and name "Offene Behandlungen"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung planen[0m
+        [36m</h1>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung planen[0m
+        [36m</h1>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/TreatmentsPage.test.tsx:155:31
+    153|     );
+    154|     show();
+    155|     const list = await screen.findByRole("list", { name: "Offene Behan…
+       |                               ^
+    156|     const items = within(list).getAllByRole("listitem");
+    157|     expect(items).toHaveLength(3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-02 offene Behandlungen > US-BEH-02 without open treatments it says "Keine offenen Behandlungen." and what to do next (P-09)
+TestingLibraryElementError: Unable to find an element with the text: Keine offenen Behandlungen.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung planen[0m
+        [36m</h1>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung planen[0m
+        [36m</h1>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/TreatmentsPage.test.tsx:171:25
+    169|     fakeServer([specimen("e1", "Bogenhanf")]);
+    170|     show();
+    171|     expect(await screen.findByText("Keine offenen Behandlungen.")).toB…
+       |                         ^
+    172|     expect(screen.getByText(/Plane unten einen Termin/)).toBeTruthy();
+    173|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-02 offene Behandlungen > US-BEH-02 says what to do next when something is overdue (P-09)
+TestingLibraryElementError: Unable to find an element with the text: /2 Termine sind überfällig, 1 ist heute fällig/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung planen[0m
+        [36m</h1>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung planen[0m
+        [36m</h1>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/TreatmentsPage.test.tsx:186:25
+    184|     );
+    185|     show();
+    186|     expect(await screen.findByText(/2 Termine sind überfällig, 1 ist h…
+       |                         ^
+    187|   });
+    188|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-02 offene Behandlungen > US-BEH-02 asks with the time zone of the device and shows a load error with a reload
+TestingLibraryElementError: Unable to find role="button" and name `/Neu laden/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung planen[0m
+        [36m</h1>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung planen[0m
+        [36m</h1>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/TreatmentsPage.test.tsx:194:25
+    192|     );
+    193|     show();
+    194|     expect(await screen.findByRole("button", { name: /Neu laden/ })).t…
+       |                         ^
+    195|     const asked = fetchFn.mock.calls.map(([url]) => String(url));
+    196|     expect(asked.some((u) => u.includes("/treatments?timeZone="))).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-02 offene Behandlungen > US-BEH-02 reloads the list after planning, so the new date shows at once
+TestingLibraryElementError: Unable to find an element with the text: Keine offenen Behandlungen.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung planen[0m
+        [36m</h1>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung planen[0m
+        [36m</h1>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/TreatmentsPage.test.tsx:211:18
+    209|     const user = userEvent.setup();
+    210|     show();
+    211|     await screen.findByText("Keine offenen Behandlungen.");
+       |                  ^
+    212|     await user.click(await screen.findByRole("checkbox", { name: "Boge…
+    213|     await user.type(screen.getByLabelText("Grund"), "Wollläuse");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 5 passed (10)
+   Start at  08:35:05
+   Duration  6.42s (tests 88%, environment 6%, transform 4%, import 2%)
+

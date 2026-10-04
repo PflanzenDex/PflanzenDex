@@ -72,14 +72,27 @@ function Treatment({ card }: { card: SpecimenCard }) {
   );
 }
 
+function Action(props: { text: string; aria: string; on: () => void }) {
+  return (
+    <button type="button" className="secondary" aria-label={props.aria} onClick={props.on}>
+      {props.text}
+    </button>
+  );
+}
+
 /** A specimen card (US-BES-06): state and need for action at a glance, from derived data only. */
 export function SpecimenCardView(props: {
   card: SpecimenCard;
   onMeasure?: ((e: { id: string; name: string }) => void) | undefined;
   /** Opens the archiving (US-BES-07). */
   onArchive?: ((e: { id: string; name: string }) => void) | undefined;
+  /** Repots a cutting (US-BES-04); only cuttings get the button. */
+  onRepot?: ((e: { id: string; name: string }) => void) | undefined;
+  /** Gives the specimen a marker or changes it (US-BES-03). */
+  onMark?: ((e: SpecimenCard) => void) | undefined;
 }) {
-  const { card, onMeasure, onArchive } = props;
+  const { card, onMeasure, onArchive, onRepot, onMark } = props;
+  const repot = card.status === "cutting" ? onRepot : undefined;
   return (
     <li className="specimen-card">
       <Photo card={card} />
@@ -91,27 +104,27 @@ export function SpecimenCardView(props: {
       <p className="quiet">Standort: {card.location ?? UNKNOWN}</p>
       <Measurement card={card} />
       <Treatment card={card} />
-      {(onMeasure || onArchive) && (
+      {(onMeasure || onArchive || repot || onMark) && (
         <div className="actions">
           {onMeasure && (
-            <button
-              type="button"
-              className="secondary"
-              aria-label={`Messen: ${card.name}`}
-              onClick={() => onMeasure(card)}
-            >
-              Messen
-            </button>
+            <Action text="Messen" aria={`Messen: ${card.name}`} on={() => onMeasure(card)} />
+          )}
+          {repot && (
+            <Action text="Eingetopft" aria={`Eingetopft: ${card.name}`} on={() => repot(card)} />
+          )}
+          {onMark && (
+            <Action
+              text="Kennzeichen"
+              aria={`Kennzeichen ändern: ${card.name}`}
+              on={() => onMark(card)}
+            />
           )}
           {onArchive && (
-            <button
-              type="button"
-              className="secondary"
-              aria-label={`Archivieren: ${card.name}`}
-              onClick={() => onArchive(card)}
-            >
-              Archivieren
-            </button>
+            <Action
+              text="Archivieren"
+              aria={`Archivieren: ${card.name}`}
+              on={() => onArchive(card)}
+            />
           )}
         </div>
       )}

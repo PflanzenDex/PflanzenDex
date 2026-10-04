@@ -20,6 +20,7 @@ const GATE_FILES = [
   /^app\/tsconfig\.base\.json$/,
   /^app\/\.prettier(rc\.json|ignore)$/,
   /^app\/scripts\/check-[a-z-]+\.mjs$/,
+  /^app\/scripts\/merge-pr(\.test)?\.mjs$/,
   /^app\/packages\/[^/]+\/(vitest\.config\.ts|tsconfig\.json)$/,
 ];
 
@@ -31,7 +32,7 @@ export function isGateFile(relativePath) {
 const FORBIDDEN_COMMANDS = [
   [/--no-verify\b/, "Skipping git hooks is not allowed for agents (US-QG-07). Fix the failing check instead."],
   [/\bgit\s+commit\b[^|;&]*\s-[a-zA-Z]*n[a-zA-Z]*\b/, "`git commit -n` skips the hooks (US-QG-07)."],
-  [/\bgh\s+pr\s+merge\b/, "Agents never merge pull requests; a human approves and merges (ADR 0001)."],
+  [/\bgh\s+pr\s+merge\b/, "Do not call `gh pr merge` directly; use `make merge PR=<n>`, which checks the conditions of ADR 0005."],
   [/\bgit\s+push\b[^|;&]*\s(origin\s+)?(\S+:)?(main|dev)(?![\w/.-])/, "Never push to `main` or `dev`; open a pull request (E-13)."],
   [/\bgit\s+push\b[^|;&]*\s(--force|-f)\b(?!-)/, "Plain force pushes are not allowed; use --force-with-lease on your own feature branch."],
   [/\bgit\s+config\b[^|;&]*\bcore\.hooksPath\b/, "Changing core.hooksPath disables the git hooks; use `make hooks`."],

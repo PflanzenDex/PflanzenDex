@@ -9,6 +9,7 @@ import type {
   MeasurementSource,
   OpenTreatment,
 } from "./cards-types";
+import { cuttingLight } from "./cutting-light";
 import { speciesDisplayName } from "./name";
 import { isActive, type SpeciesSource, type SpecimenStore, type SpecimenRow } from "./types";
 
@@ -82,15 +83,22 @@ export async function specimenCards(
   const speciesNames = new Map(
     speciesIds.map((id, i) => [id, species[i] ? speciesDisplayName(species[i]) : null] as const),
   );
+  // A cutting stands under cutting light, wherever its location lies otherwise (US-BES-04).
+  const cuttingZone = cuttingLight(zones)?.name ?? null;
   const card = (z: SpecimenRow): SpecimenCard => {
     const location = locations.find((s) => s.id === z.locationId);
     return {
       id: z.id,
       name: z.name,
+      speciesId: z.speciesId,
+      marker: z.marker,
       speciesName: speciesNames.get(z.speciesId) ?? null,
       status: z.status,
       location: location?.name ?? null,
-      lightZone: zones.find((l) => l.id === location?.lightZoneId)?.name ?? null,
+      lightZone:
+        z.status === "cutting"
+          ? cuttingZone
+          : (zones.find((l) => l.id === location?.lightZoneId)?.name ?? null),
       caughtAt: z.caughtAt,
       ...measurementDisplay(measurements.get(z.id)),
       ...treatmentDisplay(treatments.get(z.id) ?? [], today),

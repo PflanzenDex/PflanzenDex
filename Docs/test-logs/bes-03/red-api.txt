@@ -1,0 +1,157 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex.worktrees/bes-03/app/packages/api
+
+ ❯ src/collection/markers.test.ts (8 tests | 8 failed) 722ms
+   ❯ US-BES-03 naming rule via the API (2)
+     × 1st plain, 2nd needs a marker (409 marker_required), 3rd asks for the missing marker before saving 134ms
+     × a duplicate marker (case-insensitive) is 409 marker_taken, nothing changes 90ms
+   ❯ US-BES-03 rename via the API (6)
+     × gives a marker; the id stays and a read by the old id shows the new name 58ms
+     × empty or duplicate marker: error, nothing changed 85ms
+     × an archived specimen is not renamed (409 specimen.archived) 71ms
+     × two accounts: the other account's specimen looks unknown (404) and stays unchanged (P-04) 57ms
+     × an answer for a foreign specimen when creating the third one is 404 and changes nothing 138ms
+     × POST /specimens/00000000-0000-4000-8000-000000000001/marker without token: 401; without Idempotency-Key: 400 4ms
+ ❯ src/collection/specimens.test.ts (14 tests | 1 failed) 727ms
+   ❯ US-BES-02 create and view specimen (8)
+     × if the name exists, the answer is 409 and nothing changes; with a marker "Species – marker" is created 94ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 naming rule via the API > 1st plain, 2nd needs a marker (409 marker_required), 3rd asks for the missing marker before saving
+AssertionError: expected { status: 409, …(1) } to match object { status: 409, …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "body": {
+      "error": {
+-       "code": "specimen.marker_required",
++       "code": "specimen.name_taken",
+      },
+    },
+    "status": 409,
+  }
+
+ ❯ src/collection/markers.test.ts:91:22
+     89|
+     90|     const noMarker = await create(subA, { speciesId });
+     91|     expect(noMarker).toMatchObject({
+       |                      ^
+     92|       status: 409,
+     93|       body: { error: { code: "specimen.marker_required" } },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 naming rule via the API > a duplicate marker (case-insensitive) is 409 marker_taken, nothing changes
+AssertionError: expected { status: 409, …(1) } to match object { status: 409, …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "body": {
+      "error": {
+-       "code": "specimen.marker_taken",
++       "code": "specimen.name_taken",
+      },
+    },
+    "status": 409,
+  }
+
+ ❯ src/collection/markers.test.ts:131:17
+    129|     const before = await list(subA);
+    130|     const dup = await create(subA, { speciesId, marker: "ROT" });
+    131|     expect(dup).toMatchObject({ status: 409, body: { error: { code: "s…
+       |                 ^
+    132|     expect(await list(subA)).toEqual(before);
+    133|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 rename via the API > gives a marker; the id stays and a read by the old id shows the new name
+ FAIL  src/collection/markers.test.ts > US-BES-03 rename via the API > empty or duplicate marker: error, nothing changed
+ FAIL  src/collection/markers.test.ts > US-BES-03 rename via the API > an archived specimen is not renamed (409 specimen.archived)
+ FAIL  src/collection/markers.test.ts > US-BES-03 rename via the API > two accounts: the other account's specimen looks unknown (404) and stays unchanged (P-04)
+ FAIL  src/collection/markers.test.ts > US-BES-03 rename via the API > POST /specimens/00000000-0000-4000-8000-000000000001/marker without token: 401; without Idempotency-Key: 400
+SyntaxError: Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 rename via the API > an answer for a foreign specimen when creating the third one is 404 and changes nothing
+AssertionError: expected { status: 201, body: { …(11) } } to match object { status: 404, …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "body": {
+-     "error": {
+-       "code": "specimen.not_found",
+-     },
++     "archivedAt": null,
++     "archivedReason": null,
++     "caughtAt": "2026-10-03",
++     "id": "2c918ea6-082a-4f3a-8eca-95b596dec209",
++     "locationId": null,
++     "marker": "b",
++     "measurements": [],
++     "name": "Peperomia aenjpcjaoo – b",
++     "speciesId": "65eb7768-7fc8-4e01-bdaf-898aa0d12ddd",
++     "status": "plant",
++     "treatments": [],
+    },
+-   "status": 404,
++   "status": 201,
+  }
+
+ ❯ src/collection/markers.test.ts:211:15
+    209|       markers: [{ specimenId: foreign, marker: "x" }],
+    210|     });
+    211|     expect(r).toMatchObject({ status: 404, body: { error: { code: "spe…
+       |               ^
+    212|     expect((await call(subB, "GET", `/specimens/${foreign}`)).body).to…
+    213|       marker: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/collection/specimens.test.ts > US-BES-02 create and view specimen > if the name exists, the answer is 409 and nothing changes; with a marker "Species – marker" is created
+AssertionError: expected { status: 409, …(1) } to match object { status: 409, …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "body": {
+      "error": {
+-       "code": "specimen.marker_required",
++       "code": "specimen.name_taken",
+      },
+    },
+    "status": 409,
+  }
+
+ ❯ src/collection/specimens.test.ts:155:23
+    153|     const first = await create(subA, { speciesId });
+    154|     const duplicate = await create(subA, { speciesId });
+    155|     expect(duplicate).toMatchObject({
+       |                       ^
+    156|       status: 409,
+    157|       body: { error: { code: "specimen.marker_required" } },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+
+ Test Files  2 failed | 4 passed (6)
+      Tests  9 failed | 51 passed (60)
+   Start at  01:30:16
+   Duration  1.65s (tests 60%, transform 31%, import 9%)
+
+  Transform  transforming modules took 2.36s · 31% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

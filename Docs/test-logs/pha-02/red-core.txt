@@ -1,0 +1,76 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex.worktrees/pha-02/app/packages/core
+
+ ❯ src/care/phase-order.test.ts (6 tests | 3 failed) 21ms
+   ❯ US-PHA-02 deviation of a row (3)
+     × US-PHA-02 deviation = the location id differs from the target location id 5ms
+     × US-PHA-02 a specimen without a location is its own warning, not a deviation 1ms
+   ❯ US-PHA-02 deviations first (3)
+     × US-PHA-02 rows with a deviation come before rows without, by name inside each group 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/care/phase-order.test.ts > US-PHA-02 deviation of a row > US-PHA-02 deviation = the location id differs from the target location id
+AssertionError: expected 'in_place' to be 'deviation' // Object.is equality
+
+Expected: "deviation"
+Received: "in_place"
+
+ ❯ src/care/phase-order.test.ts:59:71
+     57| describe("US-PHA-02 deviation of a row", () => {
+     58|   it("US-PHA-02 deviation = the location id differs from the target lo…
+     59|     expect(phaseStatus({ locationId: WARM, targetLocationId: COLD })).…
+       |                                                                       ^
+     60|     expect(phaseStatus({ locationId: COLD, targetLocationId: COLD })).…
+     61|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/care/phase-order.test.ts > US-PHA-02 deviation of a row > US-PHA-02 a specimen without a location is its own warning, not a deviation
+AssertionError: expected 'in_place' to be 'location_missing' // Object.is equality
+
+Expected: "location_missing"
+Received: "in_place"
+
+ ❯ src/care/phase-order.test.ts:68:71
+     66|
+     67|   it("US-PHA-02 a specimen without a location is its own warning, not …
+     68|     expect(phaseStatus({ locationId: null, targetLocationId: COLD })).…
+       |                                                                       ^
+     69|     expect(phaseStatus({ locationId: null, targetLocationId: null })).…
+     70|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/care/phase-order.test.ts > US-PHA-02 deviations first > US-PHA-02 rows with a deviation come before rows without, by name inside each group
+AssertionError: expected [ 'A am Soll', 'B falsch', …(3) ] to deeply equal [ 'B falsch', 'E falsch', …(3) ]
+
+- Expected
++ Received
+
+  [
++   "A am Soll",
+    "B falsch",
+-   "E falsch",
+    "C ohne Standort",
+-   "A am Soll",
+    "D am Soll",
++   "E falsch",
+  ]
+
+ ❯ src/care/phase-order.test.ts:82:32
+     80|       { name: "E falsch", location: WARM },
+     81|     ]);
+     82|     expect(await names(store)).toEqual([
+       |                                ^
+     83|       "B falsch",
+     84|       "E falsch",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed (6)
+   Start at  06:23:20
+   Duration  297ms (transform 77%, import 12%, tests 9%, worker 1%)
+

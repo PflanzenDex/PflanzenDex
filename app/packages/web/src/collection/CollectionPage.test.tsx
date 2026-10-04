@@ -30,6 +30,8 @@ const specimen = (extra: Partial<Specimen> = {}): Specimen => ({
 const cardFrom = (e: Specimen): SpecimenCard => ({
   id: e.id,
   name: e.name,
+  speciesId: e.speciesId,
+  marker: e.marker,
   speciesName: "Bogenhanf",
   status: e.status,
   location: e.locationId === "s1" ? "Regal Süd" : null,

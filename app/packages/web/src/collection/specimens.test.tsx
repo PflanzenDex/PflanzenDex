@@ -68,6 +68,7 @@ describe('US-BES-02 form "Create specimen"', () => {
     renderToString(
       <CreateForm
         species={species}
+        siblings={[]}
         locations={locations}
         onSend={async () => null}
         onCancel={vi.fn()}

@@ -7,7 +7,7 @@ function notCounted(n: NotCounted): string | null {
   const share = [
     n.cuttingLight > 0 && `${n.cuttingLight} unter Stecklingslicht`,
     n.archived > 0 && `${n.archived} archiviert`,
-    n.zoneUnknown > 0 && `${n.zoneUnknown} mit unbekannter Zone`,
+    n.zoneUnknown > 0 && `${n.zoneUnknown} mit unbekannter Zone (siehe Hinweise)`,
   ].filter(Boolean);
   return share.length === 0 ? null : `Nicht mitgezählt: ${share.join(", ")}.`;
 }

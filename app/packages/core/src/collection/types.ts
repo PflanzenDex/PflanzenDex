@@ -46,20 +46,54 @@ export interface Specimen extends SpecimenRow {
   readonly treatments: readonly never[];
 }
 
+/** At creation only these two statuses are possible; without a value `plant` applies (US-BES-04). */
+export const CREATE_STATUS = ["plant", "cutting"] as const;
+export type CreateStatus = (typeof CREATE_STATUS)[number];
+
 export type SpecimenValues = Pick<
   SpecimenRow,
   "speciesId" | "name" | "marker" | "locationId" | "caughtAt"
->;
+> & { readonly status?: CreateStatus };
+
+/**
+ * An existing specimen that receives its marker together with a new one (US-BES-03: from the third specimen on every
+ * specimen has a marker). `name` is the new name per DM-BES-03.
+ */
+export interface MarkerAssignment {
+  readonly specimenId: string;
+  readonly name: string;
+  readonly marker: string;
+}
+
+/** One specimen and the location it is set to (US-PHA-03). */
+export interface LocationAssignment {
+  readonly specimenId: string;
+  readonly locationId: string;
+}
 
 /** Every call applies only to the account `userId` (P-04). The name is unique per account (case-insensitive). */
 export interface SpecimenStore {
   list(userId: string): Promise<readonly SpecimenRow[]>;
   find(userId: string, id: string): Promise<SpecimenRow | null>;
-  /** All or nothing; with a taken name or a foreign location nothing is written (FR-BES-03). */
+  /**
+   * All or nothing; with a taken name, a taken marker (per species, case-insensitive), a foreign location or an
+   * unknown specimen in `assignments` nothing is written (FR-BES-03, US-BES-03). The `assignments` are written in
+   * the same transaction as the new specimen.
+   */
   create(
     userId: string,
     values: SpecimenValues,
-  ): Promise<SpecimenRow | "name_taken" | "location_unknown">;
+    assignments?: readonly MarkerAssignment[],
+  ): Promise<SpecimenRow | "name_taken" | "marker_taken" | "location_unknown" | "specimen_unknown">;
+  /**
+   * Sets marker and name of one specimen in one statement (US-BES-03); the ID and everything else stay. An archived
+   * specimen stays unchanged (its name stays taken, US-BES-07); a taken marker or name changes nothing.
+   */
+  mark(
+    userId: string,
+    id: string,
+    values: { readonly name: string; readonly marker: string },
+  ): Promise<SpecimenRow | "not_found" | "archived" | "name_taken" | "marker_taken">;
   /**
    * Sets status, date and reason in one statement (US-BES-07). An already archived specimen stays unchanged, so that
    * date and reason of the first archiving are not overwritten (P-10).
@@ -70,6 +104,18 @@ export interface SpecimenStore {
     reason: string,
     date: string,
   ): Promise<SpecimenRow | "not_found" | "already_archived">;
+  /** A cutting becomes a plant (US-BES-04); any other specimen stays unchanged and reports `not_a_cutting`. */
+  repot(userId: string, id: string): Promise<SpecimenRow | "not_found" | "not_a_cutting">;
+  /**
+   * Sets the location of one or several active specimens in one transaction (US-PHA-03, BES-08). All or nothing: an
+   * unknown or foreign specimen answers `specimen_unknown`, an archived one `archived`, a location of another account
+   * `location_unknown`, and nothing is written. Setting the location a specimen already has is a plain no-op, so the
+   * call is idempotent (US-QS-03). The rows come back in the order of `assignments`.
+   */
+  setLocations(
+    userId: string,
+    assignments: readonly LocationAssignment[],
+  ): Promise<readonly SpecimenRow[] | "specimen_unknown" | "archived" | "location_unknown">;
   /** Restores the status from before the archiving and deletes date and reason (US-BES-07). */
   restore(userId: string, id: string): Promise<SpecimenRow | "not_found" | "not_archived">;
 }
@@ -86,4 +132,9 @@ export interface SpeciesSource {
  */
 export interface TargetLocationSource {
   targetLocation(userId: string, species: Species, today: string): Promise<string | null>;
+  /**
+   * Location of the growth phase, even when the species is in dormancy today (US-BES-04: this is where a cutting
+   * stands), or `null` for "unknown".
+   */
+  growthLocation(userId: string, species: Species): Promise<string | null>;
 }

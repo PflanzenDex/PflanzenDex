@@ -33,7 +33,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
 
     await expect(page.getByRole("heading", { level: 1, name: /^Messen: / })).toBeVisible();
     await expect(page.getByText("Was messen?")).toBeVisible();
-    await expect(page.getByText("RosetteDiameter.")).toBeVisible();
+    await expect(page.getByText("Rosettendurchmesser.")).toBeVisible();
     await expect(page.getByText("noch keine Messung").first()).toBeVisible();
     await expect(page.getByText("Trage oben den ersten Messwert ein.")).toBeVisible();
     await axeReport(page, info, "measure-empty");
