@@ -1,10 +1,13 @@
 import { appError, failed, localToday, isTimeZone, ok, type Result } from "../kernel";
 import type { SpeciesSource, SpecimenStore } from "../collection";
 import { carePhase, type CarePhase } from "./phase";
+import type { PhaseLocationSource } from "./phase-location";
 
 export interface PhasesDependencies {
   readonly specimens: Pick<SpecimenStore, "list">;
   readonly species: SpeciesSource;
+  /** Location per phase of the keeper (care profile, US-BES-09); until it exists nobody knows one (P-08). */
+  readonly targets: PhaseLocationSource;
   /** The clock comes from outside so that "today" is testable (NFR-08). */
   readonly clock: () => Date;
 }

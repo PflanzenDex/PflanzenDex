@@ -1,4 +1,4 @@
-import { carePhasesList } from "@pflanzendex/core";
+import { NO_PHASE_LOCATION, carePhasesList, type PhaseLocationSource } from "@pflanzendex/core";
 import { SpeciesPostgres, SpecimenPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
@@ -10,6 +10,8 @@ export const CARE_PHASES_PATHS = ["/care-phases"] as const;
 export type CarePhasesOptions = {
   /** The clock for "today" (NFR-08); tests pin it. */
   clock?: () => Date;
+  /** Location per phase of the keeper (care profile, US-BES-09); until it exists nobody knows one (P-08). */
+  phaseLocation?: PhaseLocationSource | undefined;
 };
 
 /**
@@ -20,6 +22,7 @@ export function carePhasesRoutes(pool: Pool, opt: CarePhasesOptions = {}): Hono<
   const deps = {
     specimens: new SpecimenPostgres(pool),
     species: new SpeciesPostgres(pool),
+    targets: opt.phaseLocation ?? NO_PHASE_LOCATION,
     clock: opt.clock ?? (() => new Date()),
   };
   const routes = new Hono<AuthEnv>();

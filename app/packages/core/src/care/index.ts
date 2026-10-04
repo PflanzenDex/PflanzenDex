@@ -16,5 +16,9 @@ export type {
 } from "./types";
 export { CARE_PHASES, monthTag, carePhase } from "./phase";
 export type { CarePhase } from "./phase";
+export { NO_PHASE_LOCATION } from "./phase-location";
+export type { PhaseLocationSource } from "./phase-location";
+export { phaseSwitchConfirm, MAX_SWITCH } from "./switch";
+export type { SwitchDependencies, SwitchedSpecimen } from "./switch";
 export { carePhasesList } from "./phases";
 export type { PhasesDependencies, PhasesRow } from "./phases";

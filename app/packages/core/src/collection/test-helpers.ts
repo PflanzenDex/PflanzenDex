@@ -4,6 +4,7 @@ import type {
   SpecimenStore,
   SpecimenValues,
   MarkerAssignment,
+  LocationAssignment,
   SpecimenRow,
 } from "./types";
 
@@ -159,12 +160,11 @@ export class InMemorySpecimens implements SpecimenStore {
     if (!z) return "not_found" as const;
     if (z.status === "archived") return "already_archived" as const;
     this.before.set(id, z.status);
-    const r = this.replace(userId, id, {
+    return this.replace(userId, id, {
       status: "archived",
       archivedAt: date,
       archivedReason: reason,
-    });
-    return r as SpecimenRow;
+    }) as SpecimenRow;
   }
 
   async repot(userId: string, id: string) {
@@ -174,16 +174,26 @@ export class InMemorySpecimens implements SpecimenStore {
     return this.replace(userId, id, { status: "plant" }) as SpecimenRow;
   }
 
+  async setLocations(userId: string, assignments: readonly LocationAssignment[]) {
+    const rows = await Promise.all(assignments.map((a) => this.find(userId, a.specimenId)));
+    if (rows.includes(null)) return "specimen_unknown" as const;
+    if (rows.some((z) => z?.status === "archived")) return "archived" as const;
+    const known = (id: string) => this.locations[userId]?.includes(id);
+    if (!assignments.every((a) => known(a.locationId))) return "location_unknown" as const;
+    const set = (a: LocationAssignment) =>
+      this.replace(userId, a.specimenId, { locationId: a.locationId }) as SpecimenRow;
+    return assignments.map(set);
+  }
+
   async restore(userId: string, id: string) {
     const z = await this.find(userId, id);
     if (!z) return "not_found" as const;
     if (z.status !== "archived") return "not_archived" as const;
-    const r = this.replace(userId, id, {
+    return this.replace(userId, id, {
       status: this.before.get(id) ?? "plant",
       archivedAt: null,
       archivedReason: null,
-    });
-    return r as SpecimenRow;
+    }) as SpecimenRow;
   }
 }
 

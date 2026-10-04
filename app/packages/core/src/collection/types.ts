@@ -65,6 +65,12 @@ export interface MarkerAssignment {
   readonly marker: string;
 }
 
+/** One specimen and the location it is set to (US-PHA-03). */
+export interface LocationAssignment {
+  readonly specimenId: string;
+  readonly locationId: string;
+}
+
 /** Every call applies only to the account `userId` (P-04). The name is unique per account (case-insensitive). */
 export interface SpecimenStore {
   list(userId: string): Promise<readonly SpecimenRow[]>;
@@ -100,6 +106,16 @@ export interface SpecimenStore {
   ): Promise<SpecimenRow | "not_found" | "already_archived">;
   /** A cutting becomes a plant (US-BES-04); any other specimen stays unchanged and reports `not_a_cutting`. */
   repot(userId: string, id: string): Promise<SpecimenRow | "not_found" | "not_a_cutting">;
+  /**
+   * Sets the location of one or several active specimens in one transaction (US-PHA-03, BES-08). All or nothing: an
+   * unknown or foreign specimen answers `specimen_unknown`, an archived one `archived`, a location of another account
+   * `location_unknown`, and nothing is written. Setting the location a specimen already has is a plain no-op, so the
+   * call is idempotent (US-QS-03). The rows come back in the order of `assignments`.
+   */
+  setLocations(
+    userId: string,
+    assignments: readonly LocationAssignment[],
+  ): Promise<readonly SpecimenRow[] | "specimen_unknown" | "archived" | "location_unknown">;
   /** Restores the status from before the archiving and deletes date and reason (US-BES-07). */
   restore(userId: string, id: string): Promise<SpecimenRow | "not_found" | "not_archived">;
 }

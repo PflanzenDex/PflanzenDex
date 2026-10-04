@@ -62,6 +62,15 @@ export function idField(field: string) {
     typeof value === "string" && ID.test(value) ? value.toLowerCase() : invalid(field);
 }
 
+/** A list of 1 to `max` UUIDs (lowercase); the same ID twice counts once, the order of first appearance stays. */
+export function idListField(field: string, max: number) {
+  return (value: unknown): string[] | ErrorDetail => {
+    if (!Array.isArray(value) || value.length < 1 || value.length > max) return invalid(field);
+    const ids = value.map((id) => (isId(id) ? id.toLowerCase() : null));
+    return ids.every((id) => id !== null) ? [...new Set(ids)] : invalid(field);
+  };
+}
+
 /** Lowercase letters and underscores, e.g. `species`. */
 export function identifierField(field: string, max: number) {
   return (value: unknown): string | ErrorDetail =>

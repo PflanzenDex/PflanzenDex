@@ -30,6 +30,10 @@ export const ERROR_TEXTS = {
   "specimen.not_archived": "Dieses Exemplar ist nicht archiviert.",
   "specimen.archived":
     "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her, dann kannst du damit arbeiten.",
+  "care.no_phase":
+    "Dieses Exemplar hat keine Pflegephase (Steckling oder Art ohne Ruhephasen-Zeitraum) und wird nicht umgestellt.",
+  "care.target_unknown":
+    "Für dieses Exemplar ist noch kein Soll-Standort bekannt. Weise den Standort stattdessen selbst zu.",
   "location.name_taken": "Einen Standort mit diesem Namen gibt es schon.",
   "location.not_found": "Diesen Standort gibt es nicht.",
   "light_zone.name_taken": "Eine Lichtzone mit diesem Namen gibt es schon.",

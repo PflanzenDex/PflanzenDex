@@ -151,6 +151,15 @@ export class SpecimenPostgres {
     return this.change(userId, { sql, parameter: [id, date, reason] }, "already_archived");
   }
 
+  async setLocations(
+    userId: string,
+    assignments: readonly { readonly specimenId: string; readonly locationId: string }[],
+  ): Promise<readonly SpecimenRow[] | "specimen_unknown" | "archived" | "location_unknown"> {
+    void userId;
+    void assignments;
+    throw new Error("not implemented");
+  }
+
   /** Resets the status from before the archiving (without statement: plant) and deletes date and reason. */
   async restore(userId: string, id: string): Promise<SpecimenRow | "not_found" | "not_archived"> {
     const sql = `update specimen set status = coalesce(status_before_archived, 'plant'), status_before_archived = null,

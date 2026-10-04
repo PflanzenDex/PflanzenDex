@@ -9,6 +9,7 @@ export {
   integerField,
   isId,
   idField,
+  idListField,
   shape,
   orNull,
   textField,

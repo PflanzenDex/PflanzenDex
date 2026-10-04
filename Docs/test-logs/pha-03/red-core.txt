@@ -1,0 +1,469 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex.worktrees/pha-03/app/packages/core
+
+ ❯ src/care/phases.test.ts (8 tests | 1 failed) 37ms
+   ❯ US-PHA-01 Phase eines Exemplars (8)
+     × US-PHA-03 the target location is the one of the keeper for today's phase (list and switch agree) 10ms
+ ❯ src/collection/locate.test.ts (9 tests | 5 failed) 16ms
+   ❯ US-PHA-03 set the location of a specimen (9)
+     × US-PHA-03: a specimen without a location gets the chosen one, everything else stays 6ms
+     × US-PHA-03: a cutting can be placed too, it stays a cutting (US-BES-04) 2ms
+     × US-PHA-03: an archived specimen stays unchanged and reports specimen.archived (US-BES-07) 2ms
+     × US-PHA-03: a foreign specimen looks like an unknown one (P-04) 1ms
+     × US-PHA-03: a location of another account is refused and nothing is written (P-04) 1ms
+ ❯ src/care/switch.test.ts (17 tests | 14 failed) 36ms
+   ❯ US-PHA-03 confirm the move with a tap (17)
+     × US-PHA-03: 'moved now' sets the location to the target of today's phase and returns the new state 19ms
+     × US-PHA-03: the phase decides the target, in July the growth location applies 2ms
+     × US-PHA-03: 'today' is the local calendar date, not the UTC date (NFR-08) 1ms
+     × US-PHA-03: the location is never taken from the input, extra fields are dropped 1ms
+     × US-PHA-03: several specimens are confirmed in one step, each to the target of its own species 1ms
+     × US-PHA-03: confirming again with a new key changes nothing and reports changed=false (idempotent, US-QS-03) 1ms
+     × US-PHA-03: one specimen that cannot be switched stops the whole step, nothing is written 2ms
+     × US-PHA-03: a species without dormancy period has no phase (care.no_phase) 2ms
+     × US-PHA-03: an unknown target location is refused, never invented (P-08) 1ms
+     × US-PHA-03: an archived specimen is not switched and reports specimen.archived (US-BES-07) 1ms
+     × US-PHA-03: a foreign or unknown specimen looks the same and stays untouched (P-04) 1ms
+     × US-PHA-03: a target of another account is refused by the store and nothing is written (P-04) 1ms
+     × US-PHA-03: the same ID twice counts once 1ms
+     × US-PHA-03: the list and the BES-08 hints agree with the switch afterwards 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/care/phases.test.ts > US-PHA-01 Phase eines Exemplars > US-PHA-03 the target location is the one of the keeper for today's phase (list and switch agree)
+AssertionError: expected { …(6) } to match object { Object (targetLocationId) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "targetLocationId": "66666666-6666-4666-8666-666666666666",
++   "targetLocationId": null,
+  }
+
+ ❯ src/care/phases.test.ts:125:44
+    123|     ]);
+    124|     const dormant = await list(e, "anna", "2026-12-01T12:00:00Z", "UTC…
+    125|     expect(dormant.ok && dormant.value[0]).toMatchObject({ targetLocat…
+       |                                            ^
+    126|     const growing = await list(e, "anna", "2026-07-01T12:00:00Z", "UTC…
+    127|     expect(growing.ok && growing.value[0]).toMatchObject({ targetLocat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/20]⎯
+
+ FAIL  src/care/switch.test.ts > US-PHA-03 confirm the move with a tap > US-PHA-03: 'moved now' sets the location to the target of today's phase and returns the new state
+AssertionError: expected false to deeply equal { specimens: [ { …(3) } ] }
+
+- Expected:
+{
+  "specimens": [
+    {
+      "changed": true,
+      "locationId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "specimenId": "00000000-0000-4000-8000-000000000001",
+    },
+  ],
+}
+
++ Received:
+false
+
+ ❯ src/care/switch.test.ts:97:29
+     95|     const z = await create("anna", "Bogenhanf", WINTER, { locationId: …
+     96|     const r = await confirm([z.id]);
+     97|     expect(r.ok && r.value).toEqual({
+       |                             ^
+     98|       specimens: [{ specimenId: z.id, locationId: COLD, changed: true …
+     99|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/20]⎯
+
+ FAIL  src/care/switch.test.ts > US-PHA-03 confirm the move with a tap > US-PHA-03: the phase decides the target, in July the growth location applies
+AssertionError: expected false to match object { …(2) }
+
+- Expected:
+{
+  "changed": true,
+  "locationId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+}
+
++ Received:
+false
+
+ ❯ src/care/switch.test.ts:106:42
+    104|     const z = await create("anna", "Bogenhanf", WINTER, { locationId: …
+    105|     const r = await confirm([z.id], { now: JULY });
+    106|     expect(r.ok && r.value.specimens[0]).toMatchObject({ locationId: L…
+       |                                          ^
+    107|   });
+    108|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/20]⎯
+
+ FAIL  src/care/switch.test.ts > US-PHA-03 confirm the move with a tap > US-PHA-03: 'today' is the local calendar date, not the UTC date (NFR-08)
+AssertionError: expected false to be 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' // Object.is equality
+
+- Expected:
+"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+
++ Received:
+false
+
+ ❯ src/care/switch.test.ts:114:64
+    112|     const now = "2026-10-31T23:30:00Z";
+    113|     const berlin = await confirm([z.id], { now, zone: "Europe/Berlin" …
+    114|     expect(berlin.ok && berlin.value.specimens[0]?.locationId).toBe(CO…
+       |                                                                ^
+    115|     const utc = await confirm([z.id], { now, zone: "UTC" });
+    116|     expect(utc.ok && utc.value.specimens[0]).toMatchObject({ locationI…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/20]⎯
+
+ FAIL  src/care/switch.test.ts > US-PHA-03 confirm the move with a tap > US-PHA-03: the location is never taken from the input, extra fields are dropped
+AssertionError: expected false to be 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' // Object.is equality
+
+- Expected:
+"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+
++ Received:
+false
+
+ ❯ src/care/switch.test.ts:130:54
+    128|       },
+    129|     );
+    130|     expect(r.ok && r.value.specimens[0]?.locationId).toBe(COLD);
+       |                                                      ^
+    131|   });
+    132|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/20]⎯
+
+ FAIL  src/care/switch.test.ts > US-PHA-03 confirm the move with a tap > US-PHA-03: several specimens are confirmed in one step, each to the target of its own species
+AssertionError: expected false to deeply equal [ { …(3) }, { …(3) }, { …(3) } ]
+
+- Expected:
+[
+  {
+    "changed": true,
+    "locationId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "specimenId": "00000000-0000-4000-8000-000000000001",
+  },
+  {
+    "changed": false,
+    "locationId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "specimenId": "00000000-0000-4000-8000-000000000002",
+  },
+  {
+    "changed": true,
+    "locationId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "specimenId": "00000000-0000-4000-8000-000000000003",
+  },
+]
+
++ Received:
+false
+
+ ❯ src/care/switch.test.ts:138:39
+    136|     const c = await create("anna", "Zweiter Bogenhanf", WINTER, { loca…
+    137|     const r = await confirm([a.id, b.id, c.id]);
+    138|     expect(r.ok && r.value.specimens).toEqual([
+       |                                       ^
+    139|       { specimenId: a.id, locationId: COLD, changed: true },
+    140|       { specimenId: b.id, locationId: LIVING, changed: false },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/20]⎯
+
+ FAIL  src/care/switch.test.ts > US-PHA-03 confirm the move with a tap > US-PHA-03: confirming again with a new key changes nothing and reports changed=false (idempotent, US-QS-03)
+AssertionError: expected false to deeply equal [ { …(3) } ]
+
+- Expected:
+[
+  {
+    "changed": false,
+    "locationId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "specimenId": "00000000-0000-4000-8000-000000000001",
+  },
+]
+
++ Received:
+false
+
+ ❯ src/care/switch.test.ts:150:47
+    148|     await confirm([z.id]);
+    149|     const again = await confirm([z.id]);
+    150|     expect(again.ok && again.value.specimens).toEqual([
+       |                                               ^
+    151|       { specimenId: z.id, locationId: COLD, changed: false },
+    152|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/20]⎯
+
+ FAIL  src/care/switch.test.ts > US-PHA-03 confirm the move with a tap > US-PHA-03: one specimen that cannot be switched stops the whole step, nothing is written
+AssertionError: expected { ok: false, error: { …(2) } } to match object { ok: false, error: { …(2) } }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "error": {
+-     "code": "care.no_phase",
+-     "data": {
+-       "specimenId": "00000000-0000-4000-8000-000000000002",
+-     },
++     "code": "system.unexpected",
+    },
+    "ok": false,
+  }
+
+ ❯ src/care/switch.test.ts:170:15
+    168|     const before = specimens.writes;
+    169|     const r = await confirm([plant.id, cutting.id]);
+    170|     expect(r).toMatchObject({
+       |               ^
+    171|       ok: false,
+    172|       error: { code: "care.no_phase", data: { specimenId: cutting.id }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/20]⎯
+
+ FAIL  src/care/switch.test.ts > US-PHA-03 confirm the move with a tap > US-PHA-03: a species without dormancy period has no phase (care.no_phase)
+AssertionError: expected 'system.unexpected' to be 'care.no_phase' // Object.is equality
+
+Expected: "care.no_phase"
+Received: "system.unexpected"
+
+ ❯ src/care/switch.test.ts:181:35
+    179|     const z = await create("anna", "Efeutute", WITHOUT);
+    180|     const r = await confirm([z.id]);
+    181|     expect(!r.ok && r.error.code).toBe("care.no_phase");
+       |                                   ^
+    182|   });
+    183|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/20]⎯
+
+ FAIL  src/care/switch.test.ts > US-PHA-03 confirm the move with a tap > US-PHA-03: an unknown target location is refused, never invented (P-08)
+AssertionError: expected { ok: false, error: { …(2) } } to match object { ok: false, error: { …(2) } }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "error": {
+-     "code": "care.target_unknown",
+-     "data": {
+-       "specimenId": "00000000-0000-4000-8000-000000000001",
+-     },
++     "code": "system.unexpected",
+    },
+    "ok": false,
+  }
+
+ ❯ src/care/switch.test.ts:187:15
+    185|     const z = await create("anna", "Bogenhanf", WINTER, { locationId: …
+    186|     const r = await confirm([z.id], { source: new PhaseLocationStub({}…
+    187|     expect(r).toMatchObject({
+       |               ^
+    188|       ok: false,
+    189|       error: { code: "care.target_unknown", data: { specimenId: z.id }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/20]⎯
+
+ FAIL  src/care/switch.test.ts > US-PHA-03 confirm the move with a tap > US-PHA-03: an archived specimen is not switched and reports specimen.archived (US-BES-07)
+AssertionError: expected { ok: false, error: { …(2) } } to match object { ok: false, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "error": {
+-     "code": "specimen.archived",
++     "code": "system.unexpected",
+    },
+    "ok": false,
+  }
+
+ ❯ src/care/switch.test.ts:198:15
+    196|     await specimens.archive("anna", z.id, "eingegangen", "2026-10-01");
+    197|     const r = await confirm([z.id]);
+    198|     expect(r).toMatchObject({ ok: false, error: { code: "specimen.arch…
+       |               ^
+    199|     expect(await place("anna", z.id)).toBe(LIVING);
+    200|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/20]⎯
+
+ FAIL  src/care/switch.test.ts > US-PHA-03 confirm the move with a tap > US-PHA-03: a foreign or unknown specimen looks the same and stays untouched (P-04)
+AssertionError: expected 'system.unexpected' to be 'specimen.not_found' // Object.is equality
+
+Expected: "specimen.not_found"
+Received: "system.unexpected"
+
+ ❯ src/care/switch.test.ts:206:37
+    204|     for (const id of [foreign.id, UNKNOWN_ID]) {
+    205|       const r = await confirm([id]);
+    206|       expect(!r.ok && r.error.code).toBe("specimen.not_found");
+       |                                     ^
+    207|     }
+    208|     expect(await place("ben", foreign.id)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/20]⎯
+
+ FAIL  src/care/switch.test.ts > US-PHA-03 confirm the move with a tap > US-PHA-03: a target of another account is refused by the store and nothing is written (P-04)
+AssertionError: expected 'system.unexpected' to be 'location.not_found' // Object.is equality
+
+Expected: "location.not_found"
+Received: "system.unexpected"
+
+ ❯ src/care/switch.test.ts:215:35
+    213|     const wrong = new PhaseLocationStub({ anna: { [WINTER]: { dormancy…
+    214|     const r = await confirm([z.id], { source: wrong });
+    215|     expect(!r.ok && r.error.code).toBe("location.not_found");
+       |                                   ^
+    216|     expect(await place("anna", z.id)).toBe(LIVING);
+    217|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/20]⎯
+
+ FAIL  src/care/switch.test.ts > US-PHA-03 confirm the move with a tap > US-PHA-03: the same ID twice counts once
+AssertionError: expected false to have property 'length'
+ ❯ src/care/switch.test.ts:234:39
+    232|     const z = await create("anna", "Bogenhanf", WINTER, { locationId: …
+    233|     const r = await confirm([z.id, z.id.toUpperCase()]);
+    234|     expect(r.ok && r.value.specimens).toHaveLength(1);
+       |                                       ^
+    235|   });
+    236|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/20]⎯
+
+ FAIL  src/care/switch.test.ts > US-PHA-03 confirm the move with a tap > US-PHA-03: the list and the BES-08 hints agree with the switch afterwards
+AssertionError: expected false to match object { …(2) }
+
+- Expected:
+{
+  "changed": true,
+  "locationId": "00000000-0000-4000-8000-000000000001",
+}
+
++ Received:
+false
+
+ ❯ src/care/switch.test.ts:261:42
+    259|
+    260|     const r = await confirm([z.id], { source });
+    261|     expect(r.ok && r.value.specimens[0]).toMatchObject({ locationId: l…
+       |                                          ^
+    262|
+    263|     const list = await carePhasesList(deps(DECEMBER, source), "anna", …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/20]⎯
+
+ FAIL  src/collection/locate.test.ts > US-PHA-03 set the location of a specimen > US-PHA-03: a specimen without a location gets the chosen one, everything else stays
+AssertionError: expected false to deeply equal { …(9) }
+
+- Expected:
+{
+  "archivedAt": null,
+  "archivedReason": null,
+  "caughtAt": "2026-09-01",
+  "id": "00000000-0000-4000-8000-000000000001",
+  "locationId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "marker": null,
+  "name": "Bogenhanf",
+  "speciesId": "11111111-1111-4111-8111-111111111111",
+  "status": "plant",
+}
+
++ Received:
+false
+
+ ❯ src/collection/locate.test.ts:58:29
+     56|     const z = await create("anna", "Bogenhanf");
+     57|     const r = await locate(z.id, LOC_A);
+     58|     expect(r.ok && r.value).toEqual({ ...z, locationId: LOC_A });
+       |                             ^
+     59|   });
+     60|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/20]⎯
+
+ FAIL  src/collection/locate.test.ts > US-PHA-03 set the location of a specimen > US-PHA-03: a cutting can be placed too, it stays a cutting (US-BES-04)
+AssertionError: expected false to match object { status: 'cutting', …(1) }
+
+- Expected:
+{
+  "locationId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "status": "cutting",
+}
+
++ Received:
+false
+
+ ❯ src/collection/locate.test.ts:64:29
+     62|     const z = await create("anna", "Steckling", { status: "cutting" });
+     63|     const r = await locate(z.id, LOC_B);
+     64|     expect(r.ok && r.value).toMatchObject({ status: "cutting", locatio…
+       |                             ^
+     65|   });
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/20]⎯
+
+ FAIL  src/collection/locate.test.ts > US-PHA-03 set the location of a specimen > US-PHA-03: an archived specimen stays unchanged and reports specimen.archived (US-BES-07)
+AssertionError: expected 'system.unexpected' to be 'specimen.archived' // Object.is equality
+
+Expected: "specimen.archived"
+Received: "system.unexpected"
+
+ ❯ src/collection/locate.test.ts:89:35
+     87|     const before = specimens.writes;
+     88|     const r = await locate(z.id, LOC_A);
+     89|     expect(!r.ok && r.error.code).toBe("specimen.archived");
+       |                                   ^
+     90|     expect(specimens.writes).toBe(before);
+     91|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/20]⎯
+
+ FAIL  src/collection/locate.test.ts > US-PHA-03 set the location of a specimen > US-PHA-03: a foreign specimen looks like an unknown one (P-04)
+AssertionError: expected 'system.unexpected' to be 'specimen.not_found' // Object.is equality
+
+Expected: "specimen.not_found"
+Received: "system.unexpected"
+
+ ❯ src/collection/locate.test.ts:96:35
+     94|     const foreign = await create("ben", "Bens Pflanze", { locationId: …
+     95|     const r = await locate(foreign.id, LOC_A);
+     96|     expect(!r.ok && r.error.code).toBe("specimen.not_found");
+       |                                   ^
+     97|     expect((await specimens.find("ben", foreign.id))?.locationId).toBe…
+     98|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/20]⎯
+
+ FAIL  src/collection/locate.test.ts > US-PHA-03 set the location of a specimen > US-PHA-03: a location of another account is refused and nothing is written (P-04)
+AssertionError: expected 'system.unexpected' to be 'location.not_found' // Object.is equality
+
+Expected: "location.not_found"
+Received: "system.unexpected"
+
+ ❯ src/collection/locate.test.ts:104:35
+    102|     const before = specimens.writes;
+    103|     const r = await locate(z.id, LOC_BEN);
+    104|     expect(!r.ok && r.error.code).toBe("location.not_found");
+       |                                   ^
+    105|     expect(specimens.writes).toBe(before);
+    106|     expect((await specimens.find("anna", z.id))?.locationId).toBeNull(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/20]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  20 failed | 14 passed (34)
+   Start at  02:25:55
+   Duration  357ms (transform 71%, tests 14%, import 13%, worker 2%)
+

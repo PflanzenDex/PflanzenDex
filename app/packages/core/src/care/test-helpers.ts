@@ -1,6 +1,27 @@
 import type { SpeciesSource, SpecimenStore, SpecimenRow } from "../collection";
 import type { Species, GrowthMeasure } from "../catalog";
 import type { MeasurementStore, MeasurementValues, MeasurementRow } from "./types";
+import type { CarePhase } from "./phase";
+import type { PhaseLocationSource } from "./phase-location";
+
+/**
+ * Locations per account, species and phase for tests only (the real source is the care profile, US-BES-09).
+ * `calls` shows which phases were asked, so tests can check that the phase comes from the local date.
+ */
+export class PhaseLocationStub implements PhaseLocationSource {
+  readonly calls: { userId: string; speciesId: string; phase: CarePhase }[] = [];
+
+  constructor(
+    private readonly table: Readonly<
+      Record<string, Partial<Record<string, Partial<Record<CarePhase, string>>>>>
+    >,
+  ) {}
+
+  async phaseLocation(userId: string, speciesId: string, phase: CarePhase) {
+    this.calls.push({ userId, speciesId, phase });
+    return this.table[userId]?.[speciesId]?.[phase] ?? null;
+  }
+}
 
 /** Specimens per account (tests of `care` only, no product code); each has the species `species-1`. */
 export class SpecimenStub implements Pick<SpecimenStore, "find"> {

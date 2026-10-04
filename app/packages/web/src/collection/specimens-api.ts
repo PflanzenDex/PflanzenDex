@@ -43,6 +43,24 @@ export async function repotSpecimen(
   return r.ok ? { ok: true, value: r.value as Specimen } : r;
 }
 
+/**
+ * Sets the location of a specimen from the own locations (US-PHA-03, BES-08 "Standort fehlt"). The location is chosen
+ * from a list, never typed. The repeat-guard key is created per call.
+ */
+export async function setSpecimenLocation(
+  api: string,
+  token: string,
+  input: { id: string; locationId: string },
+  fetchFn: FetchFn = fetch,
+): Promise<Response<Specimen>> {
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/specimens/${encodeURIComponent(input.id)}/location`,
+    { locationId: input.locationId },
+  );
+  return r.ok ? { ok: true, value: r.value as Specimen } : r;
+}
+
 /** Gives a specimen a marker or changes it (US-BES-03). The repeat-guard key is created per call. */
 export async function markSpecimen(
   api: string,

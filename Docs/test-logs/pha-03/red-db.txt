@@ -1,0 +1,98 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex.worktrees/pha-03/app/packages/db
+
+ ❯ src/collection/set-locations.test.ts (6 tests | 6 failed) 450ms
+   ❯ US-PHA-03 set locations in the database (6)
+     × US-PHA-03 sets the location of several specimens in one call and returns the rows in order 19ms
+     × US-PHA-03 setting the location it already has is a plain no-op (idempotent) 8ms
+     × US-PHA-03 an unknown specimen undoes the whole call 8ms
+     × US-PHA-03 an archived specimen is refused and keeps its location 17ms
+     × US-PHA-03, P-04 a location of another account is refused by the composite foreign key 8ms
+     × US-PHA-03, P-04 another account neither sees nor changes the specimen 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/set-locations.test.ts > US-PHA-03 set locations in the database > US-PHA-03 sets the location of several specimens in one call and returns the rows in order
+Error: not implemented
+ ❯ SpecimenPostgres.setLocations src/collection/specimens.ts:160:11
+    158|     void userId;
+    159|     void assignments;
+    160|     throw new Error("not implemented");
+       |           ^
+    161|   }
+    162|
+ ❯ src/collection/set-locations.test.ts:55:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/collection/set-locations.test.ts > US-PHA-03 set locations in the database > US-PHA-03 setting the location it already has is a plain no-op (idempotent)
+Error: not implemented
+ ❯ SpecimenPostgres.setLocations src/collection/specimens.ts:160:11
+    158|     void userId;
+    159|     void assignments;
+    160|     throw new Error("not implemented");
+       |           ^
+    161|   }
+    162|
+ ❯ src/collection/set-locations.test.ts:71:36
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/collection/set-locations.test.ts > US-PHA-03 set locations in the database > US-PHA-03 an unknown specimen undoes the whole call
+Error: not implemented
+ ❯ SpecimenPostgres.setLocations src/collection/specimens.ts:160:11
+    158|     void userId;
+    159|     void assignments;
+    160|     throw new Error("not implemented");
+       |           ^
+    161|   }
+    162|
+ ❯ src/collection/set-locations.test.ts:78:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/collection/set-locations.test.ts > US-PHA-03 set locations in the database > US-PHA-03 an archived specimen is refused and keeps its location
+Error: not implemented
+ ❯ SpecimenPostgres.setLocations src/collection/specimens.ts:160:11
+    158|     void userId;
+    159|     void assignments;
+    160|     throw new Error("not implemented");
+       |           ^
+    161|   }
+    162|
+ ❯ src/collection/set-locations.test.ts:90:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/collection/set-locations.test.ts > US-PHA-03 set locations in the database > US-PHA-03, P-04 a location of another account is refused by the composite foreign key
+Error: not implemented
+ ❯ SpecimenPostgres.setLocations src/collection/specimens.ts:160:11
+    158|     void userId;
+    159|     void assignments;
+    160|     throw new Error("not implemented");
+       |           ^
+    161|   }
+    162|
+ ❯ src/collection/set-locations.test.ts:99:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/collection/set-locations.test.ts > US-PHA-03 set locations in the database > US-PHA-03, P-04 another account neither sees nor changes the specimen
+Error: not implemented
+ ❯ SpecimenPostgres.setLocations src/collection/specimens.ts:160:11
+    158|     void userId;
+    159|     void assignments;
+    160|     throw new Error("not implemented");
+       |           ^
+    161|   }
+    162|
+ ❯ src/collection/set-locations.test.ts:108:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  02:26:01
+   Duration  681ms (tests 75%, transform 19%, import 6%)
+
