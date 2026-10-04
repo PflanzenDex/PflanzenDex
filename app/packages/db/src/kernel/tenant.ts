@@ -49,6 +49,8 @@ export async function asAccount<T>(
   // No `finally`: after an error the transaction is aborted and rolled back by the caller; a restore query would
   // only hide the original error.
   const result = await body();
-  await client.query("select set_config('app.account_id', $1, true)", [before.rows[0]?.id ?? ""]);
+  await client.query("select set_config('app.account_id', $1, true)", [
+    (before.rows[0] as { id: string }).id,
+  ]);
   return result;
 }

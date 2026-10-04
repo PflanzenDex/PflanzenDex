@@ -11,7 +11,7 @@ const SPECIMENS: SpeciesRepointer = {
         "update specimen set species_id = $1 where species_id = $2 and account_id = $3",
         [r.toSpeciesId, r.fromSpeciesId, r.creatorId],
       );
-      return { moved: moved.rowCount ?? 0, kept: 0 };
+      return { moved: Number(moved.rowCount), kept: 0 };
     }),
 };
 
@@ -33,7 +33,7 @@ const CARE_PROFILES: SpeciesRepointer = {
         "select count(*)::int as n from care_profile where species_id = $1 and account_id = $2",
         [r.fromSpeciesId, r.creatorId],
       );
-      return { moved: moved.rowCount ?? 0, kept: kept.rows[0]?.n ?? 0 };
+      return { moved: Number(moved.rowCount), kept: (kept.rows[0] as { n: number }).n };
     }),
 };
 
