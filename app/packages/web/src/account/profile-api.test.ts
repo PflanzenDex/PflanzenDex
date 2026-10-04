@@ -57,7 +57,7 @@ describe("US-ACC-02 profile API client", () => {
 });
 
 describe("US-ACC-02 time zone of all dates (NFR-08)", () => {
-  it("is the device's until the profile has one", () => {
+  it("is the device's when no profile time zone is set", () => {
     expect(currentTimeZone()).toBe(deviceTimeZone());
   });
 

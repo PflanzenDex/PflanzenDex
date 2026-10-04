@@ -18,7 +18,7 @@ export interface ArchiveDependencies {
   readonly clock: () => Date;
 }
 
-// For now the device sends the time zone (the profile has none yet, US-ACC-02); it determines "today".
+// The time zone comes from the profile (US-ACC-02), with the device zone as fallback; it determines "today".
 const schema = shape({
   specimenId: idField("specimenId"),
   timeZone: timeZoneField("timeZone"),

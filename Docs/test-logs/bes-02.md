@@ -43,7 +43,7 @@ Note: the code was renamed to English after this test (e.g. table `exemplar` is 
 
 - ✅ Tests (`datum.test.ts`, `anlegen.test.ts`): the same moment 23:30 UTC yields the 3rd in Berlin, the 2nd of October in New York; the clock change on 2026-03-29 shifts nothing; the database delivers the date as text, even with a deviating `TZ` of the server.
 - ✅ By hand (API with a real token): `Pacific/Kiritimati` yields `2026-10-04`, UTC was still the 3rd; an unknown time zone is rejected with `eingabe.ungueltig`.
-- ⚠️ For now the device sends the time zone with every creation; the profile has none yet (US-ACC-02).
+- ⚠️ For now the device sends the time zone with every creation; the profile has none yet (US-ACC-02). (Update 2026-10-04: since US-ACC-02 the profile has a time zone; the device zone is only the fallback.)
 
 ## 3. Criterion: the name is fixed before saving; duplicate
 
