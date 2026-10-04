@@ -15,7 +15,7 @@ export interface LightOverviewRow {
   readonly speciesName: string;
   readonly lightDemandLux: number;
   readonly position: PositionRecommendation;
-  readonly zoneName: string;
+  readonly zone: LightZone;
 }
 
 export interface LightOverview {
@@ -70,8 +70,17 @@ export async function lightOverview(deps: Dependencies, userId: string): Promise
       zones,
     );
 
-    // Extract zone name (always exists, worst case "unbekannt")
-    const zoneName = derivation.kind === "zone" ? derivation.zone.name : "unbekannt";
+    // Extract zone (always exists, worst case use a fallback)
+    const zone =
+      derivation.kind === "zone"
+        ? derivation.zone
+        : {
+            id: "unknown",
+            name: "unbekannt",
+            luxCeiling: 0,
+            ppfd: null,
+            sortOrder: 999,
+          };
 
     // Create row with position recommendation
     rows.push({
@@ -79,7 +88,7 @@ export async function lightOverview(deps: Dependencies, userId: string): Promise
       speciesName: species.latinName,
       lightDemandLux: species.lightDemandLux,
       position: recommendPosition(species.lightDemandLux),
-      zoneName,
+      zone,
     });
   }
 
