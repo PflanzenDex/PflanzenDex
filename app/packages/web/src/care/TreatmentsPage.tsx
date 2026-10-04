@@ -1,6 +1,7 @@
 import "./care.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LoadError, SIGN_IN, type ApiError } from "../kernel";
+import { OpenTreatments } from "./open-treatments";
 import { TreatmentForm } from "./treatment-form";
 import { treatmentsPlannedText } from "./text";
 import {
@@ -34,7 +35,7 @@ function useSpecimens(api: string, token: Token, reload: number): Data {
 }
 
 /** One request at a time (a double tap sends one); a refusal stays visible, a success says what was planned. */
-function usePlanning(api: string, token: Token) {
+function usePlanning(api: string, token: Token, onPlanned: () => void) {
   const busy = useRef(false);
   const [running, setRunning] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -50,25 +51,32 @@ function usePlanning(api: string, token: Token) {
       setRunning(false);
       setError(r.ok ? null : r.error);
       setMessage(r.ok ? treatmentsPlannedText(r.value) : null);
+      if (r.ok) onPlanned();
       return r.ok;
     },
-    [api, token],
+    [api, token, onPlanned],
   );
   return { running, message, error, send };
 }
 
 /**
- * Plan treatments (US-BEH-01): the form for one date or a course. Every view says what to do next (P-09): without a
- * specimen it points to the collection, after saving to the cards where the next date shows.
+ * Treatments: the open dates by urgency (US-BEH-02) and the form to plan new ones, one date or a course (US-BEH-01).
+ * Every view says what to do next (P-09): without a specimen it points to the collection, after saving the list above
+ * shows the new date.
  */
 export function TreatmentsPage(props: { api: string; token: Token }) {
   const [reload, setReload] = useState(0);
+  // The list of open treatments loads again after every successful plan (US-BEH-02).
+  const [planned, setPlanned] = useState(0);
   const data = useSpecimens(props.api, props.token, reload);
-  const planning = usePlanning(props.api, props.token);
+  const onPlanned = useCallback(() => setPlanned((n) => n + 1), []);
+  const planning = usePlanning(props.api, props.token, onPlanned);
   return (
     <div className="light treatments">
       <section aria-labelledby="treatments-title">
-        <h1 id="treatments-title">Behandlung planen</h1>
+        <h1 id="treatments-title">Behandlung</h1>
+        <OpenTreatments api={props.api} token={props.token} version={planned} />
+        <h2>Behandlung planen</h2>
         {data.kind === "loading" && <p role="status">Exemplare werden geladen …</p>}
         {data.kind === "error" && (
           <LoadError error={data.error} onReload={() => setReload((n) => n + 1)} />

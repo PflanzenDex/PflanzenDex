@@ -80,3 +80,20 @@
 .treatments .form {
   grid-template-columns: 1fr;
 }
+
+/* Open treatments (US-BEH-02): the status is text first; the left border only underlines overdue and due today. */
+.open-treatments {
+  margin: 0 0 28px;
+}
+.open-treatments .status-text {
+  margin: 8px 0 0;
+  font-weight: 700;
+}
+.open-treatments .treatment-overdue,
+.open-treatments .treatment-today {
+  border-left: 6px solid var(--warn-rand);
+  background: var(--warn-grund);
+}
+.open-treatments .hint {
+  margin: 0 0 12px;
+}
