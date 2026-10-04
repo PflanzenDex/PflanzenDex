@@ -41,3 +41,69 @@
 .caught-card .catch-date {
   font-size: 0.875rem;
 }
+/* Search, filter, sort (US-POK-08): the chosen filter has a visible marker (check mark, bold), not only aria-pressed. */
+.browse {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+.browse label {
+  display: grid;
+  gap: 4px;
+}
+.browse input,
+.browse select {
+  min-height: 48px;
+  padding: 0 12px;
+  font: inherit;
+  color: inherit;
+  background: var(--card);
+  border: 1px solid var(--rand);
+  border-radius: 12px;
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.filter {
+  min-height: 48px;
+  padding: 0 16px;
+  font: inherit;
+  color: inherit;
+  background: var(--card);
+  border: 1px solid var(--rand);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.filter.selected {
+  font-weight: 700;
+  border-width: 2px;
+}
+.filter.selected::before {
+  content: "✓ ";
+}
+.filter:disabled {
+  cursor: not-allowed;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+.hint {
+  margin: 0;
+}
+.family h2 {
+  margin: 8px 0;
+  font-size: 1.125rem;
+}
+.family-toggle {
+  min-height: 48px;
+  padding: 0 12px;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--rand);
+  border-radius: 12px;
+  cursor: pointer;
+}

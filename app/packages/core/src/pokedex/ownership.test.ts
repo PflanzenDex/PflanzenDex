@@ -58,6 +58,10 @@ describe("US-POK-06 ownership derived from the specimens", () => {
         chips: [],
         specimenCount: 1,
         caughtDate: { date: "2026-10-01", source: "created_at" },
+        germanName: "Bogenhanf",
+        familyLatin: null,
+        familyGerman: null,
+        genusSpeciesCount: null,
       },
     ]);
     expect(r.unidentified).toEqual([]);
@@ -92,6 +96,10 @@ describe("US-POK-06 ownership derived from the specimens", () => {
         chips: ["var. albispina"],
         specimenCount: 2,
         caughtDate: { date: "2026-10-01", source: "created_at" },
+        germanName: "Bogenhanf",
+        familyLatin: null,
+        familyGerman: null,
+        genusSpeciesCount: null,
       },
     ]);
   });
@@ -149,5 +157,52 @@ describe("US-POK-06 ownership derived from the specimens", () => {
     const before = specimens.writes;
     await pokedexOwnership(deps(), "anna", TZ);
     expect(specimens.writes).toBe(before);
+  });
+});
+
+describe("US-POK-08 data for search and grouping", () => {
+  it("US-POK-08 a caught species carries German name and family of its species; the genus species count is unknown (P-08)", async () => {
+    const ficus = "77777777-7777-4777-8777-777777777777";
+    const own = new SpeciesStub([
+      {
+        species: testSpecies(ficus, {
+          latinName: "Ficus lyrata",
+          germanName: "Geigenfeige",
+          familyLatin: "Moraceae",
+          familyGerman: "Maulbeergewächse",
+        }),
+      },
+    ]);
+    await add("anna", ficus);
+    const r = await pokedexOwnership({ specimens, species: own }, "anna", TZ);
+    expect(r.caught[0]).toMatchObject({
+      germanName: "Geigenfeige",
+      familyLatin: "Moraceae",
+      familyGerman: "Maulbeergewächse",
+      genusSpeciesCount: null,
+    });
+  });
+
+  it("US-POK-08 the German name of the plain species wins over a cultivar, whichever specimen comes first", async () => {
+    const plain = "88888888-8888-4888-8888-888888888888";
+    const named = "99999999-9999-4999-8999-999999999999";
+    const own = new SpeciesStub([
+      {
+        species: testSpecies(named, {
+          latinName: "Opuntia microdasys 'Albispina'",
+          germanName: "Sorte",
+        }),
+      },
+      {
+        species: testSpecies(plain, {
+          latinName: "Opuntia microdasys",
+          germanName: "Hasenöhrchen",
+        }),
+      },
+    ]);
+    await add("anna", named);
+    await add("anna", plain);
+    const r = await pokedexOwnership({ specimens, species: own }, "anna", TZ);
+    expect(r.caught[0]?.germanName).toBe("Hasenöhrchen");
   });
 });
