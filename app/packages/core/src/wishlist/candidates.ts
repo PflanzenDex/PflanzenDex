@@ -50,7 +50,7 @@ function priority(zone: ZoneStock | undefined, s: Standing): { kind: PriorityKin
     };
   return {
     kind: "other",
-    text: `Hier stehen schon ${plants(zone.count)}. Mehr Platz ist in ${s.leastNames.join(" und ")} (${plants(s.least)}).`,
+    text: `Hier ${zone.count === 1 ? "steht" : "stehen"} schon ${plants(zone.count)}. Mehr Platz ist in ${s.leastNames.join(" und ")} (${plants(s.least)}).`,
   };
 }
 
@@ -84,6 +84,14 @@ function byStock(zones: readonly ZoneStock[]) {
     a.id.localeCompare(b.id);
 }
 
+function nextActionFor(first: Candidate, zoneName: string): string {
+  if (first.priority.kind === "thinnest")
+    return `Besorge diese Pflanze zuerst: ${zoneName} hat am meisten Platz.`;
+  if (first.priority.kind === "tie")
+    return "Die Zonen sind gleich belegt: Beginne mit dem Wunsch ganz oben.";
+  return "Beginne mit dem Wunsch ganz oben: seine Zone ist unter deinen Wünschen am wenigsten belegt.";
+}
+
 function hintFor(list: readonly Candidate[]): CandidateList["hint"] {
   const first = list[0];
   if (!first)
@@ -98,10 +106,7 @@ function hintFor(list: readonly Candidate[]): CandidateList["hint"] {
     };
   return {
     text: `Als Nächstes dran: ${first.title} (${first.zoneText}).`,
-    nextAction:
-      first.priority.kind === "thinnest"
-        ? `Besorge diese Pflanze zuerst: ${first.zone.name} hat am meisten Platz.`
-        : "Beginne mit dem Wunsch ganz oben; die Zonen sind gleich belegt.",
+    nextAction: nextActionFor(first, first.zone.name),
   };
 }
 

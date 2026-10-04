@@ -136,6 +136,17 @@ describe("US-WUN-01 empty list and the next action (P-09)", () => {
     expect(list.hint.nextAction).not.toBe("");
   });
 
+  it("US-WUN-01 the next action never claims equal stock when the zones differ, and the grammar follows the count", async () => {
+    wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: Z3 });
+    stock = new ZoneStockStub({ anna: stockAnna(5, 1, 0) });
+    const { hint, candidates: list } = await candidates();
+    expect(list[0]?.priority.kind).toBe("other");
+    expect(list[0]?.priority.text).toContain("Hier steht schon 1 Pflanze");
+    expect(hint.nextAction).not.toContain("gleich belegt");
+    stock = new ZoneStockStub({ anna: stockAnna(2, 2, 2) });
+    expect((await candidates()).hint.nextAction).toContain("gleich belegt");
+  });
+
   it("US-WUN-01 a list with candidates names the first one to get and its zone", async () => {
     wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: Z3 });
     const { hint } = await candidates();
