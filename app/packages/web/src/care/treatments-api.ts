@@ -1,5 +1,5 @@
 import type { TreatmentListRow, TreatmentRow } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../kernel";
+import { call, createWrite, currentTimeZone, type Response } from "../kernel";
 
 type FetchFn = typeof fetch;
 
@@ -56,7 +56,7 @@ export async function completeTreatment(
   id: string,
   fetchFn: FetchFn = fetch,
 ): Promise<Response<TreatmentRow>> {
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = currentTimeZone();
   const r = await createWrite(api, token, fetchFn)(
     "POST",
     `/treatments/${encodeURIComponent(id)}/complete`,
@@ -88,7 +88,7 @@ export async function loadOpenTreatments(
   token: string,
   fetchFn: FetchFn = fetch,
 ): Promise<Response<readonly TreatmentListRow[]>> {
-  const timeZone = encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const timeZone = encodeURIComponent(currentTimeZone());
   const r = await call<{ treatments: TreatmentListRow[] }>(
     fetchFn,
     `${api}/treatments?timeZone=${timeZone}`,

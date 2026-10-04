@@ -66,6 +66,8 @@ function fakeServer(accountStatus = 200) {
       if (path === "/care-profiles") return response(200, { entries: [] });
       if (path === "/hints") return response(200, { hints: [] });
       if (path === "/specimens/hints") return response(200, { hints: SPECIMEN_HINTS });
+      if (path === "/specimens/light-overview") return response(200, { rows: [] });
+      if (path === "/specimens/difficulty") return response(200, { rows: [] });
       return response(404);
     }),
   );
@@ -103,10 +105,24 @@ describe("US-ACC-01 App", () => {
     expect(await screen.findByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
   });
 
-  it("signed in: starts in the catalog; the navigation switches between all four views", async () => {
+  it("US-ACC-03 signed in: starts on the start page with the guided onboarding for a new account", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     render(<App />);
+    expect(await screen.findByRole("heading", { name: "Wo stehen deine Pflanzen?" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Start" }).getAttribute("aria-current")).toBe("page");
+    await userEvent.click(screen.getByRole("button", { name: "Einstieg beenden" }));
+    expect(await screen.findByRole("heading", { name: "Start" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Art im Katalog wählen" }));
+    expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Arten" }).getAttribute("aria-current")).toBe("page");
+  });
+
+  it("signed in: the navigation switches between all views", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "Arten" }));
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
     const species = screen.getByRole("button", { name: "Arten" });
     expect(species.getAttribute("aria-current")).toBe("page");
@@ -138,6 +154,18 @@ describe("US-ACC-01 App", () => {
     );
   });
 
+  it("US-BES-05 the tab Artenvergleich opens the difficulty overview and says what to do without a species", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "Artenvergleich" }));
+    expect(await screen.findByRole("heading", { name: "Artenvergleich" })).toBeTruthy();
+    expect(screen.getByText(/Noch keine Art/)).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Artenvergleich" }).getAttribute("aria-current"),
+    ).toBe("page");
+  });
+
   it("US-BES-08 the tab Hinweise lists incomplete specimens and its action leads to the view that fixes it", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
@@ -154,6 +182,21 @@ describe("US-ACC-01 App", () => {
     ).toBe("page");
   });
 
+  it("US-LIC-03 the empty light overview offers the way to the collection by switching the tab", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "Standorte und Licht" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Zum Bestand" }));
+    expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Bestand" }).getAttribute("aria-current")).toBe(
+      "page",
+    );
+    expect(
+      screen.getByRole("button", { name: "Standorte und Licht" }).getAttribute("aria-current"),
+    ).toBeNull();
+  });
+
   it('choosing a species in the catalog leads to the form "Exemplar anlegen"; back leads to the catalog (US-BES-02)', async () => {
     vi.stubGlobal(
       "fetch",
@@ -161,6 +204,7 @@ describe("US-ACC-01 App", () => {
         const path = new URL(String(url)).pathname;
         if (path === "/account") return response(200, account);
         if (path === "/locations") return response(200, { locations: [] });
+        if (path === "/light-zones") return response(200, { zones: [] });
         if (path === "/specimens/cards") return response(200, { cards: [] });
         if (path === "/specimens/archived") return response(200, { archived: [] });
         if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
@@ -185,6 +229,7 @@ describe("US-ACC-01 App", () => {
     );
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "Arten" }));
     await userEvent.click(await screen.findByRole("button", { name: /Dracaena trifasciata/ }));
     await userEvent.click(await screen.findByRole("button", { name: "Diese Art wählen" }));
     expect(await screen.findByRole("heading", { name: "Exemplar anlegen" })).toBeTruthy();

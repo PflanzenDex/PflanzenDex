@@ -1,11 +1,10 @@
 import type { Specimen } from "@pflanzendex/core";
-import { createWrite, type Response } from "../kernel";
+import { createWrite, currentTimeZone, type Response } from "../kernel";
 
 type FetchFn = typeof fetch;
 
 /**
- * Creates a specimen. The device's time zone determines "today" for caught_at (NFR-08); the profile has none yet
- * (US-ACC-02). The repeat-guard key is created per call.
+ * Creates a specimen. The profile's time zone (US-ACC-02; the device's as fallback) determines "today" for caught_at (NFR-08). The repeat-guard key is created per call.
  */
 export async function createSpecimen(
   api: string,
@@ -17,10 +16,12 @@ export async function createSpecimen(
     markers?: { specimenId: string; marker: string }[];
     locationId?: string;
     status?: "cutting";
+    /** Back-dated catch date `YYYY-MM-DD` (FR-BES-04); without it the server uses today's local date. */
+    catchDate?: string;
   },
   fetchFn: FetchFn = fetch,
 ): Promise<Response<Specimen>> {
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = currentTimeZone();
   const r = await createWrite(api, token, fetchFn)("POST", "/specimens", {
     ...input,
     timeZone,

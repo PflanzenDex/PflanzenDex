@@ -13,6 +13,12 @@ export const ERROR_TEXTS = {
   "review.not_found": "Diesen Prüfvorgang gibt es nicht.",
   "review.status_invalid": "Dieser Vorgang ist schon entschieden.",
   "review.reason_missing": "Zum Zurückweisen gehört ein Grund, den der Ersteller sehen kann.",
+  "review.approval_incomplete":
+    "Die Art ist nicht vollständig genug zur Freigabe. Prüfe die fehlenden Angaben und Quellen.",
+  "review.merge_target_invalid":
+    "Mit dieser Art lässt sich der Vorschlag nicht zusammenführen. Wähle eine bereits freigegebene Art, die nicht der Vorschlag selbst ist.",
+  "review.merge_conflict":
+    "Das Zusammenführen ist nicht möglich, weil der Ersteller bei der Zielart schon ein Exemplar mit demselben Kennzeichen hat. Es wurde nichts geändert; lass ihn das Kennzeichen ändern oder gib den Vorschlag frei.",
   "species.duplicate":
     "Diese Art gibt es schon (gleicher Name oder Synonym). Wähle die vorhandene Art, statt eine zweite anzulegen.",
   "species.not_found": "Diese Art gibt es nicht.",
@@ -24,6 +30,8 @@ export const ERROR_TEXTS = {
     "Du hast schon ein Exemplar dieser Art. Gib dem neuen ein Kennzeichen, damit du die Töpfe unterscheiden kannst.",
   "specimen.markers_missing":
     "Ab dem dritten Exemplar braucht jedes Exemplar der Art ein Kennzeichen. Vergib die fehlenden Kennzeichen, dann wird gespeichert.",
+  "specimen.caught_in_future":
+    "Das Fangdatum liegt in der Zukunft. Wähle heute oder ein früheres Datum.",
   "specimen.not_found": "Dieses Exemplar gibt es nicht.",
   "specimen.not_a_cutting": "Dieses Exemplar ist kein Steckling und muss nicht eingetopft werden.",
   "specimen.already_archived": "Dieses Exemplar ist schon archiviert.",

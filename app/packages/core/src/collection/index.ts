@@ -11,7 +11,11 @@ export { cuttingLight } from "./cutting-light";
 export { careProfileUpdate } from "./care-profile";
 export type { CareProfileDependencies } from "./care-profile";
 export { careProfileView } from "./care-profile-view";
-export type { CareProfileEntry, CareProfileViewDependencies } from "./care-profile-view";
+export type {
+  CareProfileEntry,
+  CareProfileViewDependencies,
+  MergedSpeciesSource,
+} from "./care-profile-view";
 export { careProfileZoneUsage } from "./care-profile-zone-usage";
 export type { ZoneUsageDependencies } from "./care-profile-zone-usage";
 export { effectiveProfile, effectiveDormancy } from "./effective-profile";
@@ -40,6 +44,14 @@ export { NO_TARGET_LOCATION } from "./target-location";
 export { NO_TREATMENTS, NO_MEASUREMENTS, specimenCards, dueDate } from "./cards";
 export type { CardsDependencies } from "./cards";
 export { zoneDistribution } from "./distribution";
+export { lightOverview } from "./light-overview";
+export type { LightOverview, LightOverviewRow } from "./light-overview";
+export { difficultyOverview } from "./difficulty-overview";
+export type {
+  DifficultyDependencies,
+  DifficultyOverview,
+  DifficultyRow,
+} from "./difficulty-overview";
 export { specimenHints } from "./specimen-hints";
 export type { HintsDependencies, SpecimenHint } from "./specimen-hints";
 export type {

@@ -2,3 +2,5 @@
 export { CollectionPage } from "./CollectionPage";
 export { HintsPage } from "./HintsPage";
 export { CareProfilePage } from "./CareProfilePage";
+export { loadSpecimenCount } from "./cards-api";
+export { DifficultyPage } from "./DifficultyPage";

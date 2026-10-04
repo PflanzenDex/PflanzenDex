@@ -26,7 +26,7 @@ export type CarePhasesOptions = {
 
 /**
  * Care phases: the list (US-PHA-01) is read only, the phase is derived from the calendar on every request, never
- * stored (P-01). `timeZone` (IANA name, from the device for now, until the profile has one, US-ACC-02) determines
+ * stored (P-01). `timeZone` (IANA name, the profile's, US-ACC-02, device zone as fallback) determines
  * "today". "Moved now" (US-PHA-03) writes only through `care.confirm_switch` (P-03, with `Idempotency-Key`); the
  * target location is derived on the server, never taken from the request (FR-PHA-03).
  */

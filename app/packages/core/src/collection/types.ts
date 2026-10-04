@@ -22,6 +22,8 @@ export interface SpecimenRow {
   readonly status: SpecimenStatus;
   /** Lokales Kalenderdatum `JJJJ-MM-TT` (NFR-08). */
   readonly caughtAt: string | null;
+  /** Moment the specimen was created (ISO 8601, UTC); `null` if unknown. Source of the "≈" catch date (US-POK-07). */
+  readonly createdAt: string | null;
   /** Local calendar date of the archiving (NFR-08); `null` as long as the specimen is not archived (US-BES-07). */
   readonly archivedAt: string | null;
   /** Reason of the archiving (`received`, `given_away`, … or free); `null` as long as not archived. */
@@ -84,7 +86,14 @@ export interface SpecimenStore {
     userId: string,
     values: SpecimenValues,
     assignments?: readonly MarkerAssignment[],
-  ): Promise<SpecimenRow | "name_taken" | "marker_taken" | "location_unknown" | "specimen_unknown">;
+  ): Promise<
+    | SpecimenRow
+    | "name_taken"
+    | "marker_taken"
+    | "location_unknown"
+    | "specimen_unknown"
+    | "species_unknown"
+  >;
   /**
    * Sets marker and name of one specimen in one statement (US-BES-03); the ID and everything else stay. An archived
    * specimen stays unchanged (its name stays taken, US-BES-07); a taken marker or name changes nothing.

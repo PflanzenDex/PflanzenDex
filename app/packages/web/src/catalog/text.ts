@@ -18,6 +18,7 @@ export const STATUS: Record<Species["reviewStatus"], string> = {
   curated: "Kuratiert",
   reviewed: "Geprüft",
   rejected: "Zurückgewiesen",
+  merged: "Zusammengeführt",
 };
 
 export const lux = (n: number) => `${numberFormat.format(n)} Lux`;

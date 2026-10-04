@@ -1,12 +1,6 @@
 import type { Species } from "../catalog";
-import type {
-  SpeciesSource,
-  SpecimenStore,
-  SpecimenValues,
-  MarkerAssignment,
-  LocationAssignment,
-  SpecimenRow,
-} from "./types";
+import type { SpeciesSource, SpecimenStore, SpecimenValues, SpecimenRow } from "./types";
+import type { MarkerAssignment, LocationAssignment } from "./types";
 
 /** A complete species for tests of `collection` (test data only, no product code). */
 export const testSpecies = (id: string, extra: Partial<Species> = {}): Species => ({
@@ -120,6 +114,7 @@ export class InMemorySpecimens implements SpecimenStore {
       this.replace(userId, a.specimenId, { name: a.name, marker: a.marker });
     const row: SpecimenRow = {
       ...w,
+      createdAt: "2026-10-01T10:00:00Z",
       id: `00000000-0000-4000-8000-${String(this.rows.length + 1).padStart(12, "0")}`,
       status: w.status ?? "plant",
       archivedAt: null,

@@ -1,7 +1,7 @@
 // Guarded merge for agents (ADR 0005): `make merge PR=<n>`. Merges a pull request into `dev` with a squash merge
 // only if every condition holds; otherwise it names the failed ones and leaves the merge to a human.
 //   1. the PR is open, not a draft, and targets `dev` (never `main`: a release stays a human decision)
-//   2. the required check `ci-status` is green
+//   2. the newest `ci-status` run on the PR head commit is green (older, cancelled runs do not count)
 //   3. the PR names a story or requirement (US-/FR-/DM-/NFR-) that exists in Docs/PRODUCT-SPECS (the spec is written)
 //   4. the PR changes no gate file (workflows, rulesets, hooks, thresholds, `.claude/`, this script): a human decides
 import { execFileSync } from "node:child_process";
@@ -27,6 +27,26 @@ export function specIds(specDir) {
   return known;
 }
 
+/**
+ * The newest run of a check on the PR head commit. The rollup lists every run, so a re-run after a cancelled
+ * run yields two entries; the one that started last decides. On a tie the stricter (non-success) entry wins.
+ */
+export function latestCheck(rollup, name) {
+  const started = (c) => Date.parse(c.startedAt ?? c.completedAt ?? "") || 0;
+  const success = (c) => (c.conclusion ?? c.state) === "SUCCESS";
+  let latest;
+  for (const c of rollup ?? []) {
+    if ((c.name ?? c.context) !== name) continue;
+    if (
+      !latest ||
+      started(c) > started(latest) ||
+      (started(c) === started(latest) && success(latest) && !success(c))
+    )
+      latest = c;
+  }
+  return latest;
+}
+
 /** Problems that stop an agent from merging; empty means allowed. `pr` is the JSON of `gh pr view`. */
 export function problems(pr, known) {
   const out = [];
@@ -34,10 +54,12 @@ export function problems(pr, known) {
   if (pr.isDraft) out.push("the PR is a draft");
   if (pr.baseRefName !== "dev")
     out.push(`the base is \`${pr.baseRefName}\`; agents merge into \`dev\` only`);
-  const ci = (pr.statusCheckRollup ?? []).find((c) => (c.name ?? c.context) === "ci-status");
+  const ci = latestCheck(pr.statusCheckRollup, "ci-status");
   if (!ci) out.push("`ci-status` has not reported yet");
   else if ((ci.conclusion ?? ci.state) !== "SUCCESS")
-    out.push(`\`ci-status\` is ${ci.conclusion ?? ci.state}, not SUCCESS`);
+    out.push(
+      `\`ci-status\` is ${ci.conclusion || ci.state || ci.status || "unknown"}, not SUCCESS`,
+    );
   const ids = idsIn(`${pr.title}\n${pr.body ?? ""}`);
   if (!ids.some((id) => known.has(id)))
     out.push(

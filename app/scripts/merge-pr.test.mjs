@@ -66,3 +66,56 @@ test("US-DEV-02: a PR that changes a gate file is left to a human", () => {
   };
   assert.match(problems(gate, known)[0], /gate files.*ci\.yml.*merge-pr\.mjs/);
 });
+
+const run = (conclusion, startedAt, completedAt, status = "COMPLETED") => ({
+  name: "ci-status",
+  status,
+  conclusion,
+  startedAt,
+  completedAt,
+});
+const withRuns = (...runs) => ({ ...ok, statusCheckRollup: runs });
+
+test("US-DEV-02: a green re-run after a cancelled run on the same commit may be merged", () => {
+  const failedFirst = withRuns(
+    run("FAILURE", "2026-01-01T23:14:00Z", "2026-01-01T23:14:57Z"),
+    run("SUCCESS", "2026-01-01T23:15:00Z", "2026-01-01T23:16:41Z"),
+  );
+  assert.deepEqual(problems(failedFirst, known), []);
+  const reversedOrder = withRuns(...failedFirst.statusCheckRollup.toReversed());
+  assert.deepEqual(problems(reversedOrder, known), []);
+});
+
+test("US-DEV-02: a failing latest run stops the merge although an older run was green", () => {
+  const pr = withRuns(
+    run("SUCCESS", "2026-01-01T23:10:00Z", "2026-01-01T23:11:00Z"),
+    run("FAILURE", "2026-01-01T23:15:00Z", "2026-01-01T23:16:00Z"),
+  );
+  assert.match(problems(pr, known)[0], /FAILURE/);
+});
+
+test("US-DEV-02: only cancelled runs stop the merge", () => {
+  const pr = withRuns(
+    run("CANCELLED", "2026-01-01T23:10:00Z", "2026-01-01T23:11:00Z"),
+    run("CANCELLED", "2026-01-01T23:15:00Z", "2026-01-01T23:16:00Z"),
+  );
+  assert.match(problems(pr, known)[0], /CANCELLED/);
+});
+
+test("US-DEV-02: a pending latest run stops the merge although an older run was green", () => {
+  const pr = withRuns(
+    run("SUCCESS", "2026-01-01T23:10:00Z", "2026-01-01T23:11:00Z"),
+    run("", "2026-01-01T23:15:00Z", "0001-01-01T00:00:00Z", "IN_PROGRESS"),
+  );
+  assert.equal(problems(pr, known).length, 1);
+  assert.match(problems(pr, known)[0], /ci-status/);
+});
+
+test("US-DEV-02: other checks and a missing ci-status run do not count as green", () => {
+  const other = withRuns({
+    name: "lint",
+    conclusion: "SUCCESS",
+    startedAt: "2026-01-01T23:15:00Z",
+  });
+  assert.match(problems(other, known)[0], /not reported/);
+});

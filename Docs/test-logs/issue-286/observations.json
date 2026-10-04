@@ -1,0 +1,57 @@
+{
+  "desktop_type": "date",
+  "desktop_value": "2026-10-04",
+  "desktop_max": "2026-10-04",
+  "desktop_hint": "Voreingestellt ist heute. Hast du die Pflanze schon länger, trage hier ein früheres Datum ein; ein Datum in der Zukunft geht nicht.",
+  "axe_form_desktop": [],
+  "desktop_layout": {
+    "hscroll": false,
+    "small": [
+      "INPUT:cutting:24"
+    ]
+  },
+  "desktop_errorText": "Das Fangdatum liegt in der Zukunft. Wähle heute oder ein früheres Datum.",
+  "desktop_ariaInvalid": "true",
+  "desktop_describedby": "catch-date-hint catch-date-error",
+  "desktop_focused": "catch-date",
+  "desktop_border": "2px rgb(179, 38, 30)",
+  "desktop_keptValue": "2999-01-01",
+  "axe_refused_desktop": [],
+  "desktop_created": "Exemplar „Aloe aaceee“ ist angelegt. Der Standort ist unbekannt, denn ein Soll-Standort steht erst mit den Pflegephasen fest.",
+  "desktop_pokedex": "Start\nArten\nBestand\nBehandlung\nHinweise\nPflegephasen\nPflegeprofil\nArtenvergleich\nPokédex\nStandorte und Licht\nKonto\nEinstellungen\nPokédex\n\n1 Art gefangen\n\nSuche (Art, deutscher Name, Gattung, Familie)\nAlle\nGefangen\nFehlend\nArtenarm\n\nFehlende Arten zeigt der Pokédex erst, wenn der Artenkatalog aufgebaut ist; bis dahin ist „Fehlend“ nicht verfügbar.\n\n„Artenarm“ braucht die Artenzahl der Gattungen, die noch fehlt, und ist deshalb noch nicht verfügbar.\n\nSortierung\nAlphabetisch\nFamilie\nFangdatum\nArtenzahl\nAloe aaceee\nAloe\ngefangen 03.02.2022\n1 Exemplar\nVersion unbekannt",
+  "mobile_type": "date",
+  "mobile_value": "2026-10-04",
+  "mobile_max": "2026-10-04",
+  "mobile_hint": "Voreingestellt ist heute. Hast du die Pflanze schon länger, trage hier ein früheres Datum ein; ein Datum in der Zukunft geht nicht.",
+  "axe_form_mobile": [],
+  "mobile_layout": {
+    "hscroll": false,
+    "small": [
+      "INPUT:cutting:24"
+    ]
+  },
+  "mobile_errorText": "Das Fangdatum liegt in der Zukunft. Wähle heute oder ein früheres Datum.",
+  "mobile_ariaInvalid": "true",
+  "mobile_describedby": "catch-date-hint catch-date-error",
+  "mobile_focused": "catch-date",
+  "mobile_border": "2px rgb(179, 38, 30)",
+  "mobile_keptValue": "2999-01-01",
+  "axe_refused_mobile": [],
+  "mobile_created": "Exemplar „Ficus aaceee“ ist angelegt. Der Standort ist unbekannt, denn ein Soll-Standort steht erst mit den Pflegephasen fest.",
+  "mobile_pokedex": "Start\nArten\nBestand\nBehandlung\nHinweise\nPflegephasen\nPflegeprofil\nArtenvergleich\nPokédex\nStandorte und Licht\nKonto\nEinstellungen\nPokédex\n\n2 Arten gefangen\n\nSuche (Art, deutscher Name, Gattung, Familie)\nAlle\nGefangen\nFehlend\nArtenarm\n\nFehlende Arten zeigt der Pokédex erst, wenn der Artenkatalog aufgebaut ist; bis dahin ist „Fehlend“ nicht verfügbar.\n\n„Artenarm“ braucht die Artenzahl der Gattungen, die noch fehlt, und ist deshalb noch nicht verfügbar.\n\nSortierung\nAlphabetisch\nFamilie\nFangdatum\nArtenzahl\nAloe aaceee\nAloe\ngefangen 03.02.2022\n1 Exemplar\nFicus aaceee\nFicus\ngefangen 03.02.2022\n1 Exemplar\nVersion unbekannt",
+  "specimens": [
+    {
+      "name": "Aloe aaceee",
+      "caughtAt": "2022-02-03"
+    },
+    {
+      "name": "Ficus aaceee",
+      "caughtAt": "2022-02-03"
+    },
+    {
+      "name": "Hoya aaceee",
+      "caughtAt": "2026-10-04"
+    }
+  ],
+  "other": 0
+}

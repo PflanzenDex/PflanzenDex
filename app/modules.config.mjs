@@ -30,7 +30,9 @@ const MODULES = [
     epics: ["BES"],
     tables: ["species", "species_name", "species_version", "review_case"],
     dependsOn: ["kernel"],
-    ports: [],
+    // SpeciesRepointer (db): the merge of a proposal re-points the references of higher modules; each of them
+    // implements the port for its own tables (US-BES-10), the API composes them.
+    ports: ["SpeciesRepointer"],
   },
   {
     name: "light",

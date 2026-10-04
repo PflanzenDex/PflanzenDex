@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { localToday, MEASUREMENT_LIMITS } from "@pflanzendex/core";
-import type { ApiError } from "../kernel";
+import { currentTimeZone, type ApiError } from "../kernel";
 import { checkInput } from "./input";
 import type { MeasurementInput } from "./measurements-api";
 import { QUALITY_NAME } from "./text";
@@ -50,7 +50,7 @@ export function MeasureForm(props: {
   unit: string;
   onSend: (input: MeasurementInput) => Promise<ApiError | null>;
 }) {
-  const today = localToday(new Date(), Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const today = localToday(new Date(), currentTimeZone());
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   async function send(e: FormEvent<HTMLFormElement>) {

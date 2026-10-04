@@ -1,0 +1,132 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-issue-286-back-date-the-catch/app/packages/api
+
+ ❯ src/collection/specimens.test.ts (18 tests | 3 failed) 1244ms
+   ❯ US-BES-02 create and view specimen (12)
+     × US-BES-02 a back-dated catch date is stored and read back; the Pokédex shows it as the exact catch date (FR-BES-04, US-POK-07) 57ms
+     × US-BES-02 a catch date after the keeper's local today is 400 specimen.caught_in_future, measured in the keeper's zone, nothing written 47ms
+     × US-BES-02 an impossible or malformed catch date is 400 input.invalid on the field catchDate 51ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/specimens.test.ts > US-BES-02 create and view specimen > US-BES-02 a back-dated catch date is stored and read back; the Pokédex shows it as the exact catch date (FR-BES-04, US-POK-07)
+AssertionError: expected { status: 201, body: { …(12) } } to match object { status: 201, …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "body": {
+-     "caughtAt": "2022-02-03",
++     "caughtAt": "2026-10-03",
+    },
+    "status": 201,
+  }
+
+ ❯ src/collection/specimens.test.ts:154:15
+    152|     const speciesId = await newSpecies(subA, `Haworthia${run} limifoli…
+    153|     const r = await create(subA, { speciesId, catchDate: "2022-02-03" …
+    154|     expect(r).toMatchObject({ status: 201, body: { caughtAt: "2022-02-…
+       |               ^
+    155|     const loaded = await call(subA, "GET", `/specimens/${r.body["id"]}…
+    156|     expect(loaded.body["caughtAt"]).toBe("2022-02-03");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/collection/specimens.test.ts > US-BES-02 create and view specimen > US-BES-02 a catch date after the keeper's local today is 400 specimen.caught_in_future, measured in the keeper's zone, nothing written
+AssertionError: expected { status: 201, body: { …(12) } } to match object { status: 400, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "body": {
+-     "error": {
+-       "code": "specimen.caught_in_future",
+-       "details": [
+-         {
+-           "code": "specimen.caught_in_future",
+-           "field": "catchDate",
++     "archivedAt": null,
++     "archivedReason": null,
++     "caughtAt": "2026-10-02",
++     "createdAt": "2026-10-04T18:30:15Z",
++     "id": "7337a0af-00db-494f-b6a3-e8890a668a4e",
++     "locationId": null,
++     "marker": null,
++     "measurements": [],
++     "name": "Gasteria jcfleencok",
++     "speciesId": "709e008f-88c5-48ca-86ac-00f3aa25b35d",
++     "status": "plant",
++     "treatments": [],
+    },
+-       ],
+-     },
+-   },
+-   "status": 400,
++   "status": 201,
+  }
+
+ ❯ src/collection/specimens.test.ts:172:22
+    170|       catchDate: "2026-10-03",
+    171|     });
+    172|     expect(tomorrow).toMatchObject({
+       |                      ^
+    173|       status: 400,
+    174|       body: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/collection/specimens.test.ts > US-BES-02 create and view specimen > US-BES-02 an impossible or malformed catch date is 400 input.invalid on the field catchDate
+AssertionError: expected { status: 201, body: { …(12) } } to match object { status: 400, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "body": {
+-     "error": {
+-       "code": "input.invalid",
+-       "details": [
+-         {
+-           "field": "catchDate",
+-         },
+-       ],
+-     },
++     "archivedAt": null,
++     "archivedReason": null,
++     "caughtAt": "2026-10-03",
++     "createdAt": "2026-10-04T18:30:15Z",
++     "id": "12661a57-97ce-40d4-88df-489d166abbe6",
++     "locationId": null,
++     "marker": null,
++     "measurements": [],
++     "name": "Sansevieria jcfleencok",
++     "speciesId": "b5a397a2-0823-42c1-b450-cec33eb5f524",
++     "status": "plant",
++     "treatments": [],
+    },
+-   "status": 400,
++   "status": 201,
+  }
+
+ ❯ src/collection/specimens.test.ts:191:17
+    189|     for (const catchDate of ["2022-02-31", "03.02.2022", "2022-02-03T1…
+    190|       const r = await create(subA, { speciesId, catchDate });
+    191|       expect(r).toMatchObject({
+       |                 ^
+    192|         status: 400,
+    193|         body: { error: { code: "input.invalid", details: [{ field: "ca…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 15 passed (18)
+   Start at  20:30:13
+   Duration  1.87s (tests 71%, transform 20%, import 8%)
+
+exit code: 1

@@ -27,6 +27,7 @@ const specimen = (extra: Partial<Specimen> = {}): Specimen => ({
   locationId: null,
   status: "plant",
   caughtAt: "2026-10-03",
+  createdAt: "2026-10-03T08:00:00Z",
   archivedAt: null,
   archivedReason: null,
   measurements: [],
@@ -92,9 +93,9 @@ describe('US-BES-02 form "Create specimen"', () => {
     expect(h.split("<").filter((t) => t.includes("required"))).toEqual([]);
   });
 
-  it("explains caught_at (today, local date) and names no invented location", () => {
+  it("offers the catch date (default today, FR-BES-04) and names no invented location", () => {
     const h = html();
-    expect(h).toContain("Gefangen am: heute");
+    expect(h).toContain("Fangdatum");
     expect(h).toContain("Ohne Auswahl bleibt der Standort unbekannt");
   });
 

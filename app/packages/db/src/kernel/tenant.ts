@@ -28,3 +28,29 @@ export async function withAccount<T>(
     client.release();
   }
 }
+
+/**
+ * Runs `body` as another account inside the transaction of `client` and restores the caller's account afterwards.
+ * Only for operations that fold the data of one account into the catalog on behalf of a reviewer (merge of a proposal,
+ * US-BES-10): the creator's rows can only be re-pointed under the creator's row rule, in the same transaction as the
+ * review decision. The caller must already have proven the right to do so (the review case update is guarded by
+ * the reviewer role in the database).
+ */
+export async function asAccount<T>(
+  client: PoolClient,
+  accountId: string,
+  body: () => Promise<T>,
+): Promise<T> {
+  if (!UUID.test(accountId)) throw new Error("Account id is not a UUID");
+  const before = await client.query<{ id: string }>(
+    "select current_setting('app.account_id', true) as id",
+  );
+  await client.query("select set_config('app.account_id', $1, true)", [accountId]);
+  // No `finally`: after an error the transaction is aborted and rolled back by the caller; a restore query would
+  // only hide the original error.
+  const result = await body();
+  await client.query("select set_config('app.account_id', $1, true)", [
+    (before.rows[0] as { id: string }).id,
+  ]);
+  return result;
+}

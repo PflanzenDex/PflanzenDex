@@ -1,6 +1,7 @@
 import { Hono, type MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
 import type { Pool } from "pg";
+import { COLLECTION_REPOINTERS } from "@pflanzendex/db";
 import {
   productTitle,
   type TreatmentSource,
@@ -17,10 +18,11 @@ import {
   careProfileZoneUsageFor,
   specimenRoutes,
 } from "./collection";
-import { SPECIES_PATHS, speciesRoutes } from "./catalog";
+import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
 import { WISH_PATHS, wishRoutes, wishZoneUsageFor } from "./wishlist";
 import { zoneStockFor } from "./zone-stock";
 import { LIGHT_PATHS, lightRoutes } from "./light";
+import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
 import {
   CARE_PATHS,
   CARE_PHASES_PATHS,
@@ -71,6 +73,12 @@ function bindCareOne(
   app.route("/", treatmentRoutes(pool, opt));
 }
 
+/** The module `wishlist`: sign-in guard in front of the paths, then the routes; the stock per zone comes from `collection` unless tests replace it. */
+function bindWishlist(app: Hono, pool: Pool, auth: MiddlewareHandler, zoneStock?: ZoneStockSource) {
+  for (const path of WISH_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", wishRoutes(pool, zoneStock ?? zoneStockFor(pool)));
+}
+
 /** What `care` feeds into the collection: target location, measurements and treatments, unless tests replace them. */
 function careSources(pool: Pool, opt: AppOptions) {
   return {
@@ -105,12 +113,15 @@ export function createApp(opt: AppOptions = {}): Hono {
     );
     for (const path of SPECIES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", speciesRoutes(opt.pool));
+    for (const path of REVIEW_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+    app.route("/", reviewRoutes(opt.pool, COLLECTION_REPOINTERS));
     for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", specimenRoutes(opt.pool, { clock: opt.clock, ...careSources(opt.pool, opt) }));
+    for (const path of POKEDEX_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+    app.route("/", pokedexRoutes(opt.pool));
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", careProfileRoutes(opt.pool));
-    for (const path of WISH_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-    app.route("/", wishRoutes(opt.pool, opt.zoneStock ?? zoneStockFor(opt.pool)));
+    bindWishlist(app, opt.pool, auth, opt.zoneStock);
     bindCareOne(app, opt.pool, auth, {
       ...(opt.clock ? { clock: opt.clock } : {}),
       ...(opt.phaseLocation ? { phaseLocation: opt.phaseLocation } : {}),

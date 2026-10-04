@@ -1,11 +1,21 @@
 import { useState, type ComponentType } from "react";
 import type { Species } from "@pflanzendex/core";
 import { CollectionArea } from "./collection-area";
-import { CareProfilePage, HintsPage } from "./collection";
-import { AppError, AccountView, Loading, Welcome, apiUrl, useSession } from "./account";
+import { CareProfilePage, DifficultyPage, HintsPage } from "./collection";
+import {
+  AppError,
+  AccountView,
+  Loading,
+  Welcome,
+  apiUrl,
+  useSession,
+  SettingsPage,
+} from "./account";
 import { LightPage } from "./light";
-import { SpeciesPage } from "./catalog";
+import { ReviewPage, SpeciesPage } from "./catalog";
 import { CarePhasesPage, TreatmentsPage } from "./care";
+import { PokedexPage } from "./pokedex";
+import { StartPage } from "./start-page";
 import { Navigation, type View } from "./navigation";
 import "./style.css";
 
@@ -16,16 +26,31 @@ const version = (import.meta.env as Record<string, string | undefined>)["VITE_AP
 type Token = () => Promise<string | undefined>;
 /** The views that need nothing but the API address and the token. */
 const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Token }>>> = {
-  light: LightPage,
   treatments: TreatmentsPage,
   carePhases: CarePhasesPage,
   careProfile: CareProfilePage,
+  difficulty: DifficultyPage,
+  review: ReviewPage,
+  settings: SettingsPage,
 };
 
-export function App() {
-  const s = useSession();
-  const [view, setView] = useState<View>("species");
-  // The chosen species travels from the catalog to the collection: the app wires both modules (US-BES-02).
+/** The active view; the Pokédex links to a species profile, so the app wires pokedex and catalog (US-POK-09). */
+function useViews() {
+  const [view, setView] = useState<View>("start");
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const openProfile = (id: string) => {
+    setProfileId(id);
+    setView("species");
+  };
+  const switchView = (next: View) => {
+    setProfileId(null);
+    setView(next);
+  };
+  return { view, setView, profileId, openProfile, switchView };
+}
+
+/** The chosen species travels from the catalog to the collection: the app wires both modules (US-BES-02). */
+function useSpeciesHandOver(setView: (v: View) => void) {
   const [newSpecies, setNewSpecies] = useState<Species | null>(null);
   const choose = (species: Species) => {
     setNewSpecies(species);
@@ -35,6 +60,29 @@ export function App() {
     setNewSpecies(null);
     setView("species");
   };
+  return { newSpecies, setNewSpecies, choose, toTheCatalog };
+}
+
+/** The views that only link on to other views (start, light overview, hints); the app wires them (ADR 0003). */
+function LinkingView(props: {
+  view: "start" | "light" | "hints";
+  api: string;
+  token: Token;
+  accountId: string;
+  onOpen: (v: View) => void;
+}) {
+  const { api, token, onOpen } = props;
+  if (props.view === "start")
+    return <StartPage api={api} token={token} accountId={props.accountId} onOpen={onOpen} />;
+  if (props.view === "light")
+    return <LightPage api={api} token={token} onOpenCollection={() => onOpen("collection")} />;
+  return <HintsPage api={api} token={token} onOpen={onOpen} />;
+}
+
+export function App() {
+  const s = useSession();
+  const { view, setView, profileId, openProfile, switchView } = useViews();
+  const { newSpecies, setNewSpecies, choose, toTheCatalog } = useSpeciesHandOver(setView);
   const z = s.state;
   const Simple = SIMPLE_VIEWS[view];
   return (
@@ -50,7 +98,7 @@ export function App() {
       )}
       {z.kind === "signedIn" && (
         <div className="frame">
-          <Navigation active={view} onSwitch={setView} />
+          <Navigation active={view} onSwitch={switchView} reviewer={z.account.reviewer === true} />
           {view === "account" ? (
             <AccountView
               account={z.account}
@@ -58,10 +106,18 @@ export function App() {
               onEverywhereSignOut={() => void s.everywhereSignOut()}
               {...(z.error ? { error: z.error } : {})}
             />
+          ) : view === "start" || view === "light" || view === "hints" ? (
+            <LinkingView
+              view={view}
+              api={api}
+              token={s.token}
+              accountId={z.account.id}
+              onOpen={setView}
+            />
+          ) : view === "pokedex" ? (
+            <PokedexPage api={api} token={s.token} onOpenSpecies={openProfile} />
           ) : Simple ? (
             <Simple api={api} token={s.token} />
-          ) : view === "hints" ? (
-            <HintsPage api={api} token={s.token} onOpen={setView} />
           ) : view === "collection" ? (
             <CollectionArea
               api={api}
@@ -71,7 +127,7 @@ export function App() {
               onCompleted={() => setNewSpecies(null)}
             />
           ) : (
-            <SpeciesPage api={api} token={s.token} onChoose={choose} />
+            <SpeciesPage api={api} token={s.token} onChoose={choose} openId={profileId} />
           )}
         </div>
       )}

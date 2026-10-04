@@ -45,7 +45,7 @@ Acceptance criteria:
 - Idempotent: same inputs and caches yield identical output.
 - The operator sees a warning when catalog and tree differ in the names.
 
-### US-POK-06 · Derive ownership automatically from my plants · ⬜ (prototype ✅)
+### US-POK-06 · Derive ownership automatically from my plants · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
@@ -54,14 +54,14 @@ Acceptance criteria:
 - Caught = at least one **active** specimen of the keeper refers to the species. Archived does not count.
 - If the epithet is missing (e.g. `Hippeastrum`, `Parodia sp.`), the specimen does not count as caught; the app points this out ("Identify the species, then it counts").
 
-### US-POK-07 · Catch date and photo honest · ⬜ (prototype ✅)
+### US-POK-07 · Catch date and photo honest · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
-- Catch date per species = earliest across all active and archived specimens of the keeper. Source per specimen in this order: `Caught_At` → creation date of the specimen (display "≈") → "unknown". **Never guessed.**
+- Catch date per species = earliest across all active and archived specimens of the keeper. Source per specimen in this order: `Caught_At` (today's local date on creation, or the date the keeper back-dated, FR-BES-04) → creation date of the specimen (display "≈") → "unknown". **Never guessed.**
 - Photo = latest measurement with a photo across all specimens, otherwise Wikipedia image.
 
-### US-POK-08 · Search, filter, sort · ⬜ (prototype ✅)
+### US-POK-08 · Search, filter, sort · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
@@ -70,13 +70,15 @@ Acceptance criteria:
 - Sorting: by family (grouped, collapsible with `n / m`), alphabetical, catch date (caught first, newest first, without date after, missing last), species count (ascending, unknown last). Except "Family" a flat grid.
 - No hits: "No species found."
 
-### US-POK-09 · View details of a species · ⬜ (prototype ✅)
+### US-POK-09 · View details of a species · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
 - A tap opens the card or a detail view: larger image, full German name, full short text, genus, catch status, specimen count, cultivar chips, source link, and the link to the species profile.
 - At most one detail view open; closing is unambiguous.
 - For Missing: actions "to the wishlist" (US-WUN, `Source: Pokédex`; counts as yes for Discover, US-ENT-05) and, if a friend has it, "Friend has it" (US-SOZ-07).
+
+Status 🟨: the detail view of caught species is implemented (German name, genus, family, status, specimen count, cultivar chips, catch date, the catalog's source field as link, link to the species profile). Missing: the larger image and the full short text (taxonomy build, US-POK-03; shown as "no image" and "unknown"), the Missing cards and their two actions (no species list of the tree, no wishlist US-WUN, no friends US-SOZ).
 
 ### US-POK-10 · Collector rank and progress · ⬜ (prototype ✅)
 

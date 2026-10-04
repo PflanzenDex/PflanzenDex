@@ -144,3 +144,28 @@ summary:focus-visible {
     grid-auto-columns: max-content;
   }
 }
+/* Light overview (US-LIC-03): a bordered table with room around it; long texts wrap on a phone. */
+.light-page > section {
+  margin-bottom: 24px;
+}
+table.light-overview {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border: 1px solid var(--rand);
+  border-radius: 12px;
+}
+table.light-overview th,
+table.light-overview td {
+  padding: 10px 6px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--rand);
+  overflow-wrap: break-word;
+}
+table.light-overview td:nth-child(3),
+table.light-overview th:nth-child(3) {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}

@@ -1,11 +1,34 @@
 import type { UserManagerSettings } from "oidc-client-ts";
+import { call, createWrite, type Response } from "../kernel";
 
 export type Account = {
   id: string;
   email: string;
   displayName: string | null;
+  timeZone: string | null;
   emailConfirmed: boolean;
   mayShareWithFriends: boolean;
+  /** Operator or reviewer: shows the review list of catalog proposals (US-BES-10). */
+  reviewer?: boolean;
+};
+
+export const OCCASIONS = [
+  "phase",
+  "treatment",
+  "measurement",
+  "watering",
+  "swap",
+  "friends",
+] as const;
+export type Occasion = (typeof OCCASIONS)[number];
+
+/** Profile and settings (US-ACC-02); the same shape the API returns and takes. */
+export type AccountProfile = {
+  displayName: string | null;
+  timeZone: string | null;
+  everythingPrivate: boolean;
+  noRecommendations: boolean;
+  notifications: Record<Occasion, boolean>;
 };
 
 type Environment = Record<string, string | undefined>;
@@ -49,4 +72,21 @@ export async function signOutEverywhere(
     headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
   });
   if (!res.ok) throw new Error("sign_out_failed");
+}
+
+export const loadProfile = (
+  api: string,
+  token: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<AccountProfile>> => call(fetchFn, `${api}/account/profile`, token);
+
+/** Saves the profile as a whole; the repeat-guard key is created per call. */
+export async function saveProfile(
+  api: string,
+  token: string,
+  profile: AccountProfile,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<AccountProfile>> {
+  const r = await createWrite(api, token, fetchFn)("PUT", "/account/profile", profile);
+  return r.ok ? { ok: true, value: r.value as AccountProfile } : r;
 }

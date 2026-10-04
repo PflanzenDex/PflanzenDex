@@ -8,6 +8,8 @@ export interface CreateInput {
   locationId?: string;
   /** Only "cutting" is sent; without a value the specimen is a plant (US-BES-04). */
   status?: "cutting";
+  /** Back-dated catch date `YYYY-MM-DD`; omitted means today's local date (FR-BES-04). */
+  catchDate?: string;
 }
 
 /**
@@ -15,7 +17,13 @@ export interface CreateInput {
  * required, from the 3rd on the markers of the existing specimens that miss one, before anything is saved.
  */
 export function collectInput(
-  form: { marker: string; answers: Readonly<Record<string, string>>; data: FormData },
+  form: {
+    marker: string;
+    answers: Readonly<Record<string, string>>;
+    data: FormData;
+    /** The keeper's local today: an unchanged date field sends nothing. */
+    today: string;
+  },
   rule: { required: boolean; missing: readonly Sibling[] },
 ): CreateInput | ApiError {
   const marker = form.marker.trim();
@@ -26,10 +34,12 @@ export function collectInput(
   if (rule.required && !marker) return MARKER_MISSING;
   if (markers.some((m) => !m.marker)) return MARKERS_MISSING;
   const locationId = String(form.data.get("locationId") ?? "");
+  const catchDate = String(form.data.get("catchDate") ?? "");
   return {
     ...(marker ? { marker } : {}),
     ...(markers.length > 0 ? { markers } : {}),
     ...(locationId ? { locationId } : {}),
+    ...(catchDate && catchDate !== form.today ? { catchDate } : {}),
     ...(form.data.get("cutting") !== null ? { status: "cutting" as const } : {}),
   };
 }

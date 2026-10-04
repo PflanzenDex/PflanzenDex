@@ -1,0 +1,197 @@
+{
+  "which": "pha",
+  "started": "2026-10-03T20:25:19.353Z",
+  "checks": [
+    {
+      "id": "0 empty state with next action",
+      "expected": true,
+      "observed": true,
+      "ok": true
+    },
+    {
+      "id": "1 listed specimens: 4 of 6 (species without dormancy and archived one are absent)",
+      "expected": 4,
+      "observed": 4,
+      "ok": true
+    },
+    {
+      "id": "2 winter (Europe/Berlin, dormancy 10-01…03-15)",
+      "expected": "Soll-Phase heute: Ruhephase",
+      "observed": "Winteria crossingyear | Soll-Phase heute: Ruhephase | Standort: Fensterbank | Soll-Standort: unbekannt",
+      "ok": true
+    },
+    {
+      "id": "2 summer (Europe/Berlin, dormancy 05-01…08-31)",
+      "expected": "Soll-Phase heute: Wachstumsphase",
+      "observed": "Summeria shortrest | Soll-Phase heute: Wachstumsphase | Standort: unbekannt | Soll-Standort: unbekannt",
+      "ok": true
+    },
+    {
+      "id": "2 none: species without dormancy is not listed",
+      "expected": "absent",
+      "observed": "absent",
+      "ok": true
+    },
+    {
+      "id": "2 today (Europe/Berlin, dormancy 10-03…10-03)",
+      "expected": "Soll-Phase heute: Ruhephase",
+      "observed": "Hodie startsandends | Soll-Phase heute: Ruhephase | Standort: unbekannt | Soll-Standort: unbekannt",
+      "ok": true
+    },
+    {
+      "id": "2 tomorrow (Europe/Berlin, dormancy 10-04…10-04)",
+      "expected": "Soll-Phase heute: Wachstumsphase",
+      "observed": "Cras onlytomorrow | Soll-Phase heute: Wachstumsphase | Standort: unbekannt | Soll-Standort: unbekannt",
+      "ok": true
+    },
+    {
+      "id": "3 archived specimen is not listed",
+      "expected": "absent",
+      "observed": "absent",
+      "ok": true
+    },
+    {
+      "id": "4 target location is unknown, never invented (P-08)",
+      "expected": "Soll-Standort: unbekannt",
+      "observed": "Winteria crossingyear | Soll-Phase heute: Ruhephase | Standort: Fensterbank | Soll-Standort: unbekannt",
+      "ok": true
+    },
+    {
+      "id": "4b location of the specimen is shown",
+      "expected": "Standort: Fensterbank",
+      "observed": "Winteria crossingyear | Soll-Phase heute: Ruhephase | Standort: Fensterbank | Soll-Standort: unbekannt",
+      "ok": true
+    },
+    {
+      "id": "4c specimen without location says unbekannt",
+      "expected": "Standort: unbekannt",
+      "observed": "Summeria shortrest | Soll-Phase heute: Wachstumsphase | Standort: unbekannt | Soll-Standort: unbekannt",
+      "ok": true
+    },
+    {
+      "id": "5 after reload the same list (derived live, not stored)",
+      "expected": 4,
+      "observed": 4,
+      "ok": true
+    },
+    {
+      "id": "6 winter (Pacific/Auckland, local today 10-04)",
+      "expected": "Soll-Phase heute: Ruhephase",
+      "observed": "Winteria crossingyear | Soll-Phase heute: Ruhephase | Standort: Fensterbank | Soll-Standort: unbekannt",
+      "ok": true
+    },
+    {
+      "id": "6 summer (Pacific/Auckland, local today 10-04)",
+      "expected": "Soll-Phase heute: Wachstumsphase",
+      "observed": "Summeria shortrest | Soll-Phase heute: Wachstumsphase | Standort: unbekannt | Soll-Standort: unbekannt",
+      "ok": true
+    },
+    {
+      "id": "6 today (Pacific/Auckland, local today 10-04)",
+      "expected": "Soll-Phase heute: Wachstumsphase",
+      "observed": "Hodie startsandends | Soll-Phase heute: Wachstumsphase | Standort: unbekannt | Soll-Standort: unbekannt",
+      "ok": true
+    },
+    {
+      "id": "6 tomorrow (Pacific/Auckland, local today 10-04)",
+      "expected": "Soll-Phase heute: Ruhephase",
+      "observed": "Cras onlytomorrow | Soll-Phase heute: Ruhephase | Standort: unbekannt | Soll-Standort: unbekannt",
+      "ok": true
+    },
+    {
+      "id": "7 second account sees none of Anna's specimens",
+      "expected": 0,
+      "observed": 0,
+      "ok": true
+    }
+  ],
+  "axe": [
+    {
+      "name": "01-empty",
+      "viewport": "desktop",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            "footer"
+          ],
+          "detail": "Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "name": "01-empty",
+      "viewport": "mobile",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            "footer"
+          ],
+          "detail": "Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "name": "02-phases-berlin",
+      "viewport": "desktop",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            "footer"
+          ],
+          "detail": "Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "name": "02-phases-berlin",
+      "viewport": "mobile",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            "footer"
+          ],
+          "detail": "Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "layout": [
+    {
+      "name": "01-empty",
+      "scrollWidth": 375,
+      "small44": [],
+      "small48": 0
+    },
+    {
+      "name": "02-phases-berlin",
+      "scrollWidth": 375,
+      "small44": [],
+      "small48": 0
+    },
+    {
+      "name": "03-phases-auckland",
+      "scrollWidth": 375,
+      "small44": [],
+      "small48": 0
+    },
+    {
+      "name": "04-other-account-empty",
+      "scrollWidth": 375,
+      "small44": [],
+      "small48": 0
+    }
+  ],
+  "timezone": {
+    "berlinToday": "10-03",
+    "aucklandToday": "10-04"
+  },
+  "finished": "2026-10-03T20:25:30.682Z"
+}
