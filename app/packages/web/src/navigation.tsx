@@ -5,6 +5,7 @@ export type View =
   | "hints"
   | "carePhases"
   | "careProfile"
+  | "pokedex"
   | "light"
   | "account";
 
@@ -15,6 +16,7 @@ const ENTRIES: { id: View; text: string }[] = [
   { id: "hints", text: "Hinweise" },
   { id: "carePhases", text: "Pflegephasen" },
   { id: "careProfile", text: "Pflegeprofil" },
+  { id: "pokedex", text: "Pokédex" },
   { id: "light", text: "Standorte und Licht" },
   { id: "account", text: "Konto" },
 ];

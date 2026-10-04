@@ -1,0 +1,90 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/pok-06/app/packages/api
+
+ ❯ src/pokedex/ownership.test.ts (6 tests | 3 failed) 358ms
+   ❯ US-POK-06 ownership: derived from the specimens (4)
+     × catches the species of an active specimen, with chip, and not of an archived one 175ms
+     × a specimen without epithet is not caught and names what to do 46ms
+     × a second account sees none of this and its own appears separately (P-04) 14ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pokedex/ownership.test.ts > US-POK-06 ownership: derived from the specimens > catches the species of an active specimen, with chip, and not of an archived one
+AssertionError: expected [] to deeply equal [ { …(4) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "chips": [
+-       "var. albispina",
+-     ],
+-     "genus": "Opuntiaghckfpkkje",
+-     "species": "Opuntiaghckfpkkje microdasys",
+-     "specimenCount": 2,
+-   },
+- ]
++ []
+
+ ❯ src/pokedex/ownership.test.ts:110:22
+    108|     expect(r.status).toBe(200);
+    109|     const o = r.body["ownership"];
+    110|     expect(o.caught).toEqual([
+       |                      ^
+    111|       {
+    112|         species: `Opuntia${run} microdasys`,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/pokedex/ownership.test.ts > US-POK-06 ownership: derived from the specimens > a specimen without epithet is not caught and names what to do
+AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+- [
+-   ObjectContaining {
+-     "latinName": "Hippeastrumghckfpkkje",
+-     "nextAction": "Bestimme die Art, dann zählt es.",
+-   },
+- ]
++ []
+
+ ❯ src/pokedex/ownership.test.ts:125:28
+    123|     await specimen(subA, `Amaryllis ${run}`, genusOnly);
+    124|     const o = (await ownership(subA)).body["ownership"];
+    125|     expect(o.unidentified).toEqual([
+       |                            ^
+    126|       expect.objectContaining({
+    127|         latinName: `Hippeastrum${run}`,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/pokedex/ownership.test.ts > US-POK-06 ownership: derived from the specimens > a second account sees none of this and its own appears separately (P-04)
+AssertionError: expected [] to deeply equal [ 'Citrusghckfpkkje limon' ]
+
+- Expected
++ Received
+
+- [
+-   "Citrusghckfpkkje limon",
+- ]
++ []
+
+ ❯ src/pokedex/ownership.test.ts:140:23
+    138|     await specimen(subB, `Zitrone ${run}`, lemon);
+    139|     const b = await ownership(subB);
+    140|     expect(caught(b)).toEqual([`Citrus${run} limon`]);
+       |                       ^
+    141|     expect(JSON.stringify((await ownership(subA)).body)).not.toContain…
+    142|     expect(JSON.stringify(b.body)).not.toContain(`Opuntia${run}`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed (6)
+   Start at  09:58:41
+   Duration  937ms (tests 45%, transform 40%, import 15%)
+
