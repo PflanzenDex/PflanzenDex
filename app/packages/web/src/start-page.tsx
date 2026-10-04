@@ -9,6 +9,8 @@ import type { View } from "./navigation";
 type Token = () => Promise<string | undefined>;
 type Target = Extract<View, "species" | "light" | "collection" | "hints">;
 
+const HINT_ACTION = { locations: "Standorte anlegen", zones: "Lichtzonen einrichten" } as const;
+
 const key = (accountId: string) => `pflanzendex.onboarding-skipped.${accountId}`;
 
 /** Per-device convenience only: the counts that drive the hints are derived live, so nothing here can go stale. */
@@ -61,7 +63,7 @@ function Overview(props: { counts: OnboardingCounts; onOpen: (t: Target) => void
               <p className="next-action">{h.nextAction}</p>
               <div className="actions">
                 <button type="button" className="secondary" onClick={() => props.onOpen("light")}>
-                  Zu Standorte und Licht
+                  {HINT_ACTION[h.id]}
                 </button>
               </div>
             </li>
@@ -81,20 +83,20 @@ function Content(props: {
 }) {
   const { accountId, counts } = props;
   const [skipped, setSkipped] = useState(() => readSkipped(accountId));
-  const [finished, setFinished] = useState(false);
-  const later = () => {
+  // Leaving the guide (finished, skipped or "later") is remembered: switching tabs must not bring it back.
+  const leave = () => {
     writeSkipped(accountId);
     setSkipped(true);
   };
-  if (counts.specimens === 0 && !skipped && !finished)
+  if (counts.specimens === 0 && !skipped)
     return (
       <OnboardingWizard
         api={props.api}
         token={props.token}
         counts={counts}
         onChoosePlant={() => props.onOpen("species")}
-        onFinish={() => setFinished(true)}
-        onLater={later}
+        onFinish={leave}
+        onLater={leave}
       />
     );
   return <Overview counts={counts} onOpen={props.onOpen} />;

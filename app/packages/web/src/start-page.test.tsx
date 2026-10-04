@@ -72,6 +72,17 @@ describe("US-ACC-03 start page and guided onboarding", () => {
     expect(open).toHaveBeenCalledWith("species");
   });
 
+  it("US-ACC-03 after skipping the last step the guide does not come back when the start tab is opened again", async () => {
+    fakeServer({ zones: [ZONE], locations: [LOCATION], cards: [] });
+    view();
+    await userEvent.click(await screen.findByRole("button", { name: "Überspringen" }));
+    expect(await screen.findByRole("heading", { name: "Start" })).toBeTruthy();
+    cleanup();
+    view();
+    expect(await screen.findByRole("heading", { name: "Start" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Deine erste Pflanze" })).toBeNull();
+  });
+
   it("US-ACC-03 the first plant step leads to the catalog", async () => {
     fakeServer({ zones: [ZONE], locations: [LOCATION], cards: [] });
     view();
@@ -115,9 +126,10 @@ describe("US-ACC-03 start page and guided onboarding", () => {
     fakeServer({ zones: [], locations: [], cards: [{ id: "e1" }] });
     view();
     expect(await screen.findByText("Du hast noch keinen Standort angelegt.")).toBeTruthy();
-    const fix = screen.getAllByRole("button", { name: "Zu Standorte und Licht" });
-    await userEvent.click(fix[0] as HTMLElement);
+    await userEvent.click(screen.getByRole("button", { name: "Standorte anlegen" }));
     expect(open).toHaveBeenCalledWith("light");
+    await userEvent.click(screen.getByRole("button", { name: "Lichtzonen einrichten" }));
+    expect(open).toHaveBeenCalledTimes(2);
   });
 
   it("US-ACC-03 a load error is shown with a retry, never a blank start page", async () => {

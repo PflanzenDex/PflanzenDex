@@ -1,0 +1,116 @@
+{
+  "desktop.skip.step1": {
+    "text": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Schritt 1 von 3 | Wo stehen deine Pflanzen? | Lege Standorte an, zum Beispiel Fensterbank oder Balkon. Du kannst das auch später tun. | Name | Lichtzone | Keine Lichtzone (erscheint in den Hinweisen) | Art | innen | außen | Standort anlegen | Überspringen | Einstieg später fortsetzen | Version unbekannt",
+    "progress": "Schritt 1 von 3",
+    "progressVisible": true
+  },
+  "desktop.skip.step1.a11y": {
+    "violations": [],
+    "hscroll": false,
+    "small": []
+  },
+  "desktop.skip.step2.a11y": {
+    "violations": [],
+    "hscroll": false,
+    "small": []
+  },
+  "desktop.skip.step3.a11y": {
+    "violations": [],
+    "hscroll": false,
+    "small": []
+  },
+  "desktop.skip.start": {
+    "text": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Start | Erste Pflanze | Wähle im Katalog eine Art und lege dein erstes Exemplar an. | Art im Katalog wählen | Du hast noch keinen Standort angelegt. | Lege an, wo deine Pflanzen stehen, zum Beispiel Fensterbank oder Balkon. | Standorte anlegen | Du hast noch keine Lichtzonen. | Übernimm die vier Standardstufen oder passe sie später an. | Lichtzonen einrichten | Version unbekannt",
+    "alerts": 0
+  },
+  "desktop.skip.start.a11y": {
+    "violations": [],
+    "hscroll": false,
+    "small": []
+  },
+  "desktop.skip.hintLink": "page",
+  "desktop.skip.reload": {
+    "wizardShown": 0,
+    "startShown": 1
+  },
+  "desktop.full.locations.a11y": {
+    "violations": [],
+    "hscroll": false,
+    "small": []
+  },
+  "desktop.full.duplicate": "Einen Standort mit diesem Namen gibt es schon.",
+  "desktop.full.zones": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Schritt 2 von 3 | Wie hell ist es? | Die vier Standard-Lampen passen für den Anfang. Anpassen kannst du sie jederzeit unter „Standorte und Licht“. | Lampe 1 | Lampe 2 | Lampe 3 | Lampe 4 | Fensterbank | Lampe 2 · innen | Ändern | Weiter | Einstieg später fortsetzen | Version unbekannt",
+  "desktop.full.zones.a11y": {
+    "violations": [],
+    "hscroll": false,
+    "small": []
+  },
+  "desktop.full.speciesStatus": 201,
+  "desktop.full.created": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Exemplar „Aloe vera“ ist angelegt. Der Standort ist unbekannt, denn ein Soll-Standort steht erst mit den Pflegephasen fest. | Verteilung auf die Lichtzonen | Lampe 2 und Lampe 4 sind gleich dünn besetzt (je 0 Exemplare). | Setze Arten für diese Zonen auf die Wunschliste. | Lampe 2: 0 Exemplare · dünnste Zone | Lampe 3: 1 Exemplar | Lampe 4: 0 Exemplare · dünnste Zone | Stecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art. | Bestand |",
+  "desktop.full.start": {
+    "text": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Start | Deine Pflanzen warten im Bestand. Dort siehst du, was als Nächstes ansteht. | Zum Bestand | Version unbekannt",
+    "wizard": 0
+  },
+  "desktop.full.start.a11y": {
+    "violations": [],
+    "hscroll": false,
+    "small": []
+  },
+  "mobil.skip.step1": {
+    "text": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Schritt 1 von 3 | Wo stehen deine Pflanzen? | Lege Standorte an, zum Beispiel Fensterbank oder Balkon. Du kannst das auch später tun. | Name | Lichtzone | Keine Lichtzone (erscheint in den Hinweisen) | Art | innen | außen | Standort anlegen | Überspringen | Einstieg später fortsetzen | Version unbekannt",
+    "progress": "Schritt 1 von 3",
+    "progressVisible": true
+  },
+  "mobil.skip.step1.a11y": {
+    "violations": [],
+    "hscroll": false,
+    "small": []
+  },
+  "mobil.skip.step2.a11y": {
+    "violations": [],
+    "hscroll": false,
+    "small": []
+  },
+  "mobil.skip.step3.a11y": {
+    "violations": [],
+    "hscroll": false,
+    "small": []
+  },
+  "mobil.skip.start": {
+    "text": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Start | Erste Pflanze | Wähle im Katalog eine Art und lege dein erstes Exemplar an. | Art im Katalog wählen | Du hast noch keinen Standort angelegt. | Lege an, wo deine Pflanzen stehen, zum Beispiel Fensterbank oder Balkon. | Standorte anlegen | Du hast noch keine Lichtzonen. | Übernimm die vier Standardstufen oder passe sie später an. | Lichtzonen einrichten | Version unbekannt",
+    "alerts": 0
+  },
+  "mobil.skip.start.a11y": {
+    "violations": [],
+    "hscroll": false,
+    "small": []
+  },
+  "mobil.skip.hintLink": "page",
+  "mobil.skip.reload": {
+    "wizardShown": 0,
+    "startShown": 1
+  },
+  "mobil.full.locations.a11y": {
+    "violations": [],
+    "hscroll": false,
+    "small": []
+  },
+  "mobil.full.duplicate": "Einen Standort mit diesem Namen gibt es schon.",
+  "mobil.full.zones": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Schritt 2 von 3 | Wie hell ist es? | Die vier Standard-Lampen passen für den Anfang. Anpassen kannst du sie jederzeit unter „Standorte und Licht“. | Lampe 1 | Lampe 2 | Lampe 3 | Lampe 4 | Fensterbank | Lampe 2 · innen | Ändern | Weiter | Einstieg später fortsetzen | Version unbekannt",
+  "mobil.full.zones.a11y": {
+    "violations": [],
+    "hscroll": false,
+    "small": []
+  },
+  "mobil.full.speciesStatus": 201,
+  "mobil.full.created": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Exemplar „Aloe vera“ ist angelegt. Der Standort ist unbekannt, denn ein Soll-Standort steht erst mit den Pflegephasen fest. | Verteilung auf die Lichtzonen | Lampe 2 und Lampe 4 sind gleich dünn besetzt (je 0 Exemplare). | Setze Arten für diese Zonen auf die Wunschliste. | Lampe 2: 0 Exemplare · dünnste Zone | Lampe 3: 1 Exemplar | Lampe 4: 0 Exemplare · dünnste Zone | Stecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art. | Bestand |",
+  "mobil.full.start": {
+    "text": "Start | Arten | Bestand | Behandlung | Hinweise | Pflegephasen | Pflegeprofil | Pokédex | Standorte und Licht | Konto | Einstellungen | Start | Deine Pflanzen warten im Bestand. Dort siehst du, was als Nächstes ansteht. | Zum Bestand | Version unbekannt",
+    "wizard": 0
+  },
+  "mobil.full.start.a11y": {
+    "violations": [],
+    "hscroll": false,
+    "small": []
+  }
+}
