@@ -1,4 +1,4 @@
-import { isTimeZone } from "./date";
+import { isCalendarDate, isTimeZone } from "./date";
 import { appError, type ErrorDetail } from "./error";
 import { failed, ok, type Result } from "./result";
 
@@ -43,6 +43,12 @@ export function choiceField<const W extends string>(field: string, allowed: read
 /** An IANA time zone name, e.g. `Europe/Berlin` (NFR-08). */
 export function timeZoneField(field: string) {
   return (value: unknown): string | ErrorDetail => (isTimeZone(value) ? value : invalid(field));
+}
+
+/** A calendar date `YYYY-MM-DD` from 1900 on that exists in the calendar (NFR-08); no time of day. */
+export function calendarDateField(field: string) {
+  return (value: unknown): string | ErrorDetail =>
+    isCalendarDate(value) && value >= "1900-01-01" ? value : invalid(field);
 }
 
 /** If the value is missing (undefined or null) it is "not given" (null); otherwise the check applies. */

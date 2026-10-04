@@ -1,0 +1,168 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-issue-286-back-date-the-catch/app/packages/core
+
+ ❯ src/pokedex/catch-date.test.ts (12 tests | 1 failed) 29ms
+   ❯ US-POK-07 catch date of a back-dated specimen (FR-BES-04) (1)
+     × US-POK-07 a specimen created with a back-dated catch date drives the exact catch date, not the creation date 8ms
+ ❯ src/collection/create.test.ts (42 tests | 13 failed) 59ms
+   ❯ US-BES-02 back-dated catch date (FR-BES-04, NFR-08) (13)
+     × a catch date in the past is stored as given 7ms
+     × without or with an empty catch date it stays today's local date 2ms
+     × today's local date is allowed: in Berlin that is already the 3rd, in New York still the 2nd 1ms
+     × a date after the keeper's local today is refused, measured in the keeper's zone, not in UTC 1ms
+     × not a date is input.invalid on the field catchDate, nothing written (P-03) 1ms
+     × wrong format is input.invalid on the field catchDate, nothing written (P-03) 1ms
+     × month 13 is input.invalid on the field catchDate, nothing written (P-03) 1ms
+     × 31st of February is input.invalid on the field catchDate, nothing written (P-03) 1ms
+     × 29th of February in a non-leap year is input.invalid on the field catchDate, nothing written (P-03) 1ms
+     × with a time of day is input.invalid on the field catchDate, nothing written (P-03) 1ms
+     × a number is input.invalid on the field catchDate, nothing written (P-03) 1ms
+     × year before 1900 is input.invalid on the field catchDate, nothing written (P-03) 1ms
+     × a leap day is a valid calendar date 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pokedex/catch-date.test.ts > US-POK-07 catch date of a back-dated specimen (FR-BES-04) > US-POK-07 a specimen created with a back-dated catch date drives the exact catch date, not the creation date
+AssertionError: expected { date: '2026-10-02', …(1) } to deeply equal { date: '2022-02-03', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "date": "2022-02-03",
++   "date": "2026-10-02",
+    "source": "caught_at",
+  }
+
+ ❯ src/pokedex/catch-date.test.ts:134:34
+    132|     );
+    133|     expect(created.ok).toBe(true);
+    134|     expect(await dateOf("anna")).toEqual({ date: "2022-02-03", source:…
+       |                                  ^
+    135|   });
+    136| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  src/collection/create.test.ts > US-BES-02 back-dated catch date (FR-BES-04, NFR-08) > a catch date in the past is stored as given
+AssertionError: expected '2026-10-03' to be '2022-02-03' // Object.is equality
+
+Expected: "2022-02-03"
+Received: "2026-10-03"
+
+ ❯ src/collection/create.test.ts:110:38
+    108|   it("a catch date in the past is stored as given", async () => {
+    109|     const r = await create({ catchDate: "2022-02-03" });
+    110|     expect(r.ok && r.value.caughtAt).toBe("2022-02-03");
+       |                                      ^
+    111|     expect(specimens.rows[0]?.caughtAt).toBe("2022-02-03");
+    112|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  src/collection/create.test.ts > US-BES-02 back-dated catch date (FR-BES-04, NFR-08) > without or with an empty catch date it stays today's local date
+AssertionError: expected false to be '2026-10-03' // Object.is equality
+
+- Expected:
+"2026-10-03"
+
++ Received:
+false
+
+ ❯ src/collection/create.test.ts:120:40
+    118|         { key: `d${String(catchDate)}` },
+    119|       );
+    120|       expect(r.ok && r.value.caughtAt).toBe("2026-10-03");
+       |                                        ^
+    121|     }
+    122|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  src/collection/create.test.ts > US-BES-02 back-dated catch date (FR-BES-04, NFR-08) > today's local date is allowed: in Berlin that is already the 3rd, in New York still the 2nd
+AssertionError: expected false to be '2026-10-02' // Object.is equality
+
+- Expected:
+"2026-10-02"
+
++ Received:
+false
+
+ ❯ src/collection/create.test.ts:128:50
+    126|     expect(berlin.ok && berlin.value.caughtAt).toBe("2026-10-03");
+    127|     const newYork = await create({ catchDate: "2026-10-02", timeZone: …
+    128|     expect(newYork.ok && newYork.value.caughtAt).toBe("2026-10-02");
+       |                                                  ^
+    129|   });
+    130|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  src/collection/create.test.ts > US-BES-02 back-dated catch date (FR-BES-04, NFR-08) > a date after the keeper's local today is refused, measured in the keeper's zone, not in UTC
+AssertionError: expected false to be 'specimen.caught_in_future' // Object.is equality
+
+- Expected:
+"specimen.caught_in_future"
+
++ Received:
+false
+
+ ❯ src/collection/create.test.ts:134:35
+    132|     // 2026-10-03 is already today in Berlin but still tomorrow in New…
+    133|     const r = await create({ catchDate: "2026-10-03", timeZone: "Ameri…
+    134|     expect(!r.ok && r.error.code).toBe("specimen.caught_in_future");
+       |                                   ^
+    135|     expect(!r.ok && r.error.details).toEqual([
+    136|       { field: "catchDate", code: "specimen.caught_in_future" },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  src/collection/create.test.ts > US-BES-02 back-dated catch date (FR-BES-04, NFR-08) > not a date is input.invalid on the field catchDate, nothing written (P-03)
+ FAIL  src/collection/create.test.ts > US-BES-02 back-dated catch date (FR-BES-04, NFR-08) > wrong format is input.invalid on the field catchDate, nothing written (P-03)
+ FAIL  src/collection/create.test.ts > US-BES-02 back-dated catch date (FR-BES-04, NFR-08) > month 13 is input.invalid on the field catchDate, nothing written (P-03)
+ FAIL  src/collection/create.test.ts > US-BES-02 back-dated catch date (FR-BES-04, NFR-08) > 31st of February is input.invalid on the field catchDate, nothing written (P-03)
+ FAIL  src/collection/create.test.ts > US-BES-02 back-dated catch date (FR-BES-04, NFR-08) > 29th of February in a non-leap year is input.invalid on the field catchDate, nothing written (P-03)
+ FAIL  src/collection/create.test.ts > US-BES-02 back-dated catch date (FR-BES-04, NFR-08) > with a time of day is input.invalid on the field catchDate, nothing written (P-03)
+ FAIL  src/collection/create.test.ts > US-BES-02 back-dated catch date (FR-BES-04, NFR-08) > a number is input.invalid on the field catchDate, nothing written (P-03)
+ FAIL  src/collection/create.test.ts > US-BES-02 back-dated catch date (FR-BES-04, NFR-08) > year before 1900 is input.invalid on the field catchDate, nothing written (P-03)
+AssertionError: expected false to be 'input.invalid' // Object.is equality
+
+- Expected:
+"input.invalid"
+
++ Received:
+false
+
+ ❯ src/collection/create.test.ts:156:37
+    154|     async (_c, catchDate) => {
+    155|       const r = await create({ catchDate });
+    156|       expect(!r.ok && r.error.code).toBe("input.invalid");
+       |                                     ^
+    157|       expect(!r.ok && r.error.details).toEqual([{ field: "catchDate", …
+    158|       expect(specimens.writes).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  src/collection/create.test.ts > US-BES-02 back-dated catch date (FR-BES-04, NFR-08) > a leap day is a valid calendar date
+AssertionError: expected '2026-10-03' to be '2024-02-29' // Object.is equality
+
+Expected: "2024-02-29"
+Received: "2026-10-03"
+
+ ❯ src/collection/create.test.ts:164:38
+    162|   it("a leap day is a valid calendar date", async () => {
+    163|     const r = await create({ catchDate: "2024-02-29" });
+    164|     expect(r.ok && r.value.caughtAt).toBe("2024-02-29");
+       |                                      ^
+    165|   });
+    166| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  14 failed | 40 passed (54)
+   Start at  20:29:11
+   Duration  356ms (transform 61%, tests 19%, import 18%, worker 2%)
+
+exit code: 1

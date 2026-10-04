@@ -1,0 +1,868 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-issue-286-back-date-the-catch/app/packages/web
+
+ ❯ src/collection/specimens.test.tsx (6 tests | 1 failed) 62ms
+   ❯ US-BES-02 form "Create specimen" (4)
+     × offers the catch date (default today, FR-BES-04) and names no invented location 7ms
+ ❯ src/collection/catch-date.test.tsx (9 tests | 7 failed) 273ms
+   ❯ US-BES-02 FR-BES-04 catch date field (8)
+     × is a labelled date input, preset to the keeper's local today and capped at it 51ms
+     × follows the profile time zone, not UTC 6ms
+     × says that back-dating is allowed and the future is not, linked by aria-describedby 5ms
+     × a back-dated value is sent as catchDate 11ms
+     × a cleared field sends nothing (default applies) 7ms
+     × a refusal marks the field visibly (aria-invalid), names the error via aria-describedby and moves focus to it 7ms
+     × an error about something else does not mark the date field 34ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/catch-date.test.tsx > US-BES-02 FR-BES-04 catch date field > is a labelled date input, preset to the keeper's local today and capped at it
+TestingLibraryElementError: Unable to find a label with the text of: Fangdatum
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"create-title"[39m
+    [36m>[39m
+      [36m<h1[39m
+        [33mid[39m=[32m"create-title"[39m
+      [36m>[39m
+        [0mExemplar anlegen[0m
+      [36m</h1>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"lead"[39m
+      [36m>[39m
+        [0mArt: [0m
+        [36m<i>[39m
+          [0mDracaena trifasciata[0m
+        [36m</i>[39m
+        [0m (Bogenhanf)[0m
+      [36m</p>[39m
+      [36m<form[39m
+        [33maria-label[39m=[32m"Exemplar anlegen"[39m
+        [33mclass[39m=[32m"form"[39m
+        [33mnovalidate[39m=[32m""[39m
+      [36m>[39m
+        [36m<p[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"name-preview"[39m
+        [36m>[39m
+          [0mName: [0m
+          [0mBogenhanf[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mKennzeichen (optional)[0m
+          [36m<input[39m
+            [33mautocomplete[39m=[32m"off"[39m
+            [33mmaxlength[39m=[32m"40"[39m
+            [33mname[39m=[32m"marker"[39m
+            [33mplaceholder[39m=[32m"zum Beispiel rot"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mNur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"check"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mname[39m=[32m"cutting"[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0mDas ist ein Steckling[0m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mEin Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mStandort[0m
+          [36m<select[39m
+            [33mname[39m=[32m"locationId"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mselected[39m=[32m""[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0mStandort noch unbekannt[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mOhne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primary"[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0mExemplar anlegen[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mZurück zur Art[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ field src/collection/catch-date.test.tsx:37:28
+     35|   return onSend;
+     36| };
+     37| const field = () => screen.getByLabelText("Fangdatum") as HTMLInputEle…
+       |                            ^
+     38|
+     39| describe("US-BES-02 FR-BES-04 catch date field", () => {
+ ❯ src/collection/catch-date.test.tsx:42:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/collection/catch-date.test.tsx > US-BES-02 FR-BES-04 catch date field > follows the profile time zone, not UTC
+TestingLibraryElementError: Unable to find a label with the text of: Fangdatum
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"create-title"[39m
+    [36m>[39m
+      [36m<h1[39m
+        [33mid[39m=[32m"create-title"[39m
+      [36m>[39m
+        [0mExemplar anlegen[0m
+      [36m</h1>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"lead"[39m
+      [36m>[39m
+        [0mArt: [0m
+        [36m<i>[39m
+          [0mDracaena trifasciata[0m
+        [36m</i>[39m
+        [0m (Bogenhanf)[0m
+      [36m</p>[39m
+      [36m<form[39m
+        [33maria-label[39m=[32m"Exemplar anlegen"[39m
+        [33mclass[39m=[32m"form"[39m
+        [33mnovalidate[39m=[32m""[39m
+      [36m>[39m
+        [36m<p[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"name-preview"[39m
+        [36m>[39m
+          [0mName: [0m
+          [0mBogenhanf[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mKennzeichen (optional)[0m
+          [36m<input[39m
+            [33mautocomplete[39m=[32m"off"[39m
+            [33mmaxlength[39m=[32m"40"[39m
+            [33mname[39m=[32m"marker"[39m
+            [33mplaceholder[39m=[32m"zum Beispiel rot"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mNur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"check"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mname[39m=[32m"cutting"[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0mDas ist ein Steckling[0m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mEin Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mStandort[0m
+          [36m<select[39m
+            [33mname[39m=[32m"locationId"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mselected[39m=[32m""[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0mStandort noch unbekannt[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mOhne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primary"[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0mExemplar anlegen[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mZurück zur Art[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ field src/collection/catch-date.test.tsx:37:28
+     35|   return onSend;
+     36| };
+     37| const field = () => screen.getByLabelText("Fangdatum") as HTMLInputEle…
+       |                            ^
+     38|
+     39| describe("US-BES-02 FR-BES-04 catch date field", () => {
+ ❯ src/collection/catch-date.test.tsx:51:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/collection/catch-date.test.tsx > US-BES-02 FR-BES-04 catch date field > says that back-dating is allowed and the future is not, linked by aria-describedby
+TestingLibraryElementError: Unable to find a label with the text of: Fangdatum
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"create-title"[39m
+    [36m>[39m
+      [36m<h1[39m
+        [33mid[39m=[32m"create-title"[39m
+      [36m>[39m
+        [0mExemplar anlegen[0m
+      [36m</h1>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"lead"[39m
+      [36m>[39m
+        [0mArt: [0m
+        [36m<i>[39m
+          [0mDracaena trifasciata[0m
+        [36m</i>[39m
+        [0m (Bogenhanf)[0m
+      [36m</p>[39m
+      [36m<form[39m
+        [33maria-label[39m=[32m"Exemplar anlegen"[39m
+        [33mclass[39m=[32m"form"[39m
+        [33mnovalidate[39m=[32m""[39m
+      [36m>[39m
+        [36m<p[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"name-preview"[39m
+        [36m>[39m
+          [0mName: [0m
+          [0mBogenhanf[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mKennzeichen (optional)[0m
+          [36m<input[39m
+            [33mautocomplete[39m=[32m"off"[39m
+            [33mmaxlength[39m=[32m"40"[39m
+            [33mname[39m=[32m"marker"[39m
+            [33mplaceholder[39m=[32m"zum Beispiel rot"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mNur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"check"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mname[39m=[32m"cutting"[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0mDas ist ein Steckling[0m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mEin Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mStandort[0m
+          [36m<select[39m
+            [33mname[39m=[32m"locationId"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mselected[39m=[32m""[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0mStandort noch unbekannt[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mOhne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primary"[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0mExemplar anlegen[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mZurück zur Art[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ field src/collection/catch-date.test.tsx:37:28
+     35|   return onSend;
+     36| };
+     37| const field = () => screen.getByLabelText("Fangdatum") as HTMLInputEle…
+       |                            ^
+     38|
+     39| describe("US-BES-02 FR-BES-04 catch date field", () => {
+ ❯ src/collection/catch-date.test.tsx:57:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/collection/catch-date.test.tsx > US-BES-02 FR-BES-04 catch date field > a back-dated value is sent as catchDate
+TestingLibraryElementError: Unable to find a label with the text of: Fangdatum
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"create-title"[39m
+    [36m>[39m
+      [36m<h1[39m
+        [33mid[39m=[32m"create-title"[39m
+      [36m>[39m
+        [0mExemplar anlegen[0m
+      [36m</h1>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"lead"[39m
+      [36m>[39m
+        [0mArt: [0m
+        [36m<i>[39m
+          [0mDracaena trifasciata[0m
+        [36m</i>[39m
+        [0m (Bogenhanf)[0m
+      [36m</p>[39m
+      [36m<form[39m
+        [33maria-label[39m=[32m"Exemplar anlegen"[39m
+        [33mclass[39m=[32m"form"[39m
+        [33mnovalidate[39m=[32m""[39m
+      [36m>[39m
+        [36m<p[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"name-preview"[39m
+        [36m>[39m
+          [0mName: [0m
+          [0mBogenhanf[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mKennzeichen (optional)[0m
+          [36m<input[39m
+            [33mautocomplete[39m=[32m"off"[39m
+            [33mmaxlength[39m=[32m"40"[39m
+            [33mname[39m=[32m"marker"[39m
+            [33mplaceholder[39m=[32m"zum Beispiel rot"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mNur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"check"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mname[39m=[32m"cutting"[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0mDas ist ein Steckling[0m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mEin Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mStandort[0m
+          [36m<select[39m
+            [33mname[39m=[32m"locationId"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mselected[39m=[32m""[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0mStandort noch unbekannt[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mOhne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primary"[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0mExemplar anlegen[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mZurück zur Art[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ field src/collection/catch-date.test.tsx:37:28
+     35|   return onSend;
+     36| };
+     37| const field = () => screen.getByLabelText("Fangdatum") as HTMLInputEle…
+       |                            ^
+     38|
+     39| describe("US-BES-02 FR-BES-04 catch date field", () => {
+ ❯ src/collection/catch-date.test.tsx:73:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/collection/catch-date.test.tsx > US-BES-02 FR-BES-04 catch date field > a cleared field sends nothing (default applies)
+TestingLibraryElementError: Unable to find a label with the text of: Fangdatum
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"create-title"[39m
+    [36m>[39m
+      [36m<h1[39m
+        [33mid[39m=[32m"create-title"[39m
+      [36m>[39m
+        [0mExemplar anlegen[0m
+      [36m</h1>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"lead"[39m
+      [36m>[39m
+        [0mArt: [0m
+        [36m<i>[39m
+          [0mDracaena trifasciata[0m
+        [36m</i>[39m
+        [0m (Bogenhanf)[0m
+      [36m</p>[39m
+      [36m<form[39m
+        [33maria-label[39m=[32m"Exemplar anlegen"[39m
+        [33mclass[39m=[32m"form"[39m
+        [33mnovalidate[39m=[32m""[39m
+      [36m>[39m
+        [36m<p[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"name-preview"[39m
+        [36m>[39m
+          [0mName: [0m
+          [0mBogenhanf[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mKennzeichen (optional)[0m
+          [36m<input[39m
+            [33mautocomplete[39m=[32m"off"[39m
+            [33mmaxlength[39m=[32m"40"[39m
+            [33mname[39m=[32m"marker"[39m
+            [33mplaceholder[39m=[32m"zum Beispiel rot"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mNur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"check"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mname[39m=[32m"cutting"[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0mDas ist ein Steckling[0m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mEin Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mStandort[0m
+          [36m<select[39m
+            [33mname[39m=[32m"locationId"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mselected[39m=[32m""[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0mStandort noch unbekannt[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mOhne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primary"[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0mExemplar anlegen[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mZurück zur Art[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ field src/collection/catch-date.test.tsx:37:28
+     35|   return onSend;
+     36| };
+     37| const field = () => screen.getByLabelText("Fangdatum") as HTMLInputEle…
+       |                            ^
+     38|
+     39| describe("US-BES-02 FR-BES-04 catch date field", () => {
+ ❯ src/collection/catch-date.test.tsx:80:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/collection/catch-date.test.tsx > US-BES-02 FR-BES-04 catch date field > a refusal marks the field visibly (aria-invalid), names the error via aria-describedby and moves focus to it
+TestingLibraryElementError: Unable to find a label with the text of: Fangdatum
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"create-title"[39m
+    [36m>[39m
+      [36m<h1[39m
+        [33mid[39m=[32m"create-title"[39m
+      [36m>[39m
+        [0mExemplar anlegen[0m
+      [36m</h1>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"lead"[39m
+      [36m>[39m
+        [0mArt: [0m
+        [36m<i>[39m
+          [0mDracaena trifasciata[0m
+        [36m</i>[39m
+        [0m (Bogenhanf)[0m
+      [36m</p>[39m
+      [36m<form[39m
+        [33maria-label[39m=[32m"Exemplar anlegen"[39m
+        [33mclass[39m=[32m"form"[39m
+        [33mnovalidate[39m=[32m""[39m
+      [36m>[39m
+        [36m<p[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"name-preview"[39m
+        [36m>[39m
+          [0mName: [0m
+          [0mBogenhanf[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mKennzeichen (optional)[0m
+          [36m<input[39m
+            [33mautocomplete[39m=[32m"off"[39m
+            [33mmaxlength[39m=[32m"40"[39m
+            [33mname[39m=[32m"marker"[39m
+            [33mplaceholder[39m=[32m"zum Beispiel rot"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mNur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"check"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mname[39m=[32m"cutting"[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0mDas ist ein Steckling[0m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mEin Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mStandort[0m
+          [36m<select[39m
+            [33mname[39m=[32m"locationId"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mselected[39m=[32m""[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0mStandort noch unbekannt[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mOhne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primary"[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0mExemplar anlegen[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mZurück zur Art[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ field src/collection/catch-date.test.tsx:37:28
+     35|   return onSend;
+     36| };
+     37| const field = () => screen.getByLabelText("Fangdatum") as HTMLInputEle…
+       |                            ^
+     38|
+     39| describe("US-BES-02 FR-BES-04 catch date field", () => {
+ ❯ src/collection/catch-date.test.tsx:92:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/collection/catch-date.test.tsx > US-BES-02 FR-BES-04 catch date field > an error about something else does not mark the date field
+TestingLibraryElementError: Unable to find a label with the text of: Fangdatum
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"create-title"[39m
+    [36m>[39m
+      [36m<h1[39m
+        [33mid[39m=[32m"create-title"[39m
+      [36m>[39m
+        [0mExemplar anlegen[0m
+      [36m</h1>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"lead"[39m
+      [36m>[39m
+        [0mArt: [0m
+        [36m<i>[39m
+          [0mDracaena trifasciata[0m
+        [36m</i>[39m
+        [0m (Bogenhanf)[0m
+      [36m</p>[39m
+      [36m<form[39m
+        [33maria-label[39m=[32m"Exemplar anlegen"[39m
+        [33mclass[39m=[32m"form"[39m
+        [33mnovalidate[39m=[32m""[39m
+      [36m>[39m
+        [36m<p[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"name-preview"[39m
+        [36m>[39m
+          [0mName: [0m
+          [0mBogenhanf[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mKennzeichen (optional)[0m
+          [36m<input[39m
+            [33mautocomplete[39m=[32m"off"[39m
+            [33mmaxlength[39m=[32m"40"[39m
+            [33mname[39m=[32m"marker"[39m
+            [33mplaceholder[39m=[32m"zum Beispiel rot"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mNur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.[0m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"check"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mname[39m=[32m"cutting"[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0mDas ist ein Steckling[0m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mEin Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mStandort[0m
+          [36m<select[39m
+            [33mname[39m=[32m"locationId"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mselected[39m=[32m""[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0mStandort noch unbekannt[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mOhne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"warning"[39m
+          [33mrole[39m=[32m"alert"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0mDiese Art gibt es nicht.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"primary"[39m
+            [33mtype[39m=[32m"submit"[39m
+          [36m>[39m
+            [0mExemplar anlegen[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mZurück zur Art[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</form>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ field src/collection/catch-date.test.tsx:37:28
+     35|   return onSend;
+     36| };
+     37| const field = () => screen.getByLabelText("Fangdatum") as HTMLInputEle…
+       |                            ^
+     38|
+     39| describe("US-BES-02 FR-BES-04 catch date field", () => {
+ ❯ src/collection/catch-date.test.tsx:107:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  src/collection/specimens.test.tsx > US-BES-02 form "Create specimen" > offers the catch date (default today, FR-BES-04) and names no invented location
+AssertionError: expected '<section aria-labelledby="create-titl…' to contain 'Fangdatum'
+
+Expected: "Fangdatum"
+Received: "<section aria-labelledby="create-title"><h1 id="create-title">Exemplar anlegen</h1><p class="lead">Art: <i>Dracaena trifasciata</i> (Bogenhanf)</p><form class="form" noValidate="" aria-label="Exemplar anlegen"><p class="name-preview" aria-live="polite">Name: Bogenhanf</p><label>Kennzeichen (optional)<input maxLength="40" autoComplete="off" placeholder="zum Beispiel rot" name="marker" value=""/></label><p class="quiet">Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe.</p><label class="check"><input type="checkbox" name="cutting"/>Das ist ein Steckling</label><p class="quiet">Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.</p><label>Standort<select name="locationId"><option value="" selected="">Standort noch unbekannt</option><option value="s1">Regal Süd</option><option value="s2">Balkon</option></select></label><p class="quiet">Ohne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).</p><div class="actions"><button type="submit" class="primary">Exemplar anlegen</button><button type="button" class="secondary">Zurück zur Art</button></div></form></section>"
+
+ ❯ src/collection/specimens.test.tsx:98:15
+     96|   it("offers the catch date (default today, FR-BES-04) and names no in…
+     97|     const h = html();
+     98|     expect(h).toContain("Fangdatum");
+       |               ^
+     99|     expect(h).toContain("Ohne Auswahl bleibt der Standort unbekannt");
+    100|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  8 failed | 18 passed (26)
+   Start at  20:32:21
+   Duration  1.44s (environment 44%, transform 22%, tests 20%, import 13%, worker 1%)
+
+exit code: 1

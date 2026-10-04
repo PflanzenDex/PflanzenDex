@@ -122,6 +122,14 @@ describe("US-POK-07 catch date on the card", () => {
     expect(screen.getByText("gefangen ≈ 01.09.2026")).toBeTruthy();
   });
 
+  it("US-POK-07 a back-dated catch date (FR-BES-04) reads 'gefangen 03.02.2022', not '≈'", async () => {
+    const backDated = { ...lemon, caughtDate: { date: "2022-02-03", source: "caught_at" } };
+    fakeServer(() => response(200, { ownership: { caught: [backDated], unidentified: [] } }));
+    render(<PokedexPage api="http://api" token={token} />);
+    expect(await screen.findByText("gefangen 03.02.2022")).toBeTruthy();
+    expect(screen.queryByText(/≈/)).toBeNull();
+  });
+
   it("US-POK-07 without a date the card says 'Datum unbekannt', never a made-up date (P-08)", async () => {
     const unknown = { ...lemon, caughtDate: { date: null, source: "unknown" } };
     fakeServer(() => response(200, { ownership: { caught: [unknown], unidentified: [] } }));
