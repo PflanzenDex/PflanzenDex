@@ -66,10 +66,34 @@ export async function loadZones(
 export const createWrite = (api: string, token: string, fetchFn: FetchFn = fetch): Write =>
   createKernel<ZoneUser>(api, token, fetchFn);
 
+export interface LightOverviewRow {
+  readonly speciesId: string;
+  readonly speciesName: string;
+  readonly lightDemandLux: number;
+  readonly position: {
+    readonly category: string;
+    readonly description: string;
+  };
+  readonly zone: LightZone;
+}
+
+export interface LightOverview {
+  readonly rows: readonly LightOverviewRow[];
+}
+
 export interface DerivationRequest {
   lightDemandLux: number;
   standardLevel: number;
   softLeaf: boolean;
+}
+
+/** US-LIC-03: species by light hunger with position recommendations (derived, never stored). */
+export async function loadLightOverview(
+  api: string,
+  token: string,
+  fetchFn: FetchFn = fetch,
+): Promise<KernelResponse<LightOverview>> {
+  return call<LightOverview>(fetchFn, `${api}/specimens/light-overview`, token);
 }
 
 /** US-LIC-01: zone of the species, derived from the lux need according to the zones of the account (never stored). */

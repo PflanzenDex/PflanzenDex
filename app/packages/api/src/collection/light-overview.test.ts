@@ -171,7 +171,7 @@ describe("US-LIC-03: light overview", () => {
       speciesId: sp,
       speciesName: "Philodendron",
       lightDemandLux: 18000,
-      zoneName: expect.any(String),
+      zone: expect.objectContaining({ name: expect.any(String) }),
     });
   });
 });

@@ -1,17 +1,22 @@
 import "./light.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LightView, type LightActions } from "./light-view";
+import { LightOverviewView } from "./light-overview-view";
 import {
   createWrite,
   loadDerivation,
   loadLight,
+  loadLightOverview,
   type DerivationRequest,
   type ApiError,
   type LightData,
+  type LightOverview,
 } from "./light-api";
 
 type State =
-  { kind: "loading" } | { kind: "error"; error: ApiError } | { kind: "bereit"; data: LightData };
+  | { kind: "loading" }
+  | { kind: "error"; error: ApiError }
+  | { kind: "bereit"; data: LightData; overview: LightOverview };
 
 type Token = () => Promise<string | undefined>;
 
@@ -66,8 +71,10 @@ export function LightPage(props: { api: string; token: () => Promise<string | un
         kind: "error",
         error: { code: "access.not_signed_in", text: "Bitte melde dich neu an." },
       });
-    const r = await loadLight(api, t);
-    setZ(r.ok ? { kind: "bereit", data: r.value } : { kind: "error", error: r.error });
+    const [r, o] = await Promise.all([loadLight(api, t), loadLightOverview(api, t)]);
+    if (!r.ok) return setZ({ kind: "error", error: r.error });
+    if (!o.ok) return setZ({ kind: "error", error: o.error });
+    setZ({ kind: "bereit", data: r.value, overview: o.value });
   }, [api, token]);
   useEffect(() => void load(), [load]);
 
@@ -92,5 +99,10 @@ export function LightPage(props: { api: string; token: () => Promise<string | un
         </div>
       </div>
     );
-  return <LightView data={z.data} actions={actions} {...(lastError ? { error: lastError } : {})} />;
+  return (
+    <div className="light-page">
+      <LightOverviewView data={z.overview} />
+      <LightView data={z.data} actions={actions} {...(lastError ? { error: lastError } : {})} />
+    </div>
+  );
 }
