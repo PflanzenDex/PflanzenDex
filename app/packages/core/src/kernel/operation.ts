@@ -10,6 +10,12 @@ export interface Operation<E, A> {
   readonly schema: Schema<E>;
   /** Additional authorization (e.g. ownership); the layer always checks sign-in. */
   readonly authorized?: (context: SignedInContext, input: E) => Promise<boolean>;
+  /**
+   * The result carries a secret that is shown once (e.g. an invitation code). It is then never written to the
+   * idempotency store (a leaked database or backup must not hold it): the key is released after the run, so a
+   * repeated call with the same key runs again and returns a new secret. Calls that are still running stay guarded.
+   */
+  readonly secret?: boolean;
   /** Writes only here, only with validated input. Return domain errors as `failed(...)`. */
   readonly run: (context: SignedInContext, input: E) => Promise<Result<A>>;
 }
@@ -56,7 +62,8 @@ async function runProtected<E, A>(
     await deps.idempotency.discard(key);
     return result;
   }
-  await deps.idempotency.complete(key, result.value);
+  if (op.secret) await deps.idempotency.discard(key);
+  else await deps.idempotency.complete(key, result.value);
   return result;
 }
 

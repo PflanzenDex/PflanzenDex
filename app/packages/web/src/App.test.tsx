@@ -114,6 +114,62 @@ describe("US-ACC-01 App", () => {
     expect(await screen.findByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
   });
 
+  it("US-ACC-05 a new person without account is asked for the invitation code, then lands in the app", async () => {
+    let registered = false;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url, init) => {
+        const path = new URL(String(url)).pathname;
+        if (path === "/registration/invitation" && init?.method === "POST") {
+          registered = true;
+          return response(200, { registered: true });
+        }
+        if (path === "/account")
+          return registered
+            ? response(200, account)
+            : response(403, {
+                error: { code: "invitation.required", text: "Nur mit Einladungscode." },
+              });
+        return response(404);
+      }),
+    );
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    render(<App />);
+    expect(await screen.findByRole("heading", { name: "Einladungscode" })).toBeTruthy();
+    expect(screen.queryByRole("navigation")).toBeNull();
+    await userEvent.type(screen.getByRole("textbox", { name: "Einladungscode" }), "ABCD-EFGH");
+    await userEvent.click(screen.getByRole("button", { name: "Registrieren" }));
+    expect(await screen.findByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Betreiber" })).toBeNull();
+  });
+
+  it("US-ACC-05 the operator sees the tab Betreiber and its numbers", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => {
+        const path = new URL(String(url)).pathname;
+        if (path === "/account") return response(200, { ...account, operator: true });
+        if (path === "/operator/overview")
+          return response(200, {
+            accounts: 3,
+            activeAccounts: 2,
+            activeWindowDays: 30,
+            costPerUser: null,
+            invitationOnly: false,
+            invitations: [],
+          });
+        return response(404);
+      }),
+    );
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "Betreiber" }));
+    expect(await screen.findByRole("heading", { name: "Betreiber" })).toBeTruthy();
+    expect(screen.getByText("Kosten pro Nutzer").nextElementSibling?.textContent).toMatch(
+      /^unbekannt/,
+    );
+  });
+
   it("US-ACC-03 signed in: starts on the start page with the guided onboarding for a new account", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });

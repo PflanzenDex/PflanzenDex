@@ -1,0 +1,47 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-05-zugang-nur-per-einladung/app/packages/db
+
+ ❯ src/account/access.test.ts (27 tests | 1 failed) 386ms
+   ❯ US-ACC-05 · only the operator creates invitations (database enforced) (7)
+     × US-ACC-05 row security is on for both tables, without any policy (defense in depth) 9ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · only the operator creates invitations (database enforced) > US-ACC-05 row security is on for both tables, without any policy (defense in depth)
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+    {
+      "name": "access_setting",
+-     "rls": true,
++     "rls": false,
+      "rules": 0,
+    },
+    {
+      "name": "invitation",
+-     "rls": true,
++     "rls": false,
+      "rules": 0,
+    },
+  ]
+
+ ❯ src/account/access.test.ts:106:20
+    104|          from pg_class c where c.relname in ('invitation', 'access_set…
+    105|     );
+    106|     expect(r.rows).toEqual([
+       |                    ^
+    107|       { name: "access_setting", rls: true, rules: 0 },
+    108|       { name: "invitation", rls: true, rules: 0 },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 26 passed (27)
+   Start at  21:13:06
+   Duration  690ms (tests 68%, transform 23%, import 8%, worker 1%)
+
+exit code: 1

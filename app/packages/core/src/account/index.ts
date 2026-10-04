@@ -20,3 +20,22 @@ export type {
   OnboardingStep,
   OnboardingStepId,
 } from "./onboarding";
+export { isOperator } from "./access";
+export type {
+  AccessCounts,
+  AccessRole,
+  AccessStore,
+  InvitationRecord,
+  InvitationStatus,
+  RegisterOutcome,
+} from "./access";
+export {
+  INVITATION_VALIDITY_DAYS,
+  newInvitationCode,
+  normalizeInvitationCode,
+} from "./invitation-code";
+export { invitationCreate } from "./invitation";
+export type { CreatedInvitation, InvitationDependencies } from "./invitation";
+export { registrationSetMode, registerWithInvitation } from "./registration";
+export { ACTIVE_WINDOW_DAYS, operatorOverview } from "./operator-overview";
+export type { OperatorOverview } from "./operator-overview";

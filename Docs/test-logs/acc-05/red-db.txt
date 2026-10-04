@@ -1,0 +1,252 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-05-zugang-nur-per-einladung/app/packages/db
+
+ ❯ src/account/access.test.ts (26 tests | 15 failed) 638ms
+   ❯ US-ACC-05 · roles (1)
+     × US-ACC-05 everyone reads only their own roles 8ms
+   ❯ US-ACC-05 · only the operator creates invitations (database enforced) (6)
+     × US-ACC-05 the operator creates one; only the hash of the code is stored 1ms
+   ❯ US-ACC-05 · registration uses up a code exactly once (9)
+     × US-ACC-05 a valid code creates the account and is used up 1ms
+     × US-ACC-05 an unknown code is invalid and creates no account 0ms
+     × US-ACC-05 an expired code is invalid, and says nothing different from an unknown one 5ms
+     × US-ACC-05 a code that expires at the moment of redeeming does not work 4ms
+     × US-ACC-05 twenty concurrent registrations with one code: exactly one account, the code used once 0ms
+     × US-ACC-05 an existing account keeps the code unused 0ms
+     × US-ACC-05 two concurrent first registrations of one subject with two codes use up at most one code 0ms
+     × US-ACC-05 refuses an empty subject and rolls back on a database error 0ms
+     × US-ACC-05 the code cannot be redeemed through the database without a verified subject 0ms
+   ❯ US-ACC-05 · registration mode (3)
+     × US-ACC-05 is off by default; only the operator switches it 8ms
+     × US-ACC-05 switched on: known subjects sign in, new ones are not admitted and nothing is created 7ms
+   ❯ US-ACC-05 · operator overview: counts, no content (6)
+     × US-ACC-05 counts accounts and active accounts 0ms
+     × US-ACC-05 lists the invitations with their state, never a code 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/account/access.test.ts [ src/account/access.test.ts ]
+Error: not implemented
+ ❯ AccessPostgres.setInvitationOnly src/account/access.ts:6:53
+      4|   async roles(): Promise<never> { throw new Error("not implemented"); }
+      5|   async createInvitation(): Promise<never> { throw new Error("not impl…
+      6|   async setInvitationOnly(): Promise<never> { throw new Error("not imp…
+       |                                                     ^
+      7|   async overview(): Promise<never> { throw new Error("not implemented"…
+      8|   async register(): Promise<never> { throw new Error("not implemented"…
+ ❯ src/account/access.test.ts:48:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · roles > US-ACC-05 everyone reads only their own roles
+Error: not implemented
+ ❯ AccessPostgres.roles src/account/access.ts:4:41
+      2| export class AccessPostgres {
+      3|   constructor(_pool: unknown) {}
+      4|   async roles(): Promise<never> { throw new Error("not implemented"); }
+       |                                         ^
+      5|   async createInvitation(): Promise<never> { throw new Error("not impl…
+      6|   async setInvitationOnly(): Promise<never> { throw new Error("not imp…
+ ❯ src/account/access.test.ts:59:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · only the operator creates invitations (database enforced) > US-ACC-05 the operator creates one; only the hash of the code is stored
+Error: not implemented
+ ❯ AccessPostgres.createInvitation src/account/access.ts:5:52
+      3|   constructor(_pool: unknown) {}
+      4|   async roles(): Promise<never> { throw new Error("not implemented"); }
+      5|   async createInvitation(): Promise<never> { throw new Error("not impl…
+       |                                                    ^
+      6|   async setInvitationOnly(): Promise<never> { throw new Error("not imp…
+      7|   async overview(): Promise<never> { throw new Error("not implemented"…
+ ❯ src/account/access.test.ts:68:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · registration uses up a code exactly once > US-ACC-05 a valid code creates the account and is used up
+Error: not implemented
+ ❯ AccessPostgres.createInvitation src/account/access.ts:5:52
+      3|   constructor(_pool: unknown) {}
+      4|   async roles(): Promise<never> { throw new Error("not implemented"); }
+      5|   async createInvitation(): Promise<never> { throw new Error("not impl…
+       |                                                    ^
+      6|   async setInvitationOnly(): Promise<never> { throw new Error("not imp…
+      7|   async overview(): Promise<never> { throw new Error("not implemented"…
+ ❯ issue src/account/access.test.ts:32:15
+ ❯ src/account/access.test.ts:124:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · registration uses up a code exactly once > US-ACC-05 an unknown code is invalid and creates no account
+Error: not implemented
+ ❯ AccessPostgres.register src/account/access.ts:8:44
+      6|   async setInvitationOnly(): Promise<never> { throw new Error("not imp…
+      7|   async overview(): Promise<never> { throw new Error("not implemented"…
+      8|   async register(): Promise<never> { throw new Error("not implemented"…
+       |                                            ^
+      9| }
+     10|
+ ❯ src/account/access.test.ts:135:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · registration uses up a code exactly once > US-ACC-05 an expired code is invalid, and says nothing different from an unknown one
+Error: not implemented
+ ❯ AccessPostgres.register src/account/access.ts:8:44
+      6|   async setInvitationOnly(): Promise<never> { throw new Error("not imp…
+      7|   async overview(): Promise<never> { throw new Error("not implemented"…
+      8|   async register(): Promise<never> { throw new Error("not implemented"…
+       |                                            ^
+      9| }
+     10|
+ ❯ src/account/access.test.ts:147:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · registration uses up a code exactly once > US-ACC-05 a code that expires at the moment of redeeming does not work
+Error: not implemented
+ ❯ AccessPostgres.register src/account/access.ts:8:44
+      6|   async setInvitationOnly(): Promise<never> { throw new Error("not imp…
+      7|   async overview(): Promise<never> { throw new Error("not implemented"…
+      8|   async register(): Promise<never> { throw new Error("not implemented"…
+       |                                            ^
+      9| }
+     10|
+ ❯ src/account/access.test.ts:158:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · registration uses up a code exactly once > US-ACC-05 twenty concurrent registrations with one code: exactly one account, the code used once
+Error: not implemented
+ ❯ AccessPostgres.createInvitation src/account/access.ts:5:52
+      3|   constructor(_pool: unknown) {}
+      4|   async roles(): Promise<never> { throw new Error("not implemented"); }
+      5|   async createInvitation(): Promise<never> { throw new Error("not impl…
+       |                                                    ^
+      6|   async setInvitationOnly(): Promise<never> { throw new Error("not imp…
+      7|   async overview(): Promise<never> { throw new Error("not implemented"…
+ ❯ issue src/account/access.test.ts:32:15
+ ❯ src/account/access.test.ts:162:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · registration uses up a code exactly once > US-ACC-05 an existing account keeps the code unused
+Error: not implemented
+ ❯ AccessPostgres.createInvitation src/account/access.ts:5:52
+      3|   constructor(_pool: unknown) {}
+      4|   async roles(): Promise<never> { throw new Error("not implemented"); }
+      5|   async createInvitation(): Promise<never> { throw new Error("not impl…
+       |                                                    ^
+      6|   async setInvitationOnly(): Promise<never> { throw new Error("not imp…
+      7|   async overview(): Promise<never> { throw new Error("not implemented"…
+ ❯ issue src/account/access.test.ts:32:15
+ ❯ src/account/access.test.ts:174:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · registration uses up a code exactly once > US-ACC-05 two concurrent first registrations of one subject with two codes use up at most one code
+Error: not implemented
+ ❯ AccessPostgres.createInvitation src/account/access.ts:5:52
+      3|   constructor(_pool: unknown) {}
+      4|   async roles(): Promise<never> { throw new Error("not implemented"); }
+      5|   async createInvitation(): Promise<never> { throw new Error("not impl…
+       |                                                    ^
+      6|   async setInvitationOnly(): Promise<never> { throw new Error("not imp…
+      7|   async overview(): Promise<never> { throw new Error("not implemented"…
+ ❯ issue src/account/access.test.ts:32:15
+ ❯ src/account/access.test.ts:182:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · registration uses up a code exactly once > US-ACC-05 refuses an empty subject and rolls back on a database error
+Error: not implemented
+ ❯ AccessPostgres.createInvitation src/account/access.ts:5:52
+      3|   constructor(_pool: unknown) {}
+      4|   async roles(): Promise<never> { throw new Error("not implemented"); }
+      5|   async createInvitation(): Promise<never> { throw new Error("not impl…
+       |                                                    ^
+      6|   async setInvitationOnly(): Promise<never> { throw new Error("not imp…
+      7|   async overview(): Promise<never> { throw new Error("not implemented"…
+ ❯ issue src/account/access.test.ts:32:15
+ ❯ src/account/access.test.ts:197:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · registration uses up a code exactly once > US-ACC-05 the code cannot be redeemed through the database without a verified subject
+Error: not implemented
+ ❯ AccessPostgres.createInvitation src/account/access.ts:5:52
+      3|   constructor(_pool: unknown) {}
+      4|   async roles(): Promise<never> { throw new Error("not implemented"); }
+      5|   async createInvitation(): Promise<never> { throw new Error("not impl…
+       |                                                    ^
+      6|   async setInvitationOnly(): Promise<never> { throw new Error("not imp…
+      7|   async overview(): Promise<never> { throw new Error("not implemented"…
+ ❯ issue src/account/access.test.ts:32:15
+ ❯ src/account/access.test.ts:204:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · registration mode > US-ACC-05 is off by default; only the operator switches it
+Error: not implemented
+ ❯ AccessPostgres.overview src/account/access.ts:7:44
+      5|   async createInvitation(): Promise<never> { throw new Error("not impl…
+      6|   async setInvitationOnly(): Promise<never> { throw new Error("not imp…
+      7|   async overview(): Promise<never> { throw new Error("not implemented"…
+       |                                            ^
+      8|   async register(): Promise<never> { throw new Error("not implemented"…
+      9| }
+ ❯ src/account/access.test.ts:217:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · registration mode > US-ACC-05 switched on: known subjects sign in, new ones are not admitted and nothing is created
+Error: not implemented
+ ❯ AccessPostgres.setInvitationOnly src/account/access.ts:6:53
+      4|   async roles(): Promise<never> { throw new Error("not implemented"); }
+      5|   async createInvitation(): Promise<never> { throw new Error("not impl…
+      6|   async setInvitationOnly(): Promise<never> { throw new Error("not imp…
+       |                                                     ^
+      7|   async overview(): Promise<never> { throw new Error("not implemented"…
+      8|   async register(): Promise<never> { throw new Error("not implemented"…
+ ❯ src/account/access.test.ts:222:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · operator overview: counts, no content > US-ACC-05 counts accounts and active accounts
+Error: not implemented
+ ❯ AccessPostgres.overview src/account/access.ts:7:44
+      5|   async createInvitation(): Promise<never> { throw new Error("not impl…
+      6|   async setInvitationOnly(): Promise<never> { throw new Error("not imp…
+      7|   async overview(): Promise<never> { throw new Error("not implemented"…
+       |                                            ^
+      8|   async register(): Promise<never> { throw new Error("not implemented"…
+      9| }
+ ❯ src/account/access.test.ts:243:32
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/16]⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · operator overview: counts, no content > US-ACC-05 lists the invitations with their state, never a code
+Error: not implemented
+ ❯ AccessPostgres.createInvitation src/account/access.ts:5:52
+      3|   constructor(_pool: unknown) {}
+      4|   async roles(): Promise<never> { throw new Error("not implemented"); }
+      5|   async createInvitation(): Promise<never> { throw new Error("not impl…
+       |                                                    ^
+      6|   async setInvitationOnly(): Promise<never> { throw new Error("not imp…
+      7|   async overview(): Promise<never> { throw new Error("not implemented"…
+ ❯ issue src/account/access.test.ts:32:15
+ ❯ src/account/access.test.ts:265:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/16]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  15 failed | 11 passed (26)
+   Start at  21:12:34
+   Duration  952ms (tests 79%, transform 14%, import 6%)
+
+exit code: 1

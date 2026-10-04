@@ -1,0 +1,47 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-05-zugang-nur-per-einladung/app/packages/api
+
+ ❯ src/account/access.test.ts (21 tests | 14 failed) 229ms
+   ❯ US-ACC-05 · registration only with a valid invitation code (8)
+     × US-ACC-05 a valid code registers the subject; afterwards sign-in works and the code is used up 6ms
+     × US-ACC-05 unknown, used and malformed codes are answered identically (no oracle) 3ms
+     × US-ACC-05 an expired code is answered like an unknown one 2ms
+     × US-ACC-05 registering needs a signed-in identity (token), not an account 1ms
+     × US-ACC-05 the same call twice with an existing account uses up no second code 2ms
+   ❯ US-ACC-05 · the operator area (role checked in the operation and in the database) (13)
+     × US-ACC-05 GET /operator/overview: a plant keeper and a reviewer get 403 access.denied 2ms
+     × US-ACC-05 PUT /operator/registration: a plant keeper and a reviewer get 403 access.denied 2ms
+     × US-ACC-05 POST /operator/invitations: a plant keeper and a reviewer get 403 access.denied 2ms
+     × US-ACC-05 the operator creates a code that is shown once, and lists invitations without codes 2ms
+     × US-ACC-05 repeating the creation with the same Idempotency-Key returns the same code once 1ms
+     × US-ACC-05 refuses a validity outside 1 to 30 days with input.invalid 1ms
+     × US-ACC-05 the overview: accounts, active users, cost per user unknown, no content 2ms
+     × US-ACC-05 the mode route validates its input 2ms
+     × US-ACC-05 switching to the current value (off) works and is reported back 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · registration only with a valid invitation code > US-ACC-05 a valid code registers the subject; afterwards sign-in works and the code is used up
+ FAIL  src/account/access.test.ts > US-ACC-05 · registration only with a valid invitation code > US-ACC-05 unknown, used and malformed codes are answered identically (no oracle)
+ FAIL  src/account/access.test.ts > US-ACC-05 · registration only with a valid invitation code > US-ACC-05 an expired code is answered like an unknown one
+ FAIL  src/account/access.test.ts > US-ACC-05 · registration only with a valid invitation code > US-ACC-05 registering needs a signed-in identity (token), not an account
+ FAIL  src/account/access.test.ts > US-ACC-05 · registration only with a valid invitation code > US-ACC-05 the same call twice with an existing account uses up no second code
+ FAIL  src/account/access.test.ts > US-ACC-05 · the operator area (role checked in the operation and in the database) > US-ACC-05 GET /operator/overview: a plant keeper and a reviewer get 403 access.denied
+ FAIL  src/account/access.test.ts > US-ACC-05 · the operator area (role checked in the operation and in the database) > US-ACC-05 PUT /operator/registration: a plant keeper and a reviewer get 403 access.denied
+ FAIL  src/account/access.test.ts > US-ACC-05 · the operator area (role checked in the operation and in the database) > US-ACC-05 POST /operator/invitations: a plant keeper and a reviewer get 403 access.denied
+ FAIL  src/account/access.test.ts > US-ACC-05 · the operator area (role checked in the operation and in the database) > US-ACC-05 the operator creates a code that is shown once, and lists invitations without codes
+ FAIL  src/account/access.test.ts > US-ACC-05 · the operator area (role checked in the operation and in the database) > US-ACC-05 repeating the creation with the same Idempotency-Key returns the same code once
+ FAIL  src/account/access.test.ts > US-ACC-05 · the operator area (role checked in the operation and in the database) > US-ACC-05 refuses a validity outside 1 to 30 days with input.invalid
+ FAIL  src/account/access.test.ts > US-ACC-05 · the operator area (role checked in the operation and in the database) > US-ACC-05 the overview: accounts, active users, cost per user unknown, no content
+ FAIL  src/account/access.test.ts > US-ACC-05 · the operator area (role checked in the operation and in the database) > US-ACC-05 the mode route validates its input
+ FAIL  src/account/access.test.ts > US-ACC-05 · the operator area (role checked in the operation and in the database) > US-ACC-05 switching to the current value (off) works and is reported back
+SyntaxError: Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  14 failed | 7 passed (21)
+   Start at  21:12:36
+   Duration  922ms (transform 52%, tests 29%, import 19%)
+
+exit code: 1

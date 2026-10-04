@@ -10,7 +10,14 @@ import {
   type PhaseLocationSource,
   type ZoneStockSource,
 } from "@pflanzendex/core";
-import { authentication, accountRoutes, type TokenVerifier } from "./account";
+import {
+  OPERATOR_PATHS,
+  accountRoutes,
+  authentication,
+  operatorRoutes,
+  registrationRoutes,
+  type TokenVerifier,
+} from "./account";
 import {
   CARE_PROFILE_PATHS,
   SPECIMEN_PATHS,
@@ -45,6 +52,8 @@ export type AppOptions = {
   version?: string | undefined;
   /** Short commit hash of the running build (from the build, not secret). */
   commit?: string | undefined;
+  /** Forces the registration mode (tests only); without it the setting of the operator decides (US-ACC-05). */
+  invitationOnly?: boolean;
   /** The clock for "today" (NFR-08); defaults to system time. */
   clock?: () => Date;
   /** Replaces the care profile as source of the target location of new specimens (tests). */
@@ -88,6 +97,22 @@ function careSources(pool: Pool, opt: AppOptions) {
   };
 }
 
+/** The module `account`: registration (before the guard, no account yet), the guard itself, own account, operator area. */
+function bindAccount(app: Hono, verifier: TokenVerifier, pool: Pool, opt: AppOptions) {
+  const auth = authentication(
+    verifier,
+    pool,
+    opt.invitationOnly === undefined ? {} : { invitationOnly: opt.invitationOnly },
+  );
+  app.route("/", registrationRoutes(pool, verifier));
+  app.use("/account", auth);
+  app.use("/account/*", auth);
+  app.route("/account", accountRoutes(pool));
+  for (const path of OPERATOR_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", operatorRoutes(pool, opt.clock));
+  return auth;
+}
+
 export function createApp(opt: AppOptions = {}): Hono {
   const version = opt.version ?? "unknown";
   const commit = opt.commit ?? "unknown";
@@ -102,10 +127,7 @@ export function createApp(opt: AppOptions = {}): Hono {
     );
   app.get("/health", (c) => c.json({ status: "ok", product: productTitle(), version, commit }));
   if (opt.reviewer && opt.pool) {
-    const auth = authentication(opt.reviewer, opt.pool);
-    app.use("/account", auth);
-    app.use("/account/*", auth);
-    app.route("/account", accountRoutes(opt.pool));
+    const auth = bindAccount(app, opt.reviewer, opt.pool, opt);
     for (const path of LIGHT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route(
       "/",

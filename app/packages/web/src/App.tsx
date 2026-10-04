@@ -10,6 +10,9 @@ import {
   apiUrl,
   useSession,
   SettingsPage,
+  InvitationPage,
+  OperatorPage,
+  type State,
 } from "./account";
 import { LightPage } from "./light";
 import { ReviewPage, SpeciesPage } from "./catalog";
@@ -33,6 +36,7 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
   difficulty: DifficultyPage,
   wishlist: WishlistPage,
   review: ReviewPage,
+  operator: OperatorPage,
   settings: SettingsPage,
 };
 
@@ -81,14 +85,13 @@ function LinkingView(props: {
   return <HintsPage api={api} token={token} onOpen={onOpen} />;
 }
 
-export function App() {
-  const s = useSession();
-  const { view, setView, profileId, openProfile, switchView } = useViews();
-  const { newSpecies, setNewSpecies, choose, toTheCatalog } = useSpeciesHandOver(setView);
-  const z = s.state;
-  const Simple = SIMPLE_VIEWS[view];
+type Session = ReturnType<typeof useSession>;
+
+/** What shows before there is an account to work with: loading, an error, the welcome page, the invitation code. */
+function EntryStates(props: { state: State; session: Session }) {
+  const { state: z, session: s } = props;
   return (
-    <main className="page">
+    <>
       {z.kind === "loading" && <Loading />}
       {z.kind === "error" && <AppError text={z.text} onReload={() => void s.reload()} />}
       {z.kind === "signedOut" && (
@@ -98,9 +101,35 @@ export function App() {
           {...(z.hint ? { hint: z.hint } : {})}
         />
       )}
+      {z.kind === "invitationNeeded" && (
+        <InvitationPage
+          api={api}
+          token={s.token}
+          onRegistered={() => void s.reload()}
+          onSignOut={s.signOut}
+        />
+      )}
+    </>
+  );
+}
+
+export function App() {
+  const s = useSession();
+  const { view, setView, profileId, openProfile, switchView } = useViews();
+  const { newSpecies, setNewSpecies, choose, toTheCatalog } = useSpeciesHandOver(setView);
+  const z = s.state;
+  const Simple = SIMPLE_VIEWS[view];
+  return (
+    <main className="page">
+      <EntryStates state={z} session={s} />
       {z.kind === "signedIn" && (
         <div className="frame">
-          <Navigation active={view} onSwitch={switchView} reviewer={z.account.reviewer === true} />
+          <Navigation
+            active={view}
+            onSwitch={switchView}
+            reviewer={z.account.reviewer === true}
+            operator={z.account.operator === true}
+          />
           {view === "account" ? (
             <AccountView
               account={z.account}
