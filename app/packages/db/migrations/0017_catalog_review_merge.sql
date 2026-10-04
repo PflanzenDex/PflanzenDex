@@ -20,6 +20,15 @@ grant execute on function is_open_proposal(uuid) to pflanzendex_app;
 create policy reviewer_reads on species for select using (is_reviewer() and is_open_proposal(id));
 create policy reviewer_reads on species_name for select using (is_reviewer() and is_open_proposal(species_id));
 
+-- Whether a proposal was merged away; modules that reference species ask this instead of reading review_case.
+create function species_is_merged(p_species uuid) returns boolean
+language sql stable security definer set search_path = public, pg_temp
+as $$
+  select exists (select from review_case v where v.object_kind = 'species' and v.object_id = p_species and v.status = 'merged')
+$$;
+revoke all on function species_is_merged(uuid) from public;
+grant execute on function species_is_merged(uuid) to pflanzendex_app;
+
 -- A merge locks the species row of the proposal, so a write of the creator that is still in flight (its foreign key
 -- holds a key lock on that row) finishes before the references are re-pointed, and a later one finds the species
 -- hidden (the application re-checks the status after taking that lock). Without it a specimen could be committed

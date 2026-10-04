@@ -352,10 +352,9 @@ describe("US-BES-10 a merge and a concurrent write on the proposal (FR-BES-11, P
     expect((await species.search(reviewer, null)).map((s) => s.id)).not.toContain(
       rejected.speciesId,
     );
-    const names = await withAccount(pool, reviewer, (c) =>
-      c.query("select 1 from species_name where species_id = $1", [rejected.speciesId]),
-    );
-    expect(names.rowCount).toBe(0);
+    // The name rows are hidden too: searching the exact name finds nothing for a reviewer.
+    const byName = await species.search(reviewer, rejected.latinName.toLowerCase());
+    expect(byName.map((x) => x.id)).not.toContain(rejected.speciesId);
     // The creator still reads their rejected proposal.
     expect(await species.find(keeper, rejected.speciesId)).toMatchObject({
       reviewStatus: "rejected",

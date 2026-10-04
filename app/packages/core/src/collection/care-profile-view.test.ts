@@ -187,4 +187,14 @@ describe("US-BES-10 a care profile kept on a merged proposal does not vanish (FR
     await profiles.update("anna", MERGED, { ownHints: "x" });
     expect(await view()).toEqual([]);
   });
+
+  it("US-BES-10 a merge target that is not visible to the account shows nothing", async () => {
+    await profiles.update("anna", MERGED, { ownHints: "x" });
+    const lost = { mergedInto: async () => ({ id: GEHEIM, latinName: "Geheim" }) };
+    const entries = await careProfileView(
+      { specimens, species, profiles, zones: zoneStore({ anna: ZONES }), merged: lost },
+      "anna",
+    );
+    expect(entries).toEqual([]);
+  });
 });

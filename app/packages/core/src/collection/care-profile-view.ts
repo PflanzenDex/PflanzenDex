@@ -64,9 +64,11 @@ async function mergedEntry(
   of: { id: string; profile: CareProfile | null; zones: readonly LightZone[] },
 ): Promise<CareProfileEntry[]> {
   const { id, profile, zones } = of;
-  const target = profile && (await deps.merged?.mergedInto(userId, id));
-  const species = target && (await deps.species.find(userId, target.id));
-  if (!target || !species) return [];
+  if (!profile || !deps.merged) return [];
+  const target = await deps.merged.mergedInto(userId, id);
+  if (!target) return [];
+  const species = await deps.species.find(userId, target.id);
+  if (!species) return [];
   const name = speciesDisplayName(species);
   return [
     {
