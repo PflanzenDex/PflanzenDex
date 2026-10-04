@@ -1,4 +1,4 @@
-account {"id":"9fbbef74-a2f2-4da8-b96a-aeeac801195e"}
+account {"id":"480af597-7950-40a1-ae5c-b1a7d9cbdde0"}
 hscroll-01-empty-desktop false
 axe-01-empty-desktop []
 hscroll-01-empty-mobil false
@@ -11,23 +11,38 @@ zone-options ["unbekannt","Lampe 2 — 2 Pflanzen","Lampe 3 — 1 Pflanze","Lamp
 tabs-from-name-to-save-button 7
 keyboard-submit "saved"
 duplicate-refusal "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen."
+duplicate-field {"focus":"wish-name","invalid":"true"}
 duplicate-no-success true
+kb-empty-name {"id":"wish-name","invalid":"true","described":["Bitte gib einen Namen an."]}
+hscroll-05-field-error-name-desktop false
+axe-05-field-error-name-desktop []
+hscroll-05-field-error-name-mobil false
+axe-05-field-error-name-mobil []
+kb-credentials {"id":"wish-imageUrl","invalid":"true","described":["Die Bild-Adresse muss mit https:// beginnen und darf keine Zugangsdaten enthalten."]}
+kb-no-source {"id":"wish-imageSource","invalid":"true","name":"Bildtest","url":"https://example.test/a.jpg"}
+hscroll-06-field-error-source-desktop false
+axe-06-field-error-source-desktop []
+hscroll-06-field-error-source-mobil false
+axe-06-field-error-source-mobil []
 empty-name "Bitte gib einen Namen an."
-image-without-source "Ein Bild gehört mit seiner Quelle zusammen: Gib beides an oder keins von beiden."
+image-without-source "Ein Bild gehört mit seiner Quelle zusammen: Bitte gib die Quelle an."
 hscroll-03-form-refusal-desktop false
 axe-03-form-refusal-desktop []
 hscroll-03-form-refusal-mobil false
 axe-03-form-refusal-mobil []
-list ["Kein Bild | Geigenfeige (Ficus lyrata) | Platz 1 der Liste | Lampe 3 — 1 Pflanze | Schwierigkeit: Schwer | Braucht viel Licht. | Hier steht schon 1 Pflanze. Mehr Platz ist in Lampe 4 (0 Pflanzen).","Kein Bild | Korbmarante (Calathea orbifolia) | Platz 2 der Liste | Lampe 2 — 2 Pflanzen | Schwierigkeit: Mittel | Mag gleichmäßig feuchte Erde. | Hier stehen schon 2 Pflanzen. Mehr Platz ist in Lampe 4 (0 Pflanzen).","Kein Bild | Aloe polyphylla | Platz 3 der Liste | Ziel-Zone unbekannt | Schwierigkeit: unbekannt | Ziel-Lichtzone unbekannt: dieser Wunsch zählt bei der Platzfrage noch nicht mit (nötig ist eine Zone 2 bis 4).","Kein Bild | Keyboard-Test | Platz 4 der Liste | Ziel-Zone unbekannt | Schwierigkeit: unbekannt | Ziel-Lichtzone unbekannt: dieser Wunsch zählt bei der Platzfrage noch nicht mit (nötig ist eine Zone 2 bis 4)."]
-served-order [["Geigenfeige (Ficus lyrata)",1,"other"],["Korbmarante (Calathea orbifolia)",2,"other"],["Aloe polyphylla",null,"zone_unknown"],["Keyboard-Test",null,"zone_unknown"]]
+image-wish 201
+outside-wish 201
+picture-link {"href":"https://upload.wikimedia.org/x.jpg","target":"_blank","rel":"noopener noreferrer","referrerpolicy":"no-referrer","imgElements":0}
+outside-text 1
+list ["Kein Bild | Geigenfeige (Ficus lyrata) | Platz 1 der Liste | Lampe 3 — 1 Pflanze | Schwierigkeit: Schwer | Braucht viel Licht. | Hier steht schon 1 Pflanze. Mehr Platz ist in Lampe 4 (0 Pflanzen).","Kein Bild | Korbmarante (Calathea orbifolia) | Platz 2 der Liste | Lampe 2 — 2 Pflanzen | Schwierigkeit: Mittel | Mag gleichmäßig feuchte Erde. | Hier stehen schon 2 Pflanzen. Mehr Platz ist in Lampe 4 (0 Pflanzen).","Bild ansehen (öffnet extern) | Quelle: Wikimedia Commons | Monstera deliciosa | Platz 3 der Liste | Lampe 2 — 2 Pflanzen | Schwierigkeit: unbekannt | Hier stehen schon 2 Pflanzen. Mehr Platz ist in Lampe 4 (0 Pflanzen).","Kein Bild | Aloe polyphylla | Platz 4 der Liste | Ziel-Zone unbekannt | Schwierigkeit: unbekannt | Ziel-Lichtzone unbekannt: dieser Wunsch zählt bei der Platzfrage noch nicht mit (nötig ist eine Zone 2 bis 4).","Kein Bild | Keyboard-Test | Platz 5 der Liste | Ziel-Zone unbekannt | Schwierigkeit: unbekannt | Ziel-Lichtzone unbekannt: dieser Wunsch zählt bei der Platzfrage noch nicht mit (nötig ist eine Zone 2 bis 4).","Kein Bild | Sansevieria | Platz 6 der Liste | Ziel-Zone liegt außerhalb der Zonen 2 bis 4 | Schwierigkeit: unbekannt | Die Ziel-Lichtzone gehört nicht zu den Zonen 2 bis 4: dieser Wunsch zählt bei der Platzfrage noch nicht mit."]
+served-order [["Geigenfeige (Ficus lyrata)",1,"other"],["Korbmarante (Calathea orbifolia)",2,"other"],["Monstera deliciosa",2,"other"],["Aloe polyphylla",null,"zone_unknown"],["Keyboard-Test",null,"zone_unknown"],["Sansevieria",null,"zone_outside"]]
 sorted-ascending true
 unknown-last true
 hscroll-02-candidates-desktop false
 axe-02-candidates-desktop []
 hscroll-02-candidates-mobil false
 axe-02-candidates-mobil []
-image-wish 201
-image-source-visible true
+external-image-requests []
 B-candidates 0
 B-foreign-zone {"status":404,"body":{"error":{"code":"light_zone.not_found","text":"Diese Lichtzone gibt es nicht."}}}
-zone-delete-in-use {"status":409,"body":{"error":{"code":"light_zone.in_use","text":"Diese Lichtzone wird noch genutzt und kann nicht gelöscht werden. Ordne die genannten Einträge zuerst einer anderen Zone zu.","data":[{"kind":"wish","id":"d3ac9029-1f38-4e39-a2b0-2aa02c9313db","name":"Monstera deliciosa"}]}}}
+zone-delete-in-use {"status":409,"body":{"error":{"code":"light_zone.in_use","text":"Diese Lichtzone wird noch genutzt und kann nicht gelöscht werden. Ordne die genannten Einträge zuerst einer anderen Zone zu.","data":[{"kind":"wish","id":"d9d01ef6-1e1a-426c-905d-65b31aa85c19","name":"Sansevieria"}]}}}
