@@ -2,15 +2,29 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { deviceTimeZone, setProfileTimeZone } from "../kernel";
 import { PokedexPage } from "./PokedexPage";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 const serverError = { error: { code: "server.error", text: "Der Server antwortet nicht." } };
-const lemon = { species: "Citrus limon", genus: "Citrus", chips: [], specimenCount: 1 };
+const exact = { date: "2026-03-05", source: "caught_at" };
+const lemon = {
+  species: "Citrus limon",
+  genus: "Citrus",
+  chips: [],
+  specimenCount: 1,
+  caughtDate: exact,
+};
 const caught = [
   lemon,
-  { species: "Opuntia microdasys", genus: "Opuntia", chips: ["'Albispina'"], specimenCount: 2 },
+  {
+    species: "Opuntia microdasys",
+    genus: "Opuntia",
+    chips: ["'Albispina'"],
+    specimenCount: 2,
+    caughtDate: { date: "2026-09-01", source: "created_at" },
+  },
 ];
 const riddle = {
   specimenId: "e1",
@@ -31,6 +45,7 @@ function fakeServer(answer: () => Promise<Response>) {
 const token = async () => "tok";
 
 afterEach(() => {
+  setProfileTimeZone(null);
   cleanup();
   vi.unstubAllGlobals();
 });
@@ -96,5 +111,43 @@ describe("US-POK-06 page of the caught species", () => {
     await userEvent.click(screen.getByRole("button", { name: "Erneut laden" }));
     expect(await screen.findByText("Citrus limon")).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+});
+
+describe("US-POK-07 catch date on the card", () => {
+  it("US-POK-07 an exact date reads 'gefangen TT.MM.JJJJ', a creation date reads '≈ TT.MM.JJJJ'", async () => {
+    fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
+    render(<PokedexPage api="http://api" token={token} />);
+    expect(await screen.findByText("gefangen 05.03.2026")).toBeTruthy();
+    expect(screen.getByText("gefangen ≈ 01.09.2026")).toBeTruthy();
+  });
+
+  it("US-POK-07 without a date the card says 'Datum unbekannt', never a made-up date (P-08)", async () => {
+    const unknown = { ...lemon, caughtDate: { date: null, source: "unknown" } };
+    fakeServer(() => response(200, { ownership: { caught: [unknown], unidentified: [] } }));
+    render(<PokedexPage api="http://api" token={token} />);
+    expect(await screen.findByText("Datum unbekannt")).toBeTruthy();
+    expect(screen.queryByText(/gefangen \d/)).toBeNull();
+  });
+
+  it("US-POK-07 the request carries the time zone of the profile (NFR-08, US-ACC-02)", async () => {
+    setProfileTimeZone("Asia/Tokyo");
+    const fetchFn = fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
+    render(<PokedexPage api="http://api" token={token} />);
+    await screen.findByText("Citrus limon");
+    expect(String(fetchFn.mock.calls[0]?.[0])).toBe(
+      "http://api/pokedex/ownership?timeZone=Asia%2FTokyo",
+    );
+  });
+
+  it("US-POK-07 without a profile time zone the request falls back to the device zone", async () => {
+    setProfileTimeZone("Asia/Tokyo");
+    setProfileTimeZone(null);
+    const fetchFn = fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
+    render(<PokedexPage api="http://api" token={token} />);
+    await screen.findByText("Citrus limon");
+    expect(String(fetchFn.mock.calls[0]?.[0])).toBe(
+      `http://api/pokedex/ownership?timeZone=${encodeURIComponent(deviceTimeZone())}`,
+    );
   });
 });

@@ -1,10 +1,19 @@
-import type { CaughtSpecies, Ownership, UnidentifiedSpecimen } from "@pflanzendex/core";
+import type { CatchDate, CaughtSpecies, Ownership, UnidentifiedSpecimen } from "@pflanzendex/core";
 import { useCallback } from "react";
 import { LoadFrame } from "../kernel";
 import { loadOwnership } from "./ownership-api";
 import "./pokedex.css";
 
 const countText = (n: number) => `${n} ${n === 1 ? "Exemplar" : "Exemplare"}`;
+
+/** `2026-03-05` becomes `05.03.2026`; a calendar date is never run through `Date` (NFR-08). */
+const germanDate = (date: string) => date.split("-").reverse().join(".");
+
+/** "gefangen 05.03.2026", "gefangen ≈ 05.03.2026" (creation date) or "Datum unbekannt" (US-POK-07, P-08). */
+function catchText(d: CatchDate): string {
+  if (d.date === null) return "Datum unbekannt";
+  return `gefangen ${d.source === "created_at" ? "≈ " : ""}${germanDate(d.date)}`;
+}
 
 /**
  * The species the account has caught (US-POK-06): derived from the active specimens, never stored (P-01). A specimen
@@ -49,6 +58,7 @@ function Caught(props: { caught: readonly CaughtSpecies[] }) {
                 ))}
               </ul>
             )}
+            <span className="catch-date">{catchText(c.caughtDate)}</span>
             <span className="quiet">{countText(c.specimenCount)}</span>
           </li>
         ))}

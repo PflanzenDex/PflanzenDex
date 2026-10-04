@@ -54,7 +54,7 @@ Acceptance criteria:
 - Caught = at least one **active** specimen of the keeper refers to the species. Archived does not count.
 - If the epithet is missing (e.g. `Hippeastrum`, `Parodia sp.`), the specimen does not count as caught; the app points this out ("Identify the species, then it counts").
 
-### US-POK-07 · Catch date and photo honest · ⬜ (prototype ✅)
+### US-POK-07 · Catch date and photo honest · 🟨 (prototype ✅)
 
 Acceptance criteria:
 

@@ -11,6 +11,7 @@ const row = (id: string, name: string, status: SpecimenRow["status"] = "plant"):
   locationId: null,
   status,
   caughtAt: "2026-10-01",
+  createdAt: "2026-10-01T10:00:00Z",
   archivedAt: status === "archived" ? "2026-10-02" : null,
   archivedReason: status === "archived" ? "eingegangen" : null,
 });

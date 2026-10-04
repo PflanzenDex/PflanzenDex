@@ -42,6 +42,7 @@ export class SpecimenStub implements Pick<SpecimenStore, "find"> {
       locationId: null,
       status: away ? "archived" : "plant",
       caughtAt: "2026-10-01",
+      createdAt: "2026-10-01T10:00:00Z",
       archivedAt: away ? "2026-10-02" : null,
       archivedReason: away ? "eingegangen" : null,
     };
