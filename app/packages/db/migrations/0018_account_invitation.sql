@@ -19,6 +19,9 @@ create table invitation (
   check (expires_at > created_at)
 );
 revoke all on invitation from public;
+-- Row security on, without any policy: even a wrongly granted right would show no row. Only ENABLE, not FORCE: the
+-- `security definer` functions below run as the table owner and must keep working when the owner is not a superuser.
+alter table invitation enable row level security;
 
 create table access_setting (
   id boolean primary key default true check (id),
@@ -27,18 +30,19 @@ create table access_setting (
 );
 insert into access_setting default values;
 revoke all on access_setting from public;
+alter table access_setting enable row level security;
 
 alter table account_data add column last_active_at timestamptz;
 
 -- Whether the caller is the installation operator (a reviewer is not).
 create function is_operator() returns boolean
 language sql stable security definer set search_path = public, pg_temp
-as $$ select exists (select from account_role where account = current_account() and role = 'operator') $$;
+as $$ select exists (select from public.account_role where account = current_account() and role = 'operator') $$;
 
 -- Needed before an account exists (sign-in of an unknown subject), so no operator check: it reveals one boolean.
 create function invitation_required() returns boolean
 language sql stable security definer set search_path = public, pg_temp
-as $$ select invitation_only from access_setting $$;
+as $$ select invitation_only from public.access_setting $$;
 
 create function set_invitation_only(p_on boolean) returns void
 language plpgsql security definer set search_path = public, pg_temp
@@ -47,7 +51,7 @@ begin
   if not is_operator() then
     raise exception 'Only the operator changes the registration mode' using errcode = '42501';
   end if;
-  update access_setting set invitation_only = p_on, updated_at = now();
+  update public.access_setting set invitation_only = p_on, updated_at = now();
 end
 $$;
 
@@ -68,7 +72,7 @@ begin
     raise exception 'Invitation expiry out of range' using errcode = '22023';
   end if;
   return query
-    insert into invitation (code_hash, created_by, expires_at)
+    insert into public.invitation (code_hash, created_by, expires_at)
     values (sha256(convert_to(p_code, 'UTF8')), current_account(), p_expires_at)
     returning invitation.id, invitation.expires_at;
 end
@@ -83,7 +87,7 @@ begin
   if nullif(current_setting('app.subject', true), '') is null then
     raise exception 'Redeeming needs a verified subject' using errcode = '42501';
   end if;
-  update invitation set redeemed_at = now()
+  update public.invitation set redeemed_at = now()
    where code_hash = sha256(convert_to(p_code, 'UTF8')) and redeemed_at is null and expires_at > now();
   return found;
 end
@@ -99,10 +103,10 @@ begin
     raise exception 'Only the operator sees the overview' using errcode = '42501';
   end if;
   return query select
-    (select count(*)::integer from account),
-    (select count(*)::integer from account_data
+    (select count(*)::integer from public.account),
+    (select count(*)::integer from public.account_data
       where last_active_at >= now() - make_interval(days => p_window_days)),
-    (select s.invitation_only from access_setting s);
+    (select s.invitation_only from public.access_setting s);
 end
 $$;
 
@@ -119,7 +123,7 @@ begin
     select i.id, i.created_at, i.expires_at, i.redeemed_at,
            case when i.redeemed_at is not null then 'redeemed'
                 when i.expires_at <= now() then 'expired' else 'open' end
-      from invitation i order by i.created_at desc, i.id limit 100;
+      from public.invitation i order by i.created_at desc, i.id limit 100;
 end
 $$;
 

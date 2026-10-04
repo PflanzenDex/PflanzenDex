@@ -9,7 +9,9 @@ Legend: ✅ as expected · ⚠️ works, with a finding · ❌ error · ⏭️ n
 ## 0. Gates and red evidence
 
 - ✅ `make ci` exit 0 on the last commit before this log (see the PR for the final run).
-- ✅ Red evidence before implementing, exit code 1 each: `acc-05/red-core.txt` (`newInvitationCode is not a function`, 46 failed), `acc-05/red-db.txt` (`AccessPostgres is not a constructor`), `acc-05/red-api.txt` (suite fails, routes missing), `acc-05/red-web.txt` (`./invitation-page` missing). Note: the first db red capture was made while a stale local test container (an old database with a different 0016) was still in place; the failure shown is the missing adapter.
+- ✅ Red evidence before implementing, exit code 1 each: `acc-05/red-core.txt` (`newInvitationCode is not a function`, 46 failed) and `acc-05/red-web.txt` (`./invitation-page` missing).
+- ✅ Review round 1, red first (exit code 1): `acc-05/red-idem-core.txt` (kernel `secret` operations and the invitation replay: 3 failed), `acc-05/red-idem-api.txt` (the idempotency table holds the plain code: 1 failed), `acc-05/red-rls-db.txt` (row security on both tables: 1 failed).
+- ✅ Re-captured honest reds for db and api (the first captures were invalid: an old stale container, and a setup bug in the test that was fixed before the first commit): the implementation was temporarily replaced by stubs and restored afterwards. `acc-05/red-db.txt`: 15 failed, 11 passed (with the stub, tests that only expect a rejection pass vacuously); `acc-05/red-api.txt`: 14 failed, 7 passed (the gate tests still pass because the gate lives in the middleware, which was not stubbed).
 - ⏭️ `make e2e` (shared suite) not run; no e2e test added.
 
 ## 1. Criterion: registration only with a valid invitation code, as long as the operator set it that way
@@ -58,4 +60,4 @@ Legend: ✅ as expected · ⚠️ works, with a finding · ❌ error · ⏭️ n
 ## Open points
 
 - Owner decisions: close self-registration in the Keycloak realm when the invitation phase starts; decide the source and shape of the cost measurement (TE-10) so "Kosten pro Nutzer" can show a number; whether the mode should default to "invitation only" on a public deployment (today off, so nothing changes for existing installations).
-- `invitation.create` replays return the code from the idempotency record (operator's own rows, no retention job yet).
+- `invitation.create` is marked `secret`: nothing of it is stored in `idempotency`; a repeat with the same key creates another code. A client that loses the answer must create a new code.

@@ -1,0 +1,28 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-05-zugang-nur-per-einladung/app/packages/api
+
+ ❯ src/account/access.test.ts (21 tests | 1 failed) 458ms
+   ❯ US-ACC-05 · the operator area (role checked in the operation and in the database) (13)
+     × US-ACC-05 the idempotency table never holds the plain code; a repeat with the same key creates another code 29ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · the operator area (role checked in the operation and in the database) > US-ACC-05 the idempotency table never holds the plain code; a repeat with the same key creates another code
+AssertionError: expected 'DPEP-H08D-NP9D-022C-ACZ0-K4W3' not to be 'DPEP-H08D-NP9D-022C-ACZ0-K4W3' // Object.is equality
+ ❯ src/account/access.test.ts:232:32
+    230|     const b = await call(open, subOperator, "POST", "/operator/invitat…
+    231|     expect([a.status, b.status]).toEqual([201, 201]);
+    232|     expect(b.body["code"]).not.toBe(a.body["code"]);
+       |                                ^
+    233|     for (const code of [a.body["code"], b.body["code"]] as string[]) {
+    234|       const leaked = await pool.query(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 20 passed (21)
+   Start at  21:13:05
+   Duration  1.14s (tests 46%, transform 40%, import 14%, worker 1%)
+
+exit code: 1

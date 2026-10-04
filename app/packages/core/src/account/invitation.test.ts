@@ -147,11 +147,17 @@ describe("US-ACC-05 · only the operator creates invitation codes", () => {
     expect(!r.ok && r.error.code).toBe("access.not_signed_in");
   });
 
-  it("US-ACC-05 the same idempotency key writes one invitation and returns the same answer", async () => {
+  it("US-ACC-05 the code is a secret: a repeat with the same key creates another code, nothing is replayed", async () => {
     const a = await create({}, "olga", "same");
     const b = await create({}, "olga", "same");
-    expect(a).toEqual(b);
-    expect(access.invitations).toHaveLength(1);
+    expect(a.ok && b.ok).toBe(true);
+    if (!a.ok || !b.ok) return;
+    expect(a.value.code).not.toBe(b.value.code);
+    expect(access.invitations).toHaveLength(2);
+    expect(access.invitations.map((i) => i.code)).toEqual([
+      a.value.code.replaceAll("-", ""),
+      b.value.code.replaceAll("-", ""),
+    ]);
   });
 });
 

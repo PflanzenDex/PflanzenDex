@@ -1,0 +1,75 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-05-zugang-nur-per-einladung/app/packages/core
+
+ ❯ src/kernel/operation.test.ts (24 tests | 2 failed) 16ms
+   ❯ US-ACC-05 operations with a secret result (3)
+     × US-ACC-05 never writes the result to the idempotency store and releases the key 5ms
+     × US-ACC-05 a repeat with the same key runs again and returns a new secret 1ms
+ ❯ src/account/invitation.test.ts (46 tests | 1 failed) 18ms
+   ❯ US-ACC-05 · only the operator creates invitation codes (14)
+     × US-ACC-05 the code is a secret: a repeat with the same key creates another code, nothing is replayed 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/account/invitation.test.ts > US-ACC-05 · only the operator creates invitation codes > US-ACC-05 the code is a secret: a repeat with the same key creates another code, nothing is replayed
+AssertionError: expected 'F6MX-J29S-D6CW-KY99-B64V-KT8S' not to be 'F6MX-J29S-D6CW-KY99-B64V-KT8S' // Object.is equality
+ ❯ src/account/invitation.test.ts:155:30
+    153|     expect(a.ok && b.ok).toBe(true);
+    154|     if (!a.ok || !b.ok) return;
+    155|     expect(a.value.code).not.toBe(b.value.code);
+       |                              ^
+    156|     expect(access.invitations).toHaveLength(2);
+    157|     expect(access.invitations.map((i) => i.code)).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/kernel/operation.test.ts > US-ACC-05 operations with a secret result > US-ACC-05 never writes the result to the idempotency store and releases the key
+AssertionError: expected { kind: 'conflict' } to deeply equal { kind: 'fresh' }
+
+- Expected
++ Received
+
+  {
+-   "kind": "fresh",
++   "kind": "conflict",
+  }
+
+ ❯ src/kernel/operation.test.ts:170:19
+    168|     expect(first.ok && first.value.code).toBe("secret-1");
+    169|     const reuse = await idem.begin({ userId: "u1", operation: "test.se…
+    170|     expect(reuse).toEqual({ kind: "fresh" });
+       |                   ^
+    171|   });
+    172|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/kernel/operation.test.ts > US-ACC-05 operations with a secret result > US-ACC-05 a repeat with the same key runs again and returns a new secret
+AssertionError: expected [ 'secret-1', 'secret-1' ] to deeply equal [ 'secret-1', 'secret-2' ]
+
+- Expected
++ Received
+
+  [
+    "secret-1",
+-   "secret-2",
++   "secret-1",
+  ]
+
+ ❯ src/kernel/operation.test.ts:178:58
+    176|     const a = await secretCall(op);
+    177|     const b = await secretCall(op);
+    178|     expect([a.ok && a.value.code, b.ok && b.value.code]).toEqual(["sec…
+       |                                                          ^
+    179|     expect(counter.n).toBe(2);
+    180|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 67 passed (70)
+   Start at  21:13:18
+   Duration  234ms (transform 54%, import 28%, tests 15%, worker 3%)
+
+exit code: 1

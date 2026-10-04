@@ -26,13 +26,15 @@ const schema = shape({
 /**
  * Creates an invitation code (US-ACC-05, P-03). Only the operator may; the database checks the role again. The code is
  * single use and expires after `validForDays` (default 7, 1 to 30): the expiry is an UTC instant computed from the
- * clock of the caller. Only the hash of the code is stored (the adapter hashes), so a leaked database holds no codes.
+ * clock of the caller. Only the hash of the code is stored (the adapter hashes) and the answer is not kept for replays (`secret`), so a leaked database holds no codes; a repeat with the same Idempotency-Key creates another code.
  */
 export const invitationCreate = (deps: InvitationDependencies) =>
   defineOperation({
     name: "invitation.create",
     schema,
     authorized: isOperator(deps.access),
+    // The code is shown once and must not end up in the idempotency record (only its hash is stored anywhere).
+    secret: true,
     run: async ({ userId }, input) => {
       const code = newInvitationCode(deps.random);
       const days = input.validForDays ?? INVITATION_VALIDITY_DAYS.default;

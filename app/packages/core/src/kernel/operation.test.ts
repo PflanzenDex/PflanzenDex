@@ -145,3 +145,55 @@ describe("operations: central access check", () => {
     expect(!r.ok && r.error.code).toBe("access.denied");
   });
 });
+
+describe("US-ACC-05 operations with a secret result", () => {
+  const secretOp = (counter: { n: number }) =>
+    defineOperation({
+      name: "test.secret",
+      schema: shape({ name: textField("name", { min: 1, max: 10 }) }),
+      secret: true,
+      run: async () => ok({ code: `secret-${++counter.n}` }),
+    });
+  const secretCall = (op: ReturnType<typeof secretOp>, key = "k1") =>
+    execute(
+      op,
+      { idempotency: idem },
+      { context: user, input: { name: "a" }, idempotencyKey: key },
+    );
+
+  it("US-ACC-05 never writes the result to the idempotency store and releases the key", async () => {
+    const counter = { n: 0 };
+    const op = secretOp(counter);
+    const first = await secretCall(op);
+    expect(first.ok && first.value.code).toBe("secret-1");
+    const reuse = await idem.begin({ userId: "u1", operation: "test.secret", key: "k1" }, "{}");
+    expect(reuse).toEqual({ kind: "fresh" });
+  });
+
+  it("US-ACC-05 a repeat with the same key runs again and returns a new secret", async () => {
+    const counter = { n: 0 };
+    const op = secretOp(counter);
+    const a = await secretCall(op);
+    const b = await secretCall(op);
+    expect([a.ok && a.value.code, b.ok && b.value.code]).toEqual(["secret-1", "secret-2"]);
+    expect(counter.n).toBe(2);
+  });
+
+  it("US-ACC-05 still refuses a missing key and invalid input before running", async () => {
+    const counter = { n: 0 };
+    const op = secretOp(counter);
+    const noKey = await execute(
+      op,
+      { idempotency: idem },
+      { context: user, input: { name: "a" }, idempotencyKey: undefined },
+    );
+    expect(!noKey.ok && noKey.error.code).toBe("idempotency.key_missing");
+    const bad = await execute(
+      op,
+      { idempotency: idem },
+      { context: user, input: {}, idempotencyKey: "k" },
+    );
+    expect(!bad.ok && bad.error.code).toBe("input.invalid");
+    expect(counter.n).toBe(0);
+  });
+});

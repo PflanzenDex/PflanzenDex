@@ -97,6 +97,20 @@ describe("US-ACC-05 · only the operator creates invitations (database enforced)
     }
   });
 
+  it("US-ACC-05 row security is on for both tables, without any policy (defense in depth)", async () => {
+    const r = await pool.query<{ name: string; rls: boolean; rules: number }>(
+      `select c.relname as name, c.relrowsecurity as rls,
+              (select count(*)::int from pg_policy p where p.polrelid = c.oid) as rules
+         from pg_class c where c.relname in ('invitation', 'access_setting') order by 1`,
+    );
+    expect(r.rows).toEqual([
+      { name: "access_setting", rls: true, rules: 0 },
+      { name: "invitation", rls: true, rules: 0 },
+    ]);
+    // the definer functions still work with it
+    expect((await store.overview(operator, 30)).invitationOnly).toBe(false);
+  });
+
   it("US-ACC-05 refuses an expiry in the past or more than 31 days ahead", async () => {
     await expect(
       store.createInvitation(operator, {

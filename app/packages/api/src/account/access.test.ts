@@ -224,11 +224,32 @@ describe("US-ACC-05 · the operator area (role checked in the operation and in t
     ).toBe(true);
   });
 
-  it("US-ACC-05 repeating the creation with the same Idempotency-Key returns the same code once", async () => {
+  it("US-ACC-05 the idempotency table never holds the plain code; a repeat with the same key creates another code", async () => {
     const key = randomUUID();
     const a = await call(open, subOperator, "POST", "/operator/invitations", {}, key);
     const b = await call(open, subOperator, "POST", "/operator/invitations", {}, key);
-    expect(b.body).toEqual(a.body);
+    expect([a.status, b.status]).toEqual([201, 201]);
+    expect(b.body["code"]).not.toBe(a.body["code"]);
+    for (const code of [a.body["code"], b.body["code"]] as string[]) {
+      const leaked = await pool.query(
+        "select count(*)::int as n from idempotency where result::text ilike any($1) or fingerprint ilike any($1)",
+        [[`%${code}%`, `%${code.replaceAll("-", "")}%`]],
+      );
+      expect(leaked.rows[0].n).toBe(0);
+    }
+    const kept = await pool.query(
+      "select count(*)::int as n from idempotency where operation = 'invitation.create' and key = $1",
+      [key],
+    );
+    expect(kept.rows[0].n).toBe(0);
+    // both codes work, once each
+    for (const code of [a.body["code"], b.body["code"]] as string[]) {
+      const sub = fresh();
+      extra.push(sub);
+      expect((await call(closed, sub, "POST", "/registration/invitation", { code })).status).toBe(
+        200,
+      );
+    }
   });
 
   it("US-ACC-05 refuses a validity outside 1 to 30 days with input.invalid", async () => {
