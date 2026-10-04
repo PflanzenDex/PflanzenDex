@@ -1,4 +1,4 @@
-import { specimenHints, zoneDistribution } from "@pflanzendex/core";
+import { specimenHints, zoneDistribution, lightOverview } from "@pflanzendex/core";
 import {
   CareProfilePostgres,
   LocationPostgres,
@@ -26,6 +26,9 @@ export function derivedRoutes(pool: Pool): Hono<AuthEnv> {
   const routes = new Hono<AuthEnv>();
   routes.get("/specimens/distribution", async (c) =>
     c.json({ distribution: await zoneDistribution(deps, c.get("account").id) }),
+  );
+  routes.get("/specimens/light-overview", async (c) =>
+    c.json(await lightOverview(deps, c.get("account").id)),
   );
   routes.get("/specimens/hints", async (c) =>
     c.json({ hints: await specimenHints(deps, c.get("account").id) }),

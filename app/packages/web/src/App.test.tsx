@@ -66,6 +66,7 @@ function fakeServer(accountStatus = 200) {
       if (path === "/care-profiles") return response(200, { entries: [] });
       if (path === "/hints") return response(200, { hints: [] });
       if (path === "/specimens/hints") return response(200, { hints: SPECIMEN_HINTS });
+      if (path === "/specimens/light-overview") return response(200, { rows: [] });
       return response(404);
     }),
   );
@@ -152,6 +153,21 @@ describe("US-ACC-01 App", () => {
     expect(
       screen.getByRole("button", { name: "Standorte und Licht" }).getAttribute("aria-current"),
     ).toBe("page");
+  });
+
+  it("US-LIC-03 the empty light overview offers the way to the collection by switching the tab", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "Standorte und Licht" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Zum Bestand" }));
+    expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Bestand" }).getAttribute("aria-current")).toBe(
+      "page",
+    );
+    expect(
+      screen.getByRole("button", { name: "Standorte und Licht" }).getAttribute("aria-current"),
+    ).toBeNull();
   });
 
   it('choosing a species in the catalog leads to the form "Exemplar anlegen"; back leads to the catalog (US-BES-02)', async () => {

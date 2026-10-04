@@ -38,7 +38,7 @@ Acceptance criteria:
 - Count per zone 2–4 at specimen level (the specimen's light zone before the species'); cutting light does not count.
 - The display names the thinnest zone. On a tie all equally placed ones, with a hint to the wishlist.
 
-### US-LIC-03 · Know how close the plant belongs to the lamp · ⬜ (prototype ✅)
+### US-LIC-03 · Know how close the plant belongs to the lamp · 🟨 (prototype ✅)
 
 As a **plant keeper** I want an overview by light hunger with a position recommendation.
 

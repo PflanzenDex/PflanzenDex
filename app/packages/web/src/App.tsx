@@ -17,7 +17,6 @@ const version = (import.meta.env as Record<string, string | undefined>)["VITE_AP
 type Token = () => Promise<string | undefined>;
 /** The views that need nothing but the API address and the token. */
 const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Token }>>> = {
-  light: LightPage,
   treatments: TreatmentsPage,
   carePhases: CarePhasesPage,
   careProfile: CareProfilePage,
@@ -60,6 +59,8 @@ export function App() {
               onEverywhereSignOut={() => void s.everywhereSignOut()}
               {...(z.error ? { error: z.error } : {})}
             />
+          ) : view === "light" ? (
+            <LightPage api={api} token={s.token} onOpenCollection={() => setView("collection")} />
           ) : Simple ? (
             <Simple api={api} token={s.token} />
           ) : view === "hints" ? (

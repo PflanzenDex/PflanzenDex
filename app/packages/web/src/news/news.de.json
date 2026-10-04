@@ -18,6 +18,7 @@
     "Behandlung: Unter „Behandlung“ planst du Termine für ein oder mehrere Exemplare mit Grund, Mittel und Datum. Mit „Kur planen“ legst du mehrere Termine im Abstand von einigen Tagen an (voreingestellt 3 Termine, 7 Tage). Den nächsten Termin siehst du auf der Karte im Bestand.",
     "Behandlung: Unter „Behandlung“ siehst du alle offenen Termine nach Dringlichkeit, mit Exemplar, Grund, Mittel und Fälligkeit („überfällig seit 2 Tagen“, „heute fällig“, „in 3 Tagen“). Ohne offene Termine sagt dir die Seite, wie du einen planst.",
     "Behandlung: Jeder offene Termin hat jetzt „Erledigt“. Ein Tipp hakt ihn mit dem heutigen Datum ab, er verschwindet aus der Liste und die Karte im Bestand zeigt den nächsten Termin. Ein zweiter Tipp, auch auf einem anderen Gerät, ändert nichts. Erledigte Behandlungen siehst du je Exemplar unter „Erledigte Behandlungen“.",
-    "Pokédex: Unter „Pokédex“ siehst du, welche Arten du schon gefangen hast. Eine Art zählt, sobald du ein aktives Exemplar von ihr hast; archivierte zählen nicht. Exemplare ohne bestimmte Art werden benannt und sagen dir, was zu tun ist."
+    "Pokédex: Unter „Pokédex“ siehst du, welche Arten du schon gefangen hast. Eine Art zählt, sobald du ein aktives Exemplar von ihr hast; archivierte zählen nicht. Exemplare ohne bestimmte Art werden benannt und sagen dir, was zu tun ist.",
+    "Licht: Unter „Standorte und Licht“ siehst du im Abschnitt „Lichthunger“ alle Arten mit aktivem Exemplar nach Lux-Bedarf sortiert, mit Lichtzone und Positionsempfehlung: direkt unter der Lampe, sehr nah, nah, mittlerer Abstand oder weiter weg. Ist die Zone einer Art nicht bekannt, steht dort „unbekannt“."
   ]
 }
