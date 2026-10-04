@@ -142,6 +142,28 @@ describe("US-BES-02 back-dated catch date (FR-BES-04, NFR-08)", () => {
   });
 
   it.each([
+    // [zone, local today, a date that is tomorrow there]
+    ["Pacific/Kiritimati", "2026-10-03", "2026-10-04"], // +14: the local date is ahead of UTC (the 2nd)
+    ["Pacific/Pago_Pago", "2026-10-02", "2026-10-03"], // -11: the local date is behind the Berlin date
+  ])(
+    "%s: local today is allowed, local tomorrow is refused (extreme zones)",
+    async (timeZone, today, tomorrow) => {
+      const ok = await create({ catchDate: today, timeZone });
+      expect(ok.ok && ok.value.caughtAt).toBe(today);
+      const refused = await create({ catchDate: tomorrow, timeZone, marker: "Rot" });
+      expect(!refused.ok && refused.error.code).toBe("specimen.caught_in_future");
+      expect(specimens.rows).toHaveLength(1);
+    },
+  );
+
+  it("a date that is tomorrow in UTC but today in Kiritimati is accepted there, refused in UTC", async () => {
+    const kiritimati = await create({ catchDate: "2026-10-03", timeZone: "Pacific/Kiritimati" });
+    expect(kiritimati.ok).toBe(true);
+    const utc = await create({ catchDate: "2026-10-03", timeZone: "UTC", marker: "Rot" });
+    expect(!utc.ok && utc.error.code).toBe("specimen.caught_in_future");
+  });
+
+  it.each([
     ["not a date", "gestern"],
     ["wrong format", "03.02.2022"],
     ["month 13", "2022-13-01"],
