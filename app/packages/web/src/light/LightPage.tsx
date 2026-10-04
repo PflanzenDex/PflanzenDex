@@ -1,17 +1,23 @@
 import "./light.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LightView, type LightActions } from "./light-view";
+import { LightOverviewView } from "./light-overview-view";
 import {
   createWrite,
   loadDerivation,
   loadLight,
+  loadLightOverview,
   type DerivationRequest,
   type ApiError,
   type LightData,
+  type LightOverview,
+  type Response,
 } from "./light-api";
 
 type State =
-  { kind: "loading" } | { kind: "error"; error: ApiError } | { kind: "bereit"; data: LightData };
+  | { kind: "loading" }
+  | { kind: "error"; error: ApiError }
+  | { kind: "bereit"; data: LightData; overview: Response<LightOverview> };
 
 type Token = () => Promise<string | undefined>;
 
@@ -53,8 +59,34 @@ function buildActions(
   };
 }
 
+function OverviewSection(props: {
+  overview: Response<LightOverview>;
+  onOpenCollection: () => void;
+  onRetry: () => void;
+}) {
+  const o = props.overview;
+  if (o.ok) return <LightOverviewView data={o.value} onOpenCollection={props.onOpenCollection} />;
+  return (
+    <section aria-labelledby="overview-error">
+      <h2 id="overview-error">Lichthunger</h2>
+      <p role="alert" className="warning">
+        {o.error.text}
+      </p>
+      <div className="actions">
+        <button type="button" className="primary" onClick={props.onRetry}>
+          Erneut versuchen
+        </button>
+      </div>
+    </section>
+  );
+}
+
 /** Loads the data and connects the view to the API; after every write it reloads (never guesses). */
-export function LightPage(props: { api: string; token: () => Promise<string | undefined> }) {
+export function LightPage(props: {
+  api: string;
+  token: () => Promise<string | undefined>;
+  onOpenCollection: () => void;
+}) {
   const [z, setZ] = useState<State>({ kind: "loading" });
   const [lastError, setLastError] = useState<ApiError | undefined>();
   const { api, token } = props;
@@ -66,8 +98,10 @@ export function LightPage(props: { api: string; token: () => Promise<string | un
         kind: "error",
         error: { code: "access.not_signed_in", text: "Bitte melde dich neu an." },
       });
-    const r = await loadLight(api, t);
-    setZ(r.ok ? { kind: "bereit", data: r.value } : { kind: "error", error: r.error });
+    const [r, o] = await Promise.all([loadLight(api, t), loadLightOverview(api, t)]);
+    if (!r.ok) return setZ({ kind: "error", error: r.error });
+    // The overview is an addition: if only it fails, the zones and locations stay usable.
+    setZ({ kind: "bereit", data: r.value, overview: o });
   }, [api, token]);
   useEffect(() => void load(), [load]);
 
@@ -92,5 +126,14 @@ export function LightPage(props: { api: string; token: () => Promise<string | un
         </div>
       </div>
     );
-  return <LightView data={z.data} actions={actions} {...(lastError ? { error: lastError } : {})} />;
+  return (
+    <div className="light-page">
+      <OverviewSection
+        overview={z.overview}
+        onOpenCollection={props.onOpenCollection}
+        onRetry={() => void load()}
+      />
+      <LightView data={z.data} actions={actions} {...(lastError ? { error: lastError } : {})} />
+    </div>
+  );
 }
