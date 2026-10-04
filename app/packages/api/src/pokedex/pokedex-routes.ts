@@ -8,8 +8,8 @@ export const POKEDEX_PATHS = ["/pokedex"] as const;
 
 /**
  * Ownership of species derived from the specimens (US-POK-06) with the catch date (US-POK-07): read only, nothing
- * stored (P-01). Only data of the own account flows in (P-04). `timeZone` (IANA name, from the device for now, until
- * the profile has one, US-ACC-02) decides the local date of a creation moment (NFR-08).
+ * stored (P-01). Only data of the own account flows in (P-04). `timeZone` (IANA name, the profile zone with the device
+ * zone as fallback, chosen by the client, US-ACC-02) decides the local date of a creation moment (NFR-08).
  */
 export function pokedexRoutes(pool: Pool): Hono<AuthEnv> {
   const deps = { specimens: new SpecimenPostgres(pool), species: new SpeciesPostgres(pool) };

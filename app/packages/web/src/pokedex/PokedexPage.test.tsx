@@ -2,6 +2,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { deviceTimeZone, setProfileTimeZone } from "../kernel";
 import { PokedexPage } from "./PokedexPage";
 
 const response = (status: number, body: unknown) =>
@@ -44,6 +45,7 @@ function fakeServer(answer: () => Promise<Response>) {
 const token = async () => "tok";
 
 afterEach(() => {
+  setProfileTimeZone(null);
   cleanup();
   vi.unstubAllGlobals();
 });
@@ -128,13 +130,24 @@ describe("US-POK-07 catch date on the card", () => {
     expect(screen.queryByText(/gefangen \d/)).toBeNull();
   });
 
-  it("US-POK-07 the request carries the time zone of the device (NFR-08)", async () => {
+  it("US-POK-07 the request carries the time zone of the profile (NFR-08, US-ACC-02)", async () => {
+    setProfileTimeZone("Asia/Tokyo");
     const fetchFn = fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
     render(<PokedexPage api="http://api" token={token} />);
     await screen.findByText("Citrus limon");
-    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     expect(String(fetchFn.mock.calls[0]?.[0])).toBe(
-      `http://api/pokedex/ownership?timeZone=${encodeURIComponent(zone)}`,
+      "http://api/pokedex/ownership?timeZone=Asia%2FTokyo",
+    );
+  });
+
+  it("US-POK-07 without a profile time zone the request falls back to the device zone", async () => {
+    setProfileTimeZone("Asia/Tokyo");
+    setProfileTimeZone(null);
+    const fetchFn = fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
+    render(<PokedexPage api="http://api" token={token} />);
+    await screen.findByText("Citrus limon");
+    expect(String(fetchFn.mock.calls[0]?.[0])).toBe(
+      `http://api/pokedex/ownership?timeZone=${encodeURIComponent(deviceTimeZone())}`,
     );
   });
 });
