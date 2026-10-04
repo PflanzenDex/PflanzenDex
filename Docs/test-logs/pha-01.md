@@ -61,7 +61,7 @@ Plus a sixth species "Archivia willbearchived" (dormancy 10-01 … 03-15) whose 
 
 So the phase follows the local calendar date of the device (NFR-08), not the UTC date and not the server's date. The check depends on the time of day of the run: it needs a moment when the two time zones are on different calendar days (here 22:30 in Berlin); the script computes the dates at run time instead of hard-coding them.
 
-- ⚠️ The time zone comes from the device for now, until the account profile has one (US-ACC-02, as the spec says). A user who travels sees the phase of the place of the device. This is the documented state, not a defect.
+- ⚠️ The time zone comes from the device for now, until the account profile has one (US-ACC-02, as the spec says). A user who travels sees the phase of the place of the device. This is the documented state, not a defect. (Update 2026-10-04: since US-ACC-02 the profile has a time zone; the device zone is only the fallback.)
 
 ## 3. Criterion: target location
 
