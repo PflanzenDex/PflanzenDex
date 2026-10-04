@@ -1,0 +1,283 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-05-zugang-nur-per-einladung/app/packages/web
+
+ ❯ src/account/operator-page.test.tsx (0 test)
+ ❯ src/account/invitation-page.test.tsx (0 test)
+ ❯ src/navigation.test.tsx (2 tests | 1 failed) 191ms
+   ❯ US-ACC-05 navigation (1)
+     × US-ACC-05 the operator tab is shown to the operator only, not to reviewers 33ms
+ ❯ src/account/session.test.tsx (15 tests | 1 failed) 1853ms
+   ❯ US-ACC-01 Sitzung (15)
+     × US-ACC-05 a 403 invitation.required keeps the sign-in and asks for an invitation code 1011ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/account/invitation-page.test.tsx [ src/account/invitation-page.test.tsx ]
+Error: Failed to resolve import "./invitation-page" from "src/account/invitation-page.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-05-zugang-nur-per-einladung/app/packages/web/src/account/invitation-page.test.tsx:5:31
+  3  |  import userEvent from "@testing-library/user-event";
+  4  |  import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+  5  |  import { InvitationPage } from "./invitation-page";
+     |                                  ^
+  6  |  var _jsxFileName = "/home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-05-zugang-nur-per-einladung/app/packa...
+  7  |  import { jsxDEV as _jsxDEV } from "react/jsx-dev-runtime";
+ ❯ TransformPluginContext._formatLog ../../node_modules/vite/dist/node/chunks/node.js:8766:39
+ ❯ TransformPluginContext.error ../../node_modules/vite/dist/node/chunks/node.js:8763:14
+ ❯ normalizeUrl ../../node_modules/vite/dist/node/chunks/node.js:26423:18
+ ❯ ../../node_modules/vite/dist/node/chunks/node.js:26493:30
+ ❯ TransformPluginContext.transform ../../node_modules/vite/dist/node/chunks/node.js:26459:4
+ ❯ EnvironmentPluginContainer.transform ../../node_modules/vite/dist/node/chunks/node.js:8545:14
+ ❯ loadAndTransform ../../node_modules/vite/dist/node/chunks/node.js:19988:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/account/operator-page.test.tsx [ src/account/operator-page.test.tsx ]
+Error: Failed to resolve import "./operator-page" from "src/account/operator-page.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-05-zugang-nur-per-einladung/app/packages/web/src/account/operator-page.test.tsx:6:29
+  2  |  import userEvent from "@testing-library/user-event";
+  3  |  import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+  4  |  import { OperatorPage } from "./operator-page";
+     |                                ^
+  5  |  var _jsxFileName = "/home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-05-zugang-nur-per-einladung/app/packa...
+  6  |  import { jsxDEV as _jsxDEV } from "react/jsx-dev-runtime";
+ ❯ TransformPluginContext._formatLog ../../node_modules/vite/dist/node/chunks/node.js:8766:39
+ ❯ TransformPluginContext.error ../../node_modules/vite/dist/node/chunks/node.js:8763:14
+ ❯ normalizeUrl ../../node_modules/vite/dist/node/chunks/node.js:26423:18
+ ❯ ../../node_modules/vite/dist/node/chunks/node.js:26493:30
+ ❯ TransformPluginContext.transform ../../node_modules/vite/dist/node/chunks/node.js:26459:4
+ ❯ EnvironmentPluginContainer.transform ../../node_modules/vite/dist/node/chunks/node.js:8545:14
+ ❯ loadAndTransform ../../node_modules/vite/dist/node/chunks/node.js:19988:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/navigation.test.tsx > US-ACC-05 navigation > US-ACC-05 the operator tab is shown to the operator only, not to reviewers
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Betreiber"
+
+Here are the accessible roles:
+
+  navigation:
+
+  Name "Hauptnavigation":
+  [36m<nav[39m
+    [33maria-label[39m=[32m"Hauptnavigation"[39m
+    [33mclass[39m=[32m"navigation"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Start":
+  [36m<button[39m
+    [33mclass[39m=[32m"tab"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Arten":
+  [36m<button[39m
+    [33mclass[39m=[32m"tab"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Bestand":
+  [36m<button[39m
+    [33mclass[39m=[32m"tab"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Behandlung":
+  [36m<button[39m
+    [33mclass[39m=[32m"tab"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Hinweise":
+  [36m<button[39m
+    [33mclass[39m=[32m"tab"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Pflegephasen":
+  [36m<button[39m
+    [33mclass[39m=[32m"tab"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Pflegeprofil":
+  [36m<button[39m
+    [33mclass[39m=[32m"tab"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Artenvergleich":
+  [36m<button[39m
+    [33mclass[39m=[32m"tab"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Pokédex":
+  [36m<button[39m
+    [33mclass[39m=[32m"tab"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Standorte und Licht":
+  [36m<button[39m
+    [33mclass[39m=[32m"tab"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Konto":
+  [36m<button[39m
+    [33mclass[39m=[32m"tab"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Einstellungen":
+  [36m<button[39m
+    [33mclass[39m=[32m"tab"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<nav[39m
+      [33maria-label[39m=[32m"Hauptnavigation"[39m
+      [33mclass[39m=[32m"navigation"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mStart[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mArten[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mBestand[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mBehandlung[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mHinweise[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mPflegephasen[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mPflegeprofil[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mArtenvergleich[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mPokédex[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mStandorte und Licht[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mKonto[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"tab"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mEinstellungen[0m
+      [36m</button>[39m
+    [36m</nav>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/navigation.test.tsx:29:19
+     27|     cleanup();
+     28|     render(<Navigation active="operator" onSwitch={() => undefined} op…
+     29|     expect(screen.getByRole("button", { name: "Betreiber" }).getAttrib…
+       |                   ^
+     30|       "page",
+     31|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/account/session.test.tsx > US-ACC-01 Sitzung > US-ACC-05 a 403 invitation.required keeps the sign-in and asks for an invitation code
+AssertionError: expected { kind: 'error', …(1) } to deeply equal { kind: 'invitationNeeded' }
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+  {
+-   "kind": "invitationNeeded",
++   "kind": "error",
++   "text": "Das Konto konnte nicht geladen werden.",
+  }
+
+ ❯ src/account/session.test.tsx:123:54
+    121|     );
+    122|     const { result } = renderHook(() => useSession());
+    123|     await waitFor(() => expect(result.current.state).toEqual({ kind: "…
+       |                                                      ^
+    124|     expect(mgr.removeUser).not.toHaveBeenCalled();
+    125|     expect(await result.current.token()).toBe("tok");
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  4 failed | 4 passed (8)
+      Tests  2 failed | 48 passed (50)
+   Start at  20:44:00
+   Duration  2.79s (tests 49%, environment 39%, transform 6%, import 5%)
+
+exit 1

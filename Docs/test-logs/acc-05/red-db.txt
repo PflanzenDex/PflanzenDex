@@ -1,0 +1,38 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-05-zugang-nur-per-einladung/app/packages/db
+
+ ❯ src/account/access.test.ts (23 tests | 23 skipped) 488ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/account/access.test.ts [ src/account/access.test.ts ]
+TypeError: AccessPostgres is not a constructor
+ ❯ src/account/access.test.ts:34:11
+     32|   pool = openPool();
+     33|   await migrate(pool);
+     34|   store = new AccessPostgres(pool);
+       |           ^
+     35|   for (const id of people)
+     36|     await withAccount(pool, id, (c) => c.query("insert into account (i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/account/access.test.ts [ src/account/access.test.ts ]
+TypeError: Cannot read properties of undefined (reading 'setInvitationOnly')
+ ❯ src/account/access.test.ts:41:15
+     39| });
+     40| afterAll(async () => {
+     41|   await store.setInvitationOnly(operator, false);
+       |               ^
+     42|   await pool.query("delete from invitation where created_by = any($1)"…
+     43|   await pool.query("delete from account where subject = any($1) or id …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  23 skipped (23)
+   Start at  20:38:35
+   Duration  809ms (tests 74%, transform 17%, import 8%, worker 1%)
+
+exit 1

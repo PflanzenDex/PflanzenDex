@@ -16,3 +16,6 @@
   overflow-wrap: anywhere;
   user-select: all;
 }
+.invitation-form {
+  margin-top: 16px;
+}

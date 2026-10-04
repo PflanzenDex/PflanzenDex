@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { SIGN_IN, type ApiError } from "../kernel";
 import { redeemInvitation } from "./access-api";
+import "./operator.css";
 
 type Token = () => Promise<string | undefined>;
 
@@ -59,7 +60,7 @@ export function InvitationPage(props: {
       <p className="quiet">
         Du hast keinen Code? Bitte die Person, die PflanzenDex betreibt, um eine Einladung.
       </p>
-      <form onSubmit={(e) => void form.submit(e)} noValidate>
+      <form className="invitation-form" onSubmit={(e) => void form.submit(e)} noValidate>
         <label>
           Einladungscode
           <input

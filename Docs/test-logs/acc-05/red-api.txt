@@ -1,0 +1,27 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-05-zugang-nur-per-einladung/app/packages/api
+
+ ❯ src/account/access.test.ts (21 tests | 21 skipped) 158ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/account/access.test.ts [ src/account/access.test.ts ]
+error: could not determine data type of parameter $1
+ ❯ ../../node_modules/pg-pool/index.js:45:11
+ ❯ src/account/access.test.ts:54:3
+     52|   closed = createApp({ reviewer: verifier, pool, invitationOnly: true …
+     53|   for (const sub of [subOperator, subKeeper, subReviewer]) await call(…
+     54|   await pool.query(
+       |   ^
+     55|     "insert into account_role (account, role) select id, r.role from a…
+     56|     [null, subOperator, subReviewer],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  21 skipped (21)
+   Start at  20:41:29
+   Duration  779ms (transform 55%, tests 23%, import 21%, worker 1%)
+
+exit 1
