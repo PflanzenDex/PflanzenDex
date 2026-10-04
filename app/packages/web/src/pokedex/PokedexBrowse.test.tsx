@@ -113,7 +113,24 @@ describe("US-POK-08 filter", () => {
     expect((screen.getByRole("button", { name: "Fehlend" }) as HTMLButtonElement).disabled).toBe(
       true,
     );
-    expect(screen.getByText(/Fehlende Arten brauchen den Katalogaufbau/)).toBeTruthy();
+    expect(
+      screen.getByText(
+        /Fehlende Arten zeigt der Pokédex erst, wenn der Artenkatalog aufgebaut ist/,
+      ),
+    ).toBeTruthy();
+  });
+
+  it("US-POK-08 the disabled filters point to their visible reason and show no internal story ID", async () => {
+    await open([species("Ficus lyrata")]);
+    for (const [name, id] of [
+      ["Fehlend", "hint-missing"],
+      ["Artenarm", "hint-poor"],
+    ] as const) {
+      const id2 = screen.getByRole("button", { name }).getAttribute("aria-describedby");
+      expect(id2).toBe(id);
+      expect(document.getElementById(id)?.textContent).toContain("nicht verfügbar");
+    }
+    expect(screen.queryByText(/US-POK/)).toBeNull();
   });
 
   it("US-POK-08 'Artenarm' is disabled while no genus species count is known, and works once one is", async () => {

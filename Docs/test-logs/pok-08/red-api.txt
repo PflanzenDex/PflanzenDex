@@ -79,3 +79,5 @@ AssertionError: expected { …(5) } to match object { germanName: 'Geigenfeige',
    Start at  15:52:16
    Duration  1.68s (tests 68%, transform 22%, import 9%)
 
+
+exit code recorded when run: 1

@@ -11,6 +11,7 @@ export interface CareProfileDependencies {
 const STORE_ERROR = {
   location_unknown: "location.not_found",
   zone_unknown: "light_zone.not_found",
+  species_unknown: "species.not_found",
 } as const;
 
 /**

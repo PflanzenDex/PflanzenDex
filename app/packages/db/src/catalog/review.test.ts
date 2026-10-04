@@ -167,6 +167,7 @@ describe("P-04: the operator sees no content of other accounts", () => {
       "account_id",
       "created_at",
       "id",
+      "merged_into",
       "object_id",
       "object_kind",
       "reason",

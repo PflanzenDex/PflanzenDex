@@ -11,7 +11,11 @@ export { cuttingLight } from "./cutting-light";
 export { careProfileUpdate } from "./care-profile";
 export type { CareProfileDependencies } from "./care-profile";
 export { careProfileView } from "./care-profile-view";
-export type { CareProfileEntry, CareProfileViewDependencies } from "./care-profile-view";
+export type {
+  CareProfileEntry,
+  CareProfileViewDependencies,
+  MergedSpeciesSource,
+} from "./care-profile-view";
 export { careProfileZoneUsage } from "./care-profile-zone-usage";
 export type { ZoneUsageDependencies } from "./care-profile-zone-usage";
 export { effectiveProfile, effectiveDormancy } from "./effective-profile";

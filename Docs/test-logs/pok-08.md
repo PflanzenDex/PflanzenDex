@@ -2,11 +2,11 @@
 
 **Branch:** `feat/pok-08-suchen-filtern-sortieren` (from `origin/dev` at `12e9e23`; `dev` had no newer commits when this was written)
 **Environment:** Linux, Docker; PostgreSQL 16 in its own container (port 54738), API port 55238, web (Vite) port 55738, Keycloak 26.8 with the realm import from the repo in its own throwaway container on port 18860 (redirect address changed to `http://localhost:55738`). The shared sign-in service (18081) and the shared test database (54329) were not touched. Chromium through Playwright (Europe/Berlin, de-DE); date 2026-10-04.
-**Method:** red tests first, implementation, `make ci`, then a Playwright script (not checked in) against the real stack: two accounts through the Keycloak admin API, five species with German names and families created through the API, specimens created through the API, `caught_at` shaped with SQL on the own database. Screenshots 1440x900 and 375x812, raw observations (including axe, horizontal scroll, tap targets) in `pok-08/observation.json`. Throwaway servers, Keycloak and the own test database container were handled as stated in the PR.
+**Method:** red tests first, implementation, `make ci`, then a Playwright script (not checked in) against the real stack: two accounts through the Keycloak admin API, five species with German names and families created through the API, specimens created through the API, `caught_at` shaped with SQL on the own database. Screenshots 1440x900 and 375x812, raw observations (including axe, horizontal scroll, tap targets) in `pok-08/observation.json`.
 
 Legend: ✅ as expected · ⚠️ works, but something stands out · ❌ error · ⏭️ not checked
 
-**Scope:** the page lists caught species only, because the catalog tree (US-POK-03) and the collector cards (US-POK-01) do not exist. Spec status is 🟨. The list of missing parts is under "Offene Punkte".
+**Scope:** the page lists caught species only, because the catalog tree (US-POK-03) and the collector cards (US-POK-01) do not exist. Spec status is 🟨. The list of missing parts is under "Open points".
 
 ---
 
@@ -54,8 +54,9 @@ Legend: ✅ as expected · ⚠️ works, but something stands out · ❌ error �
 - ✅ Dark scheme captured for the family view (`09-family-dark-*.png`), axe 0 violations. The look was not reviewed in detail beyond the screenshots existing.
 - ⏭️ Screen reader and real touch devices were not tested.
 
-## Offene Punkte
+## Open points
 
 - Missing species, filter "Fehlend", search over the order and `n / m` totals need the catalog tree (US-POK-03, US-POK-01).
 - Genus species count and the filter "Artenarm" in practice need the GBIF enrichment (US-POK-03).
 - Sort and filter state is not kept across reloads (no requirement in the story).
+- The Playwright run above was done before the review follow-up (hint texts reworded without story IDs, `aria-describedby` on the disabled filters, live region for the count line). That follow-up is covered by web tests only, not by a new browser run.

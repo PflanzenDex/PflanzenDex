@@ -22,6 +22,7 @@ const REFUSED = {
   marker_taken: "specimen.marker_taken",
   location_unknown: "location.not_found",
   specimen_unknown: "specimen.not_found",
+  species_unknown: "species.not_found",
 } as const;
 
 export interface CreateDependencies {

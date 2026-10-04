@@ -37,6 +37,7 @@ export function careProfileRoutes(pool: Pool): Hono<AuthEnv> {
     species,
     profiles,
     zones: new ZonePostgres(pool),
+    merged: species,
   };
   const deps = { idempotency: new IdempotencyPostgres(pool) };
   const routes = new Hono<AuthEnv>();

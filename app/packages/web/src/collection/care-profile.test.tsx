@@ -33,6 +33,8 @@ const entry = (
   activeSpecimens: 2,
   wateringHint: "Alle zwei Wochen gießen",
   deviates,
+  mergedInto: null,
+  notice: null,
   profile: {
     growthLocation: none(),
     dormancyLocation: none(),
@@ -370,5 +372,41 @@ describe("US-BES-09 change my deviation", () => {
     finish(new Response("{}", { status: 200 }));
     await screen.findByRole("status");
     expect(puts(fetchFn)).toHaveLength(1);
+  });
+});
+
+describe("US-BES-10 a care profile kept on a merged proposal is shown, not editable (P-10)", () => {
+  it("US-BES-10 shows the notice with the next action and my kept values, without a form", async () => {
+    const kept: CareProfileEntry = {
+      ...entry(
+        {
+          ownHints: {
+            catalog: null,
+            own: "Mein alter Hinweis",
+            effective: "Mein alter Hinweis",
+            source: "profile",
+          },
+        },
+        true,
+      ),
+      speciesId: "gone",
+      speciesName: "Dein zusammengeführter Vorschlag",
+      activeSpecimens: 0,
+      mergedInto: { speciesId: "s1", speciesName: "Bogenhanf" },
+      notice: {
+        text: "Dein Vorschlag wurde mit „Bogenhanf“ zusammengeführt.",
+        nextAction:
+          "Öffne das Pflegeprofil von „Bogenhanf“ und übernimm von Hand, was du behalten willst.",
+      },
+    };
+    fakeServer({ entries: [entry(), kept] });
+    open();
+    expect(
+      await screen.findByRole("heading", { name: "Dein zusammengeführter Vorschlag" }),
+    ).toBeTruthy();
+    expect(screen.getByText(/zusammengeführt\./)).toBeTruthy();
+    expect(screen.getByText(/übernimm von Hand/)).toBeTruthy();
+    expect(screen.getByText("Mein alter Hinweis")).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: /Speichern/ })).toHaveLength(1);
   });
 });

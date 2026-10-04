@@ -49,8 +49,8 @@ export function Browse(props: { caught: readonly CaughtSpecies[] }) {
         <p className="quiet">{`${shown} von ${plural(caught.length)}`}</p>
       )}
       {shown === 0 ? (
-        <div role="status">
-          <p>Keine Art gefunden.</p>
+        <div>
+          <p role="status">Keine Art gefunden.</p>
           <button type="button" onClick={reset}>
             Suche zurücksetzen
           </button>

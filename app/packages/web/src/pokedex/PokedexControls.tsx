@@ -16,7 +16,7 @@ const SORTS: readonly { id: PokedexSort; label: string }[] = [
 
 /**
  * Search field, filter buttons and sort selection (US-POK-08). "Fehlend" needs the catalog tree and "Artenarm" the
- * species count of the genus (both US-POK-03): while they do not exist the buttons are disabled and say why (P-08, P-10).
+ * species count of the genus (both come with the taxonomy build, US-POK-03): while they do not exist the buttons are disabled and say why (P-08, P-10).
  * The chosen filter has a visible marker (see `pokedex.css`), not only `aria-pressed`.
  */
 export function Controls(props: {
@@ -42,12 +42,16 @@ export function Controls(props: {
         />
       </label>
       <FilterButtons filter={props.filter} poorKnown={poorKnown} onFilter={props.onFilter} />
-      <p className="quiet hint">
-        Fehlende Arten brauchen den Katalogaufbau (US-POK-03), bis dahin ist „Fehlend“ nicht
-        verfügbar.
-        {!poorKnown &&
-          " „Artenarm“ braucht die Artenzahl der Gattung und ist ebenfalls noch nicht verfügbar."}
+      <p id="hint-missing" className="quiet hint">
+        Fehlende Arten zeigt der Pokédex erst, wenn der Artenkatalog aufgebaut ist; bis dahin ist
+        „Fehlend“ nicht verfügbar.
       </p>
+      {!poorKnown && (
+        <p id="hint-poor" className="quiet hint">
+          „Artenarm“ braucht die Artenzahl der Gattungen, die noch fehlt, und ist deshalb noch nicht
+          verfügbar.
+        </p>
+      )}
       <label className="sort">
         <span>Sortierung</span>
         <select value={props.sort} onChange={(e) => props.onSort(e.target.value as PokedexSort)}>
@@ -60,8 +64,7 @@ export function Controls(props: {
       </label>
       {props.sort === "species_count" && !poorKnown && (
         <p className="quiet hint">
-          Die Artenzahl der Gattungen ist noch unbekannt (US-POK-03), deshalb stehen die Arten
-          alphabetisch.
+          Die Artenzahl der Gattungen ist noch unbekannt, deshalb stehen die Arten alphabetisch.
         </p>
       )}
     </div>
@@ -84,6 +87,7 @@ function FilterButtons(props: {
             key={f.id}
             type="button"
             disabled={!open}
+            aria-describedby={open ? undefined : f.id === "missing" ? "hint-missing" : "hint-poor"}
             aria-pressed={selected}
             className={selected ? "filter selected" : "filter"}
             onClick={() => open && f.id !== "missing" && props.onFilter(f.id)}

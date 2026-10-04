@@ -21,3 +21,19 @@ export const COLUMNS = `id, species_id as "speciesId", name, marker, location_id
 
 export const FOREIGN_KEY = "23503";
 export const pgError = (e: unknown) => e as { code?: string; constraint?: string };
+
+export class SpeciesGone extends Error {}
+
+/**
+ * After a write that references a species: it must not have been merged away meanwhile. A merge locks the species
+ * row of the proposal first, so a write that waited for that lock finds the merged case here and rolls back
+ * (FR-BES-11, P-10); a write that came first holds a key lock, the merge waits for it and re-points it. The check is a
+ * function of the catalog (ADR 0003: no SQL on its tables from here).
+ */
+export async function ensureSpeciesVisible(
+  client: { query: (sql: string, values: unknown[]) => Promise<{ rows: { merged: boolean }[] }> },
+  speciesId: string,
+): Promise<void> {
+  const r = await client.query("select species_is_merged($1) as merged", [speciesId]);
+  if (r.rows[0]?.merged) throw new SpeciesGone();
+}

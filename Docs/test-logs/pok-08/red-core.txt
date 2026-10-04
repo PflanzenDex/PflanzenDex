@@ -143,3 +143,5 @@ TypeError: browsePokedex is not a function
    Start at  15:50:53
    Duration  343ms (transform 73%, import 18%, tests 6%, worker 3%)
 
+
+exit code recorded when run: 1

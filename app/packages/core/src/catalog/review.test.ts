@@ -4,12 +4,15 @@ import { execute } from "../kernel";
 import { catalogCurate, catalogReview, catalogPropose } from "./index";
 import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
 import { InMemoryReview } from "./test-helpers";
+import { InMemorySpecies } from "./species/test-helpers";
 
 const OBJECT = "6f1c2f0e-4b8a-4c52-9d51-0a3f6f2c7e11";
 let idem: InMemoryIdempotencyStore;
 let store: InMemoryReview;
 let counter = 0;
 
+// This file tests the generic mechanism with a kind that has no species content; the species rules
+// (approval readiness, merge) are in approval.test.ts, merge.test.ts and list.test.ts.
 const call = <E, A>(op: Operation<E, A>, userId: string | null, input: unknown) =>
   execute(
     op,
@@ -23,7 +26,7 @@ const call = <E, A>(op: Operation<E, A>, userId: string | null, input: unknown) 
 
 const propose = (user = "keeper", extra: object = {}) =>
   call(catalogPropose(store), user, {
-    objectKind: "species",
+    objectKind: "label",
     objectId: OBJECT,
     status: "proposal",
     ...extra,
@@ -60,7 +63,7 @@ describe("FR-BES-02 users can only propose", () => {
 
   it("requires sign-in and valid input", async () => {
     const r = await call(catalogPropose(store), null, {
-      objectKind: "species",
+      objectKind: "label",
       objectId: OBJECT,
       status: "proposal",
     });
@@ -78,7 +81,7 @@ describe("FR-BES-02 users can only propose", () => {
 
 describe("FR-BES-14 only operators and reviewers set the review status", () => {
   const decide = (user: string, id: string, status = "reviewed", reason?: string) =>
-    call(catalogReview(store), user, { id, status, reason });
+    call(catalogReview(store, new InMemorySpecies()), user, { id, status, reason });
 
   it.each(["operator", "reviewer"])("%s approves; reviewer and time are recorded", async (role) => {
     const v = await propose();
@@ -125,7 +128,7 @@ describe("FR-BES-14 only operators and reviewers set the review status", () => {
   });
 
   it("curating (operator batch) is for reviewers only and immediately yields `curated`", async () => {
-    const fresh = { objectKind: "species", objectId: OBJECT };
+    const fresh = { objectKind: "label", objectId: OBJECT };
     const no = await call(catalogCurate(store), "keeper", fresh);
     expect(!no.ok && no.error.code).toBe("access.denied");
     const yes = await call(catalogCurate(store), "operator", fresh);

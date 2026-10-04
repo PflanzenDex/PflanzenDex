@@ -12,7 +12,7 @@ import {
   SettingsPage,
 } from "./account";
 import { LightPage } from "./light";
-import { SpeciesPage } from "./catalog";
+import { ReviewPage, SpeciesPage } from "./catalog";
 import { CarePhasesPage, TreatmentsPage } from "./care";
 import { PokedexPage } from "./pokedex";
 import { Navigation, type View } from "./navigation";
@@ -29,6 +29,7 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
   carePhases: CarePhasesPage,
   careProfile: CareProfilePage,
   pokedex: PokedexPage,
+  review: ReviewPage,
   settings: SettingsPage,
 };
 
@@ -60,7 +61,7 @@ export function App() {
       )}
       {z.kind === "signedIn" && (
         <div className="frame">
-          <Navigation active={view} onSwitch={setView} />
+          <Navigation active={view} onSwitch={setView} reviewer={z.account.reviewer === true} />
           {view === "account" ? (
             <AccountView
               account={z.account}

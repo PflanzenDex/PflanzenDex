@@ -42,6 +42,14 @@ export function accountRoutes(pool: Pool): Hono<AuthEnv> {
   routes.get("/", async (c) => {
     const { id, data } = c.get("account");
     const own = await ensureRow(pool, id, data);
+    // Only a hint for the UI (shows the review list); the operations check the role again (US-BES-10, P-04).
+    const reviewer = await withAccount(
+      pool,
+      id,
+      async (db) =>
+        (await db.query<{ reviewer: boolean }>("select is_reviewer() as reviewer")).rows[0]
+          ?.reviewer === true,
+    );
     return c.json({
       id,
       email: data.email,
@@ -49,6 +57,7 @@ export function accountRoutes(pool: Pool): Hono<AuthEnv> {
       timeZone: own?.time_zone ?? null,
       emailConfirmed: data.emailConfirmed,
       mayShareWithFriends: mayShareWithFriends(data),
+      reviewer,
     });
   });
 
