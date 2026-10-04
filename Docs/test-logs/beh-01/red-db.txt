@@ -1,0 +1,10 @@
+      Tests  7 failed | 1 passed (8)
+ FAIL  src/care/treatments.test.ts > US-BEH-01 open treatments per specimen (for the cards, US-BES-06) > a done treatment needs its done date and the other way round (FR-BEH-03)
+ FAIL  src/care/treatments.test.ts > US-BEH-01 open treatments per specimen (for the cards, US-BES-06) > returns only open treatments, earliest first, grouped by specimen; one query for all IDs
+ FAIL  src/care/treatments.test.ts > US-BEH-01 open treatments per specimen (for the cards, US-BES-06) > tenant: Ben asks for Anna's specimen and gets nothing; Anna does not see Ben's treatment
+ FAIL  src/care/treatments.test.ts > US-BEH-01 treatments in the database > all or nothing: one foreign specimen in the list writes none (P-04)
+ FAIL  src/care/treatments.test.ts > US-BEH-01 treatments in the database > stores reason, agent, date and course, open and without a done date
+ FAIL  src/care/treatments.test.ts > US-BEH-01 treatments in the database > the date stays the stored calendar date, independent of the server's time zone (NFR-08)
+ FAIL  src/care/treatments.test.ts > US-BEH-01 treatments in the database > values outside the limits fail already in the database
+ Test Files  1 failed (1)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯

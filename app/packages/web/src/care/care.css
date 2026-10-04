@@ -41,3 +41,42 @@
 .phase-groups {
   margin: 0 0 16px;
 }
+
+/* Plan treatments (US-BEH-01): checkbox choice of specimens and the two course fields side by side. */
+.treatments h1 {
+  margin: 0 0 8px;
+}
+.treatments .choice {
+  border: 2px solid var(--rand);
+  border-radius: 10px;
+  padding: 4px 12px 8px;
+  margin: 0;
+}
+.treatments .choice legend {
+  font-weight: 600;
+  padding: 0 4px;
+}
+.treatments label.check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+}
+.treatments label.check input {
+  width: 24px;
+  min-height: 24px;
+  height: 24px;
+  flex: none;
+  accent-color: var(--gruen);
+}
+.treatments .pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.treatments .hint {
+  margin: 0 0 16px;
+}
+.treatments .form {
+  grid-template-columns: 1fr;
+}

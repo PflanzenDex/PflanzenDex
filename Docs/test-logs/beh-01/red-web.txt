@@ -1,0 +1,8 @@
+      Tests  5 failed (5)
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-01 Seite Behandlung planen > US-BEH-01 "Kur planen" offers 3 dates at 7 days and sends them as count and interval
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-01 Seite Behandlung planen > US-BEH-01 a refusal of the server stays visible with its text and keeps the input (P-10)
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-01 Seite Behandlung planen > US-BEH-01 lists all active specimens, also cuttings, and says what to do without any (P-09, FR-BEH-04)
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-01 Seite Behandlung planen > US-BEH-01 saves one treatment with several specimens, reason, agent and date, with an Idempotency-Key
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-01 Seite Behandlung planen > US-BEH-01 without reason, date or specimen nothing is sent and the form says why
+ Test Files  1 failed (1)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯

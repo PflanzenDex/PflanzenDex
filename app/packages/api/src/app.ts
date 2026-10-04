@@ -21,9 +21,12 @@ import { LIGHT_PATHS, lightRoutes } from "./light";
 import {
   CARE_PATHS,
   CARE_PHASES_PATHS,
+  TREATMENT_PATHS,
   careRoutes,
+  treatmentRoutes,
   carePhasesRoutes,
   measurementSourceFor,
+  treatmentSourceFor,
   targetLocationFor,
 } from "./care";
 
@@ -41,14 +44,14 @@ export type AppOptions = {
   clock?: () => Date;
   /** Replaces the care profile as source of the target location of new specimens (tests). */
   targetLocation?: TargetLocationSource;
-  /** Measurements and treatments for the specimen cards (US-BES-06); without it `care` supplies the measurements (WAC-01), the treatments are still missing (BEH). */
+  /** Measurements and treatments for the specimen cards (US-BES-06); without it `care` supplies the measurements (WAC-01) and the planned treatments (BEH-01). */
   measurements?: MeasurementSource;
   treatments?: TreatmentSource;
   /** Replaces the care profile as source of the location per phase (tests); without it the keeper's own care profile (US-BES-09) answers. */
   phaseLocation?: PhaseLocationSource;
 };
 
-/** The module `care` (measurements and care phases): sign-in guard in front of the paths, then the routes. */
+/** The module `care` (measurements, care phases and treatments): sign-in guard in front of the paths, then the routes. */
 function bindCareOne(
   app: Hono,
   pool: Pool,
@@ -59,6 +62,17 @@ function bindCareOne(
   app.route("/", careRoutes(pool, opt));
   for (const path of CARE_PHASES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", carePhasesRoutes(pool, opt));
+  for (const path of TREATMENT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", treatmentRoutes(pool));
+}
+
+/** What `care` feeds into the collection: target location, measurements and treatments, unless tests replace them. */
+function careSources(pool: Pool, opt: AppOptions) {
+  return {
+    targetLocation: opt.targetLocation ?? targetLocationFor(pool),
+    measurements: opt.measurements ?? measurementSourceFor(pool),
+    treatments: opt.treatments ?? treatmentSourceFor(pool),
+  };
 }
 
 export function createApp(opt: AppOptions = {}): Hono {
@@ -84,15 +98,7 @@ export function createApp(opt: AppOptions = {}): Hono {
     for (const path of SPECIES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", speciesRoutes(opt.pool));
     for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-    app.route(
-      "/",
-      specimenRoutes(opt.pool, {
-        clock: opt.clock,
-        targetLocation: opt.targetLocation ?? targetLocationFor(opt.pool),
-        measurements: opt.measurements ?? measurementSourceFor(opt.pool),
-        treatments: opt.treatments,
-      }),
-    );
+    app.route("/", specimenRoutes(opt.pool, { clock: opt.clock, ...careSources(opt.pool, opt) }));
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", careProfileRoutes(opt.pool));
     bindCareOne(app, opt.pool, auth, {

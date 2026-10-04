@@ -1,0 +1,13 @@
+      Tests  10 failed | 14 passed (24)
+ FAIL  src/care/treatment-plan.test.ts > US-BEH-01 Behandlungstermine planen: single treatment > US-BEH-01 several specimens get one treatment each, with the same reason and date
+ FAIL  src/care/treatment-plan.test.ts > US-BEH-01 Behandlungstermine planen: single treatment > US-BEH-01 stores reason, agent and date for the specimen as an open treatment without a course
+ FAIL  src/care/treatment-plan.test.ts > US-BEH-01 Behandlungstermine planen: single treatment > US-BEH-01 the agent is optional: without it the treatment has none (P-08)
+ FAIL  src/care/treatment-plan.test.ts > US-BEH-01 Kur planen > US-BEH-01 N dates at an interval of T days create N individual treatments sharing one course id
+ FAIL  src/care/treatment-plan.test.ts > US-BEH-01 Kur planen > US-BEH-01 a course for several specimens: each specimen gets its own course id and N dates
+ FAIL  src/care/treatment-plan.test.ts > US-BEH-01 Kur planen > US-BEH-01 only one of count and interval given: the default 3 dates, 7 days fills the other
+ FAIL  src/care/treatment-plan.test.ts > US-BEH-01 port TreatmentSource for the specimen cards (US-BES-06) > US-BEH-01 open treatments of the own specimens reach the card as reason and due date
+ FAIL  src/care/treatment-plan.test.ts > US-BEH-01 specimens and tenant isolation > US-BEH-01 a foreign or unknown specimen looks the same: specimen.not_found, nothing written (P-04)
+ FAIL  src/care/treatment-plan.test.ts > US-BEH-01 specimens and tenant isolation > US-BEH-01 an archived specimen is refused for the whole call (FR-BEH-04, US-BES-07)
+ FAIL  src/care/treatment-plan.test.ts > US-BEH-01 specimens and tenant isolation > US-BEH-01 the same Idempotency-Key writes only once, a changed input under it conflicts
+ Test Files  1 failed (1)
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
