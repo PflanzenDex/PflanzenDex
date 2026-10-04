@@ -9,6 +9,10 @@ export const ERROR_TEXTS = {
   "idempotency.in_progress": "Dieselbe Aktion läuft noch. Bitte warte einen Moment.",
   "system.unexpected":
     "Es ist ein unerwarteter Fehler aufgetreten. Bitte versuche es später erneut.",
+  "invitation.invalid":
+    "Dieser Einladungscode ist ungültig, abgelaufen oder schon benutzt. Prüfe die Eingabe oder bitte um einen neuen Code.",
+  "invitation.required":
+    "Die Registrierung ist im Moment nur mit Einladungscode möglich. Gib den Code ein, den du bekommen hast.",
   "review.already_exists": "Für dieses Objekt läuft schon eine Prüfung.",
   "review.not_found": "Diesen Prüfvorgang gibt es nicht.",
   "review.status_invalid": "Dieser Vorgang ist schon entschieden.",

@@ -19,3 +19,15 @@ describe("US-BES-10 navigation", () => {
     );
   });
 });
+
+describe("US-ACC-05 navigation", () => {
+  it("US-ACC-05 the operator tab is shown to the operator only, not to reviewers", () => {
+    render(<Navigation active="species" onSwitch={() => undefined} reviewer />);
+    expect(screen.queryByRole("button", { name: "Betreiber" })).toBeNull();
+    cleanup();
+    render(<Navigation active="operator" onSwitch={() => undefined} operator />);
+    expect(screen.getByRole("button", { name: "Betreiber" }).getAttribute("aria-current")).toBe(
+      "page",
+    );
+  });
+});

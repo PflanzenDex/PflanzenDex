@@ -31,3 +31,45 @@ export async function findOrCreateAccount(pool: Pool, subject: string): Promise<
     client.release();
   }
 }
+
+async function lookUp(
+  pool: Pool,
+  subject: string,
+  override: { invitationOnly?: boolean } | undefined,
+): Promise<{ id: string | null; required: boolean }> {
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    await client.query("set local role pflanzendex_app");
+    await client.query("select set_config('app.subject', $1, true)", [subject]);
+    const known = await client.query<{ id: string }>("select id from account where subject = $1", [
+      subject,
+    ]);
+    const mode = await client.query<{ required: boolean }>(
+      "select invitation_required() as required",
+    );
+    return {
+      id: known.rows[0]?.id ?? null,
+      required: override?.invitationOnly ?? mode.rows[0]?.required === true,
+    };
+  } finally {
+    await client.query("rollback");
+    client.release();
+  }
+}
+
+/**
+ * Sign-in of a verified subject under the registration mode (US-ACC-05): a known subject always gets its account; an
+ * unknown one gets one only while registration is open. `null` means "invitation code needed" and creates nothing.
+ * `override` forces the mode for one call (tests of the API); without it the setting of the operator decides.
+ */
+export async function admitAccount(
+  pool: Pool,
+  subject: string,
+  override?: { invitationOnly?: boolean },
+): Promise<string | null> {
+  if (subject.trim() === "") throw new Error("Subject missing");
+  const { id, required } = await lookUp(pool, subject, override);
+  if (id) return id;
+  return required ? null : findOrCreateAccount(pool, subject);
+}

@@ -13,6 +13,8 @@ import { signOutEverywhere, apiUrl, getAccount, oidcSettings, type Account } fro
 export type State =
   | { kind: "loading" }
   | { kind: "signedOut"; hint?: string }
+  /** Signed in at the sign-in service, but registration needs an invitation code (US-ACC-05). */
+  | { kind: "invitationNeeded" }
   | { kind: "signedIn"; account: Account; error?: string }
   | { kind: "error"; text: string };
 
@@ -55,6 +57,8 @@ async function loadState(mgr: UserManager): Promise<State> {
       await mgr.removeUser();
       return { kind: "signedOut" };
     }
+    if (e instanceof Error && e.message === "invitation_required")
+      return { kind: "invitationNeeded" };
     return { kind: "error", text: "Das Konto konnte nicht geladen werden." };
   }
 }

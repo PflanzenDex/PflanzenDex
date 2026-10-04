@@ -48,7 +48,7 @@ Acceptance criteria:
 - Deleting the account removes all personal data, photos and sharing settings. Completed swaps remain with the swap partner with the stored display name, without any further connection.
 - Deleting requires a confirmation and names what is removed. Running swaps are canceled (`canceled`, see US-SOZ-10).
 
-### US-ACC-05 · Access by invitation only (initial phase) · ⬜ new
+### US-ACC-05 · Access by invitation only (initial phase) · 🟨 new
 
 As an **operator** I want to limit access at the beginning.
 
@@ -57,12 +57,22 @@ Acceptance criteria:
 - Registration only with a valid invitation code, as long as the operator has set it that way. Codes are single-use and expire.
 - The operator sees the number of accounts, active users and cost per user (NFR-16), no content.
 
+Details (decided with the story):
+
+- The operator switches "registration only with invitation code" on and off in the operator area. It is off by default, so nothing changes for existing installations until the operator switches it on. Existing accounts always sign in as before.
+- A person who signed in at the sign-in service but has no account yet enters the code before the account is created. Without a valid code no account and no data exist.
+- A code is unguessable (120 bits), shown to the operator exactly once, and valid for 7 days by default (assumption, starting value; the operator picks 1 to 30 days). The system stores only a hash of it. An unknown, used, expired or malformed code gets the same answer, so a refusal says nothing about which case it was.
+- An account counts as active if it opened the app in the last 30 days (assumption, starting value).
+- Only the operator role (not the reviewer role) uses the operator area; the database checks the role again. The operator sees counts and the state of invitations, never the content of an account.
+
+Not yet (why this story is 🟨): the cost per user is shown as "unknown" because the cost measurement (NFR-16, TE-10) does not exist; no number is invented (P-08). Closing the self-registration at the sign-in service itself (Keycloak realm setting) is an operator configuration, not part of the app: until the owner turns it off there, a stranger can still create a sign-in identity, but the app gives it no account and no data.
+
 ## Requirements
 
-| ID        | Requirement                                                                                                                                                       | Status |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| FR-ACC-01 | Account data (email, display name) is stored separately from collection data and accessible only to the account itself.                                           | ✅     |
-| FR-ACC-02 | Every user-related row carries the account id from the first version on (P-04, NFR-09).                                                                           | ⬜     |
-| FR-ACC-03 | Passwords and credentials are never stored by ourselves if an established service manages them (NFR-10).                                                          | ✅     |
-| FR-ACC-04 | Minors: clarify age limit and notices before the app becomes public (NFR-11).                                                                                     | ⬜     |
-| FR-ACC-05 | The sign-in service must also serve as an authorization server for AI connections (OAuth with own scopes, consent page, revocation; E-03, FR-KI-13).             | ⬜     |
+| ID        | Requirement                                                                                                                                          | Status |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| FR-ACC-01 | Account data (email, display name) is stored separately from collection data and accessible only to the account itself.                              | ✅     |
+| FR-ACC-02 | Every user-related row carries the account id from the first version on (P-04, NFR-09).                                                              | ⬜     |
+| FR-ACC-03 | Passwords and credentials are never stored by ourselves if an established service manages them (NFR-10).                                             | ✅     |
+| FR-ACC-04 | Minors: clarify age limit and notices before the app becomes public (NFR-11).                                                                        | ⬜     |
+| FR-ACC-05 | The sign-in service must also serve as an authorization server for AI connections (OAuth with own scopes, consent page, revocation; E-03, FR-KI-13). | ⬜     |
