@@ -7,10 +7,12 @@ import {
 } from "@pflanzendex/core";
 import type { ApiError } from "../kernel";
 import { collectInput, isError, type CreateInput } from "./create-input";
+import { CatchDateField, refusesCatchDate, useCatchDate } from "./catch-date-field";
 import { MarkerFields, markerRule, type Sibling } from "./marker-fields";
 import { nameConflict } from "./text";
 
 function ErrorBox({ error }: { error: ApiError }) {
+  if (refusesCatchDate(error)) return null; // shown at the date field itself
   const conflict = nameConflict(error);
   return (
     <div role="alert" className="warning">
@@ -27,7 +29,11 @@ function ErrorBox({ error }: { error: ApiError }) {
   );
 }
 
-function OtherFields(props: { locations: readonly LightLocation[] }) {
+function OtherFields(props: {
+  locations: readonly LightLocation[];
+  today: string;
+  error: ApiError | null;
+}) {
   return (
     <>
       <label className="check">
@@ -49,9 +55,8 @@ function OtherFields(props: { locations: readonly LightLocation[] }) {
           ))}
         </select>
       </label>
-      <p className="quiet">
-        Ohne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum).
-      </p>
+      <p className="quiet">Ohne Auswahl bleibt der Standort unbekannt.</p>
+      <CatchDateField today={props.today} error={props.error} />
     </>
   );
 }
@@ -103,9 +108,13 @@ export function CreateForm(props: {
   const [error, setError] = useState<ApiError | null>(props.errorStart ?? null);
   const [running, setRunning] = useState(false);
   const speciesName = speciesDisplayName(props.species);
+  const today = useCatchDate(error);
   async function send(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const input = collectInput({ marker, answers, data: new FormData(e.currentTarget) }, rule);
+    const input = collectInput(
+      { marker, answers, data: new FormData(e.currentTarget), today },
+      rule,
+    );
     if (isError(input)) return setError(input);
     setRunning(true);
     setError(await props.onSend(input));
@@ -138,7 +147,7 @@ export function CreateForm(props: {
             setError(null);
           }}
         />
-        <OtherFields locations={props.locations} />
+        <OtherFields locations={props.locations} today={today} error={error} />
         {error && <ErrorBox error={error} />}
         <Buttons running={running} onCancel={props.onCancel} />
       </form>
