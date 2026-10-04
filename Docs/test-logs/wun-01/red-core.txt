@@ -1,0 +1,653 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex.worktrees/wun-01/app/packages/core
+
+ ❯ src/wishlist/candidates.test.ts (17 tests | 17 failed) 26ms
+   ❯ US-WUN-01 candidates sorted by the stock of the target zone (5)
+     × US-WUN-01 sorts ascending by the specimen count of the target zone 11ms
+     × US-WUN-01 an unknown target zone comes last, even behind the fullest zone 2ms
+     × US-WUN-01 a zone that is not among zones 2 to 4 counts as unknown (FR-WUN-03) 2ms
+     × US-WUN-01 on equal stock the order of the zones, then the name, decides (stable) 1ms
+     × US-WUN-01 only open wishes (status wishlist) are candidates (FR-WUN-02) 1ms
+   ❯ US-WUN-01 what a candidate shows (5)
+     × US-WUN-01 shows photo with source, 'German (name)', zone with stock, difficulty and reasoning 2ms
+     × US-WUN-01 without a German name the title is the plain name, without a photo there is none (P-08) 1ms
+     × US-WUN-01 the stock text says '0 Pflanzen' for an empty zone and names an unknown zone as unknown 1ms
+     × US-WUN-01 explains why: the thinnest zone is named, other zones point to where room is left 1ms
+     × US-WUN-01 equally full zones are no 'thinnest' zone: the reason says so instead of inventing one 1ms
+   ❯ US-WUN-01 empty list and the next action (P-09) (5)
+     × US-WUN-01 without open candidates the text is 'Keine offenen Kandidaten in der Wunschliste.' 1ms
+     × US-WUN-01 a list with candidates names the first one to get and its zone 0ms
+     × US-WUN-01 if no candidate has a usable zone, the hint asks for a target zone instead of ranking blindly 0ms
+     × US-WUN-01 the zones with their stock come along for the form, also with count 0 1ms
+     × US-WUN-01 an account without zones 2 to 4 has only unknown zones and no crash 0ms
+   ❯ US-WUN-01 tenant isolation (P-04, P-05) (2)
+     × US-WUN-01 never shows the wishes of another account and asks the stock for the caller only 1ms
+     × US-WUN-01 the stock of another account does not rank my wishes 0ms
+ ❯ src/wishlist/create.test.ts (19 tests | 15 failed) 31ms
+   ❯ US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) (17)
+     × US-WUN-01 stores the wish as an open plant wish with all given fields 13ms
+     × US-WUN-01 only the name is required; everything else stays unknown instead of guessed (P-08) 2ms
+     × US-WUN-01 refuses difficulty 0 and writes nothing 2ms
+     × US-WUN-01 refuses difficulty 4 and writes nothing 1ms
+     × US-WUN-01 refuses difficulty 1.5 and writes nothing 1ms
+     × US-WUN-01 refuses a target zone that is no id and writes nothing 1ms
+     × US-WUN-01 refuses an image without its source and writes nothing 1ms
+     × US-WUN-01 refuses an image that is not https and writes nothing 1ms
+     × US-WUN-01 refuses a source without an image and writes nothing 1ms
+     × US-WUN-01 names the invalid field in the details 1ms
+     × US-WUN-01 a duplicate name is refused, also in another letter case (FR-WUN-06) 1ms
+     × US-WUN-01 the same name in another account is no duplicate (P-04) 1ms
+     × US-WUN-01 a zone of another account looks like an unknown zone (P-04) 1ms
+     × US-WUN-01 the same Idempotency-Key writes once (US-QS-03) 1ms
+   ❯ US-WUN-01 zone usage: a zone a wish points to is not deleted unnoticed (P-10) (2)
+     × US-WUN-01 names the wishes of the account that use the zone, whatever their status 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 32 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 candidates sorted by the stock of the target zone > US-WUN-01 sorts ascending by the specimen count of the target zone
+AssertionError: expected [] to deeply equal [ 'Bryophyllum', 'Cereus', 'Aloe' ]
+
+- Expected
++ Received
+
+- [
+-   "Bryophyllum",
+-   "Cereus",
+-   "Aloe",
+- ]
++ []
+
+ ❯ src/wishlist/candidates.test.ts:29:27
+     27|     wishes.seed("anna", { id: "b", name: "Bryophyllum", targetZoneId: …
+     28|     wishes.seed("anna", { id: "c", name: "Cereus", targetZoneId: Z4 });
+     29|     expect(await names()).toEqual(["Bryophyllum", "Cereus", "Aloe"]);
+       |                           ^
+     30|   });
+     31|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/32]⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 candidates sorted by the stock of the target zone > US-WUN-01 an unknown target zone comes last, even behind the fullest zone
+AssertionError: expected [] to deeply equal [ 'Bryophyllum', 'Aloe' ]
+
+- Expected
++ Received
+
+- [
+-   "Bryophyllum",
+-   "Aloe",
+- ]
++ []
+
+ ❯ src/wishlist/candidates.test.ts:35:27
+     33|     wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: null });
+     34|     wishes.seed("anna", { id: "b", name: "Bryophyllum", targetZoneId: …
+     35|     expect(await names()).toEqual(["Bryophyllum", "Aloe"]);
+       |                           ^
+     36|   });
+     37|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/32]⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 candidates sorted by the stock of the target zone > US-WUN-01 a zone that is not among zones 2 to 4 counts as unknown (FR-WUN-03)
+AssertionError: expected [] to deeply equal [ [ 'Bryophyllum', …(2) ], …(1) ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "Bryophyllum",
+-     {
+-       "id": "z4",
+-       "name": "Lampe 4",
+-     },
+-     3,
+-   ],
+-   [
+-     "Aloe",
+-     null,
+-     null,
+-   ],
+- ]
++ []
+
+ ❯ src/wishlist/candidates.test.ts:42:67
+     40|     wishes.seed("anna", { id: "b", name: "Bryophyllum", targetZoneId: …
+     41|     const list = await candidates();
+     42|     expect(list.candidates.map((c) => [c.name, c.zone, c.stock])).toEq…
+       |                                                                   ^
+     43|       ["Bryophyllum", { id: Z4, name: "Lampe 4" }, 3],
+     44|       ["Aloe", null, null],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/32]⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 candidates sorted by the stock of the target zone > US-WUN-01 on equal stock the order of the zones, then the name, decides (stable)
+AssertionError: expected [] to deeply equal [ 'Zebra', 'Aloe', 'Äpfel' ]
+
+- Expected
++ Received
+
+- [
+-   "Zebra",
+-   "Aloe",
+-   "Äpfel",
+- ]
++ []
+
+ ❯ src/wishlist/candidates.test.ts:53:27
+     51|     wishes.seed("anna", { id: "2", name: "Äpfel", targetZoneId: Z3 });
+     52|     wishes.seed("anna", { id: "3", name: "Aloe", targetZoneId: Z3 });
+     53|     expect(await names()).toEqual(["Zebra", "Aloe", "Äpfel"]);
+       |                           ^
+     54|   });
+     55|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/32]⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 candidates sorted by the stock of the target zone > US-WUN-01 only open wishes (status wishlist) are candidates (FR-WUN-02)
+AssertionError: expected [] to deeply equal [ 'Aloe' ]
+
+- Expected
++ Received
+
+- [
+-   "Aloe",
+- ]
++ []
+
+ ❯ src/wishlist/candidates.test.ts:60:27
+     58|     wishes.seed("anna", { id: "b", name: "Bought", targetZoneId: Z3, s…
+     59|     wishes.seed("anna", { id: "c", name: "Dropped", targetZoneId: Z3, …
+     60|     expect(await names()).toEqual(["Aloe"]);
+       |                           ^
+     61|   });
+     62| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/32]⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 what a candidate shows > US-WUN-01 shows photo with source, 'German (name)', zone with stock, difficulty and reasoning
+AssertionError: expected undefined to match object { …(7) }
+
+- Expected:
+{
+  "difficulty": 2,
+  "image": {
+    "source": "Wikimedia Commons",
+    "url": "https://example.test/h.jpg",
+  },
+  "reasoning": "Bleibt klein und mag helles Licht.",
+  "stock": 1,
+  "title": "Zebra-Haworthie (Haworthia fasciata)",
+  "zone": {
+    "id": "z3",
+    "name": "Lampe 3",
+  },
+  "zoneText": "Lampe 3 — 1 Pflanze",
+}
+
++ Received:
+undefined
+
+ ❯ src/wishlist/candidates.test.ts:77:15
+     75|     });
+     76|     const [c] = (await candidates()).candidates;
+     77|     expect(c).toMatchObject({
+       |               ^
+     78|       title: "Zebra-Haworthie (Haworthia fasciata)",
+     79|       zone: { id: Z3, name: "Lampe 3" },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/32]⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 what a candidate shows > US-WUN-01 without a German name the title is the plain name, without a photo there is none (P-08)
+AssertionError: expected undefined to match object { title: 'Haworthia fasciata', …(4) }
+
+- Expected:
+{
+  "difficulty": null,
+  "german": null,
+  "image": null,
+  "reasoning": null,
+  "title": "Haworthia fasciata",
+}
+
++ Received:
+undefined
+
+ ❯ src/wishlist/candidates.test.ts:91:15
+     89|     wishes.seed("anna", { id: "a", name: "Haworthia fasciata", targetZ…
+     90|     const [c] = (await candidates()).candidates;
+     91|     expect(c).toMatchObject({
+       |               ^
+     92|       title: "Haworthia fasciata",
+     93|       german: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/32]⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 what a candidate shows > US-WUN-01 the stock text says '0 Pflanzen' for an empty zone and names an unknown zone as unknown
+AssertionError: expected [] to deeply equal [ 'Lampe 2 — 0 Pflanzen', …(1) ]
+
+- Expected
++ Received
+
+- [
+-   "Lampe 2 — 0 Pflanzen",
+-   "Ziel-Zone unbekannt",
+- ]
++ []
+
+ ❯ src/wishlist/candidates.test.ts:105:41
+    103|     wishes.seed("anna", { id: "b", name: "Bryophyllum" });
+    104|     const list = (await candidates()).candidates;
+    105|     expect(list.map((c) => c.zoneText)).toEqual(["Lampe 2 — 0 Pflanzen…
+       |                                         ^
+    106|   });
+    107|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/32]⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 what a candidate shows > US-WUN-01 explains why: the thinnest zone is named, other zones point to where room is left
+AssertionError: expected undefined to be 'Bryophyllum' // Object.is equality
+
+- Expected:
+"Bryophyllum"
+
++ Received:
+undefined
+
+ ❯ src/wishlist/candidates.test.ts:113:24
+    111|     wishes.seed("anna", { id: "c", name: "Cereus" });
+    112|     const [thin, other, unknown] = (await candidates()).candidates;
+    113|     expect(thin?.name).toBe("Bryophyllum");
+       |                        ^
+    114|     expect(thin?.priority).toMatchObject({ kind: "thinnest" });
+    115|     expect(thin?.priority.text).toContain("am meisten Platz");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/32]⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 what a candidate shows > US-WUN-01 equally full zones are no 'thinnest' zone: the reason says so instead of inventing one
+AssertionError: expected undefined to be 'tie' // Object.is equality
+
+- Expected:
+"tie"
+
++ Received:
+undefined
+
+ ❯ src/wishlist/candidates.test.ts:126:30
+    124|     wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: Z2 });
+    125|     const [c] = (await candidates()).candidates;
+    126|     expect(c?.priority.kind).toBe("tie");
+       |                              ^
+    127|     expect(c?.priority.text).toContain("gleich");
+    128|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/32]⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 empty list and the next action (P-09) > US-WUN-01 without open candidates the text is 'Keine offenen Kandidaten in der Wunschliste.'
+AssertionError: expected '' to be 'Keine offenen Kandidaten in der Wunsc…' // Object.is equality
+
+- Expected
++ Received
+
+- Keine offenen Kandidaten in der Wunschliste.
+
+ ❯ src/wishlist/candidates.test.ts:135:28
+    133|     const list = await candidates();
+    134|     expect(list.candidates).toEqual([]);
+    135|     expect(list.hint.text).toBe("Keine offenen Kandidaten in der Wunsc…
+       |                            ^
+    136|     expect(list.hint.nextAction).not.toBe("");
+    137|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/32]⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 empty list and the next action (P-09) > US-WUN-01 a list with candidates names the first one to get and its zone
+AssertionError: expected '' to contain 'Aloe'
+
+- Expected
++ Received
+
+- Aloe
+
+ ❯ src/wishlist/candidates.test.ts:142:23
+    140|     wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: Z3 });
+    141|     const { hint } = await candidates();
+    142|     expect(hint.text).toContain("Aloe");
+       |                       ^
+    143|     expect(hint.text).toContain("Lampe 3");
+    144|     expect(hint.nextAction).not.toBe("");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/32]⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 empty list and the next action (P-09) > US-WUN-01 if no candidate has a usable zone, the hint asks for a target zone instead of ranking blindly
+AssertionError: expected '' to contain 'Ziel-Lichtzone'
+
+- Expected
++ Received
+
+- Ziel-Lichtzone
+
+ ❯ src/wishlist/candidates.test.ts:150:23
+    148|     wishes.seed("anna", { id: "a", name: "Aloe" });
+    149|     const { hint } = await candidates();
+    150|     expect(hint.text).toContain("Ziel-Lichtzone");
+       |                       ^
+    151|     expect(hint.nextAction).toContain("Zone");
+    152|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/32]⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 empty list and the next action (P-09) > US-WUN-01 the zones with their stock come along for the form, also with count 0
+AssertionError: expected [] to deeply equal [ [ 'Lampe 2', +0 ], …(2) ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "Lampe 2",
+-     0,
+-   ],
+-   [
+-     "Lampe 3",
+-     1,
+-   ],
+-   [
+-     "Lampe 4",
+-     2,
+-   ],
+- ]
++ []
+
+ ❯ src/wishlist/candidates.test.ts:156:70
+    154|   it("US-WUN-01 the zones with their stock come along for the form, al…
+    155|     stock = new ZoneStockStub({ anna: stockAnna(0, 1, 2) });
+    156|     expect((await candidates()).zones.map((z) => [z.name, z.count])).t…
+       |                                                                      ^
+    157|       ["Lampe 2", 0],
+    158|       ["Lampe 3", 1],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/32]⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 empty list and the next action (P-09) > US-WUN-01 an account without zones 2 to 4 has only unknown zones and no crash
+AssertionError: expected [] to deeply equal [ 'zone_unknown' ]
+
+- Expected
++ Received
+
+- [
+-   "zone_unknown",
+- ]
++ []
+
+ ❯ src/wishlist/candidates.test.ts:167:57
+    165|     wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: Z2 });
+    166|     const list = await candidates();
+    167|     expect(list.candidates.map((c) => c.priority.kind)).toEqual(["zone…
+       |                                                         ^
+    168|     expect(list.zones).toEqual([]);
+    169|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/32]⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 tenant isolation (P-04, P-05) > US-WUN-01 never shows the wishes of another account and asks the stock for the caller only
+AssertionError: expected [] to deeply equal [ 'Aloe' ]
+
+- Expected
++ Received
+
+- [
+-   "Aloe",
+- ]
++ []
+
+ ❯ src/wishlist/candidates.test.ts:176:33
+    174|     wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: Z3 });
+    175|     wishes.seed("ben", { id: "b", name: "Bens Geheimtipp", targetZoneI…
+    176|     expect(await names("anna")).toEqual(["Aloe"]);
+       |                                 ^
+    177|     expect(await names("ben")).toEqual(["Bens Geheimtipp"]);
+    178|     expect(await names("carla")).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/32]⎯
+
+ FAIL  src/wishlist/candidates.test.ts > US-WUN-01 tenant isolation (P-04, P-05) > US-WUN-01 the stock of another account does not rank my wishes
+AssertionError: expected undefined to be 1 // Object.is equality
+
+- Expected:
+1
+
++ Received:
+undefined
+
+ ❯ src/wishlist/candidates.test.ts:185:61
+    183|     // Ben has empty zones, Anna's zone 3 holds 1 specimen: Anna sees …
+    184|     wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: Z3 });
+    185|     expect((await candidates("anna")).candidates[0]?.stock).toBe(1);
+       |                                                             ^
+    186|   });
+    187| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/32]⎯
+
+ FAIL  src/wishlist/create.test.ts > US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) > US-WUN-01 stores the wish as an open plant wish with all given fields
+AssertionError: expected { ok: false, error: { …(2) } } to match object { ok: true, value: { …(10) } }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ok": true,
+-   "value": {
+-     "difficulty": 2,
+-     "german": "Zebra-Haworthie",
+-     "imageSource": "Wikimedia Commons",
+-     "imageUrl": "https://example.test/h.jpg",
+-     "license": "CC BY-SA 4.0",
+-     "name": "Haworthia fasciata",
+-     "reasoning": "Bleibt klein.",
+-     "status": "wishlist",
+-     "targetZoneId": "00000000-0000-4000-8000-0000000000a3",
+-     "type": "plant",
+-   },
++   "ok": false,
+  }
+
+ ❯ src/wishlist/create.test.ts:38:15
+     36|       }),
+     37|     );
+     38|     expect(r).toMatchObject({
+       |               ^
+     39|       ok: true,
+     40|       value: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/32]⎯
+
+ FAIL  src/wishlist/create.test.ts > US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) > US-WUN-01 only the name is required; everything else stays unknown instead of guessed (P-08)
+AssertionError: expected { ok: false, error: { …(2) } } to match object { ok: true, …(1) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ok": true,
+-   "value": {
+-     "difficulty": null,
+-     "german": null,
+-     "imageSource": null,
+-     "imageUrl": null,
+-     "license": null,
+-     "reasoning": null,
+-     "targetZoneId": null,
+-   },
++   "ok": false,
+  }
+
+ ❯ src/wishlist/create.test.ts:56:35
+     54|
+     55|   it("US-WUN-01 only the name is required; everything else stays unkno…
+     56|     expect(await create(input())).toMatchObject({
+       |                                   ^
+     57|       ok: true,
+     58|       value: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/32]⎯
+
+ FAIL  src/wishlist/create.test.ts > US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) > US-WUN-01 refuses difficulty 0 and writes nothing
+ FAIL  src/wishlist/create.test.ts > US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) > US-WUN-01 refuses difficulty 4 and writes nothing
+ FAIL  src/wishlist/create.test.ts > US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) > US-WUN-01 refuses difficulty 1.5 and writes nothing
+ FAIL  src/wishlist/create.test.ts > US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) > US-WUN-01 refuses a target zone that is no id and writes nothing
+ FAIL  src/wishlist/create.test.ts > US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) > US-WUN-01 refuses an image without its source and writes nothing
+ FAIL  src/wishlist/create.test.ts > US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) > US-WUN-01 refuses an image that is not https and writes nothing
+ FAIL  src/wishlist/create.test.ts > US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) > US-WUN-01 refuses a source without an image and writes nothing
+AssertionError: expected 'system.unexpected' to be 'input.invalid' // Object.is equality
+
+Expected: "input.invalid"
+Received: "system.unexpected"
+
+ ❯ src/wishlist/create.test.ts:86:30
+     84|   ])("US-WUN-01 refuses %s and writes nothing", async (_label, extra) …
+     85|     const r = await create(input(extra));
+     86|     expect(errorOf(r)?.code).toBe("input.invalid");
+       |                              ^
+     87|     expect(wishes.writes).toBe(0);
+     88|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/32]⎯
+
+ FAIL  src/wishlist/create.test.ts > US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) > US-WUN-01 names the invalid field in the details
+AssertionError: expected undefined to deeply equal [ { field: 'difficulty', …(1) } ]
+
+- Expected:
+[
+  {
+    "code": "input.invalid",
+    "field": "difficulty",
+  },
+]
+
++ Received:
+undefined
+
+ ❯ src/wishlist/create.test.ts:92:33
+     90|   it("US-WUN-01 names the invalid field in the details", async () => {
+     91|     const r = await create(input({ difficulty: 4 }));
+     92|     expect(errorOf(r)?.details).toEqual([{ field: "difficulty", code: …
+       |                                 ^
+     93|   });
+     94|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/32]⎯
+
+ FAIL  src/wishlist/create.test.ts > US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) > US-WUN-01 a duplicate name is refused, also in another letter case (FR-WUN-06)
+AssertionError: expected 'system.unexpected' to be 'wish.name_taken' // Object.is equality
+
+Expected: "wish.name_taken"
+Received: "system.unexpected"
+
+ ❯ src/wishlist/create.test.ts:98:30
+     96|     await create(input());
+     97|     const r = await create(input({ name: "HAWORTHIA FASCIATA" }));
+     98|     expect(errorOf(r)?.code).toBe("wish.name_taken");
+       |                              ^
+     99|     expect(wishes.rows).toHaveLength(1);
+    100|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/32]⎯
+
+ FAIL  src/wishlist/create.test.ts > US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) > US-WUN-01 the same name in another account is no duplicate (P-04)
+AssertionError: expected { ok: false, error: { …(2) } } to match object { ok: true }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ok": true,
++   "ok": false,
+  }
+
+ ❯ src/wishlist/create.test.ts:104:54
+    102|   it("US-WUN-01 the same name in another account is no duplicate (P-04…
+    103|     await create(input());
+    104|     expect(await create(input(), { userId: "ben" })).toMatchObject({ o…
+       |                                                      ^
+    105|   });
+    106|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/32]⎯
+
+ FAIL  src/wishlist/create.test.ts > US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) > US-WUN-01 a zone of another account looks like an unknown zone (P-04)
+AssertionError: expected 'system.unexpected' to be 'light_zone.not_found' // Object.is equality
+
+Expected: "light_zone.not_found"
+Received: "system.unexpected"
+
+ ❯ src/wishlist/create.test.ts:109:30
+    107|   it("US-WUN-01 a zone of another account looks like an unknown zone (…
+    108|     const r = await create(input({ targetZoneId: FOREIGN_ZONE }));
+    109|     expect(errorOf(r)?.code).toBe("light_zone.not_found");
+       |                              ^
+    110|     expect(wishes.rows).toHaveLength(0);
+    111|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/32]⎯
+
+ FAIL  src/wishlist/create.test.ts > US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) > US-WUN-01 the same Idempotency-Key writes once (US-QS-03)
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/wishlist/create.test.ts:116:25
+    114|     await create(input(), anna, "same");
+    115|     await create(input(), anna, "same");
+    116|     expect(wishes.rows).toHaveLength(1);
+       |                         ^
+    117|   });
+    118| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/32]⎯
+
+ FAIL  src/wishlist/create.test.ts > US-WUN-01 zone usage: a zone a wish points to is not deleted unnoticed (P-10) > US-WUN-01 names the wishes of the account that use the zone, whatever their status
+AssertionError: expected [] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "id": "w1",
+-     "kind": "wish",
+-     "name": "Haworthia fasciata",
+-   },
+-   {
+-     "id": "w9",
+-     "kind": "wish",
+-     "name": "Gekauft",
+-   },
+- ]
++ []
+
+ ❯ src/wishlist/create.test.ts:126:19
+    124|     wishes.seed("anna", { id: "w8", name: "Anderswo", targetZoneId: "e…
+    125|     const users = await wishZoneUsage({ wishes }).user("anna", ZONE);
+    126|     expect(users).toEqual([
+       |                   ^
+    127|       { kind: "wish", id: "w1", name: "Haworthia fasciata" },
+    128|       { kind: "wish", id: "w9", name: "Gekauft" },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/32]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  32 failed | 4 passed (36)
+   Start at  10:19:48
+   Duration  233ms (transform 57%, tests 24%, import 16%, worker 3%)
+

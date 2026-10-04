@@ -66,7 +66,7 @@ export interface LightLocationStore {
   ): Promise<LightLocation | "name_taken" | "not_found" | "zone_unknown">;
 }
 
-export type ZoneUserKind = "location" | "specimen" | "species" | "care_profile";
+export type ZoneUserKind = "location" | "specimen" | "species" | "care_profile" | "wish";
 
 export interface ZoneUser {
   readonly kind: ZoneUserKind;
