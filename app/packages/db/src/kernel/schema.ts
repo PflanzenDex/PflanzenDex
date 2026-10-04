@@ -6,6 +6,10 @@ export const WITHOUT_ACCOUNT_ID: Record<string, string> = {
   schema_migrations: "Tool bookkeeping of the migration tool, no user data",
   account_role:
     "Role assignment is the installation operator's job: the application role has no rights on the table and reads only its own role via roles_of_account() (TE-08)",
+  invitation:
+    "Invitation codes belong to the installation, not to an account (US-ACC-05): the application role has no rights on the table; the operator reaches it only through create_invitation() and list_invitations(), which check the role again, and registration through redeem_invitation(). Only hashes are stored",
+  access_setting:
+    "One row for the whole installation (registration by invitation on or off, US-ACC-05): no rights for the application role; read through invitation_required(), changed only through set_invitation_only() by the operator",
   species:
     "Shared species catalog (E-02): knowledge that belongs to everyone. Visible are approved species and the own proposals, determined by the review case (species_status(), FR-BES-11); the application can neither change nor delete (BES-01)",
   species_name:

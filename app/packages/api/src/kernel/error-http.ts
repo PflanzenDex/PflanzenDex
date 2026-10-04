@@ -8,6 +8,8 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "idempotency.key_missing": 400,
   "access.not_signed_in": 401,
   "access.denied": 403,
+  "invitation.invalid": 403,
+  "invitation.required": 403,
   "light_zone.not_found": 404,
   "location.not_found": 404,
   "review.not_found": 404,

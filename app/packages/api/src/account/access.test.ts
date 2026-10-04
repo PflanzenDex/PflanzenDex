@@ -1,0 +1,276 @@
+import { randomUUID } from "node:crypto";
+import type { Pool } from "pg";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { migrate, openPool } from "@pflanzendex/db";
+import { createApp, type AppOptions } from "../app";
+
+// US-ACC-05 over HTTP with real PostgreSQL (`make db-up`). The mode "invitation only" is forced per app instance
+// (`invitationOnly`), never switched in the shared database: other test files sign in new subjects in parallel.
+let pool: Pool;
+const [subOperator, subKeeper, subReviewer] = ["operator", "keeper", "reviewer"].map(
+  (n) => `acc05-${n}-${randomUUID()}`,
+) as [string, string, string];
+const fresh = () => `acc05-new-${randomUUID()}`;
+const extra: string[] = [];
+const verifier: NonNullable<AppOptions["reviewer"]> = async (token) => {
+  const [kind, sub] = token.split(":");
+  return kind === "valid"
+    ? { sub, email: `${sub}@example.test`, name: "Test", email_verified: true }
+    : null;
+};
+type Reply = { status: number; body: Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any
+let open: ReturnType<typeof createApp>;
+let closed: ReturnType<typeof createApp>;
+
+async function call(
+  app: ReturnType<typeof createApp>,
+  sub: string | null,
+  method: string,
+  path: string,
+  body?: unknown,
+  key: string = randomUUID(),
+): Promise<Reply> {
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    "idempotency-key": key,
+  };
+  if (sub) headers["authorization"] = `Bearer valid:${sub}`;
+  const res = await app.request(path, {
+    method,
+    headers,
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  return { status: res.status, body: (await res.json()) as Reply["body"] };
+}
+const newCode = async (days?: number) => {
+  const r = await call(
+    open,
+    subOperator,
+    "POST",
+    "/operator/invitations",
+    days ? { validForDays: days } : {},
+  );
+  if (r.status !== 201) throw new Error(JSON.stringify(r.body));
+  return r.body["code"] as string;
+};
+
+beforeAll(async () => {
+  pool = openPool();
+  await migrate(pool);
+  open = createApp({ reviewer: verifier, pool });
+  closed = createApp({ reviewer: verifier, pool, invitationOnly: true });
+  for (const sub of [subOperator, subKeeper, subReviewer]) await call(open, sub, "GET", "/account");
+  for (const [sub, role] of [
+    [subOperator, "operator"],
+    [subReviewer, "reviewer"],
+  ] as const)
+    await pool.query(
+      "insert into account_role (account, role) select id, $2 from account where subject = $1",
+      [sub, role],
+    );
+});
+afterAll(async () => {
+  await pool.query(
+    "delete from invitation where created_by in (select id from account where subject = any($1))",
+    [[subOperator]],
+  );
+  await pool.query("delete from account where subject = any($1)", [
+    [subOperator, subKeeper, subReviewer, ...extra],
+  ]);
+  await pool.end();
+});
+
+describe("US-ACC-05 · registration only with a valid invitation code", () => {
+  it("US-ACC-05 a new subject gets 403 invitation.required, and no account is created", async () => {
+    const sub = fresh();
+    extra.push(sub);
+    const r = await call(closed, sub, "GET", "/account");
+    expect(r.status).toBe(403);
+    expect(r.body["error"]).toMatchObject({ code: "invitation.required" });
+    expect(typeof r.body["error"]["text"]).toBe("string");
+    const n = await pool.query("select count(*)::int as n from account where subject = $1", [sub]);
+    expect(n.rows[0].n).toBe(0);
+  });
+
+  it("US-ACC-05 every other protected path says the same for a subject without account", async () => {
+    const sub = fresh();
+    extra.push(sub);
+    for (const path of ["/species", "/account/profile", "/review"]) {
+      const r = await call(closed, sub, "GET", path);
+      expect([path, r.status, r.body["error"].code]).toEqual([path, 403, "invitation.required"]);
+    }
+  });
+
+  it("US-ACC-05 an existing account signs in as before while the mode is on", async () => {
+    expect((await call(closed, subKeeper, "GET", "/account")).status).toBe(200);
+  });
+
+  it("US-ACC-05 a valid code registers the subject; afterwards sign-in works and the code is used up", async () => {
+    const code = await newCode();
+    const sub = fresh();
+    extra.push(sub);
+    const done = await call(closed, sub, "POST", "/registration/invitation", { code });
+    expect(done).toMatchObject({ status: 200, body: { registered: true } });
+    expect((await call(closed, sub, "GET", "/account")).status).toBe(200);
+    const other = fresh();
+    extra.push(other);
+    const again = await call(closed, other, "POST", "/registration/invitation", { code });
+    expect(again.status).toBe(403);
+    expect(again.body["error"].code).toBe("invitation.invalid");
+    expect((await call(closed, other, "GET", "/account")).status).toBe(403);
+  });
+
+  it("US-ACC-05 unknown, used and malformed codes are answered identically (no oracle)", async () => {
+    const used = await newCode();
+    const first = fresh();
+    extra.push(first);
+    await call(closed, first, "POST", "/registration/invitation", { code: used });
+    const sub = fresh();
+    extra.push(sub);
+    const answers = [];
+    for (const code of [used, "AAAA-AAAA-AAAA-AAAA-AAAA-AAAA", "nonsense", "", 42, null]) {
+      const r = await call(closed, sub, "POST", "/registration/invitation", { code });
+      answers.push(JSON.stringify([r.status, r.body]));
+    }
+    expect(new Set(answers).size).toBe(1);
+    expect(answers[0]).toContain("invitation.invalid");
+  });
+
+  it("US-ACC-05 an expired code is answered like an unknown one", async () => {
+    const code = (await newCode()).replaceAll("-", "");
+    await pool.query(
+      "update invitation set created_at = now() - interval '2 days', expires_at = now() - interval '1 day' where code_hash = sha256(convert_to($1, 'UTF8'))",
+      [code],
+    );
+    const sub = fresh();
+    extra.push(sub);
+    const r = await call(closed, sub, "POST", "/registration/invitation", { code });
+    expect([r.status, r.body["error"].code]).toEqual([403, "invitation.invalid"]);
+  });
+
+  it("US-ACC-05 registering needs a signed-in identity (token), not an account", async () => {
+    expect(
+      (await call(closed, null, "POST", "/registration/invitation", { code: "x" })).status,
+    ).toBe(401);
+  });
+
+  it("US-ACC-05 the same call twice with an existing account uses up no second code", async () => {
+    const [a, b] = [await newCode(), await newCode()];
+    const sub = fresh();
+    extra.push(sub);
+    expect(
+      (await call(closed, sub, "POST", "/registration/invitation", { code: a })).body["registered"],
+    ).toBe(true);
+    expect(
+      (await call(closed, sub, "POST", "/registration/invitation", { code: b })).body["registered"],
+    ).toBe(false);
+    const third = fresh();
+    extra.push(third);
+    expect(
+      (await call(closed, third, "POST", "/registration/invitation", { code: b })).status,
+    ).toBe(200);
+  });
+});
+
+describe("US-ACC-05 · the operator area (role checked in the operation and in the database)", () => {
+  it("US-ACC-05 GET /account tells only the caller whether they are the operator", async () => {
+    expect((await call(open, subOperator, "GET", "/account")).body["operator"]).toBe(true);
+    expect((await call(open, subReviewer, "GET", "/account")).body["operator"]).toBe(false);
+    expect((await call(open, subKeeper, "GET", "/account")).body["operator"]).toBe(false);
+  });
+
+  it.each([
+    ["GET", "/operator/overview"],
+    ["PUT", "/operator/registration"],
+    ["POST", "/operator/invitations"],
+  ])("US-ACC-05 %s %s without token: 401", async (method, path) => {
+    expect((await call(open, null, method, path, method === "GET" ? undefined : {})).status).toBe(
+      401,
+    );
+  });
+
+  it.each([
+    ["GET", "/operator/overview", undefined],
+    ["PUT", "/operator/registration", { invitationOnly: false }],
+    ["POST", "/operator/invitations", {}],
+  ])(
+    "US-ACC-05 %s %s: a plant keeper and a reviewer get 403 access.denied",
+    async (method, path, body) => {
+      for (const sub of [subKeeper, subReviewer]) {
+        const r = await call(open, sub, method, path, body);
+        expect([sub === subKeeper, r.status, r.body["error"].code]).toEqual([
+          sub === subKeeper,
+          403,
+          "access.denied",
+        ]);
+      }
+    },
+  );
+
+  it("US-ACC-05 the operator creates a code that is shown once, and lists invitations without codes", async () => {
+    const created = await call(open, subOperator, "POST", "/operator/invitations", {
+      validForDays: 3,
+    });
+    expect(created.status).toBe(201);
+    expect(created.body["code"]).toHaveLength(29);
+    const ms = Date.parse(created.body["expiresAt"]) - Date.now();
+    expect(ms).toBeGreaterThan(2.9 * 86_400_000);
+    expect(ms).toBeLessThan(3.1 * 86_400_000);
+    const overview = await call(open, subOperator, "GET", "/operator/overview");
+    expect(overview.status).toBe(200);
+    expect(JSON.stringify(overview.body)).not.toContain(created.body["code"].replaceAll("-", ""));
+    expect(
+      overview.body["invitations"].some((i: { id: string }) => i.id === created.body["id"]),
+    ).toBe(true);
+  });
+
+  it("US-ACC-05 repeating the creation with the same Idempotency-Key returns the same code once", async () => {
+    const key = randomUUID();
+    const a = await call(open, subOperator, "POST", "/operator/invitations", {}, key);
+    const b = await call(open, subOperator, "POST", "/operator/invitations", {}, key);
+    expect(b.body).toEqual(a.body);
+  });
+
+  it("US-ACC-05 refuses a validity outside 1 to 30 days with input.invalid", async () => {
+    const r = await call(open, subOperator, "POST", "/operator/invitations", { validForDays: 99 });
+    expect([r.status, r.body["error"].code]).toEqual([400, "input.invalid"]);
+  });
+
+  it("US-ACC-05 the overview: accounts, active users, cost per user unknown, no content", async () => {
+    const r = await call(open, subOperator, "GET", "/operator/overview");
+    expect(r.body).toMatchObject({
+      costPerUser: null,
+      activeWindowDays: 30,
+      invitationOnly: false,
+    });
+    expect(r.body["accounts"]).toBeGreaterThanOrEqual(3);
+    expect(r.body["activeAccounts"]).toBeGreaterThanOrEqual(3);
+    expect(Object.keys(r.body).sort()).toEqual(
+      [
+        "accounts",
+        "activeAccounts",
+        "activeWindowDays",
+        "costPerUser",
+        "invitationOnly",
+        "invitations",
+      ].sort(),
+    );
+    const text = JSON.stringify(r.body);
+    for (const sub of [subOperator, subKeeper, subReviewer]) expect(text).not.toContain(sub);
+    expect(text).not.toContain("@example.test");
+  });
+
+  it("US-ACC-05 the mode route validates its input", async () => {
+    const r = await call(open, subOperator, "PUT", "/operator/registration", {
+      invitationOnly: "yes",
+    });
+    expect([r.status, r.body["error"].code]).toEqual([400, "input.invalid"]);
+  });
+
+  it("US-ACC-05 switching to the current value (off) works and is reported back", async () => {
+    const r = await call(open, subOperator, "PUT", "/operator/registration", {
+      invitationOnly: false,
+    });
+    expect(r).toMatchObject({ status: 200, body: { invitationOnly: false } });
+  });
+});

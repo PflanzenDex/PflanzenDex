@@ -15,12 +15,12 @@ type Identity = { email: string; displayName: string | null; emailConfirmed: boo
 async function ensureRow(pool: Pool, id: string, data: Identity) {
   return withAccount(pool, id, async (db) => {
     const r = await db.query<{ display_name: string | null; time_zone: string | null }>(
-      `insert into account_data (account_id, email, display_name, email_confirmed)
-       values ($1, $2, $3, $4)
+      `insert into account_data (account_id, email, display_name, email_confirmed, last_active_at)
+       values ($1, $2, $3, $4, now())
        on conflict (account_id) do update
          set email = excluded.email,
              display_name = coalesce(account_data.display_name, excluded.display_name),
-             email_confirmed = excluded.email_confirmed, updated_at = now()
+             email_confirmed = excluded.email_confirmed, updated_at = now(), last_active_at = now()
        returning display_name, time_zone`,
       [id, data.email, data.displayName, data.emailConfirmed],
     );
@@ -42,14 +42,14 @@ export function accountRoutes(pool: Pool): Hono<AuthEnv> {
   routes.get("/", async (c) => {
     const { id, data } = c.get("account");
     const own = await ensureRow(pool, id, data);
-    // Only a hint for the UI (shows the review list); the operations check the role again (US-BES-10, P-04).
-    const reviewer = await withAccount(
-      pool,
-      id,
-      async (db) =>
-        (await db.query<{ reviewer: boolean }>("select is_reviewer() as reviewer")).rows[0]
-          ?.reviewer === true,
-    );
+    // Only a hint for the UI (shows the review list and the operator area); the operations check the role again
+    // (US-BES-10, US-ACC-05, P-04).
+    const roles = await withAccount(pool, id, async (db) => {
+      const r = await db.query<{ reviewer: boolean; operator: boolean }>(
+        "select is_reviewer() as reviewer, is_operator() as operator",
+      );
+      return r.rows[0];
+    });
     return c.json({
       id,
       email: data.email,
@@ -57,7 +57,8 @@ export function accountRoutes(pool: Pool): Hono<AuthEnv> {
       timeZone: own?.time_zone ?? null,
       emailConfirmed: data.emailConfirmed,
       mayShareWithFriends: mayShareWithFriends(data),
-      reviewer,
+      reviewer: roles?.reviewer === true,
+      operator: roles?.operator === true,
     });
   });
 

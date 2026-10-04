@@ -10,6 +10,8 @@ export type Account = {
   mayShareWithFriends: boolean;
   /** Operator or reviewer: shows the review list of catalog proposals (US-BES-10). */
   reviewer?: boolean;
+  /** The operator: shows the operator area (US-ACC-05). Only a hint; the server checks the role again. */
+  operator?: boolean;
 };
 
 export const OCCASIONS = [
@@ -50,6 +52,12 @@ export function oidcSettings(env: Environment, origin: string): UserManagerSetti
 
 export const apiUrl = (env: Environment): string => env["VITE_API_URL"] ?? "http://localhost:3000";
 
+/** Whether the 403 means "registration needs an invitation code" (US-ACC-05), judged by the code, never by the text. */
+async function invitationRequired(res: globalThis.Response): Promise<boolean> {
+  const body = (await res.json().catch(() => ({}))) as { error?: { code?: string } };
+  return body.error?.code === "invitation.required";
+}
+
 export async function getAccount(
   api: string,
   token: string,
@@ -57,6 +65,7 @@ export async function getAccount(
 ): Promise<Account> {
   const res = await fetchFn(`${api}/account`, { headers: { Authorization: `Bearer ${token}` } });
   if (res.status === 401) throw new Error("not_signed_in");
+  if (res.status === 403 && (await invitationRequired(res))) throw new Error("invitation_required");
   if (!res.ok) throw new Error("account_not_loadable");
   return (await res.json()) as Account;
 }

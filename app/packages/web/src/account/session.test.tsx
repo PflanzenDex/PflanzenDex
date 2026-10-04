@@ -111,6 +111,36 @@ describe("US-ACC-01 Sitzung", () => {
     expect(mgr.removeUser).toHaveBeenCalledOnce();
   });
 
+  it("US-ACC-05 a 403 invitation.required keeps the sign-in and asks for an invitation code", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        response(403, { error: { code: "invitation.required", text: "Nur mit Einladungscode." } }),
+      ),
+    );
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state).toEqual({ kind: "invitationNeeded" }));
+    expect(mgr.removeUser).not.toHaveBeenCalled();
+    expect(await result.current.token()).toBe("tok");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => response(200, account)),
+    );
+    await act(() => result.current.reload());
+    expect(result.current.state.kind).toBe("signedIn");
+  });
+
+  it("US-ACC-05 any other 403 stays an error, never the invitation form", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => response(403, { error: { code: "access.denied" } })),
+    );
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("error"));
+  });
+
   it("another server error shows an error with the option to reload (P-09)", async () => {
     mgr.getUser.mockResolvedValue(user);
     vi.stubGlobal(
