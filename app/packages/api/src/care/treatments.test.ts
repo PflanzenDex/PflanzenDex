@@ -43,11 +43,12 @@ async function call(
   return { status: res.status, body: (await res.json()) as Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
-let species = "";
+// A proposed species is visible to its author only (P-05), so each account proposes its own.
+const species: Record<string, string> = {};
 let counter = 0;
 const newSpecimen = async (sub: string, status?: "cutting"): Promise<string> => {
   const e = await call(sub, "POST", "/specimens", {
-    speciesId: species,
+    speciesId: species[sub],
     marker: `m${++counter}`,
     ...(status ? { status } : {}),
     timeZone: "Europe/Berlin",
@@ -67,17 +68,19 @@ beforeAll(async () => {
   pool = openPool();
   await migrate(pool);
   app = createApp({ reviewer, pool, clock: () => NOW });
-  const s = await call(subA, "POST", "/species", {
-    latinName: `Behandlung${run} test`,
-    germanName: `Behandlung ${run}`,
-    difficulty: 2,
-    standardLevel: 3,
-    lightDemandLux: 40000,
-    growthMeasure: "rosette_diameter",
-    etiolationSigns: "Rosette streckt sich.",
-    successCriteria: "Dichte, flache Rosette.",
-  });
-  species = s.body["id"] as string;
+  for (const sub of [subA, subB]) {
+    const s = await call(sub, "POST", "/species", {
+      latinName: `Behandlung${run}${sub === subA ? "a" : "b"} test`,
+      germanName: `Behandlung ${run} ${sub === subA ? "a" : "b"}`,
+      difficulty: 2,
+      standardLevel: 3,
+      lightDemandLux: 40000,
+      growthMeasure: "rosette_diameter",
+      etiolationSigns: "Rosette streckt sich.",
+      successCriteria: "Dichte, flache Rosette.",
+    });
+    species[sub] = s.body["id"] as string;
+  }
 });
 afterAll(async () => {
   await pool.query(
@@ -121,7 +124,7 @@ describe("US-BEH-01 sign-in and input", () => {
 });
 
 describe("US-BEH-01 planning", () => {
-  it("a single treatment: 201, and the card shows reason and due date (US-BES-06)", async () => {
+  it("US-BEH-04 a single treatment: 201, and the card shows reason and due date (US-BES-06)", async () => {
     const e = await newSpecimen(subA);
     const r = await plan(subA, { specimenIds: [e], date: "2026-10-01", agent: "Neemöl" });
     expect(r.status).toBe(201);
@@ -134,7 +137,7 @@ describe("US-BEH-01 planning", () => {
     });
   });
 
-  it("a course: 3 dates at 7 days by default of the client, the card names the next one and '+2 more'", async () => {
+  it("US-BEH-04 a course: 3 dates at 7 days by default of the client, the card names the next one and '+2 more'", async () => {
     const e = await newSpecimen(subA);
     const r = await plan(subA, { specimenIds: [e], date: "2026-10-03", count: 3, intervalDays: 7 });
     expect(r.status).toBe(201);

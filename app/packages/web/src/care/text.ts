@@ -1,5 +1,6 @@
 import type {
   LightLocation,
+  TreatmentRow,
   MeasurementRow,
   CarePhase,
   Quality,
@@ -42,3 +43,11 @@ export const PHASE_TEXT: Record<CarePhase, string> = {
 
 export const locationText = (locations: readonly LightLocation[], id: string | null): string =>
   id === null ? UNKNOWN : (locations.find((s) => s.id === id)?.name ?? UNKNOWN);
+
+/** "3 Termine für 1 Exemplar geplant." and where to see them (P-09). */
+export function treatmentsPlannedText(rows: readonly TreatmentRow[]): string {
+  const specimens = new Set(rows.map((r) => r.specimenId)).size;
+  const dates = rows.length === 1 ? "1 Termin" : `${rows.length} Termine`;
+  const forWhom = specimens === 1 ? "1 Exemplar" : `${specimens} Exemplare`;
+  return `${dates} für ${forWhom} geplant. Den nächsten Termin siehst du auf der Karte im Bestand.`;
+}

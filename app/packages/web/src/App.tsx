@@ -1,17 +1,26 @@
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import type { Species } from "@pflanzendex/core";
 import { CollectionArea } from "./collection-area";
 import { CareProfilePage, HintsPage } from "./collection";
 import { AppError, AccountView, Loading, Welcome, apiUrl, useSession } from "./account";
 import { LightPage } from "./light";
 import { SpeciesPage } from "./catalog";
-import { CarePhasesPage } from "./care";
+import { CarePhasesPage, TreatmentsPage } from "./care";
 import { Navigation, type View } from "./navigation";
 import "./style.css";
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
 
 const version = (import.meta.env as Record<string, string | undefined>)["VITE_APP_VERSION"];
+
+type Token = () => Promise<string | undefined>;
+/** The views that need nothing but the API address and the token. */
+const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Token }>>> = {
+  light: LightPage,
+  treatments: TreatmentsPage,
+  carePhases: CarePhasesPage,
+  careProfile: CareProfilePage,
+};
 
 export function App() {
   const s = useSession();
@@ -27,6 +36,7 @@ export function App() {
     setView("species");
   };
   const z = s.state;
+  const Simple = SIMPLE_VIEWS[view];
   return (
     <main className="page">
       {z.kind === "loading" && <Loading />}
@@ -48,14 +58,10 @@ export function App() {
               onEverywhereSignOut={() => void s.everywhereSignOut()}
               {...(z.error ? { error: z.error } : {})}
             />
-          ) : view === "light" ? (
-            <LightPage api={api} token={s.token} />
+          ) : Simple ? (
+            <Simple api={api} token={s.token} />
           ) : view === "hints" ? (
             <HintsPage api={api} token={s.token} onOpen={setView} />
-          ) : view === "carePhases" ? (
-            <CarePhasesPage api={api} token={s.token} />
-          ) : view === "careProfile" ? (
-            <CareProfilePage api={api} token={s.token} />
           ) : view === "collection" ? (
             <CollectionArea
               api={api}
