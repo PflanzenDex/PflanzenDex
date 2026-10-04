@@ -152,3 +152,8 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+.detail a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+}
