@@ -46,7 +46,7 @@ Legend: ✅ as expected · ⚠️ works, with a finding · ❌ error · ⏭️ n
 - ✅ axe (wcag2a, wcag2aa, wcag21a, wcag21aa) on initial, invalid and saved states: no violations, both viewports.
 - ⏭️ Keyboard-only run and screen reader not checked.
 
-## Offene Punkte
+## Open points
 
 - Effect of the two global switches (SOZ-04, EQU-11) and sending reminders with time, quiet hours and pause (MON-08).
 - `make e2e` has no ACC-02 spec; the manual run above is not repeatable in CI.
