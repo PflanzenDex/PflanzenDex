@@ -1,0 +1,72 @@
+{
+  "mixed": {
+    "h2": [
+      "Weichen vom Soll ab (2)",
+      "Standort fehlt (1)",
+      "Stimmen überein oder Soll unbekannt (3)"
+    ],
+    "h3": [
+      "Bogenhanf – Fenster",
+      "Bogenhanf – Regal",
+      "Opuntia – Ohne Soll 2",
+      "Bogenhanf – Ohne Platz",
+      "Bogenhanf – Sofa",
+      "Opuntia – Ohne Soll"
+    ],
+    "body": "Arten\nBestand\nHinweise\nPflegephasen\nPflegeprofil\nStandorte und Licht\nKonto\nPflegephasen\nAlle 2 nach Wohnzimmer umstellen\nWeichen vom Soll ab (2)\nBogenhanf – Fenster\n\nSoll-Phase heute: Wachstumsphase\n\nStandort: Kühler Flur\n\nSoll-Standort: Wohnzimmer\n\nWeicht ab: steht am Standort „Kühler Flur“, Soll ist „Wohnzimmer“.\n\nStelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.\n\nJetzt umgestellt\nBogenhanf – Regal\n\nSoll-Phase heute: Wachstumsphase\n\nStandort: Kühler Flur\n\nSoll-Standort: Wohnzimmer\n\nWeicht ab: steht am Standort „Kühler Flur“, Soll ist „Wohnzimmer“.\n\nStelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.\n\nJetzt umgestellt\nStandort fehlt (1)\nOpuntia – Ohne Soll 2\n\nSoll-Phase heute: Wachstumsphase\n\nStandort fehlt\n\nSoll-Standort: unbekannt\n\nWeise dem Exemplar unter „Hinweise“ einen Standort zu.\n\nStimmen überein oder Soll unbekannt (3)\nBogenhanf – Ohne Platz\n\nSoll-Phase heute: Wachstumsphase\n\nStandort: Wohnzimmer\n\nSoll-Standort: Wohnzimmer\n\nBogenhanf – Sofa\n\nSoll-Phase heute: Wachstumsphase\n\nStandort: Wohnzimmer\n\nSoll-Standort: Wohnzimmer\n\nOpuntia – Ohne Soll\n\nSoll-Phase heute: Wachstumsphase\n\nStandort: Kühler Flur\n\nSoll-Standort: unbekannt\n\nWähle im Pflegeprofil der Art einen Soll-Standort für die Wachstumsphase.\n\nVersion unbekannt"
+  },
+  "api": [
+    {
+      "name": "Bogenhanf – Fenster",
+      "loc": "8a9dd7c9-a480-4372-8327-d2c01fd443e3",
+      "target": "d7c38f0a-5bf0-4011-95df-896d15a6e893"
+    },
+    {
+      "name": "Bogenhanf – Regal",
+      "loc": "8a9dd7c9-a480-4372-8327-d2c01fd443e3",
+      "target": "d7c38f0a-5bf0-4011-95df-896d15a6e893"
+    },
+    {
+      "name": "Opuntia – Ohne Soll 2",
+      "loc": null,
+      "target": null
+    },
+    {
+      "name": "Bogenhanf – Ohne Platz",
+      "loc": "d7c38f0a-5bf0-4011-95df-896d15a6e893",
+      "target": "d7c38f0a-5bf0-4011-95df-896d15a6e893"
+    },
+    {
+      "name": "Bogenhanf – Sofa",
+      "loc": "d7c38f0a-5bf0-4011-95df-896d15a6e893",
+      "target": "d7c38f0a-5bf0-4011-95df-896d15a6e893"
+    },
+    {
+      "name": "Opuntia – Ohne Soll",
+      "loc": "8a9dd7c9-a480-4372-8327-d2c01fd443e3",
+      "target": null
+    }
+  ],
+  "mobileOverflow": 0,
+  "axe_desktop": [],
+  "axe_mobile": [],
+  "afterSwitch": {
+    "h2": [
+      "Standort fehlt (1)",
+      "Stimmen überein oder Soll unbekannt (5)"
+    ],
+    "h3": [
+      "Opuntia – Ohne Soll 2",
+      "Bogenhanf – Fenster",
+      "Bogenhanf – Ohne Platz",
+      "Bogenhanf – Regal",
+      "Bogenhanf – Sofa",
+      "Opuntia – Ohne Soll"
+    ],
+    "body": "Arten\nBestand\nHinweise\nPflegephasen\nPflegeprofil\nStandorte und Licht\nKonto\n\n2 Exemplare stehen jetzt am Standort „Wohnzimmer“.\n\nPflegephasen\n\nKeine Abweichung: Jede Pflanze mit bekanntem Soll-Standort steht dort.\n\nStandort fehlt (1)\nOpuntia – Ohne Soll 2\n\nSoll-Phase heute: Wachstumsphase\n\nStandort fehlt\n\nSoll-Standort: unbekannt\n\nWeise dem Exemplar unter „Hinweise“ einen Standort zu.\n\nStimmen überein oder Soll unbekannt (5)\nBogenhanf – Fenster\n\nSoll-Phase heute: Wachstumsphase\n\nStandort: Wohnzimmer\n\nSoll-Standort: Wohnzimmer\n\nBogenhanf – Ohne Platz\n\nSoll-Phase heute: Wachstumsphase\n\nStandort: Wohnzimmer\n\nSoll-Standort: Wohnzimmer\n\nBogenhanf – Regal\n\nSoll-Phase heute: Wachstumsphase\n\nStandort: Wohnzimmer\n\nSoll-Standort: Wohnzimmer\n\nBogenhanf – Sofa\n\nSoll-Phase heute: Wachstumsphase\n\nStandort: Wohnzimmer\n\nSoll-Standort: Wohnzimmer\n\nOpuntia – Ohne Soll\n\nSoll-Phase heute: Wachstumsphase\n\nStandort: Kühler Flur\n\nSoll-Standort: unbekannt\n\nWähle im Pflegeprofil der Art einen Soll-Standort für die Wachstumsphase.\n\nVersion unbekannt"
+  },
+  "other": {
+    "api": [],
+    "body": "Arten\nBestand\nHinweise\nPflegephasen\nPflegeprofil\nStandorte und Licht\nKonto\nPflegephasen\n\nNoch kein Exemplar hat eine Phase: Gelistet werden Pflanzen, deren Art einen Ruhephasen-Zeitraum hat. Lege im Bestand ein Exemplar einer solchen Art an.\n\nVersion unbekannt"
+  }
+}
