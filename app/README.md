@@ -162,7 +162,15 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **What:** `GET /treatments?timeZone=Europe/Berlin` (module `care`, read only, no table, no migration) returns the open treatments of the own active specimens, earliest first: `id`, `specimenId`, `specimenName`, `reason`, `agent` (or `null`, shown as "—"), `dueAt` and a derived `status` (`kind` overdue/today/soon/later, `days`, German `text`). A missing or unknown time zone is `input.invalid` (400); "today" is the local date in that zone (NFR-08).
 - **Core:** `treatmentOpenList` reuses `SpecimenStore.list` (filtered with `isActive`) and `TreatmentStore.open`, so no new store method exists and archived specimens never reach the store; `treatmentStatus` is pure calendar arithmetic.
 - **Web:** the page "Behandlung" shows the list above the planning form and loads it again after a successful plan. Empty state "Keine offenen Behandlungen."; with overdue or due-today dates a sentence says to treat those first (P-09).
-- **Limits:** no ticking off (US-BEH-03), no editing or deleting of a date, no reminder (US-MON-03), no central "Heute" list (TE-07).
+- **Limits:** no editing or deleting of a date, no reminder (US-MON-03), no central "Heute" list (TE-07).
+
+## Ticking off a treatment (US-BEH-03)
+
+- **What:** `POST /treatments/:id/complete` with `{ "timeZone": "Europe/Berlin" }` and an `Idempotency-Key` (operation `treatment.complete`, module `care`, no migration: `done` and `done_at` exist since `0015`) sets `done` and the local calendar date `done_at` (NFR-08, computed on the server from the clock and the time zone). Answer: `{ treatment }`. Idempotent: an already done treatment returns its stored row unchanged (first done date kept), also with a new key. A foreign or unknown id is 404 `treatment.not_found`, a treatment of an archived specimen 409 `specimen.archived`.
+- **History:** `GET /treatments/history?specimenId=<id>` returns `{ treatments }`, the done treatments of one own specimen, latest done date first (404 `specimen.not_found` for a foreign one, 400 without a valid id).
+- **Store:** `TreatmentStore.find`, `.complete` (one `update ... where not done`, then a read if a parallel call was faster) and `.done`.
+- **Web:** each row of "Offene Behandlungen" has the button "Erledigt"; the row leaves the list at once and the page says what was ticked off. A refusal stays visible. Below the planning form the selection "Exemplar für den Verlauf" lists the done treatments of a specimen.
+- **Limits:** no undo and no editing of a done treatment; no follow-up date (the dates of a course already exist); no reminder (US-MON-03).
 
 **Operations (TE-03):** containers, Compose, backup and deploy live in `deploy/`; see the runbook `Docs/operations/staging-deploy-and-backup.md`. Targets: `make deploy`, `make backup`, `make restore-test`.
 

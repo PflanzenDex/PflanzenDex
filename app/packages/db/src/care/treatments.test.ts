@@ -150,3 +150,70 @@ describe("US-BEH-01 open treatments per specimen (for the cards, US-BES-06)", ()
     ).rejects.toThrow();
   });
 });
+
+describe("US-BEH-03 ticking off in the database", () => {
+  async function open(account: string, specimenId: string, dueAt = "2026-10-10") {
+    const r = await treatments.createMany(account, [values({ specimenId, dueAt })]);
+    if (typeof r === "string") throw new Error(r);
+    return (r[0] as { id: string }).id;
+  }
+
+  it("US-BEH-03 sets done and the done date in one statement and returns the row", async () => {
+    const id = await open(anna, specimenAnna);
+    expect(await treatments.complete(anna, id, "2026-10-03")).toMatchObject({
+      id,
+      done: true,
+      doneAt: "2026-10-03",
+      dueAt: "2026-10-10",
+    });
+    expect(await treatments.find(anna, id)).toMatchObject({ done: true, doneAt: "2026-10-03" });
+  });
+
+  it("US-BEH-03 the second call (second device) changes nothing and keeps the first done date", async () => {
+    const id = await open(anna, specimenAnna);
+    const first = await treatments.complete(anna, id, "2026-10-03");
+    const again = await treatments.complete(anna, id, "2026-10-09");
+    expect(again).toEqual(first);
+    expect(await treatments.find(anna, id)).toMatchObject({ doneAt: "2026-10-03" });
+  });
+
+  it("US-BEH-03 the done date is the stored calendar date, independent of the server's time zone (NFR-08)", async () => {
+    const before = process.env["TZ"];
+    process.env["TZ"] = "Pacific/Kiritimati";
+    try {
+      const id = await open(anna, specimenAnna);
+      expect(await treatments.complete(anna, id, "2026-01-01")).toMatchObject({
+        doneAt: "2026-01-01",
+      });
+    } finally {
+      if (before === undefined) delete process.env["TZ"];
+      else process.env["TZ"] = before;
+    }
+  });
+
+  it("US-BEH-03 tenant: a foreign or unknown ID is unknown and stays untouched (P-04)", async () => {
+    const id = await open(ben, specimenBen);
+    expect(await treatments.complete(anna, id, "2026-10-03")).toBe("unknown");
+    expect(await treatments.find(anna, id)).toBeNull();
+    expect(await treatments.find(ben, id)).toMatchObject({ done: false, doneAt: null });
+    expect(await treatments.complete(anna, randomUUID(), "2026-10-03")).toBe("unknown");
+  });
+
+  it("US-BEH-03 the history lists the done treatments of one specimen, latest done date first, no open ones", async () => {
+    const e = await specimen(anna, "Verlauf");
+    const a = await open(anna, e, "2026-10-01");
+    const b = await open(anna, e, "2026-10-08");
+    await open(anna, e, "2026-10-15");
+    await treatments.complete(anna, a, "2026-10-02");
+    await treatments.complete(anna, b, "2026-10-09");
+    expect((await treatments.done(anna, e)).map((t) => t.id)).toEqual([b, a]);
+    expect((await treatments.open(anna, [e])).get(e)).toHaveLength(1);
+  });
+
+  it("US-BEH-03 tenant: Ben's history of Anna's specimen is empty (P-04)", async () => {
+    const e = await specimen(anna, "Privat");
+    await treatments.complete(anna, await open(anna, e), "2026-10-03");
+    expect(await treatments.done(ben, e)).toEqual([]);
+    expect(await treatments.done(anna, e)).toHaveLength(1);
+  });
+});

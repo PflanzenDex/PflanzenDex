@@ -16,6 +16,7 @@
     "Pflegeprofil: Im neuen Reiter „Pflegeprofil“ siehst du je Art den Katalogwert neben deiner Abweichung und passt Soll-Standorte je Phase, Lichtzone, Ruhephase, Gießintervalle und eigene Hinweise an. Der Katalog bleibt unverändert, mit „Auf Katalog zurücksetzen“ gilt wieder der Katalogwert. Damit erscheint in den Pflegephasen auch „Jetzt umgestellt“.",
     "Pflegephasen: Pflanzen, die nicht an ihrem Soll-Standort stehen, stehen jetzt oben und sind als Abweichung markiert. Ein Exemplar ohne Standort zeigt „Standort fehlt“ und sagt, wo du ihn setzt; Pflanzen ohne bekannten Soll-Standort zählen nie als Abweichung.",
     "Behandlung: Unter „Behandlung“ planst du Termine für ein oder mehrere Exemplare mit Grund, Mittel und Datum. Mit „Kur planen“ legst du mehrere Termine im Abstand von einigen Tagen an (voreingestellt 3 Termine, 7 Tage). Den nächsten Termin siehst du auf der Karte im Bestand.",
-    "Behandlung: Unter „Behandlung“ siehst du alle offenen Termine nach Dringlichkeit, mit Exemplar, Grund, Mittel und Fälligkeit („überfällig seit 2 Tagen“, „heute fällig“, „in 3 Tagen“). Ohne offene Termine sagt dir die Seite, wie du einen planst."
+    "Behandlung: Unter „Behandlung“ siehst du alle offenen Termine nach Dringlichkeit, mit Exemplar, Grund, Mittel und Fälligkeit („überfällig seit 2 Tagen“, „heute fällig“, „in 3 Tagen“). Ohne offene Termine sagt dir die Seite, wie du einen planst.",
+    "Behandlung: Jeder offene Termin hat jetzt „Erledigt“. Ein Tipp hakt ihn mit dem heutigen Datum ab, er verschwindet aus der Liste und die Karte im Bestand zeigt den nächsten Termin. Ein zweiter Tipp, auch auf einem anderen Gerät, ändert nichts. Erledigte Behandlungen siehst du je Exemplar unter „Erledigte Behandlungen“."
   ]
 }

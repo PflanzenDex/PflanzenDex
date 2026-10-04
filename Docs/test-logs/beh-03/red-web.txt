@@ -1,0 +1,3076 @@
+
+> test
+> vitest run
+
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-acf52b4cbecabe449/app/packages/web
+
+ ❯ src/care/TreatmentsPage.test.tsx (19 tests | 9 failed) 9708ms
+   ❯ US-BEH-03 Behandlung abhaken (6)
+     × US-BEH-03 every open row has an "Erledigt" action that names the row for screen readers 48ms
+     × US-BEH-03 a tap sends the id with the device's time zone and an Idempotency-Key, the row disappears and the page says so 1005ms
+     × US-BEH-03 after the last one is done the list says there are none and what to do next (P-09) 1004ms
+     × US-BEH-03 a double tap sends one request 1005ms
+     × US-BEH-03 a refusal stays visible with its text and the row stays open (P-10) 1003ms
+     × US-BEH-03 an unknown treatment (done elsewhere and removed) is reported, the list reloads 1004ms
+   ❯ US-BEH-03 Verlauf je Exemplar (3)
+     × US-BEH-03 asks to choose a specimen first (P-09), then lists its done treatments with the done date 1005ms
+     × US-BEH-03 a specimen without done treatments says so 1003ms
+     × US-BEH-03 ticking off reloads the shown history 1003ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-03 Behandlung abhaken > US-BEH-03 every open row has an "Erledigt" action that names the row for screen readers
+TestingLibraryElementError: Unable to find an accessible element with the role "button"
+
+Here are the accessible roles:
+
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"entry treatment-overdue"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Aloe":
+  [36m<h3 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"status-text"[39m
+  [36m/>[39m
+
+  --------------------------------------------------listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"entry treatment-today"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Bogenhanf":
+  [36m<h3 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"status-text"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<ul[39m
+  [33maria-label[39m=[32m"Offene Behandlungen"[39m
+  [33mclass[39m=[32m"list"[39m
+[36m>[39m
+  [36m<li[39m
+    [33mclass[39m=[32m"entry treatment-overdue"[39m
+  [36m>[39m
+    [36m<h3>[39m
+      [0mAloe[0m
+    [36m</h3>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"quiet"[39m
+    [36m>[39m
+      [0mGrund: [0m
+      [0mGrund a[0m
+    [36m</p>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"quiet"[39m
+    [36m>[39m
+      [0mMittel: [0m
+      [0m—[0m
+    [36m</p>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"quiet"[39m
+    [36m>[39m
+      [0mFällig am: [0m
+      [0m01.10.2026[0m
+    [36m</p>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"status-text"[39m
+    [36m>[39m
+      [0müberfällig seit 2 Tagen[0m
+    [36m</p>[39m
+  [36m</li>[39m
+  [36m<li[39m
+    [33mclass[39m=[32m"entry treatment-today"[39m
+  [36m>[39m
+    [36m<h3>[39m
+      [0mBogenhanf[0m
+    [36m</h3>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"quiet"[39m
+    [36m>[39m
+      [0mGrund: [0m
+      [0mGrund b[0m
+    [36m</p>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"quiet"[39m
+    [36m>[39m
+      [0mMittel: [0m
+      [0m—[0m
+    [36m</p>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"quiet"[39m
+    [36m>[39m
+      [0mFällig am: [0m
+      [0m03.10.2026[0m
+    [36m</p>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"status-text"[39m
+    [36m>[39m
+      [0mheute fällig[0m
+    [36m</p>[39m
+  [36m</li>[39m
+[36m</ul>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:109:15
+ ❯ src/care/TreatmentsPage.test.tsx:276:34
+    274|     show();
+    275|     const list = await screen.findByRole("list", { name: "Offene Behan…
+    276|     const buttons = within(list).getAllByRole("button");
+       |                                  ^
+    277|     expect(buttons.map((b) => b.textContent)).toEqual(["Erledigt", "Er…
+    278|     expect(buttons[0]?.getAttribute("aria-label")).toBe("Grund a bei A…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-03 Behandlung abhaken > US-BEH-03 a tap sends the id with the device's time zone and an Idempotency-Key, the row disappears and the page says so
+TestingLibraryElementError: Unable to find role="button" and name "Grund a bei Aloe als erledigt abhaken"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung[0m
+        [36m</h1>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"open-treatments-title"[39m
+          [33mclass[39m=[32m"open-treatments"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"open-treatments-title"[39m
+          [36m>[39m
+            [0mOffene Behandlungen[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Offene Behandlungen"[39m
+            [33mclass[39m=[32m"list"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-overdue"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mAloe[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund a[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m01.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0müberfällig seit 2 Tagen[0m
+              [36m</p>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-today"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBogenhanf[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund b[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m03.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0mheute fällig[0m
+              [36m</p>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<h2>[39m
+          [0mBehandlung planen[0m
+        [36m</h2>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mAloe[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung[0m
+        [36m</h1>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"open-treatments-title"[39m
+          [33mclass[39m=[32m"open-treatments"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"open-treatments-title"[39m
+          [36m>[39m
+            [0mOffene Behandlungen[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Offene Behandlungen"[39m
+            [33mclass[39m=[32m"list"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-overdue"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mAloe[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund a[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m01.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0müberfällig seit 2 Tagen[0m
+              [36m</p>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-today"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBogenhanf[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund b[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m03.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0mheute fällig[0m
+              [36m</p>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<h2>[39m
+          [0mBehandlung planen[0m
+        [36m</h2>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mAloe[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/TreatmentsPage.test.tsx:285:35
+    283|     const user = userEvent.setup();
+    284|     show();
+    285|     await user.click(await screen.findByRole("button", { name: "Grund …
+       |                                   ^
+    286|     expect(((await screen.findByText(/als erledigt eingetragen/)).text…
+    287|     expect(ticks).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-03 Behandlung abhaken > US-BEH-03 after the last one is done the list says there are none and what to do next (P-09)
+TestingLibraryElementError: Unable to find role="button" and name "Grund a bei Aloe als erledigt abhaken"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung[0m
+        [36m</h1>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"open-treatments-title"[39m
+          [33mclass[39m=[32m"open-treatments"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"open-treatments-title"[39m
+          [36m>[39m
+            [0mOffene Behandlungen[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Offene Behandlungen"[39m
+            [33mclass[39m=[32m"list"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-overdue"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mAloe[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund a[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m01.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0müberfällig seit 2 Tagen[0m
+              [36m</p>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-today"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBogenhanf[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund b[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m03.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0mheute fällig[0m
+              [36m</p>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<h2>[39m
+          [0mBehandlung planen[0m
+        [36m</h2>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mAloe[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung[0m
+        [36m</h1>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"open-treatments-title"[39m
+          [33mclass[39m=[32m"open-treatments"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"open-treatments-title"[39m
+          [36m>[39m
+            [0mOffene Behandlungen[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Offene Behandlungen"[39m
+            [33mclass[39m=[32m"list"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-overdue"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mAloe[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund a[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m01.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0müberfällig seit 2 Tagen[0m
+              [36m</p>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-today"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBogenhanf[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund b[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m03.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0mheute fällig[0m
+              [36m</p>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<h2>[39m
+          [0mBehandlung planen[0m
+        [36m</h2>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mAloe[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/TreatmentsPage.test.tsx:300:35
+    298|     const user = userEvent.setup();
+    299|     show();
+    300|     await user.click(await screen.findByRole("button", { name: "Grund …
+       |                                   ^
+    301|     await user.click(await screen.findByRole("button", { name: "Grund …
+    302|     expect(await screen.findByText("Keine offenen Behandlungen.")).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-03 Behandlung abhaken > US-BEH-03 a double tap sends one request
+TestingLibraryElementError: Unable to find role="button" and name "Grund a bei Aloe als erledigt abhaken"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung[0m
+        [36m</h1>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"open-treatments-title"[39m
+          [33mclass[39m=[32m"open-treatments"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"open-treatments-title"[39m
+          [36m>[39m
+            [0mOffene Behandlungen[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Offene Behandlungen"[39m
+            [33mclass[39m=[32m"list"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-overdue"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mAloe[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund a[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m01.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0müberfällig seit 2 Tagen[0m
+              [36m</p>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-today"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBogenhanf[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund b[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m03.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0mheute fällig[0m
+              [36m</p>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<h2>[39m
+          [0mBehandlung planen[0m
+        [36m</h2>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mAloe[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung[0m
+        [36m</h1>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"open-treatments-title"[39m
+          [33mclass[39m=[32m"open-treatments"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"open-treatments-title"[39m
+          [36m>[39m
+            [0mOffene Behandlungen[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Offene Behandlungen"[39m
+            [33mclass[39m=[32m"list"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-overdue"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mAloe[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund a[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m01.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0müberfällig seit 2 Tagen[0m
+              [36m</p>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-today"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBogenhanf[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund b[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m03.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0mheute fällig[0m
+              [36m</p>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<h2>[39m
+          [0mBehandlung planen[0m
+        [36m</h2>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mAloe[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/TreatmentsPage.test.tsx:309:33
+    307|     const user = userEvent.setup();
+    308|     show();
+    309|     const button = await screen.findByRole("button", { name: "Grund a …
+       |                                 ^
+    310|     await user.dblClick(button);
+    311|     await screen.findByText(/als erledigt eingetragen/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-03 Behandlung abhaken > US-BEH-03 a refusal stays visible with its text and the row stays open (P-10)
+TestingLibraryElementError: Unable to find role="button" and name "Grund a bei Aloe als erledigt abhaken"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung[0m
+        [36m</h1>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"open-treatments-title"[39m
+          [33mclass[39m=[32m"open-treatments"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"open-treatments-title"[39m
+          [36m>[39m
+            [0mOffene Behandlungen[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Offene Behandlungen"[39m
+            [33mclass[39m=[32m"list"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-overdue"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mAloe[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund a[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m01.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0müberfällig seit 2 Tagen[0m
+              [36m</p>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-today"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBogenhanf[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund b[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m03.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0mheute fällig[0m
+              [36m</p>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<h2>[39m
+          [0mBehandlung planen[0m
+        [36m</h2>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mAloe[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung[0m
+        [36m</h1>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"open-treatments-title"[39m
+          [33mclass[39m=[32m"open-treatments"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"open-treatments-title"[39m
+          [36m>[39m
+            [0mOffene Behandlungen[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Offene Behandlungen"[39m
+            [33mclass[39m=[32m"list"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-overdue"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mAloe[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund a[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m01.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0müberfällig seit 2 Tagen[0m
+              [36m</p>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-today"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBogenhanf[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund b[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m03.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0mheute fällig[0m
+              [36m</p>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<h2>[39m
+          [0mBehandlung planen[0m
+        [36m</h2>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mAloe[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/TreatmentsPage.test.tsx:321:35
+    319|     const user = userEvent.setup();
+    320|     show();
+    321|     await user.click(await screen.findByRole("button", { name: "Grund …
+       |                                   ^
+    322|     expect((await screen.findByRole("alert")).textContent).toContain("…
+    323|     expect(screen.queryByText(/als erledigt eingetragen/)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-03 Behandlung abhaken > US-BEH-03 an unknown treatment (done elsewhere and removed) is reported, the list reloads
+TestingLibraryElementError: Unable to find role="button" and name "Grund a bei Aloe als erledigt abhaken"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung[0m
+        [36m</h1>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"open-treatments-title"[39m
+          [33mclass[39m=[32m"open-treatments"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"open-treatments-title"[39m
+          [36m>[39m
+            [0mOffene Behandlungen[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Offene Behandlungen"[39m
+            [33mclass[39m=[32m"list"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-overdue"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mAloe[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund a[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m01.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0müberfällig seit 2 Tagen[0m
+              [36m</p>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-today"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBogenhanf[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund b[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m03.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0mheute fällig[0m
+              [36m</p>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<h2>[39m
+          [0mBehandlung planen[0m
+        [36m</h2>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mAloe[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung[0m
+        [36m</h1>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"open-treatments-title"[39m
+          [33mclass[39m=[32m"open-treatments"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"open-treatments-title"[39m
+          [36m>[39m
+            [0mOffene Behandlungen[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Offene Behandlungen"[39m
+            [33mclass[39m=[32m"list"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-overdue"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mAloe[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund a[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m01.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0müberfällig seit 2 Tagen[0m
+              [36m</p>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-today"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBogenhanf[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund b[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m03.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0mheute fällig[0m
+              [36m</p>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<h2>[39m
+          [0mBehandlung planen[0m
+        [36m</h2>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mAloe[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/TreatmentsPage.test.tsx:333:35
+    331|     const user = userEvent.setup();
+    332|     show();
+    333|     await user.click(await screen.findByRole("button", { name: "Grund …
+       |                                   ^
+    334|     expect((await screen.findByRole("alert")).textContent).toContain("…
+    335|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-03 Verlauf je Exemplar > US-BEH-03 asks to choose a specimen first (P-09), then lists its done treatments with the done date
+TestingLibraryElementError: Unable to find an element with the text: /Wähle ein Exemplar, um erledigte Behandlungen zu sehen/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung[0m
+        [36m</h1>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"open-treatments-title"[39m
+          [33mclass[39m=[32m"open-treatments"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"open-treatments-title"[39m
+          [36m>[39m
+            [0mOffene Behandlungen[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Offene Behandlungen"[39m
+            [33mclass[39m=[32m"list"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-overdue"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mAloe[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund a[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m01.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0müberfällig seit 2 Tagen[0m
+              [36m</p>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-today"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBogenhanf[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund b[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m03.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0mheute fällig[0m
+              [36m</p>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<h2>[39m
+          [0mBehandlung planen[0m
+        [36m</h2>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mAloe[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung[0m
+        [36m</h1>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"open-treatments-title"[39m
+          [33mclass[39m=[32m"open-treatments"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"open-treatments-title"[39m
+          [36m>[39m
+            [0mOffene Behandlungen[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Offene Behandlungen"[39m
+            [33mclass[39m=[32m"list"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-overdue"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mAloe[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund a[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m01.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0müberfällig seit 2 Tagen[0m
+              [36m</p>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-today"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBogenhanf[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund b[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m03.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0mheute fällig[0m
+              [36m</p>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<h2>[39m
+          [0mBehandlung planen[0m
+        [36m</h2>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mAloe[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/TreatmentsPage.test.tsx:343:25
+    341|     const user = userEvent.setup();
+    342|     show();
+    343|     expect(await screen.findByText(/Wähle ein Exemplar, um erledigte B…
+       |                         ^
+    344|     await user.selectOptions(await screen.findByLabelText("Exemplar fü…
+    345|     const list = await screen.findByRole("list", { name: "Erledigte Be…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-03 Verlauf je Exemplar > US-BEH-03 a specimen without done treatments says so
+TestingLibraryElementError: Unable to find a label with the text of: Exemplar für den Verlauf
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung[0m
+        [36m</h1>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"open-treatments-title"[39m
+          [33mclass[39m=[32m"open-treatments"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"open-treatments-title"[39m
+          [36m>[39m
+            [0mOffene Behandlungen[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Offene Behandlungen"[39m
+            [33mclass[39m=[32m"list"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-overdue"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mAloe[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund a[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m01.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0müberfällig seit 2 Tagen[0m
+              [36m</p>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-today"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBogenhanf[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund b[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m03.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0mheute fällig[0m
+              [36m</p>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<h2>[39m
+          [0mBehandlung planen[0m
+        [36m</h2>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mAloe[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung[0m
+        [36m</h1>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"open-treatments-title"[39m
+          [33mclass[39m=[32m"open-treatments"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"open-treatments-title"[39m
+          [36m>[39m
+            [0mOffene Behandlungen[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Offene Behandlungen"[39m
+            [33mclass[39m=[32m"list"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-overdue"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mAloe[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund a[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m01.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0müberfällig seit 2 Tagen[0m
+              [36m</p>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-today"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBogenhanf[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund b[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m03.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0mheute fällig[0m
+              [36m</p>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<h2>[39m
+          [0mBehandlung planen[0m
+        [36m</h2>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mAloe[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/TreatmentsPage.test.tsx:358:43
+    356|     const user = userEvent.setup();
+    357|     show();
+    358|     await user.selectOptions(await screen.findByLabelText("Exemplar fü…
+       |                                           ^
+    359|     expect(await screen.findByText(/Noch keine erledigte Behandlung/))…
+    360|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-03 Verlauf je Exemplar > US-BEH-03 ticking off reloads the shown history
+TestingLibraryElementError: Unable to find a label with the text of: Exemplar für den Verlauf
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung[0m
+        [36m</h1>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"open-treatments-title"[39m
+          [33mclass[39m=[32m"open-treatments"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"open-treatments-title"[39m
+          [36m>[39m
+            [0mOffene Behandlungen[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Offene Behandlungen"[39m
+            [33mclass[39m=[32m"list"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-overdue"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mAloe[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund a[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m01.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0müberfällig seit 2 Tagen[0m
+              [36m</p>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-today"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBogenhanf[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund b[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m03.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0mheute fällig[0m
+              [36m</p>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<h2>[39m
+          [0mBehandlung planen[0m
+        [36m</h2>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mAloe[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light treatments"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"treatments-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"treatments-title"[39m
+        [36m>[39m
+          [0mBehandlung[0m
+        [36m</h1>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"open-treatments-title"[39m
+          [33mclass[39m=[32m"open-treatments"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mid[39m=[32m"open-treatments-title"[39m
+          [36m>[39m
+            [0mOffene Behandlungen[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.[0m
+          [36m</p>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Offene Behandlungen"[39m
+            [33mclass[39m=[32m"list"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-overdue"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mAloe[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund a[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m01.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0müberfällig seit 2 Tagen[0m
+              [36m</p>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"entry treatment-today"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBogenhanf[0m
+              [36m</h3>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mGrund: [0m
+                [0mGrund b[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mMittel: [0m
+                [0m—[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFällig am: [0m
+                [0m03.10.2026[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"status-text"[39m
+              [36m>[39m
+                [0mheute fällig[0m
+              [36m</p>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+        [36m<h2>[39m
+          [0mBehandlung planen[0m
+        [36m</h2>[39m
+        [36m<form[39m
+          [33maria-label[39m=[32m"Behandlung planen"[39m
+          [33mclass[39m=[32m"form"[39m
+          [33mnovalidate[39m=[32m""[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"choice"[39m
+          [36m>[39m
+            [36m<legend>[39m
+              [0mExemplare[0m
+            [36m</legend>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mAloe[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"check"[39m
+            [36m>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0mBogenhanf[0m
+            [36m</label>[39m
+          [36m</fieldset>[39m
+          [36m<label>[39m
+            [0mGrund[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"zum Beispiel Wollläuse"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mMittel (optional)[0m
+            [36m<input[39m
+              [33mautocomplete[39m=[32m"off"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0mDatum[0m
+            [36m<input[39m
+              [33mtype[39m=[32m"date"[39m
+              [33mvalue[39m=[32m"2026-10-04"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"check"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0mKur planen (mehrere Termine)[0m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"primary"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mBehandlung speichern[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/care/TreatmentsPage.test.tsx:367:43
+    365|     const user = userEvent.setup();
+    366|     show();
+    367|     await user.selectOptions(await screen.findByLabelText("Exemplar fü…
+       |                                           ^
+    368|     await screen.findByText(/Noch keine erledigte Behandlung/);
+    369|     entries.push(doneEntry("z", "2026-10-03"));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed | 29 passed (30)
+      Tests  9 failed | 257 passed (266)
+   Start at  09:55:00
+   Duration  12.11s (tests 42%, environment 29%, transform 19%, import 10%)
+
+    Isolate  30 workers spawned · ~705ms startup each (spawn + environment, per file)
+             at least ~1.22s faster with isolate: false — reuses workers across files instead of one per file
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-acf52b4cbecabe449/app/packages/web
+npm error workspace @pflanzendex/web
+npm error location /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-acf52b4cbecabe449/app/packages/web
+npm error command failed
+npm error command sh -c vitest run

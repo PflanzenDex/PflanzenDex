@@ -12,6 +12,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "location.not_found": 404,
   "species.not_found": 404,
   "specimen.not_found": 404,
+  "treatment.not_found": 404,
   "care.no_phase": 409,
   "care.target_unknown": 409,
   "species.duplicate": 409,
