@@ -1,0 +1,17 @@
+      Tests  14 failed (14)
+ FAIL  src/care/treatments.test.ts > US-BEH-01 planning > a course: 3 dates at 7 days by default of the client, the card names the next one and '+2 more'
+ FAIL  src/care/treatments.test.ts > US-BEH-01 planning > a single treatment: 201, and the card shows reason and due date (US-BES-06)
+ FAIL  src/care/treatments.test.ts > US-BEH-01 planning > several specimens including a cutting get one treatment each (FR-BEH-04)
+ FAIL  src/care/treatments.test.ts > US-BEH-01 planning > the same Idempotency-Key writes once
+ FAIL  src/care/treatments.test.ts > US-BEH-01 sign-in and input > POST /treatments without token: 401
+ FAIL  src/care/treatments.test.ts > US-BEH-01 sign-in and input > invalid input (course too long): 400 with field, nothing written
+ FAIL  src/care/treatments.test.ts > US-BEH-01 sign-in and input > invalid input (no date): 400 with field, nothing written
+ FAIL  src/care/treatments.test.ts > US-BEH-01 sign-in and input > invalid input (no reason): 400 with field, nothing written
+ FAIL  src/care/treatments.test.ts > US-BEH-01 sign-in and input > invalid input (no specimen): 400 with field, nothing written
+ FAIL  src/care/treatments.test.ts > US-BEH-01 sign-in and input > invalid input (wrong date): 400 with field, nothing written
+ FAIL  src/care/treatments.test.ts > US-BEH-01 sign-in and input > without Idempotency-Key: 400 with a stable error code, nothing written
+ FAIL  src/care/treatments.test.ts > US-BEH-01 tenant isolation (P-04) > a foreign specimen looks like an unknown one: 404, nothing written for either account
+ FAIL  src/care/treatments.test.ts > US-BEH-01 tenant isolation (P-04) > a treatment of Anna never appears on Ben's cards
+ FAIL  src/care/treatments.test.ts > US-BEH-01 tenant isolation (P-04) > an archived specimen cannot be treated: 409 specimen.archived
+ Test Files  1 failed (1)
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯

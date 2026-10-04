@@ -1,0 +1,198 @@
+import { randomUUID } from "node:crypto";
+import type { Pool } from "pg";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { migrate, openPool } from "@pflanzendex/db";
+import { createApp, type AppOptions } from "../app";
+
+type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
+
+// US-BEH-01: plan treatments and see them on the specimen cards through the API (real PostgreSQL, `make db-up`).
+let pool: Pool;
+const run = randomUUID()
+  .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
+  .replace(/-/g, "")
+  .slice(0, 10);
+const subA = `beh1-${randomUUID()}`;
+const subB = `beh1-${randomUUID()}`;
+const reviewer: TokenVerifier = async (token) => {
+  const [kind, sub] = token.split(":");
+  return kind === "valid"
+    ? { sub, email: `${sub}@example.test`, name: "Test", email_verified: true }
+    : null;
+};
+// 2026-10-02 23:30 UTC: already October 3rd in Berlin (NFR-08).
+const NOW = new Date("2026-10-02T23:30:00Z");
+let app: ReturnType<typeof createApp>;
+type Response = { status: number; body: Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+async function call(
+  sub: string | null,
+  method: string,
+  path: string,
+  body?: unknown,
+  key: string | null = randomUUID(),
+): Promise<Response> {
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (sub) headers["authorization"] = `Bearer valid:${sub}`;
+  if (key) headers["idempotency-key"] = key;
+  const res = await app.request(path, {
+    method: method,
+    headers,
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  return { status: res.status, body: (await res.json()) as Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
+let species = "";
+let counter = 0;
+const newSpecimen = async (sub: string, status?: "cutting"): Promise<string> => {
+  const e = await call(sub, "POST", "/specimens", {
+    speciesId: species,
+    marker: `m${++counter}`,
+    ...(status ? { status } : {}),
+    timeZone: "Europe/Berlin",
+  });
+  return e.body["id"] as string;
+};
+const plan = (sub: string, input: Record<string, unknown>, key?: string | null) =>
+  call(sub, "POST", "/treatments", { reason: "Wollläuse", date: "2026-10-10", ...input }, key);
+const cards = async (sub: string) =>
+  (await call(sub, "GET", "/specimens/cards?timeZone=Europe/Berlin")).body["cards"] as {
+    id: string;
+    treatment: { reason: string; dueDate: { text: string } } | null;
+    moreTreatments: number;
+  }[];
+
+beforeAll(async () => {
+  pool = openPool();
+  await migrate(pool);
+  app = createApp({ reviewer, pool, clock: () => NOW });
+  const s = await call(subA, "POST", "/species", {
+    latinName: `Behandlung${run} test`,
+    germanName: `Behandlung ${run}`,
+    difficulty: 2,
+    standardLevel: 3,
+    lightDemandLux: 40000,
+    growthMeasure: "rosette_diameter",
+    etiolationSigns: "Rosette streckt sich.",
+    successCriteria: "Dichte, flache Rosette.",
+  });
+  species = s.body["id"] as string;
+});
+afterAll(async () => {
+  await pool.query(
+    "delete from specimen where account_id in (select id from account where subject = any($1))",
+    [[subA, subB]],
+  );
+  await pool.query(
+    `delete from species where id in (select object_id from review_case
+       where account_id in (select id from account where subject = any($1)))`,
+    [[subA, subB]],
+  );
+  await pool.query("delete from account where subject = any($1)", [[subA, subB]]);
+  await pool.end();
+});
+
+describe("US-BEH-01 sign-in and input", () => {
+  it("POST /treatments without token: 401", async () => {
+    expect((await call(null, "POST", "/treatments", {})).status).toBe(401);
+  });
+
+  it("without Idempotency-Key: 400 with a stable error code, nothing written", async () => {
+    const e = await newSpecimen(subA);
+    const r = await plan(subA, { specimenIds: [e] }, null);
+    expect(r).toMatchObject({ status: 400, body: { error: { code: "idempotency.key_missing" } } });
+    expect((await cards(subA)).find((c) => c.id === e)?.treatment).toBeNull();
+  });
+
+  it.each([
+    ["no reason", { reason: " " }, "reason"],
+    ["no date", { date: undefined }, "date"],
+    ["wrong date", { date: "2026-02-30" }, "date"],
+    ["no specimen", { specimenIds: [] }, "specimenIds"],
+    ["course too long", { count: 99 }, "count"],
+  ])("invalid input (%s): 400 with field, nothing written", async (_, input, field) => {
+    const e = await newSpecimen(subA);
+    const r = await plan(subA, { specimenIds: [e], ...input });
+    expect(r).toMatchObject({ status: 400, body: { error: { code: "input.invalid" } } });
+    expect(r.body["error"].details.map((d: { field: string }) => d.field)).toEqual([field]);
+    expect((await cards(subA)).find((c) => c.id === e)?.treatment).toBeNull();
+  });
+});
+
+describe("US-BEH-01 planning", () => {
+  it("a single treatment: 201, and the card shows reason and due date (US-BES-06)", async () => {
+    const e = await newSpecimen(subA);
+    const r = await plan(subA, { specimenIds: [e], date: "2026-10-01", agent: "Neemöl" });
+    expect(r.status).toBe(201);
+    expect(r.body["treatments"]).toMatchObject([
+      { specimenId: e, reason: "Wollläuse", agent: "Neemöl", dueAt: "2026-10-01", courseId: null },
+    ]);
+    expect((await cards(subA)).find((c) => c.id === e)).toMatchObject({
+      treatment: { reason: "Wollläuse", dueDate: { text: "überfällig seit 2 Tg." } },
+      moreTreatments: 0,
+    });
+  });
+
+  it("a course: 3 dates at 7 days by default of the client, the card names the next one and '+2 more'", async () => {
+    const e = await newSpecimen(subA);
+    const r = await plan(subA, { specimenIds: [e], date: "2026-10-03", count: 3, intervalDays: 7 });
+    expect(r.status).toBe(201);
+    expect(r.body["treatments"].map((t: { dueAt: string }) => t.dueAt)).toEqual([
+      "2026-10-03",
+      "2026-10-10",
+      "2026-10-17",
+    ]);
+    expect(new Set(r.body["treatments"].map((t: { courseId: string }) => t.courseId)).size).toBe(1);
+    expect((await cards(subA)).find((c) => c.id === e)).toMatchObject({
+      treatment: { dueDate: { text: "heute fällig" } },
+      moreTreatments: 2,
+    });
+  });
+
+  it("several specimens including a cutting get one treatment each (FR-BEH-04)", async () => {
+    const [a, b] = [await newSpecimen(subA), await newSpecimen(subA, "cutting")];
+    const r = await plan(subA, { specimenIds: [a, b] });
+    expect(r.status).toBe(201);
+    expect(r.body["treatments"]).toHaveLength(2);
+    for (const c of (await cards(subA)).filter((c) => [a, b].includes(c.id)))
+      expect(c.treatment?.reason).toBe("Wollläuse");
+  });
+
+  it("the same Idempotency-Key writes once", async () => {
+    const e = await newSpecimen(subA);
+    const key = randomUUID();
+    const first = await plan(subA, { specimenIds: [e], count: 2, intervalDays: 3 }, key);
+    const again = await plan(subA, { specimenIds: [e], count: 2, intervalDays: 3 }, key);
+    expect(again.body).toEqual(first.body);
+    expect((await cards(subA)).find((c) => c.id === e)?.moreTreatments).toBe(1);
+  });
+});
+
+describe("US-BEH-01 tenant isolation (P-04)", () => {
+  it("a foreign specimen looks like an unknown one: 404, nothing written for either account", async () => {
+    const mine = await newSpecimen(subA);
+    const foreign = await newSpecimen(subB);
+    const r = await plan(subA, { specimenIds: [mine, foreign] });
+    expect(r).toMatchObject({ status: 404, body: { error: { code: "specimen.not_found" } } });
+    expect((await cards(subA)).find((c) => c.id === mine)?.treatment).toBeNull();
+    expect((await cards(subB)).find((c) => c.id === foreign)?.treatment).toBeNull();
+  });
+
+  it("a treatment of Anna never appears on Ben's cards", async () => {
+    const e = await newSpecimen(subA);
+    await plan(subA, { specimenIds: [e] });
+    expect((await cards(subB)).some((c) => c.id === e)).toBe(false);
+  });
+
+  it("an archived specimen cannot be treated: 409 specimen.archived", async () => {
+    const e = await newSpecimen(subA);
+    await call(subA, "POST", `/specimens/${e}/archive`, {
+      reason: "eingegangen",
+      timeZone: "Europe/Berlin",
+    });
+    const r = await plan(subA, { specimenIds: [e] });
+    expect(r.body["error"]["code"]).toBe("specimen.archived");
+    expect(r.status).toBe(409);
+  });
+});
