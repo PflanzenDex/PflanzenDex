@@ -29,7 +29,16 @@ function standing(zones: readonly ZoneStock[]): Standing {
   };
 }
 
-function priority(zone: ZoneStock | undefined, s: Standing): { kind: PriorityKind; text: string } {
+function priority(
+  zone: ZoneStock | undefined,
+  s: Standing,
+  hasTarget: boolean,
+): { kind: PriorityKind; text: string } {
+  if (!zone && hasTarget)
+    return {
+      kind: "zone_outside",
+      text: "Die Ziel-Lichtzone gehört nicht zu den Zonen 2 bis 4: dieser Wunsch zählt bei der Platzfrage noch nicht mit.",
+    };
   if (!zone)
     return {
       kind: "zone_unknown",
@@ -65,12 +74,16 @@ function candidate(w: WishRow, zones: readonly ZoneStock[], s: Standing): Candid
     title: titleOf(w),
     zone: zone ? { id: zone.zoneId, name: zone.name } : null,
     stock: zone ? zone.count : null,
-    zoneText: zone ? `${zone.name} — ${plants(zone.count)}` : "Ziel-Zone unbekannt",
+    zoneText: zone
+      ? `${zone.name} — ${plants(zone.count)}`
+      : w.targetZoneId
+        ? "Ziel-Zone liegt außerhalb der Zonen 2 bis 4"
+        : "Ziel-Zone unbekannt",
     difficulty: w.difficulty,
     reasoning: w.reasoning,
     // The source always travels with the picture (DM-WUN-01); a picture without one is not shown.
     image: w.imageUrl && w.imageSource ? { url: w.imageUrl, source: w.imageSource } : null,
-    priority: priority(zone, s),
+    priority: priority(zone, s, w.targetZoneId !== null),
   };
 }
 

@@ -81,6 +81,18 @@ describe("US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06)", () => {
       { imageUrl: "http://example.test/h.jpg", imageSource: "Wikimedia Commons" },
     ],
     ["a source without an image", { imageSource: "Wikimedia Commons" }],
+    [
+      "an image address with credentials",
+      { imageUrl: "https://user:secret@example.test/h.jpg", imageSource: "Wikimedia Commons" },
+    ],
+    [
+      "an image address that is only a user name",
+      { imageUrl: "https://user@example.test/h.jpg", imageSource: "Wikimedia Commons" },
+    ],
+    [
+      "an image address with a blank",
+      { imageUrl: "https://example.test/h 1.jpg", imageSource: "Wikimedia Commons" },
+    ],
   ])("US-WUN-01 refuses %s and writes nothing", async (_label, extra) => {
     const r = await create(input(extra));
     expect(errorOf(r)?.code).toBe("input.invalid");

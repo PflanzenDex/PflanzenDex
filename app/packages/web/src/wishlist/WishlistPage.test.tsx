@@ -73,7 +73,13 @@ describe("US-WUN-01 page of the candidate list", () => {
     expect(item.textContent).toContain("Mag gleichmäßig feuchte Erde.");
     expect(item.textContent).toContain("hier ist am meisten Platz");
     expect(item.textContent).toContain("Quelle: Wikimedia Commons");
-    expect(within(item).getByRole("img").getAttribute("src")).toBe("https://upload.example/c.jpg");
+    // P-05: no remote picture is loaded in the keeper's browser; only an explicit link to the address (until US-WUN-04).
+    expect(item.querySelector("img")).toBeNull();
+    const link = within(item).getByRole("link", { name: "Bild ansehen (öffnet extern)" });
+    expect(link.getAttribute("href")).toBe("https://upload.example/c.jpg");
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+    expect(link.getAttribute("referrerpolicy")).toBe("no-referrer");
     expect(screen.getByText("Besorge diese Pflanze zuerst.")).toBeTruthy();
   });
 
@@ -136,6 +142,17 @@ describe("US-WUN-01 page of the candidate list", () => {
   });
 });
 
+describe("US-WUN-01 no remote picture is loaded (P-05)", () => {
+  it("US-WUN-01 an address that is not https is not linked and nothing is embedded", async () => {
+    fakeServer(list([candidate({ image: { url: "javascript:alert(1)", source: "Irgendwer" } })]));
+    render(<WishlistPage api="http://api" token={token} />);
+    const item = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
+    expect(item.querySelector("img")).toBeNull();
+    expect(item.querySelector("a")).toBeNull();
+    expect(item.textContent).toContain("Kein Bild");
+  });
+});
+
 describe("US-WUN-01 recording a wish", () => {
   const fill = async (name: string) => {
     await screen.findByRole("heading", { name: "Wunsch erfassen" });
@@ -163,29 +180,129 @@ describe("US-WUN-01 recording a wish", () => {
     expect((screen.getByLabelText("Name") as HTMLInputElement).value).toBe("");
   });
 
-  it("US-WUN-01 keeps a refusal visible with its text and shows no success", async () => {
-    fakeServer(list([candidate()]), () =>
-      response(409, {
-        error: { code: "wish.name_taken", text: "Einen Wunsch mit diesem Namen gibt es schon." },
-      }),
+  const refusal = (status: number, code: string, text: string, details?: unknown) => () =>
+    response(status, { error: { code, text, ...(details ? { details } : {}) } });
+  const save = () => userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
+  const describedText = (el: HTMLElement) =>
+    (el.getAttribute("aria-describedby") ?? "")
+      .split(" ")
+      .map((id) => document.getElementById(id)?.textContent ?? "")
+      .join(" ");
+
+  it("US-WUN-01 marks the name field when the name is taken: text next to it, focus, value kept, no success", async () => {
+    fakeServer(
+      list([candidate()]),
+      refusal(409, "wish.name_taken", "Einen Wunsch mit diesem Namen gibt es schon."),
     );
     render(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
-    await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("gibt es schon");
+    await save();
+    const name = screen.getByLabelText("Name") as HTMLInputElement;
+    await vi.waitFor(() => expect(name.getAttribute("aria-invalid")).toBe("true"));
+    expect(describedText(name)).toContain("gibt es schon");
+    expect(document.activeElement).toBe(name);
+    expect(name.value).toBe("Neu");
     expect(screen.queryByText(/gespeichert/)).toBeNull();
+    expect(screen.getByLabelText("Schwierigkeit").getAttribute("aria-invalid")).not.toBe("true");
   });
 
-  it("US-WUN-01 refuses an empty name and a picture without source before sending", async () => {
+  it("US-WUN-01 marks the zone field when the server says the zone is not the keeper's", async () => {
+    fakeServer(
+      list([candidate()]),
+      refusal(404, "light_zone.not_found", "Diese Lichtzone gibt es nicht."),
+    );
+    render(<WishlistPage api="http://api" token={token} />);
+    await fill("Neu");
+    await userEvent.selectOptions(screen.getByLabelText("Ziel-Lichtzone"), "z2");
+    await save();
+    const zone = screen.getByLabelText("Ziel-Lichtzone") as HTMLSelectElement;
+    await vi.waitFor(() => expect(zone.getAttribute("aria-invalid")).toBe("true"));
+    expect(describedText(zone)).toContain("gibt es nicht");
+    expect(document.activeElement).toBe(zone);
+    expect(zone.value).toBe("z2");
+  });
+
+  it("US-WUN-01 marks the field the server names in the details", async () => {
+    fakeServer(
+      list([candidate()]),
+      refusal(422, "input.invalid", "Eine Eingabe ist ungültig.", [
+        { field: "imageUrl", code: "input.invalid" },
+      ]),
+    );
+    render(<WishlistPage api="http://api" token={token} />);
+    await fill("Neu");
+    await save();
+    const url = screen.getByLabelText("Bild-Adresse (https)");
+    await vi.waitFor(() => expect(url.getAttribute("aria-invalid")).toBe("true"));
+    expect(document.activeElement).toBe(url);
+  });
+
+  it("US-WUN-01 a refusal that names no field stays in an alert that takes the focus", async () => {
+    fakeServer(list([candidate()]), refusal(500, "server.error", "Der Server antwortet nicht."));
+    render(<WishlistPage api="http://api" token={token} />);
+    await fill("Neu");
+    await save();
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Der Server antwortet nicht.");
+    await vi.waitFor(() => expect(document.activeElement).toBe(alert));
+    expect(screen.getByLabelText("Name").getAttribute("aria-invalid")).not.toBe("true");
+  });
+
+  it("US-WUN-01 refuses an empty name before sending: field marked, described, focused", async () => {
     const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: {} }));
     render(<WishlistPage api="http://api" token={token} />);
     await screen.findByRole("heading", { name: "Wunsch erfassen" });
-    await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("Name");
-    await userEvent.type(screen.getByLabelText("Name"), "Neu");
-    await userEvent.type(screen.getByLabelText("Bild-Adresse (https)"), "https://x.example/a.jpg");
-    await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("Quelle");
+    await save();
+    const name = screen.getByLabelText("Name");
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+    expect(describedText(name)).toContain("Name");
+    await vi.waitFor(() => expect(document.activeElement).toBe(name));
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+  });
+
+  it("US-WUN-01 refuses a picture address without source: the source field is marked and focused, values kept", async () => {
+    const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: {} }));
+    render(<WishlistPage api="http://api" token={token} />);
+    await fill("Neu");
+    await userEvent.type(screen.getByLabelText("Bild-Adresse (https)"), "https://x.example/a.jpg");
+    await save();
+    const source = screen.getByLabelText("Bildquelle");
+    expect(source.getAttribute("aria-invalid")).toBe("true");
+    expect(describedText(source)).toContain("Quelle");
+    await vi.waitFor(() => expect(document.activeElement).toBe(source));
+    expect((screen.getByLabelText("Bild-Adresse (https)") as HTMLInputElement).value).toBe(
+      "https://x.example/a.jpg",
+    );
+    expect((screen.getByLabelText("Name") as HTMLInputElement).value).toBe("Neu");
+    expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+  });
+
+  it("US-WUN-01 refuses an address that is not https and one with credentials on the address field", async () => {
+    fakeServer(list([candidate()]));
+    render(<WishlistPage api="http://api" token={token} />);
+    await fill("Neu");
+    await userEvent.type(screen.getByLabelText("Bildquelle"), "Quelle");
+    const url = screen.getByLabelText("Bild-Adresse (https)");
+    await userEvent.type(url, "http://x.example/a.jpg");
+    await save();
+    expect(url.getAttribute("aria-invalid")).toBe("true");
+    await userEvent.clear(url);
+    await userEvent.type(url, "https://me:pw@x.example/a.jpg");
+    await save();
+    expect(url.getAttribute("aria-invalid")).toBe("true");
+    expect(describedText(url)).toContain("https://");
+  });
+
+  it("US-WUN-01 a field loses its mark again when the next input is fine", async () => {
+    fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
+    render(<WishlistPage api="http://api" token={token} />);
+    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await save();
+    const name = screen.getByLabelText("Name");
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+    await userEvent.type(name, "Neu");
+    await save();
+    await screen.findByText(/gespeichert/);
+    expect(name.getAttribute("aria-invalid")).not.toBe("true");
   });
 });

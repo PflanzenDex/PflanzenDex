@@ -133,6 +133,9 @@ describe("US-WUN-01 wishes in the database", () => {
     await expect(
       bad({ imageUrl: "http://example.test/x.jpg", imageSource: "x" }),
     ).rejects.toThrow();
+    await expect(
+      bad({ imageUrl: "https://user:pw@example.test/x.jpg", imageSource: "x" }),
+    ).rejects.toThrow();
   });
 });
 

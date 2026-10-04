@@ -35,14 +35,22 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
     expect(await names()).toEqual(["Bryophyllum", "Aloe"]);
   });
 
-  it("US-WUN-01 a zone that is not among zones 2 to 4 counts as unknown (FR-WUN-03)", async () => {
+  it("US-WUN-01 a zone that is not among zones 2 to 4 does not count and says so, not 'unknown' (FR-WUN-03)", async () => {
     wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: "zone-1-cutting-light" });
     wishes.seed("anna", { id: "b", name: "Bryophyllum", targetZoneId: Z4 });
+    wishes.seed("anna", { id: "c", name: "Cereus" });
     const list = await candidates();
     expect(list.candidates.map((c) => [c.name, c.zone, c.stock])).toEqual([
       ["Bryophyllum", { id: Z4, name: "Lampe 4" }, 3],
       ["Aloe", null, null],
+      ["Cereus", null, null],
     ]);
+    const [, outside, unknown] = list.candidates;
+    expect(outside?.priority.kind).toBe("zone_outside");
+    expect(outside?.zoneText).toBe("Ziel-Zone liegt außerhalb der Zonen 2 bis 4");
+    expect(outside?.priority.text).toContain("zählt");
+    expect(unknown?.priority.kind).toBe("zone_unknown");
+    expect(unknown?.zoneText).toBe("Ziel-Zone unbekannt");
   });
 
   it("US-WUN-01 on equal stock the order of the zones, then the name, decides (stable)", async () => {
@@ -171,11 +179,11 @@ describe("US-WUN-01 empty list and the next action (P-09)", () => {
     ]);
   });
 
-  it("US-WUN-01 an account without zones 2 to 4 has only unknown zones and no crash", async () => {
+  it("US-WUN-01 an account without zones 2 to 4 has no usable zone: a wish with a zone is named as outside zones 2 to 4, no crash", async () => {
     stock = new ZoneStockStub({});
     wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: Z2 });
     const list = await candidates();
-    expect(list.candidates.map((c) => c.priority.kind)).toEqual(["zone_unknown"]);
+    expect(list.candidates.map((c) => c.priority.kind)).toEqual(["zone_outside"]);
     expect(list.zones).toEqual([]);
   });
 });

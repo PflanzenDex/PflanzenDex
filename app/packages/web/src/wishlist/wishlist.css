@@ -46,12 +46,6 @@
   border-radius: 8px;
   background: var(--grund);
 }
-.wish-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
 .wish-placeholder {
   aspect-ratio: auto;
   min-height: 72px;
@@ -69,7 +63,8 @@
   border-width: 2px;
   border-color: var(--gruen);
 }
-.candidate[data-priority="zone_unknown"] {
+.candidate[data-priority="zone_unknown"],
+.candidate[data-priority="zone_outside"] {
   border-style: dashed;
 }
 .wishlist-page .form {
@@ -86,4 +81,8 @@
   background: var(--grund);
   color: var(--text);
   font: inherit;
+}
+.wish-placeholder a {
+  padding: 12px;
+  text-align: center;
 }

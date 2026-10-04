@@ -4,9 +4,10 @@ import type { WishStore, ZoneStock, ZoneStockSource } from "./types";
 /**
  * Why a candidate stands where it stands (the "why" of the priority, P-09). `thinnest`: its zone has the fewest
  * specimens; `tie`: all zones 2 to 4 are equally full; `other`: another zone has more room; `zone_unknown`: no target
- * zone 2 to 4, the wish does not count (FR-WUN-03, P-10).
+ * zone, `zone_outside`: a target zone that is not among zones 2 to 4 (for example the cutting light); both do not
+ * count (FR-WUN-03, P-10).
  */
-export type PriorityKind = "thinnest" | "tie" | "other" | "zone_unknown";
+export type PriorityKind = "thinnest" | "tie" | "other" | "zone_unknown" | "zone_outside";
 
 export interface Candidate {
   readonly id: string;

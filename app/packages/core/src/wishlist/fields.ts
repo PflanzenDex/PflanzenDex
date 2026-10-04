@@ -3,10 +3,17 @@ import { WISH_LIMITS } from "./types";
 
 const SCHEME = "https://";
 
-/** `https://host.tld/...` without blanks: no `http`, no `javascript:`, because the picture is shown to the keeper. */
+/**
+ * `https://host.tld/...` without blanks and without credentials (`user:password@`): no `http`, no `javascript:`. The
+ * address is only ever shown as a link, never loaded (P-05), but it must not carry secrets into the database either.
+ * Linear scans, no regular expression on user text.
+ */
 function isHttps(text: string): boolean {
-  if (!text.toLowerCase().startsWith(SCHEME) || /\s/.test(text)) return false;
-  const host = text.slice(SCHEME.length).split(/[/?#]/, 1)[0] ?? "";
+  if (!text.toLowerCase().startsWith(SCHEME) || [...text].some((ch) => ch.trim() === ""))
+    return false;
+  const authority = text.slice(SCHEME.length).split(/[/?#]/, 1)[0] ?? "";
+  if (authority.includes("@")) return false;
+  const host = authority.split(":", 1)[0] ?? "";
   return host.includes(".") && !host.startsWith(".") && !host.endsWith(".");
 }
 

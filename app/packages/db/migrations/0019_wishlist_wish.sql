@@ -17,8 +17,9 @@ create table wish (
   -- The same number 1 to 3 everywhere (FR-WUN-04); null means "unknown" (P-08).
   difficulty smallint check (difficulty between 1 and 3),
   reasoning text check (char_length(reasoning) between 1 and 500),
-  -- A picture always comes with its source, and only over https (US-WUN-04: saved locally later).
-  image_url text check (char_length(image_url) between 1 and 500 and image_url ~* '^https://'),
+  -- A picture always comes with its source, and only over https without credentials (user:password@) in the address.
+  -- The address is shown only as a link, never loaded by the app (P-05) until it is saved locally (US-WUN-04).
+  image_url text check (char_length(image_url) between 1 and 500 and image_url ~* '^https://' and image_url !~* '^https://[^/?#]*@'),
   image_source text check (char_length(image_source) between 1 and 300),
   license text check (char_length(license) between 1 and 100),
   type text not null default 'plant' check (type in ('plant', 'equipment')),
