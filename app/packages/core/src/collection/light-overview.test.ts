@@ -1,488 +1,129 @@
 // US-LIC-03: light overview with position recommendations.
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { InMemoryLight } from "../light/test-helpers";
 import { lightOverview } from "./light-overview";
-import type { SpecimenRow } from "./types";
-import type { Species } from "../catalog";
-import type { LightZone } from "../light";
+import { InMemorySpecimens, SpeciesStub, testSpecies } from "./test-helpers";
 
-const defaultZones: LightZone[] = [
-  { id: "z1", name: "Cutting Light", luxCeiling: 1500, ppfd: null, sortOrder: 0 },
-  { id: "z2", name: "Lamp 2", luxCeiling: 15000, ppfd: 300, sortOrder: 1 },
-  { id: "z3", name: "Lamp 3", luxCeiling: 100000, ppfd: 1600, sortOrder: 2 },
-  { id: "z4", name: "Lamp 4", luxCeiling: 110000, ppfd: 2000, sortOrder: 3 },
-];
+const SP_LOW = "11111111-1111-4111-8111-111111111111";
+const SP_MID = "22222222-2222-4222-8222-222222222222";
+const SP_HIGH = "33333333-3333-4333-8333-333333333333";
+const SP_FOREIGN = "99999999-9999-4999-8999-999999999999"; // visible only to ben
+
+const species = new SpeciesStub([
+  { species: testSpecies(SP_LOW, { latinName: "Low", lightDemandLux: 3_999 }) },
+  { species: testSpecies(SP_MID, { latinName: "Mid", lightDemandLux: 15_000 }) },
+  {
+    species: testSpecies(SP_HIGH, { latinName: "High", lightDemandLux: 80_000, standardLevel: 3 }),
+  },
+  { species: testSpecies(SP_FOREIGN, { latinName: "Bens", lightDemandLux: 9_000 }), only: "ben" },
+]);
+
+const light = new InMemoryLight();
+let specimens: InMemorySpecimens;
+let n = 0;
+
+const deps = () => ({ specimens, species, zones: light.zoneAdapter() });
+const zones = async (userId: string, names: readonly string[]) => {
+  const ceilings = [1_500, 15_000, 100_000, 110_000];
+  for (const [i, name] of names.entries())
+    await light
+      .zoneAdapter()
+      .create(userId, { name, luxCeiling: ceilings[i] ?? 1, ppfd: null, sortOrder: null });
+};
+const plant = async (userId: string, speciesId: string, status?: "archived") => {
+  n += 1;
+  const r = await specimens.create(userId, {
+    speciesId,
+    name: `Pflanze ${n}`,
+    marker: null,
+    locationId: null,
+    caughtAt: null,
+  });
+  if (typeof r === "string") throw new Error(r);
+  const i = specimens.rows.findIndex((z) => z.id === r.id);
+  const row = specimens.rows[i];
+  if (status && row) specimens.rows[i] = { ...row, status };
+};
+const overview = async (userId: string) => (await lightOverview(deps(), userId)).rows;
+
+beforeEach(async () => {
+  light.zones.length = 0;
+  n = 0;
+  specimens = new InMemorySpecimens();
+  await zones("anna", ["Lampe 1", "Lampe 2", "Lampe 3", "Lampe 4"]);
+});
 
 describe("US-LIC-03: light overview", () => {
-  it("returns empty rows when there are no specimens", async () => {
-    const deps = {
-      specimens: { list: async () => [] },
-      species: { find: async () => null },
-      zones: { list: async () => defaultZones },
-    };
-
-    const result = await lightOverview(deps, "user1");
-    expect(result.rows).toHaveLength(0);
+  it("has no rows without specimens", async () => {
+    expect(await overview("anna")).toEqual([]);
   });
 
-  it("returns empty rows when there are only archived specimens", async () => {
-    const specimens: SpecimenRow[] = [
-      {
-        id: "s1",
-        speciesId: "sp1",
-        name: "Archived Plant",
-        marker: null,
-        locationId: null,
-        status: "archived",
-        caughtAt: null,
-        archivedAt: "2024-10-01",
-        archivedReason: "died",
-      },
-    ];
-
-    const species1: Species = {
-      id: "sp1",
-      latinName: "Monstera deliciosa",
-      genus: "Monstera",
-      epithet: "deliciosa",
-      cultivar: null,
-      germanName: "Fensterblatt",
-      englishName: "Swiss Cheese Plant",
-      synonyms: [],
-      familyGerman: "Araceae",
-      familyLatin: "Araceae",
-      difficulty: 1,
-      standardLevel: 2,
-      lightDemandLux: 15000,
-      dormancyFrom: null,
-      dormancyUntil: null,
-      locationHint: null,
-      growthMeasure: "height",
-      etiolationSigns: "pale leaves",
-      wateringHint: null,
-      substrate: null,
-      pruning: null,
-      growthHacks: null,
-      successCriteria: "grows",
-      botanicalStory: null,
-      source: null,
-      reviewStatus: "reviewed",
-      createdBy: "operator",
-      own: false,
-      version: 1,
-    };
-
-    const deps = {
-      specimens: { list: async () => specimens },
-      species: {
-        find: async (userId: string, id: string) => (id === "sp1" ? species1 : null),
-      },
-      zones: { list: async () => defaultZones },
-    };
-
-    const result = await lightOverview(deps, "user1");
-    expect(result.rows).toHaveLength(0);
+  it("lists one row per species, however many specimens it has", async () => {
+    await plant("anna", SP_MID);
+    await plant("anna", SP_MID);
+    expect(await overview("anna")).toHaveLength(1);
   });
 
-  it("skips species without lux demand set", async () => {
-    const specimens: SpecimenRow[] = [
-      {
-        id: "s1",
-        speciesId: "sp1",
-        name: "Test Plant",
-        marker: null,
-        locationId: null,
-        status: "plant",
-        caughtAt: null,
-        archivedAt: null,
-        archivedReason: null,
-      },
-    ];
-
-    const species1: Species = {
-      id: "sp1",
-      latinName: "Unknown Plant",
-      genus: "Unknown",
-      epithet: null,
-      cultivar: null,
-      germanName: null,
-      englishName: null,
-      synonyms: [],
-      familyGerman: null,
-      familyLatin: null,
-      difficulty: 2,
-      standardLevel: 2,
-      lightDemandLux: null as unknown as number, // No lux demand
-      dormancyFrom: null,
-      dormancyUntil: null,
-      locationHint: null,
-      growthMeasure: "height",
-      etiolationSigns: "",
-      wateringHint: null,
-      substrate: null,
-      pruning: null,
-      growthHacks: null,
-      successCriteria: "",
-      botanicalStory: null,
-      source: null,
-      reviewStatus: "reviewed",
-      createdBy: "operator",
-      own: false,
-      version: 1,
-    };
-
-    const deps = {
-      specimens: { list: async () => specimens },
-      species: {
-        find: async (userId: string, id: string) => (id === "sp1" ? species1 : null),
-      },
-      zones: { list: async () => defaultZones },
-    };
-
-    const result = await lightOverview(deps, "user1");
-    expect(result.rows).toHaveLength(0);
+  it("sorts descending by lux demand, whatever the order of the specimens", async () => {
+    await plant("anna", SP_LOW);
+    await plant("anna", SP_HIGH);
+    await plant("anna", SP_MID);
+    expect((await overview("anna")).map((r) => r.lightDemandLux)).toEqual([80_000, 15_000, 3_999]);
   });
 
-  it("creates rows for species with active specimens and lux demand", async () => {
-    const specimens: SpecimenRow[] = [
-      {
-        id: "s1",
-        speciesId: "sp1",
-        name: "My Monstera",
-        marker: null,
-        locationId: null,
-        status: "plant",
-        caughtAt: null,
-        archivedAt: null,
-        archivedReason: null,
-      },
-    ];
-
-    const species1: Species = {
-      id: "sp1",
-      latinName: "Monstera deliciosa",
-      genus: "Monstera",
-      epithet: "deliciosa",
-      cultivar: null,
-      germanName: "Fensterblatt",
-      englishName: "Swiss Cheese Plant",
-      synonyms: [],
-      familyGerman: "Araceae",
-      familyLatin: "Araceae",
-      difficulty: 1,
-      standardLevel: 2,
-      lightDemandLux: 15000,
-      dormancyFrom: null,
-      dormancyUntil: null,
-      locationHint: null,
-      growthMeasure: "height",
-      etiolationSigns: "pale leaves",
-      wateringHint: null,
-      substrate: null,
-      pruning: null,
-      growthHacks: null,
-      successCriteria: "grows",
-      botanicalStory: null,
-      source: null,
-      reviewStatus: "reviewed",
-      createdBy: "operator",
-      own: false,
-      version: 1,
-    };
-
-    const deps = {
-      specimens: { list: async () => specimens },
-      species: {
-        find: async (userId: string, id: string) => (id === "sp1" ? species1 : null),
-      },
-      zones: { list: async () => defaultZones },
-    };
-
-    const result = await lightOverview(deps, "user1");
-    expect(result.rows).toHaveLength(1);
-    expect(result.rows[0]).toMatchObject({
-      speciesId: "sp1",
-      speciesName: "Monstera deliciosa",
-      lightDemandLux: 15000,
-      position: expect.objectContaining({ category: "very_close" }),
+  it("maps the position and uses the latin name and the derived zone", async () => {
+    await plant("anna", SP_HIGH);
+    await plant("anna", SP_LOW);
+    const [high, low] = await overview("anna");
+    expect(high).toMatchObject({
+      speciesName: "High",
+      position: { category: "directly_under_lamp" },
+      zone: { name: "Lampe 4" },
+    });
+    expect(low).toMatchObject({
+      position: { category: "further_away" },
+      zone: { name: "Lampe 2" },
     });
   });
 
-  it("sorts rows descending by lux demand", async () => {
-    const specimens: SpecimenRow[] = [
-      {
-        id: "s1",
-        speciesId: "sp1",
-        name: "s1",
-        marker: null,
-        locationId: null,
-        status: "plant",
-        caughtAt: null,
-        archivedAt: null,
-        archivedReason: null,
-      },
-      {
-        id: "s2",
-        speciesId: "sp2",
-        name: "s2",
-        marker: null,
-        locationId: null,
-        status: "plant",
-        caughtAt: null,
-        archivedAt: null,
-        archivedReason: null,
-      },
-      {
-        id: "s3",
-        speciesId: "sp3",
-        name: "s3",
-        marker: null,
-        locationId: null,
-        status: "plant",
-        caughtAt: null,
-        archivedAt: null,
-        archivedReason: null,
-      },
-    ];
-
-    const species1: Species = {
-      id: "sp1",
-      latinName: "Low Light Plant",
-      genus: "Low",
-      epithet: null,
-      cultivar: null,
-      germanName: null,
-      englishName: null,
-      synonyms: [],
-      familyGerman: null,
-      familyLatin: null,
-      difficulty: 1,
-      standardLevel: 2,
-      lightDemandLux: 1000,
-      dormancyFrom: null,
-      dormancyUntil: null,
-      locationHint: null,
-      growthMeasure: "height",
-      etiolationSigns: "",
-      wateringHint: null,
-      substrate: null,
-      pruning: null,
-      growthHacks: null,
-      successCriteria: "",
-      botanicalStory: null,
-      source: null,
-      reviewStatus: "reviewed",
-      createdBy: "operator",
-      own: false,
-      version: 1,
-    };
-
-    const species2: Species = {
-      ...species1,
-      id: "sp2",
-      latinName: "Medium Light Plant",
-      lightDemandLux: 50000,
-    };
-
-    const species3: Species = {
-      ...species1,
-      id: "sp3",
-      latinName: "High Light Plant",
-      lightDemandLux: 100000,
-    };
-
-    const deps = {
-      specimens: { list: async () => specimens },
-      species: {
-        find: async (userId: string, id: string) => {
-          if (id === "sp1") return species1;
-          if (id === "sp2") return species2;
-          if (id === "sp3") return species3;
-          return null;
-        },
-      },
-      zones: { list: async () => defaultZones },
-    };
-
-    const result = await lightOverview(deps, "user1");
-    expect(result.rows).toHaveLength(3);
-    expect(result.rows[0]?.lightDemandLux).toBe(100000);
-    expect(result.rows[1]?.lightDemandLux).toBe(50000);
-    expect(result.rows[2]?.lightDemandLux).toBe(1000);
+  it("skips archived specimens", async () => {
+    await plant("anna", SP_MID, "archived");
+    expect(await overview("anna")).toEqual([]);
   });
 
-  it("uses species name (latin) for display", async () => {
-    const specimens: SpecimenRow[] = [
-      {
-        id: "s1",
-        speciesId: "sp1",
-        name: "s1",
-        marker: null,
-        locationId: null,
-        status: "plant",
-        caughtAt: null,
-        archivedAt: null,
-        archivedReason: null,
-      },
-    ];
-
-    const species1: Species = {
-      id: "sp1",
-      latinName: "Monstera deliciosa",
-      genus: "Monstera",
-      epithet: "deliciosa",
-      cultivar: null,
-      germanName: "Fensterblatt",
-      englishName: "Swiss Cheese Plant",
-      synonyms: [],
-      familyGerman: "Araceae",
-      familyLatin: "Araceae",
-      difficulty: 1,
-      standardLevel: 2,
-      lightDemandLux: 25000,
-      dormancyFrom: null,
-      dormancyUntil: null,
-      locationHint: null,
-      growthMeasure: "height",
-      etiolationSigns: "pale leaves",
-      wateringHint: null,
-      substrate: null,
-      pruning: null,
-      growthHacks: null,
-      successCriteria: "grows",
-      botanicalStory: null,
-      source: null,
-      reviewStatus: "reviewed",
-      createdBy: "operator",
-      own: false,
-      version: 1,
-    };
-
-    const deps = {
-      specimens: { list: async () => specimens },
-      species: {
-        find: async (userId: string, id: string) => (id === "sp1" ? species1 : null),
-      },
-      zones: { list: async () => defaultZones },
-    };
-
-    const result = await lightOverview(deps, "user1");
-    expect(result.rows[0]?.speciesName).toBe("Monstera deliciosa");
+  it("an archived specimen does not hide an active one of the same species", async () => {
+    await plant("anna", SP_MID, "archived");
+    await plant("anna", SP_MID);
+    expect(await overview("anna")).toHaveLength(1);
   });
 
-  it("maps position categories correctly based on lux demand thresholds", async () => {
-    const specimens: SpecimenRow[] = [
-      {
-        id: "s1",
-        speciesId: "sp1",
-        name: "s1",
-        marker: null,
-        locationId: null,
-        status: "plant",
-        caughtAt: null,
-        archivedAt: null,
-        archivedReason: null,
-      },
-      {
-        id: "s2",
-        speciesId: "sp2",
-        name: "s2",
-        marker: null,
-        locationId: null,
-        status: "plant",
-        caughtAt: null,
-        archivedAt: null,
-        archivedReason: null,
-      },
-      {
-        id: "s3",
-        speciesId: "sp3",
-        name: "s3",
-        marker: null,
-        locationId: null,
-        status: "plant",
-        caughtAt: null,
-        archivedAt: null,
-        archivedReason: null,
-      },
-      {
-        id: "s4",
-        speciesId: "sp4",
-        name: "s4",
-        marker: null,
-        locationId: null,
-        status: "plant",
-        caughtAt: null,
-        archivedAt: null,
-        archivedReason: null,
-      },
-      {
-        id: "s5",
-        speciesId: "sp5",
-        name: "s5",
-        marker: null,
-        locationId: null,
-        status: "plant",
-        caughtAt: null,
-        archivedAt: null,
-        archivedReason: null,
-      },
-    ];
+  it("shows the zone as unknown (null) when the account has no adult zone (P-08)", async () => {
+    light.zones.length = 0;
+    await zones("anna", ["Lampe 1"]);
+    await plant("anna", SP_MID);
+    const [row] = await overview("anna");
+    expect(row?.zone).toBeNull();
+    expect(row?.position.category).toBe("very_close");
+  });
 
-    const createSpecies = (id: string, lux: number): Species => ({
-      id,
-      latinName: `Plant ${lux}`,
-      genus: "Test",
-      epithet: null,
-      cultivar: null,
-      germanName: null,
-      englishName: null,
-      synonyms: [],
-      familyGerman: null,
-      familyLatin: null,
-      difficulty: 1,
-      standardLevel: 2,
-      lightDemandLux: lux,
-      dormancyFrom: null,
-      dormancyUntil: null,
-      locationHint: null,
-      growthMeasure: "height",
-      etiolationSigns: "",
-      wateringHint: null,
-      substrate: null,
-      pruning: null,
-      growthHacks: null,
-      successCriteria: "",
-      botanicalStory: null,
-      source: null,
-      reviewStatus: "reviewed",
-      createdBy: "operator",
-      own: false,
-      version: 1,
-    });
+  it("skips a species that the account cannot read", async () => {
+    await plant("anna", SP_FOREIGN);
+    expect(await overview("anna")).toEqual([]);
+  });
+});
 
-    const deps = {
-      specimens: { list: async () => specimens },
-      species: {
-        find: async (userId: string, id: string) => {
-          if (id === "sp1") return createSpecies("sp1", 60000); // directly_under_lamp
-          if (id === "sp2") return createSpecies("sp2", 20000); // very_close
-          if (id === "sp3") return createSpecies("sp3", 10000); // close
-          if (id === "sp4") return createSpecies("sp4", 6000); // medium_distance
-          if (id === "sp5") return createSpecies("sp5", 2000); // further_away
-          return null;
-        },
-      },
-      zones: { list: async () => defaultZones },
-    };
-
-    const result = await lightOverview(deps, "user1");
-    expect(result.rows).toHaveLength(5);
-
-    // Check that rows are sorted descending by lux and have correct position categories
-    expect(result.rows[0]?.position.category).toBe("directly_under_lamp");
-    expect(result.rows[1]?.position.category).toBe("very_close");
-    expect(result.rows[2]?.position.category).toBe("close");
-    expect(result.rows[3]?.position.category).toBe("medium_distance");
-    expect(result.rows[4]?.position.category).toBe("further_away");
+describe("US-LIC-03 tenant: only own specimens and zones", () => {
+  it("lists only the specimens of the asking account and uses only its zones", async () => {
+    await zones("ben", ["Bens 1", "Bens 2"]);
+    await plant("anna", SP_MID);
+    await plant("ben", SP_FOREIGN);
+    await plant("ben", SP_HIGH);
+    expect((await overview("anna")).map((r) => [r.speciesName, r.zone?.name])).toEqual([
+      ["Mid", "Lampe 2"],
+    ]);
+    expect((await overview("ben")).map((r) => [r.speciesName, r.zone?.name])).toEqual([
+      ["High", "Bens 2"],
+      ["Bens", "Bens 2"],
+    ]);
   });
 });

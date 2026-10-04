@@ -1,4 +1,12 @@
-import type { Derivation, Hint, LightLocation, LightZone, ZoneUser } from "@pflanzendex/core";
+import type {
+  Derivation,
+  Hint,
+  LightLocation,
+  LightOverview,
+  LightOverviewRow,
+  LightZone,
+  ZoneUser,
+} from "@pflanzendex/core";
 
 import {
   call,
@@ -8,7 +16,15 @@ import {
   type Write as KernelWrite,
 } from "../kernel";
 
-export type { Derivation, Hint, LightLocation, LightZone, ZoneUser };
+export type {
+  Derivation,
+  Hint,
+  LightLocation,
+  LightOverview,
+  LightOverviewRow,
+  LightZone,
+  ZoneUser,
+};
 
 type FetchFn = typeof fetch;
 
@@ -65,21 +81,6 @@ export async function loadZones(
 
 export const createWrite = (api: string, token: string, fetchFn: FetchFn = fetch): Write =>
   createKernel<ZoneUser>(api, token, fetchFn);
-
-export interface LightOverviewRow {
-  readonly speciesId: string;
-  readonly speciesName: string;
-  readonly lightDemandLux: number;
-  readonly position: {
-    readonly category: string;
-    readonly description: string;
-  };
-  readonly zone: LightZone;
-}
-
-export interface LightOverview {
-  readonly rows: readonly LightOverviewRow[];
-}
 
 export interface DerivationRequest {
   lightDemandLux: number;

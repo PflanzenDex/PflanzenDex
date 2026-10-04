@@ -11,12 +11,13 @@ import {
   type ApiError,
   type LightData,
   type LightOverview,
+  type Response,
 } from "./light-api";
 
 type State =
   | { kind: "loading" }
   | { kind: "error"; error: ApiError }
-  | { kind: "bereit"; data: LightData; overview: LightOverview };
+  | { kind: "bereit"; data: LightData; overview: Response<LightOverview> };
 
 type Token = () => Promise<string | undefined>;
 
@@ -58,8 +59,34 @@ function buildActions(
   };
 }
 
+function OverviewSection(props: {
+  overview: Response<LightOverview>;
+  onOpenCollection: () => void;
+  onRetry: () => void;
+}) {
+  const o = props.overview;
+  if (o.ok) return <LightOverviewView data={o.value} onOpenCollection={props.onOpenCollection} />;
+  return (
+    <section aria-labelledby="overview-error">
+      <h2 id="overview-error">Lichthunger</h2>
+      <p role="alert" className="warning">
+        {o.error.text}
+      </p>
+      <div className="actions">
+        <button type="button" className="primary" onClick={props.onRetry}>
+          Erneut versuchen
+        </button>
+      </div>
+    </section>
+  );
+}
+
 /** Loads the data and connects the view to the API; after every write it reloads (never guesses). */
-export function LightPage(props: { api: string; token: () => Promise<string | undefined> }) {
+export function LightPage(props: {
+  api: string;
+  token: () => Promise<string | undefined>;
+  onOpenCollection: () => void;
+}) {
   const [z, setZ] = useState<State>({ kind: "loading" });
   const [lastError, setLastError] = useState<ApiError | undefined>();
   const { api, token } = props;
@@ -73,8 +100,8 @@ export function LightPage(props: { api: string; token: () => Promise<string | un
       });
     const [r, o] = await Promise.all([loadLight(api, t), loadLightOverview(api, t)]);
     if (!r.ok) return setZ({ kind: "error", error: r.error });
-    if (!o.ok) return setZ({ kind: "error", error: o.error });
-    setZ({ kind: "bereit", data: r.value, overview: o.value });
+    // The overview is an addition: if only it fails, the zones and locations stay usable.
+    setZ({ kind: "bereit", data: r.value, overview: o });
   }, [api, token]);
   useEffect(() => void load(), [load]);
 
@@ -101,7 +128,11 @@ export function LightPage(props: { api: string; token: () => Promise<string | un
     );
   return (
     <div className="light-page">
-      <LightOverviewView data={z.overview} />
+      <OverviewSection
+        overview={z.overview}
+        onOpenCollection={props.onOpenCollection}
+        onRetry={() => void load()}
+      />
       <LightView data={z.data} actions={actions} {...(lastError ? { error: lastError } : {})} />
     </div>
   );

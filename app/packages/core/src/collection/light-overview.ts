@@ -15,7 +15,8 @@ export interface LightOverviewRow {
   readonly speciesName: string;
   readonly lightDemandLux: number;
   readonly position: PositionRecommendation;
-  readonly zone: LightZone;
+  /** `null` = zone unknown (P-08), e.g. the account has no adult zone. */
+  readonly zone: LightZone | null;
 }
 
 export interface LightOverview {
@@ -48,19 +49,22 @@ export async function lightOverview(deps: Dependencies, userId: string): Promise
   // Load species data
   const speciesList = await Promise.all(speciesIds.map((id) => deps.species.find(userId, id)));
 
-  // Build rows for species with lux demand set
+  // Build one row per readable species
   const rows: LightOverviewRow[] = [];
 
   for (let i = 0; i < speciesIds.length; i++) {
     const speciesId = speciesIds[i];
     const species = speciesList[i];
 
-    // Skip if species not found or lux demand not set (also ensures speciesId and species are defined)
-    if (!speciesId || !species || species.lightDemandLux === null) {
-      continue;
-    }
+    // A species the account cannot read is skipped. The lux demand is a required catalog field (1 to 200,000),
+    // so every readable species has one; only a corrupt value has no recommendation and is skipped.
+    if (!speciesId || !species) continue;
 
-    // Derive zone from lux demand
+    const position = recommendPosition(species.lightDemandLux);
+    if (!position) continue;
+
+    // Limitation: the catalog has no "soft-leaved C3 plant" field yet (US-LIC-01 is still 🟨 for it), so
+    // `softLeaf` is false here, exactly as in the distribution and the care profile.
     const derivation = zoneDerive(
       {
         lightDemandLux: species.lightDemandLux,
@@ -70,25 +74,12 @@ export async function lightOverview(deps: Dependencies, userId: string): Promise
       zones,
     );
 
-    // Extract zone (always exists, worst case use a fallback)
-    const zone =
-      derivation.kind === "zone"
-        ? derivation.zone
-        : {
-            id: "unknown",
-            name: "unbekannt",
-            luxCeiling: 0,
-            ppfd: null,
-            sortOrder: 999,
-          };
-
-    // Create row with position recommendation
     rows.push({
       speciesId,
       speciesName: species.latinName,
       lightDemandLux: species.lightDemandLux,
-      position: recommendPosition(species.lightDemandLux),
-      zone,
+      position,
+      zone: derivation.kind === "zone" ? derivation.zone : null,
     });
   }
 

@@ -2,54 +2,34 @@
 import { describe, it, expect } from "vitest";
 import { recommendPosition } from "./position-recommendation";
 
+const category = (lux: number) => recommendPosition(lux)?.category;
+
 describe("US-LIC-03: position recommendation", () => {
-  it("recommends 'directly under lamp' for demand >= 50000 lux", () => {
-    const r = recommendPosition(50_000);
-    expect(r.category).toBe("directly_under_lamp");
+  it.each([
+    [200_000, "directly_under_lamp"],
+    [50_000, "directly_under_lamp"],
+    [49_999, "very_close"],
+    [15_000, "very_close"],
+    [14_999, "close"],
+    [8_000, "close"],
+    [7_999, "medium_distance"],
+    [4_000, "medium_distance"],
+    [3_999, "further_away"],
+    [1, "further_away"],
+    [0, "further_away"],
+  ])("maps %i lux to %s", (lux, expected) => {
+    expect(category(lux)).toBe(expected);
   });
 
-  it("recommends 'very close' for demand >= 15000 lux", () => {
-    const r = recommendPosition(15_000);
-    expect(r.category).toBe("very_close");
+  it("returns the German description for the UI", () => {
+    expect(recommendPosition(20_000)?.description).toBe("sehr nah (~10 cm)");
+    expect(recommendPosition(60_000)?.description).toBe("direkt unter der Lampe");
   });
 
-  it("recommends 'very close' for demand >= 15000 but < 50000", () => {
-    const r = recommendPosition(20_000);
-    expect(r.category).toBe("very_close");
-  });
-
-  it("recommends 'close' for demand >= 8000 lux", () => {
-    const r = recommendPosition(8_000);
-    expect(r.category).toBe("close");
-  });
-
-  it("recommends 'close' for demand >= 8000 but < 15000", () => {
-    const r = recommendPosition(10_000);
-    expect(r.category).toBe("close");
-  });
-
-  it("recommends 'medium distance' for demand >= 4000 lux", () => {
-    const r = recommendPosition(4_000);
-    expect(r.category).toBe("medium_distance");
-  });
-
-  it("recommends 'medium distance' for demand >= 4000 but < 8000", () => {
-    const r = recommendPosition(6_000);
-    expect(r.category).toBe("medium_distance");
-  });
-
-  it("recommends 'further away' for demand < 4000 lux", () => {
-    const r = recommendPosition(3_000);
-    expect(r.category).toBe("further_away");
-  });
-
-  it("recommends 'further away' for demand 0", () => {
-    const r = recommendPosition(0);
-    expect(r.category).toBe("further_away");
-  });
-
-  it("returns German description for UI display", () => {
-    const r = recommendPosition(20_000);
-    expect(r.description).toBe("sehr nah (~10 cm)");
-  });
+  it.each([Number.NaN, -1, -50_000, Number.POSITIVE_INFINITY])(
+    "gives no recommendation for the invalid demand %s (P-08, nothing is invented)",
+    (lux) => {
+      expect(recommendPosition(lux)).toBeNull();
+    },
+  );
 });

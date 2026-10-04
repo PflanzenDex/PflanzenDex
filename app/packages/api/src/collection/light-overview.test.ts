@@ -163,6 +163,11 @@ describe("US-LIC-03: light overview", () => {
     const sp = await newSpecies(sub, "Philodendron", 18000, 2);
     await specimen(sub, "Phil", sp);
 
+    // Without light zones the zone of the species is unknown (P-08), never invented.
+    const without = await lightOverview(sub);
+    expect(without.body.rows[0].zone).toBeNull();
+
+    expect((await call(sub, "POST", "/light-zones/defaults", {})).status).toBeLessThan(300);
     const r = await lightOverview(sub);
     expect(r.status).toBe(200);
     expect(r.body.rows.length).toBeGreaterThanOrEqual(1);
@@ -173,5 +178,25 @@ describe("US-LIC-03: light overview", () => {
       lightDemandLux: 18000,
       zone: expect.objectContaining({ name: expect.any(String) }),
     });
+  });
+
+  it("US-LIC-03 tenant: shows only the specimens of the asking account", async () => {
+    const anna = `lic3-${randomUUID()}`;
+    const ben = `lic3-${randomUUID()}`;
+    subjects.push(anna, ben);
+
+    const annas = await newSpecies(anna, "Annas art", 20000, 2);
+    const bens = await newSpecies(ben, "Bens art", 9000, 2);
+    await specimen(anna, "A", annas);
+    await specimen(ben, "B", bens);
+
+    const forAnna = await lightOverview(anna);
+    const forBen = await lightOverview(ben);
+    expect(forAnna.body.rows.map((r: { speciesName: string }) => r.speciesName)).toEqual([
+      "Annas art",
+    ]);
+    expect(forBen.body.rows.map((r: { speciesName: string }) => r.speciesName)).toEqual([
+      "Bens art",
+    ]);
   });
 });

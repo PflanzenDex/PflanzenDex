@@ -1,7 +1,8 @@
 import type { LightOverview, LightOverviewRow } from "./light-api";
 
 // US-LIC-03: species by light hunger with position recommendations
-export function LightOverviewView({ data }: { data: LightOverview }) {
+export function LightOverviewView(props: { data: LightOverview; onOpenCollection: () => void }) {
+  const { data, onOpenCollection } = props;
   if (data.rows.length === 0) {
     return (
       <section aria-labelledby="overview">
@@ -12,9 +13,9 @@ export function LightOverviewView({ data }: { data: LightOverview }) {
             oder aktualisiere den Lux-Bedarf einer Art.
           </p>
           <div className="actions">
-            <a href="/bestand" className="primary">
+            <button type="button" className="primary" onClick={onOpenCollection}>
               Zum Bestand
-            </a>
+            </button>
           </div>
         </div>
       </section>
@@ -52,7 +53,7 @@ function Row({ row }: { row: LightOverviewRow }) {
   return (
     <tr>
       <td>{row.speciesName}</td>
-      <td>{row.zone.name}</td>
+      <td>{row.zone ? row.zone.name : "unbekannt"}</td>
       <td>{luxFormatted}</td>
       <td>{row.position.description}</td>
     </tr>

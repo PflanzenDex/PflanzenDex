@@ -73,7 +73,9 @@ afterEach(() => {
 describe("US-LIC-05 page locations and light zones", () => {
   it("shows a status while loading and then zone and location from the API", async () => {
     fakeServer({ zones: [zone], locations: [location] });
-    render(<LightPage api="http://api" token={async () => "tok"} />);
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
     expect(screen.getByRole("status").textContent).toContain("werden geladen");
     expect(await screen.findByRole("heading", { name: "Lampe 2" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Balkon" })).toBeTruthy();
@@ -82,7 +84,7 @@ describe("US-LIC-05 page locations and light zones", () => {
   it('without sign-in: error text with action "Erneut versuchen", no call to the API (P-09)', async () => {
     const { fetchFn } = fakeServer();
     const token = vi.fn<() => Promise<string | undefined>>(async () => undefined);
-    render(<LightPage api="http://api" token={token} />);
+    render(<LightPage api="http://api" token={token} onOpenCollection={() => undefined} />);
     expect((await screen.findByRole("alert")).textContent).toContain("Bitte melde dich neu an.");
     expect(fetchFn).not.toHaveBeenCalled();
     token.mockResolvedValue("tok");
@@ -98,13 +100,36 @@ describe("US-LIC-05 page locations and light zones", () => {
         response(500, { error: { code: "server.error", text: "Das hat nicht geklappt." } }),
       ),
     );
-    render(<LightPage api="http://api" token={async () => "tok"} />);
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
     expect((await screen.findByRole("alert")).textContent).toContain("Das hat nicht geklappt.");
+  });
+
+  it("US-LIC-03 a failing overview request keeps zones and locations usable and offers a retry", async () => {
+    const { fetchFn } = fakeServer({ zones: [zone], locations: [location] });
+    const normal = fetchFn.getMockImplementation() as typeof fetch;
+    fetchFn.mockImplementation(async (url, init) =>
+      new URL(String(url)).pathname === "/specimens/light-overview"
+        ? response(500, { error: { code: "server.error", text: "Übersicht nicht erreichbar." } })
+        : normal(url, init),
+    );
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
+    expect((await screen.findByRole("alert")).textContent).toContain("Übersicht nicht erreichbar.");
+    expect(screen.getByRole("heading", { name: "Lampe 2" })).toBeTruthy();
+    fetchFn.mockImplementation(normal);
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(await screen.findByText(/noch keine arten/i)).toBeTruthy();
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("creates a zone: sends with Idempotency-Key and reloads afterwards", async () => {
     const { calls } = fakeServer();
-    render(<LightPage api="http://api" token={async () => "tok"} />);
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
     await screen.findByText("Noch keine Lichtzonen", { exact: false });
     await userEvent.type(
       screen.getByLabelText("Name", { selector: "form[aria-label='Lichtzone anlegen'] input" }),
@@ -125,7 +150,9 @@ describe("US-LIC-05 page locations and light zones", () => {
 
   it("creates a location without zone and names it in the list afterwards", async () => {
     const { calls } = fakeServer({ zones: [zone] });
-    render(<LightPage api="http://api" token={async () => "tok"} />);
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
     await screen.findByRole("heading", { name: "Lampe 2" });
     await userEvent.type(
       screen.getByLabelText("Name", { selector: "form[aria-label='Standort anlegen'] input" }),
@@ -140,7 +167,9 @@ describe("US-LIC-05 page locations and light zones", () => {
 
   it("a rejected write shows the error text of the API and keeps offering the action", async () => {
     fakeServer();
-    render(<LightPage api="http://api" token={async () => "tok"} />);
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
     await userEvent.click(
       await screen.findByRole("button", { name: "Standard-Lampen übernehmen" }),
     );
@@ -150,7 +179,9 @@ describe("US-LIC-05 page locations and light zones", () => {
 
   it("changes a zone: the form shows the old values, after saving the new name is there", async () => {
     const { calls } = fakeServer({ zones: [zone] });
-    render(<LightPage api="http://api" token={async () => "tok"} />);
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
     await userEvent.click(await screen.findByRole("button", { name: "Ändern" }));
     const name = screen.getByLabelText("Name", {
       selector: "form[aria-label='Lampe 2 ändern'] input",
@@ -166,7 +197,9 @@ describe("US-LIC-05 page locations and light zones", () => {
 
   it("cancel while changing discards the input without a write call", async () => {
     const { calls } = fakeServer({ zones: [zone] });
-    render(<LightPage api="http://api" token={async () => "tok"} />);
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
     await userEvent.click(await screen.findByRole("button", { name: "Ändern" }));
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
     expect(screen.getByRole("heading", { name: "Lampe 2" })).toBeTruthy();
@@ -175,7 +208,9 @@ describe("US-LIC-05 page locations and light zones", () => {
 
   it("deleting asks; a used zone stays with the error text of the API", async () => {
     const { calls } = fakeServer({ zones: [zone] });
-    render(<LightPage api="http://api" token={async () => "tok"} />);
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
     await userEvent.click(await screen.findByRole("button", { name: "Löschen" }));
     expect(calls.some((a) => a.method === "DELETE")).toBe(false);
     await userEvent.click(screen.getByRole("button", { name: "Ja, „Lampe 2“ löschen" }));
@@ -186,7 +221,9 @@ describe("US-LIC-05 page locations and light zones", () => {
 
   it("deleting can be cancelled", async () => {
     fakeServer({ zones: [zone] });
-    render(<LightPage api="http://api" token={async () => "tok"} />);
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
     await userEvent.click(await screen.findByRole("button", { name: "Löschen" }));
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
     expect(screen.getByRole("button", { name: "Löschen" })).toBeTruthy();
@@ -194,7 +231,9 @@ describe("US-LIC-05 page locations and light zones", () => {
 
   it("assigns a light zone to a location without zone", async () => {
     const { calls } = fakeServer({ zones: [zone], locations: [location] });
-    render(<LightPage api="http://api" token={async () => "tok"} />);
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
     await userEvent.click(await screen.findByRole("button", { name: "Lichtzone zuweisen" }));
     await userEvent.selectOptions(
       screen.getByLabelText("Lichtzone", { selector: "form[aria-label='Balkon ändern'] select" }),
@@ -213,7 +252,9 @@ describe("US-LIC-05 page locations and light zones", () => {
 describe("US-LIC-01 determine the zone of a species on the page", () => {
   it("queries the derivation of the API and shows zone and reason", async () => {
     const { calls } = fakeServer({ zones: [zone] });
-    render(<LightPage api="http://api" token={async () => "tok"} />);
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
     await screen.findByRole("heading", { name: "Lampe 2" });
     await userEvent.type(screen.getByLabelText("Lux-Bedarf der Art (Lux)"), "15000");
     await userEvent.click(screen.getByRole("button", { name: "Zone ermitteln" }));
@@ -226,7 +267,7 @@ describe("US-LIC-01 determine the zone of a species on the page", () => {
     fakeServer({ zones: [zone] });
     let signedIn = true;
     const token = async () => (signedIn ? "tok" : undefined);
-    render(<LightPage api="http://api" token={token} />);
+    render(<LightPage api="http://api" token={token} onOpenCollection={() => undefined} />);
     await screen.findByRole("heading", { name: "Lampe 2" });
     signedIn = false;
     await userEvent.type(screen.getByLabelText("Lux-Bedarf der Art (Lux)"), "15000");
