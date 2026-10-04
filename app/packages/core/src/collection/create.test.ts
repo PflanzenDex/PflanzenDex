@@ -104,6 +104,90 @@ describe("US-BES-02 caught_at is today's local date (FR-BES-04, NFR-08)", () => 
   });
 });
 
+describe("US-BES-02 back-dated catch date (FR-BES-04, NFR-08)", () => {
+  it("a catch date in the past is stored as given", async () => {
+    const r = await create({ catchDate: "2022-02-03" });
+    expect(r.ok && r.value.caughtAt).toBe("2022-02-03");
+    expect(specimens.rows[0]?.caughtAt).toBe("2022-02-03");
+  });
+
+  it("without or with an empty catch date it stays today's local date", async () => {
+    for (const [i, catchDate] of [undefined, null].entries()) {
+      const r = await create({ catchDate, timeZone: "Europe/Berlin", marker: `Nr${i}` });
+      expect(r.ok && r.value.caughtAt).toBe("2026-10-03");
+    }
+  });
+
+  it("today's local date is allowed: in Berlin that is already the 3rd, in New York still the 2nd", async () => {
+    const berlin = await create({ catchDate: "2026-10-03", timeZone: "Europe/Berlin" });
+    expect(berlin.ok && berlin.value.caughtAt).toBe("2026-10-03");
+    const newYork = await create({
+      catchDate: "2026-10-02",
+      timeZone: "America/New_York",
+      marker: "Rot",
+    });
+    expect(newYork.ok && newYork.value.caughtAt).toBe("2026-10-02");
+  });
+
+  it("a date after the keeper's local today is refused, measured in the keeper's zone, not in UTC", async () => {
+    // 2026-10-03 is already today in Berlin but still tomorrow in New York (UTC date: the 2nd).
+    const r = await create({ catchDate: "2026-10-03", timeZone: "America/New_York" });
+    expect(!r.ok && r.error.code).toBe("specimen.caught_in_future");
+    expect(!r.ok && r.error.details).toEqual([
+      { field: "catchDate", code: "specimen.caught_in_future" },
+    ]);
+    const far = await create({ catchDate: "2999-01-01" });
+    expect(!far.ok && far.error.code).toBe("specimen.caught_in_future");
+    expect(specimens.writes).toBe(0);
+  });
+
+  it.each([
+    // [zone, local today, a date that is tomorrow there]
+    ["Pacific/Kiritimati", "2026-10-03", "2026-10-04"], // +14: the local date is ahead of UTC (the 2nd)
+    ["Pacific/Pago_Pago", "2026-10-02", "2026-10-03"], // -11: the local date is behind the Berlin date
+  ])(
+    "%s: local today is allowed, local tomorrow is refused (extreme zones)",
+    async (timeZone, today, tomorrow) => {
+      const ok = await create({ catchDate: today, timeZone });
+      expect(ok.ok && ok.value.caughtAt).toBe(today);
+      const refused = await create({ catchDate: tomorrow, timeZone, marker: "Rot" });
+      expect(!refused.ok && refused.error.code).toBe("specimen.caught_in_future");
+      expect(specimens.rows).toHaveLength(1);
+    },
+  );
+
+  it("a date that is tomorrow in UTC but today in Kiritimati is accepted there, refused in UTC", async () => {
+    const kiritimati = await create({ catchDate: "2026-10-03", timeZone: "Pacific/Kiritimati" });
+    expect(kiritimati.ok).toBe(true);
+    const utc = await create({ catchDate: "2026-10-03", timeZone: "UTC", marker: "Rot" });
+    expect(!utc.ok && utc.error.code).toBe("specimen.caught_in_future");
+  });
+
+  it.each([
+    ["not a date", "gestern"],
+    ["wrong format", "03.02.2022"],
+    ["month 13", "2022-13-01"],
+    ["31st of February", "2022-02-31"],
+    ["29th of February in a non-leap year", "2023-02-29"],
+    ["with a time of day", "2022-02-03T10:00:00Z"],
+    ["a number", 20220203],
+    ["year before 1900", "1800-01-01"],
+  ])(
+    "%s is input.invalid on the field catchDate, nothing written (P-03)",
+    async (_c, catchDate) => {
+      const r = await create({ catchDate });
+      expect(!r.ok && r.error.code).toBe("input.invalid");
+      expect(!r.ok && r.error.details).toEqual([{ field: "catchDate", code: "input.invalid" }]);
+      expect(specimens.writes).toBe(0);
+    },
+  );
+
+  it("a leap day is a valid calendar date", async () => {
+    const r = await create({ catchDate: "2024-02-29" });
+    expect(r.ok && r.value.caughtAt).toBe("2024-02-29");
+  });
+});
+
 describe("US-BES-02 location by today's phase (target location, FR-PHA-05)", () => {
   it("the location comes from the target-location port; it learns species and local date", async () => {
     const target = new TargetLocationStub(LOCATION);

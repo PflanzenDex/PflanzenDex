@@ -16,6 +16,8 @@ export async function createSpecimen(
     markers?: { specimenId: string; marker: string }[];
     locationId?: string;
     status?: "cutting";
+    /** Back-dated catch date `YYYY-MM-DD` (FR-BES-04); without it the server uses today's local date. */
+    catchDate?: string;
   },
   fetchFn: FetchFn = fetch,
 ): Promise<Response<Specimen>> {

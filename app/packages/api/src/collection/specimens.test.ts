@@ -148,6 +148,66 @@ describe("US-BES-02 create and view specimen", () => {
     expect(r).toMatchObject({ status: 201, body: { caughtAt: "2026-10-02" } });
   });
 
+  it("US-BES-02 a back-dated catch date is stored and read back; the Pokédex shows it as the exact catch date (FR-BES-04, US-POK-07)", async () => {
+    const speciesId = await newSpecies(subA, `Haworthia${run} limifolia`, `Haworthia ${run}`);
+    const r = await create(subA, { speciesId, catchDate: "2022-02-03" });
+    expect(r).toMatchObject({ status: 201, body: { caughtAt: "2022-02-03" } });
+    const loaded = await call(subA, "GET", `/specimens/${r.body["id"]}`);
+    expect(loaded.body["caughtAt"]).toBe("2022-02-03");
+    const dex = await call(subA, "GET", "/pokedex/ownership?timeZone=Europe%2FBerlin");
+    const card = (
+      dex.body["ownership"].caught as { specimens: unknown; caughtDate: unknown }[]
+    ).find((c) => JSON.stringify(c).includes(speciesId));
+    expect(card).toMatchObject({ caughtDate: { date: "2022-02-03", source: "caught_at" } });
+  });
+
+  it("US-BES-02 a catch date after the keeper's local today is 400 specimen.caught_in_future, measured in the keeper's zone, nothing written", async () => {
+    const speciesId = await newSpecies(subA, `Gasteria${run} bicolor`, `Gasteria ${run}`);
+    // The moment is 2026-10-02 23:30 UTC: the 3rd is today in Berlin, but tomorrow in New York.
+    const tomorrow = await call(subA, "POST", "/specimens", {
+      speciesId,
+      timeZone: "America/New_York",
+      catchDate: "2026-10-03",
+    });
+    expect(tomorrow).toMatchObject({
+      status: 400,
+      body: {
+        error: {
+          code: "specimen.caught_in_future",
+          details: [{ field: "catchDate", code: "specimen.caught_in_future" }],
+        },
+      },
+    });
+    const today = await create(subA, { speciesId, catchDate: "2026-10-03" });
+    expect(today).toMatchObject({ status: 201, body: { caughtAt: "2026-10-03" } });
+    const list = await call(subA, "GET", "/specimens");
+    const mine = (list.body["specimens"] as { speciesId: string }[]).filter(
+      (z) => z.speciesId === speciesId,
+    );
+    expect(mine).toHaveLength(1); // only the allowed one, the refused request wrote nothing
+  });
+
+  it("US-BES-02 an impossible or malformed catch date is 400 input.invalid on the field catchDate", async () => {
+    const speciesId = await newSpecies(subA, `Sansevieria${run} trifasciata`, `Sansevieria ${run}`);
+    for (const catchDate of ["2022-02-31", "03.02.2022", "2022-02-03T10:00:00Z", 20220203]) {
+      const r = await create(subA, { speciesId, catchDate });
+      expect(r).toMatchObject({
+        status: 400,
+        body: { error: { code: "input.invalid", details: [{ field: "catchDate" }] } },
+      });
+    }
+  });
+
+  it("US-BES-02 a back-dated specimen of account A stays private: B neither sees it nor its date (P-04)", async () => {
+    const speciesId = await newSpecies(subA, `Crassula${run} ovata`, `Crassula ${run}`);
+    const mine = await create(subA, { speciesId, catchDate: "2019-05-01" });
+    expect(mine.status).toBe(201);
+    expect((await call(subB, "GET", `/specimens/${mine.body["id"]}`)).status).toBe(404);
+    expect(JSON.stringify((await call(subB, "GET", "/specimens")).body)).not.toContain(
+      "2019-05-01",
+    );
+  });
+
   it('if the name exists, the answer is 409 and nothing changes; with a marker "Species – marker" is created', async () => {
     const speciesId = await newSpecies(subA, `Yucca${run} rostrata`, `Yucca ${run}`);
     const first = await create(subA, { speciesId });
