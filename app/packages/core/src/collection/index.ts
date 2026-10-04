@@ -16,6 +16,8 @@ export { NO_TARGET_LOCATION } from "./target-location";
 export { NO_TREATMENTS, NO_MEASUREMENTS, specimenCards, dueDate } from "./cards";
 export type { CardsDependencies } from "./cards";
 export { zoneDistribution } from "./distribution";
+export { specimenHints } from "./specimen-hints";
+export type { HintsDependencies, SpecimenHint } from "./specimen-hints";
 export type {
   NotCounted,
   Distribution,

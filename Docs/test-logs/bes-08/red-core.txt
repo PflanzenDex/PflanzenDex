@@ -1,0 +1,190 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-adf28556cc47dc1d7/app/packages/core
+
+ ❯ src/collection/specimen-hints.test.ts (9 tests | 8 failed) 15ms
+   ❯ US-BES-08 incomplete specimens appear in the hints with the fixing action (8)
+     × a specimen without location is a hint 'location_missing' that names the action (P-09) 5ms
+     × a specimen in a location without light zone is a hint 'location_without_zone' naming the location 1ms
+     × a specimen whose species cannot be read is a hint 'species_missing' (never silently dropped, P-10) 2ms
+     × one specimen can carry several hints (species and location) 1ms
+     × cuttings are checked like plants, archived specimens never appear (US-BES-07) 1ms
+     × hints are sorted by specimen name 1ms
+     × two accounts: one account sees only hints about its own specimens (P-04) 1ms
+   ❯ US-BES-08 no evaluation hides an incomplete specimen silently (1)
+     × the specimens the distribution reports as 'zone unknown' are a subset of those with a hint 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/specimen-hints.test.ts > US-BES-08 incomplete specimens appear in the hints with the fixing action > a specimen without location is a hint 'location_missing' that names the action (P-09)
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/collection/specimen-hints.test.ts:81:15
+     79|     const id = await create("anna", null, { name: "Bogenhanf" });
+     80|     const h = await hints("anna");
+     81|     expect(h).toHaveLength(1);
+       |               ^
+     82|     expect(h[0]).toMatchObject({
+     83|       kind: "location_missing",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/collection/specimen-hints.test.ts > US-BES-08 incomplete specimens appear in the hints with the fixing action > a specimen in a location without light zone is a hint 'location_without_zone' naming the location
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/collection/specimen-hints.test.ts:95:15
+     93|     const id = await create("anna", "Kiste", { name: "Aloe" });
+     94|     const h = await hints("anna");
+     95|     expect(h).toHaveLength(1);
+       |               ^
+     96|     expect(h[0]).toMatchObject({
+     97|       kind: "location_without_zone",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/collection/specimen-hints.test.ts > US-BES-08 incomplete specimens appear in the hints with the fixing action > a specimen whose species cannot be read is a hint 'species_missing' (never silently dropped, P-10)
+AssertionError: expected [] to deeply equal [ [ 'species_missing', …(1) ] ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "species_missing",
+-     "00000000-0000-4000-8000-000000000001",
+-   ],
+- ]
++ []
+
+ ❯ src/collection/specimen-hints.test.ts:108:50
+    106|     const id = await create("anna", "Fensterbank", { speciesId: SPECIE…
+    107|     const h = await hints("anna");
+    108|     expect(h.map((x) => [x.kind, x.specimenId])).toEqual([["species_mi…
+       |                                                  ^
+    109|     expect(h[0]?.nextAction).toMatch(/Art/);
+    110|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/collection/specimen-hints.test.ts > US-BES-08 incomplete specimens appear in the hints with the fixing action > one specimen can carry several hints (species and location)
+AssertionError: expected [] to deeply equal [ 'location_missing', …(1) ]
+
+- Expected
++ Received
+
+- [
+-   "location_missing",
+-   "species_missing",
+- ]
++ []
+
+ ❯ src/collection/specimen-hints.test.ts:114:61
+    112|   it("one specimen can carry several hints (species and location)", as…
+    113|     await create("anna", null, { speciesId: SPECIES_FOREIGN });
+    114|     expect((await hints("anna")).map((x) => x.kind).sort()).toEqual([
+       |                                                             ^
+    115|       "location_missing",
+    116|       "species_missing",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/collection/specimen-hints.test.ts > US-BES-08 incomplete specimens appear in the hints with the fixing action > cuttings are checked like plants, archived specimens never appear (US-BES-07)
+AssertionError: expected [] to deeply equal [ 'Steckling' ]
+
+- Expected
++ Received
+
+- [
+-   "Steckling",
+- ]
++ []
+
+ ❯ src/collection/specimen-hints.test.ts:124:42
+    122|     await create("anna", null, { status: "archived", name: "Weg" });
+    123|     const h = await hints("anna");
+    124|     expect(h.map((x) => x.specimenName)).toEqual(["Steckling"]);
+       |                                          ^
+    125|   });
+    126|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/collection/specimen-hints.test.ts > US-BES-08 incomplete specimens appear in the hints with the fixing action > hints are sorted by specimen name
+AssertionError: expected [] to deeply equal [ 'Aloe', 'Zimmerlinde' ]
+
+- Expected
++ Received
+
+- [
+-   "Aloe",
+-   "Zimmerlinde",
+- ]
++ []
+
+ ❯ src/collection/specimen-hints.test.ts:130:62
+    128|     await create("anna", null, { name: "Zimmerlinde" });
+    129|     await create("anna", null, { name: "Aloe" });
+    130|     expect((await hints("anna")).map((x) => x.specimenName)).toEqual([…
+       |                                                              ^
+    131|   });
+    132|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/collection/specimen-hints.test.ts > US-BES-08 incomplete specimens appear in the hints with the fixing action > two accounts: one account sees only hints about its own specimens (P-04)
+AssertionError: expected [] to deeply equal [ 'Annas Pflanze' ]
+
+- Expected
++ Received
+
+- [
+-   "Annas Pflanze",
+- ]
++ []
+
+ ❯ src/collection/specimen-hints.test.ts:136:62
+    134|     await create("anna", null, { name: "Annas Pflanze" });
+    135|     await create("ben", "Regal", { speciesId: SPECIES_FOREIGN, name: "…
+    136|     expect((await hints("anna")).map((x) => x.specimenName)).toEqual([…
+       |                                                              ^
+    137|     expect(await hints("ben")).toEqual([]);
+    138|     expect(await hints("carla")).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  src/collection/specimen-hints.test.ts > US-BES-08 no evaluation hides an incomplete specimen silently > the specimens the distribution reports as 'zone unknown' are a subset of those with a hint
+AssertionError: expected +0 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ src/collection/specimen-hints.test.ts:149:25
+    147|     const d = await zoneDistribution({ ...deps(), zones: light.zoneAda…
+    148|     const hinted = new Set((await hints("anna")).map((x) => x.specimen…
+    149|     expect(hinted.size).toBe(2);
+       |                         ^
+    150|     expect(d.notCounted.zoneUnknown).toBeLessThanOrEqual(hinted.size);
+    151|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 1 passed (9)
+   Start at  00:58:07
+   Duration  254ms (transform 77%, import 13%, tests 9%, worker 2%)
+

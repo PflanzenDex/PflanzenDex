@@ -91,6 +91,30 @@ describe("US-LIC-02 view of the distribution", () => {
     expect(rest.textContent).toContain("3 mit unbekannter Zone");
   });
 
+  it("US-BES-08 the note about unknown zones says where the incomplete specimens are named (P-09, P-10)", () => {
+    render(
+      <DistributionView
+        distribution={distribution({
+          notCounted: { cuttingLight: 2, archived: 1, zoneUnknown: 3 },
+        })}
+      />,
+    );
+    expect(screen.getByText(/Nicht mitgezählt/).textContent).toContain(
+      "3 mit unbekannter Zone (siehe Hinweise)",
+    );
+  });
+
+  it("US-BES-08 without unknown zones the note does not mention the hints", () => {
+    render(
+      <DistributionView
+        distribution={distribution({
+          notCounted: { cuttingLight: 2, archived: 0, zoneUnknown: 0 },
+        })}
+      />,
+    );
+    expect(screen.getByText(/Nicht mitgezählt/).textContent).not.toContain("Hinweise");
+  });
+
   it("shows nothing about the not counted when everything is counted", () => {
     render(<DistributionView distribution={distribution()} />);
     expect(screen.queryByText(/Nicht mitgezählt/)).toBeNull();
