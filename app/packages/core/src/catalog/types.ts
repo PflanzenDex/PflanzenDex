@@ -5,9 +5,10 @@ export type Role = "operator" | "reviewer";
 
 /**
  * `proposal` and `ai_unreviewed` arise from users, `curated` from an operator batch,
- * `reviewed` and `rejected` only from a reviewer.
+ * `reviewed`, `rejected` and `merged` (duplicate of an existing species) only from a reviewer.
  */
-export type ReviewStatus = "proposal" | "ai_unreviewed" | "curated" | "reviewed" | "rejected";
+export type ReviewStatus =
+  "proposal" | "ai_unreviewed" | "curated" | "reviewed" | "rejected" | "merged";
 
 export const PROPOSAL_STATUS = ["proposal", "ai_unreviewed"] as const;
 export const DECISION_STATUS = ["reviewed", "rejected"] as const;
@@ -25,6 +26,24 @@ export interface ReviewCase {
   readonly status: ReviewStatus;
   readonly reason: string | null;
   readonly reviewedBy: string | null;
+  /** ISO timestamp (UTC) of the creation; the age of an open proposal is derived from it (US-BES-10). */
+  readonly createdAt: string;
+  /** The existing species a merged proposal was folded into. */
+  readonly mergedInto: string | null;
+}
+
+/** What a merge did to the references of one kind (P-10: nothing is lost silently). */
+export interface MergeMoved {
+  /** E.g. `specimen`, `care_profile`. */
+  readonly kind: string;
+  readonly moved: number;
+  /** Left where they are because the target already has an entry of the creator (e.g. a care profile). */
+  readonly kept: number;
+}
+
+export interface MergeOutcome {
+  readonly reviewCase: ReviewCase;
+  readonly moved: readonly MergeMoved[];
 }
 
 /** Persistence port (adapter in `db`). The adapter additionally enforces the rights via row rule and trigger. */
@@ -38,14 +57,22 @@ export interface ReviewStore {
   ): Promise<ReviewCase | "present">;
   /** Reviewers find cases of all accounts (metadata only, never content, P-04), others only their own. */
   find(userId: string, id: string): Promise<ReviewCase | null>;
-  /** List all open review cases (proposal, ai_unreviewed) for reviewers only. */
-  listOpen(userId: string): Promise<readonly ReviewCase[]>;
+  /** Open cases (all) and the latest operator batches, for reviewers only (the adapter enforces it, P-04). */
+  listForReview(userId: string): Promise<readonly ReviewCase[]>;
   decide(
     userId: string,
     id: string,
     status: "reviewed" | "rejected",
     reason: string | null,
   ): Promise<ReviewCase | null>;
-  /** Merge a proposal with an existing species by changing the object_id (US-BES-10). */
-  merge(userId: string, proposalId: string, targetSpeciesId: string): Promise<ReviewCase | null>;
+  /**
+   * Folds an open proposal into an existing approved species: re-points the creator's references to the target
+   * and marks the case `merged`, all in one transaction (all or nothing, FR-BES-11, P-10). `null`: the case is
+   * not open. `conflict`: a reference cannot be re-pointed (e.g. same marker on the target); nothing was changed.
+   */
+  merge(
+    userId: string,
+    proposalId: string,
+    targetSpeciesId: string,
+  ): Promise<MergeOutcome | "conflict" | null>;
 }

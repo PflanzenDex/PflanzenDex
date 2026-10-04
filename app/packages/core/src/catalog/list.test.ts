@@ -1,93 +1,88 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import type { Operation } from "../kernel";
-import { execute } from "../kernel";
-import { catalogList, catalogPropose, catalogReview } from "./index";
-import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
-import { InMemoryReview } from "./test-helpers";
+import { describe, expect, it } from "vitest";
+import { catalogList } from "./list";
+import { speciesPropose } from "./species";
+import { FULL, ReviewWorld } from "./test-helpers";
 
-const SPECIES_1 = "6f1c2f0e-4b8a-4c52-9d51-0a3f6f2c7e11";
-const SPECIES_2 = "7f2c3f1f-5c9b-5d63-ae62-1b4g7g3d8f22";
-
-let idem: InMemoryIdempotencyStore;
-let store: InMemoryReview;
-let counter = 0;
-
-const call = <E, A>(op: Operation<E, A>, userId: string | null, input: unknown) =>
-  execute(
-    op,
-    { idempotency: idem },
-    {
-      context: { userId },
-      input,
-      idempotencyKey: `k${++counter}`,
-    },
-  );
-
-const propose = (
-  userId = "keeper",
-  speciesId = SPECIES_1,
-  status: "proposal" | "ai_unreviewed" = "proposal",
-) =>
-  call(catalogPropose(store), userId, {
-    objectKind: "species",
-    objectId: speciesId,
-    status,
+describe("US-BES-10 review list", () => {
+  it("US-BES-10 shows open proposals with required-field issues, similar species, count and oldest date", async () => {
+    const w = new ReviewWorld();
+    await w.approvedSpecies({
+      ...FULL,
+      latinName: "Sansevieria cylindrica 'Skyline'",
+      synonyms: [],
+    });
+    const a = await w.proposeSpecies("keeper");
+    const b = await w.proposeSpecies("other", {
+      ...FULL,
+      latinName: "Sansevieria cylindrica",
+      synonyms: [],
+      source: undefined,
+    });
+    const r = await catalogList(w.reviews, w.species, "reviewer");
+    if (!r.ok) throw new Error(r.error.code);
+    expect(r.value.open).toBe(2);
+    expect(r.value.oldestOpenAt).toBe(w.reviews.rows.find((z) => z.id === a.caseId)?.createdAt);
+    const open = r.value.entries.filter((e) => e.reviewCase.status === "proposal");
+    const first = open.find((e) => e.reviewCase.id === a.caseId);
+    const second = open.find((e) => e.reviewCase.id === b.caseId);
+    expect(first?.issues).toEqual([]);
+    expect(first?.similar).toEqual([]);
+    expect(second?.issues).toEqual([{ field: "source", reason: "source_missing" }]);
+    expect(second?.similar.map((s) => s.latinName)).toEqual(["Sansevieria cylindrica 'Skyline'"]);
+    expect(second?.species?.latinName).toBe("Sansevieria cylindrica");
   });
 
-beforeEach(() => {
-  idem = new InMemoryIdempotencyStore();
-  store = new InMemoryReview({ operator: ["operator"], reviewer: ["reviewer"] });
-});
-
-describe("US-BES-10 list open proposals (AC1)", () => {
-  it("reviewers see all open proposals with creator and status", async () => {
-    await propose("keeper1", SPECIES_1, "proposal");
-    await propose("keeper2", SPECIES_2, "ai_unreviewed");
-    const r = await call(catalogList(store), "reviewer", {});
-    expect(r.ok && r.value).toHaveLength(2);
-    expect(r.ok && r.value.map((p) => ({ creator: p.creatorId, status: p.status }))).toEqual([
-      { creator: "keeper1", status: "proposal" },
-      { creator: "keeper2", status: "ai_unreviewed" },
-    ]);
+  it("US-BES-10 AI-created proposals are marked (FR-BES-06)", async () => {
+    const w = new ReviewWorld();
+    const p = await w.proposeSpecies("keeper");
+    const row = w.reviews.rows.find((z) => z.id === p.caseId);
+    if (row) w.reviews.rows[w.reviews.rows.indexOf(row)] = { ...row, status: "ai_unreviewed" };
+    const r = await catalogList(w.reviews, w.species, "operator");
+    expect(r.ok && r.value.entries.map((e) => e.aiCreated)).toEqual([true]);
   });
 
-  it("operators see all open proposals", async () => {
-    await propose("keeper", SPECIES_1);
-    const r = await call(catalogList(store), "operator", {});
-    expect(r.ok && r.value).toHaveLength(1);
+  it("US-BES-10 operator batches are listed, marked curated, not counted as open and without approval issues", async () => {
+    const w = new ReviewWorld();
+    const sp = await w.call(speciesPropose(w.species), "operator", { ...FULL, source: undefined });
+    if (!sp.ok) throw new Error(sp.error.code);
+    await w.reviews.create("operator", {
+      objectKind: "species",
+      objectId: sp.value.id,
+      status: "curated",
+    });
+    const r = await catalogList(w.reviews, w.species, "operator");
+    if (!r.ok) throw new Error(r.error.code);
+    expect(r.value.open).toBe(0);
+    expect(r.value.entries).toHaveLength(1);
+    expect(r.value.entries[0]).toMatchObject({ issues: [], similar: [], aiCreated: false });
+    expect(r.value.entries[0]?.reviewCase.status).toBe("curated");
   });
 
-  it("plant keepers cannot list proposals (access.denied)", async () => {
-    await propose();
-    const r = await call(catalogList(store), "keeper", {});
-    expect(!r.ok && r.error.code).toBe("access.denied");
+  it("US-BES-10 an entry of another kind has no species content", async () => {
+    const w = new ReviewWorld();
+    await w.reviews.create("keeper", {
+      objectKind: "label",
+      objectId: "6f1c2f0e-4b8a-4c52-9d51-0a3f6f2c7e11",
+      status: "proposal",
+    });
+    const r = await catalogList(w.reviews, w.species, "operator");
+    expect(r.ok && r.value.entries[0]?.species).toBeNull();
   });
 
-  it("only open proposals are listed, not reviewed or rejected ones", async () => {
-    const proposal1 = await propose("keeper1", SPECIES_1, "proposal");
-    const proposal2 = await propose("keeper2", SPECIES_2, "proposal");
-    // Approve first one
-    if (proposal1.ok) {
-      await call(catalogReview(store), "reviewer", { id: proposal1.value.id, status: "reviewed" });
-    }
-    // Reject second one
-    if (proposal2.ok) {
-      await call(catalogReview(store), "reviewer", {
-        id: proposal2.value.id,
-        status: "rejected",
-        reason: "Source missing",
-      });
-    }
-    // List should be empty
-    const list = await call(catalogList(store), "reviewer", {});
-    expect(list.ok && list.value).toHaveLength(0);
+  it("US-BES-10 P-04 a plant keeper (or a signed-out caller) cannot list proposals of others", async () => {
+    const w = new ReviewWorld();
+    await w.proposeSpecies("keeper");
+    const denied = await catalogList(w.reviews, w.species, "other");
+    expect(!denied.ok && denied.error.code).toBe("access.denied");
+    const own = await catalogList(w.reviews, w.species, "keeper");
+    expect(!own.ok && own.error.code).toBe("access.denied");
+    const anonymous = await catalogList(w.reviews, w.species, null);
+    expect(!anonymous.ok && anonymous.error.code).toBe("access.not_signed_in");
   });
 
-  it("curated proposals are not in the open list (they are already approved)", async () => {
-    await propose("keeper1", SPECIES_1, "proposal");
-    // Curated by operator
-    const curation = await call(catalogList(store), "operator", {});
-    expect(curation.ok && curation.value).toHaveLength(1);
-    // After review, closed list is used (not part of this test)
+  it("US-BES-10 an empty list has no open proposals and no oldest date", async () => {
+    const w = new ReviewWorld();
+    const r = await catalogList(w.reviews, w.species, "operator");
+    expect(r.ok && r.value).toEqual({ open: 0, oldestOpenAt: null, entries: [] });
   });
 });

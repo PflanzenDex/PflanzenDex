@@ -1,140 +1,139 @@
-import { describe, it, expect } from "vitest";
-import { checkApprovalReadiness, isApprovalReady } from "./approval";
-import { GROWTH_MEASURES } from "./species";
-import type { SpeciesValues, GrowthMeasure } from "./species";
+import { describe, expect, it } from "vitest";
+import { checkApprovalReadiness } from "./approval";
+import { catalogReview } from "./review";
+import { FULL, ReviewWorld } from "./test-helpers";
+import type { SpeciesValues } from "./species";
 
-// Helper to create a complete species (all required fields present)
-const completeSpecies = (): SpeciesValues => ({
-  latinName: "Genus epithet",
-  genus: "Genus",
-  epithet: "epithet",
+const base: SpeciesValues = {
+  latinName: "Dracaena trifasciata",
+  genus: "Dracaena",
+  epithet: "trifasciata",
   cultivar: null,
-  germanName: "Deutscher Name",
-  englishName: "English Name",
+  germanName: null,
+  englishName: null,
   synonyms: [],
   familyGerman: null,
   familyLatin: null,
-  difficulty: 2,
+  difficulty: 1,
   standardLevel: 2,
-  lightDemandLux: 5000,
+  lightDemandLux: 15000,
   dormancyFrom: null,
   dormancyUntil: null,
   locationHint: null,
-  growthMeasure: GROWTH_MEASURES[0] as GrowthMeasure,
-  etiolationSigns: "Thin, pale leaves",
+  growthMeasure: "height",
+  etiolationSigns: "schmal",
   wateringHint: null,
   substrate: null,
   pruning: null,
   growthHacks: null,
-  successCriteria: "Steady growth",
+  successCriteria: "aufrecht",
   botanicalStory: null,
-  source: "https://example.com",
+  source: "RHS",
+};
+
+describe("US-BES-10 approval readiness (FR-BES-05, FR-BES-14)", () => {
+  it("US-BES-10 a complete profile with a source is ready", () => {
+    expect(checkApprovalReadiness(base)).toEqual([]);
+  });
+
+  it("US-BES-10 blank required texts are named one by one", () => {
+    const issues = checkApprovalReadiness({
+      ...base,
+      latinName: " ",
+      etiolationSigns: "",
+      successCriteria: " ",
+      growthMeasure: "" as never,
+    });
+    expect(issues.map((i) => i.field)).toEqual([
+      "latinName",
+      "growthMeasure",
+      "etiolationSigns",
+      "successCriteria",
+    ]);
+    expect(issues.every((i) => i.reason === "missing")).toBe(true);
+  });
+
+  it("US-BES-10 a missing number is reported", () => {
+    const issues = checkApprovalReadiness({ ...base, lightDemandLux: Number.NaN });
+    expect(issues).toContainEqual({ field: "lightDemandLux", reason: "missing" });
+  });
+
+  it("US-BES-10 without a source for the light demand it is not ready", () => {
+    expect(checkApprovalReadiness({ ...base, source: null })).toEqual([
+      { field: "source", reason: "source_missing" },
+    ]);
+    expect(checkApprovalReadiness({ ...base, source: "  " })).toEqual([
+      { field: "source", reason: "source_missing" },
+    ]);
+  });
+
+  it("US-BES-10 a dormancy period needs the source as well", () => {
+    const issues = checkApprovalReadiness({
+      ...base,
+      lightDemandLux: Number.NaN,
+      dormancyFrom: "11-01",
+      dormancyUntil: "02-15",
+      source: null,
+    });
+    expect(issues.map((i) => i.field)).toEqual(["lightDemandLux", "source"]);
+  });
 });
 
-describe("US-BES-10 species approval readiness (FR-BES-05, FR-BES-14, AC3)", () => {
-  it("a complete species with source is ready for approval", () => {
-    const species = completeSpecies();
-    expect(isApprovalReady(species)).toBe(true);
-    expect(checkApprovalReadiness(species)).toHaveLength(0);
+describe("US-BES-10 approve operation checks readiness (P-03)", () => {
+  it("US-BES-10 approving a proposal without a source is refused and names the field; nothing changes", async () => {
+    const w = new ReviewWorld();
+    const p = await w.proposeSpecies("keeper", { ...FULL, source: undefined });
+    const r = await w.call(catalogReview(w.reviews, w.species), "reviewer", {
+      id: p.caseId,
+      status: "reviewed",
+    });
+    expect(!r.ok && r.error.code).toBe("review.approval_incomplete");
+    expect(!r.ok && r.error.details).toEqual([{ field: "source", code: "input.invalid" }]);
+    expect(w.reviews.rows[0]?.status).toBe("proposal");
   });
 
-  it("missing latin name is an issue", () => {
-    const species = { ...completeSpecies(), latinName: "" };
-    expect(isApprovalReady(species)).toBe(false);
-    const issues = checkApprovalReadiness(species);
-    expect(issues.some((i) => i.field === "latinName" && i.reason === "missing")).toBe(true);
+  it("US-BES-10 a complete proposal is approved, reviewer recorded", async () => {
+    const w = new ReviewWorld();
+    const p = await w.proposeSpecies("keeper");
+    const r = await w.call(catalogReview(w.reviews, w.species), "reviewer", {
+      id: p.caseId,
+      status: "reviewed",
+    });
+    expect(r.ok && r.value).toMatchObject({ status: "reviewed", reviewedBy: "reviewer" });
   });
 
-  it("invalid difficulty (outside 1-3) is an issue", () => {
-    const species = { ...completeSpecies(), difficulty: 4 };
-    expect(isApprovalReady(species)).toBe(false);
-    const issues = checkApprovalReadiness(species);
-    expect(issues.some((i) => i.field === "difficulty" && i.reason === "invalid")).toBe(true);
+  it("US-BES-10 rejecting needs no readiness (an incomplete proposal can be rejected with a reason)", async () => {
+    const w = new ReviewWorld();
+    const p = await w.proposeSpecies("keeper", { ...FULL, source: undefined });
+    const r = await w.call(catalogReview(w.reviews, w.species), "reviewer", {
+      id: p.caseId,
+      status: "rejected",
+      reason: "Quelle fehlt",
+    });
+    expect(r.ok && r.value).toMatchObject({ status: "rejected", reason: "Quelle fehlt" });
   });
 
-  it("invalid standard level (outside 2-4) is an issue", () => {
-    const species = { ...completeSpecies(), standardLevel: 5 };
-    expect(isApprovalReady(species)).toBe(false);
-    const issues = checkApprovalReadiness(species);
-    expect(issues.some((i) => i.field === "standardLevel" && i.reason === "invalid")).toBe(true);
+  it("US-BES-10 a case whose species content is gone cannot be approved (review.not_found)", async () => {
+    const w = new ReviewWorld();
+    const p = await w.proposeSpecies("keeper");
+    w.species.rows.length = 0;
+    const r = await w.call(catalogReview(w.reviews, w.species), "reviewer", {
+      id: p.caseId,
+      status: "reviewed",
+    });
+    expect(!r.ok && r.error.code).toBe("review.not_found");
   });
 
-  it("missing light demand is an issue", () => {
-    const species = { ...completeSpecies(), lightDemandLux: 0 };
-    expect(isApprovalReady(species)).toBe(false);
-    const issues = checkApprovalReadiness(species);
-    expect(issues.some((i) => i.field === "lightDemandLux" && i.reason === "missing")).toBe(true);
-  });
-
-  it("missing growth measure is an issue", () => {
-    const species = { ...completeSpecies(), growthMeasure: "" as GrowthMeasure };
-    expect(isApprovalReady(species as SpeciesValues)).toBe(false);
-    const issues = checkApprovalReadiness(species as SpeciesValues);
-    expect(issues.some((i) => i.field === "growthMeasure" && i.reason === "missing")).toBe(true);
-  });
-
-  it("missing etiolation signs is an issue", () => {
-    const species = { ...completeSpecies(), etiolationSigns: "" };
-    expect(isApprovalReady(species)).toBe(false);
-    const issues = checkApprovalReadiness(species);
-    expect(issues.some((i) => i.field === "etiolationSigns" && i.reason === "missing")).toBe(true);
-  });
-
-  it("missing success criteria is an issue", () => {
-    const species = { ...completeSpecies(), successCriteria: "" };
-    expect(isApprovalReady(species)).toBe(false);
-    const issues = checkApprovalReadiness(species);
-    expect(issues.some((i) => i.field === "successCriteria" && i.reason === "missing")).toBe(true);
-  });
-
-  it("missing source when light demand is specified requires source (FR-BES-14)", () => {
-    const species = { ...completeSpecies(), lightDemandLux: 5000, source: null };
-    expect(isApprovalReady(species)).toBe(false);
-    const issues = checkApprovalReadiness(species);
-    expect(issues.some((i) => i.field === "source" && i.reason === "source_missing")).toBe(true);
-  });
-
-  it("missing source when dormancy is specified requires source (FR-BES-14)", () => {
-    const species = {
-      ...completeSpecies(),
-      dormancyFrom: "01-01",
-      dormancyUntil: "03-01",
-      source: null,
-    };
-    expect(isApprovalReady(species)).toBe(false);
-    const issues = checkApprovalReadiness(species);
-    expect(issues.some((i) => i.field === "source" && i.reason === "source_missing")).toBe(true);
-  });
-
-  it("source is not required when neither light demand nor dormancy is specified", () => {
-    // Note: lightDemandLux is always required per FR-BES-05, so this test
-    // creates an impossible scenario. We keep it to show that if lux=0 (missing) is treated as missing,
-    // then source isn't additionally required
-    const species = {
-      ...completeSpecies(),
-      lightDemandLux: 0,
-      dormancyFrom: null,
-      dormancyUntil: null,
-      source: null,
-    };
-    // lightDemandLux is required, so this will have issues regardless
-    expect(isApprovalReady(species)).toBe(false);
-    const issues = checkApprovalReadiness(species);
-    expect(issues.some((i) => i.field === "lightDemandLux")).toBe(true);
-  });
-
-  it("multiple issues are all reported", () => {
-    const species = {
-      ...completeSpecies(),
-      latinName: "",
-      difficulty: 4,
-      growthMeasure: "" as GrowthMeasure,
-      source: null,
-    } as SpeciesValues;
-    const issues = checkApprovalReadiness(species);
-    expect(issues.length).toBeGreaterThanOrEqual(4);
-    expect(issues.map((i) => i.field).sort()).toEqual(
-      expect.arrayContaining(["latinName", "difficulty", "growthMeasure", "source"]),
-    );
+  it("US-BES-10 FR-BES-06 an account without reviewer role (an AI connection has none) can never approve", async () => {
+    const w = new ReviewWorld();
+    const p = await w.proposeSpecies("keeper");
+    for (const user of ["keeper", "ai-connection-account"]) {
+      const r = await w.call(catalogReview(w.reviews, w.species), user, {
+        id: p.caseId,
+        status: "reviewed",
+      });
+      expect(!r.ok && r.error.code).toBe("access.denied");
+    }
+    expect(w.reviews.rows[0]?.status).toBe("proposal");
   });
 });

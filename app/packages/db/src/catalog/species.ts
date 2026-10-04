@@ -37,7 +37,9 @@ export interface SpeciesValues {
 }
 export interface Species extends SpeciesValues {
   readonly id: string;
-  readonly reviewStatus: "proposal" | "ai_unreviewed" | "curated" | "reviewed" | "rejected";
+  readonly reviewStatus:
+    "proposal" | "ai_unreviewed" | "curated" | "reviewed" | "rejected" | "merged";
+  readonly reviewReason?: string | null;
   readonly createdBy: "operator" | "reviewer" | "user";
   readonly own: boolean;
   readonly version: number;
@@ -79,7 +81,16 @@ const FIELDS = Object.keys(COLUMN) as (keyof typeof COLUMN)[];
 const SELECTION = `a.id, ${FIELDS.map((f) => `a.${COLUMN[f]} as "${f}"`).join(", ")},
   coalesce((select array_agg(n.display order by n.display) from species_name n
              where n.species_id = a.id and n.field = 'synonym'), '{}') as "synonyms",
-  species_status(a.id) as "reviewStatus", a.created_by as "createdBy", species_own(a.id) as "own", a.version`;
+  coalesce(species_status(a.id), (select v.status from review_case v where v.object_kind = 'species' and v.object_id = a.id)) as "reviewStatus",
+  (select v.reason from review_case v where v.object_kind = 'species' and v.object_id = a.id
+      and v.account_id = current_account()) as "reviewReason",
+  a.created_by as "createdBy", species_own(a.id) as "own", a.version`;
+
+// What the application shows: approved species and own proposals (FR-BES-11). Reviewers may additionally read foreign
+// open proposals by row rule (US-BES-10); only `findForReview` asks for them.
+const VISIBLE = "species_status(a.id) is not null";
+// A merged proposal is a duplicate that is gone for everybody, reviewers included.
+const NOT_MERGED = `not exists (select from review_case v where v.object_kind = 'species' and v.object_id = a.id and v.status = 'merged')`;
 
 const mask = (norm: string) => `%${norm.replace(/[\\%_]/g, "\\$&")}%`;
 
@@ -98,7 +109,7 @@ export class SpeciesPostgres {
              select n.field, n.display from species_name n
               where n.species_id = a.id and $1::text is not null and n.norm like $1::text
               order by array_position(array['latin','german','english','synonym'], n.field) limit 1) t on true
-          where $1::text is null or t.field is not null
+          where ($1::text is null or t.field is not null) and ${VISIBLE}
           order by a.latin_name limit 50`,
         [norm === null ? null : mask(norm)],
       ),
@@ -110,7 +121,12 @@ export class SpeciesPostgres {
   }
 
   async find(userId: string, id: string): Promise<Species | null> {
-    return withAccount(this.pool, userId, (c) => load(c, id));
+    return withAccount(this.pool, userId, (c) => load(c, id, VISIBLE));
+  }
+
+  /** Reviewers also get foreign open proposals (row rule `reviewer_reads`); everybody else gets what `find` gets. */
+  async findForReview(userId: string, id: string): Promise<Species | null> {
+    return withAccount(this.pool, userId, (c) => load(c, id, NOT_MERGED));
   }
 
   /** Duplicate check, review case, species and names in one transaction: all or nothing (FR-BES-03). */
@@ -123,10 +139,11 @@ export class SpeciesPostgres {
       const key = names.filter((n) => n.field === "latin" || n.field === "synonym");
       const duplicate = await c.query<{ id: string }>(
         `select n.species_id as id from species_name n
-          where n.field in ('latin', 'synonym') and n.norm = any($1) limit 1`,
+          where n.field in ('latin', 'synonym') and n.norm = any($1) and species_status(n.species_id) is not null
+          limit 1`,
         [key.map((n) => n.norm)],
       );
-      const present = await load(c, duplicate.rows[0]?.id);
+      const present = await load(c, duplicate.rows[0]?.id, VISIBLE);
       if (present) return { kind: "duplicate", value: present };
       const id = randomUUID();
       await c.query(
@@ -144,13 +161,16 @@ export class SpeciesPostgres {
          select $1, * from unnest($2::text[], $3::text[], $4::text[])`,
         [id, names.map((n) => n.field), names.map((n) => n.display), names.map((n) => n.norm)],
       );
-      return { kind: "fresh", value: (await load(c, id)) as Species };
+      return { kind: "fresh", value: (await load(c, id, VISIBLE)) as Species };
     });
   }
 }
 
-async function load(c: PoolClient, id: string | undefined): Promise<Species | null> {
+async function load(c: PoolClient, id: string | undefined, where: string): Promise<Species | null> {
   if (!id) return null;
-  const r = await c.query<Species>(`select ${SELECTION} from species a where a.id = $1`, [id]);
+  const r = await c.query<Species>(
+    `select ${SELECTION} from species a where a.id = $1 and ${where}`,
+    [id],
+  );
   return r.rows[0] ?? null;
 }

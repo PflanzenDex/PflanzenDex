@@ -1,6 +1,7 @@
 import { Hono, type MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
 import type { Pool } from "pg";
+import { COLLECTION_REPOINTERS } from "@pflanzendex/db";
 import {
   productTitle,
   type TreatmentSource,
@@ -99,7 +100,7 @@ export function createApp(opt: AppOptions = {}): Hono {
     for (const path of SPECIES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", speciesRoutes(opt.pool));
     for (const path of REVIEW_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-    app.route("/", reviewRoutes(opt.pool));
+    app.route("/", reviewRoutes(opt.pool, COLLECTION_REPOINTERS));
     for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", specimenRoutes(opt.pool, { clock: opt.clock, ...careSources(opt.pool, opt) }));
     for (const path of POKEDEX_PATHS) app.use(path, auth).use(`${path}/*`, auth);

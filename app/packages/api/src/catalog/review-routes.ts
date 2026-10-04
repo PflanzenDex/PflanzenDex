@@ -1,61 +1,49 @@
-import { catalogList, catalogMerge, catalogReview, appError } from "@pflanzendex/core";
-import { ReviewPostgres, IdempotencyPostgres } from "@pflanzendex/db";
+import { catalogList, catalogMerge, catalogReview } from "@pflanzendex/core";
+import {
+  IdempotencyPostgres,
+  ReviewPostgres,
+  SpeciesPostgres,
+  type SpeciesRepointer,
+} from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { errorBody, body, write, type AuthEnv } from "../kernel";
+import { body, errorBody, statusFor, write, type AuthEnv } from "../kernel";
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const REVIEW_PATHS = ["/review"] as const;
 
 /**
- * Review operations for species proposals (US-BES-10).
- * - GET /review/proposals: list open proposals (reviewers/operators only)
- * - POST /review/:id/decide: approve or reject (reviewers/operators only)
- * - POST /review/:id/merge: merge with existing species (reviewers/operators only)
+ * Review of catalog proposals (US-BES-10), for operators and reviewers only (the operations check the role, the
+ * database enforces it again, P-04). `repointers` are the ports of the modules that reference species; the
+ * composition root passes them in (ADR 0003), so a merge re-points specimens and care profiles atomically.
+ * - GET /review: open proposals and operator batches with issues and duplicate hints
+ * - POST /review/:id/decide: approve (`reviewed`) or reject with a reason
+ * - POST /review/:id/merge: fold the proposal into an existing species
  */
-export function reviewRoutes(pool: Pool): Hono<AuthEnv> {
-  const review = new ReviewPostgres(pool);
+export function reviewRoutes(
+  pool: Pool,
+  repointers: readonly SpeciesRepointer[] = [],
+): Hono<AuthEnv> {
+  const review = new ReviewPostgres(pool, repointers);
+  const species = new SpeciesPostgres(pool);
   const deps = { idempotency: new IdempotencyPostgres(pool) };
   const routes = new Hono<AuthEnv>();
 
-  // List all open proposals (proposals and ai_unreviewed)
-  routes.get("/review/proposals", async (c) =>
-    write(c, deps, catalogList(review), { input: {}, success: 200 }),
-  );
-
-  // Approve or reject a proposal
+  routes.get("/review", async (c) => {
+    const r = await catalogList(review, species, c.get("account").id);
+    return r.ok ? c.json(r.value) : c.json(errorBody(r.error), statusFor(r.error));
+  });
   routes.post("/review/:id/decide", async (c) =>
-    write(c, deps, catalogReview(review), {
-      input: { id: c.req.param("id"), ...(await body(c)) },
+    write(c, deps, catalogReview(review, species), {
+      input: { ...(await body(c)), id: c.req.param("id") },
       success: 200,
     }),
   );
-
-  // Merge a proposal with an existing species
-  routes.post("/review/:id/merge", async (c) => {
-    const proposalId = c.req.param("id");
-    const input = await body(c);
-
-    // Validate the merge input
-    if (!input.targetSpeciesId || typeof input.targetSpeciesId !== "string") {
-      return c.json(
-        errorBody(
-          appError("input.invalid", {
-            details: [{ field: "targetSpeciesId", code: "input.invalid" }],
-          }),
-        ),
-        400,
-      );
-    }
-
-    // For now, just call the merge operation
-    // In a more complete implementation, we would also validate that the target species exists
-    // and that re-pointing would not create conflicts
-    return write(c, deps, catalogMerge(review), {
-      input: { proposalId, targetSpeciesId: input.targetSpeciesId },
+  routes.post("/review/:id/merge", async (c) =>
+    write(c, deps, catalogMerge(review, species), {
+      input: { ...(await body(c)), proposalId: c.req.param("id") },
       success: 200,
-    });
-  });
-
+    }),
+  );
   return routes;
 }

@@ -2,8 +2,16 @@ export { catalogReview } from "./review";
 export { catalogCurate, catalogPropose } from "./propose";
 export { catalogList } from "./list";
 export { catalogMerge } from "./merge";
-export { checkApprovalReadiness, isApprovalReady } from "./approval";
-export type { ReviewStatus, ReviewCase, ReviewStore, Role } from "./types";
+export { checkApprovalReadiness } from "./approval";
+export type {
+  ReviewStatus,
+  ReviewCase,
+  ReviewStore,
+  Role,
+  MergeMoved,
+  MergeOutcome,
+} from "./types";
+export type { ReviewEntry, ReviewList, SimilarSpecies } from "./list";
 export type { ApprovalIssue } from "./approval";
 export {
   SPECIES_LIMITS,

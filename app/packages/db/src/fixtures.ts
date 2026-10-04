@@ -63,3 +63,35 @@ export const deleteSpeciesAsApplication = (pool: Pool, account: string, speciesI
   withAccount(pool, account, (c) => c.query("delete from species where id = $1", [speciesId]));
 export const speciesExists = async (pool: Pool, speciesId: string) =>
   ((await pool.query("select 1 from species where id = $1", [speciesId])).rowCount ?? 0) === 1;
+
+/** The review case of a catalog object (AB-9: tests of foreign modules write no SQL on `review_case`). */
+export const reviewCaseIdOf = async (pool: Pool, objectId: string): Promise<string> =>
+  (await pool.query<{ id: string }>("select id from review_case where object_id = $1", [objectId]))
+    .rows[0]?.id ?? "";
+
+/**
+ * Removes the species and review cases that the given accounts created (and the species they were merged into are
+ * left alone). Catalog and review case point to each other (a species needs its case, a merged case names its target),
+ * so the foreign keys are switched off for this one cleanup transaction (owner rights, tests only).
+ */
+export async function deleteCatalogFixtures(
+  pool: Pool,
+  accounts: readonly string[],
+): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    await client.query("set local session_replication_role = replica");
+    await client.query(
+      "delete from species where id in (select object_id from review_case where account_id = any($1))",
+      [accounts],
+    );
+    await client.query("delete from review_case where account_id = any($1)", [accounts]);
+    await client.query("commit");
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+  }
+}

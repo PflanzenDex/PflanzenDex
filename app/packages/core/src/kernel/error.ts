@@ -15,6 +15,10 @@ export const ERROR_TEXTS = {
   "review.reason_missing": "Zum Zurückweisen gehört ein Grund, den der Ersteller sehen kann.",
   "review.approval_incomplete":
     "Die Art ist nicht vollständig genug zur Freigabe. Prüfe die fehlenden Angaben und Quellen.",
+  "review.merge_target_invalid":
+    "Mit dieser Art lässt sich der Vorschlag nicht zusammenführen. Wähle eine bereits freigegebene Art, die nicht der Vorschlag selbst ist.",
+  "review.merge_conflict":
+    "Das Zusammenführen ist nicht möglich, weil der Ersteller bei der Zielart schon ein Exemplar mit demselben Kennzeichen hat. Es wurde nichts geändert; lass ihn das Kennzeichen ändern oder gib den Vorschlag frei.",
   "species.duplicate":
     "Diese Art gibt es schon (gleicher Name oder Synonym). Wähle die vorhandene Art, statt eine zweite anzulegen.",
   "species.not_found": "Diese Art gibt es nicht.",

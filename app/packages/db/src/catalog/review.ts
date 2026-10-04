@@ -1,9 +1,11 @@
 import type { Pool } from "pg";
 import { withAccount } from "../kernel/index.ts";
+import type { SpeciesRepointer } from "./repointer.ts";
 
 // Same shapes as the interface ReviewStore in `core` (structurally equal; `db` does not import `core`).
 export type Role = "operator" | "reviewer";
-export type ReviewStatus = "proposal" | "ai_unreviewed" | "curated" | "reviewed" | "rejected";
+export type ReviewStatus =
+  "proposal" | "ai_unreviewed" | "curated" | "reviewed" | "rejected" | "merged";
 export interface ReviewCase {
   readonly id: string;
   readonly creatorId: string;
@@ -12,14 +14,31 @@ export interface ReviewCase {
   readonly status: ReviewStatus;
   readonly reason: string | null;
   readonly reviewedBy: string | null;
+  readonly createdAt: string;
+  readonly mergedInto: string | null;
+}
+export interface MergeOutcome {
+  readonly reviewCase: ReviewCase;
+  readonly moved: readonly { kind: string; moved: number; kept: number }[];
 }
 
 const COLUMNS = `id, account_id as "creatorId", object_kind as "objectKind", object_id as "objectId",
-  status, reason, reviewed_by as "reviewedBy"`;
+  status, reason, reviewed_by as "reviewedBy",
+  to_char(created_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as "createdAt", merged_into as "mergedInto"`;
+const UNIQUE_VIOLATION = "23505";
+/** Latest operator batches shown next to the open proposals (assumption: starting value, no paging yet). */
+const BATCH_LIMIT = 50;
 
 /** Adapter for the review status; every call runs as the caller's account under the row rules (P-04). */
 export class ReviewPostgres {
-  constructor(private readonly pool: Pool) {}
+  /**
+   * `repointers`: the ports of the modules that reference species (collection, later wishlist), composed by the API
+   * (ADR 0003). The adapter itself touches no foreign table.
+   */
+  constructor(
+    private readonly pool: Pool,
+    private readonly repointers: readonly SpeciesRepointer[] = [],
+  ) {}
 
   async roles(userId: string): Promise<readonly Role[]> {
     const r = await withAccount(this.pool, userId, (c) =>
@@ -49,15 +68,19 @@ export class ReviewPostgres {
     return r.rows[0] ?? null;
   }
 
-  async listOpen(userId: string): Promise<readonly ReviewCase[]> {
-    // Reviewers and operators see all open proposals; plant keepers see none (checked in core).
-    const r = await withAccount(this.pool, userId, (c) =>
-      c.query<ReviewCase>(
-        `select ${COLUMNS} from review_case where status in ('proposal', 'ai_unreviewed') order by created_at desc`,
-        [],
-      ),
-    );
-    return r.rows;
+  /** Open cases and the latest operator batches; row rules show them to reviewers only (P-04). */
+  async listForReview(userId: string): Promise<readonly ReviewCase[]> {
+    const r = await withAccount(this.pool, userId, async (c) => {
+      const open = await c.query<ReviewCase>(
+        `select ${COLUMNS} from review_case where status in ('proposal', 'ai_unreviewed') order by created_at, id`,
+      );
+      const batches = await c.query<ReviewCase>(
+        `select ${COLUMNS} from review_case where status = 'curated' and object_kind = 'species'
+          order by created_at desc, id limit ${BATCH_LIMIT}`,
+      );
+      return [...open.rows, ...batches.rows];
+    });
+    return r;
   }
 
   async decide(
@@ -75,21 +98,39 @@ export class ReviewPostgres {
     return r.rows[0] ?? null;
   }
 
+  /**
+   * One transaction: close the case as `merged` (the database trigger lets only reviewers do it and only towards an
+   * approved species), then re-point the creator's references through the ports. Any error rolls everything back.
+   */
   async merge(
     userId: string,
     proposalId: string,
     targetSpeciesId: string,
-  ): Promise<ReviewCase | null> {
-    // Merge a proposal with an existing species (US-BES-10).
-    // Updates review_case to point to target species. Re-pointing of specimens and care_profiles
-    // is handled at the operation/API layer via the collection module's ports (AB-9).
-    return withAccount(this.pool, userId, (c) =>
-      c.query<ReviewCase>(
-        `update review_case set object_id = $2, status = 'reviewed', reviewed_by = $3
-         where id = $1 and status in ('proposal', 'ai_unreviewed')
-         returning ${COLUMNS}`,
-        [proposalId, targetSpeciesId, userId],
-      ),
-    ).then((r) => r.rows[0] ?? null);
+  ): Promise<MergeOutcome | "conflict" | null> {
+    try {
+      return await withAccount(this.pool, userId, async (c) => {
+        const closed = await c.query<ReviewCase>(
+          `update review_case set status = 'merged', merged_into = $2
+            where id = $1 and object_kind = 'species' and status in ('proposal', 'ai_unreviewed')
+            returning ${COLUMNS}`,
+          [proposalId, targetSpeciesId],
+        );
+        const reviewCase = closed.rows[0];
+        if (!reviewCase) return null;
+        const moved = [];
+        for (const port of this.repointers) {
+          const done = await port.repoint(c, {
+            creatorId: reviewCase.creatorId,
+            fromSpeciesId: reviewCase.objectId,
+            toSpeciesId: targetSpeciesId,
+          });
+          moved.push({ kind: port.kind, ...done });
+        }
+        return { reviewCase, moved };
+      });
+    } catch (e) {
+      if ((e as { code?: string }).code === UNIQUE_VIOLATION) return "conflict";
+      throw e;
+    }
   }
 }

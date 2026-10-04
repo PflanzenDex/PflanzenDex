@@ -221,6 +221,19 @@ describe("US-BES-01 further edge cases", () => {
       "erneut",
     );
     expect(speciesHints({ ...r.value, reviewStatus: "ai_unreviewed" })).toHaveLength(1);
-    expect(speciesHints({ ...r.value, reviewStatus: "reviewed" })).toEqual([]);
+    expect(speciesHints({ ...r.value, reviewStatus: "reviewed", own: false })).toEqual([]);
+  });
+
+  it("US-BES-10 the creator learns the result as a hint: reason of a rejection, approval", async () => {
+    const r = await propose(profile);
+    if (!r.ok) throw new Error("Proposal failed");
+    const rejected = speciesHints({
+      ...r.value,
+      reviewStatus: "rejected",
+      reviewReason: "Quelle fehlt",
+    });
+    expect(rejected[0]?.text).toContain("Quelle fehlt");
+    const approved = speciesHints({ ...r.value, reviewStatus: "reviewed" });
+    expect(approved.map((h) => h.text).join(" ")).toContain("freigegeben");
   });
 });
