@@ -5,24 +5,24 @@ describe("US-ACC-02 · Profile validation", () => {
   describe("Display name validation", () => {
     it("accepts a valid display name", () => {
       const result = validateProfileInput({ displayName: "Alice" });
-      expect(result.kind).toBe("fresh");
+      expect(result.ok).toBe(true);
     });
 
     it("accepts null display name", () => {
       const result = validateProfileInput({ displayName: null });
-      expect(result.kind).toBe("fresh");
+      expect(result.ok).toBe(true);
     });
 
     it("rejects empty display name", () => {
       const result = validateProfileInput({ displayName: "" });
-      expect(result.kind).toBe("error");
-      expect(result.error.code).toBe("input.invalid");
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.code).toBe("input.invalid");
     });
 
     it("rejects display name longer than 255 chars", () => {
       const result = validateProfileInput({ displayName: "a".repeat(256) });
-      expect(result.kind).toBe("error");
-      expect(result.error.code).toBe("input.invalid");
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.code).toBe("input.invalid");
     });
   });
 
@@ -31,25 +31,25 @@ describe("US-ACC-02 · Profile validation", () => {
       const zones = ["Europe/Berlin", "America/New_York", "Asia/Tokyo", "UTC"];
       zones.forEach((tz) => {
         const result = validateProfileInput({ timeZone: tz });
-        expect(result.kind).toBe("fresh", `Failed for ${tz}`);
+        expect(result.ok).toBe(true);
       });
     });
 
     it("accepts null time zone", () => {
       const result = validateProfileInput({ timeZone: null });
-      expect(result.kind).toBe("fresh");
+      expect(result.ok).toBe(true);
     });
 
     it("rejects invalid time zone format", () => {
       const result = validateProfileInput({ timeZone: "Invalid/Zone" });
-      expect(result.kind).toBe("error");
-      expect(result.error.code).toBe("input.invalid");
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.code).toBe("input.invalid");
     });
 
     it("rejects time zone with offset like +02:00", () => {
       const result = validateProfileInput({ timeZone: "+02:00" });
-      expect(result.kind).toBe("error");
-      expect(result.error.code).toBe("input.invalid");
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.code).toBe("input.invalid");
     });
   });
 
@@ -61,7 +61,7 @@ describe("US-ACC-02 · Profile validation", () => {
           treatment: { enabled: false },
         },
       });
-      expect(result.kind).toBe("fresh");
+      expect(result.ok).toBe(true);
     });
 
     it("rejects invalid time format", () => {
@@ -70,13 +70,13 @@ describe("US-ACC-02 · Profile validation", () => {
           phase: { enabled: true, time: "8:00" }, // Missing leading zero
         },
       });
-      expect(result.kind).toBe("error");
-      expect(result.error.code).toBe("input.invalid");
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.code).toBe("input.invalid");
     });
 
     it("accepts null notification settings", () => {
       const result = validateProfileInput({ notificationSettings: null });
-      expect(result.kind).toBe("fresh");
+      expect(result.ok).toBe(true);
     });
   });
 
@@ -86,7 +86,7 @@ describe("US-ACC-02 · Profile validation", () => {
         everythingPrivate: true,
         noRecommendations: false,
       });
-      expect(result.kind).toBe("fresh");
+      expect(result.ok).toBe(true);
     });
 
     it("defaults are acceptable", () => {
@@ -94,7 +94,7 @@ describe("US-ACC-02 · Profile validation", () => {
         everythingPrivate: false,
         noRecommendations: false,
       });
-      expect(result.kind).toBe("fresh");
+      expect(result.ok).toBe(true);
     });
   });
 });

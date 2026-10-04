@@ -1,5 +1,5 @@
-import { appError, type Result } from "../kernel/index.ts";
-import { isTimeZone } from "../kernel/date.ts";
+import { appError, ok, failed, type Result } from "../kernel";
+import { isTimeZone } from "../kernel";
 
 /** User profile and settings (US-ACC-02). */
 export type AccountProfile = {
@@ -70,8 +70,8 @@ export function validateProfileInput(input: UpdateProfileInput): Result<UpdatePr
         if (pref?.time) validateNotificationTime(pref.time);
       });
     }
-    return { kind: "fresh", value: input };
+    return ok(input);
   } catch {
-    return { kind: "error", error: appError("input.invalid") };
+    return failed(appError("input.invalid"));
   }
 }
