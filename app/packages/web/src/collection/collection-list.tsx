@@ -11,6 +11,8 @@ export function CollectionList(props: {
   onArchive?: (e: { id: string; name: string }) => void;
   /** Repots a cutting (US-BES-04). */
   onRepot?: (e: { id: string; name: string }) => void;
+  /** Gives a specimen a marker or changes it (US-BES-03). */
+  onMark?: (e: SpecimenCard) => void;
 }) {
   return (
     <section aria-labelledby="collection-title">
@@ -26,6 +28,7 @@ export function CollectionList(props: {
               onMeasure={props.onMeasure}
               onArchive={props.onArchive}
               onRepot={props.onRepot}
+              onMark={props.onMark}
             />
           ))}
         </ul>

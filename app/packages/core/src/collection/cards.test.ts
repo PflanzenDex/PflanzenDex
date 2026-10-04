@@ -100,6 +100,16 @@ describe("US-BES-06 Karte: Name, Art, Lichtzone, Status, Standort", () => {
     });
   });
 
+  it("US-BES-03 carries species id and marker, so that the form can ask for missing markers", async () => {
+    await create("anna", "Bogenhanf");
+    await create("anna", "Bogenhanf – rot", { marker: "rot" });
+    const cards = await specimenCards(dependencies(), "anna", TODAY);
+    expect(cards.map((k) => [k.speciesId, k.marker])).toEqual([
+      [SPECIES, null],
+      [SPECIES, "rot"],
+    ]);
+  });
+
   it('a location without light zone and a missing location stay "unknown" (null), nothing is invented', async () => {
     await create("anna", "A", { locationId: box });
     await create("anna", "B");

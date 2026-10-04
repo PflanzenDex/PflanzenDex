@@ -25,6 +25,7 @@ import { Hono } from "hono";
 import type { Pool } from "pg";
 import { errorBody, body, write, type AuthEnv } from "../kernel";
 import { archivedRoutes } from "./archived-routes";
+import { markerRoutes } from "./marker-routes";
 import { derivedRoutes } from "./derived-routes";
 
 /** Paths the sign-in guard (bearer token) must cover. */
@@ -86,6 +87,8 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   });
   // Archive, archive and restore (US-BES-07); before `/specimens/:id`.
   routes.route("/", archivedRoutes(pool, clock));
+  // US-BES-03: give a specimen a marker or change it.
+  routes.route("/", markerRoutes(pool));
   // Distribution (US-LIC-02) and hints (US-BES-08); before `/specimens/:id`.
   routes.route("/", derivedRoutes(pool));
   routes.get("/specimens/:id", async (c) => {

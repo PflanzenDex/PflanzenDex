@@ -10,7 +10,14 @@ type FetchFn = typeof fetch;
 export async function createSpecimen(
   api: string,
   token: string,
-  input: { speciesId: string; marker?: string; locationId?: string; status?: "cutting" },
+  input: {
+    speciesId: string;
+    marker?: string;
+    /** Markers for existing specimens that have none yet, from the 3rd specimen on (US-BES-03). */
+    markers?: { specimenId: string; marker: string }[];
+    locationId?: string;
+    status?: "cutting";
+  },
   fetchFn: FetchFn = fetch,
 ): Promise<Response<Specimen>> {
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -32,6 +39,21 @@ export async function repotSpecimen(
     "POST",
     `/specimens/${encodeURIComponent(id)}/repot`,
     {},
+  );
+  return r.ok ? { ok: true, value: r.value as Specimen } : r;
+}
+
+/** Gives a specimen a marker or changes it (US-BES-03). The repeat-guard key is created per call. */
+export async function markSpecimen(
+  api: string,
+  token: string,
+  input: { id: string; marker: string },
+  fetchFn: FetchFn = fetch,
+): Promise<Response<Specimen>> {
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/specimens/${encodeURIComponent(input.id)}/marker`,
+    { marker: input.marker },
   );
   return r.ok ? { ok: true, value: r.value as Specimen } : r;
 }

@@ -13,6 +13,8 @@ const response = (status: number, body: unknown) =>
 const card = (id: string, name: string): SpecimenCard => ({
   id,
   name,
+  speciesId: "a1",
+  marker: null,
   speciesName: "Bogenhanf",
   status: "plant",
   location: null,

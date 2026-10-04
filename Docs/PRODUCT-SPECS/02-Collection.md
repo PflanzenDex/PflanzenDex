@@ -27,9 +27,9 @@ Acceptance criteria:
 - Location = target location of the growth phase, unless today falls in the dormancy phase and a dormancy location exists.
 - The name is fixed before saving. If it already exists, nothing is changed and the naming rule is applied (US-BES-03).
 
-State of implementation: creating with species, name per naming rule, local `Caught_At`, optional marker and chosen location; measurement series and treatment list are empty, derived. **Open:** the target location of the phase comes through the port `TargetLocationSource`, which `care` (PHA, US-PHA-01) and the care profile (US-BES-09) have yet to implement. Until then the location is "unknown" as long as the keeper chooses none (P-08). The marker rules from the third specimen on (US-BES-03) are missing.
+State of implementation: creating with species, name per naming rule, local `Caught_At`, optional marker and chosen location; measurement series and treatment list are empty, derived. **Open:** the target location of the phase comes through the port `TargetLocationSource`, which `care` (PHA, US-PHA-01) and the care profile (US-BES-09) have yet to implement. Until then the location is "unknown" as long as the keeper chooses none (P-08). The marker rules from the third specimen on are implemented with US-BES-03.
 
-### US-BES-03 · Tell several specimens of a species apart · ⬜ (prototype ✅)
+### US-BES-03 · Tell several specimens of a species apart · ✅ (prototype ✅)
 
 As a **plant keeper** I want to tell several pots of the same species apart, so that each specimen has its own history.
 
@@ -40,6 +40,8 @@ Acceptance criteria (naming rule DM-BES-03):
 - From the 3rd: every specimen has its own marker (in the prototype a color). The app asks for the missing markers before saving.
 - Markers are unique per species (case-insensitive); duplicate or empty is an error without change.
 - Unlike in the prototype the name is not a file: renaming changes no references.
+
+State of implementation: complete for the criteria above. A further specimen without a marker is refused (`specimen.marker_required`); from the third **active** specimen on the request must carry the missing markers of the existing specimens, otherwise nothing is written (`specimen.markers_missing`); renaming (`specimen.mark`) gives or changes a marker and keeps the ID. Archived specimens do not count and keep name and marker (US-BES-07). The default "clip" ("Klammer") is a preset of the form, not applied by the API. **Not part of this story:** changing the location or other fields of an existing specimen (follow-up with the move, `US-PHA-03`); restoring an archived specimen can leave three active specimens with one unmarked, the rule is checked when creating and renaming.
 
 ### US-BES-04 · Create a cutting and pot it · 🟨 (prototype ✅)
 

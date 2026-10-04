@@ -90,6 +90,8 @@ export async function specimenCards(
     return {
       id: z.id,
       name: z.name,
+      speciesId: z.speciesId,
+      marker: z.marker,
       speciesName: speciesNames.get(z.speciesId) ?? null,
       status: z.status,
       location: location?.name ?? null,

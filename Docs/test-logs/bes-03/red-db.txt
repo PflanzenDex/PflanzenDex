@@ -1,0 +1,207 @@
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex.worktrees/bes-03/app/packages/db
+
+ ❯ src/collection/markers.test.ts (12 tests | 8 failed) 154ms
+   ❯ US-BES-03 the marker is unique per species and account (case-insensitive) (3)
+     × a second specimen with the same marker is refused even under another name 13ms
+   ❯ US-BES-03 create with markers for existing specimens is all or nothing (4)
+     × renames the existing specimens and creates the new one in one transaction 11ms
+     × a taken marker among the answers refuses everything 8ms
+     × an unknown or foreign specimen among the answers refuses everything, the foreign one is untouched 9ms
+   ❯ US-BES-03 rename in the database (5)
+     × sets marker and name, id and the rest stay 4ms
+     × a taken marker (case-insensitive) or name changes nothing 10ms
+     × the specimen's own marker may change case 5ms
+     × an archived specimen is not renamed 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 the marker is unique per species and account (case-insensitive) > a second specimen with the same marker is refused even under another name
+AssertionError: expected { …(9) } to be 'marker_taken' // Object.is equality
+
+- Expected:
+"marker_taken"
+
++ Received:
+{
+  "archivedAt": null,
+  "archivedReason": null,
+  "caughtAt": "2026-10-03",
+  "id": "ee907f84-745a-4218-8aa9-dfc5458044de",
+  "locationId": null,
+  "marker": "ROT",
+  "name": "Kennz A anders",
+  "speciesId": "00000000-0000-4000-8000-00000000fa01",
+  "status": "plant",
+}
+
+ ❯ src/collection/markers.test.ts:46:75
+     44|   it("a second specimen with the same marker is refused even under ano…
+     45|     await made(anna, "Kennz A rot", "rot");
+     46|     expect(await specimens.create(anna, values("Kennz A anders", "ROT"…
+       |                                                                           ^
+     47|     expect(await names(anna)).toEqual(["Kennz A rot"]);
+     48|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 create with markers for existing specimens is all or nothing > renames the existing specimens and creates the new one in one transaction
+AssertionError: expected { …(9) } to match object { name: 'Atomar – eins', …(1) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "marker": "eins",
+-   "name": "Atomar – eins",
++   "marker": null,
++   "name": "Atomar",
+  }
+
+ ❯ src/collection/markers.test.ts:69:49
+     67|     ]);
+     68|     expect(r).toMatchObject({ name: "Atomar – neu" });
+     69|     expect(await specimens.find(anna, eins.id)).toMatchObject({
+       |                                                 ^
+     70|       name: "Atomar – eins",
+     71|       marker: "eins",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 create with markers for existing specimens is all or nothing > a taken marker among the answers refuses everything
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/collection/markers.test.ts:90:56
+     88|       { specimenId: eins.id, name: "Doppelt – a", marker: "A" },
+     89|     ]);
+     90|     expect(r === "marker_taken" || r === "name_taken").toBe(true);
+       |                                                        ^
+     91|     expect(await specimens.find(anna, eins.id)).toMatchObject({ name: …
+     92|     expect((await names(anna)).filter((n) => n.startsWith("Doppelt")))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 create with markers for existing specimens is all or nothing > an unknown or foreign specimen among the answers refuses everything, the foreign one is untouched
+AssertionError: expected { …(9) } to be 'specimen_unknown' // Object.is equality
+
+- Expected:
+"specimen_unknown"
+
++ Received:
+{
+  "archivedAt": null,
+  "archivedReason": null,
+  "caughtAt": "2026-10-03",
+  "id": "b7d95196-ad2b-48f6-9c06-e8125ed8f44e",
+  "locationId": null,
+  "marker": "neu",
+  "name": "Fremd – neu",
+  "speciesId": "00000000-0000-4000-8000-00000000fa01",
+  "status": "plant",
+}
+
+ ❯ src/collection/markers.test.ts:100:15
+     98|       { specimenId: foreign.id, name: "Fremd – x", marker: "x" },
+     99|     ]);
+    100|     expect(r).toBe("specimen_unknown");
+       |               ^
+    101|     expect(await specimens.find(ben, foreign.id)).toMatchObject({ name…
+    102|     expect(await names(anna)).not.toContain("Fremd – neu");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 rename in the database > sets marker and name, id and the rest stay
+AssertionError: expected 'not_found' to deeply equal { …(9) }
+
+- Expected:
+{
+  "archivedAt": null,
+  "archivedReason": null,
+  "caughtAt": "2026-10-03",
+  "id": "0a0a0d6e-041b-49e5-a5f7-96727a93a67b",
+  "locationId": null,
+  "marker": "rot",
+  "name": "Umbenennen – rot",
+  "speciesId": "00000000-0000-4000-8000-00000000fa01",
+  "status": "plant",
+}
+
++ Received:
+"not_found"
+
+ ❯ src/collection/markers.test.ts:110:15
+    108|     const z = await made(anna, "Umbenennen");
+    109|     const r = await specimens.mark(anna, z.id, { name: "Umbenennen – r…
+    110|     expect(r).toEqual({ ...z, name: "Umbenennen – rot", marker: "rot" …
+       |               ^
+    111|   });
+    112|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 rename in the database > a taken marker (case-insensitive) or name changes nothing
+AssertionError: expected 'not_found' to be 'marker_taken' // Object.is equality
+
+Expected: "marker_taken"
+Received: "not_found"
+
+ ❯ src/collection/markers.test.ts:116:86
+    114|     await made(anna, "Beleg – rot", "rot");
+    115|     const z = await made(anna, "Beleg");
+    116|     expect(await specimens.mark(anna, z.id, { name: "Beleg – ROT", mar…
+       |                                                                                      ^
+    117|       "marker_taken",
+    118|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 rename in the database > the specimen's own marker may change case
+AssertionError: expected 'not_found' to match object { marker: 'Rot' }
+
+- Expected:
+{
+  "marker": "Rot",
+}
+
++ Received:
+"not_found"
+
+ ❯ src/collection/markers.test.ts:128:86
+    126|   it("the specimen's own marker may change case", async () => {
+    127|     const z = await made(anna, "Gross – rot", "rot");
+    128|     expect(await specimens.mark(anna, z.id, { name: "Gross – Rot", mar…
+       |                                                                                      ^
+    129|       marker: "Rot",
+    130|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  src/collection/markers.test.ts > US-BES-03 rename in the database > an archived specimen is not renamed
+AssertionError: expected 'not_found' to be 'archived' // Object.is equality
+
+Expected: "archived"
+Received: "not_found"
+
+ ❯ src/collection/markers.test.ts:137:83
+    135|     await specimens.archive(anna, z.id, "abgegeben", "2026-10-03");
+    136|     const before = await specimens.find(anna, z.id);
+    137|     expect(await specimens.mark(anna, z.id, { name: "Archiv – x", mark…
+       |                                                                                   ^
+    138|     expect(await specimens.find(anna, z.id)).toEqual(before);
+    139|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  8 failed | 24 passed (32)
+   Start at  01:30:12
+   Duration  1.02s (tests 80%, transform 13%, import 6%, worker 1%)
+

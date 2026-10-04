@@ -56,6 +56,9 @@ export interface DueDate {
 export interface SpecimenCard {
   readonly id: string;
   readonly name: string;
+  /** The species of the specimen and its marker (US-BES-03); the form uses them to ask for missing markers. */
+  readonly speciesId: string;
+  readonly marker: string | null;
   /** Name of the species, `null` means "unknown" (P-08): the species is (no longer) visible for this account. */
   readonly speciesName: string | null;
   readonly status: SpecimenStatus;
