@@ -65,22 +65,40 @@ export class TreatmentsPostgres {
     }
   }
 
-  /** Skeleton (red). */
+  /** One treatment by ID; the row rules make a foreign ID look unknown (P-04). */
   async find(userId: string, id: string): Promise<TreatmentRow | null> {
-    void [userId, id];
-    throw new Error("not implemented");
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<TreatmentRow>(`select ${COLUMNS} from treatment where id = $1`, [id]),
+    );
+    return r.rows[0] ?? null;
   }
 
-  /** Skeleton (red). */
+  /**
+   * Ticks off with the local date `doneAt`. Only an open treatment is updated; if a parallel call (second device) was
+   * faster, the update waits for the row, finds nothing to change and the stored row comes back with its first done
+   * date, so a repeat is harmless (idempotent, US-BEH-03).
+   */
   async complete(userId: string, id: string, doneAt: string): Promise<TreatmentRow | "unknown"> {
-    void [userId, id, doneAt];
-    throw new Error("not implemented");
+    const r = await withAccount(this.pool, userId, async (c) => {
+      const updated = await c.query<TreatmentRow>(
+        `update treatment set done = true, done_at = $2 where id = $1 and not done returning ${COLUMNS}`,
+        [id, doneAt],
+      );
+      if (updated.rows.length > 0) return updated;
+      return c.query<TreatmentRow>(`select ${COLUMNS} from treatment where id = $1`, [id]);
+    });
+    return r.rows[0] ?? "unknown";
   }
 
-  /** Skeleton (red). */
+  /** Done treatments of one specimen, latest done date first (history, US-BEH-03). */
   async done(userId: string, specimenId: string): Promise<readonly TreatmentRow[]> {
-    void [userId, specimenId];
-    throw new Error("not implemented");
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<TreatmentRow>(
+        `select ${COLUMNS} from treatment where specimen_id = $1 and done order by done_at desc, due_at desc, id`,
+        [specimenId],
+      ),
+    );
+    return r.rows;
   }
 
   /** Open treatments, earliest first; one query for all IDs. Foreign IDs return nothing (row rules, P-04). */

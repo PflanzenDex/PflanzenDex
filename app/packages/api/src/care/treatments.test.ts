@@ -318,7 +318,7 @@ describe("US-BEH-03 tick off a date", () => {
       (second as { id: string }).id,
     ]);
     expect((await cards(subA)).find((c) => c.id === e)).toMatchObject({
-      treatment: { dueDate: { text: "in 5 Tagen" } },
+      treatment: { dueDate: { text: "in 5 Tg." } },
       moreTreatments: 0,
     });
     await complete(subA, (second as { id: string }).id);
