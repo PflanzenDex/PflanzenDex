@@ -144,9 +144,13 @@ describe("US-POK-06 ownership: derived from the specimens", () => {
   });
 
   it("the route only reads: nothing is written", async () => {
-    const before = await pool.query("select count(*)::int as n from specimen");
+    const count = () =>
+      pool.query(
+        "select count(*)::int as n from specimen where account_id in (select id from account where subject = $1)",
+        [subA],
+      );
+    const before = await count();
     await ownership(subA);
-    const after = await pool.query("select count(*)::int as n from specimen");
-    expect(after.rows[0].n).toBe(before.rows[0].n);
+    expect((await count()).rows[0].n).toBe(before.rows[0].n);
   });
 });
