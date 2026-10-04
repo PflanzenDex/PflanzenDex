@@ -1,0 +1,41 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-03-gefuehrter-einstieg/app
+
+ ❯ packages/core/src/account/onboarding.test.ts (7 tests | 1 failed) 9ms
+   ❯ US-ACC-03 guided onboarding (7)
+     × US-ACC-03 every step and hint carries the label of the button that does it, in one place 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/core/src/account/onboarding.test.ts > US-ACC-03 guided onboarding > US-ACC-03 every step and hint carries the label of the button that does it, in one place
+AssertionError: expected [ undefined, undefined, undefined ] to deeply equal [ 'Standorte anlegen', …(2) ]
+
+- Expected
++ Received
+
+  [
+-   "Standorte anlegen",
+-   "Lichtzonen einrichten",
+-   "Art im Katalog wählen",
++   undefined,
++   undefined,
++   undefined,
+  ]
+
+ ❯ packages/core/src/account/onboarding.test.ts:31:64
+     29|
+     30|   it("US-ACC-03 every step and hint carries the label of the button th…
+     31|     expect(onboardingSteps(NOTHING).map((s) => s.actionLabel)).toEqual…
+       |                                                                ^
+     32|       "Standorte anlegen",
+     33|       "Lichtzonen einrichten",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  20:06:04
+   Duration  182ms (transform 43%, import 25%, tests 19%, worker 12%)
+
+exit 1

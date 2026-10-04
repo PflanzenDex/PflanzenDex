@@ -1,0 +1,144 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-03-gefuehrter-einstieg/app
+
+ ❯ packages/web/src/start-page.test.tsx (11 tests | 1 failed | 10 skipped) 1183ms
+   ❯ US-ACC-03 start page and guided onboarding (11)
+     × US-ACC-03 after skipping the last step the guide does not come back when the start tab is opened again 1182ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/web/src/start-page.test.tsx > US-ACC-03 start page and guided onboarding > US-ACC-03 after skipping the last step the guide does not come back when the start tab is opened again
+TestingLibraryElementError: Unable to find role="heading" and name "Start"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection start-page"
+    >
+      <div
+        class="onboarding"
+      >
+        <p
+          class="onboarding-progress"
+        >
+          Schritt 3 von 3
+        </p>
+        <section
+          class="onboarding-step"
+        >
+          <h2>
+            Deine erste Pflanze
+          </h2>
+          <p
+            class="quiet"
+          >
+            Wähle im Katalog eine Art und lege dein erstes Exemplar an.
+          </p>
+          <div
+            class="actions"
+          >
+            <button
+              class="primary"
+              type="button"
+            >
+              Art im Katalog wählen
+            </button>
+            <button
+              class="secondary"
+              type="button"
+            >
+              Überspringen
+            </button>
+          </div>
+        </section>
+        <div
+          class="actions"
+        >
+          <button
+            class="secondary"
+            type="button"
+          >
+            Einstieg später fortsetzen
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection start-page"
+    >
+      <div
+        class="onboarding"
+      >
+        <p
+          class="onboarding-progress"
+        >
+          Schritt 3 von 3
+        </p>
+        <section
+          class="onboarding-step"
+        >
+          <h2>
+            Deine erste Pflanze
+          </h2>
+          <p
+            class="quiet"
+          >
+            Wähle im Katalog eine Art und lege dein erstes Exemplar an.
+          </p>
+          <div
+            class="actions"
+          >
+            <button
+              class="primary"
+              type="button"
+            >
+              Art im Katalog wählen
+            </button>
+            <button
+              class="secondary"
+              type="button"
+            >
+              Überspringen
+            </button>
+          </div>
+        </section>
+        <div
+          class="actions"
+        >
+          <button
+            class="secondary"
+            type="button"
+          >
+            Einstieg später fortsetzen
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ packages/web/src/start-page.test.tsx:82:25
+     80|     cleanup();
+     81|     view();
+     82|     expect(await screen.findByRole("heading", { name: "Start" })).toBe…
+       |                         ^
+     83|     expect(screen.queryByRole("heading", { name: "Deine erste Pflanze"…
+     84|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 skipped (11)
+   Start at  20:06:20
+   Duration  2.58s (tests 49%, environment 27%, transform 16%, import 8%)
+
+exit 1
