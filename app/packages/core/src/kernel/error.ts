@@ -30,6 +30,7 @@ export const ERROR_TEXTS = {
   "specimen.not_archived": "Dieses Exemplar ist nicht archiviert.",
   "specimen.archived":
     "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her, dann kannst du damit arbeiten.",
+  "treatment.not_found": "Diese Behandlung gibt es nicht.",
   "care.no_phase":
     "Dieses Exemplar hat keine Pflegephase (Steckling oder Art ohne Ruhephasen-Zeitraum) und wird nicht umgestellt.",
   "care.target_unknown":

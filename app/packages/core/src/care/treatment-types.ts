@@ -47,4 +47,13 @@ export interface TreatmentStore {
     userId: string,
     specimenIds: readonly string[],
   ): Promise<ReadonlyMap<string, readonly TreatmentRow[]>>;
+  /** One treatment of the account by its ID (FR-BEH-02); a foreign or unknown one is `null` (P-04). */
+  find(userId: string, id: string): Promise<TreatmentRow | null>;
+  /**
+   * Ticks a treatment off with the local date `doneAt` (US-BEH-03). Idempotent: an already done treatment is returned
+   * unchanged and keeps its first done date. `"unknown"` for a foreign or unknown ID.
+   */
+  complete(userId: string, id: string, doneAt: string): Promise<TreatmentRow | "unknown">;
+  /** Done treatments of one specimen of the account, latest done date first (history, US-BEH-03). */
+  done(userId: string, specimenId: string): Promise<readonly TreatmentRow[]>;
 }

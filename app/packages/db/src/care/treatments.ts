@@ -65,6 +65,24 @@ export class TreatmentsPostgres {
     }
   }
 
+  /** Skeleton (red). */
+  async find(userId: string, id: string): Promise<TreatmentRow | null> {
+    void [userId, id];
+    throw new Error("not implemented");
+  }
+
+  /** Skeleton (red). */
+  async complete(userId: string, id: string, doneAt: string): Promise<TreatmentRow | "unknown"> {
+    void [userId, id, doneAt];
+    throw new Error("not implemented");
+  }
+
+  /** Skeleton (red). */
+  async done(userId: string, specimenId: string): Promise<readonly TreatmentRow[]> {
+    void [userId, specimenId];
+    throw new Error("not implemented");
+  }
+
   /** Open treatments, earliest first; one query for all IDs. Foreign IDs return nothing (row rules, P-04). */
   async open(
     userId: string,
