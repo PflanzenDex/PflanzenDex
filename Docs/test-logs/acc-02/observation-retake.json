@@ -1,0 +1,34 @@
+{
+  "desktop": {
+    "alert": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
+    "alertId": "settings-error",
+    "ariaInvalid": "true",
+    "ariaDescribedby": "settings-error",
+    "focusedIsZone": true,
+    "borderWidth": "2px rgb(179, 38, 30)",
+    "kept": "Mars/Olympus",
+    "axeInvalid": [],
+    "clearedName": {
+      "alert": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
+      "ariaInvalid": "true",
+      "focused": true
+    },
+    "axeEmptyName": []
+  },
+  "mobil": {
+    "alert": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
+    "alertId": "settings-error",
+    "ariaInvalid": "true",
+    "ariaDescribedby": "settings-error",
+    "focusedIsZone": true,
+    "borderWidth": "2px rgb(179, 38, 30)",
+    "kept": "Mars/Olympus",
+    "axeInvalid": [],
+    "clearedName": {
+      "alert": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
+      "ariaInvalid": "true",
+      "focused": true
+    },
+    "axeEmptyName": []
+  }
+}

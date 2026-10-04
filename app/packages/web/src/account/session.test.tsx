@@ -32,6 +32,7 @@ vi.mock("oidc-client-ts", () => ({
   },
 }));
 
+import { currentTimeZone, setProfileTimeZone } from "../kernel";
 import { useSession } from "./session";
 
 const account = {
@@ -85,6 +86,18 @@ describe("US-ACC-01 Sitzung", () => {
     await waitFor(() => expect(result.current.state).toEqual({ kind: "signedIn", account }));
     expect(vi.mocked(fetch).mock.calls[0]?.[1]?.headers).toEqual({ Authorization: "Bearer tok" });
     expect(await result.current.token()).toBe("tok");
+  });
+
+  it("US-ACC-02 the time zone of the profile becomes the zone of all dates right after sign-in (NFR-08)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => response(200, { ...account, timeZone: "Pacific/Auckland" })),
+    );
+    mgr.getUser.mockResolvedValue(user);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    expect(currentTimeZone()).toBe("Pacific/Auckland");
+    setProfileTimeZone(null);
   });
 
   it("if the account answers with 401, the sign-in is discarded and the welcome page is shown", async () => {
