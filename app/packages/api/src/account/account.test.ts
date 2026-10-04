@@ -143,7 +143,7 @@ describe("US-ACC-02: Profile and settings", () => {
       },
     });
     expect(res.status).toBe(200);
-    const profile = await res.json();
+    const profile = (await res.json()) as Record<string, unknown>;
     expect(profile.displayName).toBe("Test User");
   });
 
@@ -158,7 +158,7 @@ describe("US-ACC-02: Profile and settings", () => {
       },
     });
     expect(res.status).toBe(200);
-    const profile = await res.json();
+    const profile = (await res.json()) as Record<string, unknown>;
     expect(profile.timeZone).toBe("Europe/Berlin");
   });
 
@@ -173,8 +173,8 @@ describe("US-ACC-02: Profile and settings", () => {
       },
     });
     expect(res.status).toBe(400);
-    const error = await res.json();
-    expect(error.error.code).toBe("input.invalid");
+    const error = (await res.json()) as Record<string, unknown>;
+    expect((error.error as Record<string, unknown>).code).toBe("input.invalid");
   });
 
   it("PUT /account/profile: updates privacy switches", async () => {
@@ -188,7 +188,7 @@ describe("US-ACC-02: Profile and settings", () => {
       },
     });
     expect(res.status).toBe(200);
-    const profile = await res.json();
+    const profile = (await res.json()) as Record<string, unknown>;
     expect(profile.everythingPrivate).toBe(true);
     expect(profile.noRecommendations).toBe(true);
   });
@@ -220,7 +220,7 @@ describe("US-ACC-02: Profile and settings", () => {
       ...using(`valid:${sub2}:yes`),
     });
     expect(res2.status).toBe(200);
-    const profile2 = await res2.json();
+    const profile2 = (await res2.json()) as Record<string, unknown>;
     expect(profile2.displayName).not.toBe("Account One");
   });
 
@@ -235,8 +235,8 @@ describe("US-ACC-02: Profile and settings", () => {
       },
     });
     expect(res.status).toBe(400);
-    const error = await res.json();
-    expect(error.error.code).toBe("input.invalid");
+    const error = (await res.json()) as Record<string, unknown>;
+    expect((error.error as Record<string, unknown>).code).toBe("input.invalid");
   });
 
   it("PUT /account/profile: clears display name with null", async () => {
@@ -250,7 +250,7 @@ describe("US-ACC-02: Profile and settings", () => {
       },
     });
     expect(res.status).toBe(200);
-    const profile = await res.json();
+    const profile = (await res.json()) as Record<string, unknown>;
     expect(profile.displayName).toBeNull();
   });
 });

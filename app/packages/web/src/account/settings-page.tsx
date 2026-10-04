@@ -4,12 +4,12 @@ import { getProfile, updateProfile } from "./account-api";
 
 type Token = () => Promise<string | undefined>;
 
-const ERROR_TEXTS: Record<string, string> = {
+const ERROR_TEXTS = {
   not_signed_in: "Du bist nicht angemeldet.",
   profile_not_loadable: "Einstellungen konnten nicht geladen werden.",
   profile_update_failed: "Einstellungen konnten nicht gespeichert werden.",
   input_invalid: "Ungültige Eingabe.",
-};
+} as const;
 
 type LoadingState = "loading" | "loaded" | "saving" | "error";
 
@@ -110,7 +110,7 @@ function useSettings(api: string, token: Token) {
       try {
         const t = await token();
         if (!t) {
-          setError(ERROR_TEXTS.not_signed_in);
+          setError(ERROR_TEXTS.not_signed_in ?? null);
           setState("error");
           return;
         }
@@ -120,7 +120,9 @@ function useSettings(api: string, token: Token) {
         setState("loaded");
       } catch (err) {
         const code = err instanceof Error ? err.message : "profile_not_loadable";
-        setError(ERROR_TEXTS[code] || ERROR_TEXTS.profile_not_loadable);
+        const errorText =
+          (ERROR_TEXTS as Record<string, string>)[code] ?? ERROR_TEXTS.profile_not_loadable;
+        setError(errorText);
         setState("error");
       }
     };
@@ -133,7 +135,7 @@ function useSettings(api: string, token: Token) {
     try {
       const t = await token();
       if (!t) {
-        setError(ERROR_TEXTS.not_signed_in);
+        setError(ERROR_TEXTS.not_signed_in ?? null);
         setState("error");
         return;
       }
@@ -144,7 +146,9 @@ function useSettings(api: string, token: Token) {
       setError(null);
     } catch (err) {
       const code = err instanceof Error ? err.message : "profile_update_failed";
-      setError(ERROR_TEXTS[code] || ERROR_TEXTS.profile_update_failed);
+      const errorText =
+        (ERROR_TEXTS as Record<string, string>)[code] ?? ERROR_TEXTS.profile_update_failed;
+      setError(errorText);
       setState("error");
     }
   };
