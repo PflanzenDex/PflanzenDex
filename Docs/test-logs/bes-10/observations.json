@@ -1,5 +1,4 @@
 {
-  "roleInserted": " count \n-------\n     7\n(1 row)\n\n",
   "targetApproved": 200,
   "proposed": [
     201,
@@ -12,6 +11,7 @@
     201
   ],
   "profileOfC": 200,
+  "profileOfTarget": 200,
   "maraBeforeSpecimenSpecies": [
     "C",
     "C"
@@ -22,34 +22,18 @@
   "mobile_maraHasReviewTab": 0,
   "mobile_maraReviewApi": 403,
   "mobile_maraApproveApi": 403,
-  "summary": "21 offene Vorschläge, der älteste heute. Arbeite die Liste von oben nach unten ab.",
+  "summary": "5 offene Vorschläge, der älteste heute. Arbeite die Liste von oben nach unten ab.",
   "entryHeadings": [
     "Fixtureus tenant_test",
-    "Echeveria elegans",
-    "Aloe vera",
-    "Sansevieria cylindrica",
-    "Haworthia fasciata",
-    "Echeveria elegans",
-    "Aloe vera",
-    "Sansevieria cylindrica",
-    "Haworthia fasciata",
-    "Echeveria elegans 'Rcfdaca'",
-    "Aloe vera 'Rcfdaca'",
-    "Sansevieria cylindrica",
-    "Haworthia fasciata 'Rcfdaca'",
-    "Echeveria elegans 'Rccaacb'",
-    "Aloe vera 'Rccaacb'",
-    "Sansevieria cylindrica",
-    "Haworthia fasciata 'Rccaacb'",
-    "Echeveria elegans 'Rbaebde'",
-    "Aloe vera 'Rbaebde'",
-    "Sansevieria baebde",
-    "Haworthia fasciata 'Rbaebde'"
+    "Echeveria elegans 'Rfbdaec'",
+    "Aloe vera 'Rfbdaec'",
+    "Sansevieria fbdaec",
+    "Haworthia fasciata 'Rfbdaec'"
   ],
   "axe_list_desktop": [],
   "bApproveDisabled": true,
   "bIssues": "Freigabe noch nicht möglich:\n\nQuelle fehlt (Pflicht für Lichtbedarf und Ruhephase)",
-  "cDuplicateHint": "Mögliche Dublette: Diese Art gibt es vielleicht schon. Prüfe, ob es dieselbe Pflanze ist.\n\nSansevieria baebde 'Skyline' (gefunden über „Sansevieria baebde 'Skyline'“)Mit Sansevieria baebde 'Skyline' zusammenführen",
+  "cDuplicateHint": "Mögliche Dublette: Diese Art gibt es vielleicht schon. Prüfe, ob es dieselbe Pflanze ist.\n\nSansevieria fbdaec 'Skyline' (gefunden über „Sansevieria fbdaec 'Skyline'“)Mit Sansevieria fbdaec 'Skyline' zusammenführen",
   "approveMessage": "Vorschlag freigegeben. Die Art ist jetzt für alle sichtbar.",
   "benSeesA": 200,
   "rejectDisabledWithoutReason": true,
@@ -58,15 +42,32 @@
     "Die Quelle belegt den Lichtbedarf nicht."
   ],
   "benSeesD": 404,
-  "mergeMessage": "Vorschlag zusammengeführt. 2 Exemplare übernommen; 1 Pflegeprofil übernommen.",
+  "mergeMessage": "Vorschlag zusammengeführt. 2 Exemplare übernommen; 1 Pflegeprofil nicht übernommen, weil der Ersteller dafür schon einen Eintrag bei der Zielart hat.",
   "maraSpecimenSpeciesAfter": [
     "target",
     "target"
   ],
-  "maraProfileAfter": [
-    "target"
+  "maraProfilesAfter": [
+    {
+      "name": "Dein zusammengeführter Vorschlag",
+      "merged": "Kerzenbogenhanf fbdaec",
+      "hints": "Viel Licht, wenig Wasser"
+    },
+    {
+      "name": "Kerzenbogenhanf fbdaec",
+      "merged": null,
+      "hints": "Mein Hinweis zur Zielart"
+    }
   ],
   "maraSeesMergedProposal": 404,
+  "desktop_keptCardText": "Dein zusammengeführter Vorschlag\n\nDein Vorschlag wurde mit „Kerzenbogenhanf fbdaec“ zusammengeführt. Für diese Art hattest du schon ein Pflegeprofil, deshalb wurde dieses hier nicht übernommen und bleibt unverändert erhalten.\n\nÖffne das Pflegeprofil von „Kerzenbogenhanf fbdaec“ und übernimm von Hand, was du behalten willst.\n\nEigene Hinweise\nViel Licht, wenig Wasser\n\nZielart: Kerzenbogenhanf fbdaec",
+  "desktop_keptCardHasForm": 0,
+  "axe_careprofile_desktop": [],
+  "desktop_careProfileHScroll": false,
+  "mobile_keptCardText": "Dein zusammengeführter Vorschlag\n\nDein Vorschlag wurde mit „Kerzenbogenhanf fbdaec“ zusammengeführt. Für diese Art hattest du schon ein Pflegeprofil, deshalb wurde dieses hier nicht übernommen und bleibt unverändert erhalten.\n\nÖffne das Pflegeprofil von „Kerzenbogenhanf fbdaec“ und übernimm von Hand, was du behalten willst.\n\nEigene Hinweise\nViel Licht, wenig Wasser\n\nZielart: Kerzenbogenhanf fbdaec",
+  "mobile_keptCardHasForm": 0,
+  "axe_careprofile_mobile": [],
+  "mobile_careProfileHScroll": false,
   "maraRejectionHintVisible": 1,
   "mobileSeed": [
     201,
