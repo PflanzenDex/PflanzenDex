@@ -143,3 +143,27 @@ button:focus-visible {
   border: 2px solid var(--fehler-rand);
   outline-color: var(--fehler-rand);
 }
+
+/* Guided onboarding (US-ACC-03): a visible progress marker for the current step. */
+.onboarding-progress {
+  display: inline-block;
+  margin: 0 0 0.5rem;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.onboarding-step .list,
+.start .cards-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.start .next-step {
+  margin-bottom: 1rem;
+}
