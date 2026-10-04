@@ -113,9 +113,14 @@ export class ReviewPostgres {
           `select object_id as "objectId" from review_case where id = $1 and object_kind = 'species'`,
           [proposalId],
         );
-        // Wait for writes of the creator on the proposal that are still in flight, then block new ones.
-        if (proposal.rows[0])
-          await c.query("select lock_species_for_merge($1)", [proposal.rows[0].objectId]);
+        // Wait for writes of the creator on the proposal that are still in flight, then block new ones. If no row could
+        // be locked the case is not an open proposal any more (nothing is merged, never a silent no-lock).
+        if (!proposal.rows[0]) return null;
+        const lock = await c.query<{ locked: boolean }>(
+          "select lock_species_for_merge($1) as locked",
+          [proposal.rows[0].objectId],
+        );
+        if (lock.rows[0]?.locked !== true) return null;
         const closed = await c.query<ReviewCase>(
           `update review_case set status = 'merged', merged_into = $2
             where id = $1 and object_kind = 'species' and status in ('proposal', 'ai_unreviewed')

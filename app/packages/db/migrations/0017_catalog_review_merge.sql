@@ -12,7 +12,8 @@ language sql stable security definer set search_path = public, pg_temp
 as $$
   select exists (
     select from review_case v
-     where v.object_kind = 'species' and v.object_id = p_species and v.status in ('proposal', 'ai_unreviewed'))
+     where is_reviewer() and v.object_kind = 'species' and v.object_id = p_species
+       and v.status in ('proposal', 'ai_unreviewed'))
 $$;
 revoke all on function is_open_proposal(uuid) from public;
 grant execute on function is_open_proposal(uuid) to pflanzendex_app;
@@ -20,20 +21,33 @@ grant execute on function is_open_proposal(uuid) to pflanzendex_app;
 create policy reviewer_reads on species for select using (is_reviewer() and is_open_proposal(id));
 create policy reviewer_reads on species_name for select using (is_reviewer() and is_open_proposal(species_id));
 
--- Whether a proposal was merged away; modules that reference species ask this instead of reading review_case.
+-- Whether a proposal of the caller was merged away (only the creator references it, so other accounts learn nothing
+-- about foreign species); modules that reference species ask this instead of reading review_case.
 create function species_is_merged(p_species uuid) returns boolean
 language sql stable security definer set search_path = public, pg_temp
 as $$
-  select exists (select from review_case v where v.object_kind = 'species' and v.object_id = p_species and v.status = 'merged')
+  select exists (select from review_case v
+                  where v.object_kind = 'species' and v.object_id = p_species and v.status = 'merged'
+                    and v.account_id = current_account())
 $$;
 revoke all on function species_is_merged(uuid) from public;
 grant execute on function species_is_merged(uuid) to pflanzendex_app;
 
 -- A merge locks the species row of the proposal, so a write of the creator that is still in flight (its foreign key
 -- holds a key lock on that row) finishes before the references are re-pointed, and a later one finds the species
--- hidden (the application re-checks the status after taking that lock). Without it a specimen could be committed
--- after the re-point and point at a hidden species (P-10). The application role cannot lock rows of `species` itself.
-create function lock_species_for_merge(p_species uuid) returns void
+-- merged (the application re-checks after taking that lock). Without it a specimen could be committed after the
+-- re-point and point at a hidden species (P-10). The application role cannot lock rows of `species` itself.
+-- `species` has forced row security: FOR UPDATE only locks rows that pass an UPDATE policy of the role that runs the
+-- function (its owner), a superuser bypasses this. So exactly the owner role gets an UPDATE policy, limited to
+-- reviewers; the application role is no member of the owner role and has no UPDATE privilege, it gains no write
+-- power. The function answers whether it really locked a row, it never locks nothing silently.
+do $$
+begin
+  execute format('create policy lock_for_merge on species for update to %I using (is_reviewer())', current_user);
+end
+$$;
+
+create function lock_species_for_merge(p_species uuid) returns boolean
 language plpgsql security definer set search_path = public, pg_temp
 as $$
 begin
@@ -41,6 +55,7 @@ begin
     raise exception 'Only operators or reviewers merge proposals' using errcode = '42501';
   end if;
   perform 1 from species where id = p_species for update;
+  return found;
 end
 $$;
 revoke all on function lock_species_for_merge(uuid) from public;
