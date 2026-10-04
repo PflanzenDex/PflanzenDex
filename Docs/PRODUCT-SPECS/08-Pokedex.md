@@ -61,7 +61,7 @@ Acceptance criteria:
 - Catch date per species = earliest across all active and archived specimens of the keeper. Source per specimen in this order: `Caught_At` → creation date of the specimen (display "≈") → "unknown". **Never guessed.**
 - Photo = latest measurement with a photo across all specimens, otherwise Wikipedia image.
 
-### US-POK-08 · Search, filter, sort · ⬜ (prototype ✅)
+### US-POK-08 · Search, filter, sort · 🟨 (prototype ✅)
 
 Acceptance criteria:
 

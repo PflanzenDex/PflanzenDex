@@ -27,6 +27,16 @@ export interface CaughtSpecies {
   readonly specimenCount: number;
   /** Earliest date across all active and archived specimens of the species (US-POK-07). */
   readonly caughtDate: CatchDate;
+  /** German name of the species (US-POK-08 search); `null` means "unknown" (P-08). */
+  readonly germanName: string | null;
+  /** Family of the species (US-POK-08 search and grouping); `null` means "unknown" (P-08). */
+  readonly familyLatin: string | null;
+  readonly familyGerman: string | null;
+  /**
+   * Species count of the genus (GBIF, US-POK-03). Always `null` until the taxonomy build exists: no number is
+   * invented (P-08).
+   */
+  readonly genusSpeciesCount: number | null;
 }
 
 /** An active specimen that does not count as caught yet, with what fixes it (P-09, P-10). */

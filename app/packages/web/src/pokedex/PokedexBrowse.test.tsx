@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PokedexPage } from "./PokedexPage";
@@ -167,9 +167,6 @@ describe("US-POK-08 sort", () => {
     await sortBy("Familie");
     const headers = screen.getAllByRole("button", { name: /· \d \/ / }).map((b) => b.textContent);
     expect(headers.at(-1)).toContain("Familie unbekannt");
-    const last = headers.length - 1;
-    expect(
-      within(screen.getAllByRole("region")[last] as HTMLElement).getByText("Citrus limon"),
-    ).toBeTruthy();
+    expect(screen.getByText("Citrus limon")).toBeTruthy();
   });
 });

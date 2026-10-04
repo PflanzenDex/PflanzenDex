@@ -2,6 +2,7 @@
 // least one active specimen of the account refers to the species (the same `isActive` rule as everywhere,
 // US-BES-07). A specimen without an epithet or with an unreadable species does not count, but is named with what fixes
 // it instead of vanishing (P-09, P-10). Only the data of the account flows in (P-04).
+import type { Species } from "../catalog";
 import { isActive, type SpecimenRow } from "../collection";
 import { earliest, specimenCatchDate } from "./catch-date";
 import { speciesKey } from "./species-key";
@@ -26,31 +27,90 @@ const unidentified = (z: SpecimenRow, latinName: string | null): UnidentifiedSpe
   nextAction: NEXT_ACTION,
 });
 
-/** Species key per species ID for the account (unreadable species are `null`). */
-async function speciesKeys(
+/** Species per species ID for the account (unreadable species are `null`). */
+async function readSpecies(
   deps: OwnershipDependencies,
   userId: string,
   rows: readonly SpecimenRow[],
 ) {
   const ids = [...new Set(rows.map((z) => z.speciesId))];
   const read = await Promise.all(ids.map((id) => deps.species.find(userId, id)));
-  return new Map(ids.map((id, i) => [id, read[i]?.latinName ?? null] as const));
+  return new Map(ids.map((id, i) => [id, read[i] ?? null] as const));
 }
+
+/** German name and family shown on the card. */
+interface Details {
+  germanName: string | null;
+  familyLatin: string | null;
+  familyGerman: string | null;
+}
+/** Known values win over unknown ones; the plain species (no cultivar chip) wins over a cultivar, so the order of the specimens does not matter. */
+const merged = (have: Details, s: Species, plain: boolean): Details => {
+  const [first, second] = plain ? [s, have] : [have, s];
+  return {
+    germanName: first.germanName ?? second.germanName,
+    familyLatin: first.familyLatin ?? second.familyLatin,
+    familyGerman: first.familyGerman ?? second.familyGerman,
+  };
+};
+
+const NONE: Details = { germanName: null, familyLatin: null, familyGerman: null };
 
 /** Catch date per species key across ALL specimens, archived too (US-POK-07). */
 function catchDates(
   all: readonly SpecimenRow[],
-  latin: ReadonlyMap<string, string | null>,
+  read: ReadonlyMap<string, Species | null>,
   timeZone: string,
 ): Map<string, CatchDate> {
   const per = new Map<string, CatchDate[]>();
   for (const z of all) {
-    const name = latin.get(z.speciesId) ?? null;
+    const name = read.get(z.speciesId)?.latinName ?? null;
     const species = name === null ? null : speciesKey(name).species;
     if (species === null) continue;
     per.set(species, [...(per.get(species) ?? []), specimenCatchDate(z, timeZone)]);
   }
   return new Map([...per].map(([species, dates]) => [species, earliest(dates)]));
+}
+
+interface Entry extends Details {
+  genus: string;
+  chips: Set<string>;
+  count: number;
+}
+
+/** The key of a species that can be caught: with both genus and epithet (US-POK-06); otherwise `null`. */
+function countable(row: Species | null) {
+  const key = row === null ? null : speciesKey(row.latinName);
+  return key !== null && key.species !== null && key.genus !== null
+    ? { species: key.species, genus: key.genus, chip: key.chip }
+    : null;
+}
+
+/** Splits the active specimens into caught species (by key) and the ones that cannot count yet (P-10). */
+function collect(rows: readonly SpecimenRow[], read: ReadonlyMap<string, Species | null>) {
+  const caught = new Map<string, Entry>();
+  const open: UnidentifiedSpecimen[] = [];
+  for (const z of rows) {
+    const row = read.get(z.speciesId) ?? null;
+    const key = countable(row);
+    if (row === null || key === null) {
+      open.push(unidentified(z, row?.latinName ?? null));
+      continue;
+    }
+    const entry = caught.get(key.species) ?? {
+      ...NONE,
+      genus: key.genus,
+      chips: new Set(),
+      count: 0,
+    };
+    if (key.chip !== null) entry.chips.add(key.chip);
+    caught.set(key.species, {
+      ...entry,
+      ...merged(entry, row, key.chip === null),
+      count: entry.count + 1,
+    });
+  }
+  return { caught, open };
 }
 
 export async function pokedexOwnership(
@@ -59,27 +119,9 @@ export async function pokedexOwnership(
   timeZone: string,
 ): Promise<Ownership> {
   const all = await deps.specimens.list(userId);
-  const rows = all.filter(isActive);
-  const latin = await speciesKeys(deps, userId, all);
-  const dates = catchDates(all, latin, timeZone);
-  const caught = new Map<string, { genus: string; chips: Set<string>; count: number }>();
-  const open: UnidentifiedSpecimen[] = [];
-  for (const z of rows) {
-    const name = latin.get(z.speciesId) ?? null;
-    const key = name === null ? null : speciesKey(name);
-    if (key === null || key.species === null || key.genus === null) {
-      open.push(unidentified(z, name));
-      continue;
-    }
-    const entry = caught.get(key.species) ?? {
-      genus: key.genus,
-      chips: new Set<string>(),
-      count: 0,
-    };
-    if (key.chip !== null) entry.chips.add(key.chip);
-    entry.count += 1;
-    caught.set(key.species, entry);
-  }
+  const read = await readSpecies(deps, userId, all);
+  const dates = catchDates(all, read, timeZone);
+  const { caught, open } = collect(all.filter(isActive), read);
   const byName = (a: string, b: string) => a.localeCompare(b, "de");
   const list: CaughtSpecies[] = [...caught]
     .map(([species, e]) => ({
@@ -88,6 +130,10 @@ export async function pokedexOwnership(
       chips: [...e.chips].sort(byName),
       specimenCount: e.count,
       caughtDate: dates.get(species) ?? { date: null, source: "unknown" as const },
+      germanName: e.germanName,
+      familyLatin: e.familyLatin,
+      familyGerman: e.familyGerman,
+      genusSpeciesCount: null,
     }))
     .sort((a, b) => byName(a.species, b.species));
   return {
