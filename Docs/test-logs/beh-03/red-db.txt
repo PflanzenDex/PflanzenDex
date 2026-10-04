@@ -1,0 +1,112 @@
+
+> test
+> vitest run
+
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-acf52b4cbecabe449/app/packages/db
+
+ ❯ src/care/treatments.test.ts (14 tests | 6 failed) 177ms
+   ❯ US-BEH-03 ticking off in the database (6)
+     × US-BEH-03 sets done and the done date in one statement and returns the row 15ms
+     × US-BEH-03 the second call (second device) changes nothing and keeps the first done date 4ms
+     × US-BEH-03 the done date is the stored calendar date, independent of the server's time zone (NFR-08) 4ms
+     × US-BEH-03 tenant: a foreign or unknown ID is unknown and stays untouched (P-04) 4ms
+     × US-BEH-03 the history lists the done treatments of one specimen, latest done date first, no open ones 14ms
+     × US-BEH-03 tenant: Ben's history of Anna's specimen is empty (P-04) 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/care/treatments.test.ts > US-BEH-03 ticking off in the database > US-BEH-03 sets done and the done date in one statement and returns the row
+Error: not implemented
+ ❯ TreatmentsPostgres.complete src/care/treatments.ts:77:11
+     75|   async complete(userId: string, id: string, doneAt: string): Promise<…
+     76|     void [userId, id, doneAt];
+     77|     throw new Error("not implemented");
+       |           ^
+     78|   }
+     79|
+ ❯ src/care/treatments.test.ts:163:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/care/treatments.test.ts > US-BEH-03 ticking off in the database > US-BEH-03 the second call (second device) changes nothing and keeps the first done date
+Error: not implemented
+ ❯ TreatmentsPostgres.complete src/care/treatments.ts:77:11
+     75|   async complete(userId: string, id: string, doneAt: string): Promise<…
+     76|     void [userId, id, doneAt];
+     77|     throw new Error("not implemented");
+       |           ^
+     78|   }
+     79|
+ ❯ src/care/treatments.test.ts:174:36
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/care/treatments.test.ts > US-BEH-03 ticking off in the database > US-BEH-03 the done date is the stored calendar date, independent of the server's time zone (NFR-08)
+Error: not implemented
+ ❯ TreatmentsPostgres.complete src/care/treatments.ts:77:11
+     75|   async complete(userId: string, id: string, doneAt: string): Promise<…
+     76|     void [userId, id, doneAt];
+     77|     throw new Error("not implemented");
+       |           ^
+     78|   }
+     79|
+ ❯ src/care/treatments.test.ts:185:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/care/treatments.test.ts > US-BEH-03 ticking off in the database > US-BEH-03 tenant: a foreign or unknown ID is unknown and stays untouched (P-04)
+Error: not implemented
+ ❯ TreatmentsPostgres.complete src/care/treatments.ts:77:11
+     75|   async complete(userId: string, id: string, doneAt: string): Promise<…
+     76|     void [userId, id, doneAt];
+     77|     throw new Error("not implemented");
+       |           ^
+     78|   }
+     79|
+ ❯ src/care/treatments.test.ts:196:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/care/treatments.test.ts > US-BEH-03 ticking off in the database > US-BEH-03 the history lists the done treatments of one specimen, latest done date first, no open ones
+Error: not implemented
+ ❯ TreatmentsPostgres.complete src/care/treatments.ts:77:11
+     75|   async complete(userId: string, id: string, doneAt: string): Promise<…
+     76|     void [userId, id, doneAt];
+     77|     throw new Error("not implemented");
+       |           ^
+     78|   }
+     79|
+ ❯ src/care/treatments.test.ts:207:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/care/treatments.test.ts > US-BEH-03 ticking off in the database > US-BEH-03 tenant: Ben's history of Anna's specimen is empty (P-04)
+Error: not implemented
+ ❯ TreatmentsPostgres.complete src/care/treatments.ts:77:11
+     75|   async complete(userId: string, id: string, doneAt: string): Promise<…
+     76|     void [userId, id, doneAt];
+     77|     throw new Error("not implemented");
+       |           ^
+     78|   }
+     79|
+ ❯ src/care/treatments.test.ts:215:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed | 12 passed (13)
+      Tests  6 failed | 142 passed (148)
+   Start at  09:54:47
+   Duration  5.03s (tests 87%, import 8%, transform 5%, worker 1%)
+
+    Isolate  13 workers spawned · ~61ms startup each (spawn + environment, per file)
+             at least ~733ms faster with isolate: false — reuses workers across files instead of one per file
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-acf52b4cbecabe449/app/packages/db
+npm error workspace @pflanzendex/db
+npm error location /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-acf52b4cbecabe449/app/packages/db
+npm error command failed
+npm error command sh -c vitest run

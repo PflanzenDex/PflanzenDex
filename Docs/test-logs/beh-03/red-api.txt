@@ -1,0 +1,53 @@
+
+> test
+> vitest run
+
+
+ RUN  v5.0.3 /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-acf52b4cbecabe449/app/packages/api
+
+ ❯ src/care/treatments.test.ts (34 tests | 12 failed) 2413ms
+   ❯ US-BEH-03 tick off a date (10)
+     × US-BEH-03 without Idempotency-Key: 400, and the treatment stays open 49ms
+     × US-BEH-03 ticks off with the local date (23:30 UTC is already the 3rd in Berlin, still the 2nd in Los Angeles, NFR-08) 43ms
+     × US-BEH-03 the row leaves the open list and the card names the next date (US-BES-06) 48ms
+     × US-BEH-03 a second tap (second device, new key) changes nothing: 200, same done date 37ms
+     × US-BEH-03 invalid input (no time zone): 400 and nothing written 35ms
+     × US-BEH-03 invalid input (unknown time zone): 400 and nothing written 33ms
+     × US-BEH-03 an id that is not an id: 400; an unknown one: 404 treatment.not_found 2ms
+     × US-BEH-03 tenant: Ben cannot tick off Anna's treatment, it looks unknown and stays open (P-04) 33ms
+     × US-BEH-03 a treatment of an archived specimen is refused: 409 specimen.archived 43ms
+   ❯ US-BEH-03 history per specimen (4)
+     × US-BEH-03 done entries stay as history of the specimen, open ones are not in it 31ms
+     × US-BEH-03 tenant: Ben asking for Anna's specimen gets 404 specimen.not_found (P-04) 33ms
+     × US-BEH-03 no or invalid specimenId: 400 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/care/treatments.test.ts > US-BEH-03 tick off a date > US-BEH-03 without Idempotency-Key: 400, and the treatment stays open
+ FAIL  src/care/treatments.test.ts > US-BEH-03 tick off a date > US-BEH-03 ticks off with the local date (23:30 UTC is already the 3rd in Berlin, still the 2nd in Los Angeles, NFR-08)
+ FAIL  src/care/treatments.test.ts > US-BEH-03 tick off a date > US-BEH-03 the row leaves the open list and the card names the next date (US-BES-06)
+ FAIL  src/care/treatments.test.ts > US-BEH-03 tick off a date > US-BEH-03 a second tap (second device, new key) changes nothing: 200, same done date
+ FAIL  src/care/treatments.test.ts > US-BEH-03 tick off a date > US-BEH-03 invalid input (no time zone): 400 and nothing written
+ FAIL  src/care/treatments.test.ts > US-BEH-03 tick off a date > US-BEH-03 invalid input (unknown time zone): 400 and nothing written
+ FAIL  src/care/treatments.test.ts > US-BEH-03 tick off a date > US-BEH-03 an id that is not an id: 400; an unknown one: 404 treatment.not_found
+ FAIL  src/care/treatments.test.ts > US-BEH-03 tick off a date > US-BEH-03 tenant: Ben cannot tick off Anna's treatment, it looks unknown and stays open (P-04)
+ FAIL  src/care/treatments.test.ts > US-BEH-03 tick off a date > US-BEH-03 a treatment of an archived specimen is refused: 409 specimen.archived
+ FAIL  src/care/treatments.test.ts > US-BEH-03 history per specimen > US-BEH-03 done entries stay as history of the specimen, open ones are not in it
+ FAIL  src/care/treatments.test.ts > US-BEH-03 history per specimen > US-BEH-03 tenant: Ben asking for Anna's specimen gets 404 specimen.not_found (P-04)
+ FAIL  src/care/treatments.test.ts > US-BEH-03 history per specimen > US-BEH-03 no or invalid specimenId: 400
+SyntaxError: Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+
+ Test Files  1 failed | 16 passed (17)
+      Tests  12 failed | 184 passed (196)
+   Start at  09:54:54
+   Duration  3.20s (tests 70%, transform 20%, import 9%)
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-acf52b4cbecabe449/app/packages/api
+npm error workspace @pflanzendex/api
+npm error location /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-acf52b4cbecabe449/app/packages/api
+npm error command failed
+npm error command sh -c vitest run

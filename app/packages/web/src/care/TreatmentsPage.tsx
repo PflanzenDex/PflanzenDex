@@ -2,6 +2,7 @@ import "./care.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LoadError, SIGN_IN, type ApiError } from "../kernel";
 import { OpenTreatments } from "./open-treatments";
+import { TreatmentHistory } from "./treatment-history";
 import { TreatmentForm } from "./treatment-form";
 import { treatmentsPlannedText } from "./text";
 import {
@@ -60,7 +61,8 @@ function usePlanning(api: string, token: Token, onPlanned: () => void) {
 }
 
 /**
- * Treatments: the open dates by urgency (US-BEH-02) and the form to plan new ones, one date or a course (US-BEH-01).
+ * Treatments: the open dates by urgency with "Erledigt" (US-BEH-02, US-BEH-03), the form to plan new ones, one date or
+ * a course (US-BEH-01), and the done ones per specimen as history (US-BEH-03).
  * Every view says what to do next (P-09): without a specimen it points to the collection, after saving the list above
  * shows the new date.
  */
@@ -68,14 +70,22 @@ export function TreatmentsPage(props: { api: string; token: Token }) {
   const [reload, setReload] = useState(0);
   // The list of open treatments loads again after every successful plan (US-BEH-02).
   const [planned, setPlanned] = useState(0);
+  // The history loads again after every tick-off (US-BEH-03).
+  const [ticked, setTicked] = useState(0);
   const data = useSpecimens(props.api, props.token, reload);
   const onPlanned = useCallback(() => setPlanned((n) => n + 1), []);
+  const onTicked = useCallback(() => setTicked((n) => n + 1), []);
   const planning = usePlanning(props.api, props.token, onPlanned);
   return (
     <div className="light treatments">
       <section aria-labelledby="treatments-title">
         <h1 id="treatments-title">Behandlung</h1>
-        <OpenTreatments api={props.api} token={props.token} version={planned} />
+        <OpenTreatments
+          api={props.api}
+          token={props.token}
+          version={planned}
+          onChanged={onTicked}
+        />
         <h2>Behandlung planen</h2>
         {data.kind === "loading" && <p role="status">Exemplare werden geladen …</p>}
         {data.kind === "error" && (
@@ -102,6 +112,14 @@ export function TreatmentsPage(props: { api: string; token: Token }) {
               onSend={planning.send}
             />
           </>
+        )}
+        {data.kind === "da" && data.specimens.length > 0 && (
+          <TreatmentHistory
+            api={props.api}
+            token={props.token}
+            specimens={data.specimens}
+            version={planned + ticked}
+          />
         )}
       </section>
     </div>

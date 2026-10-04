@@ -15,10 +15,13 @@ function fakeServer(
   specimens: unknown[],
   save?: () => Promise<Response>,
   open: () => Promise<Response> = () => response(200, { treatments: [] }),
+  more: (path: string, init?: RequestInit) => Promise<Response> | undefined = () => undefined,
 ): { posts: Posted[]; fetchFn: ReturnType<typeof vi.fn<typeof fetch>> } {
   const posts: Posted[] = [];
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
     const path = new URL(String(url)).pathname;
+    const other = more(path, init);
+    if (other) return other;
     if (path === "/specimens") return response(200, { specimens });
     if (path === "/treatments" && (init?.method ?? "GET") === "GET") return open();
     if (path === "/treatments" && init?.method === "POST") {
@@ -214,5 +217,181 @@ describe("US-BEH-02 offene Behandlungen", () => {
     await user.click(screen.getByRole("button", { name: "Behandlung speichern" }));
     expect(await screen.findByRole("list", { name: "Offene Behandlungen" })).toBeTruthy();
     expect(screen.queryByText("Keine offenen Behandlungen.")).toBeNull();
+  });
+});
+
+type Tick = { path: string; body: Record<string, unknown>; key: string | undefined };
+
+/** A server with open treatments that the "complete" call removes; `history` is what the history route answers. */
+function doneServer(
+  complete: (id: string) => Promise<Response> | undefined = () => undefined,
+  history: unknown[] = [],
+) {
+  let rows = [
+    due("a", "Aloe", "2026-10-01", "overdue", "überfällig seit 2 Tagen"),
+    due("b", "Bogenhanf", "2026-10-03", "today", "heute fällig"),
+  ];
+  const ticks: Tick[] = [];
+  const server = fakeServer(
+    [specimen("s-a", "Aloe"), specimen("s-b", "Bogenhanf")],
+    undefined,
+    () => response(200, { treatments: rows }),
+    (path, init) => {
+      const m = /^\/treatments\/([^/]+)\/complete$/.exec(path);
+      if (m && init?.method === "POST") {
+        const id = m[1] as string;
+        ticks.push({
+          path,
+          body: JSON.parse(String(init.body)) as Record<string, unknown>,
+          key: (init.headers as Record<string, string>)["Idempotency-Key"],
+        });
+        const refused = complete(id);
+        if (refused) return refused;
+        rows = rows.filter((r) => r.id !== id);
+        return response(200, { treatment: { id, done: true, doneAt: "2026-10-03" } });
+      }
+      if (path === "/treatments/history") return response(200, { treatments: history });
+      return undefined;
+    },
+  );
+  return { ...server, ticks };
+}
+
+const doneEntry = (id: string, doneAt: string, agent: string | null = null) => ({
+  id,
+  specimenId: "s-a",
+  reason: `Grund ${id}`,
+  agent,
+  dueAt: "2026-10-01",
+  done: true,
+  doneAt,
+  courseId: null,
+});
+
+describe("US-BEH-03 Behandlung abhaken", () => {
+  it('US-BEH-03 every open row has an "Erledigt" action that names the row for screen readers', async () => {
+    doneServer();
+    show();
+    const list = await screen.findByRole("list", { name: "Offene Behandlungen" });
+    const buttons = within(list).getAllByRole("button");
+    expect(buttons.map((b) => b.textContent)).toEqual(["Erledigt", "Erledigt"]);
+    expect(buttons[0]?.getAttribute("aria-label")).toBe("Grund a bei Aloe als erledigt abhaken");
+  });
+
+  it("US-BEH-03 a tap sends the id with the device's time zone and an Idempotency-Key, the row disappears and the page says so", async () => {
+    const { ticks } = doneServer();
+    const user = userEvent.setup();
+    show();
+    await user.click(
+      await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
+    );
+    expect((await screen.findByText(/als erledigt eingetragen/)).textContent ?? "").toContain(
+      "Aloe",
+    );
+    expect(ticks).toHaveLength(1);
+    expect(ticks[0]?.path).toBe("/treatments/a/complete");
+    expect(ticks[0]?.body).toEqual({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+    expect(ticks[0]?.key).toBeTruthy();
+    const list = screen.getByRole("list", { name: "Offene Behandlungen" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(1);
+    expect(within(list).queryByText("Aloe")).toBeNull();
+  });
+
+  it("US-BEH-03 after the last one is done the list says there are none and what to do next (P-09)", async () => {
+    doneServer();
+    const user = userEvent.setup();
+    show();
+    await user.click(
+      await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "Grund b bei Bogenhanf als erledigt abhaken" }),
+    );
+    expect(await screen.findByText("Keine offenen Behandlungen.")).toBeTruthy();
+  });
+
+  it("US-BEH-03 a double tap sends one request", async () => {
+    const { ticks } = doneServer();
+    const user = userEvent.setup();
+    show();
+    const button = await screen.findByRole("button", {
+      name: "Grund a bei Aloe als erledigt abhaken",
+    });
+    await user.dblClick(button);
+    await screen.findByText(/als erledigt eingetragen/);
+    expect(ticks).toHaveLength(1);
+  });
+
+  it("US-BEH-03 a refusal stays visible with its text and the row stays open (P-10)", async () => {
+    doneServer(() =>
+      response(409, {
+        error: { code: "specimen.archived", text: "Dieses Exemplar ist archiviert." },
+      }),
+    );
+    const user = userEvent.setup();
+    show();
+    await user.click(
+      await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
+    );
+    expect((await screen.findByRole("alert")).textContent).toContain("archiviert");
+    expect(screen.queryByText(/als erledigt eingetragen/)).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
+    ).toBeTruthy();
+  });
+
+  it("US-BEH-03 an unknown treatment (done elsewhere and removed) is reported, the list reloads", async () => {
+    doneServer(() =>
+      response(404, {
+        error: { code: "treatment.not_found", text: "Diese Behandlung gibt es nicht." },
+      }),
+    );
+    const user = userEvent.setup();
+    show();
+    await user.click(
+      await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
+    );
+    expect((await screen.findByRole("alert")).textContent).toContain("gibt es nicht");
+  });
+});
+
+describe("US-BEH-03 Verlauf je Exemplar", () => {
+  it("US-BEH-03 asks to choose a specimen first (P-09), then lists its done treatments with the done date", async () => {
+    doneServer(undefined, [doneEntry("x", "2026-10-03", "Neemöl"), doneEntry("y", "2026-09-20")]);
+    const user = userEvent.setup();
+    show();
+    expect(
+      await screen.findByText(/Wähle ein Exemplar, um erledigte Behandlungen zu sehen/),
+    ).toBeTruthy();
+    await user.selectOptions(await screen.findByLabelText("Exemplar für den Verlauf"), "s-a");
+    const list = await screen.findByRole("list", { name: "Erledigte Behandlungen" });
+    const items = within(list).getAllByRole("listitem");
+    expect(items).toHaveLength(2);
+    expect(items[0]?.textContent).toContain("Grund x");
+    expect(items[0]?.textContent).toContain("Mittel: Neemöl");
+    expect(items[0]?.textContent).toContain("Erledigt am: 03.10.2026");
+    expect(items[1]?.textContent).toContain("Mittel: —");
+  });
+
+  it("US-BEH-03 a specimen without done treatments says so", async () => {
+    doneServer(undefined, []);
+    const user = userEvent.setup();
+    show();
+    await user.selectOptions(await screen.findByLabelText("Exemplar für den Verlauf"), "s-b");
+    expect(await screen.findByText(/Noch keine erledigte Behandlung/)).toBeTruthy();
+  });
+
+  it("US-BEH-03 ticking off reloads the shown history", async () => {
+    const entries: unknown[] = [];
+    doneServer(undefined, entries);
+    const user = userEvent.setup();
+    show();
+    await user.selectOptions(await screen.findByLabelText("Exemplar für den Verlauf"), "s-a");
+    await screen.findByText(/Noch keine erledigte Behandlung/);
+    entries.push(doneEntry("z", "2026-10-03"));
+    await user.click(
+      await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
+    );
+    expect(await screen.findByRole("list", { name: "Erledigte Behandlungen" })).toBeTruthy();
   });
 });

@@ -268,3 +268,144 @@ describe("US-BEH-02 open treatments", () => {
     await pool.query("delete from account where subject = $1", [fresh]);
   });
 });
+
+const complete = (
+  sub: string | null,
+  id: string,
+  body: unknown = { timeZone: "Europe/Berlin" },
+  key?: string | null,
+) => call(sub, "POST", `/treatments/${id}/complete`, body, key);
+const planned = async (sub: string, specimenId: string, extra: Record<string, unknown> = {}) =>
+  (await plan(sub, { specimenIds: [specimenId], ...extra })).body["treatments"] as { id: string }[];
+const history = (sub: string | null, specimenId: string) =>
+  call(sub, "GET", `/treatments/history?specimenId=${specimenId}`);
+
+describe("US-BEH-03 tick off a date", () => {
+  it("POST /treatments/:id/complete without token: 401", async () => {
+    expect((await complete(null, randomUUID())).status).toBe(401);
+  });
+
+  it("US-BEH-03 without Idempotency-Key: 400, and the treatment stays open", async () => {
+    const e = await newSpecimen(subA);
+    const [t] = await planned(subA, e);
+    const r = await complete(subA, (t as { id: string }).id, undefined, null);
+    expect(r).toMatchObject({ status: 400, body: { error: { code: "idempotency.key_missing" } } });
+    expect((await listed(subA)).some((x) => x.id === (t as { id: string }).id)).toBe(true);
+  });
+
+  it("US-BEH-03 ticks off with the local date (23:30 UTC is already the 3rd in Berlin, still the 2nd in Los Angeles, NFR-08)", async () => {
+    const e = await newSpecimen(subA);
+    const [berlin, la] = await planned(subA, e, { count: 2, intervalDays: 1, date: "2026-10-01" });
+    const a = await complete(subA, (berlin as { id: string }).id);
+    const b = await complete(subA, (la as { id: string }).id, { timeZone: "America/Los_Angeles" });
+    expect(a).toMatchObject({
+      status: 200,
+      body: { treatment: { done: true, doneAt: "2026-10-03" } },
+    });
+    expect(b.body["treatment"]).toMatchObject({ done: true, doneAt: "2026-10-02" });
+  });
+
+  it("US-BEH-03 the row leaves the open list and the card names the next date (US-BES-06)", async () => {
+    const e = await newSpecimen(subA);
+    const [first, second] = await planned(subA, e, {
+      count: 2,
+      intervalDays: 7,
+      date: "2026-10-01",
+    });
+    expect((await cards(subA)).find((c) => c.id === e)?.moreTreatments).toBe(1);
+    await complete(subA, (first as { id: string }).id);
+    expect((await listed(subA)).filter((t) => t.specimenId === e).map((t) => t.id)).toEqual([
+      (second as { id: string }).id,
+    ]);
+    expect((await cards(subA)).find((c) => c.id === e)).toMatchObject({
+      treatment: { dueDate: { text: "in 5 Tg." } },
+      moreTreatments: 0,
+    });
+    await complete(subA, (second as { id: string }).id);
+    expect((await cards(subA)).find((c) => c.id === e)?.treatment).toBeNull();
+  });
+
+  it("US-BEH-03 a second tap (second device, new key) changes nothing: 200, same done date", async () => {
+    const e = await newSpecimen(subA);
+    const [t] = await planned(subA, e);
+    const id = (t as { id: string }).id;
+    const first = await complete(subA, id);
+    const again = await complete(subA, id, { timeZone: "Pacific/Kiritimati" });
+    expect(again).toMatchObject({ status: 200 });
+    expect(again.body["treatment"]).toEqual(first.body["treatment"]);
+  });
+
+  it.each([
+    ["no time zone", {}],
+    ["unknown time zone", { timeZone: "Mars/Base" }],
+  ])("US-BEH-03 invalid input (%s): 400 and nothing written", async (_, body) => {
+    const e = await newSpecimen(subA);
+    const [t] = await planned(subA, e);
+    const r = await complete(subA, (t as { id: string }).id, body);
+    expect(r).toMatchObject({ status: 400, body: { error: { code: "input.invalid" } } });
+    expect((await listed(subA)).some((x) => x.id === (t as { id: string }).id)).toBe(true);
+  });
+
+  it("US-BEH-03 an id that is not an id: 400; an unknown one: 404 treatment.not_found", async () => {
+    expect((await complete(subA, "3")).status).toBe(400);
+    expect(await complete(subA, randomUUID())).toMatchObject({
+      status: 404,
+      body: { error: { code: "treatment.not_found" } },
+    });
+  });
+
+  it("US-BEH-03 tenant: Ben cannot tick off Anna's treatment, it looks unknown and stays open (P-04)", async () => {
+    const e = await newSpecimen(subA);
+    const [t] = await planned(subA, e);
+    const id = (t as { id: string }).id;
+    expect(await complete(subB, id)).toMatchObject({
+      status: 404,
+      body: { error: { code: "treatment.not_found" } },
+    });
+    expect((await listed(subA)).some((x) => x.id === id)).toBe(true);
+  });
+
+  it("US-BEH-03 a treatment of an archived specimen is refused: 409 specimen.archived", async () => {
+    const e = await newSpecimen(subA);
+    const [t] = await planned(subA, e);
+    await call(subA, "POST", `/specimens/${e}/archive`, {
+      reason: "eingegangen",
+      timeZone: "Europe/Berlin",
+    });
+    const r = await complete(subA, (t as { id: string }).id);
+    expect(r).toMatchObject({ status: 409, body: { error: { code: "specimen.archived" } } });
+  });
+});
+
+describe("US-BEH-03 history per specimen", () => {
+  it("GET /treatments/history without token: 401", async () => {
+    expect((await history(null, randomUUID())).status).toBe(401);
+  });
+
+  it("US-BEH-03 done entries stay as history of the specimen, open ones are not in it", async () => {
+    const e = await newSpecimen(subA);
+    const [a, b] = await planned(subA, e, { count: 2, intervalDays: 7, date: "2026-10-01" });
+    await complete(subA, (a as { id: string }).id);
+    const r = await history(subA, e);
+    expect(r.status).toBe(200);
+    expect(r.body["treatments"]).toMatchObject([
+      { id: (a as { id: string }).id, done: true, doneAt: "2026-10-03" },
+    ]);
+    expect(JSON.stringify(r.body)).not.toContain((b as { id: string }).id);
+  });
+
+  it("US-BEH-03 tenant: Ben asking for Anna's specimen gets 404 specimen.not_found (P-04)", async () => {
+    const e = await newSpecimen(subA);
+    const [t] = await planned(subA, e);
+    await complete(subA, (t as { id: string }).id);
+    expect(await history(subB, e)).toMatchObject({
+      status: 404,
+      body: { error: { code: "specimen.not_found" } },
+    });
+  });
+
+  it("US-BEH-03 no or invalid specimenId: 400", async () => {
+    expect((await call(subA, "GET", "/treatments/history")).status).toBe(400);
+    expect((await history(subA, "x")).status).toBe(400);
+  });
+});

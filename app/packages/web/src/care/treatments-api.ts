@@ -46,6 +46,42 @@ export async function planTreatments(
   return r.ok ? { ok: true, value: (r.value as { treatments: TreatmentRow[] }).treatments } : r;
 }
 
+/**
+ * Ticks a treatment off (US-BEH-03). The treatment is addressed by its ID, the done date is the device's local date
+ * (NFR-08). The repeat-guard key is created per call; a second tap on another device changes nothing.
+ */
+export async function completeTreatment(
+  api: string,
+  token: string,
+  id: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<TreatmentRow>> {
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/treatments/${encodeURIComponent(id)}/complete`,
+    {
+      timeZone,
+    },
+  );
+  return r.ok ? { ok: true, value: (r.value as { treatment: TreatmentRow }).treatment } : r;
+}
+
+/** The done treatments of one specimen, latest first (history, US-BEH-03). */
+export async function loadTreatmentHistory(
+  api: string,
+  token: string,
+  specimenId: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<readonly TreatmentRow[]>> {
+  const r = await call<{ treatments: TreatmentRow[] }>(
+    fetchFn,
+    `${api}/treatments/history?specimenId=${encodeURIComponent(specimenId)}`,
+    token,
+  );
+  return r.ok ? { ok: true, value: r.value.treatments } : r;
+}
+
 /** The open treatments of the account, earliest first, with status for the device's local "today" (US-BEH-02, NFR-08). */
 export async function loadOpenTreatments(
   api: string,

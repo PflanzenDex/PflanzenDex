@@ -97,3 +97,17 @@
 .open-treatments .hint {
   margin: 0 0 12px;
 }
+.open-treatments .done {
+  margin-top: 12px;
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* History per specimen (US-BEH-03). */
+.treatment-history {
+  margin: 28px 0 0;
+}
+.treatment-history .hint,
+.treatment-history .list {
+  margin-top: 12px;
+}
