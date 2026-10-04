@@ -220,6 +220,11 @@ describe("US-POK-08 data for search and grouping", () => {
     await add("anna", plain);
     const r = await pokedexOwnership({ specimens, species: own }, "anna", TZ);
     expect(r.caught[0]?.speciesId).toBe(plain);
+    specimens = new InMemorySpecimens();
+    await add("anna", plain);
+    await add("anna", named);
+    const reverse = await pokedexOwnership({ specimens, species: own }, "anna", TZ);
+    expect(reverse.caught[0]?.speciesId).toBe(plain);
     const onlyCultivar = await (async () => {
       specimens = new InMemorySpecimens();
       await add("anna", named);

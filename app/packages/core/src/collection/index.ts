@@ -46,6 +46,12 @@ export type { CardsDependencies } from "./cards";
 export { zoneDistribution } from "./distribution";
 export { lightOverview } from "./light-overview";
 export type { LightOverview, LightOverviewRow } from "./light-overview";
+export { difficultyOverview } from "./difficulty-overview";
+export type {
+  DifficultyDependencies,
+  DifficultyOverview,
+  DifficultyRow,
+} from "./difficulty-overview";
 export { specimenHints } from "./specimen-hints";
 export type { HintsDependencies, SpecimenHint } from "./specimen-hints";
 export type {

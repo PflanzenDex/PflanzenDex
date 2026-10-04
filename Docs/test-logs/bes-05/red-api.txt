@@ -1,0 +1,88 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-05/app/packages/api
+
+ ❯ src/collection/difficulty.test.ts (5 tests | 4 failed) 875ms
+   ❯ US-BES-05: difficulty overview (5)
+     × is empty for an account without specimens 15ms
+     × lists species with an active specimen sorted by difficulty, with the care columns 157ms
+     × does not list a species of which the only specimen is archived 68ms
+     × tenant: another account sees none of my species 49ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/difficulty.test.ts > US-BES-05: difficulty overview > is empty for an account without specimens
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ src/collection/difficulty.test.ts:95:22
+     93|     subjects.push(sub);
+     94|     const r = await difficulty(sub);
+     95|     expect(r.status).toBe(200);
+       |                      ^
+     96|     expect(r.body["rows"]).toEqual([]);
+     97|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/collection/difficulty.test.ts > US-BES-05: difficulty overview > lists species with an active specimen sorted by difficulty, with the care columns
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ src/collection/difficulty.test.ts:112:22
+    110|     await specimen(sub, "B", easy);
+    111|     const r = await difficulty(sub);
+    112|     expect(r.status).toBe(200);
+       |                      ^
+    113|     expect(r.body["rows"].map((x: { botanicalName: string }) => x.bota…
+    114|       "Easyplant",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/collection/difficulty.test.ts > US-BES-05: difficulty overview > does not list a species of which the only specimen is archived
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ src/collection/difficulty.test.ts:136:50
+    134|     });
+    135|     expect(a.status).toBe(200);
+    136|     expect((await difficulty(sub)).body["rows"]).toEqual([]);
+       |                                                  ^
+    137|   });
+    138|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/collection/difficulty.test.ts > US-BES-05: difficulty overview > tenant: another account sees none of my species
+AssertionError: Target cannot be null or undefined.
+ ❯ src/collection/difficulty.test.ts:144:51
+    142|     subjects.push(mara, ben);
+    143|     await specimen(mara, "A", await newSpecies(mara, "Maras", 2));
+    144|     expect((await difficulty(mara)).body["rows"]).toHaveLength(1);
+       |                                                   ^
+    145|     expect((await difficulty(ben)).body["rows"]).toEqual([]);
+    146|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  16:38:30
+   Duration  1.51s (tests 62%, transform 27%, import 10%)
+
+exit code: 1

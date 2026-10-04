@@ -25,7 +25,7 @@ Legend: ✅ as expected · ⚠️ works, but something stands out · ❌ error �
 - ✅ "Zum Artprofil" opens the species profile of the catalog (Arten tab, "Zurück zur Suche", profile of the species, `05-species-profile-*.png`).
 - ⚠️ The larger image is not available: the detail view says "Noch kein Bild vorhanden." (the Wikipedia image comes with the taxonomy build, US-POK-03).
 - ⚠️ The full short text is not available: "Kurztext: unbekannt" (same reason). A species without family or source shows "Familie: unbekannt" and "Quelle: unbekannt" (`02-details-no-data-*.png`), nothing is invented (P-08). The source link is the catalog's own source field, not yet the taxonomy build's.
-- ⚠️ The caught date reads 04.10.2026 for every species because the creation of a specimen sets the date to today (the `caughtAt` I sent was ignored by the create route); the date logic itself is covered by the US-POK-07 tests.
+- ⚠️ The caught date reads 04.10.2026 for every species: the create route sets `caughtAt` to today by design (FR-BES-04), so the date I sent was not used. The date logic itself is covered by the US-POK-07 tests.
 - ✅ Automated: core tests (species ID and source on the card, plain species wins over a cultivar), web tests (content, unknown values, non-http source as plain text, profile link), API test (fields through the real route).
 
 ## 2. Criterion: at most one detail view open; closing is unambiguous

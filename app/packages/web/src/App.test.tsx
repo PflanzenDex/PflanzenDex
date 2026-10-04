@@ -67,6 +67,7 @@ function fakeServer(accountStatus = 200) {
       if (path === "/hints") return response(200, { hints: [] });
       if (path === "/specimens/hints") return response(200, { hints: SPECIMEN_HINTS });
       if (path === "/specimens/light-overview") return response(200, { rows: [] });
+      if (path === "/specimens/difficulty") return response(200, { rows: [] });
       return response(404);
     }),
   );
@@ -137,6 +138,18 @@ describe("US-ACC-01 App", () => {
     expect(screen.getByRole("button", { name: "Pflegeprofil" }).getAttribute("aria-current")).toBe(
       "page",
     );
+  });
+
+  it("US-BES-05 the tab Artenvergleich opens the difficulty overview and says what to do without a species", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "Artenvergleich" }));
+    expect(await screen.findByRole("heading", { name: "Artenvergleich" })).toBeTruthy();
+    expect(screen.getByText(/Noch keine Art/)).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Artenvergleich" }).getAttribute("aria-current"),
+    ).toBe("page");
   });
 
   it("US-BES-08 the tab Hinweise lists incomplete specimens and its action leads to the view that fixes it", async () => {

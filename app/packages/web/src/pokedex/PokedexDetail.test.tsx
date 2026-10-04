@@ -69,6 +69,7 @@ describe("US-POK-09 view details of a species", () => {
     const link = d.getByRole("link", { name: /Quelle/ });
     expect(link.getAttribute("href")).toBe("https://de.wikipedia.org/wiki/Geigenfeige");
     expect(link.getAttribute("rel")).toContain("noopener");
+    expect(link.getAttribute("rel")).toContain("noreferrer");
   });
 
   it("US-POK-09 image and short text are shown as unknown while the taxonomy build does not deliver them (P-08)", async () => {
