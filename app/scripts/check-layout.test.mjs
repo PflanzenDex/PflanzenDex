@@ -4,7 +4,10 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { listPaths } from "./check-layout.mjs";
+import config from "../layout.config.mjs";
+import { compareBaseline } from "./layout-baseline.mjs";
+import { findLayout } from "./layout-rules.mjs";
+import { BASELINE_FILE, listPaths } from "./check-layout.mjs";
 
 const git = (cwd, ...args) => execFileSync("git", args, { cwd, stdio: "ignore" });
 
@@ -22,5 +25,12 @@ describe("US-QG-09 listPaths", () => {
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("US-QG-09 the repo", () => {
+  it("passes the layout check with its own baseline", () => {
+    const baseline = JSON.parse(fs.readFileSync(BASELINE_FILE, "utf8"));
+    assert.deepEqual(compareBaseline(findLayout(listPaths(), config), baseline), []);
   });
 });
