@@ -3,10 +3,9 @@
 //   AB-2  API and web import `core` only through its public interface (package root)
 //   AB-6  web imports neither API nor database (NFR-ARC-01 of the earlier draft: HTTP only)
 //   MK-1  marker STRUCTURE_IGNORE / MAX_LINES_IGNORE / COMPLEXITY_IGNORE (first 5 lines) without a reason
-//   EX-1  entry in KNOWN_EXCEPTIONS without a reason
-//   AB-7..AB-14  module boundaries (FR-QG-19): check-modules.mjs, check-modules-sql.mjs, register modules.config.mjs
+//   EX-1  entry in KNOWN_EXCEPTIONS (accepted legacy, with a reason, may only shrink) without a reason
+//   AB-7..AB-14  module boundaries (FR-QG-19): check-modules*.mjs, register modules.config.mjs
 //   ST-c  every directory with code in `core` has an `index.ts`
-// Known, deliberately accepted legacy belongs in KNOWN_EXCEPTIONS (with a reason; the list may only shrink).
 import fs from "node:fs";
 import path from "node:path";
 import { builtinModules } from "node:module";
@@ -17,7 +16,13 @@ import { checkAdapterSql, checkMigrations, kernelExports } from "./check-modules
 
 export const CORE_ALLOWED_IMPORTS = []; // third-party packages allowed in core (empty on purpose; later e.g. zod)
 export const CORE_TEST_ALLOWED_IMPORTS = ["vitest"];
-export const KNOWN_EXCEPTIONS = []; // entries: { rule, file, reason }
+export const KNOWN_EXCEPTIONS = [
+  {
+    rule: "AB-11",
+    file: "packages/db/src/kernel/schema.ts",
+    reason: "Catalog tables are named in the tenant check; they move into `catalog` later.",
+  },
+];
 
 export const MARKERS = ["STRUCTURE_IGNORE", "MAX_LINES_IGNORE", "COMPLEXITY_IGNORE"];
 // Markers in the first 5 lines: { name, reason } (empty reason = marker without a reason = error MK-1).
