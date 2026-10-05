@@ -59,7 +59,7 @@ describe("US-POK-06 page of the caught species", () => {
     expect(screen.getByText("2 Arten gefangen")).toBeTruthy();
     const cards = within(screen.getByRole("list", { name: "Gefangene Arten" }))
       .getAllByRole("listitem")
-      .filter((li) => li.classList.contains("caught-card"));
+      .filter((li) => li.querySelector("[data-species]") !== null);
     expect(cards).toHaveLength(2);
     const [lemonCard, opuntia] = cards as [HTMLElement, HTMLElement];
     expect(within(lemonCard).getByText("Citrus limon")).toBeTruthy();
@@ -86,7 +86,12 @@ describe("US-POK-06 page of the caught species", () => {
   it("US-POK-06 without caught species it says what to do next (P-09)", async () => {
     fakeServer(() => response(200, { ownership: { caught: [], unidentified: [] } }));
     render(<PokedexPage api="http://api" token={token} />);
-    expect((await screen.findByText(/Noch keine Art gefangen/)).textContent).toContain("Exemplar");
+    await screen.findByText(/Noch keine Art gefangen/);
+    expect(screen.getByText(/Lege ein Exemplar/).textContent).toContain("Exemplar");
+    // DS-26, DS-48: the empty state carries the next step as a control, not only as text.
+    expect(screen.getByRole("link", { name: "Exemplar anlegen" }).getAttribute("href")).toBe(
+      "/collection",
+    );
     expect(screen.queryByRole("list", { name: "Gefangene Arten" })).toBeNull();
   });
 

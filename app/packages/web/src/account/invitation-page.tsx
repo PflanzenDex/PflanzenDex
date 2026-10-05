@@ -1,41 +1,41 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
 import { SIGN_IN, type ApiError } from "../kernel";
 import { redeemInvitation } from "./access-api";
-import "./operator.css";
+import { useServerRefusal } from "./refusal";
+import { TextField } from "./text-field";
+import { invitationCodeSchema, type InvitationCodeFields } from "./schemas";
 
 type Token = () => Promise<string | undefined>;
 
-const EMPTY: ApiError = { code: "input.invalid", text: "Bitte gib deinen Einladungscode ein." };
+/** A refusal of the server always belongs to the one field of this form. */
+const codeField = () => ["code" as const];
 
 /**
  * The state of the form: one request at a time (a double tap sends one), an empty field is refused before sending, a
- * refusal of the server stays visible and the focus returns to the field (P-10).
+ * refusal of the server stays visible at the field and the focus returns to it (P-10).
  */
 function useRedeem(api: string, token: Token, onRegistered: () => void) {
-  const [code, setCode] = useState("");
+  const form = useForm<InvitationCodeFields>({
+    resolver: zodResolver(invitationCodeSchema),
+    defaultValues: { code: "" },
+  });
   const [error, setError] = useState<ApiError | null>(null);
-  const [running, setRunning] = useState(false);
   const busy = useRef(false);
-  const field = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (error) field.current?.focus();
-  }, [error]);
-
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
+  useServerRefusal<InvitationCodeFields>(error, form.setError, codeField);
+  const submit = form.handleSubmit(async ({ code }) => {
     if (busy.current) return;
-    const typed = code.trim();
-    if (typed === "") return setError(EMPTY);
     busy.current = true;
-    setRunning(true);
     const t = await token();
-    const r = t ? await redeemInvitation(api, t, typed) : { ok: false as const, error: SIGN_IN };
+    const r = t ? await redeemInvitation(api, t, code) : { ok: false as const, error: SIGN_IN };
     busy.current = false;
-    setRunning(false);
     if (r.ok) onRegistered();
     else setError(r.error);
-  };
-  return { code, setCode, error, running, field, submit };
+  });
+  return { form, submit, pending: form.formState.isSubmitting };
 }
 
 /**
@@ -48,46 +48,48 @@ export function InvitationPage(props: {
   onRegistered: () => void;
   onSignOut: () => void;
 }) {
-  const form = useRedeem(props.api, props.token, props.onRegistered);
-  const { error } = form;
+  const { form, submit, pending } = useRedeem(props.api, props.token, props.onRegistered);
   return (
-    <section className="card" aria-labelledby="invitation-title">
-      <h1 id="invitation-title">Einladungscode</h1>
-      <p className="lead">
+    <section
+      aria-labelledby="invitation-title"
+      className="flex w-full max-w-md min-w-0 flex-col gap-4 rounded-2xl border border-border bg-card p-5"
+    >
+      <h1 id="invitation-title" className="text-2xl font-semibold">
+        Einladungscode
+      </h1>
+      <p className="text-muted-foreground">
         Die Registrierung ist im Moment nur mit Einladung möglich. Gib den Code ein, den du bekommen
         hast.
       </p>
-      <p className="quiet">
+      <p className="text-sm text-muted-foreground">
         Du hast keinen Code? Bitte die Person, die PflanzenDex betreibt, um eine Einladung.
       </p>
-      <form className="invitation-form" onSubmit={(e) => void form.submit(e)} noValidate>
-        <label>
-          Einladungscode
-          <input
-            ref={form.field}
-            value={form.code}
-            onChange={(e) => form.setCode(e.target.value)}
+      <Form {...form}>
+        <form noValidate onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
+          <TextField
+            control={form.control}
+            name="code"
+            label="Einladungscode"
             autoComplete="off"
             autoCapitalize="characters"
             spellCheck={false}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={error ? "invitation-error" : undefined}
           />
-        </label>
-        {error && (
-          <p role="alert" id="invitation-error" className="warning">
-            {error.text}
-          </p>
-        )}
-        <div className="actions">
-          <button type="submit" className="primary" disabled={form.running}>
-            Registrieren
-          </button>
-          <button type="button" className="secondary" onClick={props.onSignOut}>
-            Abmelden
-          </button>
-        </div>
-      </form>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button type="submit" size="touch" disabled={pending} className="sm:flex-1">
+              Registrieren
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="touch"
+              onClick={props.onSignOut}
+              className="sm:flex-1"
+            >
+              Abmelden
+            </Button>
+          </div>
+        </form>
+      </Form>
     </section>
   );
 }

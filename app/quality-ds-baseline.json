@@ -2,36 +2,6 @@
   "entries": [
     {
       "rule": "DS-48",
-      "file": "account/invitation-page.tsx",
-      "count": 3
-    },
-    {
-      "rule": "DS-48",
-      "file": "account/operator-cost.tsx",
-      "count": 4
-    },
-    {
-      "rule": "DS-48",
-      "file": "account/operator-parts.tsx",
-      "count": 3
-    },
-    {
-      "rule": "DS-48",
-      "file": "account/settings-fields.tsx",
-      "count": 3
-    },
-    {
-      "rule": "DS-48",
-      "file": "account/settings-page.tsx",
-      "count": 1
-    },
-    {
-      "rule": "DS-48",
-      "file": "account/views.tsx",
-      "count": 5
-    },
-    {
-      "rule": "DS-48",
       "file": "care/measure-form.tsx",
       "count": 5
     },
@@ -199,26 +169,6 @@
       "rule": "DS-48",
       "file": "light/zones-view.tsx",
       "count": 5
-    },
-    {
-      "rule": "DS-48",
-      "file": "pokedex/PokedexBrowse.tsx",
-      "count": 2
-    },
-    {
-      "rule": "DS-48",
-      "file": "pokedex/PokedexCards.tsx",
-      "count": 1
-    },
-    {
-      "rule": "DS-48",
-      "file": "pokedex/PokedexControls.tsx",
-      "count": 3
-    },
-    {
-      "rule": "DS-48",
-      "file": "pokedex/PokedexDetail.tsx",
-      "count": 2
     }
   ]
 }

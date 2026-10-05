@@ -75,7 +75,7 @@ describe("US-ACC-05 registration with an invitation code", () => {
     await user.type(field, "FALSCH");
     await user.click(screen.getByRole("button", { name: "Registrieren" }));
     const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toBe(INVALID.error.text);
+    expect(alert.textContent).toContain("ungültig, abgelaufen oder schon benutzt");
     expect(field.value).toBe("FALSCH");
     expect(onRegistered).not.toHaveBeenCalled();
     expect(document.activeElement).toBe(field);
@@ -121,5 +121,33 @@ describe("US-ACC-05 registration with an invitation code", () => {
     open();
     await userEvent.setup().click(screen.getByRole("button", { name: "Abmelden" }));
     expect(onSignOut).toHaveBeenCalledOnce();
+  });
+});
+
+describe("US-ACC-05 · DS-48 states and primitives", () => {
+  it("US-ACC-05 · DS-49 a refusal shows the German text of its error code, never the raw server text", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(() =>
+        json(403, { error: { code: "invitation.invalid", text: "RAW SERVER TEXT" } }),
+      ),
+    );
+    open();
+    const user = userEvent.setup();
+    await user.type(screen.getByRole("textbox", { name: "Einladungscode" }), "FALSCH");
+    await user.click(screen.getByRole("button", { name: "Registrieren" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).not.toContain("RAW SERVER TEXT");
+    expect(alert.textContent).toContain("ungültig");
+  });
+
+  it("US-ACC-05 · DS-48 the refusal is linked to the field by aria-describedby and the field is marked", async () => {
+    open();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Registrieren" }));
+    const alert = await screen.findByRole("alert");
+    const field = screen.getByRole("textbox", { name: "Einladungscode" });
+    expect(field.getAttribute("aria-describedby")).toContain(alert.id);
+    expect(field.getAttribute("aria-invalid")).toBe("true");
+    expect(document.activeElement).toBe(field);
   });
 });
