@@ -2,6 +2,4 @@
 # US-DEV-02: staged files only, fast checks only (Prettier, ESLint). Domain gates run in pre-push and CI.
 . "$(dirname "$0")/_lib.sh"
 need_setup
-# US-DEV-10: repository statistics in README.md. Never blocks a commit; a failure is reported, not hidden (P-10).
-"$root/scripts/repo-stats.sh" --hook || echo "hook: repo-stats failed, README statistics not updated (run: make repo-stats)" >&2
 cd "$app" && npx --no-install lint-staged
