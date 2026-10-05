@@ -171,25 +171,20 @@ function prFixture(t) {
   return { dir, origin, run, ghCalls };
 }
 
-test("US-DEV-10: make pr writes the statistics, commits them once, pushes and marks the PR ready", (t) => {
+test("US-DEV-10: make pr leaves README.md alone, pushes and marks the PR ready", (t) => {
   const { dir, origin, run, ghCalls } = prFixture(t);
+  const before = readme(dir);
+  const head = git(dir, "rev-parse", "HEAD");
   const r = run("42");
   assert.equal(r.code, 0, r.err);
-  assert.match(readme(dir), /## What PflanzenDex does/);
-  assert.equal(git(dir, "status", "--porcelain"), "");
-  assert.equal(git(dir, "log", "-1", "--format=%s"), "docs(dev): update repository statistics\n");
-  assert.equal(
-    git(origin, "rev-parse", "feat/abc-02-growth"),
-    git(dir, "rev-parse", "HEAD"),
-    "the commit is pushed",
-  );
+  assert.equal(readme(dir), before, "no statistics block is written per PR");
+  assert.equal(git(dir, "rev-parse", "HEAD"), head, "no commit is made");
+  assert.equal(git(origin, "rev-parse", "feat/abc-02-growth"), head, "the branch is pushed");
   assert.deepEqual(ghCalls(), ["pr ready 42"]);
 
-  const head = git(dir, "rev-parse", "HEAD");
   const again = run();
   assert.equal(again.code, 0, again.err);
-  assert.match(again.out, /README statistics unchanged/);
-  assert.equal(git(dir, "rev-parse", "HEAD"), head, "no second commit when nothing changed");
+  assert.equal(git(dir, "rev-parse", "HEAD"), head);
   assert.deepEqual(ghCalls(), ["pr ready 42", "pr ready"]);
 });
 
