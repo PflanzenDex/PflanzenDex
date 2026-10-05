@@ -7,7 +7,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { FILE_RULES, importViolations, RULES } from "./check-design-system-rules.mjs";
+import { FILE_RULES, importViolations, RULES, TOKEN_FILE } from "./check-design-system-rules.mjs";
 
 const WEB = "packages/web";
 export const REQUIRED_DEPENDENCIES = [
@@ -76,6 +76,7 @@ export function scan(webRoot, locations = new Map()) {
     if (!language || isTest(full)) continue;
     const file = path.relative(src, full).split(path.sep).join("/");
     const content = fs.readFileSync(full, "utf8");
+    if (language === "css" && file !== TOKEN_FILE) add("DS-33", file);
     if (language === "tsx") scanFileRules(file, content, add, locations);
     scanLines(file, language, content, add);
   }
