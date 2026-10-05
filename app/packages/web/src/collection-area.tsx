@@ -2,7 +2,7 @@ import { Suspense, useState } from "react";
 import type { Species } from "@pflanzendex/core";
 import { CollectionPage } from "./collection";
 import { MeasurePage } from "./care";
-import { PageSkeleton } from "@/components/shared/page-skeleton";
+import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skeleton";
 
 type Token = () => Promise<string | undefined>;
 
