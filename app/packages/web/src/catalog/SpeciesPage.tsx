@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Species } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state";
-import { OFFLINE_NOTE } from "@/components/shared/request-state";
+import { OFFLINE_NOTE } from "@/components/shared/states/request-state/request-state";
 import { SIGN_IN, useInvalidate, type ApiError, type Request } from "../kernel";
 import { propose } from "./species-api";
 import { SEARCH_KEY, useProfile, useSearch } from "./species-hooks";

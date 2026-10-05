@@ -3,7 +3,7 @@ import type { LightLocation, PhasesRow } from "@pflanzendex/core";
 import { loadLocations } from "../light";
 import { LoadFrame, useInvalidate, type Response } from "../kernel";
 import { PhasesList } from "./phases-list";
-import { loadCarePhases } from "./care-phases-api";
+import { loadCarePhases } from "./api/care-phases-api";
 import { CarePhasesSkeleton } from "./CarePhasesPage.skeleton";
 import { RefusalAlert, StatusNote } from "./notices";
 import { usePhaseSwitch } from "./use-phase-switch";
