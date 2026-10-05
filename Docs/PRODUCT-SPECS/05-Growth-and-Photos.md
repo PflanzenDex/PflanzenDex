@@ -20,13 +20,15 @@ Acceptance criteria:
 
 State of implementation: the view "Measure" per specimen shows "Was messen?" (growth measure of the species, otherwise "unbekannt"), the last measurement, the last assessment, the input form and the course. Input: number on the grid of 0.5 cm (assumption: the grid also applies on the server so that nothing is rounded silently), quality (preset `Gesund`), optional note; the date defaults to today in the profile's time zone (US-ACC-02; the device's zone only as fallback while none is chosen), is changeable and not in the future (assumption: a typo in the year would distort every later rate). Invalid input writes nothing; saving goes through `measurement.record` with `Idempotency-Key`. **Open:** the optional photo (media processing, FR-WAC-09, US-WAC-05) as well as rate and trend in the view (US-WAC-03, US-WAC-04). That the same dimension is always measured at the same place exists only as a hint in the text.
 
-### US-WAC-02 · Assess etiolation while measuring · ⬜ (prototype ✅)
+### US-WAC-02 · Assess etiolation while measuring · ✅ (prototype ✅)
 
 Acceptance criteria:
 
 - Choice `Healthy` / `Etiolated/thin` (default `Healthy`).
 - If the species has etiolation signs, they can be shown at the choice field ("how to recognize?").
 - A measurement without quality (imported legacy data) counts as `Healthy`.
+
+State of implementation: the form "Measure" offers the choice `Gesund` / `Vergeilt/dünn`, preset `Gesund`; `measurement.record` accepts only these two values and stores `healthy` when the quality is missing or empty. In the database the column `quality` is required with the default `healthy`, so a row written without quality (imported legacy data) reads back as `healthy` and no measurement is ever left without one (no new migration: the column exists since US-WAC-01). The "Measure" view carries the etiolation signs of the species (catalog field, required on approval); the form shows them behind the closed disclosure "Wie erkennen?" next to the choice. If the species is not visible or the text is empty, the view says `null` and the form shows no disclosure instead of an invented text (P-08). The AI suggestion of the quality belongs to US-WAC-06/US-KI-04; how the quality overrides the trend belongs to US-WAC-04.
 
 ### US-WAC-03 · Growth rate and trend against the own average · ⬜ (prototype ✅)
 
