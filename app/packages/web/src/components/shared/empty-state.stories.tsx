@@ -9,7 +9,7 @@ const meta = { title: "shared/EmptyState", component: EmptyState } satisfies Met
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Empty: Story = {
+export const Default: Story = {
   args: {
     title: "Noch keine Pflanzen",
     description: "Lege deine erste Pflanze an, dann erscheint sie hier.",

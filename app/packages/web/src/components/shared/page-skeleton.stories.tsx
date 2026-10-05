@@ -9,4 +9,4 @@ const meta = { title: "shared/PageSkeleton", component: PageSkeleton } satisfies
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Loading: Story = {};
+export const Default: Story = {};
