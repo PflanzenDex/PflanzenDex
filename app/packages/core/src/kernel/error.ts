@@ -38,6 +38,8 @@ export const ERROR_TEXTS = {
     "Ab dem dritten Exemplar braucht jedes Exemplar der Art ein Kennzeichen. Vergib die fehlenden Kennzeichen, dann wird gespeichert.",
   "specimen.caught_in_future":
     "Das Fangdatum liegt in der Zukunft. Wähle heute oder ein früheres Datum.",
+  "specimen.caught_after_archived":
+    "Das Fangdatum liegt nach dem Tag, an dem das Exemplar archiviert wurde. Wähle das Archivierungsdatum oder ein früheres Datum.",
   "specimen.not_found": "Dieses Exemplar gibt es nicht.",
   "specimen.not_a_cutting": "Dieses Exemplar ist kein Steckling und muss nicht eingetopft werden.",
   "specimen.already_archived": "Dieses Exemplar ist schon archiviert.",

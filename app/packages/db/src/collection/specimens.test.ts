@@ -294,3 +294,45 @@ describe("US-ACC-03 count of the active specimens (start page)", () => {
     await pool.query("delete from account where id = $1", [carla]);
   });
 });
+
+describe("US-BES-11 correct the catch date in the database", () => {
+  const create = async (account: string, name: string) => {
+    const z = await specimens.create(account, { ...values, name });
+    if (typeof z === "string") throw new Error(z);
+    return z;
+  };
+
+  it("US-BES-11: only caught_at changes; the date stays the calendar date (NFR-08)", async () => {
+    const before = process.env["TZ"];
+    process.env["TZ"] = "Pacific/Kiritimati";
+    try {
+      const z = await create(anna, "Fang Korrektur");
+      const r = await specimens.setCaughtAt(anna, z.id, "2019-05-17");
+      expect(r).toEqual({ ...z, caughtAt: "2019-05-17" });
+      expect(await specimens.find(anna, z.id)).toEqual(r);
+    } finally {
+      if (before === undefined) delete process.env["TZ"];
+      else process.env["TZ"] = before;
+    }
+  });
+
+  it("US-BES-11: an archived specimen up to its archiving date; a later date changes nothing", async () => {
+    const z = await create(anna, "Fang Archiv");
+    await specimens.archive(anna, z.id, "abgegeben", "2026-01-10");
+    expect(await specimens.setCaughtAt(anna, z.id, "2026-01-11")).toBe("after_archived");
+    expect(await specimens.find(anna, z.id)).toMatchObject({ caughtAt: "2026-10-03" });
+    expect(await specimens.setCaughtAt(anna, z.id, "2026-01-10")).toMatchObject({
+      caughtAt: "2026-01-10",
+      status: "archived",
+      archivedAt: "2026-01-10",
+      archivedReason: "abgegeben",
+    });
+  });
+
+  it("US-BES-11, P-04: another account cannot correct it and gets the answer of an unknown specimen", async () => {
+    const z = await create(anna, "Fang Mandant");
+    expect(await specimens.setCaughtAt(ben, z.id, "2020-01-01")).toBe("not_found");
+    expect(await specimens.setCaughtAt(anna, randomUUID(), "2020-01-01")).toBe("not_found");
+    expect(await specimens.find(anna, z.id)).toMatchObject({ caughtAt: "2026-10-03" });
+  });
+});

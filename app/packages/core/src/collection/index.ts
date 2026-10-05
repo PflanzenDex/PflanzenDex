@@ -1,6 +1,6 @@
 // Public interface of the `collection` module (ADR 0003): specimens (US-BES-02).
-export { specimenCreate } from "./create";
-export type { CreateDependencies } from "./create";
+export { specimenCreate, specimenCorrectCatchDate } from "./create";
+export type { CreateDependencies, CatchDateDependencies } from "./create";
 export { specimenMark } from "./mark";
 export type { MarkDependencies } from "./mark";
 export { specimenRepot } from "./repot";
@@ -80,6 +80,7 @@ export {
   isActive,
 } from "./types";
 export type {
+  CatchDateStore,
   CreateStatus,
   SpeciesSource,
   Specimen,
