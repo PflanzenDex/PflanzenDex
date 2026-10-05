@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { LightView, type LightActions } from "./light-view";
 import type { LightData } from "./light-api";
 import { ErrorMessage } from "./message";
-import { derivationText } from "./text";
+import { derivationText } from "./texts";
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
 const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");

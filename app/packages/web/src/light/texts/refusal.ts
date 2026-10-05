@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { FieldValues, Path, UseFormSetError } from "react-hook-form";
 import { errorText } from "@/lib/error-text";
-import type { ApiError } from "./light-api";
+import type { ApiError } from "../light-api";
 
 /**
  * The German text of a refusal (DS-49, P-10): by its error code, never the raw server text. The one code the web
