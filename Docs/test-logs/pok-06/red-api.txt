@@ -88,3 +88,5 @@ AssertionError: expected [] to deeply equal [ 'Citrusghckfpkkje limon' ]
    Start at  09:58:41
    Duration  937ms (tests 45%, transform 40%, import 15%)
 
+
+exit code recorded when run: 1

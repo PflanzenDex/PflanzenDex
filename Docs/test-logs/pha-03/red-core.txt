@@ -467,3 +467,5 @@ Received: "system.unexpected"
    Start at  02:25:55
    Duration  357ms (transform 71%, tests 14%, import 13%, worker 2%)
 
+
+exit code recorded when run: 1

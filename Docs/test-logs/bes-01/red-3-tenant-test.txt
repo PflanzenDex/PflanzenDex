@@ -110,3 +110,5 @@ AssertionError: expected [ …(3) ] to deeply equal [ StringContaining "offen" ]
     Isolate  6 workers spawned · ~86ms startup each (spawn + environment, per file)
              at least ~429ms faster with isolate: false — reuses workers across files instead of one per file
 
+
+exit code recorded when run: 1

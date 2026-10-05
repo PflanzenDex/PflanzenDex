@@ -27,7 +27,7 @@ export type ErrorField = (typeof FIELD_ORDER)[number];
 export type FieldErrors = Partial<Record<ErrorField, string>>;
 
 /** An https address without credentials (the same rule as the server, which decides in the end). */
-function isPlainHttps(text: string): boolean {
+export function isPlainHttps(text: string): boolean {
   try {
     const url = new URL(text);
     return url.protocol === "https:" && url.username === "" && url.password === "";

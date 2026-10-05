@@ -9,3 +9,5 @@ AssertionError: expected 403 to be 200 // Object.is equality
  FAIL  src/account/profile.test.ts > US-ACC-02 · PUT /account/profile > two fresh accounts: the first save of one never shows up for the other (P-04)
 AssertionError: expected undefined to be 'Lena Test' // Object.is equality
       Tests  3 failed | 15 passed (18)
+
+exit code recorded when run: 1

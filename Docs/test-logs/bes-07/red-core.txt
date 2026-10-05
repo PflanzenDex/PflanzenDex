@@ -148,3 +148,5 @@ AssertionError: expected { ok: true, wert: { …(7) } } to match object { ok: fa
       Tests  21 failed | 34 passed (55)
    Start at  19:50:11
    Duration  283ms (transform 62%, tests 23%, import 13%, worker 2%)
+
+exit code recorded when run: 1

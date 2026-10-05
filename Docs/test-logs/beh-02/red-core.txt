@@ -38,3 +38,5 @@ false
    Start at  08:32:36
    Duration  282ms (transform 81%, import 13%, tests 5%, worker 1%)
 
+
+exit code recorded when run: 1

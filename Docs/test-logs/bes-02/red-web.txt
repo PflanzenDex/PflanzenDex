@@ -23,3 +23,5 @@ Error: Cannot find module './exemplare-api' imported from /home/max/root/Code-Ro
    Start at  15:03:21
    Duration  176ms (worker 94%, environment 6%)
 
+
+exit code recorded when run: 1

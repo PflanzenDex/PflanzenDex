@@ -215,3 +215,5 @@ error: relation "wish" does not exist
    Start at  10:21:25
    Duration  648ms (tests 82%, transform 13%, import 5%)
 
+
+exit code recorded when run: 1

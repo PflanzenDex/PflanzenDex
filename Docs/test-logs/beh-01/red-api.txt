@@ -15,3 +15,5 @@
  FAIL  src/care/treatments.test.ts > US-BEH-01 tenant isolation (P-04) > an archived specimen cannot be treated: 409 specimen.archived
  Test Files  1 failed (1)
 ⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+exit code recorded when run: 1

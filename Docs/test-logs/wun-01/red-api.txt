@@ -74,3 +74,5 @@ AssertionError: expected { status: 200, …(1) } to match object { status: 409, 
    Start at  10:23:05
    Duration  843ms (transform 50%, tests 38%, import 12%)
 
+
+exit code recorded when run: 1

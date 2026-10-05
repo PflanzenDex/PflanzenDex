@@ -92,3 +92,5 @@ error: relation "exemplar" does not exist
    Start at  15:00:56
    Duration  412ms (tests 57%, transform 31%, import 11%, worker 1%)
 
+
+exit code recorded when run: 1

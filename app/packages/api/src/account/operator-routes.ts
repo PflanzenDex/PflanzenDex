@@ -28,8 +28,10 @@ export function operatorRoutes(pool: Pool, clock: () => Date = () => new Date())
   routes.put("/operator/registration", async (c) =>
     write(c, deps, setMode, { input: await body(c) }),
   );
-  routes.post("/operator/invitations", async (c) =>
-    write(c, deps, create, { input: await body(c), success: 201 }),
-  );
+  routes.post("/operator/invitations", async (c) => {
+    const response = await write(c, deps, create, { input: await body(c), success: 201 });
+    response.headers.set("cache-control", "no-store");
+    return response;
+  });
   return routes;
 }

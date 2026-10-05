@@ -173,7 +173,7 @@ State of implementation: the tab "Prüfliste" (only for operators and reviewers;
 | Location               | yes              | Reference to a location of the keeper (US-LIC-05)                                                       |
 | Light zone (override)  | no               | overrides the species zone (cutting)                                                                    |
 | Status                 | yes              | `Plant`, `Cutting`, `Archived`                                                                          |
-| Caught_At              | no               | Date, optional on creation (back-dating allowed, never in the future, FR-BES-04); if missing, the creation date counts as "≈" (US-POK-07)                                           |
+| Caught_At              | no               | Date, optional on creation (back-dating allowed, never in the future, FR-BES-04); if missing, the creation date counts as "≈" (US-POK-07)                                                 |
 | Provenance             | no               | `{From, Swap, Date}` (US-SOZ-11)                                                                        |
 | Share, Share_Photos    | no               | Sharing setting (US-SOZ-04)                                                                             |
 

@@ -505,3 +505,5 @@ Received: "specimen.name_taken"
    Start at  01:29:58
    Duration  398ms (transform 70%, import 17%, tests 11%, worker 2%)
 
+
+exit code recorded when run: 1

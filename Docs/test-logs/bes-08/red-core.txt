@@ -188,3 +188,5 @@ AssertionError: expected +0 to be 2 // Object.is equality
    Start at  00:58:07
    Duration  254ms (transform 77%, import 13%, tests 9%, worker 2%)
 
+
+exit code recorded when run: 1

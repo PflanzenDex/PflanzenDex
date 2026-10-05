@@ -11,3 +11,5 @@
  FAIL  src/care/treatment-plan.test.ts > US-BEH-01 specimens and tenant isolation > US-BEH-01 the same Idempotency-Key writes only once, a changed input under it conflicts
  Test Files  1 failed (1)
 ⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+exit code recorded when run: 1

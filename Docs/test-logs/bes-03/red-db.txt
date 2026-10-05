@@ -205,3 +205,5 @@ Received: "not_found"
    Start at  01:30:12
    Duration  1.02s (tests 80%, transform 13%, import 6%, worker 1%)
 
+
+exit code recorded when run: 1
