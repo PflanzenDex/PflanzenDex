@@ -1,8 +1,6 @@
 // Preflight of `make claim` (US-DEV-08, #251): everything a later claim step needs is checked before the
 // first write, so a claim never stops half way (e.g. the pre-push hook failing without node_modules).
-import { existsSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { depsFindings } from "./check-deps.mjs";
 
 export class PreflightFailed extends Error {
   constructor(findings) {
@@ -11,15 +9,8 @@ export class PreflightFailed extends Error {
   }
 }
 
-const APP_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-
-export async function preflight(
-  client,
-  { hasModules = existsSync(path.join(APP_DIR, "node_modules")) } = {},
-) {
-  const findings = [];
-  if (!hasModules)
-    findings.push("node_modules missing: run `make setup` first (the pre-push hook needs it)");
+export async function preflight(client, { depsProblems = depsFindings() } = {}) {
+  const findings = depsProblems.map((f) => `${f} (the pre-push hook needs it)`);
   try {
     await client.run("git", ["cat-file", "-e", "origin/dev:Makefile"]);
   } catch {
