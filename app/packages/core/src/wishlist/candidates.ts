@@ -63,7 +63,9 @@ function priority(
   };
 }
 
-const titleOf = (w: WishRow): string => (w.german ? `${w.german} (${w.name})` : w.name);
+/** "German (name)"; just the name while no German name is known (P-08). */
+export const titleOf = (w: Pick<WishRow, "name" | "german">): string =>
+  w.german ? `${w.german} (${w.name})` : w.name;
 
 function candidate(w: WishRow, zones: readonly ZoneStock[], s: Standing): Candidate {
   const zone = zones.find((z) => z.zoneId === w.targetZoneId);

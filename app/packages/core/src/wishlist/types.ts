@@ -38,12 +38,25 @@ export interface WishRow {
 /** The values of a new wish; `nameKey` is derived from the name (`wishNameKey`) and makes the name unique per account. */
 export type WishValues = Omit<WishRow, "id" | "type" | "status"> & { readonly nameKey: string };
 
+/** A wish after "Bought" (US-WUN-03). `changed` is false when it was bought already: nothing was written again. */
+export interface WishPurchase {
+  readonly wish: WishRow;
+  readonly changed: boolean;
+}
+
 /** Every call applies to the account `userId` only (P-04). */
 export interface WishStore {
   /** `name_taken`: a wish of the account has that name (FR-WUN-06); `zone_unknown`: not a zone of the account. */
   create(userId: string, values: WishValues): Promise<WishRow | "name_taken" | "zone_unknown">;
   /** Open plant wishes (`status = wishlist`, FR-WUN-02), oldest first. */
   open(userId: string): Promise<readonly WishRow[]>;
+  /**
+   * Sets an open wish to `bought` (US-WUN-03) in one step. An already bought wish is returned unchanged
+   * (`changed: false`); `not_found`: no wish of the account (a foreign one looks the same, P-04); `not_open`: discarded.
+   */
+  buy(userId: string, wishId: string): Promise<WishPurchase | "not_found" | "not_open">;
+  /** Bought plant wishes, the history of US-WUN-03; by name. */
+  bought(userId: string): Promise<readonly WishRow[]>;
   /** Wishes of any status that point at the zone (so a zone in use is not deleted unnoticed). */
   usingZone(userId: string, zoneId: string): Promise<readonly WishRow[]>;
 }
