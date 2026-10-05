@@ -69,9 +69,9 @@ What is taken over from the prototype: the **domain behavior** (phases, growth t
 | QS Cross-cutting        | 7       | 6                      | 1      |
 | MIG Migration (dropped) | 0       | 0                      | 0      |
 | ENT Discover            | 8       | 0                      | 8      |
-| QG Quality gates        | 8       | 0                      | 8      |
+| QG Quality gates        | 9       | 0                      | 9      |
 | DEV Development process | 10      | 0                      | 10     |
-| **Total**               | **125** | **50**                 | **75** |
+| **Total**               | **126** | **50**                 | **76** |
 
 ## Replacing existing documents
 
