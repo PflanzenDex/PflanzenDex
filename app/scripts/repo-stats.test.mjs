@@ -46,7 +46,21 @@ function fixture(t) {
     "Docs/PRODUCT-SPECS/01-Demo.md",
     "### US-ABC-01 · Water a plant · ✅ new\n### US-ABC-02 · Measure growth · ⬜ ✅\n| FR-ABC-01 | Rule | 🟨 |\n",
   );
-  write(dir, "Docs/PRODUCT-SPECS/README.md", "| ABC Demo epic | 2 | 0 | 2 |\n");
+  write(dir, "Docs/PRODUCT-SPECS/02-Xyz.md", "### US-XYZ-01 · Add a friend · ✅ new\n");
+  write(dir, "Docs/PRODUCT-SPECS/19-Dev.md", "### US-DEV-01 · Run tasks · 🟨 new\n");
+  write(
+    dir,
+    "Docs/PRODUCT-SPECS/README.md",
+    [
+      "| [01-Demo.md](01-Demo.md) | Epic ABC: watering, growth |",
+      "| [02-Xyz.md](02-Xyz.md)   | Epic XYZ: friends          |",
+      "| [19-Dev.md](19-Dev.md)   | Epic DEV: hooks            |",
+      "| ABC Demo epic  | 2 | 0 | 2 |",
+      "| XYZ Other epic | 1 | 0 | 1 |",
+      "| DEV Process    | 1 | 0 | 1 |",
+      "",
+    ].join("\n"),
+  );
   write(dir, "app/packages/core/src/a.ts", "export const a = 1;\n");
   write(dir, "app/packages/core/src/a.test.ts", 'it("works", () => {});\n');
   git(dir, "add", ".");
@@ -58,23 +72,40 @@ function fixture(t) {
 
 const readme = (dir) => readFileSync(path.join(dir, "README.md"), "utf8");
 
-test("US-DEV-10: the block reports size, spec progress, notable features and history", (t) => {
+test("US-DEV-10: the block shows the feature areas with status, description, spec link and progress", (t) => {
   const { code, out } = stats(fixture(t), "--print");
   assert.equal(code, 0);
-  assert.match(out, /\| 4 files \|/);
-  assert.match(out, /2 user stories and 1 functional requirements/);
-  assert.match(out, /Stories: 1 ✅ done, 0 🟨 in progress, 1 ⬜ planned/);
-  assert.match(out, /\| ABC Demo epic \| 2 \| 1 \| 0 \| 1 \| `█████░░░░░` \|/);
-  assert.match(out, /- \*\*US-ABC-01\*\* Water a plant/);
-  assert.doesNotMatch(
-    out,
-    /US-ABC-02\*\* Measure/,
-    "the prototype ✅ after ⬜ is not the product status",
+  assert.match(out, /2 feature areas \(epics\): \*\*1 complete, 1 in progress, 0 planned\.\*\*/);
+  const xyz =
+    "| ✅ | **Other epic** · [XYZ](Docs/PRODUCT-SPECS/02-Xyz.md) | Friends | 1 ✅ · 0 🟨 · 0 ⬜ | `██████████` |";
+  const abc =
+    "| 🟨 | **Demo epic** · [ABC](Docs/PRODUCT-SPECS/01-Demo.md) | Watering, growth | 1 ✅ · 0 🟨 · 1 ⬜ | `█████░░░░░` |";
+  assert.ok(out.includes(xyz), "a complete area");
+  assert.ok(out.includes(abc), "the prototype ✅ after ⬜ is not the product status");
+  assert.ok(out.indexOf(xyz) < out.indexOf(abc), "complete areas come first");
+  assert.match(out, /"Done" : 2\n {2}"In progress" : 0\n {2}"Planned" : 1/);
+});
+
+test("US-DEV-10: process epics are listed under engineering, not as product features", (t) => {
+  const out = stats(fixture(t), "--print").out;
+  const engineering = out.indexOf("## Engineering");
+  const dev = out.indexOf(
+    "**Process** · [DEV](Docs/PRODUCT-SPECS/19-Dev.md) | Hooks | 0 ✅ · 1 🟨 · 0 ⬜",
   );
-  assert.match(out, /1 test cases/);
+  assert.ok(engineering > 0 && dev > engineering);
+});
+
+test("US-DEV-10: the block reports code, tests and activity", (t) => {
+  const out = stats(fixture(t), "--print").out;
+  assert.match(out, /\| \*\*Repository\*\* \| 6 files · 13 lines · /);
+  assert.match(out, /\| \*\*Production code\*\* \| 1 lines · packages: core 1 \|/);
+  assert.match(
+    out,
+    /\| \*\*Tests\*\* \| 1 files · 1 test cases · 1 lines \(100% of production code\) \|/,
+  );
   assert.match(out, /1 commits by 1 people since 2026-10-01/);
-  assert.match(out, /- feat\(abc\): water a plant \(US-ABC-01\)/);
   assert.match(out, /```mermaid\npie showData title Lines by language/);
+  assert.match(out, /```mermaid\nxychart-beta/);
 });
 
 test("US-DEV-10: no branch name, time stamp or hash in the block; two runs give the same output", (t) => {
@@ -92,7 +123,7 @@ test("US-DEV-10: history comes from the merge base with origin/dev, not from the
   git(dir, "add", ".");
   git(dir, "commit", "-q", "-m", "feat(abc): branch-only work");
   const after = stats(dir, "--print").out;
-  const history = (s) => s.slice(s.indexOf("### History"));
+  const history = (s) => s.slice(s.indexOf("## Activity"));
   assert.equal(history(after), history(before));
   assert.doesNotMatch(after, /branch-only work/);
 });
@@ -100,19 +131,19 @@ test("US-DEV-10: history comes from the merge base with origin/dev, not from the
 test("US-DEV-10: tree numbers come from the index, and README.md never counts itself", (t) => {
   const dir = fixture(t);
   write(dir, "unstaged.ts", "const x = 1;\n");
-  assert.match(stats(dir, "--print").out, /\| 4 files \|/);
+  assert.match(stats(dir, "--print").out, /\| 6 files · 13 lines/);
   git(dir, "add", "unstaged.ts");
-  assert.match(stats(dir, "--print").out, /\| 5 files \|/);
+  assert.match(stats(dir, "--print").out, /\| 7 files · 14 lines/);
   write(dir, "README.md", `# Demo\n\nmore\nlines\n\n${START}\n${END}\n`);
   git(dir, "add", "README.md");
-  assert.match(stats(dir, "--print").out, /\| 5 files \| .*\n\| 7 lines \|/);
+  assert.match(stats(dir, "--print").out, /\| 7 files · 14 lines/);
 });
 
 test("US-DEV-10: the hook writes the block, stages README.md, and a second run changes nothing", (t) => {
   const dir = fixture(t);
   const r = stats(dir, "--hook");
   assert.equal(r.code, 0, r.err);
-  assert.match(readme(dir), /### Product progress/);
+  assert.match(readme(dir), /## What PflanzenDex does/);
   assert.match(readme(dir), /^# Demo\n/);
   assert.equal(git(dir, "diff", "--name-only").trim(), "", "README.md is staged");
   const once = readme(dir);
@@ -158,7 +189,7 @@ test("US-DEV-10: with unstaged README edits the hook updates only the staged ver
   assert.equal(readme(dir), edited);
   const staged = git(dir, "show", ":README.md");
   assert.match(staged, /^# Demo\n/);
-  assert.match(staged, /### Product progress/);
+  assert.match(staged, /## What PflanzenDex does/);
 });
 
 test("US-DEV-10: missing markers are reported with a non-zero exit, never silently", (t) => {
