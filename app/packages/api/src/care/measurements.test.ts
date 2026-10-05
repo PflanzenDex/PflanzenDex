@@ -178,6 +178,29 @@ describe("US-WAC-01 record and view a measurement", () => {
   });
 });
 
+describe("US-WAC-02 assess etiolation while measuring", () => {
+  it("the view carries the etiolation signs of the species; healthy is the default quality", async () => {
+    const e = await newSpecimen(subA, "Anzeichen");
+    expect(await call(subA, "GET", `/specimens/${e}/measurements`)).toMatchObject({
+      status: 200,
+      body: { etiolationSigns: "Rosette streckt sich." },
+    });
+    expect((await measure(subA, e, { value: 6 })).body["quality"]).toBe("healthy");
+    const thin = await measure(subA, e, { value: 7, quality: "etiolated" });
+    expect(thin).toMatchObject({ status: 201, body: { quality: "etiolated" } });
+    expect((await call(subA, "GET", `/specimens/${e}/measurements`)).body["lastRating"]).toBe(
+      "etiolated",
+    );
+  });
+
+  it("tenant: another account gets neither the view nor the signs of a foreign specimen", async () => {
+    const annas = await newSpecimen(subA, "Anzeichenfremd");
+    const r = await call(subB, "GET", `/specimens/${annas}/measurements`);
+    expect(r.status).toBe(404);
+    expect(r.body).not.toHaveProperty("etiolationSigns");
+  });
+});
+
 describe("US-WAC-01 Mandantentrennung (P-04)", () => {
   it("a foreign or unknown specimen: 404 on measuring and on reading, nothing written", async () => {
     const bens = await newSpecimen(subB, "Ben");

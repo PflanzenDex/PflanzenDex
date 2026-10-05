@@ -51,6 +51,11 @@ export interface MeasurementView {
   readonly specimenId: string;
   /** What is measured: the growth measure of the species; `null` means "unknown" (P-08). */
   readonly growthMeasure: GrowthMeasure | null;
+  /**
+   * How to recognize etiolation on this species (catalog field, US-WAC-02), shown at the quality choice; `null` if the
+   * species is not visible or the text is empty, never invented (P-08).
+   */
+  readonly etiolationSigns: string | null;
   readonly measurements: readonly MeasurementRow[];
   readonly last: MeasurementRow | null;
   /** Quality of the last measurement; `null` as long as there is none. */

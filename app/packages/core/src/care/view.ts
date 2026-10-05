@@ -9,8 +9,8 @@ export interface ViewDependencies {
 }
 
 /**
- * The "Measure" view of a specimen (US-WAC-01): what is measured, the measurements, the last measurement and its
- * rating. Everything is derived and never stored (P-01). `null` if the specimen does not exist or belongs to another
+ * The "Measure" view of a specimen (US-WAC-01): what is measured, how etiolation shows on the species (US-WAC-02),
+ * the measurements, the last measurement and its rating. Everything is derived and never stored (P-01). `null` if the specimen does not exist or belongs to another
  * account (both look the same, P-04).
  */
 export async function measurementView(
@@ -27,6 +27,7 @@ export async function measurementView(
   return {
     specimenId: specimen.id,
     growthMeasure: species?.growthMeasure ?? null,
+    etiolationSigns: species?.etiolationSigns.trim() || null,
     measurements,
     last,
     lastRating: last?.quality ?? null,

@@ -49,9 +49,13 @@ export class SpecimenStub implements Pick<SpecimenStore, "find"> {
   }
 }
 
-/** A single species with the desired growth measure; `null` means "species not visible". */
-export const speciesStub = (growthMeasure: GrowthMeasure | null): SpeciesSource => ({
-  find: async () => (growthMeasure ? ({ id: "species-1", growthMeasure } as Species) : null),
+/** A single species with the desired growth measure and etiolation signs; `null` means "species not visible". */
+export const speciesStub = (
+  growthMeasure: GrowthMeasure | null,
+  etiolationSigns = "Triebe werden lang und dünn.",
+): SpeciesSource => ({
+  find: async () =>
+    growthMeasure ? ({ id: "species-1", growthMeasure, etiolationSigns } as Species) : null,
 });
 
 /** In-memory adapter for tests only; the real adapter lives in `db`. */
