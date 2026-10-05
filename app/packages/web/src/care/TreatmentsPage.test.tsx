@@ -245,7 +245,7 @@ describe("US-BEH-02 offene Behandlungen", () => {
       response(500, { error: { code: "server.error", text: "Fehler." } }),
     );
     show();
-    expect(await screen.findByRole("button", { name: "Erneut laden" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
     const asked = fetchFn.mock.calls.map(([url]) => String(url));
     expect(asked.some((u) => u.includes("/treatments?timeZone="))).toBe(true);
   });

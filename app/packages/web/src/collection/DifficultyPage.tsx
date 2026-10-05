@@ -29,6 +29,7 @@ export function DifficultyPage(props: { api: string; token: () => Promise<string
   return (
     <PageFrame>
       <LoadFrame
+        queryKey={["collection", "difficulty"]}
         token={token}
         load={load}
         loadingText="Artenvergleich wird geladen …"

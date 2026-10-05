@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { WishlistPage } from "./WishlistPage";
 
@@ -138,7 +139,72 @@ describe("US-WUN-01 page of the candidate list", () => {
     );
     render(<WishlistPage api="http://api" token={token} />);
     await screen.findByText("Der Server antwortet nicht.");
-    expect(screen.getByRole("button", { name: /Erneut laden/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Erneut versuchen/ })).toBeTruthy();
+  });
+});
+
+describe("US-QS-07 · DS-09 wishlist on the data layer", () => {
+  it("US-QS-07 · DS-09 pending shows the skeleton with the one loading status", () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise<Response>(() => undefined)),
+    );
+    render(<WishlistPage api="http://api" token={token} />);
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(screen.getByRole("status").textContent).toContain("Wunschliste wird geladen");
+  });
+
+  it("US-QS-07 · DS-09 a domain error shows the text and 'Erneut versuchen' loads again", async () => {
+    let attempt = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        ++attempt === 1
+          ? response(500, { error: { code: "server.error", text: "Der Server antwortet nicht." } })
+          : response(200, list([candidate()])),
+      ),
+    );
+    render(<WishlistPage api="http://api" token={token} />);
+    await screen.findByText("Der Server antwortet nicht.");
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(await screen.findByText("Korbmarante (Calathea orbifolia)")).toBeTruthy();
+  });
+
+  it("US-QS-07 · DS-09 offline after an earlier load shows the cached list with the note", async () => {
+    let offline = false;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        if (offline) throw new TypeError("Failed to fetch");
+        return response(200, list([candidate()]));
+      }),
+    );
+    function Toggle() {
+      const [open, setOpen] = useState(true);
+      return (
+        <>
+          <button onClick={() => setOpen((o) => !o)}>umschalten</button>
+          {open && <WishlistPage api="http://api" token={token} />}
+        </>
+      );
+    }
+    render(<Toggle />);
+    await screen.findByText("Korbmarante (Calathea orbifolia)");
+    offline = true;
+    await userEvent.click(screen.getByRole("button", { name: "umschalten" }));
+    await userEvent.click(screen.getByRole("button", { name: "umschalten" }));
+    expect(await screen.findByText("Offline - zuletzt geladene Daten")).toBeTruthy();
+    expect(screen.getByText("Korbmarante (Calathea orbifolia)")).toBeTruthy();
+  });
+
+  it("US-QS-07 · DS-09 a saved wish refreshes the list without a page reload", async () => {
+    fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
+    render(<WishlistPage api="http://api" token={token} />);
+    await screen.findByText("Korbmarante (Calathea orbifolia)");
+    await userEvent.type(screen.getByLabelText("Name"), "Neu");
+    await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
+    expect(await screen.findByRole("heading", { name: "Neu" })).toBeTruthy();
+    expect(screen.queryByText("Korbmarante (Calathea orbifolia)")).toBeNull();
   });
 });
 

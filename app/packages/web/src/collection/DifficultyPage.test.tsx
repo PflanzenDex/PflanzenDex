@@ -123,7 +123,7 @@ describe("US-BES-05 page of the difficulty overview", () => {
     );
     render(<DifficultyPage api="http://api" token={token} />);
     expect((await screen.findByRole("alert")).textContent).toContain("Der Server antwortet nicht.");
-    await userEvent.click(screen.getByRole("button", { name: "Erneut laden" }));
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByRole("table")).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
   });

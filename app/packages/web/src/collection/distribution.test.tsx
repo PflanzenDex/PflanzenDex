@@ -207,7 +207,7 @@ describe("US-LIC-02 collection page shows the distribution", () => {
     expect(screen.getByText(/Lampe 3 und Lampe 4 sind gleich dünn besetzt/)).toBeTruthy();
   });
 
-  it('if the distribution fails, nothing is shown half: error text and "Erneut laden"', async () => {
+  it('if the distribution fails, nothing is shown half: error text and "Erneut versuchen"', async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>(async (url) => {
@@ -223,6 +223,6 @@ describe("US-LIC-02 collection page shows the distribution", () => {
     );
     render(page());
     expect((await screen.findByRole("alert")).textContent).toContain("Verteilung nicht ladbar.");
-    expect(screen.getByRole("button", { name: "Erneut laden" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });
 });

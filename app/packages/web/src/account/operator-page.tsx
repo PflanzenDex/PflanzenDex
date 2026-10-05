@@ -1,6 +1,6 @@
 import type { CreatedInvitation, OperatorCostFigure, OperatorOverview } from "@pflanzendex/core";
 import { useCallback, useRef, useState } from "react";
-import { LoadFrame, SIGN_IN, type ApiError, type Response } from "../kernel";
+import { LoadFrame, SIGN_IN, useInvalidate, type ApiError, type Response } from "../kernel";
 import { createInvitation, loadOverview, setOperatorCost, setRegistrationMode } from "./access-api";
 import { CostForm, costPerUserText, moneyText, monthText } from "./operator-cost";
 import { InvitationsArea, ModeSection } from "./operator-parts";
@@ -8,10 +8,11 @@ import { OperatorPageSkeleton } from "./operator-page.skeleton";
 import { refusalText } from "./refusal";
 
 type Token = () => Promise<string | undefined>;
+const OPERATOR_KEY = ["account", "operator"] as const;
 
 /** One write at a time (a double tap sends one); a refusal stays visible (P-10), the page reloads afterwards. */
 function useOperatorActions(api: string, token: Token) {
-  const [refresh, setRefresh] = useState(0);
+  const invalidate = useInvalidate(OPERATOR_KEY);
   const [running, setRunning] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
@@ -28,11 +29,10 @@ function useOperatorActions(api: string, token: Token) {
     setRunning(false);
     setError(r.ok ? null : r.error);
     setMessage(r.ok ? done(r.value) : null);
-    if (r.ok) setRefresh((n) => n + 1);
+    if (r.ok) invalidate();
   };
 
   return {
-    refresh,
     running,
     message,
     error,
@@ -126,11 +126,11 @@ export function OperatorPage(props: { api: string; token: Token }) {
         </p>
       )}
       <LoadFrame
+        queryKey={[...OPERATOR_KEY, "overview"]}
         token={token}
         load={load}
         loadingText="Zahlen werden geladen …"
         loadingFallback={<OperatorPageSkeleton label="Zahlen werden geladen …" />}
-        refresh={actions.refresh}
       >
         {(overview: OperatorOverview) => (
           <>

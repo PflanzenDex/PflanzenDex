@@ -93,12 +93,12 @@ describe("US-BES-02 Seite Bestand", () => {
     expect(await screen.findByText("Standort: Regal Süd")).toBeTruthy();
   });
 
-  it('without sign-in: error text and "Erneut laden" instead of an empty list (P-10)', async () => {
+  it('without sign-in: error text and "Erneut versuchen" instead of an empty list (P-10)', async () => {
     const { fetchFn } = fakeServer();
     render(page({ token: async () => undefined }));
     expect((await screen.findByRole("alert")).textContent).toContain("Bitte melde dich neu an.");
     expect(fetchFn).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Erneut laden" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });
 
   it("if one of the two queries fails, nothing is shown half", async () => {

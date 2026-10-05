@@ -1,8 +1,8 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import type { LightLocation, SpecimenHint } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
-import { LoadFrame, useWriteAction } from "../kernel";
+import { LoadFrame, useInvalidate, useWriteAction } from "../kernel";
 import { HintsPageSkeleton } from "./HintsPage.skeleton";
 import { Actions, CARD, GRID, NextAction, PageFrame, Quiet, Status, TITLE, Warning } from "./parts";
 import { refusalText } from "./refusal";
@@ -30,14 +30,15 @@ interface Data {
  * (P-09). An incomplete specimen drops out of evaluations; here it is named instead of vanishing (P-10). A specimen
  * without a location gets one right here, chosen from the own locations (US-PHA-03).
  */
+const KEY = ["collection", "hints"] as const;
+
 export function HintsPage(props: {
   api: string;
   token: () => Promise<string | undefined>;
   onOpen: (target: HintTarget) => void;
 }) {
   const { api, onOpen, token } = props;
-  const [refresh, setRefresh] = useState(0);
-  const again = useCallback(() => setRefresh((n) => n + 1), []);
+  const again = useInvalidate(KEY);
   const place = useWriteAction(token, again);
   const load = useCallback(
     async (t: string) => {
@@ -54,11 +55,11 @@ export function HintsPage(props: {
   return (
     <PageFrame>
       <LoadFrame
+        queryKey={KEY}
         token={token}
         load={load}
         loadingText="Hinweise werden geladen …"
         loadingFallback={<HintsPageSkeleton label="Hinweise werden geladen …" />}
-        refresh={refresh}
       >
         {(data: Data) => (
           <>

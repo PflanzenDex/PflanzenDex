@@ -1,3 +1,5 @@
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createQueryClient } from "../kernel";
 import { renderToString as render } from "react-dom/server";
 import type { MeasurementView, MeasurementRow } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";
@@ -158,12 +160,14 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
 
   it('the page shows "wird geladen" first and offers the way back', () => {
     const html = renderToString(
-      <MeasurePage
-        api="http://api"
-        token={async () => "tok"}
-        specimen={{ id: "e1", name: "Bogenhanf" }}
-        onBack={vi.fn()}
-      />,
+      <QueryClientProvider client={createQueryClient()}>
+        <MeasurePage
+          api="http://api"
+          token={async () => "tok"}
+          specimen={{ id: "e1", name: "Bogenhanf" }}
+          onBack={vi.fn()}
+        />
+      </QueryClientProvider>,
     );
     expect(html).toContain("Messen: Bogenhanf");
     expect(html).toContain("Messungen werden geladen");
