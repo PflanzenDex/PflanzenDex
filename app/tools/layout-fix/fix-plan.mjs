@@ -1,7 +1,8 @@
 // Plans the moves that bring one directory within the layout rules (US-QG-09, FR-QG-21). Pure: paths in, moves out.
 //   0. LY-3 (only with `kebab`): files with a PascalCase, camelCase or snake_case name get a kebab-case name.
 //   1. LY-4: a component x.tsx moves, with every file of the same stem, into a folder x/.
-//   2. Groups chosen by a person (`into`): units that start with one of the prefixes move into the named folder.
+//   2. Groups chosen by a person (`into`): the named units (or, with a trailing *, the units that start with the prefix)
+//      move into the folder; a unit is moved by the first group that names it.
 //   3. LY-1 (unless `auto` is false): while the directory has too many units, the biggest groups of units that share a name prefix move into
 //      a folder of that prefix (care-phases-api.ts, care-phases-list.ts -> phases/ inside care/); a folder that is
 //      still too big is split again by the next name segment.
@@ -45,12 +46,18 @@ function renameToKebab(current, dir, opts) {
   }
 }
 
+// An entry is an exact unit name, or a prefix when it ends with "*".
+const matches = (name, entry) =>
+  entry.endsWith("*") ? name.startsWith(entry.slice(0, -1)) : name === entry;
+
 function moveInto(current, dir, groups) {
   const units = unitsOf(current, dir);
+  const taken = new Set();
   for (const { folder, prefixes } of groups) {
     for (const [name, entries] of units) {
-      if (!prefixes.some((prefix) => name.startsWith(prefix))) continue;
+      if (taken.has(name) || !prefixes.some((entry) => matches(name, entry))) continue;
       if (name === folder && entries.some(([, rel]) => rel.includes("/"))) continue; // already that folder
+      taken.add(name);
       for (const [old, rel] of entries) current.set(old, `${dir}/${folder}/${rel}`);
     }
   }

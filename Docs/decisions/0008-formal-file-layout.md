@@ -26,6 +26,8 @@ The module cut is checked (`app/modules.config.mjs`, AB-7 to AB-14), the file la
 
 ## Consequences
 
+- **Amended on 2026-10-05 (PR 5):** the structure rule `ST-c` of the boundary check (`index.ts` in every directory of `core`) came from the replaced proposal FR-QG-04 and contradicted "barrels per module only". It now asks for an `index.ts` in `core/src` and in each module root only, so feature folders below a module need none.
+
 - **Amended on 2026-10-05 (PR 4a):** the Node scripts move to `app/tools/`, not to a root `tools/`. They import npm packages (`eslint`, `playwright`, and the `vitest` configs import `coverage-config.mjs`), and Node resolves bare imports upwards from the importing file, so scripts under a root `tools/` would not find `app/node_modules`. The root `tools/` holds the shell scripts of the former root `scripts/`.
 
 - Moves are large but mechanical: about 77 directories are over the limit today. The baseline makes that visible and the ratchet makes it shrink.

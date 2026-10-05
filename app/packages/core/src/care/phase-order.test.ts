@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { SpeciesStub, InMemorySpecimens, testSpecies } from "../collection/test-helpers";
-import { InMemoryCareProfiles } from "../collection/care-profile-test-helpers";
+import { SpeciesStub, InMemorySpecimens, testSpecies } from "../collection/shared/test-helpers";
+import { InMemoryCareProfiles } from "../collection/care-profile/care-profile-test-helpers";
 import { carePhasesList, phaseStatus } from "./index";
 import { PhaseLocationStub } from "./test-helpers";
 

@@ -1,7 +1,7 @@
 // layout-fix: brings one directory within the layout rules (US-QG-09, FR-QG-21).
-//   node tools/layout-fix/layout-fix.mjs <dir> [--apply] [--kebab] [--into folder=prefix,prefix]... [--no-auto]
+//   node tools/layout-fix/layout-fix.mjs <dir> [--apply] [--kebab] [--into folder=name,prefix*]... [--no-auto]
 //   Dry run unless --apply; <dir> is relative to the repo root. --kebab renames PascalCase and snake_case files,
-//   --into groups the units that start with a prefix into a folder (repeatable), --no-auto switches the grouping by
+//   --into folder=name,prefix* groups the named units (a trailing * means a prefix) into a folder (repeatable), --no-auto switches the grouping by
 //   common name prefix off.
 // It plans the moves (fix-plan), moves with `git mv` and rewrites the imports that point at moved files (fix-rewrite).
 // Imports are checked afterwards: each rewritten import must still resolve to the file it pointed at before.
@@ -162,7 +162,7 @@ function main(argv) {
   if (!arg)
     return (
       console.error(
-        "usage: npm run layout-fix -- <dir> [--apply] [--kebab] [--into folder=prefix,prefix] [--no-auto]",
+        "usage: npm run layout-fix -- <dir> [--apply] [--kebab] [--into folder=name,prefix*] [--no-auto]",
       ) ?? 2
     );
   const dir = path.relative(root, path.resolve(root, arg)).split(path.sep).join("/");
@@ -177,7 +177,7 @@ function main(argv) {
     );
   for (const o of r.overLimit)
     console.log(
-      `  still over the limit: ${o.dir} has ${o.units} units; split it with --into folder=prefix`,
+      `  still over the limit: ${o.dir} has ${o.units} units; split it with --into folder=name,prefix*`,
     );
   for (const m of r.mentions) console.log(`  check by hand: ${m.file} mentions ${m.path}`);
   for (const b of r.broken)
