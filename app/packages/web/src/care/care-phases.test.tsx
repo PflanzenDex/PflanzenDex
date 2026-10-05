@@ -2,7 +2,7 @@ import { renderToString as render } from "react-dom/server";
 import type { LightLocation, PhasesRow } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";
 import { PhasesList } from "./phases-list";
-import { loadCarePhases } from "./care-phases-api";
+import { loadCarePhases } from "./api/care-phases-api";
 
 const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");
 const response = (status: number, body: unknown) =>

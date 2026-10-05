@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import type { ApiError } from "./api";
+import type { ApiError } from "../api";
 
 /** A failed request with its API error, so the view can show the German text of the code (FR-QG-11, P-10). */
 export class RequestFailure extends Error {

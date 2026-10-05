@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { EmptyState } from "./empty-state";
+import { EmptyState } from "../../empty-state";
 
 export type RequestStatus = "pending" | "error" | "empty" | "ready";
 

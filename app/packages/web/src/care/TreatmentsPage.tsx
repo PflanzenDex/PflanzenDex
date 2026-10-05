@@ -1,8 +1,8 @@
 import { useCallback, useRef, useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
-import { RequestState } from "@/components/shared/request-state";
+import { RequestState } from "@/components/shared/states/request-state/request-state";
 import { SIGN_IN, useInvalidate, useRequest, type ApiError, type Request } from "../kernel";
-import { OPEN_KEY, SPECIMENS_KEY } from "./query-keys";
+import { OPEN_KEY, SPECIMENS_KEY } from "./api/query-keys";
 import { OpenTreatments } from "./open-treatments";
 import { RefusalAlert, StatusNote } from "./notices";
 import { TreatmentHistory } from "./treatment-history";

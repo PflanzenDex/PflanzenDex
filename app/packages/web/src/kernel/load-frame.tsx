@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { EmptyState, type EmptyStateAction } from "@/components/shared/empty-state";
-import { RequestState } from "@/components/shared/request-state";
+import { RequestState } from "@/components/shared/states/request-state/request-state";
 import type { Response } from "./api";
-import { useRequest } from "./use-request";
+import { useRequest } from "./request/use-request";
 import type { QueryKey } from "@tanstack/react-query";
 
 /**
