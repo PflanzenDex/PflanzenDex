@@ -1,3 +1,4 @@
+import { Ellipsis } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -30,9 +31,7 @@ function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
           aria-label="Mehr"
           className={cn(slot, "h-auto rounded-b-md", state(active))}
         >
-          <span aria-hidden="true" className="text-lg leading-none">
-            ⋯
-          </span>
+          <Ellipsis aria-hidden="true" className="size-5 shrink-0" />
           <span>Mehr</span>
         </Button>
       </SheetTrigger>
