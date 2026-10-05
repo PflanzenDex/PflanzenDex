@@ -8,7 +8,7 @@
   ],
   "workspaces": {
     ".": {
-      "entry": ["scripts/*.mjs!", "modules.config.mjs!"],
+      "entry": ["scripts/*.mjs!", "scripts/storybook/*.mjs!", "modules.config.mjs!"],
       "ignore": ["scripts/coverage-config.d.mts", "modules.config.d.mts"]
     },
     "packages/db": {

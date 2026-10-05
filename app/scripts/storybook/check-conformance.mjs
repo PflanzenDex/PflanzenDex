@@ -1,7 +1,7 @@
 // Gate QG-U5 / FR-QG-09 (US-QS-07): runs every story of the component catalog in a real browser, in light and
 // dark at 360 px width, and checks axe (serious/critical), 44x44 px targets (DS-15), a visible focus indicator
 // on Tab (DS-37) and Esc plus focus return of overlays (DS-40). jsdom cannot measure any of this.
-// Usage: node scripts/check-conformance.mjs [--report]   (--report prints the findings but exits 0)
+// Usage: node scripts/storybook/check-conformance.mjs [--report]   (--report prints the findings but exits 0)
 // The catalog is built to a temporary directory and served from there; no database or API is needed.
 import AxeBuilder from "@axe-core/playwright";
 import { spawnSync } from "node:child_process";
@@ -26,14 +26,14 @@ import {
   targetFindings,
 } from "./conformance-rules.mjs";
 
-const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const allowlistFile = path.join(appRoot, "conformance-allowlist.json");
 const FIXTURE_PREFIX = "conformance-fixture-";
 const where = ({ story, scheme }) => `QG-U5 ${story} (${scheme})`;
 const SCHEMES = ["light", "dark"];
 const VIEWPORT = { width: 360, height: 640 };
 
-function serve(root) {
+export function serve(root) {
   const types = {
     ".html": "text/html",
     ".js": "text/javascript",
@@ -58,7 +58,7 @@ function serve(root) {
   );
 }
 
-function buildCatalog(outDir, fixtures) {
+export function buildCatalog(outDir, fixtures) {
   const r = spawnSync(
     "npm",
     ["exec", "-w", "@pflanzendex/web", "--", "storybook", "build", "-o", outDir, "--quiet"],

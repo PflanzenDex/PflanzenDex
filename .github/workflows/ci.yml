@@ -201,8 +201,46 @@ jobs:
           PR_BASE_REF: ${{ github.base_ref }}
         run: make changelog-check
 
+  # QG-U5 / US-QS-07 (ADR 0009): visual regression of the `components/ui` stories (360 px, light and dark) in the
+  # pinned Playwright container, so the pictures equal the baselines in `app/packages/web/.storybook/snapshots` made on a laptop.
+  # On failure the diff images are attached. Never updates baselines (`make ds-snapshots` is a local step).
+  ds-snapshots:
+    needs: changes
+    if: needs.changes.outputs.app == 'true' && !(github.event.action == 'edited' && github.event.pull_request.draft)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - run: make ds-snapshots-check
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: ds-snapshots-diff
+          path: app/.cache/ds-snapshots-results
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 14
+
   ci-status:
-    needs: [changes, app, metadata, dependency-review, audit, lighthouse, e2e]
+    needs:
+      [
+        changes,
+        app,
+        ds-snapshots,
+        metadata,
+        dependency-review,
+        audit,
+        lighthouse,
+        e2e,
+      ]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 2
@@ -210,13 +248,14 @@ jobs:
       - env:
           CHANGES: ${{ needs.changes.result }}
           APP: ${{ needs.app.result }}
+          DS_SNAPSHOTS: ${{ needs.ds-snapshots.result }}
           METADATA: ${{ needs.metadata.result }}
           DEPENDENCY_REVIEW: ${{ needs.dependency-review.result }}
           AUDIT: ${{ needs.audit.result }}
           LIGHTHOUSE: ${{ needs.lighthouse.result }}
           E2E: ${{ needs.e2e.result }}
         run: |
-          for r in "$CHANGES" "$APP" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E"; do
+          for r in "$CHANGES" "$APP" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E"; do
             case "$r" in
               success | skipped) ;;
               *) echo "failed: $r"; exit 1 ;;
