@@ -157,3 +157,17 @@
   align-items: center;
   min-height: 48px;
 }
+
+/* Tap marker (US-POK-09): a chevron at the card's edge plus a hover/focus border; visible without hover on touch. */
+.card-chevron {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  color: var(--leise);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+.caught-card:hover,
+.caught-card:focus-within {
+  border-color: var(--leise);
+}

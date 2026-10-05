@@ -21,6 +21,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "care.target_unknown": 409,
   "review.already_exists": 409,
   "review.status_invalid": 409,
+  "review.merge_lock_failed": 409,
   "review.reason_missing": 400,
   "review.approval_incomplete": 409,
   "review.merge_target_invalid": 409,

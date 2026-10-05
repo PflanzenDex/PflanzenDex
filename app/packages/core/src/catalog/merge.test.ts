@@ -111,6 +111,17 @@ describe("US-BES-10 merge with an existing species (FR-BES-11, P-10)", () => {
     expect(w.reviews.rows.find((z) => z.id === proposal.caseId)?.status).toBe("proposal");
   });
 
+  it("US-BES-10 a lock that cannot be taken has its own code and is not reported as decided", async () => {
+    const { w, target, proposal, merge } = await setup();
+    w.reviews.lockFails = true;
+    const r = await merge("reviewer", {
+      proposalId: proposal.caseId,
+      targetSpeciesId: target.speciesId,
+    });
+    expect(!r.ok && r.error.code).toBe("review.merge_lock_failed");
+    expect(w.reviews.rows.find((z) => z.id === proposal.caseId)?.status).toBe("proposal");
+  });
+
   it("US-BES-10 a case that is decided while merging is reported as decided", async () => {
     const { w, target, proposal, merge } = await setup();
     const original = w.reviews.merge.bind(w.reviews);

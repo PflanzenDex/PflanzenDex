@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PokedexPage } from "./PokedexPage";
@@ -156,5 +156,49 @@ describe("US-POK-09 view details of a species", () => {
     await userEvent.click(card("Ficus lyrata"));
     expect(within(detail()).queryByRole("button", { name: /Wunschliste/ })).toBeNull();
     expect(within(detail()).queryByText(/Freund/)).toBeNull();
+  });
+});
+
+describe("US-POK-09 follow-ups of the detail view (issue 297)", () => {
+  it("US-POK-09 the browser Back button closes the detail view instead of leaving the page", async () => {
+    await open();
+    await userEvent.click(card("Ficus lyrata"));
+    expect(screen.getByRole("region", { name: /Details/ })).toBeTruthy();
+    window.history.back();
+    await waitFor(() => expect(screen.queryByRole("region", { name: /Details/ })).toBeNull());
+    expect(card("Ficus lyrata")).toBeTruthy();
+  });
+
+  it("US-POK-09 closing with the button takes back the history entry the opening pushed (one Back, no extra entry)", async () => {
+    await open();
+    const push = vi.spyOn(window.history, "pushState");
+    const back = vi.spyOn(window.history, "back");
+    await userEvent.click(card("Ficus lyrata"));
+    await userEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    await waitFor(() => expect(screen.queryByRole("region", { name: /Details/ })).toBeNull());
+    expect(push).toHaveBeenCalledTimes(1);
+    expect(back).toHaveBeenCalledTimes(1);
+    push.mockRestore();
+    back.mockRestore();
+  });
+
+  it("US-POK-09 every card shows a visible tap marker (chevron), not only the hover state", async () => {
+    await open();
+    const marker = card("Ficus lyrata").closest("li")?.querySelector(".card-chevron");
+    expect(marker?.textContent).toBe("›");
+    expect(marker?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("US-POK-09 two rapid close triggers (double click, double Escape) take the history entry back only once", async () => {
+    await open();
+    const back = vi.spyOn(window.history, "back");
+    await userEvent.click(card("Ficus lyrata"));
+    const close = screen.getByRole("button", { name: "Schließen" });
+    fireEvent.click(close);
+    fireEvent.click(close);
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("region", { name: /Details/ })).toBeNull());
+    expect(back).toHaveBeenCalledTimes(1);
+    back.mockRestore();
   });
 });

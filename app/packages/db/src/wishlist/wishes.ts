@@ -15,7 +15,7 @@ export interface WishRow {
   readonly type: "plant";
   readonly status: "wishlist" | "bought" | "discarded";
 }
-export type WishValues = Omit<WishRow, "id" | "type" | "status">;
+export type WishValues = Omit<WishRow, "id" | "type" | "status"> & { readonly nameKey: string };
 
 const COLUMNS = `id, name, german, target_zone_id as "targetZoneId", difficulty, reasoning, image_url as "imageUrl",
   image_source as "imageSource", license, type, status`;
@@ -35,8 +35,8 @@ export class WishesPostgres {
     try {
       const r = await withAccount(this.pool, userId, (c) =>
         c.query<WishRow>(
-          `insert into wish (account_id, name, german, target_zone_id, difficulty, reasoning, image_url, image_source, license)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning ${COLUMNS}`,
+          `insert into wish (account_id, name, german, target_zone_id, difficulty, reasoning, image_url, image_source, license, name_key)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning ${COLUMNS}`,
           [
             userId,
             v.name,
@@ -47,13 +47,15 @@ export class WishesPostgres {
             v.imageUrl,
             v.imageSource,
             v.license,
+            v.nameKey,
           ],
         ),
       );
       return r.rows[0] as WishRow;
     } catch (e) {
       const f = e as { code?: string; constraint?: string };
-      if (f.code === UNIQUE && f.constraint === "wish_name") return "name_taken";
+      if (f.code === UNIQUE && (f.constraint === "wish_name" || f.constraint === "wish_name_key"))
+        return "name_taken";
       if (f.code === FOREIGN_KEY && f.constraint === "wish_target_zone") return "zone_unknown";
       throw e;
     }

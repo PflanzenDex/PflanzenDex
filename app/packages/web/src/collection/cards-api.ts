@@ -16,12 +16,12 @@ export async function loadCards(
   return r.ok ? { ok: true, value: r.value.cards } : r;
 }
 
-/** How many specimens the account has (for the start page); counted from the cards, nothing is stored. */
+/** How many active specimens the account has (for the start page); one cheap count on the server, nothing is stored. */
 export async function loadSpecimenCount(
   api: string,
   token: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<Response<number>> {
-  const r = await loadCards(api, token, fetchFn);
-  return r.ok ? { ok: true, value: r.value.length } : r;
+  const r = await call<{ count: number }>(fetchFn, `${api}/specimens/count`, token);
+  return r.ok ? { ok: true, value: r.value.count } : r;
 }

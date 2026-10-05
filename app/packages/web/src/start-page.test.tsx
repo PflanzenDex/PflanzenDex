@@ -25,7 +25,8 @@ function fakeServer(w: World) {
       if (path === "/light-zones") return response(200, { zones: w.zones });
       if (path === "/locations") return response(200, { locations: w.locations });
       if (path === "/hints") return response(200, { hints: [] });
-      if (path === "/specimens/cards") return response(200, { cards: w.cards });
+      if (path === "/specimens/count") return response(200, { count: w.cards.length });
+      if (path === "/specimens/cards") return response(500, {});
       return response(404, {});
     }),
   );
@@ -162,5 +163,31 @@ describe("US-ACC-03 start page and guided onboarding", () => {
     view();
     const marker = await screen.findByText("Schritt 1 von 3");
     expect(marker.className).toContain("onboarding-progress");
+  });
+
+  it("US-ACC-03 the start page counts the specimens with the count route, it does not load the card list", async () => {
+    fakeServer({ zones: [], locations: [], cards: [{ id: "e1" }] });
+    view();
+    await screen.findByRole("heading", { name: "Start" });
+    const paths = (fetch as ReturnType<typeof vi.fn>).mock.calls.map(
+      ([u]) => new URL(String(u)).pathname,
+    );
+    expect(paths).toContain("/specimens/count");
+    expect(paths).not.toContain("/specimens/cards");
+  });
+
+  it("US-ACC-03 the guide and the overview both have exactly one h1, the steps are h2", async () => {
+    fakeServer({ zones: [], locations: [], cards: [] });
+    view();
+    await screen.findByRole("heading", { name: "Wo stehen deine Pflanzen?" });
+    expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
+      "Start",
+    ]);
+    expect(screen.getByRole("heading", { name: "Wo stehen deine Pflanzen?" }).tagName).toBe("H2");
+    await userEvent.click(screen.getByRole("button", { name: "Einstieg beenden" }));
+    await screen.findByRole("heading", { name: "Start" });
+    expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
+      "Start",
+    ]);
   });
 });

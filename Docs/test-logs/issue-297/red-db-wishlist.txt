@@ -1,0 +1,78 @@
+
+ RUN  v5.0.3 <worktree>
+
+ ❯ src/wishlist/wishes.test.ts (10 tests | 10 skipped) 45ms
+ ❯ src/wishlist/name-key-migration.test.ts (3 tests | 2 failed) 839ms
+   ❯ US-WUN-01 migration 0020 backfills the name key (3)
+     × US-WUN-01 applies although wishes collide after folding, deletes nothing and keys the others 13ms
+     × US-WUN-01 a second run applies nothing, and the new rule holds for new wishes of the account only (P-04) 12ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/wishlist/wishes.test.ts [ src/wishlist/wishes.test.ts ]
+Error: Migration 0016_account_profile.sql was changed after it was applied
+ ❯ migrate src/kernel/migrate.ts:56:15
+     54|         applied.push(name);
+     55|       } else if (alt !== checksum(content)) {
+     56|         throw new Error(`Migration ${name} was changed after it was ap…
+       |               ^
+     57|       }
+     58|     }
+ ❯ src/wishlist/wishes.test.ts:48:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/wishlist/name-key-migration.test.ts > US-WUN-01 migration 0020 backfills the name key > US-WUN-01 applies although wishes collide after folding, deletes nothing and keys the others
+AssertionError: expected [] to deeply equal [ '0020_wishlist_wish_name_key.sql' ]
+
+- Expected
++ Received
+
+- [
+-   "0020_wishlist_wish_name_key.sql",
+- ]
++ []
+
+ ❯ src/wishlist/name-key-migration.test.ts:63:21
+     61|   it("US-WUN-01 applies although wishes collide after folding, deletes…
+     62|     const applied = await migrate(scratch);
+     63|     expect(applied).toEqual(["0020_wishlist_wish_name_key.sql"]);
+       |                     ^
+     64|     expect(await names(anna)).toEqual([
+     65|       { name: "Café", key: "cafe" },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/wishlist/name-key-migration.test.ts > US-WUN-01 migration 0020 backfills the name key > US-WUN-01 a second run applies nothing, and the new rule holds for new wishes of the account only (P-04)
+AssertionError: expected error: column "name_key" of relation "wis… { …(15) } to match object { constraint: 'wish_name_key' }
+(17 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "constraint": "wish_name_key",
++ DatabaseError {
++   "constraint": undefined,
+  }
+
+ ❯ src/wishlist/name-key-migration.test.ts:82:44
+     80|         ]),
+     81|       );
+     82|     await expect(add(anna, "CAFÉ", "cafe")).rejects.toMatchObject({ co…
+       |                                            ^
+     83|     await expect(add(ben, "Cafe Ben", "cafe ben")).resolves.toBeTruthy…
+     84|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 1 passed | 10 skipped (13)
+   Start at  08:12:57
+   Duration  1.23s (tests 85%, transform 7%, import 7%, worker 1%)
+
+exit code: 1

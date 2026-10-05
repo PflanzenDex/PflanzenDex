@@ -35,7 +35,8 @@ export interface WishRow {
   readonly status: WishStatus;
 }
 
-export type WishValues = Omit<WishRow, "id" | "type" | "status">;
+/** The values of a new wish; `nameKey` is derived from the name (`wishNameKey`) and makes the name unique per account. */
+export type WishValues = Omit<WishRow, "id" | "type" | "status"> & { readonly nameKey: string };
 
 /** Every call applies to the account `userId` only (P-04). */
 export interface WishStore {

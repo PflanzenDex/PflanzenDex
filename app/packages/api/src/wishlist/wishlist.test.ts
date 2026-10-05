@@ -247,6 +247,17 @@ describe("US-WUN-01 writing a wish (P-03)", () => {
   });
 });
 
+describe("US-WUN-01 names are unique after folding diacritics (FR-WUN-06)", () => {
+  it("US-WUN-01 a name that differs only in diacritics or composition is refused with 409 wish.name_taken", async () => {
+    const first = await wish(subA, { name: `Café ${run}` });
+    expect(first.status).toBe(201);
+    for (const name of [`Cafe ${run}`, `CAFÉ ${run}`, `Cafe\u0301 ${run}`]) {
+      const r = await wish(subA, { name });
+      expect(r).toMatchObject({ status: 409, body: { error: { code: "wish.name_taken" } } });
+    }
+  });
+});
+
 describe("US-WUN-01 tenant isolation and privacy (P-04, P-05)", () => {
   it("another account sees none of my wishes and its stock does not rank mine", async () => {
     expect(await names(subB)).toEqual([]);

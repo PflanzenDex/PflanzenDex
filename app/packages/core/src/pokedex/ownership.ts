@@ -119,7 +119,15 @@ function addSpecimen(
 function collect(rows: readonly SpecimenRow[], read: ReadonlyMap<string, Species | null>) {
   const caught = new Map<string, Entry>();
   const open: UnidentifiedSpecimen[] = [];
-  for (const z of rows) {
+  // Fixed order, so which cultivar represents a card never depends on the order of the specimens.
+  const ordered = [...rows].sort(
+    (a, b) =>
+      (read.get(a.speciesId)?.latinName ?? "").localeCompare(
+        read.get(b.speciesId)?.latinName ?? "",
+        "de",
+      ) || a.id.localeCompare(b.id),
+  );
+  for (const z of ordered) {
     const row = read.get(z.speciesId) ?? null;
     const key = countable(row);
     if (row === null || key === null) {

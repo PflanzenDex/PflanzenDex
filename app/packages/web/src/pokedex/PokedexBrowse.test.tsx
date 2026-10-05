@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PokedexPage } from "./PokedexPage";
@@ -179,11 +179,51 @@ describe("US-POK-08 sort", () => {
     expect(shown()).toHaveLength(3);
   });
 
-  it("US-POK-08 a species without a known family is grouped under 'Familie unbekannt', last", async () => {
+  it("US-POK-08 a species without a known family is grouped under 'Ohne bekannte Familie', last", async () => {
     await open([species("Citrus limon"), ...caught]);
     await sortBy("Familie");
-    const headers = screen.getAllByRole("button", { name: /· \d \/ / }).map((b) => b.textContent);
-    expect(headers.at(-1)).toContain("Familie unbekannt");
+    const headers = screen.getAllByRole("button", { name: /· \d/ }).map((b) => b.textContent);
+    expect(headers.at(-1)).toContain("Ohne bekannte Familie");
     expect(screen.getByText("Citrus limon")).toBeTruthy();
+  });
+});
+
+describe("US-POK-08 follow-ups of the family groups (issue 297)", () => {
+  const detailCard = (name: string) => screen.getByRole("button", { name: `Details zu ${name}` });
+
+  it("US-POK-08 a collapsed family group stays collapsed after the detail view was opened and closed", async () => {
+    await open();
+    await sortBy("Familie");
+    await userEvent.click(screen.getByRole("button", { name: /Moraceae/ }));
+    await userEvent.click(detailCard("Aloe vera"));
+    await userEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    expect(screen.getByRole("button", { name: /Moraceae/ }).getAttribute("aria-expanded")).toBe(
+      "false",
+    );
+    expect(
+      screen.getByRole("button", { name: /Asphodelaceae/ }).getAttribute("aria-expanded"),
+    ).toBe("true");
+    expect(shown()).toEqual(["Aloe vera"]);
+  });
+
+  it("US-POK-08 closing the detail view restores the scroll position of the list", async () => {
+    await open();
+    const scrollTo = vi.fn();
+    vi.stubGlobal("scrollTo", scrollTo);
+    const y = vi.spyOn(window, "scrollY", "get").mockReturnValue(420);
+    await userEvent.click(detailCard("Aloe vera"));
+    y.mockReturnValue(0);
+    await userEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    await waitFor(() => expect(scrollTo).toHaveBeenLastCalledWith(0, 420));
+    y.mockRestore();
+  });
+
+  it("US-POK-08 the group without a known family reads 'Ohne bekannte Familie' and does not say 'unbekannt' twice", async () => {
+    await open([species("Citrus limon")]);
+    await sortBy("Familie");
+    const header = screen.getByRole("button", { name: /Ohne bekannte Familie/ });
+    expect(header.textContent).toContain("1 Art");
+    expect(header.textContent).not.toContain("unbekannt");
+    expect(screen.queryByText(/Familie unbekannt/)).toBeNull();
   });
 });

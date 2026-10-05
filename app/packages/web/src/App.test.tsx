@@ -58,6 +58,7 @@ function fakeServer(accountStatus = 200) {
       const path = new URL(String(url)).pathname;
       if (path === "/account") return response(accountStatus, account);
       if (path === "/species") return response(200, { species: [] });
+      if (path === "/specimens/count") return response(200, { count: 0 });
       if (path === "/specimens/cards") return response(200, { cards: [] });
       if (path === "/specimens/archived") return response(200, { archived: [] });
       if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
@@ -282,6 +283,7 @@ describe("US-ACC-01 App", () => {
         if (path === "/account") return response(200, account);
         if (path === "/locations") return response(200, { locations: [] });
         if (path === "/light-zones") return response(200, { zones: [] });
+        if (path === "/specimens/count") return response(200, { count: 0 });
         if (path === "/specimens/cards") return response(200, { cards: [] });
         if (path === "/specimens/archived") return response(200, { archived: [] });
         if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
@@ -311,6 +313,64 @@ describe("US-ACC-01 App", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Diese Art wählen" }));
     expect(await screen.findByRole("heading", { name: "Exemplar anlegen" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zurück zur Art" }));
+    expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
+  });
+
+  it("US-POK-09 after the way Pokédex, species profile, collection, back the catalog search opens, not the old profile", async () => {
+    const species = {
+      id: "a1",
+      latinName: "Dracaena trifasciata",
+      germanName: null,
+      synonyms: [],
+      difficulty: 1,
+      standardLevel: 2,
+      lightDemandLux: 15000,
+      growthMeasure: "height",
+      etiolationSigns: "x",
+      successCriteria: "y",
+      reviewStatus: "reviewed",
+    };
+    const caught = {
+      species: "Dracaena trifasciata",
+      speciesId: "a1",
+      genus: "Dracaena",
+      chips: [],
+      specimenCount: 1,
+      caughtDate: { date: "2026-01-01", source: "caught_at" },
+      germanName: null,
+      familyLatin: null,
+      familyGerman: null,
+      genusSpeciesCount: null,
+      source: null,
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => {
+        const path = new URL(String(url)).pathname;
+        if (path === "/account") return response(200, account);
+        if (path === "/pokedex/ownership")
+          return response(200, { ownership: { caught: [caught], unidentified: [] } });
+        if (path === "/locations") return response(200, { locations: [] });
+        if (path === "/light-zones") return response(200, { zones: [] });
+        if (path === "/specimens/count") return response(200, { count: 0 });
+        if (path === "/specimens/cards") return response(200, { cards: [] });
+        if (path === "/specimens/archived") return response(200, { archived: [] });
+        if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
+        return response(
+          200,
+          path === "/species" ? { species: [{ ...species, hit: null }] } : species,
+        );
+      }),
+    );
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "Pokédex" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Details zu Dracaena trifasciata" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Zum Artprofil" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Diese Art wählen" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Zurück zur Art" }));
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
   });
 

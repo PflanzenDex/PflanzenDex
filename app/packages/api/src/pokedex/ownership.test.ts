@@ -247,8 +247,34 @@ describe("US-POK-08 the data the page searches and groups by", () => {
     });
   });
 
-  it("US-POK-08 another account never sees the family of a foreign species (P-04)", async () => {
-    expect(JSON.stringify((await ownership(subB)).body)).not.toContain("Moraceae");
+  it("US-POK-08 a specimen of B that references A's private species is unreadable for B: nothing of A's proposal leaks (P-04)", async () => {
+    const secret = await newSpecies(subA, `Secretia${run} privata`, {
+      germanName: `Geheimpflanze ${run}`,
+      familyLatin: `Secretaceae${run}`,
+      familyGerman: `Geheimgewächse ${run}`,
+    });
+    // The API refuses this, so the row is written straight into the table: the visibility rule must hold on its own.
+    await pool.query(
+      `insert into specimen (account_id, species_id, name, status)
+       select id, $2, $3, 'plant' from account where subject = $1`,
+      [subB, secret, `Fremd ${run}`],
+    );
+    const b = await ownership(subB);
+    expect(b.status).toBe(200);
+    expect(b.body["ownership"].unidentified).toEqual([
+      expect.objectContaining({ specimenName: `Fremd ${run}`, latinName: null }),
+    ]);
+    const text = JSON.stringify(b.body);
+    for (const foreign of [
+      secret,
+      `Secretia${run}`,
+      `Geheimpflanze ${run}`,
+      `Secretaceae${run}`,
+      `Geheimgewächse ${run}`,
+    ])
+      expect(text).not.toContain(foreign);
+    expect(caught(b)).not.toContain(`Secretia${run} privata`);
+    expect(JSON.stringify((await ownership(subA)).body)).not.toContain(`Fremd ${run}`);
   });
 });
 

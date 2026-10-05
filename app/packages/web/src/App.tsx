@@ -42,17 +42,18 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
 
 /** The active view; the Pokédex links to a species profile, so the app wires pokedex and catalog (US-POK-09). */
 function useViews() {
-  const [view, setView] = useState<View>("start");
+  const [view, showView] = useState<View>("start");
   const [profileId, setProfileId] = useState<string | null>(null);
   const openProfile = (id: string) => {
     setProfileId(id);
-    setView("species");
+    showView("species");
   };
-  const switchView = (next: View) => {
+  // Every other way to a view forgets the profile the Pokédex opened, so the catalog never reopens an old one.
+  const setView = (next: View) => {
     setProfileId(null);
-    setView(next);
+    showView(next);
   };
-  return { view, setView, profileId, openProfile, switchView };
+  return { view, setView, profileId, openProfile, switchView: setView };
 }
 
 /** The chosen species travels from the catalog to the collection: the app wires both modules (US-BES-02). */

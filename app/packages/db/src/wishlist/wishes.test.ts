@@ -13,8 +13,21 @@ const anna = randomUUID();
 const ben = randomUUID();
 let zoneAnna = "";
 let zoneBen = "";
-const values = (extra: Record<string, unknown> = {}) => ({
-  name: "Haworthia fasciata",
+// The same fold as `wishNameKey` in core (db does not import core).
+const keyOf = (name: string) =>
+  [...name.normalize("NFD")]
+    .filter((ch) => ch < "\u0300" || ch > "\u036f")
+    .join("")
+    .toLowerCase();
+const values = (extra: Record<string, unknown> = {}) => {
+  const all = {
+    name: "Haworthia fasciata",
+    ...base,
+    ...extra,
+  };
+  return { nameKey: keyOf(String(all.name)), ...all };
+};
+const base = {
   german: null,
   targetZoneId: null,
   difficulty: null,
@@ -22,8 +35,7 @@ const values = (extra: Record<string, unknown> = {}) => ({
   imageUrl: null,
   imageSource: null,
   license: null,
-  ...extra,
-});
+};
 
 async function zone(account: string, name: string): Promise<string> {
   const z = await zones.create(account, { name, luxCeiling: 15000, ppfd: null, sortOrder: null });
@@ -83,6 +95,17 @@ describe("US-WUN-01 wishes in the database", () => {
     expect(await wishes.create(anna, values({ name: "ALOE VERA" }))).toBe("name_taken");
     expect(await wishes.create(ben, values({ name: "Aloe vera" }))).toMatchObject({
       name: "Aloe vera",
+    });
+  });
+
+  it("US-WUN-01 refuses a duplicate that differs only in diacritics or composition (unique key, FR-WUN-06)", async () => {
+    expect(await wishes.create(anna, values({ name: "Café Pflanze" }))).toMatchObject({
+      name: "Café Pflanze",
+    });
+    expect(await wishes.create(anna, values({ name: "Cafe Pflanze" }))).toBe("name_taken");
+    expect(await wishes.create(anna, values({ name: "Cafe\u0301 PFLANZE" }))).toBe("name_taken");
+    expect(await wishes.create(ben, values({ name: "Cafe Pflanze" }))).toMatchObject({
+      name: "Cafe Pflanze",
     });
   });
 

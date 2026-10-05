@@ -305,4 +305,36 @@ describe("US-WUN-01 recording a wish", () => {
     await screen.findByText(/gespeichert/);
     expect(name.getAttribute("aria-invalid")).not.toBe("true");
   });
+
+  it("US-WUN-01 a server refusal of a field disappears as soon as that field is edited, without moving the focus", async () => {
+    fakeServer(
+      list([candidate()]),
+      refusal(409, "wish.name_taken", "Einen Wunsch mit diesem Namen gibt es schon."),
+    );
+    render(<WishlistPage api="http://api" token={token} />);
+    await fill("Neu");
+    await save();
+    const name = screen.getByLabelText("Name") as HTMLInputElement;
+    await vi.waitFor(() => expect(name.getAttribute("aria-invalid")).toBe("true"));
+    await userEvent.type(name, "x");
+    expect(name.getAttribute("aria-invalid")).not.toBe("true");
+    expect(screen.queryByText(/gibt es schon/)).toBeNull();
+    expect(document.activeElement).toBe(name);
+    expect(name.value).toBe("Neux");
+  });
+
+  it("US-WUN-01 editing another field keeps the server refusal of the name visible", async () => {
+    fakeServer(
+      list([candidate()]),
+      refusal(409, "wish.name_taken", "Einen Wunsch mit diesem Namen gibt es schon."),
+    );
+    render(<WishlistPage api="http://api" token={token} />);
+    await fill("Neu");
+    await save();
+    const name = screen.getByLabelText("Name");
+    await vi.waitFor(() => expect(name.getAttribute("aria-invalid")).toBe("true"));
+    await userEvent.type(screen.getByLabelText("Deutscher Name (optional)"), "Ein");
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getByText(/gibt es schon/)).toBeTruthy();
+  });
 });

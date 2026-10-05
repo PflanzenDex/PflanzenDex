@@ -68,11 +68,12 @@ export interface ReviewStore {
   /**
    * Folds an open proposal into an existing approved species: re-points the creator's references to the target
    * and marks the case `merged`, all in one transaction (all or nothing, FR-BES-11, P-10). `null`: the case is
-   * not open. `conflict`: a reference cannot be re-pointed (e.g. same marker on the target); nothing was changed.
+   * not open (decided in the meantime). `conflict`: a reference cannot be re-pointed (e.g. same marker on the
+   * target). `lock_failed`: the species row of the proposal could not be locked; nothing was changed in either case.
    */
   merge(
     userId: string,
     proposalId: string,
     targetSpeciesId: string,
-  ): Promise<MergeOutcome | "conflict" | null>;
+  ): Promise<MergeOutcome | "conflict" | "lock_failed" | null>;
 }
