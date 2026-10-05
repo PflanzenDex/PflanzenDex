@@ -13,7 +13,7 @@ const variants = ["default", "secondary", "outline", "destructive", "warning"] a
 
 export const Default: Story = {};
 
-export const Variants: Story = {
+export const AllVariants: Story = {
   render: (args) => (
     <div className="flex flex-wrap gap-2 p-4">
       {variants.map((variant) => (
