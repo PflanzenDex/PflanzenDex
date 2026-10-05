@@ -1,4 +1,6 @@
 // Line rules of the design system gate (DESIGN-SYSTEM.md); used by check-design-system.mjs.
+import { rawControlLines } from "./check-design-system-ast.mjs";
+
 // DS-33: tokens.css is the only stylesheet under src/.
 export const TOKEN_FILE = "styles/tokens.css";
 
@@ -64,12 +66,6 @@ export const RULES = [
     languages: ["css"],
     test: (line) => /outline\s*:\s*(?:none|0)\b/.test(line),
   },
-  {
-    id: "DS-48",
-    languages: ["tsx"],
-    test: (line, file) =>
-      !file.startsWith("components/ui/") && /<(?:button|input|select|textarea)\b/.test(line),
-  },
 ];
 
 const RESERVED_DIRS = new Set(["components", "lib", "platform", "styles"]);
@@ -114,6 +110,11 @@ const TERNARY_OR_AND = /(?<!\?)\?(?![?.])|&&/;
 
 // File rules see the whole file; each returns the 1-based lines of its violations.
 export const FILE_RULES = [
+  {
+    id: "DS-48",
+    applies: (file) => file.endsWith(".tsx") && !file.startsWith("components/ui/"),
+    lines: (content, file) => rawControlLines(content, file),
+  },
   {
     // DS-31: class names flow through cn(), never template literals or concatenation.
     id: "DS-31",
