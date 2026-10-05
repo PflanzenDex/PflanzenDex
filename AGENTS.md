@@ -27,5 +27,5 @@ Blocked for agents (and pointless anyway, because CI and the rulesets repeat eve
 
 1. `make ci` (or at least `make gates` plus the tests you touched) and report the result honestly: pass or fail, with the failing output. Never "should work" (D-05). The Stop hook reminds you if code changed after the last run.
 2. Update the spec status (⬜ → 🟨 → ✅) and the counters in `Docs/PRODUCT-SPECS/README.md` in the same PR.
-3. Commit only when asked. Conventional Commits with an epic scope (`app/commitlint.config.js`). Open the PR against `dev` and fill in the template, including the "AI involvement" section; `make pr PR=<n>` updates the README statistics, pushes and marks it ready for review (US-DEV-10).
+3. Commit only when asked. Conventional Commits with an epic scope (`app/commitlint.config.js`). Open the PR against `dev` and fill in the template, including the "AI involvement" section; `make pr PR=<n>` pushes and marks it ready for review (US-DEV-10). The README statistics are regenerated once per release PR, not per PR.
 4. Merge into `dev` with `make merge PR=<n>` once `ci-status` is green. It refuses unless the PR names a story that exists in `Docs/PRODUCT-SPECS/`, targets `dev`, and changes no gate file; then a human merges (ADR 0005). Releases into `main` stay with a human.

@@ -8,6 +8,7 @@ description: Use when preparing, cutting or hotfixing a release (merge of dev in
 A release is the pull request `dev` -> `main` (E-13). Releases are small, traceable and reversible (D-06). Versions are never set by hand; they derive from Conventional Commits.
 
 1. Scope: list what `dev` contains since the last release (`git log origin/main..origin/dev --oneline`) and compare it with the cut R0 to R6 in `Docs/PRODUCT-SPECS/16-Releases-and-Decisions.md`. Stories in the release are ✅ in the specs and in the counters of `Docs/PRODUCT-SPECS/README.md`.
+1b. Statistics: on the release branch run `make repo-stats` and commit `README.md` as `docs(dev): update repository statistics` (US-DEV-10). Per-feature PRs do not touch the block, so this is the only place it changes.
 2. CI: the latest `dev` commit has a green `ci-status` (workflow in `.github/workflows/ci.yml`). Run `make ci` locally on an up-to-date `dev` as a second view. A red gate stops the release; never merge around it.
 3. Migrations: read every new file in `app/packages/db/migrations/` since the last release. Each must be expand-only so the previous app version still works (skill `db-migration`); check that no row rule was removed.
 4. Backup: run `make backup` on the host right before the release and confirm the dump is readable; `make restore-test` proves a restore works. Runbook: `Docs/operations/staging-deploy-and-backup.md`.

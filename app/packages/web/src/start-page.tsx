@@ -5,6 +5,7 @@ import {
   startAction,
   type OnboardingCounts,
 } from "@pflanzendex/core";
+import { Button } from "@/components/ui/button";
 import { loadSpecimenCount } from "./collection";
 import { LoadFrame } from "./kernel";
 import { loadLocations, loadZones } from "./light";
@@ -33,9 +34,9 @@ function Overview(props: { counts: OnboardingCounts; onOpen: (t: Target) => void
           <h2>{action.title}</h2>
           <p>{action.nextAction}</p>
           <div className="actions">
-            <button type="button" className="primary" onClick={() => props.onOpen("species")}>
+            <Button type="button" onClick={() => props.onOpen("species")}>
               {action.actionLabel}
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
@@ -43,9 +44,9 @@ function Overview(props: { counts: OnboardingCounts; onOpen: (t: Target) => void
       )}
       {!action && (
         <div className="actions">
-          <button type="button" className="primary" onClick={() => props.onOpen("collection")}>
+          <Button type="button" onClick={() => props.onOpen("collection")}>
             Zum Bestand
-          </button>
+          </Button>
         </div>
       )}
       {hints.length > 0 && (
@@ -55,9 +56,9 @@ function Overview(props: { counts: OnboardingCounts; onOpen: (t: Target) => void
               <p>{h.text}</p>
               <p className="next-action">{h.nextAction}</p>
               <div className="actions">
-                <button type="button" className="secondary" onClick={() => props.onOpen("light")}>
+                <Button type="button" variant="secondary" onClick={() => props.onOpen("light")}>
                   {h.actionLabel}
-                </button>
+                </Button>
               </div>
             </li>
           ))}
