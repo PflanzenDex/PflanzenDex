@@ -1,4 +1,5 @@
 import { Slot } from "@radix-ui/react-slot";
+import { cva } from "class-variance-authority";
 import * as React from "react";
 import {
   Controller,
@@ -67,6 +68,17 @@ const FormItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEl
 );
 FormItem.displayName = "FormItem";
 
+/** Error state of label and message as variants (DS-34): colour follows the field state, never an inline ternary. */
+const formLabelVariants = cva("", {
+  variants: { invalid: { true: "text-destructive", false: "" } },
+  defaultVariants: { invalid: false },
+});
+
+const formMessageVariants = cva("text-sm font-medium", {
+  variants: { invalid: { true: "text-destructive", false: "text-muted-foreground" } },
+  defaultVariants: { invalid: false },
+});
+
 const FormLabel = React.forwardRef<HTMLLabelElement, React.ComponentPropsWithoutRef<typeof Label>>(
   ({ className, ...props }, ref) => {
     const { controlId, error } = useFormField();
@@ -74,7 +86,7 @@ const FormLabel = React.forwardRef<HTMLLabelElement, React.ComponentPropsWithout
       <Label
         ref={ref}
         htmlFor={controlId}
-        className={cn(error && "text-destructive", className)}
+        className={cn(formLabelVariants({ invalid: Boolean(error) }), className)}
         {...props}
       />
     );
@@ -141,11 +153,7 @@ const FormMessage = React.forwardRef<HTMLParagraphElement, FormMessageProps>(
         ref={ref}
         id={id}
         role={message ? "alert" : undefined}
-        className={cn(
-          "text-sm font-medium",
-          message ? "text-destructive" : "text-muted-foreground",
-          className,
-        )}
+        className={cn(formMessageVariants({ invalid: Boolean(message) }), className)}
         {...props}
       >
         {body}

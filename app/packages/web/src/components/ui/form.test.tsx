@@ -88,6 +88,17 @@ describe("Form (US-QS-07 · DS-47, DS-48)", () => {
     expect(onValid).not.toHaveBeenCalled();
   });
 
+  it("US-QS-07 · DS-34 label and message switch to the destructive colour only while the field is invalid", async () => {
+    render(<Demo />);
+    const label = screen.getByText("Name", { selector: "label" });
+    expect(label.className).not.toContain("text-destructive");
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.className).toContain("text-destructive");
+    expect(alert.className).not.toContain("text-muted-foreground");
+    expect(label.className).toContain("text-destructive");
+  });
+
   it("US-QS-07 · DS-47 clears the message once the field is valid", async () => {
     const onValid = vi.fn();
     render(<Demo onValid={onValid} />);
