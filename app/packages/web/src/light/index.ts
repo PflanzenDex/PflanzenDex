@@ -1,5 +1,5 @@
 // Public interface of the `light` module (ADR 0003): page for light zones and locations.
-import { lazyPage } from "@/lib/lazy-page";
+import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 export const LightPage = lazyPage(() =>
   import("./LightPage").then((m) => ({ default: m.LightPage })),
 );

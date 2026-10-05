@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { lazyPage } from "@/lib/lazy-page";
+import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import { RouteBoundary } from "./route-boundary";
 
 // Catalog of the RouteBoundary (TE-17, DS-08, DS-55): the skeleton while a page chunk loads, the error with retry when it fails.

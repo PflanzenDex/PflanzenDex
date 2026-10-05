@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { lazyPage } from "@/lib/lazy-page";
+import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import { RouteBoundary } from "./route-boundary";
 
 afterEach(cleanup);
