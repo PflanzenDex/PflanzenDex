@@ -3,11 +3,13 @@
 // This check fails when
 //   DSB-1  a violation exists that is not in the baseline, or its count grew (new code must comply),
 //   DSB-2  a baseline entry is stale or its count is higher than reality (fix: delete or lower the entry).
+//   DSB-3  the baseline holds an entry for a closed rule (NON_BASELINEABLE_RULES): those rules are
+//          hard errors, a violation fails even when an entry for it exists.
 // `--write-baseline` creates the file when it does not exist; it never raises or adds entries afterwards.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { FILE_RULES, importViolations, RULES } from "./check-design-system-rules.mjs";
+import { FILE_RULES, importViolations, RULES, TOKEN_FILE } from "./check-design-system-rules.mjs";
 
 const WEB = "packages/web";
 export const REQUIRED_DEPENDENCIES = [
@@ -76,6 +78,7 @@ export function scan(webRoot, locations = new Map()) {
     if (!language || isTest(full)) continue;
     const file = path.relative(src, full).split(path.sep).join("/");
     const content = fs.readFileSync(full, "utf8");
+    if (language === "css" && file !== TOKEN_FILE) add("DS-33", file);
     if (language === "tsx") scanFileRules(file, content, add, locations);
     scanLines(file, language, content, add);
   }
@@ -83,13 +86,29 @@ export function scan(webRoot, locations = new Map()) {
   return counts;
 }
 
+// Rules whose migration is finished: never baselined again (DS-48: raw controls outside components/ui).
+export const NON_BASELINEABLE_RULES = new Set([
+  "DS-01",
+  "DS-02",
+  "DS-07",
+  "DS-27",
+  "DS-37",
+  "DS-42",
+  "DS-48",
+]);
+
 const keyOf = (e) => `${e.rule}|${e.file}`;
 
 // Compare reality with the baseline; returns a list of problem strings (empty = pass).
 export function compare(counts, entries, locations = new Map()) {
   const problems = [];
   const at = (key) => (locations.has(key) ? ` (line ${locations.get(key).join(", ")})` : "");
-  const baseline = new Map(entries.map((e) => [keyOf(e), e.count]));
+  for (const e of entries)
+    if (NON_BASELINEABLE_RULES.has(e.rule))
+      problems.push(`DSB-3 ${e.rule} ${e.file}: ${e.rule} may not be baselined, delete the entry`);
+  const baseline = new Map(
+    entries.filter((e) => !NON_BASELINEABLE_RULES.has(e.rule)).map((e) => [keyOf(e), e.count]),
+  );
   for (const [key, count] of counts) {
     const allowed = baseline.get(key);
     const [rule, file] = key.split("|");
