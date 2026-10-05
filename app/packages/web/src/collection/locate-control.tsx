@@ -1,5 +1,9 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { LightLocation } from "@pflanzendex/core";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Actions, Quiet } from "./parts";
 
 /**
  * Sets the location of a specimen (US-PHA-03, the action behind the hint "Standort fehlt"). The location is chosen from
@@ -14,38 +18,38 @@ export function LocateControl(props: {
 }) {
   const { specimenName: name, locations } = props;
   const [choice, setChoice] = useState("");
+  const id = useId();
   if (locations.length === 0)
     return (
       <>
-        <p className="quiet">
+        <Quiet>
           Du hast noch keinen Standort angelegt. Lege zuerst unter „Standorte und Licht“ einen
           Standort an.
-        </p>
-        <div className="actions">
-          <button type="button" className="secondary" onClick={props.onCreateLocation}>
+        </Quiet>
+        <Actions>
+          <Button type="button" variant="outline" onClick={props.onCreateLocation}>
             Zu Standorte und Licht
-          </button>
-        </div>
+          </Button>
+        </Actions>
       </>
     );
   const chosen = locations.find((s) => s.id === choice);
   return (
     <>
-      <label>
-        {`Standort für „${name}“`}
-        <select value={choice} onChange={(e) => setChoice(e.target.value)}>
+      <div className="mt-2 grid gap-2">
+        <Label htmlFor={id}>{`Standort für „${name}“`}</Label>
+        <Select id={id} value={choice} onChange={(e) => setChoice(e.target.value)}>
           <option value="">Standort wählen …</option>
           {locations.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
             </option>
           ))}
-        </select>
-      </label>
-      <div className="actions">
-        <button
+        </Select>
+      </div>
+      <Actions>
+        <Button
           type="button"
-          className="primary"
           disabled={!chosen || props.busy}
           aria-label={`Standort setzen: ${name}`}
           onClick={() =>
@@ -54,8 +58,8 @@ export function LocateControl(props: {
           }
         >
           Standort setzen
-        </button>
-      </div>
+        </Button>
+      </Actions>
     </>
   );
 }

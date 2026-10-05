@@ -1,7 +1,16 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
 import type { ApiError, LightLocation, LightZone } from "./light-api";
-import { FormButtons, useSend } from "./form";
-import { ErrorMessage } from "./message";
+import { FORM_GRID, FormButtons, RefusalAlert, SelectField, TextField, useSaveForm } from "./form";
+import {
+  LOCATION_REFUSABLE,
+  NAME_MAX,
+  locationSchema,
+  toLocationInput,
+  type LocationFields,
+} from "./schemas";
+import { ENTRY } from "./zones-view";
 import { kindText, zoneName } from "./text";
 
 export interface LocationInput {
@@ -19,56 +28,49 @@ export function LocationForm(props: {
   onCancel?: () => void;
 }) {
   const s = props.start;
-  const { error, running, send } = useSend<LocationInput>(
-    (f) => ({
-      name: String(f.get("name") ?? ""),
-      lightZoneId: String(f.get("lightZoneId") ?? "") || null,
-      kind: f.get("kind") === "outdoor" ? "outdoor" : "indoor",
-    }),
-    props.onSave,
-    !s,
-  );
+  const sent = useSaveForm<LocationFields>({
+    schema: locationSchema,
+    defaults: { name: s?.name ?? "", lightZoneId: s?.lightZoneId ?? "", kind: s?.kind ?? "indoor" },
+    save: (f) => props.onSave(toLocationInput(f)),
+    refusable: LOCATION_REFUSABLE,
+    clear: !s,
+  });
+  const { control } = sent.form;
   return (
-    <form
-      className="form"
-      onSubmit={(e) => void send(e)}
-      aria-label={s ? `${s.name} ändern` : "Standort anlegen"}
-    >
-      <label>
-        Name
-        <input
+    <Form {...sent.form}>
+      <form
+        noValidate
+        className={FORM_GRID}
+        onSubmit={(e) => void sent.send(e)}
+        aria-label={s ? `${s.name} ändern` : "Standort anlegen"}
+      >
+        <TextField
+          control={control}
           name="name"
-          required
-          maxLength={60}
-          defaultValue={s?.name ?? ""}
+          label="Name"
+          maxLength={NAME_MAX}
           autoComplete="off"
         />
-      </label>
-      <label>
-        Lichtzone
-        <select name="lightZoneId" defaultValue={s?.lightZoneId ?? ""}>
+        <SelectField control={control} name="lightZoneId" label="Lichtzone">
           <option value="">Keine Lichtzone (erscheint in den Hinweisen)</option>
           {props.zones.map((z) => (
             <option key={z.id} value={z.id}>
               {z.name}
             </option>
           ))}
-        </select>
-      </label>
-      <label>
-        Art
-        <select name="kind" defaultValue={s?.kind ?? "indoor"}>
+        </SelectField>
+        <SelectField control={control} name="kind" label="Art">
           <option value="indoor">innen</option>
           <option value="outdoor">außen</option>
-        </select>
-      </label>
-      {error && <ErrorMessage error={error} />}
-      <FormButtons
-        label={s ? "Speichern" : "Standort anlegen"}
-        running={running}
-        onCancel={props.onCancel}
-      />
-    </form>
+        </SelectField>
+        <RefusalAlert sent={sent} />
+        <FormButtons
+          label={s ? "Speichern" : "Standort anlegen"}
+          running={sent.running}
+          onCancel={props.onCancel}
+        />
+      </form>
+    </Form>
   );
 }
 
@@ -82,7 +84,7 @@ export function LocationCard(props: {
   const zone = zoneName(props.zones, location.lightZoneId);
   if (update)
     return (
-      <li className="entry">
+      <li className={ENTRY}>
         <LocationForm
           zones={props.zones}
           start={location}
@@ -96,15 +98,15 @@ export function LocationCard(props: {
       </li>
     );
   return (
-    <li className="entry">
-      <h3>{location.name}</h3>
-      <p className="quiet">
+    <li className={ENTRY}>
+      <h3 className="text-lg font-semibold">{location.name}</h3>
+      <p className="text-sm text-muted-foreground">
         {zone ?? "Keine Lichtzone"} · {kindText(location.kind)}
       </p>
-      <div className="actions">
-        <button type="button" className="secondary" onClick={() => setUpdate(true)}>
+      <div className="mt-3 flex flex-col gap-3 md:flex-row">
+        <Button type="button" variant="secondary" onClick={() => setUpdate(true)}>
           {zone ? "Ändern" : "Lichtzone zuweisen"}
-        </button>
+        </Button>
       </div>
     </li>
   );

@@ -1,6 +1,11 @@
 import { useCallback, useState } from "react";
 import type { LightLocation, SpecimenHint } from "@pflanzendex/core";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Button } from "@/components/ui/button";
 import { LoadFrame, useWriteAction } from "../kernel";
+import { HintsPageSkeleton } from "./HintsPage.skeleton";
+import { Actions, CARD, GRID, NextAction, PageFrame, Quiet, Status, TITLE, Warning } from "./parts";
+import { refusalText } from "./refusal";
 import { loadLocations } from "../light";
 import { loadSpecimenHints } from "./hints-api";
 import { setSpecimenLocation } from "./specimens-api";
@@ -47,24 +52,21 @@ export function HintsPage(props: {
     [api],
   );
   return (
-    <div className="light collection">
+    <PageFrame>
       <LoadFrame
         token={token}
         load={load}
         loadingText="Hinweise werden geladen …"
+        loadingFallback={<HintsPageSkeleton label="Hinweise werden geladen …" />}
         refresh={refresh}
       >
         {(data: Data) => (
           <>
-            {place.message && (
-              <p role="status" className="hint">
-                {place.message}
-              </p>
-            )}
+            {place.message && <Status>{place.message}</Status>}
             {place.error && (
-              <div role="alert" className="warning">
-                <p>{place.error.text}</p>
-              </div>
+              <Warning>
+                <p>{refusalText(place.error)}</p>
+              </Warning>
             )}
             <HintList
               data={data}
@@ -80,7 +82,40 @@ export function HintsPage(props: {
           </>
         )}
       </LoadFrame>
-    </div>
+    </PageFrame>
+  );
+}
+
+function HintCard(props: {
+  hint: SpecimenHint;
+  locations: readonly LightLocation[];
+  busy: boolean;
+  onOpen: (t: HintTarget) => void;
+  onLocate: (specimenId: string, locationId: string, success: string) => void;
+}) {
+  const { hint: h } = props;
+  const action = ACTION[h.kind];
+  return (
+    <li className={CARD}>
+      <p>{h.text}</p>
+      <NextAction>{h.nextAction}</NextAction>
+      {h.kind === "location_missing" && (
+        <LocateControl
+          specimenName={h.specimenName}
+          locations={props.locations}
+          busy={props.busy}
+          onLocate={(locationId, success) => props.onLocate(h.specimenId, locationId, success)}
+          onCreateLocation={() => props.onOpen("light")}
+        />
+      )}
+      {action && (
+        <Actions>
+          <Button type="button" variant="outline" onClick={() => props.onOpen(action.target)}>
+            {action.label}
+          </Button>
+        </Actions>
+      )}
+    </li>
   );
 }
 
@@ -91,48 +126,33 @@ function HintList(props: {
   onLocate: (specimenId: string, locationId: string, success: string) => void;
 }) {
   return (
-    <section aria-labelledby="hints-title" className="specimen-hints">
-      <h1 id="hints-title">Hinweise</h1>
+    <section aria-labelledby="hints-title">
+      <h1 id="hints-title" className={TITLE}>
+        Hinweise
+      </h1>
       {props.data.hints.length === 0 ? (
-        <p>Keine Hinweise: Jedes Exemplar hat eine Art, einen Standort und eine Lichtzone.</p>
+        <EmptyState
+          title="Keine Hinweise"
+          description="Jedes Exemplar hat eine Art, einen Standort und eine Lichtzone."
+          action={{ label: "Zum Bestand", onClick: () => props.onOpen("collection") }}
+        />
       ) : (
         <>
-          <p className="quiet">
+          <Quiet className="mb-3">
             Diese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung
             auf die Lichtzonen.
-          </p>
-          <ul className="cards-grid">
-            {props.data.hints.map((h) => {
-              const action = ACTION[h.kind];
-              return (
-                <li key={`${h.specimenId}-${h.kind}`} className="specimen-card">
-                  <p>{h.text}</p>
-                  <p className="next-action">{h.nextAction}</p>
-                  {h.kind === "location_missing" && (
-                    <LocateControl
-                      specimenName={h.specimenName}
-                      locations={props.data.locations}
-                      busy={props.busy}
-                      onLocate={(locationId, success) =>
-                        props.onLocate(h.specimenId, locationId, success)
-                      }
-                      onCreateLocation={() => props.onOpen("light")}
-                    />
-                  )}
-                  {action && (
-                    <div className="actions">
-                      <button
-                        type="button"
-                        className="secondary"
-                        onClick={() => props.onOpen(action.target)}
-                      >
-                        {action.label}
-                      </button>
-                    </div>
-                  )}
-                </li>
-              );
-            })}
+          </Quiet>
+          <ul className={GRID}>
+            {props.data.hints.map((h) => (
+              <HintCard
+                key={`${h.specimenId}-${h.kind}`}
+                hint={h}
+                locations={props.data.locations}
+                busy={props.busy}
+                onOpen={props.onOpen}
+                onLocate={props.onLocate}
+              />
+            ))}
           </ul>
         </>
       )}

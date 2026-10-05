@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { ReviewEntry, ReviewList } from "@pflanzendex/core";
+import { ERROR_TEXTS, type ReviewEntry, type ReviewList } from "@pflanzendex/core";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -115,6 +115,20 @@ describe("US-BES-10 review list page", () => {
     expect(await screen.findByText(/Keine offenen Vorschläge/)).toBeTruthy();
   });
 
+  it("US-BES-10 · DS-48 the empty state offers to reload the list (P-09)", async () => {
+    const { fetchFn } = server(list([], 0));
+    show();
+    await userEvent.click(await screen.findByRole("button", { name: "Liste neu laden" }));
+    await vi.waitFor(() => expect(fetchFn.mock.calls.length).toBeGreaterThan(1));
+  });
+
+  it("US-BES-10 · DS-48 the loading state is one skeleton status", async () => {
+    server(list([entry()]));
+    show();
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    await screen.findByRole("heading", { name: "Echeveria elegans" });
+  });
+
   it("US-BES-10 a profile without a source cannot be approved and says why (P-09)", async () => {
     server(
       list([
@@ -189,14 +203,16 @@ describe("US-BES-10 review list page", () => {
     expect(posts[0]).toMatchObject({ path: "/review/c1/merge", body: { targetSpeciesId: "t1" } });
   });
 
-  it("US-BES-10 a refusal stays visible with the server text (approval incomplete)", async () => {
+  it("US-BES-10 a refusal stays visible with the German text of its code (approval incomplete)", async () => {
     server(list([entry()]), () =>
       response(409, { error: { code: "review.approval_incomplete", text: "Nicht vollständig." } }),
     );
     const user = userEvent.setup();
     show();
     await user.click(await screen.findByRole("button", { name: "Freigeben" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("Nicht vollständig.");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      ERROR_TEXTS["review.approval_incomplete"],
+    );
   });
 
   it("US-BES-10 operator batches are listed without actions", async () => {

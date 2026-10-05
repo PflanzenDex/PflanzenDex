@@ -1,13 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import {
-  findSchemaViolations,
-  withAccount,
-  asAccount,
-  migrate,
-  checkTenantIsolation,
-} from "./index.ts";
+import { findSchemaViolations } from "../schema-check.ts";
+import { withAccount, asAccount, migrate, checkTenantIsolation } from "./index.ts";
 import { openPool } from "./connection.ts";
 import { FIXTURES, createFixtureSpeciesAt } from "../fixtures.ts";
 import { MODULE_CONFIG as REGISTER } from "../../../../modules.config.mjs";

@@ -1,20 +1,23 @@
+import { useWatch, type Control, type FieldValues, type Path } from "react-hook-form";
 import { specimenName } from "@pflanzendex/core";
 import type { SpecimenCard } from "@pflanzendex/core";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Quiet } from "./parts";
+import type { CreateFields } from "./schemas";
 
 /** The active specimens of the chosen species, as far as the form needs them (US-BES-03). */
 export type Sibling = Pick<SpecimenCard, "id" | "name" | "marker">;
 
 /** Default marker of the naming rule (DM-BES-03): "clip"; only a preset, freely changeable. */
 const DEFAULT_MARKER = "Klammer";
-
-export const MARKERS_MISSING = {
-  code: "input.invalid",
-  text: "Bitte vergib zuerst alle fehlenden Kennzeichen, bevor du speicherst.",
-} as const;
-export const MARKER_MISSING = {
-  code: "input.invalid",
-  text: "Bitte gib ein Kennzeichen an, damit du die Töpfe dieser Art unterscheiden kannst.",
-} as const;
 
 /** The rule for the new specimen: the 1st needs no marker, the 2nd and later do, from the 3rd on the others too. */
 export function markerRule(siblings: readonly Sibling[]) {
@@ -27,80 +30,90 @@ export function markerRule(siblings: readonly Sibling[]) {
   };
 }
 
-/** One labelled marker input; `name` is only set for the marker of the new specimen. */
-export function MarkerInput(props: {
+/** One labelled marker field of a form; the message of a refused marker is linked to it (DS-38). */
+export function MarkerInput<T extends FieldValues>(props: {
+  control: Control<T>;
+  name: Path<T>;
   label: string;
-  value: string;
-  onChange: (marker: string) => void;
   required?: boolean;
-  name?: string;
+  description?: string;
   example?: string;
 }) {
   return (
-    <label>
-      {props.label}
-      <input
-        {...(props.name ? { name: props.name } : {})}
-        value={props.value}
-        required={props.required ?? false}
-        maxLength={40}
-        autoComplete="off"
-        placeholder={`zum Beispiel ${props.example ?? "rot"}`}
-        onChange={(e) => props.onChange(e.target.value)}
-      />
-    </label>
+    <FormField
+      control={props.control}
+      name={props.name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{props.label}</FormLabel>
+          <FormControl>
+            <Input
+              {...field}
+              value={String(field.value ?? "")}
+              required={props.required ?? false}
+              maxLength={40}
+              autoComplete="off"
+              placeholder={`zum Beispiel ${props.example ?? "rot"}`}
+            />
+          </FormControl>
+          {props.description && <FormDescription>{props.description}</FormDescription>}
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
+/** "Bogenhanf" with the marker the keeper typed, as it will be named (DM-BES-03). */
+function Answer(props: { control: Control<CreateFields>; sibling: Sibling; speciesName: string }) {
+  const answers = useWatch({ control: props.control, name: "answers" });
+  const answer = (answers[props.sibling.id] ?? "").trim();
+  if (!answer) return null;
+  return (
+    <Quiet live>
+      „{props.sibling.name}“ heißt dann „{specimenName(props.speciesName, answer)}“.
+    </Quiet>
   );
 }
 
 /** Marker of the new specimen plus the markers still missing at existing ones (US-BES-03). */
 export function MarkerFields(props: {
+  control: Control<CreateFields>;
   speciesName: string;
   required: boolean;
   missing: readonly Sibling[];
-  marker: string;
-  onMarker: (marker: string) => void;
-  answers: Readonly<Record<string, string>>;
-  onAnswer: (id: string, marker: string) => void;
 }) {
   return (
     <>
       <MarkerInput
-        label={props.required ? "Kennzeichen" : "Kennzeichen (optional)"}
+        control={props.control}
         name="marker"
-        value={props.marker}
+        label={props.required ? "Kennzeichen" : "Kennzeichen (optional)"}
         required={props.required}
-        onChange={props.onMarker}
+        description={
+          props.required
+            ? "Du hast schon ein Exemplar dieser Art. Das Kennzeichen unterscheidet die Töpfe; „Klammer“ ist nur eine Voreinstellung."
+            : "Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe."
+        }
       />
-      <p className="quiet">
-        {props.required
-          ? "Du hast schon ein Exemplar dieser Art. Das Kennzeichen unterscheidet die Töpfe; „Klammer“ ist nur eine Voreinstellung."
-          : "Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe."}
-      </p>
       {props.missing.length > 0 && (
-        <p className="quiet">
+        <Quiet>
           Ab dem dritten Exemplar braucht jedes Exemplar der Art ein Kennzeichen. Vergib die
           fehlenden jetzt, dann wird alles zusammen gespeichert.
-        </p>
+        </Quiet>
       )}
-      {props.missing.map((s) => {
-        const answer = (props.answers[s.id] ?? "").trim();
-        return (
-          <div key={s.id}>
-            <MarkerInput
-              label={`Kennzeichen für „${s.name}“`}
-              value={props.answers[s.id] ?? ""}
-              required
-              example="blau"
-              onChange={(k) => props.onAnswer(s.id, k)}
-            />
-            {answer && (
-              <p className="quiet" aria-live="polite">
-                „{s.name}“ heißt dann „{specimenName(props.speciesName, answer)}“.
-              </p>
-            )}
-          </div>
-        );
-      })}
+      {props.missing.map((s) => (
+        <div key={s.id} className="grid gap-1">
+          <MarkerInput
+            control={props.control}
+            name={`answers.${s.id}`}
+            label={`Kennzeichen für „${s.name}“`}
+            required
+            example="blau"
+          />
+          <Answer control={props.control} sibling={s} speciesName={props.speciesName} />
+        </div>
+      ))}
     </>
   );
 }

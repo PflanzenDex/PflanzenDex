@@ -74,7 +74,8 @@ describe("US-BES-08 page of the hints about incomplete specimens", () => {
   it("US-BES-08 without hints it says so and what the page checks (P-09)", async () => {
     fakeServer(() => response(200, { hints: [] }));
     render(<HintsPage api="http://api" token={token} onOpen={noop} />);
-    expect((await screen.findByText(/Keine Hinweise/)).textContent).toContain("Standort");
+    await screen.findByText(/Keine Hinweise/);
+    expect(screen.getByText(/Jedes Exemplar hat eine Art/).textContent).toContain("Standort");
     expect(screen.queryByRole("list")).toBeNull();
   });
 

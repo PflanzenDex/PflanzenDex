@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -38,6 +38,15 @@ const renderApp = (path = "/") =>
       <App />
     </MemoryRouter>,
   );
+
+/** The main navigation of the shared shell: the header row lists every destination as a link (DS-25). */
+const header = () => within(screen.getByRole("navigation", { name: "Hauptnavigation" }));
+const tab = (name: string) => header().getByRole("link", { name });
+const queryTab = (name: string) => header().queryByRole("link", { name });
+const findTab = async (name: string) => {
+  await screen.findByRole("navigation", { name: "Hauptnavigation" });
+  return tab(name);
+};
 
 const account = {
   id: "1",
@@ -150,7 +159,7 @@ describe("US-ACC-01 App", () => {
     await userEvent.type(screen.getByRole("textbox", { name: "Einladungscode" }), "ABCD-EFGH");
     await userEvent.click(screen.getByRole("button", { name: "Registrieren" }));
     expect(await screen.findByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Betreiber" })).toBeNull();
+    expect(queryTab("Betreiber")).toBeNull();
   });
 
   it("US-ACC-05 the operator sees the tab Betreiber and its numbers", async () => {
@@ -174,7 +183,7 @@ describe("US-ACC-01 App", () => {
     );
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    await userEvent.click(await screen.findByRole("button", { name: "Betreiber" }));
+    await userEvent.click(await findTab("Betreiber"));
     expect(await screen.findByRole("heading", { name: "Betreiber" })).toBeTruthy();
     expect(screen.getByText("Kosten pro Nutzer").nextElementSibling?.textContent).toMatch(
       /^unbekannt/,
@@ -186,34 +195,32 @@ describe("US-ACC-01 App", () => {
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
     expect(await screen.findByRole("heading", { name: "Wo stehen deine Pflanzen?" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Start" }).getAttribute("aria-current")).toBe("page");
+    expect(tab("Start").getAttribute("aria-current")).toBe("page");
     await userEvent.click(screen.getByRole("button", { name: "Einstieg beenden" }));
     expect(await screen.findByRole("heading", { name: "Start" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Art im Katalog wählen" }));
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Arten" }).getAttribute("aria-current")).toBe("page");
+    expect(tab("Arten").getAttribute("aria-current")).toBe("page");
   });
 
   it("signed in: the navigation switches between all views", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    await userEvent.click(await screen.findByRole("button", { name: "Arten" }));
+    await userEvent.click(await findTab("Arten"));
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
-    const species = screen.getByRole("button", { name: "Arten" });
+    const species = tab("Arten");
     expect(species.getAttribute("aria-current")).toBe("page");
 
-    await userEvent.click(screen.getByRole("button", { name: "Bestand" }));
+    await userEvent.click(tab("Bestand"));
     expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Bestand" }).getAttribute("aria-current")).toBe(
-      "page",
-    );
+    expect(tab("Bestand").getAttribute("aria-current")).toBe("page");
     expect(species.getAttribute("aria-current")).toBeNull();
 
-    await userEvent.click(screen.getByRole("button", { name: "Standorte und Licht" }));
+    await userEvent.click(tab("Standorte und Licht"));
     expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
 
-    await userEvent.click(screen.getByRole("button", { name: "Konto" }));
+    await userEvent.click(tab("Konto"));
     expect(await screen.findByRole("heading", { name: "Hallo, Lena" })).toBeTruthy();
     expect(screen.getByText("lena@example.test")).toBeTruthy();
   });
@@ -222,67 +229,53 @@ describe("US-ACC-01 App", () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    await userEvent.click(await screen.findByRole("button", { name: "Pflegeprofil" }));
+    await userEvent.click(await findTab("Pflegeprofil"));
     expect(await screen.findByRole("heading", { name: "Pflegeprofil" })).toBeTruthy();
     expect(screen.getByText(/Lege zuerst im Bestand ein Exemplar an/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Pflegeprofil" }).getAttribute("aria-current")).toBe(
-      "page",
-    );
+    expect(tab("Pflegeprofil").getAttribute("aria-current")).toBe("page");
   });
 
   it("US-BES-05 the tab Artenvergleich opens the difficulty overview and says what to do without a species", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    await userEvent.click(await screen.findByRole("button", { name: "Artenvergleich" }));
+    await userEvent.click(await findTab("Artenvergleich"));
     expect(await screen.findByRole("heading", { name: "Artenvergleich" })).toBeTruthy();
     expect(screen.getByText(/Noch keine Art/)).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "Artenvergleich" }).getAttribute("aria-current"),
-    ).toBe("page");
+    expect(tab("Artenvergleich").getAttribute("aria-current")).toBe("page");
   });
 
   it("US-WUN-01 the tab Wunschliste opens the candidate list and says what to do without a wish", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    await userEvent.click(await screen.findByRole("button", { name: "Wunschliste" }));
+    await userEvent.click(await findTab("Wunschliste"));
     expect(await screen.findByRole("heading", { name: "Wunschliste" })).toBeTruthy();
     expect(screen.getByText("Erfasse einen Wunsch mit Ziel-Lichtzone.")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Wunschliste" }).getAttribute("aria-current")).toBe(
-      "page",
-    );
+    expect(tab("Wunschliste").getAttribute("aria-current")).toBe("page");
   });
 
   it("US-BES-08 the tab Hinweise lists incomplete specimens and its action leads to the view that fixes it", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    await userEvent.click(await screen.findByRole("button", { name: "Hinweise" }));
+    await userEvent.click(await findTab("Hinweise"));
     expect(await screen.findByText(SPECIMEN_HINTS[0]?.text ?? "")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Hinweise" }).getAttribute("aria-current")).toBe(
-      "page",
-    );
+    expect(tab("Hinweise").getAttribute("aria-current")).toBe("page");
     await userEvent.click(screen.getByRole("button", { name: "Zu Standorte und Licht" }));
     expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "Standorte und Licht" }).getAttribute("aria-current"),
-    ).toBe("page");
+    expect(tab("Standorte und Licht").getAttribute("aria-current")).toBe("page");
   });
 
   it("US-LIC-03 the empty light overview offers the way to the collection by switching the tab", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    await userEvent.click(await screen.findByRole("button", { name: "Standorte und Licht" }));
+    await userEvent.click(await findTab("Standorte und Licht"));
     await userEvent.click(await screen.findByRole("button", { name: "Zum Bestand" }));
     expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Bestand" }).getAttribute("aria-current")).toBe(
-      "page",
-    );
-    expect(
-      screen.getByRole("button", { name: "Standorte und Licht" }).getAttribute("aria-current"),
-    ).toBeNull();
+    expect(tab("Bestand").getAttribute("aria-current")).toBe("page");
+    expect(tab("Standorte und Licht").getAttribute("aria-current")).toBeNull();
   });
 
   it('choosing a species in the catalog leads to the form "Exemplar anlegen"; back leads to the catalog (US-BES-02)', async () => {
@@ -318,7 +311,7 @@ describe("US-ACC-01 App", () => {
     );
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    await userEvent.click(await screen.findByRole("button", { name: "Arten" }));
+    await userEvent.click(await findTab("Arten"));
     await userEvent.click(await screen.findByRole("button", { name: /Dracaena trifasciata/ }));
     await userEvent.click(await screen.findByRole("button", { name: "Diese Art wählen" }));
     expect(await screen.findByRole("heading", { name: "Exemplar anlegen" })).toBeTruthy();
@@ -374,7 +367,7 @@ describe("US-ACC-01 App", () => {
     );
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    await userEvent.click(await screen.findByRole("button", { name: "Pokédex" }));
+    await userEvent.click(await findTab("Pokédex"));
     await userEvent.click(
       await screen.findByRole("button", { name: "Details zu Dracaena trifasciata" }),
     );
@@ -396,9 +389,7 @@ describe("US-ACC-01 App", () => {
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/collection");
     expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Bestand" }).getAttribute("aria-current")).toBe(
-      "page",
-    );
+    expect(tab("Bestand").getAttribute("aria-current")).toBe("page");
   });
 
   it("US-QS-07 · an unknown address lands on the start page", async () => {
@@ -406,7 +397,7 @@ describe("US-ACC-01 App", () => {
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/gibt-es-nicht");
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
-    expect(screen.getByRole("button", { name: "Start" }).getAttribute("aria-current")).toBe("page");
+    await waitFor(() => expect(tab("Start").getAttribute("aria-current")).toBe("page"));
   });
 
   it("US-QS-07 · the address shows the page and a species profile has its own address", async () => {
@@ -414,7 +405,7 @@ describe("US-ACC-01 App", () => {
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/species/a1");
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
-    expect(screen.getByRole("button", { name: "Arten" }).getAttribute("aria-current")).toBe("page");
+    expect(tab("Arten").getAttribute("aria-current")).toBe("page");
     await waitFor(() =>
       expect(vi.mocked(fetch).mock.calls.map((c) => new URL(String(c[0])).pathname)).toContain(
         "/species/a1",
@@ -427,7 +418,7 @@ describe("US-ACC-01 App", () => {
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/review");
     expect((await screen.findByRole("alert")).textContent).toContain("Prüfliste");
-    expect(screen.getByRole("button", { name: "Start" }).getAttribute("aria-current")).toBe("page");
+    expect(tab("Start").getAttribute("aria-current")).toBe("page");
   });
 
   it("US-ACC-05 · without the operator role /operator lands on the start page with a German hint", async () => {
@@ -435,7 +426,7 @@ describe("US-ACC-01 App", () => {
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/operator");
     expect((await screen.findByRole("alert")).textContent).toContain("Betreiber");
-    expect(screen.getByRole("button", { name: "Start" }).getAttribute("aria-current")).toBe("page");
+    expect(tab("Start").getAttribute("aria-current")).toBe("page");
   });
 });
 
@@ -450,24 +441,18 @@ describe("US-QS-07 browser history", () => {
       </BrowserRouter>,
     );
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
-    await userEvent.click(screen.getByRole("button", { name: "Bestand" }));
-    await userEvent.click(screen.getByRole("button", { name: "Einstellungen" }));
+    await userEvent.click(tab("Bestand"));
+    await userEvent.click(tab("Einstellungen"));
     expect(window.location.pathname).toBe("/settings");
     await act(async () => {
       window.history.back();
       await waitFor(() => expect(window.location.pathname).toBe("/collection"));
     });
-    expect(
-      (await screen.findByRole("button", { name: "Bestand" })).getAttribute("aria-current"),
-    ).toBe("page");
+    expect((await findTab("Bestand")).getAttribute("aria-current")).toBe("page");
     await act(async () => {
       window.history.back();
       await waitFor(() => expect(window.location.pathname).toBe("/"));
     });
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Start" }).getAttribute("aria-current")).toBe(
-        "page",
-      ),
-    );
+    await waitFor(() => expect(tab("Start").getAttribute("aria-current")).toBe("page"));
   });
 });

@@ -5,6 +5,7 @@ import {
   type OnboardingStep,
   type OnboardingStepId,
 } from "@pflanzendex/core";
+import { Button } from "@/components/ui/button";
 import { LocationsStep, ZonesStep } from "./light";
 
 type Token = () => Promise<string | undefined>;
@@ -16,12 +17,12 @@ function FirstPlantStep(props: { step: OnboardingStep; onChoose: () => void; onS
       <h2 tabIndex={-1}>Deine erste Pflanze</h2>
       <p className="quiet">{props.step.nextAction}</p>
       <div className="actions">
-        <button type="button" className="primary" onClick={props.onChoose}>
+        <Button type="button" onClick={props.onChoose}>
           {props.step.actionLabel}
-        </button>
-        <button type="button" className="secondary" onClick={props.onSkip}>
+        </Button>
+        <Button type="button" variant="secondary" onClick={props.onSkip}>
           Überspringen
-        </button>
+        </Button>
       </div>
     </section>
   );
@@ -72,9 +73,9 @@ export function OnboardingWizard(props: {
         />
       )}
       <div className="actions">
-        <button type="button" className="secondary" onClick={props.onEnd}>
+        <Button type="button" variant="secondary" onClick={props.onEnd}>
           Einstieg beenden
-        </button>
+        </Button>
       </div>
     </div>
   );

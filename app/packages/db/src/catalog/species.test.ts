@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { findSchemaViolations, withAccount, migrate, openPool } from "../kernel/index.ts";
+import { withAccount, migrate, openPool } from "../kernel/index.ts";
+import { findSchemaViolations } from "../schema-check.ts";
 import { assignRole } from "../fixtures.ts";
 import { SpeciesPostgres, ReviewPostgres } from "./index.ts";
 import type { SpeciesName, SpeciesValues } from "./species.ts";

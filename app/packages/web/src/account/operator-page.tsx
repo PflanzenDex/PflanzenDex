@@ -3,8 +3,9 @@ import { useCallback, useRef, useState } from "react";
 import { LoadFrame, SIGN_IN, type ApiError, type Response } from "../kernel";
 import { createInvitation, loadOverview, setOperatorCost, setRegistrationMode } from "./access-api";
 import { CostForm, costPerUserText, moneyText, monthText } from "./operator-cost";
-import { InvitationForm, InvitationList, ModeSection, NewCode } from "./operator-parts";
-import "./operator.css";
+import { InvitationsArea, ModeSection } from "./operator-parts";
+import { OperatorPageSkeleton } from "./operator-page.skeleton";
+import { refusalText } from "./refusal";
 
 type Token = () => Promise<string | undefined>;
 
@@ -64,21 +65,44 @@ function Numbers(props: { overview: OperatorOverview }) {
   const o = props.overview;
   return (
     <section aria-label="Zahlen">
-      <dl className="facts">
-        <dt>Konten</dt>
-        <dd>{o.accounts}</dd>
-        <dt>{`Aktive Nutzer (letzte ${o.activeWindowDays} Tage)`}</dt>
-        <dd>{o.activeAccounts}</dd>
-        <dt>Monatliche Kosten</dt>
-        <dd>
+      <dl className="m-0 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
+        <dt className="text-sm text-muted-foreground sm:text-base">Konten</dt>
+        <dd className="m-0 mb-2 font-semibold sm:mb-0">{o.accounts}</dd>
+        <dt className="text-sm text-muted-foreground sm:text-base">{`Aktive Nutzer (letzte ${o.activeWindowDays} Tage)`}</dt>
+        <dd className="m-0 mb-2 font-semibold sm:mb-0">{o.activeAccounts}</dd>
+        <dt className="text-sm text-muted-foreground sm:text-base">Monatliche Kosten</dt>
+        <dd className="m-0 mb-2 font-semibold [overflow-wrap:anywhere] sm:mb-0">
           {o.cost
             ? `${moneyText(o.cost.amountCents, o.cost.currency)} (${monthText(o.cost.month)})`
             : "nicht eingetragen"}
         </dd>
-        <dt>Kosten pro Nutzer</dt>
-        <dd>{costPerUserText(o.costPerUser)}</dd>
+        <dt className="text-sm text-muted-foreground sm:text-base">Kosten pro Nutzer</dt>
+        <dd className="m-0 font-semibold [overflow-wrap:anywhere]">
+          {costPerUserText(o.costPerUser)}
+        </dd>
       </dl>
-      <p className="quiet">Du siehst nur Zahlen, nie Inhalte einzelner Konten.</p>
+      <p className="mt-3 text-sm text-muted-foreground">
+        Du siehst nur Zahlen, nie Inhalte einzelner Konten.
+      </p>
+    </section>
+  );
+}
+
+function CostSection(props: {
+  cost: OperatorOverview["cost"];
+  running: boolean;
+  onSave: (figure: OperatorCostFigure) => void;
+}) {
+  return (
+    <section aria-labelledby="cost-title" className="flex flex-col gap-3">
+      <h2 id="cost-title" className="text-xl font-semibold">
+        Monatliche Kosten
+      </h2>
+      <p className="text-sm text-muted-foreground">
+        Trage die echten Hosting-Kosten eines Monats ein. Die Kosten pro Nutzer sind dieser Betrag
+        geteilt durch die aktiven Nutzer.
+      </p>
+      <CostForm cost={props.cost} running={props.running} onSave={props.onSave} />
     </section>
   );
 }
@@ -89,49 +113,48 @@ export function OperatorPage(props: { api: string; token: Token }) {
   const actions = useOperatorActions(api, token);
   const load = useCallback((t: string) => loadOverview(api, t), [api]);
   return (
-    <div className="operator">
-      <h1>Betreiber</h1>
+    <div className="flex min-w-0 flex-col gap-4">
+      <h1 className="text-2xl font-semibold">Betreiber</h1>
       {actions.message && (
-        <p role="status" className="hint">
+        <p role="status" className="rounded-lg border border-border p-3">
           {actions.message}
         </p>
       )}
       {actions.error && (
-        <p role="alert" className="warning">
-          {actions.error.text}
+        <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
+          {refusalText(actions.error)}
         </p>
       )}
       <LoadFrame
         token={token}
         load={load}
         loadingText="Zahlen werden geladen …"
+        loadingFallback={<OperatorPageSkeleton label="Zahlen werden geladen …" />}
         refresh={actions.refresh}
       >
         {(overview: OperatorOverview) => (
           <>
             <Numbers overview={overview} />
-            <section aria-labelledby="cost-title">
-              <h2 id="cost-title">Monatliche Kosten</h2>
-              <p className="quiet">
-                Trage die echten Hosting-Kosten eines Monats ein. Die Kosten pro Nutzer sind dieser
-                Betrag geteilt durch die aktiven Nutzer.
-              </p>
-              <CostForm
-                cost={overview.cost}
-                running={actions.running}
-                onSave={(f) => void actions.setCost(f)}
-              />
-            </section>
+            <CostSection
+              cost={overview.cost}
+              running={actions.running}
+              onSave={(f) => void actions.setCost(f)}
+            />
             <ModeSection
               invitationOnly={overview.invitationOnly}
               running={actions.running}
               onChange={(on) => void actions.setMode(on)}
             />
-            <section aria-labelledby="codes-title">
-              <h2 id="codes-title">Einladungscodes</h2>
-              <InvitationForm running={actions.running} onCreate={(d) => void actions.create(d)} />
-              {actions.created && <NewCode created={actions.created} />}
-              <InvitationList invitations={overview.invitations} />
+            <section aria-labelledby="codes-title" className="flex flex-col gap-3">
+              <h2 id="codes-title" className="text-xl font-semibold">
+                Einladungscodes
+              </h2>
+              <InvitationsArea
+                running={actions.running}
+                created={actions.created}
+                invitations={overview.invitations}
+                onCreate={(d) => void actions.create(d)}
+              />
             </section>
           </>
         )}

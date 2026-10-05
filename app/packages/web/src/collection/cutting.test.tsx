@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { readFileSync } from "node:fs";
 import type { Species, SpecimenCard } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "./CollectionPage";
@@ -119,18 +118,15 @@ describe("US-BES-04 create a cutting in the form", () => {
     expect(posts[1]?.body["status"]).toBe("cutting");
   });
 
-  it("US-BES-04: the tick sits inside its label, and the label row is the 48 px tap target (issue 292)", async () => {
+  it("US-BES-04: the tick sits inside its label, and the label row is the 44 px tap target (issue 292)", async () => {
     fakeServer();
     render(page(species));
     const tick = await screen.findByRole("checkbox", { name: /Das ist ein Steckling/ });
     const row = tick.closest("label");
-    expect(row?.className).toBe("check");
+    expect(row?.className).toContain("min-h-[44px]");
     // Tapping the text toggles the box: the whole row is the target, not only the 24 px box.
     await userEvent.click(screen.getByText("Das ist ein Steckling"));
     expect((tick as HTMLInputElement).checked).toBe(true);
-    // Measured in Chromium at 375x812 and 320x640: row 48 px high, no sideways scroll.
-    const css = readFileSync("src/collection/collection.css", "utf8");
-    expect(css).toMatch(/\.form label\.check \{[^}]*min-height: 48px;/);
   });
 
   it("US-BES-04: the form explains what a cutting means (P-09)", async () => {

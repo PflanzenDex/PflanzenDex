@@ -184,7 +184,7 @@ describe("US-POK-09 follow-ups of the detail view (issue 297)", () => {
 
   it("US-POK-09 every card shows a visible tap marker (chevron), not only the hover state", async () => {
     await open();
-    const marker = card("Ficus lyrata").closest("li")?.querySelector(".card-chevron");
+    const marker = card("Ficus lyrata").closest("li")?.querySelector("[data-chevron]");
     expect(marker?.textContent).toBe("›");
     expect(marker?.getAttribute("aria-hidden")).toBe("true");
   });

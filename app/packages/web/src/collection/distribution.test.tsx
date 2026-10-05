@@ -138,6 +138,45 @@ describe("US-LIC-02 view of the distribution", () => {
   });
 });
 
+describe("US-QS-07 · DS-32 distribution bars", () => {
+  const bars = (container: HTMLElement) =>
+    Array.from(container.querySelectorAll<HTMLElement>("[data-bar]"));
+
+  it("US-QS-07 · DS-32 the bar width is a CSS variable, not an inline width", () => {
+    const { container } = render(<DistributionView distribution={distribution()} />);
+    const found = bars(container);
+    expect(found).toHaveLength(3);
+    expect(found.every((b) => b.style.width === "")).toBe(true);
+    expect(found[0]?.style.getPropertyValue("--value")).toBe("100");
+    expect(Number(found[1]?.style.getPropertyValue("--value"))).toBeCloseTo(100 / 3, 5);
+  });
+
+  it("US-QS-07 · DS-32 a count of 0 renders an empty bar and the highest count a full one, nothing invented", () => {
+    const { container } = render(
+      <DistributionView
+        distribution={distribution({
+          zones: [
+            { zone: zone(2), count: 0 },
+            { zone: zone(3), count: 4 },
+          ],
+        })}
+      />,
+    );
+    expect(bars(container).map((b) => b.style.getPropertyValue("--value"))).toEqual(["0", "100"]);
+  });
+
+  it("US-QS-07 · DS-32 with all counts 0 no bar is filled", () => {
+    const { container } = render(
+      <DistributionView
+        distribution={distribution({
+          zones: [{ zone: zone(2), count: 0 }],
+        })}
+      />,
+    );
+    expect(bars(container).map((b) => b.style.getPropertyValue("--value"))).toEqual(["0"]);
+  });
+});
+
 describe("US-LIC-02 collection page shows the distribution", () => {
   const page = () => (
     <CollectionPage

@@ -1,6 +1,10 @@
 import type { TreatmentListRow } from "@pflanzendex/core";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { EmptyState, type EmptyStateAction } from "@/components/shared/empty-state";
+import { Button } from "@/components/ui/button";
 import { LoadError, SIGN_IN, type ApiError } from "../kernel";
+import { ATTENTION_CLASSES, CARD_CLASSES, LIST_CLASSES, RefusalAlert, StatusNote } from "./notices";
+import { OpenTreatmentsSkeleton } from "./open-treatments.skeleton";
 import { completeTreatment, loadOpenTreatments } from "./treatments-api";
 import { dateText } from "./text";
 
@@ -76,31 +80,35 @@ function useCompletion(api: string, token: Token, onChanged: () => void) {
   return { runningId, doneIds, message, error, complete };
 }
 
+/** Only overdue and due-today rows are marked; the status text says it first (never by colour alone). */
+const URGENCY: Record<string, string> = { overdue: ATTENTION_CLASSES, today: ATTENTION_CLASSES };
+
 function Row(props: { row: TreatmentListRow; running: boolean; onDone: () => void }) {
   const { row } = props;
   return (
-    <li className={`entry treatment-${row.status.kind}`}>
-      <h3>{row.specimenName}</h3>
-      <p className="quiet">Grund: {row.reason}</p>
-      <p className="quiet">Mittel: {row.agent ?? "—"}</p>
-      <p className="quiet">Fällig am: {dateText(row.dueAt)}</p>
-      <p className="status-text">{row.status.text}</p>
-      <button
+    <li className={`${CARD_CLASSES} flex flex-col gap-1 ${URGENCY[row.status.kind] ?? ""}`}>
+      <h3 className="font-semibold">{row.specimenName}</h3>
+      <p>Grund: {row.reason}</p>
+      <p>Mittel: {row.agent ?? "—"}</p>
+      <p>Fällig am: {dateText(row.dueAt)}</p>
+      <p className="font-bold">{row.status.text}</p>
+      <Button
         type="button"
-        className="primary done"
+        size="lg"
+        className="mt-2 self-start"
         disabled={props.running}
         aria-label={`${row.reason} bei ${row.specimenName} als erledigt abhaken`}
         onClick={props.onDone}
       >
         Erledigt
-      </button>
+      </Button>
     </li>
   );
 }
 
 /**
  * The open treatments by urgency (US-BEH-02): earliest first (the server sorts), status as text, never by colour
- * alone. Without any, the view says so and what to do next (P-09).
+ * alone. Without any, the view says so and what to do next (P-09): `next` is that action.
  */
 export function OpenTreatments(props: {
   api: string;
@@ -108,6 +116,8 @@ export function OpenTreatments(props: {
   version: number;
   /** Called after every tick-off attempt, so that other views (the history) load again. */
   onChanged: () => void;
+  /** What to do when there is nothing open: plan one, or create a specimen first. */
+  next: EmptyStateAction;
 }) {
   const [reload, setReload] = useState(0);
   const data = useOpenTreatments(props.api, props.token, props.version + reload);
@@ -121,32 +131,27 @@ export function OpenTreatments(props: {
     data.kind === "da" ? data.rows.filter((r) => !completion.doneIds.includes(r.id)) : [];
   const next = data.kind === "da" ? nextStepText(rows) : null;
   return (
-    <section aria-labelledby="open-treatments-title" className="open-treatments">
-      <h2 id="open-treatments-title">Offene Behandlungen</h2>
-      {completion.message && (
-        <p role="status" className="hint">
-          {completion.message}
-        </p>
-      )}
-      {completion.error && (
-        <div role="alert" className="warning">
-          <p>{completion.error.text}</p>
-        </div>
-      )}
-      {data.kind === "loading" && <p>Offene Behandlungen werden geladen …</p>}
+    <section aria-labelledby="open-treatments-title" className="flex flex-col gap-3">
+      <h2 id="open-treatments-title" className="text-xl font-semibold">
+        Offene Behandlungen
+      </h2>
+      {completion.message && <StatusNote>{completion.message}</StatusNote>}
+      {completion.error && <RefusalAlert error={completion.error} />}
+      {data.kind === "loading" && <OpenTreatmentsSkeleton />}
       {data.kind === "error" && (
         <LoadError error={data.error} onReload={() => setReload((n) => n + 1)} />
       )}
       {data.kind === "da" && rows.length === 0 && (
-        <div className="empty">
-          <p>Keine offenen Behandlungen.</p>
-          <p>Plane unten einen Termin, dann erscheint er hier.</p>
-        </div>
+        <EmptyState
+          title="Keine offenen Behandlungen."
+          description="Plane unten einen Termin, dann erscheint er hier."
+          action={props.next}
+        />
       )}
       {data.kind === "da" && rows.length > 0 && (
         <>
-          {next && <p className="hint">{next}</p>}
-          <ul className="list" aria-label="Offene Behandlungen">
+          {next && <p className="font-semibold">{next}</p>}
+          <ul className={LIST_CLASSES} aria-label="Offene Behandlungen">
             {rows.map((row) => (
               <Row
                 key={row.id}

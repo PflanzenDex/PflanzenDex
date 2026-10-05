@@ -1,4 +1,7 @@
+import { cva } from "class-variance-authority";
 import type { SpecimenCard, MeasurementQuality } from "@pflanzendex/core";
+import { Button } from "@/components/ui/button";
+import { Actions, CARD, Quiet } from "./parts";
 import { UNKNOWN, dateText, valueText } from "./text";
 
 const STATUS_TEXT = {
@@ -11,23 +14,40 @@ const QUALITY_TEXT: Record<MeasurementQuality, string> = {
   etiolated: "Vergeilt/dünn",
 };
 
+/** Etiolated growth is marked by the warning tokens plus the word, never by colour alone (DS-38, P-08). */
+const qualityMark = cva("", {
+  variants: {
+    quality: { healthy: "", etiolated: "border-b-2 border-warning-border bg-warning px-1" },
+  },
+});
+const dueMark = cva("", {
+  variants: {
+    kind: {
+      overdue: "border-b-2 border-warning-border bg-warning px-1 font-bold",
+      today: "",
+      soon: "",
+    },
+  },
+});
+
 function Photo({ card }: { card: SpecimenCard }) {
   if (!card.photo) {
     return (
-      <div className="card-photo platzhalter">
+      <div className="grid min-h-[72px] place-items-center rounded-lg border border-dashed border-border text-muted-foreground">
         <span>Noch kein Foto</span>
       </div>
     );
   }
   return (
     <a
-      className="card-photo"
+      className="block aspect-[4/3] overflow-hidden rounded-lg bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       href={card.photo.url}
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`Foto von ${card.name} groß öffnen`}
     >
       <img
+        className="block size-full object-cover"
         src={card.photo.url}
         alt={`Foto von ${card.name} vom ${dateText(card.photo.date)}`}
         loading="lazy"
@@ -38,22 +58,26 @@ function Photo({ card }: { card: SpecimenCard }) {
 
 function Measurement({ card }: { card: SpecimenCard }) {
   const m = card.lastMeasurement;
-  if (!m) return <p className="quiet">noch keine Messung</p>;
+  if (!m) return <Quiet>noch keine Messung</Quiet>;
   return (
     <>
       <p>
         Letzte Messung: {valueText(m.value)} ·{" "}
-        <strong className={`quality-${m.quality}`}>{QUALITY_TEXT[m.quality]}</strong> am{" "}
-        {dateText(m.date)}
+        <strong data-quality={m.quality} className={qualityMark({ quality: m.quality })}>
+          {QUALITY_TEXT[m.quality]}
+        </strong>{" "}
+        am {dateText(m.date)}
       </p>
       {m.quality === "etiolated" && (
-        <p className="quality-hint">
+        <p className="border-l-4 border-warning-border bg-warning px-2 py-1.5 text-sm text-warning-foreground">
           Vergeilt/dünn: kein Erfolgssignal, auch bei Wachstum. Siehe Erfolgskriterien der Art.
         </p>
       )}
       {m.note && (
-        <details className="note">
-          <summary>Notiz der Messung</summary>
+        <details>
+          <summary className="flex min-h-[44px] cursor-pointer items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            Notiz der Messung
+          </summary>
           <p>{m.note}</p>
         </details>
       )}
@@ -63,20 +87,32 @@ function Measurement({ card }: { card: SpecimenCard }) {
 
 function Treatment({ card }: { card: SpecimenCard }) {
   const b = card.treatment;
-  if (!b) return <p className="quiet">keine offene Behandlung</p>;
+  if (!b) return <Quiet>keine offene Behandlung</Quiet>;
   return (
-    <p className="treatment">
-      Behandlung: {b.reason} · <span className={`due-${b.dueDate.kind}`}>{b.dueDate.text}</span>
-      {card.moreTreatments > 0 && <span className="quiet"> · +{card.moreTreatments} weitere</span>}
+    <p>
+      Behandlung: {b.reason} ·{" "}
+      <span data-due={b.dueDate.kind} className={dueMark({ kind: b.dueDate.kind })}>
+        {b.dueDate.text}
+      </span>
+      {card.moreTreatments > 0 && (
+        <span className="text-muted-foreground"> · +{card.moreTreatments} weitere</span>
+      )}
     </p>
   );
 }
 
 function Action(props: { text: string; aria: string; on: () => void }) {
   return (
-    <button type="button" className="secondary" aria-label={props.aria} onClick={props.on}>
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="flex-1 whitespace-nowrap"
+      aria-label={props.aria}
+      onClick={props.on}
+    >
       {props.text}
-    </button>
+    </Button>
   );
 }
 
@@ -94,18 +130,18 @@ export function SpecimenCardView(props: {
   const { card, onMeasure, onArchive, onRepot, onMark } = props;
   const repot = card.status === "cutting" ? onRepot : undefined;
   return (
-    <li className="specimen-card">
+    <li className={CARD}>
       <Photo card={card} />
-      <h2>{card.name}</h2>
-      <p className="quiet">Art: {card.speciesName ?? UNKNOWN}</p>
-      <p className="quiet">
+      <h2 className="mt-2 text-lg font-semibold">{card.name}</h2>
+      <Quiet>Art: {card.speciesName ?? UNKNOWN}</Quiet>
+      <Quiet>
         Lichtzone: {card.lightZone ?? UNKNOWN} · Status: {STATUS_TEXT[card.status]}
-      </p>
-      <p className="quiet">Standort: {card.location ?? UNKNOWN}</p>
+      </Quiet>
+      <Quiet>Standort: {card.location ?? UNKNOWN}</Quiet>
       <Measurement card={card} />
       <Treatment card={card} />
       {(onMeasure || onArchive || repot || onMark) && (
-        <div className="actions">
+        <Actions>
           {onMeasure && (
             <Action text="Messen" aria={`Messen: ${card.name}`} on={() => onMeasure(card)} />
           )}
@@ -126,7 +162,7 @@ export function SpecimenCardView(props: {
               on={() => onArchive(card)}
             />
           )}
-        </div>
+        </Actions>
       )}
     </li>
   );

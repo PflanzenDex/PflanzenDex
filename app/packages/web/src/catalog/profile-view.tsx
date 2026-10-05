@@ -1,4 +1,6 @@
 import { speciesHints, type Species } from "@pflanzendex/core";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { DIFFICULTY, STATUS, GROWTH, lux, orUnknown, dormancyPhase } from "./text";
 
 function rows(species: Species): [string, string][] {
@@ -33,35 +35,41 @@ export function SpeciesProfile(props: {
 }) {
   const { species } = props;
   return (
-    <article aria-labelledby="species-title">
+    <article aria-labelledby="species-title" className="flex min-w-0 flex-col gap-3">
       {props.onBack && (
-        <button type="button" className="secondary back" onClick={props.onBack}>
+        <Button type="button" variant="secondary" className="self-start" onClick={props.onBack}>
           Zurück zur Suche
-        </button>
+        </Button>
       )}
-      <h1 id="species-title">
+      <h1 id="species-title" className="break-words text-2xl font-semibold">
         <i>{species.latinName}</i>
       </h1>
-      <p className="badge">{STATUS[species.reviewStatus]}</p>
+      <Badge variant="outline" className="self-start">
+        {STATUS[species.reviewStatus]}
+      </Badge>
       {speciesHints(species).map((h) => (
-        <p key={h.text} className="hint">
+        <p
+          key={h.text}
+          className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
+        >
           {h.text} {h.nextAction}
         </p>
       ))}
-      <dl className="data profile">
+      <dl className="m-0 grid grid-cols-1 gap-x-6 md:grid-cols-2">
         {rows(species).map(([name, value]) => (
-          <div key={name}>
-            <dt>{name}</dt>
+          <div
+            key={name}
+            className="min-w-0 border-b border-border py-2 [&>dd]:m-0 [&>dd]:break-words [&>dd]:whitespace-pre-wrap"
+          >
+            <dt className="text-sm text-muted-foreground">{name}</dt>
             <dd>{value}</dd>
           </div>
         ))}
       </dl>
       {props.onChoose && (
-        <div className="actions">
-          <button type="button" className="primary" onClick={props.onChoose}>
-            Diese Art wählen
-          </button>
-        </div>
+        <Button type="button" size="touch" className="self-start" onClick={props.onChoose}>
+          Diese Art wählen
+        </Button>
       )}
     </article>
   );

@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import type { ApiError } from "./api";
 
 /** Load error of a page: the text for the error code and the action "Reload" (P-09, P-10). */
@@ -6,9 +7,9 @@ export function LoadError(props: { error: ApiError; onReload: () => void }) {
     <div role="alert" className="warning">
       <p>{props.error.text}</p>
       <div className="actions">
-        <button type="button" className="secondary" onClick={props.onReload}>
+        <Button type="button" variant="secondary" onClick={props.onReload}>
           Erneut laden
-        </button>
+        </Button>
       </div>
     </div>
   );

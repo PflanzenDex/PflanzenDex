@@ -3,7 +3,7 @@ import type { OperatorOverview } from "@pflanzendex/core";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { parseAmount } from "./operator-cost";
+import { parseAmount } from "./schemas";
 import { OperatorPage } from "./operator-page";
 
 const token = async () => "tok";
@@ -362,5 +362,43 @@ describe("US-ACC-05 invitation codes", () => {
       ).toBeTruthy(),
     );
     setProfileTimeZone(null);
+  });
+});
+
+describe("US-ACC-05 · DS-48 states and primitives", () => {
+  it("US-ACC-05 · DS-52 while loading, a skeleton of the page stands in with one status and hidden blocks", () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise<Response>(() => {})),
+    );
+    const { container } = render(<OperatorPage api="http://api" token={token} />);
+    expect(screen.getByRole("status").textContent).toContain("Zahlen werden geladen");
+    expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(3);
+  });
+
+  it("US-ACC-05 · DS-26 the empty invitation list offers the next action: it takes the operator to the validity field", async () => {
+    await open();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Gültigkeit wählen" }));
+    expect(document.activeElement).toBe(screen.getByLabelText("Gültig für (Tage)"));
+  });
+
+  it("US-ACC-05 · DS-49 a refusal shows the German text of its error code, never the raw server text", async () => {
+    serve(async () => json(403, { error: { code: "access.denied", text: "RAW SERVER TEXT" } }));
+    await open();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Code erstellen" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe("Darauf hast du keinen Zugriff.");
+  });
+
+  it("US-ACC-05 · DS-48 an invalid amount marks the field and moves the focus to it", async () => {
+    await open();
+    const user = userEvent.setup();
+    const amount = screen.getByLabelText("Betrag");
+    await user.type(amount, "12,345");
+    await user.click(screen.getByRole("button", { name: "Kosten speichern" }));
+    const alert = await screen.findByRole("alert");
+    expect(amount.getAttribute("aria-invalid")).toBe("true");
+    expect(amount.getAttribute("aria-describedby")).toContain(alert.id);
+    expect(document.activeElement).toBe(amount);
   });
 });
