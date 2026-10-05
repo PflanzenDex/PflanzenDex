@@ -202,8 +202,24 @@ jobs:
           PR_BASE_REF: ${{ github.base_ref }}
         run: make changelog-check
 
+  # QG-C4: the file layout is checked for every change, also when only `Docs/` or the repo root changed
+  # (the `app` job is skipped for those). The check needs no dependencies; the full history gives it `origin/dev`
+  # for the "baseline must not grow" comparison (a missing ref fails in CI).
+  layout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - run: make layout
+
   ci-status:
-    needs: [changes, app, metadata, dependency-review, audit, lighthouse, e2e]
+    needs: [changes, app, layout, metadata, dependency-review, audit, lighthouse, e2e]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 2
@@ -211,13 +227,14 @@ jobs:
       - env:
           CHANGES: ${{ needs.changes.result }}
           APP: ${{ needs.app.result }}
+          LAYOUT: ${{ needs.layout.result }}
           METADATA: ${{ needs.metadata.result }}
           DEPENDENCY_REVIEW: ${{ needs.dependency-review.result }}
           AUDIT: ${{ needs.audit.result }}
           LIGHTHOUSE: ${{ needs.lighthouse.result }}
           E2E: ${{ needs.e2e.result }}
         run: |
-          for r in "$CHANGES" "$APP" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E"; do
+          for r in "$CHANGES" "$APP" "$LAYOUT" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E"; do
             case "$r" in
               success | skipped) ;;
               *) echo "failed: $r"; exit 1 ;;
