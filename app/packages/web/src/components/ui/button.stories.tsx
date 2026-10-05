@@ -16,7 +16,7 @@ const sizes = ["default", "sm", "lg", "touch"] as const;
 
 export const Default: Story = {};
 
-export const Variants: Story = {
+export const AllVariants: Story = {
   render: (args) => (
     <div className="flex flex-col gap-2 p-4">
       {variants.map((variant) => (

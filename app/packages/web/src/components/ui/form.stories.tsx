@@ -79,3 +79,15 @@ export const Default: Story = {};
 export const Invalid: Story = { args: { submitEmpty: true } };
 export const ServerError: Story = { args: { serverError: true } };
 export const Pending: Story = { args: { pending: true } };
+
+// Every look of the cva tones in form.tsx: invalid true/false for the label (formTone) and the message (formMessageTone).
+export const AllVariants: Story = {
+  render: () => (
+    <div className="flex flex-col gap-4 p-4">
+      <p className="text-sm">invalid: false</p>
+      <Demo />
+      <p className="text-sm">invalid: true</p>
+      <Demo submitEmpty />
+    </div>
+  ),
+};
