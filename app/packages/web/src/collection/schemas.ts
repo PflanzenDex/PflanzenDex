@@ -35,6 +35,14 @@ export const markerSchema = z.object({
 });
 export type MarkerFields = z.infer<typeof markerSchema>;
 
+export const CATCH_DATE_MISSING = "Bitte gib ein Fangdatum an: heute oder ein früheres Datum.";
+
+/** The form to correct the catch date of a specimen (US-BES-11); the server checks the date again (P-03). */
+export const catchDateSchema = z.object({
+  catchDate: z.string().min(1, CATCH_DATE_MISSING),
+});
+export type CatchDateFields = z.infer<typeof catchDateSchema>;
+
 export const OTHER_REASON = "other";
 
 /** The form to archive a specimen (US-BES-07): a reason from the list, or an own one. */
