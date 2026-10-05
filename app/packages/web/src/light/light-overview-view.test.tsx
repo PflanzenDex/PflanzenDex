@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/lib/viewport-mock";
 import { LightOverviewView } from "./light-overview-view";
 import type { LightOverview, LightOverviewRow } from "./light-api";
 
+beforeEach(() => setViewportWidth(1024));
 afterEach(() => {
   cleanup();
 });
@@ -64,5 +66,16 @@ describe("US-LIC-03: light overview view", () => {
       .map((r) => r.textContent);
     expect(names[0]).toContain("Erste");
     expect(names[1]).toContain("Zweite");
+  });
+});
+
+describe("US-LIC-03 · DS-48 light overview on a phone", () => {
+  it("shows each species as a card with labelled values instead of a table", () => {
+    setViewportWidth(360);
+    show([row()]);
+    expect(screen.queryByRole("table")).toBeNull();
+    const list = screen.getByRole("list", { name: "Lichthunger der Arten" });
+    expect(within(list).getByText("Lux-Bedarf")).toBeTruthy();
+    expect(within(list).getByText("15.000")).toBeTruthy();
   });
 });

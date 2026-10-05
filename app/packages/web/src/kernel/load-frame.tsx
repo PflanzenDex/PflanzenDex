@@ -16,6 +16,8 @@ export function LoadFrame<T>(props: {
   token: () => Promise<string | undefined>;
   load: (token: string) => Promise<Response<T>>;
   loadingText: string;
+  /** Skeleton that mirrors the page while it loads (DS-52); it must carry the single `role="status"` with `loadingText`. */
+  loadingFallback?: ReactNode;
   refresh?: number;
   children: (value: T) => ReactNode;
 }) {
@@ -35,7 +37,8 @@ export function LoadFrame<T>(props: {
       current = false;
     };
   }, [token, load, reload, refresh]);
-  if (state.kind === "loading") return <p role="status">{props.loadingText}</p>;
+  if (state.kind === "loading")
+    return props.loadingFallback ?? <p role="status">{props.loadingText}</p>;
   if (state.kind === "error")
     return <LoadError error={state.error} onReload={() => setReload((n) => n + 1)} />;
   return <>{props.children(state.value)}</>;

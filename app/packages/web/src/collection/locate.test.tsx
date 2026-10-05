@@ -176,7 +176,8 @@ describe("US-PHA-03 set the location from the hint 'location missing' (BES-08)",
     await userEvent.selectOptions(await screen.findByLabelText("Standort für „Bogenhanf“"), "s1");
     signedIn = false;
     await userEvent.click(screen.getByRole("button", { name: "Standort setzen: Bogenhanf" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("Bitte melde dich neu an.");
+    // The refusal by its code (ERROR_TEXTS) or, once the page has reloaded, the load error: both ask to sign in.
+    expect((await screen.findByRole("alert")).textContent).toMatch(/Bitte melde dich/);
     expect(posts(fetchFn)).toHaveLength(0);
   });
 });

@@ -1,6 +1,6 @@
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { AccountView, Welcome } from "./views";
+import { AccountView, AppError, Loading, Welcome } from "./views";
 import type { Account } from "./account-api";
 
 const account: Account = {
@@ -54,5 +54,21 @@ describe("signed-in view (US-ACC-01)", () => {
   it("shows no warning for a confirmed email", () => {
     const html = renderToString(<AccountView account={account} {...props} />);
     expect(html).not.toContain("bestätigen");
+  });
+});
+
+describe("loading and error states (US-ACC-01 · DS-26, DS-52)", () => {
+  it("US-ACC-01 · DS-52 loading is a skeleton with the one status text", () => {
+    const html = renderToString(<Loading />);
+    expect(html).toContain('role="status"');
+    expect(html).toContain("Anmeldung wird geprüft");
+    expect(html).toContain('aria-hidden="true"');
+  });
+
+  it("US-ACC-01 · DS-26 the error says what happened and offers 'Erneut versuchen'", () => {
+    const html = renderToString(<AppError text="Der Server antwortet nicht." onReload={nothing} />);
+    expect(html).toContain('role="alert"');
+    expect(html).toContain("Der Server antwortet nicht.");
+    expect(html).toContain("Erneut versuchen");
   });
 });

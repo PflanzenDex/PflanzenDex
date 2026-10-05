@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse e2e crap duplicates unused-report storybook build-storybook
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates unused-report storybook build-storybook
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -70,8 +70,13 @@ test: $(if $(CI),,db-up) ## Unit and database tests of all packages and check sc
 coverage: $(if $(CI),,db-up) ## Run all tests with coverage, then the ratchet check (thresholds: app/coverage-thresholds.json)
 	cd $(APP) && npm run coverage
 
-e2e: $(if $(CI),,db-up) auth-up migrate ## End-to-end tests with Playwright, mobile + desktop, axe as report (QG-T3, QG-U1; needs Docker)
+browsers: ## Install the Chromium that Playwright uses (e2e, conformance run)
 	cd $(APP) && npx --no-install playwright install $(if $(CI),--with-deps) chromium
+
+conformance: ## Component conformance over all stories: axe, 44 px targets, focus, overlays; light and dark, 360 px (QG-U5, FR-QG-09; needs `make browsers`; report only until it is switched to blocking)
+	cd $(APP) && npm run conformance
+
+e2e: $(if $(CI),,db-up) auth-up migrate browsers ## End-to-end tests with Playwright, mobile + desktop, axe blocks on serious/critical (QG-T3, QG-U1; needs Docker)
 	cd $(APP) && npm run e2e
 
 crap: ## CRAP gate on functions in changed files (QG-K3; needs coverage output, run `make coverage` first; `ARGS=--all` for the whole project)
@@ -132,10 +137,10 @@ worktree: ## New worktree and branch (BRANCH=feat/x) with its own ports; claim c
 merge: ## Merge a PR into dev as an agent (PR=<n>): green ci-status, known story, no gate file (ADR 0005)
 	cd $(APP) && node scripts/merge-pr.mjs "$(PR)"
 
-repo-stats: ## Regenerate the statistics block in README.md by hand (make pr does it before review, US-DEV-10)
+repo-stats: ## Regenerate the statistics block in README.md (once per release PR, see release-checklist; US-DEV-10)
 	scripts/repo-stats.sh
 
-pr: ## Before review (PR=<n> optional): README statistics, commit if changed, push, mark the PR ready (US-DEV-10)
+pr: ## Before review (PR=<n> optional): push and mark the PR ready (US-DEV-10)
 	scripts/pr-ready.sh "$(PR)"
 
 claim: ## Claim a story before working on it (ISSUE=<n>): assignee, status, branch, draft PR; refuses duplicate work (US-DEV-08)

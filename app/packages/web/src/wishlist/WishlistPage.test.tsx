@@ -238,12 +238,14 @@ describe("US-WUN-01 recording a wish", () => {
   });
 
   it("US-WUN-01 a refusal that names no field stays in an alert that takes the focus", async () => {
-    fakeServer(list([candidate()]), refusal(500, "server.error", "Der Server antwortet nicht."));
+    fakeServer(list([candidate()]), refusal(500, "system.unexpected", "NullPointer at line 3"));
     render(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
     await save();
     const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toContain("Der Server antwortet nicht.");
+    // DS-49: the German text of the error code, never the raw server text.
+    expect(alert.textContent).toContain("unerwarteter Fehler");
+    expect(alert.textContent).not.toContain("NullPointer");
     await vi.waitFor(() => expect(document.activeElement).toBe(alert));
     expect(screen.getByLabelText("Name").getAttribute("aria-invalid")).not.toBe("true");
   });
@@ -336,5 +338,49 @@ describe("US-WUN-01 recording a wish", () => {
     await userEvent.type(screen.getByLabelText("Deutscher Name (optional)"), "Ein");
     expect(name.getAttribute("aria-invalid")).toBe("true");
     expect(screen.getByText(/gibt es schon/)).toBeTruthy();
+  });
+});
+
+describe("US-WUN-01 · DS-48 states and primitives", () => {
+  it("US-WUN-01 · DS-52 while loading, a skeleton of the page stands in with one status and hidden blocks", () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise<Response>(() => {})),
+    );
+    const { container } = render(<WishlistPage api="http://api" token={token} />);
+    const status = screen.getByRole("status");
+    expect(status.textContent).toContain("Wunschliste wird geladen");
+    expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(3);
+    expect(screen.queryByRole("form")).toBeNull();
+  });
+
+  it("US-WUN-01 · DS-26 the empty list offers the next action: it takes the keeper to the form", async () => {
+    fakeServer(
+      list([], {
+        text: "Keine offenen Kandidaten in der Wunschliste.",
+        nextAction: "Erfasse einen Wunsch mit Ziel-Lichtzone.",
+      }),
+    );
+    render(<WishlistPage api="http://api" token={token} />);
+    await screen.findByText("Keine offenen Kandidaten in der Wunschliste.");
+    await userEvent.click(screen.getByRole("button", { name: "Wunsch erfassen" }));
+    expect(document.activeElement).toBe(screen.getByLabelText("Name"));
+  });
+
+  it("US-WUN-01 · DS-50 the save button is disabled while the write runs, so a double tap writes once", async () => {
+    let release: (r: Response) => void = () => {};
+    const fetchFn = fakeServer(
+      list([candidate()]),
+      () => new Promise<Response>((resolve) => (release = resolve)),
+    );
+    render(<WishlistPage api="http://api" token={token} />);
+    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await userEvent.type(screen.getByLabelText("Name"), "Neu");
+    await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
+    const busy = (await screen.findByRole("button", { name: /Speichert/ })) as HTMLButtonElement;
+    expect(busy.disabled).toBe(true);
+    release(new Response(JSON.stringify({ wish: { id: "w2" } }), { status: 201 }));
+    await screen.findByText(/gespeichert/);
+    expect(fetchFn.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
   });
 });

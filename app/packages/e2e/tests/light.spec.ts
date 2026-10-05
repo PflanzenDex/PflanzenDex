@@ -32,7 +32,7 @@ test.describe("US-LIC-05 locations and light zones", () => {
 
     await expect(page.getByRole("heading", { level: 3, name: "Balkon" })).toBeVisible();
     await expect(page.getByText("Lampe 3 · außen")).toBeVisible();
-    await axeReport(page, info, "light-eingerichtet");
+    await axeReport(page, info, "light-eingerichtet", { blocking: true });
 
     // Nothing is lost silently (P-10): after reloading the data from the database is there again.
     await page.reload();

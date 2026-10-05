@@ -228,7 +228,7 @@ describe("US-BES-07 archive and restore", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Wiederherstellen: Alter Ficus" }),
     );
-    expect((await screen.findByRole("alert")).textContent).toContain("Nicht archiviert.");
+    expect((await screen.findByRole("alert")).textContent).toContain("ist nicht archiviert");
     expect(screen.getByRole("region", { name: "Archiv" })).toBeTruthy();
   });
 });

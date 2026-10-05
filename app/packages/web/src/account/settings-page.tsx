@@ -1,89 +1,84 @@
-import "./settings.css";
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useCallback, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
 import { LoadFrame, SIGN_IN, deviceTimeZone, setProfileTimeZone, type ApiError } from "../kernel";
 import { loadProfile, saveProfile, type AccountProfile } from "./account-api";
-import { DISPLAY_NAME_ID, ProfileFields, SwitchFields, TIME_ZONE_ID } from "./settings-fields";
+import { ALERT_CLASSES, useServerRefusal } from "./refusal";
+import { PROFILE_REFUSABLE, profileSchema, toProfile, toProfileFields } from "./schemas";
+import type { ProfileFields as Fields } from "./schemas";
+import { ProfileFields, SwitchFields } from "./settings-fields";
+import { SettingsPageSkeleton } from "./settings-page.skeleton";
 
 type Token = () => Promise<string | undefined>;
 
-const ERROR_ID = "settings-error";
-/** Order of the fields in the form: the first refused one gets the focus. */
-const FIELD_IDS: Record<string, string> = { displayName: DISPLAY_NAME_ID, timeZone: TIME_ZONE_ID };
-
-/**
- * After a refusal the focus goes to the first refused field, otherwise to the error text, so a keyboard or screen
- * reader user lands where the problem is. Returns the ref for the error text.
- */
-function useFocusOnError(error: ApiError | null) {
-  const alertRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!error) return;
-    const fields = error.details?.map((d) => d.field) ?? [];
-    const first = Object.keys(FIELD_IDS).find((f) => fields.includes(f));
-    (first ? document.getElementById(FIELD_IDS[first] as string) : alertRef.current)?.focus();
-  }, [error]);
-  return alertRef;
-}
+/** The form fields a refusal names, in the order of the form: the first one gets the focus. */
+const refusedFields = (error: ApiError) => {
+  const named = error.details?.map((d) => d.field) ?? [];
+  return PROFILE_REFUSABLE.filter((f) => named.includes(f));
+};
 
 /** Saves one profile at a time (a double tap sends one); a refusal stays visible and keeps the input (P-10). */
 function SettingsForm(props: { api: string; token: Token; profile: AccountProfile }) {
   const [saved, setSaved] = useState(props.profile);
   const fromDevice = saved.timeZone === null;
-  const [form, setForm] = useState<AccountProfile>({
-    ...props.profile,
-    timeZone: props.profile.timeZone ?? deviceTimeZone(),
+  const form = useForm<Fields>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: toProfileFields(props.profile, deviceTimeZone()),
   });
-  const [running, setRunning] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
-  const set = (change: Partial<AccountProfile>) => {
-    setForm((f) => ({ ...f, ...change }));
-    setMessage(null);
-  };
-  const alertRef = useFocusOnError(error);
-  const dirty = JSON.stringify(form) !== JSON.stringify(saved);
+  const busy = useRef(false);
+  const { alertText, alertRef } = useServerRefusal<Fields>(error, form.setError, refusedFields);
+  const pending = form.formState.isSubmitting;
 
-  async function send(e: FormEvent) {
-    e.preventDefault();
-    if (running) return;
-    setRunning(true);
+  const send = form.handleSubmit(async (values) => {
+    if (busy.current) return;
+    busy.current = true;
     const t = await props.token();
-    const r = t ? await saveProfile(props.api, t, form) : { ok: false as const, error: SIGN_IN };
-    setRunning(false);
+    const r = t
+      ? await saveProfile(props.api, t, toProfile(values, saved))
+      : { ok: false as const, error: SIGN_IN };
+    busy.current = false;
     setError(r.ok ? null : r.error);
     setMessage(r.ok ? "Einstellungen gespeichert." : null);
     if (!r.ok) return;
     setSaved(r.value);
-    setForm(r.value);
+    form.reset(toProfileFields(r.value, null));
     setProfileTimeZone(r.value.timeZone);
-  }
+  });
 
   return (
-    <form className="form" onSubmit={(e) => void send(e)} aria-label="Einstellungen" noValidate>
-      <ProfileFields
-        form={form}
-        set={set}
-        invalid={error?.details?.map((d) => d.field) ?? []}
-        errorId={ERROR_ID}
-        fromDevice={fromDevice}
-      />
-      <SwitchFields form={form} set={set} />
-      {error && (
-        <div role="alert" id={ERROR_ID} ref={alertRef} tabIndex={-1} className="warning">
-          <p>{error.text}</p>
-        </div>
-      )}
-      {message && (
-        <p role="status" className="hint">
-          {message}
-        </p>
-      )}
-      <div className="actions">
-        <button type="submit" className="primary" disabled={running || !dirty}>
-          Speichern
-        </button>
-      </div>
-    </form>
+    <Form {...form}>
+      <form
+        aria-label="Einstellungen"
+        noValidate
+        onSubmit={(e) => void send(e)}
+        onChange={() => setMessage(null)}
+        className="flex max-w-xl flex-col gap-4"
+      >
+        <ProfileFields control={form.control} fromDevice={fromDevice} />
+        <SwitchFields control={form.control} />
+        {alertText !== null && (
+          <div role="alert" tabIndex={-1} ref={alertRef} className={ALERT_CLASSES}>
+            <p>{alertText}</p>
+          </div>
+        )}
+        {message && (
+          <p role="status" className="rounded-lg border border-border p-3">
+            {message}
+          </p>
+        )}
+        <Button
+          type="submit"
+          size="touch"
+          disabled={pending || !(form.formState.isDirty || fromDevice)}
+        >
+          {pending ? "Speichert …" : "Speichern"}
+        </Button>
+      </form>
+    </Form>
   );
 }
 
@@ -94,10 +89,16 @@ function SettingsForm(props: { api: string; token: Token; profile: AccountProfil
  */
 export function SettingsPage(props: { api: string; token: Token }) {
   const load = useCallback((t: string) => loadProfile(props.api, t), [props.api]);
+  const loading = "Einstellungen werden geladen …";
   return (
-    <div className="light settings">
-      <h1>Einstellungen</h1>
-      <LoadFrame token={props.token} load={load} loadingText="Einstellungen werden geladen …">
+    <div className="flex min-w-0 flex-col gap-4">
+      <h1 className="text-2xl font-semibold">Einstellungen</h1>
+      <LoadFrame
+        token={props.token}
+        load={load}
+        loadingText={loading}
+        loadingFallback={<SettingsPageSkeleton label={loading} />}
+      >
         {(profile) => <SettingsForm api={props.api} token={props.token} profile={profile} />}
       </LoadFrame>
     </div>

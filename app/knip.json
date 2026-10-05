@@ -18,7 +18,8 @@
       "project": ["src/**/*.ts!", "!src/**/*-test-helpers.ts!", "!src/**/*-stub.ts!"]
     },
     "packages/web": {
-      "project": ["src/**/*.{ts,tsx,css}!", "!src/**/*-test-helpers.ts!"]
+      "project": ["src/**/*.{ts,tsx,css}!", "!src/**/*-test-helpers.ts!"],
+      "ignore": [".storybook/conformance-fixtures/**"]
     },
     "packages/e2e": {
       "project": ["**/*.ts"]

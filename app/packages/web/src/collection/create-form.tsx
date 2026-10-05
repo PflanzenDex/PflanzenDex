@@ -1,22 +1,29 @@
-import { useState, type FormEvent } from "react";
-import {
-  speciesDisplayName,
-  specimenName,
-  type Species,
-  type LightLocation,
-} from "@pflanzendex/core";
+import { useCallback, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { speciesDisplayName, type Species, type LightLocation } from "@pflanzendex/core";
+import { Form } from "@/components/ui/form";
 import type { ApiError } from "../kernel";
-import { collectInput, isError, type CreateInput } from "./create-input";
-import { CatchDateField, refusesCatchDate, useCatchDate } from "./catch-date-field";
+import { refusesCatchDate, useToday } from "./catch-date-field";
+import { Heading, NamePreview, OtherFields } from "./create-fields";
+import { toCreateInput, type CreateInput } from "./create-input";
 import { MarkerFields, markerRule, type Sibling } from "./marker-fields";
+import { FormButtons, Warning } from "./parts";
+import { useEdited, useRefusal } from "./refusal";
+import { createSchema, type CreateFields } from "./schemas";
 import { nameConflict } from "./text";
 
-function ErrorBox({ error }: { error: ApiError }) {
-  if (refusesCatchDate(error)) return null; // shown at the date field itself
+/** The fields a refusal points at: the catch date by its detail, a taken marker at the marker (US-BES-02, US-BES-03). */
+function fieldsOfRefusal(error: ApiError): (keyof CreateFields)[] {
+  if (refusesCatchDate(error)) return ["catchDate"];
+  return error.code === "specimen.marker_taken" ? ["marker"] : [];
+}
+
+function ErrorBox({ text, error }: { text: string; error: ApiError }) {
   const conflict = nameConflict(error);
   return (
-    <div role="alert" className="warning">
-      <p>{error.text}</p>
+    <Warning>
+      <p>{text}</p>
       {conflict && (
         <>
           {conflict.existing.map((v) => (
@@ -25,64 +32,7 @@ function ErrorBox({ error }: { error: ApiError }) {
           <p>Mit einem Kennzeichen heißt das neue Exemplar dann „{conflict.name} – Kennzeichen“.</p>
         </>
       )}
-    </div>
-  );
-}
-
-function OtherFields(props: {
-  locations: readonly LightLocation[];
-  today: string;
-  error: ApiError | null;
-}) {
-  return (
-    <>
-      <label className="check">
-        <input type="checkbox" name="cutting" />
-        Das ist ein Steckling
-      </label>
-      <p className="quiet">
-        Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der
-        Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.
-      </p>
-      <label>
-        Standort
-        <select name="locationId" defaultValue="">
-          <option value="">Standort noch unbekannt</option>
-          {props.locations.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <p className="quiet">Ohne Auswahl bleibt der Standort unbekannt.</p>
-      <CatchDateField today={props.today} error={props.error} />
-    </>
-  );
-}
-
-function Buttons(props: { running: boolean; onCancel: () => void }) {
-  return (
-    <div className="actions">
-      <button type="submit" className="primary" disabled={props.running}>
-        Exemplar anlegen
-      </button>
-      <button type="button" className="secondary" onClick={props.onCancel}>
-        Zurück zur Art
-      </button>
-    </div>
-  );
-}
-
-function Heading({ species }: { species: Species }) {
-  return (
-    <>
-      <h1 id="create-title">Exemplar anlegen</h1>
-      <p className="lead">
-        Art: <i>{species.latinName}</i>
-        {species.germanName ? ` (${species.germanName})` : ""}
-      </p>
-    </>
+    </Warning>
   );
 }
 
@@ -103,54 +53,54 @@ export function CreateForm(props: {
   errorStart?: ApiError;
 }) {
   const rule = markerRule(props.siblings);
-  const [marker, setMarker] = useState(rule.required ? rule.preset : "");
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const today = useToday();
   const [error, setError] = useState<ApiError | null>(props.errorStart ?? null);
-  const [running, setRunning] = useState(false);
+  const form = useForm<CreateFields>({
+    resolver: zodResolver(createSchema(rule)),
+    defaultValues: {
+      marker: rule.required ? rule.preset : "",
+      answers: Object.fromEntries(rule.missing.map((s) => [s.id, ""])),
+      cutting: false,
+      locationId: "",
+      catchDate: today,
+    },
+  });
+  const alertText = useRefusal(error, form.setError, fieldsOfRefusal);
+  useEdited(
+    form,
+    useCallback(() => setError(null), []),
+  );
   const speciesName = speciesDisplayName(props.species);
-  const today = useCatchDate(error);
-  async function send(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const input = collectInput(
-      { marker, answers, data: new FormData(e.currentTarget), today },
-      rule,
-    );
-    if (isError(input)) return setError(input);
-    setRunning(true);
-    setError(await props.onSend(input));
-    setRunning(false);
-  }
+  const submit = form.handleSubmit(async (values) =>
+    setError(await props.onSend(toCreateInput(values, rule.missing, today))),
+  );
   return (
     <section aria-labelledby="create-title">
       <Heading species={props.species} />
-      <form
-        className="form"
-        noValidate
-        onSubmit={(e) => void send(e)}
-        aria-label="Exemplar anlegen"
-      >
-        <p className="name-preview" aria-live="polite">
-          Name: {specimenName(speciesName, marker.trim() || null)}
-        </p>
-        <MarkerFields
-          speciesName={speciesName}
-          required={rule.required}
-          missing={rule.missing}
-          marker={marker}
-          onMarker={(k) => {
-            setMarker(k);
-            setError(null);
-          }}
-          answers={answers}
-          onAnswer={(id, k) => {
-            setAnswers({ ...answers, [id]: k });
-            setError(null);
-          }}
-        />
-        <OtherFields locations={props.locations} today={today} error={error} />
-        {error && <ErrorBox error={error} />}
-        <Buttons running={running} onCancel={props.onCancel} />
-      </form>
+      <Form {...form}>
+        <form
+          noValidate
+          onSubmit={(e) => void submit(e)}
+          aria-label="Exemplar anlegen"
+          className="flex max-w-xl flex-col gap-4"
+        >
+          <NamePreview control={form.control} speciesName={speciesName} />
+          <MarkerFields
+            control={form.control}
+            speciesName={speciesName}
+            required={rule.required}
+            missing={rule.missing}
+          />
+          <OtherFields control={form.control} locations={props.locations} today={today} />
+          {error && alertText !== null && <ErrorBox text={alertText} error={error} />}
+          <FormButtons
+            submit="Exemplar anlegen"
+            cancel="Zurück zur Art"
+            pending={form.formState.isSubmitting}
+            onCancel={props.onCancel}
+          />
+        </form>
+      </Form>
     </section>
   );
 }

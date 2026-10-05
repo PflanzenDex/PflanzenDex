@@ -3,10 +3,9 @@
 //   AB-2  API and web import `core` only through its public interface (package root)
 //   AB-6  web imports neither API nor database (NFR-ARC-01 of the earlier draft: HTTP only)
 //   MK-1  marker STRUCTURE_IGNORE / MAX_LINES_IGNORE / COMPLEXITY_IGNORE (first 5 lines) without a reason
-//   EX-1  entry in KNOWN_EXCEPTIONS without a reason
-//   AB-7..AB-14  module boundaries (FR-QG-19): check-modules.mjs, check-modules-sql.mjs, register modules.config.mjs
+//   EX-1  entry in KNOWN_EXCEPTIONS (accepted legacy, with a reason, may only shrink) without a reason
+//   AB-7..AB-14  module boundaries (FR-QG-19): check-modules*.mjs, register modules.config.mjs
 //   ST-c  every directory with code in `core` has an `index.ts`
-// Known, deliberately accepted legacy belongs in KNOWN_EXCEPTIONS (with a reason; the list may only shrink).
 import fs from "node:fs";
 import path from "node:path";
 import { builtinModules } from "node:module";

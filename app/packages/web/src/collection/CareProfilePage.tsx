@@ -8,7 +8,9 @@ import type {
 import { LoadFrame, useWriteAction } from "../kernel";
 import { loadLocations, loadZones } from "../light";
 import { loadCareProfiles, saveCareProfile } from "./care-profile-api";
+import { CareProfilePageSkeleton } from "./CareProfilePage.skeleton";
 import { ProfileList } from "./care-profile-list";
+import { PageFrame } from "./parts";
 
 interface Data {
   readonly entries: readonly CareProfileEntry[];
@@ -46,11 +48,12 @@ export function CareProfilePage(props: { api: string; token: () => Promise<strin
   const save = (speciesId: string, changes: CareProfileChanges, success: string) =>
     void write.run((t) => saveCareProfile(api, t, { speciesId, changes }), success);
   return (
-    <div className="light collection">
+    <PageFrame>
       <LoadFrame
         token={token}
         load={load}
         loadingText="Pflegeprofil wird geladen …"
+        loadingFallback={<CareProfilePageSkeleton label="Pflegeprofil wird geladen …" />}
         refresh={refresh}
       >
         {(data: Data) => (
@@ -61,6 +64,6 @@ export function CareProfilePage(props: { api: string; token: () => Promise<strin
           />
         )}
       </LoadFrame>
-    </div>
+    </PageFrame>
   );
 }

@@ -4,9 +4,12 @@ import type {
   LightLocation,
   LightZone,
 } from "@pflanzendex/core";
+import { EmptyState } from "@/components/shared/empty-state";
 import type { ApiError } from "../kernel";
 import { CareProfileCard } from "./care-profile-card";
 import { KeptProfileCard } from "./kept-profile-card";
+import { NextAction, PROFILE_GRID, Quiet, Status, TITLE, Warning } from "./parts";
+import { refusalText } from "./refusal";
 
 export interface ProfileData {
   readonly entries: readonly CareProfileEntry[];
@@ -23,34 +26,34 @@ export function ProfileList(props: {
   const { data, write } = props;
   return (
     <section aria-labelledby="care-profile-title">
-      <h1 id="care-profile-title">Pflegeprofil</h1>
-      <p className="quiet">
+      <h1 id="care-profile-title" className={TITLE}>
+        Pflegeprofil
+      </h1>
+      <Quiet className="mb-3">
         Hier weichst du von den Katalogwerten ab, wo dein Standort oder dein Klima es verlangt. Der
         Katalog bleibt unverändert. Dein Pflegeprofil ist privat und nie Teil einer Freigabe.
-      </p>
-      {write.message && (
-        <p role="status" className="hint">
-          {write.message}
-        </p>
-      )}
+      </Quiet>
+      {write.message && <Status>{write.message}</Status>}
       {write.error && (
-        <div role="alert" className="warning">
-          <p>{write.error.text}</p>
-        </div>
+        <Warning>
+          <p>{refusalText(write.error)}</p>
+        </Warning>
       )}
       {data.locations.length === 0 && (
-        <p className="next-action">
-          Du hast noch keinen Standort angelegt. Lege zuerst unter „Standorte und Licht“ einen
-          Standort an, dann kannst du Soll-Standorte je Phase wählen.
-        </p>
+        <div className="mb-3">
+          <NextAction>
+            Du hast noch keinen Standort angelegt. Lege zuerst unter „Standorte und Licht“ einen
+            Standort an, dann kannst du Soll-Standorte je Phase wählen.
+          </NextAction>
+        </div>
       )}
       {data.entries.length === 0 ? (
-        <p>
-          Noch keine Art im Bestand: Lege zuerst im Bestand ein Exemplar an, dann kannst du hier das
-          Pflegeprofil der Art anpassen.
-        </p>
+        <EmptyState
+          title="Noch keine Art im Bestand"
+          description="Lege zuerst im Bestand ein Exemplar an, dann kannst du hier das Pflegeprofil der Art anpassen."
+        />
       ) : (
-        <ul className="cards-grid profile-grid">
+        <ul className={PROFILE_GRID}>
           {data.entries.map((entry) => (
             <li key={`${entry.speciesId}:${JSON.stringify(entry.profile)}`}>
               {entry.mergedInto ? (
