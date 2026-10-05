@@ -1,5 +1,14 @@
 import type { CSSProperties } from "react";
 import type { NotCounted, Distribution } from "@pflanzendex/core";
+import { cva } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+import { NextAction, Quiet, SUBTITLE } from "./parts";
+
+/** The bar of the thinnest zone takes the warning token; the words "dünnste Zone" carry the meaning too (DS-38). */
+const barTone = cva("block h-full w-[calc(var(--value)*1%)] rounded-full", {
+  variants: { thinnest: { true: "bg-warning-border", false: "bg-primary" } },
+  defaultVariants: { thinnest: false },
+});
 
 const specimens = (n: number) => `${n} ${n === 1 ? "Exemplar" : "Exemplare"}`;
 
@@ -22,14 +31,19 @@ export function DistributionView({ distribution }: { distribution: Distribution 
   const highest = Math.max(1, ...distribution.zones.map((z) => z.count));
   const rest = notCounted(distribution.notCounted);
   return (
-    <section aria-labelledby="distribution-title" className="distribution">
-      <h2 id="distribution-title">Verteilung auf die Lichtzonen</h2>
+    <section
+      aria-labelledby="distribution-title"
+      className="mb-5 grid gap-1 rounded-xl border border-border bg-card px-4 pb-3 pt-1 text-card-foreground"
+    >
+      <h2 id="distribution-title" className={cn(SUBTITLE, "mt-3")}>
+        Verteilung auf die Lichtzonen
+      </h2>
       <p>{distribution.hint.text}</p>
-      <p className="next-action">{distribution.hint.nextAction}</p>
+      <NextAction>{distribution.hint.nextAction}</NextAction>
       {distribution.zones.length > 0 && (
-        <ul aria-label="Exemplare je Lichtzone" className="distribution-list">
+        <ul aria-label="Exemplare je Lichtzone" className="m-0 my-3 grid list-none gap-2.5 p-0">
           {distribution.zones.map(({ zone, count }) => (
-            <li key={zone.id} className={thin.has(zone.id) ? "thinnest" : undefined}>
+            <li key={zone.id} className="grid gap-1 break-words">
               <span>
                 {zone.name}: {specimens(count)}
                 {thin.has(zone.id) && <strong> · dünnste Zone</strong>}
@@ -40,7 +54,7 @@ export function DistributionView({ distribution }: { distribution: Distribution 
               >
                 <span
                   data-bar=""
-                  className="block h-full w-[calc(var(--value)*1%)] rounded-full bg-primary"
+                  className={barTone({ thinnest: thin.has(zone.id) })}
                   style={{ "--value": (count / highest) * 100 } as CSSProperties}
                 />
               </span>
@@ -48,10 +62,10 @@ export function DistributionView({ distribution }: { distribution: Distribution 
           ))}
         </ul>
       )}
-      <p className="quiet">
+      <Quiet>
         Stecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.
-      </p>
-      {rest && <p className="quiet">{rest}</p>}
+      </Quiet>
+      {rest && <Quiet>{rest}</Quiet>}
     </section>
   );
 }

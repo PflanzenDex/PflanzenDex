@@ -1,18 +1,8 @@
 import type { CareProfileChanges, CareProfileEntry } from "@pflanzendex/core";
+import type { CareProfileFields } from "./schemas";
 
 /** What the form fields hold (all text, as typed or chosen); an empty text means "no deviation". */
-export interface Draft {
-  growthLocationId: string;
-  dormancyLocationId: string;
-  lightZoneId: string;
-  fromMonth: string;
-  fromDay: string;
-  untilMonth: string;
-  untilDay: string;
-  wateringGrowthDays: string;
-  wateringDormancyDays: string;
-  ownHints: string;
-}
+export type Draft = CareProfileFields;
 
 /** `MM-DD` -> month and day as the plain numbers the selects offer ("10-05" -> "10", "5"). */
 function split(tag: string | undefined): [string, string] {

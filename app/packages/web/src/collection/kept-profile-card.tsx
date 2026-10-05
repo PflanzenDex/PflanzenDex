@@ -1,5 +1,6 @@
 import type { CareProfileEntry } from "@pflanzendex/core";
 import type { Lists } from "./care-profile-sections";
+import { CARD, NextAction, Quiet } from "./parts";
 
 const nameOf = (list: readonly { id: string; name: string }[], id: string | null) =>
   id === null ? null : (list.find((x) => x.id === id)?.name ?? "unbekannt");
@@ -21,22 +22,31 @@ export function KeptProfileCard(props: { entry: CareProfileEntry; lists: Lists }
     ["Eigene Hinweise", p.ownHints.own],
   ];
   return (
-    <section className="specimen-card profile-card" aria-labelledby={`profile-${entry.speciesId}`}>
-      <h2 id={`profile-${entry.speciesId}`}>{entry.speciesName}</h2>
+    <section className={CARD} aria-labelledby={`profile-${entry.speciesId}`}>
+      <h2 id={`profile-${entry.speciesId}`} className="text-xl font-semibold">
+        {entry.speciesName}
+      </h2>
       {notice && (
-        <div className="hint">
+        <div className="rounded-lg border border-border p-3">
           <p>{notice.text}</p>
-          <p className="next-action">{notice.nextAction}</p>
+          <NextAction>{notice.nextAction}</NextAction>
         </div>
       )}
-      <dl className="facts">
+      <dl className="m-0 grid gap-1">
         {rows.flatMap(([label, value]) =>
           value === null
             ? []
-            : [<dt key={`t-${label}`}>{label}</dt>, <dd key={`d-${label}`}>{value}</dd>],
+            : [
+                <dt key={`t-${label}`} className="text-sm text-muted-foreground">
+                  {label}
+                </dt>,
+                <dd key={`d-${label}`} className="m-0 break-words">
+                  {value}
+                </dd>,
+              ],
         )}
       </dl>
-      {mergedInto && <p className="quiet">Zielart: {mergedInto.speciesName}</p>}
+      {mergedInto && <Quiet>Zielart: {mergedInto.speciesName}</Quiet>}
     </section>
   );
 }

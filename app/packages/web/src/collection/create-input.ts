@@ -1,5 +1,4 @@
-import type { ApiError } from "../kernel";
-import { MARKER_MISSING, MARKERS_MISSING, type Sibling } from "./marker-fields";
+import type { CreateFields } from "./schemas";
 
 export interface CreateInput {
   marker?: string;
@@ -13,35 +12,24 @@ export interface CreateInput {
 }
 
 /**
- * What the form sends, or the error that keeps it from sending (US-BES-03): from the 2nd specimen on the marker is
- * required, from the 3rd on the markers of the existing specimens that miss one, before anything is saved.
+ * What the checked form sends (US-BES-03): empty fields stay out (unknown, P-08), an unchanged catch date sends
+ * nothing, so the server uses the keeper's local today.
  */
-export function collectInput(
-  form: {
-    marker: string;
-    answers: Readonly<Record<string, string>>;
-    data: FormData;
-    /** The keeper's local today: an unchanged date field sends nothing. */
-    today: string;
-  },
-  rule: { required: boolean; missing: readonly Sibling[] },
-): CreateInput | ApiError {
-  const marker = form.marker.trim();
-  const markers = rule.missing.map((s) => ({
+export function toCreateInput(
+  f: CreateFields,
+  missing: readonly { id: string }[],
+  today: string,
+): CreateInput {
+  const marker = f.marker.trim();
+  const markers = missing.map((s) => ({
     specimenId: s.id,
-    marker: (form.answers[s.id] ?? "").trim(),
+    marker: (f.answers[s.id] ?? "").trim(),
   }));
-  if (rule.required && !marker) return MARKER_MISSING;
-  if (markers.some((m) => !m.marker)) return MARKERS_MISSING;
-  const locationId = String(form.data.get("locationId") ?? "");
-  const catchDate = String(form.data.get("catchDate") ?? "");
   return {
     ...(marker ? { marker } : {}),
     ...(markers.length > 0 ? { markers } : {}),
-    ...(locationId ? { locationId } : {}),
-    ...(catchDate && catchDate !== form.today ? { catchDate } : {}),
-    ...(form.data.get("cutting") !== null ? { status: "cutting" as const } : {}),
+    ...(f.locationId ? { locationId: f.locationId } : {}),
+    ...(f.catchDate && f.catchDate !== today ? { catchDate: f.catchDate } : {}),
+    ...(f.cutting ? { status: "cutting" as const } : {}),
   };
 }
-
-export const isError = (r: CreateInput | ApiError): r is ApiError => "code" in r;
