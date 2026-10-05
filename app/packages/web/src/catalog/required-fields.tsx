@@ -1,64 +1,83 @@
+import type { Control } from "react-hook-form";
+import { AreaField, ChoiceField, TextField } from "./field-controls";
+import type { ProposalFields } from "./schemas";
 import { DIFFICULTY, GROWTH } from "./text";
 
-function Choice(props: { name: string; label: string; options: [string, string][] }) {
+const LEVELS = [2, 3, 4].map((s): [string, string] => [String(s), `Stufe ${s}`]);
+
+function ChoiceFields({ control }: { control: Control<ProposalFields> }) {
   return (
-    <label>
-      {props.label} *
-      <select name={props.name} required defaultValue="">
-        <option value="">Bitte wählen</option>
-        {props.options.map(([value, text]) => (
-          <option key={value} value={value}>
-            {text}
-          </option>
-        ))}
-      </select>
-    </label>
+    <>
+      <ChoiceField
+        control={control}
+        name="difficulty"
+        label="Schwierigkeit"
+        required
+        options={Object.entries(DIFFICULTY)}
+      />
+      <ChoiceField
+        control={control}
+        name="standardLevel"
+        label="Standard-Stufe (Lichtzone)"
+        required
+        options={LEVELS}
+      />
+      <TextField
+        control={control}
+        name="lightDemandLux"
+        label="Lichtbedarf für maximales Wachstum (Lux)"
+        required
+        type="number"
+        inputMode="numeric"
+        min={1}
+        max={200000}
+        step={1}
+      />
+      <ChoiceField
+        control={control}
+        name="growthMeasure"
+        label="Wachstumsmaß"
+        required
+        options={Object.entries(GROWTH)}
+      />
+    </>
   );
 }
 
 /** The required fields from DM-BES-01 (FR-BES-05); everything else is in "More details". */
-export function RequiredFields(props: { start: string }) {
+export function RequiredFields({ control }: { control: Control<ProposalFields> }) {
   return (
     <>
-      <label>
-        Lateinischer Name *
-        <input
-          name="latinName"
-          required
-          maxLength={120}
-          defaultValue={props.start}
-          autoComplete="off"
-          placeholder="z. B. Dracaena trifasciata"
-        />
-        <span className="quiet">Gattung, Epitheton, Sorte nur in Anführungszeichen.</span>
-      </label>
-      <Choice name="difficulty" label="Schwierigkeit" options={Object.entries(DIFFICULTY)} />
-      <Choice
-        name="standardLevel"
-        label="Standard-Stufe (Lichtzone)"
-        options={[2, 3, 4].map((s): [string, string] => [String(s), `Stufe ${s}`])}
+      <TextField
+        control={control}
+        name="latinName"
+        label="Lateinischer Name"
+        required
+        wide
+        maxLength={120}
+        autoComplete="off"
+        placeholder="z. B. Dracaena trifasciata"
+        help="Gattung, Epitheton, Sorte nur in Anführungszeichen."
       />
-      <label>
-        Lichtbedarf für maximales Wachstum (Lux) *
-        <input
-          name="lightDemandLux"
-          required
-          type="number"
-          inputMode="numeric"
-          min={1}
-          max={200000}
-          step={1}
-        />
-      </label>
-      <Choice name="growthMeasure" label="Wachstumsmaß" options={Object.entries(GROWTH)} />
-      <label className="wide">
-        Vergeilung-Anzeichen *
-        <textarea name="etiolationSigns" required maxLength={1000} rows={3} />
-      </label>
-      <label className="wide">
-        Erfolgskriterien *
-        <textarea name="successCriteria" required maxLength={1000} rows={3} />
-      </label>
+      <ChoiceFields control={control} />
+      <AreaField
+        control={control}
+        name="etiolationSigns"
+        label="Vergeilung-Anzeichen"
+        required
+        wide
+        rows={3}
+        maxLength={1000}
+      />
+      <AreaField
+        control={control}
+        name="successCriteria"
+        label="Erfolgskriterien"
+        required
+        wide
+        rows={3}
+        maxLength={1000}
+      />
     </>
   );
 }
