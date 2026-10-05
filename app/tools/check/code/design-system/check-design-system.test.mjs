@@ -56,6 +56,7 @@ describe("design system gate (DESIGN-SYSTEM.md section 6)", () => {
       "DS-27|a.css",
       "DS-27|b.tsx",
       "DS-32|b.tsx",
+      "DS-33|a.css",
       "DS-37|a.css",
       "DS-48|b.tsx",
     ]);
@@ -66,10 +67,33 @@ describe("design system gate (DESIGN-SYSTEM.md section 6)", () => {
       "package.json": stack,
       "src/lib/utils.ts": "",
       "src/components/ui/x.ts": "",
-      "src/style.css": ":root { --a: #fff; }\n",
+      "src/styles/tokens.css": ":root { --a: #fff; }\n",
       "src/b.tsx": 'export const B = () => <i style={{ "--value": 3 }} />;\n',
     });
     assert.equal(scan(dir).size, 0);
+  });
+
+  it("QG-U4 · no css outside styles: a new module stylesheet fails, tokens.css passes", () => {
+    const base = { "package.json": stack, "src/lib/utils.ts": "", "src/components/ui/x.ts": "" };
+    const bad = web({ ...base, "src/wishlist/wishlist.css": ".a { margin: 0; }\n" });
+    assert.deepEqual([...scan(bad).keys()], ["DS-33|wishlist/wishlist.css"]);
+    const empty = web({ ...base, "src/wishlist/empty.css": "" });
+    assert.deepEqual([...scan(empty).keys()], ["DS-33|wishlist/empty.css"]);
+    const legacy = web({ ...base, "src/style.css": ":root { --a: #fff; }\n" });
+    assert.ok(scan(legacy).has("DS-33|style.css"));
+    assert.ok(scan(legacy).has("DS-27|style.css"));
+    const ok = web({ ...base, "src/styles/tokens.css": "@layer base { a { @apply p-2; } }\n" });
+    assert.equal(scan(ok).size, 0);
+  });
+
+  it("QG-U4 · no css outside styles: @apply and style tags in components fail", () => {
+    const dir = web({
+      "package.json": stack,
+      "src/lib/utils.ts": "",
+      "src/components/ui/x.ts": "",
+      "src/a.tsx": 'export const A = () => <style>{".a { @apply p-2; }"}</style>;\n',
+    });
+    assert.deepEqual([...scan(dir).keys()], ["DS-33|a.tsx"]);
   });
 
   it("checks layer imports", () => {
