@@ -64,6 +64,16 @@ export const ERROR_TEXTS = {
     "Diese Lichtzone wird noch genutzt und kann nicht gelöscht werden. Ordne die genannten Einträge zuerst einer anderen Zone zu.",
   "light_zone.not_empty":
     "Du hast schon Lichtzonen. Die Voreinstellung ist nur für ein Konto ohne Zonen.",
+  "source.unavailable":
+    "Eine externe Datenquelle antwortet gerade nicht. Deine Daten sind nicht betroffen; die Anreicherung wird später erneut versucht.",
+  "source.timeout":
+    "Eine externe Datenquelle hat zu langsam geantwortet. Deine Daten sind nicht betroffen; versuche es später erneut.",
+  "source.rate_limited":
+    "Eine externe Datenquelle bremst gerade die Abfragen. Deine Daten sind nicht betroffen; versuche es später erneut.",
+  "source.response_invalid":
+    "Eine externe Datenquelle hat eine unlesbare Antwort geliefert. Es wurde nichts übernommen; der letzte gute Stand bleibt bestehen.",
+  "source.request_rejected":
+    "Eine externe Datenquelle hat die Abfrage abgelehnt. Es wurde nichts übernommen; der Betreiber wird informiert.",
   "operator_cost.month_in_future":
     "Dieser Monat liegt in der Zukunft. Trage die Kosten eines Monats ein, der schon begonnen hat.",
 } as const;

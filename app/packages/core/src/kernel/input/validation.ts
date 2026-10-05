@@ -1,6 +1,6 @@
-import { isCalendarDate, isTimeZone } from "./date";
-import { appError, type ErrorDetail } from "./error";
-import { failed, ok, type Result } from "./result";
+import { isCalendarDate, isTimeZone } from "../date";
+import { appError, type ErrorDetail } from "../error";
+import { failed, ok, type Result } from "../result";
 
 /** Fully validates unknown input; returns the typed input or all error details (P-03). */
 export type Schema<T> = (input: unknown) => Result<T>;

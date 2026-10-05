@@ -1,8 +1,8 @@
 import { appError, type AppError } from "./error";
 import { failed, ok, type Result } from "./result";
-import { canonical } from "./canonical";
+import { canonical } from "./input";
 import type { SignedInContext, IdempotencyKey, IdempotencyStore, Context } from "./ports";
-import type { Schema } from "./validation";
+import type { Schema } from "./input";
 
 export interface Operation<E, A> {
   /** `<domain>.<verb>`, e.g. `location.create`. */

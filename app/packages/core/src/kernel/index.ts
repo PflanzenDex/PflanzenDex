@@ -17,10 +17,11 @@ export {
   numberField,
   timeZoneField,
   calendarDateField,
-} from "./validation";
-export type { Schema } from "./validation";
+} from "./input";
+export type { Schema } from "./input";
 export { defineOperation, execute } from "./operation";
 export type { Dependencies, Call, Operation } from "./operation";
-export { canonical } from "./canonical";
+export { canonical } from "./input";
 export type { SignedInContext, Begin, IdempotencyKey, IdempotencyStore, Context } from "./ports";
 export { localToday, isTimeZone, isCalendarDate } from "./date";
+export * from "./sources";
