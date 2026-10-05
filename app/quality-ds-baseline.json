@@ -257,22 +257,12 @@
     },
     {
       "rule": "DS-57",
-      "file": "dependency:class-variance-authority",
-      "count": 1
-    },
-    {
-      "rule": "DS-57",
       "file": "dependency:react-hook-form",
       "count": 1
     },
     {
       "rule": "DS-57",
       "file": "dependency:zod",
-      "count": 1
-    },
-    {
-      "rule": "DS-57",
-      "file": "missing:src/components/ui",
       "count": 1
     }
   ]
