@@ -7,36 +7,6 @@
     },
     {
       "rule": "DS-48",
-      "file": "care/measure-form.tsx",
-      "count": 5
-    },
-    {
-      "rule": "DS-48",
-      "file": "care/MeasurePage.tsx",
-      "count": 1
-    },
-    {
-      "rule": "DS-48",
-      "file": "care/open-treatments.tsx",
-      "count": 1
-    },
-    {
-      "rule": "DS-48",
-      "file": "care/phases-list.tsx",
-      "count": 2
-    },
-    {
-      "rule": "DS-48",
-      "file": "care/treatment-form.tsx",
-      "count": 8
-    },
-    {
-      "rule": "DS-48",
-      "file": "care/treatment-history.tsx",
-      "count": 1
-    },
-    {
-      "rule": "DS-48",
       "file": "catalog/more-details.tsx",
       "count": 5
     },

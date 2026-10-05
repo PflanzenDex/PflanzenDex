@@ -46,6 +46,28 @@ describe("US-PHA-01 page of the care phases", () => {
     expect(screen.getByText("Standort: Regal Süd")).toBeTruthy();
   });
 
+  it("US-PHA-01 · DS-52 while loading, a skeleton carries the one loading status", () => {
+    fakeServer({
+      "/care-phases": () => new Promise<Response>(() => undefined),
+      "/locations": () => response(200, { locations: [] }),
+    });
+    const { container } = render(<CarePhasesPage api="http://api" token={token} />);
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(container.querySelectorAll('[aria-hidden="true"].animate-pulse').length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("US-PHA-01 · DS-26 without any phase the empty state links to the collection", async () => {
+    fakeServer({
+      "/care-phases": () => response(200, { phases: [] }),
+      "/locations": () => response(200, { locations: [] }),
+    });
+    render(<CarePhasesPage api="http://api" token={token} />);
+    const link = await screen.findByRole("link", { name: "Zum Bestand" });
+    expect(link.getAttribute("href")).toBe("/collection");
+  });
+
   it("US-PHA-01 without sign-in the request to sign in comes and nothing is queried", async () => {
     const fetchFn = fakeServer({});
     render(<CarePhasesPage api="http://api" token={async () => undefined} />);
