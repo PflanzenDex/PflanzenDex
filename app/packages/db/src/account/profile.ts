@@ -28,10 +28,12 @@ export class ProfilePostgres {
     return r.rows[0] ?? null;
   }
 
+  /** `displayName: null` keeps the stored name (US-ACC-02). */
   async update(userId: string, p: ProfileRow): Promise<ProfileRow | null> {
     const r = await withAccount(this.pool, userId, (c) =>
       c.query<ProfileRow>(
-        `update account_data set display_name = $1, time_zone = $2, everything_private = $3,
+        // A null name keeps the stored one (US-ACC-02); coalesce does it in the same statement, no read before.
+        `update account_data set display_name = coalesce($1, display_name), time_zone = $2, everything_private = $3,
            no_recommendations = $4, notification_settings = $5::jsonb
          returning ${COLUMNS}`,
         [
