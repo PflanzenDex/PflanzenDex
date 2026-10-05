@@ -1,7 +1,9 @@
-import "./collection.css";
 import { useCallback, useState } from "react";
 import type { Species, Specimen } from "@pflanzendex/core";
 import { LoadError } from "../kernel";
+import { CollectionPageSkeleton } from "./CollectionPage.skeleton";
+import { PageFrame, Status, Warning } from "./parts";
+import { refusalText } from "./refusal";
 import { CreateForm } from "./create-form";
 import { ArchivedList } from "./archived-list";
 import { ArchiveForm } from "./archived-form";
@@ -16,13 +18,13 @@ import { DistributionView } from "./distribution-view";
 
 function Created({ specimen }: { specimen: Specimen }) {
   return (
-    <p role="status" className="hint">
+    <Status>
       {specimen.status === "cutting" ? "Steckling" : "Exemplar"} „{specimen.name}“ ist angelegt.
       {specimen.status === "cutting" &&
         " Er steht unter Stecklingslicht; tippe auf der Karte „Eingetopft“, sobald du ihn eintopfst."}
       {specimen.locationId === null &&
         " Der Standort ist unbekannt, denn ein Soll-Standort steht erst mit den Pflegephasen fest."}
-    </p>
+    </Status>
   );
 }
 
@@ -59,8 +61,8 @@ export function CollectionPage(props: Props) {
     completed: props.onCompleted,
   });
   return (
-    <div className="light collection">
-      {data.kind === "loading" && <p role="status">Bestand wird geladen …</p>}
+    <PageFrame>
+      {data.kind === "loading" && <CollectionPageSkeleton label="Bestand wird geladen …" />}
       {data.kind === "error" && <LoadError error={data.error} onReload={afterAction} />}
       {data.kind === "da" && (
         <Views
@@ -70,7 +72,7 @@ export function CollectionPage(props: Props) {
           props={props}
         />
       )}
-    </div>
+    </PageFrame>
   );
 }
 
@@ -137,17 +139,11 @@ function List(p: {
   const error = archived.error ?? potted.error;
   return (
     <>
-      {message ? (
-        <p role="status" className="hint">
-          {message}
-        </p>
-      ) : (
-        p.created && <Created specimen={p.created} />
-      )}
+      {message ? <Status>{message}</Status> : p.created && <Created specimen={p.created} />}
       {error && (
-        <div role="alert" className="warning">
-          <p>{error.text}</p>
-        </div>
+        <Warning>
+          <p>{refusalText(error)}</p>
+        </Warning>
       )}
       <DistributionView distribution={data.distribution} />
       <CollectionList

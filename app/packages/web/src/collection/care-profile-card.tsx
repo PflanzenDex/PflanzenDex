@@ -1,9 +1,17 @@
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useWatch } from "react-hook-form";
 import type { CareProfileChanges, CareProfileEntry } from "@pflanzendex/core";
-import { changesOf, draftOf, type Draft } from "./care-profile-draft";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
+import { changesOf, draftOf } from "./care-profile-draft";
 import { Days, Dormancy, Hints, Places, type Lists } from "./care-profile-sections";
+import { CARD, Quiet } from "./parts";
+import { careProfileSchema, type CareProfileFields } from "./schemas";
 
 export type Save = (changes: CareProfileChanges, success: string) => void;
+
+/** The dormancy fields in the order of the form: an incomplete pair is pointed out at the first empty one. */
+const DORMANCY_FIELDS = ["fromMonth", "fromDay", "untilMonth", "untilDay"] as const;
 
 /** The care profile of one species: catalog value and my deviation per field (US-BES-09). */
 export function CareProfileCard(props: {
@@ -14,49 +22,52 @@ export function CareProfileCard(props: {
 }) {
   const { entry, busy } = props;
   const initial = draftOf(entry);
-  const [draft, setDraft] = useState<Draft>(initial);
-  const [problem, setProblem] = useState<string | null>(null);
-  const set = (d: Partial<Draft>) => {
-    setProblem(null);
-    setDraft((old) => ({ ...old, ...d }));
-  };
+  const form = useForm<CareProfileFields>({
+    resolver: zodResolver(careProfileSchema),
+    defaultValues: initial,
+  });
+  const draft = useWatch({ control: form.control }) as CareProfileFields;
   const name = entry.speciesName;
   const outcome = changesOf(initial, draft);
   const reset = (changes: CareProfileChanges, label: string) =>
     props.onSave(changes, `„${label}“ für „${name}“ gilt wieder nach Katalog.`);
-  const save = () => {
-    setProblem(outcome.problem ?? null);
-    if (outcome.changes) props.onSave(outcome.changes, `Pflegeprofil für „${name}“ gespeichert.`);
-  };
-  const shared = { entry, draft, set, reset, busy };
+  const submit = form.handleSubmit((values) => {
+    const result = changesOf(initial, values);
+    if (result.problem) {
+      const first = DORMANCY_FIELDS.find((k) => values[k] === "") ?? "fromMonth";
+      form.setError(first, { type: "problem", message: result.problem }, { shouldFocus: true });
+    } else if (result.changes) {
+      props.onSave(result.changes, `Pflegeprofil für „${name}“ gespeichert.`);
+    }
+  });
+  const shared = { entry, control: form.control, reset, busy };
   return (
-    <section className="specimen-card profile-card" aria-labelledby={`profile-${entry.speciesId}`}>
-      <h2 id={`profile-${entry.speciesId}`}>{name}</h2>
-      <p className="quiet">
+    <section className={CARD} aria-labelledby={`profile-${entry.speciesId}`}>
+      <h2 id={`profile-${entry.speciesId}`} className="text-xl font-semibold">
+        {name}
+      </h2>
+      <Quiet>
         {`${entry.activeSpecimens} aktive${entry.activeSpecimens === 1 ? "s Exemplar" : " Exemplare"}`}
         {entry.deviates && " · "}
         {entry.deviates && <strong>Meine Abweichung gilt</strong>}
-      </p>
-      <Places {...shared} lists={props.lists} />
-      <Dormancy {...shared} />
-      <Days {...shared} />
-      <Hints {...shared} />
-      {problem && (
-        <div role="alert" className="warning">
-          <p>{problem}</p>
-        </div>
-      )}
-      <div className="actions">
-        <button
-          type="button"
-          className="primary"
-          disabled={busy || !(outcome.changes || outcome.problem)}
-          aria-label={`Speichern: ${name}`}
-          onClick={save}
-        >
-          Speichern
-        </button>
-      </div>
+      </Quiet>
+      <Form {...form}>
+        <form noValidate onSubmit={(e) => void submit(e)} className="grid gap-1">
+          <Places {...shared} lists={props.lists} />
+          <Dormancy {...shared} />
+          <Days {...shared} />
+          <Hints {...shared} />
+          <Button
+            type="submit"
+            size="touch"
+            className="mt-3"
+            disabled={busy || !(outcome.changes || outcome.problem)}
+            aria-label={`Speichern: ${name}`}
+          >
+            Speichern
+          </Button>
+        </form>
+      </Form>
     </section>
   );
 }

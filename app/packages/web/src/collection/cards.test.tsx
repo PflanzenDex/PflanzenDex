@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { renderToString as render } from "react-dom/server";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";
@@ -120,8 +119,8 @@ describe("US-BES-06 Karte: letzte Messung", () => {
     expect(h).toContain("Letzte Messung: ");
     expect(h).toContain(">Vergeilt/dünn</strong> am 01.10.2026");
     expect(h).toContain("kein Erfolgssignal");
-    expect(h).toContain("quality-etiolated");
-    expect(h).not.toContain("quality-healthy");
+    expect(h).toContain('data-quality="etiolated"');
+    expect(h).not.toContain('data-quality="healthy"');
   });
 
   it("the note is collapsible (closed at first) and missing when there is none", () => {
@@ -160,12 +159,12 @@ describe("US-BES-06 Karte: offene Behandlung", () => {
     const h = html([card({ treatment: treatment("überfällig seit 3 Tg.", "overdue", 3) })]);
     expect(h).toContain("Neem spritzen");
     expect(h).toContain("überfällig seit 3 Tg.");
-    expect(h).toContain("due-overdue");
+    expect(h).toContain('data-due="overdue"');
     const today = html([card({ treatment: treatment("heute fällig", "today", 0) })]);
     expect(today).toContain("heute fällig");
     const soon = html([card({ treatment: treatment("in 2 Tg.", "soon", 2) })]);
     expect(soon).toContain("in 2 Tg.");
-    expect(soon).not.toContain("due-overdue");
+    expect(soon).not.toContain('data-due="overdue"');
   });
 
   it('with several "+N weitere" is shown, with one it is not', () => {
@@ -178,17 +177,17 @@ describe("US-BES-06 Karte: offene Behandlung", () => {
 describe("US-BES-06 grid and operation", () => {
   it("a grid of list items, one card per specimen, with a heading per card", () => {
     const h = html([card(), card({ id: "e2", name: "Aloe" })]);
-    expect(h.match(/<li class="specimen-card/g)).toHaveLength(2);
-    expect(h).toContain('<ul class="cards-grid"');
+    expect(h.match(/<li /g)).toHaveLength(2);
+    expect(h).toContain("<ul ");
     expect(h).toContain("<h2");
   });
 
   it("the grid adapts to the width: one to two columns on the phone, more on wide screens", () => {
-    const css = readFileSync("src/collection/collection.css", "utf8");
-    expect(css).toContain(".cards-grid");
-    expect(css).toContain(
-      "grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr))",
-    );
+    const h = html([card()]);
+    expect(h).toContain("grid-cols-1");
+    expect(h).toContain("sm:grid-cols-2");
+    expect(h).toContain("lg:grid-cols-3");
+    expect(h).not.toMatch(/\bmax-(sm|md|lg|xl):/);
   });
 
   it("without specimens: says what to do (P-09), and offers the species choice", () => {

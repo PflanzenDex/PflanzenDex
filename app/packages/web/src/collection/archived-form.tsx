@@ -1,44 +1,65 @@
-import { useState, type FormEvent } from "react";
+import { useCallback, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useWatch, type Control } from "react-hook-form";
 import { ARCHIVED_REASONS } from "@pflanzendex/core";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import type { ApiError } from "../kernel";
+import { FormButtons, Quiet, TITLE, Warning } from "./parts";
+import { refusalText, useEdited } from "./refusal";
+import { archiveSchema, OTHER_REASON, reasonOf, type ArchiveFields } from "./schemas";
 
-const OTHER = "other";
-const REASON_MISSING: ApiError = {
-  code: "input.invalid",
-  text: "Bitte nenne einen Grund, damit du später noch weißt, warum das Exemplar im Archiv ist.",
-};
-
-function ReasonFields(props: {
-  choice: string;
-  free: string;
-  onChoice: (w: string) => void;
-  onFree: (f: string) => void;
-}) {
+/** The own reason is only asked for after "anderer Grund …" is chosen; it keeps its place in the focus order. */
+function OwnReason({ control }: { control: Control<ArchiveFields> }) {
+  const choice = useWatch({ control, name: "choice" });
+  if (choice !== OTHER_REASON) return null;
   return (
-    <>
-      <label>
-        Grund
-        <select value={props.choice} onChange={(e) => props.onChoice(e.target.value)}>
-          {ARCHIVED_REASONS.map((g) => (
-            <option key={g} value={g}>
-              {g}
-            </option>
-          ))}
-          <option value={OTHER}>anderer Grund …</option>
-        </select>
-      </label>
-      {props.choice === OTHER && (
-        <label>
-          Eigener Grund
-          <input
-            value={props.free}
-            maxLength={250}
-            autoComplete="off"
-            onChange={(e) => props.onFree(e.target.value)}
-          />
-        </label>
+    <FormField
+      control={control}
+      name="free"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Eigener Grund</FormLabel>
+          <FormControl>
+            <Input {...field} maxLength={250} autoComplete="off" />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
       )}
-    </>
+    />
+  );
+}
+
+/** The reason from the list, or "anderer Grund …" to type an own one. */
+function ReasonChoice({ control }: { control: Control<ArchiveFields> }) {
+  return (
+    <FormField
+      control={control}
+      name="choice"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Grund</FormLabel>
+          <FormControl>
+            <Select {...field}>
+              {ARCHIVED_REASONS.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+              <option value={OTHER_REASON}>anderer Grund …</option>
+            </Select>
+          </FormControl>
+        </FormItem>
+      )}
+    />
   );
 }
 
@@ -51,41 +72,51 @@ export function ArchiveForm(props: {
   onSend: (reason: string) => Promise<ApiError | null>;
   onCancel: () => void;
 }) {
-  const [choice, setChoice] = useState<string>(ARCHIVED_REASONS[0]);
-  const [free, setFree] = useState("");
+  const form = useForm<ArchiveFields>({
+    resolver: zodResolver(archiveSchema),
+    defaultValues: { choice: ARCHIVED_REASONS[0], free: "" },
+  });
   const [error, setError] = useState<ApiError | null>(null);
-  const [running, setRunning] = useState(false);
-  async function send(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const reason = choice === OTHER ? free.trim() : choice;
-    if (!reason) return setError(REASON_MISSING);
-    setRunning(true);
-    setError(await props.onSend(reason));
-    setRunning(false);
-  }
+  useEdited(
+    form,
+    useCallback(() => setError(null), []),
+  );
+  const submit = form.handleSubmit(async (values) =>
+    setError(await props.onSend(reasonOf(values))),
+  );
   return (
     <section aria-labelledby="archive-title">
-      <h1 id="archive-title">Exemplar archivieren</h1>
-      <p className="lead">„{props.name}“ verschwindet aus der Liste und aus den Auswertungen.</p>
-      <p className="quiet">
-        Die Historie bleibt erhalten. Im Archiv kannst du es jederzeit wiederherstellen.
+      <h1 id="archive-title" className={TITLE}>
+        Exemplar archivieren
+      </h1>
+      <p className="mb-2 text-muted-foreground">
+        „{props.name}“ verschwindet aus der Liste und aus den Auswertungen.
       </p>
-      <form className="form" onSubmit={(e) => void send(e)} aria-label="Exemplar archivieren">
-        <ReasonFields choice={choice} free={free} onChoice={setChoice} onFree={setFree} />
-        {error && (
-          <div role="alert" className="warning">
-            <p>{error.text}</p>
-          </div>
-        )}
-        <div className="actions">
-          <button type="submit" className="primary" disabled={running}>
-            Archivieren
-          </button>
-          <button type="button" className="secondary" onClick={props.onCancel}>
-            Abbrechen
-          </button>
-        </div>
-      </form>
+      <Quiet className="mb-5">
+        Die Historie bleibt erhalten. Im Archiv kannst du es jederzeit wiederherstellen.
+      </Quiet>
+      <Form {...form}>
+        <form
+          noValidate
+          onSubmit={(e) => void submit(e)}
+          aria-label="Exemplar archivieren"
+          className="flex max-w-xl flex-col gap-4"
+        >
+          <ReasonChoice control={form.control} />
+          <OwnReason control={form.control} />
+          {error && (
+            <Warning>
+              <p>{refusalText(error)}</p>
+            </Warning>
+          )}
+          <FormButtons
+            submit="Archivieren"
+            cancel="Abbrechen"
+            pending={form.formState.isSubmitting}
+            onCancel={props.onCancel}
+          />
+        </form>
+      </Form>
     </section>
   );
 }

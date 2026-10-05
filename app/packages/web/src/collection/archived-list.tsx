@@ -1,4 +1,6 @@
 import type { ArchivedEntry } from "@pflanzendex/core";
+import { Button } from "@/components/ui/button";
+import { Actions, CARD, GRID, Quiet, SUBTITLE } from "./parts";
 import { UNKNOWN, dateText } from "./text";
 
 /**
@@ -11,28 +13,31 @@ export function ArchivedList(props: {
 }) {
   if (props.entries.length === 0) return null;
   return (
-    <section aria-labelledby="archived-title" className="archived">
-      <h2 id="archived-title">Archiv</h2>
-      <p className="quiet">
+    <section aria-labelledby="archived-title" className="mt-6">
+      <h2 id="archived-title" className={SUBTITLE}>
+        Archiv
+      </h2>
+      <Quiet className="mb-3">
         Archivierte Exemplare fehlen in Liste und Auswertungen. Ihre Historie bleibt erhalten.
-      </p>
-      <ul className="cards-grid">
+      </Quiet>
+      <ul className={GRID}>
         {props.entries.map((e) => (
-          <li key={e.id} className="specimen-card">
-            <h3>{e.name}</h3>
-            <p className="quiet">Art: {e.speciesName ?? UNKNOWN}</p>
-            <p className="quiet">Archiviert am {dateText(e.archivedAt)}</p>
-            <p className="quiet">Grund: {e.archivedReason}</p>
-            <div className="actions">
-              <button
+          <li key={e.id} className={CARD}>
+            <h3 className="text-lg font-semibold">{e.name}</h3>
+            <Quiet>Art: {e.speciesName ?? UNKNOWN}</Quiet>
+            <Quiet>Archiviert am {dateText(e.archivedAt)}</Quiet>
+            <Quiet>Grund: {e.archivedReason}</Quiet>
+            <Actions>
+              <Button
                 type="button"
-                className="secondary"
+                variant="outline"
+                size="sm"
                 aria-label={`Wiederherstellen: ${e.name}`}
                 onClick={() => props.onRestore(e)}
               >
                 Wiederherstellen
-              </button>
-            </div>
+              </Button>
+            </Actions>
           </li>
         ))}
       </ul>

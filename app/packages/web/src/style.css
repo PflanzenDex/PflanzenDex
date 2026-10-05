@@ -136,6 +136,21 @@ button:focus-visible {
   list-style: none;
 }
 
+/* The hint cards of the start page (they used the collection module's card style; #322 migrates the start page). */
+.start .specimen-card {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.start .specimen-card p {
+  margin: 0;
+}
+
 .start .next-step {
   margin-bottom: 1rem;
 }

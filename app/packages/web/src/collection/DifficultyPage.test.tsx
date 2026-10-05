@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { readFileSync } from "node:fs";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/lib/viewport-mock";
 import { DifficultyPage } from "./DifficultyPage";
 
 const response = (status: number, body: unknown) =>
@@ -35,6 +35,7 @@ function fakeServer(rows: () => Promise<Response>) {
 }
 const token = async () => "tok";
 
+beforeEach(() => setViewportWidth(1024));
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -135,20 +136,23 @@ describe("US-BES-05 page of the difficulty overview", () => {
   });
 });
 
-describe("US-BES-05 layout of the wide table (issue 293)", () => {
-  const css = readFileSync("src/collection/collection.css", "utf8");
-
-  it("US-BES-05 the frame keeps its width, so the navigation does not re-lay out when switching tabs", () => {
-    // Measured in Chromium at 375, 768 to 1280 and 1440 px: navigation 720 px on every tab, no sideways page scroll.
-    expect(css).not.toMatch(/\.frame:has\(\.difficulty-page\)/);
-    expect(css).toMatch(
-      /\.difficulty-page \.table-scroll \{[^}]*min\(1200px, calc\(100vw - 48px\)\)/,
-    );
+describe("US-BES-05 DS-24 layout of the wide table (issue 293)", () => {
+  it("US-BES-05 from md the real table, whose own container scrolls, so the page never scrolls sideways", async () => {
+    fakeServer(() => response(200, { rows: [row()] }));
+    render(<DifficultyPage api="http://api" token={token} />);
+    const table = await screen.findByRole("table", { name: "Artenvergleich" });
+    expect(table.parentElement?.className).toContain("overflow-x-auto");
   });
 
-  it("US-BES-05 the scrolling table shows a visible keyboard focus (3 px, project convention)", () => {
-    expect(css).toMatch(
-      /\.table-scroll:focus-visible \{\s*outline: 3px solid var\(--foreground\);/,
-    );
+  it("US-BES-05 on a phone one card per species with label and value pairs, same texts as the table", async () => {
+    setViewportWidth(360);
+    fakeServer(() => response(200, { rows: [row(), row({ speciesId: "sp2", difficulty: 3 })] }));
+    render(<DifficultyPage api="http://api" token={token} />);
+    const list = await screen.findByRole("list", { name: "Artenvergleich" });
+    expect(screen.queryByRole("table")).toBeNull();
+    const cards = screen.getAllByRole("listitem");
+    expect(cards).toHaveLength(2);
+    expect(cards[0]?.textContent).toContain("SchwierigkeitLeicht");
+    expect(list.textContent).toContain("Dracaena trifasciata");
   });
 });
