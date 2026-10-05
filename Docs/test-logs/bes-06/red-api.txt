@@ -38,3 +38,5 @@ undefined
    Start at  15:23:32
    Duration  1.79s (tests 59%, transform 32%, import 9%)
 
+
+exit code recorded when run: 1

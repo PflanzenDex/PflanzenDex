@@ -16,7 +16,7 @@ import type { Pool } from "pg";
 import type { AuthEnv } from "../kernel";
 
 /**
- * Derived views over the specimens (read only, nothing stored, P-01): the light distribution (US-LIC-02) the hints
+ * Derived views over the specimens (read only, nothing stored, P-01): the light distribution (US-LIC-02), the hints
  * about incomplete specimens (US-BES-08) and the difficulty overview (US-BES-05). Only data of the own account flows in (P-04). Mounted before
  * `/specimens/:id`, otherwise "distribution" and "hints" would be read as an ID.
  */

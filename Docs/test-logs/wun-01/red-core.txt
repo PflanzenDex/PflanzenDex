@@ -651,3 +651,5 @@ AssertionError: expected [] to deeply equal [ …(2) ]
    Start at  10:19:48
    Duration  233ms (transform 57%, tests 24%, import 16%, worker 3%)
 
+
+exit code recorded when run: 1

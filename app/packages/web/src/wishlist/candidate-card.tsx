@@ -1,16 +1,8 @@
 import type { Candidate } from "@pflanzendex/core";
+import { isPlainHttps } from "./wish-input";
 
 const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
 const UNKNOWN = "unbekannt";
-
-/** Only an https address becomes a link; anything else is treated as no picture at all. */
-function isHttpsAddress(url: string): boolean {
-  try {
-    return new URL(url).protocol === "https:";
-  } catch {
-    return false;
-  }
-}
 
 /**
  * The picture of a candidate. The address was typed by a keeper; loading it would make every viewer's browser contact
@@ -18,7 +10,7 @@ function isHttpsAddress(url: string): boolean {
  * is only a link the viewer follows on purpose, with the source next to it.
  */
 function Picture({ image }: { image: Candidate["image"] }) {
-  if (!image || !isHttpsAddress(image.url))
+  if (!image || !isPlainHttps(image.url))
     return <span className="wish-photo wish-placeholder">Kein Bild</span>;
   return (
     <figure className="candidate-figure">

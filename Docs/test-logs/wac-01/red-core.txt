@@ -58,3 +58,5 @@ undefined
       Tests  4 failed | 247 passed (251)
    Start at  21:43:01
    Duration  504ms (transform 65%, import 19%, tests 13%, worker 3%)
+
+exit code recorded when run: 1

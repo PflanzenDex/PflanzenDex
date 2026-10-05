@@ -74,3 +74,5 @@ AssertionError: expected [ 'A am Soll', 'B falsch', …(3) ] to deeply equal [ '
    Start at  06:23:20
    Duration  297ms (transform 77%, import 12%, tests 9%, worker 1%)
 
+
+exit code recorded when run: 1

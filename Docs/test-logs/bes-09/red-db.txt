@@ -243,3 +243,5 @@ AssertionError: expected [ …(3) ] to deeply equal [ Array(2) ]
     Isolate  12 workers spawned · ~64ms startup each (spawn + environment, per file)
              at least ~702ms faster with isolate: false — reuses workers across files instead of one per file
 
+
+exit code recorded when run: 1

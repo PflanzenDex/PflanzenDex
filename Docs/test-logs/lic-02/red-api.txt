@@ -116,3 +116,5 @@ AssertionError: expected 404 to be 200 // Object.is equality
    Start at  19:48:09
    Duration  1.09s (tests 60%, transform 31%, import 8%)
 
+
+exit code recorded when run: 1
