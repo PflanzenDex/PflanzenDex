@@ -1,6 +1,6 @@
 import { EmptyState } from "@/components/shared/empty-state";
 import { useCallback, useMemo, useState } from "react";
-import { RequestState } from "@/components/shared/request-state";
+import { RequestState } from "@/components/shared/states/request-state/request-state";
 import { SIGN_IN as KERNEL_SIGN_IN, useReload, useRequest } from "../kernel";
 import { LightView, type LightActions } from "./light-view";
 import { LightOverviewView } from "./light-overview-view";

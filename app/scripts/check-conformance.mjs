@@ -11,7 +11,13 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
-import { INTERACTIVE, overlayResults, probeTargets, tabThrough } from "./conformance-probes.mjs";
+import {
+  INTERACTIVE,
+  overlayResults,
+  probeTargets,
+  storyUrl,
+  tabThrough,
+} from "./conformance-probes.mjs";
 import {
   axeFindings,
   focusFindings,
@@ -67,7 +73,7 @@ function buildCatalog(outDir, fixtures) {
 
 async function checkStory({ page, baseUrl, allowlist }, id, scheme) {
   const ctx = { story: id, scheme };
-  await page.goto(`${baseUrl}/iframe.html?id=${id}&viewMode=story&globals=colorScheme:${scheme}`);
+  await page.goto(storyUrl(baseUrl, id, scheme));
   await page.waitForSelector("body.sb-show-main, body.sb-show-errordisplay", {
     state: "attached",
     timeout: 15000,

@@ -3,7 +3,7 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { vi } from "vitest";
-import { createQueryClient } from "./kernel";
+import { createQueryClient } from "../../kernel";
 
 vi.mock("@testing-library/react", async (importOriginal) => {
   const rtl = await importOriginal<typeof import("@testing-library/react")>();
