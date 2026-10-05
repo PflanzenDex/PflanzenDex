@@ -33,6 +33,31 @@ const ENTRIES: { id: View; text: string }[] = [
   { id: "settings", text: "Einstellungen" },
 ];
 
+/** One URL path per view (English); the link texts above stay German. */
+export const PATHS: Record<View, string> = {
+  start: "/",
+  species: "/species",
+  collection: "/collection",
+  treatments: "/treatments",
+  hints: "/hints",
+  carePhases: "/care-phases",
+  careProfile: "/care-profile",
+  difficulty: "/difficulty",
+  pokedex: "/pokedex",
+  wishlist: "/wishlist",
+  light: "/light",
+  review: "/review",
+  operator: "/operator",
+  account: "/account",
+  settings: "/settings",
+};
+
+/** The view an address belongs to (a species profile /species/:id belongs to the catalog); unknown addresses give null. */
+export function viewOfPath(pathname: string): View | null {
+  const first = "/" + (pathname.split("/")[1] ?? "");
+  return (Object.keys(PATHS) as View[]).find((v) => PATHS[v] === first) ?? null;
+}
+
 const visible = (
   id: View,
   who: { reviewer?: boolean | undefined; operator?: boolean | undefined },
