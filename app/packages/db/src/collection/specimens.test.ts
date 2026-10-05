@@ -280,14 +280,17 @@ describe("US-ACC-03 count of the active specimens (start page)", () => {
   it("US-ACC-03 counts the active specimens of the account only, archived ones not, and writes nothing", async () => {
     const carla = randomUUID();
     await withAccount(pool, carla, (c) => c.query("insert into account (id) values ($1)", [carla]));
-    expect(await specimens.countActive(carla)).toBe(0);
+    expect(await specimens.countByStatus(carla)).toEqual({ active: 0, archived: 0 });
     const a = await specimens.create(carla, { ...values, name: "Zähler 1" });
-    await specimens.create(carla, { ...values, name: "Zähler 2" });
-    if (typeof a === "string") throw new Error(a);
-    expect(await specimens.countActive(carla)).toBe(2);
+    const b = await specimens.create(carla, { ...values, name: "Zähler 2" });
+    if (typeof a === "string" || typeof b === "string") throw new Error("create failed");
+    expect(await specimens.countByStatus(carla)).toEqual({ active: 2, archived: 0 });
     await specimens.archive(carla, a.id, "abgegeben", "2026-10-03");
-    expect(await specimens.countActive(carla)).toBe(1);
-    expect(await specimens.countActive(randomUUID())).toBe(0);
+    expect(await specimens.countByStatus(carla)).toEqual({ active: 1, archived: 1 });
+    // US-ACC-03 (#291): an account with only archived plants still counts them.
+    await specimens.archive(carla, b.id, "eingegangen", "2026-10-04");
+    expect(await specimens.countByStatus(carla)).toEqual({ active: 0, archived: 2 });
+    expect(await specimens.countByStatus(randomUUID())).toEqual({ active: 0, archived: 0 });
     await pool.query("delete from account where id = $1", [carla]);
   });
 });

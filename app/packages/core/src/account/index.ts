@@ -13,7 +13,7 @@ export type {
   ProfileDependencies,
   ProfileStore,
 } from "./profile";
-export { onboardingHints, onboardingSteps, startAction } from "./onboarding";
+export { isNewAccount, onboardingHints, onboardingSteps, startAction } from "./onboarding";
 export type {
   OnboardingCounts,
   OnboardingHint,

@@ -14,6 +14,7 @@ interface World {
   zones: unknown[];
   locations: unknown[];
   cards: unknown[];
+  archived?: number;
 }
 
 function fakeServer(w: World) {
@@ -25,7 +26,8 @@ function fakeServer(w: World) {
       if (path === "/light-zones") return response(200, { zones: w.zones });
       if (path === "/locations") return response(200, { locations: w.locations });
       if (path === "/hints") return response(200, { hints: [] });
-      if (path === "/specimens/count") return response(200, { count: w.cards.length });
+      if (path === "/specimens/count")
+        return response(200, { count: w.cards.length, archived: w.archived ?? 0 });
       if (path === "/specimens/cards") return response(500, {});
       return response(404, {});
     }),
@@ -189,5 +191,15 @@ describe("US-ACC-03 start page and guided onboarding", () => {
     expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
       "Start",
     ]);
+  });
+
+  it("US-ACC-03 an account with only archived plants gets the start page with the next plant, not the guide (#291)", async () => {
+    fakeServer({ zones: [ZONE], locations: [LOCATION], cards: [], archived: 2 });
+    view();
+    expect(await screen.findByRole("heading", { name: "Nächste Pflanze" })).toBeTruthy();
+    expect(screen.queryByText("Schritt 1 von 3")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Wo stehen deine Pflanzen?" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Art im Katalog wählen" }));
+    expect(open).toHaveBeenCalledWith("species");
   });
 });

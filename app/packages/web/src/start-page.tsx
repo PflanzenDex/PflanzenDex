@@ -1,5 +1,10 @@
 import { useCallback, useState } from "react";
-import { onboardingHints, startAction, type OnboardingCounts } from "@pflanzendex/core";
+import {
+  isNewAccount,
+  onboardingHints,
+  startAction,
+  type OnboardingCounts,
+} from "@pflanzendex/core";
 import { loadSpecimenCount } from "./collection";
 import { LoadFrame } from "./kernel";
 import { loadLocations, loadZones } from "./light";
@@ -86,7 +91,7 @@ function Content(props: {
     writeSkipped(accountId);
     setSkipped(true);
   };
-  if (counts.specimens === 0 && !skipped)
+  if (isNewAccount(counts) && !skipped)
     return (
       <OnboardingWizard
         api={props.api}
@@ -102,7 +107,7 @@ function Content(props: {
 
 /**
  * The start page (US-ACC-03). A new account is guided through locations, light zones and the first plant; every step
- * can be skipped. Afterwards the page never stays empty: without a plant it names the next action, skipped details
+ * can be skipped. An account whose plants are all archived is a returning keeper and gets the overview, not the guide. Afterwards the page never stays empty: without a plant it names the next action, skipped details
  * come back as hints (P-09), never as an error.
  */
 export function StartPage(props: {
@@ -125,7 +130,8 @@ export function StartPage(props: {
       const counts: OnboardingCounts = {
         zones: zones.value.length,
         locations: locations.value.length,
-        specimens: specimens.value,
+        specimens: specimens.value.active,
+        archivedSpecimens: specimens.value.archived,
       };
       return { ok: true as const, value: counts };
     },
