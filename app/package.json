@@ -34,7 +34,7 @@
     "build": "npm run build --workspaces --if-present",
     "gates": "npm run lint && npm run typecheck && npm run boundaries && npm run layout && npm run baseline && npm run design-system && npm run stories && npm run knip && npm run specs && npm run principles && npm run skills && npm run duplicates && npm run format:check && npm run ci-drift && npm run docs",
     "crap": "node tools/check/quality/check-crap.mjs",
-    "ci": "npm run gates && npm run coverage && npm run crap && npm run build && npm run bundle-budget && npm run conformance",
+    "ci": "npm run gates && npm run coverage && npm run crap && npm run build && npm run bundle-budget && npm run conformance:blocking",
     "knip": "knip",
     "unused-report": "mkdir -p .cache && knip --production --no-exit-code --no-config-hints --reporter markdown > .cache/unused-report.md && cat .cache/unused-report.md",
     "audit": "node tools/check/supply/check-audit.mjs",
