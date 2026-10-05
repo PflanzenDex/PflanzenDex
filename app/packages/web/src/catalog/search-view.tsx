@@ -32,7 +32,7 @@ function Hit({ t, onOpen }: { t: SpeciesHit; onOpen: (id: string) => void }) {
       <Button
         type="button"
         variant="ghost"
-        className="grid h-auto min-h-16 w-full justify-items-start gap-0.5 whitespace-normal px-3.5 py-3 text-left font-normal"
+        className="grid h-auto min-h-16 w-full justify-items-start gap-0.5 px-3.5 py-3 text-left font-normal"
         onClick={() => onOpen(t.id)}
       >
         <span className="text-lg font-semibold">

@@ -23,8 +23,6 @@ function SoftLeaf({ control }: { control: Control<DerivationFields> }) {
         <FormItem className="md:col-span-2">
           <FormControl>
             <Checkbox
-              // The unlayered legacy `input` rule of style.css still wins over the layered size until #347; `!` wins over it.
-              className="size-5! min-h-0! p-0!"
               name={field.name}
               ref={field.ref}
               onBlur={field.onBlur}

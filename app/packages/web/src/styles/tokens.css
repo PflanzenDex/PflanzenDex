@@ -1,7 +1,7 @@
 /*
- * Design system stack and tokens (US-QS-07, DS-20, DS-27, DS-28, DS-30). Tailwind v4 theme and utilities only:
- * no preflight yet (#347), so the legacy style.css and the module CSS keep their look. Layered rules lose
- * against unlayered CSS, so the legacy rules win wherever they exist.
+ * Design system stack and tokens (US-QS-07, DS-20, DS-27, DS-28, DS-30, DS-33). Tailwind v4 theme, preflight
+ * (the base layer reset) and utilities. This is the only stylesheet of the web package; everything else is utility
+ * classes on components (#347 retired style.css and the module stylesheets).
  *
  * Tokens are CSS variables on :root, redefined for dark mode with the system setting (ADR 0007 decision 6),
  * exposed to Tailwind with @theme inline. Names are by role, not by hue. style-contrast.test.ts checks every
@@ -9,6 +9,7 @@
  */
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/preflight" layer(base);
 @import "tailwindcss/utilities" layer(utilities);
 
 /* Dark mode follows the system, as today (ADR 0007 decision 6). */
@@ -114,4 +115,15 @@
   --color-phase-growth: var(--phase-growth);
   --color-phase-dormancy: var(--phase-dormancy);
   --radius-md: var(--radius);
+}
+
+/* Base layer (DS-33): the page colours and the pointer for real controls, which preflight resets to the default arrow. */
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 }

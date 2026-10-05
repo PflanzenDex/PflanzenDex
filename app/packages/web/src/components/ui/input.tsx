@@ -9,7 +9,7 @@ export const fieldClasses =
   "w-full rounded-md border border-input bg-background px-3 text-base text-foreground " +
   "placeholder:text-muted-foreground transition-colors motion-reduce:transition-none " +
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background " +
-  "aria-invalid:border-destructive aria-invalid:border-2 " +
+  "aria-invalid:border-destructive aria-invalid:inset-ring-1 aria-invalid:inset-ring-destructive " +
   "disabled:pointer-events-none disabled:opacity-50";
 
 export type FieldInvalidProps = {

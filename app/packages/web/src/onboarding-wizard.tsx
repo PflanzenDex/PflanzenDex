@@ -8,15 +8,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { LocationsStep, ZonesStep } from "./light";
 
+const ACTIONS = "flex flex-col gap-3 sm:flex-row";
+
 type Token = () => Promise<string | undefined>;
 
 /** The last step only names the way to the catalog; creating the specimen is the collection's job (US-BES-02). */
 function FirstPlantStep(props: { step: OnboardingStep; onChoose: () => void; onSkip: () => void }) {
   return (
-    <section className="onboarding-step">
-      <h2 tabIndex={-1}>Deine erste Pflanze</h2>
-      <p className="quiet">{props.step.nextAction}</p>
-      <div className="actions">
+    <section className="flex flex-col gap-3">
+      <h2 tabIndex={-1} className="text-xl font-semibold">
+        Deine erste Pflanze
+      </h2>
+      <p className="text-sm text-muted-foreground">{props.step.nextAction}</p>
+      <div className={ACTIONS}>
         <Button type="button" onClick={props.onChoose}>
           {props.step.actionLabel}
         </Button>
@@ -57,10 +61,10 @@ export function OnboardingWizard(props: {
   }, [index]);
   const common = { api: props.api, token: props.token, onNext: next };
   return (
-    <div className="onboarding" ref={box}>
-      <h1>Start</h1>
+    <div className="flex flex-col gap-3" ref={box}>
+      <h1 className="text-2xl font-semibold">Start</h1>
       <p
-        className="onboarding-progress"
+        className="m-0 self-start rounded-full border border-current px-2.5 py-0.5 text-sm font-semibold"
         role="status"
       >{`Schritt ${index + 1} von ${steps.length}`}</p>
       {id === "locations" && <LocationsStep {...common} />}
@@ -72,7 +76,7 @@ export function OnboardingWizard(props: {
           onSkip={props.onFinish}
         />
       )}
-      <div className="actions">
+      <div className={ACTIONS}>
         <Button type="button" variant="secondary" onClick={props.onEnd}>
           Einstieg beenden
         </Button>

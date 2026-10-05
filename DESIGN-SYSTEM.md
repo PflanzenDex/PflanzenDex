@@ -12,14 +12,14 @@ Normative ruleset for every UI component and page in this repository. It is the 
 
 This document describes the **target** UI stack. The `web` package does not match it yet:
 
-| Topic              | Target (this document)                                                      | Today (`app/packages/web`)                                                 |
-| ------------------ | --------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Framework          | Vite SPA + PWA, React 19, client-side router                                | Vite 8 + React 19 SPA/PWA (matches)                                        |
-| Styling            | Tailwind CSS v4 (`@tailwindcss/vite`), `clsx` + `tailwind-merge`, CVA       | Plain CSS: global `style.css` plus one `*.css` file per module             |
-| Primitives         | shadcn/ui pattern (Vite flavour), Radix / Base UI, owned in `components/ui` | None; native elements styled per module                                    |
-| Forms              | `react-hook-form` + `zod` behind a `Form` primitive                         | Hand-written controlled fields                                             |
-| Layout of the code | `components/ui`, `components/shared`, `<module>/` folders                   | `src/<module>/` with `index.ts` as public interface (`modules.config.mjs`) |
-| Device access      | Only through `src/platform/` adapters                                       | Direct browser APIs in components                                          |
+| Topic              | Target (this document)                                                      | Today (`app/packages/web`)                                                                |
+| ------------------ | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Framework          | Vite SPA + PWA, React 19, client-side router                                | Vite 8 + React 19 SPA/PWA (matches)                                                       |
+| Styling            | Tailwind CSS v4 (`@tailwindcss/vite`), `clsx` + `tailwind-merge`, CVA       | Tailwind v4 with preflight; `styles/tokens.css` is the only stylesheet                    |
+| Primitives         | shadcn/ui pattern (Vite flavour), Radix / Base UI, owned in `components/ui` | Owned in `components/ui` (Button, Input, Select, Checkbox, Dialog, Sheet, Table, Form, …) |
+| Forms              | `react-hook-form` + `zod` behind a `Form` primitive                         | `react-hook-form` + `zod` behind the `Form` primitive                                     |
+| Layout of the code | `components/ui`, `components/shared`, `<module>/` folders                   | `src/<module>/` with `index.ts` as public interface (`modules.config.mjs`)                |
+| Device access      | Only through `src/platform/` adapters                                       | Direct browser APIs in components                                                         |
 
 The gap is tracked as issues (label `design-system`), every deviation is listed in `app/quality-ds-baseline.json` and may only shrink (ratchet, section 6).
 

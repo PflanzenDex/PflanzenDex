@@ -61,7 +61,6 @@ function Similar(props: { entry: ReviewEntry; actions: ReviewActions }) {
             <Button
               type="button"
               variant="outline"
-              className="whitespace-normal"
               disabled={actions.running}
               onClick={() => actions.onMerge(entry.reviewCase.id, x.id)}
             >

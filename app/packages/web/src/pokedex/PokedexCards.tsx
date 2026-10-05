@@ -55,7 +55,7 @@ export function CardList(props: {
           <Button
             type="button"
             variant="ghost"
-            className="h-auto justify-start whitespace-normal px-0 text-left font-semibold after:absolute after:inset-0 after:content-['']"
+            className="h-auto justify-start px-0 text-left font-semibold after:absolute after:inset-0 after:content-['']"
             data-species={c.species}
             aria-label={`Details zu ${c.species}`}
             onClick={() => props.onOpen(c)}

@@ -14,7 +14,6 @@ import { useClearOnSignOut } from "./kernel";
 import { AppRoutes } from "./routes";
 import { AppShell } from "./components/shared/app-shell";
 import { navItems, PATHS, type View } from "./navigation";
-import "./style.css";
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
 
@@ -78,10 +77,14 @@ export function App() {
   const handOver = useSpeciesHandOver(setView);
   const z = s.state;
   useClearOnSignOut(z.kind === "signedIn");
-  const footer = <footer className="version-footer">Version {version || "unbekannt"}</footer>;
+  const footer = (
+    <footer className="mt-8 text-center text-xs text-muted-foreground">
+      Version {version || "unbekannt"}
+    </footer>
+  );
   if (z.kind !== "signedIn")
     return (
-      <main className="page">
+      <main className="flex min-h-dvh flex-col items-center px-4 py-6 md:pt-20">
         <EntryStates state={z} session={s} />
         {footer}
       </main>
@@ -93,9 +96,9 @@ export function App() {
         operator: z.account.operator === true,
       })}
     >
-      <div className="frame">
+      <div className="mx-auto w-full max-w-180">
         {navState?.hint && (
-          <p role="alert" className="hint">
+          <p role="alert" className="mb-3 rounded-lg border border-border p-3">
             {navState.hint}
           </p>
         )}
