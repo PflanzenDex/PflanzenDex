@@ -5,7 +5,7 @@ import {
   type SpeciesSource,
   type SpecimenStore,
 } from "../collection";
-import { carePhase, type CarePhase } from "./phase";
+import { carePhase, nextPhaseChange, type CarePhase, type NextPhaseChange } from "./phase";
 import type { PhaseLocationSource } from "./phase-location";
 import { deviationsFirst } from "./phase-status";
 
@@ -26,13 +26,15 @@ export interface PhasesRow {
   readonly name: string;
   readonly speciesId: string;
   readonly phase: CarePhase;
-  /** Kennung des heutigen Standorts des Exemplars; `null` = unbekannt. */
+  /** ID of the specimen's location today; `null` = unknown. */
   readonly locationId: string | null;
   /**
    * Target location of today's phase, selected by the keeper in their care profile (FR-PHA-02, BES-09). `null` =
    * unknown, never invented (P-08): that is always the case until the profile exists.
    */
   readonly targetLocationId: string | null;
+  /** The next phase change from today on (US-PHA-04); `null` = none in this and the next year. */
+  readonly nextChange: NextPhaseChange | null;
 }
 
 /**
@@ -69,6 +71,7 @@ export async function phaseRows(
             phase,
             locationId: z.locationId,
             targetLocationId,
+            nextChange: nextPhaseChange(period.from, period.until, today),
           })),
       ];
     }),

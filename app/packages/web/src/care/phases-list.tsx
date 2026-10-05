@@ -7,7 +7,7 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { CARD_CLASSES, LIST_CLASSES, WARNING_CLASSES } from "./notices";
-import { PHASE_TEXT, locationText } from "./text";
+import { PHASE_TEXT, locationText, nextChangeText } from "./text";
 import { needsSwitch, switchGroups, switchedText } from "./phase-groups";
 
 /** Called with the specimens to switch and the text to show afterwards; without it the list only shows. */
@@ -26,6 +26,10 @@ function Entry(props: {
     <li className={`${CARD_CLASSES} flex flex-col gap-1`}>
       <h3 className="font-semibold">{z.name}</h3>
       <p>Soll-Phase heute: {PHASE_TEXT[z.phase]}</p>
+      <p>{nextChangeText(z.nextChange)}</p>
+      {z.nextChange === null && (
+        <p className="font-semibold">Prüfe den Ruhephasen-Zeitraum im Pflegeprofil der Art.</p>
+      )}
       {status === "location_missing" ? (
         <p className={WARNING_CLASSES}>Standort fehlt</p>
       ) : (

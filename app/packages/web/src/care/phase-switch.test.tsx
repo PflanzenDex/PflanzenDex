@@ -22,6 +22,7 @@ const row = (
   phase: "dormancy",
   locationId,
   targetLocationId,
+  nextChange: { date: "2027-03-16", phase: "growth", days: 120 },
 });
 const token = async () => "tok";
 
