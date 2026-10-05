@@ -48,10 +48,21 @@ export default {
     },
     {
       path: "docs/records/test-logs",
-      collection: new RegExp(`^${story}(\\.md)?$`),
+      collection: new RegExp(`^${story}(\\.(md|txt))?$`),
     },
     {
       path: "docs/records/test-logs/*",
+      collection: new RegExp(`^${story}\\.(png|md|txt|json)$`),
+    },
+    // The same collections at their current paths, until the docs move (FR-QG-23) renames them.
+    // Without these, every new ADR, test log, principle or spec file would fail the ratchet.
+    { path: "Docs/decisions", collection: /^\d{4}-[a-z0-9-]+\.md$/ },
+    { path: "Docs/principles", collection: /^(PRIN-\d{3}-[a-z0-9-]+|README)\.md$/ },
+    { path: "Docs/PRODUCT-SPECS", collection: /^(\d{2}-[A-Za-z0-9-]+|README)\.md$/ },
+    { path: "Docs/PLANT-SYSTEM-SPECS", collection: /^(\d{2}-[A-Za-z0-9-]+|README)\.md$/ },
+    { path: "Docs/test-logs", collection: new RegExp(`^${story}(\\.(md|txt))?$`) },
+    {
+      path: "Docs/test-logs/*",
       collection: new RegExp(`^${story}\\.(png|md|txt|json)$`),
     },
   ],

@@ -887,8 +887,6 @@ git commit -m "chore(qg): run the layout check in the gates with a baseline (FR-
 
 ### Task 5: Principle, agent rule and spec status
 
-> **Execution note:** steps 1 and 2 (the principle `PRIN-011` and its register row) were skipped in PR 1 because the new gate rejects the extra file in `Docs/principles`; they move to PR 3. Steps 3 to 6 were done as written.
-
 **Files:**
 
 - Create: `Docs/principles/PRIN-011-file-layout.md`
@@ -994,7 +992,6 @@ Each of these gets its own short plan, written after the previous PR is merged, 
 - `Docs/` becomes `docs/` with `specs/{product,prototype}`, `adr`, `guides/{principles,runbooks,pitfalls}`, `records/{spikes,test-logs}`, `roadmap.md`, `design-system.md`; `DESIGN-SYSTEM.md` moves into `docs/`; file names become kebab-case (`PRODUCT-SPECS/00-Product-Overview.md` becomes `specs/product/00-product-overview.md`).
 - References to fix: `CLAUDE.md`, `AGENTS.md`, `.claude/` (rules, skills, hooks), `.agents/skills/`, `.github/CODEOWNERS`, `.github/pull_request_template.md`, `README.md`, `app/scripts/check-specs.mjs`, `check-links.mjs`, `check-principles.mjs`, `check-traceability.mjs`, the `docs` script in `app/package.json`, `.markdownlint-cli2.jsonc`.
 - Note on case: on a case-insensitive file system `Docs` to `docs` needs two renames (`Docs` to `docs-tmp` to `docs`); do it in two commits.
-- Also adds the principle `PRIN-011` (the file layout is checked, maturity `gated`, spec `FR-QG-21`, `FR-QG-22`, `US-QG-09`) and its row in the register. It was planned for PR 1 but the layout gate itself rejected it there: one more file in `Docs/principles` enlarges a baselined directory. After the move, `docs/guides/principles` is a collection and takes it.
 - Merge: **human** (agent instruction files and `CODEOWNERS` change).
 
 ### PR 4: `tools/`, `app/config`, `app/gates`
