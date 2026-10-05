@@ -5,21 +5,25 @@ import { massName, measurementText, QUALITY_NAME } from "./text";
 export function MeasurementHeader({ view }: { view: MeasurementView }) {
   const { last, lastRating } = view;
   return (
-    <dl className="messkopf">
+    <dl className="m-0 grid gap-3">
       <div>
-        <dt>Was messen?</dt>
-        <dd>
+        <dt className="font-semibold">Was messen?</dt>
+        <dd className="m-0 mt-0.5 text-muted-foreground">
           {massName(view.growthMeasure)}. Miss immer dasselbe Maß an derselben Stelle, sonst sind
           die Werte nicht vergleichbar.
         </dd>
       </div>
       <div>
-        <dt>Letzte Messung</dt>
-        <dd>{last ? measurementText(last) : "noch keine Messung"}</dd>
+        <dt className="font-semibold">Letzte Messung</dt>
+        <dd className="m-0 mt-0.5 text-muted-foreground">
+          {last ? measurementText(last) : "noch keine Messung"}
+        </dd>
       </div>
       <div>
-        <dt>Letzte Bewertung</dt>
-        <dd>{lastRating ? QUALITY_NAME[lastRating] : "noch keine Bewertung"}</dd>
+        <dt className="font-semibold">Letzte Bewertung</dt>
+        <dd className="m-0 mt-0.5 text-muted-foreground">
+          {lastRating ? QUALITY_NAME[lastRating] : "noch keine Bewertung"}
+        </dd>
       </div>
     </dl>
   );

@@ -1,16 +1,23 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import type { LightLocation, PhasesRow } from "@pflanzendex/core";
 import { loadLocations } from "../light";
-import { LoadError, SIGN_IN, type ApiError } from "../kernel";
+import { LoadFrame, type Response } from "../kernel";
 import { PhasesList } from "./phases-list";
 import { loadCarePhases } from "./care-phases-api";
+import { CarePhasesSkeleton } from "./CarePhasesPage.skeleton";
+import { RefusalAlert, StatusNote } from "./notices";
 import { usePhaseSwitch } from "./use-phase-switch";
 
 type Token = () => Promise<string | undefined>;
-type Data =
-  | { kind: "loading" }
-  | { kind: "error"; error: ApiError }
-  | { kind: "da"; rows: readonly PhasesRow[]; locations: readonly LightLocation[] };
+type Loaded = { rows: readonly PhasesRow[]; locations: readonly LightLocation[] };
+
+/** Phases and locations; if one fails, the loading fails as a whole. */
+async function loadBoth(api: string, token: string): Promise<Response<Loaded>> {
+  const [p, s] = await Promise.all([loadCarePhases(api, token), loadLocations(api, token)]);
+  if (!p.ok) return p;
+  if (!s.ok) return s;
+  return { ok: true, value: { rows: p.value, locations: s.value } };
+}
 
 /**
  * Care phases (US-PHA-01) with "Jetzt umgestellt" (US-PHA-03): loads phases and locations; if one fails, the loading
@@ -19,48 +26,35 @@ type Data =
 export function CarePhasesPage(props: { api: string; token: Token }) {
   const { api, token } = props;
   const [reload, setReload] = useState(0);
-  const [data, setData] = useState<Data>({ kind: "loading" });
   const again = useCallback(() => setReload((n) => n + 1), []);
   const move = usePhaseSwitch(api, token, again);
-  useEffect(() => {
-    let current = true;
-    void (async () => {
-      const t = await token();
-      if (!t) return current && setData({ kind: "error", error: SIGN_IN });
-      const [p, s] = await Promise.all([loadCarePhases(api, t), loadLocations(api, t)]);
-      if (!current) return;
-      if (!p.ok) return setData({ kind: "error", error: p.error });
-      if (!s.ok) return setData({ kind: "error", error: s.error });
-      setData({ kind: "da", rows: p.value, locations: s.value });
-    })();
-    return () => {
-      current = false;
-    };
-  }, [api, token, reload]);
+  const load = useCallback((t: string) => loadBoth(api, t), [api]);
+  const loading = "Pflegephasen werden geladen …";
   return (
-    <div className="light collection">
-      {data.kind === "loading" && <p role="status">Pflegephasen werden geladen …</p>}
-      {data.kind === "error" && <LoadError error={data.error} onReload={again} />}
-      {data.kind === "da" && (
-        <>
-          {move.message && (
-            <p role="status" className="hint">
-              {move.message}
-            </p>
-          )}
-          {move.error && (
-            <div role="alert" className="warning">
-              <p>{move.error.text}</p>
-            </div>
-          )}
-          <PhasesList
-            rows={data.rows}
-            locations={data.locations}
-            busy={move.running}
-            onConfirm={(ids, text) => void move.confirm(ids, text)}
-          />
-        </>
-      )}
+    <div className="flex min-w-0 flex-col gap-4">
+      <h1 id="care-phases-title" className="text-2xl font-semibold">
+        Pflegephasen
+      </h1>
+      <LoadFrame
+        token={token}
+        load={load}
+        loadingText={loading}
+        loadingFallback={<CarePhasesSkeleton label={loading} />}
+        refresh={reload}
+      >
+        {(data) => (
+          <>
+            {move.message && <StatusNote>{move.message}</StatusNote>}
+            {move.error && <RefusalAlert error={move.error} />}
+            <PhasesList
+              rows={data.rows}
+              locations={data.locations}
+              busy={move.running}
+              onConfirm={(ids, text) => void move.confirm(ids, text)}
+            />
+          </>
+        )}
+      </LoadFrame>
     </div>
   );
 }

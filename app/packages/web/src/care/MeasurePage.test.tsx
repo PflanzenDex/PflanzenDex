@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { ERROR_TEXTS } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MeasurePage } from "./MeasurePage";
 
@@ -61,9 +62,8 @@ describe("US-WAC-01 Seite Messen", () => {
     fakeServer();
     show();
     expect(screen.getByRole("status").textContent).toContain("werden geladen");
-    expect(
-      await screen.findByText("Noch keine Messung. Trage oben den ersten Messwert ein."),
-    ).toBeTruthy();
+    expect(await screen.findByText("Noch keine Messung")).toBeTruthy();
+    expect(screen.getByText("Trage oben den ersten Messwert ein.")).toBeTruthy();
     expect(screen.getByText(/Höhe\./)).toBeTruthy();
   });
 
@@ -89,7 +89,7 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(posts).toHaveLength(0);
   });
 
-  it("US-WAC-01 if the server rejects, its text is there and the input stays", async () => {
+  it("US-WAC-01 · DS-49 if the server rejects, the German text of its code is there and the input stays", async () => {
     fakeServer({
       save: () =>
         response(404, {
@@ -100,7 +100,9 @@ describe("US-WAC-01 Seite Messen", () => {
     const field = await screen.findByLabelText(/Messwert/);
     await userEvent.type(field, "10");
     await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("Das Exemplar gibt es nicht.");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      ERROR_TEXTS["specimen.not_found"],
+    );
     expect((field as HTMLInputElement).value).toBe("10");
   });
 
@@ -111,7 +113,9 @@ describe("US-WAC-01 Seite Messen", () => {
     await userEvent.type(await screen.findByLabelText(/Messwert/), "10");
     signedIn = false;
     await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("Bitte melde dich neu an.");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      ERROR_TEXTS["access.not_signed_in"],
+    );
     expect(posts).toHaveLength(0);
   });
 
@@ -136,5 +140,33 @@ describe("US-WAC-01 Seite Messen", () => {
     show(async () => "tok", back);
     await userEvent.click(screen.getByRole("button", { name: "Zurück zum Bestand" }));
     expect(back).toHaveBeenCalledOnce();
+  });
+
+  it("US-WAC-01 · DS-52 while loading, a skeleton with the one loading status mirrors the page", () => {
+    fakeServer();
+    const { container } = show();
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(container.querySelectorAll('[aria-hidden="true"].animate-pulse').length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("US-WAC-01 · DS-48 an invalid input focuses the first invalid field and links its message", async () => {
+    fakeServer();
+    show();
+    const field = await screen.findByLabelText(/Messwert/);
+    await userEvent.type(field, "12,3");
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    const alert = await screen.findByRole("alert");
+    expect(field.getAttribute("aria-invalid")).toBe("true");
+    expect(field.getAttribute("aria-describedby")).toContain(alert.id);
+    expect(document.activeElement).toBe(field);
+  });
+
+  it("US-WAC-01 · DS-26 the empty course offers an action that focuses the value field", async () => {
+    fakeServer();
+    show();
+    await userEvent.click(await screen.findByRole("button", { name: "Messwert eintragen" }));
+    expect(document.activeElement).toBe(screen.getByLabelText(/Messwert \(/));
   });
 });

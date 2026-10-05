@@ -27,9 +27,7 @@ export function OtherFields(props: {
         render={({ field }) => (
           <FormItem>
             <FormControl>
-              {/* The important sizes beat the legacy unlayered `input` rule of light.css until #347 removes it. */}
               <Checkbox
-                className="size-5! min-h-0! p-0!"
                 name={field.name}
                 ref={field.ref}
                 onBlur={field.onBlur}
