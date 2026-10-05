@@ -1,46 +1,33 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, type UseFormSetError } from "react-hook-form";
 import type { ZoneStock } from "@pflanzendex/core";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
+import { errorText } from "@/lib/error-text";
 import type { ApiError } from "../kernel";
-import {
-  checkWish,
-  EMPTY_FIELDS,
-  FIELD_ORDER,
-  fieldsOfRefusal,
-  type FieldErrors,
-  type WishFields,
-} from "./wish-input";
-import { ChoiceFields, ImageFields, NameFields, type Set } from "./wish-fields";
+import { ChoiceFields, ImageFields, NameFields } from "./wish-fields";
+import { EMPTY_FIELDS, fieldsOfRefusal, toWishInput, wishSchema, type WishFields } from "./schemas";
 import type { WishInput } from "./wishlist-api";
 
 /**
- * Where the refusals show: client checks per field, else what the server refused per field, else (a refusal that names
- * no field) an alert. The first invalid field, or the alert, takes the focus (P-10). A server refusal of a field goes
- * away as soon as that field is edited (`clear`), without moving the focus.
+ * Hands a server refusal to the form: the fields it names get the German text of its error code and the first of
+ * them takes the focus (P-10). Returns the alert text when the refusal names no field. A refusal of a field goes
+ * away as soon as that field is edited (react-hook-form revalidates it), without moving the focus.
  */
-function useRefusals(clientErrors: FieldErrors | null, error: ApiError | null) {
+function useServerRefusal(error: ApiError | null, setError: UseFormSetError<WishFields>) {
   const alertRef = useRef<HTMLDivElement>(null);
-  const [cleared, setCleared] = useState<{ error: ApiError | null; keys: readonly string[] }>({
-    error: null,
-    keys: [],
-  });
-  const refused = useMemo(
-    () => clientErrors ?? (error ? fieldsOfRefusal(error) : {}),
-    [clientErrors, error],
-  );
-  const errors = useMemo(() => {
-    if (clientErrors || cleared.error !== error) return refused;
-    return Object.fromEntries(Object.entries(refused).filter(([k]) => !cleared.keys.includes(k)));
-  }, [refused, clientErrors, cleared, error]);
-  const alertText = !clientErrors && error && Object.keys(refused).length === 0 ? error.text : null;
-  // Focus follows the refusal itself, not what is left of it after an edit.
+  const named = error ? fieldsOfRefusal(error) : [];
+  const alertText = error && named.length === 0 ? errorText(error.code) : null;
   useEffect(() => {
-    const first = FIELD_ORDER.find((k) => refused[k] !== undefined);
-    if (first) document.getElementById(`wish-${first}`)?.focus();
-    else if (alertText !== null) alertRef.current?.focus();
-  }, [refused, alertText, error]);
-  const clear = (keys: readonly string[]) =>
-    setCleared((c) => ({ error, keys: [...(c.error === error ? c.keys : []), ...keys] }));
-  return { errors, alertText, alertRef, clear };
+    if (!error) return;
+    const fields = fieldsOfRefusal(error);
+    fields.forEach((field, i) =>
+      setError(field, { type: "server", message: errorText(error.code) }, { shouldFocus: i === 0 }),
+    );
+    if (fields.length === 0) alertRef.current?.focus();
+  }, [error, setError]);
+  return { alertText, alertRef };
 }
 
 /** The form to record a wish (FR-WUN-01): only the name is required, the rest stays unknown instead of guessed (P-08). */
@@ -52,42 +39,46 @@ export function WishForm(props: {
   /** Resolves true when the wish was saved, so the form can be emptied. */
   onSend: (input: WishInput) => Promise<boolean>;
 }) {
-  const [fields, setFields] = useState<WishFields>(EMPTY_FIELDS);
-  const [clientErrors, setClientErrors] = useState<FieldErrors | null>(null);
-  const { errors, alertText, alertRef, clear } = useRefusals(clientErrors, props.error);
-  const set: Set = (change) => {
-    clear(Object.keys(change));
-    setFields((f) => ({ ...f, ...change }));
-  };
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    const checked = checkWish(fields);
-    setClientErrors("errors" in checked ? checked.errors : null);
-    if ("input" in checked && (await props.onSend(checked.input))) setFields(EMPTY_FIELDS);
-  };
+  const form = useForm<WishFields>({
+    resolver: zodResolver(wishSchema),
+    defaultValues: EMPTY_FIELDS,
+  });
+  const { alertText, alertRef } = useServerRefusal(props.error, form.setError);
+  const refused = Object.keys(form.formState.errors).length > 0;
+  const pending = props.running || form.formState.isSubmitting;
+  const submit = form.handleSubmit(async (values) => {
+    if (await props.onSend(toWishInput(values))) form.reset(EMPTY_FIELDS);
+  });
   return (
-    <section aria-labelledby="wish-form-title">
-      <h2 id="wish-form-title">Wunsch erfassen</h2>
-      {props.message && !clientErrors && (
-        <p role="status" className="hint">
+    <section aria-labelledby="wish-form-title" className="mt-7 flex flex-col gap-3">
+      <h2 id="wish-form-title" className="text-xl font-semibold">
+        Wunsch erfassen
+      </h2>
+      {props.message && !refused && (
+        <p role="status" className="rounded-lg border border-border p-3">
           {props.message}
         </p>
       )}
       {alertText !== null && (
-        <div role="alert" className="warning" tabIndex={-1} ref={alertRef}>
+        <div
+          role="alert"
+          tabIndex={-1}
+          ref={alertRef}
+          className="rounded-lg border border-destructive p-3 text-destructive"
+        >
           <p>{alertText}</p>
         </div>
       )}
-      <form className="form" onSubmit={(e) => void submit(e)} noValidate>
-        <NameFields fields={fields} set={set} errors={errors} />
-        <ChoiceFields fields={fields} set={set} errors={errors} zones={props.zones} />
-        <ImageFields fields={fields} set={set} errors={errors} />
-        <div className="actions">
-          <button type="submit" className="primary" disabled={props.running}>
-            Wunsch speichern
-          </button>
-        </div>
-      </form>
+      <Form {...form}>
+        <form noValidate onSubmit={(e) => void submit(e)} className="flex max-w-xl flex-col gap-4">
+          <NameFields control={form.control} />
+          <ChoiceFields control={form.control} zones={props.zones} />
+          <ImageFields control={form.control} />
+          <Button type="submit" size="touch" disabled={pending}>
+            {pending ? "Speichert …" : "Wunsch speichern"}
+          </Button>
+        </form>
+      </Form>
     </section>
   );
 }

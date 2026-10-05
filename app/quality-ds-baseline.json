@@ -244,16 +244,6 @@
       "rule": "DS-48",
       "file": "start-page.tsx",
       "count": 3
-    },
-    {
-      "rule": "DS-48",
-      "file": "wishlist/wish-fields.tsx",
-      "count": 7
-    },
-    {
-      "rule": "DS-48",
-      "file": "wishlist/wish-form.tsx",
-      "count": 1
     }
   ]
 }
