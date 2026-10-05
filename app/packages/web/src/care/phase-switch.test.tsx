@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CarePhasesPage } from "./CarePhasesPage";
-import { confirmPhaseSwitch } from "./care-phases-api";
+import { confirmPhaseSwitch } from "./api/care-phases-api";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));

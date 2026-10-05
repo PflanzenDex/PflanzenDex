@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useWriteAction } from "../kernel";
-import { confirmPhaseSwitch } from "./care-phases-api";
+import { confirmPhaseSwitch } from "./api/care-phases-api";
 
 /**
  * "Jetzt umgestellt" (US-PHA-03): one request at a time, afterwards the page reloads (`after`) so the rows show the
