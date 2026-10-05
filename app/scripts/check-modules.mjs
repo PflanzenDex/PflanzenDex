@@ -83,12 +83,14 @@ function checkRegister({ appDir, add, cfg }) {
       add("AB-12", file, 0, `${m.name} may depend on every other module: only the root may`);
 }
 
+const DESIGN_SYSTEM_FOLDERS = ["components", "lib", "platform", "styles"]; // no modules: DESIGN-SYSTEM.md section 1
 function checkFolders({ appDir, add, cfg, h }) {
   const seen = new Set();
   for (const pkg of LAYERS) {
     const src = path.join(appDir, "packages", pkg, "src");
     if (!fs.existsSync(src)) continue;
     for (const e of fs.readdirSync(src, { withFileTypes: true }).filter((d) => d.isDirectory())) {
+      if (pkg === "web" && DESIGN_SYSTEM_FOLDERS.includes(e.name)) continue;
       const key = `${pkg}/${e.name}`;
       const dir = path.join(src, e.name);
       if (!h.walk(dir).some((f) => h.CODE.test(f))) continue;
