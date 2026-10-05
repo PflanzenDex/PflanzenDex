@@ -103,6 +103,14 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Web:** tab "Bestand"; "Diese Art wählen" in the catalog opens the form for that species (the app wires `catalog` and `collection`, the modules do not know each other).
 - **Limits:** no editing of location, status or other fields and no deleting (renaming by marker: US-BES-03; archiving: US-BES-07); addition, zone override, provenance and sharing fields of DM-BES-02 are missing; no specimen hints yet (BES-08).
 
+## Correct the catch date of a specimen (US-BES-11)
+
+- **Data:** no migration; `caught_at` (`date`) is the only column that changes.
+- **Operation:** `specimen.correct_catch_date` (`core/src/collection/create.ts`, input `specimenId`, `timeZone`, `catchDate`) applies the rules of the creation (FR-BES-04): `calendarDateField` (a calendar date from 1900-01-01 on, else 400 `input.invalid` on `catchDate`) and "not after today in the keeper's time zone" (`specimen.caught_in_future` 400 on `catchDate`). Its own port `CatchDateStore.setCaughtAt` writes one statement; on an archived specimen a date after `archived_at` changes nothing (`specimen.caught_after_archived` 409), archiving date and reason stay. A foreign or unknown specimen is 404 `specimen.not_found` (P-04). The Pokédex catch date is derived from the stored value (US-POK-07), nothing else is written.
+- **API:** `POST /specimens/:id/catch-date` (`Idempotency-Key`; body `timeZone`, `catchDate`).
+- **Web:** the card has "Fangdatum"; the form shows the stored date ("Bisher: …" or "unbekannt"), is preset to it (today when unknown), limited to today, and after saving the message names the specimen and the new date (P-09); a refusal marks the field (P-10).
+- **Limits:** the archive section has no entry point yet; an archived specimen can be corrected through the API only.
+
 ## Tell several specimens of a species apart (US-BES-03)
 
 - **Data:** migration 0013 (`-- module: collection`): unique index `specimen_marker_per_species (account_id, species_id, lower(marker))` for rows with a marker; archived specimens count, their marker stays taken like their name (US-BES-07). The name was unique per account already, so no existing data can violate the index.

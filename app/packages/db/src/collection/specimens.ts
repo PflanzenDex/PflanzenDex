@@ -7,6 +7,7 @@ import {
   SpeciesGone,
   ensureSpeciesVisible,
   pgError,
+  setCaughtAt,
   type SpecimenRow,
 } from "./specimen-shared.ts";
 import { setLocations } from "./specimen-locations.ts";
@@ -53,7 +54,6 @@ export class SpecimenPostgres {
     return r.rows;
   }
 
-  /** How many specimens the account has that count (not archived, `isActive`); one cheap count, no rows (US-ACC-03). */
   /** Active and archived specimens of the account in one count (start page, US-ACC-03); writes nothing. */
   async countByStatus(userId: string): Promise<{ active: number; archived: number }> {
     const r = await withAccount(this.pool, userId, (c) =>
@@ -169,6 +169,11 @@ export class SpecimenPostgres {
     assignments: readonly { readonly specimenId: string; readonly locationId: string }[],
   ): Promise<readonly SpecimenRow[] | "specimen_unknown" | "archived" | "location_unknown"> {
     return setLocations(this.pool, userId, assignments);
+  }
+
+  /** Corrects the catch date (US-BES-11); see `setCaughtAt` in `specimen-shared.ts`. */
+  async setCaughtAt(userId: string, id: string, date: string) {
+    return setCaughtAt(this.pool, userId, id, date);
   }
 
   /** Resets the status from before the archiving (without statement: plant) and deletes date and reason. */
