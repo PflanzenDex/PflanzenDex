@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { test, describe } from "node:test";
 import assert from "node:assert";
 import { findDrift } from "./check-ci-drift.mjs";
@@ -280,5 +281,22 @@ jobs:
     const result = findDrift({ makefile, workflows });
     // All should be valid (even test123 and underscore targets are extracted from Makefile)
     assert.deepStrictEqual(result.findings, []);
+  });
+});
+
+describe("FR-QG-01: the Makefile", () => {
+  test("FR-QG-01: every documented target is declared in .PHONY (typo guard)", () => {
+    const lines = fs.readFileSync(new URL("../../Makefile", import.meta.url), "utf8").split("\n");
+    const phony = new Set(
+      lines
+        .find((l) => l.startsWith(".PHONY:"))
+        .split(":")[1]
+        .split(/\s+/),
+    );
+    const documented = lines.flatMap((l) => l.match(/^([a-z][a-z0-9-]*):.*## /)?.[1] ?? []);
+    assert.deepStrictEqual(
+      documented.filter((t) => !phony.has(t)),
+      [],
+    );
   });
 });
