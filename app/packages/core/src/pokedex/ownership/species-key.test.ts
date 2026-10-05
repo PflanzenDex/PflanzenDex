@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { speciesKey } from "./index";
+import { speciesKey } from "../index";
 
 describe("US-POK-06 species key from the Latin name", () => {
   it("US-POK-06 takes the first two words and normalizes the case", () => {

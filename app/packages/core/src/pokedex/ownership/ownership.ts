@@ -2,8 +2,8 @@
 // least one active specimen of the account refers to the species (the same `isActive` rule as everywhere,
 // US-BES-07). A specimen without an epithet or with an unreadable species does not count, but is named with what fixes
 // it instead of vanishing (P-09, P-10). Only the data of the account flows in (P-04).
-import type { Species } from "../catalog";
-import { isActive, type SpecimenRow } from "../collection";
+import type { Species } from "../../catalog";
+import { isActive, type SpecimenRow } from "../../collection";
 import { earliest, specimenCatchDate } from "./catch-date";
 import { speciesKey } from "./species-key";
 import type {
@@ -12,7 +12,7 @@ import type {
   Ownership,
   OwnershipDependencies,
   UnidentifiedSpecimen,
-} from "./types";
+} from "../types";
 
 const NEXT_ACTION = "Bestimme die Art, dann zählt es.";
 
