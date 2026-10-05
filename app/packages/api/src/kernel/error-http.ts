@@ -1,6 +1,6 @@
 import type { AppError, ErrorCode } from "@pflanzendex/core";
 
-type Status = 400 | 401 | 403 | 404 | 409 | 500;
+type Status = 400 | 401 | 403 | 404 | 409 | 500 | 502 | 504;
 
 // Stable mapping of error code -> HTTP status (FR-QG-11). Unknown codes are a server error, never a success.
 const STATUS: Partial<Record<ErrorCode, Status>> = {
@@ -46,6 +46,11 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "light_zone.not_empty": 409,
   "idempotency.key_conflict": 409,
   "idempotency.in_progress": 409,
+  "source.unavailable": 502,
+  "source.rate_limited": 502,
+  "source.response_invalid": 502,
+  "source.request_rejected": 502,
+  "source.timeout": 504,
 };
 
 export const statusFor = (f: AppError): Status => STATUS[f.code] ?? 500;
