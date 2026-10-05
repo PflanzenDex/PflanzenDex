@@ -3,9 +3,9 @@ import { execute } from "../kernel";
 import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
 import { InMemoryLight } from "../light/test-helpers";
 import { specimenHints } from "../collection";
-import { InMemorySpecimens, SpeciesStub, testSpecies } from "../collection/test-helpers";
+import { InMemorySpecimens, SpeciesStub, testSpecies } from "../collection/shared/test-helpers";
 import { carePhasesList, phaseSwitchConfirm } from "./index";
-import { InMemoryCareProfiles } from "../collection/care-profile-test-helpers";
+import { InMemoryCareProfiles } from "../collection/care-profile/care-profile-test-helpers";
 import { PhaseLocationStub } from "./test-helpers";
 
 const WINTER = "11111111-1111-4111-8111-111111111111"; // dormancy 11-01 to 03-15

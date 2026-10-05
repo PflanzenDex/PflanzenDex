@@ -17,6 +17,7 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "boundaries": "node tools/check/code/check-boundaries.mjs",
     "layout": "node tools/check/code/layout/check-layout.mjs",
+    "layout-fix": "node tools/layout-fix/layout-fix.mjs",
     "ci-drift": "node tools/check/release/check-ci-drift.mjs",
     "baseline": "node tools/check/quality/check-baseline.mjs",
     "design-system": "node tools/check/code/design-system/check-design-system.mjs",
