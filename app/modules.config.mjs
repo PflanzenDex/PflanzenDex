@@ -10,6 +10,10 @@
 // `dependsOn` is the dependency matrix: `A -> B` may be imported only if B is listed for A. A new edge changes this
 // file in the same PR; cycles are always an error (AB-8). `epics` maps epics to modules (report only, QG-T4).
 
+import { KERNEL_GLOSSARY_WORDS, PORTS_WITHOUT_CONTRACT_TEST } from "./module-rules.config.mjs";
+
+const MODULE_RULES = { KERNEL_GLOSSARY_WORDS, PORTS_WITHOUT_CONTRACT_TEST };
+
 const MODULES = [
   {
     name: "kernel",
@@ -181,4 +185,5 @@ export const MODULE_CONFIG = {
   UNMODULED_FOLDERS,
   MODULE_FOLDERS_IN_TRANSITION,
   GLOBAL_REFERENCE_TABLES,
+  ...MODULE_RULES,
 };

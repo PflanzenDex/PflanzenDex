@@ -2,14 +2,17 @@
 // import rules also name the violated edge (`bestand -> pflege`).
 //   AB-7   a module is imported only through its `index.ts`; every module folder has one
 //   AB-8   imports follow the dependency matrix of modules.config.mjs; cycles are always an error
-//   AB-11  `kern` imports no domain module
+//   AB-11  `kernel` imports no domain module (glossary words in kernel identifiers: check-modules-contracts.mjs)
 //   AB-12  no coupling upwards (reverse of an allowed edge) and no module importing all others
 //   AB-13  register consistency: unique names, known dependencies, one owner per table, no code outside a module
-// AB-9 (SQL on foreign tables), AB-14 (migrations) and AB-10 (global reference tables: register entries, references) live in check-modules-sql.mjs;
+//          (port contract tests: check-modules-contracts.mjs)
+// AB-9 (SQL on foreign tables), AB-14 (migrations) and AB-10 (global reference tables) live in check-modules-sql.mjs;
 // AB-10 on the live schema in db/src/kern/modul-schema.ts.
 // Folders named like a module are checked as soon as they exist; without them the checks are idle.
 import fs from "node:fs";
 import path from "node:path";
+import { checkAllModules, checkCycles } from "./check-modules-graph.mjs";
+import { checkKernelGlossary, checkPortContracts } from "./check-modules-contracts.mjs";
 
 export const LAYERS = ["core", "db", "api", "web"];
 const posix = (p) => p.split(path.sep).join("/");
@@ -38,26 +41,6 @@ export function moduleOf(loc, cfg) {
 }
 
 const depsOf = (cfg, name) => cfg.MODULES.find((m) => m.name === name)?.dependsOn ?? [];
-
-function findCycle(graph) {
-  const state = new Map();
-  const visit = (node, trail) => {
-    if (state.get(node) === 2) return null;
-    if (state.get(node) === 1) return [...trail.slice(trail.indexOf(node)), node];
-    state.set(node, 1);
-    for (const next of graph.get(node) ?? []) {
-      const c = visit(next, [...trail, node]);
-      if (c) return c;
-    }
-    state.set(node, 2);
-    return null;
-  };
-  for (const node of graph.keys()) {
-    const c = visit(node, []);
-    if (c) return c;
-  }
-  return null;
-}
 
 function checkRegister({ appDir, add, cfg }) {
   const file = path.join(appDir, CONFIG_FILE);
@@ -155,41 +138,6 @@ function checkImports({ appDir, add, cfg, h }) {
   return edges;
 }
 
-function checkCycles({ appDir, add, cfg }, edges) {
-  const graph = new Map(cfg.MODULES.map((m) => [m.name, new Set(m.dependsOn)]));
-  const first = new Map();
-  for (const [key, where] of edges) {
-    const [a, b] = key.split(" ");
-    graph.get(a)?.add(b);
-    first.set(key, where);
-  }
-  const cycle = findCycle(graph);
-  if (!cycle) return;
-  const where = first.get(`${cycle[0]} ${cycle[1]}`);
-  add(
-    "AB-8",
-    where?.file ?? path.join(appDir, CONFIG_FILE),
-    where?.line ?? 0,
-    `cycle ${cycle.join(" -> ")}`,
-  );
-}
-
-function checkAllModules({ add, cfg }, edges) {
-  for (const m of cfg.MODULES) {
-    if (m.name === cfg.KERNEL || cfg.MODULES.length < 3) continue;
-    const used = new Set([...edges.keys()].filter((k) => k.startsWith(`${m.name} `)));
-    if (used.size >= cfg.MODULES.length - 1) {
-      const where = edges.get([...used][0]);
-      add(
-        "AB-12",
-        where.file,
-        where.line,
-        `${m.name} imports every other module: only the root may`,
-      );
-    }
-  }
-}
-
 export function checkModules(ctx) {
   if (!ctx.cfg.MODULES.length) return;
   checkRegister(ctx);
@@ -197,4 +145,6 @@ export function checkModules(ctx) {
   const edges = checkImports(ctx);
   checkCycles(ctx, edges);
   checkAllModules(ctx, edges);
+  checkKernelGlossary(ctx);
+  checkPortContracts(ctx);
 }
