@@ -3,6 +3,7 @@ import {
   NO_MEASUREMENTS,
   NO_TARGET_LOCATION,
   specimenCreate,
+  specimenCorrectCatchDate,
   specimenRepot,
   specimenCards,
   specimenLoad,
@@ -44,7 +45,7 @@ export type SpecimenOptions = {
 };
 
 /**
- * Specimens (US-BES-02, US-BES-04, US-BES-07, US-PHA-03). Writing goes only through `specimen.create`, `.repot`, `.archive`, `.restore` and `.set_location` (P-03, with
+ * Specimens (US-BES-02, US-BES-04, US-BES-07, US-PHA-03). Writing goes only through `specimen.create`, `.correct_catch_date`, `.repot`, `.archive`, `.restore` and `.set_location` (P-03, with
  * `Idempotency-Key`); lists and cards show no archived specimens, `/specimens/archived` does. Reading returns only
  * specimens of the own account, a foreign or unknown specimen looks the same: 404 (P-04).
  */
@@ -59,6 +60,7 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
     clock,
   });
   const repot = specimenRepot({ specimens });
+  const correct = specimenCorrectCatchDate({ specimens, clock });
   const cardsDeps = {
     specimens,
     species: new SpeciesPostgres(pool),
@@ -109,6 +111,10 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   // US-BES-04: a cutting becomes a plant; only the status changes (P-03, with `Idempotency-Key`).
   routes.post("/specimens/:id/repot", async (c) =>
     write(c, deps, repot, { input: { specimenId: c.req.param("id") } }),
+  );
+  // US-BES-11: correct the catch date; only `caught_at` changes, same rules as on creation (P-03, `Idempotency-Key`).
+  routes.post("/specimens/:id/catch-date", async (c) =>
+    write(c, deps, correct, { input: { ...(await body(c)), specimenId: c.req.param("id") } }),
   );
   return routes;
 }

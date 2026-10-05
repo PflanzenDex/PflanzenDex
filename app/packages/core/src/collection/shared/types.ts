@@ -129,6 +129,19 @@ export interface SpecimenStore {
   restore(userId: string, id: string): Promise<SpecimenRow | "not_found" | "not_archived">;
 }
 
+/**
+ * Port for correcting the catch date (US-BES-11); its own port so readers and the other writes do not need it. One
+ * statement for the account `userId` (P-04): only `caught_at` changes. On an archived specimen a date after its
+ * archiving date answers `after_archived`; a foreign or unknown specimen answers `not_found`; nothing is written then.
+ */
+export interface CatchDateStore {
+  setCaughtAt(
+    userId: string,
+    id: string,
+    date: string,
+  ): Promise<SpecimenRow | "not_found" | "after_archived">;
+}
+
 /** Only reading a visible species; `SpeciesStore` from `catalog` fulfils the port. */
 export interface SpeciesSource {
   find(userId: string, id: string): Promise<Species | null>;

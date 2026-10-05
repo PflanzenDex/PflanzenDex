@@ -272,3 +272,96 @@ describe("US-BES-02 create and view specimen", () => {
     expect((await call(subA, "GET", "/specimens/no-uuid")).status).toBe(404);
   });
 });
+
+describe("US-BES-11 correct the catch date via the API", () => {
+  let species = "";
+  const correct = (
+    sub: string | null,
+    id: string,
+    input: Record<string, unknown>,
+    key?: string | null,
+  ) =>
+    call(sub, "POST", `/specimens/${id}/catch-date`, { timeZone: "Europe/Berlin", ...input }, key);
+  const newSpecimen = async (marker: string) => {
+    const r = await create(subA, { speciesId: species, marker });
+    expect(r.status).toBe(201);
+    return r.body["id"] as string;
+  };
+
+  beforeAll(async () => {
+    species = await newSpecies(subA, `Haworthia${run} fang`, `Fangdatum ${run}`);
+  });
+
+  it("US-BES-11 POST /specimens/:id/catch-date stores a past date; nothing else changes", async () => {
+    const id = await newSpecimen("Fang1");
+    const before = (await call(subA, "GET", `/specimens/${id}`)).body;
+    const r = await correct(subA, id, { catchDate: "2019-05-17" });
+    expect(r.status).toBe(200);
+    expect(r.body).toEqual({ ...before, caughtAt: "2019-05-17" });
+    expect((await call(subA, "GET", `/specimens/${id}`)).body["caughtAt"]).toBe("2019-05-17");
+  });
+
+  it("US-BES-11 today in Berlin is allowed, tomorrow is 400 specimen.caught_in_future on the field", async () => {
+    const id = await newSpecimen("Fang2");
+    expect((await correct(subA, id, { catchDate: "2026-10-03" })).status).toBe(200);
+    const r = await correct(subA, id, { catchDate: "2026-10-04" });
+    expect(r.status).toBe(400);
+    expect(r.body["error"]).toMatchObject({
+      code: "specimen.caught_in_future",
+      details: [{ field: "catchDate", code: "specimen.caught_in_future" }],
+    });
+    expect((await call(subA, "GET", `/specimens/${id}`)).body["caughtAt"]).toBe("2026-10-03");
+  });
+
+  it("US-BES-11 an impossible or too early date is 400 input.invalid on catchDate", async () => {
+    const id = await newSpecimen("Fang3");
+    for (const catchDate of ["2022-02-31", "1899-12-31", null]) {
+      const r = await correct(subA, id, { catchDate });
+      expect(r.status).toBe(400);
+      expect(r.body["error"]).toMatchObject({
+        code: "input.invalid",
+        details: [{ field: "catchDate", code: "input.invalid" }],
+      });
+    }
+  });
+
+  it("US-BES-11 archived: up to the archiving date; later is 409 specimen.caught_after_archived", async () => {
+    const id = await newSpecimen("Fang4");
+    const archived = await call(subA, "POST", `/specimens/${id}/archive`, {
+      timeZone: "Europe/Berlin",
+      reason: "abgegeben",
+    });
+    expect(archived.status).toBe(200);
+    // An archiving in the past (the API archives only "today"); set directly for the test.
+    await pool.query("update specimen set archived_at = '2026-01-10' where id = $1", [id]);
+    const r = await correct(subA, id, { catchDate: "2026-01-11" });
+    expect(r.status).toBe(409);
+    expect(r.body["error"]).toMatchObject({
+      code: "specimen.caught_after_archived",
+      details: [{ field: "catchDate", code: "specimen.caught_after_archived" }],
+    });
+    expect((await correct(subA, id, { catchDate: "2026-01-10" })).body).toMatchObject({
+      caughtAt: "2026-01-10",
+      status: "archived",
+      archivedAt: "2026-01-10",
+      archivedReason: "abgegeben",
+    });
+  });
+
+  it("US-BES-11 another account gets 404 like for an unknown specimen; nothing changes (P-04)", async () => {
+    const id = await newSpecimen("Fang5");
+    const foreign = await correct(subB, id, { catchDate: "2020-01-01" });
+    const unknown = await correct(subB, randomUUID(), { catchDate: "2020-01-01" });
+    expect([foreign.status, foreign.body["error"]?.code]).toEqual([404, "specimen.not_found"]);
+    expect(unknown.body).toEqual(foreign.body);
+    expect((await call(subA, "GET", `/specimens/${id}`)).body["caughtAt"]).toBe("2026-10-03");
+  });
+
+  it("US-BES-11 without token 401; without Idempotency-Key nothing is written", async () => {
+    const id = await newSpecimen("Fang6");
+    expect((await correct(null, id, { catchDate: "2020-01-01" })).status).toBe(401);
+    const r = await correct(subA, id, { catchDate: "2020-01-01" }, null);
+    expect(r.status).toBe(400);
+    expect((await call(subA, "GET", `/specimens/${id}`)).body["caughtAt"]).toBe("2026-10-03");
+  });
+});
