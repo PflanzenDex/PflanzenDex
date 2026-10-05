@@ -1,0 +1,299 @@
+{
+  "entries": [
+    {
+      "rule": "DS-10",
+      "file": "start-page.tsx",
+      "count": 2
+    },
+    {
+      "rule": "DS-32",
+      "file": "collection/distribution-view.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "account/invitation-page.tsx",
+      "count": 3
+    },
+    {
+      "rule": "DS-48",
+      "file": "account/operator-parts.tsx",
+      "count": 3
+    },
+    {
+      "rule": "DS-48",
+      "file": "account/settings-fields.tsx",
+      "count": 3
+    },
+    {
+      "rule": "DS-48",
+      "file": "account/settings-page.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "account/views.tsx",
+      "count": 5
+    },
+    {
+      "rule": "DS-48",
+      "file": "care/measure-form.tsx",
+      "count": 5
+    },
+    {
+      "rule": "DS-48",
+      "file": "care/MeasurePage.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "care/open-treatments.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "care/phases-list.tsx",
+      "count": 2
+    },
+    {
+      "rule": "DS-48",
+      "file": "care/treatment-form.tsx",
+      "count": 8
+    },
+    {
+      "rule": "DS-48",
+      "file": "care/treatment-history.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "catalog/more-details.tsx",
+      "count": 5
+    },
+    {
+      "rule": "DS-48",
+      "file": "catalog/profile-view.tsx",
+      "count": 2
+    },
+    {
+      "rule": "DS-48",
+      "file": "catalog/proposal-form.tsx",
+      "count": 3
+    },
+    {
+      "rule": "DS-48",
+      "file": "catalog/required-fields.tsx",
+      "count": 5
+    },
+    {
+      "rule": "DS-48",
+      "file": "catalog/review-entry.tsx",
+      "count": 4
+    },
+    {
+      "rule": "DS-48",
+      "file": "catalog/search-view.tsx",
+      "count": 4
+    },
+    {
+      "rule": "DS-48",
+      "file": "catalog/SpeciesPage.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "collection/archived-form.tsx",
+      "count": 4
+    },
+    {
+      "rule": "DS-48",
+      "file": "collection/archived-list.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "collection/care-profile-card.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "collection/care-profile-fields.tsx",
+      "count": 4
+    },
+    {
+      "rule": "DS-48",
+      "file": "collection/care-profile-sections.tsx",
+      "count": 2
+    },
+    {
+      "rule": "DS-48",
+      "file": "collection/catch-date-field.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "collection/collection-list.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "collection/create-form.tsx",
+      "count": 4
+    },
+    {
+      "rule": "DS-48",
+      "file": "collection/HintsPage.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "collection/locate-control.tsx",
+      "count": 3
+    },
+    {
+      "rule": "DS-48",
+      "file": "collection/marker-fields.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "collection/marker-form.tsx",
+      "count": 2
+    },
+    {
+      "rule": "DS-48",
+      "file": "collection/specimen-card.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "kernel/load-error.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "light/derivation-view.tsx",
+      "count": 4
+    },
+    {
+      "rule": "DS-48",
+      "file": "light/form.tsx",
+      "count": 2
+    },
+    {
+      "rule": "DS-48",
+      "file": "light/light-overview-view.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "light/light-view.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "light/LightPage.tsx",
+      "count": 2
+    },
+    {
+      "rule": "DS-48",
+      "file": "light/locations-view.tsx",
+      "count": 4
+    },
+    {
+      "rule": "DS-48",
+      "file": "light/setup-steps.tsx",
+      "count": 2
+    },
+    {
+      "rule": "DS-48",
+      "file": "light/zones-view.tsx",
+      "count": 5
+    },
+    {
+      "rule": "DS-48",
+      "file": "navigation.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "onboarding-wizard.tsx",
+      "count": 3
+    },
+    {
+      "rule": "DS-48",
+      "file": "pokedex/PokedexBrowse.tsx",
+      "count": 2
+    },
+    {
+      "rule": "DS-48",
+      "file": "pokedex/PokedexCards.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-48",
+      "file": "pokedex/PokedexControls.tsx",
+      "count": 3
+    },
+    {
+      "rule": "DS-48",
+      "file": "pokedex/PokedexDetail.tsx",
+      "count": 2
+    },
+    {
+      "rule": "DS-48",
+      "file": "start-page.tsx",
+      "count": 3
+    },
+    {
+      "rule": "DS-48",
+      "file": "wishlist/wish-fields.tsx",
+      "count": 7
+    },
+    {
+      "rule": "DS-48",
+      "file": "wishlist/wish-form.tsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-57",
+      "file": "dependency:class-variance-authority",
+      "count": 1
+    },
+    {
+      "rule": "DS-57",
+      "file": "dependency:clsx",
+      "count": 1
+    },
+    {
+      "rule": "DS-57",
+      "file": "dependency:react-hook-form",
+      "count": 1
+    },
+    {
+      "rule": "DS-57",
+      "file": "dependency:tailwind-merge",
+      "count": 1
+    },
+    {
+      "rule": "DS-57",
+      "file": "dependency:tailwindcss",
+      "count": 1
+    },
+    {
+      "rule": "DS-57",
+      "file": "dependency:zod",
+      "count": 1
+    },
+    {
+      "rule": "DS-57",
+      "file": "missing:src/components/ui",
+      "count": 1
+    },
+    {
+      "rule": "DS-57",
+      "file": "missing:src/lib/utils.ts",
+      "count": 1
+    }
+  ]
+}
