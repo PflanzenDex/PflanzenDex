@@ -147,6 +147,8 @@ describe("US-BES-05 layout of the wide table (issue 293)", () => {
   });
 
   it("US-BES-05 the scrolling table shows a visible keyboard focus (3 px, project convention)", () => {
-    expect(css).toMatch(/\.table-scroll:focus-visible \{\s*outline: 3px solid var\(--text\);/);
+    expect(css).toMatch(
+      /\.table-scroll:focus-visible \{\s*outline: 3px solid var\(--foreground\);/,
+    );
   });
 });

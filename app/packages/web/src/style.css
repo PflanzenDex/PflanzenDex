@@ -1,35 +1,10 @@
-:root {
-  --grund: #f4f7f2;
-  --card: #ffffff;
-  --text: #1b2a1f;
-  --leise: #4f6355;
-  --gruen: #2f7d4f;
-  --rand: #cfdccf;
-  --warn-grund: #fff4d6;
-  --warn-rand: #c98a00;
-  --fehler-rand: #b3261e; /* invalid field border; 6.0:1 on --grund, 6.5:1 on white (WCAG 1.4.11 needs 3:1) */
-  color-scheme: light dark;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --grund: #121a14;
-    --card: #1b261e;
-    --text: #e8f1ea;
-    --leise: #a9bdae;
-    --gruen: #5fbf86;
-    --rand: #2e4034;
-    --warn-grund: #3a3012;
-    --warn-rand: #e0a92e;
-    --fehler-rand: #ff8a80; /* 7.8:1 on --grund, 6.9:1 on --card */
-  }
-}
 * {
   box-sizing: border-box;
 }
 body {
   margin: 0;
-  background: var(--grund);
-  color: var(--text);
+  background: var(--background);
+  color: var(--foreground);
   font:
     16px/1.5 system-ui,
     -apple-system,
@@ -46,7 +21,7 @@ body {
   width: 100%;
   max-width: 440px;
   background: var(--card);
-  border: 1px solid var(--rand);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 24px 20px;
 }
@@ -57,13 +32,13 @@ h1 {
 }
 .lead {
   margin: 0 0 20px;
-  color: var(--leise);
+  color: var(--muted-foreground);
 }
 .data {
   margin: 16px 0;
 }
 .data dt {
-  color: var(--leise);
+  color: var(--muted-foreground);
   font-size: 0.85rem;
 }
 .data dd {
@@ -79,38 +54,33 @@ button {
   min-height: 48px;
   padding: 0 20px;
   border-radius: 12px;
-  border: 2px solid var(--gruen);
+  border: 2px solid var(--primary);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
 }
 button:focus-visible {
-  outline: 3px solid var(--text);
+  outline: 3px solid var(--foreground);
   outline-offset: 2px;
 }
 .primary {
-  background: var(--gruen);
-  color: #fff;
-}
-@media (prefers-color-scheme: dark) {
-  .primary {
-    color: #0d1a11;
-  }
+  background: var(--primary);
+  color: var(--primary-foreground);
 }
 .secondary {
   background: transparent;
-  color: var(--text);
+  color: var(--foreground);
 }
 .hint,
 .warning {
   margin: 12px 0 0;
   padding: 12px 14px;
   border-radius: 10px;
-  border: 1px solid var(--rand);
+  border: 1px solid var(--border);
 }
 .warning {
-  background: var(--warn-grund);
-  border-color: var(--warn-rand);
+  background: var(--warning);
+  border-color: var(--warning-border);
 }
 @media (min-width: 768px) {
   .page {
@@ -125,7 +95,7 @@ button:focus-visible {
 .version-footer {
   margin-top: 2rem;
   font-size: 0.75rem;
-  color: var(--leise);
+  color: var(--muted-foreground);
   text-align: center;
 }
 
@@ -141,9 +111,9 @@ button:focus-visible {
 /* A field the server refused (US-ACC-02): visible border colour and ring, not only the aria state. The ring is an inset
    shadow, so the box keeps its size and the layout does not move by 1 to 2 px. */
 [aria-invalid="true"] {
-  border-color: var(--fehler-rand);
-  box-shadow: inset 0 0 0 1px var(--fehler-rand);
-  outline-color: var(--fehler-rand);
+  border-color: var(--destructive);
+  box-shadow: inset 0 0 0 1px var(--destructive);
+  outline-color: var(--destructive);
 }
 
 /* Guided onboarding (US-ACC-03): a visible progress marker for the current step. */

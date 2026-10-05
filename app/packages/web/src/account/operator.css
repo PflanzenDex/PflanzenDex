@@ -6,7 +6,7 @@
   margin: 16px 0;
 }
 .operator .new-code {
-  border: 2px solid var(--gruen);
+  border: 2px solid var(--primary);
   border-radius: 10px;
   padding: 8px 12px;
 }
