@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { Species } from "@pflanzendex/core";
+import { ERROR_TEXTS, type Species } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SpeciesPage } from "./SpeciesPage";
 
@@ -68,9 +68,8 @@ describe("US-BES-01 Seite Arten", () => {
   it('empty catalog: says what to do and offers "Art vorschlagen" (P-09)', async () => {
     fakeServer();
     render(page());
-    expect(
-      await screen.findByText("Der gemeinsame Katalog ist noch leer. Schlage die erste Art vor."),
-    ).toBeTruthy();
+    expect(await screen.findByText("Der gemeinsame Katalog ist noch leer.")).toBeTruthy();
+    expect(screen.getByText("Schlage die erste Art vor.")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Art vorschlagen" })).toBeTruthy();
   });
 
@@ -95,7 +94,35 @@ describe("US-BES-01 Seite Arten", () => {
   it("without sign-in the search shows the error text instead of an empty list (P-10)", async () => {
     fakeServer();
     render(page({ token: async () => undefined }));
-    expect((await screen.findByRole("alert")).textContent).toContain("Bitte melde dich neu an.");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      ERROR_TEXTS["access.not_signed_in"],
+    );
+  });
+
+  it("US-BES-01 · DS-48 a failed search offers to try again and then lists the hits (DS-26, P-09)", async () => {
+    let failing = true;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        failing
+          ? response(500, { error: { code: "input.invalid", text: "roher Servertext" } })
+          : response(200, { species: [hit] }),
+      ),
+    );
+    render(page());
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).not.toContain("roher Servertext");
+    failing = false;
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(await screen.findByRole("button", { name: /Dracaena trifasciata/ })).toBeTruthy();
+  });
+
+  it("US-BES-01 · DS-48 the search shows a skeleton with one status while it loads", async () => {
+    fakeServer({ species: [hit] });
+    render(page());
+    expect(screen.getByRole("status").textContent).toContain("Suche läuft");
+    expect(await screen.findByRole("button", { name: /Dracaena trifasciata/ })).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("a profile that cannot be loaded shows the error and the way back to the search", async () => {
@@ -109,7 +136,9 @@ describe("US-BES-01 Seite Arten", () => {
     );
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: /Dracaena trifasciata/ }));
-    expect((await screen.findByRole("alert")).textContent).toContain("Art nicht gefunden.");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      ERROR_TEXTS["species.not_found"],
+    );
     await userEvent.click(screen.getByRole("button", { name: "Zurück zur Suche" }));
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
   });
@@ -154,11 +183,37 @@ describe("US-BES-01 Seite Arten", () => {
     await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), "x");
     await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), "y");
     await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("Diese Art gibt es schon.");
+    const message = await screen.findByRole("alert");
+    expect(message.textContent).toContain(ERROR_TEXTS["species.duplicate"]);
+    const name = screen.getByLabelText(/Lateinischer Name/);
+    expect(name.getAttribute("aria-describedby")).toContain(message.id);
+    expect(name.getAttribute("aria-invalid")).toBe("true");
     await userEvent.click(
       screen.getByRole("button", { name: "Vorhandene Art ansehen: Dracaena trifasciata" }),
     );
     expect(await screen.findByRole("heading", { name: "Dracaena trifasciata" })).toBeTruthy();
+  });
+
+  it("US-BES-01 · DS-48 an invalid submission focuses the first invalid field and links its German message", async () => {
+    fakeServer();
+    render(page());
+    await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
+    const name = screen.getByLabelText(/Lateinischer Name/);
+    await vi.waitFor(() => expect(document.activeElement).toBe(name));
+    const message = screen.getByText("Bitte gib den lateinischen Namen an.");
+    expect(name.getAttribute("aria-describedby")).toContain(message.id);
+    expect(screen.getByLabelText(/Schwierigkeit/).getAttribute("aria-invalid")).toBe("true");
+  });
+
+  it("US-BES-01 · DS-48 a lux value outside the allowed range is refused before sending", async () => {
+    fakeServer();
+    render(page());
+    await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
+    await userEvent.type(screen.getByLabelText(/Lichtbedarf/), "0");
+    await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
+    expect(await screen.findByText(/ganze Zahl zwischen 1 und 200.000/)).toBeTruthy();
+    expect(vi.mocked(fetch).mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
   });
 
   it("cancel in the proposal form leads back to the search", async () => {

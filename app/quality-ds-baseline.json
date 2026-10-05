@@ -32,41 +32,6 @@
     },
     {
       "rule": "DS-48",
-      "file": "catalog/more-details.tsx",
-      "count": 5
-    },
-    {
-      "rule": "DS-48",
-      "file": "catalog/profile-view.tsx",
-      "count": 2
-    },
-    {
-      "rule": "DS-48",
-      "file": "catalog/proposal-form.tsx",
-      "count": 3
-    },
-    {
-      "rule": "DS-48",
-      "file": "catalog/required-fields.tsx",
-      "count": 5
-    },
-    {
-      "rule": "DS-48",
-      "file": "catalog/review-entry.tsx",
-      "count": 4
-    },
-    {
-      "rule": "DS-48",
-      "file": "catalog/search-view.tsx",
-      "count": 4
-    },
-    {
-      "rule": "DS-48",
-      "file": "catalog/SpeciesPage.tsx",
-      "count": 1
-    },
-    {
-      "rule": "DS-48",
       "file": "collection/archived-form.tsx",
       "count": 4
     },

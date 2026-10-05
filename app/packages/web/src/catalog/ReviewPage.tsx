@@ -1,10 +1,12 @@
 import type { MergeOutcome, ReviewList } from "@pflanzendex/core";
 import { useCallback, useState } from "react";
+import { EmptyState } from "@/components/shared/empty-state";
 import { LoadFrame, useWriteAction, type Response } from "../kernel";
+import { ReviewPageSkeleton } from "./ReviewPage.skeleton";
+import { refusalText } from "./refusal";
 import { ReviewEntryView, type ReviewActions } from "./review-entry";
 import { decideProposal, loadReviewList, mergeProposal } from "./review-api";
 import { movedText, summaryText } from "./review-text";
-import "./species.css";
 
 type Token = () => Promise<string | undefined>;
 
@@ -42,42 +44,53 @@ function useReviewActions(api: string, token: Token, refresh: () => void) {
 export function ReviewPage(props: { api: string; token: Token; now?: () => number }) {
   const { api, token } = props;
   const [refresh, setRefresh] = useState(0);
-  const review = useReviewActions(
-    api,
-    token,
-    useCallback(() => setRefresh((n) => n + 1), []),
-  );
+  const reload = useCallback(() => setRefresh((n) => n + 1), []);
+  const review = useReviewActions(api, token, reload);
   const load = useCallback((t: string) => loadReviewList(api, t), [api]);
   const now = (props.now ?? Date.now)();
   return (
-    <div className="species review">
-      <h1>Prüfliste</h1>
+    <div className="flex min-w-0 flex-col gap-4 rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7">
+      <h1 className="text-2xl font-semibold">Prüfliste</h1>
       {review.message && (
-        <p role="status" className="hint">
+        <p role="status" className="rounded-lg border border-border p-3">
           {review.message} {review.outcome}
         </p>
       )}
       {review.error && (
-        <div role="alert" className="warning">
-          <p>{review.error.text}</p>
+        <div role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
+          <p>{refusalText(review.error)}</p>
         </div>
       )}
-      <LoadFrame token={token} load={load} loadingText="Prüfliste wird geladen …" refresh={refresh}>
-        {(list: ReviewList) => (
-          <>
-            <p className="hint">{summaryText(list, now)}</p>
-            <ul className="list" aria-label="Vorschläge">
-              {list.entries.map((entry) => (
-                <ReviewEntryView
-                  key={entry.reviewCase.id}
-                  entry={entry}
-                  actions={review.actions}
-                  now={now}
-                />
-              ))}
-            </ul>
-          </>
-        )}
+      <LoadFrame
+        token={token}
+        load={load}
+        loadingText="Prüfliste wird geladen …"
+        loadingFallback={<ReviewPageSkeleton label="Prüfliste wird geladen …" />}
+        refresh={refresh}
+      >
+        {(list: ReviewList) =>
+          list.entries.length === 0 ? (
+            <EmptyState
+              title="Keine offenen Vorschläge"
+              description="Es ist nichts zu prüfen."
+              action={{ label: "Liste neu laden", onClick: reload }}
+            />
+          ) : (
+            <>
+              <p className="rounded-lg border border-border p-3">{summaryText(list, now)}</p>
+              <ul className="m-0 grid list-none gap-3 p-0" aria-label="Vorschläge">
+                {list.entries.map((entry) => (
+                  <ReviewEntryView
+                    key={entry.reviewCase.id}
+                    entry={entry}
+                    actions={review.actions}
+                    now={now}
+                  />
+                ))}
+              </ul>
+            </>
+          )
+        }
       </LoadFrame>
     </div>
   );

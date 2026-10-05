@@ -4,7 +4,10 @@ import { describe, expect, it, vi } from "vitest";
 import { SpeciesProfile } from "./profile-view";
 import { SpeciesSearch } from "./search-view";
 import { ProposalForm } from "./proposal-form";
-import { duplicate, formToInput } from "./form";
+import { duplicate } from "./form";
+import { SearchResultsSkeleton } from "./search-view.skeleton";
+import { ProfileSkeleton } from "./profile-view.skeleton";
+import { proposalSchema, toProposalInput, EMPTY_PROPOSAL } from "./schemas";
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
 const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");
@@ -164,13 +167,16 @@ describe('US-BES-01 form "Propose species" (path without AI)', () => {
 
 describe("form to input and duplicate", () => {
   it("empty optional fields are dropped, numbers become numbers, synonyms one per line", () => {
-    const f = new FormData();
-    f.set("latinName", " Aloe vera ");
-    f.set("difficulty", "2");
-    f.set("lightDemandLux", "40000");
-    f.set("germanName", "  ");
-    f.set("synonyms", "Aloe barbadensis\n\n Aloe vulgaris ");
-    expect(formToInput(f)).toEqual({
+    expect(
+      toProposalInput({
+        ...EMPTY_PROPOSAL,
+        latinName: " Aloe vera ",
+        difficulty: "2",
+        lightDemandLux: "40000",
+        germanName: "  ",
+        synonyms: "Aloe barbadensis\n\n Aloe vulgaris ",
+      }),
+    ).toEqual({
       latinName: "Aloe vera",
       difficulty: 2,
       lightDemandLux: 40000,
@@ -186,5 +192,65 @@ describe("form to input and duplicate", () => {
     } as unknown as Parameters<typeof duplicate>[0];
     expect(duplicate(error)?.id).toBe("a1");
     expect(duplicate({ code: "input.invalid", text: "x" })).toBeNull();
+  });
+});
+
+describe("US-BES-01 · DS-48 proposal schema", () => {
+  const valid = {
+    ...EMPTY_PROPOSAL,
+    latinName: "Aloe vera",
+    difficulty: "1",
+    standardLevel: "3",
+    lightDemandLux: "40000",
+    growthMeasure: "height",
+    etiolationSigns: "x",
+    successCriteria: "y",
+  };
+  const issues = (over: Record<string, string>) => {
+    const r = proposalSchema.safeParse({ ...valid, ...over });
+    return r.success ? [] : r.error.issues.map((i) => `${String(i.path[0])}: ${i.message}`);
+  };
+
+  it("accepts the required fields alone", () => {
+    expect(issues({})).toEqual([]);
+  });
+
+  it("names every missing required field in German", () => {
+    const r = proposalSchema.safeParse(EMPTY_PROPOSAL);
+    expect(r.success).toBe(false);
+    const fields = r.success ? [] : r.error.issues.map((i) => i.path[0]);
+    expect(fields).toEqual([
+      "latinName",
+      "difficulty",
+      "standardLevel",
+      "lightDemandLux",
+      "growthMeasure",
+      "etiolationSigns",
+      "successCriteria",
+    ]);
+  });
+
+  it("the dormancy needs both dates or none, as MM-DD", () => {
+    expect(issues({ dormancyFrom: "11-15" })).toEqual([
+      "dormancyUntil: Beide Angaben zur Ruhephase gehören zusammen: Bitte gib auch das Ende an.",
+    ]);
+    expect(issues({ dormancyFrom: "11-15", dormancyUntil: "02-28" })).toEqual([]);
+    expect(issues({ dormancyFrom: "1115", dormancyUntil: "02-28" })).toHaveLength(1);
+  });
+
+  it("the lux value is a whole number from 1 to 200000", () => {
+    expect(issues({ lightDemandLux: "200001" })).toHaveLength(1);
+    expect(issues({ lightDemandLux: "1.5" })).toHaveLength(1);
+    expect(issues({ lightDemandLux: "200000" })).toEqual([]);
+  });
+});
+
+describe("US-BES-01 · DS-48 skeletons", () => {
+  it("each carries one loading status and no content", () => {
+    const search = renderToString(<SearchResultsSkeleton />);
+    const profile = renderToString(<ProfileSkeleton />);
+    for (const h of [search, profile]) expect(h.match(/role="status"/g)).toHaveLength(1);
+    expect(search).toContain("Suche läuft");
+    expect(profile).toContain("Art wird geladen");
   });
 });
