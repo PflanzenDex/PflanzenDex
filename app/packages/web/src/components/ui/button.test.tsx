@@ -45,6 +45,19 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
     expect(icon).toContain("min-w-[44px]");
   });
 
+  it("US-QS-07 · DS-15 no size shrinks below 44 px on wider viewports", () => {
+    for (const size of ["default", "sm", "lg", "touch", "icon"] as const) {
+      render(
+        <Button size={size} aria-label={size}>
+          {size}
+        </Button>,
+      );
+      expect(screen.getByRole("button", { name: size }).className).not.toMatch(
+        /(?:sm|md|lg|xl|2xl):min-h-/,
+      );
+    }
+  });
+
   it("US-QS-07 · DS-37 shows a focus ring that comes with outline-none", () => {
     render(<Button>Fokus</Button>);
     const cls = screen.getByRole("button", { name: "Fokus" }).className;
