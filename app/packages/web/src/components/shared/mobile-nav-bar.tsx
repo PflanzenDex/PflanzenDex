@@ -8,7 +8,7 @@ import type { NavItem } from "./nav-item";
 const BAR_SLOTS = 5;
 
 const slot =
-  "flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center justify-center gap-1 rounded-md px-1 py-1 text-xs " +
+  "flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center justify-end gap-1 rounded-b-md px-0.5 py-1 text-center text-xs " +
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 const state = (active: boolean) =>
@@ -28,7 +28,7 @@ function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
           variant="ghost"
           size="icon"
           aria-label="Mehr"
-          className={cn(slot, "h-auto whitespace-normal rounded-md", state(active))}
+          className={cn(slot, "h-auto rounded-b-md", state(active))}
         >
           <span aria-hidden="true" className="text-lg leading-none">
             ⋯
@@ -75,7 +75,7 @@ export function MobileNavBar({ items }: { items: NavItem[] }) {
   return (
     <nav
       aria-label="Navigation unten"
-      className="fixed inset-x-0 bottom-0 z-40 flex items-stretch gap-2 border-t border-border bg-background px-2 pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 flex items-stretch gap-0.5 border-t border-border bg-background px-1 pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       {inBar.map((item) => (
         <NavLink
@@ -85,7 +85,7 @@ export function MobileNavBar({ items }: { items: NavItem[] }) {
           className={({ isActive: active }) => cn(slot, state(active))}
         >
           {item.icon}
-          <span className="max-w-full truncate">{item.label}</span>
+          <span className="max-w-full break-words hyphens-auto">{item.label}</span>
         </NavLink>
       ))}
       {overflow ? <MoreDrawer items={inDrawer} active={moreActive} /> : null}

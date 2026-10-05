@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 /** Button looks (US-QS-07, DS-34, DS-35). Sizes are by role; every size keeps a 44 px hit area on touch (DS-15). */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium " +
+  "inline-flex items-center justify-center gap-2 rounded-md text-center text-sm font-medium " +
     "transition-colors motion-reduce:transition-none " +
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background " +
     "disabled:pointer-events-none disabled:opacity-50",

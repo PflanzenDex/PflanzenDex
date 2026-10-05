@@ -1,16 +1,14 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { fieldClasses } from "./components/ui/input";
 
 // US-ACC-02: a refused field gets a visible marker, but marking it must not move the layout (issue 297). The real
-// height check runs in the browser (test log); here the rule itself is pinned: no border width, no padding, no margin.
-const css = readFileSync(new URL("./style.css", import.meta.url), "utf8");
-const rule = /\[aria-invalid="true"\]\s*{([^}]*)}/.exec(css)?.[1] ?? "";
-
+// height check runs in the browser (test log); here the classes are pinned: colour and inset ring, no border width.
 describe("US-ACC-02 marker of a refused field", () => {
   it("US-ACC-02 draws the marker visibly (colour and inset ring) without changing the box size", () => {
-    expect(rule).toContain("var(--destructive)");
-    expect(rule).toMatch(/box-shadow:\s*inset/);
-    expect(rule).not.toMatch(/(^|[\s;])border(-width)?:\s*\d+px/);
-    expect(rule).not.toMatch(/padding|margin|outline-offset:\s*[1-9]/);
+    expect(fieldClasses).toContain("aria-invalid:border-destructive");
+    expect(fieldClasses).toContain("aria-invalid:inset-ring-1");
+    expect(fieldClasses).toContain("aria-invalid:inset-ring-destructive");
+    expect(fieldClasses).not.toMatch(/aria-invalid:border-\d/);
+    expect(fieldClasses).not.toMatch(/aria-invalid:(p|m)[xytblr]?-/);
   });
 });

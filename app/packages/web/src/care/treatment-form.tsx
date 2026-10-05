@@ -15,12 +15,6 @@ import {
 } from "./schemas";
 import type { TreatableSpecimen, TreatmentInput } from "./treatments-api";
 
-/**
- * Keeps the box 20 px until the legacy unlayered `input { width: 100%; min-height: 48px }` of light.css is gone (issue 347):
- * it beats the layered utilities and would stretch the box over the row.
- */
-const BOX = "size-5! min-h-0!";
-
 type FocusRef = React.MutableRefObject<HTMLInputElement | null> | undefined;
 
 /** The checkboxes of the specimens as one group: the first takes the focus when none is chosen, the message names the group. */
@@ -45,7 +39,6 @@ function Choice(props: {
         <Checkbox
           key={z.id}
           name={field.name}
-          className={BOX}
           ref={(el) => {
             if (i !== 0) return;
             field.ref(el);
@@ -113,7 +106,6 @@ function CourseFields({ control }: { control: Control<TreatmentFields> }) {
           <FormItem>
             <Checkbox
               name={field.name}
-              className={BOX}
               ref={field.ref}
               onBlur={field.onBlur}
               checked={field.value}

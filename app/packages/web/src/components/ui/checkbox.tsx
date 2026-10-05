@@ -10,7 +10,7 @@ export type CheckboxProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "t
 
 /**
  * Styled native checkbox (US-QS-07, DS-15). The whole label row is the 44 px hit area, the children are the label text,
- * so the box always has an accessible name. Fixes the 24 px gap of the legacy `.settings label.check input`.
+ * so the box always has an accessible name.
  */
 const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, rowClassName, invalid, children, ...props }, ref) => (

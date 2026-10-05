@@ -13,6 +13,8 @@ import { OnboardingWizard } from "./onboarding-wizard";
 import { readStored, writeStored } from "./platform/storage";
 import type { View } from "./navigation";
 
+const ACTIONS = "flex flex-col gap-3 sm:flex-row";
+
 type Token = () => Promise<string | undefined>;
 type Target = Extract<View, "species" | "light" | "collection" | "hints">;
 
@@ -27,13 +29,15 @@ function Overview(props: { counts: OnboardingCounts; onOpen: (t: Target) => void
   const action = startAction(props.counts);
   const hints = onboardingHints(props.counts);
   return (
-    <section aria-labelledby="start-title" className="start">
-      <h1 id="start-title">Start</h1>
+    <section aria-labelledby="start-title" className="flex flex-col gap-3">
+      <h1 id="start-title" className="text-2xl font-semibold">
+        Start
+      </h1>
       {action ? (
-        <div className="next-step">
-          <h2>{action.title}</h2>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-xl font-semibold">{action.title}</h2>
           <p>{action.nextAction}</p>
-          <div className="actions">
+          <div className={ACTIONS}>
             <Button type="button" onClick={() => props.onOpen("species")}>
               {action.actionLabel}
             </Button>
@@ -43,19 +47,22 @@ function Overview(props: { counts: OnboardingCounts; onOpen: (t: Target) => void
         <p>Deine Pflanzen warten im Bestand. Dort siehst du, was als Nächstes ansteht.</p>
       )}
       {!action && (
-        <div className="actions">
+        <div className={ACTIONS}>
           <Button type="button" onClick={() => props.onOpen("collection")}>
             Zum Bestand
           </Button>
         </div>
       )}
       {hints.length > 0 && (
-        <ul className="cards-grid" aria-label="Hinweise zur Einrichtung">
+        <ul className="m-0 grid list-none gap-3 p-0" aria-label="Hinweise zur Einrichtung">
           {hints.map((h) => (
-            <li key={h.id} className="specimen-card">
+            <li
+              key={h.id}
+              className="grid min-w-0 content-start gap-1 break-words rounded-xl border border-border bg-card p-3 text-card-foreground"
+            >
               <p>{h.text}</p>
-              <p className="next-action">{h.nextAction}</p>
-              <div className="actions">
+              <p className="text-sm text-muted-foreground">{h.nextAction}</p>
+              <div className={ACTIONS}>
                 <Button type="button" variant="secondary" onClick={() => props.onOpen("light")}>
                   {h.actionLabel}
                 </Button>
@@ -129,7 +136,7 @@ export function StartPage(props: {
     [api],
   );
   return (
-    <div className="light collection start-page">
+    <div className="min-w-0 rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7">
       <LoadFrame
         queryKey={["start", "counts"]}
         token={props.token}

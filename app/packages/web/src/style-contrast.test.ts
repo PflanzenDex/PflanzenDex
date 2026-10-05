@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const tokensCss = readFileSync(new URL("./styles/tokens.css", import.meta.url), "utf8");
-const styleCss = readFileSync(new URL("./style.css", import.meta.url), "utf8");
+const appSource = readFileSync(new URL("./App.tsx", import.meta.url), "utf8");
 
 type Rgb = [number, number, number];
 
@@ -155,7 +155,7 @@ describe("US-QS-07 · DS-20 token coverage", () => {
       expect(tokensCss, name).toContain(`--color-${name}: var(--${name})`);
   });
   it("US-QS-07 · DS-28 no German token names remain in the stylesheets", () => {
-    expect(styleCss + tokensCss).not.toMatch(/--(grund|gruen|rand|leise|warn-|fehler)/);
+    expect(tokensCss).not.toMatch(/--(grund|gruen|rand|leise|warn-|fehler)/);
   });
 });
 
@@ -179,9 +179,12 @@ describe("US-QS-07 · DS-20 colour helper", () => {
 
 // --- Issue #249: footer ----------------------------------------------------------------------------------------
 
-const footerRule = /\.version-footer\s*{([^}]*)}/.exec(styleCss)?.[1] ?? "";
-const footerToken = /color:\s*var\(--([\w-]+)\)/.exec(footerRule)?.[1] ?? "foreground";
-const opacity = Number(/opacity:\s*([\d.]+)/.exec(footerRule)?.[1] ?? 1);
+const footerClasses = /<footer className="([^"]*)"/.exec(appSource)?.[1] ?? "";
+const footerToken =
+  /(?:^|\s)text-([a-z-]+)(?=\s|$)/.exec(
+    footerClasses.replace(/text-(xs|sm|base|center)/g, ""),
+  )?.[1] ?? "foreground";
+const opacity = Number(/(?:^|\s)opacity-(\d+)/.exec(footerClasses)?.[1] ?? 100) / 100;
 
 function footerRatio(decl: Map<string, string>): number {
   const bg = resolve(decl, "background");
@@ -190,7 +193,8 @@ function footerRatio(decl: Map<string, string>): number {
 
 describe("Issue #249 footer contrast", () => {
   it("Issue #249: the footer does not fade its text with opacity", () => {
-    expect(footerRule).not.toMatch(/opacity/);
+    expect(footerClasses).toBeTruthy();
+    expect(footerClasses).not.toMatch(/opacity/);
   });
   it("Issue #249: footer text reaches 4.5:1 on the page background in the light scheme", () => {
     expect(footerRatio(lightDecl)).toBeGreaterThanOrEqual(4.5);
