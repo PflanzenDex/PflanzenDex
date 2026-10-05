@@ -19,8 +19,6 @@ export interface LightActions {
 }
 
 const SECTION = "flex min-w-0 flex-col gap-3";
-/** A long action label wraps instead of widening the page on a 320 px phone. */
-const WRAP_ACTION = "[&_button]:whitespace-normal";
 const H2 = "text-xl font-semibold";
 const QUIET = "text-sm text-muted-foreground";
 const LIST = "m-0 flex min-w-0 list-none flex-col gap-3 p-0";
@@ -58,7 +56,6 @@ function Zones(props: { data: LightData; actions: LightActions }) {
       </h2>
       {data.zones.length === 0 ? (
         <EmptyState
-          className={WRAP_ACTION}
           title="Noch keine Lichtzonen"
           description="Übernimm die vier Standard-Lampen oder lege unten eine eigene Zone an."
           action={{ label: "Standard-Lampen übernehmen", onClick: () => void actions.defaults() }}
@@ -92,7 +89,6 @@ function Locations(props: { data: LightData; actions: LightActions }) {
       </h2>
       {data.locations.length === 0 ? (
         <EmptyState
-          className={WRAP_ACTION}
           title="Noch keine Standorte"
           description="Lege einen Platz an, z. B. „Fensterbank“, und ordne ihm eine Lichtzone zu."
           action={{ label: "Ersten Standort anlegen", onClick: fresh.openAndFocus }}

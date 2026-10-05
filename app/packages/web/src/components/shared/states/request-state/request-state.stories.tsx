@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { EmptyState } from "./empty-state";
+import { EmptyState } from "../../empty-state";
 import { RequestState } from "./request-state";
-import { PageSkeleton } from "./page-skeleton";
+import { PageSkeleton } from "../page-skeleton/page-skeleton";
 
 // Catalog of the RequestState (US-QS-07, DS-09, DS-26): pending, error, empty, ready and the offline note.
 const meta = {

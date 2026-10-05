@@ -5,6 +5,13 @@ export const INTERACTIVE =
   'a[href], button, input:not([type="hidden"]), select, textarea, summary, [role="button"], [role="checkbox"], ' +
   '[role="radio"], [role="switch"], [role="tab"], [role="combobox"], [role="menuitem"], [role="link"], [tabindex]';
 
+// URL of one story in the catalog. `a11y.manual:!true` (QG-U8, FR-QG-09) switches off the automatic axe run of
+// @storybook/addon-a11y, which otherwise starts axe.run inside the story iframe after every render and collides
+// with our own AxeBuilder run ("Axe is already running") whenever the machine is loaded. The gate runs axe itself.
+export function storyUrl(baseUrl, id, scheme) {
+  return `${baseUrl}/iframe.html?id=${id}&viewMode=story&globals=colorScheme:${scheme};a11y.manual:!true`;
+}
+
 // Runs inside the page. Marks the visible, enabled, tabbable controls with data-qg-i and returns their size,
 // a readable selector and the style that would show a focus ring while unfocused.
 export function probeTargets(selector) {

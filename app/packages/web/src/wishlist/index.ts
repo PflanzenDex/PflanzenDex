@@ -1,2 +1,5 @@
 // Public interface of the `wishlist` module (ADR 0003): the page with the prioritized candidates.
-export { WishlistPage } from "./WishlistPage";
+import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+export const WishlistPage = lazyPage(() =>
+  import("./WishlistPage").then((m) => ({ default: m.WishlistPage })),
+);

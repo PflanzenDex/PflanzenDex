@@ -2,13 +2,13 @@
 export { call, createWrite } from "./api";
 export type { Response, ApiError, Write } from "./api";
 export { LoadFrame } from "./load-frame";
-export { createQueryClient } from "./query-client";
+export { createQueryClient } from "./request/query-client";
 export {
   useClearOnSignOut,
   useInvalidate,
   useReload,
   useRequest,
   type Request,
-} from "./use-request";
+} from "./request/use-request";
 export { SIGN_IN, useWriteAction } from "./use-write-action";
 export { currentTimeZone, deviceTimeZone, setProfileTimeZone } from "./time-zone";

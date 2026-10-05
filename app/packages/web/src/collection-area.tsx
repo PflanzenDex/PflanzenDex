@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import type { Species } from "@pflanzendex/core";
 import { CollectionPage } from "./collection";
 import { MeasurePage } from "./care";
+import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skeleton";
 
 type Token = () => Promise<string | undefined>;
 
@@ -17,13 +18,16 @@ export function CollectionArea(props: {
   onCompleted: () => void;
 }) {
   const [measure, setMeasure] = useState<{ id: string; name: string } | null>(null);
+  // The measure page is its own lazy part: the area stays and shows a skeleton while it loads (DS-55).
   return measure ? (
-    <MeasurePage
-      api={props.api}
-      token={props.token}
-      specimen={measure}
-      onBack={() => setMeasure(null)}
-    />
+    <Suspense fallback={<PageSkeleton />}>
+      <MeasurePage
+        api={props.api}
+        token={props.token}
+        specimen={measure}
+        onBack={() => setMeasure(null)}
+      />
+    </Suspense>
   ) : (
     <CollectionPage {...props} onMeasure={setMeasure} />
   );
