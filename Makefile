@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board merge clean db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse e2e crap duplicates
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board merge clean repo-stats db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse e2e crap duplicates
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -122,6 +122,9 @@ worktree: ## New worktree and branch (BRANCH=feat/x) with its own ports; claim c
 
 merge: ## Merge a PR into dev as an agent (PR=<n>): green ci-status, known story, no gate file (ADR 0005)
 	cd $(APP) && node scripts/merge-pr.mjs "$(PR)"
+
+repo-stats: ## Regenerate the statistics block in README.md (the pre-commit hook does it too, US-DEV-10)
+	scripts/repo-stats.sh
 
 claim: ## Claim a story before working on it (ISSUE=<n>): assignee, status, branch, draft PR; refuses duplicate work (US-DEV-08)
 	cd $(APP) && node scripts/claim.mjs "$(ISSUE)"
