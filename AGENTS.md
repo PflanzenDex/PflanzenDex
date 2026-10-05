@@ -14,6 +14,7 @@ Rules for AI agents (Claude Code, Codex, Copilot, …) working in this repo. Hum
 
 - Architecture is checked by scripts, not by goodwill: `core` has no I/O (AB-1), API and web import `core` only through `@pflanzendex/core` (AB-2), web talks to the database only over HTTP (AB-6). Writes go through validating operations (P-03). Tenant isolation is tested for every table (P-04).
 - Tests come from the acceptance criteria and carry the story ID in their name (P-06).
+- The file layout is checked by `make layout` (at most 5 units per directory, kebab-case names, one folder per component, `app/layout.config.mjs`). A new violation fails the gate; the baseline `app/layout-baseline.json` only shrinks. Move files with the layout rules in mind instead of adding to a crowded directory (FR-QG-21).
 - Domain errors carry a stable code `<domain>.<reason>` with a text in `ERROR_TEXTS` (FR-QG-11). Nothing is swallowed silently (P-10).
 - Language: everything is English (specs, glossary, identifiers, docs, commits, PRs) except UI texts and quoted prototype terms, which stay German. Never mix within a file.
 
