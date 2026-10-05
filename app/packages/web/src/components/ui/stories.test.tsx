@@ -8,6 +8,7 @@ import * as button from "./button.stories";
 import * as dialog from "./dialog.stories";
 import * as label from "./label.stories";
 import * as sheet from "./sheet.stories";
+import * as shell from "../shared/shell.stories";
 
 setProjectAnnotations([preview]);
 
@@ -17,6 +18,7 @@ const catalog = {
   Label: composeStories(label),
   Dialog: composeStories(dialog),
   Sheet: composeStories(sheet),
+  Shell: composeStories(shell),
 };
 
 describe("TE-18 · DS-01 ui primitive stories", () => {
