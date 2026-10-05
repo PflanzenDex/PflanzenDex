@@ -39,7 +39,7 @@ pie showData title Product user stories by status
 | | |
 | --- | --- |
 | **Repository** | 947 files · 113k lines · 44 MiB |
-| **Production code** | 25.3k lines · packages: web 9.53k · core 6.68k · db 3.53k · api 1.33k |
+| **Production code** | 25.3k lines · packages: web 9.52k · core 6.67k · db 3.53k · api 1.33k |
 | **Tests** | 170 files · 1.63k test cases · 27.4k lines (108% of production code) |
 | **Database** | 20 migrations · 39 error codes |
 | **Process docs** | 5 ADRs · 9 agent skills · 3 runbooks |
@@ -55,7 +55,7 @@ pie showData title Product user stories by status
 pie showData title Lines by language
   "TypeScript" : 43300
   "Text" : 29200
-  "JSON" : 21000
+  "JSON" : 20900
   "Markdown" : 8810
   "JavaScript" : 6450
   "SQL" : 1240

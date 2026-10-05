@@ -36,9 +36,33 @@ describe("US-ACC-02 · display name", () => {
     expect(b.ok && b.value.displayName).toBe("Anna");
   });
 
-  it("accepts no display name at all (null)", async () => {
+  it("accepts no display name at all (null) while none was ever chosen", async () => {
     const r = await save(valid({ displayName: null }));
     expect(r.ok && r.value.displayName).toBeNull();
+  });
+
+  it.each([
+    ["null", { displayName: null }],
+    ["left out", { displayName: undefined }],
+  ])("a display name that is %s keeps the stored name", async (_, change) => {
+    await save(valid({ displayName: "Anna" }));
+    const r = await save(valid({ ...change, timeZone: "UTC" }));
+    expect(r.ok && r.value).toMatchObject({ displayName: "Anna", timeZone: "UTC" });
+    expect(profiles.rows.get("anna")?.displayName).toBe("Anna");
+  });
+
+  it("saving the other settings without a name works and changes only the own account", async () => {
+    await save(valid({ displayName: "Ben" }), "ben");
+    const r = await save({ ...valid(), displayName: undefined, everythingPrivate: true });
+    expect(r.ok && r.value.everythingPrivate).toBe(true);
+    expect(profiles.rows.get("ben")?.displayName).toBe("Ben");
+    expect(profiles.writtenFor).toEqual(["ben", "anna"]);
+  });
+
+  it("a name can still be changed to another non-empty one", async () => {
+    await save(valid({ displayName: "Anna" }));
+    const r = await save(valid({ displayName: "Anna B." }));
+    expect(r.ok && r.value.displayName).toBe("Anna B.");
   });
 
   it.each([["   "], [""], ["x".repeat(81)], [42]])("refuses the display name %j", async (name) => {

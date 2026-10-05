@@ -40,11 +40,15 @@ export interface AccountProfile {
   readonly notifications: NotificationSwitches;
 }
 
+/** A save of the profile: like the profile, but `displayName: null` keeps the stored name (US-ACC-02). */
+export type ProfileChanges = AccountProfile;
+
 /** Port for persistence; the adapter lives in `db` (AB-1) and runs as the account of the caller (P-04). */
 export interface ProfileStore {
   /** `null` while the account has no data row yet. */
   find(userId: string): Promise<AccountProfile | null>;
-  update(userId: string, profile: AccountProfile): Promise<AccountProfile | null>;
+  /** Writes the changes in one statement; `displayName: null` leaves the stored name as it is. */
+  update(userId: string, changes: ProfileChanges): Promise<AccountProfile | null>;
 }
 
 export const defaultNotifications = (): NotificationSwitches =>
@@ -80,7 +84,8 @@ export interface ProfileDependencies {
 }
 
 /**
- * Saves the profile as a whole (US-ACC-02, P-03): display name (free, not unique), time zone (IANA name, validated
+ * Saves the profile as a whole (US-ACC-02, P-03): display name (free, not unique; `null` or left out keeps the stored
+ * name, so a name can be changed but never removed), time zone (IANA name, validated
  * against the time zone database), the two global switches and the switch per notification occasion. Only the own
  * account can be written; the account is the one of the caller, never part of the input (P-04). Writing the same
  * values twice changes nothing. An account without a data row yet answers `access.denied`.

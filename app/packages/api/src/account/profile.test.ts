@@ -12,6 +12,8 @@ const subB = `api-${randomUUID()}`;
 const subNoRow = `api-${randomUUID()}`;
 const subFreshPut = `api-${randomUUID()}`;
 const subFreshOther = `api-${randomUUID()}`;
+const subKeep = `api-${randomUUID()}`;
+const subKeepOther = `api-${randomUUID()}`;
 
 const reviewer: TokenVerifier = async (token) => {
   const [kind, sub] = token.split(":");
@@ -47,7 +49,7 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   await pool.query("delete from account where subject = any($1)", [
-    [subA, subB, subNoRow, subFreshPut, subFreshOther],
+    [subA, subB, subNoRow, subFreshPut, subFreshOther, subKeep, subKeepOther],
   ]);
   await pool.end();
 });
@@ -170,6 +172,34 @@ describe("US-ACC-02 · PUT /account/profile", () => {
     const first = await put(subB, { ...profile, displayName: "Ben" }, key);
     const second = await put(subB, { ...profile, displayName: "Ben" }, key);
     expect(await second.json()).toEqual(await first.json());
+  });
+});
+
+describe("US-ACC-02 · a save without a display name keeps the stored one", () => {
+  it.each([
+    ["null", null],
+    ["left out", undefined],
+  ])("display name %s: 200, the name stays, the other settings are saved", async (_, name) => {
+    for (const sub of [subKeep, subKeepOther])
+      await app().request("/account", { headers: as(sub) });
+    await put(subKeep, { ...profile, displayName: "Kept Name" });
+    await put(subKeepOther, { ...profile, displayName: "Other" });
+    const res = await put(subKeep, { ...profile, displayName: name, timeZone: "UTC" });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ displayName: "Kept Name", timeZone: "UTC" });
+    // The next sign-in does not refill the name from the token either.
+    await app().request("/account", { headers: as(subKeep) });
+    expect(await read(subKeep)).toMatchObject({ displayName: "Kept Name", timeZone: "UTC" });
+    expect((await read(subKeepOther))["displayName"]).toBe("Other");
+  });
+
+  it("an empty display name is still refused with input.invalid on displayName", async () => {
+    const res = await put(subKeep, { ...profile, displayName: "" });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({
+      error: { code: "input.invalid", details: [{ field: "displayName", code: "input.invalid" }] },
+    });
+    expect((await read(subKeep))["displayName"]).toBe("Kept Name");
   });
 });
 
