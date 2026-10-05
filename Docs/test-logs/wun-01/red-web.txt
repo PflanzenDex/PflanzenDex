@@ -1,0 +1,35 @@
+$ cd app/packages/web && npx vitest run src/wishlist  (module ./WishlistPage does not exist yet)
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/wun-01/app/packages/web
+
+ ❯ src/wishlist/WishlistPage.test.tsx (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/wishlist/WishlistPage.test.tsx [ src/wishlist/WishlistPage.test.tsx ]
+Error: Failed to resolve import "./WishlistPage" from "src/wishlist/WishlistPage.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/wun-01/app/packages/web/src/wishlist/WishlistPage.test.tsx:5:29
+  3  |  import userEvent from "@testing-library/user-event";
+  4  |  import { afterEach, describe, expect, it, vi } from "vitest";
+  5  |  import { WishlistPage } from "./WishlistPage";
+     |                                ^
+  6  |  var _jsxFileName = "/home/konradhe/IdeaProjects/PflanzenDex/.worktrees/wun-01/app/packages/web/src/wishlist/WishlistP...
+  7  |  import { jsxDEV as _jsxDEV } from "react/jsx-dev-runtime";
+ ❯ TransformPluginContext._formatLog ../../node_modules/vite/dist/node/chunks/node.js:8766:39
+ ❯ TransformPluginContext.error ../../node_modules/vite/dist/node/chunks/node.js:8763:14
+ ❯ normalizeUrl ../../node_modules/vite/dist/node/chunks/node.js:26423:18
+ ❯ ../../node_modules/vite/dist/node/chunks/node.js:26493:30
+ ❯ TransformPluginContext.transform ../../node_modules/vite/dist/node/chunks/node.js:26459:4
+ ❯ EnvironmentPluginContainer.transform ../../node_modules/vite/dist/node/chunks/node.js:8545:14
+ ❯ loadAndTransform ../../node_modules/vite/dist/node/chunks/node.js:19988:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  20:59:12
+   Duration  721ms (environment 99%, worker 1%)
+
+exit code: 1

@@ -68,6 +68,15 @@ function fakeServer(accountStatus = 200) {
       if (path === "/specimens/hints") return response(200, { hints: SPECIMEN_HINTS });
       if (path === "/specimens/light-overview") return response(200, { rows: [] });
       if (path === "/specimens/difficulty") return response(200, { rows: [] });
+      if (path === "/wishes/candidates")
+        return response(200, {
+          candidates: [],
+          zones: [],
+          hint: {
+            text: "Keine offenen Kandidaten in der Wunschliste.",
+            nextAction: "Erfasse einen Wunsch mit Ziel-Lichtzone.",
+          },
+        });
       return response(404);
     }),
   );
@@ -220,6 +229,18 @@ describe("US-ACC-01 App", () => {
     expect(
       screen.getByRole("button", { name: "Artenvergleich" }).getAttribute("aria-current"),
     ).toBe("page");
+  });
+
+  it("US-WUN-01 the tab Wunschliste opens the candidate list and says what to do without a wish", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "Wunschliste" }));
+    expect(await screen.findByRole("heading", { name: "Wunschliste" })).toBeTruthy();
+    expect(screen.getByText("Erfasse einen Wunsch mit Ziel-Lichtzone.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Wunschliste" }).getAttribute("aria-current")).toBe(
+      "page",
+    );
   });
 
   it("US-BES-08 the tab Hinweise lists incomplete specimens and its action leads to the view that fixes it", async () => {

@@ -8,6 +8,7 @@ export type View =
   | "careProfile"
   | "difficulty"
   | "pokedex"
+  | "wishlist"
   | "light"
   | "review"
   | "operator"
@@ -24,6 +25,7 @@ const ENTRIES: { id: View; text: string }[] = [
   { id: "careProfile", text: "Pflegeprofil" },
   { id: "difficulty", text: "Artenvergleich" },
   { id: "pokedex", text: "Pokédex" },
+  { id: "wishlist", text: "Wunschliste" },
   { id: "light", text: "Standorte und Licht" },
   { id: "review", text: "Prüfliste" },
   { id: "operator", text: "Betreiber" },

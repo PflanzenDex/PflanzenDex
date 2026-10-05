@@ -8,6 +8,7 @@ import {
   type MeasurementSource,
   type TargetLocationSource,
   type PhaseLocationSource,
+  type ZoneStockSource,
 } from "@pflanzendex/core";
 import {
   OPERATOR_PATHS,
@@ -25,6 +26,8 @@ import {
   specimenRoutes,
 } from "./collection";
 import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
+import { WISH_PATHS, wishRoutes, wishZoneUsageFor } from "./wishlist";
+import { zoneStockFor } from "./zone-stock";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
 import {
@@ -60,6 +63,8 @@ export type AppOptions = {
   treatments?: TreatmentSource;
   /** Replaces the care profile as source of the location per phase (tests); without it the keeper's own care profile (US-BES-09) answers. */
   phaseLocation?: PhaseLocationSource;
+  /** Replaces the light distribution as source of the stock per zone for the wishlist (tests); without it `collection` answers (US-LIC-02). */
+  zoneStock?: ZoneStockSource;
 };
 
 /** The module `care` (measurements, care phases and treatments): sign-in guard in front of the paths, then the routes. */
@@ -75,6 +80,12 @@ function bindCareOne(
   app.route("/", carePhasesRoutes(pool, opt));
   for (const path of TREATMENT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", treatmentRoutes(pool, opt));
+}
+
+/** The module `wishlist`: sign-in guard in front of the paths, then the routes; the stock per zone comes from `collection` unless tests replace it. */
+function bindWishlist(app: Hono, pool: Pool, auth: MiddlewareHandler, zoneStock?: ZoneStockSource) {
+  for (const path of WISH_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", wishRoutes(pool, zoneStock ?? zoneStockFor(pool)));
 }
 
 /** What `care` feeds into the collection: target location, measurements and treatments, unless tests replace them. */
@@ -118,7 +129,10 @@ export function createApp(opt: AppOptions = {}): Hono {
   if (opt.reviewer && opt.pool) {
     const auth = bindAccount(app, opt.reviewer, opt.pool, opt);
     for (const path of LIGHT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-    app.route("/", lightRoutes(opt.pool, [careProfileZoneUsageFor(opt.pool)]));
+    app.route(
+      "/",
+      lightRoutes(opt.pool, [careProfileZoneUsageFor(opt.pool), wishZoneUsageFor(opt.pool)]),
+    );
     for (const path of SPECIES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", speciesRoutes(opt.pool));
     for (const path of REVIEW_PATHS) app.use(path, auth).use(`${path}/*`, auth);
@@ -129,6 +143,7 @@ export function createApp(opt: AppOptions = {}): Hono {
     app.route("/", pokedexRoutes(opt.pool));
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", careProfileRoutes(opt.pool));
+    bindWishlist(app, opt.pool, auth, opt.zoneStock);
     bindCareOne(app, opt.pool, auth, {
       ...(opt.clock ? { clock: opt.clock } : {}),
       ...(opt.phaseLocation ? { phaseLocation: opt.phaseLocation } : {}),

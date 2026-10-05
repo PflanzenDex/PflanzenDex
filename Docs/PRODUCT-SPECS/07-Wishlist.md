@@ -6,13 +6,15 @@ Prototype reference: epic WUN. Differences: a purchase leads, guided, to the pla
 
 ## User stories
 
-### US-WUN-01 · See candidates prioritized by space need · ⬜ (prototype ✅)
+### US-WUN-01 · See candidates prioritized by space need · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
 - Open candidates (`Status: Wishlist`) are shown, sorted ascending by the stock of the respective target light zone (specimen count, zones 2–4; unknown zone last).
 - Per candidate: photo with source, "German (name)", target zone with current stock ("— N plants"), difficulty, reasoning, actions.
 - Without open candidates: "No open candidates in the wishlist."
+
+State of implementation: partly done. The tab "Wunschliste" (`GET /wishes/candidates`) lists the open plant wishes (`status = wishlist`) sorted ascending by the specimen count of the target light zone (the same count as the light distribution, US-LIC-02: zones 2–4, `isActive`; ties by zone order, then name); a wish without a zone 2–4 comes last and says so. Each card shows the picture address as an explicit link "Bild ansehen (öffnet extern)" with its source next to it, "German (name)", "zone — N plants", difficulty (Easy/Medium/Hard), reasoning and why it stands there; the list says what to do next (P-09). Unknown values read "unbekannt" (P-08); nothing is compared with an average. A wish is recorded through the validating operation `wish.create` (name required, case-insensitive unique per account, picture only with source, zone only of the own account). Privacy decision: the picture itself is **not** displayed, because loading a keeper-typed address would make every viewer's browser contact a third-party host (IP address, user agent, referrer; P-05) and the epic wants images saved locally instead of hotlinked; only an https address without credentials is accepted and it is only ever a link the viewer follows on purpose (`rel="noopener noreferrer"`, no referrer). A wish whose target zone is not among zones 2–4 (for example cutting light) is kept, does not count and says so (FR-WUN-03); the hint list for such wishes does not exist yet. Missing: displaying the picture (needs local storage, US-WUN-04), the per-candidate actions (bought, discarded) belong to US-WUN-03 and US-WUN-05; the species link, the specimen link and the discover source of DM-WUN-01 follow with their stories.
 
 ### US-WUN-02 · Be warned before the list is empty · ⬜ (prototype ✅)
 

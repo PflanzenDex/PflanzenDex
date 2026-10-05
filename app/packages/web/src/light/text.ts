@@ -25,6 +25,7 @@ const ZONE_USER_KIND: Record<ZoneUser["kind"], string> = {
   specimen: "Exemplar",
   species: "Art",
   care_profile: "Pflegeprofil der Art",
+  wish: "Wunsch",
 };
 
 export const userText = (n: ZoneUser) => `${ZONE_USER_KIND[n.kind]}: ${n.name}`;

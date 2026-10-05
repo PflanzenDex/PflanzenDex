@@ -1,0 +1,308 @@
+// @vitest-environment jsdom
+import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { WishlistPage } from "./WishlistPage";
+
+const response = (status: number, body: unknown) =>
+  Promise.resolve(new Response(JSON.stringify(body), { status }));
+const token = async () => "tok";
+
+const zones = [
+  { zoneId: "z2", name: "Lampe 2", count: 3 },
+  { zoneId: "z3", name: "Fenster 3", count: 1 },
+];
+const candidate = (extra: Record<string, unknown> = {}) => ({
+  id: "w1",
+  name: "Calathea orbifolia",
+  german: "Korbmarante",
+  title: "Korbmarante (Calathea orbifolia)",
+  zone: { id: "z3", name: "Fenster 3" },
+  stock: 1,
+  zoneText: "Fenster 3 — 1 Pflanze",
+  difficulty: 2,
+  reasoning: "Mag gleichmäßig feuchte Erde.",
+  image: { url: "https://upload.example/c.jpg", source: "Wikimedia Commons" },
+  priority: {
+    kind: "thinnest",
+    text: "Die Zone mit den wenigsten Pflanzen (1): hier ist am meisten Platz.",
+  },
+  ...extra,
+});
+const list = (
+  candidates: unknown[],
+  hint = { text: "Als Nächstes dran: Korbmarante.", nextAction: "Besorge diese Pflanze zuerst." },
+) => ({
+  candidates,
+  zones,
+  hint,
+});
+
+function fakeServer(initial: unknown, post?: () => Promise<Response>) {
+  let current = initial;
+  const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
+    const path = new URL(String(url)).pathname;
+    if (path === "/wishes/candidates") return response(200, current);
+    if (path === "/wishes" && init?.method === "POST" && post) {
+      const r = await post();
+      if (r.ok) current = list([candidate({ id: "w2", name: "Neu", german: null, title: "Neu" })]);
+      return r;
+    }
+    return response(404, {});
+  });
+  vi.stubGlobal("fetch", fetchFn);
+  return fetchFn;
+}
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+describe("US-WUN-01 page of the candidate list", () => {
+  it("US-WUN-01 shows per candidate title, zone with stock, difficulty word, reasoning, picture with source and the why", async () => {
+    fakeServer(list([candidate()]));
+    render(<WishlistPage api="http://api" token={token} />);
+    expect(screen.getByRole("status").textContent).toContain("geladen");
+    const item = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
+    expect(
+      within(item).getByRole("heading", { name: "Korbmarante (Calathea orbifolia)" }),
+    ).toBeTruthy();
+    expect(item.textContent).toContain("Fenster 3 — 1 Pflanze");
+    expect(item.textContent).toContain("Mittel");
+    expect(item.textContent).toContain("Mag gleichmäßig feuchte Erde.");
+    expect(item.textContent).toContain("hier ist am meisten Platz");
+    expect(item.textContent).toContain("Quelle: Wikimedia Commons");
+    // P-05: no remote picture is loaded in the keeper's browser; only an explicit link to the address (until US-WUN-04).
+    expect(item.querySelector("img")).toBeNull();
+    const link = within(item).getByRole("link", { name: "Bild ansehen (öffnet extern)" });
+    expect(link.getAttribute("href")).toBe("https://upload.example/c.jpg");
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+    expect(link.getAttribute("referrerpolicy")).toBe("no-referrer");
+    expect(screen.getByText("Besorge diese Pflanze zuerst.")).toBeTruthy();
+  });
+
+  it("US-WUN-01 keeps the order of the server and says unknown instead of guessing", async () => {
+    fakeServer(
+      list([
+        candidate(),
+        candidate({
+          id: "w9",
+          name: "Ficus",
+          german: null,
+          title: "Ficus",
+          zone: null,
+          stock: null,
+          zoneText: "Ziel-Zone unbekannt",
+          difficulty: null,
+          reasoning: null,
+          image: null,
+          priority: {
+            kind: "zone_unknown",
+            text: "Ziel-Lichtzone unbekannt: dieser Wunsch zählt noch nicht mit.",
+          },
+        }),
+      ]),
+    );
+    render(<WishlistPage api="http://api" token={token} />);
+    await screen.findAllByRole("listitem");
+    const titles = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    expect(titles.slice(0, 2)).toEqual(["Korbmarante (Calathea orbifolia)", "Ficus"]);
+    const second = screen.getAllByRole("listitem")[1] as HTMLElement;
+    expect(second.textContent).toContain("Ziel-Zone unbekannt");
+    expect(second.textContent).toContain("Schwierigkeit: unbekannt");
+    expect(second.textContent).toContain("Kein Bild");
+    expect(second.querySelector("img")).toBeNull();
+  });
+
+  it("US-WUN-01 without open candidates says so and what to do next", async () => {
+    fakeServer(
+      list([], {
+        text: "Keine offenen Kandidaten in der Wunschliste.",
+        nextAction: "Erfasse einen Wunsch mit Ziel-Lichtzone.",
+      }),
+    );
+    render(<WishlistPage api="http://api" token={token} />);
+    await screen.findByText("Keine offenen Kandidaten in der Wunschliste.");
+    expect(screen.getByText("Erfasse einen Wunsch mit Ziel-Lichtzone.")).toBeTruthy();
+    expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+  });
+
+  it("US-WUN-01 shows a load error with a way to retry", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        response(500, { error: { code: "server.error", text: "Der Server antwortet nicht." } }),
+      ),
+    );
+    render(<WishlistPage api="http://api" token={token} />);
+    await screen.findByText("Der Server antwortet nicht.");
+    expect(screen.getByRole("button", { name: /Erneut laden/ })).toBeTruthy();
+  });
+});
+
+describe("US-WUN-01 no remote picture is loaded (P-05)", () => {
+  it("US-WUN-01 an address that is not https is not linked and nothing is embedded", async () => {
+    fakeServer(list([candidate({ image: { url: "javascript:alert(1)", source: "Irgendwer" } })]));
+    render(<WishlistPage api="http://api" token={token} />);
+    const item = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
+    expect(item.querySelector("img")).toBeNull();
+    expect(item.querySelector("a")).toBeNull();
+    expect(item.textContent).toContain("Kein Bild");
+  });
+});
+
+describe("US-WUN-01 recording a wish", () => {
+  const fill = async (name: string) => {
+    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await userEvent.type(screen.getByLabelText("Name"), name);
+  };
+
+  it("US-WUN-01 sends the wish with the chosen zone and difficulty, reloads the list and confirms", async () => {
+    const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
+    render(<WishlistPage api="http://api" token={token} />);
+    await fill("Neu");
+    await userEvent.selectOptions(screen.getByLabelText("Ziel-Lichtzone"), "z2");
+    await userEvent.selectOptions(screen.getByLabelText("Schwierigkeit"), "3");
+    await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
+    await screen.findByText(/Wunsch „Neu“ gespeichert/);
+    const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
+    expect(JSON.parse(String(post?.[1]?.body))).toEqual({
+      name: "Neu",
+      targetZoneId: "z2",
+      difficulty: 3,
+    });
+    expect((post?.[1]?.headers as Record<string, string>)["Idempotency-Key"]).toBeTruthy();
+    expect(
+      (await screen.findAllByRole("heading", { level: 2 })).map((h) => h.textContent),
+    ).toContain("Neu");
+    expect((screen.getByLabelText("Name") as HTMLInputElement).value).toBe("");
+  });
+
+  const refusal = (status: number, code: string, text: string, details?: unknown) => () =>
+    response(status, { error: { code, text, ...(details ? { details } : {}) } });
+  const save = () => userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
+  const describedText = (el: HTMLElement) =>
+    (el.getAttribute("aria-describedby") ?? "")
+      .split(" ")
+      .map((id) => document.getElementById(id)?.textContent ?? "")
+      .join(" ");
+
+  it("US-WUN-01 marks the name field when the name is taken: text next to it, focus, value kept, no success", async () => {
+    fakeServer(
+      list([candidate()]),
+      refusal(409, "wish.name_taken", "Einen Wunsch mit diesem Namen gibt es schon."),
+    );
+    render(<WishlistPage api="http://api" token={token} />);
+    await fill("Neu");
+    await save();
+    const name = screen.getByLabelText("Name") as HTMLInputElement;
+    await vi.waitFor(() => expect(name.getAttribute("aria-invalid")).toBe("true"));
+    expect(describedText(name)).toContain("gibt es schon");
+    expect(document.activeElement).toBe(name);
+    expect(name.value).toBe("Neu");
+    expect(screen.queryByText(/gespeichert/)).toBeNull();
+    expect(screen.getByLabelText("Schwierigkeit").getAttribute("aria-invalid")).not.toBe("true");
+  });
+
+  it("US-WUN-01 marks the zone field when the server says the zone is not the keeper's", async () => {
+    fakeServer(
+      list([candidate()]),
+      refusal(404, "light_zone.not_found", "Diese Lichtzone gibt es nicht."),
+    );
+    render(<WishlistPage api="http://api" token={token} />);
+    await fill("Neu");
+    await userEvent.selectOptions(screen.getByLabelText("Ziel-Lichtzone"), "z2");
+    await save();
+    const zone = screen.getByLabelText("Ziel-Lichtzone") as HTMLSelectElement;
+    await vi.waitFor(() => expect(zone.getAttribute("aria-invalid")).toBe("true"));
+    expect(describedText(zone)).toContain("gibt es nicht");
+    expect(document.activeElement).toBe(zone);
+    expect(zone.value).toBe("z2");
+  });
+
+  it("US-WUN-01 marks the field the server names in the details", async () => {
+    fakeServer(
+      list([candidate()]),
+      refusal(422, "input.invalid", "Eine Eingabe ist ungültig.", [
+        { field: "imageUrl", code: "input.invalid" },
+      ]),
+    );
+    render(<WishlistPage api="http://api" token={token} />);
+    await fill("Neu");
+    await save();
+    const url = screen.getByLabelText("Bild-Adresse (https)");
+    await vi.waitFor(() => expect(url.getAttribute("aria-invalid")).toBe("true"));
+    expect(document.activeElement).toBe(url);
+  });
+
+  it("US-WUN-01 a refusal that names no field stays in an alert that takes the focus", async () => {
+    fakeServer(list([candidate()]), refusal(500, "server.error", "Der Server antwortet nicht."));
+    render(<WishlistPage api="http://api" token={token} />);
+    await fill("Neu");
+    await save();
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Der Server antwortet nicht.");
+    await vi.waitFor(() => expect(document.activeElement).toBe(alert));
+    expect(screen.getByLabelText("Name").getAttribute("aria-invalid")).not.toBe("true");
+  });
+
+  it("US-WUN-01 refuses an empty name before sending: field marked, described, focused", async () => {
+    const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: {} }));
+    render(<WishlistPage api="http://api" token={token} />);
+    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await save();
+    const name = screen.getByLabelText("Name");
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+    expect(describedText(name)).toContain("Name");
+    await vi.waitFor(() => expect(document.activeElement).toBe(name));
+    expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+  });
+
+  it("US-WUN-01 refuses a picture address without source: the source field is marked and focused, values kept", async () => {
+    const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: {} }));
+    render(<WishlistPage api="http://api" token={token} />);
+    await fill("Neu");
+    await userEvent.type(screen.getByLabelText("Bild-Adresse (https)"), "https://x.example/a.jpg");
+    await save();
+    const source = screen.getByLabelText("Bildquelle");
+    expect(source.getAttribute("aria-invalid")).toBe("true");
+    expect(describedText(source)).toContain("Quelle");
+    await vi.waitFor(() => expect(document.activeElement).toBe(source));
+    expect((screen.getByLabelText("Bild-Adresse (https)") as HTMLInputElement).value).toBe(
+      "https://x.example/a.jpg",
+    );
+    expect((screen.getByLabelText("Name") as HTMLInputElement).value).toBe("Neu");
+    expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+  });
+
+  it("US-WUN-01 refuses an address that is not https and one with credentials on the address field", async () => {
+    fakeServer(list([candidate()]));
+    render(<WishlistPage api="http://api" token={token} />);
+    await fill("Neu");
+    await userEvent.type(screen.getByLabelText("Bildquelle"), "Quelle");
+    const url = screen.getByLabelText("Bild-Adresse (https)");
+    await userEvent.type(url, "http://x.example/a.jpg");
+    await save();
+    expect(url.getAttribute("aria-invalid")).toBe("true");
+    await userEvent.clear(url);
+    await userEvent.type(url, "https://me:pw@x.example/a.jpg");
+    await save();
+    expect(url.getAttribute("aria-invalid")).toBe("true");
+    expect(describedText(url)).toContain("https://");
+  });
+
+  it("US-WUN-01 a field loses its mark again when the next input is fine", async () => {
+    fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
+    render(<WishlistPage api="http://api" token={token} />);
+    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await save();
+    const name = screen.getByLabelText("Name");
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+    await userEvent.type(name, "Neu");
+    await save();
+    await screen.findByText(/gespeichert/);
+    expect(name.getAttribute("aria-invalid")).not.toBe("true");
+  });
+});
