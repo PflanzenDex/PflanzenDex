@@ -285,6 +285,20 @@ describe("module boundaries (FR-QG-19)", () => {
       const v = run({}, cfg({ UNMODULED_FOLDERS: { "core/alt": "x" } }));
       assert.match(v[0], /^AB-13 modules\.config\.mjs transition entry core\/alt is stale/);
     });
+    for (const f of ["components", "lib", "platform", "styles"])
+      it(`QG-U4 · AB-13 the reserved design system folder web/${f} is no module candidate`, () => {
+        assert.deepEqual(run({ [`packages/web/src/${f}/x.ts`]: "export const x = 1;\n" }), []);
+      });
+    it("QG-U4 · AB-13 a reserved design system folder name under core or api still fails", () => {
+      for (const pkg of ["core", "api"]) {
+        const v = run({ [`packages/${pkg}/src/platform/x.ts`]: "export const x = 1;\n" });
+        assert.ok(v.some((x) => x.startsWith(`AB-13 packages/${pkg}/src/platform `)));
+      }
+    });
+    it("QG-U4 · AB-13 an unknown web folder still fails", () => {
+      const v = run({ "packages/web/src/foo/x.ts": "export const x = 1;\n" });
+      assert.match(v[0], /^AB-13 packages\/web\/src\/foo /);
+    });
     it("a module folder in transition is not checked until the move", () => {
       const files = {
         "packages/web/src/light/a.ts": "export const a = 1;\n",
