@@ -12,6 +12,7 @@ import {
 } from "./account";
 import { useClearOnSignOut } from "./kernel";
 import { AppRoutes } from "./routes";
+import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
 import { AppShell } from "./components/shared/app-shell";
 import { navItems, PATHS, type View } from "./navigation";
 
@@ -59,12 +60,14 @@ function EntryStates(props: { state: State; session: Session }) {
         />
       )}
       {z.kind === "invitationNeeded" && (
-        <InvitationPage
-          api={api}
-          token={s.token}
-          onRegistered={() => void s.reload()}
-          onSignOut={s.signOut}
-        />
+        <RouteBoundary resetKey="invitation">
+          <InvitationPage
+            api={api}
+            token={s.token}
+            onRegistered={() => void s.reload()}
+            onSignOut={s.signOut}
+          />
+        </RouteBoundary>
       )}
     </>
   );
