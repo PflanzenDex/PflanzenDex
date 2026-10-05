@@ -1,5 +1,10 @@
 import type { AccessCounts, AccessStore } from "./access";
-import { defaultNotifications, type AccountProfile, type ProfileStore } from "./profile";
+import {
+  defaultNotifications,
+  type AccountProfile,
+  type ProfileChanges,
+  type ProfileStore,
+} from "./profile";
 
 /** In-memory adapter for tests only; the real adapter lives in `db`. `known` are the accounts with a data row. */
 export class InMemoryProfiles implements ProfileStore {
@@ -23,12 +28,14 @@ export class InMemoryProfiles implements ProfileStore {
     return this.rows.get(userId) ?? null;
   }
 
-  async update(userId: string, profile: AccountProfile): Promise<AccountProfile | null> {
-    if (!this.rows.has(userId)) return null;
+  async update(userId: string, changes: ProfileChanges): Promise<AccountProfile | null> {
+    const stored = this.rows.get(userId);
+    if (!stored) return null;
     this.writes += 1;
     this.writtenFor.push(userId);
-    this.rows.set(userId, profile);
-    return profile;
+    const saved = { ...changes, displayName: changes.displayName ?? stored.displayName };
+    this.rows.set(userId, saved);
+    return saved;
   }
 }
 

@@ -72,6 +72,24 @@ describe("US-ACC-02 · profile in the database", () => {
     expect(await profiles.update(id, PROFILE)).toBeNull();
   });
 
+  it("a null display name keeps the stored one; the other fields are written", async () => {
+    const id = await newAccount();
+    await profiles.update(id, PROFILE);
+    const saved = await profiles.update(id, { ...PROFILE, displayName: null, timeZone: "UTC" });
+    expect(saved).toMatchObject({ displayName: "Anna", timeZone: "UTC" });
+    expect((await profiles.find(id))?.displayName).toBe("Anna");
+  });
+
+  it("two accounts: a null name of account B keeps B's name and never touches A's", async () => {
+    const a = await newAccount();
+    const b = await newAccount();
+    await profiles.update(a, PROFILE);
+    await profiles.update(b, { ...PROFILE, displayName: "Ben" });
+    await profiles.update(b, { ...PROFILE, displayName: null });
+    expect((await profiles.find(b))?.displayName).toBe("Ben");
+    expect(await profiles.find(a)).toEqual(PROFILE);
+  });
+
   it("the display name is not unique", async () => {
     const a = await newAccount();
     const b = await newAccount();
