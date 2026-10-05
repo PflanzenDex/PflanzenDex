@@ -3,6 +3,7 @@ import type { OperatorOverview } from "@pflanzendex/core";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { parseAmount } from "./operator-cost";
 import { OperatorPage } from "./operator-page";
 
 const token = async () => "tok";
@@ -13,7 +14,8 @@ const overview = (over: Partial<OperatorOverview> = {}): OperatorOverview => ({
   accounts: 12,
   activeAccounts: 5,
   activeWindowDays: 30,
-  costPerUser: null,
+  cost: null,
+  costPerUser: { known: false, reason: "no_figure" },
   invitationOnly: false,
   invitations: [],
   ...over,
@@ -93,6 +95,113 @@ describe("US-ACC-05 operator area: counts, no content", () => {
     render(<OperatorPage api="http://api" token={token} />);
     expect(await screen.findByText("Darauf hast du keinen Zugriff.")).toBeTruthy();
     expect(screen.getByRole("button", { name: /Erneut laden/ })).toBeTruthy();
+  });
+});
+
+describe("US-ACC-05 monthly cost and cost per user", () => {
+  const facts = () => screen.getByRole("region", { name: "Zahlen" });
+  const fact = (label: string) =>
+    within(facts()).getByText(label).nextElementSibling?.textContent ?? "";
+
+  it("US-ACC-05 without a figure: cost per user unknown with what to do (P-08, P-09)", async () => {
+    await open();
+    expect(fact("Monatliche Kosten")).toBe("nicht eingetragen");
+    expect(fact("Kosten pro Nutzer")).toBe("unbekannt: trage unten die Kosten eines Monats ein");
+  });
+
+  it("US-ACC-05 with a figure: amount per user with month and 'manuell eingetragen'", async () => {
+    current = overview({
+      cost: { amountCents: 4999, currency: "EUR", month: "2026-09" },
+      costPerUser: {
+        known: true,
+        amountCents: 1000,
+        currency: "EUR",
+        month: "2026-09",
+        source: "manual",
+      },
+    });
+    await open();
+    expect(fact("Monatliche Kosten")).toMatch(/^49,99\s€ \(September 2026\)$/);
+    expect(fact("Kosten pro Nutzer")).toMatch(/^10,00\s€ \(September 2026, manuell eingetragen\)$/);
+  });
+
+  it("US-ACC-05 a figure without active users: cost per user unknown with the reason", async () => {
+    current = overview({
+      activeAccounts: 0,
+      cost: { amountCents: 4999, currency: "EUR", month: "2026-09" },
+      costPerUser: { known: false, reason: "no_active_accounts" },
+    });
+    await open();
+    expect(fact("Kosten pro Nutzer")).toBe("unbekannt: es gibt noch keine aktiven Nutzer");
+  });
+
+  it("US-ACC-05 saving sends the amount in cents with a repeat-guard key and reloads the numbers", async () => {
+    serve((path, init) =>
+      path === "/operator/cost" && init.method === "PUT"
+        ? json(200, JSON.parse(String(init.body)))
+        : json(404, {}),
+    );
+    await open();
+    const amount = screen.getByLabelText("Betrag");
+    await userEvent.type(amount, "1.234,5");
+    const month = screen.getByLabelText("Monat");
+    await userEvent.clear(month);
+    await userEvent.type(month, "2026-09");
+    await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
+    expect(await screen.findByText("Monatliche Kosten gespeichert.")).toBeTruthy();
+    const writes = calls.filter((c) => c.method === "PUT");
+    expect(writes.map((w) => [w.path, w.body])).toEqual([
+      ["/operator/cost", { amountCents: 123450, currency: "EUR", month: "2026-09" }],
+    ]);
+    expect(
+      writes[0]?.headers["idempotency-key"] ?? writes[0]?.headers["Idempotency-Key"],
+    ).toBeTruthy();
+    expect(calls.filter((c) => c.path === "/operator/overview").length).toBe(2);
+  });
+
+  it("US-ACC-05 an invalid amount or currency is refused before sending, with what to do (P-10)", async () => {
+    await open();
+    await userEvent.type(screen.getByLabelText("Betrag"), "12,345");
+    await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
+    expect((await screen.findByRole("alert")).textContent).toMatch(/zum Beispiel 12,50/);
+    await userEvent.clear(screen.getByLabelText("Betrag"));
+    await userEvent.type(screen.getByLabelText("Betrag"), "12,50");
+    await userEvent.clear(screen.getByLabelText("Währung"));
+    await userEvent.type(screen.getByLabelText("Währung"), "E1");
+    await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
+    expect((await screen.findByRole("alert")).textContent).toMatch(/drei Buchstaben/);
+    expect(calls.filter((c) => c.method === "PUT")).toEqual([]);
+  });
+
+  it("US-ACC-05 a refusal of the server (future month) stays visible", async () => {
+    serve(() =>
+      json(400, {
+        error: {
+          code: "operator_cost.month_in_future",
+          text: "Dieser Monat liegt in der Zukunft. Trage die Kosten eines Monats ein, der schon begonnen hat.",
+        },
+      }),
+    );
+    await open();
+    await userEvent.type(screen.getByLabelText("Betrag"), "10");
+    await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
+    expect((await screen.findByRole("alert")).textContent).toMatch(/Zukunft/);
+  });
+
+  it.each([
+    ["12,50", 1250],
+    ["1.234,5", 123450],
+    ["1234.50", 123450],
+    ["0", 0],
+    [" 7 ", 700],
+    ["1000000", 100000000],
+    ["12,345", null],
+    ["-3", null],
+    ["abc", null],
+    ["1000000,01", null],
+    ["", null],
+  ])("US-ACC-05 reads the amount %j as %j cents", (text, cents) => {
+    expect(parseAmount(text)).toBe(cents);
   });
 });
 

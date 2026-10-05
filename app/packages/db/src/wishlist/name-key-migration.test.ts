@@ -61,7 +61,8 @@ const names = (account: string) =>
 describe("US-WUN-01 migration 0020 backfills the name key", () => {
   it("US-WUN-01 applies although wishes collide after folding, deletes nothing and keys the others", async () => {
     const applied = await migrate(scratch);
-    expect(applied).toEqual(["0020_wishlist_wish_name_key.sql"]);
+    // 0020 comes first; later migrations follow and must not matter for this test.
+    expect(applied[0]).toBe("0020_wishlist_wish_name_key.sql");
     expect(await names(anna)).toEqual([
       { name: "Café", key: "cafe" },
       { name: "Cafe", key: null },

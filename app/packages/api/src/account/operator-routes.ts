@@ -1,5 +1,10 @@
 import { randomBytes } from "node:crypto";
-import { invitationCreate, operatorOverview, registrationSetMode } from "@pflanzendex/core";
+import {
+  invitationCreate,
+  operatorCostSet,
+  operatorOverview,
+  registrationSetMode,
+} from "@pflanzendex/core";
 import { AccessPostgres, IdempotencyPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
@@ -11,7 +16,9 @@ export const OPERATOR_PATHS = ["/operator"] as const;
 /**
  * The operator area (US-ACC-05), for the operator only: the operations check the role, the database checks it again
  * (P-04). It shows counts and invitation states, never content of an account (P-05).
- * - GET /operator/overview: accounts, active accounts, cost per user (unknown, P-08), mode, invitations
+ * - GET /operator/overview: accounts, active accounts, monthly cost figure and cost per user (or why it is unknown,
+ *   P-08), mode, invitations
+ * - PUT /operator/cost `{ amountCents, currency, month }`: the real hosting cost of one month (NFR-16)
  * - PUT /operator/registration `{ invitationOnly }`: registration with or without invitation code
  * - POST /operator/invitations `{ validForDays? }`: 201 with the code, shown this once
  */
@@ -20,6 +27,7 @@ export function operatorRoutes(pool: Pool, clock: () => Date = () => new Date())
   const deps = { idempotency: new IdempotencyPostgres(pool) };
   const create = invitationCreate({ access, random: (n) => randomBytes(n), now: clock });
   const setMode = registrationSetMode({ access });
+  const setCost = operatorCostSet({ access, now: clock });
   const routes = new Hono<AuthEnv>();
   routes.get("/operator/overview", async (c) => {
     const r = await operatorOverview({ access }, c.get("account").id);
@@ -28,6 +36,7 @@ export function operatorRoutes(pool: Pool, clock: () => Date = () => new Date())
   routes.put("/operator/registration", async (c) =>
     write(c, deps, setMode, { input: await body(c) }),
   );
+  routes.put("/operator/cost", async (c) => write(c, deps, setCost, { input: await body(c) }));
   routes.post("/operator/invitations", async (c) => {
     const response = await write(c, deps, create, { input: await body(c), success: 201 });
     response.headers.set("cache-control", "no-store");

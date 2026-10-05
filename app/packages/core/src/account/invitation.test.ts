@@ -186,7 +186,7 @@ describe("US-ACC-05 · the operator switches registration by invitation", () => 
 });
 
 describe("US-ACC-05 · the operator sees counts and no content", () => {
-  it("US-ACC-05 shows accounts, active users and the cost per user as unknown (P-08)", async () => {
+  it("US-ACC-05 shows accounts, active users and, without a figure, the cost per user as unknown (P-08)", async () => {
     access.accounts = 12;
     access.active = 5;
     const r = await operatorOverview({ access }, "olga");
@@ -197,7 +197,8 @@ describe("US-ACC-05 · the operator sees counts and no content", () => {
       accounts: 12,
       activeAccounts: 5,
       activeWindowDays: 30,
-      costPerUser: null,
+      cost: null,
+      costPerUser: { known: false, reason: "no_figure" },
       invitationOnly: false,
     });
   });
@@ -212,6 +213,7 @@ describe("US-ACC-05 · the operator sees counts and no content", () => {
         "accounts",
         "activeAccounts",
         "activeWindowDays",
+        "cost",
         "costPerUser",
         "invitationOnly",
         "invitations",

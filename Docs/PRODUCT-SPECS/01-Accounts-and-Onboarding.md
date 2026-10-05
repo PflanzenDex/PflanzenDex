@@ -65,8 +65,13 @@ Details (decided with the story):
 - A code is unguessable (120 bits), shown to the operator exactly once, and valid for 7 days by default (assumption, starting value; the operator picks 1 to 30 days). The system stores only a hash of it. An unknown, used, expired or malformed code gets the same answer, so a refusal says nothing about which case it was.
 - An account counts as active if it opened the app in the last 30 days (assumption, starting value).
 - Only the operator role (not the reviewer role) uses the operator area; the database checks the role again. The operator sees counts and the state of invitations, never the content of an account.
+- **Cost per user from a manual monthly figure** (owner decision 2026-10-05, until TE-10 measures costs automatically): the operator enters the real hosting cost of one month (amount from 0 to 1,000,000.00 with at most two decimals, currency as a three-letter ISO 4217 code, month not after the current month in UTC; limits are an assumption, starting value). There is one figure per installation; a new entry replaces the old one. Only the operator can enter it, the database checks the role again; it is no tenant data.
+  - Given a figure and at least one active account, when the operator opens the overview, then the cost per user is the amount divided by the number of active accounts, rounded half up to whole cents, shown with the currency, the month and "manuell eingetragen".
+  - Given no figure, or a figure and no active account, then the cost per user is "unbekannt" with the reason (no figure entered / no active users); nothing is invented (P-08). The entered figure stays visible in both cases.
+  - Given a plant keeper or a reviewer, when they enter a figure, then it is refused with `access.denied` and nothing is stored.
+  - Given a month after the current month, then it is refused with `operator_cost.month_in_future`; an invalid amount or currency with `input.invalid` on the field.
 
-Not yet (why this story is 🟨): the cost per user is shown as "unknown" because the cost measurement (NFR-16, TE-10) does not exist; no number is invented (P-08). Closing the self-registration at the sign-in service itself (Keycloak realm setting) is an operator configuration, not part of the app: until the owner turns it off there, a stranger can still create a sign-in identity, but the app gives it no account and no data.
+Not yet (why this story is 🟨): the cost per user comes from the manual monthly figure above; an automatic cost measurement (NFR-16, TE-10) does not exist. Closing the self-registration at the sign-in service itself (Keycloak realm setting) is an operator configuration, not part of the app: until the owner turns it off there, a stranger can still create a sign-in identity, but the app gives it no account and no data.
 
 ## Requirements
 

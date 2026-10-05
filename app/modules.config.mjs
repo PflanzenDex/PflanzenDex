@@ -21,7 +21,7 @@ const MODULES = [
   {
     name: "account",
     epics: ["ACC"],
-    tables: ["account_data", "account_role", "invitation", "access_setting"],
+    tables: ["account_data", "account_role", "invitation", "access_setting", "operator_cost"],
     dependsOn: ["kernel"],
     ports: [],
   },
