@@ -5,3 +5,4 @@ package-lock.json
 .lighthouseci
 test-results
 playwright-report
+.cache
