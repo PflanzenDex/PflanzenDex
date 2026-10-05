@@ -5,10 +5,10 @@ import {
   type PositionRecommendation,
   zoneDerive,
   type LightZone,
-} from "../light";
-import type { Species } from "../catalog";
-import type { SpecimenRow } from "./types";
-import { isActive } from "./types";
+} from "../../light";
+import type { Species } from "../../catalog";
+import type { SpecimenRow } from "../shared/types";
+import { isActive } from "../shared/types";
 
 export interface LightOverviewRow {
   readonly speciesId: string;

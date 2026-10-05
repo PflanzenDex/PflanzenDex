@@ -1,4 +1,4 @@
-import type { LightZone } from "../light";
+import type { LightZone } from "../../light";
 import type { DistributionHint, ZoneCount } from "./distribution-types";
 
 const name = (names: readonly string[]): string =>

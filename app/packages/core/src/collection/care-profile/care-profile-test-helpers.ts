@@ -1,4 +1,4 @@
-import type { LightZone, ZoneStore } from "../light";
+import type { LightZone, ZoneStore } from "../../light";
 import type { CareProfile, CareProfileChanges, CareProfileStore } from "./care-profile-types";
 
 const EMPTY: Omit<CareProfile, "speciesId"> = {

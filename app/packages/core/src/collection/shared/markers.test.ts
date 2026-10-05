@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { execute } from "../kernel";
-import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
-import { specimenCreate, specimenArchive, NO_TARGET_LOCATION } from "./index";
+import { execute } from "../../kernel";
+import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
+import { specimenCreate, specimenArchive, NO_TARGET_LOCATION } from "../index";
 import { SpeciesStub, InMemorySpecimens, testSpecies } from "./test-helpers";
 
 const SPECIES = "11111111-1111-4111-8111-111111111111";

@@ -1,4 +1,4 @@
-import { isId } from "../kernel";
+import { isId } from "../../kernel";
 import { isActive, type Specimen, type SpecimenStore, type SpecimenRow } from "./types";
 
 /**

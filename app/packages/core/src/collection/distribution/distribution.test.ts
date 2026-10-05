@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { InMemoryLight } from "../light/test-helpers";
-import { zoneDistribution, type DistributionDependencies } from "./index";
-import { SpeciesStub, InMemorySpecimens, testSpecies } from "./test-helpers";
+import { InMemoryLight } from "../../light/test-helpers";
+import { zoneDistribution, type DistributionDependencies } from "../index";
+import { SpeciesStub, InMemorySpecimens, testSpecies } from "../shared/test-helpers";
 
 const SPECIES_LOW = "11111111-1111-4111-8111-111111111111"; // 15.000 Lux, Stufe 2: Lampe 2
 const SPECIES_HIGH = "22222222-2222-4222-8222-222222222222"; // 40.000 Lux, Stufe 3: Lampe 3

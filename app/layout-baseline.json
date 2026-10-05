@@ -5,7 +5,6 @@
     "app/packages/core/src/account": 11,
     "app/packages/core/src/care": 22,
     "app/packages/core/src/catalog/species": 8,
-    "app/packages/core/src/collection": 32,
     "app/packages/core/src/kernel": 11,
     "app/packages/web/src/account": 15,
     "app/packages/web/src/care": 25,

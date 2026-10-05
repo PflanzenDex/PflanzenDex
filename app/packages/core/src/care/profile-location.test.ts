@@ -3,8 +3,8 @@ import { execute } from "../kernel";
 import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
 import { InMemoryLight } from "../light/test-helpers";
 import { careProfileUpdate, specimenCreate, specimenHints } from "../collection";
-import { InMemoryCareProfiles } from "../collection/care-profile-test-helpers";
-import { InMemorySpecimens, SpeciesStub, testSpecies } from "../collection/test-helpers";
+import { InMemoryCareProfiles } from "../collection/care-profile/care-profile-test-helpers";
+import { InMemorySpecimens, SpeciesStub, testSpecies } from "../collection/shared/test-helpers";
 import {
   carePhasesList,
   careProfileLocations,

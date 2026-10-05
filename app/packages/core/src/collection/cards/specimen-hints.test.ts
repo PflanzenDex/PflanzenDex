@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { InMemoryLight } from "../light/test-helpers";
-import { specimenHints, zoneDistribution, type HintsDependencies } from "./index";
-import { InMemorySpecimens, SpeciesStub, testSpecies } from "./test-helpers";
+import { InMemoryLight } from "../../light/test-helpers";
+import { specimenHints, zoneDistribution, type HintsDependencies } from "../index";
+import { InMemorySpecimens, SpeciesStub, testSpecies } from "../shared/test-helpers";
 
 const SPECIES = "11111111-1111-4111-8111-111111111111";
 const SPECIES_FOREIGN = "99999999-9999-4999-8999-999999999999"; // visible only to ben

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { InMemoryLight } from "../light/test-helpers";
+import { InMemoryLight } from "../../light/test-helpers";
 import { TreatmentStub, MeasurementsStub } from "./cards-test-helpers";
 import {
   NO_TREATMENTS,
@@ -7,8 +7,8 @@ import {
   specimenCards,
   dueDate,
   type CardsDependencies,
-} from "./index";
-import { SpeciesStub, InMemorySpecimens, testSpecies } from "./test-helpers";
+} from "../index";
+import { SpeciesStub, InMemorySpecimens, testSpecies } from "../shared/test-helpers";
 
 const SPECIES = "11111111-1111-4111-8111-111111111111";
 const INVISIBLE = "99999999-9999-4999-8999-999999999999";

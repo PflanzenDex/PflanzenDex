@@ -1,4 +1,4 @@
-import type { TargetLocationSource } from "./types";
+import type { TargetLocationSource } from "../shared/types";
 
 /**
  * Until the care phases (PHA) and the care profile (BES-09) exist, nobody knows a target location. Instead of inventing

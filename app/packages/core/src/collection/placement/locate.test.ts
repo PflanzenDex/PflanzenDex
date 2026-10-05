@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { execute } from "../kernel";
-import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
-import { specimenSetLocation } from "./index";
-import { InMemorySpecimens } from "./test-helpers";
+import { execute } from "../../kernel";
+import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
+import { specimenSetLocation } from "../index";
+import { InMemorySpecimens } from "../shared/test-helpers";
 
 const SPECIES = "11111111-1111-4111-8111-111111111111";
 const LOC_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";

@@ -1,5 +1,5 @@
 // Specimens (US-BES-02, DM-BES-02). Ports for persistence and target location; adapters live in `db` and `care` (AB-1).
-import type { Species } from "../catalog";
+import type { Species } from "../../catalog";
 
 export const SPECIMEN_STATUS = ["plant", "cutting", "archived"] as const;
 export type SpecimenStatus = (typeof SPECIMEN_STATUS)[number];

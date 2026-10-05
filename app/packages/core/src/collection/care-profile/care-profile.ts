@@ -1,7 +1,7 @@
-import { appError, defineOperation, failed, ok } from "../kernel";
+import { appError, defineOperation, failed, ok } from "../../kernel";
 import { careProfileSchema } from "./care-profile-schema";
 import type { CareProfileStore } from "./care-profile-types";
-import type { SpeciesSource } from "./types";
+import type { SpeciesSource } from "../shared/types";
 
 export interface CareProfileDependencies {
   readonly profiles: CareProfileStore;

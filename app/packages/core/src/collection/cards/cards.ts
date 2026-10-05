@@ -1,6 +1,6 @@
 // Specimen cards (US-BES-06): a pure derivation from specimens, locations, zones and the ports for measurements and
 // treatments (P-01: computed, never stored). What is missing stays `null` and means "unknown" (P-08).
-import type { LightLocationStore, ZoneStore } from "../light";
+import type { LightLocationStore, ZoneStore } from "../../light";
 import type {
   TreatmentSource,
   SpecimenCard,
@@ -9,9 +9,14 @@ import type {
   MeasurementSource,
   OpenTreatment,
 } from "./cards-types";
-import { cuttingLight } from "./cutting-light";
-import { speciesDisplayName } from "./name";
-import { isActive, type SpeciesSource, type SpecimenStore, type SpecimenRow } from "./types";
+import { cuttingLight } from "../placement/cutting-light";
+import { speciesDisplayName } from "../shared/name";
+import {
+  isActive,
+  type SpeciesSource,
+  type SpecimenStore,
+  type SpecimenRow,
+} from "../shared/types";
 
 export interface CardsDependencies {
   readonly specimens: SpecimenStore;

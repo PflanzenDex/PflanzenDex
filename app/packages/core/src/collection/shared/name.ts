@@ -1,4 +1,4 @@
-import type { Species } from "../catalog";
+import type { Species } from "../../catalog";
 
 /** The name of the species as the keeper calls it: German, else Latin (assumption; never an invented name, P-08). */
 export function speciesDisplayName(species: Pick<Species, "germanName" | "latinName">): string {

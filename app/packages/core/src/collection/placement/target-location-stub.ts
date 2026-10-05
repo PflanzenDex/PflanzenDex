@@ -1,5 +1,5 @@
-import type { Species } from "../catalog";
-import type { TargetLocationSource } from "./types";
+import type { Species } from "../../catalog";
+import type { TargetLocationSource } from "../shared/types";
 
 /** Target-location stub: remembers the calls so tests can check what the port learns. */
 export class TargetLocationStub implements TargetLocationSource {

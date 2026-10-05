@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { InMemoryLight } from "../light/test-helpers";
-import { zoneDistribution } from "./index";
-import { InMemoryCareProfiles } from "./care-profile-test-helpers";
-import { InMemorySpecimens, SpeciesStub, testSpecies } from "./test-helpers";
+import { InMemoryLight } from "../../light/test-helpers";
+import { zoneDistribution } from "../index";
+import { InMemoryCareProfiles } from "../care-profile/care-profile-test-helpers";
+import { InMemorySpecimens, SpeciesStub, testSpecies } from "../shared/test-helpers";
 
 const SPECIES = "11111111-1111-4111-8111-111111111111"; // 15.000 Lux, level 2: derived zone "Lampe 2"
 const light = new InMemoryLight();

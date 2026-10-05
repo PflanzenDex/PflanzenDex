@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { execute } from "../kernel";
-import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
-import { careProfileUpdate } from "./index";
+import { execute } from "../../kernel";
+import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
+import { careProfileUpdate } from "../index";
 import { InMemoryCareProfiles } from "./care-profile-test-helpers";
-import { SpeciesStub, testSpecies } from "./test-helpers";
+import { SpeciesStub, testSpecies } from "../shared/test-helpers";
 
 const SPECIES = "11111111-1111-4111-8111-111111111111";
 const PRIVATE = "22222222-2222-4222-8222-222222222222";

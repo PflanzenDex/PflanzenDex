@@ -1,6 +1,6 @@
 // Archive (US-BES-07): the archived specimens of an account, viewable and restorable.
-import { speciesDisplayName } from "./name";
-import type { SpeciesSource, SpecimenStore } from "./types";
+import { speciesDisplayName } from "../shared/name";
+import type { SpeciesSource, SpecimenStore } from "../shared/types";
 
 export interface ArchivedEntry {
   readonly id: string;

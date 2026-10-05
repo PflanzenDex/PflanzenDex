@@ -1,4 +1,4 @@
-import type { Species } from "../catalog";
+import type { Species } from "../../catalog";
 import type { SpeciesSource, SpecimenStore, SpecimenValues, SpecimenRow } from "./types";
 import type { MarkerAssignment, LocationAssignment } from "./types";
 
@@ -192,4 +192,4 @@ export class InMemorySpecimens implements SpecimenStore {
   }
 }
 
-export { TargetLocationStub } from "./target-location-stub";
+export { TargetLocationStub } from "../placement/target-location-stub";

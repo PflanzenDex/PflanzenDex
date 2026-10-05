@@ -1,6 +1,6 @@
 // The effective care profile (FR-BES-09): specimen before care profile before catalog. Pure, derived on every request
 // and never stored (P-01). A value nobody knows stays unknown, it is never invented (P-08).
-import type { Species } from "../catalog";
+import type { Species } from "../../catalog";
 import type { CareProfile, CareProfileChanges, OverridableField } from "./care-profile-types";
 
 export type ValueSource = "specimen" | "profile" | "catalog" | "unknown";

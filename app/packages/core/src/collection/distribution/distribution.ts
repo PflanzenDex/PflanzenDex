@@ -1,11 +1,11 @@
 // Distribution of the specimens over the light zones (US-LIC-02, FR-LIC-04): a pure derivation, never stored (P-01).
 // The same count will later serve the wishlist prioritization (specimen level, zones 2 to 4 only).
-import { zoneDerive, type LightLocation, type LightZone } from "../light";
-import type { Species } from "../catalog";
-import { cuttingLight } from "./cutting-light";
+import { zoneDerive, type LightLocation, type LightZone } from "../../light";
+import type { Species } from "../../catalog";
+import { cuttingLight } from "../placement/cutting-light";
 import { distributionHint } from "./distribution-hint";
 import type { NotCounted, Distribution, DistributionDependencies } from "./distribution-types";
-import { isActive, type SpecimenRow } from "./types";
+import { isActive, type SpecimenRow } from "../shared/types";
 
 type Place = LightZone | "cuttingLight" | "archived" | "unknown";
 

@@ -1,11 +1,11 @@
 // The care profile view (US-BES-09): per species with an active specimen, or with a deviation, the catalog value and
 // my deviation side by side. Derived on every request, never stored (P-01).
-import type { Species } from "../catalog";
-import { zoneDerive, type LightZone, type ZoneStore } from "../light";
-import type { CareProfile, CareProfileReader } from "./care-profile-types";
-import { effectiveProfile, type EffectiveProfile } from "./effective-profile";
-import { speciesDisplayName } from "./name";
-import { isActive, type SpeciesSource, type SpecimenStore } from "./types";
+import type { Species } from "../../catalog";
+import { zoneDerive, type LightZone, type ZoneStore } from "../../light";
+import type { CareProfile, CareProfileReader } from "../care-profile/care-profile-types";
+import { effectiveProfile, type EffectiveProfile } from "../care-profile/effective-profile";
+import { speciesDisplayName } from "../shared/name";
+import { isActive, type SpeciesSource, type SpecimenStore } from "../shared/types";
 
 export interface CareProfileEntry {
   readonly speciesId: string;

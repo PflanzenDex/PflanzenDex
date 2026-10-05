@@ -1,8 +1,8 @@
 // US-BES-05: species compared by difficulty.
 import { beforeEach, describe, expect, it } from "vitest";
-import { InMemoryLight } from "../light/test-helpers";
+import { InMemoryLight } from "../../light/test-helpers";
 import { difficultyOverview } from "./difficulty-overview";
-import { InMemorySpecimens, SpeciesStub, testSpecies } from "./test-helpers";
+import { InMemorySpecimens, SpeciesStub, testSpecies } from "../shared/test-helpers";
 
 const SP_EASY = "11111111-1111-4111-8111-111111111111";
 const SP_MEDIUM = "22222222-2222-4222-8222-222222222222";

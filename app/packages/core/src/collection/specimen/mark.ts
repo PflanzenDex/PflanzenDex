@@ -1,9 +1,9 @@
-import { defineOperation, appError, failed, idField, ok, shape, textField } from "../kernel";
-import { markerTaken } from "./markers";
-import { speciesDisplayName, specimenName } from "./name";
-import { withDerivations } from "./read";
-import { SPECIMEN_LIMITS } from "./types";
-import type { SpeciesSource, SpecimenStore } from "./types";
+import { defineOperation, appError, failed, idField, ok, shape, textField } from "../../kernel";
+import { markerTaken } from "../shared/markers";
+import { speciesDisplayName, specimenName } from "../shared/name";
+import { withDerivations } from "../shared/read";
+import { SPECIMEN_LIMITS } from "../shared/types";
+import type { SpeciesSource, SpecimenStore } from "../shared/types";
 
 export interface MarkDependencies {
   readonly specimens: SpecimenStore;

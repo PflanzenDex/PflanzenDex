@@ -1,5 +1,5 @@
-import { defineOperation, appError, failed, idField, shape, ok } from "../kernel";
-import type { SpecimenRow, SpecimenStore } from "./types";
+import { defineOperation, appError, failed, idField, shape, ok } from "../../kernel";
+import type { SpecimenRow, SpecimenStore } from "../shared/types";
 
 export interface LocateDependencies {
   readonly specimens: Pick<SpecimenStore, "setLocations">;

@@ -8,9 +8,9 @@ import {
   ok,
   textField,
   timeZoneField,
-} from "../kernel";
-import { SPECIMEN_LIMITS } from "./types";
-import type { SpecimenStore } from "./types";
+} from "../../kernel";
+import { SPECIMEN_LIMITS } from "../shared/types";
+import type { SpecimenStore } from "../shared/types";
 
 export interface ArchiveDependencies {
   readonly specimens: SpecimenStore;

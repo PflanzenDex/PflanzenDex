@@ -1,5 +1,5 @@
-import { defineOperation, appError, failed, idField, shape, ok } from "../kernel";
-import type { SpecimenStore } from "./types";
+import { defineOperation, appError, failed, idField, shape, ok } from "../../kernel";
+import type { SpecimenStore } from "../shared/types";
 
 export interface RepotDependencies {
   readonly specimens: SpecimenStore;

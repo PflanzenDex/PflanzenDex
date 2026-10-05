@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { SpeciesStub, InMemorySpecimens, testSpecies } from "../collection/test-helpers";
+import { SpeciesStub, InMemorySpecimens, testSpecies } from "../collection/shared/test-helpers";
 import { NO_PHASE_LOCATION, carePhase, carePhasesList } from "./index";
-import { InMemoryCareProfiles } from "../collection/care-profile-test-helpers";
+import { InMemoryCareProfiles } from "../collection/care-profile/care-profile-test-helpers";
 import { PhaseLocationStub } from "./test-helpers";
 
 const WINTER = "11111111-1111-4111-8111-111111111111"; // Dormancy 11-01 to 03-15, across the turn of the year

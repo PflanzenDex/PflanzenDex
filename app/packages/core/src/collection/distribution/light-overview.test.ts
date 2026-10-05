@@ -1,8 +1,8 @@
 // US-LIC-03: light overview with position recommendations.
 import { beforeEach, describe, expect, it } from "vitest";
-import { InMemoryLight } from "../light/test-helpers";
+import { InMemoryLight } from "../../light/test-helpers";
 import { lightOverview } from "./light-overview";
-import { InMemorySpecimens, SpeciesStub, testSpecies } from "./test-helpers";
+import { InMemorySpecimens, SpeciesStub, testSpecies } from "../shared/test-helpers";
 
 const SP_LOW = "11111111-1111-4111-8111-111111111111";
 const SP_MID = "22222222-2222-4222-8222-222222222222";

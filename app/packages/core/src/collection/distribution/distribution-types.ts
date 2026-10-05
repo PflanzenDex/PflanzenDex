@@ -1,7 +1,7 @@
 // Distribution of the specimens over the light zones (US-LIC-02, FR-LIC-04): shapes of the derived view.
-import type { LightLocationStore, LightZone, ZoneStore } from "../light";
-import type { CareProfileReader } from "./care-profile-types";
-import type { SpeciesSource, SpecimenStore } from "./types";
+import type { LightLocationStore, LightZone, ZoneStore } from "../../light";
+import type { CareProfileReader } from "../care-profile/care-profile-types";
+import type { SpeciesSource, SpecimenStore } from "../shared/types";
 
 export interface ZoneCount {
   readonly zone: LightZone;

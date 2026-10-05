@@ -1,6 +1,6 @@
 // Naming rule DM-BES-03 and markers (US-BES-03): which specimens of a species must get a marker before a new one is
 // saved. Pure rules on the specimens of one species; the operations decide what to write.
-import { appError, isId, type AppError, type ErrorDetail } from "../kernel";
+import { appError, isId, type AppError, type ErrorDetail } from "../../kernel";
 import { specimenName } from "./name";
 import { SPECIMEN_LIMITS, isActive } from "./types";
 import type { MarkerAssignment, SpecimenRow } from "./types";

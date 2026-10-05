@@ -7,7 +7,7 @@ import {
   textField,
   type ErrorDetail,
   type Schema,
-} from "../kernel";
+} from "../../kernel";
 import {
   CARE_PROFILE_LIMITS,
   OVERRIDABLE_FIELDS,

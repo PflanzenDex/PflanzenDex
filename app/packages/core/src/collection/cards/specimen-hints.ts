@@ -1,9 +1,9 @@
 // Hints about incomplete specimens (US-BES-08): a pure derivation, never stored (P-01). A specimen without a readable
 // species, without a location or in a location without light zone drops out of evaluations such as the light
 // distribution; here it is named instead, with the action that fixes it (P-09, P-10).
-import type { LightLocation, LightLocationStore } from "../light";
-import type { SpeciesSource, SpecimenRow, SpecimenStore } from "./types";
-import { isActive } from "./types";
+import type { LightLocation, LightLocationStore } from "../../light";
+import type { SpeciesSource, SpecimenRow, SpecimenStore } from "../shared/types";
+import { isActive } from "../shared/types";
 
 export interface SpecimenHint {
   readonly kind: "species_missing" | "location_missing" | "location_without_zone";

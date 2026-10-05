@@ -1,7 +1,7 @@
-import type { ZoneUsage, ZoneUser } from "../light";
-import type { CareProfileReader } from "./care-profile-types";
-import { speciesDisplayName } from "./name";
-import type { SpeciesSource } from "./types";
+import type { ZoneUsage, ZoneUser } from "../../light";
+import type { CareProfileReader } from "../care-profile/care-profile-types";
+import { speciesDisplayName } from "../shared/name";
+import type { SpeciesSource } from "../shared/types";
 
 export interface ZoneUsageDependencies {
   readonly profiles: CareProfileReader;

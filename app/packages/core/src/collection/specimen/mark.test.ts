@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { execute } from "../kernel";
-import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
+import { execute } from "../../kernel";
+import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
 import {
   specimenCreate,
   specimenArchive,
   specimenMark,
   specimenLoad,
   NO_TARGET_LOCATION,
-} from "./index";
-import { SpeciesStub, InMemorySpecimens, testSpecies } from "./test-helpers";
+} from "../index";
+import { SpeciesStub, InMemorySpecimens, testSpecies } from "../shared/test-helpers";
 
 const SPECIES = "11111111-1111-4111-8111-111111111111";
 const OTHER_SPECIES = "22222222-2222-4222-8222-222222222222";

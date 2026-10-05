@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { effectiveDormancy, effectiveProfile, type CareProfile } from "./index";
+import { effectiveDormancy, effectiveProfile, type CareProfile } from "../index";
 
 const CATALOG = { dormancyFrom: "11-01", dormancyUntil: "03-15" };
 const NONE = { dormancyFrom: null, dormancyUntil: null };

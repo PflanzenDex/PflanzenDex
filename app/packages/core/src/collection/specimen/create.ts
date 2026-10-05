@@ -11,12 +11,12 @@ import {
   timeZoneField,
   calendarDateField,
   choiceField,
-} from "../kernel";
-import { withDerivations } from "./read";
-import { speciesDisplayName, specimenName } from "./name";
-import { markerAnswersField, planMarkers } from "./markers";
-import { CREATE_STATUS, SPECIMEN_LIMITS } from "./types";
-import type { SpeciesSource, SpecimenStore, TargetLocationSource } from "./types";
+} from "../../kernel";
+import { withDerivations } from "../shared/read";
+import { speciesDisplayName, specimenName } from "../shared/name";
+import { markerAnswersField, planMarkers } from "../shared/markers";
+import { CREATE_STATUS, SPECIMEN_LIMITS } from "../shared/types";
+import type { SpeciesSource, SpecimenStore, TargetLocationSource } from "../shared/types";
 
 /** What the store can refuse besides a taken name (which also reports the existing specimens). */
 const REFUSED = {

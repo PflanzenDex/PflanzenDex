@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cuttingLight } from "./index";
+import { cuttingLight } from "../index";
 
 const zone = (id: string, sortOrder: number) => ({
   id,

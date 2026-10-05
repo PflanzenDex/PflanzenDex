@@ -1,5 +1,5 @@
 // Specimen cards (US-BES-06): what the card shows and which data it needs from other modules (ports).
-import type { SpecimenStatus } from "./types";
+import type { SpecimenStatus } from "../shared/types";
 
 export const MEASUREMENT_QUALITIES = ["healthy", "etiolated"] as const;
 export type MeasurementQuality = (typeof MEASUREMENT_QUALITIES)[number];

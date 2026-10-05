@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { LightZone } from "../light";
-import { careProfileView, careProfileZoneUsage } from "./index";
-import { InMemoryCareProfiles, zoneStore } from "./care-profile-test-helpers";
-import { InMemorySpecimens, SpeciesStub, testSpecies } from "./test-helpers";
+import type { LightZone } from "../../light";
+import { careProfileView, careProfileZoneUsage } from "../index";
+import { InMemoryCareProfiles, zoneStore } from "../care-profile/care-profile-test-helpers";
+import { InMemorySpecimens, SpeciesStub, testSpecies } from "../shared/test-helpers";
 
 const BOGEN = "11111111-1111-4111-8111-111111111111";
 const ALOE = "22222222-2222-4222-8222-222222222222";

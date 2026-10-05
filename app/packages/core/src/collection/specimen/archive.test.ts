@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { execute } from "../kernel";
-import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
-import { InMemoryLight } from "../light/test-helpers";
-import { TreatmentStub, MeasurementsStub } from "./cards-test-helpers";
+import { execute } from "../../kernel";
+import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
+import { InMemoryLight } from "../../light/test-helpers";
+import { TreatmentStub, MeasurementsStub } from "../cards/cards-test-helpers";
 import {
   ARCHIVED_REASONS,
   specimenArchived,
@@ -11,8 +11,8 @@ import {
   specimenLoad,
   specimenRestore,
   specimenList,
-} from "./index";
-import { SpeciesStub, InMemorySpecimens, testSpecies } from "./test-helpers";
+} from "../index";
+import { SpeciesStub, InMemorySpecimens, testSpecies } from "../shared/test-helpers";
 
 // US-BES-07: archive a received or given-away plant without losing the history.
 const SPECIES = "11111111-1111-4111-8111-111111111111";
