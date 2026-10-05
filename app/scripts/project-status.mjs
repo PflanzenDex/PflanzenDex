@@ -31,6 +31,15 @@ export async function loadItems(client) {
     }));
 }
 
+/** Issue numbers among `numbers` that are open project items without a priority (epics need none). */
+export async function missingPriority(client, numbers) {
+  const items = await loadItems(client);
+  return numbers.filter((n) => {
+    const item = items.find((i) => i.issue === n);
+    return item && !item.priority && !item.epic;
+  });
+}
+
 export async function setStatuses(client, items, changes) {
   if (!changes.length) return;
   const fields = await json(client, [

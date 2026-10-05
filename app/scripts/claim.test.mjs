@@ -166,3 +166,34 @@ test("US-DEV-08: the draft PR title carries type, epic scope and story ID", asyn
   const create = client.calls.find((c) => c.startsWith("gh pr create"));
   assert.match(create, /--title feat\(bes\): delete specimen \(US-BES-06\)/);
 });
+
+function withProjectItems(client, items) {
+  return {
+    calls: client.calls,
+    run: (cmd, args) =>
+      cmd === "gh" && args[0] === "project" && args[1] === "item-list"
+        ? Promise.resolve(JSON.stringify({ items }))
+        : client.run(cmd, args),
+  };
+}
+
+test("US-DEV-05: a claim of an issue without a priority warns, and still succeeds", async () => {
+  const logs = [];
+  const client = withProjectItems(fake(), [
+    { id: "I", content: { type: "Issue", number: 62 }, status: "Todo" },
+  ]);
+  await claim(client, 62, { log: (m) => logs.push(m) });
+  assert.ok(logs.some((l) => /Warning: #62 has no priority/.test(l)));
+  assert.ok(logs.some((l) => /Draft PR/.test(l)));
+});
+
+test("US-DEV-05: no warning when the priority is set; a failed lookup is reported, not swallowed", async () => {
+  const logs = [];
+  const set = withProjectItems(fake(), [
+    { id: "I", content: { type: "Issue", number: 62 }, status: "Todo", priority: "P1 high" },
+  ]);
+  await claim(set, 62, { log: (m) => logs.push(m) });
+  assert.ok(!logs.some((l) => /Warning/.test(l)));
+  await claim(fake(), 62, { log: (m) => logs.push(m) });
+  assert.ok(logs.some((l) => /Warning: could not check the priority of #62/.test(l)));
+});
