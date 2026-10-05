@@ -1,6 +1,7 @@
 import type { Decorator, Preview } from "@storybook/react-vite";
 import { useEffect } from "react";
 import "../src/styles/tokens.css";
+import "./preview.css";
 import { applyColorScheme, type ColorScheme } from "./color-scheme";
 
 export const withColorScheme: Decorator = (Story, context) => {

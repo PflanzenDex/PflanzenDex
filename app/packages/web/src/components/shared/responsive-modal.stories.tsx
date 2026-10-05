@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ResponsiveModal } from "./responsive-modal";
 
@@ -19,11 +20,15 @@ export const Default: Story = {
   },
 };
 
+// Controlled and open on load; the wrapper owns the state so that Esc and the close button work as in the app.
 export const Open: Story = {
+  render: (args) => {
+    const [open, setOpen] = useState(true);
+    return <ResponsiveModal {...args} open={open} onOpenChange={setOpen} />;
+  },
   args: {
     title: "Pflanze bearbeiten",
     description: "Ändere die Angaben.",
-    open: true,
     children: <Button>Speichern</Button>,
   },
 };
