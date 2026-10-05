@@ -137,10 +137,10 @@ worktree: ## New worktree and branch (BRANCH=feat/x) with its own ports; claim c
 merge: ## Merge a PR into dev as an agent (PR=<n>): green ci-status, known story, no gate file (ADR 0005)
 	cd $(APP) && node scripts/merge-pr.mjs "$(PR)"
 
-repo-stats: ## Regenerate the statistics block in README.md by hand (make pr does it before review, US-DEV-10)
+repo-stats: ## Regenerate the statistics block in README.md (once per release PR, see release-checklist; US-DEV-10)
 	scripts/repo-stats.sh
 
-pr: ## Before review (PR=<n> optional): README statistics, commit if changed, push, mark the PR ready (US-DEV-10)
+pr: ## Before review (PR=<n> optional): push and mark the PR ready (US-DEV-10)
 	scripts/pr-ready.sh "$(PR)"
 
 claim: ## Claim a story before working on it (ISSUE=<n>): assignee, status, branch, draft PR; refuses duplicate work (US-DEV-08)

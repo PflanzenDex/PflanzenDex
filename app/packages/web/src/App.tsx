@@ -11,7 +11,8 @@ import {
   type State,
 } from "./account";
 import { AppRoutes } from "./routes";
-import { Navigation, PATHS, viewOfPath, type View } from "./navigation";
+import { AppShell } from "./components/shared/app-shell";
+import { navItems, PATHS, type View } from "./navigation";
 import "./style.css";
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
@@ -20,13 +21,11 @@ const version = (import.meta.env as Record<string, string | undefined>)["VITE_AP
 
 /** The active view comes from the address; going to a view is a navigation, so back and deep links work (US-QS-07). */
 function useViews() {
-  const { pathname } = useLocation();
   const navigate = useNavigate();
-  const view = viewOfPath(pathname) ?? "start";
   const setView = (next: View) => void navigate(PATHS[next]);
   // The Pokédex links to a species profile, so the app wires pokedex and catalog (US-POK-09).
   const openProfile = (id: string) => void navigate(`${PATHS.species}/${encodeURIComponent(id)}`);
-  return { view, setView, openProfile };
+  return { setView, openProfile };
 }
 
 /** The chosen species travels from the catalog to the collection: the app wires both modules (US-BES-02). */
@@ -73,38 +72,42 @@ function EntryStates(props: { state: State; session: Session }) {
 
 export function App() {
   const s = useSession();
-  const { view, setView, openProfile } = useViews();
+  const { setView, openProfile } = useViews();
   const { state: navState } = useLocation() as { state: { hint?: string } | null };
   const handOver = useSpeciesHandOver(setView);
   const z = s.state;
+  const footer = <footer className="version-footer">Version {version || "unbekannt"}</footer>;
+  if (z.kind !== "signedIn")
+    return (
+      <main className="page">
+        <EntryStates state={z} session={s} />
+        {footer}
+      </main>
+    );
   return (
-    <main className="page">
-      <EntryStates state={z} session={s} />
-      {z.kind === "signedIn" && (
-        <div className="frame">
-          <Navigation
-            active={view}
-            onSwitch={setView}
-            reviewer={z.account.reviewer === true}
-            operator={z.account.operator === true}
-          />
-          {navState?.hint && (
-            <p role="alert" className="hint">
-              {navState.hint}
-            </p>
-          )}
-          <AppRoutes
-            api={api}
-            session={s}
-            account={z.account}
-            {...(z.error ? { error: z.error } : {})}
-            onOpen={setView}
-            onOpenProfile={openProfile}
-            handOver={handOver}
-          />
-        </div>
-      )}
-      <footer className="version-footer">Version {version || "unbekannt"}</footer>
-    </main>
+    <AppShell
+      items={navItems({
+        reviewer: z.account.reviewer === true,
+        operator: z.account.operator === true,
+      })}
+    >
+      <div className="frame">
+        {navState?.hint && (
+          <p role="alert" className="hint">
+            {navState.hint}
+          </p>
+        )}
+        <AppRoutes
+          api={api}
+          session={s}
+          account={z.account}
+          {...(z.error ? { error: z.error } : {})}
+          onOpen={setView}
+          onOpenProfile={openProfile}
+          handOver={handOver}
+        />
+      </div>
+      {footer}
+    </AppShell>
   );
 }

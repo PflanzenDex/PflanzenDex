@@ -1,3 +1,5 @@
+import type { NavItem } from "./components/shared/nav-item";
+
 export type View =
   | "start"
   | "species"
@@ -52,40 +54,22 @@ export const PATHS: Record<View, string> = {
   settings: "/settings",
 };
 
-/** The view an address belongs to (a species profile /species/:id belongs to the catalog); unknown addresses give null. */
-export function viewOfPath(pathname: string): View | null {
-  const first = "/" + (pathname.split("/")[1] ?? "");
-  return (Object.keys(PATHS) as View[]).find((v) => PATHS[v] === first) ?? null;
-}
-
 const visible = (
   id: View,
   who: { reviewer?: boolean | undefined; operator?: boolean | undefined },
 ) => (id === "review" ? who.reviewer === true : id === "operator" ? who.operator === true : true);
 
 /**
- * The review list is only for operators and reviewers (US-BES-10), the operator area only for the operator
- * (US-ACC-05); everybody else never sees these tabs.
+ * The destinations for the shared shell (US-QS-07, DS-25). The review list is only for operators and reviewers
+ * (US-BES-10), the operator area only for the operator (US-ACC-05); everybody else never sees these entries.
  */
-export function Navigation(props: {
-  active: View;
-  onSwitch: (a: View) => void;
-  reviewer?: boolean;
-  operator?: boolean;
-}) {
-  return (
-    <nav aria-label="Hauptnavigation" className="navigation">
-      {ENTRIES.filter((e) => visible(e.id, props)).map((e) => (
-        <button
-          key={e.id}
-          type="button"
-          className={e.id === props.active ? "tab active" : "tab"}
-          aria-current={e.id === props.active ? "page" : undefined}
-          onClick={() => props.onSwitch(e.id)}
-        >
-          {e.text}
-        </button>
-      ))}
-    </nav>
-  );
+export function navItems(who: {
+  reviewer?: boolean | undefined;
+  operator?: boolean | undefined;
+}): NavItem[] {
+  return ENTRIES.filter((e) => visible(e.id, who)).map((e) => ({
+    href: PATHS[e.id],
+    label: e.text,
+    icon: null,
+  }));
 }

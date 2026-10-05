@@ -1,11 +1,6 @@
 {
   "entries": [
     {
-      "rule": "DS-32",
-      "file": "collection/distribution-view.tsx",
-      "count": 1
-    },
-    {
       "rule": "DS-48",
       "file": "care/measure-form.tsx",
       "count": 5
@@ -134,26 +129,6 @@
       "rule": "DS-48",
       "file": "collection/specimen-card.tsx",
       "count": 1
-    },
-    {
-      "rule": "DS-48",
-      "file": "kernel/load-error.tsx",
-      "count": 1
-    },
-    {
-      "rule": "DS-48",
-      "file": "navigation.tsx",
-      "count": 1
-    },
-    {
-      "rule": "DS-48",
-      "file": "onboarding-wizard.tsx",
-      "count": 3
-    },
-    {
-      "rule": "DS-48",
-      "file": "start-page.tsx",
-      "count": 3
     }
   ]
 }
