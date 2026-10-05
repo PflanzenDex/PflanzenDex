@@ -1,4 +1,5 @@
 import type { Candidate } from "@pflanzendex/core";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { isPlainHttps } from "./schemas";
 
@@ -40,8 +41,19 @@ function Picture({ image }: { image: Candidate["image"] }) {
   );
 }
 
-/** One open candidate (US-WUN-01): picture link with its source, title, target zone with stock, difficulty, reasoning and why it stands here. */
-export function CandidateCard({ c, rank }: { c: Candidate; rank: number }) {
+/**
+ * One open candidate (US-WUN-01): picture link with its source, title, target zone with stock, difficulty, reasoning
+ * and why it stands here; "Gekauft" records the purchase (US-WUN-03).
+ */
+export function CandidateCard(props: {
+  c: Candidate;
+  rank: number;
+  /** Records the purchase; without it the card has no action. */
+  onBuy?: (c: Candidate) => void;
+  /** A write is running: the action waits, so a double tap writes once. */
+  busy?: boolean;
+}) {
+  const { c, rank, onBuy } = props;
   return (
     <li
       data-priority={c.priority.kind}
@@ -57,6 +69,19 @@ export function CandidateCard({ c, rank }: { c: Candidate; rank: number }) {
       <p>Schwierigkeit: {c.difficulty ? (LEVELS[c.difficulty] ?? UNKNOWN) : UNKNOWN}</p>
       {c.reasoning && <p>{c.reasoning}</p>}
       <p className="text-sm text-muted-foreground">{c.priority.text}</p>
+      {onBuy && (
+        <Button
+          type="button"
+          variant="outline"
+          size="touch"
+          className="mt-2"
+          disabled={props.busy === true}
+          aria-label={`Gekauft: ${c.title}`}
+          onClick={() => onBuy(c)}
+        >
+          Gekauft
+        </Button>
+      )}
     </li>
   );
 }

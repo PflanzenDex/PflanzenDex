@@ -16,6 +16,10 @@ export interface WishRow {
   readonly status: "wishlist" | "bought" | "discarded";
 }
 export type WishValues = Omit<WishRow, "id" | "type" | "status"> & { readonly nameKey: string };
+export interface WishPurchase {
+  readonly wish: WishRow;
+  readonly changed: boolean;
+}
 
 const COLUMNS = `id, name, german, target_zone_id as "targetZoneId", difficulty, reasoning, image_url as "imageUrl",
   image_source as "imageSource", license, type, status`;
@@ -66,6 +70,38 @@ export class WishesPostgres {
     const r = await withAccount(this.pool, userId, (c) =>
       c.query<WishRow>(
         `select ${COLUMNS} from wish where status = 'wishlist' and type = 'plant' order by created_at, id`,
+      ),
+    );
+    return r.rows;
+  }
+
+  /**
+   * "Bought" (US-WUN-03) in one transaction: only an open plant wish changes. A second call (also a concurrent one,
+   * which waits for the row lock and then finds no open wish) returns the bought wish with `changed: false`; a
+   * discarded wish is `not_open`; a wish the row rules hide (another account) is `not_found`, like an unknown one.
+   */
+  async buy(userId: string, wishId: string): Promise<WishPurchase | "not_found" | "not_open"> {
+    return withAccount(this.pool, userId, async (c) => {
+      const changed = await c.query<WishRow>(
+        `update wish set status = 'bought' where id = $1 and type = 'plant' and status = 'wishlist' returning ${COLUMNS}`,
+        [wishId],
+      );
+      if (changed.rows[0]) return { wish: changed.rows[0], changed: true };
+      const now = await c.query<WishRow>(
+        `select ${COLUMNS} from wish where id = $1 and type = 'plant'`,
+        [wishId],
+      );
+      const wish = now.rows[0];
+      if (!wish) return "not_found";
+      return wish.status === "bought" ? { wish, changed: false } : "not_open";
+    });
+  }
+
+  /** Bought plant wishes (the history of US-WUN-03), by name; the row rules show only the own ones. */
+  async bought(userId: string): Promise<readonly WishRow[]> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<WishRow>(
+        `select ${COLUMNS} from wish where status = 'bought' and type = 'plant' order by lower(name), id`,
       ),
     );
     return r.rows;
