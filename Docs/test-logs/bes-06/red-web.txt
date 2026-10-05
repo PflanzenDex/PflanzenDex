@@ -148,3 +148,5 @@ AssertionError: expected '/* Bestand und Exemplar anlegen (US-B…' to contain '
    Start at  15:24:47
    Duration  587ms (transform 44%, tests 28%, import 24%, worker 4%)
 
+
+exit code recorded when run: 1

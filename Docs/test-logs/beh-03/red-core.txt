@@ -343,3 +343,5 @@ npm error workspace @pflanzendex/core
 npm error location /home/max/root/Code-Root/PflanzenDex/.claude/worktrees/agent-acf52b4cbecabe449/app/packages/core
 npm error command failed
 npm error command sh -c vitest run
+
+exit code recorded when run: 1

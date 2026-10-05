@@ -118,3 +118,5 @@ Error: nicht umgesetzt
    Start at  19:50:12
    Duration  662ms (tests 73%, transform 21%, import 6%)
 
+
+exit code recorded when run: 1

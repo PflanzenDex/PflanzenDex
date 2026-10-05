@@ -55,3 +55,5 @@ AssertionError: expected 400 to be 201 // Object.is equality
    Start at  19:50:13
    Duration  670ms (transform 53%, tests 32%, import 14%)
 
+
+exit code recorded when run: 1

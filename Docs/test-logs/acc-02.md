@@ -1,8 +1,10 @@
 # Test log: US-ACC-02 Profile and settings (issue #53)
 
-**Branch:** `feat/acc-02-profil-und-einstellungen` (merged with `origin/dev` at 46020c6, which was already current)
+**Branch:** `feat/acc-02-profil-und-einstellungen` (merged with `origin/dev` and has been forward-ported several times since)
 **Environment:** Linux, Node 24, Docker; PostgreSQL 16 in its own container (port 54647), API port 55147, web (Vite) port 55647, Keycloak 26.8 with the repo realm import in a throwaway container on port 55912 (redirect address of client `pflanzendex-web` adapted to port 55647 at runtime through the admin API, not in the repo). The shared test database (54329) and the shared sign-in service (18081) were not touched. Chromium via Playwright, locale de-DE, browser time zone `Asia/Tokyo` (deliberately not the Berlin default); date 2026-10-04.
 **Method:** automated tests on all layers, `make ci`, then a manual run with a throwaway Playwright script (not checked in) against the real stack: accounts through the Keycloak admin API, everything else through the UI at 1440x900 and 375x812. Screenshots and raw measurements are in `acc-02/` (`observation.json`). Containers and servers were removed afterwards.
+
+**Test data:** `acc-02/observation.json` is the pre-fix run and is superseded by `observation-retake.json` after the review fixes (see section 7).
 
 Legend: ✅ as expected · ⚠️ works, with a finding · ❌ error · ⏭️ not checked
 

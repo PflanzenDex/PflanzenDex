@@ -18,7 +18,7 @@ const verifier: NonNullable<AppOptions["reviewer"]> = async (token) => {
     ? { sub, email: `${sub}@example.test`, name: "Test", email_verified: true }
     : null;
 };
-type Reply = { status: number; body: Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any
+type Reply = { status: number; body: Record<string, any>; headers?: Headers }; // eslint-disable-line @typescript-eslint/no-explicit-any
 let open: ReturnType<typeof createApp>;
 let closed: ReturnType<typeof createApp>;
 
@@ -40,7 +40,7 @@ async function call(
     headers,
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
-  return { status: res.status, body: (await res.json()) as Reply["body"] };
+  return { status: res.status, body: (await res.json()) as Reply["body"], headers: res.headers };
 }
 const newCode = async (days?: number) => {
   const r = await call(
@@ -293,5 +293,11 @@ describe("US-ACC-05 · the operator area (role checked in the operation and in t
       invitationOnly: false,
     });
     expect(r).toMatchObject({ status: 200, body: { invitationOnly: false } });
+  });
+
+  it("US-ACC-05 POST /operator/invitations sets Cache-Control: no-store to prevent the code from being cached", async () => {
+    const r = await call(open, subOperator, "POST", "/operator/invitations", {});
+    expect(r.status).toBe(201);
+    expect(r.headers?.get("cache-control")).toBe("no-store");
   });
 });

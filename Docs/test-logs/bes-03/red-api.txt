@@ -155,3 +155,5 @@ AssertionError: expected { status: 409, …(1) } to match object { status: 409, 
              persist transforms across runs with fsModuleCache: true
              learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
 
+
+exit code recorded when run: 1

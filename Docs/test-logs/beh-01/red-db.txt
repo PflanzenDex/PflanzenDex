@@ -8,3 +8,5 @@
  FAIL  src/care/treatments.test.ts > US-BEH-01 treatments in the database > values outside the limits fail already in the database
  Test Files  1 failed (1)
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+exit code recorded when run: 1

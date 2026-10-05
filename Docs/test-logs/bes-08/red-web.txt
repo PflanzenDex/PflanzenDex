@@ -149,3 +149,5 @@ AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
    Start at  01:01:21
    Duration  5.67s (tests 91%, environment 7%, import 1%)
 
+
+exit code recorded when run: 1

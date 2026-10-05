@@ -118,3 +118,5 @@ AssertionError: expected { status: 500, …(1) } to match object { status: 201, 
    Start at  21:58:48
    Duration  1.12s (tests 65%, transform 24%, import 10%, worker 1%)
 
+
+exit code recorded when run: 1

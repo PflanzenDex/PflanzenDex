@@ -6,3 +6,5 @@
  FAIL  src/care/TreatmentsPage.test.tsx > US-BEH-01 Seite Behandlung planen > US-BEH-01 without reason, date or specimen nothing is sent and the form says why
  Test Files  1 failed (1)
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+exit code recorded when run: 1

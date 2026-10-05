@@ -161,3 +161,5 @@ Ignored nodes: comments, script, style
    Start at  10:00:21
    Duration  6.12s (tests 86%, environment 11%, import 2%)
 
+
+exit code recorded when run: 1

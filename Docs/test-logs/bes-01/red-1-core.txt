@@ -35,3 +35,5 @@ Error: Cannot find module './index' imported from /home/max/root/Code-Root/Pflan
    Start at  11:45:25
    Duration  179ms (worker 96%, environment 4%)
 
+
+exit code recorded when run: 1

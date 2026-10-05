@@ -266,3 +266,5 @@ AssertionError: expected { …(11) } to match object { Object (locationId) }
    Start at  02:57:17
    Duration  2.66s (tests 67%, transform 22%, import 11%)
 
+
+exit code recorded when run: 1

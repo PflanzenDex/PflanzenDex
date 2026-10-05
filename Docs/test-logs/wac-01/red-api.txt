@@ -33,3 +33,5 @@ AssertionError: expected { …(11) } to match object { letzteMessung: { …(4) }
   Transform  transforming modules took 2.63s · 26% of tracked time, re-done on every run
              persist transforms across runs with fsModuleCache: true
              learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+exit code recorded when run: 1

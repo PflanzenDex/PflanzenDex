@@ -325,3 +325,5 @@ AssertionError: expected [] to deeply equal [ [ 'Lampe 2', +0 ], …(2) ]
    Start at  19:47:32
    Duration  212ms (transform 72%, import 14%, tests 12%, worker 2%)
 
+
+exit code recorded when run: 1

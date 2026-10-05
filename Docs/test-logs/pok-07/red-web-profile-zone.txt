@@ -29,3 +29,5 @@ Received: "http://api/pokedex/ownership?timeZone=Europe%2FBerlin"
    Start at  15:38:22
    Duration  1.23s (environment 51%, tests 32%, import 9%, transform 6%, worker 1%)
 
+
+exit code recorded when run: 1

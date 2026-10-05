@@ -38,3 +38,5 @@ AssertionError: expected +0 to be 1 // Object.is equality
    Duration  5.61s (tests 89%, import 7%, transform 4%, worker 1%)
     Isolate  9 workers spawned · ~93ms startup each (spawn + environment, per file)
              at least ~745ms faster with isolate: false — reuses workers across files instead of one per file
+
+exit code recorded when run: 1

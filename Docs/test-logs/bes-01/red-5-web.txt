@@ -23,3 +23,5 @@ Error: Cannot find module './profil-ansicht' imported from /home/max/root/Code-R
    Start at  11:51:25
    Duration  143ms (worker 95%, environment 5%)
 
+
+exit code recorded when run: 1

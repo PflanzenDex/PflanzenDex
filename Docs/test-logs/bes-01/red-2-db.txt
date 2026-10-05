@@ -36,3 +36,5 @@ error: relation "art" does not exist
    Start at  11:48:04
    Duration  413ms (tests 61%, transform 26%, import 12%, worker 1%)
 
+
+exit code recorded when run: 1

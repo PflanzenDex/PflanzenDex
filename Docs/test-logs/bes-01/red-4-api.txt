@@ -34,3 +34,5 @@ SyntaxError: Unexpected non-whitespace character after JSON at position 4 (line 
    Start at  11:50:11
    Duration  390ms (transform 63%, import 19%, tests 17%, worker 1%)
 
+
+exit code recorded when run: 1

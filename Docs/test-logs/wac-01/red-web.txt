@@ -34,3 +34,5 @@ Received: "<section aria-labelledby="bestand-titel"><h1 id="bestand-titel">Besta
    Duration  2.63s (environment 35%, tests 34%, transform 18%, import 12%)
     Isolate  21 workers spawned · ~465ms startup each (spawn + environment, per file)
              at least ~423ms faster with isolate: false — reuses workers across files instead of one per file
+
+exit code recorded when run: 1
