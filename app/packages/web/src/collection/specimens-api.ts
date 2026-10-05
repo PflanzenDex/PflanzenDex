@@ -76,3 +76,21 @@ export async function markSpecimen(
   );
   return r.ok ? { ok: true, value: r.value as Specimen } : r;
 }
+
+/**
+ * Corrects the catch date of a specimen (US-BES-11). The profile's time zone (US-ACC-02; the device's as fallback)
+ * decides what "in the future" means (NFR-08). The repeat-guard key is created per call.
+ */
+export async function correctCatchDate(
+  api: string,
+  token: string,
+  input: { id: string; catchDate: string },
+  fetchFn: FetchFn = fetch,
+): Promise<Response<Specimen>> {
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/specimens/${encodeURIComponent(input.id)}/catch-date`,
+    { catchDate: input.catchDate, timeZone: currentTimeZone() },
+  );
+  return r.ok ? { ok: true, value: r.value as Specimen } : r;
+}

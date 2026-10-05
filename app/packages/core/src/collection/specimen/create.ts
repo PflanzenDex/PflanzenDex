@@ -16,7 +16,12 @@ import { withDerivations } from "../shared/read";
 import { speciesDisplayName, specimenName } from "../shared/name";
 import { markerAnswersField, planMarkers } from "../shared/markers";
 import { CREATE_STATUS, SPECIMEN_LIMITS } from "../shared/types";
-import type { SpeciesSource, SpecimenStore, TargetLocationSource } from "../shared/types";
+import type {
+  CatchDateStore,
+  SpeciesSource,
+  SpecimenStore,
+  TargetLocationSource,
+} from "../shared/types";
 
 /** What the store can refuse besides a taken name (which also reports the existing specimens). */
 const REFUSED = {
@@ -107,5 +112,42 @@ export const specimenCreate = (deps: CreateDependencies) =>
       if (r !== "name_taken") return failed(appError(REFUSED[r]));
       const existing = siblings.map(({ id, name: n }) => ({ id, name: n }));
       return failed(appError("specimen.name_taken", { data: { name, existing } }));
+    },
+  });
+
+export interface CatchDateDependencies {
+  readonly specimens: CatchDateStore;
+  /** The clock comes from outside so that "today" is testable (NFR-08). */
+  readonly clock: () => Date;
+}
+
+const correctSchema = shape({
+  specimenId: idField("specimenId"),
+  timeZone: timeZoneField("timeZone"),
+  // The same field and rule as on creation (FR-BES-04): a calendar date from 1900 on, required here.
+  catchDate: calendarDateField("catchDate"),
+});
+
+const CAUGHT_AFTER_ARCHIVED = appError("specimen.caught_after_archived", {
+  details: [{ field: "catchDate", code: "specimen.caught_after_archived" }],
+});
+
+/**
+ * Corrects the catch date of an existing specimen (US-BES-11) under the rules of the creation (FR-BES-04): a calendar
+ * date, not before 1900-01-01, not after today's date in the keeper's time zone (`specimen.caught_in_future`). Only
+ * `caught_at` changes; the Pokédex derives its catch date from it (US-POK-07, nothing stored twice, P-01). An archived
+ * specimen can be corrected too, but not to a date after its archiving (`specimen.caught_after_archived`). A foreign
+ * or unknown specimen looks the same: `specimen.not_found` (P-04).
+ */
+export const specimenCorrectCatchDate = (deps: CatchDateDependencies) =>
+  defineOperation({
+    name: "specimen.correct_catch_date",
+    schema: correctSchema,
+    run: async ({ userId }, input) => {
+      const today = localToday(deps.clock(), input.timeZone);
+      if (isFuture(input.catchDate, today)) return failed(CAUGHT_IN_FUTURE);
+      const r = await deps.specimens.setCaughtAt(userId, input.specimenId, input.catchDate);
+      if (r === "not_found") return failed(appError("specimen.not_found"));
+      return r === "after_archived" ? failed(CAUGHT_AFTER_ARCHIVED) : ok(withDerivations(r));
     },
   });
