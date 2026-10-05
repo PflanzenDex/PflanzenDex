@@ -29,6 +29,10 @@ export default {
   componentExempt: ["main", "routes"],
   // First match wins; "*" is one path segment. A collection has no entry limit but a name pattern (LY-2).
   dirs: [
+    // Module roots (FR-QG-21): the `src/` folder holds the modules, and there are more modules than the unit limit, so it
+    // has none; a module holds up to 10 feature directories (starting value, assumption), inside a feature 5 applies.
+    { path: "app/packages/*/src", maxUnits: Infinity },
+    { path: "app/packages/*/src/*", maxUnits: 10 },
     {
       path: "app/packages/db/migrations",
       collection: /^\d{4}_[a-z0-9_]+\.sql$/,

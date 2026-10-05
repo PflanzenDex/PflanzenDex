@@ -5,7 +5,7 @@
 //   MK-1  marker STRUCTURE_IGNORE / MAX_LINES_IGNORE / COMPLEXITY_IGNORE (first 5 lines) without a reason
 //   EX-1  entry in KNOWN_EXCEPTIONS (accepted legacy, with a reason, may only shrink) without a reason
 //   AB-7..AB-14  module boundaries (FR-QG-19): check-modules*.mjs, register modules.config.mjs
-//   ST-c  every directory with code in `core` has an `index.ts`
+//   ST-c  `core/src` and every module directory with code in `core` has an `index.ts` (feature folders below do not, ADR 0008)
 import fs from "node:fs";
 import path from "node:path";
 import { builtinModules } from "node:module";
@@ -131,12 +131,14 @@ function checkStructure(appDir, add) {
     (f) => CODE.test(f) && !isTest(f) && !hasMarker(fs.readFileSync(f, "utf8"), "STRUCTURE_IGNORE"),
   );
   for (const dir of new Set(codeFiles.map((f) => path.dirname(f)))) {
+    // Barrels exist per module only (ADR 0008): `src/` and each module root, not the feature folders below it.
+    if (path.relative(coreSrc, dir).split(path.sep).filter(Boolean).length > 1) continue;
     if (!fs.existsSync(path.join(dir, "index.ts")))
       add(
         "ST-c",
         path.join(dir, "index.ts"),
         0,
-        "missing: every directory with code needs an index.ts as its public interface",
+        "missing: every module directory with code needs an index.ts as its public interface",
       );
   }
 }

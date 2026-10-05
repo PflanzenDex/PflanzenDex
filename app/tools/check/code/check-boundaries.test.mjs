@@ -104,8 +104,16 @@ describe("architecture boundaries (US-QG-03)", () => {
       project({ ...clean, "packages/core/src/plan/rule.ts": "export const r = 1;\n" }),
     );
     assert.deepEqual(v, [
-      "ST-c packages/core/src/plan/index.ts missing: every directory with code needs an index.ts as its public interface",
+      "ST-c packages/core/src/plan/index.ts missing: every module directory with code needs an index.ts as its public interface",
     ]);
+  });
+  it("ST-c: a feature directory below a module root needs no index.ts (ADR 0008: barrels per module only)", () => {
+    assert.deepEqual(
+      checkProject(
+        project({ ...clean, "packages/core/src/meta/feature/y.ts": "export const y = 1;\n" }),
+      ),
+      [],
+    );
   });
   it("ST-c: a directory with only test files needs no index.ts", () => {
     assert.deepEqual(

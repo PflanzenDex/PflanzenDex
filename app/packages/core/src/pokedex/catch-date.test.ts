@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { InMemorySpecimens, SpeciesStub, testSpecies } from "../collection/test-helpers";
+import { InMemorySpecimens, SpeciesStub, testSpecies } from "../collection/shared/test-helpers";
 import { execute } from "../kernel";
 import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
 import {
