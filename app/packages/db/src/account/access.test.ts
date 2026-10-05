@@ -1,13 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
+import { findSchemaViolations } from "../schema-check.ts";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import {
-  migrate,
-  openPool,
-  withAccount,
-  findSchemaViolations,
-  tenantsTables,
-} from "../kernel/index.ts";
+import { migrate, openPool, withAccount, tenantsTables } from "../kernel/index.ts";
 import { assignRole } from "../fixtures.ts";
 import { AccessPostgres, admitAccount } from "./index.ts";
 

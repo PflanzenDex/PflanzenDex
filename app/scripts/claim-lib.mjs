@@ -66,10 +66,16 @@ export function scopeOf(issue) {
   return EPIC_SCOPES.includes(epic) ? epic : "dev";
 }
 
+/**
+ * Whether a PR belongs to the issue. A closing keyword ("Closes #n") in the body is the link for every PR. A story
+ * key in title or branch counts for open PRs only (live work that skipped the keyword): a merged PR that merely
+ * mentions the key (a part of a bigger story) must not make the story look taken (#393).
+ */
 export function prReferences(pr, issue) {
-  const key = claimKey(issue);
   const closes = [...(pr.body ?? "").matchAll(CLOSING)].some((m) => Number(m[1]) === issue.number);
-  return closes || hasKey(pr.title, key) || hasKey(pr.headRefName, key);
+  if (closes) return true;
+  const key = claimKey(issue);
+  return prState(pr) === "open" && (hasKey(pr.title, key) || hasKey(pr.headRefName, key));
 }
 
 export function prState(pr) {

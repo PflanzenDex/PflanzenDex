@@ -18,14 +18,6 @@ export const KERNEL_GLOSSARY_WORDS = [
 ];
 
 // AB-13: ports that are declared in code but have no shared contract test yet, each with the reason. A port with a
-// `*.contract.test.ts` that names it must not stay here (stale entries fail). The list may only shrink.
-export const PORTS_WITHOUT_CONTRACT_TEST = {
-  TargetLocationSource:
-    "Only implementation is the database-backed adapter in api/care; its contract test needs the test database (follow-up).",
-  MeasurementSource:
-    "Only implementation is the database-backed adapter in api/care; its contract test needs the test database (follow-up).",
-  TreatmentSource:
-    "Only implementation is the database-backed adapter in api/care; its contract test needs the test database (follow-up).",
-  SpeciesRepointer:
-    "Implementations (collection, later wishlist) run on a pooled client in the merge transaction; the contract test needs the test database (follow-up).",
-};
+// `*.contract.test.ts` that names it must not stay here (stale entries fail). The list may only shrink; it is empty
+// since every declared port has a contract test.
+export const PORTS_WITHOUT_CONTRACT_TEST = {};

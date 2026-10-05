@@ -50,17 +50,19 @@ const namedWords = (src) => new Set(src.match(/\w+/g) ?? []);
 export function checkPortContracts({ appDir, add, cfg, h }) {
   const exempt = cfg.PORTS_WITHOUT_CONTRACT_TEST ?? {};
   const file = path.join(appDir, CONFIG_FILE);
+  // The implementer, not the owner, usually holds the contract test (e.g. `care` for a port of `collection`).
+  const contracts = new Set();
+  for (const f of LAYERS.flatMap((pkg) => h.walkCode(path.join(appDir, "packages", pkg, "src"))))
+    if (/\.contract\.test\.[a-z]+$/.test(f))
+      namedWords(fs.readFileSync(f, "utf8")).forEach((w) => contracts.add(w));
   for (const m of cfg.MODULES) {
-    const files = LAYERS.flatMap((pkg) =>
-      h.walkCode(path.join(appDir, "packages", pkg, "src", m.name)),
-    );
     const declared = new Set();
-    const contracts = new Set();
-    for (const f of files) {
-      const src = fs.readFileSync(f, "utf8");
-      if (/\.contract\.test\.[a-z]+$/.test(f)) namedWords(src).forEach((w) => contracts.add(w));
-      else if (!isTestFile(f)) declaredNames(h.stripComments(src)).forEach((w) => declared.add(w));
-    }
+    for (const pkg of LAYERS)
+      for (const f of h.walkCode(path.join(appDir, "packages", pkg, "src", m.name)))
+        if (!isTestFile(f))
+          declaredNames(h.stripComments(fs.readFileSync(f, "utf8"))).forEach((w) =>
+            declared.add(w),
+          );
     for (const port of m.ports) {
       const stale = port in exempt && (!declared.has(port) || contracts.has(port));
       if (stale)

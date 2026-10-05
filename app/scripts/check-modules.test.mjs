@@ -522,6 +522,14 @@ describe("AB-13 contract test per port (FR-QG-19)", () => {
     assert.deepEqual(run({ ...declared, ...contract }, withPort), []);
   });
 
+  it("a contract test of the implementing module counts for a port of another module", () => {
+    const other = {
+      "packages/core/src/care/zone-usage.contract.test.ts":
+        'describe("ZoneUsage contract", () => {});\n',
+    };
+    assert.deepEqual(run({ ...declared, ...other }, withPort), []);
+  });
+
   it("a test that is not named *.contract.test does not count", () => {
     const other = { "packages/core/src/light/zone-usage.test.ts": "// ZoneUsage\n" };
     assert.equal(run({ ...declared, ...other }, withPort).length, 1);
