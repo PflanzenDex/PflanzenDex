@@ -8,6 +8,15 @@ export function toBaseline(findings) {
   return Object.fromEntries(Object.entries(out).sort(([a], [b]) => a.localeCompare(b)));
 }
 
+// What to do next, per rule (P-09).
+const NEXT = {
+  "LY-1": "group the entries into subfolders or declare a collection in app/layout.config.mjs",
+  "LY-2": "rename the entry to the name pattern of its collection",
+  "LY-3": "rename it to kebab-case",
+  "LY-4": "move the component x.tsx into a folder x/",
+  "LY-5": "move it under app/, docs/ or tools/ (or add it to the root whitelist in the config)",
+};
+
 const hint = (f) => `${f.items.slice(0, 3).join(", ")}${f.items.length > 3 ? ", ..." : ""}`;
 
 // Compares the measured findings with the baseline and, when given, with the baseline on dev.
@@ -19,11 +28,11 @@ export function compareBaseline(findings, baseline, devBaseline) {
     seen.add(`${f.rule} ${f.dir}`);
     if (known === undefined)
       errors.push(
-        `${f.rule} ${f.dir}: ${f.value} (${hint(f)}); fix it, new violations are not allowed`,
+        `${f.rule} ${f.dir}: ${f.value} (${hint(f)}); new violations are not allowed: ${NEXT[f.rule]}`,
       );
     else if (f.value > known)
       errors.push(
-        `${f.rule} ${f.dir}: ${f.value}, baseline allows ${known}; the directory got worse`,
+        `${f.rule} ${f.dir}: ${f.value}, baseline allows ${known}; the directory got worse: ${NEXT[f.rule]}`,
       );
     else if (f.value < known)
       errors.push(

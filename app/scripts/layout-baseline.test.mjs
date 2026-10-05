@@ -49,3 +49,19 @@ describe("US-QG-09 LY-6 baseline ratchet", () => {
     );
   });
 });
+
+describe("US-QG-09 every violation says what to do next", () => {
+  const next = {
+    "LY-1": /group the entries|declare a collection/,
+    "LY-2": /name pattern/,
+    "LY-3": /kebab-case/,
+    "LY-4": /into a folder/,
+    "LY-5": /app\/, docs\/ or tools\//,
+  };
+  for (const [rule, hint] of Object.entries(next)) {
+    it(`${rule}: new violation and worse directory both carry a hint`, () => {
+      assert.match(compareBaseline([f(rule, "a", 2)], {})[0], hint);
+      assert.match(compareBaseline([f(rule, "a", 3)], { [rule]: { a: 2 } })[0], hint);
+    });
+  }
+});
