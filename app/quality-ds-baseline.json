@@ -129,46 +129,6 @@
       "rule": "DS-48",
       "file": "collection/specimen-card.tsx",
       "count": 1
-    },
-    {
-      "rule": "DS-48",
-      "file": "light/derivation-view.tsx",
-      "count": 4
-    },
-    {
-      "rule": "DS-48",
-      "file": "light/form.tsx",
-      "count": 2
-    },
-    {
-      "rule": "DS-48",
-      "file": "light/light-overview-view.tsx",
-      "count": 1
-    },
-    {
-      "rule": "DS-48",
-      "file": "light/light-view.tsx",
-      "count": 1
-    },
-    {
-      "rule": "DS-48",
-      "file": "light/LightPage.tsx",
-      "count": 2
-    },
-    {
-      "rule": "DS-48",
-      "file": "light/locations-view.tsx",
-      "count": 4
-    },
-    {
-      "rule": "DS-48",
-      "file": "light/setup-steps.tsx",
-      "count": 2
-    },
-    {
-      "rule": "DS-48",
-      "file": "light/zones-view.tsx",
-      "count": 5
     }
   ]
 }

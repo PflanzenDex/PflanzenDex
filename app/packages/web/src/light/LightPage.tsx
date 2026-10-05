@@ -1,7 +1,10 @@
-import "./light.css";
+import { EmptyState } from "@/components/shared/empty-state";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { SIGN_IN as KERNEL_SIGN_IN } from "../kernel";
 import { LightView, type LightActions } from "./light-view";
 import { LightOverviewView } from "./light-overview-view";
+import { LightPageSkeleton } from "./light-page.skeleton";
+import { refusalText } from "./refusal";
 import {
   createWrite,
   loadDerivation,
@@ -19,14 +22,15 @@ type State =
   | { kind: "error"; error: ApiError }
   | { kind: "bereit"; data: LightData; overview: Response<LightOverview> };
 
-type Token = () => Promise<string | undefined>;
+/** The refusal of a missing sign-in, typed for this module. */
+const SIGN_IN: ApiError = { code: KERNEL_SIGN_IN.code, text: KERNEL_SIGN_IN.text };
 
-const NOT_SIGNED_IN = { code: "access.not_signed_in", text: "Bitte melde dich neu an." };
+type Token = () => Promise<string | undefined>;
 
 async function derive(api: string, token: Token, a: DerivationRequest) {
   const t = await token();
   if (t) return loadDerivation(api, t, a);
-  return { ok: false as const, error: NOT_SIGNED_IN };
+  return { ok: false as const, error: SIGN_IN };
 }
 
 function buildActions(
@@ -37,7 +41,7 @@ function buildActions(
 ): LightActions {
   const write = async (method: "POST" | "PUT" | "DELETE", path: string, body?: unknown) => {
     const t = await token();
-    if (!t) return { code: "access.not_signed_in", text: "Bitte melde dich neu an." };
+    if (!t) return SIGN_IN;
     const r = await createWrite(api, t)(method, path, body);
     if (!r.ok) return r.error;
     setLastError(undefined);
@@ -67,16 +71,16 @@ function OverviewSection(props: {
   const o = props.overview;
   if (o.ok) return <LightOverviewView data={o.value} onOpenCollection={props.onOpenCollection} />;
   return (
-    <section aria-labelledby="overview-error">
-      <h2 id="overview-error">Lichthunger</h2>
-      <p role="alert" className="warning">
-        {o.error.text}
-      </p>
-      <div className="actions">
-        <button type="button" className="primary" onClick={props.onRetry}>
-          Erneut versuchen
-        </button>
-      </div>
+    <section aria-labelledby="overview-error" className="flex min-w-0 flex-col gap-3">
+      <h2 id="overview-error" className="text-xl font-semibold">
+        Lichthunger
+      </h2>
+      <EmptyState
+        variant="error"
+        title="Lichthunger konnte nicht geladen werden"
+        description={refusalText(o.error)}
+        action={{ label: "Erneut versuchen", onClick: props.onRetry }}
+      />
     </section>
   );
 }
@@ -93,11 +97,7 @@ export function LightPage(props: {
 
   const load = useCallback(async () => {
     const t = await token();
-    if (!t)
-      return setZ({
-        kind: "error",
-        error: { code: "access.not_signed_in", text: "Bitte melde dich neu an." },
-      });
+    if (!t) return setZ({ kind: "error", error: SIGN_IN });
     const [r, o] = await Promise.all([loadLight(api, t), loadLightOverview(api, t)]);
     if (!r.ok) return setZ({ kind: "error", error: r.error });
     // The overview is an addition: if only it fails, the zones and locations stay usable.
@@ -107,27 +107,19 @@ export function LightPage(props: {
 
   const actions = useMemo(() => buildActions(api, token, load, setLastError), [api, token, load]);
 
-  if (z.kind === "loading")
-    return (
-      <p role="status" aria-busy="true">
-        Standorte und Lichtzonen werden geladen …
-      </p>
-    );
+  const loading = "Standorte und Lichtzonen werden geladen …";
+  if (z.kind === "loading") return <LightPageSkeleton label={loading} />;
   if (z.kind === "error")
     return (
-      <div>
-        <p role="alert" className="warning">
-          {z.error.text}
-        </p>
-        <div className="actions">
-          <button type="button" className="primary" onClick={() => void load()}>
-            Erneut versuchen
-          </button>
-        </div>
-      </div>
+      <EmptyState
+        variant="error"
+        title="Standorte und Lichtzonen konnten nicht geladen werden"
+        description={refusalText(z.error)}
+        action={{ label: "Erneut versuchen", onClick: () => void load() }}
+      />
     );
   return (
-    <div className="light-page">
+    <div className="flex min-w-0 flex-col gap-6">
       <OverviewSection
         overview={z.overview}
         onOpenCollection={props.onOpenCollection}
