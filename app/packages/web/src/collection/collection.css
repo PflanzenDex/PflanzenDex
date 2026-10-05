@@ -5,7 +5,7 @@
 .name-preview {
   margin: 0;
   padding: 12px 14px;
-  border: 1px solid var(--rand);
+  border: 1px solid var(--border);
   border-radius: 10px;
   font-weight: 600;
   overflow-wrap: anywhere;
@@ -29,7 +29,7 @@
   align-content: start;
   padding: 12px;
   background: var(--card);
-  border: 1px solid var(--rand);
+  border: 1px solid var(--border);
   border-radius: 12px;
   overflow-wrap: anywhere;
 }
@@ -45,7 +45,7 @@
   min-height: 24px;
   height: 24px;
   flex: none;
-  accent-color: var(--gruen);
+  accent-color: var(--primary);
 }
 /* Up to three actions per card: they wrap as whole buttons instead of breaking inside a word. */
 .specimen-card .actions {
@@ -70,7 +70,7 @@
   aspect-ratio: 4 / 3;
   overflow: hidden;
   border-radius: 8px;
-  background: var(--grund);
+  background: var(--background);
 }
 .card-photo img {
   width: 100%;
@@ -79,7 +79,7 @@
   display: block;
 }
 a.card-photo:focus-visible {
-  outline: 3px solid var(--text);
+  outline: 3px solid var(--foreground);
   outline-offset: 2px;
 }
 .platzhalter {
@@ -87,17 +87,17 @@ a.card-photo:focus-visible {
   min-height: 72px;
   display: grid;
   place-items: center;
-  border: 1px dashed var(--rand);
-  color: var(--leise);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
 }
 .quality-healthy {
-  color: var(--text);
+  color: var(--foreground);
 }
 .quality-etiolated,
 .due-overdue {
-  color: var(--text);
-  background: var(--warn-grund);
-  border-bottom: 2px solid var(--warn-rand);
+  color: var(--foreground);
+  background: var(--warning);
+  border-bottom: 2px solid var(--warning-border);
   padding: 0 4px;
 }
 .due-overdue {
@@ -105,8 +105,8 @@ a.card-photo:focus-visible {
 }
 .quality-hint {
   padding: 6px 8px;
-  background: var(--warn-grund);
-  border-left: 4px solid var(--warn-rand);
+  background: var(--warning);
+  border-left: 4px solid var(--warning-border);
   font-size: 0.9rem;
 }
 .note summary {
@@ -116,7 +116,7 @@ a.card-photo:focus-visible {
   cursor: pointer;
 }
 .note summary:focus-visible {
-  outline: 3px solid var(--text);
+  outline: 3px solid var(--foreground);
   outline-offset: 2px;
 }
 
@@ -140,7 +140,7 @@ a.card-photo:focus-visible {
   margin-bottom: 20px;
   padding: 4px 16px 12px;
   background: var(--card);
-  border: 1px solid var(--rand);
+  border: 1px solid var(--border);
   border-radius: 12px;
 }
 .distribution .next-action {
@@ -161,17 +161,17 @@ a.card-photo:focus-visible {
 .distribution-list .balken {
   display: block;
   height: 8px;
-  background: var(--rand);
+  background: var(--border);
   border-radius: 4px;
   overflow: hidden;
 }
 .distribution-list .balken span {
   display: block;
   height: 100%;
-  background: var(--gruen);
+  background: var(--primary);
 }
 .distribution-list .thinnest .balken span {
-  background: var(--warn-rand);
+  background: var(--warning-border);
 }
 
 /* Own care profile (US-BES-09): catalog value above my deviation, the reset below; wider screens get more columns. */
@@ -185,7 +185,7 @@ a.card-photo:focus-visible {
   display: grid;
   gap: 8px;
   padding: 12px 0;
-  border-top: 1px solid var(--rand);
+  border-top: 1px solid var(--border);
 }
 .profile-row p {
   margin: 0;
@@ -212,12 +212,12 @@ a.card-photo:focus-visible {
 }
 .table-scroll {
   overflow-x: auto;
-  border: 1px solid var(--rand);
+  border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--card);
 }
 .table-scroll:focus-visible {
-  outline: 3px solid var(--text);
+  outline: 3px solid var(--foreground);
   outline-offset: 2px;
 }
 /* Eight columns need more than the 720px column of the other views (US-BES-05). Only the table breaks out, centered,
@@ -241,7 +241,7 @@ table.difficulty-table td {
   padding: 10px 6px;
   text-align: left;
   vertical-align: top;
-  border-bottom: 1px solid var(--rand);
+  border-bottom: 1px solid var(--border);
 }
 table.difficulty-table tbody tr:last-child > * {
   border-bottom: 0;

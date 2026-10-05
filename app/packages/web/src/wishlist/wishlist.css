@@ -23,7 +23,7 @@
   align-content: start;
   padding: 12px;
   background: var(--card);
-  border: 1px solid var(--rand);
+  border: 1px solid var(--border);
   border-radius: 12px;
   overflow-wrap: anywhere;
 }
@@ -44,24 +44,24 @@
   aspect-ratio: 4 / 3;
   overflow: hidden;
   border-radius: 8px;
-  background: var(--grund);
+  background: var(--background);
 }
 .wish-placeholder {
   aspect-ratio: auto;
   min-height: 72px;
   display: grid;
   place-items: center;
-  border: 1px dashed var(--rand);
-  color: var(--leise);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
 }
 .candidate-rank {
-  color: var(--leise);
+  color: var(--muted-foreground);
   font-size: 0.9rem;
 }
 /* The thinnest zone is marked in words and by a border, not by colour alone. */
 .candidate[data-priority="thinnest"] {
   border-width: 2px;
-  border-color: var(--gruen);
+  border-color: var(--primary);
 }
 .candidate[data-priority="zone_unknown"],
 .candidate[data-priority="zone_outside"] {
@@ -77,20 +77,20 @@
 .wishlist-page textarea {
   padding: 10px 12px;
   border-radius: 10px;
-  border: 2px solid var(--rand);
-  background: var(--grund);
-  color: var(--text);
+  border: 2px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
   font: inherit;
 }
 .wish-placeholder a {
   padding: 12px;
   text-align: center;
-  color: var(--gruen);
+  color: var(--primary);
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 4px;
 }
 .wish-placeholder a:focus-visible {
-  outline: 3px solid var(--text);
+  outline: 3px solid var(--foreground);
   outline-offset: 2px;
 }

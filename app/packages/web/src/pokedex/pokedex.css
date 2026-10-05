@@ -16,7 +16,7 @@
   align-content: start;
   padding: 12px;
   background: var(--card);
-  border: 1px solid var(--rand);
+  border: 1px solid var(--border);
   border-radius: 12px;
   overflow-wrap: anywhere;
 }
@@ -33,9 +33,9 @@
 }
 .chip {
   padding: 2px 10px;
-  border: 1px solid var(--rand);
+  border: 1px solid var(--border);
   border-radius: 999px;
-  color: var(--leise);
+  color: var(--muted-foreground);
   font-size: 0.875rem;
 }
 .caught-card .catch-date {
@@ -58,7 +58,7 @@
   font: inherit;
   color: inherit;
   background: var(--card);
-  border: 1px solid var(--rand);
+  border: 1px solid var(--border);
   border-radius: 12px;
 }
 .filters {
@@ -72,7 +72,7 @@
   font: inherit;
   color: inherit;
   background: var(--card);
-  border: 1px solid var(--rand);
+  border: 1px solid var(--border);
   border-radius: 999px;
   cursor: pointer;
 }
@@ -103,7 +103,7 @@
   color: inherit;
   text-align: left;
   background: transparent;
-  border: 1px solid var(--rand);
+  border: 1px solid var(--border);
   border-radius: 12px;
   cursor: pointer;
 }
@@ -142,9 +142,9 @@
   display: grid;
   place-items: center;
   min-height: 12rem;
-  color: var(--leise);
+  color: var(--muted-foreground);
   background: var(--card);
-  border: 1px dashed var(--rand);
+  border: 1px dashed var(--border);
   border-radius: 12px;
 }
 .detail-actions {
@@ -163,11 +163,11 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  color: var(--leise);
+  color: var(--muted-foreground);
   font-size: 1.5rem;
   line-height: 1;
 }
 .caught-card:hover,
 .caught-card:focus-within {
-  border-color: var(--leise);
+  border-color: var(--muted-foreground);
 }
