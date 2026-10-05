@@ -3,7 +3,7 @@
   margin: 0 0 8px;
 }
 .settings .choice {
-  border: 2px solid var(--rand);
+  border: 2px solid var(--border);
   border-radius: 10px;
   padding: 4px 12px 8px;
   margin: 0;
@@ -23,10 +23,10 @@
   min-height: 24px;
   height: 24px;
   flex: none;
-  accent-color: var(--gruen);
+  accent-color: var(--primary);
 }
 .settings .note {
   margin: 4px 0 0;
-  color: var(--leise);
+  color: var(--muted-foreground);
   font-size: 0.95rem;
 }

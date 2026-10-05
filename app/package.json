@@ -36,7 +36,9 @@
     "duplicates": "node scripts/check-duplicates.mjs",
     "release-tags": "node scripts/check-release-tags.mjs",
     "e2e": "npm run e2e -w @pflanzendex/e2e",
-    "changelog": "node scripts/check-changelog.mjs"
+    "changelog": "node scripts/check-changelog.mjs",
+    "storybook": "npm run storybook -w @pflanzendex/web",
+    "build-storybook": "npm run build-storybook -w @pflanzendex/web"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",

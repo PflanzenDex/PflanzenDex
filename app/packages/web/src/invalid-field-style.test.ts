@@ -8,7 +8,7 @@ const rule = /\[aria-invalid="true"\]\s*{([^}]*)}/.exec(css)?.[1] ?? "";
 
 describe("US-ACC-02 marker of a refused field", () => {
   it("US-ACC-02 draws the marker visibly (colour and inset ring) without changing the box size", () => {
-    expect(rule).toContain("var(--fehler-rand)");
+    expect(rule).toContain("var(--destructive)");
     expect(rule).toMatch(/box-shadow:\s*inset/);
     expect(rule).not.toMatch(/(^|[\s;])border(-width)?:\s*\d+px/);
     expect(rule).not.toMatch(/padding|margin|outline-offset:\s*[1-9]/);

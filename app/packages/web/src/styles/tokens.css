@@ -1,7 +1,11 @@
 /*
- * Design system stack (US-QS-07, DS-57). Tailwind v4 theme and utilities only: no preflight yet (#347),
- * so the legacy style.css and the module CSS keep their look. Layered rules lose against unlayered
- * CSS, so the legacy rules win wherever they exist. Tokens follow in #333.
+ * Design system stack and tokens (US-QS-07, DS-20, DS-27, DS-28, DS-30). Tailwind v4 theme and utilities only:
+ * no preflight yet (#347), so the legacy style.css and the module CSS keep their look. Layered rules lose
+ * against unlayered CSS, so the legacy rules win wherever they exist.
+ *
+ * Tokens are CSS variables on :root, redefined for dark mode with the system setting (ADR 0007 decision 6),
+ * exposed to Tailwind with @theme inline. Names are by role, not by hue. style-contrast.test.ts checks every
+ * pair in light and dark, and fails when a colour token has no pair.
  */
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme" layer(theme);
@@ -9,3 +13,104 @@
 
 /* Dark mode follows the system, as today (ADR 0007 decision 6). */
 @custom-variant dark (@media (prefers-color-scheme: dark));
+
+:root {
+  --background: #f4f7f2;
+  --foreground: #1b2a1f;
+  --card: #ffffff;
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: #2f7d4f;
+  --primary-foreground: #ffffff;
+  --secondary: #e6efe4;
+  --secondary-foreground: #1b2a1f;
+  --muted: #e9efe6;
+  --muted-foreground: #4f6355;
+  --accent: #dcebd9;
+  --accent-foreground: #1b2a1f;
+  --destructive: #b3261e; /* invalid field border and error text */
+  --destructive-foreground: #ffffff;
+  --border: #cfdccf; /* decorative lines of cards and dividers */
+  --input: var(--border);
+  --ring: #2f7d4f;
+  --radius: 0.625rem;
+
+  /* Warning (etiolation, deviation): fill, text on it, border. */
+  --warning: #fff4d6;
+  --warning-foreground: #1b2a1f;
+  --warning-border: #c98a00;
+
+  /* Domain colours (DS-30): light zones 1 to 4 and care phases, used as text or marks on background and card. */
+  --zone-1: #8a5a00;
+  --zone-2: #4d6b00;
+  --zone-3: #1f6b3a;
+  --zone-4: #0b6a8a;
+  --phase-growth: #1f6b3a;
+  --phase-dormancy: #3f5f9a;
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #121a14;
+    --foreground: #e8f1ea;
+    --card: #1b261e;
+    --primary: #5fbf86;
+    --primary-foreground: #0d1a11;
+    --secondary: #1f2e24;
+    --secondary-foreground: #e8f1ea;
+    --muted: #1b261e;
+    --muted-foreground: #a9bdae;
+    --accent: #26382c;
+    --accent-foreground: #e8f1ea;
+    --destructive: #ff8a80; /* 7.8:1 on --background, 6.9:1 on --card */
+    --destructive-foreground: #2a0a08;
+    --border: #2e4034;
+    --ring: #5fbf86;
+
+    --warning: #3a3012;
+    --warning-foreground: #e8f1ea;
+    --warning-border: #e0a92e;
+
+    --zone-1: #e0a92e;
+    --zone-2: #b4d15a;
+    --zone-3: #5fbf86;
+    --zone-4: #6cc4e3;
+    --phase-growth: #7fd29d;
+    --phase-dormancy: #9db8f0;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-border: var(--warning-border);
+  --color-zone-1: var(--zone-1);
+  --color-zone-2: var(--zone-2);
+  --color-zone-3: var(--zone-3);
+  --color-zone-4: var(--zone-4);
+  --color-phase-growth: var(--phase-growth);
+  --color-phase-dormancy: var(--phase-dormancy);
+  --radius-md: var(--radius);
+}

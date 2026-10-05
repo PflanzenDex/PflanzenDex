@@ -13,21 +13,21 @@
 }
 .messkopf dd {
   margin: 2px 0 0;
-  color: var(--leise);
+  color: var(--muted-foreground);
 }
 .measure textarea {
   padding: 10px 12px;
   border-radius: 10px;
-  border: 2px solid var(--rand);
-  background: var(--grund);
-  color: var(--text);
+  border: 2px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
   font: inherit;
   font-weight: 400;
   width: 100%;
   resize: vertical;
 }
 .measure textarea:focus-visible {
-  outline: 3px solid var(--text);
+  outline: 3px solid var(--foreground);
   outline-offset: 2px;
 }
 .measure .hint {
@@ -47,7 +47,7 @@
   margin: 0 0 8px;
 }
 .treatments .choice {
-  border: 2px solid var(--rand);
+  border: 2px solid var(--border);
   border-radius: 10px;
   padding: 4px 12px 8px;
   margin: 0;
@@ -67,7 +67,7 @@
   min-height: 24px;
   height: 24px;
   flex: none;
-  accent-color: var(--gruen);
+  accent-color: var(--primary);
 }
 .treatments .pair {
   display: grid;
@@ -91,8 +91,8 @@
 }
 .open-treatments .treatment-overdue,
 .open-treatments .treatment-today {
-  border-left: 6px solid var(--warn-rand);
-  background: var(--warn-grund);
+  border-left: 6px solid var(--warning-border);
+  background: var(--warning);
 }
 .open-treatments .hint {
   margin: 0 0 12px;
