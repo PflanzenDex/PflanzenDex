@@ -13,6 +13,7 @@ const phase = {
   phase: "dormancy",
   locationId: "s1",
   targetLocationId: null,
+  nextChange: { date: "2027-03-16", phase: "growth", days: 120 },
 };
 const location = { id: "s1", name: "Regal Süd", lightZoneId: null, kind: "indoor" };
 const serverError = { error: { code: "server.error", text: "Der Server antwortet nicht." } };

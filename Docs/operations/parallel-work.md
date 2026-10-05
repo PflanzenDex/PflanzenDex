@@ -49,13 +49,13 @@ This calls `scripts/worktree-new.sh`: it fetches `origin/dev`, creates the branc
 
 `app/tools/workflow/worktree-env.mjs` derives these deterministically from the branch name:
 
-| Variable | Meaning |
-|---|---|
-| `PFLANZENDEX_TEST_DB_PORT` | test database port (starting range 54400 to 54899) |
-| `PFLANZENDEX_TEST_DB_NAME` | database name `pflanzendex_<branch>_<hash>` |
-| `PFLANZENDEX_DEV_API_PORT` / `PFLANZENDEX_DEV_WEB_PORT` | dev servers (ranges 54900 to 55899) |
+| Variable                                                | Meaning                                            |
+| ------------------------------------------------------- | -------------------------------------------------- |
+| `PFLANZENDEX_TEST_DB_PORT`                              | test database port (starting range 54400 to 54899) |
+| `PFLANZENDEX_TEST_DB_NAME`                              | database name `pflanzendex_<branch>_<hash>`        |
+| `PFLANZENDEX_DEV_API_PORT` / `PFLANZENDEX_DEV_WEB_PORT` | dev servers (ranges 54900 to 55899)                |
 
-The ranges are an assumption (starting values). With 500 slots per service collisions are rare but possible (hash). The fixed port 54329 is reserved for the main checkout. To use the variables, load them with `set -a; . ./.env.worktree; set +a`.
+The ranges are an assumption (starting values). With 500 slots per service collisions are rare but possible (hash). The fixed port 54329 is reserved for the main checkout. To use the variables, load them with `set -a; . ./.env.worktree; set +a`. Sign-in on a worktree port needs one more step after `make auth-up`: `cd app && node tools/keycloak/web-port.mjs` allows that port as redirect origin of the Keycloak web client (the realm export only knows 5173; Keycloak has no wildcard for ports).
 
 ## Owners and number assignment
 

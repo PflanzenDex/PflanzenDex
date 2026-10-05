@@ -14,8 +14,8 @@ export type {
   MeasurementRow,
   Quality,
 } from "./measurements/types";
-export { CARE_PHASES, monthTag, carePhase } from "./phases/phase";
-export type { CarePhase } from "./phases/phase";
+export { CARE_PHASES, monthTag, carePhase, nextPhaseChange } from "./phases/phase";
+export type { CarePhase, NextPhaseChange } from "./phases/phase";
 export { NO_PHASE_LOCATION } from "./phases/phase-location";
 export type { PhaseLocationSource } from "./phases/phase-location";
 export { careProfileLocations, careProfileTargetLocation } from "./switching/profile-location";

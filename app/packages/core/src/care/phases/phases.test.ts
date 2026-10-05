@@ -6,7 +6,7 @@ import { PhaseLocationStub } from "../shared/test-helpers";
 
 const WINTER = "11111111-1111-4111-8111-111111111111"; // Dormancy 11-01 to 03-15, across the turn of the year
 const SUMMER = "22222222-2222-4222-8222-222222222222"; // Dormancy 06-01 to 08-31, within the same year
-const WITHOUT = "33333333-3333-4333-8333-333333333333"; // ohne Ruhephasen-Zeitraum
+const WITHOUT = "33333333-3333-4333-8333-333333333333"; // without dormancy period
 const PRIVATE = "44444444-4444-4444-8444-444444444444";
 const LOCATION = "55555555-5555-4555-8555-555555555555";
 
@@ -74,7 +74,7 @@ const list = (
     zone,
   );
 
-describe("US-PHA-01 Phase eines Exemplars", () => {
+describe("US-PHA-01 Phase of a specimen", () => {
   it("US-PHA-01 period within the same year: dormancy at the boundaries and in between, otherwise growth", () => {
     expect(carePhase("06-01", "08-31", "2026-06-01")).toBe("dormancy");
     expect(carePhase("06-01", "08-31", "2026-07-15")).toBe("dormancy");
@@ -114,6 +114,16 @@ describe("US-PHA-01 Phase eines Exemplars", () => {
     const utc = await list(e, "anna", now, "UTC");
     expect(berlin.ok && berlin.value[0]?.phase).toBe("dormancy");
     expect(utc.ok && utc.value[0]?.phase).toBe("growth");
+  });
+
+  it("US-PHA-04 every row carries the next phase change from today in the user's time zone", async () => {
+    const e = await collection("anna", [{ speciesId: WINTER, name: "Bogenhanf" }]);
+    const now = "2026-10-31T23:30:00Z";
+    const berlin = await list(e, "anna", now, "Europe/Berlin");
+    const utc = await list(e, "anna", now, "UTC");
+    const change = { date: "2026-11-01", phase: "dormancy" };
+    expect(berlin.ok && berlin.value[0]?.nextChange).toEqual({ ...change, days: 0 });
+    expect(utc.ok && utc.value[0]?.nextChange).toEqual({ ...change, days: 1 });
   });
 
   it("US-PHA-01 the target location stays unknown as long as there is no care profile (P-08)", async () => {

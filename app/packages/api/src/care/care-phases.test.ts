@@ -110,6 +110,21 @@ describe("US-PHA-01 care phases through the API", () => {
     expect(utc.body["phases"][0].phase).toBe("growth");
   });
 
+  it("US-PHA-04 every row carries the next phase change from the local date", async () => {
+    const using = await newSpecies(subA, `Wechsel${run}`, {
+      dormancyFrom: "11-01",
+      dormancyUntil: "03-15",
+    });
+    await specimen(subA, using);
+    const change = { date: "2026-11-01", phase: "dormancy" };
+    const pick = (body: Record<string, { name: string; nextChange: unknown }[]>) =>
+      body["phases"]?.find((p) => p.name === `Wechsel${run}`)?.nextChange;
+    const berlin = await call(subA, "GET", "/care-phases?timeZone=Europe%2FBerlin");
+    expect(pick(berlin.body)).toEqual({ ...change, days: 0 });
+    const utc = await call(subA, "GET", "/care-phases?timeZone=UTC");
+    expect(pick(utc.body)).toEqual({ ...change, days: 1 });
+  });
+
   it("US-PHA-01 without a set clock the system time applies", async () => {
     const real = createApp({ reviewer, pool });
     const res = await real.request("/care-phases?timeZone=UTC", {
