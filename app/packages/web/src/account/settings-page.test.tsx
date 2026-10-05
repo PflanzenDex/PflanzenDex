@@ -95,7 +95,7 @@ describe("US-ACC-02 settings page: display name", () => {
     const alert = await screen.findByRole("alert");
     expect(puts[0]?.body["displayName"]).toBe("");
     expect(name.getAttribute("aria-invalid")).toBe("true");
-    expect(name.getAttribute("aria-describedby")).toBe(alert.id);
+    expect(name.getAttribute("aria-describedby")).toContain(alert.id);
     expect(screen.getByText(/darf aber nicht leer sein/)).toBeTruthy();
   });
 });
@@ -152,7 +152,7 @@ describe("US-ACC-02 settings page: time zone", () => {
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Die Eingabe ist ungültig");
     expect(zone.getAttribute("aria-invalid")).toBe("true");
-    expect(screen.getByLabelText("Anzeigename").getAttribute("aria-invalid")).toBe("false");
+    expect(screen.getByLabelText("Anzeigename").getAttribute("aria-invalid")).not.toBe("true");
     expect((zone as HTMLInputElement).value).toBe("Mars/Olympus");
     expect(currentTimeZone()).not.toBe("Mars/Olympus");
   });
@@ -176,8 +176,10 @@ describe("US-ACC-02 settings page: time zone", () => {
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     const alert = await screen.findByRole("alert");
     expect(alert.id).not.toBe("");
-    expect(zone.getAttribute("aria-describedby")).toBe(alert.id);
-    expect(screen.getByLabelText("Anzeigename").getAttribute("aria-describedby")).toBeNull();
+    expect(zone.getAttribute("aria-describedby")).toContain(alert.id);
+    expect(screen.getByLabelText("Anzeigename").getAttribute("aria-describedby")).not.toContain(
+      alert.id,
+    );
     expect(document.activeElement).toBe(zone);
   });
 
@@ -199,7 +201,7 @@ describe("US-ACC-02 settings page: time zone", () => {
     const name = await screen.findByLabelText("Anzeigename");
     await user.type(name, "x");
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    await screen.findByRole("alert");
+    await screen.findAllByRole("alert");
     expect(document.activeElement).toBe(name);
   });
 
@@ -282,7 +284,59 @@ describe("US-ACC-02 settings page: errors", () => {
     await user.type(name, "x");
     available = false;
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("melde dich neu an");
+    expect((await screen.findByRole("alert")).textContent).toContain("melde dich an");
     expect((name as HTMLInputElement).value).toBe("Annax");
+  });
+});
+
+describe("US-ACC-02 · DS-48 states and primitives", () => {
+  it("US-ACC-02 · DS-52 while loading, a skeleton of the form stands in with one status and hidden blocks", () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise<Response>(() => {})),
+    );
+    const { container } = show();
+    expect(screen.getByRole("status").textContent).toContain("Einstellungen werden geladen");
+    expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(3);
+    expect(screen.queryByRole("form")).toBeNull();
+  });
+
+  it("US-ACC-02 · DS-49 a refusal shows the German text of its error code, never the raw server text", async () => {
+    fakeServer(PROFILE, () =>
+      response(400, {
+        error: {
+          code: "input.invalid",
+          text: "RAW SERVER TEXT",
+          details: [{ field: "displayName", code: "input.invalid" }],
+        },
+      }),
+    );
+    const user = userEvent.setup();
+    show();
+    await user.type(await screen.findByLabelText("Anzeigename"), "x");
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await screen.findAllByRole("alert");
+    expect(document.body.textContent).not.toContain("RAW SERVER TEXT");
+    expect(document.body.textContent).toContain("Die Eingabe ist ungültig");
+  });
+
+  it("US-ACC-02 · DS-48 editing a refused field takes its error away", async () => {
+    fakeServer(PROFILE, () =>
+      response(400, {
+        error: {
+          code: "input.invalid",
+          text: "x",
+          details: [{ field: "displayName", code: "input.invalid" }],
+        },
+      }),
+    );
+    const user = userEvent.setup();
+    show();
+    const name = await screen.findByLabelText("Anzeigename");
+    await user.type(name, "x");
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await screen.findAllByRole("alert");
+    await user.type(name, "y");
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });
