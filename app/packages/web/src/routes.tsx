@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { Navigate, Route, Routes, useParams } from "react-router";
+import { Navigate, Route, Routes, useLocation, useParams } from "react-router";
 import type { Species } from "@pflanzendex/core";
 import { CollectionArea } from "./collection-area";
 import { CareProfilePage, DifficultyPage, HintsPage } from "./collection";
@@ -9,6 +9,7 @@ import { ReviewPage, SpeciesPage } from "./catalog";
 import { CarePhasesPage, TreatmentsPage } from "./care";
 import { PokedexPage } from "./pokedex";
 import { WishlistPage } from "./wishlist";
+import { RouteBoundary } from "@/components/shared/route-boundary";
 import { StartPage } from "./start-page";
 import { PATHS, type View } from "./navigation";
 
@@ -130,41 +131,44 @@ export function AppRoutes(props: {
     review: account.reviewer === true,
     operator: account.operator === true,
   };
+  const { pathname } = useLocation();
   return (
-    <Routes>
-      <Route
-        path={PATHS.account}
-        element={
-          <AccountView
-            account={account}
-            onSignOut={s.signOut}
-            onEverywhereSignOut={() => void s.everywhereSignOut()}
-            {...(props.error ? { error: props.error } : {})}
-          />
-        }
-      />
-      {(["start", "light", "hints"] as const).map((v) => (
+    <RouteBoundary resetKey={pathname}>
+      <Routes>
         <Route
-          key={v}
-          path={PATHS[v]}
+          path={PATHS.account}
           element={
-            <LinkingView
-              view={v}
-              api={api}
-              token={s.token}
-              accountId={account.id}
-              onOpen={props.onOpen}
+            <AccountView
+              account={account}
+              onSignOut={s.signOut}
+              onEverywhereSignOut={() => void s.everywhereSignOut()}
+              {...(props.error ? { error: props.error } : {})}
             />
           }
         />
-      ))}
-      <Route
-        path={PATHS.pokedex}
-        element={<PokedexPage api={api} token={s.token} onOpenSpecies={props.onOpenProfile} />}
-      />
-      {simpleRoutes(api, s.token, roles)}
-      {handOverRoutes(api, s.token, h)}
-      <Route path="*" element={<Navigate to={PATHS.start} replace />} />
-    </Routes>
+        {(["start", "light", "hints"] as const).map((v) => (
+          <Route
+            key={v}
+            path={PATHS[v]}
+            element={
+              <LinkingView
+                view={v}
+                api={api}
+                token={s.token}
+                accountId={account.id}
+                onOpen={props.onOpen}
+              />
+            }
+          />
+        ))}
+        <Route
+          path={PATHS.pokedex}
+          element={<PokedexPage api={api} token={s.token} onOpenSpecies={props.onOpenProfile} />}
+        />
+        {simpleRoutes(api, s.token, roles)}
+        {handOverRoutes(api, s.token, h)}
+        <Route path="*" element={<Navigate to={PATHS.start} replace />} />
+      </Routes>
+    </RouteBoundary>
   );
 }

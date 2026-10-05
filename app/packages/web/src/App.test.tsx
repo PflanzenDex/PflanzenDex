@@ -185,7 +185,7 @@ describe("US-ACC-01 App", () => {
     renderApp();
     await userEvent.click(await findTab("Betreiber"));
     expect(await screen.findByRole("heading", { name: "Betreiber" })).toBeTruthy();
-    expect(screen.getByText("Kosten pro Nutzer").nextElementSibling?.textContent).toMatch(
+    expect((await screen.findByText("Kosten pro Nutzer")).nextElementSibling?.textContent).toMatch(
       /^unbekannt/,
     );
   });
@@ -251,7 +251,7 @@ describe("US-ACC-01 App", () => {
     renderApp();
     await userEvent.click(await findTab("Wunschliste"));
     expect(await screen.findByRole("heading", { name: "Wunschliste" })).toBeTruthy();
-    expect(screen.getByText("Erfasse einen Wunsch mit Ziel-Lichtzone.")).toBeTruthy();
+    expect(await screen.findByText("Erfasse einen Wunsch mit Ziel-Lichtzone.")).toBeTruthy();
     expect(tab("Wunschliste").getAttribute("aria-current")).toBe("page");
   });
 
