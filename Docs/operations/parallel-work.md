@@ -11,15 +11,15 @@ make claim ISSUE=<n>     # claim the issue, branch and draft PR
 make board               # who works on what (optional: MILESTONE="R0 Fundament")
 ```
 
-`make claim` (`app/scripts/claim.mjs`) refuses with exit 1 and names the finding when
+`make claim` (`app/tools/workflow/claim/claim.mjs`) refuses with exit 1 and names the finding when
 
 - the issue has an assignee,
 - a PR (open or merged) closes the issue (`Closes #n` in the body), or an open PR carries the story ID in title or branch (a merged PR that only mentions the ID does not count: it may be one part of a bigger story),
 - a branch on `origin` carries the story ID.
 
-Before any write a preflight checks that `node_modules` exists and matches `package-lock.json` (`make setup` records the lock hash in `node_modules/.setup-lock-hash`; `app/scripts/check-deps.mjs`; hooks and `make gates` run the same check, so a pull that changed the lock file stops with "run make setup") and that `origin/dev` has a `Makefile` (no ancient checkout). Otherwise it pushes the branch with one empty commit (made without touching your working tree), assigns you, sets the project status "In Progress" (field and option ids are read at run time) and opens a draft PR against `dev` whose text has a `## Handoff` section (task, done, missing, verification, next steps). Keep that section current; whoever takes over reads it first. The PR title must be completed by the author (`gh api -X PATCH` edits it; `gh pr edit` fails with Projects classic). If another person claimed the issue at the same moment, the later claim steps back and deletes its branch. The claim is atomic: if a step fails, the steps already done are undone (branch deleted, assignee removed, status back to "Todo"); an issue assigned to you without a branch or PR (half claim of an older run) is continued by a re-run.
+Before any write a preflight checks that `node_modules` exists and matches `package-lock.json` (`make setup` records the lock hash in `node_modules/.setup-lock-hash`; `app/tools/check/supply/check-deps.mjs`; hooks and `make gates` run the same check, so a pull that changed the lock file stops with "run make setup") and that `origin/dev` has a `Makefile` (no ancient checkout). Otherwise it pushes the branch with one empty commit (made without touching your working tree), assigns you, sets the project status "In Progress" (field and option ids are read at run time) and opens a draft PR against `dev` whose text has a `## Handoff` section (task, done, missing, verification, next steps). Keep that section current; whoever takes over reads it first. The PR title must be completed by the author (`gh api -X PATCH` edits it; `gh pr edit` fails with Projects classic). If another person claimed the issue at the same moment, the later claim steps back and deletes its branch. The claim is atomic: if a step fails, the steps already done are undone (branch deleted, assignee removed, status back to "Todo"); an issue assigned to you without a branch or PR (half claim of an older run) is continued by a re-run.
 
-**Project status after the claim:** `.github/workflows/project-status.yml` moves it on PR events (merged into `dev` → On dev, closed unmerged → Todo, release PR merged into `main` → Done; rules in `app/scripts/project-status-lib.mjs`). Only `Closes #n` in the PR body links a PR to an issue. `make status-check` reports drift and missing priorities. The workflow needs a GitHub App (repository variable `PROJECT_APP_ID`, secret `PROJECT_APP_PRIVATE_KEY`, organization permission "Projects: read and write", installed on this repository); without it the job fails and the status stays as it is.
+**Project status after the claim:** `.github/workflows/project-status.yml` moves it on PR events (merged into `dev` → On dev, closed unmerged → Todo, release PR merged into `main` → Done; rules in `app/tools/workflow/project-status/project-status-lib.mjs`). Only `Closes #n` in the PR body links a PR to an issue. `make status-check` reports drift and missing priorities. The workflow needs a GitHub App (repository variable `PROJECT_APP_ID`, secret `PROJECT_APP_PRIVATE_KEY`, organization permission "Projects: read and write", installed on this repository); without it the job fails and the status stays as it is.
 
 **Branch naming rule:** `<type>/<epic>-<nn>-<slug>`, e.g. `feat/wac-01-messung`. The story ID is written without `US-`/`FR-`, the slug is up to four words of the issue title, lower case, at most 30 characters. Type: `fix` for label `bug`, `chore` for label `enabler`, otherwise `feat`. Issues without a story ID use `issue-<n>`, e.g. `chore/issue-243-claim-check`. Matching is by this key, so `feat/us-wac-01-x` and `feat/wac-01-y` count as the same story.
 
@@ -39,13 +39,13 @@ Limits: the check needs `gh` and network; offline it warns and lets go. It is a 
 make worktree BRANCH=feat/<task>
 ```
 
-`make worktree` first runs the claim check (`app/scripts/claim-check.mjs`): a branch with a story ID is refused when the story belongs to somebody else or has not been claimed (`make claim` first). If the branch already exists on `origin` (made by `make claim`), the worktree continues it. There is no check on push: anyone with access may push to a branch.
+`make worktree` first runs the claim check (`app/tools/workflow/claim/claim-check.mjs`): a branch with a story ID is refused when the story belongs to somebody else or has not been claimed (`make claim` first). If the branch already exists on `origin` (made by `make claim`), the worktree continues it. There is no check on push: anyone with access may push to a branch.
 
 This calls `scripts/worktree-new.sh`: it fetches `origin/dev`, creates the branch and a worktree under `.worktrees/<branch>/` (slashes become dashes) and writes `.env.worktree`. Then change into that directory and run `make setup` there. Two sessions never write into the same directory; `.worktrees/` and `.env.worktree` are ignored by git.
 
 ## Own ports and database per worktree
 
-`app/scripts/worktree-env.mjs` derives these deterministically from the branch name:
+`app/tools/workflow/worktree-env.mjs` derives these deterministically from the branch name:
 
 | Variable | Meaning |
 |---|---|

@@ -16,7 +16,7 @@ help: ## List all targets with a one-line description
 
 setup: ## Install dependencies (npm ci, or npm install without a lock file)
 	cd $(APP) && if [ -f package-lock.json ]; then npm ci; else npm install; fi
-	cd $(APP) && node scripts/check-deps.mjs --stamp
+	cd $(APP) && node tools/check/supply/check-deps.mjs --stamp
 	$(if $(CI),,$(MAKE) hooks)
 
 hooks: ## Enable the git hooks in .githooks/ (commit-msg, pre-commit, pre-push, hints)
@@ -81,7 +81,7 @@ e2e: $(if $(CI),,db-up) auth-up migrate browsers ## End-to-end tests with Playwr
 	cd $(APP) && npm run e2e
 
 crap: ## CRAP gate on functions in changed files (QG-K3; needs coverage output, run `make coverage` first; `ARGS=--all` for the whole project)
-	cd $(APP) && node scripts/check-crap.mjs $(ARGS)
+	cd $(APP) && node tools/check/quality/check-crap.mjs $(ARGS)
 
 spec-check: ## Spec consistency and story-to-test traceability (QG-T4)
 	cd $(APP) && npm run specs
@@ -125,7 +125,7 @@ layout-baseline: ## Create or lower app/layout-baseline.json, never enlarge it (
 	cd $(APP) && npm run layout -- --write-baseline
 
 gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundaries, unused code, format
-	cd $(APP) && node scripts/check-deps.mjs
+	cd $(APP) && node tools/check/supply/check-deps.mjs
 	cd $(APP) && npm run gates
 
 ci: secrets workflows $(if $(CI),,db-up) ## All gates in CI order, stops at the first failure
@@ -143,7 +143,7 @@ worktree: ## New worktree and branch (BRANCH=feat/x) with its own ports; claim c
 	scripts/worktree-new.sh "$(BRANCH)"
 
 merge: ## Merge a PR into dev as an agent (PR=<n>): green ci-status, known story, no gate file (ADR 0005)
-	cd $(APP) && node scripts/merge-pr.mjs "$(PR)"
+	cd $(APP) && node tools/workflow/merge-pr.mjs "$(PR)"
 
 repo-stats: ## Regenerate the statistics block in README.md (once per release PR, see release-checklist; US-DEV-10)
 	scripts/repo-stats.sh
@@ -152,13 +152,13 @@ pr: ## Before review (PR=<n> optional): push and mark the PR ready (US-DEV-10)
 	scripts/pr-ready.sh "$(PR)"
 
 claim: ## Claim a story before working on it (ISSUE=<n>): assignee, status, branch, draft PR; refuses duplicate work (US-DEV-08)
-	cd $(APP) && node scripts/claim.mjs "$(ISSUE)"
+	cd $(APP) && node tools/workflow/claim/claim.mjs "$(ISSUE)"
 
 board: ## Who works on which open story of the milestone; flags STALE and DOUBLE (CLAIM_STALE_HOURS, US-DEV-08)
-	cd $(APP) && node scripts/board.mjs $(MILESTONE)
+	cd $(APP) && node tools/workflow/board.mjs $(MILESTONE)
 
 status-check: ## Project status vs. pull requests and missing priorities (US-DEV-05); exit 1 on drift
-	cd $(APP) && node scripts/project-status.mjs check
+	cd $(APP) && node tools/workflow/project-status/project-status.mjs check
 
 clean: ## Remove build output and node_modules
 	cd $(APP) && rm -rf node_modules packages/*/node_modules packages/*/dist

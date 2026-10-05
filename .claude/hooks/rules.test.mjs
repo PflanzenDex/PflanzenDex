@@ -24,12 +24,38 @@ test("US-QG-07: gate configs need a human confirmation, ordinary code does not",
     "Makefile",
     "app/eslint.config.js",
     "app/knip.json",
-    "app/scripts/check-boundaries.mjs",
+    "app/tools/check/code/check-boundaries.mjs",
     "app/packages/db/vitest.config.ts",
   ]) {
     assert.equal(isGateFile(f), true, f);
   }
   for (const f of ["app/packages/core/src/index.ts", "Docs/PRODUCT-SPECS/02-Collection.md", "app/README.md"]) {
+    assert.equal(isGateFile(f), false, f);
+  }
+});
+
+test("US-QG-07: the moved check scripts, their libraries and the layout config stay gate files (FR-QG-21)", () => {
+  for (const f of [
+    "app/tools/check/docs/check-links.mjs",
+    "app/tools/check/code/check-boundaries.mjs",
+    "app/tools/check/code/layout/layout-rules.mjs",
+    "app/tools/check/code/layout/layout-baseline.mjs",
+    "app/tools/check/quality/coverage/coverage-config.mjs",
+    "app/tools/check/code/conformance/conformance-rules.mjs",
+    "app/tools/workflow/merge-pr.mjs",
+    "app/tools/workflow/merge-pr.test.mjs",
+    "app/layout.config.mjs",
+  ]) {
+    assert.equal(isGateFile(f), true, f);
+  }
+  for (const f of [
+    "app/tools/check/docs/check-links.test.mjs",
+    "app/tools/check/code/layout/layout-rules.test.mjs",
+    "app/tools/workflow/claim/claim.mjs",
+    "app/tools/workflow/board.mjs",
+    "app/tools/dev/repo-stats.mjs",
+    "app/layout-baseline.json",
+  ]) {
     assert.equal(isGateFile(f), false, f);
   }
 });
