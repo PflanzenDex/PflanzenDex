@@ -9,7 +9,7 @@ import { ReviewPage, SpeciesPage } from "./catalog";
 import { CarePhasesPage, TreatmentsPage } from "./care";
 import { PokedexPage } from "./pokedex";
 import { WishlistPage } from "./wishlist";
-import { RouteBoundary } from "@/components/shared/route-boundary";
+import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
 import { StartPage } from "./start-page";
 import { PATHS, type View } from "./navigation";
 

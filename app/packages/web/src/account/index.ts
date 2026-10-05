@@ -1,5 +1,5 @@
 // Public interface of the `account` module (ADR 0003): sign-in, session, account view.
-import { lazyPage } from "@/components/shared/lazy-page";
+import { lazyPage } from "@/lib/lazy-page";
 export const SettingsPage = lazyPage(() =>
   import("./settings-page").then((m) => ({ default: m.SettingsPage })),
 );

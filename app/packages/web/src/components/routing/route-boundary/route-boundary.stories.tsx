@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { lazyPage } from "./lazy-page";
+import { lazyPage } from "@/lib/lazy-page";
 import { RouteBoundary } from "./route-boundary";
 
 // Catalog of the RouteBoundary (TE-17, DS-08, DS-55): the skeleton while a page chunk loads, the error with retry when it fails.
 const Loading = lazyPage(() => new Promise<{ default: () => null }>(() => undefined));
 const Failing = lazyPage(() => Promise.reject<{ default: () => null }>(new Error("chunk failed")));
 
-const meta = { title: "shared/RouteBoundary", component: RouteBoundary } satisfies Meta<
+const meta = { title: "routing/RouteBoundary", component: RouteBoundary } satisfies Meta<
   typeof RouteBoundary
 >;
 

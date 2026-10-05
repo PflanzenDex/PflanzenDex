@@ -1,5 +1,5 @@
 // Public interface of the `collection` module (ADR 0003): page for collection and create specimen.
-import { lazyPage } from "@/components/shared/lazy-page";
+import { lazyPage } from "@/lib/lazy-page";
 export const CollectionPage = lazyPage(() =>
   import("./CollectionPage").then((m) => ({ default: m.CollectionPage })),
 );

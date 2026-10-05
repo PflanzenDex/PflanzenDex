@@ -1,5 +1,5 @@
 // Public interface of the module `care` (ADR 0003): page "Measure" of a specimen.
-import { lazyPage } from "@/components/shared/lazy-page";
+import { lazyPage } from "@/lib/lazy-page";
 export const MeasurePage = lazyPage(() =>
   import("./MeasurePage").then((m) => ({ default: m.MeasurePage })),
 );

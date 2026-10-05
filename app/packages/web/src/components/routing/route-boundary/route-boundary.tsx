@@ -1,8 +1,8 @@
 import { Component, Fragment, Suspense, type ErrorInfo, type ReactNode } from "react";
-import { EmptyState } from "./empty-state";
-import { PageSkeleton } from "./page-skeleton";
+import { EmptyState } from "@/components/shared/empty-state";
+import { PageSkeleton } from "@/components/shared/page-skeleton";
 import { isOnline } from "@/platform/network";
-import { retryFailedPages } from "./lazy-page";
+import { retryFailedPages } from "@/lib/lazy-page";
 
 type BoundaryProps = { resetKey: string; children: ReactNode };
 type BoundaryState = { failed: boolean; attempt: number };
