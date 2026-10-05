@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { NotCounted, Distribution } from "@pflanzendex/core";
 
 const specimens = (n: number) => `${n} ${n === 1 ? "Exemplar" : "Exemplare"}`;
@@ -33,8 +34,15 @@ export function DistributionView({ distribution }: { distribution: Distribution 
                 {zone.name}: {specimens(count)}
                 {thin.has(zone.id) && <strong> · dünnste Zone</strong>}
               </span>
-              <span aria-hidden="true" className="balken">
-                <span style={{ width: `${(count / highest) * 100}%` }} />
+              <span
+                aria-hidden="true"
+                className="block h-2 w-full overflow-hidden rounded-full bg-muted"
+              >
+                <span
+                  data-bar=""
+                  className="block h-full w-[calc(var(--value)*1%)] rounded-full bg-primary"
+                  style={{ "--value": (count / highest) * 100 } as CSSProperties}
+                />
               </span>
             </li>
           ))}
