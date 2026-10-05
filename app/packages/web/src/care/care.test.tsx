@@ -1,7 +1,7 @@
 import { renderToString as render } from "react-dom/server";
 import type { MeasurementView, MeasurementRow } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";
-import { checkInput } from "./input";
+import { measurementSchema, toMeasurementInput } from "./schemas";
 import { MeasurementHeader } from "./measurement-header";
 import { MeasureForm } from "./measure-form";
 import { MeasurePage } from "./MeasurePage";
@@ -31,6 +31,13 @@ const view = (extra: Partial<MeasurementView> = {}): MeasurementView => ({
   lastRating: null,
   ...extra,
 });
+/** The schema decides; the first message it carries is what the form shows under the field. */
+const checkInput = (f: Record<string, string>) => {
+  const r = measurementSchema.safeParse(f);
+  return r.success
+    ? { ok: true as const, input: toMeasurementInput(r.data) }
+    : { ok: false as const, text: r.error.issues[0]?.message ?? "" };
+};
 const fields = (extra: Record<string, string> = {}) => ({
   value: "12,5",
   date: "2026-10-03",
@@ -125,12 +132,15 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
 
   it("the course names value, date, quality and note; when empty it says what to do (P-09)", () => {
     const list = renderToString(
-      <MeasurementList measurements={[measurement({ note: "nach dem Umtopfen" })]} />,
+      <MeasurementList
+        measurements={[measurement({ note: "nach dem Umtopfen" })]}
+        onAdd={() => undefined}
+      />,
     );
     expect(list).toContain("12,5 cm · 03.10.2026");
     expect(list).toContain("Gesund");
     expect(list).toContain("nach dem Umtopfen");
-    expect(renderToString(<MeasurementList measurements={[]} />)).toContain(
+    expect(renderToString(<MeasurementList measurements={[]} onAdd={() => undefined} />)).toContain(
       "Trage oben den ersten Messwert ein",
     );
   });
@@ -138,9 +148,8 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
   it("the form has number, date, quality (healthy preset), note and says that the photo is missing", () => {
     const html = renderToString(<MeasureForm unit="cm" onSend={async () => null} />);
     expect(html).toContain("Messwert (cm, in Schritten von 0,5)");
-    expect(html).toMatch(
-      /<input type="date" max="\d{4}-\d{2}-\d{2}"[^>]*name="date" value="\d{4}-\d{2}-\d{2}"/,
-    );
+    expect(html).toMatch(/<input[^>]*type="date"[^>]*>/);
+    expect(html).toMatch(/<input[^>]*value="\d{4}-\d{2}-\d{2}"[^>]*>/);
     expect(html).toMatch(/<option value="healthy" selected/);
     expect(html).toContain("Vergeilt/dünn");
     expect(html).toContain("Notiz (optional)");

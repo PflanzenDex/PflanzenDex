@@ -1,100 +1,137 @@
-import { useState, type FormEvent } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useWatch, type Control, type ControllerRenderProps } from "react-hook-form";
 import { localToday, TREATMENT_LIMITS } from "@pflanzendex/core";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Form, FormField, FormItem, FormMessage, useFormField } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { currentTimeZone } from "../kernel";
-import { checkTreatment, COURSE_START, type TreatmentFields } from "./treatment-input";
+import { Field } from "./field";
+import {
+  toTreatmentInput,
+  treatmentDefaults,
+  treatmentSchema,
+  type TreatmentFields,
+} from "./schemas";
 import type { TreatableSpecimen, TreatmentInput } from "./treatments-api";
 
-function SpecimenChoice(props: {
+/**
+ * Keeps the box 20 px until the legacy unlayered `input { width: 100%; min-height: 48px }` of light.css is gone (issue 347):
+ * it beats the layered utilities and would stretch the box over the row.
+ */
+const BOX = "size-5! min-h-0!";
+
+type FocusRef = React.MutableRefObject<HTMLInputElement | null> | undefined;
+
+/** The checkboxes of the specimens as one group: the first takes the focus when none is chosen, the message names the group. */
+function Choice(props: {
   specimens: readonly TreatableSpecimen[];
-  chosen: readonly string[];
-  onToggle: (id: string) => void;
+  field: ControllerRenderProps<TreatmentFields, "specimenIds">;
+  focusRef: FocusRef;
 }) {
+  const { error, messageId } = useFormField();
+  const { field } = props;
+  const toggle = (id: string) =>
+    field.onChange(
+      field.value.includes(id) ? field.value.filter((x) => x !== id) : [...field.value, id],
+    );
   return (
-    <fieldset className="choice">
-      <legend>Exemplare</legend>
-      {props.specimens.map((z) => (
-        <label key={z.id} className="check">
-          <input
-            type="checkbox"
-            checked={props.chosen.includes(z.id)}
-            onChange={() => props.onToggle(z.id)}
-          />
+    <fieldset
+      aria-describedby={error ? messageId : undefined}
+      className="m-0 flex min-w-0 flex-col rounded-lg border-2 border-border px-3 pb-2 pt-1"
+    >
+      <legend className="px-1 font-semibold">Exemplare</legend>
+      {props.specimens.map((z, i) => (
+        <Checkbox
+          key={z.id}
+          name={field.name}
+          className={BOX}
+          ref={(el) => {
+            if (i !== 0) return;
+            field.ref(el);
+            if (props.focusRef) props.focusRef.current = el;
+          }}
+          onBlur={field.onBlur}
+          invalid={Boolean(error)}
+          aria-describedby={error ? messageId : undefined}
+          checked={field.value.includes(z.id)}
+          onChange={() => toggle(z.id)}
+        >
           {z.name}
-        </label>
+        </Checkbox>
       ))}
+      <FormMessage />
     </fieldset>
   );
 }
 
 function BasicFields(props: {
-  fields: TreatmentFields;
-  set: (change: Partial<TreatmentFields>) => void;
+  control: Control<TreatmentFields>;
+  specimens: readonly TreatableSpecimen[];
+  focusRef: FocusRef;
 }) {
-  const { fields, set } = props;
+  const { control } = props;
   return (
     <>
-      <label>
-        Grund
-        <input
-          autoComplete="off"
-          maxLength={TREATMENT_LIMITS.reason.max}
-          placeholder="zum Beispiel Wollläuse"
-          value={fields.reason}
-          onChange={(e) => set({ reason: e.target.value })}
-        />
-      </label>
-      <label>
-        Mittel (optional)
-        <input
-          autoComplete="off"
-          maxLength={TREATMENT_LIMITS.agent.max}
-          value={fields.agent}
-          onChange={(e) => set({ agent: e.target.value })}
-        />
-      </label>
-      <label>
-        Datum
-        <input type="date" value={fields.date} onChange={(e) => set({ date: e.target.value })} />
-      </label>
+      <FormField
+        control={control}
+        name="specimenIds"
+        render={({ field }) => (
+          <FormItem>
+            <Choice specimens={props.specimens} field={field} focusRef={props.focusRef} />
+          </FormItem>
+        )}
+      />
+      <Field control={control} name="reason" label="Grund">
+        {(field) => (
+          <Input
+            {...field}
+            autoComplete="off"
+            maxLength={TREATMENT_LIMITS.reason.max}
+            placeholder="zum Beispiel Wollläuse"
+          />
+        )}
+      </Field>
+      <Field control={control} name="agent" label="Mittel (optional)">
+        {(field) => <Input {...field} autoComplete="off" maxLength={TREATMENT_LIMITS.agent.max} />}
+      </Field>
+      <Field control={control} name="date" label="Datum">
+        {(field) => <Input {...field} type="date" />}
+      </Field>
     </>
   );
 }
 
-function CourseFields(props: {
-  fields: TreatmentFields;
-  set: (change: Partial<TreatmentFields>) => void;
-}) {
-  const { fields, set } = props;
+function CourseFields({ control }: { control: Control<TreatmentFields> }) {
+  const isCourse = useWatch({ control, name: "isCourse" });
   return (
     <>
-      <label className="check">
-        <input
-          type="checkbox"
-          checked={fields.isCourse}
-          onChange={(e) => set({ isCourse: e.target.checked })}
-        />
-        Kur planen (mehrere Termine)
-      </label>
-      {fields.isCourse && (
-        <div className="pair">
-          <label>
-            Anzahl der Termine
-            <input
-              inputMode="numeric"
-              autoComplete="off"
-              value={fields.count}
-              onChange={(e) => set({ count: e.target.value })}
-            />
-          </label>
-          <label>
-            Abstand in Tagen
-            <input
-              inputMode="numeric"
-              autoComplete="off"
-              value={fields.intervalDays}
-              onChange={(e) => set({ intervalDays: e.target.value })}
-            />
-          </label>
+      <FormField
+        control={control}
+        name="isCourse"
+        render={({ field }) => (
+          <FormItem>
+            <Checkbox
+              name={field.name}
+              className={BOX}
+              ref={field.ref}
+              onBlur={field.onBlur}
+              checked={field.value}
+              onChange={(e) => field.onChange(e.target.checked)}
+            >
+              Kur planen (mehrere Termine)
+            </Checkbox>
+          </FormItem>
+        )}
+      />
+      {isCourse && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field control={control} name="count" label="Anzahl der Termine">
+            {(field) => <Input {...field} inputMode="numeric" autoComplete="off" />}
+          </Field>
+          <Field control={control} name="intervalDays" label="Abstand in Tagen">
+            {(field) => <Input {...field} inputMode="numeric" autoComplete="off" />}
+          </Field>
         </div>
       )}
     </>
@@ -104,52 +141,39 @@ function CourseFields(props: {
 /**
  * Form "Behandlung planen" (US-BEH-01): one or several specimens, a reason, an optional agent and the (first) date;
  * with "Kur planen" N dates at T days (default 3 at 7). The date starts at today according to the device's local date
- * (NFR-08). A refusal stays visible and keeps the input (P-10).
+ * (NFR-08). An invalid input focuses the first invalid field; a refusal stays visible and keeps the input (P-10).
  */
 export function TreatmentForm(props: {
   specimens: readonly TreatableSpecimen[];
   running: boolean;
   onSend: (input: TreatmentInput) => Promise<boolean>;
+  /** Receives the first checkbox, so the empty list of open treatments can move the focus here. */
+  focusRef?: React.MutableRefObject<HTMLInputElement | null>;
 }) {
   const today = localToday(new Date(), currentTimeZone());
-  const [fields, setFields] = useState<TreatmentFields>({
-    specimenIds: [],
-    reason: "",
-    agent: "",
-    date: today,
-    isCourse: false,
-    ...COURSE_START,
+  const form = useForm<TreatmentFields>({
+    resolver: zodResolver(treatmentSchema),
+    defaultValues: treatmentDefaults(today),
   });
-  const [problem, setProblem] = useState<string | null>(null);
-  const set = (change: Partial<TreatmentFields>) => setFields((f) => ({ ...f, ...change }));
-  const toggle = (id: string) =>
-    set({
-      specimenIds: fields.specimenIds.includes(id)
-        ? fields.specimenIds.filter((x) => x !== id)
-        : [...fields.specimenIds, id],
-    });
-  async function send(e: FormEvent) {
-    e.preventDefault();
-    const reviewed = checkTreatment(fields);
-    if (!reviewed.ok) return setProblem(reviewed.text);
-    setProblem(null);
-    if (await props.onSend(reviewed.input)) set({ specimenIds: [], reason: "", agent: "" });
-  }
+  const isCourse = useWatch({ control: form.control, name: "isCourse" });
+  const submit = form.handleSubmit(async (values) => {
+    if (await props.onSend(toTreatmentInput(values)))
+      form.reset({ ...values, specimenIds: [], reason: "", agent: "" });
+  });
   return (
-    <form className="form" onSubmit={(e) => void send(e)} aria-label="Behandlung planen" noValidate>
-      <SpecimenChoice specimens={props.specimens} chosen={fields.specimenIds} onToggle={toggle} />
-      <BasicFields fields={fields} set={set} />
-      <CourseFields fields={fields} set={set} />
-      {problem && (
-        <div role="alert" className="warning">
-          <p>{problem}</p>
-        </div>
-      )}
-      <div className="actions">
-        <button type="submit" className="primary" disabled={props.running}>
-          {fields.isCourse ? "Kur planen" : "Behandlung speichern"}
-        </button>
-      </div>
-    </form>
+    <Form {...form}>
+      <form
+        aria-label="Behandlung planen"
+        noValidate
+        onSubmit={(e) => void submit(e)}
+        className="flex max-w-xl flex-col gap-4"
+      >
+        <BasicFields control={form.control} specimens={props.specimens} focusRef={props.focusRef} />
+        <CourseFields control={form.control} />
+        <Button type="submit" size="touch" disabled={props.running || form.formState.isSubmitting}>
+          {isCourse ? "Kur planen" : "Behandlung speichern"}
+        </Button>
+      </form>
+    </Form>
   );
 }

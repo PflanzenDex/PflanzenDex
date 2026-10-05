@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { ERROR_TEXTS } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TreatmentsPage } from "./TreatmentsPage";
 
@@ -44,6 +45,43 @@ afterEach(() => {
 });
 
 describe("US-BEH-01 Seite Behandlung planen", () => {
+  it("US-BEH-01 · DS-52 while loading, skeletons mirror the page and one status says what loads", () => {
+    fakeServer([specimen("e1", "Bogenhanf")]);
+    const { container } = show();
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(container.querySelectorAll('[aria-hidden="true"].animate-pulse').length).toBeGreaterThan(
+      1,
+    );
+  });
+
+  it("US-BEH-01 · DS-48 an invalid form focuses the first invalid field and links its message", async () => {
+    fakeServer([specimen("e1", "Bogenhanf")]);
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByRole("button", { name: "Behandlung speichern" }));
+    const first = screen.getByRole("checkbox", { name: "Bogenhanf" });
+    await vi.waitFor(() => expect(document.activeElement).toBe(first));
+    expect(first.getAttribute("aria-invalid")).toBe("true");
+    const reason = screen.getByLabelText("Grund");
+    const alert = screen.getAllByRole("alert").find((a) => a.textContent?.includes("Grund"));
+    expect(alert).toBeTruthy();
+    expect(reason.getAttribute("aria-describedby")).toContain(alert?.id ?? "none");
+  });
+
+  it("US-BEH-01 · DS-49 the refusal shows the German text of its code, never the raw server text", async () => {
+    fakeServer([specimen("e1", "Bogenhanf")], () =>
+      response(409, { error: { code: "specimen.archived", text: "RAW SERVER TEXT" } }),
+    );
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByRole("checkbox", { name: "Bogenhanf" }));
+    await user.type(screen.getByLabelText("Grund"), "Wollläuse");
+    await user.click(screen.getByRole("button", { name: "Behandlung speichern" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain(ERROR_TEXTS["specimen.archived"]);
+    expect(alert.textContent).not.toContain("RAW SERVER TEXT");
+  });
+
   it("US-BEH-01 lists all active specimens, also cuttings, and says what to do without any (P-09, FR-BEH-04)", async () => {
     fakeServer([specimen("e1", "Bogenhanf"), specimen("e2", "Aloe", "cutting")]);
     show();
@@ -54,6 +92,9 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     fakeServer([]);
     show();
     expect(await screen.findByText(/Lege zuerst ein Exemplar im Bestand an/)).toBeTruthy();
+    const links = screen.getAllByRole("link", { name: "Zum Bestand" });
+    expect(links.length).toBeGreaterThan(0);
+    for (const link of links) expect(link.getAttribute("href")).toBe("/collection");
   });
 
   it("US-BEH-01 saves one treatment with several specimens, reason, agent and date, with an Idempotency-Key", async () => {
@@ -83,7 +124,8 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     const user = userEvent.setup();
     show();
     await user.click(await screen.findByRole("button", { name: "Behandlung speichern" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("Exemplar");
+    const alerts = await screen.findAllByRole("alert");
+    expect(alerts.map((a) => a.textContent).join(" ")).toContain("Exemplar");
     await user.click(screen.getByRole("checkbox", { name: "Bogenhanf" }));
     await user.click(screen.getByRole("button", { name: "Behandlung speichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Grund");
@@ -173,6 +215,15 @@ describe("US-BEH-02 offene Behandlungen", () => {
     show();
     expect(await screen.findByText("Keine offenen Behandlungen.")).toBeTruthy();
     expect(screen.getByText(/Plane unten einen Termin/)).toBeTruthy();
+  });
+
+  it("US-BEH-02 · DS-26 the empty list offers an action that moves to the form", async () => {
+    fakeServer([specimen("e1", "Bogenhanf")]);
+    const user = userEvent.setup();
+    show();
+    await screen.findByText("Keine offenen Behandlungen.");
+    await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
+    expect(document.activeElement).toBe(await screen.findByRole("checkbox", { name: "Bogenhanf" }));
   });
 
   it("US-BEH-02 says what to do next when something is overdue (P-09)", async () => {

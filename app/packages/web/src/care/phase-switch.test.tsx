@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { ERROR_TEXTS } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CarePhasesPage } from "./CarePhasesPage";
 import { confirmPhaseSwitch } from "./care-phases-api";
@@ -158,8 +159,8 @@ describe("US-PHA-03 'Jetzt umgestellt' on the page of the care phases", () => {
     expect(screen.queryByRole("button", { name: /Alle 2 nach/ })).toBeNull();
   });
 
-  it("US-PHA-03 a refusal stays visible, the list stays and nothing is claimed (P-10)", async () => {
-    const text = "Für dieses Exemplar ist noch kein Soll-Standort bekannt.";
+  it("US-PHA-03 · DS-49 a refusal stays visible with the text of its code, the list stays and nothing is claimed (P-10)", async () => {
+    const text = ERROR_TEXTS["care.target_unknown"];
     fakeServer({
       phases: [row("e1", "Bogenhanf", "s1", "s2")],
       confirm: () => response(409, { error: { code: "care.target_unknown", text } }),
@@ -175,7 +176,7 @@ describe("US-PHA-03 'Jetzt umgestellt' on the page of the care phases", () => {
   });
 
   it("US-PHA-03 after a refusal the list is loaded again, a stale row disappears and the error stays", async () => {
-    const text = "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her.";
+    const text = ERROR_TEXTS["specimen.archived"];
     const state = {
       phases: [row("e1", "Bogenhanf", "s1", "s2")],
       confirm: async () => {
@@ -203,7 +204,8 @@ describe("US-PHA-03 'Jetzt umgestellt' on the page of the care phases", () => {
     const button = await screen.findByRole("button", { name: "Jetzt umgestellt: Bogenhanf" });
     signedIn = false;
     await userEvent.click(button);
-    expect((await screen.findByRole("alert")).textContent).toContain("Bitte melde dich neu an.");
+    // The refusal (by its code) is replaced by the load error of the reload that follows; both ask to sign in.
+    expect((await screen.findByRole("alert")).textContent).toMatch(/melde dich (neu )?an/);
     expect(posts(fetchFn)).toHaveLength(0);
   });
 });
