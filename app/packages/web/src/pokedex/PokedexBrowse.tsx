@@ -130,7 +130,7 @@ function Groups(props: {
               <Button
                 type="button"
                 variant="outline"
-                className="h-auto justify-start whitespace-normal text-left font-semibold"
+                className="h-auto justify-start text-left font-semibold"
                 aria-expanded={open}
                 onClick={() => toggle(keyOf(g))}
               >

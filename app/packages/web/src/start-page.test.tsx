@@ -164,7 +164,7 @@ describe("US-ACC-03 start page and guided onboarding", () => {
     fakeServer({ zones: [], locations: [], cards: [] });
     view();
     const marker = await screen.findByText("Schritt 1 von 3");
-    expect(marker.className).toContain("onboarding-progress");
+    expect(marker.className).toMatch(/rounded-full.*border/);
   });
 
   it("US-ACC-03 the start page counts the specimens with the count route, it does not load the card list", async () => {

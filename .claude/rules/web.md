@@ -13,3 +13,4 @@ paths:
 - Unknown values show "unbekannt", never an invented number (P-08).
 - Tokens come from OIDC with PKCE; passwords never touch our code (FR-ACC-03). No secrets in `VITE_*` variables.
 - Tests carry the story ID in the name; components are tested through what the user sees.
+- Styling is Tailwind utility classes on components; `styles/tokens.css` (tokens, `@theme`, base layer with preflight) is the only stylesheet. No `*.css` next to components, no legacy class names, no `!` overrides (DS-27, DS-33).

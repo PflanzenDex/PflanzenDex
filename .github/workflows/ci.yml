@@ -9,8 +9,9 @@ on:
     # `edited`: the squash turns the PR title into the commit message, so a changed title is checked again.
     # `ready_for_review`: a draft (e.g. from `make claim`, placeholder title) skips the metadata jobs; this run checks them.
     types: [opened, synchronize, reopened, edited, ready_for_review]
+  # Push runs only on `main` (the release workflow needs them). The PR run already checked what a squash merges into `dev`.
   push:
-    branches: [dev, main]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:

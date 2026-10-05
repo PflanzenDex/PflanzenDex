@@ -37,16 +37,17 @@ The prototype of the code below, run over the tracked files of `dev`, reports **
 
 ## Pull requests
 
-| PR  | Content                                                                                                | Merge     | Plan                    |
-| --- | ------------------------------------------------------------------------------------------------------ | --------- | ----------------------- |
-| 0   | Spec and ADR 0008 (#391)                                                                               | agent     | done                    |
-| 1   | Check, config, baseline, `make layout` in gates, principle PRIN-011 (Tasks 1 to 6)                     | **human** | this document           |
-| 2   | `make layout-fix` (dry run, apply, import and link rewrite)                                            | agent     | outline below, own plan |
-| 3   | Root and `docs/`: rename, whitelist, links; touches `CLAUDE.md`, `AGENTS.md`, `.claude/`, `CODEOWNERS` | **human** | outline below, own plan |
-| 4   | `tools/`, `app/config`, `app/gates` (Makefile, CI, hooks adapt)                                        | **human** | outline below, own plan |
-| 5   | `core` and `api`, one PR per module                                                                    | agent     | outline below, own plan |
-| 6   | `web`: `app/`, `shared/`, `components/ui`, then one PR per module                                      | agent     | outline below, own plan |
-| 7   | Touch-it rule, ceilings per release, closes #388                                                       | **human** | outline below, own plan |
+| PR  | Content                                                                                                 | Merge     | Plan                    |
+| --- | ------------------------------------------------------------------------------------------------------- | --------- | ----------------------- |
+| 0   | Spec and ADR 0008 (#391)                                                                                | agent     | done                    |
+| 1   | Check, config, baseline, `make layout` in gates, principle PRIN-011 (Tasks 1 to 6)                      | **human** | this document           |
+| 2   | `make layout-fix` (dry run, apply, import and link rewrite)                                             | agent     | outline below, own plan |
+| 3   | Root and `docs/`: rename, whitelist, links; touches `CLAUDE.md`, `AGENTS.md`, `.claude/`, `CODEOWNERS`  | **human** | outline below, own plan |
+| 4a  | Move `app/scripts` (48 units) into `app/tools/{check,workflow,dev}`; one PR, mechanical, a human merges | **human** | outline below, own plan |
+| 4   | Root `scripts/*.sh` to `tools/`, `app/config`, `app/gates` (Makefile, CI, hooks adapt)                  | **human** | outline below, own plan |
+| 5   | `core` and `api`, one PR per module                                                                     | agent     | outline below, own plan |
+| 6   | `web`: `app/`, `shared/`, `components/ui`, then one PR per module                                       | agent     | outline below, own plan |
+| 7   | Touch-it rule, ceilings per release, closes #388                                                        | **human** | outline below, own plan |
 
 PR 3 needs a human because the rename of `Docs/` changes paths in files that agents may not change alone (`CLAUDE.md`, `AGENTS.md`, `.claude/`, `.github/CODEOWNERS`, see the "Gates you must not weaken" section of `AGENTS.md`). PRs 2, 5 and 6 contain no gate file and go through `make merge`.
 
@@ -994,9 +995,50 @@ Each of these gets its own short plan, written after the previous PR is merged, 
 - Note on case: on a case-insensitive file system `Docs` to `docs` needs two renames (`Docs` to `docs-tmp` to `docs`); do it in two commits.
 - Merge: **human** (agent instruction files and `CODEOWNERS` change).
 
+### PR 4a: move `app/scripts` into `app/tools`
+
+`app/scripts` is the one crowded directory where new files arrive all the time (9 of the last 25 merged PRs touched it), and after PR 1 any new check script fails the gate. It is moved first, before `layout-fix`, in **one** mechanical PR: a half-moved tree breaks every path at once, and one PR keeps the freeze short.
+
+**Decision that changes ADR 0008: `app/tools/`, not a root `tools/`.** Several scripts import npm packages (`eslint` in `check-baseline`, `playwright` in the conformance probe, and the `vitest` configs import `coverage-config.mjs`). Node resolves bare imports from the importing file upwards, so scripts under a root `tools/` would not find `app/node_modules`. The Node scripts therefore stay inside `app/` as `app/tools/`; the root `tools/` keeps only the shell scripts from the root `scripts/` (PR 4). ADR 0008 and `FR-QG-23` are amended in this PR, and `rootDirs` in `app/layout.config.mjs` stays `app`, `docs`, `tools`.
+
+**Target (every directory has at most 5 units; `make layout` proves it):**
+
+```text
+app/tools/
+  check/
+    code/       check-boundaries, layout/, modules/, design-system/, conformance/
+    quality/    check-baseline, check-crap, check-duplicates, check-stories, coverage/
+    docs/       check-links, check-principles, check-skills, check-specs, check-traceability
+    release/    check-changelog, check-ci-drift, check-release-tags, release-config
+    supply/     check-audit, check-deps
+  workflow/     board, claim/, merge-pr, project-status/, worktree-env
+  dev/          commitlint, git-hook-hints, health-summary, repo-stats, smoke
+```
+
+Families that become a folder: `layout/` (check-layout, layout-baseline, layout-rules, layout-tree), `modules/` (check-modules, check-modules-contracts, check-modules-graph, check-modules-sql, module-report), `design-system/` (check-design-system, check-design-system-rules), `conformance/` (check-conformance, conformance-probes, conformance-rules), `coverage/` (check-coverage-ratchet, coverage-config), `claim/` (claim, claim-check, claim-preflight, `lib/` with claim-client, claim-lib, claim-steps), `project-status/` (project-status, project-status-lib). A test or `selftest` file moves with its script (same stem).
+
+**Steps, in this order:**
+
+1. **Mapping table first.** One JSON file (kept out of the repo) maps every old path to its new path; a one-off script reads it and does all of steps 2 to 4, so the move is repeatable after a conflict.
+2. **`git mv`** for every file, so `git log --follow` and rename detection keep working.
+3. **Relative imports and paths inside the scripts**: `../packages/...`, `../eslint.config.js`, `import.meta.url` based roots (for example `check-layout.mjs` derives `app` and `root` two levels up; after the move it is four) and the copy list in `check-layout.test.mjs`, which builds a throwaway repo from the script names and the path `app/scripts/...`.
+4. **References outside the scripts**, found with `grep -rIlE "app/scripts|scripts/[a-z-]+\.mjs|node scripts/"` (about 40 files): `Makefile` (17 places), `app/package.json` (20), `.github/workflows/*.yml`, `.githooks/*`, `.claude/hooks/*.mjs` and its tests, `.claude/rules/*`, `.agents/skills/*`, `app/knip.json`, `app/eslint.config.js` (imports `check-boundaries.mjs`), `app/packages/*/vitest.config.ts` and `vite.config.ts` (import `coverage-config.mjs`), `app/modules.config.mjs`, `app/quality-limits.json`, `app/audit-allowlist.json`, `app/deploy/scripts/*.sh`, `README.md`, `DESIGN-SYSTEM.md` and the docs.
+5. **Gate-file definitions must follow the move, with tests.** `.claude/hooks/rules.mjs` and `isGateFile` in `merge-pr.mjs` decide which paths a human must approve. If they still name `app/scripts/`, the moved check scripts silently stop being gate files and an agent could merge a change to them. Add a test to `rules.test.mjs` and `merge-pr.test.mjs` for every new group (`app/tools/check/**`, `app/tools/workflow/**`) before changing the patterns, and watch it fail first.
+6. **Baseline**: the `app/scripts` entry disappears from `app/layout-baseline.json` (it only shrinks).
+7. **Verify:** `make ci`, `make layout`, `grep -rn "app/scripts"` returns nothing but history (`Docs/test-logs`, changelog), `check-links`, and a manual run of `make claim` (dry run), `make worktree`, `make merge` (refuses a gate-file PR) and `make board`, because the workflow scripts have the most path logic.
+
+**Risks and how they are handled:**
+
+- **Open PRs that touch `app/scripts`** (7 files in #414 today) conflict. Rename detection resolves most; the rest is rebased onto the new paths by the author of that PR. Post a comment on #388 one day ahead and keep the merge window short.
+- **Another race with `dev`** (see #418): create the baseline change and the move on a fresh `dev`, run `make ci`, and merge right after the green run.
+- **A path nobody greps for** (a path built from parts, such as `` `scripts/${name}` ``): `make ci` plus the manual workflow runs in step 7 are the net; add anything found to the mapping and to a test.
+- **`.claude/` edits ask a human** (hook): expected, and the reason the PR is human-merged.
+
+**Merge:** **human** (`Makefile`, workflows, hooks, `.claude/`, check scripts).
+
 ### PR 4: `tools/`, `app/config`, `app/gates`
 
-- Move `scripts/*.sh` and `app/scripts/*` into `tools/{check,workflow,shell}`; move gate data (`quality-limits.json`, `quality-baseline.json`, `quality-ds-baseline.json`, `coverage-thresholds.json`, `audit-allowlist.json`, `layout-baseline.json`) to `app/gates/`; tool configs (`eslint.config.js`, `knip.json`, `commitlint.config.js`, `release.config.js`, `.prettierrc.json`, `tsconfig.base.json`) to `app/config/` where the tool accepts `--config`; otherwise they stay in `app/` and are named in the whitelist of `layout.config.mjs`.
+- Move the root `scripts/*.sh` into `tools/` (shell only; the Node scripts moved in PR 4a); move gate data (`quality-limits.json`, `quality-baseline.json`, `quality-ds-baseline.json`, `coverage-thresholds.json`, `audit-allowlist.json`, `layout-baseline.json`) to `app/gates/`; tool configs (`eslint.config.js`, `knip.json`, `commitlint.config.js`, `release.config.js`, `.prettierrc.json`, `tsconfig.base.json`) to `app/config/` where the tool accepts `--config`; otherwise they stay in `app/` and are named in the whitelist of `layout.config.mjs`.
 - Adapt: `Makefile`, `app/package.json`, all workflows, `.githooks/`, `check-ci-drift.mjs`, `.github/CODEOWNERS` (`/scripts/` becomes `/tools/`), and the path inside `check-layout.mjs` (`devBaseline` reads `app/layout-baseline.json` from `dev`; during the move PR it must read the old path).
 - Merge: **human** (Makefile, workflows, hooks, thresholds).
 
