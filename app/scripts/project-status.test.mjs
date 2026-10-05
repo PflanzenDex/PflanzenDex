@@ -2,6 +2,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { closedIssues, drift, transitions } from "./project-status-lib.mjs";
+import { missingPriority } from "./project-status.mjs";
 
 const items = [
   { issue: 1, status: "In Progress" },
@@ -75,4 +76,16 @@ test("US-DEV-05: drift names status contradicting the PRs and missing priority",
       "4:no priority",
     ],
   );
+});
+
+test("US-DEV-05: missingPriority names open items without a priority, epics and unknown issues excluded", async () => {
+  const list = {
+    items: [
+      { id: "a", content: { type: "Issue", number: 1 }, status: "Todo", priority: "P1 high" },
+      { id: "b", content: { type: "Issue", number: 2 }, status: "Todo" },
+      { id: "c", content: { type: "Issue", number: 3 }, status: "Todo", typ: "Epic" },
+    ],
+  };
+  const client = { run: async () => JSON.stringify(list) };
+  assert.deepEqual(await missingPriority(client, [1, 2, 3, 99]), [2]);
 });
