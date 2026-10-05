@@ -38,9 +38,9 @@ pie showData title Product user stories by status
 
 | | |
 | --- | --- |
-| **Repository** | 1.02k files · 122k lines · 44 MiB |
-| **Production code** | 27.8k lines · packages: web 11.6k · core 6.81k · db 3.61k · api 1.34k |
-| **Tests** | 195 files · 1.76k test cases · 29.4k lines (106% of production code) |
+| **Repository** | 1.04k files · 123k lines · 44 MiB |
+| **Production code** | 28.4k lines · packages: web 12.1k · core 6.81k · db 3.61k · api 1.34k |
+| **Tests** | 199 files · 1.80k test cases · 29.9k lines (105% of production code) |
 | **Database** | 21 migrations · 40 error codes |
 | **Process docs** | 7 ADRs · 9 agent skills · 3 runbooks |
 
@@ -53,11 +53,11 @@ pie showData title Product user stories by status
 
 ```mermaid
 pie showData title Lines by language
-  "TypeScript" : 47200
+  "TypeScript" : 48100
   "Text" : 29200
-  "JSON" : 24700
+  "JSON" : 24900
   "Markdown" : 9560
-  "JavaScript" : 6840
+  "JavaScript" : 7060
   "SQL" : 1290
   "CSS" : 1200
   "Other" : 1772

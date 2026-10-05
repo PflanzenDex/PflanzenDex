@@ -254,16 +254,6 @@
       "rule": "DS-48",
       "file": "wishlist/wish-form.tsx",
       "count": 1
-    },
-    {
-      "rule": "DS-57",
-      "file": "dependency:react-hook-form",
-      "count": 1
-    },
-    {
-      "rule": "DS-57",
-      "file": "dependency:zod",
-      "count": 1
     }
   ]
 }

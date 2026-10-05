@@ -3,25 +3,13 @@ import { composeStories, setProjectAnnotations } from "@storybook/react-vite";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import preview from "../../../.storybook/preview";
-import * as badge from "./badge.stories";
-import * as button from "./button.stories";
-import * as dialog from "./dialog.stories";
-import * as label from "./label.stories";
-import * as sheet from "./sheet.stories";
-import * as shell from "../shared/shell.stories";
+import * as form from "./form.stories";
 
 setProjectAnnotations([preview]);
 
-const catalog = {
-  Button: composeStories(button),
-  Badge: composeStories(badge),
-  Label: composeStories(label),
-  Dialog: composeStories(dialog),
-  Sheet: composeStories(sheet),
-  Shell: composeStories(shell),
-};
+const catalog = { Form: composeStories(form) };
 
-describe("TE-18 · DS-01 ui primitive stories", () => {
+describe("TE-18 · DS-47 ui form family stories", () => {
   afterEach(cleanup);
 
   for (const [component, stories] of Object.entries(catalog))

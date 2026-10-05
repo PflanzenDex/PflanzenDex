@@ -83,3 +83,95 @@ export function importViolations(file, line) {
   if (targetIsModule && rest !== undefined) found.push("DS-42");
   return found;
 }
+
+// Blank out comments and string/template contents (keeps length and newlines) so structure can be matched.
+const LITERALS =
+  /\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`/g;
+const blank = (text) => text.replace(LITERALS, (m) => m.replace(/[^\n]/g, " "));
+const lineAt = (text, index) => text.slice(0, index).split("\n").length;
+// Text between the opening bracket at `open` and its match (exclusive), or "" when unbalanced.
+function balanced(text, open) {
+  const pairs = { "(": ")", "{": "}" };
+  const close = pairs[text[open]];
+  let depth = 0;
+  for (let i = open; i < text.length; i += 1) {
+    if (text[i] === text[open]) depth += 1;
+    else if (text[i] === close && (depth -= 1) === 0) return text.slice(open + 1, i);
+  }
+  return "";
+}
+
+const notStory = (file) => !/\.stories\.tsx$/.test(file);
+const isUi = (file) => file.startsWith("components/ui/") && notStory(file);
+const CVA_CALL = /\bcva\(/;
+const TERNARY_OR_AND = /(?<!\?)\?(?![?.])|&&/;
+
+// File rules see the whole file; each returns the 1-based lines of its violations.
+export const FILE_RULES = [
+  {
+    // DS-31: class names flow through cn(), never template literals or concatenation.
+    id: "DS-31",
+    applies: (file) => file.startsWith("components/") && notStory(file),
+    lines: (content) => {
+      const found = [];
+      content.split("\n").forEach((line, i) => {
+        const code = line.replace(/\/\/.*$/, "");
+        if (/className=\{\s*(?:`|["'][^"']*["']\s*\+|[\w.]+\s*\+\s*["'`])/.test(code))
+          found.push(i + 1);
+      });
+      return found;
+    },
+  },
+  {
+    // DS-34: ui components vary classes through cva(), not by ternary or && in className.
+    id: "DS-34",
+    applies: isUi,
+    lines: (content) => {
+      const code = blank(content);
+      if (CVA_CALL.test(code)) return [];
+      const found = [];
+      for (const m of code.matchAll(/\bclassName=\{/g)) {
+        const open = m.index + m[0].length - 1;
+        const op = TERNARY_OR_AND.exec(balanced(code, open));
+        if (op) found.push(lineAt(code, open + 1 + op.index));
+      }
+      return found;
+    },
+  },
+  {
+    // DS-34: a ui component declaring variant/size props needs cva().
+    id: "DS-34",
+    applies: isUi,
+    lines: (content) => {
+      const code = blank(content);
+      if (CVA_CALL.test(code)) return [];
+      const m = /^\s*(?:variant|size)\??\s*:/m.exec(code);
+      return m ? [lineAt(code, m.index + m[0].search(/\S/))] : [];
+    },
+  },
+  {
+    // DS-36 (static part): ui components accepting className must call cn().
+    id: "DS-36",
+    applies: isUi,
+    lines: (content) => {
+      const code = blank(content);
+      if (/\bcn\(/.test(code)) return [];
+      const m = /[{,]\s*className\b(?!\s*=)|\bclassName\??\s*:/.exec(code);
+      return m ? [lineAt(code, m.index + 1)] : [];
+    },
+  },
+  {
+    // DS-35: every cva() call sets defaultVariants.
+    id: "DS-35",
+    applies: (file) => file.startsWith("components/") && notStory(file),
+    lines: (content) => {
+      const code = blank(content);
+      const found = [];
+      for (const m of code.matchAll(/\bcva\(/g)) {
+        const body = balanced(code, m.index + m[0].length - 1);
+        if (!/\bdefaultVariants\b/.test(body)) found.push(lineAt(code, m.index));
+      }
+      return found;
+    },
+  },
+];
