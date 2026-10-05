@@ -1,7 +1,7 @@
-import { appError, failed, isTimeZone, localToday, ok, type Result } from "../kernel";
-import { isActive, type SpecimenStore } from "../collection";
-import { daysBetween } from "./treatment-dates";
-import type { TreatmentRow, TreatmentStore } from "./treatment-types";
+import { appError, failed, isTimeZone, localToday, ok, type Result } from "../../kernel";
+import { isActive, type SpecimenStore } from "../../collection";
+import { daysBetween } from "../treatment-data/treatment-dates";
+import type { TreatmentRow, TreatmentStore } from "../treatment-data/treatment-types";
 
 export type TreatmentStatusKind = "overdue" | "today" | "soon" | "later";
 

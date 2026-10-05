@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { SpeciesStub, InMemorySpecimens, testSpecies } from "../collection/shared/test-helpers";
-import { NO_PHASE_LOCATION, carePhase, carePhasesList } from "./index";
-import { InMemoryCareProfiles } from "../collection/care-profile/care-profile-test-helpers";
-import { PhaseLocationStub } from "./test-helpers";
+import { SpeciesStub, InMemorySpecimens, testSpecies } from "../../collection/shared/test-helpers";
+import { NO_PHASE_LOCATION, carePhase, carePhasesList } from "../index";
+import { InMemoryCareProfiles } from "../../collection/care-profile/care-profile-test-helpers";
+import { PhaseLocationStub } from "../shared/test-helpers";
 
 const WINTER = "11111111-1111-4111-8111-111111111111"; // Dormancy 11-01 to 03-15, across the turn of the year
 const SUMMER = "22222222-2222-4222-8222-222222222222"; // Dormancy 06-01 to 08-31, within the same year

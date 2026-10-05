@@ -9,16 +9,16 @@ import {
   orNull,
   shape,
   textField,
-} from "../kernel";
-import type { SpecimenStore } from "../collection";
-import { dateField } from "./fields";
-import { addDays } from "./treatment-dates";
+} from "../../kernel";
+import type { SpecimenStore } from "../../collection";
+import { dateField } from "../shared/fields";
+import { addDays } from "../treatment-data/treatment-dates";
 import {
   COURSE_DEFAULTS,
   TREATMENT_LIMITS,
   type TreatmentRow,
   type TreatmentStore,
-} from "./treatment-types";
+} from "../treatment-data/treatment-types";
 
 export interface PlanDependencies {
   readonly treatments: TreatmentStore;

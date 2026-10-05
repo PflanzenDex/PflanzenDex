@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { execute } from "../kernel";
-import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
-import { InMemoryLight } from "../light/test-helpers";
-import { careProfileUpdate, specimenCreate, specimenHints } from "../collection";
-import { InMemoryCareProfiles } from "../collection/care-profile/care-profile-test-helpers";
-import { InMemorySpecimens, SpeciesStub, testSpecies } from "../collection/shared/test-helpers";
+import { execute } from "../../kernel";
+import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
+import { InMemoryLight } from "../../light/test-helpers";
+import { careProfileUpdate, specimenCreate, specimenHints } from "../../collection";
+import { InMemoryCareProfiles } from "../../collection/care-profile/care-profile-test-helpers";
+import { InMemorySpecimens, SpeciesStub, testSpecies } from "../../collection/shared/test-helpers";
 import {
   carePhasesList,
   careProfileLocations,
   careProfileTargetLocation,
   phaseSwitchConfirm,
-} from "./index";
+} from "../index";
 
 const WINTER = "11111111-1111-4111-8111-111111111111"; // catalog dormancy 11-01 to 03-15
 const NONE = "22222222-2222-4222-8222-222222222222"; // no dormancy period in the catalog

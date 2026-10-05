@@ -1,6 +1,6 @@
-import { appError, failed, isId, ok, type Result } from "../kernel";
-import type { SpecimenStore } from "../collection";
-import type { TreatmentRow, TreatmentStore } from "./treatment-types";
+import { appError, failed, isId, ok, type Result } from "../../kernel";
+import type { SpecimenStore } from "../../collection";
+import type { TreatmentRow, TreatmentStore } from "../treatment-data/treatment-types";
 
 export interface HistoryDependencies {
   readonly treatments: Pick<TreatmentStore, "done">;

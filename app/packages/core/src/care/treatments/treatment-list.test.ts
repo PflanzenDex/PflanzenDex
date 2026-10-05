@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { treatmentOpenList, treatmentStatus } from "./index";
-import type { SpecimenRow, SpecimenStore } from "../collection";
-import { InMemoryTreatments } from "./treatment-test-helpers";
+import { treatmentOpenList, treatmentStatus } from "../index";
+import type { SpecimenRow, SpecimenStore } from "../../collection";
+import { InMemoryTreatments } from "../treatment-data/treatment-test-helpers";
 
 const row = (id: string, name: string, status: SpecimenRow["status"] = "plant"): SpecimenRow => ({
   id,

@@ -1,4 +1,4 @@
-import type { CardMeasurementView, MeasurementSource } from "../collection";
+import type { CardMeasurementView, MeasurementSource } from "../../collection";
 import type { MeasurementStore } from "./types";
 
 export interface SourceDependencies {

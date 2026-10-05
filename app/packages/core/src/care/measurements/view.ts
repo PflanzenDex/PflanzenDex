@@ -1,5 +1,5 @@
-import { isId } from "../kernel";
-import type { SpeciesSource, SpecimenStore } from "../collection";
+import { isId } from "../../kernel";
+import type { SpeciesSource, SpecimenStore } from "../../collection";
 import type { MeasurementView, MeasurementStore } from "./types";
 
 export interface ViewDependencies {

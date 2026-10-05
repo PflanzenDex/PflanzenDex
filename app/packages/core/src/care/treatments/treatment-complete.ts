@@ -7,9 +7,9 @@ import {
   ok,
   shape,
   timeZoneField,
-} from "../kernel";
-import type { SpecimenStore } from "../collection";
-import type { TreatmentRow, TreatmentStore } from "./treatment-types";
+} from "../../kernel";
+import type { SpecimenStore } from "../../collection";
+import type { TreatmentRow, TreatmentStore } from "../treatment-data/treatment-types";
 
 export interface CompleteDependencies {
   readonly treatments: Pick<TreatmentStore, "find" | "complete">;

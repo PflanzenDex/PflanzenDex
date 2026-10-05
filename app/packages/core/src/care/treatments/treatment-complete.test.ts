@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { execute } from "../kernel/operation";
-import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
-import { treatmentComplete, treatmentHistory, treatmentSource } from "./index";
-import { SpecimenStub } from "./test-helpers";
-import { InMemoryTreatments } from "./treatment-test-helpers";
+import { execute } from "../../kernel/operation";
+import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
+import { treatmentComplete, treatmentHistory, treatmentSource } from "../index";
+import { SpecimenStub } from "../shared/test-helpers";
+import { InMemoryTreatments } from "../treatment-data/treatment-test-helpers";
 
 const E1 = "00000000-0000-4000-8000-000000000001";
 const E2 = "00000000-0000-4000-8000-000000000002";

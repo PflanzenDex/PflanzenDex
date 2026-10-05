@@ -1,10 +1,10 @@
-import { appError, failed, localToday, isTimeZone, ok, type Result } from "../kernel";
+import { appError, failed, localToday, isTimeZone, ok, type Result } from "../../kernel";
 import {
   effectiveDormancy,
   type CareProfileReader,
   type SpeciesSource,
   type SpecimenStore,
-} from "../collection";
+} from "../../collection";
 import { carePhase, type CarePhase } from "./phase";
 import type { PhaseLocationSource } from "./phase-location";
 import { deviationsFirst } from "./phase-status";
