@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates unused-report storybook build-storybook
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates unused-report storybook build-storybook
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -150,6 +150,9 @@ claim: ## Claim a story before working on it (ISSUE=<n>): assignee, status, bran
 
 board: ## Who works on which open story of the milestone; flags STALE and DOUBLE (CLAIM_STALE_HOURS, US-DEV-08)
 	cd $(APP) && node scripts/board.mjs $(MILESTONE)
+
+status-check: ## Project status vs. pull requests and missing priorities (US-DEV-05); exit 1 on drift
+	cd $(APP) && node scripts/project-status.mjs check
 
 clean: ## Remove build output and node_modules
 	cd $(APP) && rm -rf node_modules packages/*/node_modules packages/*/dist
