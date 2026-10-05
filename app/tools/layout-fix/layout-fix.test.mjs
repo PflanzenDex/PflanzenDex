@@ -149,4 +149,21 @@ describe("US-QG-09 layout-fix: dry run and apply", () => {
       r.remove();
     }
   });
+
+  it("reports a new folder that is itself over the limit instead of hiding it", () => {
+    const r = repo();
+    try {
+      const big = `${WEB}/src/big`;
+      for (let i = 1; i <= 6; i += 1) {
+        fs.mkdirSync(path.join(r.dir, big), { recursive: true });
+        fs.writeFileSync(path.join(r.dir, `${big}/grp-${i}.ts`), `export const v${i} = ${i};\n`);
+      }
+      for (const n of ["x", "y", "z"])
+        fs.writeFileSync(path.join(r.dir, `${big}/${n}.ts`), "export {};\n");
+      const report = fixDirectory(r.dir, big, { apply: false, config });
+      assert.deepEqual(report.overLimit, [{ dir: `${big}/grp`, units: 6 }]);
+    } finally {
+      r.remove();
+    }
+  });
 });

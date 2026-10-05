@@ -41,7 +41,7 @@ The prototype of the code below, run over the tracked files of `dev`, reports **
 | --- | ------------------------------------------------------------------------------------------------------- | --------- | ----------------------- |
 | 0   | Spec and ADR 0008 (#391)                                                                                | agent     | done                    |
 | 1   | Check, config, baseline, `make layout` in gates, principle PRIN-011 (Tasks 1 to 6)                      | **human** | this document           |
-| 2   | `make layout-fix` (dry run, apply, import and link rewrite)                                             | agent     | outline below, own plan |
+| 2   | `npm run layout-fix` (dry run, apply, import rewrite; done)                                             | agent     | outline below, own plan |
 | 3   | Root and `docs/`: rename, whitelist, links; touches `CLAUDE.md`, `AGENTS.md`, `.claude/`, `CODEOWNERS`  | **human** | outline below, own plan |
 | 4a  | Move `app/scripts` (48 units) into `app/tools/{check,workflow,dev}`; one PR, mechanical, a human merges | **human** | outline below, own plan |
 | 4   | Root `scripts/*.sh` to `tools/`, `app/config`, `app/gates` (Makefile, CI, hooks adapt)                  | **human** | outline below, own plan |
@@ -981,12 +981,17 @@ Do **not** run `make merge`; it refuses because of gate files. Message to the ow
 
 Each of these gets its own short plan, written after the previous PR is merged, because it works from measured output (the baseline) and from the state of parallel work. The points below are fixed now.
 
-### PR 2: `make layout-fix`
+### PR 2: `layout-fix` (done)
 
-- Files: `app/scripts/layout-fix.mjs` (CLI), `app/scripts/layout-moves.mjs` (computes the moves for a directory from the rules), `app/scripts/layout-rewrite.mjs` (rewrites references), tests next to them, a `layout-fix` target in the `Makefile` (a gate file: the target is added in PR 1's successor by the human-merged PR 4 or, if the owner agrees, here; decide in the plan).
-- Behaviour: `make layout-fix PATH=<dir>` prints the moves and rewrites (dry run); `APPLY=1` performs them with `git mv`. Imports in `.ts` and `.tsx` are rewritten with the TypeScript language service (`getEditsForFileRename`), so path aliases and extensions are respected; relative links in `.md` files with the pattern the link checker (`check-links.mjs`) already parses.
-- Tests: a temporary git repository with a small TypeScript project; a dry run changes nothing; an applied move leaves `tsc --noEmit` green; a markdown link follows its target.
-- Merge: agent (`make merge`), no gate file if the `Makefile` target is added in PR 4.
+`npm run layout-fix -- <dir> [--apply] [--kebab] [--into folder=prefix,prefix]... [--no-auto]` in `app/tools/layout-fix/` (not a gate; the `make` target comes with the next human-merged PR that touches the `Makefile`). It is a dry run unless `--apply` is given.
+
+- **What it does:** plans the moves for one directory (`fix-plan.mjs`), moves with `git mv`, rewrites every import that points at a moved file (`fix-rewrite.mjs`, `fix-resolve.mjs`: relative specifiers without extension, directory and `index` imports, exact names such as stylesheets, the `@/` alias per package, `vi.mock`, dynamic `import()`), and afterwards checks that every rewritten import still resolves to the file it pointed at; otherwise nothing is changed.
+- **The moves:** `--kebab` renames PascalCase and snake_case files (LY-3). A component `x.tsx` with its test, story and skeleton goes into a folder `x/` (LY-4, only below the component roots). `--into folder=prefix,prefix` groups the units that start with a prefix into a folder (the person decides by meaning). Unless `--no-auto` is given, the biggest groups of units that share a name prefix are folded into a folder until the directory is within the limit (LY-1), and a folder that is still too big is split again by the next name segment. A prefix that the directory name already carries is skipped (`care/phases/`, not `care/care/`).
+- **What it reports instead of guessing:** folders that are still over the limit after the moves (`still over the limit`), and files that mention a moved path as a string (a config, a doc): `check by hand`. Markdown links are not rewritten; the `docs/` PR handles them with `check-links`.
+- **What it does not do:** invent groups. Run on the real tree, the automatic grouping helps in few directories (`core/collection` 32 to 25 units, `core/care` 22 to 15, `api/collection` 17 to 16); in most the file names share no prefix. The meaningful split is made per module with `--into`.
+- **Proof on real code** (applied in a scratch state, then discarded): `core/collection` moved 11 files and rewrote 44 imports in 18 files; `tsc` was clean and all 738 core tests passed. The same run showed a new folder with 6 units, which is why the over-limit report exists.
+- **Tests:** 37, in a temporary git repository and on in-memory path lists: resolution of every import form, rewriting without touching look-alike strings, planning (components, kebab, groups, recursion, collisions) and the end to end apply, including a check that the layout rules accept the result.
+- **Merge:** agent (`make merge`); no gate file.
 
 ### PR 3: root and `docs/`
 

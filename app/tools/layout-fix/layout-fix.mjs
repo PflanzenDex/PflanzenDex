@@ -77,6 +77,24 @@ function applyMoves(root, moves, texts) {
   for (const [file, text] of texts) fs.writeFileSync(path.join(root, file), text);
 }
 
+// Directories that the moves touch and that would still be over their unit limit (a new folder can be too big itself).
+function overLimit(paths, moves, dir, config) {
+  const touched = new Set([dir]);
+  for (const now of moves.values()) {
+    for (let d = path.posix.dirname(now); d.startsWith(`${dir}/`); d = path.posix.dirname(d))
+      touched.add(d);
+  }
+  const tree = buildTree(paths.map((p) => moves.get(p) ?? p));
+  const found = [];
+  for (const d of [...touched].sort()) {
+    const rule = config.dirs.find((r) => matchDir(r.path, d));
+    const units = unitCount(tree.get(d) ?? new Map());
+    if (!rule?.collection && units > (rule?.maxUnits ?? config.maxUnits))
+      found.push({ dir: d, units });
+  }
+  return found;
+}
+
 const unitsIn = (paths, dir) => unitCount(buildTree(paths).get(dir) ?? new Map());
 
 /** Plans, and with `apply` performs, the moves for one directory. Returns the report. */
@@ -112,6 +130,7 @@ export function fixDirectory(root, dir, options = {}) {
     edits: edits.length,
     broken: broken(edits, moves, ctx),
     mentions: mentions(root, paths, moves),
+    overLimit: overLimit(paths, moves, dir, config),
     after: unitsIn(
       paths.map((p) => moves.get(p) ?? p),
       dir,
@@ -155,6 +174,10 @@ function main(argv) {
   if (r.moves.size)
     console.log(
       `${r.moves.size} file(s) move, ${r.edits} import(s) in ${r.rewrittenFiles} file(s) are rewritten`,
+    );
+  for (const o of r.overLimit)
+    console.log(
+      `  still over the limit: ${o.dir} has ${o.units} units; split it with --into folder=prefix`,
     );
   for (const m of r.mentions) console.log(`  check by hand: ${m.file} mentions ${m.path}`);
   for (const b of r.broken)
