@@ -73,15 +73,18 @@ export class InMemoryReview implements ReviewStore {
   /** Re-pointing results the merge reports; tests set it to simulate the other modules' ports. */
   moved: MergeMoved[] = [{ kind: "specimen", moved: 1, kept: 0 }];
   conflict = false;
+  /** Simulates a species row that cannot be locked. */
+  lockFails = false;
 
   async merge(
     userId: string,
     proposalId: string,
     targetSpeciesId: string,
-  ): Promise<MergeOutcome | "conflict" | null> {
+  ): Promise<MergeOutcome | "conflict" | "lock_failed" | null> {
     const i = this.rows.findIndex((z) => z.id === proposalId);
     const existing = this.rows[i];
     if (!existing || !OPEN.includes(existing.status)) return null;
+    if (this.lockFails) return "lock_failed";
     if (this.conflict) return "conflict";
     const merged: ReviewCase = {
       ...existing,

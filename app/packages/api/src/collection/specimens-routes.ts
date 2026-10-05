@@ -86,6 +86,10 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
     );
     return c.json({ cards });
   });
+  // The start page only needs the number of active specimens (US-ACC-03); before `/specimens/:id`.
+  routes.get("/specimens/count", async (c) =>
+    c.json({ count: await specimens.countActive(c.get("account").id) }),
+  );
   // Archive, archive and restore (US-BES-07); before `/specimens/:id`.
   routes.route("/", archivedRoutes(pool, clock));
   // US-BES-03: give a specimen a marker or change it.

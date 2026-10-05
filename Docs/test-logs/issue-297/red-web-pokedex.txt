@@ -1,0 +1,816 @@
+
+ RUN  v5.0.3 <worktree>
+
+ ❯ src/pokedex/PokedexDetail.test.tsx (12 tests | 2 failed) 1670ms
+   ❯ US-POK-09 follow-ups of the detail view (issue 297) (3)
+     × US-POK-09 the browser Back button closes the detail view instead of leaving the page 1033ms
+     × US-POK-09 every card shows a visible tap marker (chevron), not only the hover state 20ms
+ ❯ src/pokedex/PokedexBrowse.test.tsx (15 tests | 3 failed) 1994ms
+   ❯ US-POK-08 follow-ups of the family groups (issue 297) (3)
+     × US-POK-08 a collapsed family group stays collapsed after the detail view was opened and closed 103ms
+     × US-POK-08 closing the detail view restores the scroll position of the list 1050ms
+     × US-POK-08 the group without a known family reads 'Ohne bekannte Familie' and does not say 'unbekannt' twice 51ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pokedex/PokedexBrowse.test.tsx > US-POK-08 follow-ups of the family groups (issue 297) > US-POK-08 a collapsed family group stays collapsed after the detail view was opened and closed
+AssertionError: expected 'true' to be 'false' // Object.is equality
+
+Expected: "false"
+Received: "true"
+
+ ❯ src/pokedex/PokedexBrowse.test.tsx:200:92
+    198|     await userEvent.click(detailCard("Aloe vera"));
+    199|     await userEvent.click(screen.getByRole("button", { name: "Schließe…
+    200|     expect(screen.getByRole("button", { name: /Moraceae/ }).getAttribu…
+       |                                                                                            ^
+    201|       "false",
+    202|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/pokedex/PokedexBrowse.test.tsx > US-POK-08 follow-ups of the family groups (issue 297) > US-POK-08 closing the detail view restores the scroll position of the list
+AssertionError: expected last "vi.fn()" call to have been called with [ +0, 420 ]
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pokedex"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pokedex-title"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mid[39m=[32m"pokedex-title"[39m
+          [36m>[39m
+            [0mPokédex[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet"[39m
+          [36m>[39m
+            [0m3 Arten gefangen[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"browse"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"search"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mSuche (Art, deutscher Name, Gattung, Familie)[0m
+              [36m</span>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"search"[39m
+                [33mvalue[39m=[32m""[39m
+              [36m/>[39m
+            [36m</label>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Filter"[39m
+              [33mclass[39m=[32m"filters"[39m
+              [33mrole[39m=[32m"group"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                [33mclass[39m=[32m"filter selected"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mAlle[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"filter"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mGefangen[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-describedby[39m=[32m"hint-missing"[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"filter"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mFehlend[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"filter"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mArtenarm[0m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"quiet hint"[39m
+              [33mid[39m=[32m"hint-missing"[39m
+            [36m>[39m
+              [0mFehlende Arten zeigt der Pokédex erst, wenn der Artenkatalog aufgebaut ist; bis dahin ist „Fehlend“ nicht verfügbar.[0m
+            [36m</p>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"sort"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mSortierung[0m
+              [36m</span>[39m
+              [36m<select>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"alphabetical"[39m
+                [36m>[39m
+                  [0mAlphabetisch[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"family"[39m
+                [36m>[39m
+                  [0mFamilie[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"catch_date"[39m
+                [36m>[39m
+                  [0mFangdatum[0m
+                [36m</option>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m"species_count"[39m
+                [36m>[39m
+                  [0mArtenzahl[0m
+                [36m</option>[39m
+              [36m</select>[39m
+            [36m</label>[39m
+          [36m</div>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Gefangene Arten"[39m
+            [33mclass[39m=[32m"caught-grid"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"caught-card"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Details zu Aloe vera"[39m
+                [33mclass[39m=[32m"species card-open"[39m
+                [33mdata-species[39m=[32m"Aloe vera"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mAloe vera[0m
+              [36m</button>[39m
+              [36m<span>[39m
+                [0mEchte Aloe[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mAloe[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"catch-date"[39m
+              [36m>[39m
+                [0mDatum unbekannt[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0m1 Exemplar[0m
+              [36m</span>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"caught-card"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Details zu Ficus elastica"[39m
+                [33mclass[39m=[32m"species card-open"[39m
+                [33mdata-species[39m=[32m"Ficus elastica"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mFicus elastica[0m
+              [36m</button>[39m
+              [36m<span>[39m
+                [0mGummibaum[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFicus[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"catch-date"[39m
+              [36m>[39m
+                [0mgefangen ≈ 01.08.2026[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0m1 Exemplar[0m
+              [36m</span>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"caught-card"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Details zu Ficus lyrata"[39m
+                [33mclass[39m=[32m"species card-open"[39m
+                [33mdata-species[39m=[32m"Ficus lyrata"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mFicus lyrata[0m
+              [36m</button>[39m
+              [36m<span>[39m
+                [0mGeigenfeige[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mFicus[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"catch-date"[39m
+              [36m>[39m
+                [0mgefangen 05.03.2026[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0m1 Exemplar[0m
+              [36m</span>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected:
+[
+  0,
+  420,
+]
+
++ Received:
+undefined
+
+ ❯ src/pokedex/PokedexBrowse.test.tsx:217:42
+    215|     y.mockReturnValue(0);
+    216|     await userEvent.click(screen.getByRole("button", { name: "Schließe…
+    217|     await waitFor(() => expect(scrollTo).toHaveBeenLastCalledWith(0, 4…
+       |                                          ^
+    218|     y.mockRestore();
+    219|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/pokedex/PokedexBrowse.test.tsx > US-POK-08 follow-ups of the family groups (issue 297) > US-POK-08 the group without a known family reads 'Ohne bekannte Familie' and does not say 'unbekannt' twice
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Ohne bekannte Familie/`
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Pokédex":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Pokédex":
+  [36m<h1[39m
+    [33mid[39m=[32m"pokedex-title"[39m
+  [36m/>[39m
+
+  Name "Familie unbekannt · 1 / unbekannt":
+  [36m<h2 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet hint"[39m
+    [33mid[39m=[32m"hint-missing"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"quiet hint"[39m
+    [33mid[39m=[32m"hint-poor"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  searchbox:
+
+  Name "Suche (Art, deutscher Name, Gattung, Familie)":
+  [36m<input[39m
+    [33mtype[39m=[32m"search"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "Filter":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Filter"[39m
+    [33mclass[39m=[32m"filters"[39m
+    [33mrole[39m=[32m"group"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Alle":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"true"[39m
+    [33mclass[39m=[32m"filter selected"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Gefangen":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"filter"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Fehlend":
+  [36m<button[39m
+    [33maria-describedby[39m=[32m"hint-missing"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"filter"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Artenarm":
+  [36m<button[39m
+    [33maria-describedby[39m=[32m"hint-poor"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"filter"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Familie unbekannt · 1 / unbekannt":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"true"[39m
+    [33mclass[39m=[32m"family-toggle"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Details zu Citrus limon":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Details zu Citrus limon"[39m
+    [33mclass[39m=[32m"species card-open"[39m
+    [33mdata-species[39m=[32m"Citrus limon"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Sortierung":
+  [36m<select />[39m
+
+  --------------------------------------------------
+  option:
+
+  Name "Alphabetisch":
+  [36m<option[39m
+    [33mvalue[39m=[32m"alphabetical"[39m
+  [36m/>[39m
+
+  Name "Familie":
+  [36m<option[39m
+    [33mvalue[39m=[32m"family"[39m
+  [36m/>[39m
+
+  Name "Fangdatum":
+  [36m<option[39m
+    [33mvalue[39m=[32m"catch_date"[39m
+  [36m/>[39m
+
+  Name "Artenzahl":
+  [36m<option[39m
+    [33mvalue[39m=[32m"species_count"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "Gefangene Arten: Familie unbekannt":
+  [36m<ul[39m
+    [33maria-label[39m=[32m"Gefangene Arten: Familie unbekannt"[39m
+    [33mclass[39m=[32m"caught-grid"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"caught-card"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pokedex"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"pokedex-title"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mid[39m=[32m"pokedex-title"[39m
+        [36m>[39m
+          [0mPokédex[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0m1 Art gefangen[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"browse"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"search"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0mSuche (Art, deutscher Name, Gattung, Familie)[0m
+            [36m</span>[39m
+            [36m<input[39m
+              [33mtype[39m=[32m"search"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Filter"[39m
+            [33mclass[39m=[32m"filters"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"filter selected"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mAlle[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"filter"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGefangen[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-describedby[39m=[32m"hint-missing"[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"filter"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mFehlend[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-describedby[39m=[32m"hint-poor"[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"filter"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mArtenarm[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet hint"[39m
+            [33mid[39m=[32m"hint-missing"[39m
+          [36m>[39m
+            [0mFehlende Arten zeigt der Pokédex erst, wenn der Artenkatalog aufgebaut ist; bis dahin ist „Fehlend“ nicht verfügbar.[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"quiet hint"[39m
+            [33mid[39m=[32m"hint-poor"[39m
+          [36m>[39m
+            [0m„Artenarm“ braucht die Artenzahl der Gattungen, die noch fehlt, und ist deshalb noch nicht verfügbar.[0m
+          [36m</p>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"sort"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0mSortierung[0m
+            [36m</span>[39m
+            [36m<select>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"alphabetical"[39m
+              [36m>[39m
+                [0mAlphabetisch[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"family"[39m
+              [36m>[39m
+                [0mFamilie[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"catch_date"[39m
+              [36m>[39m
+                [0mFangdatum[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"species_count"[39m
+              [36m>[39m
+                [0mArtenzahl[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</label>[39m
+        [36m</div>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"family"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [36m<button[39m
+              [33maria-expanded[39m=[32m"true"[39m
+              [33mclass[39m=[32m"family-toggle"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+              [36m>[39m
+                [0m▾ [0m
+              [36m</span>[39m
+              [0mFamilie unbekannt · 1 / unbekannt[0m
+            [36m</button>[39m
+          [36m</h2>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Gefangene Arten: Familie unbekannt"[39m
+            [33mclass[39m=[32m"caught-grid"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"caught-card"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Details zu Citrus limon"[39m
+                [33mclass[39m=[32m"species card-open"[39m
+                [33mdata-species[39m=[32m"Citrus limon"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mCitrus limon[0m
+              [36m</button>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0mCitrus[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"catch-date"[39m
+              [36m>[39m
+                [0mgefangen 01.01.2026[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"quiet"[39m
+              [36m>[39m
+                [0m1 Exemplar[0m
+              [36m</span>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+        [36m</section>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pokedex/PokedexBrowse.test.tsx:224:27
+    222|     await open([species("Citrus limon")]);
+    223|     await sortBy("Familie");
+    224|     const header = screen.getByRole("button", { name: /Ohne bekannte F…
+       |                           ^
+    225|     expect(header.textContent).toContain("1 Art");
+    226|     expect(header.textContent).not.toContain("unbekannt");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/pokedex/PokedexDetail.test.tsx > US-POK-09 follow-ups of the detail view (issue 297) > US-POK-09 the browser Back button closes the detail view instead of leaving the page
+AssertionError: expected <section class="detail" …(1)>…(12)</section> to be null
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pokedex"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"pokedex-title"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mid[39m=[32m"pokedex-title"[39m
+          [36m>[39m
+            [0mPokédex[0m
+          [36m</h1>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Details zu Ficus lyrata"[39m
+            [33mclass[39m=[32m"detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"detail-image"[39m
+            [36m>[39m
+              [0mNoch kein Bild vorhanden.[0m
+            [36m</div>[39m
+            [36m<h2[39m
+              [33mtabindex[39m=[32m"-1"[39m
+            [36m>[39m
+              [0mGeigenfeige[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"species"[39m
+            [36m>[39m
+              [0mFicus lyrata[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mKurztext: unbekannt[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mGattung: Ficus[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mFamilie: Moraceae (Maulbeergewächse)[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"detail-status"[39m
+            [36m>[39m
+              [0mStatus: gefangen[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m3 Exemplare[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"catch-date"[39m
+            [36m>[39m
+              [0mgefangen 05.03.2026[0m
+            [36m</p>[39m
+            [36m<ul[39m
+              [33maria-label[39m=[32m"Zusätze"[39m
+              [33mclass[39m=[32m"chips"[39m
+            [36m>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"chip"[39m
+              [36m>[39m
+                [0m'Bambino'[0m
+              [36m</li>[39m
+            [36m</ul>[39m
+            [36m<p>[39m
+              [36m<a[39m
+                [33mhref[39m=[32m"https://de.wikipedia.org/wiki/Geigenfeige"[39m
+                [33mrel[39m=[32m"noopener noreferrer"[39m
+                [33mtarget[39m=[32m"_blank"[39m
+              [36m>[39m
+                [0mQuelle öffnen (de.wikipedia.org)[0m
+              [36m</a>[39m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"detail-actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"secondary"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mSchließen[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected:
+null
+
++ Received:
+<section
+  aria-label="Details zu Ficus lyrata"
+  class="detail"
+>
+  <div
+    class="detail-image"
+  >
+    Noch kein Bild vorhanden.
+  </div>
+  <h2
+    tabindex="-1"
+  >
+    Geigenfeige
+  </h2>
+  <p
+    class="species"
+  >
+    Ficus lyrata
+  </p>
+  <p>
+    Kurztext: unbekannt
+  </p>
+  <p>
+    Gattung: Ficus
+  </p>
+  <p>
+    Familie: Moraceae (Maulbeergewächse)
+  </p>
+  <p
+    class="detail-status"
+  >
+    Status: gefangen
+  </p>
+  <p>
+    3 Exemplare
+  </p>
+  <p
+    class="catch-date"
+  >
+    gefangen 05.03.2026
+  </p>
+  <ul
+    aria-label="Zusätze"
+    class="chips"
+  >
+    <li
+      class="chip"
+    >
+      'Bambino'
+    </li>
+  </ul>
+  <p>
+    <a
+      href="https://de.wikipedia.org/wiki/Geigenfeige"
+      rel="noopener noreferrer"
+      target="_blank"
+    >
+      Quelle öffnen (de.wikipedia.org)
+    </a>
+  </p>
+  <div
+    class="detail-actions"
+  >
+    <button
+      class="secondary"
+      type="button"
+    >
+      Schließen
+    </button>
+  </div>
+</section>
+
+ ❯ src/pokedex/PokedexDetail.test.tsx:168:83
+    166|     expect(screen.getByRole("region", { name: /Details/ })).toBeTruthy…
+    167|     window.history.back();
+    168|     await waitFor(() => expect(screen.queryByRole("region", { name: /D…
+       |                                                                                   ^
+    169|     expect(card("Ficus lyrata")).toBeTruthy();
+    170|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/pokedex/PokedexDetail.test.tsx > US-POK-09 follow-ups of the detail view (issue 297) > US-POK-09 every card shows a visible tap marker (chevron), not only the hover state
+AssertionError: expected undefined to be '›' // Object.is equality
+
+- Expected:
+"›"
+
++ Received:
+undefined
+
+ ❯ src/pokedex/PokedexDetail.test.tsx:185:33
+    183|     await open();
+    184|     const marker = card("Ficus lyrata").closest("li")?.querySelector("…
+    185|     expect(marker?.textContent).toBe("›");
+       |                                 ^
+    186|     expect(marker?.getAttribute("aria-hidden")).toBe("true");
+    187|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  5 failed | 33 passed (38)
+   Start at  08:08:58
+   Duration  3.15s (tests 56%, environment 24%, transform 12%, import 8%)
+
+exit code: 1

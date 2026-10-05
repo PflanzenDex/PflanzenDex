@@ -42,6 +42,7 @@ export const catalogMerge = (store: ReviewStore, species: SpeciesStore) =>
       }
       const merged = await store.merge(context.userId, proposal.id, input.targetSpeciesId);
       if (merged === "conflict") return failed(appError("review.merge_conflict"));
+      if (merged === "lock_failed") return failed(appError("review.merge_lock_failed"));
       return merged ? ok(merged) : failed(appError("review.status_invalid"));
     },
   });

@@ -6,10 +6,11 @@ import type {
   ZoneStock,
   ZoneStockSource,
 } from "./types";
+import { wishNameKey } from "./name-key";
 
 /** In-memory adapter for tests only; the real adapter lives in `db`. Zones are the ones each account owns. */
 export class InMemoryWishes implements WishStore {
-  readonly rows: (WishRow & { userId: string })[] = [];
+  readonly rows: (WishRow & { userId: string; nameKey?: string })[] = [];
   writes = 0;
 
   constructor(private readonly zones: Readonly<Record<string, readonly string[]>> = {}) {}
@@ -23,17 +24,18 @@ export class InMemoryWishes implements WishStore {
       return "zone_unknown";
     if (
       this.rows.some(
-        (r) => r.userId === userId && r.name.toLowerCase() === values.name.toLowerCase(),
+        (r) => r.userId === userId && (r.nameKey ?? wishNameKey(r.name)) === values.nameKey,
       )
     )
       return "name_taken";
+    const { nameKey, ...fields } = values;
     const row: WishRow = {
-      ...values,
+      ...fields,
       id: `w${this.rows.length + 1}`,
       type: "plant",
       status: "wishlist",
     };
-    this.rows.push({ ...row, userId });
+    this.rows.push({ ...row, userId, nameKey });
     return row;
   }
 
@@ -63,8 +65,13 @@ export class InMemoryWishes implements WishStore {
   }
 }
 
-const bare = ({ userId: owner, ...row }: WishRow & { userId: string }): WishRow => {
+const bare = ({
+  userId: owner,
+  nameKey: key,
+  ...row
+}: WishRow & { userId: string; nameKey?: string }): WishRow => {
   void owner;
+  void key;
   return row;
 };
 

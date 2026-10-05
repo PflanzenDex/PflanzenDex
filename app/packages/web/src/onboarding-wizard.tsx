@@ -57,6 +57,7 @@ export function OnboardingWizard(props: {
   const common = { api: props.api, token: props.token, onNext: next };
   return (
     <div className="onboarding" ref={box}>
+      <h1>Start</h1>
       <p
         className="onboarding-progress"
         role="status"

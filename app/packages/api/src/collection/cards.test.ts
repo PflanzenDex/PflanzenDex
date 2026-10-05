@@ -234,3 +234,20 @@ describe("US-BES-06 Karten: Mandant", () => {
     expect((await cards(`bes6-${randomUUID()}`)).body["cards"]).toEqual([]);
   });
 });
+
+describe("US-ACC-03 cheap specimen count for the start page", () => {
+  const count = (sub: string | null) => call(sub, "GET", "/specimens/count");
+
+  it("GET /specimens/count without token: 401", async () => {
+    expect((await count(null)).status).toBe(401);
+  });
+
+  it("US-ACC-03 counts the active specimens of the caller, never those of another account (P-04), and is not read as a specimen ID", async () => {
+    const before = (await count(subB)).body["count"] as number;
+    const speciesId = await newSpecies(subB, `Zaehla${run} vera`, `Zähler ${run}`);
+    await create(subB, { speciesId, name: `Zähler eins ${run}` });
+    await create(subB, { speciesId, name: `Zähler zwei ${run}`, marker: "rot" });
+    expect(await count(subB)).toMatchObject({ status: 200, body: { count: before + 2 } });
+    expect((await count(subA)).body["count"]).toBe((await cards(subA)).body["cards"].length);
+  });
+});

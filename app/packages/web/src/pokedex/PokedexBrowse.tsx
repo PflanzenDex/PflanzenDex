@@ -26,6 +26,7 @@ export function Browse(props: {
   const [filter, setFilter] = useState<PokedexFilter>("all");
   const [sort, setSort] = useState<PokedexSort>("alphabetical");
   const search = useRef<HTMLInputElement>(null);
+  const groups = useCollapsedGroups();
   const { chosen, open, close } = useDetail(caught);
   if (chosen)
     return (
@@ -37,7 +38,6 @@ export function Browse(props: {
     );
   if (caught.length === 0)
     return <p>Noch keine Art gefangen. Lege ein Exemplar mit bestimmter Art an, dann zählt es.</p>;
-  const poorKnown = caught.some((c) => c.genusSpeciesCount !== null);
   const result = browsePokedex(caught, { query, filter, sort });
   const shown =
     sort === "family" ? result.groups.reduce((n, g) => n + g.caught, 0) : result.flat.length;
@@ -53,7 +53,7 @@ export function Browse(props: {
         query={query}
         filter={filter}
         sort={sort}
-        poorKnown={poorKnown}
+        poorKnown={caught.some((c) => c.genusSpeciesCount !== null)}
         searchRef={search}
         onQuery={setQuery}
         onFilter={setFilter}
@@ -70,7 +70,7 @@ export function Browse(props: {
           </button>
         </div>
       ) : sort === "family" ? (
-        <Groups groups={result.groups} onOpen={open} />
+        <Groups groups={result.groups} state={groups} onOpen={open} />
       ) : (
         <CardList label="Gefangene Arten" species={result.flat} onOpen={open} />
       )}
@@ -80,11 +80,8 @@ export function Browse(props: {
 
 const keyOf = (g: FamilyGroup) => g.family ?? "";
 
-/** Collapsible family groups with "n / m"; m is unknown without the tree (US-POK-03), never guessed (P-08). */
-function Groups(props: {
-  groups: readonly FamilyGroup[];
-  onOpen: (species: CaughtSpecies) => void;
-}) {
+/** Which family groups are collapsed; kept by `Browse`, so it survives the detail view (US-POK-08). */
+function useCollapsedGroups() {
   const [closed, setClosed] = useState<ReadonlySet<string>>(new Set());
   const toggle = (key: string) =>
     setClosed((c) => {
@@ -92,12 +89,25 @@ function Groups(props: {
       if (!next.delete(key)) next.add(key);
       return next;
     });
+  return { closed, toggle };
+}
+
+/** Collapsible family groups with "n / m"; m is unknown without the tree (US-POK-03), never guessed (P-08). */
+function Groups(props: {
+  groups: readonly FamilyGroup[];
+  state: ReturnType<typeof useCollapsedGroups>;
+  onOpen: (species: CaughtSpecies) => void;
+}) {
+  const { closed, toggle } = props.state;
   return (
     <>
       {props.groups.map((g) => {
         const open = !closed.has(keyOf(g));
-        const name = g.family === null ? "Familie unbekannt" : g.family;
+        const name = g.family === null ? "Ohne bekannte Familie" : g.family;
         const german = g.familyGerman === null ? "" : ` (${g.familyGerman})`;
+        // Without a family there is no family total to compare with: "1 Art", not "1 / unbekannt" (P-08).
+        const count =
+          g.family === null ? plural(g.caught) : `${g.caught} / ${g.total ?? "unbekannt"}`;
         return (
           <section key={keyOf(g)} className="family">
             <h2>
@@ -108,7 +118,7 @@ function Groups(props: {
                 onClick={() => toggle(keyOf(g))}
               >
                 <span aria-hidden="true">{open ? "▾ " : "▸ "}</span>
-                {`${name}${german} · ${g.caught} / ${g.total ?? "unbekannt"}`}
+                {`${name}${german} · ${count}`}
               </button>
             </h2>
             {open && (

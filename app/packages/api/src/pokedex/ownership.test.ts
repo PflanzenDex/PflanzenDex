@@ -247,8 +247,23 @@ describe("US-POK-08 the data the page searches and groups by", () => {
     });
   });
 
-  it("US-POK-08 another account never sees the family of a foreign species (P-04)", async () => {
-    expect(JSON.stringify((await ownership(subB)).body)).not.toContain("Moraceae");
+  it("US-POK-08 another account that owns a species of its own never sees the private family and German name of A's proposal (P-04)", async () => {
+    const mine = await newSpecies(subB, `Ficus${run} lyrata`, { germanName: "Eigene Feige" });
+    await specimen(subB, `Feige B ${run}`, mine);
+    const b = await ownership(subB);
+    const card = (b.body["ownership"].caught as Record<string, unknown>[]).find(
+      (c) => c["species"] === `Ficus${run} lyrata`,
+    );
+    expect(card).toMatchObject({
+      speciesId: mine,
+      germanName: "Eigene Feige",
+      familyLatin: null,
+      familyGerman: null,
+    });
+    const text = JSON.stringify(b.body);
+    expect(text).not.toContain("Moraceae");
+    expect(text).not.toContain("Geigenfeige");
+    expect(text).not.toContain("Maulbeergewächse");
   });
 });
 

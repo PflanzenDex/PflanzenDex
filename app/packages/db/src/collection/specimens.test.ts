@@ -275,3 +275,19 @@ describe("US-BES-04 cutting in the database", () => {
     expect(await specimens.repot(anna, randomUUID())).toBe("not_found");
   });
 });
+
+describe("US-ACC-03 count of the active specimens (start page)", () => {
+  it("US-ACC-03 counts the active specimens of the account only, archived ones not, and writes nothing", async () => {
+    const carla = randomUUID();
+    await withAccount(pool, carla, (c) => c.query("insert into account (id) values ($1)", [carla]));
+    expect(await specimens.countActive(carla)).toBe(0);
+    const a = await specimens.create(carla, { ...values, name: "Zähler 1" });
+    await specimens.create(carla, { ...values, name: "Zähler 2" });
+    if (typeof a === "string") throw new Error(a);
+    expect(await specimens.countActive(carla)).toBe(2);
+    await specimens.archive(carla, a.id, "abgegeben", "2026-10-03");
+    expect(await specimens.countActive(carla)).toBe(1);
+    expect(await specimens.countActive(randomUUID())).toBe(0);
+    await pool.query("delete from account where id = $1", [carla]);
+  });
+});

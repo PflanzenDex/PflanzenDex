@@ -10,6 +10,7 @@ import {
   textField,
 } from "../kernel";
 import { httpsUrlField } from "./fields";
+import { wishNameKey } from "./name-key";
 import { WISH_LIMITS, type WishStore } from "./types";
 
 export interface CreateWishDependencies {
@@ -31,7 +32,7 @@ const schema = shape({
  * Records a wish (FR-WUN-01): only the name is required, everything else stays unknown instead of guessed (P-08). The
  * wish starts as an open plant wish (`status = wishlist`). A picture needs its source and the other way round (images
  * are saved with source, US-WUN-04); the difficulty is the number 1 to 3 (FR-WUN-04). A duplicate name, also in
- * another letter case, is refused (FR-WUN-06); a zone of another account looks like an unknown zone (P-04). Nothing is
+ * another letter case or with other diacritics, is refused (FR-WUN-06); a zone of another account looks like an unknown zone (P-04). Nothing is
  * written on refusal, the same Idempotency-Key writes once (US-QS-03).
  */
 export const wishCreate = (deps: CreateWishDependencies) =>
@@ -50,7 +51,7 @@ export const wishCreate = (deps: CreateWishDependencies) =>
             ],
           }),
         );
-      const r = await deps.wishes.create(userId, input);
+      const r = await deps.wishes.create(userId, { ...input, nameKey: wishNameKey(input.name) });
       if (r === "name_taken") return failed(appError("wish.name_taken"));
       if (r === "zone_unknown") return failed(appError("light_zone.not_found"));
       return ok(r);

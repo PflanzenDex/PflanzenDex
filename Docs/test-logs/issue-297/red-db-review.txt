@@ -1,0 +1,35 @@
+
+ RUN  v5.0.3 <worktree>
+
+ ❯ src/catalog/review.test.ts (16 tests | 1 failed) 1490ms
+   ❯ US-BES-10 merge lock (1)
+     × US-BES-10 a case whose species row cannot be locked answers lock_failed, not 'decided', and changes nothing 15ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/catalog/review.test.ts > US-BES-10 merge lock > US-BES-10 a case whose species row cannot be locked answers lock_failed, not 'decided', and changes nothing
+AssertionError: expected null to be 'lock_failed' // Object.is equality
+
+- Expected:
+"lock_failed"
+
++ Received:
+null
+
+ ❯ src/catalog/review.test.ts:185:59
+    183|     const r = await store.create(keeper, proposal());
+    184|     const id = typeof r === "string" ? "" : r.id;
+    185|     expect(await store.merge(reviewer, id, randomUUID())).toBe("lock_f…
+       |                                                           ^
+    186|     const still = await withAccount(pool, reviewer, (c) =>
+    187|       c.query<{ status: string }>("select status from review_case wher…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  08:15:43
+   Duration  2.05s (tests 78%, transform 18%, import 4%)
+
+exit code: 1

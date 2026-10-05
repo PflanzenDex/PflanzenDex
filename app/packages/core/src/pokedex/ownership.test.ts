@@ -254,3 +254,36 @@ describe("US-POK-08 data for search and grouping", () => {
     ]);
   });
 });
+
+describe("US-POK-08 two cultivars without a plain species (issue 297)", () => {
+  const first = "88888888-8888-4888-8888-888888888888";
+  const second = "99999999-9999-4999-8999-999999999999";
+  const own = new SpeciesStub([
+    {
+      species: testSpecies(second, {
+        latinName: "Opuntia microdasys 'Rufida'",
+        germanName: "Rote Sorte",
+      }),
+    },
+    {
+      species: testSpecies(first, {
+        latinName: "Opuntia microdasys 'Albispina'",
+        germanName: "Weisse Sorte",
+      }),
+    },
+  ]);
+
+  it("US-POK-08 the German name, the ID and the chips do not depend on the order of the specimens", async () => {
+    await add("anna", second);
+    await add("anna", first);
+    const one = await pokedexOwnership({ specimens, species: own }, "anna", TZ);
+    specimens = new InMemorySpecimens();
+    await add("anna", first);
+    await add("anna", second);
+    const other = await pokedexOwnership({ specimens, species: own }, "anna", TZ);
+    expect(other.caught).toEqual(one.caught);
+    expect(one.caught[0]?.germanName).toBe("Weisse Sorte");
+    expect(one.caught[0]?.speciesId).toBe(first);
+    expect(one.caught[0]?.chips).toEqual(["'Albispina'", "'Rufida'"]);
+  });
+});

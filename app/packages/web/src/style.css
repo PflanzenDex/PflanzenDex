@@ -138,9 +138,11 @@ button:focus-visible {
   padding: 0 12px;
 }
 
-/* A field the server refused (US-ACC-02): visible border, not only the aria state. */
+/* A field the server refused (US-ACC-02): visible border colour and ring, not only the aria state. The ring is an inset
+   shadow, so the box keeps its size and the layout does not move by 1 to 2 px. */
 [aria-invalid="true"] {
-  border: 2px solid var(--fehler-rand);
+  border-color: var(--fehler-rand);
+  box-shadow: inset 0 0 0 1px var(--fehler-rand);
   outline-color: var(--fehler-rand);
 }
 

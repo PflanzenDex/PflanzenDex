@@ -177,3 +177,15 @@ describe("P-04: the operator sees no content of other accounts", () => {
     ]);
   });
 });
+
+describe("US-BES-10 merge lock", () => {
+  it("US-BES-10 a case whose species row cannot be locked answers lock_failed, not 'decided', and changes nothing", async () => {
+    const r = await store.create(keeper, proposal());
+    const id = typeof r === "string" ? "" : r.id;
+    expect(await store.merge(reviewer, id, randomUUID())).toBe("lock_failed");
+    const still = await withAccount(pool, reviewer, (c) =>
+      c.query<{ status: string }>("select status from review_case where id = $1", [id]),
+    );
+    expect(still.rows[0]?.status).toBe("proposal");
+  });
+});

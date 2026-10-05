@@ -30,6 +30,9 @@ export function CardList(props: {
           >
             {c.species}
           </button>
+          <span className="card-chevron" aria-hidden="true">
+            ›
+          </span>
           {c.germanName !== null && <span>{c.germanName}</span>}
           <span className="quiet">{c.genus}</span>
           {c.chips.length > 0 && (

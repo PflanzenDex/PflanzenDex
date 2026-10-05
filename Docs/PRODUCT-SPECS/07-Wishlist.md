@@ -63,12 +63,12 @@ New wishes also arise via yes/no in Discover (`17-Discover.md`); `Discarded` is 
 
 ## Requirements
 
-| ID        | Requirement                                                                                                                                                                                   | Status |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| FR-WUN-01 | Wishes have a fixed format per DM-WUN-01.                                                                                                                                                     | ⬜     |
-| FR-WUN-02 | Only `Status = Wishlist` counts as "open".                                                                                                                                                    | ⬜     |
-| FR-WUN-03 | The target zone must be a zone 2–4 of the account, otherwise the wish is not considered in counting and buffer and appears in "Hints" (P-10).                                                 | ⬜     |
-| FR-WUN-04 | `Difficulty` is the same number 1–3 everywhere (solves B-05).                                                                                                                                 | ⬜     |
-| FR-WUN-05 | Wishlist and Pokédex are **linked**: a wish with a species shows whether the species is still missing (new compared to the prototype, solves B-09).                                          | ⬜     |
-| FR-WUN-06 | Duplicate names are rejected on creation; status changes address via id.                                                                                                                      | ⬜     |
-| FR-WUN-07 | The wishlist is private. Visible only through sharing by the keeper; swap offers from friends that concern a wished species appear as a hint (US-SOZ-09), without disclosing the list.       | ⬜     |
+| ID        | Requirement                                                                                                                                                                            | Status |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| FR-WUN-01 | Wishes have a fixed format per DM-WUN-01.                                                                                                                                              | ⬜     |
+| FR-WUN-02 | Only `Status = Wishlist` counts as "open".                                                                                                                                             | ⬜     |
+| FR-WUN-03 | The target zone must be a zone 2–4 of the account, otherwise the wish is not considered in counting and buffer and appears in "Hints" (P-10).                                          | ⬜     |
+| FR-WUN-04 | `Difficulty` is the same number 1–3 everywhere (solves B-05).                                                                                                                          | ⬜     |
+| FR-WUN-05 | Wishlist and Pokédex are **linked**: a wish with a species shows whether the species is still missing (new compared to the prototype, solves B-09).                                    | ⬜     |
+| FR-WUN-06 | Duplicate names are rejected on creation, regardless of letter case and diacritics ("Café" equals "Cafe"); status changes address via id.                                              | ⬜     |
+| FR-WUN-07 | The wishlist is private. Visible only through sharing by the keeper; swap offers from friends that concern a wished species appear as a hint (US-SOZ-09), without disclosing the list. | ⬜     |

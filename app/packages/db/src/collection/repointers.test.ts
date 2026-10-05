@@ -117,7 +117,7 @@ describe("US-BES-10 merge re-points the creator's references (FR-BES-11, P-10)",
     await profiles.update(keeper, p.speciesId, { ownHints: "viel Licht" });
 
     const r = await reviews.merge(reviewer, p.caseId, target.speciesId);
-    if (r === null || r === "conflict") throw new Error(String(r));
+    if (r === null || r === "conflict" || r === "lock_failed") throw new Error(String(r));
     expect(r.reviewCase).toMatchObject({
       status: "merged",
       mergedInto: target.speciesId,
@@ -149,7 +149,7 @@ describe("US-BES-10 merge re-points the creator's references (FR-BES-11, P-10)",
     await profiles.update(keeper, target.speciesId, { ownHints: "bleibt" });
     await profiles.update(keeper, p.speciesId, { ownHints: "bleibt nicht auf Ziel" });
     const r = await reviews.merge(operator, p.caseId, target.speciesId);
-    if (r === null || r === "conflict") throw new Error(String(r));
+    if (r === null || r === "conflict" || r === "lock_failed") throw new Error(String(r));
     expect(r.moved.find((m) => m.kind === "care_profile")).toEqual({
       kind: "care_profile",
       moved: 0,
@@ -306,7 +306,7 @@ describe("US-BES-10 a merge and a concurrent write on the proposal (FR-BES-11, P
     release();
     await inFlight;
     const r = await merging;
-    if (r === null || r === "conflict") throw new Error(String(r));
+    if (r === null || r === "conflict" || r === "lock_failed") throw new Error(String(r));
     expect(r.moved[0]).toEqual({ kind: "specimen", moved: 1, kept: 0 });
     expect(await speciesOf(keeper)).toContain(`Unterwegs:${target.speciesId}`);
   });
