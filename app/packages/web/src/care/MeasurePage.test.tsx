@@ -46,6 +46,7 @@ function fakeServer(
         measurements,
         last: measurements[0] ?? null,
         lastRating: measurements.length ? "healthy" : null,
+        growth: { count: measurements.length, ratePerYear: null, trend: null },
       });
     }),
   );
@@ -68,6 +69,15 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(await screen.findByText("Noch keine Messung")).toBeTruthy();
     expect(screen.getByText("Trage oben den ersten Messwert ein.")).toBeTruthy();
     expect(screen.getByText(/Höhe\./)).toBeTruthy();
+  });
+
+  it('US-WAC-03 shows rate and trend of the view; with one measurement "noch keine Rate"', async () => {
+    fakeServer();
+    show();
+    await screen.findByText("Noch keine Messung");
+    await userEvent.type(screen.getByLabelText(/Messwert/), "12,5");
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    expect(await screen.findByText("1 Messung — noch keine Rate")).toBeTruthy();
   });
 
   it("US-WAC-01 saves with Idempotency-Key, reports the measurement and reloads the course", async () => {

@@ -1,5 +1,6 @@
 // Measurements (US-WAC-01, DM-WAC-01). Ports for persistence; adapters live in `db` (AB-1).
 import type { GrowthMeasure } from "../../catalog";
+import type { GrowthTrend } from "./growth";
 
 export const QUALITIES = ["healthy", "etiolated"] as const;
 /** `etiolated` is "etiolated/thin" (US-WAC-02); etiolation never counts as success (US-WAC-04). */
@@ -60,4 +61,6 @@ export interface MeasurementView {
   readonly last: MeasurementRow | null;
   /** Quality of the last measurement; `null` as long as there is none. */
   readonly lastRating: Quality | null;
+  /** Rate and trend against the own history (US-WAC-03); derived, never stored (P-01). */
+  readonly growth: GrowthTrend;
 }

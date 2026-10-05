@@ -156,6 +156,15 @@ describe("US-WAC-01 record and view a measurement", () => {
     expect(a.body["measurements"].map((m: { value: number }) => m.value)).toEqual([12.5, 14]);
   });
 
+  it("US-WAC-03 the view carries rate and trend of the own measurements", async () => {
+    const e = await newSpecimen(subA, "Rate");
+    await measure(subA, e, { value: 10, date: "2026-01-01" });
+    await measure(subA, e, { value: 11, date: "2026-01-11" });
+    const a = await call(subA, "GET", `/specimens/${e}/measurements`);
+    expect(a.body["growth"]).toMatchObject({ count: 2, trend: null });
+    expect(a.body["growth"].ratePerYear).toBeCloseTo(36.5, 5);
+  });
+
   it("the same time is still the previous day in New York; a back-filled date is kept", async () => {
     const e = await newSpecimen(subA, "Zeitzone");
     const ny = await measure(subA, e, { value: 5, timeZone: "America/New_York" });

@@ -1,5 +1,6 @@
 import { isId } from "../../kernel";
 import type { SpeciesSource, SpecimenStore } from "../../collection";
+import { growthTrend } from "./growth";
 import type { MeasurementView, MeasurementStore } from "./types";
 
 export interface ViewDependencies {
@@ -31,5 +32,6 @@ export async function measurementView(
     measurements,
     last,
     lastRating: last?.quality ?? null,
+    growth: growthTrend(measurements),
   };
 }

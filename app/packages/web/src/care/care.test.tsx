@@ -4,7 +4,7 @@ import { renderToString as render } from "react-dom/server";
 import type { MeasurementView, MeasurementRow } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";
 import { measurementSchema, toMeasurementInput } from "./schemas";
-import { MeasurementHeader } from "./measurement-header";
+import { MeasurementHeader } from "./measurement-header/measurement-header";
 import { MeasureForm } from "./measure-form";
 import { MeasurePage } from "./MeasurePage";
 import { MeasurementList } from "./measurement-list";
@@ -32,6 +32,7 @@ const view = (extra: Partial<MeasurementView> = {}): MeasurementView => ({
   measurements: [],
   last: null,
   lastRating: null,
+  growth: { count: 0, ratePerYear: null, trend: null },
   ...extra,
 });
 /** The schema decides; the first message it carries is what the form shows under the field. */
