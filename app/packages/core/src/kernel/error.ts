@@ -49,6 +49,9 @@ export const ERROR_TEXTS = {
   "treatment.not_found": "Diese Behandlung gibt es nicht.",
   "wish.name_taken":
     "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
+  "wish.not_found": "Diesen Wunsch gibt es nicht. Lade die Wunschliste neu.",
+  "wish.not_open":
+    "Dieser Wunsch ist verworfen und nicht mehr offen. Nur ein offener Wunsch kann als gekauft vermerkt werden; es wurde nichts geändert.",
   "care.no_phase":
     "Dieses Exemplar hat keine Pflegephase (Steckling oder Art ohne Ruhephasen-Zeitraum) und wird nicht umgestellt.",
   "care.target_unknown":

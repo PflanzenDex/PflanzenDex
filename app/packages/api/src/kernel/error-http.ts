@@ -30,6 +30,8 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "species.duplicate": 409,
   "specimen.name_taken": 409,
   "wish.name_taken": 409,
+  "wish.not_found": 404,
+  "wish.not_open": 409,
   "specimen.marker_taken": 409,
   "specimen.marker_required": 409,
   "specimen.markers_missing": 409,
