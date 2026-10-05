@@ -4,7 +4,9 @@ import {
   type PhaseStatus,
   type PhasesRow,
 } from "@pflanzendex/core";
-import "./care.css";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Button } from "@/components/ui/button";
+import { CARD_CLASSES, LIST_CLASSES, WARNING_CLASSES } from "./notices";
 import { PHASE_TEXT, locationText } from "./text";
 import { needsSwitch, switchGroups, switchedText } from "./phase-groups";
 
@@ -21,45 +23,46 @@ function Entry(props: {
   const status = phaseStatus(z);
   const canSwitch = props.onConfirm !== undefined && needsSwitch(z);
   return (
-    <li className="entry">
-      <h3>{z.name}</h3>
+    <li className={`${CARD_CLASSES} flex flex-col gap-1`}>
+      <h3 className="font-semibold">{z.name}</h3>
       <p>Soll-Phase heute: {PHASE_TEXT[z.phase]}</p>
       {status === "location_missing" ? (
-        <p className="warning">Standort fehlt</p>
+        <p className={WARNING_CLASSES}>Standort fehlt</p>
       ) : (
-        <p className="quiet">Standort: {locationText(locations, z.locationId)}</p>
+        <p className="text-muted-foreground">Standort: {locationText(locations, z.locationId)}</p>
       )}
-      <p className="quiet">Soll-Standort: {locationText(locations, z.targetLocationId)}</p>
+      <p className="text-muted-foreground">
+        Soll-Standort: {locationText(locations, z.targetLocationId)}
+      </p>
       {status === "deviation" && (
-        <p className="warning">
+        <p className={WARNING_CLASSES}>
           Weicht ab: steht am Standort „{locationText(locations, z.locationId)}“, Soll ist „
           {locationText(locations, z.targetLocationId)}“.
         </p>
       )}
       {status === "location_missing" && !canSwitch && (
-        <p className="next-action">Weise dem Exemplar unter „Hinweise“ einen Standort zu.</p>
+        <p className="font-semibold">Weise dem Exemplar unter „Hinweise“ einen Standort zu.</p>
       )}
       {status === "in_place" && z.targetLocationId === null && (
-        <p className="next-action">
+        <p className="font-semibold">
           Wähle im Pflegeprofil der Art einen Soll-Standort für die {PHASE_TEXT[z.phase]}.
         </p>
       )}
       {canSwitch && (
         <>
-          <p className="next-action">
+          <p className="font-semibold">
             Stelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.
           </p>
-          <div className="actions">
-            <button
-              type="button"
-              className="primary"
-              disabled={props.busy}
-              aria-label={`Jetzt umgestellt: ${z.name}`}
-              onClick={() => props.onConfirm?.([z.specimenId], switchedText([z], locations))}
-            >
-              Jetzt umgestellt
-            </button>
-          </div>
+          <Button
+            type="button"
+            size="touch"
+            className="mt-2"
+            disabled={props.busy}
+            aria-label={`Jetzt umgestellt: ${z.name}`}
+            onClick={() => props.onConfirm?.([z.specimenId], switchedText([z], locations))}
+          >
+            Jetzt umgestellt
+          </Button>
         </>
       )}
     </li>
@@ -75,14 +78,15 @@ function Groups(props: {
   const groups = switchGroups(props.rows);
   if (groups.length === 0) return null;
   return (
-    <div className="actions phase-groups">
+    <div className="flex flex-col gap-3">
       {groups.map((g) => {
         const place = locationText(props.locations, g.targetLocationId);
         return (
-          <button
+          <Button
             key={g.targetLocationId}
             type="button"
-            className="secondary"
+            variant="secondary"
+            size="touch"
             disabled={props.busy}
             onClick={() =>
               props.onConfirm(
@@ -92,7 +96,7 @@ function Groups(props: {
             }
           >
             {`Alle ${g.rows.length} nach ${place} umstellen`}
-          </button>
+          </Button>
         );
       })}
     </div>
@@ -114,9 +118,9 @@ function Sections(props: {
 }) {
   const deviations = props.rows.some((z) => phaseStatus(z) === "deviation");
   return (
-    <>
+    <div className="flex flex-col gap-6">
       {!deviations && (
-        <p className="hint">
+        <p className="text-muted-foreground">
           Keine Abweichung: Jede Pflanze mit bekanntem Soll-Standort steht dort.
         </p>
       )}
@@ -124,9 +128,15 @@ function Sections(props: {
         const rows = props.rows.filter((z) => phaseStatus(z) === status);
         if (rows.length === 0) return null;
         return (
-          <section key={status} aria-labelledby={`care-phases-${status}`}>
-            <h2 id={`care-phases-${status}`}>{`${title} (${rows.length})`}</h2>
-            <ul className="list">
+          <section
+            key={status}
+            aria-labelledby={`care-phases-${status}`}
+            className="flex flex-col gap-3"
+          >
+            <h2 id={`care-phases-${status}`} className="text-xl font-semibold">
+              {`${title} (${rows.length})`}
+            </h2>
+            <ul className={LIST_CLASSES}>
               {rows.map((z) => (
                 <Entry
                   key={z.specimenId}
@@ -140,7 +150,7 @@ function Sections(props: {
           </section>
         );
       })}
-    </>
+    </div>
   );
 }
 
@@ -152,32 +162,30 @@ export function PhasesList(props: {
   onConfirm?: Confirm;
 }) {
   const busy = props.busy ?? false;
+  if (props.rows.length === 0)
+    return (
+      <EmptyState
+        title="Noch kein Exemplar hat eine Phase."
+        description="Gelistet werden Pflanzen, deren Art einen Ruhephasen-Zeitraum hat. Lege im Bestand ein Exemplar einer solchen Art an."
+        action={{ label: "Zum Bestand", href: "/collection" }}
+      />
+    );
   return (
-    <section aria-labelledby="care-phases-title">
-      <h1 id="care-phases-title">Pflegephasen</h1>
-      {props.rows.length === 0 ? (
-        <p>
-          Noch kein Exemplar hat eine Phase: Gelistet werden Pflanzen, deren Art einen
-          Ruhephasen-Zeitraum hat. Lege im Bestand ein Exemplar einer solchen Art an.
-        </p>
-      ) : (
-        <>
-          {props.onConfirm && (
-            <Groups
-              rows={props.rows}
-              locations={props.locations}
-              busy={busy}
-              onConfirm={props.onConfirm}
-            />
-          )}
-          <Sections
-            rows={props.rows}
-            locations={props.locations}
-            busy={busy}
-            onConfirm={props.onConfirm}
-          />
-        </>
+    <section aria-labelledby="care-phases-title" className="flex flex-col gap-4">
+      {props.onConfirm && (
+        <Groups
+          rows={props.rows}
+          locations={props.locations}
+          busy={busy}
+          onConfirm={props.onConfirm}
+        />
       )}
+      <Sections
+        rows={props.rows}
+        locations={props.locations}
+        busy={busy}
+        onConfirm={props.onConfirm}
+      />
     </section>
   );
 }

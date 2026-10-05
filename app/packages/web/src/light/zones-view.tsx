@@ -1,7 +1,19 @@
 import { useState } from "react";
+import { Form } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
 import type { ApiError, LightZone } from "./light-api";
-import { FormButtons, useSend } from "./form";
+import { FORM_GRID, FormButtons, RefusalAlert, TextField, useSaveForm } from "./form";
 import { ErrorMessage } from "./message";
+import {
+  LUX_LIMITS,
+  NAME_MAX,
+  ORDER_LIMITS,
+  PPFD_LIMITS,
+  ZONE_REFUSABLE,
+  toZoneInput,
+  zoneSchema,
+  type ZoneFields,
+} from "./schemas";
 import { lux, ppfd } from "./text";
 
 export interface ZoneInput {
@@ -13,102 +25,83 @@ export interface ZoneInput {
 
 type Save = (e: ZoneInput) => Promise<ApiError | null>;
 
-const numberOrNull = (s: string): number | null => (s.trim() === "" ? null : Number(s));
-
-function NumberField(props: {
-  label: string;
-  name: string;
-  limits: readonly [number, number];
-  value: number | null | undefined;
-  required?: boolean;
-}) {
-  return (
-    <label>
-      {props.label}
-      <input
-        name={props.name}
-        type="number"
-        inputMode="numeric"
-        min={props.limits[0]}
-        max={props.limits[1]}
-        step={1}
-        required={props.required ?? false}
-        defaultValue={props.value ?? ""}
-      />
-    </label>
-  );
-}
+const numeric = (limits: readonly [number, number]) =>
+  ({ type: "number", inputMode: "numeric", min: limits[0], max: limits[1], step: 1 }) as const;
 
 /** Form for creating and changing a zone; fields stay in place on an error. */
 export function ZoneForm(props: { start?: LightZone; onSave: Save; onCancel?: () => void }) {
   const z = props.start;
-  const { error, running, send } = useSend<ZoneInput>(
-    (f) => ({
-      name: String(f.get("name") ?? ""),
-      luxCeiling: Number(f.get("luxCeiling")),
-      ppfd: numberOrNull(String(f.get("ppfd") ?? "")),
-      sortOrder: numberOrNull(String(f.get("sortOrder") ?? "")),
-    }),
-    props.onSave,
-    !z,
-  );
+  const sent = useSaveForm<ZoneFields>({
+    schema: zoneSchema,
+    defaults: {
+      name: z?.name ?? "",
+      luxCeiling: z ? String(z.luxCeiling) : "",
+      ppfd: z?.ppfd == null ? "" : String(z.ppfd),
+      sortOrder: z?.sortOrder == null ? "" : String(z.sortOrder),
+    },
+    save: (f) => props.onSave(toZoneInput(f)),
+    refusable: ZONE_REFUSABLE,
+    clear: !z,
+  });
+  const { control } = sent.form;
   return (
-    <form
-      className="form"
-      onSubmit={(e) => void send(e)}
-      aria-label={z ? `${z.name} ändern` : "Lichtzone anlegen"}
-    >
-      <label>
-        Name
-        <input
+    <Form {...sent.form}>
+      <form
+        noValidate
+        className={FORM_GRID}
+        onSubmit={(e) => void sent.send(e)}
+        aria-label={z ? `${z.name} ändern` : "Lichtzone anlegen"}
+      >
+        <TextField
+          control={control}
           name="name"
-          required
-          maxLength={60}
-          defaultValue={z?.name ?? ""}
+          label="Name"
+          maxLength={NAME_MAX}
           autoComplete="off"
         />
-      </label>
-      <NumberField
-        label="Lux-Decke (Lux)"
-        name="luxCeiling"
-        limits={[1, 200000]}
-        value={z?.luxCeiling}
-        required
-      />
-      <NumberField
-        label="PPFD, optional (µmol/m²/s)"
-        name="ppfd"
-        limits={[1, 3000]}
-        value={z?.ppfd}
-      />
-      <NumberField
-        label="Reihenfolge, optional"
-        name="sortOrder"
-        limits={[0, 999]}
-        value={z?.sortOrder}
-      />
-      {error && <ErrorMessage error={error} />}
-      <FormButtons
-        label={z ? "Speichern" : "Zone anlegen"}
-        running={running}
-        onCancel={props.onCancel}
-      />
-    </form>
+        <TextField
+          control={control}
+          name="luxCeiling"
+          label="Lux-Decke (Lux)"
+          {...numeric(LUX_LIMITS)}
+        />
+        <TextField
+          control={control}
+          name="ppfd"
+          label="PPFD, optional (µmol/m²/s)"
+          {...numeric(PPFD_LIMITS)}
+        />
+        <TextField
+          control={control}
+          name="sortOrder"
+          label="Reihenfolge, optional"
+          {...numeric(ORDER_LIMITS)}
+        />
+        <RefusalAlert sent={sent} />
+        <FormButtons
+          label={z ? "Speichern" : "Zone anlegen"}
+          running={sent.running}
+          onCancel={props.onCancel}
+        />
+      </form>
+    </Form>
   );
 }
 
 function DeleteConfirm(props: { name: string; onDelete: () => void; onCancel: () => void }) {
   return (
-    <div className="actions">
-      <button type="button" className="danger" onClick={props.onDelete}>
+    <div className="mt-3 flex flex-col gap-3 md:flex-row">
+      <Button type="button" variant="destructive" onClick={props.onDelete}>
         Ja, „{props.name}“ löschen
-      </button>
-      <button type="button" className="secondary" onClick={props.onCancel}>
+      </Button>
+      <Button type="button" variant="secondary" onClick={props.onCancel}>
         Abbrechen
-      </button>
+      </Button>
     </div>
   );
 }
+
+export const ENTRY = "min-w-0 break-words rounded-lg border border-border p-4";
 
 export function ZoneCard(props: {
   zone: LightZone;
@@ -120,7 +113,7 @@ export function ZoneCard(props: {
   const [error, setError] = useState<ApiError | null>(null);
   if (mode === "update")
     return (
-      <li className="entry">
+      <li className={ENTRY}>
         <ZoneForm
           start={zone}
           onCancel={() => setMode("zeigen")}
@@ -133,9 +126,9 @@ export function ZoneCard(props: {
       </li>
     );
   return (
-    <li className="entry">
-      <h3>{zone.name}</h3>
-      <p className="quiet">
+    <li className={ENTRY}>
+      <h3 className="text-lg font-semibold">{zone.name}</h3>
+      <p className="text-sm text-muted-foreground">
         bis {lux(zone.luxCeiling)} · {ppfd(zone.ppfd)} · Platz {zone.sortOrder}
       </p>
       {error && <ErrorMessage error={error} />}
@@ -151,19 +144,19 @@ export function ZoneCard(props: {
           onCancel={() => setMode("zeigen")}
         />
       ) : (
-        <div className="actions">
+        <div className="mt-3 flex flex-col gap-3 md:flex-row">
           {(["update", "remove"] as const).map((target) => (
-            <button
+            <Button
               key={target}
               type="button"
-              className="secondary"
+              variant="secondary"
               onClick={() => {
                 setError(null);
                 setMode(target);
               }}
             >
               {target === "update" ? "Ändern" : "Löschen"}
-            </button>
+            </Button>
           ))}
         </div>
       )}

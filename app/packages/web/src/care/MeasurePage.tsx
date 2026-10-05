@@ -1,36 +1,15 @@
-import "./care.css";
-import { useCallback, useEffect, useState } from "react";
-import type { MeasurementView } from "@pflanzendex/core";
-import { LoadError, type ApiError } from "../kernel";
+import { useCallback, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { LoadFrame, SIGN_IN, type ApiError } from "../kernel";
 import { MeasureForm } from "./measure-form";
 import { MeasurementList } from "./measurement-list";
 import { recordMeasurement, loadMeasurementView, type MeasurementInput } from "./measurements-api";
 import { MeasurementHeader } from "./measurement-header";
+import { MeasurePageSkeleton } from "./MeasurePage.skeleton";
+import { StatusNote } from "./notices";
 import { measurementText } from "./text";
 
 type Token = () => Promise<string | undefined>;
-const SIGN_IN: ApiError = { code: "access.not_signed_in", text: "Bitte melde dich neu an." };
-type Data =
-  { kind: "loading" } | { kind: "error"; error: ApiError } | { kind: "da"; view: MeasurementView };
-
-async function loadData(api: string, token: Token, specimenId: string): Promise<Data> {
-  const t = await token();
-  if (!t) return { kind: "error", error: SIGN_IN };
-  const r = await loadMeasurementView(api, t, specimenId);
-  return r.ok ? { kind: "da", view: r.value } : { kind: "error", error: r.error };
-}
-
-function useView(api: string, token: Token, specimenId: string, reload: number) {
-  const [data, setData] = useState<Data>({ kind: "loading" });
-  useEffect(() => {
-    let current = true;
-    void loadData(api, token, specimenId).then((d) => current && setData(d));
-    return () => {
-      current = false;
-    };
-  }, [api, token, specimenId, reload]);
-  return data;
-}
 
 /**
  * Measure (US-WAC-01): what to measure, last measurement, last rating, input form and course of a specimen. Rate and
@@ -45,7 +24,11 @@ export function MeasurePage(props: {
   const { api, token, specimen } = props;
   const [reload, setReload] = useState(0);
   const [saved, setSaved] = useState<string | null>(null);
-  const data = useView(api, token, specimen.id, reload);
+  const valueRef = useRef<HTMLInputElement | null>(null);
+  const load = useCallback(
+    (t: string) => loadMeasurementView(api, t, specimen.id),
+    [api, specimen.id],
+  );
   const send = useCallback(
     async (input: MeasurementInput): Promise<ApiError | null> => {
       const t = await token();
@@ -58,32 +41,34 @@ export function MeasurePage(props: {
     },
     [api, token, specimen.id],
   );
+  const loading = "Messungen werden geladen …";
   return (
-    <div className="light measure">
-      <section aria-labelledby="measure-title">
-        <h1 id="measure-title">Messen: {specimen.name}</h1>
-        {data.kind === "loading" && <p role="status">Messungen werden geladen …</p>}
-        {data.kind === "error" && (
-          <LoadError error={data.error} onReload={() => setReload((n) => n + 1)} />
-        )}
-        {data.kind === "da" && (
+    <section aria-labelledby="measure-title" className="flex min-w-0 flex-col gap-4">
+      <h1 id="measure-title" className="text-2xl font-semibold [overflow-wrap:anywhere]">
+        Messen: {specimen.name}
+      </h1>
+      <LoadFrame
+        token={token}
+        load={load}
+        loadingText={loading}
+        loadingFallback={<MeasurePageSkeleton label={loading} />}
+        refresh={reload}
+      >
+        {(view) => (
           <>
-            <MeasurementHeader view={data.view} />
-            {saved && (
-              <p role="status" className="hint">
-                Gespeichert: {saved}.
-              </p>
-            )}
-            <MeasureForm unit="cm" onSend={send} />
-            <MeasurementList measurements={data.view.measurements} />
+            <MeasurementHeader view={view} />
+            {saved && <StatusNote>Gespeichert: {saved}.</StatusNote>}
+            <MeasureForm unit="cm" onSend={send} focusRef={valueRef} />
+            <MeasurementList
+              measurements={view.measurements}
+              onAdd={() => valueRef.current?.focus()}
+            />
           </>
         )}
-        <div className="actions">
-          <button type="button" className="secondary" onClick={props.onBack}>
-            Zurück zum Bestand
-          </button>
-        </div>
-      </section>
-    </div>
+      </LoadFrame>
+      <Button type="button" variant="secondary" size="touch" onClick={props.onBack}>
+        Zurück zum Bestand
+      </Button>
+    </section>
   );
 }
