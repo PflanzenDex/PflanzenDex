@@ -126,6 +126,7 @@ As a **team** I want a fixed path from idea to merge that fits the spec.
 Acceptance criteria:
 
 - **Lifecycle of a story:** ⬜ planned → 🟨 in progress (branch exists) → ✅ implemented (merged into `dev`, test with story ID present and green). The spec status and the counters in `README.md` are changed **in the same PR** (FR-QG-03, QG-U2 checks that).
+- **Project status follows the PRs (automated):** Given a PR whose body says `Closes #n`, When it is merged into `dev`, Then the project status of #n is `On dev`; When it is closed without a merge and no other open PR names #n, Then `In Progress` goes back to `Todo`; When the release PR `dev` → `main` is merged, Then every `On dev` item becomes `Done`. A closed issue stays `On dev` until the release. `make status-check` lists items whose status contradicts the PRs and open items without a priority.
 - **Flow:** read story → derive tests from the criteria (skill `spec-to-tests`) → implement → `make ci` green → PR with description (story IDs, deviations from the spec) → review → merge.
 - **Definition of Ready:** a story may be started when criteria are formulated verifiably (Given/When/Then), dependencies in `16-…` are clarified and open decisions (E-nn) are decided.
 - **Definition of Done:** FR-QG-10.

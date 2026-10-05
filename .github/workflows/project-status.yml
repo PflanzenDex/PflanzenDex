@@ -1,0 +1,44 @@
+# Project status follows the pull requests (US-DEV-05): merged into dev -> On dev, closed unmerged -> Todo,
+# release PR merged into main -> Done. Rules live in app/scripts/project-status-lib.mjs (tested).
+# The token comes from a GitHub App (vars.PROJECT_APP_ID, secrets.PROJECT_APP_PRIVATE_KEY, permission
+# "Projects: read and write" for the organization); GITHUB_TOKEN cannot write organization projects.
+name: Project status
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: project-status
+  cancel-in-progress: false
+
+jobs:
+  status:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - id: app
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.PROJECT_APP_ID }}
+          private-key: ${{ secrets.PROJECT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+      - name: Move project status
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+        run: node app/scripts/project-status.mjs event "$GITHUB_EVENT_PATH"
