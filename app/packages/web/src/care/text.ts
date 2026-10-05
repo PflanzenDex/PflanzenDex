@@ -3,6 +3,7 @@ import type {
   TreatmentRow,
   MeasurementRow,
   CarePhase,
+  NextPhaseChange,
   Quality,
   GrowthMeasure,
 } from "@pflanzendex/core";
@@ -40,6 +41,23 @@ export const PHASE_TEXT: Record<CarePhase, string> = {
   dormancy: "Ruhephase",
   growth: "Wachstumsphase",
 };
+
+/** Up to this many days ahead the forecast names the distance in days (US-PHA-04). */
+const NEAR_DAYS = 14;
+
+/** "heute", "in 5 Tagen (10.10.2026)" up to 14 days ahead, otherwise only the date (US-PHA-04). */
+export function changeWhenText(change: NextPhaseChange): string {
+  if (change.days === 0) return "heute";
+  const date = dateText(change.date);
+  if (change.days > NEAR_DAYS) return date;
+  return `in ${change.days} ${change.days === 1 ? "Tag" : "Tagen"} (${date})`;
+}
+
+/** "Nächster Wechsel zur Ruhephase: heute"; without a change in this and the next year it says so (P-08). */
+export const nextChangeText = (change: NextPhaseChange | null): string =>
+  change === null
+    ? "Nächster Phasenwechsel: keiner in diesem und im nächsten Jahr."
+    : `Nächster Wechsel zur ${PHASE_TEXT[change.phase]}: ${changeWhenText(change)}`;
 
 export const locationText = (locations: readonly LightLocation[], id: string | null): string =>
   id === null ? UNKNOWN : (locations.find((s) => s.id === id)?.name ?? UNKNOWN);
