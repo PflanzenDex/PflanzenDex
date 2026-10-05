@@ -9,6 +9,8 @@ import { fileURLToPath } from "node:url";
 import { fetchBranches, fetchIssue, fetchPrs, me, realClient } from "./claim-client.mjs";
 import { branchName, findConflicts } from "./claim-lib.mjs";
 import { preflight, PreflightFailed } from "./claim-preflight.mjs";
+import { PRIORITY_HINT } from "./project-status-lib.mjs";
+import { missingPriority } from "./project-status.mjs";
 import {
   handoffBody,
   prTitle,
@@ -83,6 +85,16 @@ async function rollBack(undo, log) {
   }
 }
 
+/** Warning only, never a failure: the claim is done; a failed lookup is reported, not swallowed (P-10). */
+async function warnNoPriority(client, number, log) {
+  try {
+    if ((await missingPriority(client, [number])).length)
+      log(`Warning: #${number} has ${PRIORITY_HINT}`);
+  } catch (e) {
+    log(`Warning: could not check the priority of #${number}: ${e.message}`);
+  }
+}
+
 /**
  * Atomic claim: preflight first, then the branch is pushed (the step that fails most often), then the
  * assignee, status and draft PR. Any failure undoes what was written; a re-run starts clean.
@@ -131,6 +143,7 @@ export async function claim(
       ])
     ).trim();
     log(`Draft PR: ${url}`);
+    await warnNoPriority(client, number, log);
     log(`Next: make worktree BRANCH=${branch}`);
     return { branch, url };
   } catch (e) {

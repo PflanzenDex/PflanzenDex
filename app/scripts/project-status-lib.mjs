@@ -5,6 +5,10 @@
 // No I/O here; project-status.mjs reads the event and writes the project.
 export const STATUS = { todo: "Todo", inProgress: "In Progress", onDev: "On dev", done: "Done" };
 
+/** What to do about a ticket without a priority; the rule itself is in CLAUDE.md ("Priority of tickets"). */
+export const PRIORITY_HINT =
+  "no priority: set the project field Priority (P0 critical, P1 high, P2 normal, P3 low; rule in CLAUDE.md)";
+
 const CLOSING = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s+#(\d+)\b/gi;
 
 /** Issue numbers a PR closes, from its body. Only closing keywords count: a story key in a title is too loose. */

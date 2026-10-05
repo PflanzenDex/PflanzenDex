@@ -68,3 +68,17 @@ test("US-DEV-08: the table lists claimed items and counts the free ones", () => 
   assert.doesNotMatch(out, /#2 /);
   assert.match(out, /1 further open items are free/);
 });
+
+test("US-DEV-05: board flags items without a priority and lists them under the table", () => {
+  const noPriority = [1];
+  const [r] = buildRows({
+    items: [item(1, "US-LIC-01", ["a"])],
+    prs: [],
+    branchDates: {},
+    now: Date.now(),
+    staleHours: 48,
+    noPriority,
+  });
+  assert.ok(r.flags.includes("NO-PRIO"));
+  assert.match(formatRows([r], 48, noPriority), /1 open item\(s\) without a priority.*#1/);
+});
