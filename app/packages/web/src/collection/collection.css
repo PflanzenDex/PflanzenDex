@@ -210,15 +210,25 @@ a.card-photo:focus-visible {
 .frame {
   min-width: 0;
 }
-/* Eight columns: this view gets more width than the 720px column of the other views (US-BES-05). */
-.frame:has(.difficulty-page) {
-  max-width: 1200px;
-}
 .table-scroll {
   overflow-x: auto;
   border: 1px solid var(--rand);
   border-radius: 12px;
   background: var(--card);
+}
+.table-scroll:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+/* Eight columns need more than the 720px column of the other views (US-BES-05). Only the table breaks out, centered,
+   up to 1200px; the frame and with it the navigation keep their width, so switching tabs moves nothing (issue 293).
+   48px leave the page padding and a scrollbar outside, so the page itself never scrolls sideways. */
+@media (min-width: 800px) {
+  .difficulty-page .table-scroll {
+    --table-width: min(1200px, calc(100vw - 48px));
+    width: var(--table-width);
+    margin-inline: calc((100% - var(--table-width)) / 2);
+  }
 }
 table.difficulty-table {
   width: 100%;

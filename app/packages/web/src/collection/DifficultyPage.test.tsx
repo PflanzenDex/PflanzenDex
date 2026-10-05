@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DifficultyPage } from "./DifficultyPage";
 
@@ -131,5 +132,21 @@ describe("US-BES-05 page of the difficulty overview", () => {
     render(<DifficultyPage api="http://api" token={async () => undefined} />);
     expect((await screen.findByRole("alert")).textContent).toContain("Bitte melde dich neu an.");
     expect(fetchFn).not.toHaveBeenCalled();
+  });
+});
+
+describe("US-BES-05 layout of the wide table (issue 293)", () => {
+  const css = readFileSync("src/collection/collection.css", "utf8");
+
+  it("US-BES-05 the frame keeps its width, so the navigation does not re-lay out when switching tabs", () => {
+    // Measured in Chromium at 375, 768 to 1280 and 1440 px: navigation 720 px on every tab, no sideways page scroll.
+    expect(css).not.toMatch(/\.frame:has\(\.difficulty-page\)/);
+    expect(css).toMatch(
+      /\.difficulty-page \.table-scroll \{[^}]*min\(1200px, calc\(100vw - 48px\)\)/,
+    );
+  });
+
+  it("US-BES-05 the scrolling table shows a visible keyboard focus (3 px, project convention)", () => {
+    expect(css).toMatch(/\.table-scroll:focus-visible \{\s*outline: 3px solid var\(--text\);/);
   });
 });
