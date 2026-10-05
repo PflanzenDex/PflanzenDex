@@ -1,7 +1,8 @@
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { MODULE_CONFIG as REAL } from "../../../../modules.config.mjs";
-import { findSchemaViolations, migrate } from "./index.ts";
+import { migrate } from "./index.ts";
+import { findSchemaViolations } from "../schema-check.ts";
 import { moduleViolations, type ForeignKey, type ModuleRegister } from "./module-schema.ts";
 import { openPool } from "./connection.ts";
 

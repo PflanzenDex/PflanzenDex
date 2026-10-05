@@ -16,13 +16,7 @@ import { checkAdapterSql, checkMigrations, kernelExports } from "./check-modules
 
 export const CORE_ALLOWED_IMPORTS = []; // third-party packages allowed in core (empty on purpose; later e.g. zod)
 export const CORE_TEST_ALLOWED_IMPORTS = ["vitest"];
-export const KNOWN_EXCEPTIONS = [
-  {
-    rule: "AB-11",
-    file: "packages/db/src/kernel/schema.ts",
-    reason: "Catalog tables are named in the tenant check; they move into `catalog` later.",
-  },
-];
+export const KNOWN_EXCEPTIONS = []; // entries: { rule, file, reason }
 
 export const MARKERS = ["STRUCTURE_IGNORE", "MAX_LINES_IGNORE", "COMPLEXITY_IGNORE"];
 // Markers in the first 5 lines: { name, reason } (empty reason = marker without a reason = error MK-1).
