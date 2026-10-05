@@ -182,3 +182,17 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
     }
   });
 });
+
+describe("US-QG-09 module roots (FR-QG-21)", () => {
+  const baseline = () => JSON.parse(fs.readFileSync(BASELINE_FILE, "utf8"));
+  const problems = (extra) =>
+    compareBaseline(findLayout([...listPaths(), ...extra], config), baseline());
+  const units = (dir, n) => Array.from({ length: n }, (_, i) => `${dir}/new-unit-${i}.ts`);
+  it("a module may hold up to 10 units, the 11th is a new violation", () => {
+    assert.deepEqual(problems(units("app/packages/core/src/pokedex", 4)), []);
+    assert.match(problems(units("app/packages/core/src/pokedex", 5))[0] ?? "", /LY-1 .*pokedex/);
+  });
+  it("the src folder that holds the modules has no unit limit", () => {
+    assert.deepEqual(problems(units("app/packages/core/src", 20)), []);
+  });
+});
