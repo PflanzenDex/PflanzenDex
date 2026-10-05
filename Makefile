@@ -16,6 +16,7 @@ help: ## List all targets with a one-line description
 
 setup: ## Install dependencies (npm ci, or npm install without a lock file)
 	cd $(APP) && if [ -f package-lock.json ]; then npm ci; else npm install; fi
+	cd $(APP) && node scripts/check-deps.mjs --stamp
 	$(if $(CI),,$(MAKE) hooks)
 
 hooks: ## Enable the git hooks in .githooks/ (commit-msg, pre-commit, pre-push, hints)
@@ -118,6 +119,7 @@ duplicates: ## Clone groups with 3+ copies in changed files block, whole project
 	cd $(APP) && npm run duplicates
 
 gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundaries, unused code, format
+	cd $(APP) && node scripts/check-deps.mjs
 	cd $(APP) && npm run gates
 
 ci: secrets workflows $(if $(CI),,db-up) ## All gates in CI order, stops at the first failure
