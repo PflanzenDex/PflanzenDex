@@ -3,6 +3,8 @@ export interface OnboardingCounts {
   readonly locations: number;
   readonly zones: number;
   readonly specimens: number;
+  /** Archived specimens: an account that had plants is a returning keeper, not a new one (#291). */
+  readonly archivedSpecimens: number;
 }
 
 export type OnboardingStepId = "locations" | "zones" | "first_plant";
@@ -51,10 +53,25 @@ export function onboardingSteps(c: OnboardingCounts): readonly OnboardingStep[] 
   ];
 }
 
-/** Without a plant the start page names the first plant as the one clear next action; with a plant: none. */
+/** The guide is for new accounts only: no active and no archived plant (an account with only archived ones returns). */
+export function isNewAccount(c: OnboardingCounts): boolean {
+  return c.specimens === 0 && c.archivedSpecimens === 0;
+}
+
+/**
+ * Without an active plant the start page names one clear next action (P-09): the first plant for a new account, the
+ * next plant for a returning keeper whose plants are all archived. With a plant: none.
+ */
 export function startAction(c: OnboardingCounts): OnboardingStep | null {
   if (c.specimens > 0) return null;
-  return onboardingSteps(c).find((s) => s.id === "first_plant") ?? null;
+  const first = onboardingSteps(c).find((s) => s.id === "first_plant");
+  if (!first || isNewAccount(c)) return first ?? null;
+  return {
+    ...first,
+    title: "Nächste Pflanze",
+    nextAction:
+      "Deine bisherigen Pflanzen sind archiviert. Wähle im Katalog eine Art für deine nächste Pflanze.",
+  };
 }
 
 const HINT_TEXT = {

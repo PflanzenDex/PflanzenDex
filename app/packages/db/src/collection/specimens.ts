@@ -54,11 +54,16 @@ export class SpecimenPostgres {
   }
 
   /** How many specimens the account has that count (not archived, `isActive`); one cheap count, no rows (US-ACC-03). */
-  async countActive(userId: string): Promise<number> {
+  /** Active and archived specimens of the account in one count (start page, US-ACC-03); writes nothing. */
+  async countByStatus(userId: string): Promise<{ active: number; archived: number }> {
     const r = await withAccount(this.pool, userId, (c) =>
-      c.query<{ n: number }>("select count(*)::int as n from specimen where status <> 'archived'"),
+      c.query<{ active: number; archived: number }>(
+        `select count(*) filter (where status <> 'archived')::int as active,
+                count(*) filter (where status = 'archived')::int as archived
+           from specimen`,
+      ),
     );
-    return r.rows[0]?.n ?? 0;
+    return r.rows[0] ?? { active: 0, archived: 0 };
   }
 
   async find(userId: string, id: string): Promise<SpecimenRow | null> {
