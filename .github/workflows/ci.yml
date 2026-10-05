@@ -8,8 +8,9 @@ on:
     branches: [dev, main]
     # `edited`: the squash turns the PR title into the commit message, so a changed title is checked again.
     types: [opened, synchronize, reopened, edited]
+  # Push runs only on `main` (the release workflow needs them). The PR run already checked what a squash merges into `dev`.
   push:
-    branches: [dev, main]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
