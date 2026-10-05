@@ -72,6 +72,7 @@ jobs:
           cache: npm
           cache-dependency-path: app/package-lock.json
       - run: make setup
+      - run: make browsers # QG-U5: the conformance run in `make ci` drives Chromium over the stories
       - run: make ci
 
   # QG-S2 for dependencies a PR adds or changes: known high-severity vulnerabilities block the merge.
@@ -134,7 +135,7 @@ jobs:
           path: app/packages/web/.lighthouseci
           if-no-files-found: ignore
 
-  # QG-T3 + QG-U1 (axe, report only): Playwright against the real stack, mobile and desktop. Release PRs into `main` and manual runs only (E-15).
+  # QG-T3 + QG-U1 (axe blocks on serious/critical): Playwright against the real stack, mobile and desktop. Release PRs into `main` and manual runs only (E-15).
   e2e:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.base_ref == 'main')
     runs-on: ubuntu-24.04
