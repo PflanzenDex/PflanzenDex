@@ -15,7 +15,7 @@ A directory with few entries and a predictable name can be read at a glance, and
 
 ## Checked by
 
-`app/scripts/check-layout.mjs`, `app/scripts/layout-rules.mjs`, `app/scripts/layout-baseline.mjs` and their tests `app/scripts/check-layout.test.mjs`, `app/scripts/layout-rules.test.mjs`, `app/scripts/layout-baseline.test.mjs`; configuration `app/layout.config.mjs`.
+`app/tools/check/code/layout/check-layout.mjs`, `app/tools/check/code/layout/layout-rules.mjs`, `app/tools/check/code/layout/layout-baseline.mjs` and their tests `app/tools/check/code/layout/check-layout.test.mjs`, `app/tools/check/code/layout/layout-rules.test.mjs`, `app/tools/check/code/layout/layout-baseline.test.mjs`; configuration `app/layout.config.mjs`.
 
 ## Gate
 

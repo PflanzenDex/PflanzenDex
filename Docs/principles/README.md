@@ -1,6 +1,6 @@
 # Principles register
 
-A rule that exists only in a document is a wish. This register records every rule of the project with its **maturity**, so it is visible which rules are only intended and which block a merge (US-QG-06, FR-DEV-04). The validator `app/scripts/check-principles.mjs` runs in `make gates` as `npm run principles`.
+A rule that exists only in a document is a wish. This register records every rule of the project with its **maturity**, so it is visible which rules are only intended and which block a merge (US-QG-06, FR-DEV-04). The validator `app/tools/check/docs/check-principles.mjs` runs in `make gates` as `npm run principles`.
 
 ## Format
 
