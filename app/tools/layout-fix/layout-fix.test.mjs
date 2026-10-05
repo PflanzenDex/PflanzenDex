@@ -140,7 +140,7 @@ describe("US-QG-09 layout-fix: dry run and apply", () => {
         apply: true,
         config,
         auto: false,
-        into: [{ folder: "care", prefixes: ["care-"] }],
+        into: [{ folder: "care", prefixes: ["care-*"] }],
       });
       assert.deepEqual(report.broken, []);
       assert.ok(fs.existsSync(path.join(r.dir, `${MOD}/care/care-api.ts`)));

@@ -174,7 +174,7 @@ describe("US-QG-09 layout-fix: explicit groups chosen by a person", () => {
   ]);
   it("moves the units that start with one of the prefixes into the named folder", () => {
     const moves = plan(paths, dir, {
-      into: [{ folder: "archive", prefixes: ["archive"] }],
+      into: [{ folder: "archive", prefixes: ["archive*"] }],
       auto: false,
     });
     assert.deepEqual(
@@ -188,5 +188,44 @@ describe("US-QG-09 layout-fix: explicit groups chosen by a person", () => {
     const more = at(dir, ["a-1.ts", "a-2.ts", "a-3.ts", "m.ts", "n.ts", "o.ts", "p.ts"]);
     assert.ok(plan(more, dir, { into: [], auto: true })[`${dir}/a-1.ts`]);
     assert.deepEqual(plan(more, dir, { into: [], auto: false }), {});
+  });
+});
+
+describe("US-QG-09 layout-fix: an --into entry is an exact unit name or a prefix with a star", () => {
+  const dir = "app/core/src/mod";
+  const paths = at(dir, [
+    "care.ts",
+    "care-view.ts",
+    "care-types.ts",
+    "x.ts",
+    "y.ts",
+    "z.ts",
+    "w.ts",
+  ]);
+  it("moves only the named unit when the entry has no star", () => {
+    const moves = plan(paths, dir, {
+      into: [{ folder: "profile", prefixes: ["care"] }],
+      auto: false,
+    });
+    assert.deepEqual(Object.keys(moves), [`${dir}/care.ts`]);
+  });
+  it("moves every unit that starts with the prefix when the entry ends with a star", () => {
+    const moves = plan(paths, dir, {
+      into: [{ folder: "profile", prefixes: ["care*"] }],
+      auto: false,
+    });
+    assert.deepEqual(
+      Object.keys(moves).sort(),
+      at(dir, ["care-types.ts", "care-view.ts", "care.ts"]).sort(),
+    );
+  });
+  it("never moves a unit twice when two groups both match it", () => {
+    const into = [
+      { folder: "views", prefixes: ["care-view"] },
+      { folder: "all-care", prefixes: ["care*"] },
+    ];
+    const moves = plan(paths, dir, { into, auto: false });
+    assert.equal(moves[`${dir}/care-view.ts`], `${dir}/views/care-view.ts`);
+    assert.equal(moves[`${dir}/care.ts`], `${dir}/all-care/care.ts`);
   });
 });
