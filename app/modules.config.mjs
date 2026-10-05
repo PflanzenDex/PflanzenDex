@@ -23,6 +23,15 @@ const MODULES = [
     ports: ["DataSource", "IdempotencyStore"],
   },
   {
+    // Platform module (TE-06, ADR 0003 table "jobs"): PostgreSQL job queue and the runner. Has its own folder because the
+    // queue has domain-free rules of its own (lease, retry, merge); MON, POK and KI depend on it, never the other way.
+    name: "jobs",
+    epics: ["TE"],
+    tables: ["job"],
+    dependsOn: ["kernel"],
+    ports: ["JobQueue"],
+  },
+  {
     name: "account",
     epics: ["ACC"],
     tables: ["account_data", "account_role", "invitation", "access_setting", "operator_cost"],
