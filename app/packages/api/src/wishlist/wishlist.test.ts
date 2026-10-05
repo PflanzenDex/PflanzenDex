@@ -288,3 +288,81 @@ describe("US-WUN-01 a zone a wish points to cannot be deleted unnoticed (P-10)",
     expect((await call(subA, "GET", "/light-zones")).body["zones"]).toHaveLength(4);
   });
 });
+
+describe("US-WUN-03 record a purchase through the API", () => {
+  const buy = (sub: string | null, id: string, key?: string | null) =>
+    call(sub, "POST", `/wishes/${id}/buy`, undefined, key);
+  const bought = (sub: string | null) => call(sub, "GET", "/wishes/bought");
+  const created = async (sub: string, name: string) => {
+    const r = await wish(sub, { name, german: `${name} deutsch` });
+    expect(r.status).toBe(201);
+    return r.body["wish"].id as string;
+  };
+
+  it("US-WUN-03 without a token: 401; without Idempotency-Key: 400, nothing bought", async () => {
+    const id = await created(subA, `Schlüssellos ${run}`);
+    expect((await buy(null, id)).status).toBe(401);
+    expect((await bought(null)).status).toBe(401);
+    expect(await buy(subA, id, null)).toMatchObject({
+      status: 400,
+      body: { error: { code: "idempotency.key_missing" } },
+    });
+    expect(await names(subA)).toContain(`Schlüssellos ${run}`);
+  });
+
+  it("US-WUN-03 'Bought' answers with the bought wish and what comes next, hides it and keeps it in the history", async () => {
+    const id = await created(subA, `Kauf ${run}`);
+    const r = await buy(subA, id);
+    expect(r).toMatchObject({
+      status: 200,
+      body: { changed: true, wish: { id, status: "bought" } },
+    });
+    expect(r.body["hint"].text).toContain(`Kauf ${run} deutsch (Kauf ${run})`);
+    expect(r.body["hint"].nextAction).toContain("Exemplar");
+    expect(await names(subA)).not.toContain(`Kauf ${run}`);
+    const history = await bought(subA);
+    expect(history.status).toBe(200);
+    expect(history.body["bought"]).toContainEqual({
+      id,
+      name: `Kauf ${run}`,
+      title: `Kauf ${run} deutsch (Kauf ${run})`,
+    });
+  });
+
+  it("US-WUN-03 buying again: 200 with changed false (idempotent); the same key replays the first answer", async () => {
+    const id = await created(subA, `Nochmal ${run}`);
+    const key = randomUUID();
+    const first = await buy(subA, id, key);
+    expect(await buy(subA, id, key)).toEqual(first);
+    expect(await buy(subA, id)).toMatchObject({ status: 200, body: { changed: false } });
+  });
+
+  it("US-WUN-03 a discarded wish: 409 wish.not_open; an unknown or malformed id: 404 / 400", async () => {
+    const id = await created(subA, `Verworfen ${run}`);
+    await pool.query("update wish set status = 'discarded' where id = $1", [id]);
+    expect(await buy(subA, id)).toMatchObject({
+      status: 409,
+      body: { error: { code: "wish.not_open" } },
+    });
+    expect(await buy(subA, randomUUID())).toMatchObject({
+      status: 404,
+      body: { error: { code: "wish.not_found" } },
+    });
+    expect((await buy(subA, "kein-id")).status).toBe(400);
+  });
+
+  it("US-WUN-03 a wish of another account: 404 wish.not_found, it stays open and out of my history (P-04)", async () => {
+    const id = await created(subB, `Bens Kauf ${run}`);
+    expect(await buy(subA, id)).toMatchObject({
+      status: 404,
+      body: { error: { code: "wish.not_found" } },
+    });
+    expect(await names(subB)).toContain(`Bens Kauf ${run}`);
+    await buy(subB, id);
+    const mine = (await bought(subA)).body["bought"] as { id: string }[];
+    expect(mine.map((w) => w.id)).not.toContain(id);
+    expect(((await bought(subB)).body["bought"] as { id: string }[]).map((w) => w.id)).toContain(
+      id,
+    );
+  });
+});

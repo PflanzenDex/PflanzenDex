@@ -28,6 +28,7 @@ const measurement = (extra: Partial<MeasurementRow> = {}): MeasurementRow => ({
 const view = (extra: Partial<MeasurementView> = {}): MeasurementView => ({
   specimenId: "e1",
   growthMeasure: "rosette_diameter",
+  etiolationSigns: "Rosette streckt sich.",
   measurements: [],
   last: null,
   lastRating: null,
@@ -156,6 +157,25 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(html).toContain("Vergeilt/dünn");
     expect(html).toContain("Notiz (optional)");
     expect(html).toContain("Ein Foto kannst du hier noch nicht hinzufügen.");
+  });
+
+  it('US-WAC-02 the quality choice offers healthy (preset) and etiolated/thin with "Wie erkennen?" closed', () => {
+    const html = renderToString(
+      <MeasureForm unit="cm" signs="Rosette streckt sich." onSend={async () => null} />,
+    );
+    expect(html).toMatch(/<option value="healthy" selected[^>]*>Gesund<\/option>/);
+    expect(html).toMatch(/<option value="etiolated"[^>]*>Vergeilt\/dünn<\/option>/);
+    expect(html).toMatch(/<details(?![^>]*\sopen)[^>]*>\s*<summary[^>]*>Wie erkennen\?<\/summary>/);
+    expect(html).toContain("Vergeilung-Anzeichen dieser Art: Rosette streckt sich.");
+  });
+
+  it("US-WAC-02 without etiolation signs (or from an older server) the form shows no disclosure", () => {
+    for (const signs of [null, undefined]) {
+      const html = renderToString(
+        <MeasureForm unit="cm" signs={signs} onSend={async () => null} />,
+      );
+      expect(html).not.toContain("Wie erkennen?");
+    }
   });
 
   it('the page shows "wird geladen" first and offers the way back', () => {

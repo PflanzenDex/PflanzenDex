@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
-import { compare, scan, toEntries } from "./check-design-system.mjs";
+import { compare, NON_BASELINEABLE_RULES, scan, toEntries } from "./check-design-system.mjs";
 
 function web(files) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ds-"));
@@ -56,6 +56,7 @@ describe("design system gate (DESIGN-SYSTEM.md section 6)", () => {
       "DS-27|a.css",
       "DS-27|b.tsx",
       "DS-32|b.tsx",
+      "DS-33|a.css",
       "DS-37|a.css",
       "DS-48|b.tsx",
     ]);
@@ -66,10 +67,33 @@ describe("design system gate (DESIGN-SYSTEM.md section 6)", () => {
       "package.json": stack,
       "src/lib/utils.ts": "",
       "src/components/ui/x.ts": "",
-      "src/style.css": ":root { --a: #fff; }\n",
+      "src/styles/tokens.css": ":root { --a: #fff; }\n",
       "src/b.tsx": 'export const B = () => <i style={{ "--value": 3 }} />;\n',
     });
     assert.equal(scan(dir).size, 0);
+  });
+
+  it("QG-U4 · no css outside styles: a new module stylesheet fails, tokens.css passes", () => {
+    const base = { "package.json": stack, "src/lib/utils.ts": "", "src/components/ui/x.ts": "" };
+    const bad = web({ ...base, "src/wishlist/wishlist.css": ".a { margin: 0; }\n" });
+    assert.deepEqual([...scan(bad).keys()], ["DS-33|wishlist/wishlist.css"]);
+    const empty = web({ ...base, "src/wishlist/empty.css": "" });
+    assert.deepEqual([...scan(empty).keys()], ["DS-33|wishlist/empty.css"]);
+    const legacy = web({ ...base, "src/style.css": ":root { --a: #fff; }\n" });
+    assert.ok(scan(legacy).has("DS-33|style.css"));
+    assert.ok(scan(legacy).has("DS-27|style.css"));
+    const ok = web({ ...base, "src/styles/tokens.css": "@layer base { a { @apply p-2; } }\n" });
+    assert.equal(scan(ok).size, 0);
+  });
+
+  it("QG-U4 · no css outside styles: @apply and style tags in components fail", () => {
+    const dir = web({
+      "package.json": stack,
+      "src/lib/utils.ts": "",
+      "src/components/ui/x.ts": "",
+      "src/a.tsx": 'export const A = () => <style>{".a { @apply p-2; }"}</style>;\n',
+    });
+    assert.deepEqual([...scan(dir).keys()], ["DS-33|a.tsx"]);
   });
 
   it("checks layer imports", () => {
@@ -112,13 +136,13 @@ describe("design system gate (DESIGN-SYSTEM.md section 6)", () => {
     ]);
     const entries = [
       { rule: "DS-12", file: "a.css", count: 1 },
-      { rule: "DS-27", file: "c.css", count: 1 },
+      { rule: "DS-32", file: "c.css", count: 1 },
     ];
     const problems = compare(counts, entries);
     assert.equal(problems.length, 3);
     assert.match(problems[0], /DSB-1 DS-12 a.css/);
     assert.match(problems[1], /DSB-1 DS-21 b.css/);
-    assert.match(problems[2], /DSB-2 DS-27 c.css/);
+    assert.match(problems[2], /DSB-2 DS-32 c.css/);
     assert.deepEqual(compare(counts, toEntries(counts)), []);
   });
 
@@ -225,5 +249,56 @@ export function C({ className, variant }: { className?: string; variant?: "a" | 
       "export const C = ({ className }: { className?: string }) => <i className={className} />;\n";
     assert.deepEqual(run(ui(src)).keys, ["DS-36|components/ui/c.tsx"]);
     assert.deepEqual(run(ui('export const C = () => <i className="x" />;\n')).keys, []);
+  });
+
+  it("QG-U4 · DS-48 cannot be baselined", () => {
+    const files = {
+      ...ui("", "ok"),
+      "src/wishlist/foo.tsx": "export const F = () => <button />;\n",
+    };
+    const { counts, locations } = run(files);
+    const entry = { rule: "DS-48", file: "wishlist/foo.tsx", count: 1 };
+    const problems = compare(counts, [entry], locations);
+    assert.ok(problems.some((p) => /^DSB-1 DS-48 wishlist\/foo\.tsx/.test(p)));
+    assert.ok(problems.some((p) => /^DSB-3 DS-48 wishlist\/foo\.tsx/.test(p)));
+    assert.ok(compare(counts, [], locations).some((p) => /^DSB-1 DS-48/.test(p)));
+  });
+
+  it("QG-U4 · closed rules reject every baseline entry, even a stale one", () => {
+    assert.deepEqual([...NON_BASELINEABLE_RULES].sort(), [
+      "DS-01",
+      "DS-02",
+      "DS-07",
+      "DS-27",
+      "DS-37",
+      "DS-42",
+      "DS-48",
+    ]);
+    for (const rule of NON_BASELINEABLE_RULES) {
+      const problems = compare(new Map(), [{ rule, file: "x.tsx", count: 1 }]);
+      assert.ok(
+        problems.some((p) => p.startsWith(`DSB-3 ${rule} x.tsx`)),
+        rule,
+      );
+    }
+    assert.deepEqual(
+      compare(new Map([["DS-12|a.css", 1]]), [{ rule: "DS-12", file: "a.css", count: 1 }]),
+      [],
+    );
+  });
+
+  it("QG-U4 · raw controls in components/ui pass", () => {
+    const src =
+      "export const C = () => (\n  <div>\n    <button />\n    <input />\n    <select />\n    <textarea />\n  </div>\n);\n";
+    assert.deepEqual(run(ui(src)).keys, []);
+  });
+
+  it("QG-U4 · the committed baseline has no entry for a closed rule", () => {
+    const file = path.join(import.meta.dirname, "../../../../quality-ds-baseline.json");
+    const { entries } = JSON.parse(fs.readFileSync(file, "utf8"));
+    assert.deepEqual(
+      entries.filter((e) => NON_BASELINEABLE_RULES.has(e.rule)),
+      [],
+    );
   });
 });

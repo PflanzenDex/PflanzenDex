@@ -195,3 +195,51 @@ describe("US-WUN-01 zone usage and tenant isolation (P-04, P-05)", () => {
     expect(change.rowCount).toBe(0);
   });
 });
+
+describe("US-WUN-03 record a purchase in the database", () => {
+  const created = async (account: string, name: string) => {
+    const w = await wishes.create(account, values({ name }));
+    if (typeof w === "string") throw new Error(w);
+    return w;
+  };
+
+  it("US-WUN-03 'Bought' sets the status bought, hides the wish from the open list and keeps it in the history", async () => {
+    const w = await created(anna, "Kaufwunsch");
+    expect(await wishes.buy(anna, w.id)).toEqual({
+      wish: { ...w, status: "bought" },
+      changed: true,
+    });
+    expect((await wishes.open(anna)).map((x) => x.id)).not.toContain(w.id);
+    expect((await wishes.bought(anna)).map((x) => x.id)).toContain(w.id);
+  });
+
+  it("US-WUN-03 buying again changes nothing (idempotent), also when two calls race", async () => {
+    const w = await created(anna, "Doppelkauf");
+    const [one, two] = await Promise.all([wishes.buy(anna, w.id), wishes.buy(anna, w.id)]);
+    const changed = [one, two].map((r) => (typeof r === "string" ? r : r.changed));
+    expect(changed.sort()).toEqual([false, true]);
+    expect(await wishes.buy(anna, w.id)).toMatchObject({
+      changed: false,
+      wish: { status: "bought" },
+    });
+  });
+
+  it("US-WUN-03 a discarded wish is not_open and stays discarded; an unknown id is not_found", async () => {
+    const w = await created(anna, "Verworfener Kauf");
+    await pool.query("update wish set status = 'discarded' where id = $1", [w.id]);
+    expect(await wishes.buy(anna, w.id)).toBe("not_open");
+    expect((await pool.query("select status from wish where id = $1", [w.id])).rows[0].status).toBe(
+      "discarded",
+    );
+    expect(await wishes.buy(anna, randomUUID())).toBe("not_found");
+  });
+
+  it("US-WUN-03 a wish of another account looks unknown, stays open and is not in my history (P-04)", async () => {
+    const w = await created(ben, "Bens Kaufwunsch");
+    expect(await wishes.buy(anna, w.id)).toBe("not_found");
+    expect((await wishes.open(ben)).map((x) => x.id)).toContain(w.id);
+    await wishes.buy(ben, w.id);
+    expect((await wishes.bought(anna)).map((x) => x.id)).not.toContain(w.id);
+    expect((await wishes.bought(ben)).map((x) => x.id)).toContain(w.id);
+  });
+});
