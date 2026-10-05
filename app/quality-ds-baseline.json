@@ -262,22 +262,7 @@
     },
     {
       "rule": "DS-57",
-      "file": "dependency:clsx",
-      "count": 1
-    },
-    {
-      "rule": "DS-57",
       "file": "dependency:react-hook-form",
-      "count": 1
-    },
-    {
-      "rule": "DS-57",
-      "file": "dependency:tailwind-merge",
-      "count": 1
-    },
-    {
-      "rule": "DS-57",
-      "file": "dependency:tailwindcss",
       "count": 1
     },
     {
@@ -288,11 +273,6 @@
     {
       "rule": "DS-57",
       "file": "missing:src/components/ui",
-      "count": 1
-    },
-    {
-      "rule": "DS-57",
-      "file": "missing:src/lib/utils.ts",
       "count": 1
     }
   ]
