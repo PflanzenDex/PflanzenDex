@@ -2,13 +2,13 @@
 import { composeStories, setProjectAnnotations } from "@storybook/react-vite";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import preview from "../../../.storybook/preview";
+import preview from "../../../../.storybook/preview";
 import { setViewportWidth } from "@/lib/viewport-mock";
-import * as emptyState from "./empty-state.stories";
-import * as pageSkeleton from "./page-skeleton.stories";
-import * as requestState from "./request-state.stories";
-import * as responsiveModal from "./responsive-modal.stories";
-import * as responsiveTable from "./responsive-table.stories";
+import * as emptyState from "../empty-state.stories";
+import * as pageSkeleton from "../page-skeleton.stories";
+import * as requestState from "../request-state.stories";
+import * as responsiveModal from "../responsive-modal.stories";
+import * as responsiveTable from "../responsive-table.stories";
 
 setProjectAnnotations([preview]);
 

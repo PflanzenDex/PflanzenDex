@@ -8,7 +8,7 @@ import { MeasurementHeader } from "./measurement-header";
 import { MeasureForm } from "./measure-form";
 import { MeasurePage } from "./MeasurePage";
 import { MeasurementList } from "./measurement-list";
-import { recordMeasurement, loadMeasurementView } from "./measurements-api";
+import { recordMeasurement, loadMeasurementView } from "./api/measurements-api";
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
 const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");

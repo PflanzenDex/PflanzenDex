@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MobileNavBar } from "./mobile-nav-bar";
-import { items, withRouter } from "./shell.fixtures";
+import { items, withRouter } from "../../../.storybook/shell-fixtures";
 
 // Catalog of the bottom bar (TE-18): shown below `md`, so the viewport stays on the phone preset (360 px).
 const meta = {

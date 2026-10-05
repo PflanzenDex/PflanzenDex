@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { GlobalHeader } from "./global-header";
-import { items, withRouter } from "./shell.fixtures";
+import { items, withRouter } from "../../../.storybook/shell-fixtures";
 
 // Catalog of the top bar (TE-18): destinations show from `md`, so the default story uses the tablet viewport.
 const meta = {

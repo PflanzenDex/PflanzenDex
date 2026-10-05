@@ -3,7 +3,11 @@ import { Button } from "@/components/ui/button";
 import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../kernel";
 import { MeasureForm } from "./measure-form";
 import { MeasurementList } from "./measurement-list";
-import { recordMeasurement, loadMeasurementView, type MeasurementInput } from "./measurements-api";
+import {
+  recordMeasurement,
+  loadMeasurementView,
+  type MeasurementInput,
+} from "./api/measurements-api";
 import { MeasurementHeader } from "./measurement-header";
 import { MeasurePageSkeleton } from "./MeasurePage.skeleton";
 import { StatusNote } from "./notices";

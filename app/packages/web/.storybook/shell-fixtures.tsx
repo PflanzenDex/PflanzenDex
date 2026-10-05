@@ -1,6 +1,6 @@
 import type { Decorator } from "@storybook/react-vite";
 import { MemoryRouter } from "react-router";
-import type { NavItem } from "./nav-item";
+import type { NavItem } from "@/components/shared/nav-item";
 
 // Shared sample data for the shell stories (TE-18): sample texts are German.
 const dot = <span aria-hidden="true" className="size-5 rounded-full bg-muted" />;

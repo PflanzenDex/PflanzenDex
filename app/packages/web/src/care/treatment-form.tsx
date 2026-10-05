@@ -13,7 +13,7 @@ import {
   treatmentSchema,
   type TreatmentFields,
 } from "./schemas";
-import type { TreatableSpecimen, TreatmentInput } from "./treatments-api";
+import type { TreatableSpecimen, TreatmentInput } from "./api/treatments-api";
 
 /**
  * Keeps the box 20 px until the legacy unlayered `input { width: 100%; min-height: 48px }` of light.css is gone (issue 347):

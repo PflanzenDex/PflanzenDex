@@ -3,11 +3,11 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { LoadFrame } from "../kernel";
-import { historyKey } from "./query-keys";
+import { historyKey } from "./api/query-keys";
 import { CARD_CLASSES, LIST_CLASSES } from "./notices";
 import { dateText } from "./text";
 import { TreatmentHistorySkeleton } from "./treatment-history.skeleton";
-import { loadTreatmentHistory, type TreatableSpecimen } from "./treatments-api";
+import { loadTreatmentHistory, type TreatableSpecimen } from "./api/treatments-api";
 
 type Token = () => Promise<string | undefined>;
 function Entry({ row }: { row: TreatmentRow }) {

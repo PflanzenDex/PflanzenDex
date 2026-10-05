@@ -5,8 +5,8 @@ import {
   TREATMENT_LIMITS,
 } from "@pflanzendex/core";
 import { z } from "zod";
-import type { MeasurementInput } from "./measurements-api";
-import type { TreatmentInput } from "./treatments-api";
+import type { MeasurementInput } from "./api/measurements-api";
+import type { TreatmentInput } from "./api/treatments-api";
 
 /**
  * The form to record a measurement (US-WAC-01, DS-47): fast feedback per field in German, so a typo does not occupy

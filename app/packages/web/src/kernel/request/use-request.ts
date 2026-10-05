@@ -1,8 +1,8 @@
 import { useCallback, useEffect } from "react";
 import { keepPreviousData, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
-import type { ApiError, Response } from "./api";
+import type { ApiError, Response } from "../api";
 import { NETWORK_DOWN, RequestFailure } from "./query-client";
-import { SIGN_IN } from "./use-write-action";
+import { SIGN_IN } from "../use-write-action";
 import type { RequestStatus } from "@/components/shared/request-state";
 
 type Token = () => Promise<string | undefined>;

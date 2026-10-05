@@ -1,9 +1,9 @@
 // Vitest setup: every `render` of a page gets the data layer (one fresh query client per render, no retries), so
 // pages are tested the way main.tsx runs them without each test repeating the provider.
 import { QueryClientProvider } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { createElement, type ReactNode } from "react";
 import { vi } from "vitest";
-import { createQueryClient } from "./kernel";
+import { createQueryClient } from "../kernel";
 
 vi.mock("@testing-library/react", async (importOriginal) => {
   const rtl = await importOriginal<typeof import("@testing-library/react")>();
@@ -11,8 +11,8 @@ vi.mock("@testing-library/react", async (importOriginal) => {
   const wrap = (Outer?: (p: { children: ReactNode }) => ReactNode) => {
     const client = createQueryClient();
     return ({ children }: { children: ReactNode }) => {
-      const inner = Outer ? <Outer>{children}</Outer> : children;
-      return <QueryClientProvider client={client}>{inner}</QueryClientProvider>;
+      const inner = Outer ? createElement(Outer, null, children) : children;
+      return createElement(QueryClientProvider, { client }, inner);
     };
   };
   return {

@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { currentTimeZone, type ApiError } from "../kernel";
 import { Field } from "./field";
 import { RefusalAlert } from "./notices";
-import type { MeasurementInput } from "./measurements-api";
+import type { MeasurementInput } from "./api/measurements-api";
 import {
   measurementDefaults,
   measurementSchema,

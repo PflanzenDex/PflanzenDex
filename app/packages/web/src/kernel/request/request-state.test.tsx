@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RequestState } from "@/components/shared/request-state";
-import { LoadFrame, useClearOnSignOut, useWriteAction, useInvalidate, type Response } from ".";
+import { LoadFrame, useClearOnSignOut, useWriteAction, useInvalidate, type Response } from "..";
 
 const token = async () => "tok";
 const fail = (code: string, text: string): Response<string[]> => ({
