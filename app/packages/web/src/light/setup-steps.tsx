@@ -1,10 +1,15 @@
 import { useCallback, useState, type ReactNode } from "react";
-import { LoadFrame } from "../kernel";
+import { Button } from "@/components/ui/button";
+import { LoadFrame, SIGN_IN as KERNEL_SIGN_IN } from "../kernel";
 import { createWrite, loadLight, type ApiError, type LightData } from "./light-api";
 import { LocationCard, LocationForm, type LocationInput } from "./locations-view";
 import { ErrorMessage } from "./message";
-import { ZoneCard, ZoneForm } from "./zones-view";
+import { Fresh, useFresh } from "./fresh";
+import { SetupStepSkeleton } from "./light-page.skeleton";
+import { ENTRY, ZoneCard, ZoneForm } from "./zones-view";
 import { kindText } from "./text";
+
+const SIGN_IN: ApiError = { code: KERNEL_SIGN_IN.code, text: KERNEL_SIGN_IN.text };
 
 type Token = () => Promise<string | undefined>;
 interface StepProps {
@@ -13,8 +18,6 @@ interface StepProps {
   /** Leaves the step, with or without data: every step can be skipped (US-ACC-03). */
   onNext: () => void;
 }
-
-const SIGN_IN: ApiError = { code: "access.not_signed_in", text: "Bitte melde dich neu an." };
 
 /** Loads the light data of the account and offers writes that reload it afterwards (never guess the new state). */
 function useSetup(api: string, token: Token, isDone: (d: LightData) => boolean) {
@@ -38,14 +41,17 @@ function useSetup(api: string, token: Token, isDone: (d: LightData) => boolean) 
   return { load, refresh, write, done };
 }
 
+const LIST = "m-0 flex min-w-0 list-none flex-col gap-3 p-0";
 const HAS_LOCATIONS = (d: LightData) => d.locations.length > 0;
 const HAS_ZONES = (d: LightData) => d.zones.length > 0;
 
 function Frame(props: { title: string; intro: string; children: ReactNode }) {
   return (
-    <section className="onboarding-step">
-      <h2 tabIndex={-1}>{props.title}</h2>
-      <p className="quiet">{props.intro}</p>
+    <section className="flex min-w-0 flex-col gap-4">
+      <h2 tabIndex={-1} className="text-xl font-semibold">
+        {props.title}
+      </h2>
+      <p className="text-sm text-muted-foreground">{props.intro}</p>
       {props.children}
     </section>
   );
@@ -53,10 +59,10 @@ function Frame(props: { title: string; intro: string; children: ReactNode }) {
 
 function Leave(props: { done: boolean; onNext: () => void }) {
   return (
-    <div className="actions">
-      <button type="button" className={props.done ? "primary" : "secondary"} onClick={props.onNext}>
+    <div className="flex flex-col md:flex-row">
+      <Button type="button" variant={props.done ? "default" : "secondary"} onClick={props.onNext}>
         {props.done ? "Weiter" : "Überspringen"}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -73,16 +79,17 @@ export function LocationsStep(props: StepProps) {
         token={props.token}
         load={load}
         loadingText="Standorte werden geladen …"
+        loadingFallback={<SetupStepSkeleton label="Standorte werden geladen …" />}
         refresh={refresh}
       >
         {(data: LightData) => (
           <>
             {data.locations.length > 0 && (
-              <ul className="list">
+              <ul className={LIST}>
                 {data.locations.map((l) => (
-                  <li key={l.id} className="entry">
-                    <h3>{l.name}</h3>
-                    <p className="quiet">{kindText(l.kind)}</p>
+                  <li key={l.id} className={ENTRY}>
+                    <h3 className="text-lg font-semibold">{l.name}</h3>
+                    <p className="text-sm text-muted-foreground">{kindText(l.kind)}</p>
                   </li>
                 ))}
               </ul>
@@ -104,14 +111,10 @@ function DefaultsButton(props: { onTake: () => Promise<ApiError | null> }) {
   return (
     <>
       {error && <ErrorMessage error={error} />}
-      <div className="actions">
-        <button
-          type="button"
-          className="primary"
-          onClick={() => void props.onTake().then(setError)}
-        >
+      <div className="flex flex-col md:flex-row">
+        <Button type="button" onClick={() => void props.onTake().then(setError)}>
           Standard-Lampen übernehmen
-        </button>
+        </Button>
       </div>
     </>
   );
@@ -120,6 +123,7 @@ function DefaultsButton(props: { onTake: () => Promise<ApiError | null> }) {
 /** Onboarding, step "zones": take over the default levels or adjust them later; locations get their zone here. */
 export function ZonesStep(props: StepProps) {
   const { load, refresh, write, done } = useSetup(props.api, props.token, HAS_ZONES);
+  const fresh = useFresh();
   return (
     <Frame
       title="Wie hell ist es?"
@@ -129,6 +133,7 @@ export function ZonesStep(props: StepProps) {
         token={props.token}
         load={load}
         loadingText="Lichtzonen werden geladen …"
+        loadingFallback={<SetupStepSkeleton label="Lichtzonen werden geladen …" />}
         refresh={refresh}
       >
         {(data: LightData) => (
@@ -136,7 +141,7 @@ export function ZonesStep(props: StepProps) {
             {data.zones.length === 0 ? (
               <DefaultsButton onTake={() => write("POST", "/light-zones/defaults", {})} />
             ) : (
-              <ul className="list" aria-label="Lichtzonen">
+              <ul className={LIST} aria-label="Lichtzonen">
                 {data.zones.map((z) => (
                   <ZoneCard
                     key={z.id}
@@ -147,12 +152,11 @@ export function ZonesStep(props: StepProps) {
                 ))}
               </ul>
             )}
-            <details className="fresh">
-              <summary>Neue Lichtzone</summary>
+            <Fresh title="Neue Lichtzone" fresh={fresh}>
               <ZoneForm onSave={(e) => write("POST", "/light-zones", e)} />
-            </details>
+            </Fresh>
             {data.zones.length > 0 && data.locations.length > 0 && (
-              <ul className="list" aria-label="Standorte">
+              <ul className={LIST} aria-label="Standorte">
                 {data.locations.map((l) => (
                   <LocationCard
                     key={l.id}
