@@ -72,4 +72,5 @@ None of this is done or made up:
 - **Monitoring and alerts:** watching `/health` and backup age belongs to DEV-09 (#172).
 - **Image pins:** base images are pinned to major versions, not digests; Renovate (FR-QG-15) pins digests once it is active.
 - **Migrations:** applied by the deploy itself (see above, #201). `deploy.sh` backs up before every deploy while the DB is running (DEV-07, #170); on the very first deploy there is no database to back up.
+- **Sign-in service and invitation phase:** the stack has no Keycloak yet; closing self-registration and switching the registration mode on for a public deployment are described in `invitation-phase.md` (#301).
 - **Confirmation:** `restore.sh` over the production database now expects `CONFIRM=yes` (was `CONFIRM=ja` before the tooling was translated).

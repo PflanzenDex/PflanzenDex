@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/lib/viewport-mock";
 import { LightPage } from "./LightPage";
 
 const SIGNED_OUT = "Du bist nicht angemeldet. Bitte melde dich an.";
@@ -71,7 +72,19 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+beforeEach(() => setViewportWidth(1024));
+
 describe("US-LIC-05 page locations and light zones", () => {
+  it("US-LIC-04 the page shows the classification rules with the zone table of the account", async () => {
+    fakeServer({ zones: [zone], locations: [] });
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
+    expect(await screen.findByRole("heading", { name: "Einstufungsregeln" })).toBeTruthy();
+    expect(screen.getByRole("table", { name: "Deine Lichtzonen" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Warnzeichen" })).toBeTruthy();
+  });
+
   it("shows a status while loading and then zone and location from the API", async () => {
     fakeServer({ zones: [zone], locations: [location] });
     render(

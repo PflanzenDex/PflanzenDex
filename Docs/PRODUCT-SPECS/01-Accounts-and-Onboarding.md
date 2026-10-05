@@ -72,7 +72,7 @@ Details (decided with the story):
   - Given a plant keeper or a reviewer, when they enter a figure, then it is refused with `access.denied` and nothing is stored.
   - Given a month after the current month, then it is refused with `operator_cost.month_in_future`; an invalid amount or currency with `input.invalid` on the field.
 
-Not yet (why this story is 🟨): the cost per user comes from the manual monthly figure above; an automatic cost measurement (NFR-16, TE-10) does not exist. Closing the self-registration at the sign-in service itself (Keycloak realm setting) is an operator configuration, not part of the app: until the owner turns it off there, a stranger can still create a sign-in identity, but the app gives it no account and no data.
+Not yet (why this story is 🟨): the cost per user comes from the manual monthly figure above; an automatic cost measurement (NFR-16, TE-10) does not exist. Closing the self-registration at the sign-in service itself (Keycloak realm setting) is an operator configuration, not part of the app: the owner decided to close it when the invitation phase starts and to switch "registration only with invitation code" on for public deployments (decision 2026-10-05, #298; the default stays off for local development and tests). The steps are in the runbook `Docs/operations/invitation-phase.md`; they can run only once a public deployment with its own sign-in service exists. Until then a stranger can still create a sign-in identity, but the app gives it no account and no data.
 
 ## Requirements
 

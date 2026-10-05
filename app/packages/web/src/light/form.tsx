@@ -13,7 +13,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/comp
 import { Input, type InputProps } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type { ApiError } from "./light-api";
-import { ALERT_CLASSES, useServerRefusal } from "./refusal";
+import { ALERT_CLASSES, useServerRefusal } from "./texts";
 
 /**
  * A form that saves through an operation: validates with its zod schema (focus goes to the first invalid field),

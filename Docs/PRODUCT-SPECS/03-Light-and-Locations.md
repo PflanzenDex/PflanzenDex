@@ -57,7 +57,7 @@ Acceptance criteria:
 
 - Columns: plant, zone, lux demand (locale-formatted), position. The thresholds are defaults and adjustable.
 
-### US-LIC-04 · Look up the classification rules · ⬜ (prototype ✅)
+### US-LIC-04 · Look up the classification rules · ✅ (prototype ✅)
 
 As a **plant keeper** I want to read the reference on levels, indicators and warning signs.
 
@@ -65,6 +65,8 @@ Acceptance criteria:
 
 - A page "Light" contains the keeper's zone table, indicators for higher levels (CAM + arid origin, "full sun", thick cuticle, spines) and warning signs.
 - The collection table (plant, zone, demand) updates without manual maintenance.
+
+Decisions (assumption, decided by the PO): the zone table shows the keeper's own zones (name, lux ceiling, PPFD or "unbekannt"), not the four defaults. The collection table is the light overview of US-LIC-03, derived live. Indicators and warning signs are static reference text (`classificationRules()` in `core`); the percentages come from the derivation constants of US-LIC-01. The warning signs (etiolation, light stress, soft-leaved C3 plant, missing demand) are a starting set, each with a next step; no new API route is needed because the zones are already loaded.
 
 ### US-LIC-05 · Manage locations and light zones · ✅ new
 

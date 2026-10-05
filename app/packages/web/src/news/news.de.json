@@ -1,5 +1,9 @@
 {
   "unreleased": [
+    "Licht: Unter „Einstufungsregeln“ schlägst du nach, wie die Lichtzonen eingestuft werden: deine Stufentabelle mit Lux und PPFD, die Indikatoren für höhere Stufen und die Warnzeichen mit dem nächsten Schritt.",
+    "Wachstum: Beim Messen zeigt „Wie erkennen?“ unter der Auswahl „Gesund“ oder „Vergeilt/dünn“, woran du Vergeilung bei dieser Art erkennst.",
+    "Exemplare: Auf der Karte im Bestand korrigierst du mit „Fangdatum“ das Fangdatum eines Exemplars auch nachträglich. Es gelten dieselben Regeln wie beim Anlegen: kein Datum in der Zukunft und keines vor 1900. Der Pokédex zeigt danach das neue Datum.",
+    "Wunschliste: Mit „Gekauft“ hakst du einen Wunsch ab. Er verschwindet aus den Kandidaten, bleibt aber im neuen Abschnitt „Gekauft“ sichtbar, und die App sagt dir, dass du die Pflanze jetzt als Exemplar anlegst.",
     "Betreiber: Im Reiter „Betreiber“ trägst du die echten Hosting-Kosten eines Monats ein (Betrag, Währung, Monat). Die Kosten pro Nutzer sind dieser Betrag geteilt durch die aktiven Nutzer der letzten 30 Tage, auf den Cent gerundet und als „manuell eingetragen“ gekennzeichnet. Ohne eingetragene Kosten oder ohne aktive Nutzer steht dort „unbekannt“ mit dem Grund.",
     "Artenvergleich: Beim Wechsel in den Reiter „Artenvergleich“ springt die Navigation nicht mehr; nur die Tabelle nutzt auf breiten Bildschirmen mehr Platz. Mit der Tastatur siehst du deutlich, wenn die Tabelle zum Scrollen ausgewählt ist.",
     "Start: Sind alle deine Pflanzen archiviert, zeigt die Startseite nicht mehr den Einstieg für neue Konten, sondern deine Startseite mit der nächsten Pflanze als nächstem Schritt.",

@@ -39,11 +39,20 @@ const list = (
   hint,
 });
 
+const NONE_BOUGHT = {
+  bought: [],
+  hint: { text: "Noch kein Wunsch ist als gekauft vermerkt.", nextAction: "Tippe auf „Gekauft“." },
+};
+/** The history of bought wishes (US-WUN-03) is loaded with the list; this answers it for stubs that know one body. */
+const boughtOr = (url: unknown, body: unknown) =>
+  response(200, String(url).endsWith("/wishes/bought") ? NONE_BOUGHT : body);
+
 function fakeServer(initial: unknown, post?: () => Promise<Response>) {
   let current = initial;
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
     const path = new URL(String(url)).pathname;
     if (path === "/wishes/candidates") return response(200, current);
+    if (path === "/wishes/bought") return response(200, NONE_BOUGHT);
     if (path === "/wishes" && init?.method === "POST" && post) {
       const r = await post();
       if (r.ok) current = list([candidate({ id: "w2", name: "Neu", german: null, title: "Neu" })]);
@@ -158,10 +167,10 @@ describe("US-QS-07 · DS-09 wishlist on the data layer", () => {
     let attempt = 0;
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () =>
+      vi.fn(async (url: unknown) =>
         ++attempt === 1
           ? response(500, { error: { code: "server.error", text: "Der Server antwortet nicht." } })
-          : response(200, list([candidate()])),
+          : boughtOr(url, list([candidate()])),
       ),
     );
     render(<WishlistPage api="http://api" token={token} />);
@@ -174,9 +183,9 @@ describe("US-QS-07 · DS-09 wishlist on the data layer", () => {
     let offline = false;
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => {
+      vi.fn(async (url: unknown) => {
         if (offline) throw new TypeError("Failed to fetch");
-        return response(200, list([candidate()]));
+        return boughtOr(url, list([candidate()]));
       }),
     );
     function Toggle() {
@@ -447,6 +456,122 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
     expect(busy.disabled).toBe(true);
     release(new Response(JSON.stringify({ wish: { id: "w2" } }), { status: 201 }));
     await screen.findByText(/gespeichert/);
+    expect(fetchFn.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
+  });
+});
+
+describe("US-WUN-03 record a purchase on the page", () => {
+  const BOUGHT_HINT = {
+    text: "„Korbmarante (Calathea orbifolia)“ ist als gekauft vermerkt. Der Wunsch steht nicht mehr in der Wunschliste, sondern unter „Gekauft“.",
+    nextAction: "Lege die Pflanze jetzt als Exemplar in deiner Sammlung an.",
+  };
+  const historyOf = (titles: string[]) => ({
+    bought: titles.map((title, i) => ({ id: `b${i}`, name: title, title })),
+    hint: {
+      text: `${titles.length} Wünsche sind als gekauft vermerkt.`,
+      nextAction:
+        "Fehlt eine dieser Pflanzen noch in deiner Sammlung, lege sie dort als Exemplar an.",
+    },
+  });
+
+  /** A server that moves the wish from the list into the history on "buy", or refuses with `refusal`. */
+  function buyServer(refusal?: { status: number; code: string }) {
+    let bought = false;
+    const empty = list([], {
+      text: "Keine offenen Kandidaten in der Wunschliste.",
+      nextAction: "Erfasse einen Wunsch.",
+    });
+    const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
+      const path = new URL(String(url)).pathname;
+      if (path === "/wishes/candidates") return response(200, bought ? empty : list([candidate()]));
+      if (path === "/wishes/bought")
+        return response(
+          200,
+          bought ? historyOf(["Korbmarante (Calathea orbifolia)"]) : NONE_BOUGHT,
+        );
+      if (path === "/wishes/w1/buy" && init?.method === "POST") {
+        if (refusal)
+          return response(refusal.status, {
+            error: { code: refusal.code, text: "roh vom Server" },
+          });
+        bought = true;
+        return response(200, {
+          changed: true,
+          wish: { id: "w1", status: "bought" },
+          hint: BOUGHT_HINT,
+        });
+      }
+      return response(404, {});
+    });
+    vi.stubGlobal("fetch", fetchFn);
+    return fetchFn;
+  }
+
+  it("US-WUN-03 each open candidate offers 'Gekauft'", async () => {
+    buyServer();
+    render(<WishlistPage api="http://api" token={token} />);
+    const item = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
+    expect(
+      within(item).getByRole("button", { name: "Gekauft: Korbmarante (Calathea orbifolia)" }),
+    ).toBeTruthy();
+  });
+
+  it("US-WUN-03 'Gekauft' sends the purchase with a repeat-guard key, hides the candidate and keeps it under 'Gekauft'", async () => {
+    const fetchFn = buyServer();
+    render(<WishlistPage api="http://api" token={token} />);
+    await userEvent.click(await screen.findByRole("button", { name: /^Gekauft: / }));
+    const done = await screen.findByText(BOUGHT_HINT.text);
+    const status = done.closest('[role="status"]') as HTMLElement;
+    expect(status.textContent).toContain(BOUGHT_HINT.nextAction);
+    await vi.waitFor(() => expect(document.activeElement).toBe(status));
+    const posts = fetchFn.mock.calls.filter(([, init]) => init?.method === "POST");
+    expect(posts).toHaveLength(1);
+    expect(new Headers(posts[0]?.[1]?.headers).get("Idempotency-Key")).toBeTruthy();
+    expect(await screen.findByText("Keine offenen Kandidaten in der Wunschliste.")).toBeTruthy();
+    const history = screen.getByRole("list", { name: "Gekaufte Wünsche" });
+    expect(within(history).getByText("Korbmarante (Calathea orbifolia)")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Gekauft" })).toBeTruthy();
+    expect(screen.getByText(/lege sie dort als Exemplar an/)).toBeTruthy();
+  });
+
+  it("US-WUN-03 without bought wishes there is no 'Gekauft' section", async () => {
+    buyServer();
+    render(<WishlistPage api="http://api" token={token} />);
+    await screen.findAllByRole("listitem");
+    expect(screen.queryByRole("heading", { name: "Gekauft" })).toBeNull();
+  });
+
+  it("US-WUN-03 a refusal shows the German text of its code, never the raw server text (P-10)", async () => {
+    buyServer({ status: 409, code: "wish.not_open" });
+    render(<WishlistPage api="http://api" token={token} />);
+    await userEvent.click(await screen.findByRole("button", { name: /^Gekauft: / }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("nicht mehr offen");
+    expect(alert.textContent).not.toContain("roh vom Server");
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+  });
+
+  it("US-WUN-03 · DS-50 'Gekauft' is disabled while the write runs, so a double tap writes once", async () => {
+    let release: (r: Response) => void = () => {};
+    const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
+      const path = new URL(String(url)).pathname;
+      if (path === "/wishes/candidates") return response(200, list([candidate()]));
+      if (path === "/wishes/bought") return response(200, NONE_BOUGHT);
+      if (init?.method === "POST") return new Promise<Response>((resolve) => (release = resolve));
+      return response(404, {});
+    });
+    vi.stubGlobal("fetch", fetchFn);
+    render(<WishlistPage api="http://api" token={token} />);
+    const button = (await screen.findByRole("button", { name: /^Gekauft: / })) as HTMLButtonElement;
+    await userEvent.click(button);
+    await vi.waitFor(() => expect(button.disabled).toBe(true));
+    await userEvent.click(button);
+    release(
+      new Response(JSON.stringify({ changed: true, wish: { id: "w1" }, hint: BOUGHT_HINT }), {
+        status: 200,
+      }),
+    );
+    await screen.findByText(BOUGHT_HINT.text);
     expect(fetchFn.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
   });
 });

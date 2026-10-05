@@ -147,3 +147,31 @@ describe("US-WAC-01 last measurement per specimen (for the cards, US-BES-06)", (
     expect((await measurements.lastFor(ben, [specimenBen])).size).toBe(1);
   });
 });
+
+describe("US-WAC-02 quality of a measurement in the database", () => {
+  it("a measurement written without quality (imported legacy data) reads back as healthy", async () => {
+    const ex = await specimen(anna, "Altdaten");
+    await withAccount(pool, anna, (c) =>
+      c.query(
+        "insert into measurement (account_id, specimen_id, date, value) values ($1, $2, '2025-06-01', 8)",
+        [anna, ex],
+      ),
+    );
+    expect(await measurements.list(anna, ex)).toEqual([
+      expect.objectContaining({ date: "2025-06-01", value: 8, quality: "healthy" }),
+    ]);
+  });
+
+  it("an explicit empty quality is refused, so no measurement is left without one", async () => {
+    const ex = await specimen(anna, "Ohne Qualität");
+    await expect(
+      withAccount(pool, anna, (c) =>
+        c.query(
+          "insert into measurement (account_id, specimen_id, date, value, quality) values ($1, $2, '2025-06-01', 8, null)",
+          [anna, ex],
+        ),
+      ),
+    ).rejects.toThrow();
+    expect(await measurements.list(anna, ex)).toEqual([]);
+  });
+});

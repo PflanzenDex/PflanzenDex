@@ -105,6 +105,14 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Web:** tab "Bestand"; "Diese Art wählen" in the catalog opens the form for that species (the app wires `catalog` and `collection`, the modules do not know each other).
 - **Limits:** no editing of location, status or other fields and no deleting (renaming by marker: US-BES-03; archiving: US-BES-07); addition, zone override, provenance and sharing fields of DM-BES-02 are missing; no specimen hints yet (BES-08).
 
+## Correct the catch date of a specimen (US-BES-11)
+
+- **Data:** no migration; `caught_at` (`date`) is the only column that changes.
+- **Operation:** `specimen.correct_catch_date` (`core/src/collection/create.ts`, input `specimenId`, `timeZone`, `catchDate`) applies the rules of the creation (FR-BES-04): `calendarDateField` (a calendar date from 1900-01-01 on, else 400 `input.invalid` on `catchDate`) and "not after today in the keeper's time zone" (`specimen.caught_in_future` 400 on `catchDate`). Its own port `CatchDateStore.setCaughtAt` writes one statement; on an archived specimen a date after `archived_at` changes nothing (`specimen.caught_after_archived` 409), archiving date and reason stay. A foreign or unknown specimen is 404 `specimen.not_found` (P-04). The Pokédex catch date is derived from the stored value (US-POK-07), nothing else is written.
+- **API:** `POST /specimens/:id/catch-date` (`Idempotency-Key`; body `timeZone`, `catchDate`).
+- **Web:** the card has "Fangdatum"; the form shows the stored date ("Bisher: …" or "unbekannt"), is preset to it (today when unknown), limited to today, and after saving the message names the specimen and the new date (P-09); a refusal marks the field (P-10).
+- **Limits:** the archive section has no entry point yet; an archived specimen can be corrected through the API only.
+
 ## Tell several specimens of a species apart (US-BES-03)
 
 - **Data:** migration 0013 (`-- module: collection`): unique index `specimen_marker_per_species (account_id, species_id, lower(marker))` for rows with a marker; archived specimens count, their marker stays taken like their name (US-BES-07). The name was unique per account already, so no existing data can violate the index.
@@ -206,13 +214,14 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Details (US-POK-09):** each caught entry carries `speciesId` (the plain species represents the card, a cultivar only until a plain one appears) and `source` (the catalog's source field, `null` = unknown). A tap on a card (`PokedexCards`, name button stretched over the card) opens `SpeciesDetail`, which replaces the list (at most one open; "Schließen" or Escape closes it, focus returns to the card; `use-detail.ts`). It shows name, genus, family, status, specimen count, chips, catch date and the source (a link only for http(s) addresses). Image and short text are shown as unknown until the taxonomy build (US-POK-03); Missing cards and their actions (wishlist, friend) do not exist yet. "Zum Artprofil" calls `onOpenSpecies(speciesId)`; `App` wires it to the catalog: `SpeciesPage` takes `openId` and starts on that profile.
 - **Limits:** the catalog accepts only `Genus epithet 'Cultivar'`, so a chip comes from a cultivar today; `var.`, `subsp.` and `f.` belong to the specimen extra (DM-BES-02), which does not exist yet. There are no collector cards (number, photo) yet: they need the catalog tree (POK-01, POK-03).
 
-## Wishlist candidates (US-WUN-01)
+## Wishlist candidates and purchases (US-WUN-01, US-WUN-03)
 
 - **What:** `GET /wishes/candidates` returns the open plant wishes (`status = wishlist`) sorted ascending by the specimen count of their target zone 2 to 4, an unknown zone or a zone outside 2 to 4 last, plus the zones with their stock and a hint with the next action; derived live, nothing stored twice (P-01). `POST /wishes` records a wish through `wish.create` (name unique per account, case-insensitive; picture only with source and only an https address without credentials).
 - **Stock:** the port `ZoneStockSource` (`core/src/wishlist`) is answered in the app root (`api/src/zone-stock.ts`) from the light distribution of `collection`, so wishlist and distribution count the same way; the wishlist never imports `collection`.
 - **Data:** table `wish` (migration `0019_wishlist_wish.sql`), tenant-safe composite foreign key `(account_id, target_zone_id)` to `light_zone`; a zone a wish points to cannot be deleted (`light_zone.in_use`, `ZoneUsage` port).
 - **Web:** tab "Wunschliste" (`web/src/wishlist`). Pictures are **not loaded**: a keeper-typed address would make every viewer's browser contact a third-party host (P-05), so the card shows only a link "Bild ansehen (öffnet extern)" with the source until pictures are saved locally (US-WUN-04). Form errors are per field (`aria-invalid`, `aria-describedby`, focus on the first invalid field).
-- **Limits:** no actions bought/discarded (US-WUN-03, US-WUN-05), no species or specimen link, no hint list for wishes outside zones 2 to 4 yet.
+- **Purchase (US-WUN-03):** `POST /wishes/:id/buy` (with `Idempotency-Key`, no body) runs `wish.buy`: an open wish becomes `bought` in one statement and leaves the candidate list; nothing is deleted. The answer is `{ wish, changed, hint }` with what happened and what to do next. Buying a bought wish again answers 200 with `changed: false` and writes nothing (idempotent, also for two racing calls); a discarded wish is refused with 409 `wish.not_open`; an unknown wish or one of another account is 404 `wish.not_found`. `GET /wishes/bought` returns the history `{ bought, hint }` (bought plant wishes by name). No migration: the `status` column of `0019` already allows `bought`. The page loads candidates and history together; each card has "Gekauft", the confirmation takes the focus, and a section "Gekauft" lists the bought wishes.
+- **Limits:** no action "discarded" and no way back from "bought" (US-WUN-05, US-ENT-04), no purchase date and no species or specimen link (the guided path to the specimen is US-WUN-05; the next action names it in words only), no hint list for wishes outside zones 2 to 4 yet.
 
 ## End-to-end tests (QG-T3, QG-U1)
 
