@@ -1,5 +1,10 @@
-import { OPERATOR_COST_CENTS, type CostPerUser, type OperatorCostFigure } from "@pflanzendex/core";
-import { useState, type FormEvent } from "react";
+import type { CostPerUser, OperatorCostFigure } from "@pflanzendex/core";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
+import { TextField } from "./text-field";
+import { costSchema, parseAmount, type CostFields } from "./schemas";
 
 /** An amount in cents as money in German notation, e.g. `1.234,50 €`. */
 export const moneyText = (cents: number, currency: string): string =>
@@ -24,20 +29,6 @@ export function costPerUserText(c: CostPerUser): string {
     : "unbekannt: es gibt noch keine aktiven Nutzer";
 }
 
-/**
- * `12,50`, `1.234,5` or `1234.50` in cents; `null` if it is no amount with at most two decimals. A comma is the
- * decimal separator if present (dots are then thousands separators), otherwise a dot is.
- */
-export function parseAmount(text: string): number | null {
-  const t = text.trim().replace(/\s/g, "");
-  const plain = t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t;
-  const [whole = "", part = "", ...rest] = plain.split(".");
-  if (rest.length > 0 || !/^\d+$/.test(whole) || !/^\d{0,2}$/.test(part)) return null;
-  if (plain.endsWith(".")) return null;
-  const cents = Number(whole) * 100 + Number(part.padEnd(2, "0"));
-  return cents <= OPERATOR_COST_CENTS.max ? cents : null;
-}
-
 /** The current month as `YYYY-MM` (UTC, like the rule on the server). */
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
@@ -47,54 +38,37 @@ export function CostForm(props: {
   running: boolean;
   onSave: (figure: OperatorCostFigure) => void;
 }) {
-  const [amount, setAmount] = useState(
-    props.cost ? (props.cost.amountCents / 100).toFixed(2).replace(".", ",") : "",
+  const form = useForm<CostFields>({
+    resolver: zodResolver(costSchema),
+    defaultValues: {
+      amount: props.cost ? (props.cost.amountCents / 100).toFixed(2).replace(".", ",") : "",
+      currency: props.cost?.currency ?? "EUR",
+      month: props.cost?.month ?? thisMonth(),
+    },
+  });
+  const submit = form.handleSubmit((v) =>
+    props.onSave({
+      amountCents: parseAmount(v.amount) ?? 0,
+      currency: v.currency.trim().toUpperCase(),
+      month: v.month,
+    }),
   );
-  const [currency, setCurrency] = useState(props.cost?.currency ?? "EUR");
-  const [month, setMonth] = useState(props.cost?.month ?? thisMonth());
-  const [problem, setProblem] = useState<string | null>(null);
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    const amountCents = parseAmount(amount);
-    const code = currency.trim().toUpperCase();
-    if (amountCents === null)
-      return setProblem(
-        "Gib einen Betrag bis 1.000.000 mit höchstens zwei Nachkommastellen ein, zum Beispiel 12,50.",
-      );
-    if (!/^[A-Z]{3}$/.test(code))
-      return setProblem("Gib die Währung mit drei Buchstaben an, zum Beispiel EUR.");
-    if (!/^\d{4}-\d{2}$/.test(month))
-      return setProblem("Wähle den Monat, zu dem die Kosten gehören.");
-    setProblem(null);
-    props.onSave({ amountCents, currency: code, month });
-  };
   return (
-    <form onSubmit={submit} noValidate>
-      <label>
-        Betrag
-        <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
-      </label>
-      <label>
-        Währung
-        <input maxLength={3} value={currency} onChange={(e) => setCurrency(e.target.value)} />
-      </label>
-      <label>
-        Monat
-        <input
+    <Form {...form}>
+      <form noValidate onSubmit={(e) => void submit(e)} className="flex max-w-xl flex-col gap-4">
+        <TextField control={form.control} name="amount" label="Betrag" inputMode="decimal" />
+        <TextField control={form.control} name="currency" label="Währung" maxLength={3} />
+        <TextField
+          control={form.control}
+          name="month"
+          label="Monat"
           type="month"
-          value={month}
           max={thisMonth()}
-          onChange={(e) => setMonth(e.target.value)}
         />
-      </label>
-      {problem && (
-        <p role="alert" className="warning">
-          {problem}
-        </p>
-      )}
-      <button type="submit" className="primary" disabled={props.running}>
-        Kosten speichern
-      </button>
-    </form>
+        <Button type="submit" size="touch" disabled={props.running}>
+          Kosten speichern
+        </Button>
+      </form>
+    </Form>
   );
 }
