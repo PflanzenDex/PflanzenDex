@@ -16,12 +16,17 @@ export async function loadCards(
   return r.ok ? { ok: true, value: r.value.cards } : r;
 }
 
-/** How many active specimens the account has (for the start page); one cheap count on the server, nothing is stored. */
+/** How many active and archived specimens the account has (for the start page); one cheap count on the server. */
 export async function loadSpecimenCount(
   api: string,
   token: string,
   fetchFn: typeof fetch = fetch,
-): Promise<Response<number>> {
-  const r = await call<{ count: number }>(fetchFn, `${api}/specimens/count`, token);
-  return r.ok ? { ok: true, value: r.value.count } : r;
+): Promise<Response<{ active: number; archived: number }>> {
+  const r = await call<{ count: number; archived?: number }>(
+    fetchFn,
+    `${api}/specimens/count`,
+    token,
+  );
+  // An API from before #291 sends no `archived`: then the start page behaves as it did before (new account).
+  return r.ok ? { ok: true, value: { active: r.value.count, archived: r.value.archived ?? 0 } } : r;
 }

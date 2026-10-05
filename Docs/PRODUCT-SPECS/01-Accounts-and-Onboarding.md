@@ -37,6 +37,7 @@ Acceptance criteria:
 - The onboarding asks for: locations (where plants stand), light zones (take over the default four levels or adjust), first plant.
 - Every step can be skipped; the app is usable afterwards. Missing details are shown later as a hint, never as an error.
 - Without a plant the start page shows a clear next action instead of an empty page.
+- Given an account whose plants are all archived, when it opens the start page, then it is a returning keeper: it gets the normal start page with "next plant" as the next action, never the onboarding for a new account (owner decision 2026-10-04). The onboarding is only for an account without active and without archived plants.
 
 ### US-ACC-04 · Export data and delete account · ⬜ new
 

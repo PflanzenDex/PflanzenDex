@@ -250,4 +250,21 @@ describe("US-ACC-03 cheap specimen count for the start page", () => {
     expect(await count(subB)).toMatchObject({ status: 200, body: { count: before + 2 } });
     expect((await count(subA)).body["count"]).toBe((await cards(subA)).body["cards"].length);
   });
+
+  it("US-ACC-03 counts archived specimens apart, so an account with only archived plants is no new account (#291)", async () => {
+    const before = (await count(subB)).body as { count: number; archived: number };
+    const speciesId = await newSpecies(subB, `Archiva${run} vera`, `Archiv ${run}`);
+    const made = await create(subB, { speciesId, name: `Archiv eins ${run}` });
+    const id = made.body["id"] as string;
+    const archived = await call(subB, "POST", `/specimens/${id}/archive`, {
+      timeZone: "Europe/Berlin",
+      reason: "eingegangen",
+    });
+    expect(archived.status).toBe(200);
+    expect(await count(subB)).toMatchObject({
+      status: 200,
+      body: { count: before.count, archived: before.archived + 1 },
+    });
+    expect(typeof (await count(subA)).body["archived"]).toBe("number");
+  });
 });

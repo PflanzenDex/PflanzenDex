@@ -58,7 +58,7 @@ function fakeServer(accountStatus = 200) {
       const path = new URL(String(url)).pathname;
       if (path === "/account") return response(accountStatus, account);
       if (path === "/species") return response(200, { species: [] });
-      if (path === "/specimens/count") return response(200, { count: 0 });
+      if (path === "/specimens/count") return response(200, { count: 0, archived: 0 });
       if (path === "/specimens/cards") return response(200, { cards: [] });
       if (path === "/specimens/archived") return response(200, { archived: [] });
       if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
@@ -283,7 +283,7 @@ describe("US-ACC-01 App", () => {
         if (path === "/account") return response(200, account);
         if (path === "/locations") return response(200, { locations: [] });
         if (path === "/light-zones") return response(200, { zones: [] });
-        if (path === "/specimens/count") return response(200, { count: 0 });
+        if (path === "/specimens/count") return response(200, { count: 0, archived: 0 });
         if (path === "/specimens/cards") return response(200, { cards: [] });
         if (path === "/specimens/archived") return response(200, { archived: [] });
         if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
@@ -352,7 +352,7 @@ describe("US-ACC-01 App", () => {
           return response(200, { ownership: { caught: [caught], unidentified: [] } });
         if (path === "/locations") return response(200, { locations: [] });
         if (path === "/light-zones") return response(200, { zones: [] });
-        if (path === "/specimens/count") return response(200, { count: 0 });
+        if (path === "/specimens/count") return response(200, { count: 0, archived: 0 });
         if (path === "/specimens/cards") return response(200, { cards: [] });
         if (path === "/specimens/archived") return response(200, { archived: [] });
         if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
