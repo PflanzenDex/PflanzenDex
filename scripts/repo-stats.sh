@@ -60,7 +60,7 @@ tree_stats() {
 
 tracked_bytes() {
   git ls-files -s -- . ':!README.md' | awk '{print $2}' | git cat-file --batch-check='%(objectsize)' |
-    awk '{s += $1} END { v = s / 1048576; printf (v < 10 ? "%.2f" : v < 100 ? "%.1f" : "%.0f") " MiB\n", v }'
+    awk '{s += $1} END { v = s / 1048576; printf (v < 10 ? "%.1f" : "%.0f") " MiB\n", v }'
 }
 
 count_files() { git ls-files -- "$@" | wc -l | tr -d ' '; }
