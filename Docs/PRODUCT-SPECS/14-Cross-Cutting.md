@@ -59,6 +59,8 @@ Acceptance criteria:
 
 As a **plant keeper** I want to operate the app on the phone next to the plant.
 
+The look and the components that make this possible are governed by the design system (`DESIGN-SYSTEM.md`, enabler TE-17, gates QG-U4 to QG-U6).
+
 Acceptance criteria:
 
 - All everyday flows (measuring with photo, confirming watering/location, ticking off treatment, Today list) can be operated with one hand and without horizontal scrolling.
@@ -67,34 +69,34 @@ Acceptance criteria:
 
 ## Non-functional requirements
 
-| ID     | Requirement                                                                                                                                                                                                                                 | Status |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| NFR-01 | **Data format:** fields have fixed, validated types (number, date, enum). Free text carries only content, no logic.                                                                                                                         | ⬜     |
-| NFR-02 | **Input without editing files:** everything goes through forms, buttons or the keeper's AI client.                                                                                                                                          | ⬜     |
-| NFR-03 | **Single source:** species knowledge stands once in the catalog; specimens carry only deviations.                                                                                                                                           | ⬜     |
-| NFR-04 | **Live derivation:** ownership, distribution, phases, trends are computed from raw data; no second copy is maintained.                                                                                                                      | ⬜     |
-| NFR-05 | **No invented numbers** (P-08).                                                                                                                                                                                                             | ⬜     |
-| NFR-06 | **Nothing disappears silently** (P-10).                                                                                                                                                                                                     | ⬜     |
-| NFR-07 | **Instruction for action instead of data graveyard** (P-09).                                                                                                                                                                                | ⬜     |
-| NFR-08 | **Time zones:** all calendar dates are local dates of the user; phase calculation and reminders use the time zone of the user profile. No shift through UTC (solves B-01).                                                                  | 🟨     |
-| NFR-09 | **Tenant isolation:** test that user A can never query or change data of user B, without friendship and sharing (P-04).                                                                                                                     | ⬜     |
-| NFR-10 | **Security:** sign-in via an established service, not built ourselves (E-03). Sessions revocable. Input validated, file uploads checked for type and size.                                                                                  | ⬜     |
-| NFR-11 | **Privacy (GDPR):** legal bases and consents documented, hosting in the EU (assumption, E-01), data processors named, deletion concept, data export. Privacy policy and imprint before the first external user.                             | ⬜     |
-| NFR-12 | **Performance:** the start page "Today" and the collection view are usable for 100 specimens without noticeable waiting time (assumption, on a phone with an average network).                                                              | ⬜     |
-| NFR-13 | **Accessibility:** operation by keyboard, contrast, alternative texts for photos (species/specimen name). Status never only via color or emoji.                                                                                             | ⬜     |
-| NFR-14 | **Language:** UI initially German; display `DD.MM.YYYY`, storage ISO. Texts are exchangeable (later translation).                                                                                                                           | ⬜     |
-| NFR-15 | **Backups and restore:** regular backup of user data and photos, restore tested.                                                                                                                                                            | ⬜     |
-| NFR-16 | **Costs in view:** operating costs (hosting, storage, load from AI connections) are measured and shown per user, so that `13-Business-Case.md` is based on data.                                                                            | ⬜     |
-| NFR-17 | **External sources** (Wikipedia, Wikidata, GBIF, OpenTree) are queried throttled and cached; failure of a source blocks no user function.                                                                                                   | ⬜     |
-| NFR-18 | **Observability:** errors and failed jobs are visible (log, alarm to the operator), without logging user data in plain text.                                                                                                                | ⬜     |
+| ID     | Requirement                                                                                                                                                                                                     | Status |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| NFR-01 | **Data format:** fields have fixed, validated types (number, date, enum). Free text carries only content, no logic.                                                                                             | ⬜     |
+| NFR-02 | **Input without editing files:** everything goes through forms, buttons or the keeper's AI client.                                                                                                              | ⬜     |
+| NFR-03 | **Single source:** species knowledge stands once in the catalog; specimens carry only deviations.                                                                                                               | ⬜     |
+| NFR-04 | **Live derivation:** ownership, distribution, phases, trends are computed from raw data; no second copy is maintained.                                                                                          | ⬜     |
+| NFR-05 | **No invented numbers** (P-08).                                                                                                                                                                                 | ⬜     |
+| NFR-06 | **Nothing disappears silently** (P-10).                                                                                                                                                                         | ⬜     |
+| NFR-07 | **Instruction for action instead of data graveyard** (P-09).                                                                                                                                                    | ⬜     |
+| NFR-08 | **Time zones:** all calendar dates are local dates of the user; phase calculation and reminders use the time zone of the user profile. No shift through UTC (solves B-01).                                      | 🟨     |
+| NFR-09 | **Tenant isolation:** test that user A can never query or change data of user B, without friendship and sharing (P-04).                                                                                         | ⬜     |
+| NFR-10 | **Security:** sign-in via an established service, not built ourselves (E-03). Sessions revocable. Input validated, file uploads checked for type and size.                                                      | ⬜     |
+| NFR-11 | **Privacy (GDPR):** legal bases and consents documented, hosting in the EU (assumption, E-01), data processors named, deletion concept, data export. Privacy policy and imprint before the first external user. | ⬜     |
+| NFR-12 | **Performance:** the start page "Today" and the collection view are usable for 100 specimens without noticeable waiting time (assumption, on a phone with an average network).                                  | ⬜     |
+| NFR-13 | **Accessibility:** operation by keyboard, contrast, alternative texts for photos (species/specimen name). Status never only via color or emoji.                                                                 | ⬜     |
+| NFR-14 | **Language:** UI initially German; display `DD.MM.YYYY`, storage ISO. Texts are exchangeable (later translation).                                                                                               | ⬜     |
+| NFR-15 | **Backups and restore:** regular backup of user data and photos, restore tested.                                                                                                                                | ⬜     |
+| NFR-16 | **Costs in view:** operating costs (hosting, storage, load from AI connections) are measured and shown per user, so that `13-Business-Case.md` is based on data.                                                | ⬜     |
+| NFR-17 | **External sources** (Wikipedia, Wikidata, GBIF, OpenTree) are queried throttled and cached; failure of a source blocks no user function.                                                                       | ⬜     |
+| NFR-18 | **Observability:** errors and failed jobs are visible (log, alarm to the operator), without logging user data in plain text.                                                                                    | ⬜     |
 
 ## Principles check per epic
 
-| Question                          | Care (BES–BEH)   | Pokédex                       | Social                               | Reminders                     |
-| --------------------------------- | ---------------- | ----------------------------- | ------------------------------------ | ----------------------------- |
-| Trigger without remembering?      | Reminder (MON)   | Catch automatically from stock | Notification on need for action     | yes                           |
-| Fixed, validated format?          | yes              | yes                           | yes                                  | yes                           |
-| Check against deviation?          | ⚠️ in "Today"    | Catalog/enrichment gaps       | Sharing hints                        | Sensor "silent"               |
-| Idempotent?                       | yes              | yes                           | yes (swap states)                    | yes (once per occasion and day) |
-| Human delivers only human things? | yes              | yes                           | yes                                  | yes                           |
-| Says what to do?                  | yes              | "N more: …"                   | Requests with action                 | yes                           |
+| Question                          | Care (BES–BEH) | Pokédex                        | Social                          | Reminders                       |
+| --------------------------------- | -------------- | ------------------------------ | ------------------------------- | ------------------------------- |
+| Trigger without remembering?      | Reminder (MON) | Catch automatically from stock | Notification on need for action | yes                             |
+| Fixed, validated format?          | yes            | yes                            | yes                             | yes                             |
+| Check against deviation?          | ⚠️ in "Today"  | Catalog/enrichment gaps        | Sharing hints                   | Sensor "silent"                 |
+| Idempotent?                       | yes            | yes                            | yes (swap states)               | yes (once per occasion and day) |
+| Human delivers only human things? | yes            | yes                            | yes                             | yes                             |
+| Says what to do?                  | yes            | "N more: …"                    | Requests with action            | yes                             |
