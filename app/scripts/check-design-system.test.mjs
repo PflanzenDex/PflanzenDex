@@ -121,4 +121,109 @@ describe("design system gate (DESIGN-SYSTEM.md section 6)", () => {
     assert.match(problems[2], /DSB-2 DS-27 c.css/);
     assert.deepEqual(compare(counts, toEntries(counts)), []);
   });
+
+  const good = `import { cva } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+const v = cva("base", {
+  variants: { variant: { a: "x", b: "y" } },
+  defaultVariants: { variant: "a" },
+});
+export function C({ className, variant }: { className?: string; variant?: "a" | "b" }) {
+  return <i className={cn(v({ variant }), className)} />;
+}
+`;
+  const ui = (content, name = "c") => ({
+    "package.json": stack,
+    "src/lib/utils.ts": "",
+    [`src/components/ui/${name}.tsx`]: content,
+  });
+  const run = (files) => {
+    const locations = new Map();
+    const counts = scan(web(files), locations);
+    return { keys: [...counts.keys()].sort(), locations, counts };
+  };
+
+  it("QG-U4 · DS-34 passes a cva + cn component with defaultVariants", () => {
+    const { keys } = run(ui(good));
+    assert.deepEqual(keys, []);
+  });
+
+  it("QG-U4 · DS-34 fails a ternary in className and names the rule and the line", () => {
+    const src =
+      'export const C = ({ isOn }: { isOn: boolean }) => (\n  <i className={isOn ? "a" : "b"} />\n);\n';
+    const { keys, locations, counts } = run(ui(src));
+    assert.deepEqual(keys, ["DS-34|components/ui/c.tsx"]);
+    assert.deepEqual(locations.get("DS-34|components/ui/c.tsx"), [2]);
+    const [problem] = compare(counts, [], locations);
+    assert.match(problem, /DSB-1 DS-34 components\/ui\/c\.tsx.*line 2/);
+  });
+
+  it("QG-U4 · DS-34 fails && inside cn() in className, but allows it with cva", () => {
+    const bad =
+      'export const C = ({ on }: { on: boolean }) => (\n  <i className={cn("a",\n on && "b")} />\n);\n';
+    assert.deepEqual(run(ui(bad)).keys, ["DS-34|components/ui/c.tsx"]);
+    assert.deepEqual(
+      run(ui(`${good}const x = (on: boolean) => <i className={cn(on && "b")} />;\n`)).keys,
+      [],
+    );
+  });
+
+  it("QG-U4 · DS-34 ignores ?. and ?? and ternaries outside className", () => {
+    const src =
+      'export const C = (p: { a?: { b: string } }) => <i className={cn("a", p.a?.b ?? "c")} />;\nconst n = p ? 1 : 2;\n';
+    assert.deepEqual(run(ui(src)).keys, []);
+  });
+
+  it("QG-U4 · DS-34 fails variant/size props without cva", () => {
+    const src = 'type P = {\n  variant?: "a" | "b";\n};\nexport const C = (_: P) => <i />;\n';
+    const { keys, locations } = run(ui(src));
+    assert.deepEqual(keys, ["DS-34|components/ui/c.tsx"]);
+    assert.deepEqual(locations.get(keys[0]), [2]);
+  });
+
+  it("QG-U4 · DS-34 does not apply outside components/ui or to stories", () => {
+    const src = 'export const C = ({ o }: { o: boolean }) => <i className={o ? "a" : "b"} />;\n';
+    const files = {
+      ...ui("", "ok"),
+      "src/components/shared/s.tsx": src,
+      "src/components/ui/c.stories.tsx": src,
+    };
+    assert.deepEqual(run(files).keys, []);
+  });
+
+  it("QG-U4 · DS-31 fails template literals and concatenation in className under components/", () => {
+    const files = {
+      ...ui("", "ok"),
+      "src/components/ui/t.tsx":
+        "export const T = ({ a }: { a: string }) => <i className={`x ${a}`} />;\n",
+      "src/components/shared/c.tsx":
+        'export const C = ({ a }: { a: string }) => <i className={"x " + a} />;\n',
+      "src/components/shared/ok.tsx": 'export const O = () => <i className={cn("x")} />;\n',
+      "src/care/other.tsx":
+        "export const D = ({ a }: { a: string }) => <i className={`x ${a}`} />;\n",
+    };
+    assert.deepEqual(run(files).keys, [
+      "DS-31|components/shared/c.tsx",
+      "DS-31|components/ui/t.tsx",
+    ]);
+  });
+
+  it("QG-U4 · DS-35 fails a cva call without defaultVariants and names the line", () => {
+    const src =
+      'import { cva } from "class-variance-authority";\n\nconst v = cva("base", {\n  variants: { a: { b: "c" } },\n});\nexport const C = () => <i className={v()} />;\n';
+    const { keys, locations } = run(ui(src));
+    assert.deepEqual(keys, ["DS-35|components/ui/c.tsx"]);
+    assert.deepEqual(locations.get(keys[0]), [3]);
+  });
+
+  it("QG-U4 · DS-35 accepts cva with defaultVariants", () => {
+    assert.deepEqual(run(ui(good)).keys, []);
+  });
+
+  it("QG-U4 · DS-36 fails a ui component that accepts className but never calls cn()", () => {
+    const src =
+      "export const C = ({ className }: { className?: string }) => <i className={className} />;\n";
+    assert.deepEqual(run(ui(src)).keys, ["DS-36|components/ui/c.tsx"]);
+    assert.deepEqual(run(ui('export const C = () => <i className="x" />;\n')).keys, []);
+  });
 });

@@ -9,6 +9,7 @@ import {
   type FieldPath,
   type FieldValues,
 } from "react-hook-form";
+import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { Label } from "./label";
 
@@ -67,6 +68,17 @@ const FormItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEl
 );
 FormItem.displayName = "FormItem";
 
+/** Form label and message tone (US-QS-07, DS-34): the error state is a variant, not a ternary. */
+const formTone = cva("", {
+  variants: { invalid: { true: "text-destructive", false: "" } },
+  defaultVariants: { invalid: false },
+});
+
+const formMessageTone = cva("text-sm font-medium", {
+  variants: { invalid: { true: "text-destructive", false: "text-muted-foreground" } },
+  defaultVariants: { invalid: false },
+});
+
 const FormLabel = React.forwardRef<HTMLLabelElement, React.ComponentPropsWithoutRef<typeof Label>>(
   ({ className, ...props }, ref) => {
     const { controlId, error } = useFormField();
@@ -74,7 +86,7 @@ const FormLabel = React.forwardRef<HTMLLabelElement, React.ComponentPropsWithout
       <Label
         ref={ref}
         htmlFor={controlId}
-        className={cn(error && "text-destructive", className)}
+        className={cn(formTone({ invalid: Boolean(error) }), className)}
         {...props}
       />
     );
@@ -141,11 +153,7 @@ const FormMessage = React.forwardRef<HTMLParagraphElement, FormMessageProps>(
         ref={ref}
         id={id}
         role={message ? "alert" : undefined}
-        className={cn(
-          "text-sm font-medium",
-          message ? "text-destructive" : "text-muted-foreground",
-          className,
-        )}
+        className={cn(formMessageTone({ invalid: Boolean(message) }), className)}
         {...props}
       >
         {body}
