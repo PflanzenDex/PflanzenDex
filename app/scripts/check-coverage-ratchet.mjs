@@ -4,6 +4,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { MODULE_CONFIG } from "../modules.config.mjs";
+import { coverageByModule } from "./module-report.mjs";
 
 export const METRICS = ["lines", "branches", "functions", "statements"];
 export const RAISE_HINT_GAP = 2;
@@ -59,6 +61,16 @@ function main() {
     fs.readFileSync(path.join(root, "coverage-thresholds.json"), "utf8"),
   );
   const { failures, hints, notes } = compare(packages, loadMeasured(root, Object.keys(packages)));
+  const summaries = {};
+  for (const pkg of Object.keys(packages)) {
+    const file = path.join(root, "packages", pkg, "coverage", "coverage-summary.json");
+    if (fs.existsSync(file)) summaries[pkg] = JSON.parse(fs.readFileSync(file, "utf8"));
+  }
+  const perModule = coverageByModule(summaries, MODULE_CONFIG.MODULES);
+  if (perModule.length)
+    console.log(
+      `note: line coverage per module (report only): ${perModule.map((m) => `${m.name} ${m.lines}%`).join(", ")}`,
+    );
   for (const line of notes) console.log(`note: ${line}`);
   for (const line of hints) console.log(`hint: ${line}`);
   for (const line of failures) console.error(`FAIL: ${line}`);

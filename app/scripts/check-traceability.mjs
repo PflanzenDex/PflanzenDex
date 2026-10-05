@@ -4,6 +4,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { MODULE_CONFIG } from "../modules.config.mjs";
+import { storiesByModule } from "./module-report.mjs";
 
 const STORY = /^###\s+(US-([A-Z]+)-\d+)\s+·.*·\s*(⬜|🟨|✅)/u;
 const DEF = /^(?:#{2,4}\s+|\|\s*\*{0,2})((?:US|FR|DM)-[A-Z]+-\d+|E-\d+)\b/;
@@ -36,6 +38,10 @@ export function testedIds(testFiles) {
       ))
         ids.add(id[0]);
   return ids;
+}
+
+export function testedIdsByFile(testFiles) {
+  return Object.fromEntries(Object.entries(testFiles).map(([f, t]) => [f, testedIds({ [f]: t })]));
 }
 
 export function traceability(stories, tested) {
@@ -123,11 +129,17 @@ export function run(root) {
   const readme = specs[path.relative(root, path.join(specDir, "README.md"))] ?? "";
   const errors = [...trace.errors, ...checkCounters(readme, stories)];
   const refs = unresolvedRefs(specs);
-  return { stories, errors, hints: trace.hints, refs };
+  const byModule = storiesByModule(stories, testedIdsByFile(tests), MODULE_CONFIG.MODULES);
+  return { stories, errors, hints: [...trace.hints, ...byModule.hints], refs, byModule };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const { stories, errors, hints, refs } = run(fileURLToPath(new URL("../../", import.meta.url)));
+  const { stories, errors, hints, refs, byModule } = run(
+    fileURLToPath(new URL("../../", import.meta.url)),
+  );
+  console.log(
+    `check-traceability: stories per module (report only): ${byModule.counts.map(([m, n]) => `${m} ${n}`).join(", ")}`,
+  );
   hints.forEach((h) => console.log(`check-traceability: hint: ${h}`));
   if (refs.length)
     console.log(
