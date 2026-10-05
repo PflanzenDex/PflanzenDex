@@ -1,6 +1,7 @@
 import type { CaughtSpecies } from "@pflanzendex/core";
 import { useEffect, useRef } from "react";
-import { catchText, countText } from "./PokedexCards";
+import { Button } from "@/components/ui/button";
+import { Chips, catchText, countText } from "./PokedexCards";
 
 /** A source is a link only if it is a plain http(s) address; anything else is shown as text, never as a link. */
 function webAddress(source: string): URL | null {
@@ -18,7 +19,12 @@ function Source(props: { source: string | null }) {
   if (url === null) return <p>{`Quelle: ${props.source}`}</p>;
   return (
     <p>
-      <a href={url.href} target="_blank" rel="noopener noreferrer">
+      <a
+        href={url.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex min-h-[44px] items-center text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         {`Quelle öffnen (${url.hostname})`}
       </a>
     </p>
@@ -53,37 +59,34 @@ export function SpeciesDetail(props: {
     return () => document.removeEventListener("keydown", close);
   }, [onClose]);
   return (
-    <section className="detail" aria-label={`Details zu ${c.species}`}>
-      <div className="detail-image">Noch kein Bild vorhanden.</div>
-      <h2 ref={title} tabIndex={-1}>
+    <section
+      className="mb-6 grid max-w-2xl min-w-0 gap-2 break-words [&_p]:m-0"
+      aria-label={`Details zu ${c.species}`}
+    >
+      <div className="grid min-h-48 place-items-center rounded-xl border border-dashed border-border bg-card text-muted-foreground">
+        Noch kein Bild vorhanden.
+      </div>
+      <h2 ref={title} tabIndex={-1} className="m-0 text-xl font-semibold">
         {c.germanName ?? c.species}
       </h2>
-      {c.germanName !== null && <p className="species">{c.species}</p>}
+      {c.germanName !== null && <p className="font-semibold">{c.species}</p>}
       <p>Kurztext: unbekannt</p>
       <p>{`Gattung: ${c.genus}`}</p>
       <p>{`Familie: ${family(c)}`}</p>
-      <p className="detail-status">Status: gefangen</p>
+      <p>Status: gefangen</p>
       <p>{countText(c.specimenCount)}</p>
-      <p className="catch-date">{catchText(c.caughtDate)}</p>
-      {c.chips.length > 0 && (
-        <ul className="chips" aria-label="Zusätze">
-          {c.chips.map((chip) => (
-            <li key={chip} className="chip">
-              {chip}
-            </li>
-          ))}
-        </ul>
-      )}
+      <p className="text-sm">{catchText(c.caughtDate)}</p>
+      <Chips chips={c.chips} />
       <Source source={c.source} />
-      <div className="detail-actions">
+      <div className="flex flex-wrap gap-2">
         {onOpenSpecies && (
-          <button type="button" onClick={() => onOpenSpecies(c.speciesId)}>
+          <Button type="button" onClick={() => onOpenSpecies(c.speciesId)}>
             Zum Artprofil
-          </button>
+          </Button>
         )}
-        <button type="button" className="secondary" onClick={onClose}>
+        <Button type="button" variant="secondary" onClick={onClose}>
           Schließen
-        </button>
+        </Button>
       </div>
     </section>
   );
