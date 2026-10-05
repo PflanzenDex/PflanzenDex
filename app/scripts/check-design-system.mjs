@@ -102,11 +102,20 @@ function main() {
   const baselinePath = path.join(appRoot, "quality-ds-baseline.json");
   const counts = scan(path.join(appRoot, WEB));
   if (process.argv.includes("--write-baseline")) {
-    if (fs.existsSync(baselinePath)) {
+    try {
+      // "wx" fails when the file exists: no check-then-write race, and it never overwrites.
+      fs.writeFileSync(
+        baselinePath,
+        `${JSON.stringify({ entries: toEntries(counts) }, null, 2)}\n`,
+        {
+          flag: "wx",
+        },
+      );
+    } catch (error) {
+      if (error.code !== "EEXIST") throw error;
       console.error("quality-ds-baseline.json exists; it may only shrink, edit it by hand.");
       process.exit(1);
     }
-    fs.writeFileSync(baselinePath, `${JSON.stringify({ entries: toEntries(counts) }, null, 2)}\n`);
     console.log(`wrote ${baselinePath} (${counts.size} entries)`);
     return;
   }
