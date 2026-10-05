@@ -7,6 +7,7 @@ import {
   parseAllowlist,
   targetFindings,
 } from "./conformance-rules.mjs";
+import { storyUrl } from "./conformance-probes.mjs";
 
 const ctx = { story: "ui-button--sizes", scheme: "light" };
 
@@ -131,5 +132,13 @@ describe("QG-U5 · conformance run, overlays (DS-40)", () => {
       ]),
       [],
     );
+  });
+});
+
+describe("QG-U8 · conformance run, one axe run at a time (FR-QG-09)", () => {
+  it("QG-U8 · story URL switches off the addon-a11y auto run so only our axe run is active", () => {
+    const url = new URL(storyUrl("http://x", "ui-button--default", "dark"));
+    assert.equal(url.searchParams.get("id"), "ui-button--default");
+    assert.equal(url.searchParams.get("globals"), "colorScheme:dark;a11y.manual:!true");
   });
 });
