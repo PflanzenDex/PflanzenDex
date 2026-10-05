@@ -63,6 +63,19 @@ describe("QG-U6 · what counts as initial", () => {
     assert.deepEqual(files.sort(), ["index-A.js", "kernel-B.js", "preloaded-E.js", "schemas-D.js"]);
   });
 
+  test("QG-U6 · DS-08 tags and attributes are matched case-insensitively", () => {
+    const dist = fixtureDist(
+      { "index-A.js": "export const a = 1;", "k.js": "export const k = 1;" },
+      '<HEAD><SCRIPT TYPE="module" SRC="/assets/index-A.js"></SCRIPT><LINK REL="modulepreload" HREF="/assets/k.js"></HEAD>',
+    );
+    assert.deepEqual(
+      initialChunks(dist)
+        .map((f) => path.basename(f))
+        .sort(),
+      ["index-A.js", "k.js"],
+    );
+  });
+
   test("QG-U6 · DS-08 a cycle between chunks terminates and counts each chunk once", () => {
     const dist = fixtureDist(
       { "index-A.js": 'import"./b.js";', "b.js": 'import"./index-A.js";' },

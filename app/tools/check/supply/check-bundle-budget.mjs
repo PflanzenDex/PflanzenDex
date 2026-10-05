@@ -39,11 +39,11 @@ export function staticImports(source) {
 
 function htmlEntries(html) {
   const refs = [];
-  for (const tag of html.match(/<(?:script|link)\b[^>]*>/g) ?? []) {
-    const isEntry = /<script\b/.test(tag) && /\btype=["']module["']/.test(tag);
-    const isPreload = /<link\b/.test(tag) && /\brel=["']modulepreload["']/.test(tag);
+  for (const tag of html.match(/<(?:script|link)\b[^>]*>/gi) ?? []) {
+    const isEntry = /<script\b/i.test(tag) && /\btype=["']module["']/i.test(tag);
+    const isPreload = /<link\b/i.test(tag) && /\brel=["']modulepreload["']/i.test(tag);
     if (!isEntry && !isPreload) continue;
-    const ref = tag.match(/\b(?:src|href)=["']([^"']+)["']/)?.[1];
+    const ref = tag.match(/\b(?:src|href)=["']([^"']+)["']/i)?.[1];
     if (ref) refs.push({ ref, entry: isEntry });
   }
   return refs;
