@@ -25,7 +25,7 @@ function routes(w: World): Record<string, Handler> {
     "POST /locations": (body) => {
       if (body["name"] === "Doppelt")
         return response(409, {
-          error: { code: "location.name_taken", text: "Den Namen gibt es schon." },
+          error: { code: "location.name_taken", text: "raw server text" },
         });
       w.locations.push({
         id: "s1",
@@ -93,7 +93,9 @@ describe("US-ACC-03 onboarding steps: locations and light zones", () => {
     render(<LocationsStep api="http://api" token={token} onNext={onNext} />);
     await userEvent.type(await screen.findByLabelText("Name"), "Doppelt");
     await userEvent.click(screen.getByRole("button", { name: "Standort anlegen" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("Den Namen gibt es schon.");
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Einen Standort mit diesem Namen gibt es schon.");
+    expect(alert.textContent).not.toContain("raw server text");
     await userEvent.click(screen.getByRole("button", { name: "Überspringen" }));
     expect(onNext).toHaveBeenCalledTimes(1);
   });
