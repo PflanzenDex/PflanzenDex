@@ -259,10 +259,10 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
 });
 
 describe("US-ACC-02 settings page: errors", () => {
-  it("US-ACC-02 a load failure shows the text and 'Erneut laden'", async () => {
+  it("US-ACC-02 a load failure shows the text and 'Erneut versuchen'", async () => {
     fakeServer(500);
     show();
-    expect(await screen.findByRole("button", { name: "Erneut laden" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
     expect(screen.getByRole("alert")).toBeTruthy();
   });
 

@@ -79,7 +79,7 @@ describe("US-ACC-03 onboarding steps: locations and light zones", () => {
     render(<LocationsStep api="http://api" token={token} onNext={onNext} />);
     expect(await screen.findByRole("heading", { name: "Wo stehen deine Pflanzen?" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Überspringen" })).toBeTruthy();
-    await userEvent.type(screen.getByLabelText("Name"), "Fensterbank");
+    await userEvent.type(await screen.findByLabelText("Name"), "Fensterbank");
     await userEvent.click(screen.getByRole("button", { name: "Standort anlegen" }));
     expect(await screen.findByText("Fensterbank")).toBeTruthy();
     expect(world.locations).toHaveLength(1);
@@ -109,7 +109,9 @@ describe("US-ACC-03 onboarding steps: locations and light zones", () => {
     const onNext = vi.fn();
     render(<ZonesStep api="http://api" token={token} onNext={onNext} />);
     expect(await screen.findByRole("heading", { name: "Wie hell ist es?" })).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Standard-Lampen übernehmen" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Standard-Lampen übernehmen" }),
+    );
     expect(await screen.findByText(/Lampe 2/)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Lichtzone zuweisen" }));
     await userEvent.selectOptions(screen.getByLabelText("Lichtzone"), "z1");

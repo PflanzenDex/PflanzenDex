@@ -1,6 +1,6 @@
 import { useCallback, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { LoadFrame, SIGN_IN as KERNEL_SIGN_IN } from "../kernel";
+import { LoadFrame, SIGN_IN as KERNEL_SIGN_IN, useInvalidate, useRequest } from "../kernel";
 import { createWrite, loadLight, type ApiError, type LightData } from "./light-api";
 import { LocationCard, LocationForm, type LocationInput } from "./locations-view";
 import { ErrorMessage } from "./message";
@@ -19,26 +19,25 @@ interface StepProps {
   onNext: () => void;
 }
 
+const LIGHT_KEY = ["light", "data"] as const;
+/** A write changes everything the light module shows, so it reloads the whole branch. */
+const LIGHT_ALL = ["light"] as const;
+
 /** Loads the light data of the account and offers writes that reload it afterwards (never guess the new state). */
 function useSetup(api: string, token: Token, isDone: (d: LightData) => boolean) {
-  const [refresh, setRefresh] = useState(0);
-  const [done, setDone] = useState(false);
-  const load = useCallback(
-    async (t: string) => {
-      const r = await loadLight(api, t);
-      if (r.ok) setDone(isDone(r.value));
-      return r;
-    },
-    [api, isDone],
-  );
+  const invalidate = useInvalidate(LIGHT_ALL);
+  const load = useCallback((t: string) => loadLight(api, t), [api]);
+  // Same key as the frame below, so both share one request and one cached copy.
+  const { value } = useRequest({ queryKey: LIGHT_KEY, token, load });
+  const done = value !== undefined && isDone(value);
   const write = async (method: "POST" | "PUT" | "DELETE", path: string, body?: unknown) => {
     const t = await token();
     if (!t) return SIGN_IN;
     const r = await createWrite(api, t)(method, path, body);
-    if (r.ok) setRefresh((n) => n + 1);
+    if (r.ok) invalidate();
     return r.ok ? null : r.error;
   };
-  return { load, refresh, write, done };
+  return { load, write, done };
 }
 
 const LIST = "m-0 flex min-w-0 list-none flex-col gap-3 p-0";
@@ -69,18 +68,18 @@ function Leave(props: { done: boolean; onNext: () => void }) {
 
 /** Onboarding, step "locations": where the plants stand (US-ACC-03). The zone can follow in the next step. */
 export function LocationsStep(props: StepProps) {
-  const { load, refresh, write, done } = useSetup(props.api, props.token, HAS_LOCATIONS);
+  const { load, write, done } = useSetup(props.api, props.token, HAS_LOCATIONS);
   return (
     <Frame
       title="Wo stehen deine Pflanzen?"
       intro="Lege Standorte an, zum Beispiel Fensterbank oder Balkon. Du kannst das auch später tun."
     >
       <LoadFrame
+        queryKey={LIGHT_KEY}
         token={props.token}
         load={load}
         loadingText="Standorte werden geladen …"
         loadingFallback={<SetupStepSkeleton label="Standorte werden geladen …" />}
-        refresh={refresh}
       >
         {(data: LightData) => (
           <>
@@ -122,7 +121,7 @@ function DefaultsButton(props: { onTake: () => Promise<ApiError | null> }) {
 
 /** Onboarding, step "zones": take over the default levels or adjust them later; locations get their zone here. */
 export function ZonesStep(props: StepProps) {
-  const { load, refresh, write, done } = useSetup(props.api, props.token, HAS_ZONES);
+  const { load, write, done } = useSetup(props.api, props.token, HAS_ZONES);
   const fresh = useFresh();
   return (
     <Frame
@@ -130,11 +129,11 @@ export function ZonesStep(props: StepProps) {
       intro="Übernimm die vier Standard-Lampen oder passe sie an und lege eigene Zonen an. Ändern kannst du alles später unter „Standorte und Licht“."
     >
       <LoadFrame
+        queryKey={LIGHT_KEY}
         token={props.token}
         load={load}
         loadingText="Lichtzonen werden geladen …"
         loadingFallback={<SetupStepSkeleton label="Lichtzonen werden geladen …" />}
-        refresh={refresh}
       >
         {(data: LightData) => (
           <>

@@ -7,5 +7,5 @@ import { coverageFor } from "../../scripts/coverage-config.mjs";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
-  test: { coverage: coverageFor("web") },
+  test: { setupFiles: ["./src/test-setup.tsx"], coverage: coverageFor("web") },
 });

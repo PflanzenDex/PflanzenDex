@@ -94,6 +94,8 @@ export function SettingsPage(props: { api: string; token: Token }) {
     <div className="flex min-w-0 flex-col gap-4">
       <h1 className="text-2xl font-semibold">Einstellungen</h1>
       <LoadFrame
+        queryKey={["account", "profile"]}
+        fresh
         token={props.token}
         load={load}
         loadingText={loading}

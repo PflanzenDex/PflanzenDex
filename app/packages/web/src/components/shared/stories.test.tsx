@@ -6,6 +6,7 @@ import preview from "../../../.storybook/preview";
 import { setViewportWidth } from "@/lib/viewport-mock";
 import * as emptyState from "./empty-state.stories";
 import * as pageSkeleton from "./page-skeleton.stories";
+import * as requestState from "./request-state.stories";
 import * as responsiveModal from "./responsive-modal.stories";
 import * as responsiveTable from "./responsive-table.stories";
 
@@ -14,6 +15,7 @@ setProjectAnnotations([preview]);
 const catalog = {
   EmptyState: composeStories(emptyState),
   PageSkeleton: composeStories(pageSkeleton),
+  RequestState: composeStories(requestState),
   ResponsiveModal: composeStories(responsiveModal),
   ResponsiveTable: composeStories(responsiveTable),
 };

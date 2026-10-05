@@ -130,7 +130,12 @@ export function StartPage(props: {
   );
   return (
     <div className="light collection start-page">
-      <LoadFrame token={props.token} load={load} loadingText="Start wird geladen …">
+      <LoadFrame
+        queryKey={["start", "counts"]}
+        token={props.token}
+        load={load}
+        loadingText="Start wird geladen …"
+      >
         {(counts: OnboardingCounts) => <Content {...props} counts={counts} />}
       </LoadFrame>
     </div>
