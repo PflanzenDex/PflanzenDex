@@ -219,16 +219,6 @@
       "rule": "DS-48",
       "file": "pokedex/PokedexDetail.tsx",
       "count": 2
-    },
-    {
-      "rule": "DS-48",
-      "file": "wishlist/wish-fields.tsx",
-      "count": 7
-    },
-    {
-      "rule": "DS-48",
-      "file": "wishlist/wish-form.tsx",
-      "count": 1
     }
   ]
 }
