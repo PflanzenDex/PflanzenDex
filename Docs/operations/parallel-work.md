@@ -21,6 +21,8 @@ Before any write a preflight checks that `node_modules` exists and matches `pack
 
 **Project status after the claim:** `.github/workflows/project-status.yml` moves it on PR events (merged into `dev` → On dev, closed unmerged → Todo, release PR merged into `main` → Done; rules in `app/tools/workflow/project-status/project-status-lib.mjs`). Only `Closes #n` in the PR body links a PR to an issue. `make status-check` reports drift and missing priorities. The workflow needs a GitHub App (repository variable `PROJECT_APP_ID`, secret `PROJECT_APP_PRIVATE_KEY`, organization permission "Projects: read and write", installed on this repository); without it the job fails and the status stays as it is.
 
+**Priority:** `make claim` prints a warning when the claimed issue has no project priority, and `make board` flags such items `NO-PRIO` (both only warn). The rule is in `CLAUDE.md` ("Priority of tickets").
+
 **Branch naming rule:** `<type>/<epic>-<nn>-<slug>`, e.g. `feat/wac-01-messung`. The story ID is written without `US-`/`FR-`, the slug is up to four words of the issue title, lower case, at most 30 characters. Type: `fix` for label `bug`, `chore` for label `enabler`, otherwise `feat`. Issues without a story ID use `issue-<n>`, e.g. `chore/issue-243-claim-check`. Matching is by this key, so `feat/us-wac-01-x` and `feat/wac-01-y` count as the same story.
 
 Exceptions, all explicit:

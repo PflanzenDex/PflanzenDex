@@ -4,6 +4,8 @@
 // Usage: node board.mjs [milestone]   (default: the open milestone with the lowest number)
 import { fileURLToPath } from "node:url";
 import { fetchPrs, fetchWorkItems, openMilestone, realClient } from "./claim/lib/claim-client.mjs";
+import { PRIORITY_HINT } from "./project-status/project-status-lib.mjs";
+import { missingPriority } from "./project-status/project-status.mjs";
 import {
   ageHours,
   claimKey,
@@ -15,7 +17,7 @@ import {
 
 const latest = (dates) => dates.filter(Boolean).sort().at(-1) ?? null;
 
-export function buildRows({ items, prs, branchDates, now, staleHours }) {
+export function buildRows({ items, prs, branchDates, now, staleHours, noPriority = [] }) {
   return items.map((issue) => {
     const key = claimKey(issue);
     const related = prs.filter((p) => prReferences(p, issue));
@@ -34,6 +36,7 @@ export function buildRows({ items, prs, branchDates, now, staleHours }) {
     if (assignees.length && claimAge > staleHours) flags.push("STALE");
     if (assignees.length > 1 || branches.length > 1 || open.length > 1) flags.push("DOUBLE");
     if (!assignees.length && (branches.length || open.length)) flags.push("NO-CLAIM");
+    if (noPriority.includes(issue.number)) flags.push("NO-PRIO");
     return {
       number: issue.number,
       key,
@@ -47,7 +50,7 @@ export function buildRows({ items, prs, branchDates, now, staleHours }) {
   });
 }
 
-export function formatRows(rows, staleHours) {
+export function formatRows(rows, staleHours, noPriority = []) {
   const line = (r) =>
     [
       `#${r.number}`.padEnd(5),
@@ -64,6 +67,11 @@ export function formatRows(rows, staleHours) {
     head,
     ...claimed.map(line),
     `${free} further open items are free to claim (make claim ISSUE=<n>).`,
+    ...(noPriority.length
+      ? [
+          `${noPriority.length} open item(s) without a priority: ${PRIORITY_HINT}. #${noPriority.join(", #")}`,
+        ]
+      : []),
   ].join("\n");
 }
 
@@ -93,9 +101,15 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       branchDatesOf(client),
     ]);
     console.log(`Milestone: ${milestone}`);
-    console.log(
-      formatRows(buildRows({ items, prs, branchDates, now: Date.now(), staleHours }), staleHours),
-    );
+    const noPriority = await missingPriority(
+      client,
+      items.map((i) => i.number),
+    ).catch((e) => {
+      console.error(`Warning: could not check priorities: ${e.message}`);
+      return [];
+    });
+    const rows = buildRows({ items, prs, branchDates, now: Date.now(), staleHours, noPriority });
+    console.log(formatRows(rows, staleHours, noPriority));
   } catch (e) {
     console.error(`board failed: ${e.message}`);
     process.exit(1);

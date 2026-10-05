@@ -45,6 +45,19 @@ Start with `Docs/PRODUCT-SPECS/README.md` (index, conventions, replacement table
 - `make setup` activates the Git hooks in `.githooks/`: `commit-msg` (commitlint), `pre-commit` (Prettier and ESLint on staged files), `pre-push` (`make gates`). Never bypass them with `--no-verify`. CI repeats every check anyway.
 - The product epic MIG (import from the vault) was dropped; its IDs stay reserved.
 
+## Priority of tickets
+
+Every open story or enabler on the project board "PflanzenDex Roadmap" needs the field **Priority** (P0 critical, P1 high, P2 normal, P3 low). Set it when you create the ticket; `make claim` and `make board` warn (they never block) when it is missing, `make status-check` lists all gaps. Rule of thumb (starting values, the owner may overrule per ticket):
+
+| Priority | Which tickets                                                                      |
+| -------- | ---------------------------------------------------------------------------------- |
+| P0       | Release R0 with label `blocker` or `kritischer-pfad`; labels `security`, `nightly` |
+| P1       | Everything else in R0 and R1; bugs                                                 |
+| P2       | R2 and R3; tickets without a release (process, chores, epics)                      |
+| P3       | R4, R5, R6 and stage 2                                                             |
+
+The status needs no manual care: the workflow `project-status.yml` sets it from the PRs (`Closes #n` in the PR body is the link; merged into `dev` = On dev, released = Done).
+
 ## Principles that shape every requirement
 
 From `Docs/PRODUCT-SPECS/00-Product-Overview.md`:
