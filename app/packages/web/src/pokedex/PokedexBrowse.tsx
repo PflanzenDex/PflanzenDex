@@ -6,6 +6,8 @@ import {
   type PokedexSort,
 } from "@pflanzendex/core";
 import { useRef, useState } from "react";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Button } from "@/components/ui/button";
 import { CardList } from "./PokedexCards";
 import { SpeciesDetail } from "./PokedexDetail";
 import { useDetail } from "./use-detail";
@@ -36,8 +38,7 @@ export function Browse(props: {
         {...(onOpenSpecies ? { onOpenSpecies } : {})}
       />
     );
-  if (caught.length === 0)
-    return <p>Noch keine Art gefangen. Lege ein Exemplar mit bestimmter Art an, dann zählt es.</p>;
+  if (caught.length === 0) return <NothingCaught />;
   const result = browsePokedex(caught, { query, filter, sort });
   const shown =
     sort === "family" ? result.groups.reduce((n, g) => n + g.caught, 0) : result.flat.length;
@@ -48,7 +49,7 @@ export function Browse(props: {
   };
   return (
     <>
-      <p className="quiet">{`${plural(caught.length)} gefangen`}</p>
+      <p className="m-0 text-muted-foreground">{`${plural(caught.length)} gefangen`}</p>
       <Controls
         query={query}
         filter={filter}
@@ -60,21 +61,36 @@ export function Browse(props: {
         onSort={setSort}
       />
       {shown !== caught.length && (
-        <p className="quiet">{`${shown} von ${plural(caught.length)}`}</p>
+        <p className="m-0 text-muted-foreground">{`${shown} von ${plural(caught.length)}`}</p>
       )}
       {shown === 0 ? (
-        <div>
-          <p role="status">Keine Art gefunden.</p>
-          <button type="button" onClick={reset}>
-            Suche zurücksetzen
-          </button>
-        </div>
+        <NoHit onReset={reset} />
       ) : sort === "family" ? (
         <Groups groups={result.groups} state={groups} onOpen={open} />
       ) : (
         <CardList label="Gefangene Arten" species={result.flat} onOpen={open} />
       )}
     </>
+  );
+}
+
+function NothingCaught() {
+  return (
+    <EmptyState
+      title="Noch keine Art gefangen."
+      description="Lege ein Exemplar mit bestimmter Art an, dann zählt es."
+      action={{ label: "Exemplar anlegen", href: "/collection" }}
+    />
+  );
+}
+
+function NoHit(props: { onReset: () => void }) {
+  return (
+    <EmptyState
+      title="Keine Art gefunden."
+      description="Ändere die Suche oder den Filter."
+      action={{ label: "Suche zurücksetzen", onClick: props.onReset }}
+    />
   );
 }
 
@@ -109,17 +125,18 @@ function Groups(props: {
         const count =
           g.family === null ? plural(g.caught) : `${g.caught} / ${g.total ?? "unbekannt"}`;
         return (
-          <section key={keyOf(g)} className="family">
-            <h2>
-              <button
+          <section key={keyOf(g)}>
+            <h2 className="my-2 text-lg">
+              <Button
                 type="button"
-                className="family-toggle"
+                variant="outline"
+                className="h-auto justify-start whitespace-normal text-left font-semibold"
                 aria-expanded={open}
                 onClick={() => toggle(keyOf(g))}
               >
                 <span aria-hidden="true">{open ? "▾ " : "▸ "}</span>
                 {`${name}${german} · ${count}`}
-              </button>
+              </Button>
             </h2>
             {open && (
               <CardList

@@ -52,7 +52,7 @@ const open = async (list = caught) => {
 };
 const shown = () =>
   screen.queryAllByRole("listitem").flatMap((li) => {
-    const s = li.querySelector(".species");
+    const s = li.querySelector("[data-species]");
     return s ? [s.textContent] : [];
   });
 const search = (text: string) =>
@@ -99,12 +99,15 @@ describe("US-POK-08 filter", () => {
     await open();
     const all = screen.getByRole("button", { name: "Alle" });
     expect(all.getAttribute("aria-pressed")).toBe("true");
-    expect(all.classList.contains("selected")).toBe(true);
+    // The marker is a visible check mark, not only aria-pressed (US-POK-08, DS-19).
+    expect(all.textContent).toContain("✓");
     await userEvent.click(screen.getByRole("button", { name: "Gefangen" }));
-    expect(screen.getByRole("button", { name: "Gefangen" }).classList.contains("selected")).toBe(
-      true,
+    expect(screen.getByRole("button", { name: "Gefangen" }).getAttribute("aria-pressed")).toBe(
+      "true",
     );
-    expect(all.classList.contains("selected")).toBe(false);
+    expect(screen.getByRole("button", { name: "Gefangen" }).textContent).toContain("✓");
+    expect(all.getAttribute("aria-pressed")).toBe("false");
+    expect(all.textContent).not.toContain("✓");
     expect(shown()).toHaveLength(3);
   });
 

@@ -222,26 +222,6 @@
     },
     {
       "rule": "DS-48",
-      "file": "pokedex/PokedexBrowse.tsx",
-      "count": 2
-    },
-    {
-      "rule": "DS-48",
-      "file": "pokedex/PokedexCards.tsx",
-      "count": 1
-    },
-    {
-      "rule": "DS-48",
-      "file": "pokedex/PokedexControls.tsx",
-      "count": 3
-    },
-    {
-      "rule": "DS-48",
-      "file": "pokedex/PokedexDetail.tsx",
-      "count": 2
-    },
-    {
-      "rule": "DS-48",
       "file": "start-page.tsx",
       "count": 3
     }
