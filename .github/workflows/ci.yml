@@ -9,6 +9,7 @@ on:
     # `edited`: the squash turns the PR title into the commit message, so a changed title is checked again.
     types: [opened, synchronize, reopened, edited]
   # Push runs only on `main` (the release workflow needs them). The PR run already checked what a squash merges into `dev`.
+    # `ready_for_review`: a draft (e.g. from `make claim`, placeholder title) skips the metadata jobs; this run checks them.
   push:
     branches: [main]
   workflow_dispatch:
@@ -49,7 +50,8 @@ jobs:
 
   app:
     needs: changes
-    if: needs.changes.outputs.app == 'true'
+    # Editing a draft's title or body (Handoff updates) does not rerun the suite; `ready_for_review` runs everything.
+    if: needs.changes.outputs.app == 'true' && !(github.event.action == 'edited' && github.event.pull_request.draft)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     # Database tests (TE-02): real PostgreSQL as in production (E-01); same port as `make db-up`.
@@ -171,27 +173,11 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-  # QG-C1 for the PR title: the squash into `dev` and the merge into `main` use it as the commit message.
-  pr-title:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-      - run: make setup
-      # Pass the title only as an environment variable, never inline it in the command (script injection).
-      - env:
-          MSG: ${{ github.event.pull_request.title }}
-        run: make commitlint
-
-  # QG-U3: `feat:`/`fix:` PRs need a German entry in the user changelog or `[skip-changelog]`.
-  changelog:
-    if: github.event_name == 'pull_request'
+  # QG-C1 for the PR title (the squash into `dev` and the merge into `main` use it as the commit message)
+  # and QG-U3 (`feat:`/`fix:` PRs need a German entry in the user changelog or `[skip-changelog]`).
+  # Not for drafts: `make claim` opens them with a placeholder title; `ready_for_review` runs this job.
+  metadata:
+    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -202,7 +188,13 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
       # Title and body only as environment variables, never inline in the command (script injection).
+      - env:
+          MSG: ${{ github.event.pull_request.title }}
+        run: make commitlint
       - env:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
@@ -211,7 +203,7 @@ jobs:
         run: make changelog-check
 
   ci-status:
-    needs: [changes, app, pr-title, changelog, dependency-review, audit, lighthouse, e2e]
+    needs: [changes, app, metadata, dependency-review, audit, lighthouse, e2e]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 2
@@ -219,14 +211,13 @@ jobs:
       - env:
           CHANGES: ${{ needs.changes.result }}
           APP: ${{ needs.app.result }}
-          PR_TITLE: ${{ needs.pr-title.result }}
-          CHANGELOG: ${{ needs.changelog.result }}
+          METADATA: ${{ needs.metadata.result }}
           DEPENDENCY_REVIEW: ${{ needs.dependency-review.result }}
           AUDIT: ${{ needs.audit.result }}
           LIGHTHOUSE: ${{ needs.lighthouse.result }}
           E2E: ${{ needs.e2e.result }}
         run: |
-          for r in "$CHANGES" "$APP" "$PR_TITLE" "$CHANGELOG" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E"; do
+          for r in "$CHANGES" "$APP" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E"; do
             case "$r" in
               success | skipped) ;;
               *) echo "failed: $r"; exit 1 ;;
