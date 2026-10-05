@@ -1,0 +1,33 @@
+
+ RUN  v5.0.3 <worktree>/app/packages/web
+
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+ ❯ src/pokedex/PokedexDetail.test.tsx (13 tests | 1 failed) 788ms
+   ❯ US-POK-09 follow-ups of the detail view (issue 297) (4)
+     × US-POK-09 two rapid close triggers (double click, double Escape) take the history entry back only once 51ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pokedex/PokedexDetail.test.tsx > US-POK-09 follow-ups of the detail view (issue 297) > US-POK-09 two rapid close triggers (double click, double Escape) take the history entry back only once
+AssertionError: expected "back" to be called 1 times, but got 3 times
+ ❯ src/pokedex/PokedexDetail.test.tsx:201:18
+    199|     fireEvent.keyDown(document, { key: "Escape" });
+    200|     await waitFor(() => expect(screen.queryByRole("region", { name: /D…
+    201|     expect(back).toHaveBeenCalledTimes(1);
+       |                  ^
+    202|     back.mockRestore();
+    203|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  08:41:54
+   Duration  2.02s (tests 41%, environment 33%, transform 16%, import 9%)
+
+exit code: 1

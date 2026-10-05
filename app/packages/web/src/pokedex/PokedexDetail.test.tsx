@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PokedexPage } from "./PokedexPage";
@@ -187,5 +187,18 @@ describe("US-POK-09 follow-ups of the detail view (issue 297)", () => {
     const marker = card("Ficus lyrata").closest("li")?.querySelector(".card-chevron");
     expect(marker?.textContent).toBe("›");
     expect(marker?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("US-POK-09 two rapid close triggers (double click, double Escape) take the history entry back only once", async () => {
+    await open();
+    const back = vi.spyOn(window.history, "back");
+    await userEvent.click(card("Ficus lyrata"));
+    const close = screen.getByRole("button", { name: "Schließen" });
+    fireEvent.click(close);
+    fireEvent.click(close);
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("region", { name: /Details/ })).toBeNull());
+    expect(back).toHaveBeenCalledTimes(1);
+    back.mockRestore();
   });
 });

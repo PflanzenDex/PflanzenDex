@@ -11,19 +11,20 @@ Legend: ✅ as expected · ⚠️ works, but with a finding · ❌ error · ⏭�
 ## 0. Gates and tests
 
 - ✅ Red runs saved with exit code 1 before the implementation: `red-web-pokedex.txt` (5 failing), `red-web-app.txt` (1), `red-web-wishlist.txt` (1), `red-web-invalid.txt` (1), `red-web-start.txt` (12, partly collateral because the fake server no longer serves the card list), `red-core-ownership.txt` (1), `red-core-wishlist.txt` (1 failing test plus one test file that cannot import the missing `name-key` module), `red-core-merge.txt` (1), `red-db-wishlist.txt` (migration test and wishes test, run with the migration file moved away), `red-db-review.txt` (1), `red-db-specimens-count.txt` (1), `red-api-count.txt` (1).
-- ⚠️ Not run red: the test that replaced the vacuous API isolation test (it only strengthens an assertion and passed at once), the API test for names that differ in diacritics (core and database tests of the same behavior ran red).
-- ✅ `make ci` exit code 0 on the commit before the test log (output of the run is in the PR Handoff).
+- ⚠️ Not run red: the API test for names that differ in diacritics (core and database tests of the same behavior ran red).
+- ✅ `make ci` exit code 0 on the commit before the test log (the PR Handoff holds only the exit code and the head, not the output).
 - ⏭️ `make e2e` and Lighthouse were not run locally; CI covers them.
 
 ## 1. US-POK-08: collapsed groups and scroll position survive the detail view
 
 - ✅ Sorted by "Familie", the group "Cactaceae" was collapsed, the card "Monstera deliciosa" opened, then the browser Back button used: the group is still collapsed (`cactaceae-expanded-after-back: "false"`), the scroll position is the one from before opening (desktop 400 to 400, mobile 834 to 834). The same with the button "Schließen" (desktop 400 to 400, mobile 865 to 865).
 - ✅ The group of species without a known family reads "Ohne bekannte Familie · 1 Art" (`group-headers`, `03-pokedex-groups-*.png`); other groups keep "n / unbekannt" (the family total needs the taxonomy build, US-POK-03).
-- Automated: `PokedexBrowse.test.tsx` (group state, scroll, header), `ownership.test.ts` in core (deterministic cultivar card) and API (isolation with an own specimen of account B).
+- Automated: `PokedexBrowse.test.tsx` (group state, scroll, header), `ownership.test.ts` in core (deterministic cultivar card) and API: B holds a specimen row that references A's private species (written by SQL, the API refuses it) and sees it only as unidentified with no trace of A's species; shown red by switching off the visibility rule (`red-api-isolation.txt`, rule and row security switched off temporarily in the test database, then restored).
 
 ## 2. US-POK-09: Back closes the detail, tap marker, profile reset
 
 - ✅ Opening the detail pushes a history entry (`history-state-open: {"pokedexDetail":true}`); the browser Back button closes the detail and stays on the Pokédex page (URL unchanged, `detail-closed-after-back: true`). The "Schließen" button and Escape take the same entry back through `history.back()`.
+- ⚠️ Limits, not fixed: after Back, the browser's Forward button re-enters the history entry of the detail, but the detail view does not reopen (the page state is gone), so Forward appears to do nothing once; switching the tab while a detail is open leaves one stale entry behind (also for "Zum Artprofil"). A double click on "Schließen" or a double Escape takes the entry back only once (guard in `use-detail.ts`, `red-web-close-guard.txt`).
 - ⚠️ `history.length` grows by one per opening (`history-length-delta: 1`): the browser never shortens the list when going back, only the current position moves. Going back twice leaves the app's page, as before. When the detail is left through "Zum Artprofil", the pushed entry stays behind (Back then does nothing visible once); accepted, noted in the code comments.
 - ✅ Every card shows a chevron "›" (14 of 14 cards, visible, `aria-hidden`), plus a border on hover and focus (`03-pokedex-groups-*.png`, `04-pokedex-detail-*.png`). The hover state itself was not checked in the real browser (⏭️).
 - Automated: `PokedexDetail.test.tsx`; `App.test.tsx` covers the reset of the profile id (the way Pokédex, species profile, collection, "Zurück zur Art" ends on the catalog search).
@@ -33,7 +34,7 @@ Legend: ✅ as expected · ⚠️ works, but with a finding · ❌ error · ⏭�
 - ✅ After the wish "Café Test" was saved, "Cafe Test" is refused with the German text of `wish.name_taken` (`wish-name-error-text`), the name field is marked (`aria-invalid="true"`, red border plus inset ring, text under the field, `06-wish-name-taken-*.png`).
 - ✅ Typing one more character into the name field removes the mark and the text at once (`error-cleared-on-input: ["false", 0]`), the focus stays in the field (`focus-stays-on-name: "wish-name"`, `07-wish-error-cleared-*.png`). Automated: editing another field keeps the refusal of the name visible.
 - ✅ Database: migration `0020_wishlist_wish_name_key.sql` adds the nullable column `name_key` and the unique index `wish_name_key (account_id, name_key)`; the key is computed in core (`wishNameKey`: NFD, combining marks removed, lower case). Tested on a scratch database migrated to 0019, filled with colliding wishes ("Café", "Cafe" of one account), then migrated to 0020: the migration applies, nothing is deleted, the older wish gets the key, the newer colliding one keeps its name and gets no key (exempt, reported as a `WARNING` naming the wish ids), a second run applies nothing, the previous app version can still insert without a key. Names that differ only in "ß"/"ss" stay different on purpose.
-- ⚠️ Existing duplicates after folding are reported, not merged or renamed; an operator has to ask the owner. Not checked against real production data (⏭️).
+- ⚠️ Existing duplicates after folding are reported (WARNING in the migration output), not merged or renamed; they stay duplicates, exempt from the unique index (`name_key is null`), until repaired (query in the spec, 07-Wishlist.md); no hint or repair in the app yet. Not checked against real production data (⏭️).
 
 ## 4. US-ACC-02: marked field does not move the layout
 

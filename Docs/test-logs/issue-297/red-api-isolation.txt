@@ -1,0 +1,40 @@
+
+ RUN  v5.0.3 <worktree>/app/packages/api
+
+ ❯ src/pokedex/ownership.test.ts (12 tests | 1 failed) 857ms
+   ❯ US-POK-08 the data the page searches and groups by (2)
+     × US-POK-08 a specimen of B that references A's private species is unreadable for B: nothing of A's proposal leaks (P-04) 48ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pokedex/ownership.test.ts > US-POK-08 the data the page searches and groups by > US-POK-08 a specimen of B that references A's private species is unreadable for B: nothing of A's proposal leaks (P-04)
+AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+- [
+-   ObjectContaining {
+-     "latinName": null,
+-     "specimenName": "Fremd kfopbacaen",
+-   },
+- ]
++ []
+
+ ❯ src/pokedex/ownership.test.ts:264:46
+    262|     const b = await ownership(subB);
+    263|     expect(b.status).toBe(200);
+    264|     expect(b.body["ownership"].unidentified).toEqual([
+       |                                              ^
+    265|       expect.objectContaining({ specimenName: `Fremd ${run}`, latinNam…
+    266|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  08:41:40
+   Duration  1.57s (tests 59%, transform 30%, import 10%)
+
+exit code: 1

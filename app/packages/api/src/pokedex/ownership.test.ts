@@ -247,23 +247,34 @@ describe("US-POK-08 the data the page searches and groups by", () => {
     });
   });
 
-  it("US-POK-08 another account that owns a species of its own never sees the private family and German name of A's proposal (P-04)", async () => {
-    const mine = await newSpecies(subB, `Ficus${run} lyrata`, { germanName: "Eigene Feige" });
-    await specimen(subB, `Feige B ${run}`, mine);
-    const b = await ownership(subB);
-    const card = (b.body["ownership"].caught as Record<string, unknown>[]).find(
-      (c) => c["species"] === `Ficus${run} lyrata`,
-    );
-    expect(card).toMatchObject({
-      speciesId: mine,
-      germanName: "Eigene Feige",
-      familyLatin: null,
-      familyGerman: null,
+  it("US-POK-08 a specimen of B that references A's private species is unreadable for B: nothing of A's proposal leaks (P-04)", async () => {
+    const secret = await newSpecies(subA, `Secretia${run} privata`, {
+      germanName: `Geheimpflanze ${run}`,
+      familyLatin: `Secretaceae${run}`,
+      familyGerman: `Geheimgewächse ${run}`,
     });
+    // The API refuses this, so the row is written straight into the table: the visibility rule must hold on its own.
+    await pool.query(
+      `insert into specimen (account_id, species_id, name, status)
+       select id, $2, $3, 'plant' from account where subject = $1`,
+      [subB, secret, `Fremd ${run}`],
+    );
+    const b = await ownership(subB);
+    expect(b.status).toBe(200);
+    expect(b.body["ownership"].unidentified).toEqual([
+      expect.objectContaining({ specimenName: `Fremd ${run}`, latinName: null }),
+    ]);
     const text = JSON.stringify(b.body);
-    expect(text).not.toContain("Moraceae");
-    expect(text).not.toContain("Geigenfeige");
-    expect(text).not.toContain("Maulbeergewächse");
+    for (const foreign of [
+      secret,
+      `Secretia${run}`,
+      `Geheimpflanze ${run}`,
+      `Secretaceae${run}`,
+      `Geheimgewächse ${run}`,
+    ])
+      expect(text).not.toContain(foreign);
+    expect(caught(b)).not.toContain(`Secretia${run} privata`);
+    expect(JSON.stringify((await ownership(subA)).body)).not.toContain(`Fremd ${run}`);
   });
 });
 

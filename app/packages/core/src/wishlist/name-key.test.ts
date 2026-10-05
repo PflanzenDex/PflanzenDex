@@ -9,6 +9,7 @@ describe("US-WUN-01 the key that makes wish names unique (FR-WUN-06)", () => {
     ["Cafe\u0301", "cafe"],
     ["Müller-Dornröschen", "muller-dornroschen"],
     ["Žižkov", "zizkov"],
+    ["  Aloe   vera\t ", "aloe vera"],
   ])("US-WUN-01 folds %s to %s", (name, key) => {
     expect(wishNameKey(name)).toBe(key);
   });

@@ -42,6 +42,7 @@ beforeAll(async () => {
   await insert(anna, "Café", "2026-01-01T10:00:00Z");
   await insert(anna, "Cafe", "2026-01-02T10:00:00Z"); // collides only after folding
   await insert(anna, "Aloe vera", "2026-01-03T10:00:00Z");
+  await insert(anna, "Aloe  vera", "2026-01-03T11:00:00Z"); // double blank: collides only after folding
   await insert(ben, "Cafe", "2026-01-04T10:00:00Z");
 });
 afterAll(async () => {
@@ -65,6 +66,7 @@ describe("US-WUN-01 migration 0020 backfills the name key", () => {
       { name: "Café", key: "cafe" },
       { name: "Cafe", key: null },
       { name: "Aloe vera", key: "aloe vera" },
+      { name: "Aloe  vera", key: null },
     ]);
     expect(await names(ben)).toEqual([{ name: "Cafe", key: "cafe" }]);
   });

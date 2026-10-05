@@ -10,8 +10,8 @@ alter table wish add column name_key text;
 -- The owner must see the rows to fill the column: the row rules are forced for the owner too (as in 0012).
 alter table wish no force row level security;
 
--- Same steps as `wishNameKey`: decompose (NFD), drop combining marks U+0300..U+036F, lower case.
-update wish set name_key = lower(regexp_replace(normalize(name, NFD), '[̀-ͯ]', '', 'g'));
+-- Same steps as `wishNameKey`: decompose (NFD), drop combining marks U+0300..U+036F, lower case, collapse white space, trim.
+update wish set name_key = btrim(regexp_replace(lower(regexp_replace(normalize(name, NFD), '[\u0300-\u036f]', '', 'g')), '\s+', ' ', 'g'));
 
 -- Wishes that only now collide with an older wish of the same account: nothing is deleted or renamed (P-10). The newer
 -- ones keep their name and get no key, so they are exempt from the new rule; each one is reported here, so the operator

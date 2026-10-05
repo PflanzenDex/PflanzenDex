@@ -113,7 +113,7 @@ describe("US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06)", () => {
 
   it("US-WUN-01 a duplicate that differs only in diacritics or Unicode composition is refused (FR-WUN-06)", async () => {
     await create(input({ name: "Café Pflanze" }));
-    for (const name of ["Cafe Pflanze", "CAFÉ PFLANZE", "Cafe\u0301 Pflanze"]) {
+    for (const name of ["Cafe  Pflanze", "Cafe Pflanze", "CAFÉ PFLANZE", "Cafe\u0301 Pflanze"]) {
       const r = await create(input({ name }));
       expect(errorOf(r)?.code).toBe("wish.name_taken");
     }

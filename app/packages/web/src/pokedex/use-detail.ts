@@ -15,20 +15,29 @@ export function useDetail(caught: readonly CaughtSpecies[]) {
   const [selected, setSelected] = useState<string | null>(null);
   const opener = useRef<string | null>(null);
   const scrollY = useRef(0);
+  // Set when a close went into the history; a second trigger before popstate must not pop again.
+  const closing = useRef(false);
   const open = useCallback((c: CaughtSpecies) => {
     opener.current = c.species;
     scrollY.current = window.scrollY;
+    closing.current = false;
     window.history.pushState(DETAIL_STATE, "");
     setSelected(c.species);
   }, []);
   // Closing goes through the history; the popstate listener below then closes the view (one path for Back and buttons).
   const close = useCallback(() => {
-    if (isDetailEntry()) window.history.back();
-    else setSelected(null);
+    if (closing.current) return;
+    if (isDetailEntry()) {
+      closing.current = true;
+      window.history.back();
+    } else setSelected(null);
   }, []);
   useEffect(() => {
     if (selected === null) return;
-    const onPop = () => setSelected(null);
+    const onPop = () => {
+      closing.current = false;
+      setSelected(null);
+    };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, [selected]);
