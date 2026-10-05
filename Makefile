@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse e2e crap duplicates
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse e2e crap duplicates storybook build-storybook
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -82,6 +82,12 @@ spec-check: ## Spec consistency and story-to-test traceability (QG-T4)
 
 skills-check: ## Check agent skills in .agents/skills (trigger, paths, check command, links; US-DEV-04)
 	cd $(APP) && npm run skills
+
+storybook: ## Component catalog (Storybook) on http://localhost:6006, light/dark toolbar, 360 px viewport (TE-18)
+	cd $(APP) && npm run storybook
+
+build-storybook: ## Build the component catalog to app/packages/web/node_modules/.cache/storybook (TE-18)
+	cd $(APP) && npm run build-storybook
 
 lighthouse: ## Lighthouse CI on the built web app, mobile, report only (QG-U1); report in app/packages/web/.lighthouseci
 	cd $(APP) && npm run build -w @pflanzendex/web
