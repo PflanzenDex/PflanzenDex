@@ -1,4 +1,5 @@
 import type { AccessCounts, AccessStore } from "./access";
+import type { OperatorCostFigure } from "./operator-cost";
 import {
   defaultNotifications,
   type AccountProfile,
@@ -54,6 +55,8 @@ export class InMemoryAccess implements AccessStore {
   overviewReads = 0;
   accounts = 0;
   active = 0;
+  cost: OperatorCostFigure | null = null;
+  readonly costSetBy: string[] = [];
 
   constructor(private readonly roleOf: Record<string, readonly Role[]>) {}
 
@@ -93,6 +96,15 @@ export class InMemoryAccess implements AccessStore {
         status: i.redeemed ? "redeemed" : "open",
       })),
     };
+  }
+
+  async operatorCost(): Promise<OperatorCostFigure | null> {
+    return this.cost;
+  }
+
+  async setOperatorCost(userId: string, figure: OperatorCostFigure): Promise<void> {
+    this.costSetBy.push(userId);
+    this.cost = figure;
   }
 
   async register(subject: string, code: string): Promise<"registered" | "existing" | "invalid"> {

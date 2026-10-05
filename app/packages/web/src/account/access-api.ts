@@ -1,4 +1,4 @@
-import type { CreatedInvitation, OperatorOverview } from "@pflanzendex/core";
+import type { CreatedInvitation, OperatorCostFigure, OperatorOverview } from "@pflanzendex/core";
 import { call, createWrite, currentTimeZone, type Response } from "../kernel";
 
 type FetchFn = typeof fetch;
@@ -22,6 +22,17 @@ export async function setRegistrationMode(
     invitationOnly,
   });
   return r.ok ? { ok: true, value: r.value as { invitationOnly: boolean } } : r;
+}
+
+/** The real hosting cost of one month (US-ACC-05, NFR-16); replaces the figure entered before. */
+export async function setOperatorCost(
+  api: string,
+  token: string,
+  figure: OperatorCostFigure,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<OperatorCostFigure>> {
+  const r = await createWrite(api, token, fetchFn)("PUT", "/operator/cost", figure);
+  return r.ok ? { ok: true, value: r.value as OperatorCostFigure } : r;
 }
 
 /** The answer carries the code exactly once. */

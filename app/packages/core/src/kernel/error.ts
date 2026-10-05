@@ -59,6 +59,8 @@ export const ERROR_TEXTS = {
     "Diese Lichtzone wird noch genutzt und kann nicht gelöscht werden. Ordne die genannten Einträge zuerst einer anderen Zone zu.",
   "light_zone.not_empty":
     "Du hast schon Lichtzonen. Die Voreinstellung ist nur für ein Konto ohne Zonen.",
+  "operator_cost.month_in_future":
+    "Dieser Monat liegt in der Zukunft. Trage die Kosten eines Monats ein, der schon begonnen hat.",
 } as const;
 
 export type ErrorCode = keyof typeof ERROR_TEXTS;

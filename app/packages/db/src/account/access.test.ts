@@ -326,6 +326,84 @@ describe("US-ACC-05 · operator overview: counts, no content", () => {
   });
 });
 
+describe("US-ACC-05 · monthly operating cost (database enforced)", () => {
+  const clear = () =>
+    pool.query("update operator_cost set amount_cents = null, currency = null, month = null");
+  const thisMonth = () => new Date().toISOString().slice(0, 7);
+
+  it("US-ACC-05 without a figure the operator reads null; a figure is stored and replaced", async () => {
+    await clear();
+    expect(await store.operatorCost(operator)).toBeNull();
+    await store.setOperatorCost(operator, { amountCents: 4999, currency: "EUR", month: "2026-09" });
+    expect(await store.operatorCost(operator)).toEqual({
+      amountCents: 4999,
+      currency: "EUR",
+      month: "2026-09",
+    });
+    await store.setOperatorCost(operator, {
+      amountCents: 100,
+      currency: "CHF",
+      month: thisMonth(),
+    });
+    expect(await store.operatorCost(operator)).toEqual({
+      amountCents: 100,
+      currency: "CHF",
+      month: thisMonth(),
+    });
+    expect((await pool.query("select count(*)::int as n from operator_cost")).rows[0].n).toBe(1);
+  });
+
+  it.each([["keeper"], ["reviewer"]])(
+    "US-ACC-05 a %s can neither read nor enter the figure; nothing changes",
+    async (who) => {
+      const id = who === "keeper" ? keeper : reviewer;
+      await store.setOperatorCost(operator, {
+        amountCents: 777,
+        currency: "EUR",
+        month: "2026-08",
+      });
+      await expect(store.operatorCost(id)).rejects.toThrow(/Only the operator/);
+      await expect(
+        store.setOperatorCost(id, { amountCents: 1, currency: "EUR", month: "2026-08" }),
+      ).rejects.toThrow(/Only the operator/);
+      expect((await store.operatorCost(operator))?.amountCents).toBe(777);
+    },
+  );
+
+  it("US-ACC-05 the database refuses a future month, a bad currency and an amount out of range", async () => {
+    const next = new Date();
+    next.setUTCDate(1);
+    next.setUTCMonth(next.getUTCMonth() + 1);
+    const month = next.toISOString().slice(0, 7);
+    await expect(
+      store.setOperatorCost(operator, { amountCents: 1, currency: "EUR", month }),
+    ).rejects.toThrow(/future/);
+    await expect(
+      store.setOperatorCost(operator, { amountCents: 1, currency: "eur", month: "2026-01" }),
+    ).rejects.toThrow(/operator_cost_currency_check/);
+    await expect(
+      store.setOperatorCost(operator, {
+        amountCents: 100_000_001,
+        currency: "EUR",
+        month: "2026-01",
+      }),
+    ).rejects.toThrow(/operator_cost_amount_cents_check/);
+  });
+
+  it("US-ACC-05 the application role has no right on the table; row security is on without a policy", async () => {
+    await expect(
+      withAccount(pool, operator, (c) => c.query("select * from operator_cost")),
+    ).rejects.toThrow(/permission denied/);
+    const r = await pool.query<{ rls: boolean; rules: number }>(
+      `select c.relrowsecurity as rls,
+              (select count(*)::int from pg_policy p where p.polrelid = c.oid) as rules
+         from pg_class c where c.relname = 'operator_cost'`,
+    );
+    expect(r.rows).toEqual([{ rls: true, rules: 0 }]);
+    await clear();
+  });
+});
+
 describe("US-ACC-05 · schema rules", () => {
   it("US-ACC-05 the new tables break no tenant or module rule", async () => {
     expect(await findSchemaViolations(pool)).toEqual([]);

@@ -1,7 +1,8 @@
-import type { CreatedInvitation, OperatorOverview } from "@pflanzendex/core";
+import type { CreatedInvitation, OperatorCostFigure, OperatorOverview } from "@pflanzendex/core";
 import { useCallback, useRef, useState } from "react";
 import { LoadFrame, SIGN_IN, type ApiError, type Response } from "../kernel";
-import { createInvitation, loadOverview, setRegistrationMode } from "./access-api";
+import { createInvitation, loadOverview, setOperatorCost, setRegistrationMode } from "./access-api";
+import { CostForm, costPerUserText, moneyText, monthText } from "./operator-cost";
 import { InvitationForm, InvitationList, ModeSection, NewCode } from "./operator-parts";
 import "./operator.css";
 
@@ -43,6 +44,11 @@ function useOperatorActions(api: string, token: Token) {
             ? "Registrierung: ab jetzt nur mit Einladungscode."
             : "Registrierung: ab jetzt offen für alle.",
       ),
+    setCost: (figure: OperatorCostFigure) =>
+      run(
+        (t) => setOperatorCost(api, t, figure),
+        () => "Monatliche Kosten gespeichert.",
+      ),
     create: (days: number) =>
       run(
         (t) => createInvitation(api, t, days),
@@ -63,12 +69,14 @@ function Numbers(props: { overview: OperatorOverview }) {
         <dd>{o.accounts}</dd>
         <dt>{`Aktive Nutzer (letzte ${o.activeWindowDays} Tage)`}</dt>
         <dd>{o.activeAccounts}</dd>
-        <dt>Kosten pro Nutzer</dt>
+        <dt>Monatliche Kosten</dt>
         <dd>
-          {o.costPerUser === null
-            ? "unbekannt (die Kostenmessung gibt es noch nicht)"
-            : o.costPerUser}
+          {o.cost
+            ? `${moneyText(o.cost.amountCents, o.cost.currency)} (${monthText(o.cost.month)})`
+            : "nicht eingetragen"}
         </dd>
+        <dt>Kosten pro Nutzer</dt>
+        <dd>{costPerUserText(o.costPerUser)}</dd>
       </dl>
       <p className="quiet">Du siehst nur Zahlen, nie Inhalte einzelner Konten.</p>
     </section>
@@ -102,6 +110,18 @@ export function OperatorPage(props: { api: string; token: Token }) {
         {(overview: OperatorOverview) => (
           <>
             <Numbers overview={overview} />
+            <section aria-labelledby="cost-title">
+              <h2 id="cost-title">Monatliche Kosten</h2>
+              <p className="quiet">
+                Trage die echten Hosting-Kosten eines Monats ein. Die Kosten pro Nutzer sind dieser
+                Betrag geteilt durch die aktiven Nutzer.
+              </p>
+              <CostForm
+                cost={overview.cost}
+                running={actions.running}
+                onSave={(f) => void actions.setCost(f)}
+              />
+            </section>
             <ModeSection
               invitationOnly={overview.invitationOnly}
               running={actions.running}

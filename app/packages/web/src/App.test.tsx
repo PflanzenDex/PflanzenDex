@@ -164,7 +164,8 @@ describe("US-ACC-01 App", () => {
             accounts: 3,
             activeAccounts: 2,
             activeWindowDays: 30,
-            costPerUser: null,
+            cost: null,
+            costPerUser: { known: false, reason: "no_figure" },
             invitationOnly: false,
             invitations: [],
           });

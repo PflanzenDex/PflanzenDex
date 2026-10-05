@@ -38,4 +38,6 @@ export { invitationCreate } from "./invitation";
 export type { CreatedInvitation, InvitationDependencies } from "./invitation";
 export { registrationSetMode, registerWithInvitation } from "./registration";
 export { ACTIVE_WINDOW_DAYS, operatorOverview } from "./operator-overview";
+export { costPerUser, OPERATOR_COST_CENTS, operatorCostSet } from "./operator-cost";
+export type { CostPerUser, OperatorCostFigure } from "./operator-cost";
 export type { OperatorOverview } from "./operator-overview";

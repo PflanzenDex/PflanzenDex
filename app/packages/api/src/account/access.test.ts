@@ -54,9 +54,13 @@ const newCode = async (days?: number) => {
   return r.body["code"] as string;
 };
 
+const clearCost = () =>
+  pool.query("update operator_cost set amount_cents = null, currency = null, month = null");
+
 beforeAll(async () => {
   pool = openPool();
   await migrate(pool);
+  await clearCost();
   open = createApp({ reviewer: verifier, pool });
   closed = createApp({ reviewer: verifier, pool, invitationOnly: true });
   for (const sub of [subOperator, subKeeper, subReviewer]) await call(open, sub, "GET", "/account");
@@ -70,6 +74,7 @@ beforeAll(async () => {
     );
 });
 afterAll(async () => {
+  await clearCost();
   await pool.query(
     "delete from invitation where created_by in (select id from account where subject = any($1))",
     [[subOperator]],
@@ -257,10 +262,11 @@ describe("US-ACC-05 · the operator area (role checked in the operation and in t
     expect([r.status, r.body["error"].code]).toEqual([400, "input.invalid"]);
   });
 
-  it("US-ACC-05 the overview: accounts, active users, cost per user unknown, no content", async () => {
+  it("US-ACC-05 the overview: accounts, active users, cost per user unknown without a figure, no content", async () => {
     const r = await call(open, subOperator, "GET", "/operator/overview");
     expect(r.body).toMatchObject({
-      costPerUser: null,
+      cost: null,
+      costPerUser: { known: false, reason: "no_figure" },
       activeWindowDays: 30,
       invitationOnly: false,
     });
@@ -271,6 +277,7 @@ describe("US-ACC-05 · the operator area (role checked in the operation and in t
         "accounts",
         "activeAccounts",
         "activeWindowDays",
+        "cost",
         "costPerUser",
         "invitationOnly",
         "invitations",
@@ -279,6 +286,59 @@ describe("US-ACC-05 · the operator area (role checked in the operation and in t
     const text = JSON.stringify(r.body);
     for (const sub of [subOperator, subKeeper, subReviewer]) expect(text).not.toContain(sub);
     expect(text).not.toContain("@example.test");
+  });
+
+  it("US-ACC-05 PUT /operator/cost: the operator enters the monthly figure; the overview divides it by the active users", async () => {
+    const figure = { amountCents: 12345, currency: "EUR", month: "2026-09" };
+    const put = await call(open, subOperator, "PUT", "/operator/cost", figure);
+    expect([put.status, put.body]).toEqual([200, figure]);
+    const r = await call(open, subOperator, "GET", "/operator/overview");
+    const active = r.body["activeAccounts"] as number;
+    expect(active).toBeGreaterThan(0);
+    expect(r.body["cost"]).toEqual(figure);
+    expect(r.body["costPerUser"]).toEqual({
+      known: true,
+      amountCents: Math.floor((2 * 12345 + active) / (2 * active)),
+      currency: "EUR",
+      month: "2026-09",
+      source: "manual",
+    });
+  });
+
+  it.each([
+    ["keeper", "keeper"],
+    ["reviewer", "reviewer"],
+  ])(
+    "US-ACC-05 PUT /operator/cost by a %s: 403 access.denied, the figure stays",
+    async (_, who) => {
+      const sub = who === "keeper" ? subKeeper : subReviewer;
+      const before = (await call(open, subOperator, "GET", "/operator/overview")).body["cost"];
+      const r = await call(open, sub, "PUT", "/operator/cost", {
+        amountCents: 1,
+        currency: "EUR",
+        month: "2026-09",
+      });
+      expect([r.status, r.body["error"].code]).toEqual([403, "access.denied"]);
+      expect((await call(open, subOperator, "GET", "/operator/overview")).body["cost"]).toEqual(
+        before,
+      );
+    },
+  );
+
+  it("US-ACC-05 PUT /operator/cost refuses a future month (400 operator_cost.month_in_future) and bad input (400)", async () => {
+    const r = await call(open, subOperator, "PUT", "/operator/cost", {
+      amountCents: 1,
+      currency: "EUR",
+      month: "2999-01",
+    });
+    expect([r.status, r.body["error"].code]).toEqual([400, "operator_cost.month_in_future"]);
+    const bad = await call(open, subOperator, "PUT", "/operator/cost", {
+      amountCents: -5,
+      currency: "EUR",
+      month: "2026-09",
+    });
+    expect([bad.status, bad.body["error"].code]).toEqual([400, "input.invalid"]);
+    expect(await call(open, null, "PUT", "/operator/cost", {})).toMatchObject({ status: 401 });
   });
 
   it("US-ACC-05 the mode route validates its input", async () => {

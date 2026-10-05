@@ -6,6 +6,7 @@ type Status = 400 | 401 | 403 | 404 | 409 | 500;
 const STATUS: Partial<Record<ErrorCode, Status>> = {
   "input.invalid": 400,
   "idempotency.key_missing": 400,
+  "operator_cost.month_in_future": 400,
   "access.not_signed_in": 401,
   "access.denied": 403,
   "invitation.invalid": 403,

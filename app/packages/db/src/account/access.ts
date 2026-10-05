@@ -11,6 +11,11 @@ interface InvitationRecord {
   readonly redeemedAt: string | null;
   readonly status: Status;
 }
+interface OperatorCostFigure {
+  readonly amountCents: number;
+  readonly currency: string;
+  readonly month: string;
+}
 interface AccessCounts {
   readonly accounts: number;
   readonly activeAccounts: number;
@@ -74,6 +79,27 @@ export class AccessPostgres {
         invitations: list.rows,
       };
     });
+  }
+
+  /** The monthly cost figure (US-ACC-05, NFR-16), `null` while none was entered; the database checks the operator. */
+  async operatorCost(userId: string): Promise<OperatorCostFigure | null> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<{ amountCents: string | null; currency: string | null; month: string | null }>(
+        `select amount_cents as "amountCents", currency, to_char(month, 'YYYY-MM') as month
+           from operator_cost()`,
+      ),
+    );
+    const row = r.rows[0];
+    if (!row || row.amountCents === null || row.currency === null || row.month === null)
+      return null;
+    // bigint arrives as text; the column is limited to 100,000,000, far inside the safe integer range.
+    return { amountCents: Number(row.amountCents), currency: row.currency, month: row.month };
+  }
+
+  async setOperatorCost(userId: string, f: OperatorCostFigure): Promise<void> {
+    await withAccount(this.pool, userId, (c) =>
+      c.query("select set_operator_cost($1, $2, $3)", [f.amountCents, f.currency, `${f.month}-01`]),
+    );
   }
 
   /**

@@ -1,4 +1,5 @@
 import type { SignedInContext } from "../kernel";
+import type { OperatorCostFigure } from "./operator-cost";
 
 /** Roles are assigned administratively, never through the application (TE-08, FR-BES-14). */
 export type AccessRole = "operator" | "reviewer";
@@ -39,6 +40,9 @@ export interface AccessStore {
   ): Promise<{ id: string; expiresAt: string }>;
   setInvitationOnly(userId: string, on: boolean): Promise<void>;
   overview(userId: string, activeWindowDays: number): Promise<AccessCounts>;
+  /** The monthly cost figure of the installation, `null` while none was entered (US-ACC-05, NFR-16). */
+  operatorCost(userId: string): Promise<OperatorCostFigure | null>;
+  setOperatorCost(userId: string, figure: OperatorCostFigure): Promise<void>;
   /**
    * Creates the account of the subject and uses up the code in one transaction (single use, also under concurrency).
    * `existing`: the subject already has an account, the code stays unused. `invalid` covers unknown, used and

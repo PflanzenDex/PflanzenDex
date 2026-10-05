@@ -12,6 +12,11 @@
     },
     {
       "rule": "DS-48",
+      "file": "account/operator-cost.tsx",
+      "count": 4
+    },
+    {
+      "rule": "DS-48",
       "file": "account/operator-parts.tsx",
       "count": 3
     },
