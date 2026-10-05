@@ -6,7 +6,7 @@ import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../kernel";
 import { ATTENTION_CLASSES, CARD_CLASSES, LIST_CLASSES, RefusalAlert, StatusNote } from "./notices";
 import { OpenTreatmentsSkeleton } from "./open-treatments.skeleton";
 import { completeTreatment, loadOpenTreatments } from "./treatments-api";
-import { OPEN_KEY, TREATMENTS } from "./query-keys";
+import { OPEN_KEY, TREATMENTS } from "./api/query-keys";
 import { dateText } from "./text";
 
 type Token = () => Promise<string | undefined>;
