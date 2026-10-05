@@ -1,8 +1,8 @@
-import type { SpeciesSource, SpecimenStore, SpecimenRow } from "../collection";
-import type { Species, GrowthMeasure } from "../catalog";
-import type { MeasurementStore, MeasurementValues, MeasurementRow } from "./types";
-import type { CarePhase } from "./phase";
-import type { PhaseLocationSource } from "./phase-location";
+import type { SpeciesSource, SpecimenStore, SpecimenRow } from "../../collection";
+import type { Species, GrowthMeasure } from "../../catalog";
+import type { MeasurementStore, MeasurementValues, MeasurementRow } from "../measurements/types";
+import type { CarePhase } from "../phases/phase";
+import type { PhaseLocationSource } from "../phases/phase-location";
 
 /**
  * Locations per account, species and phase for tests only (the real source is the care profile, US-BES-09).

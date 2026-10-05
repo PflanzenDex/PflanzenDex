@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { localToday } from "../kernel";
-import { carePhase, nextPhaseChange } from "./index";
-import { addDays } from "./treatment-dates";
+import { localToday } from "../../kernel";
+import { carePhase, nextPhaseChange } from "../index";
+import { addDays } from "../treatment-data/treatment-dates";
 
 describe("US-PHA-04 Foresee the next phase change", () => {
   it("US-PHA-04 the change is today when today is the first day of the dormancy (From)", () => {

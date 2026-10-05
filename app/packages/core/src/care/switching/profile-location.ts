@@ -2,9 +2,9 @@ import {
   effectiveDormancy,
   type CareProfileReader,
   type TargetLocationSource,
-} from "../collection";
-import { carePhase, type CarePhase } from "./phase";
-import type { PhaseLocationSource } from "./phase-location";
+} from "../../collection";
+import { carePhase, type CarePhase } from "../phases/phase";
+import type { PhaseLocationSource } from "../phases/phase-location";
 
 async function profileOf(profiles: CareProfileReader, userId: string, speciesId: string) {
   return (await profiles.list(userId)).find((p) => p.speciesId === speciesId) ?? null;

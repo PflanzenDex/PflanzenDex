@@ -1,5 +1,5 @@
-import type { OpenTreatment, TreatmentSource } from "../collection";
-import type { TreatmentStore } from "./treatment-types";
+import type { OpenTreatment, TreatmentSource } from "../../collection";
+import type { TreatmentStore } from "../treatment-data/treatment-types";
 
 export interface TreatmentSourceDependencies {
   readonly treatments: Pick<TreatmentStore, "open">;

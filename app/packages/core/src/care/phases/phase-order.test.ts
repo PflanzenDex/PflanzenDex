@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { SpeciesStub, InMemorySpecimens, testSpecies } from "../collection/shared/test-helpers";
-import { InMemoryCareProfiles } from "../collection/care-profile/care-profile-test-helpers";
-import { carePhasesList, phaseStatus } from "./index";
-import { PhaseLocationStub } from "./test-helpers";
+import { SpeciesStub, InMemorySpecimens, testSpecies } from "../../collection/shared/test-helpers";
+import { InMemoryCareProfiles } from "../../collection/care-profile/care-profile-test-helpers";
+import { carePhasesList, phaseStatus } from "../index";
+import { PhaseLocationStub } from "../shared/test-helpers";
 
 const WINTER = "11111111-1111-4111-8111-111111111111"; // Dormancy 11-01 to 03-15
 const COLD = "66666666-6666-4666-8666-666666666666";

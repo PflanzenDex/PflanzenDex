@@ -7,9 +7,9 @@ import {
   shape,
   timeZoneField,
   idListField,
-} from "../kernel";
-import { LOCATE_ERROR, type LocationAssignment, type SpecimenStore } from "../collection";
-import { phaseRows, type PhasesDependencies } from "./phases";
+} from "../../kernel";
+import { LOCATE_ERROR, type LocationAssignment, type SpecimenStore } from "../../collection";
+import { phaseRows, type PhasesDependencies } from "../phases/phases";
 
 export interface SwitchDependencies extends PhasesDependencies {
   readonly specimens: Pick<SpecimenStore, "list" | "find" | "setLocations">;

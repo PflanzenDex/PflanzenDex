@@ -1,6 +1,6 @@
 // Care phase of a specimen (US-PHA-01, FR-PHA-01) and its next change (US-PHA-04). Pure functions: the phase and the
 // next change are derived from the calendar on every request and never stored (P-01).
-import { addDays } from "./treatment-dates";
+import { addDays } from "../treatment-data/treatment-dates";
 
 export const CARE_PHASES = ["growth", "dormancy"] as const;
 export type CarePhase = (typeof CARE_PHASES)[number];

@@ -1,5 +1,5 @@
 // Measurements (US-WAC-01, DM-WAC-01). Ports for persistence; adapters live in `db` (AB-1).
-import type { GrowthMeasure } from "../catalog";
+import type { GrowthMeasure } from "../../catalog";
 
 export const QUALITIES = ["healthy", "etiolated"] as const;
 /** `etiolated` is "etiolated/thin" (US-WAC-02); etiolation never counts as success (US-WAC-04). */
