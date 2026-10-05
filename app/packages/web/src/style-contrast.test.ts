@@ -107,10 +107,12 @@ const TEXT_PAIRS: [string, string][] = [
     ],
   ),
 ];
-/** UI components (3:1, WCAG 1.4.11): the focus ring and the invalid-field border. */
+/** UI components (3:1, WCAG 1.4.11): the focus ring, the field boundary (`--input`) and the invalid-field border. */
 const UI_PAIRS: [string, string][] = [
   ["ring", "background"],
   ["ring", "card"],
+  ["input", "background"],
+  ["input", "card"],
   ["destructive", "background"],
   ["destructive", "card"],
 ];
@@ -118,7 +120,7 @@ const UI_PAIRS: [string, string][] = [
  * Tokens that are only decorative lines (cards, dividers, the edge of a warning box whose text carries the message),
  * never the only cue: no ratio required (WCAG 1.4.11). `--warning-border` is 2.7:1 in light, as before the migration.
  */
-const DECORATIVE = ["border", "input", "warning-border"];
+const DECORATIVE = ["border", "warning-border"];
 
 const pairedTokens = new Set([...TEXT_PAIRS, ...UI_PAIRS].flat());
 
