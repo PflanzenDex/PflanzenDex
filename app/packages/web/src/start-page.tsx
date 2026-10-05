@@ -9,6 +9,7 @@ import { loadSpecimenCount } from "./collection";
 import { LoadFrame } from "./kernel";
 import { loadLocations, loadZones } from "./light";
 import { OnboardingWizard } from "./onboarding-wizard";
+import { readStored, writeStored } from "./platform/storage";
 import type { View } from "./navigation";
 
 type Token = () => Promise<string | undefined>;
@@ -17,20 +18,9 @@ type Target = Extract<View, "species" | "light" | "collection" | "hints">;
 const key = (accountId: string) => `pflanzendex.onboarding-skipped.${accountId}`;
 
 /** Per-device convenience only: the counts that drive the hints are derived live, so nothing here can go stale. */
-function readSkipped(accountId: string): boolean {
-  try {
-    return window.localStorage.getItem(key(accountId)) === "1";
-  } catch {
-    return false;
-  }
-}
-function writeSkipped(accountId: string): void {
-  try {
-    window.localStorage.setItem(key(accountId), "1");
-  } catch {
-    // Without storage the onboarding is simply offered again next time.
-  }
-}
+const readSkipped = (accountId: string): boolean => readStored(key(accountId)) === "1";
+// Without storage the onboarding is simply offered again next time.
+const writeSkipped = (accountId: string): void => void writeStored(key(accountId), "1");
 
 function Overview(props: { counts: OnboardingCounts; onOpen: (t: Target) => void }) {
   const action = startAction(props.counts);

@@ -1,11 +1,6 @@
 {
   "entries": [
     {
-      "rule": "DS-10",
-      "file": "start-page.tsx",
-      "count": 2
-    },
-    {
       "rule": "DS-32",
       "file": "collection/distribution-view.tsx",
       "count": 1
