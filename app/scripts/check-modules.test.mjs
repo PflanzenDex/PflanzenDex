@@ -462,3 +462,93 @@ describe("module boundaries (FR-QG-19)", () => {
     });
   });
 });
+
+describe("AB-11 glossary words in the kernel (FR-QG-19)", () => {
+  const words = cfg({ KERNEL_GLOSSARY_WORDS: ["specimen", "species", "wish"] });
+  const kernel = (src) => ({ "packages/core/src/kernel/domain.ts": src });
+
+  it("an identifier with a glossary word fails with rule, file, line and the word", () => {
+    const v = run(kernel("export const a = 1;\nexport function loadSpecimens() {}\n"), words);
+    assert.equal(v.length, 1);
+    assert.match(
+      v[0],
+      /^AB-11 packages\/core\/src\/kernel\/domain\.ts:2 kernel names the glossary word "specimens" in `loadSpecimens`/,
+    );
+  });
+
+  it("snake case and plurals are matched", () => {
+    assert.equal(run(kernel("export const wish_list_size = 1;\n"), words).length, 1);
+    assert.equal(run(kernel("export const allSpecies = 1;\n"), words).length, 1);
+  });
+
+  it("comments and string literals (error codes, texts) are data and pass", () => {
+    const src =
+      '// the specimen\n/* species */\nexport const codes = { "species.not_found": 404, t: `wish` };\n';
+    assert.deepEqual(run(kernel(src), words), []);
+  });
+
+  it("test files and test helpers of the kernel are not checked", () => {
+    const files = {
+      "packages/core/src/kernel/a.test.ts": "export const specimen = 1;\n",
+      "packages/core/src/kernel/test-helpers.ts": "export const wish = 1;\n",
+    };
+    assert.deepEqual(run(files, words), []);
+  });
+
+  it("without a word list the rule is idle", () => {
+    assert.deepEqual(run(kernel("export const specimen = 1;\n")), []);
+  });
+});
+
+describe("AB-13 contract test per port (FR-QG-19)", () => {
+  const withPort = cfg({
+    MODULES: CFG.MODULES.map((m) => (m.name === "light" ? { ...m, ports: ["ZoneUsage"] } : m)),
+  });
+  const declared = {
+    "packages/core/src/light/types.ts": "export interface ZoneUsage { user(): void }\n",
+  };
+  const contract = {
+    "packages/core/src/light/zone-usage.contract.test.ts":
+      'describe("ZoneUsage contract", () => {});\n',
+  };
+
+  it("a declared port without a contract test fails and names the port and module", () => {
+    const v = run(declared, withPort);
+    assert.equal(v.length, 1);
+    assert.match(v[0], /^AB-13 modules\.config\.mjs port ZoneUsage \(light\) has no contract test/);
+  });
+
+  it("a declared port with a contract test passes", () => {
+    assert.deepEqual(run({ ...declared, ...contract }, withPort), []);
+  });
+
+  it("a test that is not named *.contract.test does not count", () => {
+    const other = { "packages/core/src/light/zone-usage.test.ts": "// ZoneUsage\n" };
+    assert.equal(run({ ...declared, ...other }, withPort).length, 1);
+  });
+
+  it("a registered port that is not declared in code yet is not checked", () => {
+    assert.deepEqual(run({}, withPort), []);
+  });
+
+  it("a registered exemption passes, and goes stale once a contract test exists", () => {
+    const exempt = cfg({
+      ...withPort,
+      PORTS_WITHOUT_CONTRACT_TEST: { ZoneUsage: "needs the database" },
+    });
+    assert.deepEqual(run(declared, exempt), []);
+    const v = run({ ...declared, ...contract }, exempt);
+    assert.equal(v.length, 1);
+    assert.match(v[0], /PORTS_WITHOUT_CONTRACT_TEST entry ZoneUsage is stale/);
+  });
+
+  it("the real register: every declared port has a contract test or a reasoned exemption", () => {
+    const appDir = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+    assert.deepEqual(
+      checkProject(appDir, REAL).filter((v) => /^AB-1[13] /.test(v)),
+      [],
+    );
+    for (const reason of Object.values(REAL.PORTS_WITHOUT_CONTRACT_TEST))
+      assert.ok(reason.trim().length > 0);
+  });
+});
