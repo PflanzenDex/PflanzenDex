@@ -32,7 +32,7 @@
   --destructive: #b3261e; /* invalid field border and error text */
   --destructive-foreground: #ffffff;
   --border: #cfdccf; /* decorative lines of cards and dividers */
-  --input: var(--border);
+  --input: #74897a; /* field boundary: 3.5:1 on background, 3.8:1 on card (WCAG 1.4.11); --border stays decorative */
   --ring: #2f7d4f;
   --radius: 0.625rem;
 
@@ -68,6 +68,7 @@
     --destructive: #ff8a80; /* 7.8:1 on --background, 6.9:1 on --card */
     --destructive-foreground: #2a0a08;
     --border: #2e4034;
+    --input: #648069; /* 4.1:1 on background, 3.6:1 on card */
     --ring: #5fbf86;
 
     --warning: #3a3012;

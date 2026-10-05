@@ -1,0 +1,63 @@
+# Routine (US-DEV-03, FR-DEV-03, QG-C6 overall report): weekly report of code that only tests keep alive.
+# `make gates` runs knip with tests as entry points; this run uses `knip --production`, which ignores tests.
+# Report only: some findings are intended (prepared code), so nothing fails and nothing is deleted automatically.
+# Owner: maintainers. Output: one open issue labelled `unused-code`, updated each week; closed when nothing is found.
+# Scheduled workflows only run from the default branch, so this starts once it has reached `main`.
+name: Unused code report
+
+on:
+  schedule:
+    - cron: "41 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'schedule' && 'dev' || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - run: make unused-report
+      - run: cat app/.cache/unused-report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Open, update or close the unused-code issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          report=app/.cache/unused-report.md
+          nr="$(gh issue list --label unused-code --state open --json number --jq '.[0].number')"
+          if ! grep -q '^## ' "$report"; then
+            if [ -n "$nr" ]; then
+              gh issue close "$nr" --comment "Nothing found any more: $RUN_URL"
+            fi
+            exit 0
+          fi
+          {
+            echo "Weekly report (QG-C6, US-DEV-03): code and dependencies that only tests or nothing keep alive on \`dev\`."
+            echo "For each finding: delete it, wire it in, or note in this issue why it stays (for example prepared code of a planned story)."
+            echo "Run: $RUN_URL. Reproduce locally with \`make unused-report\`."
+            echo
+            head -c 60000 "$report"
+          } > body.md
+          gh label create unused-code --color BFD4F2 --description "Weekly unused code report (QG-C6)" --force
+          if [ -n "$nr" ]; then
+            gh issue edit "$nr" --body-file body.md
+            gh issue comment "$nr" --body "Updated: $RUN_URL"
+          else
+            gh issue create --label unused-code --title "Unused code candidates on dev" --body-file body.md
+          fi
