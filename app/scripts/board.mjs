@@ -13,9 +13,8 @@ export function buildRows({ items, prs, branchDates, now, staleHours }) {
     const key = claimKey(issue);
     const related = prs.filter((p) => prReferences(p, issue));
     const open = related.filter((p) => prState(p) === "open");
-    const finished = new Set(
-      related.filter((p) => prState(p) !== "open").map((p) => p.headRefName),
-    );
+    // Every finished PR retires its branch, also one that never named the issue (merged without "Closes #n").
+    const finished = new Set(prs.filter((p) => prState(p) !== "open").map((p) => p.headRefName));
     const openHeads = new Set(open.map((p) => p.headRefName));
     const branches = Object.keys(branchDates).filter(
       (b) => openHeads.has(b) || (hasKey(b, key) && !finished.has(b)),

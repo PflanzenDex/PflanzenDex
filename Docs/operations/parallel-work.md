@@ -14,7 +14,7 @@ make board               # who works on what (optional: MILESTONE="R0 Fundament"
 `make claim` (`app/scripts/claim.mjs`) refuses with exit 1 and names the finding when
 
 - the issue has an assignee,
-- a PR (open or merged) references the issue (`Closes #n`) or carries the story ID in title or branch,
+- a PR (open or merged) closes the issue (`Closes #n` in the body), or an open PR carries the story ID in title or branch (a merged PR that only mentions the ID does not count: it may be one part of a bigger story),
 - a branch on `origin` carries the story ID.
 
 Before any write a preflight checks that `node_modules` exists (`make setup`) and that `origin/dev` has a `Makefile` (no ancient checkout). Otherwise it pushes the branch with one empty commit (made without touching your working tree), assigns you, sets the project status "In Progress" (field and option ids are read at run time) and opens a draft PR against `dev` whose text has a `## Handoff` section (task, done, missing, verification, next steps). Keep that section current; whoever takes over reads it first. The PR title must be completed by the author (`gh api -X PATCH` edits it; `gh pr edit` fails with Projects classic). If another person claimed the issue at the same moment, the later claim steps back and deletes its branch. The claim is atomic: if a step fails, the steps already done are undone (branch deleted, assignee removed, status back to "Todo"); an issue assigned to you without a branch or PR (half claim of an older run) is continued by a re-run.

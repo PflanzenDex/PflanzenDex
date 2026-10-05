@@ -52,11 +52,11 @@ test("US-DEV-08: an assignee blocks the claim and is named", () => {
   assert.match(f.text, /@konradhe14/);
 });
 
-test("US-DEV-08: open and merged PRs referencing the issue block, closed ones do not", () => {
+test("US-DEV-08: PRs closing the issue block (open, merged), closed ones do not", () => {
   const prs = [
     { number: 1, title: "x", body: "Closes #62", state: "OPEN" },
-    { number: 2, title: "feat(bes): y (US-BES-06)", body: "", state: "MERGED" },
-    { number: 3, title: "z (US-BES-06)", body: "", state: "CLOSED" },
+    { number: 2, title: "feat(bes): y", body: "Fixes #62", state: "MERGED" },
+    { number: 3, title: "z", body: "Closes #62", state: "CLOSED" },
     { number: 4, title: "other", body: "Closes #620", state: "OPEN" },
   ];
   const found = findConflicts({ issue: story, prs, branches: [] });
@@ -66,10 +66,23 @@ test("US-DEV-08: open and merged PRs referencing the issue block, closed ones do
   );
 });
 
+test("US-DEV-08: a story key alone blocks only while the PR is open, never after the merge (#393)", () => {
+  const prs = [
+    { number: 1, title: "wip (US-BES-06)", body: "", state: "OPEN", headRefName: "x" },
+    { number: 2, title: "part of it (US-BES-06)", body: "", state: "MERGED", headRefName: "y" },
+    { number: 3, title: "z", body: "", state: "OPEN", headRefName: "feat/bes-06-remove" },
+  ];
+  const found = findConflicts({ issue: story, prs, branches: [] });
+  assert.deepEqual(
+    found.map((f) => f.text.match(/PR #(\d+)/)[1]),
+    ["1", "3"],
+  );
+});
+
 test("US-DEV-08: ALLOW_PRIOR_WORK waives merged PRs but never open ones", () => {
   const prs = [
     { number: 1, title: "x", body: "Closes #62", state: "OPEN" },
-    { number: 2, title: "(US-BES-06)", body: "", state: "MERGED" },
+    { number: 2, title: "(US-BES-06)", body: "Closes #62", state: "MERGED" },
   ];
   const found = findConflicts({ issue: story, prs, branches: [], allowPrior: true });
   assert.equal(found.length, 1);
