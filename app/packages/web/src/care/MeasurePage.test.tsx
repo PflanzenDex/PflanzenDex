@@ -18,7 +18,9 @@ const measurement = {
 };
 const specimen = { id: "e1", name: "Bogenhanf" };
 
-function fakeServer(opts: { loadError?: boolean; save?: () => Promise<Response> } = {}) {
+function fakeServer(
+  opts: { loadError?: boolean; save?: () => Promise<Response>; signs?: string | null } = {},
+) {
   const measurements: unknown[] = [];
   const posts: { body: Record<string, unknown>; key: string | undefined }[] = [];
   let loadAttempts = 0;
@@ -40,6 +42,7 @@ function fakeServer(opts: { loadError?: boolean; save?: () => Promise<Response> 
       return response(200, {
         specimenId: "e1",
         growthMeasure: "height",
+        etiolationSigns: opts.signs ?? null,
         measurements,
         last: measurements[0] ?? null,
         lastRating: measurements.length ? "healthy" : null,
@@ -78,6 +81,29 @@ describe("US-WAC-01 Seite Messen", () => {
     ).toBeTruthy();
     expect(posts[0]?.body).toMatchObject({ value: 12.5, quality: "healthy" });
     expect(posts[0]?.key).toBeTruthy();
+  });
+
+  it('US-WAC-02 "Wie erkennen?" opens the etiolation signs of the species; etiolated/thin is sent', async () => {
+    const { posts } = fakeServer({ signs: "Rosette streckt sich, Blätter werden blass." });
+    show();
+    const summary = await screen.findByText("Wie erkennen?");
+    const details = summary.closest("details");
+    expect(details?.open).toBe(false);
+    await userEvent.click(summary);
+    expect(details?.open).toBe(true);
+    expect(screen.getByText(/Rosette streckt sich, Blätter werden blass\./)).toBeTruthy();
+    await userEvent.type(screen.getByLabelText(/Messwert/), "8");
+    await userEvent.selectOptions(screen.getByLabelText("Qualität"), "etiolated");
+    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await screen.findByText(/Gespeichert:/);
+    expect(posts[0]?.body).toMatchObject({ value: 8, quality: "etiolated" });
+  });
+
+  it("US-WAC-02 without etiolation signs of the species there is no disclosure, nothing invented (P-08)", async () => {
+    fakeServer({ signs: null });
+    show();
+    await screen.findByText("Noch keine Messung");
+    expect(screen.queryByText("Wie erkennen?")).toBeNull();
   });
 
   it("US-WAC-01 an invalid input is rejected before sending and writes nothing", async () => {

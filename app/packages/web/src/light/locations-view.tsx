@@ -11,7 +11,7 @@ import {
   type LocationFields,
 } from "./schemas";
 import { ENTRY } from "./zones-view";
-import { kindText, zoneName } from "./text";
+import { kindText, zoneName } from "./texts";
 
 export interface LocationInput {
   name: string;

@@ -12,7 +12,7 @@ import {
   toDerivationRequest,
   type DerivationFields,
 } from "./schemas";
-import { derivationText } from "./text";
+import { derivationText } from "./texts";
 
 function SoftLeaf({ control }: { control: Control<DerivationFields> }) {
   return (

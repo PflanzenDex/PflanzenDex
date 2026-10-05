@@ -14,7 +14,7 @@ import {
   zoneSchema,
   type ZoneFields,
 } from "./schemas";
-import { lux, ppfd } from "./text";
+import { lux, ppfd } from "./texts";
 
 export interface ZoneInput {
   name: string;

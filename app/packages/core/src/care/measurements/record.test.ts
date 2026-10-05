@@ -221,6 +221,53 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
   });
 });
 
+describe("US-WAC-02 assess etiolation while measuring", () => {
+  const view = (signs?: string, mass: "height" | null = "height") =>
+    measurementView(
+      {
+        measurements,
+        specimens: new SpecimenStub({ anna: [E1], ben: [E2] }),
+        species: speciesStub(mass, signs),
+      },
+      "anna",
+      E1,
+    );
+
+  it("the choice is healthy or etiolated/thin, healthy by default", async () => {
+    expect(await record(input())).toMatchObject({ ok: true, value: { quality: "healthy" } });
+    expect(await record(input({ quality: "etiolated" }))).toMatchObject({
+      ok: true,
+      value: { quality: "etiolated" },
+    });
+    expect(await record(input({ quality: "thin" }))).toMatchObject({ ok: false });
+    expect(measurements.rows.map((m) => m.quality)).toEqual(["healthy", "etiolated"]);
+  });
+
+  it("a measurement without quality (null, legacy data) counts as healthy", async () => {
+    expect(await record(input({ quality: null }))).toMatchObject({
+      ok: true,
+      value: { quality: "healthy" },
+    });
+  });
+
+  it("the view carries the etiolation signs of the species for the choice field", async () => {
+    expect(await view("Triebe werden lang und dünn.")).toMatchObject({
+      etiolationSigns: "Triebe werden lang und dünn.",
+    });
+  });
+
+  it("without visible species or with an empty text the signs stay unknown, nothing is invented (P-08)", async () => {
+    expect((await view("Triebe werden lang.", null))?.etiolationSigns).toBeNull();
+    expect((await view("   "))?.etiolationSigns).toBeNull();
+  });
+
+  it("the last rating stays etiolated/thin when the last measurement is etiolated", async () => {
+    await record(input({ date: "2026-09-01", quality: "healthy" }));
+    await record(input({ date: "2026-10-01", quality: "etiolated" }));
+    expect((await view())?.lastRating).toBe("etiolated");
+  });
+});
+
 describe("US-BES-07 Messen: archivierte Exemplare", () => {
   it("an archived specimen is not measured (missing in growth), nothing is written", async () => {
     const r = await record(input(), anna, "archived", [E1]);
