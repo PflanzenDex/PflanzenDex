@@ -10,6 +10,7 @@ import {
   InvitationPage,
   type State,
 } from "./account";
+import { useClearOnSignOut } from "./kernel";
 import { AppRoutes } from "./routes";
 import { AppShell } from "./components/shared/app-shell";
 import { navItems, PATHS, type View } from "./navigation";
@@ -76,6 +77,7 @@ export function App() {
   const { state: navState } = useLocation() as { state: { hint?: string } | null };
   const handOver = useSpeciesHandOver(setView);
   const z = s.state;
+  useClearOnSignOut(z.kind === "signedIn");
   const footer = <footer className="version-footer">Version {version || "unbekannt"}</footer>;
   if (z.kind !== "signedIn")
     return (

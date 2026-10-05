@@ -123,7 +123,7 @@ describe("US-WAC-01 Seite Messen", () => {
     fakeServer({ loadError: true });
     show();
     expect((await screen.findByRole("alert")).textContent).toContain("Das hat nicht geklappt.");
-    await userEvent.click(screen.getByRole("button", { name: "Erneut laden" }));
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByText("Verlauf")).toBeTruthy();
   });
 

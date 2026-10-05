@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LoadFrame, SIGN_IN, type ApiError } from "../kernel";
+import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../kernel";
 import { MeasureForm } from "./measure-form";
 import { MeasurementList } from "./measurement-list";
 import { recordMeasurement, loadMeasurementView, type MeasurementInput } from "./measurements-api";
@@ -22,7 +22,8 @@ export function MeasurePage(props: {
   onBack: () => void;
 }) {
   const { api, token, specimen } = props;
-  const [reload, setReload] = useState(0);
+  const key = useMemo(() => ["care", "measurements", specimen.id], [specimen.id]);
+  const invalidate = useInvalidate(key);
   const [saved, setSaved] = useState<string | null>(null);
   const valueRef = useRef<HTMLInputElement | null>(null);
   const load = useCallback(
@@ -36,10 +37,10 @@ export function MeasurePage(props: {
       const r = await recordMeasurement({ api, token: t }, specimen.id, input);
       if (!r.ok) return r.error;
       setSaved(measurementText(r.value));
-      setReload((n) => n + 1);
+      invalidate();
       return null;
     },
-    [api, token, specimen.id],
+    [api, token, specimen.id, invalidate],
   );
   const loading = "Messungen werden geladen …";
   return (
@@ -48,11 +49,11 @@ export function MeasurePage(props: {
         Messen: {specimen.name}
       </h1>
       <LoadFrame
+        queryKey={key}
         token={token}
         load={load}
         loadingText={loading}
         loadingFallback={<MeasurePageSkeleton label={loading} />}
-        refresh={reload}
       >
         {(view) => (
           <>

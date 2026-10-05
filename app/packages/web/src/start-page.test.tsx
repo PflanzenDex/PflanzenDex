@@ -142,7 +142,7 @@ describe("US-ACC-03 start page and guided onboarding", () => {
     );
     view();
     expect((await screen.findByRole("alert")).textContent).toContain("Der Server antwortet nicht.");
-    expect(screen.getByRole("button", { name: "Erneut laden" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });
 
   it("US-ACC-03 focus moves to the heading of the new step and the step is announced politely", async () => {

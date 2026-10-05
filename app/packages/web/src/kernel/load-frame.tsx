@@ -1,45 +1,55 @@
-import { useEffect, useState, type ReactNode } from "react";
-import type { ApiError, Response } from "./api";
-import { LoadError } from "./load-error";
-import { SIGN_IN } from "./use-write-action";
-
-type State<T> =
-  { kind: "loading" } | { kind: "error"; error: ApiError } | { kind: "loaded"; value: T };
+import type { ReactNode } from "react";
+import { EmptyState, type EmptyStateAction } from "@/components/shared/empty-state";
+import { RequestState } from "@/components/shared/request-state";
+import type { Response } from "./api";
+import { useRequest } from "./use-request";
+import type { QueryKey } from "@tanstack/react-query";
 
 /**
- * Loads one thing for a page and shows what the user needs while it is not there: a status while loading, the error
- * with "Erneut laden" if it fails (P-09, P-10), the content when loaded. Without a token nothing is queried. A late
- * answer of a page that was left is dropped. Changing `refresh` loads again and keeps showing the old content until
- * the new one is there (after a write on the page).
+ * Loads one thing for a page on the data layer and shows what the user needs while it is not there (DS-09, DS-26):
+ * the skeleton while loading, the error with "Erneut versuchen" if it fails (P-09, P-10), the empty state when there
+ * are no rows, the content when loaded; when the network is down the last loaded copy with a note (US-QS-07). Without
+ * a token nothing is queried. `queryKey` names the data; a write refreshes it with `useInvalidate`.
  */
 export function LoadFrame<T>(props: {
+  queryKey: QueryKey;
   token: () => Promise<string | undefined>;
   load: (token: string) => Promise<Response<T>>;
   loadingText: string;
+  /** The data fills a form: it is not kept after the view closes (see `useRequest`). */
+  fresh?: boolean;
   /** Skeleton that mirrors the page while it loads (DS-52); it must carry the single `role="status"` with `loadingText`. */
   loadingFallback?: ReactNode;
-  refresh?: number;
+  /** Optional empty state for a view that has nothing to show without rows. */
+  empty?: {
+    isEmpty: (value: T) => boolean;
+    title: string;
+    description?: string;
+    action?: EmptyStateAction;
+  };
   children: (value: T) => ReactNode;
 }) {
-  const { token, load, refresh } = props;
-  const [reload, setReload] = useState(0);
-  const [state, setState] = useState<State<T>>({ kind: "loading" });
-  useEffect(() => {
-    let current = true;
-    void (async () => {
-      const t = await token();
-      if (!t) return current && setState({ kind: "error", error: SIGN_IN });
-      const r = await load(t);
-      if (current)
-        setState(r.ok ? { kind: "loaded", value: r.value } : { kind: "error", error: r.error });
-    })();
-    return () => {
-      current = false;
-    };
-  }, [token, load, reload, refresh]);
-  if (state.kind === "loading")
-    return props.loadingFallback ?? <p role="status">{props.loadingText}</p>;
-  if (state.kind === "error")
-    return <LoadError error={state.error} onReload={() => setReload((n) => n + 1)} />;
-  return <>{props.children(state.value)}</>;
+  const { queryKey, token, load, empty, fresh } = props;
+  const r = useRequest({ queryKey, token, load, ...(fresh ? { fresh } : {}) });
+  const isEmpty = r.status === "ready" && r.value !== undefined && empty?.isEmpty(r.value);
+  return (
+    <RequestState
+      status={isEmpty ? "empty" : r.status}
+      {...(r.error ? { errorText: r.error.text } : {})}
+      onRetry={r.retry}
+      skeleton={props.loadingFallback ?? <p role="status">{props.loadingText}</p>}
+      empty={
+        empty ? (
+          <EmptyState
+            title={empty.title}
+            {...(empty.description ? { description: empty.description } : {})}
+            {...(empty.action ? { action: empty.action } : {})}
+          />
+        ) : null
+      }
+      offline={r.offline}
+    >
+      {r.value !== undefined ? props.children(r.value) : null}
+    </RequestState>
+  );
 }

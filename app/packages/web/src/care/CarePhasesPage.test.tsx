@@ -84,7 +84,7 @@ describe("US-PHA-01 page of the care phases", () => {
     });
     render(<CarePhasesPage api="http://api" token={token} />);
     expect((await screen.findByRole("alert")).textContent).toContain("Der Server antwortet nicht.");
-    await userEvent.click(screen.getByRole("button", { name: "Erneut laden" }));
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByText("Bogenhanf")).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
   });
