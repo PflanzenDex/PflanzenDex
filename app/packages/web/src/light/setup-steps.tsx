@@ -7,7 +7,7 @@ import { ErrorMessage } from "./message";
 import { Fresh, useFresh } from "./fresh";
 import { SetupStepSkeleton } from "./light-page.skeleton";
 import { ENTRY, ZoneCard, ZoneForm } from "./zones-view";
-import { kindText } from "./text";
+import { kindText } from "./texts";
 
 const SIGN_IN: ApiError = { code: KERNEL_SIGN_IN.code, text: KERNEL_SIGN_IN.text };
 

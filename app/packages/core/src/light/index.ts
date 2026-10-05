@@ -23,5 +23,11 @@ export type {
 } from "./types";
 export { GAP_MAX, PROMOTE_FROM, zoneDerive, zoneDeriveReviewed } from "./derive";
 export type { Derivation, DerivationInput, DerivationReason } from "./derive";
-export { recommendPosition, POSITIONS } from "./position-recommendation";
-export type { PositionRecommendation, PositionCategory } from "./position-recommendation";
+export { recommendPosition, POSITIONS } from "./classification";
+export type { PositionRecommendation, PositionCategory } from "./classification";
+export { classificationRules } from "./classification";
+export type {
+  ClassificationIndicator,
+  ClassificationRules,
+  ClassificationWarning,
+} from "./classification";
