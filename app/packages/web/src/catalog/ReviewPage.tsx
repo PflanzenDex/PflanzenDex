@@ -1,7 +1,7 @@
 import type { MergeOutcome, ReviewList } from "@pflanzendex/core";
 import { useCallback, useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
-import { LoadFrame, useWriteAction, type Response } from "../kernel";
+import { LoadFrame, useInvalidate, useWriteAction, type Response } from "../kernel";
 import { ReviewPageSkeleton } from "./ReviewPage.skeleton";
 import { refusalText } from "./refusal";
 import { ReviewEntryView, type ReviewActions } from "./review-entry";
@@ -9,6 +9,7 @@ import { decideProposal, loadReviewList, mergeProposal } from "./review-api";
 import { movedText, summaryText } from "./review-text";
 
 type Token = () => Promise<string | undefined>;
+const KEY = ["catalog", "review"] as const;
 
 /** The three actions of the review list, each one write at a time; a merge also reports what it moved (P-10). */
 function useReviewActions(api: string, token: Token, refresh: () => void) {
@@ -43,8 +44,7 @@ function useReviewActions(api: string, token: Token, refresh: () => void) {
 /** The review list for operators and reviewers (US-BES-10): approve, reject with a reason, merge with a species. */
 export function ReviewPage(props: { api: string; token: Token; now?: () => number }) {
   const { api, token } = props;
-  const [refresh, setRefresh] = useState(0);
-  const reload = useCallback(() => setRefresh((n) => n + 1), []);
+  const reload = useInvalidate(KEY);
   const review = useReviewActions(api, token, reload);
   const load = useCallback((t: string) => loadReviewList(api, t), [api]);
   const now = (props.now ?? Date.now)();
@@ -62,11 +62,11 @@ export function ReviewPage(props: { api: string; token: Token; now?: () => numbe
         </div>
       )}
       <LoadFrame
+        queryKey={KEY}
         token={token}
         load={load}
         loadingText="Prüfliste wird geladen …"
         loadingFallback={<ReviewPageSkeleton label="Prüfliste wird geladen …" />}
-        refresh={refresh}
       >
         {(list: ReviewList) =>
           list.entries.length === 0 ? (

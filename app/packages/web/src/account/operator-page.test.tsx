@@ -52,6 +52,8 @@ afterEach(() => {
 const open = async () => {
   render(<OperatorPage api="http://api" token={token} />);
   await screen.findByRole("heading", { name: "Betreiber" });
+  // The numbers arrive through the data layer after the heading.
+  await screen.findByRole("region", { name: "Zahlen" });
 };
 
 describe("US-ACC-05 operator area: counts, no content", () => {
@@ -94,7 +96,7 @@ describe("US-ACC-05 operator area: counts, no content", () => {
     );
     render(<OperatorPage api="http://api" token={token} />);
     expect(await screen.findByText("Darauf hast du keinen Zugriff.")).toBeTruthy();
-    expect(screen.getByRole("button", { name: /Erneut laden/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Erneut versuchen/ })).toBeTruthy();
   });
 });
 

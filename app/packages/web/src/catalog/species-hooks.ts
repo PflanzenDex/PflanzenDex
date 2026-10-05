@@ -1,54 +1,43 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Species, SpeciesHit } from "@pflanzendex/core";
-import type { ApiError } from "../kernel";
+import { useRequest, type Request } from "../kernel";
 import { loadSpecies, searchSpecies } from "./species-api";
 
 type Token = () => Promise<string | undefined>;
-export const SIGN_IN: ApiError = {
-  code: "access.not_signed_in",
-  text: "Bitte melde dich neu an.",
-};
-export type Profile =
-  { kind: "loading" } | { kind: "error"; error: ApiError } | { kind: "da"; value: Species };
+export const SEARCH_KEY = ["catalog", "search"] as const;
 
-/** Searches after a short pause after typing; `reload` changes when the list must be current. */
-export function useSearch(api: string, token: Token, searchText: string, reload: string) {
-  const [hit, setHit] = useState<readonly SpeciesHit[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<ApiError | null>(null);
+/** The text after a short pause, so typing does not send a request per letter. */
+function useDebounced(text: string, ms: number): string {
+  const [settled, setSettled] = useState(text);
   useEffect(() => {
-    let current = true;
-    setLoading(true);
-    const run = async () => {
-      const t = await token();
-      const r = t
-        ? await searchSpecies(api, t, searchText)
-        : { ok: false as const, error: SIGN_IN };
-      if (!current) return;
-      if (r.ok) setHit(r.value);
-      setError(r.ok ? null : r.error);
-      setLoading(false);
-    };
-    const timer = setTimeout(() => void run(), searchText ? 250 : 0);
-    return () => {
-      current = false;
-      clearTimeout(timer);
-    };
-  }, [api, token, searchText, reload]);
-  return { hit, loading, error };
+    const timer = setTimeout(() => setSettled(text), text ? ms : 0);
+    return () => clearTimeout(timer);
+  }, [text, ms]);
+  return settled;
 }
 
-/** Loads the profile of a species; an error (also "not visible") is shown, never swallowed. */
-export function useProfile(api: string, token: Token) {
-  const [profile, setProfile] = useState<Profile>({ kind: "loading" });
-  const load = useCallback(
-    async (id: string) => {
-      setProfile({ kind: "loading" });
-      const t = await token();
-      const r = t ? await loadSpecies(api, t, id) : { ok: false as const, error: SIGN_IN };
-      setProfile(r.ok ? { kind: "da", value: r.value } : { kind: "error", error: r.error });
-    },
-    [api, token],
-  );
-  return { profile, load };
+/** Searches after a short pause after typing; the result stays until the next one is there (cached per text). */
+export function useSearch(api: string, token: Token, searchText: string) {
+  const term = useDebounced(searchText, 250);
+  const key = [...SEARCH_KEY, term];
+  const load = useCallback((t: string) => searchSpecies(api, t, term), [api, term]);
+  const r = useRequest<readonly SpeciesHit[]>({
+    queryKey: key,
+    token,
+    load,
+    keepPrevious: true,
+  });
+  return {
+    hit: r.value ?? [],
+    loading: r.status === "pending" || term !== searchText,
+    error: r.error ?? null,
+    offline: r.offline,
+    retry: r.retry,
+  };
+}
+
+/** Loads the profile of a species once one is chosen; an error (also "not visible") is shown, never swallowed. */
+export function useProfile(api: string, token: Token, id: string | null): Request<Species> {
+  const load = useCallback((t: string) => loadSpecies(api, t, id ?? ""), [api, id]);
+  return useRequest({ queryKey: ["catalog", "species", id], token, load, enabled: id !== null });
 }

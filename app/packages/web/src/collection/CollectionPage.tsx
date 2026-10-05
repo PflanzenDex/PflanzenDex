@@ -1,6 +1,7 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import type { Species, Specimen } from "@pflanzendex/core";
-import { LoadError } from "../kernel";
+import { useInvalidate } from "../kernel";
+import { RequestState } from "@/components/shared/request-state";
 import { CollectionPageSkeleton } from "./CollectionPage.skeleton";
 import { PageFrame, Status, Warning } from "./parts";
 import { refusalText } from "./refusal";
@@ -8,7 +9,7 @@ import { CreateForm } from "./create-form";
 import { ArchivedList } from "./archived-list";
 import { ArchiveForm } from "./archived-form";
 import { CollectionList } from "./collection-list";
-import { useCollection, type Data, type Token } from "./use-collection";
+import { COLLECTION_KEY, useCollection, type Loaded, type Token } from "./use-collection";
 import { useArchive } from "./use-archive";
 import { useRepot } from "./use-repot";
 import { useMarker } from "./use-marker";
@@ -44,9 +45,8 @@ type Props = {
  */
 export function CollectionPage(props: Props) {
   const { api, token, newSpecies } = props;
-  const [reload, setReload] = useState(0);
-  const data = useCollection(api, token, reload);
-  const afterAction = useCallback(() => setReload((n) => n + 1), []);
+  const request = useCollection(api, token);
+  const afterAction = useInvalidate(COLLECTION_KEY);
   const archived = useArchive(api, token, afterAction);
   const potted = useRepot(api, token, afterAction);
   const marked = useMarker(api, token, afterAction);
@@ -62,16 +62,22 @@ export function CollectionPage(props: Props) {
   });
   return (
     <PageFrame>
-      {data.kind === "loading" && <CollectionPageSkeleton label="Bestand wird geladen …" />}
-      {data.kind === "error" && <LoadError error={data.error} onReload={afterAction} />}
-      {data.kind === "da" && (
-        <Views
-          data={data}
-          create={create}
-          actions={{ archived, potted, marked, clearMessages }}
-          props={props}
-        />
-      )}
+      <RequestState
+        status={request.status}
+        {...(request.error ? { errorText: request.error.text } : {})}
+        onRetry={request.retry}
+        skeleton={<CollectionPageSkeleton label="Bestand wird geladen …" />}
+        offline={request.offline}
+      >
+        {request.value && (
+          <Views
+            data={request.value}
+            create={create}
+            actions={{ archived, potted, marked, clearMessages }}
+            props={props}
+          />
+        )}
+      </RequestState>
     </PageFrame>
   );
 }
@@ -85,7 +91,7 @@ type Actions = {
 
 /** One view at a time: the create form, the archive form, the marker form or the list. */
 function Views(p: {
-  data: Extract<Data, { kind: "da" }>;
+  data: Loaded;
   create: ReturnType<typeof useCreate>;
   actions: Actions;
   props: Props;
@@ -127,12 +133,7 @@ function Views(p: {
   return <List data={data} created={create.created} actions={p.actions} props={props} />;
 }
 
-function List(p: {
-  data: Extract<Data, { kind: "da" }>;
-  created: Specimen | null;
-  actions: Actions;
-  props: Props;
-}) {
+function List(p: { data: Loaded; created: Specimen | null; actions: Actions; props: Props }) {
   const { data, actions } = p;
   const { archived, potted, marked, clearMessages } = actions;
   const message = marked.message ?? archived.message ?? potted.message;

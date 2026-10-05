@@ -1,13 +1,14 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import type { LightLocation, PhasesRow } from "@pflanzendex/core";
 import { loadLocations } from "../light";
-import { LoadFrame, type Response } from "../kernel";
+import { LoadFrame, useInvalidate, type Response } from "../kernel";
 import { PhasesList } from "./phases-list";
 import { loadCarePhases } from "./care-phases-api";
 import { CarePhasesSkeleton } from "./CarePhasesPage.skeleton";
 import { RefusalAlert, StatusNote } from "./notices";
 import { usePhaseSwitch } from "./use-phase-switch";
 
+const KEY = ["care", "phases"] as const;
 type Token = () => Promise<string | undefined>;
 type Loaded = { rows: readonly PhasesRow[]; locations: readonly LightLocation[] };
 
@@ -25,8 +26,7 @@ async function loadBoth(api: string, token: string): Promise<Response<Loaded>> {
  */
 export function CarePhasesPage(props: { api: string; token: Token }) {
   const { api, token } = props;
-  const [reload, setReload] = useState(0);
-  const again = useCallback(() => setReload((n) => n + 1), []);
+  const again = useInvalidate(KEY);
   const move = usePhaseSwitch(api, token, again);
   const load = useCallback((t: string) => loadBoth(api, t), [api]);
   const loading = "Pflegephasen werden geladen …";
@@ -36,11 +36,11 @@ export function CarePhasesPage(props: { api: string; token: Token }) {
         Pflegephasen
       </h1>
       <LoadFrame
+        queryKey={KEY}
         token={token}
         load={load}
         loadingText={loading}
         loadingFallback={<CarePhasesSkeleton label={loading} />}
-        refresh={reload}
       >
         {(data) => (
           <>

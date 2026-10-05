@@ -1,6 +1,6 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import type { CandidateList } from "@pflanzendex/core";
-import { LoadFrame, useWriteAction } from "../kernel";
+import { LoadFrame, useInvalidate, useWriteAction } from "../kernel";
 import { EmptyState } from "@/components/shared/empty-state";
 import { CandidateCard } from "./candidate-card";
 import { WishForm } from "./wish-form";
@@ -13,6 +13,7 @@ const focusForm = () =>
     .querySelector<HTMLElement>('section[aria-labelledby="wish-form-title"] input[name="name"]')
     ?.focus();
 
+const KEY = ["wishlist", "candidates"] as const;
 type Token = () => Promise<string | undefined>;
 
 /** The list with what to do next, and below it the form to record a wish; a write reloads the list (P-10). */
@@ -69,9 +70,8 @@ function Body(props: { list: CandidateList; api: string; token: Token; onWritten
  */
 export function WishlistPage(props: { api: string; token: Token }) {
   const { api, token } = props;
-  const [version, setVersion] = useState(0);
+  const reload = useInvalidate(KEY);
   const load = useCallback((t: string) => loadCandidates(api, t), [api]);
-  const reload = useCallback(() => setVersion((n) => n + 1), []);
   return (
     <div className="rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7">
       <section aria-labelledby="wishlist-title" className="flex min-w-0 flex-col gap-3">
@@ -83,9 +83,9 @@ export function WishlistPage(props: { api: string; token: Token }) {
           Pflanzen kommt.
         </p>
         <LoadFrame
+          queryKey={KEY}
           token={token}
           load={load}
-          refresh={version}
           loadingText="Wunschliste wird geladen …"
           loadingFallback={<WishlistPageSkeleton label="Wunschliste wird geladen …" />}
         >

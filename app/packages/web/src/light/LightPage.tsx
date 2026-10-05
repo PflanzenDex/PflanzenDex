@@ -1,6 +1,7 @@
 import { EmptyState } from "@/components/shared/empty-state";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { SIGN_IN as KERNEL_SIGN_IN } from "../kernel";
+import { useCallback, useMemo, useState } from "react";
+import { RequestState } from "@/components/shared/request-state";
+import { SIGN_IN as KERNEL_SIGN_IN, useReload, useRequest } from "../kernel";
 import { LightView, type LightActions } from "./light-view";
 import { LightOverviewView } from "./light-overview-view";
 import { LightPageSkeleton } from "./light-page.skeleton";
@@ -17,10 +18,8 @@ import {
   type Response,
 } from "./light-api";
 
-type State =
-  | { kind: "loading" }
-  | { kind: "error"; error: ApiError }
-  | { kind: "bereit"; data: LightData; overview: Response<LightOverview> };
+type Loaded = { data: LightData; overview: Response<LightOverview> };
+const LIGHT_KEY = ["light"] as const;
 
 /** The refusal of a missing sign-in, typed for this module. */
 const SIGN_IN: ApiError = { code: KERNEL_SIGN_IN.code, text: KERNEL_SIGN_IN.text };
@@ -91,41 +90,48 @@ export function LightPage(props: {
   token: () => Promise<string | undefined>;
   onOpenCollection: () => void;
 }) {
-  const [z, setZ] = useState<State>({ kind: "loading" });
   const [lastError, setLastError] = useState<ApiError | undefined>();
   const { api, token } = props;
 
-  const load = useCallback(async () => {
-    const t = await token();
-    if (!t) return setZ({ kind: "error", error: SIGN_IN });
-    const [r, o] = await Promise.all([loadLight(api, t), loadLightOverview(api, t)]);
-    if (!r.ok) return setZ({ kind: "error", error: r.error });
-    // The overview is an addition: if only it fails, the zones and locations stay usable.
-    setZ({ kind: "bereit", data: r.value, overview: o });
-  }, [api, token]);
-  useEffect(() => void load(), [load]);
+  const loadAll = useCallback(
+    async (t: string): Promise<Response<Loaded>> => {
+      const [r, o] = await Promise.all([loadLight(api, t), loadLightOverview(api, t)]);
+      if (!r.ok) return r;
+      // The overview is an addition: if only it fails, the zones and locations stay usable.
+      return { ok: true, value: { data: r.value, overview: o } };
+    },
+    [api],
+  );
+  const request = useRequest({ queryKey: [...LIGHT_KEY, "page"], token, load: loadAll });
+  const reload = useReload(LIGHT_KEY);
+  const load = useCallback(() => reload(), [reload]);
 
   const actions = useMemo(() => buildActions(api, token, load, setLastError), [api, token, load]);
 
   const loading = "Standorte und Lichtzonen werden geladen …";
-  if (z.kind === "loading") return <LightPageSkeleton label={loading} />;
-  if (z.kind === "error")
-    return (
-      <EmptyState
-        variant="error"
-        title="Standorte und Lichtzonen konnten nicht geladen werden"
-        description={refusalText(z.error)}
-        action={{ label: "Erneut versuchen", onClick: () => void load() }}
-      />
-    );
+  const z = request.value;
   return (
-    <div className="flex min-w-0 flex-col gap-6">
-      <OverviewSection
-        overview={z.overview}
-        onOpenCollection={props.onOpenCollection}
-        onRetry={() => void load()}
-      />
-      <LightView data={z.data} actions={actions} {...(lastError ? { error: lastError } : {})} />
-    </div>
+    <RequestState
+      status={request.status}
+      onRetry={request.retry}
+      skeleton={<LightPageSkeleton label={loading} />}
+      offline={request.offline}
+      {...(request.error ? { errorText: errorTitle(request.error) } : {})}
+    >
+      {z && (
+        <div className="flex min-w-0 flex-col gap-6">
+          <OverviewSection
+            overview={z.overview}
+            onOpenCollection={props.onOpenCollection}
+            onRetry={() => void load()}
+          />
+          <LightView data={z.data} actions={actions} {...(lastError ? { error: lastError } : {})} />
+        </div>
+      )}
+    </RequestState>
   );
 }
+
+/** The failed load names what could not be loaded and why, in the German text of the code (P-10). */
+const errorTitle = (e: { code: string; text: string }) =>
+  `Standorte und Lichtzonen konnten nicht geladen werden. ${refusalText(e as ApiError)}`;

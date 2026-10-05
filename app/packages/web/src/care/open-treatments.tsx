@@ -1,37 +1,15 @@
 import type { TreatmentListRow } from "@pflanzendex/core";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { EmptyState, type EmptyStateAction } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
-import { LoadError, SIGN_IN, type ApiError } from "../kernel";
+import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../kernel";
 import { ATTENTION_CLASSES, CARD_CLASSES, LIST_CLASSES, RefusalAlert, StatusNote } from "./notices";
 import { OpenTreatmentsSkeleton } from "./open-treatments.skeleton";
 import { completeTreatment, loadOpenTreatments } from "./treatments-api";
+import { OPEN_KEY, TREATMENTS } from "./query-keys";
 import { dateText } from "./text";
 
 type Token = () => Promise<string | undefined>;
-type Data =
-  | { kind: "loading" }
-  | { kind: "error"; error: ApiError }
-  | { kind: "da"; rows: readonly TreatmentListRow[] };
-
-/** Loads the open treatments again whenever `version` changes (after planning, or "Erneut laden"). */
-function useOpenTreatments(api: string, token: Token, version: number): Data {
-  const [data, setData] = useState<Data>({ kind: "loading" });
-  useEffect(() => {
-    let current = true;
-    void (async () => {
-      const t = await token();
-      const r = t ? await loadOpenTreatments(api, t) : { ok: false as const, error: SIGN_IN };
-      if (current)
-        setData(r.ok ? { kind: "da", rows: r.value } : { kind: "error", error: r.error });
-    })();
-    return () => {
-      current = false;
-    };
-  }, [api, token, version]);
-  return data;
-}
-
 /** One sentence that says what to do next (P-09): the overdue and the due-today dates first. */
 export function nextStepText(rows: readonly TreatmentListRow[]): string | null {
   const overdue = rows.filter((r) => r.status.kind === "overdue").length;
@@ -106,30 +84,54 @@ function Row(props: { row: TreatmentListRow; running: boolean; onDone: () => voi
   );
 }
 
+function OpenList(props: {
+  all: readonly TreatmentListRow[];
+  completion: ReturnType<typeof useCompletion>;
+  next: EmptyStateAction;
+}) {
+  const { completion } = props;
+  const rows = props.all.filter((r) => !completion.doneIds.includes(r.id));
+  const next = nextStepText(rows);
+  if (rows.length === 0)
+    return (
+      <EmptyState
+        title="Keine offenen Behandlungen."
+        description="Plane unten einen Termin, dann erscheint er hier."
+        action={props.next}
+      />
+    );
+  return (
+    <>
+      {next && <p className="font-semibold">{next}</p>}
+      <ul className={LIST_CLASSES} aria-label="Offene Behandlungen">
+        {rows.map((row) => (
+          <Row
+            key={row.id}
+            row={row}
+            running={completion.runningId === row.id}
+            onDone={() => void completion.complete(row)}
+          />
+        ))}
+      </ul>
+    </>
+  );
+}
+
 /**
  * The open treatments by urgency (US-BEH-02): earliest first (the server sorts), status as text, never by colour
- * alone. Without any, the view says so and what to do next (P-09): `next` is that action.
+ * alone. Without any, the view says so and what to do next (P-09): `next` is that action. Planning and every tick-off
+ * attempt invalidate the treatments, so this list and the history load again without a page reload.
  */
 export function OpenTreatments(props: {
   api: string;
   token: Token;
-  version: number;
-  /** Called after every tick-off attempt, so that other views (the history) load again. */
-  onChanged: () => void;
   /** What to do when there is nothing open: plan one, or create a specimen first. */
   next: EmptyStateAction;
 }) {
-  const [reload, setReload] = useState(0);
-  const data = useOpenTreatments(props.api, props.token, props.version + reload);
-  const { onChanged } = props;
-  const changed = useCallback(() => {
-    setReload((n) => n + 1);
-    onChanged();
-  }, [onChanged]);
-  const completion = useCompletion(props.api, props.token, changed);
-  const rows =
-    data.kind === "da" ? data.rows.filter((r) => !completion.doneIds.includes(r.id)) : [];
-  const next = data.kind === "da" ? nextStepText(rows) : null;
+  const { api, token } = props;
+  const changed = useInvalidate(TREATMENTS);
+  const completion = useCompletion(api, token, changed);
+  const load = useCallback((t: string) => loadOpenTreatments(api, t), [api]);
   return (
     <section aria-labelledby="open-treatments-title" className="flex flex-col gap-3">
       <h2 id="open-treatments-title" className="text-xl font-semibold">
@@ -137,32 +139,15 @@ export function OpenTreatments(props: {
       </h2>
       {completion.message && <StatusNote>{completion.message}</StatusNote>}
       {completion.error && <RefusalAlert error={completion.error} />}
-      {data.kind === "loading" && <OpenTreatmentsSkeleton />}
-      {data.kind === "error" && (
-        <LoadError error={data.error} onReload={() => setReload((n) => n + 1)} />
-      )}
-      {data.kind === "da" && rows.length === 0 && (
-        <EmptyState
-          title="Keine offenen Behandlungen."
-          description="Plane unten einen Termin, dann erscheint er hier."
-          action={props.next}
-        />
-      )}
-      {data.kind === "da" && rows.length > 0 && (
-        <>
-          {next && <p className="font-semibold">{next}</p>}
-          <ul className={LIST_CLASSES} aria-label="Offene Behandlungen">
-            {rows.map((row) => (
-              <Row
-                key={row.id}
-                row={row}
-                running={completion.runningId === row.id}
-                onDone={() => void completion.complete(row)}
-              />
-            ))}
-          </ul>
-        </>
-      )}
+      <LoadFrame
+        queryKey={OPEN_KEY}
+        token={token}
+        load={load}
+        loadingText="Offene Behandlungen werden geladen …"
+        loadingFallback={<OpenTreatmentsSkeleton />}
+      >
+        {(all) => <OpenList all={all} completion={completion} next={props.next} />}
+      </LoadFrame>
     </section>
   );
 }

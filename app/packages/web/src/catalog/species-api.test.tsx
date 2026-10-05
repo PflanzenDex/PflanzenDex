@@ -1,6 +1,8 @@
+import { QueryClientProvider } from "@tanstack/react-query";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { loadSpecies, propose, searchSpecies } from "./species-api";
+import { createQueryClient } from "../kernel";
 import { SpeciesPage } from "./SpeciesPage";
 
 const response = (status: number, body: unknown) =>
@@ -37,7 +39,9 @@ describe("US-BES-01 client of the species API", () => {
 
   it("the page starts with the search and loads, without inventing anything", () => {
     const h = renderToString(
-      <SpeciesPage api="http://api" token={async () => "tok"} onChoose={vi.fn()} />,
+      <QueryClientProvider client={createQueryClient()}>
+        <SpeciesPage api="http://api" token={async () => "tok"} onChoose={vi.fn()} />
+      </QueryClientProvider>,
     );
     expect(h).toContain("Art wählen");
     expect(h).toContain("Suche läuft");

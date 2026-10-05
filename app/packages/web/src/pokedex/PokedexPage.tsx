@@ -21,6 +21,7 @@ export function PokedexPage(props: {
   return (
     <div className="min-w-0">
       <LoadFrame
+        queryKey={["pokedex", "ownership"]}
         token={token}
         load={load}
         loadingText="Pokédex wird geladen …"
