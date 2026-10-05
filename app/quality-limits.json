@@ -1,5 +1,5 @@
 {
-  "_comment": "Single source of truth for code metric limits (FR-QG-16, E-15). Values are assumptions until measured (`crap.max` 450 is the Tombola start value, assumption; read by scripts/check-crap.mjs). Read by eslint.config.js; per-area overrides are merged over `default`.",
+  "_comment": "Single source of truth for code metric limits (FR-QG-16, E-15). Values are assumptions until measured (`crap.max` 450 is the Tombola start value, assumption; read by tools/check/quality/check-crap.mjs). Read by eslint.config.js; per-area overrides are merged over `default`.",
   "default": {
     "complexity": 15,
     "cognitiveComplexity": 30,

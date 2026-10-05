@@ -13,4 +13,4 @@ paths:
 - Status symbols: ⬜ planned, 🟨 in progress, ✅ done. Change the status and the counters in `README.md` in the same PR as the code.
 - A new epic needs: a numbered file, README tables updated, cross-references, glossary terms in `00`, a place in the release cut in `16`.
 - Respect the principles (P-01 to P-11): no comparisons against species averages, no rankings between friends, etiolation never counts as success.
-- `app/scripts/check-specs.mjs` validates structure; run `make gates` after editing.
+- `app/tools/check/docs/check-specs.mjs` validates structure; run `make gates` after editing.

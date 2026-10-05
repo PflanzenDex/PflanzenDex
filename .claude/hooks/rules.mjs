@@ -19,8 +19,10 @@ const GATE_FILES = [
   /^app\/release\.config\.js$/,
   /^app\/tsconfig\.base\.json$/,
   /^app\/\.prettier(rc\.json|ignore)$/,
-  /^app\/scripts\/check-[a-z-]+\.mjs$/,
-  /^app\/scripts\/merge-pr(\.test)?\.mjs$/,
+  // Every non-test file under app/tools/check/ defines a gate: the check scripts and their libraries (rules, thresholds).
+  /^app\/tools\/check\/(?:.+\/)?(?!.*\.(?:test|selftest)\.mjs$)[^/]+\.mjs$/,
+  /^app\/tools\/workflow\/merge-pr(\.test)?\.mjs$/,
+  /^app\/layout\.config\.mjs$/,
   /^app\/packages\/[^/]+\/(vitest\.config\.ts|tsconfig\.json)$/,
 ];
 

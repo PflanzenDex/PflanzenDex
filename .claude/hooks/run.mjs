@@ -57,7 +57,7 @@ const handlers = {
     if (prettierCanFormat(file)) run("npx", ["--no-install", "prettier", "--write", "--log-level", "warn", file.slice(4)], { cwd: path.join(root, "app") });
     if (isSpecPath(file)) {
       try {
-        run("node", ["app/scripts/check-specs.mjs"]);
+        run("node", ["app/tools/check/docs/check-specs.mjs"]);
       } catch (e) {
         print({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: `Spec check failed after editing ${file}:\n${e.stderr || e.stdout}` } });
       }
