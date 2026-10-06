@@ -2,11 +2,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
+import { Form, FormRoot } from "@/components/ui/form";
 import { SIGN_IN, type ApiError } from "../kernel";
 import { redeemInvitation } from "./access-api";
 import { useServerRefusal } from "./refusal";
-import { TextField } from "./text-field";
+import { TextField } from "@/components/ui/input";
 import { invitationCodeSchema, type InvitationCodeFields } from "./schemas";
 
 type Token = () => Promise<string | undefined>;
@@ -65,12 +65,12 @@ export function InvitationPage(props: {
         Du hast keinen Code? Bitte die Person, die PflanzenDex betreibt, um eine Einladung.
       </p>
       <Form {...form}>
-        <form noValidate onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
+        <FormRoot onSubmit={submit} className="flex flex-col gap-4">
           <TextField
             control={form.control}
             name="code"
             label="Einladungscode"
-            autoComplete="off"
+            autoComplete="one-time-code"
             autoCapitalize="characters"
             spellCheck={false}
           />
@@ -88,7 +88,7 @@ export function InvitationPage(props: {
               Abmelden
             </Button>
           </div>
-        </form>
+        </FormRoot>
       </Form>
     </section>
   );

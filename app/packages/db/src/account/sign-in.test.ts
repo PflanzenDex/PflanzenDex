@@ -1,20 +1,24 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { withAccount, migrate, openPool } from "../kernel/index.ts";
+import { withAccount, migrate, openFixturePool, openOwnerPool } from "../kernel/index.ts";
 import { findOrCreateAccount } from "./index.ts";
 
 // US-ACC-01, FR-ACC-01: account creation runs through its own path that sees only the account of the verified subject.
 let pool: Pool;
+// Deliberate cross-tenant observation/cleanup of FORCE-d tables: needs the superuser, the suite owner is under row security (#294).
+let admin: Pool;
 const subjectA = `test-${randomUUID()}`;
 const subjectB = `test-${randomUUID()}`;
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
 });
 afterAll(async () => {
-  await pool.query("delete from account where subject = any($1)", [[subjectA, subjectB]]);
+  await admin.query("delete from account where subject = any($1)", [[subjectA, subjectB]]);
+  await admin.end();
   await pool.end();
 });
 
@@ -29,7 +33,7 @@ describe("account creation via the subject of the sign-in service (US-ACC-01)", 
   it("two concurrent first sign-ins yield exactly one account", async () => {
     const ids = await Promise.all([1, 2, 3].map(() => findOrCreateAccount(pool, subjectB)));
     expect(new Set(ids).size).toBe(1);
-    const n = await pool.query("select count(*)::int as n from account where subject = $1", [
+    const n = await admin.query("select count(*)::int as n from account where subject = $1", [
       subjectB,
     ]);
     expect(n.rows[0].n).toBe(1);

@@ -35,7 +35,7 @@ type Props = {
   token: Token;
   newSpecies: Species | null;
   onSpeciesChoose: () => void;
-  onCompleted: () => void;
+  onCompleted: (specimen: Specimen) => void;
   onMeasure?: (e: { id: string; name: string }) => void;
 };
 
@@ -66,6 +66,7 @@ export function CollectionPage(props: Props) {
         status={request.status}
         {...(request.error ? { errorText: request.error.text } : {})}
         onRetry={request.retry}
+        heading="Bestand"
         skeleton={<CollectionPageSkeleton label="Bestand wird geladen …" />}
         offline={request.offline}
       >

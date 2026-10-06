@@ -2,25 +2,9 @@ import type { Pool } from "pg";
 import { withAccount } from "../kernel/index.ts";
 import type { SpeciesRepointer } from "./repointer.ts";
 
-// Same shapes as the interface ReviewStore in `core` (structurally equal; `db` does not import `core`).
-export type Role = "operator" | "reviewer";
-export type ReviewStatus =
-  "proposal" | "ai_unreviewed" | "curated" | "reviewed" | "rejected" | "merged";
-export interface ReviewCase {
-  readonly id: string;
-  readonly creatorId: string;
-  readonly objectKind: string;
-  readonly objectId: string;
-  readonly status: ReviewStatus;
-  readonly reason: string | null;
-  readonly reviewedBy: string | null;
-  readonly createdAt: string;
-  readonly mergedInto: string | null;
-}
-export interface MergeOutcome {
-  readonly reviewCase: ReviewCase;
-  readonly moved: readonly { kind: string; moved: number; kept: number }[];
-}
+// The shapes are the types of `core` (type-only import through its public entry, AB-2).
+import type { MergeOutcome, ReviewCase, ReviewStatus, Role } from "@pflanzendex/core";
+export type { MergeOutcome, ReviewCase, ReviewStatus, Role };
 
 const COLUMNS = `id, account_id as "creatorId", object_kind as "objectKind", object_id as "objectId",
   status, reason, reviewed_by as "reviewedBy",
@@ -109,14 +93,16 @@ export class ReviewPostgres {
   ): Promise<MergeOutcome | "conflict" | "lock_failed" | null> {
     try {
       return await withAccount(this.pool, userId, async (c) => {
-        const proposal = await c.query<{ objectId: string }>(
-          `select object_id as "objectId" from review_case where id = $1 and object_kind = 'species'`,
+        const proposal = await c.query<{ objectId: string; status: string }>(
+          `select object_id as "objectId", status from review_case where id = $1 and object_kind = 'species'`,
           [proposalId],
         );
         // Wait for writes of the creator on the proposal that are still in flight, then block new ones. If no row could
         // be locked, that is its own failure (`lock_failed`, nothing is merged, never a silent no-lock); a case that was
         // decided in the meantime is `null`.
-        if (!proposal.rows[0]) return null;
+        // A decided case is final: under row security its species is hidden, so locking it would fail for the wrong reason.
+        if (!proposal.rows[0] || !["proposal", "ai_unreviewed"].includes(proposal.rows[0].status))
+          return null;
         const lock = await c.query<{ locked: boolean }>(
           "select lock_species_for_merge($1) as locked",
           [proposal.rows[0].objectId],

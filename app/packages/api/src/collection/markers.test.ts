@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool } from "@pflanzendex/db";
+import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
 // US-BES-03: tell several specimens of a species apart via the API (real PostgreSQL, `make db-up`).
 let pool: Pool;
+let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
 const run = randomUUID()
   .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
   .replace(/-/g, "")
@@ -63,22 +64,24 @@ const list = async (sub: string): Promise<{ id: string; name: string; marker: st
   (await call(sub, "GET", "/specimens")).body["specimens"];
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer, pool, clock: () => NOW });
 });
 afterAll(async () => {
-  await pool.query(
+  await admin.query(
     "delete from specimen where account_id in (select id from account where subject = any($1))",
     [[subA, subB]],
   );
-  await pool.query(
+  await admin.query(
     `delete from species where id in (select object_id from review_case
        where account_id in (select id from account where subject = any($1)))`,
     [[subA, subB]],
   );
-  await pool.query("delete from account where subject = any($1)", [[subA, subB]]);
+  await admin.query("delete from account where subject = any($1)", [[subA, subB]]);
   await pool.end();
+  await admin.end();
 });
 
 describe("US-BES-03 naming rule via the API", () => {

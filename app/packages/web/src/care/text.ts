@@ -8,8 +8,9 @@ import type {
   GrowthMeasure,
 } from "@pflanzendex/core";
 
-/** P-08: what is missing is called "unknown" and is never filled with a value. */
-export const UNKNOWN = "unbekannt";
+import { UNKNOWN, dateText, valueText } from "@/lib/format";
+
+export { UNKNOWN, dateText, valueText };
 
 export const MASS_NAME: Record<GrowthMeasure, string> = {
   height: "Höhe",
@@ -23,16 +24,6 @@ export const QUALITY_NAME: Record<Quality, string> = {
   healthy: "Gesund",
   etiolated: "Vergeilt/dünn",
 };
-
-/** `YYYY-MM-DD` as "03.10.2026" (without time zone conversion: it is a calendar date, NFR-08). */
-export function dateText(iso: string): string {
-  const [jahr, month, tag] = iso.split("-");
-  return `${tag}.${month}.${jahr}`;
-}
-
-/** "12.5 cm": the measures of the species are measured in centimeters (US-WAC-01). */
-export const valueText = (value: number): string =>
-  `${value.toLocaleString("de-DE", { maximumFractionDigits: 1 })} cm`;
 
 export const measurementText = (m: MeasurementRow): string =>
   `${valueText(m.value)} am ${dateText(m.date)}`;

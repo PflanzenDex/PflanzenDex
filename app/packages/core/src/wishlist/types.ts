@@ -33,16 +33,22 @@ export interface WishRow {
   readonly license: string | null;
   readonly type: "plant";
   readonly status: WishStatus;
+  /** The specimen this wish became ("bought → specimen", US-WUN-05); `null` until it is linked. */
+  readonly specimenId: string | null;
 }
 
 /** The values of a new wish; `nameKey` is derived from the name (`wishNameKey`) and makes the name unique per account. */
-export type WishValues = Omit<WishRow, "id" | "type" | "status"> & { readonly nameKey: string };
+export type WishValues = Omit<WishRow, "id" | "type" | "status" | "specimenId"> & {
+  readonly nameKey: string;
+};
 
-/** A wish after "Bought" (US-WUN-03). `changed` is false when it was bought already: nothing was written again. */
-export interface WishPurchase {
+/** A wish after a status change ("Bought", US-WUN-03; "Discarded", US-WUN-05). `changed` is false when nothing was written. */
+export interface WishChange {
   readonly wish: WishRow;
   readonly changed: boolean;
 }
+/** A wish after "Bought" (US-WUN-03). `changed` is false when it was bought already: nothing was written again. */
+export type WishPurchase = WishChange;
 
 /** Every call applies to the account `userId` only (P-04). */
 export interface WishStore {
@@ -57,6 +63,42 @@ export interface WishStore {
   buy(userId: string, wishId: string): Promise<WishPurchase | "not_found" | "not_open">;
   /** Bought plant wishes, the history of US-WUN-03; by name. */
   bought(userId: string): Promise<readonly WishRow[]>;
+  /**
+   * Sets an open wish to `discarded` (US-WUN-05) in one step; it is kept, never deleted (P-10). A wish that is discarded
+   * already is returned unchanged; `not_found` as for `buy`; `not_open`: the wish is bought and stays bought.
+   */
+  discard(userId: string, wishId: string): Promise<WishChange | "not_found" | "not_open">;
+  /** Discarded plant wishes, so a discarded wish stays readable (P-10); by name. */
+  discarded(userId: string): Promise<readonly WishRow[]>;
+  /**
+   * Links a bought wish to the specimen it became (US-WUN-05). Linking the same specimen again changes nothing.
+   * `not_found`: no wish of the account (a foreign one looks the same, P-04); `not_bought`: only a bought wish is linked;
+   * `specimen_unknown`: not a specimen of the account; `already_linked`: the wish has another specimen, or the specimen
+   * belongs to another wish.
+   */
+  link(
+    userId: string,
+    wishId: string,
+    specimenId: string,
+  ): Promise<WishChange | "not_found" | "not_bought" | "specimen_unknown" | "already_linked">;
+  /**
+   * Open plant wishes that have no name key (FR-WUN-06, #303): they collided with an older wish after folding when
+   * migration 0020 ran and are exempt from the unique name rule. Oldest first.
+   */
+  keyless(userId: string): Promise<readonly WishRow[]>;
+  /**
+   * Renames a wish that has no name key and sets its key in one step, so it leaves the exempt group. `not_found`: no
+   * wish of the account (a foreign one looks the same, P-04); `not_duplicate`: the wish has a key already;
+   * `name_taken`: another wish has that name key.
+   */
+  rename(
+    userId: string,
+    wishId: string,
+    name: string,
+    nameKey: string,
+  ): Promise<WishRow | "not_found" | "not_duplicate" | "name_taken">;
+  /** Deletes a wish that has no name key; `not_found` / `not_duplicate` as for `rename`. Returns the deleted wish. */
+  remove(userId: string, wishId: string): Promise<WishRow | "not_found" | "not_duplicate">;
   /** Wishes of any status that point at the zone (so a zone in use is not deleted unnoticed). */
   usingZone(userId: string, zoneId: string): Promise<readonly WishRow[]>;
 }

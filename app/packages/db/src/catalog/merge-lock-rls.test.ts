@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool, testDatabaseUrl, withAccount } from "../kernel/index.ts";
+import { migrate, openAdminPool, openPool, testDatabaseUrl, withAccount } from "../kernel/index.ts";
 import { assignRole } from "../fixtures.ts";
 
 // US-BES-10, FR-BES-11, P-10: the lock that a merge takes on the proposal's species row must be real when the owner
@@ -26,7 +26,7 @@ function scratchUrl(): string {
 }
 
 beforeAll(async () => {
-  admin = openPool();
+  admin = openAdminPool();
   await migrate(admin); // makes sure the application role exists (cluster-wide)
   await admin.query(`create role ${OWNER} login nosuperuser password 'lock'`);
   await admin.query(`grant pflanzendex_app to ${OWNER} with admin option`);

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { withAccount, migrate, openPool } from "../kernel/index.ts";
+import { withAccount, migrate, openOwnerPool, openFixturePool } from "../kernel/index.ts";
 import { findSchemaViolations } from "../schema-check.ts";
 import { assignRole } from "../fixtures.ts";
 import { SpeciesPostgres, ReviewPostgres } from "./index.ts";
@@ -9,6 +9,8 @@ import type { SpeciesName, SpeciesValues } from "./species.ts";
 
 // US-BES-01, FR-BES-02, FR-BES-11, E-02: species catalog with private proposals (real PostgreSQL, `make db-up`).
 let pool: Pool;
+// Deliberate cross-tenant cleanup/observation of FORCE-d tables: needs the superuser, the suite owner is under row security (#294).
+let admin: Pool;
 let species: SpeciesPostgres;
 const [anna, ben, operator] = [randomUUID(), randomUUID(), randomUUID()];
 const all = [anna, ben, operator];
@@ -68,7 +70,8 @@ async function approve(speciesId: string) {
 }
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   species = new SpeciesPostgres(pool);
   for (const id of all)
@@ -76,11 +79,12 @@ beforeAll(async () => {
   await assignRole(pool, operator, "operator");
 });
 afterAll(async () => {
-  await pool.query(
+  await admin.query(
     "delete from species where id in (select object_id from review_case where account_id = any($1))",
     [all],
   );
-  await pool.query("delete from account where id = any($1)", [all]);
+  await admin.query("delete from account where id = any($1)", [all]);
+  await admin.end();
   await pool.end();
 });
 
@@ -127,7 +131,7 @@ describe("species catalog: proposal is private (FR-BES-11, P-04, P-05)", () => {
 
 describe("species catalog: row rules and triggers in the database", () => {
   it("species and names have enforced row rules; the application cannot change or delete them", async () => {
-    const r = await pool.query(
+    const r = await admin.query(
       `select relname, relrowsecurity, relforcerowsecurity from pg_class
         where relname in ('species', 'species_name') order by relname`,
     );
@@ -205,12 +209,12 @@ describe("species catalog: row rules and triggers in the database", () => {
 
   it("if creation fails, nothing remains (no partial state, FR-BES-03)", async () => {
     const w = values(name("Aloe teil "), { difficulty: 9 });
-    const before = await pool.query(
+    const before = await admin.query(
       "select count(*)::int as n from review_case where account_id = $1",
       [anna],
     );
     await expect(species.create(anna, w, names(w))).rejects.toThrow();
-    const after = await pool.query(
+    const after = await admin.query(
       "select count(*)::int as n from review_case where account_id = $1",
       [anna],
     );
@@ -276,5 +280,41 @@ describe("species catalog and review status (TE-08)", () => {
       reviewStatus: "reviewed",
       latinName: a.latinName,
     });
+  });
+
+  it("US-POK-03 the taxonomy build reads only approved species without cultivar and epithet-less entries", async () => {
+    const approved = await create(anna, values(name("Aloe taxon ")));
+    await approve(approved.id);
+    const proposal = await create(anna, values(name("Aloe nur-vorschlag ")));
+    const cultivar = await create(anna, values(name("Aloe sorte "), { cultivar: "Rot" }));
+    await approve(cultivar.id);
+    const noEpithet = await create(anna, values(name("Aloe"), { epithet: null }));
+    await approve(noEpithet.id);
+    const listed = await species.approvedLatinNames();
+    expect(listed).toContain(approved.latinName);
+    expect(listed).not.toContain(proposal.latinName);
+    expect(listed).not.toContain(cultivar.latinName);
+    expect(listed).not.toContain(noEpithet.latinName);
+  });
+
+  it("US-POK-01 gives the Pokédex cards facts of approved species only, no proposals and no cultivars", async () => {
+    const approved = await create(
+      anna,
+      values(name("Aloe karte "), { germanName: "Kartenaloe", difficulty: 3, standardLevel: 4 }),
+    );
+    await approve(approved.id);
+    const proposal = await create(anna, values(name("Aloe karte-vorschlag ")));
+    const cultivar = await create(anna, values(name("Aloe karte-sorte "), { cultivar: "Rot" }));
+    await approve(cultivar.id);
+    const facts = await species.approvedFacts(ben);
+    expect(facts).toContainEqual({
+      latinName: approved.latinName,
+      germanName: "Kartenaloe",
+      difficulty: 3,
+      lightZone: 4,
+    });
+    const names = facts.map((f) => f.latinName);
+    expect(names).not.toContain(proposal.latinName);
+    expect(names).not.toContain(cultivar.latinName);
   });
 });

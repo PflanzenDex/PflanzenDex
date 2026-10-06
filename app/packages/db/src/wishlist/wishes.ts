@@ -1,28 +1,16 @@
-import type { Pool } from "pg";
+import type { Pool, PoolClient } from "pg";
 import { withAccount } from "../kernel/index.ts";
+import {
+  COLUMNS,
+  findWish,
+  type WishChange,
+  type WishPurchase,
+  type WishRow,
+  type WishValues,
+} from "./wish-row.ts";
+import { discardedWishes, discardWish, linkWish } from "./wish-outcome.ts";
 
-// Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
-export interface WishRow {
-  readonly id: string;
-  readonly name: string;
-  readonly german: string | null;
-  readonly targetZoneId: string | null;
-  readonly difficulty: number | null;
-  readonly reasoning: string | null;
-  readonly imageUrl: string | null;
-  readonly imageSource: string | null;
-  readonly license: string | null;
-  readonly type: "plant";
-  readonly status: "wishlist" | "bought" | "discarded";
-}
-export type WishValues = Omit<WishRow, "id" | "type" | "status"> & { readonly nameKey: string };
-export interface WishPurchase {
-  readonly wish: WishRow;
-  readonly changed: boolean;
-}
-
-const COLUMNS = `id, name, german, target_zone_id as "targetZoneId", difficulty, reasoning, image_url as "imageUrl",
-  image_source as "imageSource", license, type, status`;
+export type { WishChange, WishPurchase, WishRow, WishValues } from "./wish-row.ts";
 
 const UNIQUE = "23505";
 const FOREIGN_KEY = "23503";
@@ -87,14 +75,25 @@ export class WishesPostgres {
         [wishId],
       );
       if (changed.rows[0]) return { wish: changed.rows[0], changed: true };
-      const now = await c.query<WishRow>(
-        `select ${COLUMNS} from wish where id = $1 and type = 'plant'`,
-        [wishId],
-      );
-      const wish = now.rows[0];
+      const wish = await findWish(c, wishId);
       if (!wish) return "not_found";
       return wish.status === "bought" ? { wish, changed: false } : "not_open";
     });
+  }
+
+  /** Sets an open wish to `discarded` (US-WUN-05); see `discardWish`. */
+  discard(userId: string, wishId: string): Promise<WishChange | "not_found" | "not_open"> {
+    return discardWish(this.pool, userId, wishId);
+  }
+
+  /** Discarded plant wishes, by name; the row rules show only the own ones. */
+  discarded(userId: string): Promise<readonly WishRow[]> {
+    return discardedWishes(this.pool, userId);
+  }
+
+  /** Links a bought wish to its specimen (US-WUN-05); see `linkWish`. */
+  link(userId: string, wishId: string, specimenId: string) {
+    return linkWish(this.pool, userId, wishId, specimenId);
   }
 
   /** Bought plant wishes (the history of US-WUN-03), by name; the row rules show only the own ones. */
@@ -105,6 +104,63 @@ export class WishesPostgres {
       ),
     );
     return r.rows;
+  }
+
+  /**
+   * Open plant wishes without a name key (FR-WUN-06, #303), oldest first: the ones migration 0020 left exempt from the
+   * unique name rule. The row rules show only the own ones.
+   */
+  async keyless(userId: string): Promise<readonly WishRow[]> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<WishRow>(
+        `select ${COLUMNS} from wish where name_key is null and status = 'wishlist' and type = 'plant' order by created_at, id`,
+      ),
+    );
+    return r.rows;
+  }
+
+  /**
+   * Renames a key-less wish and sets its key in one statement, so it leaves the exempt group. `not_duplicate`: the
+   * wish has a key already (checked in the same statement, so a concurrent rename cannot slip through); a wish the
+   * row rules hide is `not_found`; a taken name (key or old lower-case rule) is `name_taken`.
+   */
+  async rename(
+    userId: string,
+    wishId: string,
+    name: string,
+    nameKey: string,
+  ): Promise<WishRow | "not_found" | "not_duplicate" | "name_taken"> {
+    try {
+      return await withAccount(this.pool, userId, async (c) => {
+        const changed = await c.query<WishRow>(
+          `update wish set name = $2, name_key = $3 where id = $1 and name_key is null returning ${COLUMNS}`,
+          [wishId, name, nameKey],
+        );
+        return changed.rows[0] ?? (await this.missing(c, wishId));
+      });
+    } catch (e) {
+      const f = e as { code?: string; constraint?: string };
+      if (f.code === UNIQUE && (f.constraint === "wish_name" || f.constraint === "wish_name_key"))
+        return "name_taken";
+      throw e;
+    }
+  }
+
+  /** Deletes a key-less wish and returns it; `not_found` / `not_duplicate` as for `rename`. */
+  async remove(userId: string, wishId: string): Promise<WishRow | "not_found" | "not_duplicate"> {
+    return withAccount(this.pool, userId, async (c) => {
+      const gone = await c.query<WishRow>(
+        `delete from wish where id = $1 and name_key is null returning ${COLUMNS}`,
+        [wishId],
+      );
+      return gone.rows[0] ?? (await this.missing(c, wishId));
+    });
+  }
+
+  /** Why an update or delete of a key-less wish touched nothing: it has a key already, or it is not visible. */
+  private async missing(c: PoolClient, wishId: string): Promise<"not_found" | "not_duplicate"> {
+    const seen = await c.query("select 1 from wish where id = $1", [wishId]);
+    return seen.rowCount === 1 ? "not_duplicate" : "not_found";
   }
 
   /** Wishes of any status that point at the zone, by name. */

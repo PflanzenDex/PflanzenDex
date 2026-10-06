@@ -28,6 +28,10 @@ export const ERROR_TEXTS = {
   "species.duplicate":
     "Diese Art gibt es schon (gleicher Name oder Synonym). Wähle die vorhandene Art, statt eine zweite anzulegen.",
   "species.not_found": "Diese Art gibt es nicht.",
+  "catalog.name_hybrid":
+    "Hybridzeichen (× oder x) gehören nicht in den Katalog. Trage die Art ohne Hybridzeichen ein, zum Beispiel „Citrus limon“ statt „Citrus x limon“.",
+  "catalog.name_addition":
+    "Zusätze wie var., subsp., f. oder cv. gehören nicht in den Katalog. Trage nur Gattung und Art ein; den Zusatz hältst du beim Exemplar fest.",
   "specimen.name_taken":
     "Ein Exemplar mit diesem Namen gibt es schon. Gib ein Kennzeichen an (zum Beispiel eine Farbe), damit du die Töpfe unterscheiden kannst.",
   "specimen.marker_taken":
@@ -59,6 +63,14 @@ export const ERROR_TEXTS = {
   "wish.not_found": "Diesen Wunsch gibt es nicht. Lade die Wunschliste neu.",
   "wish.not_open":
     "Dieser Wunsch ist verworfen und nicht mehr offen. Nur ein offener Wunsch kann als gekauft vermerkt werden; es wurde nichts geändert.",
+  "wish.already_bought":
+    "Dieser Wunsch ist schon als gekauft vermerkt und lässt sich nicht mehr verwerfen. Es wurde nichts geändert.",
+  "wish.not_bought":
+    "Dieser Wunsch ist nicht als gekauft vermerkt. Nur ein gekaufter Wunsch wird mit einem Exemplar verknüpft; es wurde nichts geändert.",
+  "wish.already_linked":
+    "Dieser Wunsch ist schon mit einem anderen Exemplar verknüpft, oder das Exemplar gehört schon zu einem anderen Wunsch. Es wurde nichts geändert.",
+  "wish.not_duplicate":
+    "Dieser Wunsch hat keinen doppelten Namen und lässt sich hier nicht umbenennen oder löschen. Lade die Wunschliste neu; es wurde nichts geändert.",
   "care.no_phase":
     "Dieses Exemplar hat keine Pflegephase (Steckling oder Art ohne Ruhephasen-Zeitraum) und wird nicht umgestellt.",
   "care.target_unknown":
@@ -81,6 +93,12 @@ export const ERROR_TEXTS = {
     "Eine externe Datenquelle hat eine unlesbare Antwort geliefert. Es wurde nichts übernommen; der letzte gute Stand bleibt bestehen.",
   "source.request_rejected":
     "Eine externe Datenquelle hat die Abfrage abgelehnt. Es wurde nichts übernommen; der Betreiber wird informiert.",
+  "taxonomy.no_match":
+    "Zu dieser Art gibt es in der Pflanzen-Taxonomie keinen Treffer. Prüfe den lateinischen Namen; Familie und Gattung bleiben unbekannt.",
+  "taxonomy.not_species":
+    "Der Treffer der Pflanzen-Taxonomie ist keine Art (zum Beispiel nur eine Gattung). Familie und Gattung bleiben unbekannt.",
+  "taxonomy.lineage_missing":
+    "Zu dieser Art fehlt in der Pflanzen-Taxonomie die Einordnung in Gattung und Familie. Sie bleibt unbekannt.",
   "operator_cost.month_in_future":
     "Dieser Monat liegt in der Zukunft. Trage die Kosten eines Monats ein, der schon begonnen hat.",
 } as const;

@@ -37,15 +37,38 @@ const list = (
   candidates,
   zones,
   hint,
+  duplicates: [],
+  duplicateHint: null,
+  replenishment: {
+    buffer: 2,
+    zones: [],
+    actions: { discover: false, suggestions: false },
+    nextAction: null,
+  },
 });
 
 const NONE_BOUGHT = {
   bought: [],
   hint: { text: "Noch kein Wunsch ist als gekauft vermerkt.", nextAction: "Tippe auf „Gekauft“." },
 };
-/** The history of bought wishes (US-WUN-03) is loaded with the list; this answers it for stubs that know one body. */
+const NONE_DISCARDED = {
+  discarded: [],
+  hint: { text: "Kein Wunsch ist verworfen.", nextAction: "Tippe auf „Verwerfen“." },
+};
+/** The list of discarded wishes (US-WUN-05) is loaded with the page; stubs that know nothing else answer it empty. */
+const fallback = (url: unknown) =>
+  String(url).endsWith("/wishes/discarded") ? response(200, NONE_DISCARDED) : response(404, {});
+
+/** The histories of bought (US-WUN-03) and discarded (US-WUN-05) wishes are loaded with the list; this answers them for stubs that know one body. */
 const boughtOr = (url: unknown, body: unknown) =>
-  response(200, String(url).endsWith("/wishes/bought") ? NONE_BOUGHT : body);
+  response(
+    200,
+    String(url).endsWith("/wishes/bought")
+      ? NONE_BOUGHT
+      : String(url).endsWith("/wishes/discarded")
+        ? NONE_DISCARDED
+        : body,
+  );
 
 function fakeServer(initial: unknown, post?: () => Promise<Response>) {
   let current = initial;
@@ -58,7 +81,7 @@ function fakeServer(initial: unknown, post?: () => Promise<Response>) {
       if (r.ok) current = list([candidate({ id: "w2", name: "Neu", german: null, title: "Neu" })]);
       return r;
     }
-    return response(404, {});
+    return fallback(url);
   });
   vi.stubGlobal("fetch", fetchFn);
   return fetchFn;
@@ -137,6 +160,28 @@ describe("US-WUN-01 page of the candidate list", () => {
     await screen.findByText("Keine offenen Kandidaten in der Wunschliste.");
     expect(screen.getByText("Erfasse einen Wunsch mit Ziel-Lichtzone.")).toBeTruthy();
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+  });
+
+  it("US-WUN-02 shows the replenishment warning of the server above the list", async () => {
+    fakeServer({
+      ...list([candidate()]),
+      replenishment: {
+        buffer: 2,
+        zones: [
+          {
+            zoneId: "z3",
+            name: "Fenster 3",
+            open: 1,
+            text: "Nachschub nötig: Fenster 3 (1 offener Kandidat)",
+          },
+        ],
+        actions: { discover: false, suggestions: false },
+        nextAction: "Erfasse einen Wunsch mit Ziel-Zone Fenster 3.",
+      },
+    });
+    render(<WishlistPage api="http://api" token={token} />);
+    expect(await screen.findByText("Nachschub nötig: Fenster 3 (1 offener Kandidat)")).toBeTruthy();
+    expect(screen.getByText("Erfasse einen Wunsch mit Ziel-Zone Fenster 3.")).toBeTruthy();
   });
 
   it("US-WUN-01 shows a load error with a way to retry", async () => {
@@ -466,7 +511,7 @@ describe("US-WUN-03 record a purchase on the page", () => {
     nextAction: "Lege die Pflanze jetzt als Exemplar in deiner Sammlung an.",
   };
   const historyOf = (titles: string[]) => ({
-    bought: titles.map((title, i) => ({ id: `b${i}`, name: title, title })),
+    bought: titles.map((title, i) => ({ id: `b${i}`, name: title, title, specimenId: null })),
     hint: {
       text: `${titles.length} Wünsche sind als gekauft vermerkt.`,
       nextAction:
@@ -501,7 +546,7 @@ describe("US-WUN-03 record a purchase on the page", () => {
           hint: BOUGHT_HINT,
         });
       }
-      return response(404, {});
+      return fallback(url);
     });
     vi.stubGlobal("fetch", fetchFn);
     return fetchFn;
@@ -558,7 +603,7 @@ describe("US-WUN-03 record a purchase on the page", () => {
       if (path === "/wishes/candidates") return response(200, list([candidate()]));
       if (path === "/wishes/bought") return response(200, NONE_BOUGHT);
       if (init?.method === "POST") return new Promise<Response>((resolve) => (release = resolve));
-      return response(404, {});
+      return fallback(url);
     });
     vi.stubGlobal("fetch", fetchFn);
     render(<WishlistPage api="http://api" token={token} />);
@@ -573,5 +618,144 @@ describe("US-WUN-03 record a purchase on the page", () => {
     );
     await screen.findByText(BOUGHT_HINT.text);
     expect(fetchFn.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
+  });
+});
+
+describe("FR-WUN-06 #303 repair of duplicate wish names on the page", () => {
+  const HINT = {
+    text: "Diese Wünsche heißen gleich wie ein anderer: umbenennen oder zusammenführen.",
+    nextAction: "Benenne jeden dieser Wünsche um oder lösche ihn.",
+  };
+  const withDuplicates = () => ({
+    ...list([candidate()]),
+    duplicates: [{ id: "w9", name: "Cafe", title: "Cafe" }],
+    duplicateHint: HINT,
+  });
+
+  /** Serves the list with one duplicate until a repair succeeds, then without; or refuses with `refusal`. */
+  function repairServer(refusal?: { status: number; code: string }) {
+    let fixed = false;
+    const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
+      const path = new URL(String(url)).pathname;
+      if (path === "/wishes/candidates")
+        return response(200, fixed ? list([candidate()]) : withDuplicates());
+      if (path === "/wishes/bought") return response(200, NONE_BOUGHT);
+      if (init?.method === "POST" && /^\/wishes\/w9\/(rename|remove-duplicate)$/.test(path)) {
+        if (refusal)
+          return response(refusal.status, {
+            error: { code: refusal.code, text: "roh vom Server" },
+          });
+        fixed = true;
+        return response(200, {
+          wish: { id: "w9", name: "Cafe au lait" },
+          removed: { id: "w9" },
+          hint: { text: "Der Wunsch heißt jetzt „Cafe au lait“.", nextAction: "Prüfe weitere." },
+        });
+      }
+      return fallback(url);
+    });
+    vi.stubGlobal("fetch", fetchFn);
+    return fetchFn;
+  }
+  const posts = (f: ReturnType<typeof repairServer>) =>
+    f.mock.calls.filter(([, init]) => init?.method === "POST");
+
+  it("FR-WUN-06 #303 shows the hint and each duplicate with its actions, above the candidates", async () => {
+    repairServer();
+    render(<WishlistPage api="http://api" token={token} />);
+    const section = await screen.findByRole("region", { name: "Doppelte Namen" });
+    expect(within(section).getByText(HINT.text)).toBeTruthy();
+    expect(within(section).getByText(HINT.nextAction)).toBeTruthy();
+    expect(within(section).getByLabelText("Neuer Name für Cafe")).toBeTruthy();
+    expect(within(section).getByRole("button", { name: "Umbenennen: Cafe" })).toBeTruthy();
+    expect(within(section).getByRole("button", { name: "Löschen: Cafe" })).toBeTruthy();
+  });
+
+  it("FR-WUN-06 #303 without duplicates there is no such section", async () => {
+    fakeServer(list([candidate()]));
+    render(<WishlistPage api="http://api" token={token} />);
+    await screen.findAllByRole("listitem");
+    expect(screen.queryByRole("region", { name: "Doppelte Namen" })).toBeNull();
+  });
+
+  it("FR-WUN-06 #303 rename sends the new name with a repeat-guard key and the hint goes away", async () => {
+    const f = repairServer();
+    render(<WishlistPage api="http://api" token={token} />);
+    const field = await screen.findByLabelText("Neuer Name für Cafe");
+    await userEvent.clear(field);
+    await userEvent.type(field, "Cafe au lait");
+    await userEvent.click(screen.getByRole("button", { name: "Umbenennen: Cafe" }));
+    await screen.findByText(/heißt jetzt/);
+    expect(posts(f)).toHaveLength(1);
+    const [url, init] = posts(f)[0] ?? [];
+    expect(String(url)).toBe("http://api/wishes/w9/rename");
+    expect(JSON.parse(String(init?.body))).toEqual({ name: "Cafe au lait" });
+    expect(new Headers(init?.headers).get("Idempotency-Key")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Doppelte Namen" })).toBeNull();
+  });
+
+  it("FR-WUN-06 #303 a blank name sends nothing and says so", async () => {
+    const f = repairServer();
+    render(<WishlistPage api="http://api" token={token} />);
+    const field = await screen.findByLabelText("Neuer Name für Cafe");
+    await userEvent.clear(field);
+    await userEvent.click(screen.getByRole("button", { name: "Umbenennen: Cafe" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("Name");
+    expect(posts(f)).toHaveLength(0);
+  });
+
+  it("FR-WUN-06 #303 a taken name shows the German text of its code, never the raw server text (P-10)", async () => {
+    repairServer({ status: 409, code: "wish.name_taken" });
+    render(<WishlistPage api="http://api" token={token} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Umbenennen: Cafe" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Einen Wunsch mit diesem Namen gibt es schon");
+    expect(alert.textContent).not.toContain("roh vom Server");
+    expect(screen.getByRole("region", { name: "Doppelte Namen" })).toBeTruthy();
+  });
+
+  it("FR-WUN-06 #303 delete asks first and sends nothing until it is confirmed", async () => {
+    const f = repairServer();
+    render(<WishlistPage api="http://api" token={token} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Löschen: Cafe" }));
+    expect(screen.getByText(/Wirklich löschen/)).toBeTruthy();
+    expect(posts(f)).toHaveLength(0);
+    await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    expect(screen.queryByText(/Wirklich löschen/)).toBeNull();
+    expect(posts(f)).toHaveLength(0);
+    await userEvent.click(screen.getByRole("button", { name: "Löschen: Cafe" }));
+    await userEvent.click(screen.getByRole("button", { name: "Ja, löschen: Cafe" }));
+    await vi.waitFor(() => expect(posts(f)).toHaveLength(1));
+    expect(String(posts(f)[0]?.[0])).toBe("http://api/wishes/w9/remove-duplicate");
+    await vi.waitFor(() =>
+      expect(screen.queryByRole("region", { name: "Doppelte Namen" })).toBeNull(),
+    );
+  });
+
+  it("FR-WUN-06 #303 · DS-50 the actions wait while a write runs, so a double tap writes once", async () => {
+    let release: (r: Response) => void = () => {};
+    const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
+      const path = new URL(String(url)).pathname;
+      if (path === "/wishes/candidates") return response(200, withDuplicates());
+      if (path === "/wishes/bought") return response(200, NONE_BOUGHT);
+      if (init?.method === "POST") return new Promise<Response>((resolve) => (release = resolve));
+      return fallback(url);
+    });
+    vi.stubGlobal("fetch", fetchFn);
+    render(<WishlistPage api="http://api" token={token} />);
+    const button = (await screen.findByRole("button", {
+      name: "Umbenennen: Cafe",
+    })) as HTMLButtonElement;
+    await userEvent.click(button);
+    await vi.waitFor(() => expect(button.disabled).toBe(true));
+    await userEvent.click(button);
+    release(
+      new Response(JSON.stringify({ wish: {}, hint: { text: "ok", nextAction: "" } }), {
+        status: 200,
+      }),
+    );
+    await vi.waitFor(() =>
+      expect(fetchFn.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1),
+    );
   });
 });

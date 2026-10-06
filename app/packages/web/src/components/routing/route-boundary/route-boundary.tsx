@@ -4,14 +4,19 @@ import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skel
 import { isOnline } from "@/platform/network";
 import { retryFailedPages } from "@/components/routing/lazy-page/lazy-page";
 
-type BoundaryProps = { resetKey: string; children: ReactNode };
+type BoundaryProps = {
+  resetKey: string;
+  children: ReactNode;
+  /** Replaces the page error view, e.g. for a lazy part inside a page (DS-55). Gets the retry action. */
+  errorView?: (retry: () => void) => ReactNode;
+};
 type BoundaryState = { failed: boolean; attempt: number };
 
 const TEXT = "Die Seite konnte nicht geladen werden.";
 const OFFLINE_TEXT = "Du bist offline. Diese Seite wurde noch nicht geladen.";
 
 /** Catches a page chunk that cannot be fetched and offers "Erneut versuchen" (DS-08, DS-11, P-09, P-10). */
-class ChunkErrorBoundary extends Component<BoundaryProps, BoundaryState> {
+export class ChunkErrorBoundary extends Component<BoundaryProps, BoundaryState> {
   override state: BoundaryState = { failed: false, attempt: 0 };
   private lastKey = this.props.resetKey;
 
@@ -40,11 +45,13 @@ class ChunkErrorBoundary extends Component<BoundaryProps, BoundaryState> {
   override render(): ReactNode {
     if (this.state.failed)
       return (
-        <EmptyState
-          variant="error"
-          title={isOnline() ? TEXT : OFFLINE_TEXT}
-          action={{ label: "Erneut versuchen", onClick: this.retry }}
-        />
+        this.props.errorView?.(this.retry) ?? (
+          <EmptyState
+            variant="error"
+            title={isOnline() ? TEXT : OFFLINE_TEXT}
+            action={{ label: "Erneut versuchen", onClick: this.retry }}
+          />
+        )
       );
     return <Fragment key={this.state.attempt}>{this.props.children}</Fragment>;
   }

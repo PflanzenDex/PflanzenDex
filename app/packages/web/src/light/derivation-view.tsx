@@ -2,9 +2,10 @@ import { useState } from "react";
 import type { Control } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormRoot } from "@/components/ui/form";
 import type { DerivationRequest, Derivation, Response } from "./light-api";
-import { FORM_GRID, RefusalAlert, SelectField, TextField, useSaveForm } from "./form";
+import { FORM_GRID, RefusalAlert, SelectField, useSaveForm } from "./form";
+import { TextField } from "@/components/ui/input";
 import {
   DERIVATION_REFUSABLE,
   LUX_LIMITS,
@@ -58,12 +59,7 @@ export function DerivationForm({ onDerive }: { onDerive: Derive }) {
   const text = response?.ok ? derivationText(response.value) : null;
   return (
     <Form {...sent.form}>
-      <form
-        noValidate
-        className={FORM_GRID}
-        onSubmit={(e) => void sent.send(e)}
-        aria-label="Zone ermitteln"
-      >
+      <FormRoot className={FORM_GRID} onSubmit={sent.send} aria-label="Zone ermitteln">
         <TextField
           control={control}
           name="lightDemandLux"
@@ -97,7 +93,7 @@ export function DerivationForm({ onDerive }: { onDerive: Derive }) {
             Zone ermitteln
           </Button>
         </div>
-      </form>
+      </FormRoot>
     </Form>
   );
 }

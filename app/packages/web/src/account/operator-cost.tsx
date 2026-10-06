@@ -2,8 +2,8 @@ import type { CostPerUser, OperatorCostFigure } from "@pflanzendex/core";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { TextField } from "./text-field";
+import { Form, FormRoot } from "@/components/ui/form";
+import { TextField } from "@/components/ui/input";
 import { costSchema, parseAmount, type CostFields } from "./schemas";
 
 /** An amount in cents as money in German notation, e.g. `1.234,50 €`. */
@@ -55,7 +55,7 @@ export function CostForm(props: {
   );
   return (
     <Form {...form}>
-      <form noValidate onSubmit={(e) => void submit(e)} className="flex max-w-xl flex-col gap-4">
+      <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
         <TextField control={form.control} name="amount" label="Betrag" inputMode="decimal" />
         <TextField control={form.control} name="currency" label="Währung" maxLength={3} />
         <TextField
@@ -68,7 +68,7 @@ export function CostForm(props: {
         <Button type="submit" size="touch" disabled={props.running}>
           Kosten speichern
         </Button>
-      </form>
+      </FormRoot>
     </Form>
   );
 }

@@ -10,6 +10,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormRoot,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { currentTimeZone, type ApiError } from "../kernel";
@@ -139,9 +140,8 @@ export function CatchDateForm(props: {
         der Pokédex rechnet mit dem neuen Datum.
       </Quiet>
       <Form {...form}>
-        <form
-          noValidate
-          onSubmit={(e) => void submit(e)}
+        <FormRoot
+          onSubmit={submit}
           aria-label="Fangdatum korrigieren"
           className="flex max-w-xl flex-col gap-4"
         >
@@ -157,7 +157,7 @@ export function CatchDateForm(props: {
             pending={form.formState.isSubmitting}
             onCancel={() => setOpen(null)}
           />
-        </form>
+        </FormRoot>
       </Form>
     </section>
   );

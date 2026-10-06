@@ -110,6 +110,9 @@ describe("US-PHA-04 Foresee the next phase change", () => {
   });
 
   it("US-PHA-04 the forecast agrees with the phase list on every day of a leap year", () => {
+    // Plain comparisons collect the mismatches and one `expect` reports them: tens of thousands of `expect` calls made
+    // this test cost seconds, so it timed out under machine load (#200).
+    const mismatches: string[] = [];
     for (const [from, until] of [
       ["11-01", "03-15"],
       ["06-01", "08-31"],
@@ -118,16 +121,25 @@ describe("US-PHA-04 Foresee the next phase change", () => {
     ] as const)
       for (let d = 0; d < 366; d += 1) {
         const today = addDays("2028-01-01", d);
+        const at = `${from}..${until} on ${today}`;
         const next = nextPhaseChange(from, until, today);
-        expect(next).not.toBeNull();
-        if (!next) continue;
-        expect(next.date >= today).toBe(true);
-        expect(addDays(today, next.days)).toBe(next.date);
-        expect(carePhase(from, until, next.date)).toBe(next.phase);
-        expect(carePhase(from, until, addDays(next.date, -1))).not.toBe(next.phase);
+        if (!next) {
+          mismatches.push(`${at}: no forecast`);
+          continue;
+        }
+        if (next.date < today) mismatches.push(`${at}: forecast ${next.date} lies in the past`);
+        if (addDays(today, next.days) !== next.date)
+          mismatches.push(`${at}: days do not reach ${next.date}`);
+        if (carePhase(from, until, next.date) !== next.phase)
+          mismatches.push(`${at}: phase on ${next.date}`);
+        if (carePhase(from, until, addDays(next.date, -1)) === next.phase)
+          mismatches.push(`${at}: no change at ${next.date}`);
         // No change lies between today and the forecast.
+        const phaseToday = carePhase(from, until, today);
         for (let k = 0; k < next.days; k += 1)
-          expect(carePhase(from, until, addDays(today, k))).toBe(carePhase(from, until, today));
+          if (carePhase(from, until, addDays(today, k)) !== phaseToday)
+            mismatches.push(`${at}: phase changes before ${next.date}`);
       }
+    expect(mismatches).toEqual([]);
   });
 });

@@ -4,7 +4,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, MIGRATIONS_DIRECTORY, openPool, testDatabaseUrl } from "../kernel/index.ts";
+import {
+  migrate,
+  MIGRATIONS_DIRECTORY,
+  openAdminPool,
+  openPool,
+  testDatabaseUrl,
+} from "../kernel/index.ts";
 import { withAccount } from "../kernel/index.ts";
 
 // US-WUN-01, FR-WUN-06: migration 0020 backfills the name key of existing wishes. Wishes that collide only after folding
@@ -27,10 +33,11 @@ const insert = (account: string, name: string, createdAt: string) =>
   );
 
 beforeAll(async () => {
-  admin = openPool();
+  admin = openAdminPool();
   await admin.query(`create database ${DB}`);
   const url = new URL(testDatabaseUrl());
   url.pathname = `/${DB}`;
+  // Scratch database owned by the superuser: replays a historical migration state, not RLS behaviour.
   scratch = openPool(url.toString());
   scratch.on("error", () => undefined);
   const before = mkdtempSync(join(tmpdir(), "wish-key-"));

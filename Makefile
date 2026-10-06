@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates layout layout-baseline unused-report storybook build-storybook
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -77,6 +77,12 @@ browsers: ## Install the Chromium that Playwright uses (e2e, conformance run)
 conformance: ## Component conformance over all stories: axe, 44 px targets, focus, overlays; light and dark, 360 px (QG-U5, FR-QG-09; needs `make browsers`; report only until it is switched to blocking)
 	cd $(APP) && npm run conformance
 
+ds-snapshots-check: ## Visual regression of the components/ui stories against the baselines in app/packages/web/.storybook/snapshots, 360 px, light and dark, in the pinned Playwright container; also runs its self-test (QG-U5, US-QS-07; needs Docker)
+	cd $(APP) && npm run ds-snapshots
+
+ds-snapshots: ## Rewrite the baselines in app/ds-snapshots (pinned Playwright container, needs Docker); review the images, then commit them (QG-U5, US-QS-07)
+	cd $(APP) && npm run ds-snapshots:update
+
 e2e: $(if $(CI),,db-up) auth-up migrate browsers ## End-to-end tests with Playwright, mobile + desktop, axe blocks on serious/critical (QG-T3, QG-U1; needs Docker)
 	cd $(APP) && npm run e2e
 
@@ -101,6 +107,9 @@ lighthouse: ## Lighthouse CI on the built web app, mobile, report only (QG-U1), 
 	scripts/lighthouse-run.sh
 	scripts/lighthouse-summary.sh | tee $(APP)/packages/web/.lighthouseci/summary.md
 
+bundle-report: ## Initial JS per chunk and package as Markdown, 140 kB working target; report only, never fails (QG-U6, FR-QG-10)
+	@cd $(APP) && npm run --silent bundle-report
+
 release-tags-check: ## All v* tags come from the release workflow, no hand-set version (FR-DEV-05; needs gh auth)
 	cd $(APP) && npm run release-tags
 
@@ -118,6 +127,9 @@ unused-report: ## Code only reachable from tests and unused dependencies, report
 
 duplicates: ## Clone groups with 3+ copies in changed files block, whole project is reported (QG-K4; base DUPLICATES_BASE, default origin/dev)
 	cd $(APP) && npm run duplicates
+
+dup: ## Share of duplicated lines in the whole project (jscpd), ratchet toward 1 % (QG-K5, FR-QG-10; config app/.jscpd.json, limit in app/quality-limits.json)
+	cd $(APP) && npm run dup
 
 layout: ## File layout: at most 5 units per directory, names, component folders, baseline ratchet (QG-C4, US-QG-09)
 	cd $(APP) && npm run layout

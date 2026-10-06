@@ -2,13 +2,14 @@ import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { localToday } from "@pflanzendex/core";
-import { migrate, openPool } from "@pflanzendex/db";
+import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
 // US-WAC-01: record a measurement and the "Measure" view through the API (real PostgreSQL, `make db-up`).
 let pool: Pool;
+let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
 const run = randomUUID()
   .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
   .replace(/-/g, "")
@@ -66,23 +67,25 @@ const measure = (sub: string, id: string, input: Record<string, unknown>, key?: 
   call(sub, "POST", `/specimens/${id}/measurements`, { timeZone: "Europe/Berlin", ...input }, key);
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer, pool, clock: () => NOW });
 });
 afterAll(async () => {
   // Specimens first (with their measurements): the reference to the species is on delete restrict (AB-10).
-  await pool.query(
+  await admin.query(
     "delete from specimen where account_id in (select id from account where subject = any($1))",
     [[subA, subB]],
   );
-  await pool.query(
+  await admin.query(
     `delete from species where id in (select object_id from review_case
        where account_id in (select id from account where subject = any($1)))`,
     [[subA, subB]],
   );
-  await pool.query("delete from account where subject = any($1)", [[subA, subB]]);
+  await admin.query("delete from account where subject = any($1)", [[subA, subB]]);
   await pool.end();
+  await admin.end();
 });
 
 describe("US-WAC-01 sign-in and input", () => {

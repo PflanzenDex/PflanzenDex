@@ -2,18 +2,9 @@ import type { Pool } from "pg";
 import { UNIQUE, FOREIGN_KEY, errorCode } from "./light-zones.ts";
 import { withAccount } from "../kernel/index.ts";
 
-export type LocationKind = "indoor" | "outdoor";
-export interface LightLocation {
-  readonly id: string;
-  readonly name: string;
-  readonly lightZoneId: string | null;
-  readonly kind: LocationKind;
-}
-export interface LocationValues {
-  readonly name: string;
-  readonly lightZoneId: string | null;
-  readonly kind: LocationKind;
-}
+// The shapes are the types of `core` (type-only import through its public entry, AB-2).
+import type { LightLocation, LocationValues } from "@pflanzendex/core";
+export type { LightLocation, LocationValues };
 export interface ZoneUser {
   readonly kind: "location" | "specimen" | "species";
   readonly id: string;

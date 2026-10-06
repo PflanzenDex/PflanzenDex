@@ -1,12 +1,15 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createFixtureSpecimen } from "../fixtures.ts";
 import { ZonePostgres } from "../light/index.ts";
-import { migrate, openPool, withAccount } from "../kernel/index.ts";
+import { migrate, openFixturePool, openOwnerPool, withAccount } from "../kernel/index.ts";
 import { WishesPostgres } from "./index.ts";
 
 // US-WUN-01, DM-WUN-01, P-04: wishes per account (real PostgreSQL, `make db-up`).
 let pool: Pool;
+// Deliberate cross-tenant observation/cleanup of FORCE-d tables: needs the superuser, the suite owner is under row security (#294).
+let admin: Pool;
 let wishes: WishesPostgres;
 let zones: ZonePostgres;
 const anna = randomUUID();
@@ -44,7 +47,8 @@ async function zone(account: string, name: string): Promise<string> {
 }
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   wishes = new WishesPostgres(pool);
   zones = new ZonePostgres(pool);
@@ -54,7 +58,8 @@ beforeAll(async () => {
   zoneBen = await zone(ben, "Lampe 3");
 });
 afterAll(async () => {
-  await pool.query("delete from account where id = any($1)", [[anna, ben]]);
+  await admin.query("delete from account where id = any($1)", [[anna, ben]]);
+  await admin.end();
   await pool.end();
 });
 
@@ -122,14 +127,14 @@ describe("US-WUN-01 wishes in the database", () => {
     const bought = await wishes.create(anna, values({ name: "Gekauft" }));
     const dropped = await wishes.create(anna, values({ name: "Verworfen" }));
     if (typeof bought === "string" || typeof dropped === "string") throw new Error("setup");
-    await pool.query("update wish set status = 'bought' where id = $1", [bought.id]);
-    await pool.query("update wish set status = 'discarded' where id = $1", [dropped.id]);
+    await admin.query("update wish set status = 'bought' where id = $1", [bought.id]);
+    await admin.query("update wish set status = 'discarded' where id = $1", [dropped.id]);
     const names = (await wishes.open(anna)).map((w) => w.name);
     expect(names).not.toContain("Gekauft");
     expect(names).not.toContain("Verworfen");
     expect(
       (
-        await pool.query("select count(*)::int as n from wish where id = any($1)", [
+        await admin.query("select count(*)::int as n from wish where id = any($1)", [
           [bought.id, dropped.id],
         ])
       ).rows[0].n,
@@ -166,7 +171,7 @@ describe("US-WUN-01 zone usage and tenant isolation (P-04, P-05)", () => {
   it("names the wishes of the account that point at a zone, whatever their status", async () => {
     const w = await wishes.create(anna, values({ name: "Zonenwunsch", targetZoneId: zoneAnna }));
     if (typeof w === "string") throw new Error("setup");
-    await pool.query("update wish set status = 'bought' where id = $1", [w.id]);
+    await admin.query("update wish set status = 'bought' where id = $1", [w.id]);
     expect((await wishes.usingZone(anna, zoneAnna)).map((x) => x.name)).toContain("Zonenwunsch");
   });
 
@@ -184,7 +189,7 @@ describe("US-WUN-01 zone usage and tenant isolation (P-04, P-05)", () => {
   });
 
   it("a wish of another account cannot be read or changed by SQL as account A", async () => {
-    const id = (await pool.query("select id from wish where name = 'Bens Geheimtipp'")).rows[0].id;
+    const id = (await admin.query("select id from wish where name = 'Bens Geheimtipp'")).rows[0].id;
     const read = await withAccount(pool, anna, (c) =>
       c.query("select * from wish where id = $1", [id]),
     );
@@ -226,11 +231,11 @@ describe("US-WUN-03 record a purchase in the database", () => {
 
   it("US-WUN-03 a discarded wish is not_open and stays discarded; an unknown id is not_found", async () => {
     const w = await created(anna, "Verworfener Kauf");
-    await pool.query("update wish set status = 'discarded' where id = $1", [w.id]);
+    await admin.query("update wish set status = 'discarded' where id = $1", [w.id]);
     expect(await wishes.buy(anna, w.id)).toBe("not_open");
-    expect((await pool.query("select status from wish where id = $1", [w.id])).rows[0].status).toBe(
-      "discarded",
-    );
+    expect(
+      (await admin.query("select status from wish where id = $1", [w.id])).rows[0].status,
+    ).toBe("discarded");
     expect(await wishes.buy(anna, randomUUID())).toBe("not_found");
   });
 
@@ -241,5 +246,155 @@ describe("US-WUN-03 record a purchase in the database", () => {
     await wishes.buy(ben, w.id);
     expect((await wishes.bought(anna)).map((x) => x.id)).not.toContain(w.id);
     expect((await wishes.bought(ben)).map((x) => x.id)).toContain(w.id);
+  });
+});
+
+describe("US-WUN-05 from purchase to plant in the database", () => {
+  const bought = async (account: string, name: string) => {
+    const w = await wishes.create(account, values({ name }));
+    if (typeof w === "string") throw new Error(w);
+    await wishes.buy(account, w.id);
+    return w;
+  };
+
+  it("US-WUN-05 a bought wish is linked to a specimen of the account and the link is read back", async () => {
+    const w = await bought(anna, "Kauf mit Exemplar");
+    const specimen = await createFixtureSpecimen(pool, anna, "Exemplar zum Kauf");
+    expect(await wishes.link(anna, w.id, specimen)).toMatchObject({
+      changed: true,
+      wish: { specimenId: specimen, status: "bought" },
+    });
+    expect((await wishes.bought(anna)).find((x) => x.id === w.id)?.specimenId).toBe(specimen);
+  });
+
+  it("US-WUN-05 linking the same specimen again changes nothing; another specimen is already_linked", async () => {
+    const w = await bought(anna, "Zweimal verknüpft");
+    const one = await createFixtureSpecimen(pool, anna, "Verknüpft eins");
+    const two = await createFixtureSpecimen(pool, anna, "Verknüpft zwei");
+    await wishes.link(anna, w.id, one);
+    expect(await wishes.link(anna, w.id, one)).toMatchObject({ changed: false });
+    expect(await wishes.link(anna, w.id, two)).toBe("already_linked");
+  });
+
+  it("US-WUN-05 a specimen belongs to one wish only", async () => {
+    const a = await bought(anna, "Eigentümer eins");
+    const b = await bought(anna, "Eigentümer zwei");
+    const specimen = await createFixtureSpecimen(pool, anna, "Geteiltes Exemplar");
+    await wishes.link(anna, a.id, specimen);
+    expect(await wishes.link(anna, b.id, specimen)).toBe("already_linked");
+  });
+
+  it("US-WUN-05 only a bought wish is linked", async () => {
+    const w = await wishes.create(anna, values({ name: "Noch offen" }));
+    if (typeof w === "string") throw new Error(w);
+    const specimen = await createFixtureSpecimen(pool, anna, "Exemplar zum offenen Wunsch");
+    expect(await wishes.link(anna, w.id, specimen)).toBe("not_bought");
+    await expect(
+      admin.query("update wish set specimen_id = $2 where id = $1", [w.id, specimen]),
+    ).rejects.toMatchObject({ constraint: "wish_specimen_only_when_bought" });
+  });
+
+  it("US-WUN-05 a specimen or wish of another account looks unknown (P-04)", async () => {
+    const mine = await bought(anna, "Mein Kauf");
+    const theirs = await bought(ben, "Bens Kauf");
+    const bensSpecimen = await createFixtureSpecimen(pool, ben, "Bens Exemplar");
+    expect(await wishes.link(anna, mine.id, bensSpecimen)).toBe("specimen_unknown");
+    expect(await wishes.link(anna, theirs.id, bensSpecimen)).toBe("not_found");
+    expect(await wishes.link(anna, randomUUID(), bensSpecimen)).toBe("not_found");
+  });
+
+  it("US-WUN-05 an open wish becomes discarded, stays stored and readable; again changes nothing", async () => {
+    const w = await wishes.create(anna, values({ name: "Zu verwerfen" }));
+    if (typeof w === "string") throw new Error(w);
+    expect(await wishes.discard(anna, w.id)).toMatchObject({
+      changed: true,
+      wish: { status: "discarded" },
+    });
+    expect((await wishes.open(anna)).map((x) => x.id)).not.toContain(w.id);
+    expect((await wishes.discarded(anna)).map((x) => x.id)).toContain(w.id);
+    expect(await wishes.discard(anna, w.id)).toMatchObject({ changed: false });
+  });
+
+  it("US-WUN-05 a bought wish is not_open for discarding; foreign or unknown is not_found (P-04)", async () => {
+    const mine = await bought(anna, "Gekauft nicht verwerfbar");
+    expect(await wishes.discard(anna, mine.id)).toBe("not_open");
+    const theirs = await wishes.create(ben, values({ name: "Bens offener Wunsch" }));
+    if (typeof theirs === "string") throw new Error(theirs);
+    expect(await wishes.discard(anna, theirs.id)).toBe("not_found");
+    expect(await wishes.discard(anna, randomUUID())).toBe("not_found");
+    expect((await wishes.discarded(anna)).map((x) => x.id)).not.toContain(theirs.id);
+    expect((await wishes.open(ben)).map((x) => x.id)).toContain(theirs.id);
+  });
+});
+
+// FR-WUN-06 / #303: wishes without a name key (exempt since migration 0020) are found, renamed (which sets the key)
+// or deleted, only by their own account. Such a row can only come from the migration, so the test inserts it as the
+// migration left it.
+describe("FR-WUN-06 #303 repair of key-less duplicate wishes", () => {
+  const created = async (account: string, name: string) => {
+    const w = await wishes.create(account, values({ name }));
+    if (typeof w === "string") throw new Error(w);
+    return w;
+  };
+  const keyless = async (account: string, name: string): Promise<string> => {
+    const r = await withAccount(pool, account, (c) =>
+      c.query<{ id: string }>(
+        "insert into wish (account_id, name, name_key) values ($1, $2, null) returning id",
+        [account, name],
+      ),
+    );
+    return (r.rows[0] as { id: string }).id;
+  };
+  const keyOfRow = async (id: string) =>
+    (await admin.query("select name_key from wish where id = $1", [id])).rows[0]?.name_key;
+
+  it("FR-WUN-06 #303 lists only the open key-less wishes of the own account", async () => {
+    const mine = await keyless(anna, "Doppelt A");
+    const bought = await keyless(anna, "Doppelt gekauft");
+    await wishes.buy(anna, bought);
+    const theirs = await keyless(ben, "Doppelt B");
+    await created(anna, "Regulär");
+    const ids = (await wishes.keyless(anna)).map((w) => w.id);
+    expect(ids).toContain(mine);
+    expect(ids).not.toContain(bought);
+    expect(ids).not.toContain(theirs);
+    expect((await wishes.keyless(ben)).map((w) => w.id)).toContain(theirs);
+  });
+
+  it("FR-WUN-06 #303 rename sets the key, a taken name is name_taken and changes nothing", async () => {
+    await created(anna, "Café Original");
+    const id = await keyless(anna, "Cafe Original");
+    expect(await wishes.rename(anna, id, "Cafe ORIGINAL", keyOf("Cafe ORIGINAL"))).toBe(
+      "name_taken",
+    );
+    expect(await keyOfRow(id)).toBeNull();
+    const r = await wishes.rename(anna, id, "Cafe Zwei", keyOf("Cafe Zwei"));
+    expect(r).toMatchObject({ id, name: "Cafe Zwei" });
+    expect(await keyOfRow(id)).toBe(keyOf("Cafe Zwei"));
+    expect((await wishes.keyless(anna)).map((w) => w.id)).not.toContain(id);
+  });
+
+  it("FR-WUN-06 #303 a regular wish is not_duplicate for rename and remove and stays", async () => {
+    const w = await created(anna, "Reguläre Pflanze");
+    expect(await wishes.rename(anna, w.id, "Anders", keyOf("Anders"))).toBe("not_duplicate");
+    expect(await wishes.remove(anna, w.id)).toBe("not_duplicate");
+    expect((await wishes.open(anna)).find((x) => x.id === w.id)?.name).toBe("Reguläre Pflanze");
+  });
+
+  it("FR-WUN-06 #303 remove deletes the key-less wish and returns it", async () => {
+    const id = await keyless(anna, "Zu löschen");
+    expect(await wishes.remove(anna, id)).toMatchObject({ id, name: "Zu löschen" });
+    expect((await admin.query("select 1 from wish where id = $1", [id])).rowCount).toBe(0);
+    expect(await wishes.remove(anna, id)).toBe("not_found");
+  });
+
+  it("FR-WUN-06 #303 another account can neither rename nor delete it (P-04)", async () => {
+    const id = await keyless(anna, "Annas Doppel");
+    expect(await wishes.rename(ben, id, "Mein", keyOf("Mein"))).toBe("not_found");
+    expect(await wishes.remove(ben, id)).toBe("not_found");
+    expect(await wishes.rename(anna, randomUUID(), "X", "x")).toBe("not_found");
+    expect((await admin.query("select name from wish where id = $1", [id])).rows[0].name).toBe(
+      "Annas Doppel",
+    );
   });
 });

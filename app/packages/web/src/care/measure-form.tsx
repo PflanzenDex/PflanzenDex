@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Control } from "react-hook-form";
 import { localToday, MEASUREMENT_LIMITS } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
+import { Form, FormRoot } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -115,10 +115,9 @@ export function MeasureForm(props: {
   });
   return (
     <Form {...form}>
-      <form
+      <FormRoot
         aria-label="Messung erfassen"
-        noValidate
-        onSubmit={(e) => void submit(e)}
+        onSubmit={submit}
         className="flex max-w-xl flex-col gap-4"
       >
         <Fields
@@ -132,7 +131,7 @@ export function MeasureForm(props: {
         <Button type="submit" size="touch" disabled={form.formState.isSubmitting}>
           Messung speichern
         </Button>
-      </form>
+      </FormRoot>
     </Form>
   );
 }

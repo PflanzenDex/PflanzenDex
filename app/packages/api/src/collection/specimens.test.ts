@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool } from "@pflanzendex/db";
+import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
 // US-BES-02: create and view a specimen via the API (real PostgreSQL, `make db-up`).
 let pool: Pool;
+let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
 const run = randomUUID()
   .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
   .replace(/-/g, "")
@@ -59,23 +60,25 @@ const create = (sub: string, input: Record<string, unknown>, key?: string) =>
   call(sub, "POST", "/specimens", { timeZone: "Europe/Berlin", ...input }, key);
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer, pool, clock: () => NOW });
 });
 afterAll(async () => {
   // Specimens first: the reference to the species is on delete restrict (AB-10).
-  await pool.query(
+  await admin.query(
     "delete from specimen where account_id in (select id from account where subject = any($1))",
     [[subA, subB]],
   );
-  await pool.query(
+  await admin.query(
     `delete from species where id in (select object_id from review_case
        where account_id in (select id from account where subject = any($1)))`,
     [[subA, subB]],
   );
-  await pool.query("delete from account where subject = any($1)", [[subA, subB]]);
+  await admin.query("delete from account where subject = any($1)", [[subA, subB]]);
   await pool.end();
+  await admin.end();
 });
 
 describe("US-BES-02 sign-in and input", () => {
@@ -333,7 +336,7 @@ describe("US-BES-11 correct the catch date via the API", () => {
     });
     expect(archived.status).toBe(200);
     // An archiving in the past (the API archives only "today"); set directly for the test.
-    await pool.query("update specimen set archived_at = '2026-01-10' where id = $1", [id]);
+    await admin.query("update specimen set archived_at = '2026-01-10' where id = $1", [id]);
     const r = await correct(subA, id, { catchDate: "2026-01-11" });
     expect(r.status).toBe(409);
     expect(r.body["error"]).toMatchObject({

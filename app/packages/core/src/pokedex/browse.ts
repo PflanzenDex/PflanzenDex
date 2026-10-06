@@ -32,7 +32,7 @@ export interface Browsed {
 }
 
 /** Species-poor: the genus has at most 10 species (US-POK-01). */
-const SPECIES_POOR_MAX = 10;
+export const SPECIES_POOR_MAX = 10;
 
 const lower = (text: string) => text.toLocaleLowerCase("de");
 const byName = (a: CaughtSpecies, b: CaughtSpecies) => a.species.localeCompare(b.species, "de");

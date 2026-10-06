@@ -3,11 +3,13 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { SpecimenPostgres } from "../collection/index.ts";
 import { createFixtureSpeciesAt } from "../fixtures.ts";
-import { migrate, withAccount, openPool } from "../kernel/index.ts";
+import { migrate, withAccount, openOwnerPool, openFixturePool } from "../kernel/index.ts";
 import { MeasurementsPostgres } from "./index.ts";
 
 // US-WAC-01, DM-WAC-01, P-04: Messungen je Konto (echte PostgreSQL, `make db-up`).
 let pool: Pool;
+// Deliberate cross-tenant cleanup/observation of FORCE-d tables: needs the superuser, the suite owner is under row security (#294).
+let admin: Pool;
 let measurements: MeasurementsPostgres;
 const anna = randomUUID();
 const ben = randomUUID();
@@ -37,9 +39,10 @@ async function specimen(account: string, name: string): Promise<string> {
 }
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
-  species = await createFixtureSpeciesAt(pool);
+  species = await createFixtureSpeciesAt();
   measurements = new MeasurementsPostgres(pool);
   for (const id of [anna, ben])
     await withAccount(pool, id, (c) => c.query("insert into account (id) values ($1)", [id]));
@@ -47,7 +50,8 @@ beforeAll(async () => {
   specimenBen = await specimen(ben, "Ben Pflanze");
 });
 afterAll(async () => {
-  await pool.query("delete from account where id = any($1)", [[anna, ben]]);
+  await admin.query("delete from account where id = any($1)", [[anna, ben]]);
+  await admin.end();
   await pool.end();
 });
 
@@ -112,8 +116,8 @@ describe("US-WAC-01 measurements in the database", () => {
     );
     const ex = await specimen(account, "Weg");
     await measurements.create(account, values({ specimenId: ex }));
-    await pool.query("delete from account where id = $1", [account]);
-    const r = await pool.query("select 1 from measurement where specimen_id = $1", [ex]);
+    await admin.query("delete from account where id = $1", [account]);
+    const r = await admin.query("select 1 from measurement where specimen_id = $1", [ex]);
     expect(r.rowCount).toBe(0);
   });
 });

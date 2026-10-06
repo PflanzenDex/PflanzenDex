@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { CollectionArea } from "./collection-area";
 import { EMPTY_DISTRIBUTION } from "./collection/distribution-test-helpers";
 
@@ -27,6 +27,12 @@ const emptyView = {
   last: null,
   lastRating: null,
 };
+
+// Both pages are lazy chunks (DS-08). Loading them first makes the waits below depend on the data only, not on how
+// long the first import of a chunk takes on a busy machine (#444).
+beforeAll(async () => {
+  await Promise.all([import("./collection/CollectionPage"), import("./care/MeasurePage")]);
+}, 30_000);
 
 afterEach(() => {
   cleanup();
@@ -55,7 +61,13 @@ describe("US-WAC-01 collection wired with measuring", () => {
         onCompleted={() => {}}
       />,
     );
-    await userEvent.click(await screen.findByRole("button", { name: "Messen: Bogenhanf" }));
+    // The collection page is a lazy part; its first import can take longer than the default second under load.
+    const measure = await screen.findByRole(
+      "button",
+      { name: "Messen: Bogenhanf" },
+      { timeout: 5_000 },
+    );
+    await userEvent.click(measure);
     expect(await screen.findByRole("heading", { name: "Messen: Bogenhanf" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zurück zum Bestand" }));
     expect(await screen.findByRole("heading", { name: "Bestand" })).toBeTruthy();

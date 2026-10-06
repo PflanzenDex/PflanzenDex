@@ -1,8 +1,20 @@
-import { appError, isTimeZone, pokedexOwnership } from "@pflanzendex/core";
-import { SpeciesPostgres, SpecimenPostgres } from "@pflanzendex/db";
-import { Hono } from "hono";
+import { appError, isTimeZone, pokedexOwnership, readCollectorCards } from "@pflanzendex/core";
+import { SpeciesPostgres, SpecimenPostgres, TaxonomyPostgres } from "@pflanzendex/db";
+import { Hono, type Context } from "hono";
 import type { Pool } from "pg";
 import { errorBody, type AuthEnv } from "../kernel";
+
+const zoneOf = (c: Context<AuthEnv>) => {
+  const zone = c.req.query("timeZone");
+  return isTimeZone(zone) ? zone : null;
+};
+const invalidZone = (c: Context<AuthEnv>) =>
+  c.json(
+    errorBody(
+      appError("input.invalid", { details: [{ field: "timeZone", code: "input.invalid" }] }),
+    ),
+    400,
+  );
 
 export const POKEDEX_PATHS = ["/pokedex"] as const;
 
@@ -15,12 +27,22 @@ export function pokedexRoutes(pool: Pool): Hono<AuthEnv> {
   const deps = { specimens: new SpecimenPostgres(pool), species: new SpeciesPostgres(pool) };
   const routes = new Hono<AuthEnv>();
   routes.get("/pokedex/ownership", async (c) => {
-    const timeZone = c.req.query("timeZone");
-    if (!isTimeZone(timeZone)) {
-      const details = [{ field: "timeZone", code: "input.invalid" as const }];
-      return c.json(errorBody(appError("input.invalid", { details })), 400);
-    }
+    const timeZone = zoneOf(c);
+    if (timeZone === null) return invalidZone(c);
     return c.json({ ownership: await pokedexOwnership(deps, c.get("account").id, timeZone) });
+  });
+  // Collector cards (US-POK-01): the shared taxonomy tree against the derived ownership; caught is never stored.
+  const taxa = new TaxonomyPostgres(pool);
+  const tree = {
+    tree: () => taxa.tree(),
+    facts: (userId: string) => deps.species.approvedFacts(userId),
+  };
+  routes.get("/pokedex/cards", async (c) => {
+    const timeZone = zoneOf(c);
+    if (timeZone === null) return invalidZone(c);
+    const userId = c.get("account").id;
+    const { caught } = await pokedexOwnership(deps, userId, timeZone);
+    return c.json({ cards: await readCollectorCards(tree, userId, caught) });
   });
   return routes;
 }

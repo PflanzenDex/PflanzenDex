@@ -1,5 +1,5 @@
 {
-  "_comment": "Single source of truth for code metric limits (FR-QG-16, E-15). Values are assumptions until measured (`crap.max` 450 is the Tombola start value, assumption; read by tools/check/quality/check-crap.mjs). Read by eslint.config.js; per-area overrides are merged over `default`.",
+  "_comment": "Single source of truth for code metric limits (FR-QG-16, E-15). Values are assumptions until measured (`dup.maxPercent` 1.65 is the start value measured with jscpd on 2026-10-06, assumption, ratcheted down to the 1 % target, read by tools/check/quality/duplicates/check-dup.mjs; `crap.max` 450 is the Tombola start value, assumption; read by tools/check/quality/check-crap.mjs). Read by eslint.config.js; per-area overrides are merged over `default`.",
   "default": {
     "complexity": 15,
     "cognitiveComplexity": 30,
@@ -9,9 +9,10 @@
     "maxParams": 4
   },
   "duplicates": { "minOccurrences": 3, "minTokens": 50, "minLines": 5, "mode": "mild" },
+  "dup": { "maxPercent": 1.0, "slackPercent": 0.1 },
   "overrides": {
     "packages/core/**/*.ts": { "complexity": 10, "cognitiveComplexity": 15 }
   },
   "crap": { "max": 450 },
-  "bundle": { "initialJsGzipBytes": 210000 }
+  "bundle": { "initialJsGzipBytes": 152000 }
 }

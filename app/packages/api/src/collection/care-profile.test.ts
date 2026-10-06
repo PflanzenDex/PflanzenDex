@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool } from "@pflanzendex/db";
+import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
 // US-BES-09: the own care profile through the API (real PostgreSQL, `make db-up`).
 let pool: Pool;
+let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
 const run = randomUUID()
   .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
   .replace(/-/g, "")
@@ -90,7 +91,8 @@ let zoneHigh: string;
 let foreignZone: string;
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer, pool, clock: () => NOW });
   speciesA = await newSpecies(subA, `Winter${run}`);
@@ -106,14 +108,15 @@ afterAll(async () => {
   const subs = [[subA, subB]];
   const owned = "account_id in (select id from account where subject = any($1))";
   // Profiles and specimens first: both reference the species on delete restrict (AB-10).
-  await pool.query(`delete from care_profile where ${owned}`, subs);
-  await pool.query(`delete from specimen where ${owned}`, subs);
-  await pool.query(
+  await admin.query(`delete from care_profile where ${owned}`, subs);
+  await admin.query(`delete from specimen where ${owned}`, subs);
+  await admin.query(
     `delete from species where id in (select object_id from review_case where ${owned})`,
     subs,
   );
-  await pool.query("delete from account where subject = any($1)", subs);
+  await admin.query("delete from account where subject = any($1)", subs);
   await pool.end();
+  await admin.end();
 });
 
 describe("US-BES-09 care profile through the API", () => {

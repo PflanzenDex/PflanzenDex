@@ -1,11 +1,12 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool } from "@pflanzendex/db";
+import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp } from "../app";
 
 // US-LIC-05: locations and light zones via the API (real PostgreSQL, `make db-up`).
 let pool: Pool;
+let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
 const subA = `licht-${randomUUID()}`;
 const subB = `licht-${randomUUID()}`;
 type TokenVerifier = NonNullable<NonNullable<Parameters<typeof createApp>[0]>["reviewer"]>;
@@ -38,13 +39,15 @@ async function call(
 }
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer, pool });
 });
 afterAll(async () => {
-  await pool.query("delete from account where subject = any($1)", [[subA, subB]]);
+  await admin.query("delete from account where subject = any($1)", [[subA, subB]]);
   await pool.end();
+  await admin.end();
 });
 
 describe("US-LIC-05 sign-in and input", () => {
@@ -218,14 +221,14 @@ describe("US-LIC-01 derive the zone of the species", () => {
       zone: { name: "Lampe 2" },
       reason: "soft_leaf",
     });
-    await pool.query("delete from account where subject = $1", [sub]);
+    await admin.query("delete from account where subject = $1", [sub]);
   });
 
   it("Konto ohne Zonen: Zone unbekannt statt geraten; fremde Zonen bleiben unsichtbar (P-04)", async () => {
     const empty = `licht-${randomUUID()}`;
     const r = await call(empty, "GET", query(15000, 2));
     expect(r).toMatchObject({ status: 200, body: { kind: "unknown" } });
-    await pool.query("delete from account where subject = $1", [empty]);
+    await admin.query("delete from account where subject = $1", [empty]);
   });
 
   it("invalid input: 400 with the affected fields", async () => {

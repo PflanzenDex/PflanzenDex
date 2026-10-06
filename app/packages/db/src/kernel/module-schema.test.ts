@@ -1,10 +1,9 @@
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { MODULE_CONFIG as REAL } from "../../../../modules.config.mjs";
-import { migrate } from "./index.ts";
+import { migrate, openOwnerPool } from "./index.ts";
 import { findSchemaViolations } from "../schema-check.ts";
 import { moduleViolations, type ForeignKey, type ModuleRegister } from "./module-schema.ts";
-import { openPool } from "./connection.ts";
 
 // Module boundaries in the schema (FR-QG-19): table ownership (AB-13) and foreign keys across module boundaries (AB-10).
 const REGISTER: ModuleRegister = {
@@ -111,7 +110,7 @@ describe("AB-10 global reference tables (ADR 0003 O-2)", () => {
 describe("module boundaries against the real database (AB-10, AB-13)", () => {
   let pool: Pool;
   beforeAll(async () => {
-    pool = openPool();
+    pool = openOwnerPool();
     await migrate(pool);
   });
   afterAll(() => pool.end());
@@ -211,6 +210,7 @@ describe("module boundaries against the real database (AB-10, AB-13)", () => {
       expect.stringMatching(/^AB-10 foreign key measurement_specimen/),
       expect.stringMatching(/^AB-10 foreign key specimen_species/),
       expect.stringMatching(/^AB-10 foreign key treatment_specimen/),
+      expect.stringMatching(/^AB-10 foreign key wish_specimen/),
     ]);
     expect(
       await findSchemaViolations(pool, using({ species: { ...species, owner: "light" } })),

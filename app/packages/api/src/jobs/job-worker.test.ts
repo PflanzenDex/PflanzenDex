@@ -1,12 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { enqueueJob } from "@pflanzendex/core";
-import { JobsPostgres, migrate, openPool } from "@pflanzendex/db";
+import { JobsPostgres, migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createJobWorker } from "./job-worker";
 
 // US-QS-03, TE-06: the worker runs queued jobs against the real queue (PostgreSQL) and repeats what failed.
 let pool: Pool;
+let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
 let queue: JobsPostgres;
 let clock = new Date("2030-01-01T10:00:00Z");
 const now = () => clock;
@@ -16,18 +17,20 @@ const type = `test.w${randomUUID()
 const events: string[] = [];
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   queue = new JobsPostgres(pool);
 });
 beforeEach(async () => {
   clock = new Date("2030-01-01T10:00:00Z");
   events.length = 0;
-  await pool.query("delete from job where type = $1", [type]);
+  await admin.query("delete from job where type = $1", [type]);
 });
 afterAll(async () => {
-  await pool.query("delete from job where type = $1", [type]);
+  await admin.query("delete from job where type = $1", [type]);
   await pool.end();
+  await admin.end();
 });
 
 const worker = (handler: () => Promise<void>) =>
@@ -40,9 +43,9 @@ const worker = (handler: () => Promise<void>) =>
   });
 const order = (extra = {}) => enqueueJob({ queue, now }, { type, runAt: now(), ...extra });
 const statusOf = async () =>
-  (await pool.query<{ status: string }>("select status from job where type = $1", [type])).rows.map(
-    (r) => r.status,
-  );
+  (
+    await admin.query<{ status: string }>("select status from job where type = $1", [type])
+  ).rows.map((r) => r.status);
 
 describe("US-QS-03 the job worker", () => {
   it("US-QS-03 runs a queued job once and ordering it twice runs it once", async () => {

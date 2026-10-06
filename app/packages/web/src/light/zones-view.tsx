@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Form } from "@/components/ui/form";
+import { Form, FormRoot } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import type { ApiError, LightZone } from "./light-api";
-import { FORM_GRID, FormButtons, RefusalAlert, TextField, useSaveForm } from "./form";
+import { FORM_GRID, FormButtons, RefusalAlert, useSaveForm } from "./form";
+import { TextField } from "@/components/ui/input";
 import { ErrorMessage } from "./message";
 import {
   LUX_LIMITS,
@@ -46,10 +47,9 @@ export function ZoneForm(props: { start?: LightZone; onSave: Save; onCancel?: ()
   const { control } = sent.form;
   return (
     <Form {...sent.form}>
-      <form
-        noValidate
+      <FormRoot
         className={FORM_GRID}
-        onSubmit={(e) => void sent.send(e)}
+        onSubmit={sent.send}
         aria-label={z ? `${z.name} ändern` : "Lichtzone anlegen"}
       >
         <TextField
@@ -83,7 +83,7 @@ export function ZoneForm(props: { start?: LightZone; onSave: Save; onCancel?: ()
           running={sent.running}
           onCancel={props.onCancel}
         />
-      </form>
+      </FormRoot>
     </Form>
   );
 }

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, withAccount, openPool } from "../kernel/index.ts";
+import { migrate, withAccount, openOwnerPool, openFixturePool } from "../kernel/index.ts";
 import { createFixtureSpeciesAt } from "../fixtures.ts";
 import { LocationPostgres } from "../light/index.ts";
 import { SpecimenPostgres } from "./index.ts";
@@ -9,6 +9,8 @@ import type { SpecimenRow } from "./specimens.ts";
 
 // US-PHA-03, US-BES-08, P-04: set the location of specimens (real PostgreSQL, `make db-up`).
 let pool: Pool;
+// Deliberate cross-tenant cleanup/observation of FORCE-d tables: needs the superuser, the suite owner is under row security (#294).
+let admin: Pool;
 let specimens: SpecimenPostgres;
 let locations: LocationPostgres;
 const anna = randomUUID();
@@ -16,16 +18,18 @@ const ben = randomUUID();
 let species = "";
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
-  species = await createFixtureSpeciesAt(pool);
+  species = await createFixtureSpeciesAt();
   specimens = new SpecimenPostgres(pool);
   locations = new LocationPostgres(pool);
   for (const id of [anna, ben])
     await withAccount(pool, id, (c) => c.query("insert into account (id) values ($1)", [id]));
 });
 afterAll(async () => {
-  await pool.query("delete from account where id = any($1)", [[anna, ben]]);
+  await admin.query("delete from account where id = any($1)", [[anna, ben]]);
+  await admin.end();
   await pool.end();
 });
 

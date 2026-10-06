@@ -78,10 +78,20 @@ const WISHLIST: Record<string, unknown> = {
       text: "Keine offenen Kandidaten in der Wunschliste.",
       nextAction: "Erfasse einen Wunsch mit Ziel-Lichtzone.",
     },
+    replenishment: {
+      buffer: 2,
+      zones: [],
+      actions: { discover: false, suggestions: false },
+      nextAction: null,
+    },
   },
   "/wishes/bought": {
     bought: [],
     hint: { text: "Noch kein Wunsch ist als gekauft vermerkt.", nextAction: "Gekauft" },
+  },
+  "/wishes/discarded": {
+    discarded: [],
+    hint: { text: "Kein Wunsch ist verworfen.", nextAction: "Verwerfen" },
   },
 };
 

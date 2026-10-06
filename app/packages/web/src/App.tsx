@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import type { Species } from "@pflanzendex/core";
 import {
@@ -12,8 +12,11 @@ import {
 } from "./account";
 import { useClearOnSignOut } from "./kernel";
 import { AppRoutes } from "./routes";
+import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
 import { AppShell } from "./components/shared/app-shell";
-import { navItems, PATHS, type View } from "./navigation";
+import { pageTitle, navItems, PATHS, viewTitle, type View } from "./navigation";
+import { PathNotes } from "./wishlist";
+import { useWishHandOver } from "./wish-to-specimen";
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
 
@@ -44,6 +47,20 @@ function useSpeciesHandOver(setView: (v: View) => void) {
 
 type Session = ReturnType<typeof useSession>;
 
+/** The page title before there is an account to work with (US-QS-09, WCAG 2.4.2); signed in, the shell sets it per view. */
+const ENTRY_TITLES: Record<Exclude<State["kind"], "signedIn">, string | undefined> = {
+  loading: undefined,
+  error: "Fehler",
+  signedOut: "Anmelden",
+  invitationNeeded: "Einladungscode",
+};
+
+function useEntryTitle(kind: State["kind"]) {
+  useEffect(() => {
+    if (kind !== "signedIn") document.title = pageTitle(ENTRY_TITLES[kind]);
+  }, [kind]);
+}
+
 /** What shows before there is an account to work with: loading, an error, the welcome page, the invitation code. */
 function EntryStates(props: { state: State; session: Session }) {
   const { state: z, session: s } = props;
@@ -59,12 +76,14 @@ function EntryStates(props: { state: State; session: Session }) {
         />
       )}
       {z.kind === "invitationNeeded" && (
-        <InvitationPage
-          api={api}
-          token={s.token}
-          onRegistered={() => void s.reload()}
-          onSignOut={s.signOut}
-        />
+        <RouteBoundary resetKey="invitation">
+          <InvitationPage
+            api={api}
+            token={s.token}
+            onRegistered={() => void s.reload()}
+            onSignOut={s.signOut}
+          />
+        </RouteBoundary>
       )}
     </>
   );
@@ -75,8 +94,11 @@ export function App() {
   const { setView, openProfile } = useViews();
   const { state: navState } = useLocation() as { state: { hint?: string } | null };
   const handOver = useSpeciesHandOver(setView);
+  // The way from a bought wish to its specimen (US-WUN-05): wishlist, catalog and collection are wired here.
+  const wishPath = useWishHandOver(api, s.token, handOver);
   const z = s.state;
   useClearOnSignOut(z.kind === "signedIn");
+  useEntryTitle(z.kind);
   const footer = (
     <footer className="mt-8 text-center text-xs text-muted-foreground">
       Version {version || "unbekannt"}
@@ -91,6 +113,7 @@ export function App() {
     );
   return (
     <AppShell
+      titleOf={viewTitle}
       items={navItems({
         reviewer: z.account.reviewer === true,
         operator: z.account.operator === true,
@@ -102,6 +125,11 @@ export function App() {
             {navState.hint}
           </p>
         )}
+        {(wishPath.notes.wish || wishPath.notes.notice) && (
+          <Suspense fallback={null}>
+            <PathNotes {...wishPath.notes} />
+          </Suspense>
+        )}
         <AppRoutes
           api={api}
           session={s}
@@ -109,7 +137,7 @@ export function App() {
           {...(z.error ? { error: z.error } : {})}
           onOpen={setView}
           onOpenProfile={openProfile}
-          handOver={handOver}
+          handOver={wishPath.handOver}
         />
       </div>
       {footer}

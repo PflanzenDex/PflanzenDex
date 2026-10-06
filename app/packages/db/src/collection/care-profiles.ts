@@ -2,20 +2,10 @@ import type { Pool } from "pg";
 import { withAccount } from "../kernel/index.ts";
 import { FOREIGN_KEY, SpeciesGone, ensureSpeciesVisible, pgError } from "./specimen-shared.ts";
 
-// Same shape as `CareProfile` in `core` (structurally equal; `db` does not import `core`).
-export interface CareProfileRow {
-  readonly speciesId: string;
-  readonly growthLocationId: string | null;
-  readonly dormancyLocationId: string | null;
-  readonly lightZoneId: string | null;
-  readonly dormancyFrom: string | null;
-  readonly dormancyUntil: string | null;
-  readonly wateringGrowthDays: number | null;
-  readonly wateringDormancyDays: number | null;
-  readonly ownHints: string | null;
-}
-
-export type CareProfileChanges = Partial<Omit<CareProfileRow, "speciesId">>;
+// The shapes are the types of `core` (type-only import through its public entry, AB-2).
+import type { CareProfile, CareProfileChanges } from "@pflanzendex/core";
+export type CareProfileRow = CareProfile;
+export type { CareProfileChanges };
 
 /** Field name -> column; the order is the order of the parameters. */
 const COLUMN_OF: Record<keyof CareProfileChanges, string> = {

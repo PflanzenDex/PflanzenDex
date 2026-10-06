@@ -1,12 +1,13 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool } from "@pflanzendex/db";
+import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
 
 // US-ACC-05 over HTTP with real PostgreSQL (`make db-up`). The mode "invitation only" is forced per app instance
 // (`invitationOnly`), never switched in the shared database: other test files sign in new subjects in parallel.
 let pool: Pool;
+let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
 const [subOperator, subKeeper, subReviewer] = ["operator", "keeper", "reviewer"].map(
   (n) => `acc05-${n}-${randomUUID()}`,
 ) as [string, string, string];
@@ -55,10 +56,11 @@ const newCode = async (days?: number) => {
 };
 
 const clearCost = () =>
-  pool.query("update operator_cost set amount_cents = null, currency = null, month = null");
+  admin.query("update operator_cost set amount_cents = null, currency = null, month = null");
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   await clearCost();
   open = createApp({ reviewer: verifier, pool });
@@ -68,21 +70,22 @@ beforeAll(async () => {
     [subOperator, "operator"],
     [subReviewer, "reviewer"],
   ] as const)
-    await pool.query(
+    await admin.query(
       "insert into account_role (account, role) select id, $2 from account where subject = $1",
       [sub, role],
     );
 });
 afterAll(async () => {
   await clearCost();
-  await pool.query(
+  await admin.query(
     "delete from invitation where created_by in (select id from account where subject = any($1))",
     [[subOperator]],
   );
-  await pool.query("delete from account where subject = any($1)", [
+  await admin.query("delete from account where subject = any($1)", [
     [subOperator, subKeeper, subReviewer, ...extra],
   ]);
   await pool.end();
+  await admin.end();
 });
 
 describe("US-ACC-05 · registration only with a valid invitation code", () => {
@@ -93,7 +96,7 @@ describe("US-ACC-05 · registration only with a valid invitation code", () => {
     expect(r.status).toBe(403);
     expect(r.body["error"]).toMatchObject({ code: "invitation.required" });
     expect(typeof r.body["error"]["text"]).toBe("string");
-    const n = await pool.query("select count(*)::int as n from account where subject = $1", [sub]);
+    const n = await admin.query("select count(*)::int as n from account where subject = $1", [sub]);
     expect(n.rows[0].n).toBe(0);
   });
 
@@ -143,7 +146,7 @@ describe("US-ACC-05 · registration only with a valid invitation code", () => {
 
   it("US-ACC-05 an expired code is answered like an unknown one", async () => {
     const code = (await newCode()).replaceAll("-", "");
-    await pool.query(
+    await admin.query(
       "update invitation set created_at = now() - interval '2 days', expires_at = now() - interval '1 day' where code_hash = sha256(convert_to($1, 'UTF8'))",
       [code],
     );
@@ -236,13 +239,13 @@ describe("US-ACC-05 · the operator area (role checked in the operation and in t
     expect([a.status, b.status]).toEqual([201, 201]);
     expect(b.body["code"]).not.toBe(a.body["code"]);
     for (const code of [a.body["code"], b.body["code"]] as string[]) {
-      const leaked = await pool.query(
+      const leaked = await admin.query(
         "select count(*)::int as n from idempotency where result::text ilike any($1) or fingerprint ilike any($1)",
         [[`%${code}%`, `%${code.replaceAll("-", "")}%`]],
       );
       expect(leaked.rows[0].n).toBe(0);
     }
-    const kept = await pool.query(
+    const kept = await admin.query(
       "select count(*)::int as n from idempotency where operation = 'invitation.create' and key = $1",
       [key],
     );

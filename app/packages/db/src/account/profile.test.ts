@@ -1,10 +1,12 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool, withAccount } from "../kernel/index.ts";
+import { migrate, openOwnerPool, withAccount, openFixturePool } from "../kernel/index.ts";
 import { findOrCreateAccount, ProfilePostgres } from "./index.ts";
 
 let pool: Pool;
+// Deliberate cross-tenant cleanup/observation of FORCE-d tables: needs the superuser, the suite owner is under row security (#294).
+let admin: Pool;
 let profiles: ProfilePostgres;
 const subjects: string[] = [];
 
@@ -39,12 +41,14 @@ async function newAccount(withData = true): Promise<string> {
 }
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   profiles = new ProfilePostgres(pool);
 });
 afterAll(async () => {
-  await pool.query("delete from account where subject = any($1)", [subjects]);
+  await admin.query("delete from account where subject = any($1)", [subjects]);
+  await admin.end();
   await pool.end();
 });
 

@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool } from "@pflanzendex/db";
+import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
 // US-BES-10 over HTTP with real PostgreSQL (`make db-up`): two plant keepers and an operator share the catalog.
 let pool: Pool;
+let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
 const run = randomUUID()
   .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
   .replace(/-/g, "")
@@ -71,17 +72,18 @@ const approve = async (sub: string) => {
 };
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer: verifier, pool });
   for (const sub of [subKeeper, subOther, subOperator]) await call(sub, "GET", "/species");
-  await pool.query(
+  await admin.query(
     "insert into account_role (account, role) select id, 'operator' from account where subject = $1",
     [subOperator],
   );
 });
 afterAll(async () => {
-  const client = await pool.connect();
+  const client = await admin.connect();
   try {
     await client.query("begin");
     await client.query("set local session_replication_role = replica");
@@ -97,6 +99,7 @@ afterAll(async () => {
   } finally {
     client.release();
     await pool.end();
+    await admin.end();
   }
 });
 

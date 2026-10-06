@@ -8,7 +8,7 @@ import {
   type Result,
   type ErrorDetail,
 } from "../../kernel";
-import { parseLatin, type LatinName } from "./name";
+import { latinNameProblem, parseLatin, type LatinName } from "./name";
 import { SPECIES_LIMITS, GROWTH_MEASURES } from "./types";
 
 const invalid = (field: string): ErrorDetail => ({ field, code: "input.invalid" });
@@ -21,8 +21,17 @@ const optional = (field: string, max: number) => {
   return (value: unknown): string | ErrorDetail | null => (empty(value) ? null : check(value));
 };
 
-const latinField = (value: unknown): LatinName | ErrorDetail =>
-  (typeof value === "string" && parseLatin(value)) || invalid("latinName");
+const NAME_PROBLEM = {
+  addition: "catalog.name_addition",
+  hybrid: "catalog.name_hybrid",
+} as const;
+
+const latinField = (value: unknown): LatinName | ErrorDetail => {
+  const parsed = typeof value === "string" && parseLatin(value);
+  if (parsed) return parsed;
+  const problem = typeof value === "string" ? latinNameProblem(value) : null;
+  return problem ? { field: "latinName", code: NAME_PROBLEM[problem] } : invalid("latinName");
+};
 
 const synonymField = (value: unknown): string[] | ErrorDetail => {
   if (empty(value)) return [];

@@ -4,6 +4,13 @@ export { migrate, MIGRATIONS_DIRECTORY, type MigrationsOptions } from "./migrate
 export { checkSchema, tenantsTables, WITHOUT_ACCOUNT_ID } from "./schema.ts";
 export type { TenantExceptions } from "./schema.ts";
 export { checkTenantIsolation, type FixtureContext, type Fixtures } from "./isolation.ts";
-export { openPool, testDatabaseUrl } from "./connection.ts";
+export {
+  ensureTestOwnerDatabase,
+  openAdminPool,
+  openFixturePool,
+  openOwnerPool,
+  openPool,
+  testDatabaseUrl,
+} from "./connection.ts";
 export { IdempotencyPostgres } from "./idempotency.ts";
 export { FIXTURES_KERNEL } from "./fixtures.ts";

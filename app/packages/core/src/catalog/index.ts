@@ -29,6 +29,7 @@ export type {
   SpeciesName,
   SpeciesStore,
   SpeciesHit,
+  SpeciesCreation,
   SpeciesValues,
   LatinName,
   NameField,

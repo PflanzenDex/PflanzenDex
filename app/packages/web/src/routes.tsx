@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router";
-import type { Species } from "@pflanzendex/core";
+import type { Species, Specimen } from "@pflanzendex/core";
 import { CollectionArea } from "./collection-area";
 import { CareProfilePage, DifficultyPage, HintsPage } from "./collection";
 import { AccountView, SettingsPage, OperatorPage, useSession, type State } from "./account";
@@ -8,10 +8,13 @@ import { LightPage } from "./light";
 import { ReviewPage, SpeciesPage } from "./catalog";
 import { CarePhasesPage, TreatmentsPage } from "./care";
 import { PokedexPage } from "./pokedex";
-import { WishlistPage } from "./wishlist";
+import { WishlistPage, type WishToPlant } from "./wishlist";
+import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
-import { StartPage } from "./start-page";
 import { PATHS, type View } from "./navigation";
+
+/** The start page carries the onboarding forms (validation, form library): its chunk loads with its route (#451). */
+const StartPage = lazyPage(() => import("./start-page").then((m) => ({ default: m.StartPage })));
 
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
@@ -22,7 +25,6 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
   carePhases: CarePhasesPage,
   careProfile: CareProfilePage,
   difficulty: DifficultyPage,
-  wishlist: WishlistPage,
   review: ReviewPage,
   operator: OperatorPage,
   settings: SettingsPage,
@@ -81,9 +83,15 @@ type HandOver = {
   setNewSpecies: (s: Species | null) => void;
   choose: (s: Species) => void;
   toTheCatalog: () => void;
+  /** A specimen was created for the chosen species: the app links it to its bought wish, if any (US-WUN-05). */
+  onCreated: (specimen: Specimen) => void;
+  /** Starts the way from a bought wish to its specimen (US-WUN-05). */
+  startFromWish: (wish: WishToPlant) => void;
+  /** The catalog search starts with this text while a bought wish is on its way to the specimen (US-WUN-05). */
+  searchStart?: string;
 };
 
-/** The catalog and the collection hand the chosen species over to each other (US-BES-02). */
+/** The catalog and the collection hand the chosen species over to each other (US-BES-02); the wishlist starts the way to the plant (US-WUN-05). */
 function handOverRoutes(api: string, token: Token, h: HandOver) {
   return [
     <Route
@@ -95,14 +103,27 @@ function handOverRoutes(api: string, token: Token, h: HandOver) {
           token={token}
           newSpecies={h.newSpecies}
           onSpeciesChoose={h.toTheCatalog}
-          onCompleted={() => h.setNewSpecies(null)}
+          onCompleted={h.onCreated}
         />
       }
     />,
     <Route
       key="species"
       path={PATHS.species}
-      element={<SpeciesPage api={api} token={token} onChoose={h.choose} openId={null} />}
+      element={
+        <SpeciesPage
+          api={api}
+          token={token}
+          onChoose={h.choose}
+          openId={null}
+          {...(h.searchStart ? { initialSearch: h.searchStart } : {})}
+        />
+      }
+    />,
+    <Route
+      key="wishlist"
+      path={PATHS.wishlist}
+      element={<WishlistPage api={api} token={token} onCreateSpecimen={h.startFromWish} />}
     />,
     <Route
       key="profile"
@@ -119,12 +140,7 @@ export function AppRoutes(props: {
   error?: string;
   onOpen: (v: View) => void;
   onOpenProfile: (id: string) => void;
-  handOver: {
-    newSpecies: Species | null;
-    setNewSpecies: (s: Species | null) => void;
-    choose: (s: Species) => void;
-    toTheCatalog: () => void;
-  };
+  handOver: HandOver;
 }) {
   const { api, session: s, account, handOver: h } = props;
   const roles: Partial<Record<View, boolean>> = {
