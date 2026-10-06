@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { MeasurementSource, TargetLocationSource, TreatmentSource } from "@pflanzendex/core";
-import { SpeciesPostgres, migrate, openEnsuredOwnerPool, openFixturePool } from "@pflanzendex/db";
+import { SpeciesPostgres, migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp, type AppOptions } from "../app";
@@ -66,7 +66,7 @@ let specimenOfB = "";
 let locationA = "";
 
 beforeAll(async () => {
-  pool = await openEnsuredOwnerPool();
+  pool = openOwnerPool();
   admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer: verifier, pool });

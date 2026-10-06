@@ -7,7 +7,6 @@ export { checkTenantIsolation, type FixtureContext, type Fixtures } from "./isol
 export {
   ensureTestOwnerDatabase,
   openAdminPool,
-  openEnsuredOwnerPool,
   openFixturePool,
   openOwnerPool,
   openPool,

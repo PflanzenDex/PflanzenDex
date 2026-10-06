@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openEnsuredOwnerPool, openFixturePool, withAccount } from "@pflanzendex/db";
+import { migrate, openOwnerPool, openFixturePool, withAccount } from "@pflanzendex/db";
 import { createApp } from "../app";
 import type { TokenVerifier } from "./index";
 
@@ -43,7 +43,7 @@ const read = async (sub: string) =>
   >;
 
 beforeAll(async () => {
-  pool = await openEnsuredOwnerPool();
+  pool = openOwnerPool();
   admin = openFixturePool();
   await migrate(pool);
   // The web app loads the account first, which creates the data row.
