@@ -1,6 +1,6 @@
-# Initial JS bundle report (QG-U6, FR-QG-10)
+# Supply gates and the initial JS bundle report (QG-U6, FR-QG-10)
 
-`make bundle-report` prints where the initial JavaScript of the web app comes from, as Markdown. The CI job `ci` appends the same table to its job summary (step "Initial JS bundle report"). The report never fails and changes no threshold.
+`check-bundle-budget.mjs` is the blocking budget gate; `report-bundle.mjs` is its report. `make bundle-report` prints where the initial JavaScript of the web app comes from, as Markdown. The CI job `ci` appends the same table to its job summary (step "Initial JS bundle report"). The report never fails and changes no threshold.
 
 ## What it measures
 
