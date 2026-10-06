@@ -3,8 +3,8 @@ import type { TodayItem, TodayKind, TodayList, TodayTarget } from "@pflanzendex/
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { dateText } from "@/lib/format";
-import { LoadFrame } from "../kernel";
-import { loadToday } from "./today-api";
+import { LoadFrame } from "../../kernel";
+import { loadToday } from "../today-api";
 
 /** Where an action leads: the app wires the destination to a view (the modules do not know each other). */
 export type TodayDestination = TodayTarget | "collection";
