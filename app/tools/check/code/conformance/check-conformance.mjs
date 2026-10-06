@@ -33,7 +33,7 @@ const where = ({ story, scheme }) => `QG-U5 ${story} (${scheme})`;
 const SCHEMES = ["light", "dark"];
 const VIEWPORT = { width: 360, height: 640 };
 
-function serve(root) {
+export function serve(root) {
   const types = {
     ".html": "text/html",
     ".js": "text/javascript",
@@ -58,7 +58,7 @@ function serve(root) {
   );
 }
 
-function buildCatalog(outDir, fixtures) {
+export function buildCatalog(outDir, fixtures) {
   const r = spawnSync(
     "npm",
     ["exec", "-w", "@pflanzendex/web", "--", "storybook", "build", "-o", outDir, "--quiet"],
