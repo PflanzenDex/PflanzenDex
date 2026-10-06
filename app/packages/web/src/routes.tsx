@@ -9,9 +9,12 @@ import { ReviewPage, SpeciesPage } from "./catalog";
 import { CarePhasesPage, TreatmentsPage } from "./care";
 import { PokedexPage } from "./pokedex";
 import { WishlistPage } from "./wishlist";
+import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
-import { StartPage } from "./start-page";
 import { PATHS, type View } from "./navigation";
+
+/** The start page carries the onboarding forms (validation, form library): its chunk loads with its route (#451). */
+const StartPage = lazyPage(() => import("./start-page").then((m) => ({ default: m.StartPage })));
 
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
