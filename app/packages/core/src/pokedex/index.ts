@@ -2,6 +2,16 @@
 export { pokedexOwnership, speciesKey } from "./ownership";
 export { browsePokedex } from "./browse";
 export { collectorProgress } from "./rank";
+export { milestoneOverview, milestones } from "./milestones";
+export type {
+  CaughtDates,
+  Milestone,
+  MilestoneLevel,
+  MilestoneOverview,
+  MilestoneTree,
+  TreeGroup,
+  TreeSpecies,
+} from "./milestones";
 export type { CollectorProgress, CollectorRank, TreeTotals } from "./rank";
 export type { Browsed, BrowseOptions, FamilyGroup, PokedexFilter, PokedexSort } from "./browse";
 export type {
