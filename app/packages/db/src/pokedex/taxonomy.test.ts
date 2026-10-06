@@ -106,4 +106,20 @@ describe("US-POK-03 taxonomy tree in the database", () => {
       /permission denied/,
     );
   });
+
+  it("US-POK-01 reads the resolved tree for the cards, never the unresolved rows", async () => {
+    await store.replace(build("f1"));
+    expect(await store.tree()).toEqual([
+      {
+        latinName: "Ficus benjamina",
+        genus: "Ficus",
+        family: "Moraceae",
+        order: "Rosales",
+        summary: "Eine Art.",
+        imageUrl: null,
+        pageUrl: "https://de.wikipedia.org/wiki/Ficus_benjamina",
+        genusSpeciesCount: null,
+      },
+    ]);
+  });
 });

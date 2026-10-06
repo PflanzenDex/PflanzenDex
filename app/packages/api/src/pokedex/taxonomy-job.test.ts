@@ -10,6 +10,7 @@ import {
 } from "@pflanzendex/db";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { createApp } from "../app";
 import { checkTaxonomy, pokedexJobHandlers, scheduleChecks } from "./index";
 
 // US-POK-03: the build job against real PostgreSQL; the sources are a fake (no network, no clock).
@@ -133,6 +134,56 @@ describe("US-POK-03 taxonomy build job", () => {
     });
     expect(row.rows[0].provenance).toMatchObject({ lineage: { source: "opentree" } });
     expect(await checkTaxonomy(pool, FUTURE)).toBe("up_to_date");
+  });
+
+  it("US-POK-01 serves the built tree as collector cards: missing for one account, caught for the account with a specimen", async () => {
+    const reviewer = async (token: string) =>
+      token.startsWith("valid:")
+        ? { sub: token.slice(6), email: "x@example.test", name: "T", email_verified: true }
+        : null;
+    const app = createApp({ reviewer, pool });
+    const get = async (sub: string | null, query = "timeZone=Europe%2FBerlin") =>
+      app.request(`/pokedex/cards?${query}`, {
+        headers: sub ? { authorization: `Bearer valid:${sub}` } : {},
+      });
+    const mine = async (sub: string) => {
+      const body = (await (await get(sub)).json()) as {
+        cards: { species: string; state: string }[];
+      };
+      return body.cards.find((c) => c.species === latinName);
+    };
+    expect((await get(null)).status).toBe(401);
+    const bad = await get(`pok1-${account}`, "timeZone=Mars%2FBase");
+    expect(bad.status).toBe(400);
+    expect(((await bad.json()) as { error: { code: string } }).error.code).toBe("input.invalid");
+
+    const keeper = `pok1-keeper-${account}`;
+    const other = `pok1-other-${account}`;
+    expect(await mine(keeper)).toMatchObject({
+      state: "missing",
+      genus,
+      family: "Testaceae",
+      difficulty: 1,
+      lightZone: 2,
+      germanName: null,
+    });
+    const made = await app.request("/specimens", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer valid:${keeper}`,
+        "content-type": "application/json",
+        "idempotency-key": randomUUID(),
+      },
+      body: JSON.stringify({ timeZone: "Europe/Berlin", speciesId, marker: "Karte" }),
+    });
+    expect(made.status).toBe(201);
+    expect(await mine(keeper)).toMatchObject({ state: "caught", specimenCount: 1 });
+    expect(await mine(other)).toMatchObject({ state: "missing", specimenCount: 0 });
+    await admin.query(
+      "delete from specimen where account_id in (select id from account where subject = any($1))",
+      [[keeper, other]],
+    );
+    await admin.query("delete from account where subject = any($1)", [[keeper, other]]);
   });
 
   it("US-POK-03 the job type is registered, so a queued build never ends dead for lack of a handler", () => {

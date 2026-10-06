@@ -41,3 +41,5 @@ export type {
   TaxonomyDependencies,
   TaxonomyStore,
 } from "./taxonomy";
+export { collectorCards, readCollectorCards, shortGermanName } from "./cards";
+export type { CollectorCard, SpeciesFacts, TaxonCardRow, TaxonCardSource } from "./cards";
