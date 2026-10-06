@@ -11,6 +11,12 @@ import type {
   SpeciesName,
   SpeciesValues,
 } from "@pflanzendex/core";
+export interface SpeciesFacts {
+  readonly latinName: string;
+  readonly germanName: string | null;
+  readonly difficulty: number | null;
+  readonly lightZone: number | null;
+}
 export type { Species, SpeciesCreation, SpeciesHit, SpeciesName, SpeciesValues };
 
 /** Column per field (without synonyms: they live in `species_name`). */
@@ -78,6 +84,22 @@ export class SpeciesPostgres {
         order by a.latin_name`,
     );
     return r.rows.map((x) => x.latin_name);
+  }
+
+  /**
+   * German name, difficulty and standard light zone of the approved species (no cultivars, no proposals): the facts
+   * the Pokédex cards show next to the taxonomy (US-POK-01).
+   */
+  async approvedFacts(userId: string): Promise<readonly SpeciesFacts[]> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<SpeciesFacts>(
+        `select a.latin_name as "latinName", a.german_name as "germanName", a.difficulty,
+                a.standard_level as "lightZone"
+           from species a
+          where a.cultivar is null and species_status(a.id) in ('curated', 'reviewed')`,
+      ),
+    );
+    return r.rows;
   }
 
   async search(userId: string, norm: string | null): Promise<readonly SpeciesHit[]> {

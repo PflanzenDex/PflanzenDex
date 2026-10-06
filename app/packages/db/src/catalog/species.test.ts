@@ -296,4 +296,25 @@ describe("species catalog and review status (TE-08)", () => {
     expect(listed).not.toContain(cultivar.latinName);
     expect(listed).not.toContain(noEpithet.latinName);
   });
+
+  it("US-POK-01 gives the Pokédex cards facts of approved species only, no proposals and no cultivars", async () => {
+    const approved = await create(
+      anna,
+      values(name("Aloe karte "), { germanName: "Kartenaloe", difficulty: 3, standardLevel: 4 }),
+    );
+    await approve(approved.id);
+    const proposal = await create(anna, values(name("Aloe karte-vorschlag ")));
+    const cultivar = await create(anna, values(name("Aloe karte-sorte "), { cultivar: "Rot" }));
+    await approve(cultivar.id);
+    const facts = await species.approvedFacts(ben);
+    expect(facts).toContainEqual({
+      latinName: approved.latinName,
+      germanName: "Kartenaloe",
+      difficulty: 3,
+      lightZone: 4,
+    });
+    const names = facts.map((f) => f.latinName);
+    expect(names).not.toContain(proposal.latinName);
+    expect(names).not.toContain(cultivar.latinName);
+  });
 });

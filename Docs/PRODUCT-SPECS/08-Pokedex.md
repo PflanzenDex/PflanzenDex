@@ -8,7 +8,7 @@ Note: in the prototype the stories POK-04 (hook) and POK-05 (robustness) were pa
 
 ## User stories
 
-### US-POK-01 · See collector cards for species · ⬜ (prototype ✅)
+### US-POK-01 · See collector cards for species · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
@@ -19,6 +19,8 @@ Acceptance criteria:
 - If the short text is missing: "No description available."
 - Species-poor (genus ≤ 10 species according to GBIF): badge "Species-poor"; caught species-poor species with a rarity frame.
 - Source link on every card with an image source (CC BY-SA).
+
+Status 🟨: the cards of the taxonomy tree work (`GET /pokedex/cards`, caught derived live from the specimens, missing cards, species-poor badge and rarity frame, Wikipedia image as a link only, P-05). Missing: the latest measurement photo of an active specimen (WAC-05, storage TE-05; the Wikipedia image link or a neutral sprout is shown) and the family icons (FR-POK-10); caught species that are not in the tree are not shown as cards (FR-POK-04 hints).
 
 ### US-POK-02 · Maintain the catalog · ⬜ (prototype ✅)
 
