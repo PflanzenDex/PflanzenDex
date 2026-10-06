@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import type { CareProfileChanges, CareProfileEntry } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
+import { Form, FormRoot } from "@/components/ui/form";
 import { changesOf, draftOf } from "./care-profile-draft";
 import { Days, Dormancy, Hints, Places, type Lists } from "./care-profile-sections";
 import { CARD, Quiet } from "./parts";
@@ -52,7 +52,7 @@ export function CareProfileCard(props: {
         {entry.deviates && <strong>Meine Abweichung gilt</strong>}
       </Quiet>
       <Form {...form}>
-        <form noValidate onSubmit={(e) => void submit(e)} className="grid gap-1">
+        <FormRoot onSubmit={submit} className="grid gap-1">
           <Places {...shared} lists={props.lists} />
           <Dormancy {...shared} />
           <Days {...shared} />
@@ -66,7 +66,7 @@ export function CareProfileCard(props: {
           >
             Speichern
           </Button>
-        </form>
+        </FormRoot>
       </Form>
     </section>
   );

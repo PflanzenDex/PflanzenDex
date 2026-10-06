@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import { specimenName } from "@pflanzendex/core";
-import { Form } from "@/components/ui/form";
+import { Form, FormRoot } from "@/components/ui/form";
 import type { ApiError } from "../kernel";
 import { MarkerInput } from "./marker-fields";
 import { FormButtons, Quiet, TITLE, Warning } from "./parts";
@@ -41,9 +41,8 @@ export function MarkerForm(props: {
         Nur der Name ändert sich: Messungen und Behandlungen bleiben beim Exemplar.
       </Quiet>
       <Form {...form}>
-        <form
-          noValidate
-          onSubmit={(e) => void submit(e)}
+        <FormRoot
+          onSubmit={submit}
           aria-label="Kennzeichen ändern"
           className="flex max-w-xl flex-col gap-4"
         >
@@ -67,7 +66,7 @@ export function MarkerForm(props: {
             pending={form.formState.isSubmitting}
             onCancel={props.onCancel}
           />
-        </form>
+        </FormRoot>
       </Form>
     </section>
   );
