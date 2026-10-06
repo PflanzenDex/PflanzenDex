@@ -27,6 +27,8 @@ export function LoadFrame<T>(props: {
     description?: string;
     action?: EmptyStateAction;
   };
+  /** Page level only: the main heading shown when the load fails (US-QS-09). */
+  heading?: string;
   children: (value: T) => ReactNode;
 }) {
   const { queryKey, token, load, empty, fresh } = props;
@@ -48,6 +50,7 @@ export function LoadFrame<T>(props: {
         ) : null
       }
       offline={r.offline}
+      {...(props.heading ? { heading: props.heading } : {})}
     >
       {r.value !== undefined ? props.children(r.value) : null}
     </RequestState>

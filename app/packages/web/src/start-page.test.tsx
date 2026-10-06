@@ -52,7 +52,7 @@ describe("US-ACC-03 start page and guided onboarding", () => {
     fakeServer({ zones: [], locations: [], cards: [] });
     view();
     expect(await screen.findByRole("heading", { name: "Wo stehen deine Pflanzen?" })).toBeTruthy();
-    expect(screen.getByText("Schritt 1 von 3")).toBeTruthy();
+    expect(screen.getByText("Schritt 1 von 3: Standorte")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Überspringen" })).toBeTruthy();
   });
 
@@ -61,10 +61,10 @@ describe("US-ACC-03 start page and guided onboarding", () => {
     view();
     await userEvent.click(await screen.findByRole("button", { name: "Überspringen" }));
     expect(await screen.findByRole("heading", { name: "Wie hell ist es?" })).toBeTruthy();
-    expect(screen.getByText("Schritt 2 von 3")).toBeTruthy();
+    expect(screen.getByText("Schritt 2 von 3: Lichtzonen")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Überspringen" }));
     expect(await screen.findByRole("heading", { name: "Deine erste Pflanze" })).toBeTruthy();
-    expect(screen.getByText("Schritt 3 von 3")).toBeTruthy();
+    expect(screen.getByText("Schritt 3 von 3: Erste Pflanze")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Überspringen" }));
 
     expect(await screen.findByRole("heading", { name: "Start" })).toBeTruthy();
@@ -152,7 +152,7 @@ describe("US-ACC-03 start page and guided onboarding", () => {
     const heading = await screen.findByRole("heading", { name: "Wie hell ist es?" });
     expect(document.activeElement).toBe(heading);
     expect(heading.getAttribute("tabindex")).toBe("-1");
-    const marker = screen.getByText("Schritt 2 von 3");
+    const marker = screen.getByText("Schritt 2 von 3: Lichtzonen");
     expect(marker.getAttribute("role")).toBe("status");
     await userEvent.click(screen.getByRole("button", { name: "Überspringen" }));
     expect(document.activeElement).toBe(
@@ -163,7 +163,7 @@ describe("US-ACC-03 start page and guided onboarding", () => {
   it("US-ACC-03 a wizard step shows a visible progress marker, not only an aria attribute", async () => {
     fakeServer({ zones: [], locations: [], cards: [] });
     view();
-    const marker = await screen.findByText("Schritt 1 von 3");
+    const marker = await screen.findByText("Schritt 1 von 3: Standorte");
     expect(marker.className).toMatch(/rounded-full.*border/);
   });
 
@@ -197,9 +197,31 @@ describe("US-ACC-03 start page and guided onboarding", () => {
     fakeServer({ zones: [ZONE], locations: [LOCATION], cards: [], archived: 2 });
     view();
     expect(await screen.findByRole("heading", { name: "Nächste Pflanze" })).toBeTruthy();
-    expect(screen.queryByText("Schritt 1 von 3")).toBeNull();
+    expect(screen.queryByText("Schritt 1 von 3: Standorte")).toBeNull();
     expect(screen.queryByRole("heading", { name: "Wo stehen deine Pflanzen?" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Art im Katalog wählen" }));
     expect(open).toHaveBeenCalledWith("species");
+  });
+
+  it("US-QS-09 every step names itself and its position, and the first step has no way back", async () => {
+    fakeServer({ zones: [], locations: [], cards: [] });
+    view();
+    await screen.findByText("Schritt 1 von 3: Standorte");
+    expect(screen.queryByRole("button", { name: "Zurück" })).toBeNull();
+  });
+
+  it("US-QS-09 going back leads to the previous step and keeps what the account already saved there (3.3.7)", async () => {
+    fakeServer({ zones: [ZONE], locations: [LOCATION], cards: [] });
+    view();
+    // The guide starts at the first step without data, here the third.
+    await screen.findByText("Schritt 3 von 3: Erste Pflanze");
+    await userEvent.click(screen.getByRole("button", { name: "Zurück" }));
+    const zones = await screen.findByRole("heading", { name: "Wie hell ist es?" });
+    expect(screen.getByText("Schritt 2 von 3: Lichtzonen")).toBeTruthy();
+    expect(document.activeElement).toBe(zones);
+    await userEvent.click(screen.getByRole("button", { name: "Zurück" }));
+    await screen.findByRole("heading", { name: "Wo stehen deine Pflanzen?" });
+    // The location from before is shown, not asked for again.
+    expect(await screen.findByText("Fensterbank")).toBeTruthy();
   });
 });

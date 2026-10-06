@@ -59,6 +59,7 @@ export function HintsPage(props: {
         token={token}
         load={load}
         loadingText="Hinweise werden geladen …"
+        heading="Hinweise"
         loadingFallback={<HintsPageSkeleton label="Hinweise werden geladen …" />}
       >
         {(data: Data) => (

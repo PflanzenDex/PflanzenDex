@@ -33,6 +33,7 @@ export function DifficultyPage(props: { api: string; token: () => Promise<string
         token={token}
         load={load}
         loadingText="Artenvergleich wird geladen …"
+        heading="Artenvergleich"
         loadingFallback={<DifficultyPageSkeleton label="Artenvergleich wird geladen …" />}
       >
         {(rows: readonly DifficultyRow[]) => <DifficultyTable rows={rows} />}

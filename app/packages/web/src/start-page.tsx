@@ -142,6 +142,7 @@ export function StartPage(props: {
         token={props.token}
         load={load}
         loadingText="Start wird geladen …"
+        heading="Start"
       >
         {(counts: OnboardingCounts) => <Content {...props} counts={counts} />}
       </LoadFrame>

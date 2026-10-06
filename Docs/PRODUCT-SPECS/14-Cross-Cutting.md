@@ -86,7 +86,7 @@ Acceptance criteria:
 - Given any widget, when it has the focus, then the focus can always leave it again with the keys named above; there is no keyboard trap (2.1.2).
 - Given an everyday flow (US-QS-07: measuring with photo, confirming watering or location, ticking off a treatment, Today list), when its end-to-end test runs, then a keyboard-only variant of the test passes (guardrail, P-06).
 
-### US-QS-09 · Oriented and guided through the app · ⬜ new
+### US-QS-09 · Oriented and guided through the app · 🟨 new
 
 As a **plant keeper using a screen reader, magnification or with limited concentration** I want to always know where I am and what comes next.
 

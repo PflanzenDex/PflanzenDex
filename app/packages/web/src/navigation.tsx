@@ -91,3 +91,18 @@ export function navItems(who: {
     icon: <e.icon aria-hidden="true" className="size-5 shrink-0" />,
   }));
 }
+
+/** Spelled here and not imported from core: the root barrel of core would add about 5 kB gzip to the initial bundle (DS-08). */
+const PRODUCT = "PflanzenDex";
+/** "Name – PflanzenDex", or the product alone without a name (US-QS-09, WCAG 2.4.2). */
+export const pageTitle = (view?: string) => (view ? `${view} – ${PRODUCT}` : PRODUCT);
+
+/**
+ * The page title of the address (US-QS-09, WCAG 2.4.2): the name of the navigation entry, so title, entry and heading
+ * agree; a species profile has its own address below the catalog. Unknown addresses redirect, so they only get the product.
+ */
+export function viewTitle(pathname: string): string {
+  const entry = ENTRIES.find((e) => PATHS[e.id] === pathname);
+  if (entry) return pageTitle(entry.text);
+  return pathname.startsWith(`${PATHS.species}/`) ? pageTitle("Artenprofil") : pageTitle();
+}

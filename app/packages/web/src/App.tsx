@@ -1,4 +1,4 @@
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import type { Species } from "@pflanzendex/core";
 import {
@@ -14,7 +14,7 @@ import { useClearOnSignOut } from "./kernel";
 import { AppRoutes } from "./routes";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
 import { AppShell } from "./components/shared/app-shell";
-import { navItems, PATHS, type View } from "./navigation";
+import { pageTitle, navItems, PATHS, viewTitle, type View } from "./navigation";
 import { PathNotes } from "./wishlist";
 import { useWishHandOver } from "./wish-to-specimen";
 
@@ -46,6 +46,20 @@ function useSpeciesHandOver(setView: (v: View) => void) {
 }
 
 type Session = ReturnType<typeof useSession>;
+
+/** The page title before there is an account to work with (US-QS-09, WCAG 2.4.2); signed in, the shell sets it per view. */
+const ENTRY_TITLES: Record<Exclude<State["kind"], "signedIn">, string | undefined> = {
+  loading: undefined,
+  error: "Fehler",
+  signedOut: "Anmelden",
+  invitationNeeded: "Einladungscode",
+};
+
+function useEntryTitle(kind: State["kind"]) {
+  useEffect(() => {
+    if (kind !== "signedIn") document.title = pageTitle(ENTRY_TITLES[kind]);
+  }, [kind]);
+}
 
 /** What shows before there is an account to work with: loading, an error, the welcome page, the invitation code. */
 function EntryStates(props: { state: State; session: Session }) {
@@ -84,6 +98,7 @@ export function App() {
   const wishPath = useWishHandOver(api, s.token, handOver);
   const z = s.state;
   useClearOnSignOut(z.kind === "signedIn");
+  useEntryTitle(z.kind);
   const footer = (
     <footer className="mt-8 text-center text-xs text-muted-foreground">
       Version {version || "unbekannt"}
@@ -98,6 +113,7 @@ export function App() {
     );
   return (
     <AppShell
+      titleOf={viewTitle}
       items={navItems({
         reviewer: z.account.reviewer === true,
         operator: z.account.operator === true,

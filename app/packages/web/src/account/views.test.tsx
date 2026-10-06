@@ -20,6 +20,12 @@ describe("welcome (US-ACC-01)", () => {
     expect(html).toContain("Anmelden");
   });
 
+  it("US-QS-09 sign-in and sign-up ask for no puzzle and no code, they hand over to the sign-in service (3.3.8)", () => {
+    const html = renderToString(<Welcome onRegister={nothing} onSignIn={nothing} />);
+    expect(html).not.toMatch(/<input|captcha|<canvas|<iframe/i);
+    expect(html.match(/<button/g)).toHaveLength(2);
+  });
+
   it("names the next action after signing out", () => {
     const html = renderToString(
       <Welcome onRegister={nothing} onSignIn={nothing} hint="Du bist abgemeldet." />,

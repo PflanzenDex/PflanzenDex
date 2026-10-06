@@ -70,7 +70,7 @@ export function InvitationPage(props: {
             control={form.control}
             name="code"
             label="Einladungscode"
-            autoComplete="off"
+            autoComplete="one-time-code"
             autoCapitalize="characters"
             spellCheck={false}
           />
