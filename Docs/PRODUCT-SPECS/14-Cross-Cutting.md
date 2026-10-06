@@ -73,7 +73,7 @@ Acceptance criteria:
 
 The conformance target is **WCAG 2.2 level AA** as adopted by **EN 301 549 V4.1.1** (published 2026-09-02, chapters 9 web and 11 software; decision E-23). The stories below turn that target into checkable behavior at app level. Component-level rules (focus ring, 44 px targets, contrast, overlays) stay in `DESIGN-SYSTEM.md` (DS-15 to DS-20, DS-37, DS-38, DS-40) and the gates QG-U1 and QG-U5. The bracketed numbers name the WCAG 2.2 success criteria a criterion covers. The criteria of US-QS-08 to US-QS-12 are **standing criteria**: once done, they hold for every view, flow and control added later. The Definition of Done (FR-QG-10, item 11) and the gate QG-U7 (FR-QG-24) enforce them on every story, so accessibility is not a one-time effort.
 
-### US-QS-08 · Operable by keyboard alone · ⬜ new
+### US-QS-08 · Operable by keyboard alone · 🟨 new
 
 As a **plant keeper who cannot or does not want to use a pointer** I want to reach every function with the keyboard.
 

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Ellipsis } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -20,10 +21,14 @@ const state = (active: boolean) =>
 const isActive = (pathname: string, href: string) =>
   href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
 
-/** The "Mehr" button and the slide-over drawer with the destinations that do not fit the bar (DS-25). */
+/**
+ * The "Mehr" button and the slide-over drawer with the destinations that do not fit the bar (DS-25). Choosing a
+ * destination closes the drawer, so the new page is not left behind an overlay that holds the focus (US-QS-08).
+ */
 function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
+  const [open, setOpen] = useState(false);
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button
           variant="ghost"
@@ -41,6 +46,7 @@ function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
             <li key={item.href}>
               <NavLink
                 to={item.href}
+                onClick={() => setOpen(false)}
                 className={({ isActive }) =>
                   cn(
                     "flex min-h-[44px] items-center gap-3 rounded-md px-3 text-base hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -74,6 +80,7 @@ export function MobileNavBar({ items }: { items: NavItem[] }) {
   return (
     <nav
       aria-label="Navigation unten"
+      data-bottom-bar
       className="fixed inset-x-0 bottom-0 z-40 flex items-stretch gap-0.5 border-t border-border bg-background px-1 pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       {inBar.map((item) => (
