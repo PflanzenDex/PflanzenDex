@@ -9,7 +9,8 @@ export async function signIn(page: Page, account: TestAccount): Promise<void> {
   await page.locator("#username").fill(account.email);
   await page.locator("#password").fill(account.password);
   await page.locator("#kc-login").click();
-  await expect(page.getByRole("navigation", { name: "Hauptnavigation" })).toBeVisible();
+  // The header row of destinations is hidden below md; the brand in the banner stands on every width.
+  await expect(page.getByRole("banner").getByRole("link", { name: "PflanzenDex" })).toBeVisible();
 }
 
 /** Login, then open the locations-and-light view (the start view is the species search since US-BES-01). */
