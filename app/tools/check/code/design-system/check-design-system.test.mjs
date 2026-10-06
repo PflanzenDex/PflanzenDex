@@ -264,6 +264,64 @@ export function C({ className, variant }: { className?: string; variant?: "a" | 
     assert.ok(compare(counts, [], locations).some((p) => /^DSB-1 DS-48/.test(p)));
   });
 
+  it("DS-48 issue 452 · flags raw controls found by the AST, positive cases", () => {
+    const cases = {
+      button: "<button />",
+      input: "<input />",
+      select: "<select />",
+      textarea: "<textarea />",
+      form: "<form onSubmit={f} />",
+      role: '<div role="button" tabIndex={0} />',
+      roleLink: "<span role={'switch'} />",
+      anchorOnClick: "<a onClick={go}>x</a>",
+      anchorHashHref: '<a href="#" onClick={go}>x</a>',
+    };
+    for (const [name, jsx] of Object.entries(cases)) {
+      const { keys } = run({ ...ui("", "ok"), "src/w/a.tsx": `export const A = () => ${jsx};\n` });
+      assert.deepEqual(keys, ["DS-48|w/a.tsx"], name);
+    }
+  });
+
+  it("DS-48 issue 452 · reports the line of every violation", () => {
+    const src =
+      'export const A = () => (\n  <div>\n    <form />\n    <i role="tab" />\n  </div>\n);\n';
+    const { locations, counts } = run({ ...ui("", "ok"), "src/w/a.tsx": src });
+    assert.equal(counts.get("DS-48|w/a.tsx"), 2);
+    assert.deepEqual(locations.get("DS-48|w/a.tsx"), [3, 4]);
+  });
+
+  it("DS-48 issue 452 · asChild children, ui files, links and non-interactive roles pass", () => {
+    const pass = {
+      asChild: "<Trigger asChild><button /></Trigger>",
+      asChildAnchor: "<Slot asChild><a onClick={go}>x</a></Slot>",
+      formInProvider: "<Form {...f}>\n<form noValidate />\n</Form>",
+      asChildForm: "<Slot asChild>\n<form />\n</Slot>",
+      link: '<a href="/x">x</a>',
+      plainAnchor: "<a>x</a>",
+      roleStatus: '<div role="status" />',
+      roleDynamic: "<div role={r} />",
+      text: '<p>{"<button>"}</p>',
+    };
+    for (const [name, jsx] of Object.entries(pass)) {
+      const { keys } = run({ ...ui("", "ok"), "src/w/a.tsx": `export const A = () => ${jsx};\n` });
+      assert.deepEqual(keys, [], name);
+    }
+    const inUi = 'export const A = () => <div role="button"><form /><a onClick={go} /></div>;\n';
+    assert.deepEqual(run(ui(inUi)).keys, []);
+  });
+
+  it("DS-48 issue 452 · a form is allowed only as the direct child of the Form provider", () => {
+    const jsx = "<Form {...f}><div><form /></div></Form>";
+    const { keys } = run({ ...ui("", "ok"), "src/w/a.tsx": `export const A = () => ${jsx};\n` });
+    assert.deepEqual(keys, ["DS-48|w/a.tsx"]);
+  });
+
+  it("DS-48 issue 452 · asChild exempts only the direct child, not nested controls", () => {
+    const jsx = "<Slot asChild><span><button /></span></Slot>";
+    const { keys } = run({ ...ui("", "ok"), "src/w/a.tsx": `export const A = () => ${jsx};\n` });
+    assert.deepEqual(keys, ["DS-48|w/a.tsx"]);
+  });
+
   it("QG-U4 · closed rules reject every baseline entry, even a stale one", () => {
     assert.deepEqual([...NON_BASELINEABLE_RULES].sort(), [
       "DS-01",

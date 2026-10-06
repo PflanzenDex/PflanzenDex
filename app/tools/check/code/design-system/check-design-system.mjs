@@ -37,7 +37,7 @@ const isTest = (file) => /\.test\.[tj]sx?$/.test(file);
 // Whole-file rules (DS-31, DS-34, DS-35, DS-36); records the violating lines in `locations`.
 function scanFileRules(file, content, add, locations) {
   for (const rule of FILE_RULES.filter((r) => r.applies(file))) {
-    for (const line of rule.lines(content)) {
+    for (const line of rule.lines(content, file)) {
       add(rule.id, file);
       const key = `${rule.id}|${file}`;
       locations.set(key, [...(locations.get(key) ?? []), line]);
