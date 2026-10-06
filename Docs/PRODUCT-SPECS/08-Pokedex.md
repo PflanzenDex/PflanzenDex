@@ -31,7 +31,7 @@ Acceptance criteria:
 - The catalog grows in batches (target size 600+ species; collector genera with 10–20 species, otherwise 1–3 per genus); each batch is proofread and usable without a "finished" catalog (prototype 🟡: 215 species).
 - User proposals (US-BES-01) land in the operator's review list (US-BES-10) and count only after approval.
 
-### US-POK-03 · Build taxonomy and enrichment automatically · ⬜ (prototype ✅)
+### US-POK-03 · Build taxonomy and enrichment automatically · 🟨 (prototype ✅)
 
 As the **system** I want to generate the tree, including Wikipedia data and genus species count, from the catalog.
 
@@ -44,6 +44,8 @@ Acceptance criteria:
 - Robust: on a network failure the previous good tree is kept (atomic replacement); individual errors are reported, not cached; "no article/GBIF hit" is cached as a result; requests are throttled and repeated on 429/5xx (at most 5×, backoff ≤ 60 s).
 - Idempotent: same inputs and caches yield identical output.
 - The operator sees a warning when catalog and tree differ in the names.
+
+Status 🟨: the build job (`pokedex.build_taxonomy`) resolves lineage (OpenTree, land plants, rank species; a synonym hit such as _Sansevieria_ → _Dracaena_ is kept under the current name, approximate hits are errors), takes the Wikipedia summary (de, else en) only when Wikidata confirms rank species, shortens the text to 2 sentences and 240 characters at a sentence boundary (a longer first sentence leaves the text unknown), reads the GBIF species count per genus once (0 = unknown) and replaces the table `taxon` in one transaction; unresolved species are rows with a reason code (`taxonomy.*`). A source failure stops the build and keeps the previous tree (the job is retried by the queue). The job is ordered when the fingerprint of the catalog names differs from the stored tree. Missing: the operator warning for name differences, and the lease renewal for builds longer than 5 minutes (see `README.md` status line).
 
 ### US-POK-06 · Derive ownership automatically from my plants · 🟨 (prototype ✅)
 

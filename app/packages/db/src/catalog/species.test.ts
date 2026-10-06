@@ -281,4 +281,19 @@ describe("species catalog and review status (TE-08)", () => {
       latinName: a.latinName,
     });
   });
+
+  it("US-POK-03 the taxonomy build reads only approved species without cultivar and epithet-less entries", async () => {
+    const approved = await create(anna, values(name("Aloe taxon ")));
+    await approve(approved.id);
+    const proposal = await create(anna, values(name("Aloe nur-vorschlag ")));
+    const cultivar = await create(anna, values(name("Aloe sorte "), { cultivar: "Rot" }));
+    await approve(cultivar.id);
+    const noEpithet = await create(anna, values(name("Aloe"), { epithet: null }));
+    await approve(noEpithet.id);
+    const listed = await species.approvedLatinNames();
+    expect(listed).toContain(approved.latinName);
+    expect(listed).not.toContain(proposal.latinName);
+    expect(listed).not.toContain(cultivar.latinName);
+    expect(listed).not.toContain(noEpithet.latinName);
+  });
 });
