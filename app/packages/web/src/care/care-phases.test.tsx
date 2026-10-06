@@ -18,6 +18,7 @@ const row = (extra: Partial<PhasesRow> = {}): PhasesRow => ({
   phase: "dormancy",
   locationId: "s1",
   targetLocationId: null,
+  nextChange: { date: "2027-03-16", phase: "growth", days: 120 },
   ...extra,
 });
 
@@ -61,5 +62,37 @@ describe("US-PHA-01 list of the care phases", () => {
     const h = renderToString(<PhasesList rows={[]} locations={[]} />);
     expect(h).toContain("Ruhephasen-Zeitraum");
     expect(h).toContain("Lege im Bestand ein Exemplar");
+  });
+});
+
+describe("US-PHA-04 next phase change in the list", () => {
+  const show = (nextChange: PhasesRow["nextChange"]) =>
+    renderToString(<PhasesList rows={[row({ nextChange })]} locations={locations} />);
+
+  it("US-PHA-04 a change today says 'heute'", () => {
+    expect(show({ date: "2026-11-01", phase: "dormancy", days: 0 })).toContain(
+      "Nächster Wechsel zur Ruhephase: heute",
+    );
+  });
+
+  it("US-PHA-04 up to 14 days ahead: in N days with the date", () => {
+    expect(show({ date: "2026-10-06", phase: "growth", days: 1 })).toContain(
+      "Nächster Wechsel zur Wachstumsphase: in 1 Tag (06.10.2026)",
+    );
+    expect(show({ date: "2026-10-19", phase: "dormancy", days: 14 })).toContain(
+      "Nächster Wechsel zur Ruhephase: in 14 Tagen (19.10.2026)",
+    );
+  });
+
+  it("US-PHA-04 more than 14 days ahead: only the date", () => {
+    const h = show({ date: "2026-10-20", phase: "dormancy", days: 15 });
+    expect(h).toContain("Nächster Wechsel zur Ruhephase: 20.10.2026");
+    expect(h).not.toContain("in 15 Tagen");
+  });
+
+  it("US-PHA-04 without a change in this and the next year it says so and what to check (P-08, P-09)", () => {
+    const h = show(null);
+    expect(h).toContain("Nächster Phasenwechsel: keiner in diesem und im nächsten Jahr.");
+    expect(h).toContain("Prüfe den Ruhephasen-Zeitraum im Pflegeprofil der Art.");
   });
 });

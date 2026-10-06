@@ -1,10 +1,15 @@
 import type { Pool, PoolClient } from "pg";
 import { CATALOG_TENANT_EXCEPTIONS } from "./catalog/index.ts";
+import { JOBS_TENANT_EXCEPTIONS } from "./jobs/index.ts";
 import { checkSchema, WITHOUT_ACCOUNT_ID, type TenantExceptions } from "./kernel/index.ts";
 
 // Composition root of the schema check (ADR 0003): the kernel checks, the modules contribute their exceptions.
 const EXCEPTIONS: TenantExceptions = {
-  withoutAccountId: { ...WITHOUT_ACCOUNT_ID, ...CATALOG_TENANT_EXCEPTIONS.withoutAccountId },
+  withoutAccountId: {
+    ...WITHOUT_ACCOUNT_ID,
+    ...CATALOG_TENANT_EXCEPTIONS.withoutAccountId,
+    ...JOBS_TENANT_EXCEPTIONS.withoutAccountId,
+  },
   ruleRequired: [...CATALOG_TENANT_EXCEPTIONS.ruleRequired],
 };
 

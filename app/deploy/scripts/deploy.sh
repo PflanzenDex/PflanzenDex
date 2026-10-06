@@ -15,7 +15,8 @@ deploy_ref() {
   GIT_SHA="$(git rev-parse --short HEAD)"
   APP_VERSION="$(git describe --tags --always)"
   export GIT_SHA APP_VERSION
-  "${compose[@]}" up -d --build --remove-orphans
+  # The one-shot `migrate` service runs before the api (docker-compose.yml); a failed migration fails this step.
+  "${compose[@]}" up -d --build --remove-orphans || { echo "compose up failed (build or migration); logs: ${compose[*]} logs migrate" >&2; return 1; }
   local healthy=0
   for _ in $(seq 1 30); do
     if [ "$("${compose[@]}" ps --format '{{.Service}} {{.Health}}' | grep -c '^api healthy')" = 1 ]; then healthy=1; break; fi

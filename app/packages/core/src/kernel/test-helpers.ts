@@ -2,7 +2,7 @@ import type { Begin, IdempotencyKey, IdempotencyStore } from "./ports";
 import { defineOperation } from "./operation";
 import { appError } from "./error";
 import { failed, ok } from "./result";
-import { shape, textField } from "./validation";
+import { shape, textField } from "./input";
 
 const id = (s: IdempotencyKey) => JSON.stringify([s.userId, s.operation, s.key]);
 

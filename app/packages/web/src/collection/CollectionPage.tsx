@@ -15,6 +15,7 @@ import { useRepot } from "./use-repot";
 import { useMarker } from "./use-marker";
 import { useCreate } from "./use-create";
 import { MarkerForm } from "./marker-form";
+import { CatchDateForm, useCatchDate } from "./catch-date-field";
 import { DistributionView } from "./distribution-view";
 
 function Created({ specimen }: { specimen: Specimen }) {
@@ -50,11 +51,10 @@ export function CollectionPage(props: Props) {
   const archived = useArchive(api, token, afterAction);
   const potted = useRepot(api, token, afterAction);
   const marked = useMarker(api, token, afterAction);
+  const caught = useCatchDate(api, token, afterAction);
   const clearMessages = useCallback(() => {
-    archived.setMessage(null);
-    potted.setMessage(null);
-    marked.setMessage(null);
-  }, [archived, potted, marked]);
+    for (const a of [archived, potted, marked, caught]) a.setMessage(null);
+  }, [archived, potted, marked, caught]);
   const create = useCreate(api, token, newSpecies, {
     after: afterAction,
     clearMessages,
@@ -73,7 +73,7 @@ export function CollectionPage(props: Props) {
           <Views
             data={request.value}
             create={create}
-            actions={{ archived, potted, marked, clearMessages }}
+            actions={{ archived, potted, marked, caught, clearMessages }}
             props={props}
           />
         )}
@@ -86,6 +86,7 @@ type Actions = {
   archived: ReturnType<typeof useArchive>;
   potted: ReturnType<typeof useRepot>;
   marked: ReturnType<typeof useMarker>;
+  caught: ReturnType<typeof useCatchDate>;
   clearMessages: () => void;
 };
 
@@ -97,7 +98,7 @@ function Views(p: {
   props: Props;
 }) {
   const { data, create, props } = p;
-  const { archived, marked } = p.actions;
+  const { archived, marked, caught } = p.actions;
   if (props.newSpecies) {
     const id = props.newSpecies.id;
     return (
@@ -130,13 +131,14 @@ function Views(p: {
       />
     );
   }
+  if (caught.open) return <CatchDateForm state={{ ...caught, open: caught.open }} />;
   return <List data={data} created={create.created} actions={p.actions} props={props} />;
 }
 
 function List(p: { data: Loaded; created: Specimen | null; actions: Actions; props: Props }) {
   const { data, actions } = p;
-  const { archived, potted, marked, clearMessages } = actions;
-  const message = marked.message ?? archived.message ?? potted.message;
+  const { archived, potted, marked, caught, clearMessages } = actions;
+  const message = caught.message ?? marked.message ?? archived.message ?? potted.message;
   const error = archived.error ?? potted.error;
   return (
     <>
@@ -157,11 +159,16 @@ function List(p: { data: Loaded; created: Specimen | null; actions: Actions; pro
         onRepot={(e) => {
           archived.setMessage(null);
           marked.setMessage(null);
+          caught.setMessage(null);
           void potted.repot(e);
         }}
         onMark={(e) => {
           clearMessages();
           marked.setOpen(e);
+        }}
+        onCatchDate={(e) => {
+          clearMessages();
+          caught.setOpen(e);
         }}
         {...(p.props.onMeasure ? { onMeasure: p.props.onMeasure } : {})}
       />
@@ -169,6 +176,7 @@ function List(p: { data: Loaded; created: Specimen | null; actions: Actions; pro
         entries={data.archived}
         onRestore={(e) => {
           marked.setMessage(null);
+          caught.setMessage(null);
           void archived.restore(e);
         }}
       />

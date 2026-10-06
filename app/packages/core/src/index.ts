@@ -7,4 +7,5 @@ export * from "./light";
 export * from "./collection";
 export * from "./care";
 export * from "./wishlist";
+export * from "./jobs";
 export * from "./pokedex";

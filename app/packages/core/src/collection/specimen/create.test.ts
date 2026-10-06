@@ -1,7 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { execute } from "../../kernel";
 import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
-import { specimenCreate, specimenLoad, specimenList, NO_TARGET_LOCATION } from "../index";
+import {
+  specimenCorrectCatchDate,
+  specimenCreate,
+  specimenLoad,
+  specimenList,
+  NO_TARGET_LOCATION,
+  type CatchDateStore,
+} from "../index";
 import {
   SpeciesStub,
   InMemorySpecimens,
@@ -327,5 +334,170 @@ describe("US-BES-04 create a cutting", () => {
       expect(!r.ok && r.error.details).toEqual([{ field: "status", code: "input.invalid" }]);
     }
     expect(specimens.writes).toBe(0);
+  });
+});
+
+/** The in-memory specimens plus the catch-date port (US-BES-11); the real adapter is one SQL statement in `db`. */
+class InMemoryCatchDates extends InMemorySpecimens implements CatchDateStore {
+  async setCaughtAt(userId: string, id: string, date: string) {
+    const i = this.rows.findIndex((z) => z.userId === userId && z.id === id);
+    const row = this.rows[i];
+    if (!row) return "not_found" as const;
+    if (row.archivedAt !== null && date > row.archivedAt) return "after_archived" as const;
+    this.writes += 1;
+    this.rows[i] = { ...row, caughtAt: date };
+    const { userId: owner, ...without } = this.rows[i];
+    void owner;
+    return without;
+  }
+}
+
+describe("US-BES-11 correct the catch date of a specimen", () => {
+  let store: InMemoryCatchDates;
+  const correct = (
+    input: Record<string, unknown>,
+    opt: { context?: { userId: string | null }; key?: string } = {},
+  ) =>
+    execute(
+      specimenCorrectCatchDate({ specimens: store, clock: () => NOW }),
+      { idempotency: idem },
+      {
+        context: opt.context ?? anna,
+        input: { timeZone: "Europe/Berlin", ...input },
+        idempotencyKey: opt.key ?? `k${++counter}`,
+      },
+    );
+  const own = async (userId = "anna", extra: Record<string, unknown> = {}) => {
+    const r = await store.create(userId, {
+      speciesId: SPECIES,
+      name: `Bogenhanf ${++counter}`,
+      marker: `m${counter}`,
+      locationId: null,
+      caughtAt: "2026-09-01",
+    });
+    if (typeof r === "string") throw new Error(r);
+    const i = store.rows.findIndex((z) => z.id === r.id);
+    const row = store.rows[i];
+    if (row) store.rows[i] = { ...row, ...extra };
+    store.writes = 0;
+    return r.id;
+  };
+
+  beforeEach(() => {
+    store = new InMemoryCatchDates();
+  });
+
+  it("US-BES-11 a past date is stored as given; nothing else of the specimen changes", async () => {
+    const id = await own();
+    const before = store.rows.find((z) => z.id === id);
+    const r = await correct({ specimenId: id, catchDate: "2019-05-17" });
+    expect(r.ok && r.value).toMatchObject({ id, caughtAt: "2019-05-17" });
+    expect(store.rows.find((z) => z.id === id)).toEqual({ ...before, caughtAt: "2019-05-17" });
+  });
+
+  it("US-BES-11 today in the keeper's time zone is allowed, tomorrow is specimen.caught_in_future on the field", async () => {
+    const id = await own();
+    // 23:30 UTC on 2 October: already 3 October in Berlin (NFR-08).
+    const today = await correct({ specimenId: id, catchDate: "2026-10-03" });
+    expect(today.ok && today.value.caughtAt).toBe("2026-10-03");
+    store.writes = 0;
+    const tomorrow = await correct({ specimenId: id, catchDate: "2026-10-04" });
+    expect(!tomorrow.ok && tomorrow.error.code).toBe("specimen.caught_in_future");
+    expect(!tomorrow.ok && tomorrow.error.details).toEqual([
+      { field: "catchDate", code: "specimen.caught_in_future" },
+    ]);
+    expect(store.writes).toBe(0);
+  });
+
+  it("US-BES-11 'future' is measured against the local date, not the UTC date", async () => {
+    const id = await own();
+    const ny = await correct({
+      specimenId: id,
+      catchDate: "2026-10-03",
+      timeZone: "America/New_York",
+    });
+    expect(!ny.ok && ny.error.code).toBe("specimen.caught_in_future");
+    const kiritimati = await correct({
+      specimenId: id,
+      catchDate: "2026-10-03",
+      timeZone: "Pacific/Kiritimati",
+    });
+    expect(kiritimati.ok).toBe(true);
+  });
+
+  it.each([
+    ["missing", undefined],
+    ["empty", null],
+    ["31st of February", "2022-02-31"],
+    ["with a time of day", "2022-02-03T10:00:00Z"],
+    ["year before 1900", "1899-12-31"],
+  ])(
+    "US-BES-11 %s is input.invalid on the field catchDate, nothing written (P-03)",
+    async (_c, catchDate) => {
+      const id = await own();
+      const r = await correct({ specimenId: id, catchDate });
+      expect(!r.ok && r.error.code).toBe("input.invalid");
+      expect(!r.ok && r.error.details).toEqual([{ field: "catchDate", code: "input.invalid" }]);
+      expect(store.writes).toBe(0);
+    },
+  );
+
+  it("US-BES-11 1900-01-01 is the earliest allowed date", async () => {
+    const r = await correct({ specimenId: await own(), catchDate: "1900-01-01" });
+    expect(r.ok && r.value.caughtAt).toBe("1900-01-01");
+  });
+
+  it("US-BES-11 an invalid time zone is input.invalid, nothing written", async () => {
+    const r = await correct({
+      specimenId: await own(),
+      catchDate: "2020-01-01",
+      timeZone: "+02:00",
+    });
+    expect(!r.ok && r.error.details).toEqual([{ field: "timeZone", code: "input.invalid" }]);
+    expect(store.writes).toBe(0);
+  });
+
+  it("US-BES-11 an archived specimen can be corrected up to its archiving date; archiving date and reason stay", async () => {
+    const archived = { status: "archived", archivedAt: "2026-01-10", archivedReason: "abgegeben" };
+    const id = await own("anna", archived);
+    const ok = await correct({ specimenId: id, catchDate: "2026-01-10" });
+    expect(ok.ok && ok.value).toMatchObject({ caughtAt: "2026-01-10", ...archived });
+    store.writes = 0;
+    const after = await correct({ specimenId: id, catchDate: "2026-01-11" });
+    expect(!after.ok && after.error.code).toBe("specimen.caught_after_archived");
+    expect(!after.ok && after.error.details).toEqual([
+      { field: "catchDate", code: "specimen.caught_after_archived" },
+    ]);
+    expect(store.rows.find((z) => z.id === id)?.caughtAt).toBe("2026-01-10");
+  });
+
+  it("US-BES-11 a specimen of another account looks like an unknown one: specimen.not_found, nothing changed (P-04)", async () => {
+    const bens = await own("ben");
+    const r = await correct({ specimenId: bens, catchDate: "2020-01-01" });
+    expect(!r.ok && r.error.code).toBe("specimen.not_found");
+    const unknown = await correct({
+      specimenId: "99999999-9999-4999-8999-999999999999",
+      catchDate: "2020-01-01",
+    });
+    expect(!unknown.ok && unknown.error).toEqual(!r.ok && r.error);
+    expect(store.rows.find((z) => z.id === bens)?.caughtAt).toBe("2026-09-01");
+  });
+
+  it("US-BES-11 without sign-in: access.not_signed_in, nothing written", async () => {
+    const id = await own();
+    const r = await correct(
+      { specimenId: id, catchDate: "2020-01-01" },
+      { context: { userId: null } },
+    );
+    expect(!r.ok && r.error.code).toBe("access.not_signed_in");
+    expect(store.writes).toBe(0);
+  });
+
+  it("US-BES-11 the same Idempotency-Key does not write twice", async () => {
+    const id = await own();
+    const first = await correct({ specimenId: id, catchDate: "2020-01-01" }, { key: "same" });
+    const again = await correct({ specimenId: id, catchDate: "2020-01-01" }, { key: "same" });
+    expect(again).toEqual(first);
+    expect(store.writes).toBe(1);
   });
 });

@@ -95,8 +95,9 @@ storybook: ## Component catalog (Storybook) on http://localhost:6006, light/dark
 build-storybook: ## Build the component catalog to app/packages/web/node_modules/.cache/storybook (TE-18)
 	cd $(APP) && npm run build-storybook
 
-lighthouse: ## Lighthouse CI on the built web app, mobile, report only (QG-U1); report in app/packages/web/.lighthouseci
+lighthouse: ## Lighthouse CI on the built web app, mobile, report only (QG-U1), plus the initial JS budget as report (QG-U6); report in app/packages/web/.lighthouseci
 	cd $(APP) && npm run build -w @pflanzendex/web
+	cd $(APP) && npm run bundle-budget -- --report
 	scripts/lighthouse-run.sh
 	scripts/lighthouse-summary.sh | tee $(APP)/packages/web/.lighthouseci/summary.md
 

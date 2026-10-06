@@ -1,5 +1,8 @@
 // Line rules of the design system gate (DESIGN-SYSTEM.md); used by check-design-system.mjs.
-const TOKEN_FILES = new Set(["style.css", "styles/tokens.css"]);
+import { rawControlLines } from "./check-design-system-ast.mjs";
+
+// DS-33: tokens.css is the only stylesheet under src/.
+export const TOKEN_FILE = "styles/tokens.css";
 
 const COLOR_LITERAL = /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|oklch|oklab|lab|lch)\(/;
 const PALETTE_HUES =
@@ -41,7 +44,7 @@ export const RULES = [
   {
     id: "DS-27",
     languages: ["css"],
-    test: (line, file) => !TOKEN_FILES.has(file) && COLOR_LITERAL.test(line),
+    test: (line, file) => file !== TOKEN_FILE && COLOR_LITERAL.test(line),
   },
   {
     id: "DS-27",
@@ -54,15 +57,14 @@ export const RULES = [
     test: (line) => /style=\{\{/.test(line) && !/["']--[\w-]+["']\s*:/.test(line),
   },
   {
+    id: "DS-33",
+    languages: ["css", "tsx"],
+    test: (line, file) => file !== TOKEN_FILE && /@apply\b|<style[\s>]/.test(line),
+  },
+  {
     id: "DS-37",
     languages: ["css"],
     test: (line) => /outline\s*:\s*(?:none|0)\b/.test(line),
-  },
-  {
-    id: "DS-48",
-    languages: ["tsx"],
-    test: (line, file) =>
-      !file.startsWith("components/ui/") && /<(?:button|input|select|textarea)\b/.test(line),
   },
 ];
 
@@ -108,6 +110,11 @@ const TERNARY_OR_AND = /(?<!\?)\?(?![?.])|&&/;
 
 // File rules see the whole file; each returns the 1-based lines of its violations.
 export const FILE_RULES = [
+  {
+    id: "DS-48",
+    applies: (file) => file.endsWith(".tsx") && !file.startsWith("components/ui/"),
+    lines: (content, file) => rawControlLines(content, file),
+  },
   {
     // DS-31: class names flow through cn(), never template literals or concatenation.
     id: "DS-31",

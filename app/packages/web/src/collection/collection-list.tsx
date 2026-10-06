@@ -16,6 +16,8 @@ export function CollectionList(props: {
   onRepot?: (e: { id: string; name: string }) => void;
   /** Gives a specimen a marker or changes it (US-BES-03). */
   onMark?: (e: SpecimenCard) => void;
+  /** Corrects the catch date of a specimen (US-BES-11). */
+  onCatchDate?: (e: SpecimenCard) => void;
 }) {
   return (
     <section aria-labelledby="collection-title">
@@ -39,6 +41,7 @@ export function CollectionList(props: {
                 onArchive={props.onArchive}
                 onRepot={props.onRepot}
                 onMark={props.onMark}
+                onCatchDate={props.onCatchDate}
               />
             ))}
           </ul>
