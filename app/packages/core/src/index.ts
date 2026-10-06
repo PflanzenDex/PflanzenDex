@@ -9,3 +9,4 @@ export * from "./care";
 export * from "./wishlist";
 export * from "./jobs";
 export * from "./pokedex";
+export * from "./social";

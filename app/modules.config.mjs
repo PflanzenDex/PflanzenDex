@@ -99,7 +99,7 @@ const MODULES = [
   {
     name: "social",
     epics: ["SOZ"],
-    tables: ["friendship", "sharing", "offer", "swap", "event"],
+    tables: ["friendship", "friend_code", "sharing", "offer", "swap", "event"],
     dependsOn: ["kernel", "account", "catalog", "collection", "care", "pokedex", "monitoring"],
     ports: [],
   },
