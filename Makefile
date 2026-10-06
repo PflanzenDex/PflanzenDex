@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates layout layout-baseline unused-report storybook build-storybook ds-snapshots ds-snapshots-check
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline unused-report storybook build-storybook ds-snapshots ds-snapshots-check
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -124,6 +124,9 @@ unused-report: ## Code only reachable from tests and unused dependencies, report
 
 duplicates: ## Clone groups with 3+ copies in changed files block, whole project is reported (QG-K4; base DUPLICATES_BASE, default origin/dev)
 	cd $(APP) && npm run duplicates
+
+dup: ## Share of duplicated lines in the whole project (jscpd), ratchet toward 1 % (QG-K5, FR-QG-10; config app/.jscpd.json, limit in app/quality-limits.json)
+	cd $(APP) && npm run dup
 
 layout: ## File layout: at most 5 units per directory, names, component folders, baseline ratchet (QG-C4, US-QG-09)
 	cd $(APP) && npm run layout
