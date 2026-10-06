@@ -189,8 +189,18 @@ describe("US-QG-09 module roots (FR-QG-21)", () => {
     compareBaseline(findLayout([...listPaths(), ...extra], config), baseline());
   const units = (dir, n) => Array.from({ length: n }, (_, i) => `${dir}/new-unit-${i}.ts`);
   it("a module may hold up to 10 units, the 11th is a new violation", () => {
-    assert.deepEqual(problems(units("app/packages/core/src/pokedex", 4)), []);
-    assert.match(problems(units("app/packages/core/src/pokedex", 5))[0] ?? "", /LY-1 .*pokedex/);
+    // The module already holds some units; find how many new ones it takes to cross the limit instead of
+    // assuming a count that a refactor of the module would invalidate.
+    const dir = "app/packages/core/src/pokedex";
+    const crossing = Array.from({ length: 11 }, (_, n) => n).find(
+      (n) => problems(units(dir, n)).length > 0,
+    );
+    assert.ok(
+      crossing !== undefined && crossing >= 1,
+      "the 11th unit must be what crosses the limit",
+    );
+    assert.deepEqual(problems(units(dir, crossing - 1)), []);
+    assert.match(problems(units(dir, crossing))[0] ?? "", /LY-1 .*pokedex/);
   });
   it("the src folder that holds the modules has no unit limit", () => {
     assert.deepEqual(problems(units("app/packages/core/src", 20)), []);

@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Pokédex: Oben im Pokédex zeigt dein Sammlerrang („Keimling“ bis „Botaniker“), wie viele Arten du gefangen hast und wie viele noch bis zum nächsten Rang fehlen. Solange der Baum der Arten noch fehlt, stehen Gesamtzahl und Ordnungen als „unbekannt“ da.",
     "Pflegephasen: Zu jedem Exemplar steht jetzt, wann der nächste Phasenwechsel kommt: „heute“, innerhalb von zwei Wochen „in 5 Tagen (10.10.2026)“, sonst das Datum.",
     "Licht: Unter „Einstufungsregeln“ schlägst du nach, wie die Lichtzonen eingestuft werden: deine Stufentabelle mit Lux und PPFD, die Indikatoren für höhere Stufen und die Warnzeichen mit dem nächsten Schritt.",
     "Wachstum: Beim Messen zeigt „Wie erkennen?“ unter der Auswahl „Gesund“ oder „Vergeilt/dünn“, woran du Vergeilung bei dieser Art erkennst.",
