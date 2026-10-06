@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { AppShell } from "./app-shell";
 import { GlobalHeader } from "./global-header";
 import { MobileNavBar } from "./mobile-nav-bar";
@@ -154,5 +154,71 @@ describe("AppShell (US-QS-07, DS-21, DS-22, DS-25)", () => {
     at("/", <AppShell items={make(9)}>x</AppShell>);
     expect(screen.getByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
     expect(screen.getByRole("navigation", { name: "Navigation unten" })).toBeTruthy();
+  });
+});
+
+describe("US-QS-08 Operable by keyboard alone (app shell)", () => {
+  it("US-QS-08 · 2.4.1 the first Tab reaches the skip link, which moves the focus to the main content", async () => {
+    at("/", <AppShell items={make(9)}>Inhalt</AppShell>);
+    await userEvent.tab();
+    const skip = screen.getByRole("link", { name: "Zum Inhalt springen" });
+    expect(document.activeElement).toBe(skip);
+    await userEvent.keyboard("{Enter}");
+    expect(document.activeElement).toBe(screen.getByRole("main"));
+  });
+
+  it("US-QS-08 · 2.4.1 after the skip link the next Tab lands in the content, past the navigation", async () => {
+    at(
+      "/",
+      <AppShell items={make(9)}>
+        <button type="button">Im Inhalt</button>
+      </AppShell>,
+    );
+    await userEvent.tab();
+    await userEvent.keyboard("{Enter}");
+    await userEvent.tab();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Im Inhalt" }));
+  });
+
+  it("US-QS-08 · 2.4.7 the skip link is hidden until focused and then shows a focus ring", () => {
+    at("/", <AppShell items={make(3)}>x</AppShell>);
+    const skip = screen.getByRole("link", { name: "Zum Inhalt springen" });
+    expect(skip.className).toContain("sr-only");
+    expect(skip.className).toContain("focus:not-sr-only");
+    expect(skip.className).toContain("focus-visible:ring-2");
+    // DS-15: a 44 px target once it shows; no padding while hidden, so it stays a 1 px sr-only box.
+    expect(skip.className).toContain("focus:min-h-[44px]");
+    expect(skip.className).not.toMatch(/(^| )p[xy]?-\d/);
+  });
+
+  it("US-QS-08 · 2.4.11 the page keeps scroll padding for the sticky header and the bottom bar", () => {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const height = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLElement) {
+        return { height: this.tagName === "HEADER" ? 52 : 68 } as DOMRect;
+      });
+    const { unmount } = at("/", <AppShell items={make(9)}>x</AppShell>);
+    expect(document.documentElement.style.scrollPaddingTop).toBe("52px");
+    expect(document.documentElement.style.scrollPaddingBottom).toBe("68px");
+    unmount();
+    expect(document.documentElement.style.scrollPaddingTop).toBe("");
+    height.mockRestore();
+    vi.unstubAllGlobals();
+  });
+
+  it("US-QS-08 · 2.1.2 choosing a destination in the Mehr drawer closes it, so no overlay keeps the focus", async () => {
+    at("/", <MobileNavBar items={make(9)} />);
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    const drawer = screen.getByRole("dialog", { name: "Mehr" });
+    within(drawer).getByRole("link", { name: "Ziel 6" }).focus();
+    await userEvent.keyboard("{Enter}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 });

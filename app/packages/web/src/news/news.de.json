@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Tastatur: Die App lässt sich ganz ohne Maus bedienen. Der erste Druck auf die Tab-Taste zeigt „Zum Inhalt springen“ und bringt dich an der Navigation vorbei direkt zum Inhalt. Ein ausgewähltes Element verschwindet nie hinter der Kopfzeile oder der Leiste unten, und das Menü „Mehr“ schließt sich, sobald du ein Ziel wählst.",
     "Darstellung: Ist auf deinem Gerät „Bewegung reduzieren“ eingestellt, öffnen sich Menüs und Fenster ohne Animation. In den Windows-Kontrastdesigns siehst du jetzt immer, welches Element ausgewählt ist, und Schaltflächen haben einen Rahmen. Auch bei 400 % Zoom, auf schmalen Bildschirmen und im Querformat bleibt alles lesbar, ohne seitliches Scrollen.",
     "Pflegephasen: Zu jedem Exemplar steht jetzt, wann der nächste Phasenwechsel kommt: „heute“, innerhalb von zwei Wochen „in 5 Tagen (10.10.2026)“, sonst das Datum.",
     "Licht: Unter „Einstufungsregeln“ schlägst du nach, wie die Lichtzonen eingestuft werden: deine Stufentabelle mit Lux und PPFD, die Indikatoren für höhere Stufen und die Warnzeichen mit dem nächsten Schritt.",
