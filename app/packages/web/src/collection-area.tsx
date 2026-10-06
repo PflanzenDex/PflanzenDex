@@ -1,5 +1,5 @@
 import { Suspense, useState } from "react";
-import type { Species } from "@pflanzendex/core";
+import type { Species, Specimen } from "@pflanzendex/core";
 import { CollectionPage } from "./collection";
 import { MeasurePage } from "./care";
 import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skeleton";
@@ -15,7 +15,7 @@ export function CollectionArea(props: {
   token: Token;
   newSpecies: Species | null;
   onSpeciesChoose: () => void;
-  onCompleted: () => void;
+  onCompleted: (specimen: Specimen) => void;
 }) {
   const [measure, setMeasure] = useState<{ id: string; name: string } | null>(null);
   // The measure page is its own lazy part: the area stays and shows a skeleton while it loads (DS-55).

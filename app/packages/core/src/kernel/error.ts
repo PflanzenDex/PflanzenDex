@@ -52,6 +52,12 @@ export const ERROR_TEXTS = {
   "wish.not_found": "Diesen Wunsch gibt es nicht. Lade die Wunschliste neu.",
   "wish.not_open":
     "Dieser Wunsch ist verworfen und nicht mehr offen. Nur ein offener Wunsch kann als gekauft vermerkt werden; es wurde nichts geändert.",
+  "wish.already_bought":
+    "Dieser Wunsch ist schon als gekauft vermerkt und lässt sich nicht mehr verwerfen. Es wurde nichts geändert.",
+  "wish.not_bought":
+    "Dieser Wunsch ist nicht als gekauft vermerkt. Nur ein gekaufter Wunsch wird mit einem Exemplar verknüpft; es wurde nichts geändert.",
+  "wish.already_linked":
+    "Dieser Wunsch ist schon mit einem anderen Exemplar verknüpft, oder das Exemplar gehört schon zu einem anderen Wunsch. Es wurde nichts geändert.",
   "wish.not_duplicate":
     "Dieser Wunsch hat keinen doppelten Namen und lässt sich hier nicht umbenennen oder löschen. Lade die Wunschliste neu; es wurde nichts geändert.",
   "care.no_phase":

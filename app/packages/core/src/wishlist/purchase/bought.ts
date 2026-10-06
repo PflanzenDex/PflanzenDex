@@ -10,6 +10,8 @@ export interface BoughtWish {
   readonly name: string;
   /** "German (name)"; just the name while no German name is known (P-08). */
   readonly title: string;
+  /** The specimen the wish became (US-WUN-05); `null` until it is linked. */
+  readonly specimenId: string | null;
 }
 
 /** The history of purchases (US-WUN-03) with what to do next (P-09). */
@@ -36,13 +38,18 @@ function hintFor(count: number): BoughtList["hint"] {
 
 /**
  * The bought wishes of the account (US-WUN-03): they left the candidate list but are kept, so a purchase never
- * disappears silently (P-10). Only the own wishes flow in (P-04, P-05). The purchase date and the link to the
- * specimen follow with US-WUN-05.
+ * disappears silently (P-10). Only the own wishes flow in (P-04, P-05). The link to the specimen (US-WUN-05) is part
+ * of each entry; a wish without one offers the way to the plant.
  */
 export async function wishBought(deps: BoughtDependencies, userId: string): Promise<BoughtList> {
   const rows = await deps.wishes.bought(userId);
   return {
-    bought: rows.map((w) => ({ id: w.id, name: w.name, title: titleOf(w) })),
+    bought: rows.map((w) => ({
+      id: w.id,
+      name: w.name,
+      title: titleOf(w),
+      specimenId: w.specimenId,
+    })),
     hint: hintFor(rows.length),
   };
 }

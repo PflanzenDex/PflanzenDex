@@ -326,6 +326,7 @@ describe("US-WUN-03 record a purchase through the API", () => {
       id,
       name: `Kauf ${run}`,
       title: `Kauf ${run} deutsch (Kauf ${run})`,
+      specimenId: null,
     });
   });
 
@@ -364,6 +365,142 @@ describe("US-WUN-03 record a purchase through the API", () => {
     expect(((await bought(subB)).body["bought"] as { id: string }[]).map((w) => w.id)).toContain(
       id,
     );
+  });
+});
+
+describe("US-WUN-05 from purchase to plant through the API", () => {
+  const post = (
+    sub: string | null,
+    id: string,
+    action: string,
+    body?: unknown,
+    key?: string | null,
+  ) => call(sub, "POST", `/wishes/${id}/${action}`, body, key);
+  const created = async (sub: string, name: string, buy = false) => {
+    const r = await wish(sub, { name });
+    const id = r.body["wish"].id as string;
+    if (buy) await post(sub, id, "buy");
+    return id;
+  };
+  let counter = 0;
+  const subSpecies = (sub: string) =>
+    newSpecies(
+      sub,
+      `Wun${run} ${"abcdefghij"[counter % 10]}${"klmnopqrst"[Math.floor(counter++ / 10) % 10]}`,
+    );
+  // A specimen of its own species, without a location (it is not needed here).
+  const mySpecimen = async (sub: string, marker: string) => {
+    const r = await call(sub, "POST", "/specimens", {
+      timeZone: "Europe/Berlin",
+      speciesId: await subSpecies(sub),
+      marker,
+    });
+    return r.body["id"] as string;
+  };
+
+  it("US-WUN-05 a bought wish is linked to a specimen; the history shows the link", async () => {
+    const id = await created(subA, `Gelinkt ${run}`, true);
+    const specimenId = await mySpecimen(subA, `l1${run}`);
+    const r = await post(subA, id, "specimen", { specimenId });
+    expect(r).toMatchObject({ status: 200, body: { changed: true, wish: { id, specimenId } } });
+    const history = (await call(subA, "GET", "/wishes/bought")).body["bought"] as {
+      id: string;
+      specimenId: string | null;
+    }[];
+    expect(history.find((w) => w.id === id)?.specimenId).toBe(specimenId);
+  });
+
+  it("US-WUN-05 linking needs sign-in and an Idempotency-Key; the same key replays; again changes nothing", async () => {
+    const id = await created(subA, `Schlüssel ${run}`, true);
+    const specimenId = await mySpecimen(subA, `l2${run}`);
+    expect((await post(null, id, "specimen", { specimenId })).status).toBe(401);
+    expect(await post(subA, id, "specimen", { specimenId }, null)).toMatchObject({
+      status: 400,
+      body: { error: { code: "idempotency.key_missing" } },
+    });
+    const key = randomUUID();
+    const first = await post(subA, id, "specimen", { specimenId }, key);
+    expect(await post(subA, id, "specimen", { specimenId }, key)).toEqual(first);
+    expect(await post(subA, id, "specimen", { specimenId })).toMatchObject({
+      status: 200,
+      body: { changed: false },
+    });
+  });
+
+  it("US-WUN-05 refusals: open wish 409 wish.not_bought, other specimen 409 wish.already_linked, bad input 400", async () => {
+    const open = await created(subA, `Offen ${run}`);
+    const id = await created(subA, `Zwei ${run}`, true);
+    const one = await mySpecimen(subA, `l3${run}`);
+    const two = await mySpecimen(subA, `l4${run}`);
+    expect(await post(subA, open, "specimen", { specimenId: one })).toMatchObject({
+      status: 409,
+      body: { error: { code: "wish.not_bought" } },
+    });
+    await post(subA, id, "specimen", { specimenId: one });
+    expect(await post(subA, id, "specimen", { specimenId: two })).toMatchObject({
+      status: 409,
+      body: { error: { code: "wish.already_linked" } },
+    });
+    expect((await post(subA, id, "specimen", { specimenId: "x" })).status).toBe(400);
+    expect((await post(subA, id, "specimen", {})).status).toBe(400);
+  });
+
+  it("US-WUN-05 a wish or specimen of another account looks unknown: 404 (P-04)", async () => {
+    const mine = await created(subA, `Meins ${run}`, true);
+    const theirs = await created(subB, `Seins ${run}`, true);
+    const bensSpecimen = await mySpecimen(subB, `l5${run}`);
+    expect(await post(subA, mine, "specimen", { specimenId: bensSpecimen })).toMatchObject({
+      status: 404,
+      body: { error: { code: "specimen.not_found" } },
+    });
+    expect(await post(subA, theirs, "specimen", { specimenId: bensSpecimen })).toMatchObject({
+      status: 404,
+      body: { error: { code: "wish.not_found" } },
+    });
+  });
+
+  it("US-WUN-05 'Discarded': the wish leaves the list but stays readable under discarded", async () => {
+    const id = await created(subA, `Verwerfen ${run}`);
+    expect((await post(null, id, "discard")).status).toBe(401);
+    const r = await post(subA, id, "discard");
+    expect(r).toMatchObject({
+      status: 200,
+      body: { changed: true, wish: { id, status: "discarded" } },
+    });
+    expect(r.body["hint"].text).toContain("verworfen");
+    expect(await names(subA)).not.toContain(`Verwerfen ${run}`);
+    const list = await call(subA, "GET", "/wishes/discarded");
+    expect(list.body["discarded"]).toContainEqual({
+      id,
+      name: `Verwerfen ${run}`,
+      title: `Verwerfen ${run}`,
+    });
+    expect(await post(subA, id, "discard")).toMatchObject({
+      status: 200,
+      body: { changed: false },
+    });
+    expect((await call(null, "GET", "/wishes/discarded")).status).toBe(401);
+  });
+
+  it("US-WUN-05 discarding: a bought wish 409 wish.already_bought; unknown 404; another account 404 and stays open", async () => {
+    const bought = await created(subA, `Schon gekauft ${run}`, true);
+    expect(await post(subA, bought, "discard")).toMatchObject({
+      status: 409,
+      body: { error: { code: "wish.already_bought" } },
+    });
+    expect((await post(subA, randomUUID(), "discard")).status).toBe(404);
+    expect((await post(subA, "kein-id", "discard")).status).toBe(400);
+    const theirs = await created(subB, `Bens offener ${run}`);
+    expect(await post(subA, theirs, "discard")).toMatchObject({
+      status: 404,
+      body: { error: { code: "wish.not_found" } },
+    });
+    expect(await names(subB)).toContain(`Bens offener ${run}`);
+    expect(
+      ((await call(subA, "GET", "/wishes/discarded")).body["discarded"] as { id: string }[]).map(
+        (w) => w.id,
+      ),
+    ).not.toContain(theirs);
   });
 });
 

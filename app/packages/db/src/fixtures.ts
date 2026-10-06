@@ -1,5 +1,5 @@
 import type { Pool } from "pg";
-import { FIXTURE_SPECIES_ID, FIXTURES_COLLECTION } from "./collection/index.ts";
+import { FIXTURE_SPECIES_ID, FIXTURES_COLLECTION, SpecimenPostgres } from "./collection/index.ts";
 import { FIXTURES_CATALOG } from "./catalog/index.ts";
 import { FIXTURES_KERNEL, openFixturePool, withAccount, type Fixtures } from "./kernel/index.ts";
 import { FIXTURES_ACCOUNT } from "./account/index.ts";
@@ -62,6 +62,23 @@ export async function createFixtureSpeciesAt(): Promise<string> {
     [FIXTURE_SPECIES_ID],
   );
   return FIXTURE_SPECIES_ID;
+}
+
+/** A specimen of the fixture species for the account (AB-9: tests of foreign modules write no SQL on `specimen`). */
+export async function createFixtureSpecimen(
+  pool: Pool,
+  account: string,
+  name: string,
+): Promise<string> {
+  const r = await new SpecimenPostgres(pool).create(account, {
+    speciesId: await createFixtureSpeciesAt(),
+    name,
+    marker: null,
+    locationId: null,
+    caughtAt: "2026-10-03",
+  });
+  if (typeof r === "string") throw new Error(r);
+  return r.id;
 }
 
 /** Deleting a species with owner rights and as the application (AB-9: tests of foreign modules write no SQL on `species`). */

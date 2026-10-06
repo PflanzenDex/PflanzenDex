@@ -35,7 +35,7 @@ type Props = {
   token: Token;
   newSpecies: Species | null;
   onSpeciesChoose: () => void;
-  onCompleted: () => void;
+  onCompleted: (specimen: Specimen) => void;
   onMeasure?: (e: { id: string; name: string }) => void;
 };
 

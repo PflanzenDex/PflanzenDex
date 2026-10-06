@@ -83,6 +83,10 @@ const WISHLIST: Record<string, unknown> = {
     bought: [],
     hint: { text: "Noch kein Wunsch ist als gekauft vermerkt.", nextAction: "Gekauft" },
   },
+  "/wishes/discarded": {
+    discarded: [],
+    hint: { text: "Kein Wunsch ist verworfen.", nextAction: "Verwerfen" },
+  },
 };
 
 function fakeServer(accountStatus = 200) {

@@ -1,28 +1,16 @@
 import type { Pool, PoolClient } from "pg";
 import { withAccount } from "../kernel/index.ts";
+import {
+  COLUMNS,
+  findWish,
+  type WishChange,
+  type WishPurchase,
+  type WishRow,
+  type WishValues,
+} from "./wish-row.ts";
+import { discardedWishes, discardWish, linkWish } from "./wish-outcome.ts";
 
-// Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
-export interface WishRow {
-  readonly id: string;
-  readonly name: string;
-  readonly german: string | null;
-  readonly targetZoneId: string | null;
-  readonly difficulty: number | null;
-  readonly reasoning: string | null;
-  readonly imageUrl: string | null;
-  readonly imageSource: string | null;
-  readonly license: string | null;
-  readonly type: "plant";
-  readonly status: "wishlist" | "bought" | "discarded";
-}
-export type WishValues = Omit<WishRow, "id" | "type" | "status"> & { readonly nameKey: string };
-export interface WishPurchase {
-  readonly wish: WishRow;
-  readonly changed: boolean;
-}
-
-const COLUMNS = `id, name, german, target_zone_id as "targetZoneId", difficulty, reasoning, image_url as "imageUrl",
-  image_source as "imageSource", license, type, status`;
+export type { WishChange, WishPurchase, WishRow, WishValues } from "./wish-row.ts";
 
 const UNIQUE = "23505";
 const FOREIGN_KEY = "23503";
@@ -87,14 +75,25 @@ export class WishesPostgres {
         [wishId],
       );
       if (changed.rows[0]) return { wish: changed.rows[0], changed: true };
-      const now = await c.query<WishRow>(
-        `select ${COLUMNS} from wish where id = $1 and type = 'plant'`,
-        [wishId],
-      );
-      const wish = now.rows[0];
+      const wish = await findWish(c, wishId);
       if (!wish) return "not_found";
       return wish.status === "bought" ? { wish, changed: false } : "not_open";
     });
+  }
+
+  /** Sets an open wish to `discarded` (US-WUN-05); see `discardWish`. */
+  discard(userId: string, wishId: string): Promise<WishChange | "not_found" | "not_open"> {
+    return discardWish(this.pool, userId, wishId);
+  }
+
+  /** Discarded plant wishes, by name; the row rules show only the own ones. */
+  discarded(userId: string): Promise<readonly WishRow[]> {
+    return discardedWishes(this.pool, userId);
+  }
+
+  /** Links a bought wish to its specimen (US-WUN-05); see `linkWish`. */
+  link(userId: string, wishId: string, specimenId: string) {
+    return linkWish(this.pool, userId, wishId, specimenId);
   }
 
   /** Bought plant wishes (the history of US-WUN-03), by name; the row rules show only the own ones. */

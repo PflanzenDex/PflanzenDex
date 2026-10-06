@@ -45,9 +45,24 @@ const NONE_BOUGHT = {
   bought: [],
   hint: { text: "Noch kein Wunsch ist als gekauft vermerkt.", nextAction: "Tippe auf „Gekauft“." },
 };
-/** The history of bought wishes (US-WUN-03) is loaded with the list; this answers it for stubs that know one body. */
+const NONE_DISCARDED = {
+  discarded: [],
+  hint: { text: "Kein Wunsch ist verworfen.", nextAction: "Tippe auf „Verwerfen“." },
+};
+/** The list of discarded wishes (US-WUN-05) is loaded with the page; stubs that know nothing else answer it empty. */
+const fallback = (url: unknown) =>
+  String(url).endsWith("/wishes/discarded") ? response(200, NONE_DISCARDED) : response(404, {});
+
+/** The histories of bought (US-WUN-03) and discarded (US-WUN-05) wishes are loaded with the list; this answers them for stubs that know one body. */
 const boughtOr = (url: unknown, body: unknown) =>
-  response(200, String(url).endsWith("/wishes/bought") ? NONE_BOUGHT : body);
+  response(
+    200,
+    String(url).endsWith("/wishes/bought")
+      ? NONE_BOUGHT
+      : String(url).endsWith("/wishes/discarded")
+        ? NONE_DISCARDED
+        : body,
+  );
 
 function fakeServer(initial: unknown, post?: () => Promise<Response>) {
   let current = initial;
@@ -60,7 +75,7 @@ function fakeServer(initial: unknown, post?: () => Promise<Response>) {
       if (r.ok) current = list([candidate({ id: "w2", name: "Neu", german: null, title: "Neu" })]);
       return r;
     }
-    return response(404, {});
+    return fallback(url);
   });
   vi.stubGlobal("fetch", fetchFn);
   return fetchFn;
@@ -468,7 +483,7 @@ describe("US-WUN-03 record a purchase on the page", () => {
     nextAction: "Lege die Pflanze jetzt als Exemplar in deiner Sammlung an.",
   };
   const historyOf = (titles: string[]) => ({
-    bought: titles.map((title, i) => ({ id: `b${i}`, name: title, title })),
+    bought: titles.map((title, i) => ({ id: `b${i}`, name: title, title, specimenId: null })),
     hint: {
       text: `${titles.length} Wünsche sind als gekauft vermerkt.`,
       nextAction:
@@ -503,7 +518,7 @@ describe("US-WUN-03 record a purchase on the page", () => {
           hint: BOUGHT_HINT,
         });
       }
-      return response(404, {});
+      return fallback(url);
     });
     vi.stubGlobal("fetch", fetchFn);
     return fetchFn;
@@ -560,7 +575,7 @@ describe("US-WUN-03 record a purchase on the page", () => {
       if (path === "/wishes/candidates") return response(200, list([candidate()]));
       if (path === "/wishes/bought") return response(200, NONE_BOUGHT);
       if (init?.method === "POST") return new Promise<Response>((resolve) => (release = resolve));
-      return response(404, {});
+      return fallback(url);
     });
     vi.stubGlobal("fetch", fetchFn);
     render(<WishlistPage api="http://api" token={token} />);
@@ -609,7 +624,7 @@ describe("FR-WUN-06 #303 repair of duplicate wish names on the page", () => {
           hint: { text: "Der Wunsch heißt jetzt „Cafe au lait“.", nextAction: "Prüfe weitere." },
         });
       }
-      return response(404, {});
+      return fallback(url);
     });
     vi.stubGlobal("fetch", fetchFn);
     return fetchFn;
@@ -696,7 +711,7 @@ describe("FR-WUN-06 #303 repair of duplicate wish names on the page", () => {
       if (path === "/wishes/candidates") return response(200, withDuplicates());
       if (path === "/wishes/bought") return response(200, NONE_BOUGHT);
       if (init?.method === "POST") return new Promise<Response>((resolve) => (release = resolve));
-      return response(404, {});
+      return fallback(url);
     });
     vi.stubGlobal("fetch", fetchFn);
     render(<WishlistPage api="http://api" token={token} />);

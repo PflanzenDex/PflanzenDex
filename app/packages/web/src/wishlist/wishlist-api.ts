@@ -1,7 +1,10 @@
 import type {
   BoughtList,
   CandidateList,
+  DiscardedList,
   WishBuyResult,
+  WishDiscardResult,
+  WishLinkResult,
   WishRemoveResult,
   WishRenameResult,
   WishRow,
@@ -17,25 +20,31 @@ function loadCandidates(
   return call<CandidateList>(fetchFn, `${api}/wishes/candidates`, token);
 }
 
-/** The page data: the open candidates and the bought wishes (US-WUN-03), loaded together so the page has one state. */
+/** The page data: the open candidates, the bought (US-WUN-03) and the discarded wishes (US-WUN-05), loaded together so the page has one state. */
 export interface Wishlist {
   readonly list: CandidateList;
   readonly bought: BoughtList;
+  readonly discarded: DiscardedList;
 }
 
-/** Loads candidates and bought wishes in parallel; the first refusal wins, nothing is shown half (P-10). */
+/** Loads candidates, bought and discarded wishes in parallel; the first refusal wins, nothing is shown half (P-10). */
 export async function loadWishlist(
   api: string,
   token: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<Response<Wishlist>> {
-  const [list, bought] = await Promise.all([
+  const [list, bought, discarded] = await Promise.all([
     loadCandidates(api, token, fetchFn),
     call<BoughtList>(fetchFn, `${api}/wishes/bought`, token),
+    call<DiscardedList>(fetchFn, `${api}/wishes/discarded`, token),
   ]);
   if (!list.ok) return list;
   if (!bought.ok) return bought;
-  return { ok: true, value: { list: list.value, bought: bought.value } };
+  if (!discarded.ok) return discarded;
+  return {
+    ok: true,
+    value: { list: list.value, bought: bought.value, discarded: discarded.value },
+  };
 }
 
 /** "Gekauft" (US-WUN-03): marks an open wish as bought; the answer says what happened and what comes next. */
@@ -51,6 +60,36 @@ export async function buyWish(
     fetchFn,
   )("POST", `/wishes/${encodeURIComponent(wishId)}/buy`);
   return r.ok ? { ok: true, value: r.value as WishBuyResult } : r;
+}
+
+/** "Verwerfen" (US-WUN-05): sets an open wish to discarded; it is kept and listed under "Verworfen" (P-10). */
+export async function discardWish(
+  api: string,
+  token: string,
+  wishId: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<WishDiscardResult>> {
+  const r = await createWrite(
+    api,
+    token,
+    fetchFn,
+  )("POST", `/wishes/${encodeURIComponent(wishId)}/discard`);
+  return r.ok ? { ok: true, value: r.value as WishDiscardResult } : r;
+}
+
+/** Links a bought wish to the specimen it became (US-WUN-05, "bought → specimen"). */
+export async function linkWishSpecimen(
+  api: string,
+  token: string,
+  target: { wishId: string; specimenId: string },
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<WishLinkResult>> {
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/wishes/${encodeURIComponent(target.wishId)}/specimen`,
+    { specimenId: target.specimenId },
+  );
+  return r.ok ? { ok: true, value: r.value as WishLinkResult } : r;
 }
 
 export interface WishInput {

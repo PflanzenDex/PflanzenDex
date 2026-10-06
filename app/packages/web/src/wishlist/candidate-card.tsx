@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Candidate } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -41,19 +42,60 @@ function Picture({ image }: { image: Candidate["image"] }) {
   );
 }
 
+/** "Verwerfen" asks before it writes: the wish stays stored under "Verworfen", but there is no way back yet (P-10). */
+function Discard(props: { c: Candidate; onDiscard: (c: Candidate) => void; busy: boolean }) {
+  const { c } = props;
+  const [asking, setAsking] = useState(false);
+  if (!asking)
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="touch"
+        disabled={props.busy}
+        aria-label={`Verwerfen: ${c.title}`}
+        onClick={() => setAsking(true)}
+      >
+        Verwerfen
+      </Button>
+    );
+  return (
+    <div className="grid gap-2">
+      <p>Wirklich verwerfen? Der Wunsch bleibt unter „Verworfen“ gespeichert.</p>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          variant="destructive"
+          size="touch"
+          disabled={props.busy}
+          aria-label={`Ja, verwerfen: ${c.title}`}
+          onClick={() => props.onDiscard(c)}
+        >
+          Ja, verwerfen
+        </Button>
+        <Button type="button" variant="outline" size="touch" onClick={() => setAsking(false)}>
+          Abbrechen
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /**
  * One open candidate (US-WUN-01): picture link with its source, title, target zone with stock, difficulty, reasoning
- * and why it stands here; "Gekauft" records the purchase (US-WUN-03).
+ * and why it stands here; "Gekauft" records the purchase (US-WUN-03), "Verwerfen" discards the wish (US-WUN-05).
  */
 export function CandidateCard(props: {
   c: Candidate;
   rank: number;
   /** Records the purchase; without it the card has no action. */
   onBuy?: (c: Candidate) => void;
+  /** Sets the wish to discarded (US-WUN-05); asks first. Without it the card has no such action. */
+  onDiscard?: (c: Candidate) => void;
   /** A write is running: the action waits, so a double tap writes once. */
   busy?: boolean;
 }) {
-  const { c, rank, onBuy } = props;
+  const { c, rank, onBuy, onDiscard } = props;
   return (
     <li
       data-priority={c.priority.kind}
@@ -82,6 +124,7 @@ export function CandidateCard(props: {
           Gekauft
         </Button>
       )}
+      {onDiscard && <Discard c={c} onDiscard={onDiscard} busy={props.busy === true} />}
     </li>
   );
 }
