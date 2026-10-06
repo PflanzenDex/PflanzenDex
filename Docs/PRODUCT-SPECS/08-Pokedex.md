@@ -20,7 +20,7 @@ Acceptance criteria:
 - Species-poor (genus ≤ 10 species according to GBIF): badge "Species-poor"; caught species-poor species with a rarity frame.
 - Source link on every card with an image source (CC BY-SA).
 
-### US-POK-02 · Maintain the catalog · ⬜ (prototype ✅)
+### US-POK-02 · Maintain the catalog · 🟨 (prototype ✅)
 
 As an **operator** I want to maintain the species catalog in one place; as a **plant keeper** to propose species.
 
@@ -30,6 +30,8 @@ Acceptance criteria:
 - Names are normalized (`ficus BENJAMINA` → `Ficus benjamina`), duplicates are dropped, invalid ratings trigger a warning, hybrid signs and cultivar additions do not belong in the catalog (US-POK-06).
 - The catalog grows in batches (target size 600+ species; collector genera with 10–20 species, otherwise 1–3 per genus); each batch is proofread and usable without a "finished" catalog (prototype 🟡: 215 species).
 - User proposals (US-BES-01) land in the operator's review list (US-BES-10) and count only after approval.
+
+Status 🟨: the entry fields with limits (difficulty 1–3, light level 2–4), the normalization (`ficus BENJAMINA` → `Ficus benjamina`), the duplicate check (name and synonyms) and the proposal path into the review list (US-BES-01, US-BES-10; a proposal counts only after approval) work. A hybrid sign (`x`, `×`, `+`) or an addition (`var.`, `subsp.`, `f.`, `cv.`) is refused on the Latin name with the codes `catalog.name_hybrid` and `catalog.name_addition`. Missing: the growth to 600+ species in proofread batches (TE-12, data work, not part of this story), an operator path to change an approved entry, and a decision on the cultivar in quotation marks (DM-BES-01 and US-POK-06 allow it in the catalog name, this criterion excludes it).
 
 ### US-POK-03 · Build taxonomy and enrichment automatically · 🟨 (prototype ✅)
 
