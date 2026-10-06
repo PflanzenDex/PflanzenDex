@@ -3,3 +3,4 @@ export { errorBody, statusFor } from "./error-http";
 export type { AuthEnv } from "./auth-env";
 export { body, write } from "./route-helpers";
 export type { ResponseShape, Ctx } from "./route-helpers";
+export { createMemorySourceCache, createSourceClient } from "./sources";
