@@ -8,9 +8,21 @@ export interface FriendRequest {
   readonly otherName: string | null;
   /** `sent`: I redeemed a code of the other side; `received`: the other side redeemed my code. */
   readonly direction: "sent" | "received";
+  /** `declined`: the other side did not accept; shown to the sender as "not accepted", nothing more (US-SOZ-02). */
+  readonly status: "requested" | "declined";
   /** UTC instant (ISO 8601). */
   readonly requestedAt: string;
 }
+
+/** A confirmed friend: the display name as stored and since when (US-SOZ-02). No collection data (US-SOZ-04). */
+export interface Friend {
+  readonly id: string;
+  readonly name: string | null;
+  /** UTC instant (ISO 8601). */
+  readonly since: string;
+}
+
+export type AnswerOutcome = "accepted" | "declined" | "not_found" | "not_open";
 
 export type RedeemResult =
   | { readonly outcome: "requested"; readonly request: FriendRequest }
@@ -32,6 +44,13 @@ export interface FriendStore {
    * again gets the existing request.
    */
   requestWithCode(userId: string, code: string): Promise<RedeemResult>;
-  /** Open (not yet answered) requests of the account, newest first. */
+  /** Open (not yet answered) requests of the account, newest first, plus the declined ones the account sent. */
   openRequests(userId: string): Promise<readonly FriendRequest[]>;
+  /**
+   * Accepts or declines a request the account received, on both sides in one transaction. Answering the same way
+   * again writes nothing; an id that is unknown, foreign or of a request the account sent is `not_found`.
+   */
+  answer(userId: string, requestId: string, accept: boolean): Promise<AnswerOutcome>;
+  /** Confirmed friends of the account, by name. */
+  friends(userId: string): Promise<readonly Friend[]>;
 }

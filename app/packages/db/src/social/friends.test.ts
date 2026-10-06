@@ -153,3 +153,73 @@ describe("US-SOZ-01 friend codes and requests in the database", () => {
     expect(rows.rows[0].n).toBe(2);
   });
 });
+
+describe("US-SOZ-02 answer a request in the database", () => {
+  const pair = async (seedOwner: string, redeemer: string) => {
+    await friends.requestWithCode(redeemer, await code(seedOwner));
+    const incoming = (await friends.openRequests(seedOwner)).find(
+      (r) => r.direction === "received" && r.status === "requested",
+    );
+    return incoming?.id as string;
+  };
+  const makeAccounts = async (n: number) => {
+    const ids = Array.from({ length: n }, () => randomUUID());
+    for (const id of ids) await createAccountWithName(pool, id, `N-${id.slice(0, 4)}`);
+    return ids;
+  };
+
+  it("US-SOZ-02 accepting confirms both rows with the same start and lists the friend on both sides", async () => {
+    const [x, y] = await makeAccounts(2);
+    try {
+      const id = await pair(x as string, y as string);
+      expect(await friends.answer(x as string, id, true)).toBe("accepted");
+      const rows = await pool.query(
+        "select status, since from friendship where account_id = any($1) and other_id = any($1)",
+        [[x, y]],
+      );
+      expect(rows.rows.map((r) => r.status)).toEqual(["confirmed", "confirmed"]);
+      expect(rows.rows[0].since).toEqual(rows.rows[1].since);
+      expect(await friends.friends(x as string)).toMatchObject([{ name: expect.any(String) }]);
+      expect(await friends.friends(y as string)).toHaveLength(1);
+      expect(await friends.openRequests(x as string)).toEqual([]);
+      expect(await friends.answer(x as string, id, true)).toBe("accepted");
+      expect(await friends.answer(x as string, id, false)).toBe("not_open");
+    } finally {
+      await pool.query("delete from account where id = any($1)", [[x, y]]);
+    }
+  });
+
+  it("US-SOZ-02 declining leaves the receiver nothing and the sender 'declined'; a new code starts over", async () => {
+    const [x, y] = await makeAccounts(2);
+    try {
+      const id = await pair(x as string, y as string);
+      expect(await friends.answer(x as string, id, false)).toBe("declined");
+      expect(await friends.openRequests(x as string)).toEqual([]);
+      expect(await friends.openRequests(y as string)).toMatchObject([{ status: "declined" }]);
+      expect(await friends.friends(y as string)).toEqual([]);
+      const again = await friends.requestWithCode(y as string, await code(x as string));
+      expect(again).toMatchObject({ outcome: "requested" });
+      expect(await friends.openRequests(x as string)).toMatchObject([{ status: "requested" }]);
+    } finally {
+      await pool.query("delete from account where id = any($1)", [[x, y]]);
+    }
+  });
+
+  it("US-SOZ-02 the sender and a third account cannot answer: not found, nothing changes (P-04)", async () => {
+    const [x, y, z] = await makeAccounts(3);
+    try {
+      const id = await pair(x as string, y as string);
+      const sent = (await friends.openRequests(y as string))[0]?.id as string;
+      expect(await friends.answer(y as string, sent, true)).toBe("not_found");
+      expect(await friends.answer(z as string, id, true)).toBe("not_found");
+      expect(await friends.answer(x as string, randomUUID(), true)).toBe("not_found");
+      const st = await pool.query(
+        "select distinct status from friendship where account_id = any($1)",
+        [[x, y]],
+      );
+      expect(st.rows).toEqual([{ status: "requested" }]);
+    } finally {
+      await pool.query("delete from account where id = any($1)", [[x, y, z]]);
+    }
+  });
+});

@@ -58,6 +58,9 @@ export const ERROR_TEXTS = {
   "friend.own_code": "Das ist dein eigener Freundescode. Gib ihn an jemand anderen weiter.",
   "friend.already_linked":
     "Mit dieser Person gibt es schon eine Anfrage oder Freundschaft. Es wurde nichts geändert und der Code ist nicht verbraucht.",
+  "friend.request_not_found": "Diese Freundschaftsanfrage gibt es nicht. Lade die Liste neu.",
+  "friend.request_answered":
+    "Diese Anfrage hast du schon anders beantwortet. Es wurde nichts geändert.",
   "wish.name_taken":
     "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
   "wish.not_found": "Diesen Wunsch gibt es nicht. Lade die Wunschliste neu.",

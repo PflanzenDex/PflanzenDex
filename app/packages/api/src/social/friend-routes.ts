@@ -1,5 +1,11 @@
 import { randomBytes } from "node:crypto";
-import { friendInvite, friendRequest, friendRequests } from "@pflanzendex/core";
+import {
+  friendAnswer,
+  friendInvite,
+  friendList,
+  friendRequest,
+  friendRequests,
+} from "@pflanzendex/core";
 import { FriendsPostgres, IdempotencyPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
@@ -13,13 +19,18 @@ export const FRIEND_PATHS = ["/friends"] as const;
  * that is passed on outside the app. Everything runs as the account of the caller (P-04, P-05).
  * - POST /friends/invitations: 201 with the single-use code (valid 7 days), shown this once
  * - POST /friends/requests `{ code }`: 201 with the request (display name of the inviter), not yet a friendship
- * - GET /friends/requests: `{ incoming, outgoing }`, the open requests; only the display name of the other side
+ * - GET /friends/requests: `{ incoming, outgoing }`, the open requests; only the display name of the other side.
+ *   `outgoing` also holds the requests the other side declined (`status: "declined"`: shown as "not accepted", US-SOZ-02)
+ * - POST /friends/requests/:id/answer `{ decision: "accept" | "decline" }` (US-SOZ-02): only the receiver; 404 for any
+ *   other id (no leak), 409 `friend.request_answered` when answered the other way before
+ * - GET /friends: `{ friends }`, the confirmed friends (display name, since); never their collections (P-05)
  */
 export function friendRoutes(pool: Pool, clock: () => Date = () => new Date()): Hono<AuthEnv> {
   const friends = new FriendsPostgres(pool);
   const deps = { idempotency: new IdempotencyPostgres(pool) };
   const invite = friendInvite({ friends, random: (n) => randomBytes(n), now: clock });
   const request = friendRequest({ friends });
+  const answer = friendAnswer({ friends });
   const routes = new Hono<AuthEnv>();
   routes.post("/friends/invitations", async (c) => {
     const response = await write(c, deps, invite, { input: {}, success: 201 });
@@ -32,5 +43,9 @@ export function friendRoutes(pool: Pool, clock: () => Date = () => new Date()): 
   routes.get("/friends/requests", async (c) =>
     c.json(await friendRequests({ friends }, c.get("account").id)),
   );
+  routes.post("/friends/requests/:id/answer", async (c) => {
+    return write(c, deps, answer, { input: { ...(await body(c)), requestId: c.req.param("id") } });
+  });
+  routes.get("/friends", async (c) => c.json(await friendList({ friends }, c.get("account").id)));
   return routes;
 }

@@ -16,7 +16,7 @@ Replacement: replaces `../PLANT-SYSTEM-SPECS/11-Social.md`. Dropped: the "hub" a
 
 ## User stories
 
-### US-SOZ-01 · Request a friendship · 🟨 new
+### US-SOZ-01 · Request a friendship · ✅ new
 
 Acceptance criteria:
 
@@ -34,13 +34,22 @@ Assumptions, decided by the PO (revisable):
 - Both sides store the display name of the other side at the time of the request; a side without a display name is stored as unknown (P-08). After an ended friendship a new request is allowed and reuses the stored rows.
 - Open requests are visible only to their two sides, with the display name and nothing else (P-04, P-05). The number of open codes per account is not limited yet (assumption: no abuse expected; revisit with US-SOZ-12).
 
-### US-SOZ-02 · Answer a friendship request · ⬜ new
+### US-SOZ-02 · Answer a friendship request · 🟨 new
 
 Acceptance criteria:
 
 - Open requests appear in the app and as a notification (US-SOZ-12).
 - Accepting makes the friendship effective on both sides. Declining discards silently; the other side learns only "not accepted".
 - Before acceptance only the display name is visible, no collection.
+
+Assumptions, decided by the PO (revisable):
+
+- Declining sets both sides to `declined`. The decliner's list shows nothing of it; the sender sees "Nicht angenommen" next to the name, with no reason and no time. The entry stays until the sender gets a new request accepted or declined with a new code (a new code replaces it); a way to dismiss it comes with US-SOZ-03.
+- Only the receiver of a request can answer. An id that is unknown, belongs to another account or to a request the caller sent answers `friend.request_not_found`, so existence does not leak (P-04).
+- Answering twice the same way writes nothing; answering the other way afterwards is refused with `friend.request_answered` (no taking back an answer; ending a friendship is US-SOZ-03).
+- Accepting stores the same start time on both rows; there is no accept-timeout and no limit of open requests.
+- The page "Freunde" (navigation entry, path `/friends`) combines US-SOZ-01 and US-SOZ-02: open requests, confirmed friends (name and since when only), invite with a code, enter a code. It shows no collection data and no counts against each other (P-05, FR-SOZ-11).
+- The notification about an open request is US-SOZ-12 and not part of this story.
 
 ### US-SOZ-03 · Manage friends and end a friendship · ⬜ new
 
