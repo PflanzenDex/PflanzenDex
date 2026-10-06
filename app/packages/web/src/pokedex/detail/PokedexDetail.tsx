@@ -1,7 +1,7 @@
 import type { CaughtSpecies } from "@pflanzendex/core";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Chips, catchText, countText } from "./PokedexCards";
+import { Chips, catchText, countText } from "../PokedexCards";
 
 /** A source is a link only if it is a plain http(s) address; anything else is shown as text, never as a link. */
 function webAddress(source: string): URL | null {

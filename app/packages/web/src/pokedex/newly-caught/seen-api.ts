@@ -1,4 +1,4 @@
-import { call, createWrite, type Response } from "../kernel";
+import { call, createWrite, type Response } from "../../kernel";
 
 /** The seen species keys of the account (US-POK-12); `null` while the account has no state yet (first visit). */
 export async function loadSeen(

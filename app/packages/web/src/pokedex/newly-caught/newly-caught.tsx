@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { errorText } from "@/lib/error-text";
 import { useInvalidate, useRequest, useWriteAction } from "../../kernel";
-import { loadSeen, markSeen } from "../seen-api";
+import { loadSeen, markSeen } from "./seen-api";
 
 const SEEN_KEY = ["pokedex", "seen"] as const;
 
