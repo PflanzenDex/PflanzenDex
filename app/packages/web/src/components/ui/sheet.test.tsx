@@ -37,13 +37,13 @@ describe("Sheet (US-QS-07, DS-23, DS-40)", () => {
   it("US-QS-07 · DS-23 opens as a named dialog with the required title", async () => {
     render(<Example />);
     await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
-    expect(screen.getByRole("dialog", { name: "Filter" })).toBeTruthy();
+    expect(await screen.findByRole("dialog", { name: "Filter" })).toBeTruthy();
   });
 
   it("US-QS-07 · DS-23 the content respects the safe area and 90dvh", async () => {
     render(<Example />);
     await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
-    const cls = screen.getByRole("dialog").className;
+    const cls = (await screen.findByRole("dialog")).className;
     expect(cls).toContain("pb-[env(safe-area-inset-bottom)]");
     expect(cls).toContain("max-h-[90dvh]");
   });
@@ -52,6 +52,7 @@ describe("Sheet (US-QS-07, DS-23, DS-40)", () => {
     render(<Example />);
     const trigger = screen.getByRole("button", { name: "Öffnen" });
     await userEvent.click(trigger);
+    await screen.findByRole("dialog");
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(document.activeElement).toBe(trigger);
@@ -60,10 +61,19 @@ describe("Sheet (US-QS-07, DS-23, DS-40)", () => {
   it("US-QS-07 · DS-40 Tab keeps focus inside the sheet", async () => {
     render(<Example />);
     await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
-    const dialog = screen.getByRole("dialog");
+    const dialog = await screen.findByRole("dialog");
     for (let i = 0; i < 5; i++) {
       await userEvent.tab();
       expect(dialog.contains(document.activeElement)).toBe(true);
     }
+  });
+
+  it("US-QS-07 · DS-08 the trigger is a named button that opens the sheet before the chunk is cached", async () => {
+    render(<Example />);
+    const trigger = screen.getByRole("button", { name: "Öffnen" });
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    await userEvent.click(trigger);
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    expect(await screen.findByRole("dialog", { name: "Filter" })).toBeTruthy();
   });
 });

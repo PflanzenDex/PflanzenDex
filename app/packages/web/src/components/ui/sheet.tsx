@@ -1,48 +1,129 @@
 import * as React from "react";
-import { Drawer } from "vaul";
-import { cn } from "@/lib/utils";
+import { Slot } from "@radix-ui/react-slot";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Button } from "@/components/ui/button";
+import { ChunkErrorBoundary } from "@/components/routing/route-boundary/route-boundary";
+import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+import type { SheetPanelProps } from "./sheet-panel";
 
-const Sheet = Drawer.Root;
-const SheetTrigger = Drawer.Trigger;
+// Vaul is about 8 kB gzip and only needed once a sheet opens, so it loads on demand (DS-08, US-QS-07).
+const loadPanel = () => import("./sheet-panel");
+const SheetPanel = lazyPage(loadPanel);
 
-export type SheetContentProps = Omit<
-  React.ComponentPropsWithoutRef<typeof Drawer.Content>,
-  "title"
-> & {
-  /** Required: the accessible name of the sheet (DS-40). */
-  title: string;
-  /** Optional description linked to the sheet. */
-  description?: string;
+type SheetState = { open: boolean; setOpen: (open: boolean) => void; opened: boolean };
+const SheetContext = React.createContext<SheetState | null>(null);
+
+function useSheet(): SheetState {
+  const ctx = React.useContext(SheetContext);
+  if (!ctx) throw new Error("Sheet parts must be used inside <Sheet>");
+  return ctx;
+}
+
+/** Starts fetching the sheet code; a failure here is retried by the real open, which shows the error (P-10). */
+function preload(): void {
+  void loadPanel().catch(() => undefined);
+}
+
+export type SheetProps = {
+  open?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  children?: React.ReactNode;
 };
 
-/** Bottom sheet (US-QS-07, DS-23, DS-40): Vaul drag handle, safe-area padding, max height 90dvh. */
-const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>(
-  ({ className, title, description, children, ...props }, ref) => (
-    <Drawer.Portal>
-      <Drawer.Overlay className="fixed inset-0 z-50 bg-foreground/50" />
-      <Drawer.Content
+/**
+ * Bottom sheet root (US-QS-07, DS-23). Holds the open state; the Vaul drawer itself is a lazy chunk that loads when
+ * the sheet first opens (or earlier on hover, focus, touch and when the browser is idle).
+ */
+function Sheet({ open: openProp, defaultOpen = false, onOpenChange, children }: SheetProps) {
+  const [inner, setInner] = React.useState(defaultOpen);
+  const open = openProp ?? inner;
+  const [opened, setOpened] = React.useState(open);
+  if (open && !opened) setOpened(true);
+  const setOpen = React.useCallback(
+    (next: boolean) => {
+      setInner(next);
+      onOpenChange?.(next);
+    },
+    [onOpenChange],
+  );
+  React.useEffect(() => {
+    const id = window.setTimeout(preload, 1500);
+    return () => window.clearTimeout(id);
+  }, []);
+  const value = React.useMemo(() => ({ open, setOpen, opened }), [open, setOpen, opened]);
+  return <SheetContext.Provider value={value}>{children}</SheetContext.Provider>;
+}
+
+export type SheetTriggerProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  asChild?: boolean;
+};
+
+/** Opens the sheet. Works before the drawer code is there; the code is requested on first contact. */
+const SheetTrigger = React.forwardRef<HTMLButtonElement, SheetTriggerProps>(
+  ({ asChild, onClick, onPointerEnter, onFocus, onTouchStart, ...props }, ref) => {
+    const { open, setOpen } = useSheet();
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp
         ref={ref}
-        className={cn(
-          "fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[90dvh] flex-col rounded-t-xl border border-border bg-background pb-[env(safe-area-inset-bottom)] text-foreground",
-          className,
-        )}
+        type={asChild ? undefined : "button"}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        data-state={open ? "open" : "closed"}
         {...props}
-      >
-        <div
-          aria-hidden="true"
-          className="mx-auto mt-3 h-1.5 w-12 shrink-0 rounded-full bg-muted"
-        />
-        <Drawer.Title className="px-4 pt-3 text-lg font-semibold">{title}</Drawer.Title>
-        {description ? (
-          <Drawer.Description className="px-4 text-sm text-muted-foreground">
-            {description}
-          </Drawer.Description>
-        ) : null}
-        <div className="overflow-y-auto p-4">{children}</div>
-      </Drawer.Content>
-    </Drawer.Portal>
-  ),
+        onPointerEnter={(e: React.PointerEvent<HTMLButtonElement>) => {
+          preload();
+          onPointerEnter?.(e);
+        }}
+        onFocus={(e: React.FocusEvent<HTMLButtonElement>) => {
+          preload();
+          onFocus?.(e);
+        }}
+        onTouchStart={(e: React.TouchEvent<HTMLButtonElement>) => {
+          preload();
+          onTouchStart?.(e);
+        }}
+        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+          onClick?.(e);
+          if (!e.defaultPrevented) setOpen(!open);
+        }}
+      />
+    );
+  },
 );
+SheetTrigger.displayName = "SheetTrigger";
+
+export type SheetContentProps = Omit<SheetPanelProps, "open" | "onOpenChange">;
+
+/** Bottom sheet content (US-QS-07, DS-23, DS-40): see `sheet-panel.tsx`. A failed chunk shows an error with retry. */
+const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>((props, ref) => {
+  const { open, setOpen, opened } = useSheet();
+  if (!opened) return null;
+  return (
+    <ChunkErrorBoundary
+      resetKey="sheet"
+      errorView={(retry) =>
+        open ? (
+          <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background p-4 pb-[env(safe-area-inset-bottom)]">
+            <EmptyState
+              variant="error"
+              title="Das Fenster konnte nicht geladen werden."
+              action={{ label: "Erneut versuchen", onClick: retry }}
+            />
+            <Button variant="ghost" className="mt-2 w-full" onClick={() => setOpen(false)}>
+              Schließen
+            </Button>
+          </div>
+        ) : null
+      }
+    >
+      <React.Suspense fallback={null}>
+        <SheetPanel ref={ref} {...props} open={open} onOpenChange={setOpen} />
+      </React.Suspense>
+    </ChunkErrorBoundary>
+  );
+});
 SheetContent.displayName = "SheetContent";
 
 export { Sheet, SheetContent, SheetTrigger };
