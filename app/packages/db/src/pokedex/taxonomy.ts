@@ -78,7 +78,24 @@ const failedRow = (f: TaxonomyRecord["failures"][number], b: TaxonomyRecord) => 
   b.builtAt,
 ];
 
-/** Adapter for the taxonomy tree. Needs the owner connection: the application role may only read `taxon`. */
+/** One resolved species of the tree for the collector cards (US-POK-01); same shape as `TaxonCardRow` in `core`. */
+export interface TaxonCardRecord {
+  readonly latinName: string;
+  readonly genus: string;
+  readonly family: string | null;
+  readonly order: string | null;
+  readonly summary: string | null;
+  readonly imageUrl: string | null;
+  readonly pageUrl: string | null;
+  readonly genusSpeciesCount: number | null;
+}
+
+// Resolved species only; the catalog facts (German name, difficulty, light zone) come through the catalog port.
+const CARDS = `select latin_name as "latinName", genus, family, order_name as "order", summary,
+    image_url as "imageUrl", page_url as "pageUrl", genus_species_count as "genusSpeciesCount"
+  from taxon where status = 'resolved'`;
+
+/** Adapter for the taxonomy tree. Writing needs the owner connection: the application role may only read `taxon`. */
 export class TaxonomyPostgres {
   constructor(private readonly pool: Pool) {}
 
@@ -87,6 +104,11 @@ export class TaxonomyPostgres {
       "select catalog_fingerprint as f from taxon limit 1",
     );
     return r.rows[0]?.f ?? null;
+  }
+
+  /** The resolved tree for the collector cards: shared by all accounts, no user data (readable by the application role). */
+  async tree(): Promise<readonly TaxonCardRecord[]> {
+    return (await this.pool.query<TaxonCardRecord>(CARDS)).rows;
   }
 
   /** Replaces the whole tree in one transaction: on any error nothing changes (US-POK-03). */

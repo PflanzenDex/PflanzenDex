@@ -36,9 +36,11 @@ const riddle = {
 const unidentified = [riddle];
 
 function fakeServer(answer: () => Promise<Response>) {
-  const fetchFn = vi.fn<typeof fetch>(async (url) =>
-    new URL(String(url)).pathname === "/pokedex/ownership" ? answer() : response(404, {}),
-  );
+  const fetchFn = vi.fn<typeof fetch>(async (url) => {
+    const path = new URL(String(url)).pathname;
+    if (path === "/pokedex/cards") return response(200, { cards: [] });
+    return path === "/pokedex/ownership" ? answer() : response(404, {});
+  });
   vi.stubGlobal("fetch", fetchFn);
   return fetchFn;
 }
