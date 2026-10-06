@@ -2,6 +2,8 @@ import type { TreatmentListRow } from "@pflanzendex/core";
 import { useCallback, useRef, useState } from "react";
 import { EmptyState, type EmptyStateAction } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
+import { isOnline } from "@/platform/network";
+import { useAnnounce } from "@/platform/announcer/context";
 import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../kernel";
 import { ATTENTION_CLASSES, CARD_CLASSES, LIST_CLASSES, RefusalAlert, StatusNote } from "./notices";
 import { OpenTreatmentsSkeleton } from "./open-treatments.skeleton";
@@ -28,6 +30,7 @@ export function nextStepText(rows: readonly TreatmentListRow[]): string | null {
  */
 function useCompletion(api: string, token: Token, onChanged: () => void) {
   const busy = useRef(false);
+  const announcer = useAnnounce();
   const [runningId, setRunningId] = useState<string | null>(null);
   // Ticked off here: hidden at once, so a second tap before the list reloads has nothing to hit.
   const [doneIds, setDoneIds] = useState<readonly string[]>([]);
@@ -37,6 +40,18 @@ function useCompletion(api: string, token: Token, onChanged: () => void) {
     async (row: TreatmentListRow) => {
       if (busy.current) return;
       busy.current = true;
+      if (announcer && !isOnline()) {
+        // No network: the tick-off waits in the buffer, the row is hidden so it cannot be buffered twice (US-QS-10).
+        setDoneIds((ids) => [...ids, row.id]);
+        busy.current = false;
+        void announcer.buffer({
+          token,
+          send: (t) => completeTreatment(api, t, row.id),
+          success: `„${row.specimenName}“: „${row.reason}“ als erledigt eingetragen.`,
+          after: onChanged,
+        });
+        return;
+      }
       setRunningId(row.id);
       const t = await token();
       const r = t
@@ -53,7 +68,7 @@ function useCompletion(api: string, token: Token, onChanged: () => void) {
       );
       onChanged();
     },
-    [api, token, onChanged],
+    [api, token, onChanged, announcer],
   );
   return { runningId, doneIds, message, error, complete };
 }
