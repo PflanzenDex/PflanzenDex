@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates layout layout-baseline unused-report storybook build-storybook
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates layout layout-baseline unused-report storybook build-storybook ds-snapshots ds-snapshots-check
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -76,6 +76,12 @@ browsers: ## Install the Chromium that Playwright uses (e2e, conformance run)
 
 conformance: ## Component conformance over all stories: axe, 44 px targets, focus, overlays; light and dark, 360 px (QG-U5, FR-QG-09; needs `make browsers`; report only until it is switched to blocking)
 	cd $(APP) && npm run conformance
+
+ds-snapshots-check: ## Visual regression of the components/ui stories against the baselines in app/packages/web/.storybook/snapshots, 360 px, light and dark, in the pinned Playwright container; also runs its self-test (QG-U5, US-QS-07; needs Docker)
+	cd $(APP) && npm run ds-snapshots
+
+ds-snapshots: ## Rewrite the baselines in app/ds-snapshots (pinned Playwright container, needs Docker); review the images, then commit them (QG-U5, US-QS-07)
+	cd $(APP) && npm run ds-snapshots:update
 
 e2e: $(if $(CI),,db-up) auth-up migrate browsers ## End-to-end tests with Playwright, mobile + desktop, axe blocks on serious/critical (QG-T3, QG-U1; needs Docker)
 	cd $(APP) && npm run e2e

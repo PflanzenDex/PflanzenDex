@@ -13,5 +13,5 @@
     "packages/core/**/*.ts": { "complexity": 10, "cognitiveComplexity": 15 }
   },
   "crap": { "max": 450 },
-  "bundle": { "initialJsGzipBytes": 210000 }
+  "bundle": { "initialJsGzipBytes": 152000 }
 }

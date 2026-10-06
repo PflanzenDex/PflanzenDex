@@ -10,4 +10,7 @@ export { AppError, AccountView, Loading, Welcome } from "./views";
 export { apiUrl } from "./account-api";
 export { useSession } from "./session";
 export type { State } from "./session";
-export { InvitationPage } from "./invitation-page";
+/** Needed only while the invitation code is asked for: forms and validation stay out of the entry chunk (#451). */
+export const InvitationPage = lazyPage(() =>
+  import("./invitation-page").then((m) => ({ default: m.InvitationPage })),
+);
