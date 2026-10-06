@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import type { Species } from "@pflanzendex/core";
 import {
@@ -15,6 +15,8 @@ import { AppRoutes } from "./routes";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
 import { AppShell } from "./components/shared/app-shell";
 import { pageTitle, navItems, PATHS, viewTitle, type View } from "./navigation";
+import { PathNotes } from "./wishlist";
+import { useWishHandOver } from "./wish-to-specimen";
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
 
@@ -92,6 +94,8 @@ export function App() {
   const { setView, openProfile } = useViews();
   const { state: navState } = useLocation() as { state: { hint?: string } | null };
   const handOver = useSpeciesHandOver(setView);
+  // The way from a bought wish to its specimen (US-WUN-05): wishlist, catalog and collection are wired here.
+  const wishPath = useWishHandOver(api, s.token, handOver);
   const z = s.state;
   useClearOnSignOut(z.kind === "signedIn");
   useEntryTitle(z.kind);
@@ -121,6 +125,11 @@ export function App() {
             {navState.hint}
           </p>
         )}
+        {(wishPath.notes.wish || wishPath.notes.notice) && (
+          <Suspense fallback={null}>
+            <PathNotes {...wishPath.notes} />
+          </Suspense>
+        )}
         <AppRoutes
           api={api}
           session={s}
@@ -128,7 +137,7 @@ export function App() {
           {...(z.error ? { error: z.error } : {})}
           onOpen={setView}
           onOpenProfile={openProfile}
-          handOver={handOver}
+          handOver={wishPath.handOver}
         />
       </div>
       {footer}

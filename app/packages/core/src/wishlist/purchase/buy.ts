@@ -18,10 +18,9 @@ const schema = shape({ wishId: idField("wishId") });
 
 const ERROR = { not_found: "wish.not_found", not_open: "wish.not_open" } as const;
 
-// The guided path from purchase to plant (species preselected, link wish -> specimen) is US-WUN-05; until then the
-// next action names the specimen in words only.
+// The guided path to the plant (US-WUN-05) starts from the action "Exemplar anlegen" on this answer.
 const NEXT_ACTION =
-  "Lege die Pflanze jetzt als Exemplar in deiner Sammlung an, damit sie in ihrer Lichtzone mitzählt.";
+  "Tippe auf „Exemplar anlegen“: Die Art ist vorgewählt, und der Wunsch wird mit dem Exemplar verknüpft. So zählt die Pflanze in ihrer Lichtzone mit.";
 
 function hintFor(wish: WishRow, changed: boolean): WishBuyResult["hint"] {
   const title = titleOf(wish);

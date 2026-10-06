@@ -48,6 +48,8 @@ const renderAt = (path: string) => {
           setNewSpecies: () => undefined,
           choose: () => undefined,
           toTheCatalog: () => undefined,
+          onCreated: () => undefined,
+          startFromWish: () => undefined,
         }}
       />
     </MemoryRouter>,

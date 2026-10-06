@@ -78,10 +78,12 @@ export function SpeciesPage(props: {
   onChoose: (species: Species) => void;
   /** Start on the profile of this species (a link from another area, e.g. the Pokédex, US-POK-09). */
   openId?: string | null;
+  /** Start the search with this text (a bought wish whose species is not in the catalog yet, US-WUN-05). */
+  initialSearch?: string;
 }) {
   const { api, token, onChoose, openId } = props;
   const [view, setView] = useState<View>(openId ? { kind: "profile" } : { kind: "search" });
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState(props.initialSearch ?? "");
   const [fresh, setNew] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(openId ?? null);
   const search = useSearch(api, token, searchText);
