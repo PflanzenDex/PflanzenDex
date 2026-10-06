@@ -66,7 +66,7 @@ export function OnboardingWizard(props: {
       <p
         className="m-0 self-start rounded-full border border-current px-2.5 py-0.5 text-sm font-semibold"
         role="status"
-      >{`Schritt ${index + 1} von ${steps.length}`}</p>
+      >{`Schritt ${index + 1} von ${steps.length}: ${steps[index]?.title ?? ""}`}</p>
       {id === "locations" && <LocationsStep {...common} />}
       {id === "zones" && <ZonesStep {...common} />}
       {id === "first_plant" && (
@@ -77,6 +77,11 @@ export function OnboardingWizard(props: {
         />
       )}
       <div className={ACTIONS}>
+        {index > 0 && (
+          <Button type="button" variant="secondary" onClick={() => setIndex(index - 1)}>
+            Zurück
+          </Button>
+        )}
         <Button type="button" variant="secondary" onClick={props.onEnd}>
           Einstieg beenden
         </Button>

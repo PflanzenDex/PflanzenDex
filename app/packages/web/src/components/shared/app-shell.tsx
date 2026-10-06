@@ -1,4 +1,5 @@
 import { useEffect, useRef, type MouseEvent, type ReactNode, type RefObject } from "react";
+import { RouteFocus } from "@/components/routing/route-focus/route-focus";
 import { GlobalHeader } from "./global-header";
 import { MobileNavBar } from "./mobile-nav-bar";
 import type { NavItem } from "./nav-item";
@@ -45,7 +46,16 @@ function skipToContent(event: MouseEvent<HTMLAnchorElement>) {
  * horizontal scroll, and `main` keeps bottom padding for the sticky bar plus the safe area.
  * One `items` list is the single source of destinations for header and bar. The skip link comes first (US-QS-08).
  */
-export function AppShell({ items, children }: { items: NavItem[]; children: ReactNode }) {
+export function AppShell({
+  items,
+  titleOf,
+  children,
+}: {
+  items: NavItem[];
+  /** The page title of an address; with it the shell also moves the focus to the new view's heading (US-QS-09). */
+  titleOf?: (pathname: string) => string;
+  children: ReactNode;
+}) {
   const shell = useRef<HTMLDivElement>(null);
   useStickyScrollPadding(shell);
   return (
@@ -66,6 +76,7 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
         tabIndex={-1}
         className="flex-1 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))] pt-4 md:px-6 md:pb-0"
       >
+        {titleOf ? <RouteFocus titleOf={titleOf} /> : null}
         {children}
       </main>
       <MobileNavBar items={items} />

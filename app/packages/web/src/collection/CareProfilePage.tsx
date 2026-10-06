@@ -56,6 +56,7 @@ export function CareProfilePage(props: { api: string; token: () => Promise<strin
         token={token}
         load={load}
         loadingText="Pflegeprofil wird geladen …"
+        heading="Pflegeprofil"
         loadingFallback={<CareProfilePageSkeleton label="Pflegeprofil wird geladen …" />}
       >
         {(data: Data) => (

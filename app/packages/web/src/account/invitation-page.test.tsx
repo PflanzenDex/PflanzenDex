@@ -150,4 +150,15 @@ describe("US-ACC-05 · DS-48 states and primitives", () => {
     expect(field.getAttribute("aria-invalid")).toBe("true");
     expect(document.activeElement).toBe(field);
   });
+
+  it("US-QS-09 the code can be pasted and offered by the device or a password manager (3.3.8)", async () => {
+    open();
+    const user = userEvent.setup();
+    const field = screen.getByRole("textbox", { name: "Einladungscode" });
+    expect(field.getAttribute("autocomplete")).toBe("one-time-code");
+    expect(field.hasAttribute("readonly")).toBe(false);
+    await user.click(field);
+    await user.paste("ABCD-EFGH-JKMN");
+    expect((field as HTMLInputElement).value).toBe("ABCD-EFGH-JKMN");
+  });
 });

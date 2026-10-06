@@ -26,6 +26,7 @@ export function PokedexPage(props: {
         token={token}
         load={load}
         loadingText="Pokédex wird geladen …"
+        heading="Pokédex"
         loadingFallback={<PokedexPageSkeleton label="Pokédex wird geladen …" />}
       >
         {(ownership: Ownership) => (

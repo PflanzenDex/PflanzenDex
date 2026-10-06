@@ -14,6 +14,8 @@ export type RequestStateProps = {
   empty?: ReactNode;
   /** The data on screen is the last loaded copy because the network is down (US-QS-07). */
   offline?: boolean;
+  /** Page level only: the main heading shown above the error, because a failed page has no content that carries it (US-QS-09). */
+  heading?: string;
   children?: ReactNode;
 };
 
@@ -25,15 +27,18 @@ export const OFFLINE_NOTE = "Offline - zuletzt geladene Daten";
  * it is the cached copy. Takes data and callbacks only (DS-44).
  */
 export function RequestState(props: RequestStateProps) {
-  const { status, errorText, onRetry, skeleton, empty, offline, children } = props;
+  const { status, errorText, onRetry, skeleton, empty, offline, heading, children } = props;
   if (status === "pending") return <>{skeleton}</>;
   if (status === "error")
     return (
-      <EmptyState
-        variant="error"
-        title={errorText ?? "Das Laden ist fehlgeschlagen."}
-        action={{ label: "Erneut versuchen", onClick: onRetry }}
-      />
+      <>
+        {heading ? <h1 className="mb-3 text-2xl font-semibold">{heading}</h1> : null}
+        <EmptyState
+          variant="error"
+          title={errorText ?? "Das Laden ist fehlgeschlagen."}
+          action={{ label: "Erneut versuchen", onClick: onRetry }}
+        />
+      </>
     );
   if (status === "empty") return <>{empty}</>;
   return (

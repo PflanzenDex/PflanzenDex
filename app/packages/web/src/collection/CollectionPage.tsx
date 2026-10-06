@@ -66,6 +66,7 @@ export function CollectionPage(props: Props) {
         status={request.status}
         {...(request.error ? { errorText: request.error.text } : {})}
         onRetry={request.retry}
+        heading="Bestand"
         skeleton={<CollectionPageSkeleton label="Bestand wird geladen …" />}
         offline={request.offline}
       >

@@ -115,6 +115,7 @@ export function LightPage(props: {
     <RequestState
       status={request.status}
       onRetry={request.retry}
+      heading="Standorte und Lichtzonen"
       skeleton={<LightPageSkeleton label={loading} />}
       offline={request.offline}
       {...(request.error ? { errorText: errorTitle(request.error) } : {})}
