@@ -127,3 +127,36 @@
     cursor: pointer;
   }
 }
+
+/*
+ * Adaptable display (US-QS-12). These two blocks stay outside the layers on purpose: unlayered rules win over the
+ * utilities layer and over the styles that third-party parts inject at runtime (the Vaul sheet), in any order.
+ */
+
+/*
+ * Reduced motion (WCAG 2.3.3, DS-19): with the system setting, animations and transitions end at once. `!important`
+ * is the one exception to DS-33 here, because libraries set transitions as inline styles while a sheet moves.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * Forced colors (Windows contrast themes; WCAG 2.4.7, 1.4.11, DS-37): the focus ring is a box shadow, which forced
+ * colors drop, so a system-coloured outline carries the focus for every focusable element, also for future ones.
+ */
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}

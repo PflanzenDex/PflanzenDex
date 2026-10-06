@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 rounded-md text-center text-sm font-medium " +
     "transition-colors motion-reduce:transition-none " +
+    // Forced colors replace the fill; the border keeps the button's boundary visible (US-QS-12, WCAG 1.4.11).
+    "forced-colors:border forced-colors:border-[color:ButtonText] " +
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background " +
     "disabled:pointer-events-none disabled:opacity-50",
   {
