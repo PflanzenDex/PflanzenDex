@@ -12,6 +12,28 @@ export function storyUrl(baseUrl, id, scheme) {
   return `${baseUrl}/iframe.html?id=${id}&viewMode=story&globals=colorScheme:${scheme};a11y.manual:!true`;
 }
 
+// Runs inside the page (QG-U9, FR-QG-09). Resolves once the style of the story has settled: it lets two frames
+// pass so that the colour scheme (applied while the story renders) has been recalculated and every transition it
+// started exists, then waits until no finite animation or transition is running any more. axe reads computed
+// colours, so sampling in the middle of a transition (foreground still the light-mode text colour on the dark
+// background) reports a contrast failure that is not real. A real low contrast is still reported: it is the
+// settled end state that gets measured. Infinite animations are skipped, they would never finish.
+export async function settleStyles() {
+  const frame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
+  const running = () =>
+    document
+      .getAnimations()
+      .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity)
+      .filter((a) => a.playState !== "finished" && a.playState !== "idle");
+  await frame();
+  await frame();
+  for (let round = 0; round < 20 && running().length > 0; round++) {
+    await Promise.all(running().map((a) => a.finished.catch(() => undefined)));
+    await frame();
+  }
+  return running().length;
+}
+
 // Runs inside the page. Marks the visible, enabled, tabbable controls with data-qg-i and returns their size,
 // a readable selector and the style that would show a focus ring while unfocused.
 export function probeTargets(selector) {
