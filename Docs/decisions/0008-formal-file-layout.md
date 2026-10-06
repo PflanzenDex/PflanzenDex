@@ -11,11 +11,11 @@ The module cut is checked (`app/modules.config.mjs`, AB-7 to AB-14), the file la
 
 ## Decision
 
-- **One configuration, one script.** `app/layout.config.mjs` describes the layout, `app/scripts/check-layout.mjs` checks it (QG-C4, `make layout`, part of `make gates`, pre-push and CI). Rules LY-1 to LY-6 are in FR-QG-21.
+- **One configuration, one script.** `app/layout.config.mjs` describes the layout, `app/tools/check/code/layout/check-layout.mjs` checks it (QG-C4, `make layout`, part of `make gates`, pre-push and CI). Rules LY-1 to LY-6 are in FR-QG-21.
 - **Fan-out limit 5 per directory** (a unit is a group of files with the same name stem), with declared collections (name pattern instead of a limit) and module roots (modules from `modules.config.mjs`, up to 10 feature directories each). Entries starting with `.` are ignored.
 - **kebab-case everywhere**, one directory per component, barrels per module only (not per component), a whitelist for the repo root.
 - **Baseline ratchet** (FR-QG-22): values only shrink, stale entries fail, new keys against `dev` fail. The first PR creates the baseline from the measured state, so the gate is green on day one and stops further growth.
-- **Target layout** (FR-QG-23): `docs/` (lower case), `tools/`, `app/config`, `app/gates`, `web/src/{app,shared,<modules>}`. Test logs stay in the repo as a collection `docs/records/test-logs/<story-id>/`.
+- **Target layout** (FR-QG-23): `docs/` (lower case), `app/tools/{check,workflow,dev}` for the Node scripts and `tools/` for the shell scripts only, `app/config`, `app/gates`, `web/src/{app,shared,<modules>}`. Test logs stay in the repo as a collection `docs/records/test-logs/<story-id>/`.
 - **Migration** in small PRs with the helper `make layout-fix` (dry run first, import rewrite, `git mv`). Gate files (check, Makefile, workflows, hooks, thresholds) are changed in their own PRs that a human merges (ADR 0005).
 
 ## Alternatives considered
@@ -25,6 +25,10 @@ The module cut is checked (`app/modules.config.mjs`, AB-7 to AB-14), the file la
 - **Fixed limit without collections:** would force artificial grouping of migrations, ADRs and test logs, where the number carries no meaning.
 
 ## Consequences
+
+- **Amended on 2026-10-05 (PR 5):** the structure rule `ST-c` of the boundary check (`index.ts` in every directory of `core`) came from the replaced proposal FR-QG-04 and contradicted "barrels per module only". It now asks for an `index.ts` in `core/src` and in each module root only, so feature folders below a module need none.
+
+- **Amended on 2026-10-05 (PR 4a):** the Node scripts move to `app/tools/`, not to a root `tools/`. They import npm packages (`eslint`, `playwright`, and the `vitest` configs import `coverage-config.mjs`), and Node resolves bare imports upwards from the importing file, so scripts under a root `tools/` would not find `app/node_modules`. The root `tools/` holds the shell scripts of the former root `scripts/`.
 
 - Moves are large but mechanical: about 77 directories are over the limit today. The baseline makes that visible and the ratchet makes it shrink.
 - Open pull requests that touch moved files conflict. Moves therefore wait for a module while another claim touches it (`make board`); the `web` moves wait until the DS-48 pull requests are merged.

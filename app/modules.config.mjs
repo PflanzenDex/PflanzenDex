@@ -1,5 +1,5 @@
 // Module register (AB-13): the single source for the module boundary checks (AB-7 to AB-14, FR-QG-19, ADR 0003).
-// Read by scripts/check-boundaries.mjs (imports, structure, migrations) and by findSchemaViolations in db (tables,
+// Read by tools/check/code/check-boundaries.mjs (imports, structure, migrations) and by findSchemaViolations in db (tables,
 // foreign keys). Code that moves into modules only reads this file.
 //
 // A module folder is `packages/<core|db|api|web>/src/<name>/` with an `index.ts` as its public interface (variant A).
@@ -21,6 +21,15 @@ const MODULES = [
     tables: ["account", "idempotency", "schema_migrations", "medium"],
     dependsOn: [],
     ports: ["DataSource", "IdempotencyStore"],
+  },
+  {
+    // Platform module (TE-06, ADR 0003 table "jobs"): PostgreSQL job queue and the runner. Has its own folder because the
+    // queue has domain-free rules of its own (lease, retry, merge); MON, POK and KI depend on it, never the other way.
+    name: "jobs",
+    epics: ["TE"],
+    tables: ["job"],
+    dependsOn: ["kernel"],
+    ports: ["JobQueue"],
   },
   {
     name: "account",

@@ -4,12 +4,13 @@ Ticket TE-03 (#40). Basis: E-01 (self-hosting, Docker Compose, one host), R-09, 
 
 ## Overview
 
-| Service | Job                                                                                         |
-| ------- | ------------------------------------------------------------------------------------------- |
-| `proxy` | Caddy: HTTPS with an automatic certificate; `/health` and `/api/*` go to the API, the rest to web |
-| `api`   | Hono API (Node 24, through tsx, because `core` is exported as TypeScript source)            |
-| `web`   | static PWA (Vite build, Caddy)                                                              |
-| `db`    | PostgreSQL 16, data in the `dbdata` volume                                                  |
+| Service   | Job                                                                                               |
+| --------- | ------------------------------------------------------------------------------------------------- |
+| `proxy`   | Caddy: HTTPS with an automatic certificate; `/health` and `/api/*` go to the API, the rest to web |
+| `api`     | Hono API (Node 24, through tsx, because `core` is exported as TypeScript source)                  |
+| `web`     | static PWA (Vite build, Caddy)                                                                    |
+| `db`      | PostgreSQL 16, data in the `dbdata` volume                                                        |
+| `migrate` | one-shot, same image as `api`: applies pending SQL migrations, then exits (#201)                  |
 
 The database is not exposed. Only the proxy listens (ports from `HTTP_PORT`/`HTTPS_PORT`).
 
@@ -26,6 +27,7 @@ make deploy          # fetches origin/main, backs up the DB (if it runs), builds
 ```
 
 To try another state: `app/deploy/scripts/deploy.sh origin/dev`. Builds are reproducible: `npm ci` from the lock file, base images pinned to major versions (`node:24-alpine`, `postgres:16-alpine`, `caddy:2-alpine`). `GET /health` shows the running version (`version` = commit hash).
+Migrations run on every deploy: the one-shot `migrate` service (same image as `api`, `packages/db/migrations`) applies pending files before the `api` starts (`depends_on: service_completed_successfully`). They are forward only and guarded by an advisory lock and checksums. A failing migration fails `compose up`, so `deploy.sh` rolls back to the previous ref and the API never runs against a half-migrated schema. Check with `docker compose --env-file app/deploy/.env -f app/deploy/docker-compose.yml logs migrate`. Migrations are not rolled back; use the pre-deploy backup (restore below) for data problems. Manual run: `docker compose --env-file app/deploy/.env -f app/deploy/docker-compose.yml run --rm migrate`.
 Rollback: `app/deploy/scripts/deploy.sh <earlier commit>`; for data problems, restore (below).
 
 Trying it locally (without a domain): `.env` with `SITE_ADDRESS=localhost`, then `docker compose --env-file app/deploy/.env -f app/deploy/docker-compose.yml up -d --build` and `curl -k https://localhost:8443/health`.
@@ -55,8 +57,8 @@ docker compose --env-file app/deploy/.env -f app/deploy/docker-compose.yml start
 
 Test log:
 
-| Date       | Where                        | Result                                                                                                      |
-| ---------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Date       | Where                        | Result                                                                                                 |
+| ---------- | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
 | 2026-10-03 | development machine (Docker) | `make restore-test` passed (500 rows, same checksum); backup and restore run against the Compose stack |
 
 ## Open (needs hardware, a domain or a decision)
@@ -69,5 +71,6 @@ None of this is done or made up:
 - **Backup to a second location:** decide the target for `BACKUP_REMOTE` (second machine, external storage) and how the copy is encrypted. Photos/object storage are not backed up yet because they do not exist yet (TE-05).
 - **Monitoring and alerts:** watching `/health` and backup age belongs to DEV-09 (#172).
 - **Image pins:** base images are pinned to major versions, not digests; Renovate (FR-QG-15) pins digests once it is active.
-- **Migrations:** take a fresh backup before production migrations (DEV-07, #170); `deploy.sh` already backs up before every deploy while the DB is running.
+- **Migrations:** applied by the deploy itself (see above, #201). `deploy.sh` backs up before every deploy while the DB is running (DEV-07, #170); on the very first deploy there is no database to back up.
+- **Sign-in service and invitation phase:** the stack has no Keycloak yet; closing self-registration and switching the registration mode on for a public deployment are described in `invitation-phase.md` (#301).
 - **Confirmation:** `restore.sh` over the production database now expects `CONFIRM=yes` (was `CONFIRM=ja` before the tooling was translated).

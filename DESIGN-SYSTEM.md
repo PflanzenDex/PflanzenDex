@@ -565,7 +565,7 @@ Run through all six. If an answer is "no", fix it or state the exception and the
 
 ## 6. Enforcement in CI
 
-Rules marked 🔒 are checked by `app/scripts/check-design-system.mjs`, wired in as `npm run design-system` and part of `make gates` / `make ci` (same pattern as `check-boundaries`, `check-baseline`).
+Rules marked 🔒 are checked by `app/tools/check/code/design-system/check-design-system.mjs`, wired in as `npm run design-system` and part of `make gates` / `make ci` (same pattern as `check-boundaries`, `check-baseline`).
 
 - **Ratchet, not a big bang.** The `web` package violates many rules today (section 0). Known violations are recorded in `app/quality-ds-baseline.json` as `{ rule, file, count }`. The check fails when
   - a violation appears that is **not** in the baseline (new code must comply), or

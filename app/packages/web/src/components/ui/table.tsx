@@ -4,12 +4,22 @@ import { cn } from "@/lib/utils";
 export type TableProps = React.TableHTMLAttributes<HTMLTableElement> & {
   /** Classes for the scroll container around the table. */
   containerClassName?: string;
+  /** Accessible name of the scroll region (German, supplied by the caller; DS-37). */
+  containerLabel?: string;
 };
 
-/** Semantic table (US-QS-07, DS-24). The scroll container wraps only the table, so the page never scrolls sideways. Below `md` modules render cards instead (ResponsiveTable). */
+/** Semantic table (US-QS-07, DS-24, DS-37). The scroll container wraps only the table, so the page never scrolls sideways. Below `md` modules render cards instead (ResponsiveTable). */
 const Table = React.forwardRef<HTMLTableElement, TableProps>(
-  ({ className, containerClassName, ...props }, ref) => (
-    <div className={cn("relative w-full overflow-x-auto", containerClassName)}>
+  ({ className, containerClassName, containerLabel = "Tabelle", ...props }, ref) => (
+    <div
+      role="region"
+      aria-label={containerLabel}
+      tabIndex={0}
+      className={cn(
+        "relative w-full overflow-x-auto rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        containerClassName,
+      )}
+    >
       <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
     </div>
   ),

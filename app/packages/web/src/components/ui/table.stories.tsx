@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "./table";
 
-// Catalog of the Table parts (TE-18, DS-24). Not interactive: no focus, disabled, invalid or loading state.
+// Catalog of the Table parts (TE-18, DS-24). The scroll region is focusable (DS-37); the Scrolling story shows it.
 const meta = { title: "ui/Table", component: Table } satisfies Meta<typeof Table>;
 
 export default meta;
@@ -51,7 +51,7 @@ export const Default: Story = {
 export const Scrolling: Story = {
   render: (args) => (
     <div className="w-64 p-4">
-      <Table {...args} className="min-w-[32rem]">
+      <Table {...args} containerLabel="Pflanzenliste" className="min-w-[32rem]">
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>

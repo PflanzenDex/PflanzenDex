@@ -126,8 +126,10 @@ export function SpecimenCardView(props: {
   onRepot?: ((e: { id: string; name: string }) => void) | undefined;
   /** Gives the specimen a marker or changes it (US-BES-03). */
   onMark?: ((e: SpecimenCard) => void) | undefined;
+  /** Corrects the catch date (US-BES-11). */
+  onCatchDate?: ((e: SpecimenCard) => void) | undefined;
 }) {
-  const { card, onMeasure, onArchive, onRepot, onMark } = props;
+  const { card, onMeasure, onArchive, onRepot, onMark, onCatchDate } = props;
   const repot = card.status === "cutting" ? onRepot : undefined;
   return (
     <li className={CARD}>
@@ -140,7 +142,7 @@ export function SpecimenCardView(props: {
       <Quiet>Standort: {card.location ?? UNKNOWN}</Quiet>
       <Measurement card={card} />
       <Treatment card={card} />
-      {(onMeasure || onArchive || repot || onMark) && (
+      {(onMeasure || onArchive || repot || onMark || onCatchDate) && (
         <Actions>
           {onMeasure && (
             <Action text="Messen" aria={`Messen: ${card.name}`} on={() => onMeasure(card)} />
@@ -153,6 +155,13 @@ export function SpecimenCardView(props: {
               text="Kennzeichen"
               aria={`Kennzeichen ändern: ${card.name}`}
               on={() => onMark(card)}
+            />
+          )}
+          {onCatchDate && (
+            <Action
+              text="Fangdatum"
+              aria={`Fangdatum korrigieren: ${card.name}`}
+              on={() => onCatchDate(card)}
             />
           )}
           {onArchive && (

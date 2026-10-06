@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { InMemorySpecimens, SpeciesStub, testSpecies } from "../collection/test-helpers";
+import { InMemorySpecimens, SpeciesStub, testSpecies } from "../collection/shared/test-helpers";
 import { pokedexOwnership, type OwnershipDependencies } from "./index";
 
 const LEMON = "11111111-1111-4111-8111-111111111111";

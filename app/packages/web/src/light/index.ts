@@ -4,4 +4,10 @@ export const LightPage = lazyPage(() =>
   import("./LightPage").then((m) => ({ default: m.LightPage })),
 );
 export { loadLocations, loadZones } from "./light-api";
-export { LocationsStep, ZonesStep } from "./setup-steps";
+/** The onboarding steps carry the forms (validation, form library): their chunk loads when a step opens (#451). */
+export const LocationsStep = lazyPage(() =>
+  import("./setup-steps").then((m) => ({ default: m.LocationsStep })),
+);
+export const ZonesStep = lazyPage(() =>
+  import("./setup-steps").then((m) => ({ default: m.ZonesStep })),
+);

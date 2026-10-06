@@ -8,8 +8,8 @@
   ],
   "workspaces": {
     ".": {
-      "entry": ["scripts/*.mjs!", "scripts/storybook/*.mjs!", "modules.config.mjs!"],
-      "ignore": ["scripts/coverage-config.d.mts", "modules.config.d.mts"]
+      "entry": ["tools/**/*.mjs!", "modules.config.mjs!"],
+      "ignore": ["tools/check/quality/coverage/coverage-config.d.mts", "modules.config.d.mts"]
     },
     "packages/db": {
       "project": ["src/**/*.ts!", "!src/**/fixtures.ts!", "!src/kernel/migrate-cli.ts!"]

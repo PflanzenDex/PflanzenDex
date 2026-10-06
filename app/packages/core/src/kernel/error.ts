@@ -38,6 +38,8 @@ export const ERROR_TEXTS = {
     "Ab dem dritten Exemplar braucht jedes Exemplar der Art ein Kennzeichen. Vergib die fehlenden Kennzeichen, dann wird gespeichert.",
   "specimen.caught_in_future":
     "Das Fangdatum liegt in der Zukunft. Wähle heute oder ein früheres Datum.",
+  "specimen.caught_after_archived":
+    "Das Fangdatum liegt nach dem Tag, an dem das Exemplar archiviert wurde. Wähle das Archivierungsdatum oder ein früheres Datum.",
   "specimen.not_found": "Dieses Exemplar gibt es nicht.",
   "specimen.not_a_cutting": "Dieses Exemplar ist kein Steckling und muss nicht eingetopft werden.",
   "specimen.already_archived": "Dieses Exemplar ist schon archiviert.",
@@ -47,6 +49,9 @@ export const ERROR_TEXTS = {
   "treatment.not_found": "Diese Behandlung gibt es nicht.",
   "wish.name_taken":
     "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
+  "wish.not_found": "Diesen Wunsch gibt es nicht. Lade die Wunschliste neu.",
+  "wish.not_open":
+    "Dieser Wunsch ist verworfen und nicht mehr offen. Nur ein offener Wunsch kann als gekauft vermerkt werden; es wurde nichts geändert.",
   "care.no_phase":
     "Dieses Exemplar hat keine Pflegephase (Steckling oder Art ohne Ruhephasen-Zeitraum) und wird nicht umgestellt.",
   "care.target_unknown":
@@ -59,6 +64,16 @@ export const ERROR_TEXTS = {
     "Diese Lichtzone wird noch genutzt und kann nicht gelöscht werden. Ordne die genannten Einträge zuerst einer anderen Zone zu.",
   "light_zone.not_empty":
     "Du hast schon Lichtzonen. Die Voreinstellung ist nur für ein Konto ohne Zonen.",
+  "source.unavailable":
+    "Eine externe Datenquelle antwortet gerade nicht. Deine Daten sind nicht betroffen; die Anreicherung wird später erneut versucht.",
+  "source.timeout":
+    "Eine externe Datenquelle hat zu langsam geantwortet. Deine Daten sind nicht betroffen; versuche es später erneut.",
+  "source.rate_limited":
+    "Eine externe Datenquelle bremst gerade die Abfragen. Deine Daten sind nicht betroffen; versuche es später erneut.",
+  "source.response_invalid":
+    "Eine externe Datenquelle hat eine unlesbare Antwort geliefert. Es wurde nichts übernommen; der letzte gute Stand bleibt bestehen.",
+  "source.request_rejected":
+    "Eine externe Datenquelle hat die Abfrage abgelehnt. Es wurde nichts übernommen; der Betreiber wird informiert.",
   "operator_cost.month_in_future":
     "Dieser Monat liegt in der Zukunft. Trage die Kosten eines Monats ein, der schon begonnen hat.",
 } as const;

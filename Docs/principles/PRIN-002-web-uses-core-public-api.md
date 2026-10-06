@@ -15,7 +15,7 @@ Number of `AB-2` violations; the target is 0.
 
 ## Checked by
 
-`app/scripts/check-boundaries.mjs`, tests in `app/scripts/check-boundaries.test.mjs`.
+`app/tools/check/code/check-boundaries.mjs`, tests in `app/tools/check/code/check-boundaries.test.mjs`.
 
 ## Gate
 
@@ -23,4 +23,4 @@ Number of `AB-2` violations; the target is 0.
 
 ## Evidence
 
-Violations fail with rule `AB-2` and path (see the AB-2 cases in `app/scripts/check-boundaries.test.mjs`).
+Violations fail with rule `AB-2` and path (see the AB-2 cases in `app/tools/check/code/check-boundaries.test.mjs`).

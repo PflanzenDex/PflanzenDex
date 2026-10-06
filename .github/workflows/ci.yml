@@ -219,7 +219,7 @@ jobs:
       - run: make layout
 
 
-  # QG-U5 / US-QS-07 (ADR 0009): visual regression of the `components/ui` stories (360 px, light and dark) in the
+  # QG-U5 / US-QS-07 (ADR 0010): visual regression of the `components/ui` stories (360 px, light and dark) in the
   # pinned Playwright container, so the pictures equal the baselines in `app/packages/web/.storybook/snapshots` made on a laptop.
   # On failure the diff images are attached. Never updates baselines (`make ds-snapshots` is a local step).
   ds-snapshots:

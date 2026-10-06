@@ -17,6 +17,10 @@ vi.mock("./catalog/SpeciesPage", () => {
   loaded.pages.push("catalog");
   return { SpeciesPage: () => null };
 });
+vi.mock("./start-page", () => {
+  loaded.pages.push("start");
+  return { StartPage: () => null };
+});
 vi.mock("./pokedex/PokedexPage", () => {
   throw new Error("Failed to fetch dynamically imported module");
 });
@@ -75,5 +79,10 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
       "Die Seite konnte nicht geladen werden.",
     );
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
+  });
+
+  it("#451 · DS-08 the start route loads the start page chunk on demand", async () => {
+    renderAt("/");
+    await vi.waitFor(() => expect(loaded.pages).toContain("start"));
   });
 });

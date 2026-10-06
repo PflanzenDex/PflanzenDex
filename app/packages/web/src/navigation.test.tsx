@@ -62,3 +62,29 @@ describe("US-QS-07 · DS-25 navigation items", () => {
     expect(bar.getByRole("button", { name: "Mehr" })).toBeTruthy();
   });
 });
+
+describe("US-QS-07 · DS-22 navigation icons", () => {
+  it("US-QS-07 · DS-22 every destination has a decorative icon", () => {
+    const items = navItems({ reviewer: true, operator: true });
+    expect(items.length).toBe(Object.values(PATHS).length);
+    for (const item of items) expect(item.icon, item.label).not.toBeNull();
+  });
+
+  it("US-QS-07 · DS-22 the bottom bar slots show an aria-hidden icon and keep the label as the name", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <AppShell items={navItems({})}>
+          <p>Inhalt</p>
+        </AppShell>
+      </MemoryRouter>,
+    );
+    const bar = within(screen.getByRole("navigation", { name: "Navigation unten" }));
+    const slots = [...bar.getAllByRole("link"), bar.getByRole("button", { name: "Mehr" })];
+    for (const el of slots) {
+      const svg = el.querySelector("svg");
+      expect(svg, el.textContent ?? "").not.toBeNull();
+      expect(svg?.getAttribute("aria-hidden")).toBe("true");
+    }
+    expect(bar.getByRole("link", { name: "Start" })).toBeTruthy();
+  });
+});

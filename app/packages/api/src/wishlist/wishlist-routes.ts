@@ -1,4 +1,6 @@
 import {
+  wishBought,
+  wishBuy,
   wishCandidates,
   wishCreate,
   wishZoneUsage,
@@ -24,10 +26,12 @@ export function wishZoneUsageFor(pool: Pool): ZoneUsage {
  * target zone (nothing stored twice, P-01). The stock comes through the port `ZoneStockSource`, which the app root
  * wires (ADR 0003: the wishlist never reaches into the collection). Writing goes only through `wish.create` (P-03,
  * with `Idempotency-Key`). Everything is private to the account (P-04, P-05): a foreign zone looks like an unknown one.
+ * "Bought" (US-WUN-03) goes through `wish.buy`; the bought wishes stay readable as the history (`GET /wishes/bought`).
  */
 export function wishRoutes(pool: Pool, zoneStock: ZoneStockSource): Hono<AuthEnv> {
   const wishes = new WishesPostgres(pool);
   const create = wishCreate({ wishes });
+  const buy = wishBuy({ wishes });
   const deps = { idempotency: new IdempotencyPostgres(pool) };
   const routes = new Hono<AuthEnv>();
   routes.get("/wishes/candidates", async (c) =>
@@ -39,6 +43,12 @@ export function wishRoutes(pool: Pool, zoneStock: ZoneStockSource): Hono<AuthEnv
       success: 201,
       wrapper: (wish: WishRow) => ({ wish }),
     }),
+  );
+  routes.get("/wishes/bought", async (c) =>
+    c.json(await wishBought({ wishes }, c.get("account").id)),
+  );
+  routes.post("/wishes/:id/buy", async (c) =>
+    write(c, deps, buy, { input: { wishId: c.req.param("id") } }),
   );
   return routes;
 }

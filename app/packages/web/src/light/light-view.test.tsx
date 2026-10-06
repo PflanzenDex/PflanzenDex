@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { LightView, type LightActions } from "./light-view";
 import type { LightData } from "./light-api";
 import { ErrorMessage } from "./message";
-import { derivationText } from "./text";
+import { derivationText } from "./texts";
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
 const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");
@@ -114,7 +114,7 @@ describe("US-LIC-05 error message when deleting a used zone", () => {
   });
 });
 
-describe("US-LIC-01 Ansicht Zone ermitteln", () => {
+describe("US-LIC-01 view: derive the zone of a species", () => {
   it("offers lux need, default level and the C3 hint and explains why", () => {
     const h = html(empty);
     expect(h).toContain("Zone einer Art ermitteln");
@@ -122,6 +122,25 @@ describe("US-LIC-01 Ansicht Zone ermitteln", () => {
     expect(h).toContain("Stufe 4");
     expect(h).toContain("Sonnenliebende C3-Pflanze mit weichem Blatt");
     expect(h).toContain("Stecklingslicht ist nie das Ziel");
+  });
+
+  it("US-LIC-01 the C3 checkbox is the design-system box in one row with its label (#261)", () => {
+    const h = html(empty);
+    // The label row that holds the soft-leaf checkbox and its text, as the Checkbox primitive renders it.
+    const row = h.match(
+      /<label class="([^"]*)"><input([^>]*)\/><span>Sonnenliebende C3-Pflanze mit weichem Blatt<\/span><\/label>/,
+    );
+    expect(row).not.toBeNull();
+    const [, rowClass = "", input = ""] = row ?? [];
+    // Box and text side by side, vertically centred, the row is the 44 px target (DS-15).
+    expect(rowClass.split(" ")).toEqual(expect.arrayContaining(["flex", "items-center"]));
+    expect(rowClass).not.toContain("flex-col");
+    expect(input).toContain('type="checkbox"');
+    const boxClass = input.match(/class="([^"]*)"/)?.[1] ?? "";
+    // Normal 20 px box that never shrinks; no field sizing (width, height, padding) from text inputs.
+    expect(boxClass.split(" ")).toEqual(expect.arrayContaining(["size-5", "shrink-0"]));
+    expect(boxClass).not.toMatch(/(^| )(w-full|h-11|min-h-|px-|py-)/);
+    expect(boxClass).not.toContain("!");
   });
 
   it("US-LIC-01 result texts: zone with reason, unknown with next action (P-08, P-09)", () => {

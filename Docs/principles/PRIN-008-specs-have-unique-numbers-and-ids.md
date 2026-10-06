@@ -15,7 +15,7 @@ The script reports every duplicate file number and every ID defined twice; the t
 
 ## Checked by
 
-`app/scripts/check-specs.mjs`, tests in `app/scripts/check-specs.test.mjs`.
+`app/tools/check/docs/check-specs.mjs`, tests in `app/tools/check/docs/check-specs.test.mjs`.
 
 ## Gate
 

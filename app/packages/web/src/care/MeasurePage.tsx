@@ -12,7 +12,8 @@ import { measurementText } from "./text";
 type Token = () => Promise<string | undefined>;
 
 /**
- * Measure (US-WAC-01): what to measure, last measurement, last rating, input form and course of a specimen. Rate and
+ * Measure (US-WAC-01): what to measure, last measurement, last rating, input form (quality with the etiolation signs
+ * of the species, US-WAC-02) and course of a specimen. Rate and
  * trend are still missing (US-WAC-03). Every view says what to do next (P-09).
  */
 export function MeasurePage(props: {
@@ -59,7 +60,7 @@ export function MeasurePage(props: {
           <>
             <MeasurementHeader view={view} />
             {saved && <StatusNote>Gespeichert: {saved}.</StatusNote>}
-            <MeasureForm unit="cm" onSend={send} focusRef={valueRef} />
+            <MeasureForm unit="cm" signs={view.etiolationSigns} onSend={send} focusRef={valueRef} />
             <MeasurementList
               measurements={view.measurements}
               onAdd={() => valueRef.current?.focus()}

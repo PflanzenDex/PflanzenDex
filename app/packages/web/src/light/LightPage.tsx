@@ -4,8 +4,9 @@ import { RequestState } from "@/components/shared/states/request-state/request-s
 import { SIGN_IN as KERNEL_SIGN_IN, useReload, useRequest } from "../kernel";
 import { LightView, type LightActions } from "./light-view";
 import { LightOverviewView } from "./light-overview-view";
+import { RulesView } from "./rules-view";
 import { LightPageSkeleton } from "./light-page.skeleton";
-import { refusalText } from "./refusal";
+import { refusalText } from "./texts";
 import {
   createWrite,
   loadDerivation,
@@ -125,6 +126,7 @@ export function LightPage(props: {
             onOpenCollection={props.onOpenCollection}
             onRetry={() => void load()}
           />
+          <RulesView zones={z.data.zones} />
           <LightView data={z.data} actions={actions} {...(lastError ? { error: lastError } : {})} />
         </div>
       )}

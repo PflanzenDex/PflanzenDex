@@ -15,7 +15,7 @@ Number of `AB-1` violations reported by the boundary script; the target is 0. Ex
 
 ## Checked by
 
-`app/scripts/check-boundaries.mjs`, tests in `app/scripts/check-boundaries.test.mjs`.
+`app/tools/check/code/check-boundaries.mjs`, tests in `app/tools/check/code/check-boundaries.test.mjs`.
 
 ## Gate
 

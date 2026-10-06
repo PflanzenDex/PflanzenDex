@@ -16,6 +16,23 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  # One-shot: applies pending migrations (forward only, advisory lock) before the api starts (#201, US-DEV-07).
+  # A failing migration fails `up`, so deploy.sh rolls back the code and the api never serves a half-migrated schema.
+  migrate:
+    build:
+      context: ..
+      dockerfile: deploy/api.Dockerfile
+      args:
+        GIT_SHA: ${GIT_SHA:-unbekannt}
+        APP_VERSION: ${APP_VERSION:-unbekannt}
+    restart: "no"
+    working_dir: /srv/app/packages/db
+    command: ["npx", "tsx", "src/kernel/migrate-cli.ts"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
   api:
     build:
       context: ..
@@ -30,6 +47,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
       interval: 15s

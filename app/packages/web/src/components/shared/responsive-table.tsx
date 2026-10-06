@@ -40,7 +40,7 @@ export function ResponsiveTable<Row>({
 
   if (isMd) {
     return (
-      <Table>
+      <Table containerLabel={caption}>
         <TableCaption className="sr-only">{caption}</TableCaption>
         <TableHeader>
           <TableRow>

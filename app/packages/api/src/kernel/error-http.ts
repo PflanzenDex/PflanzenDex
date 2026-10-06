@@ -1,6 +1,6 @@
 import type { AppError, ErrorCode } from "@pflanzendex/core";
 
-type Status = 400 | 401 | 403 | 404 | 409 | 500;
+type Status = 400 | 401 | 403 | 404 | 409 | 500 | 502 | 504;
 
 // Stable mapping of error code -> HTTP status (FR-QG-11). Unknown codes are a server error, never a success.
 const STATUS: Partial<Record<ErrorCode, Status>> = {
@@ -30,6 +30,8 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "species.duplicate": 409,
   "specimen.name_taken": 409,
   "wish.name_taken": 409,
+  "wish.not_found": 404,
+  "wish.not_open": 409,
   "specimen.marker_taken": 409,
   "specimen.marker_required": 409,
   "specimen.markers_missing": 409,
@@ -37,12 +39,18 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "specimen.not_a_cutting": 409,
   "specimen.not_archived": 409,
   "specimen.archived": 409,
+  "specimen.caught_after_archived": 409,
   "light_zone.name_taken": 409,
   "location.name_taken": 409,
   "light_zone.in_use": 409,
   "light_zone.not_empty": 409,
   "idempotency.key_conflict": 409,
   "idempotency.in_progress": 409,
+  "source.unavailable": 502,
+  "source.rate_limited": 502,
+  "source.response_invalid": 502,
+  "source.request_rejected": 502,
+  "source.timeout": 504,
 };
 
 export const statusFor = (f: AppError): Status => STATUS[f.code] ?? 500;

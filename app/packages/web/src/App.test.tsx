@@ -69,6 +69,22 @@ const SPECIMEN_HINTS = [
   },
 ];
 
+/** The wishlist page loads the candidates and the bought wishes together (US-WUN-01, US-WUN-03). */
+const WISHLIST: Record<string, unknown> = {
+  "/wishes/candidates": {
+    candidates: [],
+    zones: [],
+    hint: {
+      text: "Keine offenen Kandidaten in der Wunschliste.",
+      nextAction: "Erfasse einen Wunsch mit Ziel-Lichtzone.",
+    },
+  },
+  "/wishes/bought": {
+    bought: [],
+    hint: { text: "Noch kein Wunsch ist als gekauft vermerkt.", nextAction: "Gekauft" },
+  },
+};
+
 function fakeServer(accountStatus = 200) {
   vi.stubGlobal(
     "fetch",
@@ -87,15 +103,7 @@ function fakeServer(accountStatus = 200) {
       if (path === "/specimens/hints") return response(200, { hints: SPECIMEN_HINTS });
       if (path === "/specimens/light-overview") return response(200, { rows: [] });
       if (path === "/specimens/difficulty") return response(200, { rows: [] });
-      if (path === "/wishes/candidates")
-        return response(200, {
-          candidates: [],
-          zones: [],
-          hint: {
-            text: "Keine offenen Kandidaten in der Wunschliste.",
-            nextAction: "Erfasse einen Wunsch mit Ziel-Lichtzone.",
-          },
-        });
+      if (path in WISHLIST) return response(200, WISHLIST[path]);
       return response(404);
     }),
   );

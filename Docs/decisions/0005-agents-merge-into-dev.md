@@ -12,7 +12,7 @@ ADR 0001 required one human approval on `dev` and kept agents from merging. In a
 
 - **`dev-review`:** `required_approving_review_count` is 0. A PR is still required, `ci-status` and CodeQL stay mandatory (`dev-protection`), and code-owner review still applies to agent configuration (`CODEOWNERS`), so changes to what agents may do keep an owner.
 - **`main` unchanged:** `main-review` keeps its approval; a release is a human decision.
-- **Agents merge through one door:** `make merge PR=<n>` (`app/scripts/merge-pr.mjs`). The hook still denies a direct `gh pr merge`. The script merges (squash, branch deleted) only if the PR is open, not a draft, targets `dev`, has a green `ci-status`, names a story or requirement that exists in `Docs/PRODUCT-SPECS/` ("the spec is written"), and changes no gate file (workflows, rulesets, hooks, thresholds, `.claude/`, the merge script itself). Otherwise it lists what failed and a human merges.
+- **Agents merge through one door:** `make merge PR=<n>` (`app/tools/workflow/merge-pr.mjs`). The hook still denies a direct `gh pr merge`. The script merges (squash, branch deleted) only if the PR is open, not a draft, targets `dev`, has a green `ci-status`, names a story or requirement that exists in `Docs/PRODUCT-SPECS/` ("the spec is written"), and changes no gate file (workflows, rulesets, hooks, thresholds, `.claude/`, the merge script itself). Otherwise it lists what failed and a human merges.
 
 ## Consequences
 

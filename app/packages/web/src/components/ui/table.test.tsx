@@ -53,6 +53,28 @@ describe("Table (US-QS-07, DS-24, DS-36)", () => {
     expect(table.className).not.toContain("overflow");
   });
 
+  it("US-QS-07 · DS-37 the scroll region is a focusable, named region with a visible focus ring", () => {
+    render(sample());
+    const region = screen.getByRole("region", { name: "Tabelle" });
+    expect(region).toBe(screen.getByRole("table").parentElement);
+    expect(region.getAttribute("tabindex")).toBe("0");
+    expect(region.className).toContain("focus-visible:ring-2");
+    expect(region.className).toContain("focus-visible:ring-ring");
+  });
+
+  it("US-QS-07 · DS-37 the caller names the region via containerLabel", () => {
+    render(
+      <Table containerLabel="Pflanzenvergleich">
+        <TableBody>
+          <TableRow>
+            <TableCell>x</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>,
+    );
+    expect(screen.getByRole("region", { name: "Pflanzenvergleich" })).toBeTruthy();
+  });
+
   it("US-QS-07 · DS-36 forwards ref and puts caller classes last", () => {
     const ref = createRef<HTMLTableElement>();
     render(

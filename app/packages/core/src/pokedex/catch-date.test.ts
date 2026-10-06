@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { InMemorySpecimens, SpeciesStub, testSpecies } from "../collection/test-helpers";
+import { InMemorySpecimens, SpeciesStub, testSpecies } from "../collection/shared/test-helpers";
 import { execute } from "../kernel";
 import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
-import { specimenCreate, NO_TARGET_LOCATION } from "../collection";
+import {
+  specimenCorrectCatchDate,
+  specimenCreate,
+  NO_TARGET_LOCATION,
+  type CatchDateStore,
+} from "../collection";
 import { pokedexOwnership, type OwnershipDependencies } from "./index";
 
 const LEMON = "11111111-1111-4111-8111-111111111111";
@@ -132,5 +137,46 @@ describe("US-POK-07 catch date of a back-dated specimen (FR-BES-04)", () => {
     );
     expect(created.ok).toBe(true);
     expect(await dateOf("anna")).toEqual({ date: "2022-02-03", source: "caught_at" });
+  });
+});
+
+describe("US-BES-11 the Pokédex follows a corrected catch date (US-POK-07)", () => {
+  // Test-only port over the in-memory rows; the derived Pokédex date is never stored (P-01).
+  const catchDates: CatchDateStore = {
+    setCaughtAt: async (userId, id, date) => {
+      const i = specimens.rows.findIndex((z) => z.userId === userId && z.id === id);
+      const row = specimens.rows[i];
+      if (!row) return "not_found";
+      specimens.rows[i] = { ...row, caughtAt: date };
+      return { ...row, caughtAt: date };
+    },
+  };
+  const correct = (id: string, catchDate: string) =>
+    execute(
+      specimenCorrectCatchDate({
+        specimens: catchDates,
+        clock: () => new Date("2026-10-02T12:00:00Z"),
+      }),
+      { idempotency: new InMemoryIdempotencyStore() },
+      {
+        context: { userId: "anna" },
+        input: { specimenId: id, timeZone: "Europe/Berlin", catchDate },
+        idempotencyKey: `correct-${id}-${catchDate}`,
+      },
+    );
+
+  it("US-BES-11 correcting the catch date of the only specimen changes the catch date of the species", async () => {
+    await add("anna", { caughtAt: "2026-09-01", createdAt: "2026-09-01T10:00:00Z" });
+    const id = specimens.rows[0]?.id ?? "";
+    expect((await correct(id, "2021-04-12")).ok).toBe(true);
+    expect(await dateOf("anna")).toEqual({ date: "2021-04-12", source: "caught_at" });
+  });
+
+  it("US-BES-11 moving the earliest specimen later lets the next earliest one decide (derived, not stored)", async () => {
+    await add("anna", { caughtAt: "2020-01-01", createdAt: null });
+    await add("anna", { caughtAt: "2023-06-01", createdAt: null });
+    const first = specimens.rows[0]?.id ?? "";
+    expect((await correct(first, "2025-03-03")).ok).toBe(true);
+    expect(await dateOf("anna")).toEqual({ date: "2023-06-01", source: "caught_at" });
   });
 });
