@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { Suspense, lazy } from "react";
 import { Link, MemoryRouter, Route, Routes, useNavigate } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
+import { AnnouncerProvider } from "@/platform/announcer/announcer";
 import { RouteFocus } from "./route-focus";
 
 afterEach(() => {
@@ -70,9 +71,11 @@ function Harness() {
 
 const view = () =>
   render(
-    <MemoryRouter initialEntries={["/"]}>
-      <Harness />
-    </MemoryRouter>,
+    <AnnouncerProvider>
+      <MemoryRouter initialEntries={["/"]}>
+        <Harness />
+      </MemoryRouter>
+    </AnnouncerProvider>,
   );
 
 describe("US-QS-09 · RouteFocus (2.4.2, 2.4.3)", () => {

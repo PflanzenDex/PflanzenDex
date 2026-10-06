@@ -87,7 +87,7 @@ Acceptance criteria:
 - Rank by number of caught species: Seedling 0–4, Sapling from 5, Young plant from 15, Bloomer from 30, Treetop from 60, Botanist from 100.
 - Display: rank, "N / M species caught (P %)", progress bar, "N more until "<next rank>"", "k of K orders discovered" (K from the tree, not hard-coded), state of the tree.
 
-### US-POK-11 · Milestones with an instruction for action · ⬜ (prototype ✅)
+### US-POK-11 · Milestones with an instruction for action · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
@@ -97,6 +97,8 @@ Acceptance criteria:
 - Groups "Without family/genus/order" have no milestones.
 - Each milestone has `current`, `target`, `remaining` and up to 3 `missing` (German + Latin).
 - Display: up to 4 open milestones with the smallest remainder > 0 (tie: higher ratio first, then title), "N more: …" with bar; collapsed "N milestones reached" with date (catch date of the nth species), if known.
+
+Status 🟨: the logic and the view work over a taxonomy tree. Missing: the tree (taxonomy build, US-POK-03); until then the view says milestones need the tree and shows none (nothing is invented, P-08).
 
 ### US-POK-12 · "Newly caught" on the next visit · ⬜ (prototype ✅)
 
