@@ -16,7 +16,7 @@ Replacement: replaces `../PLANT-SYSTEM-SPECS/11-Social.md`. Dropped: the "hub" a
 
 ## User stories
 
-### US-SOZ-01 · Request a friendship · ⬜ new
+### US-SOZ-01 · Request a friendship · 🟨 new
 
 Acceptance criteria:
 
@@ -25,6 +25,14 @@ Acceptance criteria:
 - A code is single-use and expires after 7 days; expired or used codes are clearly rejected.
 - No self-invitation; a duplicate request creates no second one.
 - There is no open user search; friends find each other only via invitation (FR-SOZ-08).
+
+Assumptions, decided by the PO (revisable):
+
+- A friend code is 24 characters of the same code alphabet as the access invitation (US-ACC-05), shown in groups of four and typed case-insensitively. It is not an access invitation: it needs an existing account, and with registration by invitation switched on the newcomer first needs an access invitation.
+- A refused redemption (own code, request or friendship with the person exists in either direction) does not use the code up. Redeeming the same code again as the same account returns the existing request and writes nothing.
+- Unknown, used and expired codes are rejected with their own error (`friend.unknown_code`, `friend.code_used`, `friend.code_expired`); unlike the access invitation this reveals nothing worth protecting, because the person holds the code.
+- Both sides store the display name of the other side at the time of the request; a side without a display name is stored as unknown (P-08). After an ended friendship a new request is allowed and reuses the stored rows.
+- Open requests are visible only to their two sides, with the display name and nothing else (P-04, P-05). The number of open codes per account is not limited yet (assumption: no abuse expected; revisit with US-SOZ-12).
 
 ### US-SOZ-02 · Answer a friendship request · ⬜ new
 

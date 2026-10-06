@@ -244,6 +244,14 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Runner:** `createJobWorker` (`api/src/jobs`) polls every 5 s (assumption) inside the API process (one deployable); a queue error is reported to stderr and retried at the next tick. Handlers are registered in `api/src/jobs/handlers.ts` (empty until the first job type exists).
 - **Open:** no job types yet (reminders US-MON-08, catalog build US-POK-03, photo processing US-WAC-05, AI orders KI), no queue figure in the health endpoint (US-DEV), no retry or release of dead jobs by the operator.
 
+## Friends by invitation (US-SOZ-01)
+
+- **Module:** `social` (`core/src/social/friendship`, `db/src/social`, `api/src/social`), registered in `modules.config.mjs` (tables `friendship`, `friend_code`).
+- **Routes:** `POST /friends/invitations` (with `Idempotency-Key`) answers 201 with the single-use code (valid 7 days, shown once, `cache-control: no-store`; only its hash is stored). `POST /friends/requests { code }` redeems a code and answers 201 with the request (display name of the inviter, `direction: sent`); not yet a friendship. `GET /friends/requests` returns `{ incoming, outgoing }`, the open requests with the display name of the other side only. There is no user search (FR-SOZ-08).
+- **Errors:** 404 `friend.unknown_code`; 409 `friend.code_used`, `friend.code_expired`, `friend.own_code` (no self-invitation), `friend.already_linked` (a request or friendship exists in either direction; the code stays unused).
+- **Data:** migration `0026_social_friendship.sql`. `friendship` holds one row per side under the normal row rule (`account_id` is the owner; it stores the other side's display name, `direction`, `status`); the other side's row is written by `request_friendship()` in the same transaction by switching the account inside the function. `friend_code` has no account id (justified entry in `SOCIAL_TENANT_EXCEPTIONS`): the application role has no rights on it, only `create_friend_code()` and `request_friendship()` reach it, which act for the calling account only. Exactly one of several concurrent redemptions wins (row lock).
+- **Open:** no screens yet, accepting or declining (US-SOZ-02), the friends list and ending a friendship (US-SOZ-03), no notification (US-SOZ-12), no limit of open codes per account.
+
 ## End-to-end tests (QG-T3, QG-U1)
 
 - **Target:** `make e2e` starts the test database and Keycloak (`db-up`, `auth-up`), applies the migrations and runs Playwright (package `packages/e2e`; Playwright starts API and web itself). Needs Docker. Projects: `mobil` (Pixel 7) and `desktop`.

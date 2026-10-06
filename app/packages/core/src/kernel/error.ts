@@ -51,6 +51,13 @@ export const ERROR_TEXTS = {
   "specimen.archived":
     "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her, dann kannst du damit arbeiten.",
   "treatment.not_found": "Diese Behandlung gibt es nicht.",
+  "friend.unknown_code":
+    "Diesen Freundescode gibt es nicht. Prüfe die Eingabe oder bitte um einen neuen Code.",
+  "friend.code_used": "Dieser Freundescode wurde schon benutzt. Bitte um einen neuen Code.",
+  "friend.code_expired": "Dieser Freundescode ist abgelaufen. Bitte um einen neuen Code.",
+  "friend.own_code": "Das ist dein eigener Freundescode. Gib ihn an jemand anderen weiter.",
+  "friend.already_linked":
+    "Mit dieser Person gibt es schon eine Anfrage oder Freundschaft. Es wurde nichts geändert und der Code ist nicht verbraucht.",
   "wish.name_taken":
     "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
   "wish.not_found": "Diesen Wunsch gibt es nicht. Lade die Wunschliste neu.",

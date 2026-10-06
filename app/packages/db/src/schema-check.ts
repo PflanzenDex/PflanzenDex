@@ -1,6 +1,7 @@
 import type { Pool, PoolClient } from "pg";
 import { CATALOG_TENANT_EXCEPTIONS } from "./catalog/index.ts";
 import { JOBS_TENANT_EXCEPTIONS } from "./jobs/index.ts";
+import { SOCIAL_TENANT_EXCEPTIONS } from "./social/index.ts";
 import { POKEDEX_TENANT_EXCEPTIONS } from "./pokedex/index.ts";
 import { checkSchema, WITHOUT_ACCOUNT_ID, type TenantExceptions } from "./kernel/index.ts";
 
@@ -10,9 +11,13 @@ const EXCEPTIONS: TenantExceptions = {
     ...WITHOUT_ACCOUNT_ID,
     ...CATALOG_TENANT_EXCEPTIONS.withoutAccountId,
     ...JOBS_TENANT_EXCEPTIONS.withoutAccountId,
+    ...SOCIAL_TENANT_EXCEPTIONS.withoutAccountId,
     ...POKEDEX_TENANT_EXCEPTIONS.withoutAccountId,
   },
-  ruleRequired: [...CATALOG_TENANT_EXCEPTIONS.ruleRequired],
+  ruleRequired: [
+    ...CATALOG_TENANT_EXCEPTIONS.ruleRequired,
+    ...SOCIAL_TENANT_EXCEPTIONS.ruleRequired,
+  ],
 };
 
 /** Violations of the tenant rules in the schema (and, with the register, of the module boundaries); empty means fine. */
