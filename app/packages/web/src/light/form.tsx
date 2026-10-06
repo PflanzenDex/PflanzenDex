@@ -10,7 +10,6 @@ import {
 import type { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input, type InputProps } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type { ApiError } from "./light-api";
 import { ALERT_CLASSES, useServerRefusal } from "./texts";
@@ -82,31 +81,6 @@ export function FormButtons(props: {
 
 /** Two columns from `md`, one on a phone. */
 export const FORM_GRID = "grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2";
-
-/** One labelled input of a form with its message (DS-47); the input attributes pass through. */
-export function TextField<T extends FieldValues>(
-  props: { control: Control<T>; name: FieldPath<T>; label: string } & Omit<
-    InputProps,
-    "name" | "value" | "onChange" | "onBlur" | "ref"
-  >,
-) {
-  const { control, name, label, ...input } = props;
-  return (
-    <FormField
-      control={control}
-      name={name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{label}</FormLabel>
-          <FormControl>
-            <Input {...field} {...input} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
-}
 
 /** One labelled select of a form; the options are passed as children. */
 export function SelectField<T extends FieldValues>(props: {

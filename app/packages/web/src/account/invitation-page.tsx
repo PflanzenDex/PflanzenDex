@@ -6,7 +6,7 @@ import { Form } from "@/components/ui/form";
 import { SIGN_IN, type ApiError } from "../kernel";
 import { redeemInvitation } from "./access-api";
 import { useServerRefusal } from "./refusal";
-import { TextField } from "./text-field";
+import { TextField } from "@/components/ui/input";
 import { invitationCodeSchema, type InvitationCodeFields } from "./schemas";
 
 type Token = () => Promise<string | undefined>;

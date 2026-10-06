@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { TextField } from "./text-field";
+import { TextField } from "@/components/ui/input";
 import { costSchema, parseAmount, type CostFields } from "./schemas";
 
 /** An amount in cents as money in German notation, e.g. `1.234,50 €`. */

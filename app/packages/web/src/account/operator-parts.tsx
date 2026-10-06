@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { instantText } from "./access-api";
-import { TextField } from "./text-field";
+import { TextField } from "@/components/ui/input";
 import { DAYS, invitationDaysSchema, type InvitationDaysFields } from "./schemas";
 
 const STATUS_TEXT: Record<InvitationStatus, string> = {
