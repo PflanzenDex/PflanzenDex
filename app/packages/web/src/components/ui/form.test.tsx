@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { zodResolver } from "@hookform/resolvers/zod";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -14,6 +14,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormRoot,
 } from "./form";
 import { Input } from "./input";
 
@@ -32,7 +33,7 @@ function Demo({
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: "" } });
   return (
     <Form {...form}>
-      <form
+      <FormRoot
         onSubmit={form.handleSubmit((v) => {
           onValid(v);
           if (serverFail)
@@ -41,7 +42,6 @@ function Demo({
               (n, e) => form.setError(n as "name", e),
             );
         })}
-        noValidate
       >
         <FormField
           control={form.control}
@@ -59,7 +59,7 @@ function Demo({
         />
         <FormMessage name="root.server" />
         <button type="submit">Speichern</button>
-      </form>
+      </FormRoot>
     </Form>
   );
 }
@@ -112,5 +112,42 @@ describe("Form (US-QS-07 · DS-47, DS-48)", () => {
   it("US-QS-07 · DS-47 FormMessage shows caller text when there is no error, nothing otherwise", () => {
     render(<Demo />);
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+});
+
+describe("FormRoot (US-QS-07 · DS-48)", () => {
+  it("US-QS-07 · DS-48 renders a native form without browser validation bubbles", () => {
+    render(<FormRoot aria-label="Pflanze" />);
+    const form = screen.getByRole("form", { name: "Pflanze" });
+    expect(form.tagName).toBe("FORM");
+    expect(form).toHaveProperty("noValidate", true);
+  });
+
+  it("US-QS-07 · DS-48 sends the values through the provider's submit and blocks invalid ones", async () => {
+    const onValid = vi.fn();
+    render(<Demo onValid={onValid} />);
+    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("Bitte einen Namen eingeben.");
+    expect(onValid).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByRole("textbox", { name: "Name" }), {
+      target: { value: "Monstera" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(onValid).toHaveBeenCalledTimes(1));
+    expect(onValid.mock.calls[0]?.[0]).toEqual({ name: "Monstera" });
+  });
+
+  it("US-QS-07 · DS-48 prevents the native page reload even without a handler", () => {
+    render(<FormRoot aria-label="Suche" />);
+    const event = new Event("submit", { bubbles: true, cancelable: true });
+    screen.getByRole("form", { name: "Suche" }).dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it("US-QS-07 · DS-48 keeps className, role and ref of the caller", () => {
+    const ref = { current: null as HTMLFormElement | null };
+    render(<FormRoot ref={ref} role="search" className="max-w-xl" />);
+    expect(screen.getByRole("search").className).toContain("max-w-xl");
+    expect(ref.current?.tagName).toBe("FORM");
   });
 });

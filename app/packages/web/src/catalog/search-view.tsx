@@ -11,6 +11,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormRoot,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { searchSchema, type SearchFields } from "./schemas";
@@ -72,7 +73,7 @@ function SearchField(props: { searchText: string; onSearch: (text: string) => vo
   });
   return (
     <Form {...form}>
-      <form role="search" noValidate onSubmit={(e) => e.preventDefault()} className="max-w-xl">
+      <FormRoot role="search" className="max-w-xl">
         <FormField
           control={form.control}
           name="search"
@@ -95,7 +96,7 @@ function SearchField(props: { searchText: string; onSearch: (text: string) => vo
             </FormItem>
           )}
         />
-      </form>
+      </FormRoot>
     </Form>
   );
 }

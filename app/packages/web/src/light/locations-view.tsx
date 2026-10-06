@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
+import { Form, FormRoot } from "@/components/ui/form";
 import type { ApiError, LightLocation, LightZone } from "./light-api";
 import { FORM_GRID, FormButtons, RefusalAlert, SelectField, useSaveForm } from "./form";
 import { TextField } from "@/components/ui/input";
@@ -39,10 +39,9 @@ export function LocationForm(props: {
   const { control } = sent.form;
   return (
     <Form {...sent.form}>
-      <form
-        noValidate
+      <FormRoot
         className={FORM_GRID}
-        onSubmit={(e) => void sent.send(e)}
+        onSubmit={sent.send}
         aria-label={s ? `${s.name} ändern` : "Standort anlegen"}
       >
         <TextField
@@ -70,7 +69,7 @@ export function LocationForm(props: {
           running={sent.running}
           onCancel={props.onCancel}
         />
-      </form>
+      </FormRoot>
     </Form>
   );
 }

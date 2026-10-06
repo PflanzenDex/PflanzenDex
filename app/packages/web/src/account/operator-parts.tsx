@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
+import { Form, FormRoot } from "@/components/ui/form";
 import { instantText } from "./access-api";
 import { TextField } from "@/components/ui/input";
 import { DAYS, invitationDaysSchema, type InvitationDaysFields } from "./schemas";
@@ -63,7 +63,7 @@ export function InvitationForm(props: {
   const submit = form.handleSubmit((v) => props.onCreate(Number(v.days)));
   return (
     <Form {...form}>
-      <form noValidate onSubmit={(e) => void submit(e)} className="flex max-w-xl flex-col gap-4">
+      <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
         <TextField
           control={form.control}
           name="days"
@@ -77,7 +77,7 @@ export function InvitationForm(props: {
         <Button type="submit" size="touch" disabled={props.running}>
           Code erstellen
         </Button>
-      </form>
+      </FormRoot>
     </Form>
   );
 }

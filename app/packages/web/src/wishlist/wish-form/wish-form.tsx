@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormSetError } from "react-hook-form";
 import type { ZoneStock } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
+import { Form, FormRoot } from "@/components/ui/form";
 import { errorText } from "@/lib/error-text";
 import type { ApiError } from "../../kernel";
 import { ChoiceFields, ImageFields, NameFields } from "./wish-fields/wish-fields";
@@ -76,14 +76,14 @@ export function WishForm(props: {
         </div>
       )}
       <Form {...form}>
-        <form noValidate onSubmit={(e) => void submit(e)} className="flex max-w-xl flex-col gap-4">
+        <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
           <NameFields control={form.control} />
           <ChoiceFields control={form.control} zones={props.zones} />
           <ImageFields control={form.control} />
           <Button type="submit" size="touch" disabled={pending}>
             {pending ? "Speichert …" : "Wunsch speichern"}
           </Button>
-        </form>
+        </FormRoot>
       </Form>
     </section>
   );
