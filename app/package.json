@@ -23,6 +23,7 @@
     "design-system": "node tools/check/code/design-system/check-design-system.mjs",
     "stories": "node tools/check/quality/check-stories.mjs",
     "bundle-budget": "node tools/check/supply/check-bundle-budget.mjs",
+    "bundle-report": "node tools/check/supply/report-bundle.mjs",
     "conformance": "node tools/check/code/conformance/check-conformance.mjs --report && node --test tools/check/code/conformance/check-conformance.selftest.mjs",
     "conformance:blocking": "node tools/check/code/conformance/check-conformance.mjs && node --test tools/check/code/conformance/check-conformance.selftest.mjs",
     "ds-snapshots": "node tools/check/code/conformance/ds-snapshots.mjs && node --test tools/check/code/conformance/ds-snapshots.selftest.mjs",
