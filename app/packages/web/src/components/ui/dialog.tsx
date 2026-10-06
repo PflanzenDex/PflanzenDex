@@ -41,7 +41,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
         {children}
         <DialogPrimitive.Close
           aria-label={closeLabel}
-          className="absolute right-2 top-2 inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+          className="absolute right-2 top-2 inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md forced-colors:border forced-colors:border-[color:ButtonText] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
         >
           <span aria-hidden="true">×</span>
         </DialogPrimitive.Close>

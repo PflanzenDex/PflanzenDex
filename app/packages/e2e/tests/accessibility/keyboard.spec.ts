@@ -1,4 +1,4 @@
-import { expect, test } from "../support/fixtures";
+import { expect, test } from "../../support/fixtures";
 import {
   chooseByArrows,
   keyboardWalk,
@@ -7,7 +7,7 @@ import {
   signInByKeyboard,
   tabTo,
   typeInto,
-} from "../support/keyboard";
+} from "../../support/keyboard";
 import type { Page } from "@playwright/test";
 
 // US-QS-08 Operable by keyboard alone: keyboard-only variants of the everyday flows (US-QS-07) and a keyboard walk

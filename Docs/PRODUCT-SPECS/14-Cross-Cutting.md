@@ -124,7 +124,7 @@ Acceptance criteria:
 - Given a shortcut, then it does not take over keys that browsers, the operating system or screen readers use (for example Tab, Ctrl+L, Alt+arrow, the screen reader modifier keys); the register rejects such a key at build time (guardrail).
 - Given a phone without a keyboard, then nothing depends on a shortcut.
 
-### US-QS-12 · Adaptable display · ⬜ new
+### US-QS-12 · Adaptable display · 🟨 new
 
 As a **plant keeper with low vision** I want to enlarge and adapt the display without losing content.
 
