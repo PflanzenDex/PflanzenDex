@@ -65,6 +65,21 @@ const mask = (norm: string) => `%${norm.replace(/[\\%_]/g, "\\$&")}%`;
 export class SpeciesPostgres {
   constructor(private readonly pool: Pool) {}
 
+  /**
+   * Latin names (genus and epithet, no cultivar) of the approved species: the input of the taxonomy build (US-POK-03).
+   * Needs the owner connection and sets no account; only reviewed or curated species count, never proposals.
+   */
+  async approvedLatinNames(): Promise<readonly string[]> {
+    const r = await this.pool.query<{ latin_name: string }>(
+      `select a.latin_name from species a
+        where a.cultivar is null and a.epithet is not null
+          and exists (select from review_case v where v.object_kind = 'species' and v.object_id = a.id
+                         and v.status in ('curated', 'reviewed'))
+        order by a.latin_name`,
+    );
+    return r.rows.map((x) => x.latin_name);
+  }
+
   async search(userId: string, norm: string | null): Promise<readonly SpeciesHit[]> {
     const r = await withAccount(this.pool, userId, (c) =>
       c.query<Species & { field: NameField | null; display: string | null }>(

@@ -82,6 +82,12 @@ export const ERROR_TEXTS = {
     "Eine externe Datenquelle hat eine unlesbare Antwort geliefert. Es wurde nichts übernommen; der letzte gute Stand bleibt bestehen.",
   "source.request_rejected":
     "Eine externe Datenquelle hat die Abfrage abgelehnt. Es wurde nichts übernommen; der Betreiber wird informiert.",
+  "taxonomy.no_match":
+    "Zu dieser Art gibt es in der Pflanzen-Taxonomie keinen Treffer. Prüfe den lateinischen Namen; Familie und Gattung bleiben unbekannt.",
+  "taxonomy.not_species":
+    "Der Treffer der Pflanzen-Taxonomie ist keine Art (zum Beispiel nur eine Gattung). Familie und Gattung bleiben unbekannt.",
+  "taxonomy.lineage_missing":
+    "Zu dieser Art fehlt in der Pflanzen-Taxonomie die Einordnung in Gattung und Familie. Sie bleibt unbekannt.",
   "operator_cost.month_in_future":
     "Dieser Monat liegt in der Zukunft. Trage die Kosten eines Monats ein, der schon begonnen hat.",
 } as const;
