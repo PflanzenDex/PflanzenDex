@@ -5,7 +5,7 @@
     "app/packages/core/src/account": 11,
     "app/packages/core/src/catalog/species": 8,
     "app/packages/core/src/kernel": 11,
-    "app/packages/web/src/account": 15,
+    "app/packages/web/src/account": 14,
     "app/packages/web/src/care": 25,
     "app/packages/web/src/catalog": 19,
     "app/packages/web/src/collection": 50,
@@ -32,7 +32,7 @@
   },
   "LY-4": {
     "app/packages/web/src": 5,
-    "app/packages/web/src/account": 10,
+    "app/packages/web/src/account": 9,
     "app/packages/web/src/care": 17,
     "app/packages/web/src/catalog": 12,
     "app/packages/web/src/collection": 26,

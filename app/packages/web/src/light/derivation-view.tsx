@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import type { DerivationRequest, Derivation, Response } from "./light-api";
-import { FORM_GRID, RefusalAlert, SelectField, TextField, useSaveForm } from "./form";
+import { FORM_GRID, RefusalAlert, SelectField, useSaveForm } from "./form";
+import { TextField } from "@/components/ui/input";
 import {
   DERIVATION_REFUSABLE,
   LUX_LIMITS,
