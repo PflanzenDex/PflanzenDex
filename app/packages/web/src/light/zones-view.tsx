@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import type { ApiError, LightZone } from "./light-api";
-import { FORM_GRID, FormButtons, RefusalAlert, TextField, useSaveForm } from "./form";
+import { FORM_GRID, FormButtons, RefusalAlert, useSaveForm } from "./form";
+import { TextField } from "@/components/ui/input";
 import { ErrorMessage } from "./message";
 import {
   LUX_LIMITS,
