@@ -2,23 +2,33 @@ import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { findSchemaViolations } from "../schema-check.ts";
-import { withAccount, asAccount, migrate, checkTenantIsolation } from "./index.ts";
-import { openPool } from "./connection.ts";
+import {
+  withAccount,
+  asAccount,
+  migrate,
+  checkTenantIsolation,
+  openOwnerPool,
+  openFixturePool,
+} from "./index.ts";
 import { FIXTURES, createFixtureSpeciesAt } from "../fixtures.ts";
 import { MODULE_CONFIG as REGISTER } from "../../../../modules.config.mjs";
 
 // Test harness with two accounts (QG-D1, NFR-09, FR-ACC-02). Runs against a real PostgreSQL (`make db-up`).
 let pool: Pool;
+// Deliberate cross-tenant cleanup/observation of FORCE-d tables: needs the superuser, the suite owner is under row security (#294).
+let admin: Pool;
 const accountA = randomUUID();
 const accountB = randomUUID();
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
-  await createFixtureSpeciesAt(pool);
+  await createFixtureSpeciesAt();
 });
 afterAll(async () => {
-  await pool.query("delete from account where id = any($1)", [[accountA, accountB]]);
+  await admin.query("delete from account where id = any($1)", [[accountA, accountB]]);
+  await admin.end();
   await pool.end();
 });
 
@@ -44,7 +54,7 @@ describe("US-BES-10 switching the account inside a transaction (merge of a propo
 
 describe("tenant isolation across all tables", () => {
   it("account A reads and changes nothing of account B (and vice versa), for every table with an account id", async () => {
-    const problems = await checkTenantIsolation(pool, FIXTURES, accountA, accountB);
+    const problems = await checkTenantIsolation(pool, FIXTURES, [accountA, accountB], admin);
     expect(problems).toEqual([]);
   });
 
@@ -91,7 +101,7 @@ describe("tenant isolation across all tables", () => {
       await client.query("create table fresh (account_id uuid not null references account(id))");
       await client.query("select tenant_protection('fresh')");
       await client.query("commit");
-      const problems = await checkTenantIsolation(pool, FIXTURES, accountA, accountB);
+      const problems = await checkTenantIsolation(pool, FIXTURES, [accountA, accountB], admin);
       expect(problems).toEqual([expect.stringContaining("fresh")]);
     } finally {
       client.release();
@@ -108,7 +118,7 @@ describe("tenant isolation across all tables", () => {
       await pool.query("drop policy tenant on leak");
       await pool.query("create policy tenant on leak using (true) with check (true)");
       const fixtures = { ...FIXTURES, leak: () => ({ value: "x" }) };
-      const problems = await checkTenantIsolation(pool, fixtures, accountA, accountB);
+      const problems = await checkTenantIsolation(pool, fixtures, [accountA, accountB], admin);
       expect(problems.length).toBeGreaterThan(0);
       expect(problems.join("\n")).toContain("leak");
     } finally {
@@ -160,7 +170,7 @@ describe("session variable per transaction", () => {
         throw new Error("Abbruch");
       }),
     ).rejects.toThrow("Abbruch");
-    const r = await pool.query("select 1 from account where id = $1", [accountB]);
+    const r = await admin.query("select 1 from account where id = $1", [accountB]);
     expect(r.rowCount).toBe(0);
   });
 });

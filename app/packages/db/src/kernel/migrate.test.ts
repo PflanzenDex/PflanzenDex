@@ -4,13 +4,13 @@ import { join } from "node:path";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate } from "./migrate.ts";
-import { openPool } from "./connection.ts";
+import { openOwnerPool } from "./connection.ts";
 
 const TABLE_NAME = "schema_migrations_test";
 let pool: Pool;
 
 beforeAll(() => {
-  pool = openPool();
+  pool = openOwnerPool();
 });
 afterAll(async () => {
   await pool.query(`drop table if exists ${TABLE_NAME}`);

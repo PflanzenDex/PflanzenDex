@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, withAccount, openPool } from "../kernel/index.ts";
+import { migrate, withAccount, openOwnerPool } from "../kernel/index.ts";
 import { assignRole, deleteAccountsWithCatalog, reviewCaseIdOf } from "../fixtures.ts";
 import { ReviewPostgres, SpeciesPostgres } from "../catalog/index.ts";
 import type { SpeciesName, SpeciesValues } from "../catalog/species.ts";
@@ -62,7 +62,7 @@ async function propose(user: string, label: string) {
   if (r.kind !== "fresh") throw new Error("duplicate");
   return {
     speciesId: r.value.id,
-    caseId: await reviewCaseIdOf(pool, r.value.id),
+    caseId: await reviewCaseIdOf(r.value.id),
     latinName: w.latinName,
   };
 }
@@ -91,7 +91,7 @@ const speciesOf = async (user: string) =>
   (await specimens.list(user)).map((s) => `${s.name}:${s.speciesId}`).sort();
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
   await migrate(pool);
   species = new SpeciesPostgres(pool);
   reviews = new ReviewPostgres(pool, COLLECTION_REPOINTERS);
@@ -104,7 +104,7 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   const accounts = [keeper, other, operator, reviewer];
-  await deleteAccountsWithCatalog(pool, accounts);
+  await deleteAccountsWithCatalog(accounts);
   await pool.end();
 });
 

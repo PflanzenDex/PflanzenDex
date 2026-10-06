@@ -2,13 +2,21 @@ import { createHash, randomUUID } from "node:crypto";
 import { findSchemaViolations } from "../schema-check.ts";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool, withAccount, tenantsTables } from "../kernel/index.ts";
+import {
+  migrate,
+  openFixturePool,
+  openOwnerPool,
+  withAccount,
+  tenantsTables,
+} from "../kernel/index.ts";
 import { assignRole } from "../fixtures.ts";
 import { AccessPostgres, admitAccount } from "./index.ts";
 
 // US-ACC-05 against a real PostgreSQL: invitation codes, the registration mode and the operator overview. The rights
 // hold without the operations from `core`: a wrong application cannot get past the database.
 let pool: Pool;
+// Deliberate cross-tenant observation/cleanup of FORCE-d tables: needs the superuser, the suite owner is under row security (#294).
+let admin: Pool;
 let store: AccessPostgres;
 const [operator, reviewer, keeper] = [randomUUID(), randomUUID(), randomUUID()];
 const people = [operator, reviewer, keeper];
@@ -28,10 +36,11 @@ const issue = async (code = newCode(), expiresAt = inOneDay()) => {
   return code;
 };
 const accountsOf = async (s: string) =>
-  (await pool.query("select count(*)::int as n from account where subject = $1", [s])).rows[0].n;
+  (await admin.query("select count(*)::int as n from account where subject = $1", [s])).rows[0].n;
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   store = new AccessPostgres(pool);
   for (const id of people)
@@ -42,10 +51,11 @@ beforeAll(async () => {
 afterAll(async () => {
   await store.setInvitationOnly(operator, false);
   await pool.query("delete from invitation where created_by = any($1)", [people]);
-  await pool.query("delete from account where subject = any($1) or id = any($2)", [
+  await admin.query("delete from account where subject = any($1) or id = any($2)", [
     subjects,
     people,
   ]);
+  await admin.end();
   await pool.end();
 });
 
@@ -174,7 +184,7 @@ describe("US-ACC-05 · registration uses up a code exactly once", () => {
     expect(outcomes.filter((o) => o === "registered")).toHaveLength(1);
     expect(outcomes.filter((o) => o === "invalid")).toHaveLength(19);
     const created = (
-      await pool.query("select count(*)::int as n from account where subject = any($1)", [names])
+      await admin.query("select count(*)::int as n from account where subject = any($1)", [names])
     ).rows[0].n;
     expect(created).toBe(1);
   });
@@ -252,7 +262,7 @@ describe("US-ACC-05 · operator overview: counts, no content", () => {
     const before = await store.overview(operator, 30);
     const s = subject();
     await store.register(s, await issue());
-    const id = (await pool.query<{ id: string }>("select id from account where subject = $1", [s]))
+    const id = (await admin.query<{ id: string }>("select id from account where subject = $1", [s]))
       .rows[0]?.id as string;
     await withAccount(pool, id, (c) =>
       c.query(
@@ -263,7 +273,7 @@ describe("US-ACC-05 · operator overview: counts, no content", () => {
     const after = await store.overview(operator, 30);
     expect(after.accounts).toBe(before.accounts + 1);
     expect(after.activeAccounts).toBe(before.activeAccounts + 1);
-    await pool.query(
+    await admin.query(
       "update account_data set last_active_at = now() - interval '31 days' where account_id = $1",
       [id],
     );

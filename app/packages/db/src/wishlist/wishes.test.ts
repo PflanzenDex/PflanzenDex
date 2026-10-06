@@ -2,11 +2,13 @@ import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ZonePostgres } from "../light/index.ts";
-import { migrate, openPool, withAccount } from "../kernel/index.ts";
+import { migrate, openFixturePool, openOwnerPool, withAccount } from "../kernel/index.ts";
 import { WishesPostgres } from "./index.ts";
 
 // US-WUN-01, DM-WUN-01, P-04: wishes per account (real PostgreSQL, `make db-up`).
 let pool: Pool;
+// Deliberate cross-tenant observation/cleanup of FORCE-d tables: needs the superuser, the suite owner is under row security (#294).
+let admin: Pool;
 let wishes: WishesPostgres;
 let zones: ZonePostgres;
 const anna = randomUUID();
@@ -44,7 +46,8 @@ async function zone(account: string, name: string): Promise<string> {
 }
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   wishes = new WishesPostgres(pool);
   zones = new ZonePostgres(pool);
@@ -54,7 +57,8 @@ beforeAll(async () => {
   zoneBen = await zone(ben, "Lampe 3");
 });
 afterAll(async () => {
-  await pool.query("delete from account where id = any($1)", [[anna, ben]]);
+  await admin.query("delete from account where id = any($1)", [[anna, ben]]);
+  await admin.end();
   await pool.end();
 });
 
@@ -122,14 +126,14 @@ describe("US-WUN-01 wishes in the database", () => {
     const bought = await wishes.create(anna, values({ name: "Gekauft" }));
     const dropped = await wishes.create(anna, values({ name: "Verworfen" }));
     if (typeof bought === "string" || typeof dropped === "string") throw new Error("setup");
-    await pool.query("update wish set status = 'bought' where id = $1", [bought.id]);
-    await pool.query("update wish set status = 'discarded' where id = $1", [dropped.id]);
+    await admin.query("update wish set status = 'bought' where id = $1", [bought.id]);
+    await admin.query("update wish set status = 'discarded' where id = $1", [dropped.id]);
     const names = (await wishes.open(anna)).map((w) => w.name);
     expect(names).not.toContain("Gekauft");
     expect(names).not.toContain("Verworfen");
     expect(
       (
-        await pool.query("select count(*)::int as n from wish where id = any($1)", [
+        await admin.query("select count(*)::int as n from wish where id = any($1)", [
           [bought.id, dropped.id],
         ])
       ).rows[0].n,
@@ -166,7 +170,7 @@ describe("US-WUN-01 zone usage and tenant isolation (P-04, P-05)", () => {
   it("names the wishes of the account that point at a zone, whatever their status", async () => {
     const w = await wishes.create(anna, values({ name: "Zonenwunsch", targetZoneId: zoneAnna }));
     if (typeof w === "string") throw new Error("setup");
-    await pool.query("update wish set status = 'bought' where id = $1", [w.id]);
+    await admin.query("update wish set status = 'bought' where id = $1", [w.id]);
     expect((await wishes.usingZone(anna, zoneAnna)).map((x) => x.name)).toContain("Zonenwunsch");
   });
 
@@ -184,7 +188,7 @@ describe("US-WUN-01 zone usage and tenant isolation (P-04, P-05)", () => {
   });
 
   it("a wish of another account cannot be read or changed by SQL as account A", async () => {
-    const id = (await pool.query("select id from wish where name = 'Bens Geheimtipp'")).rows[0].id;
+    const id = (await admin.query("select id from wish where name = 'Bens Geheimtipp'")).rows[0].id;
     const read = await withAccount(pool, anna, (c) =>
       c.query("select * from wish where id = $1", [id]),
     );
@@ -226,11 +230,11 @@ describe("US-WUN-03 record a purchase in the database", () => {
 
   it("US-WUN-03 a discarded wish is not_open and stays discarded; an unknown id is not_found", async () => {
     const w = await created(anna, "Verworfener Kauf");
-    await pool.query("update wish set status = 'discarded' where id = $1", [w.id]);
+    await admin.query("update wish set status = 'discarded' where id = $1", [w.id]);
     expect(await wishes.buy(anna, w.id)).toBe("not_open");
-    expect((await pool.query("select status from wish where id = $1", [w.id])).rows[0].status).toBe(
-      "discarded",
-    );
+    expect(
+      (await admin.query("select status from wish where id = $1", [w.id])).rows[0].status,
+    ).toBe("discarded");
     expect(await wishes.buy(anna, randomUUID())).toBe("not_found");
   });
 
@@ -263,7 +267,7 @@ describe("FR-WUN-06 #303 repair of key-less duplicate wishes", () => {
     return (r.rows[0] as { id: string }).id;
   };
   const keyOfRow = async (id: string) =>
-    (await pool.query("select name_key from wish where id = $1", [id])).rows[0]?.name_key;
+    (await admin.query("select name_key from wish where id = $1", [id])).rows[0]?.name_key;
 
   it("FR-WUN-06 #303 lists only the open key-less wishes of the own account", async () => {
     const mine = await keyless(anna, "Doppelt A");
@@ -301,7 +305,7 @@ describe("FR-WUN-06 #303 repair of key-less duplicate wishes", () => {
   it("FR-WUN-06 #303 remove deletes the key-less wish and returns it", async () => {
     const id = await keyless(anna, "Zu löschen");
     expect(await wishes.remove(anna, id)).toMatchObject({ id, name: "Zu löschen" });
-    expect((await pool.query("select 1 from wish where id = $1", [id])).rowCount).toBe(0);
+    expect((await admin.query("select 1 from wish where id = $1", [id])).rowCount).toBe(0);
     expect(await wishes.remove(anna, id)).toBe("not_found");
   });
 
@@ -310,7 +314,7 @@ describe("FR-WUN-06 #303 repair of key-less duplicate wishes", () => {
     expect(await wishes.rename(ben, id, "Mein", keyOf("Mein"))).toBe("not_found");
     expect(await wishes.remove(ben, id)).toBe("not_found");
     expect(await wishes.rename(anna, randomUUID(), "X", "x")).toBe("not_found");
-    expect((await pool.query("select name from wish where id = $1", [id])).rows[0].name).toBe(
+    expect((await admin.query("select name from wish where id = $1", [id])).rows[0].name).toBe(
       "Annas Doppel",
     );
   });

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, withAccount, openPool } from "../kernel/index.ts";
+import { migrate, withAccount, openOwnerPool, openFixturePool } from "../kernel/index.ts";
 import {
   speciesExists,
   createFixtureSpeciesAt,
@@ -13,6 +13,8 @@ import { SpecimenPostgres } from "./index.ts";
 
 // US-BES-02, DM-BES-02, P-04: Exemplare je Konto (echte PostgreSQL, `make db-up`).
 let pool: Pool;
+// Deliberate cross-tenant cleanup/observation of FORCE-d tables: needs the superuser, the suite owner is under row security (#294).
+let admin: Pool;
 let specimens: SpecimenPostgres;
 let locations: LocationPostgres;
 const anna = randomUUID();
@@ -33,9 +35,10 @@ const values: {
 };
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
-  species = await createFixtureSpeciesAt(pool);
+  species = await createFixtureSpeciesAt();
   values.speciesId = species;
   specimens = new SpecimenPostgres(pool);
   locations = new LocationPostgres(pool);
@@ -43,7 +46,8 @@ beforeAll(async () => {
     await withAccount(pool, id, (c) => c.query("insert into account (id) values ($1)", [id]));
 });
 afterAll(async () => {
-  await pool.query("delete from account where id = any($1)", [[anna, ben]]);
+  await admin.query("delete from account where id = any($1)", [[anna, ben]]);
+  await admin.end();
   await pool.end();
 });
 
@@ -132,11 +136,11 @@ describe("US-BES-02 specimens in the database", () => {
   it("US-BES-02, AB-10, P-10: a used species cannot be deleted (on delete restrict), not even with owner rights", async () => {
     const z = await specimens.create(anna, { ...values, name: "Benutzt" });
     expect(typeof z).toBe("object");
-    await expect(deleteSpecies(pool, species)).rejects.toMatchObject({
+    await expect(deleteSpecies(species)).rejects.toMatchObject({
       code: "23503",
       constraint: "specimen_species",
     });
-    expect(await speciesExists(pool, species)).toBe(true);
+    expect(await speciesExists(species)).toBe(true);
   });
 
   it("US-BES-02, AB-10: the application role still may not delete species", async () => {
@@ -291,7 +295,7 @@ describe("US-ACC-03 count of the active specimens (start page)", () => {
     await specimens.archive(carla, b.id, "eingegangen", "2026-10-04");
     expect(await specimens.countByStatus(carla)).toEqual({ active: 0, archived: 2 });
     expect(await specimens.countByStatus(randomUUID())).toEqual({ active: 0, archived: 0 });
-    await pool.query("delete from account where id = $1", [carla]);
+    await admin.query("delete from account where id = $1", [carla]);
   });
 });
 

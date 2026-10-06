@@ -1,12 +1,14 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, withAccount, openPool } from "../kernel/index.ts";
+import { migrate, withAccount, openOwnerPool, openFixturePool } from "../kernel/index.ts";
 import { createFixtureSpeciesAt } from "../fixtures.ts";
 import { SpecimenPostgres, type SpecimenRow } from "./specimens.ts";
 
 // US-BES-03: markers per species and renaming (real PostgreSQL, `make db-up`).
 let pool: Pool;
+// Deliberate cross-tenant cleanup/observation of FORCE-d tables: needs the superuser, the suite owner is under row security (#294).
+let admin: Pool;
 let specimens: SpecimenPostgres;
 const anna = randomUUID();
 const ben = randomUUID();
@@ -28,15 +30,17 @@ const names = async (account: string) =>
   (await specimens.list(account)).map((z: SpecimenRow) => z.name).sort();
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
-  species = await createFixtureSpeciesAt(pool);
+  species = await createFixtureSpeciesAt();
   specimens = new SpecimenPostgres(pool);
   for (const id of [anna, ben])
     await withAccount(pool, id, (c) => c.query("insert into account (id) values ($1)", [id]));
 });
 afterAll(async () => {
-  await pool.query("delete from account where id = any($1)", [[anna, ben]]);
+  await admin.query("delete from account where id = any($1)", [[anna, ben]]);
+  await admin.end();
   await pool.end();
 });
 

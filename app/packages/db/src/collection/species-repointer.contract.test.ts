@@ -5,7 +5,7 @@ import { SpeciesPostgres } from "../catalog/index.ts";
 import type { SpeciesRepointer } from "../catalog/index.ts";
 import type { SpeciesName, SpeciesValues } from "../catalog/species.ts";
 import { deleteAccountsWithCatalog } from "../fixtures.ts";
-import { migrate, openPool, withAccount } from "../kernel/index.ts";
+import { migrate, openOwnerPool, withAccount } from "../kernel/index.ts";
 import { CareProfilePostgres, COLLECTION_REPOINTERS, SpecimenPostgres } from "./index.ts";
 
 // Contract of the port `SpeciesRepointer` (ADR 0003, FR-QG-19, US-BES-10): every implementation, run in the
@@ -120,12 +120,12 @@ async function inTransaction(
 }
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
   await migrate(pool);
   await withAccount(pool, keeper, (c) => c.query("insert into account (id) values ($1)", [keeper]));
 });
 afterAll(async () => {
-  await deleteAccountsWithCatalog(pool, [keeper]);
+  await deleteAccountsWithCatalog([keeper]);
   await pool.end();
 });
 
