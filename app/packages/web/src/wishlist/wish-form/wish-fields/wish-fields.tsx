@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { WishFields } from "./schemas";
+import type { WishFields } from "../../schemas";
 
 const plants = (n: number) => `${n} ${n === 1 ? "Pflanze" : "Pflanzen"}`;
 

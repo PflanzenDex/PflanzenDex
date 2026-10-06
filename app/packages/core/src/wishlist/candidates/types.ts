@@ -34,6 +34,26 @@ export interface DuplicateWish {
   readonly title: string;
 }
 
+/** A zone 2 to 4 with fewer open candidates than the buffer (US-WUN-02). */
+export interface ReplenishZone {
+  readonly zoneId: string;
+  readonly name: string;
+  readonly open: number;
+  /** "Nachschub nötig: <zone> (N offene Kandidaten)". */
+  readonly text: string;
+}
+
+export interface Replenishment {
+  /** Open candidates every zone 2 to 4 should have at least. */
+  readonly buffer: number;
+  /** Zones below the buffer, in zone order; empty = nothing to warn about. */
+  readonly zones: readonly ReplenishZone[];
+  /** Which actions of the warning exist: "Discover for <zone>" (US-ENT-07), "Fetch suggestions" (US-WUN-04). */
+  readonly actions: { readonly discover: boolean; readonly suggestions: boolean };
+  /** What to do now; `null` without a warning (P-09). */
+  readonly nextAction: string | null;
+}
+
 export interface CandidateList {
   /** Open candidates, the zone with the fewest specimens first; unknown zone last. */
   readonly candidates: readonly Candidate[];
@@ -44,6 +64,8 @@ export interface CandidateList {
   /** Open wishes that share a name with another wish (migration 0020); empty when there are none. */
   readonly duplicates: readonly DuplicateWish[];
   /** Says what is wrong and what to do (P-09); `null` when there are no duplicates. */
+  /** The warning before the list runs empty (US-WUN-02). */
+  readonly replenishment: Replenishment;
   readonly duplicateHint: { readonly text: string; readonly nextAction: string } | null;
 }
 
