@@ -22,3 +22,22 @@ export type {
   SpeciesKey,
   UnidentifiedSpecimen,
 } from "./types";
+export {
+  TAXONOMY_JOB_TYPE,
+  buildTaxonomy,
+  fingerprintOf,
+  orderTaxonomyBuild,
+  runTaxonomyBuild,
+  shortText,
+} from "./taxonomy";
+export type {
+  CatalogNames,
+  GenusCount,
+  Taxon,
+  TaxonFailure,
+  TaxonLineage,
+  TaxonText,
+  TaxonomyBuild,
+  TaxonomyDependencies,
+  TaxonomyStore,
+} from "./taxonomy";

@@ -2,6 +2,8 @@ import { serve } from "@hono/node-server";
 import { JobsPostgres, openPool, testDatabaseUrl } from "@pflanzendex/db";
 import { createApp } from "./app";
 import { createJobWorker, JOB_HANDLERS } from "./jobs";
+import { checkTaxonomy, pokedexJobHandlers, scheduleChecks } from "./pokedex";
+import { createMemorySourceCache, createSourceClient } from "./kernel";
 import { createTokenVerifier } from "./account";
 
 // Configuration from the environment only (no secrets in the repo). The defaults match `make auth-up`.
@@ -24,6 +26,22 @@ serve({ fetch: app.fetch, port }, (info) => {
 });
 
 // Background jobs (TE-06) run in the same process; the queue hands out each job once, also with several processes.
-const worker = createJobWorker({ queue: new JobsPostgres(pool), handlers: JOB_HANDLERS });
+const sources = createSourceClient({
+  fetch,
+  sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  now: Date.now,
+  cache: createMemorySourceCache(),
+  userAgent: `PflanzenDex/${process.env["APP_VERSION"] ?? "dev"} (https://github.com/PflanzenDex/PflanzenDex)`,
+});
+const worker = createJobWorker({
+  queue: new JobsPostgres(pool),
+  handlers: { ...JOB_HANDLERS, ...pokedexJobHandlers({ pool, sources }) },
+});
 worker.start();
+// The taxonomy build runs when the catalog differs from the stored tree (US-POK-03).
+scheduleChecks(
+  () => checkTaxonomy(pool, () => new Date()),
+  60 * 60 * 1000,
+  (error) => console.error("taxonomy check failed", error),
+);
 process.on("SIGTERM", () => void worker.stop().then(() => process.exit(0)));
