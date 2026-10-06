@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { MeasurementSource, TargetLocationSource, TreatmentSource } from "@pflanzendex/core";
-import { SpeciesPostgres, migrate, openPool } from "@pflanzendex/db";
+import { SpeciesPostgres, migrate, openEnsuredOwnerPool, openFixturePool } from "@pflanzendex/db";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp, type AppOptions } from "../app";
@@ -10,6 +10,7 @@ import { measurementSourceFor, targetLocationFor, treatmentSourceFor } from "./s
 // against the real adapters (real PostgreSQL, `make db-up`). The lower module `collection` defines the ports, `care`
 // implements them. Common to all: they answer only for the account that asks (P-04) and leave out what is unknown.
 let pool: Pool;
+let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
 let app: ReturnType<typeof createApp>;
 const run = randomUUID()
   .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
@@ -39,7 +40,7 @@ async function call(sub: string, method: string, path: string, body?: unknown): 
 }
 
 const accountOf = async (sub: string) =>
-  (await pool.query<{ id: string }>("select id from account where subject = $1", [sub])).rows[0]
+  (await admin.query<{ id: string }>("select id from account where subject = $1", [sub])).rows[0]
     ?.id as string;
 const newSpecies = async (sub: string, name: string) =>
   (
@@ -65,7 +66,8 @@ let specimenOfB = "";
 let locationA = "";
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = await openEnsuredOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer: verifier, pool });
   speciesA = await newSpecies(subA, "Vertrag");
@@ -101,14 +103,15 @@ beforeAll(async () => {
 afterAll(async () => {
   const subs = [[subA, subB]];
   const owned = "account_id in (select id from account where subject = any($1))";
-  await pool.query(`delete from care_profile where ${owned}`, subs);
-  await pool.query(`delete from specimen where ${owned}`, subs);
-  await pool.query(
+  await admin.query(`delete from care_profile where ${owned}`, subs);
+  await admin.query(`delete from specimen where ${owned}`, subs);
+  await admin.query(
     `delete from species where id in (select object_id from review_case where ${owned})`,
     subs,
   );
-  await pool.query("delete from account where subject = any($1)", subs);
+  await admin.query("delete from account where subject = any($1)", subs);
   await pool.end();
+  await admin.end();
 });
 
 describe("MeasurementSource contract · care adapter", () => {

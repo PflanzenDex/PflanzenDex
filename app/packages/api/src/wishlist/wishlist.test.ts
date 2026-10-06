@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool, withAccount } from "@pflanzendex/db";
+import { migrate, openEnsuredOwnerPool, openFixturePool, withAccount } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
 // US-WUN-01: candidates sorted by the space need of the target light zone through the API (real PostgreSQL).
 let pool: Pool;
+let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
 const run = randomUUID()
   .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
   .replace(/-/g, "")
@@ -98,7 +99,8 @@ let zoneA: Record<string, string> = {};
 const specimenIds: string[] = [];
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = await openEnsuredOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer, pool });
   zoneA = await defaults(subA);
@@ -117,14 +119,15 @@ beforeAll(async () => {
 afterAll(async () => {
   const accounts = "select id from account where subject = any($1)";
   const subs = [[subA, subB, subC]];
-  await pool.query(`delete from wish where account_id in (${accounts})`, subs);
-  await pool.query(`delete from specimen where account_id in (${accounts})`, subs);
-  await pool.query(
+  await admin.query(`delete from wish where account_id in (${accounts})`, subs);
+  await admin.query(`delete from specimen where account_id in (${accounts})`, subs);
+  await admin.query(
     `delete from species where id in (select object_id from review_case where account_id in (${accounts}))`,
     subs,
   );
-  await pool.query("delete from account where subject = any($1)", subs);
+  await admin.query("delete from account where subject = any($1)", subs);
   await pool.end();
+  await admin.end();
 });
 
 describe("US-WUN-01 sign-in and input", () => {
@@ -212,7 +215,7 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
 
   it("a wish that is no longer open leaves the list (FR-WUN-02)", async () => {
     await wish(subA, { name: `Gekauft ${run}`, targetZoneId: zoneA["Lampe 4"] });
-    await pool.query("update wish set status = 'bought' where name = $1", [`Gekauft ${run}`]);
+    await admin.query("update wish set status = 'bought' where name = $1", [`Gekauft ${run}`]);
     expect(await names(subA)).not.toContain(`Gekauft ${run}`);
   });
 
@@ -340,7 +343,7 @@ describe("US-WUN-03 record a purchase through the API", () => {
 
   it("US-WUN-03 a discarded wish: 409 wish.not_open; an unknown or malformed id: 404 / 400", async () => {
     const id = await created(subA, `Verworfen ${run}`);
-    await pool.query("update wish set status = 'discarded' where id = $1", [id]);
+    await admin.query("update wish set status = 'discarded' where id = $1", [id]);
     expect(await buy(subA, id)).toMatchObject({
       status: 409,
       body: { error: { code: "wish.not_open" } },
@@ -514,7 +517,7 @@ describe("FR-WUN-06 #303 repair of duplicate wish names through the API", () => 
     ((await candidates(sub)).body["duplicates"] as { id: string; name: string }[]).map((d) => d.id);
   const keyless = async (sub: string, name: string) => {
     const account = (
-      await pool.query<{ id: string }>("select id from account where subject = $1", [sub])
+      await admin.query<{ id: string }>("select id from account where subject = $1", [sub])
     ).rows[0]?.id as string;
     const r = await withAccount(pool, account, (c) =>
       c.query<{ id: string }>(
