@@ -9,38 +9,23 @@ import {
   typeInto,
 } from "../../support/keyboard";
 import type { Page } from "@playwright/test";
+import { VIEWS, openView } from "../../support/display";
 
 // US-QS-08 Operable by keyboard alone: keyboard-only variants of the everyday flows (US-QS-07) and a keyboard walk
 // over every view of the navigation, on the phone and on desktop. No step clicks or taps.
-
-const VIEWS: { label: string; heading: RegExp }[] = [
-  { label: "Start", heading: /^Start$/ },
-  { label: "Arten", heading: /^Art wählen$/ },
-  { label: "Bestand", heading: /^Bestand$/ },
-  { label: "Behandlung", heading: /^Behandlung$/ },
-  { label: "Hinweise", heading: /Hinweise/ },
-  { label: "Pflegephasen", heading: /^Pflegephasen$/ },
-  { label: "Pflegeprofil", heading: /Pflegeprofil/ },
-  { label: "Artenvergleich", heading: /Artenvergleich|Schwierigkeit/ },
-  { label: "Pokédex", heading: /Pokédex/ },
-  { label: "Wunschliste", heading: /Wunschliste/ },
-  { label: "Standorte und Licht", heading: /Standorte und Lichtzonen/ },
-  { label: "Konto", heading: /^Hallo, / },
-  { label: "Einstellungen", heading: /Einstellungen/ },
-];
 
 /** Proposes a species and creates a specimen of it, keyboard only (the start of every care flow). */
 async function specimenByKeyboard(page: Page, species: string): Promise<void> {
   await openByKeyboard(page, "Arten");
   await press(page, page.getByRole("button", { name: /Art vorschlagen/ }).first());
   const form = page.getByRole("form", { name: "Art vorschlagen" });
-  await typeInto(page, form.getByLabel("Lateinischer Name *"), species);
-  await chooseByArrows(page, form.getByLabel("Schwierigkeit *"), 1);
-  await chooseByArrows(page, form.getByLabel("Standard-Stufe (Lichtzone) *"), 3);
+  await typeInto(page, form.getByLabel(/^Lateinischer Name/), species);
+  await chooseByArrows(page, form.getByLabel(/^Schwierigkeit/), 1);
+  await chooseByArrows(page, form.getByLabel(/^Standard-Stufe/), 3);
   await typeInto(page, form.getByLabel(/Lichtbedarf/), "40000");
-  await chooseByArrows(page, form.getByLabel("Wachstumsmaß *"), 1);
-  await typeInto(page, form.getByLabel("Vergeilung-Anzeichen *"), "Die Rosette streckt sich.");
-  await typeInto(page, form.getByLabel("Erfolgskriterien *"), "Dichte, flache Rosette.");
+  await chooseByArrows(page, form.getByLabel(/^Wachstumsmaß/), 1);
+  await typeInto(page, form.getByLabel(/^Vergeilung-Anzeichen/), "Die Rosette streckt sich.");
+  await typeInto(page, form.getByLabel(/^Erfolgskriterien/), "Dichte, flache Rosette.");
   await press(page, form.getByRole("button", { name: "Vorschlag speichern" }));
   await press(page, page.getByRole("button", { name: "Diese Art wählen" }));
   const create = page.getByRole("form", { name: "Exemplar anlegen" });
@@ -54,9 +39,8 @@ test.describe("US-QS-08 Operable by keyboard alone", () => {
     account,
   }) => {
     await signInByKeyboard(page, account);
-    await page
-      .locator("body")
-      .evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+    // A freshly loaded view: the first Tab starts at the top of the page.
+    await openView(page, "/light");
     await page.keyboard.press("Tab");
     const skip = page.getByRole("link", { name: "Zum Inhalt springen" });
     await expect(skip).toBeFocused();
@@ -77,14 +61,12 @@ test.describe("US-QS-08 Operable by keyboard alone", () => {
     test.setTimeout(240_000);
     await signInByKeyboard(page, account);
     for (const view of VIEWS) {
-      await openByKeyboard(page, view.label);
-      await expect(page.getByRole("heading", { level: 1, name: view.heading })).toBeVisible();
-      await page.waitForLoadState("networkidle");
+      await openView(page, view);
       const steps = await keyboardWalk(page);
       const hidden = steps.filter((s) => s.hidden).map((s) => s.name);
-      expect(hidden, `${view.label}: focus hidden behind a sticky part`).toEqual([]);
+      expect(hidden, `${view}: focus hidden behind a sticky part`).toEqual([]);
       const unmarked = steps.filter((s) => !s.indicator).map((s) => s.name);
-      expect(unmarked, `${view.label}: focus without a visible indicator`).toEqual([]);
+      expect(unmarked, `${view}: focus without a visible indicator`).toEqual([]);
     }
   });
 
@@ -168,6 +150,8 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
     await press(page, form.getByRole("button", { name: "Standort anlegen" }));
     await expect(page.getByRole("heading", { level: 3, name: "Regal" })).toBeVisible();
     await specimenByKeyboard(page, "Haworthia cooperi");
+    // The hint "Standort fehlt" carries the action that sets the location (US-PHA-03).
+    await openByKeyboard(page, "Hinweise");
     const select = page.getByLabel(/^Standort für „/);
     await chooseByArrows(page, select, 1);
     await press(page, page.getByRole("button", { name: /^Standort setzen: / }));

@@ -12,8 +12,10 @@ export async function tabTo(
   options: { back?: boolean; max?: number } = {},
 ): Promise<void> {
   const key = options.back ? "Shift+Tab" : "Tab";
+  await expect(target).toBeAttached();
   for (let i = 0; i < (options.max ?? MAX_TABS); i++) {
-    if (await target.evaluate((el) => el === document.activeElement).catch(() => false)) return;
+    if (await target.evaluate((el) => el === document.activeElement, null, { timeout: 2_000 }))
+      return;
     await page.keyboard.press(key);
   }
   throw new Error(`Not reachable by ${key}: ${target.toString()}`);
@@ -85,8 +87,14 @@ function describeFocus(): WalkStep | null {
     .filter((c) => ["sticky", "fixed"].includes(getComputedStyle(c).position))
     .filter((c) => getComputedStyle(c).display !== "none")
     .map((c) => c.getBoundingClientRect());
+  // Covered means inside the sticky part's box and painted under it (the skip link floats above the header).
+  const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
   const coveredBy = (c: DOMRect) =>
-    r.top >= c.top && r.bottom <= c.bottom && r.left >= c.left && r.right <= c.right;
+    r.top >= c.top &&
+    r.bottom <= c.bottom &&
+    r.left >= c.left &&
+    r.right <= c.right &&
+    !(top && (top === el || el.contains(top)));
   const offscreen = r.bottom <= 0 || r.top >= window.innerHeight;
   const style = getComputedStyle(el);
   const indicator =
@@ -120,10 +128,12 @@ function countTabbable(): string[] {
  * when a focused element is completely hidden (2.4.11).
  */
 export async function keyboardWalk(page: Page): Promise<WalkStep[]> {
-  await page.locator("body").evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await page.evaluate(() => window.scrollTo(0, 0));
-  const steps: WalkStep[] = [];
   const skip = page.getByRole("link", { name: "Zum Inhalt springen" });
+  // The walk starts at the skip link: blurring alone keeps the browser's starting point of sequential navigation.
+  await skip.focus();
+  const first = await page.evaluate(describeFocus);
+  const steps: WalkStep[] = first ? [first] : [];
   for (let i = 0; i < MAX_TABS; i++) {
     await page.keyboard.press("Tab");
     const step = await page.evaluate(describeFocus);
