@@ -17,6 +17,21 @@ const upperStart = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLower
 
 const wordsValid = (w: string[]) => w.length <= 2 && w.every((x) => WORD.test(x));
 
+const ADDITION = /^(?:var|subvar|subsp|ssp|f|fo|forma|cv)\.?$/iu;
+const HYBRID_WORD = /^[x×]$/iu;
+
+/**
+ * Why a text is not a catalog name although it looks like one (US-POK-02): a hybrid sign (`x`, `×`, `+` as a word or
+ * glued to the genus) or a `var.`/`subsp.`/`f.`/`cv.` addition. Both belong to the specimen (US-POK-06), not into the
+ * catalog. `null` for everything else; an epithet that merely starts with x (`xanthacantha`) is no hybrid sign.
+ */
+export function latinNameProblem(text: string): "addition" | "hybrid" | null {
+  const words = text.split(/\s/u).filter(Boolean);
+  if (words.some((w) => ADDITION.test(w))) return "addition";
+  const glued = /^[×+]/u.test(words[0] ?? "") || words.some((w) => w.includes("×"));
+  return glued || words.some((w) => HYBRID_WORD.test(w) || w === "+") ? "hybrid" : null;
+}
+
 /** Splits a Latin name; `null` if it does not match the pattern. */
 export function parseLatin(text: string): LatinName | null {
   // Collapse whitespace to single spaces first (linear, no `\s+` regex on user input).
