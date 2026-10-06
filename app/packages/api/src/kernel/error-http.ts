@@ -29,6 +29,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "review.merge_conflict": 409,
   "species.duplicate": 409,
   "specimen.name_taken": 409,
+  "pokedex.not_caught": 409,
   "wish.name_taken": 409,
   "wish.not_found": 404,
   "wish.not_open": 409,

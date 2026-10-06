@@ -60,6 +60,8 @@ export const ERROR_TEXTS = {
     "Dieser Wunsch ist schon mit einem anderen Exemplar verknüpft, oder das Exemplar gehört schon zu einem anderen Wunsch. Es wurde nichts geändert.",
   "wish.not_duplicate":
     "Dieser Wunsch hat keinen doppelten Namen und lässt sich hier nicht umbenennen oder löschen. Lade die Wunschliste neu; es wurde nichts geändert.",
+  "pokedex.not_caught":
+    "Diese Art hast du noch nicht gefangen und kann deshalb nicht als gesehen vermerkt werden. Lade den Pokédex neu; es wurde nichts geändert.",
   "care.no_phase":
     "Dieses Exemplar hat keine Pflegephase (Steckling oder Art ohne Ruhephasen-Zeitraum) und wird nicht umgestellt.",
   "care.target_unknown":

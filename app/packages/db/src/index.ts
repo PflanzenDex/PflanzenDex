@@ -6,5 +6,6 @@ export * from "./light/index.ts";
 export * from "./collection/index.ts";
 export * from "./care/index.ts";
 export * from "./wishlist/index.ts";
+export * from "./pokedex/index.ts";
 export * from "./jobs/index.ts";
 export { findSchemaViolations } from "./schema-check.ts";
