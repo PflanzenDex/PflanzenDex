@@ -109,14 +109,16 @@ export class ReviewPostgres {
   ): Promise<MergeOutcome | "conflict" | "lock_failed" | null> {
     try {
       return await withAccount(this.pool, userId, async (c) => {
-        const proposal = await c.query<{ objectId: string }>(
-          `select object_id as "objectId" from review_case where id = $1 and object_kind = 'species'`,
+        const proposal = await c.query<{ objectId: string; status: string }>(
+          `select object_id as "objectId", status from review_case where id = $1 and object_kind = 'species'`,
           [proposalId],
         );
         // Wait for writes of the creator on the proposal that are still in flight, then block new ones. If no row could
         // be locked, that is its own failure (`lock_failed`, nothing is merged, never a silent no-lock); a case that was
         // decided in the meantime is `null`.
-        if (!proposal.rows[0]) return null;
+        // A decided case is final: under row security its species is hidden, so locking it would fail for the wrong reason.
+        if (!proposal.rows[0] || !["proposal", "ai_unreviewed"].includes(proposal.rows[0].status))
+          return null;
         const lock = await c.query<{ locked: boolean }>(
           "select lock_species_for_merge($1) as locked",
           [proposal.rows[0].objectId],

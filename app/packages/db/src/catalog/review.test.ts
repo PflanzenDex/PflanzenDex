@@ -1,7 +1,13 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { withAccount, migrate, openPool, checkTenantIsolation } from "../kernel/index.ts";
+import {
+  withAccount,
+  migrate,
+  openOwnerPool,
+  checkTenantIsolation,
+  openFixturePool,
+} from "../kernel/index.ts";
 import {
   FIXTURES,
   createFixtureSpeciesAt,
@@ -13,6 +19,8 @@ import { ReviewPostgres } from "./index.ts";
 
 // TE-08: roles and review status against a real PostgreSQL; the rights apply even without the operations from `core`.
 let pool: Pool;
+// Deliberate cross-tenant cleanup/observation of FORCE-d tables: needs the superuser, the suite owner is under row security (#294).
+let admin: Pool;
 let store: ReviewPostgres;
 const [keeper, foreign, operator, reviewer] = [
   randomUUID(),
@@ -29,7 +37,8 @@ const proposal = () => ({
 });
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   store = new ReviewPostgres(pool);
   for (const id of all)
@@ -38,7 +47,8 @@ beforeAll(async () => {
   await assignRole(pool, reviewer, "reviewer");
 });
 afterAll(async () => {
-  await pool.query("delete from account where id = any($1)", [all]);
+  await admin.query("delete from account where id = any($1)", [all]);
+  await admin.end();
   await pool.end();
 });
 
@@ -148,8 +158,8 @@ describe("P-04: the operator sees no content of other accounts", () => {
     const [a, b] = [randomUUID(), randomUUID()];
     await withAccount(pool, a, (c) => c.query("insert into account (id) values ($1)", [a]));
     await assignRole(pool, a, "operator");
-    await createFixtureSpeciesAt(pool);
-    const problems = await checkTenantIsolation(pool, FIXTURES, a, b);
+    await createFixtureSpeciesAt();
+    const problems = await checkTenantIsolation(pool, FIXTURES, [a, b], admin);
     // The only exception, deliberately: reviewers read the review list (kind, id and status of the object, no content).
     expect(problems.filter((p) => !p.startsWith("review_case:"))).toEqual([]);
     // Reading and a no-op update on the review list are the reviewer right; reassigning, deleting and injecting stay forbidden.

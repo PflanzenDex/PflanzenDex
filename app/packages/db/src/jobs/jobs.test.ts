@@ -1,6 +1,6 @@
 import type { Pool } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { migrate, openPool, withAccount } from "../kernel/index.ts";
+import { migrate, openOwnerPool, withAccount } from "../kernel/index.ts";
 import { JobsPostgres, type NewJob } from "./jobs.ts";
 
 // TE-06, US-QS-03: the job queue in real PostgreSQL (`make db-up`). Mirrors the contract test of the port in core
@@ -21,7 +21,7 @@ const job = (extra: Partial<NewJob> = {}): NewJob => ({
 });
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
   await migrate(pool);
   queue = new JobsPostgres(pool);
 });

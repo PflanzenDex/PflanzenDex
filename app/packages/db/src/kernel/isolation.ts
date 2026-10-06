@@ -17,6 +17,12 @@ export type Fixtures = Record<
   (context: FixtureContext) => Record<string, unknown> | Promise<Record<string, unknown>>
 >;
 
+/** The connection under test and the superuser connection that may see across accounts (#294). */
+interface Connections {
+  readonly pool: Pool;
+  readonly observer: Pool;
+}
+
 const q = (name: string) => `"${name.replaceAll('"', '""')}"`;
 
 async function insert(pool: Pool, t: TenantsTableName, accountId: string, fx: Fixtures) {
@@ -28,21 +34,22 @@ async function insert(pool: Pool, t: TenantsTableName, accountId: string, fx: Fi
   });
 }
 
-async function count(pool: Pool, t: TenantsTableName, accountId: string): Promise<number> {
-  const r = await pool.query(`select count(*)::int as n from ${q(t.name)} where ${q(t.id)} = $1`, [
-    accountId,
-  ]);
+async function count(observer: Pool, t: TenantsTableName, accountId: string): Promise<number> {
+  const r = await observer.query(
+    `select count(*)::int as n from ${q(t.name)} where ${q(t.id)} = $1`,
+    [accountId],
+  );
   return r.rows[0].n;
 }
 
-async function clear(pool: Pool, tables: TenantsTableName[], accounts: string[]) {
+async function clear(observer: Pool, tables: TenantsTableName[], accounts: string[]) {
   for (const t of [...tables].reverse())
-    await pool.query(`delete from ${q(t.name)} where ${q(t.id)} = any($1)`, [accounts]);
+    await observer.query(`delete from ${q(t.name)} where ${q(t.id)} = any($1)`, [accounts]);
 }
 
 /** As `attacker`, tries to read, change, delete or inject foreign rows of `victim`. */
 async function attack(
-  pool: Pool,
+  { pool, observer }: Connections,
   t: TenantsTableName,
   attacker: string,
   victim: string,
@@ -69,7 +76,7 @@ async function attack(
   const remove = await withAccount(pool, attacker, (c) => c.query(`delete from ${q(t.name)}`));
   if (remove.rowCount !== 1)
     problems.push(`deletes ${remove.rowCount} instead of only the own row`);
-  if ((await count(pool, t, victim)) !== 1)
+  if ((await count(observer, t, victim)) !== 1)
     problems.push("changed or deleted a row of the foreign account");
   return problems;
 }
@@ -88,11 +95,12 @@ async function withoutAccount(pool: Pool, t: TenantsTableName): Promise<string[]
 }
 
 async function checkTableName(
-  pool: Pool,
+  conn: Connections,
   t: TenantsTableName,
   accounts: readonly [string, string],
   fx: Fixtures,
 ) {
+  const { pool, observer } = conn;
   const [a, b] = accounts;
   if (!(t.name in fx))
     return ["no fixture in fixtures.ts: table is not included in the tenant test"];
@@ -101,15 +109,15 @@ async function checkTableName(
     [a, b],
     [b, a],
   ] as const) {
-    await clear(pool, [t], [a, b]);
+    await clear(observer, [t], [a, b]);
     await insert(pool, t, attacker, fx);
     await insert(pool, t, victim, fx);
-    problems.push(...(await attack(pool, t, attacker, victim)));
-    await clear(pool, [t], [a, b]);
+    problems.push(...(await attack(conn, t, attacker, victim)));
+    await clear(observer, [t], [a, b]);
   }
   await insert(pool, t, a, fx);
   problems.push(...(await withoutAccount(pool, t)));
-  await clear(pool, [t], [a, b]);
+  await clear(observer, [t], [a, b]);
   return problems;
 }
 
@@ -124,12 +132,14 @@ async function createAccounts(pool: Pool, accounts: string[]) {
  * Generic tenant test (QG-D1, NFR-09): for every table with an account id, two accounts create one row each;
  * then account A may neither read, change, reassign nor delete B's row, and vice versa.
  * Returns the problems as text (empty means passed). The test accounts are removed again at the end.
+ * `pool` is the connection under test. Counting the victim's row and clearing rows between the steps must see
+ * across accounts, which row security forbids to a non-superuser owner: pass a superuser `observer` then (#294).
  */
 export async function checkTenantIsolation(
   pool: Pool,
   fixtures: Fixtures,
-  accountA: string,
-  accountB: string,
+  accounts: readonly [string, string],
+  observer: Pool = pool,
 ): Promise<string[]> {
   const tables = await tenantsTables(pool);
   // The account table last: deleting it pulls the rows of the others along via the foreign keys.
@@ -140,12 +150,12 @@ export async function checkTenantIsolation(
   const problems: string[] = [];
   try {
     for (const t of sortOrder) {
-      if (t.name !== "account") await createAccounts(pool, [accountA, accountB]);
-      for (const p of await checkTableName(pool, t, [accountA, accountB], fixtures))
+      if (t.name !== "account") await createAccounts(pool, [...accounts]);
+      for (const p of await checkTableName({ pool, observer }, t, accounts, fixtures))
         problems.push(`${t.name}: ${p}`);
     }
   } finally {
-    await pool.query("delete from account where id = any($1)", [[accountA, accountB]]);
+    await observer.query("delete from account where id = any($1)", [[...accounts]]);
   }
   return problems;
 }

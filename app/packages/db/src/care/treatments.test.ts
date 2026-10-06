@@ -3,11 +3,13 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { SpecimenPostgres } from "../collection/index.ts";
 import { createFixtureSpeciesAt } from "../fixtures.ts";
-import { migrate, withAccount, openPool } from "../kernel/index.ts";
+import { migrate, withAccount, openOwnerPool, openFixturePool } from "../kernel/index.ts";
 import { TreatmentsPostgres } from "./index.ts";
 
 // US-BEH-01, DM-BEH-01, P-04: treatments per account (real PostgreSQL, `make db-up`).
 let pool: Pool;
+// Deliberate cross-tenant cleanup/observation of FORCE-d tables: needs the superuser, the suite owner is under row security (#294).
+let admin: Pool;
 let treatments: TreatmentsPostgres;
 const anna = randomUUID();
 const ben = randomUUID();
@@ -36,9 +38,10 @@ async function specimen(account: string, name: string): Promise<string> {
 }
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
-  species = await createFixtureSpeciesAt(pool);
+  species = await createFixtureSpeciesAt();
   treatments = new TreatmentsPostgres(pool);
   for (const id of [anna, ben])
     await withAccount(pool, id, (c) => c.query("insert into account (id) values ($1)", [id]));
@@ -46,7 +49,8 @@ beforeAll(async () => {
   specimenBen = await specimen(ben, "Ben Pflanze");
 });
 afterAll(async () => {
-  await pool.query("delete from account where id = any($1)", [[anna, ben]]);
+  await admin.query("delete from account where id = any($1)", [[anna, ben]]);
+  await admin.end();
   await pool.end();
 });
 
@@ -109,8 +113,8 @@ describe("US-BEH-01 treatments in the database", () => {
     );
     const ex = await specimen(account, "Weg");
     await treatments.createMany(account, [values({ specimenId: ex })]);
-    await pool.query("delete from account where id = $1", [account]);
-    const r = await pool.query("select 1 from treatment where specimen_id = $1", [ex]);
+    await admin.query("delete from account where id = $1", [account]);
+    const r = await admin.query("select 1 from treatment where specimen_id = $1", [ex]);
     expect(r.rowCount).toBe(0);
   });
 });
@@ -125,7 +129,7 @@ describe("US-BEH-01 open treatments per specimen (for the cards, US-BES-06)", ()
       values({ specimenId: a, dueAt: "2026-10-05", reason: "früher" }),
       values({ specimenId: b, dueAt: "2026-10-07" }),
     ]);
-    await pool.query(
+    await admin.query(
       "update treatment set done = true, done_at = '2026-10-04' where reason = 'früher'",
     );
     const r = await treatments.open(anna, [a, b, none]);
@@ -146,7 +150,7 @@ describe("US-BEH-01 open treatments per specimen (for the cards, US-BES-06)", ()
 
   it("a done treatment needs its done date and the other way round (FR-BEH-03)", async () => {
     await expect(
-      pool.query("update treatment set done = true where specimen_id = $1", [specimenAnna]),
+      admin.query("update treatment set done = true where specimen_id = $1", [specimenAnna]),
     ).rejects.toThrow();
   });
 });

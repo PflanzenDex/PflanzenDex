@@ -1,11 +1,19 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { IdempotencyPostgres, migrate, withAccount, openPool } from "../kernel/index.ts";
+import {
+  IdempotencyPostgres,
+  migrate,
+  withAccount,
+  openOwnerPool,
+  openFixturePool,
+} from "../kernel/index.ts";
 import { LocationPostgres, ZonePostgres } from "./index.ts";
 
 // US-LIC-05, FR-LIC-01, P-04: light zones and locations per account (real PostgreSQL, `make db-up`).
 let pool: Pool;
+// Deliberate cross-tenant cleanup/observation of FORCE-d tables: needs the superuser, the suite owner is under row security (#294).
+let admin: Pool;
 let zones: ZonePostgres;
 let locations: LocationPostgres;
 const anna = randomUUID();
@@ -13,7 +21,8 @@ const ben = randomUUID();
 const values = { name: "Lampe 2", luxCeiling: 15000, ppfd: 300, sortOrder: 2 };
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   zones = new ZonePostgres(pool);
   locations = new LocationPostgres(pool);
@@ -21,7 +30,8 @@ beforeAll(async () => {
     await withAccount(pool, id, (c) => c.query("insert into account (id) values ($1)", [id]));
 });
 afterAll(async () => {
-  await pool.query("delete from account where id = any($1)", [[anna, ben]]);
+  await admin.query("delete from account where id = any($1)", [[anna, ben]]);
+  await admin.end();
   await pool.end();
 });
 
