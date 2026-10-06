@@ -57,6 +57,24 @@ export interface WishStore {
   buy(userId: string, wishId: string): Promise<WishPurchase | "not_found" | "not_open">;
   /** Bought plant wishes, the history of US-WUN-03; by name. */
   bought(userId: string): Promise<readonly WishRow[]>;
+  /**
+   * Open plant wishes that have no name key (FR-WUN-06, #303): they collided with an older wish after folding when
+   * migration 0020 ran and are exempt from the unique name rule. Oldest first.
+   */
+  keyless(userId: string): Promise<readonly WishRow[]>;
+  /**
+   * Renames a wish that has no name key and sets its key in one step, so it leaves the exempt group. `not_found`: no
+   * wish of the account (a foreign one looks the same, P-04); `not_duplicate`: the wish has a key already;
+   * `name_taken`: another wish has that name key.
+   */
+  rename(
+    userId: string,
+    wishId: string,
+    name: string,
+    nameKey: string,
+  ): Promise<WishRow | "not_found" | "not_duplicate" | "name_taken">;
+  /** Deletes a wish that has no name key; `not_found` / `not_duplicate` as for `rename`. Returns the deleted wish. */
+  remove(userId: string, wishId: string): Promise<WishRow | "not_found" | "not_duplicate">;
   /** Wishes of any status that point at the zone (so a zone in use is not deleted unnoticed). */
   usingZone(userId: string, zoneId: string): Promise<readonly WishRow[]>;
 }
