@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
-import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { ChunkErrorBoundary } from "@/components/routing/route-boundary/route-boundary";
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
@@ -105,13 +104,15 @@ const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>((props,
       resetKey="sheet"
       errorView={(retry) =>
         open ? (
-          <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background p-4 pb-[env(safe-area-inset-bottom)]">
-            <EmptyState
-              variant="error"
-              title="Das Fenster konnte nicht geladen werden."
-              action={{ label: "Erneut versuchen", onClick: retry }}
-            />
-            <Button variant="ghost" className="mt-2 w-full" onClick={() => setOpen(false)}>
+          <div
+            role="alert"
+            className="fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-3 border-t border-destructive bg-background p-4 pb-[env(safe-area-inset-bottom)] text-center text-foreground"
+          >
+            <p className="text-base font-semibold">Das Fenster konnte nicht geladen werden.</p>
+            <Button variant="outline" onClick={retry}>
+              Erneut versuchen
+            </Button>
+            <Button variant="ghost" onClick={() => setOpen(false)}>
               Schließen
             </Button>
           </div>
