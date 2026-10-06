@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Ellipsis } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet/sheet";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "./nav-item";
 

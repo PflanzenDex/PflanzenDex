@@ -7,7 +7,7 @@ import * as badge from "./badge.stories";
 import * as button from "./button.stories";
 import * as dialog from "./dialog.stories";
 import * as label from "./label.stories";
-import * as sheet from "./sheet.stories";
+import * as sheet from "./sheet/sheet.stories";
 
 setProjectAnnotations([preview]);
 

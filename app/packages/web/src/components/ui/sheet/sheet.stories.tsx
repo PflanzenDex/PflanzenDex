@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button } from "./button";
+import { Button } from "../button";
 import { Sheet, SheetContent, SheetTrigger } from "./sheet";
 
 // Catalog of the Sheet states (TE-18): closed and open.
