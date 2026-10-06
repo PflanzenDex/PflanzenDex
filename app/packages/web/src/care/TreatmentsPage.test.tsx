@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { deliverBuffered } from "@/platform/announcer/outbox";
+import { AnnouncerProvider } from "@/platform/announcer/announcer";
 import { TreatmentsPage } from "./TreatmentsPage";
 
 const response = (status: number, body: unknown) =>
@@ -39,9 +41,11 @@ function fakeServer(
 }
 const show = () => render(<TreatmentsPage api="http://api" token={token} />);
 
-afterEach(() => {
+afterEach(async () => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+  await deliverBuffered();
 });
 
 describe("US-BEH-01 Seite Behandlung planen", () => {
@@ -444,5 +448,50 @@ describe("US-BEH-03 Verlauf je Exemplar", () => {
       await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
     );
     expect(await screen.findByRole("list", { name: "Erledigte Behandlungen" })).toBeTruthy();
+  });
+});
+
+describe("US-QS-10 Behandlung abhaken wird angesagt", () => {
+  const tickButton = () =>
+    screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" });
+  const withAnnouncer = () =>
+    render(
+      <AnnouncerProvider>
+        <TreatmentsPage api="http://api" token={token} />
+      </AnnouncerProvider>,
+    );
+  const heard = () => document.querySelector("[aria-live=polite]")?.textContent?.trim();
+
+  it("US-QS-10 the result of ticking off is a status message that a screen reader reads, and nothing else takes the focus", async () => {
+    doneServer();
+    const user = userEvent.setup();
+    show();
+    await user.click(await tickButton());
+    const status = await screen.findByRole("status");
+    expect(status.textContent).toContain("als erledigt eingetragen");
+    // The status is a live region: it never takes the focus (4.1.3).
+    expect(document.activeElement).not.toBe(status);
+    expect(status.closest("[tabindex]")).toBeNull();
+  });
+
+  it("US-QS-10 offline a tick-off is buffered, the row is hidden, the state is text and announced, and it is delivered once when online", async () => {
+    const state = vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    const { ticks } = doneServer();
+    const user = userEvent.setup();
+    withAnnouncer();
+    await user.click(await tickButton());
+    expect(ticks).toHaveLength(0);
+    await waitFor(() =>
+      expect(heard()).toMatch(/^Du bist offline\. Wird gesendet, sobald du wieder online bist: /),
+    );
+    expect(screen.getAllByText(/Du bist offline/).length).toBeGreaterThan(1);
+    expect(
+      screen.queryByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
+    ).toBeNull();
+    state.mockReturnValue(true);
+    act(() => void window.dispatchEvent(new Event("online")));
+    await waitFor(() => expect(heard()).toMatch(/^Nachträglich gesendet: /));
+    expect(ticks).toHaveLength(1);
+    expect(ticks[0]?.path).toBe("/treatments/a/complete");
   });
 });
