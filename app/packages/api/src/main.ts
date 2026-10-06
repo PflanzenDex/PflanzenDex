@@ -2,7 +2,7 @@ import { serve } from "@hono/node-server";
 import { JobsPostgres, openPool, testDatabaseUrl } from "@pflanzendex/db";
 import { createApp } from "./app";
 import { createJobWorker, JOB_HANDLERS } from "./jobs";
-import { pokedexJobHandlers, scheduleTaxonomyChecks } from "./pokedex";
+import { checkTaxonomy, pokedexJobHandlers, scheduleChecks } from "./pokedex";
 import { createMemorySourceCache, createSourceClient } from "./kernel";
 import { createTokenVerifier } from "./account";
 
@@ -39,5 +39,9 @@ const worker = createJobWorker({
 });
 worker.start();
 // The taxonomy build runs when the catalog differs from the stored tree (US-POK-03).
-scheduleTaxonomyChecks(pool);
+scheduleChecks(
+  () => checkTaxonomy(pool, () => new Date()),
+  60 * 60 * 1000,
+  (error) => console.error("taxonomy check failed", error),
+);
 process.on("SIGTERM", () => void worker.stop().then(() => process.exit(0)));

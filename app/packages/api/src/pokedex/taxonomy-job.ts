@@ -31,7 +31,7 @@ export function pokedexJobHandlers(deps: PokedexJobDeps): JobHandlers {
  * Checks once whether the catalog differs from the tree and queues the build if so; without a change nothing is
  * queued (US-POK-03). Returns what happened, errors are thrown to the caller (P-10).
  */
-export function checkTaxonomy(pool: Pool, now: () => Date = () => new Date()) {
+export function checkTaxonomy(pool: Pool, now: () => Date) {
   const queue = new JobsPostgres(pool);
   return orderTaxonomyBuild({
     ...taxonomy(pool),
@@ -42,13 +42,13 @@ export function checkTaxonomy(pool: Pool, now: () => Date = () => new Date()) {
   });
 }
 
-/** Runs `checkTaxonomy` now and then every `intervalMs` (starting value: hourly) until the returned stop is called. */
-export function scheduleTaxonomyChecks(
-  pool: Pool,
-  intervalMs = 60 * 60 * 1000,
-  report: (error: unknown) => void = (e) => console.error("taxonomy check failed", e),
+/** Runs `check` now and then every `intervalMs` (starting value: hourly) until the returned stop is called. */
+export function scheduleChecks(
+  check: () => Promise<unknown>,
+  intervalMs: number,
+  report: (error: unknown) => void,
 ): () => void {
-  const run = () => void checkTaxonomy(pool).catch(report);
+  const run = () => void check().catch(report);
   run();
   const timer = setInterval(run, intervalMs);
   timer.unref();

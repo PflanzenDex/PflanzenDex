@@ -9,8 +9,8 @@ import {
   withAccount,
 } from "@pflanzendex/db";
 import type { Pool } from "pg";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { checkTaxonomy, pokedexJobHandlers } from "./index";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { checkTaxonomy, pokedexJobHandlers, scheduleChecks } from "./index";
 
 // US-POK-03: the build job against real PostgreSQL; the sources are a fake (no network, no clock).
 let pool: Pool;
@@ -137,5 +137,30 @@ describe("US-POK-03 taxonomy build job", () => {
 
   it("US-POK-03 the job type is registered, so a queued build never ends dead for lack of a handler", () => {
     expect(Object.keys(pokedexJobHandlers({ pool, sources }))).toEqual([TAXONOMY_JOB_TYPE]);
+  });
+
+  it("US-POK-03 the schedule checks at once and then every interval, and reports a failed check (P-10)", async () => {
+    vi.useFakeTimers();
+    try {
+      const reported: unknown[] = [];
+      let calls = 0;
+      const stop = scheduleChecks(
+        async () => {
+          calls += 1;
+          if (calls === 2) throw new Error("db down");
+        },
+        1000,
+        (e) => reported.push(e),
+      );
+      expect(calls).toBe(1);
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(calls).toBe(3);
+      expect(reported).toHaveLength(1);
+      stop();
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(calls).toBe(3);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

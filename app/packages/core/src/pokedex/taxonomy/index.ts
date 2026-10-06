@@ -4,15 +4,13 @@ export {
   TAXONOMY_JOB_TYPE,
   buildTaxonomy,
   fingerprintOf,
-  normalizeNames,
   orderTaxonomyBuild,
   runTaxonomyBuild,
 } from "./build";
-export type { BuiltTree, TaxonomyDependencies } from "./build";
-export { shortText, SUMMARY_LIMITS } from "./enrich";
+export type { TaxonomyDependencies } from "./build";
+export { shortText } from "./enrich";
 export type {
   CatalogNames,
-  FailureReason,
   GenusCount,
   Taxon,
   TaxonFailure,
