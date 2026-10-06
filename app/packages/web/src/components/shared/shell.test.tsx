@@ -186,6 +186,9 @@ describe("US-QS-08 Operable by keyboard alone (app shell)", () => {
     expect(skip.className).toContain("sr-only");
     expect(skip.className).toContain("focus:not-sr-only");
     expect(skip.className).toContain("focus-visible:ring-2");
+    // DS-15: a 44 px target once it shows; no padding while hidden, so it stays a 1 px sr-only box.
+    expect(skip.className).toContain("focus:min-h-[44px]");
+    expect(skip.className).not.toMatch(/(^| )p[xy]?-\d/);
   });
 
   it("US-QS-08 · 2.4.11 the page keeps scroll padding for the sticky header and the bottom bar", () => {

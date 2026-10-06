@@ -56,7 +56,7 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
       <a
         href={`#${MAIN_ID}`}
         onClick={skipToContent}
-        className="sr-only rounded-md bg-background px-4 py-3 font-semibold text-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="sr-only rounded-md bg-background font-semibold text-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:inline-flex focus:min-h-[44px] focus:items-center focus:px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         Zum Inhalt springen
       </a>
