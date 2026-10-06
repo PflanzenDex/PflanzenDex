@@ -11,7 +11,7 @@ import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
 import { initialChunks, readBudget, formatKb } from "./check-bundle-budget.mjs";
 
-/** Working target in gzip bytes (assumption, starting value; report only, never fails). */
+// Working target in gzip bytes (assumption, starting value; report only, never fails).
 export const WORKING_TARGET_BYTES = 140000;
 const MAX_PACKAGE_ROWS = 25;
 const UNATTRIBUTED = "(unattributed)";
@@ -179,21 +179,20 @@ function main(argv) {
   const web = fileURLToPath(new URL("../../../packages/web", import.meta.url));
   const dist = given ?? path.join(web, "node_modules/.cache/bundle-report");
   if (!given) {
-    const r = spawnSync(
-      "npx",
-      ["--no-install", "vite", "build", "--sourcemap", "--outDir", dist, "--emptyOutDir"],
-      { cwd: web, stdio: ["ignore", process.stderr, process.stderr] },
-    );
+    const args = ["run", "build", "-w", "@pflanzendex/web", "--", "--sourcemap", "--emptyOutDir"];
+    args.push("--outDir", dist);
+    const r = spawnSync("npm", args, {
+      cwd: web,
+      stdio: ["ignore", process.stderr, process.stderr],
+    });
     if (r.status !== 0) {
       console.error("bundle report: the build failed (report only, not a gate)");
       return 0;
     }
   }
-  if (!fs.existsSync(path.join(dist, "index.html"))) {
-    console.error(`bundle report: ${dist}/index.html not found`);
-    return 0;
-  }
-  process.stdout.write(renderMarkdown(buildReport(dist)));
+  if (!fs.existsSync(path.join(dist, "index.html")))
+    return console.error(`bundle report: ${dist}/index.html not found`) ?? 0;
+  process.stdout.write(renderMarkdown(buildReport(dist))); // always exit 0: report only
   return 0;
 }
 
