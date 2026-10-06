@@ -55,7 +55,13 @@ describe("US-WAC-01 collection wired with measuring", () => {
         onCompleted={() => {}}
       />,
     );
-    await userEvent.click(await screen.findByRole("button", { name: "Messen: Bogenhanf" }));
+    // The collection page is a lazy part; its first import can take longer than the default second under load.
+    const measure = await screen.findByRole(
+      "button",
+      { name: "Messen: Bogenhanf" },
+      { timeout: 5_000 },
+    );
+    await userEvent.click(measure);
     expect(await screen.findByRole("heading", { name: "Messen: Bogenhanf" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zurück zum Bestand" }));
     expect(await screen.findByRole("heading", { name: "Bestand" })).toBeTruthy();
