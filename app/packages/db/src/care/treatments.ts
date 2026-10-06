@@ -1,21 +1,9 @@
 import type { Pool } from "pg";
 import { withAccount } from "../kernel/index.ts";
 
-// Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
-export interface TreatmentRow {
-  readonly id: string;
-  readonly specimenId: string;
-  readonly reason: string;
-  readonly agent: string | null;
-  readonly dueAt: string;
-  readonly done: boolean;
-  readonly doneAt: string | null;
-  readonly courseId: string | null;
-}
-export type TreatmentValues = Pick<
-  TreatmentRow,
-  "specimenId" | "reason" | "agent" | "dueAt" | "courseId"
->;
+// The shapes are the types of `core` (type-only import through its public entry, AB-2).
+import type { TreatmentRow, TreatmentValues } from "@pflanzendex/core";
+export type { TreatmentRow, TreatmentValues };
 
 // Dates come back as text (the driver would build a `Date` in the server's time zone, NFR-08).
 const COLUMNS = `id, specimen_id as "specimenId", reason, agent, to_char(due_at, 'YYYY-MM-DD') as "dueAt", done,

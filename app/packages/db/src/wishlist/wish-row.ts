@@ -1,28 +1,8 @@
 import type { PoolClient } from "pg";
 
-// Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
-export interface WishRow {
-  readonly id: string;
-  readonly name: string;
-  readonly german: string | null;
-  readonly targetZoneId: string | null;
-  readonly difficulty: number | null;
-  readonly reasoning: string | null;
-  readonly imageUrl: string | null;
-  readonly imageSource: string | null;
-  readonly license: string | null;
-  readonly type: "plant";
-  readonly status: "wishlist" | "bought" | "discarded";
-  readonly specimenId: string | null;
-}
-export type WishValues = Omit<WishRow, "id" | "type" | "status" | "specimenId"> & {
-  readonly nameKey: string;
-};
-export interface WishChange {
-  readonly wish: WishRow;
-  readonly changed: boolean;
-}
-export type WishPurchase = WishChange;
+// The shapes are the types of `core` (type-only import through its public entry, AB-2).
+import type { WishChange, WishPurchase, WishRow, WishValues } from "@pflanzendex/core";
+export type { WishChange, WishPurchase, WishRow, WishValues };
 
 export const COLUMNS = `id, name, german, target_zone_id as "targetZoneId", difficulty, reasoning, image_url as "imageUrl",
   image_source as "imageSource", license, type, status, specimen_id as "specimenId"`;

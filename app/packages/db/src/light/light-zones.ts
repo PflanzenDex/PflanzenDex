@@ -1,20 +1,9 @@
 import type { Pool } from "pg";
 import { withAccount } from "../kernel/index.ts";
 
-// Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
-export interface LightZone {
-  readonly id: string;
-  readonly name: string;
-  readonly luxCeiling: number;
-  readonly ppfd: number | null;
-  readonly sortOrder: number;
-}
-export interface ZoneValues {
-  readonly name: string;
-  readonly luxCeiling: number;
-  readonly ppfd: number | null;
-  readonly sortOrder: number | null;
-}
+// The shapes are the types of `core` (type-only import through its public entry, AB-2).
+import type { LightZone, ZoneValues } from "@pflanzendex/core";
+export type { LightZone, ZoneValues };
 
 const COLUMNS = `id, name, lux_ceiling as "luxCeiling", ppfd, sort_order as "sortOrder"`;
 /** PostgreSQL error codes: unique violation, foreign key violation. */

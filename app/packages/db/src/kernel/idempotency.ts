@@ -1,17 +1,9 @@
 import type { Pool } from "pg";
 import { withAccount } from "./tenant.ts";
 
-// Same shapes as IdempotencyStore in `core` (structurally equal; `db` does not import `core`).
-export interface IdempotencyKey {
-  readonly userId: string;
-  readonly operation: string;
-  readonly key: string;
-}
-export type Begin =
-  | { readonly kind: "fresh" }
-  | { readonly kind: "repeat"; readonly result: unknown }
-  | { readonly kind: "running" }
-  | { readonly kind: "conflict" };
+// The shapes are the types of `core` (type-only import through its public entry, AB-2).
+import type { Begin, IdempotencyKey } from "@pflanzendex/core";
+export type { Begin, IdempotencyKey };
 
 type Row = { fingerprint: string; result: unknown; done: boolean };
 
