@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool } from "@pflanzendex/db";
+import { migrate, openPool, withAccount } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
@@ -364,5 +364,98 @@ describe("US-WUN-03 record a purchase through the API", () => {
     expect(((await bought(subB)).body["bought"] as { id: string }[]).map((w) => w.id)).toContain(
       id,
     );
+  });
+});
+
+// FR-WUN-06 / #303: key-less duplicate wishes (as migration 0020 leaves them) are listed, renamed and deleted.
+describe("FR-WUN-06 #303 repair of duplicate wish names through the API", () => {
+  const rename = (sub: string | null, id: string, input: unknown, key?: string | null) =>
+    call(sub, "POST", `/wishes/${id}/rename`, input, key);
+  const drop = (sub: string | null, id: string, key?: string | null) =>
+    call(sub, "POST", `/wishes/${id}/remove-duplicate`, undefined, key);
+  const duplicates = async (sub: string) =>
+    ((await candidates(sub)).body["duplicates"] as { id: string; name: string }[]).map((d) => d.id);
+  const keyless = async (sub: string, name: string) => {
+    const account = (
+      await pool.query<{ id: string }>("select id from account where subject = $1", [sub])
+    ).rows[0]?.id as string;
+    const r = await withAccount(pool, account, (c) =>
+      c.query<{ id: string }>(
+        "insert into wish (account_id, name, name_key) values ($1, $2, null) returning id",
+        [account, name],
+      ),
+    );
+    return (r.rows[0] as { id: string }).id;
+  };
+
+  it("FR-WUN-06 #303 the candidate list names the key-less wishes with a hint, and only the own ones (P-04)", async () => {
+    const mine = await keyless(subA, `Doppel A ${run}`);
+    const theirs = await keyless(subB, `Doppel B ${run}`);
+    const l = (await candidates(subA)).body;
+    expect(l["duplicates"].map((d: { id: string }) => d.id)).toContain(mine);
+    expect(await duplicates(subA)).not.toContain(theirs);
+    expect(l["duplicateHint"].text).toContain("heißen gleich");
+  });
+
+  it("FR-WUN-06 #303 without a token: 401; without Idempotency-Key: 400, nothing changes", async () => {
+    const id = await keyless(subA, `Schutz ${run}`);
+    expect((await rename(null, id, { name: "Neu" })).status).toBe(401);
+    expect((await drop(null, id)).status).toBe(401);
+    expect((await rename(subA, id, { name: "Neu" }, null)).status).toBe(400);
+    expect((await drop(subA, id, null)).status).toBe(400);
+    expect(await duplicates(subA)).toContain(id);
+  });
+
+  it("FR-WUN-06 #303 rename sets the key: 200, the hint disappears; a taken name is 409 wish.name_taken", async () => {
+    await wish(subA, { name: `Café ${run}` });
+    const id = await keyless(subA, `Cafe ${run}`);
+    expect(await rename(subA, id, { name: `CAFE ${run}` })).toMatchObject({
+      status: 409,
+      body: { error: { code: "wish.name_taken" } },
+    });
+    const ok = await rename(subA, id, { name: `Cafe au lait ${run}` });
+    expect(ok).toMatchObject({ status: 200, body: { wish: { id, name: `Cafe au lait ${run}` } } });
+    expect(await duplicates(subA)).not.toContain(id);
+    // The key is set now: the same name is taken for a new wish as well.
+    expect((await wish(subA, { name: `cafe AU LAIT ${run}` })).status).toBe(409);
+  });
+
+  it("FR-WUN-06 #303 delete removes the duplicate and keeps the other wish", async () => {
+    await wish(subA, { name: `Fícus ${run}` });
+    const id = await keyless(subA, `Ficus ${run}`);
+    expect(await drop(subA, id)).toMatchObject({ status: 200, body: { removed: { id } } });
+    expect(await duplicates(subA)).not.toContain(id);
+    expect(await names(subA)).toContain(`Fícus ${run}`);
+  });
+
+  it("FR-WUN-06 #303 a regular wish: 409 wish.not_duplicate; malformed id or name: 400", async () => {
+    const r = await wish(subA, { name: `Regulär ${run}` });
+    const id = r.body["wish"].id as string;
+    expect(await rename(subA, id, { name: "Anders" })).toMatchObject({
+      status: 409,
+      body: { error: { code: "wish.not_duplicate" } },
+    });
+    expect(await drop(subA, id)).toMatchObject({
+      status: 409,
+      body: { error: { code: "wish.not_duplicate" } },
+    });
+    expect(await names(subA)).toContain(`Regulär ${run}`);
+    expect((await rename(subA, "kein-id", { name: "Neu" })).status).toBe(400);
+    const dup = await keyless(subA, `Leer ${run}`);
+    expect((await rename(subA, dup, { name: "  " })).status).toBe(400);
+  });
+
+  it("FR-WUN-06 #303 a wish of another account: 404 wish.not_found, it stays (P-04)", async () => {
+    const id = await keyless(subB, `Bens Doppel ${run}`);
+    expect(await rename(subA, id, { name: "Meins" })).toMatchObject({
+      status: 404,
+      body: { error: { code: "wish.not_found" } },
+    });
+    expect(await drop(subA, id)).toMatchObject({
+      status: 404,
+      body: { error: { code: "wish.not_found" } },
+    });
+    expect(await duplicates(subB)).toContain(id);
+    expect((await rename(subA, randomUUID(), { name: "x" })).status).toBe(404);
   });
 });

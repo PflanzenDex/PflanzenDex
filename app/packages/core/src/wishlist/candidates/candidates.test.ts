@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { wishCandidates } from "./index";
-import { InMemoryWishes, ZoneStockStub } from "./test-helpers";
+import { wishCandidates } from "../index";
+import { InMemoryWishes, ZoneStockStub } from "../test-helpers";
 
 const Z2 = "z2";
 const Z3 = "z3";

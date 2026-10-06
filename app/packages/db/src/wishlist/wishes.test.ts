@@ -247,3 +247,75 @@ describe("US-WUN-03 record a purchase in the database", () => {
     expect((await wishes.bought(ben)).map((x) => x.id)).toContain(w.id);
   });
 });
+
+// FR-WUN-06 / #303: wishes without a name key (exempt since migration 0020) are found, renamed (which sets the key)
+// or deleted, only by their own account. Such a row can only come from the migration, so the test inserts it as the
+// migration left it.
+describe("FR-WUN-06 #303 repair of key-less duplicate wishes", () => {
+  const created = async (account: string, name: string) => {
+    const w = await wishes.create(account, values({ name }));
+    if (typeof w === "string") throw new Error(w);
+    return w;
+  };
+  const keyless = async (account: string, name: string): Promise<string> => {
+    const r = await withAccount(pool, account, (c) =>
+      c.query<{ id: string }>(
+        "insert into wish (account_id, name, name_key) values ($1, $2, null) returning id",
+        [account, name],
+      ),
+    );
+    return (r.rows[0] as { id: string }).id;
+  };
+  const keyOfRow = async (id: string) =>
+    (await pool.query("select name_key from wish where id = $1", [id])).rows[0]?.name_key;
+
+  it("FR-WUN-06 #303 lists only the open key-less wishes of the own account", async () => {
+    const mine = await keyless(anna, "Doppelt A");
+    const bought = await keyless(anna, "Doppelt gekauft");
+    await wishes.buy(anna, bought);
+    const theirs = await keyless(ben, "Doppelt B");
+    await created(anna, "Regulär");
+    const ids = (await wishes.keyless(anna)).map((w) => w.id);
+    expect(ids).toContain(mine);
+    expect(ids).not.toContain(bought);
+    expect(ids).not.toContain(theirs);
+    expect((await wishes.keyless(ben)).map((w) => w.id)).toContain(theirs);
+  });
+
+  it("FR-WUN-06 #303 rename sets the key, a taken name is name_taken and changes nothing", async () => {
+    await created(anna, "Café Original");
+    const id = await keyless(anna, "Cafe Original");
+    expect(await wishes.rename(anna, id, "Cafe ORIGINAL", keyOf("Cafe ORIGINAL"))).toBe(
+      "name_taken",
+    );
+    expect(await keyOfRow(id)).toBeNull();
+    const r = await wishes.rename(anna, id, "Cafe Zwei", keyOf("Cafe Zwei"));
+    expect(r).toMatchObject({ id, name: "Cafe Zwei" });
+    expect(await keyOfRow(id)).toBe(keyOf("Cafe Zwei"));
+    expect((await wishes.keyless(anna)).map((w) => w.id)).not.toContain(id);
+  });
+
+  it("FR-WUN-06 #303 a regular wish is not_duplicate for rename and remove and stays", async () => {
+    const w = await created(anna, "Reguläre Pflanze");
+    expect(await wishes.rename(anna, w.id, "Anders", keyOf("Anders"))).toBe("not_duplicate");
+    expect(await wishes.remove(anna, w.id)).toBe("not_duplicate");
+    expect((await wishes.open(anna)).find((x) => x.id === w.id)?.name).toBe("Reguläre Pflanze");
+  });
+
+  it("FR-WUN-06 #303 remove deletes the key-less wish and returns it", async () => {
+    const id = await keyless(anna, "Zu löschen");
+    expect(await wishes.remove(anna, id)).toMatchObject({ id, name: "Zu löschen" });
+    expect((await pool.query("select 1 from wish where id = $1", [id])).rowCount).toBe(0);
+    expect(await wishes.remove(anna, id)).toBe("not_found");
+  });
+
+  it("FR-WUN-06 #303 another account can neither rename nor delete it (P-04)", async () => {
+    const id = await keyless(anna, "Annas Doppel");
+    expect(await wishes.rename(ben, id, "Mein", keyOf("Mein"))).toBe("not_found");
+    expect(await wishes.remove(ben, id)).toBe("not_found");
+    expect(await wishes.rename(anna, randomUUID(), "X", "x")).toBe("not_found");
+    expect((await pool.query("select name from wish where id = $1", [id])).rows[0].name).toBe(
+      "Annas Doppel",
+    );
+  });
+});

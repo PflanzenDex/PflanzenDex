@@ -5,6 +5,7 @@ import { LoadFrame, useInvalidate, useWriteAction } from "../kernel";
 import { EmptyState } from "@/components/shared/empty-state";
 import { BoughtList } from "./bought-list/bought-list";
 import { CandidateCard } from "./candidate-card";
+import { DuplicateWishes, useRepair } from "./duplicate-wishes/duplicate-wishes";
 import { WishForm } from "./wish-form";
 import { WishlistPageSkeleton } from "./WishlistPage.skeleton";
 import { buyWish, createWish, loadWishlist, type WishInput, type Wishlist } from "./wishlist-api";
@@ -19,15 +20,17 @@ const KEY = ["wishlist", "candidates"] as const;
 type Token = () => Promise<string | undefined>;
 
 /** "Gekauft" (US-WUN-03): the answer of the server says what happened and what comes next (P-09, P-10). */
-function useBuy(api: string, token: Token, onWritten: () => void) {
+function useBuy(api: string, token: Token, onWritten: () => void, onRun: () => void) {
   const write = useWriteAction(token, onWritten);
   const [done, setDone] = useState<WishBuyResult["hint"] | null>(null);
-  const buy = (c: Candidate) =>
+  const buy = (c: Candidate) => {
+    onRun();
     void write.run(async (t) => {
       const r = await buyWish(api, t, c.id);
       setDone(r.ok ? r.value.hint : null);
       return r;
     }, "");
+  };
   return { buy, done, running: write.running, error: write.error };
 }
 
@@ -86,7 +89,11 @@ function Candidates(props: { list: CandidateList; onBuy: (c: Candidate) => void;
 function Body(props: { data: Wishlist; api: string; token: Token; onWritten: () => void }) {
   const { data, api, token } = props;
   const write = useWriteAction(token, props.onWritten);
-  const purchase = useBuy(api, token, props.onWritten);
+  // The outcome shown on top is the one of the write that ran last (P-10): an older one never lingers.
+  const [last, setLast] = useState<"buy" | "repair">("buy");
+  const purchase = useBuy(api, token, props.onWritten, () => setLast("buy"));
+  const repair = useRepair(api, token, props.onWritten, () => setLast("repair"));
+  const outcome = last === "repair" ? repair : purchase;
   const send = async (input: WishInput): Promise<boolean> => {
     let saved = false;
     await write.run(async (t) => {
@@ -98,7 +105,8 @@ function Body(props: { data: Wishlist; api: string; token: Token; onWritten: () 
   };
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <BuyOutcome done={purchase.done} error={purchase.error} />
+      <BuyOutcome done={outcome.done} error={outcome.error} />
+      <DuplicateWishes list={data.list} repair={repair} />
       <Candidates list={data.list} onBuy={purchase.buy} busy={purchase.running} />
       <WishForm
         zones={data.list.zones}

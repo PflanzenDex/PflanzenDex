@@ -5,9 +5,10 @@ import type {
   Candidate,
   CandidateList,
   CandidatesDependencies,
+  DuplicateWish,
   PriorityKind,
-} from "./candidate-types";
-import type { WishRow, ZoneStock } from "./types";
+} from "./types";
+import type { WishRow, ZoneStock } from "../types";
 
 const plants = (n: number): string => `${n} ${n === 1 ? "Pflanze" : "Pflanzen"}`;
 
@@ -125,6 +126,14 @@ function hintFor(list: readonly Candidate[]): CandidateList["hint"] {
   };
 }
 
+const DUPLICATE_HINT: NonNullable<CandidateList["duplicateHint"]> = {
+  text: "Diese Wünsche heißen gleich wie ein anderer: umbenennen oder zusammenführen. Sie wurden früher angelegt, als Namen mit und ohne Akzente noch als verschieden galten.",
+  nextAction:
+    "Benenne jeden dieser Wünsche um oder lösche ihn, wenn du den anderen Wunsch behältst.",
+};
+
+const duplicate = (w: WishRow): DuplicateWish => ({ id: w.id, name: w.name, title: titleOf(w) });
+
 /**
  * The open candidates of the account (`status = wishlist`, FR-WUN-02), sorted ascending by the specimen count of their
  * target zone (zones 2 to 4); a wish without a usable target zone comes last and is named as not counted (FR-WUN-03,
@@ -135,8 +144,19 @@ export async function wishCandidates(
   deps: CandidatesDependencies,
   userId: string,
 ): Promise<CandidateList> {
-  const [open, zones] = await Promise.all([deps.wishes.open(userId), deps.stock.stock(userId)]);
+  const [open, zones, keyless] = await Promise.all([
+    deps.wishes.open(userId),
+    deps.stock.stock(userId),
+    deps.wishes.keyless(userId),
+  ]);
   const s = standing(zones);
   const candidates = open.map((w) => candidate(w, zones, s)).sort(byStock(zones));
-  return { candidates, zones, hint: hintFor(candidates) };
+  const duplicates = keyless.map(duplicate);
+  return {
+    candidates,
+    zones,
+    hint: hintFor(candidates),
+    duplicates,
+    duplicateHint: duplicates.length > 0 ? DUPLICATE_HINT : null,
+  };
 }
