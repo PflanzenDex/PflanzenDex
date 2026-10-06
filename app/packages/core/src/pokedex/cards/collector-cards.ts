@@ -54,8 +54,11 @@ export interface CollectorCard {
 }
 
 /** "Birkenfeige (Zimmerlinde)" becomes "Birkenfeige". */
-export const shortGermanName = (name: string | null): string | null =>
-  name === null ? null : name.replace(/\s*\(.*$/, "").trim() || name;
+export function shortGermanName(name: string | null): string | null {
+  if (name === null) return null;
+  const open = name.indexOf("(");
+  return (open === -1 ? name : name.slice(0, open)).trim() || name;
+}
 
 const compare = (a: string | null, b: string | null) => {
   if (a === b) return 0;

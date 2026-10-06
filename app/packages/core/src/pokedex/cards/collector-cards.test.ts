@@ -104,6 +104,7 @@ describe("US-POK-01 collector cards", () => {
   it("US-POK-01 cuts the addition in parentheses off the short German name", () => {
     expect(shortGermanName("Birkenfeige (Zimmerlinde)")).toBe("Birkenfeige");
     expect(shortGermanName("Efeutute")).toBe("Efeutute");
+    expect(shortGermanName("(Zimmerlinde)")).toBe("(Zimmerlinde)");
     expect(shortGermanName(null)).toBeNull();
   });
 
