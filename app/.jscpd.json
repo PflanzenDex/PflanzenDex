@@ -1,0 +1,22 @@
+{
+  "path": ["packages"],
+  "format": ["typescript", "tsx", "javascript"],
+  "minTokens": 50,
+  "minLines": 5,
+  "mode": "mild",
+  "gitignore": true,
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/coverage/**",
+    "**/*.test.*",
+    "**/*.selftest.*",
+    "**/*.d.ts",
+    "**/*.stories.*",
+    "**/fixtures.ts",
+    "**/*-test-helpers.ts",
+    "packages/e2e/**",
+    "packages/*/migrations/**",
+    "packages/web/.storybook/**"
+  ]
+}
