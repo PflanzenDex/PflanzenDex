@@ -2,13 +2,14 @@ import { randomUUID } from "node:crypto";
 import type { TreatmentSource, CardMeasurementView, MeasurementSource } from "@pflanzendex/core";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool } from "@pflanzendex/db";
+import { migrate, openEnsuredOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
 // US-BES-06: specimens as cards through the API (real PostgreSQL, `make db-up`).
 let pool: Pool;
+let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
 const run = randomUUID()
   .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
   .replace(/-/g, "")
@@ -92,24 +93,26 @@ const create = (sub: string, input: Record<string, unknown>) =>
   call(sub, "POST", "/specimens", { timeZone: "Europe/Berlin", ...input });
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = await openEnsuredOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer, pool, clock: () => NOW, measurements, treatments });
   appWithoutPorts = createApp({ reviewer, pool, clock: () => NOW });
 });
 afterAll(async () => {
   // Specimens first: the reference to the species is on delete restrict (AB-10).
-  await pool.query(
+  await admin.query(
     "delete from specimen where account_id in (select id from account where subject = any($1))",
     [[subA, subB]],
   );
-  await pool.query(
+  await admin.query(
     `delete from species where id in (select object_id from review_case
        where account_id in (select id from account where subject = any($1)))`,
     [[subA, subB]],
   );
-  await pool.query("delete from account where subject = any($1)", [[subA, subB]]);
+  await admin.query("delete from account where subject = any($1)", [[subA, subB]]);
   await pool.end();
+  await admin.end();
 });
 
 describe("US-BES-06 cards: sign-in and input", () => {

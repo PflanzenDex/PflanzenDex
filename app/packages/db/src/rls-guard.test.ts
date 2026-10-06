@@ -3,7 +3,13 @@ import type pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import setup from "./test-global-setup.ts";
 import { assignRole } from "./fixtures.ts";
-import { migrate, openFixturePool, openOwnerPool, withAccount } from "./kernel/index.ts";
+import {
+  migrate,
+  openEnsuredOwnerPool,
+  openFixturePool,
+  openOwnerPool,
+  withAccount,
+} from "./kernel/index.ts";
 
 // #294, QG-D1: the db suite must run like production, as a NON-superuser owner, so row-level security applies to
 // every test. If the suite connection were a superuser again, RLS regressions would pass unnoticed.
@@ -93,5 +99,19 @@ describe("#294 QG-D1 the bootstrap of the owner role", () => {
       "select rolsuper as s from pg_roles where rolname = current_user",
     );
     expect(r.rows[0]?.s).toBe(false);
+  });
+});
+
+describe("#476 QG-D1 the owner pool for suites without a global setup", () => {
+  it("#476 QG-D1 openEnsuredOwnerPool creates the owner database if needed and connects as the non-superuser", async () => {
+    const own = await openEnsuredOwnerPool();
+    try {
+      const r = await own.query<{ s: boolean; b: boolean }>(
+        "select rolsuper as s, rolbypassrls as b from pg_roles where rolname = current_user",
+      );
+      expect(r.rows[0]).toEqual({ s: false, b: false });
+    } finally {
+      await own.end();
+    }
   });
 });

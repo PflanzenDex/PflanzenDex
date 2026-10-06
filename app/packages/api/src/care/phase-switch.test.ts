@@ -2,13 +2,14 @@ import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { CarePhase, PhaseLocationSource } from "@pflanzendex/core";
-import { migrate, openPool } from "@pflanzendex/db";
+import { migrate, openEnsuredOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
 // US-PHA-03: confirm a move with a tap, and set a location (BES-08) through the API (real PostgreSQL, `make db-up`).
 let pool: Pool;
+let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
 const run = randomUUID()
   .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
   .replace(/-/g, "")
@@ -106,7 +107,8 @@ let cold: string;
 let foreignLocation: string;
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = await openEnsuredOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer, pool, clock: () => NOW, phaseLocation });
   appWithoutProfile = createApp({ reviewer, pool, clock: () => NOW });
@@ -115,7 +117,7 @@ beforeAll(async () => {
   living = await location(subA, `Wohnzimmer ${run}`);
   cold = await location(subA, `Kühler Flur ${run}`);
   foreignLocation = await location(subB, `Bens Flur ${run}`);
-  const owner = await pool.query<{ id: string }>("select id from account where subject = $1", [
+  const owner = await admin.query<{ id: string }>("select id from account where subject = $1", [
     subA,
   ]);
   plan[owner.rows[0]?.id ?? ""] = { [speciesA]: { dormancy: cold, growth: living } };
@@ -123,17 +125,18 @@ beforeAll(async () => {
 afterAll(async () => {
   const subs = [[subA, subB]];
   // Specimens first: the reference to the species is on delete restrict (AB-10).
-  await pool.query(
+  await admin.query(
     "delete from specimen where account_id in (select id from account where subject = any($1))",
     subs,
   );
-  await pool.query(
+  await admin.query(
     `delete from species where id in (select object_id from review_case
        where account_id in (select id from account where subject = any($1)))`,
     subs,
   );
-  await pool.query("delete from account where subject = any($1)", subs);
+  await admin.query("delete from account where subject = any($1)", subs);
   await pool.end();
+  await admin.end();
 });
 
 describe("US-PHA-03 confirm a move through the API", () => {

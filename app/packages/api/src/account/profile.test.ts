@@ -1,12 +1,13 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool, withAccount } from "@pflanzendex/db";
+import { migrate, openEnsuredOwnerPool, openFixturePool, withAccount } from "@pflanzendex/db";
 import { createApp } from "../app";
 import type { TokenVerifier } from "./index";
 
 // US-ACC-02: profile and settings through the API. Database: `make db-up`.
 let pool: Pool;
+let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
 const subA = `api-${randomUUID()}`;
 const subB = `api-${randomUUID()}`;
 const subNoRow = `api-${randomUUID()}`;
@@ -42,16 +43,18 @@ const read = async (sub: string) =>
   >;
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = await openEnsuredOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   // The web app loads the account first, which creates the data row.
   for (const sub of [subA, subB]) await app().request("/account", { headers: as(sub) });
 });
 afterAll(async () => {
-  await pool.query("delete from account where subject = any($1)", [
+  await admin.query("delete from account where subject = any($1)", [
     [subA, subB, subNoRow, subFreshPut, subFreshOther, subKeep, subKeepOther],
   ]);
   await pool.end();
+  await admin.end();
 });
 
 describe("US-ACC-02 · GET /account/profile", () => {

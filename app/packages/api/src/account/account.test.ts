@@ -1,12 +1,13 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool } from "@pflanzendex/db";
+import { migrate, openEnsuredOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp } from "../app";
 import { onlyWithConfirmedEmail, type TokenVerifier } from "./index";
 
 // US-ACC-01: the API verifies the token and sets the account per request (withAccount). Database: `make db-up`.
 let pool: Pool;
+let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
 const sub1 = `api-${randomUUID()}`;
 const sub2 = `api-${randomUUID()}`;
 
@@ -27,12 +28,14 @@ const account = async (app: ReturnType<typeof createApp>, init: object) =>
   (await (await app.request("/account", init)).json()) as AccountResponse & Record<string, unknown>;
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = await openEnsuredOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
 });
 afterAll(async () => {
-  await pool.query("delete from account where subject = any($1)", [[sub1, sub2]]);
+  await admin.query("delete from account where subject = any($1)", [[sub1, sub2]]);
   await pool.end();
+  await admin.end();
 });
 
 describe("GET /account (US-ACC-01)", () => {
