@@ -99,7 +99,7 @@ Acceptance criteria:
 - Given sign-in or sign-up, then no step requires solving a puzzle or remembering a code by heart; pasting passwords and codes and password managers work (3.3.8).
 - Given a view has nothing to do, then it says so and names the next step (P-09), also for screen reader users.
 
-### US-QS-10 · Changes are announced, not only shown · ⬜ new
+### US-QS-10 · Changes are announced, not only shown · 🟨 new
 
 As a **plant keeper using a screen reader** I want to hear what the app did, without losing my place.
 

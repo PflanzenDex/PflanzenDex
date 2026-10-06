@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation, useNavigationType } from "react-router";
+import { useAnnounce } from "@/platform/announcer/context";
 
 /** Longest wait for a view to finish loading before the focus falls back to the main region. */
 const MAX_WAIT_MS = 2500;
@@ -69,15 +70,15 @@ const mainRegion = () => document.getElementById("inhalt");
 
 /**
  * Orientation on a view change (US-QS-09, WCAG 2.4.2, 2.4.3): sets the page title (`titleOf` returns it whole), and once the new view has
- * loaded moves the focus to its main heading and announces the title politely. Going back restores the focus to the
+ * loaded moves the focus to its main heading and announces the title politely (through the shared announcer, US-QS-10). Going back restores the focus to the
  * control that opened the view. It never moves the focus on the first load, so Tab still reaches the skip link first
- * (US-QS-08). Render it inside the main region; it renders only the hidden announcement.
+ * (US-QS-08). Render it inside the main region; it renders nothing itself.
  */
 export function RouteFocus({ titleOf }: { titleOf: (pathname: string) => string }) {
   const { pathname, key } = useLocation();
   const type = useNavigationType();
   const title = titleOf(pathname);
-  const [announced, setAnnounced] = useState("");
+  const announcer = useAnnounce();
   const last = useRef<Opener | null>(null);
   const previous = useRef<string | null>(null);
   const openers = useRef(new Map<string, Opener>());
@@ -103,13 +104,9 @@ export function RouteFocus({ titleOf }: { titleOf: (pathname: string) => string 
       // Back to a view whose opener is gone falls back to the heading, then to the main region.
       const target = el ?? mainHeading() ?? mainRegion();
       if (target) focusIt(target);
-      setAnnounced(title);
+      announcer?.announce(title);
     });
-  }, [key, type, title]);
+  }, [key, type, title, announcer]);
 
-  return (
-    <div aria-live="polite" aria-atomic="true" className="sr-only">
-      {announced}
-    </div>
-  );
+  return null;
 }
