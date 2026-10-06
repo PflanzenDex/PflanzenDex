@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Sheet, SheetContent, SheetTrigger } from "./sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 // The chunk request fails while `broken` is set (offline, or a deployment replaced the file), then works.
 const chunk = vi.hoisted(() => ({ broken: true }));

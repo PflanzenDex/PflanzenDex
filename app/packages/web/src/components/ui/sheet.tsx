@@ -4,10 +4,10 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { ChunkErrorBoundary } from "@/components/routing/route-boundary/route-boundary";
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
-import type { SheetPanelProps } from "./sheet-panel";
+import type { SheetPanelProps } from "@/components/sheet-panel/sheet-panel";
 
 // Vaul is about 8 kB gzip and only needed once a sheet opens, so it loads on demand (DS-08, US-QS-07).
-const loadPanel = () => import("./sheet-panel");
+const loadPanel = () => import("@/components/sheet-panel/sheet-panel");
 const SheetPanel = lazyPage(loadPanel);
 
 type SheetState = { open: boolean; setOpen: (open: boolean) => void; opened: boolean };
@@ -96,7 +96,7 @@ SheetTrigger.displayName = "SheetTrigger";
 
 export type SheetContentProps = Omit<SheetPanelProps, "open" | "onOpenChange">;
 
-/** Bottom sheet content (US-QS-07, DS-23, DS-40): see `sheet-panel.tsx`. A failed chunk shows an error with retry. */
+/** Bottom sheet content (US-QS-07, DS-23, DS-40): see `components/sheet-panel`. A failed chunk shows an error with retry. */
 const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>((props, ref) => {
   const { open, setOpen, opened } = useSheet();
   if (!opened) return null;
