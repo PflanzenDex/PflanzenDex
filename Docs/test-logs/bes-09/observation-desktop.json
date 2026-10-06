@@ -4,19 +4,13 @@
     "phasesBefore": {
       "axe": [],
       "smallTargets": [],
-      "scrollWidth": [
-        1440,
-        1440
-      ]
+      "scrollWidth": [1440, 1440]
     },
     "hintsBefore": "Hinweise\n\nDiese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.\n\n„Dracaena – Eins“ hat noch keinen Standort.\n\nWeise dem Exemplar einen Standort zu.\n\nStandort für „Dracaena – Eins“\nStandort wählen …\nKühler Flur\nWohnzimmer\nStandort setzen\n\n„Dracaena – Zwei“ hat noch keinen Standort.\n\nWeise dem Exemplar einen Standort zu.\n\nStandort für „Dracaena – Zwei“\nStandort wählen …\nKühler Flur\nWohnzimmer\nStandort setzen\n\n„Epipremnum“ hat noch keinen Standort.\n\nWeise dem Exemplar einen Standort zu.\n\nStandort für „Epipremnum“\nStandort wählen …\nKühler Flur\nWohnzimmer\nStandort setzen",
     "profileEmpty": {
       "axe": [],
       "smallTargets": [],
-      "scrollWidth": [
-        1440,
-        1440
-      ]
+      "scrollWidth": [1440, 1440]
     },
     "profileText": "Dracaena\n\n2 aktive Exemplare\n\nKatalog: unbekannt\n\nSoll-Standort Wachstumsphase für „Dracaena“\nKatalog gilt\nKühler Flur\nWohnzimmer\nAuf Katalog zurücksetzen\n\nKatalog: unbekannt\n\nSoll-Standort Ruhephase für „Dracaena“\nKatalog gilt\nKühler Flur\nWohnzimmer\nAuf Katalog zurücksetzen\n\nKatalog: Zone 3\n\nLichtzone für „Dracaena“\nKatalog gilt\nZone 1\nZone 2\nZone 3\nZone 4\nAuf Katalog zurücksetzen\n\nKatalog: 01.11. bis 15.03.\n\nRuhephase von (Monat) für „Dracaena“\nMonat\nJanuar\nFebruar\nMärz\nApril\nMai\nJuni\nJuli\nAugust\nSeptember\nOktober\nNovember\nDezember\nRuhephase von (Tag) für „Dracaena“\nTag\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\nRuhephase bis (Monat) für „Dracaena“\nMonat\nJanuar\nFebruar\nMärz\nApril\nMai\nJuni\nJuli\nAugust\nSeptember\nOktober\nNovember\nDezember\nRuhephase bis (Tag) für „Dracaena“\nTag\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\nAuf Katalog zurücksetzen\n\nKatalog: unbekannt\n\nGießintervall Wachstumsphase (Tage) für „Dracaena“\nAuf Katalog zurücksetzen\n\nKatalog: unbekannt\n\nGießintervall Ruhephase (Tage) für „Dracaena“\nAuf Katalog zurücksetzen\n\nHinweis der Art: Alle zwei Wochen gießen, im Winter sparsam.\n\nKatalog: keine\n\nEigene Hinweise für „Dracaena“\nAuf Katalog zurücksetzen\nSpeichern",
     "saved": "Pflegeprofil für „Dracaena“ gespeichert.",
@@ -47,10 +41,7 @@
     "phasesAfterProfile": {
       "axe": [],
       "smallTargets": [],
-      "scrollWidth": [
-        1440,
-        1440
-      ]
+      "scrollWidth": [1440, 1440]
     },
     "switched": "„Dracaena – Eins“ steht jetzt am Standort „Wohnzimmer“.",
     "eins": true,
@@ -75,11 +66,7 @@
         }
       }
     },
-    "distribution": [
-      "Zone 2:0",
-      "Zone 3:2",
-      "Zone 4:1"
-    ],
+    "distribution": ["Zone 2:0", "Zone 3:2", "Zone 4:1"],
     "benView": "Pflegeprofil\n\nHier weichst du von den Katalogwerten ab, wo dein Standort oder dein Klima es verlangt. Der Katalog bleibt unverändert. Dein Pflegeprofil ist privat und nie Teil einer Freigabe.\n\nDu hast noch keinen Standort angelegt. Lege zuerst unter „Standorte und Licht“ einen Standort an, dann kannst du Soll-Standorte je Phase wählen.\n\nNoch keine Art im Bestand: Lege zuerst im Bestand ein Exemplar an, dann kannst du hier das Pflegeprofil der Art anpassen.",
     "benAttackSpecies": "species.not_found",
     "benList": 0,

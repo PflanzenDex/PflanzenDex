@@ -22,14 +22,9 @@
     "doubleTapPosts": 1,
     "afterSingle": "„Opuntia ruhend – Kaktus“ steht jetzt am Standort „Kühler Flur“.",
     "kaktusNow": true,
-    "groupButton": [
-      "Alle 2 nach Wohnzimmer umstellen"
-    ],
+    "groupButton": ["Alle 2 nach Wohnzimmer umstellen"],
     "afterGroup": "2 Exemplare stehen jetzt am Standort „Wohnzimmer“.",
-    "groupNow": [
-      true,
-      true
-    ],
+    "groupNow": [true, true],
     "buttonsAfter": 0,
     "repeat": {
       "specimens": [
@@ -149,14 +144,9 @@
     "doubleTapPosts": 1,
     "afterSingle": "„Opuntia ruhend – Kaktus“ steht jetzt am Standort „Kühler Flur“.",
     "kaktusNow": true,
-    "groupButton": [
-      "Alle 2 nach Wohnzimmer umstellen"
-    ],
+    "groupButton": ["Alle 2 nach Wohnzimmer umstellen"],
     "afterGroup": "2 Exemplare stehen jetzt am Standort „Wohnzimmer“.",
-    "groupNow": [
-      true,
-      true
-    ],
+    "groupNow": [true, true],
     "buttonsAfter": 0,
     "repeat": {
       "specimens": [

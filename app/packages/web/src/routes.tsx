@@ -8,15 +8,15 @@ import { LightPage } from "./light";
 import { ReviewPage, SpeciesPage } from "./catalog";
 import { CarePhasesPage, TreatmentsPage } from "./care";
 import { PokedexPage } from "./pokedex";
+import { FriendsPage } from "./social";
 import { TodayPage, type TodayDestination } from "./today";
 import { WishlistPage, type WishToPlant } from "./wishlist";
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
 import { PATHS, type View } from "./navigation";
 
-/** The start page carries the onboarding forms (validation, form library): its chunk loads with its route (#451). */
+/** The start page carries the onboarding forms: its chunk loads with its route (#451). */
 const StartPage = lazyPage(() => import("./start-page").then((m) => ({ default: m.StartPage })));
-
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 
@@ -26,6 +26,7 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
   carePhases: CarePhasesPage,
   careProfile: CareProfilePage,
   difficulty: DifficultyPage,
+  friends: FriendsPage,
   review: ReviewPage,
   operator: OperatorPage,
   settings: SettingsPage,

@@ -95,9 +95,7 @@
         {
           "id": "color-contrast",
           "impact": "serious",
-          "nodes": [
-            "footer"
-          ],
+          "nodes": ["footer"],
           "detail": "Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
         }
       ]
@@ -109,9 +107,7 @@
         {
           "id": "color-contrast",
           "impact": "serious",
-          "nodes": [
-            "footer"
-          ],
+          "nodes": ["footer"],
           "detail": "Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
         }
       ]
@@ -123,9 +119,7 @@
         {
           "id": "color-contrast",
           "impact": "serious",
-          "nodes": [
-            "footer"
-          ],
+          "nodes": ["footer"],
           "detail": "Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
         }
       ]
@@ -137,9 +131,7 @@
         {
           "id": "color-contrast",
           "impact": "serious",
-          "nodes": [
-            "footer"
-          ],
+          "nodes": ["footer"],
           "detail": "Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
         }
       ]
@@ -151,9 +143,7 @@
         {
           "id": "color-contrast",
           "impact": "serious",
-          "nodes": [
-            "footer"
-          ],
+          "nodes": ["footer"],
           "detail": "Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
         }
       ]
@@ -165,9 +155,7 @@
         {
           "id": "color-contrast",
           "impact": "serious",
-          "nodes": [
-            "footer"
-          ],
+          "nodes": ["footer"],
           "detail": "Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
         }
       ]

@@ -6,12 +6,12 @@ Prototype reference: epic LIC. In the prototype the four lamp levels are **chara
 
 ## Default light zones
 
-| Zone   | Purpose                                              | Lux value | PPFD (approx.) |
-| ------ | ---------------------------------------------------- | --------- | -------------- |
-| Lamp 1 | Cutting light, never an assignment level for adults  | 1,500     | 36 µmol/m²/s   |
-| Lamp 2 | Understory, partial shade                            | 15,000    | 300            |
-| Lamp 3 | Subtropical full sun, stem succulents                | 100,000   | 1600           |
-| Lamp 4 | Desert full sun, CAM cacti                           | 110,000   | 2000           |
+| Zone   | Purpose                                             | Lux value | PPFD (approx.) |
+| ------ | --------------------------------------------------- | --------- | -------------- |
+| Lamp 1 | Cutting light, never an assignment level for adults | 1,500     | 36 µmol/m²/s   |
+| Lamp 2 | Understory, partial shade                           | 15,000    | 300            |
+| Lamp 3 | Subtropical full sun, stem succulents               | 100,000   | 1600           |
+| Lamp 4 | Desert full sun, CAM cacti                          | 110,000   | 2000           |
 
 These four are the default for new accounts. The keeper can adjust names and values and add zones (US-LIC-05).
 
@@ -47,13 +47,13 @@ Acceptance criteria:
 - One row per species with at least one active specimen and a set lux demand, sorted descending by demand.
 - Position mapping by lux demand:
 
-  | Demand   | Position                    |
-  | -------- | --------------------------- |
-  | ≥ 50,000 | directly under the lamp     |
-  | ≥ 15,000 | very close (~10 cm)         |
-  | ≥ 8,000  | close (~20–30 cm)           |
-  | ≥ 4,000  | medium distance (~40 cm)    |
-  | below    | may stand further away      |
+  | Demand   | Position                 |
+  | -------- | ------------------------ |
+  | ≥ 50,000 | directly under the lamp  |
+  | ≥ 15,000 | very close (~10 cm)      |
+  | ≥ 8,000  | close (~20–30 cm)        |
+  | ≥ 4,000  | medium distance (~40 cm) |
+  | below    | may stand further away   |
 
 - Columns: plant, zone, lux demand (locale-formatted), position. The thresholds are defaults and adjustable.
 
@@ -81,11 +81,11 @@ Acceptance criteria:
 
 ## Requirements
 
-| ID        | Requirement                                                                                                                                                                          | Status                                                                                      |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
-| FR-LIC-01 | Light zones are data of the account with a default, not hard-coded; counting, wishlist and recommendations read them centrally (solves B-07).                                        | 🟨 Data and default (LIC-05); reading by counting, wishlist and recommendations follows     |
-| FR-LIC-02 | A specimen's light zone overrides that of the species (cutting → cutting light).                                                                                                     | 🟨 In the distribution (LIC-02): zone of the location, status cutting; an own zone field on the specimen follows (BES-04) |
-| FR-LIC-03 | If the lux demand is missing, the species drops out of the light overview and appears in "Hints".                                                                                    | ⬜                                                                                          |
-| FR-LIC-04 | Distribution and wishlist prioritization use the same counting (specimen level, only zones 2–4).                                                                                     | 🟨 Counting as a reusable function (LIC-02); the wishlist (WUN) does not use it yet |
-| FR-LIC-05 | The light overview (species view) uses the species' lux demand also for cuttings; the distribution (specimen view) respects the override. Intended and explained in the interface.  | ⬜                                                                                          |
-| FR-LIC-06 | A measured light intensity per lamp (phone app) can be stored per device (US-EQU-03). If it is missing, the zone's value applies, marked as "not measured".                          | ⬜                                                                                          |
+| ID        | Requirement                                                                                                                                                                        | Status                                                                                                                    |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| FR-LIC-01 | Light zones are data of the account with a default, not hard-coded; counting, wishlist and recommendations read them centrally (solves B-07).                                      | 🟨 Data and default (LIC-05); reading by counting, wishlist and recommendations follows                                   |
+| FR-LIC-02 | A specimen's light zone overrides that of the species (cutting → cutting light).                                                                                                   | 🟨 In the distribution (LIC-02): zone of the location, status cutting; an own zone field on the specimen follows (BES-04) |
+| FR-LIC-03 | If the lux demand is missing, the species drops out of the light overview and appears in "Hints".                                                                                  | ⬜                                                                                                                        |
+| FR-LIC-04 | Distribution and wishlist prioritization use the same counting (specimen level, only zones 2–4).                                                                                   | 🟨 Counting as a reusable function (LIC-02); the wishlist (WUN) does not use it yet                                       |
+| FR-LIC-05 | The light overview (species view) uses the species' lux demand also for cuttings; the distribution (specimen view) respects the override. Intended and explained in the interface. | ⬜                                                                                                                        |
+| FR-LIC-06 | A measured light intensity per lamp (phone app) can be stored per device (US-EQU-03). If it is missing, the zone's value applies, marked as "not measured".                        | ⬜                                                                                                                        |

@@ -13,32 +13,32 @@ As of: 2026-10-03 · Ticket TE-15 · Backs decisions E-03 (sign-in service) and 
 
 Everything self-hosted via Docker, throwaway setup in this folder:
 
-| Part | Content |
-|---|---|
-| `keycloak/` | Keycloak 26.8.0 with `--features=cimd,resource-indicators`, `start-dev`, H2 |
-| `zitadel/` | Zitadel v4.19.4 following the official Compose setup (Traefik, API, login UI, Postgres) |
+| Part               | Content                                                                                                                                                                                                                                                                              |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `keycloak/`        | Keycloak 26.8.0 with `--features=cimd,resource-indicators`, `start-dev`, H2                                                                                                                                                                                                          |
+| `zitadel/`         | Zitadel v4.19.4 following the official Compose setup (Traefik, API, login UI, Postgres)                                                                                                                                                                                              |
 | `mcp-test-server/` | Minimal MCP server (Streamable HTTP, SDK 1.32.0) as OAuth resource server: Protected Resource Metadata (RFC 9728), JWT validation (issuer, audience), three tools with the classes read, draft and write (`status`, `create_draft`, `watered`), step-up via `403 insufficient_scope` |
-| `checks/` | Check scripts: discovery and DCR, full flow with browser login (Playwright), CIMD simulation, policies |
+| `checks/`          | Check scripts: discovery and DCR, full flow with browser login (Playwright), CIMD simulation, policies                                                                                                                                                                               |
 
 Tested first locally, then through public quick tunnels (Cloudflare) with the real clients.
 
 ## Result per criterion
 
-| Criterion | Keycloak 26.8.0 | Zitadel v4.19.4 |
-|---|---|---|
-| Discovery | RFC 8414 and OIDC | OIDC only (sufficient per MCP spec) |
-| PKCE | S256 and `plain` advertised | S256 only |
-| Anonymous DCR (RFC 7591) | yes; **domain restriction** via the "Trusted Hosts" policy (`client-uris-must-match`) | yes; **no restriction of redirect hosts**, even `http://evil.example.org/cb` was accepted |
-| Unknown fields in DCR | **400** (`UnrecognizedPropertyException`, issue #53363, open) | ignored (RFC 7591 §2) |
-| CIMD | yes (experimental); clean document accepted; **document with the ChatGPT-typical field `token_endpoint_auth_methods_supported` rejected**; **document with grant `jwt-bearer` (like Claude's real document) rejected** | not available |
-| `resource` (RFC 8707) | yes, with feature `resource-indicators`; wrong `resource` → `invalid_target`; `aud` = MCP URL | accepted and **ignored** (token issued even with wrong `resource`) |
-| Own scopes, step-up | yes; `pflanzen:read/draft/write`; `403 insufficient_scope` → new authorization yields the higher permission | own scopes not proven: token response without `scope` field, content of the opaque token not verifiable |
-| `iss` parameter (RFC 9207) | yes | not advertised |
-| Consent | page exists (German), **but without selection of individual scopes** ("Ja"/"Nein") | **no consent page** |
-| Token | JWT, 5 minutes, validation via JWKS | opaque (introspection with an own API application needed, not tried) |
-| Refresh | rotation (new refresh token), revocation effective (`invalid_grant`) | rotation, revocation effective (`invalid_request`) |
-| Operations | 1 container (plus database in production), approx. 800 MiB RAM in dev mode, start 10 s, image 474 MB | 4 containers (proxy, API, login UI, Postgres), together approx. 360 MiB RAM |
-| UI | login and consent in German, theme customizable | login in German |
+| Criterion                  | Keycloak 26.8.0                                                                                                                                                                                                        | Zitadel v4.19.4                                                                                         |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Discovery                  | RFC 8414 and OIDC                                                                                                                                                                                                      | OIDC only (sufficient per MCP spec)                                                                     |
+| PKCE                       | S256 and `plain` advertised                                                                                                                                                                                            | S256 only                                                                                               |
+| Anonymous DCR (RFC 7591)   | yes; **domain restriction** via the "Trusted Hosts" policy (`client-uris-must-match`)                                                                                                                                  | yes; **no restriction of redirect hosts**, even `http://evil.example.org/cb` was accepted               |
+| Unknown fields in DCR      | **400** (`UnrecognizedPropertyException`, issue #53363, open)                                                                                                                                                          | ignored (RFC 7591 §2)                                                                                   |
+| CIMD                       | yes (experimental); clean document accepted; **document with the ChatGPT-typical field `token_endpoint_auth_methods_supported` rejected**; **document with grant `jwt-bearer` (like Claude's real document) rejected** | not available                                                                                           |
+| `resource` (RFC 8707)      | yes, with feature `resource-indicators`; wrong `resource` → `invalid_target`; `aud` = MCP URL                                                                                                                          | accepted and **ignored** (token issued even with wrong `resource`)                                      |
+| Own scopes, step-up        | yes; `pflanzen:read/draft/write`; `403 insufficient_scope` → new authorization yields the higher permission                                                                                                            | own scopes not proven: token response without `scope` field, content of the opaque token not verifiable |
+| `iss` parameter (RFC 9207) | yes                                                                                                                                                                                                                    | not advertised                                                                                          |
+| Consent                    | page exists (German), **but without selection of individual scopes** ("Ja"/"Nein")                                                                                                                                     | **no consent page**                                                                                     |
+| Token                      | JWT, 5 minutes, validation via JWKS                                                                                                                                                                                    | opaque (introspection with an own API application needed, not tried)                                    |
+| Refresh                    | rotation (new refresh token), revocation effective (`invalid_grant`)                                                                                                                                                   | rotation, revocation effective (`invalid_request`)                                                      |
+| Operations                 | 1 container (plus database in production), approx. 800 MiB RAM in dev mode, start 10 s, image 474 MB                                                                                                                   | 4 containers (proxy, API, login UI, Postgres), together approx. 360 MiB RAM                             |
+| UI                         | login and consent in German, theme customizable                                                                                                                                                                        | login in German                                                                                         |
 
 ![Keycloak consent page](consent-keycloak.png)
 

@@ -1,133 +1,133 @@
 [
- {
-  "k": "first: marker label desktop",
-  "v": "Kennzeichen (optional)"
- },
- {
-  "k": "first: name preview desktop",
-  "v": "Name: Echeveria bessmall"
- },
- {
-  "k": "layout 01-first-form desktop",
-  "v": {
-   "scrollW": 1440,
-   "innerW": 1440
+  {
+    "k": "first: marker label desktop",
+    "v": "Kennzeichen (optional)"
+  },
+  {
+    "k": "first: name preview desktop",
+    "v": "Name: Echeveria bessmall"
+  },
+  {
+    "k": "layout 01-first-form desktop",
+    "v": {
+      "scrollW": 1440,
+      "innerW": 1440
+    }
+  },
+  {
+    "k": "second: preset desktop",
+    "v": "Klammer"
+  },
+  {
+    "k": "second: name preview desktop",
+    "v": "Name: Echeveria bessmall – Klammer"
+  },
+  {
+    "k": "layout 02-second-form desktop",
+    "v": {
+      "scrollW": 1440,
+      "innerW": 1440
+    }
+  },
+  {
+    "k": "third: missing field desktop",
+    "v": 1
+  },
+  {
+    "k": "layout 03-third-form-missing desktop",
+    "v": {
+      "scrollW": 1440,
+      "innerW": 1440
+    }
+  },
+  {
+    "k": "third: error text desktop",
+    "v": "Bitte vergib zuerst alle fehlenden Kennzeichen, bevor du speicherst."
+  },
+  {
+    "k": "third: POSTs after blocked submit desktop",
+    "v": 0
+  },
+  {
+    "k": "layout 04-third-blocked desktop",
+    "v": {
+      "scrollW": 1440,
+      "innerW": 1440
+    }
+  },
+  {
+    "k": "third: rename preview desktop",
+    "v": "„Echeveria bessmall“ heißt dann „Echeveria bessmall – blau“."
+  },
+  {
+    "k": "layout 05-third-form-filled desktop",
+    "v": {
+      "scrollW": 1440,
+      "innerW": 1440
+    }
+  },
+  {
+    "k": "list names desktop",
+    "v": [
+      "Echeveria bessmall – blau",
+      "Echeveria bessmall – Klammer",
+      "Echeveria bessmall – rot"
+    ]
+  },
+  {
+    "k": "layout 06-list-three desktop",
+    "v": {
+      "scrollW": 1440,
+      "innerW": 1440
+    }
+  },
+  {
+    "k": "layout 07-rename-form desktop",
+    "v": {
+      "scrollW": 1440,
+      "innerW": 1440
+    }
+  },
+  {
+    "k": "rename duplicate: error desktop",
+    "v": "Dieses Kennzeichen gibt es bei dieser Art schon. Wähle ein anderes, damit du die Töpfe unterscheiden kannst."
+  },
+  {
+    "k": "layout 08-rename-duplicate desktop",
+    "v": {
+      "scrollW": 1440,
+      "innerW": 1440
+    }
+  },
+  {
+    "k": "rename preview desktop",
+    "v": "Name: Echeveria bessmall – grün"
+  },
+  {
+    "k": "rename message desktop",
+    "v": "„Echeveria bessmall – blau“ heißt jetzt „Echeveria bessmall – grün“. Die Historie bleibt beim Exemplar."
+  },
+  {
+    "k": "list names after rename desktop",
+    "v": [
+      "Echeveria bessmall – grün",
+      "Echeveria bessmall – Klammer",
+      "Echeveria bessmall – rot"
+    ]
+  },
+  {
+    "k": "layout 09-renamed desktop",
+    "v": {
+      "scrollW": 1440,
+      "innerW": 1440
+    }
+  },
+  {
+    "k": "after reload desktop",
+    "v": [
+      "Echeveria bessmall – grün",
+      "Echeveria bessmall – Klammer",
+      "Echeveria bessmall – rot"
+    ]
   }
- },
- {
-  "k": "second: preset desktop",
-  "v": "Klammer"
- },
- {
-  "k": "second: name preview desktop",
-  "v": "Name: Echeveria bessmall – Klammer"
- },
- {
-  "k": "layout 02-second-form desktop",
-  "v": {
-   "scrollW": 1440,
-   "innerW": 1440
-  }
- },
- {
-  "k": "third: missing field desktop",
-  "v": 1
- },
- {
-  "k": "layout 03-third-form-missing desktop",
-  "v": {
-   "scrollW": 1440,
-   "innerW": 1440
-  }
- },
- {
-  "k": "third: error text desktop",
-  "v": "Bitte vergib zuerst alle fehlenden Kennzeichen, bevor du speicherst."
- },
- {
-  "k": "third: POSTs after blocked submit desktop",
-  "v": 0
- },
- {
-  "k": "layout 04-third-blocked desktop",
-  "v": {
-   "scrollW": 1440,
-   "innerW": 1440
-  }
- },
- {
-  "k": "third: rename preview desktop",
-  "v": "„Echeveria bessmall“ heißt dann „Echeveria bessmall – blau“."
- },
- {
-  "k": "layout 05-third-form-filled desktop",
-  "v": {
-   "scrollW": 1440,
-   "innerW": 1440
-  }
- },
- {
-  "k": "list names desktop",
-  "v": [
-   "Echeveria bessmall – blau",
-   "Echeveria bessmall – Klammer",
-   "Echeveria bessmall – rot"
-  ]
- },
- {
-  "k": "layout 06-list-three desktop",
-  "v": {
-   "scrollW": 1440,
-   "innerW": 1440
-  }
- },
- {
-  "k": "layout 07-rename-form desktop",
-  "v": {
-   "scrollW": 1440,
-   "innerW": 1440
-  }
- },
- {
-  "k": "rename duplicate: error desktop",
-  "v": "Dieses Kennzeichen gibt es bei dieser Art schon. Wähle ein anderes, damit du die Töpfe unterscheiden kannst."
- },
- {
-  "k": "layout 08-rename-duplicate desktop",
-  "v": {
-   "scrollW": 1440,
-   "innerW": 1440
-  }
- },
- {
-  "k": "rename preview desktop",
-  "v": "Name: Echeveria bessmall – grün"
- },
- {
-  "k": "rename message desktop",
-  "v": "„Echeveria bessmall – blau“ heißt jetzt „Echeveria bessmall – grün“. Die Historie bleibt beim Exemplar."
- },
- {
-  "k": "list names after rename desktop",
-  "v": [
-   "Echeveria bessmall – grün",
-   "Echeveria bessmall – Klammer",
-   "Echeveria bessmall – rot"
-  ]
- },
- {
-  "k": "layout 09-renamed desktop",
-  "v": {
-   "scrollW": 1440,
-   "innerW": 1440
-  }
- },
- {
-  "k": "after reload desktop",
-  "v": [
-   "Echeveria bessmall – grün",
-   "Echeveria bessmall – Klammer",
-   "Echeveria bessmall – rot"
-  ]
- }
 ]

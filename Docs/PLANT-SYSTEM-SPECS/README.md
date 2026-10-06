@@ -8,27 +8,27 @@ As of: 2026-10-02 · Derived from the **as-is state** of the vault (dashboard, n
 
 ## Files
 
-| File | Content |
-|---|---|
-| [00-System-Overview.md](00-System-Overview.md) | Goal, actors, architecture, components, data model, glossary |
-| [01-Collection-Species-and-Specimens.md](01-Collection-Species-and-Specimens.md) | Epic BES: species notes, specimens, creating, cutting, archive |
-| [02-Light-and-Lamps.md](02-Light-and-Lamps.md) | Epic LIC: lamp levels, assignment, distribution, position |
-| [03-Care-Phases.md](03-Care-Phases.md) | Epic PHA: dormancy/growth phase, location reconciliation |
-| [04-Growth-and-Photos.md](04-Growth-and-Photos.md) | Epic WAC: measurement, trend, etiolation, photo assessment |
-| [05-Treatments.md](05-Treatments.md) | Epic BEH: pests, diseases, courses of treatment |
-| [06-Wishlist.md](06-Wishlist.md) | Epic WUN: purchase candidates, buffer check, research |
-| [07-Pokedex.md](07-Pokedex.md) | Epic POK: collector cards, taxonomy tree, milestones |
-| [08-Monitoring-and-Sensors.md](08-Monitoring-and-Sensors.md) | Epic MON: bot reminders, watering, sensors (**planned**) |
-| [09-Cross-Cutting-Quality.md](09-Cross-Cutting-Quality.md) | Epic QS: non-functional requirements, principles check |
-| [11-Social.md](11-Social.md) | Epic SOZ: friends, feed "New among friends", swapping (**planned**) |
-| [13-Equipment-and-Affiliate.md](13-Equipment-and-Affiliate.md) | Epic EQU: track equipment/lamps, derive need, affiliate recommendations (**planned**) |
-| [12-Business-Case.md](12-Business-Case.md) | Product stages: for us, pays for itself, profit; assumptions and metrics |
-| [10-Gaps-and-Backlog.md](10-Gaps-and-Backlog.md) | Findings (as-is ≠ docs, defects, data gaps) and prioritized backlog |
-| [12-Target-Architecture-AI-first.md](12-Target-Architecture-AI-first.md) | Target architecture: AI-first, tech stack, hub proposal for E-SOZ-01 (**draft**) |
+| File                                                                             | Content                                                                               |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [00-System-Overview.md](00-System-Overview.md)                                   | Goal, actors, architecture, components, data model, glossary                          |
+| [01-Collection-Species-and-Specimens.md](01-Collection-Species-and-Specimens.md) | Epic BES: species notes, specimens, creating, cutting, archive                        |
+| [02-Light-and-Lamps.md](02-Light-and-Lamps.md)                                   | Epic LIC: lamp levels, assignment, distribution, position                             |
+| [03-Care-Phases.md](03-Care-Phases.md)                                           | Epic PHA: dormancy/growth phase, location reconciliation                              |
+| [04-Growth-and-Photos.md](04-Growth-and-Photos.md)                               | Epic WAC: measurement, trend, etiolation, photo assessment                            |
+| [05-Treatments.md](05-Treatments.md)                                             | Epic BEH: pests, diseases, courses of treatment                                       |
+| [06-Wishlist.md](06-Wishlist.md)                                                 | Epic WUN: purchase candidates, buffer check, research                                 |
+| [07-Pokedex.md](07-Pokedex.md)                                                   | Epic POK: collector cards, taxonomy tree, milestones                                  |
+| [08-Monitoring-and-Sensors.md](08-Monitoring-and-Sensors.md)                     | Epic MON: bot reminders, watering, sensors (**planned**)                              |
+| [09-Cross-Cutting-Quality.md](09-Cross-Cutting-Quality.md)                       | Epic QS: non-functional requirements, principles check                                |
+| [11-Social.md](11-Social.md)                                                     | Epic SOZ: friends, feed "New among friends", swapping (**planned**)                   |
+| [13-Equipment-and-Affiliate.md](13-Equipment-and-Affiliate.md)                   | Epic EQU: track equipment/lamps, derive need, affiliate recommendations (**planned**) |
+| [12-Business-Case.md](12-Business-Case.md)                                       | Product stages: for us, pays for itself, profit; assumptions and metrics              |
+| [10-Gaps-and-Backlog.md](10-Gaps-and-Backlog.md)                                 | Findings (as-is ≠ docs, defects, data gaps) and prioritized backlog                   |
+| [12-Target-Architecture-AI-first.md](12-Target-Architecture-AI-first.md)         | Target architecture: AI-first, tech stack, hub proposal for E-SOZ-01 (**draft**)      |
 
 ## Conventions
 
-- **Actors:** *plant keeper* (the user), *friend* (another plant keeper, epic SOZ only), *operator* (whoever runs the system and manages partner programs, epic EQU only), *Claude* (assistant in Claude Code or chat), *system* (hook, script, Dataview block, bot). See `00-System-Overview.md`.
+- **Actors:** _plant keeper_ (the user), _friend_ (another plant keeper, epic SOZ only), _operator_ (whoever runs the system and manages partner programs, epic EQU only), _Claude_ (assistant in Claude Code or chat), _system_ (hook, script, Dataview block, bot). See `00-System-Overview.md`.
 - **IDs:** `US-<EPIC>-nn` user story, `FR-<EPIC>-nn` functional requirement, `DM-nn` data model, `NFR-nn` non-functional. IDs are stable, do not renumber.
 - **Status per story/requirement:**
   - ✅ implemented and present in the vault
@@ -39,20 +39,20 @@ As of: 2026-10-02 · Derived from the **as-is state** of the vault (dashboard, n
 
 ## Status overview
 
-| Epic | Stories | ✅ | 🟡 | ⬜ |
-|---|---|---|---|---|
-| BES Collection | 8 | 7 | 1 | 0 |
-| LIC Light | 4 | 4 | 0 | 0 |
-| PHA Care phases | 4 | 4 | 0 | 0 |
-| WAC Growth/photo | 7 | 6 | 1 | 0 |
-| BEH Treatments | 4 | 4 | 0 | 0 |
-| WUN Wishlist | 5 | 4 | 1 | 0 |
-| POK Pokédex | 13 | 12 | 1 | 0 |
-| MON Monitoring | 7 | 0 | 0 | 7 |
-| SOZ Social | 13 | 0 | 0 | 13 |
-| EQU Equipment | 12 | 0 | 0 | 12 |
-| QS Cross-cutting | 6 | 4 | 2 | 0 |
-| **Total** | **83** | **45** | **6** | **32** |
+| Epic             | Stories | ✅     | 🟡    | ⬜     |
+| ---------------- | ------- | ------ | ----- | ------ |
+| BES Collection   | 8       | 7      | 1     | 0      |
+| LIC Light        | 4       | 4      | 0     | 0      |
+| PHA Care phases  | 4       | 4      | 0     | 0      |
+| WAC Growth/photo | 7       | 6      | 1     | 0      |
+| BEH Treatments   | 4       | 4      | 0     | 0      |
+| WUN Wishlist     | 5       | 4      | 1     | 0      |
+| POK Pokédex      | 13      | 12     | 1     | 0      |
+| MON Monitoring   | 7       | 0      | 0     | 7      |
+| SOZ Social       | 13      | 0      | 0     | 13     |
+| EQU Equipment    | 12      | 0      | 0     | 12     |
+| QS Cross-cutting | 6       | 4      | 2     | 0      |
+| **Total**        | **83**  | **45** | **6** | **32** |
 
 ## Figures of the as-is state (2026-10-02)
 

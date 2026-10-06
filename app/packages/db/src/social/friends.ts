@@ -6,8 +6,15 @@ export interface FriendRequestRow {
   readonly id: string;
   readonly otherName: string | null;
   readonly direction: "sent" | "received";
+  readonly status: "requested" | "declined";
   readonly requestedAt: string;
 }
+export interface FriendRow {
+  readonly id: string;
+  readonly name: string | null;
+  readonly since: string;
+}
+export type AnswerOutcome = "accepted" | "declined" | "not_found" | "not_open";
 type Outcome =
   "requested" | "unknown_code" | "code_used" | "code_expired" | "own_code" | "already_linked";
 export type RedeemResult =
@@ -57,6 +64,7 @@ export class FriendsPostgres {
         id: row.id as string,
         otherName: row.otherName,
         direction: "sent",
+        status: "requested",
         requestedAt: row.requestedAt as string,
       },
     };
@@ -65,8 +73,29 @@ export class FriendsPostgres {
   async openRequests(userId: string): Promise<readonly FriendRequestRow[]> {
     const r = await withAccount(this.pool, userId, (c) =>
       c.query<FriendRequestRow>(
-        `select id, other_name as "otherName", direction, ${INSTANT("requested_at")} as "requestedAt"
-           from friendship where status = 'requested' order by requested_at desc, id`,
+        `select id, other_name as "otherName", direction, status, ${INSTANT("requested_at")} as "requestedAt"
+           from friendship where status = 'requested' or (status = 'declined' and direction = 'sent')
+          order by requested_at desc, id`,
+      ),
+    );
+    return r.rows;
+  }
+
+  async answer(userId: string, requestId: string, accept: boolean): Promise<AnswerOutcome> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<{ outcome: AnswerOutcome }>("select outcome from answer_friendship($1, $2)", [
+        requestId,
+        accept,
+      ]),
+    );
+    return (r.rows[0] as { outcome: AnswerOutcome }).outcome;
+  }
+
+  async friends(userId: string): Promise<readonly FriendRow[]> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<FriendRow>(
+        `select id, other_name as name, ${INSTANT("since")} as since
+           from friendship where status = 'confirmed' order by lower(coalesce(other_name, '')), id`,
       ),
     );
     return r.rows;

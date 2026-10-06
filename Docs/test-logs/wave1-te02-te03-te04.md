@@ -14,6 +14,7 @@ Legend: ✅ as expected · ⚠️ works, but with a finding · ❌ error · ⏭�
 **Expected:** the three PRs can be combined on `dev` without conflict.
 
 **Observed:**
+
 - ✅ #185 (TE-04) merged without conflict.
 - ✅ #186 (TE-02) merged without conflict (after #185).
 - ⚠️ #187 (TE-03) **conflict in two files** (after #185 and #186):
@@ -26,6 +27,7 @@ Legend: ✅ as expected · ⚠️ works, but with a finding · ❌ error · ⏭�
 **Expected:** lint, type check, architecture boundaries, format, tests and build run green.
 
 **Observed:**
+
 - ✅ `make ci` exit code 0 (test database present, `make ci` uses it).
 
 ```text
@@ -123,6 +125,7 @@ pflanzendex-web-1     Up 33 seconds             80/tcp, …
 ```
 
 **Observed:**
+
 - ✅ Build and start without errors; the database is only in the Compose network (port 5432 not published to the host).
 - ✅ `curl -k https://localhost:8443/health` → `HTTP/2 200`, Body `{"status":"ok","produkt":"PflanzenDex","version":"f55b1d7"}` (`version` = commit of the build, `GIT_SHA` via the `.env`).
 - ⚠️ `http://localhost:8080/health` answers `308` to `https://localhost/health` **without port 8443**. Relevant only with the local non-standard port configuration, uncritical on staging with 80/443; worth mentioning in the runbook.
@@ -135,6 +138,7 @@ pflanzendex-web-1     Up 33 seconds             80/tcp, …
 ![/health Desktop](wave1/01-health-desktop.png)
 
 **Observed:**
+
 - ✅ Status 200, content as above.
 - ⚠️ The certificate comes from Caddy's internal CA (`localhost`); the browser reports `ERR_CERT_AUTHORITY_INVALID`. The screenshot was taken with `ignoreHTTPSErrors`. Expected for `localhost`; a publicly trusted certificate presupposes domain and DNS (see 4.5).
 
@@ -146,6 +150,7 @@ pflanzendex-web-1     Up 33 seconds             80/tcp, …
 ![Web mobile 375×812](wave1/03-web-mobil.png)
 
 **Observed:**
+
 - ✅ Status 200, title "PflanzenDex", heading "PflanzenDex", no console errors and no page errors.
 - ⚠️ The page is a pure scaffold (unformatted heading, otherwise empty). That is expected for TE-01/TE-03, but there is no operable interface yet; a mobile/layout judgment is not possible.
 
@@ -164,10 +169,10 @@ pflanzendex-web-1     Up 33 seconds             80/tcp, …
 
 ## 6. Recommendation
 
-| PR | Recommendation | Reasoning |
-| --- | --- | --- |
-| #185 TE-04 | **merge** | Tests prove validation, idempotency, error codes and access check; no conflicts; `make ci` green. Connection to the DB follows later. |
-| #186 TE-02 | **merge** | Generic tenant test incl. control checks green against real PostgreSQL; migration tool behaves as specified; no conflicts. |
+| PR         | Recommendation                          | Reasoning                                                                                                                                                                                                                                                                                                                              |
+| ---------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #185 TE-04 | **merge**                               | Tests prove validation, idempotency, error codes and access check; no conflicts; `make ci` green. Connection to the DB follows later.                                                                                                                                                                                                  |
+| #186 TE-02 | **merge**                               | Generic tenant test incl. control checks green against real PostgreSQL; migration tool behaves as specified; no conflicts.                                                                                                                                                                                                             |
 | #187 TE-03 | **merge, after resolving the conflict** | Stack builds and starts, `/health` over HTTPS delivers the version, DB not published, restore test passed. Before the merge: resolve the conflict in `Makefile` and `app/README.md` with #186 (additive, see 0). Open points (migration step in the deploy, domain, `BACKUP_REMOTE`) are partly named in the runbook and do not block. |
 
 Order: #185 and #186 first, then rebase #187 onto `dev`.

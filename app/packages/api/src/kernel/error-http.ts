@@ -34,6 +34,8 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "friend.code_expired": 409,
   "friend.own_code": 409,
   "friend.already_linked": 409,
+  "friend.request_not_found": 404,
+  "friend.request_answered": 409,
   "wish.name_taken": 409,
   "wish.not_found": 404,
   "wish.not_open": 409,

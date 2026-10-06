@@ -5,6 +5,7 @@ import {
   CalendarClock,
   Gauge,
   Heart,
+  Users,
   Home,
   Leaf,
   Lightbulb,
@@ -31,6 +32,7 @@ export type View =
   | "difficulty"
   | "pokedex"
   | "wishlist"
+  | "friends"
   | "light"
   | "review"
   | "operator"
@@ -49,6 +51,7 @@ const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
   { id: "difficulty", text: "Artenvergleich", icon: Gauge },
   { id: "pokedex", text: "Pokédex", icon: BookOpen },
   { id: "wishlist", text: "Wunschliste", icon: Heart },
+  { id: "friends", text: "Freunde", icon: Users },
   { id: "light", text: "Standorte und Licht", icon: Sun },
   { id: "review", text: "Prüfliste", icon: ClipboardCheck },
   { id: "operator", text: "Betreiber", icon: Building2 },
@@ -69,6 +72,7 @@ export const PATHS: Record<View, string> = {
   difficulty: "/difficulty",
   pokedex: "/pokedex",
   wishlist: "/wishlist",
+  friends: "/friends",
   light: "/light",
   review: "/review",
   operator: "/operator",

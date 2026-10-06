@@ -13,9 +13,7 @@
       "id": "color-contrast",
       "impact": "serious",
       "knoten": 1,
-      "ziel": [
-        "footer"
-      ]
+      "ziel": ["footer"]
     }
   ],
   "02-archivieren-formular": {
@@ -35,9 +33,7 @@
       "id": "color-contrast",
       "impact": "serious",
       "knoten": 1,
-      "ziel": [
-        "footer"
-      ]
+      "ziel": ["footer"]
     }
   ],
   "leererGrund": "Bitte nenne einen Grund, damit du später noch weißt, warum das Exemplar im Archiv ist.",
@@ -47,10 +43,7 @@
   },
   "nachAbbrechenKarten": 3,
   "meldung": "„Echeveria bmnqbfms – rot“ ist archiviert. Du findest es im Archiv und kannst es dort wiederherstellen.",
-  "kartenNachArchiv": [
-    "Echeveria bmnqbfms – blau",
-    "Ficus bmnqbfms"
-  ],
+  "kartenNachArchiv": ["Echeveria bmnqbfms – blau", "Ficus bmnqbfms"],
   "archivText": "ArchivArchivierte Exemplare fehlen in Liste und Auswertungen. Ihre Historie bleibt erhalten.Echeveria bmnqbfms – rotArt: Echeveria bmnqbfmsArchiviert am 03.10.2026Grund: verkauftWiederherstellen",
   "04-archiviert-mit-archiv": {
     "scrollBreite": 375,
@@ -61,9 +54,7 @@
       "id": "color-contrast",
       "impact": "serious",
       "knoten": 1,
-      "ziel": [
-        "footer"
-      ]
+      "ziel": ["footer"]
     }
   ],
   "archivZwei": [
@@ -75,13 +66,8 @@
     "kleineZiele": []
   },
   "nachReload": {
-    "karten": [
-      "Ficus bmnqbfms"
-    ],
-    "archiv": [
-      "Echeveria bmnqbfms – blau",
-      "Echeveria bmnqbfms – rot"
-    ]
+    "karten": ["Ficus bmnqbfms"],
+    "archiv": ["Echeveria bmnqbfms – blau", "Echeveria bmnqbfms – rot"]
   },
   "historie": {
     "id": "9c7e45b1-8bff-46da-85b4-e03eb6977e94",
@@ -128,13 +114,8 @@
   },
   "nachWiederherstellen": {
     "meldung": "„Echeveria bmnqbfms – rot“ ist wiederhergestellt und steht wieder im Bestand.",
-    "karten": [
-      "Echeveria bmnqbfms – rot",
-      "Ficus bmnqbfms"
-    ],
-    "archiv": [
-      "Echeveria bmnqbfms – blau"
-    ]
+    "karten": ["Echeveria bmnqbfms – rot", "Ficus bmnqbfms"],
+    "archiv": ["Echeveria bmnqbfms – blau"]
   },
   "wiederhergestellt": {
     "id": "9c7e45b1-8bff-46da-85b4-e03eb6977e94",

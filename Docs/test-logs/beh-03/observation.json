@@ -38,10 +38,7 @@
     }
   },
   "desktop-parallel": {
-    "statuses": [
-      200,
-      200
-    ],
+    "statuses": [200, 200],
     "same": true,
     "doneAt": "2026-10-04"
   },
@@ -102,10 +99,7 @@
     }
   },
   "mobile-parallel": {
-    "statuses": [
-      200,
-      200
-    ],
+    "statuses": [200, 200],
     "same": true,
     "doneAt": "2026-10-04"
   },

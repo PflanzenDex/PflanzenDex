@@ -54,23 +54,12 @@
           "horizontalScroll": false,
           "smallTargets": []
         },
-        "searchFicus": [
-          "Ficus elastica",
-          "Ficus lyrata"
-        ],
+        "searchFicus": ["Ficus elastica", "Ficus lyrata"],
         "countLine": "2 von 5 Arten",
-        "searchGerman": [
-          "Ficus lyrata"
-        ],
-        "searchFamily": [
-          "Opuntia microdasys"
-        ],
-        "searchGermanUmlaut": [
-          "Opuntia microdasys"
-        ],
-        "searchGenus": [
-          "Opuntia microdasys"
-        ],
+        "searchGerman": ["Ficus lyrata"],
+        "searchFamily": ["Opuntia microdasys"],
+        "searchGermanUmlaut": ["Opuntia microdasys"],
+        "searchGenus": ["Opuntia microdasys"],
         "noHit": true,
         "afterResetFocus": "search",
         "afterResetList": [
@@ -111,26 +100,15 @@
           "▾ Moraceae (Maulbeergewächse) · 2 / unbekannt",
           "▾ Familie unbekannt · 1 / unbekannt"
         ],
-        "groupsExpanded": [
-          "true",
-          "true",
-          "true",
-          "true"
-        ],
+        "groupsExpanded": ["true", "true", "true", "true"],
         "collapsedAfterSpace": "false",
-        "shownCollapsed": [
-          "Aloe vera",
-          "Opuntia microdasys",
-          "Citrus limon"
-        ],
+        "shownCollapsed": ["Aloe vera", "Opuntia microdasys", "Citrus limon"],
         "expandedAfterEnter": "true",
         "checksFamily": {
           "horizontalScroll": false,
           "smallTargets": []
         },
-        "groupsWithSearch": [
-          "▾ Moraceae (Maulbeergewächse) · 2 / unbekannt"
-        ]
+        "groupsWithSearch": ["▾ Moraceae (Maulbeergewächse) · 2 / unbekannt"]
       }
     },
     {
@@ -180,23 +158,12 @@
           "horizontalScroll": false,
           "smallTargets": []
         },
-        "searchFicus": [
-          "Ficus elastica",
-          "Ficus lyrata"
-        ],
+        "searchFicus": ["Ficus elastica", "Ficus lyrata"],
         "countLine": "2 von 5 Arten",
-        "searchGerman": [
-          "Ficus lyrata"
-        ],
-        "searchFamily": [
-          "Opuntia microdasys"
-        ],
-        "searchGermanUmlaut": [
-          "Opuntia microdasys"
-        ],
-        "searchGenus": [
-          "Opuntia microdasys"
-        ],
+        "searchGerman": ["Ficus lyrata"],
+        "searchFamily": ["Opuntia microdasys"],
+        "searchGermanUmlaut": ["Opuntia microdasys"],
+        "searchGenus": ["Opuntia microdasys"],
         "noHit": true,
         "afterResetFocus": "search",
         "afterResetList": [
@@ -237,26 +204,15 @@
           "▾ Moraceae (Maulbeergewächse) · 2 / unbekannt",
           "▾ Familie unbekannt · 1 / unbekannt"
         ],
-        "groupsExpanded": [
-          "true",
-          "true",
-          "true",
-          "true"
-        ],
+        "groupsExpanded": ["true", "true", "true", "true"],
         "collapsedAfterSpace": "false",
-        "shownCollapsed": [
-          "Aloe vera",
-          "Opuntia microdasys",
-          "Citrus limon"
-        ],
+        "shownCollapsed": ["Aloe vera", "Opuntia microdasys", "Citrus limon"],
         "expandedAfterEnter": "true",
         "checksFamily": {
           "horizontalScroll": false,
           "smallTargets": []
         },
-        "groupsWithSearch": [
-          "▾ Moraceae (Maulbeergewächse) · 2 / unbekannt"
-        ]
+        "groupsWithSearch": ["▾ Moraceae (Maulbeergewächse) · 2 / unbekannt"]
       }
     }
   ],
@@ -305,23 +261,12 @@
       "horizontalScroll": false,
       "smallTargets": []
     },
-    "searchFicus": [
-      "Ficus elastica",
-      "Ficus lyrata"
-    ],
+    "searchFicus": ["Ficus elastica", "Ficus lyrata"],
     "countLine": "2 von 5 Arten",
-    "searchGerman": [
-      "Ficus lyrata"
-    ],
-    "searchFamily": [
-      "Opuntia microdasys"
-    ],
-    "searchGermanUmlaut": [
-      "Opuntia microdasys"
-    ],
-    "searchGenus": [
-      "Opuntia microdasys"
-    ],
+    "searchGerman": ["Ficus lyrata"],
+    "searchFamily": ["Opuntia microdasys"],
+    "searchGermanUmlaut": ["Opuntia microdasys"],
+    "searchGenus": ["Opuntia microdasys"],
     "noHit": true,
     "afterResetFocus": "search",
     "afterResetList": [
@@ -362,26 +307,15 @@
       "▾ Moraceae (Maulbeergewächse) · 2 / unbekannt",
       "▾ Familie unbekannt · 1 / unbekannt"
     ],
-    "groupsExpanded": [
-      "true",
-      "true",
-      "true",
-      "true"
-    ],
+    "groupsExpanded": ["true", "true", "true", "true"],
     "collapsedAfterSpace": "false",
-    "shownCollapsed": [
-      "Aloe vera",
-      "Opuntia microdasys",
-      "Citrus limon"
-    ],
+    "shownCollapsed": ["Aloe vera", "Opuntia microdasys", "Citrus limon"],
     "expandedAfterEnter": "true",
     "checksFamily": {
       "horizontalScroll": false,
       "smallTargets": []
     },
-    "groupsWithSearch": [
-      "▾ Moraceae (Maulbeergewächse) · 2 / unbekannt"
-    ]
+    "groupsWithSearch": ["▾ Moraceae (Maulbeergewächse) · 2 / unbekannt"]
   },
   "mobile": {
     "view": "mobile",
@@ -428,23 +362,12 @@
       "horizontalScroll": false,
       "smallTargets": []
     },
-    "searchFicus": [
-      "Ficus elastica",
-      "Ficus lyrata"
-    ],
+    "searchFicus": ["Ficus elastica", "Ficus lyrata"],
     "countLine": "2 von 5 Arten",
-    "searchGerman": [
-      "Ficus lyrata"
-    ],
-    "searchFamily": [
-      "Opuntia microdasys"
-    ],
-    "searchGermanUmlaut": [
-      "Opuntia microdasys"
-    ],
-    "searchGenus": [
-      "Opuntia microdasys"
-    ],
+    "searchGerman": ["Ficus lyrata"],
+    "searchFamily": ["Opuntia microdasys"],
+    "searchGermanUmlaut": ["Opuntia microdasys"],
+    "searchGenus": ["Opuntia microdasys"],
     "noHit": true,
     "afterResetFocus": "search",
     "afterResetList": [
@@ -485,26 +408,15 @@
       "▾ Moraceae (Maulbeergewächse) · 2 / unbekannt",
       "▾ Familie unbekannt · 1 / unbekannt"
     ],
-    "groupsExpanded": [
-      "true",
-      "true",
-      "true",
-      "true"
-    ],
+    "groupsExpanded": ["true", "true", "true", "true"],
     "collapsedAfterSpace": "false",
-    "shownCollapsed": [
-      "Aloe vera",
-      "Opuntia microdasys",
-      "Citrus limon"
-    ],
+    "shownCollapsed": ["Aloe vera", "Opuntia microdasys", "Citrus limon"],
     "expandedAfterEnter": "true",
     "checksFamily": {
       "horizontalScroll": false,
       "smallTargets": []
     },
-    "groupsWithSearch": [
-      "▾ Moraceae (Maulbeergewächse) · 2 / unbekannt"
-    ]
+    "groupsWithSearch": ["▾ Moraceae (Maulbeergewächse) · 2 / unbekannt"]
   },
   "otherAccount": {
     "text": "Noch keine Art gefangen. Lege ein Exemplar mit bestimmter Art an, dann zählt es.",

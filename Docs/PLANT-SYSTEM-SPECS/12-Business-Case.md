@@ -26,6 +26,7 @@ Delimitation: beginner apps (watering reminder, plant identification) serve a di
 ### Stage 1 · For us (goal: used permanently, costs ≈ 0)
 
 Success criteria (assumptions, confirm before starting):
+
 - All three use the system **at least weekly**, also without a reminder.
 - At least **one real swap** runs completely through the system (offer → acceptance → handover).
 - The feed "Neu bei Freunden" is opened without anyone reminding of it.
@@ -44,11 +45,11 @@ Running costs (to be determined, not estimated): hosting of the hub, domain, sto
 
 Revenue sources in order of suitability:
 
-| Source | Fit | Note |
-|---|---|---|
-| **Voluntary contribution / small subscription** ("supporter") | fits a small community | Return: more photo storage, sensor integration (MON), export. Core functions stay free, otherwise swapping falls away. |
-| **Affiliate links** (lamps, substrate, sensors) | fits: the app knows lamp demand and wishlist, from epic EQU also the device stock | only label and only for things the app recommends anyway; rules in `13-Equipment-and-Affiliate.md` (FR-EQU-03…10) |
-| **Shop/nursery partners** via "Fehlt dir" species | fits, needs user numbers | only from measurable traffic |
+| Source                                                        | Fit                                                                               | Note                                                                                                                   |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Voluntary contribution / small subscription** ("supporter") | fits a small community                                                            | Return: more photo storage, sensor integration (MON), export. Core functions stay free, otherwise swapping falls away. |
+| **Affiliate links** (lamps, substrate, sensors)               | fits: the app knows lamp demand and wishlist, from epic EQU also the device stock | only label and only for things the app recommends anyway; rules in `13-Equipment-and-Affiliate.md` (FR-EQU-03…10)      |
+| **Shop/nursery partners** via "Fehlt dir" species             | fits, needs user numbers                                                          | only from measurable traffic                                                                                           |
 
 Break-even calculation (placeholder): `paying_users × price × (1 − fees) ≥ running_costs`. The numbers are measured in stage 1, not assumed.
 
@@ -62,14 +63,14 @@ Only possible if user numbers and engagement are far above stage 2. Options, eac
 
 ## Risks
 
-| Risk | Effect | Countermeasure |
-|---|---|---|
-| Network effect missing (feed empty with 1–2 friends) | Social seems dead | Start only with the circle of friends; value also without friends (Pokédex, care) |
-| Target group pays little | Stage 2 fails | Keep costs low, no subscription compulsion for core functions |
-| Entry hurdle Obsidian/Dataview | Growth stays limited to the tech-savvy | Decide on an own interface only after stage 1 |
-| Privacy and location/photos | Loss of trust | Private by default (FR-SOZ-01) |
-| Swapping legally (species protection, plant health) | Liability | Notices (FR-SOZ-09), no shipping/selling in stages 1–2 |
-| Operation too costly for few users | Project fizzles out | Choose the simplest exchange layer, build nothing that stage 1 does not need |
+| Risk                                                 | Effect                                 | Countermeasure                                                                    |
+| ---------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------- |
+| Network effect missing (feed empty with 1–2 friends) | Social seems dead                      | Start only with the circle of friends; value also without friends (Pokédex, care) |
+| Target group pays little                             | Stage 2 fails                          | Keep costs low, no subscription compulsion for core functions                     |
+| Entry hurdle Obsidian/Dataview                       | Growth stays limited to the tech-savvy | Decide on an own interface only after stage 1                                     |
+| Privacy and location/photos                          | Loss of trust                          | Private by default (FR-SOZ-01)                                                    |
+| Swapping legally (species protection, plant health)  | Liability                              | Notices (FR-SOZ-09), no shipping/selling in stages 1–2                            |
+| Operation too costly for few users                   | Project fizzles out                    | Choose the simplest exchange layer, build nothing that stage 1 does not need      |
 
 ## Decisions that determine this case
 
@@ -80,10 +81,10 @@ Only possible if user numbers and engagement are far above stage 2. Options, eac
 
 ## Metrics
 
-| Metric | Stage | How measured |
-|---|---|---|
-| Weekly active users | 1 | Hub accesses or dashboard openings |
-| Completed swaps | 1, 2 | `Tausch_Id` with status `übergeben` |
-| New users without an invitation from us | 2 | Hub sign-ups |
-| Paying users, running costs | 2 | Payment provider, invoices |
-| Return rate after 4 weeks | 2, 3 | Hub data |
+| Metric                                  | Stage | How measured                        |
+| --------------------------------------- | ----- | ----------------------------------- |
+| Weekly active users                     | 1     | Hub accesses or dashboard openings  |
+| Completed swaps                         | 1, 2  | `Tausch_Id` with status `übergeben` |
+| New users without an invitation from us | 2     | Hub sign-ups                        |
+| Paying users, running costs             | 2     | Payment provider, invoices          |
+| Return rate after 4 weeks               | 2, 3  | Hub data                            |

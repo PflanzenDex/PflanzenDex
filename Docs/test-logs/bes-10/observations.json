@@ -1,21 +1,10 @@
 {
   "targetApproved": 200,
-  "proposed": [
-    201,
-    201,
-    201,
-    201
-  ],
-  "specimensOfC": [
-    201,
-    201
-  ],
+  "proposed": [201, 201, 201, 201],
+  "specimensOfC": [201, 201],
   "profileOfC": 200,
   "profileOfTarget": 200,
-  "maraBeforeSpecimenSpecies": [
-    "C",
-    "C"
-  ],
+  "maraBeforeSpecimenSpecies": ["C", "C"],
   "desktop_maraHasReviewTab": 0,
   "desktop_maraReviewApi": 403,
   "desktop_maraApproveApi": 403,
@@ -37,16 +26,10 @@
   "approveMessage": "Vorschlag freigegeben. Die Art ist jetzt für alle sichtbar.",
   "benSeesA": 200,
   "rejectDisabledWithoutReason": true,
-  "maraSeesReason": [
-    "rejected",
-    "Die Quelle belegt den Lichtbedarf nicht."
-  ],
+  "maraSeesReason": ["rejected", "Die Quelle belegt den Lichtbedarf nicht."],
   "benSeesD": 404,
   "mergeMessage": "Vorschlag zusammengeführt. 2 Exemplare übernommen; 1 Pflegeprofil nicht übernommen, weil der Ersteller dafür schon einen Eintrag bei der Zielart hat.",
-  "maraSpecimenSpeciesAfter": [
-    "target",
-    "target"
-  ],
+  "maraSpecimenSpeciesAfter": ["target", "target"],
   "maraProfilesAfter": [
     {
       "name": "Dein zusammengeführter Vorschlag",
@@ -69,10 +52,7 @@
   "axe_careprofile_mobile": [],
   "mobile_careProfileHScroll": false,
   "maraRejectionHintVisible": 1,
-  "mobileSeed": [
-    201,
-    201
-  ],
+  "mobileSeed": [201, 201],
   "axe_list_mobile": [],
   "mobileHorizontalScroll": false,
   "mobileSmallTargets": []

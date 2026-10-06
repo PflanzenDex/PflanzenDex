@@ -10,13 +10,13 @@ Legend: ✅ as expected · ⚠️ works, but with a finding · ❌ error · ⏭�
 
 Species and expectations (dates `MM-DD`; "today" in Berlin was `10-03`, in Auckland `10-04` because of the 11-hour difference at the time of the run, `observation.json`, key `timezone`):
 
-| Species (as typed) | Dormancy period | Expected in Berlin | Expected in Auckland |
-|---|---|---|---|
-| Winteria crossingyear | 10-01 … 03-15 (crosses the new year) | Ruhephase | Ruhephase |
-| Summeria shortrest | 05-01 … 08-31 | Wachstumsphase | Wachstumsphase |
-| Nopausa evergrowing | none | not listed | not listed |
-| Hodie startsandends | 10-03 … 10-03 (today in Berlin) | Ruhephase | Wachstumsphase |
-| Cras onlytomorrow | 10-04 … 10-04 (tomorrow in Berlin) | Wachstumsphase | Ruhephase |
+| Species (as typed)    | Dormancy period                      | Expected in Berlin | Expected in Auckland |
+| --------------------- | ------------------------------------ | ------------------ | -------------------- |
+| Winteria crossingyear | 10-01 … 03-15 (crosses the new year) | Ruhephase          | Ruhephase            |
+| Summeria shortrest    | 05-01 … 08-31                        | Wachstumsphase     | Wachstumsphase       |
+| Nopausa evergrowing   | none                                 | not listed         | not listed           |
+| Hodie startsandends   | 10-03 … 10-03 (today in Berlin)      | Ruhephase          | Wachstumsphase       |
+| Cras onlytomorrow     | 10-04 … 10-04 (tomorrow in Berlin)   | Wachstumsphase     | Ruhephase            |
 
 Plus a sixth species "Archivia willbearchived" (dormancy 10-01 … 03-15) whose specimen was archived through "Archivieren" before the list was read.
 

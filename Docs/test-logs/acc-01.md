@@ -15,6 +15,7 @@ Note: the code was renamed to English after this test (e.g. column `subjekt` is 
 **Expected:** `make ci` runs green (lint, types, boundaries, format, tests, build).
 
 **Observed:**
+
 - ✅ `make ci` exit code 0 with its own test database. Tests: api 15, core 31, db 19, web 12, check scripts 17.
 - ✅ The tests run without Keycloak (token with a locally generated key; account routes against real PostgreSQL).
 - ⚠️ In CI (GitHub) no Keycloak runs: the flow below is proven **only manually**, not automated.
@@ -24,6 +25,7 @@ Note: the code was renamed to English after this test (e.g. column `subjekt` is 
 **Expected:** start → "Konto anlegen" → registration form of the sign-in service (email, name), the password is not processed by us; after registration the person stands signed in in the app.
 
 **Observed:**
+
 - ✅ Start page with "Konto anlegen" and "Anmelden" (`01-start-mobile.png`, `01-start-desktop.png`).
 - ✅ "Konto anlegen" opens the registration directly at Keycloak (`prompt=create`), German thanks to `ui_locales=de` (`02-registration-mobile.png`, `02-registration-desktop.png`).
 - ⚠️ Without `ui_locales` the page appeared in English (browser language); fixed with the parameter.
@@ -38,6 +40,7 @@ Note: the code was renamed to English after this test (e.g. column `subjekt` is 
 **Expected:** the account receives a confirmation mail; without confirmation sharing is blocked.
 
 **Observed:**
+
 - ✅ After "Registrieren" Keycloak shows "E-Mail verifizieren" (`03-confirm-email-mobile.png`); the mail is in Mailpit with a link valid for 5 minutes; the link leads to the password assignment and then into the app.
 - ✅ Control check: `emailVerified` set to `false` via the admin API, sign-in → Keycloak demands the confirmation again and does not let the person into the app (`13-confirm-email-again-mobile.png`). After clicking the new link they are signed in.
 - ✅ API: a token with `email_verified: false` yields `emailBestaetigt: false` and `darfMitFreundenTeilen: false`; the barrier `nurMitBestaetigterEmail` answers `403 email_unbestaetigt` (API test with real database).
@@ -49,6 +52,7 @@ Note: the code was renamed to English after this test (e.g. column `subjekt` is 
 **Expected:** reloading the page stays signed in; "Auf allen Geräten abmelden" ends all sessions.
 
 **Observed:**
+
 - ✅ Reloading the page: still signed in (token in browser storage, renewal via refresh token).
 - ✅ "Abmelden" ends the session at Keycloak and in the app; afterwards "Du bist abgemeldet." (`07-signed-out-mobile.png`).
 - ✅ "Auf allen Geräten abmelden" (second browser context as a second device): before 3 sessions in the account API, afterwards "Du bist auf allen Geräten abgemeldet." (`10-signed-out-everywhere-mobile.png`). The refresh token of the second device then yields `invalid_grant`.
@@ -61,6 +65,7 @@ Note: the code was renamed to English after this test (e.g. column `subjekt` is 
 **Expected:** known email with wrong password and unknown email show the same message.
 
 **Observed:**
+
 - ✅ Both cases: "Ungültiger Benutzername oder Passwort." (text identical, `09-wrong-login-desktop.png` for the known case; login page `08-login-desktop.png`, `12-login-mobile.png`).
 - ⏭️ No measurement of response times; brute-force protection is switched on in the realm (5 failed attempts), the lockout itself was not triggered.
 
@@ -69,6 +74,7 @@ Note: the code was renamed to English after this test (e.g. column `subjekt` is 
 **Expected:** without or with an invalid token 401; a valid token sets the account via `mitKonto`; foreign accounts are invisible.
 
 **Observed:**
+
 - ✅ `curl /konto` without token: `401`, `WWW-Authenticate: Bearer`, answer `nicht_angemeldet` without a reason.
 - ✅ Tests with a local key: wrong issuer, wrong audience, expired, foreign signature, `alg: none` and nonsense are rejected.
 - ✅ With a real Keycloak token the app delivers the own account (section 1).

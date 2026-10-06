@@ -1,132 +1,132 @@
 [
- {
-  "k": "layout bestand-leer desktop",
-  "v": {
-   "scrollW": 1440,
-   "innerW": 1440,
-   "klein": []
+  {
+    "k": "layout bestand-leer desktop",
+    "v": {
+      "scrollW": 1440,
+      "innerW": 1440,
+      "klein": []
+    }
+  },
+  {
+    "k": "layout bestand-leer mobil",
+    "v": {
+      "scrollW": 375,
+      "innerW": 375,
+      "klein": []
+    }
+  },
+  {
+    "k": "name-vorschau",
+    "v": "Name: Bogenhanf"
+  },
+  {
+    "k": "pflichtfelder",
+    "v": 0
+  },
+  {
+    "k": "layout formular desktop",
+    "v": {
+      "scrollW": 1440,
+      "innerW": 1440,
+      "klein": []
+    }
+  },
+  {
+    "k": "layout formular mobil",
+    "v": {
+      "scrollW": 375,
+      "innerW": 375,
+      "klein": []
+    }
+  },
+  {
+    "k": "angelegt-banner",
+    "v": "Exemplar „Bogenhanf“ ist angelegt. Der Standort ist unbekannt, denn ein Soll-Standort steht erst mit den Pflegephasen fest."
+  },
+  {
+    "k": "liste-1",
+    "v": "Bogenhanf\n\nStandort: unbekannt\n\nGefangen am 03.10.2026\n\nnoch keine Messung · keine Behandlung"
+  },
+  {
+    "k": "erwartetes-datum-berlin",
+    "v": "03.10.2026"
+  },
+  {
+    "k": "standort-anlegen",
+    "v": 201
+  },
+  {
+    "k": "dublette-alert",
+    "v": "Ein Exemplar mit diesem Namen gibt es schon. Gib ein Kennzeichen an (zum Beispiel eine Farbe), damit du die Töpfe unterscheiden kannst.\n\nSchon vorhanden: Bogenhanf\n\nMit einem Kennzeichen heißt das neue Exemplar dann „Bogenhanf – Kennzeichen“."
+  },
+  {
+    "k": "anzahl-nach-dublette",
+    "v": 1
+  },
+  {
+    "k": "name-vorschau-2",
+    "v": "Name: Bogenhanf – rot"
+  },
+  {
+    "k": "liste-2",
+    "v": [
+      "Bogenhanf\n\nStandort: unbekannt\n\nGefangen am 03.10.2026\n\nnoch keine Messung · keine Behandlung",
+      "Bogenhanf – rot\n\nStandort: Regal Süd\n\nGefangen am 03.10.2026\n\nnoch keine Messung · keine Behandlung"
+    ]
+  },
+  {
+    "k": "layout bestand-zwei desktop",
+    "v": {
+      "scrollW": 1440,
+      "innerW": 1440,
+      "klein": []
+    }
+  },
+  {
+    "k": "layout bestand-zwei mobil",
+    "v": {
+      "scrollW": 375,
+      "innerW": 375,
+      "klein": []
+    }
+  },
+  {
+    "k": "nach-reload",
+    "v": 2
+  },
+  {
+    "k": "zeitzone",
+    "v": {
+      "gefangenAm": "2026-10-04",
+      "erwartetKiritimati": "2026-10-04",
+      "utc": "2026-10-03"
+    }
+  },
+  {
+    "k": "falsche-zeitzone",
+    "v": {
+      "status": 400,
+      "code": "eingabe.ungueltig"
+    }
+  },
+  {
+    "k": "konsole-fehler-mara",
+    "v": [
+      "Failed to load resource: the server responded with a status of 409 (Conflict)"
+    ]
+  },
+  {
+    "k": "ben-liest-maras-exemplar",
+    "v": {
+      "status": 404,
+      "code": "exemplar.nicht_gefunden"
+    }
+  },
+  {
+    "k": "ben-waehlt-maras-private-art",
+    "v": {
+      "status": 404,
+      "code": "art.nicht_gefunden"
+    }
   }
- },
- {
-  "k": "layout bestand-leer mobil",
-  "v": {
-   "scrollW": 375,
-   "innerW": 375,
-   "klein": []
-  }
- },
- {
-  "k": "name-vorschau",
-  "v": "Name: Bogenhanf"
- },
- {
-  "k": "pflichtfelder",
-  "v": 0
- },
- {
-  "k": "layout formular desktop",
-  "v": {
-   "scrollW": 1440,
-   "innerW": 1440,
-   "klein": []
-  }
- },
- {
-  "k": "layout formular mobil",
-  "v": {
-   "scrollW": 375,
-   "innerW": 375,
-   "klein": []
-  }
- },
- {
-  "k": "angelegt-banner",
-  "v": "Exemplar „Bogenhanf“ ist angelegt. Der Standort ist unbekannt, denn ein Soll-Standort steht erst mit den Pflegephasen fest."
- },
- {
-  "k": "liste-1",
-  "v": "Bogenhanf\n\nStandort: unbekannt\n\nGefangen am 03.10.2026\n\nnoch keine Messung · keine Behandlung"
- },
- {
-  "k": "erwartetes-datum-berlin",
-  "v": "03.10.2026"
- },
- {
-  "k": "standort-anlegen",
-  "v": 201
- },
- {
-  "k": "dublette-alert",
-  "v": "Ein Exemplar mit diesem Namen gibt es schon. Gib ein Kennzeichen an (zum Beispiel eine Farbe), damit du die Töpfe unterscheiden kannst.\n\nSchon vorhanden: Bogenhanf\n\nMit einem Kennzeichen heißt das neue Exemplar dann „Bogenhanf – Kennzeichen“."
- },
- {
-  "k": "anzahl-nach-dublette",
-  "v": 1
- },
- {
-  "k": "name-vorschau-2",
-  "v": "Name: Bogenhanf – rot"
- },
- {
-  "k": "liste-2",
-  "v": [
-   "Bogenhanf\n\nStandort: unbekannt\n\nGefangen am 03.10.2026\n\nnoch keine Messung · keine Behandlung",
-   "Bogenhanf – rot\n\nStandort: Regal Süd\n\nGefangen am 03.10.2026\n\nnoch keine Messung · keine Behandlung"
-  ]
- },
- {
-  "k": "layout bestand-zwei desktop",
-  "v": {
-   "scrollW": 1440,
-   "innerW": 1440,
-   "klein": []
-  }
- },
- {
-  "k": "layout bestand-zwei mobil",
-  "v": {
-   "scrollW": 375,
-   "innerW": 375,
-   "klein": []
-  }
- },
- {
-  "k": "nach-reload",
-  "v": 2
- },
- {
-  "k": "zeitzone",
-  "v": {
-   "gefangenAm": "2026-10-04",
-   "erwartetKiritimati": "2026-10-04",
-   "utc": "2026-10-03"
-  }
- },
- {
-  "k": "falsche-zeitzone",
-  "v": {
-   "status": 400,
-   "code": "eingabe.ungueltig"
-  }
- },
- {
-  "k": "konsole-fehler-mara",
-  "v": [
-   "Failed to load resource: the server responded with a status of 409 (Conflict)"
-  ]
- },
- {
-  "k": "ben-liest-maras-exemplar",
-  "v": {
-   "status": 404,
-   "code": "exemplar.nicht_gefunden"
-  }
- },
- {
-  "k": "ben-waehlt-maras-private-art",
-  "v": {
-   "status": 404,
-   "code": "art.nicht_gefunden"
-  }
- }
 ]

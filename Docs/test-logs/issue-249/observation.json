@@ -1,46 +1,46 @@
 [
- {
-  "vw": 1440,
-  "scheme": "light",
-  "color": {
-   "color": "rgb(79, 99, 85)",
-   "opacity": "1",
-   "text": "Version unbekannt"
+  {
+    "vw": 1440,
+    "scheme": "light",
+    "color": {
+      "color": "rgb(79, 99, 85)",
+      "opacity": "1",
+      "text": "Version unbekannt"
+    },
+    "violations": [],
+    "contrast": []
   },
-  "violations": [],
-  "contrast": []
- },
- {
-  "vw": 1440,
-  "scheme": "dark",
-  "color": {
-   "color": "rgb(169, 189, 174)",
-   "opacity": "1",
-   "text": "Version unbekannt"
+  {
+    "vw": 1440,
+    "scheme": "dark",
+    "color": {
+      "color": "rgb(169, 189, 174)",
+      "opacity": "1",
+      "text": "Version unbekannt"
+    },
+    "violations": [],
+    "contrast": []
   },
-  "violations": [],
-  "contrast": []
- },
- {
-  "vw": 375,
-  "scheme": "light",
-  "color": {
-   "color": "rgb(79, 99, 85)",
-   "opacity": "1",
-   "text": "Version unbekannt"
+  {
+    "vw": 375,
+    "scheme": "light",
+    "color": {
+      "color": "rgb(79, 99, 85)",
+      "opacity": "1",
+      "text": "Version unbekannt"
+    },
+    "violations": [],
+    "contrast": []
   },
-  "violations": [],
-  "contrast": []
- },
- {
-  "vw": 375,
-  "scheme": "dark",
-  "color": {
-   "color": "rgb(169, 189, 174)",
-   "opacity": "1",
-   "text": "Version unbekannt"
-  },
-  "violations": [],
-  "contrast": []
- }
+  {
+    "vw": 375,
+    "scheme": "dark",
+    "color": {
+      "color": "rgb(169, 189, 174)",
+      "opacity": "1",
+      "text": "Version unbekannt"
+    },
+    "violations": [],
+    "contrast": []
+  }
 ]

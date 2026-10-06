@@ -52,12 +52,7 @@
     "scrollW": 375,
     "clientW": 375
   },
-  "zones-cells": [
-    "unbekannt",
-    "unbekannt",
-    "unbekannt",
-    "unbekannt"
-  ],
+  "zones-cells": ["unbekannt", "unbekannt", "unbekannt", "unbekannt"],
   "other-account-rows": 0,
   "other-account-text": "Artenvergleich\n\nNoch keine Art mit aktivem Exemplar: Lege im Bestand ein Exemplar an, dann erscheint seine Art hier.",
   "mobil-small-targets": []

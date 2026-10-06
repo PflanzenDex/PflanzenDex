@@ -53,7 +53,9 @@ beforeAll(async () => {
   for (const sub of [subA, subB, subC]) await call(sub, "GET", "/account");
 });
 afterAll(async () => {
-  await pool.query("delete from account where subject = any($1)", [[subA, subB, subC]]);
+  await pool.query("delete from account where subject = any($1)", [
+    [subA, subB, subC, ...Object.keys(NAMES).filter((k) => k.startsWith("soz2-"))],
+  ]);
   await pool.end();
 });
 
@@ -141,5 +143,64 @@ describe("US-SOZ-01 invite, redeem, request", () => {
       status: 409,
       body: { error: { code: "friend.code_expired" } },
     });
+  });
+});
+
+describe("US-SOZ-02 answer through the API", () => {
+  const request = async (inviter: string, redeemer: string) => {
+    const { code } = await invite(inviter);
+    await redeem(redeemer, code);
+    const incoming = (await requests(inviter)).incoming as { id: string; otherName: string }[];
+    return incoming.find((r) => r.otherName === NAMES[redeemer]) as { id: string };
+  };
+  const answer = (sub: string | null, id: string, decision: unknown, key?: string | null) =>
+    call(sub, "POST", `/friends/requests/${id}/answer`, { decision }, key);
+  const subD = `soz2-${randomUUID()}`;
+  const subE = `soz2-${randomUUID()}`;
+  NAMES[subD] = "Dora";
+  NAMES[subE] = "Emil";
+
+  it("US-SOZ-02 answer without a token: 401, without a valid decision: 400", async () => {
+    expect((await answer(null, randomUUID(), "accept")).status).toBe(401);
+    expect((await answer(subA, randomUUID(), "maybe")).status).toBe(400);
+  });
+
+  it("US-SOZ-02 accepting makes both sides friends and the request disappears", async () => {
+    await call(subD, "GET", "/account");
+    await call(subE, "GET", "/account");
+    const r = await request(subD, subE);
+    expect(await answer(subD, r.id, "accept")).toMatchObject({
+      status: 200,
+      body: { status: "confirmed" },
+    });
+    expect((await call(subD, "GET", "/friends")).body["friends"]).toMatchObject([{ name: "Emil" }]);
+    expect((await call(subE, "GET", "/friends")).body["friends"]).toMatchObject([{ name: "Dora" }]);
+    expect(await requests(subD)).toEqual({ incoming: [], outgoing: [] });
+    expect(await answer(subD, r.id, "decline")).toMatchObject({
+      status: 409,
+      body: { error: { code: "friend.request_answered" } },
+    });
+  });
+
+  it("US-SOZ-02 declining shows the sender 'declined' and nothing to the receiver; a third account gets 404", async () => {
+    const r = await request(subA, subC);
+    expect((await answer(subB, r.id, "accept")).status).toBe(404);
+    expect(await answer(subA, r.id, "decline")).toMatchObject({
+      status: 200,
+      body: { status: "declined" },
+    });
+    expect((await requests(subC)).outgoing).toEqual(
+      expect.arrayContaining([expect.objectContaining({ otherName: "Anna", status: "declined" })]),
+    );
+    expect((await requests(subA)).incoming).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ otherName: "Cleo" })]),
+    );
+    expect((await call(subC, "GET", "/friends")).body["friends"]).toEqual([]);
+  });
+
+  it("US-SOZ-02 the sender cannot answer its own request: 404", async () => {
+    const { code } = await invite(subE);
+    const sent = await redeem(subB, code);
+    expect((await answer(subB, sent.body["id"], "accept")).status).toBe(404);
   });
 });
