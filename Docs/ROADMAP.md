@@ -19,16 +19,16 @@ As of: 2026-10-03 · generated from the GitHub tickets (source: issues, mileston
 
 Order per spec (`16`): R0 → R1 → … → R6. **No dates:** the specs contain no effort basis, and P-08 forbids invented numbers. The sizes S/M/L/XL are rough assumptions and serve only for ordering.
 
-| Milestone                           | Tickets | Stories | Decisions | Enablers | Exit criterion                                                                                                                                                                               |
-| ----------------------------------- | ------- | ------- | --------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **R0 Foundation**                   | 38      | 27      | 6         | 5        | The three can create and view locations, species and specimens in the app; gates (CI, structure, boundaries, spec check) stand before the first domain code (18/19, "Implementation order"). |
-| **R1 Parity**                       | 52      | 42      | 3         | 7        | Everything the vault can do today is in the app; all three can switch. Usable on mobile (PWA). Parity is the condition for stage 1 (13).                                                     |
-| **R2 Social**                       | 8       | 8       | 0         | 0        | Friends see shared new acquisitions; tenant and sharing gates stand before the first friend sees anything.                                                                                   |
-| **R3 Swapping and reminders**       | 23      | 21      | 2         | 0        | First real swap runs atomically via the app; reminders and Discover engage the users.                                                                                                        |
-| **R4 AI access**                    | 14      | 12      | 1         | 1        | Input without forms via the own AI client; rights, draft duty and rate limits are enforced server-side before the first connection is released.                                              |
-| **R5 Equipment**                    | 12      | 12      | 0         | 0        | Equipment and need; recommendations only after legal review and with labeling.                                                                                                               |
-| **R6 Sensors**                      | 3       | 2       | 1         | 0        | Sensor pilot on a few plants, after the hardware decision E-09.                                                                                                                              |
-| **Stage 2 – opening for externals** | 4       | 0       | 3         | 1        | Precondition before externals get access: law and privacy, contribution model, photo virus scan.                                                                                             |
+| Milestone | Tickets | Stories | Decisions | Enablers | Exit criterion |
+|---|---|---|---|---|---|
+| **R0 Foundation** | 38 | 27 | 6 | 5 | The three can create and view locations, species and specimens in the app; gates (CI, structure, boundaries, spec check) stand before the first domain code (18/19, "Implementation order"). |
+| **R1 Parity** | 52 | 42 | 3 | 7 | Everything the vault can do today is in the app; all three can switch. Usable on mobile (PWA). Parity is the condition for stage 1 (13). |
+| **R2 Social** | 8 | 8 | 0 | 0 | Friends see shared new acquisitions; tenant and sharing gates stand before the first friend sees anything. |
+| **R3 Swapping and reminders** | 23 | 21 | 2 | 0 | First real swap runs atomically via the app; reminders and Discover engage the users. |
+| **R4 AI access** | 14 | 12 | 1 | 1 | Input without forms via the own AI client; rights, draft duty and rate limits are enforced server-side before the first connection is released. |
+| **R5 Equipment** | 12 | 12 | 0 | 0 | Equipment and need; recommendations only after legal review and with labeling. |
+| **R6 Sensors** | 3 | 2 | 1 | 0 | Sensor pilot on a few plants, after the hardware decision E-09. |
+| **Stage 2 – opening for externals** | 4 | 0 | 3 | 1 | Precondition before externals get access: law and privacy, contribution model, photo virus scan. |
 
 Without milestone: [#173](https://github.com/PflanzenDex/PflanzenDex/issues/173) `E-19`, [#37](https://github.com/PflanzenDex/PflanzenDex/issues/37) `E-18`, [#26](https://github.com/PflanzenDex/PflanzenDex/issues/26) `E-07` (stage 3 or later).
 
@@ -44,47 +44,47 @@ The longest chain in the whole graph has 14 steps and ends at [#105](https://git
 
 Tickets that most others transitively wait for:
 
-| Rank | Ticket                                                                                                                                           | waiting tickets | Milestone     |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------- | ------------- |
-| 1    | [#20](https://github.com/PflanzenDex/PflanzenDex/issues/20) `E-01` Technology and hosting                                                        | 135             | R0 Foundation |
-| 2    | [#24](https://github.com/PflanzenDex/PflanzenDex/issues/24) `E-05` Code location (/app in the same repo)                                         | 131             | R0 Foundation |
-| 3    | [#38](https://github.com/PflanzenDex/PflanzenDex/issues/38) `TE-01` Create the monorepo scaffold under /app (core / api / web)                   | 130             | R0 Foundation |
-| 4    | [#39](https://github.com/PflanzenDex/PflanzenDex/issues/39) `TE-02` Database foundation with account id, row-level rules and tenant test harness | 109             | R0 Foundation |
-| 5    | [#41](https://github.com/PflanzenDex/PflanzenDex/issues/41) `TE-04` Layer of validating operations (idempotency, error codes)                    | 102             | R0 Foundation |
-| 6    | [#22](https://github.com/PflanzenDex/PflanzenDex/issues/22) `E-03` Sign-in method and service                                                    | 98              | R0 Foundation |
-| 7    | [#52](https://github.com/PflanzenDex/PflanzenDex/issues/52) `ACC-01` Register and sign in                                                        | 96              | R0 Foundation |
-| 8    | [#45](https://github.com/PflanzenDex/PflanzenDex/issues/45) `TE-08` Operator role and catalog review workflow                                    | 93              | R0 Foundation |
-| 9    | [#21](https://github.com/PflanzenDex/PflanzenDex/issues/21) `E-02` Species catalog: shared, review, deviations                                   | 89              | R0 Foundation |
-| 10   | [#57](https://github.com/PflanzenDex/PflanzenDex/issues/57) `BES-01` Choose a species from the catalog or create a new one                       | 88              | R0 Foundation |
-| 11   | [#69](https://github.com/PflanzenDex/PflanzenDex/issues/69) `LIC-05` Manage locations and light zones                                            | 79              | R0 Foundation |
-| 12   | [#58](https://github.com/PflanzenDex/PflanzenDex/issues/58) `BES-02` Create a specimen                                                           | 77              | R0 Foundation |
-| 13   | [#40](https://github.com/PflanzenDex/PflanzenDex/issues/40) `TE-03` Hosting, environments and deploy foundation (self-operation, EU)             | 42              | R0 Foundation |
-| 14   | [#66](https://github.com/PflanzenDex/PflanzenDex/issues/66) `LIC-02` Know where there is still room                                              | 38              | R1 Parity     |
-| 15   | [#84](https://github.com/PflanzenDex/PflanzenDex/issues/84) `WUN-01` See candidates prioritized by space need                                    | 35              | R1 Parity     |
+| Rank | Ticket | waiting tickets | Milestone |
+|---|---|---|---|
+| 1 | [#20](https://github.com/PflanzenDex/PflanzenDex/issues/20) `E-01` Technology and hosting | 135 | R0 Foundation |
+| 2 | [#24](https://github.com/PflanzenDex/PflanzenDex/issues/24) `E-05` Code location (/app in the same repo) | 131 | R0 Foundation |
+| 3 | [#38](https://github.com/PflanzenDex/PflanzenDex/issues/38) `TE-01` Create the monorepo scaffold under /app (core / api / web) | 130 | R0 Foundation |
+| 4 | [#39](https://github.com/PflanzenDex/PflanzenDex/issues/39) `TE-02` Database foundation with account id, row-level rules and tenant test harness | 109 | R0 Foundation |
+| 5 | [#41](https://github.com/PflanzenDex/PflanzenDex/issues/41) `TE-04` Layer of validating operations (idempotency, error codes) | 102 | R0 Foundation |
+| 6 | [#22](https://github.com/PflanzenDex/PflanzenDex/issues/22) `E-03` Sign-in method and service | 98 | R0 Foundation |
+| 7 | [#52](https://github.com/PflanzenDex/PflanzenDex/issues/52) `ACC-01` Register and sign in | 96 | R0 Foundation |
+| 8 | [#45](https://github.com/PflanzenDex/PflanzenDex/issues/45) `TE-08` Operator role and catalog review workflow | 93 | R0 Foundation |
+| 9 | [#21](https://github.com/PflanzenDex/PflanzenDex/issues/21) `E-02` Species catalog: shared, review, deviations | 89 | R0 Foundation |
+| 10 | [#57](https://github.com/PflanzenDex/PflanzenDex/issues/57) `BES-01` Choose a species from the catalog or create a new one | 88 | R0 Foundation |
+| 11 | [#69](https://github.com/PflanzenDex/PflanzenDex/issues/69) `LIC-05` Manage locations and light zones | 79 | R0 Foundation |
+| 12 | [#58](https://github.com/PflanzenDex/PflanzenDex/issues/58) `BES-02` Create a specimen | 77 | R0 Foundation |
+| 13 | [#40](https://github.com/PflanzenDex/PflanzenDex/issues/40) `TE-03` Hosting, environments and deploy foundation (self-operation, EU) | 42 | R0 Foundation |
+| 14 | [#66](https://github.com/PflanzenDex/PflanzenDex/issues/66) `LIC-02` Know where there is still room | 38 | R1 Parity |
+| 15 | [#84](https://github.com/PflanzenDex/PflanzenDex/issues/84) `WUN-01` See candidates prioritized by space need | 35 | R1 Parity |
 
 ## Decisions: state and due date
 
-| Decision                                                                                                        | State                | At the latest before            | Directly blocks                        |
-| --------------------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------- | -------------------------------------- |
-| [#20](https://github.com/PflanzenDex/PflanzenDex/issues/20) `E-01` Technology and hosting                       | partly decided       | R0 Foundation                   | `POK-03`, `TE-01`, `TE-03`, `TE-13`    |
-| [#21](https://github.com/PflanzenDex/PflanzenDex/issues/21) `E-02` Species catalog: shared, review, deviations  | decided in principle | R0 Foundation                   | `BES-01`, `BES-09`, `BES-10`, `POK-02` |
-| [#22](https://github.com/PflanzenDex/PflanzenDex/issues/22) `E-03` Sign-in method and service                   | decided in principle | R0 Foundation                   | `ACC-01`, `KI-07`, `TE-16`             |
-| [#23](https://github.com/PflanzenDex/PflanzenDex/issues/23) `E-04` AI access: interface, sign-in, rights        | decided in principle | R4 AI access                    | `KI-07`                                |
-| [#24](https://github.com/PflanzenDex/PflanzenDex/issues/24) `E-05` Code location (/app in the same repo)        | decided              | R0 Foundation                   | `TE-01`                                |
-| [#25](https://github.com/PflanzenDex/PflanzenDex/issues/25) `E-06` PWA or native app                            | open                 | R1 Parity                       | `QS-07`                                |
-| [#26](https://github.com/PflanzenDex/PflanzenDex/issues/26) `E-07` Allow selling for money?                     | open                 | Stage 3 / later                 | –                                      |
-| [#27](https://github.com/PflanzenDex/PflanzenDex/issues/27) `E-08` Voluntary contribution or subscription       | open                 | Stage 2 – opening for externals | –                                      |
-| [#28](https://github.com/PflanzenDex/PflanzenDex/issues/28) `E-09` Sensor technology                            | open                 | R6 Sensors                      | `MON-06`                               |
-| [#29](https://github.com/PflanzenDex/PflanzenDex/issues/29) `E-10` Default delivery channel for reminders       | open                 | R3 Swapping and reminders       | `MON-01`                               |
-| [#30](https://github.com/PflanzenDex/PflanzenDex/issues/30) `E-11` Cuttings in the measuring rhythm             | open                 | R3 Swapping and reminders       | `MON-04`                               |
-| [#31](https://github.com/PflanzenDex/PflanzenDex/issues/31) `E-12` Legal matters before the first external user | open                 | Stage 2 – opening for externals | `TE-11`                                |
-| [#32](https://github.com/PflanzenDex/PflanzenDex/issues/32) `E-13` CI platform and branch model                 | decided              | R0 Foundation                   | `DEV-06`, `QG-02`                      |
-| [#33](https://github.com/PflanzenDex/PflanzenDex/issues/33) `E-14` Deploy approval                              | open                 | R1 Parity                       | `DEV-06`                               |
-| [#34](https://github.com/PflanzenDex/PflanzenDex/issues/34) `E-15` Threshold values of the gates                | decided              | R0 Foundation                   | `QG-06`                                |
-| [#35](https://github.com/PflanzenDex/PflanzenDex/issues/35) `E-16` Static analysis (Fallow/Semgrep)             | decided              | R1 Parity                       | `QG-08`                                |
-| [#36](https://github.com/PflanzenDex/PflanzenDex/issues/36) `E-17` Photo virus scan                             | open                 | Stage 2 – opening for externals | –                                      |
-| [#37](https://github.com/PflanzenDex/PflanzenDex/issues/37) `E-18` Review automation                            | open                 | Stage 3 / later                 | –                                      |
-| [#173](https://github.com/PflanzenDex/PflanzenDex/issues/173) `E-19` Built-in AI chat (BYOK)                    | open                 | Stage 3 / later                 | –                                      |
+| Decision | State | At the latest before | Directly blocks |
+|---|---|---|---|
+| [#20](https://github.com/PflanzenDex/PflanzenDex/issues/20) `E-01` Technology and hosting | partly decided | R0 Foundation | `POK-03`, `TE-01`, `TE-03`, `TE-13` |
+| [#21](https://github.com/PflanzenDex/PflanzenDex/issues/21) `E-02` Species catalog: shared, review, deviations | decided in principle | R0 Foundation | `BES-01`, `BES-09`, `BES-10`, `POK-02` |
+| [#22](https://github.com/PflanzenDex/PflanzenDex/issues/22) `E-03` Sign-in method and service | decided in principle | R0 Foundation | `ACC-01`, `KI-07`, `TE-16` |
+| [#23](https://github.com/PflanzenDex/PflanzenDex/issues/23) `E-04` AI access: interface, sign-in, rights | decided in principle | R4 AI access | `KI-07` |
+| [#24](https://github.com/PflanzenDex/PflanzenDex/issues/24) `E-05` Code location (/app in the same repo) | decided | R0 Foundation | `TE-01` |
+| [#25](https://github.com/PflanzenDex/PflanzenDex/issues/25) `E-06` PWA or native app | open | R1 Parity | `QS-07` |
+| [#26](https://github.com/PflanzenDex/PflanzenDex/issues/26) `E-07` Allow selling for money? | open | Stage 3 / later | – |
+| [#27](https://github.com/PflanzenDex/PflanzenDex/issues/27) `E-08` Voluntary contribution or subscription | open | Stage 2 – opening for externals | – |
+| [#28](https://github.com/PflanzenDex/PflanzenDex/issues/28) `E-09` Sensor technology | open | R6 Sensors | `MON-06` |
+| [#29](https://github.com/PflanzenDex/PflanzenDex/issues/29) `E-10` Default delivery channel for reminders | open | R3 Swapping and reminders | `MON-01` |
+| [#30](https://github.com/PflanzenDex/PflanzenDex/issues/30) `E-11` Cuttings in the measuring rhythm | open | R3 Swapping and reminders | `MON-04` |
+| [#31](https://github.com/PflanzenDex/PflanzenDex/issues/31) `E-12` Legal matters before the first external user | open | Stage 2 – opening for externals | `TE-11` |
+| [#32](https://github.com/PflanzenDex/PflanzenDex/issues/32) `E-13` CI platform and branch model | decided | R0 Foundation | `DEV-06`, `QG-02` |
+| [#33](https://github.com/PflanzenDex/PflanzenDex/issues/33) `E-14` Deploy approval | open | R1 Parity | `DEV-06` |
+| [#34](https://github.com/PflanzenDex/PflanzenDex/issues/34) `E-15` Threshold values of the gates | decided | R0 Foundation | `QG-06` |
+| [#35](https://github.com/PflanzenDex/PflanzenDex/issues/35) `E-16` Static analysis (Fallow/Semgrep) | decided | R1 Parity | `QG-08` |
+| [#36](https://github.com/PflanzenDex/PflanzenDex/issues/36) `E-17` Photo virus scan | open | Stage 2 – opening for externals | – |
+| [#37](https://github.com/PflanzenDex/PflanzenDex/issues/37) `E-18` Review automation | open | Stage 3 / later | – |
+| [#173](https://github.com/PflanzenDex/PflanzenDex/issues/173) `E-19` Built-in AI chat (BYOK) | open | Stage 3 / later | – |
 
 Open decisions in a sensible order: **E-01** (hosting provider), **E-14, E-06** before R1, **E-10, E-11** before R3, **E-04** (test on real clients, `TE-16`) before R4, **E-12, E-08, E-17** before stage 2, **E-09** before R6.
 

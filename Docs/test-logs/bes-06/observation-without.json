@@ -51,7 +51,9 @@
     "kleineZiele": [],
     "karten": 0
   },
-  "benSieht": ["Bens Ficus"],
+  "benSieht": [
+    "Bens Ficus"
+  ],
   "06-fremdes-konto-eigene-karte-desktop": {
     "spalten": 2,
     "scrollBreite": 1440,

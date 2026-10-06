@@ -106,7 +106,9 @@
           {
             "species": "Echeveria elegans",
             "genus": "Echeveria",
-            "chips": ["'Perle'"],
+            "chips": [
+              "'Perle'"
+            ],
             "specimenCount": 1
           }
         ],

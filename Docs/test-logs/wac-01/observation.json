@@ -4,7 +4,10 @@
       "Noch kein Foto | Aloe polyphylla | Art: Aloe polyphylla | Lichtzone: unbekannt · Status: Pflanze | Standort: unbekannt | noch keine Messung | keine offene Behandlung | Messen | Archivieren",
       "Noch kein Foto | Echeveria elegans | Art: Echeveria elegans | Lichtzone: unbekannt · Status: Pflanze | Standort: unbekannt | noch keine Messung | keine offene Behandlung | Messen | Archivieren"
     ],
-    "namen": ["Aloe polyphylla", "Echeveria elegans"],
+    "namen": [
+      "Aloe polyphylla",
+      "Echeveria elegans"
+    ],
     "nachGesund": [
       "Noch kein Foto | Aloe polyphylla | Art: Aloe polyphylla | Lichtzone: unbekannt · Status: Pflanze | Standort: unbekannt | Letzte Messung: 12,5 cm · Gesund am 01.10.2026 | Notiz der Messung | keine offene Behandlung | Messen | Archivieren",
       "Noch kein Foto | Echeveria elegans | Art: Echeveria elegans | Lichtzone: unbekannt · Status: Pflanze | Standort: unbekannt | noch keine Messung | keine offene Behandlung | Messen | Archivieren"
@@ -32,7 +35,9 @@
     ],
     "scrollBreite": 1440,
     "kleineZiele": [],
-    "axe": ["color-contrast:1"],
+    "axe": [
+      "color-contrast:1"
+    ],
     "nachReload": [
       "Noch kein Foto | Aloe polyphylla | Art: Aloe polyphylla | Lichtzone: unbekannt · Status: Pflanze | Standort: unbekannt | Letzte Messung: 14 cm · Vergeilt/dünn am 02.10.2026 | Vergeilt/dünn: kein Erfolgssignal, auch bei Wachstum. Siehe Erfolgskriterien der Art. | keine offene Behandlung | Messen | Archivieren",
       "Noch kein Foto | Echeveria elegans | Art: Echeveria elegans | Lichtzone: unbekannt · Status: Pflanze | Standort: unbekannt | noch keine Messung | keine offene Behandlung | Messen | Archivieren"
@@ -44,7 +49,10 @@
       "Noch kein Foto | Haworthia fasciata | Art: Haworthia fasciata | Lichtzone: unbekannt · Status: Pflanze | Standort: unbekannt | noch keine Messung | keine offene Behandlung | Messen | Archivieren",
       "Noch kein Foto | Sempervivum tectorum | Art: Sempervivum tectorum | Lichtzone: unbekannt · Status: Pflanze | Standort: unbekannt | noch keine Messung | keine offene Behandlung | Messen | Archivieren"
     ],
-    "namen": ["Haworthia fasciata", "Sempervivum tectorum"],
+    "namen": [
+      "Haworthia fasciata",
+      "Sempervivum tectorum"
+    ],
     "nachGesund": [
       "Noch kein Foto | Haworthia fasciata | Art: Haworthia fasciata | Lichtzone: unbekannt · Status: Pflanze | Standort: unbekannt | Letzte Messung: 12,5 cm · Gesund am 01.10.2026 | Notiz der Messung | keine offene Behandlung | Messen | Archivieren",
       "Noch kein Foto | Sempervivum tectorum | Art: Sempervivum tectorum | Lichtzone: unbekannt · Status: Pflanze | Standort: unbekannt | noch keine Messung | keine offene Behandlung | Messen | Archivieren"
@@ -72,7 +80,9 @@
     ],
     "scrollBreite": 375,
     "kleineZiele": [],
-    "axe": ["color-contrast:1"],
+    "axe": [
+      "color-contrast:1"
+    ],
     "nachReload": [
       "Noch kein Foto | Haworthia fasciata | Art: Haworthia fasciata | Lichtzone: unbekannt · Status: Pflanze | Standort: unbekannt | Letzte Messung: 14 cm · Vergeilt/dünn am 02.10.2026 | Vergeilt/dünn: kein Erfolgssignal, auch bei Wachstum. Siehe Erfolgskriterien der Art. | keine offene Behandlung | Messen | Archivieren",
       "Noch kein Foto | Sempervivum tectorum | Art: Sempervivum tectorum | Lichtzone: unbekannt · Status: Pflanze | Standort: unbekannt | noch keine Messung | keine offene Behandlung | Messen | Archivieren"

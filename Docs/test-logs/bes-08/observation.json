@@ -56,7 +56,9 @@
       }
     ]
   },
-  "distributionNote-desktop": ["Nicht mitgezählt: 1 archiviert."],
+  "distributionNote-desktop": [
+    "Nicht mitgezählt: 1 archiviert."
+  ],
   "hintTexts-desktop": [
     "„Aloeeccca – in der Kiste“ steht am Standort „Kiste eccca“, der noch keine Lichtzone hat.Weise dem Standort „Kiste eccca“ eine Lichtzone zu.Zu Standorte und Licht",
     "„Aloeeccca – ohne Standort“ hat noch keinen Standort.Weise dem Exemplar einen Standort zu.Zum Bestand"
@@ -66,7 +68,9 @@
     "scrollWidth": 1440,
     "smallTargets": []
   },
-  "distributionNote-mobile": ["Nicht mitgezählt: 1 archiviert."],
+  "distributionNote-mobile": [
+    "Nicht mitgezählt: 1 archiviert."
+  ],
   "hintTexts-mobile": [
     "„Aloeeccca – in der Kiste“ steht am Standort „Kiste eccca“, der noch keine Lichtzone hat.Weise dem Standort „Kiste eccca“ eine Lichtzone zu.Zu Standorte und Licht",
     "„Aloeeccca – ohne Standort“ hat noch keinen Standort.Weise dem Exemplar einen Standort zu.Zum Bestand"

@@ -25,7 +25,7 @@ Legend: ✅ as expected · ⚠️ works, but with a finding · ❌ error · ⏭�
 
 - ✅ Every card has "Archivieren". The form (`02-archive-form-*.png`) offers exactly these five reasons and "anderer Grund …" (`observation.json`: `gruende`).
 - ✅ With "verkauft": message "… ist archiviert. Du findest es im Archiv und kannst es dort wiederherstellen." (P-09); the archive shows "Archiviert am 03.10.2026" and "Grund: verkauft" (`04-archived-with-archive-*.png`).
-- ✅ The free reason " Katze war schneller " is stored trimmed (`05-two-archived-free-reason-*.png`).
+- ✅ The free reason "  Katze war schneller " is stored trimmed (`05-two-archived-free-reason-*.png`).
 - ✅ An empty free reason is not sent, "Bitte nenne einen Grund …" appears (`03-free-reason-empty-*.png`); "Abbrechen" leaves all three cards in place.
 - ✅ Date as a local calendar date: core test with 23:30 UTC (Berlin 3 October, New York 2 October), DB test with the server time zone Pacific/Kiritimati, API test. By hand only Berlin was checked.
 - ✅ A second archiving through the API: 409 `specimen.already_archived`, date and reason of the first stay (`doppeltArchivieren`).

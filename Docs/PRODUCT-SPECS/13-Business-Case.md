@@ -47,11 +47,11 @@ Running costs (to be determined, not estimated): hosting, database, photo storag
 
 Revenue sources in order of suitability:
 
-| Source                                                        | Fit                                                        | Note                                                                                                                                                            |
-| ------------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Voluntary contribution / small subscription** ("supporter") | fits a small community                                     | Return: more photo storage, higher rate limits of the AI connection, sensor integration (MON), export. Core functions stay free, otherwise swapping falls away. |
-| **Affiliate links** (lamps, substrate, sensors)               | fits: the app knows light zones, wishlist and device stock | only labeled and only for derived need; rules in `11-Equipment-and-Recommendations.md` (FR-EQU-03 to -10)                                                       |
-| **Shop/nursery partners** via "you lack it" species           | fits, needs user numbers                                   | only from measurable traffic                                                                                                                                    |
+| Source                                                    | Fit                                                          | Note                                                                                                                                                                   |
+| --------------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Voluntary contribution / small subscription** ("supporter") | fits a small community                                   | Return: more photo storage, higher rate limits of the AI connection, sensor integration (MON), export. Core functions stay free, otherwise swapping falls away.        |
+| **Affiliate links** (lamps, substrate, sensors)           | fits: the app knows light zones, wishlist and device stock   | only labeled and only for derived need; rules in `11-Equipment-and-Recommendations.md` (FR-EQU-03 to -10)                                                              |
+| **Shop/nursery partners** via "you lack it" species       | fits, needs user numbers                                     | only from measurable traffic                                                                                                                                           |
 
 AI costs arise at the keeper (own AI client), not at the operator; for us only the load of the interface arises, limited by rate limits per connection (US-KI-06). A built-in chat with an operator quota would change that (E-19).
 
@@ -68,16 +68,16 @@ Only possible if user numbers and engagement are far above stage 2. Options, eac
 
 ## Risks
 
-| Risk                                                                                                | Effect                                      | Countermeasure                                                                                                                                              |
-| --------------------------------------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Rebuild without parity:** the three keep using the vault because the app can do less              | Stage 1 fails                               | Release R1 has parity as its goal; prototype and app run in parallel, switch only after the keeper confirms; re-entry instead of import (risk R-10 in `16`) |
-| Effort: the vault prototype becomes a product (accounts, operation, privacy)                        | Project fizzles out                         | Smallest releases, each usable; keep operation simple (E-01)                                                                                                |
-| Network effect missing (feed empty with 1–2 friends)                                                | Social seems dead                           | Start with the circle of friends; value also without friends (Pokédex, care)                                                                                |
-| Target group pays little                                                                            | Stage 2 fails                               | Keep costs low, no subscription compulsion for core functions                                                                                               |
-| Load of the AI connections grows faster than revenue; users without a paid AI client see less value | Loss per user or weaker value proposition 5 | Rate limits per connection, measurement (NFR-16), manual paths always available (FR-KI-05); E-19 checks a built-in chat later                               |
-| Privacy and location/photos                                                                         | Loss of trust, fine                         | Private by default (FR-SOZ-01), remove EXIF/GPS, GDPR concept before the first external user                                                                |
-| Swapping legally (species protection, plant health)                                                 | Liability                                   | Notices (FR-SOZ-09), no shipping/selling in stages 1–2                                                                                                      |
-| Catalog quality (AI-created profiles with errors)                                                   | wrong care hints                            | Review status (FR-BES-06), sources, operator review list                                                                                                    |
+| Risk                                                                                                          | Effect                                              | Countermeasure                                                                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Rebuild without parity:** the three keep using the vault because the app can do less                        | Stage 1 fails                                       | Release R1 has parity as its goal; prototype and app run in parallel, switch only after the keeper confirms; re-entry instead of import (risk R-10 in `16`)          |
+| Effort: the vault prototype becomes a product (accounts, operation, privacy)                                  | Project fizzles out                                 | Smallest releases, each usable; keep operation simple (E-01)                                                                                                         |
+| Network effect missing (feed empty with 1–2 friends)                                                          | Social seems dead                                   | Start with the circle of friends; value also without friends (Pokédex, care)                                                                                         |
+| Target group pays little                                                                                      | Stage 2 fails                                       | Keep costs low, no subscription compulsion for core functions                                                                                                        |
+| Load of the AI connections grows faster than revenue; users without a paid AI client see less value           | Loss per user or weaker value proposition 5         | Rate limits per connection, measurement (NFR-16), manual paths always available (FR-KI-05); E-19 checks a built-in chat later                                        |
+| Privacy and location/photos                                                                                   | Loss of trust, fine                                 | Private by default (FR-SOZ-01), remove EXIF/GPS, GDPR concept before the first external user                                                                         |
+| Swapping legally (species protection, plant health)                                                           | Liability                                           | Notices (FR-SOZ-09), no shipping/selling in stages 1–2                                                                                                               |
+| Catalog quality (AI-created profiles with errors)                                                             | wrong care hints                                    | Review status (FR-BES-06), sources, operator review list                                                                                                             |
 
 ## Decisions that determine this case
 
@@ -90,12 +90,12 @@ Collected in `16-Releases-and-Decisions.md`. Relevant for the case:
 
 ## Metrics
 
-| Metric                                         | Stage | How measured                                     |
-| ---------------------------------------------- | ----- | ------------------------------------------------ |
-| Weekly active accounts                         | 1     | Sign-ins and actions, without evaluating content |
-| Switch from the vault to the app               | 1     | all three use the app for daily care             |
-| Completed swaps                                | 1, 2  | Swap with status `handed over`                   |
-| Cost per active account (hosting, storage, AI) | 1, 2  | Operator measurement (NFR-16)                    |
-| New accounts without an invitation from us     | 2     | Registrations (US-ACC-05 after opening)          |
-| Paying users, running costs                    | 2     | Payment provider, invoices                       |
-| Return rate after 4 weeks                      | 2, 3  | Account activity                                 |
+| Metric                                           | Stage | How measured                                         |
+| ------------------------------------------------ | ----- | ---------------------------------------------------- |
+| Weekly active accounts                           | 1     | Sign-ins and actions, without evaluating content     |
+| Switch from the vault to the app                 | 1     | all three use the app for daily care                 |
+| Completed swaps                                  | 1, 2  | Swap with status `handed over`                       |
+| Cost per active account (hosting, storage, AI)   | 1, 2  | Operator measurement (NFR-16)                        |
+| New accounts without an invitation from us       | 2     | Registrations (US-ACC-05 after opening)              |
+| Paying users, running costs                      | 2     | Payment provider, invoices                           |
+| Return rate after 4 weeks                        | 2, 3  | Account activity                                     |

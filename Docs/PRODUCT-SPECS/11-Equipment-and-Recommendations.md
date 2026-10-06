@@ -6,15 +6,15 @@ Replacement: replaces `../PLANT-SYSTEM-SPECS/13-Equipment-and-Affiliate.md`. Dro
 
 ## Terms
 
-| Term           | Meaning                                                                                                           |
-| -------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Equipment      | Everything material for care except the plants. One record per device or per consumable type.                     |
-| Device         | Equipment with lifetime and operation (lamp, timer, sensor, fan, pump).                                           |
-| Consumable     | Is used up (substrate, fertilizer, plant agents); has supply instead of operating data.                           |
-| Lamp device    | Device of type lamp, assigned to a light zone (US-LIC-05).                                                        |
-| Product id     | Manufacturer-neutral (manufacturer, model, optional GTIN/EAN). Belongs in the record, the affiliate URL does not. |
-| Recommendation | Product suggestion shown by the system with reasoning from own data.                                              |
-| Affiliate link | Labeled product link with commission; arises only at display time.                                                |
+| Term             | Meaning                                                                                                         |
+| ---------------- | --------------------------------------------------------------------------------------------------------------- |
+| Equipment        | Everything material for care except the plants. One record per device or per consumable type.                   |
+| Device           | Equipment with lifetime and operation (lamp, timer, sensor, fan, pump).                                         |
+| Consumable       | Is used up (substrate, fertilizer, plant agents); has supply instead of operating data.                         |
+| Lamp device      | Device of type lamp, assigned to a light zone (US-LIC-05).                                                      |
+| Product id       | Manufacturer-neutral (manufacturer, model, optional GTIN/EAN). Belongs in the record, the affiliate URL does not. |
+| Recommendation   | Product suggestion shown by the system with reasoning from own data.                                            |
+| Affiliate link   | Labeled product link with commission; arises only at display time.                                              |
 
 ## User stories
 
@@ -131,17 +131,17 @@ Acceptance criteria:
 
 ### DM-EQU-01 Equipment
 
-| Field                                                                 | Required | Meaning                                                                                                    |
-| --------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------- |
-| `Type`                                                                | yes      | `Lamp \| Timer \| Sensor \| Ventilation \| Pump \| Pot \| Substrate \| Fertilizer \| Plant agent \| Other` |
-| `Name`                                                                | yes      | Display name, unique                                                                                       |
-| `Status`                                                              | yes      | `active \| defective \| retired` (not used for consumables)                                                |
-| `Manufacturer`, `Model`                                               | no       | Free text                                                                                                  |
-| `Product_Id`                                                          | no       | GTIN/EAN or manufacturer + model; **no URL**                                                               |
-| `Price_EUR`, `Bought_At`, `In_Operation_Since`, `Check_Interval_Days` | no       |                                                                                                            |
-| `Location`                                                            | no       | Reference to a location (US-LIC-05)                                                                        |
-| `Share`                                                               | no       | `private` (default) or `friends`                                                                           |
-| `Note`                                                                | no       | Free text                                                                                                  |
+| Field                                                                   | Required | Meaning                                                                                                              |
+| ----------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------- |
+| `Type`                                                                  | yes      | `Lamp \| Timer \| Sensor \| Ventilation \| Pump \| Pot \| Substrate \| Fertilizer \| Plant agent \| Other`          |
+| `Name`                                                                  | yes      | Display name, unique                                                                                                 |
+| `Status`                                                                | yes      | `active \| defective \| retired` (not used for consumables)                                                          |
+| `Manufacturer`, `Model`                                                 | no       | Free text                                                                                                            |
+| `Product_Id`                                                            | no       | GTIN/EAN or manufacturer + model; **no URL**                                                                         |
+| `Price_EUR`, `Bought_At`, `In_Operation_Since`, `Check_Interval_Days`   | no       |                                                                                                                      |
+| `Location`                                                              | no       | Reference to a location (US-LIC-05)                                                                                  |
+| `Share`                                                                 | no       | `private` (default) or `friends`                                                                                     |
+| `Note`                                                                  | no       | Free text                                                                                                            |
 
 ### DM-EQU-02 Lamp device (extension)
 
@@ -157,15 +157,15 @@ Per account: `Recommendations_Active` (default `true`), `Hidden`, `Click_Measure
 
 ## Requirements
 
-| ID        | Requirement                                                                                                                                                                                                                          | Status |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
-| FR-EQU-01 | Equipment tracking is independent of recommendations: all stories except US-EQU-10/11 work without partner integration.                                                                                                              | ⬜     |
-| FR-EQU-02 | Equipment data belongs to the account. Friends see it only after sharing (US-EQU-12).                                                                                                                                                | ⬜     |
-| FR-EQU-03 | **Product id instead of URL:** what is stored is _what_ the product is. Affiliate URLs arise only at display time from product id + partner configuration. A program change changes no record.                                       | ⬜     |
-| FR-EQU-04 | Partner IDs live with the operator, never in user data, never in the export. Link generation is a pure function with tests.                                                                                                          | ⬜     |
-| FR-EQU-05 | **Labeling duty:** every affiliate link is labeled as advertising. Obligations from the partner program and law (DE/EU: advertising labeling, privacy) are to be checked **before** stage 2; this document replaces no legal review. | ⬜     |
-| FR-EQU-06 | **Need before commission:** selection and order follow the fit, never the commission level. Test: a changed commission table does not change the order.                                                                              | ⬜     |
-| FR-EQU-07 | **No recommendations in sensitive contexts:** no links on plant agents against pests/diseases (approval, health), none in friend views, in the Pokédex or in swap offers.                                                            | ⬜     |
-| FR-EQU-08 | **Data minimization:** collection data (plants, locations, measurements, photos) never goes to partners. Click measurement only aggregated and only with consent.                                                                    | ⬜     |
-| FR-EQU-09 | **No invented product data:** names, prices, availability come from a citable source with retrieval date. The AI may **research and suggest** products, but writes them only after confirmation and with a source (US-KI-05).        | ⬜     |
-| FR-EQU-10 | **Lock no function behind recommendations:** no purchase obligation, no dark pattern, no restriction of tracking under "No recommendations".                                                                                         | ⬜     |
+| ID        | Requirement                                                                                                                                                                                                                                    | Status |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| FR-EQU-01 | Equipment tracking is independent of recommendations: all stories except US-EQU-10/11 work without partner integration.                                                                                                                        | ⬜     |
+| FR-EQU-02 | Equipment data belongs to the account. Friends see it only after sharing (US-EQU-12).                                                                                                                                                          | ⬜     |
+| FR-EQU-03 | **Product id instead of URL:** what is stored is _what_ the product is. Affiliate URLs arise only at display time from product id + partner configuration. A program change changes no record.                                                 | ⬜     |
+| FR-EQU-04 | Partner IDs live with the operator, never in user data, never in the export. Link generation is a pure function with tests.                                                                                                                    | ⬜     |
+| FR-EQU-05 | **Labeling duty:** every affiliate link is labeled as advertising. Obligations from the partner program and law (DE/EU: advertising labeling, privacy) are to be checked **before** stage 2; this document replaces no legal review.           | ⬜     |
+| FR-EQU-06 | **Need before commission:** selection and order follow the fit, never the commission level. Test: a changed commission table does not change the order.                                                                                         | ⬜     |
+| FR-EQU-07 | **No recommendations in sensitive contexts:** no links on plant agents against pests/diseases (approval, health), none in friend views, in the Pokédex or in swap offers.                                                                       | ⬜     |
+| FR-EQU-08 | **Data minimization:** collection data (plants, locations, measurements, photos) never goes to partners. Click measurement only aggregated and only with consent.                                                                               | ⬜     |
+| FR-EQU-09 | **No invented product data:** names, prices, availability come from a citable source with retrieval date. The AI may **research and suggest** products, but writes them only after confirmation and with a source (US-KI-05).                   | ⬜     |
+| FR-EQU-10 | **Lock no function behind recommendations:** no purchase obligation, no dark pattern, no restriction of tracking under "No recommendations".                                                                                                   | ⬜     |

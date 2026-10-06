@@ -1,9 +1,1 @@
-{
-  "name": "te15-checks",
-  "private": true,
-  "type": "module",
-  "description": "Spike TE-15: check scripts (throwaway code)",
-  "dependencies": {
-    "playwright": "^1.63.0"
-  }
-}
+{"name":"te15-checks","private":true,"type":"module","description":"Spike TE-15: check scripts (throwaway code)","dependencies":{"playwright":"^1.63.0"}}

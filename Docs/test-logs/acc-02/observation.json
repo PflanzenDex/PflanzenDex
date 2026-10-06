@@ -6,7 +6,14 @@
       "hint": 1,
       "privateChecked": false,
       "noRec": false,
-      "notifications": [true, true, true, true, true, true],
+      "notifications": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "saveDisabled": false
     },
     "layout-initial": {
@@ -57,7 +64,14 @@
       "hint": 1,
       "privateChecked": false,
       "noRec": false,
-      "notifications": [true, true, true, true, true, true],
+      "notifications": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "saveDisabled": false
     },
     "layout-initial": {

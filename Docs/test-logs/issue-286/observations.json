@@ -6,7 +6,9 @@
   "axe_form_desktop": [],
   "desktop_layout": {
     "hscroll": false,
-    "small": ["INPUT:cutting:24"]
+    "small": [
+      "INPUT:cutting:24"
+    ]
   },
   "desktop_errorText": "Das Fangdatum liegt in der Zukunft. Wähle heute oder ein früheres Datum.",
   "desktop_ariaInvalid": "true",
@@ -24,7 +26,9 @@
   "axe_form_mobile": [],
   "mobile_layout": {
     "hscroll": false,
-    "small": ["INPUT:cutting:24"]
+    "small": [
+      "INPUT:cutting:24"
+    ]
   },
   "mobile_errorText": "Das Fangdatum liegt in der Zukunft. Wähle heute oder ein früheres Datum.",
   "mobile_ariaInvalid": "true",

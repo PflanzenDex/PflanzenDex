@@ -1,9 +1,15 @@
 {
   "keycloak-user-create-status": 201,
-  "wizard-h1": ["Start"],
-  "wizard-h2": ["Wo stehen deine Pflanzen?"],
+  "wizard-h1": [
+    "Start"
+  ],
+  "wizard-h2": [
+    "Wo stehen deine Pflanzen?"
+  ],
   "axe-01-start-guide": [],
-  "overview-h1": ["Start"],
+  "overview-h1": [
+    "Start"
+  ],
   "created-specimens": 14,
   "api-count-route": {
     "status": 200,
@@ -11,7 +17,10 @@
       "count": 14
     }
   },
-  "start-page-requests": ["/specimens/count", "/specimens/count"],
+  "start-page-requests": [
+    "/specimens/count",
+    "/specimens/count"
+  ],
   "axe-02-start-overview": [],
   "group-headers": [
     "▾ Araceae (Aronstabgewächse) · 3 / unbekannt",
@@ -38,7 +47,11 @@
   "scroll-before-open-aloe": 400,
   "cactaceae-expanded-after-close-button": "false",
   "scroll-after-close-button": 400,
-  "search-field-height-unmarked-newrule-oldrule": [48, 48, 48],
+  "search-field-height-unmarked-newrule-oldrule": [
+    48,
+    48,
+    48
+  ],
   "unknown-family-header": [
     "▾ Araceae (Aronstabgewächse) · 3 / unbekannt",
     "▾ Asphodelaceae (Affodillgewächse) · 3 / unbekannt",
@@ -48,10 +61,19 @@
   ],
   "wish-name-error-text": "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
   "name-aria-invalid-after-409": "true",
-  "name-input-height-before-invalid-after": [48, 48],
-  "name-border": ["2px", "rgb(179, 38, 30) 0px 0px 0px 1px inset"],
+  "name-input-height-before-invalid-after": [
+    48,
+    48
+  ],
+  "name-border": [
+    "2px",
+    "rgb(179, 38, 30) 0px 0px 0px 1px inset"
+  ],
   "axe-06-wish-name-taken": [],
-  "error-cleared-on-input": ["false", 0],
+  "error-cleared-on-input": [
+    "false",
+    0
+  ],
   "focus-stays-on-name": "wish-name",
   "displayname-aria-invalid": "true",
   "displayname-box-before-after": [
@@ -73,7 +95,10 @@
     "rgb(179, 38, 30)",
     "rgb(179, 38, 30) 0px 0px 0px 1px inset"
   ],
-  "settings-page-height-before-after": [1105, 1185],
+  "settings-page-height-before-after": [
+    1105,
+    1185
+  ],
   "axe-08-settings-invalid": [],
   "horizontal-scroll": false,
   "external-requests": []

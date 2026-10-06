@@ -51,7 +51,10 @@
   "axe_desktop": [],
   "axe_mobile": [],
   "afterSwitch": {
-    "h2": ["Standort fehlt (1)", "Stimmen überein oder Soll unbekannt (5)"],
+    "h2": [
+      "Standort fehlt (1)",
+      "Stimmen überein oder Soll unbekannt (5)"
+    ],
     "h3": [
       "Opuntia – Ohne Soll 2",
       "Bogenhanf – Fenster",

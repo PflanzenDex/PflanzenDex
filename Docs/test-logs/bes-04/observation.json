@@ -1,13 +1,19 @@
 {
   "desktop": {
-    "zonen": [201, 201, 201],
+    "zonen": [
+      201,
+      201,
+      201
+    ],
     "hakenStart": false,
     "formularText": "Name: Stecklingcd vera Kennzeichen (optional) Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe. Das ist ein Steckling Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“. Standort Standort noch unbekannt Regal Süd Ohne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum). Exemplar anlegen Zurück zur Art",
     "axeFormular": [
       {
         "id": "color-contrast",
         "impact": "serious",
-        "ziele": ["footer"]
+        "ziele": [
+          "footer"
+        ]
       }
     ],
     "angelegtMeldung": "Steckling „Stecklingcd vera“ ist angelegt. Er steht unter Stecklingslicht; tippe auf der Karte „Eingetopft“, sobald du ihn eintopfst.",
@@ -58,7 +64,9 @@
       {
         "id": "color-contrast",
         "impact": "serious",
-        "ziele": ["footer"]
+        "ziele": [
+          "footer"
+        ]
       }
     ],
     "eingetopftMeldung": "„Stecklingcd vera“ ist eingetopft und eine Pflanze. Ab jetzt gilt die Lichtzone seines Standorts oder der Art.",
@@ -114,14 +122,20 @@
     "kleineZiele": []
   },
   "mobil": {
-    "zonen": [201, 201, 201],
+    "zonen": [
+      201,
+      201,
+      201
+    ],
     "hakenStart": false,
     "formularText": "Name: Stecklingbb vera Kennzeichen (optional) Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe. Das ist ein Steckling Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“. Standort Standort noch unbekannt Regal Süd Ohne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum). Exemplar anlegen Zurück zur Art",
     "axeFormular": [
       {
         "id": "color-contrast",
         "impact": "serious",
-        "ziele": ["footer"]
+        "ziele": [
+          "footer"
+        ]
       }
     ],
     "angelegtMeldung": "Steckling „Stecklingbb vera“ ist angelegt. Er steht unter Stecklingslicht; tippe auf der Karte „Eingetopft“, sobald du ihn eintopfst.",
@@ -172,7 +186,9 @@
       {
         "id": "color-contrast",
         "impact": "serious",
-        "ziele": ["footer"]
+        "ziele": [
+          "footer"
+        ]
       }
     ],
     "eingetopftMeldung": "„Stecklingbb vera“ ist eingetopft und eine Pflanze. Ab jetzt gilt die Lichtzone seines Standorts oder der Art.",

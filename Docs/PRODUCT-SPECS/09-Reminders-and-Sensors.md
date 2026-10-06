@@ -80,24 +80,24 @@ Acceptance criteria:
 
 ### Functional
 
-| ID        | Requirement                                                                                                                                       | Status               |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| FR-MON-01 | The reminder logic is pure, tested logic (P-01), not bound to the delivery channel.                                                               | ⬜                   |
-| FR-MON-02 | Reminders only when action is needed, once per occasion and day.                                                                                  | ⬜                   |
-| FR-MON-03 | Phase calculation, "Today" list and reminder use the **same** logic (solves B-02).                                                                | ⬜                   |
-| FR-MON-04 | Soil moisture replaces the watering tip where a sensor stands; without a sensor the tip stays.                                                    | ⬜                   |
-| FR-MON-05 | No sensors for growth measurement and etiolation judgment; both stay manual.                                                                      | ⬜ (design decision) |
-| FR-MON-06 | Sensor path (example from the prototype spec): controller → Wi-Fi/MQTT → receiver → raw value store → aggregates. Technology open (E-09).         | ⬜                   |
-| FR-MON-07 | Raw values are kept separate from collection data; only aggregates go into the collection (from the prototype NFR-MON-01, here for data storage). | ⬜                   |
-| FR-MON-08 | Delivery failed: marked after three attempts, visible in "Hints".                                                                                 | ⬜                   |
+| ID        | Requirement                                                                                                                                                 | Status                |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| FR-MON-01 | The reminder logic is pure, tested logic (P-01), not bound to the delivery channel.                                                                         | ⬜                    |
+| FR-MON-02 | Reminders only when action is needed, once per occasion and day.                                                                                            | ⬜                    |
+| FR-MON-03 | Phase calculation, "Today" list and reminder use the **same** logic (solves B-02).                                                                          | ⬜                    |
+| FR-MON-04 | Soil moisture replaces the watering tip where a sensor stands; without a sensor the tip stays.                                                              | ⬜                    |
+| FR-MON-05 | No sensors for growth measurement and etiolation judgment; both stay manual.                                                                                | ⬜ (design decision)  |
+| FR-MON-06 | Sensor path (example from the prototype spec): controller → Wi-Fi/MQTT → receiver → raw value store → aggregates. Technology open (E-09).                  | ⬜                    |
+| FR-MON-07 | Raw values are kept separate from collection data; only aggregates go into the collection (from the prototype NFR-MON-01, here for data storage).           | ⬜                    |
+| FR-MON-08 | Delivery failed: marked after three attempts, visible in "Hints".                                                                                           | ⬜                    |
 
 ### Non-functional
 
-| ID         | Requirement                                                                                        | Status |
-| ---------- | -------------------------------------------------------------------------------------------------- | ------ |
-| NFR-MON-02 | Thresholds are estimates; conservative starting values, adjust in operation (avoid alarm fatigue). | ⬜     |
-| NFR-MON-03 | A sensor failure is noticed via the "silent" check.                                                | ⬜     |
-| NFR-MON-04 | A failure of the reminder job is visible to the operator (NFR-18).                                 | ⬜     |
+| ID         | Requirement                                                                                                  | Status |
+| ---------- | ------------------------------------------------------------------------------------------------------------ | ------ |
+| NFR-MON-02 | Thresholds are estimates; conservative starting values, adjust in operation (avoid alarm fatigue).           | ⬜     |
+| NFR-MON-03 | A sensor failure is noticed via the "silent" check.                                                          | ⬜     |
+| NFR-MON-04 | A failure of the reminder job is visible to the operator (NFR-18).                                           | ⬜     |
 
 ### Hardware pilot (guide values from the prototype, check before buying)
 

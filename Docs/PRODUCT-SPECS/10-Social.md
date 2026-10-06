@@ -6,13 +6,13 @@ Replacement: replaces `../PLANT-SYSTEM-SPECS/11-Social.md`. Dropped: the "hub" a
 
 ## Terms
 
-| Term            | Meaning                                                                                                          |
-| --------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Friend          | Another keeper with a **confirmed** friendship (mutual).                                                         |
-| Sharing setting | Per specimen: `private` (default) or `friends`.                                                                  |
-| Offer           | Specimen or cutting that a keeper offers to friends for swapping or giving away.                                 |
+| Term            | Meaning                                                                                                        |
+| --------------- | -------------------------------------------------------------------------------------------------------------- |
+| Friend          | Another keeper with a **confirmed** friendship (mutual).                                                       |
+| Sharing setting | Per specimen: `private` (default) or `friends`.                                                                |
+| Offer           | Specimen or cutting that a keeper offers to friends for swapping or giving away.                               |
 | Swap            | Process request → acceptance → handover. Giving away without a counterpart ("gifting") is a swap without return. |
-| Provenance      | Note on the recipient's specimen: from whom, when.                                                               |
+| Provenance      | Note on the recipient's specimen: from whom, when.                                                             |
 
 ## User stories
 
@@ -177,19 +177,19 @@ Acceptance criteria:
 
 ## Requirements
 
-| ID        | Requirement                                                                                                                                                                                                       | Status                    |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| FR-SOZ-01 | **Private by default:** without a sharing setting no specimen, photo or location leaves the account (P-05).                                                                                                       | ⬜                        |
-| FR-SOZ-02 | All social data lives in the shared data storage of the app; there is no separate "hub" any more. Access only via account and friendship (NFR-09).                                                                | ⬜                        |
-| FR-SOZ-03 | If a data source fails (no network), social blocks show the last state with a note.                                                                                                                               | ⬜                        |
-| FR-SOZ-04 | Swap states, sharing filters and feed derivation are pure logic with tests (P-01).                                                                                                                                | ⬜                        |
-| FR-SOZ-05 | The handover is atomic: archiving at the giver and creating at the recipient in one transaction.                                                                                                                  | ⬜                        |
-| FR-SOZ-06 | Changes run only through validating operations (P-03).                                                                                                                                                            | ⬜                        |
-| FR-SOZ-07 | No invented data: date and catch status come from shared specimens; "unknown" instead of guessing (P-08).                                                                                                         | ⬜                        |
-| FR-SOZ-08 | Display names are freely chosen and no proof of identity. Friendship and swap require the mutual confirmation of the person; no open user search.                                                                 | ⬜                        |
-| FR-SOZ-09 | **Plant law and health:** notices on species protection and pest infestation when offering. They do not prevent offering and replace no legal review. Shipping across national borders is not part of the system. | ⬜                        |
-| FR-SOZ-10 | Deletion: a keeper can delete and export their social data completely (US-ACC-04). Completed swaps remain with the partner with the stored display name.                                                          | ⬜                        |
-| FR-SOZ-11 | Out of scope: chat between friends, public profiles, leaderboards, selling for money, shipping handling, groups.                                                                                                  | ⬜ (deliberate, see E-07) |
+| ID        | Requirement                                                                                                                                                                                                              | Status                   |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
+| FR-SOZ-01 | **Private by default:** without a sharing setting no specimen, photo or location leaves the account (P-05).                                                                                                              | ⬜                       |
+| FR-SOZ-02 | All social data lives in the shared data storage of the app; there is no separate "hub" any more. Access only via account and friendship (NFR-09).                                                                       | ⬜                       |
+| FR-SOZ-03 | If a data source fails (no network), social blocks show the last state with a note.                                                                                                                                      | ⬜                       |
+| FR-SOZ-04 | Swap states, sharing filters and feed derivation are pure logic with tests (P-01).                                                                                                                                       | ⬜                       |
+| FR-SOZ-05 | The handover is atomic: archiving at the giver and creating at the recipient in one transaction.                                                                                                                         | ⬜                       |
+| FR-SOZ-06 | Changes run only through validating operations (P-03).                                                                                                                                                                   | ⬜                       |
+| FR-SOZ-07 | No invented data: date and catch status come from shared specimens; "unknown" instead of guessing (P-08).                                                                                                                | ⬜                       |
+| FR-SOZ-08 | Display names are freely chosen and no proof of identity. Friendship and swap require the mutual confirmation of the person; no open user search.                                                                       | ⬜                       |
+| FR-SOZ-09 | **Plant law and health:** notices on species protection and pest infestation when offering. They do not prevent offering and replace no legal review. Shipping across national borders is not part of the system.       | ⬜                       |
+| FR-SOZ-10 | Deletion: a keeper can delete and export their social data completely (US-ACC-04). Completed swaps remain with the partner with the stored display name.                                                                | ⬜                       |
+| FR-SOZ-11 | Out of scope: chat between friends, public profiles, leaderboards, selling for money, shipping handling, groups.                                                                                                         | ⬜ (deliberate, see E-07) |
 
 ## Open questions
 

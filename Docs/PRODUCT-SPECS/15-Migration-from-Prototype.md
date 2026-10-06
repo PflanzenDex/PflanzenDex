@@ -4,15 +4,15 @@
 
 The IDs stay **reserved** and are not reassigned (convention: IDs are never renumbered). The stories do not count in the status overview of the `README.md`.
 
-| ID        | Former meaning                                                       | Status     |
-| --------- | -------------------------------------------------------------------- | ---------- |
-| US-MIG-01 | Import vault data (dry run, idempotent, error report)                | ⛔ dropped |
-| US-MIG-02 | Align locations, light zones and scales                              | ⛔ dropped |
-| US-MIG-03 | Parallel operation and switching (comparison view prototype vs. app) | ⛔ dropped |
-| FR-MIG-01 | Import tool                                                          | ⛔ dropped |
-| FR-MIG-02 | Import only into the own account                                     | ⛔ dropped |
-| FR-MIG-03 | Source (vault) untouched                                             | ⛔ dropped |
-| FR-MIG-04 | Tolerant parsing                                                     | ⛔ dropped |
+| ID                      | Former meaning                                                           | Status      |
+| ----------------------- | ------------------------------------------------------------------------ | ----------- |
+| US-MIG-01               | Import vault data (dry run, idempotent, error report)                    | ⛔ dropped  |
+| US-MIG-02               | Align locations, light zones and scales                                  | ⛔ dropped  |
+| US-MIG-03               | Parallel operation and switching (comparison view prototype vs. app)     | ⛔ dropped  |
+| FR-MIG-01 | Import tool | ⛔ dropped |
+| FR-MIG-02 | Import only into the own account | ⛔ dropped |
+| FR-MIG-03 | Source (vault) untouched | ⛔ dropped |
+| FR-MIG-04 | Tolerant parsing | ⛔ dropped |
 
 ## Consequences of the decision
 

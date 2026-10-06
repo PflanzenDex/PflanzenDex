@@ -32,16 +32,16 @@ Default zones of the account in this run (button "Standard-Lampen übernehmen"):
 
 **Expected** (computed by hand; ceiling of the current level ×0.8 must be reached, and the demand must not be more than 30 % below the ceiling of the next level, otherwise the species stays):
 
-| Input (lux need, default level, soft leaf) | Expected zone | Why                                                             | Observed                                                                                                                               |
-| ------------------------------------------ | ------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| 10,000, 2, no                              | Lampe 2       | 80 % of 15,000 = 12,000 not reached                             | ✅ Lampe 2, "Die Art bleibt bei ihrer Standard-Stufe …"                                                                                |
-| 14,000, 2, no                              | Lampe 2       | 12,000 reached, but 14,000 is far below 70 % of 100,000         | ✅ Lampe 2, same text                                                                                                                  |
-| 75,000, 2, no                              | Lampe 3       | reaches Lampe 3 (≥ 70,000), but not 80 % of 100,000 for Lampe 4 | ✅ Lampe 3, "Die nächste Zone wäre mehr Licht als die Art braucht … Sie bleibt hier." (`02-derivation-promoted-one-step-*.png`)        |
-| 80,000, 2, no                              | Lampe 4       | reaches 80 % of 100,000 and ≥ 70 % of 110,000                   | ✅ Lampe 4, "Der Lux-Bedarf erreicht mindestens 80 % der Lux-Decke der Stufe darunter …"                                               |
-| 80,000, 2, **soft leaf**                   | Lampe 2       | C3 plants with soft leaves are not moved up automatically       | ✅ Lampe 2, "Weichblättrige C3-Pflanzen werden nicht automatisch in eine stärkere Zone eingestuft …" (`03-derivation-soft-leaf-*.png`) |
-| 20,000, 3, no                              | Lampe 3       | stays at the default level, 20,000 is far below 70 % of 110,000 | ✅ Lampe 3, "… bleibt bei ihrer Standard-Stufe …"                                                                                      |
-| 100,000, 4, no                             | Lampe 4       | highest zone of the account                                     | ✅ Lampe 4, "Das ist die höchste Zone deines Kontos." (`04-derivation-top-zone-*.png`)                                                 |
-| 500, 2, no                                 | Lampe 2       | cutting light is never the target                               | ✅ Lampe 2                                                                                                                             |
+| Input (lux need, default level, soft leaf) | Expected zone | Why | Observed |
+|---|---|---|---|
+| 10,000, 2, no | Lampe 2 | 80 % of 15,000 = 12,000 not reached | ✅ Lampe 2, "Die Art bleibt bei ihrer Standard-Stufe …" |
+| 14,000, 2, no | Lampe 2 | 12,000 reached, but 14,000 is far below 70 % of 100,000 | ✅ Lampe 2, same text |
+| 75,000, 2, no | Lampe 3 | reaches Lampe 3 (≥ 70,000), but not 80 % of 100,000 for Lampe 4 | ✅ Lampe 3, "Die nächste Zone wäre mehr Licht als die Art braucht … Sie bleibt hier." (`02-derivation-promoted-one-step-*.png`) |
+| 80,000, 2, no | Lampe 4 | reaches 80 % of 100,000 and ≥ 70 % of 110,000 | ✅ Lampe 4, "Der Lux-Bedarf erreicht mindestens 80 % der Lux-Decke der Stufe darunter …" |
+| 80,000, 2, **soft leaf** | Lampe 2 | C3 plants with soft leaves are not moved up automatically | ✅ Lampe 2, "Weichblättrige C3-Pflanzen werden nicht automatisch in eine stärkere Zone eingestuft …" (`03-derivation-soft-leaf-*.png`) |
+| 20,000, 3, no | Lampe 3 | stays at the default level, 20,000 is far below 70 % of 110,000 | ✅ Lampe 3, "… bleibt bei ihrer Standard-Stufe …" |
+| 100,000, 4, no | Lampe 4 | highest zone of the account | ✅ Lampe 4, "Das ist die höchste Zone deines Kontos." (`04-derivation-top-zone-*.png`) |
+| 500, 2, no | Lampe 2 | cutting light is never the target | ✅ Lampe 2 |
 
 - ⚠️ **Wording, not a defect:** for 75,000 lux the species is moved from the default level 2 up to Lampe 3, but the reason text only explains why it does not go higher ("Sie bleibt hier"). It does not say why it moved up. The result is correct; the explanation could name both steps. Observation only.
 - ✅ Dark scheme (OS preference `dark`, desktop): the form and the result are readable (`07-derivation-dark-desktop.png`). Only looked at, no axe run in dark.
