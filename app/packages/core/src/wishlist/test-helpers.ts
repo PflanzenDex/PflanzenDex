@@ -15,6 +15,8 @@ export class InMemoryWishes implements WishStore {
     status: WishStatus;
     userId: string;
     nameKey?: string;
+    /** No name key (migration 0020): exempt from the unique name rule (FR-WUN-06, #303). */
+    keyless?: boolean;
   })[] = [];
   writes = 0;
 
@@ -29,7 +31,10 @@ export class InMemoryWishes implements WishStore {
       return "zone_unknown";
     if (
       this.rows.some(
-        (r) => r.userId === userId && (r.nameKey ?? wishNameKey(r.name)) === values.nameKey,
+        (r) =>
+          r.userId === userId &&
+          !r.keyless &&
+          (r.nameKey ?? wishNameKey(r.name)) === values.nameKey,
       )
     )
       return "name_taken";
@@ -45,7 +50,10 @@ export class InMemoryWishes implements WishStore {
   }
 
   /** Test setup: puts a wish with any status straight into the table. */
-  seed(userId: string, row: Partial<WishRow> & { id: string; name: string }): void {
+  seed(
+    userId: string,
+    row: Partial<WishRow> & { id: string; name: string; keyless?: boolean },
+  ): void {
     this.rows.push({
       german: null,
       targetZoneId: null,
@@ -85,6 +93,45 @@ export class InMemoryWishes implements WishStore {
       .map(bare);
   }
 
+  async keyless(userId: string): Promise<readonly WishRow[]> {
+    return this.rows
+      .filter((r) => r.userId === userId && r.keyless && r.status === "wishlist")
+      .map(bare);
+  }
+
+  async rename(
+    userId: string,
+    wishId: string,
+    name: string,
+    nameKey: string,
+  ): Promise<WishRow | "not_found" | "not_duplicate" | "name_taken"> {
+    const row = this.rows.find((r) => r.userId === userId && r.id === wishId);
+    if (!row) return "not_found";
+    if (!row.keyless) return "not_duplicate";
+    const taken = this.rows.some(
+      (r) =>
+        r.userId === userId &&
+        r !== row &&
+        !r.keyless &&
+        (r.nameKey ?? wishNameKey(r.name)) === nameKey,
+    );
+    if (taken) return "name_taken";
+    this.writes += 1;
+    const renamed = { ...row, name, nameKey, keyless: false };
+    this.rows[this.rows.indexOf(row)] = renamed;
+    return bare(renamed);
+  }
+
+  async remove(userId: string, wishId: string): Promise<WishRow | "not_found" | "not_duplicate"> {
+    const i = this.rows.findIndex((r) => r.userId === userId && r.id === wishId);
+    const row = this.rows[i];
+    if (!row) return "not_found";
+    if (!row.keyless) return "not_duplicate";
+    this.writes += 1;
+    this.rows.splice(i, 1);
+    return bare(row);
+  }
+
   async usingZone(userId: string, zoneId: string): Promise<readonly WishRow[]> {
     return this.rows.filter((r) => r.userId === userId && r.targetZoneId === zoneId).map(bare);
   }
@@ -93,10 +140,12 @@ export class InMemoryWishes implements WishStore {
 const bare = ({
   userId: owner,
   nameKey: key,
+  keyless: free,
   ...row
-}: WishRow & { userId: string; nameKey?: string }): WishRow => {
+}: WishRow & { userId: string; nameKey?: string; keyless?: boolean }): WishRow => {
   void owner;
   void key;
+  void free;
   return row;
 };
 

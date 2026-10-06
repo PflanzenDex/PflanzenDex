@@ -2,6 +2,8 @@
 // purchase and its history (US-WUN-03).
 export { wishCandidates } from "./candidates";
 export { wishCreate } from "./create";
+export { wishRemove, wishRename } from "./repair";
+export type { RepairDependencies, WishRemoveResult, WishRenameResult } from "./repair";
 export { wishZoneUsage } from "./zone-usage";
 export { wishBought, wishBuy } from "./purchase";
 export type {
@@ -27,5 +29,6 @@ export type {
   Candidate,
   CandidateList,
   CandidatesDependencies,
+  DuplicateWish,
   PriorityKind,
-} from "./candidate-types";
+} from "./candidates";

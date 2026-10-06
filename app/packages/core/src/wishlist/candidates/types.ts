@@ -1,5 +1,5 @@
 // Shapes of the prioritized candidate list (US-WUN-01): derived on every request, never stored (P-01).
-import type { WishStore, ZoneStock, ZoneStockSource } from "./types";
+import type { WishStore, ZoneStock, ZoneStockSource } from "../types";
 
 /**
  * Why a candidate stands where it stands (the "why" of the priority, P-09). `thinnest`: its zone has the fewest
@@ -27,6 +27,13 @@ export interface Candidate {
   readonly priority: { readonly kind: PriorityKind; readonly text: string };
 }
 
+/** An open wish whose name equals another wish after folding (FR-WUN-06, #303); it can be renamed or deleted. */
+export interface DuplicateWish {
+  readonly id: string;
+  readonly name: string;
+  readonly title: string;
+}
+
 export interface CandidateList {
   /** Open candidates, the zone with the fewest specimens first; unknown zone last. */
   readonly candidates: readonly Candidate[];
@@ -34,9 +41,13 @@ export interface CandidateList {
   readonly zones: readonly ZoneStock[];
   /** What the list says and what to do next (P-09). */
   readonly hint: { readonly text: string; readonly nextAction: string };
+  /** Open wishes that share a name with another wish (migration 0020); empty when there are none. */
+  readonly duplicates: readonly DuplicateWish[];
+  /** Says what is wrong and what to do (P-09); `null` when there are no duplicates. */
+  readonly duplicateHint: { readonly text: string; readonly nextAction: string } | null;
 }
 
 export interface CandidatesDependencies {
-  readonly wishes: Pick<WishStore, "open">;
+  readonly wishes: Pick<WishStore, "open" | "keyless">;
   readonly stock: ZoneStockSource;
 }
