@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openEnsuredOwnerPool, openFixturePool, withAccount } from "@pflanzendex/db";
+import { migrate, openOwnerPool, openFixturePool, withAccount } from "@pflanzendex/db";
 
 // QG-D1 (#476): the api suite must run like production, as a NON-superuser owner, so row-level security applies to
 // every route test. If the suite connection were a superuser again, an RLS regression visible only through the
@@ -11,7 +11,7 @@ let admin: Pool;
 const [a, b] = [randomUUID(), randomUUID()];
 
 beforeAll(async () => {
-  pool = await openEnsuredOwnerPool();
+  pool = openOwnerPool();
   admin = openFixturePool();
   await migrate(pool);
   for (const id of [a, b])
