@@ -1,6 +1,7 @@
 import {
   BookOpen,
   Building2,
+  CalendarCheck,
   CalendarClock,
   Gauge,
   Heart,
@@ -20,6 +21,7 @@ import type { NavItem } from "./components/shared/nav-item";
 
 export type View =
   | "start"
+  | "today"
   | "species"
   | "collection"
   | "treatments"
@@ -37,6 +39,7 @@ export type View =
 
 const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
   { id: "start", text: "Start", icon: Home },
+  { id: "today", text: "Heute", icon: CalendarCheck },
   { id: "species", text: "Arten", icon: Leaf },
   { id: "collection", text: "Bestand", icon: Package },
   { id: "treatments", text: "Behandlung", icon: Sprout },
@@ -56,6 +59,7 @@ const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
 /** One URL path per view (English); the link texts above stay German. */
 export const PATHS: Record<View, string> = {
   start: "/",
+  today: "/today",
   species: "/species",
   collection: "/collection",
   treatments: "/treatments",

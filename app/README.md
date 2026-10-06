@@ -177,6 +177,12 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Web:** tab "Hinweise" (`HintsPage` in the `collection` module); a button per hint leads to "Bestand" or "Standorte und Licht" (the app maps the target to a tab, the modules do not know each other). The note "mit unbekannter Zone" of the light distribution points to this tab (P-10).
 - **Limits:** no operation changes the location of an existing specimen yet (BES-03/PHA-03), so "Standort fehlt" names its action but the app cannot do it; the tab shows no count badge; the central "Heute" list (TE-07) and the deviations (QS-04) do not exist yet and must treat incomplete specimens the same way (listed or counted with a note). Missing lux need of a species (FR-LIC-03) has no hint yet.
 
+## Today list (TE-07, US-QS-01)
+
+- **What:** `GET /today?timeZone=<IANA name>` returns `{ date, items, upcoming }`, derived live (no table, no migration, P-01) by `todayStatus` in `core/src/today` (module `today`, read only): treatments overdue or due today (US-BEH-02), phase deviations (US-PHA-02) and incomplete specimens (US-BES-08), most urgent first. Each item has `id`, `kind`, `specimenId`, `specimenName`, `text`, `nextAction` and `target` (`treatments`, `care_phases` or `hints`; P-09). `upcoming` counts open treatments that are not due yet (P-10). An unknown time zone answers 400 `input.invalid`; without token 401; only the own, active specimens are read (P-04).
+- **Web:** view "Heute" (`/today`, `TodayPage` in the `today` module); the app maps `target` to a view.
+- **Limits:** see the gap list in `Docs/PRODUCT-SPECS/14-Cross-Cutting.md` (US-QS-01).
+
 ## Measurements (US-WAC-01)
 
 - **Module:** `care` (owner decision O-1: PHA, BEH and WAC live in one module; `core/src/care`, `db/src/care`, `api/src/care`, `web/src/care`). It depends on `kernel`, `catalog` and `collection` (all listed in `modules.config.mjs`).
