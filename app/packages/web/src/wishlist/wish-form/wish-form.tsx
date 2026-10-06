@@ -5,10 +5,16 @@ import type { ZoneStock } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { errorText } from "@/lib/error-text";
-import type { ApiError } from "../kernel";
-import { ChoiceFields, ImageFields, NameFields } from "./wish-fields";
-import { EMPTY_FIELDS, fieldsOfRefusal, toWishInput, wishSchema, type WishFields } from "./schemas";
-import type { WishInput } from "./wishlist-api";
+import type { ApiError } from "../../kernel";
+import { ChoiceFields, ImageFields, NameFields } from "./wish-fields/wish-fields";
+import {
+  EMPTY_FIELDS,
+  fieldsOfRefusal,
+  toWishInput,
+  wishSchema,
+  type WishFields,
+} from "../schemas";
+import type { WishInput } from "../wishlist-api";
 
 /**
  * Hands a server refusal to the form: the fields it names get the German text of its error code and the first of

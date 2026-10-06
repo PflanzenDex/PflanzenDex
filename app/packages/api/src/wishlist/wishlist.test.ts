@@ -193,6 +193,23 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
     ]);
   });
 
+  it("US-WUN-02 warns for every zone 2 to 4 below 2 open candidates, and only for the own account", async () => {
+    const own = (await candidates(subA)).body["replenishment"] as {
+      buffer: number;
+      zones: { name: string; open: number; text: string }[];
+    };
+    expect(own.buffer).toBe(2);
+    expect(own.zones.map((z) => [z.name, z.open])).toEqual([
+      ["Lampe 2", 1],
+      ["Lampe 3", 1],
+      ["Lampe 4", 1],
+    ]);
+    expect(own.zones[0]?.text).toBe("Nachschub nötig: Lampe 2 (1 offener Kandidat)");
+    // Ben's zones are his own and hold none of Anna's wishes (P-04).
+    const ben = (await candidates(subB)).body["replenishment"] as { zones: { open: number }[] };
+    expect(ben.zones.map((z) => z.open)).toEqual([0, 0, 0]);
+  });
+
   it("an archived specimen no longer counts in the stock (isActive)", async () => {
     const before = (await candidates(subA)).body["zones"] as { name: string; count: number }[];
     expect(before.find((z) => z.name === "Lampe 3")?.count).toBe(1);

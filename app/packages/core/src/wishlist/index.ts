@@ -1,7 +1,7 @@
 // Public interface of the module `wishlist` (ADR 0003): the wish list and its priority by space need (US-WUN-01), the
 // purchase and its history (US-WUN-03), the link to the specimen and
 // "Discarded" (US-WUN-05).
-export { wishCandidates } from "./candidates";
+export { REPLENISH_BUFFER, wishCandidates } from "./candidates";
 export { wishCreate } from "./create";
 export { wishRemove, wishRename } from "./repair";
 export type { RepairDependencies, WishRemoveResult, WishRenameResult } from "./repair";
@@ -38,6 +38,8 @@ export type {
   Candidate,
   CandidateList,
   CandidatesDependencies,
+  ReplenishZone,
+  Replenishment,
   DuplicateWish,
   PriorityKind,
 } from "./candidates";
