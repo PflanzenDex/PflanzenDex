@@ -2,12 +2,12 @@ import type { Ownership, UnidentifiedSpecimen } from "@pflanzendex/core";
 import { useCallback } from "react";
 import { LoadFrame } from "../kernel";
 import { Browse } from "./PokedexBrowse";
-import { loadOwnership } from "./ownership-api";
+import { loadOwnership } from "./caught/ownership-api";
 import { PokedexPageSkeleton } from "./PokedexPage.skeleton";
 import { CARD, GRID } from "./PokedexCards";
 import { CollectorRank } from "./collector-rank/collector-rank";
 import { Milestones } from "./milestones/milestones";
-import { NewlyCaught } from "./newly-caught/newly-caught";
+import { NewlyCaught } from "./caught/newly-caught/newly-caught";
 
 /**
  * The species the account has caught (US-POK-06): derived from the active specimens, never stored (P-01). A specimen

@@ -9,8 +9,8 @@ import { useRef, useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { CardList } from "./PokedexCards";
-import { SpeciesDetail } from "./detail/PokedexDetail";
-import { useDetail } from "./detail/use-detail";
+import { SpeciesDetail } from "./PokedexDetail";
+import { useDetail } from "./use-detail";
 import { Controls } from "./PokedexControls";
 
 const plural = (n: number) => `${n} ${n === 1 ? "Art" : "Arten"}`;
