@@ -36,7 +36,7 @@ describe("ResponsiveModal (US-QS-07, DS-23)", () => {
     setViewportWidth(360);
     render(<Example />);
     await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
-    const dialog = screen.getByRole("dialog", { name: "Pflanze bearbeiten" });
+    const dialog = await screen.findByRole("dialog", { name: "Pflanze bearbeiten" });
     expect(dialog.className).toContain("pb-[env(safe-area-inset-bottom)]");
     expect(dialog.className).toContain("inset-x-0");
   });

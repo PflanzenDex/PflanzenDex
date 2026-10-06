@@ -17,6 +17,11 @@ vi.mock("./light/setup-steps", () => {
   return { LocationsStep: () => null, ZonesStep: () => null };
 });
 
+vi.mock("vaul", () => {
+  loaded.pages.push("vaul");
+  return { Drawer: {} };
+});
+
 describe("#451 · DS-08 the entry bundle stays small", () => {
   it("#451 the invitation page (forms and validation) loads only when the invitation code is asked for", async () => {
     await import("./App");
@@ -31,5 +36,10 @@ describe("#451 · DS-08 the entry bundle stays small", () => {
   it("#451 the onboarding steps (forms and validation) load only when a step opens", async () => {
     await import("./App");
     expect(loaded.pages).not.toContain("setup-steps");
+  });
+
+  it("US-QS-07 · DS-08 the sheet library (Vaul) loads only when a sheet is first opened", async () => {
+    await import("./App");
+    expect(loaded.pages).not.toContain("vaul");
   });
 });
