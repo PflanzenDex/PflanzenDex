@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openEnsuredOwnerPool, openFixturePool } from "@pflanzendex/db";
+import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp } from "../app";
 
 // US-LIC-05: locations and light zones via the API (real PostgreSQL, `make db-up`).
@@ -39,7 +39,7 @@ async function call(
 }
 
 beforeAll(async () => {
-  pool = await openEnsuredOwnerPool();
+  pool = openOwnerPool();
   admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer, pool });

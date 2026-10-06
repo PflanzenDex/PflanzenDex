@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { enqueueJob } from "@pflanzendex/core";
-import { JobsPostgres, migrate, openEnsuredOwnerPool, openFixturePool } from "@pflanzendex/db";
+import { JobsPostgres, migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createJobWorker } from "./job-worker";
@@ -17,7 +17,7 @@ const type = `test.w${randomUUID()
 const events: string[] = [];
 
 beforeAll(async () => {
-  pool = await openEnsuredOwnerPool();
+  pool = openOwnerPool();
   admin = openFixturePool();
   await migrate(pool);
   queue = new JobsPostgres(pool);

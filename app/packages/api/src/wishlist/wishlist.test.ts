@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openEnsuredOwnerPool, openFixturePool, withAccount } from "@pflanzendex/db";
+import { migrate, openOwnerPool, openFixturePool, withAccount } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
@@ -99,7 +99,7 @@ let zoneA: Record<string, string> = {};
 const specimenIds: string[] = [];
 
 beforeAll(async () => {
-  pool = await openEnsuredOwnerPool();
+  pool = openOwnerPool();
   admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer, pool });
