@@ -48,8 +48,8 @@ export class FriendsPostgres {
         [code],
       ),
     );
-    const row = r.rows[0];
-    if (!row) throw new Error("request_friendship returned no row");
+    // The function always returns exactly one row.
+    const row = r.rows[0] as NonNullable<(typeof r.rows)[number]>;
     if (row.outcome !== "requested") return { outcome: row.outcome };
     return {
       outcome: "requested",
