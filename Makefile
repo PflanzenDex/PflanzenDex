@@ -107,6 +107,9 @@ lighthouse: ## Lighthouse CI on the built web app, mobile, report only (QG-U1), 
 	scripts/lighthouse-run.sh
 	scripts/lighthouse-summary.sh | tee $(APP)/packages/web/.lighthouseci/summary.md
 
+bundle-report: ## Initial JS per chunk and package as Markdown, 140 kB working target; report only, never fails (QG-U6, FR-QG-10)
+	@cd $(APP) && npm run --silent bundle-report
+
 release-tags-check: ## All v* tags come from the release workflow, no hand-set version (FR-DEV-05; needs gh auth)
 	cd $(APP) && npm run release-tags
 

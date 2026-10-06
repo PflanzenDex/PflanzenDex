@@ -77,6 +77,11 @@ jobs:
       - run: make setup
       - run: make browsers # QG-U5: the conformance run in `make ci` drives Chromium over the stories
       - run: make ci
+      # QG-U6 report (FR-QG-10): initial JS per chunk and package in the job summary. Report only: runs after a
+      # failure too, and a failing report never fails the job (the blocking gate is the budget step inside `make ci`).
+      - name: Initial JS bundle report
+        if: always()
+        run: make bundle-report >> "$GITHUB_STEP_SUMMARY" || echo "bundle report unavailable (report only)"
 
   # QG-S2 for dependencies a PR adds or changes: known high-severity vulnerabilities block the merge.
   dependency-review:
