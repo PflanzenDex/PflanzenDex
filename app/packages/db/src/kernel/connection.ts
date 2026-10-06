@@ -44,6 +44,15 @@ export function openOwnerPool(): pg.Pool {
   return openPool(testOwnerUrl());
 }
 
+/**
+ * Owner pool for suites without a vitest global setup (`api`, QG-D1): makes sure the owner role and its database
+ * exist (idempotent, safe against parallel processes), then connects as the non-superuser owner.
+ */
+export async function openEnsuredOwnerPool(): Promise<pg.Pool> {
+  await ensureTestOwnerDatabase();
+  return openOwnerPool();
+}
+
 /** Superuser pool: only for roles, scratch databases and fixtures that need rights the owner must not have. */
 export function openAdminPool(allowExitOnIdle = false): pg.Pool {
   return openPool(testDatabaseUrl(), allowExitOnIdle);

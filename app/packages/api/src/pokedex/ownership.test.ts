@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool } from "@pflanzendex/db";
+import { migrate, openEnsuredOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
 // US-POK-06: ownership derived from the specimens through the API (real PostgreSQL, `make db-up`).
 let pool: Pool;
+let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
 const run = randomUUID()
   .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
   .replace(/-/g, "")
@@ -64,22 +65,24 @@ const specimen = async (sub: string, marker: string, speciesId: string) =>
   ] as string;
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = await openEnsuredOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer, pool });
 });
 afterAll(async () => {
-  await pool.query(
+  await admin.query(
     "delete from specimen where account_id in (select id from account where subject = any($1))",
     [[subA, subB]],
   );
-  await pool.query(
+  await admin.query(
     `delete from species where id in (select object_id from review_case
        where account_id in (select id from account where subject = any($1)))`,
     [[subA, subB]],
   );
-  await pool.query("delete from account where subject = any($1)", [[subA, subB]]);
+  await admin.query("delete from account where subject = any($1)", [[subA, subB]]);
   await pool.end();
+  await admin.end();
 });
 
 describe("US-POK-06 ownership: sign-in", () => {
@@ -164,7 +167,7 @@ describe("US-POK-06 ownership: derived from the specimens", () => {
 
   it("the route only reads: nothing is written", async () => {
     const count = () =>
-      pool.query(
+      admin.query(
         "select count(*)::int as n from specimen where account_id in (select id from account where subject = $1)",
         [subA],
       );
@@ -188,21 +191,21 @@ describe("US-POK-07 catch date through the API", () => {
     const kept = await specimen(subA, `Limonia neu ${run}`, lemon);
     const old = await specimen(subA, `Limonia alt ${run}`, lemon);
     const created = await specimen(subA, `Limonia ohne ${run}`, lemon);
-    await pool.query("update specimen set caught_at = '2026-06-01' where id = $1", [kept]);
-    await pool.query(
+    await admin.query("update specimen set caught_at = '2026-06-01' where id = $1", [kept]);
+    await admin.query(
       "update specimen set caught_at = '2025-02-03', status = 'archived', archived_at = '2026-01-01', archived_reason = 'abgegeben' where id = $1",
       [old],
     );
-    await pool.query("update specimen set caught_at = null where id = $1", [created]);
+    await admin.query("update specimen set caught_at = null where id = $1", [created]);
     expect(await datesOf(subA, `Limonia${run} acidissima`)).toEqual({
       date: "2025-02-03",
       source: "caught_at",
     });
-    await pool.query(
+    await admin.query(
       "update specimen set caught_at = null, status = 'plant', archived_at = null, archived_reason = null where id = $1",
       [old],
     );
-    await pool.query("update specimen set created_at = '2024-12-31T23:30:00Z' where id = $1", [
+    await admin.query("update specimen set created_at = '2024-12-31T23:30:00Z' where id = $1", [
       old,
     ]);
     expect(await datesOf(subA, `Limonia${run} acidissima`, "Europe/Berlin")).toEqual({
@@ -254,7 +257,7 @@ describe("US-POK-08 the data the page searches and groups by", () => {
       familyGerman: `Geheimgewächse ${run}`,
     });
     // The API refuses this, so the row is written straight into the table: the visibility rule must hold on its own.
-    await pool.query(
+    await admin.query(
       `insert into specimen (account_id, species_id, name, status)
        select id, $2, $3, 'plant' from account where subject = $1`,
       [subB, secret, `Fremd ${run}`],
