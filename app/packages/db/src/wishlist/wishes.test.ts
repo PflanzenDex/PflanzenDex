@@ -267,7 +267,7 @@ describe("FR-WUN-06 #303 repair of key-less duplicate wishes", () => {
     return (r.rows[0] as { id: string }).id;
   };
   const keyOfRow = async (id: string) =>
-    (await pool.query("select name_key from wish where id = $1", [id])).rows[0]?.name_key;
+    (await admin.query("select name_key from wish where id = $1", [id])).rows[0]?.name_key;
 
   it("FR-WUN-06 #303 lists only the open key-less wishes of the own account", async () => {
     const mine = await keyless(anna, "Doppelt A");
@@ -305,7 +305,7 @@ describe("FR-WUN-06 #303 repair of key-less duplicate wishes", () => {
   it("FR-WUN-06 #303 remove deletes the key-less wish and returns it", async () => {
     const id = await keyless(anna, "Zu löschen");
     expect(await wishes.remove(anna, id)).toMatchObject({ id, name: "Zu löschen" });
-    expect((await pool.query("select 1 from wish where id = $1", [id])).rowCount).toBe(0);
+    expect((await admin.query("select 1 from wish where id = $1", [id])).rowCount).toBe(0);
     expect(await wishes.remove(anna, id)).toBe("not_found");
   });
 
@@ -314,7 +314,7 @@ describe("FR-WUN-06 #303 repair of key-less duplicate wishes", () => {
     expect(await wishes.rename(ben, id, "Mein", keyOf("Mein"))).toBe("not_found");
     expect(await wishes.remove(ben, id)).toBe("not_found");
     expect(await wishes.rename(anna, randomUUID(), "X", "x")).toBe("not_found");
-    expect((await pool.query("select name from wish where id = $1", [id])).rows[0].name).toBe(
+    expect((await admin.query("select name from wish where id = $1", [id])).rows[0].name).toBe(
       "Annas Doppel",
     );
   });
