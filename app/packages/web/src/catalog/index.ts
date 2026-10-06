@@ -6,3 +6,10 @@ export const SpeciesPage = lazyPage(() =>
 export const ReviewPage = lazyPage(() =>
   import("./ReviewPage").then((m) => ({ default: m.ReviewPage })),
 );
+// The app finds the species of a bought wish (US-WUN-05); the calls load when the way is used (DS-08).
+export const searchSpecies = async (
+  ...args: Parameters<typeof import("./species-api").searchSpecies>
+) => (await import("./species-api")).searchSpecies(...args);
+export const loadSpecies = async (
+  ...args: Parameters<typeof import("./species-api").loadSpecies>
+) => (await import("./species-api")).loadSpecies(...args);

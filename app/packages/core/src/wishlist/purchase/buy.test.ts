@@ -54,7 +54,7 @@ describe("US-WUN-03 record a purchase", () => {
     await buy(ALOE);
     const history = await wishBought({ wishes }, "anna");
     expect(history.bought).toEqual([
-      { id: ALOE, name: "Aloe vera", title: "Echte Aloe (Aloe vera)" },
+      { id: ALOE, name: "Aloe vera", title: "Echte Aloe (Aloe vera)", specimenId: null },
     ]);
     expect(wishes.rows.map((w) => w.id)).toContain(ALOE);
   });

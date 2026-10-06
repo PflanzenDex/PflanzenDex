@@ -1,4 +1,5 @@
 import type {
+  WishChange,
   WishPurchase,
   WishRow,
   WishStatus,
@@ -44,6 +45,7 @@ export class InMemoryWishes implements WishStore {
       id: `w${this.rows.length + 1}`,
       type: "plant",
       status: "wishlist",
+      specimenId: null,
     };
     this.rows.push({ ...row, userId, nameKey });
     return row;
@@ -64,6 +66,7 @@ export class InMemoryWishes implements WishStore {
       license: null,
       type: "plant",
       status: "wishlist" as WishStatus,
+      specimenId: null,
       ...row,
       userId,
     });
@@ -91,6 +94,40 @@ export class InMemoryWishes implements WishStore {
           a.name.toLowerCase().localeCompare(b.name.toLowerCase()) || a.id.localeCompare(b.id),
       )
       .map(bare);
+  }
+
+  async discard(userId: string, wishId: string): Promise<WishChange | "not_found" | "not_open"> {
+    const row = this.rows.find((r) => r.userId === userId && r.id === wishId);
+    if (!row) return "not_found";
+    if (row.status === "bought") return "not_open";
+    if (row.status === "discarded") return { wish: bare(row), changed: false };
+    this.writes += 1;
+    row.status = "discarded";
+    return { wish: bare(row), changed: true };
+  }
+
+  async discarded(userId: string): Promise<readonly WishRow[]> {
+    return this.rows.filter((r) => r.userId === userId && r.status === "discarded").map(bare);
+  }
+
+  readonly specimens: Record<string, readonly string[]> = {};
+
+  async link(
+    userId: string,
+    wishId: string,
+    specimenId: string,
+  ): Promise<WishChange | "not_found" | "not_bought" | "specimen_unknown" | "already_linked"> {
+    const row = this.rows.find((r) => r.userId === userId && r.id === wishId);
+    if (!row) return "not_found";
+    if (row.status !== "bought") return "not_bought";
+    if (!this.specimens[userId]?.includes(specimenId)) return "specimen_unknown";
+    if (row.specimenId === specimenId) return { wish: bare(row), changed: false };
+    if (row.specimenId !== null) return "already_linked";
+    if (this.rows.some((r) => r.userId === userId && r.specimenId === specimenId))
+      return "already_linked";
+    this.writes += 1;
+    Object.assign(row, { specimenId });
+    return { wish: bare(row), changed: true };
   }
 
   async keyless(userId: string): Promise<readonly WishRow[]> {

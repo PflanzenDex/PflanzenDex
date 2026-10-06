@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createFixtureSpecimen } from "../fixtures.ts";
 import { ZonePostgres } from "../light/index.ts";
 import { migrate, openFixturePool, openOwnerPool, withAccount } from "../kernel/index.ts";
 import { WishesPostgres } from "./index.ts";
@@ -245,6 +246,84 @@ describe("US-WUN-03 record a purchase in the database", () => {
     await wishes.buy(ben, w.id);
     expect((await wishes.bought(anna)).map((x) => x.id)).not.toContain(w.id);
     expect((await wishes.bought(ben)).map((x) => x.id)).toContain(w.id);
+  });
+});
+
+describe("US-WUN-05 from purchase to plant in the database", () => {
+  const bought = async (account: string, name: string) => {
+    const w = await wishes.create(account, values({ name }));
+    if (typeof w === "string") throw new Error(w);
+    await wishes.buy(account, w.id);
+    return w;
+  };
+
+  it("US-WUN-05 a bought wish is linked to a specimen of the account and the link is read back", async () => {
+    const w = await bought(anna, "Kauf mit Exemplar");
+    const specimen = await createFixtureSpecimen(pool, anna, "Exemplar zum Kauf");
+    expect(await wishes.link(anna, w.id, specimen)).toMatchObject({
+      changed: true,
+      wish: { specimenId: specimen, status: "bought" },
+    });
+    expect((await wishes.bought(anna)).find((x) => x.id === w.id)?.specimenId).toBe(specimen);
+  });
+
+  it("US-WUN-05 linking the same specimen again changes nothing; another specimen is already_linked", async () => {
+    const w = await bought(anna, "Zweimal verknüpft");
+    const one = await createFixtureSpecimen(pool, anna, "Verknüpft eins");
+    const two = await createFixtureSpecimen(pool, anna, "Verknüpft zwei");
+    await wishes.link(anna, w.id, one);
+    expect(await wishes.link(anna, w.id, one)).toMatchObject({ changed: false });
+    expect(await wishes.link(anna, w.id, two)).toBe("already_linked");
+  });
+
+  it("US-WUN-05 a specimen belongs to one wish only", async () => {
+    const a = await bought(anna, "Eigentümer eins");
+    const b = await bought(anna, "Eigentümer zwei");
+    const specimen = await createFixtureSpecimen(pool, anna, "Geteiltes Exemplar");
+    await wishes.link(anna, a.id, specimen);
+    expect(await wishes.link(anna, b.id, specimen)).toBe("already_linked");
+  });
+
+  it("US-WUN-05 only a bought wish is linked", async () => {
+    const w = await wishes.create(anna, values({ name: "Noch offen" }));
+    if (typeof w === "string") throw new Error(w);
+    const specimen = await createFixtureSpecimen(pool, anna, "Exemplar zum offenen Wunsch");
+    expect(await wishes.link(anna, w.id, specimen)).toBe("not_bought");
+    await expect(
+      admin.query("update wish set specimen_id = $2 where id = $1", [w.id, specimen]),
+    ).rejects.toMatchObject({ constraint: "wish_specimen_only_when_bought" });
+  });
+
+  it("US-WUN-05 a specimen or wish of another account looks unknown (P-04)", async () => {
+    const mine = await bought(anna, "Mein Kauf");
+    const theirs = await bought(ben, "Bens Kauf");
+    const bensSpecimen = await createFixtureSpecimen(pool, ben, "Bens Exemplar");
+    expect(await wishes.link(anna, mine.id, bensSpecimen)).toBe("specimen_unknown");
+    expect(await wishes.link(anna, theirs.id, bensSpecimen)).toBe("not_found");
+    expect(await wishes.link(anna, randomUUID(), bensSpecimen)).toBe("not_found");
+  });
+
+  it("US-WUN-05 an open wish becomes discarded, stays stored and readable; again changes nothing", async () => {
+    const w = await wishes.create(anna, values({ name: "Zu verwerfen" }));
+    if (typeof w === "string") throw new Error(w);
+    expect(await wishes.discard(anna, w.id)).toMatchObject({
+      changed: true,
+      wish: { status: "discarded" },
+    });
+    expect((await wishes.open(anna)).map((x) => x.id)).not.toContain(w.id);
+    expect((await wishes.discarded(anna)).map((x) => x.id)).toContain(w.id);
+    expect(await wishes.discard(anna, w.id)).toMatchObject({ changed: false });
+  });
+
+  it("US-WUN-05 a bought wish is not_open for discarding; foreign or unknown is not_found (P-04)", async () => {
+    const mine = await bought(anna, "Gekauft nicht verwerfbar");
+    expect(await wishes.discard(anna, mine.id)).toBe("not_open");
+    const theirs = await wishes.create(ben, values({ name: "Bens offener Wunsch" }));
+    if (typeof theirs === "string") throw new Error(theirs);
+    expect(await wishes.discard(anna, theirs.id)).toBe("not_found");
+    expect(await wishes.discard(anna, randomUUID())).toBe("not_found");
+    expect((await wishes.discarded(anna)).map((x) => x.id)).not.toContain(theirs.id);
+    expect((await wishes.open(ben)).map((x) => x.id)).toContain(theirs.id);
   });
 });
 
