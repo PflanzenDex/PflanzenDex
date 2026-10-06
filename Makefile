@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline unused-report storybook build-storybook ds-snapshots ds-snapshots-check
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -106,6 +106,9 @@ lighthouse: ## Lighthouse CI on the built web app, mobile, report only (QG-U1), 
 	cd $(APP) && npm run bundle-budget -- --report
 	scripts/lighthouse-run.sh
 	scripts/lighthouse-summary.sh | tee $(APP)/packages/web/.lighthouseci/summary.md
+
+bundle-report: ## Initial JS per chunk and package as Markdown, 140 kB working target; report only, never fails (QG-U6, FR-QG-10)
+	@cd $(APP) && npm run --silent bundle-report
 
 release-tags-check: ## All v* tags come from the release workflow, no hand-set version (FR-DEV-05; needs gh auth)
 	cd $(APP) && npm run release-tags
