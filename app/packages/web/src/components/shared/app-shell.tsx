@@ -1,4 +1,5 @@
 import { useEffect, useRef, type MouseEvent, type ReactNode, type RefObject } from "react";
+import { AnnouncerProvider } from "@/platform/announcer/announcer";
 import { RouteFocus } from "@/components/routing/route-focus/route-focus";
 import { GlobalHeader } from "./global-header";
 import { MobileNavBar } from "./mobile-nav-bar";
@@ -59,27 +60,29 @@ export function AppShell({
   const shell = useRef<HTMLDivElement>(null);
   useStickyScrollPadding(shell);
   return (
-    <div
-      ref={shell}
-      className="flex min-h-dvh flex-col overflow-x-hidden bg-background text-foreground"
-    >
-      <a
-        href={`#${MAIN_ID}`}
-        onClick={skipToContent}
-        className="sr-only rounded-md bg-background font-semibold text-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:inline-flex focus:min-h-[44px] focus:items-center focus:px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    <AnnouncerProvider>
+      <div
+        ref={shell}
+        className="flex min-h-dvh flex-col overflow-x-hidden bg-background text-foreground"
       >
-        Zum Inhalt springen
-      </a>
-      <GlobalHeader items={items} />
-      <main
-        id={MAIN_ID}
-        tabIndex={-1}
-        className="flex-1 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))] pt-4 md:px-6 md:pb-0"
-      >
-        {titleOf ? <RouteFocus titleOf={titleOf} /> : null}
-        {children}
-      </main>
-      <MobileNavBar items={items} />
-    </div>
+        <a
+          href={`#${MAIN_ID}`}
+          onClick={skipToContent}
+          className="sr-only rounded-md bg-background font-semibold text-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:inline-flex focus:min-h-[44px] focus:items-center focus:px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Zum Inhalt springen
+        </a>
+        <GlobalHeader items={items} />
+        <main
+          id={MAIN_ID}
+          tabIndex={-1}
+          className="flex-1 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))] pt-4 md:px-6 md:pb-0"
+        >
+          {titleOf ? <RouteFocus titleOf={titleOf} /> : null}
+          {children}
+        </main>
+        <MobileNavBar items={items} />
+      </div>
+    </AnnouncerProvider>
   );
 }
