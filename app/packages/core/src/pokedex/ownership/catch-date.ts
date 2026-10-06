@@ -1,9 +1,9 @@
 // Catch date of a species (US-POK-07, P-01: derived, never stored): the earliest date across all specimens of the
 // keeper, active and archived. Per specimen: `caught_at` (exact), else the local creation date (approximate), else
 // unknown. A date is never guessed (P-08).
-import { localToday } from "../kernel";
-import type { SpecimenRow } from "../collection";
-import type { CatchDate } from "./types";
+import { localToday } from "../../kernel";
+import type { SpecimenRow } from "../../collection";
+import type { CatchDate } from "../types";
 
 const UNKNOWN: CatchDate = { date: null, source: "unknown" };
 

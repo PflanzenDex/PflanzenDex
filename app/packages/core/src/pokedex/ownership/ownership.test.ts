@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { InMemorySpecimens, SpeciesStub, testSpecies } from "../collection/shared/test-helpers";
-import { pokedexOwnership, type OwnershipDependencies } from "./index";
+import { InMemorySpecimens, SpeciesStub, testSpecies } from "../../collection/shared/test-helpers";
+import { pokedexOwnership, type OwnershipDependencies } from "../index";
 
 const LEMON = "11111111-1111-4111-8111-111111111111";
 const OPUNTIA_VAR = "22222222-2222-4222-8222-222222222222";

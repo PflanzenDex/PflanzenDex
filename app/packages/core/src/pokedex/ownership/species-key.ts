@@ -1,6 +1,6 @@
 // Species key of a Latin name (US-POK-06): the first two words, hybrid sign skipped, epithet in lower case. Additions
 // (`var.`, `subsp.`, `f.`, `'Cultivar'`) do not flow into the assignment but become a chip on the card.
-import type { SpeciesKey } from "./types";
+import type { SpeciesKey } from "../types";
 
 const HYBRID_SIGNS = new Set(["x", "×"]);
 /** "sp." and "spp." stand for "species unknown": no epithet. */

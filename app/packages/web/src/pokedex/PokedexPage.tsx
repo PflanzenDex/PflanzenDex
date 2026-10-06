@@ -5,6 +5,7 @@ import { Browse } from "./PokedexBrowse";
 import { loadOwnership } from "./ownership-api";
 import { PokedexPageSkeleton } from "./PokedexPage.skeleton";
 import { CARD, GRID } from "./PokedexCards";
+import { CollectorRank } from "./collector-rank/collector-rank";
 
 /**
  * The species the account has caught (US-POK-06): derived from the active specimens, never stored (P-01). A specimen
@@ -32,6 +33,7 @@ export function PokedexPage(props: {
             <h1 id="pokedex-title" className="mb-2 text-2xl font-semibold">
               Pokédex
             </h1>
+            <CollectorRank caught={ownership.caught.length} />
             <Browse caught={ownership.caught} {...(onOpenSpecies ? { onOpenSpecies } : {})} />
             <Unidentified specimens={ownership.unidentified} />
           </section>
