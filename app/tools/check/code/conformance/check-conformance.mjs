@@ -15,6 +15,7 @@ import {
   INTERACTIVE,
   overlayResults,
   probeTargets,
+  settleStyles,
   storyUrl,
   tabThrough,
 } from "./conformance-probes.mjs";
@@ -71,6 +72,13 @@ export function buildCatalog(outDir, fixtures) {
   if (r.status !== 0) throw new Error(`storybook build failed:\n${r.stdout}\n${r.stderr}`);
 }
 
+// QG-U9: axe starts only after the colour scheme and its transitions have settled (see settleStyles).
+export async function settleBeforeAxe(page) {
+  const unsettled = await page.evaluate(settleStyles);
+  if (unsettled > 0)
+    throw new Error(`QG-U9: ${unsettled} animation(s) still running after the wait`);
+}
+
 async function checkStory({ page, baseUrl, allowlist }, id, scheme) {
   const ctx = { story: id, scheme };
   await page.goto(storyUrl(baseUrl, id, scheme));
@@ -81,6 +89,7 @@ async function checkStory({ page, baseUrl, allowlist }, id, scheme) {
   if (await page.locator("body.sb-show-errordisplay").count())
     return [`${where(ctx)}: the story failed to render`];
   await page.evaluate(() => document.fonts.ready);
+  await settleBeforeAxe(page);
 
   // Stories with autoFocus or an open overlay start with focus inside; measure the unfocused style first.
   await page.evaluate(
