@@ -9,7 +9,7 @@
     "maxParams": 4
   },
   "duplicates": { "minOccurrences": 3, "minTokens": 50, "minLines": 5, "mode": "mild" },
-  "dup": { "maxPercent": 1.65, "slackPercent": 0.1 },
+  "dup": { "maxPercent": 1.02, "slackPercent": 0.1 },
   "overrides": {
     "packages/core/**/*.ts": { "complexity": 10, "cognitiveComplexity": 15 }
   },

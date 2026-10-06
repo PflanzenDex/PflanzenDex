@@ -10,6 +10,7 @@ export type {
   SpeciesName,
   SpeciesStore,
   SpeciesHit,
+  SpeciesCreation,
   SpeciesValues,
   NameField,
   GrowthMeasure,

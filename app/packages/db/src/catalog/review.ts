@@ -2,25 +2,9 @@ import type { Pool } from "pg";
 import { withAccount } from "../kernel/index.ts";
 import type { SpeciesRepointer } from "./repointer.ts";
 
-// Same shapes as the interface ReviewStore in `core` (structurally equal; `db` does not import `core`).
-export type Role = "operator" | "reviewer";
-export type ReviewStatus =
-  "proposal" | "ai_unreviewed" | "curated" | "reviewed" | "rejected" | "merged";
-export interface ReviewCase {
-  readonly id: string;
-  readonly creatorId: string;
-  readonly objectKind: string;
-  readonly objectId: string;
-  readonly status: ReviewStatus;
-  readonly reason: string | null;
-  readonly reviewedBy: string | null;
-  readonly createdAt: string;
-  readonly mergedInto: string | null;
-}
-export interface MergeOutcome {
-  readonly reviewCase: ReviewCase;
-  readonly moved: readonly { kind: string; moved: number; kept: number }[];
-}
+// The shapes are the types of `core` (type-only import through its public entry, AB-2).
+import type { MergeOutcome, ReviewCase, ReviewStatus, Role } from "@pflanzendex/core";
+export type { MergeOutcome, ReviewCase, ReviewStatus, Role };
 
 const COLUMNS = `id, account_id as "creatorId", object_kind as "objectKind", object_id as "objectId",
   status, reason, reviewed_by as "reviewedBy",

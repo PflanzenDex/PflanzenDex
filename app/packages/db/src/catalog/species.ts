@@ -2,52 +2,16 @@ import { randomUUID } from "node:crypto";
 import type { Pool, PoolClient } from "pg";
 import { withAccount } from "../kernel/index.ts";
 
-// Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
-export type NameField = "latin" | "german" | "english" | "synonym";
-export interface SpeciesName {
-  readonly field: NameField;
-  readonly display: string;
-  readonly norm: string;
-}
-export interface SpeciesValues {
-  readonly latinName: string;
-  readonly genus: string;
-  readonly epithet: string | null;
-  readonly cultivar: string | null;
-  readonly germanName: string | null;
-  readonly englishName: string | null;
-  readonly synonyms: readonly string[];
-  readonly familyGerman: string | null;
-  readonly familyLatin: string | null;
-  readonly difficulty: number;
-  readonly standardLevel: number;
-  readonly lightDemandLux: number;
-  readonly dormancyFrom: string | null;
-  readonly dormancyUntil: string | null;
-  readonly locationHint: string | null;
-  readonly growthMeasure: "height" | "rosette_diameter" | "shoot_length";
-  readonly etiolationSigns: string;
-  readonly wateringHint: string | null;
-  readonly substrate: string | null;
-  readonly pruning: string | null;
-  readonly growthHacks: string | null;
-  readonly successCriteria: string;
-  readonly botanicalStory: string | null;
-  readonly source: string | null;
-}
-export interface Species extends SpeciesValues {
-  readonly id: string;
-  readonly reviewStatus:
-    "proposal" | "ai_unreviewed" | "curated" | "reviewed" | "rejected" | "merged";
-  readonly reviewReason?: string | null;
-  readonly createdBy: "operator" | "reviewer" | "user";
-  readonly own: boolean;
-  readonly version: number;
-}
-export interface SpeciesHit extends Species {
-  readonly hit: { readonly field: NameField; readonly display: string } | null;
-}
-export type SpeciesCreation = { readonly kind: "fresh" | "duplicate"; readonly value: Species };
+// The shapes are the interfaces of `core` (type-only import through its public entry, AB-2).
+import type {
+  NameField,
+  Species,
+  SpeciesCreation,
+  SpeciesHit,
+  SpeciesName,
+  SpeciesValues,
+} from "@pflanzendex/core";
+export type { Species, SpeciesCreation, SpeciesHit, SpeciesName, SpeciesValues };
 
 /** Column per field (without synonyms: they live in `species_name`). */
 const COLUMN: Record<Exclude<keyof SpeciesValues, "synonyms">, string> = {
