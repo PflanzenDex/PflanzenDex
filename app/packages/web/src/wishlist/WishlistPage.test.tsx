@@ -39,6 +39,12 @@ const list = (
   hint,
   duplicates: [],
   duplicateHint: null,
+  replenishment: {
+    buffer: 2,
+    zones: [],
+    actions: { discover: false, suggestions: false },
+    nextAction: null,
+  },
 });
 
 const NONE_BOUGHT = {
@@ -154,6 +160,28 @@ describe("US-WUN-01 page of the candidate list", () => {
     await screen.findByText("Keine offenen Kandidaten in der Wunschliste.");
     expect(screen.getByText("Erfasse einen Wunsch mit Ziel-Lichtzone.")).toBeTruthy();
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+  });
+
+  it("US-WUN-02 shows the replenishment warning of the server above the list", async () => {
+    fakeServer({
+      ...list([candidate()]),
+      replenishment: {
+        buffer: 2,
+        zones: [
+          {
+            zoneId: "z3",
+            name: "Fenster 3",
+            open: 1,
+            text: "Nachschub nötig: Fenster 3 (1 offener Kandidat)",
+          },
+        ],
+        actions: { discover: false, suggestions: false },
+        nextAction: "Erfasse einen Wunsch mit Ziel-Zone Fenster 3.",
+      },
+    });
+    render(<WishlistPage api="http://api" token={token} />);
+    expect(await screen.findByText("Nachschub nötig: Fenster 3 (1 offener Kandidat)")).toBeTruthy();
+    expect(screen.getByText("Erfasse einen Wunsch mit Ziel-Zone Fenster 3.")).toBeTruthy();
   });
 
   it("US-WUN-01 shows a load error with a way to retry", async () => {

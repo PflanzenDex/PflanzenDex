@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { TreatmentSource, MeasurementSource } from "@pflanzendex/core";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openEnsuredOwnerPool, openFixturePool } from "@pflanzendex/db";
+import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
@@ -96,7 +96,7 @@ const restoreSpecimen = (sub: string | null, id: string) =>
 const ids = (a: Response, field: string) => (a.body[field] as { id: string }[]).map((x) => x.id);
 
 beforeAll(async () => {
-  pool = await openEnsuredOwnerPool();
+  pool = openOwnerPool();
   admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer, pool, clock: () => NOW, measurements, treatments });

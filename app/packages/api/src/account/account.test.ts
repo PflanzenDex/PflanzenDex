@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openEnsuredOwnerPool, openFixturePool } from "@pflanzendex/db";
+import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
 import { createApp } from "../app";
 import { onlyWithConfirmedEmail, type TokenVerifier } from "./index";
 
@@ -28,7 +28,7 @@ const account = async (app: ReturnType<typeof createApp>, init: object) =>
   (await (await app.request("/account", init)).json()) as AccountResponse & Record<string, unknown>;
 
 beforeAll(async () => {
-  pool = await openEnsuredOwnerPool();
+  pool = openOwnerPool();
   admin = openFixturePool();
   await migrate(pool);
 });

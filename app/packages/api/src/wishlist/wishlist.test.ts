@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openEnsuredOwnerPool, openFixturePool, withAccount } from "@pflanzendex/db";
+import { migrate, openOwnerPool, openFixturePool, withAccount } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
@@ -99,7 +99,7 @@ let zoneA: Record<string, string> = {};
 const specimenIds: string[] = [];
 
 beforeAll(async () => {
-  pool = await openEnsuredOwnerPool();
+  pool = openOwnerPool();
   admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer, pool });
@@ -191,6 +191,23 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
       ["Lampe 3", 1],
       ["Lampe 4", 0],
     ]);
+  });
+
+  it("US-WUN-02 warns for every zone 2 to 4 below 2 open candidates, and only for the own account", async () => {
+    const own = (await candidates(subA)).body["replenishment"] as {
+      buffer: number;
+      zones: { name: string; open: number; text: string }[];
+    };
+    expect(own.buffer).toBe(2);
+    expect(own.zones.map((z) => [z.name, z.open])).toEqual([
+      ["Lampe 2", 1],
+      ["Lampe 3", 1],
+      ["Lampe 4", 1],
+    ]);
+    expect(own.zones[0]?.text).toBe("Nachschub nötig: Lampe 2 (1 offener Kandidat)");
+    // Ben's zones are his own and hold none of Anna's wishes (P-04).
+    const ben = (await candidates(subB)).body["replenishment"] as { zones: { open: number }[] };
+    expect(ben.zones.map((z) => z.open)).toEqual([0, 0, 0]);
   });
 
   it("an archived specimen no longer counts in the stock (isActive)", async () => {

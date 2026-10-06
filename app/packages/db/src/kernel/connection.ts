@@ -38,19 +38,11 @@ export function openPool(url: string = testDatabaseUrl(), allowExitOnIdle = fals
 
 /**
  * Pool of the db suite: connects as the non-superuser owner of the schema (#294, QG-D1), so row-level security
- * applies to every query exactly as in production. Needs `ensureTestOwnerDatabase()` (vitest global setup of `db`).
+ * applies to every query exactly as in production. Needs `ensureTestOwnerDatabase()` (vitest global setup of `db`
+ * and `api`).
  */
 export function openOwnerPool(): pg.Pool {
   return openPool(testOwnerUrl());
-}
-
-/**
- * Owner pool for suites without a vitest global setup (`api`, QG-D1): makes sure the owner role and its database
- * exist (idempotent, safe against parallel processes), then connects as the non-superuser owner.
- */
-export async function openEnsuredOwnerPool(): Promise<pg.Pool> {
-  await ensureTestOwnerDatabase();
-  return openOwnerPool();
 }
 
 /** Superuser pool: only for roles, scratch databases and fixtures that need rights the owner must not have. */

@@ -114,7 +114,7 @@ describe("US-QS-09 · the navigation is the same in every view (3.2.3, 3.2.4)", 
     }
     for (const links of seen) expect(links).toEqual(seen[0]);
     expect(seen[0]?.length).toBe(Object.keys(PATHS).length);
-  });
+  }, 20_000); // renders every view in one test: ~1 s alone, over the 5 s default under machine load (#200)
 
   it("US-QS-09 keyboard only: choosing an entry moves the focus to the heading of the new view", async () => {
     renderAt(PATHS.start);

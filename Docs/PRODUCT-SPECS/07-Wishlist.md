@@ -18,13 +18,15 @@ State of implementation: partly done. The tab "Wunschliste" (`GET /wishes/candid
 
 Repair of duplicate names (FR-WUN-06, migration 0020, issue 303): names are unique per account after folding diacritics, letter case and white space. Wishes that existed before the migration and collide only after folding were kept unchanged (nothing is deleted or renamed, P-10), but are exempt from the new rule (`name_key is null`); the migration only reported them as a warning in its output. The wishlist now shows them: above the candidates a hint says that these open wishes have the same name as another wish ("Diese Wünsche heißen gleich wie ein anderer: umbenennen oder zusammenführen"), lists each of them and offers two validating actions per wish: rename (the new name is checked like a new wish, so the wish gets its key and leaves the exempt group; a name that is taken still is refused with `wish.name_taken`) and delete (merge: the keeper keeps the other wish; asked for confirmation first, P-10). Both operations work only on wishes of the own account that still have no key; any other wish is refused with `wish.not_duplicate`, a foreign or unknown wish with `wish.not_found` (P-04). Without such wishes the hint does not appear.
 
-### US-WUN-02 · Be warned before the list is empty · ⬜ (prototype ✅)
+### US-WUN-02 · Be warned before the list is empty · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
 - Per zone 2–4 there should be at least **2** open candidates (buffer, adjustable).
 - If a zone falls below the buffer, a warning appears "Replenishment needed: <zone> (N open candidates)" with the actions "Discover for <zone>" (US-ENT-07) and "Fetch suggestions" (US-WUN-04).
 - The warning can come as a reminder (US-MON-01).
+
+State of implementation: partly done. `GET /wishes/candidates` returns `replenishment` and the wishlist tab shows it above the list: every zone 2 to 4 with fewer open candidates (`status = wishlist`, target zone = that zone) than the buffer gets the line "Nachschub nötig: <zone> (N offene Kandidaten)", plus a next action that points to the form "Wunsch erfassen" (P-09). Wishes without a zone 2 to 4 count towards no zone (FR-WUN-03). Derived live, nothing stored (P-01). Assumption, decided by the PO: the buffer is the constant 2 (`REPLENISH_BUFFER`); the spec says "adjustable", an account setting follows with its own change (the derivation already takes the buffer as a parameter). Missing: the actions "Discover for <zone>" (US-ENT-07) and "Fetch suggestions" (US-WUN-04), which do not exist yet and are therefore not shown (`actions` in the answer says so); the reminder (US-MON-01).
 
 ### US-WUN-03 · Record a purchase · 🟨 (prototype ✅)
 
