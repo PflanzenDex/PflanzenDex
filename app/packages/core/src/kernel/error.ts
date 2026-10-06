@@ -28,6 +28,10 @@ export const ERROR_TEXTS = {
   "species.duplicate":
     "Diese Art gibt es schon (gleicher Name oder Synonym). Wähle die vorhandene Art, statt eine zweite anzulegen.",
   "species.not_found": "Diese Art gibt es nicht.",
+  "catalog.name_hybrid":
+    "Hybridzeichen (× oder x) gehören nicht in den Katalog. Trage die Art ohne Hybridzeichen ein, zum Beispiel „Citrus limon“ statt „Citrus x limon“.",
+  "catalog.name_addition":
+    "Zusätze wie var., subsp., f. oder cv. gehören nicht in den Katalog. Trage nur Gattung und Art ein; den Zusatz hältst du beim Exemplar fest.",
   "specimen.name_taken":
     "Ein Exemplar mit diesem Namen gibt es schon. Gib ein Kennzeichen an (zum Beispiel eine Farbe), damit du die Töpfe unterscheiden kannst.",
   "specimen.marker_taken":
