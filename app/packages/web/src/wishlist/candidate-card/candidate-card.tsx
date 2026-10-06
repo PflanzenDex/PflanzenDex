@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Candidate } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { isPlainHttps } from "./schemas";
+import { isPlainHttps } from "../schemas";
 
 const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
 const UNKNOWN = "unbekannt";

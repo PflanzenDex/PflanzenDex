@@ -29,6 +29,12 @@ const candidates = (open: unknown[]) => ({
   hint: { text: "Als Nächstes dran: Korbmarante.", nextAction: "Besorge diese Pflanze zuerst." },
   duplicates: [],
   duplicateHint: null,
+  replenishment: {
+    buffer: 2,
+    zones: [],
+    actions: { discover: false, suggestions: false },
+    nextAction: null,
+  },
 });
 const BOUGHT_HINT = {
   text: "„Korbmarante (Calathea orbifolia)“ ist als gekauft vermerkt.",
