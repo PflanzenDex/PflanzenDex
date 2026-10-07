@@ -1,5 +1,4 @@
 import {
-  BookOpen,
   Building2,
   CalendarCheck,
   CalendarClock,
@@ -30,7 +29,6 @@ export type View =
   | "carePhases"
   | "careProfile"
   | "difficulty"
-  | "pokedex"
   | "wishlist"
   | "discover"
   | "friends"
@@ -42,8 +40,7 @@ export type View =
 
 const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
   { id: "today", text: "Heute", icon: CalendarCheck },
-  { id: "collection", text: "Bestand", icon: Package },
-  { id: "pokedex", text: "Pokédex", icon: BookOpen },
+  { id: "collection", text: "Sammlung", icon: Package },
   { id: "discover", text: "Entdecken", icon: Compass },
   { id: "wishlist", text: "Wunschliste", icon: Heart },
   { id: "species", text: "Arten", icon: Leaf },
@@ -71,7 +68,6 @@ export const PATHS: Record<View, string> = {
   carePhases: "/care-phases",
   careProfile: "/care-profile",
   difficulty: "/difficulty",
-  pokedex: "/pokedex",
   wishlist: "/wishlist",
   discover: "/discover",
   friends: "/friends",
@@ -81,6 +77,11 @@ export const PATHS: Record<View, string> = {
   account: "/account",
   settings: "/settings",
 };
+
+/** The former Pokédex address: it opens the species mode of the Sammlung, so old links keep working (US-QS-14). */
+export const LEGACY_POKEDEX_PATH = "/pokedex";
+/** Where the old Pokédex address leads: the destination "Sammlung" in its species mode. */
+export const SPECIES_MODE_ADDRESS = `${PATHS.collection}?view=species`;
 
 const visible = (
   id: View,

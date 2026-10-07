@@ -8,6 +8,8 @@ import { SpecimenCardView } from "./specimen-card";
 export function CollectionList(props: {
   cards: readonly SpecimenCard[];
   onSpeciesChoose: () => void;
+  /** Shown below the title of a destination (US-QS-14): the heading is then a screen reader section name, not the page title. */
+  embedded?: boolean;
   /** Opens the measure view; the app wires `collection` with `care` (US-WAC-01). */
   onMeasure?: (e: { id: string; name: string }) => void;
   /** Opens the archiving of a specimen (US-BES-07). */
@@ -21,9 +23,15 @@ export function CollectionList(props: {
 }) {
   return (
     <section aria-labelledby="collection-title">
-      <h1 id="collection-title" className={TITLE}>
-        Bestand
-      </h1>
+      {props.embedded ? (
+        <h2 id="collection-title" className="sr-only">
+          Pflanzen
+        </h2>
+      ) : (
+        <h1 id="collection-title" className={TITLE}>
+          Bestand
+        </h1>
+      )}
       {props.cards.length === 0 ? (
         <EmptyState
           title="Du hast noch kein Exemplar."

@@ -129,6 +129,7 @@ beforeEach(() => {
   mgr.getUser.mockReset();
   mgr.signinRedirect.mockClear();
   window.sessionStorage.clear();
+  window.localStorage.removeItem("pflanzendex.collection-view");
   window.history.replaceState({}, "", "/");
 });
 afterEach(() => {
@@ -236,9 +237,9 @@ describe("US-ACC-01 App", () => {
     const species = tab("Arten");
     expect(species.getAttribute("aria-current")).toBe("page");
 
-    await userEvent.click(tab("Bestand"));
+    await userEvent.click(tab("Sammlung"));
     expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
-    expect(tab("Bestand").getAttribute("aria-current")).toBe("page");
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
     expect(species.getAttribute("aria-current")).toBeNull();
 
     await userEvent.click(tab("Standorte und Licht"));
@@ -298,7 +299,7 @@ describe("US-ACC-01 App", () => {
     await userEvent.click(await findTab("Standorte und Licht"));
     await userEvent.click(await screen.findByRole("button", { name: "Zum Bestand" }));
     expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
-    expect(tab("Bestand").getAttribute("aria-current")).toBe("page");
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
     expect(tab("Standorte und Licht").getAttribute("aria-current")).toBeNull();
   });
 
@@ -343,7 +344,7 @@ describe("US-ACC-01 App", () => {
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
   });
 
-  it("US-POK-09 after the way Pokédex, species profile, collection, back the catalog search opens, not the old profile", async () => {
+  it("US-POK-09 after the way Sammlung species mode, species profile, collection, back the catalog search opens, not the old profile", async () => {
     const species = {
       id: "a1",
       latinName: "Dracaena trifasciata",
@@ -391,7 +392,8 @@ describe("US-ACC-01 App", () => {
     );
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    await userEvent.click(await findTab("Pokédex"));
+    await userEvent.click(await findTab("Sammlung"));
+    await userEvent.click(screen.getByRole("button", { name: "Arten" }));
     await userEvent.click(
       await screen.findByRole("button", { name: "Details zu Dracaena trifasciata" }),
     );
@@ -413,7 +415,7 @@ describe("US-ACC-01 App", () => {
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/collection");
     expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
-    expect(tab("Bestand").getAttribute("aria-current")).toBe("page");
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
   });
 
   it("US-QS-07 · an unknown address lands on the start page", async () => {
@@ -465,14 +467,14 @@ describe("US-QS-07 browser history", () => {
       </BrowserRouter>,
     );
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
-    await userEvent.click(tab("Bestand"));
+    await userEvent.click(tab("Sammlung"));
     await userEvent.click(tab("Einstellungen"));
     expect(window.location.pathname).toBe("/settings");
     await act(async () => {
       window.history.back();
       await waitFor(() => expect(window.location.pathname).toBe("/collection"));
     });
-    expect((await findTab("Bestand")).getAttribute("aria-current")).toBe("page");
+    expect((await findTab("Sammlung")).getAttribute("aria-current")).toBe("page");
     await act(async () => {
       window.history.back();
       await waitFor(() => expect(window.location.pathname).toBe("/"));

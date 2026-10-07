@@ -9,7 +9,14 @@ import { CreateForm } from "./create-form";
 import { ArchivedList } from "./archived-list";
 import { ArchiveForm } from "./archived-form";
 import { CollectionList } from "./collection-list";
-import { COLLECTION_KEY, useCollection, type Loaded, type Token } from "./use-collection";
+import {
+  COLLECTION_KEY,
+  useCollection,
+  useHostReport,
+  type Loaded,
+  type Token,
+} from "./use-collection";
+import type { Host } from "./use-collection";
 import { useArchive } from "./use-archive";
 import { useRepot } from "./use-repot";
 import { useMarker } from "./use-marker";
@@ -37,6 +44,8 @@ type Props = {
   onSpeciesChoose: () => void;
   onCompleted: (specimen: Specimen) => void;
   onMeasure?: (e: { id: string; name: string }) => void;
+  /** Set when the destination "Sammlung" shows the page below its title: demoted heading, count line (US-QS-14). */
+  host?: Host;
 };
 
 /**
@@ -55,6 +64,8 @@ export function CollectionPage(props: Props) {
   const clearMessages = useCallback(() => {
     for (const a of [archived, potted, marked, caught]) a.setMessage(null);
   }, [archived, potted, marked, caught]);
+  const formOpen = !!(newSpecies || archived.open || marked.open || caught.open);
+  useHostReport(props.host, request.value?.cards.length, formOpen);
   const create = useCreate(api, token, newSpecies, {
     after: afterAction,
     clearMessages,
@@ -66,7 +77,7 @@ export function CollectionPage(props: Props) {
         status={request.status}
         {...(request.error ? { errorText: request.error.text } : {})}
         onRetry={request.retry}
-        heading="Bestand"
+        {...(props.host ? {} : { heading: "Bestand" })}
         skeleton={<CollectionPageSkeleton label="Bestand wird geladen …" />}
         offline={request.offline}
       >
@@ -153,6 +164,7 @@ function List(p: { data: Loaded; created: Specimen | null; actions: Actions; pro
       <CollectionList
         cards={data.cards}
         onSpeciesChoose={p.props.onSpeciesChoose}
+        embedded={p.props.host !== undefined}
         onArchive={(e) => {
           clearMessages();
           archived.setOpen(e);

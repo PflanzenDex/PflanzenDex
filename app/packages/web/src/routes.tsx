@@ -7,14 +7,13 @@ import { AccountView, SettingsPage, OperatorPage, useSession, type State } from 
 import { LightPage } from "./light";
 import { ReviewPage, SpeciesPage } from "./catalog";
 import { CarePhasesPage, TreatmentsPage } from "./care";
-import { PokedexPage } from "./pokedex";
 import { FriendsPage } from "./social";
 import { TodayPage, type TodayDestination } from "./today";
 import { DiscoverPage } from "./discover";
 import { WishlistPage, type WishToPlant } from "./wishlist";
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
-import { PATHS, type View } from "./navigation";
+import { LEGACY_POKEDEX_PATH, PATHS, SPECIES_MODE_ADDRESS, type View } from "./navigation";
 /** The start page carries the onboarding forms: its chunk loads with its route (#451). */
 const StartPage = lazyPage(() => import("./start-page").then((m) => ({ default: m.StartPage })));
 type Token = () => Promise<string | undefined>;
@@ -102,7 +101,7 @@ type HandOver = {
 };
 
 /** The catalog and the collection hand the chosen species over to each other (US-BES-02); the wishlist starts the way to the plant (US-WUN-05). */
-function handOverRoutes(api: string, token: Token, h: HandOver) {
+function handOverRoutes(api: string, token: Token, h: HandOver, open: (id: string) => void) {
   return [
     <Route
       key="collection"
@@ -114,6 +113,7 @@ function handOverRoutes(api: string, token: Token, h: HandOver) {
           newSpecies={h.newSpecies}
           onSpeciesChoose={h.toTheCatalog}
           onCompleted={h.onCreated}
+          onOpenSpecies={open}
         />
       }
     />,
@@ -188,11 +188,11 @@ export function AppRoutes(props: {
           />
         ))}
         <Route
-          path={PATHS.pokedex}
-          element={<PokedexPage api={api} token={s.token} onOpenSpecies={props.onOpenProfile} />}
+          path={`${LEGACY_POKEDEX_PATH}/*`}
+          element={<Navigate to={SPECIES_MODE_ADDRESS} replace />}
         />
         {simpleRoutes(api, s.token, roles)}
-        {handOverRoutes(api, s.token, h)}
+        {handOverRoutes(api, s.token, h, props.onOpenProfile)}
         <Route path="*" element={<Navigate to={PATHS.start} replace />} />
       </Routes>
     </RouteBoundary>

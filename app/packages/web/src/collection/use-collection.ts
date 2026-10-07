@@ -1,5 +1,5 @@
 import type { ArchivedEntry, SpecimenCard, LightLocation, Distribution } from "@pflanzendex/core";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { loadLocations } from "../light";
 import { useRequest, type Request } from "../kernel";
 import { loadArchived } from "./archived-api";
@@ -38,4 +38,30 @@ export function useCollection(api: string, token: Token): Request<Loaded> {
     [api],
   );
   return useRequest({ queryKey: COLLECTION_KEY, token, load });
+}
+
+export type Host = {
+  onCaption: (text: string | null) => void;
+  onFullView: (open: boolean) => void;
+};
+
+const plantCount = (n: number) => (n === 1 ? "1 Pflanze" : `${n} Pflanzen`);
+
+/** Tells the host what the page shows now: the count of the list and whether a form is open (US-QS-14). */
+export function useHostReport(
+  host: Host | undefined,
+  count: number | undefined,
+  fullView: boolean,
+) {
+  useEffect(() => {
+    host?.onCaption(count === undefined ? null : plantCount(count));
+    host?.onFullView(fullView);
+  }, [host, count, fullView]);
+  useEffect(
+    () => () => {
+      host?.onCaption(null);
+      host?.onFullView(false);
+    },
+    [host],
+  );
 }
