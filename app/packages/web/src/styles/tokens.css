@@ -86,7 +86,7 @@
     --muted-foreground: #a5b6ab;
     --accent: #1f3a2b;
     --accent-foreground: #a9e8c4;
-    --destructive: #ff8a80; /* 7.8:1 on --background, 6.9:1 on --card */
+    --destructive: #ff8a80; /* 8.0:1 on --background, 7.2:1 on --card */
     --destructive-foreground: #2a0a08;
     --border: #2b3b31;
     --input: #6f8c79; /* 5.0:1 on background, 4.4:1 on card */
