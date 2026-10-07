@@ -1,51 +1,63 @@
 import type { ComponentType } from "react";
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router";
 import type { Species, Specimen } from "@pflanzendex/core";
-import { CareProfilePage } from "./collection";
 import { OperatorPage, useSession, type State } from "./account";
-import { LightPage } from "./light";
+import { CareProfileSection } from "./collection";
 import { ReviewPage, SpeciesPage } from "./catalog";
-import { CarePhasesPage } from "./care";
-import { FriendsPage } from "./social";
-import { DiscoverPage } from "./discover";
+import { FriendCollectionPage, FriendsPage } from "./social";
 import type { WishToPlant } from "./wishlist";
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+import { AreaSection } from "@/components/routing/areas/area-section/area-section";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
-import { AccountArea, CollectionArea, TodayArea } from "@/components/routing/areas/lazy-areas";
+import {
+  AccountArea,
+  CollectionArea,
+  DiscoverArea,
+  TodayArea,
+} from "@/components/routing/areas/lazy-areas";
 import { legacyRoutes } from "@/components/routing/legacy-routes/legacy-routes";
-import { PATHS, type View } from "./navigation";
+import { PATHS, PROFILE_BASE, type LinkTarget, type View } from "./navigation";
 /** The start page carries the onboarding forms: its chunk loads with its route (#451). */
 const StartPage = lazyPage(() => import("./start-page").then((m) => ({ default: m.StartPage })));
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 /** The views that need nothing but the API address and the token. */
 const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Token }>>> = {
-  carePhases: CarePhasesPage,
-  careProfile: CareProfilePage,
   friends: FriendsPage,
-  discover: DiscoverPage,
   review: ReviewPage,
   operator: OperatorPage,
 };
 
-/** The views that link on to other views; the app wires them (ADR 0003). */
-function LinkingView(props: {
-  view: "start" | "light";
-  api: string;
-  token: Token;
-  accountId: string;
-  onOpen: (v: View) => void;
-}) {
-  const { api, token, onOpen } = props;
-  if (props.view === "start")
-    return <StartPage api={api} token={token} accountId={props.accountId} onOpen={onOpen} />;
-  return <LightPage api={api} token={token} onOpenCollection={() => onOpen("collection")} />;
+/** A friend's shared collection has its own address; the friendship id comes from it (US-SOZ-07). */
+function FriendCollectionRoute(props: { api: string; token: Token }) {
+  const { friendId } = useParams();
+  return <FriendCollectionPage {...props} friendId={friendId ?? ""} />;
 }
+
+/** My care profile is a section of the species profile (US-BES-09, US-QS-14); the app wires `collection` into `catalog`. */
+const careProfile = (api: string, token: Token) =>
+  function CareProfile(species: Species) {
+    return (
+      <AreaSection
+        anchor="pflegeprofil"
+        title="Mein Pflegeprofil"
+        loading="Pflegeprofil wird geladen …"
+      >
+        <CareProfileSection api={api} token={token} speciesId={species.id} />
+      </AreaSection>
+    );
+  };
 
 /** The species profile has its own address; the id comes from it (US-POK-09). */
 function SpeciesProfileRoute(props: { api: string; token: Token; onChoose: (s: Species) => void }) {
   const { profileId } = useParams();
-  return <SpeciesPage {...props} openId={profileId ?? null} />;
+  return (
+    <SpeciesPage
+      {...props}
+      openId={profileId ?? null}
+      profileSection={careProfile(props.api, props.token)}
+    />
+  );
 }
 
 /** Shown on the start page when a role-bound address is opened without the role (P-10). */
@@ -106,21 +118,21 @@ function handOverRoutes(api: string, token: Token, h: HandOver, open: (id: strin
       }
     />,
     <Route
-      key="species"
-      path={PATHS.species}
+      key="discover"
+      path={PATHS.discover}
       element={
-        <SpeciesPage
+        <DiscoverArea
           api={api}
           token={token}
           onChoose={h.choose}
-          openId={null}
-          {...(h.searchStart ? { initialSearch: h.searchStart } : {})}
+          profileSection={careProfile(api, token)}
+          {...(h.searchStart ? { searchStart: h.searchStart } : {})}
         />
       }
     />,
     <Route
       key="profile"
-      path={`${PATHS.species}/:profileId`}
+      path={`${PROFILE_BASE}/:profileId`}
       element={<SpeciesProfileRoute api={api} token={token} onChoose={h.choose} />}
     />,
   ];
@@ -131,7 +143,7 @@ export function AppRoutes(props: {
   session: ReturnType<typeof useSession>;
   account: SignedIn;
   error?: string;
-  onOpen: (v: View) => void;
+  onOpen: (v: LinkTarget) => void;
   onOpenProfile: (id: string) => void;
   handOver: HandOver;
 }) {
@@ -157,21 +169,16 @@ export function AppRoutes(props: {
             />
           }
         />
-        {(["start", "light"] as const).map((v) => (
-          <Route
-            key={v}
-            path={PATHS[v]}
-            element={
-              <LinkingView
-                view={v}
-                api={api}
-                token={s.token}
-                accountId={account.id}
-                onOpen={props.onOpen}
-              />
-            }
-          />
-        ))}
+        <Route
+          path={PATHS.start}
+          element={
+            <StartPage api={api} token={s.token} accountId={account.id} onOpen={props.onOpen} />
+          }
+        />
+        <Route
+          path={`${PATHS.friends}/:friendId`}
+          element={<FriendCollectionRoute api={api} token={s.token} />}
+        />
         <Route
           path={PATHS.today}
           element={<TodayArea api={api} token={s.token} onOpen={props.onOpen} />}

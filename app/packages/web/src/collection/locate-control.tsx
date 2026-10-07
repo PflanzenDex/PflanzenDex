@@ -23,12 +23,12 @@ export function LocateControl(props: {
     return (
       <>
         <Quiet>
-          Du hast noch keinen Standort angelegt. Lege zuerst unter „Standorte und Licht“ einen
-          Standort an.
+          Du hast noch keinen Standort angelegt. Lege zuerst in der Sammlung unter „Standorte
+          verwalten“ einen Standort an.
         </Quiet>
         <Actions>
           <Button type="button" variant="outline" onClick={props.onCreateLocation}>
-            Zu Standorte und Licht
+            Standorte verwalten
           </Button>
         </Actions>
       </>

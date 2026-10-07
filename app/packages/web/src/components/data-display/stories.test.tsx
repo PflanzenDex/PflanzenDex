@@ -1,0 +1,31 @@
+// @vitest-environment jsdom
+import { composeStories, setProjectAnnotations } from "@storybook/react-vite";
+import { cleanup } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
+import preview from "../../../.storybook/preview";
+import { setViewportWidth } from "@/lib/viewport-mock";
+import * as avatar from "./avatar/avatar.stories";
+import * as card from "./card/card.stories";
+import * as progress from "./progress/progress.stories";
+
+setProjectAnnotations([preview]);
+
+const catalog = {
+  Avatar: composeStories(avatar),
+  Card: composeStories(card),
+  Progress: composeStories(progress),
+};
+
+describe("TE-17 · DS-02 data-display component stories", () => {
+  afterEach(cleanup);
+
+  for (const [component, stories] of Object.entries(catalog))
+    for (const [name, Story] of Object.entries(stories))
+      for (const width of [360, 768])
+        for (const scheme of ["light", "dark"] as const)
+          it(`TE-17 · ${component}/${name} renders at ${width}px in ${scheme} mode`, async () => {
+            setViewportWidth(width);
+            await Story.run({ globals: { colorScheme: scheme } });
+            expect(document.body.children.length).toBeGreaterThan(0);
+          });
+});

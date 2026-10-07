@@ -1,11 +1,10 @@
 import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
 import { CARD, PROFILE_GRID } from "./parts";
 
-/** Placeholder with the layout of the care profile on a phone: title, intro and a card with its fields and the save button (DS-52, DS-53). */
-export function CareProfilePageSkeleton({ label }: { label: string }) {
+/** Placeholder with the layout of the care profile on a phone: intro and a card with its fields and the save button (DS-52, DS-53). */
+export function CareProfileSectionSkeleton({ label }: { label: string }) {
   return (
     <SkeletonGroup label={label} className="flex min-w-0 flex-col gap-3">
-      <Skeleton className="h-8 w-1/2" />
       <Skeleton className="h-14 w-full" />
       <ul className={PROFILE_GRID}>
         <li aria-hidden="true" className={CARD}>

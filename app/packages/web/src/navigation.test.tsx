@@ -5,13 +5,18 @@ import { afterEach, describe, expect, it } from "vitest";
 import { AppShell } from "./components/shared/app-shell";
 import { BRAND_LINK_LABEL, DISPLAY_NAME } from "./components/shared/nav-item";
 import {
+  CATALOG_ADDRESS,
   DIFFICULTY_ADDRESS,
+  MANAGE_ADDRESS,
+  PHASES_ADDRESS,
   WISHLIST_MODE_ADDRESS,
   accountAddress,
   navItems,
   pageTitle,
   PATHS,
+  profileAddress,
   todayAddress,
+  viewAddress,
   viewTitle,
 } from "./navigation";
 
@@ -64,7 +69,7 @@ describe("US-QS-07 · DS-25 navigation items", () => {
   it("US-QS-07 · DS-25 the bottom bar shows at most 5 destinations, the rest sit in the drawer", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
-        <AppShell items={navItems({})}>
+        <AppShell items={navItems({ reviewer: true })}>
           <p>Inhalt</p>
         </AppShell>
       </MemoryRouter>,
@@ -109,7 +114,7 @@ describe("US-QS-07 · DS-22 navigation icons", () => {
   it("US-QS-07 · DS-22 the bottom bar slots show an aria-hidden icon and keep the label as the name", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
-        <AppShell items={navItems({})}>
+        <AppShell items={navItems({ reviewer: true })}>
           <p>Inhalt</p>
         </AppShell>
       </MemoryRouter>,
@@ -202,5 +207,44 @@ describe("US-QS-14 Konto and Einstellungen are one destination", () => {
     expect(accountAddress("settings")).toBe("/account#einstellungen");
     expect(accountAddress("profile")).toBe("/account#profil");
     expect(viewTitle("/account")).toBe("Konto – PflanzenDéx");
+  });
+});
+
+describe("US-QS-14 Pflegephasen, Pflegeprofil and Standorte und Licht moved into the Sammlung", () => {
+  it("US-QS-14 the navigation lists none of the three and no path for them", () => {
+    const names = labels({ reviewer: true, operator: true });
+    for (const gone of ["Pflegephasen", "Pflegeprofil", "Standorte und Licht"])
+      expect(names).not.toContain(gone);
+    for (const path of ["/care-phases", "/care-profile", "/light"])
+      expect(Object.values(PATHS)).not.toContain(path);
+  });
+
+  it("US-QS-14 links to the three open their place in the Sammlung; other views keep their path", () => {
+    expect(viewAddress("carePhases")).toBe("/collection?view=plants&group=phase");
+    expect(viewAddress("light")).toBe("/collection?view=plants&manage=locations");
+    expect(viewAddress("careProfile")).toBe("/collection?view=species");
+    expect(PHASES_ADDRESS).toBe(viewAddress("carePhases"));
+    expect(MANAGE_ADDRESS).toBe(viewAddress("light"));
+    expect(viewAddress("friends")).toBe("/friends");
+  });
+});
+
+describe("US-QS-14 the catalog is a mode of Entdecken, not a destination", () => {
+  it("US-QS-14 the navigation has no entry Arten and the old Arten address leads to the catalog mode", () => {
+    expect(labels({ reviewer: true, operator: true })).not.toContain("Arten");
+    expect(CATALOG_ADDRESS).toBe("/discover?view=catalog");
+    expect(viewAddress("species")).toBe(CATALOG_ADDRESS);
+  });
+
+  it("US-QS-14 a species profile lives below Entdecken, which stays the current destination, and has its own title", () => {
+    expect(profileAddress("a 1")).toBe("/discover/species/a%201");
+    expect(viewTitle(profileAddress("a1"))).toBe(pageTitle("Artenprofil"));
+    const nav = headerLinks(profileAddress("a1"), {});
+    expect(nav.getByRole("link", { name: "Entdecken" }).getAttribute("aria-current")).toBe("page");
+  });
+
+  it("US-QS-14 five destinations fit the bottom bar without Mehr, Prüfliste and Betreiber open the drawer", () => {
+    expect(navItems({}).length).toBe(5);
+    expect(navItems({ reviewer: true }).length).toBe(6);
   });
 });

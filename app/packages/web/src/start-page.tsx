@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import {
   isNewAccount,
   onboardingHints,
@@ -11,12 +11,13 @@ import { LoadFrame } from "./kernel";
 import { loadLocations, loadZones } from "./light";
 import { OnboardingWizard } from "./onboarding-wizard";
 import { readStored, writeStored } from "./platform/storage";
-import type { View } from "./navigation";
+import type { LinkTarget } from "./navigation";
+import { FriendsBanner } from "./social";
 
 const ACTIONS = "flex flex-col gap-3 sm:flex-row";
 
 type Token = () => Promise<string | undefined>;
-type Target = Extract<View, "species" | "light" | "collection">;
+type Target = Extract<LinkTarget, "species" | "light" | "collection">;
 
 const key = (accountId: string) => `pflanzendex.onboarding-skipped.${accountId}`;
 
@@ -100,7 +101,14 @@ function Content(props: {
         onEnd={leave}
       />
     );
-  return <Overview counts={counts} onOpen={props.onOpen} />;
+  return (
+    <>
+      <Suspense fallback={null}>
+        <FriendsBanner api={props.api} token={props.token} quiet requests />
+      </Suspense>
+      <Overview counts={counts} onOpen={props.onOpen} />
+    </>
+  );
 }
 
 /**

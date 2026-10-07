@@ -1,10 +1,12 @@
-import type { FriendStore } from "../friendship";
-import { friendView, type FriendViewDependencies } from "../sharing";
+import type { FriendStore } from "../../friendship";
+import { friendView, type FriendViewDependencies } from "../../sharing";
 import { daysBetween, deriveEvents } from "./derive";
-import { FEED_DAYS, type Feed, type FeedEvent, type FeedQuery } from "./types";
+import { FEED_DAYS, type Feed, type FeedEvent, type FeedQuery } from "../types";
 
 export interface FeedDependencies extends FriendViewDependencies {
   readonly friends: FriendStore;
+  /** The clock, for `asOf`; `core` has no I/O. */
+  readonly now: () => Date;
 }
 
 const text = (a: string | null, b: string | null) => (a ?? "").localeCompare(b ?? "");
@@ -71,5 +73,9 @@ export async function friendFeed(
     .filter((e) => !query.onlyNewSpecies || e.type === "new_species")
     .sort(order);
   const shared = views.reduce((n, v) => n + v.view.specimens.length, 0);
-  return { events, hint: hintFor(friends.length, events.length, shared) };
+  return {
+    events,
+    asOf: deps.now().toISOString(),
+    hint: hintFor(friends.length, events.length, shared),
+  };
 }

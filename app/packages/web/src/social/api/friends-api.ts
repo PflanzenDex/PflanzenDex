@@ -1,6 +1,7 @@
 import type {
   CreatedFriendCode,
   Friend,
+  FriendCard,
   FriendRequest,
   OpenRequests,
   SharingRow,
@@ -125,4 +126,24 @@ export async function setSpeciesSharing(
     { share: target.share ? "friends" : "private" },
   );
   return r.ok ? { ok: true, value: r.value as { changed: number } } : r;
+}
+
+/** The shared collection of one friend as cards, with "you have it" (US-SOZ-07); `friendId` is the friendship id. */
+export function loadFriendCollection(
+  api: string,
+  token: string,
+  friendId: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<{ friend: { name: string | null }; cards: readonly FriendCard[] }>> {
+  return call(fetchFn, `${api}/friends/${encodeURIComponent(friendId)}/collection`, token);
+}
+
+/** "Auf die Wunschliste" for a species a friend has and I lack (US-SOZ-07): records a wish by the Latin name; the wishlist checks duplicates. */
+export async function addToWishlist(
+  api: string,
+  token: string,
+  latinName: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<unknown>> {
+  return createWrite(api, token, fetchFn)("POST", "/wishes", { name: latinName });
 }

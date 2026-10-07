@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { friendView, sharedSpeciesCount } from "../index";
+import { friendCollection, friendView, sharedSpeciesCount } from "../index";
 import { InMemoryFacts, InMemoryPrivacy, InMemorySharing } from "../test-helpers";
 
 const S1 = "s1";
@@ -117,5 +117,58 @@ describe("US-SOZ-03 US-SOZ-04 shared caught species", () => {
     expect(await count(["Haworthia fasciata"], "cleo")).toBeNull();
     privacy.on.add("anna");
     expect(await count(["Haworthia fasciata"])).toBeNull();
+  });
+});
+
+describe("US-SOZ-07 a friend's shared collection as cards", () => {
+  const cards = (mine: string[], viewer = "ben") =>
+    friendCollection(
+      {
+        sharing,
+        privacy,
+        facts: new InMemoryFacts(facts),
+        mine: { latinNamesOf: async () => mine },
+      },
+      viewer,
+      "anna",
+    );
+
+  it("US-SOZ-07 one card per shared species with count, first catch date and 'you have it' from my own collection", async () => {
+    await sharing.setMany("anna", [S1, S2], true, false);
+    const { cards: list } = await cards(["Haworthia fasciata"]);
+    expect(list).toEqual([
+      {
+        speciesLatin: "Haworthia fasciata",
+        speciesGerman: "Zebra-Haworthie",
+        specimens: 1,
+        cuttings: 0,
+        firstCaught: "2026-05-01",
+        iHave: true,
+      },
+      {
+        speciesLatin: null,
+        speciesGerman: null,
+        specimens: 1,
+        cuttings: 1,
+        firstCaught: null,
+        iHave: null,
+      },
+    ]);
+    expect((await cards([])).cards[0]?.iHave).toBe(false);
+  });
+
+  it("US-SOZ-07 nothing private, nothing for strangers, nothing while 'Everything private' is on (P-05)", async () => {
+    await sharing.set("anna", S1, true, false);
+    expect((await cards([], "cleo")).cards).toEqual([]);
+    privacy.on.add("anna");
+    expect((await cards([])).cards).toEqual([]);
+  });
+
+  it("US-SOZ-07 cards carry facts only: no rank, no score, nothing of the friend's private data", async () => {
+    await sharing.set("anna", S1, true, false);
+    const [card] = (await cards([])).cards;
+    expect(Object.keys(card ?? {}).sort()).toEqual(
+      ["cuttings", "firstCaught", "iHave", "specimens", "speciesGerman", "speciesLatin"].sort(),
+    );
   });
 });

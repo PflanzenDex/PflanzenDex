@@ -65,7 +65,7 @@ describe("US-BES-08 page of the hints about incomplete specimens", () => {
     fakeServer(() => response(200, { hints: [noSpecies, noZone] }));
     const open = vi.fn();
     render(<HintsPage api="http://api" token={token} onOpen={open} />);
-    await userEvent.click(await screen.findByRole("button", { name: /Standorte und Licht/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /Standorte verwalten/ }));
     expect(open).toHaveBeenLastCalledWith("light");
     await userEvent.click(screen.getByRole("button", { name: /Zum Bestand/ }));
     expect(open).toHaveBeenLastCalledWith("collection");

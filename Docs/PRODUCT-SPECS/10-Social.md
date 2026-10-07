@@ -108,7 +108,7 @@ Assumptions, decided by the PO (revisable):
 - Events of the same friend, species, day and type are summarized ("N Exemplare"). The filter offers 7, 30 and 90 days (the API accepts 1 to 365), a friend, and "only new species". Ordering: newest first, then friend name, then species; no ranking and no comparison between friends (FR-SOZ-11). Every state says what to do next (P-09).
 - The block "Neu bei Freunden" sits at the top of the page "Freunde". The banner and the "seen" state are US-SOZ-06.
 
-### US-SOZ-06 · "New among friends" since my last visit · ⬜ new
+### US-SOZ-06 · "New among friends" since my last visit · ✅ new
 
 Acceptance criteria:
 
@@ -116,7 +116,16 @@ Acceptance criteria:
 - Banner "Friends have N new plants: …" stays until "Okay".
 - If the data is missing (no network), the block shows the last state with "As of DD.MM.YYYY" (FR-SOZ-03).
 
-### US-SOZ-07 · View and compare a friend's collection · ⬜ new
+Assumptions, decided by the PO (revisable):
+
+- "New" means visible to me since my last "Okay": the later of the moment the specimen was shared and the start of the friendship, not the catch date. An old specimen that is shared today is new to me today; a friend I made today shows everything as new once, and what I saw before is never new again. The seen state is one instant per account (`feed_seen`), private to it (P-04).
+- The first visit creates the state silently: the banner is empty and the app marks the feed as seen up to the instant it read. There is no banner for what was shared before the person looked.
+- "Okay" marks the feed as seen up to the instant the banner was read (`asOf`), not up to now: what became visible in between is still new. The state only moves forward and never past now; repeating the call changes nothing.
+- The banner names friend and species with a count and nothing else (P-05); it shows nothing for private specimens, while a friend has "Everything private" on, or after the friendship ended. It stays until "Okay". It is shown on the start page and on the page "Freunde"; on the start page a failed load stays quiet (the page "Freunde" says it, P-10).
+- Offline (FR-SOZ-03): the screens show the last loaded copy; every answer carries the instant it was read and the banner and the feed show it as "Stand: DD.MM.YYYY", so an older copy is recognizable. "Okay" needs a connection and is disabled without one (the write buffer of US-QS-10 is not used for it, because the banner would still say "new" afterwards).
+- The server clock and the database clock are assumed to agree to the second; the comparison uses instants, not calendar dates (a visit is a moment, not a day).
+
+### US-SOZ-07 · View and compare a friend's collection · 🟨 new
 
 Acceptance criteria:
 
@@ -125,7 +134,18 @@ Acceptance criteria:
 - No rank or leaderboard comparison (FR-POK-11). Facts are shown, no rating.
 - Shared equipment appears as the friend's device list (US-EQU-12).
 
+Assumptions, decided by the PO (revisable):
+
+- The view has its own address per friend (`/friends/<friendship id>`, reached by "Sammlung ansehen" in the friend list) and reads only through `friendView`: only what the friend shares, only through a confirmed friendship, nothing while "Everything private" is on (P-05). `GET /friends/:id/collection` derives the cards on every request; an id that is not one of my friends is `friend.not_found`.
+- A card is one species the friend shares: Latin and German name, the number of shared specimens (cuttings counted separately), the earliest known catch date ("unbekannt" without one, P-08) and "Du hast sie" / "Du hast sie nicht" from my own active specimens, compared by the Latin name. A species that is unknown to friends (a private proposal) cannot be compared: the card says "Vergleich unbekannt" and is neither lacked nor shared.
+- The cards follow the look of the collector cards (US-POK-01) but not their data: the Pokédex cards come from the catalog tree (number, genus size, light zone), while a friend's card only carries what the friend shares. "Caught" means the friend shares an active specimen of the species.
+- Filters: "Alle", "Ich habe nicht" (`iHave` is false), "Wir haben beide" (true); cards with an unknown comparison show under "Alle" only. No rank, no leaderboard, no rating, no comparison between friends (FR-SOZ-11, FR-POK-11). Every state says what to do next (P-09); an empty filter points back to "Alle".
+- "Auf die Wunschliste" on a species I lack records a wish by the Latin name through the existing wishlist operation, so its duplicate check applies; the wish does not yet record that a friend suggested it (no source field on the wish, US-WUN).
+- The friend's device list (US-EQU-12) does not exist yet; the page says so. Everything else of the story is done.
+
 ### US-SOZ-08 · Offer a plant or cutting for swapping · ⬜ new
+
+Module: the exchange (SOZ-08 to SOZ-11, SOZ-13) is its own module `swap` (ADR `Docs/decisions/0012-swap-module.md`, assumption decided by the PO): two-sided swap rows, states that only move forward, the handover only after both confirmations in one transaction, the cancelation when a friendship ends (SOZ-03) by a hook that the app root wires plus a lazy check on every transition.
 
 Acceptance criteria:
 
@@ -168,13 +188,20 @@ Acceptance criteria:
 - Both see the swap in the history (US-SOZ-13) and as an event "Swapped" in the feed.
 - **Atomic:** archiving and creating run in one transaction. If one fails (e.g. name conflict), the swap stays at `accepted` and reports the reason; there is never a half state (FR-SOZ-05).
 
-### US-SOZ-12 · Be notified about news · ⬜ new
+### US-SOZ-12 · Be notified about news · 🟨 new
 
 Acceptance criteria:
 
 - Triggers: new friendship request, request for my offer, acceptance/decline of my request, the other side confirmed the handover.
 - New feed events trigger **no** individual message, only the banner (US-SOZ-06).
 - Delivery by the rules of epic MON (US-MON-01, -08): only when action is needed, once per occasion and day. Without push, "Today" shows open points.
+
+Assumptions, decided by the PO (revisable):
+
+- Push and mail are not built: the channel decision E-10 ("web push + optional email") is a recommendation for release R3, and the delivery machinery (reminders, device registration, mail sending, quiet hours, US-MON-01 and US-MON-08) does not exist. This story therefore delivers the in-app part only; the channel stays on the owner's list (E-10) and a message needs the reminders of epic MON.
+- The in-app notice is "Du hast N offene Freundschaftsanfragen: <names>" with the way to the answer ("Anfragen ansehen"), shown on the start page above the banner about new plants (US-SOZ-06). It is derived on every visit from the open incoming requests, so it needs no state and disappears when they are answered. Only the display name is named (P-05). A failed load stays quiet there; the page "Freunde" lists the requests and says if it cannot load them (P-10).
+- Not yet notified: the acceptance or decline of my own request (the sender sees the friend in the list, or "Nicht angenommen" under "Anfragen", US-SOZ-02), the triggers of the swap module (request for my offer, answer, the other side confirmed the handover: US-SOZ-08 to US-SOZ-11 do not exist), and the central "Today" list: its items are specimen-bound and `today` does not depend on `social` in the module matrix, so open requests are not part of it; changing the matrix is a reviewed decision of its own.
+- New feed events trigger no individual message, only the banner (unchanged, US-SOZ-06). The switch "friends" of the notification settings (US-ACC-02) is saved and will apply to push and mail; the in-app notice is not switched off by it, because it is no message.
 
 ### US-SOZ-13 · Swap history · ⬜ new
 

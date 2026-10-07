@@ -14,7 +14,14 @@ import { useClearOnSignOut } from "./kernel";
 import { AppRoutes } from "./routes";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
 import { AppShell } from "./components/shared/app-shell";
-import { pageTitle, navItems, PATHS, viewTitle, type View } from "./navigation";
+import {
+  pageTitle,
+  navItems,
+  profileAddress,
+  viewAddress,
+  viewTitle,
+  type LinkTarget,
+} from "./navigation";
 import { PathNotes } from "./wishlist";
 import { useWishHandOver } from "./wish-to-specimen";
 
@@ -25,14 +32,14 @@ const version = (import.meta.env as Record<string, string | undefined>)["VITE_AP
 /** The active view comes from the address; going to a view is a navigation, so back and deep links work (US-QS-07). */
 function useViews() {
   const navigate = useNavigate();
-  const setView = (next: View) => void navigate(PATHS[next]);
+  const setView = (next: LinkTarget) => void navigate(viewAddress(next));
   // The Pokédex links to a species profile, so the app wires pokedex and catalog (US-POK-09).
-  const openProfile = (id: string) => void navigate(`${PATHS.species}/${encodeURIComponent(id)}`);
+  const openProfile = (id: string) => void navigate(profileAddress(id));
   return { setView, openProfile };
 }
 
 /** The chosen species travels from the catalog to the collection: the app wires both modules (US-BES-02). */
-function useSpeciesHandOver(setView: (v: View) => void) {
+function useSpeciesHandOver(setView: (v: LinkTarget) => void) {
   const [newSpecies, setNewSpecies] = useState<Species | null>(null);
   const choose = (species: Species) => {
     setNewSpecies(species);

@@ -52,8 +52,37 @@ describe("US-QS-14 old addresses keep working", () => {
     );
   });
 
+  it("US-QS-14 · US-PHA-01 /care-phases leads to the plants grouped by care phase and keeps the focus handling", () => {
+    open("/care-phases");
+    expect(screen.getByTestId("address").textContent).toBe(
+      "/collection?view=plants&group=phase true",
+    );
+  });
+
+  it("US-QS-14 · US-BES-09 /care-profile leads to the species mode, where a species with its care profile is chosen", () => {
+    open("/care-profile");
+    expect(screen.getByTestId("address").textContent).toBe("/collection?view=species true");
+  });
+
+  it("US-QS-14 · US-LIC-01 /light leads to the plants with the management of the locations open", () => {
+    open("/light");
+    expect(screen.getByTestId("address").textContent).toBe(
+      "/collection?view=plants&manage=locations true",
+    );
+  });
+
   it("US-QS-14 the former Pokédex address still opens the species mode of the Sammlung", () => {
     open("/pokedex/abc");
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=species false");
+  });
+
+  it("US-QS-14 · US-BES-01 /species leads to the catalog mode of Entdecken and keeps the focus on the control", () => {
+    open("/species");
+    expect(screen.getByTestId("address").textContent).toBe("/discover?view=catalog true");
+  });
+
+  it("US-QS-14 · US-POK-09 /species/:id leads to the same profile below Entdecken", () => {
+    open("/species/a%201");
+    expect(screen.getByTestId("address").textContent).toBe("/discover/species/a%201 false");
   });
 });

@@ -225,6 +225,24 @@ describe("US-SOZ-04 what a friend sees", () => {
     );
   });
 
+  it("US-SOZ-07 the friend's collection as cards with 'you have it'; strangers get 404 (P-05)", async () => {
+    const stranger = await call(subC, "GET", `/friends/${friendOfBen}/collection`);
+    expect(stranger).toMatchObject({ status: 404, body: { error: { code: "friend.not_found" } } });
+    await call(subA, "PUT", `/sharing/species/${speciesId}`, { share: "friends" });
+    const r = await call(subB, "GET", `/friends/${friendOfBen}/collection`);
+    expect(r.body.friend).toEqual({ name: "Anna" });
+    expect(r.body.cards).toHaveLength(1);
+    expect(r.body.cards[0]).toMatchObject({
+      speciesLatin: latin,
+      speciesGerman: "Freundespflanze",
+      specimens: 2,
+      iHave: true,
+    });
+    expect(Object.keys(r.body.cards[0]).sort()).toEqual(
+      ["cuttings", "firstCaught", "iHave", "specimens", "speciesGerman", "speciesLatin"].sort(),
+    );
+  });
+
   it("US-SOZ-03 US-SOZ-04 ending the friendship withdraws everything at once and deletes nothing", async () => {
     expect((await call(subA, "POST", `/friends/${friendOfAnna}/end`, {})).status).toBe(200);
     expect((await call(subB, "GET", `/friends/${friendOfBen}/shared`)).status).toBe(404);

@@ -10,17 +10,20 @@ export function SammlungHeader<V extends string>(props: {
   options: readonly SegmentedOption<V>[];
   onChoose: (v: V) => void;
   caption: string | null;
+  /** The destination title and the name of the switch; the default is the Sammlung. */
+  title?: string;
+  switchLabel?: string;
   /** A second control that belongs to the chosen view, e.g. the arrangement of the species. */
   children?: ReactNode;
 }) {
   return (
     <div className="mb-4 flex flex-col gap-3">
       <div>
-        <h1 className="text-2xl font-semibold">Sammlung</h1>
+        <h1 className="text-2xl font-semibold">{props.title ?? "Sammlung"}</h1>
         {props.caption ? <p className="text-sm text-muted-foreground">{props.caption}</p> : null}
       </div>
       <SegmentedControl
-        label="Ansicht der Sammlung"
+        label={props.switchLabel ?? "Ansicht der Sammlung"}
         options={props.options}
         value={props.view}
         onChange={props.onChoose}
