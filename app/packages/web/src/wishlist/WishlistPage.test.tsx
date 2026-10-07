@@ -759,3 +759,17 @@ describe("FR-WUN-06 #303 repair of duplicate wish names on the page", () => {
     );
   });
 });
+
+describe("US-QS-14 · US-WUN-01 the wishlist hosted by the Sammlung", () => {
+  it("US-QS-14 · US-WUN-01 with a host it has no main heading, names its section and reports the count line", async () => {
+    fakeServer(list([candidate()]));
+    const onCaption = vi.fn();
+    const view = render(<WishlistPage api="http://api" token={token} host={{ onCaption }} />);
+    await screen.findByRole("list", { name: "Offene Kandidaten" });
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+    expect(screen.getByRole("heading", { level: 2, name: "Wunschliste" })).toBeTruthy();
+    expect(onCaption).toHaveBeenLastCalledWith("1 offener Wunsch");
+    view.unmount();
+    expect(onCaption).toHaveBeenLastCalledWith(null);
+  });
+});

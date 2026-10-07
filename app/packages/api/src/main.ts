@@ -5,11 +5,20 @@ import { createJobWorker, JOB_HANDLERS } from "./jobs";
 import { checkTaxonomy, pokedexJobHandlers, scheduleChecks } from "./pokedex";
 import { createMemorySourceCache, createSourceClient } from "./kernel";
 import { createTokenVerifier } from "./account";
+import { createS3ObjectStore, createSharpProcessor, s3ConfigFromEnv } from "./media";
 
 // Configuration from the environment only (no secrets in the repo). The defaults match `make auth-up`.
 const issuer = process.env["OIDC_ISSUER"] ?? "http://localhost:18081/realms/pflanzendex";
 const pool = openPool(process.env["DATABASE_URL"] ?? testDatabaseUrl());
+// Photo storage (US-WAC-06): without S3_* variables the photo upload answers 502 (the rest of the app is unaffected).
+const s3 = s3ConfigFromEnv(process.env);
+if (s3 && !("bucket" in s3)) console.warn(`Photo storage disabled, missing: ${s3.join(", ")}`);
+const media =
+  s3 && "bucket" in s3
+    ? { store: createS3ObjectStore(s3), processor: createSharpProcessor() }
+    : undefined;
 const app = createApp({
+  ...(media ? { media } : {}),
   reviewer: createTokenVerifier({
     issuer,
     audience: process.env["OIDC_AUDIENCE"] ?? "pflanzendex-api",

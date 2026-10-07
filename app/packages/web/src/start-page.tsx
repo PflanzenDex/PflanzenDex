@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import {
   isNewAccount,
   onboardingHints,
@@ -17,7 +17,7 @@ import { FriendsBanner } from "./social";
 const ACTIONS = "flex flex-col gap-3 sm:flex-row";
 
 type Token = () => Promise<string | undefined>;
-type Target = Extract<View, "species" | "light" | "collection" | "hints">;
+type Target = Extract<View, "species" | "light" | "collection">;
 
 const key = (accountId: string) => `pflanzendex.onboarding-skipped.${accountId}`;
 
@@ -103,7 +103,9 @@ function Content(props: {
     );
   return (
     <>
-      <FriendsBanner api={props.api} token={props.token} quiet />
+      <Suspense fallback={null}>
+        <FriendsBanner api={props.api} token={props.token} quiet />
+      </Suspense>
       <Overview counts={counts} onOpen={props.onOpen} />
     </>
   );

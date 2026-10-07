@@ -15,7 +15,7 @@ Acceptance criteria:
 
 State of implementation (enabler TE-07, assumptions decided by the PO, flagged): the module `today` (read only, no table) holds the one `status` function (`todayStatus` in `core`, `GET /today?timeZone=<IANA name>`, view "Heute"). It does not recompute anything; it reuses the derivations of the open treatments (US-BEH-02), the care phases (US-PHA-02) and the hints about incomplete specimens (US-BES-08), reads the clock once and adds order and next action, so "Today", the reminders (MON) and the AI daily status (US-KI-02) can use it and never disagree (R-04). Dates are local calendar days in the user's time zone (NFR-08). Entries, most urgent first (what is bound to a date comes first; assumption): (1) treatment overdue, the most overdue first, (2) treatment due today, (3) phase deviation (location id differs from the target location of today's phase, US-PHA-02), (4) incomplete specimen (US-BES-08), inside groups 3 and 4 by name. Every entry carries a text, a next action (P-09) and the place where it is done (`treatments`, `care_phases`, `hints`; the interface maps them to views). A specimen without location is named once, as incomplete data, not again as deviation (P-10 without duplicates). Treatments that are not due yet are not entries but are counted (`upcoming`, shown as a note), so nothing disappears silently (P-10). An empty list says "Heute steht nichts an." with the count of later dates and leads to the collection (P-09). Archived specimens never appear (`isActive`, US-BES-07), only the own data is read (P-04). **Open (gap list):** the entry "measurement overdue" (needs an interval per species or specimen, which no story defines yet; P-08, no invented number), the wishlist buffer warning (US-WUN-02, still its own view), "phase change today with the old location" (US-MON-02), the QS-04 deviation view, a switch of the AI daily status (US-KI-02) onto the function, reading of the same function by the reminders (US-MON-01 to MON-03), a per-entry quick action in the list (ticking off a treatment still happens in "Behandlung"), the list on the start page, and a count badge on the navigation entry.
 
-### US-QS-02 · Logic is testable · ⬜ (prototype 🟡)
+### US-QS-02 · Logic is testable · 🟨 (prototype 🟡)
 
 As a **developer** I want to secure every calculation with tests.
 
@@ -23,6 +23,8 @@ Acceptance criteria:
 
 - Phase, rate, trend, light zone counting, prioritization, naming rule, rank, milestones, swap states and feed derivation exist as pure logic without I/O and have tests.
 - Every story with status ✅ has at least one test whose name carries the story ID (P-06).
+
+State of implementation: care phase (`care/phases`), light zone counting (`collection/distribution`), prioritization (`wishlist/candidates`), naming rule (`wishlist/name-key`, `pokedex/ownership/species-key`), rank (`pokedex/rank`) and milestones (`pokedex/milestones`) are pure logic in `core` with tests. The second criterion is enforced for `US-` stories by `check-traceability.mjs` (`make spec-check`, US-QG-04); the report `app/tools/check/quality/duplicates/story-tests/report-story-tests.mjs` (report only, exit 0; owner decision 2026-10-07) lists the tests per ✅/🟨 story and requirement and the state of each logic area. **Open:** rate and trend (they come with US-WAC-03), swap states and feed derivation (SOZ, do not exist yet), and whether requirement rows (`FR-`, `NFR-`) with ✅ must also carry a test name (owner decision; five ✅ requirements have none today).
 
 ### US-QS-03 · Repeatable without fear · 🟨 (prototype ✅)
 
@@ -149,6 +151,42 @@ Acceptance criteria:
 - Given I report a barrier, then the report reaches the operator as an issue with the label `accessibility`, I get a confirmation, and the operator answers within a stated period (starting value: 14 days, assumption).
 - Given a release into `main`, then the known gaps on the page match the open issues with the label `accessibility` (nothing disappears silently, P-10).
 - Given the legal check of E-23 finds the app in scope of the BFSG, then the page also carries the information the BFSG requires for services, before the first external user.
+
+### US-QS-14 · Modern, calm and fast-feeling interface · ⬜ new
+
+As a **plant keeper** I want the app to look modern and feel quick on the phone and on a large screen, so that checking my plants is pleasant every day.
+
+Acceptance criteria:
+
+- Given a viewport of 360 px, then the main destinations are reached from a bottom bar with at most five items; from 768 px a navigation rail and from 1280 px a labelled sidebar show the same destinations from one list.
+- Given light and dark mode, then every colour pair of the design tokens meets WCAG 2.2 AA (4.5:1 text, 3:1 boundaries and focus) and a test fails when a token has no checked pair.
+- Given `prefers-reduced-motion: reduce`, then no non-essential motion runs (no route transition, no list entry, no swipe animation) and every state change is still visible.
+- Given a screen change, a list that appears or a completed action, then the change is animated with the shared motion tokens (starting values: 120, 200 and 320 ms, assumption), using `transform` and `opacity` only.
+- Given the first load of the app, then the initial JavaScript stays within the budget of QG-U6 and the Lighthouse scores do not get worse than before the redesign; code for animation that only one screen needs loads with that screen.
+- Given any view, then it keeps its next action for empty, error and loading states (P-09) and shows "unbekannt" for unknown values (P-08).
+- Given the main destinations, then my plants (US-BES) and the species I caught or still miss (US-POK) are one destination "Sammlung" with a switch at the top between "Pflanzen", "Arten" and "Wunschliste"; there is no separate "Bestand", "Pokédex", "Wunschliste" or "Artenvergleich" destination and the page has one main heading.
+- Given the destination "Sammlung", when I choose "Arten", then the species view shows, the address names the view so that back, forward and a copied link lead to the same view, and the species view is loaded only then.
+- Given a link to the former address of the Pokédex (including any path below it), when I open it, then I land on the species view of the "Sammlung"; the former address of the collection still shows my plants.
+- Given I chose a view before, when I open "Sammlung" without a view in the address, then the view from my last choice on this device shows; when the address names a view, then the address wins; when the device cannot remember (private mode), then the plants show and nothing breaks.
+- Given I switch the view with the keyboard or a screen reader, then every choice is a target of at least 44 px, the selected one is marked by more than colour, the focus stays on the switch, and the new view is announced politely (US-QS-10).
+- Given the destination "Sammlung", when I choose "Wunschliste", then my open wishes show ranked by the space need of their target zone with their actions (US-WUN-01, US-WUN-03, US-WUN-05), a wish with an unknown target zone stands at the end and says so (P-08), and the count line names the number of open wishes; the address names the mode, the mode is remembered per device and the address wins as for the other modes, and the wishlist is loaded only then.
+- Given the species view of the "Sammlung", when I choose the arrangement "Schwierigkeit", then the species with an active specimen show side by side, the easiest first, with "unbekannt" for a missing value (US-BES-05), under the same main heading; the address names the arrangement, and choosing "Pokédex" shows the caught and missing species again.
+- Given a link or bookmark to the former addresses of "Wunschliste" or "Artenvergleich", when I open it, then I land on the wishlist mode or on the species view arranged by difficulty of the "Sammlung", the focus stays where it was, and the former addresses are no entries of the navigation.
+- Given a missing species in the Pokédex offers "Auf die Wunschliste" (US-POK-09), when I choose it, then the wishlist mode of the "Sammlung" opens.
+- Given I switch between the modes or the arrangements with the keyboard or a screen reader, then every choice is at least 44 px, the choice is marked by more than colour, the focus stays on the control and the new view is announced politely; a mode that is loading, empty or failing keeps its next action (P-09, P-10).
+- Given the main destinations, then treatments (US-BEH) and the hints about incomplete plants (US-BES-08) are not destinations of their own: "Heute" shows them as sections after "Jetzt dran", in the order "Jetzt dran", "Behandlungen", "Fehlt noch", each named by a heading below the one main heading of the page.
+- Given the section "Behandlungen", then I see the open dates by urgency with "Erledigt" (US-BEH-02, US-BEH-03), plan new ones in a form that opens as a sheet on a phone and as a dialog on a large screen (US-BEH-01), and reach the done treatments per plant (US-BEH-03).
+- Given the section "Fehlt noch", then each hint names what is missing and offers the action that fixes it, including choosing a location for a plant without one right there (US-BES-08, US-PHA-03).
+- Given a link or bookmark to the former addresses of "Behandlung" or "Hinweise", when I open it, then I land on "Heute" at the matching section, the section name is announced politely and the focus is on its heading; the former addresses are no entries of the navigation.
+- Given one of the sections is empty, fails to load or is loading, then it shows that state with its next action (P-09, P-10) while the other sections stay usable.
+- Given "Heute" is opened, then the sections load as their own parts, so the initial JavaScript does not carry them (QG-U6).
+- Given the main destinations, then "Konto" and "Einstellungen" are one destination "Konto" with one main heading and the sections "Profil" (name, e-mail, ways to sign out; US-ACC-01) and "Einstellungen" (display name, time zone, notifications, privacy; US-ACC-02) in this order, each named by a heading below the main heading; "Einstellungen" is no entry of the navigation.
+- Given a wide screen (1280 px), then a list of the sections beside them links to each section and marks the current one by more than colour; on a small screen the sections are stacked without the list.
+- Given a link or bookmark to the former address of "Einstellungen", when I open it, then I land on "Konto" at the section "Einstellungen", the section name is announced politely and the focus is on its heading.
+- Given the section "Einstellungen" fails to load or is loading, then it shows that state with its next action (P-09, P-10) while the section "Profil" stays usable; saving settings works as before (US-ACC-02).
+- Given "Konto" is opened, then the settings load as their own part, so the initial JavaScript does not carry them (QG-U6). Invitations to friends stay in "Freunde" (US-SOZ); "Konto" has no section for them.
+
+Decision and tokens: ADR [0011](../decisions/0011-redesign-direction-greenhouse.md), E-24.
 
 ## Non-functional requirements
 

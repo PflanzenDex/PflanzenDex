@@ -19,7 +19,7 @@ function Picture(props: { card: Card }) {
       src={c.imageUrl}
       alt={`Bild von ${c.species}`}
       loading="lazy"
-      className={cn("h-32 w-full rounded-lg object-cover", c.state === "missing" && "grayscale")}
+      className={cn("h-32 w-full rounded-tile object-cover", c.state === "missing" && "grayscale")}
     />
   );
 }
@@ -61,8 +61,8 @@ export function CollectorCard(props: { card: Card }) {
       data-state={c.state}
       {...(rare ? { "data-rarity": "" } : {})}
       className={cn(
-        "grid min-w-0 content-start gap-1 break-words rounded-xl border bg-card p-3 text-card-foreground",
-        rare ? "border-2 border-warning-border" : "border-border",
+        "grid min-w-0 content-start gap-1 break-words rounded-card bg-card p-3 text-card-foreground shadow-elevation-1",
+        rare && "border-2 border-warning-border",
       )}
     >
       <Picture card={c} />

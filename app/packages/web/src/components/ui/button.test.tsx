@@ -150,4 +150,20 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
       expect(screen.getByRole("button", { name: variant })).toBeTruthy();
     }
   });
+
+  it("US-QS-14 · Greenhouse look: pill shape, semibold and a press scale; icon buttons use the control radius", () => {
+    render(
+      <>
+        <Button>Speichern</Button>
+        <Button size="icon" aria-label="Mehr">
+          +
+        </Button>
+      </>,
+    );
+    const pill = screen.getByRole("button", { name: "Speichern" }).className;
+    expect(pill).toContain("rounded-pill");
+    expect(pill).toContain("font-semibold");
+    expect(pill).toContain("active:scale-[0.98]");
+    expect(screen.getByRole("button", { name: "Mehr" }).className).toContain("rounded-control");
+  });
 });

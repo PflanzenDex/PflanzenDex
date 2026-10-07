@@ -1,6 +1,9 @@
 import type { SpeciesSource, SpecimenStore, SpecimenRow } from "../../collection";
 import type { Species, GrowthMeasure } from "../../catalog";
 import type { MeasurementStore, MeasurementValues, MeasurementRow } from "../measurements/types";
+import { appError, failed, ok } from "../../kernel";
+import type { ErrorCode, Result } from "../../kernel";
+import type { PhotoStorage } from "../measurements/photo";
 import type { CarePhase } from "../phases/phase";
 import type { PhaseLocationSource } from "../phases/phase-location";
 
@@ -88,11 +91,44 @@ export class InMemoryMeasurements implements MeasurementStore {
     return last;
   }
 
+  async findOnDate(userId: string, specimenId: string, date: string) {
+    const [newest] = (await this.list(userId, specimenId)).filter((z) => z.date === date);
+    return newest ?? null;
+  }
+
+  async setPhoto(userId: string, measurementId: string, photo: string): Promise<boolean> {
+    const row = this.rows.find((z) => z.userId === userId && z.id === measurementId);
+    if (!row) return false;
+    this.rows[this.rows.indexOf(row)] = { ...row, photo };
+    return true;
+  }
+
   async create(userId: string, w: MeasurementValues): Promise<MeasurementRow | "specimen_unknown"> {
     this.writes += 1;
     if (!this.ownership[userId]?.includes(w.specimenId)) return "specimen_unknown";
-    const row: MeasurementRow = { ...w, id: `m${this.rows.length + 1}` };
+    const row: MeasurementRow = { ...w, id: `m${this.rows.length + 1}`, photo: null };
     this.rows.push({ ...row, userId });
     return row;
+  }
+}
+
+/** In-memory `PhotoStorage` for tests only; the real one is `imageStorage` of `media`, composed in the API. */
+export class PhotoStorageStub implements PhotoStorage {
+  readonly objects = new Set<string>();
+  calls = 0;
+
+  /** The refusal the next uploads get (like `media.not_an_image` from the real pipeline); `null` accepts. */
+  refusal: ErrorCode | null = null;
+
+  async put(accountId: string, name: string): Promise<Result<{ width: number; height: number }>> {
+    this.calls += 1;
+    if (this.refusal) return failed(appError(this.refusal));
+    this.objects.add(`${accountId}/${name}`);
+    return ok({ width: 800, height: 600 });
+  }
+
+  async remove(accountId: string, name: string): Promise<Result<void>> {
+    this.objects.delete(`${accountId}/${name}`);
+    return ok(undefined);
   }
 }

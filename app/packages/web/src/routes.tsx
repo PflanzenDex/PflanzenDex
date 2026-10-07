@@ -1,46 +1,36 @@
 import type { ComponentType } from "react";
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router";
 import type { Species, Specimen } from "@pflanzendex/core";
-import { CollectionArea } from "./collection-area";
-import { CareProfilePage, DifficultyPage, HintsPage } from "./collection";
-import { AccountView, SettingsPage, OperatorPage, useSession, type State } from "./account";
+import { CareProfilePage } from "./collection";
+import { OperatorPage, useSession, type State } from "./account";
 import { LightPage } from "./light";
 import { ReviewPage, SpeciesPage } from "./catalog";
-import { CarePhasesPage, TreatmentsPage } from "./care";
-import { PokedexPage } from "./pokedex";
+import { CarePhasesPage } from "./care";
 import { FriendsPage } from "./social";
-import { TodayPage, type TodayDestination } from "./today";
-import { WishlistPage, type WishToPlant } from "./wishlist";
+import { DiscoverPage } from "./discover";
+import type { WishToPlant } from "./wishlist";
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
+import { AccountArea, CollectionArea, TodayArea } from "@/components/routing/areas/lazy-areas";
+import { legacyRoutes } from "@/components/routing/legacy-routes/legacy-routes";
 import { PATHS, type View } from "./navigation";
-
 /** The start page carries the onboarding forms: its chunk loads with its route (#451). */
 const StartPage = lazyPage(() => import("./start-page").then((m) => ({ default: m.StartPage })));
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
-
 /** The views that need nothing but the API address and the token. */
 const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Token }>>> = {
-  treatments: TreatmentsPage,
   carePhases: CarePhasesPage,
   careProfile: CareProfilePage,
-  difficulty: DifficultyPage,
   friends: FriendsPage,
+  discover: DiscoverPage,
   review: ReviewPage,
   operator: OperatorPage,
-  settings: SettingsPage,
-};
-
-/** Where the actions of the "Today" list lead (TE-07). */
-const TODAY_VIEW: Record<TodayDestination, View> = {
-  ...{ treatments: "treatments", hints: "hints", collection: "collection" },
-  care_phases: "carePhases",
 };
 
 /** The views that link on to other views; the app wires them (ADR 0003). */
 function LinkingView(props: {
-  view: "start" | "today" | "light" | "hints";
+  view: "start" | "light";
   api: string;
   token: Token;
   accountId: string;
@@ -49,11 +39,7 @@ function LinkingView(props: {
   const { api, token, onOpen } = props;
   if (props.view === "start")
     return <StartPage api={api} token={token} accountId={props.accountId} onOpen={onOpen} />;
-  if (props.view === "today")
-    return <TodayPage api={api} token={token} onOpen={(d) => onOpen(TODAY_VIEW[d])} />;
-  if (props.view === "light")
-    return <LightPage api={api} token={token} onOpenCollection={() => onOpen("collection")} />;
-  return <HintsPage api={api} token={token} onOpen={onOpen} />;
+  return <LightPage api={api} token={token} onOpenCollection={() => onOpen("collection")} />;
 }
 
 /** The species profile has its own address; the id comes from it (US-POK-09). */
@@ -102,7 +88,7 @@ type HandOver = {
 };
 
 /** The catalog and the collection hand the chosen species over to each other (US-BES-02); the wishlist starts the way to the plant (US-WUN-05). */
-function handOverRoutes(api: string, token: Token, h: HandOver) {
+function handOverRoutes(api: string, token: Token, h: HandOver, open: (id: string) => void) {
   return [
     <Route
       key="collection"
@@ -114,6 +100,8 @@ function handOverRoutes(api: string, token: Token, h: HandOver) {
           newSpecies={h.newSpecies}
           onSpeciesChoose={h.toTheCatalog}
           onCompleted={h.onCreated}
+          onOpenSpecies={open}
+          onCreateSpecimen={h.startFromWish}
         />
       }
     />,
@@ -129,11 +117,6 @@ function handOverRoutes(api: string, token: Token, h: HandOver) {
           {...(h.searchStart ? { initialSearch: h.searchStart } : {})}
         />
       }
-    />,
-    <Route
-      key="wishlist"
-      path={PATHS.wishlist}
-      element={<WishlistPage api={api} token={token} onCreateSpecimen={h.startFromWish} />}
     />,
     <Route
       key="profile"
@@ -164,7 +147,9 @@ export function AppRoutes(props: {
         <Route
           path={PATHS.account}
           element={
-            <AccountView
+            <AccountArea
+              api={api}
+              token={s.token}
               account={account}
               onSignOut={s.signOut}
               onEverywhereSignOut={() => void s.everywhereSignOut()}
@@ -172,7 +157,7 @@ export function AppRoutes(props: {
             />
           }
         />
-        {(["start", "today", "light", "hints"] as const).map((v) => (
+        {(["start", "light"] as const).map((v) => (
           <Route
             key={v}
             path={PATHS[v]}
@@ -188,11 +173,12 @@ export function AppRoutes(props: {
           />
         ))}
         <Route
-          path={PATHS.pokedex}
-          element={<PokedexPage api={api} token={s.token} onOpenSpecies={props.onOpenProfile} />}
+          path={PATHS.today}
+          element={<TodayArea api={api} token={s.token} onOpen={props.onOpen} />}
         />
+        {legacyRoutes()}
         {simpleRoutes(api, s.token, roles)}
-        {handOverRoutes(api, s.token, h)}
+        {handOverRoutes(api, s.token, h, props.onOpenProfile)}
         <Route path="*" element={<Navigate to={PATHS.start} replace />} />
       </Routes>
     </RouteBoundary>

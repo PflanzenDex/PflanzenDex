@@ -1,13 +1,14 @@
 import type { TreatmentListRow } from "@pflanzendex/core";
 import { useCallback, useRef, useState } from "react";
 import { EmptyState, type EmptyStateAction } from "@/components/shared/empty-state";
+import { Sprout } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { isOnline } from "@/platform/network";
 import { useAnnounce } from "@/platform/announcer/context";
 import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../kernel";
-import { ATTENTION_CLASSES, CARD_CLASSES, LIST_CLASSES, RefusalAlert, StatusNote } from "./notices";
+import { ATTENTION_CLASSES, LIST_CLASSES, RefusalAlert, StatusNote } from "./notices";
 import { OpenTreatmentsSkeleton } from "./open-treatments.skeleton";
-import { completeTreatment, loadOpenTreatments } from "./treatments-api";
+import { completeTreatment, loadOpenTreatments } from "./api/treatments-api";
 import { OPEN_KEY, TREATMENTS } from "./api/query-keys";
 import { dateText } from "./text";
 
@@ -73,22 +74,41 @@ function useCompletion(api: string, token: Token, onChanged: () => void) {
   return { runningId, doneIds, message, error, complete };
 }
 
-/** Only overdue and due-today rows are marked; the status text says it first (never by colour alone). */
-const URGENCY: Record<string, string> = { overdue: ATTENTION_CLASSES, today: ATTENTION_CLASSES };
+/** The status chip of an overdue or due-today row: the status text says it first, the tint only underlines it (never by colour alone). */
+const CHIP = new Set(["overdue", "today"]);
 
-function Row(props: { row: TreatmentListRow; running: boolean; onDone: () => void }) {
+function Row(props: {
+  row: TreatmentListRow;
+  running: boolean;
+  onDone: () => void;
+  /** Shown as a section of another page: the specimen name is one heading level lower (US-QS-14). */
+  host: boolean;
+}) {
   const { row } = props;
+  const Name = props.host ? "h4" : "h3";
   return (
-    <li className={`${CARD_CLASSES} flex flex-col gap-1 ${URGENCY[row.status.kind] ?? ""}`}>
-      <h3 className="font-semibold">{row.specimenName}</h3>
-      <p>Grund: {row.reason}</p>
-      <p>Mittel: {row.agent ?? "—"}</p>
-      <p>Fällig am: {dateText(row.dueAt)}</p>
-      <p className="font-bold">{row.status.text}</p>
+    <li className="flex min-w-0 items-center gap-3 rounded-card bg-card p-3 text-card-foreground shadow-elevation-1 [overflow-wrap:anywhere]">
+      <span
+        aria-hidden="true"
+        className="flex size-13 shrink-0 items-center justify-center rounded-tile bg-accent text-accent-foreground"
+      >
+        <Sprout className="size-6" />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <Name className="text-[15px] font-semibold">{row.specimenName}</Name>
+        <p className="text-[12.5px] text-muted-foreground">Grund: {row.reason}</p>
+        <p className="text-[12.5px] text-muted-foreground">Mittel: {row.agent ?? "—"}</p>
+        <p className="text-[12.5px] text-muted-foreground">Fällig am: {dateText(row.dueAt)}</p>
+        <p
+          className={`w-fit rounded-full px-2 py-0.5 text-[12.5px] font-semibold ${CHIP.has(row.status.kind) ? ATTENTION_CLASSES : ""}`}
+        >
+          {row.status.text}
+        </p>
+      </div>
       <Button
         type="button"
         size="lg"
-        className="mt-2 self-start"
+        className="shrink-0 rounded-full"
         disabled={props.running}
         aria-label={`${row.reason} bei ${row.specimenName} als erledigt abhaken`}
         onClick={props.onDone}
@@ -103,6 +123,7 @@ function OpenList(props: {
   all: readonly TreatmentListRow[];
   completion: ReturnType<typeof useCompletion>;
   next: EmptyStateAction;
+  host: boolean;
 }) {
   const { completion } = props;
   const rows = props.all.filter((r) => !completion.doneIds.includes(r.id));
@@ -111,7 +132,12 @@ function OpenList(props: {
     return (
       <EmptyState
         title="Keine offenen Behandlungen."
-        description="Plane unten einen Termin, dann erscheint er hier."
+        level={props.host ? 3 : 2}
+        description={
+          props.host
+            ? "Plane einen Termin, dann erscheint er hier."
+            : "Plane unten einen Termin, dann erscheint er hier."
+        }
         action={props.next}
       />
     );
@@ -125,6 +151,7 @@ function OpenList(props: {
             row={row}
             running={completion.runningId === row.id}
             onDone={() => void completion.complete(row)}
+            host={props.host}
           />
         ))}
       </ul>
@@ -142,16 +169,20 @@ export function OpenTreatments(props: {
   token: Token;
   /** What to do when there is nothing open: plan one, or create a specimen first. */
   next: EmptyStateAction;
+  /** Shown as a section of "Heute" (US-QS-14): its heading is one level lower. */
+  host?: boolean;
 }) {
   const { api, token } = props;
+  const host = props.host === true;
+  const Title = host ? "h3" : "h2";
   const changed = useInvalidate(TREATMENTS);
   const completion = useCompletion(api, token, changed);
   const load = useCallback((t: string) => loadOpenTreatments(api, t), [api]);
   return (
     <section aria-labelledby="open-treatments-title" className="flex flex-col gap-3">
-      <h2 id="open-treatments-title" className="text-xl font-semibold">
+      <Title id="open-treatments-title" className="text-xl font-semibold">
         Offene Behandlungen
-      </h2>
+      </Title>
       {completion.message && <StatusNote>{completion.message}</StatusNote>}
       {completion.error && <RefusalAlert error={completion.error} />}
       <LoadFrame
@@ -161,7 +192,7 @@ export function OpenTreatments(props: {
         loadingText="Offene Behandlungen werden geladen …"
         loadingFallback={<OpenTreatmentsSkeleton />}
       >
-        {(all) => <OpenList all={all} completion={completion} next={props.next} />}
+        {(all) => <OpenList all={all} completion={completion} next={props.next} host={host} />}
       </LoadFrame>
     </section>
   );

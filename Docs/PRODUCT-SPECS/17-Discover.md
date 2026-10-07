@@ -25,7 +25,7 @@ Delimitation from EQU: a **suggestion** is a species from the catalog, not a pro
 
 ## User stories
 
-### US-ENT-01 · See suggestions one by one as a card · ⬜ new
+### US-ENT-01 · See suggestions one by one as a card · 🟨 new
 
 As a **plant keeper** I want to get species suggested one by one as a large card, so that filling the wishlist is fun instead of research.
 

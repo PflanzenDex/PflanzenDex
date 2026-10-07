@@ -165,12 +165,12 @@ export async function takePhoto(): Promise<Photo | undefined> {
 
 ### 2.4 Responsive adaptive patterns
 
-| ID    | Rule                                                                                                                                                                                                                                       |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| DS-23 | **Modals:** below `md` a bottom Sheet (Vaul-based `@/components/ui/sheet`), from `md` a centered Dialog. Modules use `ResponsiveModal`, never a bare `Dialog` for content a phone user must fill in.                                       |
-| DS-24 | **Tables:** below `md` a stack of cards (one card per row, label/value pairs, the row's main action reachable), from `md` the real `Table`. Both views render from the same column definition so they cannot drift. Use `ResponsiveTable`. |
-| DS-25 | **Navigation:** below `md` a sticky bottom bar (max 5 destinations) and a slide-over drawer for the rest; from `md` a top bar, from `lg` optionally a sidebar. One source of truth for the destinations.                                   |
-| DS-26 | Every list/table/detail view defines its empty, loading and error state, and each offers a next action (P-09).                                                                                                                             |
+| ID    | Rule                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DS-23 | **Modals:** below `md` a bottom Sheet (Vaul-based `@/components/ui/sheet`), from `md` a centered Dialog. Modules use `ResponsiveModal`, never a bare `Dialog` for content a phone user must fill in.                                                                                                                                                                                                                                                                                        |
+| DS-24 | **Tables:** below `md` a stack of cards (one card per row, label/value pairs, the row's main action reachable), from `md` the real `Table`. Both views render from the same column definition so they cannot drift. Use `ResponsiveTable`.                                                                                                                                                                                                                                                  |
+| DS-25 | **Navigation (ADR 0011 decision 6):** below `md` a fixed bottom bar with at most 5 slots (the first four destinations plus "Mehr", which opens a sheet with the rest); from `md` a navigation rail (about 80 px, icon with label under it, all destinations); from `xl` a labelled sidebar (248 px, product name on top). Bar, rail and sidebar render the same single list of destinations. The active item is never shown by colour alone (pill or fill, semibold label, `aria-current`). |
+| DS-26 | Every list/table/detail view defines its empty, loading and error state, and each offers a next action (P-09).                                                                                                                                                                                                                                                                                                                                                                              |
 
 `ResponsiveModal` sketch (the choice is made with CSS/media query hook, content rendered once):
 
@@ -276,7 +276,6 @@ export function ResponsiveModal({
   --border: oklch(0.9 0.01 130);
   --input: var(--border);
   --ring: oklch(0.55 0.15 150);
-  --radius: 0.625rem;
 }
 
 .dark {
@@ -302,9 +301,10 @@ export function ResponsiveModal({
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-md: var(--radius);
 }
 ```
+
+Since the Greenhouse redesign (ADR 0011, US-QS-14) the values of these tokens, the radius tokens (`radius-control` 14 px, `radius-tile` 16 px, `radius-card` 22 px, `radius-pill`; the Tailwind steps `lg`, `xl`, `2xl` map to control, tile and card), the elevation levels (`shadow-elevation-1`, `shadow-elevation-2`), the motion tokens (`--motion-fast`, `--motion-base`, `--motion-slow`, `ease-enter`, `ease-leave`; 0 ms under `prefers-reduced-motion`) and the type scale (`text-xs` to `text-4xl`, plus `text-label`) live in `styles/tokens.css`; the font is self-hosted Figtree (`font-sans`). The literal values in the sketch above are illustrative.
 
 Always pair a surface with its foreground: `bg-primary text-primary-foreground`, `bg-card text-card-foreground`, `bg-muted text-muted-foreground`.
 

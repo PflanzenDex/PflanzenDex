@@ -1,4 +1,14 @@
-import { appError, measurementView, measurementRecord } from "@pflanzendex/core";
+import { createHash, randomUUID } from "node:crypto";
+import {
+  appError,
+  measurementView,
+  measurementRecord,
+  measurementPhoto,
+  MEDIA_LIMITS,
+  imageStorage,
+  type ImageProcessor,
+  type ObjectStore,
+} from "@pflanzendex/core";
 import {
   SpeciesPostgres,
   SpecimenPostgres,
@@ -10,11 +20,16 @@ import type { Pool } from "pg";
 import { errorBody, body, write, type AuthEnv } from "../kernel";
 
 /** Paths the sign-in guard (bearer token) must cover. */
-export const CARE_PATHS = ["/specimens/:id/measurements"] as const;
+export const CARE_PATHS = [
+  "/specimens/:id/measurements",
+  "/specimens/:id/measurements/photo",
+] as const;
 
 export type CareOptions = {
   /** The clock for "today" (NFR-08); tests pin it. */
   clock?: () => Date;
+  /** Object store and image processing for measurement photos (TE-05); without them the photo route answers 502. */
+  media?: { readonly store: ObjectStore; readonly processor: ImageProcessor };
 };
 
 /**
@@ -47,5 +62,31 @@ export function careRoutes(pool: Pool, opt: CareOptions = {}): Hono<AuthEnv> {
       success: 201,
     }),
   );
+  routes.post("/specimens/:id/measurements/photo", async (c) => {
+    if (!opt.media) return c.json(errorBody(appError("media.storage_unavailable")), 502);
+    // Refuse before reading when the announced size is already too large (the pipeline checks the real size again).
+    if (Number(c.req.header("content-length") ?? 0) > MEDIA_LIMITS.uploadMaxBytes)
+      return c.json(errorBody(appError("media.too_large")), 413);
+    const bytes = new Uint8Array(await c.req.arrayBuffer());
+    const contentType = (c.req.header("content-type") ?? "").split(";")[0]?.trim() ?? "";
+    const photo = measurementPhoto({
+      measurements,
+      specimens,
+      storage: imageStorage(opt.media),
+      newName: randomUUID,
+      clock: opt.clock ?? (() => new Date()),
+      upload: { bytes, contentType },
+    });
+    return write(c, deps, photo, {
+      input: {
+        specimenId: c.req.param("id"),
+        timeZone: c.req.query("timeZone"),
+        date: c.req.query("date"),
+        replace: c.req.query("replace") === "true" ? true : undefined,
+        digest: createHash("sha256").update(bytes).digest("hex"),
+      },
+      success: 201,
+    });
+  });
   return routes;
 }

@@ -22,6 +22,7 @@ vi.mock("./start-page", () => {
   return { StartPage: () => null };
 });
 vi.mock("./pokedex/PokedexPage", () => {
+  loaded.pages.push("pokedex");
   throw new Error("Failed to fetch dynamically imported module");
 });
 
@@ -64,23 +65,37 @@ afterEach(() => {
 
 describe("US-QS-07 · DS-08 route-level lazy loading", () => {
   it("US-QS-07 · DS-08 a route shows one loading status while its page chunk loads", () => {
-    renderAt("/wishlist");
+    renderAt("/collection?view=wishlist");
     expect(screen.getAllByRole("status")).toHaveLength(1);
     expect(screen.getByText("Lädt…")).toBeTruthy();
   });
 
-  it("US-QS-07 · DS-08 a first load of /wishlist does not load the chunks of other modules", async () => {
-    renderAt("/wishlist");
+  it("US-QS-07 · DS-08 a first load of the wishlist mode does not load the chunks of other modules", async () => {
+    renderAt("/collection?view=wishlist");
     await screen.findByRole("heading", { name: /Wunschliste/ });
     expect(loaded.pages).toEqual([]);
   });
 
   it("US-QS-07 · DS-08 a failed page chunk shows an error with retry instead of a blank page", async () => {
-    renderAt("/pokedex");
+    renderAt("/collection?view=species");
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Die Seite konnte nicht geladen werden.",
     );
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
+  });
+
+  it("US-QS-14 · DS-08 the Sammlung in plants mode does not load the species page chunk", async () => {
+    renderAt("/collection?view=plants");
+    await screen.findByRole("heading", { name: "Sammlung" });
+    expect(loaded.pages).not.toContain("pokedex");
+  });
+
+  it("US-QS-14 · the old Pokédex address and its sub-paths open the species mode of the Sammlung", async () => {
+    // The species page chunk is mocked to fail: only the species mode requests it, so an alert proves the redirect.
+    renderAt("/pokedex/irgendwas");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Die Seite konnte nicht geladen werden.",
+    );
   });
 
   it("#451 · DS-08 the start route loads the start page chunk on demand", async () => {

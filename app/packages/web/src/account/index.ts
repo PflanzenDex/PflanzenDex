@@ -8,6 +8,7 @@ export const OperatorPage = lazyPage(() =>
 );
 export { AppError, AccountView, Loading, Welcome } from "./views";
 export { apiUrl } from "./account-api";
+export type { Account } from "./account-api";
 export { useSession } from "./session";
 export type { State } from "./session";
 /** Needed only while the invitation code is asked for: forms and validation stay out of the entry chunk (#451). */

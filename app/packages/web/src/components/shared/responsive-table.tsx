@@ -69,7 +69,7 @@ export function ResponsiveTable<Row>({
       {rows.map((row) => (
         <li
           key={getRowKey(row)}
-          className="min-w-0 break-words rounded-lg border border-border bg-card p-4 text-card-foreground"
+          className="min-w-0 break-words rounded-card bg-card p-4 text-card-foreground shadow-elevation-1"
         >
           <dl className="grid grid-cols-[minmax(0,auto)_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm">
             {columns.map((c) => (
