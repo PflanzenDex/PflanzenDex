@@ -4,7 +4,7 @@ import type { Species, Specimen } from "@pflanzendex/core";
 import { OperatorPage, useSession, type State } from "./account";
 import { CareProfileSection } from "./collection";
 import { ReviewPage, SpeciesPage } from "./catalog";
-import { FriendsPage } from "./social";
+import { FriendCollectionPage, FriendsPage } from "./social";
 import { DiscoverPage } from "./discover";
 import type { WishToPlant } from "./wishlist";
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
@@ -24,6 +24,12 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
   review: ReviewPage,
   operator: OperatorPage,
 };
+
+/** A friend's shared collection has its own address; the friendship id comes from it (US-SOZ-07). */
+function FriendCollectionRoute(props: { api: string; token: Token }) {
+  const { friendId } = useParams();
+  return <FriendCollectionPage {...props} friendId={friendId ?? ""} />;
+}
 
 /** My care profile is a section of the species profile (US-BES-09, US-QS-14); the app wires `collection` into `catalog`. */
 const careProfile = (api: string, token: Token) =>
@@ -166,6 +172,10 @@ export function AppRoutes(props: {
           element={
             <StartPage api={api} token={s.token} accountId={account.id} onOpen={props.onOpen} />
           }
+        />
+        <Route
+          path={`${PATHS.friends}/:friendId`}
+          element={<FriendCollectionRoute api={api} token={s.token} />}
         />
         <Route
           path={PATHS.today}

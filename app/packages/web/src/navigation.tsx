@@ -139,5 +139,6 @@ export function viewTitle(pathname: string): string {
   if (pathname === PATHS.start) return pageTitle("Start");
   const entry = ENTRIES.find((e) => PATHS[e.id] === pathname);
   if (entry) return pageTitle(entry.text);
+  if (pathname.startsWith(`${PATHS.friends}/`)) return pageTitle("Sammlung eines Freundes");
   return pathname.startsWith(`${PATHS.species}/`) ? pageTitle("Artenprofil") : pageTitle();
 }

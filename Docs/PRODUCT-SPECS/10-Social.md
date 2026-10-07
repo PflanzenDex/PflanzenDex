@@ -125,7 +125,7 @@ Assumptions, decided by the PO (revisable):
 - Offline (FR-SOZ-03): the screens show the last loaded copy; every answer carries the instant it was read and the banner and the feed show it as "Stand: DD.MM.YYYY", so an older copy is recognizable. "Okay" needs a connection and is disabled without one (the write buffer of US-QS-10 is not used for it, because the banner would still say "new" afterwards).
 - The server clock and the database clock are assumed to agree to the second; the comparison uses instants, not calendar dates (a visit is a moment, not a day).
 
-### US-SOZ-07 · View and compare a friend's collection · ⬜ new
+### US-SOZ-07 · View and compare a friend's collection · 🟨 new
 
 Acceptance criteria:
 
@@ -133,6 +133,15 @@ Acceptance criteria:
 - Per card "you have it" or "you lack it" (from my ownership, US-POK-06). Filters "I lack", "We both have".
 - No rank or leaderboard comparison (FR-POK-11). Facts are shown, no rating.
 - Shared equipment appears as the friend's device list (US-EQU-12).
+
+Assumptions, decided by the PO (revisable):
+
+- The view has its own address per friend (`/friends/<friendship id>`, reached by "Sammlung ansehen" in the friend list) and reads only through `friendView`: only what the friend shares, only through a confirmed friendship, nothing while "Everything private" is on (P-05). `GET /friends/:id/collection` derives the cards on every request; an id that is not one of my friends is `friend.not_found`.
+- A card is one species the friend shares: Latin and German name, the number of shared specimens (cuttings counted separately), the earliest known catch date ("unbekannt" without one, P-08) and "Du hast sie" / "Du hast sie nicht" from my own active specimens, compared by the Latin name. A species that is unknown to friends (a private proposal) cannot be compared: the card says "Vergleich unbekannt" and is neither lacked nor shared.
+- The cards follow the look of the collector cards (US-POK-01) but not their data: the Pokédex cards come from the catalog tree (number, genus size, light zone), while a friend's card only carries what the friend shares. "Caught" means the friend shares an active specimen of the species.
+- Filters: "Alle", "Ich habe nicht" (`iHave` is false), "Wir haben beide" (true); cards with an unknown comparison show under "Alle" only. No rank, no leaderboard, no rating, no comparison between friends (FR-SOZ-11, FR-POK-11). Every state says what to do next (P-09); an empty filter points back to "Alle".
+- "Auf die Wunschliste" on a species I lack records a wish by the Latin name through the existing wishlist operation, so its duplicate check applies; the wish does not yet record that a friend suggested it (no source field on the wish, US-WUN).
+- The friend's device list (US-EQU-12) does not exist yet; the page says so. Everything else of the story is done.
 
 ### US-SOZ-08 · Offer a plant or cutting for swapping · ⬜ new
 

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FriendsPage } from "./friends-page";
 
@@ -129,7 +130,11 @@ afterEach(() => {
 describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
   it("US-SOZ-02 shows the open requests with the display name only, and next steps when there are none (P-09)", async () => {
     fakeServer();
-    render(<FriendsPage api="http://api" token={token} />);
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
     expect(await screen.findByText(/Keine offenen Anfragen/)).toBeTruthy();
     expect(screen.getByText(/Noch keine Freunde/)).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Freunde", level: 1 })).toBeTruthy();
@@ -137,7 +142,11 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
 
   it("US-SOZ-02 accepting a request makes the person a friend and says so", async () => {
     const { calls } = fakeServer({ incoming: [req()] });
-    render(<FriendsPage api="http://api" token={token} />);
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
     await userEvent.click(await screen.findByRole("button", { name: "Anfrage von Ben annehmen" }));
     expect(await screen.findByText(/Du bist jetzt mit Ben befreundet/)).toBeTruthy();
     expect(calls[0]).toEqual({ path: "/friends/requests/r1/answer", body: { decision: "accept" } });
@@ -148,7 +157,11 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
 
   it("US-SOZ-02 declining sends the answer and tells the receiver what the other side learns", async () => {
     const { calls } = fakeServer({ incoming: [req()] });
-    render(<FriendsPage api="http://api" token={token} />);
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
     await userEvent.click(await screen.findByRole("button", { name: "Anfrage von Ben ablehnen" }));
     expect(await screen.findByText(/nur, dass sie nicht angenommen wurde/)).toBeTruthy();
     expect(calls[0]?.body).toEqual({ decision: "decline" });
@@ -156,7 +169,11 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
 
   it("US-SOZ-02 a request I sent that was declined shows only 'Nicht angenommen'", async () => {
     fakeServer({ outgoing: [req({ direction: "sent", otherName: "Anna", status: "declined" })] });
-    render(<FriendsPage api="http://api" token={token} />);
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
     const list = await screen.findByRole("list", { name: "Von dir gesendete Anfragen" });
     expect(within(list).getByText("Nicht angenommen")).toBeTruthy();
     expect(within(list).getByText("Anfrage an Anna")).toBeTruthy();
@@ -164,13 +181,21 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
 
   it("US-SOZ-02 a person without a stored name stays 'Name unbekannt' (P-08)", async () => {
     fakeServer({ incoming: [req({ otherName: null })] });
-    render(<FriendsPage api="http://api" token={token} />);
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
     expect(await screen.findByText(/Name unbekannt möchte/)).toBeTruthy();
   });
 
   it("US-SOZ-01 creates a code and shows it once with its expiry", async () => {
     fakeServer();
-    render(<FriendsPage api="http://api" token={token} />);
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
     await userEvent.click(await screen.findByRole("button", { name: "Einladungscode erzeugen" }));
     expect((await screen.findByLabelText("Dein Freundescode")).textContent).toBe(
       "ABCD-EFGH-JKMN-PQRS-TVWX-YZ01",
@@ -180,7 +205,11 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
 
   it("US-SOZ-01 sends a request with a code and lists it as waiting", async () => {
     const { calls } = fakeServer();
-    render(<FriendsPage api="http://api" token={token} />);
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
     await userEvent.type(await screen.findByLabelText("Freundescode"), "ABCD-EFGH");
     await userEvent.click(screen.getByRole("button", { name: "Anfrage senden" }));
     expect(await screen.findByText(/Anfrage gesendet/)).toBeTruthy();
@@ -190,7 +219,11 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
 
   it("US-SOZ-01 an empty code is refused before sending; a refused code shows its German text at the field (P-10)", async () => {
     const { calls } = fakeServer();
-    render(<FriendsPage api="http://api" token={token} />);
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
     await userEvent.click(await screen.findByRole("button", { name: "Anfrage senden" }));
     expect(await screen.findByText("Bitte gib den Freundescode ein.")).toBeTruthy();
     expect(calls).toEqual([]);
@@ -204,10 +237,14 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     fakeServer({
       friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: null }],
     });
-    render(<FriendsPage api="http://api" token={token} />);
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
     const list = await screen.findByRole("list", { name: "Freunde" });
     expect(list.textContent).toBe(
-      "Benbefreundet seit 06.10.2026Gemeinsame Arten: unbekannt (noch nichts freigegeben)Freundschaft beenden",
+      "Benbefreundet seit 06.10.2026Gemeinsame Arten: unbekannt (noch nichts freigegeben)Sammlung ansehenFreundschaft beenden",
     );
   });
 
@@ -215,7 +252,11 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     const { calls } = fakeServer({
       friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: null }],
     });
-    render(<FriendsPage api="http://api" token={token} />);
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
     await userEvent.click(
       await screen.findByRole("button", { name: "Freundschaft mit Ben beenden" }),
     );
@@ -232,7 +273,11 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
 
   it("US-SOZ-04 everything is private by default; sharing a specimen says what friends see, withdrawing says when it takes effect", async () => {
     const { calls } = fakeServer();
-    render(<FriendsPage api="http://api" token={token} />);
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
     const box = await screen.findByRole("checkbox", { name: "Zebra – M1: mit Freunden teilen" });
     expect((box as HTMLInputElement).checked).toBe(false);
     expect(screen.getByText(/Alles ist privat, bis du es freigibst/)).toBeTruthy();
@@ -256,7 +301,11 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
 
   it("US-SOZ-04 archived specimens are not offered; the bulk action shares a whole species", async () => {
     const { calls } = fakeServer();
-    render(<FriendsPage api="http://api" token={token} />);
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
     await screen.findByRole("checkbox", { name: "Zebra – M2: mit Freunden teilen" });
     expect(screen.queryByRole("checkbox", { name: /M3/ })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Alle Exemplare von Zebra teilen" }));
@@ -277,7 +326,11 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
         { id: "f2", name: "Cleo", since: "2026-10-06T12:00:00.000Z", sharedSpecies: 0 },
       ],
     });
-    render(<FriendsPage api="http://api" token={token} />);
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
     expect(await screen.findByText("Gemeinsame Arten: 2")).toBeTruthy();
     expect(screen.getByText("Gemeinsame Arten: 0")).toBeTruthy();
   });
