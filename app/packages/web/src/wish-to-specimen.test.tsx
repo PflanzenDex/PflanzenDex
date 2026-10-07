@@ -131,7 +131,7 @@ const tab = (name: string) =>
 const open = async () => {
   mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
   render(
-    <MemoryRouter initialEntries={["/wishlist"]}>
+    <MemoryRouter initialEntries={["/collection?view=wishlist"]}>
       <App />
     </MemoryRouter>,
   );
@@ -197,8 +197,8 @@ describe("US-WUN-05 the species is preselected from the catalog", () => {
     const f = server();
     await open();
     await screen.findByRole("heading", { name: "Exemplar anlegen" });
-    await userEvent.click(tab("Wunschliste"));
-    await screen.findByRole("list", { name: "Gekaufte Wünsche" });
+    await userEvent.click(tab("Freunde"));
+    await screen.findByRole("heading", { name: "Freunde" });
     await userEvent.click(tab("Arten"));
     await screen.findByRole("heading", { name: "Art wählen" });
     await userEvent.click(await screen.findByRole("button", { name: /Dracaena trifasciata/ }));

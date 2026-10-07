@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { SegmentedControl, type SegmentedOption } from "../segmented-control/segmented-control";
 
 /**
@@ -9,6 +10,8 @@ export function SammlungHeader<V extends string>(props: {
   options: readonly SegmentedOption<V>[];
   onChoose: (v: V) => void;
   caption: string | null;
+  /** A second control that belongs to the chosen view, e.g. the arrangement of the species. */
+  children?: ReactNode;
 }) {
   return (
     <div className="mb-4 flex flex-col gap-3">
@@ -22,6 +25,7 @@ export function SammlungHeader<V extends string>(props: {
         value={props.view}
         onChange={props.onChoose}
       />
+      {props.children}
     </div>
   );
 }

@@ -65,13 +65,13 @@ afterEach(() => {
 
 describe("US-QS-07 · DS-08 route-level lazy loading", () => {
   it("US-QS-07 · DS-08 a route shows one loading status while its page chunk loads", () => {
-    renderAt("/wishlist");
+    renderAt("/collection?view=wishlist");
     expect(screen.getAllByRole("status")).toHaveLength(1);
     expect(screen.getByText("Lädt…")).toBeTruthy();
   });
 
-  it("US-QS-07 · DS-08 a first load of /wishlist does not load the chunks of other modules", async () => {
-    renderAt("/wishlist");
+  it("US-QS-07 · DS-08 a first load of the wishlist mode does not load the chunks of other modules", async () => {
+    renderAt("/collection?view=wishlist");
     await screen.findByRole("heading", { name: /Wunschliste/ });
     expect(loaded.pages).toEqual([]);
   });

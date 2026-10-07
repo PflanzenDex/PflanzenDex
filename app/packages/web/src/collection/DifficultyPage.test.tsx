@@ -156,3 +156,17 @@ describe("US-BES-05 DS-24 layout of the wide table (issue 293)", () => {
     expect(list.textContent).toContain("Dracaena trifasciata");
   });
 });
+
+describe("US-QS-14 · US-BES-05 the comparison hosted by the Sammlung", () => {
+  it("US-QS-14 · US-BES-05 with a host it has no main heading, names its section and reports the count line", async () => {
+    fakeServer(() => response(200, { rows: [row(), row({ speciesId: "sp2", difficulty: 3 })] }));
+    const onCaption = vi.fn();
+    const view = render(<DifficultyPage api="http://api" token={token} host={{ onCaption }} />);
+    await screen.findByRole("table");
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+    expect(screen.getByRole("heading", { level: 2, name: "Artenvergleich" })).toBeTruthy();
+    expect(onCaption).toHaveBeenLastCalledWith("2 Arten im Vergleich");
+    view.unmount();
+    expect(onCaption).toHaveBeenLastCalledWith(null);
+  });
+});

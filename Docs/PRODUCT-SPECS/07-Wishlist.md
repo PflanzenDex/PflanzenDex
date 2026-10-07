@@ -4,6 +4,8 @@ Goal: new plants are acquired where the light system has room, and the candidate
 
 Prototype reference: epic WUN. Differences: a purchase leads, guided, to the plant (solves B-09), images are saved locally instead of hotlinked, equipment candidates are added (epic EQU).
 
+Note (US-QS-14): the wishlist is shown as the view "Wunschliste" of the destination "Sammlung"; the former destination "Wunschliste" no longer exists and its address leads there.
+
 ## User stories
 
 ### US-WUN-01 · See candidates prioritized by space need · 🟨 (prototype ✅)

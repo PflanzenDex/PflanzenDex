@@ -1,18 +1,17 @@
 import type { ComponentType } from "react";
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router";
 import type { Species, Specimen } from "@pflanzendex/core";
-import { CollectionArea } from "./collection-area";
-import { CareProfilePage, DifficultyPage } from "./collection";
+import { CareProfilePage } from "./collection";
 import { OperatorPage, useSession, type State } from "./account";
 import { LightPage } from "./light";
 import { ReviewPage, SpeciesPage } from "./catalog";
 import { CarePhasesPage } from "./care";
 import { FriendsPage } from "./social";
 import { DiscoverPage } from "./discover";
-import { WishlistPage, type WishToPlant } from "./wishlist";
+import type { WishToPlant } from "./wishlist";
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
-import { AccountArea, TodayArea } from "@/components/routing/areas/lazy-areas";
+import { AccountArea, CollectionArea, TodayArea } from "@/components/routing/areas/lazy-areas";
 import { legacyRoutes } from "@/components/routing/legacy-routes/legacy-routes";
 import { PATHS, type View } from "./navigation";
 /** The start page carries the onboarding forms: its chunk loads with its route (#451). */
@@ -23,7 +22,6 @@ type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Token }>>> = {
   carePhases: CarePhasesPage,
   careProfile: CareProfilePage,
-  difficulty: DifficultyPage,
   friends: FriendsPage,
   discover: DiscoverPage,
   review: ReviewPage,
@@ -103,6 +101,7 @@ function handOverRoutes(api: string, token: Token, h: HandOver, open: (id: strin
           onSpeciesChoose={h.toTheCatalog}
           onCompleted={h.onCreated}
           onOpenSpecies={open}
+          onCreateSpecimen={h.startFromWish}
         />
       }
     />,
@@ -118,11 +117,6 @@ function handOverRoutes(api: string, token: Token, h: HandOver, open: (id: strin
           {...(h.searchStart ? { initialSearch: h.searchStart } : {})}
         />
       }
-    />,
-    <Route
-      key="wishlist"
-      path={PATHS.wishlist}
-      element={<WishlistPage api={api} token={token} onCreateSpecimen={h.startFromWish} />}
     />,
     <Route
       key="profile"

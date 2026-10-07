@@ -290,24 +290,28 @@ describe("US-ACC-01 App", () => {
     expect(tab("Pflegeprofil").getAttribute("aria-current")).toBe("page");
   });
 
-  it("US-BES-05 the tab Artenvergleich opens the difficulty overview and says what to do without a species", async () => {
+  it("US-QS-14 · US-BES-05 the old address /difficulty opens the comparison in the species mode of the Sammlung and says what to do without a species", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
-    renderApp();
-    await userEvent.click(await findTab("Artenvergleich"));
+    renderApp("/difficulty");
     expect(await screen.findByRole("heading", { name: "Artenvergleich" })).toBeTruthy();
     expect(screen.getByText(/Noch keine Art/)).toBeTruthy();
-    expect(tab("Artenvergleich").getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
+    expect(header().queryByRole("link", { name: "Artenvergleich" })).toBeNull();
   });
 
-  it("US-WUN-01 the tab Wunschliste opens the candidate list and says what to do without a wish", async () => {
+  it("US-QS-14 · US-WUN-01 the old address /wishlist opens the Wunschliste mode and says what to do without a wish", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
-    renderApp();
-    await userEvent.click(await findTab("Wunschliste"));
+    renderApp("/wishlist");
     expect(await screen.findByRole("heading", { name: "Wunschliste" })).toBeTruthy();
     expect(await screen.findByText("Erfasse einen Wunsch mit Ziel-Lichtzone.")).toBeTruthy();
-    expect(tab("Wunschliste").getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("button", { name: "Wunschliste" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
+    expect(header().queryByRole("link", { name: "Wunschliste" })).toBeNull();
   });
 
   it("US-QS-14 · US-BES-08 the old address /hints lands on the section Fehlt noch of Heute; its action leads to the view that fixes it", async () => {

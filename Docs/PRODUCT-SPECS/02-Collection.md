@@ -6,6 +6,8 @@ Prototype reference: epic BES (`../PLANT-SYSTEM-SPECS/01-Collection-Species-and-
 
 Note (US-QS-14): the collection of specimens is shown as the view "Pflanzen" of the destination "Sammlung", next to the species view of the Pokédex epic (POK).
 
+Note (US-QS-14): the species comparison by difficulty (US-BES-05) is the arrangement "Schwierigkeit" of the species view "Arten" of the destination "Sammlung"; the former destination "Artenvergleich" no longer exists and its address leads there.
+
 Note (US-QS-14): the hints about incomplete specimens (US-BES-08) are shown as the section "Fehlt noch" of the destination "Heute"; the former destination "Hinweise" no longer exists and its address leads there.
 
 ## User stories

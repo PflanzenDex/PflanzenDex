@@ -4,7 +4,16 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { AppShell } from "./components/shared/app-shell";
 import { BRAND_LINK_LABEL, DISPLAY_NAME } from "./components/shared/nav-item";
-import { accountAddress, navItems, pageTitle, PATHS, todayAddress, viewTitle } from "./navigation";
+import {
+  DIFFICULTY_ADDRESS,
+  WISHLIST_MODE_ADDRESS,
+  accountAddress,
+  navItems,
+  pageTitle,
+  PATHS,
+  todayAddress,
+  viewTitle,
+} from "./navigation";
 
 afterEach(cleanup);
 
@@ -115,19 +124,40 @@ describe("US-QS-07 · DS-22 navigation icons", () => {
     expect(bar.getByRole("link", { name: "Heute" })).toBeTruthy();
   });
 
-  it("US-QS-14 · DS-25 the bar holds Heute, Sammlung, Entdecken, Wunschliste, then Mehr; Start is no destination", () => {
+  it("US-QS-14 · DS-25 the bar holds Heute, Sammlung, Entdecken, Freunde, then Mehr with Konto first; Start is no destination", () => {
     const items = navItems({});
-    expect(items.slice(0, 4).map((i) => i.label)).toEqual([
+    expect(items.slice(0, 5).map((i) => i.label)).toEqual([
       "Heute",
       "Sammlung",
       "Entdecken",
-      "Wunschliste",
+      "Freunde",
+      "Konto",
     ]);
     expect(items.map((i) => i.label)).not.toContain("Pokédex");
     expect(items.map((i) => i.label)).not.toContain("Bestand");
     expect(items.map((i) => i.label)).not.toContain("Start");
     expect(items.map((i) => i.href)).not.toContain("/");
-    expect(items.at(-1)?.label).toBe("Konto");
+    expect(
+      navItems({ reviewer: true, operator: true })
+        .map((i) => i.label)
+        .slice(-2),
+    ).toEqual(["Prüfliste", "Betreiber"]);
+  });
+});
+
+describe("US-QS-14 Wunschliste and Artenvergleich are modes of the Sammlung", () => {
+  it("US-QS-14 · US-WUN-01 · US-BES-05 the navigation lists neither of them and has no path for them", () => {
+    const labels = navItems({ reviewer: true, operator: true }).map((i) => i.label);
+    expect(labels).not.toContain("Wunschliste");
+    expect(labels).not.toContain("Artenvergleich");
+    expect(Object.values(PATHS)).not.toContain("/wishlist");
+    expect(Object.values(PATHS)).not.toContain("/difficulty");
+  });
+
+  it("US-QS-14 the addresses of the two modes are on the Sammlung", () => {
+    expect(WISHLIST_MODE_ADDRESS).toBe("/collection?view=wishlist");
+    expect(DIFFICULTY_ADDRESS).toBe("/collection?view=species&sort=difficulty");
+    expect(viewTitle("/wishlist")).toBe("PflanzenDéx");
   });
 });
 
