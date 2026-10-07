@@ -51,6 +51,8 @@ const fields = (extra: Record<string, string> = {}) => ({
   ...extra,
 });
 
+const PHOTO = { api: "http://api", token: async () => "tok", specimenId: "e1" };
+
 describe("US-WAC-01 client of the measure API", () => {
   it("records with bearer token, time zone of the device and a fresh Idempotency-Key", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(201, measurement()));
@@ -128,6 +130,20 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(html).toContain("Vergeilt/dünn");
   });
 
+  it("US-WAC-05 the last assessment shows date and note of the last measurement", () => {
+    const html = renderToString(
+      <MeasurementHeader
+        view={view({
+          last: measurement({ note: "Blätter wirken blass", quality: "etiolated" }),
+          lastRating: "etiolated",
+        })}
+      />,
+    );
+    expect(html).toContain("Vergeilt/dünn");
+    expect(html).toContain("03.10.2026");
+    expect(html).toContain("Blätter wirken blass");
+  });
+
   it('without measurement: "noch keine Messung", and without species the measure stays "unknown" (P-08)', () => {
     const html = renderToString(<MeasurementHeader view={view({ growthMeasure: null })} />);
     expect(html).toContain("noch keine Messung");
@@ -140,17 +156,18 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
       <MeasurementList
         measurements={[measurement({ note: "nach dem Umtopfen" })]}
         onAdd={() => undefined}
+        photo={PHOTO}
       />,
     );
     expect(list).toContain("12,5 cm · 03.10.2026");
     expect(list).toContain("Gesund");
     expect(list).toContain("nach dem Umtopfen");
-    expect(renderToString(<MeasurementList measurements={[]} onAdd={() => undefined} />)).toContain(
-      "Trage oben den ersten Messwert ein",
-    );
+    expect(
+      renderToString(<MeasurementList measurements={[]} onAdd={() => undefined} photo={PHOTO} />),
+    ).toContain("Trage oben den ersten Messwert ein");
   });
 
-  it("the form has number, date, quality (healthy preset), note and says that the photo is missing", () => {
+  it("the form has number, date, quality (healthy preset), note and the optional photo (US-WAC-05)", () => {
     const html = renderToString(<MeasureForm unit="cm" onSend={async () => null} />);
     expect(html).toContain("Messwert (cm, in Schritten von 0,5)");
     expect(html).toMatch(/<input[^>]*type="date"[^>]*>/);
@@ -158,7 +175,7 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(html).toMatch(/<option value="healthy" selected/);
     expect(html).toContain("Vergeilt/dünn");
     expect(html).toContain("Notiz (optional)");
-    expect(html).toContain("Ein Foto kannst du hier noch nicht hinzufügen.");
+    expect(html).toContain("Foto (optional)");
   });
 
   it('US-WAC-02 the quality choice offers healthy (preset) and etiolated/thin with "Wie erkennen?" closed', () => {

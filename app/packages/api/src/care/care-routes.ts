@@ -4,6 +4,7 @@ import {
   measurementView,
   measurementRecord,
   measurementPhoto,
+  measurementPhotoFile,
   MEDIA_LIMITS,
   imageStorage,
   type ImageProcessor,
@@ -17,12 +18,13 @@ import {
 } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { errorBody, body, write, type AuthEnv } from "../kernel";
+import { errorBody, statusFor, body, write, type AuthEnv } from "../kernel";
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const CARE_PATHS = [
   "/specimens/:id/measurements",
   "/specimens/:id/measurements/photo",
+  "/specimens/:id/measurements/:measurementId/photo",
 ] as const;
 
 export type CareOptions = {
@@ -31,6 +33,28 @@ export type CareOptions = {
   /** Object store and image processing for measurement photos (TE-05); without them the photo route answers 502. */
   media?: { readonly store: ObjectStore; readonly processor: ImageProcessor };
 };
+
+/** Reads the cleaned photo of a measurement back, for the owner only (US-WAC-05, P-05). */
+function addPhotoRead(
+  routes: Hono<AuthEnv>,
+  deps: { measurements: MeasurementsPostgres; specimens: SpecimenPostgres },
+  media: CareOptions["media"],
+): void {
+  routes.get("/specimens/:id/measurements/:measurementId/photo", async (c) => {
+    if (!media) return c.json(errorBody(appError("media.storage_unavailable")), 502);
+    const r = await measurementPhotoFile(
+      { ...deps, objects: media.store },
+      c.get("account").id,
+      c.req.param("id"),
+      c.req.param("measurementId"),
+    );
+    if (!r.ok) return c.json(errorBody(r.error), statusFor(r.error));
+    return c.body(r.value.bytes as unknown as ArrayBuffer, 200, {
+      "content-type": r.value.contentType,
+      "cache-control": "private, max-age=3600",
+    });
+  });
+}
 
 /**
  * Measurements of a specimen (US-WAC-01). Writing goes only through `measurement.record` (P-03, with
@@ -88,5 +112,6 @@ export function careRoutes(pool: Pool, opt: CareOptions = {}): Hono<AuthEnv> {
       success: 201,
     });
   });
+  addPhotoRead(routes, { measurements, specimens }, opt.media);
   return routes;
 }

@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MeasurePage } from "./MeasurePage";
 
 const response = (status: number, body: unknown) =>
@@ -20,21 +20,38 @@ const measurement = {
 const specimen = { id: "e1", name: "Bogenhanf" };
 
 function fakeServer(
-  opts: { loadError?: boolean; save?: () => Promise<Response>; signs?: string | null } = {},
+  opts: {
+    loadError?: boolean;
+    save?: () => Promise<Response>;
+    signs?: string | null;
+    withPhoto?: boolean;
+    photoSave?: () => Promise<Response>;
+  } = {},
 ) {
+  const photoPosts: { url: string; type: string | undefined; key: string | undefined }[] = [];
   const measurements: unknown[] = [];
   const posts: { body: Record<string, unknown>; key: string | undefined }[] = [];
   let loadAttempts = 0;
   vi.stubGlobal(
     "fetch",
-    vi.fn<typeof fetch>(async (_url, init) => {
+    vi.fn<typeof fetch>(async (url, init) => {
+      if (String(url).endsWith("/photo"))
+        return new Response(new Uint8Array([1]), {
+          status: 200,
+          headers: { "content-type": "image/jpeg" },
+        });
+      if (init?.method === "POST" && String(url).includes("/measurements/photo")) {
+        const h = init.headers as Record<string, string>;
+        photoPosts.push({ url: String(url), type: h["Content-Type"], key: h["Idempotency-Key"] });
+        return opts.photoSave ? opts.photoSave() : response(201, { photo: "p.jpg" });
+      }
       if (init?.method === "POST") {
         posts.push({
           body: JSON.parse(String(init.body)) as Record<string, unknown>,
           key: (init.headers as Record<string, string>)["Idempotency-Key"],
         });
         if (opts.save) return opts.save();
-        measurements.unshift(measurement);
+        measurements.unshift(opts.withPhoto ? { ...measurement, photo: "p.jpg" } : measurement);
         return response(201, measurement);
       }
       loadAttempts += 1;
@@ -51,12 +68,16 @@ function fakeServer(
       });
     }),
   );
-  return { posts };
+  return { posts, photoPosts };
 }
 
 const show = (token: () => Promise<string | undefined> = async () => "tok", onBack = vi.fn()) =>
   render(<MeasurePage api="http://api" token={token} specimen={specimen} onBack={onBack} />);
 
+beforeEach(() => {
+  URL.createObjectURL = vi.fn(() => "blob:photo");
+  URL.revokeObjectURL = vi.fn();
+});
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -205,5 +226,74 @@ describe("US-WAC-01 Seite Messen", () => {
     show();
     await userEvent.click(await screen.findByRole("button", { name: "Messwert eintragen" }));
     expect(document.activeElement).toBe(screen.getByLabelText(/Messwert \(/));
+  });
+});
+
+const IMAGE = new File([new Uint8Array([1, 2, 3])], "pflanze.jpg", { type: "image/jpeg" });
+const fillValue = async (v: string) => userEvent.type(await screen.findByLabelText(/Messwert/), v);
+const save = () => userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+
+describe("US-WAC-05 photo in the form and in the course", () => {
+  it("a measurement with a photo shows the photo with alternative text in the course", async () => {
+    fakeServer({ withPhoto: true });
+    show();
+    await fillValue("12,5");
+    await save();
+    expect(
+      await screen.findByRole("img", { name: "Foto der Messung vom 01.10.2026" }),
+    ).toBeTruthy();
+  });
+
+  it("the form sends the chosen photo after the measurement, for its date, as raw file with Idempotency-Key", async () => {
+    const { posts, photoPosts } = fakeServer({ withPhoto: true });
+    show();
+    await fillValue("12,5");
+    await userEvent.upload(screen.getByLabelText(/Foto/), IMAGE);
+    await save();
+    await screen.findByText(/Gespeichert:/);
+    expect(posts).toHaveLength(1);
+    expect(photoPosts).toHaveLength(1);
+    expect(photoPosts[0]?.type).toBe("image/jpeg");
+    expect(photoPosts[0]?.key).toBeTruthy();
+    expect(photoPosts[0]?.url).toMatch(
+      /\/specimens\/e1\/measurements\/photo\?.*date=\d{4}-\d{2}-\d{2}/,
+    );
+  });
+
+  it("without a chosen photo nothing is uploaded", async () => {
+    const { photoPosts } = fakeServer();
+    show();
+    await fillValue("12,5");
+    await save();
+    await screen.findByText(/Gespeichert:/);
+    expect(photoPosts).toHaveLength(0);
+  });
+
+  it("a file that is not an image is rejected before sending and writes nothing", async () => {
+    const { posts, photoPosts } = fakeServer();
+    show();
+    await fillValue("12,5");
+    await userEvent
+      .setup({ applyAccept: false })
+      .upload(screen.getByLabelText(/Foto/), new File(["x"], "x.pdf", { type: "application/pdf" }));
+    await save();
+    expect((await screen.findByRole("alert")).textContent).toContain("JPEG, PNG oder WebP");
+    expect(posts).toHaveLength(0);
+    expect(photoPosts).toHaveLength(0);
+  });
+
+  it("if the photo is refused the measurement stays saved and the German text of the code is shown (P-10)", async () => {
+    fakeServer({
+      photoSave: () =>
+        response(415, { error: { code: "media.type_unsupported", text: "raw server text" } }),
+    });
+    show();
+    await fillValue("12,5");
+    await userEvent.upload(screen.getByLabelText(/Foto/), IMAGE);
+    await save();
+    expect(await screen.findByText(/Gespeichert:/)).toBeTruthy();
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain(ERROR_TEXTS["media.type_unsupported"]);
+    expect(alert.textContent).not.toContain("raw server text");
   });
 });

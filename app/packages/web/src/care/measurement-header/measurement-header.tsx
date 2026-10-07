@@ -1,6 +1,6 @@
 import type { MeasurementView } from "@pflanzendex/core";
 import { GrowthSummary } from "./growth-summary/growth-summary";
-import { massName, measurementText, QUALITY_NAME } from "../text";
+import { dateText, massName, measurementText, QUALITY_NAME } from "../text";
 
 /** What to measure, last measurement and last rating (US-WAC-01); derived, never stored (P-01). */
 export function MeasurementHeader({ view }: { view: MeasurementView }) {
@@ -24,7 +24,9 @@ export function MeasurementHeader({ view }: { view: MeasurementView }) {
       <div>
         <dt className="font-semibold">Letzte Bewertung</dt>
         <dd className="m-0 mt-0.5 text-muted-foreground">
-          {lastRating ? QUALITY_NAME[lastRating] : "noch keine Bewertung"}
+          {lastRating && last
+            ? [QUALITY_NAME[lastRating], dateText(last.date), last.note].filter(Boolean).join(" · ")
+            : "noch keine Bewertung"}
         </dd>
       </div>
     </dl>

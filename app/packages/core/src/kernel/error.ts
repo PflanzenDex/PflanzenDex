@@ -52,6 +52,7 @@ export const ERROR_TEXTS = {
     "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her, dann kannst du damit arbeiten.",
   "measurement.not_found":
     "Für diesen Tag gibt es noch keine Messung. Erfasse zuerst die Messung, dann kannst du das Foto dazu speichern; es wurde nichts gespeichert.",
+  "measurement.photo_not_found": "Zu dieser Messung gibt es kein Foto.",
   "measurement.photo_exists":
     "Zu dieser Messung gibt es schon ein Foto. Bestätige, dass es ersetzt werden soll; bis dahin bleibt das alte Foto unverändert.",
   "treatment.not_found": "Diese Behandlung gibt es nicht.",

@@ -19,6 +19,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "specimen.not_found": 404,
   "treatment.not_found": 404,
   "measurement.not_found": 404,
+  "measurement.photo_not_found": 404,
   "measurement.photo_exists": 409,
   "media.not_found": 404,
   "media.too_large": 413,

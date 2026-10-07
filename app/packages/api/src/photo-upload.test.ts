@@ -246,3 +246,33 @@ describe("US-WAC-06 tenant isolation (P-04)", () => {
     expect((await call(subA, "GET", `/specimens/${e}/measurements`)).body["last"].photo).toBeNull();
   });
 });
+
+describe("US-WAC-05 reading the photo back is private to the owner (P-05)", () => {
+  const raw = (sub: string | null, e: string, m: string) =>
+    app.request(`/specimens/${e}/measurements/${m}/photo`, {
+      headers: sub ? { authorization: `Bearer valid:${sub}` } : {},
+    });
+
+  it("the owner gets the stored JPEG; foreign accounts and anonymous callers get nothing", async () => {
+    const e = await newSpecimen(subA, "Lesen");
+    await measure(subA, e);
+    const up = await upload(subA, e, await gpsPhoto(400, 300));
+    const mid = up.body["measurementId"] as string;
+    const own = await raw(subA, e, mid);
+    expect([own.status, own.headers.get("content-type")]).toEqual([200, "image/jpeg"]);
+    expect(own.headers.get("cache-control")).toContain("private");
+    expect((await own.arrayBuffer()).byteLength).toBeGreaterThan(0);
+    expect((await raw(subB, e, mid)).status).toBe(404);
+    expect((await raw(null, e, mid)).status).toBe(401);
+  });
+
+  it("a measurement without a photo answers 404 measurement.photo_not_found", async () => {
+    const e = await newSpecimen(subA, "OhneFoto");
+    const m = await measure(subA, e);
+    const r = await raw(subA, e, m.body["id"] as string);
+    expect(r.status).toBe(404);
+    expect(((await r.json()) as { error: { code: string } }).error.code).toBe(
+      "measurement.photo_not_found",
+    );
+  });
+});

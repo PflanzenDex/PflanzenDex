@@ -9,6 +9,8 @@ export { measurementRecord } from "./measurements/record";
 export type { RecordDependencies } from "./measurements/record";
 export { measurementPhoto } from "./measurements/capture/photo";
 export type { PhotoDependencies, PhotoResult, PhotoStorage } from "./measurements/capture/photo";
+export { measurementPhotoFile } from "./measurements/capture/file";
+export type { PhotoFileDependencies } from "./measurements/capture/file";
 export { RATED_BY, MEASUREMENT_LIMITS, QUALITIES } from "./measurements/types";
 export type {
   RatedBy,
