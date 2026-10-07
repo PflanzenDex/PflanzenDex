@@ -152,6 +152,21 @@ Acceptance criteria:
 - Given a release into `main`, then the known gaps on the page match the open issues with the label `accessibility` (nothing disappears silently, P-10).
 - Given the legal check of E-23 finds the app in scope of the BFSG, then the page also carries the information the BFSG requires for services, before the first external user.
 
+### US-QS-14 · Modern, calm and fast-feeling interface · ⬜ new
+
+As a **plant keeper** I want the app to look modern and feel quick on the phone and on a large screen, so that checking my plants is pleasant every day.
+
+Acceptance criteria:
+
+- Given a viewport of 360 px, then the main destinations are reached from a bottom bar with at most five items; from 768 px a navigation rail and from 1280 px a labelled sidebar show the same destinations from one list.
+- Given light and dark mode, then every colour pair of the design tokens meets WCAG 2.2 AA (4.5:1 text, 3:1 boundaries and focus) and a test fails when a token has no checked pair.
+- Given `prefers-reduced-motion: reduce`, then no non-essential motion runs (no route transition, no list entry, no swipe animation) and every state change is still visible.
+- Given a screen change, a list that appears or a completed action, then the change is animated with the shared motion tokens (starting values: 120, 200 and 320 ms, assumption), using `transform` and `opacity` only.
+- Given the first load of the app, then the initial JavaScript stays within the budget of QG-U6 and the Lighthouse scores do not get worse than before the redesign; code for animation that only one screen needs loads with that screen.
+- Given any view, then it keeps its next action for empty, error and loading states (P-09) and shows "unbekannt" for unknown values (P-08).
+
+Decision and tokens: ADR [0011](../decisions/0011-redesign-direction-greenhouse.md), E-24.
+
 ## Non-functional requirements
 
 | ID     | Requirement                                                                                                                                                                                                                                                                                                                                                        | Status |
