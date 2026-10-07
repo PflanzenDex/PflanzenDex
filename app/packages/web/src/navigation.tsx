@@ -3,7 +3,6 @@ import {
   CalendarCheck,
   Compass,
   Users,
-  Leaf,
   Package,
   User,
   ClipboardCheck,
@@ -12,18 +11,10 @@ import {
 import { DISPLAY_NAME, type NavItem } from "./components/shared/nav-item";
 
 export type View =
-  | "start"
-  | "today"
-  | "species"
-  | "collection"
-  | "discover"
-  | "friends"
-  | "review"
-  | "operator"
-  | "account";
+  "start" | "today" | "collection" | "discover" | "friends" | "review" | "operator" | "account";
 
 /** What a link inside the app can open: a destination, or one of the three views that moved into the Sammlung (US-QS-14). */
-export type LinkTarget = View | "light" | "carePhases" | "careProfile";
+export type LinkTarget = View | "species" | "light" | "carePhases" | "careProfile";
 
 /** Pflegephasen, Pflegeprofil and Standorte und Licht are no destinations any more: they live in the Sammlung (US-QS-14). */
 const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
@@ -32,7 +23,6 @@ const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
   { id: "discover", text: "Entdecken", icon: Compass },
   { id: "friends", text: "Freunde", icon: Users },
   { id: "account", text: "Konto", icon: User },
-  { id: "species", text: "Arten", icon: Leaf },
   { id: "review", text: "Prüfliste", icon: ClipboardCheck },
   { id: "operator", text: "Betreiber", icon: Building2 },
 ];
@@ -41,7 +31,6 @@ const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
 export const PATHS: Record<View, string> = {
   start: "/",
   today: "/today",
-  species: "/species",
   collection: "/collection",
   discover: "/discover",
   friends: "/friends",
@@ -49,6 +38,18 @@ export const PATHS: Record<View, string> = {
   operator: "/operator",
   account: "/account",
 };
+
+/**
+ * The catalog of the species is the mode "Katalog" of "Entdecken" (US-QS-14); the former destination "Arten" at
+ * `/species` redirects there (`LEGACY_SPECIES_PATH`). The profile of one species is a page of
+ * its own with a way back, linked from the Pokédex, wishes and old bookmarks. It lives below Entdecken
+ * (`/discover/species/:id`), so the navigation keeps "Entdecken" as the current destination; the old
+ * `/species/:id` redirects there.
+ */
+export const LEGACY_SPECIES_PATH = "/species";
+export const CATALOG_ADDRESS = `${PATHS.discover}?view=catalog`;
+export const PROFILE_BASE = `${PATHS.discover}/species`;
+export const profileAddress = (id: string) => `${PROFILE_BASE}/${encodeURIComponent(id)}`;
 
 /** The former addresses of "Wunschliste" and "Artenvergleich": the third mode and an arrangement of the species of the Sammlung (US-QS-14). */
 export const LEGACY_WISHLIST_PATH = "/wishlist";
@@ -97,13 +98,15 @@ export const MANAGE_ADDRESS = `${PATHS.collection}?view=plants&${MANAGE_PARAM}=l
 
 /** The address a link inside the app opens for a view: the three merged views lead to their place in the Sammlung. */
 export const viewAddress = (v: LinkTarget): string =>
-  v === "light"
-    ? MANAGE_ADDRESS
-    : v === "carePhases"
-      ? PHASES_ADDRESS
-      : v === "careProfile"
-        ? SPECIES_MODE_ADDRESS
-        : PATHS[v];
+  v === "species"
+    ? CATALOG_ADDRESS
+    : v === "light"
+      ? MANAGE_ADDRESS
+      : v === "carePhases"
+        ? PHASES_ADDRESS
+        : v === "careProfile"
+          ? SPECIES_MODE_ADDRESS
+          : PATHS[v];
 
 const visible = (
   id: View,
@@ -132,7 +135,7 @@ export const pageTitle = (view?: string) => (view ? `${view} – ${PRODUCT}` : P
 
 /**
  * The page title of the address (US-QS-09, WCAG 2.4.2): the name of the navigation entry, so title, entry and heading
- * agree; a species profile has its own address below the catalog. Unknown addresses redirect, so they only get the product.
+ * agree; a species profile has its own address below `/discover/species`. Unknown addresses redirect, so they only get the product.
  */
 export function viewTitle(pathname: string): string {
   // The start page is no destination (brand link, landing page) but keeps its page title.
@@ -140,5 +143,5 @@ export function viewTitle(pathname: string): string {
   const entry = ENTRIES.find((e) => PATHS[e.id] === pathname);
   if (entry) return pageTitle(entry.text);
   if (pathname.startsWith(`${PATHS.friends}/`)) return pageTitle("Sammlung eines Freundes");
-  return pathname.startsWith(`${PATHS.species}/`) ? pageTitle("Artenprofil") : pageTitle();
+  return pathname.startsWith(`${PROFILE_BASE}/`) ? pageTitle("Artenprofil") : pageTitle();
 }

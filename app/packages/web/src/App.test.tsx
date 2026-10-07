@@ -289,16 +289,20 @@ describe("US-ACC-01 App", () => {
     expect(await screen.findByRole("heading", { name: "Start" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Art im Katalog wählen" }));
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
-    expect(tab("Arten").getAttribute("aria-current")).toBe("page");
+    expect(tab("Entdecken").getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("button", { name: "Katalog" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
   });
 
   it("signed in: the navigation switches between all views", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    await userEvent.click(await findTab("Arten"));
+    await userEvent.click(await findTab("Entdecken"));
+    await userEvent.click(await screen.findByRole("button", { name: "Katalog" }));
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
-    const species = tab("Arten");
+    const species = tab("Entdecken");
     expect(species.getAttribute("aria-current")).toBe("page");
 
     await userEvent.click(tab("Sammlung"));
@@ -442,7 +446,8 @@ describe("US-ACC-01 App", () => {
     );
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    await userEvent.click(await findTab("Arten"));
+    await userEvent.click(await findTab("Entdecken"));
+    await userEvent.click(await screen.findByRole("button", { name: "Katalog" }));
     await userEvent.click(await screen.findByRole("button", { name: /Dracaena trifasciata/ }));
     await userEvent.click(await screen.findByRole("button", { name: "Diese Art wählen" }));
     expect(await screen.findByRole("heading", { name: "Exemplar anlegen" })).toBeTruthy();
@@ -537,7 +542,7 @@ describe("US-ACC-01 App", () => {
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/species/a1");
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
-    expect(tab("Arten").getAttribute("aria-current")).toBe("page");
+    await waitFor(() => expect(tab("Entdecken").getAttribute("aria-current")).toBe("page"));
     await waitFor(() =>
       expect(vi.mocked(fetch).mock.calls.map((c) => new URL(String(c[0])).pathname)).toContain(
         "/species/a1",

@@ -32,8 +32,11 @@ export function SpeciesProfile(props: {
   species: Species;
   onChoose?: () => void;
   onBack?: () => void;
+  /** Below a destination title the profile is a section: its name is then an h2 (US-QS-14). */
+  embedded?: boolean | undefined;
 }) {
   const { species } = props;
+  const Heading = props.embedded ? "h2" : "h1";
   return (
     <article aria-labelledby="species-title" className="flex min-w-0 flex-col gap-3">
       {props.onBack && (
@@ -41,9 +44,9 @@ export function SpeciesProfile(props: {
           Zurück zur Suche
         </Button>
       )}
-      <h1 id="species-title" className="break-words text-2xl font-semibold">
+      <Heading id="species-title" className="break-words text-2xl font-semibold">
         <i>{species.latinName}</i>
-      </h1>
+      </Heading>
       <Badge variant="outline" className="self-start">
         {STATUS[species.reviewStatus]}
       </Badge>

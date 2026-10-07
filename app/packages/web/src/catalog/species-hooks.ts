@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Species, SpeciesHit } from "@pflanzendex/core";
-import { useRequest, type Request } from "../kernel";
-import { loadSpecies, searchSpecies } from "./species-api";
+import { SIGN_IN, useInvalidate, useRequest, type ApiError, type Request } from "../kernel";
+import { loadSpecies, propose, searchSpecies } from "./species-api";
 
 type Token = () => Promise<string | undefined>;
 export const SEARCH_KEY = ["catalog", "search"] as const;
@@ -40,4 +40,27 @@ export function useSearch(api: string, token: Token, searchText: string) {
 export function useProfile(api: string, token: Token, id: string | null): Request<Species> {
   const load = useCallback((t: string) => loadSpecies(api, t, id ?? ""), [api, id]);
   return useRequest({ queryKey: ["catalog", "species", id], token, load, enabled: id !== null });
+}
+
+/** Sends the proposal of a species; the search forgets its cached hits and `onSaved` gets the new id (US-BES-01). */
+export function useSend(api: string, token: Token, onSaved: (id: string) => void) {
+  const searchChanged = useInvalidate(SEARCH_KEY);
+  return async (input: Record<string, unknown>): Promise<ApiError | null> => {
+    const t = await token();
+    const r = t ? await propose(api, t, input) : { ok: false as const, error: SIGN_IN };
+    if (!r.ok) return r.error;
+    searchChanged();
+    onSaved(r.value.id);
+    return null;
+  };
+}
+
+/** The species whose profile shows: starts with the one of the address and follows it when it changes (US-POK-09). */
+export function useOpenId(openId: string | null | undefined) {
+  const state = useState<string | null>(openId ?? null);
+  const set = state[1];
+  useEffect(() => {
+    if (openId) set(openId);
+  }, [openId, set]);
+  return state;
 }

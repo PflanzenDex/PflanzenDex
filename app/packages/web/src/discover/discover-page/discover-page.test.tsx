@@ -168,7 +168,7 @@ describe("US-ENT-01 suggestions as a card", () => {
     ).toBeTruthy();
     expect(screen.getByText("Schlage eine neue Art für den Katalog vor.")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Art vorschlagen" }).getAttribute("href")).toBe(
-      "/species",
+      "/discover?view=catalog",
     );
   });
 

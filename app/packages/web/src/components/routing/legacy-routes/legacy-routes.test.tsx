@@ -75,4 +75,14 @@ describe("US-QS-14 old addresses keep working", () => {
     open("/pokedex/abc");
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=species false");
   });
+
+  it("US-QS-14 · US-BES-01 /species leads to the catalog mode of Entdecken and keeps the focus on the control", () => {
+    open("/species");
+    expect(screen.getByTestId("address").textContent).toBe("/discover?view=catalog true");
+  });
+
+  it("US-QS-14 · US-POK-09 /species/:id leads to the same profile below Entdecken", () => {
+    open("/species/a%201");
+    expect(screen.getByTestId("address").textContent).toBe("/discover/species/a%201 false");
+  });
 });

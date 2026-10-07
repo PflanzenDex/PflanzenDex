@@ -2,6 +2,7 @@ import type { SuggestionDeck } from "@pflanzendex/core";
 import { useEffect, useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
+import { CATALOG_ADDRESS } from "@/navigation";
 import { SuggestionCard } from "../suggestion-card/suggestion-card";
 
 /**
@@ -52,7 +53,7 @@ export function DeckView(props: { deck: SuggestionDeck; onNewDeck: () => void })
       <EmptyState
         title={deck.empty.text}
         description={deck.empty.nextAction}
-        action={{ label: "Art vorschlagen", href: "/species" }}
+        action={{ label: "Art vorschlagen", href: CATALOG_ADDRESS }}
       />
     );
   const current = deck.suggestions[position];

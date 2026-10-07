@@ -58,7 +58,10 @@ export function ProposalForm(props: {
   onSend: (input: Record<string, unknown>) => Promise<ApiError | null>;
   onCancel: () => void;
   onExisting: (id: string) => void;
+  /** Below a destination title the form is a section: its name is then an h2 (US-QS-14). */
+  embedded?: boolean | undefined;
 }) {
+  const Heading = props.embedded ? "h2" : "h1";
   const form = useForm<ProposalFields>({
     resolver: zodResolver(proposalSchema),
     defaultValues: { ...EMPTY_PROPOSAL, latinName: props.start ?? "" },
@@ -70,9 +73,9 @@ export function ProposalForm(props: {
   });
   return (
     <section aria-labelledby="proposal-title" className="flex min-w-0 flex-col gap-3">
-      <h1 id="proposal-title" className="text-2xl font-semibold">
+      <Heading id="proposal-title" className="text-2xl font-semibold">
         Art vorschlagen
-      </h1>
+      </Heading>
       <p className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground">
         Dein Vorschlag ist zunächst nur für dich sichtbar und kommt in die Prüfliste. Erst nach der
         Freigabe sehen ihn alle und er zählt im Pokédex. Bis dahin kannst du die Art trotzdem für

@@ -52,6 +52,21 @@ vi.mock("./collection-area", () => {
   return { CollectionArea: () => null };
 });
 
+vi.mock("@/components/routing/areas/discover-area/discover-area", () => {
+  loaded.pages.push("discover-area");
+  return { DiscoverArea: () => null };
+});
+
+vi.mock("./discover/discover-page/discover-page", () => {
+  loaded.pages.push("discover-page");
+  return { DiscoverPage: () => null };
+});
+
+vi.mock("./catalog/SpeciesPage", () => {
+  loaded.pages.push("species-page");
+  return { SpeciesPage: () => null };
+});
+
 vi.mock("vaul", () => {
   loaded.pages.push("vaul");
   return { Drawer: {} };
@@ -87,6 +102,12 @@ describe("#451 · DS-08 the entry bundle stays small", () => {
   it("US-QS-14 · DS-08 Heute with its sections (treatments, hints) loads only when its route opens", async () => {
     await import("./App");
     for (const part of ["today-area", "treatments", "hints"])
+      expect(loaded.pages).not.toContain(part);
+  });
+
+  it("US-QS-14 · DS-08 Entdecken with its modes (suggestions, catalog) loads only when its route opens", async () => {
+    await import("./App");
+    for (const part of ["discover-area", "discover-page", "species-page"])
       expect(loaded.pages).not.toContain(part);
   });
 

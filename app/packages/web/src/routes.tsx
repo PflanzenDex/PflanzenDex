@@ -5,14 +5,18 @@ import { OperatorPage, useSession, type State } from "./account";
 import { CareProfileSection } from "./collection";
 import { ReviewPage, SpeciesPage } from "./catalog";
 import { FriendCollectionPage, FriendsPage } from "./social";
-import { DiscoverPage } from "./discover";
 import type { WishToPlant } from "./wishlist";
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import { AreaSection } from "@/components/routing/areas/area-section/area-section";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
-import { AccountArea, CollectionArea, TodayArea } from "@/components/routing/areas/lazy-areas";
+import {
+  AccountArea,
+  CollectionArea,
+  DiscoverArea,
+  TodayArea,
+} from "@/components/routing/areas/lazy-areas";
 import { legacyRoutes } from "@/components/routing/legacy-routes/legacy-routes";
-import { PATHS, type LinkTarget, type View } from "./navigation";
+import { PATHS, PROFILE_BASE, type LinkTarget, type View } from "./navigation";
 /** The start page carries the onboarding forms: its chunk loads with its route (#451). */
 const StartPage = lazyPage(() => import("./start-page").then((m) => ({ default: m.StartPage })));
 type Token = () => Promise<string | undefined>;
@@ -20,7 +24,6 @@ type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 /** The views that need nothing but the API address and the token. */
 const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Token }>>> = {
   friends: FriendsPage,
-  discover: DiscoverPage,
   review: ReviewPage,
   operator: OperatorPage,
 };
@@ -115,22 +118,21 @@ function handOverRoutes(api: string, token: Token, h: HandOver, open: (id: strin
       }
     />,
     <Route
-      key="species"
-      path={PATHS.species}
+      key="discover"
+      path={PATHS.discover}
       element={
-        <SpeciesPage
+        <DiscoverArea
           api={api}
           token={token}
           onChoose={h.choose}
-          openId={null}
           profileSection={careProfile(api, token)}
-          {...(h.searchStart ? { initialSearch: h.searchStart } : {})}
+          {...(h.searchStart ? { searchStart: h.searchStart } : {})}
         />
       }
     />,
     <Route
       key="profile"
-      path={`${PATHS.species}/:profileId`}
+      path={`${PROFILE_BASE}/:profileId`}
       element={<SpeciesProfileRoute api={api} token={token} onChoose={h.choose} />}
     />,
   ];

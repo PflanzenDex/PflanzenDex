@@ -6,6 +6,8 @@ Prototype reference: none, idea from 2026-10-02. Builds on POK (catalog, ownersh
 
 Delimitation from EQU: a **suggestion** is a species from the catalog, not a product recommendation. Discover contains no affiliate or shop links (FR-EQU-07 already excludes the Pokédex, ENT takes this over).
 
+Note (US-QS-14): the suggestion cards are the mode "Vorschläge" of the destination "Entdecken", next to the mode "Katalog" with the species catalog of the collection epic (BES); the empty state of the deck leads to "Art vorschlagen" in the catalog mode.
+
 ## Problem
 
 1. **Replenishment is work:** on "Replenishment needed" (US-WUN-02) the keeper has to trigger a research and review every suggestion individually (US-WUN-04). That needs a connected AI client (US-KI-08) and time.
