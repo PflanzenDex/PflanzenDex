@@ -81,8 +81,9 @@ function resolve(scheme: Map<string, string>, name: string): Rgb {
   return toSrgb(value);
 }
 
-const NOT_COLORS = new Set(["radius"]);
-const colorTokens = [...lightDecl.keys()].filter((n) => !NOT_COLORS.has(n));
+/** Tokens that are not colours (US-QS-14): elevation (shadows) and motion (durations). */
+const NOT_COLORS = /^(radius|elevation-|motion-)/;
+const colorTokens = [...lightDecl.keys()].filter((n) => !NOT_COLORS.test(n));
 
 /** Text pairs (4.5:1): foreground token on surface token. */
 const TEXT_PAIRS: [string, string][] = [
@@ -115,6 +116,7 @@ const UI_PAIRS: [string, string][] = [
   ["input", "card"],
   ["destructive", "background"],
   ["destructive", "card"],
+  ["warning-border", "warning"], // US-QS-14: ADR 0011 pair, the edge of the warning box on its fill
 ];
 /**
  * Tokens that are only decorative lines (cards, dividers, the edge of a warning box whose text carries the message),
