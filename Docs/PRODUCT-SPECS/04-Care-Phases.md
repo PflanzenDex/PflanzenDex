@@ -4,6 +4,8 @@ Goal: the system knows from the calendar which phase every plant should be in an
 
 Prototype reference: epic PHA. Difference: locations are entities, no text comparison; calculation and reminder run in the background, not only on opening.
 
+Note (US-QS-14): care phases (US-PHA-01, US-PHA-03) are shown as the grouping "Nach Pflegephase" of the view "Pflanzen" of the destination "Sammlung"; the former destination "Pflegephasen" no longer exists and its address leads there.
+
 ## User stories
 
 ### US-PHA-01 · See which phase every plant should be in · 🟨 (prototype ✅)

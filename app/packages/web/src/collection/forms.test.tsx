@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Species, SpecimenCard } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CareProfilePage } from "./CareProfilePage";
+import { CareProfileSection } from "./CareProfilePage";
 import { CollectionPage } from "./CollectionPage";
 import { DifficultyPage } from "./DifficultyPage";
 import { HintsPage } from "./HintsPage";
@@ -133,7 +133,10 @@ describe("US-BES-02 DS-52 skeletons mirror the pages while they load", () => {
     ["collection", () => page()],
     ["hints", () => <HintsPage api="http://api" token={token} onOpen={vi.fn()} />],
     ["difficulty", () => <DifficultyPage api="http://api" token={token} />],
-    ["care profile", () => <CareProfilePage api="http://api" token={token} />],
+    [
+      "care profile section",
+      () => <CareProfileSection api="http://api" token={token} speciesId="s1" />,
+    ],
   ];
   it.each(views)(
     "US-BES-02 the %s page shows placeholder blocks inside the one status",

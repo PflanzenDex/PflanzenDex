@@ -28,7 +28,7 @@ export type HintTarget = "collection" | "light";
 /** Hints with a link to the place that fixes them; "location missing" is fixed right here (US-PHA-03). */
 const ACTION: Partial<Record<SpecimenHint["kind"], { target: HintTarget; label: string }>> = {
   species_missing: { target: "collection", label: "Zum Bestand" },
-  location_without_zone: { target: "light", label: "Zu Standorte und Licht" },
+  location_without_zone: { target: "light", label: "Standorte verwalten" },
 };
 
 interface Data {

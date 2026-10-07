@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { Species } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state";
 import { OFFLINE_NOTE } from "@/components/shared/states/request-state/request-state";
@@ -18,6 +18,7 @@ function ProfilePage(props: {
   fresh: boolean;
   onChoose: (a: Species) => void;
   onBack: () => void;
+  section: ((species: Species) => ReactNode) | undefined;
 }) {
   const { profile } = props;
   return (
@@ -51,6 +52,7 @@ function ProfilePage(props: {
             onChoose={() => props.onChoose(profile.value as Species)}
             onBack={props.onBack}
           />
+          {props.section?.(profile.value)}
         </>
       )}
     </div>
@@ -68,11 +70,7 @@ function SearchFailure(props: { error: ApiError; onRetry: () => void }) {
   );
 }
 
-/**
- * Search, view, choose or propose a species in the catalog (US-BES-01). "Choose" reports the species outward; the
- * specimen for it is created by `collection` (US-BES-02), the app wires both (`catalog` does not know `collection`).
- */
-export function SpeciesPage(props: {
+type SpeciesPageProps = {
   api: string;
   token: () => Promise<string | undefined>;
   onChoose: (species: Species) => void;
@@ -80,7 +78,18 @@ export function SpeciesPage(props: {
   openId?: string | null;
   /** Start the search with this text (a bought wish whose species is not in the catalog yet, US-WUN-05). */
   initialSearch?: string;
-}) {
+  /**
+   * A section below the profile of a species that another module provides, e.g. my care profile (US-BES-09, US-QS-14);
+   * the app wires it (`catalog` does not know `collection`).
+   */
+  profileSection?: (species: Species) => ReactNode;
+};
+
+/**
+ * Search, view, choose or propose a species in the catalog (US-BES-01). "Choose" reports the species outward; the
+ * specimen for it is created by `collection` (US-BES-02), the app wires both (`catalog` does not know `collection`).
+ */
+export function SpeciesPage(props: SpeciesPageProps) {
   const { api, token, onChoose, openId } = props;
   const [view, setView] = useState<View>(openId ? { kind: "profile" } : { kind: "search" });
   const [searchText, setSearchText] = useState(props.initialSearch ?? "");
@@ -129,7 +138,13 @@ export function SpeciesPage(props: {
         <ProposalForm start={searchText} onSend={send} onCancel={back} onExisting={open} />
       )}
       {view.kind === "profile" && (
-        <ProfilePage profile={profile} fresh={fresh} onChoose={onChoose} onBack={back} />
+        <ProfilePage
+          profile={profile}
+          fresh={fresh}
+          onChoose={onChoose}
+          onBack={back}
+          section={props.profileSection}
+        />
       )}
     </div>
   );

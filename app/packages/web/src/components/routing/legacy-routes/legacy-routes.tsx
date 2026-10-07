@@ -1,6 +1,11 @@
 import { Navigate, Route } from "react-router";
 import {
   DIFFICULTY_ADDRESS,
+  LEGACY_CARE_PHASES_PATH,
+  LEGACY_CARE_PROFILE_PATH,
+  LEGACY_LIGHT_PATH,
+  MANAGE_ADDRESS,
+  PHASES_ADDRESS,
   LEGACY_DIFFICULTY_PATH,
   LEGACY_WISHLIST_PATH,
   WISHLIST_MODE_ADDRESS,
@@ -15,7 +20,8 @@ import {
 
 /**
  * The addresses of destinations that no longer exist: old links and bookmarks keep working (US-QS-14). The Pokédex is
- * the species mode of the Sammlung; Behandlung and Hinweise are sections of Heute, Einstellungen is a section of Konto; Wunschliste and Artenvergleich are the wishlist mode and an arrangement of the species. The state keeps the focus where the
+ * the species mode of the Sammlung; Behandlung and Hinweise are sections of Heute, Einstellungen is a section of Konto; Wunschliste and Artenvergleich are the wishlist mode and an arrangement of the species. Pflegephasen is a grouping of the plants,
+ Pflegeprofil a section of the species profile (its address opens the species mode, where a species is chosen) and Standorte und Licht the management view of the plants. The state keeps the focus where the
  * target view puts it (the section heading), instead of RouteFocus moving it to the main heading.
  */
 export function legacyRoutes() {
@@ -44,6 +50,21 @@ export function legacyRoutes() {
       key="difficulty"
       path={LEGACY_DIFFICULTY_PATH}
       element={<Navigate to={DIFFICULTY_ADDRESS} replace state={{ keepFocus: true }} />}
+    />,
+    <Route
+      key="care-phases"
+      path={LEGACY_CARE_PHASES_PATH}
+      element={<Navigate to={PHASES_ADDRESS} replace state={{ keepFocus: true }} />}
+    />,
+    <Route
+      key="care-profile"
+      path={LEGACY_CARE_PROFILE_PATH}
+      element={<Navigate to={SPECIES_MODE_ADDRESS} replace state={{ keepFocus: true }} />}
+    />,
+    <Route
+      key="light"
+      path={LEGACY_LIGHT_PATH}
+      element={<Navigate to={MANAGE_ADDRESS} replace state={{ keepFocus: true }} />}
     />,
     <Route
       key="pokedex"

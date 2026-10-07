@@ -10,6 +10,8 @@ Note (US-QS-14): the species comparison by difficulty (US-BES-05) is the arrange
 
 Note (US-QS-14): the hints about incomplete specimens (US-BES-08) are shown as the section "Fehlt noch" of the destination "Heute"; the former destination "Hinweise" no longer exists and its address leads there.
 
+Note (US-QS-14): the own care profile (US-BES-09) is the section "Mein Pflegeprofil" of the profile of a species, not a destination of its own; the former address "Pflegeprofil" leads to the species view of the destination "Sammlung", where a species is chosen. The plants can be grouped by location and zone in the view "Pflanzen".
+
 ## User stories
 
 ### US-BES-01 · Choose a species from the catalog or create a new one · 🟨 (prototype ✅)

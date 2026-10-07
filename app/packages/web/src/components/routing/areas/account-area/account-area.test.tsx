@@ -178,3 +178,18 @@ describe("US-QS-14 the address points at a section", () => {
     await screen.findByLabelText("Anzeigename");
   });
 });
+
+describe("US-QS-14 Konto links to the management of the locations", () => {
+  it("US-QS-14 · US-LIC-01 the section Einstellungen has a link to Standorte und Lichtzonen in the Sammlung", async () => {
+    fakeServer();
+    show();
+    await screen.findByLabelText("Anzeigename");
+    const link = screen.getByRole("link", { name: "Standorte und Lichtzonen verwalten" });
+    expect(link.getAttribute("href")).toBe("/collection?view=plants&manage=locations");
+    expect(
+      within(screen.getByRole("region", { name: "Einstellungen" })).getByRole("link", {
+        name: "Standorte und Lichtzonen verwalten",
+      }),
+    ).toBeTruthy();
+  });
+});
