@@ -50,10 +50,33 @@ describe("US-WAC-01 MeasurementSource for the specimen cards (US-BES-06)", () =>
     expect([...r.keys()]).toEqual([E1]);
   });
 
-  it("the photo is null until photos are recorded (US-WAC-03), never an invented value", async () => {
+  it("the photo is null while no measurement has one, never an invented value", async () => {
     await store.create("anna", values(E1));
     const r = await measurementSource({ measurements: store }).forSpecimens("anna", [E1]);
     expect(r.get(E1)?.photo).toBeNull();
+  });
+
+  it("US-WAC-05 the photo is the most recent one, even if the last measurement has none; its url is the private API path", async () => {
+    const old = await store.create("anna", values(E1, { date: "2026-09-20" }));
+    await store.create("anna", values(E1, { date: "2026-10-02" }));
+    if (typeof old === "string") throw new Error(old);
+    await store.setPhoto("anna", old.id, "p1.jpg");
+    const r = await measurementSource({ measurements: store }).forSpecimens("anna", [E1]);
+    expect(r.get(E1)?.photo).toEqual({
+      url: `/specimens/${E1}/measurements/${old.id}/photo`,
+      date: "2026-09-20",
+    });
+    expect(r.get(E1)?.last.date).toBe("2026-10-02");
+  });
+
+  it("US-WAC-05 of two photos the newer measurement wins", async () => {
+    const a = await store.create("anna", values(E1, { date: "2026-09-20" }));
+    const b = await store.create("anna", values(E1, { date: "2026-10-02" }));
+    if (typeof a === "string" || typeof b === "string") throw new Error("fixture");
+    await store.setPhoto("anna", a.id, "p1.jpg");
+    await store.setPhoto("anna", b.id, "p2.jpg");
+    const r = await measurementSource({ measurements: store }).forSpecimens("anna", [E1]);
+    expect(r.get(E1)?.photo?.date).toBe("2026-10-02");
   });
 
   it("tenant: measurements of another account do not appear", async () => {
@@ -67,6 +90,10 @@ describe("US-WAC-01 MeasurementSource for the specimen cards (US-BES-06)", () =>
     const source = measurementSource({
       measurements: {
         lastFor: async () => {
+          asked += 1;
+          return new Map();
+        },
+        lastPhotoFor: async () => {
           asked += 1;
           return new Map();
         },

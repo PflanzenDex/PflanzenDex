@@ -13,10 +13,10 @@ import {
   COLLECTION_KEY,
   useCollection,
   useHostReport,
+  type Host,
   type Loaded,
   type Token,
 } from "./use-collection";
-import type { Host } from "./use-collection";
 import { useArchive } from "./use-archive";
 import { useRepot } from "./use-repot";
 import { useMarker } from "./use-marker";
@@ -156,16 +156,13 @@ function List(p: { data: Loaded; created: Specimen | null; actions: Actions; pro
   return (
     <>
       {message ? <Status>{message}</Status> : p.created && <Created specimen={p.created} />}
-      {error && (
-        <Warning>
-          <p>{refusalText(error)}</p>
-        </Warning>
-      )}
+      {error && <Warning>{refusalText(error)}</Warning>}
       <DistributionView distribution={data.distribution} />
       <CollectionList
         cards={data.cards}
         onSpeciesChoose={p.props.onSpeciesChoose}
         embedded={p.props.host !== undefined}
+        photoAccess={{ api: p.props.api, token: p.props.token }}
         {...(p.props.groupBy ? { groupBy: p.props.groupBy } : {})}
         onArchive={(e) => {
           clearMessages();

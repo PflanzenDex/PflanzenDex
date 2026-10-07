@@ -1,6 +1,8 @@
+// @vitest-environment jsdom
+import { cleanup, render as rtl, screen } from "@testing-library/react";
 import { renderToString as render } from "react-dom/server";
 import type { SpecimenCard } from "@pflanzendex/core";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CollectionList } from "./collection-list";
 import { loadCards } from "./cards-api";
 
@@ -25,8 +27,9 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   moreTreatments: 0,
   ...extra,
 });
+const ACCESS = { api: "http://api", token: async () => "tok" };
 const html = (cards: SpecimenCard[]) =>
-  renderToString(<CollectionList cards={cards} onSpeciesChoose={vi.fn()} />);
+  renderToString(<CollectionList cards={cards} onSpeciesChoose={vi.fn()} photoAccess={ACCESS} />);
 
 describe("US-BES-06 client of the cards API", () => {
   it("loads the cards with bearer token and the time zone of the device", async () => {
@@ -76,13 +79,48 @@ describe("US-BES-06 Karte: Inhalt", () => {
     expect(h).toContain("Noch kein Foto");
     expect(h).not.toContain("<img");
   });
+});
 
-  it("with a photo: the image is a link that opens it large, with description and date", () => {
-    const h = html([card({ photo: { url: "https://medien.test/x.jpg", date: "2026-09-28" } })]);
-    expect(h).toContain('href="https://medien.test/x.jpg"');
-    expect(h).toContain("Foto von Bogenhanf groß öffnen");
-    expect(h).toContain('alt="Foto von Bogenhanf vom 28.09.2026"');
-    expect(h).not.toContain("Noch kein Foto");
+describe("US-WAC-05 the latest photo on the card is private (P-05)", () => {
+  const withPhoto = card({
+    photo: { url: "/specimens/e1/measurements/m1/photo", date: "2026-09-28" },
+  });
+  const show = () =>
+    rtl(<CollectionList cards={[withPhoto]} onSpeciesChoose={vi.fn()} photoAccess={ACCESS} />);
+  beforeEach(() => {
+    URL.createObjectURL = vi.fn(() => "blob:card");
+    URL.revokeObjectURL = vi.fn();
+  });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("fetches the photo with the token and shows it as a link that opens it large, with description and date", async () => {
+    const fetchFn = vi.fn<typeof fetch>(
+      async () => new Response(new Uint8Array([1]), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchFn);
+    show();
+    const img = await screen.findByRole("img", { name: "Foto von Bogenhanf vom 28.09.2026" });
+    expect(img.getAttribute("src")).toBe("blob:card");
+    expect(img.closest("a")?.getAttribute("href")).toBe("blob:card");
+    expect(screen.getByRole("link", { name: "Foto von Bogenhanf groß öffnen" })).toBeTruthy();
+    const [url, init] = fetchFn.mock.calls[0] ?? [];
+    expect(String(url)).toBe("http://api/specimens/e1/measurements/m1/photo");
+    expect((init?.headers as Record<string, string>)["Authorization"]).toBe("Bearer tok");
+  });
+
+  it("says that it is loading, and why when the photo is gone (German text of the code)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        response(404, { error: { code: "measurement.photo_not_found", text: "raw" } }),
+      ),
+    );
+    show();
+    expect(screen.getByText("Lädt …")).toBeTruthy();
+    expect(await screen.findByText("Zu dieser Messung gibt es kein Foto.")).toBeTruthy();
   });
 });
 

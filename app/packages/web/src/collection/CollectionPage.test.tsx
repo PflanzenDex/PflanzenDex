@@ -196,7 +196,7 @@ describe("US-BES-06 cards on the collection page", () => {
     const card: SpecimenCard = {
       ...cardFrom(specimen({ locationId: "s1" })),
       lightZone: "Zone 3",
-      photo: { url: "https://medien.test/x.jpg", date: "2026-09-28" },
+      photo: { url: "/specimens/e1/measurements/m1/photo", date: "2026-09-28" },
       lastMeasurement: {
         date: "2026-10-01",
         value: 12.5,
@@ -214,15 +214,17 @@ describe("US-BES-06 cards on the collection page", () => {
       vi.fn<typeof fetch>(async (url) => {
         const path = new URL(String(url)).pathname;
         if (path === "/locations") return response(200, { locations: [location] });
+        if (path.endsWith("/photo")) return new Response(new Uint8Array([1]), { status: 200 });
         return path === "/specimens/archived"
           ? response(200, { archived: [] })
           : response(200, { cards: [card], ...EMPTY_DISTRIBUTION });
       }),
     );
+    URL.createObjectURL = vi.fn(() => "blob:card");
     render(page());
     expect(await screen.findByText("Lichtzone: Zone 3 · Status: Pflanze")).toBeTruthy();
-    const photo = screen.getByRole("link", { name: "Foto von Bogenhanf groß öffnen" });
-    expect(photo.getAttribute("href")).toBe("https://medien.test/x.jpg");
+    const photo = await screen.findByRole("link", { name: "Foto von Bogenhanf groß öffnen" });
+    expect(photo.getAttribute("href")).toBe("blob:card");
     expect(screen.getByText(/kein Erfolgssignal/)).toBeTruthy();
     expect(screen.getByText("überfällig seit 1 Tg.")).toBeTruthy();
     expect(screen.getByText(/\+2 weitere/)).toBeTruthy();

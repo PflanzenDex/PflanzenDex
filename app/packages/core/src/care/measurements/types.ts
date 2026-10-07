@@ -46,6 +46,14 @@ export interface MeasurementStore {
     userId: string,
     specimenIds: readonly string[],
   ): Promise<ReadonlyMap<string, MeasurementRow>>;
+  /**
+   * The most recent measurement that has a photo, per named specimen of the account (latest date, with the same date
+   * the one recorded last); specimens without a photo are missing from the answer.
+   */
+  lastPhotoFor(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, { readonly id: string; readonly date: string }>>;
   /** The measurement of the specimen on that local date; with several the one recorded last (FR-WAC-07), else `null`. */
   findOnDate(userId: string, specimenId: string, date: string): Promise<MeasurementRow | null>;
   /** Sets the photo name; `false` if the measurement is gone or not the account's (nothing written, P-04). */

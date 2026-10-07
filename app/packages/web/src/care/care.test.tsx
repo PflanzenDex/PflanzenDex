@@ -157,13 +157,21 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
         measurements={[measurement({ note: "nach dem Umtopfen" })]}
         onAdd={() => undefined}
         photo={PHOTO}
+        onPhotoSaved={() => undefined}
       />,
     );
     expect(list).toContain("12,5 cm · 03.10.2026");
     expect(list).toContain("Gesund");
     expect(list).toContain("nach dem Umtopfen");
     expect(
-      renderToString(<MeasurementList measurements={[]} onAdd={() => undefined} photo={PHOTO} />),
+      renderToString(
+        <MeasurementList
+          measurements={[]}
+          onAdd={() => undefined}
+          photo={PHOTO}
+          onPhotoSaved={() => undefined}
+        />,
+      ),
     ).toContain("Trage oben den ersten Messwert ein");
   });
 

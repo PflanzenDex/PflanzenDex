@@ -1,7 +1,8 @@
 import { cva } from "class-variance-authority";
 import type { SpecimenCard, MeasurementQuality } from "@pflanzendex/core";
+import type { PhotoAccess } from "@/lib/use-stored-photo";
 import { Button } from "@/components/ui/button";
-import { Actions, CARD, Quiet } from "./parts";
+import { Actions, CARD, Photo, Quiet } from "./parts";
 import { UNKNOWN, dateText, valueText } from "./text";
 
 const STATUS_TEXT = {
@@ -29,32 +30,6 @@ const dueMark = cva("", {
     },
   },
 });
-
-function Photo({ card }: { card: SpecimenCard }) {
-  if (!card.photo) {
-    return (
-      <div className="grid min-h-[72px] place-items-center rounded-lg border border-dashed border-border text-muted-foreground">
-        <span>Noch kein Foto</span>
-      </div>
-    );
-  }
-  return (
-    <a
-      className="block aspect-[4/3] overflow-hidden rounded-lg bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-      href={card.photo.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={`Foto von ${card.name} groß öffnen`}
-    >
-      <img
-        className="block size-full object-cover"
-        src={card.photo.url}
-        alt={`Foto von ${card.name} vom ${dateText(card.photo.date)}`}
-        loading="lazy"
-      />
-    </a>
-  );
-}
 
 function Measurement({ card }: { card: SpecimenCard }) {
   const m = card.lastMeasurement;
@@ -128,12 +103,14 @@ export function SpecimenCardView(props: {
   onMark?: ((e: SpecimenCard) => void) | undefined;
   /** Corrects the catch date (US-BES-11). */
   onCatchDate?: ((e: SpecimenCard) => void) | undefined;
+  /** How the private photo is fetched (US-WAC-05);  */
+  photoAccess: PhotoAccess;
 }) {
   const { card, onMeasure, onArchive, onRepot, onMark, onCatchDate } = props;
   const repot = card.status === "cutting" ? onRepot : undefined;
   return (
     <li className={`animate-list-in ${CARD}`}>
-      <Photo card={card} />
+      <Photo card={card} access={props.photoAccess} />
       <h2 className="mt-2 text-lg font-semibold">{card.name}</h2>
       <Quiet>Art: {card.speciesName ?? UNKNOWN}</Quiet>
       <Quiet>
