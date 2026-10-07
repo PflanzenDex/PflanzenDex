@@ -54,7 +54,7 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   await pool.query("delete from account where subject = any($1)", [
-    [subA, subB, subC, ...Object.keys(NAMES).filter((k) => k.startsWith("soz2-"))],
+    [subA, subB, subC, ...Object.keys(NAMES).filter((k) => /^soz[23]-/.test(k))],
   ]);
   await pool.end();
 });
@@ -202,5 +202,33 @@ describe("US-SOZ-02 answer through the API", () => {
     const { code } = await invite(subE);
     const sent = await redeem(subB, code);
     expect((await answer(subB, sent.body["id"], "accept")).status).toBe(404);
+  });
+});
+
+describe("US-SOZ-03 end a friendship through the API", () => {
+  const subF = `soz3-${randomUUID()}`;
+  const subG = `soz3-${randomUUID()}`;
+  NAMES[subF] = "Fiona";
+  NAMES[subG] = "Gero";
+  it("US-SOZ-03 ending removes the friend on both sides; a stranger and an unknown id get 404", async () => {
+    await call(subF, "GET", "/account");
+    await call(subG, "GET", "/account");
+    const { code } = await invite(subF);
+    await redeem(subG, code);
+    const incoming = (await requests(subF)).incoming as { id: string }[];
+    await call(subF, "POST", `/friends/requests/${incoming[0]?.id}/answer`, { decision: "accept" });
+    const friendId = (await call(subF, "GET", "/friends")).body["friends"][0].id as string;
+    expect((await call(null, "POST", `/friends/${friendId}/end`, {})).status).toBe(401);
+    expect((await call(subA, "POST", `/friends/${friendId}/end`, {})).status).toBe(404);
+    expect(await call(subF, "POST", `/friends/${randomUUID()}/end`, {})).toMatchObject({
+      status: 404,
+      body: { error: { code: "friend.not_found" } },
+    });
+    expect(await call(subF, "POST", `/friends/${friendId}/end`, {})).toMatchObject({
+      status: 200,
+      body: { status: "ended" },
+    });
+    expect((await call(subF, "GET", "/friends")).body["friends"]).toEqual([]);
+    expect((await call(subG, "GET", "/friends")).body["friends"]).toEqual([]);
   });
 });

@@ -51,13 +51,21 @@ Assumptions, decided by the PO (revisable):
 - The page "Freunde" (navigation entry, path `/friends`) combines US-SOZ-01 and US-SOZ-02: open requests, confirmed friends (name and since when only), invite with a code, enter a code. It shows no collection data and no counts against each other (P-05, FR-SOZ-11).
 - The notification about an open request is US-SOZ-12 and not part of this story.
 
-### US-SOZ-03 · Manage friends and end a friendship · ⬜ new
+### US-SOZ-03 · Manage friends and end a friendship · 🟨 new
 
 Acceptance criteria:
 
 - "Friends": list with display name, start, number of shared caught species.
 - Ending immediately withdraws collection, feed and offers from both sides. Own data and completed swaps (incl. provenance) remain.
 - Open swap requests with the person are canceled (`canceled`). The other side is not actively notified.
+
+Assumptions, decided by the PO (revisable):
+
+- "Number of shared caught species" counts the species the friend has shared with me (US-SOZ-04) that I have caught too. Only shared specimens can be counted, so the number comes with US-SOZ-04; until then the list shows name and start only. It is shown as a plain number next to the name, never as a ranking or a comparison between friends (FR-SOZ-11); a friend who shares nothing shows "unknown", not 0 (P-08).
+- Either side can end a confirmed friendship; both rows become `ended` in one transaction and keep the start and the stored display names. Only a confirmed friendship can be ended; ending twice writes nothing; an id that is unknown, foreign or still a request is `friend.not_found` (P-04).
+- Ending withdraws everything that is visible only between friends from both sides at once: what a friend sees is always read through a confirmed friendship (P-05), so no data has to be deleted. The screen asks first and says what happens, including that what was already delivered cannot be retrieved (P-10). The other side is not notified and no longer finds the person in its list.
+- A new request with a new code can restart an ended friendship; the old sharing settings do not come back by themselves (they are per specimen and checked against the friendship each time).
+- Canceling open swap requests with the person belongs to the swap module (US-SOZ-10) and is checked there against the friendship status; it does not exist yet.
 
 ### US-SOZ-04 · Decide what friends see · ⬜ new
 

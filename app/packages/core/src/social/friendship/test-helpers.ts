@@ -102,6 +102,16 @@ export class InMemoryFriends implements FriendStore {
     return target2(accept);
   }
 
+  async end(userId: string, friendId: string): Promise<"ended" | "not_found"> {
+    const mine = this.rows.find((r) => r.userId === userId && r.id === friendId);
+    if (!mine || (mine.status !== "confirmed" && mine.status !== "ended")) return "not_found";
+    if (mine.status === "confirmed") {
+      this.writes += 1;
+      for (const r of this.rows.filter((x) => pairOf(x, userId, mine.otherId))) r.status = "ended";
+    }
+    return "ended";
+  }
+
   async friends(userId: string): Promise<readonly Friend[]> {
     return this.rows
       .filter((r) => r.userId === userId && r.status === "confirmed")

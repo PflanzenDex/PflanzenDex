@@ -223,3 +223,38 @@ describe("US-SOZ-02 answer a request in the database", () => {
     }
   });
 });
+
+describe("US-SOZ-03 end a friendship in the database", () => {
+  it("US-SOZ-03 ending sets both rows to ended, keeps the start, is repeatable and leaks nothing (P-04)", async () => {
+    const [x, y, z] = [randomUUID(), randomUUID(), randomUUID()];
+    for (const id of [x, y, z]) await createAccountWithName(pool, id, `N-${id.slice(0, 4)}`);
+    try {
+      await friends.requestWithCode(y, await code(x));
+      const request = (await friends.openRequests(x))[0]?.id as string;
+      expect(await friends.end(x, request)).toBe("not_found");
+      await friends.answer(x, request, true);
+      const friendId = (await friends.friends(x))[0]?.id as string;
+      expect(await friends.end(z, friendId)).toBe("not_found");
+      expect(await friends.end(x, randomUUID())).toBe("not_found");
+      expect(await friends.end(x, friendId)).toBe("ended");
+      const rows = await pool.query(
+        "select status, since is not null as has_since from friendship where account_id = any($1) and other_id = any($1)",
+        [[x, y]],
+      );
+      expect(rows.rows).toEqual([
+        { status: "ended", has_since: true },
+        { status: "ended", has_since: true },
+      ]);
+      expect(await friends.friends(y)).toEqual([]);
+      expect(await friends.end(x, friendId)).toBe("ended");
+      expect(
+        await friends.end(
+          y,
+          (await pool.query("select id from friendship where account_id = $1", [y])).rows[0].id,
+        ),
+      ).toBe("ended");
+    } finally {
+      await pool.query("delete from account where id = any($1)", [[x, y, z]]);
+    }
+  });
+});
