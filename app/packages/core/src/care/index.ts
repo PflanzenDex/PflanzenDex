@@ -3,12 +3,12 @@ export { measurementView } from "./measurements/view";
 export type { ViewDependencies } from "./measurements/view";
 export { growthTrend } from "./measurements/growth";
 export type { GrowthTrend, Trend } from "./measurements/growth";
-export { measurementSource } from "./measurements/source";
-export type { SourceDependencies } from "./measurements/source";
+export { measurementSource } from "./measurements/capture/source";
+export type { SourceDependencies } from "./measurements/capture/source";
 export { measurementRecord } from "./measurements/record";
 export type { RecordDependencies } from "./measurements/record";
-export { measurementPhoto } from "./measurements/photo";
-export type { PhotoDependencies, PhotoResult, PhotoStorage } from "./measurements/photo";
+export { measurementPhoto } from "./measurements/capture/photo";
+export type { PhotoDependencies, PhotoResult, PhotoStorage } from "./measurements/capture/photo";
 export { RATED_BY, MEASUREMENT_LIMITS, QUALITIES } from "./measurements/types";
 export type {
   RatedBy,

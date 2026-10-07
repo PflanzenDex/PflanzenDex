@@ -1,5 +1,5 @@
-import type { CardMeasurementView, MeasurementSource } from "../../collection";
-import type { MeasurementStore } from "./types";
+import type { CardMeasurementView, MeasurementSource } from "../../../collection";
+import type { MeasurementStore } from "../types";
 
 export interface SourceDependencies {
   readonly measurements: Pick<MeasurementStore, "lastFor">;
