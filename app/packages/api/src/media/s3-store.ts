@@ -56,8 +56,10 @@ export const createS3Client = (config: S3Config) =>
   });
 
 /** `ObjectStore` on S3. The key is always `objectKey(accountId, name)`: one account can never address another's object. */
-export function createS3ObjectStore(config: S3Config): ObjectStore {
-  const client = createS3Client(config);
+export function createS3ObjectStore(
+  config: S3Config,
+  client: Pick<S3Client, "send"> = createS3Client(config),
+): ObjectStore {
   const Bucket = config.bucket;
   const run = async <T>(
     key: Result<string>,
