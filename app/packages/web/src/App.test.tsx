@@ -42,6 +42,12 @@ const renderApp = (path = "/") =>
 /** The main navigation of the shared shell: the header row lists every destination as a link (DS-25). */
 const header = () => within(screen.getByRole("navigation", { name: "Hauptnavigation" }));
 const tab = (name: string) => header().getByRole("link", { name });
+/** The start page is no destination (US-QS-14): the brand link leads there and no entry is marked active. */
+const expectStartPage = () => {
+  expect(header().getByRole("link", { name: "PflanzenDex, zur Startseite" })).toBeTruthy();
+  for (const link of header().getAllByRole("link"))
+    expect(link.getAttribute("aria-current")).toBeNull();
+};
 const queryTab = (name: string) => header().queryByRole("link", { name });
 const findTab = async (name: string) => {
   await screen.findByRole("navigation", { name: "Hauptnavigation" });
@@ -213,7 +219,7 @@ describe("US-ACC-01 App", () => {
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
     expect(await screen.findByRole("heading", { name: "Wo stehen deine Pflanzen?" })).toBeTruthy();
-    expect(tab("Start").getAttribute("aria-current")).toBe("page");
+    expectStartPage();
     await userEvent.click(screen.getByRole("button", { name: "Einstieg beenden" }));
     expect(await screen.findByRole("heading", { name: "Start" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Art im Katalog wählen" }));
@@ -415,7 +421,7 @@ describe("US-ACC-01 App", () => {
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/gibt-es-nicht");
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
-    await waitFor(() => expect(tab("Start").getAttribute("aria-current")).toBe("page"));
+    await waitFor(() => expectStartPage());
   });
 
   it("US-QS-07 · the address shows the page and a species profile has its own address", async () => {
@@ -436,7 +442,7 @@ describe("US-ACC-01 App", () => {
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/review");
     expect((await screen.findByRole("alert")).textContent).toContain("Prüfliste");
-    expect(tab("Start").getAttribute("aria-current")).toBe("page");
+    expectStartPage();
   });
 
   it("US-ACC-05 · without the operator role /operator lands on the start page with a German hint", async () => {
@@ -444,7 +450,7 @@ describe("US-ACC-01 App", () => {
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/operator");
     expect((await screen.findByRole("alert")).textContent).toContain("Betreiber");
-    expect(tab("Start").getAttribute("aria-current")).toBe("page");
+    expectStartPage();
   });
 });
 
@@ -471,6 +477,6 @@ describe("US-QS-07 browser history", () => {
       window.history.back();
       await waitFor(() => expect(window.location.pathname).toBe("/"));
     });
-    await waitFor(() => expect(tab("Start").getAttribute("aria-current")).toBe("page"));
+    await waitFor(() => expectStartPage());
   });
 });

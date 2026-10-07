@@ -1,7 +1,11 @@
+import { Fragment } from "react";
 import { Leaf } from "lucide-react";
 import { Link, NavLink } from "react-router";
 import { cn } from "@/lib/utils";
 import { stackedItem, stackedLabel, stackedPill, type NavItem } from "../nav-item";
+
+/** The first four destinations are the primary ones (the bottom bar); a hairline separates the rest in the sidebar. */
+const PRIMARY = 4;
 
 /**
  * Navigation rail from `md` to below `xl` (US-QS-14, ADR 0011 decision 6, DS-25): about 80 px wide (assumption),
@@ -15,32 +19,34 @@ function NavRail({ items, className }: { items: NavItem[]; className?: string })
       aria-label="Navigation seitlich"
       data-side-nav="rail"
       className={cn(
-        "sticky top-0 hidden h-dvh w-20 shrink-0 flex-col items-stretch gap-1 overflow-y-auto border-r border-border bg-card px-1 py-3 md:flex xl:hidden",
+        "sticky top-0 hidden h-dvh w-20 shrink-0 flex-col items-stretch overflow-hidden border-r border-border bg-card px-1 pt-3 md:flex xl:hidden",
         className,
       )}
     >
       <Link
         to="/"
-        aria-label="PflanzenDex, Start"
+        aria-label="PflanzenDex, zur Startseite"
         className="mx-auto mb-2 flex size-11 shrink-0 items-center justify-center rounded-control bg-primary text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <Leaf aria-hidden="true" className="size-5" />
       </Link>
-      {items.map((item) => (
-        <NavLink
-          key={item.href}
-          to={item.href}
-          end={item.href === "/"}
-          className={({ isActive }) => cn(stackedItem, "w-full", stackedLabel(isActive))}
-        >
-          {({ isActive }) => (
-            <>
-              <span className={stackedPill(isActive)}>{item.icon}</span>
-              <span className="max-w-full break-words hyphens-auto">{item.label}</span>
-            </>
-          )}
-        </NavLink>
-      ))}
+      <div className="flex min-h-0 flex-1 scroll-py-3 flex-col gap-1 overflow-y-auto pb-3">
+        {items.map((item) => (
+          <NavLink
+            key={item.href}
+            to={item.href}
+            end={item.href === "/"}
+            className={({ isActive }) => cn(stackedItem, "w-full", stackedLabel(isActive))}
+          >
+            {({ isActive }) => (
+              <>
+                <span className={stackedPill(isActive)}>{item.icon}</span>
+                <span className="max-w-full break-words hyphens-auto">{item.label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+      </div>
     </nav>
   );
 }
@@ -56,12 +62,13 @@ function NavSidebar({ items, className }: { items: NavItem[]; className?: string
       aria-label="Hauptnavigation"
       data-side-nav="sidebar"
       className={cn(
-        "sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col gap-1 overflow-y-auto border-r border-border bg-card p-3 xl:flex",
+        "sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col overflow-hidden border-r border-border bg-card px-3 pt-3 xl:flex",
         className,
       )}
     >
       <Link
         to="/"
+        aria-label="PflanzenDex, zur Startseite"
         className="mb-3 flex min-h-[44px] shrink-0 items-center gap-3 rounded-control px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span className="flex size-8 shrink-0 items-center justify-center rounded-control bg-primary text-primary-foreground">
@@ -69,24 +76,30 @@ function NavSidebar({ items, className }: { items: NavItem[]; className?: string
         </span>
         <span className="text-xl font-bold">PflanzenDex</span>
       </Link>
-      {items.map((item) => (
-        <NavLink
-          key={item.href}
-          to={item.href}
-          end={item.href === "/"}
-          className={({ isActive }) =>
-            cn(
-              "flex min-h-[44px] shrink-0 items-center gap-3 rounded-control border border-transparent px-3 text-[15px] font-semibold [&_svg]:size-[22px] [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              isActive
-                ? "bg-accent text-accent-foreground forced-colors:border-[color:Highlight]"
-                : "text-muted-foreground hover:bg-muted",
-            )
-          }
-        >
-          {item.icon}
-          <span className="min-w-0 break-words">{item.label}</span>
-        </NavLink>
-      ))}
+      <div className="flex min-h-0 flex-1 scroll-py-3 flex-col gap-1 overflow-y-auto pb-3">
+        {items.map((item, index) => (
+          <Fragment key={item.href}>
+            {index === PRIMARY && items.length > PRIMARY ? (
+              <hr className="my-2 shrink-0 border-border" />
+            ) : null}
+            <NavLink
+              to={item.href}
+              end={item.href === "/"}
+              className={({ isActive }) =>
+                cn(
+                  "flex min-h-[44px] shrink-0 items-center gap-3 rounded-control border border-transparent px-3 text-[15px] font-semibold [&_svg]:size-[22px] [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  isActive
+                    ? "bg-accent text-accent-foreground forced-colors:border-[color:Highlight]"
+                    : "text-muted-foreground hover:bg-muted",
+                )
+              }
+            >
+              {item.icon}
+              <span className="min-w-0 break-words">{item.label}</span>
+            </NavLink>
+          </Fragment>
+        ))}
+      </div>
     </nav>
   );
 }

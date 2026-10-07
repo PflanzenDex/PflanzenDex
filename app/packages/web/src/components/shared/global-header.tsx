@@ -9,6 +9,7 @@ export function GlobalHeader() {
     <header className="sticky top-0 z-40 flex items-center gap-4 border-b border-border bg-card px-4 pt-[env(safe-area-inset-top)] md:hidden">
       <Link
         to="/"
+        aria-label="PflanzenDex, zur Startseite"
         className="flex min-h-[44px] items-center text-lg font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         PflanzenDex

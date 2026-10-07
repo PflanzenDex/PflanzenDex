@@ -116,7 +116,9 @@ describe("GlobalHeader (US-QS-07, US-QS-14, DS-25)", () => {
     const header = screen.getByRole("banner");
     expect(header.className).toContain("md:hidden");
     expect(within(header).queryByRole("navigation")).toBeNull();
-    expect(screen.getByRole("link", { name: "PflanzenDex" }).getAttribute("href")).toBe("/");
+    expect(
+      screen.getByRole("link", { name: "PflanzenDex, zur Startseite" }).getAttribute("href"),
+    ).toBe("/");
   });
 });
 
@@ -149,7 +151,9 @@ describe("SideNav, rail (US-QS-14, DS-25, DS-44)", () => {
     for (const link of within(rail()).getAllByRole("link", { name: /^Ziel/ }))
       expect(link.className).toContain("min-h-[44px]");
     expect(
-      within(rail()).getByRole("link", { name: "PflanzenDex, Start" }).getAttribute("href"),
+      within(rail())
+        .getByRole("link", { name: "PflanzenDex, zur Startseite" })
+        .getAttribute("href"),
     ).toBe("/");
   });
 });
@@ -184,6 +188,21 @@ describe("SideNav, sidebar (US-QS-14, DS-25, DS-44)", () => {
       expect(document.activeElement).toBe(link);
     }
     await userEvent.keyboard("{Enter}");
+  });
+
+  it("US-QS-14 · the destination list scrolls on its own and a hairline separates the first four from the rest", () => {
+    at("/", <SideNav items={make(9)} />);
+    for (const nav of [rail(), sidebar()]) {
+      expect(nav.className).toContain("h-dvh");
+      expect(nav.className).toContain("overflow-hidden");
+      const list = nav.querySelector("div");
+      expect(list?.className).toContain("overflow-y-auto");
+      expect(list?.className).toContain("scroll-py-3");
+    }
+    const divider = within(sidebar()).getByRole("separator");
+    expect(divider.className).toContain("border-border");
+    expect(divider.previousElementSibling?.textContent).toBe("Ziel 3");
+    expect(within(rail()).queryByRole("separator")).toBeNull();
   });
 
   it("US-QS-14 · show forces one form visible for stories and tests", () => {
