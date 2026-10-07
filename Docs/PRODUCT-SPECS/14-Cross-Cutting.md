@@ -78,6 +78,7 @@ Acceptance criteria:
 - Given a set of tabs, when I move with the arrow keys, Home or End, then focus and selection move together over a real tablist (only the selected tab is in the tab order, `aria-selected` and `aria-controls` are set) (4.1.2, 2.1.1).
 - Given a collapsible section such as a care profile part, when I toggle it with Enter or Space, then its button reports `aria-expanded`, the height animates with the motion tokens, and under reduced motion it switches without animation (4.1.2, 2.3.3).
 - Given a popover or an overflow menu is open, when I press Escape, press outside or tab out, then it closes, and Escape returns focus to its trigger; in the menu the arrow keys, Home and End move over the enabled items (2.1.1, 2.4.3).
+- Given a long list such as the species catalog, when I press "Mehr laden" (or use the numbered pages), then the button is disabled and shows the sprout while the page loads without shifting the layout, a polite live region says how many were added and "n von m", focus stays on the button (or on "Alles geladen" after the last page), and the numbered pages form a named navigation with `aria-current="page"` and 44 px targets (4.1.3, 2.4.3, 2.5.8, 4.1.2).
 
 ### Accessibility (US-QS-08 to US-QS-13)
 
