@@ -6,6 +6,7 @@ import { FIXTURES_ACCOUNT } from "./account/index.ts";
 import { FIXTURES_LIGHT } from "./light/index.ts";
 import { FIXTURES_CARE } from "./care/index.ts";
 import { FIXTURES_WISHLIST } from "./wishlist/index.ts";
+import { FIXTURES_POKEDEX } from "./pokedex/index.ts";
 import { FIXTURES_SOCIAL } from "./social/index.ts";
 
 // One example per table with an account id for the remaining columns (without the id, the test sets it).
@@ -19,6 +20,7 @@ export const FIXTURES: Fixtures = {
   ...FIXTURES_COLLECTION,
   ...FIXTURES_CARE,
   ...FIXTURES_WISHLIST,
+  ...FIXTURES_POKEDEX,
   ...FIXTURES_SOCIAL,
 };
 
