@@ -16,7 +16,7 @@ import type { View } from "./navigation";
 const ACTIONS = "flex flex-col gap-3 sm:flex-row";
 
 type Token = () => Promise<string | undefined>;
-type Target = Extract<View, "species" | "light" | "collection" | "hints">;
+type Target = Extract<View, "species" | "light" | "collection">;
 
 const key = (accountId: string) => `pflanzendex.onboarding-skipped.${accountId}`;
 

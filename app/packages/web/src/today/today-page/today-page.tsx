@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import type { TodayItem, TodayKind, TodayList, TodayTarget } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state";
+import { SectionLabel } from "@/components/section-label/section-label";
 import { Button } from "@/components/ui/button";
 import { dateText } from "@/lib/format";
 import { LoadFrame } from "../../kernel";
@@ -21,7 +22,8 @@ const GO: Record<TodayTarget, string> = {
   care_phases: "Zu Pflegephasen",
   hints: "Zu Hinweisen",
 };
-const CARD = "min-w-0 rounded-lg border border-border p-3 [overflow-wrap:anywhere]";
+const CARD =
+  "min-w-0 rounded-card bg-card p-3 text-card-foreground shadow-elevation-1 [overflow-wrap:anywhere]";
 const URGENT = "border-warning-border bg-warning text-warning-foreground";
 
 function Item(props: { item: TodayItem; onOpen: (d: TodayDestination) => void }) {
@@ -56,6 +58,7 @@ function Content(props: { list: TodayList; onOpen: (d: TodayDestination) => void
     return (
       <EmptyState
         title="Heute steht nichts an."
+        level={3}
         description={
           list.upcoming > 0
             ? laterText(list.upcoming)
@@ -84,7 +87,8 @@ function Content(props: { list: TodayList; onOpen: (d: TodayDestination) => void
 /**
  * The central "Today" list (TE-07): what needs action today, most urgent first: treatments overdue or due, plants
  * standing away from their target location, incomplete specimens. Every entry says what to do next and leads to the
- * place where it is done (P-09); an empty list says so, with what is still ahead (P-10).
+ * place where it is done (P-09); an empty list says so, with what is still ahead (P-10). It is the first section,
+ * "Jetzt dran", of the destination "Heute"; the app adds the treatments and the missing details below (US-QS-14).
  */
 export function TodayPage(props: {
   api: string;
@@ -95,18 +99,21 @@ export function TodayPage(props: {
   const load = useCallback((t: string) => loadToday(api, t), [api]);
   const loading = "Heute wird geladen …";
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-3">
       <h1 id="today-title" className="text-2xl font-semibold">
         Heute
       </h1>
-      <LoadFrame queryKey={KEY} token={props.token} load={load} loadingText={loading}>
-        {(list: TodayList) => (
-          <>
-            <p className="text-sm text-muted-foreground">Stand: {dateText(list.date)}</p>
-            <Content list={list} onOpen={props.onOpen} />
-          </>
-        )}
-      </LoadFrame>
+      <section aria-labelledby="now-title" className="flex min-w-0 flex-col gap-3">
+        <SectionLabel id="now-title">Jetzt dran</SectionLabel>
+        <LoadFrame queryKey={KEY} token={props.token} load={load} loadingText={loading}>
+          {(list: TodayList) => (
+            <>
+              <p className="text-sm text-muted-foreground">Stand: {dateText(list.date)}</p>
+              <Content list={list} onOpen={props.onOpen} />
+            </>
+          )}
+        </LoadFrame>
+      </section>
     </div>
   );
 }

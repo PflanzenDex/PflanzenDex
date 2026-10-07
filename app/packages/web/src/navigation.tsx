@@ -7,11 +7,9 @@ import {
   Heart,
   Users,
   Leaf,
-  Lightbulb,
   ListChecks,
   Package,
   Settings,
-  Sprout,
   Sun,
   User,
   ClipboardCheck,
@@ -24,8 +22,6 @@ export type View =
   | "today"
   | "species"
   | "collection"
-  | "treatments"
-  | "hints"
   | "carePhases"
   | "careProfile"
   | "difficulty"
@@ -46,8 +42,6 @@ const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
   { id: "species", text: "Arten", icon: Leaf },
   { id: "friends", text: "Freunde", icon: Users },
   { id: "light", text: "Standorte und Licht", icon: Sun },
-  { id: "treatments", text: "Behandlung", icon: Sprout },
-  { id: "hints", text: "Hinweise", icon: Lightbulb },
   { id: "carePhases", text: "Pflegephasen", icon: CalendarClock },
   { id: "careProfile", text: "Pflegeprofil", icon: ListChecks },
   { id: "difficulty", text: "Artenvergleich", icon: Gauge },
@@ -63,8 +57,6 @@ export const PATHS: Record<View, string> = {
   today: "/today",
   species: "/species",
   collection: "/collection",
-  treatments: "/treatments",
-  hints: "/hints",
   carePhases: "/care-phases",
   careProfile: "/care-profile",
   difficulty: "/difficulty",
@@ -82,6 +74,14 @@ export const PATHS: Record<View, string> = {
 export const LEGACY_POKEDEX_PATH = "/pokedex";
 /** Where the old Pokédex address leads: the destination "Sammlung" in its species mode. */
 export const SPECIES_MODE_ADDRESS = `${PATHS.collection}?view=species`;
+
+/** The former addresses of the destinations "Behandlung" and "Hinweise": they open the sections of "Heute" (US-QS-14). */
+export const LEGACY_TREATMENTS_PATH = "/treatments";
+export const LEGACY_HINTS_PATH = "/hints";
+/** The sections of "Heute" below "Jetzt dran" by the anchor in the address, e.g. `/today#behandlungen` (US-QS-14). */
+export const TODAY_SECTIONS = { treatments: "behandlungen", hints: "fehlt-noch" } as const;
+export type TodaySection = keyof typeof TODAY_SECTIONS;
+export const todayAddress = (section: TodaySection) => `${PATHS.today}#${TODAY_SECTIONS[section]}`;
 
 const visible = (
   id: View,

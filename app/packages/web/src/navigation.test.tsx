@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { AppShell } from "./components/shared/app-shell";
 import { BRAND_LINK_LABEL, DISPLAY_NAME } from "./components/shared/nav-item";
-import { navItems, pageTitle, PATHS, viewTitle } from "./navigation";
+import { navItems, pageTitle, PATHS, todayAddress, viewTitle } from "./navigation";
 
 afterEach(cleanup);
 
@@ -128,6 +128,22 @@ describe("US-QS-07 · DS-22 navigation icons", () => {
     expect(items.map((i) => i.label)).not.toContain("Start");
     expect(items.map((i) => i.href)).not.toContain("/");
     expect(items.at(-1)?.label).toBe("Einstellungen");
+  });
+});
+
+describe("US-QS-14 Behandlung and Hinweise are sections of Heute", () => {
+  it("US-QS-14 the navigation lists neither Behandlung nor Hinweise", () => {
+    const labels = navItems({ reviewer: true, operator: true }).map((i) => i.label);
+    expect(labels).not.toContain("Behandlung");
+    expect(labels).not.toContain("Hinweise");
+    expect(Object.values(PATHS)).not.toContain("/treatments");
+    expect(Object.values(PATHS)).not.toContain("/hints");
+  });
+
+  it("US-QS-14 the sections have addresses on Heute, and Heute keeps its title", () => {
+    expect(todayAddress("treatments")).toBe("/today#behandlungen");
+    expect(todayAddress("hints")).toBe("/today#fehlt-noch");
+    expect(viewTitle("/today")).toBe("Heute – PflanzenDéx");
   });
 });
 

@@ -22,6 +22,21 @@ vi.mock("./pokedex/PokedexPage", () => {
   return { PokedexPage: () => null };
 });
 
+vi.mock("@/components/routing/today-area/today-area", () => {
+  loaded.pages.push("today-area");
+  return { TodayArea: () => null };
+});
+
+vi.mock("./care/TreatmentsPage", () => {
+  loaded.pages.push("treatments");
+  return { TreatmentsPage: () => null };
+});
+
+vi.mock("./collection/HintsPage", () => {
+  loaded.pages.push("hints");
+  return { HintsPage: () => null };
+});
+
 vi.mock("vaul", () => {
   loaded.pages.push("vaul");
   return { Drawer: {} };
@@ -46,6 +61,12 @@ describe("#451 · DS-08 the entry bundle stays small", () => {
   it("US-QS-14 · DS-08 the species page of the Sammlung loads only when Arten is chosen", async () => {
     await import("./App");
     expect(loaded.pages).not.toContain("pokedex");
+  });
+
+  it("US-QS-14 · DS-08 Heute with its sections (treatments, hints) loads only when its route opens", async () => {
+    await import("./App");
+    for (const part of ["today-area", "treatments", "hints"])
+      expect(loaded.pages).not.toContain(part);
   });
 
   it("US-QS-07 · DS-08 the sheet library (Vaul) loads only when a sheet is first opened", async () => {

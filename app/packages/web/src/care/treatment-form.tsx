@@ -20,7 +20,7 @@ import {
   treatmentSchema,
   type TreatmentFields,
 } from "./schemas";
-import type { TreatableSpecimen, TreatmentInput } from "./treatments-api";
+import type { TreatableSpecimen, TreatmentInput } from "./api/treatments-api";
 
 type FocusRef = React.MutableRefObject<HTMLInputElement | null> | undefined;
 

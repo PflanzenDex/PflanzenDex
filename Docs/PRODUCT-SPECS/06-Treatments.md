@@ -4,6 +4,8 @@ Goal: treatment dates are planned, their due date becomes visible and ticking of
 
 Prototype reference: epic BEH. Differences: stable id instead of array index (solves B-08), the done date is stored, reminder without opening the app.
 
+Note (US-QS-14): the open treatments, planning and the history are shown as the section "Behandlungen" of the destination "Heute"; the former destination "Behandlung" no longer exists and its address leads there.
+
 ## User stories
 
 ### US-BEH-01 · Plan treatment dates · ✅ (prototype ✅)
