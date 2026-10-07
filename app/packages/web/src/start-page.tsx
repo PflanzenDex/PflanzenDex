@@ -11,12 +11,12 @@ import { LoadFrame } from "./kernel";
 import { loadLocations, loadZones } from "./light";
 import { OnboardingWizard } from "./onboarding-wizard";
 import { readStored, writeStored } from "./platform/storage";
-import type { View } from "./navigation";
+import type { LinkTarget } from "./navigation";
 
 const ACTIONS = "flex flex-col gap-3 sm:flex-row";
 
 type Token = () => Promise<string | undefined>;
-type Target = Extract<View, "species" | "light" | "collection">;
+type Target = Extract<LinkTarget, "species" | "light" | "collection">;
 
 const key = (accountId: string) => `pflanzendex.onboarding-skipped.${accountId}`;
 

@@ -43,9 +43,9 @@ export function CareProfileCard(props: {
   const shared = { entry, control: form.control, reset, busy };
   return (
     <section className={CARD} aria-labelledby={`profile-${entry.speciesId}`}>
-      <h2 id={`profile-${entry.speciesId}`} className="text-xl font-semibold">
+      <h3 id={`profile-${entry.speciesId}`} className="text-xl font-semibold">
         {name}
-      </h2>
+      </h3>
       <Quiet>
         {`${entry.activeSpecimens} aktive${entry.activeSpecimens === 1 ? "s Exemplar" : " Exemplare"}`}
         {entry.deviates && " · "}

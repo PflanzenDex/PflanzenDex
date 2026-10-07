@@ -101,9 +101,43 @@ const WISHLIST: Record<string, unknown> = {
   },
 };
 
+/** A species as the catalog delivers it, for the profile page at `/species/a1`. */
+const PROFILE_SPECIES = {
+  id: "a1",
+  latinName: "Dracaena trifasciata",
+  genus: "Dracaena",
+  epithet: "trifasciata",
+  cultivar: null,
+  germanName: "Bogenhanf",
+  englishName: null,
+  synonyms: [],
+  familyGerman: null,
+  familyLatin: null,
+  difficulty: 1,
+  standardLevel: 2,
+  lightDemandLux: 15000,
+  dormancyFrom: null,
+  dormancyUntil: null,
+  locationHint: null,
+  growthMeasure: "height",
+  etiolationSigns: "Blätter kippen.",
+  wateringHint: null,
+  substrate: null,
+  pruning: null,
+  growthHacks: null,
+  successCriteria: "Aufrecht.",
+  botanicalStory: null,
+  source: null,
+  reviewStatus: "reviewed",
+  createdBy: "user",
+  own: false,
+  version: 1,
+};
+
 /** The answers of the simple routes; the rest (account, wishlist) is decided in `fakeServer`. */
 const ANSWERS: Record<string, unknown> = {
   "/species": { species: [] },
+  "/species/a1": PROFILE_SPECIES,
   "/specimens/count": { count: 0, archived: 0 },
   "/specimens/cards": { cards: [] },
   "/specimens/archived": { archived: [] },
@@ -114,6 +148,7 @@ const ANSWERS: Record<string, unknown> = {
   "/treatments": { treatments: [] },
   "/specimens": { specimens: [] },
   "/care-profiles": { entries: [] },
+  "/care-phases": { phases: [] },
   "/hints": { hints: [] },
   "/specimens/hints": { hints: SPECIMEN_HINTS },
   "/specimens/light-overview": { rows: [] },
@@ -271,7 +306,7 @@ describe("US-ACC-01 App", () => {
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
     expect(species.getAttribute("aria-current")).toBeNull();
 
-    await userEvent.click(tab("Standorte und Licht"));
+    await userEvent.click(screen.getByRole("button", { name: "Standorte verwalten" }));
     expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
 
     await userEvent.click(tab("Konto"));
@@ -280,14 +315,49 @@ describe("US-ACC-01 App", () => {
     expect(screen.getByText("lena@example.test")).toBeTruthy();
   });
 
-  it("US-BES-09 the tab Pflegeprofil opens the own care profile and says what to do without a species", async () => {
+  it("US-QS-14 · US-BES-09 the old address /care-profile opens the species mode, where a species is chosen; there is no tab Pflegeprofil", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
-    renderApp();
-    await userEvent.click(await findTab("Pflegeprofil"));
-    expect(await screen.findByRole("heading", { name: "Pflegeprofil" })).toBeTruthy();
-    expect(screen.getByText(/Lege zuerst im Bestand ein Exemplar an/)).toBeTruthy();
-    expect(tab("Pflegeprofil").getAttribute("aria-current")).toBe("page");
+    renderApp("/care-profile");
+    expect(await screen.findByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Arten" }).getAttribute("aria-pressed")).toBe("true");
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
+    expect(queryTab("Pflegeprofil")).toBeNull();
+  });
+
+  it("US-QS-14 · US-BES-09 the profile of a species has the section Mein Pflegeprofil, which says what to do without a specimen", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/species/a1");
+    expect(
+      await screen.findByRole("heading", { level: 2, name: "Mein Pflegeprofil" }),
+    ).toBeTruthy();
+    expect(await screen.findByText(/Du hast noch kein Exemplar dieser Art/)).toBeTruthy();
+  });
+
+  it("US-QS-14 · US-PHA-01 the old address /care-phases opens the plants grouped by care phase", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/care-phases");
+    expect(await screen.findByText("Noch kein Exemplar hat eine Phase.")).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /Nach Pflegephase/ }).getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
+    expect(queryTab("Pflegephasen")).toBeNull();
+  });
+
+  it("US-QS-14 · US-LIC-01 the old address /light opens the management of the locations in the Sammlung, with a way back", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp("/light");
+    expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
+    expect(queryTab("Standorte und Licht")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Standorte verwalten" })).toBeTruthy();
   });
 
   it("US-QS-14 · US-BES-05 the old address /difficulty opens the comparison in the species mode of the Sammlung and says what to do without a species", async () => {
@@ -323,20 +393,20 @@ describe("US-ACC-01 App", () => {
     expect(tab("Heute").getAttribute("aria-current")).toBe("page");
     expect(header().queryByRole("link", { name: "Hinweise" })).toBeNull();
     expect(header().queryByRole("link", { name: "Behandlung" })).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Zu Standorte und Licht" }));
+    await userEvent.click(screen.getByRole("button", { name: "Standorte verwalten" }));
     expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
-    expect(tab("Standorte und Licht").getAttribute("aria-current")).toBe("page");
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
   });
 
   it("US-LIC-03 the empty light overview offers the way to the collection by switching the tab", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
-    renderApp();
-    await userEvent.click(await findTab("Standorte und Licht"));
+    renderApp("/light");
     await userEvent.click(await screen.findByRole("button", { name: "Zum Bestand" }));
     expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
-    expect(tab("Standorte und Licht").getAttribute("aria-current")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Standorte" })).toBeNull();
   });
 
   it('choosing a species in the catalog leads to the form "Exemplar anlegen"; back leads to the catalog (US-BES-02)', async () => {

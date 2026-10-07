@@ -4,7 +4,8 @@ import { AreaSection } from "@/components/routing/areas/area-section/area-sectio
 import { useSectionAnchor } from "@/components/routing/areas/area-section/use-section-anchor";
 import { AccountView, SettingsPage } from "@/account";
 import type { Account } from "@/account";
-import { ACCOUNT_SECTIONS, PATHS } from "@/navigation";
+import { Button } from "@/components/ui/button";
+import { ACCOUNT_SECTIONS, MANAGE_ADDRESS, PATHS } from "@/navigation";
 
 type Token = () => Promise<string | undefined>;
 
@@ -49,6 +50,7 @@ function SectionNav() {
  * The destination "Konto" (US-QS-14): the profile with the ways to sign out (US-ACC-01) and the settings (US-ACC-02)
  * as sections one below the other, with a list of the sections beside them on wide screens. The app wires the modules;
  * the settings are their own lazy part. The old address of "Einstellungen" leads to the anchor of its section.
+ * The settings end with a link to the management of the locations and light zones, which lives in the Sammlung.
  * Invitations to friends belong to "Freunde" (US-SOZ), not to the account, so there is no section for them.
  */
 export function AccountArea(props: {
@@ -84,6 +86,12 @@ export function AccountArea(props: {
             loading="Einstellungen werden geladen …"
           >
             <SettingsPage api={props.api} token={props.token} host />
+            <p className="text-sm text-muted-foreground">
+              Standorte und Lichtzonen legst du in der Sammlung an und änderst sie dort.
+            </p>
+            <Button asChild variant="secondary" className="self-start">
+              <Link to={MANAGE_ADDRESS}>Standorte und Lichtzonen verwalten</Link>
+            </Button>
           </AreaSection>
         </div>
       </div>

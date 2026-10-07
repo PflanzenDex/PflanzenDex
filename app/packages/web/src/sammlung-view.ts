@@ -1,6 +1,7 @@
 import { useSearchParams } from "react-router";
 import { readStored, writeStored } from "@/platform/storage";
 import { useAnnounce } from "@/platform/announcer/context";
+import { GROUP_PARAM, MANAGE_PARAM } from "./navigation";
 
 export type SammlungView = "plants" | "species" | "wishlist";
 /** How the species mode is arranged: the Pokédex, or the comparison by difficulty (US-BES-05). */
@@ -61,4 +62,49 @@ export function useSpeciesSort(): { sort: SpeciesSort; choose: (s: SpeciesSort) 
     announce?.announce(SPECIES_SORTS.find((o) => o.value === next)?.label ?? "");
   };
   return { sort, choose };
+}
+
+/** How the plants are arranged: all, grouped by care phase (US-PHA-01) or by location and zone (US-LIC). */
+export type PlantGroup = "all" | "phase" | "location";
+export const PLANT_GROUPS: readonly { value: PlantGroup; label: string }[] = [
+  { value: "all", label: "Alle" },
+  { value: "phase", label: "Nach Pflegephase" },
+  { value: "location", label: "Nach Standort" },
+];
+
+/**
+ * The grouping of the plants (US-QS-14): only the address decides, `group=phase` or `group=location`, anything else
+ * shows all plants. Choosing keeps the mode and the focus on the control.
+ */
+export function usePlantGroup(): { group: PlantGroup; choose: (g: PlantGroup) => void } {
+  const [params, setParams] = useSearchParams();
+  const announce = useAnnounce();
+  const raw = params.get(GROUP_PARAM);
+  const group: PlantGroup = raw === "phase" || raw === "location" ? raw : "all";
+  const choose = (next: PlantGroup) => {
+    if (next === group) return;
+    const query: Record<string, string> = { [VIEW_PARAM]: "plants" };
+    if (next !== "all") query[GROUP_PARAM] = next;
+    setParams(query, { state: { keepFocus: true } });
+    announce?.announce(PLANT_GROUPS.find((o) => o.value === next)?.label ?? "");
+  };
+  return { group, choose };
+}
+
+/**
+ * The management of the locations and light zones (US-LIC, US-QS-14): an in-page view of the plants, open while the
+ * address carries `manage=locations`. Opening and closing are navigations without `keepFocus`, so the focus moves to
+ * the heading of the view that appears; the grouping stays in the address, so closing returns to where the user was.
+ */
+export function useManage(): { open: boolean; setOpen: (open: boolean) => void } {
+  const [params, setParams] = useSearchParams();
+  const open = params.get(MANAGE_PARAM) === "locations";
+  const setOpen = (next: boolean) => {
+    const query = new URLSearchParams(params);
+    query.set(VIEW_PARAM, "plants");
+    if (next) query.set(MANAGE_PARAM, "locations");
+    else query.delete(MANAGE_PARAM);
+    setParams(query);
+  };
+  return { open, setOpen };
 }

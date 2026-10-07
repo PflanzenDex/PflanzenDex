@@ -126,7 +126,7 @@ export function ZonesStep(props: StepProps) {
   return (
     <Frame
       title="Wie hell ist es?"
-      intro="Übernimm die vier Standard-Lampen oder passe sie an und lege eigene Zonen an. Ändern kannst du alles später unter „Standorte und Licht“."
+      intro="Übernimm die vier Standard-Lampen oder passe sie an und lege eigene Zonen an. Ändern kannst du alles später in der Sammlung unter „Standorte verwalten“."
     >
       <LoadFrame
         queryKey={LIGHT_KEY}

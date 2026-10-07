@@ -6,8 +6,8 @@ export const CollectionPage = lazyPage(() =>
 export const HintsPage = lazyPage(() =>
   import("./HintsPage").then((m) => ({ default: m.HintsPage })),
 );
-export const CareProfilePage = lazyPage(() =>
-  import("./CareProfilePage").then((m) => ({ default: m.CareProfilePage })),
+export const CareProfileSection = lazyPage(() =>
+  import("./CareProfilePage").then((m) => ({ default: m.CareProfileSection })),
 );
 export const DifficultyPage = lazyPage(() =>
   import("./DifficultyPage").then((m) => ({ default: m.DifficultyPage })),

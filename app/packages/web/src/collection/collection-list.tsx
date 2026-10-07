@@ -1,15 +1,12 @@
 import type { SpecimenCard } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
+import { SectionLabel } from "@/components/section-label/section-label";
+import { groupByLocation } from "@/components/sammlung-header/location-groups/group-by-location";
 import { Actions, GRID, TITLE } from "./parts";
 import { SpecimenCardView } from "./specimen-card";
 
-/** The cards of the specimens of the account. Every view says what to do next (P-09). */
-export function CollectionList(props: {
-  cards: readonly SpecimenCard[];
-  onSpeciesChoose: () => void;
-  /** Shown below the title of a destination (US-QS-14): the heading is then a screen reader section name, not the page title. */
-  embedded?: boolean;
+type Handlers = {
   /** Opens the measure view; the app wires `collection` with `care` (US-WAC-01). */
   onMeasure?: (e: { id: string; name: string }) => void;
   /** Opens the archiving of a specimen (US-BES-07). */
@@ -20,7 +17,56 @@ export function CollectionList(props: {
   onMark?: (e: SpecimenCard) => void;
   /** Corrects the catch date of a specimen (US-BES-11). */
   onCatchDate?: (e: SpecimenCard) => void;
-}) {
+};
+
+function Grid(props: Handlers & { cards: readonly SpecimenCard[] }) {
+  return (
+    <ul className={GRID}>
+      {props.cards.map((k) => (
+        <SpecimenCardView
+          key={k.id}
+          card={k}
+          onMeasure={props.onMeasure}
+          onArchive={props.onArchive}
+          onRepot={props.onRepot}
+          onMark={props.onMark}
+          onCatchDate={props.onCatchDate}
+        />
+      ))}
+    </ul>
+  );
+}
+
+/** The cards, as one grid or grouped by location with its zone, each group below its heading (US-QS-14). */
+function Cards(props: Handlers & { cards: readonly SpecimenCard[]; groupBy?: "location" }) {
+  if (props.groupBy !== "location") return <Grid {...props} />;
+  return (
+    <div className="flex flex-col gap-6">
+      {groupByLocation(props.cards).map((g, i) => (
+        <section
+          key={g.key}
+          aria-labelledby={`location-group-${i}`}
+          className="flex flex-col gap-3"
+        >
+          <SectionLabel id={`location-group-${i}`}>{g.title}</SectionLabel>
+          <Grid {...props} cards={g.items} />
+        </section>
+      ))}
+    </div>
+  );
+}
+
+/** The cards of the specimens of the account. Every view says what to do next (P-09). */
+export function CollectionList(
+  props: Handlers & {
+    cards: readonly SpecimenCard[];
+    onSpeciesChoose: () => void;
+    /** Shown below the title of a destination (US-QS-14): the heading is then a screen reader section name, not the page title. */
+    embedded?: boolean;
+    /** Groups the cards by location and zone, each group below a heading (US-QS-14). */
+    groupBy?: "location";
+  },
+) {
   return (
     <section aria-labelledby="collection-title">
       {props.embedded ? (
@@ -40,19 +86,7 @@ export function CollectionList(props: {
         />
       ) : (
         <>
-          <ul className={GRID}>
-            {props.cards.map((k) => (
-              <SpecimenCardView
-                key={k.id}
-                card={k}
-                onMeasure={props.onMeasure}
-                onArchive={props.onArchive}
-                onRepot={props.onRepot}
-                onMark={props.onMark}
-                onCatchDate={props.onCatchDate}
-              />
-            ))}
-          </ul>
+          <Cards {...props} />
           <Actions>
             <Button type="button" size="touch" onClick={props.onSpeciesChoose}>
               Weiteres Exemplar: Art wählen

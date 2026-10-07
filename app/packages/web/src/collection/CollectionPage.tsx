@@ -46,6 +46,7 @@ type Props = {
   onMeasure?: (e: { id: string; name: string }) => void;
   /** Set when the destination "Sammlung" shows the page below its title: demoted heading, count line (US-QS-14). */
   host?: Host;
+  groupBy?: "location"; // grouping by location and zone (US-QS-14)
 };
 
 /**
@@ -165,6 +166,7 @@ function List(p: { data: Loaded; created: Specimen | null; actions: Actions; pro
         cards={data.cards}
         onSpeciesChoose={p.props.onSpeciesChoose}
         embedded={p.props.host !== undefined}
+        {...(p.props.groupBy ? { groupBy: p.props.groupBy } : {})}
         onArchive={(e) => {
           clearMessages();
           archived.setOpen(e);
