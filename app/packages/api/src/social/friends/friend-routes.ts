@@ -6,11 +6,14 @@ import {
   friendList,
   friendRequest,
   friendRequests,
+  sharedSpeciesCount,
 } from "@pflanzendex/core";
-import { FriendsPostgres, IdempotencyPostgres } from "@pflanzendex/db";
+import { FriendsPostgres, IdempotencyPostgres, SharingPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { body, write, type AuthEnv } from "../kernel";
+import { body, write, type AuthEnv } from "../../kernel";
+import { friendSharedRoute } from "../sharing/sharing-routes";
+import { sharingPorts } from "../sharing/wiring";
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const FRIEND_PATHS = ["/friends"] as const;
@@ -26,7 +29,9 @@ export const FRIEND_PATHS = ["/friends"] as const;
  *   other id (no leak), 409 `friend.request_answered` when answered the other way before
  * - POST /friends/:id/end (US-SOZ-03): ends the friendship on both sides at once; 404 `friend.not_found` for any id that is
  *   not one of the caller's confirmed or ended friendships (no leak); ending twice is a no-op
- * - GET /friends: `{ friends }`, the confirmed friends (display name, since); never their collections (P-05)
+ * - GET /friends: `{ friends }`, the confirmed friends: display name, since, and `sharedSpecies`, the number of species the
+ *   friend shares with me that I have caught too (`null` = unknown, the friend shares nothing, US-SOZ-03); never their collections (P-05)
+ * - GET /friends/:id/shared (US-SOZ-04): what this friend shares with the caller, whitelisted facts only
  */
 export function friendRoutes(pool: Pool, clock: () => Date = () => new Date()): Hono<AuthEnv> {
   const friends = new FriendsPostgres(pool);
@@ -35,6 +40,10 @@ export function friendRoutes(pool: Pool, clock: () => Date = () => new Date()): 
   const request = friendRequest({ friends });
   const answer = friendAnswer({ friends });
   const end = friendEnd({ friends });
+  const sharing = new SharingPostgres(pool);
+  const ports = sharingPorts(pool);
+  const sharedSpecies = (viewerId: string, ownerId: string) =>
+    sharedSpeciesCount({ sharing, ...ports }, viewerId, ownerId);
   const routes = new Hono<AuthEnv>();
   routes.post("/friends/invitations", async (c) => {
     const response = await write(c, deps, invite, { input: {}, success: 201 });
@@ -53,6 +62,9 @@ export function friendRoutes(pool: Pool, clock: () => Date = () => new Date()): 
   routes.post("/friends/:id/end", async (c) =>
     write(c, deps, end, { input: { friendId: c.req.param("id") } }),
   );
-  routes.get("/friends", async (c) => c.json(await friendList({ friends }, c.get("account").id)));
+  routes.get("/friends/:id/shared", friendSharedRoute(pool));
+  routes.get("/friends", async (c) =>
+    c.json(await friendList({ friends, sharedSpecies }, c.get("account").id)),
+  );
   return routes;
 }

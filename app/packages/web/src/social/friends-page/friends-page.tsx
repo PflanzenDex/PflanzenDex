@@ -7,11 +7,14 @@ import {
   createFriendCode,
   endFriendship,
   loadFriends,
+  setSpeciesSharing,
+  setSpecimenSharing,
   sendFriendRequest,
   type FriendsData,
 } from "../api/friends-api";
 import { CodeForm } from "../parts/code-form/code-form";
 import { FriendList } from "../parts/friend-list/friend-list";
+import { SharingPanel } from "../parts/sharing-panel/sharing-panel";
 import { InviteCard } from "../parts/invite-card/invite-card";
 import { nameOf, RequestList } from "../parts/request-list/request-list";
 import { FriendsPageSkeleton } from "./friends-page.skeleton";
@@ -55,6 +58,43 @@ function Outcome(props: { message: string | null; error: ApiError | null }) {
   );
 }
 
+/** The sharing panel with its own writes and their outcome (US-SOZ-04): one request at a time, the page reloads after each. */
+function SharingSection(props: {
+  data: FriendsData;
+  api: string;
+  token: Token;
+  onWritten: () => void;
+}) {
+  const { api, data } = props;
+  const sharing = useWriteAction(props.token, props.onWritten);
+  const set = (specimenId: string, share: boolean) =>
+    void sharing.run(
+      (t) => setSpecimenSharing(api, t, { specimenId, share }),
+      share
+        ? "Freigegeben: Freunde sehen dieses Exemplar ab jetzt."
+        : "Zurückgezogen: Freunde sehen dieses Exemplar ab dem nächsten Abruf nicht mehr.",
+    );
+  const setSpecies = (speciesId: string, share: boolean) =>
+    void sharing.run(
+      (t) => setSpeciesSharing(api, t, { speciesId, share }),
+      share
+        ? "Alle Exemplare dieser Art sind für Freunde freigegeben."
+        : "Alle Exemplare dieser Art sind zurückgezogen.",
+    );
+  return (
+    <>
+      <Outcome message={sharing.message} error={sharing.error} />
+      <SharingPanel
+        specimens={data.specimens}
+        shared={data.shared}
+        busy={sharing.running}
+        onSet={set}
+        onSetSpecies={setSpecies}
+      />
+    </>
+  );
+}
+
 function Body(props: { data: FriendsData; api: string; token: Token; onWritten: () => void }) {
   const { api, token, data } = props;
   const [created, setCreated] = useState<CreatedFriendCode | null>(null);
@@ -93,6 +133,7 @@ function Body(props: { data: FriendsData; api: string; token: Token; onWritten: 
           )
         }
       />
+      <SharingSection data={data} api={api} token={token} onWritten={props.onWritten} />
       <InviteCard
         created={created}
         running={invite.running}

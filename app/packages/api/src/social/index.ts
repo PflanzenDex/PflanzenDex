@@ -1,2 +1,3 @@
-// Public interface of the `social` module (ADR 0003): the friend routes.
-export { FRIEND_PATHS, friendRoutes } from "./friend-routes";
+// Public interface of the `social` module (ADR 0003): the friend routes and the sharing routes.
+export { FRIEND_PATHS, friendRoutes } from "./friends/friend-routes";
+export { SHARING_PATHS, sharingRoutes } from "./sharing/sharing-routes";
