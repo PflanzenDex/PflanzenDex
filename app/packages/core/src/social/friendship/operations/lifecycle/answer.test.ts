@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { execute } from "../../../kernel/operation";
-import { InMemoryIdempotencyStore } from "../../../kernel/test-helpers";
-import { friendAnswer, friendInvite, friendList, friendRequest, friendRequests } from "../index";
-import { fixedRandom, InMemoryFriends } from "../test-helpers";
+import { execute } from "../../../../kernel/operation";
+import { InMemoryIdempotencyStore } from "../../../../kernel/test-helpers";
+import { friendAnswer, friendInvite, friendList, friendRequest, friendRequests } from "../../index";
+import { fixedRandom, InMemoryFriends } from "../../test-helpers";
 
 const anna = { userId: "anna" };
 const ben = { userId: "ben" };

@@ -1,5 +1,5 @@
-import { appError, defineOperation, failed, idField, ok, shape } from "../../../kernel";
-import type { FriendStore } from "../types";
+import { appError, defineOperation, failed, idField, ok, shape } from "../../../../kernel";
+import type { FriendStore } from "../../types";
 
 export interface EndDependencies {
   readonly friends: FriendStore;

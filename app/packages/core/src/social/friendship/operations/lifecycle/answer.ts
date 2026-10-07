@@ -6,8 +6,8 @@ import {
   ok,
   shape,
   type ErrorDetail,
-} from "../../../kernel";
-import type { FriendStore } from "../types";
+} from "../../../../kernel";
+import type { FriendStore } from "../../types";
 
 export interface AnswerDependencies {
   readonly friends: FriendStore;
