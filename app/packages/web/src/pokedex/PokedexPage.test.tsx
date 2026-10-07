@@ -166,3 +166,26 @@ describe("US-POK-07 catch date on the card", () => {
     );
   });
 });
+
+describe("US-POK-12 newly caught species on the page", () => {
+  it("US-POK-12 announces the species caught since the last visit above the rank", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async (url) => {
+      const path = new URL(String(url)).pathname;
+      if (path === "/pokedex/ownership")
+        return response(200, { ownership: { caught, unidentified: [] } });
+      return path === "/pokedex/seen"
+        ? response(200, { seen: ["Citrus limon"] })
+        : response(404, {});
+    });
+    vi.stubGlobal("fetch", fetchFn);
+    render(<PokedexPage api="http://api" token={token} />);
+    expect(await screen.findByText("Neu gefangen: Opuntia microdasys")).toBeTruthy();
+  });
+
+  it("US-POK-12 a failing seen state does not break the page and shows no banner", async () => {
+    fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
+    render(<PokedexPage api="http://api" token={token} />);
+    expect(await screen.findByRole("heading", { level: 1, name: "Pokédex" })).toBeTruthy();
+    expect(screen.queryByText(/Neu gefangen/)).toBeNull();
+  });
+});

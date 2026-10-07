@@ -3,15 +3,17 @@ import { useCallback } from "react";
 import { CollectorCards } from "@/components/collector-cards/collector-cards";
 import { LoadFrame } from "../kernel";
 import { Browse } from "./PokedexBrowse";
-import { loadOwnership } from "./ownership-api";
+import { loadOwnership } from "./caught/ownership-api";
 import { PokedexPageSkeleton } from "./PokedexPage.skeleton";
 import { CARD, GRID } from "./PokedexCards";
 import { CollectorRank } from "./collector-rank/collector-rank";
 import { Milestones } from "./milestones/milestones";
+import { NewlyCaught } from "./caught/newly-caught/newly-caught";
 
 /**
  * The species the account has caught (US-POK-06): derived from the active specimens, never stored (P-01). A specimen
- * that does not count yet is named with the action that fixes it (P-09, P-10).
+ * that does not count yet is named with the action that fixes it (P-09, P-10). Species caught since the last visit are
+ * announced above the rank until the keeper confirms (US-POK-12).
  */
 export function PokedexPage(props: {
   api: string;
@@ -36,6 +38,7 @@ export function PokedexPage(props: {
             <h1 id="pokedex-title" className="mb-2 text-2xl font-semibold">
               Pokédex
             </h1>
+            <NewlyCaught api={api} token={token} caught={ownership.caught} />
             <CollectorRank caught={ownership.caught.length} />
             <Milestones caught={ownership.caught} />
             <Browse caught={ownership.caught} {...(onOpenSpecies ? { onOpenSpecies } : {})} />

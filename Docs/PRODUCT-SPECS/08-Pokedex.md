@@ -106,7 +106,7 @@ Acceptance criteria:
 
 Status 🟨: the logic and the view work over a taxonomy tree. Missing: the tree (taxonomy build, US-POK-03); until then the view says milestones need the tree and shows none (nothing is invented, P-08).
 
-### US-POK-12 · "Newly caught" on the next visit · ⬜ (prototype ✅)
+### US-POK-12 · "Newly caught" on the next visit · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
