@@ -56,4 +56,11 @@ describe("Input (US-QS-07, DS-15, DS-19, DS-38)", () => {
     expect(cls).toContain("text-base");
     expect(cls).toContain("focus-visible:ring-2");
   });
+
+  it("US-QS-14 · Greenhouse look: control radius on the card surface", () => {
+    render(<Input aria-label="Name" />);
+    const cls = screen.getByLabelText("Name").className;
+    expect(cls).toContain("rounded-control");
+    expect(cls).toContain("bg-card");
+  });
 });

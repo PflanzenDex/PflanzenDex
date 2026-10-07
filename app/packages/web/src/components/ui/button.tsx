@@ -5,8 +5,9 @@ import { cn } from "@/lib/utils";
 
 /** Button looks (US-QS-07, DS-34, DS-35). Sizes are by role; every size keeps a 44 px hit area on touch (DS-15). */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md text-center text-sm font-medium " +
-    "transition-colors motion-reduce:transition-none " +
+  "inline-flex items-center justify-center gap-2 text-center text-sm font-semibold " +
+    // Press feedback is a transform only (ADR 0011 decision 5); the motion tokens end it at once under reduced motion.
+    "transition-[color,background-color,transform] duration-(--motion-fast) ease-(--ease-enter) active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100 " +
     // Forced colors replace the fill; the border keeps the button's boundary visible (US-QS-12, WCAG 1.4.11).
     "forced-colors:border forced-colors:border-[color:ButtonText] " +
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background " +
@@ -22,11 +23,11 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "min-h-[44px] px-4 py-2",
-        sm: "min-h-[44px] px-3",
-        lg: "min-h-[48px] px-6 text-base",
-        icon: "min-h-[44px] min-w-[44px]",
-        touch: "min-h-[48px] w-full px-4 sm:w-auto",
+        default: "min-h-[44px] rounded-pill px-5 py-2",
+        sm: "min-h-[44px] rounded-control px-3",
+        lg: "min-h-[48px] rounded-pill px-6 text-base",
+        icon: "min-h-[44px] min-w-[44px] rounded-control",
+        touch: "min-h-[48px] w-full rounded-pill px-4 sm:w-auto",
       },
     },
     defaultVariants: { variant: "default", size: "default" },

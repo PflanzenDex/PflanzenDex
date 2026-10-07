@@ -26,7 +26,7 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
         <Drawer.Content
           ref={ref}
           className={cn(
-            "fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[90dvh] flex-col rounded-t-xl border border-border bg-background pb-[env(safe-area-inset-bottom)] text-foreground",
+            "fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[90dvh] flex-col rounded-t-card bg-card shadow-elevation-2 pb-[env(safe-area-inset-bottom)] text-foreground",
             className,
           )}
           {...props}

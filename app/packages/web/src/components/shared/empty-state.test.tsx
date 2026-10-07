@@ -42,4 +42,11 @@ describe("EmptyState (US-QS-07, DS-26, P-09)", () => {
     render(<EmptyState title="Leer" action={{ label: "Zum Pokédex", href: "/pokedex" }} />);
     expect(screen.getByRole("link", { name: "Zum Pokédex" }).getAttribute("href")).toBe("/pokedex");
   });
+
+  it("US-QS-14 · Greenhouse look: card surface with an icon tile and the next step", () => {
+    const { container } = render(<EmptyState title="Leer" action={{ label: "Los", href: "/x" }} />);
+    expect((container.firstChild as HTMLElement).className).toContain("rounded-card");
+    expect(container.querySelector('[aria-hidden="true"].rounded-tile.bg-accent')).not.toBeNull();
+    expect(screen.getByRole("link", { name: "Los" })).toBeTruthy();
+  });
 });

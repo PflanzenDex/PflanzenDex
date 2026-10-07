@@ -38,4 +38,11 @@ describe("Badge (US-QS-07, DS-34, DS-36)", () => {
     render(<Badge variant="warning">Etioliert</Badge>);
     expect(screen.getByText("Etioliert")).toBeTruthy();
   });
+
+  it("US-QS-14 · Greenhouse look: pill with 13 px label text", () => {
+    render(<Badge>Neu</Badge>);
+    const cls = screen.getByText("Neu").className;
+    expect(cls).toContain("rounded-pill");
+    expect(cls).toContain("text-label");
+  });
 });
