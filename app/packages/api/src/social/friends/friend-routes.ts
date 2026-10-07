@@ -12,7 +12,7 @@ import { FriendsPostgres, IdempotencyPostgres, SharingPostgres } from "@pflanzen
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import { body, write, type AuthEnv } from "../../kernel";
-import { friendSharedRoute } from "../sharing/sharing-routes";
+import { friendCollectionRoute, friendSharedRoute } from "../sharing/sharing-routes";
 import { sharingPorts } from "../sharing/wiring";
 
 /** Paths the sign-in guard (bearer token) must cover. */
@@ -31,6 +31,7 @@ export const FRIEND_PATHS = ["/friends"] as const;
  *   not one of the caller's confirmed or ended friendships (no leak); ending twice is a no-op
  * - GET /friends: `{ friends }`, the confirmed friends: display name, since, and `sharedSpecies`, the number of species the
  *   friend shares with me that I have caught too (`null` = unknown, the friend shares nothing, US-SOZ-03); never their collections (P-05)
+ * - GET /friends/:id/collection (US-SOZ-07): the friend's shared collection as cards with "you have it"
  * - GET /friends/:id/shared (US-SOZ-04): what this friend shares with the caller, whitelisted facts only
  */
 export function friendRoutes(pool: Pool, clock: () => Date = () => new Date()): Hono<AuthEnv> {
@@ -63,6 +64,7 @@ export function friendRoutes(pool: Pool, clock: () => Date = () => new Date()): 
     write(c, deps, end, { input: { friendId: c.req.param("id") } }),
   );
   routes.get("/friends/:id/shared", friendSharedRoute(pool));
+  routes.get("/friends/:id/collection", friendCollectionRoute(pool));
   routes.get("/friends", async (c) =>
     c.json(await friendList({ friends, sharedSpecies }, c.get("account").id)),
   );
