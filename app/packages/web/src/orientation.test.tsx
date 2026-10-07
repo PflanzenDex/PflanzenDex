@@ -140,12 +140,12 @@ describe("US-QS-09 · a view with nothing to do says so and names the next step 
       "/specimens/difficulty": { rows: [] },
     })[path];
 
-  it("US-QS-09 the empty hints say so in text with a button to the next place, after the one heading", async () => {
-    renderAt(PATHS.hints, empty);
-    const note = await screen.findByRole("heading", { level: 2, name: "Keine Hinweise" });
+  it("US-QS-09 · US-QS-14 the empty hints (a section of Heute) say so in text with a button to the next place, after the one heading", async () => {
+    renderAt("/hints", empty);
+    const note = await screen.findByRole("heading", { level: 3, name: "Keine Hinweise" });
     const main = screen.getByRole("main");
     expect(main.contains(note)).toBe(true);
-    const h1 = within(main).getByRole("heading", { level: 1 });
+    const h1 = await within(main).findByRole("heading", { level: 1 });
     expect(h1.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(within(main).getByRole("button", { name: "Zum Bestand" })).toBeTruthy();
   });

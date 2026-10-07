@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // The sign-in service is a foreign system: UserManager is replaced, app and modules run for real.
 const mgr = vi.hoisted(() => ({
@@ -101,29 +101,58 @@ const WISHLIST: Record<string, unknown> = {
   },
 };
 
+/** The answers of the simple routes; the rest (account, wishlist) is decided in `fakeServer`. */
+const ANSWERS: Record<string, unknown> = {
+  "/species": { species: [] },
+  "/specimens/count": { count: 0, archived: 0 },
+  "/specimens/cards": { cards: [] },
+  "/specimens/archived": { archived: [] },
+  "/specimens/distribution": EMPTY_DISTRIBUTION,
+  "/locations": { locations: [] },
+  "/light-zones": { zones: [] },
+  "/today": { date: "2026-10-03", upcoming: 0, items: [] },
+  "/treatments": { treatments: [] },
+  "/specimens": { specimens: [] },
+  "/care-profiles": { entries: [] },
+  "/hints": { hints: [] },
+  "/specimens/hints": { hints: SPECIMEN_HINTS },
+  "/specimens/light-overview": { rows: [] },
+  "/specimens/difficulty": { rows: [] },
+};
+
 function fakeServer(accountStatus = 200) {
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url) => {
       const path = new URL(String(url)).pathname;
       if (path === "/account") return response(accountStatus, account);
-      if (path === "/species") return response(200, { species: [] });
-      if (path === "/specimens/count") return response(200, { count: 0, archived: 0 });
-      if (path === "/specimens/cards") return response(200, { cards: [] });
-      if (path === "/specimens/archived") return response(200, { archived: [] });
-      if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
-      if (path === "/locations") return response(200, { locations: [] });
-      if (path === "/light-zones") return response(200, { zones: [] });
-      if (path === "/care-profiles") return response(200, { entries: [] });
-      if (path === "/hints") return response(200, { hints: [] });
-      if (path === "/specimens/hints") return response(200, { hints: SPECIMEN_HINTS });
-      if (path === "/specimens/light-overview") return response(200, { rows: [] });
-      if (path === "/specimens/difficulty") return response(200, { rows: [] });
+      if (path in ANSWERS) return response(200, ANSWERS[path]);
       if (path in WISHLIST) return response(200, WISHLIST[path]);
       return response(404);
     }),
   );
 }
+
+// Heute and its sections are lazy parts: loading them first keeps the waits on the data, not on a cold import (#444).
+beforeAll(async () => {
+  // jsdom has no matchMedia: the planning form of the treatments section reads it.
+  window.matchMedia ??= ((query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+    addListener: () => undefined,
+    removeListener: () => undefined,
+    dispatchEvent: () => false,
+    onchange: null,
+  })) as unknown as typeof window.matchMedia;
+  await Promise.all([
+    import("@/components/routing/today-area/today-area"),
+    import("./today/today-page/today-page"),
+    import("./care/TreatmentsPage"),
+    import("./collection/HintsPage"),
+  ]);
+}, 30_000);
 
 beforeEach(() => {
   mgr.getUser.mockReset();
@@ -280,13 +309,15 @@ describe("US-ACC-01 App", () => {
     expect(tab("Wunschliste").getAttribute("aria-current")).toBe("page");
   });
 
-  it("US-BES-08 the tab Hinweise lists incomplete specimens and its action leads to the view that fixes it", async () => {
+  it("US-QS-14 · US-BES-08 the old address /hints lands on the section Fehlt noch of Heute; its action leads to the view that fixes it", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
-    renderApp();
-    await userEvent.click(await findTab("Hinweise"));
+    renderApp("/hints");
     expect(await screen.findByText(SPECIMEN_HINTS[0]?.text ?? "")).toBeTruthy();
-    expect(tab("Hinweise").getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("heading", { level: 2, name: "Fehlt noch" })).toBeTruthy();
+    expect(tab("Heute").getAttribute("aria-current")).toBe("page");
+    expect(header().queryByRole("link", { name: "Hinweise" })).toBeNull();
+    expect(header().queryByRole("link", { name: "Behandlung" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Zu Standorte und Licht" }));
     expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
     expect(tab("Standorte und Licht").getAttribute("aria-current")).toBe("page");

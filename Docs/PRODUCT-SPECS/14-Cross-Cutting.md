@@ -169,6 +169,12 @@ Acceptance criteria:
 - Given a link to the former address of the Pokédex (including any path below it), when I open it, then I land on the species view of the "Sammlung"; the former address of the collection still shows my plants.
 - Given I chose a view before, when I open "Sammlung" without a view in the address, then the view from my last choice on this device shows; when the address names a view, then the address wins; when the device cannot remember (private mode), then the plants show and nothing breaks.
 - Given I switch the view with the keyboard or a screen reader, then every choice is a target of at least 44 px, the selected one is marked by more than colour, the focus stays on the switch, and the new view is announced politely (US-QS-10).
+- Given the main destinations, then treatments (US-BEH) and the hints about incomplete plants (US-BES-08) are not destinations of their own: "Heute" shows them as sections after "Jetzt dran", in the order "Jetzt dran", "Behandlungen", "Fehlt noch", each named by a heading below the one main heading of the page.
+- Given the section "Behandlungen", then I see the open dates by urgency with "Erledigt" (US-BEH-02, US-BEH-03), plan new ones in a form that opens as a sheet on a phone and as a dialog on a large screen (US-BEH-01), and reach the done treatments per plant (US-BEH-03).
+- Given the section "Fehlt noch", then each hint names what is missing and offers the action that fixes it, including choosing a location for a plant without one right there (US-BES-08, US-PHA-03).
+- Given a link or bookmark to the former addresses of "Behandlung" or "Hinweise", when I open it, then I land on "Heute" at the matching section, the section name is announced politely and the focus is on its heading; the former addresses are no entries of the navigation.
+- Given one of the sections is empty, fails to load or is loading, then it shows that state with its next action (P-09, P-10) while the other sections stay usable.
+- Given "Heute" is opened, then the sections load as their own parts, so the initial JavaScript does not carry them (QG-U6).
 
 Decision and tokens: ADR [0011](../decisions/0011-redesign-direction-greenhouse.md), E-24.
 

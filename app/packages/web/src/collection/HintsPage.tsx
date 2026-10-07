@@ -36,8 +36,12 @@ export function HintsPage(props: {
   api: string;
   token: () => Promise<string | undefined>;
   onOpen: (target: HintTarget) => void;
+  /** Shown as a section of "Heute" (US-QS-14): no card frame and no title of its own, the area names the section. */
+  host?: boolean;
 }) {
   const { api, onOpen, token } = props;
+  const host = props.host === true;
+  const Frame = host ? Plain : PageFrame;
   const again = useInvalidate(KEY);
   const place = useWriteAction(token, again);
   const load = useCallback(
@@ -53,14 +57,14 @@ export function HintsPage(props: {
     [api],
   );
   return (
-    <PageFrame>
+    <Frame>
       <LoadFrame
         queryKey={KEY}
         token={token}
         load={load}
         loadingText="Hinweise werden geladen …"
-        heading="Hinweise"
-        loadingFallback={<HintsPageSkeleton label="Hinweise werden geladen …" />}
+        {...(host ? {} : { heading: "Hinweise" })}
+        loadingFallback={<HintsPageSkeleton label="Hinweise werden geladen …" host={host} />}
       >
         {(data: Data) => (
           <>
@@ -73,6 +77,7 @@ export function HintsPage(props: {
             <HintList
               data={data}
               busy={place.running}
+              host={host}
               onOpen={onOpen}
               onLocate={(specimenId, locationId, success) =>
                 void place.run(
@@ -84,11 +89,21 @@ export function HintsPage(props: {
           </>
         )}
       </LoadFrame>
-    </PageFrame>
+    </Frame>
   );
 }
 
+/** The section of "Heute" is not framed in a card of its own: its hints are the cards. */
+function Plain({ children }: { children: React.ReactNode }) {
+  return <div className="min-w-0">{children}</div>;
+}
+
+/** A hint of the section "Fehlt noch": the warning tokens say it needs a step, the text says which (US-QS-14). */
+const HOST_CARD =
+  "grid min-w-0 content-start gap-1 break-words rounded-card bg-warning p-3 text-warning-foreground shadow-elevation-1";
+
 function HintCard(props: {
+  host: boolean;
   hint: SpecimenHint;
   locations: readonly LightLocation[];
   busy: boolean;
@@ -98,7 +113,7 @@ function HintCard(props: {
   const { hint: h } = props;
   const action = ACTION[h.kind];
   return (
-    <li className={CARD}>
+    <li className={props.host ? HOST_CARD : CARD}>
       <p>{h.text}</p>
       <NextAction>{h.nextAction}</NextAction>
       {h.kind === "location_missing" && (
@@ -122,19 +137,23 @@ function HintCard(props: {
 }
 
 function HintList(props: {
+  host: boolean;
   data: Data;
   busy: boolean;
   onOpen: (t: HintTarget) => void;
   onLocate: (specimenId: string, locationId: string, success: string) => void;
 }) {
   return (
-    <section aria-labelledby="hints-title">
-      <h1 id="hints-title" className={TITLE}>
-        Hinweise
-      </h1>
+    <section aria-labelledby={props.host ? undefined : "hints-title"}>
+      {!props.host && (
+        <h1 id="hints-title" className={TITLE}>
+          Hinweise
+        </h1>
+      )}
       {props.data.hints.length === 0 ? (
         <EmptyState
           title="Keine Hinweise"
+          level={props.host ? 3 : 2}
           description="Jedes Exemplar hat eine Art, einen Standort und eine Lichtzone."
           action={{ label: "Zum Bestand", onClick: () => props.onOpen("collection") }}
         />
@@ -149,6 +168,7 @@ function HintList(props: {
               <HintCard
                 key={`${h.specimenId}-${h.kind}`}
                 hint={h}
+                host={props.host}
                 locations={props.data.locations}
                 busy={props.busy}
                 onOpen={props.onOpen}

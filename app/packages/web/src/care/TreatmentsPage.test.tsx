@@ -2,7 +2,7 @@
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { deliverBuffered } from "@/platform/announcer/outbox";
 import { AnnouncerProvider } from "@/platform/announcer/announcer";
 import { TreatmentsPage } from "./TreatmentsPage";
@@ -493,5 +493,50 @@ describe("US-QS-10 Behandlung abhaken wird angesagt", () => {
     await waitFor(() => expect(heard()).toMatch(/^Nachträglich gesendet: /));
     expect(ticks).toHaveLength(1);
     expect(ticks[0]?.path).toBe("/treatments/a/complete");
+  });
+});
+
+describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", () => {
+  beforeAll(() => {
+    // jsdom has neither: the responsive modal reads the media query, the sheet captures the pointer.
+    Element.prototype.setPointerCapture ??= () => undefined;
+    window.matchMedia ??= ((query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+      onchange: null,
+    })) as unknown as typeof window.matchMedia;
+  });
+  const showHost = () => render(<TreatmentsPage api="http://api" token={token} host />);
+
+  it("US-QS-14 has no h1 and no title of its own; its headings are level 3", async () => {
+    doneServer();
+    showHost();
+    await screen.findByRole("list", { name: "Offene Behandlungen" });
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+    expect(screen.queryByRole("heading", { level: 2 })).toBeNull();
+    expect(screen.getByRole("heading", { level: 3, name: "Offene Behandlungen" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 3, name: "Erledigte Behandlungen" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 4, name: "Aloe" })).toBeTruthy();
+  });
+
+  it("US-QS-14 · US-BEH-02 an overdue row shows its status text from the data as a chip", async () => {
+    doneServer();
+    showHost();
+    const list = await screen.findByRole("list", { name: "Offene Behandlungen" });
+    expect(within(list).getByText("überfällig seit 2 Tagen").className).toContain("rounded-full");
+  });
+
+  it("US-QS-14 · US-BEH-01 the form is not on the page until Behandlung planen is chosen", async () => {
+    doneServer();
+    showHost();
+    await screen.findByRole("list", { name: "Offene Behandlungen" });
+    expect(screen.queryByRole("button", { name: "Behandlung speichern" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Behandlung planen" }));
+    expect(await screen.findByRole("button", { name: "Behandlung speichern" })).toBeTruthy();
   });
 });

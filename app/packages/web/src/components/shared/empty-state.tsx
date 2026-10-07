@@ -13,6 +13,8 @@ export type EmptyStateProps = {
   /** `error` is announced as an alert; `empty` is plain content. */
   variant?: "empty" | "error";
   className?: string;
+  /** Heading level of the title: 2 on a page, 3 inside a section of a page (US-QS-14). */
+  level?: 2 | 3;
 };
 
 /** Empty or error state of a list, table or detail view (US-QS-07, DS-26, P-09): says what happened and what to do next. */
@@ -22,7 +24,9 @@ export function EmptyState({
   action,
   variant = "empty",
   className,
+  level = 2,
 }: EmptyStateProps) {
+  const Title = level === 3 ? "h3" : "h2";
   return (
     <div
       role={variant === "error" ? "alert" : undefined}
@@ -38,7 +42,7 @@ export function EmptyState({
       >
         {variant === "error" ? "!" : "🌱"}
       </span>
-      <h2 className="break-words text-lg font-semibold">{title}</h2>
+      <Title className="break-words text-lg font-semibold">{title}</Title>
       {description ? (
         <p className="max-w-prose break-words text-sm text-muted-foreground">{description}</p>
       ) : null}

@@ -2,25 +2,28 @@ import type { ComponentType } from "react";
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router";
 import type { Species, Specimen } from "@pflanzendex/core";
 import { CollectionArea } from "./collection-area";
-import { CareProfilePage, DifficultyPage, HintsPage } from "./collection";
+import { CareProfilePage, DifficultyPage } from "./collection";
 import { AccountView, SettingsPage, OperatorPage, useSession, type State } from "./account";
 import { LightPage } from "./light";
 import { ReviewPage, SpeciesPage } from "./catalog";
-import { CarePhasesPage, TreatmentsPage } from "./care";
+import { CarePhasesPage } from "./care";
 import { FriendsPage } from "./social";
-import { TodayPage, type TodayDestination } from "./today";
 import { DiscoverPage } from "./discover";
 import { WishlistPage, type WishToPlant } from "./wishlist";
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
-import { LEGACY_POKEDEX_PATH, PATHS, SPECIES_MODE_ADDRESS, type View } from "./navigation";
+import { legacyRoutes } from "@/components/routing/legacy-routes/legacy-routes";
+import { PATHS, type View } from "./navigation";
 /** The start page carries the onboarding forms: its chunk loads with its route (#451). */
 const StartPage = lazyPage(() => import("./start-page").then((m) => ({ default: m.StartPage })));
+/** The destination "Heute" with its sections is its own lazy part: the shell does not carry it (DS-08, US-QS-14). */
+const TodayArea = lazyPage(() =>
+  import("@/components/routing/today-area/today-area").then((m) => ({ default: m.TodayArea })),
+);
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 /** The views that need nothing but the API address and the token. */
 const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Token }>>> = {
-  treatments: TreatmentsPage,
   carePhases: CarePhasesPage,
   careProfile: CareProfilePage,
   difficulty: DifficultyPage,
@@ -31,15 +34,9 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
   settings: SettingsPage,
 };
 
-/** Where the actions of the "Today" list lead (TE-07). */
-const TODAY_VIEW: Record<TodayDestination, View> = {
-  ...{ treatments: "treatments", hints: "hints", collection: "collection" },
-  care_phases: "carePhases",
-};
-
 /** The views that link on to other views; the app wires them (ADR 0003). */
 function LinkingView(props: {
-  view: "start" | "today" | "light" | "hints";
+  view: "start" | "light";
   api: string;
   token: Token;
   accountId: string;
@@ -48,11 +45,7 @@ function LinkingView(props: {
   const { api, token, onOpen } = props;
   if (props.view === "start")
     return <StartPage api={api} token={token} accountId={props.accountId} onOpen={onOpen} />;
-  if (props.view === "today")
-    return <TodayPage api={api} token={token} onOpen={(d) => onOpen(TODAY_VIEW[d])} />;
-  if (props.view === "light")
-    return <LightPage api={api} token={token} onOpenCollection={() => onOpen("collection")} />;
-  return <HintsPage api={api} token={token} onOpen={onOpen} />;
+  return <LightPage api={api} token={token} onOpenCollection={() => onOpen("collection")} />;
 }
 
 /** The species profile has its own address; the id comes from it (US-POK-09). */
@@ -172,7 +165,7 @@ export function AppRoutes(props: {
             />
           }
         />
-        {(["start", "today", "light", "hints"] as const).map((v) => (
+        {(["start", "light"] as const).map((v) => (
           <Route
             key={v}
             path={PATHS[v]}
@@ -188,9 +181,10 @@ export function AppRoutes(props: {
           />
         ))}
         <Route
-          path={`${LEGACY_POKEDEX_PATH}/*`}
-          element={<Navigate to={SPECIES_MODE_ADDRESS} replace />}
+          path={PATHS.today}
+          element={<TodayArea api={api} token={s.token} onOpen={props.onOpen} />}
         />
+        {legacyRoutes()}
         {simpleRoutes(api, s.token, roles)}
         {handOverRoutes(api, s.token, h, props.onOpenProfile)}
         <Route path="*" element={<Navigate to={PATHS.start} replace />} />
