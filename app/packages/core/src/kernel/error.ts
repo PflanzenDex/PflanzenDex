@@ -105,6 +105,16 @@ export const ERROR_TEXTS = {
     "Der Treffer der Pflanzen-Taxonomie ist keine Art (zum Beispiel nur eine Gattung). Familie und Gattung bleiben unbekannt.",
   "taxonomy.lineage_missing":
     "Zu dieser Art fehlt in der Pflanzen-Taxonomie die Einordnung in Gattung und Familie. Sie bleibt unbekannt.",
+  "media.name_invalid": "Der Bildname ist ungültig. Es wurde nichts gespeichert.",
+  "media.not_found": "Dieses Bild gibt es nicht.",
+  "media.too_large":
+    "Das Bild ist zu groß. Wähle ein kleineres Foto (höchstens 15 MB); es wurde nichts gespeichert.",
+  "media.type_unsupported":
+    "Dieses Bildformat wird nicht unterstützt. Nimm ein Foto als JPEG, PNG oder WebP auf; es wurde nichts gespeichert.",
+  "media.not_an_image":
+    "Die Datei lässt sich nicht als Bild lesen. Wähle ein anderes Foto; es wurde nichts gespeichert.",
+  "media.storage_unavailable":
+    "Der Bildspeicher antwortet gerade nicht. Deine Daten sind nicht betroffen; versuche es später erneut.",
   "operator_cost.month_in_future":
     "Dieser Monat liegt in der Zukunft. Trage die Kosten eines Monats ein, der schon begonnen hat.",
 } as const;
