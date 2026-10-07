@@ -37,6 +37,21 @@ vi.mock("./collection/HintsPage", () => {
   return { HintsPage: () => null };
 });
 
+vi.mock("./wishlist/WishlistPage", () => {
+  loaded.pages.push("wishlist");
+  return { WishlistPage: () => null };
+});
+
+vi.mock("./collection/DifficultyPage", () => {
+  loaded.pages.push("difficulty");
+  return { DifficultyPage: () => null };
+});
+
+vi.mock("./collection-area", () => {
+  loaded.pages.push("collection-area");
+  return { CollectionArea: () => null };
+});
+
 vi.mock("vaul", () => {
   loaded.pages.push("vaul");
   return { Drawer: {} };
@@ -61,6 +76,12 @@ describe("#451 · DS-08 the entry bundle stays small", () => {
   it("US-QS-14 · DS-08 the species page of the Sammlung loads only when Arten is chosen", async () => {
     await import("./App");
     expect(loaded.pages).not.toContain("pokedex");
+  });
+
+  it("US-QS-14 · DS-08 the Sammlung with its modes (wishlist, comparison by difficulty) loads only when its route opens", async () => {
+    await import("./App");
+    for (const part of ["collection-area", "wishlist", "difficulty"])
+      expect(loaded.pages).not.toContain(part);
   });
 
   it("US-QS-14 · DS-08 Heute with its sections (treatments, hints) loads only when its route opens", async () => {

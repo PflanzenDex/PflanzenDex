@@ -3,8 +3,6 @@ import {
   CalendarCheck,
   CalendarClock,
   Compass,
-  Gauge,
-  Heart,
   Users,
   Leaf,
   ListChecks,
@@ -23,8 +21,6 @@ export type View =
   | "collection"
   | "carePhases"
   | "careProfile"
-  | "difficulty"
-  | "wishlist"
   | "discover"
   | "friends"
   | "light"
@@ -36,16 +32,14 @@ const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
   { id: "today", text: "Heute", icon: CalendarCheck },
   { id: "collection", text: "Sammlung", icon: Package },
   { id: "discover", text: "Entdecken", icon: Compass },
-  { id: "wishlist", text: "Wunschliste", icon: Heart },
-  { id: "species", text: "Arten", icon: Leaf },
   { id: "friends", text: "Freunde", icon: Users },
+  { id: "account", text: "Konto", icon: User },
+  { id: "species", text: "Arten", icon: Leaf },
   { id: "light", text: "Standorte und Licht", icon: Sun },
   { id: "carePhases", text: "Pflegephasen", icon: CalendarClock },
   { id: "careProfile", text: "Pflegeprofil", icon: ListChecks },
-  { id: "difficulty", text: "Artenvergleich", icon: Gauge },
   { id: "review", text: "Prüfliste", icon: ClipboardCheck },
   { id: "operator", text: "Betreiber", icon: Building2 },
-  { id: "account", text: "Konto", icon: User },
 ];
 
 /** One URL path per view (English); the link texts above stay German. */
@@ -56,8 +50,6 @@ export const PATHS: Record<View, string> = {
   collection: "/collection",
   carePhases: "/care-phases",
   careProfile: "/care-profile",
-  difficulty: "/difficulty",
-  wishlist: "/wishlist",
   discover: "/discover",
   friends: "/friends",
   light: "/light",
@@ -65,6 +57,14 @@ export const PATHS: Record<View, string> = {
   operator: "/operator",
   account: "/account",
 };
+
+/** The former addresses of "Wunschliste" and "Artenvergleich": the third mode and an arrangement of the species of the Sammlung (US-QS-14). */
+export const LEGACY_WISHLIST_PATH = "/wishlist";
+export const LEGACY_DIFFICULTY_PATH = "/difficulty";
+/** Where the wishlist lives now, and where the "to the wishlist" actions lead (US-POK-09, US-WUN-01). */
+export const WISHLIST_MODE_ADDRESS = `${PATHS.collection}?view=wishlist`;
+/** The comparison of the species by difficulty (US-BES-05). */
+export const DIFFICULTY_ADDRESS = `${PATHS.collection}?view=species&sort=difficulty`;
 
 /** The former Pokédex address: it opens the species mode of the Sammlung, so old links keep working (US-QS-14). */
 export const LEGACY_POKEDEX_PATH = "/pokedex";

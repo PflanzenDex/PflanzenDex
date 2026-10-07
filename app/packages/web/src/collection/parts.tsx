@@ -11,6 +11,11 @@ export function PageFrame({ children }: { children: ReactNode }) {
   );
 }
 
+/** A page shown inside another destination is not framed in a card of its own (US-QS-14). */
+export function Plain({ children }: { children: ReactNode }) {
+  return <div className="min-w-0">{children}</div>;
+}
+
 export const TITLE = "mb-2 text-2xl font-semibold";
 export const SUBTITLE = "mb-1 text-xl font-semibold";
 

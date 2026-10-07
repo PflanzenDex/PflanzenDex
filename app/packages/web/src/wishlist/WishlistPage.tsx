@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Candidate, CandidateList } from "@pflanzendex/core";
 import { LoadFrame, useInvalidate, useWriteAction } from "../kernel";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -117,6 +117,18 @@ function Body(props: {
   );
 }
 
+/** Set when a destination shows this page below its own title (US-QS-14). */
+type Host = { onCaption: (text: string | null) => void };
+
+/** Tells the host the count line of the loaded list and takes it back when the page goes away (US-QS-14). */
+function ReportCaption({ host, open }: { host: Host | undefined; open: number }) {
+  useEffect(() => {
+    host?.onCaption(open === 1 ? "1 offener Wunsch" : `${open} offene Wünsche`);
+    return () => host?.onCaption(null);
+  }, [host, open]);
+  return null;
+}
+
 /**
  * The wishlist (US-WUN-01): the open candidates sorted by the stock of their target light zone, thinnest first, each
  * with the reason for its place and the actions "Gekauft" (US-WUN-03) and "Verwerfen" (US-WUN-05); below it the form to
@@ -127,16 +139,30 @@ export function WishlistPage(props: {
   api: string;
   token: Token;
   onCreateSpecimen?: (w: WishToPlant) => void;
+  /** The destination "Sammlung" shows the page below its title: no card frame, no main heading (US-QS-14). */
+  host?: Host;
 }) {
-  const { api, token, onCreateSpecimen } = props;
+  const { api, token, onCreateSpecimen, host } = props;
   const reload = useInvalidate(KEY);
   const load = useCallback((t: string) => loadWishlist(api, t), [api]);
   return (
-    <div className="rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7">
+    <div
+      className={
+        host
+          ? "min-w-0"
+          : "rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7"
+      }
+    >
       <section aria-labelledby="wishlist-title" className="flex min-w-0 flex-col gap-3">
-        <h1 id="wishlist-title" className="text-2xl font-semibold">
-          Wunschliste
-        </h1>
+        {host ? (
+          <h2 id="wishlist-title" className="sr-only">
+            Wunschliste
+          </h2>
+        ) : (
+          <h1 id="wishlist-title" className="text-2xl font-semibold">
+            Wunschliste
+          </h1>
+        )}
         <p className="text-muted-foreground">
           Deine offenen Wünsche, geordnet nach Platz: oben steht, was in die Zone mit den wenigsten
           Pflanzen kommt.
@@ -149,13 +175,16 @@ export function WishlistPage(props: {
           loadingFallback={<WishlistPageSkeleton label="Wunschliste wird geladen …" />}
         >
           {(data: Wishlist) => (
-            <Body
-              data={data}
-              api={api}
-              token={token}
-              onWritten={reload}
-              {...(onCreateSpecimen ? { onCreateSpecimen } : {})}
-            />
+            <>
+              <ReportCaption host={host} open={data.list.candidates.length} />
+              <Body
+                data={data}
+                api={api}
+                token={token}
+                onWritten={reload}
+                {...(onCreateSpecimen ? { onCreateSpecimen } : {})}
+              />
+            </>
           )}
         </LoadFrame>
       </section>

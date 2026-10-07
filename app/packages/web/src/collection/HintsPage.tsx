@@ -4,7 +4,18 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { LoadFrame, useInvalidate, useWriteAction } from "../kernel";
 import { HintsPageSkeleton } from "./HintsPage.skeleton";
-import { Actions, CARD, GRID, NextAction, PageFrame, Quiet, Status, TITLE, Warning } from "./parts";
+import {
+  Actions,
+  CARD,
+  GRID,
+  NextAction,
+  PageFrame,
+  Plain,
+  Quiet,
+  Status,
+  TITLE,
+  Warning,
+} from "./parts";
 import { refusalText } from "./refusal";
 import { loadLocations } from "../light";
 import { loadSpecimenHints } from "./hints-api";
@@ -91,11 +102,6 @@ export function HintsPage(props: {
       </LoadFrame>
     </Frame>
   );
-}
-
-/** The section of "Heute" is not framed in a card of its own: its hints are the cards. */
-function Plain({ children }: { children: React.ReactNode }) {
-  return <div className="min-w-0">{children}</div>;
 }
 
 /** A hint of the section "Fehlt noch": the warning tokens say it needs a step, the text says which (US-QS-14). */

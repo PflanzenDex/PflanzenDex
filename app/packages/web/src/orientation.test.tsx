@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { AppShell } from "./components/shared/app-shell";
 import { AppRoutes } from "./routes";
-import { navItems, PATHS, viewTitle } from "./navigation";
+import { DIFFICULTY_ADDRESS, navItems, PATHS, viewTitle } from "./navigation";
 
 beforeAll(() => {
   // jsdom has no matchMedia, the bottom bar's drawer reads it.
@@ -122,12 +122,12 @@ describe("US-QS-09 · the navigation is the same in every view (3.2.3, 3.2.4)", 
   it("US-QS-09 keyboard only: choosing an entry moves the focus to the heading of the new view", async () => {
     renderAt(PATHS.start);
     const bar = screen.getByRole("navigation", { name: "Hauptnavigation" });
-    const link = within(bar).getByRole("link", { name: "Wunschliste" });
+    const link = within(bar).getByRole("link", { name: "Sammlung" });
     link.focus();
     await userEvent.keyboard("{Enter}");
-    const heading = await screen.findByRole("heading", { level: 1, name: /Wunschliste/ });
+    const heading = await screen.findByRole("heading", { level: 1, name: "Sammlung" });
     await waitFor(() => expect(document.activeElement).toBe(heading));
-    expect(document.title).toBe("Wunschliste – PflanzenDéx");
+    expect(document.title).toBe("Sammlung – PflanzenDéx");
   });
 });
 
@@ -151,15 +151,15 @@ describe("US-QS-09 · a view with nothing to do says so and names the next step 
   });
 
   it("US-QS-09 the empty species comparison names what to do in its text", async () => {
-    renderAt(PATHS.difficulty, empty);
+    renderAt(DIFFICULTY_ADDRESS, empty);
     await screen.findByRole("heading", { name: "Noch keine Art mit aktivem Exemplar" });
     expect(screen.getByText(/Lege im Bestand ein Exemplar an/)).toBeTruthy();
   });
 
   it("US-QS-09 a view that failed to load shows its heading, the reason and a retry, not a blank page", async () => {
-    renderAt(PATHS.difficulty);
+    renderAt(DIFFICULTY_ADDRESS);
     const alert = await screen.findByRole("alert");
     expect(within(alert).getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
-    expect(screen.getByRole("heading", { level: 1, name: "Artenvergleich" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
   });
 });

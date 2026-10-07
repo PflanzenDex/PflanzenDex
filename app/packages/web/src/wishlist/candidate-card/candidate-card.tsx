@@ -50,8 +50,9 @@ function Discard(props: { c: Candidate; onDiscard: (c: Candidate) => void; busy:
     return (
       <Button
         type="button"
-        variant="ghost"
+        variant="outline"
         size="touch"
+        className="rounded-full"
         disabled={props.busy}
         aria-label={`Verwerfen: ${c.title}`}
         onClick={() => setAsking(true)}
@@ -100,13 +101,15 @@ export function CandidateCard(props: {
     <li
       data-priority={c.priority.kind}
       className={cn(
-        "grid min-w-0 content-start gap-1 break-words rounded-xl border border-border bg-card p-3 text-card-foreground",
+        "grid min-w-0 content-start gap-1 break-words rounded-card border border-border bg-card p-3 text-card-foreground shadow-elevation-1",
         PRIORITY_BORDER[c.priority.kind],
       )}
     >
       <Picture image={c.image} />
       <h2 className="mt-2 text-lg font-semibold">{c.title}</h2>
-      <p className="text-sm text-muted-foreground">Platz {rank} der Liste</p>
+      <p className="w-fit rounded-full bg-muted px-3 py-0.5 text-sm font-semibold text-muted-foreground">
+        Platz {rank} der Liste
+      </p>
       <p className="font-bold">{c.zoneText}</p>
       <p>Schwierigkeit: {c.difficulty ? (LEVELS[c.difficulty] ?? UNKNOWN) : UNKNOWN}</p>
       {c.reasoning && <p>{c.reasoning}</p>}
@@ -116,7 +119,7 @@ export function CandidateCard(props: {
           type="button"
           variant="outline"
           size="touch"
-          className="mt-2"
+          className="mt-2 rounded-full"
           disabled={props.busy === true}
           aria-label={`Gekauft: ${c.title}`}
           onClick={() => onBuy(c)}

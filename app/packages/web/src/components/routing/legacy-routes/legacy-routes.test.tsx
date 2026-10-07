@@ -40,6 +40,18 @@ describe("US-QS-14 old addresses keep working", () => {
     expect(screen.getByTestId("address").textContent).toBe("/account#einstellungen true");
   });
 
+  it("US-QS-14 · US-WUN-01 /wishlist leads to the wishlist mode of the Sammlung and keeps the focus on the control", () => {
+    open("/wishlist");
+    expect(screen.getByTestId("address").textContent).toBe("/collection?view=wishlist true");
+  });
+
+  it("US-QS-14 · US-BES-05 /difficulty leads to the species mode sorted by difficulty", () => {
+    open("/difficulty");
+    expect(screen.getByTestId("address").textContent).toBe(
+      "/collection?view=species&sort=difficulty true",
+    );
+  });
+
   it("US-QS-14 the former Pokédex address still opens the species mode of the Sammlung", () => {
     open("/pokedex/abc");
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=species false");
