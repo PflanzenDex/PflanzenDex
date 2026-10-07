@@ -3,7 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CareProfileEntry, Layered } from "@pflanzendex/core";
-import { CareProfilePage } from "./CareProfilePage";
+import { CareProfileSection } from "./CareProfilePage";
 import { loadCareProfiles, saveCareProfile } from "./care-profile-api";
 
 const response = (status: number, body: unknown) =>
@@ -75,7 +75,7 @@ const puts = (fetchFn: ReturnType<typeof fakeServer>) =>
   fetchFn.mock.calls.filter(([, init]) => init?.method === "PUT");
 const sent = (fetchFn: ReturnType<typeof fakeServer>) =>
   puts(fetchFn).map(([, init]) => JSON.parse(String(init?.body)) as unknown);
-const open = () => render(<CareProfilePage api="http://api" token={token} />);
+const open = () => render(<CareProfileSection api="http://api" token={token} speciesId="s1" />);
 
 afterEach(() => {
   cleanup();
@@ -174,7 +174,9 @@ describe("US-BES-09 the care profile page shows the catalog value and my deviati
     fakeServer({ entries: [entry()], locations: [] });
     open();
     expect(
-      await screen.findByText(/Lege zuerst unter „Standorte und Licht“ einen Standort an/),
+      await screen.findByText(
+        /Lege zuerst in der Sammlung unter „Standorte verwalten“ einen Standort an/,
+      ),
     ).toBeTruthy();
     expect(screen.queryByLabelText("Soll-Standort Wachstumsphase für „Bogenhanf“")).toBeNull();
   });
@@ -182,12 +184,12 @@ describe("US-BES-09 the care profile page shows the catalog value and my deviati
   it("US-BES-09 without a species in the collection the page says what to do next (P-09)", async () => {
     fakeServer({ entries: [] });
     open();
-    expect(await screen.findByText(/Lege zuerst im Bestand ein Exemplar an/)).toBeTruthy();
+    expect(await screen.findByText(/Du hast noch kein Exemplar dieser Art/)).toBeTruthy();
   });
 
   it("US-BES-09 without sign-in nothing is requested and the user is asked to sign in", async () => {
     const fetchFn = fakeServer({ entries: [entry()] });
-    render(<CareProfilePage api="http://api" token={async () => undefined} />);
+    render(<CareProfileSection api="http://api" token={async () => undefined} speciesId="s1" />);
     expect(await screen.findByText(/melde dich neu an/)).toBeTruthy();
     expect(fetchFn).not.toHaveBeenCalled();
   });

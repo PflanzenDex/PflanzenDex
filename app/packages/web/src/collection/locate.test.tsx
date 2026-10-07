@@ -137,14 +137,14 @@ describe("US-PHA-03 set the location from the hint 'location missing' (BES-08)",
     render(<HintsPage api="http://api" token={token} onOpen={noop} />);
     await screen.findByText(noZone.text);
     expect(screen.getAllByRole("combobox")).toHaveLength(1);
-    expect(screen.getByRole("button", { name: /Standorte und Licht/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Standorte verwalten/ })).toBeTruthy();
   });
 
   it("US-PHA-03 without any location it says what to do first (P-09)", async () => {
     fakeServer({ hints: [noLocation], locations: [] });
     render(<HintsPage api="http://api" token={token} onOpen={noop} />);
     expect((await screen.findByText(/noch keinen Standort angelegt/)).textContent).toContain(
-      "Standorte und Licht",
+      "Standorte verwalten",
     );
     expect(screen.queryByRole("combobox")).toBeNull();
   });

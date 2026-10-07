@@ -233,3 +233,18 @@ describe("US-POK-09 open a species profile from outside", () => {
     expect(screen.getByRole("button", { name: /Zurück zur Suche/ })).toBeTruthy();
   });
 });
+
+describe("US-QS-14 · US-BES-09 a section of another module below the profile", () => {
+  it("US-QS-14 the section the app hands over shows below the profile of the species, with the species", async () => {
+    fakeServer();
+    render(
+      page({
+        openId: "a1",
+        profileSection: (s) => <h2>{`Mein Pflegeprofil von ${s.germanName}`}</h2>,
+      }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Mein Pflegeprofil von Bogenhanf" }),
+    ).toBeTruthy();
+  });
+});

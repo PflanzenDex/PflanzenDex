@@ -23,9 +23,9 @@ export function KeptProfileCard(props: { entry: CareProfileEntry; lists: Lists }
   ];
   return (
     <section className={CARD} aria-labelledby={`profile-${entry.speciesId}`}>
-      <h2 id={`profile-${entry.speciesId}`} className="text-xl font-semibold">
+      <h3 id={`profile-${entry.speciesId}`} className="text-xl font-semibold">
         {entry.speciesName}
-      </h2>
+      </h3>
       {notice && (
         <div className="rounded-lg border border-border p-3">
           <p>{notice.text}</p>

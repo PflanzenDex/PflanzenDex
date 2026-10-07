@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import type { ApiError } from "../kernel";
 import { CareProfileCard } from "./care-profile-card";
 import { KeptProfileCard } from "./kept-profile-card";
-import { NextAction, PROFILE_GRID, Quiet, Status, TITLE, Warning } from "./parts";
+import { NextAction, PROFILE_GRID, Quiet, Status, Warning } from "./parts";
 import { refusalText } from "./refusal";
 
 export interface ProfileData {
@@ -17,7 +17,7 @@ export interface ProfileData {
   readonly zones: readonly LightZone[];
 }
 
-/** The page body: what was saved or refused, the hint to create a location first, and one card per species. */
+/** The section body: what was saved or refused, the hint to create a location first, and the card of the species. */
 export function ProfileList(props: {
   data: ProfileData;
   write: { running: boolean; message: string | null; error: ApiError | null };
@@ -25,10 +25,7 @@ export function ProfileList(props: {
 }) {
   const { data, write } = props;
   return (
-    <section aria-labelledby="care-profile-title">
-      <h1 id="care-profile-title" className={TITLE}>
-        Pflegeprofil
-      </h1>
+    <div>
       <Quiet className="mb-3">
         Hier weichst du von den Katalogwerten ab, wo dein Standort oder dein Klima es verlangt. Der
         Katalog bleibt unverändert. Dein Pflegeprofil ist privat und nie Teil einer Freigabe.
@@ -42,15 +39,15 @@ export function ProfileList(props: {
       {data.locations.length === 0 && (
         <div className="mb-3">
           <NextAction>
-            Du hast noch keinen Standort angelegt. Lege zuerst unter „Standorte und Licht“ einen
-            Standort an, dann kannst du Soll-Standorte je Phase wählen.
+            Du hast noch keinen Standort angelegt. Lege zuerst in der Sammlung unter „Standorte
+            verwalten“ einen Standort an, dann kannst du Soll-Standorte je Phase wählen.
           </NextAction>
         </div>
       )}
       {data.entries.length === 0 ? (
         <EmptyState
-          title="Noch keine Art im Bestand"
-          description="Lege zuerst im Bestand ein Exemplar an, dann kannst du hier das Pflegeprofil der Art anpassen."
+          title="Du hast noch kein Exemplar dieser Art."
+          description="Lege zuerst mit „Diese Art wählen“ ein Exemplar an, dann kannst du hier das Pflegeprofil der Art anpassen."
         />
       ) : (
         <ul className={PROFILE_GRID}>
@@ -70,6 +67,6 @@ export function ProfileList(props: {
           ))}
         </ul>
       )}
-    </section>
+    </div>
   );
 }

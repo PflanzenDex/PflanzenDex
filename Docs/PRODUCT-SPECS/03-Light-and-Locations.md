@@ -4,6 +4,8 @@ Goal: every species gets the light level that enables its maximum growth, and th
 
 Prototype reference: epic LIC. In the prototype the four lamp levels are **character-identical strings** in five places (B-07) and locations are **free text with exact comparison** (FR-PHA-03). In the app both are entities.
 
+Note (US-QS-14): locations and light zones are managed from the view "Pflanzen" of the destination "Sammlung" ("Standorte verwalten") and from a link in the section "Einstellungen" of "Konto"; the former destination "Standorte und Licht" no longer exists and its address leads there. The plants can be grouped by location and zone.
+
 ## Default light zones
 
 | Zone   | Purpose                                              | Lux value | PPFD (approx.) |

@@ -8,9 +8,8 @@ import type {
 import { LoadFrame, useInvalidate, useWriteAction } from "../kernel";
 import { loadLocations, loadZones } from "../light";
 import { loadCareProfiles, saveCareProfile } from "./care-profile-api";
-import { CareProfilePageSkeleton } from "./CareProfilePage.skeleton";
+import { CareProfileSectionSkeleton } from "./CareProfilePage.skeleton";
 import { ProfileList } from "./care-profile-list";
-import { PageFrame } from "./parts";
 
 interface Data {
   readonly entries: readonly CareProfileEntry[];
@@ -21,12 +20,17 @@ interface Data {
 const KEY = ["collection", "care-profile"] as const;
 
 /**
- * My own care profile per species (US-BES-09): the catalog value and my deviation side by side, only for the fields
- * a keeper may deviate in (FR-BES-09). The catalog stays untouched; the profile is private (P-05). Targets are chosen
- * from the own locations, never typed (FR-PHA-03). Every save says what changed, a refusal stays visible (P-10).
+ * My own care profile of one species (US-BES-09), a section of the species profile (US-QS-14): the catalog value and
+ * my deviation side by side, only for the fields a keeper may deviate in (FR-BES-09). The catalog stays untouched; the
+ * profile is private (P-05). Targets are chosen from the own locations, never typed (FR-PHA-03). Every save says what
+ * changed, a refusal stays visible (P-10). A profile kept from a proposal that was merged into this species shows here too (US-BES-10). The section sits below a heading of its own, so it has none.
  */
-export function CareProfilePage(props: { api: string; token: () => Promise<string | undefined> }) {
-  const { api, token } = props;
+export function CareProfileSection(props: {
+  api: string;
+  token: () => Promise<string | undefined>;
+  speciesId: string;
+}) {
+  const { api, token, speciesId } = props;
   const again = useInvalidate(KEY);
   const write = useWriteAction(token, again);
   const load = useCallback(
@@ -41,23 +45,28 @@ export function CareProfilePage(props: { api: string; token: () => Promise<strin
       if (!zones.ok) return zones;
       return {
         ok: true as const,
-        value: { entries: entries.value, locations: locations.value, zones: zones.value },
+        value: {
+          entries: entries.value.filter(
+            (e) => e.speciesId === speciesId || e.mergedInto?.speciesId === speciesId,
+          ),
+          locations: locations.value,
+          zones: zones.value,
+        },
       };
     },
-    [api],
+    [api, speciesId],
   );
   const save = (speciesId: string, changes: CareProfileChanges, success: string) =>
     void write.run((t) => saveCareProfile(api, t, { speciesId, changes }), success);
   return (
-    <PageFrame>
+    <div className="min-w-0">
       <LoadFrame
         queryKey={KEY}
         fresh
         token={token}
         load={load}
         loadingText="Pflegeprofil wird geladen …"
-        heading="Pflegeprofil"
-        loadingFallback={<CareProfilePageSkeleton label="Pflegeprofil wird geladen …" />}
+        loadingFallback={<CareProfileSectionSkeleton label="Pflegeprofil wird geladen …" />}
       >
         {(data: Data) => (
           <ProfileList
@@ -67,6 +76,6 @@ export function CareProfilePage(props: { api: string; token: () => Promise<strin
           />
         )}
       </LoadFrame>
-    </PageFrame>
+    </div>
   );
 }

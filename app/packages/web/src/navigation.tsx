@@ -1,13 +1,10 @@
 import {
   Building2,
   CalendarCheck,
-  CalendarClock,
   Compass,
   Users,
   Leaf,
-  ListChecks,
   Package,
-  Sun,
   User,
   ClipboardCheck,
   type LucideIcon,
@@ -19,15 +16,16 @@ export type View =
   | "today"
   | "species"
   | "collection"
-  | "carePhases"
-  | "careProfile"
   | "discover"
   | "friends"
-  | "light"
   | "review"
   | "operator"
   | "account";
 
+/** What a link inside the app can open: a destination, or one of the three views that moved into the Sammlung (US-QS-14). */
+export type LinkTarget = View | "light" | "carePhases" | "careProfile";
+
+/** Pflegephasen, Pflegeprofil and Standorte und Licht are no destinations any more: they live in the Sammlung (US-QS-14). */
 const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
   { id: "today", text: "Heute", icon: CalendarCheck },
   { id: "collection", text: "Sammlung", icon: Package },
@@ -35,9 +33,6 @@ const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
   { id: "friends", text: "Freunde", icon: Users },
   { id: "account", text: "Konto", icon: User },
   { id: "species", text: "Arten", icon: Leaf },
-  { id: "light", text: "Standorte und Licht", icon: Sun },
-  { id: "carePhases", text: "Pflegephasen", icon: CalendarClock },
-  { id: "careProfile", text: "Pflegeprofil", icon: ListChecks },
   { id: "review", text: "Prüfliste", icon: ClipboardCheck },
   { id: "operator", text: "Betreiber", icon: Building2 },
 ];
@@ -48,11 +43,8 @@ export const PATHS: Record<View, string> = {
   today: "/today",
   species: "/species",
   collection: "/collection",
-  carePhases: "/care-phases",
-  careProfile: "/care-profile",
   discover: "/discover",
   friends: "/friends",
-  light: "/light",
   review: "/review",
   operator: "/operator",
   account: "/account",
@@ -86,6 +78,32 @@ export const ACCOUNT_SECTIONS = { profile: "profil", settings: "einstellungen" }
 export type AccountSection = keyof typeof ACCOUNT_SECTIONS;
 export const accountAddress = (section: AccountSection) =>
   `${PATHS.account}#${ACCOUNT_SECTIONS[section]}`;
+
+/** The former addresses of "Pflegephasen", "Pflegeprofil" and "Standorte und Licht" (US-QS-14). */
+export const LEGACY_CARE_PHASES_PATH = "/care-phases";
+export const LEGACY_CARE_PROFILE_PATH = "/care-profile";
+export const LEGACY_LIGHT_PATH = "/light";
+/** The query parameters below the plants of the Sammlung: the grouping and the open management of the locations. */
+export const GROUP_PARAM = "group";
+export const MANAGE_PARAM = "manage";
+/** The plants grouped by care phase, with "Jetzt umgestellt" (US-PHA-01, US-PHA-03). */
+export const PHASES_ADDRESS = `${PATHS.collection}?view=plants&${GROUP_PARAM}=phase`;
+/** The management of locations and light zones, opened in the plants of the Sammlung (US-LIC). */
+export const MANAGE_ADDRESS = `${PATHS.collection}?view=plants&${MANAGE_PARAM}=locations`;
+/**
+ * Where a user without a chosen species lands for the care profile: `SPECIES_MODE_ADDRESS`, the species mode of the
+ * Sammlung. The profile of a species has the section "Mein Pflegeprofil" (US-BES-09), and a keeper reaches a species there (US-QS-14).
+ */
+
+/** The address a link inside the app opens for a view: the three merged views lead to their place in the Sammlung. */
+export const viewAddress = (v: LinkTarget): string =>
+  v === "light"
+    ? MANAGE_ADDRESS
+    : v === "carePhases"
+      ? PHASES_ADDRESS
+      : v === "careProfile"
+        ? SPECIES_MODE_ADDRESS
+        : PATHS[v];
 
 const visible = (
   id: View,
