@@ -100,6 +100,11 @@ function fakeServer(initial: Initial = {}) {
     if (path === "/friends/requests")
       return response(200, { incoming: state.incoming, outgoing: state.outgoing });
     if (path === "/friends") return response(200, { friends: state.friends });
+    if (path === "/feed")
+      return response(200, {
+        events: [],
+        hint: { text: "Nichts Neues.", nextAction: "Schau später wieder vorbei." },
+      });
     if (path === "/specimens") return response(200, { specimens: SPECIMENS });
     if (path === "/sharing") return response(200, { shared: state.shared });
     return response(404, {});

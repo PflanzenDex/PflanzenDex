@@ -88,7 +88,7 @@ Assumptions, decided by the PO (revisable):
 - "Number of shared caught species" (US-SOZ-03) = species the friend shares with me that I have caught too (active specimens, compared by the Latin name); `null` = unknown when the friend shares nothing, never 0 by guess (P-08); shown as a plain number, no comparison between friends (FR-SOZ-11).
 - Withdrawing takes effect for the next retrieval; the page says that what was already delivered cannot be retrieved. The consumers of the sharing (feed, counts in the feed, the collection view of a friend, US-SOZ-05 to US-SOZ-07) read it through `friendView` and do not exist yet; `GET /friends/:id/shared` is the one door they use.
 
-### US-SOZ-05 · See which new plants friends have collected · ⬜ new
+### US-SOZ-05 · See which new plants friends have collected · 🟨 new
 
 Acceptance criteria:
 
@@ -98,6 +98,15 @@ Acceptance criteria:
 - Sharing an old specimen creates **no** event "new today", but carries its actual date.
 - Events are summarized by species, friend and day ("N specimens").
 - Default period 30 days. Filters: by friend, only "New species".
+
+Assumptions, decided by the PO (revisable):
+
+- The feed is derived on every request from what friends share (`friendView`), never stored (P-01, DM-SOZ-04): so it exists only through a confirmed friendship, never while a friend has "Everything private" on, and never shows a private specimen. It reads no table of another module.
+- "New species caught" is judged by what the friend shares: a species is new on the earliest dated day among the shared specimens of that species, because the rest of the friend's collection is private. A species that is unknown to friends (a private catalog proposal) is never "new species". Precedence of the types: a cutting is "New cutting", the first specimens of a species "New species", every other one "New specimen".
+- "Potted" needs the history of a cutting becoming a plant and "Swapped" needs the swap module (US-SOZ-10, US-SOZ-11); both types are missing and are added with them. The photo is missing until photos exist (US-WAC-05).
+- The date of an event is `Caught_At`; the period counts calendar days back from today in the viewer's time zone (today and the 29 days before, NFR-08). A shared specimen without a known date cannot be placed in a period: such events are listed after the dated ones as "Datum unbekannt" instead of vanishing (P-08, P-10).
+- Events of the same friend, species, day and type are summarized ("N Exemplare"). The filter offers 7, 30 and 90 days (the API accepts 1 to 365), a friend, and "only new species". Ordering: newest first, then friend name, then species; no ranking and no comparison between friends (FR-SOZ-11). Every state says what to do next (P-09).
+- The block "Neu bei Freunden" sits at the top of the page "Freunde". The banner and the "seen" state are US-SOZ-06.
 
 ### US-SOZ-06 · "New among friends" since my last visit · ⬜ new
 
