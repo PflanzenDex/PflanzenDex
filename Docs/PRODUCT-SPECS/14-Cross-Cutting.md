@@ -73,6 +73,7 @@ Acceptance criteria:
 - The app is installable (home screen) and shows the last loaded data when there is no network; write actions are buffered and delivered when the network returns, without duplicate entry (`US-QS-03`).
 - Photo capture directly from the camera.
 - Given a page or a request is loading, when the wait is shown, then an animated sprout (static under reduced motion) accompanies the placeholder or stands alone, and assistive technology hears the loading text once (4.1.3, 2.3.3).
+- Given a write succeeded or failed, when the result is shown, then a toast says so in a polite (error: assertive) live region above the bottom bar, an undo action is offered where one exists, and the toast stays while it is hovered or focused and for an error at least 10 s; a state that lasts (offline, unknown zone, failed sync) is shown as a banner that stays until dismissed or resolved (4.1.3, 2.2.1, P-10).
 
 ### Accessibility (US-QS-08 to US-QS-13)
 
