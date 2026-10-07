@@ -145,6 +145,8 @@ Assumptions, decided by the PO (revisable):
 
 ### US-SOZ-08 · Offer a plant or cutting for swapping · ⬜ new
 
+Module: the exchange (SOZ-08 to SOZ-11, SOZ-13) is its own module `swap` (ADR `Docs/decisions/0012-swap-module.md`, assumption decided by the PO): two-sided swap rows, states that only move forward, the handover only after both confirmations in one transaction, the cancelation when a friendship ends (SOZ-03) by a hook that the app root wires plus a lazy check on every transition.
+
 Acceptance criteria:
 
 - From the specimen card, "Offer for swapping" creates an offer: `Species`, specimen, `Type` (`cutting | plant | offshoot`), `Mode` (`swap | give away`), optional `Wish` and `Note`.
