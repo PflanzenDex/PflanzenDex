@@ -61,7 +61,7 @@ export function CollectorCard(props: { card: Card }) {
       data-state={c.state}
       {...(rare ? { "data-rarity": "" } : {})}
       className={cn(
-        "grid min-w-0 content-start gap-1 break-words rounded-card bg-card p-3 text-card-foreground shadow-elevation-1",
+        "animate-list-in grid min-w-0 content-start gap-1 break-words rounded-card bg-card p-3 text-card-foreground shadow-elevation-1",
         rare && "border-2 border-warning-border",
       )}
     >
