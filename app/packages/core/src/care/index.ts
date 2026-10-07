@@ -2,7 +2,7 @@
 export { measurementView } from "./measurements/view";
 export type { ViewDependencies } from "./measurements/view";
 export { growthTrend } from "./measurements/growth";
-export type { GrowthTrend, Trend } from "./measurements/growth";
+export type { GrowthSignal, GrowthTrend, Trend } from "./measurements/growth";
 export { measurementSource } from "./measurements/capture/source";
 export type { SourceDependencies } from "./measurements/capture/source";
 export { measurementRecord } from "./measurements/record";

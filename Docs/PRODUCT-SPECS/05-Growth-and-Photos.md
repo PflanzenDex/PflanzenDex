@@ -18,7 +18,7 @@ Acceptance criteria:
 - The same dimension is always measured at the same place.
 - Saving is idempotent (US-QS-03).
 
-State of implementation: the view "Measure" per specimen shows "Was messen?" (growth measure of the species, otherwise "unbekannt"), the last measurement, the last assessment, the input form and the course. Input: number on the grid of 0.5 cm (assumption: the grid also applies on the server so that nothing is rounded silently), quality (preset `Gesund`), optional note; the date defaults to today in the profile's time zone (US-ACC-02; the device's zone only as fallback while none is chosen), is changeable and not in the future (assumption: a typo in the year would distort every later rate). Invalid input writes nothing; saving goes through `measurement.record` with `Idempotency-Key`. **Open:** the upload control for the optional photo in the form (the processing exists, US-WAC-06; showing it is US-WAC-05); rate and trend are in the view (US-WAC-03), the rule that etiolated growth overrides the trend is missing (US-WAC-04). That the same dimension is always measured at the same place exists only as a hint in the text.
+State of implementation: the view "Measure" per specimen shows "Was messen?" (growth measure of the species, otherwise "unbekannt"), the last measurement, the last assessment, the input form and the course. Input: number on the grid of 0.5 cm (assumption: the grid also applies on the server so that nothing is rounded silently), quality (preset `Gesund`), optional note; the date defaults to today in the profile's time zone (US-ACC-02; the device's zone only as fallback while none is chosen), is changeable and not in the future (assumption: a typo in the year would distort every later rate). Invalid input writes nothing; saving goes through `measurement.record` with `Idempotency-Key`. **Open:** the upload control for the optional photo in the form (the processing exists, US-WAC-06; showing it is US-WAC-05); rate and trend are in the view (US-WAC-03), the rule that etiolated growth overrides the trend is in the view (US-WAC-04). That the same dimension is always measured at the same place exists only as a hint in the text.
 
 ### US-WAC-02 · Assess etiolation while measuring · ✅ (prototype ✅)
 
@@ -41,14 +41,16 @@ Acceptance criteria:
 - Two measurements on the same day or in the wrong order (Δ days ≤ 0) yield no rate; before the evaluation the measurements are sorted by date.
 - **No** comparison with a species average (P-08). As soon as enough own data of all users is available, a comparison can be introduced, only with sample size and minimum count (see non-goals in `16-Releases-and-Decisions.md`).
 
-State of implementation: `growthTrend` (core, pure, derived on demand) feeds the `growth` field of the Measure view; the view shows rate (cm/year) and trend. Decisions (assumption, decided by the PO): an interval with Δ days ≤ 0 is skipped, so the trend needs at least two intervals of positive length; the relative deviation divides by the absolute mean, so a negative mean works; with three or more measurements but no usable trend the view says "noch kein Trend" (unknown, P-08). The etiolation override (US-WAC-04) is separate.
+State of implementation: `growthTrend` (core, pure, derived on demand) feeds the `growth` field of the Measure view; the view shows rate (cm/year) and trend. Decisions (assumption, decided by the PO): an interval with Δ days ≤ 0 is skipped, so the trend needs at least two intervals of positive length; the relative deviation divides by the absolute mean, so a negative mean works; with three or more measurements but no usable trend the view says "noch kein Trend" (unknown, P-08). The etiolation override is US-WAC-04.
 
-### US-WAC-04 · Etiolation overrides the trend · ⬜ (prototype ✅)
+### US-WAC-04 · Etiolation overrides the trend · ✅ (prototype ✅)
 
 Acceptance criteria:
 
 - If the quality of the last measurement is `Etiolated/thin`, the view shows "Growth etiolated/thin — despite the rate no success signal, see success criteria", regardless of the rate.
 - A rising trend counts as a success signal only together with `Healthy`.
+
+State of implementation: `growthTrend` (core, derived on demand, never stored) takes the quality of each measurement and returns `signal`: `etiolated` if the latest measurement by date is rated etiolated (regardless of rate or trend, even with a single measurement), `success` only for a faster trend with a healthy latest measurement, otherwise `null`. A missing quality counts as healthy (US-WAC-02). The view keeps showing the rate and replaces the trend line by the etiolation text (German UI text), or appends "(Erfolgssignal)" on success. Earlier etiolated measurements do not override a healthy latest one.
 
 ### US-WAC-05 · View history and photos · ⬜ (prototype ✅)
 

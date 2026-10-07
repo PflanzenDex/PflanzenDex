@@ -33,7 +33,7 @@ const view = (extra: Partial<MeasurementView> = {}): MeasurementView => ({
   measurements: [],
   last: null,
   lastRating: null,
-  growth: { count: 0, ratePerYear: null, trend: null },
+  growth: { count: 0, ratePerYear: null, trend: null, signal: null },
   ...extra,
 });
 /** The schema decides; the first message it carries is what the form shows under the field. */

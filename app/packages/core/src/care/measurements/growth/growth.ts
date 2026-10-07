@@ -1,5 +1,8 @@
 import type { MeasurementRow } from "../types";
 
+/** What the course says about success: etiolated growth never counts (US-WAC-04). */
+export type GrowthSignal = "etiolated" | "success";
+
 export type Trend = "faster" | "slower" | "stable";
 
 /** Rate and trend of a specimen's own course (US-WAC-03). `null` means "unknown", never a guess (P-08). */
@@ -10,6 +13,11 @@ export interface GrowthTrend {
   readonly ratePerYear: number | null;
   /** Last interval rate against the mean of the previous ones; `null` below three usable measurements. */
   readonly trend: Trend | null;
+  /**
+   * `etiolated` if the last measurement is rated etiolated, whatever the rate; `success` only for a faster trend
+   * together with a healthy last measurement; otherwise `null` (US-WAC-04).
+   */
+  readonly signal: GrowthSignal | null;
 }
 
 /** Relative deviation from which the trend is faster or slower (assumption, US-WAC-03). */
@@ -25,7 +33,7 @@ function daysBetween(from: string, to: string): number {
   return Math.round((ms(to) - ms(from)) / MS_PER_DAY);
 }
 
-type Point = Pick<MeasurementRow, "date" | "value">;
+type Point = Pick<MeasurementRow, "date" | "value"> & Partial<Pick<MeasurementRow, "quality">>;
 
 function classify(last: number, previous: readonly number[]): Trend {
   const mean = previous.reduce((a, b) => a + b, 0) / previous.length;
@@ -59,19 +67,26 @@ function overallRate(first: Point, last: Point): number | null {
   return days > 0 ? ((last.value - first.value) / days) * 365 : null;
 }
 
+/** The last measurement's quality overrides the trend; a missing quality counts as healthy (US-WAC-02). */
+function signalOf(last: Point, trend: Trend | null): GrowthSignal | null {
+  if (last.quality === "etiolated") return "etiolated";
+  return trend === "faster" ? "success" : null;
+}
+
 /**
  * Derives overall rate and trend from the measurements in any order (sorted by date first). Intervals of zero or
- * negative length are skipped, so two measurements on the same day yield no rate. Etiolation is judged separately
- * and overrides the signal (US-WAC-04). Derived on demand, never stored (P-01).
+ * negative length are skipped, so two measurements on the same day yield no rate. The last measurement's etiolation
+ * rating overrides the signal (US-WAC-04). Derived on demand, never stored (P-01).
  */
 export function growthTrend(measurements: readonly Point[]): GrowthTrend {
   const sorted = sortByDate(measurements);
   const [first, last] = [sorted[0], sorted[sorted.length - 1]];
   const count = sorted.length;
-  if (!first || !last || count < 2) return { count, ratePerYear: null, trend: null };
+  if (!first || !last) return { count, ratePerYear: null, trend: null, signal: null };
+  if (count < 2) return { count, ratePerYear: null, trend: null, signal: signalOf(last, null) };
   const rates = intervalRates(sorted);
   const latest = rates[rates.length - 1];
   const trend =
     rates.length >= 2 && latest !== undefined ? classify(latest, rates.slice(0, -1)) : null;
-  return { count, ratePerYear: overallRate(first, last), trend };
+  return { count, ratePerYear: overallRate(first, last), trend, signal: signalOf(last, trend) };
 }

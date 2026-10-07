@@ -15,8 +15,18 @@ export interface GrowthLines {
   readonly trend: string;
 }
 
+export const ETIOLATED_TEXT =
+  "Wuchs vergeilt/dünn — trotz Rate kein Erfolgssignal, siehe Erfolgskriterien";
+
 /** What the view says about rate and trend; "unknown" where the data does not reach (P-08). */
 export function growthLines(g: GrowthTrend): GrowthLines {
+  const lines = rateAndTrend(g);
+  if (g.signal === "etiolated") return { ...lines, trend: ETIOLATED_TEXT };
+  if (g.signal === "success") return { ...lines, trend: `${lines.trend} (Erfolgssignal)` };
+  return lines;
+}
+
+function rateAndTrend(g: GrowthTrend): GrowthLines {
   if (g.count === 0) return { rate: "noch keine Messung", trend: "" };
   if (g.count === 1) return { rate: "1 Messung — noch keine Rate", trend: "" };
   if (g.ratePerYear === null)
