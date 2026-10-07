@@ -171,6 +171,28 @@
 
   --ease-enter: cubic-bezier(0.2, 0, 0, 1);
   --ease-leave: cubic-bezier(0.4, 0, 1, 1);
+
+  /* PlantLoader (US-QS-07): grow and sway, durations are multiples of the motion token, so 0ms under reduced motion. */
+  --animate-plant-grow: plant-grow calc(var(--motion-slow) * 6) var(--ease-enter) infinite;
+  --animate-plant-sway: plant-sway calc(var(--motion-slow) * 8) ease-in-out infinite;
+  @keyframes plant-grow {
+    0% {
+      transform: scale(0.35);
+    }
+    60%,
+    100% {
+      transform: scale(1);
+    }
+  }
+  @keyframes plant-sway {
+    0%,
+    100% {
+      transform: rotate(-4deg);
+    }
+    50% {
+      transform: rotate(4deg);
+    }
+  }
 }
 
 /* Base layer (DS-33): the page colours and the pointer for real controls, which preflight resets to the default arrow. */

@@ -22,3 +22,11 @@ describe("US-QS-09 · RequestState page heading (1.3.1, 2.4.6)", () => {
     expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
   });
 });
+
+describe("US-QS-07 · RequestState loading without a skeleton (DS-56)", () => {
+  it("US-QS-07 pending without a skeleton shows the PlantLoader as the one loading status", () => {
+    render(<RequestState onRetry={() => undefined} status="pending" />);
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(screen.getByRole("status").textContent).toBe("Lädt…");
+  });
+});
