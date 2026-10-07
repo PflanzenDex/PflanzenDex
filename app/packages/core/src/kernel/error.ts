@@ -66,6 +66,15 @@ export const ERROR_TEXTS = {
   "friend.request_answered":
     "Diese Anfrage hast du schon anders beantwortet. Es wurde nichts geändert.",
   "friend.not_found": "Diesen Freund gibt es nicht. Lade die Liste neu.",
+  "offer.not_shared":
+    "Dieses Exemplar ist nicht für Freunde freigegeben. Gib es zuerst unter „Was Freunde sehen“ frei, dann kannst du es anbieten.",
+  "offer.already_open":
+    "Für dieses Exemplar gibt es schon ein offenes Angebot. Ziehe es zurück, bevor du ein neues erstellst.",
+  "offer.treatment_open":
+    "Für dieses Exemplar läuft noch eine Behandlung. Bestätige ausdrücklich, dass du es trotzdem anbieten willst.",
+  "offer.not_found": "Dieses Angebot gibt es nicht. Lade die Liste neu.",
+  "offer.not_active":
+    "Dieses Angebot ist schon übergeben und kann nicht mehr zurückgezogen werden. Es wurde nichts geändert.",
   "wish.name_taken":
     "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
   "wish.not_found": "Diesen Wunsch gibt es nicht. Lade die Wunschliste neu.",

@@ -1,5 +1,7 @@
 import { useCallback, useState } from "react";
+import { Link } from "react-router";
 import type { CreatedFriendCode } from "@pflanzendex/core";
+import { Button } from "@/components/ui/button";
 import { LoadFrame, SIGN_IN, useInvalidate, useWriteAction, type ApiError } from "../../../kernel";
 import { errorText } from "@/lib/error-text";
 import {
@@ -177,6 +179,11 @@ export function FriendsPage(props: { api: string; token: Token }) {
           Freunde findest du nur über einen Code, den ihr außerhalb der App austauscht. Was sie von
           dir sehen, bestimmst du; ohne deine Freigabe sieht niemand etwas.
         </p>
+        <div>
+          <Button asChild variant="outline" size="touch">
+            <Link to="/friends/exchange">Zur Tauschbörse</Link>
+          </Button>
+        </div>
         <LoadFrame
           queryKey={KEY}
           token={token}

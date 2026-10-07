@@ -5,6 +5,7 @@ import { OperatorPage, useSession, type State } from "./account";
 import { CareProfileSection } from "./collection";
 import { ReviewPage, SpeciesPage } from "./catalog";
 import { FriendCollectionPage, FriendsPage } from "./social";
+import { ExchangePage } from "./swap";
 import type { WishToPlant } from "./wishlist";
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import { AreaSection } from "@/components/routing/areas/area-section/area-section";
@@ -16,7 +17,7 @@ import {
   TodayArea,
 } from "@/components/routing/areas/lazy-areas";
 import { legacyRoutes } from "@/components/routing/legacy-routes/legacy-routes";
-import { PATHS, PROFILE_BASE, type LinkTarget, type View } from "./navigation";
+import { EXCHANGE_PATH, PATHS, PROFILE_BASE, type LinkTarget, type View } from "./navigation";
 /** The start page carries the onboarding forms: its chunk loads with its route (#451). */
 const StartPage = lazyPage(() => import("./start-page").then((m) => ({ default: m.StartPage })));
 type Token = () => Promise<string | undefined>;
@@ -175,6 +176,7 @@ export function AppRoutes(props: {
             <StartPage api={api} token={s.token} accountId={account.id} onOpen={props.onOpen} />
           }
         />
+        <Route path={EXCHANGE_PATH} element={<ExchangePage api={api} token={s.token} />} />
         <Route
           path={`${PATHS.friends}/:friendId`}
           element={<FriendCollectionRoute api={api} token={s.token} />}

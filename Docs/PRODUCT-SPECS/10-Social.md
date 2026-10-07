@@ -143,7 +143,7 @@ Assumptions, decided by the PO (revisable):
 - "Auf die Wunschliste" on a species I lack records a wish by the Latin name through the existing wishlist operation, so its duplicate check applies; the wish does not yet record that a friend suggested it (no source field on the wish, US-WUN).
 - The friend's device list (US-EQU-12) does not exist yet; the page says so. Everything else of the story is done.
 
-### US-SOZ-08 · Offer a plant or cutting for swapping · ⬜ new
+### US-SOZ-08 · Offer a plant or cutting for swapping · 🟨 new
 
 Module: the exchange (SOZ-08 to SOZ-11, SOZ-13) is its own module `swap` (ADR `Docs/decisions/0012-swap-module.md`, assumption decided by the PO): two-sided swap rows, states that only move forward, the handover only after both confirmations in one transaction, the cancelation when a friendship ends (SOZ-03) by a hook that the app root wires plus a lazy check on every transition.
 
@@ -156,6 +156,17 @@ Acceptance criteria:
 - Phase hint "currently dormancy phase", if applicable.
 - Notice on species protection (e.g. CITES-listed cacti/orchids) when offering (FR-SOZ-09).
 - Withdrawing at any time (`withdrawn`); open requests are canceled.
+
+Assumptions, decided by the PO (revisable):
+
+- The module is `swap` (ADR 0012). The offer is a tenant table of the giver; friends read open offers only through a database function of US-SOZ-09, never through the table. Health details and the dormancy phase are derived on every read (P-01).
+- Entry point: until the specimen card of the redesigned "Sammlung" offers it, the dialog "Zum Tausch anbieten" lives on the page "Tauschbörse" (`/friends/exchange`, button "Zur Tauschbörse" on the page "Freunde"); the page is no destination of its own in the navigation. The button on the specimen card is open.
+- An offer needs `Share = friends` of the specimen (`offer.not_shared`); the dialog shows this and offers to set the sharing with one tap. Only the keeper's own, active specimen can be offered; a foreign one is `specimen.not_found`, an archived one `specimen.archived`; a specimen has at most one open or reserved offer (database rule, `offer.already_open`).
+- The treatments carry no pest category, so every open treatment counts as "treatment open": such a specimen is offered only after the explicit confirmation (`confirmTreatment`, `offer.treatment_open`). The health details name "Behandlung offen" or "Zuletzt behandelt: <reason>, <date>", never the agent and never a note; without any treatment the text is "Keine Behandlung bekannt", which does not say "healthy" (P-08).
+- The phase hint "Zurzeit in der Ruhephase" comes from the care phase list of today in the viewer's time zone (NFR-08); a specimen without a phase shows none.
+- The plant law notice (FR-SOZ-09) is one static text that mentions CITES as an example and says it is no legal advice; it informs and never blocks. There is no list of protected species in the system, so none is invented (P-08).
+- Withdrawing works at any time while the offer is open or reserved, repeating it changes nothing, a handed-over offer is `offer.not_active`; withdrawn offers stay in the list (P-10). Canceling the open requests comes with the requests (US-SOZ-09, US-SOZ-10).
+- Limits (assumption, starting values): wish 1 to 200 characters, note 1 to 500.
 
 ### US-SOZ-09 · See offers from friends and request them · ⬜ new
 

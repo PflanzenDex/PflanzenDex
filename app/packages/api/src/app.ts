@@ -29,14 +29,7 @@ import {
 } from "./collection";
 import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
 import { WISH_PATHS, wishRoutes, wishZoneUsageFor } from "./wishlist";
-import {
-  FEED_PATHS,
-  FRIEND_PATHS,
-  SHARING_PATHS,
-  feedRoutes,
-  friendRoutes,
-  sharingRoutes,
-} from "./social";
+import { bindFriends } from "./friends-bindings";
 import { zoneStockFor } from "./zone-stock";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
@@ -115,15 +108,6 @@ function bindToday(
 function bindWishlist(app: Hono, pool: Pool, auth: MiddlewareHandler, zoneStock?: ZoneStockSource) {
   for (const path of WISH_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", wishRoutes(pool, zoneStock ?? zoneStockFor(pool)));
-}
-
-/** The module `social` (friends by invitation): sign-in guard in front of the paths, then the routes. */
-function bindFriends(app: Hono, pool: Pool, auth: MiddlewareHandler, clock?: () => Date) {
-  for (const path of [...FRIEND_PATHS, ...SHARING_PATHS, ...FEED_PATHS])
-    app.use(path, auth).use(`${path}/*`, auth);
-  app.route("/", friendRoutes(pool, clock));
-  app.route("/", sharingRoutes(pool));
-  app.route("/", feedRoutes(pool, clock));
 }
 
 /** What `care` takes from the app options: clock, location per phase and the media port (photos, US-WAC-06). */

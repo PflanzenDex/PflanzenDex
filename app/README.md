@@ -281,6 +281,14 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Notice (US-SOZ-12):** the start page shows "Du hast N offene Freundschaftsanfragen: <names>" with the way to the answer, derived on every visit from `GET /friends/requests` (no state, no new route, nothing stored). Push and mail are not built (E-10, epic MON); the triggers of the swap module do not exist yet.
 - **Open:** the photo switch (US-WAC-05), the types "Potted" and "Swapped" (US-SOZ-10, US-SOZ-11), the friend's device list (US-EQU-12), the delivery by push or mail (E-10, MON), the cancelation of open swap requests (US-SOZ-10), no limit of open codes per account.
 
+## Offers to swap or give away (US-SOZ-08)
+
+- **Module:** `swap` (`core/src/swap`, `db/src/swap`, `api/src/swap`, `web/src/swap`, ADR 0012), registered in `modules.config.mjs` with the edges `kernel, social, collection, catalog, care`; the wiring of the ports is in the app root (`api/src/swap/offers/wiring.ts`).
+- **Routes:** `GET /offers?timeZone=…` (my offers with health details and phase), `GET /offers/preview?specimenId=…&timeZone=…` (what the dialog shows: sharing, existing offer, health, phase, plant law notice), `POST /offers` (`offer.create`, with `Idempotency-Key`; 409 `offer.not_shared`, `offer.already_open`, `offer.treatment_open`), `POST /offers/:id/withdraw` (`offer.withdraw`; 404 `offer.not_found`, 409 `offer.not_active`).
+- **Data:** table `offer` (migration `0033_swap_offer.sql`, tenant isolation, composite foreign key `(account_id, specimen_id)`, one open or reserved offer per specimen as a partial unique index). Health and phase are derived, not stored.
+- **Web:** the page "Tauschbörse" at `/friends/exchange` (button on the page "Freunde"): my offers and the dialog "Zum Tausch anbieten".
+- **Open:** the button on the specimen card, the offers of friends and the requests (US-SOZ-09), answering (US-SOZ-10), the handover (US-SOZ-11), the history (US-SOZ-13).
+
 ## End-to-end tests (QG-T3, QG-U1)
 
 - **Target:** `make e2e` starts the test database and Keycloak (`db-up`, `auth-up`), applies the migrations and runs Playwright (package `packages/e2e`; Playwright starts API and web itself). Needs Docker. Projects: `mobil` (Pixel 7) and `desktop`.

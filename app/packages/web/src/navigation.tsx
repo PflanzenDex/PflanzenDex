@@ -27,6 +27,9 @@ const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
   { id: "operator", text: "Betreiber", icon: Building2 },
 ];
 
+/** The exchange (ADR 0012) lives below "Freunde", no destination of its own (US-SOZ-08). */
+export const EXCHANGE_PATH = "/friends/exchange";
+
 /** One URL path per view (English); the link texts above stay German. */
 export const PATHS: Record<View, string> = {
   start: "/",
@@ -142,6 +145,7 @@ export function viewTitle(pathname: string): string {
   if (pathname === PATHS.start) return pageTitle("Start");
   const entry = ENTRIES.find((e) => PATHS[e.id] === pathname);
   if (entry) return pageTitle(entry.text);
+  if (pathname === EXCHANGE_PATH) return pageTitle("Tauschbörse");
   if (pathname.startsWith(`${PATHS.friends}/`)) return pageTitle("Sammlung eines Freundes");
   return pathname.startsWith(`${PROFILE_BASE}/`) ? pageTitle("Artenprofil") : pageTitle();
 }
