@@ -147,7 +147,7 @@ beforeAll(async () => {
     onchange: null,
   })) as unknown as typeof window.matchMedia;
   await Promise.all([
-    import("@/components/routing/today-area/today-area"),
+    import("@/components/routing/areas/today-area/today-area"),
     import("./today/today-page/today-page"),
     import("./care/TreatmentsPage"),
     import("./collection/HintsPage"),
@@ -275,7 +275,8 @@ describe("US-ACC-01 App", () => {
     expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
 
     await userEvent.click(tab("Konto"));
-    expect(await screen.findByRole("heading", { name: "Hallo, Lena" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { level: 1, name: "Konto" })).toBeTruthy();
+    expect(await screen.findByText("Hallo, Lena")).toBeTruthy();
     expect(screen.getByText("lena@example.test")).toBeTruthy();
   });
 
@@ -499,8 +500,8 @@ describe("US-QS-07 browser history", () => {
     );
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
     await userEvent.click(tab("Sammlung"));
-    await userEvent.click(tab("Einstellungen"));
-    expect(window.location.pathname).toBe("/settings");
+    await userEvent.click(tab("Konto"));
+    expect(window.location.pathname).toBe("/account");
     await act(async () => {
       window.history.back();
       await waitFor(() => expect(window.location.pathname).toBe("/collection"));

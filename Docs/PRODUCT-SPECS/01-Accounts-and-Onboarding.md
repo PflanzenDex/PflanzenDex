@@ -4,6 +4,8 @@ Goal: every person has their own account with their own data. Getting started ta
 
 The prototype had no account. Everything in this epic is new.
 
+Note (US-QS-14): the account view (US-ACC-01) and the settings (US-ACC-02) are the sections "Profil" and "Einstellungen" of one destination "Konto".
+
 ## User stories
 
 ### US-ACC-01 · Register and sign in · ✅ new
