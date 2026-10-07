@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { AppShell } from "./components/shared/app-shell";
 import { AppRoutes } from "./routes";
-import { DIFFICULTY_ADDRESS, navItems, PATHS, viewTitle } from "./navigation";
+import { DIFFICULTY_ADDRESS, navItems, PATHS, profileAddress, viewTitle } from "./navigation";
 
 beforeAll(() => {
   // jsdom has no matchMedia, the bottom bar's drawer reads it.
@@ -69,7 +69,7 @@ const VIEWS = Object.entries(PATHS);
 
 describe("US-QS-09 · every view has a unique German title (2.4.2)", () => {
   it("US-QS-09 each address has its own title ending in the product name", () => {
-    const titles = [...VIEWS.map(([, path]) => viewTitle(path)), viewTitle("/species/abc")];
+    const titles = [...VIEWS.map(([, path]) => viewTitle(path)), viewTitle(profileAddress("abc"))];
     expect(new Set(titles).size).toBe(titles.length);
     for (const t of titles) expect(t).toMatch(/^.+ – PflanzenDéx$/);
     expect(viewTitle(PATHS.start)).toBe("Start – PflanzenDéx");

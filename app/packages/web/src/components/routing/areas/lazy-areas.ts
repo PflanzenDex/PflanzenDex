@@ -11,3 +11,7 @@ export const AccountArea = lazyPage(() =>
 export const CollectionArea = lazyPage(() =>
   import("@/collection-area").then((m) => ({ default: m.CollectionArea })),
 );
+/** The destination "Entdecken" with its modes (suggestions, catalog) is a lazy part too; every mode loads when chosen (DS-08, US-QS-14). */
+export const DiscoverArea = lazyPage(() =>
+  import("./discover-area/discover-area").then((m) => ({ default: m.DiscoverArea })),
+);
