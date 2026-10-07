@@ -66,12 +66,12 @@ What is taken over from the prototype: the **domain behavior** (phases, growth t
 | SOZ Social              | 13      | 0                      | 13     |
 | EQU Equipment           | 12      | 0                      | 12     |
 | KI AI access            | 10      | 3                      | 7      |
-| QS Cross-cutting        | 13      | 8                      | 5      |
+| QS Cross-cutting        | 14      | 8                      | 6      |
 | MIG Migration (dropped) | 0       | 0                      | 0      |
 | ENT Discover            | 8       | 0                      | 8      |
 | QG Quality gates        | 9       | 0                      | 9      |
 | DEV Development process | 10      | 0                      | 10     |
-| **Total**               | **133** | **52**                 | **81** |
+| **Total**               | **134** | **52**                 | **82** |
 
 ## Replacing existing documents
 
