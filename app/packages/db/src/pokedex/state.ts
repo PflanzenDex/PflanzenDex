@@ -29,6 +29,7 @@ export class PokedexStatePostgres {
         [species, userId],
       ),
     );
-    return r.rows[0]?.seen ?? [];
+    // `insert ... returning` always yields exactly the one row of the account.
+    return (r.rows[0] as { seen: string[] }).seen;
   }
 }
