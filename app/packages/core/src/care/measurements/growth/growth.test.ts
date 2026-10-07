@@ -5,7 +5,7 @@ const m = (date: string, value: number) => ({ date, value });
 
 describe("US-WAC-03 growth rate and trend against the own average", () => {
   it("zero measurements: no rate, no trend", () => {
-    expect(growthTrend([])).toEqual({ count: 0, ratePerYear: null, trend: null });
+    expect(growthTrend([])).toEqual({ count: 0, ratePerYear: null, trend: null, signal: null });
   });
 
   it("one measurement: no rate yet", () => {
@@ -13,6 +13,7 @@ describe("US-WAC-03 growth rate and trend against the own average", () => {
       count: 1,
       ratePerYear: null,
       trend: null,
+      signal: null,
     });
   });
 
@@ -85,7 +86,7 @@ describe("US-WAC-03 growth rate and trend against the own average", () => {
 
   it("two measurements on the same day give no rate", () => {
     const r = growthTrend([m("2026-01-01", 10), m("2026-01-01", 12)]);
-    expect(r).toEqual({ count: 2, ratePerYear: null, trend: null });
+    expect(r).toEqual({ count: 2, ratePerYear: null, trend: null, signal: null });
   });
 
   it("an interval of zero days is skipped and never divides by zero", () => {
@@ -99,7 +100,64 @@ describe("US-WAC-03 growth rate and trend against the own average", () => {
     expect(Object.keys(growthTrend([m("2026-01-01", 1), m("2026-02-01", 2)])).sort()).toEqual([
       "count",
       "ratePerYear",
+      "signal",
       "trend",
     ]);
+  });
+});
+
+const q = (date: string, value: number, quality: "healthy" | "etiolated") => ({
+  date,
+  value,
+  quality,
+});
+// intervals of 10 days: 1 cm, then 1.2 cm: trend faster
+const FASTER = [q("2026-01-01", 10, "healthy"), q("2026-01-11", 11, "healthy")] as const;
+
+describe("US-WAC-04 etiolation overrides the trend", () => {
+  it("last measurement etiolated: signal etiolated, regardless of the rate (rate stays visible)", () => {
+    const r = growthTrend([...FASTER, q("2026-01-21", 12.2, "etiolated")]);
+    expect(r.signal).toBe("etiolated");
+    expect(r.trend).toBe("faster");
+    expect(r.ratePerYear).toBeCloseTo((2.2 / 20) * 365, 10);
+  });
+
+  it("etiolated with falling rate or without a trend is still etiolated", () => {
+    expect(
+      growthTrend([q("2026-01-01", 10, "healthy"), q("2026-01-11", 9, "etiolated")]).signal,
+    ).toBe("etiolated");
+    expect(growthTrend([q("2026-01-01", 10, "etiolated")]).signal).toBe("etiolated");
+  });
+
+  it("a rising trend is a success signal only together with a healthy last measurement", () => {
+    expect(growthTrend([...FASTER, q("2026-01-21", 12.2, "healthy")]).signal).toBe("success");
+  });
+
+  it("an earlier etiolated measurement does not override a healthy last one", () => {
+    const r = growthTrend([
+      q("2026-01-01", 10, "etiolated"),
+      q("2026-01-11", 11, "healthy"),
+      q("2026-01-21", 12.2, "healthy"),
+    ]);
+    expect(r.signal).toBe("success");
+  });
+
+  it("the last measurement is the latest by date, however the rows are ordered", () => {
+    const r = growthTrend([q("2026-01-21", 12.2, "etiolated"), ...FASTER].reverse());
+    expect(r.signal).toBe("etiolated");
+  });
+
+  it("no rising trend and healthy: no success signal; missing quality counts as healthy", () => {
+    expect(growthTrend([...FASTER, q("2026-01-21", 12.05, "healthy")]).signal).toBeNull();
+    expect(
+      growthTrend([
+        { date: "2026-01-01", value: 1 },
+        { date: "2026-01-11", value: 2 },
+      ]).signal,
+    ).toBeNull();
+  });
+
+  it("no measurement: no signal", () => {
+    expect(growthTrend([]).signal).toBeNull();
   });
 });

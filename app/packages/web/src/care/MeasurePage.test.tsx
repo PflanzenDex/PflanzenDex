@@ -47,7 +47,7 @@ function fakeServer(
         measurements,
         last: measurements[0] ?? null,
         lastRating: measurements.length ? "healthy" : null,
-        growth: { count: measurements.length, ratePerYear: null, trend: null },
+        growth: { count: measurements.length, ratePerYear: null, trend: null, signal: null },
       });
     }),
   );
