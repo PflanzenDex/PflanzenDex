@@ -20,3 +20,11 @@ describe("PageSkeleton (US-QS-07, DS-55, DS-56)", () => {
     expect(status.className).toContain("min-w-0");
   });
 });
+
+describe("PageSkeleton sprout (US-QS-07, DS-56)", () => {
+  it("US-QS-07 · DS-56 shows the sprout without a second status", () => {
+    const { container } = render(<PageSkeleton />);
+    expect(container.querySelectorAll("svg")).toHaveLength(1);
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+  });
+});
