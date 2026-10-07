@@ -40,6 +40,7 @@ import {
 import { zoneStockFor } from "./zone-stock";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
+import { discoverRoutes } from "./discover";
 import {
   CARE_PATHS,
   CARE_PHASES_PATHS,
@@ -160,8 +161,7 @@ function bindAccount(app: Hono, verifier: TokenVerifier, pool: Pool, opt: AppOpt
 }
 
 export function createApp(opt: AppOptions = {}): Hono {
-  const version = opt.version ?? "unknown";
-  const commit = opt.commit ?? "unknown";
+  const { version = "unknown", commit = "unknown" } = opt;
   const app = new Hono();
   if (opt.webOrigin)
     app.use(
@@ -187,6 +187,7 @@ export function createApp(opt: AppOptions = {}): Hono {
     app.route("/", specimenRoutes(opt.pool, { clock: opt.clock, ...careSources(opt.pool, opt) }));
     for (const path of POKEDEX_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", pokedexRoutes(opt.pool));
+    app.route("/", discoverRoutes(opt.pool, auth));
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", careProfileRoutes(opt.pool));
     bindWishlist(app, opt.pool, auth, opt.zoneStock);

@@ -3,6 +3,7 @@ import {
   Building2,
   CalendarCheck,
   CalendarClock,
+  Compass,
   Gauge,
   Heart,
   Users,
@@ -32,6 +33,7 @@ export type View =
   | "difficulty"
   | "pokedex"
   | "wishlist"
+  | "discover"
   | "friends"
   | "light"
   | "review"
@@ -51,6 +53,7 @@ const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
   { id: "difficulty", text: "Artenvergleich", icon: Gauge },
   { id: "pokedex", text: "Pokédex", icon: BookOpen },
   { id: "wishlist", text: "Wunschliste", icon: Heart },
+  { id: "discover", text: "Entdecken", icon: Compass },
   { id: "friends", text: "Freunde", icon: Users },
   { id: "light", text: "Standorte und Licht", icon: Sun },
   { id: "review", text: "Prüfliste", icon: ClipboardCheck },
@@ -72,6 +75,7 @@ export const PATHS: Record<View, string> = {
   difficulty: "/difficulty",
   pokedex: "/pokedex",
   wishlist: "/wishlist",
+  discover: "/discover",
   friends: "/friends",
   light: "/light",
   review: "/review",
