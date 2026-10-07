@@ -1,13 +1,9 @@
-// Module register (AB-13): the single source for the module boundary checks (AB-7 to AB-14, FR-QG-19, ADR 0003).
-// Read by tools/check/code/check-boundaries.mjs (imports, structure, migrations) and by findSchemaViolations in db (tables,
-// foreign keys). Code that moves into modules only reads this file.
-//
-// A module folder is `packages/<core|db|api|web>/src/<name>/` with an `index.ts` as its public interface (variant A).
-// The rules apply to every folder that carries the name of a module below; without such folders the gate is idle.
-// The cut follows ADR 0003 with the owner decisions O-1 (care and growth merged) and O-2 (foreign keys across modules
-// only tenant-safe as (account_id, id) on allowed dependencies, plus the registered exception for reference tables).
-// `dependsOn` is the dependency matrix: `A -> B` may be imported only if B is listed for A. A new edge changes this
-// file in the same PR; cycles are always an error (AB-8). `epics` maps epics to modules (report only, QG-T4).
+// Module register (AB-13): the single source for the module boundary checks (AB-7 to AB-14, FR-QG-19, ADR 0003, 0012).
+// Read by tools/check/code/check-boundaries.mjs (imports, structure, migrations) and by findSchemaViolations in db.
+// A module folder is `packages/<core|db|api|web>/src/<name>/` with an `index.ts` as its public interface; without such
+// folders the gate is idle. `dependsOn` is the dependency matrix: `A -> B` may be imported only if B is listed for A; a
+// new edge changes this file in the same PR, cycles are always an error (AB-8). `epics` maps epics to modules (report only).
+// Foreign keys across modules only tenant-safe as (account_id, id) on allowed dependencies (O-2), plus reference tables.
 
 import { KERNEL_GLOSSARY_WORDS, PORTS_WITHOUT_CONTRACT_TEST } from "./module-rules.config.mjs";
 
@@ -106,8 +102,16 @@ const MODULES = [
   {
     name: "social",
     epics: ["SOZ"],
-    tables: ["friendship", "friend_code", "sharing", "feed_seen", "offer", "swap", "event"],
+    tables: ["friendship", "friend_code", "sharing", "feed_seen", "event"],
     dependsOn: ["kernel", "account", "catalog", "collection", "care", "pokedex", "monitoring"],
+    ports: [],
+  },
+  {
+    // Swapping (ADR 0012): no back edge, `social` and `collection` never import it.
+    name: "swap",
+    epics: [],
+    tables: ["offer", "swap"],
+    dependsOn: ["kernel", "social", "collection", "catalog", "care"],
     ports: [],
   },
   {
@@ -133,9 +137,8 @@ const MODULES = [
   },
 ];
 
-// The migrations 0001 to 0011 were applied before the English rename and must not be renamed. They name no (English)
-// module in the file name; this map assigns them (AB-14). 0012 renames the objects of all modules in one go
-// (ADR 0004). New migrations carry the module in the name and in the first line.
+// The migrations 0001 to 0011 were applied before the English rename and must not be renamed; this map assigns them to
+// modules (AB-14). 0012 renames the objects of all modules (ADR 0004). New migrations carry the module in the name.
 const LEGACY_MIGRATIONS = {
   "0001_mandantengrundlage.sql": ["kernel"],
   "0002_betreiber_pruefstatus.sql": ["account", "catalog"],
@@ -166,18 +169,16 @@ const LEGACY_TABLE_NAMES = {
   messung: "measurement",
 };
 
-// Transition (ratchet, may only shrink): folders directly below `packages/<pkg>/src/` that belong to no module yet.
-// Any other folder that is neither a module nor listed here fails (AB-13); an entry whose folder is gone is an error.
+// Transition (ratchet, may only shrink): folders directly below `packages/<pkg>/src/` that belong to no module yet;
+// any other folder that is no module fails (AB-13); an entry whose folder is gone is an error.
 const UNMODULED_FOLDERS = {};
 
-// Module-named folders that exist but do not meet the rules yet; treated like unmoduled folders until fixed, an
-// entry that no longer applies is an error (ratchet). Empty: web/licht has its index.ts and is imported via it.
+// Module-named folders that exist but do not meet the rules yet (ratchet, like the list above).
 const MODULE_FOLDERS_IN_TRANSITION = {};
 
-// Global reference tables (AB-10, ADR 0003 O-2): tables without `konto_id` (a justified entry in OHNE_KONTO_KENNUNG,
-// db/src/kern/schema.ts) that other modules may point to with a plain foreign key on `(id)`, only from a module that may
-// depend on the owner, with `on delete restrict`: the database guarantees integrity (PRIN-006, P-10). Every entry needs
-// a reason; the list grows only through review. Only `species`; its names and versions are details of it.
+// Global reference tables (AB-10, ADR 0003 O-2): tables without an account id (justified in db/src/kernel/schema.ts) that
+// other modules may point to with a plain foreign key on `(id)`, only from a module that may depend on the owner, with
+// `on delete restrict` (P-10). Every entry needs a reason; the list grows only through review. Only `species`.
 const GLOBAL_REFERENCE_TABLES = {
   species: {
     owner: "catalog",
@@ -187,7 +188,6 @@ const GLOBAL_REFERENCE_TABLES = {
 };
 
 const KERNEL = "kernel";
-
 export const MODULE_CONFIG = {
   MODULES,
   KERNEL,
