@@ -12,7 +12,6 @@
     "app/packages/web/src/components/shared": 11,
     "app/packages/web/src/components/ui": 16,
     "app/packages/web/src/light": 16,
-    "Docs": 9,
     "Docs/spikes/te-15-oauth": 6,
     "Docs/spikes/te-15-oauth/checks": 17,
     "scripts": 9
@@ -27,7 +26,6 @@
     "app/packages/web/src/light": 2,
     "app/packages/web/src/pokedex": 9,
     "app/packages/web/src/wishlist": 3,
-    "Docs": 3,
     "Docs/spikes/te-15-oauth": 1
   },
   "LY-4": {

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Sammlung Wunschliste Desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.card{background:var(--surface);border-radius:24px;box-shadow:0 1px 2px var(--shadow),0 8px 20px var(--shadow)}
+.chip{display:inline-flex;align-items:center;font-size:12.5px;font-weight:600;padding:3px 11px;border-radius:13px;background:var(--soft);color:var(--softtext)}
+.btn{min-height:48px;padding:0 22px;border-radius:24px;border:0;background:var(--primary);color:var(--onprimary);font-size:15px;font-weight:700}
+.btn2{min-height:44px;padding:0 18px;border-radius:22px;border:2px solid var(--line);background:transparent;color:var(--text);font-weight:700;font-size:14px}
+.ph{display:flex;align-items:center;justify-content:center;border-radius:16px;flex:none}
+.p1{background:var(--t1b);color:var(--t1f)}.p2{background:var(--t2b);color:var(--t2f)}.p3{background:var(--t3b);color:var(--t3f)}.p4{background:var(--t4b);color:var(--t4f)}
+.mut{color:var(--muted)}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:4px;gap:4px}
+.seg button{min-height:40px;padding:0 20px;border:0;border-radius:20px;background:transparent;color:var(--muted);font-weight:600;font-size:14px}
+.seg button.on{background:var(--soft);color:var(--softtext)}
+.wc{padding:16px 18px;display:flex;align-items:center;gap:16px}
+.wc b{font-size:18px;font-weight:600;font-style:italic}.wc p{margin:4px 0 0;font-size:14px;line-height:1.4;color:var(--muted)}
+.rk{width:32px;height:32px;border-radius:50%;background:var(--soft);color:var(--softtext);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.side{width:248px;flex:none;box-sizing:border-box;padding:24px 16px;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.side a{min-height:44px;box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:14px;text-decoration:none;font-size:15px;font-weight:600;color:var(--muted)}
+.side a.on{background:var(--soft);color:var(--softtext)}
+</style>
+</helmet>
+<div style="{{vars}};width:1280px;height:800px;box-sizing:border-box;display:flex;background:var(--bg);color:var(--text);overflow:hidden">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19l8-8"/></symbol>
+<symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+<symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5a3 3 0 010 6M18 14c2 .6 3 2.6 3 6"/></symbol>
+<symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></symbol>
+</defs></svg>
+<aside class="side">
+<div style="font-size:20px;font-weight:700;padding:0 12px 20px;display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:10px;background:var(--primary);color:var(--onprimary);display:flex;align-items:center;justify-content:center"><svg class="i" style="width:20px;height:20px"><use href="#leaf"/></svg></span>PflanzenDéx</div>
+<nav aria-label="Hauptnavigation" style="display:flex;flex-direction:column;gap:4px">
+<a href="#"><svg class="i"><use href="#sun"/></svg>Heute</a>
+<a href="#" class="on"><svg class="i"><use href="#leaf"/></svg>Sammlung</a>
+<a href="#"><svg class="i"><use href="#compass"/></svg>Entdecken</a>
+<a href="#"><svg class="i"><use href="#users"/></svg>Freunde</a>
+<a href="#"><svg class="i"><use href="#user"/></svg>Konto</a>
+</nav>
+</aside>
+<main style="flex:1;min-width:0;padding:32px 40px 0;display:flex;flex-direction:column;gap:18px">
+<header style="display:flex;align-items:flex-end;justify-content:space-between"><div><div class="mut" style="font-size:14px;font-weight:500">3 offene Wünsche · sortiert nach freiem Platz in der Zielzone</div><h1 style="margin:0;font-size:40px;line-height:1.1;font-weight:700;letter-spacing:-.8px">Sammlung</h1></div>
+<div class="seg" role="group" aria-label="Ansicht"><button aria-pressed="false">Pflanzen</button><button aria-pressed="false">Arten</button><button class="on" aria-pressed="true">Wunschliste</button></div></header>
+<div style="flex:1;min-height:0;display:flex;gap:24px">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:14px">
+<div class="card wc"><div class="rk">1</div><div class="ph p1" style="width:72px;height:72px"><svg class="i" style="width:34px;height:34px"><use href="#leaf"/></svg></div><div style="flex:1"><b>Alocasia zebrina</b><div style="display:flex;gap:6px;margin-top:6px"><span class="chip">Zone 2</span><span class="chip">mittel</span></div><p>Zone 2 hat Platz für 2 weitere Pflanzen, mehr als jede andere Zone.</p></div><div style="display:flex;flex-direction:column;gap:8px"><button class="btn" style="min-height:44px">Gekauft</button><button class="btn2">Verwerfen</button></div></div>
+<div class="card wc"><div class="rk">2</div><div class="ph p3" style="width:72px;height:72px"><svg class="i" style="width:34px;height:34px"><use href="#leaf"/></svg></div><div style="flex:1"><b>Philodendron hederaceum</b><div style="display:flex;gap:6px;margin-top:6px"><span class="chip">Zone 3</span><span class="chip">leicht</span></div><p>Zone 3 hat Platz für 1 weitere Pflanze.</p></div><div style="display:flex;flex-direction:column;gap:8px"><button class="btn" style="min-height:44px">Gekauft</button><button class="btn2">Verwerfen</button></div></div>
+<div class="card wc" style="background:var(--warnbg);color:var(--warntext);box-shadow:none"><div class="rk" style="background:transparent;border:2px solid var(--warntext);color:var(--warntext)">3</div><div style="flex:1"><b>Hoya carnosa</b><p style="color:var(--warntext)">Zielzone unbekannt, deshalb am Ende der Liste.</p></div><button class="btn2" style="border-color:var(--warntext);color:var(--warntext)">Zone festlegen</button></div>
+</div>
+<aside class="card" style="width:320px;flex:none;box-sizing:border-box;border-radius:28px 28px 0 0;padding:20px;display:flex;flex-direction:column;gap:14px">
+<h2 style="margin:0;font-size:18px;font-weight:700">Platz in deinen Zonen</h2>
+<div style="font-size:14px;display:flex;flex-direction:column;gap:12px">
+<div><div style="display:flex;justify-content:space-between"><span>Zone 2</span><b>2 frei</b></div><div style="height:12px;border-radius:6px;background:var(--bg);margin-top:4px"><div style="width:60%;height:12px;border-radius:6px;background:var(--primary)"></div></div></div>
+<div><div style="display:flex;justify-content:space-between"><span>Zone 3</span><b>1 frei</b></div><div style="height:12px;border-radius:6px;background:var(--bg);margin-top:4px"><div style="width:30%;height:12px;border-radius:6px;background:var(--primary)"></div></div></div>
+<div><div style="display:flex;justify-content:space-between"><span>Zone 4</span><b>0 frei</b></div><div style="height:12px;border-radius:6px;background:var(--bg);margin-top:4px"></div></div>
+</div>
+<p class="mut" style="margin:0;font-size:13.5px;line-height:1.45">Der freie Platz kommt aus den Standorten, die du eingerichtet hast. Keine Vergleiche mit anderen Sammlungen.</p>
+<a href="#" style="margin-top:auto;margin-bottom:20px;font-size:14px;font-weight:600;color:var(--primary);min-height:44px;display:inline-flex;align-items:center;text-decoration:none">Standorte verwalten</a>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = (this.props.theme ?? 'light') === 'dark';
+const P = dark
+? {bg:'#0F1612',surface:'#18221C',text:'#E6EFE9',muted:'#A5B6AB',line:'#2B3B31',primary:'#7BD3A0',onprimary:'#0B2316',soft:'#1F3A2B',softtext:'#A9E8C4',warnbg:'#3A2F10',warntext:'#F2C766',shadow:'rgba(0,0,0,0.35)',t1b:'#27432F',t1f:'#7BD3A0',t2b:'#3A3A20',t2f:'#E3D07A',t3b:'#25384A',t3f:'#8EC5F0',t4b:'#3C2B3F',t4f:'#E0A8E8'}
+: {bg:'#F2F6F3',surface:'#FFFFFF',text:'#14201A',muted:'#4B5C52',line:'#D3DED6',primary:'#1B6B4A',onprimary:'#FFFFFF',soft:'#D8EEDF',softtext:'#124A32',warnbg:'#FFF1CF',warntext:'#6B4700',shadow:'rgba(20,40,28,0.08)',t1b:'#CFE8D6',t1f:'#1B6B4A',t2b:'#EEF0C8',t2f:'#5A5A12',t3b:'#D4E6F4',t3f:'#1F4F78',t4b:'#F0DDF2',t4f:'#6B2C75'};
+return { vars: Object.keys(P).map(k => '--' + k + ':' + P[k]).join(';') };
+}
+}
+</script>
+</body>
+</html>

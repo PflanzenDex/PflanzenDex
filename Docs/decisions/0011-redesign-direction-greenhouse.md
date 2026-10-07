@@ -13,6 +13,12 @@ The owner asked for a modern look with real animation and a proper layout, mobil
 
 Three directions were drawn: **A Greenhouse** (soft, photo-led, large radius, calm green), **B Field Notes** (dense, hairlines, one blue accent) and **C Collector** (game-like Pokédex). The owner chose A. Mockups were drawn for Today and Collection (A and B) and Today and Pokédex (C); Discover, Measure, Friends, Settings and onboarding are not drawn yet and are designed in their screen PRs from the same tokens.
 
+Source files: `Docs/design` (the canvas sources: `directions/` holds the three directions, `greenhouse/` the mobile and desktop screens of the chosen direction, `README.md` explains how to open them). The same canvases exist as claude.ai artifacts, which are **private to the project owner**; the files in the repo are the source:
+
+- Directions: <https://claude.ai/artifact/J4tf3smVkAA95ppheurHqf>
+- Screens (Greenhouse): <https://claude.ai/artifact/YJvAytYFmzMc28EzmmSbuj>
+- Reference board: <https://claude.ai/artifact/Gv7hbqzi8wtNgmCkxa8iQH>
+
 ## Decision 1 · Direction A "Greenhouse"
 
 - **Status:** accepted.
