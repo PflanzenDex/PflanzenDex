@@ -1,4 +1,10 @@
-import type { AnswerOutcome, Friend, FriendRequest, FriendStore, RedeemResult } from "./types";
+import type {
+  AnswerOutcome,
+  FriendRecord,
+  FriendRequest,
+  FriendStore,
+  RedeemResult,
+} from "./types";
 
 interface Code {
   readonly by: string;
@@ -112,10 +118,15 @@ export class InMemoryFriends implements FriendStore {
     return "ended";
   }
 
-  async friends(userId: string): Promise<readonly Friend[]> {
+  async friends(userId: string): Promise<readonly FriendRecord[]> {
     return this.rows
       .filter((r) => r.userId === userId && r.status === "confirmed")
-      .map((r) => ({ id: r.id, name: r.otherName, since: r.since as string }));
+      .map((r) => ({
+        id: r.id,
+        name: r.otherName,
+        since: r.since as string,
+        accountId: r.otherId,
+      }));
   }
 }
 

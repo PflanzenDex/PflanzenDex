@@ -1,5 +1,5 @@
 import type { Pool } from "pg";
-import { withAccount } from "../kernel/index.ts";
+import { withAccount } from "../../kernel/index.ts";
 
 // Same shapes as the interface FriendStore in `core` (structurally equal; `db` does not import `core`).
 export interface FriendRequestRow {
@@ -13,6 +13,8 @@ export interface FriendRow {
   readonly id: string;
   readonly name: string | null;
   readonly since: string;
+  /** Stays on the server (P-05). */
+  readonly accountId: string;
 }
 export type AnswerOutcome = "accepted" | "declined" | "not_found" | "not_open";
 type Outcome =
@@ -94,7 +96,7 @@ export class FriendsPostgres {
   async friends(userId: string): Promise<readonly FriendRow[]> {
     const r = await withAccount(this.pool, userId, (c) =>
       c.query<FriendRow>(
-        `select id, other_name as name, ${INSTANT("since")} as since
+        `select id, other_name as name, ${INSTANT("since")} as since, other_id as "accountId"
            from friendship where status = 'confirmed' order by lower(coalesce(other_name, '')), id`,
       ),
     );

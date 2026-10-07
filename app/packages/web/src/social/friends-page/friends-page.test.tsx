@@ -25,10 +25,24 @@ const req = (extra: Partial<Req> = {}): Req => ({
 });
 
 type Initial = { incoming?: Req[]; outgoing?: Req[]; friends?: unknown[] };
-type State = { incoming: Req[]; outgoing: Req[]; friends: unknown[] };
+type State = {
+  incoming: Req[];
+  outgoing: Req[];
+  friends: unknown[];
+  shared: { specimenId: string; photos: boolean }[];
+};
+const SPECIMENS = [
+  { id: "s1", speciesId: "sp1", name: "Zebra – M1", status: "plant" },
+  { id: "s2", speciesId: "sp1", name: "Zebra – M2", status: "cutting" },
+  { id: "s3", speciesId: "sp1", name: "Zebra – M3", status: "archived" },
+];
 
 /** The writes of the fake server; the state changes like the real one would. */
-function write(state: State, path: string, body: { code?: string; decision?: string }) {
+function write(
+  state: State,
+  path: string,
+  body: { code?: string; decision?: string; share?: string },
+) {
   if (path === "/friends/invitations")
     return response(201, {
       id: "c1",
@@ -41,13 +55,29 @@ function write(state: State, path: string, body: { code?: string; decision?: str
     state.outgoing = [req({ direction: "sent", otherName: "Anna" })];
     return response(201, state.outgoing[0]);
   }
+  if (path.startsWith("/sharing/")) {
+    const id = path.split("/").pop() as string;
+    const ids = path.includes("/species/")
+      ? SPECIMENS.filter((s) => s.status !== "archived").map((s) => s.id)
+      : [id];
+    state.shared =
+      body.share === "friends"
+        ? [...new Set([...state.shared.map((r) => r.specimenId), ...ids])].map((specimenId) => ({
+            specimenId,
+            photos: false,
+          }))
+        : state.shared.filter((r) => !ids.includes(r.specimenId));
+    return response(200, { share: body.share, changed: ids.length });
+  }
   if (path.endsWith("/end")) {
     state.friends = [];
     return response(200, { status: "ended" });
   }
   state.incoming = [];
   if (body.decision === "accept")
-    state.friends = [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z" }];
+    state.friends = [
+      { id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: null },
+    ];
   return response(200, { status: body.decision === "accept" ? "confirmed" : "declined" });
 }
 
@@ -57,11 +87,12 @@ function fakeServer(initial: Initial = {}) {
     incoming: initial.incoming ?? [],
     outgoing: initial.outgoing ?? [],
     friends: initial.friends ?? [],
+    shared: [],
   };
   const calls: { path: string; body: unknown }[] = [];
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
     const path = new URL(String(url)).pathname;
-    if (init?.method === "POST") {
+    if (init && init.method !== "GET") {
       const body = init.body ? JSON.parse(String(init.body)) : undefined;
       calls.push({ path, body });
       return write(state, path, body);
@@ -69,6 +100,8 @@ function fakeServer(initial: Initial = {}) {
     if (path === "/friends/requests")
       return response(200, { incoming: state.incoming, outgoing: state.outgoing });
     if (path === "/friends") return response(200, { friends: state.friends });
+    if (path === "/specimens") return response(200, { specimens: SPECIMENS });
+    if (path === "/sharing") return response(200, { shared: state.shared });
     return response(404, {});
   });
   vi.stubGlobal("fetch", fetchFn);
@@ -155,15 +188,19 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
   });
 
   it("US-SOZ-02 shows no collection data of a friend, only name and start (P-05)", async () => {
-    fakeServer({ friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z" }] });
+    fakeServer({
+      friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: null }],
+    });
     render(<FriendsPage api="http://api" token={token} />);
     const list = await screen.findByRole("list", { name: "Freunde" });
-    expect(list.textContent).toBe("Benbefreundet seit 06.10.2026Freundschaft beenden");
+    expect(list.textContent).toBe(
+      "Benbefreundet seit 06.10.2026Gemeinsame Arten: unbekannt (noch nichts freigegeben)Freundschaft beenden",
+    );
   });
 
   it("US-SOZ-03 ending a friendship asks first, says what it does and then removes the friend", async () => {
     const { calls } = fakeServer({
-      friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z" }],
+      friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: null }],
     });
     render(<FriendsPage api="http://api" token={token} />);
     await userEvent.click(
@@ -172,11 +209,63 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(screen.getByText(/alle Freigaben gelten dann nicht mehr/)).toBeTruthy();
     expect(calls).toEqual([]);
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
-    expect(screen.queryByText(/alle Freigaben/)).toBeNull();
+    expect(screen.queryByText(/alle Freigaben gelten dann nicht mehr/)).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Freundschaft mit Ben beenden" }));
     await userEvent.click(screen.getByRole("button", { name: "Ja, beenden" }));
     expect(await screen.findByText(/Freundschaft mit Ben beendet/)).toBeTruthy();
     expect(calls[0]).toEqual({ path: "/friends/f1/end", body: {} });
     expect(await screen.findByText(/Noch keine Freunde/)).toBeTruthy();
+  });
+
+  it("US-SOZ-04 everything is private by default; sharing a specimen says what friends see, withdrawing says when it takes effect", async () => {
+    const { calls } = fakeServer();
+    render(<FriendsPage api="http://api" token={token} />);
+    const box = await screen.findByRole("checkbox", { name: "Zebra – M1: mit Freunden teilen" });
+    expect((box as HTMLInputElement).checked).toBe(false);
+    expect(screen.getByText(/Alles ist privat, bis du es freigibst/)).toBeTruthy();
+    expect(screen.getByText(/nie Standort, Messwerte/)).toBeTruthy();
+    await userEvent.click(box);
+    expect(
+      await screen.findByText(/Freigegeben: Freunde sehen dieses Exemplar ab jetzt/),
+    ).toBeTruthy();
+    expect(calls[0]).toEqual({ path: "/sharing/specimens/s1", body: { share: "friends" } });
+    expect(
+      (await screen.findByRole("checkbox", {
+        name: "Zebra – M1: mit Freunden teilen",
+      })) as HTMLInputElement,
+    ).toHaveProperty("checked", true);
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Zebra – M1: mit Freunden teilen" }),
+    );
+    expect(await screen.findByText(/ab dem nächsten Abruf nicht mehr/)).toBeTruthy();
+    expect(calls[1]).toEqual({ path: "/sharing/specimens/s1", body: { share: "private" } });
+  });
+
+  it("US-SOZ-04 archived specimens are not offered; the bulk action shares a whole species", async () => {
+    const { calls } = fakeServer();
+    render(<FriendsPage api="http://api" token={token} />);
+    await screen.findByRole("checkbox", { name: "Zebra – M2: mit Freunden teilen" });
+    expect(screen.queryByRole("checkbox", { name: /M3/ })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Alle Exemplare von Zebra teilen" }));
+    expect(
+      await screen.findByText(/Alle Exemplare dieser Art sind für Freunde freigegeben/),
+    ).toBeTruthy();
+    expect(calls[0]).toEqual({ path: "/sharing/species/sp1", body: { share: "friends" } });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Alle Exemplare von Zebra zurückziehen" }),
+    );
+    expect(await screen.findByText(/Alle Exemplare dieser Art sind zurückgezogen/)).toBeTruthy();
+  });
+
+  it("US-SOZ-03 shows the number of shared caught species of a friend, and unknown without sharing (P-08)", async () => {
+    fakeServer({
+      friends: [
+        { id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: 2 },
+        { id: "f2", name: "Cleo", since: "2026-10-06T12:00:00.000Z", sharedSpecies: 0 },
+      ],
+    });
+    render(<FriendsPage api="http://api" token={token} />);
+    expect(await screen.findByText("Gemeinsame Arten: 2")).toBeTruthy();
+    expect(screen.getByText("Gemeinsame Arten: 0")).toBeTruthy();
   });
 });

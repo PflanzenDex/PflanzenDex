@@ -1,3 +1,4 @@
+import { createFixtureSpecimenAt } from "../collection/index.ts";
 import { asAccount, type Fixtures } from "../kernel/index.ts";
 
 // The other side of the example friendship: a fixed account that stays in place (like the fixture species account),
@@ -12,4 +13,5 @@ export const FIXTURES_SOCIAL: Fixtures = {
     );
     return { other_id: OTHER_SIDE, other_name: "Test", direction: "sent" };
   },
+  sharing: async (k) => ({ specimen_id: await createFixtureSpecimenAt(k) }),
 };

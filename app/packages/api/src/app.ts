@@ -27,7 +27,7 @@ import {
 } from "./collection";
 import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
 import { WISH_PATHS, wishRoutes, wishZoneUsageFor } from "./wishlist";
-import { FRIEND_PATHS, friendRoutes } from "./social";
+import { FRIEND_PATHS, SHARING_PATHS, friendRoutes, sharingRoutes } from "./social";
 import { zoneStockFor } from "./zone-stock";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
@@ -103,8 +103,10 @@ function bindWishlist(app: Hono, pool: Pool, auth: MiddlewareHandler, zoneStock?
 
 /** The module `social` (friends by invitation): sign-in guard in front of the paths, then the routes. */
 function bindFriends(app: Hono, pool: Pool, auth: MiddlewareHandler, clock?: () => Date) {
-  for (const path of FRIEND_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  for (const path of [...FRIEND_PATHS, ...SHARING_PATHS])
+    app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", friendRoutes(pool, clock));
+  app.route("/", sharingRoutes(pool));
 }
 
 /** What `care` feeds into the collection: target location, measurements and treatments, unless tests replace them. */

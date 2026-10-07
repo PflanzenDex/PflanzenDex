@@ -67,7 +67,7 @@ Assumptions, decided by the PO (revisable):
 - A new request with a new code can restart an ended friendship; the old sharing settings do not come back by themselves (they are per specimen and checked against the friendship each time).
 - Canceling open swap requests with the person belongs to the swap module (US-SOZ-10) and is checked there against the friendship status; it does not exist yet.
 
-### US-SOZ-04 · Decide what friends see · ⬜ new
+### US-SOZ-04 · Decide what friends see · 🟨 new
 
 Acceptance criteria:
 
@@ -77,6 +77,16 @@ Acceptance criteria:
 - A global switch "Everything private" suspends all sharing settings without deleting them.
 - Withdrawing takes effect immediately for future retrievals. What has already been delivered cannot be retrieved (note in the dialog).
 - Bulk action: "Share all specimens of this species".
+
+Assumptions, decided by the PO (revisable):
+
+- A row in `sharing` means "shared with friends"; no row means private. Every specimen is private by default and nothing is written for that. `Share_Photos` is stored with the row (default off) and is off for a private specimen; withdrawing deletes the row, so the photo choice has to be made again when sharing again. The switch has nothing to act on before photos exist (US-WAC-05) and is not offered on the page yet.
+- Friends read a shared specimen only through a confirmed friendship, checked in the database on every retrieval (`friend_shares()`): ending a friendship (US-SOZ-03) withdraws everything at once and deletes nothing; a new friendship does not bring old settings back by itself but they apply again, because the rows were never deleted (the owner can withdraw them first). A friend who shares nothing and a stranger look the same: an empty list (P-05).
+- The global switch "Everything private" (profile, US-ACC-02) is applied when friends read: while it is on, friends see nothing; the sharing rows stay and apply again when it is switched off.
+- What a friend gets is a whitelist: species (Latin and German name, only of approved catalog species: a private proposal stays unknown), the specimen name, caught date, cutting yes/no and the photo flag. A marker is part of the stored specimen name (DM-BES-03), so a specimen with a marker is shown under the species name alone; the marker is never shared. Archived specimens are never shown and cannot be shared; withdrawing them works.
+- Only the keeper's own, active specimens can be shared; a foreign or unknown id is `specimen.not_found` (P-04). The bulk action shares every active specimen of the species in one transaction and answers how many it changed (0 is shown, not hidden, P-10).
+- "Number of shared caught species" (US-SOZ-03) = species the friend shares with me that I have caught too (active specimens, compared by the Latin name); `null` = unknown when the friend shares nothing, never 0 by guess (P-08); shown as a plain number, no comparison between friends (FR-SOZ-11).
+- Withdrawing takes effect for the next retrieval; the page says that what was already delivered cannot be retrieved. The consumers of the sharing (feed, counts in the feed, the collection view of a friend, US-SOZ-05 to US-SOZ-07) read it through `friendView` and do not exist yet; `GET /friends/:id/shared` is the one door they use.
 
 ### US-SOZ-05 · See which new plants friends have collected · ⬜ new
 
