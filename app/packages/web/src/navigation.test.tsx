@@ -44,7 +44,11 @@ describe("US-ACC-05 navigation", () => {
 describe("US-QS-07 · DS-25 navigation items", () => {
   it("US-QS-07 · DS-25 every destination links to the address of its view", () => {
     const items = navItems({ reviewer: true, operator: true });
-    expect(items.map((i) => i.href)).toEqual(Object.values(PATHS));
+    expect(items.map((i) => i.href).sort()).toEqual(
+      Object.values(PATHS)
+        .filter((p) => p !== PATHS.start)
+        .sort(),
+    );
   });
 
   it("US-QS-07 · DS-25 the bottom bar shows at most 5 destinations, the rest sit in the drawer", () => {
@@ -63,10 +67,32 @@ describe("US-QS-07 · DS-25 navigation items", () => {
   });
 });
 
+describe("US-QS-14 · the start page is no destination", () => {
+  it("US-QS-14 · on / the brand link leads home and no destination is marked active", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <AppShell items={navItems({ reviewer: true, operator: true })}>
+          <p>Inhalt</p>
+        </AppShell>
+      </MemoryRouter>,
+    );
+    for (const name of ["Navigation unten", "Navigation seitlich", "Hauptnavigation"]) {
+      const nav = within(screen.getByRole("navigation", { name }));
+      for (const link of nav.getAllByRole("link"))
+        expect(link.getAttribute("aria-current"), link.textContent ?? "").toBeNull();
+    }
+    const brand = within(screen.getByRole("navigation", { name: "Hauptnavigation" })).getByRole(
+      "link",
+      { name: "PflanzenDex, zur Startseite" },
+    );
+    expect(brand.getAttribute("href")).toBe("/");
+  });
+});
+
 describe("US-QS-07 · DS-22 navigation icons", () => {
   it("US-QS-07 · DS-22 every destination has a decorative icon", () => {
     const items = navItems({ reviewer: true, operator: true });
-    expect(items.length).toBe(Object.values(PATHS).length);
+    expect(items.length).toBe(Object.values(PATHS).length - 1);
     for (const item of items) expect(item.icon, item.label).not.toBeNull();
   });
 
@@ -85,6 +111,19 @@ describe("US-QS-07 · DS-22 navigation icons", () => {
       expect(svg, el.textContent ?? "").not.toBeNull();
       expect(svg?.getAttribute("aria-hidden")).toBe("true");
     }
-    expect(bar.getByRole("link", { name: "Start" })).toBeTruthy();
+    expect(bar.getByRole("link", { name: "Heute" })).toBeTruthy();
+  });
+
+  it("US-QS-14 · DS-25 the bar holds Heute, Bestand, Pokédex, Entdecken, then Mehr; Start is no destination", () => {
+    const items = navItems({});
+    expect(items.slice(0, 4).map((i) => i.label)).toEqual([
+      "Heute",
+      "Bestand",
+      "Pokédex",
+      "Entdecken",
+    ]);
+    expect(items.map((i) => i.label)).not.toContain("Start");
+    expect(items.map((i) => i.href)).not.toContain("/");
+    expect(items.at(-1)?.label).toBe("Einstellungen");
   });
 });

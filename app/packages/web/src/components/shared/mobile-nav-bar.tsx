@@ -4,22 +4,10 @@ import { NavLink, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import type { NavItem } from "./nav-item";
+import { isActivePath, stackedItem, stackedLabel, stackedPill, type NavItem } from "./nav-item";
 
 /** At most 5 slots in the bar (DS-25): 5 destinations, or 4 plus "Mehr". */
 const BAR_SLOTS = 5;
-
-const slot =
-  "flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center justify-end gap-1 rounded-b-md px-0.5 py-1 text-center text-xs " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
-const state = (active: boolean) =>
-  active
-    ? "border-t-2 border-primary font-semibold text-foreground"
-    : "border-t-2 border-transparent text-muted-foreground";
-
-const isActive = (pathname: string, href: string) =>
-  href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
 
 /**
  * The "Mehr" button and the slide-over drawer with the destinations that do not fit the bar (DS-25). Choosing a
@@ -34,9 +22,15 @@ function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
           variant="ghost"
           size="icon"
           aria-label="Mehr"
-          className={cn(slot, "h-auto rounded-b-md", state(active))}
+          className={cn(
+            stackedItem,
+            "h-auto flex-1 rounded-none hover:bg-transparent",
+            stackedLabel(active),
+          )}
         >
-          <Ellipsis aria-hidden="true" className="size-5 shrink-0" />
+          <span className={stackedPill(active)}>
+            <Ellipsis aria-hidden="true" />
+          </span>
           <span>Mehr</span>
         </Button>
       </SheetTrigger>
@@ -49,7 +43,7 @@ function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
                   cn(
-                    "flex min-h-[44px] items-center gap-3 rounded-md px-3 text-base hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "flex min-h-[44px] items-center gap-3 rounded-control px-3 text-base hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     isActive ? "bg-accent font-semibold" : "",
                   )
                 }
@@ -67,31 +61,35 @@ function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
 
 /**
  * Sticky bottom bar below `md` (US-QS-07, DS-25, DS-22). Takes plain items, never modules (DS-44): the first four
- * stay in the bar, the rest move into the "Mehr" drawer. The active one is bold, has a top rule and
- * `aria-current`, so color is never the only signal (DS-19).
+ * stay in the bar, the rest move into the "Mehr" drawer. The active one has the accent pill, a semibold label and
+ * `aria-current`, so color is never the only signal (DS-19). Greenhouse look: ADR 0011 decision 6.
  */
 export function MobileNavBar({ items }: { items: NavItem[] }) {
   const { pathname } = useLocation();
   const overflow = items.length > BAR_SLOTS;
   const inBar = overflow ? items.slice(0, BAR_SLOTS - 1) : items;
   const inDrawer = overflow ? items.slice(BAR_SLOTS - 1) : [];
-  const moreActive = inDrawer.some((i) => isActive(pathname, i.href));
+  const moreActive = inDrawer.some((i) => isActivePath(pathname, i.href));
 
   return (
     <nav
       aria-label="Navigation unten"
       data-bottom-bar
-      className="fixed inset-x-0 bottom-0 z-40 flex items-stretch gap-0.5 border-t border-border bg-background px-1 pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 flex items-stretch gap-0.5 border-t border-border bg-card px-1 pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       {inBar.map((item) => (
         <NavLink
           key={item.href}
           to={item.href}
           end={item.href === "/"}
-          className={({ isActive: active }) => cn(slot, state(active))}
+          className={({ isActive: active }) => cn(stackedItem, "flex-1", stackedLabel(active))}
         >
-          {item.icon}
-          <span className="max-w-full break-words hyphens-auto">{item.label}</span>
+          {({ isActive: active }) => (
+            <>
+              <span className={stackedPill(active)}>{item.icon}</span>
+              <span className="max-w-full break-words hyphens-auto">{item.label}</span>
+            </>
+          )}
         </NavLink>
       ))}
       {overflow ? <MoreDrawer items={inDrawer} active={moreActive} /> : null}

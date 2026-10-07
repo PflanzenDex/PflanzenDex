@@ -3,7 +3,6 @@ import {
   BookOpen,
   CalendarClock,
   Heart,
-  Home,
   Leaf,
   Lightbulb,
   Package,
@@ -16,7 +15,6 @@ import type { NavItem } from "./nav-item";
 
 // Shared sample data for the shell stories (TE-18): sample texts are German.
 const icons: LucideIcon[] = [
-  Home,
   Package,
   Sprout,
   BookOpen,
@@ -27,7 +25,6 @@ const icons: LucideIcon[] = [
   Settings,
 ];
 const labels = [
-  "Start",
   "Bestand",
   "Behandlung",
   "Pokédex",
@@ -38,7 +35,6 @@ const labels = [
   "Einstellungen",
 ];
 const paths = [
-  "/",
   "/collection",
   "/treatments",
   "/pokedex",
@@ -49,9 +45,9 @@ const paths = [
   "/settings",
 ];
 export const items: NavItem[] = labels.map((label, i) => {
-  const Icon = icons[i] ?? Home;
+  const Icon = icons[i] ?? Package;
   return {
-    href: paths[i] ?? "/",
+    href: paths[i] ?? "/collection",
     label,
     icon: <Icon aria-hidden="true" className="size-5 shrink-0" />,
   };

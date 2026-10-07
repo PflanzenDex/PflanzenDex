@@ -3,10 +3,11 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { AppShell } from "./app-shell";
-import { GlobalHeader } from "./global-header";
-import { MobileNavBar } from "./mobile-nav-bar";
-import type { NavItem } from "./nav-item";
+import { AppShell } from "../app-shell";
+import { GlobalHeader } from "../global-header";
+import { MobileNavBar } from "../mobile-nav-bar";
+import { SideNav } from "../side-nav/side-nav";
+import type { NavItem } from "../nav-item";
 
 beforeAll(() => {
   // jsdom has no matchMedia, Vaul reads it.
@@ -91,13 +92,16 @@ describe("MobileNavBar (US-QS-07, DS-25, DS-22, DS-44)", () => {
     at("/p2", <MobileNavBar items={make(4)} />);
     const active = screen.getByRole("link", { name: "Ziel 2" });
     expect(active.getAttribute("aria-current")).toBe("page");
-    expect(active.className).toContain("font-semibold");
+    expect(active.className).toContain("text-foreground");
+    expect(active.firstElementChild?.className).toContain("bg-accent");
     expect(screen.getByRole("link", { name: "Ziel 1" }).getAttribute("aria-current")).toBeNull();
   });
 
-  it("US-QS-07 · DS-25 marks Mehr active when the current page is in the drawer", () => {
+  it("US-QS-14 · DS-25 marks Mehr active when the current page is in the drawer", () => {
     at("/p8", <MobileNavBar items={make(9)} />);
-    expect(screen.getByRole("button", { name: "Mehr" }).className).toContain("font-semibold");
+    const more = screen.getByRole("button", { name: "Mehr" });
+    expect(more.className).toContain("text-foreground");
+    expect(more.firstElementChild?.className).toContain("bg-accent");
   });
 
   it("US-QS-07 · DS-44 takes plain items and renders their labels and hrefs", () => {
@@ -106,30 +110,105 @@ describe("MobileNavBar (US-QS-07, DS-25, DS-22, DS-44)", () => {
   });
 });
 
-describe("GlobalHeader (US-QS-07, DS-25)", () => {
-  it("US-QS-07 · DS-25 shows all destinations in the top navigation from md", () => {
-    at("/", <GlobalHeader items={make(9)} />);
-    const nav = screen.getByRole("navigation", { name: "Hauptnavigation" });
-    expect(within(nav).getAllByRole("link")).toHaveLength(9);
-    expect(nav.className).toContain("hidden");
-    expect(nav.className).toContain("md:flex");
+describe("GlobalHeader (US-QS-07, US-QS-14, DS-25)", () => {
+  it("US-QS-14 · DS-25 the header is hidden from md and carries only the brand, the rail or sidebar take over", () => {
+    at("/p1", <GlobalHeader />);
+    const header = screen.getByRole("banner");
+    expect(header.className).toContain("md:hidden");
+    expect(within(header).queryByRole("navigation")).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "PflanzenDex, zur Startseite" }).getAttribute("href"),
+    ).toBe("/");
+  });
+});
+
+const rail = () => screen.getByRole("navigation", { name: "Navigation seitlich" });
+const sidebar = () => screen.getByRole("navigation", { name: "Hauptnavigation" });
+
+describe("SideNav, rail (US-QS-14, DS-25, DS-44)", () => {
+  it("US-QS-14 · shows from md up to below xl, 80 px wide, with all destinations and no Mehr", () => {
+    at("/", <SideNav items={make(9)} />);
+    expect(rail().className).toContain("md:flex");
+    expect(rail().className).toContain("xl:hidden");
+    expect(rail().className).toContain("w-20");
+    expect(within(rail()).getAllByRole("link", { name: /^Ziel/ })).toHaveLength(9);
+    expect(within(rail()).queryByRole("button", { name: "Mehr" })).toBeNull();
   });
 
-  it("US-QS-07 · DS-25 the brand is always visible and links home", () => {
-    at("/p1", <GlobalHeader items={make(3)} />);
-    const brand = screen.getByRole("link", { name: "PflanzenDex" });
-    expect(brand.getAttribute("href")).toBe("/");
-    expect(brand.closest("header")?.className).not.toContain("hidden");
-  });
-
-  it("US-QS-07 · DS-19 marks the active destination by aria-current and a text change", () => {
-    at("/p1", <GlobalHeader items={make(3)} />);
-    const active = within(screen.getByRole("navigation", { name: "Hauptnavigation" })).getByRole(
-      "link",
-      { name: "Ziel 1" },
-    );
+  it("US-QS-14 · DS-19 the active item has the accent pill, a foreground label and aria-current", () => {
+    at("/p2", <SideNav items={make(4)} />);
+    const active = within(rail()).getByRole("link", { name: "Ziel 2" });
     expect(active.getAttribute("aria-current")).toBe("page");
+    expect(active.className).toContain("text-foreground");
+    expect(active.firstElementChild?.className).toContain("bg-accent");
+    const other = within(rail()).getByRole("link", { name: "Ziel 1" });
+    expect(other.getAttribute("aria-current")).toBeNull();
+    expect(other.className).toContain("text-muted-foreground");
+  });
+
+  it("US-QS-14 · DS-15 every target keeps a 44 px hit area and the brand link goes home", () => {
+    at("/", <SideNav items={make(3)} />);
+    for (const link of within(rail()).getAllByRole("link", { name: /^Ziel/ }))
+      expect(link.className).toContain("min-h-[44px]");
+    expect(
+      within(rail())
+        .getByRole("link", { name: "PflanzenDex, zur Startseite" })
+        .getAttribute("href"),
+    ).toBe("/");
+  });
+});
+
+describe("SideNav, sidebar (US-QS-14, DS-25, DS-44)", () => {
+  it("US-QS-14 · shows from xl, 248 px wide, with the product name and all destinations", () => {
+    at("/", <SideNav items={make(9)} />);
+    expect(sidebar().className).toContain("xl:flex");
+    expect(sidebar().className).toContain("w-[248px]");
+    expect(within(sidebar()).getByText("PflanzenDex")).toBeTruthy();
+    expect(within(sidebar()).getAllByRole("link", { name: /^Ziel/ })).toHaveLength(9);
+  });
+
+  it("US-QS-14 · DS-19 the active item has the accent fill, a visible forced-colours border and aria-current", () => {
+    at("/p1", <SideNav items={make(3)} />);
+    const active = within(sidebar()).getByRole("link", { name: "Ziel 1" });
+    expect(active.getAttribute("aria-current")).toBe("page");
+    expect(active.className).toContain("bg-accent");
     expect(active.className).toContain("font-semibold");
+    expect(active.className).toContain("forced-colors:border-[color:Highlight]");
+    expect(
+      within(sidebar()).getByRole("link", { name: "Ziel 2" }).getAttribute("aria-current"),
+    ).toBeNull();
+  });
+
+  it("US-QS-14 · DS-15 every item is at least 44 px high and reachable by keyboard", async () => {
+    at("/", <SideNav items={make(3)} />);
+    const links = within(sidebar()).getAllByRole("link");
+    for (const link of links) expect(link.className).toContain("min-h-[44px]");
+    for (const link of links) {
+      link.focus();
+      expect(document.activeElement).toBe(link);
+    }
+    await userEvent.keyboard("{Enter}");
+  });
+
+  it("US-QS-14 · the destination list scrolls on its own and a hairline separates the first four from the rest", () => {
+    at("/", <SideNav items={make(9)} />);
+    for (const nav of [rail(), sidebar()]) {
+      expect(nav.className).toContain("h-dvh");
+      expect(nav.className).toContain("overflow-hidden");
+      const list = nav.querySelector("div");
+      expect(list?.className).toContain("overflow-y-auto");
+      expect(list?.className).toContain("scroll-py-3");
+    }
+    const divider = within(sidebar()).getByRole("separator");
+    expect(divider.className).toContain("border-border");
+    expect(divider.previousElementSibling?.textContent).toBe("Ziel 3");
+    expect(within(rail()).queryByRole("separator")).toBeNull();
+  });
+
+  it("US-QS-14 · show forces one form visible for stories and tests", () => {
+    at("/", <SideNav items={make(2)} show="rail" />);
+    expect(rail().className).toContain("flex");
+    expect(sidebar().className).toContain("hidden");
   });
 });
 
@@ -142,18 +221,22 @@ describe("AppShell (US-QS-07, DS-21, DS-22, DS-25)", () => {
     expect(root.className).not.toMatch(/h-screen|100vh/);
   });
 
-  it("US-QS-07 · DS-22 main keeps bottom padding for the sticky bar and safe area", () => {
+  it("US-QS-14 · DS-22 main keeps bottom padding for the sticky bar and safe area, gutters 16, 24 and 40 px", () => {
     at("/", <AppShell items={make(9)}>Inhalt</AppShell>);
     const main = screen.getByRole("main");
     expect(main.textContent).toBe("Inhalt");
     expect(main.className).toContain("pb-[calc(4rem+env(safe-area-inset-bottom))]");
-    expect(main.className).toContain("md:pb-0");
+    expect(main.className).toContain("md:pb-6");
+    for (const gutter of ["px-4", "md:px-6", "xl:px-10"]) expect(main.className).toContain(gutter);
   });
 
-  it("US-QS-07 · DS-25 renders header, bottom bar and the same destinations in both", () => {
+  it("US-QS-14 · DS-25 renders bar, rail and sidebar from the one list; the bar holds at most five slots", () => {
     at("/", <AppShell items={make(9)}>x</AppShell>);
-    expect(screen.getByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
-    expect(screen.getByRole("navigation", { name: "Navigation unten" })).toBeTruthy();
+    const bar = screen.getByRole("navigation", { name: "Navigation unten" });
+    expect(bar.className).toContain("md:hidden");
+    expect(within(bar).getAllByRole("link").length + 1).toBeLessThanOrEqual(5);
+    expect(within(rail()).getAllByRole("link", { name: /^Ziel/ })).toHaveLength(9);
+    expect(within(sidebar()).getAllByRole("link", { name: /^Ziel/ })).toHaveLength(9);
   });
 });
 
