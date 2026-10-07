@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Standorte verwalten mobil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.chip{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:3px 10px;border-radius:12px;background:var(--soft);color:var(--softtext)}
+.chip.w{background:var(--warnbg);color:var(--warntext)}
+.btn{min-height:48px;padding:0 20px;border-radius:24px;border:0;background:var(--primary);color:var(--onprimary);font-size:15px;font-weight:700}
+.h1{margin:0;font-size:32px;line-height:1.1;font-weight:700;letter-spacing:-.5px}
+.mut{color:var(--muted)}
+.loc{display:flex;align-items:center;gap:12px;min-height:64px;padding:8px 4px;border-top:1px solid var(--line)}
+.loc b{display:block;font-size:15px;font-weight:600}.loc small{display:block;font-size:13px;color:var(--muted)}
+.ed{min-width:44px;min-height:44px;border-radius:50%;border:0;background:var(--bg);color:var(--text);display:flex;align-items:center;justify-content:center}
+</style>
+</helmet>
+<div style="{{vars}};width:360px;height:760px;box-sizing:border-box;position:relative;background:var(--bg);color:var(--text);overflow:hidden">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="pin" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+<symbol id="edit" viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16zM14 6l3 3"/></symbol>
+<symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+</defs></svg>
+<div style="padding:24px 20px;opacity:.5"><div class="mut" style="font-size:13px">24 Pflanzen</div><h1 class="h1">Sammlung</h1></div>
+<div style="position:absolute;inset:0;background:rgba(0,0,0,0.45)"></div>
+<section aria-label="Standorte und Licht" style="position:absolute;left:0;right:0;bottom:0;height:640px;box-sizing:border-box;background:var(--surface);border-radius:28px 28px 0 0;box-shadow:0 -8px 24px var(--shadow);padding:10px 20px 20px;display:flex;flex-direction:column;gap:12px">
+<div style="width:44px;height:5px;border-radius:3px;background:var(--line);align-self:center"></div>
+<div style="display:flex;align-items:center;justify-content:space-between"><h2 style="margin:0;font-size:22px;font-weight:700">Standorte und Licht</h2><button class="ed" aria-label="Schließen"><svg class="i"><use href="#x"/></svg></button></div>
+<p class="mut" style="margin:0;font-size:13.5px;line-height:1.45">Zone 1 ist Stecklingslicht, die Zonen 2 bis 4 sind für ausgewachsene Pflanzen. Jeder Standort gehört zu einer Zone.</p>
+<div style="flex:1;min-height:0;overflow:hidden">
+<div class="loc"><svg class="i mut"><use href="#pin"/></svg><div style="flex:1"><b>Wohnzimmer, Südfenster</b><small>9 Pflanzen</small></div><span class="chip">Zone 3</span><button class="ed" aria-label="Bearbeiten"><svg class="i" style="width:18px;height:18px"><use href="#edit"/></svg></button></div>
+<div class="loc"><svg class="i mut"><use href="#pin"/></svg><div style="flex:1"><b>Küchenfenster</b><small>6 Pflanzen</small></div><span class="chip">Zone 2</span><button class="ed" aria-label="Bearbeiten"><svg class="i" style="width:18px;height:18px"><use href="#edit"/></svg></button></div>
+<div class="loc"><svg class="i mut"><use href="#pin"/></svg><div style="flex:1"><b>Schlafzimmer, Regal</b><small>4 Stecklinge</small></div><span class="chip">Zone 1</span><button class="ed" aria-label="Bearbeiten"><svg class="i" style="width:18px;height:18px"><use href="#edit"/></svg></button></div>
+<div class="loc"><svg class="i mut"><use href="#pin"/></svg><div style="flex:1"><b>Flur</b><small>2 Pflanzen</small></div><span class="chip w">Zone unbekannt</span><button class="ed" aria-label="Zone festlegen"><svg class="i" style="width:18px;height:18px"><use href="#edit"/></svg></button></div>
+<div class="loc" style="border-bottom:1px solid var(--line)"><svg class="i mut"><use href="#pin"/></svg><div style="flex:1"><b>Balkon</b><small>3 Pflanzen</small></div><span class="chip">Zone 4</span><button class="ed" aria-label="Bearbeiten"><svg class="i" style="width:18px;height:18px"><use href="#edit"/></svg></button></div>
+</div>
+<button class="btn" style="display:flex;align-items:center;justify-content:center;gap:8px"><svg class="i"><use href="#plus"/></svg>Standort hinzufügen</button>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = (this.props.theme ?? 'light') === 'dark';
+const P = dark
+? {bg:'#0F1612',surface:'#18221C',text:'#E6EFE9',muted:'#A5B6AB',line:'#2B3B31',primary:'#7BD3A0',onprimary:'#0B2316',soft:'#1F3A2B',softtext:'#A9E8C4',warnbg:'#3A2F10',warntext:'#F2C766',shadow:'rgba(0,0,0,0.35)'}
+: {bg:'#F2F6F3',surface:'#FFFFFF',text:'#14201A',muted:'#4B5C52',line:'#D3DED6',primary:'#1B6B4A',onprimary:'#FFFFFF',soft:'#D8EEDF',softtext:'#124A32',warnbg:'#FFF1CF',warntext:'#6B4700',shadow:'rgba(20,40,28,0.08)'};
+return { vars: Object.keys(P).map(k => '--' + k + ':' + P[k]).join(';') };
+}
+}
+</script>
+</body>
+</html>
