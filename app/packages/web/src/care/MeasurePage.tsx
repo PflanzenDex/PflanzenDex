@@ -1,13 +1,13 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../kernel";
+import { LoadFrame, useInvalidate } from "../kernel";
 import { MeasureForm } from "./measure-form";
 import { MeasurementList } from "./measurement-list";
-import { recordMeasurement, loadMeasurementView, type MeasurementInput } from "./measurements-api";
+import { loadMeasurementView } from "./measurements-api";
 import { MeasurementHeader } from "./measurement-header/measurement-header";
 import { MeasurePageSkeleton } from "./MeasurePage.skeleton";
-import { StatusNote } from "./notices";
-import { measurementText } from "./text";
+import { useMeasureSend } from "./measurement-header/measurement-photo";
+import { RefusalAlert, StatusNote } from "./notices";
 
 type Token = () => Promise<string | undefined>;
 
@@ -24,24 +24,17 @@ export function MeasurePage(props: {
   const { api, token, specimen } = props;
   const key = useMemo(() => ["care", "measurements", specimen.id], [specimen.id]);
   const invalidate = useInvalidate(key);
-  const [saved, setSaved] = useState<string | null>(null);
   const valueRef = useRef<HTMLInputElement | null>(null);
   const load = useCallback(
     (t: string) => loadMeasurementView(api, t, specimen.id),
     [api, specimen.id],
   );
-  const send = useCallback(
-    async (input: MeasurementInput): Promise<ApiError | null> => {
-      const t = await token();
-      if (!t) return SIGN_IN;
-      const r = await recordMeasurement({ api, token: t }, specimen.id, input);
-      if (!r.ok) return r.error;
-      setSaved(measurementText(r.value));
-      invalidate();
-      return null;
-    },
-    [api, token, specimen.id, invalidate],
-  );
+  const { send, photoRefusal, saved } = useMeasureSend({
+    api,
+    token,
+    specimenId: specimen.id,
+    invalidate,
+  });
   const loading = "Messungen werden geladen …";
   return (
     <section aria-labelledby="measure-title" className="flex min-w-0 flex-col gap-4">
@@ -59,9 +52,11 @@ export function MeasurePage(props: {
           <>
             <MeasurementHeader view={view} />
             {saved && <StatusNote>Gespeichert: {saved}.</StatusNote>}
+            {photoRefusal && <RefusalAlert error={photoRefusal} />}
             <MeasureForm unit="cm" signs={view.etiolationSigns} onSend={send} focusRef={valueRef} />
             <MeasurementList
               measurements={view.measurements}
+              photo={{ api, token, specimenId: specimen.id }}
               onAdd={() => valueRef.current?.focus()}
             />
           </>
