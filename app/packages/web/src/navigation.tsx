@@ -18,7 +18,7 @@ import {
   ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
-import type { NavItem } from "./components/shared/nav-item";
+import { DISPLAY_NAME, type NavItem } from "./components/shared/nav-item";
 
 export type View =
   | "start"
@@ -102,9 +102,9 @@ export function navItems(who: {
   }));
 }
 
-/** Spelled here and not imported from core: the root barrel of core would add about 5 kB gzip to the initial bundle (DS-08). */
-const PRODUCT = "PflanzenDex";
-/** "Name – PflanzenDex", or the product alone without a name (US-QS-09, WCAG 2.4.2). */
+/** The display name is not imported from core: the root barrel of core would add about 5 kB gzip to the initial bundle (DS-08). */
+const PRODUCT = DISPLAY_NAME;
+/** "Name – PflanzenDéx", or the product alone without a name (US-QS-09, WCAG 2.4.2). */
 export const pageTitle = (view?: string) => (view ? `${view} – ${PRODUCT}` : PRODUCT);
 
 /**

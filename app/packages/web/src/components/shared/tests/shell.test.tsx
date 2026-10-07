@@ -117,7 +117,7 @@ describe("GlobalHeader (US-QS-07, US-QS-14, DS-25)", () => {
     expect(header.className).toContain("md:hidden");
     expect(within(header).queryByRole("navigation")).toBeNull();
     expect(
-      screen.getByRole("link", { name: "PflanzenDex, zur Startseite" }).getAttribute("href"),
+      screen.getByRole("link", { name: "PflanzenDéx, zur Startseite" }).getAttribute("href"),
     ).toBe("/");
   });
 });
@@ -152,7 +152,7 @@ describe("SideNav, rail (US-QS-14, DS-25, DS-44)", () => {
       expect(link.className).toContain("min-h-[44px]");
     expect(
       within(rail())
-        .getByRole("link", { name: "PflanzenDex, zur Startseite" })
+        .getByRole("link", { name: "PflanzenDéx, zur Startseite" })
         .getAttribute("href"),
     ).toBe("/");
   });
@@ -163,7 +163,7 @@ describe("SideNav, sidebar (US-QS-14, DS-25, DS-44)", () => {
     at("/", <SideNav items={make(9)} />);
     expect(sidebar().className).toContain("xl:flex");
     expect(sidebar().className).toContain("w-[248px]");
-    expect(within(sidebar()).getByText("PflanzenDex")).toBeTruthy();
+    expect(within(sidebar()).getByText("PflanzenDéx")).toBeTruthy();
     expect(within(sidebar()).getAllByRole("link", { name: /^Ziel/ })).toHaveLength(9);
   });
 

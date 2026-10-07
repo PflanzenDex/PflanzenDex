@@ -13,7 +13,7 @@ afterEach(() => {
 });
 
 const TITLES: Record<string, string> = { "/": "Erste", "/b": "Zweite", "/slow": "Langsame" };
-const titleOf = (pathname: string) => `${TITLES[pathname] ?? "Ohne"} – PflanzenDex`;
+const titleOf = (pathname: string) => `${TITLES[pathname] ?? "Ohne"} – PflanzenDéx`;
 
 /** A page that shows its heading only after it has "loaded", like a lazy page behind a skeleton. */
 const Slow = lazy(async () => {
@@ -81,7 +81,7 @@ const view = () =>
 describe("US-QS-09 · RouteFocus (2.4.2, 2.4.3)", () => {
   it("US-QS-09 sets the German page title of the view, without stealing the focus on first load", () => {
     view();
-    expect(document.title).toBe("Erste – PflanzenDex");
+    expect(document.title).toBe("Erste – PflanzenDéx");
     expect(document.activeElement).toBe(document.body);
   });
 
@@ -91,10 +91,10 @@ describe("US-QS-09 · RouteFocus (2.4.2, 2.4.3)", () => {
     const heading = await screen.findByRole("heading", { level: 1, name: "Zweite Seite" });
     await waitFor(() => expect(document.activeElement).toBe(heading));
     expect(heading.getAttribute("tabindex")).toBe("-1");
-    expect(document.title).toBe("Zweite – PflanzenDex");
+    expect(document.title).toBe("Zweite – PflanzenDéx");
     await waitFor(() =>
       expect(document.querySelector("[aria-live=polite]")?.textContent).toBe(
-        "Zweite – PflanzenDex",
+        "Zweite – PflanzenDéx",
       ),
     );
   });
