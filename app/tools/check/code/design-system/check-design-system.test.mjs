@@ -294,7 +294,6 @@ export function C({ className, variant }: { className?: string; variant?: "a" | 
     const pass = {
       asChild: "<Trigger asChild><button /></Trigger>",
       asChildAnchor: "<Slot asChild><a onClick={go}>x</a></Slot>",
-      formInProvider: "<Form {...f}>\n<form noValidate />\n</Form>",
       asChildForm: "<Slot asChild>\n<form />\n</Slot>",
       link: '<a href="/x">x</a>',
       plainAnchor: "<a>x</a>",
@@ -310,10 +309,13 @@ export function C({ className, variant }: { className?: string; variant?: "a" | 
     assert.deepEqual(run(ui(inUi)).keys, []);
   });
 
-  it("DS-48 issue 452 · a form is allowed only as the direct child of the Form provider", () => {
-    const jsx = "<Form {...f}><div><form /></div></Form>";
-    const { keys } = run({ ...ui("", "ok"), "src/w/a.tsx": `export const A = () => ${jsx};\n` });
-    assert.deepEqual(keys, ["DS-48|w/a.tsx"]);
+  it("DS-48 issue 505 · a raw form is flagged, also directly under the Form provider", () => {
+    for (const jsx of ["<Form {...f}><form /></Form>", "<Form {...f}><div><form /></div></Form>"]) {
+      const { keys } = run({ ...ui("", "ok"), "src/w/a.tsx": `export const A = () => ${jsx};\n` });
+      assert.deepEqual(keys, ["DS-48|w/a.tsx"], jsx);
+    }
+    const formRoot = "export const FormRoot = () => <Form {...f}><form noValidate /></Form>;\n";
+    assert.deepEqual(run(ui(formRoot)).keys, []);
   });
 
   it("DS-48 issue 452 · asChild exempts only the direct child, not nested controls", () => {
