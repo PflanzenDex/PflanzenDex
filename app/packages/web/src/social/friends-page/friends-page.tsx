@@ -14,6 +14,7 @@ import {
 } from "../api/friends-api";
 import { CodeForm } from "../parts/code-form/code-form";
 import { FriendList } from "../parts/friend-list/friend-list";
+import { FeedBlock } from "../feed-block/feed-block";
 import { SharingPanel } from "../parts/sharing-panel/sharing-panel";
 import { InviteCard } from "../parts/invite-card/invite-card";
 import { nameOf, RequestList } from "../parts/request-list/request-list";
@@ -109,6 +110,11 @@ function Body(props: { data: FriendsData; api: string; token: Token; onWritten: 
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <Outcome message={message ?? null} error={error ?? null} />
+      <FeedBlock
+        api={api}
+        token={token}
+        friends={data.friends.map((f) => ({ id: f.id, name: f.name }))}
+      />
       <RequestList
         requests={data.requests}
         busy={answer.running}
