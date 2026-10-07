@@ -27,11 +27,17 @@ export function EmptyState({
     <div
       role={variant === "error" ? "alert" : undefined}
       className={cn(
-        "flex min-w-0 flex-col items-center gap-3 rounded-lg border border-dashed border-border p-6 text-center",
-        variant === "error" && "border-destructive",
+        "flex min-w-0 flex-col items-center gap-4 rounded-card bg-card px-6 py-10 text-center shadow-elevation-1",
+        variant === "error" && "border border-destructive",
         className,
       )}
     >
+      <span
+        aria-hidden="true"
+        className="flex size-14 items-center justify-center rounded-tile bg-accent text-2xl text-accent-foreground"
+      >
+        {variant === "error" ? "!" : "🌱"}
+      </span>
       <h2 className="break-words text-lg font-semibold">{title}</h2>
       {description ? (
         <p className="max-w-prose break-words text-sm text-muted-foreground">{description}</p>
