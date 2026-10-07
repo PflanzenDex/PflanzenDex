@@ -71,9 +71,9 @@ describe("US-QS-09 · every view has a unique German title (2.4.2)", () => {
   it("US-QS-09 each address has its own title ending in the product name", () => {
     const titles = [...VIEWS.map(([, path]) => viewTitle(path)), viewTitle("/species/abc")];
     expect(new Set(titles).size).toBe(titles.length);
-    for (const t of titles) expect(t).toMatch(/^.+ – PflanzenDex$/);
-    expect(viewTitle(PATHS.start)).toBe("Start – PflanzenDex");
-    expect(viewTitle("/gibt-es-nicht")).toBe("PflanzenDex");
+    for (const t of titles) expect(t).toMatch(/^.+ – PflanzenDéx$/);
+    expect(viewTitle(PATHS.start)).toBe("Start – PflanzenDéx");
+    expect(viewTitle("/gibt-es-nicht")).toBe("PflanzenDéx");
   });
 
   it.each(VIEWS)("US-QS-09 the view %s sets its title in the document", (_view, path) => {
@@ -109,7 +109,7 @@ describe("US-QS-09 · the navigation is the same in every view (3.2.3, 3.2.4)", 
         within(bar)
           .getAllByRole("link")
           // The product name on top of the sidebar is a brand link home, not a destination (US-QS-14).
-          .filter((a) => a.textContent !== "PflanzenDex")
+          .filter((a) => a.textContent !== "PflanzenDéx")
           .map((a) => `${a.textContent}|${a.getAttribute("href")}`),
       );
       cleanup();
@@ -127,7 +127,7 @@ describe("US-QS-09 · the navigation is the same in every view (3.2.3, 3.2.4)", 
     await userEvent.keyboard("{Enter}");
     const heading = await screen.findByRole("heading", { level: 1, name: /Wunschliste/ });
     await waitFor(() => expect(document.activeElement).toBe(heading));
-    expect(document.title).toBe("Wunschliste – PflanzenDex");
+    expect(document.title).toBe("Wunschliste – PflanzenDéx");
   });
 });
 

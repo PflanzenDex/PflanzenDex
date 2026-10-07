@@ -62,7 +62,7 @@ export function InvitationPage(props: {
         hast.
       </p>
       <p className="text-sm text-muted-foreground">
-        Du hast keinen Code? Bitte die Person, die PflanzenDex betreibt, um eine Einladung.
+        Du hast keinen Code? Bitte die Person, die PflanzenDéx betreibt, um eine Einladung.
       </p>
       <Form {...form}>
         <FormRoot onSubmit={submit} className="flex flex-col gap-4">

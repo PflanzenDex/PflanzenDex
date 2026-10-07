@@ -2,7 +2,14 @@ import { Fragment } from "react";
 import { Leaf } from "lucide-react";
 import { Link, NavLink } from "react-router";
 import { cn } from "@/lib/utils";
-import { stackedItem, stackedLabel, stackedPill, type NavItem } from "../nav-item";
+import {
+  BRAND_LINK_LABEL,
+  DISPLAY_NAME,
+  stackedItem,
+  stackedLabel,
+  stackedPill,
+  type NavItem,
+} from "../nav-item";
 
 /** The first four destinations are the primary ones (the bottom bar); a hairline separates the rest in the sidebar. */
 const PRIMARY = 4;
@@ -25,7 +32,7 @@ function NavRail({ items, className }: { items: NavItem[]; className?: string })
     >
       <Link
         to="/"
-        aria-label="PflanzenDex, zur Startseite"
+        aria-label={BRAND_LINK_LABEL}
         className="mx-auto mb-2 flex size-11 shrink-0 items-center justify-center rounded-control bg-primary text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <Leaf aria-hidden="true" className="size-5" />
@@ -68,13 +75,13 @@ function NavSidebar({ items, className }: { items: NavItem[]; className?: string
     >
       <Link
         to="/"
-        aria-label="PflanzenDex, zur Startseite"
+        aria-label={BRAND_LINK_LABEL}
         className="mb-3 flex min-h-[44px] shrink-0 items-center gap-3 rounded-control px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span className="flex size-8 shrink-0 items-center justify-center rounded-control bg-primary text-primary-foreground">
           <Leaf aria-hidden="true" className="size-5" />
         </span>
-        <span className="text-xl font-bold">PflanzenDex</span>
+        <span className="text-xl font-bold">{DISPLAY_NAME}</span>
       </Link>
       <div className="flex min-h-0 flex-1 scroll-py-3 flex-col gap-1 overflow-y-auto pb-3">
         {items.map((item, index) => (

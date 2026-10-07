@@ -44,7 +44,7 @@ const header = () => within(screen.getByRole("navigation", { name: "Hauptnavigat
 const tab = (name: string) => header().getByRole("link", { name });
 /** The start page is no destination (US-QS-14): the brand link leads there and no entry is marked active. */
 const expectStartPage = () => {
-  expect(header().getByRole("link", { name: "PflanzenDex, zur Startseite" })).toBeTruthy();
+  expect(header().getByRole("link", { name: "PflanzenDéx, zur Startseite" })).toBeTruthy();
   for (const link of header().getAllByRole("link"))
     expect(link.getAttribute("aria-current")).toBeNull();
 };

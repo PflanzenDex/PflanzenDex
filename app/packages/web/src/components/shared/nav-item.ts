@@ -26,3 +26,9 @@ export const stackedLabel = (active: boolean) =>
 
 export const isActivePath = (pathname: string, href: string) =>
   href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
+
+/** How the product is shown to users (US-QS-14). Identifiers, repository and docs keep "PflanzenDex". */
+export const DISPLAY_NAME = "PflanzenDéx";
+
+/** Accessible name of every brand link. */
+export const BRAND_LINK_LABEL = `${DISPLAY_NAME}, zur Startseite`;

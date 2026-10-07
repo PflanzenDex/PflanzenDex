@@ -3,7 +3,8 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { AppShell } from "./components/shared/app-shell";
-import { navItems, PATHS } from "./navigation";
+import { BRAND_LINK_LABEL, DISPLAY_NAME } from "./components/shared/nav-item";
+import { navItems, pageTitle, PATHS } from "./navigation";
 
 afterEach(cleanup);
 
@@ -83,7 +84,7 @@ describe("US-QS-14 · the start page is no destination", () => {
     }
     const brand = within(screen.getByRole("navigation", { name: "Hauptnavigation" })).getByRole(
       "link",
-      { name: "PflanzenDex, zur Startseite" },
+      { name: "PflanzenDéx, zur Startseite" },
     );
     expect(brand.getAttribute("href")).toBe("/");
   });
@@ -125,5 +126,14 @@ describe("US-QS-07 · DS-22 navigation icons", () => {
     expect(items.map((i) => i.label)).not.toContain("Start");
     expect(items.map((i) => i.href)).not.toContain("/");
     expect(items.at(-1)?.label).toBe("Einstellungen");
+  });
+});
+
+describe("display name (US-QS-14)", () => {
+  it("US-QS-14: the product is displayed as PflanzenDéx and titles end with it", () => {
+    expect(DISPLAY_NAME).toBe("PflanzenDéx");
+    expect(BRAND_LINK_LABEL).toBe("PflanzenDéx, zur Startseite");
+    expect(pageTitle("X")).toBe("X – PflanzenDéx");
+    expect(pageTitle()).toBe("PflanzenDéx");
   });
 });
