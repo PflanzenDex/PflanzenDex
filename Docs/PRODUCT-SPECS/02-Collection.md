@@ -4,6 +4,8 @@ Goal: species knowledge once in the shared catalog, every pot as its own specime
 
 Prototype reference: epic BES (`../PLANT-SYSTEM-SPECS/01-Collection-Species-and-Specimens.md`). The difference: in the prototype every keeper creates their species notes themselves. In the app species come from a **shared catalog** (E-02), filled by the operator and reviewed proposals; account-specific deviations live in the **care profile** (DM-BES-04).
 
+Note (US-QS-14): the collection of specimens is shown as the view "Pflanzen" of the destination "Sammlung", next to the species view of the Pokédex epic (POK).
+
 ## User stories
 
 ### US-BES-01 · Choose a species from the catalog or create a new one · 🟨 (prototype ✅)

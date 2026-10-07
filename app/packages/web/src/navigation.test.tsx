@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { AppShell } from "./components/shared/app-shell";
 import { BRAND_LINK_LABEL, DISPLAY_NAME } from "./components/shared/nav-item";
-import { navItems, pageTitle, PATHS } from "./navigation";
+import { navItems, pageTitle, PATHS, viewTitle } from "./navigation";
 
 afterEach(cleanup);
 
@@ -115,17 +115,26 @@ describe("US-QS-07 · DS-22 navigation icons", () => {
     expect(bar.getByRole("link", { name: "Heute" })).toBeTruthy();
   });
 
-  it("US-QS-14 · DS-25 the bar holds Heute, Bestand, Pokédex, Entdecken, then Mehr; Start is no destination", () => {
+  it("US-QS-14 · DS-25 the bar holds Heute, Sammlung, Entdecken, Wunschliste, then Mehr; Start is no destination", () => {
     const items = navItems({});
     expect(items.slice(0, 4).map((i) => i.label)).toEqual([
       "Heute",
-      "Bestand",
-      "Pokédex",
+      "Sammlung",
       "Entdecken",
+      "Wunschliste",
     ]);
+    expect(items.map((i) => i.label)).not.toContain("Pokédex");
+    expect(items.map((i) => i.label)).not.toContain("Bestand");
     expect(items.map((i) => i.label)).not.toContain("Start");
     expect(items.map((i) => i.href)).not.toContain("/");
     expect(items.at(-1)?.label).toBe("Einstellungen");
+  });
+});
+
+describe("US-QS-14 the destination Sammlung", () => {
+  it("US-QS-14 the page title is the same for the plants and the species mode", () => {
+    expect(viewTitle(PATHS.collection)).toBe("Sammlung – PflanzenDéx");
+    expect(navItems({}).find((i) => i.href === "/collection")?.label).toBe("Sammlung");
   });
 });
 

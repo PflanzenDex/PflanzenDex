@@ -6,6 +6,8 @@ Prototype reference: epic POK (`../PLANT-SYSTEM-SPECS/07-Pokedex.md`), the most 
 
 Note: in the prototype the stories POK-04 (hook) and POK-05 (robustness) were part of the build. They are absorbed into US-POK-03 here.
 
+Note (US-QS-14): the Pokédex is shown as the view "Arten" of the destination "Sammlung", next to the view "Pflanzen" of the collection epic (BES).
+
 ## User stories
 
 ### US-POK-01 · See collector cards for species · 🟨 (prototype ✅)

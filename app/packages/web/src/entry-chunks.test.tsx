@@ -17,6 +17,11 @@ vi.mock("./light/setup-steps", () => {
   return { LocationsStep: () => null, ZonesStep: () => null };
 });
 
+vi.mock("./pokedex/PokedexPage", () => {
+  loaded.pages.push("pokedex");
+  return { PokedexPage: () => null };
+});
+
 vi.mock("vaul", () => {
   loaded.pages.push("vaul");
   return { Drawer: {} };
@@ -36,6 +41,11 @@ describe("#451 · DS-08 the entry bundle stays small", () => {
   it("#451 the onboarding steps (forms and validation) load only when a step opens", async () => {
     await import("./App");
     expect(loaded.pages).not.toContain("setup-steps");
+  });
+
+  it("US-QS-14 · DS-08 the species page of the Sammlung loads only when Arten is chosen", async () => {
+    await import("./App");
+    expect(loaded.pages).not.toContain("pokedex");
   });
 
   it("US-QS-07 · DS-08 the sheet library (Vaul) loads only when a sheet is first opened", async () => {
