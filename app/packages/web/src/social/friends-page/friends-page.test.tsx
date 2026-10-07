@@ -41,6 +41,10 @@ function write(state: State, path: string, body: { code?: string; decision?: str
     state.outgoing = [req({ direction: "sent", otherName: "Anna" })];
     return response(201, state.outgoing[0]);
   }
+  if (path.endsWith("/end")) {
+    state.friends = [];
+    return response(200, { status: "ended" });
+  }
   state.incoming = [];
   if (body.decision === "accept")
     state.friends = [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z" }];
@@ -154,6 +158,25 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     fakeServer({ friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z" }] });
     render(<FriendsPage api="http://api" token={token} />);
     const list = await screen.findByRole("list", { name: "Freunde" });
-    expect(list.textContent).toBe("Benbefreundet seit 06.10.2026");
+    expect(list.textContent).toBe("Benbefreundet seit 06.10.2026Freundschaft beenden");
+  });
+
+  it("US-SOZ-03 ending a friendship asks first, says what it does and then removes the friend", async () => {
+    const { calls } = fakeServer({
+      friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z" }],
+    });
+    render(<FriendsPage api="http://api" token={token} />);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Freundschaft mit Ben beenden" }),
+    );
+    expect(screen.getByText(/alle Freigaben gelten dann nicht mehr/)).toBeTruthy();
+    expect(calls).toEqual([]);
+    await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    expect(screen.queryByText(/alle Freigaben/)).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Freundschaft mit Ben beenden" }));
+    await userEvent.click(screen.getByRole("button", { name: "Ja, beenden" }));
+    expect(await screen.findByText(/Freundschaft mit Ben beendet/)).toBeTruthy();
+    expect(calls[0]).toEqual({ path: "/friends/f1/end", body: {} });
+    expect(await screen.findByText(/Noch keine Freunde/)).toBeTruthy();
   });
 });

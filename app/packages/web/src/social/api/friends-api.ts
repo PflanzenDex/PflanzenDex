@@ -59,3 +59,18 @@ export async function answerFriendRequest(
   );
   return r.ok ? { ok: true, value: r.value as { status: "confirmed" | "declined" } } : r;
 }
+
+/** Ends a friendship on both sides at once (US-SOZ-03). */
+export async function endFriendship(
+  api: string,
+  token: string,
+  friendId: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<{ status: "ended" }>> {
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/friends/${encodeURIComponent(friendId)}/end`,
+    {},
+  );
+  return r.ok ? { ok: true, value: r.value as { status: "ended" } } : r;
+}

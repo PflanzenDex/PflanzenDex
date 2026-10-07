@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import {
   friendAnswer,
+  friendEnd,
   friendInvite,
   friendList,
   friendRequest,
@@ -23,6 +24,8 @@ export const FRIEND_PATHS = ["/friends"] as const;
  *   `outgoing` also holds the requests the other side declined (`status: "declined"`: shown as "not accepted", US-SOZ-02)
  * - POST /friends/requests/:id/answer `{ decision: "accept" | "decline" }` (US-SOZ-02): only the receiver; 404 for any
  *   other id (no leak), 409 `friend.request_answered` when answered the other way before
+ * - POST /friends/:id/end (US-SOZ-03): ends the friendship on both sides at once; 404 `friend.not_found` for any id that is
+ *   not one of the caller's confirmed or ended friendships (no leak); ending twice is a no-op
  * - GET /friends: `{ friends }`, the confirmed friends (display name, since); never their collections (P-05)
  */
 export function friendRoutes(pool: Pool, clock: () => Date = () => new Date()): Hono<AuthEnv> {
@@ -31,6 +34,7 @@ export function friendRoutes(pool: Pool, clock: () => Date = () => new Date()): 
   const invite = friendInvite({ friends, random: (n) => randomBytes(n), now: clock });
   const request = friendRequest({ friends });
   const answer = friendAnswer({ friends });
+  const end = friendEnd({ friends });
   const routes = new Hono<AuthEnv>();
   routes.post("/friends/invitations", async (c) => {
     const response = await write(c, deps, invite, { input: {}, success: 201 });
@@ -46,6 +50,9 @@ export function friendRoutes(pool: Pool, clock: () => Date = () => new Date()): 
   routes.post("/friends/requests/:id/answer", async (c) => {
     return write(c, deps, answer, { input: { ...(await body(c)), requestId: c.req.param("id") } });
   });
+  routes.post("/friends/:id/end", async (c) =>
+    write(c, deps, end, { input: { friendId: c.req.param("id") } }),
+  );
   routes.get("/friends", async (c) => c.json(await friendList({ friends }, c.get("account").id)));
   return routes;
 }

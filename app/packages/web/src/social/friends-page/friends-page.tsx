@@ -5,6 +5,7 @@ import { errorText } from "@/lib/error-text";
 import {
   answerFriendRequest,
   createFriendCode,
+  endFriendship,
   loadFriends,
   sendFriendRequest,
   type FriendsData,
@@ -35,16 +36,11 @@ function useSendRequest(api: string, token: Token, reload: () => void) {
   return { send, refusal, write };
 }
 
-function Body(props: { data: FriendsData; api: string; token: Token; onWritten: () => void }) {
-  const { api, token, data } = props;
-  const [created, setCreated] = useState<CreatedFriendCode | null>(null);
-  const invite = useWriteAction(token, props.onWritten);
-  const answer = useWriteAction(token, props.onWritten);
-  const request = useSendRequest(api, token, props.onWritten);
-  const message = [invite.message, answer.message, request.write.message].find((m) => m !== null);
-  const error = invite.error ?? answer.error;
+/** What the last write did: a notice, or the German text of its refusal (P-10). */
+function Outcome(props: { message: string | null; error: ApiError | null }) {
+  const { message, error } = props;
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <>
       {message && (
         <p role="status" className="rounded-lg border border-border p-3">
           {message}
@@ -55,6 +51,24 @@ function Body(props: { data: FriendsData; api: string; token: Token; onWritten: 
           {error.code === SIGN_IN.code ? SIGN_IN.text : errorText(error.code)}
         </p>
       )}
+    </>
+  );
+}
+
+function Body(props: { data: FriendsData; api: string; token: Token; onWritten: () => void }) {
+  const { api, token, data } = props;
+  const [created, setCreated] = useState<CreatedFriendCode | null>(null);
+  const invite = useWriteAction(token, props.onWritten);
+  const answer = useWriteAction(token, props.onWritten);
+  const ending = useWriteAction(token, props.onWritten);
+  const request = useSendRequest(api, token, props.onWritten);
+  const message = [invite.message, answer.message, ending.message, request.write.message].find(
+    (m) => m !== null,
+  );
+  const error = invite.error ?? answer.error ?? ending.error;
+  return (
+    <div className="flex min-w-0 flex-col gap-6">
+      <Outcome message={message ?? null} error={error ?? null} />
       <RequestList
         requests={data.requests}
         busy={answer.running}
@@ -69,7 +83,16 @@ function Body(props: { data: FriendsData; api: string; token: Token; onWritten: 
           )
         }
       />
-      <FriendList friends={data.friends} />
+      <FriendList
+        friends={data.friends}
+        busy={ending.running}
+        onEnd={(f) =>
+          void ending.run(
+            (t) => endFriendship(api, t, f.id),
+            `Freundschaft mit ${nameOf(f.name)} beendet. Ihr seht nichts mehr voneinander; deine eigenen Daten bleiben.`,
+          )
+        }
+      />
       <InviteCard
         created={created}
         running={invite.running}

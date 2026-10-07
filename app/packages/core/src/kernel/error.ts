@@ -61,6 +61,7 @@ export const ERROR_TEXTS = {
   "friend.request_not_found": "Diese Freundschaftsanfrage gibt es nicht. Lade die Liste neu.",
   "friend.request_answered":
     "Diese Anfrage hast du schon anders beantwortet. Es wurde nichts geändert.",
+  "friend.not_found": "Diesen Freund gibt es nicht. Lade die Liste neu.",
   "wish.name_taken":
     "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
   "wish.not_found": "Diesen Wunsch gibt es nicht. Lade die Wunschliste neu.",

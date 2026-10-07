@@ -36,6 +36,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "friend.already_linked": 409,
   "friend.request_not_found": 404,
   "friend.request_answered": 409,
+  "friend.not_found": 404,
   "wish.name_taken": 409,
   "wish.not_found": 404,
   "wish.not_open": 409,

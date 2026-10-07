@@ -51,6 +51,11 @@ export interface FriendStore {
    * again writes nothing; an id that is unknown, foreign or of a request the account sent is `not_found`.
    */
   answer(userId: string, requestId: string, accept: boolean): Promise<AnswerOutcome>;
+  /**
+   * Ends a confirmed friendship on both sides in one transaction. Ending twice writes nothing; an id that is unknown,
+   * foreign or not a friendship (yet) is `not_found`.
+   */
+  end(userId: string, friendId: string): Promise<"ended" | "not_found">;
   /** Confirmed friends of the account, by name. */
   friends(userId: string): Promise<readonly Friend[]>;
 }

@@ -100,4 +100,13 @@ export class FriendsPostgres {
     );
     return r.rows;
   }
+
+  async end(userId: string, friendId: string): Promise<"ended" | "not_found"> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<{ outcome: "ended" | "not_found" }>("select outcome from end_friendship($1)", [
+        friendId,
+      ]),
+    );
+    return (r.rows[0] as { outcome: "ended" | "not_found" }).outcome;
+  }
 }
