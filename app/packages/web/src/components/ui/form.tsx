@@ -163,6 +163,29 @@ const FormMessage = React.forwardRef<HTMLParagraphElement, FormMessageProps>(
 );
 FormMessage.displayName = "FormMessage";
 
+/**
+ * The `<form>` of the Form family (US-QS-07, DS-47, DS-48). Place it directly under the `Form` provider and pass
+ * `onSubmit={form.handleSubmit(...)}`: the browser's own validation bubbles are off (`noValidate`, the zod
+ * resolver owns validation) and the native submit never reloads the page. The handler may be async.
+ */
+const FormRoot = React.forwardRef<
+  HTMLFormElement,
+  Omit<React.FormHTMLAttributes<HTMLFormElement>, "onSubmit" | "noValidate"> & {
+    onSubmit?: (event: React.FormEvent<HTMLFormElement>) => unknown;
+  }
+>(({ onSubmit, ...props }, ref) => (
+  <form
+    ref={ref}
+    noValidate
+    onSubmit={(event) => {
+      event.preventDefault();
+      void onSubmit?.(event);
+    }}
+    {...props}
+  />
+));
+FormRoot.displayName = "FormRoot";
+
 export {
   Form,
   FormControl,
@@ -171,5 +194,6 @@ export {
   FormItem,
   FormLabel,
   FormMessage,
+  FormRoot,
   useFormField,
 };

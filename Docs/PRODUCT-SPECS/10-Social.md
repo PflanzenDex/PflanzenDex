@@ -16,7 +16,7 @@ Replacement: replaces `../PLANT-SYSTEM-SPECS/11-Social.md`. Dropped: the "hub" a
 
 ## User stories
 
-### US-SOZ-01 · Request a friendship · ⬜ new
+### US-SOZ-01 · Request a friendship · ✅ new
 
 Acceptance criteria:
 
@@ -26,7 +26,15 @@ Acceptance criteria:
 - No self-invitation; a duplicate request creates no second one.
 - There is no open user search; friends find each other only via invitation (FR-SOZ-08).
 
-### US-SOZ-02 · Answer a friendship request · ⬜ new
+Assumptions, decided by the PO (revisable):
+
+- A friend code is 24 characters of the same code alphabet as the access invitation (US-ACC-05), shown in groups of four and typed case-insensitively. It is not an access invitation: it needs an existing account, and with registration by invitation switched on the newcomer first needs an access invitation.
+- A refused redemption (own code, request or friendship with the person exists in either direction) does not use the code up. Redeeming the same code again as the same account returns the existing request and writes nothing.
+- Unknown, used and expired codes are rejected with their own error (`friend.unknown_code`, `friend.code_used`, `friend.code_expired`); unlike the access invitation this reveals nothing worth protecting, because the person holds the code.
+- Both sides store the display name of the other side at the time of the request; a side without a display name is stored as unknown (P-08). After an ended friendship a new request is allowed and reuses the stored rows.
+- Open requests are visible only to their two sides, with the display name and nothing else (P-04, P-05). The number of open codes per account is not limited yet (assumption: no abuse expected; revisit with US-SOZ-12).
+
+### US-SOZ-02 · Answer a friendship request · 🟨 new
 
 Acceptance criteria:
 
@@ -34,13 +42,30 @@ Acceptance criteria:
 - Accepting makes the friendship effective on both sides. Declining discards silently; the other side learns only "not accepted".
 - Before acceptance only the display name is visible, no collection.
 
-### US-SOZ-03 · Manage friends and end a friendship · ⬜ new
+Assumptions, decided by the PO (revisable):
+
+- Declining sets both sides to `declined`. The decliner's list shows nothing of it; the sender sees "Nicht angenommen" next to the name, with no reason and no time. The entry stays until the sender gets a new request accepted or declined with a new code (a new code replaces it); a way to dismiss it comes with US-SOZ-03.
+- Only the receiver of a request can answer. An id that is unknown, belongs to another account or to a request the caller sent answers `friend.request_not_found`, so existence does not leak (P-04).
+- Answering twice the same way writes nothing; answering the other way afterwards is refused with `friend.request_answered` (no taking back an answer; ending a friendship is US-SOZ-03).
+- Accepting stores the same start time on both rows; there is no accept-timeout and no limit of open requests.
+- The page "Freunde" (navigation entry, path `/friends`) combines US-SOZ-01 and US-SOZ-02: open requests, confirmed friends (name and since when only), invite with a code, enter a code. It shows no collection data and no counts against each other (P-05, FR-SOZ-11).
+- The notification about an open request is US-SOZ-12 and not part of this story.
+
+### US-SOZ-03 · Manage friends and end a friendship · 🟨 new
 
 Acceptance criteria:
 
 - "Friends": list with display name, start, number of shared caught species.
 - Ending immediately withdraws collection, feed and offers from both sides. Own data and completed swaps (incl. provenance) remain.
 - Open swap requests with the person are canceled (`canceled`). The other side is not actively notified.
+
+Assumptions, decided by the PO (revisable):
+
+- "Number of shared caught species" counts the species the friend has shared with me (US-SOZ-04) that I have caught too. Only shared specimens can be counted, so the number comes with US-SOZ-04; until then the list shows name and start only. It is shown as a plain number next to the name, never as a ranking or a comparison between friends (FR-SOZ-11); a friend who shares nothing shows "unknown", not 0 (P-08).
+- Either side can end a confirmed friendship; both rows become `ended` in one transaction and keep the start and the stored display names. Only a confirmed friendship can be ended; ending twice writes nothing; an id that is unknown, foreign or still a request is `friend.not_found` (P-04).
+- Ending withdraws everything that is visible only between friends from both sides at once: what a friend sees is always read through a confirmed friendship (P-05), so no data has to be deleted. The screen asks first and says what happens, including that what was already delivered cannot be retrieved (P-10). The other side is not notified and no longer finds the person in its list.
+- A new request with a new code can restart an ended friendship; the old sharing settings do not come back by themselves (they are per specimen and checked against the friendship each time).
+- Canceling open swap requests with the person belongs to the swap module (US-SOZ-10) and is checked there against the friendship status; it does not exist yet.
 
 ### US-SOZ-04 · Decide what friends see · ⬜ new
 

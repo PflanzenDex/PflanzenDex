@@ -1,0 +1,45 @@
+import { careProfileLocations, todayStatus, type PhaseLocationSource } from "@pflanzendex/core";
+import {
+  CareProfilePostgres,
+  LocationPostgres,
+  SpeciesPostgres,
+  SpecimenPostgres,
+  TreatmentsPostgres,
+} from "@pflanzendex/db";
+import { Hono } from "hono";
+import type { Pool } from "pg";
+import { errorBody, statusFor, type AuthEnv } from "../kernel";
+
+/** Paths the sign-in guard (bearer token) must cover. */
+export const TODAY_PATHS = ["/today"] as const;
+
+export type TodayOptions = {
+  /** The clock for "today" (NFR-08); tests pin it. */
+  clock?: () => Date;
+  /** Replaces the care profile as source of the location per phase (tests). */
+  phaseLocation?: PhaseLocationSource | undefined;
+};
+
+/**
+ * The central "Today" list (TE-07): read only, derived on every request from the keeper's own data (P-01, P-04), through
+ * the one `status` function of `core` that reminders and the AI status use as well (R-04). `timeZone` (IANA name)
+ * decides what "today" is (NFR-08).
+ */
+export function todayRoutes(pool: Pool, opt: TodayOptions = {}): Hono<AuthEnv> {
+  const profiles = new CareProfilePostgres(pool);
+  const deps = {
+    specimens: new SpecimenPostgres(pool),
+    species: new SpeciesPostgres(pool),
+    locations: new LocationPostgres(pool),
+    treatments: new TreatmentsPostgres(pool),
+    profiles,
+    targets: opt.phaseLocation ?? careProfileLocations(profiles),
+    clock: opt.clock ?? (() => new Date()),
+  };
+  const routes = new Hono<AuthEnv>();
+  routes.get("/today", async (c) => {
+    const r = await todayStatus(deps, c.get("account").id, c.req.query("timeZone"));
+    return r.ok ? c.json(r.value) : c.json(errorBody(r.error), statusFor(r.error));
+  });
+  return routes;
+}

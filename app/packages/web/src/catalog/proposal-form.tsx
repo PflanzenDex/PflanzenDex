@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormSetError } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
+import { Form, FormRoot } from "@/components/ui/form";
 import type { ApiError } from "../kernel";
 import { duplicate } from "./form";
 import { MoreDetails } from "./more-details";
@@ -80,9 +80,8 @@ export function ProposalForm(props: {
       </p>
       <p className="text-sm text-muted-foreground">Pflichtfelder sind mit * markiert.</p>
       <Form {...form}>
-        <form
-          noValidate
-          onSubmit={(e) => void submit(e)}
+        <FormRoot
+          onSubmit={submit}
           aria-label="Art vorschlagen"
           className="grid gap-4 md:grid-cols-2"
         >
@@ -105,7 +104,7 @@ export function ProposalForm(props: {
             </div>
           )}
           <Actions pending={form.formState.isSubmitting} onCancel={props.onCancel} />
-        </form>
+        </FormRoot>
       </Form>
     </section>
   );

@@ -13,6 +13,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormRoot,
 } from "./form";
 import { Input } from "./input";
 
@@ -42,8 +43,7 @@ function Demo({ submitEmpty, serverError, pending }: DemoProps) {
   }
   return (
     <Form {...form}>
-      <form
-        noValidate
+      <FormRoot
         className="flex flex-col gap-4 p-4"
         onSubmit={form.handleSubmit(() => new Promise<void>(() => {}))}
       >
@@ -66,7 +66,7 @@ function Demo({ submitEmpty, serverError, pending }: DemoProps) {
         <Button type="submit" disabled={pending || form.formState.isSubmitting}>
           {pending || form.formState.isSubmitting ? "Speichert …" : "Speichern"}
         </Button>
-      </form>
+      </FormRoot>
     </Form>
   );
 }

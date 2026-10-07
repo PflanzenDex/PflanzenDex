@@ -27,6 +27,7 @@ import {
 } from "./collection";
 import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
 import { WISH_PATHS, wishRoutes, wishZoneUsageFor } from "./wishlist";
+import { FRIEND_PATHS, friendRoutes } from "./social";
 import { zoneStockFor } from "./zone-stock";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
@@ -41,6 +42,7 @@ import {
   treatmentSourceFor,
   targetLocationFor,
 } from "./care";
+import { TODAY_PATHS, todayRoutes } from "./today";
 
 export type AppOptions = {
   /** Verifies access tokens of the sign-in service; without it there are no protected routes. */
@@ -82,10 +84,27 @@ function bindCareOne(
   app.route("/", treatmentRoutes(pool, opt));
 }
 
+/** The module `today` (TE-07): sign-in guard in front of the path, then the read-only route. */
+function bindToday(
+  app: Hono,
+  pool: Pool,
+  auth: MiddlewareHandler,
+  opt: { clock?: () => Date; phaseLocation?: PhaseLocationSource },
+) {
+  for (const path of TODAY_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", todayRoutes(pool, opt));
+}
+
 /** The module `wishlist`: sign-in guard in front of the paths, then the routes; the stock per zone comes from `collection` unless tests replace it. */
 function bindWishlist(app: Hono, pool: Pool, auth: MiddlewareHandler, zoneStock?: ZoneStockSource) {
   for (const path of WISH_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", wishRoutes(pool, zoneStock ?? zoneStockFor(pool)));
+}
+
+/** The module `social` (friends by invitation): sign-in guard in front of the paths, then the routes. */
+function bindFriends(app: Hono, pool: Pool, auth: MiddlewareHandler, clock?: () => Date) {
+  for (const path of FRIEND_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", friendRoutes(pool, clock));
 }
 
 /** What `care` feeds into the collection: target location, measurements and treatments, unless tests replace them. */
@@ -144,10 +163,13 @@ export function createApp(opt: AppOptions = {}): Hono {
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", careProfileRoutes(opt.pool));
     bindWishlist(app, opt.pool, auth, opt.zoneStock);
-    bindCareOne(app, opt.pool, auth, {
+    bindFriends(app, opt.pool, auth, opt.clock);
+    const care = {
       ...(opt.clock ? { clock: opt.clock } : {}),
       ...(opt.phaseLocation ? { phaseLocation: opt.phaseLocation } : {}),
-    });
+    };
+    bindCareOne(app, opt.pool, auth, care);
+    bindToday(app, opt.pool, auth, care);
   }
   return app;
 }

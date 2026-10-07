@@ -48,8 +48,7 @@ function rawControl(opening) {
 }
 
 // DS-48: raw controls outside components/ui, found in the TypeScript AST. The direct children of
-// an element with `asChild` are exempt: the parent primitive renders them (Radix Slot). So is a
-// `<form>` directly under the `Form` provider (DS-47/DS-48; no `<form>` primitive exists).
+// an element with `asChild` are exempt: the parent primitive renders them (Radix Slot).
 export function rawControlLines(content, file = "file.tsx") {
   const source = ts.createSourceFile(
     file,
@@ -62,13 +61,10 @@ export function rawControlLines(content, file = "file.tsx") {
   const found = [];
   const visit = (node) => {
     if (ts.isJsxElement(node)) {
-      // The DS pattern is `<Form {...form}><form>`: the native form under the provider is allowed.
       const asChild = attrOf(node.openingElement, "asChild") !== undefined;
-      const provider = node.openingElement.tagName.getText() === "Form";
       for (const child of node.children) {
         const isElement = ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child);
-        if (isElement && (asChild || (provider && openingOf(child).tagName.getText() === "form")))
-          exempt.add(child);
+        if (isElement && asChild) exempt.add(child);
       }
     }
     if ((ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) && !exempt.has(node)) {

@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
+import { Form, FormRoot } from "@/components/ui/form";
 import { LoadFrame, SIGN_IN, deviceTimeZone, setProfileTimeZone, type ApiError } from "../kernel";
 import { loadProfile, saveProfile, type AccountProfile } from "./account-api";
 import { ALERT_CLASSES, useServerRefusal } from "./refusal";
@@ -51,10 +51,9 @@ function SettingsForm(props: { api: string; token: Token; profile: AccountProfil
 
   return (
     <Form {...form}>
-      <form
+      <FormRoot
         aria-label="Einstellungen"
-        noValidate
-        onSubmit={(e) => void send(e)}
+        onSubmit={send}
         onChange={() => setMessage(null)}
         className="flex max-w-xl flex-col gap-4"
       >
@@ -77,7 +76,7 @@ function SettingsForm(props: { api: string; token: Token; profile: AccountProfil
         >
           {pending ? "Speichert …" : "Speichern"}
         </Button>
-      </form>
+      </FormRoot>
     </Form>
   );
 }

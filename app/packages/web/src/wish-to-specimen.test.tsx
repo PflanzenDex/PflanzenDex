@@ -76,6 +76,12 @@ const READS: Record<string, unknown> = {
     hint: { text: "Keine offenen Kandidaten.", nextAction: "Erfasse einen Wunsch." },
     duplicates: [],
     duplicateHint: null,
+    replenishment: {
+      buffer: 2,
+      zones: [],
+      actions: { discover: false, suggestions: false },
+      nextAction: null,
+    },
   },
   "/wishes/discarded": {
     discarded: [],

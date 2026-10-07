@@ -8,14 +8,15 @@ import { LightPage } from "./light";
 import { ReviewPage, SpeciesPage } from "./catalog";
 import { CarePhasesPage, TreatmentsPage } from "./care";
 import { PokedexPage } from "./pokedex";
+import { FriendsPage } from "./social";
+import { TodayPage, type TodayDestination } from "./today";
 import { WishlistPage, type WishToPlant } from "./wishlist";
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
 import { PATHS, type View } from "./navigation";
 
-/** The start page carries the onboarding forms (validation, form library): its chunk loads with its route (#451). */
+/** The start page carries the onboarding forms: its chunk loads with its route (#451). */
 const StartPage = lazyPage(() => import("./start-page").then((m) => ({ default: m.StartPage })));
-
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 
@@ -25,14 +26,21 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
   carePhases: CarePhasesPage,
   careProfile: CareProfilePage,
   difficulty: DifficultyPage,
+  friends: FriendsPage,
   review: ReviewPage,
   operator: OperatorPage,
   settings: SettingsPage,
 };
 
-/** The views that only link on to other views (start, light overview, hints); the app wires them (ADR 0003). */
+/** Where the actions of the "Today" list lead (TE-07). */
+const TODAY_VIEW: Record<TodayDestination, View> = {
+  ...{ treatments: "treatments", hints: "hints", collection: "collection" },
+  care_phases: "carePhases",
+};
+
+/** The views that link on to other views; the app wires them (ADR 0003). */
 function LinkingView(props: {
-  view: "start" | "light" | "hints";
+  view: "start" | "today" | "light" | "hints";
   api: string;
   token: Token;
   accountId: string;
@@ -41,6 +49,8 @@ function LinkingView(props: {
   const { api, token, onOpen } = props;
   if (props.view === "start")
     return <StartPage api={api} token={token} accountId={props.accountId} onOpen={onOpen} />;
+  if (props.view === "today")
+    return <TodayPage api={api} token={token} onOpen={(d) => onOpen(TODAY_VIEW[d])} />;
   if (props.view === "light")
     return <LightPage api={api} token={token} onOpenCollection={() => onOpen("collection")} />;
   return <HintsPage api={api} token={token} onOpen={onOpen} />;
@@ -162,7 +172,7 @@ export function AppRoutes(props: {
             />
           }
         />
-        {(["start", "light", "hints"] as const).map((v) => (
+        {(["start", "today", "light", "hints"] as const).map((v) => (
           <Route
             key={v}
             path={PATHS[v]}

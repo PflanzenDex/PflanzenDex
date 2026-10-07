@@ -73,7 +73,7 @@ describe("MobileNavBar (US-QS-07, DS-25, DS-22, DS-44)", () => {
   it("US-QS-07 · DS-25 lists the remaining destinations in the drawer", async () => {
     at("/", <MobileNavBar items={make(9)} />);
     await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
-    const drawer = screen.getByRole("dialog", { name: "Mehr" });
+    const drawer = await screen.findByRole("dialog", { name: "Mehr" });
     expect(within(drawer).getAllByRole("link")).toHaveLength(5);
   });
 
@@ -216,7 +216,7 @@ describe("US-QS-08 Operable by keyboard alone (app shell)", () => {
   it("US-QS-08 · 2.1.2 choosing a destination in the Mehr drawer closes it, so no overlay keeps the focus", async () => {
     at("/", <MobileNavBar items={make(9)} />);
     await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
-    const drawer = screen.getByRole("dialog", { name: "Mehr" });
+    const drawer = await screen.findByRole("dialog", { name: "Mehr" });
     within(drawer).getByRole("link", { name: "Ziel 6" }).focus();
     await userEvent.keyboard("{Enter}");
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());

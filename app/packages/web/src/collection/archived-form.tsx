@@ -9,6 +9,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormRoot,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -96,9 +97,8 @@ export function ArchiveForm(props: {
         Die Historie bleibt erhalten. Im Archiv kannst du es jederzeit wiederherstellen.
       </Quiet>
       <Form {...form}>
-        <form
-          noValidate
-          onSubmit={(e) => void submit(e)}
+        <FormRoot
+          onSubmit={submit}
           aria-label="Exemplar archivieren"
           className="flex max-w-xl flex-col gap-4"
         >
@@ -115,7 +115,7 @@ export function ArchiveForm(props: {
             pending={form.formState.isSubmitting}
             onCancel={props.onCancel}
           />
-        </form>
+        </FormRoot>
       </Form>
     </section>
   );

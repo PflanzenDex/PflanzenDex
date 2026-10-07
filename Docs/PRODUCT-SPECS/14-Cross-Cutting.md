@@ -4,7 +4,7 @@ Non-functional requirements for all epics. All ⬜. The yardstick is the product
 
 ## User stories
 
-### US-QS-01 · Nothing depends on remembering · ⬜ (prototype 🟡)
+### US-QS-01 · Nothing depends on remembering · 🟨 (prototype 🟡)
 
 As a **plant keeper** I want the system to report need for action itself.
 
@@ -12,6 +12,8 @@ Acceptance criteria:
 
 - Phase changes, due treatments, overdue measurements and wishlist buffer trigger a reminder (epic MON) without the app being opened.
 - The start page "Today" shows the same items (one source, `FR-MON-03`).
+
+State of implementation (enabler TE-07, assumptions decided by the PO, flagged): the module `today` (read only, no table) holds the one `status` function (`todayStatus` in `core`, `GET /today?timeZone=<IANA name>`, view "Heute"). It does not recompute anything; it reuses the derivations of the open treatments (US-BEH-02), the care phases (US-PHA-02) and the hints about incomplete specimens (US-BES-08), reads the clock once and adds order and next action, so "Today", the reminders (MON) and the AI daily status (US-KI-02) can use it and never disagree (R-04). Dates are local calendar days in the user's time zone (NFR-08). Entries, most urgent first (what is bound to a date comes first; assumption): (1) treatment overdue, the most overdue first, (2) treatment due today, (3) phase deviation (location id differs from the target location of today's phase, US-PHA-02), (4) incomplete specimen (US-BES-08), inside groups 3 and 4 by name. Every entry carries a text, a next action (P-09) and the place where it is done (`treatments`, `care_phases`, `hints`; the interface maps them to views). A specimen without location is named once, as incomplete data, not again as deviation (P-10 without duplicates). Treatments that are not due yet are not entries but are counted (`upcoming`, shown as a note), so nothing disappears silently (P-10). An empty list says "Heute steht nichts an." with the count of later dates and leads to the collection (P-09). Archived specimens never appear (`isActive`, US-BES-07), only the own data is read (P-04). **Open (gap list):** the entry "measurement overdue" (needs an interval per species or specimen, which no story defines yet; P-08, no invented number), the wishlist buffer warning (US-WUN-02, still its own view), "phase change today with the old location" (US-MON-02), the QS-04 deviation view, a switch of the AI daily status (US-KI-02) onto the function, reading of the same function by the reminders (US-MON-01 to MON-03), a per-entry quick action in the list (ticking off a treatment still happens in "Behandlung"), the list on the start page, and a count badge on the navigation entry.
 
 ### US-QS-02 · Logic is testable · ⬜ (prototype 🟡)
 

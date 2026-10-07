@@ -11,6 +11,12 @@ import type {
   SpeciesName,
   SpeciesValues,
 } from "@pflanzendex/core";
+export interface SpeciesFacts {
+  readonly latinName: string;
+  readonly germanName: string | null;
+  readonly difficulty: number | null;
+  readonly lightZone: number | null;
+}
 export type { Species, SpeciesCreation, SpeciesHit, SpeciesName, SpeciesValues };
 
 /** Column per field (without synonyms: they live in `species_name`). */
@@ -64,6 +70,37 @@ const mask = (norm: string) => `%${norm.replace(/[\\%_]/g, "\\$&")}%`;
  */
 export class SpeciesPostgres {
   constructor(private readonly pool: Pool) {}
+
+  /**
+   * Latin names (genus and epithet, no cultivar) of the approved species: the input of the taxonomy build (US-POK-03).
+   * Needs the owner connection and sets no account; only reviewed or curated species count, never proposals.
+   */
+  async approvedLatinNames(): Promise<readonly string[]> {
+    const r = await this.pool.query<{ latin_name: string }>(
+      `select a.latin_name from species a
+        where a.cultivar is null and a.epithet is not null
+          and exists (select from review_case v where v.object_kind = 'species' and v.object_id = a.id
+                         and v.status in ('curated', 'reviewed'))
+        order by a.latin_name`,
+    );
+    return r.rows.map((x) => x.latin_name);
+  }
+
+  /**
+   * German name, difficulty and standard light zone of the approved species (no cultivars, no proposals): the facts
+   * the Pokédex cards show next to the taxonomy (US-POK-01).
+   */
+  async approvedFacts(userId: string): Promise<readonly SpeciesFacts[]> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<SpeciesFacts>(
+        `select a.latin_name as "latinName", a.german_name as "germanName", a.difficulty,
+                a.standard_level as "lightZone"
+           from species a
+          where a.cultivar is null and species_status(a.id) in ('curated', 'reviewed')`,
+      ),
+    );
+    return r.rows;
+  }
 
   async search(userId: string, norm: string | null): Promise<readonly SpeciesHit[]> {
     const r = await withAccount(this.pool, userId, (c) =>

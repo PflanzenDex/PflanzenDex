@@ -1,5 +1,6 @@
 import type { Ownership, UnidentifiedSpecimen } from "@pflanzendex/core";
 import { useCallback } from "react";
+import { CollectorCards } from "@/components/collector-cards/collector-cards";
 import { LoadFrame } from "../kernel";
 import { Browse } from "./PokedexBrowse";
 import { loadOwnership } from "./caught/ownership-api";
@@ -42,6 +43,7 @@ export function PokedexPage(props: {
             <Milestones caught={ownership.caught} />
             <Browse caught={ownership.caught} {...(onOpenSpecies ? { onOpenSpecies } : {})} />
             <Unidentified specimens={ownership.unidentified} />
+            <CollectorCards api={api} token={token} />
           </section>
         )}
       </LoadFrame>

@@ -1,9 +1,11 @@
 import {
   BookOpen,
   Building2,
+  CalendarCheck,
   CalendarClock,
   Gauge,
   Heart,
+  Users,
   Home,
   Leaf,
   Lightbulb,
@@ -20,6 +22,7 @@ import type { NavItem } from "./components/shared/nav-item";
 
 export type View =
   | "start"
+  | "today"
   | "species"
   | "collection"
   | "treatments"
@@ -29,6 +32,7 @@ export type View =
   | "difficulty"
   | "pokedex"
   | "wishlist"
+  | "friends"
   | "light"
   | "review"
   | "operator"
@@ -37,6 +41,7 @@ export type View =
 
 const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
   { id: "start", text: "Start", icon: Home },
+  { id: "today", text: "Heute", icon: CalendarCheck },
   { id: "species", text: "Arten", icon: Leaf },
   { id: "collection", text: "Bestand", icon: Package },
   { id: "treatments", text: "Behandlung", icon: Sprout },
@@ -46,6 +51,7 @@ const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
   { id: "difficulty", text: "Artenvergleich", icon: Gauge },
   { id: "pokedex", text: "Pokédex", icon: BookOpen },
   { id: "wishlist", text: "Wunschliste", icon: Heart },
+  { id: "friends", text: "Freunde", icon: Users },
   { id: "light", text: "Standorte und Licht", icon: Sun },
   { id: "review", text: "Prüfliste", icon: ClipboardCheck },
   { id: "operator", text: "Betreiber", icon: Building2 },
@@ -56,6 +62,7 @@ const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
 /** One URL path per view (English); the link texts above stay German. */
 export const PATHS: Record<View, string> = {
   start: "/",
+  today: "/today",
   species: "/species",
   collection: "/collection",
   treatments: "/treatments",
@@ -65,6 +72,7 @@ export const PATHS: Record<View, string> = {
   difficulty: "/difficulty",
   pokedex: "/pokedex",
   wishlist: "/wishlist",
+  friends: "/friends",
   light: "/light",
   review: "/review",
   operator: "/operator",

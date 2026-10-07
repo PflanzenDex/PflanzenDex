@@ -4,10 +4,11 @@ import { LoadFrame, useInvalidate, useWriteAction } from "../kernel";
 import { EmptyState } from "@/components/shared/empty-state";
 import { useCandidateWrite, WriteOutcome, type WishToPlant } from "./actions/actions";
 import { BoughtList } from "./history/bought-list/bought-list";
-import { CandidateCard } from "./candidate-card";
+import { CandidateCard } from "./candidate-card/candidate-card";
 import { DiscardedList } from "./history/discarded-list/discarded-list";
+import { ReplenishWarning } from "./replenish-warning/replenish-warning";
 import { DuplicateWishes, useRepair } from "./duplicate-wishes/duplicate-wishes";
-import { WishForm } from "./wish-form";
+import { WishForm } from "./wish-form/wish-form";
 import { WishlistPageSkeleton } from "./WishlistPage.skeleton";
 import { createWish, loadWishlist, type WishInput, type Wishlist } from "./wishlist-api";
 
@@ -95,6 +96,7 @@ function Body(props: {
         error={outcome.error}
         {...(onCreateSpecimen ? { onCreateSpecimen } : {})}
       />
+      <ReplenishWarning replenishment={data.list.replenishment} />
       <DuplicateWishes list={data.list} repair={repair} />
       <Candidates
         list={data.list}

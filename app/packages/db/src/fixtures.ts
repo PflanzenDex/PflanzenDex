@@ -7,6 +7,7 @@ import { FIXTURES_LIGHT } from "./light/index.ts";
 import { FIXTURES_CARE } from "./care/index.ts";
 import { FIXTURES_WISHLIST } from "./wishlist/index.ts";
 import { FIXTURES_POKEDEX } from "./pokedex/index.ts";
+import { FIXTURES_SOCIAL } from "./social/index.ts";
 
 // One example per table with an account id for the remaining columns (without the id, the test sets it).
 // The entries live in their respective module; they are collected here. A new table without an entry
@@ -20,12 +21,23 @@ export const FIXTURES: Fixtures = {
   ...FIXTURES_CARE,
   ...FIXTURES_WISHLIST,
   ...FIXTURES_POKEDEX,
+  ...FIXTURES_SOCIAL,
 };
 
 // Test helpers for tables of another module (AB-9): tests of one module write no SQL on foreign tables,
 // they call these helpers. Role assignment is the operator's job in operation (TE-08), not the application's.
 export const assignRole = (pool: Pool, account: string, role: "operator" | "reviewer") =>
   pool.query("insert into account_role (account, role) values ($1, $2)", [account, role]);
+
+/** An account with its data row and display name (AB-9: tests of foreign modules write no SQL on `account_data`). */
+export const createAccountWithName = (pool: Pool, id: string, name: string | null) =>
+  withAccount(pool, id, async (c) => {
+    await c.query("insert into account (id) values ($1) on conflict do nothing", [id]);
+    await c.query(
+      "insert into account_data (account_id, email, display_name) values ($1, $2, $3)",
+      [id, `${id}@example.test`, name],
+    );
+  });
 
 /** The application role may neither read nor write the role table (both must fail with `permission denied`). */
 export const readRoleTable = (pool: Pool, account: string) =>
