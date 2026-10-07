@@ -2,6 +2,7 @@ import { useEffect, useRef, type MouseEvent, type ReactNode, type RefObject } fr
 import { AnnouncerProvider } from "@/platform/announcer/announcer";
 import { RouteFocus } from "@/components/routing/route-focus/route-focus";
 import { GlobalHeader } from "./global-header";
+import { SideNav } from "./side-nav/side-nav";
 import { MobileNavBar } from "./mobile-nav-bar";
 import type { NavItem } from "./nav-item";
 
@@ -17,6 +18,7 @@ function useStickyScrollPadding(shell: RefObject<HTMLDivElement | null>) {
     if (!root || typeof ResizeObserver === "undefined") return;
     const header = root.querySelector("header");
     const bar = root.querySelector("nav[data-bottom-bar]");
+    // From `md` the header and the bar are `display: none` and measure 0, so rail and sidebar add no padding.
     const html = document.documentElement.style;
     const update = () => {
       html.scrollPaddingTop = `${header?.getBoundingClientRect().height ?? 0}px`;
@@ -43,9 +45,10 @@ function skipToContent(event: MouseEvent<HTMLAnchorElement>) {
 }
 
 /**
- * Page frame (US-QS-07, DS-21, DS-22, DS-25): header, content and the bottom bar below `md`. `min-h-dvh`, no
- * horizontal scroll, and `main` keeps bottom padding for the sticky bar plus the safe area.
- * One `items` list is the single source of destinations for header and bar. The skip link comes first (US-QS-08).
+ * Page frame (US-QS-07, US-QS-14, DS-21, DS-22, DS-25): below `md` the brand header, the content and the bottom bar;
+ * from `md` a navigation rail, from `xl` a labelled sidebar next to the content. `min-h-dvh`, no horizontal scroll,
+ * and `main` keeps bottom padding for the bar (below `md`) plus the safe area. Gutters 16, 24 and 40 px.
+ * One `items` list is the single source of destinations for bar, rail and sidebar. The skip link comes first (US-QS-08).
  */
 export function AppShell({
   items,
@@ -63,7 +66,7 @@ export function AppShell({
     <AnnouncerProvider>
       <div
         ref={shell}
-        className="flex min-h-dvh flex-col overflow-x-hidden bg-background text-foreground"
+        className="flex min-h-dvh flex-col overflow-x-hidden bg-background text-foreground md:flex-row"
       >
         <a
           href={`#${MAIN_ID}`}
@@ -72,15 +75,18 @@ export function AppShell({
         >
           Zum Inhalt springen
         </a>
-        <GlobalHeader items={items} />
-        <main
-          id={MAIN_ID}
-          tabIndex={-1}
-          className="flex-1 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))] pt-4 md:px-6 md:pb-0"
-        >
-          {titleOf ? <RouteFocus titleOf={titleOf} /> : null}
-          {children}
-        </main>
+        <SideNav items={items} />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <GlobalHeader />
+          <main
+            id={MAIN_ID}
+            tabIndex={-1}
+            className="flex-1 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))] pt-4 md:px-6 md:pb-6 md:pt-6 xl:px-10"
+          >
+            {titleOf ? <RouteFocus titleOf={titleOf} /> : null}
+            {children}
+          </main>
+        </div>
         <MobileNavBar items={items} />
       </div>
     </AnnouncerProvider>

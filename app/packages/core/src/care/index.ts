@@ -7,6 +7,8 @@ export { measurementSource } from "./measurements/source";
 export type { SourceDependencies } from "./measurements/source";
 export { measurementRecord } from "./measurements/record";
 export type { RecordDependencies } from "./measurements/record";
+export { measurementPhoto } from "./measurements/photo";
+export type { PhotoDependencies, PhotoResult, PhotoStorage } from "./measurements/photo";
 export { RATED_BY, MEASUREMENT_LIMITS, QUALITIES } from "./measurements/types";
 export type {
   RatedBy,

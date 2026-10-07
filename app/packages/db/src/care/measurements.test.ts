@@ -104,6 +104,37 @@ describe("US-WAC-01 measurements in the database", () => {
     expect(await measurements.list(ben, specimenAnna)).toEqual([]);
   });
 
+  it("US-WAC-06 finds the measurement of a day (the last recorded) and sets its photo", async () => {
+    const ex = await specimen(anna, "Foto");
+    await measurements.create(anna, values({ specimenId: ex, date: "2026-10-05", value: 1 }));
+    const second = await measurements.create(
+      anna,
+      values({ specimenId: ex, date: "2026-10-05", value: 2 }),
+    );
+    if (typeof second === "string") throw new Error(second);
+    expect(await measurements.findOnDate(anna, ex, "2026-10-06")).toBeNull();
+    expect(await measurements.findOnDate(anna, ex, "2026-10-05")).toMatchObject({
+      id: second.id,
+      photo: null,
+    });
+    expect(await measurements.setPhoto(anna, second.id, "foto-1.jpg")).toBe(true);
+    expect((await measurements.findOnDate(anna, ex, "2026-10-05"))?.photo).toBe("foto-1.jpg");
+  });
+
+  it("US-WAC-06 a foreign account neither finds nor changes a measurement's photo (P-04)", async () => {
+    const z = await measurements.create(anna, values({ date: "2026-10-07" }));
+    if (typeof z === "string") throw new Error(z);
+    expect(await measurements.findOnDate(ben, specimenAnna, "2026-10-07")).toBeNull();
+    expect(await measurements.setPhoto(ben, z.id, "fremd.jpg")).toBe(false);
+    expect((await measurements.findOnDate(anna, specimenAnna, "2026-10-07"))?.photo).toBeNull();
+  });
+
+  it("US-WAC-06 the database accepts only valid photo names", async () => {
+    const z = await measurements.create(anna, values({ date: "2026-10-08" }));
+    if (typeof z === "string") throw new Error(z);
+    await expect(measurements.setPhoto(anna, z.id, "../x.jpg")).rejects.toThrow();
+  });
+
   it("values outside the limits fail already in the database", async () => {
     for (const extra of [{ value: -0.5 }, { value: 10_001 }, { quality: "super" }, { note: "" }])
       await expect(measurements.create(anna, values(extra))).rejects.toThrow();

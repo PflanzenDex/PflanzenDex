@@ -9,6 +9,8 @@ import {
   type TargetLocationSource,
   type PhaseLocationSource,
   type ZoneStockSource,
+  type ObjectStore,
+  type ImageProcessor,
 } from "@pflanzendex/core";
 import {
   OPERATOR_PATHS,
@@ -27,9 +29,18 @@ import {
 } from "./collection";
 import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
 import { WISH_PATHS, wishRoutes, wishZoneUsageFor } from "./wishlist";
+import {
+  FEED_PATHS,
+  FRIEND_PATHS,
+  SHARING_PATHS,
+  feedRoutes,
+  friendRoutes,
+  sharingRoutes,
+} from "./social";
 import { zoneStockFor } from "./zone-stock";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
+import { discoverRoutes } from "./discover";
 import {
   CARE_PATHS,
   CARE_PHASES_PATHS,
@@ -41,6 +52,7 @@ import {
   treatmentSourceFor,
   targetLocationFor,
 } from "./care";
+import { TODAY_PATHS, todayRoutes } from "./today";
 
 export type AppOptions = {
   /** Verifies access tokens of the sign-in service; without it there are no protected routes. */
@@ -61,6 +73,8 @@ export type AppOptions = {
   /** Measurements and treatments for the specimen cards (US-BES-06); without it `care` supplies the measurements (WAC-01) and the planned treatments (BEH-01). */
   measurements?: MeasurementSource;
   treatments?: TreatmentSource;
+  /** Object store and image processing for measurement photos (US-WAC-06); without them uploading a photo answers 502. */
+  media?: { store: ObjectStore; processor: ImageProcessor };
   /** Replaces the care profile as source of the location per phase (tests); without it the keeper's own care profile (US-BES-09) answers. */
   phaseLocation?: PhaseLocationSource;
   /** Replaces the light distribution as source of the stock per zone for the wishlist (tests); without it `collection` answers (US-LIC-02). */
@@ -72,7 +86,11 @@ function bindCareOne(
   app: Hono,
   pool: Pool,
   auth: MiddlewareHandler,
-  opt: { clock?: () => Date; phaseLocation?: PhaseLocationSource },
+  opt: {
+    clock?: () => Date;
+    phaseLocation?: PhaseLocationSource;
+    media?: { store: ObjectStore; processor: ImageProcessor };
+  },
 ) {
   for (const path of CARE_PATHS) app.use(path, auth);
   app.route("/", careRoutes(pool, opt));
@@ -82,10 +100,39 @@ function bindCareOne(
   app.route("/", treatmentRoutes(pool, opt));
 }
 
+/** The module `today` (TE-07): sign-in guard in front of the path, then the read-only route. */
+function bindToday(
+  app: Hono,
+  pool: Pool,
+  auth: MiddlewareHandler,
+  opt: { clock?: () => Date; phaseLocation?: PhaseLocationSource },
+) {
+  for (const path of TODAY_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", todayRoutes(pool, opt));
+}
+
 /** The module `wishlist`: sign-in guard in front of the paths, then the routes; the stock per zone comes from `collection` unless tests replace it. */
 function bindWishlist(app: Hono, pool: Pool, auth: MiddlewareHandler, zoneStock?: ZoneStockSource) {
   for (const path of WISH_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", wishRoutes(pool, zoneStock ?? zoneStockFor(pool)));
+}
+
+/** The module `social` (friends by invitation): sign-in guard in front of the paths, then the routes. */
+function bindFriends(app: Hono, pool: Pool, auth: MiddlewareHandler, clock?: () => Date) {
+  for (const path of [...FRIEND_PATHS, ...SHARING_PATHS, ...FEED_PATHS])
+    app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", friendRoutes(pool, clock));
+  app.route("/", sharingRoutes(pool));
+  app.route("/", feedRoutes(pool, clock));
+}
+
+/** What `care` takes from the app options: clock, location per phase and the media port (photos, US-WAC-06). */
+function careOptions(opt: AppOptions) {
+  return {
+    ...(opt.clock ? { clock: opt.clock } : {}),
+    ...(opt.phaseLocation ? { phaseLocation: opt.phaseLocation } : {}),
+    ...(opt.media ? { media: opt.media } : {}),
+  };
 }
 
 /** What `care` feeds into the collection: target location, measurements and treatments, unless tests replace them. */
@@ -114,8 +161,7 @@ function bindAccount(app: Hono, verifier: TokenVerifier, pool: Pool, opt: AppOpt
 }
 
 export function createApp(opt: AppOptions = {}): Hono {
-  const version = opt.version ?? "unknown";
-  const commit = opt.commit ?? "unknown";
+  const { version = "unknown", commit = "unknown" } = opt;
   const app = new Hono();
   if (opt.webOrigin)
     app.use(
@@ -141,13 +187,14 @@ export function createApp(opt: AppOptions = {}): Hono {
     app.route("/", specimenRoutes(opt.pool, { clock: opt.clock, ...careSources(opt.pool, opt) }));
     for (const path of POKEDEX_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", pokedexRoutes(opt.pool));
+    app.route("/", discoverRoutes(opt.pool, auth));
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", careProfileRoutes(opt.pool));
     bindWishlist(app, opt.pool, auth, opt.zoneStock);
-    bindCareOne(app, opt.pool, auth, {
-      ...(opt.clock ? { clock: opt.clock } : {}),
-      ...(opt.phaseLocation ? { phaseLocation: opt.phaseLocation } : {}),
-    });
+    bindFriends(app, opt.pool, auth, opt.clock);
+    const care = careOptions(opt);
+    bindCareOne(app, opt.pool, auth, care);
+    bindToday(app, opt.pool, auth, care);
   }
   return app;
 }

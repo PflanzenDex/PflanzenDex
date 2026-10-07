@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setProfileTimeZone } from "../kernel";
-import { loadOpenTreatments } from "./treatments-api";
+import { loadOpenTreatments } from "./api/treatments-api";
 
 afterEach(() => setProfileTimeZone(null));
 

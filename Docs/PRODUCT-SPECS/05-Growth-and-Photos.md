@@ -18,7 +18,7 @@ Acceptance criteria:
 - The same dimension is always measured at the same place.
 - Saving is idempotent (US-QS-03).
 
-State of implementation: the view "Measure" per specimen shows "Was messen?" (growth measure of the species, otherwise "unbekannt"), the last measurement, the last assessment, the input form and the course. Input: number on the grid of 0.5 cm (assumption: the grid also applies on the server so that nothing is rounded silently), quality (preset `Gesund`), optional note; the date defaults to today in the profile's time zone (US-ACC-02; the device's zone only as fallback while none is chosen), is changeable and not in the future (assumption: a typo in the year would distort every later rate). Invalid input writes nothing; saving goes through `measurement.record` with `Idempotency-Key`. **Open:** the optional photo (media processing, FR-WAC-09, US-WAC-05); rate and trend are in the view (US-WAC-03). That the same dimension is always measured at the same place exists only as a hint in the text.
+State of implementation: the view "Measure" per specimen shows "Was messen?" (growth measure of the species, otherwise "unbekannt"), the last measurement, the last assessment, the input form and the course. Input: number on the grid of 0.5 cm (assumption: the grid also applies on the server so that nothing is rounded silently), quality (preset `Gesund`), optional note; the date defaults to today in the profile's time zone (US-ACC-02; the device's zone only as fallback while none is chosen), is changeable and not in the future (assumption: a typo in the year would distort every later rate). Invalid input writes nothing; saving goes through `measurement.record` with `Idempotency-Key`. **Open:** the upload control for the optional photo in the form (the processing exists, US-WAC-06; showing it is US-WAC-05); rate and trend are in the view (US-WAC-03), the rule that etiolated growth overrides the trend is missing (US-WAC-04). That the same dimension is always measured at the same place exists only as a hint in the text.
 
 ### US-WAC-02 · Assess etiolation while measuring · ✅ (prototype ✅)
 
@@ -58,7 +58,7 @@ Acceptance criteria:
 - Photo series in time order; the specimen card (US-BES-06) shows the latest photo.
 - "Last assessment" shows date and note of the last measurement.
 
-### US-WAC-06 · Have a photo assessed and store it · ⬜ (prototype ✅)
+### US-WAC-06 · Have a photo assessed and store it · 🟨 (prototype ✅)
 
 As a **plant keeper** I want to have a photo assessed, so that measured number, judgment and picture belong together.
 
@@ -73,6 +73,8 @@ Acceptance criteria (processing):
 - The photo belongs to the measurement of the same day; a second photo for the same measurement replaces only after confirmation.
 - Invalid file, too large a file or a missing measurement abort with a clear message.
 
+State of implementation: the processing and storing half works (release R1). `POST /specimens/:id/measurements/photo?timeZone=…&date=…&replace=true` takes the raw image file (`Content-Type` JPEG, PNG or WebP, `Idempotency-Key`) and runs `measurement.photo`: the image is rotated by EXIF, the long side reduced to at most 1600 px, JPEG quality 82, EXIF/GPS removed, only the cleaned version is stored, never the original (FR-WAC-09, QG-D3). The photo belongs to the measurement of the given day (default today in the profile's time zone; with several measurements that day the one recorded last, FR-WAC-07); a second photo is refused with `measurement.photo_exists` until the request repeats with `replace=true`, then the old object is deleted after the new one is linked. Errors with German texts: `measurement.not_found` (no measurement that day), `media.too_large` (413), `media.type_unsupported` (415), `media.not_an_image` (422), `media.storage_unavailable` (502, no storage configured). Storage: column `measurement.photo` (migration `0031`). **Missing:** the AI assessment with the suggestion of `quality` and note (US-KI-04, release R4; `Assessed_By` stays `Keeper`), the upload control and the confirmation dialog in the web form, showing the photo (US-WAC-05); the status stays 🟨.
+
 ## Data model
 
 ### DM-WAC-01 Measurement
@@ -81,11 +83,11 @@ Acceptance criteria (processing):
 
 ## Requirements
 
-| ID        | Requirement                                                                                                                                                                                    | Status |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| FR-WAC-02 | The rate is a comparison against the **own** history; numbers without a verifiable source are not shown (P-08).                                                                                | ⬜     |
-| FR-WAC-03 | The trend threshold ±10 % is a default, centrally configurable in the logic.                                                                                                                   | ⬜     |
-| FR-WAC-05 | The growth view also shows cuttings, marked "Cutting". (Open question from the prototype, settled here: visible, because cuttings should be measured.)                                         | ⬜     |
-| FR-WAC-07 | More than one measurement on the same day is possible, but yields no rate (Δ days = 0).                                                                                                        | ⬜     |
-| FR-WAC-08 | A too old last measurement (default 30 days, adjustable) creates a reminder (US-MON-04). Cuttings are excluded or have a shorter rhythm (decision open).                                       | ⬜     |
-| FR-WAC-09 | Photos are the property of the user. After processing only the cleaned version exists (no original with GPS).                                                                                  | ⬜     |
+| ID        | Requirement                                                                                                                                              | Status |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| FR-WAC-02 | The rate is a comparison against the **own** history; numbers without a verifiable source are not shown (P-08).                                          | ⬜     |
+| FR-WAC-03 | The trend threshold ±10 % is a default, centrally configurable in the logic.                                                                             | ⬜     |
+| FR-WAC-05 | The growth view also shows cuttings, marked "Cutting". (Open question from the prototype, settled here: visible, because cuttings should be measured.)   | ⬜     |
+| FR-WAC-07 | More than one measurement on the same day is possible, but yields no rate (Δ days = 0).                                                                  | ⬜     |
+| FR-WAC-08 | A too old last measurement (default 30 days, adjustable) creates a reminder (US-MON-04). Cuttings are excluded or have a shorter rhythm (decision open). | ⬜     |
+| FR-WAC-09 | Photos are the property of the user. After processing only the cleaned version exists (no original with GPS).                                            | 🟨     |

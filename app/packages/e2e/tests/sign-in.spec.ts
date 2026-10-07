@@ -5,7 +5,7 @@ import { signIn, expect, test } from "../support/fixtures";
 test.describe("US-ACC-01 sign-in", () => {
   test("US-ACC-01 start page offers create account and sign in", async ({ page }, info) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { level: 1, name: "PflanzenDex" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "PflanzenDéx" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Konto anlegen" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Anmelden" })).toBeVisible();
     await axeReport(page, info, "start", { blocking: true });

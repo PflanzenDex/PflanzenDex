@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
+import { Form, FormRoot } from "@/components/ui/form";
 import { SIGN_IN, type ApiError } from "../kernel";
 import { redeemInvitation } from "./access-api";
 import { useServerRefusal } from "./refusal";
@@ -62,10 +62,10 @@ export function InvitationPage(props: {
         hast.
       </p>
       <p className="text-sm text-muted-foreground">
-        Du hast keinen Code? Bitte die Person, die PflanzenDex betreibt, um eine Einladung.
+        Du hast keinen Code? Bitte die Person, die PflanzenDéx betreibt, um eine Einladung.
       </p>
       <Form {...form}>
-        <form noValidate onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
+        <FormRoot onSubmit={submit} className="flex flex-col gap-4">
           <TextField
             control={form.control}
             name="code"
@@ -88,7 +88,7 @@ export function InvitationPage(props: {
               Abmelden
             </Button>
           </div>
-        </form>
+        </FormRoot>
       </Form>
     </section>
   );

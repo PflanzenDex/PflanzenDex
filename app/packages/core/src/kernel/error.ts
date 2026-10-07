@@ -28,6 +28,10 @@ export const ERROR_TEXTS = {
   "species.duplicate":
     "Diese Art gibt es schon (gleicher Name oder Synonym). Wähle die vorhandene Art, statt eine zweite anzulegen.",
   "species.not_found": "Diese Art gibt es nicht.",
+  "catalog.name_hybrid":
+    "Hybridzeichen (× oder x) gehören nicht in den Katalog. Trage die Art ohne Hybridzeichen ein, zum Beispiel „Citrus limon“ statt „Citrus x limon“.",
+  "catalog.name_addition":
+    "Zusätze wie var., subsp., f. oder cv. gehören nicht in den Katalog. Trage nur Gattung und Art ein; den Zusatz hältst du beim Exemplar fest.",
   "specimen.name_taken":
     "Ein Exemplar mit diesem Namen gibt es schon. Gib ein Kennzeichen an (zum Beispiel eine Farbe), damit du die Töpfe unterscheiden kannst.",
   "specimen.marker_taken":
@@ -46,7 +50,22 @@ export const ERROR_TEXTS = {
   "specimen.not_archived": "Dieses Exemplar ist nicht archiviert.",
   "specimen.archived":
     "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her, dann kannst du damit arbeiten.",
+  "measurement.not_found":
+    "Für diesen Tag gibt es noch keine Messung. Erfasse zuerst die Messung, dann kannst du das Foto dazu speichern; es wurde nichts gespeichert.",
+  "measurement.photo_exists":
+    "Zu dieser Messung gibt es schon ein Foto. Bestätige, dass es ersetzt werden soll; bis dahin bleibt das alte Foto unverändert.",
   "treatment.not_found": "Diese Behandlung gibt es nicht.",
+  "friend.unknown_code":
+    "Diesen Freundescode gibt es nicht. Prüfe die Eingabe oder bitte um einen neuen Code.",
+  "friend.code_used": "Dieser Freundescode wurde schon benutzt. Bitte um einen neuen Code.",
+  "friend.code_expired": "Dieser Freundescode ist abgelaufen. Bitte um einen neuen Code.",
+  "friend.own_code": "Das ist dein eigener Freundescode. Gib ihn an jemand anderen weiter.",
+  "friend.already_linked":
+    "Mit dieser Person gibt es schon eine Anfrage oder Freundschaft. Es wurde nichts geändert und der Code ist nicht verbraucht.",
+  "friend.request_not_found": "Diese Freundschaftsanfrage gibt es nicht. Lade die Liste neu.",
+  "friend.request_answered":
+    "Diese Anfrage hast du schon anders beantwortet. Es wurde nichts geändert.",
+  "friend.not_found": "Diesen Freund gibt es nicht. Lade die Liste neu.",
   "wish.name_taken":
     "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
   "wish.not_found": "Diesen Wunsch gibt es nicht. Lade die Wunschliste neu.",
@@ -60,6 +79,8 @@ export const ERROR_TEXTS = {
     "Dieser Wunsch ist schon mit einem anderen Exemplar verknüpft, oder das Exemplar gehört schon zu einem anderen Wunsch. Es wurde nichts geändert.",
   "wish.not_duplicate":
     "Dieser Wunsch hat keinen doppelten Namen und lässt sich hier nicht umbenennen oder löschen. Lade die Wunschliste neu; es wurde nichts geändert.",
+  "pokedex.not_caught":
+    "Diese Art hast du noch nicht gefangen und kann deshalb nicht als gesehen vermerkt werden. Lade den Pokédex neu; es wurde nichts geändert.",
   "care.no_phase":
     "Dieses Exemplar hat keine Pflegephase (Steckling oder Art ohne Ruhephasen-Zeitraum) und wird nicht umgestellt.",
   "care.target_unknown":
@@ -82,6 +103,22 @@ export const ERROR_TEXTS = {
     "Eine externe Datenquelle hat eine unlesbare Antwort geliefert. Es wurde nichts übernommen; der letzte gute Stand bleibt bestehen.",
   "source.request_rejected":
     "Eine externe Datenquelle hat die Abfrage abgelehnt. Es wurde nichts übernommen; der Betreiber wird informiert.",
+  "taxonomy.no_match":
+    "Zu dieser Art gibt es in der Pflanzen-Taxonomie keinen Treffer. Prüfe den lateinischen Namen; Familie und Gattung bleiben unbekannt.",
+  "taxonomy.not_species":
+    "Der Treffer der Pflanzen-Taxonomie ist keine Art (zum Beispiel nur eine Gattung). Familie und Gattung bleiben unbekannt.",
+  "taxonomy.lineage_missing":
+    "Zu dieser Art fehlt in der Pflanzen-Taxonomie die Einordnung in Gattung und Familie. Sie bleibt unbekannt.",
+  "media.name_invalid": "Der Bildname ist ungültig. Es wurde nichts gespeichert.",
+  "media.not_found": "Dieses Bild gibt es nicht.",
+  "media.too_large":
+    "Das Bild ist zu groß. Wähle ein kleineres Foto (höchstens 15 MB); es wurde nichts gespeichert.",
+  "media.type_unsupported":
+    "Dieses Bildformat wird nicht unterstützt. Nimm ein Foto als JPEG, PNG oder WebP auf; es wurde nichts gespeichert.",
+  "media.not_an_image":
+    "Die Datei lässt sich nicht als Bild lesen. Wähle ein anderes Foto; es wurde nichts gespeichert.",
+  "media.storage_unavailable":
+    "Der Bildspeicher antwortet gerade nicht. Deine Daten sind nicht betroffen; versuche es später erneut.",
   "operator_cost.month_in_future":
     "Dieser Monat liegt in der Zukunft. Trage die Kosten eines Monats ein, der schon begonnen hat.",
 } as const;

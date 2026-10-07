@@ -6,9 +6,11 @@ Prototype reference: epic POK (`../PLANT-SYSTEM-SPECS/07-Pokedex.md`), the most 
 
 Note: in the prototype the stories POK-04 (hook) and POK-05 (robustness) were part of the build. They are absorbed into US-POK-03 here.
 
+Note (US-QS-14): the Pokédex is shown as the view "Arten" of the destination "Sammlung", next to the views "Pflanzen" of the collection epic (BES) and "Wunschliste" of the wishlist epic (WUN); the action "to the wishlist" of a missing species (US-POK-09) opens the wishlist view.
+
 ## User stories
 
-### US-POK-01 · See collector cards for species · ⬜ (prototype ✅)
+### US-POK-01 · See collector cards for species · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
@@ -20,18 +22,22 @@ Acceptance criteria:
 - Species-poor (genus ≤ 10 species according to GBIF): badge "Species-poor"; caught species-poor species with a rarity frame.
 - Source link on every card with an image source (CC BY-SA).
 
-### US-POK-02 · Maintain the catalog · ⬜ (prototype ✅)
+Status 🟨: the cards of the taxonomy tree work (`GET /pokedex/cards`, caught derived live from the specimens, missing cards, species-poor badge and rarity frame, Wikipedia image as a link only, P-05). Missing: the latest measurement photo of an active specimen (WAC-05, storage TE-05; the Wikipedia image link or a neutral sprout is shown) and the family icons (FR-POK-10); caught species that are not in the tree are not shown as cards (FR-POK-04 hints).
+
+### US-POK-02 · Maintain the catalog · 🟨 (prototype ✅)
 
 As an **operator** I want to maintain the species catalog in one place; as a **plant keeper** to propose species.
 
 Acceptance criteria:
 
 - A catalog entry has `Name` (genus + epithet), `German`, `Difficulty` (1–3), `Light_Zone` (2–4), optional `Note`. Required fields are validated.
-- Names are normalized (`ficus BENJAMINA` → `Ficus benjamina`), duplicates are dropped, invalid ratings trigger a warning, hybrid signs and cultivar additions do not belong in the catalog (US-POK-06).
+- Names are normalized (`ficus BENJAMINA` → `Ficus benjamina`), duplicates are dropped, invalid ratings trigger a warning, a hybrid sign (`x`, `×`, `+`) or an addition (`var.`, `subsp.`, `ssp.`, `f.`, `cv.`) is refused in a catalog name (these belong to the specimen, US-POK-06), while a cultivar in quotation marks (`Ficus elastica 'Robusta'`) is accepted (DM-BES-01) and shown as a chip (US-POK-06); it does not change the species assignment of the Pokédex.
 - The catalog grows in batches (target size 600+ species; collector genera with 10–20 species, otherwise 1–3 per genus); each batch is proofread and usable without a "finished" catalog (prototype 🟡: 215 species).
 - User proposals (US-BES-01) land in the operator's review list (US-BES-10) and count only after approval.
 
-### US-POK-03 · Build taxonomy and enrichment automatically · ⬜ (prototype ✅)
+Status 🟨: the entry fields with limits (difficulty 1–3, light level 2–4), the normalization (`ficus BENJAMINA` → `Ficus benjamina`), the duplicate check (name and synonyms) and the proposal path into the review list (US-BES-01, US-BES-10; a proposal counts only after approval) work. A hybrid sign (`x`, `X`, `×`, `+`) or an addition (`var.`, `subsp.`, `ssp.`, `f.`, `cv.`) is refused on the Latin name with the codes `catalog.name_hybrid` and `catalog.name_addition`; a cultivar in quotation marks stays accepted (owner decision 2026-10-07). Missing: the growth to 600+ species in proofread batches (TE-12, data work, not part of this story) and an operator path to change an approved entry.
+
+### US-POK-03 · Build taxonomy and enrichment automatically · 🟨 (prototype ✅)
 
 As the **system** I want to generate the tree, including Wikipedia data and genus species count, from the catalog.
 
@@ -44,6 +50,8 @@ Acceptance criteria:
 - Robust: on a network failure the previous good tree is kept (atomic replacement); individual errors are reported, not cached; "no article/GBIF hit" is cached as a result; requests are throttled and repeated on 429/5xx (at most 5×, backoff ≤ 60 s).
 - Idempotent: same inputs and caches yield identical output.
 - The operator sees a warning when catalog and tree differ in the names.
+
+Status 🟨: the build job (`pokedex.build_taxonomy`) resolves lineage (OpenTree, land plants, rank species; a synonym hit such as _Sansevieria_ → _Dracaena_ is kept under the current name, approximate hits are errors), takes the Wikipedia summary (de, else en) only when Wikidata confirms rank species, shortens the text to 2 sentences and 240 characters at a sentence boundary (a longer first sentence leaves the text unknown), reads the GBIF species count per genus once (0 = unknown) and replaces the table `taxon` in one transaction; unresolved species are rows with a reason code (`taxonomy.*`). A source failure stops the build and keeps the previous tree (the job is retried by the queue). The job is ordered when the fingerprint of the catalog names differs from the stored tree. Missing: the operator warning for name differences, and the lease renewal for builds longer than 5 minutes (see `README.md` status line).
 
 ### US-POK-06 · Derive ownership automatically from my plants · 🟨 (prototype ✅)
 
@@ -100,7 +108,7 @@ Acceptance criteria:
 
 Status 🟨: the logic and the view work over a taxonomy tree. Missing: the tree (taxonomy build, US-POK-03); until then the view says milestones need the tree and shows none (nothing is invented, P-08).
 
-### US-POK-12 · "Newly caught" on the next visit · ⬜ (prototype ✅)
+### US-POK-12 · "Newly caught" on the next visit · 🟨 (prototype ✅)
 
 Acceptance criteria:
 

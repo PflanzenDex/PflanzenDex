@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { CollectionArea } from "./collection-area";
@@ -54,13 +55,15 @@ describe("US-WAC-01 collection wired with measuring", () => {
       }),
     );
     render(
-      <CollectionArea
-        api="http://api"
-        token={async () => "tok"}
-        newSpecies={null}
-        onSpeciesChoose={() => {}}
-        onCompleted={() => {}}
-      />,
+      <MemoryRouter>
+        <CollectionArea
+          api="http://api"
+          token={async () => "tok"}
+          newSpecies={null}
+          onSpeciesChoose={() => {}}
+          onCompleted={() => {}}
+        />
+      </MemoryRouter>,
     );
     // The collection page is a lazy part; its first import can take longer than the default second under load.
     const measure = await screen.findByRole(
@@ -71,6 +74,6 @@ describe("US-WAC-01 collection wired with measuring", () => {
     await userEvent.click(measure);
     expect(await screen.findByRole("heading", { name: "Messen: Bogenhanf" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zurück zum Bestand" }));
-    expect(await screen.findByRole("heading", { name: "Bestand" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Sammlung" })).toBeTruthy();
   });
 });

@@ -12,35 +12,55 @@
 @import "tailwindcss/preflight" layer(base);
 @import "tailwindcss/utilities" layer(utilities);
 
+/* Figtree (SIL OFL 1.1, fonts/ofl.txt), self-hosted: Latin subset incl. German umlauts and ß, variable weight axis. */
+@font-face {
+  font-family: "Figtree";
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url("./fonts/figtree-latin-wght-normal.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* Dark mode follows the system, as today (ADR 0007 decision 6). */
 @custom-variant dark (@media (prefers-color-scheme: dark));
 
 :root {
-  --background: #f4f7f2;
-  --foreground: #1b2a1f;
+  --background: #f2f6f3;
+  --foreground: #14201a;
   --card: #ffffff;
   --card-foreground: var(--foreground);
   --popover: var(--card);
   --popover-foreground: var(--foreground);
-  --primary: #2f7d4f;
+  --primary: #1b6b4a;
   --primary-foreground: #ffffff;
-  --secondary: #e6efe4;
-  --secondary-foreground: #1b2a1f;
-  --muted: #e9efe6;
-  --muted-foreground: #4f6355;
-  --accent: #dcebd9;
-  --accent-foreground: #1b2a1f;
+  --secondary: #e6eee8;
+  --secondary-foreground: #14201a;
+  --muted: #e6eee8;
+  --muted-foreground: #4b5c52;
+  --accent: #d8eedf;
+  --accent-foreground: #124a32;
   --destructive: #b3261e; /* invalid field border and error text */
   --destructive-foreground: #ffffff;
-  --border: #cfdccf; /* decorative lines of cards and dividers */
-  --input: #74897a; /* field boundary: 3.5:1 on background, 3.8:1 on card (WCAG 1.4.11); --border stays decorative */
-  --ring: #2f7d4f;
-  --radius: 0.625rem;
+  --border: #d3ded6; /* decorative lines of cards and dividers */
+  --input: #6b8274; /* field boundary: 3.8:1 on background, 4.1:1 on card (WCAG 1.4.11); --border stays decorative */
+  --ring: #1b6b4a;
+
+  /* Elevation (ADR 0011 decision 4) and motion (decision 5); radius, type scale and easing are in @theme below. */
+  --elevation-1: 0 1px 2px rgb(20 40 28 / 0.08), 0 6px 16px rgb(20 40 28 / 0.08);
+  --elevation-2: 0 8px 24px rgb(20 40 28 / 0.08); /* sheets, dialogs, floating action */
+  --elevation-2-border: transparent; /* dark mode draws a 1px border, where shadows are weak */
+
+  --motion-fast: 120ms; /* press, toggle (starting values, assumption) */
+  --motion-base: 200ms; /* list entry, chip, sheet content */
+  --motion-slow: 320ms; /* route transition, card to detail */
 
   /* Warning (etiolation, deviation): fill, text on it, border. */
-  --warning: #fff4d6;
-  --warning-foreground: #1b2a1f;
-  --warning-border: #c98a00;
+  --warning: #fff1cf;
+  --warning-foreground: #6b4700;
+  --warning-border: #8a5a00;
 
   /* Domain colours (DS-30): light zones 1 to 4 and care phases, used as text or marks on background and card. */
   --zone-1: #8a5a00;
@@ -55,25 +75,28 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #121a14;
-    --foreground: #e8f1ea;
-    --card: #1b261e;
-    --primary: #5fbf86;
-    --primary-foreground: #0d1a11;
-    --secondary: #1f2e24;
-    --secondary-foreground: #e8f1ea;
-    --muted: #1b261e;
-    --muted-foreground: #a9bdae;
-    --accent: #26382c;
-    --accent-foreground: #e8f1ea;
-    --destructive: #ff8a80; /* 7.8:1 on --background, 6.9:1 on --card */
+    --background: #0f1612;
+    --foreground: #e6efe9;
+    --card: #18221c;
+    --primary: #7bd3a0;
+    --primary-foreground: #0b2316;
+    --secondary: #223028;
+    --secondary-foreground: #e6efe9;
+    --muted: #18221c;
+    --muted-foreground: #a5b6ab;
+    --accent: #1f3a2b;
+    --accent-foreground: #a9e8c4;
+    --destructive: #ff8a80; /* 8.0:1 on --background, 7.2:1 on --card */
     --destructive-foreground: #2a0a08;
-    --border: #2e4034;
-    --input: #648069; /* 4.1:1 on background, 3.6:1 on card */
-    --ring: #5fbf86;
+    --border: #2b3b31;
+    --input: #6f8c79; /* 5.0:1 on background, 4.4:1 on card */
+    --ring: #7bd3a0;
+    --elevation-1: 0 1px 2px rgb(0 0 0 / 0.35), 0 6px 16px rgb(0 0 0 / 0.35);
+    --elevation-2: 0 8px 24px rgb(0 0 0 / 0.35);
+    --elevation-2-border: var(--border);
 
-    --warning: #3a3012;
-    --warning-foreground: #e8f1ea;
+    --warning: #3a2f10;
+    --warning-foreground: #f2c766;
     --warning-border: #e0a92e;
 
     --zone-1: #e0a92e;
@@ -114,13 +137,75 @@
   --color-zone-4: var(--zone-4);
   --color-phase-growth: var(--phase-growth);
   --color-phase-dormancy: var(--phase-dormancy);
-  --radius-md: var(--radius);
+  --shadow-elevation-1: var(--elevation-1);
+  --shadow-elevation-2: var(--elevation-2), 0 0 0 1px var(--elevation-2-border);
+}
+
+/* Values that do not change with the colour scheme are plain theme variables (ADR 0011 decisions 3 to 5). */
+@theme {
+  /* Radius: tokens plus the Tailwind steps components already use, so existing classes resolve to the new radii. */
+  --radius-control: 14px; /* inputs, small buttons, chips with text */
+  --radius-tile: 16px; /* photo tiles */
+  --radius-card: 22px; /* cards (24px from 1280px is set by the shell) */
+  --radius-pill: 9999px; /* primary buttons, navigation indicators, filter chips */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: var(--radius-control);
+  --radius-xl: var(--radius-tile);
+  --radius-2xl: var(--radius-card);
+
+  --font-sans: "Figtree", system-ui, sans-serif;
+  --text-xs: 0.75rem;
+  --text-label: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.25;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 1.25;
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 1.25;
+  --text-4xl: 2.5rem;
+  --text-4xl--line-height: 1.25;
+
+  --ease-enter: cubic-bezier(0.2, 0, 0, 1);
+  --ease-leave: cubic-bezier(0.4, 0, 1, 1);
+
+  /* PlantLoader (US-QS-07): grow and sway, durations are multiples of the motion token, so 0ms under reduced motion. */
+  --animate-plant-grow: plant-grow calc(var(--motion-slow) * 6) var(--ease-enter) infinite;
+  --animate-plant-sway: plant-sway calc(var(--motion-slow) * 8) ease-in-out infinite;
+  @keyframes plant-grow {
+    0% {
+      transform: scale(0.35);
+    }
+    60%,
+    100% {
+      transform: scale(1);
+    }
+  }
+  @keyframes plant-sway {
+    0%,
+    100% {
+      transform: rotate(-4deg);
+    }
+    50% {
+      transform: rotate(4deg);
+    }
+  }
 }
 
 /* Base layer (DS-33): the page colours and the pointer for real controls, which preflight resets to the default arrow. */
 @layer base {
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background font-sans text-foreground;
+    font-size: 1rem;
+    line-height: 1.45; /* running text; headings 1.25 */
+  }
+  h1,
+  h2,
+  h3 {
+    line-height: 1.25;
   }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
@@ -138,6 +223,11 @@
  * is the one exception to DS-33 here, because libraries set transitions as inline styles while a sheet moves.
  */
 @media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
   *,
   ::before,
   ::after {

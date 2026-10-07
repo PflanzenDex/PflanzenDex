@@ -16,7 +16,7 @@ const Table = React.forwardRef<HTMLTableElement, TableProps>(
       aria-label={containerLabel}
       tabIndex={0}
       className={cn(
-        "relative w-full overflow-x-auto rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "relative w-full overflow-x-auto rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         containerClassName,
       )}
     >
@@ -57,7 +57,10 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     scope={scope}
-    className={cn("h-11 px-3 text-left align-middle font-medium text-muted-foreground", className)}
+    className={cn(
+      "h-11 px-3 text-left align-middle text-xs font-semibold text-muted-foreground",
+      className,
+    )}
     {...props}
   />
 ));

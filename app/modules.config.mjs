@@ -4,9 +4,8 @@
 //
 // A module folder is `packages/<core|db|api|web>/src/<name>/` with an `index.ts` as its public interface (variant A).
 // The rules apply to every folder that carries the name of a module below; without such folders the gate is idle.
-// The cut follows ADR 0003 with the owner decisions O-1 (care and growth merged, media and jobs live in `kernel`)
-// and O-2 (foreign keys across modules only tenant-safe as (account_id, id) on allowed dependencies, plus the one
-// registered exception below for global reference tables).
+// The cut follows ADR 0003 with the owner decisions O-1 (care and growth merged) and O-2 (foreign keys across modules
+// only tenant-safe as (account_id, id) on allowed dependencies, plus the registered exception for reference tables).
 // `dependsOn` is the dependency matrix: `A -> B` may be imported only if B is listed for A. A new edge changes this
 // file in the same PR; cycles are always an error (AB-8). `epics` maps epics to modules (report only, QG-T4).
 
@@ -30,6 +29,14 @@ const MODULES = [
     tables: ["job"],
     dependsOn: ["kernel"],
     ports: ["JobQueue"],
+  },
+  {
+    // Platform module (TE-05): object store port with an S3 adapter, image processing (strip EXIF/GPS). No table yet.
+    name: "media",
+    epics: ["TE"],
+    tables: [],
+    dependsOn: ["kernel"],
+    ports: ["ObjectStore", "ImageProcessor"],
   },
   {
     name: "account",
@@ -99,7 +106,7 @@ const MODULES = [
   {
     name: "social",
     epics: ["SOZ"],
-    tables: ["friendship", "sharing", "offer", "swap", "event"],
+    tables: ["friendship", "friend_code", "sharing", "offer", "swap", "event"],
     dependsOn: ["kernel", "account", "catalog", "collection", "care", "pokedex", "monitoring"],
     ports: [],
   },
@@ -144,8 +151,7 @@ const LEGACY_MIGRATIONS = {
   "0012_english_names.sql": ["kernel", "account", "catalog", "light", "collection", "care"],
 };
 
-// Table names as the applied migrations 0001 to 0011 wrote them. 0012 renamed them; the migration check maps the old
-// names to the registered ones.
+// Table names as the applied migrations 0001 to 0011 wrote them (0012 renamed them); the check maps them to the registered ones.
 const LEGACY_TABLE_NAMES = {
   konto: "account",
   konto_rolle: "account_role",
@@ -161,8 +167,7 @@ const LEGACY_TABLE_NAMES = {
 };
 
 // Transition (ratchet, may only shrink): folders directly below `packages/<pkg>/src/` that belong to no module yet.
-// Any other folder below `src/` that is neither a module nor listed here fails (AB-13). An entry whose folder is gone
-// is an error. Empty since the move into modules (#227): all code lives in kern, konto, katalog and licht.
+// Any other folder that is neither a module nor listed here fails (AB-13); an entry whose folder is gone is an error.
 const UNMODULED_FOLDERS = {};
 
 // Module-named folders that exist but do not meet the rules yet; treated like unmoduled folders until fixed, an
@@ -170,12 +175,9 @@ const UNMODULED_FOLDERS = {};
 const MODULE_FOLDERS_IN_TRANSITION = {};
 
 // Global reference tables (AB-10, ADR 0003 O-2): tables without `konto_id` (a justified entry in OHNE_KONTO_KENNUNG,
-// db/src/kern/schema.ts) that other modules may point to with a plain foreign key on `(id)`. Allowed only from a module
-// that may depend on the owner according to the matrix above, with `on delete restrict`. Why: a rule that exists only
-// in a document is a wish (Docs/principles/README.md); the database guarantees integrity (PRIN-006, P-04 testable)
-// and deleting a species in use fails instead of leaving a dangling reference (P-10). Every entry needs a reason; the
-// list grows only through review (EX-1 principle: registered, justified, narrow). Only `art`: `art_name` and
-// `art_version` are details of a species, nothing outside `katalog` should point to them.
+// db/src/kern/schema.ts) that other modules may point to with a plain foreign key on `(id)`, only from a module that may
+// depend on the owner, with `on delete restrict`: the database guarantees integrity (PRIN-006, P-10). Every entry needs
+// a reason; the list grows only through review. Only `species`; its names and versions are details of it.
 const GLOBAL_REFERENCE_TABLES = {
   species: {
     owner: "catalog",

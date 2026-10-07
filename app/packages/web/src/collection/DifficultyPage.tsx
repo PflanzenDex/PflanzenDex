@@ -1,11 +1,11 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import type { DifficultyRow } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ResponsiveTable, type ResponsiveColumn } from "@/components/shared/responsive-table";
 import { LoadFrame } from "../kernel";
 import { loadDifficulty } from "./difficulty-api";
 import { DifficultyPageSkeleton } from "./DifficultyPage.skeleton";
-import { PageFrame, Quiet, TITLE } from "./parts";
+import { PageFrame, Plain, Quiet, TITLE } from "./parts";
 
 const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
 const UNKNOWN = "unbekannt";
@@ -22,32 +22,64 @@ const COLUMNS: ResponsiveColumn<DifficultyRow>[] = [
   { key: "difficulty", header: "Schwierigkeit", cell: (r) => LEVELS[r.difficulty] ?? UNKNOWN },
 ];
 
-/** Species with an active specimen side by side, easiest first (US-BES-05); a missing value says "unbekannt" (P-08). */
-export function DifficultyPage(props: { api: string; token: () => Promise<string | undefined> }) {
-  const { api, token } = props;
+/** Set when a destination shows this page below its own title (US-QS-14). */
+type Host = { onCaption: (text: string | null) => void };
+
+/** Tells the host the count line of the loaded comparison and takes it back when the page goes away (US-QS-14). */
+function ReportCaption({ host, count }: { host: Host | undefined; count: number }) {
+  useEffect(() => {
+    host?.onCaption(count === 1 ? "1 Art im Vergleich" : `${count} Arten im Vergleich`);
+    return () => host?.onCaption(null);
+  }, [host, count]);
+  return null;
+}
+
+/**
+ * Species with an active specimen side by side, easiest first (US-BES-05); a missing value says "unbekannt" (P-08).
+ * The destination "Sammlung" shows it below its title as an arrangement of the species (US-QS-14): `host` drops the
+ * card frame and the main heading, the section name stays for screen readers.
+ */
+export function DifficultyPage(props: {
+  api: string;
+  token: () => Promise<string | undefined>;
+  host?: Host;
+}) {
+  const { api, token, host } = props;
   const load = useCallback((t: string) => loadDifficulty(api, t), [api]);
+  const Frame = host ? Plain : PageFrame;
   return (
-    <PageFrame>
+    <Frame>
       <LoadFrame
         queryKey={["collection", "difficulty"]}
         token={token}
         load={load}
         loadingText="Artenvergleich wird geladen …"
-        heading="Artenvergleich"
+        {...(host ? {} : { heading: "Artenvergleich" })}
         loadingFallback={<DifficultyPageSkeleton label="Artenvergleich wird geladen …" />}
       >
-        {(rows: readonly DifficultyRow[]) => <DifficultyTable rows={rows} />}
+        {(rows: readonly DifficultyRow[]) => (
+          <>
+            <ReportCaption host={host} count={rows.length} />
+            <DifficultyTable rows={rows} host={host !== undefined} />
+          </>
+        )}
       </LoadFrame>
-    </PageFrame>
+    </Frame>
   );
 }
 
-function DifficultyTable({ rows }: { rows: readonly DifficultyRow[] }) {
+function DifficultyTable({ rows, host }: { rows: readonly DifficultyRow[]; host: boolean }) {
   return (
     <section aria-labelledby="difficulty-title">
-      <h1 id="difficulty-title" className={TITLE}>
-        Artenvergleich
-      </h1>
+      {host ? (
+        <h2 id="difficulty-title" className="sr-only">
+          Artenvergleich
+        </h2>
+      ) : (
+        <h1 id="difficulty-title" className={TITLE}>
+          Artenvergleich
+        </h1>
+      )}
       {rows.length === 0 ? (
         <EmptyState
           title="Noch keine Art mit aktivem Exemplar"

@@ -17,6 +17,46 @@ vi.mock("./light/setup-steps", () => {
   return { LocationsStep: () => null, ZonesStep: () => null };
 });
 
+vi.mock("./pokedex/PokedexPage", () => {
+  loaded.pages.push("pokedex");
+  return { PokedexPage: () => null };
+});
+
+vi.mock("@/components/routing/areas/today-area/today-area", () => {
+  loaded.pages.push("today-area");
+  return { TodayArea: () => null };
+});
+
+vi.mock("./care/TreatmentsPage", () => {
+  loaded.pages.push("treatments");
+  return { TreatmentsPage: () => null };
+});
+
+vi.mock("./collection/HintsPage", () => {
+  loaded.pages.push("hints");
+  return { HintsPage: () => null };
+});
+
+vi.mock("./wishlist/WishlistPage", () => {
+  loaded.pages.push("wishlist");
+  return { WishlistPage: () => null };
+});
+
+vi.mock("./collection/DifficultyPage", () => {
+  loaded.pages.push("difficulty");
+  return { DifficultyPage: () => null };
+});
+
+vi.mock("./collection-area", () => {
+  loaded.pages.push("collection-area");
+  return { CollectionArea: () => null };
+});
+
+vi.mock("vaul", () => {
+  loaded.pages.push("vaul");
+  return { Drawer: {} };
+});
+
 describe("#451 · DS-08 the entry bundle stays small", () => {
   it("#451 the invitation page (forms and validation) loads only when the invitation code is asked for", async () => {
     await import("./App");
@@ -31,5 +71,27 @@ describe("#451 · DS-08 the entry bundle stays small", () => {
   it("#451 the onboarding steps (forms and validation) load only when a step opens", async () => {
     await import("./App");
     expect(loaded.pages).not.toContain("setup-steps");
+  });
+
+  it("US-QS-14 · DS-08 the species page of the Sammlung loads only when Arten is chosen", async () => {
+    await import("./App");
+    expect(loaded.pages).not.toContain("pokedex");
+  });
+
+  it("US-QS-14 · DS-08 the Sammlung with its modes (wishlist, comparison by difficulty) loads only when its route opens", async () => {
+    await import("./App");
+    for (const part of ["collection-area", "wishlist", "difficulty"])
+      expect(loaded.pages).not.toContain(part);
+  });
+
+  it("US-QS-14 · DS-08 Heute with its sections (treatments, hints) loads only when its route opens", async () => {
+    await import("./App");
+    for (const part of ["today-area", "treatments", "hints"])
+      expect(loaded.pages).not.toContain(part);
+  });
+
+  it("US-QS-07 · DS-08 the sheet library (Vaul) loads only when a sheet is first opened", async () => {
+    await import("./App");
+    expect(loaded.pages).not.toContain("vaul");
   });
 });

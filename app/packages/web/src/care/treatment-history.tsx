@@ -7,13 +7,14 @@ import { historyKey } from "./api/query-keys";
 import { CARD_CLASSES, LIST_CLASSES } from "./notices";
 import { dateText } from "./text";
 import { TreatmentHistorySkeleton } from "./treatment-history.skeleton";
-import { loadTreatmentHistory, type TreatableSpecimen } from "./treatments-api";
+import { loadTreatmentHistory, type TreatableSpecimen } from "./api/treatments-api";
 
 type Token = () => Promise<string | undefined>;
-function Entry({ row }: { row: TreatmentRow }) {
+function Entry({ row, host }: { row: TreatmentRow; host: boolean }) {
+  const Name = host ? "h4" : "h3";
   return (
     <li className={CARD_CLASSES}>
-      <h3 className="font-semibold">{row.reason}</h3>
+      <Name className="font-semibold">{row.reason}</Name>
       <p className="text-muted-foreground">Mittel: {row.agent ?? "—"}</p>
       <p className="text-muted-foreground">Fällig am: {dateText(row.dueAt)}</p>
       <p className="text-muted-foreground">
@@ -29,6 +30,7 @@ function History(props: {
   specimen: string;
   /** Moves the focus back to the choice of the specimen. */
   onChoose: () => void;
+  host: boolean;
 }) {
   const { api, token, specimen } = props;
   const load = useCallback((t: string) => loadTreatmentHistory(api, t, specimen), [api, specimen]);
@@ -50,7 +52,7 @@ function History(props: {
       {(rows: readonly TreatmentRow[]) => (
         <ul className={LIST_CLASSES} aria-label="Erledigte Behandlungen">
           {rows.map((row) => (
-            <Entry key={row.id} row={row} />
+            <Entry key={row.id} row={row} host={props.host} />
           ))}
         </ul>
       )}
@@ -66,14 +68,18 @@ export function TreatmentHistory(props: {
   api: string;
   token: Token;
   specimens: readonly TreatableSpecimen[];
+  /** Shown as a section of "Heute" (US-QS-14): its heading is one level lower. */
+  host?: boolean;
 }) {
+  const host = props.host === true;
+  const Title = host ? "h3" : "h2";
   const [specimen, setSpecimen] = useState("");
   const choice = useRef<HTMLSelectElement>(null);
   return (
     <section aria-labelledby="treatment-history-title" className="flex flex-col gap-3">
-      <h2 id="treatment-history-title" className="text-xl font-semibold">
+      <Title id="treatment-history-title" className="text-xl font-semibold">
         Erledigte Behandlungen
-      </h2>
+      </Title>
       <div className="flex max-w-xl flex-col gap-2">
         <Label htmlFor="history-specimen">Exemplar für den Verlauf</Label>
         <Select
@@ -100,6 +106,7 @@ export function TreatmentHistory(props: {
           token={props.token}
           specimen={specimen}
           onChoose={() => choice.current?.focus()}
+          host={host}
         />
       )}
     </section>

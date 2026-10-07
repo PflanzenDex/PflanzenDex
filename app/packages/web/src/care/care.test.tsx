@@ -23,6 +23,7 @@ const measurement = (extra: Partial<MeasurementRow> = {}): MeasurementRow => ({
   quality: "healthy",
   note: null,
   ratedBy: "keeper",
+  photo: null,
   ...extra,
 });
 const view = (extra: Partial<MeasurementView> = {}): MeasurementView => ({

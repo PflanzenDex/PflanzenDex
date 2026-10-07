@@ -1,6 +1,6 @@
 import type { AppError, ErrorCode } from "@pflanzendex/core";
 
-type Status = 400 | 401 | 403 | 404 | 409 | 500 | 502 | 504;
+type Status = 400 | 401 | 403 | 404 | 409 | 413 | 415 | 422 | 500 | 502 | 504;
 
 // Stable mapping of error code -> HTTP status (FR-QG-11). Unknown codes are a server error, never a success.
 const STATUS: Partial<Record<ErrorCode, Status>> = {
@@ -18,6 +18,13 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "specimen.caught_in_future": 400,
   "specimen.not_found": 404,
   "treatment.not_found": 404,
+  "measurement.not_found": 404,
+  "measurement.photo_exists": 409,
+  "media.not_found": 404,
+  "media.too_large": 413,
+  "media.type_unsupported": 415,
+  "media.not_an_image": 422,
+  "media.storage_unavailable": 502,
   "care.no_phase": 409,
   "care.target_unknown": 409,
   "review.already_exists": 409,
@@ -29,6 +36,15 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "review.merge_conflict": 409,
   "species.duplicate": 409,
   "specimen.name_taken": 409,
+  "pokedex.not_caught": 409,
+  "friend.unknown_code": 404,
+  "friend.code_used": 409,
+  "friend.code_expired": 409,
+  "friend.own_code": 409,
+  "friend.already_linked": 409,
+  "friend.request_not_found": 404,
+  "friend.request_answered": 409,
+  "friend.not_found": 404,
   "wish.name_taken": 409,
   "wish.not_found": 404,
   "wish.not_open": 409,

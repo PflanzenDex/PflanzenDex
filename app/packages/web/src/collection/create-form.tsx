@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { speciesDisplayName, type Species, type LightLocation } from "@pflanzendex/core";
-import { Form } from "@/components/ui/form";
+import { Form, FormRoot } from "@/components/ui/form";
 import type { ApiError } from "../kernel";
 import { refusesCatchDate, useToday } from "./catch-date-field";
 import { Heading, NamePreview, OtherFields } from "./create-fields";
@@ -78,9 +78,8 @@ export function CreateForm(props: {
     <section aria-labelledby="create-title">
       <Heading species={props.species} />
       <Form {...form}>
-        <form
-          noValidate
-          onSubmit={(e) => void submit(e)}
+        <FormRoot
+          onSubmit={submit}
           aria-label="Exemplar anlegen"
           className="flex max-w-xl flex-col gap-4"
         >
@@ -99,7 +98,7 @@ export function CreateForm(props: {
             pending={form.formState.isSubmitting}
             onCancel={props.onCancel}
           />
-        </form>
+        </FormRoot>
       </Form>
     </section>
   );

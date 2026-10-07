@@ -3,6 +3,7 @@
 // "Discarded" (US-WUN-05).
 export { REPLENISH_BUFFER, wishCandidates } from "./candidates";
 export { wishCreate } from "./create";
+export { wishNameKey } from "./name-key";
 export { wishRemove, wishRename } from "./repair";
 export type { RepairDependencies, WishRemoveResult, WishRenameResult } from "./repair";
 export { wishZoneUsage } from "./zone-usage";

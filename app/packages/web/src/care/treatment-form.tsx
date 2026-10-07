@@ -3,7 +3,14 @@ import { useForm, useWatch, type Control, type ControllerRenderProps } from "rea
 import { localToday, TREATMENT_LIMITS } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormField, FormItem, FormMessage, useFormField } from "@/components/ui/form";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormMessage,
+  useFormField,
+  FormRoot,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { currentTimeZone } from "../kernel";
 import { Field } from "./field";
@@ -13,7 +20,7 @@ import {
   treatmentSchema,
   type TreatmentFields,
 } from "./schemas";
-import type { TreatableSpecimen, TreatmentInput } from "./treatments-api";
+import type { TreatableSpecimen, TreatmentInput } from "./api/treatments-api";
 
 type FocusRef = React.MutableRefObject<HTMLInputElement | null> | undefined;
 
@@ -154,10 +161,9 @@ export function TreatmentForm(props: {
   });
   return (
     <Form {...form}>
-      <form
+      <FormRoot
         aria-label="Behandlung planen"
-        noValidate
-        onSubmit={(e) => void submit(e)}
+        onSubmit={submit}
         className="flex max-w-xl flex-col gap-4"
       >
         <BasicFields control={form.control} specimens={props.specimens} focusRef={props.focusRef} />
@@ -165,7 +171,7 @@ export function TreatmentForm(props: {
         <Button type="submit" size="touch" disabled={props.running || form.formState.isSubmitting}>
           {isCourse ? "Kur planen" : "Behandlung speichern"}
         </Button>
-      </form>
+      </FormRoot>
     </Form>
   );
 }
