@@ -10,13 +10,14 @@ export interface MeasurementRow {
   readonly quality: "healthy" | "etiolated";
   readonly note: string | null;
   readonly ratedBy: "keeper" | "ai_adopted";
+  readonly photo: string | null;
 }
-export type MeasurementValues = Omit<MeasurementRow, "id">;
+export type MeasurementValues = Omit<MeasurementRow, "id" | "photo">;
 
 // `date` comes back as text (the driver would build a `Date` in the server's time zone, NFR-08) and
 // `numeric` as a number instead of text.
 const COLUMNS = `id, specimen_id as "specimenId", to_char(date, 'YYYY-MM-DD') as date, value::float8 as value,
-  quality, note, rated_by as "ratedBy"`;
+  quality, note, rated_by as "ratedBy", photo`;
 
 const FOREIGN_KEY = "23503";
 
@@ -56,6 +57,30 @@ export class MeasurementsPostgres {
       ),
     );
     return new Map(r.rows.map((z) => [z.specimenId, z]));
+  }
+
+  /** The measurement of the specimen on that local date; with several the one recorded last (FR-WAC-07). */
+  async findOnDate(
+    userId: string,
+    specimenId: string,
+    date: string,
+  ): Promise<MeasurementRow | null> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<MeasurementRow>(
+        `select ${COLUMNS} from measurement where specimen_id = $1 and date = $2
+         order by created_at desc, id limit 1`,
+        [specimenId, date],
+      ),
+    );
+    return r.rows[0] ?? null;
+  }
+
+  /** The row rules hide a foreign measurement: then nothing is updated and the answer is `false` (P-04). */
+  async setPhoto(userId: string, measurementId: string, photo: string): Promise<boolean> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query("update measurement set photo = $2 where id = $1", [measurementId, photo]),
+    );
+    return r.rowCount === 1;
   }
 
   /** One statement: all or nothing. */

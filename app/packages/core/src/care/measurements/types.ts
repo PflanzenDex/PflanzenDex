@@ -26,9 +26,12 @@ export interface MeasurementRow {
   readonly quality: Quality;
   readonly note: string | null;
   readonly ratedBy: RatedBy;
+  /** Object name of the processed photo (US-WAC-06, FR-WAC-09); `null` means no photo. */
+  readonly photo: string | null;
 }
 
-export type MeasurementValues = Omit<MeasurementRow, "id">;
+/** A new measurement has no photo yet; the photo is attached by `measurement.photo` (US-WAC-06). */
+export type MeasurementValues = Omit<MeasurementRow, "id" | "photo">;
 
 /** Every call applies to the account `userId` only (P-04). */
 export interface MeasurementStore {
@@ -42,6 +45,10 @@ export interface MeasurementStore {
     userId: string,
     specimenIds: readonly string[],
   ): Promise<ReadonlyMap<string, MeasurementRow>>;
+  /** The measurement of the specimen on that local date; with several the one recorded last (FR-WAC-07), else `null`. */
+  findOnDate(userId: string, specimenId: string, date: string): Promise<MeasurementRow | null>;
+  /** Sets the photo name; `false` if the measurement is gone or not the account's (nothing written, P-04). */
+  setPhoto(userId: string, measurementId: string, photo: string): Promise<boolean>;
   /** All or nothing; a specimen of another account counts as unknown and writes nothing. */
   create(userId: string, values: MeasurementValues): Promise<MeasurementRow | "specimen_unknown">;
 }

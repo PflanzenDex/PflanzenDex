@@ -1,6 +1,6 @@
 import type { AppError, ErrorCode } from "@pflanzendex/core";
 
-type Status = 400 | 401 | 403 | 404 | 409 | 500 | 502 | 504;
+type Status = 400 | 401 | 403 | 404 | 409 | 413 | 415 | 422 | 500 | 502 | 504;
 
 // Stable mapping of error code -> HTTP status (FR-QG-11). Unknown codes are a server error, never a success.
 const STATUS: Partial<Record<ErrorCode, Status>> = {
@@ -18,6 +18,13 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "specimen.caught_in_future": 400,
   "specimen.not_found": 404,
   "treatment.not_found": 404,
+  "measurement.not_found": 404,
+  "measurement.photo_exists": 409,
+  "media.not_found": 404,
+  "media.too_large": 413,
+  "media.type_unsupported": 415,
+  "media.not_an_image": 422,
+  "media.storage_unavailable": 502,
   "care.no_phase": 409,
   "care.target_unknown": 409,
   "review.already_exists": 409,
