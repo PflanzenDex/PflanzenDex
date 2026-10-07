@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>A Heute Desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="{{vars}};width:1280px;height:800px;box-sizing:border-box;display:flex;background:var(--bg);color:var(--text);overflow:hidden">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19l8-8"/></symbol>
+<symbol id="book" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3V4zM8 17h11"/></symbol>
+<symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+<symbol id="heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></symbol>
+<symbol id="ruler" viewBox="0 0 24 24"><path d="M3 15L15 3l6 6L9 21zM8 10l2 2M11 7l2 2M5 13l2 2"/></symbol>
+<symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5a3 3 0 010 6M18 14c2 .6 3 2.6 3 6"/></symbol>
+<symbol id="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></symbol>
+<symbol id="drop" viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z"/></symbol>
+<symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+</defs></svg>
+<aside style="width:248px;flex:none;box-sizing:border-box;padding:24px 16px;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px">
+<div style="font-size:20px;font-weight:700;letter-spacing:-0.3px;padding:0 12px 20px;display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:10px;background:var(--primary);color:var(--onprimary);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#leaf"/></svg></span>PflanzenDex</div>
+<nav aria-label="Hauptnavigation" style="display:flex;flex-direction:column;gap:4px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="8">
+<a href="#" style="min-height:44px;box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:14px;text-decoration:none;font-size:15px;font-weight:600;background:{{n.bg}};color:{{n.color}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="{{n.icon}}"/></svg>{{n.label}}</a>
+</sc-for>
+</nav>
+</aside>
+<main style="flex:1;min-width:0;padding:32px 40px;display:flex;flex-direction:column;gap:24px">
+<header style="display:flex;align-items:flex-end;justify-content:space-between">
+<div><div style="font-size:14px;color:var(--muted);font-weight:500">Mittwoch, 7. Oktober</div>
+<h1 style="margin:0;font-size:40px;line-height:1.1;font-weight:700;letter-spacing:-0.8px">Heute</h1></div>
+<button style="min-height:48px;padding:0 22px;border-radius:24px;border:0;background:var(--primary);color:var(--onprimary);font-size:15px;font-weight:700">Pflanze hinzufügen</button>
+</header>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px">
+<section style="display:flex;flex-direction:column;gap:12px">
+<h2 style="margin:0;font-size:15px;font-weight:600;color:var(--muted)">Jetzt dran</h2>
+<sc-for list="{{tasks}}" as="t" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:16px;background:var(--surface);border-radius:24px;padding:14px;box-shadow:0 1px 2px var(--shadow),0 8px 20px var(--shadow)">
+<div style="width:72px;height:72px;border-radius:18px;flex:none;display:flex;align-items:center;justify-content:center;background:{{t.bg}}"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="{{t.fg}}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#leaf"/></svg></div>
+<div style="flex:1;min-width:0"><div style="font-size:18px;font-weight:600">{{t.name}}</div><div style="font-size:14px;color:var(--muted);margin-top:2px">{{t.meta}}</div></div>
+<button style="min-height:48px;padding:0 20px 0 16px;border-radius:24px;border:0;background:var(--primary);color:var(--onprimary);font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="{{t.icon}}"/></svg>{{t.label}}</button>
+</div>
+</sc-for>
+<div style="display:flex;align-items:center;gap:16px;background:var(--warnbg);color:var(--warntext);border-radius:24px;padding:16px 20px">
+<div style="flex:1;font-size:15px;line-height:1.45"><b>Ficus lyrata</b> hat noch keine Lichtzone: unbekannt. Lege sie fest, dann zeigen wir den Pflegeplan.</div>
+<button style="min-height:44px;padding:0 18px;border-radius:14px;border:2px solid var(--warntext);background:transparent;color:var(--warntext);font-weight:600;font-size:14px">Zone wählen</button>
+</div>
+</section>
+<section style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface);border-radius:24px;padding:20px;box-shadow:0 1px 2px var(--shadow),0 8px 20px var(--shadow);display:flex;flex-direction:column;gap:14px">
+<h2 style="margin:0;font-size:16px;font-weight:700">Lichtzonen</h2>
+<sc-for list="{{zones}}" as="z" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:12px;font-size:14px"><div style="width:84px;color:var(--muted);font-weight:500">{{z.label}}</div><div style="flex:1;height:14px;border-radius:7px;background:var(--bg)"><div style="width:{{z.w}};height:14px;border-radius:7px;background:{{z.color}}"></div></div><div style="width:24px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums">{{z.n}}</div></div>
+</sc-for>
+</div>
+<div style="background:var(--soft);color:var(--softtext);border-radius:24px;padding:18px 20px;display:flex;align-items:center;gap:14px">
+<div style="flex:1;font-size:15px;line-height:1.45"><b>Mara</b> hat eine <i>Hoya kerrii</i> gefangen. Neu bei Freunden seit deinem letzten Besuch.</div>
+<button style="min-height:44px;padding:0 18px;border-radius:14px;border:0;background:var(--softtext);color:var(--soft);font-weight:600;font-size:14px">Ansehen</button>
+</div>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = (this.props.theme ?? 'light') === 'dark';
+const P = dark
+? {bg:'#0F1612',surface:'#18221C',text:'#E6EFE9',muted:'#A5B6AB',line:'#2B3B31',primary:'#7BD3A0',onprimary:'#0B2316',soft:'#1F3A2B',softtext:'#A9E8C4',warnbg:'#3A2F10',warntext:'#F2C766',shadow:'rgba(0,0,0,0.35)'}
+: {bg:'#F2F6F3',surface:'#FFFFFF',text:'#14201A',muted:'#4B5C52',line:'#D3DED6',primary:'#1B6B4A',onprimary:'#FFFFFF',soft:'#D8EEDF',softtext:'#124A32',warnbg:'#FFF1CF',warntext:'#6B4700',shadow:'rgba(20,40,28,0.08)'};
+const vars = Object.keys(P).map(k => '--' + k + ':' + P[k]).join(';');
+const t1 = dark ? ['#27432F','#7BD3A0'] : ['#CFE8D6','#1B6B4A'];
+const t2 = dark ? ['#3A3A20','#E3D07A'] : ['#EEF0C8','#5A5A12'];
+const t3 = dark ? ['#25384A','#8EC5F0'] : ['#D4E6F4','#1F4F78'];
+const tasks = [
+{name:'Monstera deliciosa „Frida“',meta:'Gießen · Zone 3 · zuletzt vor 8 Tagen',bg:t1[0],fg:t1[1],icon:'#drop',label:'Gegossen'},
+{name:'Pilea, Steckling',meta:'Wurzeln prüfen · Zone 1 · Steckling seit 12 Tagen',bg:t2[0],fg:t2[1],icon:'#eye',label:'Geprüft'},
+{name:'Sansevieria „Sol“',meta:'Messen · letzte Messung vor 21 Tagen',bg:t3[0],fg:t3[1],icon:'#ruler',label:'Messen'}
+];
+const zones = [['Zone 1',4],['Zone 2',6],['Zone 3',9],['Zone 4',3],['unbekannt',2]].map(z => ({label:z[0],n:z[1],w:Math.round(z[1]/9*100)+'%',color:z[0]==='unbekannt'?P.warntext:P.primary}));
+const items = [['Heute','#sun'],['Sammlung','#leaf'],['Pokédex','#book'],['Entdecken','#compass'],['Wunschliste','#heart'],['Messen','#ruler'],['Freunde','#users'],['Einstellungen','#gear']];
+const nav = items.map((x,i) => ({label:x[0],icon:x[1],bg:i===0?P.soft:'transparent',color:i===0?P.softtext:P.muted}));
+return { vars, tasks, zones, nav };
+}
+}
+</script>
+</body>
+</html>

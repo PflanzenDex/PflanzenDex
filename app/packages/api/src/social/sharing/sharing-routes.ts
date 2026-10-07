@@ -1,6 +1,7 @@
 import {
   appError,
   friendAccount,
+  friendCollection,
   friendView,
   sharingList,
   sharingSet,
@@ -55,5 +56,30 @@ export function friendSharedRoute(pool: Pool) {
       return c.json(errorBody(error), statusFor(error));
     }
     return c.json(await friendView({ sharing, privacy, facts }, me, owner));
+  };
+}
+
+/**
+ * `GET /friends/:id/collection` (US-SOZ-07): the shared collection of the friend with this friendship id as cards, with
+ * "you have it" from my own collection; `{ friend: { name }, cards }`. Only what the friend shares, only through a confirmed
+ * friendship; an id that is not one of my friends is 404 `friend.not_found`.
+ */
+export function friendCollectionRoute(pool: Pool) {
+  const friends = new FriendsPostgres(pool);
+  const sharing = new SharingPostgres(pool);
+  const { privacy, facts, mine } = sharingPorts(pool);
+  return async (c: Context<AuthEnv>) => {
+    const me = c.get("account").id;
+    const friend = (await friends.friends(me)).find((f) => f.id === c.req.param("id"));
+    if (!friend) {
+      const error = appError("friend.not_found");
+      return c.json(errorBody(error), statusFor(error));
+    }
+    const { cards } = await friendCollection(
+      { sharing, privacy, facts, mine },
+      me,
+      friend.accountId,
+    );
+    return c.json({ friend: { name: friend.name }, cards });
   };
 }

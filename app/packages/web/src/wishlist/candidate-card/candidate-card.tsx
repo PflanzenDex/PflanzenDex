@@ -101,7 +101,7 @@ export function CandidateCard(props: {
     <li
       data-priority={c.priority.kind}
       className={cn(
-        "grid min-w-0 content-start gap-1 break-words rounded-card border border-border bg-card p-3 text-card-foreground shadow-elevation-1",
+        "animate-list-in grid min-w-0 content-start gap-1 break-words rounded-card border border-border bg-card p-3 text-card-foreground shadow-elevation-1",
         PRIORITY_BORDER[c.priority.kind],
       )}
     >

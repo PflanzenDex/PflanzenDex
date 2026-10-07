@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Start Desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.card{background:var(--surface);border-radius:24px;box-shadow:0 1px 2px var(--shadow),0 8px 20px var(--shadow)}
+.btn{min-height:52px;padding:0 28px;border-radius:26px;border:0;background:var(--primary);color:var(--onprimary);font-size:16px;font-weight:700}
+.btn2{min-height:48px;padding:0 20px;border-radius:24px;border:0;background:transparent;color:var(--text);font-weight:600;font-size:15px}
+.mut{color:var(--muted)}
+.st{display:flex;align-items:center;gap:14px;padding:14px 18px;min-height:60px}
+.st b{display:block;font-size:16px;font-weight:600}.st small{display:block;font-size:13.5px;color:var(--muted)}
+.dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex:none}
+.side{width:248px;flex:none;box-sizing:border-box;padding:24px 16px;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.side a{min-height:44px;box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:14px;text-decoration:none;font-size:15px;font-weight:600;color:var(--muted)}
+</style>
+</helmet>
+<div style="{{vars}};width:1280px;height:800px;box-sizing:border-box;display:flex;background:var(--bg);color:var(--text);overflow:hidden">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19l8-8"/></symbol>
+<symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+<symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5a3 3 0 010 6M18 14c2 .6 3 2.6 3 6"/></symbol>
+<symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></symbol>
+<symbol id="check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+</defs></svg>
+<aside class="side">
+<div style="font-size:20px;font-weight:700;padding:0 12px 20px;display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:10px;background:var(--primary);color:var(--onprimary);display:flex;align-items:center;justify-content:center"><svg class="i" style="width:20px;height:20px"><use href="#leaf"/></svg></span>PflanzenDéx</div>
+<nav aria-label="Hauptnavigation" style="display:flex;flex-direction:column;gap:4px">
+<a href="#"><svg class="i"><use href="#sun"/></svg>Heute</a>
+<a href="#"><svg class="i"><use href="#leaf"/></svg>Sammlung</a>
+<a href="#"><svg class="i"><use href="#compass"/></svg>Entdecken</a>
+<a href="#"><svg class="i"><use href="#users"/></svg>Freunde</a>
+<a href="#"><svg class="i"><use href="#user"/></svg>Konto</a>
+</nav>
+</aside>
+<main style="flex:1;min-width:0;padding:56px 40px;display:flex;align-items:center;justify-content:center">
+<div style="display:grid;grid-template-columns:minmax(0,440px) minmax(0,460px);gap:56px;align-items:center">
+<div style="height:420px;border-radius:32px;background:var(--t1b);color:var(--t1f);display:flex;align-items:center;justify-content:center"><svg class="i" style="width:150px;height:150px;stroke-width:1"><use href="#leaf"/></svg></div>
+<div style="display:flex;flex-direction:column;gap:20px">
+<div><h1 style="margin:0;font-size:40px;line-height:1.1;font-weight:700;letter-spacing:-.8px">Fang deine erste Pflanze</h1><p class="mut" style="margin:10px 0 0;font-size:16.5px;line-height:1.5">Trage eine Pflanze ein, die du besitzt. Danach zeigen wir dir, was als Nächstes zu tun ist.</p></div>
+<div class="card" style="overflow:hidden">
+<div class="st"><span class="dot" style="background:var(--primary);color:var(--onprimary)"><svg class="i" style="width:16px;height:16px"><use href="#check"/></svg></span><div><b>Konto erstellt</b></div></div>
+<div class="st" style="border-top:1px solid var(--line)"><span class="dot" style="background:var(--soft);color:var(--softtext)">2</span><div><b>Pflanze hinzufügen</b><small>Nächster Schritt</small></div></div>
+<div class="st" style="border-top:1px solid var(--line)"><span class="dot" style="background:var(--bg);color:var(--muted)">3</span><div><b>Lichtzonen einrichten</b><small>Optional, hilft bei der Pflege</small></div></div>
+</div>
+<div style="display:flex;gap:12px;align-items:center"><button class="btn">Pflanze hinzufügen</button><button class="btn2">Später</button></div>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = (this.props.theme ?? 'light') === 'dark';
+const P = dark
+? {bg:'#0F1612',surface:'#18221C',text:'#E6EFE9',muted:'#A5B6AB',line:'#2B3B31',primary:'#7BD3A0',onprimary:'#0B2316',soft:'#1F3A2B',softtext:'#A9E8C4',shadow:'rgba(0,0,0,0.35)',t1b:'#27432F',t1f:'#7BD3A0'}
+: {bg:'#F2F6F3',surface:'#FFFFFF',text:'#14201A',muted:'#4B5C52',line:'#D3DED6',primary:'#1B6B4A',onprimary:'#FFFFFF',soft:'#D8EEDF',softtext:'#124A32',shadow:'rgba(20,40,28,0.08)',t1b:'#CFE8D6',t1f:'#1B6B4A'};
+return { vars: Object.keys(P).map(k => '--' + k + ':' + P[k]).join(';') };
+}
+}
+</script>
+</body>
+</html>

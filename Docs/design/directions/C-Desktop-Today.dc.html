@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>C Heute Desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0;font-family:'Lexend',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="{{vars}};width:1280px;height:800px;box-sizing:border-box;display:flex;background:var(--bg);color:var(--text);overflow:hidden">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19l8-8"/></symbol>
+<symbol id="book" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3V4zM8 17h11"/></symbol>
+<symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+<symbol id="heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></symbol>
+<symbol id="ruler" viewBox="0 0 24 24"><path d="M3 15L15 3l6 6L9 21zM8 10l2 2M11 7l2 2M5 13l2 2"/></symbol>
+<symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5a3 3 0 010 6M18 14c2 .6 3 2.6 3 6"/></symbol>
+<symbol id="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></symbol>
+<symbol id="drop" viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z"/></symbol>
+<symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+</defs></svg>
+<aside style="width:240px;flex:none;box-sizing:border-box;padding:24px 14px;background:var(--surface);border-right:2px solid var(--line);display:flex;flex-direction:column;gap:4px">
+<div style="font-size:19px;font-weight:800;padding:0 12px 18px;letter-spacing:-0.3px">PflanzenDex</div>
+<nav aria-label="Hauptnavigation" style="display:flex;flex-direction:column;gap:4px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="8">
+<a href="#" style="min-height:44px;box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:12px;text-decoration:none;font-size:14.5px;font-weight:600;background:{{n.bg}};color:{{n.color}}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><use href="{{n.icon}}"/></svg>{{n.label}}</a>
+</sc-for>
+</nav>
+</aside>
+<main style="flex:1;min-width:0;padding:32px 40px;display:flex;flex-direction:column;gap:22px">
+<header style="display:flex;align-items:flex-end;justify-content:space-between">
+<div><div style="font-size:13px;color:var(--muted);font-weight:500">Mittwoch, 7. Oktober</div><h1 style="margin:0;font-size:38px;line-height:1.1;font-weight:800;letter-spacing:-0.8px">Heute</h1></div>
+<button style="min-height:48px;padding:0 22px;border-radius:14px;border:0;background:var(--primary);color:var(--onprimary);font-size:15px;font-weight:700;box-shadow:0 4px 0 var(--primarydark)">Pflanze hinzufügen</button>
+</header>
+<a href="#" style="padding:18px 22px;border-radius:22px;background:var(--hero);color:var(--herotext);text-decoration:none;display:flex;align-items:center;gap:20px">
+<div style="width:72px;height:72px;border-radius:50%;flex:none;background:conic-gradient(var(--heroring) 0 36%,var(--herotrack) 0);display:flex;align-items:center;justify-content:center"><div style="width:56px;height:56px;border-radius:50%;background:var(--hero);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700">42</div></div>
+<div style="flex:1"><div style="font-size:20px;font-weight:700">Pokédex</div><div style="font-size:14px;opacity:0.92">42 von 118 Arten gefangen. Als Nächstes in deiner Wunschliste: <i>Alocasia zebrina</i>.</div></div>
+<div style="font-size:14px;font-weight:700;border-radius:14px;padding:12px 20px;background:var(--heroring);color:var(--onhero)">Öffnen</div>
+</a>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:24px">
+<section style="display:flex;flex-direction:column;gap:12px">
+<h2 style="margin:0;font-size:14px;font-weight:600;color:var(--muted)">Jetzt dran</h2>
+<sc-for list="{{tasks}}" as="t" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:16px;background:var(--surface);border:2px solid var(--line);border-radius:20px;padding:12px;box-shadow:0 5px 0 var(--line)">
+<div style="width:60px;height:60px;border-radius:16px;flex:none;display:flex;align-items:center;justify-content:center;background:{{t.bg}}"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="{{t.fg}}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="{{t.icon}}"/></svg></div>
+<div style="flex:1;min-width:0"><div style="font-size:17px;font-weight:600">{{t.name}}</div><div style="font-size:13.5px;color:var(--muted);margin-top:2px">{{t.meta}}</div></div>
+<button style="min-width:96px;min-height:48px;border-radius:14px;border:0;background:var(--primary);color:var(--onprimary);font-size:15px;font-weight:700;box-shadow:0 3px 0 var(--primarydark)">{{t.short}}</button>
+</div>
+</sc-for>
+<div style="display:flex;align-items:center;gap:16px;background:var(--warnbg);color:var(--warntext);border-radius:20px;padding:14px 18px"><div style="flex:1;font-size:14.5px;line-height:1.45"><b>Ficus lyrata:</b> Lichtzone unbekannt. Lege sie fest, dann zeigen wir den Pflegeplan.</div><button style="min-height:44px;padding:0 16px;border-radius:12px;border:2px solid var(--warntext);background:transparent;color:var(--warntext);font-weight:700;font-size:14px">Zone wählen</button></div>
+</section>
+<section style="background:var(--surface);border:2px solid var(--line);border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:14px;align-self:start">
+<h2 style="margin:0;font-size:16px;font-weight:700">Lichtzonen</h2>
+<sc-for list="{{zones}}" as="z" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:12px;font-size:14px"><div style="width:84px;color:{{z.lc}};font-weight:500">{{z.label}}</div><div style="flex:1;height:16px;border-radius:8px;background:var(--line)"><div style="width:{{z.w}};height:16px;border-radius:8px;background:{{z.color}}"></div></div><div style="width:24px;text-align:right;font-weight:700">{{z.n}}</div></div>
+</sc-for>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"dark","options":["light","dark"]}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = (this.props.theme ?? 'dark') === 'dark';
+const P = dark
+? {bg:'#12102A',surface:'#1D1A40',text:'#EFEBFF',muted:'#B3ACE0',line:'#38336E',primary:'#FFC247',primarydark:'#B57F0B',onprimary:'#2A1D00',soft:'#2F2A66',softtext:'#D9D2FF',warnbg:'#4A3A0C',warntext:'#FFD36B',hero:'#2F2A66',herotext:'#EFEBFF',heroring:'#FFC247',herotrack:'#4A4490',onhero:'#2A1D00'}
+: {bg:'#F1EEFC',surface:'#FFFFFF',text:'#1A1636',muted:'#504A78',line:'#D2CBF0',primary:'#5A32D4',primarydark:'#3A1E94',onprimary:'#FFFFFF',soft:'#E4DCFF',softtext:'#3A1D9E',warnbg:'#FFE9A8',warntext:'#5C4000',hero:'#5A32D4',herotext:'#FFFFFF',heroring:'#FFC247',herotrack:'#8F70E8',onhero:'#2A1D00'};
+const vars = Object.keys(P).map(k => '--' + k + ':' + P[k]).join(';');
+const a = dark ? ['#2F2A66','#FFC247'] : ['#E4DCFF','#5A32D4'];
+const b = dark ? ['#1F4A44','#6EE0CC'] : ['#CFF2EA','#0F6B5B'];
+const c = dark ? ['#4A2A44','#FF9FD0'] : ['#FBDDEC','#9B1F63'];
+const tasks = [
+{name:'Monstera deliciosa „Frida“',meta:'Gießen · Zone 3 · zuletzt vor 8 Tagen',bg:b[0],fg:b[1],icon:'#drop',short:'Gießen'},
+{name:'Pilea, Steckling',meta:'Wurzeln prüfen · Zone 1 · Steckling seit 12 Tagen',bg:a[0],fg:a[1],icon:'#eye',short:'Prüfen'},
+{name:'Sansevieria „Sol“',meta:'Messen · letzte Messung vor 21 Tagen',bg:c[0],fg:c[1],icon:'#ruler',short:'Messen'}
+];
+const zones = [['Zone 1',4],['Zone 2',6],['Zone 3',9],['Zone 4',3],['unbekannt',2]].map(z => ({label:z[0],n:z[1],w:Math.round(z[1]/9*100)+'%',color:z[0]==='unbekannt'?P.warntext:P.primary,lc:z[0]==='unbekannt'?P.warntext:P.muted}));
+const items = [['Heute','#sun'],['Sammlung','#leaf'],['Pokédex','#book'],['Entdecken','#compass'],['Wunschliste','#heart'],['Messen','#ruler'],['Freunde','#users'],['Einstellungen','#gear']];
+const nav = items.map((x,i) => ({label:x[0],icon:x[1],bg:i===0?P.primary:'transparent',color:i===0?P.onprimary:P.muted}));
+return { vars, tasks, zones, nav };
+}
+}
+</script>
+</body>
+</html>

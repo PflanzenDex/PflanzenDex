@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import type { CreatedFriendCode } from "@pflanzendex/core";
-import { LoadFrame, SIGN_IN, useInvalidate, useWriteAction, type ApiError } from "../../kernel";
+import { LoadFrame, SIGN_IN, useInvalidate, useWriteAction, type ApiError } from "../../../kernel";
 import { errorText } from "@/lib/error-text";
 import {
   answerFriendRequest,
@@ -11,14 +11,14 @@ import {
   setSpecimenSharing,
   sendFriendRequest,
   type FriendsData,
-} from "../api/friends-api";
-import { CodeForm } from "../parts/code-form/code-form";
-import { FriendList } from "../parts/friend-list/friend-list";
-import { FriendsBanner } from "../feed/friends-banner/friends-banner";
-import { FeedBlock } from "../feed/feed-block/feed-block";
-import { SharingPanel } from "../parts/sharing-panel/sharing-panel";
-import { InviteCard } from "../parts/invite-card/invite-card";
-import { nameOf, RequestList } from "../parts/request-list/request-list";
+} from "../../api/friends-api";
+import { CodeForm } from "../../parts/code-form/code-form";
+import { FriendList } from "../../parts/friend-list/friend-list";
+import { FriendsBanner } from "../../feed/friends-banner/friends-banner";
+import { FeedBlock } from "../../feed/feed-block/feed-block";
+import { SharingPanel } from "../../parts/sharing-panel/sharing-panel";
+import { InviteCard } from "../../parts/invite-card/invite-card";
+import { nameOf, RequestList } from "../../parts/request-list/request-list";
 import { FriendsPageSkeleton } from "./friends-page.skeleton";
 
 const KEY = ["social", "friends"] as const;

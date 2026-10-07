@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>C Pokédex mobil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0;font-family:'Lexend',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="{{vars}};width:360px;height:760px;box-sizing:border-box;display:flex;flex-direction:column;background:var(--bg);color:var(--text);overflow:hidden">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19l8-8"/></symbol>
+<symbol id="book" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3V4zM8 17h11"/></symbol>
+<symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+<symbol id="more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></symbol>
+</defs></svg>
+<header style="padding:22px 18px 8px">
+<div style="font-size:12px;color:var(--muted);font-weight:500">42 von 118 Arten gefangen</div>
+<h1 style="margin:0;font-size:30px;line-height:1.1;font-weight:800;letter-spacing:-0.6px">Pokédex</h1>
+<div style="margin-top:12px;height:12px;border-radius:6px;background:var(--line)"><div style="width:36%;height:12px;border-radius:6px;background:var(--primary)"></div></div>
+</header>
+<div style="display:flex;gap:8px;padding:8px 16px;overflow:hidden">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="4">
+<button style="min-height:44px;padding:0 16px;border-radius:14px;border:2px solid {{c.line}};background:{{c.bg}};color:{{c.fg}};font-size:13.5px;font-weight:700;flex:none">{{c.label}}</button>
+</sc-for>
+</div>
+<div style="flex:1;min-height:0;overflow:hidden;padding:6px 16px 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-content:start">
+<sc-for list="{{cards}}" as="k" hint-placeholder-count="9">
+<a href="#" style="text-decoration:none;color:var(--text);background:var(--surface);border:2px solid {{k.border}};border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:6px;box-shadow:0 4px 0 {{k.border}}">
+<div style="height:76px;border-radius:10px;background:{{k.bg}};display:flex;align-items:center;justify-content:center"><svg width="40" height="40" viewBox="0 0 24 24" fill="{{k.fill}}" stroke="{{k.fg}}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><use href="#leaf"/></svg></div>
+<div style="font-size:12.5px;font-weight:600;line-height:1.25;font-style:{{k.fs}}">{{k.name}}</div>
+<div style="font-size:11.5px;color:var(--muted);font-weight:500">{{k.state}}</div>
+</a>
+</sc-for>
+</div>
+<nav aria-label="Hauptnavigation" style="display:flex;padding:8px 8px 14px;background:var(--surface);border-top:2px solid var(--line)">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="5">
+<a href="#" style="flex:1;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;font-size:11.5px;font-weight:600;color:{{n.color}}">
+<span style="width:48px;height:30px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:{{n.pill}};color:{{n.pillfg}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><use href="{{n.icon}}"/></svg></span>{{n.label}}</a>
+</sc-for>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = (this.props.theme ?? 'light') === 'dark';
+const P = dark
+? {bg:'#12102A',surface:'#1D1A40',text:'#EFEBFF',muted:'#B3ACE0',line:'#38336E',primary:'#FFC247',primarydark:'#B57F0B',onprimary:'#2A1D00',soft:'#2F2A66',softtext:'#D9D2FF'}
+: {bg:'#F1EEFC',surface:'#FFFFFF',text:'#1A1636',muted:'#504A78',line:'#D2CBF0',primary:'#5A32D4',primarydark:'#3A1E94',onprimary:'#FFFFFF',soft:'#E4DCFF',softtext:'#3A1D9E'};
+const vars = Object.keys(P).map(k => '--' + k + ':' + P[k]).join(';');
+const tones = dark ? [['#2F2A66','#FFC247'],['#1F4A44','#6EE0CC'],['#4A2A44','#FF9FD0']] : [['#E4DCFF','#5A32D4'],['#CFF2EA','#0F6B5B'],['#FBDDEC','#9B1F63']];
+const cards = [
+['Monstera deliciosa',true],['Ficus lyrata',true],['Pilea peperomioides',true],
+['Hoya kerrii',true],['Sansevieria trifasciata',true],['Calathea orbifolia',true],
+['Alocasia zebrina',false],['Philodendron hederaceum',false],['Epipremnum aureum',false]
+].map((x,i) => x[1]
+ ? {name:x[0],state:'gefangen',bg:tones[i%3][0],fg:tones[i%3][1],fill:tones[i%3][1],border:P.primary==='#FFC247'?'#4A4490':'#BFB3F0',fs:'italic'}
+ : {name:x[0],state:'noch nicht gefangen',bg:P.line,fg:P.muted,fill:'none',border:P.line,fs:'italic'});
+const chips = ['Alle','Gefangen','Fehlt','Aronstabgewächse'].map((l,i) => ({label:l,bg:i===0?P.primary:'transparent',fg:i===0?P.onprimary:P.text,line:i===0?P.primary:P.line}));
+const items = [['Heute','#sun'],['Sammlung','#leaf'],['Pokédex','#book'],['Entdecken','#compass'],['Mehr','#more']];
+const nav = items.map((x,i) => ({label:x[0],icon:x[1],color:i===2?'var(--text)':'var(--muted)',pill:i===2?'var(--primary)':'transparent',pillfg:i===2?'var(--onprimary)':'inherit'}));
+return { vars, cards, chips, nav };
+}
+}
+</script>
+</body>
+</html>

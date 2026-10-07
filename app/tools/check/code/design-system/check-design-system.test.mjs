@@ -309,6 +309,63 @@ export function C({ className, variant }: { className?: string; variant?: "a" | 
     assert.deepEqual(run(ui(inUi)).keys, []);
   });
 
+  it("DS-48 issue 564 · an interactive role on a component imported from components/ui is allowed", () => {
+    const imp = (line, jsx) => `${line}\nexport const A = () => ${jsx};\n`;
+    const ok = {
+      alias: imp('import { Button } from "@/components/ui/button";', '<Button role="tab" />'),
+      aliasMenu: imp(
+        'import { Button } from "@/components/ui/button";',
+        '<Button role="menuitem" />',
+      ),
+      renamed: imp('import { Button as B } from "@/components/ui/button";', '<B role="option" />'),
+      relative: imp(
+        'import { Button } from "../../components/ui/button";',
+        '<Button role="tab" />',
+      ),
+      defaultImport: imp('import Chip from "@/components/ui/chip";', '<Chip role="tab" />'),
+    };
+    for (const [name, src] of Object.entries(ok)) {
+      assert.deepEqual(run({ ...ui("", "ok"), "src/w/a.tsx": src }).keys, [], name);
+    }
+  });
+
+  it("DS-48 issue 564 · raw controls and roles on other elements stay flagged", () => {
+    const imp = (line, jsx) => `${line}\nexport const A = () => ${jsx};\n`;
+    const btn = 'import { Button } from "@/components/ui/button";';
+    const bad = {
+      div: imp(btn, '<div role="tab" />'),
+      span: imp(btn, '<span role="menuitem" />'),
+      li: imp(btn, '<li role="option" />'),
+      anchor: imp(btn, '<a role="tab" onClick={go} />'),
+      rawButton: imp(btn, '<button role="tab" />'),
+      rawInput: imp(btn, '<input role="combobox" />'),
+      otherImport: imp('import { Button } from "./button";', '<Button role="tab" />'),
+      sharedImport: imp(
+        'import { Button } from "@/components/shared/button";',
+        '<Button role="tab" />',
+      ),
+      libImport: imp('import { Button } from "some-lib";', '<Button role="tab" />'),
+      notImported: '<Button role="tab" />',
+      typeOnly: imp(
+        'import type { Button } from "@/components/ui/button";',
+        '<Button role="tab" />',
+      ),
+      shadowedName: imp('import { Button } from "@/components/ui/button";', '<Other role="tab" />'),
+      prefixPath: imp(
+        'import { Button } from "@/components/uikit/button";',
+        '<Button role="tab" />',
+      ),
+    };
+    for (const [name, src] of Object.entries(bad)) {
+      const source = src.includes("import") ? src : `export const A = () => ${src};\n`;
+      assert.deepEqual(
+        run({ ...ui("", "ok"), "src/w/a.tsx": source }).keys,
+        ["DS-48|w/a.tsx"],
+        name,
+      );
+    }
+  });
+
   it("DS-48 issue 505 · a raw form is flagged, also directly under the Form provider", () => {
     for (const jsx of ["<Form {...f}><form /></Form>", "<Form {...f}><div><form /></div></Form>"]) {
       const { keys } = run({ ...ui("", "ok"), "src/w/a.tsx": `export const A = () => ${jsx};\n` });

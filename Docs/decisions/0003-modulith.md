@@ -1,6 +1,7 @@
 # 0003 · Modulith: one deployable, modules cut by domain with their own public interface
 
 - **Status:** **accepted.** The decision "Modulith" was taken on 2026-10-03 by the project owner. The module cut, the dependency matrix, the directory structure and the open questions O-3 to O-9 were confirmed on 2026-10-05 as an assumption decided by the PO under the autonomy rules (O-1 and O-2 by the owner on 2026-10-03); all of them stay revisable by a later ADR. `app/modules.config.mjs` is the single source for the cut; where it differs from the tables below, the register wins.
+- **Amended by:** ADR 0012 (the exchange of epic SOZ is its own module `swap`; the tables `offer` and `swap` and the dependency edges are in `app/modules.config.mjs`)
 - **Changes:** adds E-20 (`Docs/PRODUCT-SPECS/16-Releases-and-Decisions.md`) and the module rules AB-7 to AB-14 (`Docs/PRODUCT-SPECS/18-Architecture-and-Quality-Gates.md`, section "Modulgrenzen")
 - **Refines:** E-01 (monorepo, `core` without I/O), FR-QG-04, FR-QG-05, P-02, P-03, P-04
 - **Affects:** every epic that is built from now on (BES, PHA, WAC, BEH, WUN, POK, MON, SOZ, EQU, KI, ENT), `app/tools/check/code/check-boundaries.mjs` (later, own issue)

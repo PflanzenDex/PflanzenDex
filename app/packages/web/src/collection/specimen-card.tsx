@@ -132,7 +132,7 @@ export function SpecimenCardView(props: {
   const { card, onMeasure, onArchive, onRepot, onMark, onCatchDate } = props;
   const repot = card.status === "cutting" ? onRepot : undefined;
   return (
-    <li className={CARD}>
+    <li className={`animate-list-in ${CARD}`}>
       <Photo card={card} />
       <h2 className="mt-2 text-lg font-semibold">{card.name}</h2>
       <Quiet>Art: {card.speciesName ?? UNKNOWN}</Quiet>

@@ -5,6 +5,7 @@ import { useInvalidate, useRequest, useWriteAction } from "../../../kernel";
 import { loadBanner, markFeedSeen } from "../../api/feed-api";
 import { dateText } from "../../parts/invite-card/invite-card";
 import { nameOf } from "../../parts/request-list/request-list";
+import { RequestsNotice } from "../requests-notice/requests-notice";
 
 const KEY = ["social", "banner"] as const;
 type Token = () => Promise<string | undefined>;
@@ -36,7 +37,7 @@ function useFirstVisit(api: string, token: Token, banner: Banner | undefined, re
  * Without news (and on the very first visit) nothing is shown. `quiet` (start page) keeps a failed load from adding a
  * second error to the page: the page "Freunde" says it.
  */
-export function FriendsBanner(props: { api: string; token: Token; quiet?: boolean }) {
+function NewPlantsBanner(props: { api: string; token: Token; quiet?: boolean }) {
   const { api, token } = props;
   const reload = useInvalidate(KEY);
   const load = useCallback((t: string) => loadBanner(api, t), [api]);
@@ -82,5 +83,28 @@ export function FriendsBanner(props: { api: string; token: Token; quiet?: boolea
         </p>
       )}
     </section>
+  );
+}
+
+/**
+ * What friends are up to, in one place (US-SOZ-06, US-SOZ-12): the notice about open friendship requests when `requests` is
+ * set, then the banner about new plants.
+ */
+export function FriendsBanner(props: {
+  api: string;
+  token: Token;
+  quiet?: boolean;
+  /** Also tell about open friendship requests (US-SOZ-12); the start page does, the page "Freunde" lists them itself. */
+  requests?: boolean;
+}) {
+  return (
+    <>
+      {props.requests && <RequestsNotice api={props.api} token={props.token} />}
+      <NewPlantsBanner
+        api={props.api}
+        token={props.token}
+        {...(props.quiet ? { quiet: true } : {})}
+      />
+    </>
   );
 }
