@@ -8,6 +8,12 @@ export interface SharingRow {
   readonly photos: boolean;
 }
 
+/** A shared specimen with the instant it became visible to the caller (US-SOZ-06). */
+export interface SharingRowSince extends SharingRow {
+  /** UTC instant (ISO 8601): the later of the moment it was shared and the start of the friendship. */
+  readonly visibleSince: string;
+}
+
 /** The part of a specimen the sharing operations need; the adapter of `collection` answers it (ADR 0003). */
 export interface SpecimenFact {
   readonly id: string;
@@ -39,6 +45,8 @@ export interface SharingStore {
    * database checks it, so ending a friendship withdraws everything at once (US-SOZ-03, P-05).
    */
   sharedBy(userId: string, ownerId: string): Promise<readonly SharingRow[]>;
+  /** The same, each with the instant it became visible to the caller (US-SOZ-06). */
+  sharedBySince(userId: string, ownerId: string): Promise<readonly SharingRowSince[]>;
 }
 
 /** Port: the global switch "Everything private" of an account (US-ACC-02); the profile of `account` answers it. */

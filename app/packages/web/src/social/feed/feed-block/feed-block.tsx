@@ -3,10 +3,10 @@ import type { Feed, FeedEvent, FeedType } from "@pflanzendex/core";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { LoadFrame } from "../../kernel";
-import { loadFeed, type FeedFilter } from "../api/feed-api";
-import { dateText } from "../parts/invite-card/invite-card";
-import { nameOf } from "../parts/request-list/request-list";
+import { LoadFrame } from "../../../kernel";
+import { loadFeed, type FeedFilter } from "../../api/feed-api";
+import { dateText } from "../../parts/invite-card/invite-card";
+import { nameOf } from "../../parts/request-list/request-list";
 
 const TYPE_TEXT: Record<FeedType, string> = {
   new_species: "Neue Art gefangen",
@@ -115,6 +115,7 @@ export function FeedBlock(props: {
             <p className="rounded-lg border border-border p-3">
               {feed.hint.text} <strong>{feed.hint.nextAction}</strong>
             </p>
+            <p className="text-sm text-muted-foreground">Stand: {dateText(feed.asOf)}</p>
             {feed.events.length > 0 && (
               <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0" aria-label="Neuigkeiten">
                 {feed.events.map((e, i) => (

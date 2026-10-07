@@ -189,3 +189,115 @@ describe("US-SOZ-05 feed through the API", () => {
     expect((await feed(subB)).body.events).toEqual([]);
   });
 });
+
+describe("US-SOZ-06 banner since my last visit through the API", () => {
+  // The banner compares database instants with the clock: this app runs on the real clock.
+  let live: ReturnType<typeof createApp>;
+  const get = async (sub: string | null, path: string) => {
+    const res = await live.request(path, {
+      headers: sub ? { authorization: `Bearer valid:${sub}` } : {},
+    });
+    return { status: res.status, body: (await res.json()) as any }; // eslint-disable-line @typescript-eslint/no-explicit-any
+  };
+  const post = async (sub: string | null, path: string, body: unknown) => {
+    const res = await live.request(path, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "idempotency-key": randomUUID(),
+        ...(sub ? { authorization: `Bearer valid:${sub}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+    return { status: res.status, body: (await res.json()) as any }; // eslint-disable-line @typescript-eslint/no-explicit-any
+  };
+  const [subD, subE] = [`soz6-${randomUUID()}`, `soz6-${randomUUID()}`];
+  let shareId = "";
+
+  beforeAll(async () => {
+    live = createApp({ reviewer, pool });
+    NAMES[subD] = "Dora";
+    NAMES[subE] = "Emil";
+    for (const sub of [subD, subE]) await get(sub, "/account");
+    const call2 = async (sub: string, method: string, path: string, body?: unknown) => {
+      const res = await live.request(path, {
+        method,
+        headers: {
+          "content-type": "application/json",
+          "idempotency-key": randomUUID(),
+          authorization: `Bearer valid:${sub}`,
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      });
+      return { status: res.status, body: (await res.json()) as any }; // eslint-disable-line @typescript-eslint/no-explicit-any
+    };
+    const { code } = (await call2(subD, "POST", "/friends/invitations", {})).body;
+    await call2(subE, "POST", "/friends/requests", { code });
+    const incoming = (await get(subD, "/friends/requests")).body.incoming[0].id;
+    await call2(subD, "POST", `/friends/requests/${incoming}/answer`, { decision: "accept" });
+    shareId = (
+      await call2(subD, "POST", "/specimens", {
+        timeZone: "Europe/Berlin",
+        speciesId,
+        marker: "B1",
+        catchDate: "2020-01-01",
+      })
+    ).body.id;
+    await call2(subD, "PUT", `/sharing/specimens/${shareId}`, { share: "friends" });
+  });
+  afterAll(async () => {
+    await admin.query(
+      "delete from specimen where account_id in (select id from account where subject = any($1))",
+      [[subD, subE]],
+    );
+    await admin.query("delete from account where subject = any($1)", [[subD, subE]]);
+  });
+
+  it("US-SOZ-06 without a token: 401", async () => {
+    expect((await get(null, "/feed/banner")).status).toBe(401);
+    expect((await post(null, "/feed/seen", { upTo: new Date().toISOString() })).status).toBe(401);
+  });
+
+  it("US-SOZ-06 the first visit is silent: no banner for what was shared before; the feed carries asOf", async () => {
+    const b = (await get(subE, "/feed/banner")).body;
+    expect(b).toMatchObject({ firstVisit: true, count: 0, items: [] });
+    expect((await post(subE, "/feed/seen", { upTo: b.asOf })).status).toBe(200);
+    const again = (await get(subE, "/feed/banner")).body;
+    expect(again).toMatchObject({ firstVisit: false, count: 0 });
+    const feed = (await get(subE, "/feed?timeZone=Europe%2FBerlin")).body;
+    expect(new Date(feed.asOf).getTime()).toBeGreaterThan(0);
+  });
+
+  it("US-SOZ-06 a newly shared specimen shows in the banner until 'Okay'; an old catch date does not matter", async () => {
+    const second = (
+      await post(subD, "/specimens", {
+        timeZone: "Europe/Berlin",
+        speciesId,
+        marker: "B2",
+        catchDate: "2019-05-05",
+      })
+    ).body.id;
+    await live.request(`/sharing/specimens/${second}`, {
+      method: "PUT",
+      headers: {
+        "content-type": "application/json",
+        "idempotency-key": randomUUID(),
+        authorization: `Bearer valid:${subD}`,
+      },
+      body: JSON.stringify({ share: "friends" }),
+    });
+    const b = (await get(subE, "/feed/banner")).body;
+    expect(b.count).toBe(1);
+    expect(b.items[0]).toMatchObject({ friendName: "Dora", speciesLatin: latin, count: 1 });
+    expect(JSON.stringify(b)).not.toMatch(/accountId|B2/);
+    expect((await get(subE, "/feed/banner")).body.count).toBe(1);
+    await post(subE, "/feed/seen", { upTo: b.asOf });
+    expect((await get(subE, "/feed/banner")).body.count).toBe(0);
+  });
+
+  it("US-SOZ-06 bad input for 'seen': 400; the seen state of one account never changes another's", async () => {
+    expect((await post(subE, "/feed/seen", { upTo: "gestern" })).status).toBe(400);
+    expect((await post(subE, "/feed/seen", {})).status).toBe(400);
+    expect((await get(subD, "/feed/banner")).body.firstVisit).toBe(true);
+  });
+});

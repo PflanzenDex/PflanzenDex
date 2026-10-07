@@ -14,4 +14,5 @@ export const FIXTURES_SOCIAL: Fixtures = {
     return { other_id: OTHER_SIDE, other_name: "Test", direction: "sent" };
   },
   sharing: async (k) => ({ specimen_id: await createFixtureSpecimenAt(k) }),
+  feed_seen: () => ({}),
 };
