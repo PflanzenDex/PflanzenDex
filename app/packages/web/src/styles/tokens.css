@@ -193,6 +193,14 @@
       transform: rotate(4deg);
     }
   }
+  /* List entry (US-QS-14): a card rises and fades in; transform and opacity only, so nothing shifts, and 0ms under reduced motion. */
+  --animate-list-in: list-in var(--motion-base) var(--ease-enter) both;
+  @keyframes list-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+  }
   /* Toast (US-QS-07): enters with a short rise, duration from the motion token, so no movement under reduced motion. */
   --animate-toast-in: toast-in var(--motion-base) var(--ease-enter) both;
   @keyframes toast-in {
@@ -245,6 +253,33 @@
     transition-duration: 1ms !important;
     transition-delay: 0s !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * Route transition (US-QS-14, ADR 0011 decision 5): while a view change runs (the marker is set by the router for its
+ * duration only), the main content cross-fades over `--motion-slow`; the app bar and navigation stay still. The page
+ * snapshot does not animate, and the main group does not morph, so the content never stretches. Under reduced
+ * motion the router starts no transition; the zero duration is the second line of defence.
+ */
+:root[data-route-transition] main {
+  view-transition-name: page;
+}
+:root[data-route-transition]::view-transition-old(root),
+:root[data-route-transition]::view-transition-new(root),
+::view-transition-group(page) {
+  animation: none;
+}
+::view-transition-old(page),
+::view-transition-new(page) {
+  animation-duration: var(--motion-slow);
+  animation-timing-function: var(--ease-enter);
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0s !important;
   }
 }
 
