@@ -72,6 +72,7 @@ Acceptance criteria:
 - All everyday flows (measuring with photo, confirming watering/location, ticking off treatment, Today list) can be operated with one hand and without horizontal scrolling.
 - The app is installable (home screen) and shows the last loaded data when there is no network; write actions are buffered and delivered when the network returns, without duplicate entry (`US-QS-03`).
 - Photo capture directly from the camera.
+- Given a page or a request is loading, when the wait is shown, then an animated sprout (static under reduced motion) accompanies the placeholder or stands alone, and assistive technology hears the loading text once (4.1.3, 2.3.3).
 
 ### Accessibility (US-QS-08 to US-QS-13)
 
