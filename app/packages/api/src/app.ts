@@ -9,6 +9,8 @@ import {
   type TargetLocationSource,
   type PhaseLocationSource,
   type ZoneStockSource,
+  type ObjectStore,
+  type ImageProcessor,
 } from "@pflanzendex/core";
 import {
   OPERATOR_PATHS,
@@ -70,6 +72,8 @@ export type AppOptions = {
   /** Measurements and treatments for the specimen cards (US-BES-06); without it `care` supplies the measurements (WAC-01) and the planned treatments (BEH-01). */
   measurements?: MeasurementSource;
   treatments?: TreatmentSource;
+  /** Object store and image processing for measurement photos (US-WAC-06); without them uploading a photo answers 502. */
+  media?: { store: ObjectStore; processor: ImageProcessor };
   /** Replaces the care profile as source of the location per phase (tests); without it the keeper's own care profile (US-BES-09) answers. */
   phaseLocation?: PhaseLocationSource;
   /** Replaces the light distribution as source of the stock per zone for the wishlist (tests); without it `collection` answers (US-LIC-02). */
@@ -81,7 +85,11 @@ function bindCareOne(
   app: Hono,
   pool: Pool,
   auth: MiddlewareHandler,
-  opt: { clock?: () => Date; phaseLocation?: PhaseLocationSource },
+  opt: {
+    clock?: () => Date;
+    phaseLocation?: PhaseLocationSource;
+    media?: { store: ObjectStore; processor: ImageProcessor };
+  },
 ) {
   for (const path of CARE_PATHS) app.use(path, auth);
   app.route("/", careRoutes(pool, opt));
@@ -115,6 +123,15 @@ function bindFriends(app: Hono, pool: Pool, auth: MiddlewareHandler, clock?: () 
   app.route("/", friendRoutes(pool, clock));
   app.route("/", sharingRoutes(pool));
   app.route("/", feedRoutes(pool, clock));
+}
+
+/** What `care` takes from the app options: clock, location per phase and the media port (photos, US-WAC-06). */
+function careOptions(opt: AppOptions) {
+  return {
+    ...(opt.clock ? { clock: opt.clock } : {}),
+    ...(opt.phaseLocation ? { phaseLocation: opt.phaseLocation } : {}),
+    ...(opt.media ? { media: opt.media } : {}),
+  };
 }
 
 /** What `care` feeds into the collection: target location, measurements and treatments, unless tests replace them. */
@@ -174,10 +191,7 @@ export function createApp(opt: AppOptions = {}): Hono {
     app.route("/", careProfileRoutes(opt.pool));
     bindWishlist(app, opt.pool, auth, opt.zoneStock);
     bindFriends(app, opt.pool, auth, opt.clock);
-    const care = {
-      ...(opt.clock ? { clock: opt.clock } : {}),
-      ...(opt.phaseLocation ? { phaseLocation: opt.phaseLocation } : {}),
-    };
+    const care = careOptions(opt);
     bindCareOne(app, opt.pool, auth, care);
     bindToday(app, opt.pool, auth, care);
   }

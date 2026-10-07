@@ -50,6 +50,10 @@ export const ERROR_TEXTS = {
   "specimen.not_archived": "Dieses Exemplar ist nicht archiviert.",
   "specimen.archived":
     "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her, dann kannst du damit arbeiten.",
+  "measurement.not_found":
+    "Für diesen Tag gibt es noch keine Messung. Erfasse zuerst die Messung, dann kannst du das Foto dazu speichern; es wurde nichts gespeichert.",
+  "measurement.photo_exists":
+    "Zu dieser Messung gibt es schon ein Foto. Bestätige, dass es ersetzt werden soll; bis dahin bleibt das alte Foto unverändert.",
   "treatment.not_found": "Diese Behandlung gibt es nicht.",
   "friend.unknown_code":
     "Diesen Freundescode gibt es nicht. Prüfe die Eingabe oder bitte um einen neuen Code.",

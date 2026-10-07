@@ -6,3 +6,5 @@ export { storeImage } from "./store-image";
 export type { StoreImageDependencies, StoredImage } from "./store-image";
 /** Pure in-memory fake of the port for tests of this and higher modules. */
 export { InMemoryObjectStore } from "./object-store.fake";
+export { imageStorage } from "./image-storage";
+export type { ImageStorage } from "./image-storage";

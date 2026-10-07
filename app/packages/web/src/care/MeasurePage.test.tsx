@@ -15,6 +15,7 @@ const measurement = {
   quality: "healthy",
   note: null,
   ratedBy: "keeper",
+  photo: null,
 };
 const specimen = { id: "e1", name: "Bogenhanf" };
 
