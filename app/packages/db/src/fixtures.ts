@@ -8,6 +8,7 @@ import { FIXTURES_CARE } from "./care/index.ts";
 import { FIXTURES_WISHLIST } from "./wishlist/index.ts";
 import { FIXTURES_POKEDEX } from "./pokedex/index.ts";
 import { FIXTURES_SOCIAL } from "./social/index.ts";
+import { FIXTURES_SWAP } from "./swap/index.ts";
 
 // One example per table with an account id for the remaining columns (without the id, the test sets it).
 // The entries live in their respective module; they are collected here. A new table without an entry
@@ -22,6 +23,7 @@ export const FIXTURES: Fixtures = {
   ...FIXTURES_WISHLIST,
   ...FIXTURES_POKEDEX,
   ...FIXTURES_SOCIAL,
+  ...FIXTURES_SWAP,
 };
 
 // Test helpers for tables of another module (AB-9): tests of one module write no SQL on foreign tables,
