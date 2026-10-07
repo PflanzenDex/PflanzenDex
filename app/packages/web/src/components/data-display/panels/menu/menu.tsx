@@ -19,8 +19,6 @@ export type MenuProps = {
   className?: string;
 };
 
-// The role sits on the shared Button; DS-48 reads a literal interactive role as a raw control, so it is a constant.
-const ITEM_ROLE = "menuitem";
 const ITEM = '[role="menuitem"]:not(:disabled)';
 
 /** Moves focus over the enabled items for Up, Down, Home and End (wrapping). */
@@ -42,7 +40,7 @@ function MenuRow(props: { item: MenuItem; onChoose: () => void }) {
   const { item } = props;
   return (
     <Button
-      role={ITEM_ROLE}
+      role="menuitem"
       type="button"
       variant="ghost"
       tabIndex={-1}

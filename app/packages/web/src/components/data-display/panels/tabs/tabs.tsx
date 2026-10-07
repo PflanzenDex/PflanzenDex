@@ -26,9 +26,6 @@ function targetIndex(key: string, index: number, count: number): number | undefi
   }[key];
 }
 
-// The role sits on the shared Button; DS-48 reads a literal interactive role as a raw control, so it is a constant.
-const TAB_ROLE = "tab";
-
 type TabButtonProps = {
   tab: TabItem;
   active: boolean;
@@ -42,7 +39,7 @@ function TabButton(props: TabButtonProps) {
   return (
     <Button
       id={props.tabId}
-      role={TAB_ROLE}
+      role="tab"
       type="button"
       variant="ghost"
       aria-selected={active}
