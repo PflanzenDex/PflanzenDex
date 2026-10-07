@@ -1,12 +1,12 @@
-import { Suspense, type ReactNode } from "react";
+import { Suspense } from "react";
 import { useNavigate } from "react-router";
-import { SectionLabel } from "@/components/section-label/section-label";
+import { AreaSection as Section } from "@/components/routing/areas/area-section/area-section";
+import { useSectionAnchor } from "@/components/routing/areas/area-section/use-section-anchor";
 import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
 import { HintsPage } from "@/collection";
 import { TreatmentsPage } from "@/care";
 import { TodayPage, type TodayDestination } from "@/today";
 import { TODAY_SECTIONS, todayAddress, type View } from "@/navigation";
-import { headingId, useSectionAnchor } from "./use-section-anchor";
 
 type Token = () => Promise<string | undefined>;
 
@@ -16,28 +16,10 @@ const VIEW: Partial<Record<TodayDestination, View>> = {
   collection: "collection",
 };
 
-/** A section of "Heute": its name is a heading (level 2) the address can point at; the content loads on its own. */
-function Section(props: { anchor: string; title: string; loading: string; children: ReactNode }) {
-  return (
-    <section
-      id={props.anchor}
-      aria-labelledby={headingId(props.anchor)}
-      className="flex min-w-0 scroll-mt-4 flex-col gap-3"
-    >
-      <SectionLabel id={headingId(props.anchor)}>{props.title}</SectionLabel>
-      <Suspense
-        fallback={
-          <SkeletonGroup label={props.loading} className="flex min-w-0 flex-col gap-3">
-            <Skeleton className="h-24 w-full rounded-card" />
-            <Skeleton className="h-24 w-full rounded-card" />
-          </SkeletonGroup>
-        }
-      >
-        {props.children}
-      </Suspense>
-    </section>
-  );
-}
+const NAMES: Record<string, string> = {
+  [TODAY_SECTIONS.treatments]: "Behandlungen",
+  [TODAY_SECTIONS.hints]: "Fehlt noch",
+};
 
 /**
  * The destination "Heute" (US-QS-14): the list "Jetzt dran" (`today`), the open treatments with planning and history
@@ -47,7 +29,7 @@ function Section(props: { anchor: string; title: string; loading: string; childr
  */
 export function TodayArea(props: { api: string; token: Token; onOpen: (view: View) => void }) {
   const navigate = useNavigate();
-  useSectionAnchor();
+  useSectionAnchor(NAMES);
   const open = (d: TodayDestination) => {
     // Same page: the state keeps the focus where useSectionAnchor puts it (RouteFocus leaves it alone).
     if (d === "treatments" || d === "hints")

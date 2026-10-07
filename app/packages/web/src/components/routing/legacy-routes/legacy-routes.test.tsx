@@ -35,6 +35,11 @@ describe("US-QS-14 old addresses keep working", () => {
     expect(screen.getByTestId("address").textContent).toBe("/today#fehlt-noch true");
   });
 
+  it("US-QS-14 · US-ACC-02 /settings leads to the section Einstellungen of Konto and keeps the focus handling to the section", () => {
+    open("/settings");
+    expect(screen.getByTestId("address").textContent).toBe("/account#einstellungen true");
+  });
+
   it("US-QS-14 the former Pokédex address still opens the species mode of the Sammlung", () => {
     open("/pokedex/abc");
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=species false");

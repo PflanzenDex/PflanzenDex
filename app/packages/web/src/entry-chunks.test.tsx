@@ -22,7 +22,7 @@ vi.mock("./pokedex/PokedexPage", () => {
   return { PokedexPage: () => null };
 });
 
-vi.mock("@/components/routing/today-area/today-area", () => {
+vi.mock("@/components/routing/areas/today-area/today-area", () => {
   loaded.pages.push("today-area");
   return { TodayArea: () => null };
 });

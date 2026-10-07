@@ -9,7 +9,6 @@ import {
   Leaf,
   ListChecks,
   Package,
-  Settings,
   Sun,
   User,
   ClipboardCheck,
@@ -31,8 +30,7 @@ export type View =
   | "light"
   | "review"
   | "operator"
-  | "account"
-  | "settings";
+  | "account";
 
 const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
   { id: "today", text: "Heute", icon: CalendarCheck },
@@ -48,7 +46,6 @@ const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
   { id: "review", text: "Prüfliste", icon: ClipboardCheck },
   { id: "operator", text: "Betreiber", icon: Building2 },
   { id: "account", text: "Konto", icon: User },
-  { id: "settings", text: "Einstellungen", icon: Settings },
 ];
 
 /** One URL path per view (English); the link texts above stay German. */
@@ -67,7 +64,6 @@ export const PATHS: Record<View, string> = {
   review: "/review",
   operator: "/operator",
   account: "/account",
-  settings: "/settings",
 };
 
 /** The former Pokédex address: it opens the species mode of the Sammlung, so old links keep working (US-QS-14). */
@@ -82,6 +78,14 @@ export const LEGACY_HINTS_PATH = "/hints";
 export const TODAY_SECTIONS = { treatments: "behandlungen", hints: "fehlt-noch" } as const;
 export type TodaySection = keyof typeof TODAY_SECTIONS;
 export const todayAddress = (section: TodaySection) => `${PATHS.today}#${TODAY_SECTIONS[section]}`;
+
+/** The former address of the destination "Einstellungen": it opens the section "Einstellungen" of "Konto" (US-QS-14). */
+export const LEGACY_SETTINGS_PATH = "/settings";
+/** The sections of "Konto" by the anchor in the address, e.g. `/account#einstellungen` (US-QS-14). */
+export const ACCOUNT_SECTIONS = { profile: "profil", settings: "einstellungen" } as const;
+export type AccountSection = keyof typeof ACCOUNT_SECTIONS;
+export const accountAddress = (section: AccountSection) =>
+  `${PATHS.account}#${ACCOUNT_SECTIONS[section]}`;
 
 const visible = (
   id: View,

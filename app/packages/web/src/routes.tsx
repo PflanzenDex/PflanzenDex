@@ -3,7 +3,7 @@ import { Navigate, Route, Routes, useLocation, useParams } from "react-router";
 import type { Species, Specimen } from "@pflanzendex/core";
 import { CollectionArea } from "./collection-area";
 import { CareProfilePage, DifficultyPage } from "./collection";
-import { AccountView, SettingsPage, OperatorPage, useSession, type State } from "./account";
+import { OperatorPage, useSession, type State } from "./account";
 import { LightPage } from "./light";
 import { ReviewPage, SpeciesPage } from "./catalog";
 import { CarePhasesPage } from "./care";
@@ -12,14 +12,11 @@ import { DiscoverPage } from "./discover";
 import { WishlistPage, type WishToPlant } from "./wishlist";
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
+import { AccountArea, TodayArea } from "@/components/routing/areas/lazy-areas";
 import { legacyRoutes } from "@/components/routing/legacy-routes/legacy-routes";
 import { PATHS, type View } from "./navigation";
 /** The start page carries the onboarding forms: its chunk loads with its route (#451). */
 const StartPage = lazyPage(() => import("./start-page").then((m) => ({ default: m.StartPage })));
-/** The destination "Heute" with its sections is its own lazy part: the shell does not carry it (DS-08, US-QS-14). */
-const TodayArea = lazyPage(() =>
-  import("@/components/routing/today-area/today-area").then((m) => ({ default: m.TodayArea })),
-);
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 /** The views that need nothing but the API address and the token. */
@@ -31,7 +28,6 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
   discover: DiscoverPage,
   review: ReviewPage,
   operator: OperatorPage,
-  settings: SettingsPage,
 };
 
 /** The views that link on to other views; the app wires them (ADR 0003). */
@@ -157,7 +153,9 @@ export function AppRoutes(props: {
         <Route
           path={PATHS.account}
           element={
-            <AccountView
+            <AccountArea
+              api={api}
+              token={s.token}
               account={account}
               onSignOut={s.signOut}
               onEverywhereSignOut={() => void s.everywhereSignOut()}

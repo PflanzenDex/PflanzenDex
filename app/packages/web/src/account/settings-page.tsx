@@ -84,14 +84,21 @@ function SettingsForm(props: { api: string; token: Token; profile: AccountProfil
 /**
  * Profile and settings (US-ACC-02): display name, time zone (prefilled from the device until chosen), a switch per
  * notification occasion and the two global switches. The page says what happens next (P-09): the hint under the time
- * zone, the confirmation after saving, the refusal with its reason.
+ * zone, the confirmation after saving, the refusal with its reason. With `host` (a section of "Konto", US-QS-14) the
+ * page has no title of its own and sits in a card: the destination names the section.
  */
-export function SettingsPage(props: { api: string; token: Token }) {
+export function SettingsPage(props: { api: string; token: Token; host?: boolean }) {
   const load = useCallback((t: string) => loadProfile(props.api, t), [props.api]);
   const loading = "Einstellungen werden geladen …";
   return (
-    <div className="flex min-w-0 flex-col gap-4">
-      <h1 className="text-2xl font-semibold">Einstellungen</h1>
+    <div
+      className={
+        props.host === true
+          ? "flex min-w-0 max-w-xl flex-col gap-4 rounded-card bg-card p-5 shadow-elevation-1"
+          : "flex min-w-0 flex-col gap-4"
+      }
+    >
+      {props.host !== true && <h1 className="text-2xl font-semibold">Einstellungen</h1>}
       <LoadFrame
         queryKey={["account", "profile"]}
         fresh

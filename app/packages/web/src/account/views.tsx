@@ -42,6 +42,31 @@ export function Welcome(props: { onRegister: Action; onSignIn: Action; hint?: st
   );
 }
 
+const NOTICE = "rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground";
+
+/** What needs attention before anything else: the unconfirmed e-mail address and the error of the last sign-in step. */
+function Notices(props: { account: Account; error?: string }) {
+  return (
+    <>
+      {!props.account.emailConfirmed && (
+        <p role="alert" className={NOTICE}>
+          E-Mail-Adresse bestätigen: Wir haben dir einen Link geschickt. Teilen mit Freunden ist
+          erst danach möglich.
+        </p>
+      )}
+      {props.error && (
+        <p role="alert" className={NOTICE}>
+          {props.error}
+        </p>
+      )}
+    </>
+  );
+}
+
+/**
+ * The profile card of "Konto" (US-QS-14): avatar tile, name, e-mail and the ways to sign out. It has no heading of its
+ * own: the destination names it "Profil" and carries the one h1.
+ */
 export function AccountView(props: {
   account: Account;
   onSignOut: Action;
@@ -49,34 +74,36 @@ export function AccountView(props: {
   error?: string;
 }) {
   const { account } = props;
+  const name = account.displayName || account.email;
   return (
-    <section aria-labelledby="title" className={CARD}>
-      <h1 id="title" className="text-2xl font-semibold [overflow-wrap:anywhere]">
-        Hallo{account.displayName ? `, ${account.displayName}` : ""}
-      </h1>
-      <dl className="m-0">
-        <dt className="text-sm text-muted-foreground">E-Mail</dt>
-        <dd className="m-0 [overflow-wrap:anywhere]">{account.email}</dd>
-      </dl>
-      {!account.emailConfirmed && (
-        <p
-          role="alert"
-          className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
+    <div className="flex w-full min-w-0 max-w-xl flex-col gap-4 rounded-card bg-card p-5 shadow-elevation-1">
+      <div className="flex min-w-0 items-center gap-4">
+        <span
+          aria-hidden="true"
+          className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-accent text-xl font-semibold text-accent-foreground"
         >
-          E-Mail-Adresse bestätigen: Wir haben dir einen Link geschickt. Teilen mit Freunden ist
-          erst danach möglich.
-        </p>
-      )}
-      {props.error && (
-        <p
-          role="alert"
-          className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
-        >
-          {props.error}
-        </p>
-      )}
+          {name.slice(0, 1).toUpperCase()}
+        </span>
+        <dl className="m-0 min-w-0">
+          <dt className="sr-only">Name</dt>
+          <dd className="m-0 text-lg font-semibold [overflow-wrap:anywhere]">
+            Hallo{account.displayName ? `, ${account.displayName}` : ""}
+          </dd>
+          <dt className="sr-only">E-Mail</dt>
+          <dd className="m-0 text-sm text-muted-foreground [overflow-wrap:anywhere]">
+            {account.email}
+          </dd>
+        </dl>
+      </div>
+      <Notices account={account} {...(props.error ? { error: props.error } : {})} />
       <div className={ACTIONS}>
-        <Button type="button" size="touch" onClick={props.onSignOut} className="sm:flex-1">
+        <Button
+          type="button"
+          variant="outline"
+          size="touch"
+          onClick={props.onSignOut}
+          className="sm:flex-1"
+        >
           Abmelden
         </Button>
         <Button
@@ -89,7 +116,7 @@ export function AccountView(props: {
           Auf allen Geräten abmelden
         </Button>
       </div>
-    </section>
+    </div>
   );
 }
 

@@ -175,6 +175,11 @@ Acceptance criteria:
 - Given a link or bookmark to the former addresses of "Behandlung" or "Hinweise", when I open it, then I land on "Heute" at the matching section, the section name is announced politely and the focus is on its heading; the former addresses are no entries of the navigation.
 - Given one of the sections is empty, fails to load or is loading, then it shows that state with its next action (P-09, P-10) while the other sections stay usable.
 - Given "Heute" is opened, then the sections load as their own parts, so the initial JavaScript does not carry them (QG-U6).
+- Given the main destinations, then "Konto" and "Einstellungen" are one destination "Konto" with one main heading and the sections "Profil" (name, e-mail, ways to sign out; US-ACC-01) and "Einstellungen" (display name, time zone, notifications, privacy; US-ACC-02) in this order, each named by a heading below the main heading; "Einstellungen" is no entry of the navigation.
+- Given a wide screen (1280 px), then a list of the sections beside them links to each section and marks the current one by more than colour; on a small screen the sections are stacked without the list.
+- Given a link or bookmark to the former address of "Einstellungen", when I open it, then I land on "Konto" at the section "Einstellungen", the section name is announced politely and the focus is on its heading.
+- Given the section "Einstellungen" fails to load or is loading, then it shows that state with its next action (P-09, P-10) while the section "Profil" stays usable; saving settings works as before (US-ACC-02).
+- Given "Konto" is opened, then the settings load as their own part, so the initial JavaScript does not carry them (QG-U6). Invitations to friends stay in "Freunde" (US-SOZ); "Konto" has no section for them.
 
 Decision and tokens: ADR [0011](../decisions/0011-redesign-direction-greenhouse.md), E-24.
 

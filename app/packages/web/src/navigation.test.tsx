@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { AppShell } from "./components/shared/app-shell";
 import { BRAND_LINK_LABEL, DISPLAY_NAME } from "./components/shared/nav-item";
-import { navItems, pageTitle, PATHS, todayAddress, viewTitle } from "./navigation";
+import { accountAddress, navItems, pageTitle, PATHS, todayAddress, viewTitle } from "./navigation";
 
 afterEach(cleanup);
 
@@ -127,7 +127,7 @@ describe("US-QS-07 · DS-22 navigation icons", () => {
     expect(items.map((i) => i.label)).not.toContain("Bestand");
     expect(items.map((i) => i.label)).not.toContain("Start");
     expect(items.map((i) => i.href)).not.toContain("/");
-    expect(items.at(-1)?.label).toBe("Einstellungen");
+    expect(items.at(-1)?.label).toBe("Konto");
   });
 });
 
@@ -160,5 +160,17 @@ describe("display name (US-QS-14)", () => {
     expect(BRAND_LINK_LABEL).toBe("PflanzenDéx, zur Startseite");
     expect(pageTitle("X")).toBe("X – PflanzenDéx");
     expect(pageTitle()).toBe("PflanzenDéx");
+  });
+});
+
+describe("US-QS-14 Konto and Einstellungen are one destination", () => {
+  it("US-QS-14 · US-ACC-02 the navigation lists Konto but not Einstellungen, and no path /settings", () => {
+    const labels = navItems({ reviewer: true, operator: true }).map((i) => i.label);
+    expect(labels).toContain("Konto");
+    expect(labels).not.toContain("Einstellungen");
+    expect(Object.values(PATHS)).not.toContain("/settings");
+    expect(accountAddress("settings")).toBe("/account#einstellungen");
+    expect(accountAddress("profile")).toBe("/account#profil");
+    expect(viewTitle("/account")).toBe("Konto – PflanzenDéx");
   });
 });
