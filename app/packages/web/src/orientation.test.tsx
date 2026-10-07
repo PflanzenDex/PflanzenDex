@@ -108,6 +108,8 @@ describe("US-QS-09 · the navigation is the same in every view (3.2.3, 3.2.4)", 
       seen.push(
         within(bar)
           .getAllByRole("link")
+          // The product name on top of the sidebar is a brand link home, not a destination (US-QS-14).
+          .filter((a) => a.textContent !== "PflanzenDex")
           .map((a) => `${a.textContent}|${a.getAttribute("href")}`),
       );
       cleanup();
