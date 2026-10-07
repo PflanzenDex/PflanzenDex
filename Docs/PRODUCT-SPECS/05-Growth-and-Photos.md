@@ -71,6 +71,8 @@ Acceptance criteria (processing):
 - The photo belongs to the measurement of the same day; a second photo for the same measurement replaces only after confirmation.
 - Invalid file, too large a file or a missing measurement abort with a clear message.
 
+State of implementation: the building blocks exist (TE-05): object store port with an S3 adapter, the processing stage (rotation, 1600 px, JPEG quality 82, no EXIF/GPS, original never stored, FR-WAC-09, QG-D3) and the errors `media.too_large`, `media.type_unsupported`, `media.not_an_image`. Missing: the upload route, the link to the measurement and the confirmation on replacement, the assessment (US-KI-04) and the view; the status stays ⬜.
+
 ## Data model
 
 ### DM-WAC-01 Measurement
@@ -79,11 +81,11 @@ Acceptance criteria (processing):
 
 ## Requirements
 
-| ID        | Requirement                                                                                                                                                                                    | Status |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| FR-WAC-02 | The rate is a comparison against the **own** history; numbers without a verifiable source are not shown (P-08).                                                                                | ⬜     |
-| FR-WAC-03 | The trend threshold ±10 % is a default, centrally configurable in the logic.                                                                                                                   | ⬜     |
-| FR-WAC-05 | The growth view also shows cuttings, marked "Cutting". (Open question from the prototype, settled here: visible, because cuttings should be measured.)                                         | ⬜     |
-| FR-WAC-07 | More than one measurement on the same day is possible, but yields no rate (Δ days = 0).                                                                                                        | ⬜     |
-| FR-WAC-08 | A too old last measurement (default 30 days, adjustable) creates a reminder (US-MON-04). Cuttings are excluded or have a shorter rhythm (decision open).                                       | ⬜     |
-| FR-WAC-09 | Photos are the property of the user. After processing only the cleaned version exists (no original with GPS).                                                                                  | ⬜     |
+| ID        | Requirement                                                                                                                                              | Status |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| FR-WAC-02 | The rate is a comparison against the **own** history; numbers without a verifiable source are not shown (P-08).                                          | ⬜     |
+| FR-WAC-03 | The trend threshold ±10 % is a default, centrally configurable in the logic.                                                                             | ⬜     |
+| FR-WAC-05 | The growth view also shows cuttings, marked "Cutting". (Open question from the prototype, settled here: visible, because cuttings should be measured.)   | ⬜     |
+| FR-WAC-07 | More than one measurement on the same day is possible, but yields no rate (Δ days = 0).                                                                  | ⬜     |
+| FR-WAC-08 | A too old last measurement (default 30 days, adjustable) creates a reminder (US-MON-04). Cuttings are excluded or have a shorter rhythm (decision open). | ⬜     |
+| FR-WAC-09 | Photos are the property of the user. After processing only the cleaned version exists (no original with GPS).                                            | ⬜     |
