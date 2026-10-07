@@ -1,4 +1,4 @@
-import type { Banner, Feed } from "@pflanzendex/core";
+import type { Banner, Feed, OpenRequests } from "@pflanzendex/core";
 import { call, createWrite, currentTimeZone, type Response } from "../../kernel";
 
 export interface FeedFilter {
@@ -38,3 +38,10 @@ export async function markFeedSeen(
   const r = await createWrite(api, token, fetchFn)("POST", "/feed/seen", { upTo });
   return r.ok ? { ok: true, value: r.value as { seenAt: string } } : r;
 }
+
+/** The open requests of both directions (US-SOZ-12); the notice only needs the ones waiting for my answer. */
+export const loadOpenRequests = (
+  api: string,
+  token: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<OpenRequests>> => call<OpenRequests>(fetchFn, `${api}/friends/requests`, token);

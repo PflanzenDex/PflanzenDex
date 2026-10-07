@@ -104,7 +104,7 @@ function Content(props: {
   return (
     <>
       <Suspense fallback={null}>
-        <FriendsBanner api={props.api} token={props.token} quiet />
+        <FriendsBanner api={props.api} token={props.token} quiet requests />
       </Suspense>
       <Overview counts={counts} onOpen={props.onOpen} />
     </>

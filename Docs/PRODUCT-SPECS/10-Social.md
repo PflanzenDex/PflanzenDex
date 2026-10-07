@@ -186,13 +186,20 @@ Acceptance criteria:
 - Both see the swap in the history (US-SOZ-13) and as an event "Swapped" in the feed.
 - **Atomic:** archiving and creating run in one transaction. If one fails (e.g. name conflict), the swap stays at `accepted` and reports the reason; there is never a half state (FR-SOZ-05).
 
-### US-SOZ-12 · Be notified about news · ⬜ new
+### US-SOZ-12 · Be notified about news · 🟨 new
 
 Acceptance criteria:
 
 - Triggers: new friendship request, request for my offer, acceptance/decline of my request, the other side confirmed the handover.
 - New feed events trigger **no** individual message, only the banner (US-SOZ-06).
 - Delivery by the rules of epic MON (US-MON-01, -08): only when action is needed, once per occasion and day. Without push, "Today" shows open points.
+
+Assumptions, decided by the PO (revisable):
+
+- Push and mail are not built: the channel decision E-10 ("web push + optional email") is a recommendation for release R3, and the delivery machinery (reminders, device registration, mail sending, quiet hours, US-MON-01 and US-MON-08) does not exist. This story therefore delivers the in-app part only; the channel stays on the owner's list (E-10) and a message needs the reminders of epic MON.
+- The in-app notice is "Du hast N offene Freundschaftsanfragen: <names>" with the way to the answer ("Anfragen ansehen"), shown on the start page above the banner about new plants (US-SOZ-06). It is derived on every visit from the open incoming requests, so it needs no state and disappears when they are answered. Only the display name is named (P-05). A failed load stays quiet there; the page "Freunde" lists the requests and says if it cannot load them (P-10).
+- Not yet notified: the acceptance or decline of my own request (the sender sees the friend in the list, or "Nicht angenommen" under "Anfragen", US-SOZ-02), the triggers of the swap module (request for my offer, answer, the other side confirmed the handover: US-SOZ-08 to US-SOZ-11 do not exist), and the central "Today" list: its items are specimen-bound and `today` does not depend on `social` in the module matrix, so open requests are not part of it; changing the matrix is a reviewed decision of its own.
+- New feed events trigger no individual message, only the banner (unchanged, US-SOZ-06). The switch "friends" of the notification settings (US-ACC-02) is saved and will apply to push and mail; the in-app notice is not switched off by it, because it is no message.
 
 ### US-SOZ-13 · Swap history · ⬜ new
 
