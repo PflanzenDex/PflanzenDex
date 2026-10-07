@@ -20,6 +20,16 @@ export interface Friend {
   readonly name: string | null;
   /** UTC instant (ISO 8601). */
   readonly since: string;
+  /**
+   * How many of the species this friend shares with me I have caught too (US-SOZ-03, US-SOZ-04); `null` = unknown
+   * (the friend shares nothing, P-08). A plain number, never a comparison or a ranking (FR-SOZ-11).
+   */
+  readonly sharedSpecies: number | null;
+}
+
+/** A friend as the store knows it: with the account id, which never leaves the server (P-05). */
+export interface FriendRecord extends Omit<Friend, "sharedSpecies"> {
+  readonly accountId: string;
 }
 
 export type AnswerOutcome = "accepted" | "declined" | "not_found" | "not_open";
@@ -57,5 +67,5 @@ export interface FriendStore {
    */
   end(userId: string, friendId: string): Promise<"ended" | "not_found">;
   /** Confirmed friends of the account, by name. */
-  friends(userId: string): Promise<readonly Friend[]>;
+  friends(userId: string): Promise<readonly FriendRecord[]>;
 }

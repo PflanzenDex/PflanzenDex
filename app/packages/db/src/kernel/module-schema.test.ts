@@ -208,6 +208,7 @@ describe("module boundaries against the real database (AB-10, AB-13)", () => {
       // `measurement` (care) references `specimen`; if `specimen` counts as a global reference table, that is a violation.
       expect.stringMatching(/^AB-10 foreign key care_profile_species/),
       expect.stringMatching(/^AB-10 foreign key measurement_specimen/),
+      expect.stringMatching(/^AB-10 foreign key sharing_specimen/),
       expect.stringMatching(/^AB-10 foreign key specimen_species/),
       expect.stringMatching(/^AB-10 foreign key treatment_specimen/),
       expect.stringMatching(/^AB-10 foreign key wish_specimen/),

@@ -38,8 +38,8 @@ function EndConfirm(props: { name: string; busy: boolean; onYes: () => void; onN
 /**
  * The confirmed friends (US-SOZ-02, US-SOZ-03): display name and since when, nothing from their collections: what a
  * friend sees is decided per specimen, private by default (US-SOZ-04, P-05). No rankings, no counts against each other.
- * The number of shared caught species comes with US-SOZ-04, because only shared specimens can be counted. Ending a
- * friendship asks first and says what it does (P-10).
+ * The number of shared caught species counts only what the friend shares: "unbekannt" when nothing is shared, never 0
+ * by guess (P-08). Ending a friendship asks first and says what it does (P-10).
  */
 export function FriendList(props: {
   friends: readonly Friend[];
@@ -63,6 +63,11 @@ export function FriendList(props: {
               <span>{nameOf(f.name)}</span>
               <span className="text-sm text-muted-foreground">
                 befreundet seit {dateText(f.since)}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {f.sharedSpecies === null
+                  ? "Gemeinsame Arten: unbekannt (noch nichts freigegeben)"
+                  : `Gemeinsame Arten: ${f.sharedSpecies}`}
               </span>
               {asking === f.id ? (
                 <EndConfirm

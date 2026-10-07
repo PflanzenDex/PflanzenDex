@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool } from "@pflanzendex/db";
-import { createApp, type AppOptions } from "../app";
+import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
+import { createApp, type AppOptions } from "../../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
 // US-SOZ-01: friend codes and requests through the API (real PostgreSQL).
 let pool: Pool;
+let admin: Pool; // superuser fixture pool: cross-tenant setup and cleanup (QG-D1)
 const subA = `soz1-${randomUUID()}`;
 const subB = `soz1-${randomUUID()}`;
 const subC = `soz1-${randomUUID()}`;
@@ -47,16 +48,18 @@ const requests = async (sub: string) => (await call(sub, "GET", "/friends/reques
 const redeem = (sub: string, code: string) => call(sub, "POST", "/friends/requests", { code });
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer, pool });
   for (const sub of [subA, subB, subC]) await call(sub, "GET", "/account");
 });
 afterAll(async () => {
-  await pool.query("delete from account where subject = any($1)", [
+  await admin.query("delete from account where subject = any($1)", [
     [subA, subB, subC, ...Object.keys(NAMES).filter((k) => /^soz[23]-/.test(k))],
   ]);
   await pool.end();
+  await admin.end();
 });
 
 describe("US-SOZ-01 sign-in and input", () => {
@@ -135,7 +138,7 @@ describe("US-SOZ-01 invite, redeem, request", () => {
 
   it("US-SOZ-01 an expired code answers 409 friend.code_expired", async () => {
     const { code } = await invite(subA);
-    await pool.query(
+    await admin.query(
       "update friend_code set created_at = now() - interval '8 days', expires_at = now() - interval '1 day' where created_by in (select id from account where subject = $1)",
       [subA],
     );
