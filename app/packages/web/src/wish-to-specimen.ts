@@ -3,7 +3,7 @@ import { useLocation } from "react-router";
 import type { Species, Specimen } from "@pflanzendex/core";
 import { loadSpecies, searchSpecies } from "./catalog";
 import { linkWishSpecimen, type PathNotice as Notice, type WishToPlant } from "./wishlist";
-import { PATHS } from "./navigation";
+import { PATHS, PROFILE_BASE } from "./navigation";
 
 type Token = () => Promise<string | undefined>;
 
@@ -75,7 +75,7 @@ export function useWishToSpecimen(
 
   // Leaving the way drops the link and a notice of another page; the effect runs on address changes only.
   useEffect(() => {
-    const onTheWay = pathname === PATHS.species || pathname.startsWith(`${PATHS.species}/`);
+    const onTheWay = pathname === PATHS.discover || pathname.startsWith(`${PROFILE_BASE}/`);
     if (!onTheWay && pathname !== PATHS.collection) {
       current.current = null;
       setWish(null);
@@ -91,7 +91,7 @@ export function useWishToSpecimen(
       const species = await speciesOf(api, token, w);
       if (current.current !== w.id) return;
       if (species) return choose(species);
-      setNotice({ kind: "status", text: NOT_IN_CATALOG(w), path: PATHS.species });
+      setNotice({ kind: "status", text: NOT_IN_CATALOG(w), path: PATHS.discover });
       toTheCatalog();
     },
     [api, token, choose, toTheCatalog],

@@ -1,10 +1,9 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { Species } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state";
 import { OFFLINE_NOTE } from "@/components/shared/states/request-state/request-state";
-import { SIGN_IN, useInvalidate, type ApiError, type Request } from "../kernel";
-import { propose } from "./species-api";
-import { SEARCH_KEY, useProfile, useSearch } from "./species-hooks";
+import type { ApiError, Request } from "../kernel";
+import { useOpenId, useProfile, useSearch, useSend } from "./species-hooks";
 import { SpeciesProfile } from "./profile-view";
 import { SpeciesSearch } from "./search-view";
 import { ProposalForm } from "./proposal-form";
@@ -16,6 +15,7 @@ type View = { kind: "search" } | { kind: "proposal" } | { kind: "profile" };
 function ProfilePage(props: {
   profile: Request<Species>;
   fresh: boolean;
+  embedded: boolean | undefined;
   onChoose: (a: Species) => void;
   onBack: () => void;
   section: ((species: Species) => ReactNode) | undefined;
@@ -51,6 +51,7 @@ function ProfilePage(props: {
             species={profile.value}
             onChoose={() => props.onChoose(profile.value as Species)}
             onBack={props.onBack}
+            embedded={props.embedded}
           />
           {props.section?.(profile.value)}
         </>
@@ -83,6 +84,8 @@ type SpeciesPageProps = {
    * the app wires it (`catalog` does not know `collection`).
    */
   profileSection?: (species: Species) => ReactNode;
+  /** Shown below the title of a destination (Entdecken, mode Katalog): the headings are h2 (US-QS-14). */
+  embedded?: boolean;
 };
 
 /**
@@ -94,27 +97,17 @@ export function SpeciesPage(props: SpeciesPageProps) {
   const [view, setView] = useState<View>(openId ? { kind: "profile" } : { kind: "search" });
   const [searchText, setSearchText] = useState(props.initialSearch ?? "");
   const [fresh, setNew] = useState(false);
-  const [profileId, setProfileId] = useState<string | null>(openId ?? null);
+  const [profileId, setProfileId] = useOpenId(openId);
   const search = useSearch(api, token, searchText);
   const profile = useProfile(api, token, profileId);
-  const searchChanged = useInvalidate(SEARCH_KEY);
-
-  useEffect(() => {
-    if (openId) setProfileId(openId);
-  }, [openId]);
   const open = (id: string) => {
     setView({ kind: "profile" });
     setProfileId(id);
   };
-  async function send(input: Record<string, unknown>): Promise<ApiError | null> {
-    const t = await token();
-    const r = t ? await propose(api, t, input) : { ok: false as const, error: SIGN_IN };
-    if (!r.ok) return r.error;
+  const send = useSend(api, token, (id) => {
     setNew(true);
-    searchChanged();
-    open(r.value.id);
-    return null;
-  }
+    open(id);
+  });
   const back = () => {
     setNew(false);
     setView({ kind: "search" });
@@ -132,15 +125,23 @@ export function SpeciesPage(props: SpeciesPageProps) {
           onSearch={setSearchText}
           onOpen={open}
           onPropose={() => setView({ kind: "proposal" })}
+          embedded={props.embedded}
         />
       )}
       {view.kind === "proposal" && (
-        <ProposalForm start={searchText} onSend={send} onCancel={back} onExisting={open} />
+        <ProposalForm
+          start={searchText}
+          onSend={send}
+          onCancel={back}
+          onExisting={open}
+          embedded={props.embedded}
+        />
       )}
       {view.kind === "profile" && (
         <ProfilePage
           profile={profile}
           fresh={fresh}
+          embedded={props.embedded}
           onChoose={onChoose}
           onBack={back}
           section={props.profileSection}

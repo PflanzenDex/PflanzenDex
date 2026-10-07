@@ -111,12 +111,15 @@ export function SpeciesSearch(props: {
   onSearch: (text: string) => void;
   onOpen: (id: string) => void;
   onPropose: () => void;
+  /** Below a destination title the search is a section: its name is then an h2 (US-QS-14). */
+  embedded?: boolean | undefined;
 }) {
+  const Heading = props.embedded ? "h2" : "h1";
   return (
     <section aria-labelledby="search-title" className="flex min-w-0 flex-col gap-3">
-      <h1 id="search-title" className="text-2xl font-semibold">
+      <Heading id="search-title" className="text-2xl font-semibold">
         Art wählen
-      </h1>
+      </Heading>
       <p className="text-muted-foreground">
         Suche die Art deiner Pflanze im Katalog. Findest du sie nicht, schlage sie vor.
       </p>

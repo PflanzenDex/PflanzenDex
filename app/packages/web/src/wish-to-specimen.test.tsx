@@ -199,7 +199,8 @@ describe("US-WUN-05 the species is preselected from the catalog", () => {
     await screen.findByRole("heading", { name: "Exemplar anlegen" });
     await userEvent.click(tab("Freunde"));
     await screen.findByRole("heading", { name: "Freunde" });
-    await userEvent.click(tab("Arten"));
+    await userEvent.click(tab("Entdecken"));
+    await userEvent.click(await screen.findByRole("button", { name: "Katalog" }));
     await screen.findByRole("heading", { name: "Art wählen" });
     await userEvent.click(await screen.findByRole("button", { name: /Dracaena trifasciata/ }));
     await userEvent.click(await screen.findByRole("button", { name: "Diese Art wählen" }));
