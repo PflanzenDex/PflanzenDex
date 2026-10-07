@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Pflanze mobil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.card{background:var(--surface);border-radius:22px;box-shadow:0 1px 2px var(--shadow),0 6px 16px var(--shadow)}
+.chip{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:3px 10px;border-radius:12px;background:var(--soft);color:var(--softtext)}
+.btn{min-height:48px;padding:0 20px;border-radius:24px;border:0;background:var(--primary);color:var(--onprimary);font-size:15px;font-weight:700}
+.act{flex:1;min-height:64px;border-radius:18px;border:0;background:var(--surface);color:var(--text);font-size:13px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 1px 2px var(--shadow),0 6px 16px var(--shadow)}
+.mut{color:var(--muted)}
+.t{font-size:13px;color:var(--muted);font-weight:500}
+.nav{display:flex;padding:8px 8px 14px;background:var(--surface);border-top:1px solid var(--line)}
+.nav a{flex:1;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;font-size:12px;font-weight:600;color:var(--muted)}
+.nav a span{width:56px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center}
+.nav a.on{color:var(--text)}.nav a.on span{background:var(--soft)}
+</style>
+</helmet>
+<div style="{{vars}};width:360px;height:760px;box-sizing:border-box;display:flex;flex-direction:column;background:var(--bg);color:var(--text);overflow:hidden">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19l8-8"/></symbol>
+<symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+<symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5a3 3 0 010 6M18 14c2 .6 3 2.6 3 6"/></symbol>
+<symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></symbol>
+<symbol id="back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+<symbol id="drop" viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z"/></symbol>
+<symbol id="ruler" viewBox="0 0 24 24"><path d="M3 15L15 3l6 6L9 21zM8 10l2 2M11 7l2 2M5 13l2 2"/></symbol>
+<symbol id="pot" viewBox="0 0 24 24"><path d="M5 9h14l-2 11H7zM4 9h16M8 9V6M16 9V6M12 9V4"/></symbol>
+<symbol id="camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+<symbol id="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+</defs></svg>
+<div style="position:relative;height:210px;flex:none;background:var(--t1b);color:var(--t1f);display:flex;align-items:center;justify-content:center">
+<button aria-label="Zurück" style="position:absolute;left:12px;top:16px;width:44px;height:44px;border-radius:50%;border:0;background:var(--surface);color:var(--text);display:flex;align-items:center;justify-content:center"><svg class="i"><use href="#back"/></svg></button>
+<svg class="i" style="width:84px;height:84px;stroke-width:1.2"><use href="#leaf"/></svg>
+</div>
+<div style="flex:1;min-height:0;overflow:hidden;margin-top:-24px;background:var(--bg);border-radius:28px 28px 0 0;padding:20px 16px 0;display:flex;flex-direction:column;gap:12px">
+<div><h1 style="margin:0;font-size:28px;line-height:1.15;font-weight:700;letter-spacing:-.4px">Frida</h1><div class="mut" style="font-size:14px;font-style:italic">Monstera deliciosa</div><div style="display:flex;gap:6px;margin-top:8px"><span class="chip">Zone 3</span><span class="chip">Wohnzimmer, Südfenster</span></div></div>
+<div class="card" style="padding:14px;display:flex;align-items:center;gap:12px"><div style="flex:1"><div class="t">Nächste Pflege</div><div style="font-size:17px;font-weight:700">Gießen heute</div></div><button class="btn">Gegossen</button></div>
+<div style="display:flex;gap:10px"><button class="act"><svg class="i"><use href="#ruler"/></svg>Messen</button><button class="act"><svg class="i"><use href="#pot"/></svg>Umtopfen</button><button class="act"><svg class="i"><use href="#camera"/></svg>Foto</button></div>
+<div class="card" style="padding:14px"><div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:15px">Wachstum</b><span class="t">eigener Verlauf</span></div>
+<div style="font-size:15px;margin-top:2px">+2 Blätter in 30 Tagen</div>
+<svg viewBox="0 0 300 60" width="100%" height="60" style="margin-top:6px"><path d="M0 50 L50 46 L100 40 L150 34 L200 30 L250 20 L300 12" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="300" cy="12" r="5" fill="var(--primary)"/></svg></div>
+<a href="#" class="card" style="padding:0 14px;min-height:56px;display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-size:15px;font-weight:600"><span style="flex:1">Mein Pflegeprofil</span><svg class="i mut"><use href="#chev"/></svg></a>
+</div>
+<nav class="nav" aria-label="Hauptnavigation">
+<a href="#"><span><svg class="i"><use href="#sun"/></svg></span>Heute</a>
+<a href="#" class="on"><span><svg class="i"><use href="#leaf"/></svg></span>Sammlung</a>
+<a href="#"><span><svg class="i"><use href="#compass"/></svg></span>Entdecken</a>
+<a href="#"><span><svg class="i"><use href="#users"/></svg></span>Freunde</a>
+<a href="#"><span><svg class="i"><use href="#user"/></svg></span>Konto</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = (this.props.theme ?? 'light') === 'dark';
+const P = dark
+? {bg:'#0F1612',surface:'#18221C',text:'#E6EFE9',muted:'#A5B6AB',line:'#2B3B31',primary:'#7BD3A0',onprimary:'#0B2316',soft:'#1F3A2B',softtext:'#A9E8C4',shadow:'rgba(0,0,0,0.35)',t1b:'#27432F',t1f:'#7BD3A0'}
+: {bg:'#F2F6F3',surface:'#FFFFFF',text:'#14201A',muted:'#4B5C52',line:'#D3DED6',primary:'#1B6B4A',onprimary:'#FFFFFF',soft:'#D8EEDF',softtext:'#124A32',shadow:'rgba(20,40,28,0.08)',t1b:'#CFE8D6',t1f:'#1B6B4A'};
+return { vars: Object.keys(P).map(k => '--' + k + ':' + P[k]).join(';') };
+}
+}
+</script>
+</body>
+</html>

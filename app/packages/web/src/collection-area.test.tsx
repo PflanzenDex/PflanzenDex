@@ -27,6 +27,7 @@ const emptyView = {
   measurements: [],
   last: null,
   lastRating: null,
+  growth: { count: 0, ratePerYear: null, trend: null },
 };
 
 // Both pages are lazy chunks (DS-08). Loading them first makes the waits below depend on the data only, not on how

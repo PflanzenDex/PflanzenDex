@@ -3,7 +3,7 @@ import type { Species, GrowthMeasure } from "../../catalog";
 import type { MeasurementStore, MeasurementValues, MeasurementRow } from "../measurements/types";
 import { appError, failed, ok } from "../../kernel";
 import type { ErrorCode, Result } from "../../kernel";
-import type { PhotoStorage } from "../measurements/photo";
+import type { PhotoStorage } from "../measurements/capture/photo";
 import type { CarePhase } from "../phases/phase";
 import type { PhaseLocationSource } from "../phases/phase-location";
 

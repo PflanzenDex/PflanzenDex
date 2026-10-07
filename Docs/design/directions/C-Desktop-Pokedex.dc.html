@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>C Pokédex Desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0;font-family:'Lexend',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="{{vars}};width:1280px;height:800px;box-sizing:border-box;display:flex;background:var(--bg);color:var(--text);overflow:hidden">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19l8-8"/></symbol>
+<symbol id="book" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3V4zM8 17h11"/></symbol>
+<symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+<symbol id="heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></symbol>
+<symbol id="ruler" viewBox="0 0 24 24"><path d="M3 15L15 3l6 6L9 21zM8 10l2 2M11 7l2 2M5 13l2 2"/></symbol>
+<symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5a3 3 0 010 6M18 14c2 .6 3 2.6 3 6"/></symbol>
+<symbol id="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></symbol>
+</defs></svg>
+<aside style="width:240px;flex:none;box-sizing:border-box;padding:24px 14px;background:var(--surface);border-right:2px solid var(--line);display:flex;flex-direction:column;gap:4px">
+<div style="font-size:19px;font-weight:800;padding:0 12px 18px;letter-spacing:-0.3px">PflanzenDex</div>
+<nav aria-label="Hauptnavigation" style="display:flex;flex-direction:column;gap:4px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="8">
+<a href="#" style="min-height:44px;box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:12px;text-decoration:none;font-size:14.5px;font-weight:600;background:{{n.bg}};color:{{n.color}}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><use href="{{n.icon}}"/></svg>{{n.label}}</a>
+</sc-for>
+</nav>
+</aside>
+<main style="flex:1;min-width:0;padding:32px 40px 0;display:flex;flex-direction:column;gap:18px">
+<header style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px">
+<div><div style="font-size:13px;color:var(--muted);font-weight:500">42 von 118 Arten gefangen</div><h1 style="margin:0;font-size:38px;line-height:1.1;font-weight:800;letter-spacing:-0.8px">Pokédex</h1></div>
+<div style="flex:1;max-width:340px;height:14px;border-radius:7px;background:var(--line);margin-bottom:12px"><div style="width:36%;height:14px;border-radius:7px;background:var(--primary)"></div></div>
+</header>
+<div style="display:flex;gap:8px">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="5">
+<button style="min-height:44px;padding:0 18px;border-radius:14px;border:2px solid {{c.line}};background:{{c.bg}};color:{{c.fg}};font-size:14px;font-weight:700">{{c.label}}</button>
+</sc-for>
+</div>
+<div style="flex:1;min-height:0;display:flex;gap:24px">
+<div style="flex:1;min-width:0;overflow:hidden;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-content:start">
+<sc-for list="{{cards}}" as="k" hint-placeholder-count="12">
+<a href="#" style="text-decoration:none;color:var(--text);background:var(--surface);border:2px solid {{k.border}};border-radius:18px;padding:10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 5px 0 {{k.border}};outline:{{k.ring}};outline-offset:3px">
+<div style="height:112px;border-radius:12px;background:{{k.bg}};display:flex;align-items:center;justify-content:center"><svg width="52" height="52" viewBox="0 0 24 24" fill="{{k.fill}}" stroke="{{k.fg}}" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><use href="#leaf"/></svg></div>
+<div style="font-size:14px;font-weight:600;font-style:italic;line-height:1.25">{{k.name}}</div>
+<div style="font-size:12.5px;color:var(--muted);font-weight:500">{{k.state}}</div>
+</a>
+</sc-for>
+</div>
+<aside style="width:320px;flex:none;box-sizing:border-box;background:var(--surface);border:2px solid var(--line);border-radius:24px 24px 0 0;padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="height:160px;border-radius:16px;background:{{hero.bg}};display:flex;align-items:center;justify-content:center"><svg width="76" height="76" viewBox="0 0 24 24" fill="{{hero.fg}}" stroke="{{hero.fg}}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><use href="#leaf"/></svg></div>
+<div><h2 style="margin:0;font-size:21px;font-weight:700;font-style:italic">Monstera deliciosa</h2><div style="font-size:13.5px;color:var(--muted);margin-top:2px">Aronstabgewächse · Quelle: GBIF</div></div>
+<div style="background:var(--soft);color:var(--softtext);border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.45"><b>Gefangen</b> am 3. März 2026. Deine Pflanze „Frida“, Zone 3.</div>
+<div style="display:flex;gap:10px;margin-top:auto;padding-bottom:20px"><button style="flex:1;min-height:48px;border-radius:14px;border:0;background:var(--primary);color:var(--onprimary);font-weight:700;font-size:15px;box-shadow:0 4px 0 var(--primarydark)">Zur Pflanze</button></div>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = (this.props.theme ?? 'light') === 'dark';
+const P = dark
+? {bg:'#12102A',surface:'#1D1A40',text:'#EFEBFF',muted:'#B3ACE0',line:'#38336E',primary:'#FFC247',primarydark:'#B57F0B',onprimary:'#2A1D00',soft:'#2F2A66',softtext:'#D9D2FF'}
+: {bg:'#F1EEFC',surface:'#FFFFFF',text:'#1A1636',muted:'#504A78',line:'#D2CBF0',primary:'#5A32D4',primarydark:'#3A1E94',onprimary:'#FFFFFF',soft:'#E4DCFF',softtext:'#3A1D9E'};
+const vars = Object.keys(P).map(k => '--' + k + ':' + P[k]).join(';');
+const tones = dark ? [['#2F2A66','#FFC247'],['#1F4A44','#6EE0CC'],['#4A2A44','#FF9FD0']] : [['#E4DCFF','#5A32D4'],['#CFF2EA','#0F6B5B'],['#FBDDEC','#9B1F63']];
+const bd = dark ? '#4A4490' : '#BFB3F0';
+const cards = [
+['Monstera deliciosa',true],['Ficus lyrata',true],['Pilea peperomioides',true],['Hoya kerrii',true],
+['Sansevieria trifasciata',true],['Calathea orbifolia',true],['Aloe vera',true],['Hoya carnosa',true],
+['Alocasia zebrina',false],['Philodendron hederaceum',false],['Epipremnum aureum',false],['Zamioculcas zamiifolia',false]
+].map((x,i) => x[1]
+ ? {name:x[0],state:'gefangen',bg:tones[i%3][0],fg:tones[i%3][1],fill:tones[i%3][1],border:bd,ring:i===0?'3px solid '+P.primary:'none'}
+ : {name:x[0],state:'noch nicht gefangen',bg:P.line,fg:P.muted,fill:'none',border:P.line,ring:'none'});
+const chips = ['Alle','Gefangen','Fehlt','Aronstabgewächse','Seidenpflanzen'].map((l,i) => ({label:l,bg:i===0?P.primary:'transparent',fg:i===0?P.onprimary:P.text,line:i===0?P.primary:P.line}));
+const items = [['Heute','#sun'],['Sammlung','#leaf'],['Pokédex','#book'],['Entdecken','#compass'],['Wunschliste','#heart'],['Messen','#ruler'],['Freunde','#users'],['Einstellungen','#gear']];
+const nav = items.map((x,i) => ({label:x[0],icon:x[1],bg:i===2?P.primary:'transparent',color:i===2?P.onprimary:P.muted}));
+return { vars, cards, chips, nav, hero:{bg:tones[0][0],fg:tones[0][1]} };
+}
+}
+</script>
+</body>
+</html>

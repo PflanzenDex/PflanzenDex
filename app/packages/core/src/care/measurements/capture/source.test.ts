@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { measurementSource } from "../index";
-import { InMemoryMeasurements } from "../shared/test-helpers";
+import { measurementSource } from "../../index";
+import { InMemoryMeasurements } from "../../shared/test-helpers";
 
 const E1 = "00000000-0000-4000-8000-000000000001";
 const E2 = "00000000-0000-4000-8000-000000000002";

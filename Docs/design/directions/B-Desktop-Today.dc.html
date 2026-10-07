@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>B Heute Desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="{{vars}};width:1280px;height:800px;box-sizing:border-box;display:flex;background:var(--bg);color:var(--text);overflow:hidden">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19l8-8"/></symbol>
+<symbol id="book" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3V4zM8 17h11"/></symbol>
+<symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+<symbol id="heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></symbol>
+<symbol id="ruler" viewBox="0 0 24 24"><path d="M3 15L15 3l6 6L9 21zM8 10l2 2M11 7l2 2M5 13l2 2"/></symbol>
+<symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5a3 3 0 010 6M18 14c2 .6 3 2.6 3 6"/></symbol>
+<symbol id="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></symbol>
+</defs></svg>
+<aside style="width:216px;flex:none;box-sizing:border-box;padding:20px 12px;border-right:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;gap:2px">
+<div style="font-size:16px;font-weight:700;padding:0 10px 18px;letter-spacing:-0.2px">PflanzenDex</div>
+<nav aria-label="Hauptnavigation" style="display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="8">
+<a href="#" style="min-height:44px;box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:0 10px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;background:{{n.bg}};color:{{n.color}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="{{n.icon}}"/></svg>{{n.label}}</a>
+</sc-for>
+</nav>
+</aside>
+<main style="flex:1;min-width:0;padding:28px 40px;display:flex;flex-direction:column;gap:20px">
+<header style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:16px">
+<div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);letter-spacing:0.04em">MI 07.10.2026</div><h1 style="margin:2px 0 0;font-size:30px;font-weight:700;letter-spacing:-0.5px">Heute</h1></div>
+<button style="min-height:44px;padding:0 18px;border-radius:6px;border:0;background:var(--primary);color:var(--onprimary);font-size:14px;font-weight:600">Pflanze hinzufügen</button>
+</header>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:40px">
+<section>
+<div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px"><h2 style="margin:0;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Fällig</h2><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted)">3</span></div>
+<sc-for list="{{tasks}}" as="t" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:16px;min-height:72px;border-top:1px solid var(--line);padding:10px 0">
+<div style="width:48px;height:48px;border-radius:6px;background:{{t.bg}};flex:none;display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="{{t.fg}}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#leaf"/></svg></div>
+<div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:600">{{t.name}}</div><div style="font-size:14px;color:var(--muted)">{{t.what}}</div></div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:13px;width:150px;text-align:right">{{t.when}}</div>
+<button style="min-height:44px;padding:0 16px;border-radius:6px;border:1px solid var(--text);background:transparent;color:var(--text);font-size:14px;font-weight:600">{{t.label}}</button>
+</div>
+</sc-for>
+<div style="border-top:1px solid var(--line)"></div>
+<div style="margin-top:20px;padding:14px 16px;border:1px solid var(--warnline);border-radius:6px;background:var(--warnbg);color:var(--warntext);font-size:14px;display:flex;align-items:center;gap:16px"><div style="flex:1"><b>Ficus lyrata:</b> Lichtzone unbekannt. Ohne Zone kein Pflegeplan.</div><button style="min-height:44px;padding:0 16px;border-radius:6px;border:1px solid var(--warntext);background:transparent;color:var(--warntext);font-weight:600;font-size:14px">Zone festlegen</button></div>
+</section>
+<section style="display:flex;flex-direction:column;gap:24px">
+<div>
+<h2 style="margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Lichtzonen</h2>
+<sc-for list="{{zones}}" as="z" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:12px;min-height:36px;border-top:1px solid var(--line);font-size:14px"><div style="width:84px;color:{{z.lc}}">{{z.label}}</div><div style="flex:1;height:8px;background:var(--line)"><div style="width:{{z.w}};height:8px;background:{{z.color}}"></div></div><div style="width:24px;text-align:right;font-family:'IBM Plex Mono',monospace">{{z.n}}</div></div>
+</sc-for>
+</div>
+<div>
+<h2 style="margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Freunde</h2>
+<div style="border-top:1px solid var(--line);padding-top:10px;font-size:14px;line-height:1.5"><b>Mara</b> hat <i>Hoya kerrii</i> gefangen.<br><a href="#" style="color:var(--primary);font-weight:600;display:inline-flex;min-height:44px;align-items:center">Ansehen</a></div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = (this.props.theme ?? 'light') === 'dark';
+const P = dark
+? {bg:'#0E0F12',surface:'#16181D',text:'#ECEDEF',muted:'#A0A4AD',line:'#2C2F37',primary:'#9DB0FF',onprimary:'#0B1235',soft:'#1F2748',softtext:'#BCC9FF',warnbg:'#382A10',warntext:'#F0C070',warnline:'#5A4519'}
+: {bg:'#F6F6F4',surface:'#FFFFFF',text:'#121212',muted:'#54565C',line:'#D0D1CC',primary:'#2443C9',onprimary:'#FFFFFF',soft:'#E3E8FB',softtext:'#1B3294',warnbg:'#FFE9C7',warntext:'#6A3E00',warnline:'#E8C98F'};
+const vars = Object.keys(P).map(k => '--' + k + ':' + P[k]).join(';');
+const a = dark ? ['#1F2748','#9DB0FF'] : ['#E3E8FB','#2443C9'];
+const b = dark ? ['#2A2D33','#C9CCD3'] : ['#E8E8E4','#3A3C42'];
+const tasks = [
+{name:'Monstera deliciosa „Frida“',what:'Gießen · Zone 3',when:'heute · vor 8 Tagen',bg:a[0],fg:a[1],label:'Gegossen'},
+{name:'Pilea, Steckling',what:'Wurzeln prüfen · Zone 1',when:'heute · Tag 12',bg:b[0],fg:b[1],label:'Geprüft'},
+{name:'Sansevieria „Sol“',what:'Messen · zuletzt vor 21 Tagen',when:'seit 7 Tagen fällig',bg:a[0],fg:a[1],label:'Messen'}
+];
+const zones = [['Zone 1',4],['Zone 2',6],['Zone 3',9],['Zone 4',3],['unbekannt',2]].map(z => ({label:z[0],n:z[1],w:Math.round(z[1]/9*100)+'%',color:z[0]==='unbekannt'?P.warntext:P.primary,lc:z[0]==='unbekannt'?P.warntext:P.muted}));
+const items = [['Heute','#sun'],['Sammlung','#leaf'],['Pokédex','#book'],['Entdecken','#compass'],['Wunschliste','#heart'],['Messen','#ruler'],['Freunde','#users'],['Einstellungen','#gear']];
+const nav = items.map((x,i) => ({label:x[0],icon:x[1],bg:i===0?P.soft:'transparent',color:i===0?P.softtext:P.muted}));
+return { vars, tasks, zones, nav };
+}
+}
+</script>
+</body>
+</html>

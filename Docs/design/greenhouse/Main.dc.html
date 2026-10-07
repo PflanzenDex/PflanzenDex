@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Heute mobil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.card{background:var(--surface);border-radius:22px;box-shadow:0 1px 2px var(--shadow),0 6px 16px var(--shadow)}
+.chip{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:3px 10px;border-radius:12px;background:var(--soft);color:var(--softtext)}
+.chip.w{background:var(--warnbg);color:var(--warntext)}
+.btn{min-height:48px;padding:0 20px;border-radius:24px;border:0;background:var(--primary);color:var(--onprimary);font-size:15px;font-weight:700}
+.btn2{min-height:44px;padding:0 16px;border-radius:22px;border:2px solid var(--primary);background:transparent;color:var(--text);font-weight:700;font-size:14px}
+.ph{display:flex;align-items:center;justify-content:center;border-radius:16px;flex:none}
+.p1{background:var(--t1b);color:var(--t1f)}.p2{background:var(--t2b);color:var(--t2f)}.p3{background:var(--t3b);color:var(--t3f)}.p4{background:var(--t4b);color:var(--t4f)}
+.h1{margin:0;font-size:32px;line-height:1.1;font-weight:700;letter-spacing:-.5px}
+.mut{color:var(--muted)}
+.sec{font-size:13px;font-weight:600;color:var(--muted);padding:6px 4px 0}
+.row{display:flex;align-items:center;gap:12px;padding:10px}
+.row b{display:block;font-size:15px;font-weight:600;line-height:1.25}
+.row small{display:block;font-size:12.5px;color:var(--muted);line-height:1.35}
+.go{width:44px;height:44px;border-radius:50%;border:0;background:var(--primary);color:var(--onprimary);display:flex;align-items:center;justify-content:center;flex:none}
+.nav{display:flex;padding:8px 8px 14px;background:var(--surface);border-top:1px solid var(--line)}
+.nav a{flex:1;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;font-size:12px;font-weight:600;color:var(--muted)}
+.nav a span{width:56px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center}
+.nav a.on{color:var(--text)}.nav a.on span{background:var(--soft)}
+</style>
+</helmet>
+<div style="{{vars}};width:360px;height:760px;box-sizing:border-box;display:flex;flex-direction:column;background:var(--bg);color:var(--text);overflow:hidden">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19l8-8"/></symbol>
+<symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+<symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5a3 3 0 010 6M18 14c2 .6 3 2.6 3 6"/></symbol>
+<symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></symbol>
+<symbol id="drop" viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z"/></symbol>
+<symbol id="ruler" viewBox="0 0 24 24"><path d="M3 15L15 3l6 6L9 21zM8 10l2 2M11 7l2 2M5 13l2 2"/></symbol>
+<symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="sprout" viewBox="0 0 24 24"><path d="M12 21v-9M12 12c0-4 3-6 7-6 0 4-3 6-7 6zM12 15c0-3-2-5-6-5 0 3 2 5 6 5z"/></symbol>
+<symbol id="pin" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+</defs></svg>
+<header style="padding:24px 20px 6px">
+<div class="mut" style="font-size:13px;font-weight:500">Mittwoch, 7. Oktober</div>
+<h1 class="h1">Heute</h1>
+</header>
+<div style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:8px;padding:8px 16px 0">
+<div class="sec">Jetzt dran</div>
+<div class="card row"><div class="ph p1" style="width:52px;height:52px"><svg class="i" style="width:26px;height:26px"><use href="#leaf"/></svg></div><div style="flex:1;min-width:0"><b>Monstera „Frida“</b><small>Gießen · Zone 3 · vor 8 Tagen</small></div><button class="go" aria-label="Gießen erledigt"><svg class="i"><use href="#drop"/></svg></button></div>
+<div class="card row"><div class="ph p3" style="width:52px;height:52px"><svg class="i" style="width:26px;height:26px"><use href="#leaf"/></svg></div><div style="flex:1;min-width:0"><b>Sansevieria „Sol“</b><small>Messen · zuletzt vor 21 Tagen</small></div><button class="go" aria-label="Messung starten"><svg class="i"><use href="#ruler"/></svg></button></div>
+<div class="sec" style="padding-top:10px">Behandlungen</div>
+<div class="card row"><div class="ph p2" style="width:52px;height:52px"><svg class="i" style="width:26px;height:26px"><use href="#sprout"/></svg></div><div style="flex:1;min-width:0"><b>Calathea „Orbi“</b><small>Schädlinge behandeln</small><span class="chip w" style="margin-top:4px">seit 2 Tagen überfällig</span></div><button class="btn2" style="min-height:44px;padding:0 14px">Erledigt</button></div>
+<div class="card row"><div class="ph p4" style="width:52px;height:52px"><svg class="i" style="width:26px;height:26px"><use href="#sprout"/></svg></div><div style="flex:1;min-width:0"><b>Pilea, Steckling</b><small>Dünger, Woche 2 · morgen</small></div><button class="btn2" style="min-height:44px;padding:0 14px">Planen</button></div>
+<div class="sec" style="padding-top:10px">Fehlt noch</div>
+<div class="card row" style="background:var(--warnbg);box-shadow:none;color:var(--warntext)"><div style="flex:1;font-size:14px;line-height:1.4"><b style="font-size:14px">Ficus lyrata</b>Lichtzone unbekannt. Lege sie fest, dann zeigen wir den Pflegeplan.</div><button class="btn2" style="border-color:var(--warntext);color:var(--warntext);padding:0 12px">Zone wählen</button></div>
+</div>
+<nav class="nav" aria-label="Hauptnavigation">
+<a href="#" class="on"><span><svg class="i"><use href="#sun"/></svg></span>Heute</a>
+<a href="#"><span><svg class="i"><use href="#leaf"/></svg></span>Sammlung</a>
+<a href="#"><span><svg class="i"><use href="#compass"/></svg></span>Entdecken</a>
+<a href="#"><span><svg class="i"><use href="#users"/></svg></span>Freunde</a>
+<a href="#"><span><svg class="i"><use href="#user"/></svg></span>Konto</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = (this.props.theme ?? 'light') === 'dark';
+const P = dark
+? {bg:'#0F1612',surface:'#18221C',text:'#E6EFE9',muted:'#A5B6AB',line:'#2B3B31',primary:'#7BD3A0',onprimary:'#0B2316',soft:'#1F3A2B',softtext:'#A9E8C4',warnbg:'#3A2F10',warntext:'#F2C766',shadow:'rgba(0,0,0,0.35)',t1b:'#27432F',t1f:'#7BD3A0',t2b:'#3A3A20',t2f:'#E3D07A',t3b:'#25384A',t3f:'#8EC5F0',t4b:'#3C2B3F',t4f:'#E0A8E8'}
+: {bg:'#F2F6F3',surface:'#FFFFFF',text:'#14201A',muted:'#4B5C52',line:'#D3DED6',primary:'#1B6B4A',onprimary:'#FFFFFF',soft:'#D8EEDF',softtext:'#124A32',warnbg:'#FFF1CF',warntext:'#6B4700',shadow:'rgba(20,40,28,0.08)',t1b:'#CFE8D6',t1f:'#1B6B4A',t2b:'#EEF0C8',t2f:'#5A5A12',t3b:'#D4E6F4',t3f:'#1F4F78',t4b:'#F0DDF2',t4f:'#6B2C75'};
+return { vars: Object.keys(P).map(k => '--' + k + ':' + P[k]).join(';') };
+}
+}
+</script>
+</body>
+</html>
