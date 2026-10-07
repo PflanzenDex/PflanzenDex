@@ -12,6 +12,7 @@ import { loadLocations, loadZones } from "./light";
 import { OnboardingWizard } from "./onboarding-wizard";
 import { readStored, writeStored } from "./platform/storage";
 import type { View } from "./navigation";
+import { FriendsBanner } from "./social";
 
 const ACTIONS = "flex flex-col gap-3 sm:flex-row";
 
@@ -100,7 +101,12 @@ function Content(props: {
         onEnd={leave}
       />
     );
-  return <Overview counts={counts} onOpen={props.onOpen} />;
+  return (
+    <>
+      <FriendsBanner api={props.api} token={props.token} quiet />
+      <Overview counts={counts} onOpen={props.onOpen} />
+    </>
+  );
 }
 
 /**

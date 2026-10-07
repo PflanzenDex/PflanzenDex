@@ -7,6 +7,11 @@ export interface SharingRow {
   readonly photos: boolean;
 }
 
+export interface SharingRowSince extends SharingRow {
+  /** UTC instant (ISO 8601): when the specimen became visible to the caller. */
+  readonly visibleSince: string;
+}
+
 /**
  * Adapter for the sharing settings (US-SOZ-04). Every call runs as the account of the caller (P-04): the rows of the
  * own account through the normal row rule, the rows of a friend only through `friend_shares()`, which checks the
@@ -50,6 +55,19 @@ export class SharingPostgres {
     const r = await withAccount(this.pool, userId, (c) =>
       c.query<SharingRow>(
         `select specimen_id as "specimenId", share_photos as photos from friend_shares($1)`,
+        [ownerId],
+      ),
+    );
+    return r.rows;
+  }
+
+  /** What `ownerId` shares with the caller, with the instant each specimen became visible (US-SOZ-06); empty without a confirmed friendship. */
+  async sharedBySince(userId: string, ownerId: string): Promise<readonly SharingRowSince[]> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<SharingRowSince>(
+        `select specimen_id as "specimenId", share_photos as photos,
+                to_char(visible_since at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as "visibleSince"
+           from friend_shares_since($1)`,
         [ownerId],
       ),
     );

@@ -3,7 +3,7 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createAccountWithName, createFixtureSpecimen } from "../../fixtures.ts";
 import { migrate, openFixturePool, openOwnerPool, withAccount } from "../../kernel/index.ts";
-import { FriendsPostgres, SharingPostgres } from "../index.ts";
+import { FeedSeenPostgres, FriendsPostgres, SharingPostgres } from "../index.ts";
 
 // US-SOZ-04, DM-SOZ-04, P-04, P-05: sharing settings per specimen (real PostgreSQL, `make db-up`).
 let pool: Pool;
@@ -102,5 +102,49 @@ describe("US-SOZ-04 sharing settings in the database", () => {
       expect(me.rows[0].id).toBe(cleo);
     });
     await sharing.set(anna, s, false, false);
+  });
+});
+
+describe("US-SOZ-06 visible since and the seen state in the database", () => {
+  it("US-SOZ-06 a shared specimen is visible since the later of sharing and friendship start (P-05)", async () => {
+    const [x, y] = [randomUUID(), randomUUID()];
+    for (const id of [x, y]) await createAccountWithName(pool, id, `N-${id.slice(0, 4)}`);
+    try {
+      const s = await specimen(x, "Sichtbar seit");
+      await sharing.set(x, s, true, false);
+      expect(await sharing.sharedBySince(y, x)).toEqual([]);
+      await admin.query(
+        "update sharing set created_at = now() - interval '10 days' where account_id = $1",
+        [x],
+      );
+      await befriend(x, y);
+      const [row] = await sharing.sharedBySince(y, x);
+      expect(row?.specimenId).toBe(s);
+      // Shared long before the friendship: it became visible when the friendship started.
+      expect(Date.now() - new Date(row?.visibleSince as string).getTime()).toBeLessThan(60_000);
+      expect(await sharing.sharedBySince(x, y)).toEqual([]);
+      // The old function still answers (expand/contract).
+      expect(await sharing.sharedBy(y, x)).toEqual([{ specimenId: s, photos: false }]);
+    } finally {
+      await admin.query("delete from account where id = any($1)", [[x, y]]);
+    }
+  });
+
+  it("US-SOZ-06 the seen state is created by the first mark, only moves forward and is private to the account (P-04)", async () => {
+    const seen = new FeedSeenPostgres(pool);
+    const [x, y] = [randomUUID(), randomUUID()];
+    for (const id of [x, y]) await createAccountWithName(pool, id, `N-${id.slice(0, 4)}`);
+    try {
+      expect(await seen.seenAt(x)).toBeNull();
+      const past = new Date(Date.now() - 3_600_000).toISOString();
+      const first = await seen.markSeen(x, past);
+      expect(new Date(first).getTime()).toBe(new Date(past).getTime());
+      expect(await seen.markSeen(x, new Date(Date.now() - 7_200_000).toISOString())).toBe(first);
+      const future = await seen.markSeen(x, new Date(Date.now() + 86_400_000).toISOString());
+      expect(new Date(future).getTime()).toBeLessThanOrEqual(Date.now() + 1000);
+      expect(await seen.seenAt(y)).toBeNull();
+    } finally {
+      await admin.query("delete from account where id = any($1)", [[x, y]]);
+    }
   });
 });

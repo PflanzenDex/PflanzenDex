@@ -1,5 +1,5 @@
-import type { Feed } from "@pflanzendex/core";
-import { call, currentTimeZone, type Response } from "../../kernel";
+import type { Banner, Feed } from "@pflanzendex/core";
+import { call, createWrite, currentTimeZone, type Response } from "../../kernel";
 
 export interface FeedFilter {
   /** The friendship id, or `null` for all friends. */
@@ -19,4 +19,22 @@ export function loadFeed(
   if (filter.friendId) query.set("friend", filter.friendId);
   if (filter.onlyNewSpecies) query.set("onlyNewSpecies", "true");
   return call<Feed>(fetchFn, `${api}/feed?${query.toString()}`, token);
+}
+
+/** The banner "Friends have N new plants" (US-SOZ-06); `firstVisit` means the feed was never opened. */
+export const loadBanner = (
+  api: string,
+  token: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<Banner>> => call<Banner>(fetchFn, `${api}/feed/banner`, token);
+
+/** "Okay" on the banner and the silent creation of the first visit (US-SOZ-06): marks the feed as seen up to `upTo`. */
+export async function markFeedSeen(
+  api: string,
+  token: string,
+  upTo: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<{ seenAt: string }>> {
+  const r = await createWrite(api, token, fetchFn)("POST", "/feed/seen", { upTo });
+  return r.ok ? { ok: true, value: r.value as { seenAt: string } } : r;
 }
