@@ -26,6 +26,7 @@ const feed = (
   hint = { text: "Das ist neu.", nextAction: "Schau in die Sammlung." },
 ) => ({
   events,
+  asOf: "2026-10-06T10:00:00.000Z",
   hint,
 });
 

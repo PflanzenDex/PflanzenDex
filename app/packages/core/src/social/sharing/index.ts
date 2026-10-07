@@ -14,6 +14,7 @@ export type {
   SharedFacts,
   SharedSpecimen,
   SharingRow,
+  SharingRowSince,
   SharingStore,
   SpecimenFact,
   SpecimenLookup,

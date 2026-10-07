@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import {
   isNewAccount,
   onboardingHints,
@@ -12,6 +12,7 @@ import { loadLocations, loadZones } from "./light";
 import { OnboardingWizard } from "./onboarding-wizard";
 import { readStored, writeStored } from "./platform/storage";
 import type { LinkTarget } from "./navigation";
+import { FriendsBanner } from "./social";
 
 const ACTIONS = "flex flex-col gap-3 sm:flex-row";
 
@@ -100,7 +101,14 @@ function Content(props: {
         onEnd={leave}
       />
     );
-  return <Overview counts={counts} onOpen={props.onOpen} />;
+  return (
+    <>
+      <Suspense fallback={null}>
+        <FriendsBanner api={props.api} token={props.token} quiet />
+      </Suspense>
+      <Overview counts={counts} onOpen={props.onOpen} />
+    </>
+  );
 }
 
 /**

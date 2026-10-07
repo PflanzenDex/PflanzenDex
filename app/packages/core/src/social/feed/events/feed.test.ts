@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { FriendStore } from "../friendship";
-import { InMemoryFacts, InMemoryPrivacy, InMemorySharing } from "../sharing/test-helpers";
+import type { FriendStore } from "../../friendship";
+import { InMemoryFacts, InMemoryPrivacy, InMemorySharing } from "../../sharing/test-helpers";
 import { daysBetween } from "./derive";
-import { friendFeed } from "./index";
+import { friendFeed } from "../index";
 
 const TODAY = "2026-10-06";
 type Facts = ConstructorParameters<typeof InMemoryFacts>[0];
@@ -32,10 +32,20 @@ const friends = {
   },
 } as unknown as FriendStore;
 const feed = (q: Partial<Parameters<typeof friendFeed>[2]> = {}) =>
-  friendFeed({ friends, sharing, privacy, facts: new InMemoryFacts(facts) }, "me", {
-    today: TODAY,
-    ...q,
-  });
+  friendFeed(
+    {
+      friends,
+      sharing,
+      privacy,
+      facts: new InMemoryFacts(facts),
+      now: () => new Date("2026-10-06T10:00:00Z"),
+    },
+    "me",
+    {
+      today: TODAY,
+      ...q,
+    },
+  );
 const share = (owner: string, ...ids: string[]) => sharing.setMany(owner, ids, true, false);
 
 beforeEach(() => {
@@ -155,6 +165,7 @@ describe("US-SOZ-05 new among friends", () => {
         sharing,
         privacy,
         facts: new InMemoryFacts(facts),
+        now: () => new Date("2026-10-06T10:00:00Z"),
       },
       "me",
       { today: TODAY },

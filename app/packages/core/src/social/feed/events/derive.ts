@@ -1,5 +1,5 @@
-import type { SharedSpecimen } from "../sharing";
-import type { FeedEvent, FeedType } from "./types";
+import type { SharedSpecimen } from "../../sharing";
+import type { FeedEvent, FeedType } from "../types";
 
 /** Whole days from `from` to `to` (calendar dates `YYYY-MM-DD`); calendar arithmetic, so daylight saving shifts nothing. */
 export function daysBetween(from: string, to: string): number {

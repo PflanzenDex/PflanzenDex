@@ -34,6 +34,8 @@ export interface FeedQuery {
 
 export interface Feed {
   readonly events: readonly FeedEvent[];
+  /** UTC instant (ISO 8601) the data was read; the screen shows it as "Stand" when it can only show an older copy (FR-SOZ-03). */
+  readonly asOf: string;
   /** What to do next (P-09). */
   readonly hint: { readonly text: string; readonly nextAction: string };
 }

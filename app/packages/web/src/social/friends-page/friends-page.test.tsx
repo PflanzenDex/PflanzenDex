@@ -100,8 +100,16 @@ function fakeServer(initial: Initial = {}) {
     if (path === "/friends/requests")
       return response(200, { incoming: state.incoming, outgoing: state.outgoing });
     if (path === "/friends") return response(200, { friends: state.friends });
+    if (path === "/feed/banner")
+      return response(200, {
+        firstVisit: false,
+        count: 0,
+        items: [],
+        asOf: "2026-10-06T10:00:00.000Z",
+      });
     if (path === "/feed")
       return response(200, {
+        asOf: "2026-10-06T10:00:00.000Z",
         events: [],
         hint: { text: "Nichts Neues.", nextAction: "Schau später wieder vorbei." },
       });

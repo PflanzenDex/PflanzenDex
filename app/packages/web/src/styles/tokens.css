@@ -193,6 +193,14 @@
       transform: rotate(4deg);
     }
   }
+  /* Toast (US-QS-07): enters with a short rise, duration from the motion token, so no movement under reduced motion. */
+  --animate-toast-in: toast-in var(--motion-base) var(--ease-enter) both;
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+  }
 }
 
 /* Base layer (DS-33): the page colours and the pointer for real controls, which preflight resets to the default arrow. */
