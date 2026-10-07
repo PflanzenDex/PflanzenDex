@@ -1,12 +1,14 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openPool, withAccount } from "../kernel/index.ts";
-import { createAccountWithName } from "../fixtures.ts";
-import { FriendsPostgres } from "./index.ts";
+import { migrate, openFixturePool, openOwnerPool, withAccount } from "../../kernel/index.ts";
+import { createAccountWithName } from "../../fixtures.ts";
+import { FriendsPostgres } from "../index.ts";
 
 // US-SOZ-01, DM-SOZ-01, P-04, P-05: friend codes and requests (real PostgreSQL, `make db-up`).
 let pool: Pool;
+// Deliberate cross-tenant observation and cleanup: needs the superuser, the suite owner is under row security (#294).
+let admin: Pool;
 let friends: FriendsPostgres;
 const anna = randomUUID();
 const ben = randomUUID();
@@ -30,7 +32,8 @@ const code = async (owner: string, days = 7) => {
 };
 
 beforeAll(async () => {
-  pool = openPool();
+  pool = openOwnerPool();
+  admin = openFixturePool();
   await migrate(pool);
   friends = new FriendsPostgres(pool);
   for (const [id, name] of [
@@ -41,14 +44,15 @@ beforeAll(async () => {
     await createAccountWithName(pool, id, name);
 });
 afterAll(async () => {
-  await pool.query("delete from account where id = any($1)", [[anna, ben, cleo]]);
+  await admin.query("delete from account where id = any($1)", [[anna, ben, cleo]]);
   await pool.end();
+  await admin.end();
 });
 
 describe("US-SOZ-01 friend codes and requests in the database", () => {
   it("US-SOZ-01 stores only the hash of a code and the application role cannot read the table", async () => {
     const c = await code(anna);
-    const rows = await pool.query("select code_hash from friend_code where created_by = $1", [
+    const rows = await admin.query("select code_hash from friend_code where created_by = $1", [
       anna,
     ]);
     expect(rows.rows.map((r) => r.code_hash.toString("hex"))).not.toContain(c);
@@ -78,7 +82,7 @@ describe("US-SOZ-01 friend codes and requests in the database", () => {
     expect(await friends.openRequests(ben)).toMatchObject([
       { otherName: "Anna", direction: "sent" },
     ]);
-    const status = await pool.query(
+    const status = await admin.query(
       "select status, since from friendship where account_id = any($1)",
       [[anna, ben]],
     );
@@ -108,7 +112,7 @@ describe("US-SOZ-01 friend codes and requests in the database", () => {
 
   it("US-SOZ-01 rejects an expired, an unknown and an own code, and an existing request, without using the code up", async () => {
     const old = await code(anna, 1);
-    await pool.query(
+    await admin.query(
       "update friend_code set created_at = now() - interval '2 days', expires_at = now() - interval '1 day' where code_hash = sha256(convert_to($1, 'UTF8'))",
       [old],
     );
@@ -134,19 +138,19 @@ describe("US-SOZ-01 friend codes and requests in the database", () => {
       expect(results.filter((r) => r.outcome === "requested")).toHaveLength(1);
       expect(results.filter((r) => r.outcome === "code_used")).toHaveLength(2);
     } finally {
-      await pool.query("delete from account where id = any($1)", [accounts]);
+      await admin.query("delete from account where id = any($1)", [accounts]);
     }
   });
 
   it("US-SOZ-01 after an ended friendship a new request is possible and reuses the rows", async () => {
     const c = await code(cleo);
     await withAccount(pool, anna, (cl) => cl.query("select 1"));
-    await pool.query(
+    await admin.query(
       "update friendship set status = 'ended' where account_id = any($1) and other_id = any($1)",
       [[anna, cleo]],
     );
     expect(await friends.requestWithCode(anna, c)).toMatchObject({ outcome: "requested" });
-    const rows = await pool.query(
+    const rows = await admin.query(
       "select count(*)::int as n from friendship where account_id = any($1) and other_id = any($1)",
       [[anna, cleo]],
     );
@@ -173,7 +177,7 @@ describe("US-SOZ-02 answer a request in the database", () => {
     try {
       const id = await pair(x as string, y as string);
       expect(await friends.answer(x as string, id, true)).toBe("accepted");
-      const rows = await pool.query(
+      const rows = await admin.query(
         "select status, since from friendship where account_id = any($1) and other_id = any($1)",
         [[x, y]],
       );
@@ -185,7 +189,7 @@ describe("US-SOZ-02 answer a request in the database", () => {
       expect(await friends.answer(x as string, id, true)).toBe("accepted");
       expect(await friends.answer(x as string, id, false)).toBe("not_open");
     } finally {
-      await pool.query("delete from account where id = any($1)", [[x, y]]);
+      await admin.query("delete from account where id = any($1)", [[x, y]]);
     }
   });
 
@@ -201,7 +205,7 @@ describe("US-SOZ-02 answer a request in the database", () => {
       expect(again).toMatchObject({ outcome: "requested" });
       expect(await friends.openRequests(x as string)).toMatchObject([{ status: "requested" }]);
     } finally {
-      await pool.query("delete from account where id = any($1)", [[x, y]]);
+      await admin.query("delete from account where id = any($1)", [[x, y]]);
     }
   });
 
@@ -213,13 +217,13 @@ describe("US-SOZ-02 answer a request in the database", () => {
       expect(await friends.answer(y as string, sent, true)).toBe("not_found");
       expect(await friends.answer(z as string, id, true)).toBe("not_found");
       expect(await friends.answer(x as string, randomUUID(), true)).toBe("not_found");
-      const st = await pool.query(
+      const st = await admin.query(
         "select distinct status from friendship where account_id = any($1)",
         [[x, y]],
       );
       expect(st.rows).toEqual([{ status: "requested" }]);
     } finally {
-      await pool.query("delete from account where id = any($1)", [[x, y, z]]);
+      await admin.query("delete from account where id = any($1)", [[x, y, z]]);
     }
   });
 });
@@ -237,7 +241,7 @@ describe("US-SOZ-03 end a friendship in the database", () => {
       expect(await friends.end(z, friendId)).toBe("not_found");
       expect(await friends.end(x, randomUUID())).toBe("not_found");
       expect(await friends.end(x, friendId)).toBe("ended");
-      const rows = await pool.query(
+      const rows = await admin.query(
         "select status, since is not null as has_since from friendship where account_id = any($1) and other_id = any($1)",
         [[x, y]],
       );
@@ -250,11 +254,11 @@ describe("US-SOZ-03 end a friendship in the database", () => {
       expect(
         await friends.end(
           y,
-          (await pool.query("select id from friendship where account_id = $1", [y])).rows[0].id,
+          (await admin.query("select id from friendship where account_id = $1", [y])).rows[0].id,
         ),
       ).toBe("ended");
     } finally {
-      await pool.query("delete from account where id = any($1)", [[x, y, z]]);
+      await admin.query("delete from account where id = any($1)", [[x, y, z]]);
     }
   });
 });

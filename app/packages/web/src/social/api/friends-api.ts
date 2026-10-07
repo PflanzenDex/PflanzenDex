@@ -1,4 +1,11 @@
-import type { CreatedFriendCode, Friend, FriendRequest, OpenRequests } from "@pflanzendex/core";
+import type {
+  CreatedFriendCode,
+  Friend,
+  FriendRequest,
+  OpenRequests,
+  SharingRow,
+  SpecimenRow,
+} from "@pflanzendex/core";
 import { call, createWrite, type Response } from "../../kernel";
 
 type FetchFn = typeof fetch;
@@ -7,21 +14,36 @@ type FetchFn = typeof fetch;
 export interface FriendsData {
   readonly requests: OpenRequests;
   readonly friends: readonly Friend[];
+  /** The keeper's own specimens and what is shared of them (US-SOZ-04). */
+  readonly specimens: readonly Pick<SpecimenRow, "id" | "speciesId" | "name" | "status">[];
+  readonly shared: readonly SharingRow[];
 }
 
-/** Loads requests and friends in parallel; the first refusal wins, nothing is shown half. */
+/** Loads requests, friends, own specimens and sharing in parallel; the first refusal wins, nothing is shown half. */
 export async function loadFriends(
   api: string,
   token: string,
   fetchFn: FetchFn = fetch,
 ): Promise<Response<FriendsData>> {
-  const [requests, friends] = await Promise.all([
+  const [requests, friends, specimens, sharing] = await Promise.all([
     call<OpenRequests>(fetchFn, `${api}/friends/requests`, token),
     call<{ friends: readonly Friend[] }>(fetchFn, `${api}/friends`, token),
+    call<{ specimens: FriendsData["specimens"] }>(fetchFn, `${api}/specimens`, token),
+    call<{ shared: readonly SharingRow[] }>(fetchFn, `${api}/sharing`, token),
   ]);
   if (!requests.ok) return requests;
   if (!friends.ok) return friends;
-  return { ok: true, value: { requests: requests.value, friends: friends.value.friends } };
+  if (!specimens.ok) return specimens;
+  if (!sharing.ok) return sharing;
+  return {
+    ok: true,
+    value: {
+      requests: requests.value,
+      friends: friends.value.friends,
+      specimens: specimens.value.specimens,
+      shared: sharing.value.shared,
+    },
+  };
 }
 
 /** A new friend code (US-SOZ-01); the answer carries it exactly once. */
@@ -73,4 +95,34 @@ export async function endFriendship(
     {},
   );
   return r.ok ? { ok: true, value: r.value as { status: "ended" } } : r;
+}
+
+/** Shares or withdraws one specimen (US-SOZ-04); private is the default. */
+export async function setSpecimenSharing(
+  api: string,
+  token: string,
+  target: { specimenId: string; share: boolean },
+  fetchFn: FetchFn = fetch,
+): Promise<Response<{ share: "private" | "friends" }>> {
+  const r = await createWrite(api, token, fetchFn)(
+    "PUT",
+    `/sharing/specimens/${encodeURIComponent(target.specimenId)}`,
+    { share: target.share ? "friends" : "private" },
+  );
+  return r.ok ? { ok: true, value: r.value as { share: "private" | "friends" } } : r;
+}
+
+/** Shares or withdraws every active specimen of a species (US-SOZ-04); the answer says how many were touched. */
+export async function setSpeciesSharing(
+  api: string,
+  token: string,
+  target: { speciesId: string; share: boolean },
+  fetchFn: FetchFn = fetch,
+): Promise<Response<{ changed: number }>> {
+  const r = await createWrite(api, token, fetchFn)(
+    "PUT",
+    `/sharing/species/${encodeURIComponent(target.speciesId)}`,
+    { share: target.share ? "friends" : "private" },
+  );
+  return r.ok ? { ok: true, value: r.value as { changed: number } } : r;
 }

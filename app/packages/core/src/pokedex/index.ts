@@ -2,6 +2,8 @@
 export { pokedexOwnership, speciesKey } from "./ownership";
 export { browsePokedex } from "./browse";
 export { collectorProgress } from "./rank";
+export { newlyCaught, pokedexMarkSeen, SEEN_LIMITS } from "./seen";
+export type { MarkSeenDependencies, SeenStore } from "./seen";
 export { milestoneOverview, milestones } from "./milestones";
 export type {
   CaughtDates,

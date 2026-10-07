@@ -29,11 +29,11 @@ As an **operator** I want to maintain the species catalog in one place; as a **p
 Acceptance criteria:
 
 - A catalog entry has `Name` (genus + epithet), `German`, `Difficulty` (1–3), `Light_Zone` (2–4), optional `Note`. Required fields are validated.
-- Names are normalized (`ficus BENJAMINA` → `Ficus benjamina`), duplicates are dropped, invalid ratings trigger a warning, hybrid signs and cultivar additions do not belong in the catalog (US-POK-06).
+- Names are normalized (`ficus BENJAMINA` → `Ficus benjamina`), duplicates are dropped, invalid ratings trigger a warning, a hybrid sign (`x`, `×`, `+`) or an addition (`var.`, `subsp.`, `ssp.`, `f.`, `cv.`) is refused in a catalog name (these belong to the specimen, US-POK-06), while a cultivar in quotation marks (`Ficus elastica 'Robusta'`) is accepted (DM-BES-01) and shown as a chip (US-POK-06); it does not change the species assignment of the Pokédex.
 - The catalog grows in batches (target size 600+ species; collector genera with 10–20 species, otherwise 1–3 per genus); each batch is proofread and usable without a "finished" catalog (prototype 🟡: 215 species).
 - User proposals (US-BES-01) land in the operator's review list (US-BES-10) and count only after approval.
 
-Status 🟨: the entry fields with limits (difficulty 1–3, light level 2–4), the normalization (`ficus BENJAMINA` → `Ficus benjamina`), the duplicate check (name and synonyms) and the proposal path into the review list (US-BES-01, US-BES-10; a proposal counts only after approval) work. A hybrid sign (`x`, `×`, `+`) or an addition (`var.`, `subsp.`, `f.`, `cv.`) is refused on the Latin name with the codes `catalog.name_hybrid` and `catalog.name_addition`. Missing: the growth to 600+ species in proofread batches (TE-12, data work, not part of this story), an operator path to change an approved entry, and a decision on the cultivar in quotation marks (DM-BES-01 and US-POK-06 allow it in the catalog name, this criterion excludes it).
+Status 🟨: the entry fields with limits (difficulty 1–3, light level 2–4), the normalization (`ficus BENJAMINA` → `Ficus benjamina`), the duplicate check (name and synonyms) and the proposal path into the review list (US-BES-01, US-BES-10; a proposal counts only after approval) work. A hybrid sign (`x`, `X`, `×`, `+`) or an addition (`var.`, `subsp.`, `ssp.`, `f.`, `cv.`) is refused on the Latin name with the codes `catalog.name_hybrid` and `catalog.name_addition`; a cultivar in quotation marks stays accepted (owner decision 2026-10-07). Missing: the growth to 600+ species in proofread batches (TE-12, data work, not part of this story) and an operator path to change an approved entry.
 
 ### US-POK-03 · Build taxonomy and enrichment automatically · 🟨 (prototype ✅)
 
@@ -106,7 +106,7 @@ Acceptance criteria:
 
 Status 🟨: the logic and the view work over a taxonomy tree. Missing: the tree (taxonomy build, US-POK-03); until then the view says milestones need the tree and shows none (nothing is invented, P-08).
 
-### US-POK-12 · "Newly caught" on the next visit · ⬜ (prototype ✅)
+### US-POK-12 · "Newly caught" on the next visit · 🟨 (prototype ✅)
 
 Acceptance criteria:
 

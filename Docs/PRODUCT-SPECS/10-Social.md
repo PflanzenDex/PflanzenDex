@@ -67,7 +67,7 @@ Assumptions, decided by the PO (revisable):
 - A new request with a new code can restart an ended friendship; the old sharing settings do not come back by themselves (they are per specimen and checked against the friendship each time).
 - Canceling open swap requests with the person belongs to the swap module (US-SOZ-10) and is checked there against the friendship status; it does not exist yet.
 
-### US-SOZ-04 · Decide what friends see · ⬜ new
+### US-SOZ-04 · Decide what friends see · 🟨 new
 
 Acceptance criteria:
 
@@ -78,7 +78,17 @@ Acceptance criteria:
 - Withdrawing takes effect immediately for future retrievals. What has already been delivered cannot be retrieved (note in the dialog).
 - Bulk action: "Share all specimens of this species".
 
-### US-SOZ-05 · See which new plants friends have collected · ⬜ new
+Assumptions, decided by the PO (revisable):
+
+- A row in `sharing` means "shared with friends"; no row means private. Every specimen is private by default and nothing is written for that. `Share_Photos` is stored with the row (default off) and is off for a private specimen; withdrawing deletes the row, so the photo choice has to be made again when sharing again. The switch has nothing to act on before photos exist (US-WAC-05) and is not offered on the page yet.
+- Friends read a shared specimen only through a confirmed friendship, checked in the database on every retrieval (`friend_shares()`): ending a friendship (US-SOZ-03) withdraws everything at once and deletes nothing; a new friendship does not bring old settings back by itself but they apply again, because the rows were never deleted (the owner can withdraw them first). A friend who shares nothing and a stranger look the same: an empty list (P-05).
+- The global switch "Everything private" (profile, US-ACC-02) is applied when friends read: while it is on, friends see nothing; the sharing rows stay and apply again when it is switched off.
+- What a friend gets is a whitelist: species (Latin and German name, only of approved catalog species: a private proposal stays unknown), the specimen name, caught date, cutting yes/no and the photo flag. A marker is part of the stored specimen name (DM-BES-03), so a specimen with a marker is shown under the species name alone; the marker is never shared. Archived specimens are never shown and cannot be shared; withdrawing them works.
+- Only the keeper's own, active specimens can be shared; a foreign or unknown id is `specimen.not_found` (P-04). The bulk action shares every active specimen of the species in one transaction and answers how many it changed (0 is shown, not hidden, P-10).
+- "Number of shared caught species" (US-SOZ-03) = species the friend shares with me that I have caught too (active specimens, compared by the Latin name); `null` = unknown when the friend shares nothing, never 0 by guess (P-08); shown as a plain number, no comparison between friends (FR-SOZ-11).
+- Withdrawing takes effect for the next retrieval; the page says that what was already delivered cannot be retrieved. The consumers of the sharing (feed, counts in the feed, the collection view of a friend, US-SOZ-05 to US-SOZ-07) read it through `friendView` and do not exist yet; `GET /friends/:id/shared` is the one door they use.
+
+### US-SOZ-05 · See which new plants friends have collected · 🟨 new
 
 Acceptance criteria:
 
@@ -88,6 +98,15 @@ Acceptance criteria:
 - Sharing an old specimen creates **no** event "new today", but carries its actual date.
 - Events are summarized by species, friend and day ("N specimens").
 - Default period 30 days. Filters: by friend, only "New species".
+
+Assumptions, decided by the PO (revisable):
+
+- The feed is derived on every request from what friends share (`friendView`), never stored (P-01, DM-SOZ-04): so it exists only through a confirmed friendship, never while a friend has "Everything private" on, and never shows a private specimen. It reads no table of another module.
+- "New species caught" is judged by what the friend shares: a species is new on the earliest dated day among the shared specimens of that species, because the rest of the friend's collection is private. A species that is unknown to friends (a private catalog proposal) is never "new species". Precedence of the types: a cutting is "New cutting", the first specimens of a species "New species", every other one "New specimen".
+- "Potted" needs the history of a cutting becoming a plant and "Swapped" needs the swap module (US-SOZ-10, US-SOZ-11); both types are missing and are added with them. The photo is missing until photos exist (US-WAC-05).
+- The date of an event is `Caught_At`; the period counts calendar days back from today in the viewer's time zone (today and the 29 days before, NFR-08). A shared specimen without a known date cannot be placed in a period: such events are listed after the dated ones as "Datum unbekannt" instead of vanishing (P-08, P-10).
+- Events of the same friend, species, day and type are summarized ("N Exemplare"). The filter offers 7, 30 and 90 days (the API accepts 1 to 365), a friend, and "only new species". Ordering: newest first, then friend name, then species; no ranking and no comparison between friends (FR-SOZ-11). Every state says what to do next (P-09).
+- The block "Neu bei Freunden" sits at the top of the page "Freunde". The banner and the "seen" state are US-SOZ-06.
 
 ### US-SOZ-06 · "New among friends" since my last visit · ⬜ new
 
