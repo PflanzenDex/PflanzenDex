@@ -74,6 +74,7 @@ Acceptance criteria:
 - Photo capture directly from the camera.
 - Given a page or a request is loading, when the wait is shown, then an animated sprout (static under reduced motion) accompanies the placeholder or stands alone, and assistive technology hears the loading text once (4.1.3, 2.3.3).
 - Given a write succeeded or failed, when the result is shown, then a toast says so in a polite (error: assertive) live region above the bottom bar, an undo action is offered where one exists, and the toast stays while it is hovered or focused and for an error at least 10 s; a state that lasts (offline, unknown zone, failed sync) is shown as a banner that stays until dismissed or resolved (4.1.3, 2.2.1, P-10).
+- Given a card, a person or plant picture, or a progress value is shown, when it is read by assistive technology or the image fails, then a card that opens something is one link or button with a visible focus ring and a 44 px target, a picture is named (or hidden when the name is next to it) and falls back to initials, and progress is a named progress bar with its value or "Schritt n von m"; motion stops under reduced motion (1.1.1, 2.4.7, 2.5.8, 4.1.2).
 
 ### Accessibility (US-QS-08 to US-QS-13)
 
