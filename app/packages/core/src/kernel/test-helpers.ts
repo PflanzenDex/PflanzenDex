@@ -1,4 +1,4 @@
-import type { Begin, IdempotencyKey, IdempotencyStore } from "./ports";
+import type { Begin, IdempotencyKey, IdempotencyStore } from "./ports/ports";
 import { defineOperation } from "./operation";
 import { appError } from "./error";
 import { failed, ok } from "./result";

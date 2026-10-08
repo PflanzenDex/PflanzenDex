@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { IdempotencyKey, IdempotencyStore } from "./ports";
-import { InMemoryIdempotencyStore } from "./test-helpers";
+import { InMemoryIdempotencyStore } from "../test-helpers";
 
 const key = (k = "k1", userId = "u1"): IdempotencyKey => ({ userId, operation: "op", key: k });
 

@@ -22,6 +22,12 @@ export type { Schema } from "./input";
 export { defineOperation, execute } from "./operation";
 export type { Dependencies, Call, Operation } from "./operation";
 export { canonical } from "./input";
-export type { SignedInContext, Begin, IdempotencyKey, IdempotencyStore, Context } from "./ports";
+export type {
+  SignedInContext,
+  Begin,
+  IdempotencyKey,
+  IdempotencyStore,
+  Context,
+} from "./ports/ports";
 export { localToday, isTimeZone, isCalendarDate } from "./date";
 export * from "./sources";
