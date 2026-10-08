@@ -9,7 +9,7 @@
 /.github/workflows/                 @MaxNize
 /.github/rulesets/                  @konradhe14 @MaxNize @NiklasKoch-14
 /Makefile                           @MaxNize
-/scripts/                           @MaxNize
+/tools/                             @MaxNize
 
 /app/packages/core/                 @MaxNize
 /app/packages/api/                  @MaxNize

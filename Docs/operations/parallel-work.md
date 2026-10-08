@@ -43,7 +43,7 @@ make worktree BRANCH=feat/<task>
 
 `make worktree` first runs the claim check (`app/tools/workflow/claim/claim-check.mjs`): a branch with a story ID is refused when the story belongs to somebody else or has not been claimed (`make claim` first). If the branch already exists on `origin` (made by `make claim`), the worktree continues it. There is no check on push: anyone with access may push to a branch.
 
-This calls `scripts/worktree-new.sh`: it fetches `origin/dev`, creates the branch and a worktree under `.worktrees/<branch>/` (slashes become dashes) and writes `.env.worktree`. Then change into that directory and run `make setup` there. Two sessions never write into the same directory; `.worktrees/` and `.env.worktree` are ignored by git.
+This calls `tools/repo/worktree-new.sh`: it fetches `origin/dev`, creates the branch and a worktree under `.worktrees/<branch>/` (slashes become dashes) and writes `.env.worktree`. Then change into that directory and run `make setup` there. Two sessions never write into the same directory; `.worktrees/` and `.env.worktree` are ignored by git.
 
 ## Own ports and database per worktree
 

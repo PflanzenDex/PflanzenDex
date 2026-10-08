@@ -18,4 +18,4 @@ ADR 0001 required one human approval on `dev` and kept agents from merging. In a
 
 - A PR with a green `ci-status` and a known story reaches `dev` without a second look; the quality bar is the gates and the tests, not a reviewer. Weak gates now matter more, and every gate change still needs a human.
 - The conditions are checked by a script, not by GitHub: an agent running under an admin account could still call the API directly. The hook and `AGENTS.md` stop that; if it proves insufficient, run agents under a bot account that has no bypass.
-- Apply the ruleset change on GitHub after the merge (`scripts/rulesets-apply.sh`); the file in the repo alone changes nothing.
+- Apply the ruleset change on GitHub after the merge (`tools/repo/rulesets-apply.sh`); the file in the repo alone changes nothing.

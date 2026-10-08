@@ -114,8 +114,8 @@ build-storybook: ## Build the component catalog to app/packages/web/node_modules
 lighthouse: ## Lighthouse CI on the built web app, mobile, report only (QG-U1), plus the initial JS budget as report (QG-U6); report in app/packages/web/.lighthouseci
 	cd $(APP) && npm run build -w @pflanzendex/web
 	cd $(APP) && npm run bundle-budget -- --report
-	scripts/lighthouse-run.sh
-	scripts/lighthouse-summary.sh | tee $(APP)/packages/web/.lighthouseci/summary.md
+	tools/lighthouse/lighthouse-run.sh
+	tools/lighthouse/lighthouse-summary.sh | tee $(APP)/packages/web/.lighthouseci/summary.md
 
 bundle-report: ## Initial JS per chunk and package as Markdown, 140 kB working target; report only, never fails (QG-U6, FR-QG-10)
 	@cd $(APP) && npm run --silent bundle-report
@@ -124,10 +124,10 @@ release-tags-check: ## All v* tags come from the release workflow, no hand-set v
 	cd $(APP) && npm run release-tags
 
 secrets: ## Secret scan over the full git history (gitleaks, QG-S1)
-	scripts/gitleaks.sh
+	tools/lint/gitleaks.sh
 
 workflows: ## Lint GitHub workflows (actionlint)
-	scripts/actionlint.sh
+	tools/lint/actionlint.sh
 
 audit: ## Known high-severity vulnerabilities in dependencies (npm audit, QG-S2)
 	cd $(APP) && npm run audit
@@ -166,7 +166,7 @@ release-dry-run: ## Show the next version and notes without publishing (BRANCH=d
 		--dry-run --no-ci --branches "$${BRANCH:-$$(git branch --show-current)}"
 
 worktree: ## New worktree and branch (BRANCH=feat/x) with its own ports; claim check first (opt-out SKIP_CLAIM_CHECK=1, US-DEV-08)
-	scripts/worktree-new.sh "$(BRANCH)"
+	tools/repo/worktree-new.sh "$(BRANCH)"
 
 ci-reuse: ## CI only: reuse a green job (JOBS="app ds-snapshots") of the same PR head commit after a title/body edit (US-QG-02, #404)
 	cd $(APP) && node tools/workflow/actions/ci-reuse/ci-reuse.mjs $(JOBS)
@@ -175,10 +175,10 @@ merge: ## Merge a PR into dev as an agent (PR=<n>): green ci-status, known story
 	cd $(APP) && node tools/workflow/merge-pr.mjs "$(PR)"
 
 repo-stats: ## Regenerate the statistics block in README.md (once per release PR, see release-checklist; US-DEV-10)
-	scripts/repo-stats.sh
+	tools/repo/repo-stats.sh
 
 pr: ## Before review (PR=<n> optional): push and mark the PR ready (US-DEV-10)
-	scripts/pr-ready.sh "$(PR)"
+	tools/repo/pr-ready.sh "$(PR)"
 
 claim: ## Claim a story before working on it (ISSUE=<n>): assignee, status, branch, draft PR; refuses duplicate work (US-DEV-08)
 	cd $(APP) && node tools/workflow/claim/claim.mjs "$(ISSUE)"

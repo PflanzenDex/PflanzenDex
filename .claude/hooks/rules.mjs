@@ -43,7 +43,7 @@ const FORBIDDEN_COMMANDS = [
 // Commands that change repo-wide GitHub settings: allowed only after a human confirms.
 const CONFIRM_COMMANDS = [
   [/\bgh\s+api\b[^|;&]*(-X|--method)\s*(PUT|PATCH|POST|DELETE)\b[^|;&]*\b(rulesets|branches\/[^/\s]+\/protection|code-scanning|vulnerability-alerts)\b/i,
-    "This changes GitHub protection settings; update .github/rulesets/ and use scripts/rulesets-apply.sh instead."],
+    "This changes GitHub protection settings; update .github/rulesets/ and use tools/repo/rulesets-apply.sh instead."],
   [/\bgh\s+repo\s+edit\b/, "This changes repository settings."],
   [/\bgh\s+release\s+(create|delete|edit)\b|\bgit\s+push\b[^|;&]*\s(--tags|v\d)/, "Releases and tags come from the release workflow only (ADR 0002)."],
 ];

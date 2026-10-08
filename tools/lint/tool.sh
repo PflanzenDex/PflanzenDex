@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Pinned check tools without an npm package (gitleaks, actionlint). Prints the path to the binary.
 # Uses the binary from PATH if it has the pinned version; otherwise downloads it to .cache/tools/ and verifies the checksum.
-# Usage: bin="$(scripts/tool.sh gitleaks)"
+# Usage: bin="$(tools/lint/tool.sh gitleaks)"
 set -euo pipefail
 
 name="${1:?usage: $0 <gitleaks|actionlint>}"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Rulesets as code (FR-QG-02, FR-DEV-02, ADR 0001): `.github/rulesets/*.json` is the source of truth, GitHub the copy.
-# Usage: scripts/rulesets-apply.sh            applies every file (creates it, or updates it by name)
-#        scripts/rulesets-apply.sh --check    only compares, exits 1 on drift
+# Usage: tools/repo/rulesets-apply.sh            applies every file (creates it, or updates it by name)
+#        tools/repo/rulesets-apply.sh --check    only compares, exits 1 on drift
 # Needs `gh` with admin rights on the repo, and `jq`.
 set -euo pipefail
 

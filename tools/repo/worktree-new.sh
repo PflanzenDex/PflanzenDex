@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Creates a branch and worktree for one task (US-DEV-08): one task, one branch, one working directory.
-# Usage: scripts/worktree-new.sh <branch>   e.g. feat/dev-08-parallel
+# Usage: tools/repo/worktree-new.sh <branch>   e.g. feat/dev-08-parallel
 # The branch starts from origin/dev (or continues origin/<branch> when `make claim` created it); the directory is .worktrees/<name>/.
 # Unique ports and database names go into .worktrees/<name>/.env.worktree (see worktree-env.mjs).
 set -euo pipefail

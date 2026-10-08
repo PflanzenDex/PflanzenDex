@@ -12,7 +12,7 @@ Options considered: the Team plan (about 4 USD per user and month), making the r
 
 ## Decision
 
-The repo is **public**. Rulesets live as code in `.github/rulesets/` and are applied with `scripts/rulesets-apply.sh`; `--check` reports drift between the files and GitHub.
+The repo is **public**. Rulesets live as code in `.github/rulesets/` and are applied with `tools/repo/rulesets-apply.sh`; `--check` reports drift between the files and GitHub.
 
 Each protected branch has two rulesets, so that the hard rules never have exceptions while the review rule can:
 
