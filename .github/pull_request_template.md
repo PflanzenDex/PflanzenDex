@@ -21,7 +21,7 @@ Closes #
 - [ ] Input validated, no secrets in code, access and tenant isolation checked (P-04)
 - [ ] Module boundaries respected, no magic strings
 - [ ] `feat:`/`fix:` PR: short German entry in `app/packages/web/src/news/news.de.json` ("Neu in dieser Version"), or `[skip-changelog]` in the title/description for internal changes (QG-U3)
-- [ ] Spec status and counters in `Docs/PRODUCT-SPECS/README.md` updated in this PR
+- [ ] Spec status and counters in `docs/specs/product/readme.md` updated in this PR
 - [ ] `make ci` green locally
 
 ## AI involvement

@@ -57,7 +57,7 @@ count_matches() { local re="$1"; shift; git grep --cached -h -E "$re" -- "$@" 2>
 # --- Specs (index) ------------------------------------------------------------------------------------
 # "STORY<TAB>epic<TAB>status<TAB>id<TAB>title" and "FR<TAB>status".
 spec_items() {
-  git grep --cached -h -E '^### US-[A-Z]+-[0-9]+ ·|^\| FR-[A-Z]+-[0-9]+ ' -- 'Docs/PRODUCT-SPECS/*.md' 2>/dev/null |
+  git grep --cached -h -E '^### US-[A-Z]+-[0-9]+ ·|^\| FR-[A-Z]+-[0-9]+ ' -- 'docs/specs/product/*.md' 2>/dev/null |
     awk '
       # The product status is the first symbol; a story heading may carry the prototype status after it.
       function status(s) { sub(/^[ \t]+/, "", s); sub(/[ \t].*/, "", s)
@@ -70,7 +70,7 @@ spec_items() {
 # "EPIC<TAB>code<TAB>name<TAB>spec file<TAB>description" from the spec index: names from the counter table
 # ("| ACC Accounts | 5 | …"), file and description from the file table ("| [01-….md](…) | Epic ACC: … |").
 epic_info() {
-  git show :Docs/PRODUCT-SPECS/README.md 2>/dev/null | awk -F'|' '
+  git show :docs/specs/product/readme.md 2>/dev/null | awk -F'|' '
     function trim(s) { gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
     $2 ~ /^ [A-Z][A-Z]+ [^ ]/ && trim($3) ~ /^[0-9]+$/ { c = trim($2); code = c; sub(/ .*/, "", code); sub(/^[^ ]+ /, "", c)
       name[code] = c; order[++n] = code }
@@ -101,7 +101,7 @@ epic_table() {
   while IFS=$'\t' read -r rank code name file desc t d w; do
     [ -n "$code" ] || continue
     case "${rank:0:1}" in 1) icon="✅" ;; 2) icon="🟨" ;; *) icon="⬜" ;; esac
-    printf '| %s | **%s** · [%s](Docs/PRODUCT-SPECS/%s) | %s | %d ✅ · %d 🟨 · %d ⬜ | `%s` |\n' \
+    printf '| %s | **%s** · [%s](docs/specs/product/%s) | %s | %d ✅ · %d 🟨 · %d ⬜ | `%s` |\n' \
       "$icon" "$name" "$code" "$file" "$desc" "$d" "$w" $((t - d - w)) "$(bar "$d" "$w" "$t")"
   done <<<"$1"
 }
@@ -164,7 +164,7 @@ render() {
   echo "| **Production code** | $prod lines · packages: $pkgs |"
   echo "| **Tests** | $(count_files '*.test.ts' '*.test.tsx' '*.test.mjs') files · $(awk "$AWK_ROUND"' {print fmt($1)}' <<<"$cases") test cases · $test lines ($ratio% of production code) |"
   echo "| **Database** | $(count_files 'app/packages/db/migrations/*.sql') migrations · $(count_matches '^\s*"[a-z_]+\.[a-z_]+":' 'app/packages/core/src/kernel/error.ts') error codes |"
-  echo "| **Process docs** | $(count_files 'Docs/decisions/[0-9]*.md') ADRs · $(count_files '.agents/skills/*/SKILL.md') agent skills · $(count_files 'Docs/operations/*.md') runbooks |"
+  echo "| **Process docs** | $(count_files 'docs/adr/[0-9]*.md') ADRs · $(count_files '.agents/skills/*/SKILL.md') agent skills · $(count_files 'docs/guides/operations/*.md') runbooks |"
   echo
   echo "### Quality gates and development process"
   echo

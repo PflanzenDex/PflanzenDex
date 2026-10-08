@@ -27,7 +27,7 @@ const stack = JSON.stringify({
   ),
 });
 
-describe("design system gate (DESIGN-SYSTEM.md section 6)", () => {
+describe("design system gate (docs/guides/design-system.md section 6)", () => {
   it("passes a compliant package", () => {
     const dir = web({
       "package.json": stack,

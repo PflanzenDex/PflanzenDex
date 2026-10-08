@@ -66,7 +66,7 @@ function checkRegister({ appDir, add, cfg }) {
       add("AB-12", file, 0, `${m.name} may depend on every other module: only the root may`);
 }
 
-const DESIGN_SYSTEM_FOLDERS = ["components", "lib", "platform", "styles"]; // no modules: DESIGN-SYSTEM.md section 1
+const DESIGN_SYSTEM_FOLDERS = ["components", "lib", "platform", "styles"]; // no modules: docs/guides/design-system.md section 1
 function checkFolders({ appDir, add, cfg, h }) {
   const seen = new Set();
   for (const pkg of LAYERS) {

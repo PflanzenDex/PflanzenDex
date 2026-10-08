@@ -1,6 +1,6 @@
 // Data for the module gate rules AB-11 (glossary), AB-13 (port contracts) and AB-14 (legacy migration names), merged into modules.config.mjs.
 
-// AB-11: glossary words (Docs/PRODUCT-SPECS/00, singular; plurals are matched too) that no identifier in the kernel code
+// AB-11: glossary words (docs/specs/product/00, singular; plurals are matched too) that no identifier in the kernel code
 // may contain. Comments and string literals (error codes and texts are data) are not checked. "zone" and "phase"
 // are left out on purpose: `timeZone` is a technical word.
 export const KERNEL_GLOSSARY_WORDS = [

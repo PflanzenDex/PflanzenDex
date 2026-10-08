@@ -44,14 +44,14 @@ function fixture(t) {
   write(dir, "README.md", `# Demo\n\n${START}\n${END}\n`);
   write(
     dir,
-    "Docs/PRODUCT-SPECS/01-Demo.md",
+    "docs/specs/product/01-Demo.md",
     "### US-ABC-01 · Water a plant · ✅ new\n### US-ABC-02 · Measure growth · ⬜ ✅\n| FR-ABC-01 | Rule | 🟨 |\n",
   );
-  write(dir, "Docs/PRODUCT-SPECS/02-Xyz.md", "### US-XYZ-01 · Add a friend · ✅ new\n");
-  write(dir, "Docs/PRODUCT-SPECS/19-Dev.md", "### US-DEV-01 · Run tasks · 🟨 new\n");
+  write(dir, "docs/specs/product/02-Xyz.md", "### US-XYZ-01 · Add a friend · ✅ new\n");
+  write(dir, "docs/specs/product/19-Dev.md", "### US-DEV-01 · Run tasks · 🟨 new\n");
   write(
     dir,
-    "Docs/PRODUCT-SPECS/README.md",
+    "docs/specs/product/readme.md",
     [
       "| [01-Demo.md](01-Demo.md) | Epic ABC: watering, growth |",
       "| [02-Xyz.md](02-Xyz.md)   | Epic XYZ: friends          |",
@@ -78,9 +78,9 @@ test("US-DEV-10: the block shows the feature areas with status, description, spe
   assert.equal(code, 0);
   assert.match(out, /2 feature areas \(epics\): \*\*1 complete, 1 in progress, 0 planned\.\*\*/);
   const xyz =
-    "| ✅ | **Other epic** · [XYZ](Docs/PRODUCT-SPECS/02-Xyz.md) | Friends | 1 ✅ · 0 🟨 · 0 ⬜ | `██████████` |";
+    "| ✅ | **Other epic** · [XYZ](docs/specs/product/02-Xyz.md) | Friends | 1 ✅ · 0 🟨 · 0 ⬜ | `██████████` |";
   const abc =
-    "| 🟨 | **Demo epic** · [ABC](Docs/PRODUCT-SPECS/01-Demo.md) | Watering, growth | 1 ✅ · 0 🟨 · 1 ⬜ | `█████░░░░░` |";
+    "| 🟨 | **Demo epic** · [ABC](docs/specs/product/01-Demo.md) | Watering, growth | 1 ✅ · 0 🟨 · 1 ⬜ | `█████░░░░░` |";
   assert.ok(out.includes(xyz), "a complete area");
   assert.ok(out.includes(abc), "the prototype ✅ after ⬜ is not the product status");
   assert.ok(out.indexOf(xyz) < out.indexOf(abc), "complete areas come first");
@@ -91,7 +91,7 @@ test("US-DEV-10: process epics are listed under engineering, not as product feat
   const out = stats(fixture(t), "--print").out;
   const engineering = out.indexOf("## Engineering");
   const dev = out.indexOf(
-    "**Process** · [DEV](Docs/PRODUCT-SPECS/19-Dev.md) | Hooks | 0 ✅ · 1 🟨 · 0 ⬜",
+    "**Process** · [DEV](docs/specs/product/19-Dev.md) | Hooks | 0 ✅ · 1 🟨 · 0 ⬜",
   );
   assert.ok(engineering > 0 && dev > engineering);
 });

@@ -243,7 +243,7 @@ jobs:
           PR_BASE_REF: ${{ github.base_ref }}
         run: make changelog-check
 
-  # QG-C4: the file layout is checked for every change, also when only `Docs/` or the repo root changed
+  # QG-C4: the file layout is checked for every change, also when only `docs/` or the repo root changed
   # (the `app` job is skipped for those). The check needs no dependencies; the full history gives it `origin/dev`
   # for the "baseline must not grow" comparison (a missing ref fails in CI).
   layout:

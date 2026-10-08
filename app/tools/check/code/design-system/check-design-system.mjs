@@ -1,4 +1,4 @@
-// Ratchet gate for the UI rules in DESIGN-SYSTEM.md (rule IDs DS-nn).
+// Ratchet gate for the UI rules in docs/guides/design-system.md (rule IDs DS-nn).
 // quality-ds-baseline.json lists known violations: { rule, file, count }.
 // This check fails when
 //   DSB-1  a violation exists that is not in the baseline, or its count grew (new code must comply),
@@ -167,7 +167,7 @@ function main() {
   const entries = JSON.parse(fs.readFileSync(baselinePath, "utf8")).entries;
   const problems = compare(counts, entries, locations);
   if (problems.length > 0) {
-    console.error("Design system check failed (DESIGN-SYSTEM.md, section 6):");
+    console.error("Design system check failed (docs/guides/design-system.md, section 6):");
     for (const p of problems) console.error(`  ${p}`);
     process.exit(1);
   }

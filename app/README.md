@@ -30,7 +30,7 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 
 - **Node:** version 24 (`.nvmrc`). Vitest 5 does not officially support odd Node versions (e.g. 25).
 - **TypeScript 6.0.x** is pinned on purpose: `typescript-eslint` does not support TypeScript 7 yet (peer range `<6.1`).
-- **Load measurement (NFR-12):** `npm run perf:measure -w @pflanzendex/api` seeds accounts with 100 and 1,000 specimens in a throw-away test database and prints response times and SQL statement counts per request as JSON. It is a measurement, not a gate, and not part of `make ci`; results: `Docs/test-logs/nfr-12.md`.
+- **Load measurement (NFR-12):** `npm run perf:measure -w @pflanzendex/api` seeds accounts with 100 and 1,000 specimens in a throw-away test database and prints response times and SQL statement counts per request as JSON. It is a measurement, not a gate, and not part of `make ci`; results: `docs/records/test-logs/nfr-12.md`.
 - **Boundary check:** `npm run boundaries` (script and tests in `scripts/`); messages name the rule ID, file and line. Module rules AB-7 to AB-14 (FR-QG-19) read the module register `modules.config.mjs`; AB-10 and table ownership run in `findSchemaViolations` (db tests).
 - **Thresholds** (starting values, assumptions, E-15): file length ≤ 200, complexity ≤ 15, in `core` ≤ 10 (`eslint.config.js`).
 
@@ -52,7 +52,7 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **API:** `Authorization: Bearer <access token>`; signature (JWKS), issuer and audience `pflanzendex-api` are verified. Every request sets the account via `withAccount`. `GET /account` returns the caller's own account data. Environment: `OIDC_ISSUER`, `OIDC_AUDIENCE`, `DATABASE_URL`, `WEB_ORIGIN`.
 - **Account creation:** `findOrCreateAccount` (db) is the dedicated path for the first sign-in: the `anmeldung_*` policies on `account` show and allow only the row of the verified subject (`app.subject`). No BYPASSRLS.
 - **Web:** `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID` and `VITE_API_URL` override the defaults. "Sign out on all devices" calls the Keycloak account API (`DELETE /account/sessions`).
-- **Tests without Keycloak:** token, middleware and UI tests run without the auth server (locally generated keys). The flow against Keycloak was checked manually: `Docs/test-logs/acc-01.md`.
+- **Tests without Keycloak:** token, middleware and UI tests run without the auth server (locally generated keys). The flow against Keycloak was checked manually: `docs/records/test-logs/acc-01.md`.
 
 ## Operator role and review status (TE-08)
 
@@ -183,7 +183,7 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 
 - **What:** `GET /today?timeZone=<IANA name>` returns `{ date, items, upcoming }`, derived live (no table, no migration, P-01) by `todayStatus` in `core/src/today` (module `today`, read only): treatments overdue or due today (US-BEH-02), phase deviations (US-PHA-02) and incomplete specimens (US-BES-08), most urgent first. Each item has `id`, `kind`, `specimenId`, `specimenName`, `text`, `nextAction` and `target` (`treatments`, `care_phases` or `hints`; P-09). `upcoming` counts open treatments that are not due yet (P-10). An unknown time zone answers 400 `input.invalid`; without token 401; only the own, active specimens are read (P-04).
 - **Web:** view "Heute" (`/today`, `TodayPage` in the `today` module); the app maps `target` to a view.
-- **Limits:** see the gap list in `Docs/PRODUCT-SPECS/14-Cross-Cutting.md` (US-QS-01).
+- **Limits:** see the gap list in `docs/specs/product/14-cross-cutting.md` (US-QS-01).
 
 ## Measurements (US-WAC-01)
 
@@ -211,7 +211,7 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Web:** each row of "Offene Behandlungen" has the button "Erledigt"; the row leaves the list at once and the page says what was ticked off. A refusal stays visible. Below the planning form the selection "Exemplar für den Verlauf" lists the done treatments of a specimen.
 - **Limits:** no undo and no editing of a done treatment; no follow-up date (the dates of a course already exist); no reminder (US-MON-03).
 
-**Operations (TE-03):** containers, Compose, backup and deploy live in `deploy/`; see the runbook `Docs/operations/staging-deploy-and-backup.md`. Targets: `make deploy`, `make backup`, `make restore-test`.
+**Operations (TE-03):** containers, Compose, backup and deploy live in `deploy/`; see the runbook `docs/guides/operations/staging-deploy-and-backup.md`. Targets: `make deploy`, `make backup`, `make restore-test`.
 
 ## Pokédex ownership (US-POK-06)
 
@@ -264,7 +264,7 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Errors** (German texts in `ERROR_TEXTS`): `media.name_invalid`, `media.not_found`, `media.too_large`, `media.type_unsupported`, `media.not_an_image`, `media.storage_unavailable`. HTTP mapping: 413, 415, 422, 404, 502 (first route: US-WAC-06).
 - **S3 adapter** (`createS3ObjectStore`, `@aws-sdk/client-s3`): any S3-compatible host, no provider-specific code (hosting TE-03 stays open). Environment: `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` (required), `S3_ENDPOINT` (custom hosts, e.g. MinIO) and `S3_FORCE_PATH_STYLE` (default `true` with an endpoint). `s3ConfigFromEnv` names the missing variables; no secret lives in the repo.
 - **Local storage:** `MINIO_ROOT_PASSWORD=<password> docker compose -f app/dev/storage.compose.yaml up -d` starts MinIO on `127.0.0.1:19000` (user `pflanzendex`). Run the API tests with the `S3_*` variables set (endpoint `http://127.0.0.1:19000`, bucket `pflanzendex-test`, the bucket is created by the test). Without them the adapter tests are reported as skipped with the reason; everything else runs against the in-memory fake.
-- **Open:** the only route is the measurement photo upload (US-WAC-06, see Measurements; the object name sits in `measurement.photo`, so there is no table `medium`), no UI, no route that reads a photo, no access rules for shared photos (SOZ), no virus scan, no backup of the bucket (`Docs/operations/staging-deploy-and-backup.md`), no `make` target for the storage container (proposed in the PR), the `sharp` install inside the Alpine API image is untested.
+- **Open:** the only route is the measurement photo upload (US-WAC-06, see Measurements; the object name sits in `measurement.photo`, so there is no table `medium`), no UI, no route that reads a photo, no access rules for shared photos (SOZ), no virus scan, no backup of the bucket (`docs/guides/operations/staging-deploy-and-backup.md`), no `make` target for the storage container (proposed in the PR), the `sharp` install inside the Alpine API image is untested.
 
 ## Friends by invitation, sharing and the feed (US-SOZ-01 to US-SOZ-07, US-SOZ-12)
 
@@ -295,5 +295,5 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 
 - **Target:** `make e2e` starts the test database and Keycloak (`db-up`, `auth-up`), applies the migrations and runs Playwright (package `packages/e2e`; Playwright starts API and web itself). Needs Docker. Projects: `mobil` (Pixel 7) and `desktop`.
 - **When:** not on every PR into `dev`, but on PRs `dev` to `main`, nightly and manually (`ci.yml`, `nightly.yml`; E-13/E-15). Failures fail the job; the report is the artifact `e2e-report`.
-- **Covered:** sign-in against the real Keycloak (US-ACC-01) and locations/light zones (US-LIC-05). Test accounts are created through the Keycloak admin API; registration with mail confirmation stays documented manually (`Docs/test-logs/acc-01.md`).
+- **Covered:** sign-in against the real Keycloak (US-ACC-01) and locations/light zones (US-LIC-05). Test accounts are created through the Keycloak admin API; registration with mail confirmation stays documented manually (`docs/records/test-logs/acc-01.md`).
 - **Accessibility:** axe runs inside the tests as a report (attachment `axe-*.json`, job summary) and never fails a test (FR-QG-09).

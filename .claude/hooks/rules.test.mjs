@@ -29,7 +29,7 @@ test("US-QG-07: gate configs need a human confirmation, ordinary code does not",
   ]) {
     assert.equal(isGateFile(f), true, f);
   }
-  for (const f of ["app/packages/core/src/index.ts", "Docs/PRODUCT-SPECS/02-Collection.md", "app/README.md"]) {
+  for (const f of ["app/packages/core/src/index.ts", "docs/specs/product/02-collection.md", "app/README.md"]) {
     assert.equal(isGateFile(f), false, f);
   }
 });
@@ -114,9 +114,9 @@ test("US-QG-07: changing protection settings or releasing by hand needs confirma
 test("US-DEV-02: formatting, code paths and gate runs are recognized", () => {
   assert.equal(prettierCanFormat("app/packages/core/src/a.ts"), true);
   assert.equal(prettierCanFormat("app/node_modules/x/a.js"), false);
-  assert.equal(prettierCanFormat("Docs/ROADMAP.md"), false);
+  assert.equal(prettierCanFormat("docs/guides/roadmap.md"), false);
   assert.equal(isCodePath("app/packages/web/src/App.tsx"), true);
-  assert.equal(isCodePath("Docs/ROADMAP.md"), false);
+  assert.equal(isCodePath("docs/guides/roadmap.md"), false);
   assert.equal(ranGates("make ci"), true);
   assert.equal(ranGates("make gates 2>&1 | tail"), true);
   assert.equal(ranGates("make test"), false);

@@ -9,7 +9,7 @@
     ":timezone(Europe/Berlin)",
   ],
   baseBranchPatterns: ["dev"],
-  ignorePaths: ["**/node_modules/**", "Docs/spikes/**"],
+  ignorePaths: ["**/node_modules/**", "docs/records/spikes/**"],
   schedule: ["before 6am on monday"],
   // Protection against compromised releases: new versions only after 3 days (starting value, an assumption).
   minimumReleaseAge: "3 days",

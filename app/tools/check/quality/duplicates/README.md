@@ -1,6 +1,6 @@
 # Duplication gate (QG-K5)
 
-Covers FR-QG-10 and US-QG-07 (an operations note; it lives here because `Docs/operations/` is at the five-unit limit LY-1). `make dup` measures the share of duplicated lines in `app/packages` with [jscpd](https://github.com/kucherenko/jscpd) (no server, no account). It is part of `make gates` and therefore of `make ci`; the CI job `ci` runs it through `make ci`, so `ci-status` covers it. QG-K4 (`make duplicates`, Fallow) stays: it blocks clone groups with three or more copies in changed files.
+Covers FR-QG-10 and US-QG-07 (an operations note; it lives here because `docs/guides/operations/` is at the five-unit limit LY-1). `make dup` measures the share of duplicated lines in `app/packages` with [jscpd](https://github.com/kucherenko/jscpd) (no server, no account). It is part of `make gates` and therefore of `make ci`; the CI job `ci` runs it through `make ci`, so `ci-status` covers it. QG-K4 (`make duplicates`, Fallow) stays: it blocks clone groups with three or more copies in changed files.
 
 ## Run it
 

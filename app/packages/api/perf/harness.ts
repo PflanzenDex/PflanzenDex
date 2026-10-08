@@ -4,7 +4,7 @@ import { ensureTestOwnerDatabase, migrate, openFixturePool, openOwnerPool } from
 import { createApp } from "../src/app.ts";
 
 // Load measurement (NFR-12, issue #586): the API in process on a real PostgreSQL, with every SQL statement counted.
-// Not a test and not a gate; run it with `npm run perf:measure -w @pflanzendex/api` (see Docs/test-logs/).
+// Not a test and not a gate; run it with `npm run perf:measure -w @pflanzendex/api` (see docs/records/test-logs/).
 
 export type Counts = { total: number; payload: number };
 export type Reply = { status: number; bytes: number; body: Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any

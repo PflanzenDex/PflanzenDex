@@ -1,4 +1,4 @@
-// Line rules of the design system gate (DESIGN-SYSTEM.md); used by check-design-system.mjs.
+// Line rules of the design system gate (docs/guides/design-system.md); used by check-design-system.mjs.
 import { rawControlLines } from "./check-design-system-ast.mjs";
 
 // DS-33: tokens.css is the only stylesheet under src/.

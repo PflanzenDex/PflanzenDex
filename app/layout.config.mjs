@@ -60,27 +60,15 @@ export default {
       path: "docs/records/test-logs/*",
       collection: new RegExp(`^${story}\\.(png|md|txt|json)$`),
     },
-    // The same collections at their current paths, until the docs move (FR-QG-23) renames them.
-    // Without these, every new ADR, test log, principle or spec file would fail the ratchet.
-    // Docs is at its unit limit and gets the redesign mockup sources (Docs/design). It lists its folders by name,
-    // so the baseline entries for Docs (LY-1, LY-3) can go; a new top-level entry in Docs needs a line here.
-    {
-      path: "Docs",
-      collection:
-        /^(decisions|design|operations|pitfalls|PLANT-SYSTEM-SPECS|principles|PRODUCT-SPECS|spikes|test-logs|ROADMAP\.md)$/,
-    },
     // Redesign mockup sources: the canvas's own file names (mixed case such as M-Pflanzen.dc.html) stay as they are.
-    { path: "Docs/design", collection: /^(README\.md|directions|greenhouse)$/ },
-    { path: "Docs/design/directions", collection: /^([A-Za-z0-9-]+\.dc\.html|canvas\.json)$/ },
-    { path: "Docs/design/greenhouse", collection: /^([A-Za-z0-9-]+\.dc\.html|canvas\.json)$/ },
-    { path: "Docs/decisions", collection: /^\d{4}-[a-z0-9-]+\.md$/ },
-    { path: "Docs/principles", collection: /^(PRIN-\d{3}-[a-z0-9-]+|README)\.md$/ },
-    { path: "Docs/PRODUCT-SPECS", collection: /^(\d{2}-[A-Za-z0-9-]+|README)\.md$/ },
-    { path: "Docs/PLANT-SYSTEM-SPECS", collection: /^(\d{2}-[A-Za-z0-9-]+|README)\.md$/ },
-    { path: "Docs/test-logs", collection: new RegExp(`^${story}(\\.(md|txt))?$`) },
+    { path: "docs/records/design", collection: /^(README\.md|directions|greenhouse)$/ },
     {
-      path: "Docs/test-logs/*",
-      collection: new RegExp(`^${story}\\.(png|md|txt|json)$`),
+      path: "docs/records/design/directions",
+      collection: /^([A-Za-z0-9-]+\.dc\.html|canvas\.json)$/,
+    },
+    {
+      path: "docs/records/design/greenhouse",
+      collection: /^([A-Za-z0-9-]+\.dc\.html|canvas\.json)$/,
     },
   ],
 };

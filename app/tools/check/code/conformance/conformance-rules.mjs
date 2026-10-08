@@ -1,4 +1,4 @@
-// Pure rules of the QG-U5 conformance run (FR-QG-09, US-QS-07, DESIGN-SYSTEM.md DS-15/17/19/20/37/38/40).
+// Pure rules of the QG-U5 conformance run (FR-QG-09, US-QS-07, docs/guides/design-system.md DS-15/17/19/20/37/38/40).
 // The browser part lives in check-conformance.mjs; everything that decides pass or fail is here and unit tested.
 
 export const MIN_TARGET = 44; // DS-15, CSS px

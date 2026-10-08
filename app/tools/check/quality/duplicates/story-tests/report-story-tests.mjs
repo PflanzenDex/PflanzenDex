@@ -69,7 +69,7 @@ export function render({ rows, missing }, areas) {
 }
 
 export function run(root) {
-  const specs = readTree(root, path.join(root, "Docs/PRODUCT-SPECS"), (p) => p.endsWith(".md"));
+  const specs = readTree(root, path.join(root, "docs/specs/product"), (p) => p.endsWith(".md"));
   const isTest = (p) => /\.test\.(ts|tsx|mjs)$/.test(p);
   const tests = {};
   for (const d of ["app/packages", "app/tools", ".claude/hooks"])

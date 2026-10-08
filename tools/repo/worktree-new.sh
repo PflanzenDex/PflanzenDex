@@ -16,7 +16,7 @@ git show-ref --verify --quiet "refs/heads/$branch" && { echo "branch already exi
 # Claim check (US-DEV-08): refuse stories claimed by someone else or not claimed yet.
 # Explicit opt-out only: make worktree BRANCH=... SKIP_CLAIM_CHECK=1
 node "$root/app/tools/workflow/claim/claim-check.mjs" worktree "$branch" || {
-  echo "worktree refused: see above, or opt out with SKIP_CLAIM_CHECK=1 (Docs/operations/parallel-work.md)" >&2
+  echo "worktree refused: see above, or opt out with SKIP_CLAIM_CHECK=1 (docs/guides/operations/parallel-work.md)" >&2
   exit 1
 }
 

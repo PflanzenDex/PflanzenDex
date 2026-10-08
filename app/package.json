@@ -30,7 +30,7 @@
     "ds-snapshots": "node tools/check/code/conformance/ds-snapshots.mjs && node --test tools/check/code/conformance/ds-snapshots.selftest.mjs",
     "ds-snapshots:update": "node tools/check/code/conformance/ds-snapshots.mjs --update",
     "health": "node tools/dev/health-summary.mjs",
-    "docs": "cd .. && npx markdownlint-cli2 \"Docs/**/*.md\" \"CLAUDE.md\" --config \".markdownlint-cli2.jsonc\" && cd app && node tools/check/docs/check-links.mjs",
+    "docs": "cd .. && npx markdownlint-cli2 \"docs/**/*.md\" \"CLAUDE.md\" --config \".markdownlint-cli2.jsonc\" && cd app && node tools/check/docs/check-links.mjs",
     "specs": "node tools/check/docs/check-specs.mjs && node tools/check/docs/check-traceability.mjs",
     "principles": "node tools/check/docs/check-principles.mjs",
     "test": "npm run test --workspaces --if-present && node --test \"tools/**/*.test.mjs\" \"../.claude/hooks/*.test.mjs\"",

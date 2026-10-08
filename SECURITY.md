@@ -11,8 +11,8 @@ Helpful details: affected component or endpoint, steps to reproduce, possible im
 
 ## Scope
 
-The code on `main` and `dev` and the hosted instance. Out of scope: spike code under `Docs/spikes/` (local experiments with throwaway credentials).
+The code on `main` and `dev` and the hosted instance. Out of scope: spike code under `docs/records/spikes/` (local experiments with throwaway credentials).
 
 ## Checks already in place
 
-Secret scanning with push protection, dependency alerts, static analysis and tenant isolation tests (QG-S1 to QG-S3 and QG-D1 in `Docs/PRODUCT-SPECS/18-Architecture-and-Quality-Gates.md`).
+Secret scanning with push protection, dependency alerts, static analysis and tenant isolation tests (QG-S1 to QG-S3 and QG-D1 in `docs/specs/product/18-architecture-and-quality-gates.md`).
