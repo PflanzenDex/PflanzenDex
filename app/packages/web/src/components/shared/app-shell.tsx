@@ -1,6 +1,8 @@
 import { useEffect, useRef, type MouseEvent, type ReactNode, type RefObject } from "react";
 import { AnnouncerProvider } from "@/platform/announcer/announcer";
+import { useOnline } from "@/platform/network";
 import { RouteFocus } from "@/components/routing/route-focus/route-focus";
+import { Banner } from "./states/banner/banner";
 import { ToastProvider } from "./states/toast/toast-provider/toast-provider";
 import { GlobalHeader } from "./global-header";
 import { SideNav } from "./side-nav/side-nav";
@@ -34,6 +36,17 @@ function useStickyScrollPadding(shell: RefObject<HTMLDivElement | null>) {
       html.scrollPaddingBottom = "";
     };
   }, [shell]);
+}
+
+/** Says that the device is offline and what that means, as long as it lasts (US-QS-14, P-09, P-10). */
+function OfflineBanner() {
+  if (useOnline()) return null;
+  return (
+    <Banner variant="warning" title="Du bist offline" className="mb-4">
+      Angezeigte Daten können veraltet sein. Änderungen werden gesendet, sobald du wieder online
+      bist.
+    </Banner>
+  );
 }
 
 /** Moves the focus past the navigation to the main content (US-QS-08, WCAG 2.4.1), without touching the address. */
@@ -86,6 +99,7 @@ export function AppShell({
               className="flex-1 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))] pt-4 md:px-6 md:pb-6 md:pt-6 xl:px-10"
             >
               {titleOf ? <RouteFocus titleOf={titleOf} /> : null}
+              <OfflineBanner />
               {children}
             </main>
           </div>

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -303,5 +303,22 @@ describe("US-QS-08 Operable by keyboard alone (app shell)", () => {
     within(drawer).getByRole("link", { name: "Ziel 6" }).focus();
     await userEvent.keyboard("{Enter}");
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+});
+
+describe("AppShell offline banner (US-QS-14, P-09, P-10)", () => {
+  it("US-QS-14 shows a banner while the device is offline and removes it when it is back", () => {
+    const state = vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    at("/", <AppShell items={make(3)}>Inhalt</AppShell>);
+    expect(screen.getByText("Du bist offline")).toBeTruthy();
+    state.mockReturnValue(true);
+    act(() => void window.dispatchEvent(new Event("online")));
+    expect(screen.queryByText("Du bist offline")).toBeNull();
+    state.mockRestore();
+  });
+
+  it("US-QS-14 shows no banner while the device is online", () => {
+    at("/", <AppShell items={make(3)}>Inhalt</AppShell>);
+    expect(screen.queryByText("Du bist offline")).toBeNull();
   });
 });

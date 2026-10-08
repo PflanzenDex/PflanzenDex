@@ -5,6 +5,7 @@ import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { CollectionArea } from "./collection-area";
 import { EMPTY_DISTRIBUTION } from "./collection/distribution-test-helpers";
+import { ToastProvider } from "./components/shared/states/toast/toast-provider/toast-provider";
 import { AnnouncerProvider } from "./platform/announcer/announcer";
 
 const response = (status: number, body: unknown) =>
@@ -68,16 +69,18 @@ function Probe() {
 const renderAt = (path: string) =>
   render(
     <MemoryRouter initialEntries={[path]}>
-      <AnnouncerProvider>
-        <CollectionArea
-          api="http://api"
-          token={async () => "tok"}
-          newSpecies={null}
-          onSpeciesChoose={() => {}}
-          onCompleted={() => {}}
-        />
-        <Probe />
-      </AnnouncerProvider>
+      <ToastProvider>
+        <AnnouncerProvider>
+          <CollectionArea
+            api="http://api"
+            token={async () => "tok"}
+            newSpecies={null}
+            onSpeciesChoose={() => {}}
+            onCompleted={() => {}}
+          />
+          <Probe />
+        </AnnouncerProvider>
+      </ToastProvider>
     </MemoryRouter>,
   );
 

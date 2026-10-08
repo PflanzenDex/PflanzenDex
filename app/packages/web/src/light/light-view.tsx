@@ -1,4 +1,5 @@
 import { EmptyState } from "@/components/shared/empty-state";
+import { Banner } from "@/components/shared/states/banner/banner";
 import { DerivationForm, type Derive } from "./derivation-view";
 import { Fresh, useFresh } from "./fresh";
 import type { ApiError, LightData } from "./light-api";
@@ -79,6 +80,18 @@ function Zones(props: { data: LightData; actions: LightActions }) {
   );
 }
 
+/** Names the locations whose light zone is unknown and what to do (US-QS-14, P-09, P-10). */
+function UnknownZoneBanner({ locations }: { locations: LightData["locations"] }) {
+  const open = locations.filter((l) => l.lightZoneId === null);
+  if (open.length === 0) return null;
+  return (
+    <Banner variant="warning" title="Lichtzone unbekannt">
+      Für {open.map((l) => l.name).join(", ")} fehlt die Lichtzone. Weise sie mit „Lichtzone
+      zuweisen“ zu, damit die Hinweise zum Licht stimmen.
+    </Banner>
+  );
+}
+
 function Locations(props: { data: LightData; actions: LightActions }) {
   const { data, actions } = props;
   const fresh = useFresh();
@@ -87,6 +100,7 @@ function Locations(props: { data: LightData; actions: LightActions }) {
       <h2 id="locations" className={H2}>
         Standorte
       </h2>
+      <UnknownZoneBanner locations={data.locations} />
       {data.locations.length === 0 ? (
         <EmptyState
           title="Noch keine Standorte"

@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render as plainRender, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/lib/viewport-mock";
+import { ToastProvider } from "@/components/shared/states/toast/toast-provider/toast-provider";
 import { LightPage } from "./LightPage";
+
+/** The page lives inside the app shell, which owns the toast provider (US-QS-14). */
+const render = (ui: React.ReactElement) => plainRender(<ToastProvider>{ui}</ToastProvider>);
 
 const SIGNED_OUT = "Du bist nicht angemeldet. Bitte melde dich an.";
 const response = (status: number, body: unknown) =>
@@ -264,6 +268,39 @@ describe("US-LIC-05 page locations and light zones", () => {
       lightZoneId: "z1",
       kind: "outdoor",
     });
+  });
+});
+
+describe("US-QS-14 feedback on the light page", () => {
+  it("US-QS-14 a saved location is confirmed with a toast", async () => {
+    fakeServer({ zones: [zone], locations: [location] });
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Lichtzone zuweisen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    expect(await screen.findByText("Standort gespeichert.")).toBeTruthy();
+  });
+
+  it("US-QS-14 a refused write shows no success toast", async () => {
+    fakeServer({ zones: [], locations: [] });
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Standard-Lampen übernehmen" }),
+    );
+    await screen.findByRole("alert");
+    expect(screen.queryByText("Standard-Lampen übernommen.")).toBeNull();
+  });
+
+  it("US-QS-14 a location without light zone shows a banner that says what to do", async () => {
+    fakeServer({ zones: [zone], locations: [location] });
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
+    expect(await screen.findByText("Lichtzone unbekannt")).toBeTruthy();
+    expect(screen.getByText(/Für Balkon fehlt die Lichtzone/)).toBeTruthy();
   });
 });
 
