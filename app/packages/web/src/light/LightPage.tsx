@@ -1,5 +1,6 @@
 import { EmptyState } from "@/components/shared/empty-state";
 import { useCallback, useMemo, useState } from "react";
+import { useToast } from "@/components/shared/states/toast/toast-provider/toast-provider";
 import { RequestState } from "@/components/shared/states/request-state/request-state";
 import { SIGN_IN as KERNEL_SIGN_IN, useReload, useRequest } from "../kernel";
 import { LightView, type LightActions } from "./light-view";
@@ -34,31 +35,37 @@ async function derive(api: string, token: Token, a: DerivationRequest) {
 }
 
 function buildActions(
-  api: string,
-  token: Token,
+  { api, token }: { api: string; token: Token },
   load: () => Promise<void>,
   setLastError: (f: ApiError | undefined) => void,
+  saved: (message: string) => void,
 ): LightActions {
-  const write = async (method: "POST" | "PUT" | "DELETE", path: string, body?: unknown) => {
+  const write = async (
+    method: "POST" | "PUT" | "DELETE",
+    path: string,
+    message: string,
+    body?: unknown,
+  ) => {
     const t = await token();
     if (!t) return SIGN_IN;
     const r = await createWrite(api, t)(method, path, body);
     if (!r.ok) return r.error;
     setLastError(undefined);
     await load();
+    saved(message);
     return null;
   };
   return {
-    zoneCreate: (e) => write("POST", "/light-zones", e),
-    zoneUpdate: (id, e) => write("PUT", `/light-zones/${id}`, e),
-    zoneDelete: (id) => write("DELETE", `/light-zones/${id}`),
+    zoneCreate: (e) => write("POST", "/light-zones", "Lichtzone angelegt.", e),
+    zoneUpdate: (id, e) => write("PUT", `/light-zones/${id}`, "Lichtzone gespeichert.", e),
+    zoneDelete: (id) => write("DELETE", `/light-zones/${id}`, "Lichtzone gelöscht."),
     defaults: async () => {
-      const f = await write("POST", "/light-zones/defaults", {});
+      const f = await write("POST", "/light-zones/defaults", "Standard-Lampen übernommen.", {});
       setLastError(f ?? undefined);
       return f;
     },
-    locationCreate: (e) => write("POST", "/locations", e),
-    locationUpdate: (id, e) => write("PUT", `/locations/${id}`, e),
+    locationCreate: (e) => write("POST", "/locations", "Standort angelegt.", e),
+    locationUpdate: (id, e) => write("PUT", `/locations/${id}`, "Standort gespeichert.", e),
     zoneDerive: (a) => derive(api, token, a),
   };
 }
@@ -93,6 +100,7 @@ export function LightPage(props: {
 }) {
   const [lastError, setLastError] = useState<ApiError | undefined>();
   const { api, token } = props;
+  const toast = useToast();
 
   const loadAll = useCallback(
     async (t: string): Promise<Response<Loaded>> => {
@@ -107,7 +115,10 @@ export function LightPage(props: {
   const reload = useReload(LIGHT_KEY);
   const load = useCallback(() => reload(), [reload]);
 
-  const actions = useMemo(() => buildActions(api, token, load, setLastError), [api, token, load]);
+  const actions = useMemo(
+    () => buildActions({ api, token }, load, setLastError, (message) => toast.show({ message })),
+    [api, token, load, toast],
+  );
 
   const loading = "Standorte und Lichtzonen werden geladen …";
   const z = request.value;
