@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
+import { migrate, openOwnerPool, openFixturePool, holdTaxonLock } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
@@ -9,6 +9,8 @@ type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 // US-BES-10 over HTTP with real PostgreSQL (`make db-up`): two plant keepers and an operator share the catalog.
 let pool: Pool;
 let admin: Pool; // superuser fixture pool: setup, cleanup and cross-tenant observation (QG-D1)
+// Approves species: holds the taxon lock so a parallel taxonomy build sees a stable catalog (#646).
+let releaseTaxa: (() => Promise<void>) | undefined;
 const run = randomUUID()
   .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
   .replace(/-/g, "")
@@ -74,6 +76,7 @@ const approve = async (sub: string) => {
 beforeAll(async () => {
   pool = openOwnerPool();
   admin = openFixturePool();
+  releaseTaxa = await holdTaxonLock(admin);
   await migrate(pool);
   app = createApp({ reviewer: verifier, pool });
   for (const sub of [subKeeper, subOther, subOperator]) await call(sub, "GET", "/species");
@@ -99,6 +102,7 @@ afterAll(async () => {
   } finally {
     client.release();
     await pool.end();
+    await releaseTaxa?.();
     await admin.end();
   }
 });

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
+import { migrate, openFixturePool, openOwnerPool, holdTaxonLock } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
@@ -9,6 +9,8 @@ type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 // US-SOZ-05: "Neu bei Freunden" through the API (real PostgreSQL).
 let pool: Pool;
 let admin: Pool; // superuser fixture pool: cross-tenant setup and cleanup (QG-D1)
+// Approves species: holds the taxon lock so a parallel taxonomy build sees a stable catalog (#646).
+let releaseTaxa: (() => Promise<void>) | undefined;
 const [subA, subB, subC, subOp] = [0, 1, 2, 3].map(() => `soz5-${randomUUID()}`) as [
   string,
   string,
@@ -67,6 +69,7 @@ const specimen = async (sub: string, catchDate: string, marker: string) =>
 beforeAll(async () => {
   pool = openOwnerPool();
   admin = openFixturePool();
+  releaseTaxa = await holdTaxonLock(admin);
   await migrate(pool);
   app = createApp({ reviewer, pool, clock: () => new Date("2026-10-06T10:00:00Z") });
   for (const sub of [subA, subB, subC, subOp]) await call(sub, "GET", "/account");
@@ -109,6 +112,7 @@ afterAll(async () => {
   );
   await admin.query("delete from account where subject = any($1)", subs);
   await pool.end();
+  await releaseTaxa?.();
   await admin.end();
 });
 
