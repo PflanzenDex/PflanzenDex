@@ -1,0 +1,124 @@
+{
+  "viewport": {
+    "width": 375,
+    "height": 812
+  },
+  "findings": [
+    {
+      "step": "signed-out",
+      "status": "✅",
+      "note": "screenshot 01-signed-out-mobil.png"
+    },
+    {
+      "step": "login",
+      "status": "✅",
+      "note": "screenshot 02-login-mobil.png"
+    },
+    {
+      "step": "start",
+      "status": "✅",
+      "note": "screenshot 03-start-mobil.png"
+    },
+    {
+      "step": "light-empty",
+      "status": "✅",
+      "note": "screenshot 04-light-empty-mobil.png"
+    },
+    {
+      "step": "light-set-up",
+      "status": "✅",
+      "note": "screenshot 05-light-set-up-mobil.png"
+    },
+    {
+      "step": "species-search",
+      "status": "✅",
+      "note": "screenshot 06-species-search-mobil.png"
+    },
+    {
+      "step": "species-proposal",
+      "status": "✅",
+      "note": "screenshot 07-species-proposal-mobil.png"
+    },
+    {
+      "step": "specimen-new",
+      "status": "✅",
+      "note": "screenshot 08-specimen-new-mobil.png"
+    },
+    {
+      "step": "collection",
+      "status": "✅",
+      "note": "screenshot 09-collection-mobil.png"
+    },
+    {
+      "step": "measure",
+      "status": "✅",
+      "note": "screenshot 10-measure-mobil.png"
+    },
+    {
+      "step": "measure-invalid",
+      "status": "✅",
+      "note": "screenshot 11-measure-invalid-mobil.png"
+    },
+    {
+      "step": "start-with-data",
+      "status": "✅",
+      "note": "screenshot 12-start-with-data-mobil.png"
+    },
+    {
+      "step": "pokedex",
+      "status": "✅",
+      "note": "screenshot 13-pokedex-mobil.png"
+    },
+    {
+      "step": "wishlist",
+      "status": "✅",
+      "note": "screenshot 14-wishlist-mobil.png"
+    },
+    {
+      "step": "care-phases",
+      "status": "✅",
+      "note": "screenshot 15-care-phases-mobil.png"
+    },
+    {
+      "step": "treatments",
+      "status": "✅",
+      "note": "screenshot 16-treatments-mobil.png"
+    },
+    {
+      "step": "hints",
+      "status": "✅",
+      "note": "screenshot 17-hints-mobil.png"
+    },
+    {
+      "step": "care-profile",
+      "status": "✅",
+      "note": "screenshot 18-care-profile-mobil.png"
+    },
+    {
+      "step": "difficulty",
+      "status": "✅",
+      "note": "screenshot 19-difficulty-mobil.png"
+    },
+    {
+      "step": "light-with-specimen",
+      "status": "✅",
+      "note": "screenshot 20-light-with-specimen-mobil.png"
+    },
+    {
+      "step": "account",
+      "status": "✅",
+      "note": "screenshot 21-account-mobil.png"
+    },
+    {
+      "step": "settings",
+      "status": "✅",
+      "note": "screenshot 22-settings-mobil.png"
+    },
+    {
+      "step": "review-no-role",
+      "status": "✅",
+      "note": "screenshot 23-review-no-role-mobil.png"
+    }
+  ],
+  "consoleErrors": []
+}
