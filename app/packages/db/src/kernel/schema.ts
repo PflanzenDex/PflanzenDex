@@ -79,7 +79,7 @@ function violation(z: Row, ex: TenantExceptions): string | null {
 }
 
 /**
- * Violations of the tenant rules in the schema; empty means fine. With the module register (app/modules.config.mjs)
+ * Violations of the tenant rules in the schema; empty means fine. With the module register (app/config/lint/modules.config.mjs)
  * it also checks the module boundaries: table without module (AB-13) and foreign keys across module boundaries (AB-10).
  */
 export async function checkSchema(

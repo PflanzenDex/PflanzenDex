@@ -11,7 +11,7 @@
   },
   "scripts": {
     "dev": "concurrently -n api,web -c blue,green \"npm run dev -w @pflanzendex/api\" \"npm run dev -w @pflanzendex/web\"",
-    "lint": "eslint .",
+    "lint": "eslint -c config/lint/eslint.config.js .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "npm run typecheck --workspaces --if-present",
@@ -39,8 +39,8 @@
     "gates": "npm run lint && npm run typecheck && npm run boundaries && npm run layout && npm run db-indexes && npm run baseline && npm run design-system && npm run stories && npm run knip && npm run specs && npm run principles && npm run skills && npm run duplicates && npm run dup && npm run format:check && npm run ci-drift && npm run docs",
     "crap": "node tools/check/quality/check-crap.mjs",
     "ci": "npm run gates && npm run coverage && npm run crap && npm run build && npm run bundle-budget && npm run conformance:blocking",
-    "knip": "knip",
-    "unused-report": "mkdir -p .cache && knip --production --no-exit-code --no-config-hints --reporter markdown > .cache/unused-report.md && cat .cache/unused-report.md",
+    "knip": "knip -c config/lint/knip.json",
+    "unused-report": "mkdir -p .cache && knip -c config/lint/knip.json --production --no-exit-code --no-config-hints --reporter markdown > .cache/unused-report.md && cat .cache/unused-report.md",
     "audit": "node tools/check/supply/check-audit.mjs",
     "skills": "node tools/check/docs/check-skills.mjs",
     "dup": "node tools/check/quality/duplicates/check-dup.mjs",
@@ -81,10 +81,13 @@
     "typescript-eslint": "^8.71.0",
     "vitest": "^5.0.3"
   },
+  "release": {
+    "extends": "./config/project/release.config.js"
+  },
   "lint-staged": {
     "*.{ts,tsx,js,mjs}": [
       "prettier --write",
-      "eslint --max-warnings=0 --no-warn-ignored"
+      "eslint -c config/lint/eslint.config.js --max-warnings=0 --no-warn-ignored"
     ],
     "*.{json,md,css,html,yml,yaml}": "prettier --write"
   }

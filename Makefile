@@ -25,7 +25,7 @@ hooks: ## Enable the git hooks in .githooks/ (commit-msg, pre-commit, pre-push, 
 commitlint: ## Check a commit message or PR title (MSG="feat(pha): …"), QG-C1
 	@# MSG reaches the shell as an environment variable, never through $$(MSG) expansion: PR titles are untrusted input.
 	@test -n "$$MSG" || { echo 'usage: make commitlint MSG="feat(pha): …"' >&2; exit 2; }
-	@cd $(APP) && printf '%s\n' "$$MSG" | npx --no-install commitlint
+	@cd $(APP) && printf '%s\n' "$$MSG" | npx --no-install commitlint --config config/project/commitlint.config.js
 
 changelog-check: ## PR changelog gate (QG-U3); env PR_TITLE, PR_BODY, PR_BASE_SHA, PR_BASE_REF
 	@cd $(APP) && npm run --silent changelog
@@ -56,29 +56,29 @@ db-down: ## Remove the test database
 migrate: ## Apply migrations (DATABASE_URL, otherwise the test database)
 	cd $(APP) && npm run migrate -w @pflanzendex/db
 
-auth-up: ## Start the auth server (Keycloak) and mail catcher; admin password in app/dev/.env (not in the repo)
-	@test -f $(APP)/dev/.env || echo "KC_ADMIN_PASSWORD=$$(head -c 18 /dev/urandom | base64 | tr -dc A-Za-z0-9)" > $(APP)/dev/.env
-	docker compose -f $(APP)/dev/compose.yaml --env-file $(APP)/dev/.env up -d
+auth-up: ## Start the auth server (Keycloak) and mail catcher; admin password in app/config/dev/.env (not in the repo)
+	@test -f $(APP)/config/dev/.env || echo "KC_ADMIN_PASSWORD=$$(head -c 18 /dev/urandom | base64 | tr -dc A-Za-z0-9)" > $(APP)/config/dev/.env
+	docker compose -f $(APP)/config/dev/compose.yaml --env-file $(APP)/config/dev/.env up -d
 	@for i in $$(seq 60); do curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && break; sleep 2; done; curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null || { echo "Keycloak is not responding"; exit 1; }
 	@echo "Keycloak: http://localhost:18081 (realm pflanzendex), mail: http://localhost:18025"
 
 auth-down: ## Remove the auth server and mail catcher
-	-docker compose -f $(APP)/dev/compose.yaml --env-file $(APP)/dev/.env down -v
+	-docker compose -f $(APP)/config/dev/compose.yaml --env-file $(APP)/config/dev/.env down -v
 
 start: auth-up db-up ## Start everything for local work: auth server, database, API and web; prints URLs and test accounts
 	@for i in $$(seq 60); do curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test && break; sleep 2; done; curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test || { echo "Keycloak or the database is not responding"; exit 1; }
 	@echo "Web: http://localhost:5173  API: http://localhost:3000  Keycloak: http://localhost:18081  Mail: http://localhost:18025"
-	@echo "Test accounts (dev realm): test, test2, test3 - password testtest12 (see app/README.md)"
+	@echo "Test accounts (dev realm): test, test2, test3 - password testtest12 (see docs/guides/reference/app.md)"
 	$(MAKE) dev
 
 stop: ## Stop the local auth server, mail catcher and database containers (data is kept)
-	-docker compose -f $(APP)/dev/compose.yaml --env-file $(APP)/dev/.env stop
+	-docker compose -f $(APP)/config/dev/compose.yaml --env-file $(APP)/config/dev/.env stop
 	-docker stop $(DB_CONTAINER)
 
 test: $(if $(CI),,db-up) ## Unit and database tests of all packages and check scripts
 	cd $(APP) && npm run test
 
-coverage: $(if $(CI),,db-up) ## Run all tests with coverage, then the ratchet check (thresholds: app/coverage-thresholds.json)
+coverage: $(if $(CI),,db-up) ## Run all tests with coverage, then the ratchet check (thresholds: app/config/gates/coverage-thresholds.json)
 	cd $(APP) && npm run coverage
 
 browsers: ## Install the Chromium that Playwright uses (e2e, conformance run)
@@ -138,13 +138,13 @@ unused-report: ## Code only reachable from tests and unused dependencies, report
 duplicates: ## Clone groups with 3+ copies in changed files block, whole project is reported (QG-K4; base DUPLICATES_BASE, default origin/dev)
 	cd $(APP) && npm run duplicates
 
-dup: ## Share of duplicated lines in the whole project (jscpd), ratchet toward 1 % (QG-K5, FR-QG-10; config app/.jscpd.json, limit in app/quality-limits.json)
+dup: ## Share of duplicated lines in the whole project (jscpd), ratchet toward 1 % (QG-K5, FR-QG-10; config app/.jscpd.json, limit in app/config/gates/quality-limits.json)
 	cd $(APP) && npm run dup
 
 layout: ## File layout: at most 5 units per directory, names, component folders, baseline ratchet (QG-C4, US-QG-09)
 	cd $(APP) && npm run layout
 
-layout-baseline: ## Create or lower app/layout-baseline.json, never enlarge it (FR-QG-22)
+layout-baseline: ## Create or lower app/config/gates/baselines/layout-baseline.json, never enlarge it (FR-QG-22)
 	cd $(APP) && npm run layout -- --write-baseline
 
 db-indexes: ## Every foreign key and tenant column (account_id) of the migrations has an index, baseline ratchet (US-QG-07)
@@ -192,11 +192,11 @@ status-check: ## Project status vs. pull requests and missing priorities (US-DEV
 clean: ## Remove build output and node_modules
 	cd $(APP) && rm -rf node_modules packages/*/node_modules packages/*/dist
 
-deploy: ## Build and start staging from origin/main (on the host, needs app/deploy/.env)
-	$(APP)/deploy/scripts/deploy.sh
+deploy: ## Build and start staging from origin/main (on the host, needs app/config/deploy/.env)
+	$(APP)/config/deploy/scripts/deploy.sh
 
-backup: ## Back up the database (app/deploy/backups)
-	$(APP)/deploy/scripts/backup.sh
+backup: ## Back up the database (app/config/deploy/backups)
+	$(APP)/config/deploy/scripts/backup.sh
 
 restore-test: ## Restore test in a throwaway container (needs Docker)
-	$(APP)/deploy/scripts/restore-test.sh
+	$(APP)/config/deploy/scripts/restore-test.sh

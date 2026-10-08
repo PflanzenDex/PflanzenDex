@@ -3,7 +3,7 @@
 - **Status:** proposed (2026-10-05). The project owner confirms or changes each decision in the review of this ADR's PR; the status of every decision is stated below.
 - **Refines:** TE-17 (design system migration), TE-18 (living component catalog); complements ADR [0006](0006-vite-spa-pwa-capacitor.md) (E-21), which decides framework, router and data layer
 - **Decision record:** E-22 in `docs/specs/product/16-releases-and-decisions.md`
-- **Rules:** `docs/guides/design-system.md` (DS-01, DS-08, DS-15, DS-23, DS-28 and sections 3 and 6), `US-QS-07`
+- **Rules:** `docs/guides/reference/design-system.md` (DS-01, DS-08, DS-15, DS-23, DS-28 and sections 3 and 6), `US-QS-07`
 
 ## Context
 
@@ -76,7 +76,7 @@ This ADR contains six decisions. Each states status, reason, alternatives and co
 ## Decision 5 · Bundle budget (DS-08)
 
 - **Status:** starting value is an assumption; the measured number is decided in the budget issue and confirmed by the owner there.
-- **Decision:** the budget for initial JavaScript (gzipped) is set from a measurement, not in advance. `docs/guides/design-system.md` DS-08 names 170 kB as a starting value; that is an assumption, not a measurement. The budget issue measures the real first load (`make lighthouse`, `vite build` size output), then writes the measured number plus a stated headroom into the budget. Until then no hard limit is enforced on the strength of 170 kB.
+- **Decision:** the budget for initial JavaScript (gzipped) is set from a measurement, not in advance. `docs/guides/reference/design-system.md` DS-08 names 170 kB as a starting value; that is an assumption, not a measurement. The budget issue measures the real first load (`make lighthouse`, `vite build` size output), then writes the measured number plus a stated headroom into the budget. Until then no hard limit is enforced on the strength of 170 kB.
 - **Reason:** P-08 and FR-QG-09 forbid invented numbers; a limit that was never measured is either always red or meaningless.
 - **Alternatives:** fix 170 kB now (rejected: unmeasured); no budget (rejected: DS-08 asks for route-level splitting to be checkable).
 - **Consequences:**
@@ -90,9 +90,9 @@ This ADR contains six decisions. Each states status, reason, alternatives and co
 - **Status:** proposed, owner confirms in the ADR PR review.
 - **Decision:** dark mode keeps `prefers-color-scheme` (today's behavior). Tailwind's `dark:` variant is bound to it with `@custom-variant dark (@media (prefers-color-scheme: dark));`. A manual light/dark toggle is a separate story and not part of this migration.
 - **Reason:** it is what the app does today, needs no stored preference and no flash-of-wrong-theme handling, and keeps the migration small.
-- **Alternatives:** the `.dark` class sketched in `docs/guides/design-system.md` section 3.1 with a toggle (deferred: it needs a story, a stored setting and a no-flash bootstrap); a `data-theme` attribute (same cost).
+- **Alternatives:** the `.dark` class sketched in `docs/guides/reference/design-system.md` section 3.1 with a toggle (deferred: it needs a story, a stored setting and a no-flash bootstrap); a `data-theme` attribute (same cost).
 - **Consequences:**
-  - Tokens are redefined for dark inside `@media (prefers-color-scheme: dark)` instead of under `.dark`; the sketch in `docs/guides/design-system.md` section 3.1 differs in selector only. The stack issue adjusts the sketch when the tokens are implemented; this ADR does not edit `docs/guides/design-system.md`.
+  - Tokens are redefined for dark inside `@media (prefers-color-scheme: dark)` instead of under `.dark`; the sketch in `docs/guides/reference/design-system.md` section 3.1 differs in selector only. The stack issue adjusts the sketch when the tokens are implemented; this ADR does not edit `docs/guides/reference/design-system.md`.
   - Storybook shows dark by emulating the media feature (toolbar), which the catalog setup must support, so stories can be checked in both themes (decision 3).
   - If a toggle is added later, the variant is redefined in one place (`@custom-variant`); components keep using `dark:` and tokens.
 

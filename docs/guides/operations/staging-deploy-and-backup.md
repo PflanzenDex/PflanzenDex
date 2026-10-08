@@ -1,6 +1,6 @@
 # Runbook: deploy staging, back up, restore
 
-Ticket TE-03 (#40). Basis: E-01 (self-hosting, Docker Compose, one host), R-09, R-11, NFR-15, QG-S1. All files live in `app/deploy/`.
+Ticket TE-03 (#40). Basis: E-01 (self-hosting, Docker Compose, one host), R-09, R-11, NFR-15, QG-S1. All files live in `app/config/deploy/`.
 
 ## Overview
 
@@ -14,12 +14,12 @@ Ticket TE-03 (#40). Basis: E-01 (self-hosting, Docker Compose, one host), R-09, 
 
 The database is not exposed. Only the proxy listens (ports from `HTTP_PORT`/`HTTPS_PORT`).
 
-**Compression and caching (NFR-12):** the proxy compresses text responses (HTML, JS, CSS, JSON, SVG) with zstd or gzip, whichever `Accept-Encoding` asks for; Brotli would need a Caddy plugin and is not used. `web` sends `Cache-Control: public, max-age=31536000, immutable` for the hashed files under `/assets/` and `no-cache` (revalidate) for `index.html`, the service worker, the web manifest and SPA routes. The config is `app/deploy/proxy.Caddyfile` and `app/deploy/web.Caddyfile`; the test is `serving-headers.test.ts` in `app/packages/web/src/lib/test-setup/`.
+**Compression and caching (NFR-12):** the proxy compresses text responses (HTML, JS, CSS, JSON, SVG) with zstd or gzip, whichever `Accept-Encoding` asks for; Brotli would need a Caddy plugin and is not used. `web` sends `Cache-Control: public, max-age=31536000, immutable` for the hashed files under `/assets/` and `no-cache` (revalidate) for `index.html`, the service worker, the web manifest and SPA routes. The config is `app/config/deploy/proxy.Caddyfile` and `app/config/deploy/web.Caddyfile`; the test is `serving-headers.test.ts` in `app/packages/web/src/lib/test-setup/`.
 
 ## One-time setup (host)
 
 1. Install Docker and Docker Compose, clone the repo.
-2. `cp app/deploy/.env.example app/deploy/.env` and fill in the values (a long random password, `SITE_ADDRESS` = domain). The file is in `.gitignore`; secrets never go into the repo (QG-S1).
+2. `cp app/config/deploy/.env.example app/config/deploy/.env` and fill in the values (a long random password, `SITE_ADDRESS` = domain). The file is in `.gitignore`; secrets never go into the repo (QG-S1).
 3. Schedule backups with cron or a timer, e.g. daily: `0 3 * * * cd /path/to/repo && make backup`.
 
 ## Deploy from `main`
@@ -28,16 +28,16 @@ The database is not exposed. Only the proxy listens (ports from `HTTP_PORT`/`HTT
 make deploy          # fetches origin/main, backs up the DB (if it runs), builds, starts, waits for /health
 ```
 
-To try another state: `app/deploy/scripts/deploy.sh origin/dev`. Builds are reproducible: `npm ci` from the lock file, base images pinned to major versions (`node:24-alpine`, `postgres:16-alpine`, `caddy:2-alpine`). `GET /health` shows the running version (`version` = commit hash).
-Migrations run on every deploy: the one-shot `migrate` service (same image as `api`, `packages/db/migrations`) applies pending files before the `api` starts (`depends_on: service_completed_successfully`). They are forward only and guarded by an advisory lock and checksums. A failing migration fails `compose up`, so `deploy.sh` rolls back to the previous ref and the API never runs against a half-migrated schema. Check with `docker compose --env-file app/deploy/.env -f app/deploy/docker-compose.yml logs migrate`. Migrations are not rolled back; use the pre-deploy backup (restore below) for data problems. Manual run: `docker compose --env-file app/deploy/.env -f app/deploy/docker-compose.yml run --rm migrate`.
-Rollback: `app/deploy/scripts/deploy.sh <earlier commit>`; for data problems, restore (below).
+To try another state: `app/config/deploy/scripts/deploy.sh origin/dev`. Builds are reproducible: `npm ci` from the lock file, base images pinned to major versions (`node:24-alpine`, `postgres:16-alpine`, `caddy:2-alpine`). `GET /health` shows the running version (`version` = commit hash).
+Migrations run on every deploy: the one-shot `migrate` service (same image as `api`, `packages/db/migrations`) applies pending files before the `api` starts (`depends_on: service_completed_successfully`). They are forward only and guarded by an advisory lock and checksums. A failing migration fails `compose up`, so `deploy.sh` rolls back to the previous ref and the API never runs against a half-migrated schema. Check with `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml logs migrate`. Migrations are not rolled back; use the pre-deploy backup (restore below) for data problems. Manual run: `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml run --rm migrate`.
+Rollback: `app/config/deploy/scripts/deploy.sh <earlier commit>`; for data problems, restore (below).
 
-Trying it locally (without a domain): `.env` with `SITE_ADDRESS=localhost`, then `docker compose --env-file app/deploy/.env -f app/deploy/docker-compose.yml up -d --build` and `curl -k https://localhost:8443/health`.
+Trying it locally (without a domain): `.env` with `SITE_ADDRESS=localhost`, then `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml up -d --build` and `curl -k https://localhost:8443/health`.
 
 ## Backup
 
 ```bash
-make backup          # app/deploy/backups/pflanzendex-<UTC time>.dump (pg_dump -Fc)
+make backup          # app/config/deploy/backups/pflanzendex-<UTC time>.dump (pg_dump -Fc)
 ```
 
 The script verifies the file with `pg_restore -l`, deletes backups older than `BACKUP_RETENTION_DAYS` and copies them to `BACKUP_REMOTE` with `rsync` if set (second location, R-11). An unreadable backup fails with an error (a backup that cannot be restored is an incident, NFR-15).
@@ -46,11 +46,11 @@ The script verifies the file with `pg_restore -l`, deletes backups older than `B
 
 ```bash
 # into a second database (safe, for checking):
-app/deploy/scripts/restore.sh app/deploy/backups/<file>.dump pdx_check
+app/config/deploy/scripts/restore.sh app/config/deploy/backups/<file>.dump pdx_check
 # over the production database (overwrites it; stop the API first):
-docker compose --env-file app/deploy/.env -f app/deploy/docker-compose.yml stop api
-CONFIRM=yes app/deploy/scripts/restore.sh app/deploy/backups/<file>.dump
-docker compose --env-file app/deploy/.env -f app/deploy/docker-compose.yml start api
+docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml stop api
+CONFIRM=yes app/config/deploy/scripts/restore.sh app/config/deploy/backups/<file>.dump
+docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml start api
 ```
 
 ## Restore test (NFR-15)

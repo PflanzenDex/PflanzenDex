@@ -6,7 +6,7 @@ import load from "@commitlint/load";
 
 const config = await load(
   {},
-  { file: "commitlint.config.js", cwd: new URL("../..", import.meta.url).pathname },
+  { file: "config/project/commitlint.config.js", cwd: new URL("../..", import.meta.url).pathname },
 );
 const check = (message) =>
   lint(message, config.rules, {

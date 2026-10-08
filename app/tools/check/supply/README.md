@@ -11,10 +11,10 @@
 
 ## Targets
 
-| Number                    | Value  | Effect                                                                                          |
-| ------------------------- | ------ | ----------------------------------------------------------------------------------------------- |
-| Hard limit                | 136 kB | `bundle.initialJsGzipBytes` in `app/quality-limits.json`; the blocking gate; only ever lowered. |
-| Working target (starting) | 140 kB | Assumption (owner decision 2026-10-06, phones are the main target). Report only, never blocks.  |
+| Number                    | Value  | Effect                                                                                                       |
+| ------------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
+| Hard limit                | 136 kB | `bundle.initialJsGzipBytes` in `app/config/gates/quality-limits.json`; the blocking gate; only ever lowered. |
+| Working target (starting) | 140 kB | Assumption (owner decision 2026-10-06, phones are the main target). Report only, never blocks.               |
 
 The gap between the target and the limit is not room to spend: the target is where the bundle should move, the limit is the ratchet.
 

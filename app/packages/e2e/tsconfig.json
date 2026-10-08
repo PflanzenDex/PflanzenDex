@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../config/project/tsconfig.base.json",
   "compilerOptions": { "lib": ["ES2023", "DOM"], "types": ["node"] },
   "include": ["tests", "support", "playwright.config.ts"]
 }

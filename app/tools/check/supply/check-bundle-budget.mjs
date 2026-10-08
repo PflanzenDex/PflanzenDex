@@ -16,7 +16,9 @@ import path from "node:path";
 import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
 
-export function readBudget(file = new URL("../../../quality-limits.json", import.meta.url)) {
+export function readBudget(
+  file = new URL("../../../config/gates/quality-limits.json", import.meta.url),
+) {
   return JSON.parse(fs.readFileSync(file, "utf8")).bundle.initialJsGzipBytes;
 }
 
@@ -80,7 +82,7 @@ export function checkBudget(total, max = INITIAL_JS_BUDGET_BYTES) {
   const message = ok
     ? `initial JS ${formatKb(total)} gzip, allowed ${formatKb(max)}`
     : `initial JS is ${formatKb(total)} gzip, allowed ${formatKb(max)} (over by ${formatKb(total - max)}). ` +
-      `Load the new code lazily (React.lazy, DS-08) or lower the cost; the limit is bundle.initialJsGzipBytes in app/quality-limits.json and is only ever lowered.`;
+      `Load the new code lazily (React.lazy, DS-08) or lower the cost; the limit is bundle.initialJsGzipBytes in app/config/gates/quality-limits.json and is only ever lowered.`;
   return { ok, message };
 }
 

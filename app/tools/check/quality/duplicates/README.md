@@ -13,7 +13,7 @@ The output names the measured percentage, the limit and the target. On failure i
 ## Limit and target
 
 - Target (owner decision): at most 1 % duplicated lines.
-- The limit is `dup.maxPercent` in `app/quality-limits.json`. It started at the measured value (1.65 %, measured on 2026-10-06, assumption) and only goes down, never up.
+- The limit is `dup.maxPercent` in `app/config/gates/quality-limits.json`. It started at the measured value (1.65 %, measured on 2026-10-06, assumption) and only goes down, never up.
 - `DUP-1`: the measured value is above the limit. Remove the clones; do not raise the limit.
 - `DUP-2`: the measured value is more than `slackPercent` (0.1 points) below the limit. Lower `maxPercent` to the printed value in the same PR that removed clones. At 1 % the ratchet is finished.
 

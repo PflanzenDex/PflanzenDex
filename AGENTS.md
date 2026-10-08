@@ -14,7 +14,7 @@ Rules for AI agents (Claude Code, Codex, Copilot, …) working in this repo. Hum
 
 - Architecture is checked by scripts, not by goodwill: `core` has no I/O (AB-1), API and web import `core` only through `@pflanzendex/core` (AB-2), web talks to the database only over HTTP (AB-6). Writes go through validating operations (P-03). Tenant isolation is tested for every table (P-04).
 - Tests come from the acceptance criteria and carry the story ID in their name (P-06).
-- The file layout is checked by `make layout` (at most 5 units per directory, kebab-case names, one folder per component, `app/layout.config.mjs`). A new violation fails the gate; the baseline `app/layout-baseline.json` only shrinks. Move files with the layout rules in mind instead of adding to a crowded directory (FR-QG-21).
+- The file layout is checked by `make layout` (at most 5 units per directory, kebab-case names, one folder per component, `app/config/lint/layout.config.mjs`). A new violation fails the gate; the baseline `app/config/gates/baselines/layout-baseline.json` only shrinks. Move files with the layout rules in mind instead of adding to a crowded directory (FR-QG-21).
 - Domain errors carry a stable code `<domain>.<reason>` with a text in `ERROR_TEXTS` (FR-QG-11). Nothing is swallowed silently (P-10).
 - Language: everything is English (specs, glossary, identifiers, docs, commits, PRs) except UI texts and quoted prototype terms, which stay German. Never mix within a file.
 
@@ -28,5 +28,5 @@ Blocked for agents (and pointless anyway, because CI and the rulesets repeat eve
 
 1. `make ci` (or at least `make gates` plus the tests you touched) and report the result honestly: pass or fail, with the failing output. Never "should work" (D-05). The Stop hook reminds you if code changed after the last run.
 2. Update the spec status (⬜ → 🟨 → ✅) and the counters in `docs/specs/product/readme.md` in the same PR.
-3. Commit only when asked. Conventional Commits with an epic scope (`app/commitlint.config.js`). Open the PR against `dev` and fill in the template, including the "AI involvement" section; `make pr PR=<n>` pushes and marks it ready for review (US-DEV-10). The README statistics are regenerated once per release PR, not per PR.
+3. Commit only when asked. Conventional Commits with an epic scope (`app/config/project/commitlint.config.js`). Open the PR against `dev` and fill in the template, including the "AI involvement" section; `make pr PR=<n>` pushes and marks it ready for review (US-DEV-10). The README statistics are regenerated once per release PR, not per PR.
 4. Merge into `dev` with `make merge PR=<n>` once `ci-status` is green. It refuses unless the PR names a story that exists in `docs/specs/product/`, targets `dev`, and changes no gate file; then a human merges (ADR 0005). Releases into `main` stay with a human.

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const LAYERS = ["core", "db", "api", "web"];
-const CONFIG_FILE = "modules.config.mjs";
+const CONFIG_FILE = "config/lint/modules.config.mjs";
 const isTestFile = (f) => /\.test\.[a-z]+$/.test(f);
 const isTestHelper = (f) => path.parse(f).name === "test-helpers";
 

@@ -11,11 +11,11 @@ A directory with few entries and a predictable name can be read at a glance, and
 
 ## How it is measured
 
-`make layout` counts units per directory (files with the same stem count once) and reports violations of LY-1 to LY-5; the target is an empty `app/layout-baseline.json`. Limits: 5 units per directory, 10 feature directories per module (starting values, assumption).
+`make layout` counts units per directory (files with the same stem count once) and reports violations of LY-1 to LY-5; the target is an empty `app/config/gates/baselines/layout-baseline.json`. Limits: 5 units per directory, 10 feature directories per module (starting values, assumption).
 
 ## Checked by
 
-`app/tools/check/code/layout/check-layout.mjs`, `app/tools/check/code/layout/layout-rules.mjs`, `app/tools/check/code/layout/layout-baseline.mjs` and their tests `app/tools/check/code/layout/check-layout.test.mjs`, `app/tools/check/code/layout/layout-rules.test.mjs`, `app/tools/check/code/layout/layout-baseline.test.mjs`; configuration `app/layout.config.mjs`.
+`app/tools/check/code/layout/check-layout.mjs`, `app/tools/check/code/layout/layout-rules.mjs`, `app/tools/check/code/layout/layout-baseline.mjs` and their tests `app/tools/check/code/layout/check-layout.test.mjs`, `app/tools/check/code/layout/layout-rules.test.mjs`, `app/tools/check/code/layout/layout-baseline.test.mjs`; configuration `app/config/lint/layout.config.mjs`.
 
 ## Gate
 

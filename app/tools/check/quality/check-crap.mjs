@@ -10,7 +10,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 /** The threshold lives in quality-limits.json (`crap.max`, FR-QG-16/18); a function above it fails. */
-export function readMaxCrap(file = new URL("../../../quality-limits.json", import.meta.url)) {
+export function readMaxCrap(
+  file = new URL("../../../config/gates/quality-limits.json", import.meta.url),
+) {
   return JSON.parse(fs.readFileSync(file, "utf8")).crap.max;
 }
 

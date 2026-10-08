@@ -7,11 +7,11 @@
 
 ## Context
 
-The module cut is checked (`app/modules.config.mjs`, AB-7 to AB-14), the file layout is not. A measurement on 2026-10-05 showed 77 of 111 tracked directories with more than 5 entries (`docs/records/test-logs` 70, `app/scripts` 59, `web/src/collection` 49, `core/src/collection` 48, `web/src/components/ui` 40), 22 entries in `app/`, two `scripts/` folders, loose component files in `web/src` and mixed naming (`docs/specs/product` next to `docs/adr`, PascalCase pages next to kebab-case files). A rule that nobody checks is a wish (chapter 18), and the proposal FR-QG-04 was never built.
+The module cut is checked (`app/config/lint/modules.config.mjs`, AB-7 to AB-14), the file layout is not. A measurement on 2026-10-05 showed 77 of 111 tracked directories with more than 5 entries (`docs/records/test-logs` 70, `app/scripts` 59, `web/src/collection` 49, `core/src/collection` 48, `web/src/components/ui` 40), 22 entries in `app/`, two `scripts/` folders, loose component files in `web/src` and mixed naming (`docs/specs/product` next to `docs/adr`, PascalCase pages next to kebab-case files). A rule that nobody checks is a wish (chapter 18), and the proposal FR-QG-04 was never built.
 
 ## Decision
 
-- **One configuration, one script.** `app/layout.config.mjs` describes the layout, `app/tools/check/code/layout/check-layout.mjs` checks it (QG-C4, `make layout`, part of `make gates`, pre-push and CI). Rules LY-1 to LY-6 are in FR-QG-21.
+- **One configuration, one script.** `app/config/lint/layout.config.mjs` describes the layout, `app/tools/check/code/layout/check-layout.mjs` checks it (QG-C4, `make layout`, part of `make gates`, pre-push and CI). Rules LY-1 to LY-6 are in FR-QG-21.
 - **Fan-out limit 5 per directory** (a unit is a group of files with the same name stem), with declared collections (name pattern instead of a limit) and module roots (modules from `modules.config.mjs`, up to 10 feature directories each). Entries starting with `.` are ignored.
 - **kebab-case everywhere**, one directory per component, barrels per module only (not per component), a whitelist for the repo root.
 - **Baseline ratchet** (FR-QG-22): values only shrink, stale entries fail, new keys against `dev` fail. The first PR creates the baseline from the measured state, so the gate is green on day one and stops further growth.

@@ -16,7 +16,7 @@ A release is the pull request `dev` -> `main` (E-13). Releases are small, tracea
 6. Changelog and privacy gates: user-facing `feat:`/`fix:` entries are present in `app/packages/web/src/news/news.de.json` (QG-U3, checked per PR; review the German wording and move "unveroeffentlicht" entries under the new version) and the privacy gates (QG-D1, QG-D2) are green where the release touches social data. Gates that do not exist yet are named in the PR as open, not skipped silently.
 7. Preview: run `make release-dry-run BRANCH=dev` and paste version and notes into the PR; it needs a GitHub token (`gh auth login`). Also run `make secrets` for the secret scan over the full history.
 8. Open the PR `dev` -> `main` and merge it as a merge commit (not squash, not rebase), so `main` keeps the history of `dev`. The release workflow runs on `main` only for commits with green CI.
-9. Deploy deliberately (E-14), then smoke-test `/health` and one core flow. If it fails, roll back to the previous commit (`app/deploy/scripts/deploy.sh <previous commit>`); data problems follow the restore runbook.
+9. Deploy deliberately (E-14), then smoke-test `/health` and one core flow. If it fails, roll back to the previous commit (`app/config/deploy/scripts/deploy.sh <previous commit>`); data problems follow the restore runbook.
 10. Back-merge: after the release merge `main` into `dev` by pull request, so version and changelog commits do not make the branches diverge.
 11. Hotfix (E-13): branch from `main`, fix with a test, full `make ci`, PR into `main` as merge commit, small scope, no bypass of gates; then back-merge into `dev` as in step 10.
 

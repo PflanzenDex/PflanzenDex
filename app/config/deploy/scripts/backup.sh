@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Database backup (NFR-15, TE-03): pg_dump in custom format, verified with pg_restore -l.
 # Retention per BACKUP_RETENTION_DAYS; optional second target via rsync (BACKUP_REMOTE, R-11).
-# Environment: deploy/.env (if present); PG_EXEC overrides how the Postgres container is reached (for tests).
+# Environment: config/deploy/.env (if present); PG_EXEC overrides how the Postgres container is reached (for tests).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

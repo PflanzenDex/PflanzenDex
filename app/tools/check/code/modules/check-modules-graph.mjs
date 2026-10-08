@@ -1,7 +1,7 @@
 // Module graph checks of AB-8 and AB-12 (cycles, a module importing every other), part of check-modules.mjs.
 import path from "node:path";
 
-const CONFIG_FILE = "modules.config.mjs";
+const CONFIG_FILE = "config/lint/modules.config.mjs";
 
 function findCycle(graph) {
   const state = new Map();

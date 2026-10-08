@@ -65,7 +65,7 @@ Acceptance criteria:
 
 As a **plant keeper** I want to operate the app on the phone next to the plant.
 
-The look and the components that make this possible are governed by the design system (`docs/guides/design-system.md`, enabler TE-17, gates QG-U4 to QG-U6).
+The look and the components that make this possible are governed by the design system (`docs/guides/reference/design-system.md`, enabler TE-17, gates QG-U4 to QG-U6).
 
 Acceptance criteria:
 
@@ -82,7 +82,7 @@ Acceptance criteria:
 
 ### Accessibility (US-QS-08 to US-QS-13)
 
-The conformance target is **WCAG 2.2 level AA** as adopted by **EN 301 549 V4.1.1** (published 2026-09-02, chapters 9 web and 11 software; decision E-23). The stories below turn that target into checkable behavior at app level. Component-level rules (focus ring, 44 px targets, contrast, overlays) stay in `docs/guides/design-system.md` (DS-15 to DS-20, DS-37, DS-38, DS-40) and the gates QG-U1 and QG-U5. The bracketed numbers name the WCAG 2.2 success criteria a criterion covers. The criteria of US-QS-08 to US-QS-12 are **standing criteria**: once done, they hold for every view, flow and control added later. The Definition of Done (FR-QG-10, item 11) and the gate QG-U7 (FR-QG-24) enforce them on every story, so accessibility is not a one-time effort.
+The conformance target is **WCAG 2.2 level AA** as adopted by **EN 301 549 V4.1.1** (published 2026-09-02, chapters 9 web and 11 software; decision E-23). The stories below turn that target into checkable behavior at app level. Component-level rules (focus ring, 44 px targets, contrast, overlays) stay in `docs/guides/reference/design-system.md` (DS-15 to DS-20, DS-37, DS-38, DS-40) and the gates QG-U1 and QG-U5. The bracketed numbers name the WCAG 2.2 success criteria a criterion covers. The criteria of US-QS-08 to US-QS-12 are **standing criteria**: once done, they hold for every view, flow and control added later. The Definition of Done (FR-QG-10, item 11) and the gate QG-U7 (FR-QG-24) enforce them on every story, so accessibility is not a one-time effort.
 
 ### US-QS-08 · Operable by keyboard alone · 🟨 new
 
@@ -232,7 +232,7 @@ Decision and tokens: ADR [0011](../../adr/0011-redesign-direction-greenhouse.md)
 | NFR-10 | **Security:** sign-in via an established service, not built ourselves (E-03). Sessions revocable. Input validated, file uploads checked for type and size.                                                                                                                                                                                                         | ⬜     |
 | NFR-11 | **Privacy (GDPR):** legal bases and consents documented, hosting in the EU (assumption, E-01), data processors named, deletion concept, data export. Privacy policy and imprint before the first external user.                                                                                                                                                    | ⬜     |
 | NFR-12 | **Performance:** the start page "Today" and the collection view are usable for 100 specimens without noticeable waiting time (assumption, on a phone with an average network).                                                                                                                                                                                     | ⬜     |
-| NFR-13 | **Accessibility:** the product conforms to WCAG 2.2 level AA as adopted by EN 301 549 V4.1.1 (E-23): operation by keyboard alone, contrast, alternative texts for photos (species/specimen name), status never only via color or emoji. App-level behavior in US-QS-08 to US-QS-13, component rules in `docs/guides/design-system.md`, checks in QG-U1 and QG-U5 (`FR-QG-09`). | ⬜     |
+| NFR-13 | **Accessibility:** the product conforms to WCAG 2.2 level AA as adopted by EN 301 549 V4.1.1 (E-23): operation by keyboard alone, contrast, alternative texts for photos (species/specimen name), status never only via color or emoji. App-level behavior in US-QS-08 to US-QS-13, component rules in `docs/guides/reference/design-system.md`, checks in QG-U1 and QG-U5 (`FR-QG-09`). | ⬜     |
 | NFR-14 | **Language:** UI initially German; display `DD.MM.YYYY`, storage ISO. Texts are exchangeable (later translation).                                                                                                                                                                                                                                                  | ⬜     |
 | NFR-15 | **Backups and restore:** regular backup of user data and photos, restore tested.                                                                                                                                                                                                                                                                                   | ⬜     |
 | NFR-16 | **Costs in view:** operating costs (hosting, storage, load from AI connections) are measured and shown per user, so that `13-Business-Case.md` is based on data. Until the measurement exists (TE-10), the operator enters the real monthly hosting cost by hand and the overview divides it by the active accounts (US-ACC-05).                                   | ⬜     |

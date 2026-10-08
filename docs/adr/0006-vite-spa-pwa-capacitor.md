@@ -3,7 +3,7 @@
 - **Status:** accepted (2026-10-05, project owner)
 - **Refines:** E-06 (PWA or native app: "PWA first"), TE-17 (design system migration)
 - **Decision record:** E-21 in `docs/specs/product/16-releases-and-decisions.md`
-- **Rules:** `docs/guides/design-system.md` sections 0 and 1.3 (DS-07 to DS-11)
+- **Rules:** `docs/guides/reference/design-system.md` sections 0 and 1.3 (DS-07 to DS-11)
 
 ## Context
 
@@ -43,7 +43,7 @@ The design system migration (TE-17) needs a settled platform before components, 
 
 ## Consequences
 
-- `docs/guides/design-system.md` section 1.3 (DS-09 "decision pending") is settled by this ADR; the follow-up issues implement it (router and data layer setup).
+- `docs/guides/reference/design-system.md` section 1.3 (DS-09 "decision pending") is settled by this ADR; the follow-up issues implement it (router and data layer setup).
 - The dependencies `react-router` and `@tanstack/react-query` are added by the implementing issues, not by this ADR.
 - The component library, the Storybook catalog and the bundle budget are not decided here; they are decided in issue 332 (TE-18).
 - Any later switch to SSR or to React Native needs a new ADR that supersedes this one.

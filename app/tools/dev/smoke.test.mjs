@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 
-const smoke = new URL("../../deploy/scripts/smoke.sh", import.meta.url).pathname;
+const smoke = new URL("../../config/deploy/scripts/smoke.sh", import.meta.url).pathname;
 const bin = mkdtempSync(join(tmpdir(), "smoke-"));
 // Stub: with -w prints STUB_CODE (web root), otherwise prints STUB_HEALTH or fails (/health).
 writeFileSync(

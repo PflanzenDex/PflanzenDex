@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Staging deploy (TE-03, US-DEV-06): fetches origin/main, builds images, restarts, waits for health,
 # runs the smoke test and rolls back to the previous ref automatically if it fails.
-# Usage on the host, in the checkout:  make deploy   (or deploy/scripts/deploy.sh [ref], default origin/main)
+# Usage on the host, in the checkout:  make deploy   (or config/deploy/scripts/deploy.sh [ref], default origin/main)
 # Deploying stays a deliberate step (E-14); nothing in CI calls this script.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -38,7 +38,7 @@ smoke_base_url() {
 
 main() {
   local ref="${1:-origin/main}"
-  if [ ! -f .env ]; then echo "ERROR: deploy/.env is missing (template: .env.example)" >&2; exit 1; fi
+  if [ ! -f .env ]; then echo "ERROR: config/deploy/.env is missing (template: .env.example)" >&2; exit 1; fi
 
   git fetch --quiet --tags origin
   local previous

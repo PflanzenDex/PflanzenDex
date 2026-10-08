@@ -15,7 +15,7 @@ ESLint `max-lines` reports the offending file; the target is 0 files above 200 l
 
 ## Checked by
 
-`app/eslint.config.js`.
+`app/config/lint/eslint.config.js`.
 
 ## Gate
 
@@ -23,4 +23,4 @@ ESLint `max-lines` reports the offending file; the target is 0 files above 200 l
 
 ## Evidence
 
-The threshold is configured once, in `app/eslint.config.js` (FR-QG-18).
+The threshold is configured once, in `app/config/lint/eslint.config.js` (FR-QG-18).

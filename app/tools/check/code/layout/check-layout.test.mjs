@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import config from "../../../../layout.config.mjs";
+import config from "../../../../config/lint/layout.config.mjs";
 import { compareBaseline } from "./layout-baseline.mjs";
 import { findLayout } from "./layout-rules.mjs";
 import { BASELINE_FILE, listPaths } from "./check-layout.mjs";
@@ -62,7 +62,7 @@ describe("US-QG-09 routine additions", () => {
 describe("US-QG-09 CLI protections of the ratchet", () => {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const copies = [
-    ["../../../../layout.config.mjs", "app/layout.config.mjs"],
+    ["../../../../config/lint/layout.config.mjs", "app/config/lint/layout.config.mjs"],
     ...["check-layout", "layout-rules", "layout-tree", "layout-baseline"].map((n) => [
       `${n}.mjs`,
       `app/tools/check/code/layout/${n}.mjs`,
@@ -81,6 +81,7 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
       fs.mkdirSync(path.dirname(path.join(dir, to)), { recursive: true });
       fs.copyFileSync(path.join(here, from), path.join(dir, to));
     }
+    fs.mkdirSync(path.join(dir, "app/config/gates/baselines"), { recursive: true });
     fs.writeFileSync(path.join(dir, "README.md"), "");
     for (let i = 0; i < files; i++) {
       fs.mkdirSync(path.join(dir, "app/x"), { recursive: true });
@@ -97,7 +98,7 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
         encoding: "utf8",
       });
     };
-    const baselineFile = path.join(dir, "app/layout-baseline.json");
+    const baselineFile = path.join(dir, "app/config/gates/baselines/layout-baseline.json");
     return {
       dir,
       run,

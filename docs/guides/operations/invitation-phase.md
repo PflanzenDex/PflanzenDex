@@ -4,7 +4,7 @@ Issue #301. Basis: US-ACC-05 (`docs/specs/product/01-accounts-and-onboarding.md`
 
 ## What stays as it is
 
-- **Local development and tests:** the realm export `app/dev/keycloak/pflanzendex-realm.json` keeps `"registrationAllowed": true`, and the app default of the registration mode stays OFF (`access_setting.invitation_only` defaults to `false`, migration `0018_account_invitation.sql`). `make auth-up`, `make test` and `make e2e` behave as before.
+- **Local development and tests:** the realm export `app/config/dev/keycloak/pflanzendex-realm.json` keeps `"registrationAllowed": true`, and the app default of the registration mode stays OFF (`access_setting.invitation_only` defaults to `false`, migration `0018_account_invitation.sql`). `make auth-up`, `make test` and `make e2e` behave as before.
 - **The switches are per installation, not per build.** Both live in running systems (the Keycloak realm and the database), so this runbook sets them once on the public host. Nothing in the repo turns them on.
 
 ## Two layers, both needed
@@ -24,7 +24,7 @@ Keycloak imports a realm file only when the realm does not exist yet (`--import-
 
 ## Steps
 
-Placeholders: `<kc-container>` is the Keycloak container on the host, `<admin>` a Keycloak admin of the `master` realm, `<operator-email>` the operator's email. All commands run on the host in the repo checkout. `compose` stands for `docker compose --env-file app/deploy/.env -f app/deploy/docker-compose.yml`.
+Placeholders: `<kc-container>` is the Keycloak container on the host, `<admin>` a Keycloak admin of the `master` realm, `<operator-email>` the operator's email. All commands run on the host in the repo checkout. `compose` stands for `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml`.
 
 ### 1. Preconditions
 
@@ -120,13 +120,13 @@ Expected: one row `<user-id> | <operator-email> | operator | <time>` and `invita
 
 Development machine (Docker), throwaway containers only (shared Keycloak 18081 and shared test databases untouched):
 
-- Keycloak 26.8.0, realm imported from `app/dev/keycloak/pflanzendex-realm.json`: `registrationAllowed` was `true`, the registration endpoint answered 200 with the form; after `kcadm.sh update realms/pflanzendex -s registrationAllowed=false` it answered 400 "Registrierung nicht erlaubt." and the login page had no register link; switching back restored 200. `kcadm.sh create users` worked on the closed realm; `execute-actions-email` failed only because no mail server was running.
+- Keycloak 26.8.0, realm imported from `app/config/dev/keycloak/pflanzendex-realm.json`: `registrationAllowed` was `true`, the registration endpoint answered 200 with the form; after `kcadm.sh update realms/pflanzendex -s registrationAllowed=false` it answered 400 "Registrierung nicht erlaubt." and the login page had no register link; switching back restored 200. `kcadm.sh create users` worked on the closed realm; `execute-actions-email` failed only because no mail server was running.
 - The placeholder variants in the realm file failed as described under "Why not in the realm export file".
 - PostgreSQL 16 with migrations `0001` to `0021`: the step 5 script stopped with "No account for subject …" and changed nothing before the account existed; after a first sign-in (account created through the app's sign-in path as `pflanzendex_app`), it granted `operator`, set `invitation_only = t`, and a second run changed nothing. As the app role, `is_operator()` and `invitation_required()` returned `t`, `operator_overview(30)` returned `1 | 1 | t`.
 
 ## Missing (needs infrastructure, a human or a decision)
 
-- **No Keycloak in the deploy stack.** `app/deploy/docker-compose.yml` has no sign-in service, and the API there gets no `OIDC_ISSUER`, `OIDC_AUDIENCE` or `WEB_ORIGIN` (it falls back to the local development values in `app/packages/api/src/main.ts`). A production Keycloak (production mode, its own database, hostname, TLS behind the proxy, SMTP, a public realm export with the real redirect addresses) is needed before step 2 can run anywhere public. Related: #202 (redirect addresses), TE-03 (#40), E-03.
+- **No Keycloak in the deploy stack.** `app/config/deploy/docker-compose.yml` has no sign-in service, and the API there gets no `OIDC_ISSUER`, `OIDC_AUDIENCE` or `WEB_ORIGIN` (it falls back to the local development values in `app/packages/api/src/main.ts`). A production Keycloak (production mode, its own database, hostname, TLS behind the proxy, SMTP, a public realm export with the real redirect addresses) is needed before step 2 can run anywhere public. Related: #202 (redirect addresses), TE-03 (#40), E-03.
 - **No migration step in the deploy** (#201): the staging database stays empty unless migrations are applied by hand; step 1 assumes they ran.
 - **Public domain and SMTP:** still open (see `staging-deploy-and-backup.md`). Without SMTP neither the operator nor invited people get the password link of step 3.
 - **Owner confirmation:** closing the realm means the operator creates every invited person's sign-in identity by hand (step 6). If that is not wanted, the alternative is to leave the realm open and rely on the app layer only (strangers get an identity but no account), as the spec already allows.

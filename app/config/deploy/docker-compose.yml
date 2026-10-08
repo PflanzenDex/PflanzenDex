@@ -1,5 +1,5 @@
 # Local and staging (E-01: one host, Docker Compose). All values come from the environment, see .env.example.
-# Start: docker compose --env-file deploy/.env -f deploy/docker-compose.yml up -d --build
+# Start: docker compose --env-file config/deploy/.env -f config/deploy/docker-compose.yml up -d --build
 name: pflanzendex
 services:
   db:
@@ -20,8 +20,8 @@ services:
   # A failing migration fails `up`, so deploy.sh rolls back the code and the api never serves a half-migrated schema.
   migrate:
     build:
-      context: ..
-      dockerfile: deploy/api.Dockerfile
+      context: ../..
+      dockerfile: config/deploy/api.Dockerfile
       args:
         GIT_SHA: ${GIT_SHA:-unbekannt}
         APP_VERSION: ${APP_VERSION:-unbekannt}
@@ -35,8 +35,8 @@ services:
         condition: service_healthy
   api:
     build:
-      context: ..
-      dockerfile: deploy/api.Dockerfile
+      context: ../..
+      dockerfile: config/deploy/api.Dockerfile
       args:
         GIT_SHA: ${GIT_SHA:-unbekannt}
         APP_VERSION: ${APP_VERSION:-unbekannt}
@@ -56,8 +56,8 @@ services:
       retries: 5
   web:
     build:
-      context: ..
-      dockerfile: deploy/web.Dockerfile
+      context: ../..
+      dockerfile: config/deploy/web.Dockerfile
       args:
         APP_VERSION: ${APP_VERSION:-unbekannt}
     restart: unless-stopped

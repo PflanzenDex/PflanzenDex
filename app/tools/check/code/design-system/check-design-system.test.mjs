@@ -27,7 +27,7 @@ const stack = JSON.stringify({
   ),
 });
 
-describe("design system gate (docs/guides/design-system.md section 6)", () => {
+describe("design system gate (docs/guides/reference/design-system.md section 6)", () => {
   it("passes a compliant package", () => {
     const dir = web({
       "package.json": stack,
@@ -411,7 +411,10 @@ export function C({ className, variant }: { className?: string; variant?: "a" | 
   });
 
   it("QG-U4 · the committed baseline has no entry for a closed rule", () => {
-    const file = path.join(import.meta.dirname, "../../../../quality-ds-baseline.json");
+    const file = path.join(
+      import.meta.dirname,
+      "../../../../config/gates/baselines/quality-ds-baseline.json",
+    );
     const { entries } = JSON.parse(fs.readFileSync(file, "utf8"));
     assert.deepEqual(
       entries.filter((e) => NON_BASELINEABLE_RULES.has(e.rule)),

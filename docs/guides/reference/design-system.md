@@ -1,4 +1,4 @@
-# docs/guides/design-system.md
+# docs/guides/reference/design-system.md
 
 Normative ruleset for every UI component and page in this repository. It is the reference for humans and agents when UI is created, changed or refactored. Rules carry IDs (`DS-nn`) so that issues, reviews and the CI check (`npm run design-system` in `app/`, section 6) can point at them.
 
@@ -21,9 +21,9 @@ This document describes the **target** UI stack. The `web` package does not matc
 | Layout of the code | `components/ui`, `components/shared`, `<module>/` folders                   | `src/<module>/` with `index.ts` as public interface (`modules.config.mjs`)                |
 | Device access      | Only through `src/platform/` adapters                                       | Direct browser APIs in components                                                         |
 
-The gap is tracked as issues (label `design-system`), every deviation is listed in `app/quality-ds-baseline.json` and may only shrink (ratchet, section 6).
+The gap is tracked as issues (label `design-system`), every deviation is listed in `app/config/gates/baselines/quality-ds-baseline.json` and may only shrink (ratchet, section 6).
 
-**Paths and aliases.** `@/` means `app/packages/web/src/`. A module is a top-level folder of `src/` other than `components`, `lib`, `platform` and `styles`; its name and allowed dependencies come from ADR 0003 and `app/modules.config.mjs`. This file never defines its own module list.
+**Paths and aliases.** `@/` means `app/packages/web/src/`. A module is a top-level folder of `src/` other than `components`, `lib`, `platform` and `styles`; its name and allowed dependencies come from ADR 0003 and `app/config/lint/modules.config.mjs`. This file never defines its own module list.
 
 ---
 
@@ -410,7 +410,7 @@ export { buttonVariants };
 
 ### 4.1 Sharing across modules without cycles
 
-The module list and the allowed dependencies are defined once, in ADR 0003 and `app/modules.config.mjs`. The UI follows them.
+The module list and the allowed dependencies are defined once, in ADR 0003 and `app/config/lint/modules.config.mjs`. The UI follows them.
 
 | ID    | Rule                                                                                                                                                                                                                                                                                                                                                              |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -567,7 +567,7 @@ Run through all six. If an answer is "no", fix it or state the exception and the
 
 Rules marked 🔒 are checked by `app/tools/check/code/design-system/check-design-system.mjs`, wired in as `npm run design-system` and part of `make gates` / `make ci` (same pattern as `check-boundaries`, `check-baseline`).
 
-- **Ratchet, not a big bang.** The `web` package violates many rules today (section 0). Known violations are recorded in `app/quality-ds-baseline.json` as `{ rule, file, count }`. The check fails when
+- **Ratchet, not a big bang.** The `web` package violates many rules today (section 0). Known violations are recorded in `app/config/gates/baselines/quality-ds-baseline.json` as `{ rule, file, count }`. The check fails when
   - a violation appears that is **not** in the baseline (new code must comply), or
   - the count for an entry **grows**, or
   - an entry is **stale** (the violation is gone but the entry remains: delete it, so the baseline only shrinks).

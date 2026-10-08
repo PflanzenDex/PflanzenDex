@@ -4,5 +4,5 @@
 **/*.log
 .env
 .env.*
-deploy/.env
-deploy/backups
+config/deploy/.env
+config/deploy/backups

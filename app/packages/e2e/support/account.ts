@@ -15,7 +15,7 @@ export interface TestAccount {
 function adminPassword(): string {
   const fromEnv = process.env["KC_ADMIN_PASSWORD"];
   if (fromEnv) return fromEnv;
-  const file = new URL("../../../dev/.env", import.meta.url);
+  const file = new URL("../../../config/dev/.env", import.meta.url);
   // eslint-disable-next-line security/detect-non-literal-fs-filename -- fixed path next to this file
   const line = fs
     .readFileSync(file, "utf8")

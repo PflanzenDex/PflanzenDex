@@ -2,7 +2,7 @@
 
 - **Status:** accepted by the PO (2026-10-08), revisable. Assumption decided by the product owner under the autonomy rules.
 - **Refines:** ADR 0003 (the module cut: `social` owned `offer` and `swap`), US-SOZ-08 to US-SOZ-11 and US-SOZ-13
-- **Affects:** `app/modules.config.mjs` (new module `swap`, the tables `offer` and `swap` move out of `social`), `docs/specs/product/10-social.md`
+- **Affects:** `app/config/lint/modules.config.mjs` (new module `swap`, the tables `offer` and `swap` move out of `social`), `docs/specs/product/10-social.md`
 
 ## Context
 
@@ -29,7 +29,7 @@ A new module **`swap`** (public interface per package: `core/src/swap`, `db/src/
 
 ## Consequences
 
-- `app/modules.config.mjs` gets the module `swap` with the edges above; the tables `offer` and `swap` move from `social` to `swap`. The matrix in ADR 0003 is amended by this record, the register wins (as stated there).
+- `app/config/lint/modules.config.mjs` gets the module `swap` with the edges above; the tables `offer` and `swap` move from `social` to `swap`. The matrix in ADR 0003 is amended by this record, the register wins (as stated there).
 - The build is cut into the five stories: the offer (SOZ-08), the exchange list and the request (SOZ-09), the answer (SOZ-10), the handover (SOZ-11), the history (SOZ-13). Each is its own pull request.
 - `collection` gains two connection-taking functions for the handover; their contract test sits with them.
 - Revisit when swapping is extended to equipment (US-EQU-12) or to groups (out of scope, FR-SOZ-11).

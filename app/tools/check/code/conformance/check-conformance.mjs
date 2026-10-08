@@ -28,7 +28,7 @@ import {
 } from "./conformance-rules.mjs";
 
 const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
-const allowlistFile = path.join(appRoot, "conformance-allowlist.json");
+const allowlistFile = path.join(appRoot, "config/gates/conformance-allowlist.json");
 const FIXTURE_PREFIX = "conformance-fixture-";
 const where = ({ story, scheme }) => `QG-U5 ${story} (${scheme})`;
 const SCHEMES = ["light", "dark"];

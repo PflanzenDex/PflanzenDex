@@ -135,7 +135,7 @@ function checkMigration(ctx, file) {
 
 /** AB-10, register part: every GLOBAL_REFERENCE_TABLES entry has a reason and names the module that owns the table. */
 function checkGlobalTables({ appDir, add, cfg }) {
-  const file = path.join(appDir, "modules.config.mjs");
+  const file = path.join(appDir, "config/lint/modules.config.mjs");
   const owners = tableOwners(cfg);
   for (const [table, entry] of Object.entries(cfg.GLOBAL_REFERENCE_TABLES ?? {})) {
     if (!entry.reason?.trim())

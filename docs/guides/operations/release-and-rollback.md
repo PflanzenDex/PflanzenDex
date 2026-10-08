@@ -20,13 +20,13 @@ There is one source: the git tag. No version is written into versioned files.
 
 ## Deploy
 
-On the host, in the checkout: `make deploy` (or `app/deploy/scripts/deploy.sh [ref]`, default `origin/main`; pass a tag such as `v0.1.0` to deploy a specific release).
+On the host, in the checkout: `make deploy` (or `app/config/deploy/scripts/deploy.sh [ref]`, default `origin/main`; pass a tag such as `v0.1.0` to deploy a specific release).
 
 Steps: fetch (with tags), remember the current commit as the rollback target, back up the database if it is running, check out the ref, build and start, wait for the api healthcheck, run the smoke test.
 
 ## Smoke test
 
-`app/deploy/scripts/smoke.sh <base-url> <expected-version>` passes only if
+`app/config/deploy/scripts/smoke.sh <base-url> <expected-version>` passes only if
 
 - `GET <base-url>/health` answers 200 and its `version` equals the version just deployed, and
 - `GET <base-url>/` (web root, through the proxy) answers 200.
@@ -46,7 +46,7 @@ Limits: database migrations are not reverted. Migrations must be expand/contract
 
 ## Manual rollback
 
-On the host, in the checkout: `make deploy` does not take a ref, so call the script: `app/deploy/scripts/deploy.sh v0.1.0` (the last good tag). The script runs the same backup, build and smoke test. Check afterwards with `curl -s https://<host>/health`.
+On the host, in the checkout: `make deploy` does not take a ref, so call the script: `app/config/deploy/scripts/deploy.sh v0.1.0` (the last good tag). The script runs the same backup, build and smoke test. Check afterwards with `curl -s https://<host>/health`.
 
 ## Hotfix path (E-13)
 

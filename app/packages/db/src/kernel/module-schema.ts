@@ -1,6 +1,6 @@
 import type { Pool, PoolClient } from "pg";
 
-// Module boundaries in the schema (AB-9, AB-10, AB-13; FR-QG-19, ADR 0003). The register comes from outside (app/modules.config.mjs),
+// Module boundaries in the schema (AB-9, AB-10, AB-13; FR-QG-19, ADR 0003). The register comes from outside (app/config/lint/modules.config.mjs),
 // so the runtime code of the database layer does not depend on a file outside the package.
 export type ModuleRegister = {
   KERNEL: string;
@@ -89,7 +89,9 @@ export function moduleViolations(
   const owner = new Map(reg.MODULES.flatMap((m) => m.tables.map((t) => [t, m.name] as const)));
   const out = tables
     .filter((t) => !owner.has(t))
-    .map((t) => `AB-13 table ${t}: belongs to no module (entry in app/modules.config.mjs)`);
+    .map(
+      (t) => `AB-13 table ${t}: belongs to no module (entry in app/config/lint/modules.config.mjs)`,
+    );
   for (const fk of fks) {
     const source = owner.get(fk.source);
     const target = owner.get(fk.target);

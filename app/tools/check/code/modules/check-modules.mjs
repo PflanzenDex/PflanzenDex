@@ -16,7 +16,7 @@ import { checkKernelGlossary, checkPortContracts } from "./check-modules-contrac
 
 export const LAYERS = ["core", "db", "api", "web"];
 const posix = (p) => p.split(path.sep).join("/");
-const CONFIG_FILE = "modules.config.mjs";
+const CONFIG_FILE = "config/lint/modules.config.mjs";
 
 /** Where a file or import target sits: layer package, folder below `src/` (null for root files) and the rest. */
 export function locate(appDir, abs) {
@@ -66,7 +66,7 @@ function checkRegister({ appDir, add, cfg }) {
       add("AB-12", file, 0, `${m.name} may depend on every other module: only the root may`);
 }
 
-const DESIGN_SYSTEM_FOLDERS = ["components", "lib", "platform", "styles"]; // no modules: docs/guides/design-system.md section 1
+const DESIGN_SYSTEM_FOLDERS = ["components", "lib", "platform", "styles"]; // no modules: docs/guides/reference/design-system.md section 1
 function checkFolders({ appDir, add, cfg, h }) {
   const seen = new Set();
   for (const pkg of LAYERS) {

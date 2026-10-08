@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { MODULE_CONFIG } from "../../../modules.config.mjs";
+import { MODULE_CONFIG } from "../../../config/lint/modules.config.mjs";
 import { storiesByModule } from "../code/modules/module-report.mjs";
 
 const STORY = /^###\s+(US-([A-Z]+)-\d+)\s+·.*·\s*(⬜|🟨|✅)/u;

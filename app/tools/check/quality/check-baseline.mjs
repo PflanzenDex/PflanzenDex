@@ -60,7 +60,9 @@ export function checkBaseline(findings, baseline) {
 async function currentFindings() {
   process.env.QUALITY_BASELINE = "off";
   const { ESLint } = await import("eslint");
-  const results = await new ESLint().lintFiles(["."]);
+  const results = await new ESLint({
+    overrideConfigFile: "config/lint/eslint.config.js",
+  }).lintFiles(["."]);
   return results.flatMap((r) =>
     r.messages.flatMap((m) => {
       if (!METRIC_RULES.includes(m.ruleId)) return [];
@@ -72,7 +74,9 @@ async function currentFindings() {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const baseline = JSON.parse(fs.readFileSync("quality-baseline.json", "utf8"));
+  const baseline = JSON.parse(
+    fs.readFileSync("config/gates/baselines/quality-baseline.json", "utf8"),
+  );
   const errors = checkBaseline(await currentFindings(), baseline);
   if (errors.length) {
     console.error(errors.join("\n"));

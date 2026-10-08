@@ -9,7 +9,7 @@ COPY packages/db/package.json packages/db/
 COPY packages/api/package.json packages/api/
 COPY packages/web/package.json packages/web/
 RUN npm ci --workspace @pflanzendex/api --include-workspace-root=false
-COPY tsconfig.base.json ./
+COPY config/project/tsconfig.base.json config/project/
 COPY packages/core packages/core
 COPY packages/db packages/db
 COPY packages/api packages/api

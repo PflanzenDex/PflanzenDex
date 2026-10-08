@@ -2,7 +2,7 @@
 
 - **Status:** the **direction** (A "Greenhouse") is **accepted** (2026-10-07, chosen by the project owner from three mockups). The **token values and numbers below are proposed** until the owner confirms them in the review of this ADR's PR. Numbers that are not measured are marked as assumptions.
 - **Story:** `US-QS-14` (`docs/specs/product/14-cross-cutting.md`), decision record E-24 (`docs/specs/product/16-releases-and-decisions.md`)
-- **Refines:** ADR [0007](0007-component-library-storybook-bundle-budget.md) (tokens as CSS variables, dark mode follows the system, bundle budget) and the rules `DS-20`, `DS-25`, `DS-27`, `DS-28` of `docs/guides/design-system.md`
+- **Refines:** ADR [0007](0007-component-library-storybook-bundle-budget.md) (tokens as CSS variables, dark mode follows the system, bundle budget) and the rules `DS-20`, `DS-25`, `DS-27`, `DS-28` of `docs/guides/reference/design-system.md`
 - **Tracking:** epic #525, issue #526
 
 ## Context
@@ -122,6 +122,6 @@ The lowest text ratio is 5.43 (`zone-1` on `background`, light), the lowest UI r
 ## Consequences
 
 - The look changes in one place first (tokens), then the shell, then the screens. Between the PRs the app is consistent because components use only tokens.
-- `docs/guides/design-system.md` sections 3 (tokens) and DS-25 (navigation) change in the PRs (a) and (b).
+- `docs/guides/reference/design-system.md` sections 3 (tokens) and DS-25 (navigation) change in the PRs (a) and (b).
 - Mockups are in a private design canvas; this ADR is the durable record. The canvas link is in issue #526.
 - Not decided here: the exact layouts of Discover, Measure, Friends, Settings and onboarding; photo treatment beyond a rounded corner; any rarity or ranking visuals (not allowed without a citable source, P-08).

@@ -10,7 +10,7 @@ US-DEV-06 lists git tag, `CHANGELOG.md` and release notes as the result of a rel
 
 ## Decision
 
-- **Tool:** semantic-release (`app/release.config.js`): one package, one release line, branch `main` only.
+- **Tool:** semantic-release (`app/config/project/release.config.js`): one package, one release line, branch `main` only.
 - **Trigger:** `.github/workflows/release.yml` via `workflow_run` on "CI", only on `success` for a `push` to `main`. If `main` has moved on in the meantime, semantic-release stops without releasing.
 - **Result:** tag `vX.Y.Z` (immutable through the `release-tags` ruleset) and a GitHub release with notes grouped into Features, Bug fixes, Performance and Reverts. **No** `CHANGELOG.md` and no version field in `package.json`. The GitHub releases are the change log; builds take the version from `git describe`.
 - **0.x:** the starting point is tag `v0.0.0` on the state of `main` before the first release (`ecf6780`). Breaking changes bump the minor version (`BEFORE_1_0` in the config). 1.0.0 happens deliberately, through a PR that removes that rule (first release for outside users, stage 2).

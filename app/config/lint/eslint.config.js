@@ -6,12 +6,12 @@ import fs from "node:fs";
 import sonarjs from "eslint-plugin-sonarjs";
 import security from "eslint-plugin-security";
 import { minimatch } from "minimatch";
-import { walkCode, hasMarker } from "./tools/check/code/check-boundaries.mjs";
+import { walkCode, hasMarker } from "../../tools/check/code/check-boundaries.mjs";
 
 // Files with `MAX_LINES_IGNORE: <reason>` in their first 5 lines are exempt from max-lines (US-QG-03).
 // Thresholds live once in quality-limits.json (FR-QG-16); per-area overrides are merged over `default`.
 const limits = JSON.parse(
-  fs.readFileSync(new URL("./quality-limits.json", import.meta.url), "utf8"),
+  fs.readFileSync(new URL("../gates/quality-limits.json", import.meta.url), "utf8"),
 );
 const rulesFor = (l) => ({
   complexity: ["error", l.complexity],
@@ -34,8 +34,12 @@ const areaOverrides = Object.entries(limits.overrides).map(([glob, o]) => ({
 const baseline =
   process.env.QUALITY_BASELINE === "off"
     ? []
-    : JSON.parse(fs.readFileSync(new URL("./quality-baseline.json", import.meta.url), "utf8"))
-        .entries;
+    : JSON.parse(
+        fs.readFileSync(
+          new URL("../gates/baselines/quality-baseline.json", import.meta.url),
+          "utf8",
+        ),
+      ).entries;
 const baselineOverrides = [...new Set(baseline.map((e) => e.file))].map((file) => {
   const own = baseline.filter((e) => e.file === file);
   const area = areaOverrides.find((a) => minimatch(file, a.files[0]));
@@ -86,7 +90,7 @@ export default defineConfig([
   },
   // Scripts and tests build file paths from trusted constants and temp dirs.
   {
-    files: ["tools/**", "eslint.config.js", "**/*.test.ts", "**/*.test.mjs"],
+    files: ["tools/**", "config/**", "**/*.test.ts", "**/*.test.mjs"],
     rules: { "security/detect-non-literal-fs-filename": "off" },
   },
   {

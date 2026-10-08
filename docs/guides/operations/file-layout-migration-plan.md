@@ -4,7 +4,7 @@
 
 **Goal:** The file layout of the repo is written down in one configuration and checked by a script on every push and in CI, with a baseline that only shrinks; then the existing disorder is moved into the target layout step by step.
 
-**Architecture:** Pure functions over a list of repo-relative paths (`git ls-files`) apply the rules LY-1 to LY-5 and return findings; a second pure module compares the findings with `app/layout-baseline.json` (LY-6); a thin CLI reads git and the config and sets the exit code. Because the rules are pure, every rule is tested with an in-memory path list.
+**Architecture:** Pure functions over a list of repo-relative paths (`git ls-files`) apply the rules LY-1 to LY-5 and return findings; a second pure module compares the findings with `app/config/gates/baselines/layout-baseline.json` (LY-6); a thin CLI reads git and the config and sets the exit code. Because the rules are pure, every rule is tested with an in-memory path list.
 
 **Tech Stack:** Node ESM (`.mjs`), `node:test` (like the other scripts in `app/scripts/`), no new dependency.
 
@@ -16,7 +16,7 @@
 - Names are **kebab-case**; entries starting with `.` are ignored; conventional root names (`README.md`, `Makefile`, `LICENSE`, ...) are exempt.
 - A component `x.tsx` lives in a directory `x/`; barrels (`index.ts`) only per module.
 - The baseline **only shrinks**: stale entries fail, entries that `dev` does not have fail, the write command refuses to enlarge it.
-- Script files have at most 200 lines (PRIN-004, tests excluded); ESLint complexity limits apply (`app/eslint.config.js`).
+- Script files have at most 200 lines (PRIN-004, tests excluded); ESLint complexity limits apply (`app/config/lint/eslint.config.js`).
 - Everything in the repo is English; commits are Conventional Commits with the scope `qg`; no `--no-verify`; PR title is a Conventional Commit and names `FR-QG-21`.
 - Gate files (check scripts, `Makefile`, `package.json` gate list, hooks, workflows, thresholds, `.claude/`) are changed in PRs that **a human merges** (ADR 0005). Agents never merge those.
 - Numbers (5 units, 10 features per module) are starting values, not measured (assumption).
@@ -33,7 +33,7 @@ These inputs are implied by the spec but not named in its criteria; each has a t
 
 ## Measured starting point (prototype run on 2026-10-05, `dev` at `3dd5389`)
 
-The prototype of the code below, run over the tracked files of `dev`, reports **98 findings**: LY-1 in 72 directories, LY-3 in 14, LY-4 in 11 and LY-5 at the root (`docs/guides/design-system.md`, `Docs`, `scripts`). The biggest: `web/src/collection` 46 units, `docs/records/test-logs/issue-297` 44, `app/scripts` 38, `docs/records/test-logs` 37. The generated baseline is about 110 lines of JSON. The real numbers are produced again in Task 4 and may differ slightly.
+The prototype of the code below, run over the tracked files of `dev`, reports **98 findings**: LY-1 in 72 directories, LY-3 in 14, LY-4 in 11 and LY-5 at the root (`docs/guides/reference/design-system.md`, `Docs`, `scripts`). The biggest: `web/src/collection` 46 units, `docs/records/test-logs/issue-297` 44, `app/scripts` 38, `docs/records/test-logs` 37. The generated baseline is about 110 lines of JSON. The real numbers are produced again in Task 4 and may differ slightly.
 
 ## Pull requests
 
@@ -537,14 +537,14 @@ git commit -m "chore(qg): add the layout baseline ratchet LY-6 (FR-QG-22, US-QG-
 
 **Files:**
 
-- Create: `app/layout.config.mjs`
+- Create: `app/config/lint/layout.config.mjs`
 - Create: `app/scripts/check-layout.mjs`
 - Test: `app/scripts/check-layout.test.mjs`
 
 **Interfaces:**
 
 - Consumes: `findLayout` (Task 1), `compareBaseline` and `toBaseline` (Task 2).
-- Produces: `listPaths(cwd = repoRoot)` (tracked plus untracked-not-ignored files, minus files deleted in the working tree, unquoted via `-z`) and `BASELINE_FILE` (absolute path of `app/layout-baseline.json`); CLI `node scripts/check-layout.mjs [--write-baseline]`. Exit 0 is green, exit 1 prints one problem per line. Environment: `LAYOUT_BASE` (default `origin/dev`), `CI` (a missing base ref is an error).
+- Produces: `listPaths(cwd = repoRoot)` (tracked plus untracked-not-ignored files, minus files deleted in the working tree, unquoted via `-z`) and `BASELINE_FILE` (absolute path of `app/config/gates/baselines/layout-baseline.json`); CLI `node scripts/check-layout.mjs [--write-baseline]`. Exit 0 is green, exit 1 prints one problem per line. Environment: `LAYOUT_BASE` (default `origin/dev`), `CI` (a missing base ref is an error).
 
 - [ ] **Step 1: Write the failing test** `app/scripts/check-layout.test.mjs` (the "repo passes" test is added in Task 4, when the baseline exists)
 
@@ -593,7 +593,7 @@ describe("US-QG-09 listPaths", () => {
 Run: `cd app && node --test scripts/check-layout.test.mjs`
 Expected: FAIL with `Cannot find module './check-layout.mjs'`.
 
-- [ ] **Step 3: Write the configuration** `app/layout.config.mjs`
+- [ ] **Step 3: Write the configuration** `app/config/lint/layout.config.mjs`
 
 It describes the **target** layout. What does not match yet is in the baseline.
 
@@ -661,8 +661,8 @@ export default {
 - [ ] **Step 4: Write the CLI** `app/scripts/check-layout.mjs`
 
 ```js
-// QG-C4 file layout gate (US-QG-09, FR-QG-21, FR-QG-22). Rules LY-1 to LY-6; config: app/layout.config.mjs.
-//   node scripts/check-layout.mjs                  check against app/layout-baseline.json
+// QG-C4 file layout gate (US-QG-09, FR-QG-21, FR-QG-22). Rules LY-1 to LY-6; config: app/config/lint/layout.config.mjs.
+//   node scripts/check-layout.mjs                  check against app/config/gates/baselines/layout-baseline.json
 //   node scripts/check-layout.mjs --write-baseline create the baseline (an empty {} counts as none), or lower it; never enlarge it
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -728,7 +728,7 @@ function devBaseline() {
     return undefined;
   }
   try {
-    return JSON.parse(git(root, "show", `${devRef}:app/layout-baseline.json`));
+    return JSON.parse(git(root, "show", `${devRef}:app/config/gates/baselines/layout-baseline.json`));
   } catch {
     return undefined;
   }
@@ -784,7 +784,7 @@ Expected: no ESLint output. If `security/detect-unsafe-regex` fires on a pattern
 - [ ] **Step 7: Commit**
 
 ```bash
-git add app/layout.config.mjs app/scripts/check-layout.mjs app/scripts/check-layout.test.mjs
+git add app/config/lint/layout.config.mjs app/scripts/check-layout.mjs app/scripts/check-layout.test.mjs
 git commit -m "chore(qg): add the layout check CLI and configuration (FR-QG-21, US-QG-09)"
 ```
 
@@ -792,7 +792,7 @@ git commit -m "chore(qg): add the layout check CLI and configuration (FR-QG-21, 
 
 **Files:**
 
-- Create: `app/layout-baseline.json` (generated)
+- Create: `app/config/gates/baselines/layout-baseline.json` (generated)
 - Modify: `app/package.json` (the `scripts` block)
 - Modify: `Makefile` (`.PHONY` line and two targets)
 - Modify: `app/scripts/check-layout.test.mjs` (add the "repo passes" test)
@@ -870,7 +870,7 @@ Add `layout layout-baseline` to the `.PHONY` list, and add the two targets next 
 layout: ## File layout: at most 5 units per directory, names, component folders, baseline ratchet (QG-C4, US-QG-09)
     cd $(APP) && npm run layout
 
-layout-baseline: ## Create or lower app/layout-baseline.json, never enlarge it (FR-QG-22)
+layout-baseline: ## Create or lower app/config/gates/baselines/layout-baseline.json, never enlarge it (FR-QG-22)
     cd $(APP) && npm run layout -- --write-baseline
 ```
 
@@ -882,7 +882,7 @@ Expected: green; the output contains `check-layout: OK (<n> baselined directorie
 - [ ] **Step 7: Commit**
 
 ```bash
-git add app/layout-baseline.json app/package.json Makefile app/scripts/check-layout.test.mjs
+git add app/config/gates/baselines/layout-baseline.json app/package.json Makefile app/scripts/check-layout.test.mjs
 git commit -m "chore(qg): run the layout check in the gates with a baseline (FR-QG-21, FR-QG-22)"
 ```
 
@@ -912,11 +912,11 @@ A directory with few entries and a predictable name can be read at a glance, and
 
 ## How it is measured
 
-`make layout` counts units per directory (files with the same stem count once) and reports violations of LY-1 to LY-5; the target is an empty `app/layout-baseline.json`. Limits: 5 units per directory, 10 feature directories per module (starting values, assumption).
+`make layout` counts units per directory (files with the same stem count once) and reports violations of LY-1 to LY-5; the target is an empty `app/config/gates/baselines/layout-baseline.json`. Limits: 5 units per directory, 10 feature directories per module (starting values, assumption).
 
 ## Checked by
 
-`app/scripts/check-layout.mjs`, `app/scripts/layout-rules.mjs`, `app/scripts/layout-baseline.mjs` and their tests `app/scripts/check-layout.test.mjs`, `app/scripts/layout-rules.test.mjs`, `app/scripts/layout-baseline.test.mjs`; configuration `app/layout.config.mjs`.
+`app/scripts/check-layout.mjs`, `app/scripts/layout-rules.mjs`, `app/scripts/layout-baseline.mjs` and their tests `app/scripts/check-layout.test.mjs`, `app/scripts/layout-rules.test.mjs`, `app/scripts/layout-baseline.test.mjs`; configuration `app/config/lint/layout.config.mjs`.
 
 ## Gate
 
@@ -936,7 +936,7 @@ One test per rule and a test that the repo passes with its baseline (US-QG-09). 
 - [ ] **Step 3: Add one bullet** to "While you work" in `AGENTS.md`
 
 ```markdown
-- The file layout is checked by `make layout` (at most 5 units per directory, kebab-case names, one folder per component, `app/layout.config.mjs`). A new violation fails the gate; the baseline `app/layout-baseline.json` only shrinks. Move files with the layout rules in mind instead of adding to a crowded directory (FR-QG-21).
+- The file layout is checked by `make layout` (at most 5 units per directory, kebab-case names, one folder per component, `app/config/lint/layout.config.mjs`). A new violation fails the gate; the baseline `app/config/gates/baselines/layout-baseline.json` only shrinks. Move files with the layout rules in mind instead of adding to a crowded directory (FR-QG-21).
 ```
 
 - [ ] **Step 4: Update the status symbols** in the spec
@@ -973,7 +973,7 @@ The body follows `.github/pull_request_template.md`: `Refs #388` (not `Closes`, 
 
 - [ ] **Step 3: Wait for `ci-status`, then tell the owner what to merge**
 
-Do **not** run `make merge`; it refuses because of gate files. Message to the owner: PR number, "ci-status green", and the review focus: (a) `app/layout.config.mjs` (limits and whitelist), (b) the size of `app/layout-baseline.json` (about 100 directories, none of them new), (c) `Makefile` and `package.json` (only the two targets and one gate step), (d) `AGENTS.md` (one bullet).
+Do **not** run `make merge`; it refuses because of gate files. Message to the owner: PR number, "ci-status green", and the review focus: (a) `app/config/lint/layout.config.mjs` (limits and whitelist), (b) the size of `app/config/gates/baselines/layout-baseline.json` (about 100 directories, none of them new), (c) `Makefile` and `package.json` (only the two targets and one gate step), (d) `AGENTS.md` (one bullet).
 
 ---
 
@@ -995,7 +995,7 @@ Each of these gets its own short plan, written after the previous PR is merged, 
 
 ### PR 3: root and `docs/`
 
-- `Docs/` becomes `docs/` with `specs/{product,prototype}`, `adr`, `guides/{principles,runbooks,pitfalls}`, `records/{spikes,test-logs}`, `roadmap.md`, `design-system.md`; `docs/guides/design-system.md` moves into `docs/`; file names become kebab-case (`PRODUCT-SPECS/00-Product-Overview.md` becomes `specs/product/00-product-overview.md`).
+- `Docs/` becomes `docs/` with `specs/{product,prototype}`, `adr`, `guides/{principles,runbooks,pitfalls}`, `records/{spikes,test-logs}`, `roadmap.md`, `design-system.md`; `docs/guides/reference/design-system.md` moves into `docs/`; file names become kebab-case (`PRODUCT-SPECS/00-Product-Overview.md` becomes `specs/product/00-product-overview.md`).
 - References to fix: `CLAUDE.md`, `AGENTS.md`, `.claude/` (rules, skills, hooks), `.agents/skills/`, `.github/CODEOWNERS`, `.github/pull_request_template.md`, `README.md`, `app/scripts/check-specs.mjs`, `check-links.mjs`, `check-principles.mjs`, `check-traceability.mjs`, the `docs` script in `app/package.json`, `.markdownlint-cli2.jsonc`.
 - Note on case: on a case-insensitive file system `Docs` to `docs` needs two renames (`Docs` to `docs-tmp` to `docs`); do it in two commits.
 - Merge: **human** (agent instruction files and `CODEOWNERS` change).
@@ -1004,7 +1004,7 @@ Each of these gets its own short plan, written after the previous PR is merged, 
 
 `app/scripts` is the one crowded directory where new files arrive all the time (9 of the last 25 merged PRs touched it), and after PR 1 any new check script fails the gate. It is moved first, before `layout-fix`, in **one** mechanical PR: a half-moved tree breaks every path at once, and one PR keeps the freeze short.
 
-**Decision that changes ADR 0008: `app/tools/`, not a root `tools/`.** Several scripts import npm packages (`eslint` in `check-baseline`, `playwright` in the conformance probe, and the `vitest` configs import `coverage-config.mjs`). Node resolves bare imports from the importing file upwards, so scripts under a root `tools/` would not find `app/node_modules`. The Node scripts therefore stay inside `app/` as `app/tools/`; the root `tools/` keeps only the shell scripts from the root `scripts/` (PR 4). ADR 0008 and `FR-QG-23` are amended in this PR, and `rootDirs` in `app/layout.config.mjs` stays `app`, `docs`, `tools`.
+**Decision that changes ADR 0008: `app/tools/`, not a root `tools/`.** Several scripts import npm packages (`eslint` in `check-baseline`, `playwright` in the conformance probe, and the `vitest` configs import `coverage-config.mjs`). Node resolves bare imports from the importing file upwards, so scripts under a root `tools/` would not find `app/node_modules`. The Node scripts therefore stay inside `app/` as `app/tools/`; the root `tools/` keeps only the shell scripts from the root `scripts/` (PR 4). ADR 0008 and `FR-QG-23` are amended in this PR, and `rootDirs` in `app/config/lint/layout.config.mjs` stays `app`, `docs`, `tools`.
 
 **Target (every directory has at most 5 units; `make layout` proves it):**
 
@@ -1027,9 +1027,9 @@ Families that become a folder: `layout/` (check-layout, layout-baseline, layout-
 1. **Mapping table first.** One JSON file (kept out of the repo) maps every old path to its new path; a one-off script reads it and does all of steps 2 to 4, so the move is repeatable after a conflict.
 2. **`git mv`** for every file, so `git log --follow` and rename detection keep working.
 3. **Relative imports and paths inside the scripts**: `../packages/...`, `../eslint.config.js`, `import.meta.url` based roots (for example `check-layout.mjs` derives `app` and `root` two levels up; after the move it is four) and the copy list in `check-layout.test.mjs`, which builds a throwaway repo from the script names and the path `app/scripts/...`.
-4. **References outside the scripts**, found with `grep -rIlE "app/scripts|scripts/[a-z-]+\.mjs|node scripts/"` (about 40 files): `Makefile` (17 places), `app/package.json` (20), `.github/workflows/*.yml`, `.githooks/*`, `.claude/hooks/*.mjs` and its tests, `.claude/rules/*`, `.agents/skills/*`, `app/knip.json`, `app/eslint.config.js` (imports `check-boundaries.mjs`), `app/packages/*/vitest.config.ts` and `vite.config.ts` (import `coverage-config.mjs`), `app/modules.config.mjs`, `app/quality-limits.json`, `app/audit-allowlist.json`, `app/deploy/scripts/*.sh`, `README.md`, `docs/guides/design-system.md` and the docs.
+4. **References outside the scripts**, found with `grep -rIlE "app/scripts|scripts/[a-z-]+\.mjs|node scripts/"` (about 40 files): `Makefile` (17 places), `app/package.json` (20), `.github/workflows/*.yml`, `.githooks/*`, `.claude/hooks/*.mjs` and its tests, `.claude/rules/*`, `.agents/skills/*`, `app/config/lint/knip.json`, `app/config/lint/eslint.config.js` (imports `check-boundaries.mjs`), `app/packages/*/vitest.config.ts` and `vite.config.ts` (import `coverage-config.mjs`), `app/config/lint/modules.config.mjs`, `app/config/gates/quality-limits.json`, `app/config/gates/audit-allowlist.json`, `app/config/deploy/scripts/*.sh`, `README.md`, `docs/guides/reference/design-system.md` and the docs.
 5. **Gate-file definitions must follow the move, with tests.** `.claude/hooks/rules.mjs` and `isGateFile` in `merge-pr.mjs` decide which paths a human must approve. If they still name `app/scripts/`, the moved check scripts silently stop being gate files and an agent could merge a change to them. Add a test to `rules.test.mjs` and `merge-pr.test.mjs` for every new group (`app/tools/check/**`, `app/tools/workflow/**`) before changing the patterns, and watch it fail first.
-6. **Baseline**: the `app/scripts` entry disappears from `app/layout-baseline.json` (it only shrinks).
+6. **Baseline**: the `app/scripts` entry disappears from `app/config/gates/baselines/layout-baseline.json` (it only shrinks).
 7. **Verify:** `make ci`, `make layout`, `grep -rn "app/scripts"` returns nothing but history (`docs/records/test-logs`, changelog), `check-links`, and a manual run of `make claim` (dry run), `make worktree`, `make merge` (refuses a gate-file PR) and `make board`, because the workflow scripts have the most path logic.
 
 **Risks and how they are handled:**
@@ -1044,7 +1044,7 @@ Families that become a folder: `layout/` (check-layout, layout-baseline, layout-
 ### PR 4: `tools/`, `app/config`, `app/gates`
 
 - Move the root `scripts/*.sh` into `tools/` (shell only; the Node scripts moved in PR 4a); move gate data (`quality-limits.json`, `quality-baseline.json`, `quality-ds-baseline.json`, `coverage-thresholds.json`, `audit-allowlist.json`, `layout-baseline.json`) to `app/gates/`; tool configs (`eslint.config.js`, `knip.json`, `commitlint.config.js`, `release.config.js`, `.prettierrc.json`, `tsconfig.base.json`) to `app/config/` where the tool accepts `--config`; otherwise they stay in `app/` and are named in the whitelist of `layout.config.mjs`.
-- Adapt: `Makefile`, `app/package.json`, all workflows, `.githooks/`, `check-ci-drift.mjs`, `.github/CODEOWNERS` (`/scripts/` becomes `/tools/`), and the path inside `check-layout.mjs` (`devBaseline` reads `app/layout-baseline.json` from `dev`; during the move PR it must read the old path).
+- Adapt: `Makefile`, `app/package.json`, all workflows, `.githooks/`, `check-ci-drift.mjs`, `.github/CODEOWNERS` (`/scripts/` becomes `/tools/`), and the path inside `check-layout.mjs` (`devBaseline` reads `app/config/gates/baselines/layout-baseline.json` from `dev`; during the move PR it must read the old path).
 - Merge: **human** (Makefile, workflows, hooks, thresholds).
 
 ### PR 5: `core` and `api`

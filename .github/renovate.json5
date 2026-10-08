@@ -43,7 +43,7 @@
     { matchUpdateTypes: ["major"], automerge: false, addLabels: ["major"] },
     // 0.x packages: a minor can break, so treat it like a major.
     { matchCurrentVersion: "/^v?0\\./", matchUpdateTypes: ["minor"], automerge: false },
-    // typescript-eslint only supports TypeScript below 6.1 (app/README.md).
+    // typescript-eslint only supports TypeScript below 6.1 (docs/guides/reference/app.md).
     { matchPackageNames: ["typescript"], allowedVersions: "<6.1" },
     // PostgreSQL major upgrades only with a migration plan and a restore test (US-DEV-07, NFR-15).
     { matchPackageNames: ["postgres"], matchUpdateTypes: ["major"], enabled: false },

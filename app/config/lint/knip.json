@@ -1,6 +1,9 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreExportsUsedInFile": true,
+  "commitlint": { "config": ["config/project/commitlint.config.js"] },
+  "eslint": { "config": ["config/lint/eslint.config.js"] },
+  "semantic-release": { "config": ["config/project/release.config.js"] },
   "ignoreDependencies": [
     "@commitlint/cli",
     "lint-staged",
@@ -8,8 +11,11 @@
   ],
   "workspaces": {
     ".": {
-      "entry": ["tools/**/*.mjs!", "modules.config.mjs!"],
-      "ignore": ["tools/check/quality/coverage/coverage-config.d.mts", "modules.config.d.mts"]
+      "entry": ["tools/**/*.mjs!", "config/lint/modules.config.mjs!"],
+      "ignore": [
+        "tools/check/quality/coverage/coverage-config.d.mts",
+        "config/lint/modules.config.d.mts"
+      ]
     },
     "packages/db": {
       "project": ["src/**/*.ts!", "!src/**/fixtures.ts!", "!src/kernel/migrate-cli.ts!"]

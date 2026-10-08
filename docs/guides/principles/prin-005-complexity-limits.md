@@ -15,7 +15,7 @@ ESLint `complexity` reports the offending function; the target is 0 functions ab
 
 ## Checked by
 
-`app/eslint.config.js`.
+`app/config/lint/eslint.config.js`.
 
 ## Gate
 
@@ -23,4 +23,4 @@ ESLint `complexity` reports the offending function; the target is 0 functions ab
 
 ## Evidence
 
-Thresholds are configured once, in `app/eslint.config.js` (FR-QG-18).
+Thresholds are configured once, in `app/config/lint/eslint.config.js` (FR-QG-18).

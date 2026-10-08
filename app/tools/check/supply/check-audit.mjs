@@ -64,7 +64,7 @@ function main() {
     return 2;
   }
   const allowlist = JSON.parse(
-    readFileSync(new URL("../../../audit-allowlist.json", import.meta.url), "utf8"),
+    readFileSync(new URL("../../../config/gates/audit-allowlist.json", import.meta.url), "utf8"),
   );
   const now = new Date();
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
