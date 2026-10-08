@@ -72,17 +72,29 @@ function devBaseline() {
   }
 }
 
+/** The baseline, or undefined when the file does not exist yet. One read, no check-then-read race. */
+function readBaseline() {
+  try {
+    return JSON.parse(fs.readFileSync(BASELINE_FILE, "utf8"));
+  } catch (error) {
+    if (error?.code === "ENOENT") return undefined;
+    throw error;
+  }
+}
+
 function main(argv) {
   const findings = scan();
-  const exists = fs.existsSync(BASELINE_FILE);
-  const baseline = exists ? JSON.parse(fs.readFileSync(BASELINE_FILE, "utf8")) : {};
+  const baseline = readBaseline();
+  const exists = baseline !== undefined;
   if (argv.includes("--write-baseline")) {
-    const keep = exists ? findings.filter((f) => baseline[f.table]?.includes(f.target)) : findings;
+    const keep = exists
+      ? findings.filter((f) => baseline?.[f.table]?.includes(f.target))
+      : findings;
     fs.writeFileSync(BASELINE_FILE, `${JSON.stringify(toBaseline(keep), null, 2)}\n`);
     console.log(`check-db-indexes: wrote ${keep.length} entries to ${BASELINE_FILE}`);
     return 0;
   }
-  const errors = compareBaseline(findings, baseline, exists ? devBaseline() : undefined);
+  const errors = compareBaseline(findings, baseline ?? {}, exists ? devBaseline() : undefined);
   for (const e of errors) console.error(`check-db-indexes: ${e}`);
   if (errors.length) return 1;
   console.log(`check-db-indexes: ok (${findings.length} known findings in the baseline)`);
