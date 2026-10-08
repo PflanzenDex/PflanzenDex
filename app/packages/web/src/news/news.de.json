@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Stecklinge messen: In der Messansicht ist ein Steckling jetzt deutlich als „Steckling“ markiert.",
     "Fotos auf der Karte: Die Karte zeigt dein neuestes Foto; Fotos zu Messungen lassen sich nachträglich ergänzen oder ersetzen.",
     "Fotos beim Messen: Zu jeder Messung kannst du jetzt ein Foto hinzufügen. Es bleibt privat, Ort und Kameradaten werden entfernt, und du siehst es im Verlauf. Dort zeigt auch ein Diagramm deine Messwerte; vergeilte Messungen sind als Raute markiert.",
     "Vergeilung: Ist deine letzte Messung als „Vergeilt/dünn“ bewertet, zählt der Wuchs nie als Erfolg – die Ansicht sagt das deutlich, auch wenn die Rate hoch ist. Nur ein steigender Trend bei gesundem Wuchs gilt als Erfolgssignal.",

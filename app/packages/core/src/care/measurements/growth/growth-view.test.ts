@@ -57,3 +57,26 @@ describe("US-WAC-04 etiolation overrides the trend in the Measure view", () => {
     );
   });
 });
+
+describe("FR-WAC-05 the growth view also shows cuttings, marked as such", () => {
+  const viewOf = async (cuttings: string[]) => {
+    const measurements = new InMemoryMeasurements({ anna: [E1] });
+    return measurementView(
+      {
+        measurements,
+        specimens: new SpecimenStub({ anna: [E1] }, [], cuttings),
+        species: speciesStub("height"),
+      },
+      "anna",
+      E1,
+    );
+  };
+
+  it("a cutting is in the view with status cutting", async () => {
+    expect((await viewOf([E1]))?.status).toBe("cutting");
+  });
+
+  it("a plant is a plant, so the web marks only cuttings", async () => {
+    expect((await viewOf([]))?.status).toBe("plant");
+  });
+});

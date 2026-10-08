@@ -28,6 +28,7 @@ const measurement = (extra: Partial<MeasurementRow> = {}): MeasurementRow => ({
 });
 const view = (extra: Partial<MeasurementView> = {}): MeasurementView => ({
   specimenId: "e1",
+  status: "plant",
   growthMeasure: "rosette_diameter",
   etiolationSigns: "Rosette streckt sich.",
   measurements: [],
@@ -142,6 +143,13 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(html).toContain("Vergeilt/dünn");
     expect(html).toContain("03.10.2026");
     expect(html).toContain("Blätter wirken blass");
+  });
+
+  it("FR-WAC-05 a cutting is marked as Steckling in the growth view, a plant is not", () => {
+    const cutting = renderToString(<MeasurementHeader view={view({ status: "cutting" })} />);
+    expect(cutting).toContain("Steckling");
+    const plant = renderToString(<MeasurementHeader view={view()} />);
+    expect(plant).not.toContain("Steckling");
   });
 
   it('without measurement: "noch keine Messung", and without species the measure stays "unknown" (P-08)', () => {
