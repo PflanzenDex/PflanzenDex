@@ -8,10 +8,10 @@ import {
 import { useRef, useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
-import { CardList } from "./PokedexCards";
-import { SpeciesDetail } from "./PokedexDetail";
-import { useDetail } from "./use-detail";
-import { Controls } from "./PokedexControls";
+import { CardList } from "../pokedex-cards/pokedex-cards";
+import { SpeciesDetail } from "../pokedex-detail/pokedex-detail";
+import { useDetail } from "../use-detail";
+import { Controls } from "../pokedex-controls/pokedex-controls";
 
 const plural = (n: number) => `${n} ${n === 1 ? "Art" : "Arten"}`;
 

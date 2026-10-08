@@ -88,7 +88,7 @@ const checked = (name: string) => radio(name).getAttribute("aria-pressed") === "
 beforeAll(async () => {
   await Promise.all([
     import("./collection/collection-page/collection-page"),
-    import("./pokedex/PokedexPage"),
+    import("./pokedex/pokedex-page/pokedex-page"),
     import("./wishlist/WishlistPage"),
     import("./collection/difficulty-page/difficulty-page"),
   ]);
