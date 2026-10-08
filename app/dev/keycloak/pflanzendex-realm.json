@@ -5,7 +5,7 @@
   "loginTheme": "pflanzendex",
   "sslRequired": "external",
   "registrationAllowed": true,
-  "registrationEmailAsUsername": true,
+  "registrationEmailAsUsername": false,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
   "verifyEmail": true,
@@ -31,6 +31,32 @@
     "from": "noreply@pflanzendex.localhost",
     "fromDisplayName": "PflanzenDex"
   },
+  "users": [
+    {
+      "username": "test",
+      "email": "test@example.test",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "credentials": [{ "type": "password", "value": "testtest12", "temporary": false }]
+    },
+    {
+      "username": "test2",
+      "email": "test2@example.test",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "credentials": [{ "type": "password", "value": "testtest12", "temporary": false }]
+    },
+    {
+      "username": "test3",
+      "email": "test3@example.test",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "credentials": [{ "type": "password", "value": "testtest12", "temporary": false }]
+    }
+  ],
   "clients": [
     {
       "clientId": "pflanzendex-api",
