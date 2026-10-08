@@ -167,7 +167,7 @@ describe("US-ACC-01 Sitzung", () => {
     const { result } = renderHook(() => useSession());
     await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
     act(() => result.current.signOut());
-    expect(mgr.signoutRedirect).toHaveBeenCalledOnce();
+    await waitFor(() => expect(mgr.signoutRedirect).toHaveBeenCalledOnce());
     cleanup();
     mgr.getUser.mockResolvedValue(null);
     const fresh = renderHook(() => useSession());
@@ -185,10 +185,10 @@ describe("US-ACC-01 Sitzung", () => {
     const { result } = renderHook(() => useSession());
     await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
     act(() => result.current.signIn());
-    expect(mgr.signinRedirect).toHaveBeenLastCalledWith();
+    await waitFor(() => expect(mgr.signinRedirect).toHaveBeenLastCalledWith());
     expect(window.sessionStorage.getItem("pflanzendex.signed_out")).toBeNull();
     act(() => result.current.register());
-    expect(mgr.signinRedirect).toHaveBeenLastCalledWith({ prompt: "create" });
+    await waitFor(() => expect(mgr.signinRedirect).toHaveBeenLastCalledWith({ prompt: "create" }));
   });
 
   it("signing out on all devices ends the sessions at the sign-in service and signs out", async () => {

@@ -6,7 +6,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
-import { UserManager, WebStorageStateStore, type User } from "oidc-client-ts";
+import type { UserManager, User } from "oidc-client-ts";
 import { setProfileTimeZone } from "../kernel";
 import { signOutEverywhere, apiUrl, getAccount, oidcSettings, type Account } from "./account-api";
 
@@ -21,8 +21,13 @@ export type State =
 const env = import.meta.env as Record<string, string | undefined>;
 const MARKER = "pflanzendex.signed_out";
 
-function newManager(): UserManager {
-  return new UserManager({
+// The sign-in library is about a seventh of the initial JavaScript; it loads as its own chunk, started at once
+// (the loading state paints meanwhile) instead of travelling inside the entry chunk (US-QS-07, DS-08).
+const library = import("oidc-client-ts");
+
+async function newManager(): Promise<UserManager> {
+  const { UserManager: Manager, WebStorageStateStore } = await library;
+  return new Manager({
     ...oidcSettings(env, window.location.origin),
     // The sign-in stays on the device (US-ACC-01); revocable via "sign out on all devices".
     userStore: new WebStorageStateStore({ store: window.localStorage }),
@@ -63,22 +68,23 @@ async function loadState(mgr: UserManager): Promise<State> {
   }
 }
 
-function sessionActions(mgr: UserManager, setState: Dispatch<SetStateAction<State>>) {
+function sessionActions(manager: Promise<UserManager>, setState: Dispatch<SetStateAction<State>>) {
   return {
     signIn: () => {
       window.sessionStorage.removeItem(MARKER);
-      void mgr.signinRedirect();
+      void manager.then((mgr) => mgr.signinRedirect());
     },
     // `prompt=create` opens registration directly at the sign-in service (OIDC extension, supported by Keycloak).
     register: () => {
       window.sessionStorage.removeItem(MARKER);
-      void mgr.signinRedirect({ prompt: "create" });
+      void manager.then((mgr) => mgr.signinRedirect({ prompt: "create" }));
     },
     signOut: () => {
       window.sessionStorage.setItem(MARKER, "1");
-      void mgr.signoutRedirect();
+      void manager.then((mgr) => mgr.signoutRedirect());
     },
     everywhereSignOut: async () => {
+      const mgr = await manager;
       const user = await mgr.getUser();
       try {
         if (user) await signOutEverywhere(mgr.settings.authority, user.access_token);
@@ -97,13 +103,13 @@ function sessionActions(mgr: UserManager, setState: Dispatch<SetStateAction<Stat
 }
 
 export function useSession() {
-  const mgr = useMemo(newManager, []);
+  const manager = useMemo(newManager, []);
   const [state, setState] = useState<State>({ kind: "loading" });
 
   const load = useCallback(async () => {
     setState({ kind: "loading" });
-    setState(await loadState(mgr));
-  }, [mgr]);
+    setState(await loadState(await manager));
+  }, [manager]);
 
   useEffect(() => {
     void load();
@@ -112,16 +118,21 @@ export function useSession() {
         kind: "signedOut",
         hint: "Deine Sitzung wurde beendet. Bitte melde dich neu an.",
       });
-    mgr.events.addUserSignedOut(ended);
-    mgr.events.addSilentRenewError(ended);
+    const listening = manager.then((mgr) => {
+      mgr.events.addUserSignedOut(ended);
+      mgr.events.addSilentRenewError(ended);
+      return mgr;
+    });
     return () => {
-      mgr.events.removeUserSignedOut(ended);
-      mgr.events.removeSilentRenewError(ended);
+      void listening.then((mgr) => {
+        mgr.events.removeUserSignedOut(ended);
+        mgr.events.removeSilentRenewError(ended);
+      });
     };
-  }, [mgr, load]);
+  }, [manager, load]);
 
-  const token = useCallback(async () => (await mgr.getUser())?.access_token, [mgr]);
-  const actions = useMemo(() => sessionActions(mgr, setState), [mgr]);
+  const token = useCallback(async () => (await (await manager).getUser())?.access_token, [manager]);
+  const actions = useMemo(() => sessionActions(manager, setState), [manager]);
 
   return { state, token, reload: load, ...actions };
 }
