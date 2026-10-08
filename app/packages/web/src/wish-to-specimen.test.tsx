@@ -23,7 +23,7 @@ vi.mock("oidc-client-ts", () => ({
   },
 }));
 
-import { App } from "./App";
+import { App } from "./app";
 import { EMPTY_DISTRIBUTION } from "./collection/insights/distribution-test-helpers";
 
 // US-WUN-05: after "Gekauft" the app opens the creation of a specimen with the species preselected from the catalog, or
