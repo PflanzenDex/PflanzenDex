@@ -1,5 +1,5 @@
 # Project status follows the pull requests (US-DEV-05): merged into dev -> On dev, closed unmerged -> Todo,
-# release PR merged into main -> Done. Rules live in app/tools/workflow/project-status/project-status-lib.mjs (tested).
+# release PR merged into main -> Done. Rules live in app/tools/workflow/actions/project-status/project-status-lib.mjs (tested).
 # The token comes from a GitHub App (vars.PROJECT_APP_ID, secrets.PROJECT_APP_PRIVATE_KEY, permission
 # "Projects: read and write" for the organization); GITHUB_TOKEN cannot write organization projects.
 name: Project status
@@ -41,4 +41,4 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
           GH_REPO: ${{ github.repository }}
-        run: node app/tools/workflow/project-status/project-status.mjs event "$GITHUB_EVENT_PATH"
+        run: node app/tools/workflow/actions/project-status/project-status.mjs event "$GITHUB_EVENT_PATH"

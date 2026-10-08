@@ -15,7 +15,9 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # Title/body edits and leaving draft change no code: they get their own group, so they never cancel the run that is
+  # testing the same commit; their `reuse` job waits for that run instead (US-QG-02, #404).
+  group: ci-${{ github.ref }}${{ contains(fromJSON('["edited","ready_for_review"]'), github.event.action) && '-meta' || '' }}
   cancel-in-progress: true
 
 permissions:
@@ -48,10 +50,44 @@ jobs:
             echo "app=false" >> "$GITHUB_OUTPUT"
           fi
 
+  # US-QG-02 (#404): a title/body edit or leaving draft starts a run on an unchanged commit. A green `app` or
+  # `ds-snapshots` of that head commit is reused (waiting while a run of it is still going); a failed, cancelled or
+  # missing result, a changed base branch or any API error runs the job in full. Nothing else is ever assumed green.
+  reuse:
+    if: >-
+      github.event_name == 'pull_request'
+      && contains(fromJSON('["edited","ready_for_review"]'), github.event.action)
+      && !github.event.changes.base
+      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      checks: read
+    outputs:
+      app: ${{ steps.reuse.outputs.app }}
+      ds-snapshots: ${{ steps.reuse.outputs['ds-snapshots'] }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - id: reuse
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: make ci-reuse JOBS="app ds-snapshots"
+
   app:
-    needs: changes
-    # Editing a draft's title or body (Handoff updates) does not rerun the suite; `ready_for_review` runs everything.
-    if: needs.changes.outputs.app == 'true' && !(github.event.action == 'edited' && github.event.pull_request.draft)
+    needs: [changes, reuse]
+    # Editing a draft's title or body (Handoff updates) does not rerun the suite; `ready_for_review` runs everything
+    # unless `reuse` found a green result for the same commit. `!cancelled()` because `reuse` is skipped on most events.
+    if: >-
+      !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
+      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs.app != 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     # Database tests (TE-02): real PostgreSQL as in production (E-01); same port as `make db-up`.
@@ -223,13 +259,15 @@ jobs:
           node-version-file: .nvmrc
       - run: make layout
 
-
   # QG-U5 / US-QS-07 (ADR 0010): visual regression of the `components/ui` stories (360 px, light and dark) in the
   # pinned Playwright container, so the pictures equal the baselines in `app/packages/web/.storybook/snapshots` made on a laptop.
   # On failure the diff images are attached. Never updates baselines (`make ds-snapshots` is a local step).
   ds-snapshots:
-    needs: changes
-    if: needs.changes.outputs.app == 'true' && !(github.event.action == 'edited' && github.event.pull_request.draft)
+    needs: [changes, reuse]
+    if: >-
+      !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.app == 'true'
+      && !(github.event.action == 'edited' && github.event.pull_request.draft)
+      && needs.reuse.outputs['ds-snapshots'] != 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -256,6 +294,7 @@ jobs:
     needs:
       [
         changes,
+        reuse,
         app,
         layout,
         ds-snapshots,
@@ -271,6 +310,7 @@ jobs:
     steps:
       - env:
           CHANGES: ${{ needs.changes.result }}
+          REUSE: ${{ needs.reuse.result }}
           APP: ${{ needs.app.result }}
           LAYOUT: ${{ needs.layout.result }}
           DS_SNAPSHOTS: ${{ needs.ds-snapshots.result }}
@@ -280,7 +320,7 @@ jobs:
           LIGHTHOUSE: ${{ needs.lighthouse.result }}
           E2E: ${{ needs.e2e.result }}
         run: |
-          for r in "$CHANGES" "$APP" "$LAYOUT" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E"; do
+          for r in "$CHANGES" "$REUSE" "$APP" "$LAYOUT" "$DS_SNAPSHOTS" "$METADATA" "$DEPENDENCY_REVIEW" "$AUDIT" "$LIGHTHOUSE" "$E2E"; do
             case "$r" in
               success | skipped) ;;
               *) echo "failed: $r"; exit 1 ;;
