@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { Sheet, SheetContent, SheetTrigger } from "./sheet";
@@ -55,7 +55,7 @@ describe("Sheet (US-QS-07, DS-23, DS-40)", () => {
     await screen.findByRole("dialog");
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(document.activeElement).toBe(trigger);
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
   });
 
   it("US-QS-07 · DS-40 Tab keeps focus inside the sheet", async () => {
@@ -75,5 +75,18 @@ describe("Sheet (US-QS-07, DS-23, DS-40)", () => {
     await userEvent.click(trigger);
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
     expect(await screen.findByRole("dialog", { name: "Filter" })).toBeTruthy();
+  });
+
+  it("US-QS-14 · DS-40 focus moves into the sheet on open and Tab cycles inside it", async () => {
+    render(<Example />);
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    const dialog = await screen.findByRole("dialog");
+    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+    for (let i = 0; i < 4; i++) {
+      await userEvent.tab();
+      expect(dialog.contains(document.activeElement)).toBe(true);
+    }
+    await userEvent.tab({ shift: true });
+    expect(dialog.contains(document.activeElement)).toBe(true);
   });
 });

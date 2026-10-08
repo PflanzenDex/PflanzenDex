@@ -85,7 +85,7 @@ describe("MobileNavBar (US-QS-07, DS-25, DS-22, DS-44)", () => {
     expect(screen.getByRole("dialog", { name: "Mehr" })).toBeTruthy();
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(document.activeElement).toBe(more);
+    await waitFor(() => expect(document.activeElement).toBe(more));
   });
 
   it("US-QS-07 · DS-19 marks the active destination by aria-current and a text change, not color alone", () => {
