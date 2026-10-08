@@ -108,7 +108,10 @@ describe("US-ENT-01 suggestions", () => {
       license: null,
     });
     const deps = {
-      ownership: { specimens: { list: async () => [] }, species: { find: async () => null } },
+      ownership: {
+        specimens: { list: async () => [] },
+        species: { find: async () => null, findMany: async () => [] },
+      },
       tree: {
         tree: async () => [row("Aloe vera", "Asphodelaceae"), row("Ficus lyrata")],
         facts: async () => [],
@@ -123,7 +126,10 @@ describe("US-ENT-01 suggestions", () => {
 
   it("US-ENT-01 says the catalog is empty when the tree has no species", async () => {
     const deps = {
-      ownership: { specimens: { list: async () => [] }, species: { find: async () => null } },
+      ownership: {
+        specimens: { list: async () => [] },
+        species: { find: async () => null, findMany: async () => [] },
+      },
       tree: { tree: async () => [], facts: async () => [] },
       wishes: new InMemoryWishes(),
     };

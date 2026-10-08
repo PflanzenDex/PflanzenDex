@@ -1,5 +1,31 @@
+# Static web server (NFR-12). Compression (zstd, gzip) happens once in the reverse proxy (Caddyfile).
 :8080 {
 	root * /srv/web
-	try_files {path} /index.html
-	file_server
+
+	# Vite emits content-hashed files under /assets/: cache for a year, never revalidate.
+	# No try_files here, so a missing hashed file is a 404 and never an HTML page cached as immutable.
+	handle /assets/* {
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
+	# Entry points that must stay fresh: the shell, the service worker and the web manifest.
+	@revalidate path /index.html /sw.js /service-worker.js /registerSW.js /manifest.webmanifest /manifest.json
+	handle @revalidate {
+		header Cache-Control "no-cache"
+		file_server
+	}
+
+	# Everything else (SPA routes fall back to the shell, so they revalidate too).
+	handle {
+		header Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+
+	# An error (such as a missing hashed file during a deploy) must never be cached as immutable.
+	handle_errors {
+		header Cache-Control "no-store"
+		respond "{err.status_code} {err.status_text}" {err.status_code}
+	}
 }

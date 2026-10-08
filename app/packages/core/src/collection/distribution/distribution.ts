@@ -74,7 +74,7 @@ export async function zoneDistribution(
   ]);
   const zones = [...allZones].sort((a, b) => a.sortOrder - b.sortOrder);
   const speciesIds = [...new Set(rows.map((z) => z.speciesId))];
-  const read = await Promise.all(speciesIds.map((id) => deps.species.find(userId, id)));
+  const read = await deps.species.findMany(userId, speciesIds);
   const context: Context = {
     zones,
     locations,

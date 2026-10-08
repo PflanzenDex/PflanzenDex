@@ -56,6 +56,10 @@ export class InMemorySpecies implements SpeciesStore {
     return z ? this.asValue(userId, z) : null;
   }
 
+  async findMany(userId: string, ids: readonly string[]) {
+    return Promise.all(ids.map((id) => this.find(userId, id)));
+  }
+
   /** Roles for `findForReview` (reviewers see foreign proposals). */
   reviewers: string[] = [];
 

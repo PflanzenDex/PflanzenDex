@@ -79,6 +79,8 @@ export interface SpeciesStore {
   /** `norm`: normalized search text, `null` lists all visible species. */
   search(userId: string, norm: string | null): Promise<readonly SpeciesHit[]>;
   find(userId: string, id: string): Promise<Species | null>;
+  /** `find` for many IDs in one step (NFR-12): one result per ID in the same order, `null` where `find` gives `null`. */
+  findMany(userId: string, ids: readonly string[]): Promise<readonly (Species | null)[]>;
   /** Like `find`, but a reviewer also gets foreign open proposals to judge them (US-BES-10). Others: as `find`. */
   findForReview(userId: string, id: string): Promise<Species | null>;
   /**

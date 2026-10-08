@@ -119,6 +119,19 @@ describe("US-BES-01 search", () => {
     expect(h).toContain("Vorschlag, nur für dich sichtbar");
   });
 
+  it("US-QS-14 renders only the first 20 hits and offers Mehr laden with the total", () => {
+    const many = Array.from({ length: 45 }, (_, i) => hit({ ...species, id: `s${i}` }));
+    const h = renderToString(<SpeciesSearch searchText="" hit={many} {...actions} />);
+    expect(h.match(/<li /g)).toHaveLength(20);
+    expect(h).toContain("20 von 45 angezeigt");
+    expect(h).toContain("Mehr laden");
+  });
+
+  it("US-QS-14 shows no Mehr laden for a short list", () => {
+    const h = renderToString(<SpeciesSearch searchText="" hit={[hit(species)]} {...actions} />);
+    expect(h).not.toContain("Mehr laden");
+  });
+
   it('without hits: offers "Propose species" (P-09)', () => {
     const h = renderToString(<SpeciesSearch searchText="Zzyzx" hit={[]} {...actions} />);
     expect(h).toContain("Keine Art zu „Zzyzx“ gefunden");

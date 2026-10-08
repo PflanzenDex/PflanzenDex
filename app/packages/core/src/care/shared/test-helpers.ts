@@ -59,9 +59,11 @@ export const speciesStub = (
   growthMeasure: GrowthMeasure | null,
   etiolationSigns = "Triebe werden lang und dünn.",
 ): SpeciesSource => ({
-  find: async () =>
-    growthMeasure ? ({ id: "species-1", growthMeasure, etiolationSigns } as Species) : null,
+  find: async () => one(growthMeasure, etiolationSigns),
+  findMany: async (_userId, ids) => ids.map(() => one(growthMeasure, etiolationSigns)),
 });
+const one = (growthMeasure: GrowthMeasure | null, etiolationSigns: string) =>
+  growthMeasure ? ({ id: "species-1", growthMeasure, etiolationSigns } as Species) : null;
 
 /** In-memory adapter for tests only; the real adapter lives in `db`. */
 export class InMemoryMeasurements implements MeasurementStore {

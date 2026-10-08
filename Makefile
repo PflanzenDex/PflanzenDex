@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check ci-reuse merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check ci-reuse merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -136,6 +136,9 @@ layout: ## File layout: at most 5 units per directory, names, component folders,
 
 layout-baseline: ## Create or lower app/layout-baseline.json, never enlarge it (FR-QG-22)
 	cd $(APP) && npm run layout -- --write-baseline
+
+db-indexes: ## Every foreign key and tenant column (account_id) of the migrations has an index, baseline ratchet (US-QG-07)
+	cd $(APP) && npm run db-indexes
 
 gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundaries, unused code, format
 	cd $(APP) && node tools/check/supply/check-deps.mjs

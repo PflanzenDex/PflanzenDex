@@ -6,8 +6,7 @@ import {
   zoneDerive,
   type LightZone,
 } from "../../light";
-import type { Species } from "../../catalog";
-import type { SpecimenRow } from "../shared/types";
+import type { SpeciesSource, SpecimenRow } from "../shared/types";
 import { isActive } from "../shared/types";
 
 export interface LightOverviewRow {
@@ -25,7 +24,7 @@ export interface LightOverview {
 
 interface Dependencies {
   readonly specimens: { list(userId: string): Promise<readonly SpecimenRow[]> };
-  readonly species: { find(userId: string, id: string): Promise<Species | null> };
+  readonly species: Pick<SpeciesSource, "findMany">;
   readonly zones: { list(userId: string): Promise<readonly LightZone[]> };
 }
 
@@ -47,7 +46,7 @@ export async function lightOverview(deps: Dependencies, userId: string): Promise
   const speciesIds = [...new Set(activeSpecimens.map((s) => s.speciesId))];
 
   // Load species data
-  const speciesList = await Promise.all(speciesIds.map((id) => deps.species.find(userId, id)));
+  const speciesList = await deps.species.findMany(userId, speciesIds);
 
   // Build one row per readable species
   const rows: LightOverviewRow[] = [];

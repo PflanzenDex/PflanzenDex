@@ -145,6 +145,8 @@ export interface CatchDateStore {
 /** Only reading a visible species; `SpeciesStore` from `catalog` fulfils the port. */
 export interface SpeciesSource {
   find(userId: string, id: string): Promise<Species | null>;
+  /** `find` for many IDs in one step (NFR-12): one result per ID, same order, `null` where `find` gives `null`. */
+  findMany(userId: string, ids: readonly string[]): Promise<readonly (Species | null)[]>;
 }
 
 /**

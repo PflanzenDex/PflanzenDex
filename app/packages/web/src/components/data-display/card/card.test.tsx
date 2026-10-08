@@ -28,7 +28,8 @@ describe("Card (US-QS-07, DS-34)", () => {
     expect(screen.getByText("Heute")).toBeTruthy();
     rerender(<Card data-testid="c">Körper</Card>);
     expect(screen.queryByRole("img")).toBeNull();
-    expect(screen.getByTestId("c").children).toHaveLength(1);
+    expect(screen.getByTestId("c").children).toHaveLength(0);
+    expect(screen.getByTestId("c").querySelector("span")).toBeNull();
   });
 
   it("US-QS-07 with href the whole card is one link with focus ring and a 44 px target", () => {
@@ -84,5 +85,50 @@ describe("Card (US-QS-07, DS-34)", () => {
     );
     expect(screen.getByTestId("c")).toBe(ref.current);
     expect(ref.current?.className.endsWith("mt-4")).toBe(true);
+  });
+
+  it("US-QS-14 without media and footer the children are direct children of the card, so a layout class reaches them", () => {
+    render(
+      <Card data-testid="c" className="grid gap-1">
+        <p>Name</p>
+        <p>Datum</p>
+      </Card>,
+    );
+    const card = screen.getByTestId("c");
+    expect(card.className).toContain("grid");
+    expect(card.className).not.toMatch(/(^|\s)block(\s|$)/);
+    expect(card.className).toContain("p-4");
+    expect(Array.from(card.children).map((c) => c.textContent)).toEqual(["Name", "Datum"]);
+  });
+
+  it("US-QS-14 a link or button card also holds its children directly, with its own padding", () => {
+    render(
+      <>
+        <Card href="/a" className="grid">
+          <span>A1</span>
+          <span>A2</span>
+        </Card>
+        <Card onClick={() => undefined} className="grid">
+          <span>B1</span>
+          <span>B2</span>
+        </Card>
+      </>,
+    );
+    for (const el of [screen.getByRole("link"), screen.getByRole("button")]) {
+      expect(el.children).toHaveLength(2);
+      expect(el.className).toContain("p-4");
+      expect(el.className).not.toContain("p-0");
+    }
+  });
+
+  it("US-QS-14 with media or footer the body block takes bodyClassName", () => {
+    render(
+      <Card data-testid="c" media={<i>m</i>} footer={<i>f</i>} bodyClassName="grid gap-1">
+        <p>Körper</p>
+      </Card>,
+    );
+    const body = screen.getByText("Körper").parentElement as HTMLElement;
+    expect(body.className).toContain("grid");
+    expect(body.className).toContain("p-4");
   });
 });

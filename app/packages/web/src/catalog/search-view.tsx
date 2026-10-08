@@ -1,6 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { SpeciesHit, NameField } from "@pflanzendex/core";
+import { LoadMore } from "@/components/data-display/panels/pagination/load-more/load-more";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,6 +52,32 @@ function Hit({ t, onOpen }: { t: SpeciesHit; onOpen: (id: string) => void }) {
         </Badge>
       </Button>
     </li>
+  );
+}
+
+/** Hits shown per step; the API returns the whole list, so "Mehr laden" slices it on the client (US-QS-14). */
+export const HITS_PER_PAGE = 20;
+
+function HitList(props: { hit: readonly SpeciesHit[]; onOpen: (id: string) => void }) {
+  const [shown, setShown] = useState(HITS_PER_PAGE);
+  const visible = props.hit.slice(0, shown);
+  return (
+    <>
+      <ul className="m-0 grid list-none gap-2 p-0" aria-label="Treffer">
+        {visible.map((t) => (
+          <Hit key={t.id} t={t} onOpen={props.onOpen} />
+        ))}
+      </ul>
+      {props.hit.length > HITS_PER_PAGE && (
+        <LoadMore
+          loadedCount={visible.length}
+          totalCount={props.hit.length}
+          hasMore={visible.length < props.hit.length}
+          pending={false}
+          onLoadMore={() => setShown((n) => n + HITS_PER_PAGE)}
+        />
+      )}
+    </>
   );
 }
 
@@ -135,11 +163,7 @@ export function SpeciesSearch(props: {
         !props.failed && <Empty searchText={props.searchText} onPropose={props.onPropose} />
       ) : (
         <>
-          <ul className="m-0 grid list-none gap-2 p-0" aria-label="Treffer">
-            {props.hit.map((t) => (
-              <Hit key={t.id} t={t} onOpen={props.onOpen} />
-            ))}
-          </ul>
+          <HitList key={props.searchText.trim()} hit={props.hit} onOpen={props.onOpen} />
           <Button
             type="button"
             variant="secondary"
