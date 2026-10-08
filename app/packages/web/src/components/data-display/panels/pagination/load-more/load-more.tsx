@@ -35,6 +35,13 @@ type Refs = {
   done: React.RefObject<HTMLParagraphElement | null>;
 };
 
+/** The new items are inserted above the button and push it down: keep a focused button in view, no jump (WCAG 2.4.7). */
+function keepInView(button: HTMLButtonElement | null) {
+  if (!button || document.activeElement !== button) return;
+  const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  button.scrollIntoView?.({ block: "nearest", behavior: reduced ? "auto" : "smooth" });
+}
+
 /** Tracks the load the user asked for: announces its result and puts lost focus back (see {@link LoadMore}). */
 function useLoadRequest(props: LoadMoreProps, refs: Refs) {
   const { loadedCount, totalCount, hasMore, pending, onLoadMore } = props;
@@ -55,6 +62,7 @@ function useLoadRequest(props: LoadMoreProps, refs: Refs) {
       const active = document.activeElement;
       const lost = !active || active === document.body || active === refs.button.current;
       if (req.focused && lost) (hasMore ? refs.button.current : refs.done.current)?.focus();
+      if (req.focused && hasMore) keepInView(refs.button.current);
     } else if (!req.saw) return; // not started yet
     request.current = null; // done, or failed (the parent shows the error, P-10)
   }, [pending, loadedCount, totalCount, hasMore]);
