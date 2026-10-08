@@ -62,6 +62,25 @@ export function openFixturePool(): pg.Pool {
 }
 
 /**
+ * Session lock for test files that own approved species or taxa in the shared test database. The taxonomy build
+ * replaces the whole `taxon` table and its fingerprint covers every approved species, so a parallel file that approves
+ * or deletes one would change the fingerprint between two builds (#633, #646). Returns the release function; call it
+ * before ending `admin`.
+ */
+export async function holdTaxonLock(admin: pg.Pool): Promise<() => Promise<void>> {
+  const lock = await admin.connect();
+  const key = "select pg_advisory_%s(hashtext('pflanzendex-test-taxon'))";
+  await lock.query(key.replace("%s", "lock"));
+  return async () => {
+    try {
+      await lock.query(key.replace("%s", "unlock"));
+    } finally {
+      lock.release();
+    }
+  };
+}
+
+/**
  * Creates (idempotently, safe against two test processes at once) the non-superuser owner role and its database.
  * Runs once per test run from the vitest global setup; this is the only place that needs the superuser connection
  * for the normal suite. The application role is created here (cluster-wide) because only a superuser may create

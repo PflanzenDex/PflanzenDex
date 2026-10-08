@@ -6,6 +6,7 @@ export type { TenantExceptions } from "./schema.ts";
 export { checkTenantIsolation, type FixtureContext, type Fixtures } from "./isolation.ts";
 export {
   ensureTestOwnerDatabase,
+  holdTaxonLock,
   openAdminPool,
   openFixturePool,
   openOwnerPool,
