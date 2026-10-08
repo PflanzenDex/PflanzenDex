@@ -39,3 +39,23 @@ test("#205: the realm uses the PflanzenDex login theme and the theme ships a fav
 test("#202: the default dev port stays allowed (other ports are added by web-port.mjs)", () => {
   assert.ok(web.redirectUris.includes("http://localhost:5173/*"));
 });
+
+test("US-DEV-01: users sign in with a username; email stays an accepted login", () => {
+  assert.equal(realm.registrationEmailAsUsername, false);
+  assert.equal(realm.loginWithEmailAllowed, true);
+});
+
+test("US-DEV-01: the imported test users are dev-only (@example.test), enabled and verified", () => {
+  const users = realm.users ?? [];
+  assert.deepEqual(users.map((u) => u.username).sort(), ["test", "test2", "test3"]);
+  for (const u of users) {
+    assert.equal(u.email, `${u.username}@example.test`);
+    assert.equal(u.enabled, true);
+    assert.equal(u.emailVerified, true);
+    assert.deepEqual(u.requiredActions ?? [], []);
+    const [password] = u.credentials;
+    assert.equal(password.type, "password");
+    assert.equal(password.temporary, false);
+    assert.ok(password.value.length >= 10, "meets the realm password policy length(10)");
+  }
+});
