@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check ci-reuse merge clean repo-stats pr db-up db-down migrate auth-up auth-down deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check ci-reuse merge clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -64,6 +64,16 @@ auth-up: ## Start the auth server (Keycloak) and mail catcher; admin password in
 
 auth-down: ## Remove the auth server and mail catcher
 	-docker compose -f $(APP)/dev/compose.yaml --env-file $(APP)/dev/.env down -v
+
+start: auth-up db-up ## Start everything for local work: auth server, database, API and web; prints URLs and test accounts
+	@for i in $$(seq 60); do curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test && break; sleep 2; done; curl -sf http://localhost:18081/realms/pflanzendex/.well-known/openid-configuration >/dev/null && docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test || { echo "Keycloak or the database is not responding"; exit 1; }
+	@echo "Web: http://localhost:5173  API: http://localhost:3000  Keycloak: http://localhost:18081  Mail: http://localhost:18025"
+	@echo "Test accounts (dev realm): test, test2, test3 - password testtest12 (see app/README.md)"
+	$(MAKE) dev
+
+stop: ## Stop the local auth server, mail catcher and database containers (data is kept)
+	-docker compose -f $(APP)/dev/compose.yaml --env-file $(APP)/dev/.env stop
+	-docker stop $(DB_CONTAINER)
 
 test: $(if $(CI),,db-up) ## Unit and database tests of all packages and check scripts
 	cd $(APP) && npm run test
