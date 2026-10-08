@@ -27,6 +27,7 @@ export async function measurementView(
   const last = measurements[0] ?? null;
   return {
     specimenId: specimen.id,
+    status: specimen.status,
     growthMeasure: species?.growthMeasure ?? null,
     etiolationSigns: species?.etiolationSigns.trim() || null,
     measurements,

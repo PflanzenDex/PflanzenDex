@@ -6,14 +6,26 @@ import preview from "../../../.storybook/preview";
 import { setViewportWidth } from "@/lib/viewport-mock";
 import * as avatar from "./avatar/avatar.stories";
 import * as card from "./card/card.stories";
+import * as accordion from "./panels/accordion/accordion.stories";
+import * as menu from "./panels/menu/menu.stories";
+import * as popover from "./panels/popover/popover.stories";
+import * as loadMore from "./panels/pagination/load-more/load-more.stories";
+import * as pagination from "./panels/pagination/pagination.stories";
+import * as tabs from "./panels/tabs/tabs.stories";
 import * as progress from "./progress/progress.stories";
 
 setProjectAnnotations([preview]);
 
 const catalog = {
+  Accordion: composeStories(accordion),
   Avatar: composeStories(avatar),
   Card: composeStories(card),
+  Menu: composeStories(menu),
+  LoadMore: composeStories(loadMore),
+  Pagination: composeStories(pagination),
+  Popover: composeStories(popover),
   Progress: composeStories(progress),
+  Tabs: composeStories(tabs),
 };
 
 describe("TE-17 · DS-02 data-display component stories", () => {

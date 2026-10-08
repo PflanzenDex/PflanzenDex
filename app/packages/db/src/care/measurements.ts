@@ -59,6 +59,23 @@ export class MeasurementsPostgres {
     return new Map(r.rows.map((z) => [z.specimenId, z]));
   }
 
+  /** The most recent measurement with a photo per specimen; foreign IDs return nothing (P-04). */
+  async lastPhotoFor(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, { id: string; date: string }>> {
+    if (specimenIds.length === 0) return new Map();
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<{ specimenId: string; id: string; date: string }>(
+        `select distinct on (specimen_id) specimen_id as "specimenId", id, to_char(date, 'YYYY-MM-DD') as date from measurement
+         where specimen_id = any($1) and photo is not null
+         order by specimen_id, date desc, created_at desc, id`,
+        [specimenIds],
+      ),
+    );
+    return new Map(r.rows.map((z) => [z.specimenId, { id: z.id, date: z.date }]));
+  }
+
   /** The measurement of the specimen on that local date; with several the one recorded last (FR-WAC-07). */
   async findOnDate(
     userId: string,

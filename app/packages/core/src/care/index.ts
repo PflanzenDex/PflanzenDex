@@ -1,14 +1,16 @@
 // Public interface of the module `care` (ADR 0003): measurements (US-WAC-01).
 export { measurementView } from "./measurements/view";
 export type { ViewDependencies } from "./measurements/view";
-export { growthTrend } from "./measurements/growth";
-export type { GrowthTrend, Trend } from "./measurements/growth";
+export { GROWTH_DEFAULTS, growthTrend } from "./measurements/growth";
+export type { GrowthSignal, GrowthTrend, Trend } from "./measurements/growth";
 export { measurementSource } from "./measurements/capture/source";
 export type { SourceDependencies } from "./measurements/capture/source";
 export { measurementRecord } from "./measurements/record";
 export type { RecordDependencies } from "./measurements/record";
 export { measurementPhoto } from "./measurements/capture/photo";
 export type { PhotoDependencies, PhotoResult, PhotoStorage } from "./measurements/capture/photo";
+export { measurementPhotoFile } from "./measurements/capture/file";
+export type { PhotoFileDependencies } from "./measurements/capture/file";
 export { RATED_BY, MEASUREMENT_LIMITS, QUALITIES } from "./measurements/types";
 export type {
   RatedBy,

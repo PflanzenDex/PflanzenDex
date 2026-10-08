@@ -1,5 +1,9 @@
 {
   "unreleased": [
+    "Stecklinge messen: In der Messansicht ist ein Steckling jetzt deutlich als „Steckling“ markiert.",
+    "Fotos auf der Karte: Die Karte zeigt dein neuestes Foto; Fotos zu Messungen lassen sich nachträglich ergänzen oder ersetzen.",
+    "Fotos beim Messen: Zu jeder Messung kannst du jetzt ein Foto hinzufügen. Es bleibt privat, Ort und Kameradaten werden entfernt, und du siehst es im Verlauf. Dort zeigt auch ein Diagramm deine Messwerte; vergeilte Messungen sind als Raute markiert.",
+    "Vergeilung: Ist deine letzte Messung als „Vergeilt/dünn“ bewertet, zählt der Wuchs nie als Erfolg – die Ansicht sagt das deutlich, auch wenn die Rate hoch ist. Nur ein steigender Trend bei gesundem Wuchs gilt als Erfolgssignal.",
     "Wachstumsrate: Zu jeder Pflanze siehst du jetzt, wie schnell sie wächst (cm pro Jahr) und ob der Trend steigt oder fällt – verglichen mit deinem eigenen Schnitt, nie mit einem Artdurchschnitt. Fehlen Messungen, steht dort „unbekannt“.",
     "Entdecken: Im neuen Reiter „Entdecken“ siehst du Arten aus dem Katalog einzeln als große Karte, die du weder besitzt noch auf der Wunschliste hast. Die Karte zeigt Bild (als Link zur Quelle), Namen, Kurztext, Lichtzone, Schwierigkeit und weitere Merkmale; was unbekannt ist, steht als „unbekannt“ da. Darunter stehen die Gründe für den Vorschlag. Mit „Nein“, „Später“ und „Ja“ oder per Wischen nach links und rechts blätterst du weiter; nach dem Stapel folgt „Neuer Stapel“. Deine Entscheidungen werden noch nicht gespeichert.",
     "Pokédex: Hast du seit deinem letzten Besuch neue Arten gefangen, zeigt dir der Pokédex oben „Neu gefangen: …“. Das Banner bleibt, bis du „Okay“ tippst; erst dann merkt sich dein Konto, dass du die Arten gesehen hast. Beim ersten Besuch erscheint es nicht.",
@@ -60,6 +64,7 @@
     "Freunde: Der Block „Neu bei Freunden“ zeigt, welche neuen Arten, Exemplare und Stecklinge deine Freunde gesammelt haben, die neuesten zuerst. Du siehst nur, was sie freigegeben haben. Du kannst nach Freund und Zeitraum filtern oder nur neue Arten anzeigen; ein unbekanntes Fangdatum steht als „Datum unbekannt“ da.",
     "Freunde: Auf der Startseite und unter „Freunde“ meldet ein Hinweis „Freunde haben N neue Pflanzen“, was seit deinem letzten „Okay“ für dich sichtbar wurde. Beim allerersten Öffnen gibt es keinen Hinweis. Der Hinweis nennt nur Freund und Art; ohne Verbindung steht dabei „Stand“ mit dem Datum der angezeigten Daten.",
     "Freunde: Bei jedem Freund führt „Sammlung ansehen“ zu seinen freigegebenen Arten als Karten, mit „Du hast sie“ oder „Du hast sie nicht“. Mit den Filtern „Ich habe nicht“ und „Wir haben beide“ findest du, was dir fehlt oder was ihr gemeinsam habt; eine Art, die dir fehlt, setzt du mit einem Tipp auf die Wunschliste. Es gibt keine Wertung und keinen Rang.",
-    "Start: Wenn jemand dir eine Freundschaftsanfrage geschickt hat, zeigt die Startseite „Du hast N offene Freundschaftsanfragen“ mit den Namen und einem Weg zur Antwort. Der Hinweis verschwindet, sobald du alle beantwortet hast. Nachrichten per Push oder E-Mail gibt es noch nicht."
+    "Start: Wenn jemand dir eine Freundschaftsanfrage geschickt hat, zeigt die Startseite „Du hast N offene Freundschaftsanfragen“ mit den Namen und einem Weg zur Antwort. Der Hinweis verschwindet, sobald du alle beantwortet hast. Nachrichten per Push oder E-Mail gibt es noch nicht.",
+    "Tauschbörse: Unter „Freunde“ → „Zur Tauschbörse“ kannst du ein Exemplar zum Tausch oder zum Verschenken anbieten. Es muss für Freunde freigegeben sein; die App zeigt vorher, was Freunde über den Gesundheitszustand erfahren (offene oder letzte Behandlung, ohne Mittel und Notizen) und weist auf den Artenschutz hin. Ein Angebot kannst du jederzeit zurückziehen."
   ]
 }

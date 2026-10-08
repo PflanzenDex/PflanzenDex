@@ -1,4 +1,5 @@
 import type { SpecimenCard } from "@pflanzendex/core";
+import type { PhotoAccess } from "@/lib/use-stored-photo";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/section-label/section-label";
@@ -17,6 +18,8 @@ type Handlers = {
   onMark?: (e: SpecimenCard) => void;
   /** Corrects the catch date of a specimen (US-BES-11). */
   onCatchDate?: (e: SpecimenCard) => void;
+  /** How the private photos on the cards are fetched (US-WAC-05, P-05). */
+  photoAccess: PhotoAccess;
 };
 
 function Grid(props: Handlers & { cards: readonly SpecimenCard[] }) {
@@ -31,6 +34,7 @@ function Grid(props: Handlers & { cards: readonly SpecimenCard[] }) {
           onRepot={props.onRepot}
           onMark={props.onMark}
           onCatchDate={props.onCatchDate}
+          photoAccess={props.photoAccess}
         />
       ))}
     </ul>

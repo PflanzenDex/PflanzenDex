@@ -1,5 +1,6 @@
 // Measurements (US-WAC-01, DM-WAC-01). Ports for persistence; adapters live in `db` (AB-1).
 import type { GrowthMeasure } from "../../catalog";
+import type { SpecimenStatus } from "../../collection";
 import type { GrowthTrend } from "./growth";
 
 export const QUALITIES = ["healthy", "etiolated"] as const;
@@ -46,6 +47,14 @@ export interface MeasurementStore {
     userId: string,
     specimenIds: readonly string[],
   ): Promise<ReadonlyMap<string, MeasurementRow>>;
+  /**
+   * The most recent measurement that has a photo, per named specimen of the account (latest date, with the same date
+   * the one recorded last); specimens without a photo are missing from the answer.
+   */
+  lastPhotoFor(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, { readonly id: string; readonly date: string }>>;
   /** The measurement of the specimen on that local date; with several the one recorded last (FR-WAC-07), else `null`. */
   findOnDate(userId: string, specimenId: string, date: string): Promise<MeasurementRow | null>;
   /** Sets the photo name; `false` if the measurement is gone or not the account's (nothing written, P-04). */
@@ -57,6 +66,8 @@ export interface MeasurementStore {
 /** The "Measure" view of a specimen (US-WAC-01). Rate and trend follow with US-WAC-03. */
 export interface MeasurementView {
   readonly specimenId: string;
+  /** Plant or cutting (FR-WAC-05): cuttings are measured too and are marked as such. */
+  readonly status: SpecimenStatus;
   /** What is measured: the growth measure of the species; `null` means "unknown" (P-08). */
   readonly growthMeasure: GrowthMeasure | null;
   /**

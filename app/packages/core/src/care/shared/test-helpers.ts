@@ -32,6 +32,8 @@ export class SpecimenStub implements Pick<SpecimenStore, "find"> {
   constructor(
     private readonly ownership: Readonly<Record<string, readonly string[]>>,
     private readonly archived: readonly string[] = [],
+    /** IDs that are cuttings (US-BES-04). */
+    private readonly cuttings: readonly string[] = [],
   ) {}
 
   async find(userId: string, id: string): Promise<SpecimenRow | null> {
@@ -43,7 +45,7 @@ export class SpecimenStub implements Pick<SpecimenStore, "find"> {
       name: "Bogenhanf",
       marker: null,
       locationId: null,
-      status: away ? "archived" : "plant",
+      status: away ? "archived" : this.cuttings.includes(id) ? "cutting" : "plant",
       caughtAt: "2026-10-01",
       createdAt: "2026-10-01T10:00:00Z",
       archivedAt: away ? "2026-10-02" : null,
@@ -89,6 +91,15 @@ export class InMemoryMeasurements implements MeasurementStore {
       if (newest) last.set(id, newest);
     }
     return last;
+  }
+
+  async lastPhotoFor(userId: string, specimenIds: readonly string[]) {
+    const found = new Map<string, { id: string; date: string }>();
+    for (const id of specimenIds) {
+      const [newest] = (await this.list(userId, id)).filter((z) => z.photo);
+      if (newest) found.set(id, { id: newest.id, date: newest.date });
+    }
+    return found;
   }
 
   async findOnDate(userId: string, specimenId: string, date: string) {

@@ -52,6 +52,7 @@ export const ERROR_TEXTS = {
     "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her, dann kannst du damit arbeiten.",
   "measurement.not_found":
     "Für diesen Tag gibt es noch keine Messung. Erfasse zuerst die Messung, dann kannst du das Foto dazu speichern; es wurde nichts gespeichert.",
+  "measurement.photo_not_found": "Zu dieser Messung gibt es kein Foto.",
   "measurement.photo_exists":
     "Zu dieser Messung gibt es schon ein Foto. Bestätige, dass es ersetzt werden soll; bis dahin bleibt das alte Foto unverändert.",
   "treatment.not_found": "Diese Behandlung gibt es nicht.",
@@ -66,6 +67,15 @@ export const ERROR_TEXTS = {
   "friend.request_answered":
     "Diese Anfrage hast du schon anders beantwortet. Es wurde nichts geändert.",
   "friend.not_found": "Diesen Freund gibt es nicht. Lade die Liste neu.",
+  "offer.not_shared":
+    "Dieses Exemplar ist nicht für Freunde freigegeben. Gib es zuerst unter „Was Freunde sehen“ frei, dann kannst du es anbieten.",
+  "offer.already_open":
+    "Für dieses Exemplar gibt es schon ein offenes Angebot. Ziehe es zurück, bevor du ein neues erstellst.",
+  "offer.treatment_open":
+    "Für dieses Exemplar läuft noch eine Behandlung. Bestätige ausdrücklich, dass du es trotzdem anbieten willst.",
+  "offer.not_found": "Dieses Angebot gibt es nicht. Lade die Liste neu.",
+  "offer.not_active":
+    "Dieses Angebot ist schon übergeben und kann nicht mehr zurückgezogen werden. Es wurde nichts geändert.",
   "wish.name_taken":
     "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
   "wish.not_found": "Diesen Wunsch gibt es nicht. Lade die Wunschliste neu.",

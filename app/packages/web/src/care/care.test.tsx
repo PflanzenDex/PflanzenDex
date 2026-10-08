@@ -28,12 +28,13 @@ const measurement = (extra: Partial<MeasurementRow> = {}): MeasurementRow => ({
 });
 const view = (extra: Partial<MeasurementView> = {}): MeasurementView => ({
   specimenId: "e1",
+  status: "plant",
   growthMeasure: "rosette_diameter",
   etiolationSigns: "Rosette streckt sich.",
   measurements: [],
   last: null,
   lastRating: null,
-  growth: { count: 0, ratePerYear: null, trend: null },
+  growth: { count: 0, ratePerYear: null, trend: null, signal: null },
   ...extra,
 });
 /** The schema decides; the first message it carries is what the form shows under the field. */
@@ -50,6 +51,8 @@ const fields = (extra: Record<string, string> = {}) => ({
   note: "",
   ...extra,
 });
+
+const PHOTO = { api: "http://api", token: async () => "tok", specimenId: "e1" };
 
 describe("US-WAC-01 client of the measure API", () => {
   it("records with bearer token, time zone of the device and a fresh Idempotency-Key", async () => {
@@ -128,6 +131,27 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(html).toContain("Vergeilt/dünn");
   });
 
+  it("US-WAC-05 the last assessment shows date and note of the last measurement", () => {
+    const html = renderToString(
+      <MeasurementHeader
+        view={view({
+          last: measurement({ note: "Blätter wirken blass", quality: "etiolated" }),
+          lastRating: "etiolated",
+        })}
+      />,
+    );
+    expect(html).toContain("Vergeilt/dünn");
+    expect(html).toContain("03.10.2026");
+    expect(html).toContain("Blätter wirken blass");
+  });
+
+  it("FR-WAC-05 a cutting is marked as Steckling in the growth view, a plant is not", () => {
+    const cutting = renderToString(<MeasurementHeader view={view({ status: "cutting" })} />);
+    expect(cutting).toContain("Steckling");
+    const plant = renderToString(<MeasurementHeader view={view()} />);
+    expect(plant).not.toContain("Steckling");
+  });
+
   it('without measurement: "noch keine Messung", and without species the measure stays "unknown" (P-08)', () => {
     const html = renderToString(<MeasurementHeader view={view({ growthMeasure: null })} />);
     expect(html).toContain("noch keine Messung");
@@ -140,17 +164,26 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
       <MeasurementList
         measurements={[measurement({ note: "nach dem Umtopfen" })]}
         onAdd={() => undefined}
+        photo={PHOTO}
+        onPhotoSaved={() => undefined}
       />,
     );
     expect(list).toContain("12,5 cm · 03.10.2026");
     expect(list).toContain("Gesund");
     expect(list).toContain("nach dem Umtopfen");
-    expect(renderToString(<MeasurementList measurements={[]} onAdd={() => undefined} />)).toContain(
-      "Trage oben den ersten Messwert ein",
-    );
+    expect(
+      renderToString(
+        <MeasurementList
+          measurements={[]}
+          onAdd={() => undefined}
+          photo={PHOTO}
+          onPhotoSaved={() => undefined}
+        />,
+      ),
+    ).toContain("Trage oben den ersten Messwert ein");
   });
 
-  it("the form has number, date, quality (healthy preset), note and says that the photo is missing", () => {
+  it("the form has number, date, quality (healthy preset), note and the optional photo (US-WAC-05)", () => {
     const html = renderToString(<MeasureForm unit="cm" onSend={async () => null} />);
     expect(html).toContain("Messwert (cm, in Schritten von 0,5)");
     expect(html).toMatch(/<input[^>]*type="date"[^>]*>/);
@@ -158,7 +191,7 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(html).toMatch(/<option value="healthy" selected/);
     expect(html).toContain("Vergeilt/dünn");
     expect(html).toContain("Notiz (optional)");
-    expect(html).toContain("Ein Foto kannst du hier noch nicht hinzufügen.");
+    expect(html).toContain("Foto (optional)");
   });
 
   it('US-WAC-02 the quality choice offers healthy (preset) and etiolated/thin with "Wie erkennen?" closed', () => {
