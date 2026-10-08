@@ -2,7 +2,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { WishlistPage } from "../WishlistPage";
+import { WishlistPage } from "../wishlist-page/wishlist-page";
 
 // US-WUN-05: from the purchase to the plant: "Exemplar anlegen" after "Gekauft" and in the history, the link state, and
 // the action "Verwerfen".

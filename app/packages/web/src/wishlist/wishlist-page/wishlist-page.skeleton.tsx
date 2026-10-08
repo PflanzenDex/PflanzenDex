@@ -1,5 +1,5 @@
 import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
-import { CandidateCardSkeleton } from "./candidate-card/candidate-card.skeleton";
+import { CandidateCardSkeleton } from "../candidate-card/candidate-card.skeleton";
 
 /** Placeholder with the layout of the page on a phone: hint, two cards, form fields and the save button (DS-52, DS-53). */
 export function WishlistPageSkeleton({ label }: { label: string }) {
