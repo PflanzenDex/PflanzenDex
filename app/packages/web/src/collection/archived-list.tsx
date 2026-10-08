@@ -1,6 +1,7 @@
 import type { ArchivedEntry } from "@pflanzendex/core";
+import { Card } from "@/components/data-display/card/card";
 import { Button } from "@/components/ui/button";
-import { Actions, CARD, GRID, Quiet, SUBTITLE } from "./parts";
+import { Actions, GRID, Quiet, SUBTITLE } from "./parts";
 import { UNKNOWN, dateText } from "./text";
 
 /**
@@ -22,22 +23,24 @@ export function ArchivedList(props: {
       </Quiet>
       <ul className={GRID}>
         {props.entries.map((e) => (
-          <li key={e.id} className={CARD}>
-            <h3 className="text-lg font-semibold">{e.name}</h3>
-            <Quiet>Art: {e.speciesName ?? UNKNOWN}</Quiet>
-            <Quiet>Archiviert am {dateText(e.archivedAt)}</Quiet>
-            <Quiet>Grund: {e.archivedReason}</Quiet>
-            <Actions>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                aria-label={`Wiederherstellen: ${e.name}`}
-                onClick={() => props.onRestore(e)}
-              >
-                Wiederherstellen
-              </Button>
-            </Actions>
+          <li key={e.id}>
+            <Card className="grid gap-1 break-words">
+              <h3 className="text-lg font-semibold">{e.name}</h3>
+              <Quiet>Art: {e.speciesName ?? UNKNOWN}</Quiet>
+              <Quiet>Archiviert am {dateText(e.archivedAt)}</Quiet>
+              <Quiet>Grund: {e.archivedReason}</Quiet>
+              <Actions>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  aria-label={`Wiederherstellen: ${e.name}`}
+                  onClick={() => props.onRestore(e)}
+                >
+                  Wiederherstellen
+                </Button>
+              </Actions>
+            </Card>
           </li>
         ))}
       </ul>
