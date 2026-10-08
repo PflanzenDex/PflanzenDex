@@ -2,8 +2,8 @@
 // token in GH_TOKEN. Usage: node project-status.mjs event <event.json>   |   node project-status.mjs check
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { json, realClient } from "../claim/lib/claim-client.mjs";
-import { PROJECT_NUMBER, STATUS_FIELD } from "../claim/lib/claim-steps.mjs";
+import { json, realClient } from "../../claim/lib/claim-client.mjs";
+import { PROJECT_NUMBER, STATUS_FIELD } from "../../claim/lib/claim-steps.mjs";
 import { drift, transitions } from "./project-status-lib.mjs";
 
 const OWNER = "PflanzenDex";

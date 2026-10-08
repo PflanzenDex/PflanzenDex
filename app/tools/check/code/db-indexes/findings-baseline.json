@@ -1,18 +1,3 @@
 {
-  "care_profile": [
-    "fk(account_id, dormancy_location_id)",
-    "fk(account_id, growth_location_id)",
-    "fk(account_id, light_zone_id)",
-    "fk(species_id)"
-  ],
-  "friend_code": ["fk(created_by)", "fk(redeemed_by)"],
-  "friendship": ["fk(other_id)"],
-  "invitation": ["fk(created_by)"],
-  "location": ["fk(account_id, light_zone_id)"],
-  "offer": ["fk(account_id, specimen_id)"],
-  "review_case": ["account_id", "fk(account_id)", "fk(merged_into)", "fk(reviewed_by)"],
-  "species": ["fk(object_kind, id)"],
-  "specimen": ["fk(account_id, location_id)", "fk(species_id)"],
-  "treatment": ["account_id", "fk(account_id, specimen_id)", "fk(account_id)"],
-  "wish": ["fk(account_id, specimen_id)", "fk(account_id, target_zone_id)"]
+  "species": ["fk(object_kind, id)"]
 }

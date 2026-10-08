@@ -4,8 +4,8 @@
 // Usage: node board.mjs [milestone]   (default: the open milestone with the lowest number)
 import { fileURLToPath } from "node:url";
 import { fetchPrs, fetchWorkItems, openMilestone, realClient } from "./claim/lib/claim-client.mjs";
-import { PRIORITY_HINT } from "./project-status/project-status-lib.mjs";
-import { missingPriority } from "./project-status/project-status.mjs";
+import { PRIORITY_HINT } from "./actions/project-status/project-status-lib.mjs";
+import { missingPriority } from "./actions/project-status/project-status.mjs";
 import {
   ageHours,
   claimKey,

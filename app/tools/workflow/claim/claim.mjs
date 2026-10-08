@@ -9,8 +9,8 @@ import { fileURLToPath } from "node:url";
 import { fetchBranches, fetchIssue, fetchPrs, me, realClient } from "./lib/claim-client.mjs";
 import { branchName, findConflicts } from "./lib/claim-lib.mjs";
 import { preflight, PreflightFailed } from "./claim-preflight.mjs";
-import { PRIORITY_HINT } from "../project-status/project-status-lib.mjs";
-import { missingPriority } from "../project-status/project-status.mjs";
+import { PRIORITY_HINT } from "../actions/project-status/project-status-lib.mjs";
+import { missingPriority } from "../actions/project-status/project-status.mjs";
 import {
   handoffBody,
   prTitle,
