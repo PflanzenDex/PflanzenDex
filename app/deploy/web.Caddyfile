@@ -22,4 +22,10 @@
 		try_files {path} /index.html
 		file_server
 	}
+
+	# An error (such as a missing hashed file during a deploy) must never be cached as immutable.
+	handle_errors {
+		header Cache-Control "no-store"
+		respond "{err.status_code} {err.status_text}" {err.status_code}
+	}
 }

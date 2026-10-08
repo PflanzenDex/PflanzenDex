@@ -37,4 +37,8 @@ describe("NFR-12 · compression and cache headers of the serving layer", () => {
     expect(fallback).toContain('Cache-Control "no-cache"');
     expect(fallback).toContain("try_files {path} /index.html");
   });
+
+  it("NFR-12 an error response (such as a missing hashed file) is never cached", () => {
+    expect(block("handle_errors")).toContain('Cache-Control "no-store"');
+  });
 });
