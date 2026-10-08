@@ -1,5 +1,5 @@
 // Sets up the spike realm: realm, users, scopes. Idempotent (409 is tolerated).
-import { admin, KC, REALM } from "./kc-lib.mjs";
+import { admin, KC, REALM } from "../lib/kc-lib.mjs";
 console.log("Keycloak:", KC);
 await admin("", { method: "POST", realm: "", body: { realm: REALM, enabled: true, internationalizationEnabled: true, supportedLocales: ["de", "en"], defaultLocale: "de", registrationAllowed: false } });
 await admin("/users", { method: "POST", body: { username: "alice", enabled: true, email: "alice@example.test", emailVerified: true, firstName: "Alice", lastName: "Test", credentials: [{ type: "password", value: "alice", temporary: false }] } });

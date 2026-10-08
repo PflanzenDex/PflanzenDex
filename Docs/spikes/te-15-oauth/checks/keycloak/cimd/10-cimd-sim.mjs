@@ -1,6 +1,6 @@
 // Check 10: does Keycloak accept a URL client ID (CIMD)? Variant with and without the field typical for ChatGPT.
 import { chromium } from "playwright";
-import { discover, pkce } from "./oauth-lib.mjs";
+import { discover, pkce } from "../../lib/oauth-lib.mjs";
 const ISSUER = process.env.ISSUER, MCP = process.env.MCP_ORIGIN; const meta = await discover(ISSUER);
 console.log("client_id_metadata_document_supported:", meta.client_id_metadata_document_supported);
 const b = await chromium.launch();

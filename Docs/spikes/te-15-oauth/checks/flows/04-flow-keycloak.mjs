@@ -1,8 +1,8 @@
 // Check 4: full flow against Keycloak (DCR client, auth code + PKCE, resource, consent, step-up, refresh, revocation).
 import { chromium } from "playwright";
 import fs from "node:fs";
-const ALICE = (() => { try { return JSON.parse(fs.readFileSync(new URL("./secrets/kc.json", import.meta.url))).alice; } catch { return "alice"; } })();
-import { pkce, decode, listener, token, mcp, discover, register } from "./oauth-lib.mjs";
+const ALICE = (() => { try { return JSON.parse(fs.readFileSync(new URL("../secrets/kc.json", import.meta.url))).alice; } catch { return "alice"; } })();
+import { pkce, decode, listener, token, mcp, discover, register } from "../lib/oauth-lib.mjs";
 const ISSUER = process.env.ISSUER || "http://localhost:18080/realms/pflanzendex";
 const RES = process.env.RESOURCE || "http://localhost:18081/mcp";
 fs.mkdirSync("out", { recursive: true });

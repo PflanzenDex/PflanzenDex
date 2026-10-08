@@ -1,6 +1,6 @@
 // Exploration: DCR with a foreign domain, then the login page of Zitadel v4 (fields).
 import { chromium } from "playwright";
-import { discover, register, pkce } from "./oauth-lib.mjs";
+import { discover, register, pkce } from "../lib/oauth-lib.mjs";
 const meta = await discover("http://localhost:18082");
 const evil = await register(meta, { client_name: "Fremder Client", redirect_uris: ["https://evil.example.org/cb"], grant_types: ["authorization_code"], response_types: ["code"], token_endpoint_auth_method: "none" });
 console.log("DCR fremde Domain ->", evil.status, evil.j.client_id ? "akzeptiert" : JSON.stringify(evil.j));

@@ -1,6 +1,6 @@
 // Hardening for the public test: random passwords for admin and test user, event log on.
 import fs from "node:fs"; import crypto from "node:crypto";
-import { admin, KC } from "./kc-lib.mjs";
+import { admin, KC } from "../../lib/kc-lib.mjs";
 const rnd = () => crypto.randomBytes(12).toString("base64url");
 const adminPw = rnd(), alicePw = rnd();
 const mu = (await admin("/users?username=admin&exact=true", { realm: "master" }))[0];

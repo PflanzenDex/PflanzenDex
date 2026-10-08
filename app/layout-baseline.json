@@ -1,14 +1,11 @@
 {
   "LY-1": {
     "app": 22,
-    "Docs/spikes/te-15-oauth": 6,
-    "Docs/spikes/te-15-oauth/checks": 17,
     "scripts": 9
   },
   "LY-3": {
     ".": 2,
-    "app/deploy": 1,
-    "Docs/spikes/te-15-oauth": 1
+    "app/deploy": 1
   },
   "LY-4": {
     "app/packages/web/src": 5

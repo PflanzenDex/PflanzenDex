@@ -1,5 +1,5 @@
 // CIMD policy: client ID URLs only from trusted domains (claude.ai, chatgpt.com), resource only for the MCP server.
-import { KC, REALM } from "./kc-lib.mjs";
+import { KC, REALM } from "../../lib/kc-lib.mjs";
 const MCP = process.argv[2]; const domains = ["claude.ai", "chatgpt.com", ...(process.env.EXTRA_DOMAIN ? [process.env.EXTRA_DOMAIN] : [])];
 const t = (await (await fetch(`${KC}/realms/master/protocol/openid-connect/token`, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ grant_type: "password", client_id: "admin-cli", username: "admin", password: "admin" }) })).json()).access_token;
 const put = async (p, body) => { const r = await fetch(`${KC}/admin/realms/${REALM}/client-policies/${p}`, { method: "PUT", headers: { authorization: `Bearer ${t}`, "content-type": "application/json" }, body: JSON.stringify(body) }); console.log(p, r.status, r.ok ? "" : await r.text()); };

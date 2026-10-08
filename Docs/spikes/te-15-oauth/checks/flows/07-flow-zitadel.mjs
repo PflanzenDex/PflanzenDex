@@ -1,7 +1,7 @@
 // Check 7: flow against Zitadel v4 (DCR client, auth code + PKCE, resource, scopes, token format, refresh, revocation).
 import { chromium } from "playwright";
 import fs from "node:fs";
-import { pkce, decode, listener, token, mcp, discover, register } from "./oauth-lib.mjs";
+import { pkce, decode, listener, token, mcp, discover, register } from "../lib/oauth-lib.mjs";
 const ISSUER = process.env.ISSUER || "http://localhost:18082"; const RES = process.env.RESOURCE || "http://localhost:18081/mcp";
 const USER = "zitadel-admin@zitadel.localhost", PASS = "Password1!";
 fs.mkdirSync("out", { recursive: true });
@@ -32,8 +32,8 @@ console.log("\n[A] resource + Scope pflanzen:read");
 let a = await authorize("openid offline_access pflanzen:read", RES, "ZA"); console.log("  Redirect parameters:", JSON.stringify({ ...a.res, code: a.res.code ? "…" : undefined }));
 let t = await exchange(a, RES); console.log("  Token:", JSON.stringify(show(t))); console.log("  Token-Antwort-Felder:", Object.keys(t.j || {}).join(","), "| scope:", t.j?.scope);
 const refresh = t.j?.refresh_token; const at = t.j?.access_token;
-if (at && fs.existsSync("../zitadel/secrets/admin.pat")) {
-  const pat = fs.readFileSync("../zitadel/secrets/admin.pat", "utf8").trim();
+if (at && fs.existsSync("../servers/zitadel/secrets/admin.pat")) {
+  const pat = fs.readFileSync("../servers/zitadel/secrets/admin.pat", "utf8").trim();
   const ir = await fetch(meta.introspection_endpoint, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", authorization: `Bearer ${pat}` }, body: new URLSearchParams({ token: at }) });
   const ij = await ir.json().catch(() => ({})); console.log("  Introspection (with service user PAT) ->", ir.status, JSON.stringify({ active: ij.active, scope: ij.scope, aud: ij.aud, client_id: ij.client_id, azp: ij.azp, sub: ij.sub?.slice(0, 8) }));
 }

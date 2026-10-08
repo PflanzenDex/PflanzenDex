@@ -15,9 +15,9 @@ Everything self-hosted via Docker, throwaway setup in this folder:
 
 | Part | Content |
 |---|---|
-| `keycloak/` | Keycloak 26.8.0 with `--features=cimd,resource-indicators`, `start-dev`, H2 |
-| `zitadel/` | Zitadel v4.19.4 following the official Compose setup (Traefik, API, login UI, Postgres) |
-| `mcp-test-server/` | Minimal MCP server (Streamable HTTP, SDK 1.32.0) as OAuth resource server: Protected Resource Metadata (RFC 9728), JWT validation (issuer, audience), three tools with the classes read, draft and write (`status`, `create_draft`, `watered`), step-up via `403 insufficient_scope` |
+| `servers/keycloak/` | Keycloak 26.8.0 with `--features=cimd,resource-indicators`, `start-dev`, H2 |
+| `servers/zitadel/` | Zitadel v4.19.4 following the official Compose setup (Traefik, API, login UI, Postgres) |
+| `servers/mcp-test-server/` | Minimal MCP server (Streamable HTTP, SDK 1.32.0) as OAuth resource server: Protected Resource Metadata (RFC 9728), JWT validation (issuer, audience), three tools with the classes read, draft and write (`status`, `create_draft`, `watered`), step-up via `403 insufficient_scope` |
 | `checks/` | Check scripts: discovery and DCR, full flow with browser login (Playwright), CIMD simulation, policies |
 
 Tested first locally, then through public quick tunnels (Cloudflare) with the real clients.
@@ -84,13 +84,13 @@ Price of the decision for Keycloak:
 
 ```bash
 # Keycloak (set the hostname for tunnel tests via KC_HOSTNAME)
-cd keycloak && docker compose -p te15-kc up -d
-cd ../checks && npm install && npx playwright install chromium
-node setup-keycloak.mjs && node 02-kc-policies.mjs && node 03-kc-resource.mjs http://localhost:18081/mcp && node 05-kc-audience.mjs
+cd servers/keycloak && docker compose -p te15-kc up -d
+cd ../../checks && npm install && npx playwright install chromium
+node keycloak/setup-keycloak.mjs && node keycloak/02-kc-policies.mjs && node keycloak/03-kc-resource.mjs http://localhost:18081/mcp && node keycloak/05-kc-audience.mjs
 # MCP test server
-cd ../mcp-test-server && npm install && AS_ISSUER=http://localhost:18080/realms/pflanzendex RESOURCE_URL=http://localhost:18081/mcp node server.mjs
+cd ../servers/mcp-test-server && npm install && AS_ISSUER=http://localhost:18080/realms/pflanzendex RESOURCE_URL=http://localhost:18081/mcp node server.mjs
 # Flow test (other terminal)
-cd ../checks && node 04-flow-keycloak.mjs
+cd ../../checks && node flows/04-flow-keycloak.mjs
 ```
 
 Tests with cloud clients need public HTTPS addresses for Keycloak and the MCP server. In this environment `cloudflared` worked only in the Docker container with `--dns 1.1.1.1` (WSL's DNS resolver did not resolve Cloudflare's SRV records). Admin and test passwords in `checks/11-kc-harden.mjs` are random values that end up in an uncommitted file.

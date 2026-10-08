@@ -1,6 +1,6 @@
 // Helper functions for the Keycloak admin API (spike TE-15)
 import fs from "node:fs";
-const SEC = (() => { try { return JSON.parse(fs.readFileSync(new URL("./secrets/kc.json", import.meta.url))); } catch { return {}; } })();
+const SEC = (() => { try { return JSON.parse(fs.readFileSync(new URL("../secrets/kc.json", import.meta.url))); } catch { return {}; } })();
 export const KC = process.env.KC_URL || "http://localhost:18080";
 export const REALM = "pflanzendex";
 let tok;

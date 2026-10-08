@@ -1,6 +1,6 @@
 // Sets the anonymous DCR policies the way a production operation would need them:
 // registration only if the redirect URIs are on trusted domains (instead of a host check of the sender IP).
-import { admin } from "./kc-lib.mjs";
+import { admin } from "../lib/kc-lib.mjs";
 const comps = await admin("/components?type=org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy");
 const th = comps.find((c) => c.name === "Trusted Hosts" && c.subType === "anonymous");
 th.config = { "host-sending-registration-request-must-match": ["false"], "client-uris-must-match": ["true"], "trusted-hosts": ["claude.ai", "chatgpt.com", "localhost", "127.0.0.1"] };
