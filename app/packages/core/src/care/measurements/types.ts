@@ -1,5 +1,6 @@
 // Measurements (US-WAC-01, DM-WAC-01). Ports for persistence; adapters live in `db` (AB-1).
 import type { GrowthMeasure } from "../../catalog";
+import type { SpecimenStatus } from "../../collection";
 import type { GrowthTrend } from "./growth";
 
 export const QUALITIES = ["healthy", "etiolated"] as const;
@@ -65,6 +66,8 @@ export interface MeasurementStore {
 /** The "Measure" view of a specimen (US-WAC-01). Rate and trend follow with US-WAC-03. */
 export interface MeasurementView {
   readonly specimenId: string;
+  /** Plant or cutting (FR-WAC-05): cuttings are measured too and are marked as such. */
+  readonly status: SpecimenStatus;
   /** What is measured: the growth measure of the species; `null` means "unknown" (P-08). */
   readonly growthMeasure: GrowthMeasure | null;
   /**

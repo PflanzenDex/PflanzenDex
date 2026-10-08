@@ -1,4 +1,5 @@
 import type { MeasurementView } from "@pflanzendex/core";
+import { Badge } from "@/components/ui/badge";
 import { GrowthSummary } from "./growth-summary/growth-summary";
 import { dateText, massName, measurementText, QUALITY_NAME } from "../text";
 
@@ -7,6 +8,14 @@ export function MeasurementHeader({ view }: { view: MeasurementView }) {
   const { last, lastRating } = view;
   return (
     <dl className="m-0 grid gap-3">
+      {view.status === "cutting" && (
+        <div>
+          <dt className="font-semibold">Status</dt>
+          <dd className="m-0 mt-0.5">
+            <Badge variant="outline">Steckling</Badge>
+          </dd>
+        </div>
+      )}
       <div>
         <dt className="font-semibold">Was messen?</dt>
         <dd className="m-0 mt-0.5 text-muted-foreground">
