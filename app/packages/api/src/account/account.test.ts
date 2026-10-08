@@ -66,6 +66,23 @@ describe("GET /account (US-ACC-01)", () => {
     expect(second.id).toBe(k.id);
   });
 
+  it("first sign-in creates exactly one account row, later and parallel sign-ins reuse it", async () => {
+    const sub = `api-${randomUUID()}`;
+    try {
+      const app = createApp({ reviewer, pool });
+      const rows = async () =>
+        (await admin.query("select id from account where subject = $1", [sub])).rows;
+      expect(await rows()).toHaveLength(0);
+      const first = await account(app, using(`valid:${sub}:no`));
+      expect(await rows()).toHaveLength(1);
+      const later = await Promise.all([1, 2, 3].map(() => account(app, using(`valid:${sub}:no`))));
+      expect(later.map((a) => a.id)).toEqual([first.id, first.id, first.id]);
+      expect(await rows()).toHaveLength(1);
+    } finally {
+      await admin.query("delete from account where subject = $1", [sub]);
+    }
+  });
+
   it("takes the email confirmation from the token", async () => {
     const app = createApp({ reviewer, pool });
     const before = await account(app, using(`valid:${sub2}:no`));

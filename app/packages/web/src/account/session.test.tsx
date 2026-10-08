@@ -247,6 +247,47 @@ describe("US-ACC-01 Sitzung", () => {
     expect(window.location.search).toBe("");
   });
 
+  it("signed out with the sign-out marker shows the hint, without the marker no hint", async () => {
+    mgr.getUser.mockResolvedValue(null);
+    window.sessionStorage.setItem("pflanzendex.signed_out", "1");
+    const marked = renderHook(() => useSession());
+    await waitFor(() =>
+      expect(marked.result.current.state).toEqual({
+        kind: "signedOut",
+        hint: "Du bist abgemeldet.",
+      }),
+    );
+    cleanup();
+    window.sessionStorage.clear();
+    const plain = renderHook(() => useSession());
+    await waitFor(() => expect(plain.result.current.state).toEqual({ kind: "signedOut" }));
+  });
+
+  it("a 401 not_signed_in from the API discards the stored sign-in and shows no error", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => response(401, { error: { code: "not_signed_in" } })),
+    );
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
+    expect(mgr.removeUser).toHaveBeenCalledOnce();
+  });
+
+  it("the return from the sign-in service is processed once under Strict Mode", async () => {
+    // The once-guard lives at module level (one page load); a fresh module instance starts without a cached callback.
+    vi.resetModules();
+    const { StrictMode } = await import("react");
+    const fresh = await import("./session");
+    window.history.replaceState({}, "", "/?code=abc&state=xyz");
+    mgr.signinCallback.mockClear();
+    mgr.signinCallback.mockResolvedValue(user);
+    const { result } = renderHook(() => fresh.useSession(), { wrapper: StrictMode });
+    await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+    expect(mgr.signinCallback).toHaveBeenCalledOnce();
+    expect(window.location.search).toBe("");
+  });
+
   it("an error return (?error=…) is cleaned and leads to the welcome page", async () => {
     window.history.replaceState({}, "", "/?error=access_denied");
     mgr.getUser.mockResolvedValue(null);
