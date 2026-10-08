@@ -11,6 +11,7 @@ const card = (species: string, extra: Partial<CollectorCard> = {}): CollectorCar
   germanName: null,
   germanNameFull: null,
   summary: "Ein Text.",
+  summaryLanguage: "de",
   genus: species.split(" ")[0] ?? species,
   genusSpeciesCount: null,
   speciesPoor: false,
@@ -29,6 +30,7 @@ const row = (latinName: string, family = "Moraceae"): TaxonCardRow => ({
   family,
   order: "Rosales",
   summary: null,
+  summaryLanguage: null,
   imageUrl: null,
   pageUrl: null,
   genusSpeciesCount: null,
@@ -43,6 +45,11 @@ describe("US-ENT-01 suggestions", () => {
       card("Aloe vera"),
     ];
     expect(names(candidatesOf(cards, ["Aloe  Vera"]))).toEqual(["Ficus elastica"]);
+  });
+
+  it("US-QS-14 keeps the language of the summary on the suggestion", () => {
+    const [english] = candidatesOf([card("Aloe vera", { summaryLanguage: "en" })], []);
+    expect(english?.summaryLanguage).toBe("en");
   });
 
   it("US-ENT-01 gives every card 1 to 3 reasons from own data and no percentage or match", () => {

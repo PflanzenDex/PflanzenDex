@@ -10,11 +10,12 @@ const suggestion = (
   species,
   germanName: german,
   summary: `${german} ist eine robuste Zimmerpflanze.`,
+  summaryLanguage: "de",
   family: "Asphodelaceae",
   lightZone: level.zone,
   difficulty: level.difficulty,
   imageUrl: null,
-  sourceUrl: null,
+  sourceUrl: "https://de.wikipedia.org/wiki/Zimmerpflanze",
   attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
   reasons: [reason],
 });

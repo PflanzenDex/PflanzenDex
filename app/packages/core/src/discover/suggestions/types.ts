@@ -22,6 +22,8 @@ export interface Suggestion {
   readonly species: string;
   readonly germanName: string | null;
   readonly summary: string | null;
+  /** Language of `summary` (WCAG 3.1.2); `null` = unknown, then no `lang` is claimed. */
+  readonly summaryLanguage: "de" | "en" | null;
   readonly family: string | null;
   /** Target light zone 2 to 4 of the catalog; `null` = unknown. */
   readonly lightZone: number | null;

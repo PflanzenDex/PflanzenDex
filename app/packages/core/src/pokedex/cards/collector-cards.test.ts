@@ -13,6 +13,7 @@ const row = (latinName: string, extra: Partial<TaxonCardRow> = {}): TaxonCardRow
   family: "Moraceae",
   order: "Rosales",
   summary: "Ein Baum.",
+  summaryLanguage: "de",
   imageUrl: "https://upload.example/ficus.jpg",
   pageUrl: "https://de.wikipedia.org/wiki/Ficus",
   genusSpeciesCount: 800,
@@ -99,6 +100,18 @@ describe("US-POK-01 collector cards", () => {
   it("US-POK-01 a species the catalog does not know keeps its card with unknown values (P-08)", () => {
     const [card] = collectorCards([row("Ficus benjamina")], [], []);
     expect(card).toMatchObject({ germanName: null, difficulty: null, lightZone: null });
+  });
+
+  it("US-QS-14 carries the language of the summary to the card, null when unknown", () => {
+    const cards = collectorCards(
+      [
+        row("Ficus benjamina", { summaryLanguage: "en" }),
+        row("Ficus elastica", { summaryLanguage: null }),
+      ],
+      [],
+      [],
+    );
+    expect(cards.map((c) => c.summaryLanguage)).toEqual(["en", null]);
   });
 
   it("US-POK-01 cuts the addition in parentheses off the short German name", () => {

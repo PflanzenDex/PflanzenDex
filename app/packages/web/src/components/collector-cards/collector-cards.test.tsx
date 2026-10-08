@@ -11,6 +11,7 @@ const card = (extra: Partial<CollectorCard>): CollectorCard => ({
   germanName: null,
   germanNameFull: null,
   summary: null,
+  summaryLanguage: null,
   genus: "Ficus",
   genusSpeciesCount: null,
   speciesPoor: false,
