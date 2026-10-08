@@ -2,10 +2,10 @@ import { useCallback, useEffect } from "react";
 import type { DifficultyRow } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ResponsiveTable, type ResponsiveColumn } from "@/components/shared/responsive-table";
-import { LoadFrame } from "../kernel";
-import { loadDifficulty } from "./difficulty-api";
-import { DifficultyPageSkeleton } from "./DifficultyPage.skeleton";
-import { PageFrame, Plain, Quiet, TITLE } from "./parts";
+import { LoadFrame } from "../../kernel";
+import { loadDifficulty } from "../difficulty-api";
+import { DifficultyPageSkeleton } from "./difficulty-page.skeleton";
+import { PageFrame, Plain, Quiet, TITLE } from "../parts";
 
 const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
 const UNKNOWN = "unbekannt";

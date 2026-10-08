@@ -33,7 +33,10 @@ const emptyView = {
 // Both pages are lazy chunks (DS-08). Loading them first makes the waits below depend on the data only, not on how
 // long the first import of a chunk takes on a busy machine (#444).
 beforeAll(async () => {
-  await Promise.all([import("./collection/CollectionPage"), import("./care/MeasurePage")]);
+  await Promise.all([
+    import("./collection/collection-page/collection-page"),
+    import("./care/MeasurePage"),
+  ]);
 }, 30_000);
 
 afterEach(() => {

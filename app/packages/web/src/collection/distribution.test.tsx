@@ -2,7 +2,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import type { LightZone, Distribution } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CollectionPage } from "./CollectionPage";
+import { CollectionPage } from "./collection-page/collection-page";
 import { loadDistribution } from "./distribution-api";
 import { DistributionView } from "./distribution-view";
 

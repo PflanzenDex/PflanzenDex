@@ -87,10 +87,10 @@ const checked = (name: string) => radio(name).getAttribute("aria-pressed") === "
 
 beforeAll(async () => {
   await Promise.all([
-    import("./collection/CollectionPage"),
+    import("./collection/collection-page/collection-page"),
     import("./pokedex/PokedexPage"),
     import("./wishlist/WishlistPage"),
-    import("./collection/DifficultyPage"),
+    import("./collection/difficulty-page/difficulty-page"),
   ]);
 }, 30_000);
 

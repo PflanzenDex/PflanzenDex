@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Species, SpecimenCard } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CollectionPage } from "./CollectionPage";
+import { CollectionPage } from "./collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "./distribution-test-helpers";
 import { markSpecimen, createSpecimen } from "./specimens-api";
 

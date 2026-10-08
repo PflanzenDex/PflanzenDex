@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { Species, SpecimenCard } from "@pflanzendex/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setProfileTimeZone, type ApiError } from "../kernel";
-import { CollectionPage } from "./CollectionPage";
+import { CollectionPage } from "./collection-page/collection-page";
 import { CreateForm } from "./create-form";
 import { EMPTY_DISTRIBUTION } from "./distribution-test-helpers";
 import { correctCatchDate, createSpecimen } from "./specimens-api";

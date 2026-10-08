@@ -32,7 +32,7 @@ vi.mock("./care/TreatmentsPage", () => {
   return { TreatmentsPage: () => null };
 });
 
-vi.mock("./collection/HintsPage", () => {
+vi.mock("./collection/hints-page/hints-page", () => {
   loaded.pages.push("hints");
   return { HintsPage: () => null };
 });
@@ -42,7 +42,7 @@ vi.mock("./wishlist/WishlistPage", () => {
   return { WishlistPage: () => null };
 });
 
-vi.mock("./collection/DifficultyPage", () => {
+vi.mock("./collection/difficulty-page/difficulty-page", () => {
   loaded.pages.push("difficulty");
   return { DifficultyPage: () => null };
 });
