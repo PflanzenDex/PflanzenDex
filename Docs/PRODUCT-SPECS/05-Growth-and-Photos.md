@@ -41,7 +41,7 @@ Acceptance criteria:
 - Two measurements on the same day or in the wrong order (Δ days ≤ 0) yield no rate; before the evaluation the measurements are sorted by date.
 - **No** comparison with a species average (P-08). As soon as enough own data of all users is available, a comparison can be introduced, only with sample size and minimum count (see non-goals in `16-Releases-and-Decisions.md`).
 
-State of implementation: `growthTrend` (core, pure, derived on demand) feeds the `growth` field of the Measure view; the view shows rate (cm/year) and trend. Decisions (assumption, decided by the PO): an interval with Δ days ≤ 0 is skipped, so the trend needs at least two intervals of positive length; the relative deviation divides by the absolute mean, so a negative mean works; with three or more measurements but no usable trend the view says "noch kein Trend" (unknown, P-08). The etiolation override is US-WAC-04.
+State of implementation: `growthTrend` (core, pure, derived on demand) feeds the `growth` field of the Measure view; the view shows rate (cm/year) and trend. Decisions (assumption, decided by the PO): an interval with Δ days ≤ 0 is skipped, so the trend needs at least two intervals of positive length; the relative deviation divides by the absolute mean, so a negative mean works; with three or more measurements but no usable trend the view says "noch kein Trend" (unknown, P-08). The etiolation override is US-WAC-04. FR-WAC-03: the 10 % threshold is `GROWTH_DEFAULTS.trendTolerance` (core, one documented place, assumption decided by the PO); `growthTrend` takes an optional `tolerance` for tests and later tuning, an unusable value falls back to the default. The spec does not ask for a per-account setting, so there is none.
 
 ### US-WAC-04 · Etiolation overrides the trend · ✅ (prototype ✅)
 
@@ -90,7 +90,7 @@ State of implementation: the processing and storing half works (release R1). `PO
 | ID        | Requirement                                                                                                                                              | Status |
 | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | FR-WAC-02 | The rate is a comparison against the **own** history; numbers without a verifiable source are not shown (P-08).                                          | ⬜     |
-| FR-WAC-03 | The trend threshold ±10 % is a default, centrally configurable in the logic.                                                                             | ⬜     |
+| FR-WAC-03 | The trend threshold ±10 % is a default, centrally configurable in the logic.                                                                             | ✅     |
 | FR-WAC-05 | The growth view also shows cuttings, marked "Cutting". (Open question from the prototype, settled here: visible, because cuttings should be measured.)   | ⬜     |
 | FR-WAC-07 | More than one measurement on the same day is possible, but yields no rate (Δ days = 0).                                                                  | ⬜     |
 | FR-WAC-08 | A too old last measurement (default 30 days, adjustable) creates a reminder (US-MON-04). Cuttings are excluded or have a shorter rhythm (decision open). | ⬜     |

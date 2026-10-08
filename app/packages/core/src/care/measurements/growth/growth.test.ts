@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { growthTrend } from "./growth";
+import { GROWTH_DEFAULTS, growthTrend } from "./growth";
 
 const m = (date: string, value: number) => ({ date, value });
 
@@ -159,5 +159,29 @@ describe("US-WAC-04 etiolation overrides the trend", () => {
 
   it("no measurement: no signal", () => {
     expect(growthTrend([]).signal).toBeNull();
+  });
+});
+
+describe("FR-WAC-03 the trend threshold is a central default", () => {
+  // intervals of 10 days: 1 cm, then 1.2 cm: +20 % against the mean of the previous rates
+  const faster = [m("2026-01-01", 10), m("2026-01-11", 11), m("2026-01-21", 12.2)];
+
+  it("the default is 10 % and lives in one place", () => {
+    expect(GROWTH_DEFAULTS.trendTolerance).toBe(0.1);
+    expect(growthTrend(faster).trend).toBe("faster");
+  });
+
+  it("a wider tolerance turns the same course stable, a narrower one keeps it faster", () => {
+    expect(growthTrend(faster, { tolerance: 0.3 }).trend).toBe("stable");
+    expect(growthTrend(faster, { tolerance: 0.05 }).trend).toBe("faster");
+  });
+
+  it("an unusable tolerance (negative, NaN, infinite) falls back to the default instead of inventing a rule", () => {
+    for (const tolerance of [-1, Number.NaN, Number.POSITIVE_INFINITY])
+      expect(growthTrend(faster, { tolerance }).trend).toBe("faster");
+  });
+
+  it("the threshold is no account setting: the view derives with the default (no stored value)", () => {
+    expect(Object.keys(GROWTH_DEFAULTS)).toEqual(["trendTolerance"]);
   });
 });
