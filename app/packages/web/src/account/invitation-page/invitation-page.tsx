@@ -3,11 +3,11 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Form, FormRoot } from "@/components/ui/form";
-import { SIGN_IN, type ApiError } from "../kernel";
-import { redeemInvitation } from "./access-api";
-import { useServerRefusal } from "./refusal";
+import { SIGN_IN, type ApiError } from "../../kernel";
+import { redeemInvitation } from "../api/access-api";
+import { useServerRefusal } from "../refusal";
 import { TextField } from "@/components/ui/input";
-import { invitationCodeSchema, type InvitationCodeFields } from "./schemas";
+import { invitationCodeSchema, type InvitationCodeFields } from "../schemas";
 
 type Token = () => Promise<string | undefined>;
 

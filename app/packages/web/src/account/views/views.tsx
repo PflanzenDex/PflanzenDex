@@ -2,7 +2,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
 import { DISPLAY_NAME } from "@/components/shared/nav-item";
-import type { Account } from "./account-api";
+import type { Account } from "../api/account-api";
 
 type Action = () => void;
 

@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Form, FormRoot } from "@/components/ui/form";
 import { TextField } from "@/components/ui/input";
-import { costSchema, parseAmount, type CostFields } from "./schemas";
+import { costSchema, parseAmount, type CostFields } from "../../schemas";
 
 /**
  * Look of a button while a write runs. The button is `aria-disabled`, not `disabled`: a disabled focused element loses

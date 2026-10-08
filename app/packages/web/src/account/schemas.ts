@@ -1,6 +1,6 @@
 import { OPERATOR_COST_CENTS, INVITATION_VALIDITY_DAYS } from "@pflanzendex/core";
 import { z } from "zod";
-import { OCCASIONS, type AccountProfile } from "./account-api";
+import { OCCASIONS, type AccountProfile } from "./api/account-api";
 
 /** The fields of the settings form (US-ACC-02, DS-47): texts stay texts, the server operation decides (P-03). */
 export const profileSchema = z.object({

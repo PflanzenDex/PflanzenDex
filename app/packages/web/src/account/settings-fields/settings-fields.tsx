@@ -9,8 +9,8 @@ import {
 } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { OCCASIONS, type Occasion } from "./account-api";
-import type { ProfileFields as Fields } from "./schemas";
+import { OCCASIONS, type Occasion } from "../api/account-api";
+import type { ProfileFields as Fields } from "../schemas";
 
 const OCCASION_TEXT: Record<Occasion, string> = {
   phase: "Pflegephasen",

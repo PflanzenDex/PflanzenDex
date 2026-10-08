@@ -3,7 +3,7 @@ import type { OperatorOverview } from "@pflanzendex/core";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { parseAmount } from "./schemas";
+import { parseAmount } from "../../schemas";
 import { OperatorPage } from "./operator-page";
 
 const token = async () => "tok";
@@ -342,7 +342,7 @@ describe("US-ACC-05 invitation codes", () => {
   });
 
   it("US-ACC-05 shows the expiry in the time zone of the profile", async () => {
-    const { setProfileTimeZone } = await import("../kernel");
+    const { setProfileTimeZone } = await import("../../../kernel");
     setProfileTimeZone("Pacific/Auckland");
     current = overview({
       invitations: [

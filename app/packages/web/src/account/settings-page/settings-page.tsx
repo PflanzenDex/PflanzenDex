@@ -3,12 +3,18 @@ import { useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Form, FormRoot } from "@/components/ui/form";
-import { LoadFrame, SIGN_IN, deviceTimeZone, setProfileTimeZone, type ApiError } from "../kernel";
-import { loadProfile, saveProfile, type AccountProfile } from "./account-api";
-import { ALERT_CLASSES, useServerRefusal } from "./refusal";
-import { PROFILE_REFUSABLE, profileSchema, toProfile, toProfileFields } from "./schemas";
-import type { ProfileFields as Fields } from "./schemas";
-import { ProfileFields, SwitchFields } from "./settings-fields";
+import {
+  LoadFrame,
+  SIGN_IN,
+  deviceTimeZone,
+  setProfileTimeZone,
+  type ApiError,
+} from "../../kernel";
+import { loadProfile, saveProfile, type AccountProfile } from "../api/account-api";
+import { ALERT_CLASSES, useServerRefusal } from "../refusal";
+import { PROFILE_REFUSABLE, profileSchema, toProfile, toProfileFields } from "../schemas";
+import type { ProfileFields as Fields } from "../schemas";
+import { ProfileFields, SwitchFields } from "../settings-fields/settings-fields";
 import { SettingsPageSkeleton } from "./settings-page.skeleton";
 
 type Token = () => Promise<string | undefined>;

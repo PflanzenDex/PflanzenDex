@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { currentTimeZone, deviceTimeZone, setProfileTimeZone } from "../kernel";
+import { currentTimeZone, deviceTimeZone, setProfileTimeZone } from "../../kernel";
 import { loadProfile, saveProfile } from "./account-api";
 
 const PROFILE = {

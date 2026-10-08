@@ -1,7 +1,7 @@
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { AccountView, AppError, Loading, Welcome } from "./views";
-import type { Account } from "./account-api";
+import type { Account } from "../api/account-api";
 
 const account: Account = {
   id: "1",

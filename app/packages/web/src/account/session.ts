@@ -8,7 +8,13 @@ import {
 } from "react";
 import type { UserManager, User } from "oidc-client-ts";
 import { setProfileTimeZone } from "../kernel";
-import { signOutEverywhere, apiUrl, getAccount, oidcSettings, type Account } from "./account-api";
+import {
+  signOutEverywhere,
+  apiUrl,
+  getAccount,
+  oidcSettings,
+  type Account,
+} from "./api/account-api";
 
 export type State =
   | { kind: "loading" }

@@ -5,10 +5,10 @@ import { useForm } from "react-hook-form";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Form, FormRoot } from "@/components/ui/form";
-import { instantText } from "./access-api";
-import { BUSY_LOOK } from "./operator-cost";
+import { instantText } from "../../api/access-api";
+import { BUSY_LOOK } from "../operator-cost/operator-cost";
 import { TextField } from "@/components/ui/input";
-import { DAYS, invitationDaysSchema, type InvitationDaysFields } from "./schemas";
+import { DAYS, invitationDaysSchema, type InvitationDaysFields } from "../../schemas";
 
 const STATUS_TEXT: Record<InvitationStatus, string> = {
   open: "offen",

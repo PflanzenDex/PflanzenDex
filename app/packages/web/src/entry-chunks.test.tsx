@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 // A mocked module factory runs only when the module is imported: this records what the app shell loads up front.
 const loaded = vi.hoisted(() => ({ pages: [] as string[] }));
-vi.mock("./account/invitation-page", () => {
+vi.mock("./account/invitation-page/invitation-page", () => {
   loaded.pages.push("invitation");
   return { InvitationPage: () => null };
 });

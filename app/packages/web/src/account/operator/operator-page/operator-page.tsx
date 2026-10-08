@@ -1,11 +1,16 @@
 import type { CreatedInvitation, OperatorCostFigure, OperatorOverview } from "@pflanzendex/core";
 import { useCallback, useRef, useState } from "react";
-import { LoadFrame, SIGN_IN, useInvalidate, type ApiError, type Response } from "../kernel";
-import { createInvitation, loadOverview, setOperatorCost, setRegistrationMode } from "./access-api";
-import { CostForm, costPerUserText, moneyText, monthText } from "./operator-cost";
-import { InvitationsArea, ModeSection } from "./operator-parts";
+import { LoadFrame, SIGN_IN, useInvalidate, type ApiError, type Response } from "../../../kernel";
+import {
+  createInvitation,
+  loadOverview,
+  setOperatorCost,
+  setRegistrationMode,
+} from "../../api/access-api";
+import { CostForm, costPerUserText, moneyText, monthText } from "../operator-cost/operator-cost";
+import { InvitationsArea, ModeSection } from "../operator-parts/operator-parts";
 import { OperatorPageSkeleton } from "./operator-page.skeleton";
-import { refusalText } from "./refusal";
+import { refusalText } from "../../refusal";
 
 type Token = () => Promise<string | undefined>;
 const OPERATOR_KEY = ["account", "operator"] as const;
