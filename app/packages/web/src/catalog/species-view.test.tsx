@@ -1,13 +1,13 @@
 import { renderToString as render } from "react-dom/server";
 import type { Species, SpeciesHit } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";
-import { SpeciesProfile } from "./profile-view";
-import { SpeciesSearch } from "./search-view";
-import { ProposalForm } from "./proposal-form";
-import { duplicate } from "./form";
-import { SearchResultsSkeleton } from "./search-view.skeleton";
-import { ProfileSkeleton } from "./profile-view.skeleton";
-import { proposalSchema, toProposalInput, EMPTY_PROPOSAL } from "./schemas";
+import { SpeciesProfile } from "./profile-view/profile-view";
+import { SpeciesSearch } from "./search-view/search-view";
+import { ProposalForm } from "./proposal/proposal-form/proposal-form";
+import { duplicate } from "./proposal/form";
+import { SearchResultsSkeleton } from "./search-view/search-view.skeleton";
+import { ProfileSkeleton } from "./profile-view/profile-view.skeleton";
+import { proposalSchema, toProposalInput, EMPTY_PROPOSAL } from "./shared/schemas";
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
 const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");

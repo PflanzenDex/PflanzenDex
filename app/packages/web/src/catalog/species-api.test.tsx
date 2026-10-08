@@ -3,7 +3,7 @@ import { renderToString } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { loadSpecies, propose, searchSpecies } from "./species-api";
 import { createQueryClient } from "../kernel";
-import { SpeciesPage } from "./SpeciesPage";
+import { SpeciesPage } from "./species-page/species-page";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));

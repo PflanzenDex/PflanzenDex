@@ -1,5 +1,5 @@
 import type { MergeOutcome, ReviewCase, ReviewList } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../kernel";
+import { call, createWrite, type Response } from "../../kernel";
 
 type FetchFn = typeof fetch;
 

@@ -3,8 +3,8 @@ import { ERROR_TEXTS, type ReviewEntry, type ReviewList } from "@pflanzendex/cor
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ReviewPage } from "./ReviewPage";
-import { ageText, issueText, movedText, summaryText } from "./review-text";
+import { ReviewPage } from "./review-page";
+import { ageText, issueText, movedText, summaryText } from "../review-text";
 
 const NOW = Date.parse("2026-10-10T12:00:00Z");
 const token = async () => "tok";

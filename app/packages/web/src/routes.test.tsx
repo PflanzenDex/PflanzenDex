@@ -13,7 +13,7 @@ vi.mock("./light/LightPage", () => {
   loaded.pages.push("light");
   return { LightPage: () => null };
 });
-vi.mock("./catalog/SpeciesPage", () => {
+vi.mock("./catalog/species-page/species-page", () => {
   loaded.pages.push("catalog");
   return { SpeciesPage: () => null };
 });

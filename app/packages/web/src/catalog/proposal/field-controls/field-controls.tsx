@@ -11,7 +11,7 @@ import { Input, type InputProps } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import type { ProposalFields } from "./schemas";
+import type { ProposalFields } from "../../shared/schemas";
 
 type Base = {
   control: Control<ProposalFields>;

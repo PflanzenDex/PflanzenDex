@@ -1,5 +1,5 @@
 import { errorText } from "@/lib/error-text";
-import type { ApiError } from "../kernel";
+import type { ApiError } from "../../kernel";
 
 /**
  * The German text of a refusal (DS-49, P-10): by its error code, never the raw server text. The one code the web

@@ -4,8 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ageText, issueText } from "./review-text";
-import { DIFFICULTY, GROWTH, dormancyPhase, lux, orUnknown } from "./text";
+import { ageText, issueText } from "../review-text";
+import { DIFFICULTY, GROWTH, dormancyPhase, lux, orUnknown } from "../../shared/text";
 
 export interface ReviewActions {
   running: boolean;

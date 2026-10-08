@@ -1,7 +1,7 @@
 import type { Control } from "react-hook-form";
-import { AreaField, ChoiceField, TextField } from "./field-controls";
-import type { ProposalFields } from "./schemas";
-import { DIFFICULTY, GROWTH } from "./text";
+import { AreaField, ChoiceField, TextField } from "../field-controls/field-controls";
+import type { ProposalFields } from "../../shared/schemas";
+import { DIFFICULTY, GROWTH } from "../../shared/text";
 
 const LEVELS = [2, 3, 4].map((s): [string, string] => [String(s), `Stufe ${s}`]);
 

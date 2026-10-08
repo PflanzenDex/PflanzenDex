@@ -1,12 +1,12 @@
 import type { MergeOutcome, ReviewList } from "@pflanzendex/core";
 import { useCallback, useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
-import { LoadFrame, useInvalidate, useWriteAction, type Response } from "../kernel";
-import { ReviewPageSkeleton } from "./ReviewPage.skeleton";
-import { refusalText } from "./refusal";
-import { ReviewEntryView, type ReviewActions } from "./review-entry";
-import { decideProposal, loadReviewList, mergeProposal } from "./review-api";
-import { movedText, summaryText } from "./review-text";
+import { LoadFrame, useInvalidate, useWriteAction, type Response } from "../../../kernel";
+import { ReviewPageSkeleton } from "./review-page.skeleton";
+import { refusalText } from "../../shared/refusal";
+import { ReviewEntryView, type ReviewActions } from "../review-entry/review-entry";
+import { decideProposal, loadReviewList, mergeProposal } from "../review-api";
+import { movedText, summaryText } from "../review-text";
 
 type Token = () => Promise<string | undefined>;
 const KEY = ["catalog", "review"] as const;

@@ -6,7 +6,6 @@
     "app/packages/core/src/catalog/species": 8,
     "app/packages/core/src/kernel": 11,
     "app/packages/web/src/account": 14,
-    "app/packages/web/src/catalog": 19,
     "app/packages/web/src/collection": 50,
     "app/packages/web/src/components/shared": 11,
     "app/packages/web/src/components/ui": 16,
@@ -19,7 +18,6 @@
     ".": 2,
     "app/deploy": 1,
     "app/packages/web/src": 2,
-    "app/packages/web/src/catalog": 5,
     "app/packages/web/src/light": 2,
     "app/packages/web/src/pokedex": 9,
     "app/packages/web/src/wishlist": 3,
@@ -28,7 +26,6 @@
   "LY-4": {
     "app/packages/web/src": 5,
     "app/packages/web/src/account": 9,
-    "app/packages/web/src/catalog": 12,
     "app/packages/web/src/collection": 18,
     "app/packages/web/src/components/shared": 7,
     "app/packages/web/src/components/ui": 12,

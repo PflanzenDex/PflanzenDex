@@ -3,18 +3,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormSetError } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Form, FormRoot } from "@/components/ui/form";
-import type { ApiError } from "../kernel";
-import { duplicate } from "./form";
-import { MoreDetails } from "./more-details";
-import { refusalText } from "./refusal";
-import { RequiredFields } from "./required-fields";
+import type { ApiError } from "../../../kernel";
+import { duplicate } from "../form";
+import { MoreDetails } from "../more-details/more-details";
+import { refusalText } from "../../shared/refusal";
+import { RequiredFields } from "../required-fields/required-fields";
 import {
   EMPTY_PROPOSAL,
   proposalSchema,
   refusedFields,
   toProposalInput,
   type ProposalFields,
-} from "./schemas";
+} from "../../shared/schemas";
 
 const ALERT =
   "rounded-lg border border-destructive p-3 text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
