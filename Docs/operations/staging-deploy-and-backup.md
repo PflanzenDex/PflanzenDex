@@ -14,6 +14,8 @@ Ticket TE-03 (#40). Basis: E-01 (self-hosting, Docker Compose, one host), R-09, 
 
 The database is not exposed. Only the proxy listens (ports from `HTTP_PORT`/`HTTPS_PORT`).
 
+**Compression and caching (NFR-12):** the proxy compresses text responses (HTML, JS, CSS, JSON, SVG) with zstd or gzip, whichever `Accept-Encoding` asks for; Brotli would need a Caddy plugin and is not used. `web` sends `Cache-Control: public, max-age=31536000, immutable` for the hashed files under `/assets/` and `no-cache` (revalidate) for `index.html`, the service worker, the web manifest and SPA routes. The config is `app/deploy/Caddyfile` and `app/deploy/web.Caddyfile`; the test is `serving-headers.test.ts` in `app/packages/web/src/lib/test-setup/`.
+
 ## One-time setup (host)
 
 1. Install Docker and Docker Compose, clone the repo.

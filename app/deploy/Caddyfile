@@ -1,6 +1,8 @@
 # Reverse proxy with an automatic certificate (Let's Encrypt). The address comes from the environment (.env).
 # Locally: SITE_ADDRESS=localhost (Caddy then uses its internal CA, no public certificate).
 {$SITE_ADDRESS} {
+	# Text compression (NFR-12): Caddy negotiates zstd or gzip from Accept-Encoding; it skips images and other
+	# already-compressed types. Brotli would need a Caddy plugin, so it is not used (zstd compresses as well).
 	encode zstd gzip
 	@api path /health /api/*
 	handle @api {
