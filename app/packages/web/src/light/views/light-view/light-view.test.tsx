@@ -1,9 +1,9 @@
 import { renderToString as render } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { LightView, type LightActions } from "./light-view";
-import type { LightData } from "./light-api";
-import { ErrorMessage } from "./message";
-import { derivationText } from "./texts";
+import type { LightData } from "../../shared/light-api/light-api";
+import { ErrorMessage } from "../../shared/ui/message/message";
+import { derivationText } from "../../shared/texts";
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
 const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");

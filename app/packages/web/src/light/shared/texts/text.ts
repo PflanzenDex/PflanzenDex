@@ -1,4 +1,10 @@
-import type { Derivation, ApiError, LightLocation, LightZone, ZoneUser } from "../light-api";
+import type {
+  Derivation,
+  ApiError,
+  LightLocation,
+  LightZone,
+  ZoneUser,
+} from "../light-api/light-api";
 
 const numberFormat = new Intl.NumberFormat("de-DE");
 

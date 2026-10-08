@@ -14,7 +14,7 @@ import {
   type Response as KernelResponse,
   type ApiError as KernelApiError,
   type Write as KernelWrite,
-} from "../kernel";
+} from "../../../kernel";
 
 export type {
   Derivation,

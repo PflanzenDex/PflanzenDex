@@ -12,7 +12,7 @@ vi.mock("./start-page", () => {
   return { StartPage: () => null };
 });
 
-vi.mock("./light/setup-steps", () => {
+vi.mock("./light/views/setup-steps/setup-steps", () => {
   loaded.pages.push("setup-steps");
   return { LocationsStep: () => null, ZonesStep: () => null };
 });

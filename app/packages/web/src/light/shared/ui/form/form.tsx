@@ -11,8 +11,8 @@ import type { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select } from "@/components/ui/select";
-import type { ApiError } from "./light-api";
-import { ALERT_CLASSES, useServerRefusal } from "./texts";
+import type { ApiError } from "../../light-api/light-api";
+import { ALERT_CLASSES, useServerRefusal } from "../../texts";
 
 /**
  * A form that saves through an operation: validates with its zod schema (focus goes to the first invalid field),

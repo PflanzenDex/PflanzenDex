@@ -1,6 +1,6 @@
 import { EmptyState } from "@/components/shared/empty-state";
 import { ResponsiveTable, type ResponsiveColumn } from "@/components/shared/responsive-table";
-import type { LightOverview, LightOverviewRow } from "./light-api";
+import type { LightOverview, LightOverviewRow } from "../../shared/light-api/light-api";
 
 const lux = new Intl.NumberFormat("de-DE");
 

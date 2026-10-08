@@ -3,7 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/lib/viewport-mock";
 import { RulesView } from "./rules-view";
-import type { LightZone } from "../light-api";
+import type { LightZone } from "../../shared/light-api/light-api";
 
 beforeEach(() => setViewportWidth(1024));
 afterEach(() => cleanup());
