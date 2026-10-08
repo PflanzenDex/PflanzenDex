@@ -167,7 +167,7 @@ export async function takePhoto(): Promise<Photo | undefined> {
 
 | ID    | Rule                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DS-23 | **Modals:** below `md` a bottom Sheet (Vaul-based `@/components/ui/sheet`), from `md` a centered Dialog. Modules use `ResponsiveModal`, never a bare `Dialog` for content a phone user must fill in.                                                                                                                                                                                                                                                                                        |
+| DS-23 | **Modals:** below `md` a bottom Sheet (Vaul-based `@/components/ui/overlays/sheet/sheet`), from `md` a centered Dialog. Modules use `ResponsiveModal`, never a bare `Dialog` for content a phone user must fill in.                                                                                                                                                                                                                                                                         |
 | DS-24 | **Tables:** below `md` a stack of cards (one card per row, label/value pairs, the row's main action reachable), from `md` the real `Table`. Both views render from the same column definition so they cannot drift. Use `ResponsiveTable`.                                                                                                                                                                                                                                                  |
 | DS-25 | **Navigation (ADR 0011 decision 6):** below `md` a fixed bottom bar with at most 5 slots (the first four destinations plus "Mehr", which opens a sheet with the rest); from `md` a navigation rail (about 80 px, icon with label under it, all destinations); from `xl` a labelled sidebar (248 px, product name on top). Bar, rail and sidebar render the same single list of destinations. The active item is never shown by colour alone (pill or fill, semibold label, `aria-current`). |
 | DS-26 | Every list/table/detail view defines its empty, loading and error state, and each offers a next action (P-09).                                                                                                                                                                                                                                                                                                                                                                              |
@@ -182,13 +182,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/overlays/dialog/dialog";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
+} from "@/components/ui/overlays/sheet/sheet";
 
 type Props = {
   open: boolean;
@@ -335,7 +335,7 @@ export function cn(...inputs: ClassValue[]) {
 | DS-36 | Components forward `ref`, spread remaining props onto the root element and keep native semantics (`<button>` for actions, `<a>`/`Link` for navigation). Radix `asChild` is used instead of re-implementing. |
 
 ```tsx
-// components/ui/button.tsx
+// components/ui/button/button.tsx
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -446,8 +446,8 @@ export type WishInput = z.infer<typeof wishSchema>;
 // wishlist/wish-form.tsx
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button/button";
+import { Input } from "@/components/ui/fields/input/input";
 import {
   Form,
   FormControl,
@@ -455,7 +455,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/fields/form/form";
 import { wishSchema, type WishInput } from "../schemas";
 
 export function WishForm({
@@ -505,13 +505,13 @@ export function WishForm({
 | ID    | Rule                                                                                                                                                                                                                                                                                              |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | DS-52 | Every async view has a skeleton that has the **same structure and box sizes** as the loaded mobile layout: same container, same number of rows (or a fixed plausible count), same heights. Cumulative Layout Shift stays < 0.1 (assumption, starting value; measured by the `lighthouse` script). |
-| DS-53 | Skeletons are built from `components/ui/skeleton.tsx` and live next to the component they mirror (`specimen-card.skeleton.tsx`). When the real component changes size, the skeleton changes in the same PR.                                                                                       |
+| DS-53 | Skeletons are built from `components/ui/display/skeleton/skeleton.tsx` and live next to the component they mirror (`specimen-card.skeleton.tsx`). When the real component changes size, the skeleton changes in the same PR.                                                                      |
 | DS-54 | Images and media reserve space with `aspect-*` or explicit `width`/`height`. No element is inserted above already visible content after load (banners, error bars use reserved space or an overlay).                                                                                              |
 | DS-55 | Route-level pages load behind one `Suspense` boundary whose fallback is the page skeleton (DS-08); inside a page, wrap the **smallest** lazy or async part in its own `Suspense`/pending state, so the shell and header render at once.                                                           |
 | DS-56 | Skeletons are `aria-hidden` with a single `role="status"` + visually hidden "Lädt…" text on the container. Animation respects `motion-reduce`. A loading state never shows an invented number (P-08).                                                                                             |
 
 ```tsx
-// components/ui/skeleton.tsx
+// components/ui/display/skeleton/skeleton.tsx
 import { cn } from "@/lib/utils";
 
 export function Skeleton({
