@@ -16,15 +16,16 @@ export function careProfileZoneUsage(deps: ZoneUsageDependencies): ZoneUsage {
   return {
     user: async (userId, lightZoneId) => {
       const using = (await deps.profiles.list(userId)).filter((p) => p.lightZoneId === lightZoneId);
-      const named = await Promise.all(
-        using.map(async (p): Promise<ZoneUser | null> => {
-          const species = await deps.species.find(userId, p.speciesId);
-          return species
-            ? { kind: "care_profile", id: p.speciesId, name: speciesDisplayName(species) }
-            : null;
-        }),
+      const found = await deps.species.findMany(
+        userId,
+        using.map((p) => p.speciesId),
       );
-      return named.filter((u): u is ZoneUser => u !== null);
+      return using.flatMap((p, i): ZoneUser[] => {
+        const species = found[i];
+        return species
+          ? [{ kind: "care_profile", id: p.speciesId, name: speciesDisplayName(species) }]
+          : [];
+      });
     },
   };
 }

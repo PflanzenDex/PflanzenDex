@@ -287,3 +287,43 @@ describe("US-POK-08 two cultivars without a plain species (issue 297)", () => {
     expect(one.caught[0]?.chips).toEqual(["'Albispina'", "'Rufida'"]);
   });
 });
+
+describe("NFR-12 species are read in one batch, not one call per species", () => {
+  it("NFR-12 reads all distinct species with one findMany call and no find call", async () => {
+    let finds = 0;
+    const many: string[][] = [];
+    const counting = {
+      find: async (userId: string, id: string) => (finds++, species.find(userId, id)),
+      findMany: async (userId: string, ids: readonly string[]) => (
+        many.push([...ids]),
+        species.findMany(userId, ids)
+      ),
+    };
+    for (const id of [LEMON, OPUNTIA, HIPPEASTRUM, PARODIA, LEMON]) await add("anna", id);
+    const r = await pokedexOwnership({ specimens, species: counting }, "anna", TZ);
+    expect(r.caught).toHaveLength(2); // Hippeastrum and "Parodia sp." have no epithet
+    expect(finds).toBe(0);
+    expect(many).toHaveLength(1);
+    expect(many[0]).toHaveLength(4);
+  });
+
+  it("NFR-12 gives the same result as per-species reads, and a foreign private species stays unreadable", async () => {
+    await add("anna", BEN_ONLY, "plant", "Fremd");
+    await add("anna", LEMON);
+    const perId = { find: species.find.bind(species), findMany: species.findMany.bind(species) };
+    const batch = await pokedexOwnership({ specimens, species }, "anna", TZ);
+    const single = await pokedexOwnership(
+      {
+        specimens,
+        species: {
+          ...perId,
+          findMany: (u, ids) => Promise.all(ids.map((id) => species.find(u, id))),
+        },
+      },
+      "anna",
+      TZ,
+    );
+    expect(batch).toEqual(single);
+    expect(batch.unidentified.map((x) => x.specimenName)).toEqual(["Fremd"]);
+  });
+});

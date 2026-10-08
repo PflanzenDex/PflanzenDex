@@ -71,7 +71,7 @@ export async function specimenHints(
   const active = rows.filter(isActive);
   const locations = new Map(locationList.map((s) => [s.id, s] as const));
   const speciesIds = [...new Set(active.map((z) => z.speciesId))];
-  const found = await Promise.all(speciesIds.map((id) => deps.species.find(userId, id)));
+  const found = await deps.species.findMany(userId, speciesIds);
   const readable = new Set(speciesIds.filter((_, i) => found[i]));
   const hints = active.flatMap((z) => [
     ...(readable.has(z.speciesId)

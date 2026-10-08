@@ -317,4 +317,58 @@ describe("species catalog and review status (TE-08)", () => {
     expect(names).not.toContain(proposal.latinName);
     expect(names).not.toContain(cultivar.latinName);
   });
+  it("NFR-12 findMany equals find per ID: same order, unknown and foreign private species are null", async () => {
+    const mine = await create(anna, values(name("Aloe batch-eigen ")));
+    const shared = await create(anna, values(name("Aloe batch-frei ")));
+    await approve(shared.id);
+    const theirs = await create(ben, values(name("Aloe batch-fremd ")));
+    const unknown = randomUUID();
+    const ids = [shared.id, theirs.id, mine.id, unknown, shared.id.toUpperCase()];
+    for (const user of [anna, ben, operator]) {
+      const many = await species.findMany(user, ids);
+      expect(many).toEqual(await Promise.all(ids.map((id) => species.find(user, id))));
+    }
+    const forAnna = await species.findMany(anna, ids);
+    expect(forAnna.map((x) => x?.id ?? null)).toEqual([shared.id, null, mine.id, null, shared.id]);
+    expect((await species.findMany(ben, ids)).map((x) => x?.id ?? null)).toEqual([
+      shared.id,
+      theirs.id,
+      null,
+      null,
+      shared.id,
+    ]);
+    expect(await species.findMany(anna, [])).toEqual([]);
+  });
+
+  it("NFR-12 findMany needs one transaction for any number of species", async () => {
+    const made = [];
+    for (let i = 0; i < 6; i++) made.push((await create(anna, values(name(`Aloe zaehl${i} `)))).id);
+    let statements = 0;
+    const counted = new Proxy(pool, {
+      get(target, prop) {
+        if (prop === "connect")
+          return async () => {
+            const c = await target.connect();
+            return new Proxy(c, {
+              get(client, p) {
+                const v = Reflect.get(client, p, client) as unknown;
+                if (p !== "query") return typeof v === "function" ? v.bind(client) : v;
+                return (...a: unknown[]) => (
+                  statements++,
+                  (v as (...x: unknown[]) => unknown).apply(client, a)
+                );
+              },
+            });
+          };
+        const v = Reflect.get(target, prop, target) as unknown;
+        return typeof v === "function" ? v.bind(target) : v;
+      },
+    });
+    const few = await new SpeciesPostgres(counted).findMany(anna, made.slice(0, 2));
+    const afterFew = statements;
+    statements = 0;
+    const many = await new SpeciesPostgres(counted).findMany(anna, made);
+    expect(few.every((x) => x !== null) && many.every((x) => x !== null)).toBe(true);
+    expect(statements).toBe(afterFew);
+  });
 });

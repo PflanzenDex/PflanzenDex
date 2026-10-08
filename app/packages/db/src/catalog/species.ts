@@ -59,6 +59,7 @@ const SELECTION = `a.id, ${FIELDS.map((f) => `a.${COLUMN[f]} as "${f}"`).join(",
 // What the application shows: approved species and own proposals (FR-BES-11). Reviewers may additionally read foreign
 // open proposals by row rule (US-BES-10); only `findForReview` asks for them.
 const VISIBLE = "species_status(a.id) is not null";
+const BY_IDS = `select ${SELECTION} from species a where a.id = any($1::uuid[]) and ${VISIBLE}`;
 // A merged proposal is a duplicate that is gone for everybody, reviewers included.
 const NOT_MERGED = `not exists (select from review_case v where v.object_kind = 'species' and v.object_id = a.id and v.status = 'merged')`;
 
@@ -123,6 +124,14 @@ export class SpeciesPostgres {
 
   async find(userId: string, id: string): Promise<Species | null> {
     return withAccount(this.pool, userId, (c) => load(c, id, VISIBLE));
+  }
+
+  /** `find` for many IDs in ONE statement (NFR-12): same visibility, `null` for unreadable or unknown IDs. */
+  async findMany(userId: string, ids: readonly string[]): Promise<readonly (Species | null)[]> {
+    if (ids.length === 0) return [];
+    const r = await withAccount(this.pool, userId, (c) => c.query<Species>(BY_IDS, [ids]));
+    const byId = new Map(r.rows.map((s) => [s.id, s] as const));
+    return ids.map((id) => byId.get(id.toLowerCase()) ?? null);
   }
 
   /** The species a merged proposal of the account went into (US-BES-10); `null` for everything else. */
