@@ -18,8 +18,7 @@
     "app/packages/web/src": 5,
     "app/packages/web/src/collection": 18,
     "app/packages/web/src/components/shared": 7,
-    "app/packages/web/src/components/ui": 12,
-    "app/packages/web/src/kernel": 1
+    "app/packages/web/src/components/ui": 12
   },
   "LY-5": {
     ".": 3

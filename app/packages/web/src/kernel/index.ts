@@ -1,7 +1,7 @@
 // Public interface of the module `kernel` (ADR 0003): access to the API with sign-in and replay protection, the data layer, shared load error.
 export { call, createWrite } from "./api";
 export type { Response, ApiError, Write } from "./api";
-export { LoadFrame } from "./load-frame";
+export { LoadFrame } from "./load-frame/load-frame";
 export { createQueryClient } from "./request/query-client";
 export {
   useClearOnSignOut,
