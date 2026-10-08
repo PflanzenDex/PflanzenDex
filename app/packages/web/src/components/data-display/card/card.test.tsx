@@ -18,6 +18,19 @@ describe("Card (US-QS-07, DS-34)", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 
+  it("US-QS-14 a nested card is flat and tinted, so a card inside the page card has no second shadow", () => {
+    render(
+      <Card nested data-testid="c">
+        Hinweis
+      </Card>,
+    );
+    const card = screen.getByTestId("c");
+    expect(card.className).toContain("bg-secondary");
+    expect(card.className).toContain("shadow-none");
+    expect(card.className).not.toContain("shadow-elevation-1");
+    expect(card.className).not.toContain("bg-card");
+  });
+
   it("US-QS-07 media and footer slots render around the body, and are left out when absent", () => {
     const { rerender } = render(
       <Card media={<img src="x.jpg" alt="Monstera" />} footer={<span>Heute</span>}>

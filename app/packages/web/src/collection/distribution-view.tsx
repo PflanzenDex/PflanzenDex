@@ -33,7 +33,7 @@ export function DistributionView({ distribution }: { distribution: Distribution 
   return (
     <section
       aria-labelledby="distribution-title"
-      className="mb-5 grid gap-1 rounded-xl border border-border bg-card px-4 pb-3 pt-1 text-card-foreground"
+      className="mb-5 grid gap-1 rounded-card bg-secondary px-4 pb-3 pt-1 text-secondary-foreground"
     >
       <h2 id="distribution-title" className={cn(SUBTITLE, "mt-3")}>
         Verteilung auf die Lichtzonen
@@ -50,7 +50,7 @@ export function DistributionView({ distribution }: { distribution: Distribution 
               </span>
               <span
                 aria-hidden="true"
-                className="block h-2 w-full overflow-hidden rounded-full bg-muted"
+                className="block h-2 w-full overflow-hidden rounded-full bg-background"
               >
                 <span
                   data-bar=""

@@ -100,7 +100,7 @@ function Row(props: {
         <p className="text-[12.5px] text-muted-foreground">Mittel: {row.agent ?? "—"}</p>
         <p className="text-[12.5px] text-muted-foreground">Fällig am: {dateText(row.dueAt)}</p>
         <p
-          className={`w-fit rounded-full px-2 py-0.5 text-[12.5px] font-semibold ${CHIP.has(row.status.kind) ? ATTENTION_CLASSES : ""}`}
+          className={`w-fit rounded-control px-2.5 py-0.5 text-[12.5px] font-semibold ${CHIP.has(row.status.kind) ? ATTENTION_CLASSES : ""}`}
         >
           {row.status.text}
         </p>
