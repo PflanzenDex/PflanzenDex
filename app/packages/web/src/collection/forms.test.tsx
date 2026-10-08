@@ -4,9 +4,9 @@ import userEvent from "@testing-library/user-event";
 import type { Species, SpecimenCard } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CareProfileSection } from "./care-profile-page/care-profile-page";
-import { CollectionPage } from "./CollectionPage";
-import { DifficultyPage } from "./DifficultyPage";
-import { HintsPage } from "./HintsPage";
+import { CollectionPage } from "./collection-page/collection-page";
+import { DifficultyPage } from "./difficulty-page/difficulty-page";
+import { HintsPage } from "./hints-page/hints-page";
 import { EMPTY_DISTRIBUTION } from "./distribution-test-helpers";
 
 // DS-48 migration of the module (issue 318): invalid submissions focus the first invalid field and link the German

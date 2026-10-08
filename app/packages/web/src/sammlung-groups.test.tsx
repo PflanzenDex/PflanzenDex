@@ -89,7 +89,7 @@ const pressed = (name: string | RegExp) =>
 
 beforeAll(async () => {
   await Promise.all([
-    import("./collection/CollectionPage"),
+    import("./collection/collection-page/collection-page"),
     import("./care/CarePhasesPage"),
     import("./light/LightPage"),
   ]);

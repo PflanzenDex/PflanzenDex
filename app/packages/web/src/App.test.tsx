@@ -185,7 +185,7 @@ beforeAll(async () => {
     import("@/components/routing/areas/today-area/today-area"),
     import("./today/today-page/today-page"),
     import("./care/TreatmentsPage"),
-    import("./collection/HintsPage"),
+    import("./collection/hints-page/hints-page"),
   ]);
 }, 30_000);
 
