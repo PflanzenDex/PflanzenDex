@@ -1,6 +1,6 @@
 import { execute, type Operation } from "../kernel";
 import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
-import { speciesPropose } from "./species/propose";
+import { speciesPropose } from "./species/naming/propose";
 import { InMemorySpecies } from "./species/test-helpers";
 import { catalogPropose } from "./propose";
 import {

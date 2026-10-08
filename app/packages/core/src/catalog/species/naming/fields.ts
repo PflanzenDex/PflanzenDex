@@ -7,9 +7,9 @@ import {
   choiceField,
   type Result,
   type ErrorDetail,
-} from "../../kernel";
+} from "../../../kernel";
 import { latinNameProblem, parseLatin, type LatinName } from "./name";
-import { SPECIES_LIMITS, GROWTH_MEASURES } from "./types";
+import { SPECIES_LIMITS, GROWTH_MEASURES } from "../types";
 
 const invalid = (field: string): ErrorDetail => ({ field, code: "input.invalid" });
 const empty = (value: unknown) =>

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { execute } from "../../kernel";
-import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
-import { speciesHints, speciesLoad, speciesSearch, speciesPropose } from "./index";
-import { InMemorySpecies } from "./test-helpers";
+import { execute } from "../../../kernel";
+import { InMemoryIdempotencyStore } from "../../../kernel/test-helpers";
+import { speciesHints, speciesLoad, speciesSearch, speciesPropose } from "../index";
+import { InMemorySpecies } from "../test-helpers";
 
 let store: InMemorySpecies;
 let idem: InMemoryIdempotencyStore;

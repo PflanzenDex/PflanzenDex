@@ -1,6 +1,6 @@
-import { isId } from "../../kernel";
-import { normalize } from "./name";
-import type { Species, SpeciesStore, SpeciesHit } from "./types";
+import { isId } from "../../../kernel";
+import { normalize } from "../naming/name";
+import type { Species, SpeciesStore, SpeciesHit } from "../types";
 
 /**
  * Searches by Latin, German, English name or synonym (a partial word suffices, case and

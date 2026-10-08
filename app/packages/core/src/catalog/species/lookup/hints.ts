@@ -1,4 +1,4 @@
-import type { Species } from "./types";
+import type { Species } from "../types";
 
 export interface SpeciesHint {
   readonly text: string;

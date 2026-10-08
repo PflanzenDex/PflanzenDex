@@ -1,7 +1,7 @@
-import { defineOperation, appError, failed, ok } from "../../kernel";
+import { defineOperation, appError, failed, ok } from "../../../kernel";
 import { speciesSchema, type SpeciesInput } from "./fields";
 import { normalize } from "./name";
-import type { SpeciesName, SpeciesStore, SpeciesValues, NameField } from "./types";
+import type { SpeciesName, SpeciesStore, SpeciesValues, NameField } from "../types";
 
 function valueFrom(e: SpeciesInput): SpeciesValues {
   const { latinName: name, ...rest } = e;
