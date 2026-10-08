@@ -89,7 +89,7 @@ beforeAll(async () => {
   await Promise.all([
     import("./collection/collection-page/collection-page"),
     import("./pokedex/pokedex-page/pokedex-page"),
-    import("./wishlist/WishlistPage"),
+    import("./wishlist/wishlist-page/wishlist-page"),
     import("./collection/difficulty-page/difficulty-page"),
   ]);
 }, 30_000);

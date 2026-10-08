@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Candidate, CandidateList } from "@pflanzendex/core";
-import { LoadFrame, useInvalidate, useWriteAction } from "../kernel";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
 import { EmptyState } from "@/components/shared/empty-state";
-import { useCandidateWrite, WriteOutcome, type WishToPlant } from "./actions/actions";
-import { BoughtList } from "./history/bought-list/bought-list";
-import { CandidateCard } from "./candidate-card/candidate-card";
-import { DiscardedList } from "./history/discarded-list/discarded-list";
-import { ReplenishWarning } from "./replenish-warning/replenish-warning";
-import { DuplicateWishes, useRepair } from "./duplicate-wishes/duplicate-wishes";
-import { WishForm } from "./wish-form/wish-form";
-import { WishlistPageSkeleton } from "./WishlistPage.skeleton";
-import { createWish, loadWishlist, type WishInput, type Wishlist } from "./wishlist-api";
+import { useCandidateWrite, WriteOutcome, type WishToPlant } from "../actions/actions";
+import { BoughtList } from "../history/bought-list/bought-list";
+import { CandidateCard } from "../candidate-card/candidate-card";
+import { DiscardedList } from "../history/discarded-list/discarded-list";
+import { ReplenishWarning } from "../replenish-warning/replenish-warning";
+import { DuplicateWishes, useRepair } from "../duplicate-wishes/duplicate-wishes";
+import { WishForm } from "../wish-form/wish-form";
+import { WishlistPageSkeleton } from "./wishlist-page.skeleton";
+import { createWish, loadWishlist, type WishInput, type Wishlist } from "../wishlist-api";
 
 /** Next action of an empty list: take the keeper to the form below. */
 const focusForm = () =>
