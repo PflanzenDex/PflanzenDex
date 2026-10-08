@@ -1,5 +1,5 @@
-import type { ApiError } from "./light-api";
-import { fieldNames, refusalText, userText } from "./texts";
+import type { ApiError } from "../../light-api/light-api";
+import { fieldNames, refusalText, userText } from "../../texts";
 
 /** Server error with what to do next (P-09); for a used zone with all users (P-10). Text by error code (DS-49). */
 export function ErrorMessage({ error }: { error: ApiError }) {

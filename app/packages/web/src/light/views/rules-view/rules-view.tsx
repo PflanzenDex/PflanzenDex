@@ -1,6 +1,6 @@
 import { classificationRules } from "@pflanzendex/core";
 import { ResponsiveTable, type ResponsiveColumn } from "@/components/shared/responsive-table";
-import type { LightZone } from "../light-api";
+import type { LightZone } from "../../shared/light-api/light-api";
 
 const number = new Intl.NumberFormat("de-DE");
 const H2 = "text-xl font-semibold";

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Form, FormRoot } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import type { ApiError, LightZone } from "./light-api";
-import { FORM_GRID, FormButtons, RefusalAlert, useSaveForm } from "./form";
+import type { ApiError, LightZone } from "../../shared/light-api/light-api";
+import { FORM_GRID, FormButtons, RefusalAlert, useSaveForm } from "../../shared/ui/form/form";
 import { TextField } from "@/components/ui/input";
-import { ErrorMessage } from "./message";
+import { ErrorMessage } from "../../shared/ui/message/message";
 import {
   LUX_LIMITS,
   NAME_MAX,
@@ -14,8 +14,8 @@ import {
   toZoneInput,
   zoneSchema,
   type ZoneFields,
-} from "./schemas";
-import { lux, ppfd } from "./texts";
+} from "../../shared/schemas";
+import { lux, ppfd } from "../../shared/texts";
 
 export interface ZoneInput {
   name: string;

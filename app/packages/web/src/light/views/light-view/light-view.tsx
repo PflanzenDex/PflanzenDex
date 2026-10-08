@@ -1,11 +1,15 @@
 import { EmptyState } from "@/components/shared/empty-state";
 import { Banner } from "@/components/shared/states/banner/banner";
-import { DerivationForm, type Derive } from "./derivation-view";
-import { Fresh, useFresh } from "./fresh";
-import type { ApiError, LightData } from "./light-api";
-import { LocationForm, LocationCard, type LocationInput } from "./locations-view";
-import { ErrorMessage } from "./message";
-import { ZoneForm, ZoneCard, type ZoneInput } from "./zones-view";
+import { DerivationForm, type Derive } from "../../zones/derivation-view/derivation-view";
+import { Fresh, useFresh } from "../../shared/ui/fresh/fresh";
+import type { ApiError, LightData } from "../../shared/light-api/light-api";
+import {
+  LocationForm,
+  LocationCard,
+  type LocationInput,
+} from "../../zones/locations-view/locations-view";
+import { ErrorMessage } from "../../shared/ui/message/message";
+import { ZoneForm, ZoneCard, type ZoneInput } from "../../zones/zones-view/zones-view";
 
 type AppError = Promise<ApiError | null>;
 

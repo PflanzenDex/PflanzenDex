@@ -1,8 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Form, FormRoot } from "@/components/ui/form";
-import type { ApiError, LightLocation, LightZone } from "./light-api";
-import { FORM_GRID, FormButtons, RefusalAlert, SelectField, useSaveForm } from "./form";
+import type { ApiError, LightLocation, LightZone } from "../../shared/light-api/light-api";
+import {
+  FORM_GRID,
+  FormButtons,
+  RefusalAlert,
+  SelectField,
+  useSaveForm,
+} from "../../shared/ui/form/form";
 import { TextField } from "@/components/ui/input";
 import {
   LOCATION_REFUSABLE,
@@ -10,9 +16,9 @@ import {
   locationSchema,
   toLocationInput,
   type LocationFields,
-} from "./schemas";
-import { ENTRY } from "./zones-view";
-import { kindText, zoneName } from "./texts";
+} from "../../shared/schemas";
+import { ENTRY } from "../zones-view/zones-view";
+import { kindText, zoneName } from "../../shared/texts";
 
 export interface LocationInput {
   name: string;

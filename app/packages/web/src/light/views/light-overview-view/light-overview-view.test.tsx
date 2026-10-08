@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/lib/viewport-mock";
 import { LightOverviewView } from "./light-overview-view";
-import type { LightOverview, LightOverviewRow } from "./light-api";
+import type { LightOverview, LightOverviewRow } from "../../shared/light-api/light-api";
 
 beforeEach(() => setViewportWidth(1024));
 afterEach(() => {

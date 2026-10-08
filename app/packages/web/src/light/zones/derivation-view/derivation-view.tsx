@@ -3,8 +3,8 @@ import type { Control } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormRoot } from "@/components/ui/form";
-import type { DerivationRequest, Derivation, Response } from "./light-api";
-import { FORM_GRID, RefusalAlert, SelectField, useSaveForm } from "./form";
+import type { DerivationRequest, Derivation, Response } from "../../shared/light-api/light-api";
+import { FORM_GRID, RefusalAlert, SelectField, useSaveForm } from "../../shared/ui/form/form";
 import { TextField } from "@/components/ui/input";
 import {
   DERIVATION_REFUSABLE,
@@ -12,8 +12,8 @@ import {
   derivationSchema,
   toDerivationRequest,
   type DerivationFields,
-} from "./schemas";
-import { derivationText } from "./texts";
+} from "../../shared/schemas";
+import { derivationText } from "../../shared/texts";
 
 function SoftLeaf({ control }: { control: Control<DerivationFields> }) {
   return (

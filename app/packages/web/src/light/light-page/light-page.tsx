@@ -2,12 +2,12 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { useCallback, useMemo, useState } from "react";
 import { useToast } from "@/components/shared/states/toast/toast-provider/toast-provider";
 import { RequestState } from "@/components/shared/states/request-state/request-state";
-import { SIGN_IN as KERNEL_SIGN_IN, useReload, useRequest } from "../kernel";
-import { LightView, type LightActions } from "./light-view";
-import { LightOverviewView } from "./light-overview-view";
-import { RulesView } from "./rules-view";
+import { SIGN_IN as KERNEL_SIGN_IN, useReload, useRequest } from "../../kernel";
+import { LightView, type LightActions } from "../views/light-view/light-view";
+import { LightOverviewView } from "../views/light-overview-view/light-overview-view";
+import { RulesView } from "../views/rules-view";
 import { LightPageSkeleton } from "./light-page.skeleton";
-import { refusalText } from "./texts";
+import { refusalText } from "../shared/texts";
 import {
   createWrite,
   loadDerivation,
@@ -18,7 +18,7 @@ import {
   type LightData,
   type LightOverview,
   type Response,
-} from "./light-api";
+} from "../shared/light-api/light-api";
 
 type Loaded = { data: LightData; overview: Response<LightOverview> };
 const LIGHT_KEY = ["light"] as const;

@@ -1,13 +1,22 @@
 import { useCallback, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { LoadFrame, SIGN_IN as KERNEL_SIGN_IN, useInvalidate, useRequest } from "../kernel";
-import { createWrite, loadLight, type ApiError, type LightData } from "./light-api";
-import { LocationCard, LocationForm, type LocationInput } from "./locations-view";
-import { ErrorMessage } from "./message";
-import { Fresh, useFresh } from "./fresh";
-import { SetupStepSkeleton } from "./light-page.skeleton";
-import { ENTRY, ZoneCard, ZoneForm } from "./zones-view";
-import { kindText } from "./texts";
+import { LoadFrame, SIGN_IN as KERNEL_SIGN_IN, useInvalidate, useRequest } from "../../../kernel";
+import {
+  createWrite,
+  loadLight,
+  type ApiError,
+  type LightData,
+} from "../../shared/light-api/light-api";
+import {
+  LocationCard,
+  LocationForm,
+  type LocationInput,
+} from "../../zones/locations-view/locations-view";
+import { ErrorMessage } from "../../shared/ui/message/message";
+import { Fresh, useFresh } from "../../shared/ui/fresh/fresh";
+import { SetupStepSkeleton } from "../../light-page/light-page.skeleton";
+import { ENTRY, ZoneCard, ZoneForm } from "../../zones/zones-view/zones-view";
+import { kindText } from "../../shared/texts";
 
 const SIGN_IN: ApiError = { code: KERNEL_SIGN_IN.code, text: KERNEL_SIGN_IN.text };
 
