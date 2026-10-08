@@ -24,22 +24,24 @@ export function ArchivedList(props: {
       <ul className={GRID}>
         {props.entries.map((e) => (
           <li key={e.id}>
-            <Card className="grid gap-1 break-words">
-              <h3 className="text-lg font-semibold">{e.name}</h3>
-              <Quiet>Art: {e.speciesName ?? UNKNOWN}</Quiet>
-              <Quiet>Archiviert am {dateText(e.archivedAt)}</Quiet>
-              <Quiet>Grund: {e.archivedReason}</Quiet>
-              <Actions>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  aria-label={`Wiederherstellen: ${e.name}`}
-                  onClick={() => props.onRestore(e)}
-                >
-                  Wiederherstellen
-                </Button>
-              </Actions>
+            <Card>
+              <div className="grid gap-1">
+                <h3 className="text-lg font-semibold">{e.name}</h3>
+                <Quiet>Art: {e.speciesName ?? UNKNOWN}</Quiet>
+                <Quiet>Archiviert am {dateText(e.archivedAt)}</Quiet>
+                <Quiet>Grund: {e.archivedReason}</Quiet>
+                <Actions>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    aria-label={`Wiederherstellen: ${e.name}`}
+                    onClick={() => props.onRestore(e)}
+                  >
+                    Wiederherstellen
+                  </Button>
+                </Actions>
+              </div>
             </Card>
           </li>
         ))}

@@ -43,47 +43,49 @@ function FriendRow(props: { friend: Friend; busy: boolean; onEnd: (friend: Frien
   const [asking, setAsking] = useState(false);
   return (
     <li>
-      <Card className="grid break-words">
-        <span className="flex items-center gap-3">
-          <Avatar name={f.name ?? ""} decorative />
-          <span>{nameOf(f.name)}</span>
-        </span>
-        <span className="text-sm text-muted-foreground">befreundet seit {dateText(f.since)}</span>
-        <span className="text-sm text-muted-foreground">
-          {f.sharedSpecies === null
-            ? "Gemeinsame Arten: unbekannt (noch nichts freigegeben)"
-            : `Gemeinsame Arten: ${f.sharedSpecies}`}
-        </span>
-        <span className="mt-2">
-          <Button asChild variant="outline" size="touch">
-            <Link to={`/friends/${f.id}`} aria-label={`Sammlung von ${nameOf(f.name)} ansehen`}>
-              Sammlung ansehen
-            </Link>
-          </Button>
-        </span>
-        {asking ? (
-          <EndConfirm
-            name={nameOf(f.name)}
-            busy={props.busy}
-            onYes={() => {
-              setAsking(false);
-              props.onEnd(f);
-            }}
-            onNo={() => setAsking(false)}
-          />
-        ) : (
+      <Card>
+        <div className="grid">
+          <span className="flex items-center gap-3">
+            <Avatar name={f.name ?? ""} decorative />
+            <span>{nameOf(f.name)}</span>
+          </span>
+          <span className="text-sm text-muted-foreground">befreundet seit {dateText(f.since)}</span>
+          <span className="text-sm text-muted-foreground">
+            {f.sharedSpecies === null
+              ? "Gemeinsame Arten: unbekannt (noch nichts freigegeben)"
+              : `Gemeinsame Arten: ${f.sharedSpecies}`}
+          </span>
           <span className="mt-2">
-            <Button
-              type="button"
-              size="touch"
-              variant="outline"
-              aria-label={`Freundschaft mit ${nameOf(f.name)} beenden`}
-              onClick={() => setAsking(true)}
-            >
-              Freundschaft beenden
+            <Button asChild variant="outline" size="touch">
+              <Link to={`/friends/${f.id}`} aria-label={`Sammlung von ${nameOf(f.name)} ansehen`}>
+                Sammlung ansehen
+              </Link>
             </Button>
           </span>
-        )}
+          {asking ? (
+            <EndConfirm
+              name={nameOf(f.name)}
+              busy={props.busy}
+              onYes={() => {
+                setAsking(false);
+                props.onEnd(f);
+              }}
+              onNo={() => setAsking(false)}
+            />
+          ) : (
+            <span className="mt-2">
+              <Button
+                type="button"
+                size="touch"
+                variant="outline"
+                aria-label={`Freundschaft mit ${nameOf(f.name)} beenden`}
+                onClick={() => setAsking(true)}
+              >
+                Freundschaft beenden
+              </Button>
+            </span>
+          )}
+        </div>
       </Card>
     </li>
   );
