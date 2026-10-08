@@ -1,5 +1,5 @@
-import { appError, failed, ok, type Result } from "../kernel";
-import { isOperator, type AccessStore, type InvitationRecord } from "./access";
+import { appError, failed, ok, type Result } from "../../kernel";
+import { isOperator, type AccessStore, type InvitationRecord } from "../access";
 import { costPerUser, type CostPerUser, type OperatorCostFigure } from "./operator-cost";
 
 /** An account counts as active if it was seen in this window (assumption, starting value; no source for a better one). */

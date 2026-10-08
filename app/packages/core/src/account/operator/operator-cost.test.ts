@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { ERROR_TEXTS, execute } from "../kernel";
-import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
-import { costPerUser, operatorCostSet, operatorOverview } from "./index";
-import { InMemoryAccess } from "./test-helpers";
+import { ERROR_TEXTS, execute } from "../../kernel";
+import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
+import { costPerUser, operatorCostSet, operatorOverview } from "../index";
+import { InMemoryAccess } from "../test-helpers";
 
 const NOW = new Date("2026-10-04T10:00:00.000Z");
 const FIGURE = { amountCents: 4999, currency: "EUR", month: "2026-09" };

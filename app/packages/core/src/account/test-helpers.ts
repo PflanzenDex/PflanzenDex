@@ -1,5 +1,5 @@
 import type { AccessCounts, AccessStore } from "./access";
-import type { OperatorCostFigure } from "./operator-cost";
+import type { OperatorCostFigure } from "./operator/operator-cost";
 import {
   defaultNotifications,
   type AccountProfile,

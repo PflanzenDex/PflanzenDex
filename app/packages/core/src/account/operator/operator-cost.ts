@@ -6,8 +6,8 @@ import {
   ok,
   shape,
   type ErrorDetail,
-} from "../kernel";
-import { isOperator, type AccessStore } from "./access";
+} from "../../kernel";
+import { isOperator, type AccessStore } from "../access";
 
 /** The amount of one month in cents: 0 to 1,000,000.00 (assumption, starting value; the database checks the same). */
 export const OPERATOR_COST_CENTS = { min: 0, max: 100_000_000 } as const;

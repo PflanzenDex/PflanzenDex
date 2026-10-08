@@ -1,5 +1,5 @@
 import type { SignedInContext } from "../kernel";
-import type { OperatorCostFigure } from "./operator-cost";
+import type { OperatorCostFigure } from "./operator/operator-cost";
 
 /** Roles are assigned administratively, never through the application (TE-08, FR-BES-14). */
 export type AccessRole = "operator" | "reviewer";
