@@ -102,7 +102,7 @@ beforeAll(async () => {
   // The sections are lazy parts: loading them first keeps the waits below on the data (#444).
   await Promise.all([
     import("@/today/today-page/today-page"),
-    import("@/care/TreatmentsPage"),
+    import("@/care/treatments/treatments-page/treatments-page"),
     import("@/collection/hints-page/hints-page"),
   ]);
 }, 30_000);

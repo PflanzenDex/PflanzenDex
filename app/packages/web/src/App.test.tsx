@@ -184,7 +184,7 @@ beforeAll(async () => {
   await Promise.all([
     import("@/components/routing/areas/today-area/today-area"),
     import("./today/today-page/today-page"),
-    import("./care/TreatmentsPage"),
+    import("./care/treatments/treatments-page/treatments-page"),
     import("./collection/hints-page/hints-page"),
   ]);
 }, 30_000);
