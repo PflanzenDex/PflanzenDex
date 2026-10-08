@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Species, SpecimenCard } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CareProfileSection } from "./CareProfilePage";
+import { CareProfileSection } from "./care-profile-page/care-profile-page";
 import { CollectionPage } from "./CollectionPage";
 import { DifficultyPage } from "./DifficultyPage";
 import { HintsPage } from "./HintsPage";
