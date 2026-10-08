@@ -7,7 +7,7 @@ import { ReviewPage, SpeciesPage } from "./catalog";
 import { FriendCollectionPage, FriendsPage } from "./social";
 import { ExchangePage } from "./swap";
 import type { WishToPlant } from "./wishlist";
-import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+import { StartPage } from "./shell";
 import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
 import {
@@ -24,8 +24,6 @@ import {
   type LinkTarget,
   type View,
 } from "./components/shared/navigation/nav-model/navigation/navigation";
-/** The start page carries the onboarding forms: its chunk loads with its route (#451). */
-const StartPage = lazyPage(() => import("./shell").then((m) => ({ default: m.StartPage })));
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 /** The views that need nothing but the API address and the token. */
