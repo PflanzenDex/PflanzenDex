@@ -116,6 +116,7 @@ describe("US-POK-03 taxonomy tree in the database", () => {
         family: "Moraceae",
         order: "Rosales",
         summary: "Eine Art.",
+        summaryLanguage: "de",
         imageUrl: null,
         pageUrl: "https://de.wikipedia.org/wiki/Ficus_benjamina",
         genusSpeciesCount: null,

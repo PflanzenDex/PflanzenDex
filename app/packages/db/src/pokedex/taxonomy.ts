@@ -85,6 +85,7 @@ export interface TaxonCardRecord {
   readonly family: string | null;
   readonly order: string | null;
   readonly summary: string | null;
+  readonly summaryLanguage: "de" | "en" | null;
   readonly imageUrl: string | null;
   readonly pageUrl: string | null;
   readonly genusSpeciesCount: number | null;
@@ -92,6 +93,7 @@ export interface TaxonCardRecord {
 
 // Resolved species only; the catalog facts (German name, difficulty, light zone) come through the catalog port.
 const CARDS = `select latin_name as "latinName", genus, family, order_name as "order", summary,
+    summary_language as "summaryLanguage",
     image_url as "imageUrl", page_url as "pageUrl", genus_species_count as "genusSpeciesCount"
   from taxon where status = 'resolved'`;
 

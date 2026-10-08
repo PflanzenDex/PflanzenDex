@@ -217,8 +217,15 @@ describe("AppShell (US-QS-07, DS-21, DS-22, DS-25)", () => {
     const { container } = at("/", <AppShell items={make(9)}>Inhalt</AppShell>);
     const root = container.firstElementChild as HTMLElement;
     expect(root.className).toContain("min-h-dvh");
-    expect(root.className).toContain("overflow-x-hidden");
+    expect(root.className).toContain("overflow-x-clip");
     expect(root.className).not.toMatch(/h-screen|100vh/);
+  });
+
+  it("US-QS-14 the shell clips instead of hiding the overflow, so sticky rows inside it stick to the window", () => {
+    const { container } = at("/", <AppShell items={make(9)}>Inhalt</AppShell>);
+    expect((container.firstElementChild as HTMLElement).className).not.toContain(
+      "overflow-x-hidden",
+    );
   });
 
   it("US-QS-14 · DS-22 main keeps bottom padding for the sticky bar and safe area, gutters 16, 24 and 40 px", () => {

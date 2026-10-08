@@ -10,6 +10,8 @@ export interface TaxonCardRow {
   readonly family: string | null;
   readonly order: string | null;
   readonly summary: string | null;
+  /** Language of the summary as the taxonomy job stored it; `null` = unknown (P-08). */
+  readonly summaryLanguage: "de" | "en" | null;
   /** Link only: the image itself is not stored (P-05). */
   readonly imageUrl: string | null;
   readonly pageUrl: string | null;
@@ -40,6 +42,8 @@ export interface CollectorCard {
   /** Full name for the tooltip. */
   readonly germanNameFull: string | null;
   readonly summary: string | null;
+  /** Language of `summary` (WCAG 3.1.2); `null` = unknown. */
+  readonly summaryLanguage: "de" | "en" | null;
   readonly genus: string;
   readonly genusSpeciesCount: number | null;
   readonly speciesPoor: boolean;
@@ -88,6 +92,7 @@ function cardOf(
     germanName: shortGermanName(f.germanName),
     germanNameFull: f.germanName,
     summary: t.summary,
+    summaryLanguage: t.summaryLanguage,
     genus: t.genus,
     genusSpeciesCount: t.genusSpeciesCount,
     speciesPoor: t.genusSpeciesCount !== null && t.genusSpeciesCount <= SPECIES_POOR_MAX,
