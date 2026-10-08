@@ -160,6 +160,73 @@ Acceptance criteria:
 
 State of implementation: operation `specimen.correct_catch_date` (`POST /specimens/:id/catch-date`, `Idempotency-Key`, P-03) with the field and the rules of the creation: `catchDate` is a calendar date from 1900-01-01 on (else `input.invalid` on the field), not after today in the time zone of the request (`specimen.caught_in_future` on the field). Only `caught_at` changes in one statement under the row rule; an archived specimen is corrected too, but a date after its archiving date is refused with `specimen.caught_after_archived` on the field and nothing changes. A foreign or unknown specimen answers `specimen.not_found` (404) alike. The Pokédex date is derived from the stored value, nothing else is written. The card in the tab "Bestand" has "Fangdatum": a form with the stored date ("Bisher: …" or "unbekannt"), preset to it (or today when unknown) and limited to today; after saving the message names the specimen and the new date, a refusal marks the field with the German text of its code. **Open:** the section "Archiv" has no entry point, so an archived specimen can be corrected only through the API; the manual test protocol against the running app (story-test-protocol) is still missing.
 
+### US-BES-12 · Fill the catalog once from open sources · ⬜ new
+
+As an **operator** I want the catalog fields of a species to be fetched once from open data sources and stored with their source, so that keepers get complete profiles without the app asking a foreign service on every view.
+
+Acceptance criteria:
+
+- Given an approved species (US-BES-10) or an operator batch, when it enters the catalog, then a background job fetches its values from the sources chosen in E-25, stores the raw answer per source (DM-BES-05) and fills the empty catalog fields from it; each value carries its source and retrieval date (DM-BES-06).
+- Given a keeper who views, searches or swipes species (catalog, Pokédex, Discover), when the view loads, then it reads only the stored catalog; no request to a foreign source runs on behalf of a keeper (FR-BES-18).
+- Given two sources with different values for the same field, when the job fills the field, then it takes the value of the source ranked first for that field (FR-BES-17), never a mean, and marks the field as disputed for the review (US-BES-16).
+- Given a value on a scale of its own (for example lux or an ecological light indicator), when it is stored, then the raw value stays in the source snapshot and the catalog value is converted by a tested rule; the limits of the rule are marked as assumptions (P-08).
+- Given a field that no source fills, when the job ends, then the field reads "unbekannt" and appears in the gap list of the species (US-BES-13); nothing is guessed (P-08).
+- Given a source that is down, slow or over its limit, when the job runs, then it retries later with backoff and records the failure in the error list of the job; already stored values stay (P-10).
+- Given a reviewed value, when a later run brings a different value, then the reviewed value stays and the difference becomes a correction for the review (FR-BES-19), never a silent overwrite.
+- A monthly routine (US-DEV-03) compares the stored snapshots with the sources and reports the differences to the operator.
+
+### US-BES-13 · Fill the remaining gaps once by AI research · ⬜ new
+
+As an **operator** I want the fields that no open source fills to be researched once by an AI client and handed in as a marked draft, so that the catalog becomes complete without anyone typing every profile by hand.
+
+Acceptance criteria:
+
+- Given the gap list of the catalog (fields "unbekannt" after US-BES-12), when the operator starts a research task, then the AI client researches the gaps per species and hands them in through the validating operation for profiles (US-KI-03, US-KI-05); there is no AI built into the app (E-19).
+- Given an AI result, when it is stored, then every value carries the source the client names, the marking `ai-created, unreviewed` (DM-BES-01) and the AI connection (KI-R5); a value without a source is refused.
+- Given an AI value for toxicity to pets, when it has no citable source, then it is not stored as a fact (US-KI-06, DM-ENT-01); the field stays "unbekannt".
+- Given an AI value, when the open sources (US-BES-12) already filled the field, then the AI value does not replace it; at most it becomes a correction for the review (US-BES-16).
+- Given AI values in the catalog, when a keeper sees them, then they are marked as AI-researched and unreviewed until a reviewer approves them (FR-BES-06).
+
+### US-BES-14 · Report a wrong value or propose a correction · ⬜ new
+
+As a **plant keeper** I want to say that a value in a species profile is wrong or missing and propose the right one, so that the shared catalog gets better from what keepers observe.
+
+Acceptance criteria:
+
+- Given a species profile, when I choose "Stimmt nicht" at a field, then I can report the field with a reason and optionally propose a value; the proposal names the field, the old value, the new value, a reason and a source (DM-BES-07).
+- Given a proposed value for a field that needs a source (light demand, dormancy, temperature, humidity, toxicity; FR-BES-14), when I give no source, then the proposal is refused with the field named; a pure report without a value needs no source.
+- Given a value of the wrong type or range for the field (DM-BES-01, DM-ENT-01), when I submit it, then nothing is stored and the error names the field (P-03).
+- Given my open correction, when I look at the species, then I see it as "in Prüfung" and can withdraw it; it changes nothing in the catalog until a reviewer accepts it (FR-BES-02).
+- Given an open correction by me or someone else for the same field and value, when I want to propose the same, then I am pointed to the open one and can confirm it (US-BES-15) instead of creating a duplicate.
+- Given my own care profile, when I disagree with a catalog value only for my location, then the view points me to the care profile (US-BES-09) instead of a correction; a correction is for values that are wrong for everyone.
+- After submitting, the view says what happens next: who reviews it and that I get a hint with the result (P-09).
+
+### US-BES-15 · Confirm or dispute catalog values and corrections · ⬜ new
+
+As a **plant keeper** I want to confirm or dispute a value or an open correction, so that reviewers see which entries the community trusts and which need a look first.
+
+Acceptance criteria:
+
+- Given a catalog value or an open correction, when I choose "Stimmt" or "Stimmt nicht", then my vote is stored once per account and item (DM-BES-08); choosing again changes or withdraws it.
+- Given votes on an item, when anyone views it, then they see the counts of confirmations and disputes, never who voted; there is no score, rank or public profile per person (non-goals in `16`, P-05).
+- Given a catalog value with more disputes than confirmations, at least 3 disputes (starting value, assumption), when the review list is built, then the value appears there as disputed (US-BES-16).
+- Given votes, when a reviewer decides, then the votes are a signal and never change the catalog by themselves (E-26).
+- Given an account that votes on many items in a short time (more than 50 votes per hour, starting value, assumption), when it votes again, then the vote is refused with a hint to try later.
+- Given a species that is still a private proposal (FR-BES-11), when another keeper looks for it, then it cannot be voted on.
+
+### US-BES-16 · Review corrections and keep the history of every value · ⬜ new
+
+As an **operator (reviewer)** I want to work through reported values, corrections and source differences in one place and see where every value came from, so that the catalog stays correct and every change can be traced and undone.
+
+Acceptance criteria:
+
+- Given open corrections, disputed values (US-BES-15) and source differences (US-BES-12), when I open the review list (US-BES-10), then each entry shows the field, the current value with its source, the proposed value with its source, the reason, the counts of confirmations and disputes and its age; disputed values and entries with more confirmations come first.
+- Given a correction, when I accept it, then the field takes the new value with its source, the catalog gets a new version (FR-BES-12), the provenance of the field records "community" and the reviewer (DM-BES-06), and keepers who have not overridden the field get the hint of FR-BES-12.
+- Given a correction, when I reject it, then I give a reason; the creator sees the reason as a hint in the app, the catalog stays unchanged.
+- Given a field, when anyone opens its history, then they see every version with value, source, origin (source, AI, community, reviewer) and date; personal names are not shown to other keepers (P-05).
+- Given an accepted change that turns out wrong, when I revert the field to an earlier version, then the earlier value with its source comes back as a new version; nothing is deleted from the history (P-10).
+- An AI connection can never accept, reject or revert (FR-BES-06, FR-KI-09).
+
 ## Data model
 
 ### DM-BES-01 Species (catalog)
@@ -222,6 +289,58 @@ Account-specific deviations from the catalog values of a species. Private, never
 | Watering interval growth / dormancy | Days (US-MON-05); starting value from the catalog's watering hint                      |
 | Own hints                           | Free text, private (substrate, pruning, watering)                                      |
 
+### DM-BES-05 Source snapshot (species × source)
+
+The raw answer of one data source for one species, kept so that conversions can be corrected later without asking the source again (US-BES-12). Shared like the catalog, never per account.
+
+| Field             | Meaning                                                                      |
+| ----------------- | ---------------------------------------------------------------------------- |
+| Species, source   | Key; one current snapshot per species and source, older ones stay as history |
+| Source identifier | The species identifier at the source (for example the taxon key)             |
+| Retrieved at      | Date and time of the request                                                 |
+| Source link       | Link to the species at the source, for attribution                           |
+| License           | License of the data as the source states it (E-25)                           |
+| Raw answer        | The answer as received, unchanged                                            |
+
+### DM-BES-06 Field provenance (species × field × version)
+
+Where a catalog value comes from. Every set catalog field has one current entry; older ones form the history (US-BES-16, FR-BES-12).
+
+| Field          | Meaning                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------- |
+| Species, field | Key together with the version                                                               |
+| Version        | Number of the catalog version that set the value                                            |
+| Value          | The value as stored in the catalog                                                          |
+| Origin         | `source`, `ai`, `community`, `reviewer`, `operator`                                         |
+| Source         | Source name and link, or the cited work; required except for origin `reviewer` on free text |
+| Set at, by     | Date; account or connection (shown to reviewers only, P-05)                                 |
+| Disputed       | Yes when sources differ or the votes say so (US-BES-12, US-BES-15)                          |
+
+### DM-BES-07 Correction (catalog)
+
+A keeper's report or proposal for one field of an approved species (US-BES-14). Not to be confused with a proposal of a new species (FR-BES-11).
+
+| Field           | Meaning                                                             |
+| --------------- | ------------------------------------------------------------------- |
+| Species, field  | What it is about                                                    |
+| Old value       | The catalog value when the correction was made                      |
+| Proposed value  | Optional; empty for a pure report                                   |
+| Reason          | Required, free text                                                 |
+| Source          | Required for a proposed value of a field that needs one (FR-BES-14) |
+| Status          | `open`, `accepted`, `rejected`, `withdrawn`                         |
+| Created by, at  | Account and date; visible to reviewers only (P-05)                  |
+| Decision reason | Required on rejection, visible to the creator                       |
+
+### DM-BES-08 Vote
+
+One account's "Stimmt" or "Stimmt nicht" on a catalog value or an open correction (US-BES-15).
+
+| Field         | Meaning                                                                         |
+| ------------- | ------------------------------------------------------------------------------- |
+| Account, item | Key; item = a field of a species or a correction; one vote per account and item |
+| Direction     | `confirm` or `dispute`                                                          |
+| At            | Date; votes are counted, never shown per person                                 |
+
 ## Requirements
 
 | ID        | Requirement                                                                                                                                                                                                                                                                                                                                                                                                                               | Status                                                                                    |
@@ -240,3 +359,10 @@ Account-specific deviations from the catalog values of a species. Private, never
 | FR-BES-12 | **Changes to the catalog** are versioned. If an impact-relevant field changes (dormancy, lux demand, default level), keepers who have not overridden the value receive a hint (P-10).                                                                                                                                                                                                                                                     | ⬜                                                                                        |
 | FR-BES-13 | **Growth measure locked:** as soon as an account has a measurement for the species, the growth measure can no longer be changed. A change is only possible by the operator with conversion of the measurement series (FR-BES-07).                                                                                                                                                                                                         | ⬜                                                                                        |
 | FR-BES-14 | **Review:** `reviewed` requires complete required fields (FR-BES-05) and sources for light demand and dormancy. The reviewer is initially the operator; further reviewers are a role (TE-08). Contributions by users to the catalog need a grant of rights in the terms of use (E-12).                                                                                                                                                    | 🟨                                                                                        |
+| FR-BES-15 | **Source snapshots:** the raw answer of every data source is stored per species and source with retrieval date, link and license (DM-BES-05). Conversions into catalog values can be repeated from the snapshot without a new request.                                                                                                                                                                                                    | ⬜                                                                                        |
+| FR-BES-16 | **Provenance per value:** every catalog value carries its origin, source and date (DM-BES-06). The species profile shows the source next to the value; a value without origin is not shown as a fact (P-08).                                                                                                                                                                                                                              | ⬜                                                                                        |
+| FR-BES-17 | **Combining sources:** per field there is a fixed order of sources (E-25). The first source that has a value wins; values are never averaged. Differing values mark the field as disputed for the review.                                                                                                                                                                                                                                 | ⬜                                                                                        |
+| FR-BES-18 | **No foreign request at view time:** views and operations that a keeper triggers read only the stored catalog. Foreign sources are asked only by background jobs (US-BES-12, US-POK-03) through the source client (NFR-17).                                                                                                                                                                                                               | ⬜                                                                                        |
+| FR-BES-19 | **No silent overwrite:** a reviewed value is never replaced by a job, an AI result or a vote. A differing value becomes a correction for the review (US-BES-16); accepting it creates a catalog version (FR-BES-12).                                                                                                                                                                                                                      | ⬜                                                                                        |
+| FR-BES-20 | **License gate:** a source feeds the stored catalog only if its license allows storing and the use the product makes of it (E-25); its attribution is shown with the value. Data under share-alike or non-commercial terms is not stored until E-25 allows it.                                                                                                                                                                            | ⬜                                                                                        |
+| FR-BES-21 | **Community rules:** corrections and votes are possible only for approved species and only for signed-in keepers; one vote per account and item; counts are shown, persons are not (P-05); no score, rank or public profile per person. Corrections and votes are subject to the grant of rights in the terms of use (E-12) and to a rate limit (starting value, assumption: 50 votes and 20 corrections per account and hour).           | ⬜                                                                                        |
