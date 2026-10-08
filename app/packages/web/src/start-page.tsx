@@ -6,7 +6,7 @@ import {
   startAction,
   type OnboardingCounts,
 } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { loadSpecimenCount } from "./collection";
 import { LoadFrame } from "./kernel";
 import { loadLocations, loadZones } from "./light";

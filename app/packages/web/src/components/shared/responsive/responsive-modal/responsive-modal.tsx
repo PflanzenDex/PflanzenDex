@@ -1,7 +1,7 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/overlays/dialog/dialog";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/overlays/sheet/sheet";
 import { useIsMd } from "@/lib/use-breakpoint";
 
 export type ResponsiveModalProps = {

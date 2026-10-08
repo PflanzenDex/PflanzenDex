@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { ChunkErrorBoundary } from "@/components/routing/route-boundary/route-boundary";
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import type { SheetPanelProps } from "@/components/sheet-panel/sheet-panel";

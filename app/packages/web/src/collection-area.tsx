@@ -8,7 +8,7 @@ import { WishlistPage, type WishToPlant } from "@/wishlist";
 import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skeleton";
 import { SammlungHeader } from "@/components/sammlung-header/sammlung-header";
 import { PlantControls } from "@/components/sammlung-header/plant-controls/plant-controls";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { SegmentedControl } from "@/components/segmented-control/segmented-control";
 import {
   PLANT_GROUPS,

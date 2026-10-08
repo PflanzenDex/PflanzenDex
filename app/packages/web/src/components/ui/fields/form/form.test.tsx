@@ -16,7 +16,7 @@ import {
   FormMessage,
   FormRoot,
 } from "./form";
-import { Input } from "./input";
+import { Input } from "../input/input";
 
 afterEach(cleanup);
 

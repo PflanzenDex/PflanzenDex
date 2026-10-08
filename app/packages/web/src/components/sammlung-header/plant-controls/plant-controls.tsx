@@ -1,5 +1,5 @@
 import { SegmentedControl, type SegmentedOption } from "../../segmented-control/segmented-control";
-import { Button } from "../../ui/button";
+import { Button } from "../../ui/button/button";
 
 /**
  * The controls below the switch of the plants in the Sammlung (US-QS-14): how the plants are grouped (all, by care

@@ -1,12 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
-import { Form, FormRoot } from "@/components/ui/form";
+import { Button } from "@/components/ui/button/button";
+import { Form, FormRoot } from "@/components/ui/fields/form/form";
 import { SIGN_IN, type ApiError } from "../../kernel";
 import { redeemInvitation } from "../api/access-api";
 import { useServerRefusal } from "../refusal";
-import { TextField } from "@/components/ui/input";
+import { TextField } from "@/components/ui/fields/input/input";
 import { invitationCodeSchema, type InvitationCodeFields } from "../schemas";
 
 type Token = () => Promise<string | undefined>;

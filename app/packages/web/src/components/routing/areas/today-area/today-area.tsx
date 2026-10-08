@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { useNavigate } from "react-router";
 import { AreaSection as Section } from "@/components/routing/areas/area-section/area-section";
 import { useSectionAnchor } from "@/components/routing/areas/area-section/use-section-anchor";
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 import { HintsPage } from "@/collection";
 import { TreatmentsPage } from "@/care";
 import { TodayPage, type TodayDestination } from "@/today";

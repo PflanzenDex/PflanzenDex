@@ -4,7 +4,7 @@ import { AreaSection } from "@/components/routing/areas/area-section/area-sectio
 import { useSectionAnchor } from "@/components/routing/areas/area-section/use-section-anchor";
 import { AccountView, SettingsPage } from "@/account";
 import type { Account } from "@/account";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { ACCOUNT_SECTIONS, MANAGE_ADDRESS, PATHS } from "@/navigation";
 
 type Token = () => Promise<string | undefined>;

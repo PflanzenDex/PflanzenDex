@@ -2,22 +2,18 @@
 import { composeStories, setProjectAnnotations } from "@storybook/react-vite";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import preview from "../../../.storybook/preview";
-import * as checkbox from "./checkbox.stories";
-import * as input from "./input.stories";
-import * as select from "./select.stories";
-import * as textarea from "./textarea.stories";
+import preview from "../../../../.storybook/preview";
+import * as skeleton from "../display/skeleton/skeleton.stories";
+import * as table from "../display/table/table.stories";
 
 setProjectAnnotations([preview]);
 
 const catalog = {
-  Input: composeStories(input),
-  Textarea: composeStories(textarea),
-  Select: composeStories(select),
-  Checkbox: composeStories(checkbox),
+  Skeleton: composeStories(skeleton),
+  Table: composeStories(table),
 };
 
-describe("TE-18 · DS-01 ui form primitive stories", () => {
+describe("TE-18 · DS-01 ui data primitive stories", () => {
   afterEach(cleanup);
 
   for (const [component, stories] of Object.entries(catalog))

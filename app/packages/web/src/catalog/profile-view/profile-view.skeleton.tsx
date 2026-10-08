@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the species profile on a phone: back button, title, badge, rows (DS-52, DS-53). */
 export function ProfileSkeleton() {

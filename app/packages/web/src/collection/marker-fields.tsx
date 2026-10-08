@@ -8,8 +8,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/fields/form/form";
+import { Input } from "@/components/ui/fields/input/input";
 import { Quiet } from "./parts";
 import type { CreateFields } from "./schemas";
 

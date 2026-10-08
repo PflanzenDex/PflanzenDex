@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 import { CARD, PROFILE_GRID } from "../parts";
 
 /** Placeholder with the layout of the care profile on a phone: intro and a card with its fields and the save button (DS-52, DS-53). */

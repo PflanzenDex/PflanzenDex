@@ -1,5 +1,5 @@
 import { PlantLoader } from "@/components/shared/states/plant-loader/plant-loader";
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 
 export type PageSkeletonProps = {
   /** Loading text for assistive technology (German). */

@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the care phases on a phone: the switch button, a section title and two entries (DS-52, DS-53). */
 export function CarePhasesSkeleton({ label }: { label: string }) {

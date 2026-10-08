@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "../ui/button";
+import { Button } from "../ui/button/button";
 
 export type SegmentedOption<V extends string> = { value: V; label: string };
 

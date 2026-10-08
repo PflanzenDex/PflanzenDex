@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Form, FormRoot } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
+import { Form, FormRoot } from "@/components/ui/fields/form/form";
+import { Button } from "@/components/ui/button/button";
 import type { ApiError, LightZone } from "../../shared/light-api/light-api";
 import { FORM_GRID, FormButtons, RefusalAlert, useSaveForm } from "../../shared/ui/form/form";
-import { TextField } from "@/components/ui/input";
+import { TextField } from "@/components/ui/fields/input/input";
 import { ErrorMessage } from "../../shared/ui/message/message";
 import {
   LUX_LIMITS,

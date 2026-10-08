@@ -1,7 +1,7 @@
 import type { SpecimenCard } from "@pflanzendex/core";
 import type { PhotoAccess } from "@/lib/use-stored-photo";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { SectionLabel } from "@/components/section-label/section-label";
 import { groupByLocation } from "@/components/sammlung-header/location-groups/group-by-location";
 import { Actions, GRID, TITLE } from "./parts";

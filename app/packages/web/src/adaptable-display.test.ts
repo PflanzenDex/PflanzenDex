@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button/button";
 
 const tokens = readFileSync(new URL("./styles/tokens.css", import.meta.url), "utf8");
 

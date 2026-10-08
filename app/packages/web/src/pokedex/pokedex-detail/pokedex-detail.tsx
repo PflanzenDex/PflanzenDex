@@ -1,6 +1,6 @@
 import type { CaughtSpecies } from "@pflanzendex/core";
 import { useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Chips, catchText, countText } from "../pokedex-cards/pokedex-cards";
 
 /** A source is a link only if it is a plain http(s) address; anything else is shown as text, never as a link. */

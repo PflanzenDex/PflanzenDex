@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { cn } from "@/lib/utils";
 
 export type EmptyStateAction = { label: string } & (

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/display/badge/badge";
 import { Card } from "./card";
 
 // Catalog of the Card variants (TE-18, US-QS-07). Light and dark come from the theme toolbar. The link and button cards

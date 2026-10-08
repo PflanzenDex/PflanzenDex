@@ -1,9 +1,9 @@
 import type { PokedexFilter, PokedexSort } from "@pflanzendex/core";
 import { useId, type RefObject } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { Button } from "@/components/ui/button/button";
+import { Input } from "@/components/ui/fields/input/input";
+import { Label } from "@/components/ui/display/label/label";
+import { Select } from "@/components/ui/fields/select/select";
 import { cn } from "@/lib/utils";
 
 const HINT = "m-0 text-sm text-muted-foreground";

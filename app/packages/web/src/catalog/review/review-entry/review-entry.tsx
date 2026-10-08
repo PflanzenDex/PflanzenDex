@@ -1,9 +1,9 @@
 import type { ReviewEntry } from "@pflanzendex/core";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/display/badge/badge";
+import { Button } from "@/components/ui/button/button";
+import { Label } from "@/components/ui/display/label/label";
+import { Textarea } from "@/components/ui/fields/textarea/textarea";
 import { ageText, issueText } from "../review-text";
 import { DIFFICULTY, GROWTH, dormancyPhase, lux, orUnknown } from "../../shared/text";
 

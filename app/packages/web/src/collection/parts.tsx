@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { SpecimenCard } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { useStoredPhoto, type PhotoAccess } from "@/lib/use-stored-photo";
 import { refusalText } from "./refusal";
 import { dateText } from "./text";

@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
 import type { Feed, FeedEvent, FeedType } from "@pflanzendex/core";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
+import { Label } from "@/components/ui/display/label/label";
+import { Select } from "@/components/ui/fields/select/select";
 import { LoadFrame } from "../../../kernel";
 import { loadFeed, type FeedFilter } from "../../api/feed-api";
 import { dateText } from "../../parts/invite-card/invite-card";

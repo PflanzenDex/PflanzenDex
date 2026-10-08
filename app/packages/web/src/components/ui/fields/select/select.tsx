@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { fieldClasses, type FieldInvalidProps } from "./input";
+import { fieldClasses, type FieldInvalidProps } from "../input/input";
 
 export type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & FieldInvalidProps;
 

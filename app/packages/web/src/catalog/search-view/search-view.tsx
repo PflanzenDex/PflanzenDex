@@ -4,8 +4,8 @@ import { useForm } from "react-hook-form";
 import type { SpeciesHit, NameField } from "@pflanzendex/core";
 import { LoadMore } from "@/components/data-display/panels/pagination/load-more/load-more";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/display/badge/badge";
+import { Button } from "@/components/ui/button/button";
 import {
   Form,
   FormControl,
@@ -14,8 +14,8 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/fields/form/form";
+import { Input } from "@/components/ui/fields/input/input";
 import { searchSchema, type SearchFields } from "../shared/schemas";
 import { SearchResultsSkeleton } from "./search-view.skeleton";
 import { badge } from "../shared/text";

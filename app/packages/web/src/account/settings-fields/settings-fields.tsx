@@ -6,9 +6,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/fields/form/form";
+import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
+import { Input } from "@/components/ui/fields/input/input";
 import { OCCASIONS, type Occasion } from "../api/account-api";
 import type { ProfileFields as Fields } from "../schemas";
 

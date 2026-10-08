@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/display/skeleton/skeleton";
 import { dateText } from "@/lib/format";
 import { useStoredPhoto, type PhotoAccess } from "@/lib/use-stored-photo";
 import { refusalText } from "../../../shared/notices/notices";

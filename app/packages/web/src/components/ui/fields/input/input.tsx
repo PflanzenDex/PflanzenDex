@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { Control, FieldPath, FieldValues } from "react-hook-form";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "./form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "../form/form";
 import { cn } from "@/lib/utils";
 
 /**

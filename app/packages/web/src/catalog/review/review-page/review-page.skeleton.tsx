@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the review list on a phone: summary and two entries with facts and buttons (DS-52, DS-53). */
 export function ReviewPageSkeleton({ label }: { label: string }) {

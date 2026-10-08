@@ -11,8 +11,8 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/fields/form/form";
+import { Input } from "@/components/ui/fields/input/input";
 import { currentTimeZone, type ApiError } from "../kernel";
 import { FormButtons, Quiet, TITLE, Warning } from "./parts";
 import { useEdited, useRefusal } from "./refusal";

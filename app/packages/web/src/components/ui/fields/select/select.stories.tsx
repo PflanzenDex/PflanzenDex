@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Label } from "./label";
+import { Label } from "../../display/label/label";
 import { Select } from "./select";
 
 // Catalog of the Select states (TE-18): default, focus, disabled, invalid. Styled native select (ADR 0007).

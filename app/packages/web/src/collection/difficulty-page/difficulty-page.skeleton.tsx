@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the species comparison on a phone: title, intro and three row cards (DS-52, DS-53). */
 export function DifficultyPageSkeleton({ label }: { label: string }) {

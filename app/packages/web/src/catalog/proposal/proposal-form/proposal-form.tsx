@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormSetError } from "react-hook-form";
-import { Button } from "@/components/ui/button";
-import { Form, FormRoot } from "@/components/ui/form";
+import { Button } from "@/components/ui/button/button";
+import { Form, FormRoot } from "@/components/ui/fields/form/form";
 import type { ApiError } from "../../../kernel";
 import { duplicate } from "../form";
 import { MoreDetails } from "../more-details/more-details";

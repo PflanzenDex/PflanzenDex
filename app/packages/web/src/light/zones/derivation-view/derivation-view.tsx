@@ -1,11 +1,11 @@
 import { useState } from "react";
 import type { Control } from "react-hook-form";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormControl, FormField, FormItem, FormRoot } from "@/components/ui/form";
+import { Button } from "@/components/ui/button/button";
+import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
+import { Form, FormControl, FormField, FormItem, FormRoot } from "@/components/ui/fields/form/form";
 import type { DerivationRequest, Derivation, Response } from "../../shared/light-api/light-api";
 import { FORM_GRID, RefusalAlert, SelectField, useSaveForm } from "../../shared/ui/form/form";
-import { TextField } from "@/components/ui/input";
+import { TextField } from "@/components/ui/fields/input/input";
 import {
   DERIVATION_REFUSABLE,
   LUX_LIMITS,

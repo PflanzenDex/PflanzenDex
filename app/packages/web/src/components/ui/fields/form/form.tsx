@@ -11,7 +11,7 @@ import {
 } from "react-hook-form";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
-import { Label } from "./label";
+import { Label } from "../../display/label/label";
 
 /**
  * Form family on react-hook-form (US-QS-07, DS-47, DS-48). `Form` is the provider; spread `useForm()` into it.

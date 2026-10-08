@@ -1,7 +1,7 @@
 import { cva } from "class-variance-authority";
 import type { SpecimenCard, MeasurementQuality } from "@pflanzendex/core";
 import type { PhotoAccess } from "@/lib/use-stored-photo";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Actions, CARD, Photo, Quiet } from "./parts";
 import { UNKNOWN, dateText, valueText } from "./text";
 

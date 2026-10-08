@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { cn } from "@/lib/utils";
 import type { CaughtSpecies } from "@pflanzendex/core";
 import { catchText } from "@/components/collector-card/catch-text";

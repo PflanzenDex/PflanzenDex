@@ -10,9 +10,9 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+} from "@/components/ui/fields/form/form";
+import { Input } from "@/components/ui/fields/input/input";
+import { Select } from "@/components/ui/fields/select/select";
 import type { ApiError } from "../kernel";
 import { FormButtons, Quiet, TITLE, Warning } from "./parts";
 import { refusalText, useEdited } from "./refusal";

@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { errorText } from "@/lib/error-text";
 import { useInvalidate, useRequest, useWriteAction } from "../../../kernel";
 import { createOffer, loadPreview, shareSpecimen, type OwnSpecimenRow } from "../../api/offers-api";

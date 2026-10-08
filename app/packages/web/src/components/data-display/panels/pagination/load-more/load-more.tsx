@@ -1,6 +1,6 @@
 import * as React from "react";
 import { PlantLoader } from "@/components/shared/states/plant-loader/plant-loader";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { cn } from "@/lib/utils";
 
 export type LoadMoreProps = {

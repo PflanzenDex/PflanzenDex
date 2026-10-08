@@ -1,6 +1,6 @@
 import type { OfferView } from "@pflanzendex/core";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/display/badge/badge";
+import { Button } from "@/components/ui/button/button";
 import { healthText, MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
 
 const STATUS_TEXT = {

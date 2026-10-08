@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 import { GRID } from "../parts";
 import { SpecimenCardSkeleton } from "../specimen-card.skeleton";
 

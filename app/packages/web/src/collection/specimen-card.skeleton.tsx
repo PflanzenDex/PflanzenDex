@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/display/skeleton/skeleton";
 import { CARD } from "./parts";
 
 /** Placeholder with the blocks of a specimen card: photo, title, three lines, measurement and the action row (DS-52, DS-53). */

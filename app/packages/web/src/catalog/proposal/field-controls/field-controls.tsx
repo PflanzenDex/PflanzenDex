@@ -6,10 +6,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input, type InputProps } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+} from "@/components/ui/fields/form/form";
+import { Input, type InputProps } from "@/components/ui/fields/input/input";
+import { Select } from "@/components/ui/fields/select/select";
+import { Textarea } from "@/components/ui/fields/textarea/textarea";
 import { cn } from "@/lib/utils";
 import type { ProposalFields } from "../../shared/schemas";
 

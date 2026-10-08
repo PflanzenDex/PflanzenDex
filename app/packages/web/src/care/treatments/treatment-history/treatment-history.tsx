@@ -1,7 +1,7 @@
 import type { TreatmentRow } from "@pflanzendex/core";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { Label } from "@/components/ui/display/label/label";
+import { Select } from "@/components/ui/fields/select/select";
 import { LoadFrame } from "../../../kernel";
 import { historyKey } from "../../shared/api/query-keys";
 import { CARD_CLASSES, LIST_CLASSES } from "../../shared/notices/notices";

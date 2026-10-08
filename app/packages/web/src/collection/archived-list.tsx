@@ -1,6 +1,6 @@
 import type { ArchivedEntry } from "@pflanzendex/core";
 import { Card } from "@/components/data-display/card/card";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Actions, GRID, Quiet, SUBTITLE } from "./parts";
 import { UNKNOWN, dateText } from "./text";
 

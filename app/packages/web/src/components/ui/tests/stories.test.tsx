@@ -2,18 +2,24 @@
 import { composeStories, setProjectAnnotations } from "@storybook/react-vite";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import preview from "../../../.storybook/preview";
-import * as skeleton from "./skeleton.stories";
-import * as table from "./table.stories";
+import preview from "../../../../.storybook/preview";
+import * as badge from "../display/badge/badge.stories";
+import * as button from "../button/button.stories";
+import * as dialog from "../overlays/dialog/dialog.stories";
+import * as label from "../display/label/label.stories";
+import * as sheet from "../overlays/sheet/sheet.stories";
 
 setProjectAnnotations([preview]);
 
 const catalog = {
-  Skeleton: composeStories(skeleton),
-  Table: composeStories(table),
+  Button: composeStories(button),
+  Badge: composeStories(badge),
+  Label: composeStories(label),
+  Dialog: composeStories(dialog),
+  Sheet: composeStories(sheet),
 };
 
-describe("TE-18 · DS-01 ui data primitive stories", () => {
+describe("TE-18 · DS-01 ui primitive stories", () => {
   afterEach(cleanup);
 
   for (const [component, stories] of Object.entries(catalog))

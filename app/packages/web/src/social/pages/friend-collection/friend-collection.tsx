@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { Link } from "react-router";
 import type { FriendCard as Card } from "@pflanzendex/core";
 import { SegmentedControl } from "@/components/segmented-control/segmented-control";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { LoadFrame, useWriteAction } from "../../../kernel";
 import { errorText } from "@/lib/error-text";
 import { addToWishlist, loadFriendCollection } from "../../api/friends-api";

@@ -4,7 +4,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { applyServerError } from "@/lib/error-text";
-import { Button } from "./button";
+import { Button } from "../../button/button";
 import {
   Form,
   FormControl,
@@ -15,7 +15,7 @@ import {
   FormMessage,
   FormRoot,
 } from "./form";
-import { Input } from "./input";
+import { Input } from "../input/input";
 
 // Catalog of the Form family (TE-18): default, invalid (empty submit), server error by code, pending submit.
 const schema = z.object({ name: z.string().min(1, "Bitte einen Namen eingeben.") });

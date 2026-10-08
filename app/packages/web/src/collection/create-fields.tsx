@@ -1,6 +1,6 @@
 import { useWatch, type Control } from "react-hook-form";
 import { specimenName, type Species, type LightLocation } from "@pflanzendex/core";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
 import {
   FormControl,
   FormDescription,
@@ -8,8 +8,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Select } from "@/components/ui/select";
+} from "@/components/ui/fields/form/form";
+import { Select } from "@/components/ui/fields/select/select";
 import { CatchDateField } from "./catch-date-field";
 import { TITLE } from "./parts";
 import type { CreateFields } from "./schemas";

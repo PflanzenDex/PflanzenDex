@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { speciesDisplayName, type Species, type LightLocation } from "@pflanzendex/core";
-import { Form, FormRoot } from "@/components/ui/form";
+import { Form, FormRoot } from "@/components/ui/fields/form/form";
 import type { ApiError } from "../kernel";
 import { refusesCatchDate, useToday } from "./catch-date-field";
 import { Heading, NamePreview, OtherFields } from "./create-fields";

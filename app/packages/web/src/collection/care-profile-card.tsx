@@ -1,8 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import type { CareProfileChanges, CareProfileEntry } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button";
-import { Form, FormRoot } from "@/components/ui/form";
+import { Button } from "@/components/ui/button/button";
+import { Form, FormRoot } from "@/components/ui/fields/form/form";
 import { changesOf, draftOf } from "./care-profile-draft";
 import { Days, Dormancy, Hints, Places, type Lists } from "./care-profile-sections";
 import { CARD, Quiet } from "./parts";

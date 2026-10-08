@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the operator page on a phone: the numbers, the cost form and the mode (DS-52, DS-53). */
 export function OperatorPageSkeleton({ label }: { label: string }) {

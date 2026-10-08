@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { CircleCheck, Info, OctagonAlert, TriangleAlert, X, type LucideIcon } from "lucide-react";
 import * as React from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { cn } from "@/lib/utils";
 
 /** Banner looks (US-QS-07, DS-34). Colour only supports the meaning: every variant has an icon and text (DS-38). */

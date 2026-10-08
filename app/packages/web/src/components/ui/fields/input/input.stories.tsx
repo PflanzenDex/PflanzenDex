@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Input } from "./input";
-import { Label } from "./label";
+import { Label } from "../../display/label/label";
 
 // Catalog of the Input states (TE-18): default, focus, disabled, invalid and the input types. Light and dark come from the toolbar.
 const meta = {

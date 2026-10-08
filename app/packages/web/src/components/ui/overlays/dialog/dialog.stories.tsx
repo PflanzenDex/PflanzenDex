@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button } from "./button";
+import { Button } from "../../button/button";
 import { Dialog, DialogContent, DialogTrigger } from "./dialog";
 
 // Catalog of the Dialog states (TE-18): closed and open.

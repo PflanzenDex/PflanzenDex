@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Label } from "./label";
+import { Label } from "../../display/label/label";
 import { Textarea } from "./textarea";
 
 // Catalog of the Textarea states (TE-18): default, focus, disabled, invalid.

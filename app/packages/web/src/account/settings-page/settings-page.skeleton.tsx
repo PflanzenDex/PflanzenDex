@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the settings on a phone: two fields, two switch groups and the save button (DS-52, DS-53). */
 export function SettingsPageSkeleton({ label }: { label: string }) {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { Banner, BannerItem } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { useInvalidate, useRequest, useWriteAction } from "../../../kernel";
 import { loadBanner, markFeedSeen } from "../../api/feed-api";
 import { dateText } from "../../parts/invite-card/invite-card";

@@ -2,7 +2,7 @@ import type { TreatmentListRow } from "@pflanzendex/core";
 import { useCallback, useRef, useState } from "react";
 import { EmptyState, type EmptyStateAction } from "@/components/shared/empty-state/empty-state";
 import { Sprout } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { isOnline } from "@/platform/network";
 import { useAnnounce } from "@/platform/announcer/context";
 import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../../../kernel";

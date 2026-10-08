@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 import { CARD, GRID } from "../parts";
 
 /** Placeholder with the layout of the hints on a phone: title, intro and two hint cards with their button (DS-52, DS-53). */

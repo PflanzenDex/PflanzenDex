@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import { specimenName } from "@pflanzendex/core";
-import { Form, FormRoot } from "@/components/ui/form";
+import { Form, FormRoot } from "@/components/ui/fields/form/form";
 import type { ApiError } from "../kernel";
 import { MarkerInput } from "./marker-fields";
 import { FormButtons, Quiet, TITLE, Warning } from "./parts";

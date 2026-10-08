@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Ellipsis } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/overlays/sheet/sheet";
 import { cn } from "@/lib/utils";
 import { isActivePath, stackedItem, stackedLabel, stackedPill, type NavItem } from "../nav-item";
 

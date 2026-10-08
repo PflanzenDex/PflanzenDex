@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import type { TodayItem, TodayKind, TodayList, TodayTarget } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { SectionLabel } from "@/components/section-label/section-label";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { dateText } from "@/lib/format";
 import { LoadFrame } from "../../kernel";
 import { loadToday } from "../today-api";
