@@ -5,11 +5,11 @@ import type {
   LightLocation,
   LightZone,
 } from "@pflanzendex/core";
-import { LoadFrame, useInvalidate, useWriteAction } from "../kernel";
-import { loadLocations, loadZones } from "../light";
-import { loadCareProfiles, saveCareProfile } from "./care-profile-api";
-import { CareProfileSectionSkeleton } from "./CareProfilePage.skeleton";
-import { ProfileList } from "./care-profile-list";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
+import { loadLocations, loadZones } from "../../light";
+import { loadCareProfiles, saveCareProfile } from "../care-profile-api";
+import { CareProfileSectionSkeleton } from "./care-profile-page.skeleton";
+import { ProfileList } from "../care-profile-list";
 
 interface Data {
   readonly entries: readonly CareProfileEntry[];
