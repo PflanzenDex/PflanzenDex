@@ -1,3 +1,4 @@
+import { Card } from "@/components/data-display/card/card";
 import { Suspense, useCallback, useState } from "react";
 import {
   isNewAccount,
@@ -57,17 +58,16 @@ function Overview(props: { counts: OnboardingCounts; onOpen: (t: Target) => void
       {hints.length > 0 && (
         <ul className="m-0 grid list-none gap-3 p-0" aria-label="Hinweise zur Einrichtung">
           {hints.map((h) => (
-            <li
-              key={h.id}
-              className="grid min-w-0 content-start gap-1 break-words rounded-xl border border-border bg-card p-3 text-card-foreground"
-            >
-              <p>{h.text}</p>
-              <p className="text-sm text-muted-foreground">{h.nextAction}</p>
-              <div className={ACTIONS}>
-                <Button type="button" variant="secondary" onClick={() => props.onOpen("light")}>
-                  {h.actionLabel}
-                </Button>
-              </div>
+            <li key={h.id}>
+              <Card className="grid content-start gap-1">
+                <p>{h.text}</p>
+                <p className="text-sm text-muted-foreground">{h.nextAction}</p>
+                <div className={ACTIONS}>
+                  <Button type="button" variant="secondary" onClick={() => props.onOpen("light")}>
+                    {h.actionLabel}
+                  </Button>
+                </div>
+              </Card>
             </li>
           ))}
         </ul>

@@ -244,8 +244,23 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     );
     const list = await screen.findByRole("list", { name: "Freunde" });
     expect(list.textContent).toBe(
-      "Benbefreundet seit 06.10.2026Gemeinsame Arten: unbekannt (noch nichts freigegeben)Sammlung ansehenFreundschaft beenden",
+      "BBenbefreundet seit 06.10.2026Gemeinsame Arten: unbekannt (noch nichts freigegeben)Sammlung ansehenFreundschaft beenden",
     );
+  });
+
+  it("US-QS-07 shows each friend with a decorative initials avatar, the name stays the text", async () => {
+    fakeServer({
+      friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: null }],
+    });
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
+    const list = await screen.findByRole("list", { name: "Freunde" });
+    expect(within(list).queryByRole("img")).toBeNull();
+    expect(within(list).getByText("B").getAttribute("aria-hidden")).toBe("true");
+    expect(within(list).getByText("Ben")).toBeTruthy();
   });
 
   it("US-SOZ-03 ending a friendship asks first, says what it does and then removes the friend", async () => {

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { EmptyState, type EmptyStateAction } from "@/components/shared/empty-state";
+import { PlantLoader } from "@/components/shared/states/plant-loader/plant-loader";
 import { RequestState } from "@/components/shared/states/request-state/request-state";
 import type { Response } from "./api";
 import { useRequest } from "./request/use-request";
@@ -39,7 +40,11 @@ export function LoadFrame<T>(props: {
       status={isEmpty ? "empty" : r.status}
       {...(r.error ? { errorText: r.error.text } : {})}
       onRetry={r.retry}
-      skeleton={props.loadingFallback ?? <p role="status">{props.loadingText}</p>}
+      skeleton={
+        props.loadingFallback ?? (
+          <PlantLoader label={props.loadingText} size="lg" className="mx-auto my-8 flex" />
+        )
+      }
       empty={
         empty ? (
           <EmptyState

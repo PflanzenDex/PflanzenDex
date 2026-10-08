@@ -224,4 +224,13 @@ describe("US-ACC-03 start page and guided onboarding", () => {
     // The location from before is shown, not asked for again.
     expect(await screen.findByText("Fensterbank")).toBeTruthy();
   });
+
+  it("US-QS-07 the start page waits behind the PlantLoader with one loading status", async () => {
+    fakeServer({ zones: [], locations: [], cards: [] });
+    view();
+    const status = screen.getByRole("status");
+    expect(status.textContent).toBe("Start wird geladen …");
+    expect(await screen.findByRole("heading", { name: "Wo stehen deine Pflanzen?" })).toBeTruthy();
+    expect(screen.queryByText("Start wird geladen …")).toBeNull();
+  });
 });
