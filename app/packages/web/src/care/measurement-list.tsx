@@ -2,6 +2,7 @@ import type { MeasurementRow } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state";
 import { GrowthChart } from "./measurement-header/growth-chart";
 import { MeasurementPhoto } from "./measurement-header/measurement-photo";
+import { PhotoAction } from "./measurement-header/photo-action";
 import { CARD_CLASSES, LIST_CLASSES } from "./notices";
 import { QUALITY_NAME, dateText, valueText } from "./text";
 
@@ -10,6 +11,8 @@ export function MeasurementList(props: {
   measurements: readonly MeasurementRow[];
   /** What the photos need to be loaded privately (P-05). */
   photo: { api: string; token: () => Promise<string | undefined>; specimenId: string };
+  /** Reloads the course after a photo was saved. */
+  onPhotoSaved: () => void;
   /** Moves the focus to the value field of the form. */
   onAdd: () => void;
 }) {
@@ -29,7 +32,7 @@ export function MeasurementList(props: {
         <>
           <GrowthChart measurements={measurements} />
           <ul className={LIST_CLASSES}>
-            {measurements.map((m) => (
+            {measurements.map((m, i) => (
               <li key={m.id} className={CARD_CLASSES}>
                 <h3 className="font-semibold">
                   {valueText(m.value)} · {dateText(m.date)}
@@ -38,6 +41,16 @@ export function MeasurementList(props: {
                 {m.note && <p className="text-muted-foreground">{m.note}</p>}
                 {m.photo && (
                   <MeasurementPhoto {...props.photo} measurementId={m.id} date={m.date} />
+                )}
+                {/* The server attaches a photo to the day's latest measurement, so only that one offers it (FR-WAC-07). */}
+                {measurements[i - 1]?.date !== m.date && (
+                  <PhotoAction
+                    access={props.photo}
+                    specimenId={props.photo.specimenId}
+                    date={m.date}
+                    hasPhoto={m.photo !== null}
+                    onSaved={props.onPhotoSaved}
+                  />
                 )}
               </li>
             ))}

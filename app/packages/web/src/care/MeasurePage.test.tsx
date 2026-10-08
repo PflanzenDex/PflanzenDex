@@ -3,6 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/lib/viewport-mock";
 import { MeasurePage } from "./MeasurePage";
 
 const response = (status: number, body: unknown) =>
@@ -26,10 +27,11 @@ function fakeServer(
     signs?: string | null;
     withPhoto?: boolean;
     photoSave?: () => Promise<Response>;
+    existing?: unknown[];
   } = {},
 ) {
   const photoPosts: { url: string; type: string | undefined; key: string | undefined }[] = [];
-  const measurements: unknown[] = [];
+  const measurements: unknown[] = [...(opts.existing ?? [])];
   const posts: { body: Record<string, unknown>; key: string | undefined }[] = [];
   let loadAttempts = 0;
   vi.stubGlobal(
@@ -295,5 +297,81 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain(ERROR_TEXTS["media.type_unsupported"]);
     expect(alert.textContent).not.toContain("raw server text");
+  });
+});
+
+describe("US-WAC-05 add or replace the photo of an existing measurement", () => {
+  const exists = () =>
+    response(409, { error: { code: "measurement.photo_exists", text: "raw server text" } });
+  const pick = async (label: RegExp) =>
+    userEvent.upload(await screen.findByLabelText(label), IMAGE);
+
+  it("adds a photo to a measurement without one, for its date, without replace", async () => {
+    setViewportWidth(1024);
+    const { photoPosts } = fakeServer({ existing: [measurement] });
+    show();
+    await pick(/Foto hinzufügen/);
+    await vi.waitFor(() => expect(photoPosts).toHaveLength(1));
+    expect(photoPosts[0]?.url).toContain("date=2026-10-01");
+    expect(photoPosts[0]?.url).not.toContain("replace");
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("an existing photo is replaced only after confirmation (measurement.photo_exists)", async () => {
+    setViewportWidth(1024);
+    let calls = 0;
+    const { photoPosts } = fakeServer({
+      existing: [{ ...measurement, photo: "p.jpg" }],
+      photoSave: () =>
+        ++calls === 1 ? exists() : response(201, { photo: "q.jpg", replaced: true }),
+    });
+    show();
+    await pick(/Foto ersetzen/);
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toContain(ERROR_TEXTS["measurement.photo_exists"]);
+    expect(photoPosts).toHaveLength(1);
+    await userEvent.click(screen.getByRole("button", { name: "Foto ersetzen" }));
+    await vi.waitFor(() => expect(photoPosts).toHaveLength(2));
+    expect(photoPosts[1]?.url).toContain("replace=true");
+  });
+
+  it("cancelling the confirmation keeps the old photo and sends nothing more", async () => {
+    setViewportWidth(1024);
+    const { photoPosts } = fakeServer({
+      existing: [{ ...measurement, photo: "p.jpg" }],
+      photoSave: exists,
+    });
+    show();
+    await pick(/Foto ersetzen/);
+    await screen.findByRole("dialog");
+    await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(photoPosts).toHaveLength(1);
+  });
+
+  it("another refusal shows the German text of its code and keeps the measurement (P-10)", async () => {
+    setViewportWidth(1024);
+    fakeServer({
+      existing: [measurement],
+      photoSave: () =>
+        response(415, { error: { code: "media.type_unsupported", text: "raw server text" } }),
+    });
+    show();
+    await pick(/Foto hinzufügen/);
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      ERROR_TEXTS["media.type_unsupported"],
+    );
+  });
+
+  it("only the latest measurement of a day offers the photo, because the server attaches it to that one (FR-WAC-07)", async () => {
+    fakeServer({
+      existing: [
+        { ...measurement, id: "m2" },
+        { ...measurement, id: "m1", value: 11 },
+      ],
+    });
+    show();
+    await screen.findAllByRole("heading", { level: 3 });
+    expect(screen.getAllByLabelText(/Foto hinzufügen/)).toHaveLength(1);
   });
 });

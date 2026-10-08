@@ -91,6 +91,15 @@ export class InMemoryMeasurements implements MeasurementStore {
     return last;
   }
 
+  async lastPhotoFor(userId: string, specimenIds: readonly string[]) {
+    const found = new Map<string, { id: string; date: string }>();
+    for (const id of specimenIds) {
+      const [newest] = (await this.list(userId, id)).filter((z) => z.photo);
+      if (newest) found.set(id, { id: newest.id, date: newest.date });
+    }
+    return found;
+  }
+
   async findOnDate(userId: string, specimenId: string, date: string) {
     const [newest] = (await this.list(userId, specimenId)).filter((z) => z.date === date);
     return newest ?? null;

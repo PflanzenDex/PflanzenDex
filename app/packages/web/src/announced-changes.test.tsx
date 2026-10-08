@@ -26,7 +26,13 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
 });
 
 const list = (cards: SpecimenCard[]) =>
-  render(<CollectionList cards={cards} onSpeciesChoose={vi.fn()} />);
+  render(
+    <CollectionList
+      cards={cards}
+      onSpeciesChoose={vi.fn()}
+      photoAccess={{ api: "http://api", token: async () => "tok" }}
+    />,
+  );
 
 describe("US-QS-10 · a form with errors guides to the fix (3.3.1, 3.3.3, DS-38)", () => {
   it("US-QS-10 submitting an empty proposal focuses the first invalid field and every error names the field and the fix", async () => {
@@ -50,9 +56,23 @@ describe("US-QS-10 · a form with errors guides to the fix (3.3.1, 3.3.3, DS-38)
 });
 
 describe("US-QS-10 · photos have an alternative text (1.1.1)", () => {
-  it("US-QS-10 a specimen photo is described with the name and the date", () => {
-    list([card({ photo: { url: "https://medien.test/x.jpg", date: "2026-09-28" } })]);
-    expect(screen.getByAltText("Foto von Bogenhanf vom 28.09.2026")).toBeTruthy();
+  it("US-QS-10 a specimen photo is described with the name and the date", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => new Response(new Uint8Array([1]), { status: 200 })),
+    );
+    URL.createObjectURL = vi.fn(() => "blob:card");
+    render(
+      <CollectionList
+        cards={[
+          card({ photo: { url: "/specimens/e1/measurements/m1/photo", date: "2026-09-28" } }),
+        ]}
+        onSpeciesChoose={vi.fn()}
+        photoAccess={{ api: "http://api", token: async () => "tok" }}
+      />,
+    );
+    expect(await screen.findByAltText("Foto von Bogenhanf vom 28.09.2026")).toBeTruthy();
+    vi.unstubAllGlobals();
   });
 
   it("US-QS-10 without a photo there is no image at all, only text", () => {

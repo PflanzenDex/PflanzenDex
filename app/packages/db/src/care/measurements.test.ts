@@ -183,6 +183,36 @@ describe("US-WAC-01 last measurement per specimen (for the cards, US-BES-06)", (
   });
 });
 
+describe("US-WAC-05 the most recent photo per specimen", () => {
+  it("names the newest measurement that has a photo, even if the last measurement has none", async () => {
+    const e = await specimen(anna, "Foto neuestes");
+    const old = await measurements.create(anna, values({ specimenId: e, date: "2026-09-01" }));
+    const mid = await measurements.create(anna, values({ specimenId: e, date: "2026-09-15" }));
+    await measurements.create(anna, values({ specimenId: e, date: "2026-10-01" }));
+    if (typeof old === "string" || typeof mid === "string") throw new Error("fixture");
+    await measurements.setPhoto(anna, old.id, "a.jpg");
+    await measurements.setPhoto(anna, mid.id, "b.jpg");
+    const r = await measurements.lastPhotoFor(anna, [e]);
+    expect(r.get(e)).toEqual({ id: mid.id, date: "2026-09-15" });
+  });
+
+  it("a specimen without a photo is missing; without IDs the answer is empty", async () => {
+    const e = await specimen(anna, "Ohne Foto");
+    await measurements.create(anna, values({ specimenId: e }));
+    expect((await measurements.lastPhotoFor(anna, [e])).size).toBe(0);
+    expect((await measurements.lastPhotoFor(anna, [])).size).toBe(0);
+  });
+
+  it("tenant: Ben asks for Anna's specimen and gets nothing (P-04)", async () => {
+    const e = await specimen(anna, "Foto fremd");
+    const m = await measurements.create(anna, values({ specimenId: e }));
+    if (typeof m === "string") throw new Error(m);
+    await measurements.setPhoto(anna, m.id, "c.jpg");
+    expect((await measurements.lastPhotoFor(ben, [e])).size).toBe(0);
+    expect((await measurements.lastPhotoFor(anna, [e])).size).toBe(1);
+  });
+});
+
 describe("US-WAC-02 quality of a measurement in the database", () => {
   it("a measurement written without quality (imported legacy data) reads back as healthy", async () => {
     const ex = await specimen(anna, "Altdaten");

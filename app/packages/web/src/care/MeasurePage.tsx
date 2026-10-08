@@ -57,6 +57,7 @@ export function MeasurePage(props: {
             <MeasurementList
               measurements={view.measurements}
               photo={{ api, token, specimenId: specimen.id }}
+              onPhotoSaved={invalidate}
               onAdd={() => valueRef.current?.focus()}
             />
           </>

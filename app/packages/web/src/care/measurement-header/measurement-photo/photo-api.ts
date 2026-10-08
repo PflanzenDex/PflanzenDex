@@ -3,7 +3,7 @@ import { currentTimeZone, type ApiError, type Response } from "../../../kernel";
 import { GENERIC_ERROR_TEXT } from "@/lib/error-text";
 
 type FetchFn = typeof fetch;
-export interface PhotoAccess {
+export interface UploadAccess {
   api: string;
   token: string;
   fetchFn?: FetchFn;
@@ -21,27 +21,9 @@ async function failure(res: globalThis.Response): Promise<{ ok: false; error: Ap
   return { ok: false, error: body.error ?? { code: "server.error", text: GENERIC_ERROR_TEXT } };
 }
 
-/** Loads the stored photo of a measurement (private: only with the token, P-05) as an object URL. */
-export async function loadPhoto(
-  access: PhotoAccess,
-  specimenId: string,
-  measurementId: string,
-): Promise<Response<string>> {
-  try {
-    const res = await (access.fetchFn ?? fetch)(
-      `${access.api}/specimens/${encodeURIComponent(specimenId)}/measurements/${encodeURIComponent(measurementId)}/photo`,
-      { headers: { Authorization: `Bearer ${access.token}` } },
-    );
-    if (!res.ok) return await failure(res);
-    return { ok: true, value: URL.createObjectURL(await res.blob()) };
-  } catch {
-    return { ok: false, error: NETWORK };
-  }
-}
-
 /** Sends the raw image file for the measurement of `date` (US-WAC-06); a fresh `Idempotency-Key` per call. */
 export async function uploadPhoto(
-  access: PhotoAccess,
+  access: UploadAccess,
   specimenId: string,
   photo: { file: File; date?: string; replace?: boolean },
 ): Promise<Response<unknown>> {
