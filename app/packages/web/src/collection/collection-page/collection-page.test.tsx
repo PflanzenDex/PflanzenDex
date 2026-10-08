@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { Species, Specimen, SpecimenCard } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "./collection-page";
-import { EMPTY_DISTRIBUTION } from "../distribution-test-helpers";
+import { EMPTY_DISTRIBUTION } from "../insights/distribution-test-helpers";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));

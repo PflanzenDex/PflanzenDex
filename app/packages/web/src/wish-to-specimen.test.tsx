@@ -24,7 +24,7 @@ vi.mock("oidc-client-ts", () => ({
 }));
 
 import { App } from "./App";
-import { EMPTY_DISTRIBUTION } from "./collection/distribution-test-helpers";
+import { EMPTY_DISTRIBUTION } from "./collection/insights/distribution-test-helpers";
 
 // US-WUN-05: after "Gekauft" the app opens the creation of a specimen with the species preselected from the catalog, or
 // the catalog search with the wish name; the wish is linked to the specimen it became ("bought → specimen").

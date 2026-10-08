@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { CollectionArea } from "./collection-area";
-import { EMPTY_DISTRIBUTION } from "./collection/distribution-test-helpers";
+import { EMPTY_DISTRIBUTION } from "./collection/insights/distribution-test-helpers";
 import { AnnouncerProvider } from "./platform/announcer/announcer";
 import { VIEW_KEY } from "./sammlung-view";
 

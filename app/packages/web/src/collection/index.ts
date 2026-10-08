@@ -12,4 +12,4 @@ export const CareProfileSection = lazyPage(() =>
 export const DifficultyPage = lazyPage(() =>
   import("./difficulty-page/difficulty-page").then((m) => ({ default: m.DifficultyPage })),
 );
-export { loadSpecimenCount } from "./cards-api";
+export { loadSpecimenCount } from "./specimens/cards/cards-api";

@@ -29,7 +29,7 @@ vi.mock("oidc-client-ts", () => ({
 
 import { BrowserRouter, MemoryRouter } from "react-router";
 import { App } from "./App";
-import { EMPTY_DISTRIBUTION } from "./collection/distribution-test-helpers";
+import { EMPTY_DISTRIBUTION } from "./collection/insights/distribution-test-helpers";
 
 /** The app runs inside a router; a memory router stands for the address bar. */
 const renderApp = (path = "/") =>

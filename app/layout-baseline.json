@@ -1,7 +1,6 @@
 {
   "LY-1": {
     "app": 22,
-    "app/packages/web/src/collection": 50,
     "Docs/spikes/te-15-oauth": 6,
     "Docs/spikes/te-15-oauth/checks": 17,
     "scripts": 9
@@ -13,8 +12,7 @@
     "Docs/spikes/te-15-oauth": 1
   },
   "LY-4": {
-    "app/packages/web/src": 5,
-    "app/packages/web/src/collection": 18
+    "app/packages/web/src": 5
   },
   "LY-5": {
     ".": 3
