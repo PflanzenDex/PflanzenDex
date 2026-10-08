@@ -30,6 +30,7 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 
 - **Node:** version 24 (`.nvmrc`). Vitest 5 does not officially support odd Node versions (e.g. 25).
 - **TypeScript 6.0.x** is pinned on purpose: `typescript-eslint` does not support TypeScript 7 yet (peer range `<6.1`).
+- **Load measurement (NFR-12):** `npm run perf:measure -w @pflanzendex/api` seeds accounts with 100 and 1,000 specimens in a throw-away test database and prints response times and SQL statement counts per request as JSON. It is a measurement, not a gate, and not part of `make ci`; results: `Docs/test-logs/nfr-12.md`.
 - **Boundary check:** `npm run boundaries` (script and tests in `scripts/`); messages name the rule ID, file and line. Module rules AB-7 to AB-14 (FR-QG-19) read the module register `modules.config.mjs`; AB-10 and table ownership run in `findSchemaViolations` (db tests).
 - **Thresholds** (starting values, assumptions, E-15): file length ≤ 200, complexity ≤ 15, in `core` ≤ 10 (`eslint.config.js`).
 
