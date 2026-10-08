@@ -1,6 +1,6 @@
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { holdTaxonLock, openFixturePool } from "./index.ts";
+import { holdTaxonLock, openFixturePool } from "../kernel/index.ts";
 
 let admin: Pool;
 beforeAll(() => {
