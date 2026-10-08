@@ -181,3 +181,42 @@ describe("US-ENT-01 suggestions as a card", () => {
     expect(screen.getByRole("button", { name: /Erneut versuchen/ })).toBeTruthy();
   });
 });
+
+describe("US-QS-14 focus follows the view (SC 2.4.3)", () => {
+  it("US-QS-14 after the last decision the focus is on the end-state heading, after Neuer Stapel on the next card title", async () => {
+    fakeServer(async (deck) =>
+      response(
+        200,
+        deck === 1
+          ? deckOf(suggestion("Aspidistra elatior"))
+          : deckOf(suggestion("Ficus lyrata"), suggestion("Aloe vera")),
+      ),
+    );
+    const user = userEvent.setup();
+    render(<DiscoverPage api="http://api" token={token} />);
+    await card();
+    await user.click(screen.getByRole("button", { name: "Ja" }));
+    const end = await screen.findByRole("heading", { name: /Für heute durch/ });
+    expect(document.activeElement).toBe(end);
+    await user.click(screen.getByRole("button", { name: "Neuer Stapel" }));
+    const title = await within(await card()).findByRole("heading", { name: "Ficus lyrata" });
+    expect(document.activeElement).toBe(title);
+    await user.click(screen.getByRole("button", { name: "Später" }));
+    expect(document.activeElement).toBe(
+      within(await card()).getByRole("heading", { name: "Aloe vera" }),
+    );
+  });
+
+  it("US-QS-14 after Neuer Stapel into an empty last deck the focus is on that heading", async () => {
+    fakeServer(async (deck) =>
+      response(200, deck === 1 ? deckOf(suggestion("Aspidistra elatior")) : { ...nothing, deck }),
+    );
+    const user = userEvent.setup();
+    render(<DiscoverPage api="http://api" token={token} />);
+    await card();
+    await user.click(screen.getByRole("button", { name: "Nein" }));
+    await user.click(await screen.findByRole("button", { name: "Neuer Stapel" }));
+    const heading = await screen.findByRole("heading", { name: /Keine neuen Vorschläge/ });
+    expect(document.activeElement).toBe(heading);
+  });
+});

@@ -6,6 +6,12 @@ import { Form, FormRoot } from "@/components/ui/form";
 import { TextField } from "@/components/ui/input";
 import { costSchema, parseAmount, type CostFields } from "./schemas";
 
+/**
+ * Look of a button while a write runs. The button is `aria-disabled`, not `disabled`: a disabled focused element loses
+ * the focus to the body (SC 2.4.3); `useOperatorActions` ignores a second press anyway.
+ */
+export const BUSY_LOOK = "aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
+
 /** An amount in cents as money in German notation, e.g. `1.234,50 €`. */
 export const moneyText = (cents: number, currency: string): string =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(cents / 100);
@@ -65,7 +71,13 @@ export function CostForm(props: {
           type="month"
           max={thisMonth()}
         />
-        <Button type="submit" size="touch" disabled={props.running}>
+        <Button
+          type="submit"
+          size="touch"
+          aria-disabled={props.running || undefined}
+          aria-busy={props.running || undefined}
+          className={BUSY_LOOK}
+        >
           Kosten speichern
         </Button>
       </FormRoot>

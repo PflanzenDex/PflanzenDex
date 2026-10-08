@@ -51,7 +51,12 @@ export function DiscoverPage(props: {
                 Entdecken
               </h1>
             )}
-            <DeckView key={deck} deck={value} onNewDeck={() => setDeck((d) => d + 1)} />
+            <DeckView
+              key={deck}
+              takeFocus={deck > 1}
+              deck={value}
+              onNewDeck={() => setDeck((d) => d + 1)}
+            />
           </>
         )}
       </LoadFrame>

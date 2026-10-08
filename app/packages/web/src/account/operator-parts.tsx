@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Form, FormRoot } from "@/components/ui/form";
 import { instantText } from "./access-api";
+import { BUSY_LOOK } from "./operator-cost";
 import { TextField } from "@/components/ui/input";
 import { DAYS, invitationDaysSchema, type InvitationDaysFields } from "./schemas";
 
@@ -38,7 +39,9 @@ export function ModeSection(props: {
         type="button"
         variant="outline"
         size="touch"
-        disabled={props.running}
+        aria-disabled={props.running || undefined}
+        aria-busy={props.running || undefined}
+        className={BUSY_LOOK}
         onClick={() => props.onChange(!invitationOnly)}
       >
         {invitationOnly ? "Für alle öffnen" : "Nur mit Einladungscode erlauben"}
@@ -74,7 +77,13 @@ export function InvitationForm(props: {
           min={DAYS.min}
           max={DAYS.max}
         />
-        <Button type="submit" size="touch" disabled={props.running}>
+        <Button
+          type="submit"
+          size="touch"
+          aria-disabled={props.running || undefined}
+          aria-busy={props.running || undefined}
+          className={BUSY_LOOK}
+        >
           Code erstellen
         </Button>
       </FormRoot>
