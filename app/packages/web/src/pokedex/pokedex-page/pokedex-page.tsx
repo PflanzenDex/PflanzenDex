@@ -1,14 +1,14 @@
 import type { Ownership, UnidentifiedSpecimen } from "@pflanzendex/core";
 import { useCallback, useEffect } from "react";
 import { CollectorCards } from "@/components/collector-cards/collector-cards";
-import { LoadFrame } from "../kernel";
-import { Browse } from "./PokedexBrowse";
-import { loadOwnership } from "./caught/ownership-api";
-import { PokedexPageSkeleton } from "./PokedexPage.skeleton";
-import { CARD, GRID } from "./PokedexCards";
-import { CollectorRank } from "./collector-rank/collector-rank";
-import { Milestones } from "./milestones/milestones";
-import { NewlyCaught } from "./caught/newly-caught/newly-caught";
+import { LoadFrame } from "../../kernel";
+import { Browse } from "../pokedex-browse/pokedex-browse";
+import { loadOwnership } from "../caught/ownership-api";
+import { PokedexPageSkeleton } from "./pokedex-page.skeleton";
+import { CARD, GRID } from "../pokedex-cards/pokedex-cards";
+import { CollectorRank } from "../collector-rank/collector-rank";
+import { Milestones } from "../milestones/milestones";
+import { NewlyCaught } from "../caught/newly-caught/newly-caught";
 
 /** Set when a destination shows this page below its own title (US-QS-14). */
 type Host = { onCaption: (text: string | null) => void };

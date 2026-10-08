@@ -21,7 +21,7 @@ vi.mock("./start-page", () => {
   loaded.pages.push("start");
   return { StartPage: () => null };
 });
-vi.mock("./pokedex/PokedexPage", () => {
+vi.mock("./pokedex/pokedex-page/pokedex-page", () => {
   loaded.pages.push("pokedex");
   throw new Error("Failed to fetch dynamically imported module");
 });
