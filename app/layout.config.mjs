@@ -33,6 +33,8 @@ export default {
     // has none; a module holds up to 10 feature directories (starting value, assumption), inside a feature 5 applies.
     { path: "app/packages/*/src", maxUnits: Infinity },
     { path: "app/packages/*/src/*", maxUnits: 10 },
+    // The gate scripts: one folder per gate (US-QG-07 added db-indexes as the sixth); a seventh needs a new reason.
+    { path: "app/tools/check/code", maxUnits: 6 },
     {
       path: "app/packages/db/migrations",
       collection: /^\d{4}_[a-z0-9_]+\.sql$/,
