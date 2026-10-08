@@ -166,6 +166,8 @@ As a **plant keeper** I want the app to look modern and feel quick on the phone 
 Acceptance criteria:
 
 - Given a viewport of 360 px, then the main destinations are reached from a bottom bar with at most five items; from 768 px a navigation rail and from 1280 px a labelled sidebar show the same destinations from one list.
+- Given my account has no role, when I open the app at 360 px, then the bottom bar shows the five destinations "Heute", "Sammlung", "Entdecken", "Freunde" and "Konto" and no "Mehr".
+- Given my account has the role reviewer or operator, when I open the app at 360 px, then the bar still holds at most five slots: "Heute", "Sammlung", "Entdecken", "Freunde" and "Mehr", and the drawer "Mehr" holds "Konto" and the role-only entries "Prüfliste" and "Betreiber" (owner decision 2026-10-08, issue #607); from 768 px the rail and the sidebar show "Konto" and the role-only entries as separate items.
 - Given light and dark mode, then every colour pair of the design tokens meets WCAG 2.2 AA (4.5:1 text, 3:1 boundaries and focus) and a test fails when a token has no checked pair.
 - Given `prefers-reduced-motion: reduce`, then no non-essential motion runs (no route transition, no list entry, no swipe animation) and every state change is still visible.
 - Given a screen change, a list that appears or a completed action, then the change is animated with the shared motion tokens (starting values: 120, 200 and 320 ms, assumption), using `transform` and `opacity` only.

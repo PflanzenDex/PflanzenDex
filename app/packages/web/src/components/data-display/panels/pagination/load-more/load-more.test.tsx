@@ -70,6 +70,61 @@ describe("LoadMore (US-QS-07, DS-34)", () => {
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Mehr laden" }));
   });
 
+  it("US-QS-14 after a load the focused button is scrolled into view with block nearest (WCAG 2.4.7)", async () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    window.matchMedia = vi
+      .fn()
+      .mockReturnValue({ matches: false }) as unknown as typeof window.matchMedia;
+    const user = userEvent.setup();
+    const { rerender } = render(<LoadMore {...base} />);
+    await user.click(screen.getByRole("button", { name: "Mehr laden" }));
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    rerender(<LoadMore {...base} loadedCount={40} />);
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest", behavior: "smooth" });
+    expect(scrollIntoView.mock.contexts[0]).toBe(
+      screen.getByRole("button", { name: "Mehr laden" }),
+    );
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Mehr laden" }));
+  });
+
+  it("US-QS-14 with prefers-reduced-motion the button scrolls into view without smooth motion", async () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    window.matchMedia = vi
+      .fn()
+      .mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
+    const user = userEvent.setup();
+    const { rerender } = render(<LoadMore {...base} />);
+    await user.click(screen.getByRole("button", { name: "Mehr laden" }));
+    rerender(<LoadMore {...base} loadedCount={40} />);
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest", behavior: "auto" });
+  });
+
+  it("US-QS-14 no scrolling when focus was elsewhere during the load", async () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    window.matchMedia = vi
+      .fn()
+      .mockReturnValue({ matches: false }) as unknown as typeof window.matchMedia;
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <>
+        <input aria-label="Suche" />
+        <LoadMore {...base} />
+      </>,
+    );
+    await user.click(screen.getByRole("button", { name: "Mehr laden" }));
+    screen.getByLabelText("Suche").focus();
+    rerender(
+      <>
+        <input aria-label="Suche" />
+        <LoadMore {...base} loadedCount={40} />
+      </>,
+    );
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
   it("US-QS-07 focus moves to the 'Alles geladen' note when the last page arrived", async () => {
     const user = userEvent.setup();
     const { rerender } = render(<LoadMore {...base} loadedCount={40} />);
