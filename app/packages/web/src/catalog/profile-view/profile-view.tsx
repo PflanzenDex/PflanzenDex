@@ -1,7 +1,7 @@
 import { speciesHints, type Species } from "@pflanzendex/core";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DIFFICULTY, STATUS, GROWTH, lux, orUnknown, dormancyPhase } from "./text";
+import { DIFFICULTY, STATUS, GROWTH, lux, orUnknown, dormancyPhase } from "../shared/text";
 
 function rows(species: Species): [string, string][] {
   const family = [species.familyGerman, species.familyLatin].filter(Boolean).join(" · ");

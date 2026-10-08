@@ -62,7 +62,7 @@ vi.mock("./discover/discover-page/discover-page", () => {
   return { DiscoverPage: () => null };
 });
 
-vi.mock("./catalog/SpeciesPage", () => {
+vi.mock("./catalog/species-page/species-page", () => {
   loaded.pages.push("species-page");
   return { SpeciesPage: () => null };
 });

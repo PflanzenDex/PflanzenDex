@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS, type Species } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { SpeciesPage } from "./SpeciesPage";
+import { SpeciesPage } from "./species-page";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));

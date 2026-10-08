@@ -1,5 +1,5 @@
 import type { ApprovalIssue, MergeOutcome, ReviewList } from "@pflanzendex/core";
-import { FIELDS } from "./text";
+import { FIELDS } from "../shared/text";
 
 const DAY = 86_400_000;
 

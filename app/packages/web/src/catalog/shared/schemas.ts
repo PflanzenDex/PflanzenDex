@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { errorText } from "@/lib/error-text";
-import type { ApiError } from "../kernel";
+import type { ApiError } from "../../kernel";
 
 const LUX_MAX = 200000;
 const required = (message: string) => z.string().trim().min(1, message);

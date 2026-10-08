@@ -16,9 +16,9 @@ import {
   FormRoot,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { searchSchema, type SearchFields } from "./schemas";
+import { searchSchema, type SearchFields } from "../shared/schemas";
 import { SearchResultsSkeleton } from "./search-view.skeleton";
-import { badge } from "./text";
+import { badge } from "../shared/text";
 
 const FOUND: Record<NameField, string> = {
   latin: "lateinischen Namen",

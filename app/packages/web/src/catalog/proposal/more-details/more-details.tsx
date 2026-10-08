@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFormState, type Control } from "react-hook-form";
-import { AreaField, TextField } from "./field-controls";
-import type { ProposalFields } from "./schemas";
+import { AreaField, TextField } from "../field-controls/field-controls";
+import type { ProposalFields } from "../../shared/schemas";
 
 const TEXTS: [name: keyof ProposalFields, label: string, help?: string][] = [
   ["germanName", "Deutscher Name"],

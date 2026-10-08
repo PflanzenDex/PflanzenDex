@@ -2,13 +2,13 @@ import { useState, type ReactNode } from "react";
 import type { Species } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state";
 import { OFFLINE_NOTE } from "@/components/shared/states/request-state/request-state";
-import type { ApiError, Request } from "../kernel";
-import { useOpenId, useProfile, useSearch, useSend } from "./species-hooks";
-import { SpeciesProfile } from "./profile-view";
-import { SpeciesSearch } from "./search-view";
-import { ProposalForm } from "./proposal-form";
-import { ProfileSkeleton } from "./profile-view.skeleton";
-import { refusalText } from "./refusal";
+import type { ApiError, Request } from "../../kernel";
+import { useOpenId, useProfile, useSearch, useSend } from "../species-hooks";
+import { SpeciesProfile } from "../profile-view/profile-view";
+import { SpeciesSearch } from "../search-view/search-view";
+import { ProposalForm } from "../proposal/proposal-form/proposal-form";
+import { ProfileSkeleton } from "../profile-view/profile-view.skeleton";
+import { refusalText } from "../shared/refusal";
 
 type View = { kind: "search" } | { kind: "proposal" } | { kind: "profile" };
 
