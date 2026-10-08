@@ -70,7 +70,7 @@ services:
       - "${HTTP_PORT:-80}:80"
       - "${HTTPS_PORT:-443}:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./proxy.Caddyfile:/etc/caddy/Caddyfile:ro
       - caddydata:/data
     depends_on:
       - api

@@ -1,4 +1,4 @@
-# Static web server (NFR-12). Compression (zstd, gzip) happens once in the reverse proxy (Caddyfile).
+# Static web server (NFR-12). Compression (zstd, gzip) happens once in the reverse proxy (proxy.Caddyfile).
 :8080 {
 	root * /srv/web
 
