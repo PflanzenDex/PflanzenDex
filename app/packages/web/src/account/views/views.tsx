@@ -1,7 +1,7 @@
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { Button } from "@/components/ui/button";
 import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
-import { DISPLAY_NAME } from "@/components/shared/nav-item";
+import { DISPLAY_NAME } from "@/components/shared/navigation/nav-item";
 import type { Account } from "../api/account-api";
 
 type Action = () => void;

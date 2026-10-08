@@ -6,7 +6,7 @@ import {
   type PokedexSort,
 } from "@pflanzendex/core";
 import { useRef, useState } from "react";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { Button } from "@/components/ui/button";
 import { CardList } from "../pokedex-cards/pokedex-cards";
 import { SpeciesDetail } from "../pokedex-detail/pokedex-detail";

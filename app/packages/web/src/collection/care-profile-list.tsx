@@ -4,7 +4,7 @@ import type {
   LightLocation,
   LightZone,
 } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import type { ApiError } from "../kernel";
 import { CareProfileCard } from "./care-profile-card";
 import { KeptProfileCard } from "./kept-profile-card";

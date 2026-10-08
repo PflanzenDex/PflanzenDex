@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { GlobalHeader } from "./global-header";
-import { withRouter } from "./shell.fixtures";
+import { withRouter } from "../../shell/shell.fixtures";
 
 // Catalog of the top bar (TE-18): it shows below `md` only, so the viewport stays on the phone preset (360 px).
 const meta = {

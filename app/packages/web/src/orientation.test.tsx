@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { AppShell } from "./components/shared/app-shell";
+import { AppShell } from "./components/shared/navigation/app-shell/app-shell";
 import { AppRoutes } from "./routes";
 import { DIFFICULTY_ADDRESS, navItems, PATHS, profileAddress, viewTitle } from "./navigation";
 

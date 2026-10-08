@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { MemoryRouter } from "react-router";
 import type { ReactElement } from "react";
 import { createQueryClient } from "@/kernel";
-import { AppShell } from "@/components/shared/app-shell";
+import { AppShell } from "@/components/shared/navigation/app-shell/app-shell";
 import { navItems, viewTitle } from "@/navigation";
 import { fakeFetch, type Routes } from "../fake-api.fixtures";
 

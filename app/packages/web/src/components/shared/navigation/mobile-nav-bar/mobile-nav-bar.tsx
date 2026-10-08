@@ -4,7 +4,7 @@ import { NavLink, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { isActivePath, stackedItem, stackedLabel, stackedPill, type NavItem } from "./nav-item";
+import { isActivePath, stackedItem, stackedLabel, stackedPill, type NavItem } from "../nav-item";
 
 /** At most 5 slots in the bar (DS-25): 5 destinations, or 4 plus "Mehr". */
 const BAR_SLOTS = 5;

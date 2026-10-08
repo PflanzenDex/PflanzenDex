@@ -2,7 +2,7 @@ import type { CreatedInvitation, InvitationRecord, InvitationStatus } from "@pfl
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRef } from "react";
 import { useForm } from "react-hook-form";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { Button } from "@/components/ui/button";
 import { Form, FormRoot } from "@/components/ui/form";
 import { instantText } from "../../api/access-api";

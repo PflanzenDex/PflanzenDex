@@ -1,7 +1,10 @@
 import { useCallback, useEffect } from "react";
 import type { DifficultyRow } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state";
-import { ResponsiveTable, type ResponsiveColumn } from "@/components/shared/responsive-table";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
+import {
+  ResponsiveTable,
+  type ResponsiveColumn,
+} from "@/components/shared/responsive/responsive-table/responsive-table";
 import { LoadFrame } from "../../kernel";
 import { loadDifficulty } from "../difficulty-api";
 import { DifficultyPageSkeleton } from "./difficulty-page.skeleton";

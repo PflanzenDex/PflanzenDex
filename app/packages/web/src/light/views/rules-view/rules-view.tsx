@@ -1,5 +1,8 @@
 import { classificationRules } from "@pflanzendex/core";
-import { ResponsiveTable, type ResponsiveColumn } from "@/components/shared/responsive-table";
+import {
+  ResponsiveTable,
+  type ResponsiveColumn,
+} from "@/components/shared/responsive/responsive-table/responsive-table";
 import type { LightZone } from "../../shared/light-api/light-api";
 
 const number = new Intl.NumberFormat("de-DE");

@@ -8,7 +8,7 @@ import {
   ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
-import { DISPLAY_NAME, type NavItem } from "./components/shared/nav-item";
+import { DISPLAY_NAME, type NavItem } from "./components/shared/navigation/nav-item";
 
 export type View =
   "start" | "today" | "collection" | "discover" | "friends" | "review" | "operator" | "account";

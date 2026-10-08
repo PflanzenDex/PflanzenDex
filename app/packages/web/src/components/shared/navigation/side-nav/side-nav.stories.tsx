@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { items, withRouter } from "../shell.fixtures";
+import { items, withRouter } from "../../shell/shell.fixtures";
 import { SideNav } from "./side-nav";
 
 // Catalog of the side navigation (TE-18): rail from `md`, sidebar from `xl`; `show` forces a form visible at the phone width.

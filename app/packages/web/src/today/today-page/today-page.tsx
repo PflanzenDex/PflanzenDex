@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import type { TodayItem, TodayKind, TodayList, TodayTarget } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { SectionLabel } from "@/components/section-label/section-label";
 import { Button } from "@/components/ui/button";
 import { dateText } from "@/lib/format";

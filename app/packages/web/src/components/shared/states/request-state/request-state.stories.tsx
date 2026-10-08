@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { EmptyState } from "../../empty-state";
+import { EmptyState } from "../../empty-state/empty-state";
 import { RequestState } from "./request-state";
 import { PageSkeleton } from "../page-skeleton/page-skeleton";
 

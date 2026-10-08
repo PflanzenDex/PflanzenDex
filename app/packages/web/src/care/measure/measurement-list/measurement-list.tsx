@@ -1,5 +1,5 @@
 import type { MeasurementRow } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { GrowthChart } from "../measurement-header/growth-chart";
 import { MeasurementPhoto } from "../measurement-header/measurement-photo";
 import { PhotoAction } from "../measurement-header/photo-action";

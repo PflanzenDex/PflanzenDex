@@ -2,11 +2,11 @@
 import { composeStories, setProjectAnnotations } from "@storybook/react-vite";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import preview from "../../../../.storybook/preview";
-import * as appShell from "../app-shell.stories";
-import * as globalHeader from "../global-header.stories";
-import * as mobileNavBar from "../mobile-nav-bar.stories";
-import * as sideNav from "../side-nav/side-nav.stories";
+import preview from "../../../../../.storybook/preview";
+import * as appShell from "../../navigation/app-shell/app-shell.stories";
+import * as globalHeader from "../../navigation/global-header/global-header.stories";
+import * as mobileNavBar from "../../navigation/mobile-nav-bar/mobile-nav-bar.stories";
+import * as sideNav from "../../navigation/side-nav/side-nav.stories";
 
 setProjectAnnotations([preview]);
 

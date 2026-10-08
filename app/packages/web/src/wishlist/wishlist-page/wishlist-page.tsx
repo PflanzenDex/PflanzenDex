@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Candidate, CandidateList } from "@pflanzendex/core";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { useCandidateWrite, WriteOutcome, type WishToPlant } from "../actions/actions";
 import { BoughtList } from "../history/bought-list/bought-list";
 import { CandidateCard } from "../candidate-card/candidate-card";

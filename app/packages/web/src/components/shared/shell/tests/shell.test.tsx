@@ -3,11 +3,11 @@ import { act, cleanup, render, screen, waitFor, within } from "@testing-library/
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { AppShell } from "../app-shell";
-import { GlobalHeader } from "../global-header";
-import { MobileNavBar } from "../mobile-nav-bar";
-import { SideNav } from "../side-nav/side-nav";
-import type { NavItem } from "../nav-item";
+import { AppShell } from "../../navigation/app-shell/app-shell";
+import { GlobalHeader } from "../../navigation/global-header/global-header";
+import { MobileNavBar } from "../../navigation/mobile-nav-bar/mobile-nav-bar";
+import { SideNav } from "../../navigation/side-nav/side-nav";
+import type { NavItem } from "../../navigation/nav-item";
 
 beforeAll(() => {
   // jsdom has no matchMedia, Vaul reads it.

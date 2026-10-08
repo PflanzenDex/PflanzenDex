@@ -1,8 +1,8 @@
 import type { ComponentProps } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Button } from "@/components/ui/button";
-import { EmptyState } from "./empty-state";
-import { PageSkeleton } from "./states/page-skeleton/page-skeleton";
+import { EmptyState } from "../../empty-state/empty-state";
+import { PageSkeleton } from "../../states/page-skeleton/page-skeleton";
 import { ResponsiveTable, type ResponsiveColumn } from "./responsive-table";
 
 // Catalog of the ResponsiveTable (TE-17, DS-24, DS-26): rows, loading, empty and error.

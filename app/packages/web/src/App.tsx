@@ -13,7 +13,7 @@ import {
 import { useClearOnSignOut } from "./kernel";
 import { AppRoutes } from "./routes";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
-import { AppShell } from "./components/shared/app-shell";
+import { AppShell } from "./components/shared/navigation/app-shell/app-shell";
 import {
   pageTitle,
   navItems,

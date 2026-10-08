@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import type { LightLocation, SpecimenHint } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { Button } from "@/components/ui/button";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
 import { HintsPageSkeleton } from "./hints-page.skeleton";

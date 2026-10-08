@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { AppShell } from "./app-shell";
-import { items, withRouter } from "./shell.fixtures";
+import { items, withRouter } from "../../shell/shell.fixtures";
 
 // Catalog of the page frame (TE-18): phone, tablet and desktop come from the viewport toolbar.
 const meta = {

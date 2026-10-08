@@ -4,7 +4,7 @@ import {
   type PhaseStatus,
   type PhasesRow,
 } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { Button } from "@/components/ui/button";
 import { CARD_CLASSES, LIST_CLASSES, WARNING_CLASSES } from "../../shared/notices/notices";
 import { PHASE_TEXT, locationText, nextChangeText } from "../../shared/text";
