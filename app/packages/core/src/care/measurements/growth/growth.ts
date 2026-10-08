@@ -20,8 +20,18 @@ export interface GrowthTrend {
   readonly signal: GrowthSignal | null;
 }
 
-/** Relative deviation from which the trend is faster or slower (assumption, US-WAC-03). */
-const TOLERANCE = 0.1;
+/**
+ * Central defaults of the growth evaluation (FR-WAC-03). Assumption, decided by the PO: a last interval rate more than
+ * 10 % above or below the mean of the previous ones is faster or slower. It is one place in the logic, not a stored or
+ * per-account value; callers may pass another tolerance to `growthTrend` (tests, later tuning).
+ */
+export const GROWTH_DEFAULTS = { trendTolerance: 0.1 } as const;
+
+/** An option the caller passes is used only if it is a usable non-negative number. */
+const usable = (tolerance: number | undefined): number =>
+  tolerance !== undefined && Number.isFinite(tolerance) && tolerance >= 0
+    ? tolerance
+    : GROWTH_DEFAULTS.trendTolerance;
 const MS_PER_DAY = 86_400_000;
 
 /** Whole days between two calendar dates `YYYY-MM-DD` (NFR-08: no time zone involved). */
@@ -35,12 +45,12 @@ function daysBetween(from: string, to: string): number {
 
 type Point = Pick<MeasurementRow, "date" | "value"> & Partial<Pick<MeasurementRow, "quality">>;
 
-function classify(last: number, previous: readonly number[]): Trend {
+function classify(last: number, previous: readonly number[], tolerance: number): Trend {
   const mean = previous.reduce((a, b) => a + b, 0) / previous.length;
   if (mean === 0) return "stable";
   const deviation = (last - mean) / Math.abs(mean);
-  if (deviation > TOLERANCE) return "faster";
-  if (deviation < -TOLERANCE) return "slower";
+  if (deviation > tolerance) return "faster";
+  if (deviation < -tolerance) return "slower";
   return "stable";
 }
 
@@ -78,7 +88,10 @@ function signalOf(last: Point, trend: Trend | null): GrowthSignal | null {
  * negative length are skipped, so two measurements on the same day yield no rate. The last measurement's etiolation
  * rating overrides the signal (US-WAC-04). Derived on demand, never stored (P-01).
  */
-export function growthTrend(measurements: readonly Point[]): GrowthTrend {
+export function growthTrend(
+  measurements: readonly Point[],
+  options: { readonly tolerance?: number } = {},
+): GrowthTrend {
   const sorted = sortByDate(measurements);
   const [first, last] = [sorted[0], sorted[sorted.length - 1]];
   const count = sorted.length;
@@ -87,6 +100,8 @@ export function growthTrend(measurements: readonly Point[]): GrowthTrend {
   const rates = intervalRates(sorted);
   const latest = rates[rates.length - 1];
   const trend =
-    rates.length >= 2 && latest !== undefined ? classify(latest, rates.slice(0, -1)) : null;
+    rates.length >= 2 && latest !== undefined
+      ? classify(latest, rates.slice(0, -1), usable(options.tolerance))
+      : null;
   return { count, ratePerYear: overallRate(first, last), trend, signal: signalOf(last, trend) };
 }
