@@ -37,7 +37,7 @@ vi.mock("./collection/hints-page/hints-page", () => {
   return { HintsPage: () => null };
 });
 
-vi.mock("./wishlist/WishlistPage", () => {
+vi.mock("./wishlist/wishlist-page/wishlist-page", () => {
   loaded.pages.push("wishlist");
   return { WishlistPage: () => null };
 });
