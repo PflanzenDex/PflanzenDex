@@ -8,7 +8,7 @@ import {
   openOwnerPool,
   withAccount,
 } from "@pflanzendex/db";
-import type { Pool } from "pg";
+import type { Pool, PoolClient } from "pg";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createApp } from "../app";
 import { checkTaxonomy, pokedexJobHandlers, scheduleChecks } from "./index";
@@ -16,6 +16,11 @@ import { checkTaxonomy, pokedexJobHandlers, scheduleChecks } from "./index";
 // US-POK-03: the build job against real PostgreSQL; the sources are a fake (no network, no clock).
 let pool: Pool;
 let admin: Pool; // superuser fixture pool: setup and cleanup of shared rows (QG-D1)
+// The build job replaces the whole shared `taxon` table, so this file holds the same session lock as discover.test.ts
+// while it owns the table, and removes what the build wrote (also taxa of foreign species) in afterAll.
+const TAXON_LOCK = "select pg_advisory_lock(hashtext('pflanzendex-test-taxon'))";
+let lock: PoolClient | undefined;
+
 const account = randomUUID();
 const operator = randomUUID();
 const speciesId = randomUUID();
@@ -80,6 +85,8 @@ const sources: SourceClient = {
 beforeAll(async () => {
   pool = openOwnerPool();
   admin = openFixturePool();
+  lock = await admin.connect();
+  await lock.query(TAXON_LOCK);
   await migrate(pool);
   await admin.query("insert into account (id) values ($1)", [account]);
   await admin.query(
@@ -101,13 +108,23 @@ beforeAll(async () => {
   await new ReviewPostgres(pool).decide(operator, v.rows[0]?.id ?? "", "reviewed", null);
 });
 afterAll(async () => {
-  await admin.query("delete from job where type = $1", [TAXONOMY_JOB_TYPE]);
-  await admin.query("delete from taxon where latin_name = $1", [latinName]);
-  await admin.query("delete from species where id = $1", [speciesId]);
-  await admin.query("delete from review_case where object_id = $1", [speciesId]);
-  await admin.query("delete from account where id = any($1)", [[account, operator]]);
-  await pool.end();
-  await admin.end();
+  try {
+    await admin.query("delete from job where type = $1", [TAXONOMY_JOB_TYPE]);
+    // One build writes every taxon with the same fingerprint, including those of foreign species.
+    await admin.query(
+      "delete from taxon where catalog_fingerprint in (select catalog_fingerprint from taxon where latin_name = $1)",
+      [latinName],
+    );
+    await admin.query("delete from taxon where latin_name = $1", [latinName]);
+    await admin.query("delete from species where id = $1", [speciesId]);
+    await admin.query("delete from review_case where object_id = $1", [speciesId]);
+    await admin.query("delete from account where id = any($1)", [[account, operator]]);
+  } finally {
+    await lock?.query("select pg_advisory_unlock(hashtext('pflanzendex-test-taxon'))");
+    lock?.release();
+    await pool.end();
+    await admin.end();
+  }
 });
 
 const job = { type: TAXONOMY_JOB_TYPE } as JobRow;

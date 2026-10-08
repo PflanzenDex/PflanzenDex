@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
-import type { Pool } from "pg";
+import type { Pool, PoolClient } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../app";
 
@@ -20,6 +20,10 @@ const verifier = async (token: string) =>
     ? { sub: token.slice(6), email: "x@example.test", name: "T", email_verified: true }
     : null;
 let app: ReturnType<typeof createApp>;
+// `taxon` is one shared table that the taxonomy build job replaces as a whole (US-POK-03). Both test files hold this
+// session lock while they own taxon rows, so a parallel build can neither wipe the rows seeded here nor add its own.
+const TAXON_LOCK = "select pg_advisory_lock(hashtext('pflanzendex-test-taxon'))";
+let lock: PoolClient | undefined;
 
 const get = (sub: string | null, query = "timeZone=Europe%2FBerlin") =>
   app.request(`/discover/suggestions?${query}`, {
@@ -27,12 +31,22 @@ const get = (sub: string | null, query = "timeZone=Europe%2FBerlin") =>
   });
 type Deck = { deck: number; suggestions: { species: string; reasons: string[] }[]; empty: unknown };
 const mine = async (sub: string, query?: string) => (await (await get(sub, query)).json()) as Deck;
-const species = async (sub: string) =>
-  (await mine(sub, "timeZone=Europe%2FBerlin&deck=1")).suggestions.map((s) => s.species);
+// All decks in order, not only the first: foreign taxa left in the shared database may fill deck 1 (size 10).
+const cards = async (sub: string) => {
+  const all: Deck["suggestions"] = [];
+  for (let deck = 1; ; deck++) {
+    const page = await mine(sub, `timeZone=Europe%2FBerlin&deck=${deck}`);
+    if (page.suggestions.length === 0) return all;
+    all.push(...page.suggestions);
+  }
+};
+const species = async (sub: string) => (await cards(sub)).map((s) => s.species);
 
 beforeAll(async () => {
   pool = openOwnerPool();
   admin = openFixturePool();
+  lock = await admin.connect();
+  await lock.query(TAXON_LOCK);
   await migrate(pool);
   app = createApp({ reviewer: verifier, pool });
   for (const latinName of [wished, open])
@@ -43,14 +57,19 @@ beforeAll(async () => {
     );
 });
 afterAll(async () => {
-  await admin.query("delete from taxon where genus = $1", [genus]);
-  await admin.query(
-    "delete from wish where account_id in (select id from account where subject = any($1))",
-    [[keeper, other]],
-  );
-  await admin.query("delete from account where subject = any($1)", [[keeper, other]]);
-  await pool.end();
-  await admin.end();
+  try {
+    await admin.query("delete from taxon where genus = $1", [genus]);
+    await admin.query(
+      "delete from wish where account_id in (select id from account where subject = any($1))",
+      [[keeper, other]],
+    );
+    await admin.query("delete from account where subject = any($1)", [[keeper, other]]);
+  } finally {
+    await lock?.query("select pg_advisory_unlock(hashtext('pflanzendex-test-taxon'))");
+    lock?.release();
+    await pool.end();
+    await admin.end();
+  }
 });
 
 describe("US-ENT-01 suggestions through the API", () => {
@@ -84,7 +103,7 @@ describe("US-ENT-01 suggestions through the API", () => {
     expect(after).not.toContain(wished);
     // The wish is private (P-04, FR-ENT-08): another account still gets the species suggested.
     expect(await species(other)).toContain(wished);
-    const card = (await mine(keeper)).suggestions.find((s) => s.species === open);
+    const card = (await cards(keeper)).find((s) => s.species === open);
     expect(card?.reasons.length).toBeGreaterThanOrEqual(1);
     expect(card?.reasons.length).toBeLessThanOrEqual(3);
   });
