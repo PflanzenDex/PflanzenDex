@@ -206,6 +206,7 @@ Acceptance criteria:
 - Given a link or bookmark to the former address of "Arten" (`/species`), when I open it, then I land on "Entdecken" in the mode "Katalog", the address is replaced (back does not return to it), the focus stays where it was, and the former address is no entry of the navigation.
 - Given a link or bookmark to the profile of one species below the former address (`/species/<id>`), when I open it, then the same profile opens at `/discover/species/<id>` (decision: the profile keeps being a page of its own with a way back, it moves below "Entdecken" so that "Entdecken" stays the current destination and the page title "Artenprofil" is unchanged); links inside the app (Pokédex, wishes) use the new address.
 - Given "Entdecken" is opened, then the suggestion cards and the catalog load only when they are chosen, so the initial JavaScript does not carry them (QG-U6); an animation library for the cards would load only with the suggestions (ADR 0011).
+- Given the component catalog (Storybook), then page stories show the real screens "Heute", "Sammlung" (each mode), "Entdecken" (each mode), "Freunde" and "Konto" with fixture data and no network, in light and dark and at 360 px and 1280 px; they pass the conformance run (QG-U5) and are not part of the production bundle.
 
 Decision and tokens: ADR [0011](../decisions/0011-redesign-direction-greenhouse.md), E-24.
 
