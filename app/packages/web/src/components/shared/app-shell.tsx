@@ -11,6 +11,15 @@ import type { NavItem } from "./nav-item";
 
 const MAIN_ID = "inhalt";
 
+/** Room kept beyond a bar for the focus ring (2 px ring plus 2 px offset, doubled for sub-pixel rounding), US-QS-14. */
+const FOCUS_RING_ROOM = 8;
+
+/** The bar's real height plus the ring room; 0 while the bar is hidden (`display: none`), so rail and sidebar add none. */
+function clearance(bar: Element | null | undefined): string {
+  const height = bar?.getBoundingClientRect().height ?? 0;
+  return `${height > 0 ? height + FOCUS_RING_ROOM : 0}px`;
+}
+
 /**
  * Keeps the focused element out from under the sticky header and the fixed bottom bar (US-QS-08, WCAG 2.4.11): the
  * page's scroll padding follows their real height, which changes with wrapping, safe areas and the `md` breakpoint.
@@ -24,8 +33,8 @@ function useStickyScrollPadding(shell: RefObject<HTMLDivElement | null>) {
     // From `md` the header and the bar are `display: none` and measure 0, so rail and sidebar add no padding.
     const html = document.documentElement.style;
     const update = () => {
-      html.scrollPaddingTop = `${header?.getBoundingClientRect().height ?? 0}px`;
-      html.scrollPaddingBottom = `${bar?.getBoundingClientRect().height ?? 0}px`;
+      html.scrollPaddingTop = clearance(header);
+      html.scrollPaddingBottom = clearance(bar);
     };
     const observer = new ResizeObserver(update);
     for (const el of [header, bar]) if (el) observer.observe(el);

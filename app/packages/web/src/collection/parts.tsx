@@ -28,7 +28,7 @@ export const GRID = "m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:
 /** The care profile cards are wider (a row of controls each): two columns at most. */
 export const PROFILE_GRID = "m-0 grid list-none grid-cols-1 gap-3 p-0 lg:grid-cols-2";
 export const CARD =
-  "grid min-w-0 content-start gap-1 break-words rounded-xl border border-border bg-card p-3 text-card-foreground";
+  "grid min-w-0 content-start gap-1 break-words rounded-card bg-secondary p-3 text-secondary-foreground";
 
 /** Secondary text: explanations, the "Art:" lines of a card. */
 export function Quiet(props: { children: ReactNode; className?: string; live?: boolean }) {

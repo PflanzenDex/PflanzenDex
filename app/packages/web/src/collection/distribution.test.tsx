@@ -35,6 +35,16 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe("US-QS-14 the distribution inside the page card", () => {
+  it("is a flat tinted surface without its own border or card fill", () => {
+    render(<DistributionView distribution={distribution()} />);
+    const box = screen.getByRole("region", { name: "Verteilung auf die Lichtzonen" });
+    expect(box.className).toContain("bg-secondary");
+    expect(box.className).not.toContain("border-border");
+    expect(box.className).not.toContain("bg-card");
+  });
+});
+
 describe("US-LIC-02 client of the distribution API", () => {
   it("loads the distribution with bearer token", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () =>

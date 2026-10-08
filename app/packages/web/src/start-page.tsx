@@ -59,7 +59,7 @@ function Overview(props: { counts: OnboardingCounts; onOpen: (t: Target) => void
         <ul className="m-0 grid list-none gap-3 p-0" aria-label="Hinweise zur Einrichtung">
           {hints.map((h) => (
             <li key={h.id}>
-              <Card className="grid content-start gap-1">
+              <Card nested className="grid content-start gap-1">
                 <p>{h.text}</p>
                 <p className="text-sm text-muted-foreground">{h.nextAction}</p>
                 <div className={ACTIONS}>

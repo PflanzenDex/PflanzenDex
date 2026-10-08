@@ -209,3 +209,9 @@ Not run: `make ci` of section 0 is repeated for this docs-only change (result in
 - Environment: the Keycloak users `qs14-*@example.test` stay in the shared local Keycloak; the scratch database and this run's API and Vite processes were removed after the test.
 
 Screenshots (`us-qs-14/`, prefix `re-`, 128 colours): `re-01` planning sheet, `re-02` drawer "Mehr", `re-03` and `re-04` "Freunde", `re-05` overdue chip, `re-06` start-page hints, `re-07` archive entry, `re-08` "Mehr laden".
+
+### Fixes for #629 and #630 (2026-10-08)
+
+- #629: the shell already kept the page's scroll padding equal to the bar height, so `scrollIntoView({ block: "nearest" })` put the button exactly at the bar's top edge. The shell now adds 8 px of room for the focus ring (ring 2 px plus offset 2 px, doubled) to the top and bottom scroll padding, and still adds nothing where the bars are hidden (from `md`). Measured in Storybook at 360 px: the bottom scroll padding is 67 px (bar 59 px plus 8 px). The real "Mehr laden" button with 45 species was not re-run against the real app; the geometry check on a Storybook page only confirmed the padding value.
+- #630 (a): cards inside the page card (start-page hints, archive entries, distribution card, specimen cards in "Sammlung") are flat and one surface step tinted (`bg-secondary`, no second shadow or border), as ADR 0011 decision 4 says depth comes from the surface step. `Card` got a `nested` prop. (b): the status chip uses `rounded-control` instead of the full pill, so a wrapped text stays a soft box. (c): the two friend buttons share one wrapping row with a gap.
+- Screenshots `fix-01` and `fix-02` (prefix `fix-`, 128 colours): "Sammlung" and "Heute" in dark mode at 360 px from the Storybook page stories. Before: `re-05`, `re-06`, `re-07`. The friend row at 1280 px has no page story with a friend list, so (c) is covered by a unit test only.

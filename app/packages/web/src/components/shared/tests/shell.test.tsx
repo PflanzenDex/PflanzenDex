@@ -288,10 +288,30 @@ describe("US-QS-08 Operable by keyboard alone (app shell)", () => {
         return { height: this.tagName === "HEADER" ? 52 : 68 } as DOMRect;
       });
     const { unmount } = at("/", <AppShell items={make(9)}>x</AppShell>);
-    expect(document.documentElement.style.scrollPaddingTop).toBe("52px");
-    expect(document.documentElement.style.scrollPaddingBottom).toBe("68px");
+    // US-QS-14: 8 px more than the bars, so a focus ring (2 px ring, 2 px offset) of the focused element stays clear.
+    expect(document.documentElement.style.scrollPaddingTop).toBe("60px");
+    expect(document.documentElement.style.scrollPaddingBottom).toBe("76px");
     unmount();
     expect(document.documentElement.style.scrollPaddingTop).toBe("");
+    height.mockRestore();
+    vi.unstubAllGlobals();
+  });
+
+  it("US-QS-14 · 2.4.11 no extra scroll padding where the bars are hidden (rail and sidebar)", () => {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const height = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(() => ({ height: 0 }) as DOMRect);
+    const { unmount } = at("/", <AppShell items={make(9)}>x</AppShell>);
+    expect(document.documentElement.style.scrollPaddingTop).toBe("0px");
+    expect(document.documentElement.style.scrollPaddingBottom).toBe("0px");
+    unmount();
     height.mockRestore();
     vi.unstubAllGlobals();
   });

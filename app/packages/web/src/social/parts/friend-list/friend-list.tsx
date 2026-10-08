@@ -54,25 +54,13 @@ function FriendRow(props: { friend: Friend; busy: boolean; onEnd: (friend: Frien
             ? "Gemeinsame Arten: unbekannt (noch nichts freigegeben)"
             : `Gemeinsame Arten: ${f.sharedSpecies}`}
         </span>
-        <span className="mt-2">
+        <span className="mt-2 flex flex-wrap gap-2">
           <Button asChild variant="outline" size="touch">
             <Link to={`/friends/${f.id}`} aria-label={`Sammlung von ${nameOf(f.name)} ansehen`}>
               Sammlung ansehen
             </Link>
           </Button>
-        </span>
-        {asking ? (
-          <EndConfirm
-            name={nameOf(f.name)}
-            busy={props.busy}
-            onYes={() => {
-              setAsking(false);
-              props.onEnd(f);
-            }}
-            onNo={() => setAsking(false)}
-          />
-        ) : (
-          <span className="mt-2">
+          {!asking && (
             <Button
               type="button"
               size="touch"
@@ -82,7 +70,18 @@ function FriendRow(props: { friend: Friend; busy: boolean; onEnd: (friend: Frien
             >
               Freundschaft beenden
             </Button>
-          </span>
+          )}
+        </span>
+        {asking && (
+          <EndConfirm
+            name={nameOf(f.name)}
+            busy={props.busy}
+            onYes={() => {
+              setAsking(false);
+              props.onEnd(f);
+            }}
+            onNo={() => setAsking(false)}
+          />
         )}
       </Card>
     </li>

@@ -248,6 +248,23 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     );
   });
 
+  it("US-QS-14 the two friend buttons sit in one wrapping row, like the buttons of the share cards", async () => {
+    fakeServer({
+      friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: null }],
+    });
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
+    const see = await screen.findByRole("link", { name: "Sammlung von Ben ansehen" });
+    const end = screen.getByRole("button", { name: "Freundschaft mit Ben beenden" });
+    const row = see.parentElement;
+    expect(row).toBe(end.parentElement);
+    expect(row?.className).toContain("flex-wrap");
+    expect(row?.className).toContain("gap-2");
+  });
+
   it("US-QS-07 shows each friend with a decorative initials avatar, the name stays the text", async () => {
     fakeServer({
       friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: null }],
@@ -368,8 +385,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
       expect.stringMatching(/Ben$/),
       expect.stringMatching(/^befreundet seit /),
       "Gemeinsame Arten: unbekannt (noch nichts freigegeben)",
-      "Sammlung ansehen",
-      "Freundschaft beenden",
+      "Sammlung ansehenFreundschaft beenden", // one wrapping row, see the test below
     ]);
   });
 
