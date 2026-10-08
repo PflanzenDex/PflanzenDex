@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { CATALOG_ADDRESS } from "@/navigation";
+import { cn } from "@/lib/utils";
 import { SuggestionCard } from "../suggestion-card/suggestion-card";
 
 /**
@@ -17,26 +18,36 @@ const SAVED = 0;
 /** "Nein · Später · Ja" as buttons; they are the way without a swipe gesture (NFR-13). */
 function Actions(props: { onDecide: (d: Decision) => void }) {
   return (
-    <div className="mx-auto flex w-full max-w-md gap-2">
-      <Button
-        variant="outline"
-        size="touch"
-        className="flex-1"
-        onClick={() => props.onDecide("no")}
-      >
-        Nein
-      </Button>
-      <Button
-        variant="secondary"
-        size="touch"
-        className="flex-1"
-        onClick={() => props.onDecide("later")}
-      >
-        Später
-      </Button>
-      <Button size="touch" className="flex-1" onClick={() => props.onDecide("yes")}>
-        Ja
-      </Button>
+    <div
+      className={cn(
+        // Stays in view with the card (US-QS-14, NFR-13): above the phone bar (3.5 rem plus safe area, a little under
+        // the bar's 59 px so no content shows in between), at the window bottom from `md`. A window too low for it
+        // (400 % zoom) scrolls it like content.
+        "sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-10 border-t border-border bg-background py-2",
+        "md:bottom-0 [@media(max-height:30rem)]:static",
+      )}
+    >
+      <div className="mx-auto flex w-full max-w-md gap-2">
+        <Button
+          variant="outline"
+          size="touch"
+          className="flex-1"
+          onClick={() => props.onDecide("no")}
+        >
+          Nein
+        </Button>
+        <Button
+          variant="secondary"
+          size="touch"
+          className="flex-1"
+          onClick={() => props.onDecide("later")}
+        >
+          Später
+        </Button>
+        <Button size="touch" className="flex-1" onClick={() => props.onDecide("yes")}>
+          Ja
+        </Button>
+      </div>
     </div>
   );
 }
@@ -83,11 +94,11 @@ export function DeckView(props: {
         {`Vorschlag ${position + 1} von ${deck.suggestions.length}`}
       </p>
       <SuggestionCard key={current.species} suggestion={current} onSwipe={advance} />
-      <Actions onDecide={advance} />
       <p className="m-0 text-center text-sm text-muted-foreground">
         Deine Entscheidungen werden noch nicht gespeichert: „Ja“ und „Nein“ blättern vorerst nur
         weiter.
       </p>
+      <Actions onDecide={advance} />
     </div>
   );
 }

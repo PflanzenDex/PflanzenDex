@@ -39,6 +39,7 @@ function suggestionOf(card: CollectorCard, newFamily: boolean): Suggestion {
     species: card.species,
     germanName: card.germanName,
     summary: card.summary,
+    summaryLanguage: card.summaryLanguage,
     family: card.family,
     lightZone: card.lightZone,
     difficulty: card.difficulty,
