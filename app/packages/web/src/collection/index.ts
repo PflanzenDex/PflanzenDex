@@ -7,7 +7,7 @@ export const HintsPage = lazyPage(() =>
   import("./HintsPage").then((m) => ({ default: m.HintsPage })),
 );
 export const CareProfileSection = lazyPage(() =>
-  import("./CareProfilePage").then((m) => ({ default: m.CareProfileSection })),
+  import("./care-profile-page/care-profile-page").then((m) => ({ default: m.CareProfileSection })),
 );
 export const DifficultyPage = lazyPage(() =>
   import("./DifficultyPage").then((m) => ({ default: m.DifficultyPage })),
