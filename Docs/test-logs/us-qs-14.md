@@ -215,3 +215,67 @@ Screenshots (`us-qs-14/`, prefix `re-`, 128 colours): `re-01` planning sheet, `r
 - #629: the shell already kept the page's scroll padding equal to the bar height, so `scrollIntoView({ block: "nearest" })` put the button exactly at the bar's top edge. The shell now adds 8 px of room for the focus ring (ring 2 px plus offset 2 px, doubled) to the top and bottom scroll padding, and still adds nothing where the bars are hidden (from `md`). Measured in Storybook at 360 px: the bottom scroll padding is 67 px (bar 59 px plus 8 px). The real "Mehr laden" button with 45 species was not re-run against the real app; the geometry check on a Storybook page only confirmed the padding value.
 - #630 (a): cards inside the page card (start-page hints, archive entries, distribution card, specimen cards in "Sammlung") are flat and one surface step tinted (`bg-secondary`, no second shadow or border), as ADR 0011 decision 4 says depth comes from the surface step. `Card` got a `nested` prop. (b): the status chip uses `rounded-control` instead of the full pill, so a wrapped text stays a soft box. (c): the two friend buttons share one wrapping row with a gap.
 - Screenshots `fix-01` and `fix-02` (prefix `fix-`, 128 colours): "Sammlung" and "Heute" in dark mode at 360 px from the Storybook page stories. Before: `re-05`, `re-06`, `re-07`. The friend row at 1280 px has no page story with a friend list, so (c) is covered by a unit test only.
+
+## Gap test: role "Betreiber" and "Vorschläge" with real taxa (2026-10-08, issue #635)
+
+**Branch:** `chore/qs-14-redesign-test-gap-betreiber` (draft PR #640), based on `dev` at `747751a`. Docs only; no app code changed.
+
+**Setup:** same method as the re-test: real Keycloak 26.8, API (port 55270), Vite on port 5173 (the realm only allows that redirect address), PostgreSQL 16 in this worktree's container (port 54770) with a fresh scratch database `pflanzendex_manual` (migrations 0001 to 0041, dropped afterwards), Chromium 1243 headless driven by Playwright, `de-DE`, light and dark, reduced motion. The existing Keycloak users were reused, none created: "Mara Testperson" (main account) and "Jonas Testperson" (second account). Changes that are not in the repo:
+
+- **Operator role:** roles live in the table `account_role` (`is_operator()` and `is_reviewer()` read it; `GET /account` reports `operator` and `reviewer`). No Keycloak realm role is involved, so the Keycloak admin password was not needed. Mara got `operator` and Jonas `reviewer` with `insert into account_role (account, role) ...` in the scratch database. (The database function `is_reviewer()` is true for any role, so the operator also sees "Prüfliste"; that matches the spec text.)
+- **Species and taxa:** 35 real house plant names (Monstera deliciosa, Hoya carnosa, ...) were proposed through the API by Mara and approved through `POST /review/:id/decide` by Jonas. The taxonomy job of the API process (the real OpenTree, Wikidata, Wikipedia and GBIF run, started with the API) then built the taxa itself within about two minutes: 33 `resolved`, 2 `unresolved` (`Ceropegia woodii`: `taxonomy.not_species`, `Dracaena trifasciata`: `taxonomy.no_match`). So no taxon was inserted by SQL and there is no deviation from the repo here. 12 of the 33 summaries are English (`summary_language = 'en'`), 21 German.
+- Mara's collection for the second look: light zones "Lampe 1" to "Lampe 4" (defaults), locations "Wachstumsregal" and "Fensterbank", three specimens (Aloe vera, Epipremnum aureum, Hoya carnosa), two wishes. For the "AllDecided" state Jonas put all 35 species on his wishlist through the API.
+- On the Betreiber page I saved a monthly cost (12,50 EUR), created one invitation code and switched the registration mode to "nur mit Einladungscode" and back to "offen für alle" in the scratch database.
+
+Legend as above. Screenshots (`us-qs-14/`, prefix `gap-`, 8 files, 128 colours) are 360×800, 768×900 and 1280×800.
+
+| #   | Check                                                        | Result                               |
+| --- | ------------------------------------------------------------ | ------------------------------------ |
+| G0  | how the operator role is granted                             | ✅ database, no Keycloak admin       |
+| G1a | navigation for the operator at 360, 768, 1280 px, both modes | ✅                                   |
+| G1b | Betreiber page: heading, layout, overflow, targets, focus    | ✅ (⚠️ focus lost after saving #642) |
+| G1c | role gate for a reviewer opening `/operator`                 | ✅                                   |
+| G2a | deck with real taxa: cards, reasons, keyboard, swipe         | ⚠️ #643, #644, #645                  |
+| G2b | end of a deck, "Neuer Stapel", last deck                     | ⚠️ #643                              |
+| G2c | "AllDecided" and its wording                                 | ✅                                   |
+| G2d | "Mehr laden" in "Vorschläge"                                 | ⏭️ does not exist there              |
+
+### G0 and G1. Role "Betreiber"
+
+**Expected** (`Docs/PRODUCT-SPECS/14-Cross-Cutting.md`, US-QS-14): for an account with the role operator the bar at 360 px shows "Heute", "Sammlung", "Entdecken", "Freunde", "Mehr" and the drawer "Mehr" holds "Konto", "Prüfliste" and "Betreiber"; the rail (768 px) and the sidebar (1280 px) show "Konto" and the role-only entries as separate items. The page has one main heading, no horizontal scroll, controls of at least 44 px and a visible focus.
+
+**Observed** (Mara as operator; measured with `getBoundingClientRect` and `getComputedStyle` in all six combinations of 360, 768, 1280 px and light, dark):
+
+- ✅ 360 px: `nav "Navigation unten"`, 360×59 px, five items of 69×58 px: "Heute", "Sammlung", "Entdecken", "Freunde", "Mehr". The drawer (`role=dialog`) lists "Konto", "Prüfliste", "Betreiber", each 328×44 px (`gap-01-*`). On `/operator` the item "Mehr" is the highlighted one (`gap-02-*`).
+- ✅ 768 px: `nav "Navigation seitlich"`, a rail 80 px wide: brand, then "Heute", "Sammlung", "Entdecken", "Freunde", "Konto", "Prüfliste", "Betreiber" (71×58 px each); "Betreiber" carries `aria-current="page"` on its page (`gap-03-*`).
+- ✅ 1280 px: `nav "Hauptnavigation"`, a sidebar 248 px wide, items 223×44 px; a rule sets "Konto", "Prüfliste" and "Betreiber" off from the four destinations; the current entry is highlighted (`gap-04-*`).
+- ✅ The page: one `h1` "Betreiber", title "Betreiber – PflanzenDéx", sections "Monatliche Kosten", "Registrierung", "Einladungscodes"; the heading takes the focus after the navigation (all six combinations); scroll overflow 0 px; every button, input and link is at least 44 px high (only the visually hidden skip link measures 1×1 px). The keyboard order is skip link, brand, (sidebar entries), the form fields, the buttons, the bar. The focus ring is visible on "Kosten speichern" (`gap-02-*` shows the page, the ring by eye in a separate dark 360 px shot that is not part of the set). Light and dark show the same layout; on the phone the statistics stack as label above value, from 1280 px they sit in two columns.
+- ✅ Writes work: "Kosten speichern" with 12,50 gives "Monatliche Kosten gespeichert." and "Kosten pro Nutzer 6,25 € (Oktober 2026, manuell eingetragen)" with two accounts; "Code erstellen" shows the code once ("ZKKJ-SWE2-..." with "Gültig bis 15.10.2026, 16:40. Der Code wird nur jetzt angezeigt ...") and a list line "offen · erstellt ..."; the status line is a `role=status` with "Einladungscode erstellt.". The registration switch toggles ("Im Moment: nur mit Einladungscode" and back).
+- ✅ Jonas (reviewer, no operator role): the bar shows "Heute", "Sammlung", "Entdecken", "Freunde", "Mehr" (drawer not opened in this run, it was in R4); opening `/operator` by address leads to the start page with "Der Betreiberbereich ist nur für den Betreiber sichtbar." (a refusal that names the reason, P-10).
+- ⚠️ After each of the three writes the keyboard focus is lost to `BODY` (measured for "Kosten speichern", "Für alle öffnen" and "Code erstellen" with Enter): #642.
+- ⚠️ By eye: the page is a plain column without a page card, unlike "Freunde". On a phone the section "Registrierung" button "Nur mit Einladungscode erlauben" looks like an outlined chip with weak contrast to the page (not measured). A judgment call, not filed.
+- ⏭️ Not checked: a Keycloak realm role (does not exist), axe and exact contrast on the live page, a real phone, screen reader output, the invitation flow (registering with the code) and the page with several invitations.
+
+### G2. "Vorschläge" with real taxa
+
+**Expected** (`Docs/PRODUCT-SPECS/17-Discover.md`, US-ENT-01 to US-ENT-04, as far as they are built; US-ENT-04 is not): one card at a time with image and source, name, text, zone, difficulty and unknown attributes as "unbekannt", 1 to 3 reasons from own data, "Nein", "Später", "Ja" as buttons and by swipe, "Für heute durch" after the last card with "Neuer Stapel", an empty view with the reason and the next action.
+
+**Observed:**
+
+- ✅ With 33 resolved taxa Mara sees "Vorschlag 1 von 10" with image, `h2` name, "Deutscher Name unbekannt", the Wikipedia text, a definition list ("Lichtzone", "Schwierigkeit" as ★☆☆, "Luftfeuchte", "Mindesttemperatur", "Haustiere", "Wuchsgröße" as "unbekannt"), the source line "Bild und Text: Wikipedia (CC BY-SA)", "Warum diese Art?" and the three buttons. No overflow at 360 and 1280 px, light and dark (`gap-05-*`). Decks have 10, 10, 10 and 3 cards (33 candidates), the fifth request ends in an empty view.
+- ✅ Keyboard: Tab reaches the buttons in 6 steps at 360 px (13 at 1280 px, through the sidebar); Enter on "Ja", "Nein" or "Später" moves on and puts the focus on the new card title (`H2#suggestion-title`), the line "Vorschlag n von 10" is `aria-live="polite"`. The focus ring on "Nein" is visible (`gap-06-*`).
+- ✅ A drag with the mouse (pointer events) to the right and to the left each advanced one card. ⏭️ A real touch swipe was not tested.
+- ✅ The honesty line "Deine Entscheidungen werden noch nicht gespeichert: „Ja“ und „Nein“ blättern vorerst nur weiter." is visible and the end card says "Für heute durch. 0 neu auf der Wunschliste." even after several "Ja" (consistent with US-ENT-04 not built, P-10).
+- ✅ "AllDecided" (Jonas with all 35 species on the wishlist): "Keine neuen Vorschläge: Du besitzt alle Arten des Katalogs oder hast dich schon entschieden." with "Schlage eine neue Art für den Katalog vor." and the button "Art vorschlagen" (`gap-07-*`, dark 360 px; the same at 1280 px light). The reason and the next action are clear, the target (catalog mode) exists. The earlier misleading "Der Katalog hat noch keine Arten." (taxa missing) did not show now because taxa existed.
+- ⚠️ Focus is lost to `BODY` at the end of a deck ("Für heute durch ...", `gap-08-*`) and after "Neuer Stapel" (every deck and the final empty view): #643.
+- ⚠️ The three action buttons sit below the fold: y=937 px at 360×800 (the page is 1169 px high, the bar starts at 741 px), y=840 px at 1280×800 (`gap-05-*` shows the card, `gap-06-*` the page after scrolling by 369 px). The source line link is 20 px high. #644.
+- ⚠️ 12 of 33 texts are English in the German card, without `lang` attribute: #645.
+- ⚠️ Reasons: every card shows the same two lines, "Diese Art hast du noch nicht gefangen." (true for every candidate, so no information) and "Neue Familie: <Familie> fehlt dir noch im Pokédex." With an empty collection deck 1 holds ten Araceae in a row and deck 2 starts with Asparagaceae, so the order follows the families, not variety. This is the state of the built part (US-ENT-03 and the scoring of US-ENT-05 are open in the spec, status 🟨); the card does not claim more than it knows. Not filed, as a story of the epic ENT covers it.
+- ⚠️ "Neuer Stapel" is offered after the last small deck (3 cards) although no further deck exists; the next request answers "Keine weiteren Vorschläge: Dieser Stapel ist der letzte." (the wording talks about a deck the user never saw). Honest and with a next action, but a dead end by one tap. Not filed (wording).
+- ⏭️ "Mehr laden" does not exist in "Vorschläge" (the deck uses "Neuer Stapel"); the "Katalog" mode with "Mehr laden" was checked in the re-test (R3). The state with an empty taxon table ("Der Katalog hat noch keine Arten.") was not repeated. The filters of US-ENT-02 are not built. Reasons from thriving or struggling specimens (measurements) were not set up, so only the two built reason lines were seen.
+
+### Offene Punkte after the gap test
+
+- New issues: #642 (focus lost after saving on the Betreiber page), #643 (focus lost at the end of a deck and after "Neuer Stapel"), #644 (decision buttons below the fold, small source link), #645 (English texts without `lang`). They have no Priority on the board yet (bugs: P1 by the rule of thumb).
+- Still not checked (unchanged): contrast and axe on the live pages (#637), real phone and other browsers (#638), screen reader output (#636), a real touch swipe, the invitation redemption flow.
+- Environment: the Keycloak users `qs14-*@example.test` stay in the shared local Keycloak (reused, none created); the scratch database, this run's API and Vite processes were removed after the test. The registration mode of the scratch database was set back before it was dropped.
