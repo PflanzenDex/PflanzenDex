@@ -24,6 +24,9 @@ const ENDPOINTS = [
   "/specimens/hints",
   "/species?q=",
   `/discover/suggestions?${TZ}`,
+  `/pokedex/cards?${TZ}`,
+  `/pokedex/ownership?${TZ}`,
+  "/wishes/candidates",
 ];
 const baseline = JSON.parse(
   readFileSync(new URL("query-count-baseline.json", import.meta.url), "utf8"),
@@ -59,8 +62,20 @@ async function ok(sub: string, method: string, path: string, body?: unknown) {
   return r.body;
 }
 
-/** An account with `n` species, specimens (each in its own location), measurements and treatments. */
+/** A few resolved catalog taxa (shared table), so the Pokedex and wish endpoints have rows to derive. */
+async function seedTaxa(): Promise<void> {
+  for (let g = 0; g < 5; g++)
+    await admin.query(
+      `insert into taxon (latin_name, status, accepted_name, genus, family, catalog_fingerprint, built_at)
+       values ($1, 'resolved', $1, $2, 'Qcfamily', $3, now())`,
+      [`Qcgenus${run}${g} species`, `Qcgenus${run}${g}`, `qc-${run}`],
+    );
+}
+
+/** An account with `n` species, specimens (each in its own location), measurements, treatments and 3 wishes. */
 async function seed(sub: string, n: number): Promise<void> {
+  for (let g = 0; g < 3; g++)
+    await ok(sub, "POST", "/wishes", { name: `Qcgenus${run}${g} species` });
   const zone = await ok(sub, "POST", "/light-zones", { name: `Zone ${run}`, luxCeiling: 30000 });
   for (let i = 0; i < n; i++) {
     const letters =
@@ -126,6 +141,7 @@ beforeAll(async () => {
         }
       : null;
   app = createApp({ reviewer: verifier, pool, clock: () => NOW });
+  await seedTaxa();
   await seed(subs.small, SMALL);
   await seed(subs.large, LARGE);
   await measure("small");
@@ -144,6 +160,7 @@ afterAll(async () => {
     [both],
   );
   await admin.query("delete from account where subject = any($1)", [both]);
+  await admin.query("delete from taxon where catalog_fingerprint = $1", [`qc-${run}`]);
   await pool.end();
   await admin.end();
 });
