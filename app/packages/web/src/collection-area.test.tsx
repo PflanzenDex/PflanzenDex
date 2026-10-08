@@ -35,7 +35,7 @@ const emptyView = {
 beforeAll(async () => {
   await Promise.all([
     import("./collection/collection-page/collection-page"),
-    import("./care/MeasurePage"),
+    import("./care/measure/measure-page/measure-page"),
   ]);
 }, 30_000);
 

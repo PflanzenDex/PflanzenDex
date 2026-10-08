@@ -27,7 +27,7 @@ vi.mock("@/components/routing/areas/today-area/today-area", () => {
   return { TodayArea: () => null };
 });
 
-vi.mock("./care/TreatmentsPage", () => {
+vi.mock("./care/treatments/treatments-page/treatments-page", () => {
   loaded.pages.push("treatments");
   return { TreatmentsPage: () => null };
 });

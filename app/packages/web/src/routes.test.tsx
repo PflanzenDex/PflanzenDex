@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 // A mocked module factory runs only when the module is imported: this records which page chunks a route loads.
 const loaded = vi.hoisted(() => ({ pages: [] as string[] }));
-vi.mock("./care/MeasurePage", () => {
+vi.mock("./care/measure/measure-page/measure-page", () => {
   loaded.pages.push("care");
   return { MeasurePage: () => null };
 });
