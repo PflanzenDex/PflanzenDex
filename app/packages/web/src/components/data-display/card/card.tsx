@@ -27,6 +27,8 @@ type CardOwnProps = {
   media?: React.ReactNode;
   /** Trailing row below the body, separated by a rule (dates, badges, secondary actions of a static card). */
   footer?: React.ReactNode;
+  /** Classes for the padded body block; only used when `media` or `footer` is present (see the layout contract). */
+  bodyClassName?: string | undefined;
 };
 
 /**
@@ -40,13 +42,16 @@ export type CardProps = CardOwnProps &
     onClick?: React.MouseEventHandler<HTMLElement>;
   };
 
+// Layout contract (US-QS-14): without media and footer the children are direct children of the card element, which
+// carries the padding itself, so `className="grid gap-1"` on the card lays the children out. With media or footer the
+// children sit in a padded body block that takes `bodyClassName`.
 function Slots(props: CardOwnProps & { children: React.ReactNode }) {
   return (
     <>
       {props.media ? (
         <span className="block overflow-hidden rounded-t-card">{props.media}</span>
       ) : null}
-      <span className="block p-4">{props.children}</span>
+      <span className={cn("block p-4", props.bodyClassName)}>{props.children}</span>
       {props.footer ? (
         <span className="block border-t border-border px-4 py-3">{props.footer}</span>
       ) : null}
@@ -55,11 +60,15 @@ function Slots(props: CardOwnProps & { children: React.ReactNode }) {
 }
 
 const Card = React.forwardRef<HTMLElement, CardProps>((props, ref) => {
-  const { media, footer, className, children, ...rest } = props;
-  const slots = (
-    <Slots media={media} footer={footer}>
+  const { media, footer, bodyClassName, className, children, ...rest } = props;
+  const slotted = Boolean(media) || Boolean(footer);
+  const pad = slotted ? "" : "p-4";
+  const slots = slotted ? (
+    <Slots media={media} footer={footer} bodyClassName={bodyClassName}>
       {children}
     </Slots>
+  ) : (
+    children
   );
   if (typeof props.href === "string") {
     const { href, onClick, ...anchor } = rest;
@@ -68,7 +77,7 @@ const Card = React.forwardRef<HTMLElement, CardProps>((props, ref) => {
         ref={ref as React.Ref<HTMLAnchorElement>}
         href={href}
         {...(onClick ? { onClick: onClick as React.MouseEventHandler<HTMLAnchorElement> } : {})}
-        className={cn(cardVariants({ interactive: true }), className)}
+        className={cn(cardVariants({ interactive: true }), pad, className)}
         {...anchor}
       >
         {slots}
@@ -84,6 +93,7 @@ const Card = React.forwardRef<HTMLElement, CardProps>((props, ref) => {
         className={cn(
           cardVariants({ interactive: true }),
           "h-auto items-stretch justify-start whitespace-normal rounded-[var(--radius-card)] p-0 text-left text-base font-normal hover:bg-card hover:text-card-foreground",
+          pad,
           className,
         )}
         {...(rest as Omit<ButtonProps, "size" | "variant" | "className" | "children">)}
@@ -95,7 +105,7 @@ const Card = React.forwardRef<HTMLElement, CardProps>((props, ref) => {
   return (
     <div
       ref={ref as React.Ref<HTMLDivElement>}
-      className={cn(cardVariants(), className)}
+      className={cn(cardVariants(), pad, className)}
       {...(rest as React.HTMLAttributes<HTMLDivElement>)}
     >
       {slots}

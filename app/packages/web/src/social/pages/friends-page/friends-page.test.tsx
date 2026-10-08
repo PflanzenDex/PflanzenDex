@@ -349,4 +349,38 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(await screen.findByText("Gemeinsame Arten: 2")).toBeTruthy();
     expect(screen.getByText("Gemeinsame Arten: 0")).toBeTruthy();
   });
+
+  it("US-SOZ-02 US-QS-14 a friend row stacks name, date, shared species and actions as separate items with a gap", async () => {
+    fakeServer({
+      friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: null }],
+    });
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
+    const list = await screen.findByRole("list", { name: "Freunde" });
+    const row = within(list).getByRole("listitem").firstElementChild as HTMLElement;
+    expect(row.className).toMatch(/(^|\s)grid(\s|$)/);
+    expect(row.className).toMatch(/(^|\s)gap-\d/);
+    const items = Array.from(row.children).map((c) => c.textContent);
+    expect(items).toEqual([
+      expect.stringMatching(/Ben$/),
+      expect.stringMatching(/^befreundet seit /),
+      "Gemeinsame Arten: unbekannt (noch nichts freigegeben)",
+      "Sammlung ansehen",
+      "Freundschaft beenden",
+    ]);
+  });
+
+  it("US-QS-14 the title sits on the page background like the other destinations, not inside a card", async () => {
+    fakeServer();
+    const { container } = render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
+    await screen.findByText(/Noch keine Freunde/);
+    expect((container.firstElementChild as HTMLElement).className).not.toContain("bg-card");
+  });
 });

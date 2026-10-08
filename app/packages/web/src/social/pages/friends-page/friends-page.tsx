@@ -170,7 +170,7 @@ export function FriendsPage(props: { api: string; token: Token }) {
   const reload = useInvalidate(KEY);
   const load = useCallback((t: string) => loadFriends(api, t), [api]);
   return (
-    <div className="rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7">
+    <div className="min-w-0">
       <section aria-labelledby="friends-title" className="flex min-w-0 flex-col gap-3">
         <h1 id="friends-title" className="text-2xl font-semibold">
           Freunde

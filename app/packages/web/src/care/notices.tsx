@@ -34,9 +34,8 @@ export function RefusalAlert({ error }: { error: ApiError }) {
   );
 }
 
-/** Marks a row that needs attention (overdue, due today): text first, the border and tint only underline it. */
-export const ATTENTION_CLASSES =
-  "border-l-[6px] border-l-warning-border bg-warning text-warning-foreground";
+/** Marks a row that needs attention (overdue, due today): text first, the border and tint only underline it (a full border: a thick left edge follows the pill's round corner, #608). */
+export const ATTENTION_CLASSES = "border border-warning-border bg-warning text-warning-foreground";
 
 /** Card of one list entry. */
 export const CARD_CLASSES = "min-w-0 rounded-lg border border-border p-3 [overflow-wrap:anywhere]";
