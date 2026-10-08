@@ -17,28 +17,28 @@ What is taken over from the prototype: the **domain behavior** (phases, growth t
 
 ## Files
 
-| File                                                                                 | Content                                                                                                |
-| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| [00-Product-Overview.md](00-Product-Overview.md)                                     | Vision, target group, actors, principles, domain model, glossary                                       |
-| [01-Accounts-and-Onboarding.md](01-Accounts-and-Onboarding.md)                       | Epic ACC: account, sign-in, profile, invitation                                                        |
-| [02-Collection.md](02-Collection.md)                                                 | Epic BES: species catalog, care profile, review, specimens, cutting, archive                           |
-| [03-Light-and-Locations.md](03-Light-and-Locations.md)                               | Epic LIC: light zones, locations, distribution, position                                               |
-| [04-Care-Phases.md](04-Care-Phases.md)                                               | Epic PHA: dormancy/growth phase, location reconciliation                                               |
-| [05-Growth-and-Photos.md](05-Growth-and-Photos.md)                                   | Epic WAC: measurement, trend, etiolation, photos                                                       |
-| [06-Treatments.md](06-Treatments.md)                                                 | Epic BEH: pests, diseases, courses of treatment                                                        |
-| [07-Wishlist.md](07-Wishlist.md)                                                     | Epic WUN: purchase candidates, buffer, path to the plant                                               |
-| [08-Pokedex.md](08-Pokedex.md)                                                       | Epic POK: collector cards, taxonomy, milestones                                                        |
-| [09-Reminders-and-Sensors.md](09-Reminders-and-Sensors.md)                           | Epic MON: notifications, watering, sensors                                                             |
-| [10-Social.md](10-Social.md)                                                         | Epic SOZ: friends, feed, swapping                                                                      |
-| [11-Equipment-and-Recommendations.md](11-Equipment-and-Recommendations.md)           | Epic EQU: equipment, need, affiliate                                                                   |
-| [12-AI-Assistant.md](12-AI-Assistant.md)                                             | Epic KI: AI access via an open interface, tasks, drafts, care by voice, profiles, photo assessment     |
-| [13-Business-Case.md](13-Business-Case.md)                                           | Stages: for us, pays for itself, profit                                                                |
-| [14-Cross-Cutting.md](14-Cross-Cutting.md)                                           | Epic QS: privacy, security, mobile, quality                                                            |
-| [15-Migration-from-Prototype.md](15-Migration-from-Prototype.md)                     | Epic MIG: **dropped** (no import from the vault, IDs reserved)                                         |
-| [16-Releases-and-Decisions.md](16-Releases-and-Decisions.md)                         | Release cut, technology draft, open decisions, non-goals                                               |
-| [17-Discover.md](17-Discover.md)                                                     | Epic ENT: swipe suggestions from the catalog, matching light and thriving plants, filling the wishlist |
-| [18-Architecture-and-Quality-Gates.md](18-Architecture-and-Quality-Gates.md)         | Epic QG: hooks, CI, structure rules, architecture boundaries, complexity, privacy gates, DoD           |
-| [19-Development-Process-and-Automation.md](19-Development-Process-and-Automation.md) | Epic DEV: task runner, hooks, routines, skills, process, release, migrations, operations               |
+| File                                                                                 | Content                                                                                                            |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| [00-Product-Overview.md](00-Product-Overview.md)                                     | Vision, target group, actors, principles, domain model, glossary                                                   |
+| [01-Accounts-and-Onboarding.md](01-Accounts-and-Onboarding.md)                       | Epic ACC: account, sign-in, profile, invitation                                                                    |
+| [02-Collection.md](02-Collection.md)                                                 | Epic BES: species catalog, enrichment from sources, corrections, care profile, review, specimens, cutting, archive |
+| [03-Light-and-Locations.md](03-Light-and-Locations.md)                               | Epic LIC: light zones, locations, distribution, position                                                           |
+| [04-Care-Phases.md](04-Care-Phases.md)                                               | Epic PHA: dormancy/growth phase, location reconciliation                                                           |
+| [05-Growth-and-Photos.md](05-Growth-and-Photos.md)                                   | Epic WAC: measurement, trend, etiolation, photos                                                                   |
+| [06-Treatments.md](06-Treatments.md)                                                 | Epic BEH: pests, diseases, courses of treatment                                                                    |
+| [07-Wishlist.md](07-Wishlist.md)                                                     | Epic WUN: purchase candidates, buffer, path to the plant                                                           |
+| [08-Pokedex.md](08-Pokedex.md)                                                       | Epic POK: collector cards, taxonomy, milestones                                                                    |
+| [09-Reminders-and-Sensors.md](09-Reminders-and-Sensors.md)                           | Epic MON: notifications, watering, sensors                                                                         |
+| [10-Social.md](10-Social.md)                                                         | Epic SOZ: friends, feed, swapping                                                                                  |
+| [11-Equipment-and-Recommendations.md](11-Equipment-and-Recommendations.md)           | Epic EQU: equipment, need, affiliate                                                                               |
+| [12-AI-Assistant.md](12-AI-Assistant.md)                                             | Epic KI: AI access via an open interface, tasks, drafts, care by voice, profiles, photo assessment                 |
+| [13-Business-Case.md](13-Business-Case.md)                                           | Stages: for us, pays for itself, profit                                                                            |
+| [14-Cross-Cutting.md](14-Cross-Cutting.md)                                           | Epic QS: privacy, security, mobile, quality                                                                        |
+| [15-Migration-from-Prototype.md](15-Migration-from-Prototype.md)                     | Epic MIG: **dropped** (no import from the vault, IDs reserved)                                                     |
+| [16-Releases-and-Decisions.md](16-Releases-and-Decisions.md)                         | Release cut, technology draft, open decisions, non-goals                                                           |
+| [17-Discover.md](17-Discover.md)                                                     | Epic ENT: swipe suggestions from the catalog, matching light and thriving plants, filling the wishlist             |
+| [18-Architecture-and-Quality-Gates.md](18-Architecture-and-Quality-Gates.md)         | Epic QG: hooks, CI, structure rules, architecture boundaries, complexity, privacy gates, DoD                       |
+| [19-Development-Process-and-Automation.md](19-Development-Process-and-Automation.md) | Epic DEV: task runner, hooks, routines, skills, process, release, migrations, operations                           |
 
 ## Conventions
 
@@ -55,7 +55,7 @@ What is taken over from the prototype: the **domain behavior** (phases, growth t
 | Epic                    | Stories | tried in the prototype | new    |
 | ----------------------- | ------- | ---------------------- | ------ |
 | ACC Accounts            | 5       | 0                      | 5      |
-| BES Collection          | 11      | 8                      | 3      |
+| BES Collection          | 16      | 8                      | 8      |
 | LIC Light and locations | 5       | 4                      | 1      |
 | PHA Care phases         | 4       | 4                      | 0      |
 | WAC Growth/photos       | 6       | 6                      | 0      |
@@ -71,7 +71,7 @@ What is taken over from the prototype: the **domain behavior** (phases, growth t
 | ENT Discover            | 8       | 0                      | 8      |
 | QG Quality gates        | 9       | 0                      | 9      |
 | DEV Development process | 10      | 0                      | 10     |
-| **Total**               | **134** | **52**                 | **82** |
+| **Total**               | **139** | **52**                 | **87** |
 
 ## Replacing existing documents
 
