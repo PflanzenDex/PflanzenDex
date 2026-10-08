@@ -1,5 +1,5 @@
 import type { SuggestionDeck } from "@pflanzendex/core";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { CATALOG_ADDRESS } from "@/navigation";
@@ -42,17 +42,27 @@ function Actions(props: { onDecide: (d: Decision) => void }) {
 }
 
 /** One deck, one card at a time; after the last card "Für heute durch" and "Neuer Stapel" (US-ENT-01). */
-export function DeckView(props: { deck: SuggestionDeck; onNewDeck: () => void }) {
+export function DeckView(props: {
+  deck: SuggestionDeck;
+  onNewDeck: () => void;
+  /** True for a deck the keeper asked for ("Neuer Stapel"): the button that had the focus is gone, so the focus moves here (SC 2.4.3). */
+  takeFocus?: boolean;
+}) {
   const { deck } = props;
   const [position, setPosition] = useState(0);
+  const endTitle = useRef<HTMLHeadingElement>(null);
+  const takeFocus = props.takeFocus === true;
   useEffect(() => {
-    if (position > 0) document.getElementById("suggestion-title")?.focus();
-  }, [position]);
+    // The next card, the end card or the empty state: the heading of the new view gets the focus, never the body.
+    if (position > 0 || takeFocus)
+      (endTitle.current ?? document.getElementById("suggestion-title"))?.focus();
+  }, [position, takeFocus]);
   if (deck.empty !== null)
     return (
       <EmptyState
         title={deck.empty.text}
         description={deck.empty.nextAction}
+        titleRef={endTitle}
         action={{ label: "Art vorschlagen", href: CATALOG_ADDRESS }}
       />
     );
@@ -62,6 +72,7 @@ export function DeckView(props: { deck: SuggestionDeck; onNewDeck: () => void })
       <EmptyState
         title={`Für heute durch. ${SAVED} neu auf der Wunschliste.`}
         description="Weitere Vorschläge gibt es mit einem neuen Stapel."
+        titleRef={endTitle}
         action={{ label: "Neuer Stapel", onClick: props.onNewDeck }}
       />
     );

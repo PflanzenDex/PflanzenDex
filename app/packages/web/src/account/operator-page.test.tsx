@@ -404,3 +404,41 @@ describe("US-ACC-05 · DS-48 states and primitives", () => {
     expect(document.activeElement).toBe(amount);
   });
 });
+
+describe("US-QS-14 operator page keeps the focus while and after a save (SC 2.4.3)", () => {
+  const created = { id: "i9", code: "ABCD-EFGH", expiresAt: "2026-10-11T10:00:00.000Z" };
+  const cases = [
+    { button: "Kosten speichern", done: "Monatliche Kosten gespeichert.", prep: true },
+    { button: "Nur mit Einladungscode erlauben", done: /ab jetzt nur mit Einladungscode/ },
+    { button: "Code erstellen", done: "Einladungscode erstellt." },
+  ];
+  for (const c of cases)
+    it(`US-QS-14 after "${c.button}" the focus stays on the control, not on the body`, async () => {
+      let release: () => void = () => undefined;
+      serve(
+        (path, init) =>
+          new Promise<Response>((resolve) => {
+            release = () =>
+              resolve(
+                path === "/operator/invitations"
+                  ? new Response(JSON.stringify(created), { status: 201 })
+                  : new Response(JSON.stringify(JSON.parse(String(init.body ?? "{}"))), {
+                      status: 200,
+                    }),
+              );
+          }),
+      );
+      await open();
+      const user = userEvent.setup();
+      if (c.prep) await user.type(screen.getByLabelText("Betrag"), "12,50");
+      const button = screen.getByRole("button", { name: c.button });
+      await user.click(button);
+      // While the write runs the control stays focused and says it is busy; it does not drop the focus.
+      await waitFor(() => expect(button.getAttribute("aria-busy")).toBe("true"));
+      expect(document.activeElement).toBe(button);
+      release();
+      await screen.findByText(c.done);
+      expect(document.activeElement).not.toBe(document.body);
+      expect(document.activeElement?.textContent).toBe(button.textContent);
+    });
+});
