@@ -13,7 +13,7 @@ import {
 } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import type { AuthEnv } from "../kernel";
+import type { AuthEnv } from "../../kernel";
 
 /**
  * Derived views over the specimens (read only, nothing stored, P-01): the light distribution (US-LIC-02), the hints

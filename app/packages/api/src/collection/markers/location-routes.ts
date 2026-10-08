@@ -2,7 +2,7 @@ import { specimenSetLocation } from "@pflanzendex/core";
 import { SpecimenPostgres, IdempotencyPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { body, write, type AuthEnv } from "../kernel";
+import { body, write, type AuthEnv } from "../../kernel";
 
 /**
  * Set the location of a specimen to one of the own locations (US-PHA-03, the action behind the BES-08 hint "location

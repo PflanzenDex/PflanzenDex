@@ -24,11 +24,11 @@ import {
 } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { errorBody, body, write, type AuthEnv } from "../kernel";
-import { archivedRoutes } from "./archived-routes";
-import { markerRoutes } from "./marker-routes";
-import { locationRoutes } from "./location-routes";
-import { derivedRoutes } from "./derived-routes";
+import { errorBody, body, write, type AuthEnv } from "../../kernel";
+import { archivedRoutes } from "../archived/archived-routes";
+import { markerRoutes } from "../markers/marker-routes";
+import { locationRoutes } from "../markers/location-routes";
+import { derivedRoutes } from "../insights/derived-routes";
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const SPECIMEN_PATHS = ["/specimens"] as const;

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
-import { createApp, type AppOptions } from "../app";
+import { createApp, type AppOptions } from "../../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 

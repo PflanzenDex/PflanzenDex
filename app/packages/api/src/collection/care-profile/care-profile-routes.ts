@@ -9,7 +9,7 @@ import {
 } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { body, write, type AuthEnv } from "../kernel";
+import { body, write, type AuthEnv } from "../../kernel";
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const CARE_PROFILE_PATHS = ["/care-profiles"] as const;

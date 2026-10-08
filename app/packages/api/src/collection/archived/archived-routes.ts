@@ -2,7 +2,7 @@ import { specimenArchived, specimenArchive, specimenRestore } from "@pflanzendex
 import { SpeciesPostgres, SpecimenPostgres, IdempotencyPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { body, write, type AuthEnv } from "../kernel";
+import { body, write, type AuthEnv } from "../../kernel";
 
 /**
  * Archive and restore (US-BES-07). Writes only through the operations (P-03, `Idempotency-Key`); the archive returns

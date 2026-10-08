@@ -2,7 +2,7 @@ import { specimenMark } from "@pflanzendex/core";
 import { SpeciesPostgres, SpecimenPostgres, IdempotencyPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { body, write, type AuthEnv } from "../kernel";
+import { body, write, type AuthEnv } from "../../kernel";
 
 /**
  * Give a specimen a marker or change it (US-BES-03). Writing goes only through `specimen.mark` (P-03, with
