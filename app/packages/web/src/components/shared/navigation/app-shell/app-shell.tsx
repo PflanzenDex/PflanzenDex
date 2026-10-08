@@ -7,7 +7,7 @@ import { ToastProvider } from "../../states/toast/toast-provider/toast-provider"
 import { GlobalHeader } from "../global-header/global-header";
 import { SideNav } from "../side-nav/side-nav";
 import { MobileNavBar } from "../mobile-nav-bar/mobile-nav-bar";
-import type { NavItem } from "../nav-item";
+import type { NavItem } from "../nav-model/nav-item";
 
 const MAIN_ID = "inhalt";
 

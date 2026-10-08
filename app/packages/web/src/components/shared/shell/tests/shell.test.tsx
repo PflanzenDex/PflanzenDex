@@ -7,7 +7,7 @@ import { AppShell } from "../../navigation/app-shell/app-shell";
 import { GlobalHeader } from "../../navigation/global-header/global-header";
 import { MobileNavBar } from "../../navigation/mobile-nav-bar/mobile-nav-bar";
 import { SideNav } from "../../navigation/side-nav/side-nav";
-import type { NavItem } from "../../navigation/nav-item";
+import type { NavItem } from "../../navigation/nav-model/nav-item";
 
 beforeAll(() => {
   // jsdom has no matchMedia, Vaul reads it.

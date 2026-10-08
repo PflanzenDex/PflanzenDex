@@ -3,7 +3,10 @@ import { useLocation } from "react-router";
 import type { Species, Specimen } from "@pflanzendex/core";
 import { loadSpecies, searchSpecies } from "./catalog";
 import { linkWishSpecimen, type PathNotice as Notice, type WishToPlant } from "./wishlist";
-import { PATHS, PROFILE_BASE } from "./navigation";
+import {
+  PATHS,
+  PROFILE_BASE,
+} from "./components/shared/navigation/nav-model/navigation/navigation";
 
 type Token = () => Promise<string | undefined>;
 

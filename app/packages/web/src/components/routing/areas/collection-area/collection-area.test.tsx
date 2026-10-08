@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { CollectionArea } from "./collection-area";
-import { EMPTY_DISTRIBUTION } from "./collection/insights/distribution-test-helpers";
+import { EMPTY_DISTRIBUTION } from "../../../../collection/insights/distribution-test-helpers";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -34,8 +34,8 @@ const emptyView = {
 // long the first import of a chunk takes on a busy machine (#444).
 beforeAll(async () => {
   await Promise.all([
-    import("./collection/collection-page/collection-page"),
-    import("./care/measure/measure-page/measure-page"),
+    import("../../../../collection/collection-page/collection-page"),
+    import("../../../../care/measure/measure-page/measure-page"),
   ]);
 }, 30_000);
 

@@ -7,9 +7,6 @@
     ".": 2,
     "app/deploy": 1
   },
-  "LY-4": {
-    "app/packages/web/src": 5
-  },
   "LY-5": {
     ".": 3
   }

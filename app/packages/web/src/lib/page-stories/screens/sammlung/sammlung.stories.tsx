@@ -1,5 +1,5 @@
 import type { Meta } from "@storybook/react-vite";
-import { CollectionArea } from "@/components/routing/areas/lazy-areas";
+import { CollectionArea } from "@/components/routing/areas/shared/lazy-areas";
 import { collectionEmpty, collectionRoutes } from "../../data/collection-data";
 import { API, token } from "../../harness/fake-api.fixtures";
 import { pageParameters, screenStory, variants } from "../../harness/screen-story/screen-story";

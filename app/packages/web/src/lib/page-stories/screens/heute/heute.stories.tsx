@@ -1,5 +1,5 @@
 import type { Meta } from "@storybook/react-vite";
-import { TodayArea } from "@/components/routing/areas/lazy-areas";
+import { TodayArea } from "@/components/routing/areas/shared/lazy-areas";
 import { todayEmpty, todayRoutes } from "../../data/today-data";
 import { API, token } from "../../harness/fake-api.fixtures";
 import { pageParameters, screenStory, variants } from "../../harness/screen-story/screen-story";

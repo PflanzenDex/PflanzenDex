@@ -19,7 +19,7 @@ import {
   useSammlungView,
   useSpeciesSort,
   type PlantGroup,
-} from "./sammlung-view";
+} from "../../../../sammlung-view";
 
 type Token = () => Promise<string | undefined>;
 

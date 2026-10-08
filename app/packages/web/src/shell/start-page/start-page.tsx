@@ -7,13 +7,13 @@ import {
   type OnboardingCounts,
 } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
-import { loadSpecimenCount } from "./collection";
-import { LoadFrame } from "./kernel";
-import { loadLocations, loadZones } from "./light";
-import { OnboardingWizard } from "./onboarding-wizard";
-import { readStored, writeStored } from "./platform/storage";
-import type { LinkTarget } from "./navigation";
-import { FriendsBanner } from "./social";
+import { loadSpecimenCount } from "../../collection";
+import { LoadFrame } from "../../kernel";
+import { loadLocations, loadZones } from "../../light";
+import { OnboardingWizard } from "../onboarding-wizard/onboarding-wizard";
+import { readStored, writeStored } from "../../platform/storage";
+import type { LinkTarget } from "../../components/shared/navigation/nav-model/navigation/navigation";
+import { FriendsBanner } from "../../social";
 
 const ACTIONS = "flex flex-col gap-3 sm:flex-row";
 

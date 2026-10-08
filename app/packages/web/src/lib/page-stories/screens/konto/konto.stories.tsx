@@ -1,5 +1,5 @@
 import type { Meta } from "@storybook/react-vite";
-import { AccountArea } from "@/components/routing/areas/lazy-areas";
+import { AccountArea } from "@/components/routing/areas/shared/lazy-areas";
 import { account, accountRoutes } from "../../data/account-data";
 import { API, token } from "../../harness/fake-api.fixtures";
 import { pageParameters, screenStory, variants } from "../../harness/screen-story/screen-story";

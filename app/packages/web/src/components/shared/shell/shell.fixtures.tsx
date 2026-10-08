@@ -11,7 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { MemoryRouter } from "react-router";
-import type { NavItem } from "../navigation/nav-item";
+import type { NavItem } from "../navigation/nav-model/nav-item";
 
 // Shared sample data for the shell stories (TE-18): sample texts are German.
 const icons: LucideIcon[] = [

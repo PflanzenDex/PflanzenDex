@@ -1,11 +1,15 @@
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router";
-import { AreaSection } from "@/components/routing/areas/area-section/area-section";
-import { useSectionAnchor } from "@/components/routing/areas/area-section/use-section-anchor";
+import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
+import { useSectionAnchor } from "@/components/routing/areas/shared/area-section/use-section-anchor";
 import { AccountView, SettingsPage } from "@/account";
 import type { Account } from "@/account";
 import { Button } from "@/components/ui/button/button";
-import { ACCOUNT_SECTIONS, MANAGE_ADDRESS, PATHS } from "@/navigation";
+import {
+  ACCOUNT_SECTIONS,
+  MANAGE_ADDRESS,
+  PATHS,
+} from "@/components/shared/navigation/nav-model/navigation/navigation";
 
 type Token = () => Promise<string | undefined>;
 

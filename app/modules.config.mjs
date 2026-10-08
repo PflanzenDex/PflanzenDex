@@ -5,7 +5,12 @@
 // new edge changes this file in the same PR, cycles are always an error (AB-8). `epics` maps epics to modules (report only).
 // Foreign keys across modules only tenant-safe as (account_id, id) on allowed dependencies (O-2), plus reference tables.
 
-import { KERNEL_GLOSSARY_WORDS, PORTS_WITHOUT_CONTRACT_TEST } from "./module-rules.config.mjs";
+import {
+  KERNEL_GLOSSARY_WORDS,
+  LEGACY_MIGRATIONS,
+  LEGACY_TABLE_NAMES,
+  PORTS_WITHOUT_CONTRACT_TEST,
+} from "./module-rules.config.mjs";
 
 const MODULE_RULES = { KERNEL_GLOSSARY_WORDS, PORTS_WITHOUT_CONTRACT_TEST };
 
@@ -129,6 +134,13 @@ const MODULES = [
     ports: [],
   },
   {
+    name: "shell", // web app root, start page, onboarding (US-QG-07); nothing imports it except main and routes
+    epics: [],
+    tables: [],
+    dependsOn: ["kernel", "account", "collection", "light", "social", "wishlist", "care", "today"],
+    ports: [],
+  },
+  {
     name: "ai-access",
     epics: ["AI"],
     tables: ["connection", "task", "draft", "ai_log"],
@@ -136,38 +148,6 @@ const MODULES = [
     ports: [],
   },
 ];
-
-// The migrations 0001 to 0011 were applied before the English rename and must not be renamed; this map assigns them to
-// modules (AB-14). 0012 renames the objects of all modules (ADR 0004). New migrations carry the module in the name.
-const LEGACY_MIGRATIONS = {
-  "0001_mandantengrundlage.sql": ["kernel"],
-  "0002_betreiber_pruefstatus.sql": ["account", "catalog"],
-  "0003_anmeldung.sql": ["account"],
-  "0004_lichtzonen_standorte.sql": ["light", "kernel"],
-  "0005_katalog_artenkatalog.sql": ["catalog"],
-  "0006_licht_standort_schluessel.sql": ["light"],
-  "0007_bestand_exemplar.sql": ["collection"],
-  "0008_bestand_exemplar_art_fremdschluessel.sql": ["collection"],
-  "0009_bestand_exemplar_schluessel.sql": ["collection"],
-  "0010_pflege_messung.sql": ["care"],
-  "0011_bestand_archiv.sql": ["collection"],
-  "0012_english_names.sql": ["kernel", "account", "catalog", "light", "collection", "care"],
-};
-
-// Table names as the applied migrations 0001 to 0011 wrote them (0012 renamed them); the check maps them to the registered ones.
-const LEGACY_TABLE_NAMES = {
-  konto: "account",
-  konto_rolle: "account_role",
-  kontodaten: "account_data",
-  pruefvorgang: "review_case",
-  lichtzone: "light_zone",
-  standort: "location",
-  idempotenz: "idempotency",
-  art: "species",
-  art_name: "species_name",
-  exemplar: "specimen",
-  messung: "measurement",
-};
 
 // Transition (ratchet, may only shrink): folders directly below `packages/<pkg>/src/` that belong to no module yet;
 // any other folder that is no module fails (AB-13); an entry whose folder is gone is an error.

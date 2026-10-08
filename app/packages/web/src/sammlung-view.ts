@@ -1,7 +1,10 @@
 import { useSearchParams } from "react-router";
 import { readStored, writeStored } from "@/platform/storage";
 import { useAnnounce } from "@/platform/announcer/context";
-import { GROUP_PARAM, MANAGE_PARAM } from "./navigation";
+import {
+  GROUP_PARAM,
+  MANAGE_PARAM,
+} from "./components/shared/navigation/nav-model/navigation/navigation";
 
 export type SammlungView = "plants" | "species" | "wishlist";
 /** How the species mode is arranged: the Pokédex, or the comparison by difficulty (US-BES-05). */

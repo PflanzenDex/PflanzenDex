@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { BRAND_LINK_LABEL, DISPLAY_NAME } from "../nav-item";
+import { BRAND_LINK_LABEL, DISPLAY_NAME } from "../nav-model/nav-item";
 
 /**
  * Top bar below `md` (US-QS-07, US-QS-14, DS-25): only the brand, which links home. The destinations are in the

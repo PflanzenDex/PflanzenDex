@@ -29,7 +29,7 @@ vi.mock("oidc-client-ts", () => ({
 
 import { BrowserRouter, MemoryRouter } from "react-router";
 import { App } from "./app";
-import { EMPTY_DISTRIBUTION } from "./collection/insights/distribution-test-helpers";
+import { EMPTY_DISTRIBUTION } from "../../collection/insights/distribution-test-helpers";
 
 /** The app runs inside a router; a memory router stands for the address bar. */
 const renderApp = (path = "/") =>
@@ -183,9 +183,9 @@ beforeAll(async () => {
   })) as unknown as typeof window.matchMedia;
   await Promise.all([
     import("@/components/routing/areas/today-area/today-area"),
-    import("./today/today-page/today-page"),
-    import("./care/treatments/treatments-page/treatments-page"),
-    import("./collection/hints-page/hints-page"),
+    import("../../today/today-page/today-page"),
+    import("../../care/treatments/treatments-page/treatments-page"),
+    import("../../collection/hints-page/hints-page"),
   ]);
 }, 30_000);
 

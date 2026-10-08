@@ -2,8 +2,8 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
-import { AppShell } from "./components/shared/navigation/app-shell/app-shell";
-import { BRAND_LINK_LABEL, DISPLAY_NAME } from "./components/shared/navigation/nav-item";
+import { AppShell } from "../../app-shell/app-shell";
+import { BRAND_LINK_LABEL, DISPLAY_NAME } from "../nav-item";
 import {
   CATALOG_ADDRESS,
   DIFFICULTY_ADDRESS,

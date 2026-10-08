@@ -17,7 +17,7 @@ vi.mock("./catalog/species-page/species-page", () => {
   loaded.pages.push("catalog");
   return { SpeciesPage: () => null };
 });
-vi.mock("./start-page", () => {
+vi.mock("./shell/start-page/start-page", () => {
   loaded.pages.push("start");
   return { StartPage: () => null };
 });

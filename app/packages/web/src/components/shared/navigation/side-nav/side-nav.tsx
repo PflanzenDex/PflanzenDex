@@ -9,7 +9,7 @@ import {
   stackedLabel,
   stackedPill,
   type NavItem,
-} from "../nav-item";
+} from "../nav-model/nav-item";
 
 /** The first four destinations are the primary ones (the bottom bar); a hairline separates the rest in the sidebar. */
 const PRIMARY = 4;

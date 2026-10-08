@@ -6,7 +6,7 @@ import {
   type OnboardingStepId,
 } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
-import { LocationsStep, ZonesStep } from "./light";
+import { LocationsStep, ZonesStep } from "../../light";
 
 const ACTIONS = "flex flex-col gap-3 sm:flex-row";
 

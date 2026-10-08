@@ -9,11 +9,11 @@ import {
   useSession,
   InvitationPage,
   type State,
-} from "./account";
-import { useClearOnSignOut } from "./kernel";
-import { AppRoutes } from "./routes";
+} from "../../account";
+import { useClearOnSignOut } from "../../kernel";
+import { AppRoutes } from "../../routes";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
-import { AppShell } from "./components/shared/navigation/app-shell/app-shell";
+import { AppShell } from "../../components/shared/navigation/app-shell/app-shell";
 import {
   pageTitle,
   navItems,
@@ -21,9 +21,9 @@ import {
   viewAddress,
   viewTitle,
   type LinkTarget,
-} from "./navigation";
-import { PathNotes } from "./wishlist";
-import { useWishHandOver } from "./wish-to-specimen";
+} from "../../components/shared/navigation/nav-model/navigation/navigation";
+import { PathNotes } from "../../wishlist";
+import { useWishHandOver } from "../../wish-to-specimen";
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
 
