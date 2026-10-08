@@ -1,14 +1,14 @@
 import { useCallback } from "react";
 import type { Species, Specimen } from "@pflanzendex/core";
-import { useInvalidate } from "../kernel";
+import { useInvalidate } from "../../kernel";
 import { RequestState } from "@/components/shared/states/request-state/request-state";
-import { CollectionPageSkeleton } from "./CollectionPage.skeleton";
-import { PageFrame, Status, Warning } from "./parts";
-import { refusalText } from "./refusal";
-import { CreateForm } from "./create-form";
-import { ArchivedList } from "./archived-list";
-import { ArchiveForm } from "./archived-form";
-import { CollectionList } from "./collection-list";
+import { CollectionPageSkeleton } from "./collection-page.skeleton";
+import { PageFrame, Status, Warning } from "../parts";
+import { refusalText } from "../refusal";
+import { CreateForm } from "../create-form";
+import { ArchivedList } from "../archived-list";
+import { ArchiveForm } from "../archived-form";
+import { CollectionList } from "../collection-list";
 import {
   COLLECTION_KEY,
   useCollection,
@@ -16,14 +16,14 @@ import {
   type Host,
   type Loaded,
   type Token,
-} from "./use-collection";
-import { useArchive } from "./use-archive";
-import { useRepot } from "./use-repot";
-import { useMarker } from "./use-marker";
-import { useCreate } from "./use-create";
-import { MarkerForm } from "./marker-form";
-import { CatchDateForm, useCatchDate } from "./catch-date-field";
-import { DistributionView } from "./distribution-view";
+} from "../use-collection";
+import { useArchive } from "../use-archive";
+import { useRepot } from "../use-repot";
+import { useMarker } from "../use-marker";
+import { useCreate } from "../use-create";
+import { MarkerForm } from "../marker-form";
+import { CatchDateForm, useCatchDate } from "../catch-date-field";
+import { DistributionView } from "../distribution-view";
 
 function Created({ specimen }: { specimen: Specimen }) {
   return (

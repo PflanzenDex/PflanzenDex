@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { ArchivedEntry, SpecimenCard } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { archiveSpecimen, loadArchived, restoreSpecimen } from "./archived-api";
-import { CollectionPage } from "./CollectionPage";
+import { CollectionPage } from "./collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "./distribution-test-helpers";
 
 // US-BES-07: archive and restore in the UI (jsdom, server simulated).

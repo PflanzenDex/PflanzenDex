@@ -1,6 +1,6 @@
 import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
-import { GRID } from "./parts";
-import { SpecimenCardSkeleton } from "./specimen-card.skeleton";
+import { GRID } from "../parts";
+import { SpecimenCardSkeleton } from "../specimen-card.skeleton";
 
 /** Placeholder with the layout of the collection on a phone: title, distribution, two cards and the button (DS-52, DS-53). */
 export function CollectionPageSkeleton({ label }: { label: string }) {
