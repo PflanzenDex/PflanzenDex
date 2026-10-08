@@ -43,7 +43,9 @@ export function biggest(report, count = 5) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const root = fileURLToPath(new URL("../../../../", import.meta.url));
-  const limits = JSON.parse(fs.readFileSync(path.join(root, "quality-limits.json"), "utf8")).dup;
+  const limits = JSON.parse(
+    fs.readFileSync(path.join(root, "config/gates/quality-limits.json"), "utf8"),
+  ).dup;
   const out = fs.mkdtempSync(path.join(os.tmpdir(), "jscpd-"));
   const run = spawnSync(
     "npx",

@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
-import { EmptyState } from "@/components/shared/empty-state";
-import { ResponsiveModal } from "@/components/shared/responsive-modal";
-import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
+import { ResponsiveModal } from "@/components/shared/responsive/responsive-modal/responsive-modal";
+import { Button } from "@/components/ui/button/button";
 import { RequestState } from "@/components/shared/states/request-state/request-state";
 import { SIGN_IN, type ApiError, type Request } from "../../../kernel";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";

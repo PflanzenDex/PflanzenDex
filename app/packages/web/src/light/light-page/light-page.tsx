@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { useCallback, useMemo, useState } from "react";
 import { useToast } from "@/components/shared/states/toast/toast-provider/toast-provider";
 import { RequestState } from "@/components/shared/states/request-state/request-state";

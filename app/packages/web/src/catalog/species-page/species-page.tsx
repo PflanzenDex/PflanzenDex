@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import type { Species } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { OFFLINE_NOTE } from "@/components/shared/states/request-state/request-state";
 import type { ApiError, Request } from "../../kernel";
 import { useOpenId, useProfile, useSearch, useSend } from "../species-hooks";

@@ -14,7 +14,7 @@ test("US-DEV-02: changed dependencies and migrations each produce one hint", () 
 });
 
 test("US-DEV-02: plain code or docs changes produce no hint", () => {
-  assert.deepEqual(hintsFor(["app/packages/core/src/index.ts", "Docs/ROADMAP.md"]), []);
+  assert.deepEqual(hintsFor(["app/packages/core/src/index.ts", "docs/guides/roadmap.md"]), []);
 });
 
 test("US-DEV-02: changes to hooks and the Node version are reported", () => {

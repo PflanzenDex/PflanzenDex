@@ -1,5 +1,5 @@
 import type { MeasurementView } from "@pflanzendex/core";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/display/badge/badge";
 import { GrowthSummary } from "./growth-summary/growth-summary";
 import { dateText, massName, measurementText, QUALITY_NAME } from "../../shared/text";
 

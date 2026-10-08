@@ -2,7 +2,7 @@
 // The realm export only knows 5173; worktrees get deterministic ports (54400-55899, worktree-env.mjs), and Keycloak
 // accepts no wildcard in the host part, so the port is added through the admin API. Idempotent.
 // Usage: node tools/keycloak/web-port.mjs [port ...]   (default: PFLANZENDEX_DEV_WEB_PORT from the environment or .env.worktree)
-// Env:   KC_ADMIN_PASSWORD (default: app/dev/.env of this checkout or of the main checkout), E2E_KEYCLOAK_URL.
+// Env:   KC_ADMIN_PASSWORD (default: app/config/dev/.env of this checkout or of the main checkout), E2E_KEYCLOAK_URL.
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";

@@ -1,11 +1,14 @@
 import { useCallback, useEffect } from "react";
 import type { DifficultyRow } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state";
-import { ResponsiveTable, type ResponsiveColumn } from "@/components/shared/responsive-table";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
+import {
+  ResponsiveTable,
+  type ResponsiveColumn,
+} from "@/components/shared/responsive/responsive-table/responsive-table";
 import { LoadFrame } from "../../kernel";
-import { loadDifficulty } from "../difficulty-api";
+import { loadDifficulty } from "../insights/api/difficulty-api";
 import { DifficultyPageSkeleton } from "./difficulty-page.skeleton";
-import { PageFrame, Plain, Quiet, TITLE } from "../parts";
+import { PageFrame, Plain, Quiet, TITLE } from "../specimens/cards/parts/parts";
 
 const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
 const UNKNOWN = "unbekannt";

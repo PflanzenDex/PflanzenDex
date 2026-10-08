@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of two history entries on a phone (DS-52, DS-53). */
 export function TreatmentHistorySkeleton({ label }: { label: string }) {

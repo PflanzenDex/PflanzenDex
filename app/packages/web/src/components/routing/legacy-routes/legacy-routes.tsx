@@ -19,7 +19,7 @@ import {
   accountAddress,
   profileAddress,
   todayAddress,
-} from "@/navigation";
+} from "@/components/shared/navigation/nav-model/navigation/navigation";
 
 /** The old address of one species profile: the same profile below Entdecken. */
 function ProfileRedirect() {

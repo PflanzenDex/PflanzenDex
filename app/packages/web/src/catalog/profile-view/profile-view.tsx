@@ -1,6 +1,6 @@
 import { speciesHints, type Species } from "@pflanzendex/core";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/display/badge/badge";
+import { Button } from "@/components/ui/button/button";
 import { DIFFICULTY, STATUS, GROWTH, lux, orUnknown, dormancyPhase } from "../shared/text";
 
 function rows(species: Species): [string, string][] {

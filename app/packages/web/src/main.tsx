@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { App } from "./App";
+import { App } from "./shell";
 import { createQueryClient } from "./kernel";
 import { TransitionRouter } from "./platform/route-transition/transition-router/transition-router";
 import "./styles/tokens.css";

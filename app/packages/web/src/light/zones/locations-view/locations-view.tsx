@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Form, FormRoot } from "@/components/ui/form";
+import { Button } from "@/components/ui/button/button";
+import { Form, FormRoot } from "@/components/ui/fields/form/form";
 import type { ApiError, LightLocation, LightZone } from "../../shared/light-api/light-api";
 import {
   FORM_GRID,
@@ -9,7 +9,7 @@ import {
   SelectField,
   useSaveForm,
 } from "../../shared/ui/form/form";
-import { TextField } from "@/components/ui/input";
+import { TextField } from "@/components/ui/fields/input/input";
 import {
   LOCATION_REFUSABLE,
   NAME_MAX,

@@ -3,12 +3,12 @@ import type { Species, Specimen } from "@pflanzendex/core";
 import { useInvalidate } from "../../kernel";
 import { RequestState } from "@/components/shared/states/request-state/request-state";
 import { CollectionPageSkeleton } from "./collection-page.skeleton";
-import { PageFrame, Status, Warning } from "../parts";
-import { refusalText } from "../refusal";
-import { CreateForm } from "../create-form";
-import { ArchivedList } from "../archived-list";
-import { ArchiveForm } from "../archived-form";
-import { CollectionList } from "../collection-list";
+import { PageFrame, Status, Warning } from "../specimens/cards/parts/parts";
+import { refusalText } from "../specimens/model/refusal";
+import { CreateForm } from "../specimens/create/create-form/create-form";
+import { ArchivedList } from "../archived/archived-list/archived-list";
+import { ArchiveForm } from "../archived/archived-form/archived-form";
+import { CollectionList } from "../specimens/cards/collection-list/collection-list";
 import {
   COLLECTION_KEY,
   useCollection,
@@ -16,14 +16,17 @@ import {
   type Host,
   type Loaded,
   type Token,
-} from "../use-collection";
-import { useArchive } from "../use-archive";
-import { useRepot } from "../use-repot";
-import { useMarker } from "../use-marker";
-import { useCreate } from "../use-create";
-import { MarkerForm } from "../marker-form";
-import { CatchDateForm, useCatchDate } from "../catch-date-field";
-import { DistributionView } from "../distribution-view";
+} from "../specimens/hooks/use-collection";
+import { useArchive } from "../specimens/hooks/use-archive";
+import { useRepot } from "../specimens/hooks/use-repot";
+import { useMarker } from "../markers/use-marker";
+import { useCreate } from "../specimens/create/use-create";
+import { MarkerForm } from "../markers/marker/marker-form/marker-form";
+import {
+  CatchDateForm,
+  useCatchDate,
+} from "../markers/catch-date/catch-date-field/catch-date-field";
+import { DistributionView } from "../insights/distribution-view/distribution-view";
 
 function Created({ specimen }: { specimen: Specimen }) {
   return (

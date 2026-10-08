@@ -66,7 +66,7 @@ const show = (path = "/account", props: { signOut?: () => void; error?: string }
   );
 
 beforeAll(async () => {
-  await import("@/account/settings-page"); // the section is a lazy part: loading it first keeps the waits on the data
+  await import("@/account/settings-page/settings-page"); // the section is a lazy part: loading it first keeps the waits on the data
 }, 30_000);
 
 afterEach(() => {

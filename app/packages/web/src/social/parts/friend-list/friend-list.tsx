@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import type { Friend } from "@pflanzendex/core";
 import { Avatar } from "@/components/data-display/avatar/avatar";
 import { Card } from "@/components/data-display/card/card";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { dateText } from "../invite-card/invite-card";
 import { nameOf } from "../request-list/request-list";
 

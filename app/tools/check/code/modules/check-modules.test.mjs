@@ -5,7 +5,7 @@ import path from "node:path";
 import { describe, it } from "node:test";
 import { checkProject } from "../check-boundaries.mjs";
 import { kernelExports } from "./check-modules-sql.mjs";
-import { MODULE_CONFIG as REAL } from "../../../../modules.config.mjs";
+import { MODULE_CONFIG as REAL } from "../../../../config/lint/modules.config.mjs";
 
 // Module rules AB-7 to AB-14 (FR-QG-19): each rule has a clean case and a violating fixture.
 const CFG = {
@@ -134,7 +134,9 @@ describe("module boundaries (FR-QG-19)", () => {
       });
       const v = checkProject(project(clean), c);
       assert.ok(
-        v.some((x) => /^AB-8 modules\.config\.mjs cycle (light|collection) -> /.test(x)),
+        v.some((x) =>
+          /^AB-8 config\/lint\/modules\.config\.mjs cycle (light|collection) -> /.test(x),
+        ),
         v.join("\n"),
       );
     });
@@ -168,8 +170,12 @@ describe("module boundaries (FR-QG-19)", () => {
         ],
       });
       const v = checkProject(project({}), c);
-      assert.ok(v.some((x) => /^AB-8 modules\.config\.mjs .*itself/.test(x)));
-      assert.ok(v.some((x) => /^AB-13 modules\.config\.mjs .*unknown module gibtsnicht/.test(x)));
+      assert.ok(v.some((x) => /^AB-8 config\/lint\/modules\.config\.mjs .*itself/.test(x)));
+      assert.ok(
+        v.some((x) =>
+          /^AB-13 config\/lint\/modules\.config\.mjs .*unknown module gibtsnicht/.test(x),
+        ),
+      );
     });
   });
 
@@ -204,7 +210,9 @@ describe("module boundaries (FR-QG-19)", () => {
         MODULES: [{ ...CFG.MODULES[0], dependsOn: ["light"] }, ...CFG.MODULES.slice(1)],
       });
       assert.ok(
-        checkProject(project(clean), c).some((x) => /^AB-11 modules\.config\.mjs /.test(x)),
+        checkProject(project(clean), c).some((x) =>
+          /^AB-11 config\/lint\/modules\.config\.mjs /.test(x),
+        ),
       );
     });
     it("reports the number of kernel exports as a measure", () => {
@@ -246,7 +254,9 @@ describe("module boundaries (FR-QG-19)", () => {
         v.join("\n"),
       );
       assert.ok(
-        v.some((x) => /^AB-12 modules\.config\.mjs .*care may depend on every other/.test(x)),
+        v.some((x) =>
+          /^AB-12 config\/lint\/modules\.config\.mjs .*care may depend on every other/.test(x),
+        ),
       );
       const root = {
         "packages/core/src/index.ts":
@@ -261,7 +271,7 @@ describe("module boundaries (FR-QG-19)", () => {
       const c = cfg({ MODULES: [CFG.MODULES[0], { ...CFG.MODULES[1], tables: ["account"] }] });
       assert.ok(
         checkProject(project({}), c).some((x) =>
-          /^AB-13 modules\.config\.mjs table account has two owners/.test(x),
+          /^AB-13 config\/lint\/modules\.config\.mjs table account has two owners/.test(x),
         ),
       );
     });
@@ -283,7 +293,10 @@ describe("module boundaries (FR-QG-19)", () => {
       };
       assert.deepEqual(run(files, cfg({ UNMODULED_FOLDERS: { "core/alt": "x" } })), []);
       const v = run({}, cfg({ UNMODULED_FOLDERS: { "core/alt": "x" } }));
-      assert.match(v[0], /^AB-13 modules\.config\.mjs transition entry core\/alt is stale/);
+      assert.match(
+        v[0],
+        /^AB-13 config\/lint\/modules\.config\.mjs transition entry core\/alt is stale/,
+      );
     });
     for (const f of ["components", "lib", "platform", "styles"])
       it(`QG-U4 · AB-13 the reserved design system folder web/${f} is no module candidate`, () => {
@@ -373,7 +386,7 @@ describe("module boundaries (FR-QG-19)", () => {
       const v = go({}, withCatalog({ species: { owner: "catalog", reason: " " } }));
       assert.match(
         v.join("\n"),
-        /^AB-10 modules\.config\.mjs global reference table species has no reason/m,
+        /^AB-10 config\/lint\/modules\.config\.mjs global reference table species has no reason/m,
       );
       const w = go(
         mig("collection", FK),
@@ -515,7 +528,10 @@ describe("AB-13 contract test per port (FR-QG-19)", () => {
   it("a declared port without a contract test fails and names the port and module", () => {
     const v = run(declared, withPort);
     assert.equal(v.length, 1);
-    assert.match(v[0], /^AB-13 modules\.config\.mjs port ZoneUsage \(light\) has no contract test/);
+    assert.match(
+      v[0],
+      /^AB-13 config\/lint\/modules\.config\.mjs port ZoneUsage \(light\) has no contract test/,
+    );
   });
 
   it("a declared port with a contract test passes", () => {

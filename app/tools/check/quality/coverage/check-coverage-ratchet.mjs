@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { MODULE_CONFIG } from "../../../../modules.config.mjs";
+import { MODULE_CONFIG } from "../../../../config/lint/modules.config.mjs";
 import { coverageByModule } from "../../code/modules/module-report.mjs";
 
 export const METRICS = ["lines", "branches", "functions", "statements"];
@@ -58,7 +58,7 @@ export function loadMeasured(root, packages) {
 function main() {
   const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
   const { packages } = JSON.parse(
-    fs.readFileSync(path.join(root, "coverage-thresholds.json"), "utf8"),
+    fs.readFileSync(path.join(root, "config/gates/coverage-thresholds.json"), "utf8"),
   );
   const { failures, hints, notes } = compare(packages, loadMeasured(root, Object.keys(packages)));
   const summaries = {};

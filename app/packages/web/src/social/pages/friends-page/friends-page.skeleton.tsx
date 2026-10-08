@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the page on a phone: the invite button, the code field, two requests (DS-52, DS-53). */
 export function FriendsPageSkeleton({ label }: { label: string }) {

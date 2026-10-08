@@ -1,8 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch, type Control, type ControllerRenderProps } from "react-hook-form";
 import { localToday, TREATMENT_LIMITS } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button/button";
+import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
 import {
   Form,
   FormField,
@@ -10,8 +10,8 @@ import {
   FormMessage,
   useFormField,
   FormRoot,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/fields/form/form";
+import { Input } from "@/components/ui/fields/input/input";
 import { currentTimeZone } from "../../../kernel";
 import { Field } from "../../shared/field/field";
 import {

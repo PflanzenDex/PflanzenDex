@@ -1,6 +1,6 @@
 import type { SharingRow, SpecimenRow } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button/button";
+import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
 
 type Specimen = Pick<SpecimenRow, "id" | "speciesId" | "name" | "status">;
 

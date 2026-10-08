@@ -1,7 +1,7 @@
 import { appError, type AppError } from "./error";
 import { failed, ok, type Result } from "./result";
 import { canonical } from "./input";
-import type { SignedInContext, IdempotencyKey, IdempotencyStore, Context } from "./ports";
+import type { SignedInContext, IdempotencyKey, IdempotencyStore, Context } from "./ports/ports";
 import type { Schema } from "./input";
 
 export interface Operation<E, A> {

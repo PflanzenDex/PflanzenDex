@@ -22,14 +22,14 @@ test("US-QG-07: gate configs need a human confirmation, ordinary code does not",
     ".githooks/pre-push",
     ".claude/settings.json",
     "Makefile",
-    "app/eslint.config.js",
-    "app/knip.json",
+    "app/config/lint/eslint.config.js",
+    "app/config/lint/knip.json",
     "app/tools/check/code/check-boundaries.mjs",
     "app/packages/db/vitest.config.ts",
   ]) {
     assert.equal(isGateFile(f), true, f);
   }
-  for (const f of ["app/packages/core/src/index.ts", "Docs/PRODUCT-SPECS/02-Collection.md", "app/README.md"]) {
+  for (const f of ["app/packages/core/src/index.ts", "docs/specs/product/02-collection.md", "docs/guides/reference/app.md"]) {
     assert.equal(isGateFile(f), false, f);
   }
 });
@@ -44,7 +44,7 @@ test("US-QG-07: the moved check scripts, their libraries and the layout config s
     "app/tools/check/code/conformance/conformance-rules.mjs",
     "app/tools/workflow/merge-pr.mjs",
     "app/tools/workflow/merge-pr.test.mjs",
-    "app/layout.config.mjs",
+    "app/config/lint/layout.config.mjs",
   ]) {
     assert.equal(isGateFile(f), true, f);
   }
@@ -54,7 +54,7 @@ test("US-QG-07: the moved check scripts, their libraries and the layout config s
     "app/tools/workflow/claim/claim.mjs",
     "app/tools/workflow/board.mjs",
     "app/tools/dev/repo-stats.mjs",
-    "app/layout-baseline.json",
+    "app/config/gates/baselines/layout-baseline.json",
   ]) {
     assert.equal(isGateFile(f), false, f);
   }
@@ -114,9 +114,9 @@ test("US-QG-07: changing protection settings or releasing by hand needs confirma
 test("US-DEV-02: formatting, code paths and gate runs are recognized", () => {
   assert.equal(prettierCanFormat("app/packages/core/src/a.ts"), true);
   assert.equal(prettierCanFormat("app/node_modules/x/a.js"), false);
-  assert.equal(prettierCanFormat("Docs/ROADMAP.md"), false);
+  assert.equal(prettierCanFormat("docs/guides/roadmap.md"), false);
   assert.equal(isCodePath("app/packages/web/src/App.tsx"), true);
-  assert.equal(isCodePath("Docs/ROADMAP.md"), false);
+  assert.equal(isCodePath("docs/guides/roadmap.md"), false);
   assert.equal(ranGates("make ci"), true);
   assert.equal(ranGates("make gates 2>&1 | tail"), true);
   assert.equal(ranGates("make test"), false);

@@ -2,9 +2,9 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const read = (name: string) =>
-  readFileSync(new URL(`../../../../../deploy/${name}`, import.meta.url), "utf8");
+  readFileSync(new URL(`../../../../../config/deploy/${name}`, import.meta.url), "utf8");
 const web = read("web.Caddyfile");
-const proxy = read("Caddyfile");
+const proxy = read("proxy.Caddyfile");
 
 /** The body of the `handle` block that starts with the given matcher. */
 function block(header: string): string {

@@ -1,5 +1,5 @@
 import type { CreatedFriendCode } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 
 /** Calendar date of an instant in the viewer's time zone (NFR-08), e.g. 13.10.2026. */
 export const dateText = (iso: string): string =>

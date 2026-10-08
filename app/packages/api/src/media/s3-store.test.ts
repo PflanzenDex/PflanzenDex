@@ -37,7 +37,7 @@ describe("TE-05 S3 configuration from the environment", () => {
   });
 });
 
-// Real S3 (MinIO, see app/dev/storage.compose.yaml). Without S3_* in the environment, or when the endpoint does not
+// Real S3 (MinIO, see app/config/dev/storage.compose.yaml). Without S3_* in the environment, or when the endpoint does not
 // answer, the block below is reported as skipped with the reason in its name; it never passes silently (P-10).
 const found = s3ConfigFromEnv(process.env);
 const config: S3Config | null = found && !Array.isArray(found) ? (found as S3Config) : null;
@@ -55,7 +55,7 @@ const why = !config ? "S3_* variables not set" : !live ? `${config.endpoint} not
 
 describe.skipIf(!live)(
   why
-    ? `TE-05 S3 adapter against MinIO (SKIPPED: ${why}; start MinIO, see app/dev/storage.compose.yaml)`
+    ? `TE-05 S3 adapter against MinIO (SKIPPED: ${why}; start MinIO, see app/config/dev/storage.compose.yaml)`
     : "TE-05 S3 adapter against MinIO",
   () => {
     const a = randomUUID();

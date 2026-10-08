@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        New features start in `Docs/PRODUCT-SPECS/` (a story with Given/When/Then criteria); the issue comes second.
+        New features start in `docs/specs/product/` (a story with Given/When/Then criteria); the issue comes second.
   - type: input
     id: id
     attributes:

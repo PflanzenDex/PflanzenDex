@@ -5,7 +5,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const dev = join(fileURLToPath(import.meta.url), "..", "..", "..", "dev");
+const dev = join(fileURLToPath(import.meta.url), "..", "..", "..", "config", "dev");
 const realm = JSON.parse(readFileSync(join(dev, "keycloak", "pflanzendex-realm.json"), "utf8"));
 const web = realm.clients.find((c) => c.clientId === "pflanzendex-web");
 

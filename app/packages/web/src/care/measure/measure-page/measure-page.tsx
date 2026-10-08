@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { LoadFrame, useInvalidate } from "../../../kernel";
 import { MeasureForm } from "../measure-form/measure-form";
 import { MeasurementList } from "../measurement-list/measurement-list";

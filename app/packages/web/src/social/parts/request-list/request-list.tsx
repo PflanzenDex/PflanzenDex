@@ -1,6 +1,6 @@
 import type { FriendRequest, OpenRequests } from "@pflanzendex/core";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/display/badge/badge";
+import { Button } from "@/components/ui/button/button";
 
 /** A person without a stored display name stays unknown instead of being named by guess (P-08). */
 export const nameOf = (name: string | null) => name ?? "Name unbekannt";

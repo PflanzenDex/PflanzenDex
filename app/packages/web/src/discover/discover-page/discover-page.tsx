@@ -1,6 +1,6 @@
 import type { SuggestionDeck } from "@pflanzendex/core";
 import { useCallback, useState } from "react";
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 import { LoadFrame } from "../../kernel";
 import { DeckView } from "../deck-view/deck-view";
 import { loadSuggestions } from "./discover-api";

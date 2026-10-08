@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { MODULE_CONFIG } from "../../../modules.config.mjs";
+import { MODULE_CONFIG } from "../../../config/lint/modules.config.mjs";
 import { storiesByModule } from "../code/modules/module-report.mjs";
 
 const STORY = /^###\s+(US-([A-Z]+)-\d+)\s+·.*·\s*(⬜|🟨|✅)/u;
@@ -116,7 +116,7 @@ function readTree(root, dir, ok) {
 }
 
 export function run(root) {
-  const specDir = path.join(root, "Docs/PRODUCT-SPECS");
+  const specDir = path.join(root, "docs/specs/product");
   const specs = readTree(root, specDir, (p) => p.endsWith(".md"));
   const isTest = (p) => /\.test\.(ts|tsx|mjs)$/.test(p);
   const tests = {
@@ -126,7 +126,7 @@ export function run(root) {
   };
   const stories = parseStories(specs);
   const trace = traceability(stories, testedIds(tests));
-  const readme = specs[path.relative(root, path.join(specDir, "README.md"))] ?? "";
+  const readme = specs[path.relative(root, path.join(specDir, "readme.md"))] ?? "";
   const errors = [...trace.errors, ...checkCounters(readme, stories)];
   const refs = unresolvedRefs(specs);
   const byModule = storiesByModule(stories, testedIdsByFile(tests), MODULE_CONFIG.MODULES);

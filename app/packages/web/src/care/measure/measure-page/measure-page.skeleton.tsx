@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the measure page on a phone: the three header lines, the form and the course (DS-52, DS-53). */
 export function MeasurePageSkeleton({ label }: { label: string }) {

@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { Banner } from "@/components/shared/states/banner/banner";
 import { DerivationForm, type Derive } from "../../zones/derivation-view/derivation-view";
 import { Fresh, useFresh } from "../../shared/ui/fresh/fresh";

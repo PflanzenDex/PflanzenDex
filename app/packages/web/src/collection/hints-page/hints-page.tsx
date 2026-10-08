@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import type { LightLocation, SpecimenHint } from "@pflanzendex/core";
-import { EmptyState } from "@/components/shared/empty-state";
-import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
+import { Button } from "@/components/ui/button/button";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
 import { HintsPageSkeleton } from "./hints-page.skeleton";
 import {
@@ -15,12 +15,12 @@ import {
   Status,
   TITLE,
   Warning,
-} from "../parts";
-import { refusalText } from "../refusal";
+} from "../specimens/cards/parts/parts";
+import { refusalText } from "../specimens/model/refusal";
 import { loadLocations } from "../../light";
-import { loadSpecimenHints } from "../hints-api";
-import { setSpecimenLocation } from "../specimens-api";
-import { LocateControl } from "../locate-control";
+import { loadSpecimenHints } from "../insights/api/hints-api";
+import { setSpecimenLocation } from "../specimens/model/specimens-api";
+import { LocateControl } from "../markers/locate/locate-control/locate-control";
 
 /** Where a hint is fixed: the app wires the target to a tab (the modules do not know each other). */
 export type HintTarget = "collection" | "light";

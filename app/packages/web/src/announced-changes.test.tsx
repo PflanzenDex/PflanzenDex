@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ProposalForm } from "./catalog/proposal/proposal-form/proposal-form";
-import { CollectionList } from "./collection/collection-list";
+import { CollectionList } from "./collection/specimens/cards/collection-list/collection-list";
 
 afterEach(cleanup);
 

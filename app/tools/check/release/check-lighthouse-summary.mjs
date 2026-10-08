@@ -1,5 +1,5 @@
 // Report QG-U1 (FR-QG-10, E-15): Markdown summary of the Lighthouse runs in packages/web/.lighthouseci. Report only, no threshold.
-// Usage: node tools/check/release/check-lighthouse-summary.mjs [reports-dir]   (entry point: scripts/lighthouse-summary.sh)
+// Usage: node tools/check/release/check-lighthouse-summary.mjs [reports-dir]   (entry point: tools/lighthouse/lighthouse-summary.sh)
 // Every number is the median over the runs, taken per metric. Values are measured under Lighthouse's mobile
 // emulation (simulated throttling), never on a real phone, and they are not targets.
 import fs from "node:fs";

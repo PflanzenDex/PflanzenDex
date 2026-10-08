@@ -2,7 +2,7 @@ import { defineOperation, appError, failed, ok, type Result, shape } from "../ke
 import { zoneUpdateSchema, zoneIdSchema, zoneSchema } from "./fields";
 import type { LightZone, ZoneUsage, ZoneStore, ZoneValues } from "./types";
 
-/** Default light zones from the specification (03-Light-and-Locations.md), applies to new accounts. */
+/** Default light zones from the specification (03-light-and-locations.md), applies to new accounts. */
 export const ZONE_DEFAULT: readonly ZoneValues[] = [
   { name: "Lampe 1", luxCeiling: 1_500, ppfd: 36, sortOrder: 1 },
   { name: "Lampe 2", luxCeiling: 15_000, ppfd: 300, sortOrder: 2 },

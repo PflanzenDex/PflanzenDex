@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the page on a phone: count, search field, filter buttons, sort field and two cards (DS-52, DS-53). */
 export function PokedexPageSkeleton({ label }: { label: string }) {

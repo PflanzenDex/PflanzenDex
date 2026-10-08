@@ -1,5 +1,5 @@
 import { useCallback, useState, type ReactNode } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { LoadFrame, SIGN_IN as KERNEL_SIGN_IN, useInvalidate, useRequest } from "../../../kernel";
 import {
   createWrite,

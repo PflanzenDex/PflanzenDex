@@ -8,9 +8,15 @@ import {
   type FieldValues,
 } from "react-hook-form";
 import type { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select } from "@/components/ui/select";
+import { Button } from "@/components/ui/button/button";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/fields/form/form";
+import { Select } from "@/components/ui/fields/select/select";
 import type { ApiError } from "../../light-api/light-api";
 import { ALERT_CLASSES, useServerRefusal } from "../../texts";
 

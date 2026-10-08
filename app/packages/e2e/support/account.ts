@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 
 // Test accounts are created through the Keycloak admin API (verified email, final password), so the flows
-// under test start at the login page. Registration with mail confirmation is covered by Docs/test-logs/acc-01.md.
+// under test start at the login page. Registration with mail confirmation is covered by docs/records/test-logs/acc-01.md.
 const KEYCLOAK = process.env["E2E_KEYCLOAK_URL"] ?? "http://localhost:18081";
 const REALM = "pflanzendex";
 
@@ -15,7 +15,7 @@ export interface TestAccount {
 function adminPassword(): string {
   const fromEnv = process.env["KC_ADMIN_PASSWORD"];
   if (fromEnv) return fromEnv;
-  const file = new URL("../../../dev/.env", import.meta.url);
+  const file = new URL("../../../config/dev/.env", import.meta.url);
   // eslint-disable-next-line security/detect-non-literal-fs-filename -- fixed path next to this file
   const line = fs
     .readFileSync(file, "utf8")

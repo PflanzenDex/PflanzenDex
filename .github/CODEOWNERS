@@ -9,16 +9,15 @@
 /.github/workflows/                 @MaxNize
 /.github/rulesets/                  @konradhe14 @MaxNize @NiklasKoch-14
 /Makefile                           @MaxNize
-/scripts/                           @MaxNize
+/tools/                             @MaxNize
 
 /app/packages/core/                 @MaxNize
 /app/packages/api/                  @MaxNize
 /app/packages/web/                  @MaxNize
 
-/Docs/PRODUCT-SPECS/                @MaxNize
-/Docs/PLANT-SYSTEM-SPECS/         @MaxNize
-/Docs/betrieb/                      @MaxNize
-/Docs/operations/                   @MaxNize
+/docs/specs/product/                @MaxNize
+/docs/specs/prototype/         @MaxNize
+/docs/guides/operations/                   @MaxNize
 
 # Agent instructions and guardrails: what AI agents read and may do. Never changed without a human owner's review.
 /CLAUDE.md                          @konradhe14 @MaxNize @NiklasKoch-14

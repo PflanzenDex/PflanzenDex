@@ -1,6 +1,6 @@
 // Pure rules of the claim check (US-DEV-08): who works on which story, how a branch is named,
 // which findings forbid a second claim. No I/O here; the clients live in claim-client.mjs.
-import { EPIC_SCOPES } from "../../../../commitlint.config.js";
+import { EPIC_SCOPES } from "../../../../config/project/commitlint.config.js";
 
 // Assumption (starting value, not measured): a claim without a commit for 48 hours counts as stale.
 export const DEFAULT_STALE_HOURS = 48;

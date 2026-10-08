@@ -13,16 +13,16 @@ const GATE_FILES = [
   /^\.gitleaksignore$/,
   /^Makefile$/,
   /^scripts\/(gitleaks|actionlint|tool|rulesets-apply)\.sh$/,
-  /^app\/eslint\.config\.js$/,
-  /^app\/knip\.json$/,
-  /^app\/commitlint\.config\.js$/,
-  /^app\/release\.config\.js$/,
-  /^app\/tsconfig\.base\.json$/,
+  /^app\/config\/lint\/eslint\.config\.js$/,
+  /^app\/config\/lint\/knip\.json$/,
+  /^app\/config\/project\/commitlint\.config\.js$/,
+  /^app\/config\/project\/release\.config\.js$/,
+  /^app\/config\/project\/tsconfig\.base\.json$/,
   /^app\/\.prettier(rc\.json|ignore)$/,
   // Every non-test file under app/tools/check/ defines a gate: the check scripts and their libraries (rules, thresholds).
   /^app\/tools\/check\/(?:.+\/)?(?!.*\.(?:test|selftest)\.mjs$)[^/]+\.mjs$/,
   /^app\/tools\/workflow\/merge-pr(\.test)?\.mjs$/,
-  /^app\/layout\.config\.mjs$/,
+  /^app\/config\/lint\/layout\.config\.mjs$/,
   /^app\/packages\/[^/]+\/(vitest\.config\.ts|tsconfig\.json)$/,
 ];
 
@@ -43,7 +43,7 @@ const FORBIDDEN_COMMANDS = [
 // Commands that change repo-wide GitHub settings: allowed only after a human confirms.
 const CONFIRM_COMMANDS = [
   [/\bgh\s+api\b[^|;&]*(-X|--method)\s*(PUT|PATCH|POST|DELETE)\b[^|;&]*\b(rulesets|branches\/[^/\s]+\/protection|code-scanning|vulnerability-alerts)\b/i,
-    "This changes GitHub protection settings; update .github/rulesets/ and use scripts/rulesets-apply.sh instead."],
+    "This changes GitHub protection settings; update .github/rulesets/ and use tools/repo/rulesets-apply.sh instead."],
   [/\bgh\s+repo\s+edit\b/, "This changes repository settings."],
   [/\bgh\s+release\s+(create|delete|edit)\b|\bgit\s+push\b[^|;&]*\s(--tags|v\d)/, "Releases and tags come from the release workflow only (ADR 0002)."],
 ];
@@ -141,5 +141,5 @@ export function prettierCanFormat(relativePath) {
 }
 
 export function isSpecPath(relativePath) {
-  return relativePath.startsWith("Docs/PRODUCT-SPECS/");
+  return relativePath.startsWith("docs/specs/product/");
 }

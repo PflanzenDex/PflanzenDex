@@ -1,6 +1,6 @@
 import type { MergeOutcome, ReviewList } from "@pflanzendex/core";
 import { useCallback, useState } from "react";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { LoadFrame, useInvalidate, useWriteAction, type Response } from "../../../kernel";
 import { ReviewPageSkeleton } from "./review-page.skeleton";
 import { refusalText } from "../../shared/refusal";

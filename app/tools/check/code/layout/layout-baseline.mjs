@@ -10,7 +10,8 @@ export function toBaseline(findings) {
 
 // What to do next, per rule (P-09).
 const NEXT = {
-  "LY-1": "group the entries into subfolders or declare a collection in app/layout.config.mjs",
+  "LY-1":
+    "group the entries into subfolders or declare a collection in app/config/lint/layout.config.mjs",
   "LY-2": "rename the entry to the name pattern of its collection",
   "LY-3": "rename it to kebab-case",
   "LY-4": "move the component x.tsx into a folder x/",

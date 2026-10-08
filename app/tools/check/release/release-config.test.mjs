@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { analyzeCommits } from "@semantic-release/commit-analyzer";
-import config from "../../../release.config.js";
+import config from "../../../config/project/release.config.js";
 
 const [, analyzerConfig] = config.plugins.find(
   (p) => Array.isArray(p) && p[0] === "@semantic-release/commit-analyzer",

@@ -11,7 +11,7 @@ import {
   openFixturePool,
 } from "./index.ts";
 import { FIXTURES, createFixtureSpeciesAt } from "../fixtures.ts";
-import { MODULE_CONFIG as REGISTER } from "../../../../modules.config.mjs";
+import { MODULE_CONFIG as REGISTER } from "../../../../config/lint/modules.config.mjs";
 
 // Test harness with two accounts (QG-D1, NFR-09, FR-ACC-02). Runs against a real PostgreSQL (`make db-up`).
 let pool: Pool;

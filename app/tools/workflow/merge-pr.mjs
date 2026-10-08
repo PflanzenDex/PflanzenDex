@@ -2,7 +2,7 @@
 // only if every condition holds; otherwise it names the failed ones and leaves the merge to a human.
 //   1. the PR is open, not a draft, and targets `dev` (never `main`: a release stays a human decision)
 //   2. the newest `ci-status` run on the PR head commit is green (older, cancelled runs do not count)
-//   3. the PR names a story or requirement (US-/FR-/DM-/NFR-) that exists in Docs/PRODUCT-SPECS (the spec is written)
+//   3. the PR names a story or requirement (US-/FR-/DM-/NFR-) that exists in docs/specs/product (the spec is written)
 //   4. the PR changes no gate file (workflows, rulesets, hooks, thresholds, `.claude/`, this script): a human decides
 import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync } from "node:fs";
@@ -63,7 +63,7 @@ export function problems(pr, known) {
   const ids = idsIn(`${pr.title}\n${pr.body ?? ""}`);
   if (!ids.some((id) => known.has(id)))
     out.push(
-      "the PR names no story or requirement that exists in Docs/PRODUCT-SPECS (no spec, no merge)",
+      "the PR names no story or requirement that exists in docs/specs/product (no spec, no merge)",
     );
   const gates = (pr.files ?? []).map((f) => f.path).filter(isGateFile);
   if (gates.length)
@@ -81,7 +81,7 @@ function main(number) {
   const fields = "state,isDraft,baseRefName,title,body,files,statusCheckRollup";
   const pr = JSON.parse(gh("pr", "view", number, "--json", fields));
   const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
-  const found = problems(pr, specIds(join(root, "Docs", "PRODUCT-SPECS")));
+  const found = problems(pr, specIds(join(root, "docs", "specs", "product")));
   if (found.length) {
     console.error(
       `merge-pr: PR #${number} is not merged:\n${found.map((p) => `  - ${p}`).join("\n")}`,

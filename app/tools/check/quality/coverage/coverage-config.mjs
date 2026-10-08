@@ -1,7 +1,7 @@
 // Shared coverage settings for all vitest configs. Thresholds live only in coverage-thresholds.json.
 import fs from "node:fs";
 
-const file = new URL("../../../../coverage-thresholds.json", import.meta.url);
+const file = new URL("../../../../config/gates/coverage-thresholds.json", import.meta.url);
 
 export function readThresholds() {
   return JSON.parse(fs.readFileSync(file, "utf8")).packages;

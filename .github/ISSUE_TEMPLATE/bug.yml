@@ -6,7 +6,7 @@ body:
     id: spec
     attributes:
       label: Affected story or requirement
-      description: ID from Docs/PRODUCT-SPECS, e.g. US-PHA-02 or FR-WAC-03
+      description: ID from docs/specs/product, e.g. US-PHA-02 or FR-WAC-03
       placeholder: US-…
     validations:
       required: true

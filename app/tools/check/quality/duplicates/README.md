@@ -1,6 +1,6 @@
 # Duplication gate (QG-K5)
 
-Covers FR-QG-10 and US-QG-07 (an operations note; it lives here because `Docs/operations/` is at the five-unit limit LY-1). `make dup` measures the share of duplicated lines in `app/packages` with [jscpd](https://github.com/kucherenko/jscpd) (no server, no account). It is part of `make gates` and therefore of `make ci`; the CI job `ci` runs it through `make ci`, so `ci-status` covers it. QG-K4 (`make duplicates`, Fallow) stays: it blocks clone groups with three or more copies in changed files.
+Covers FR-QG-10 and US-QG-07 (an operations note; it lives here because `docs/guides/operations/` is at the five-unit limit LY-1). `make dup` measures the share of duplicated lines in `app/packages` with [jscpd](https://github.com/kucherenko/jscpd) (no server, no account). It is part of `make gates` and therefore of `make ci`; the CI job `ci` runs it through `make ci`, so `ci-status` covers it. QG-K4 (`make duplicates`, Fallow) stays: it blocks clone groups with three or more copies in changed files.
 
 ## Run it
 
@@ -13,7 +13,7 @@ The output names the measured percentage, the limit and the target. On failure i
 ## Limit and target
 
 - Target (owner decision): at most 1 % duplicated lines.
-- The limit is `dup.maxPercent` in `app/quality-limits.json`. It started at the measured value (1.65 %, measured on 2026-10-06, assumption) and only goes down, never up.
+- The limit is `dup.maxPercent` in `app/config/gates/quality-limits.json`. It started at the measured value (1.65 %, measured on 2026-10-06, assumption) and only goes down, never up.
 - `DUP-1`: the measured value is above the limit. Remove the clones; do not raise the limit.
 - `DUP-2`: the measured value is more than `slackPercent` (0.1 points) below the limit. Lower `maxPercent` to the printed value in the same PR that removed clones. At 1 % the ratchet is finished.
 

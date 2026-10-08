@@ -10,7 +10,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import defaultConfig from "../../layout.config.mjs";
+import defaultConfig from "../../config/lint/layout.config.mjs";
 import { listPaths } from "../check/code/layout/check-layout.mjs";
 import { buildTree, matchDir, unitCount } from "../check/code/layout/layout-tree.mjs";
 import { planMoves } from "./fix-plan.mjs";

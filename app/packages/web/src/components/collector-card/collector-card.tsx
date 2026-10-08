@@ -1,5 +1,5 @@
 import type { CollectorCard as Card } from "@pflanzendex/core";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/display/badge/badge";
 import { cn } from "@/lib/utils";
 import { catchText } from "./catch-text";
 

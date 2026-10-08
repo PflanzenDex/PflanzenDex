@@ -20,9 +20,9 @@ function walkDir(dir) {
     if (
       entry === "node_modules" ||
       entry.startsWith(".") ||
-      fullPath.includes("/Docs/spikes/") ||
-      fullPath.includes("/Docs/test-logs/") ||
-      fullPath.includes("/ROADMAP.md") ||
+      fullPath.includes("/docs/records/spikes/") ||
+      fullPath.includes("/docs/records/test-logs/") ||
+      fullPath.includes("/docs/guides/roadmap.md") ||
       (fullPath.includes("/app/") && fullPath.endsWith("/CHANGELOG.md"))
     ) {
       continue;

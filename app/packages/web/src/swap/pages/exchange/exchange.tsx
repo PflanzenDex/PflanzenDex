@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Link } from "react-router";
 import type { OfferView } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { errorText } from "@/lib/error-text";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
 import { loadExchange, withdrawOffer, type ExchangeData } from "../../api/offers-api";

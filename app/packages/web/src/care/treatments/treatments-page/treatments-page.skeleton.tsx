@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the planning form on a phone: specimen choice, three fields and the button (DS-52, DS-53). */
 export function TreatmentFormSkeleton({ label }: { label: string }) {

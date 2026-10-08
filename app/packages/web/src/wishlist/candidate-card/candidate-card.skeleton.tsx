@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/display/skeleton/skeleton";
 
 /** Placeholder with the blocks of a `CandidateCard` (picture, title, three text lines); decorative, no numbers (P-08). */
 export function CandidateCardSkeleton() {

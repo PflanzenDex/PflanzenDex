@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Link } from "react-router";
 import type { CreatedFriendCode } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { LoadFrame, SIGN_IN, useInvalidate, useWriteAction, type ApiError } from "../../../kernel";
 import { errorText } from "@/lib/error-text";
 import {

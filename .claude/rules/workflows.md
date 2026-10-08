@@ -3,7 +3,7 @@ paths:
   - ".github/**"
   - "Makefile"
   - ".githooks/**"
-  - "scripts/**"
+  - "tools/**"
 ---
 
 # Rules for CI, Makefile and git hooks

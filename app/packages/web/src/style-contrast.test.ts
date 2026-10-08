@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const tokensCss = readFileSync(new URL("./styles/tokens.css", import.meta.url), "utf8");
-const appSource = readFileSync(new URL("./App.tsx", import.meta.url), "utf8");
+const appSource = readFileSync(new URL("./shell/app/app.tsx", import.meta.url), "utf8");
 
 type Rgb = [number, number, number];
 

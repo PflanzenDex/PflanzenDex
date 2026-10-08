@@ -7,19 +7,23 @@ import { ReviewPage, SpeciesPage } from "./catalog";
 import { FriendCollectionPage, FriendsPage } from "./social";
 import { ExchangePage } from "./swap";
 import type { WishToPlant } from "./wishlist";
-import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
-import { AreaSection } from "@/components/routing/areas/area-section/area-section";
+import { StartPage } from "./shell";
+import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
 import {
   AccountArea,
   CollectionArea,
   DiscoverArea,
   TodayArea,
-} from "@/components/routing/areas/lazy-areas";
+} from "@/components/routing/areas/shared/lazy-areas";
 import { legacyRoutes } from "@/components/routing/legacy-routes/legacy-routes";
-import { EXCHANGE_PATH, PATHS, PROFILE_BASE, type LinkTarget, type View } from "./navigation";
-/** The start page carries the onboarding forms: its chunk loads with its route (#451). */
-const StartPage = lazyPage(() => import("./start-page").then((m) => ({ default: m.StartPage })));
+import {
+  EXCHANGE_PATH,
+  PATHS,
+  PROFILE_BASE,
+  type LinkTarget,
+  type View,
+} from "./components/shared/navigation/nav-model/navigation/navigation";
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 /** The views that need nothing but the API address and the token. */
@@ -28,7 +32,6 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
   review: ReviewPage,
   operator: OperatorPage,
 };
-
 /** A friend's shared collection has its own address; the friendship id comes from it (US-SOZ-07). */
 function FriendCollectionRoute(props: { api: string; token: Token }) {
   const { friendId } = useParams();

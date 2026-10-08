@@ -1,4 +1,4 @@
-// Validates the principles register in Docs/principles (US-QG-06, FR-DEV-04).
+// Validates the principles register in docs/guides/principles (US-QG-06, FR-DEV-04).
 //   PRIN-1  frontmatter incomplete (id, title, maturity, spec) or maturity unknown
 //   PRIN-2  id duplicated, or file name does not start with the id
 //   PRIN-3  a section required for the maturity level is missing or empty
@@ -67,7 +67,7 @@ export function findProblems(files, env) {
     if (ids.has(meta.id))
       problems.push(`PRIN-2 ${name}: id ${meta.id} also used in ${ids.get(meta.id)}`);
     else ids.set(meta.id, name);
-    if (!name.startsWith(`${meta.id}-`) || !name.endsWith(".md"))
+    if (!name.toLowerCase().startsWith(`${meta.id.toLowerCase()}-`) || !name.endsWith(".md"))
       problems.push(`PRIN-2 ${name}: file name must start with "${meta.id}-"`);
     for (const key of REQUIRED[meta.maturity] ?? []) {
       if (!sections[SECTIONS[key]])
@@ -90,11 +90,11 @@ export function findProblems(files, env) {
 }
 
 export function run(root) {
-  const dir = path.join(root, "Docs/principles");
+  const dir = path.join(root, "docs/guides/principles");
   const files = Object.fromEntries(
     fs
       .readdirSync(dir)
-      .filter((f) => /^PRIN-.*\.md$/.test(f))
+      .filter((f) => /^prin-.*\.md$/i.test(f))
       .map((f) => [f, fs.readFileSync(path.join(dir, f), "utf8")]),
   );
   const makefile = fs.readFileSync(path.join(root, "Makefile"), "utf8");

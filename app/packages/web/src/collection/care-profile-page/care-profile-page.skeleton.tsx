@@ -1,5 +1,5 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
-import { CARD, PROFILE_GRID } from "../parts";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
+import { CARD, PROFILE_GRID } from "../specimens/cards/parts/parts";
 
 /** Placeholder with the layout of the care profile on a phone: intro and a card with its fields and the save button (DS-52, DS-53). */
 export function CareProfileSectionSkeleton({ label }: { label: string }) {

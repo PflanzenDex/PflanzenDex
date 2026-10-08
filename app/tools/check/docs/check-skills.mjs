@@ -5,7 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const REPO_PATH = /`((?:app|Docs|scripts|\.github|\.agents|\.claude)\/[^`\s*<>]+)`/g;
+const REPO_PATH = /`((?:app|docs|scripts|\.github|\.agents|\.claude)\/[^`\s*<>]+)`/g;
 
 function frontmatter(text) {
   const m = text.match(/^---\n([\s\S]*?)\n---\n/);

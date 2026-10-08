@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Candidate } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { errorText } from "@/lib/error-text";
 import { useWriteAction, type ApiError, type Response } from "../../kernel";
 import { buyWish, discardWish } from "../wishlist-api";

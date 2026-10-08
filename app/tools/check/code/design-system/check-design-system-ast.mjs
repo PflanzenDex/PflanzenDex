@@ -1,4 +1,4 @@
-// DS-48 (DESIGN-SYSTEM.md): AST detection of raw controls outside components/ui, used by check-design-system-rules.mjs.
+// DS-48 (docs/guides/reference/design-system.md): AST detection of raw controls outside components/ui, used by check-design-system-rules.mjs.
 import ts from "typescript";
 
 const RAW_TAGS = new Set(["button", "input", "select", "textarea", "form"]);

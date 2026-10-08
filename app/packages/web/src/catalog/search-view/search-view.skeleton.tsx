@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 
 /** Placeholder with the layout of the hit list on a phone: three rows of name, German name and badge (DS-52, DS-53). */
 export function SearchResultsSkeleton() {

@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ResponsiveModal } from "@/components/shared/responsive-modal";
+import { Button } from "@/components/ui/button/button";
+import { Input } from "@/components/ui/fields/input/input";
+import { Label } from "@/components/ui/display/label/label";
+import { ResponsiveModal } from "@/components/shared/responsive/responsive-modal/responsive-modal";
 import { errorText } from "@/lib/error-text";
 import type { ApiError } from "../../../../kernel";
 import type { PhotoAccess } from "@/lib/use-stored-photo";

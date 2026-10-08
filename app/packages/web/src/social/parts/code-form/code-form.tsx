@@ -2,9 +2,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Form, FormRoot } from "@/components/ui/form";
-import { TextField } from "@/components/ui/input";
+import { Button } from "@/components/ui/button/button";
+import { Form, FormRoot } from "@/components/ui/fields/form/form";
+import { TextField } from "@/components/ui/fields/input/input";
 import { errorText } from "@/lib/error-text";
 import type { ApiError } from "../../../kernel";
 

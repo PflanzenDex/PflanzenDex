@@ -1,17 +1,17 @@
-// QG-C4 file layout gate (US-QG-09, FR-QG-21, FR-QG-22). Rules LY-1 to LY-6; config: app/layout.config.mjs.
-//   node tools/check/code/layout/check-layout.mjs                  check against app/layout-baseline.json
+// QG-C4 file layout gate (US-QG-09, FR-QG-21, FR-QG-22). Rules LY-1 to LY-6; config: app/config/lint/layout.config.mjs.
+//   node tools/check/code/layout/check-layout.mjs                  check against app/config/gates/baselines/layout-baseline.json
 //   node tools/check/code/layout/check-layout.mjs --write-baseline create the baseline (an empty {} counts as none), or lower it; never enlarge it
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import config from "../../../../layout.config.mjs";
+import config from "../../../../config/lint/layout.config.mjs";
 import { compareBaseline, toBaseline } from "./layout-baseline.mjs";
 import { findLayout } from "./layout-rules.mjs";
 
 const app = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 const root = path.resolve(app, "..");
-export const BASELINE_FILE = path.join(app, "layout-baseline.json");
+export const BASELINE_FILE = path.join(app, "config/gates/baselines/layout-baseline.json");
 const devRef = process.env.LAYOUT_BASE ?? "origin/dev";
 
 const git = (cwd, ...args) =>
@@ -61,7 +61,9 @@ function devBaseline() {
     return undefined;
   }
   try {
-    return JSON.parse(git(root, "show", `${devRef}:app/layout-baseline.json`));
+    return JSON.parse(
+      git(root, "show", `${devRef}:app/config/gates/baselines/layout-baseline.json`),
+    );
   } catch {
     return undefined;
   }

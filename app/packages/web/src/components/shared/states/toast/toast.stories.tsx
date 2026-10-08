@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { ToastItem } from "./toast-item/toast-item";
 import { ToastProvider, useToast } from "./toast-provider/toast-provider";
 
