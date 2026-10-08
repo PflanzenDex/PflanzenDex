@@ -285,3 +285,179 @@ Legend as above. Screenshots (`us-qs-14/`, prefix `gap-`, 8 files, 128 colours) 
 - The decision row "Nein", "Später", "Ja" is sticky: above the phone bar below `md`, at the window bottom from `md`; in a window lower than 30 rem (400 % zoom) it scrolls like content so it never covers the focused title. The shell clips instead of hiding the horizontal overflow (`overflow-x-clip`), because `overflow-x-hidden` made the shell a scroll container and sticky never stuck. The source link is 44 px high. The summary carries `lang` from `taxon.summary_language`, with the hint "Text auf Englisch"; the language now travels from the taxon query through `TaxonCardRow`, `CollectorCard` and `Suggestion`.
 - Measured in Chromium with the Storybook page story (fixture card, shorter than a real card): at 360x640 the buttons sit at y=669..717 before (below the 640 px window) and y=528..576 after; at 360x640, 1280x720 and 1280x900 the row stays in view at the top and at the end of the scroll, at 320x200 it is static. Screenshots `fix2-01` (before), `fix2-02` and `fix2-03` (after).
 - Not verified: the real app with a real card (image, long Wikipedia text), a real phone with a dynamic bar and safe area, a screen reader reading the `lang` switch, focus position on the title after a decision at 400 % zoom by hand.
+
+## Axe and contrast pass on the live pages (2026-10-08, issue #637)
+
+**Branch:** `chore/qs-14-redesign-test-gap-axe` (draft PR #653), based on `dev` at `bd16f16`. Docs only; no app code changed. This pass replaces the ⏭️ "axe on the real pages" and "exact contrast on the live page" of the sections above.
+
+**Setup:** the real stack, signed in through the real Keycloak 26.8 (port 18081, realm `pflanzendex`, existing local user `konrad@example.test`; registration was open, so no invitation code was needed). API on port 54956 (`WEB_ORIGIN=http://localhost:55456`), Vite dev server on this worktree's own port 55456, PostgreSQL 16 in this worktree's container (port 54456) with a scratch database `pflanzendex_axe` (migrations 0001 to 0041). Chromium 1243 headless, Playwright 1.63.0, axe-core 4.13.0 (`@axe-core/playwright` 4.13.0), locale `de-DE`, Node 24.21.0. The ports 5173, 5174 and 3000 were not touched.
+
+**Runtime changes that are not in the repo:**
+
+- Keycloak client `pflanzendex-web`: `http://localhost:55456/*` was added as redirect URI, `http://localhost:55456` as web origin and `http://localhost:55456/*` to the post-logout URIs with `kcadm` inside the container; all three were removed again after the run (admin credentials were read from the container's environment and are not written anywhere).
+- Scratch database: 12 approved species and 12 resolved taxa inserted with SQL (the triggers `species_guard` and `review_case_guard` were disabled in that database only, inside one transaction, and enabled again), a second account "Jonas Testperson" with a confirmed friendship to the main account and two shared specimens (SQL), and the roles `operator` and `reviewer` for the main account (`insert into account_role`), so "Prüfliste" and "Betreiber" are reachable.
+- Through the API as the signed-in account: the four default light zones, locations "Fensterbank" (no zone), "Wachstumsregal" (Lampe 3), "Balkon" (Lampe 4, outdoor), six specimens (one cutting), one overdue and one due-today treatment plan (a three-part course), three wishes. The pages therefore show data, not empty states. The scratch database was dropped afterwards.
+
+**Method (scripts are throwaway and live outside the repo):** one signed-in browser context per width and colour scheme (360×640 and 1280×800; `colorScheme` light and dark, because dark mode follows the system and has no toggle; `reducedMotion: reduce` so that entry animations cannot distort colours). Per route: wait for the `h1` and the network to be idle, then axe with the tags `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa` and `best-practice`; axe "needs review" (incomplete) results were read one by one. Contrast was measured three ways: (1) a DOM scan of every visible text node (computed colour with opacity, background blended up the ancestor chain, large text at 3:1 and the rest at 4.5:1), (2) the token pairs of `app/packages/web/src/styles/tokens.css` computed with the WCAG formula, (3) the focus indicator read from the computed style of every element reached with Tab. 16 routes × 4 combinations = 64 axe runs: `/`, `/today`, `/collection?view=plants`, `…&group=phase`, `…&manage=locations`, `/collection?view=species`, `/collection?view=wishlist`, `/discover` (mode "Vorschläge"), `/discover?view=catalog`, `/discover/species/:id`, `/friends`, `/friends/:friendId`, `/friends/exchange`, `/account`, `/review`, `/operator`.
+
+Legend as above. Screenshots only for findings (`us-qs-14/a3-*`, `a4-*`, `a5-*`, 64 colours).
+
+### A. Axe on the 16 routes
+
+**Expected:** no violation of WCAG 2.2 A or AA on any real page, in both widths and both schemes.
+
+**Observed:**
+
+- ✅ **0 violations of any impact (critical 0, serious 0, moderate 0, minor 0) in 64 runs** (axe 4.13.0, tags above, including `best-practice`). Every page has one `h1` and the landmarks `main`, `nav`, `header`.
+- ✅ No horizontal scroll (`scrollWidth - clientWidth` = 0) on any of the 64 combinations.
+- ⚠️ Axe's "needs review" list is not empty (it does not count as a violation, but I read every item):
+  - **A1** `aria-valid-attr-value`: fields without a description point `aria-describedby` at an id that does not exist (`aria-describedby="_r_4_-description"`): 3 fields on `…&manage=locations`, 6 on the wishlist, 10 on the species profile, 1 on "Freunde", 8 on "Konto", 4 on "Betreiber", 1 in the catalog. Cause in `components/ui/form.tsx`. Issue #656.
+  - **A2** `aria-prohibited-attr`: the difficulty stars carry `aria-label` on a `span` (12 cards on `/collection?view=species`, `collector-card.tsx`) and on a `dd` (`/discover` suggestion card). Issue #657.
+  - `color-contrast` "needs review" (13 elements on the species list, 1 on `/discover`): all are the decorative `✓` and the `★` characters ("Element content contains only non-text characters"). Not a text pair; the stars and the check keep a text alternative or sit next to text. No finding.
+- ⚠️ Harness note, not an app finding: in the first runs (several Chromium instances in parallel against the Vite dev server) five route/scheme combinations were scanned while the lazy page chunk was still loading (`page-has-heading-one`, `landmark-one-main`). With one browser at a time and a longer wait for the `h1`, the same five routes showed 0 violations; the table holds the rerun values.
+
+Matrix: axe violations / lowest contrast ratio of any enabled text on the page (DOM scan); a third number is the lowest ratio of a disabled control on the page (see F). Every cell has 0 violations.
+
+| Route                                                           | 360 light       | 360 dark        | 1280 light      | 1280 dark       |
+| --------------------------------------------------------------- | --------------- | --------------- | --------------- | --------------- |
+| start (/)                                                       | 0 / 6.46        | 0 / 7.69        | 0 / 6.46        | 0 / 7.69        |
+| today (/today)                                                  | 0 / 6.46        | 0 / 7.69        | 0 / 6.46        | 0 / 7.69        |
+| collection-plants (/collection?view=plants)                     | 0 / 6.02        | 0 / 6.49        | 0 / 6.02        | 0 / 6.49        |
+| collection-phases (/collection?view=plants&group=phase)         | 0 / 6.02        | 0 / 7.69        | 0 / 6.02        | 0 / 7.69        |
+| collection-locations (/collection?view=plants&manage=locations) | 0 / 6.46        | 0 / 7.69        | 0 / 6.46        | 0 / 7.69        |
+| collection-species (/collection?view=species)                   | 0 / 6.02 / 3.21 | 0 / 7.69 / 4.68 | 0 / 6.02 / 3.21 | 0 / 7.69 / 4.68 |
+| collection-wishlist (/collection?view=wishlist)                 | 0 / 6.02        | 0 / 7.69        | 0 / 6.02        | 0 / 7.69        |
+| discover (/discover)                                            | 0 / 6.02        | 0 / 7.69        | 0 / 6.02        | 0 / 7.69        |
+| discover-catalog (/discover?view=catalog)                       | 0 / 6.02        | 0 / 7.69        | 0 / 6.02        | 0 / 7.69        |
+| species-profile (/discover/species/:id)                         | 0 / 6.02 / 2.86 | 0 / 6.49 / 2.76 | 0 / 6.02 / 2.86 | 0 / 6.49 / 2.76 |
+| friends (/friends)                                              | 0 / 6.46        | 0 / 7.69        | 0 / 6.46        | 0 / 7.69        |
+| friend-collection (/friends/:id)                                | 0 / 6.02        | 0 / 7.69        | 0 / 6.02        | 0 / 7.69        |
+| exchange (/friends/exchange)                                    | 0 / 6.52 / 2.86 | 0 / 7.69 / 2.76 | 0 / 6.52 / 2.86 | 0 / 7.69 / 2.76 |
+| account (/account)                                              | 0 / 6.46        | 0 / 7.69        | 0 / 6.46        | 0 / 7.69        |
+| review (/review)                                                | 0 / 6.52        | 0 / 7.69        | 0 / 6.52        | 0 / 7.69        |
+| operator (/operator)                                            | 0 / 6.46        | 0 / 7.69        | 0 / 6.46        | 0 / 7.69        |
+
+### B. Contrast of the rendered text (DOM scan)
+
+**Expected:** every text pair at least 4.5:1 (3:1 for large text), light and dark, on all 16 routes.
+
+**Observed:**
+
+- ✅ 4 554 text nodes measured in 64 page states (computed colour including opacity, over the blended background): **0 enabled texts below the limit.** Lowest enabled value on any page: **6.02:1 in light** and **6.49:1 in dark** (`muted-foreground` on `secondary`, the chips on `/collection?view=plants`). No text sits on an image or gradient (0 nodes with a `background-image` in the chain).
+- ✅ Dark mode is a real second palette, not an inversion: the lowest dark pair is 5.82:1 (`muted-foreground` on `accent`), all text pairs of the tokens are 5.8:1 or more in both schemes.
+- ⏭️ Text inside photos or the Wikipedia images of the cards was not measured (the app draws no text over an image).
+
+### C. Greenhouse tokens (computed from `tokens.css`, WCAG formula)
+
+**Expected:** text pairs 4.5:1, UI components and focus rings 3:1, in light and dark (the test `style-contrast.test.ts` covers the same pairs; this table is an independent recomputation).
+
+**Observed:** ✅ every required pair passes in both schemes (92 pair/scheme values computed, the table shows the pairs the UI uses):
+
+| Pair                                                                           | Needs | Light | Dark  |
+| ------------------------------------------------------------------------------ | ----- | ----- | ----- |
+| Body text on the page (`foreground` on `background`)                           | 4.5:1 | 15.39 | 15.64 |
+| Text on a card (`foreground` on `card`)                                        | 4.5:1 | 16.78 | 13.93 |
+| Secondary text on the page (`muted-foreground` on `background`)                | 4.5:1 | 6.52  | 8.64  |
+| Secondary text on a chip or secondary fill (`muted-foreground` on `secondary`) | 4.5:1 | 6.02  | 6.49  |
+| Secondary text on the selected fill (`muted-foreground` on `accent`)           | 4.5:1 | 5.83  | 5.82  |
+| Label of the primary button (`primary-foreground` on `primary`)                | 4.5:1 | 6.46  | 9.21  |
+| Label of the secondary button (`secondary-foreground` on `secondary`)          | 4.5:1 | 14.19 | 11.76 |
+| Selected chip, success banner (`accent-foreground` on `accent`)                | 4.5:1 | 8.39  | 8.85  |
+| Error text on the page (`destructive` on `background`)                         | 4.5:1 | 5.99  | 8.04  |
+| Error text on a card (`destructive` on `card`)                                 | 4.5:1 | 6.54  | 7.16  |
+| Warning banner text (`warning-foreground` on `warning`)                        | 4.5:1 | 7.42  | 8.24  |
+| Link and label in the primary colour on the page (`primary` on `background`)   | 4.5:1 | 5.93  | 10.2  |
+| Primary colour on a card (`primary` on `card`)                                 | 4.5:1 | 6.46  | 9.08  |
+| Light zone 1 mark as text on a card (`zone-1` on `card`)                       | 4.5:1 | 5.93  | 7.7   |
+| Zone 2 (`zone-2` on `card`)                                                    | 4.5:1 | 6.14  | 9.51  |
+| Zone 3 (`zone-3` on `card`)                                                    | 4.5:1 | 6.52  | 7.23  |
+| Zone 4 (`zone-4` on `card`)                                                    | 4.5:1 | 6.1   | 8.29  |
+| Phase growth (`phase-growth` on `card`)                                        | 4.5:1 | 6.52  | 9.04  |
+| Phase dormancy (`phase-dormancy` on `card`)                                    | 4.5:1 | 6.34  | 8.21  |
+| Field boundary (`--input`) on the page (`input` on `background`)               | 3:1   | 3.8   | 4.99  |
+| Field boundary on a card (`input` on `card`)                                   | 3:1   | 4.14  | 4.44  |
+| Focus ring on the page (`ring` on `background`)                                | 3:1   | 5.93  | 10.2  |
+| Focus ring on a card (`ring` on `card`)                                        | 3:1   | 6.46  | 9.08  |
+| Focus ring on the selected fill (`ring` on `accent`)                           | 3:1   | 5.3   | 6.87  |
+| Warning banner border on its fill (`warning-border` on `warning`)              | 3:1   | 5.29  | 6.2   |
+| Primary button fill against the page (`primary` on `background`)               | 3:1   | 5.93  | 10.2  |
+| `--border` on the page (decorative by design) (`border` on `background`)       | 3:1   | 1.27  | 1.55  |
+| `--border` on a card (decorative by design) (`border` on `card`)               | 3:1   | 1.38  | 1.38  |
+
+- ⚠️ `--border` is 1.27:1 to 1.55:1 and is documented as decorative; secondary and outline buttons rely on it or on a 1.1:1 fill as their boundary. That is a reading of WCAG 1.4.11, not a calculation error: decision issue #660 (with the measured values of 300 controls).
+
+### D. Focus rings
+
+**Expected:** a visible focus indicator of at least 3:1 on every focusable element, never removed (WCAG 2.4.7, 1.4.11, 2.4.13).
+
+**Observed:**
+
+- ✅ **444 focus stops** (Tab, 40 steps on each of `/today`, `/collection?view=plants`, `/discover`, `/friends`, `/account`, in the four width/scheme combinations, 220 ms wait per step): **every one has an indicator** (0 without). The ring is a 2 px `box-shadow` in `--ring`; buttons add a 2 px gap in the surrounding background colour (290 of the 444 stops, the "offset ring"), links and nav items a plain 2 px ring. Lowest ring against the surrounding background: **5.47:1 in light, 7.32:1 in dark** (on the selected `accent` fill 5.30:1 and 6.87:1 by the table above).
+- ✅ Because the buttons have the gap, the ring on a primary button (same colour as the button) is separated from the button and is measured against the page, not the button; the pair "ring on `primary`" (1.0:1 in the token table) never occurs.
+- ✅ The skip link "Zum Inhalt springen" appears at the top left on focus (178×44 px) with the same ring.
+- ⚠️ My first probe read the style too early and reported 157 of 444 stops "without indicator" (all links); with the 220 ms wait they all have the ring (the box-shadow transition). Mentioned so nobody repeats the early read.
+- ✅ Forced colors (see E): the rule `:focus-visible { outline: 2px solid Highlight }` is active; 0 findings.
+
+### E. Forced colors, reduced motion, 320 px and 400 percent zoom
+
+**Forced colors (`forcedColors: active`, 360 and 1280 px, 16 routes, 32 runs):**
+
+- ✅ axe: 0 violations in all 32 runs. No horizontal scroll. I looked at the screenshots of `/today` (360 px) and `/collection?view=plants` (1280 px): text, nav items, chips, cards (`CanvasText` border), the checked state ("✓") and the focus outline are readable in the system colours; `Highlight` marks the current item and the progress fill.
+- ⚠️ In the bottom bar the item "Mehr" is drawn with a box border, the four other items are not (`a3-forced-colors-mehr-mobil.png`). Cosmetic. Issue #658.
+- ⏭️ Only Chromium's emulation; a real Windows contrast theme (and Firefox, Safari) was not available.
+
+**Reduced motion (`prefers-reduced-motion: reduce` against `no-preference`, 1280 px, `/collection?view=plants`, `/discover`, `/collection?view=species`, sampled every frame for 2.5 s after the load):**
+
+- ✅ With `no-preference` the page runs `pulse` (skeleton, 2 000 ms), `plant-sway` (2 560 ms), `plant-grow` (1 920 ms; both infinite) and `list-in` (200 ms): 6 to 19 animations at the same time. With `reduce` there is **no infinite animation** and every animation lasts 1 ms (the rule in `tokens.css`); `list-in` is still created but ends at once. The route cross-fade is not started under `reduce` (not measured separately).
+- ⏭️ The Vaul sheet motion and the swipe card were not driven in this pass.
+
+**320 px and 400 percent zoom (320×640, and 320×256 = 1280×1024 at 400 percent; light and dark for the 400 percent case; 16 routes each, 64 runs):**
+
+- ✅ `scrollWidth - clientWidth` = 0 and no visible element beyond the right or left edge outside a horizontal scroller on any route; the only elements whose content is wider than their box are visually hidden by design (`.sr-only`: the skip link until focused, the two `dt` of "Konto", the `h2` that carry the section names).
+- ⚠️ At 320×256 the sticky app bar (45 px) and the fixed bottom bar (75 px) cover 120 of 256 px (47 percent); 136 px are left for content (`a4-zoom400-fixed-bars-mobil.png`). The content scrolls and the scroll padding (53 px top, 83 px bottom) keeps focused controls clear (1 of 34 stops in the plants list was still partly under a bar; the criterion 2.4.11 only fails when a control is fully hidden). Issue #659.
+
+### F. Disabled states
+
+- ✅ Disabled controls are drawn with `opacity-50` on the whole control (`disabled:opacity-50`); WCAG 1.4.3 exempts inactive components, so none counts as a failure. Measured for information (opacity blended with the page, per token): label on the primary button **2.29:1 in light, 3.28:1 in dark**; body text on page 3.20:1 and 4.71:1; secondary button 3.08:1 and 4.15:1. The DOM scan shows 2.86:1 (light) and 2.76:1 (dark) for the same buttons ("Speichern" on the species profile, "Angebot erstellen" on "Tauschbörse"), but it does not blend the fill, so the per-token figures are the right ones.
+- ⚠️ The light primary button is hard to read when disabled (2.29:1) while the reason is not always visible. Not filed (exempt, and a design choice); worth a look when the buttons get a disabled reason (P-09).
+
+### G. Banners, toasts, chips
+
+**Expected:** each variant readable in both schemes; meaning not only by colour.
+
+**Observed:**
+
+- ✅ Banner variants (token pairs): info `secondary-foreground` on `secondary` 14.19:1 / 11.76:1; success `accent-foreground` on `accent` 8.39:1 / 8.85:1; warning `warning-foreground` on `warning` 7.42:1 / 8.24:1, border `warning-border` 5.29:1 / 6.20:1; error `card-foreground` on `card` 16.78:1 / 13.93:1 with a `destructive` border 6.54:1 / 7.16:1 (light / dark). Every variant has an icon and a text (DS-38).
+- ✅ Live states checked with axe and the text scan at 360 and 1280 px, light and dark (12 runs: invalid submit, toast, offline banner × 4): the **toast** "Standort angelegt." (card, `primary` border and icon 6.46:1 / 9.08:1), the **offline banner** "Du bist offline" (warning variant, provoked with `setOffline`; screenshot not kept), the warning banner "Lichtzone unbekannt" and the **field error** after submitting an empty "Neuer Standort" (the `alert`, `destructive` text 6.54:1 / 7.16:1): 0 axe violations and 0 enabled texts below the limit in all of them. The toast does not cover the bottom bar at 360×640 (it sits above it).
+- ✅ Chips: the selected filter chip uses `accent-foreground` on `accent` (8.39:1 / 8.85:1) plus a "✓" and semibold weight, so the selection is not colour only; the zone and phase chips use the `zone-*` and `phase-*` tokens as text (5.9:1 to 9.5:1 above).
+- ⚠️ The selected chip's fill is 1.12:1 (light) and 1.48:1 (dark) against the page: the state is carried by the check mark and the weight, not by the fill, which is fine; the unselected chips' boundary is part of #660.
+- ⏭️ The toast with an error (`kind: "error"`, `destructive` border) and the toast action button were not provoked; only their token pairs are covered.
+
+### H. Findings and issues
+
+| #   | Finding                                                                                                                    | Impact                                          | Issue |
+| --- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | ----- |
+| A1  | `aria-describedby` points at a missing description id on every field without description (33 fields on 7 pages)            | low (axe "needs review")                        | #656  |
+| A2  | Difficulty stars: `aria-label` on a `span` and a `dd` (13 places)                                                          | moderate (not announced by every screen reader) | #657  |
+| A3  | Forced colors: "Mehr" has a box border, the other four bar items do not                                                    | minor, cosmetic                                 | #658  |
+| A4  | 400 percent zoom: two fixed bars leave 136 of 256 px for content                                                           | moderate usability, WCAG 1.4.10 holds           | #659  |
+| A5  | Secondary and outline buttons rely on 1.1 to 1.6:1 boundaries (labels are 6:1 or more); decision whether SC 1.4.11 applies | decision                                        | #660  |
+
+Counts by axe impact: critical 0, serious 0, moderate 0, minor 0 (axe violations); the five findings above come from axe's "needs review" list (A1, A2), the forced-colors and zoom emulation (A3, A4) and my own contrast measurement (A5). Not findings: the disabled-control contrast (exempt, F) and the decorative `--border` (decided in the tokens).
+
+### I. A permanent gate (described, not built here)
+
+A cheap one exists and belongs to #467 / FR-QG-24 (QG-U7): `app/packages/e2e` already has Playwright, `@axe-core/playwright` and the helper `support/axe.ts` (`axeReport`, blocking on serious and critical) plus the sign-in fixtures. The missing part is a spec that loops over the route register of the web app (`routes.tsx`, `navigation.tsx` `PATHS`) for the two projects (mobile 360, desktop 1280) and a dark project (`colorScheme: "dark"`), waits for the `h1`, and calls `axeReport(page, info, route, { blocking: true })`. The helper would need three changes: add the tag `wcag22aa`, report the "needs review" results of `aria-valid-attr-value` and `aria-prohibited-attr` (they found A1 and A2), and wait for the lazy chunk (the five harness false alarms above). One browser at a time took about 60 to 90 seconds per width/scheme combination here (16 routes, dev server); in CI against the production build it should be faster. A second, equally cheap addition: the overflow check (`scrollWidth`) at 320 px and the forced-colors project, which found nothing today and would keep it that way. The token-pair table of section C is already a gate (`style-contrast.test.ts`); the DOM text scan would add the rendered colours (opacity, nesting) which the token test cannot see.
+
+### J. Not covered
+
+- ⏭️ A real screen reader (#636), a real phone, other browsers (#638), a real Windows high contrast theme, real 400 percent browser zoom (emulated by the viewport 320×256, which is the same layout width but not the browser's zoom code path).
+- ⏭️ Route states that need other data: empty states, error states of the API (only the offline banner and one form error were provoked), a specimen with a photo, the suggestion deck after the last card ("Für heute durch"), the sheets (Vaul) "Mehr", delete and edit dialogs, the onboarding wizard steps beyond the first screen (the start page was measured with the wizard's first step), toasts of kind "error".
+- ⏭️ The page `/` (start) after the onboarding is finished, the friend's collection with photos, the review page with a pending proposal to decide (only the list was open).
+- ⏭️ Dark mode by a user toggle: the app has none (it follows the system), so only `prefers-color-scheme` was emulated.
+- ⏭️ Text over images, video, PDF or print styles: not in the app.
+
+### Offene Punkte after the axe pass
+
+- New issues: #656, #657, #658, #659, #660 (labels `enabler`, `epic:QS`; no Priority on the board yet).
+- Environment: the Keycloak redirect additions were removed again, the API and Vite processes of this pass were stopped, the scratch database `pflanzendex_axe` was dropped; the Keycloak user `konrad@example.test` and the other containers were not changed.
