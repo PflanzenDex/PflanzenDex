@@ -43,7 +43,7 @@ function FriendRow(props: { friend: Friend; busy: boolean; onEnd: (friend: Frien
   const [asking, setAsking] = useState(false);
   return (
     <li>
-      <Card className="grid break-words">
+      <Card className="grid gap-2 break-words">
         <span className="flex items-center gap-3">
           <Avatar name={f.name ?? ""} decorative />
           <span>{nameOf(f.name)}</span>
