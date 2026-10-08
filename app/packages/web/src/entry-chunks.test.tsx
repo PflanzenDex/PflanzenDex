@@ -17,7 +17,7 @@ vi.mock("./light/views/setup-steps/setup-steps", () => {
   return { LocationsStep: () => null, ZonesStep: () => null };
 });
 
-vi.mock("./pokedex/PokedexPage", () => {
+vi.mock("./pokedex/pokedex-page/pokedex-page", () => {
   loaded.pages.push("pokedex");
   return { PokedexPage: () => null };
 });

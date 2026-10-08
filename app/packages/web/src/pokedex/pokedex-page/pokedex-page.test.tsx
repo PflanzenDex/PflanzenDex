@@ -2,8 +2,8 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { deviceTimeZone, setProfileTimeZone } from "../kernel";
-import { PokedexPage } from "./PokedexPage";
+import { deviceTimeZone, setProfileTimeZone } from "../../kernel";
+import { PokedexPage } from "./pokedex-page";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
