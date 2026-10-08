@@ -50,11 +50,8 @@ export async function phaseRows(
   const active = (await deps.specimens.list(userId)).filter((z) => z.status === "plant");
   const own = new Map((await deps.profiles.list(userId)).map((p) => [p.speciesId, p] as const));
   const speciesIds = [...new Set(active.map((z) => z.speciesId))];
-  const species = new Map(
-    await Promise.all(
-      speciesIds.map(async (id) => [id, await deps.species.find(userId, id)] as const),
-    ),
-  );
+  const read = await deps.species.findMany(userId, speciesIds);
+  const species = new Map(speciesIds.map((id, i) => [id, read[i] ?? null] as const));
   const rows = await Promise.all(
     active.flatMap((z) => {
       const spec = species.get(z.speciesId);

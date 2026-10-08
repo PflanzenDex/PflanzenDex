@@ -99,7 +99,7 @@ export async function careProfileView(
   const active = specimens.filter(isActive);
   const own = new Map(profiles.map((p) => [p.speciesId, p] as const));
   const ids = [...new Set([...active.map((z) => z.speciesId), ...own.keys()])];
-  const found = await Promise.all(ids.map((id) => deps.species.find(userId, id)));
+  const found = await deps.species.findMany(userId, ids);
   const entries = (
     await Promise.all(
       found.map(async (species, i): Promise<CareProfileEntry[]> => {

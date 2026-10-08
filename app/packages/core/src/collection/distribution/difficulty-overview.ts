@@ -1,9 +1,8 @@
 // Species compared by difficulty (US-BES-05): one row per species with at least one active specimen, easiest first.
 // Pure derivation, never stored (P-01). A value the catalog does not know stays `null` ("unbekannt", P-08).
 import { zoneDerive, type LightZone } from "../../light";
-import type { Species } from "../../catalog";
 import { speciesDisplayName } from "../shared/name";
-import { isActive, type SpecimenRow } from "../shared/types";
+import { isActive, type SpeciesSource, type SpecimenRow } from "../shared/types";
 
 export interface DifficultyRow {
   readonly speciesId: string;
@@ -25,7 +24,7 @@ export interface DifficultyOverview {
 
 export interface DifficultyDependencies {
   readonly specimens: { list(userId: string): Promise<readonly SpecimenRow[]> };
-  readonly species: { find(userId: string, id: string): Promise<Species | null> };
+  readonly species: Pick<SpeciesSource, "findMany">;
   readonly zones: { list(userId: string): Promise<readonly LightZone[]> };
 }
 
@@ -42,7 +41,7 @@ export async function difficultyOverview(
     deps.zones.list(userId),
   ]);
   const ids = [...new Set(specimens.filter(isActive).map((s) => s.speciesId))];
-  const found = await Promise.all(ids.map((id) => deps.species.find(userId, id)));
+  const found = await deps.species.findMany(userId, ids);
   const rows: DifficultyRow[] = [];
   for (const species of found) {
     if (!species) continue;

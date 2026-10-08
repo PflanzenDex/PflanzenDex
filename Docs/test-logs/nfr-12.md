@@ -80,3 +80,44 @@ PFLANZENDEX_TEST_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:<port>/pfla
 ```
 
 Use a throw-away database (the script inserts catalog rows). `PERF_SIZES`, `PERF_RUNS` and `PERF_SPECIES` change the sizes, the timed runs and the species count. This run used its own container (`pflanzendex-perf-586`, port 54999), removed afterwards.
+
+---
+
+## 7. After the fix: species read in one batch (issue #600)
+
+**Change:** `SpeciesStore` / `SpeciesSource` got `findMany(userId, ids)` (one statement in one `withAccount` transaction, `id = any($1::uuid[])` under the same visibility rule as `find`; unreadable and unknown IDs give `null`, order and length follow `ids`). `readSpecies` and every other per-ID loop over `species.find` in `core` that served the derived requests (cards, hints, distribution, light overview, difficulty, phases, archived, care-profile view and zone usage) use it. Same environment and method as above (own container `pflanzendex-nfr12-600`, port 54990, removed afterwards), date 2026-10-08.
+
+SQL statements, total (payload), 60 species, identical at 100 and 1,000 specimens:
+
+| Request                         | Before    | After   |
+| ------------------------------- | --------- | ------- |
+| `GET /today`                    | 642 (130) | 52 (12) |
+| `GET /specimens/hints`          | 316 (64)  | 21 (5)  |
+| `GET /specimens/cards`          | 336 (68)  | 41 (9)  |
+| `GET /specimens/distribution`   | 326 (66)  | 31 (7)  |
+| `GET /specimens/light-overview` | 316 (64)  | 21 (5)  |
+| `GET /specimens/difficulty`     | 316 (64)  | 21 (5)  |
+| `GET /discover/suggestions`     | 333 (69)  | 38 (10) |
+| `GET /pokedex/cards`            | 318 (66)  | 23 (7)  |
+| `GET /pokedex/ownership`        | 311 (63)  | 16 (4)  |
+| `GET /wishes/candidates`        | 336 (68)  | 41 (9)  |
+
+1,000 specimens over 250 species (`PERF_SIZES=1000 PERF_SPECIES=250`), median / p95 in ms and statements:
+
+| Request                         | Before: ms    | Before: stmts | After: ms   | After: stmts |
+| ------------------------------- | ------------- | ------------- | ----------- | ------------ |
+| `GET /today`                    | 266.6 / 278.6 | 2542          | 51.0 / 63.3 | 52           |
+| `GET /specimens/hints`          | 135.2 / 142.9 | 1266          | 39.7 / 58.9 | 21           |
+| `GET /specimens/cards`          | 143.7 / 150.6 | 1286          | 47.8 / 59.3 | 41           |
+| `GET /specimens/distribution`   | 134.3 / 141.1 | 1276          | 42.7 / 56.8 | 31           |
+| `GET /specimens/light-overview` | 135.0 / 144.8 | 1266          | 40.0 / 55.1 | 21           |
+| `GET /specimens/difficulty`     | 135.7 / 142.1 | 1266          | 43.2 / 56.3 | 21           |
+| `GET /discover/suggestions`     | 153.5 / 164.1 | 1283          | 65.6 / 92.0 | 38           |
+| `GET /pokedex/cards`            | 156.2 / 164.9 | 1268          | 70.9 / 88.9 | 23           |
+| `GET /pokedex/ownership`        | 143.2 / 152.1 | 1261          | 45.3 / 63.0 | 16           |
+| `GET /wishes/candidates`        | 140.6 / 148.5 | 1286          | 43.4 / 55.7 | 41           |
+
+- The statement count no longer depends on the number of species: the 60-species and 250-species runs give the same counts per request (candidate threshold of section 5, first bullet: met, at most 52 statements).
+- The remaining time at 250 species is CPU and payload: the bodies of `light-overview`, `difficulty` and `pokedex/ownership` grow with the species (17 to 72 KB, 20 to 85 KB, 18 to 76 KB). `/today` still needs 52 statements as a fixed cost; that is a separate topic from the species loop.
+- `query-count-baseline.json` (US-QG-07) is empty now: all seven entries (`/today`, cards, distribution, light overview, difficulty, hints, discover suggestions) stopped growing and were deleted.
+- Limits as in section 4: one run, one machine, times are not deterministic; statement counts are.

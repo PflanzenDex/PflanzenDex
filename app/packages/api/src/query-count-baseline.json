@@ -1,9 +1,1 @@
-{
-  "GET /today": "5 -> 92, 50 -> 542 statements (9 per specimen)",
-  "GET /specimens/cards": "5 -> 61, 50 -> 286 statements (5 per specimen)",
-  "GET /specimens/distribution": "5 -> 51, 50 -> 276 statements (5 per specimen)",
-  "GET /specimens/light-overview": "5 -> 41, 50 -> 266 statements (5 per specimen)",
-  "GET /specimens/difficulty": "5 -> 41, 50 -> 266 statements (5 per specimen)",
-  "GET /specimens/hints": "5 -> 41, 50 -> 266 statements (5 per specimen)",
-  "GET /discover/suggestions": "5 -> 57, 50 -> 282 statements (5 per specimen)"
-}
+{}

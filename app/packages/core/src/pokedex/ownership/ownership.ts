@@ -34,7 +34,7 @@ async function readSpecies(
   rows: readonly SpecimenRow[],
 ) {
   const ids = [...new Set(rows.map((z) => z.speciesId))];
-  const read = await Promise.all(ids.map((id) => deps.species.find(userId, id)));
+  const read = await deps.species.findMany(userId, ids);
   return new Map(ids.map((id, i) => [id, read[i] ?? null] as const));
 }
 

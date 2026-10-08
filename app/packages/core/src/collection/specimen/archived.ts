@@ -29,7 +29,7 @@ export async function specimenArchived(
 ): Promise<readonly ArchivedEntry[]> {
   const rows = (await deps.specimens.list(userId)).filter((z) => z.status === "archived");
   const speciesIds = [...new Set(rows.map((z) => z.speciesId))];
-  const species = await Promise.all(speciesIds.map((id) => deps.species.find(userId, id)));
+  const species = await deps.species.findMany(userId, speciesIds);
   const names = new Map(
     speciesIds.map((id, i) => [id, species[i] ? speciesDisplayName(species[i]) : null] as const),
   );

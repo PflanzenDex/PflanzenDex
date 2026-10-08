@@ -81,7 +81,7 @@ export async function specimenCards(
   const [locations, zones, species, measurements, treatments] = await Promise.all([
     deps.locations.list(userId),
     deps.zones.list(userId),
-    Promise.all(speciesIds.map((id) => deps.species.find(userId, id))),
+    deps.species.findMany(userId, speciesIds),
     deps.measurements.forSpecimens(userId, ids),
     deps.treatments.open(userId, ids),
   ]);
