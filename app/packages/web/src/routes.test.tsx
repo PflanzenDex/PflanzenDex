@@ -9,11 +9,11 @@ vi.mock("./care/measure/measure-page/measure-page", () => {
   loaded.pages.push("care");
   return { MeasurePage: () => null };
 });
-vi.mock("./light/LightPage", () => {
+vi.mock("./light/light-page/light-page", () => {
   loaded.pages.push("light");
   return { LightPage: () => null };
 });
-vi.mock("./catalog/SpeciesPage", () => {
+vi.mock("./catalog/species-page/species-page", () => {
   loaded.pages.push("catalog");
   return { SpeciesPage: () => null };
 });

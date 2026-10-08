@@ -60,7 +60,7 @@ const catalogShown = () => screen.findByRole("heading", { level: 2, name: "Art w
 beforeAll(async () => {
   await Promise.all([
     import("../../../../discover/discover-page/discover-page"),
-    import("../../../../catalog/SpeciesPage"),
+    import("../../../../catalog/species-page/species-page"),
   ]);
 }, 30_000);
 

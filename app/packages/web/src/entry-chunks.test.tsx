@@ -12,7 +12,7 @@ vi.mock("./start-page", () => {
   return { StartPage: () => null };
 });
 
-vi.mock("./light/setup-steps", () => {
+vi.mock("./light/views/setup-steps/setup-steps", () => {
   loaded.pages.push("setup-steps");
   return { LocationsStep: () => null, ZonesStep: () => null };
 });
@@ -62,7 +62,7 @@ vi.mock("./discover/discover-page/discover-page", () => {
   return { DiscoverPage: () => null };
 });
 
-vi.mock("./catalog/SpeciesPage", () => {
+vi.mock("./catalog/species-page/species-page", () => {
   loaded.pages.push("species-page");
   return { SpeciesPage: () => null };
 });

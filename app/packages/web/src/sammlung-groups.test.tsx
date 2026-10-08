@@ -91,7 +91,7 @@ beforeAll(async () => {
   await Promise.all([
     import("./collection/collection-page/collection-page"),
     import("./care/phases/care-phases-page/care-phases-page"),
-    import("./light/LightPage"),
+    import("./light/light-page/light-page"),
   ]);
 }, 30_000);
 

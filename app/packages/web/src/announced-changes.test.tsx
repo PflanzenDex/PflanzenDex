@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ProposalForm } from "./catalog/proposal-form";
+import { ProposalForm } from "./catalog/proposal/proposal-form/proposal-form";
 import { CollectionList } from "./collection/collection-list";
 
 afterEach(cleanup);
