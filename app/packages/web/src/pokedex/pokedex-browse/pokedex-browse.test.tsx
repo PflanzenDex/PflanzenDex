@@ -65,6 +65,15 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe("US-POK-08 · #593 layout on a phone", () => {
+  it("US-POK-08 the counter keeps the usual spacing to the search label below it", async () => {
+    await open();
+    const counter = screen.getByText("3 Arten gefangen");
+    expect(counter.className).toMatch(/(^|\s)mb-[1-9]/);
+    expect(counter.className).not.toMatch(/(^|\s)m-0(\s|$)/);
+  });
+});
+
 describe("US-POK-08 search", () => {
   it("US-POK-08 finds case-insensitively by species, German name, genus and family", async () => {
     await open();
