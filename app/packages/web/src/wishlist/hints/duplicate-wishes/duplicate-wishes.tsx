@@ -3,8 +3,8 @@ import { WISH_LIMITS, type CandidateList, type DuplicateWish } from "@pflanzende
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/fields/input/input";
 import { Label } from "@/components/ui/display/label/label";
-import { useWriteAction, type Response } from "../../kernel";
-import { removeDuplicateWish, renameWish } from "../wishlist-api";
+import { useWriteAction, type Response } from "../../../kernel";
+import { removeDuplicateWish, renameWish } from "../../wishlist-api";
 
 type Token = () => Promise<string | undefined>;
 type Hint = { text: string; nextAction: string };

@@ -6,8 +6,9 @@ import { useCandidateWrite, WriteOutcome, type WishToPlant } from "../actions/ac
 import { BoughtList } from "../history/bought-list/bought-list";
 import { CandidateCard } from "../candidate-card/candidate-card";
 import { DiscardedList } from "../history/discarded-list/discarded-list";
-import { ReplenishWarning } from "../replenish-warning/replenish-warning";
-import { DuplicateWishes, useRepair } from "../duplicate-wishes/duplicate-wishes";
+import { ReplenishWarning } from "../hints/replenish-warning/replenish-warning";
+import { DuplicateWishes, useRepair } from "../hints/duplicate-wishes/duplicate-wishes";
+import { UnfitWishes } from "../hints/unfit-wishes/unfit-wishes";
 import { WishForm } from "../wish-form/wish-form";
 import { WishlistPageSkeleton } from "./wishlist-page.skeleton";
 import { createWish, loadWishlist, type WishInput, type Wishlist } from "../wishlist-api";
@@ -17,7 +18,6 @@ const focusForm = () =>
   document
     .querySelector<HTMLElement>('section[aria-labelledby="wish-form-title"] input[name="name"]')
     ?.focus();
-
 const KEY = ["wishlist", "candidates"] as const;
 type Token = () => Promise<string | undefined>;
 type Last = "write" | "repair";
@@ -102,6 +102,7 @@ function Body(props: {
       />
       <ReplenishWarning replenishment={data.list.replenishment} />
       <DuplicateWishes list={data.list} repair={repair} />
+      <UnfitWishes wishes={data.list.unfit} />
       <Candidates
         list={data.list}
         onBuy={candidate.buy}

@@ -80,6 +80,7 @@ const WISHLIST: Record<string, unknown> = {
   "/wishes/candidates": {
     candidates: [],
     zones: [],
+    unfit: [],
     hint: {
       text: "Keine offenen Kandidaten in der Wunschliste.",
       nextAction: "Erfasse einen Wunsch mit Ziel-Lichtzone.",

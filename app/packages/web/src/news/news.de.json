@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Zonen-Hinweise: Wünsche ohne Zone oder mit dem Stecklingslicht stehen jetzt in einem eigenen Hinweis „Wünsche ohne passende Zone“, mit Grund und nächstem Schritt. Nichts wird dabei gelöscht.",
     "Wunschbilder: Bei einem Wunsch mit Bild von Wikimedia Commons kannst du das Bild jetzt bei dir speichern. Es erscheint mit Quelle und Lizenz auf der Karte und bleibt privat.",
     "Datumsfelder: Zeigt dein Browser statt eines Kalenders ein einfaches Textfeld, steht dort jetzt das erwartete Format „JJJJ-MM-TT“.",
     "Exemplar anlegen: Bleibt das Formular über Mitternacht offen, wird das voreingestellte Fangdatum nicht mehr als „gestern“ gespeichert; ohne deine Änderung gilt der Tag, an dem du speicherst.",

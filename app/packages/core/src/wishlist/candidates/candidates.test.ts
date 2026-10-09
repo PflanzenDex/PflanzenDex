@@ -243,3 +243,61 @@ describe("US-WUN-04 the candidate says whether the image is stored locally, with
     expect(JSON.stringify(list)).not.toContain("secret-name");
   });
 });
+
+describe("FR-WUN-03 hints for wishes without a fitting zone", () => {
+  const outside = { anna: [{ zoneId: "zone-1", name: "Anzucht" }] };
+  const withStub = () => {
+    stock = new ZoneStockStub({ anna: stockAnna(5, 1, 3) }, outside);
+  };
+
+  it("a wish with the cutting light zone is listed with its name, the zone, a reason and the next action", async () => {
+    withStub();
+    wishes.seed("anna", { id: "a", name: "Aloe", german: "Aloe", targetZoneId: "zone-1" });
+    const { unfit } = await candidates();
+    expect(unfit).toHaveLength(1);
+    expect(unfit[0]).toMatchObject({
+      id: "a",
+      title: "Aloe (Aloe)",
+      kind: "zone_outside",
+      zone: "Anzucht",
+    });
+    expect(unfit[0]?.reason).toContain("Stecklingslicht");
+    expect(unfit[0]?.nextAction).toContain("Zone prüfen");
+    expect(unfit[0]?.nextAction).toContain("aus der Liste");
+  });
+
+  it("a wish without a zone says so and invents none (P-08)", async () => {
+    withStub();
+    wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: null });
+    const { unfit } = await candidates();
+    expect(unfit[0]).toMatchObject({ kind: "zone_unknown", zone: null });
+    expect(unfit[0]?.reason).toContain("keine Ziel-Zone");
+  });
+
+  it("a wish with a zone 2 to 4 is not listed; the list is empty without such wishes", async () => {
+    withStub();
+    wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: Z3 });
+    expect((await candidates()).unfit).toEqual([]);
+  });
+
+  it("only open wishes are listed, and nothing is removed from the candidates (P-10)", async () => {
+    withStub();
+    wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: "zone-1" });
+    wishes.seed("anna", { id: "b", name: "Bryophyllum", targetZoneId: null, status: "bought" });
+    const list = await candidates();
+    expect(list.unfit.map((u) => u.id)).toEqual(["a"]);
+    expect(list.candidates.map((c) => c.id)).toEqual(["a"]);
+  });
+
+  it("without a name for the zone the text still names the problem, never a made-up zone", async () => {
+    wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: "zone-1" });
+    const { unfit } = await candidates();
+    expect(unfit[0]).toMatchObject({ kind: "zone_outside", zone: null });
+  });
+
+  it("another account's wishes and zones never show up (P-04)", async () => {
+    withStub();
+    wishes.seed("ben", { id: "x", name: "Fremd", targetZoneId: null });
+    expect((await candidates()).unfit).toEqual([]);
+  });
+});

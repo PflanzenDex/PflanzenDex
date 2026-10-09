@@ -618,3 +618,47 @@ describe("FR-WUN-06 #303 repair of duplicate wish names through the API", () => 
     expect((await rename(subA, randomUUID(), { name: "x" })).status).toBe(404);
   });
 });
+
+describe("FR-WUN-03 hints for wishes without a fitting zone", () => {
+  it("lists a wish with the cutting light and one without a zone, names the zone, and keeps both among the candidates (P-10)", async () => {
+    const own = `wun3-${randomUUID()}`;
+    const zones = await defaults(own);
+    const cutting = await wish(own, { name: `Anzucht ${run}`, targetZoneId: zones["Lampe 1"] });
+    const none = await wish(own, { name: `Ohne ${run}` });
+    expect([cutting.status, none.status]).toEqual([201, 201]);
+    const r = await candidates(own);
+    const unfit = r.body["unfit"] as {
+      title: string;
+      kind: string;
+      zone: string | null;
+      reason: string;
+      nextAction: string;
+    }[];
+    expect(unfit.map((u) => [u.title, u.kind, u.zone]).sort()).toEqual(
+      [
+        [`Anzucht ${run}`, "zone_outside", "Lampe 1"],
+        [`Ohne ${run}`, "zone_unknown", null],
+      ].sort(),
+    );
+    expect(unfit.every((u) => u.reason.length > 0 && u.nextAction.includes("Zone prüfen"))).toBe(
+      true,
+    );
+    expect((r.body["candidates"] as Candidate[]).length).toBe(2);
+    await admin.query(
+      "delete from wish where account_id in (select id from account where subject = $1)",
+      [own],
+    );
+    await admin.query(
+      "delete from light_zone where account_id in (select id from account where subject = $1)",
+      [own],
+    );
+    await admin.query("delete from account where subject = $1", [own]);
+  });
+
+  it("another account's wishes never appear in the hints (P-04)", async () => {
+    const r = await candidates(subB);
+    expect(
+      (r.body["unfit"] as { title: string }[]).every((u) => !u.title.includes("Anzucht")),
+    ).toBe(true);
+  });
+});

@@ -1,7 +1,7 @@
 // Warning before the candidate list runs empty (US-WUN-02): derived on every request from the open wishes and the
 // zones 2 to 4, never stored (P-01). Wishes without a zone 2 to 4 count towards no zone (FR-WUN-03).
-import type { Replenishment } from "./types";
-import type { WishRow, ZoneStock } from "../types";
+import type { Replenishment } from "../types";
+import type { WishRow, ZoneStock } from "../../types";
 
 /**
  * Open candidates every zone 2 to 4 should have at least. Assumption, decided by the PO: a fixed starting value of 2

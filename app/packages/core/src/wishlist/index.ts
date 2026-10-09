@@ -40,6 +40,7 @@ export type {
   WishStatus,
   WishStore,
   WishValues,
+  OutsideZone,
   ZoneStock,
   ZoneStockSource,
 } from "./types";
@@ -48,6 +49,7 @@ export type {
   CandidateList,
   CandidatesDependencies,
   ReplenishZone,
+  UnfitWish,
   Replenishment,
   DuplicateWish,
   PriorityKind,
