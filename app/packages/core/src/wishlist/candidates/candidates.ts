@@ -154,11 +154,12 @@ export async function wishCandidates(
   deps: CandidatesDependencies,
   userId: string,
 ): Promise<CandidateList> {
-  const [open, zones, keyless, outside] = await Promise.all([
+  const [open, zones, keyless, outside, buffer] = await Promise.all([
     deps.wishes.open(userId),
     deps.stock.stock(userId),
     deps.wishes.keyless(userId),
     deps.stock.uncounted?.(userId) ?? [],
+    deps.stock.buffer?.(userId),
   ]);
   const s = standing(zones);
   const candidates = open.map((w) => candidate(w, zones, s)).sort(byStock(zones));
@@ -169,7 +170,7 @@ export async function wishCandidates(
     hint: hintFor(candidates),
     duplicates,
     unfit: unfitWishes(open, zones, outside, titleOf),
-    replenishment: replenishment(open, zones),
+    replenishment: replenishment(open, zones, buffer),
     duplicateHint: duplicates.length > 0 ? DUPLICATE_HINT : null,
   };
 }

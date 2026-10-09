@@ -4,8 +4,8 @@ import type { Replenishment } from "../types";
 import type { WishRow, ZoneStock } from "../../types";
 
 /**
- * Open candidates every zone 2 to 4 should have at least. Assumption, decided by the PO: a fixed starting value of 2
- * (the spec says "adjustable"; an account setting follows with its own change, the function takes it as a parameter).
+ * Default of open candidates every zone 2 to 4 should have at least. Assumption, decided by the PO: 2. The account can
+ * change it (`REPLENISH_BUFFER_LIMITS` in `account`, US-WUN-02); the function takes the value as a parameter.
  */
 export const REPLENISH_BUFFER = 2;
 

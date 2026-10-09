@@ -77,6 +77,7 @@ describe("US-ACC-02 · GET /account/profile", () => {
         swap: true,
         friends: true,
       },
+      replenishBuffer: 2,
     });
   });
 

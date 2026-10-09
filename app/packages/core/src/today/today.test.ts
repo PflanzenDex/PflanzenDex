@@ -47,6 +47,8 @@ interface Extra {
   readonly measured?: Readonly<Record<string, CardMeasurementView["last"]["quality"]>>;
   readonly wishes?: readonly Pick<WishRow, "targetZoneId">[];
   readonly stock?: readonly ZoneStock[];
+  /** The buffer of the account (US-WUN-02); without it the default applies. */
+  readonly buffer?: number;
 }
 const asked: string[][] = [];
 
@@ -105,7 +107,10 @@ async function setUp(
       },
     },
     wishes: { open: async () => (extra.wishes ?? []) as readonly WishRow[] },
-    stock: { stock: async () => extra.stock ?? [] },
+    stock: {
+      stock: async () => extra.stock ?? [],
+      ...(extra.buffer === undefined ? {} : { buffer: async () => extra.buffer as number }),
+    },
   };
   return (zone: unknown = "Europe/Berlin", user = "anna") => todayStatus(deps, user, zone);
 }
@@ -287,6 +292,17 @@ describe("US-QS-04 deviations become visible in the today list", () => {
       wishes: [{ targetZoneId: "z2" }, { targetZoneId: "z2" }],
     });
     expect(kinds(await today())).toEqual([]);
+  });
+
+  it("US-WUN-02 the Today list uses the buffer of the account at once: a higher value warns, a lower one does not", async () => {
+    const stock = [{ zoneId: "z2", name: "Lampe 2", count: 0 }];
+    const wishes = [{ targetZoneId: "z2" }, { targetZoneId: "z2" }];
+    const higher = await setUp([], [], { stock, wishes, buffer: 3 });
+    expect(kinds(await higher())).toEqual(["buffer_low:null"]);
+    const lower = await setUp([], [], { stock, wishes: [{ targetZoneId: "z2" }], buffer: 1 });
+    expect(kinds(await lower())).toEqual([]);
+    const off = await setUp([], [], { stock, wishes: [], buffer: 0 });
+    expect(kinds(await off())).toEqual([]);
   });
 
   it("US-QS-04 orders date-bound first, then deviation, etiolated, incomplete data, buffer last", async () => {

@@ -67,3 +67,50 @@ describe("US-WUN-02 warning before the list is empty", () => {
     expect(r.actions).toEqual({ discover: false, suggestions: false });
   });
 });
+
+describe("US-WUN-02 the buffer is the account's setting", () => {
+  const withBuffer = (buffer: number | undefined) =>
+    wishCandidates(
+      {
+        wishes,
+        stock: new ZoneStockStub(
+          { anna: stock(5, 1, 3) },
+          {},
+          buffer === undefined ? {} : { anna: buffer },
+        ),
+      },
+      "anna",
+    );
+
+  it("without a stored value the default of 2 applies", async () => {
+    open("z2", 2);
+    open("z3", 2);
+    open("z4", 2);
+    expect((await withBuffer(undefined)).replenishment).toMatchObject({ buffer: 2, zones: [] });
+  });
+
+  it("a higher buffer warns for more zones, at once", async () => {
+    open("z2", 2);
+    open("z3", 2);
+    open("z4", 2);
+    const r = (await withBuffer(3)).replenishment;
+    expect(r.buffer).toBe(3);
+    expect(r.zones.map((z) => z.name)).toEqual(["Lampe 2", "Lampe 3", "Lampe 4"]);
+  });
+
+  it("a lower buffer warns for fewer zones; 0 switches the warning off", async () => {
+    open("z2", 1);
+    expect((await withBuffer(1)).replenishment.zones.map((z) => z.name)).toEqual([
+      "Lampe 3",
+      "Lampe 4",
+    ]);
+    const off = (await withBuffer(0)).replenishment;
+    expect(off).toMatchObject({ buffer: 0, zones: [], nextAction: null });
+  });
+
+  it("the buffer of another account never applies (P-04)", async () => {
+    const stub = new ZoneStockStub({ anna: stock(5, 1, 3) }, {}, { ben: 9 });
+    const r = await wishCandidates({ wishes, stock: stub }, "anna");
+    expect(r.replenishment.buffer).toBe(2);
+  });
+});

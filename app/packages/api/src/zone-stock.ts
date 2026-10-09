@@ -1,6 +1,12 @@
-import { cuttingLight, zoneDistribution, type ZoneStockSource } from "@pflanzendex/core";
+import {
+  REPLENISH_BUFFER,
+  cuttingLight,
+  zoneDistribution,
+  type ZoneStockSource,
+} from "@pflanzendex/core";
 import {
   CareProfilePostgres,
+  ProfilePostgres,
   LocationPostgres,
   SpeciesPostgres,
   SpecimenPostgres,
@@ -21,10 +27,15 @@ export function zoneStockFor(pool: Pool): ZoneStockSource {
     zones: new ZonePostgres(pool),
     profiles: new CareProfilePostgres(pool),
   };
+  const accounts = new ProfilePostgres(pool);
   return {
     async stock(userId) {
       const { zones } = await zoneDistribution(deps, userId);
       return zones.map(({ zone, count }) => ({ zoneId: zone.id, name: zone.name, count }));
+    },
+    /** The buffer of the account setting (US-ACC-02, US-WUN-02); the default while no profile row exists. */
+    async buffer(userId) {
+      return (await accounts.find(userId))?.replenishBuffer ?? REPLENISH_BUFFER;
     },
     /** The zone that does not count, the cutting light: only used to name it in the wishlist hints (FR-WUN-03). */
     async uncounted(userId) {
