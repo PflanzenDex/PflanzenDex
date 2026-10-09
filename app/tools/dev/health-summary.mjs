@@ -23,7 +23,6 @@ export function toMarkdown(top) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const { ESLint } = await import("eslint");
   const eslint = new ESLint({
-    overrideConfigFile: "config/lint/eslint.config.js",
     overrideConfig: [{ rules: { "sonarjs/cognitive-complexity": ["warn", 0] } }],
   });
   const results = await eslint.lintFiles(["packages"]);
