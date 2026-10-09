@@ -6,7 +6,7 @@ export const SettingsPage = lazyPage(() =>
 export const OperatorPage = lazyPage(() =>
   import("./operator/operator-page/operator-page").then((m) => ({ default: m.OperatorPage })),
 );
-export { AppError, AccountView, Loading, Welcome } from "./views/views";
+export { AppError, AccountView, Loading, MeasuredView, Welcome } from "./views/views";
 export { apiUrl } from "./api/account-api";
 export type { Account } from "./api/account-api";
 export { useSession } from "./session";

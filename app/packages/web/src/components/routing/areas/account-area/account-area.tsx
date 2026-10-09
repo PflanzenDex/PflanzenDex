@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router";
 import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
 import { useSectionAnchor } from "@/components/routing/areas/shared/area-section/use-section-anchor";
-import { AccountView, SettingsPage } from "@/account";
+import { AccountView, MeasuredView, SettingsPage } from "@/account";
 import type { Account } from "@/account";
 import { Button } from "@/components/ui/button/button";
 import {
@@ -17,6 +17,7 @@ type Token = () => Promise<string | undefined>;
 const SECTIONS = [
   { anchor: ACCOUNT_SECTIONS.profile, title: "Profil" },
   { anchor: ACCOUNT_SECTIONS.settings, title: "Einstellungen" },
+  { anchor: ACCOUNT_SECTIONS.measured, title: "Was wird gemessen?" },
 ] as const;
 const NAMES: Record<string, string> = Object.fromEntries(SECTIONS.map((s) => [s.anchor, s.title]));
 
@@ -55,7 +56,8 @@ function SectionNav() {
  * as sections one below the other, with a list of the sections beside them on wide screens. The app wires the modules;
  * the settings are their own lazy part. The old address of "Einstellungen" leads to the anchor of its section.
  * The settings end with a link to the management of the locations and light zones, which lives in the Sammlung.
- * Invitations to friends belong to "Freunde" (US-SOZ), not to the account, so there is no section for them.
+ * Invitations to friends belong to "Freunde" (US-SOZ), not to the account, so there is no section for them. The last
+ * section says what is recorded about the use (US-QS-05).
  */
 export function AccountArea(props: {
   api: string;
@@ -96,6 +98,13 @@ export function AccountArea(props: {
             <Button asChild variant="secondary" className="self-start">
               <Link to={MANAGE_ADDRESS}>Standorte und Lichtzonen verwalten</Link>
             </Button>
+          </AreaSection>
+          <AreaSection
+            anchor={ACCOUNT_SECTIONS.measured}
+            title="Was wird gemessen?"
+            loading="Wird geladen …"
+          >
+            <MeasuredView />
           </AreaSection>
         </div>
       </div>

@@ -247,6 +247,46 @@ describe("US-SOZ-04 what a friend sees", () => {
     );
   });
 
+  it("US-QS-05 FR-SOZ-01 location, growth notes and treatments never reach a friend, on any friend view", async () => {
+    const secret = randomUUID().slice(0, 8);
+    const location = (
+      await call(subA, "POST", "/locations", {
+        name: `Geheimort ${secret}`,
+        kind: "indoor",
+        lightZoneId: null,
+      })
+    ).body.id as string;
+    const writes = [
+      await call(subA, "POST", `/specimens/${annaSpecimen}/location`, { locationId: location }),
+      await call(subA, "POST", `/specimens/${annaSpecimen}/measurements`, {
+        timeZone: "Europe/Berlin",
+        date: "2026-10-01",
+        value: 7,
+        note: `Geheimnotiz ${secret}`,
+      }),
+      await call(subA, "POST", "/treatments", {
+        specimenIds: [annaSpecimen],
+        reason: `Geheimbehandlung ${secret}`,
+        date: "2026-10-10",
+      }),
+    ];
+    // The secrets really are stored for the owner, so their absence below means something.
+    for (const w of writes) expect(w.status).toBeLessThan(300);
+    await call(subA, "PUT", `/sharing/specimens/${annaSpecimen}`, { share: "friends" });
+    const seen = [
+      await call(subB, "GET", `/friends/${friendOfBen}/shared`),
+      await call(subB, "GET", `/friends/${friendOfBen}/collection`),
+      await call(subB, "GET", "/friends"),
+      await call(subB, "GET", "/feed?timeZone=Europe/Berlin"),
+      await call(subB, "GET", "/feed/banner?timeZone=Europe/Berlin"),
+    ];
+    expect(seen[0]?.body.specimens.map((x: { id: string }) => x.id)).toContain(annaSpecimen);
+    for (const r of seen) {
+      expect(r.status).toBe(200);
+      expect(JSON.stringify(r.body)).not.toContain(secret);
+    }
+  });
+
   it("US-SOZ-03 US-SOZ-04 ending the friendship withdraws everything at once and deletes nothing", async () => {
     expect((await call(subA, "POST", `/friends/${friendOfAnna}/end`, {})).status).toBe(200);
     expect((await call(subB, "GET", `/friends/${friendOfBen}/shared`)).status).toBe(404);

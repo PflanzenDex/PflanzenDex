@@ -141,3 +141,22 @@ export function AppError(props: { text: string; onReload: Action }) {
     />
   );
 }
+
+/** What the app records about the use and what never leaves the account (US-QS-05, #305): every point is true today. */
+const MEASURED = [
+  "Keine Klickzählung und keine Nutzungsanalyse: PflanzenDex zählt nicht, was du antippst oder wie lange du die App nutzt, und bindet keine Werbe- oder Analysedienste ein.",
+  "Bei jeder Anmeldung speichern wir, wann du zuletzt aktiv warst. Der Betreiber sieht davon nur die Zahl der aktiven Konten der letzten 30 Tage, nie deinen Zeitpunkt.",
+  "Fotos zu deinen Messungen speichern wir ohne Ort- und Kameradaten (EXIF/GPS) und verkleinert; nur du kannst sie sehen.",
+  "Standort, Notizen, Behandlungen und Preise deiner Pflanzen sehen Freunde nie, auch nicht bei geteilten Exemplaren.",
+  "Bilder auf Sammlerkarten und Vorschlägen lädt dein Gerät direkt von Wikipedia (Wikimedia).",
+] as const;
+
+export function MeasuredView() {
+  return (
+    <ul className="m-0 grid list-disc gap-2 pl-5">
+      {MEASURED.map((text) => (
+        <li key={text}>{text}</li>
+      ))}
+    </ul>
+  );
+}
