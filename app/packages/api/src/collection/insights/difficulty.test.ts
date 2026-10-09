@@ -75,6 +75,11 @@ afterAll(async () => {
       "delete from specimen where account_id in (select id from account where subject = any($1))",
       [subjects],
     );
+    // A care profile points at its species (care_profile_species): it goes before the species.
+    await admin.query(
+      "delete from care_profile where account_id in (select id from account where subject = any($1))",
+      [subjects],
+    );
     await admin.query(
       `delete from species where id in (select object_id from review_case
          where account_id in (select id from account where subject = any($1)))`,
@@ -137,6 +142,23 @@ describe("US-BES-05: difficulty overview", () => {
     });
     expect(a.status).toBe(200);
     expect((await difficulty(sub)).body["rows"]).toEqual([]);
+  });
+
+  it("US-BES-05 · US-BES-09 my care-profile watering intervals reach the comparison (#306)", async () => {
+    const sub = `bes5-${randomUUID()}`;
+    subjects.push(sub);
+    const sp = await newSpecies(sub, "Profiled", 1, { wateringHint: "alle 10 Tage" });
+    await specimen(sub, "A", sp);
+    const put = await call(sub, "PUT", `/care-profiles/${sp}`, {
+      wateringGrowthDays: 7,
+      wateringDormancyDays: 21,
+    });
+    expect(put.status).toBeLessThan(300);
+    const [row] = (await difficulty(sub)).body["rows"];
+    expect(row).toMatchObject({
+      wateringHint: "alle 10 Tage",
+      ownWatering: { growthDays: 7, dormancyDays: 21 },
+    });
   });
 
   it("tenant: another account sees none of my species", async () => {

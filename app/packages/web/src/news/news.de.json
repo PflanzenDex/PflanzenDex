@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Artenvergleich: Hast du für eine Art im Pflegeprofil eine eigene Lichtzone oder eigene Gießabstände eingetragen, zeigt der Vergleich jetzt deine Werte, gekennzeichnet mit „dein Pflegeprofil“.",
     "Artenvergleich: Fehlt eine Art, weil du sie nicht mehr lesen kannst, sagt die Seite jetzt, wie viele Arten deshalb nicht im Vergleich stehen.",
     "Konto: Der neue Abschnitt „Was wird gemessen?“ sagt dir, was PflanzenDex über deine Nutzung speichert – keine Klickzählung, keine Analysedienste, nur wann du zuletzt aktiv warst – und was Freunde nie sehen.",
     "Heute: Die Liste „Jetzt dran“ zeigt jetzt auch, wenn die letzte Messung einer Pflanze vergeilt/dünn war, und wenn für eine Lichtzone zu wenige Wünsche offen sind („Nachschub“) – jeweils mit dem nächsten Schritt.",
