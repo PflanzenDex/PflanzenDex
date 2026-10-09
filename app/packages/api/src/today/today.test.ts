@@ -125,3 +125,48 @@ describe("TE-07 GET /today", () => {
     expect(await items(subB)).toEqual([]);
   });
 });
+
+describe("US-QS-04 deviations in GET /today", () => {
+  it("US-QS-04 an etiolated last measurement and a zone below the buffer appear with their action", async () => {
+    const created = await call(subB, "POST", "/specimens", {
+      speciesId: species[subB],
+      marker: "vergeilt",
+      timeZone: "Europe/Berlin",
+    });
+    const id = created.body["id"] as string;
+    const stubbed = createApp({
+      reviewer,
+      pool,
+      clock: () => NOW,
+      measurements: {
+        forSpecimens: async (_u, ids) =>
+          new Map(
+            ids.map((i) => {
+              const last = {
+                date: "2026-10-01",
+                value: 9,
+                quality: "etiolated" as const,
+                note: null,
+              };
+              return [i, { last, photo: null }] as const;
+            }),
+          ),
+      },
+      zoneStock: { stock: async () => [{ zoneId: "z3", name: "Lampe 3", count: 0 }] },
+    });
+    const res = await stubbed.request("/today?timeZone=Europe/Berlin", {
+      headers: { authorization: `Bearer valid:${subB}` },
+    });
+    const body = (await res.json()) as {
+      items: { kind: string; specimenId: string | null; target: string }[];
+    };
+    expect(body.items.filter((i) => i.kind !== "specimen_incomplete")).toEqual([
+      expect.objectContaining({
+        kind: "measurement_etiolated",
+        specimenId: id,
+        target: "measurements",
+      }),
+      expect.objectContaining({ kind: "buffer_low", specimenId: null, target: "wishlist" }),
+    ]);
+  });
+});

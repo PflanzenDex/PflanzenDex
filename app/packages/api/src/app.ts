@@ -45,7 +45,7 @@ import {
   treatmentSourceFor,
   targetLocationFor,
 } from "./care";
-import { TODAY_PATHS, todayRoutes } from "./today";
+import { TODAY_PATHS, todayRoutes, type TodayOptions } from "./today";
 
 export type AppOptions = {
   /** Verifies access tokens of the sign-in service; without it there are no protected routes. */
@@ -94,14 +94,17 @@ function bindCareOne(
 }
 
 /** The module `today` (TE-07): sign-in guard in front of the path, then the read-only route. */
-function bindToday(
-  app: Hono,
-  pool: Pool,
-  auth: MiddlewareHandler,
-  opt: { clock?: () => Date; phaseLocation?: PhaseLocationSource },
-) {
+function bindToday(app: Hono, pool: Pool, auth: MiddlewareHandler, opt: TodayOptions) {
   for (const path of TODAY_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", todayRoutes(pool, opt));
+}
+
+/** What "Today" reads from `care` and `wishlist` (US-QS-04): last measurements and the stock per zone, unless tests replace them. */
+function todaySources(pool: Pool, opt: AppOptions) {
+  return {
+    measurements: opt.measurements ?? measurementSourceFor(pool),
+    zoneStock: opt.zoneStock ?? zoneStockFor(pool),
+  };
 }
 
 /** The module `wishlist`: sign-in guard in front of the paths, then the routes; the stock per zone comes from `collection` unless tests replace it. */
@@ -178,7 +181,7 @@ export function createApp(opt: AppOptions = {}): Hono {
     bindFriends(app, opt.pool, auth, opt.clock);
     const care = careOptions(opt);
     bindCareOne(app, opt.pool, auth, care);
-    bindToday(app, opt.pool, auth, care);
+    bindToday(app, opt.pool, auth, { ...care, ...todaySources(opt.pool, opt) });
   }
   return app;
 }

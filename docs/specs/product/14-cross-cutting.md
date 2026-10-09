@@ -35,12 +35,14 @@ Acceptance criteria:
 
 State of implementation: the job queue (TE-06, PostgreSQL, module `jobs`) exists: orders with the same type and key are merged, a failed run is retried with backoff, a lost worker loses its job after a lease, and a job that cannot succeed ends dead with its error kept (P-10). Handlers must be repeatable. **Open:** no job type yet (reminders, catalog enrichment, photo processing come with their stories) and the redelivery of buffered write actions.
 
-### US-QS-04 · Deviations become visible · ⬜ (prototype ✅)
+### US-QS-04 · Deviations become visible · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
 - Wrong location, overdue treatment, buffer undercut, etiolated last measurement, data gaps appear as a warning with an instruction for action (P-09).
 - Data that would be missing in an evaluation (specimen without species, without location) appears in a warning list (P-10).
+
+State of implementation: the today list (TE-07, view "Heute") shows every deviation as an entry with a state word, a text and the next action (P-09): wrong location of the care phase (US-PHA-02), overdue treatment (US-BEH-02), etiolated last measurement ("Vergeilt", leads to measuring), zone 2 to 4 below the buffer of open candidates ("Nachschub", the warning of US-WUN-02, leads to the wishlist) and data gaps (US-BES-08, specimen without location or zone, also in the warning list "Fehlt noch"). A specimen always has a species (required on creation), so "without species" cannot occur. Archived specimens are left out (US-BES-07). **Open:** the manual test protocol in a real browser.
 
 ### US-QS-05 · Privacy and control · ⬜ (prototype ✅ partly)
 
