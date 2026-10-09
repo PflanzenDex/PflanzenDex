@@ -11,7 +11,7 @@
   },
   "scripts": {
     "dev": "concurrently -n api,web -c blue,green \"npm run dev -w @pflanzendex/api\" \"npm run dev -w @pflanzendex/web\"",
-    "lint": "eslint -c config/lint/eslint.config.js .",
+    "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "npm run typecheck --workspaces --if-present",
@@ -87,7 +87,7 @@
   "lint-staged": {
     "*.{ts,tsx,js,mjs}": [
       "prettier --write",
-      "eslint -c config/lint/eslint.config.js --max-warnings=0 --no-warn-ignored"
+      "eslint --max-warnings=0 --no-warn-ignored"
     ],
     "*.{json,md,css,html,yml,yaml}": "prettier --write"
   }

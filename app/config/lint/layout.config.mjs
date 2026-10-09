@@ -31,6 +31,8 @@ export default {
   dirs: [
     // Module roots (FR-QG-21): the `src/` folder holds the modules, and there are more modules than the unit limit, so it
     // has none; a module holds up to 10 feature directories (starting value, assumption), inside a feature 5 applies.
+    // The app root: package.json, package-lock.json, eslint.config.js (ESLint finds it only here), packages, tools, config.
+    { path: "app", maxUnits: 6 },
     { path: "app/packages/*/src", maxUnits: Infinity },
     { path: "app/packages/*/src/*", maxUnits: 10 },
     // The gate scripts: one folder per gate (US-QG-07 added db-indexes as the sixth); a seventh needs a new reason.

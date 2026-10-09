@@ -2,7 +2,6 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreExportsUsedInFile": true,
   "commitlint": { "config": ["config/project/commitlint.config.js"] },
-  "eslint": { "config": ["config/lint/eslint.config.js"] },
   "semantic-release": { "config": ["config/project/release.config.js"] },
   "ignoreDependencies": [
     "@commitlint/cli",

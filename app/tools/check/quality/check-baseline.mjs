@@ -60,9 +60,7 @@ export function checkBaseline(findings, baseline) {
 async function currentFindings() {
   process.env.QUALITY_BASELINE = "off";
   const { ESLint } = await import("eslint");
-  const results = await new ESLint({
-    overrideConfigFile: "config/lint/eslint.config.js",
-  }).lintFiles(["."]);
+  const results = await new ESLint().lintFiles(["."]);
   return results.flatMap((r) =>
     r.messages.flatMap((m) => {
       if (!METRIC_RULES.includes(m.ruleId)) return [];
