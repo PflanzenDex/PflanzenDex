@@ -5,6 +5,9 @@ import { EPIC_SCOPES } from "../../../../config/project/commitlint.config.js";
 // Assumption (starting value, not measured): a claim without a commit for 48 hours counts as stale.
 export const DEFAULT_STALE_HOURS = 48;
 
+/** Label of generated report issues (US-DEV-11); such an issue can never be claimed. */
+export const REPORT_LABEL = "report";
+
 const ID_PATTERN = /\b(US-[A-Z]{2,4}-\d{2}|FR-[A-Z]{2,4}-\d{2}|TE-\d{2})\b/i;
 const CLOSING = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s+#(\d+)\b/gi;
 const UMLAUTS = { ä: "ae", ö: "oe", ü: "ue", ß: "ss" };
@@ -89,6 +92,13 @@ export function prState(pr) {
 export function findConflicts({ issue, prs, branches, allowPrior = false }) {
   const key = claimKey(issue);
   const found = [];
+  // US-DEV-11: the pinned retro issue is rewritten by a workflow; it is a report, never a task.
+  if ((issue.labels ?? []).some((l) => l.name === REPORT_LABEL)) {
+    found.push({
+      kind: "report",
+      text: `issue #${issue.number} is a generated report (label "${REPORT_LABEL}"), not a work item`,
+    });
+  }
   for (const a of issue.assignees ?? []) {
     found.push({
       kind: "assignee",

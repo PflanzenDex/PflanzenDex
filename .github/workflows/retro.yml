@@ -1,0 +1,40 @@
+# Issue flow retro (US-DEV-11): rewrites the pinned report issue "Retro: Issue flow" (label `report`, locked,
+# never a work item) with created vs. closed per day and the burndown. Owner: maintainers. On failure: the run
+# fails and shows up in the Actions tab; the next issue event or the nightly run retries.
+# Scheduled and issue-triggered workflows only run from the default branch, so this starts once it has reached `main`.
+name: Retro
+
+on:
+  issues:
+    types: [opened, closed, reopened]
+  schedule:
+    - cron: "7 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# The report is recomputed from all issues each time, so only the newest run matters.
+concurrency:
+  group: retro
+  cancel-in-progress: true
+
+jobs:
+  retro:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      # Only the script runs (no dependencies needed). Edits by GITHUB_TOKEN trigger no workflow, so no loop.
+      - run: make retro WRITE=1
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}

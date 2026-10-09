@@ -109,3 +109,16 @@ test("US-DEV-08: the claim key of a branch name, with or without US-/FR- prefix"
   assert.equal(keyOfBranch("feat/gate-global-reference"), null);
   assert.equal(keyOfBranch("dev"), null);
 });
+
+test("US-DEV-11: a generated report issue is no work item and can never be claimed", () => {
+  const report = {
+    number: 800,
+    title: "Retro: Issue flow",
+    labels: [{ name: "report" }],
+    assignees: [],
+  };
+  const found = findConflicts({ issue: report, prs: [], branches: [] });
+  assert.equal(found.length, 1);
+  assert.equal(found[0].kind, "report");
+  assert.match(found[0].text, /generated report/);
+});

@@ -206,6 +206,20 @@ Acceptance criteria:
 - **Never fails silently (P-10):** missing markers end with a non-zero exit and a message naming `README.md`.
 - **Content, in this order:** (1) what the app does: one row per product epic with status (✅ all stories done, 🟨 some done or in progress, ⬜ planned), name, short description and link from the spec index, story counts and a progress bar, complete areas first, plus a chart of stories by status; (2) engineering: repository size, production code per package, tests (files, cases, lines in relation to production code), migrations, error codes, ADRs, skills, runbooks, the process epics (QG, DEV) in the same table form, and lines by language; (3) activity: commits, people, latest release and commits per active day. Charts are Mermaid, because GitHub strips JavaScript from READMEs. Every number is counted from the repo; nothing is estimated (P-08).
 
+### US-DEV-11 · Issue flow retro as a live pinned issue · 🟨 new
+
+As a **maintainer** I want a live retro of the issue flow, so that I see at a glance whether we create more issues than we close, without asking anybody (or an AI) to count.
+
+Acceptance criteria:
+
+- **One pinned report issue, rewritten by a script:** the script behind `make retro` (run by a workflow on every issue opened, closed or reopened, nightly and on demand) rewrites the body of the open issue labelled `report` titled "Retro: Issue flow". Given no such issue exists, when it runs, then it creates the issue, locks it and tries to pin it (a failed pin is a warning, not an error).
+- **Counted, not estimated (P-08):** every issue of the repository counts, pull requests and `report` issues do not. "Closed" includes closed as not planned. Day boundaries are Europe/Berlin. Given issues created and closed on known days, when the report is built, then per day it shows created, closed, net and open at the end of the day.
+- **Averages without distortion:** the averages per day (created, closed, net) cover full days only, without the kickoff day (the initial bulk of tickets) and without today; the last 7 full days are shown next to the overall average, so a trend is visible. Given fewer than 2 full days, then the averages show "unknown".
+- **Content:** a short verdict (backlog grows, shrinks or holds, with the net per day), the averages, open now, a Mermaid line chart of cumulative created vs. closed and a Mermaid bar chart of open issues at the end of each day (burndown), both over the last 42 days (starting value), and a table of the last 14 days.
+- **The report is no work item:** the issue carries the label `report`, has no milestone, is not on the project board and is locked; its body says it is generated and must not be claimed. Given an issue labelled `report`, when somebody runs `make claim` on it, then the claim is refused.
+- **Idempotent and quiet:** given the generated body equals the current body, when the script runs, then it edits nothing. The body contains no clock time, only the date of the latest day and of the latest event.
+- **Least privilege (FR-DEV-08):** the workflow has `issues: write` and `contents: read`, nothing else.
+
 ## Requirements
 
 | ID        | Requirement                                                                                                                                                                                                                                                                                                                                                                   | Status |
