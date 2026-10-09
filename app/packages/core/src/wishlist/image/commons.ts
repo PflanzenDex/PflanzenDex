@@ -72,9 +72,11 @@ const text = (meta: Meta, key: string): string => {
   return typeof v === "string" ? v.trim() : "";
 };
 
+/** Plain text of the author field (HTML in the API answer): tags go, and no angle bracket survives. */
 const stripTags = (html: string): string =>
   html
     .replace(/<[^>]*>/g, "")
+    .replace(/[<>]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 

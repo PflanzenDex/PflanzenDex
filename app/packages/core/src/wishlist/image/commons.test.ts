@@ -134,4 +134,10 @@ describe("US-WUN-04 license and source are read from the answer, never guessed",
     );
     expect(huge).toEqual({ ok: false, reason: "not_found" });
   });
+
+  it("the author is plain text: tags and stray angle brackets are gone, even nested ones", () => {
+    const r = readCommons(page({}, { Artist: "<<b>script>alert(1)</b> Anna <i>B.</i>" }));
+    expect(r.ok && /[<>]/.test(r.file.source)).toBe(false);
+    expect(r.ok && r.file.source).toContain("Anna B.");
+  });
 });
