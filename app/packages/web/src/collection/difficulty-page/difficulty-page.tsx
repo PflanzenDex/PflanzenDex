@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from "react";
-import type { DifficultyRow } from "@pflanzendex/core";
+import type { DifficultyOverview, DifficultyRow } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import {
   ResponsiveTable,
@@ -60,10 +60,10 @@ export function DifficultyPage(props: {
         {...(host ? {} : { heading: "Artenvergleich" })}
         loadingFallback={<DifficultyPageSkeleton label="Artenvergleich wird geladen …" />}
       >
-        {(rows: readonly DifficultyRow[]) => (
+        {({ rows, unreadable }: DifficultyOverview) => (
           <>
             <ReportCaption host={host} count={rows.length} />
-            <DifficultyTable rows={rows} host={host !== undefined} />
+            <DifficultyTable rows={rows} unreadable={unreadable} host={host !== undefined} />
           </>
         )}
       </LoadFrame>
@@ -71,7 +71,23 @@ export function DifficultyPage(props: {
   );
 }
 
-function DifficultyTable({ rows, host }: { rows: readonly DifficultyRow[]; host: boolean }) {
+/** Species the account can no longer read have no row; the page says how many are missing (P-10). */
+function UnreadableNote({ count }: { count: number }) {
+  if (count === 0) return null;
+  const species = count === 1 ? "1 Art" : `${count} Arten`;
+  return (
+    <Quiet className="mb-3">
+      {`${species} deiner Exemplare kannst du nicht mehr lesen; sie fehlen in diesem Vergleich.`}
+    </Quiet>
+  );
+}
+
+function DifficultyTable(props: {
+  rows: readonly DifficultyRow[];
+  unreadable: number;
+  host: boolean;
+}) {
+  const { rows, host } = props;
   return (
     <section aria-labelledby="difficulty-title">
       {host ? (
@@ -83,6 +99,7 @@ function DifficultyTable({ rows, host }: { rows: readonly DifficultyRow[]; host:
           Artenvergleich
         </h1>
       )}
+      <UnreadableNote count={props.unreadable} />
       {rows.length === 0 ? (
         <EmptyState
           title="Noch keine Art mit aktivem Exemplar"

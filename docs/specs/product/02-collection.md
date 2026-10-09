@@ -78,7 +78,7 @@ Acceptance criteria:
 - Columns: species, botanical name, light zone, watering rule, substrate, pruning, success criteria, difficulty.
 - Only species with at least one active specimen. Sorted by `Difficulty` (number 1–3, display Easy/Medium/Hard).
 
-State of implementation: complete for the criteria above. The tab "Artenvergleich" (`GET /specimens/difficulty`) shows one row per species with an active specimen (archived ones do not count, US-BES-07), sorted by difficulty ascending and then by botanical name. The light zone is the one derived from the lux demand (FR-LIC-01, never the zone of a location); the watering rule is the catalog's watering hint, not the keeper's own interval from the care profile (US-BES-09). Every value the catalog does not know reads "unbekannt" (P-08). Derived on every request, nothing stored (P-01).
+State of implementation: complete for the criteria above. The tab "Artenvergleich" (`GET /specimens/difficulty`) shows one row per species with an active specimen (archived ones do not count, US-BES-07), sorted by difficulty ascending and then by botanical name. A species the account can no longer read (for example a re-pointed merged proposal) has no row; the answer counts it in `unreadable` and the page says how many are missing (P-10). The light zone is the one derived from the lux demand (FR-LIC-01, never the zone of a location); the watering rule is the catalog's watering hint, not the keeper's own interval from the care profile (US-BES-09). Every value the catalog does not know reads "unbekannt" (P-08). Derived on every request, nothing stored (P-01).
 
 ### US-BES-06 · See specimens as cards · 🟨 (prototype ✅)
 
