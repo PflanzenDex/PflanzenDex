@@ -142,6 +142,7 @@ const open = async () => {
 beforeEach(() => {
   mgr.getUser.mockReset();
   window.sessionStorage.clear();
+  window.sessionStorage.setItem("pflanzendex.silent_tried", "1");
 });
 afterEach(() => {
   cleanup();

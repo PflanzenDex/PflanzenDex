@@ -26,6 +26,8 @@ export type State =
 
 const env = import.meta.env as Record<string, string | undefined>;
 const MARKER = "pflanzendex.signed_out";
+// Set before the one silent attempt per tab, so a refused attempt (`login_required`) can never loop.
+const SILENT_TRIED = "pflanzendex.silent_tried";
 
 // The sign-in library is about a seventh of the initial JavaScript; it loads as its own chunk, started at once
 // (the loading state paints meanwhile) instead of travelling inside the entry chunk (US-QS-07, DS-08).
@@ -52,10 +54,24 @@ function processReturn(mgr: UserManager): Promise<User | undefined> {
   return mgr.getUser().then((u) => (u && !u.expired ? u : undefined));
 }
 
+// Once per tab, never after an explicit sign-out and never while the address still carries a result of the detour.
+function shouldTrySilently(): boolean {
+  const q = new URLSearchParams(window.location.search);
+  if (q.has("code") || q.has("error")) return false;
+  return !window.sessionStorage.getItem(MARKER) && !window.sessionStorage.getItem(SILENT_TRIED);
+}
+
 async function loadState(mgr: UserManager): Promise<State> {
   try {
     const user = await processReturn(mgr);
     if (!user) {
+      if (shouldTrySilently()) {
+        // A live session at the sign-in service (app token lost, other port, cleared site data) is picked up
+        // without showing a login page (US-ACC-01); without one the service answers `login_required` at once.
+        window.sessionStorage.setItem(SILENT_TRIED, "1");
+        await mgr.signinRedirect({ prompt: "none" });
+        return { kind: "loading" };
+      }
       const hint = window.sessionStorage.getItem(MARKER) ? "Du bist abgemeldet." : undefined;
       return hint ? { kind: "signedOut", hint } : { kind: "signedOut" };
     }

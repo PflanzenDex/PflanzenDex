@@ -193,6 +193,7 @@ beforeEach(() => {
   mgr.getUser.mockReset();
   mgr.signinRedirect.mockClear();
   window.sessionStorage.clear();
+  window.sessionStorage.setItem("pflanzendex.silent_tried", "1");
   window.localStorage.removeItem("pflanzendex.collection-view");
   window.history.replaceState({}, "", "/");
 });

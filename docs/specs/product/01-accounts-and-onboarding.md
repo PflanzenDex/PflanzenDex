@@ -18,6 +18,7 @@ Acceptance criteria:
 - The email address is confirmed before the account can share data with friends.
 - The sign-in stays on the device but is revocable ("sign out on all devices").
 - Wrong credentials do not reveal whether the email exists.
+- Given the sign-in service still has a live session for this browser but the app holds no sign-in (lost token, other port, cleared site data), when the app opens, then the person is signed in without seeing a login page; without a live session the welcome page shows, and the attempt is made once per tab and never after an explicit sign-out.
 
 ### US-ACC-02 · Profile and settings · 🟨 new
 
