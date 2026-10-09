@@ -3,11 +3,17 @@ import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Chips, catchText, countText } from "../pokedex-cards/pokedex-cards";
 
-/** A source is a link only if it is a plain http(s) address; anything else is shown as text, never as a link. */
+/**
+ * A source is a link only if it is a plain http(s) address; anything else is shown as text, never as a link. User name
+ * and password in the address are dropped, so they never reach the page (P-05).
+ */
 function webAddress(source: string): URL | null {
   try {
     const url = new URL(source);
-    return url.protocol === "https:" || url.protocol === "http:" ? url : null;
+    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+    url.username = "";
+    url.password = "";
+    return url;
   } catch {
     return null;
   }

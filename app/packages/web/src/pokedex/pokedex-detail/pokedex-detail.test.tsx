@@ -87,6 +87,32 @@ describe("US-POK-09 view details of a species", () => {
     expect(screen.queryByText(/US-POK/)).toBeNull();
   });
 
+  it("US-POK-09 a source address with credentials links without them, they never reach the page (P-05)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              ownership: {
+                caught: [
+                  species("Aloe vera", { source: "https://nutzer:geheim@example.org/aloe" }),
+                ],
+                unidentified: [],
+              },
+            }),
+            { status: 200 },
+          ),
+        ),
+      ),
+    );
+    render(<PokedexPage api="http://api" token={token} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Details zu Aloe vera" }));
+    const link = within(detail()).getByRole("link", { name: /Quelle/ });
+    expect(link.getAttribute("href")).toBe("https://example.org/aloe");
+    expect(detail().innerHTML).not.toContain("geheim");
+  });
+
   it("US-POK-09 a source that is not an http(s) link is shown as plain text, never as a link", async () => {
     vi.stubGlobal(
       "fetch",
