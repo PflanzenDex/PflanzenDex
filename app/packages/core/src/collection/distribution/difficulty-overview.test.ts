@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryLight } from "../../light/test-helpers";
 import { difficultyOverview } from "./difficulty-overview";
 import { InMemorySpecimens, SpeciesStub, testSpecies } from "../shared/test-helpers";
+import { InMemoryCareProfiles } from "../care-profile/care-profile-test-helpers";
 
 const SP_EASY = "11111111-1111-4111-8111-111111111111";
 const SP_MEDIUM = "22222222-2222-4222-8222-222222222222";
@@ -160,5 +161,51 @@ describe("US-BES-05 tenant: only own specimens and zones", () => {
       ["Bens", "Bens 2"],
       ["Zed hard", "Bens 2"],
     ]);
+  });
+});
+
+describe("US-BES-05 · US-BES-09 my care profile flows into the comparison (#306)", () => {
+  const zoneIds = async () => (await light.zoneAdapter().list("anna")).map((z) => z.id);
+
+  it("US-BES-09 my zone for a species replaces the derived zone and says it comes from my care profile", async () => {
+    await zones("anna", ["Lampe 1", "Lampe 2", "Lampe 3"]);
+    await plant("anna", SP_EASY);
+    const ids = await zoneIds();
+    const profiles = new InMemoryCareProfiles({ anna: { zones: ids } });
+    await profiles.update("anna", SP_EASY, { lightZoneId: ids[2] as string });
+    const [row] = (await difficultyOverview({ ...deps(), profiles }, "anna")).rows;
+    expect(row).toMatchObject({ zone: { name: "Lampe 3" }, zoneSource: "profile" });
+  });
+
+  it("US-BES-09 my watering intervals are carried next to the catalog hint", async () => {
+    await zones("anna", ["Lampe 1", "Lampe 2"]);
+    await plant("anna", SP_EASY);
+    const profiles = new InMemoryCareProfiles({ anna: { zones: await zoneIds() } });
+    await profiles.update("anna", SP_EASY, { wateringGrowthDays: 7, wateringDormancyDays: 21 });
+    const [row] = (await difficultyOverview({ ...deps(), profiles }, "anna")).rows;
+    expect(row).toMatchObject({
+      wateringHint: "alle 10 Tage",
+      ownWatering: { growthDays: 7, dormancyDays: 21 },
+    });
+  });
+
+  it("US-BES-05 without a care profile the catalog applies: derived zone, no own watering", async () => {
+    await zones("anna", ["Lampe 1", "Lampe 2"]);
+    await plant("anna", SP_EASY);
+    const [row] = await rows("anna");
+    expect(row).toMatchObject({
+      zone: { name: "Lampe 2" },
+      zoneSource: "species",
+      ownWatering: null,
+    });
+  });
+
+  it("US-BES-05 · P-04 another account's profile does not change my comparison", async () => {
+    await zones("anna", ["Lampe 1", "Lampe 2"]);
+    await plant("anna", SP_EASY);
+    const profiles = new InMemoryCareProfiles({ ben: { zones: [] } });
+    await profiles.update("ben", SP_EASY, { wateringGrowthDays: 3 });
+    const [row] = (await difficultyOverview({ ...deps(), profiles }, "anna")).rows;
+    expect(row).toMatchObject({ zoneSource: "species", ownWatering: null });
   });
 });

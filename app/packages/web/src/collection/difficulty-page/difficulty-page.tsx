@@ -12,13 +12,29 @@ import { PageFrame, Plain, Quiet, TITLE } from "../specimens/cards/parts/parts";
 
 const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
 const UNKNOWN = "unbekannt";
+const OWN = " (dein Pflegeprofil)";
+
+/** The zone; my care-profile zone says where it comes from (US-BES-09, #306). */
+const zoneText = (r: DifficultyRow) =>
+  r.zone ? `${r.zone.name}${r.zoneSource === "profile" ? OWN : ""}` : UNKNOWN;
+
+/** My watering intervals from the care profile, else the catalog hint (US-BES-09, #306). */
+function wateringText(r: DifficultyRow): string {
+  const own = r.ownWatering;
+  if (!own) return r.wateringHint ?? UNKNOWN;
+  const parts = [
+    own.growthDays === null ? null : `alle ${own.growthDays} Tage`,
+    own.dormancyDays === null ? null : `in der Ruhe alle ${own.dormancyDays} Tage`,
+  ].filter((p): p is string => p !== null);
+  return `${parts.join(", ")}${OWN}`;
+}
 
 /** One column definition for the card stack (phone) and the table (from `md`), so the two cannot drift (DS-24). */
 const COLUMNS: ResponsiveColumn<DifficultyRow>[] = [
   { key: "species", header: "Art", cell: (r) => <strong>{r.speciesName}</strong> },
   { key: "botanical", header: "Botanischer Name", cell: (r) => r.botanicalName },
-  { key: "zone", header: "Lichtzone", cell: (r) => r.zone?.name ?? UNKNOWN },
-  { key: "watering", header: "Gießregel", cell: (r) => r.wateringHint ?? UNKNOWN },
+  { key: "zone", header: "Lichtzone", cell: zoneText },
+  { key: "watering", header: "Gießregel", cell: wateringText },
   { key: "substrate", header: "Substrat", cell: (r) => r.substrate ?? UNKNOWN },
   { key: "pruning", header: "Schnitt", cell: (r) => r.pruning ?? UNKNOWN },
   { key: "success", header: "Erfolgskriterium", cell: (r) => r.successCriteria },
