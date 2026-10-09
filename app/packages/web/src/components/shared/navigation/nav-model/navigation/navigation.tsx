@@ -78,7 +78,11 @@ export const todayAddress = (section: TodaySection) => `${PATHS.today}#${TODAY_S
 /** The former address of the destination "Einstellungen": it opens the section "Einstellungen" of "Konto" (US-QS-14). */
 export const LEGACY_SETTINGS_PATH = "/settings";
 /** The sections of "Konto" by the anchor in the address, e.g. `/account#einstellungen` (US-QS-14). */
-export const ACCOUNT_SECTIONS = { profile: "profil", settings: "einstellungen" } as const;
+export const ACCOUNT_SECTIONS = {
+  profile: "profil",
+  settings: "einstellungen",
+  measured: "gemessen",
+} as const;
 export type AccountSection = keyof typeof ACCOUNT_SECTIONS;
 export const accountAddress = (section: AccountSection) =>
   `${PATHS.account}#${ACCOUNT_SECTIONS[section]}`;

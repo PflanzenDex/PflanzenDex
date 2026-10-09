@@ -44,7 +44,7 @@ Acceptance criteria:
 
 State of implementation: the today list (TE-07, view "Heute") shows every deviation as an entry with a state word, a text and the next action (P-09): wrong location of the care phase (US-PHA-02), overdue treatment (US-BEH-02), etiolated last measurement ("Vergeilt", leads to measuring), zone 2 to 4 below the buffer of open candidates ("Nachschub", the warning of US-WUN-02, leads to the wishlist) and data gaps (US-BES-08, specimen without location or zone, also in the warning list "Fehlt noch"). A specimen always has a species (required on creation), so "without species" cannot occur. Archived specimens are left out (US-BES-07). **Open:** the manual test protocol in a real browser.
 
-### US-QS-05 · Privacy and control · ⬜ (prototype ✅ partly)
+### US-QS-05 · Privacy and control · 🟨 (prototype ✅ partly)
 
 As a **plant keeper** I want to know and determine what happens with my data.
 
@@ -54,6 +54,8 @@ Acceptance criteria:
 - Photos are freed of EXIF/GPS before storage and reduced to a maximum size (prototype: long side 1600 px, quality 82).
 - Location, growth notes, treatments, prices and financial data are never transmitted to friends or partners (FR-SOZ-01, FR-EQU-08).
 - A page "What is measured?" names usage measurement and click counting; without consent nothing is counted.
+
+State of implementation: photos are freed of EXIF/GPS and reduced (long side 1600 px, quality 82) before storage and served only to their owner (US-WAC-06). Friends see only the whitelisted facts of shared specimens (US-SOZ-04); a test proves for every friend view (shared specimens, friend collection, friend list, feed, feed banner) that location, measurement notes and treatments of a shared specimen never reach the friend. The section "Was wird gemessen?" on the page Konto names what is recorded: no click counting, no usage analytics and no advertising or analytics services; the time of the last activity is stored on every sign-in and the operator sees only the number of active accounts of the last 30 days (US-ACC-05); images of collector cards and suggestions are loaded by the device directly from Wikimedia. **Open:** information, export and deletion of the account (US-ACC-04, release R3); whether the count of active accounts needs a consent or rests on the operator's legitimate interest (owner decision).
 
 ### US-QS-06 · Sources and licenses · 🟨 (prototype ✅)
 

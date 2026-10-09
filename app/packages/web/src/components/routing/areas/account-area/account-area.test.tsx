@@ -75,7 +75,7 @@ afterEach(() => {
 });
 
 describe("US-QS-14 Konto with its sections", () => {
-  it("US-QS-14 · US-ACC-01 one h1 Konto and the sections Profil, Einstellungen as h2 in this order", async () => {
+  it("US-QS-14 · US-ACC-01 one h1 Konto and the sections Profil, Einstellungen, Was wird gemessen? as h2 in this order", async () => {
     fakeServer();
     show();
     await screen.findByLabelText("Anzeigename");
@@ -85,6 +85,7 @@ describe("US-QS-14 Konto with its sections", () => {
     expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
       "Profil",
       "Einstellungen",
+      "Was wird gemessen?",
     ]);
   });
 
@@ -168,7 +169,11 @@ describe("US-QS-14 the address points at a section", () => {
     show();
     const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
     const links = within(list).getAllByRole("link");
-    expect(links.map((l) => l.textContent)).toEqual(["Profil", "Einstellungen"]);
+    expect(links.map((l) => l.textContent)).toEqual([
+      "Profil",
+      "Einstellungen",
+      "Was wird gemessen?",
+    ]);
     expect(links[0]?.getAttribute("aria-current")).toBe("location");
     await userEvent.click(links[1] as HTMLElement);
     const heading = screen.getByRole("heading", { level: 2, name: "Einstellungen" });
@@ -191,5 +196,25 @@ describe("US-QS-14 Konto links to the management of the locations", () => {
         name: "Standorte und Lichtzonen verwalten",
       }),
     ).toBeTruthy();
+  });
+});
+
+describe("US-QS-05 the page Was wird gemessen?", () => {
+  it("US-QS-05 names what is recorded about the use: no click counting, no analytics, the last activity as one date", async () => {
+    fakeServer();
+    show();
+    const section = within(screen.getByRole("region", { name: "Was wird gemessen?" }));
+    expect(section.getByText(/Keine Klickzählung und keine Nutzungsanalyse/)).toBeTruthy();
+    expect(section.getByText(/wann du zuletzt aktiv warst/)).toBeTruthy();
+    expect(section.getByText(/nur die Zahl der aktiven Konten/)).toBeTruthy();
+    expect(section.getByText(/Ort- und Kameradaten/)).toBeTruthy();
+    expect(section.getByText(/Standort, Notizen, Behandlungen/)).toBeTruthy();
+  });
+
+  it("US-QS-05 the address #gemessen leads to the section", async () => {
+    fakeServer();
+    show("/account#gemessen");
+    const heading = screen.getByRole("heading", { level: 2, name: "Was wird gemessen?" });
+    await waitFor(() => expect(document.activeElement).toBe(heading));
   });
 });
