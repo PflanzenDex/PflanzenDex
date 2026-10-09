@@ -132,4 +132,12 @@ export interface ZoneStock {
  */
 export interface ZoneStockSource {
   stock(userId: string): Promise<readonly ZoneStock[]>;
+  /** The zones of the account that do not count (the cutting light); only used to name them in hints (FR-WUN-03). */
+  uncounted?(userId: string): Promise<readonly OutsideZone[]>;
+}
+
+/** A zone that is not among zones 2 to 4 (the cutting light, FR-LIC-02). */
+export interface OutsideZone {
+  readonly zoneId: string;
+  readonly name: string;
 }

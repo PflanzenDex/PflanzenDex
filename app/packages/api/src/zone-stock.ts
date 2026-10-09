@@ -1,4 +1,4 @@
-import { zoneDistribution, type ZoneStockSource } from "@pflanzendex/core";
+import { cuttingLight, zoneDistribution, type ZoneStockSource } from "@pflanzendex/core";
 import {
   CareProfilePostgres,
   LocationPostgres,
@@ -25,6 +25,11 @@ export function zoneStockFor(pool: Pool): ZoneStockSource {
     async stock(userId) {
       const { zones } = await zoneDistribution(deps, userId);
       return zones.map(({ zone, count }) => ({ zoneId: zone.id, name: zone.name, count }));
+    },
+    /** The zone that does not count, the cutting light: only used to name it in the wishlist hints (FR-WUN-03). */
+    async uncounted(userId) {
+      const lowest = cuttingLight(await deps.zones.list(userId));
+      return lowest ? [{ zoneId: lowest.id, name: lowest.name }] : [];
     },
   };
 }

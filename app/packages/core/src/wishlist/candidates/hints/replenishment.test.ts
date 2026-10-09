@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { REPLENISH_BUFFER, wishCandidates } from "../index";
-import { InMemoryWishes, ZoneStockStub } from "../test-helpers";
+import { REPLENISH_BUFFER, wishCandidates } from "../../index";
+import { InMemoryWishes, ZoneStockStub } from "../../test-helpers";
 
 const stock = (c2: number, c3: number, c4: number) => [
   { zoneId: "z2", name: "Lampe 2", count: c2 },

@@ -38,6 +38,7 @@ const list = (
   zones,
   hint,
   duplicates: [],
+  unfit: [],
   duplicateHint: null,
   replenishment: {
     buffer: 2,

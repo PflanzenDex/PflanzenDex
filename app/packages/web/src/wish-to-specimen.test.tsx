@@ -75,6 +75,7 @@ const READS: Record<string, unknown> = {
     zones: [],
     hint: { text: "Keine offenen Kandidaten.", nextAction: "Erfasse einen Wunsch." },
     duplicates: [],
+    unfit: [],
     duplicateHint: null,
     replenishment: {
       buffer: 2,

@@ -43,6 +43,18 @@ export interface DuplicateWish {
   readonly title: string;
 }
 
+/** An open wish that does not count in the space question and what to do about it (FR-WUN-03, P-09, P-10). */
+export interface UnfitWish {
+  readonly id: string;
+  readonly title: string;
+  /** `zone_unknown`: no target zone; `zone_outside`: the cutting light, not among zones 2 to 4. */
+  readonly kind: "zone_unknown" | "zone_outside";
+  /** The zone it points to; `null` if there is none or its name is not known (P-08). */
+  readonly zone: string | null;
+  readonly reason: string;
+  readonly nextAction: string;
+}
+
 /** A zone 2 to 4 with fewer open candidates than the buffer (US-WUN-02). */
 export interface ReplenishZone {
   readonly zoneId: string;
@@ -75,6 +87,8 @@ export interface CandidateList {
   /** Says what is wrong and what to do (P-09); `null` when there are no duplicates. */
   /** The warning before the list runs empty (US-WUN-02). */
   readonly replenishment: Replenishment;
+  /** Open wishes without a fitting zone (FR-WUN-03); empty when every wish has a zone 2 to 4. */
+  readonly unfit: readonly UnfitWish[];
   readonly duplicateHint: { readonly text: string; readonly nextAction: string } | null;
 }
 
