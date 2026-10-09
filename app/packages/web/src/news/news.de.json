@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Datumsfelder: Zeigt dein Browser statt eines Kalenders ein einfaches Textfeld, steht dort jetzt das erwartete Format „JJJJ-MM-TT“.",
     "Exemplar anlegen: Bleibt das Formular über Mitternacht offen, wird das voreingestellte Fangdatum nicht mehr als „gestern“ gespeichert; ohne deine Änderung gilt der Tag, an dem du speicherst.",
     "Pokédex: Nach „Zurück“ öffnet „Vorwärts“ im Browser die zuletzt geschlossene Art wieder, statt nichts zu tun; kehrst du zu einer geöffneten Art zurück, siehst du sie wieder.",
     "Artenvergleich: Hast du für eine Art im Pflegeprofil eine eigene Lichtzone oder eigene Gießabstände eingetragen, zeigt der Vergleich jetzt deine Werte, gekennzeichnet mit „dein Pflegeprofil“.",

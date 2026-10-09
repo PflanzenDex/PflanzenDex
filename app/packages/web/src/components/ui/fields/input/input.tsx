@@ -21,12 +21,19 @@ export type FieldInvalidProps = {
 
 export type InputProps = React.InputHTMLAttributes<HTMLInputElement> & FieldInvalidProps;
 
+/**
+ * A browser without a date picker shows a date field as plain text: the placeholder and the pattern name the format
+ * there (FR-BES-04); browsers with a picker ignore both. A caller's own values win.
+ */
+const DATE_HINT = { placeholder: "JJJJ-MM-TT", pattern: "\\d{4}-\\d{2}-\\d{2}" };
+
 /** Single-line field (US-QS-07, DS-15, DS-18, DS-19). `type`, `inputMode` and `autoComplete` pass through; dates stay `YYYY-MM-DD` strings (DS-51). */
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, invalid, type = "text", ...props }, ref) => (
     <input
       ref={ref}
       type={type}
+      {...(type === "date" ? DATE_HINT : {})}
       aria-invalid={invalid || props["aria-invalid"] || undefined}
       className={cn(fieldClasses, "min-h-[44px] py-2", className)}
       {...props}
