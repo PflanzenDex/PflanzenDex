@@ -53,11 +53,11 @@ Acceptance criteria: see US-BES-06 (next date, overdue/today/in N days, "+N more
 
 ## Requirements
 
-| ID        | Requirement                                                                                                                                              | Status |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| FR-BEH-01 | Format like DM-BEH-01; date local.                                                                                                                       | ✅     |
-| FR-BEH-02 | Changes address the treatment via a stable id; parallel editing (two devices) never hits a wrong entry (solves B-08).                                    | ✅     |
-| FR-BEH-03 | The done date is stored.                                                                                                                                 | ✅     |
-| FR-BEH-04 | The form lists all active specimens, also cuttings.                                                                                                      | ✅     |
-| FR-BEH-05 | Due treatments trigger a reminder (US-MON-03).                                                                                                           | ⬜     |
-| FR-BEH-06 | Health details (open treatment, last treated: reason, date) flow **without agent and notes** into swap offers (US-SOZ-08).                               | ⬜     |
+| ID        | Requirement                                                                                                                | Status |
+| --------- | -------------------------------------------------------------------------------------------------------------------------- | ------ |
+| FR-BEH-01 | Format like DM-BEH-01; date local.                                                                                         | ✅     |
+| FR-BEH-02 | Changes address the treatment via a stable id; parallel editing (two devices) never hits a wrong entry (solves B-08).      | ✅     |
+| FR-BEH-03 | The done date is stored.                                                                                                   | ✅     |
+| FR-BEH-04 | The form lists all active specimens, also cuttings.                                                                        | ✅     |
+| FR-BEH-05 | Due treatments trigger a reminder (US-MON-03).                                                                             | ⬜     |
+| FR-BEH-06 | Health details (open treatment, last treated: reason, date) flow **without agent and notes** into swap offers (US-SOZ-08). | ⬜     |

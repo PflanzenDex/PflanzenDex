@@ -5,13 +5,13 @@ As of: 2026-10-02 · **Draft.** None of it is implemented. This spec describes t
 ## How this spec relates to the prototype
 
 |           | Prototype (`docs/specs/prototype/`) | Product (this spec)                                        |
-| --------- | -------------------------------------- | ---------------------------------------------------------- |
-| Users     | one person                             | many people with accounts                                  |
-| Storage   | Markdown + frontmatter in the vault    | server-side data storage, described technology-neutrally   |
-| Interface | Dataview dashboard in Obsidian         | web app, mobile-first                                      |
-| Input     | click forms, Claude in Claude Code     | forms **and** the keeper's AI client via an open interface |
-| Social    | not present                            | core feature                                               |
-| Statement | as-is state, derived from the code     | target state, requirements for the product                 |
+| --------- | ----------------------------------- | ---------------------------------------------------------- |
+| Users     | one person                          | many people with accounts                                  |
+| Storage   | Markdown + frontmatter in the vault | server-side data storage, described technology-neutrally   |
+| Interface | Dataview dashboard in Obsidian      | web app, mobile-first                                      |
+| Input     | click forms, Claude in Claude Code  | forms **and** the keeper's AI client via an open interface |
+| Social    | not present                         | core feature                                               |
+| Statement | as-is state, derived from the code  | target state, requirements for the product                 |
 
 What is taken over from the prototype: the **domain behavior** (phases, growth trend, etiolation, lamp logic, Pokédex, wishlist buffer). What is not taken over: file names, wikilinks, frontmatter keys, Dataview, `processFrontMatter`, the `post-commit` hook.
 
@@ -54,7 +54,7 @@ What is taken over from the prototype: the **domain behavior** (phases, growth t
 
 | Epic                    | Stories | tried in the prototype | new    |
 | ----------------------- | ------- | ---------------------- | ------ |
-| ACC Accounts            | 5       | 0                      | 5      |
+| ACC Accounts            | 6       | 0                      | 6      |
 | BES Collection          | 16      | 8                      | 8      |
 | LIC Light and locations | 5       | 4                      | 1      |
 | PHA Care phases         | 4       | 4                      | 0      |
@@ -71,7 +71,7 @@ What is taken over from the prototype: the **domain behavior** (phases, growth t
 | ENT Discover            | 8       | 0                      | 8      |
 | QG Quality gates        | 9       | 0                      | 9      |
 | DEV Development process | 10      | 0                      | 10     |
-| **Total**               | **139** | **52**                 | **87** |
+| **Total**               | **140** | **52**                 | **88** |
 
 ## Replacing existing documents
 
