@@ -3,7 +3,6 @@ import { cors } from "hono/cors";
 import type { Pool } from "pg";
 import { COLLECTION_REPOINTERS } from "@pflanzendex/db";
 import {
-  productTitle,
   type TreatmentSource,
   type MeasurementSource,
   type TargetLocationSource,
@@ -31,6 +30,7 @@ import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./cata
 import { WISH_PATHS, wishRoutes, wishZoneUsageFor } from "./wishlist";
 import { bindFriends } from "./friends-bindings";
 import { zoneStockFor } from "./zone-stock";
+import { bindHealth } from "./health";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
 import { discoverRoutes } from "./discover";
@@ -158,7 +158,7 @@ export function createApp(opt: AppOptions = {}): Hono {
         allowHeaders: ["Authorization", "Content-Type", "Idempotency-Key"],
       }),
     );
-  app.get("/health", (c) => c.json({ status: "ok", product: productTitle(), version, commit }));
+  bindHealth(app, { pool: opt.pool, version, commit, storage: opt.media !== undefined });
   if (opt.reviewer && opt.pool) {
     const auth = bindAccount(app, opt.reviewer, opt.pool, opt);
     for (const path of LIGHT_PATHS) app.use(path, auth).use(`${path}/*`, auth);

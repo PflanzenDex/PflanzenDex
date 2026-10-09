@@ -12,6 +12,11 @@ describe("health endpoint (TE-01, TE-03)", () => {
       product: "PflanzenDex",
       version: "v0.1.0-3-gabc1234",
       commit: "abc1234",
+      checks: {
+        database: "not_configured",
+        jobs: { status: "not_configured" },
+        storage: "not_configured",
+      },
     });
   });
 
