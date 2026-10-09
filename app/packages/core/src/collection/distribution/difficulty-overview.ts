@@ -20,6 +20,8 @@ export interface DifficultyRow {
 
 export interface DifficultyOverview {
   readonly rows: readonly DifficultyRow[];
+  /** Species of active specimens the account can no longer read (e.g. a re-pointed merged proposal); named, not dropped silently (P-10). */
+  readonly unreadable: number;
 }
 
 export interface DifficultyDependencies {
@@ -30,7 +32,7 @@ export interface DifficultyDependencies {
 
 /**
  * One row per readable species with an active specimen, sorted by difficulty ascending and then by name. Archived
- * specimens do not count (US-BES-07); a species the account cannot read is skipped.
+ * specimens do not count (US-BES-07); a species the account cannot read has no row, but is counted in `unreadable`.
  */
 export async function difficultyOverview(
   deps: DifficultyDependencies,
@@ -43,8 +45,12 @@ export async function difficultyOverview(
   const ids = [...new Set(specimens.filter(isActive).map((s) => s.speciesId))];
   const found = await deps.species.findMany(userId, ids);
   const rows: DifficultyRow[] = [];
+  let unreadable = 0;
   for (const species of found) {
-    if (!species) continue;
+    if (!species) {
+      unreadable += 1;
+      continue;
+    }
     // The catalog has no field for soft-leaved C3 plants yet (US-LIC-01), so it is never assumed.
     const derived = zoneDerive(
       {
@@ -69,5 +75,5 @@ export async function difficultyOverview(
   rows.sort(
     (a, b) => a.difficulty - b.difficulty || a.botanicalName.localeCompare(b.botanicalName, "de"),
   );
-  return { rows };
+  return { rows, unreadable };
 }

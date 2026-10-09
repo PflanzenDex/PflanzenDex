@@ -116,6 +116,28 @@ describe("US-BES-05 page of the difficulty overview", () => {
     expect(screen.queryByRole("table")).toBeNull();
   });
 
+  it("US-BES-05 · P-10 names the species that are missing because they cannot be read", async () => {
+    fakeServer(() => response(200, { rows: [row()], unreadable: 2 }));
+    render(<DifficultyPage api="http://api" token={token} />);
+    await screen.findByRole("table");
+    expect(screen.getByText(/2 Arten deiner Exemplare kannst du nicht mehr lesen/)).toBeTruthy();
+  });
+
+  it("US-BES-05 · P-10 without readable species the empty state still names the missing ones", async () => {
+    fakeServer(() => response(200, { rows: [], unreadable: 1 }));
+    render(<DifficultyPage api="http://api" token={token} />);
+    expect(
+      await screen.findByText(/1 Art deiner Exemplare kannst du nicht mehr lesen/),
+    ).toBeTruthy();
+  });
+
+  it("US-BES-05 without unreadable species there is no note", async () => {
+    fakeServer(() => response(200, { rows: [row()], unreadable: 0 }));
+    render(<DifficultyPage api="http://api" token={token} />);
+    await screen.findByRole("table");
+    expect(screen.queryByText(/nicht mehr lesen/)).toBeNull();
+  });
+
   it("US-BES-05 keeps an error visible and reloads on request (P-10)", async () => {
     let attempt = 0;
     fakeServer(() =>

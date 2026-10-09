@@ -136,6 +136,15 @@ describe("US-BES-05: difficulty overview", () => {
     await plant("anna", SP_FOREIGN);
     expect(await rows("anna")).toEqual([]);
   });
+
+  it("US-BES-05 · P-10 counts the species it cannot read instead of dropping them silently", async () => {
+    await plant("anna", SP_FOREIGN);
+    await plant("anna", SP_FOREIGN);
+    await plant("anna", SP_EASY);
+    const overview = await difficultyOverview(deps(), "anna");
+    expect(overview.rows).toHaveLength(1);
+    expect(overview.unreadable).toBe(1);
+  });
 });
 
 describe("US-BES-05 tenant: only own specimens and zones", () => {
