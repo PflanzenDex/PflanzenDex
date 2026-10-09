@@ -168,7 +168,7 @@ Assumptions, decided by the PO (revisable):
 - Withdrawing works at any time while the offer is open or reserved, repeating it changes nothing, a handed-over offer is `offer.not_active`; withdrawn offers stay in the list (P-10). Canceling the open requests comes with the requests (US-SOZ-09, US-SOZ-10).
 - Limits (assumption, starting values): wish 1 to 200 characters, note 1 to 500.
 
-### US-SOZ-09 · See offers from friends and request them · ⬜ new
+### US-SOZ-09 · See offers from friends and request them · 🟨 new
 
 Acceptance criteria:
 
@@ -177,6 +177,8 @@ Acceptance criteria:
 - "Request" creates a swap. For `swap` I can attach one of my own specimens with `Share = friends` as a counter-offer or leave the return open (free text).
 - Only one open request from me per offer; own offers cannot be requested.
 - If the species is on my **wishlist**, a hint appears; the list itself is not transmitted (FR-WUN-07).
+
+State of implementation: partly done. The page "Tauschbörse" shows "Angebote von Freunden" above the dialog of US-SOZ-08 (`GET /exchange/offers?timeZone=…[&type=…][&lack=true]`): species (German and Latin name, "Art unbekannt" while the species is not approved or unknown, P-08), giver (the name stored for the friend), type, mode, wish, note, health details (reason and date only, never agent or note, P-05), the dormancy hint, the chip "Fehlt dir" (the species is not among the caught ones; unknown for an unknown species) and the hint "Steht auf deiner Wunschliste" (asked per species through the port `WishHints`, never the list itself, FR-WUN-07; a wish counts when its folded name equals the folded Latin name, assumption). Filters: type and "you lack it". What a friend shows is decided by the database function `friend_offers()` (migration 0044, like `friend_shares()`): both friendship rows confirmed, the specimen shared with friends, the offer open, nothing while the owner has "Everything private" on; own offers never appear, a stranger sees nothing. "Anfragen" runs the validating operation `swap.request` (`POST /offers/:id/request`, `Idempotency-Key`) which calls the function `request_swap()`: both sides of the swap are written in one transaction (table `swap`, one row per side, `swap_id` shared, DM-SOZ-03; the giver's row is written as the giver by switching the account inside the function). For the mode `swap` the requester may attach one own specimen with `Share = friends` as the counter-offer (name copied into both rows) and/or free text (1 to 500 characters), or leave the return open; a gift takes no counter-offer (`swap.counter_not_allowed`, `swap.counter_not_shared`, `specimen.not_found`). Only one open request per requester and offer (`swap.already_requested`, a partial unique index); an own offer is `swap.own_offer`; an offer that is not an open, shared offer of a confirmed friend, also a foreign or unknown id, is `offer.not_found` and reveals nothing; a withdrawn offer is `offer.not_active`. The offer on the list then reads "Angefragt". **Missing:** the filter by light zone (fits my distribution, US-LIC-02: no rule for "fits" is decided yet), the photo of the offered specimen (the flag `photosShared` is returned; serving a friend's photo is its own piece of work and needs an access rule), the answer, the states after `requested` and the history (US-SOZ-10, US-SOZ-11, US-SOZ-13), canceling the open requests when an offer is withdrawn (US-SOZ-08, US-SOZ-10) and the manual test protocol.
 
 ### US-SOZ-10 · Answer a swap request · ⬜ new
 
