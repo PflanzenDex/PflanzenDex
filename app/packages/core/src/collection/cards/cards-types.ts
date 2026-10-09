@@ -1,11 +1,12 @@
 // Specimen cards (US-BES-06): what the card shows and which data it needs from other modules (ports).
+import type { ZoneSource } from "../placement/effective-zone";
 import type { SpecimenStatus } from "../shared/types";
 
 export const MEASUREMENT_QUALITIES = ["healthy", "etiolated"] as const;
 export type MeasurementQuality = (typeof MEASUREMENT_QUALITIES)[number];
 
 export interface LastMeasurement {
-  /** Lokales Kalenderdatum `JJJJ-MM-TT` (NFR-08). */
+  /** Local calendar date `YYYY-MM-DD` (NFR-08). */
   readonly date: string;
   /** In the unit of the species' growth measure (cm), as measured. */
   readonly value: number;
@@ -34,7 +35,7 @@ export interface MeasurementSource {
 export interface OpenTreatment {
   readonly id: string;
   readonly reason: string;
-  /** Lokales Kalenderdatum `JJJJ-MM-TT`. */
+  /** Local calendar date `YYYY-MM-DD`. */
   readonly dueAt: string;
 }
 
@@ -63,8 +64,10 @@ export interface SpecimenCard {
   readonly speciesName: string | null;
   readonly status: SpecimenStatus;
   readonly location: string | null;
-  /** Zone of the location (an override on the specimen only comes with BES-04); `null` = unknown. */
+  /** Effective zone, the same one the distribution counts (FR-LIC-02); `null` = unknown. */
   readonly lightZone: string | null;
+  /** Where the zone comes from; `null` when the zone is unknown. */
+  readonly lightZoneSource: ZoneSource | null;
   readonly caughtAt: string | null;
   readonly photo: CardMeasurementView["photo"];
   /** `null` = no measurement yet. */

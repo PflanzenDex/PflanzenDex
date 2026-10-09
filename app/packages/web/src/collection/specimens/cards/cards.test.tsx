@@ -20,6 +20,7 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   status: "plant",
   location: "Regal Süd",
   lightZone: "Zone 3",
+  lightZoneSource: "location",
   caughtAt: "2026-09-01",
   photo: null,
   lastMeasurement: null,
@@ -57,16 +58,26 @@ describe("US-BES-06 Karte: Inhalt", () => {
     const h = html([card()]);
     expect(h).toContain("Bogenhanf");
     expect(h).toContain("Art: Bogenhanf");
-    expect(h).toContain("Lichtzone: Zone 3");
+    expect(h).toContain("Lichtzone: Zone 3 (vom Standort)");
     expect(h).toContain("Status: Pflanze");
     expect(h).toContain("Standort: Regal Süd");
   });
 
   it('missing values are called "unknown", nothing is invented (P-08)', () => {
-    const h = html([card({ speciesName: null, location: null, lightZone: null })]);
+    const h = html([
+      card({ speciesName: null, location: null, lightZone: null, lightZoneSource: null }),
+    ]);
     expect(h).toContain("Art: unbekannt");
     expect(h).toContain("Lichtzone: unbekannt");
     expect(h).toContain("Standort: unbekannt");
+  });
+
+  it.each([
+    ["species", "Lichtzone: Lampe 3 (aus dem Lichtbedarf der Art)"],
+    ["profile", "Lichtzone: Lampe 3 (aus deinem Pflegeprofil)"],
+    ["cutting", "Lichtzone: Lampe 3 (Stecklingslicht)"],
+  ] as const)("US-BES-06 · #592 says where the zone comes from (%s)", (source, text) => {
+    expect(html([card({ lightZone: "Lampe 3", lightZoneSource: source })])).toContain(text);
   });
 
   it("shows the levels of the status in words", () => {

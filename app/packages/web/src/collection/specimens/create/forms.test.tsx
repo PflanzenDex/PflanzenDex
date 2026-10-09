@@ -23,6 +23,7 @@ const card = (id: string, marker: string | null): SpecimenCard => ({
   status: "plant",
   location: null,
   lightZone: null,
+  lightZoneSource: null,
   caughtAt: "2026-10-03",
   photo: null,
   lastMeasurement: null,

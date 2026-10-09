@@ -8,6 +8,7 @@ export { specimenSetLocation, LOCATE_ERROR } from "./placement/locate";
 export type { LocateDependencies } from "./placement/locate";
 export type { RepotDependencies } from "./specimen/repot";
 export { cuttingLight } from "./placement/cutting-light";
+export type { ZoneSource } from "./placement/effective-zone";
 export { careProfileUpdate } from "./care-profile/care-profile";
 export type { CareProfileDependencies } from "./care-profile/care-profile";
 export { careProfileView } from "./profile-views/care-profile-view";

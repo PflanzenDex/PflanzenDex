@@ -1,5 +1,5 @@
 import { cva } from "class-variance-authority";
-import type { SpecimenCard, MeasurementQuality } from "@pflanzendex/core";
+import type { SpecimenCard, MeasurementQuality, ZoneSource } from "@pflanzendex/core";
 import type { PhotoAccess } from "@/lib/use-stored-photo";
 import { Button } from "@/components/ui/button/button";
 import { Actions, CARD, Photo, Quiet } from "../parts/parts";
@@ -10,6 +10,17 @@ const STATUS_TEXT = {
   cutting: "Steckling",
   archived: "Archiviert",
 } as const;
+/** Where the effective zone comes from (FR-LIC-02, #592): the same rule as the distribution. */
+const ZONE_SOURCE_TEXT: Record<ZoneSource, string> = {
+  location: "vom Standort",
+  profile: "aus deinem Pflegeprofil",
+  species: "aus dem Lichtbedarf der Art",
+  cutting: "Stecklingslicht",
+};
+const zoneText = (card: SpecimenCard): string =>
+  card.lightZone && card.lightZoneSource
+    ? `${card.lightZone} (${ZONE_SOURCE_TEXT[card.lightZoneSource]})`
+    : UNKNOWN;
 const QUALITY_TEXT: Record<MeasurementQuality, string> = {
   healthy: "Gesund",
   etiolated: "Vergeilt/dünn",
@@ -114,7 +125,7 @@ export function SpecimenCardView(props: {
       <h2 className="mt-2 text-lg font-semibold">{card.name}</h2>
       <Quiet>Art: {card.speciesName ?? UNKNOWN}</Quiet>
       <Quiet>
-        Lichtzone: {card.lightZone ?? UNKNOWN} · Status: {STATUS_TEXT[card.status]}
+        Lichtzone: {zoneText(card)} · Status: {STATUS_TEXT[card.status]}
       </Quiet>
       <Quiet>Standort: {card.location ?? UNKNOWN}</Quiet>
       <Measurement card={card} />

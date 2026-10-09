@@ -24,6 +24,7 @@ const card = (id: string, name: string, status: SpecimenCard["status"]): Specime
   status,
   location: null,
   lightZone: status === "cutting" ? "Lampe 1" : null,
+  lightZoneSource: status === "cutting" ? "cutting" : null,
   caughtAt: "2026-09-01",
   photo: null,
   lastMeasurement: null,
@@ -47,7 +48,13 @@ function fakeServer(opts: { repotError?: Response } = {}) {
       if (path.endsWith("/repot")) {
         if (opts.repotError) return opts.repotError.clone();
         const k = cards.find((x) => x.id === path.split("/")[2]);
-        if (k) cards[cards.indexOf(k)] = { ...k, status: "plant", lightZone: null };
+        if (k)
+          cards[cards.indexOf(k)] = {
+            ...k,
+            status: "plant",
+            lightZone: null,
+            lightZoneSource: null,
+          };
       }
       return response(201, { id: "new", name: "Bogenhanf", locationId: null, status: "cutting" });
     }
