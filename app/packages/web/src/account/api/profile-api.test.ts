@@ -7,6 +7,7 @@ const PROFILE = {
   timeZone: "Europe/Berlin",
   everythingPrivate: true,
   noRecommendations: false,
+  replenishBuffer: 2,
   notifications: {
     phase: true,
     treatment: false,

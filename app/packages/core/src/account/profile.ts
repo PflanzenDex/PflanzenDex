@@ -28,6 +28,12 @@ export type NotificationSwitches = Readonly<Record<NotificationOccasion, boolean
 /** Limit of the display name in characters (assumption, starting value). */
 export const DISPLAY_NAME_LIMITS = { min: 1, max: 80 } as const;
 
+/**
+ * The buffer of open candidates every zone 2 to 4 should have (US-WUN-02): whole number from 0 to 10, 2 until changed.
+ * Assumption, decided by the PO.
+ */
+export const REPLENISH_BUFFER_LIMITS = { min: 0, max: 10, default: 2 } as const;
+
 /** Profile and settings of one account (US-ACC-02); the display name is not unique (FR-SOZ-08). */
 export interface AccountProfile {
   readonly displayName: string | null;
@@ -38,10 +44,17 @@ export interface AccountProfile {
   /** No affiliate or equipment recommendations (US-EQU-11). */
   readonly noRecommendations: boolean;
   readonly notifications: NotificationSwitches;
+  /** Open candidates per zone 2 to 4 below which the wishlist warns (US-WUN-02, REPLENISH_BUFFER_LIMITS). */
+  readonly replenishBuffer: number;
 }
 
-/** A save of the profile: like the profile, but `displayName: null` keeps the stored name (US-ACC-02). */
-export type ProfileChanges = AccountProfile;
+/**
+ * A save of the profile: like the profile, but `displayName: null` keeps the stored name (US-ACC-02) and
+ * `replenishBuffer: null` keeps the stored buffer, so an older client cannot reset it.
+ */
+export type ProfileChanges = Omit<AccountProfile, "replenishBuffer"> & {
+  readonly replenishBuffer: number | null;
+};
 
 /** Port for persistence; the adapter lives in `db` (AB-1) and runs as the account of the caller (P-04). */
 export interface ProfileStore {
@@ -71,12 +84,21 @@ function notificationsField(field: string) {
   };
 }
 
+const bufferField = (field: string) => (value: unknown) =>
+  typeof value === "number" &&
+  Number.isInteger(value) &&
+  value >= REPLENISH_BUFFER_LIMITS.min &&
+  value <= REPLENISH_BUFFER_LIMITS.max
+    ? value
+    : ({ field, code: "input.invalid" } as ErrorDetail);
+
 const schema = shape({
   displayName: orNull(textField("displayName", DISPLAY_NAME_LIMITS)),
   timeZone: orNull(timeZoneField("timeZone")),
   everythingPrivate: flag("everythingPrivate"),
   noRecommendations: flag("noRecommendations"),
   notifications: notificationsField("notifications"),
+  replenishBuffer: orNull(bufferField("replenishBuffer")),
 });
 
 export interface ProfileDependencies {
@@ -85,7 +107,7 @@ export interface ProfileDependencies {
 
 /**
  * Saves the profile as a whole (US-ACC-02, P-03): display name (free, not unique; `null` or left out keeps the stored
- * name, so a name can be changed but never removed), time zone (IANA name, validated
+ * name, so a name can be changed but never removed), the buffer of the wishlist warning (whole number 0 to 10, `null` or left out keeps the stored value), time zone (IANA name, validated
  * against the time zone database), the two global switches and the switch per notification occasion. Only the own
  * account can be written; the account is the one of the caller, never part of the input (P-04). Writing the same
  * values twice changes nothing. An account without a data row yet answers `access.denied`.

@@ -134,6 +134,11 @@ export interface ZoneStockSource {
   stock(userId: string): Promise<readonly ZoneStock[]>;
   /** The zones of the account that do not count (the cutting light); only used to name them in hints (FR-WUN-03). */
   uncounted?(userId: string): Promise<readonly OutsideZone[]>;
+  /**
+   * The buffer of open candidates per zone the account wants (US-WUN-02, account setting of US-ACC-02); without this
+   * method the default applies.
+   */
+  buffer?(userId: string): Promise<number>;
 }
 
 /** A zone that is not among zones 2 to 4 (the cutting light, FR-LIC-02). */

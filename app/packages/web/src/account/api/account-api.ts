@@ -31,6 +31,8 @@ export type AccountProfile = {
   everythingPrivate: boolean;
   noRecommendations: boolean;
   notifications: Record<Occasion, boolean>;
+  /** Open wishlist candidates per zone 2 to 4 below which the wishlist warns (US-WUN-02). */
+  replenishBuffer: number;
 };
 
 type Environment = Record<string, string | undefined>;

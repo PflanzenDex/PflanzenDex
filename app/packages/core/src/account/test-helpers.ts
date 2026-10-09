@@ -2,6 +2,7 @@ import type { AccessCounts, AccessStore } from "./access";
 import type { OperatorCostFigure } from "./operator/operator-cost";
 import {
   defaultNotifications,
+  REPLENISH_BUFFER_LIMITS,
   type AccountProfile,
   type ProfileChanges,
   type ProfileStore,
@@ -22,6 +23,7 @@ export class InMemoryProfiles implements ProfileStore {
         everythingPrivate: false,
         noRecommendations: false,
         notifications: defaultNotifications(),
+        replenishBuffer: REPLENISH_BUFFER_LIMITS.default,
       });
   }
 
@@ -34,7 +36,11 @@ export class InMemoryProfiles implements ProfileStore {
     if (!stored) return null;
     this.writes += 1;
     this.writtenFor.push(userId);
-    const saved = { ...changes, displayName: changes.displayName ?? stored.displayName };
+    const saved = {
+      ...changes,
+      displayName: changes.displayName ?? stored.displayName,
+      replenishBuffer: changes.replenishBuffer ?? stored.replenishBuffer,
+    };
     this.rows.set(userId, saved);
     return saved;
   }
