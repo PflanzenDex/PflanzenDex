@@ -63,6 +63,54 @@ Test log:
 | ---------- | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
 | 2026-10-03 | development machine (Docker) | `make restore-test` passed (500 rows, same checksum); backup and restore run against the Compose stack |
 
+## Health check (US-DEV-09)
+
+`GET /health` (no sign-in) answers with version, commit and `checks`:
+
+| Field             | Values                                                                 | Meaning                                                                                                         |
+| ----------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `status`          | `ok`, `degraded`, `error`                                              | `error` (HTTP 503) when the database does not answer within 2 s (assumption); `degraded` (HTTP 200) for the job queue |
+| `checks.database` | `ok`, `error`, `not_configured`                                        | `select 1` against the API's pool; the error text is never passed on                                            |
+| `checks.jobs`     | `{ status: ok \| dead_jobs, queued, running, dead }`, `error`, `not_configured` | counts of the job queue (TE-06); `dead_jobs` = at least one job gave up with its error kept                      |
+| `checks.storage`  | `configured`, `not_configured`                                         | whether the photo storage (S3) is set up; it is not called on every check                                       |
+
+The Compose health check of `api` and `make deploy` use it: a 503 marks the container unhealthy and fails the deploy, which then rolls back. Monitoring should alert on `status != "ok"` and on HTTP 503.
+
+## Runbooks for incidents (US-DEV-09)
+
+Each runbook: what you see, what to check, what to do. Restoring a backup and the fallback to the previous version are above ("Restore") and in `release-and-rollback.md`.
+
+### Migration fails
+
+- **You see:** `make deploy` ends with an error at the `migrate` service; `deploy.sh` has rolled back to the previous ref, the old version keeps running.
+- **Check:** `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml logs migrate` names the file and the SQL error. Migrations are forward only and run under an advisory lock, so a half-applied file is rolled back by its transaction.
+- **Do:** fix the migration in a new PR (never edit an applied file: the checksum check refuses it), deploy again. If data was changed by hand meanwhile, take `make backup` first. Restore from the backup taken by the deploy only if the data itself is wrong.
+
+### Database not reachable
+
+- **You see:** `/health` answers 503 with `checks.database: "error"`; the API container is unhealthy.
+- **Check:** `docker compose … ps db`, `docker compose … logs db` (disk full, crash loop, wrong password in `.env`).
+- **Do:** free disk space or fix `.env`, `docker compose … up -d db`, wait for `/health` to answer 200. If the data volume is damaged: restore the latest backup (above).
+
+### Dead jobs
+
+- **You see:** `/health` answers `degraded` with `checks.jobs.status: "dead_jobs"`.
+- **Check:** on the database, `select type, last_error, finished_at from job where status = 'dead' order by finished_at desc limit 20;` (owner role). Handlers are repeatable (US-QS-03).
+- **Do:** fix the cause (external source down, bug), then order the job again through the feature that creates it (the queue merges duplicates). Old finished jobs are purged by the worker.
+
+### Photo storage full or unavailable
+
+- **You see:** photo uploads fail with `media.storage_unavailable` (HTTP 502); measurements are still saved without photo. `/health` shows `checks.storage: "configured"`, because the storage is not called on every check.
+- **Check:** the S3 provider's console (quota, credentials, bucket); the `S3_*` variables of the API (`S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, optional `S3_ENDPOINT`).
+- **Do:** raise the quota or fix the credentials, restart `api`. Nothing has to be repaired in the database: a failed upload stores nothing (P-10).
+
+### Security incident
+
+- **You see:** a leaked secret (GitHub secret scanning, QG-S1), unusual sign-ins, or a report through `SECURITY.md`.
+- **Do, in this order:** rotate the affected secret (database password in `.env` on the host, S3 keys) and restart the stack; if tokens may be affected, end all sessions at the sign-in service; take `make backup` and keep the logs; follow `SECURITY.md` for disclosure. Personal data affected: the operator has to decide about the notification duty (GDPR Art. 33, 72 hours).
+
+**Open:** runbooks for the AI interface, reminders and the GDPR deletion follow with their features (KI, MON, US-ACC-04); operator messages for errors and dead jobs (NFR-18) and operating metrics (NFR-16) do not exist yet.
+
 ## Open (needs hardware, a domain or a decision)
 
 None of this is done or made up:
@@ -71,7 +119,7 @@ None of this is done or made up:
 - **Domain and DNS:** there is no public address. Needed: a domain, an A/AAAA record (dynamic DNS if the IP changes) or a tunnel, ports 80/443 forwarded to the host. Without these Caddy cannot get a public certificate. Reachability from outside over HTTPS (criterion from #40) is therefore **not** proven (R-11, spike TE-15).
 - **Security updates:** set up automatic updates on the host (e.g. `unattended-upgrades`, reboot policy) and document them here.
 - **Backup to a second location:** decide the target for `BACKUP_REMOTE` (second machine, external storage) and how the copy is encrypted. Photos/object storage are not backed up yet because they do not exist yet (TE-05).
-- **Monitoring and alerts:** watching `/health` and backup age belongs to DEV-09 (#172).
+- **Monitoring and alerts:** `/health` now reports database and job queue (see "Health check"); an external monitor that polls it and alerts, and a check of the backup age, are not set up yet (DEV-09, #172).
 - **Image pins:** base images are pinned to major versions, not digests; Renovate (FR-QG-15) pins digests once it is active.
 - **Migrations:** applied by the deploy itself (see above, #201). `deploy.sh` backs up before every deploy while the DB is running (DEV-07, #170); on the very first deploy there is no database to back up.
 - **Sign-in service and invitation phase:** the stack has no Keycloak yet; closing self-registration and switching the registration mode on for a public deployment are described in `invitation-phase.md` (#301).

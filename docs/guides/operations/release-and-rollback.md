@@ -14,7 +14,7 @@ There is one source: the git tag. No version is written into versioned files.
 
 - `deploy.sh` computes `APP_VERSION="$(git describe --tags --always)"`, for example `v0.1.0` (exactly on the tag) or `v0.1.0-3-gabc1234` (3 commits after it), and `GIT_SHA` (short commit).
 - `docker-compose.yml` passes both as build args. The api image sets them as env vars, the web image as `VITE_APP_VERSION` at build time.
-- `GET /health` returns `{"status":"ok","product":"PflanzenDex","version":"<describe>","commit":"<sha>"}`. Both show `unknown` if the build did not get a value (P-08).
+- `GET /health` returns `{"status":"ok","product":"PflanzenDex","version":"<describe>","commit":"<sha>","checks":{…}}` (checks of database and job queue, see `staging-deploy-and-backup.md`). Both show `unknown` if the build did not get a value (P-08).
 - The web app shows `Version <describe>` in the footer.
 - Local dev (`make dev`) has no build arg, so both show `unknown`.
 
