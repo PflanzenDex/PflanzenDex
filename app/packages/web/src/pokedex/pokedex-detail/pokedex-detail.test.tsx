@@ -51,6 +51,8 @@ const detail = () => screen.getByRole("region", { name: /Details/ });
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  // jsdom keeps the history across tests; a detail entry left behind would open its species in the next test.
+  window.history.replaceState(null, "");
 });
 
 describe("US-POK-09 view details of a species", () => {
@@ -167,6 +169,25 @@ describe("US-POK-09 follow-ups of the detail view (issue 297)", () => {
     window.history.back();
     await waitFor(() => expect(screen.queryByRole("region", { name: /Details/ })).toBeNull());
     expect(card("Ficus lyrata")).toBeTruthy();
+  });
+
+  it("US-POK-09 Forward after Back opens the same species again instead of a stale, empty entry (#306)", async () => {
+    await open();
+    await userEvent.click(card("Ficus lyrata"));
+    window.history.back();
+    await waitFor(() => expect(screen.queryByRole("region", { name: /Details/ })).toBeNull());
+    window.history.forward();
+    await waitFor(() => expect(detail().textContent).toContain("Ficus lyrata"));
+  });
+
+  it("US-POK-09 a detail entry reached from elsewhere in the history opens its species (#306)", async () => {
+    window.history.pushState({ pokedexDetail: true, species: "Aloe vera" }, "");
+    await open();
+    expect((await screen.findByRole("region", { name: /Details/ })).textContent).toContain(
+      "Aloe vera",
+    );
+    window.history.back();
+    await waitFor(() => expect(screen.queryByRole("region", { name: /Details/ })).toBeNull());
   });
 
   it("US-POK-09 closing with the button takes back the history entry the opening pushed (one Back, no extra entry)", async () => {
