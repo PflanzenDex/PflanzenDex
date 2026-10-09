@@ -27,7 +27,7 @@ import {
   specimenRoutes,
 } from "./collection";
 import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
-import { WISH_PATHS, wishRoutes, wishZoneUsageFor } from "./wishlist";
+import { WISH_PATHS, wishRoutes, wishZoneUsageFor, type WishImageSources } from "./wishlist";
 import { bindFriends } from "./friends-bindings";
 import { zoneStockFor } from "./zone-stock";
 import { bindHealth } from "./health";
@@ -68,6 +68,8 @@ export type AppOptions = {
   treatments?: TreatmentSource;
   /** Object store and image processing for measurement photos (US-WAC-06); without them uploading a photo answers 502. */
   media?: { store: ObjectStore; processor: ImageProcessor };
+  /** Source client and downloader for the local copy of wish images (US-WUN-04); without them storing an image answers 502. */
+  wishImage?: WishImageSources;
   /** Replaces the care profile as source of the location per phase (tests); without it the keeper's own care profile (US-BES-09) answers. */
   phaseLocation?: PhaseLocationSource;
   /** Replaces the light distribution as source of the stock per zone for the wishlist (tests); without it `collection` answers (US-LIC-02). */
@@ -108,9 +110,10 @@ function todaySources(pool: Pool, opt: AppOptions) {
 }
 
 /** The module `wishlist`: sign-in guard in front of the paths, then the routes; the stock per zone comes from `collection` unless tests replace it. */
-function bindWishlist(app: Hono, pool: Pool, auth: MiddlewareHandler, zoneStock?: ZoneStockSource) {
+function bindWishlist(app: Hono, pool: Pool, auth: MiddlewareHandler, opt: AppOptions) {
   for (const path of WISH_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-  app.route("/", wishRoutes(pool, zoneStock ?? zoneStockFor(pool)));
+  const image = opt.wishImage && opt.media ? { ...opt.wishImage, media: opt.media } : undefined;
+  app.route("/", wishRoutes(pool, opt.zoneStock ?? zoneStockFor(pool), image));
 }
 
 /** What `care` takes from the app options: clock, location per phase and the media port (photos, US-WAC-06). */
@@ -177,7 +180,7 @@ export function createApp(opt: AppOptions = {}): Hono {
     app.route("/", discoverRoutes(opt.pool, auth));
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", careProfileRoutes(opt.pool));
-    bindWishlist(app, opt.pool, auth, opt.zoneStock);
+    bindWishlist(app, opt.pool, auth, opt);
     bindFriends(app, opt.pool, auth, opt.clock);
     const care = careOptions(opt);
     bindCareOne(app, opt.pool, auth, care);

@@ -31,6 +31,11 @@ export interface WishRow {
   /** Always set together with `imageUrl`. */
   readonly imageSource: string | null;
   readonly license: string | null;
+  /**
+   * Object name of the stored copy of the image (US-WUN-04, `<uuid>.jpg` in the object store); `null` until it is
+   * stored. The address above is only the origin, it is never loaded by a viewer (P-05).
+   */
+  readonly imageObject: string | null;
   readonly type: "plant";
   readonly status: WishStatus;
   /** The specimen this wish became ("bought → specimen", US-WUN-05); `null` until it is linked. */
@@ -38,7 +43,7 @@ export interface WishRow {
 }
 
 /** The values of a new wish; `nameKey` is derived from the name (`wishNameKey`) and makes the name unique per account. */
-export type WishValues = Omit<WishRow, "id" | "type" | "status" | "specimenId"> & {
+export type WishValues = Omit<WishRow, "id" | "type" | "status" | "specimenId" | "imageObject"> & {
   readonly nameKey: string;
 };
 
@@ -54,6 +59,17 @@ export type WishPurchase = WishChange;
 export interface WishStore {
   /** `name_taken`: a wish of the account has that name (FR-WUN-06); `zone_unknown`: not a zone of the account. */
   create(userId: string, values: WishValues): Promise<WishRow | "name_taken" | "zone_unknown">;
+  /** One wish of the account of any status; `null` if there is none (a foreign one looks the same, P-04). */
+  find(userId: string, wishId: string): Promise<WishRow | null>;
+  /**
+   * Records the stored copy of the wish image with its verified source and license (US-WUN-04). `null`: no wish of the
+   * account (nothing written, P-04).
+   */
+  setImage(
+    userId: string,
+    wishId: string,
+    image: { readonly object: string; readonly source: string; readonly license: string },
+  ): Promise<WishRow | null>;
   /** Open plant wishes (`status = wishlist`, FR-WUN-02), oldest first. */
   open(userId: string): Promise<readonly WishRow[]>;
   /**

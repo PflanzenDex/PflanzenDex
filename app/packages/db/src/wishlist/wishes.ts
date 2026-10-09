@@ -53,6 +53,27 @@ export class WishesPostgres {
     }
   }
 
+  /** One wish of the account; the row rules hide a foreign one (P-04). */
+  async find(userId: string, wishId: string): Promise<WishRow | null> {
+    return (await withAccount(this.pool, userId, (c) => findWish(c, wishId))) ?? null;
+  }
+
+  /** Records the stored copy with its verified source and license (US-WUN-04); `null` if the wish is not the account's. */
+  async setImage(
+    userId: string,
+    wishId: string,
+    image: { object: string; source: string; license: string },
+  ): Promise<WishRow | null> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<WishRow>(
+        `update wish set image_object = $2, image_source = $3, license = $4
+         where id = $1 and type = 'plant' returning ${COLUMNS}`,
+        [wishId, image.object, image.source, image.license],
+      ),
+    );
+    return r.rows[0] ?? null;
+  }
+
   /** Open plant wishes (FR-WUN-02), oldest first; the row rules show only the own ones. */
   async open(userId: string): Promise<readonly WishRow[]> {
     const r = await withAccount(this.pool, userId, (c) =>

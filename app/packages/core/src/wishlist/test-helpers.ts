@@ -1,24 +1,17 @@
-import type {
-  WishChange,
-  WishPurchase,
-  WishRow,
-  WishStatus,
-  WishStore,
-  WishValues,
-  ZoneStock,
-  ZoneStockSource,
-} from "./types";
-import { wishNameKey } from "./name-key";
+import type { WishChange, WishPurchase, WishRow, WishStatus, WishStore, WishValues } from "./types";
+import { wishNameKey } from "./repair/name-key";
+
+/** A stored wish with its owner; `keyless`: no name key (migration 0020), exempt from the unique name rule (FR-WUN-06, #303). */
+type Stored = Omit<WishRow, "status"> & {
+  status: WishStatus;
+  userId: string;
+  nameKey?: string;
+  keyless?: boolean;
+};
 
 /** In-memory adapter for tests only; the real adapter lives in `db`. Zones are the ones each account owns. */
 export class InMemoryWishes implements WishStore {
-  readonly rows: (Omit<WishRow, "status"> & {
-    status: WishStatus;
-    userId: string;
-    nameKey?: string;
-    /** No name key (migration 0020): exempt from the unique name rule (FR-WUN-06, #303). */
-    keyless?: boolean;
-  })[] = [];
+  readonly rows: Stored[] = [];
   writes = 0;
 
   constructor(private readonly zones: Readonly<Record<string, readonly string[]>> = {}) {}
@@ -42,6 +35,7 @@ export class InMemoryWishes implements WishStore {
     const { nameKey, ...fields } = values;
     const row: WishRow = {
       ...fields,
+      imageObject: null,
       id: `w${this.rows.length + 1}`,
       type: "plant",
       status: "wishlist",
@@ -64,12 +58,30 @@ export class InMemoryWishes implements WishStore {
       imageUrl: null,
       imageSource: null,
       license: null,
+      imageObject: null,
       type: "plant",
       status: "wishlist" as WishStatus,
       specimenId: null,
       ...row,
       userId,
     });
+  }
+
+  async find(userId: string, wishId: string): Promise<WishRow | null> {
+    const row = this.rows.find((r) => r.userId === userId && r.id === wishId);
+    return row ? bare(row) : null;
+  }
+
+  async setImage(
+    userId: string,
+    wishId: string,
+    i: { object: string; source: string; license: string },
+  ) {
+    const row = this.rows.find((r) => r.userId === userId && r.id === wishId);
+    if (!row) return null;
+    this.writes += 1;
+    Object.assign(row, { imageObject: i.object, imageSource: i.source, license: i.license });
+    return bare(row);
   }
 
   async open(userId: string): Promise<readonly WishRow[]> {
@@ -174,26 +186,10 @@ export class InMemoryWishes implements WishStore {
   }
 }
 
-const bare = ({
-  userId: owner,
-  nameKey: key,
-  keyless: free,
-  ...row
-}: WishRow & { userId: string; nameKey?: string; keyless?: boolean }): WishRow => {
-  void owner;
-  void key;
-  void free;
-  return row;
+const bare = (row: Stored): WishRow => {
+  const { userId, nameKey, keyless, ...wish } = row;
+  void [userId, nameKey, keyless];
+  return wish;
 };
 
-/** Stock per zone and account for tests only (the real source is the light distribution of `collection`). */
-export class ZoneStockStub implements ZoneStockSource {
-  readonly calls: string[] = [];
-
-  constructor(private readonly table: Readonly<Record<string, readonly ZoneStock[]>>) {}
-
-  async stock(userId: string): Promise<readonly ZoneStock[]> {
-    this.calls.push(userId);
-    return this.table[userId] ?? [];
-  }
-}
+export { ZoneStockStub } from "./candidates/zone-stock-stub";

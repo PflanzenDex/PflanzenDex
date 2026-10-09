@@ -89,7 +89,12 @@ describe("US-WUN-01 what a candidate shows", () => {
       zoneText: "Lampe 3 — 1 Pflanze",
       difficulty: 2,
       reasoning: "Bleibt klein und mag helles Licht.",
-      image: { url: "https://example.test/h.jpg", source: "Wikimedia Commons" },
+      image: {
+        url: "https://example.test/h.jpg",
+        source: "Wikimedia Commons",
+        license: null,
+        stored: false,
+      },
     });
   });
 
@@ -202,5 +207,39 @@ describe("US-WUN-01 tenant isolation (P-04, P-05)", () => {
     // Ben has empty zones, Anna's zone 3 holds 1 specimen: Anna sees 1, not 0.
     wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: Z3 });
     expect((await candidates("anna")).candidates[0]?.stock).toBe(1);
+  });
+});
+
+describe("US-WUN-04 the candidate says whether the image is stored locally, with its license", () => {
+  it("a stored copy is flagged with source and license; the address stays the origin", async () => {
+    const wishes = new InMemoryWishes({});
+    wishes.seed("anna", {
+      id: "w1",
+      name: "Haworthia",
+      imageUrl: "https://commons.wikimedia.org/wiki/File:H.jpg",
+      imageSource: "Anna, https://commons.wikimedia.org/wiki/File:H.jpg",
+      license: "CC BY 4.0",
+      imageObject: "img-1.jpg",
+    });
+    const list = await wishCandidates({ wishes, stock: new ZoneStockStub({}) }, "anna");
+    expect(list.candidates[0]?.image).toEqual({
+      url: "https://commons.wikimedia.org/wiki/File:H.jpg",
+      source: "Anna, https://commons.wikimedia.org/wiki/File:H.jpg",
+      license: "CC BY 4.0",
+      stored: true,
+    });
+  });
+
+  it("the stored flag never exposes the object name (P-05)", async () => {
+    const wishes = new InMemoryWishes({});
+    wishes.seed("anna", {
+      id: "w1",
+      name: "Haworthia",
+      imageUrl: "https://commons.wikimedia.org/wiki/File:H.jpg",
+      imageSource: "x",
+      imageObject: "secret-name.jpg",
+    });
+    const list = await wishCandidates({ wishes, stock: new ZoneStockStub({}) }, "anna");
+    expect(JSON.stringify(list)).not.toContain("secret-name");
   });
 });

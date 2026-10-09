@@ -86,7 +86,15 @@ function candidate(w: WishRow, zones: readonly ZoneStock[], s: Standing): Candid
     difficulty: w.difficulty,
     reasoning: w.reasoning,
     // The source always travels with the picture (DM-WUN-01); a picture without one is not shown.
-    image: w.imageUrl && w.imageSource ? { url: w.imageUrl, source: w.imageSource } : null,
+    image:
+      w.imageUrl && w.imageSource
+        ? {
+            url: w.imageUrl,
+            source: w.imageSource,
+            license: w.license,
+            stored: w.imageObject !== null,
+          }
+        : null,
     priority: priority(zone, s, w.targetZoneId !== null),
   };
 }

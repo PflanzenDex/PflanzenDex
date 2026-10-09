@@ -39,6 +39,11 @@ const base = {
   imageSource: null,
   license: null,
 };
+const IMAGE = {
+  object: "img-1.jpg",
+  source: "Anna, https://commons.wikimedia.org/wiki/File:A.jpg",
+  license: "CC BY 4.0",
+};
 
 async function zone(account: string, name: string): Promise<string> {
   const z = await zones.create(account, { name, luxCeiling: 15000, ppfd: null, sortOrder: null });
@@ -396,5 +401,48 @@ describe("FR-WUN-06 #303 repair of key-less duplicate wishes", () => {
     expect((await admin.query("select name from wish where id = $1", [id])).rows[0].name).toBe(
       "Annas Doppel",
     );
+  });
+});
+
+describe("US-WUN-04 the stored copy of a wish image", () => {
+  it("records object, source and license on the wish and reads them back", async () => {
+    const w = await wishes.create(
+      anna,
+      values({
+        name: "Image wish",
+        imageUrl: "https://commons.wikimedia.org/wiki/File:A.jpg",
+        imageSource: "Wikipedia",
+      }),
+    );
+    if (typeof w === "string") throw new Error(w);
+    expect(w.imageObject).toBeNull();
+    const updated = await wishes.setImage(anna, w.id, IMAGE);
+    expect(updated).toMatchObject({
+      imageObject: "img-1.jpg",
+      imageSource: IMAGE.source,
+      license: "CC BY 4.0",
+    });
+    expect(await wishes.find(anna, w.id)).toMatchObject({ imageObject: "img-1.jpg" });
+  });
+
+  it("tenant: another account neither finds nor changes the wish (P-04)", async () => {
+    const w = await wishes.create(
+      anna,
+      values({
+        name: "Private image",
+        imageUrl: "https://commons.wikimedia.org/wiki/File:B.jpg",
+        imageSource: "x",
+      }),
+    );
+    if (typeof w === "string") throw new Error(w);
+    expect(await wishes.find(ben, w.id)).toBeNull();
+    expect(await wishes.setImage(ben, w.id, IMAGE)).toBeNull();
+    expect((await wishes.find(anna, w.id))?.imageObject).toBeNull();
+  });
+
+  it("the database refuses an object name that is not a stored JPEG name", async () => {
+    const w = await wishes.create(anna, values({ name: "Bad object" }));
+    if (typeof w === "string") throw new Error(w);
+    await expect(wishes.setImage(anna, w.id, { ...IMAGE, object: "../x.png" })).rejects.toThrow();
   });
 });

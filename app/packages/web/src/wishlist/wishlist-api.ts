@@ -142,3 +142,18 @@ export async function removeDuplicateWish(
   )("POST", `/wishes/${encodeURIComponent(wishId)}/remove-duplicate`);
   return r.ok ? { ok: true, value: r.value as WishRemoveResult } : r;
 }
+
+/** "Bild speichern" (US-WUN-04): stores a local copy of the wish image from Wikimedia Commons with source and license. */
+export async function storeWishImage(
+  api: string,
+  token: string,
+  wishId: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<{ changed: boolean }>> {
+  const r = await createWrite(
+    api,
+    token,
+    fetchFn,
+  )("POST", `/wishes/${encodeURIComponent(wishId)}/image`);
+  return r.ok ? { ok: true, value: r.value as { changed: boolean } } : r;
+}

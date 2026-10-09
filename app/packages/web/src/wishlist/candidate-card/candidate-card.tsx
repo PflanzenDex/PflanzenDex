@@ -2,6 +2,8 @@ import { useState } from "react";
 import type { Candidate } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
 import { cn } from "@/lib/utils";
+import { useStoredPhoto, type PhotoAccess } from "@/lib/use-stored-photo";
+import { errorText } from "@/lib/error-text";
 import { isPlainHttps } from "../schemas";
 
 const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
@@ -17,13 +19,50 @@ const PRIORITY_BORDER: Record<string, string> = {
 const placeholder =
   "grid min-h-18 place-items-center rounded-lg border border-dashed border-border text-muted-foreground";
 
+/** The local copy (US-WUN-04): fetched with the token, so a viewer's browser never contacts a third-party host (P-05). */
+function StoredPicture(props: {
+  c: Candidate;
+  image: NonNullable<Candidate["image"]>;
+  access: PhotoAccess;
+}) {
+  const { c, image } = props;
+  const state = useStoredPhoto(props.access, `/wishes/${encodeURIComponent(c.id)}/image`);
+  return (
+    <figure className="m-0 grid gap-1">
+      {typeof state === "string" ? (
+        <img
+          src={state}
+          alt={`Bild von ${c.title}`}
+          className="max-h-64 w-full rounded-lg object-cover"
+        />
+      ) : (
+        <span role="status" className={placeholder}>
+          {state ? errorText(state.code) : "Bild wird geladen …"}
+        </span>
+      )}
+      <figcaption className="text-sm text-muted-foreground">
+        Quelle: {image.source} · Lizenz: {image.license ?? UNKNOWN}
+      </figcaption>
+    </figure>
+  );
+}
+
 /**
- * The picture of a candidate. The address was typed by a keeper; loading it would make every viewer's browser contact
- * a third-party host (IP address, browser, referrer) and breaks P-05. Until pictures are saved locally (US-WUN-04) it
- * is only a link the viewer follows on purpose, with the source next to it.
+ * The picture of a candidate. A stored copy (US-WUN-04) is shown from the own storage. Otherwise the address, typed by
+ * a keeper, is only a link the viewer follows on purpose: loading it would make every viewer's browser contact a
+ * third-party host (IP address, browser, referrer) and breaks P-05. "Bild speichern" fetches a copy from Wikimedia
+ * Commons with its license; the server refuses everything else with a clear text.
  */
-function Picture({ image }: { image: Candidate["image"] }) {
+function Picture(props: {
+  c: Candidate;
+  access: PhotoAccess | undefined;
+  onStoreImage: ((c: Candidate) => void) | undefined;
+  busy: boolean;
+}) {
+  const { c, access, onStoreImage } = props;
+  const image = c.image;
   if (!image || !isPlainHttps(image.url)) return <span className={placeholder}>Kein Bild</span>;
+  if (image.stored && access) return <StoredPicture c={c} image={image} access={access} />;
   return (
     <figure className="m-0 grid gap-1">
       <span className={placeholder}>
@@ -38,6 +77,18 @@ function Picture({ image }: { image: Candidate["image"] }) {
         </a>
       </span>
       <figcaption className="text-sm text-muted-foreground">Quelle: {image.source}</figcaption>
+      {onStoreImage && (
+        <Button
+          type="button"
+          variant="outline"
+          size="touch"
+          disabled={props.busy}
+          aria-label={`Bild speichern: ${c.title}`}
+          onClick={() => onStoreImage(c)}
+        >
+          Bild speichern
+        </Button>
+      )}
     </figure>
   );
 }
@@ -95,6 +146,10 @@ export function CandidateCard(props: {
   onDiscard?: (c: Candidate) => void;
   /** A write is running: the action waits, so a double tap writes once. */
   busy?: boolean;
+  /** How the stored image is fetched privately (US-WUN-04, P-05). */
+  photoAccess?: PhotoAccess;
+  /** Stores a local copy of the image from Wikimedia Commons (US-WUN-04); without it the card has no such action. */
+  onStoreImage?: (c: Candidate) => void;
 }) {
   const { c, rank, onBuy, onDiscard } = props;
   return (
@@ -105,7 +160,12 @@ export function CandidateCard(props: {
         PRIORITY_BORDER[c.priority.kind],
       )}
     >
-      <Picture image={c.image} />
+      <Picture
+        c={c}
+        access={props.photoAccess}
+        onStoreImage={props.onStoreImage}
+        busy={props.busy === true}
+      />
       <h2 className="mt-2 text-lg font-semibold">{c.title}</h2>
       <p className="w-fit rounded-full bg-muted px-3 py-0.5 text-sm font-semibold text-muted-foreground">
         Platz {rank} der Liste

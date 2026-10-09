@@ -2,7 +2,7 @@ import type { Result } from "../result";
 
 // Port and value types for external sources (TE-09, NFR-17). `core` only describes them; adapters live in the API (AB-1).
 
-export const SOURCE_NAMES = ["wikipedia", "wikidata", "gbif", "opentree"] as const;
+export const SOURCE_NAMES = ["wikipedia", "wikidata", "gbif", "opentree", "commons"] as const;
 export type SourceName = (typeof SOURCE_NAMES)[number];
 
 /** What a consumer asks of a source. The adapter builds the URL; `body` makes it a POST (OpenTree). */
