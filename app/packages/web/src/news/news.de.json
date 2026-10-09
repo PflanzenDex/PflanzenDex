@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Licht: Die Seite „Standorte und Lichtzonen“ beginnt wieder mit ihrer Überschrift und deinen Lichtzonen und Standorten; „Lichthunger“ und die Einstufungsregeln stehen darunter zum Nachschlagen.",
     "Bestand: Die Karte eines Exemplars zeigt jetzt dieselbe Lichtzone, unter der es in der Verteilung auf die Lichtzonen zählt, und sagt dazu, woher sie kommt: vom Standort, aus deinem Pflegeprofil, aus dem Lichtbedarf der Art oder als Stecklingslicht. Hat der Standort keine Lichtzone, steht dort nicht mehr „unbekannt“, wenn sich die Zone aus der Art ableiten lässt.",
     "Neues Erscheinungsbild: PflanzenDex wirkt jetzt ruhiger und einheitlicher und hat einen hellen und einen dunklen Modus. Bewegungen und Animationen entfallen, wenn dein Gerät weniger Bewegung wünscht. Hinweise, Meldungen und Ladeanzeigen sehen neu aus und sagen dir klar, was los ist und was du als Nächstes tun kannst.",
     "Stecklinge messen: In der Messansicht ist ein Steckling jetzt deutlich als „Steckling“ markiert.",
