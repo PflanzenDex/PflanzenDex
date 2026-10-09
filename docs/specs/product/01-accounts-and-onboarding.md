@@ -77,12 +77,38 @@ Details (decided with the story):
 
 Not yet (why this story is 🟨): the cost per user comes from the manual monthly figure above; an automatic cost measurement (NFR-16, TE-10) does not exist. Closing the self-registration at the sign-in service itself (Keycloak realm setting) is an operator configuration, not part of the app: the owner decided to close it when the invitation phase starts and to switch "registration only with invitation code" on for public deployments (decision 2026-10-05, #298; the default stays off for local development and tests). The steps are in the runbook `docs/guides/operations/invitation-phase.md`; they can run only once a public deployment with its own sign-in service exists. Until then a stranger can still create a sign-in identity, but the app gives it no account and no data.
 
+### US-ACC-06 · Several accounts on one device · ⬜ new
+
+As a **plant keeper** I want to add a second account in the app and switch between my accounts without signing in again, for example a household account next to my own, or a test account next to my real one.
+
+Acceptance criteria:
+
+- Given I am signed in, when I choose "Add account" and sign in as another person, then both accounts are listed (display name and email) and the added one is active.
+- Given two or more accounts on the device, when I pick another account, then the app shows that account's data at once and asks for no password while its sign-in is valid.
+- Given I switched accounts, then nothing of the previous account is visible or reachable in the new one: views, cached data, drafts and the outbox are separate per account (P-04, P-05).
+- Given I add an account that is already listed, then the app switches to it; no duplicate entry appears.
+- Given I sign out of one account, then only that account leaves the device and its session ends; the others stay signed in. "Sign out of all accounts" removes every account from the device.
+- Given a listed account whose sign-in has expired or was revoked ("sign out on all devices"), when I pick it, then I am asked to sign in again for that account only; the entry stays listed with the note that the sign-in has expired (P-10).
+- Given the device holds the limit of accounts, when I add another, then I am told the limit and offered to sign out of one.
+
+Details (proposed with the story, for the owner to confirm):
+
+- **Limit:** 5 accounts per device (assumption, starting value).
+- **Local only:** the account list lives on the device. The server learns nothing about other accounts on the same device and never links them (P-05); there is no merging of data and no sharing between own accounts.
+- **Same guarantees per account:** each sign-in stays revocable from the account itself (US-ACC-01), and a revoked account stops working on this device at the latest at its next request.
+- **Adding must show the sign-in form** even if the sign-in service still holds a session for another person, and must never end in the "already signed in with another user" page. Whether that needs a prompt option or ending the service session first is an implementation spike (Keycloak behavior with `prompt=login` and with registration); the result goes into the implementation PR.
+- **Silent pick-up (US-ACC-01) only applies when no account is stored on the device;** once accounts are listed, the list decides who is active.
+- **The active account is remembered** across reloads; with several accounts and no remembered choice the app asks which one to use instead of guessing.
+- **Offline:** switching between accounts with a valid sign-in works offline; adding an account needs a connection.
+- **Out of scope:** account linking, one login for several people, and an "admin acts as another user" mode.
+
 ## Requirements
 
-| ID        | Requirement                                                                                                                                          | Status |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| FR-ACC-01 | Account data (email, display name) is stored separately from collection data and accessible only to the account itself.                              | ✅     |
-| FR-ACC-02 | Every user-related row carries the account id from the first version on (P-04, NFR-09).                                                              | ⬜     |
-| FR-ACC-03 | Passwords and credentials are never stored by ourselves if an established service manages them (NFR-10).                                             | ✅     |
-| FR-ACC-04 | Minors: clarify age limit and notices before the app becomes public (NFR-11).                                                                        | ⬜     |
-| FR-ACC-05 | The sign-in service must also serve as an authorization server for AI connections (OAuth with own scopes, consent page, revocation; E-03, FR-KI-13). | ⬜     |
+| ID        | Requirement                                                                                                                                              | Status |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| FR-ACC-01 | Account data (email, display name) is stored separately from collection data and accessible only to the account itself.                                  | ✅     |
+| FR-ACC-02 | Every user-related row carries the account id from the first version on (P-04, NFR-09).                                                                  | ⬜     |
+| FR-ACC-03 | Passwords and credentials are never stored by ourselves if an established service manages them (NFR-10).                                                 | ✅     |
+| FR-ACC-04 | Minors: clarify age limit and notices before the app becomes public (NFR-11).                                                                            | ⬜     |
+| FR-ACC-05 | The sign-in service must also serve as an authorization server for AI connections (OAuth with own scopes, consent page, revocation; E-03, FR-KI-13).     | ⬜     |
+| FR-ACC-06 | Several accounts on one device are isolated per account (data, caches, outbox, drafts) and each keeps its own revocable sign-in (US-ACC-06, P-04, P-05). | ⬜     |
