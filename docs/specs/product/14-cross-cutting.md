@@ -53,13 +53,15 @@ Acceptance criteria:
 - Location, growth notes, treatments, prices and financial data are never transmitted to friends or partners (FR-SOZ-01, FR-EQU-08).
 - A page "What is measured?" names usage measurement and click counting; without consent nothing is counted.
 
-### US-QS-06 · Sources and licenses · ⬜ (prototype ✅)
+### US-QS-06 · Sources and licenses · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
 - Wikipedia texts and images (CC BY-SA) are shown with source link and license statement (FR-POK-07).
 - User images remain the property of the user; passing on only after sharing.
 - Partner links are labeled (FR-EQU-05).
+
+State of implementation: the collector card (US-POK-01) and the suggestion card (US-ENT-01) link the Wikipedia article with "Quelle: Wikipedia (CC BY-SA)" or "Bild und Text: Wikipedia (CC BY-SA)"; when text or image are shown without a known article link, source and license are still named as text ("…, Link unbekannt", P-08); a card without Wikipedia content shows no attribution. User images (measurement photos, US-WAC-06) are served only to their owner and are not passed on (the photo switch of US-SOZ-04 does not act yet). **Open:** the label of partner links (FR-EQU-05; equipment does not exist yet) and the license of each image (a Wikimedia Commons image can carry a license other than CC BY-SA; the catalog does not store it yet).
 
 ### US-QS-07 · Usable on mobile · ⬜ new
 

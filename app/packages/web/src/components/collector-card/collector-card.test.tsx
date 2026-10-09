@@ -94,3 +94,21 @@ describe("US-POK-01 collector card", () => {
     expect(container.querySelector("[data-rarity]")).not.toBeNull();
   });
 });
+
+describe("US-QS-06 sources and licenses on the collector card (FR-POK-07)", () => {
+  it("US-QS-06 Wikipedia text without a known source link still names source and license, without a link", () => {
+    show(card({ imageUrl: null, sourceUrl: null }));
+    expect(screen.getByText("Quelle: Wikipedia (CC BY-SA), Link unbekannt")).toBeTruthy();
+    expect(screen.queryByRole("link")).toBeNull();
+  });
+
+  it("US-QS-06 a Wikipedia image without a known source link also names source and license", () => {
+    show(card({ summary: null, sourceUrl: null }));
+    expect(screen.getByText("Quelle: Wikipedia (CC BY-SA), Link unbekannt")).toBeTruthy();
+  });
+
+  it("US-QS-06 nothing from Wikipedia on the card: no attribution", () => {
+    show(card({ summary: null, imageUrl: null, sourceUrl: null }));
+    expect(screen.queryByText(/Wikipedia/)).toBeNull();
+  });
+});

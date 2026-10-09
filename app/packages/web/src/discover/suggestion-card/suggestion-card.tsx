@@ -2,6 +2,7 @@ import type { Suggestion, SuggestionAttributes } from "@pflanzendex/core";
 import { useRef, type PointerEvent } from "react";
 import { cn } from "@/lib/utils";
 import { swipeDirection } from "../swipe/swipe";
+import { WikipediaSource } from "@/components/collector-card/collector-card";
 
 const stars = (n: number) => "★".repeat(n) + "☆".repeat(3 - n);
 const LEVEL = { low: "niedrig", medium: "mittel", high: "hoch" } as const;
@@ -120,16 +121,12 @@ export function SuggestionCard(props: {
       </div>
       <Summary s={s} />
       <Facts s={s} />
-      {s.sourceUrl !== null && (
-        <a
-          href={s.sourceUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex min-h-11 items-center text-sm underline"
-        >
-          Bild und Text: Wikipedia (CC BY-SA)
-        </a>
-      )}
+      <WikipediaSource
+        label="Bild und Text"
+        sourceUrl={s.sourceUrl}
+        shown={s.summary !== null || s.imageUrl !== null}
+        className="inline-flex min-h-11 items-center"
+      />
       <section aria-label="Gründe">
         <h3 className="m-0 mb-1 text-sm font-semibold">Warum diese Art?</h3>
         <ul className="m-0 grid list-disc gap-1 pl-5 text-sm">
