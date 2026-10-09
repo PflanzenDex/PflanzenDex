@@ -89,6 +89,20 @@ describe("US-LIC-05 page locations and light zones", () => {
     expect(screen.getByRole("heading", { name: "Warnzeichen" })).toBeTruthy();
   });
 
+  it("US-QS-09 · #591 the page heading comes first, the reference sections follow below it", async () => {
+    fakeServer({ zones: [zone], locations: [location] });
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
+    await screen.findByRole("heading", { name: "Einstufungsregeln" });
+    const headings = screen.getAllByRole("heading");
+    expect(headings[0]).toMatchObject({ tagName: "H1", textContent: "Standorte und Lichtzonen" });
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    const names = headings.map((h) => h.textContent);
+    for (const reference of ["Lichthunger", "Einstufungsregeln", "Warnzeichen"])
+      expect(names.indexOf(reference)).toBeGreaterThan(0);
+  });
+
   it("shows a status while loading and then zone and location from the API", async () => {
     fakeServer({ zones: [zone], locations: [location] });
     render(

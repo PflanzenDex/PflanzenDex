@@ -132,14 +132,15 @@ export function LightPage(props: {
       {...(request.error ? { errorText: errorTitle(request.error) } : {})}
     >
       {z && (
+        // The view carries the page heading, so it comes first; the reference sections follow (US-QS-09, #591).
         <div className="flex min-w-0 flex-col gap-6">
+          <LightView data={z.data} actions={actions} {...(lastError ? { error: lastError } : {})} />
           <OverviewSection
             overview={z.overview}
             onOpenCollection={props.onOpenCollection}
             onRetry={() => void load()}
           />
           <RulesView zones={z.data.zones} />
-          <LightView data={z.data} actions={actions} {...(lastError ? { error: lastError } : {})} />
         </div>
       )}
     </RequestState>
