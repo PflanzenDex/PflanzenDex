@@ -49,7 +49,8 @@ export function Browse(props: {
   };
   return (
     <>
-      <p className="m-0 text-muted-foreground">{`${plural(caught.length)} gefangen`}</p>
+      {/* Spacing to the search label below, which has no top margin (#593). */}
+      <p className="mb-3 mt-0 text-muted-foreground">{`${plural(caught.length)} gefangen`}</p>
       <Controls
         query={query}
         filter={filter}
