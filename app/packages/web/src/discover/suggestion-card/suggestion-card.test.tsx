@@ -50,3 +50,22 @@ describe("US-QS-14 source link target", () => {
     expect(link.className).toContain("items-center");
   });
 });
+
+describe("US-QS-06 sources and licenses on the suggestion card (FR-POK-07)", () => {
+  it("US-QS-06 links the source with the license statement", () => {
+    show(suggestion());
+    const link = screen.getByRole("link", { name: "Bild und Text: Wikipedia (CC BY-SA)" });
+    expect(link.getAttribute("href")).toBe("https://en.wikipedia.org/wiki/Aglaonema_commutatum");
+  });
+
+  it("US-QS-06 Wikipedia text without a known source link still names source and license, without a link", () => {
+    show(suggestion({ sourceUrl: null }));
+    expect(screen.getByText("Bild und Text: Wikipedia (CC BY-SA), Link unbekannt")).toBeTruthy();
+    expect(screen.queryByRole("link")).toBeNull();
+  });
+
+  it("US-QS-06 nothing from Wikipedia on the card: no attribution", () => {
+    show(suggestion({ summary: null, imageUrl: null, sourceUrl: null }));
+    expect(screen.queryByText(/Wikipedia/)).toBeNull();
+  });
+});

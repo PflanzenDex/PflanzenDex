@@ -49,6 +49,32 @@ function Facts(props: { card: Card }) {
 }
 
 /**
+ * Source and license of Wikipedia content (US-QS-06, FR-POK-07): a link when the source is known; when text or image are
+ * shown without one, the source and license are still named, as text (P-08). Without Wikipedia content: nothing.
+ */
+export function WikipediaSource(props: {
+  label: string;
+  sourceUrl: string | null;
+  shown: boolean;
+  className?: string;
+}) {
+  const text = `${props.label}: Wikipedia (CC BY-SA)`;
+  if (props.sourceUrl !== null)
+    return (
+      <a
+        href={props.sourceUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cn("text-sm underline", props.className)}
+      >
+        {text}
+      </a>
+    );
+  if (!props.shown) return null;
+  return <span className="text-sm text-muted-foreground">{`${text}, Link unbekannt`}</span>;
+}
+
+/**
  * Collector card of one species (US-POK-01). Caught is colored, missing keeps name and text visible and shows the
  * image in grey. A species-poor genus gets a badge, a caught one also a rarity frame.
  */
@@ -82,16 +108,11 @@ export function CollectorCard(props: { card: Card }) {
       {c.specimenCount > 1 && (
         <span className="text-muted-foreground">{`${c.specimenCount} Exemplare`}</span>
       )}
-      {c.sourceUrl !== null && (
-        <a
-          href={c.sourceUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm underline"
-        >
-          Quelle: Wikipedia (CC BY-SA)
-        </a>
-      )}
+      <WikipediaSource
+        label="Quelle"
+        sourceUrl={c.sourceUrl}
+        shown={c.summary !== null || c.imageUrl !== null}
+      />
     </li>
   );
 }
