@@ -15,12 +15,16 @@ const LABEL: Record<TodayKind, string> = {
   treatment_overdue: "Überfällig",
   treatment_due: "Heute fällig",
   phase_deviation: "Abweichung",
+  measurement_etiolated: "Vergeilt",
   specimen_incomplete: "Angaben fehlen",
+  buffer_low: "Nachschub",
 };
 const GO: Record<TodayTarget, string> = {
   treatments: "Zu Behandlung",
   care_phases: "Zu Pflegephasen",
+  measurements: "Zum Messen",
   hints: "Zu Hinweisen",
+  wishlist: "Zur Wunschliste",
 };
 const CARD =
   "min-w-0 rounded-card bg-card p-3 text-card-foreground shadow-elevation-1 [overflow-wrap:anywhere]";
@@ -38,7 +42,8 @@ function Item(props: { item: TodayItem; onOpen: (d: TodayDestination) => void })
         type="button"
         variant="secondary"
         className="mt-2 self-start"
-        aria-label={`${GO[item.target]}: ${item.specimenName}`}
+        // An item about the whole account (buffer, US-WUN-02) has no specimen; its text names the zone instead.
+        aria-label={`${GO[item.target]}: ${item.specimenName ?? item.text}`}
         onClick={() => props.onOpen(item.target)}
       >
         {GO[item.target]}

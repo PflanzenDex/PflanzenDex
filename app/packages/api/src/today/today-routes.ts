@@ -1,10 +1,17 @@
-import { careProfileLocations, todayStatus, type PhaseLocationSource } from "@pflanzendex/core";
+import {
+  careProfileLocations,
+  todayStatus,
+  type MeasurementSource,
+  type PhaseLocationSource,
+  type ZoneStockSource,
+} from "@pflanzendex/core";
 import {
   CareProfilePostgres,
   LocationPostgres,
   SpeciesPostgres,
   SpecimenPostgres,
   TreatmentsPostgres,
+  WishesPostgres,
 } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
@@ -18,6 +25,10 @@ export type TodayOptions = {
   clock?: () => Date;
   /** Replaces the care profile as source of the location per phase (tests). */
   phaseLocation?: PhaseLocationSource | undefined;
+  /** Last measurement per specimen (US-QS-04); the app root wires `care`. */
+  measurements: MeasurementSource;
+  /** Stock per zone 2 to 4 for the buffer warning (US-WUN-02); the app root wires the distribution. */
+  zoneStock: ZoneStockSource;
 };
 
 /**
@@ -25,7 +36,7 @@ export type TodayOptions = {
  * the one `status` function of `core` that reminders and the AI status use as well (R-04). `timeZone` (IANA name)
  * decides what "today" is (NFR-08).
  */
-export function todayRoutes(pool: Pool, opt: TodayOptions = {}): Hono<AuthEnv> {
+export function todayRoutes(pool: Pool, opt: TodayOptions): Hono<AuthEnv> {
   const profiles = new CareProfilePostgres(pool);
   const deps = {
     specimens: new SpecimenPostgres(pool),
@@ -35,6 +46,9 @@ export function todayRoutes(pool: Pool, opt: TodayOptions = {}): Hono<AuthEnv> {
     profiles,
     targets: opt.phaseLocation ?? careProfileLocations(profiles),
     clock: opt.clock ?? (() => new Date()),
+    measurements: opt.measurements,
+    wishes: new WishesPostgres(pool),
+    stock: opt.zoneStock,
   };
   const routes = new Hono<AuthEnv>();
   routes.get("/today", async (c) => {

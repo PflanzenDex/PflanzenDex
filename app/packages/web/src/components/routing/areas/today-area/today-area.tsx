@@ -18,6 +18,9 @@ type Token = () => Promise<string | undefined>;
 const VIEW: Partial<Record<TodayDestination, LinkTarget>> = {
   care_phases: "carePhases",
   collection: "collection",
+  // Measuring and the wishlist live in the Sammlung (US-QS-14, US-QS-04).
+  measurements: "collection",
+  wishlist: "collection",
 };
 
 const NAMES: Record<string, string> = {

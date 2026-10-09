@@ -14,8 +14,12 @@ import {
   type TreatmentListRow,
 } from "../care";
 import type { TodayItem, TodayList } from "./today-types";
+import { bufferItems, etiolatedItems, type DeviationDependencies } from "./deviations";
 
-export type TodayDependencies = TreatmentListDependencies & PhasesDependencies & HintsDependencies;
+export type TodayDependencies = TreatmentListDependencies &
+  PhasesDependencies &
+  HintsDependencies &
+  DeviationDependencies;
 
 const PHASE_NAME = { growth: "Wachstumsphase", dormancy: "Ruhephase" } as const;
 
@@ -40,15 +44,16 @@ const deviationItem = (p: PhasesRow): TodayItem => ({
 });
 
 const byName = (a: TodayItem, b: TodayItem) =>
-  a.specimenName.localeCompare(b.specimenName, "de") || a.id.localeCompare(b.id);
+  (a.specimenName ?? "").localeCompare(b.specimenName ?? "", "de") || a.id.localeCompare(b.id);
 
 /** Overdue and due today, in the order of `treatmentOpenList`: the earliest date, so the most overdue, first. */
 const treatmentOrder = (rows: readonly TreatmentListRow[]) =>
   rows.filter((t) => t.status.kind === "overdue" || t.status.kind === "today").map(treatmentItem);
 
 /**
- * What needs action today (TE-07): treatments overdue or due today, specimens away from the target location of their
- * phase (US-PHA-02) and incomplete specimens (US-BES-08), in this order of urgency: what is bound to a date first.
+ * What needs action today (TE-07, US-QS-04): treatments overdue or due today, specimens away from the target location
+ * of their phase (US-PHA-02), etiolated last measurements, incomplete specimens (US-BES-08) and zones below the buffer
+ * of open candidates (US-WUN-02), in this order of urgency: what is bound to a date first, the account-wide last.
  * A specimen without location is reported once, as incomplete data, not again as a phase deviation (P-10 without
  * duplicates). `today` is the date in `timeZone`, taken from one reading of the clock for all parts (NFR-08).
  */
@@ -63,10 +68,12 @@ export async function todayStatus(
     );
   const now = deps.clock();
   const same = { ...deps, clock: () => now };
-  const [treatments, phases, hints] = await Promise.all([
+  const [treatments, phases, hints, etiolated, buffer] = await Promise.all([
     treatmentOpenList(same, userId, timeZone),
     carePhasesList(same, userId, timeZone),
     specimenHints(same, userId),
+    deps.specimens.list(userId).then((rows) => etiolatedItems(deps, userId, rows)),
+    bufferItems(deps, userId),
   ]);
   if (!treatments.ok) return treatments;
   if (!phases.ok) return phases;
@@ -83,7 +90,13 @@ export async function todayStatus(
   }));
   return ok({
     date: localToday(now, timeZone),
-    items: [...due, ...deviations.sort(byName), ...incomplete.sort(byName)],
+    items: [
+      ...due,
+      ...deviations.sort(byName),
+      ...etiolated.sort(byName),
+      ...incomplete.sort(byName),
+      ...buffer,
+    ],
     upcoming: treatments.value.length - due.length,
   });
 }

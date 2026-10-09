@@ -85,6 +85,47 @@ describe("TE-07 today page", () => {
     expect(onOpen).toHaveBeenCalledWith("care_phases");
   });
 
+  it("US-QS-04 an etiolated measurement and a zone below the buffer show their state word and lead to their place", async () => {
+    fakeServer(() =>
+      response(200, {
+        date: "2026-10-03",
+        upcoming: 0,
+        items: [
+          item(
+            "measurement_etiolated",
+            "measurements",
+            "Aloe",
+            "„Aloe“: Die letzte Messung vom 01.10.2026 ist vergeilt/dünn.",
+            "Stelle das Exemplar heller.",
+          ),
+          {
+            ...item(
+              "buffer_low",
+              "wishlist",
+              "x",
+              "Nachschub nötig: Lampe 3 (0 offene Kandidaten)",
+              "Erfasse einen Wunsch.",
+            ),
+            specimenId: null,
+            specimenName: null,
+          },
+        ],
+      }),
+    );
+    const onOpen = vi.fn();
+    render(<TodayPage api="http://api" token={token} onOpen={onOpen} />);
+    expect(await screen.findByText("Vergeilt")).toBeTruthy();
+    expect(screen.getByText("Nachschub")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Zum Messen: Aloe" }));
+    expect(onOpen).toHaveBeenLastCalledWith("measurements");
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Zur Wunschliste: Nachschub nötig: Lampe 3 (0 offene Kandidaten)",
+      }),
+    );
+    expect(onOpen).toHaveBeenLastCalledWith("wishlist");
+  });
+
   it("TE-07 P-10 an empty list says that nothing is due, names what is ahead and offers the collection", async () => {
     fakeServer(() => response(200, { date: "2026-10-03", upcoming: 1, items: [] }));
     const onOpen = vi.fn();

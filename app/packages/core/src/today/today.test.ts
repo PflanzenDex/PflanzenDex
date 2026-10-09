@@ -6,6 +6,8 @@ import { InMemoryTreatments } from "../care/treatment-data/treatment-test-helper
 import { InMemoryCareProfiles } from "../collection/care-profile/care-profile-test-helpers";
 import { SpeciesStub, testSpecies } from "../collection/shared/test-helpers";
 import { PhaseLocationStub } from "../care/shared/test-helpers";
+import type { CardMeasurementView } from "../collection";
+import type { WishRow, ZoneStock } from "../wishlist";
 
 const WINTER = "11111111-1111-4111-8111-111111111111"; // dormancy 11-01 to 03-15
 const SUMMER = "22222222-2222-4222-8222-222222222222"; // dormancy 06-01 to 08-31
@@ -40,7 +42,19 @@ const locations: LightLocationStore = {
   update: async () => "not_found",
 };
 
-async function setUp(rows: readonly SpecimenRow[], plan: [string, string, string][] = []) {
+/** What `care` and `wishlist` deliver for a test: last measurement per specimen, open wishes, stock per zone 2 to 4. */
+interface Extra {
+  readonly measured?: Readonly<Record<string, CardMeasurementView["last"]["quality"]>>;
+  readonly wishes?: readonly Pick<WishRow, "targetZoneId">[];
+  readonly stock?: readonly ZoneStock[];
+}
+const asked: string[][] = [];
+
+async function setUp(
+  rows: readonly SpecimenRow[],
+  plan: [string, string, string][] = [],
+  extra: Extra = {},
+) {
   const treatments = new InMemoryTreatments({ anna: rows.map((r) => r.id), ben: ["e9"] });
   for (const [specimenId, dueAt, reason] of plan)
     await treatments.createMany("anna", [
@@ -77,6 +91,21 @@ async function setUp(rows: readonly SpecimenRow[], plan: [string, string, string
       anna: { [WINTER]: { growth: SOLL }, [SUMMER]: { growth: SOLL } },
     }),
     clock,
+    measurements: {
+      forSpecimens: async (_u: string, ids: readonly string[]) => {
+        asked.push([...ids]);
+        return new Map(
+          ids.flatMap((id) => {
+            const quality = extra.measured?.[id];
+            if (!quality) return [];
+            const last = { date: "2026-10-01", value: 12, quality, note: null };
+            return [[id, { last, photo: null }] as const];
+          }),
+        );
+      },
+    },
+    wishes: { open: async () => (extra.wishes ?? []) as readonly WishRow[] },
+    stock: { stock: async () => extra.stock ?? [] },
   };
   return (zone: unknown = "Europe/Berlin", user = "anna") => todayStatus(deps, user, zone);
 }
@@ -204,5 +233,79 @@ describe("TE-07 priority and order", () => {
     const today = await setUp([row("e1", "Aloe")]);
     const r = await today();
     expect(r.ok && r.value.items).toEqual([]);
+  });
+});
+
+describe("US-QS-04 deviations become visible in the today list", () => {
+  it("US-QS-04 an etiolated last measurement appears as a warning with an instruction for action", async () => {
+    const today = await setUp([row("e1", "Aloe"), row("e2", "Efeu")], [], {
+      measured: { e1: "etiolated", e2: "healthy" },
+    });
+    const r = await today();
+    expect(kinds(r)).toEqual(["measurement_etiolated:Aloe"]);
+    if (!r.ok) throw new Error("failed");
+    const item = r.value.items[0];
+    expect(item).toMatchObject({ id: "etiolated:e1", specimenId: "e1", target: "measurements" });
+    expect(item?.text).toBe("„Aloe“: Die letzte Messung vom 01.10.2026 ist vergeilt/dünn.");
+    expect(item?.nextAction.length).toBeGreaterThan(0);
+  });
+
+  it("US-QS-04 US-BES-07 the measurements of archived specimens are not asked for and never warned about", async () => {
+    asked.length = 0;
+    const archived = { status: "archived" as const, archivedAt: "2026-10-02", archivedReason: "x" };
+    const today = await setUp([row("e1", "Alt", archived), row("e2", "Aloe")], [], {
+      measured: { e1: "etiolated" },
+    });
+    expect(kinds(await today())).toEqual([]);
+    expect(asked.flat()).not.toContain("e1");
+  });
+
+  it("US-QS-04 US-WUN-02 a zone below the buffer of open candidates appears with the action of the wishlist", async () => {
+    const stock = [
+      { zoneId: "z2", name: "Lampe 2", count: 3 },
+      { zoneId: "z3", name: "Lampe 3", count: 1 },
+    ];
+    const wishes = [{ targetZoneId: "z2" }, { targetZoneId: "z2" }, { targetZoneId: "z3" }];
+    const today = await setUp([row("e1", "Aloe")], [], { stock, wishes });
+    const r = await today();
+    expect(kinds(r)).toEqual(["buffer_low:null"]);
+    if (!r.ok) throw new Error("failed");
+    expect(r.value.items[0]).toMatchObject({
+      id: "buffer:z3",
+      specimenId: null,
+      specimenName: null,
+      text: "Nachschub nötig: Lampe 3 (1 offener Kandidat)",
+      target: "wishlist",
+    });
+    expect(r.value.items[0]?.nextAction).toContain("Lampe 3");
+  });
+
+  it("US-QS-04 with enough open candidates in every zone there is no buffer warning", async () => {
+    const stock = [{ zoneId: "z2", name: "Lampe 2", count: 0 }];
+    const today = await setUp([], [], {
+      stock,
+      wishes: [{ targetZoneId: "z2" }, { targetZoneId: "z2" }],
+    });
+    expect(kinds(await today())).toEqual([]);
+  });
+
+  it("US-QS-04 orders date-bound first, then deviation, etiolated, incomplete data, buffer last", async () => {
+    const today = await setUp(
+      [
+        row("e1", "Zeder", { locationId: null }),
+        row("e2", "Aloe"),
+        row("e3", "Bogenhanf", { speciesId: WINTER, locationId: ELSEWHERE }),
+      ],
+      [["e2", "2026-10-03", "Heute"]],
+      { measured: { e2: "etiolated" }, stock: [{ zoneId: "z2", name: "Lampe 2", count: 0 }] },
+    );
+    expect(kinds(await today())).toEqual([
+      "treatment_due:Aloe",
+      "phase_deviation:Bogenhanf",
+      "measurement_etiolated:Aloe",
+      "specimen_incomplete:Bogenhanf",
+      "specimen_incomplete:Zeder",
+      "buffer_low:null",
+    ]);
   });
 });
