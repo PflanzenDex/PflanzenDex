@@ -72,13 +72,20 @@ const text = (meta: Meta, key: string): string => {
   return typeof v === "string" ? v.trim() : "";
 };
 
-/** Plain text of the author field (HTML in the API answer): tags go, and no angle bracket survives. */
-const stripTags = (html: string): string =>
-  html
-    .replace(/<[^>]*>/g, "")
-    .replace(/[<>]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+/**
+ * Plain text of the author field (the API answer holds HTML): everything between `<` and `>` goes and no angle bracket
+ * survives. A small scanner instead of a pattern, so nothing half-matched can remain.
+ */
+function stripTags(html: string): string {
+  let out = "";
+  let depth = 0;
+  for (const ch of html) {
+    if (ch === "<") depth += 1;
+    else if (ch === ">") depth = Math.max(0, depth - 1);
+    else if (depth === 0) out += ch;
+  }
+  return out.replace(/\s+/g, " ").trim();
+}
 
 interface ImageInfo {
   readonly url: string;
