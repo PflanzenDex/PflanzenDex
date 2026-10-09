@@ -5,9 +5,11 @@ import {
   NO_TREATMENTS,
   NO_MEASUREMENTS,
   specimenCards,
+  zoneDistribution,
   dueDate,
   type CardsDependencies,
 } from "../index";
+import { InMemoryCareProfiles } from "../care-profile/care-profile-test-helpers";
 import { SpeciesStub, InMemorySpecimens, testSpecies } from "../shared/test-helpers";
 
 const SPECIES = "11111111-1111-4111-8111-111111111111";
@@ -96,6 +98,7 @@ describe("US-BES-06 Karte: Name, Art, Lichtzone, Status, Standort", () => {
       status: "plant",
       location: "Regal Süd",
       lightZone: "Zone 3",
+      lightZoneSource: "location",
       caughtAt: "2026-09-01",
     });
   });
@@ -115,8 +118,12 @@ describe("US-BES-06 Karte: Name, Art, Lichtzone, Status, Standort", () => {
     await create("anna", "B");
     const cards = await specimenCards(dependencies(), "anna", TODAY);
     const target = (n: string) => cards.find((k) => k.name === n);
-    expect(target("A")).toMatchObject({ location: "Kiste", lightZone: null });
-    expect(target("B")).toMatchObject({ location: null, lightZone: null });
+    expect(target("A")).toMatchObject({
+      location: "Kiste",
+      lightZone: null,
+      lightZoneSource: null,
+    });
+    expect(target("B")).toMatchObject({ location: null, lightZone: null, lightZoneSource: null });
   });
 
   it('a species the account may not (no longer) see is called "unknown" (null)', async () => {
@@ -141,7 +148,12 @@ describe("US-BES-04 card: a cutting stands under cutting light", () => {
   it("US-BES-04: a cutting shows the lowest zone as light zone, even without a zone at the location", async () => {
     await create("anna", "Steckling", { locationId: box, status: "cutting" });
     const [card] = await specimenCards(dependencies(), "anna", TODAY);
-    expect(card).toMatchObject({ status: "cutting", location: "Kiste", lightZone: "Zone 3" });
+    expect(card).toMatchObject({
+      status: "cutting",
+      location: "Kiste",
+      lightZone: "Zone 3",
+      lightZoneSource: "cutting",
+    });
   });
 
   it("US-BES-04: a cutting at a location of a higher zone still shows the lowest zone", async () => {
@@ -166,6 +178,48 @@ describe("US-BES-04 card: a cutting stands under cutting light", () => {
     await create("anna", "Steckling", { status: "cutting" });
     const [card] = await specimenCards(dependencies(), "anna", TODAY);
     expect(card?.lightZone).toBeNull();
+  });
+});
+
+describe("US-BES-06 · #592 card: the same effective zone as the distribution", () => {
+  // Zone 3 is the cutting light; Zone 4 is the only zone for adult plants.
+  const adultZone = async () => {
+    const z = await light
+      .zoneAdapter()
+      .create("anna", { name: "Zone 4", luxCeiling: 50000, ppfd: null, sortOrder: null });
+    return typeof z === "string" ? "" : z.id;
+  };
+
+  it("US-BES-06 a location without zone falls back to the zone of the species, as in the distribution", async () => {
+    await adultZone();
+    await create("anna", "Bogenhanf", { locationId: box });
+    const [card] = await specimenCards(dependencies(), "anna", TODAY);
+    expect(card).toMatchObject({ lightZone: "Zone 4", lightZoneSource: "species" });
+    const distribution = await zoneDistribution(dependencies(), "anna");
+    expect(distribution.zones.map((z) => [z.zone.name, z.count])).toEqual([["Zone 4", 1]]);
+  });
+
+  it("US-BES-09 my zone for the species applies on the card and says it comes from my care profile", async () => {
+    const top = await adultZone();
+    const profiles = new InMemoryCareProfiles({ anna: { zones: [zone, top] } });
+    await profiles.update("anna", SPECIES, { lightZoneId: zone });
+    await create("anna", "Bogenhanf");
+    const [card] = await specimenCards(dependencies({ profiles }), "anna", TODAY);
+    expect(card).toMatchObject({ lightZone: "Zone 3", lightZoneSource: "profile" });
+  });
+
+  it("US-BES-06 the zone of the location wins over the zone of the species", async () => {
+    await adultZone();
+    await create("anna", "Bogenhanf", { locationId: shelf });
+    const [card] = await specimenCards(dependencies(), "anna", TODAY);
+    expect(card).toMatchObject({ lightZone: "Zone 3", lightZoneSource: "location" });
+  });
+
+  it("US-BES-06 a species the account may not see gives no zone, nothing is invented (P-08)", async () => {
+    await adultZone();
+    await create("anna", "Geist", { speciesId: INVISIBLE, locationId: box });
+    const [card] = await specimenCards(dependencies(), "anna", TODAY);
+    expect(card).toMatchObject({ lightZone: null, lightZoneSource: null });
   });
 });
 

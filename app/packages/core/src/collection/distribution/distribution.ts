@@ -1,54 +1,24 @@
 // Distribution of the specimens over the light zones (US-LIC-02, FR-LIC-04): a pure derivation, never stored (P-01).
 // The same count will later serve the wishlist prioritization (specimen level, zones 2 to 4 only).
-import { zoneDerive, type LightLocation, type LightZone } from "../../light";
-import type { Species } from "../../catalog";
+import type { LightZone } from "../../light";
 import { cuttingLight } from "../placement/cutting-light";
+import { effectiveZone, zoneOverrides, type ZoneContext } from "../placement/effective-zone";
 import { distributionHint } from "./distribution-hint";
 import type { NotCounted, Distribution, DistributionDependencies } from "./distribution-types";
 import { isActive, type SpecimenRow } from "../shared/types";
 
 type Place = LightZone | "cuttingLight" | "archived" | "unknown";
 
-interface Context {
-  readonly zones: readonly LightZone[];
-  readonly locations: readonly LightLocation[];
-  readonly species: ReadonlyMap<string, Species | null>;
-  /** Zone override of the care profile per species (US-BES-09). */
-  readonly overrides: ReadonlyMap<string, string>;
-}
-
-/** Zone from the lux need of the species (US-LIC-01). "Soft leaf" is not yet known by the catalog, it is never assumed. */
-function zoneSpecies(
-  species: Species | null | undefined,
-  zones: readonly LightZone[],
-  override?: string,
-): Place {
-  if (!species) return "unknown";
-  const own = zones.find((l) => l.id === override);
-  if (own) return own.id === cuttingLight(zones)?.id ? "cuttingLight" : own;
-  const a = zoneDerive(
-    {
-      lightDemandLux: species.lightDemandLux,
-      standardLevel: species.standardLevel,
-      softLeaf: false,
-    },
-    zones,
-  );
-  return a.kind === "zone" ? a.zone : "unknown";
-}
-
 /**
- * Where a specimen counts (FR-LIC-02): cutting and archive first (`isActive`, the same rule as in list and cards,
- * US-BES-07), then the zone of its location (specimen before species), otherwise the derived zone of the species. The
- * lowest zone of the account is the cutting light.
+ * Where a specimen counts (FR-LIC-02): archive and cutting first (`isActive`, the same rule as in list and cards, US-BES-07), then
+ * the effective zone that the card shows too (#592). The lowest zone of the account is the cutting light.
  */
-function placeFrom(z: SpecimenRow, k: Context): Place {
+function placeFrom(z: SpecimenRow, k: ZoneContext): Place {
   if (!isActive(z)) return "archived";
   if (z.status === "cutting") return "cuttingLight";
-  const location = k.locations.find((s) => s.id === z.locationId);
-  const own = k.zones.find((l) => l.id === location?.lightZoneId);
-  if (!own) return zoneSpecies(k.species.get(z.speciesId), k.zones, k.overrides.get(z.speciesId));
-  return own.id === cuttingLight(k.zones)?.id ? "cuttingLight" : own;
+  const own = effectiveZone(z, k);
+  if (!own) return "unknown";
+  return own.zone.id === cuttingLight(k.zones)?.id ? "cuttingLight" : own.zone;
 }
 
 const thinnestZones = (zones: readonly { zone: LightZone; count: number }[]): LightZone[] => {
@@ -75,13 +45,11 @@ export async function zoneDistribution(
   const zones = [...allZones].sort((a, b) => a.sortOrder - b.sortOrder);
   const speciesIds = [...new Set(rows.map((z) => z.speciesId))];
   const read = await deps.species.findMany(userId, speciesIds);
-  const context: Context = {
+  const context: ZoneContext = {
     zones,
     locations,
     species: new Map(speciesIds.map((id, i) => [id, read[i] ?? null] as const)),
-    overrides: new Map(
-      profiles.flatMap((p) => (p.lightZoneId ? [[p.speciesId, p.lightZoneId] as const] : [])),
-    ),
+    overrides: zoneOverrides(profiles),
   };
   const count = new Map<string, number>();
   const rest = { cuttingLight: 0, archived: 0, zoneUnknown: 0 };

@@ -18,6 +18,7 @@ const card = (id: string, name: string, species: string, where: [string, string]
     status: "plant",
     location: where[1],
     lightZone: where[0],
+    lightZoneSource: "location",
     caughtAt: "2026-03-12",
     photo: null,
     lastMeasurement: { date: "2026-10-01", value: 24, quality: "healthy", note: null },

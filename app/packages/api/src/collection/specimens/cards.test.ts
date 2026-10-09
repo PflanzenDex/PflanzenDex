@@ -171,6 +171,25 @@ describe("US-BES-06 Karten: Inhalt", () => {
     expect(card).toMatchObject({ location: null, lightZone: null });
   });
 
+  it("US-BES-06 · #592 without a zone at the location the card shows the zone of the species and says so", async () => {
+    for (const [name, luxCeiling] of [
+      [`Steck ${run}`, 1500],
+      [`Hell ${run}`, 100000],
+    ] as const) {
+      await call(subB, "POST", "/light-zones", { name, luxCeiling });
+    }
+    const speciesId = await newSpecies(subB, `Echeveria${run} elegans`, `Echeverie ${run}`);
+    const e = await create(subB, { speciesId });
+    const card = (await cards(subB)).body["cards"].find(
+      (k: { id: string }) => k.id === e.body["id"],
+    );
+    expect(card).toMatchObject({ lightZone: `Hell ${run}`, lightZoneSource: "species" });
+    const distribution = (await call(subB, "GET", "/specimens/distribution")).body;
+    expect(distribution["distribution"]["zones"]).toMatchObject([
+      { zone: { name: `Hell ${run}` }, count: 1 },
+    ]);
+  });
+
   it('measurement, photo and open treatments come from the ports; "today" follows the time zone of the user', async () => {
     const speciesId = await newSpecies(subA, `Yucca${run} rostrata`, `Yucca ${run}`);
     const e = await create(subA, { speciesId });

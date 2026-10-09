@@ -9,7 +9,8 @@ import type {
   MeasurementSource,
   OpenTreatment,
 } from "./cards-types";
-import { cuttingLight } from "../placement/cutting-light";
+import type { CareProfileReader } from "../care-profile/care-profile-types";
+import { effectiveZone, zoneOverrides, type ZoneContext } from "../placement/effective-zone";
 import { speciesDisplayName } from "../shared/name";
 import {
   isActive,
@@ -25,6 +26,8 @@ export interface CardsDependencies {
   readonly zones: ZoneStore;
   readonly measurements: MeasurementSource;
   readonly treatments: TreatmentSource;
+  /** My zone override per species (US-BES-09); without it the derived zone of the catalog applies. */
+  readonly profiles?: CareProfileReader;
 }
 
 /** Until WAC and BEH deliver their data, there are no measurements and no treatments (nothing is invented). */
@@ -78,20 +81,27 @@ export async function specimenCards(
   const rows = (await deps.specimens.list(userId)).filter(isActive);
   const ids = rows.map((z) => z.id);
   const speciesIds = [...new Set(rows.map((z) => z.speciesId))];
-  const [locations, zones, species, measurements, treatments] = await Promise.all([
+  const [locations, zones, species, measurements, treatments, profiles] = await Promise.all([
     deps.locations.list(userId),
     deps.zones.list(userId),
     deps.species.findMany(userId, speciesIds),
     deps.measurements.forSpecimens(userId, ids),
     deps.treatments.open(userId, ids),
+    deps.profiles?.list(userId) ?? [],
   ]);
   const speciesNames = new Map(
     speciesIds.map((id, i) => [id, species[i] ? speciesDisplayName(species[i]) : null] as const),
   );
-  // A cutting stands under cutting light, wherever its location lies otherwise (US-BES-04).
-  const cuttingZone = cuttingLight(zones)?.name ?? null;
+  // The same zone rule as the distribution (FR-LIC-02, #592): cutting light, location, my profile, species.
+  const context: ZoneContext = {
+    zones,
+    locations,
+    species: new Map(speciesIds.map((id, i) => [id, species[i] ?? null] as const)),
+    overrides: zoneOverrides(profiles),
+  };
   const card = (z: SpecimenRow): SpecimenCard => {
     const location = locations.find((s) => s.id === z.locationId);
+    const zone = effectiveZone(z, context);
     return {
       id: z.id,
       name: z.name,
@@ -100,10 +110,8 @@ export async function specimenCards(
       speciesName: speciesNames.get(z.speciesId) ?? null,
       status: z.status,
       location: location?.name ?? null,
-      lightZone:
-        z.status === "cutting"
-          ? cuttingZone
-          : (zones.find((l) => l.id === location?.lightZoneId)?.name ?? null),
+      lightZone: zone?.zone.name ?? null,
+      lightZoneSource: zone?.source ?? null,
       caughtAt: z.caughtAt,
       ...measurementDisplay(measurements.get(z.id)),
       ...treatmentDisplay(treatments.get(z.id) ?? [], today),

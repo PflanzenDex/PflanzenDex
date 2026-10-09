@@ -16,6 +16,7 @@ import {
   type TargetLocationSource,
 } from "@pflanzendex/core";
 import {
+  CareProfilePostgres,
   SpeciesPostgres,
   SpecimenPostgres,
   IdempotencyPostgres,
@@ -44,6 +45,17 @@ export type SpecimenOptions = {
   treatments?: TreatmentSource | undefined;
 };
 
+/** What the cards read (US-BES-06); the care profiles give the same effective zone as the distribution (#592). */
+const cardsDependencies = (pool: Pool, specimens: SpecimenPostgres, opt: SpecimenOptions) => ({
+  specimens,
+  species: new SpeciesPostgres(pool),
+  locations: new LocationPostgres(pool),
+  zones: new ZonePostgres(pool),
+  measurements: opt.measurements ?? NO_MEASUREMENTS,
+  treatments: opt.treatments ?? NO_TREATMENTS,
+  profiles: new CareProfilePostgres(pool),
+});
+
 /**
  * Specimens (US-BES-02, US-BES-04, US-BES-07, US-PHA-03). Writing goes only through `specimen.create`, `.correct_catch_date`, `.repot`, `.archive`, `.restore` and `.set_location` (P-03, with
  * `Idempotency-Key`); lists and cards show no archived specimens, `/specimens/archived` does. Reading returns only
@@ -61,14 +73,7 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   });
   const repot = specimenRepot({ specimens });
   const correct = specimenCorrectCatchDate({ specimens, clock });
-  const cardsDeps = {
-    specimens,
-    species: new SpeciesPostgres(pool),
-    locations: new LocationPostgres(pool),
-    zones: new ZonePostgres(pool),
-    measurements: opt.measurements ?? NO_MEASUREMENTS,
-    treatments: opt.treatments ?? NO_TREATMENTS,
-  };
+  const cardsDeps = cardsDependencies(pool, specimens, opt);
   const routes = new Hono<AuthEnv>();
 
   routes.get("/specimens", async (c) =>
