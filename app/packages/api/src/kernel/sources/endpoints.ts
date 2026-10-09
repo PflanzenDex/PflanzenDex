@@ -8,6 +8,7 @@ export function sourceUrl(request: SourceRequest): string {
     wikidata: "https://www.wikidata.org",
     gbif: "https://api.gbif.org/v1",
     opentree: "https://api.opentreeoflife.org/v3",
+    commons: "https://commons.wikimedia.org",
   } as const;
   const url = new URL(roots[request.source] + request.path);
   for (const [key, value] of Object.entries(request.query ?? {})) url.searchParams.set(key, value);

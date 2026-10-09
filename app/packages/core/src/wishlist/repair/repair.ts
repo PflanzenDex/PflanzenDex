@@ -1,6 +1,6 @@
 import { appError, defineOperation, failed, idField, ok, shape, textField } from "../../kernel";
 import { titleOf } from "../candidates";
-import { wishNameKey } from "../name-key";
+import { wishNameKey } from "./name-key";
 import { WISH_LIMITS, type WishRow, type WishStore } from "../types";
 
 export interface RepairDependencies {

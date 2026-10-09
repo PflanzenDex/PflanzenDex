@@ -26,6 +26,8 @@ function Candidates(props: {
   list: CandidateList;
   onBuy: (c: Candidate) => void;
   onDiscard: (c: Candidate) => void;
+  onStoreImage: (c: Candidate) => void;
+  photoAccess: { api: string; token: Token };
   busy: boolean;
 }) {
   const { list } = props;
@@ -54,6 +56,8 @@ function Candidates(props: {
             rank={i + 1}
             onBuy={props.onBuy}
             onDiscard={props.onDiscard}
+            onStoreImage={props.onStoreImage}
+            photoAccess={props.photoAccess}
             busy={props.busy}
           />
         ))}
@@ -102,6 +106,8 @@ function Body(props: {
         list={data.list}
         onBuy={candidate.buy}
         onDiscard={candidate.discard}
+        onStoreImage={candidate.storeImage}
+        photoAccess={{ api, token }}
         busy={candidate.running}
       />
       <WishForm

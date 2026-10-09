@@ -247,6 +247,8 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
     expect(list.find((c) => c.name === `Bild ${run}`)?.image).toEqual({
       url: "https://example.test/bild.jpg",
       source: "Wikimedia Commons",
+      license: null,
+      stored: false,
     });
   });
 });

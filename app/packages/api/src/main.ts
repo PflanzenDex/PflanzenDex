@@ -1,6 +1,7 @@
 import { serve } from "@hono/node-server";
 import { JobsPostgres, openPool, testDatabaseUrl } from "@pflanzendex/db";
 import { createApp } from "./app";
+import { createWikimediaDownload } from "./wishlist";
 import { createJobWorker, JOB_HANDLERS } from "./jobs";
 import { checkTaxonomy, pokedexJobHandlers, scheduleChecks } from "./pokedex";
 import { createMemorySourceCache, createSourceClient } from "./kernel";
@@ -17,8 +18,18 @@ const media =
   s3 && "bucket" in s3
     ? { store: createS3ObjectStore(s3), processor: createSharpProcessor() }
     : undefined;
+// External sources (TE-09): shared by the background jobs and the wish images (US-WUN-04).
+const userAgent = `PflanzenDex/${process.env["APP_VERSION"] ?? "dev"} (https://github.com/PflanzenDex/PflanzenDex)`;
+const sources = createSourceClient({
+  fetch,
+  sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  now: Date.now,
+  cache: createMemorySourceCache(),
+  userAgent,
+});
 const app = createApp({
   ...(media ? { media } : {}),
+  wishImage: { sources, download: createWikimediaDownload({ fetch, userAgent }) },
   reviewer: createTokenVerifier({
     issuer,
     audience: process.env["OIDC_AUDIENCE"] ?? "pflanzendex-api",
@@ -35,13 +46,6 @@ serve({ fetch: app.fetch, port }, (info) => {
 });
 
 // Background jobs (TE-06) run in the same process; the queue hands out each job once, also with several processes.
-const sources = createSourceClient({
-  fetch,
-  sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
-  now: Date.now,
-  cache: createMemorySourceCache(),
-  userAgent: `PflanzenDex/${process.env["APP_VERSION"] ?? "dev"} (https://github.com/PflanzenDex/PflanzenDex)`,
-});
 const worker = createJobWorker({
   queue: new JobsPostgres(pool),
   handlers: { ...JOB_HANDLERS, ...pokedexJobHandlers({ pool, sources }) },

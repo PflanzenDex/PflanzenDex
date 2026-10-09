@@ -23,7 +23,16 @@ export interface Candidate {
   readonly zoneText: string;
   readonly difficulty: number | null;
   readonly reasoning: string | null;
-  readonly image: { readonly url: string; readonly source: string } | null;
+  /**
+   * The picture: origin address, source, license (`null` while unknown, P-08) and whether a local copy is stored
+   * (US-WUN-04). The copy is served only to the owner; its object name is never exposed (P-05).
+   */
+  readonly image: {
+    readonly url: string;
+    readonly source: string;
+    readonly license: string | null;
+    readonly stored: boolean;
+  } | null;
   readonly priority: { readonly kind: PriorityKind; readonly text: string };
 }
 
