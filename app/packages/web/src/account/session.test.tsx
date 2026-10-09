@@ -54,6 +54,8 @@ beforeEach(() => {
   mgr.handler["source"] = [];
   mgr.handler["erneuern"] = [];
   window.sessionStorage.clear();
+  // The silent attempt has its own tests below; all others start as if it had already been made.
+  window.sessionStorage.setItem("pflanzendex.silent_tried", "1");
   window.history.replaceState({}, "", "/");
   vi.stubGlobal(
     "fetch",
@@ -259,6 +261,7 @@ describe("US-ACC-01 Sitzung", () => {
     );
     cleanup();
     window.sessionStorage.clear();
+    window.sessionStorage.setItem("pflanzendex.silent_tried", "1");
     const plain = renderHook(() => useSession());
     await waitFor(() => expect(plain.result.current.state).toEqual({ kind: "signedOut" }));
   });
@@ -294,5 +297,34 @@ describe("US-ACC-01 Sitzung", () => {
     const { result } = renderHook(() => useSession());
     await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
     expect(window.location.search).toBe("");
+  });
+
+  it("US-ACC-01 without a stored sign-in a live session at the sign-in service is picked up silently (prompt=none), once", async () => {
+    window.sessionStorage.removeItem("pflanzendex.silent_tried");
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(mgr.signinRedirect).toHaveBeenCalledWith({ prompt: "none" }));
+    expect(result.current.state).toEqual({ kind: "loading" });
+    expect(window.sessionStorage.getItem("pflanzendex.silent_tried")).toBe("1");
+  });
+
+  it("US-ACC-01 when the silent attempt is refused (login_required) the welcome page shows, without a second attempt", async () => {
+    window.sessionStorage.removeItem("pflanzendex.silent_tried");
+    window.sessionStorage.setItem("pflanzendex.silent_tried", "1");
+    window.history.replaceState({}, "", "/?error=login_required&state=abc");
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
+    expect(mgr.signinRedirect).not.toHaveBeenCalled();
+    expect(window.location.search).toBe("");
+  });
+
+  it("US-ACC-01 after an explicit sign-out there is no silent attempt, the person stays signed out", async () => {
+    window.sessionStorage.removeItem("pflanzendex.silent_tried");
+    window.sessionStorage.setItem("pflanzendex.signed_out", "1");
+    mgr.getUser.mockResolvedValue(null);
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("signedOut"));
+    expect(mgr.signinRedirect).not.toHaveBeenCalled();
   });
 });
