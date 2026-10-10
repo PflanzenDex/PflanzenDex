@@ -13,6 +13,8 @@ export type {
   ReminderSettings,
   ReminderStatus,
   ReminderStore,
+  WateringEntry,
+  WateringStore,
 } from "./types";
 export { bundleOf, deliveryTime, inQuietHours, isPaused, measurementOverdue } from "./daily/bundle";
 export type { MeasuredSpecimen } from "./daily/bundle";
@@ -28,3 +30,5 @@ export {
   scheduleReminders,
   sendRemindersHandler,
 } from "./daily/daily";
+export { MAX_WATERED, monitoringWater, wateringDue, wateringOccasions } from "./watering/watering";
+export type { WateredDependencies, WateringCandidate, WateringDue } from "./watering/watering";

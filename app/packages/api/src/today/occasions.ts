@@ -4,12 +4,14 @@ import {
   localToday,
   measurementOverdue,
   phaseChangeOccasions,
+  wateringOccasions,
   todayStatus,
   type Occasion,
   type OccasionSource,
 } from "@pflanzendex/core";
 import { ProfilePostgres, RemindersPostgres } from "@pflanzendex/db";
 import type { Pool } from "pg";
+import { wateringDueFor } from "./watering";
 import { todayDependencies, type TodayOptions } from "./today-routes";
 
 /**
@@ -18,7 +20,7 @@ import { todayDependencies, type TodayOptions } from "./today-routes";
  * derived from the last measurement of each active plant (a cutting is left out until E-11 is decided). An occasion that
  * the keeper switched off in the profile (US-ACC-02) is not reported; a pause is applied later, when the bundle is built.
  * The phase change (US-MON-02) comes from the phase list, the same rows and the same deviation rule as the Today list
- * (`phaseChangeOccasions`). Not built yet: watering (US-MON-05).
+ * (`phaseChangeOccasions`); watering (US-MON-05) from the keeper's own intervals and the watering log (`wateringDueFor`).
  */
 export function reminderOccasionsFor(pool: Pool, opt: TodayOptions): OccasionSource {
   const profiles = new ProfilePostgres(pool);
@@ -38,6 +40,7 @@ export function reminderOccasionsFor(pool: Pool, opt: TodayOptions): OccasionSou
         }));
       const phases = await carePhasesList(deps, userId, timeZone);
       if (!phases.ok) throw new Error(phases.error.code);
+      const watering = wateringOccasions(await wateringDueFor(pool, userId, timeZone, now));
       const [rows, settings, profile] = await Promise.all([
         deps.specimens.list(userId),
         reminders.settings(userId),
@@ -59,9 +62,12 @@ export function reminderOccasionsFor(pool: Pool, opt: TodayOptions): OccasionSou
         settings.measurementDays,
       );
       const off = (o: Occasion) => profile?.notifications[o.occasion] === false;
-      return [...treatments, ...phaseChangeOccasions(phases.value), ...measurements].filter(
-        (o) => !off(o),
-      );
+      return [
+        ...treatments,
+        ...phaseChangeOccasions(phases.value),
+        ...watering,
+        ...measurements,
+      ].filter((o) => !off(o));
     },
   };
 }

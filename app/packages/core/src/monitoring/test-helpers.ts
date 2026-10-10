@@ -13,6 +13,8 @@ import {
   type ReminderSettings,
   type ReminderStatus,
   type ReminderStore,
+  type WateringEntry,
+  type WateringStore,
 } from "./types";
 
 export class InMemoryReminders implements ReminderStore {
@@ -124,3 +126,24 @@ export const occasionsOf = (list: readonly Occasion[]): OccasionSource => ({
 export const rosterOf = (...accounts: { userId: string; timeZone: string }[]): ReminderRoster => ({
   accounts: async () => accounts,
 });
+
+/** In-memory watering log for tests: one entry per account, specimen and day. */
+export class InMemoryWatering implements WateringStore {
+  readonly entries = new Set<string>();
+
+  async lastWatered(userId: string, specimenIds: readonly string[]) {
+    const last = new Map<string, string>();
+    for (const e of this.entries) {
+      const [user, specimen, date] = e.split("|") as [string, string, string];
+      if (user === userId && specimenIds.includes(specimen) && date > (last.get(specimen) ?? ""))
+        last.set(specimen, date);
+    }
+    return last;
+  }
+
+  async record(userId: string, entries: readonly WateringEntry[]) {
+    const before = this.entries.size;
+    for (const e of entries) this.entries.add(`${userId}|${e.specimenId}|${e.date}`);
+    return { created: this.entries.size - before };
+  }
+}

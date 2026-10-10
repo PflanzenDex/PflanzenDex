@@ -1,5 +1,6 @@
 import type { ReminderRow, ReminderStatus } from "@pflanzendex/core";
 import { useCallback } from "react";
+import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { LoadFrame } from "../../kernel";
 import { loadInbox } from "../api/reminders-api";
 
@@ -54,20 +55,22 @@ export function Inbox(props: { api: string; token: () => Promise<string | undefi
       token={props.token}
       load={load}
       loadingText="Erinnerungen werden geladen …"
-      empty={{
-        isEmpty: (rows) => rows.length === 0,
-        title: "Keine Erinnerungen",
-        description:
-          "Es gibt nichts zu erinnern. Sobald etwas fällig wird, steht es hier und in der Heute-Liste.",
-      }}
     >
-      {(rows) => (
-        <ul aria-label="Erinnerungen" className="m-0 flex list-none flex-col gap-3 p-0">
-          {rows.map((row) => (
-            <Reminder key={row.id} row={row} />
-          ))}
-        </ul>
-      )}
+      {(rows) =>
+        rows.length === 0 ? (
+          <EmptyState
+            level={3}
+            title="Keine Erinnerungen"
+            description="Es gibt nichts zu erinnern. Sobald etwas fällig wird, steht es hier und in der Heute-Liste."
+          />
+        ) : (
+          <ul aria-label="Erinnerungen" className="m-0 flex list-none flex-col gap-3 p-0">
+            {rows.map((row) => (
+              <Reminder key={row.id} row={row} />
+            ))}
+          </ul>
+        )
+      }
     </LoadFrame>
   );
 }
