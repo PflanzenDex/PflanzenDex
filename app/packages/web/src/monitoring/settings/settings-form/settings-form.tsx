@@ -1,6 +1,7 @@
 import { REMINDER_LIMITS, type ReminderOccasion, type ReminderSettings } from "@pflanzendex/core";
 import { useCallback, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button/button";
+import { FormRoot } from "@/components/ui/fields/form/form";
 import { Input } from "@/components/ui/fields/input/input";
 import { Label } from "@/components/ui/display/label/label";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
@@ -127,7 +128,7 @@ function Form(props: { api: string; token: Token; saved: ReminderSettings }) {
   const pause = (o: ReminderOccasion, until: string) => setPaused((p) => withPause(p, o, until));
 
   return (
-    <form
+    <FormRoot
       aria-label="Erinnerungen einstellen"
       onSubmit={submit}
       className="flex max-w-xl flex-col gap-4"
@@ -149,7 +150,7 @@ function Form(props: { api: string; token: Token; saved: ReminderSettings }) {
       <Button type="submit" size="touch" disabled={write.running}>
         {write.running ? "Speichert …" : "Erinnerungen speichern"}
       </Button>
-    </form>
+    </FormRoot>
   );
 }
 
