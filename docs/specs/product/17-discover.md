@@ -81,7 +81,7 @@ Acceptance criteria:
 
 Assumptions, decided by the PO (revisable): the client names only the species and the decision; the server derives the wish from the suggestion itself (a made-up card cannot be written) and refuses a species that is not suggested to the account (`discover.not_suggested`). The "catalog reference" of the wish is the Latin name, because the wish has no species column yet (the name key keeps it unique, FR-WUN-06). The target zone is the account's n-th zone (as in US-ENT-03), the license stays unknown because the card carries none (P-08), the image source is the card's source link, and `Reasoning` holds the displayed reasons joined into one text. A repeated decision on a species that has a wish of any status writes nothing (`saved: false`). A swipe to the right is "Yes", to the left "No". Not built yet: resetting a wish back to open from the wishlist (so a discarded species appears again).
 
-### US-ENT-05 · Suggestions learn from my decisions · ⬜ new
+### US-ENT-05 · Suggestions learn from my decisions · 🟨 new
 
 As a **plant keeper** I want my decisions to change the next suggestions.
 
@@ -92,6 +92,8 @@ Acceptance criteria:
 - Wishes from other sources (AI research, manual) count as "yes", because the keeper adopted them deliberately.
 - Example: after 5× No for Crassulaceae and 0× Yes the family factor drops to 1/6. Crassulaceae appear much less often, but not never (US-ENT-06).
 - Only the own decisions count; decisions of other users do not flow in (FR-ENT-07).
+
+Assumptions, decided by the PO (revisable): the factor looks at the attributes the catalog carries today: family, genus, light zone and difficulty (the DM-ENT-01 attributes join when the catalog has them; unknown values are neutral). A decision is attributed through the catalog card of the same name key, with the catalog's light zone and difficulty; a wish for a species outside the catalog changes nothing. The score is the factor times (1 + the number of shares), so the factor also orders species without a share (starting value of the base, assumption; without decisions the order stays that of US-ENT-03). The reason "You have N species of the genus (family) X on the wishlist" appears only where yes outnumbers no (genus first, then family); there is no reason for a rejection. Not built yet: the proximity and growth shares of FR-ENT-02 and the exploration quota that keeps rejected families from disappearing (US-ENT-06).
 
 ### US-ENT-06 · Also see the surprising · ⬜ new
 

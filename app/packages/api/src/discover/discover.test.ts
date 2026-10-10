@@ -203,3 +203,30 @@ describe("US-ENT-04 decisions through the API", () => {
     );
   });
 });
+
+describe("US-ENT-05 suggestions learn from decisions through the API", () => {
+  it("US-ENT-05 after a Ja the species of the same genus say so, for that account only (FR-ENT-07)", async () => {
+    const liked = `${genus} gemocht`;
+    for (const latinName of [liked, `${genus} verwandt`])
+      await admin.query(
+        `insert into taxon (latin_name, status, accepted_name, genus, family, catalog_fingerprint, built_at)
+         values ($1, 'resolved', $1, $2, 'Testaceae', 'ent5', now())`,
+        [latinName, genus],
+      );
+    const yes = await app.request("/discover/decisions", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer valid:${other}`,
+        "content-type": "application/json",
+        "idempotency-key": randomUUID(),
+      },
+      body: JSON.stringify({ species: liked, decision: "yes", timeZone: "Europe/Berlin" }),
+    });
+    expect(yes.status).toBe(200);
+    const mineCard = (await cards(other)).find((s) => s.species === `${genus} verwandt`);
+    expect(mineCard?.reasons.join(" ")).toContain("Du hast 1 Art der Gattung");
+    const theirs = (await cards(keeper)).find((s) => s.species === `${genus} verwandt`);
+    // The keeper has decided on other species: the count comes from the own wishes only.
+    expect(theirs?.reasons.join(" ")).not.toContain("Du hast 1 Art der Gattung");
+  });
+});

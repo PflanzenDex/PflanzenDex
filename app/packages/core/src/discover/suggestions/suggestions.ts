@@ -4,6 +4,13 @@
 import { pokedexOwnership, readCollectorCards, type CollectorCard } from "../../pokedex";
 import { wishNameKey, type ZoneStock } from "../../wishlist";
 import {
+  preferenceFactor,
+  preferenceReason,
+  tallyOf,
+  type Decisions,
+  type Tally,
+} from "../preferences";
+import {
   DECK_SIZE,
   type NoSuggestions,
   type Suggestion,
@@ -51,13 +58,21 @@ interface Shares {
   readonly score: number;
 }
 
-function sharesOf(card: CollectorCard, newFamily: boolean, stock: readonly ZoneStock[]): Shares {
+function sharesOf(
+  card: CollectorCard,
+  newFamily: boolean,
+  stock: readonly ZoneStock[],
+  tally: Tally,
+): Shares {
   const reasons: string[] = [];
   const space = spaceReason(card.lightZone, stock);
   if (space) reasons.push(space);
   if (newFamily && card.family !== null)
     reasons.push(`Neue Familie: ${card.family} fehlt dir noch im Pokédex.`);
   const score = reasons.length;
+  // The preference is a factor, not a share (FR-ENT-02): it names the own wishes it comes from (US-ENT-05).
+  const preferred = preferenceReason(tally, card);
+  if (preferred) reasons.push(preferred);
   reasons.push("Diese Art hast du noch nicht gefangen.");
   return { reasons: reasons.slice(0, MAX_REASONS), score };
 }
@@ -80,20 +95,27 @@ function suggestionOf(card: CollectorCard, reasons: readonly string[]): Suggesti
 
 /**
  * Pure: the ordered candidates of the account; a species with a wish of any status is excluded (US-ENT-02 reads on).
- * Order: most shares first (space, new family; FR-ENT-02), the tree order inside a group (FR-ENT-05).
+ * Order: the score of FR-ENT-02 first, the tree order inside a group (FR-ENT-05). The score is the preference factor
+ * (US-ENT-05) times the shares (space, new family) plus a base of 1 (assumption, decided by the PO, so that the
+ * factor also orders species without a share); without decisions the factor is 1 and the order is that of the shares.
  */
 export function candidatesOf(
   cards: readonly CollectorCard[],
   wishedNames: readonly string[],
   stock: readonly ZoneStock[] = [],
+  decisions: Decisions = { yes: [], no: [] },
 ): Suggestion[] {
+  const tally = tallyOf(cards, decisions);
   const wished = new Set(wishedNames.map(wishNameKey));
   const owned = new Set(cards.filter((c) => c.state === "caught").map((c) => c.family));
   const open = cards.filter((c) => c.state === "missing" && !wished.has(wishNameKey(c.species)));
   const fresh = (c: CollectorCard) => c.family !== null && !owned.has(c.family);
-  const scored = open.map((c) => ({ c, ...sharesOf(c, fresh(c), stock) }));
+  const scored = open.map((c) => {
+    const shares = sharesOf(c, fresh(c), stock, tally);
+    return { c, reasons: shares.reasons, rank: preferenceFactor(tally, c) * (1 + shares.score) };
+  });
   // Array.prototype.sort is stable, so the tree order stays inside equal scores.
-  return scored.sort((a, b) => b.score - a.score).map(({ c, reasons }) => suggestionOf(c, reasons));
+  return scored.sort((a, b) => b.rank - a.rank).map(({ c, reasons }) => suggestionOf(c, reasons));
 }
 
 /** Pure: deck number `deck` (1-based) of `size` cards, or the reason why there is none. */
@@ -123,11 +145,16 @@ export async function candidatesFor(
     deps.stock?.stock(userId) ?? [],
   ]);
   const names = [...open, ...bought, ...discarded].map((w) => w.name);
+  // US-ENT-05: yes = open and bought wishes, no = discarded wishes, derived live on every deck.
+  const decisions = {
+    yes: [...open, ...bought].map((w) => w.name),
+    no: discarded.map((w) => w.name),
+  };
   return {
     catalogEmpty: cards.length === 0,
     names,
     stock,
-    candidates: candidatesOf(cards, names, stock),
+    candidates: candidatesOf(cards, names, stock, decisions),
   };
 }
 
