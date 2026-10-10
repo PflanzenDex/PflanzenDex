@@ -446,3 +446,37 @@ describe("US-WUN-04 the stored copy of a wish image", () => {
     await expect(wishes.setImage(anna, w.id, { ...IMAGE, object: "../x.png" })).rejects.toThrow();
   });
 });
+
+describe("US-ENT-04 decision columns", () => {
+  it("US-ENT-04 stores source, decision date and discarded status of a Discover decision, private to the account", async () => {
+    const r = await wishes.create(
+      anna,
+      values({
+        name: "Discover rara",
+        source: "discover",
+        decidedAt: "2026-10-03",
+        status: "discarded",
+      }),
+    );
+    expect(r).toMatchObject({ name: "Discover rara", status: "discarded" });
+    const own = await withAccount(pool, anna, (c) =>
+      c.query("select source, to_char(decided_at, 'YYYY-MM-DD') as d from wish where name = $1", [
+        "Discover rara",
+      ]),
+    );
+    expect(own.rows).toEqual([{ source: "discover", d: "2026-10-03" }]);
+    const foreign = await withAccount(pool, ben, (c) =>
+      c.query("select 1 from wish where name = $1", ["Discover rara"]),
+    );
+    expect(foreign.rows).toEqual([]);
+    expect(await wishes.discarded(ben)).toEqual([]);
+  });
+
+  it("US-ENT-04 a wish written without a source is a manual wish without a decision date", async () => {
+    await wishes.create(anna, values({ name: "Manuell rara" }));
+    const r = await withAccount(pool, anna, (c) =>
+      c.query("select source, decided_at from wish where name = $1", ["Manuell rara"]),
+    );
+    expect(r.rows).toEqual([{ source: "manual", decided_at: null }]);
+  });
+});

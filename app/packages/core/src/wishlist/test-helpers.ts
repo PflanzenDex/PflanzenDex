@@ -7,6 +7,8 @@ type Stored = Omit<WishRow, "status"> & {
   userId: string;
   nameKey?: string;
   keyless?: boolean;
+  source?: string;
+  decidedAt?: string | undefined;
 };
 
 /** In-memory adapter for tests only; the real adapter lives in `db`. Zones are the ones each account owns. */
@@ -32,16 +34,16 @@ export class InMemoryWishes implements WishStore {
       )
     )
       return "name_taken";
-    const { nameKey, ...fields } = values;
+    const { nameKey, source, decidedAt, status, ...fields } = values;
     const row: WishRow = {
       ...fields,
       imageObject: null,
       id: `w${this.rows.length + 1}`,
       type: "plant",
-      status: "wishlist",
+      status: status ?? "wishlist",
       specimenId: null,
     };
-    this.rows.push({ ...row, userId, nameKey });
+    this.rows.push({ ...row, userId, nameKey, source: source ?? "manual", decidedAt });
     return row;
   }
 
@@ -187,8 +189,8 @@ export class InMemoryWishes implements WishStore {
 }
 
 const bare = (row: Stored): WishRow => {
-  const { userId, nameKey, keyless, ...wish } = row;
-  void [userId, nameKey, keyless];
+  const { userId, nameKey, keyless, source, decidedAt, ...wish } = row;
+  void [userId, nameKey, keyless, source, decidedAt];
   return wish;
 };
 

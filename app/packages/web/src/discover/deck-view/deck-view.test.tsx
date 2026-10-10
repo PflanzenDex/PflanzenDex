@@ -19,6 +19,10 @@ const suggestion = (species: string): Suggestion => ({
   attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
   reasons: ["Diese Art hast du noch nicht gefangen."],
 });
+const saveOk = async () => ({
+  ok: true as const,
+  value: { decision: "yes" as const, saved: true },
+});
 const deck: SuggestionDeck = {
   deck: 1,
   empty: null,
@@ -27,7 +31,7 @@ const deck: SuggestionDeck = {
 
 describe("US-QS-14 decision buttons stay with the card", () => {
   it("US-QS-14 keeps Nein, Später and Ja in a sticky row above the bar, at the bottom from md", () => {
-    render(<DeckView deck={deck} onNewDeck={() => undefined} />);
+    render(<DeckView deck={deck} onDecide={saveOk} onNewDeck={() => undefined} />);
     const row = screen.getByRole("button", { name: "Nein" }).parentElement?.parentElement;
     for (const name of ["Nein", "Später", "Ja"])
       expect(screen.getByRole("button", { name }).parentElement?.parentElement).toBe(row);
@@ -38,7 +42,7 @@ describe("US-QS-14 decision buttons stay with the card", () => {
   });
 
   it("US-QS-14 puts the row after the card and the honesty line, so no content sits behind it at the end", () => {
-    render(<DeckView deck={deck} onNewDeck={() => undefined} />);
+    render(<DeckView deck={deck} onDecide={saveOk} onNewDeck={() => undefined} />);
     const row = screen.getByRole("button", { name: "Nein" }).parentElement?.parentElement;
     const grid = row?.parentElement;
     expect(grid?.lastElementChild).toBe(row);
@@ -48,7 +52,7 @@ describe("US-QS-14 decision buttons stay with the card", () => {
   });
 
   it("US-QS-14 lets the row scroll with the content in a window lower than 30 rem (400 % zoom)", () => {
-    render(<DeckView deck={deck} onNewDeck={() => undefined} />);
+    render(<DeckView deck={deck} onDecide={saveOk} onNewDeck={() => undefined} />);
     const row = screen.getByRole("button", { name: "Ja" }).parentElement?.parentElement;
     expect(row?.className).toContain("[@media(max-height:30rem)]:static");
   });
