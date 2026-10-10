@@ -108,13 +108,12 @@ export function deckOf(
   return { deck, suggestions, empty: reason };
 }
 
-/** Reads the suggestions of the account (P-04): ownership is derived live, the wishes are the only decisions so far. */
-export async function suggestions(
+/** The ordered candidates of the account with the zone stock and the wished names they were derived from (P-04). */
+export async function candidatesFor(
   deps: SuggestionsDependencies,
   userId: string,
   timeZone: string,
-  deck = 1,
-): Promise<SuggestionDeck> {
+) {
   const { caught } = await pokedexOwnership(deps.ownership, userId, timeZone);
   const [cards, open, bought, discarded, stock] = await Promise.all([
     readCollectorCards(deps.tree, userId, caught),
@@ -123,7 +122,23 @@ export async function suggestions(
     deps.wishes.discarded(userId),
     deps.stock?.stock(userId) ?? [],
   ]);
-  if (cards.length === 0) return { deck, suggestions: [], empty: EMPTY_CATALOG };
   const names = [...open, ...bought, ...discarded].map((w) => w.name);
-  return deckOf(candidatesOf(cards, names, stock), deck);
+  return {
+    catalogEmpty: cards.length === 0,
+    names,
+    stock,
+    candidates: candidatesOf(cards, names, stock),
+  };
+}
+
+/** Reads the suggestions of the account (P-04): ownership is derived live, the wishes are the only decisions so far. */
+export async function suggestions(
+  deps: SuggestionsDependencies,
+  userId: string,
+  timeZone: string,
+  deck = 1,
+): Promise<SuggestionDeck> {
+  const { catalogEmpty, candidates } = await candidatesFor(deps, userId, timeZone);
+  if (catalogEmpty) return { deck, suggestions: [], empty: EMPTY_CATALOG };
+  return deckOf(candidates, deck);
 }

@@ -32,11 +32,12 @@ export type {
 } from "./purchase";
 export type { WishZoneUsageDependencies } from "./zone-usage";
 export type { CreateWishDependencies } from "./create";
-export { WISH_LIMITS, WISH_STATUS } from "./types";
+export { WISH_LIMITS, WISH_SOURCES, WISH_STATUS } from "./types";
 export type {
   WishChange,
   WishPurchase,
   WishRow,
+  WishSource,
   WishStatus,
   WishStore,
   WishValues,

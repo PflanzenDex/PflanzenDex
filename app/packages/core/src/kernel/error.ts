@@ -90,6 +90,8 @@ export const ERROR_TEXTS = {
   "offer.not_found": "Dieses Angebot gibt es nicht. Lade die Liste neu.",
   "offer.not_active":
     "Dieses Angebot ist schon übergeben und kann nicht mehr zurückgezogen werden. Es wurde nichts geändert.",
+  "discover.not_suggested":
+    "Diese Art wird dir gerade nicht vorgeschlagen: Du hast sie schon gefangen oder sie fehlt im Katalog. Lade die Vorschläge neu.",
   "wish.name_taken":
     "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
   "wish.image_source_unsupported":

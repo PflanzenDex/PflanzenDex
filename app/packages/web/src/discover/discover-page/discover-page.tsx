@@ -3,7 +3,12 @@ import { useCallback, useState } from "react";
 import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 import { LoadFrame } from "../../kernel";
 import { DeckView } from "../deck-view/deck-view";
-import { loadSuggestions } from "./discover-api";
+import { decideSuggestion, loadSuggestions } from "./discover-api";
+
+const SIGN_IN_NEEDED = {
+  ok: false as const,
+  error: { code: "access.not_signed_in", text: "Bitte melde dich an." },
+};
 
 /** Placeholder with the layout of a card on a phone: image, name, text, three buttons (DS-52). */
 function DeckSkeleton({ label }: { label: string }) {
@@ -30,6 +35,13 @@ export function DiscoverPage(props: {
   const { api, token, embedded } = props;
   const [deck, setDeck] = useState(1);
   const load = useCallback((t: string) => loadSuggestions(api, t, deck), [api, deck]);
+  const decide = useCallback(
+    async (species: string, decision: "yes" | "no") => {
+      const t = await token();
+      return t ? decideSuggestion(api, t, { species, decision }) : SIGN_IN_NEEDED;
+    },
+    [api, token],
+  );
   return (
     <section
       {...(embedded ? { "aria-label": "Vorschläge" } : { "aria-labelledby": "discover-title" })}
@@ -55,6 +67,7 @@ export function DiscoverPage(props: {
               key={deck}
               takeFocus={deck > 1}
               deck={value}
+              onDecide={decide}
               onNewDeck={() => setDeck((d) => d + 1)}
             />
           </>

@@ -42,9 +42,20 @@ export interface WishRow {
   readonly specimenId: string | null;
 }
 
-/** The values of a new wish; `nameKey` is derived from the name (`wishNameKey`) and makes the name unique per account. */
+/** Where a wish came from (DM-ENT-02); a wish without a given source is `manual`. */
+export const WISH_SOURCES = ["manual", "discover"] as const;
+export type WishSource = (typeof WISH_SOURCES)[number];
+
+/**
+ * The values of a new wish; `nameKey` is derived from the name (`wishNameKey`) and makes the name unique per account.
+ * `source`, `decidedAt` (local date of the decision) and `status` are set by a Discover decision (US-ENT-04); without
+ * them a wish is an open `manual` wish.
+ */
 export type WishValues = Omit<WishRow, "id" | "type" | "status" | "specimenId" | "imageObject"> & {
   readonly nameKey: string;
+  readonly source?: WishSource;
+  readonly decidedAt?: string;
+  readonly status?: "wishlist" | "discarded";
 };
 
 /** A wish after a status change ("Bought", US-WUN-03; "Discarded", US-WUN-05). `changed` is false when nothing was written. */

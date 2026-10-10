@@ -131,3 +131,75 @@ describe("US-ENT-03 reasons through the API", () => {
     expect(asked[0]).not.toBe("");
   });
 });
+
+describe("US-ENT-04 decisions through the API", () => {
+  const decideAs = (sub: string | null, input: Record<string, unknown>) =>
+    app.request("/discover/decisions", {
+      method: "POST",
+      headers: {
+        ...(sub ? { authorization: `Bearer valid:${sub}` } : {}),
+        "content-type": "application/json",
+        "idempotency-key": randomUUID(),
+      },
+      body: JSON.stringify({ timeZone: "Europe/Berlin", ...input }),
+    });
+  const wishesOf = (sub: string) =>
+    admin.query<{ name: string; status: string; source: string; decided_at: string | null }>(
+      `select name, status, source, to_char(decided_at, 'YYYY-MM-DD') as decided_at from wish
+        where account_id in (select id from account where subject = $1) and name like $2`,
+      [sub, `${genus}%`],
+    );
+  const target = `${genus} entschieden`;
+  const later = `${genus} spaeter`;
+
+  beforeAll(async () => {
+    for (const latinName of [target, later])
+      await admin.query(
+        `insert into taxon (latin_name, status, accepted_name, genus, family, catalog_fingerprint, built_at)
+         values ($1, 'resolved', $1, $2, 'Testaceae', 'ent4', now())`,
+        [latinName, genus],
+      );
+  });
+
+  it("US-ENT-04 answers 401 without a token and 400 for a bad decision", async () => {
+    expect((await decideAs(null, { species: target, decision: "yes" })).status).toBe(401);
+    expect((await decideAs(keeper, { species: target, decision: "maybe" })).status).toBe(400);
+  });
+
+  it("US-ENT-04 Yes writes one open Discover wish, a repeat writes no second one, and the species leaves the deck", async () => {
+    const first = await decideAs(keeper, { species: target, decision: "yes" });
+    expect(first.status).toBe(200);
+    expect(await first.json()).toEqual({ decision: "yes", saved: true });
+    const again = await decideAs(keeper, { species: target, decision: "no" });
+    expect(await again.json()).toEqual({ decision: "no", saved: false });
+    const rows = (await wishesOf(keeper)).rows.filter((r) => r.name === target);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ status: "wishlist", source: "discover" });
+    expect(rows[0]?.decided_at).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(await species(keeper)).not.toContain(target);
+  });
+
+  it("US-ENT-04 No keeps the species as a discarded wish, Later writes nothing", async () => {
+    const no = await decideAs(keeper, { species: `${genus} offen`, decision: "no" });
+    expect(await no.json()).toEqual({ decision: "no", saved: true });
+    const skip = await decideAs(keeper, { species: later, decision: "later" });
+    expect(await skip.json()).toEqual({ decision: "later", saved: false });
+    const names = (await wishesOf(keeper)).rows.map((r) => [r.name, r.status]);
+    expect(names).toContainEqual([`${genus} offen`, "discarded"]);
+    expect(names.map(([n]) => n)).not.toContain(later);
+    expect(await species(keeper)).toContain(later);
+  });
+
+  it("US-ENT-04 is private: the decision of one account changes nothing for another (P-04, FR-ENT-08)", async () => {
+    expect((await wishesOf(other)).rows).toEqual([]);
+    expect(await species(other)).toEqual(expect.arrayContaining([target, `${genus} offen`]));
+  });
+
+  it("US-ENT-04 refuses a species that is not suggested with 409 discover.not_suggested", async () => {
+    const r = await decideAs(keeper, { species: `${genus} erfunden`, decision: "yes" });
+    expect(r.status).toBe(409);
+    expect(((await r.json()) as { error: { code: string } }).error.code).toBe(
+      "discover.not_suggested",
+    );
+  });
+});

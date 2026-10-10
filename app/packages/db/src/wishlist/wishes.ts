@@ -27,8 +27,8 @@ export class WishesPostgres {
     try {
       const r = await withAccount(this.pool, userId, (c) =>
         c.query<WishRow>(
-          `insert into wish (account_id, name, german, target_zone_id, difficulty, reasoning, image_url, image_source, license, name_key)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning ${COLUMNS}`,
+          `insert into wish (account_id, name, german, target_zone_id, difficulty, reasoning, image_url, image_source, license, name_key, source, decided_at, status)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) returning ${COLUMNS}`,
           [
             userId,
             v.name,
@@ -40,6 +40,9 @@ export class WishesPostgres {
             v.imageSource,
             v.license,
             v.nameKey,
+            v.source ?? "manual",
+            v.decidedAt ?? null,
+            v.status ?? "wishlist",
           ],
         ),
       );
