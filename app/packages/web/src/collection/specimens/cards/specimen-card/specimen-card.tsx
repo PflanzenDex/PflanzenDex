@@ -71,6 +71,16 @@ function Measurement({ card }: { card: SpecimenCard }) {
   );
 }
 
+/** From whom a received specimen came and when (US-SOZ-13); an own specimen has no such line. */
+function Provenance({ value }: { value: SpecimenCard["provenance"] }) {
+  if (!value) return null;
+  return (
+    <Quiet>
+      Erhalten von {value.from ?? "einem Freund"} am {dateText(value.date.slice(0, 10))}
+    </Quiet>
+  );
+}
+
 function Treatment({ card }: { card: SpecimenCard }) {
   const b = card.treatment;
   if (!b) return <Quiet>keine offene Behandlung</Quiet>;
@@ -128,6 +138,7 @@ export function SpecimenCardView(props: {
         Lichtzone: {zoneText(card)} · Status: {STATUS_TEXT[card.status]}
       </Quiet>
       <Quiet>Standort: {card.location ?? UNKNOWN}</Quiet>
+      <Provenance value={card.provenance} />
       <Measurement card={card} />
       <Treatment card={card} />
       {(onMeasure || onArchive || repot || onMark || onCatchDate) && (

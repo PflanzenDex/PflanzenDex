@@ -220,13 +220,15 @@ Assumptions, decided by the PO (revisable):
 - Not yet notified: the acceptance or decline of my own request (the sender sees the friend in the list, or "Nicht angenommen" under "Anfragen", US-SOZ-02), the triggers of the swap module (request for my offer, answer, the other side confirmed the handover: US-SOZ-08 to US-SOZ-11 do not exist), and the central "Today" list: its items are specimen-bound and `today` does not depend on `social` in the module matrix, so open requests are not part of it; changing the matrix is a reviewed decision of its own.
 - New feed events trigger no individual message, only the banner (unchanged, US-SOZ-06). The switch "friends" of the notification settings (US-ACC-02) is saved and will apply to push and mail; the in-app notice is not switched off by it, because it is no message.
 
-### US-SOZ-13 · Swap history · ⬜ new
+### US-SOZ-13 · Swap history · ✅ new
 
 Acceptance criteria:
 
 - "Swap history": completed and canceled processes with date, friend, given/received, status.
 - The history remains after ending the friendship; the friend appears with the stored display name.
 - A received specimen shows "from <display name>" (provenance).
+
+State of implementation: done (the manual test protocol is missing). "Tauschverlauf" on the page "Tauschbörse" (`GET /swaps/history`) lists the finished swaps of the account (handed over, declined, canceled, withdrawn), newest first, each with the date (the handover instant, else the last decision, else the request; shown as the keeper's local calendar date, NFR-08), the friend ("Gegeben an <name>" / "Erhalten von <name>"), species ("Art unbekannt" while unknown, P-08), type, mode, the status in words, the reason of a decline and the cause of an automatic end. Open requests are not history, they stay on the requests list (US-SOZ-10). The friend is the display name stored in the swap row at the request, so the history stays unchanged after the friendship ended and a friend without a name reads "einem Freund" (P-08); a swap whose friendship ended is canceled first (the lazy check of ADR 0012). Each account reads only its own rows (P-04). The received specimen carries its provenance: the port `ProvenanceSource` of the cards (`collection` defines it, `swap` implements it from `received_specimen_id` of the handed-over swap row; no extra table) gives each specimen card of the recipient the line "Erhalten von <name> am <date>"; the giver's archived specimen has no card (US-BES-07). Assumption: the date of the card line is the UTC date of the handover instant.
 
 ## Data model
 

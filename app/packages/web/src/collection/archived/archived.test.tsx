@@ -24,6 +24,7 @@ const card = (id: string, name: string): SpecimenCard => ({
   photo: null,
   lastMeasurement: null,
   treatment: null,
+  provenance: null,
   moreTreatments: 0,
 });
 const entry = (extra: Partial<ArchivedEntry> = {}): ArchivedEntry => ({

@@ -1,4 +1,11 @@
-import { swapAnswer, swapHandover, swapOverview } from "@pflanzendex/core";
+import {
+  swapAnswer,
+  swapHandover,
+  swapHistory,
+  swapOverview,
+  swapProvenance,
+  type ProvenanceSource,
+} from "@pflanzendex/core";
 import { IdempotencyPostgres, SpeciesPostgres, SwapsPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
@@ -12,6 +19,9 @@ export const SWAP_PATHS = ["/swaps"] as const;
  * - GET /swaps: `{ received, sent }`, my side of every swap (requests for my offers and requests I sent) with the state,
  *   the counter-offer, the reason of a decline and the cause of an automatic end; a swap behind an ended friendship is
  *   canceled first
+ * - GET /swaps/history: `{ entries }`, the finished swaps (handed over, declined, canceled, withdrawn), newest first, each with
+ *   date, friend (the name stored at the request, so it stays after the friendship ended), `given`/`received`, species,
+ *   status, reason and cause (US-SOZ-13); a route before `/swaps/:id/...` is not needed, the paths differ
  * - POST /swaps/:id/answer `{ action: accept|decline|propose|cancel|withdraw, reason?, proposal? }` (with
  *   `Idempotency-Key`): 200 `{ status }`; 404 `swap.not_found`, 409 `swap.not_allowed`, `swap.wrong_state`,
  *   `offer.not_active` (the offer is withdrawn or reserved for another), `swap.friendship_ended`
@@ -28,6 +38,9 @@ export function swapRoutes(pool: Pool, clock: () => Date = () => new Date()): Ho
   const handover = swapHandover({ swaps, species: new SpeciesPostgres(pool), clock });
   const routes = new Hono<AuthEnv>();
   routes.get("/swaps", async (c) => c.json(await swapOverview({ swaps }, c.get("account").id)));
+  routes.get("/swaps/history", async (c) =>
+    c.json(await swapHistory({ swaps }, c.get("account").id)),
+  );
   routes.post("/swaps/:id/answer", async (c) =>
     write(c, idem, answer, { input: { ...(await body(c)), swapId: c.req.param("id") } }),
   );
@@ -42,3 +55,7 @@ export const cancelOrphanedSwaps = (pool: Pool) => {
   const swaps = new SwapsPostgres(pool);
   return async (userId: string): Promise<void> => void (await swaps.cancelOrphaned(userId));
 };
+
+/** The port "Provenance per specimen" of the specimen cards (US-SOZ-13), fed by the handed-over swaps (ADR 0012). */
+export const provenanceSourceFor = (pool: Pool): ProvenanceSource =>
+  swapProvenance({ swaps: new SwapsPostgres(pool) });

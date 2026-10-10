@@ -29,6 +29,7 @@ const card = (id: string, name: string, status: SpecimenCard["status"]): Specime
   photo: null,
   lastMeasurement: null,
   treatment: null,
+  provenance: null,
   moreTreatments: 0,
 });
 

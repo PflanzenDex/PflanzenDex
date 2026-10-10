@@ -663,4 +663,17 @@ describe("US-SOZ-11 the handover in one transaction", () => {
       })),
     ).rejects.toThrow();
   });
+
+  it("US-SOZ-13 the provenance of a received specimen names the giver as stored and the handover instant; nothing for others", async () => {
+    const a = await accepted();
+    await confirmAs(anna, a);
+    const done = (await confirmAs(ben, a)) as { received: string };
+    const own = await specimen(ben, `Eigenes ${suffix()}`);
+    const p = await swaps.provenanceFor(ben, [done.received, own, a.specimenId]);
+    expect([...p.keys()]).toEqual([done.received]);
+    expect(p.get(done.received)).toMatchObject({ from: `N-${anna.slice(0, 4)}` });
+    expect(p.get(done.received)?.date).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect((await swaps.provenanceFor(anna, [done.received])).size).toBe(0);
+    expect((await swaps.provenanceFor(ben, [])).size).toBe(0);
+  });
 });

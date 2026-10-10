@@ -4,6 +4,7 @@ import { TreatmentStub, MeasurementsStub } from "./cards-test-helpers";
 import {
   NO_TREATMENTS,
   NO_MEASUREMENTS,
+  NO_PROVENANCE,
   specimenCards,
   zoneDistribution,
   dueDate,
@@ -327,5 +328,51 @@ describe("US-BES-06 tenant: only own specimens", () => {
     expect(bens[0]?.location).toBe("Fensterbank");
     expect(JSON.stringify(bens)).not.toContain("Regal Süd");
     expect(await specimenCards(dependencies(), "carla", TODAY)).toEqual([]);
+  });
+});
+
+describe("US-SOZ-13 card: where a specimen came from", () => {
+  it("a specimen without provenance has none (nothing is invented, P-08)", async () => {
+    const e = await create("anna", "Eigene");
+    const [card] = await specimenCards(dependencies({ provenance: NO_PROVENANCE }), "anna", TODAY);
+    expect(card?.id).toBe(e.id);
+    expect(card?.provenance).toBeNull();
+  });
+
+  it("a received specimen shows from whom and when; the port is asked once, for the own active specimens only", async () => {
+    const a = await create("anna", "Erhalten");
+    const b = await create("anna", "Eigene 2");
+    const gone = await create("anna", "Alt");
+    await specimens.archive("anna", gone.id, "weg", "2026-10-01");
+    const asked: (readonly string[])[] = [];
+    const provenance = {
+      forSpecimens: async (userId: string, ids: readonly string[]) => {
+        asked.push(ids);
+        return new Map([[a.id, { from: "Ben", date: "2026-10-10" }]]);
+      },
+    };
+    const cards = await specimenCards(dependencies({ provenance }), "anna", TODAY);
+    expect(cards.find((c) => c.id === a.id)?.provenance).toEqual({
+      from: "Ben",
+      date: "2026-10-10",
+    });
+    expect(cards.find((c) => c.id === b.id)?.provenance).toBeNull();
+    expect(asked).toHaveLength(1);
+    expect(asked[0]).not.toContain(gone.id);
+  });
+
+  it("a friend who has no display name is unknown (null), not made up", async () => {
+    const a = await create("anna", "Erhalten");
+    const provenance = {
+      forSpecimens: async () => new Map([[a.id, { from: null, date: "2026-10-10" }]]),
+    };
+    const [card] = await specimenCards(dependencies({ provenance }), "anna", TODAY);
+    expect(card?.provenance).toEqual({ from: null, date: "2026-10-10" });
+  });
+
+  it("without the port at all the cards work as before", async () => {
+    await create("anna", "Eigene");
+    const [card] = await specimenCards(dependencies(), "anna", TODAY);
+    expect(card?.provenance).toBeNull();
   });
 });
