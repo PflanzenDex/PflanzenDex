@@ -17,6 +17,7 @@ export const EPIC_SCOPES = [
   "ki",
   "qs",
   "ent",
+  "ach",
   "qg",
   "dev",
 ];
