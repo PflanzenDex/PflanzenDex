@@ -1,3 +1,4 @@
+import type { TargetLocationSource } from "@pflanzendex/core";
 import type { Hono, MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
 import {
@@ -21,7 +22,13 @@ import {
 } from "./swap";
 
 /** The modules `social` (friends, sharing, feed) and `swap` (offers, exchange): sign-in guard in front of the paths, then the routes. */
-export function bindFriends(app: Hono, pool: Pool, auth: MiddlewareHandler, clock?: () => Date) {
+export function bindFriends(
+  app: Hono,
+  pool: Pool,
+  auth: MiddlewareHandler,
+  sources: { clock?: () => Date; targetLocation?: TargetLocationSource } = {},
+) {
+  const { clock, targetLocation } = sources;
   for (const path of [
     ...FRIEND_PATHS,
     ...SHARING_PATHS,
@@ -36,6 +43,6 @@ export function bindFriends(app: Hono, pool: Pool, auth: MiddlewareHandler, cloc
   app.route("/", feedRoutes(pool, clock, swappedSourceFor(pool)));
   const swapOptions = { ...(clock ? { clock } : {}) };
   app.route("/", offerRoutes(pool, swapOptions));
-  app.route("/", swapRoutes(pool, clock));
+  app.route("/", swapRoutes(pool, clock, targetLocation));
   app.route("/", exchangeRoutes(pool, offerDependencies(pool, swapOptions)));
 }

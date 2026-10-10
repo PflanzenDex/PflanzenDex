@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Standort bei der Übergabe: Ein getauschtes oder geschenktes Exemplar steht bei dir gleich am Standort, den dein Pflegeprofil für die Art vorsieht. Ohne Pflegeprofil bleibt der Standort unbekannt.",
     "Neu bei Freunden: Der Block zeigt jetzt auch „Eingetopft“ (ein freigegebener Steckling wurde eingetopft) und „Getauscht“ (ein Tausch, an dem du beteiligt warst).",
     "Tauschverlauf: In der Tauschbörse siehst du alle abgeschlossenen und beendeten Tausche mit Datum, Freund und Stand, auch nachdem eine Freundschaft beendet wurde. Ein getauschtes Exemplar zeigt auf seiner Karte, von wem du es erhalten hast.",
     "Übergabe bestätigen: Ist ein Tausch zugesagt, bestätigen beide Seiten die Übergabe. Dann wird das Exemplar bei dir archiviert und beim Freund als neues Exemplar angelegt, in einem Schritt. Gelingt etwas nicht, bleibt alles wie es war.",

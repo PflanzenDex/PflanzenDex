@@ -126,6 +126,7 @@ afterAll(async () => {
   const subs = [[subA, subB, subC, subD, subE, subOp]];
   await admin.query(`delete from swap where account_id in (${accounts})`, subs);
   await admin.query(`delete from offer where account_id in (${accounts})`, subs);
+  await admin.query(`delete from care_profile where account_id in (${accounts})`, subs);
   await admin.query(`delete from specimen where account_id in (${accounts})`, subs);
   await admin.query(
     `delete from species where id in (select object_id from review_case where account_id in (${accounts}))`,
@@ -164,7 +165,18 @@ describe("US-SOZ-11 the handover through the API", () => {
     });
   });
 
-  it("the first confirmation waits; the second completes: the giver's specimen is archived, the recipient gets a new one with today's local date, both sides see 'handed over'", async () => {
+  it("the first confirmation waits; the second completes: the giver's specimen is archived, the recipient gets a new one with today's local date at the growth location of the recipient's own care profile, both sides see 'handed over'", async () => {
+    const mineLoc = (
+      await call(subB, "POST", "/locations", {
+        name: "Fensterbank",
+        kind: "indoor",
+        lightZoneId: null,
+      })
+    ).body.id as string;
+    expect(
+      (await call(subB, "PUT", `/care-profiles/${speciesId}`, { growthLocationId: mineLoc }))
+        .status,
+    ).toBe(200);
     const a = await accepted("H2");
     expect(await confirm(subB, a.swapId)).toMatchObject({
       status: 200,
@@ -194,7 +206,7 @@ describe("US-SOZ-11 the handover through the API", () => {
     expect(mine.find((x) => x.id === done.body.receivedSpecimenId)).toMatchObject({
       status: "cutting",
       caughtAt: "2026-10-10",
-      locationId: null,
+      locationId: mineLoc,
     });
     expect((await swaps(subA)).received.find((s) => s.swapId === a.swapId)?.status).toBe(
       "handed_over",

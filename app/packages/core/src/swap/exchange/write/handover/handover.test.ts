@@ -3,6 +3,7 @@ import type { Species } from "../../../../catalog";
 import { execute } from "../../../../kernel/operation";
 import { InMemoryIdempotencyStore } from "../../../../kernel/test-helpers";
 import { testSpecies } from "../../../../collection/shared/test-helpers";
+import { TargetLocationStub } from "../../../../collection/placement/target-location-stub";
 import { swapHandover } from "../../../index";
 import { handoverSpecimen, InMemoryHandover } from "./test-helpers";
 
@@ -15,6 +16,7 @@ const ALOE = testSpecies("sp1", { latinName: "Aloe vera", germanName: "Echte Alo
 
 let store: InMemoryHandover;
 let species: Species | null;
+let target: TargetLocationStub;
 let idem: InMemoryIdempotencyStore;
 let n = 0;
 const run = (input: unknown = {}, user: string | null = GIVER, key = `k${++n}`) =>
@@ -22,6 +24,7 @@ const run = (input: unknown = {}, user: string | null = GIVER, key = `k${++n}`) 
     swapHandover({
       swaps: store,
       species: { find: async () => species, findMany: async () => [species] },
+      targetLocation: target,
       clock: () => NOW,
     }),
     { idempotency: idem },
@@ -41,7 +44,44 @@ beforeEach(() => {
     type: "cutting",
   });
   species = ALOE;
+  target = new TargetLocationStub(null);
   idem = new InMemoryIdempotencyStore();
+});
+
+describe("US-SOZ-11 the location of the new specimen comes from the recipient's care profile", () => {
+  it("a received cutting stands at the recipient's growth location, asked for the recipient and not the giver", async () => {
+    target = new TargetLocationStub("loc-ben-phase", "loc-ben-growth");
+    await run({}, RECIPIENT);
+    await run({}, GIVER);
+    expect(store.created[0]?.values["locationId"]).toBe("loc-ben-growth");
+    expect(target.growthCalls).toEqual([{ userId: RECIPIENT, speciesId: "sp1" }]);
+  });
+
+  it("a received plant stands at the location of its phase today", async () => {
+    store = new InMemoryHandover({
+      giver: GIVER,
+      recipient: RECIPIENT,
+      mode: "give_away",
+      type: "plant",
+    });
+    target = new TargetLocationStub("loc-ben-phase", "loc-ben-growth");
+    await run({}, RECIPIENT);
+    await run({}, GIVER);
+    expect(store.created[0]?.values["locationId"]).toBe("loc-ben-phase");
+    expect(target.calls).toEqual([{ userId: RECIPIENT, speciesId: "sp1", today: "2026-10-10" }]);
+  });
+
+  it("without a care profile the location stays unknown and the giver's location is never passed on (P-08)", async () => {
+    await run({}, RECIPIENT);
+    await run({}, GIVER);
+    expect(store.created[0]?.values["locationId"]).toBeNull();
+  });
+
+  it("a waiting confirmation asks the port for nothing", async () => {
+    target = new TargetLocationStub("x", "y");
+    await run({}, GIVER);
+    expect([target.calls, target.growthCalls]).toEqual([[], []]);
+  });
 });
 
 describe("US-SOZ-11 the handover counts only when both sides confirmed", () => {
