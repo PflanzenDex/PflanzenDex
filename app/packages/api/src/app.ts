@@ -4,6 +4,7 @@ import type { Pool } from "pg";
 import { COLLECTION_REPOINTERS } from "@pflanzendex/db";
 import {
   type TreatmentSource,
+  type ProvenanceSource,
   type MeasurementSource,
   type TargetLocationSource,
   type PhaseLocationSource,
@@ -27,6 +28,7 @@ import {
   specimenRoutes,
 } from "./collection";
 import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
+import { provenanceSourceFor } from "./swap";
 import { WISH_PATHS, wishRoutes, wishZoneUsageFor, type WishImageSources } from "./wishlist";
 import { bindFriends } from "./friends-bindings";
 import { zoneStockFor } from "./zone-stock";
@@ -66,6 +68,8 @@ export type AppOptions = {
   /** Measurements and treatments for the specimen cards (US-BES-06); without it `care` supplies the measurements (WAC-01) and the planned treatments (BEH-01). */
   measurements?: MeasurementSource;
   treatments?: TreatmentSource;
+  /** From whom received specimens came (US-SOZ-13); without it `swap` supplies it. */
+  provenance?: ProvenanceSource;
   /** Object store and image processing for measurement photos (US-WAC-06); without them uploading a photo answers 502. */
   media?: { store: ObjectStore; processor: ImageProcessor };
   /** Source client and downloader for the local copy of wish images (US-WUN-04); without them storing an image answers 502. */
@@ -131,6 +135,7 @@ function careSources(pool: Pool, opt: AppOptions) {
     targetLocation: opt.targetLocation ?? targetLocationFor(pool),
     measurements: opt.measurements ?? measurementSourceFor(pool),
     treatments: opt.treatments ?? treatmentSourceFor(pool),
+    provenance: opt.provenance ?? provenanceSourceFor(pool),
   };
 }
 

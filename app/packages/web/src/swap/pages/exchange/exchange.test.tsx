@@ -62,6 +62,7 @@ function server(opts: { offers?: unknown[]; preview?: unknown } = {}) {
       if (u.pathname === "/offers") return response(200, { offers: state.offers });
       if (u.pathname === "/offers/preview") return response(200, state.preview);
       if (u.pathname === "/specimens") return response(200, { specimens: SPECIMENS });
+      if (u.pathname === "/swaps/history") return response(200, { entries: [] });
       if (u.pathname === "/swaps") return response(200, { received: [], sent: [] });
       if (u.pathname === "/exchange/offers") return response(200, { offers: [] });
       if (u.pathname === "/sharing") return response(200, { shared: [] });

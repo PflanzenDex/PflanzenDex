@@ -32,6 +32,7 @@ const card = (
   photo: null,
   lastMeasurement: null,
   treatment: null,
+  provenance: null,
   moreTreatments: 0,
   ...extra,
 });

@@ -90,6 +90,11 @@ export interface ExchangeStore {
     swapId: string,
     change: { action: SwapAction; reason: string | null; proposal: string | null },
   ): Promise<{ readonly outcome: SwapAnswerOutcome; readonly status: SwapStatus | null }>;
+  /** From whom the caller received the given specimens (US-SOZ-13); specimens that were not received are missing. */
+  provenanceFor(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, { readonly from: string | null; readonly date: string }>>;
   /** Cancels the open swaps of the caller whose friendship is gone; the number of canceled swaps. */
   cancelOrphaned(userId: string): Promise<number>;
 }

@@ -1,4 +1,4 @@
-import type { SwapAction, SwapOverview } from "@pflanzendex/core";
+import type { HistoryEntry, SwapAction, SwapOverview } from "@pflanzendex/core";
 import { call, createWrite, currentTimeZone, type Response } from "../../kernel";
 
 type FetchFn = typeof fetch;
@@ -44,4 +44,13 @@ export async function confirmHandover(
     { timeZone: currentTimeZone(), ...(marker ? { marker } : {}) },
   );
   return r.ok ? { ok: true, value: r.value as { status: "waiting" | "handed_over" } } : r;
+}
+
+/** Loads the swap history (US-SOZ-13): finished swaps, newest first. */
+export function loadHistory(
+  api: string,
+  token: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<{ entries: readonly HistoryEntry[] }>> {
+  return call<{ entries: readonly HistoryEntry[] }>(fetchFn, `${api}/swaps/history`, token);
 }
