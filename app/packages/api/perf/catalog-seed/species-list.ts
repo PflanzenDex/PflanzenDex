@@ -1,0 +1,71 @@
+// Dev seed list: common houseplants. Names and families are botanical common knowledge; difficulty and light level
+// are starting values chosen for demo data, not measured (P-08). The seed marks every row with that source.
+// Table columns: latin | german | english | family (latin) | family (german) | difficulty 1-3 | standard level 2-4
+export type SeedRow = readonly [string, string, string, string, string, 1 | 2 | 3, 2 | 3 | 4];
+
+const TABLE = [
+  "Monstera deliciosa|Fensterblatt|Swiss cheese plant|Araceae|Aronstabgewächse|1|3",
+  "Epipremnum aureum|Efeutute|Golden pothos|Araceae|Aronstabgewächse|1|2",
+  "Philodendron hederaceum|Herzblatt-Philodendron|Heartleaf philodendron|Araceae|Aronstabgewächse|1|2",
+  "Spathiphyllum wallisii|Einblatt|Peace lily|Araceae|Aronstabgewächse|1|2",
+  "Zamioculcas zamiifolia|Glücksfeder|ZZ plant|Araceae|Aronstabgewächse|1|2",
+  "Aglaonema commutatum|Kolbenfaden|Chinese evergreen|Araceae|Aronstabgewächse|1|2",
+  "Anthurium andraeanum|Flamingoblume|Flamingo flower|Araceae|Aronstabgewächse|2|3",
+  "Alocasia amazonica|Pfeilblatt|African mask plant|Araceae|Aronstabgewächse|3|3",
+  "Dieffenbachia seguine|Dieffenbachie|Dumb cane|Araceae|Aronstabgewächse|1|3",
+  "Syngonium podophyllum|Purpurtute|Arrowhead vine|Araceae|Aronstabgewächse|1|3",
+  "Sansevieria trifasciata|Bogenhanf|Snake plant|Asparagaceae|Spargelgewächse|1|2",
+  "Chlorophytum comosum|Grünlilie|Spider plant|Asparagaceae|Spargelgewächse|1|3",
+  "Dracaena fragrans|Drachenbaum|Corn plant|Asparagaceae|Spargelgewächse|1|3",
+  "Yucca elephantipes|Palmlilie|Spineless yucca|Asparagaceae|Spargelgewächse|1|4",
+  "Aloe vera|Echte Aloe|Aloe vera|Asphodelaceae|Affodillgewächse|1|4",
+  "Haworthiopsis attenuata|Zebra-Haworthie|Zebra plant|Asphodelaceae|Affodillgewächse|1|3",
+  "Crassula ovata|Geldbaum|Jade plant|Crassulaceae|Dickblattgewächse|1|4",
+  "Echeveria elegans|Echeverie|Mexican snowball|Crassulaceae|Dickblattgewächse|2|4",
+  "Kalanchoe blossfeldiana|Flammendes Käthchen|Flaming Katy|Crassulaceae|Dickblattgewächse|1|4",
+  "Sedum morganianum|Eselsschwanz|Burro's tail|Crassulaceae|Dickblattgewächse|2|4",
+  "Ficus elastica|Gummibaum|Rubber plant|Moraceae|Maulbeergewächse|1|3",
+  "Ficus lyrata|Geigenfeige|Fiddle-leaf fig|Moraceae|Maulbeergewächse|3|4",
+  "Ficus benjamina|Birkenfeige|Weeping fig|Moraceae|Maulbeergewächse|2|3",
+  "Schefflera arboricola|Strahlenaralie|Dwarf umbrella tree|Araliaceae|Araliengewächse|1|3",
+  "Hedera helix|Gewöhnlicher Efeu|English ivy|Araliaceae|Araliengewächse|1|2",
+  "Fatsia japonica|Zimmeraralie|Japanese aralia|Araliaceae|Araliengewächse|1|2",
+  "Pilea peperomioides|Ufopflanze|Chinese money plant|Urticaceae|Brennnesselgewächse|1|3",
+  "Peperomia obtusifolia|Zwergpfeffer|Baby rubber plant|Piperaceae|Pfeffergewächse|1|3",
+  "Calathea orbifolia|Korbmarante|Calathea orbifolia|Marantaceae|Pfeilwurzgewächse|3|2",
+  "Maranta leuconeura|Gebetspflanze|Prayer plant|Marantaceae|Pfeilwurzgewächse|2|2",
+  "Ctenanthe burle-marxii|Kammmarante|Fishbone prayer plant|Marantaceae|Pfeilwurzgewächse|2|2",
+  "Nephrolepis exaltata|Schwertfarn|Boston fern|Lomariopsidaceae|Schwertfarngewächse|2|2",
+  "Asplenium nidus|Nestfarn|Bird's nest fern|Aspleniaceae|Streifenfarngewächse|2|2",
+  "Adiantum raddianum|Frauenhaarfarn|Delta maidenhair fern|Pteridaceae|Saumfarngewächse|3|2",
+  "Platycerium bifurcatum|Geweihfarn|Staghorn fern|Polypodiaceae|Tüpfelfarngewächse|3|3",
+  "Phalaenopsis amabilis|Schmetterlingsorchidee|Moth orchid|Orchidaceae|Orchideengewächse|2|3",
+  "Paphiopedilum insigne|Frauenschuh|Lady's slipper orchid|Orchidaceae|Orchideengewächse|3|3",
+  "Tillandsia ionantha|Luftnelke|Sky plant|Bromeliaceae|Ananasgewächse|2|3",
+  "Guzmania lingulata|Guzmanie|Scarlet star|Bromeliaceae|Ananasgewächse|2|3",
+  "Beaucarnea recurvata|Elefantenfuß|Ponytail palm|Asparagaceae|Spargelgewächse|1|4",
+  "Chamaedorea elegans|Bergpalme|Parlor palm|Arecaceae|Palmengewächse|1|2",
+  "Howea forsteriana|Kentiapalme|Kentia palm|Arecaceae|Palmengewächse|2|3",
+  "Cycas revoluta|Palmfarn|Sago palm|Cycadaceae|Palmfarngewächse|2|4",
+  "Hoya carnosa|Porzellanblume|Wax plant|Apocynaceae|Hundsgiftgewächse|2|3",
+  "Ceropegia woodii|Leuchterblume|String of hearts|Apocynaceae|Hundsgiftgewächse|2|4",
+  "Tradescantia zebrina|Dreimasterblume|Inch plant|Commelinaceae|Commelinagewächse|1|3",
+  "Begonia maculata|Tropfenbegonie|Polka dot begonia|Begoniaceae|Schiefblattgewächse|3|3",
+  "Saintpaulia ionantha|Usambaraveilchen|African violet|Gesneriaceae|Gesneriengewächse|2|3",
+  "Codiaeum variegatum|Wunderstrauch|Croton|Euphorbiaceae|Wolfsmilchgewächse|3|4",
+  "Euphorbia trigona|Dreikantige Wolfsmilch|African milk tree|Euphorbiaceae|Wolfsmilchgewächse|1|4",
+  "Citrus limon|Zitronenbaum|Lemon tree|Rutaceae|Rautengewächse|3|4",
+];
+
+export const SEED_SPECIES: readonly SeedRow[] = TABLE.map((line) => {
+  const [latin, german, english, familyLatin, familyGerman, difficulty, level] = line.split("|");
+  return [
+    latin ?? "",
+    german ?? "",
+    english ?? "",
+    familyLatin ?? "",
+    familyGerman ?? "",
+    Number(difficulty) as 1 | 2 | 3,
+    Number(level) as 2 | 3 | 4,
+  ];
+});
