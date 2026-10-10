@@ -1,4 +1,5 @@
 import {
+  NO_TARGET_LOCATION,
   swapAnswer,
   swapHandover,
   swapHistory,
@@ -6,6 +7,7 @@ import {
   swapProvenance,
   type ProvenanceSource,
   type SwappedSource,
+  type TargetLocationSource,
 } from "@pflanzendex/core";
 import { IdempotencyPostgres, SpeciesPostgres, SwapsPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
@@ -32,11 +34,20 @@ export const SWAP_PATHS = ["/swaps"] as const;
  *   409 `specimen.marker_required` (the recipient names a marker), `specimen.name_taken`, `swap.wrong_state`,
  *   `swap.friendship_ended`, 404 `swap.not_found`, `species.not_found`, `specimen.not_found`; a refusal changes nothing
  */
-export function swapRoutes(pool: Pool, clock: () => Date = () => new Date()): Hono<AuthEnv> {
+export function swapRoutes(
+  pool: Pool,
+  clock: () => Date = () => new Date(),
+  targetLocation: TargetLocationSource = NO_TARGET_LOCATION,
+): Hono<AuthEnv> {
   const swaps = new SwapsPostgres(pool);
   const idem = { idempotency: new IdempotencyPostgres(pool) };
   const answer = swapAnswer({ swaps });
-  const handover = swapHandover({ swaps, species: new SpeciesPostgres(pool), clock });
+  const handover = swapHandover({
+    swaps,
+    species: new SpeciesPostgres(pool),
+    targetLocation,
+    clock,
+  });
   const routes = new Hono<AuthEnv>();
   routes.get("/swaps", async (c) => c.json(await swapOverview({ swaps }, c.get("account").id)));
   routes.get("/swaps/history", async (c) =>

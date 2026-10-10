@@ -186,7 +186,10 @@ export function createApp(opt: AppOptions = {}): Hono {
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", careProfileRoutes(opt.pool));
     bindWishlist(app, opt.pool, auth, opt);
-    bindFriends(app, opt.pool, auth, opt.clock);
+    bindFriends(app, opt.pool, auth, {
+      ...(opt.clock ? { clock: opt.clock } : {}),
+      targetLocation: opt.targetLocation ?? targetLocationFor(opt.pool),
+    });
     const care = careOptions(opt);
     bindCareOne(app, opt.pool, auth, care);
     bindToday(app, opt.pool, auth, { ...care, ...todaySources(opt.pool, opt) });

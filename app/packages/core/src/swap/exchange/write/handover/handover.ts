@@ -18,7 +18,9 @@ import {
   specimenName,
   type SpeciesSource,
   type SpecimenRow,
+  type TargetLocationSource,
 } from "../../../../collection";
+import type { Species } from "../../../../catalog";
 import type { HandoverContext, HandoverSpecimen, HandoverSteps, HandoverStore } from "./ports";
 
 const MARKER_LIMITS = { min: 1, max: 40 } as const;
@@ -26,6 +28,8 @@ const MARKER_LIMITS = { min: 1, max: 40 } as const;
 export interface HandoverDependencies {
   readonly swaps: HandoverStore;
   readonly species: SpeciesSource;
+  /** The recipient's own care profile decides where the new specimen stands (BES-02, FR-PHA-05); unknown without one (P-08). */
+  readonly targetLocation: TargetLocationSource;
   /** The clock comes from outside so that "today" is testable (NFR-08). */
   readonly clock: () => Date;
 }
@@ -64,7 +68,9 @@ interface Completion {
   readonly ctx: HandoverContext;
   readonly userId: string;
   readonly today: string;
+  readonly deps: HandoverDependencies;
   readonly prepared: {
+    readonly species: Species;
     readonly speciesId: string;
     readonly name: string;
     readonly assignments: readonly { specimenId: string; name: string; marker: string }[];
@@ -72,21 +78,27 @@ interface Completion {
 }
 
 async function complete(c: Completion): Promise<Verdict> {
-  const { steps, swapId, ctx, userId, prepared, today } = c;
+  const { steps, swapId, ctx, userId, prepared, today, deps } = c;
   const giver = ctx.role === "giver" ? userId : (ctx.otherId as string);
   const recipient = ctx.role === "giver" ? (ctx.otherId as string) : userId;
   const who = ctx.otherName ?? "einem Freund";
   const reason = ctx.mode === "give_away" ? `Verschenkt an ${who}` : `Getauscht mit ${who}`;
   await steps.archiveGiven(giver, ctx.specimenId as string, reason, today);
+  const status = ctx.type === "plant" ? "plant" : "cutting";
+  // Same rule as a new specimen (US-BES-02/04): a cutting stands in cutting light, a plant at the target of its phase.
+  const locationId =
+    status === "cutting"
+      ? await deps.targetLocation.growthLocation(recipient, prepared.species)
+      : await deps.targetLocation.targetLocation(recipient, prepared.species, today);
   const made = await steps.createReceived(
     recipient,
     {
       speciesId: prepared.speciesId,
       name: specimenName(prepared.name, ctx.marker),
       marker: ctx.marker,
-      locationId: null,
+      locationId,
       caughtAt: today,
-      status: ctx.type === "plant" ? "plant" : "cutting",
+      status,
     },
     prepared.assignments,
   );
@@ -133,7 +145,7 @@ async function prepare(
   if (!species) return refuse(appError("species.not_found"));
   const p = plan(species, ctx.marker, await steps.recipientSpecimens(recipient), offered.speciesId);
   if (p.plan.kind === "failed") return refuse(p.plan.error);
-  return { speciesId: offered.speciesId, name: p.name, assignments: p.plan.assignments };
+  return { species, speciesId: offered.speciesId, name: p.name, assignments: p.plan.assignments };
 }
 
 async function confirmed(
@@ -152,7 +164,7 @@ async function confirmed(
   const prepared = await prepare(deps, steps, ctx, userId);
   if ("commit" in prepared) return prepared;
   if (!ctx.both) return { commit: true, value: ok({ status: "waiting" }) };
-  return complete({ steps, swapId: input.swapId, ctx, userId, today, prepared });
+  return complete({ steps, swapId: input.swapId, ctx, userId, today, prepared, deps });
 }
 
 /**
@@ -160,7 +172,7 @@ async function confirmed(
  * the first confirmation is recorded and waits. The confirmation that completes it runs one transaction: the giver's
  * specimen is archived ("Getauscht mit <name>" or "Verschenkt an <name>", US-BES-07) and the recipient gets a new
  * specimen of the same species under the naming rule (DM-BES-03; a cutting or offshoot becomes a cutting, US-BES-04;
- * caught date = the local handover date in the confirming person's time zone, NFR-08; location unknown, P-08; private,
+ * caught date = the local handover date in the confirming person's time zone, NFR-08; location from the recipient's care profile, unknown without one, P-08; private,
  * no sharing row). Measurements, treatments and location of the giver are not passed on. The recipient names a marker
  * when the naming rule asks for one (assumption, decided by the PO: asked at the recipient's own confirmation; the
  * markers of further existing specimens are not asked here and refuse with `specimen.markers_missing`). If any step
