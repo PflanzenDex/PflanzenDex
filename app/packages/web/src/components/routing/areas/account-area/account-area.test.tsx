@@ -62,6 +62,7 @@ function fakeServer(status = 200) {
           measurementDays: 30,
         });
       if (path === "/reminders/subscriptions") return response(200, { subscriptions: [] });
+      if (path === "/ai/connections") return response(200, { connections: [] });
       if (path !== "/account/profile") return response(404, {});
       if (init?.method === "PUT") {
         const body = JSON.parse(String(init.body)) as Record<string, unknown>;
@@ -111,6 +112,7 @@ describe("US-QS-14 Konto with its sections", () => {
       "Profil",
       "Einstellungen",
       "Erinnerungen",
+      "KI-Clients",
       "Was wird gemessen?",
     ]);
   });
@@ -199,6 +201,7 @@ describe("US-QS-14 the address points at a section", () => {
       "Profil",
       "Einstellungen",
       "Erinnerungen",
+      "KI-Clients",
       "Was wird gemessen?",
     ]);
     expect(links[0]?.getAttribute("aria-current")).toBe("location");

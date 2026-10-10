@@ -148,9 +148,10 @@ const MODULES = [
     ports: [],
   },
   {
-    name: "ai-access",
-    epics: ["AI"],
-    tables: ["connection", "task", "draft", "ai_log"],
+    name: "ai",
+    // The keeper's AI client (ADR 0013, epic KI). Further tables follow with their stories: task, draft, ai_log.
+    epics: ["KI"],
+    tables: ["ai_connection"],
     dependsOn: ["kernel", "account"],
     ports: [],
   },
