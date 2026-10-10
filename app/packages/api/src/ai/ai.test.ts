@@ -1,8 +1,10 @@
 import { randomUUID } from "node:crypto";
+import { InMemoryObjectStore } from "@pflanzendex/core";
 import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp, type AppOptions } from "../app";
+import { createSharpProcessor } from "../media";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
@@ -33,6 +35,7 @@ const aiVerifier: TokenVerifier = async (token) => {
       }
     : null;
 };
+const photos = new InMemoryObjectStore();
 let app: ReturnType<typeof createApp>;
 type Response = { status: number; body: Record<string, any>; headers: Headers }; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -70,11 +73,16 @@ beforeAll(async () => {
   app = createApp({
     reviewer,
     pool,
+    media: { store: photos, processor: createSharpProcessor() },
     ai: { verifier: aiVerifier, resource: RESOURCE, issuer: "https://login.example/realms/p" },
   });
   for (const sub of [subA, subB]) await call(web(sub), "GET", "/account");
 });
 afterAll(async () => {
+  await admin.query(
+    "delete from specimen where account_id in (select id from account where subject = any($1))",
+    [[subA, subB]],
+  );
   await admin.query(
     `delete from species where id in (select object_id from review_case
        where account_id in (select id from account where subject = any($1)))`,
@@ -340,5 +348,101 @@ describe("US-KI-03 species profile as a draft", () => {
     expect(adopt.status).toBe(200);
     expect(await found(subA)).toContain(profile.latinName);
     expect(await found(subB)).not.toContain(profile.latinName);
+  });
+});
+
+describe("US-KI-04 photo assessment", () => {
+  const tag = randomUUID()
+    .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
+    .replace(/-/g, "")
+    .slice(0, 10);
+  const OTHER = "https://other.client/oauth";
+  let measurementId = "";
+  const assessment = (quality = "etiolated", note: string | null = "Streckt sich.") => ({
+    type: "photo_assessment",
+    source: "Foto der Messung",
+    content: { measurementId, quality, note },
+  });
+  const photoRequest = (token: string, id = measurementId) =>
+    app.request(`/mcp/measurements/${id}/photo`, { headers: { authorization: `Bearer ${token}` } });
+
+  beforeAll(async () => {
+    const sp = await call(web(subA), "POST", "/species", {
+      latinName: `Kifoto${tag} test`,
+      germanName: `Kifoto ${tag}`,
+      difficulty: 2,
+      standardLevel: 3,
+      lightDemandLux: 40000,
+      growthMeasure: "rosette_diameter",
+      etiolationSigns: "Rosette streckt sich.",
+      successCriteria: "Dichte, flache Rosette.",
+    });
+    const sid = (
+      await call(web(subA), "POST", "/specimens", {
+        speciesId: sp.body["id"],
+        marker: "foto",
+        timeZone: "Europe/Berlin",
+      })
+    ).body["id"];
+    const m = await call(web(subA), "POST", `/specimens/${sid}/measurements`, {
+      timeZone: "Europe/Berlin",
+      value: 12.5,
+    });
+    measurementId = m.body["id"];
+    const account = (await admin.query("select id from account where subject = $1", [subA])).rows[0]
+      .id;
+    await photos.put(account, "kifoto.jpg", new Uint8Array([1, 2, 3]), "image/jpeg");
+    await admin.query("update measurement set photo = 'kifoto.jpg' where id = $1", [measurementId]);
+  });
+
+  it("US-KI-04 delivers the photo of the own account to a connected client with the read right, logged", async () => {
+    const r = await photoRequest(ai(subA, "pflanzen:read"));
+    expect(r.status).toBe(200);
+    expect(r.headers.get("content-type")).toBe("image/jpeg");
+    expect(new Uint8Array(await r.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
+    const log = (await call(web(subA), "GET", "/ai/log")).body["log"];
+    expect(log.some((e: { operation: string }) => e.operation === "measurement_photo")).toBe(true);
+  });
+
+  it("US-KI-04 a stranger's client gets nothing: the photo looks like a missing one (P-04, KI-R6)", async () => {
+    expect((await photoRequest(ai(subB, "pflanzen:read", OTHER))).status).toBe(404);
+    expect((await photoRequest(web(subA))).status).toBe(401);
+  });
+
+  it("US-KI-04 the client suggests quality and note as a draft; nothing is written before adoption", async () => {
+    const r = await call(ai(subA, "pflanzen:draft"), "POST", "/mcp/drafts", assessment());
+    expect(r.status).toBe(201);
+    const view = async () =>
+      (
+        await admin.query("select quality, note, rated_by from measurement where id = $1", [
+          measurementId,
+        ])
+      ).rows[0];
+    expect(await view()).toMatchObject({ quality: "healthy", rated_by: "keeper" });
+    const bad = await call(ai(subA, "pflanzen:draft"), "POST", "/mcp/drafts", assessment("great"));
+    expect(bad.status).toBe(400);
+    const adopt = await call(web(subA), "POST", `/ai/drafts/${r.body["id"]}/adopt`);
+    expect(adopt.status).toBe(200);
+    expect(await view()).toMatchObject({
+      quality: "etiolated",
+      note: "Streckt sich.",
+      rated_by: "ai_adopted",
+    });
+  });
+
+  it("US-KI-04 adopting a draft for a foreign or photoless measurement is refused and writes nothing", async () => {
+    const r = await call(
+      ai(subB, "pflanzen:draft", `${OTHER}-draft`),
+      "POST",
+      "/mcp/drafts",
+      assessment("healthy", null),
+    );
+    expect(r.status).toBe(201);
+    const adopt = await call(web(subB), "POST", `/ai/drafts/${r.body["id"]}/adopt`);
+    expect(adopt.body["error"].code).toBe("measurement.not_found");
+    expect(
+      (await admin.query("select quality from measurement where id = $1", [measurementId])).rows[0]
+        .quality,
+    ).toBe("etiolated");
   });
 });

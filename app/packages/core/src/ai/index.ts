@@ -38,3 +38,5 @@ export type {
   DraftTypes,
   ProposeCall,
 } from "./drafts";
+export { aiMeasurementPhoto } from "./photo";
+export type { PhotoCall, PhotoFile, PhotoSource } from "./photo";

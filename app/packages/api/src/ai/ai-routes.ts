@@ -3,6 +3,7 @@ import {
   aiConnections,
   aiRevoke,
   aiSetRights,
+  type PhotoSource,
   type StatusSource,
   type ConnectionStore,
 } from "@pflanzendex/core";
@@ -49,7 +50,7 @@ export function aiAccessRoutes(
   pool: Pool,
   auth: MiddlewareHandler<AuthEnv>,
   opt: AiAccessOptions | undefined,
-  status: StatusSource,
+  ports: { status: StatusSource; photo: PhotoSource },
 ): Hono<AuthEnv> {
   if (!opt) return new Hono<AuthEnv>();
   const connections = opt.connections ?? new ConnectionsPostgres(pool);
@@ -79,6 +80,6 @@ export function aiAccessRoutes(
   const drafts = new DraftsPostgres(pool);
   const types = draftTypes(pool);
   routes.route("/", draftRoutes(pool, { drafts, types, log }, clock));
-  routes.route("/", clientRoutes(pool, opt, { connections, log, status, drafts, types }));
+  routes.route("/", clientRoutes(pool, opt, { connections, log, ...ports, drafts, types }));
   return routes;
 }

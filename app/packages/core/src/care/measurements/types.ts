@@ -57,6 +57,14 @@ export interface MeasurementStore {
   ): Promise<ReadonlyMap<string, { readonly id: string; readonly date: string }>>;
   /** The measurement of the specimen on that local date; with several the one recorded last (FR-WAC-07), else `null`. */
   findOnDate(userId: string, specimenId: string, date: string): Promise<MeasurementRow | null>;
+  /** One measurement of the account by id; a foreign or unknown id gives `null` (P-04). */
+  get(userId: string, measurementId: string): Promise<MeasurementRow | null>;
+  /** Sets quality, note and who rated (US-KI-04); `false` if the measurement is gone or not the account's. */
+  assess(
+    userId: string,
+    measurementId: string,
+    rating: { quality: Quality; note: string | null; ratedBy: RatedBy },
+  ): Promise<boolean>;
   /** Sets the photo name; `false` if the measurement is gone or not the account's (nothing written, P-04). */
   setPhoto(userId: string, measurementId: string, photo: string): Promise<boolean>;
   /** All or nothing; a specimen of another account counts as unknown and writes nothing. */

@@ -38,6 +38,7 @@ import {
   treatmentRoutes,
   carePhasesRoutes,
   measurementSourceFor,
+  measurementPhotoSourceFor,
   treatmentSourceFor,
   targetLocationFor,
 } from "./care";
@@ -160,7 +161,13 @@ export function createApp(opt: AppOptions = {}): Hono {
     bindCareOne(app, opt.pool, auth, care);
     const today = { ...care, ...todaySources(opt.pool, opt) };
     bindToday(app, opt.pool, auth, today);
-    app.route("/", aiAccessRoutes(opt.pool, auth, opt.ai, todayStatusSource(opt.pool, today)));
+    app.route(
+      "/",
+      aiAccessRoutes(opt.pool, auth, opt.ai, {
+        status: todayStatusSource(opt.pool, today),
+        photo: measurementPhotoSourceFor(opt.pool, opt.media),
+      }),
+    );
   }
   return app;
 }
