@@ -20,16 +20,18 @@ export class WateringPostgres {
     userId: string,
     specimenIds: readonly string[],
   ): Promise<ReadonlyMap<string, string>> {
-    const r = await withAccount(this.pool, userId, (c) =>
-      c.query<{ specimenId: string; date: string }>(
+    const latest = new Map<string, string>();
+    await withAccount(this.pool, userId, async (c) => {
+      const found = await c.query<{ specimenId: string; date: string }>(
         `select specimen_id as "specimenId", to_char(max(watered_on), 'YYYY-MM-DD') as date
            from watering_log
           where specimen_id = any($1::uuid[])
           group by specimen_id`,
         [specimenIds],
-      ),
-    );
-    return new Map(r.rows.map((z) => [z.specimenId, z.date]));
+      );
+      for (const z of found.rows) latest.set(z.specimenId, z.date);
+    });
+    return latest;
   }
 
   /** One transaction; the unique day makes a repeat write nothing. Returns how many entries are new. */
