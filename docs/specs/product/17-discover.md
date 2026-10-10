@@ -107,7 +107,7 @@ Acceptance criteria:
 
 Assumptions, decided by the PO (revisable): the exploration cards per deck are 2 of 10 (`EXPLORATION_PER_DECK`, DM-ENT-03 starting value, not adjustable yet). A species explores if its order has no caught species, or, where the order has one, its family has none; the groups are ordered by their size in the catalog tree (fewest species first, name as tie-break). Deck n takes one species from each of the next 2 groups, so the groups of earlier decks are used up first; inside a group the species is chosen by a stable hash of account, local day, deck number and group, so the choice varies per day but a reload shows the same deck. Species that explore in any deck are left out of the normal order, so no card shows twice; the normal cards fill the rest of the deck in rank order, and the exploration cards sit spread between them. An exploration card carries the badge "Mal etwas anderes" and the reasons "Aus der Ordnung X hast du noch keine Art im Pokédex" (or Familie) and the plain not-caught fact; its preference reasons are left out. Species without a known order and family never explore (P-08). The wish written by US-ENT-04 takes the reasons of the normal card. The hard filters of US-ENT-02 are not built yet and will apply to the groups.
 
-### US-ENT-07 · Discover directly from the buffer warning · ⬜ new
+### US-ENT-07 · Discover directly from the buffer warning · 🟨 new
 
 As a **plant keeper** I want to see matching suggestions immediately on "Replenishment needed".
 
@@ -115,6 +115,8 @@ Acceptance criteria:
 
 - Besides "Fetch suggestions" (AI research, US-WUN-04) the buffer warning (US-WUN-02) offers the action "Discover for <zone>", which opens a deck with a filter on this zone.
 - If the catalog does not suffice for the zone (fewer candidates than the buffer after filters), the view says so and offers the AI research or "Propose species" (US-BES-01). Newly researched species go via the catalog (US-POK-02), not past it.
+
+Assumptions, decided by the PO (revisable): the warning offers one button "Entdecken für <zone>" per zone below the buffer; it opens Discover at `/discover?view=suggestions&zone=<n>` (n = zone number 2 to 4, the n-th zone of the account, as in US-ENT-03). `GET /discover/suggestions` takes the same `zone` parameter (anything but 2 to 4 is `input.invalid`) and answers `zoneFilter` with the zone, its name, the number of candidates of the zone and, if that number is below the account's buffer (US-WUN-02, default 2), a `shortfall` with the text and the next action. The filter keeps species whose catalog light zone equals the zone; exploration picks of other zones are left out; a species without a known zone is not shown as fitting (P-08). The view names the zone and shows the shortfall with the link "Art vorschlagen" (US-BES-01; newly proposed species go through the catalog and its review, US-POK-02). Not built yet: the "Fetch suggestions" (AI research, US-WUN-04) offer in the shortfall, because that story does not exist; the other keeper filters of US-ENT-02.
 
 ### US-ENT-08 · Suggestions via the AI client · ⬜ new
 

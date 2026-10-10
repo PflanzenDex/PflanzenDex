@@ -31,10 +31,15 @@ export function DiscoverPage(props: {
   token: () => Promise<string | undefined>;
   /** The destination Entdecken shows the page below its title: no heading of its own (US-QS-14). */
   embedded?: boolean;
+  /** Only species of this light zone 2 to 4 (US-ENT-07, "Discover for <zone>" from the buffer warning). */
+  zone?: number;
 }) {
-  const { api, token, embedded } = props;
+  const { api, token, embedded, zone } = props;
   const [deck, setDeck] = useState(1);
-  const load = useCallback((t: string) => loadSuggestions(api, t, deck), [api, deck]);
+  const load = useCallback(
+    (t: string) => loadSuggestions(api, t, zone === undefined ? { deck } : { deck, zone }),
+    [api, deck, zone],
+  );
   const decide = useCallback(
     async (species: string, decision: "yes" | "no") => {
       const t = await token();
@@ -48,7 +53,7 @@ export function DiscoverPage(props: {
       className="min-w-0"
     >
       <LoadFrame
-        queryKey={["discover", deck]}
+        queryKey={["discover", deck, zone ?? null]}
         token={token}
         load={load}
         loadingText="Vorschläge werden geladen …"

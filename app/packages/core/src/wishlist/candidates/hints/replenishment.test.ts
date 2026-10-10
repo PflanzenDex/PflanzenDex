@@ -61,10 +61,11 @@ describe("US-WUN-02 warning before the list is empty", () => {
     expect(r.zones.find((z) => z.zoneId === "z2")?.open).toBe(1);
   });
 
-  it("US-WUN-02 says what to do next while the actions of Discover and Fetch suggestions do not exist yet (P-09)", async () => {
+  it("US-ENT-07 offers Discover for the zone, with its number, while Fetch suggestions does not exist yet (P-09)", async () => {
     const r = await replenishment();
     expect(r.nextAction).toContain("Wunsch erfassen");
-    expect(r.actions).toEqual({ discover: false, suggestions: false });
+    expect(r.actions).toEqual({ discover: true, suggestions: false });
+    expect(r.zones.map((z) => z.zoneNumber)).toEqual([2, 3, 4]);
   });
 });
 

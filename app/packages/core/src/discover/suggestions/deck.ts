@@ -26,9 +26,9 @@ export function deckOf(
   size: number = DECK_SIZE,
 ): SuggestionDeck {
   const suggestions = candidates.slice((deck - 1) * size, deck * size);
-  if (suggestions.length > 0) return { deck, suggestions, empty: null };
+  if (suggestions.length > 0) return { deck, suggestions, empty: null, zoneFilter: null };
   const reason = deck > 1 && candidates.length > 0 ? DECK_DONE : NOTHING_LEFT;
-  return { deck, suggestions, empty: reason };
+  return { deck, suggestions, empty: reason, zoneFilter: null };
 }
 
 /** Puts the exploration cards between the others, spread over the deck (US-ENT-06). */
@@ -65,10 +65,11 @@ export function exploringDeckOf(
     next += chunk.length;
     if (d === deck) mine = interleave(chunk, explore);
   }
-  if (mine.length > 0) return { deck, suggestions: mine, empty: null };
+  if (mine.length > 0) return { deck, suggestions: mine, empty: null, zoneFilter: null };
   return {
     deck,
     suggestions: [],
     empty: deck > 1 && candidates.length > 0 ? DECK_DONE : NOTHING_LEFT,
+    zoneFilter: null,
   };
 }

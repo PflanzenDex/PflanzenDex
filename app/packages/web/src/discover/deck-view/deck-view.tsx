@@ -80,8 +80,34 @@ function useDecisions(onDecide: OnDecide, advance: () => void) {
   return { saved, error, decide };
 }
 
+/** The zone the deck is filtered to and, if the catalog does not suffice for it, what to do next (US-ENT-07, P-09). */
+function ZoneNotice(props: {
+  filter: NonNullable<SuggestionDeck["zoneFilter"]>;
+  /** The empty state below already offers the proposal. */
+  offerProposal: boolean;
+}) {
+  const { filter, offerProposal } = props;
+  const { shortfall } = filter;
+  return (
+    <div className="grid gap-2">
+      <p className="m-0 font-semibold">{`Vorschläge für ${filter.name ?? `Zone ${filter.zone}`}`}</p>
+      {shortfall !== null && (
+        <Banner variant="warning">
+          <p className="m-0">{shortfall.text}</p>
+          <p className="m-0">{shortfall.nextAction}</p>
+          {offerProposal && (
+            <Button asChild variant="outline" size="touch" className="mt-2">
+              <a href={CATALOG_ADDRESS}>Art vorschlagen</a>
+            </Button>
+          )}
+        </Banner>
+      )}
+    </div>
+  );
+}
+
 /** One deck, one card at a time; after the last card "Für heute durch" and "Neuer Stapel" (US-ENT-01). */
-export function DeckView(props: {
+function Cards(props: {
   deck: SuggestionDeck;
   /** Writes "Ja" or "Nein" (US-ENT-04); the card moves on only after it is saved, so nothing is lost silently (P-10). */
   onDecide: OnDecide;
@@ -133,6 +159,16 @@ export function DeckView(props: {
         „Ja“ legt die Art auf die Wunschliste, „Nein“ verwirft sie dort, „Später“ speichert nichts.
       </p>
       <Actions onDecide={(d) => void decide(current.species, d)} />
+    </div>
+  );
+}
+
+export function DeckView(props: Parameters<typeof Cards>[0]) {
+  const filter = props.deck.zoneFilter;
+  return (
+    <div className="grid min-w-0 gap-3">
+      {filter !== null && <ZoneNotice filter={filter} offerProposal={props.deck.empty === null} />}
+      <Cards {...props} />
     </div>
   );
 }

@@ -58,6 +58,8 @@ export interface UnfitWish {
 /** A zone 2 to 4 with fewer open candidates than the buffer (US-WUN-02). */
 export interface ReplenishZone {
   readonly zoneId: string;
+  /** Zone number 2 to 4 of the catalog (the n-th zone of the account), the filter of "Discover for <zone>" (US-ENT-07). */
+  readonly zoneNumber: number;
   readonly name: string;
   readonly open: number;
   /** "Nachschub nötig: <zone> (N offene Kandidaten)". */

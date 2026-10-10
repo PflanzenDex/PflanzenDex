@@ -2,7 +2,7 @@
 // by the shares they have (space, new family; US-ENT-03, FR-ENT-02), then the tree order (FR-ENT-05: same data, same
 // deck, same order). Reasons name own data only and carry no percentage (FR-ENT-06, P-08).
 import { pokedexOwnership, readCollectorCards, type CollectorCard } from "../../pokedex";
-import { wishNameKey, type ZoneStock } from "../../wishlist";
+import { REPLENISH_BUFFER, wishNameKey, type ZoneStock } from "../../wishlist";
 import {
   preferenceFactor,
   preferenceReason,
@@ -16,7 +16,9 @@ import {
   EXPLORATION_PER_DECK,
   type Suggestion,
   type SuggestionDeck,
+  type SuggestionOptions,
   type SuggestionsDependencies,
+  type ZoneFilter,
 } from "./types";
 import { EMPTY_CATALOG, exploringDeckOf } from "./deck";
 
@@ -134,20 +136,59 @@ export async function candidatesFor(
   };
 }
 
-/** Reads the suggestions of the account (P-04): ownership is derived live, the wishes are the only decisions so far. */
+/**
+ * The zone filter of US-ENT-07: how many candidates the zone has and whether that is fewer than the buffer of the
+ * account (US-WUN-02), then the way on is the proposal of a species (P-09). Without a stock the zone has no name.
+ */
+function zoneFilterOf(
+  zone: number,
+  available: number,
+  buffer: number,
+  stock: readonly ZoneStock[],
+): ZoneFilter {
+  const name = stock[zone - 2]?.name ?? null;
+  const label = name ?? `Zone ${zone}`;
+  const short = available < buffer;
+  return {
+    zone,
+    name,
+    available,
+    shortfall: short
+      ? {
+          text: `Für ${label} gibt es im Katalog nur ${available} passende ${available === 1 ? "Art" : "Arten"} (Puffer: ${buffer}).`,
+          nextAction:
+            "Du kannst eine neue Art für den Katalog vorschlagen (Katalog, „Art vorschlagen“).",
+        }
+      : null,
+  };
+}
+
+/**
+ * Reads the suggestions of the account (P-04): ownership is derived live, the wishes are the only decisions so far.
+ * With `options.zone` the deck holds only species of that light zone (US-ENT-07); the exploration picks of other zones
+ * are left out, and the answer says whether the zone has fewer candidates than the buffer.
+ */
 export async function suggestions(
   deps: SuggestionsDependencies,
   userId: string,
   timeZone: string,
-  deck = 1,
+  options: SuggestionOptions = {},
 ): Promise<SuggestionDeck> {
-  const { catalogEmpty, candidates, cards, names } = await candidatesFor(deps, userId, timeZone);
-  if (catalogEmpty) return { deck, suggestions: [], empty: EMPTY_CATALOG };
+  const { zone, deck = 1 } = options;
+  const { catalogEmpty, candidates, cards, names, stock } = await candidatesFor(
+    deps,
+    userId,
+    timeZone,
+  );
+  if (catalogEmpty) return { deck, suggestions: [], empty: EMPTY_CATALOG, zoneFilter: null };
+  const inZone = zone === undefined ? candidates : candidates.filter((c) => c.lightZone === zone);
   // The picks are fixed per account and local day (FR-ENT-05); the deck number is part of the choice inside a group.
   const seed = `${userId}|${localToday((deps.clock ?? (() => new Date()))(), timeZone)}`;
-  return exploringDeckOf(
-    candidates,
-    explorationPlan(cards, names, seed, EXPLORATION_PER_DECK),
-    deck,
+  const plan = explorationPlan(cards, names, seed, EXPLORATION_PER_DECK).map((picks) =>
+    zone === undefined ? picks : picks.filter((p) => p.card.lightZone === zone),
   );
+  const result = exploringDeckOf(inZone, plan, deck);
+  if (zone === undefined) return result;
+  const buffer = (await deps.stock?.buffer?.(userId)) ?? REPLENISH_BUFFER;
+  return { ...result, zoneFilter: zoneFilterOf(zone, inZone.length, buffer, stock) };
 }

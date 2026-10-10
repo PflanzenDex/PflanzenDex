@@ -19,10 +19,11 @@ export function replenishment(
   buffer: number = REPLENISH_BUFFER,
 ): Replenishment {
   const low = zones
-    .map((z) => ({ z, n: open.filter((w) => w.targetZoneId === z.zoneId).length }))
+    .map((z, i) => ({ z, i, n: open.filter((w) => w.targetZoneId === z.zoneId).length }))
     .filter(({ n }) => n < buffer)
-    .map(({ z, n }) => ({
+    .map(({ z, i, n }) => ({
       zoneId: z.zoneId,
+      zoneNumber: i + 2,
       name: z.name,
       open: n,
       text: `Nachschub nötig: ${z.name} (${candidates(n)})`,
@@ -30,9 +31,8 @@ export function replenishment(
   return {
     buffer,
     zones: low,
-    // "Discover for <zone>" (US-ENT-07) and "Fetch suggestions" (US-WUN-04) do not exist yet: not offered, so the
-    // keeper is pointed to the form that does (P-09).
-    actions: { discover: false, suggestions: false },
+    // "Discover for <zone>" exists (US-ENT-07); "Fetch suggestions" (US-WUN-04) does not yet and is not offered.
+    actions: { discover: true, suggestions: false },
     nextAction:
       low.length === 0
         ? null

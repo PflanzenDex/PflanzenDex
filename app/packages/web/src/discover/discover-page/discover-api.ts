@@ -1,17 +1,19 @@
 import type { DecideResult, SuggestionDeck } from "@pflanzendex/core";
 import { call, createWrite, currentTimeZone, type Response } from "../../kernel";
 
-/** Loads deck `deck` of the suggestions (US-ENT-01): derived on every request, in the zone of the profile (NFR-08). */
+/** Loads deck `deck` of the suggestions (US-ENT-01), optionally only for light zone `zone` (US-ENT-07): derived on every request, in the zone of the profile (NFR-08). */
 export function loadSuggestions(
   api: string,
   token: string,
-  deck: number,
+  query: { deck: number; zone?: number },
   fetchFn: typeof fetch = fetch,
 ): Promise<Response<SuggestionDeck>> {
   const timeZone = encodeURIComponent(currentTimeZone());
+  const { deck, zone } = query;
+  const filter = zone === undefined ? "" : `&zone=${zone}`;
   return call<SuggestionDeck>(
     fetchFn,
-    `${api}/discover/suggestions?timeZone=${timeZone}&deck=${deck}`,
+    `${api}/discover/suggestions?timeZone=${timeZone}&deck=${deck}${filter}`,
     token,
   );
 }
