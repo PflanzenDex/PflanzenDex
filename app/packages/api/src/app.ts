@@ -182,7 +182,7 @@ export function createApp(opt: AppOptions = {}): Hono {
     app.route("/", specimenRoutes(opt.pool, { clock: opt.clock, ...careSources(opt.pool, opt) }));
     for (const path of POKEDEX_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", pokedexRoutes(opt.pool));
-    app.route("/", discoverRoutes(opt.pool, auth));
+    app.route("/", discoverRoutes(opt.pool, auth, opt.zoneStock));
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", careProfileRoutes(opt.pool));
     bindWishlist(app, opt.pool, auth, opt);

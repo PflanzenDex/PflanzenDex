@@ -108,3 +108,26 @@ describe("US-ENT-01 suggestions through the API", () => {
     expect(card?.reasons.length).toBeLessThanOrEqual(3);
   });
 });
+
+describe("US-ENT-03 reasons through the API", () => {
+  it("US-ENT-03 asks the stock port for the signed-in account only,", async () => {
+    const asked: string[] = [];
+    const withStock = createApp({
+      reviewer: verifier,
+      pool,
+      zoneStock: {
+        stock: async (userId: string) => {
+          asked.push(userId);
+          return [];
+        },
+        buffer: async () => 2,
+      },
+    });
+    const res = await withStock.request("/discover/suggestions?timeZone=Europe%2FBerlin", {
+      headers: { authorization: `Bearer valid:${keeper}` },
+    });
+    expect(res.status).toBe(200);
+    expect(asked).toHaveLength(1);
+    expect(asked[0]).not.toBe("");
+  });
+});

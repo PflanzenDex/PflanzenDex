@@ -49,7 +49,7 @@ Acceptance criteria (hard filters before any scoring):
 - Catalog profiles with review status `ai-created, unreviewed` appear only with a label (FR-BES-06).
 - Optional filters of the keeper (DM-ENT-03): light zone, highest difficulty, "pet-safe". A filter on an **unknown** attribute does not exclude the species but shows "Pets: unknown" (P-08, P-10).
 
-### US-ENT-03 · Understand why something is suggested · ⬜ new
+### US-ENT-03 · Understand why something is suggested · 🟨 new
 
 As a **plant keeper** I want to see why a species shows up, so that I trust the suggestions.
 
@@ -63,6 +63,8 @@ Acceptance criteria:
   - "you have put 4 cacti on the wishlist" (US-ENT-05)
 - At most the 3 strongest reasons. Reasons arise from the domain logic, never from the model (P-01, KI-R2).
 - Exploration suggestions (US-ENT-06) are marked as "something different".
+
+Assumptions, decided by the PO (revisable): the reasons that can be proven from existing own data are built first: "<Zone> has the fewest plants (n)" or "No plant stands in <Zone> yet" (the stock per zone 2 to 4 of US-LIC-02 through the port `ZoneStockSource`; zone number n of the catalog is the n-th zone of the account; a tie of all zones, an unknown zone and an account without a counted plant give no reason, P-08), "New family: <family> is still missing in your Pokédex" and the plain fact "You have not caught this species yet" (no share, always last). Scoring (FR-ENT-02) so far: every share (space, new family) weighs 1 (starting value, assumption); the deck is ordered by the number of shares, the tree order breaks ties (FR-ENT-05). No invented fit rule: a reason that needs "thriving" waits for its derivation.
 
 ### US-ENT-04 · Decision lands in the wishlist immediately · ⬜ new
 
