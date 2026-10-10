@@ -19,4 +19,5 @@ create table ai_log (
     references ai_connection (account_id, id) on delete cascade
 );
 create index ai_log_list on ai_log (account_id, created_at desc);
+create index ai_log_connection on ai_log (account_id, connection_id);
 select tenant_protection('ai_log');
