@@ -38,7 +38,31 @@ function fakeServer(status = 200) {
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url, init) => {
-      if (new URL(String(url)).pathname !== "/account/profile") return response(404, {});
+      const path = new URL(String(url)).pathname;
+      // The section Erinnerungen (US-MON-08) has its own tests; here it only has to load quietly.
+      if (path === "/reminders")
+        return response(200, {
+          reminders: [
+            {
+              id: "r",
+              localDate: "2026-10-10",
+              status: "in_app",
+              attempts: 1,
+              lastError: null,
+              items: [],
+            },
+          ],
+        });
+      if (path === "/reminders/settings")
+        return response(200, {
+          sendTime: "08:00",
+          quietFrom: null,
+          quietTo: null,
+          paused: {},
+          measurementDays: 30,
+        });
+      if (path === "/reminders/subscriptions") return response(200, { subscriptions: [] });
+      if (path !== "/account/profile") return response(404, {});
       if (init?.method === "PUT") {
         const body = JSON.parse(String(init.body)) as Record<string, unknown>;
         puts.push(body);
@@ -76,7 +100,7 @@ afterEach(() => {
 });
 
 describe("US-QS-14 Konto with its sections", () => {
-  it("US-QS-14 · US-ACC-01 one h1 Konto and the sections Profil, Einstellungen, Was wird gemessen? as h2 in this order", async () => {
+  it("US-QS-14 · US-ACC-01 one h1 Konto and the sections Profil, Einstellungen, Erinnerungen, Was wird gemessen? as h2 in this order", async () => {
     fakeServer();
     show();
     await screen.findByLabelText("Anzeigename");
@@ -86,6 +110,7 @@ describe("US-QS-14 Konto with its sections", () => {
     expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
       "Profil",
       "Einstellungen",
+      "Erinnerungen",
       "Was wird gemessen?",
     ]);
   });
@@ -173,6 +198,7 @@ describe("US-QS-14 the address points at a section", () => {
     expect(links.map((l) => l.textContent)).toEqual([
       "Profil",
       "Einstellungen",
+      "Erinnerungen",
       "Was wird gemessen?",
     ]);
     expect(links[0]?.getAttribute("aria-current")).toBe("location");

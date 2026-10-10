@@ -16,7 +16,7 @@ const MONITORING_PATHS = ["/reminders"] as const;
  * Reminders (epic MON), always for the own account (P-04, P-05):
  * `GET /reminders` the in-app inbox, newest first (days with nothing due are not listed; a failed delivery shows its status,
  * FR-MON-08); `GET`/`PUT /reminders/settings` the time of the daily check, quiet hours, pauses per occasion and the days of
- * an overdue measurement (US-MON-08); `POST`/`DELETE /reminders/subscriptions` the push subscription of a browser. The guard is applied here. Writes
+ * an overdue measurement (US-MON-08); `GET`/`POST`/`DELETE /reminders/subscriptions` the push subscriptions of the browsers (the list shows endpoints only). The guard is applied here. Writes
  * need an `Idempotency-Key` and go through validating operations (P-03).
  */
 export function monitoringRoutes(pool: Pool, auth: MiddlewareHandler): Hono<AuthEnv> {
@@ -35,6 +35,14 @@ export function monitoringRoutes(pool: Pool, auth: MiddlewareHandler): Hono<Auth
     c.json(await reminders.settings(c.get("account").id)),
   );
   routes.put("/reminders/settings", async (c) => write(c, writes, save, { input: await body(c) }));
+  // Endpoints only: the keys stay on the server (US-MON-08).
+  routes.get("/reminders/subscriptions", async (c) =>
+    c.json({
+      subscriptions: (await channels.subscriptions(c.get("account").id)).map((s) => ({
+        endpoint: s.endpoint,
+      })),
+    }),
+  );
   routes.post("/reminders/subscriptions", async (c) =>
     write(c, writes, subscribe, { input: await body(c), success: 201 }),
   );
