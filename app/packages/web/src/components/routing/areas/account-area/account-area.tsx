@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router";
 import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
 import { useSectionAnchor } from "@/components/routing/areas/shared/area-section/use-section-anchor";
 import { RemindersSection } from "@/monitoring";
+import { AiClientsSection } from "@/ai-access";
 import { AccountView, MeasuredView, SettingsPage } from "@/account";
 import type { Account } from "@/account";
 import { Button } from "@/components/ui/button/button";
@@ -19,6 +20,7 @@ const SECTIONS = [
   { anchor: ACCOUNT_SECTIONS.profile, title: "Profil" },
   { anchor: ACCOUNT_SECTIONS.settings, title: "Einstellungen" },
   { anchor: ACCOUNT_SECTIONS.reminders, title: "Erinnerungen" },
+  { anchor: ACCOUNT_SECTIONS.aiClients, title: "KI-Clients" },
   { anchor: ACCOUNT_SECTIONS.measured, title: "Was wird gemessen?" },
 ] as const;
 const NAMES: Record<string, string> = Object.fromEntries(SECTIONS.map((s) => [s.anchor, s.title]));
@@ -50,6 +52,25 @@ function SectionNav() {
         ))}
       </ul>
     </nav>
+  );
+}
+
+/** The settings with the link to the management of the locations and light zones, which lives in the Sammlung. */
+function SettingsSection(props: { api: string; token: Token }) {
+  return (
+    <AreaSection
+      anchor={ACCOUNT_SECTIONS.settings}
+      title="Einstellungen"
+      loading="Einstellungen werden geladen …"
+    >
+      <SettingsPage api={props.api} token={props.token} host />
+      <p className="text-sm text-muted-foreground">
+        Standorte und Lichtzonen legst du in der Sammlung an und änderst sie dort.
+      </p>
+      <Button asChild variant="secondary" className="self-start">
+        <Link to={MANAGE_ADDRESS}>Standorte und Lichtzonen verwalten</Link>
+      </Button>
+    </AreaSection>
   );
 }
 
@@ -88,25 +109,20 @@ export function AccountArea(props: {
               {...(props.error ? { error: props.error } : {})}
             />
           </AreaSection>
-          <AreaSection
-            anchor={ACCOUNT_SECTIONS.settings}
-            title="Einstellungen"
-            loading="Einstellungen werden geladen …"
-          >
-            <SettingsPage api={props.api} token={props.token} host />
-            <p className="text-sm text-muted-foreground">
-              Standorte und Lichtzonen legst du in der Sammlung an und änderst sie dort.
-            </p>
-            <Button asChild variant="secondary" className="self-start">
-              <Link to={MANAGE_ADDRESS}>Standorte und Lichtzonen verwalten</Link>
-            </Button>
-          </AreaSection>
+          <SettingsSection api={props.api} token={props.token} />
           <AreaSection
             anchor={ACCOUNT_SECTIONS.reminders}
             title="Erinnerungen"
             loading="Erinnerungen werden geladen …"
           >
             <RemindersSection api={props.api} token={props.token} />
+          </AreaSection>
+          <AreaSection
+            anchor={ACCOUNT_SECTIONS.aiClients}
+            title="KI-Clients"
+            loading="KI-Clients werden geladen …"
+          >
+            <AiClientsSection api={props.api} token={props.token} />
           </AreaSection>
           <AreaSection
             anchor={ACCOUNT_SECTIONS.measured}

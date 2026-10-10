@@ -62,6 +62,12 @@ export const ERROR_TEXTS = {
   "friend.code_expired": "Dieser Freundescode ist abgelaufen. Bitte um einen neuen Code.",
   "monitoring.subscription_limit":
     "Du hast schon so viele Geräte für Benachrichtigungen angemeldet, wie möglich sind. Entferne ein Gerät und versuche es erneut.",
+  "ai.connection_revoked":
+    "Dieser KI-Client wurde von dir getrennt und hat keinen Zugriff mehr. Du kannst ihn in der Liste der verbundenen KI-Clients wieder zulassen.",
+  "ai.scope_insufficient":
+    "Dafür reichen die Rechte dieser Verbindung nicht. Erlaube dem KI-Client in der App das nötige Recht und verbinde ihn neu.",
+  "ai.connection_not_found": "Diese Verbindung gibt es nicht. Lade die Liste neu.",
+  "ai.connection_active": "Dieser KI-Client ist schon wieder verbunden. Es wurde nichts geändert.",
   "friend.own_code": "Das ist dein eigener Freundescode. Gib ihn an jemand anderen weiter.",
   "friend.already_linked":
     "Mit dieser Person gibt es schon eine Anfrage oder Freundschaft. Es wurde nichts geändert und der Code ist nicht verbraucht.",

@@ -86,6 +86,7 @@ export const ACCOUNT_SECTIONS = {
   profile: "profil",
   settings: "einstellungen",
   reminders: "erinnerungen",
+  aiClients: "ki-clients",
   measured: "gemessen",
 } as const;
 export type AccountSection = keyof typeof ACCOUNT_SECTIONS;

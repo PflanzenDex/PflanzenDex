@@ -31,6 +31,7 @@ const sources = createSourceClient({
   cache: createMemorySourceCache(),
   userAgent,
 });
+const aiResource = process.env["AI_RESOURCE_URL"] ?? "http://localhost:3000/mcp";
 const app = createApp({
   ...(media ? { media } : {}),
   wishImage: { sources, download: createWikimediaDownload({ fetch, userAgent }) },
@@ -38,6 +39,12 @@ const app = createApp({
     issuer,
     audience: process.env["OIDC_AUDIENCE"] ?? "pflanzendex-api",
   }),
+  // The AI interface (US-KI-07): its tokens have their own audience, the URL of the interface (RFC 8707, spike TE-15).
+  ai: {
+    resource: aiResource,
+    issuer,
+    verifier: createTokenVerifier({ issuer, audience: aiResource }),
+  },
   version: process.env["APP_VERSION"],
   commit: process.env["GIT_SHA"],
   pool,

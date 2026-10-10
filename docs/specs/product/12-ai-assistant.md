@@ -88,7 +88,7 @@ Acceptance criteria:
 - When connecting, the app states: the chosen AI provider receives the data the client retrieves. The app itself sends nothing to an AI service; the operator has no data processor for it (E-04, NFR-11).
 - Fields on toxicity, species protection and plant agents deliver source and date or "unknown", never a factual claim without a source.
 
-### US-KI-07 · Connect the AI client and manage access · ⬜ new
+### US-KI-07 · Connect the AI client and manage access · 🟨 new
 
 As a **plant keeper** I want to connect my AI client to my account and define exactly what it may do.
 
@@ -178,4 +178,4 @@ Built-in chat with operator quota (E-19), operator billing of AI calls, long-liv
 2. **Built-in chat (E-19):** add later if paths A and B are not enough?
 3. **Friends' data via AI:** open later? If so, with which protections against injection (FR-KI-07)?
 4. How many clients should be tested for real before R4 (FR-KI-06)?
-5. **Consent without deselecting individual rights:** Keycloak's default consent page only knows "yes" or "no" for all requested scopes (spike TE-15). US-KI-07 requires deselecting individual rights. Either a consent step of its own (theme or own dialog) or adjusting the story.
+5. **Consent without deselecting individual rights (assumption, decided by the PO, ADR 0013):** the sign-in service keeps its all-or-nothing consent; the rights the keeper allows are set in the app ("KI-Clients" in "Konto"), default `drafts`, and the token can only narrow them. A higher right that a token carries becomes a request the keeper confirms in the app. User task for production: the consent page of the sign-in service names client, requested rights and the AI provider (US-KI-06). Original question: Keycloak's default consent page only knows "yes" or "no" for all requested scopes (spike TE-15). US-KI-07 requires deselecting individual rights. Either a consent step of its own (theme or own dialog) or adjusting the story.

@@ -2,16 +2,7 @@ import { Hono, type MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
 import type { Pool } from "pg";
 import { COLLECTION_REPOINTERS } from "@pflanzendex/db";
-import {
-  type TreatmentSource,
-  type ProvenanceSource,
-  type MeasurementSource,
-  type TargetLocationSource,
-  type PhaseLocationSource,
-  type ZoneStockSource,
-  type ObjectStore,
-  type ImageProcessor,
-} from "@pflanzendex/core";
+import { type PhaseLocationSource, type ObjectStore, type ImageProcessor } from "@pflanzendex/core";
 import {
   OPERATOR_PATHS,
   accountRoutes,
@@ -29,7 +20,7 @@ import {
 } from "./collection";
 import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
 import { provenanceSourceFor } from "./swap";
-import { WISH_PATHS, wishRoutes, wishZoneUsageFor, type WishImageSources } from "./wishlist";
+import { WISH_PATHS, wishRoutes, wishZoneUsageFor } from "./wishlist";
 import { bindFriends } from "./friends-bindings";
 import { zoneStockFor } from "./zone-stock";
 import { bindHealth } from "./health";
@@ -37,6 +28,8 @@ import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
 import { discoverRoutes } from "./discover";
 import { monitoringRoutes } from "./monitoring";
+import { aiAccessRoutes } from "./ai-access";
+import type { AppOptions } from "./app-options";
 import {
   CARE_PATHS,
   CARE_PHASES_PATHS,
@@ -50,36 +43,7 @@ import {
 } from "./care";
 import { TODAY_PATHS, todayRoutes, type TodayOptions } from "./today";
 
-export type AppOptions = {
-  /** Verifies access tokens of the sign-in service; without it there are no protected routes. */
-  reviewer?: TokenVerifier;
-  pool?: Pool;
-  /** Origin of the web app for CORS (the API sets no cookies, sign-in runs via bearer token). */
-  webOrigin?: string;
-  /** Version of the running build: `git describe --tags --always`, e.g. v0.1.0 or v0.1.0-3-gabc1234 (from the build, not secret). */
-  version?: string | undefined;
-  /** Short commit hash of the running build (from the build, not secret). */
-  commit?: string | undefined;
-  /** Forces the registration mode (tests only); without it the setting of the operator decides (US-ACC-05). */
-  invitationOnly?: boolean;
-  /** The clock for "today" (NFR-08); defaults to system time. */
-  clock?: () => Date;
-  /** Replaces the care profile as source of the target location of new specimens (tests). */
-  targetLocation?: TargetLocationSource;
-  /** Measurements and treatments for the specimen cards (US-BES-06); without it `care` supplies the measurements (WAC-01) and the planned treatments (BEH-01). */
-  measurements?: MeasurementSource;
-  treatments?: TreatmentSource;
-  /** From whom received specimens came (US-SOZ-13); without it `swap` supplies it. */
-  provenance?: ProvenanceSource;
-  /** Object store and image processing for measurement photos (US-WAC-06); without them uploading a photo answers 502. */
-  media?: { store: ObjectStore; processor: ImageProcessor };
-  /** Source client and downloader for the local copy of wish images (US-WUN-04); without them storing an image answers 502. */
-  wishImage?: WishImageSources;
-  /** Replaces the care profile as source of the location per phase (tests); without it the keeper's own care profile (US-BES-09) answers. */
-  phaseLocation?: PhaseLocationSource;
-  /** Replaces the light distribution as source of the stock per zone for the wishlist (tests); without it `collection` answers (US-LIC-02). */
-  zoneStock?: ZoneStockSource;
-};
+export type { AppOptions } from "./app-options";
 
 /** The module `care` (measurements, care phases and treatments): sign-in guard in front of the paths, then the routes. */
 function bindCareOne(
@@ -185,6 +149,7 @@ export function createApp(opt: AppOptions = {}): Hono {
     app.route("/", pokedexRoutes(opt.pool));
     app.route("/", discoverRoutes(opt.pool, auth, opt.zoneStock));
     app.route("/", monitoringRoutes(opt.pool, auth));
+    app.route("/", aiAccessRoutes(opt.pool, auth, opt.ai));
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", careProfileRoutes(opt.pool));
     bindWishlist(app, opt.pool, auth, opt);
