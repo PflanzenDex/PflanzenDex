@@ -41,7 +41,7 @@ import {
   treatmentSourceFor,
   targetLocationFor,
 } from "./care";
-import { TODAY_PATHS, todayRoutes, type TodayOptions } from "./today";
+import { TODAY_PATHS, todayRoutes, todayStatusSource, type TodayOptions } from "./today";
 
 export type { AppOptions } from "./app-options";
 
@@ -149,7 +149,6 @@ export function createApp(opt: AppOptions = {}): Hono {
     app.route("/", pokedexRoutes(opt.pool));
     app.route("/", discoverRoutes(opt.pool, auth, opt.zoneStock));
     app.route("/", monitoringRoutes(opt.pool, auth));
-    app.route("/", aiAccessRoutes(opt.pool, auth, opt.ai));
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", careProfileRoutes(opt.pool));
     bindWishlist(app, opt.pool, auth, opt);
@@ -159,7 +158,9 @@ export function createApp(opt: AppOptions = {}): Hono {
     });
     const care = careOptions(opt);
     bindCareOne(app, opt.pool, auth, care);
-    bindToday(app, opt.pool, auth, { ...care, ...todaySources(opt.pool, opt) });
+    const today = { ...care, ...todaySources(opt.pool, opt) };
+    bindToday(app, opt.pool, auth, today);
+    app.route("/", aiAccessRoutes(opt.pool, auth, opt.ai, todayStatusSource(opt.pool, today)));
   }
   return app;
 }

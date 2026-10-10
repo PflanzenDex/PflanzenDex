@@ -49,6 +49,11 @@ export function todayDependencies(pool: Pool, opt: TodayOptions) {
   };
 }
 
+/** The central status function as a port for the AI interface (US-KI-02): the same derivation as "Today" and the reminders. */
+export const todayStatusSource =
+  (pool: Pool, opt: TodayOptions) => (userId: string, timeZone: unknown) =>
+    todayStatus(todayDependencies(pool, opt), userId, timeZone);
+
 /**
  * The central "Today" list (TE-07): read only, derived on every request from the keeper's own data (P-01, P-04), through
  * the one `status` function of `core` that reminders and the AI status use as well (R-04). `timeZone` (IANA name)
