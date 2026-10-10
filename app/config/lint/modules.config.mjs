@@ -72,8 +72,15 @@ const MODULES = [
   {
     name: "monitoring",
     epics: ["MON"],
-    tables: ["reminder", "watering_log", "sensor", "measurements", "delivery_channel"],
-    dependsOn: ["kernel", "collection"],
+    tables: [
+      "reminder",
+      "reminder_setting",
+      "watering_log",
+      "sensor",
+      "measurements",
+      "delivery_channel",
+    ],
+    dependsOn: ["kernel", "collection", "jobs"],
     ports: ["OccasionSource"],
   },
   {

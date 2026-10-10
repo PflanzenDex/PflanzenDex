@@ -9,6 +9,7 @@ export * from "./wishlist/index.ts";
 export * from "./pokedex/index.ts";
 export * from "./social/index.ts";
 export * from "./swap/index.ts";
+export * from "./monitoring/index.ts";
 export * from "./jobs/index.ts";
 export * from "./pokedex/index.ts";
 export { findSchemaViolations } from "./schema-check.ts";

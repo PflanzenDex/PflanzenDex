@@ -36,6 +36,7 @@ import { bindHealth } from "./health";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
 import { discoverRoutes } from "./discover";
+import { monitoringRoutes } from "./monitoring";
 import {
   CARE_PATHS,
   CARE_PHASES_PATHS,
@@ -183,6 +184,7 @@ export function createApp(opt: AppOptions = {}): Hono {
     for (const path of POKEDEX_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", pokedexRoutes(opt.pool));
     app.route("/", discoverRoutes(opt.pool, auth, opt.zoneStock));
+    app.route("/", monitoringRoutes(opt.pool, auth));
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", careProfileRoutes(opt.pool));
     bindWishlist(app, opt.pool, auth, opt);

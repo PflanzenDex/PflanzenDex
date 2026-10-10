@@ -60,6 +60,8 @@ export const ERROR_TEXTS = {
     "Diesen Freundescode gibt es nicht. Prüfe die Eingabe oder bitte um einen neuen Code.",
   "friend.code_used": "Dieser Freundescode wurde schon benutzt. Bitte um einen neuen Code.",
   "friend.code_expired": "Dieser Freundescode ist abgelaufen. Bitte um einen neuen Code.",
+  "monitoring.subscription_limit":
+    "Du hast schon so viele Geräte für Benachrichtigungen angemeldet, wie möglich sind. Entferne ein Gerät und versuche es erneut.",
   "friend.own_code": "Das ist dein eigener Freundescode. Gib ihn an jemand anderen weiter.",
   "friend.already_linked":
     "Mit dieser Person gibt es schon eine Anfrage oder Freundschaft. Es wurde nichts geändert und der Code ist nicht verbraucht.",

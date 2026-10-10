@@ -129,6 +129,8 @@ Acceptance criteria:
 - If the client adds knowledge about the species, it marks what does not come from the catalog (KI-R5).
 - Discover works completely without AI (FR-KI-05).
 
+Gap, noted by the PO assistant (US-ENT-08 not started): the operations `suggestions` (`GET /discover/suggestions`) and `decide` (`POST /discover/decisions`) exist and run without AI (FR-KI-05), so the part that needs no AI client is in place. Missing and blocked by the AI access (release R4): the connection of the client (US-KI-07, E-04), the tool definitions that expose both operations to it, the right model "write, otherwise draft" for `decide` (US-KI-09) and the marking of knowledge that does not come from the catalog (KI-R5).
+
 ## Data model
 
 ### DM-ENT-01 Species attributes (extension of DM-BES-01)
