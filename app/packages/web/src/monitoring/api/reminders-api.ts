@@ -1,5 +1,5 @@
 import type { ReminderRow, ReminderSettings } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../../kernel";
+import { call, createWrite, currentTimeZone, type Response } from "../../kernel";
 
 type FetchFn = typeof fetch;
 
@@ -51,3 +51,39 @@ export const removeSubscription = (
   endpoint: string,
   fetchFn: FetchFn = fetch,
 ) => createWrite(api, token, fetchFn)("DELETE", "/reminders/subscriptions", { endpoint });
+
+/** A plant that is due to be watered today (US-MON-05). */
+export interface WateringDueRow {
+  readonly specimenId: string;
+  readonly name: string;
+  readonly intervalDays: number;
+  readonly lastWateredOn: string | null;
+  readonly daysSince: number;
+}
+
+/** The plants due to be watered today, derived on every request in the zone of the profile (US-MON-05, NFR-08). */
+export async function loadWateringDue(
+  api: string,
+  token: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<readonly WateringDueRow[]>> {
+  const zone = encodeURIComponent(currentTimeZone());
+  const r = await call<{ due: readonly WateringDueRow[] }>(
+    fetchFn,
+    `${api}/watering/due?timeZone=${zone}`,
+    token,
+  );
+  return r.ok ? { ok: true, value: r.value.due } : r;
+}
+
+/** "Gegossen" for one or several specimens; the server takes today's date in the zone of the profile. */
+export const markWatered = (
+  api: string,
+  token: string,
+  specimenIds: readonly string[],
+  fetchFn: FetchFn = fetch,
+) =>
+  createWrite(api, token, fetchFn)("POST", "/watering", {
+    specimenIds,
+    timeZone: currentTimeZone(),
+  });

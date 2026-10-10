@@ -16,9 +16,10 @@ import {
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import { errorBody, statusFor, type AuthEnv } from "../kernel";
+import { wateringRoutes } from "./watering-routes";
 
 /** Paths the sign-in guard (bearer token) must cover. */
-export const TODAY_PATHS = ["/today"] as const;
+export const TODAY_PATHS = ["/today", "/watering"] as const;
 
 export type TodayOptions = {
   /** The clock for "today" (NFR-08); tests pin it. */
@@ -60,5 +61,6 @@ export function todayRoutes(pool: Pool, opt: TodayOptions): Hono<AuthEnv> {
     const r = await todayStatus(deps, c.get("account").id, c.req.query("timeZone"));
     return r.ok ? c.json(r.value) : c.json(errorBody(r.error), statusFor(r.error));
   });
+  routes.route("/", wateringRoutes(pool, opt.clock ?? (() => new Date())));
   return routes;
 }

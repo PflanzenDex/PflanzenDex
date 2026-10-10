@@ -144,3 +144,23 @@ export interface ReminderChannel {
 export interface ReminderRoster {
   accounts(): Promise<readonly { readonly userId: string; readonly timeZone: string }[]>;
 }
+
+/** One entry of the watering log (DM-MON-01): the local calendar date on which the specimen was watered (NFR-08). */
+export interface WateringEntry {
+  readonly specimenId: string;
+  readonly date: string;
+}
+
+/**
+ * Port for the watering log (US-MON-05); every call is for the account `userId` only (P-04). `sensor` entries
+ * (US-MON-06) will come through the same table; today only `manual` ones are written.
+ */
+export interface WateringStore {
+  /** The latest watering date per specimen over all sources; specimens never watered are absent. */
+  lastWatered(userId: string, specimenIds: readonly string[]): Promise<ReadonlyMap<string, string>>;
+  /**
+   * Writes the manual entries of one call in one transaction. One entry per specimen and day: a repeat creates
+   * nothing new. Returns how many entries are new.
+   */
+  record(userId: string, entries: readonly WateringEntry[]): Promise<{ readonly created: number }>;
+}
