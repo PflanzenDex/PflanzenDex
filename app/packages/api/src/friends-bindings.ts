@@ -17,6 +17,7 @@ import {
   offerDependencies,
   offerRoutes,
   swapRoutes,
+  swappedSourceFor,
 } from "./swap";
 
 /** The modules `social` (friends, sharing, feed) and `swap` (offers, exchange): sign-in guard in front of the paths, then the routes. */
@@ -32,7 +33,7 @@ export function bindFriends(app: Hono, pool: Pool, auth: MiddlewareHandler, cloc
     app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", friendRoutes(pool, clock, cancelOrphanedSwaps(pool)));
   app.route("/", sharingRoutes(pool));
-  app.route("/", feedRoutes(pool, clock));
+  app.route("/", feedRoutes(pool, clock, swappedSourceFor(pool)));
   const swapOptions = { ...(clock ? { clock } : {}) };
   app.route("/", offerRoutes(pool, swapOptions));
   app.route("/", swapRoutes(pool, clock));

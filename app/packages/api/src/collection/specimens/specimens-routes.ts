@@ -76,7 +76,7 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
     targetLocation: opt.targetLocation ?? NO_TARGET_LOCATION,
     clock,
   });
-  const repot = specimenRepot({ specimens });
+  const repot = specimenRepot({ specimens, clock });
   const correct = specimenCorrectCatchDate({ specimens, clock });
   const cardsDeps = cardsDependencies(pool, specimens, opt);
   const routes = new Hono<AuthEnv>();
@@ -120,7 +120,7 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   );
   // US-BES-04: a cutting becomes a plant; only the status changes (P-03, with `Idempotency-Key`).
   routes.post("/specimens/:id/repot", async (c) =>
-    write(c, deps, repot, { input: { specimenId: c.req.param("id") } }),
+    write(c, deps, repot, { input: { ...(await body(c)), specimenId: c.req.param("id") } }),
   );
   // US-BES-11: correct the catch date; only `caught_at` changes, same rules as on creation (P-03, `Idempotency-Key`).
   routes.post("/specimens/:id/catch-date", async (c) =>

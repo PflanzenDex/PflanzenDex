@@ -127,9 +127,13 @@ export class SpecimenPostgres {
    * One statement: only a cutting becomes a plant (US-BES-04). Plants and archived specimens stay unchanged and report
    * `not_a_cutting`; foreign specimens are invisible to the row rule.
    */
-  async repot(userId: string, id: string): Promise<SpecimenRow | "not_found" | "not_a_cutting"> {
-    const sql = `update specimen set status = 'plant' where id = $1 and status = 'cutting' returning ${COLUMNS}`;
-    return this.change(userId, { sql, parameter: [id] }, "not_a_cutting");
+  async repot(
+    userId: string,
+    id: string,
+    date: string | null,
+  ): Promise<SpecimenRow | "not_found" | "not_a_cutting"> {
+    const sql = `update specimen set status = 'plant', repotted_at = $2::date where id = $1 and status = 'cutting' returning ${COLUMNS}`;
+    return this.change(userId, { sql, parameter: [id, date] }, "not_a_cutting");
   }
 
   /**
