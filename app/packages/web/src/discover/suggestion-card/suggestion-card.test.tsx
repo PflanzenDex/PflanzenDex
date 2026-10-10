@@ -18,6 +18,7 @@ const suggestion = (extra: Partial<Suggestion> = {}): Suggestion => ({
   sourceUrl: "https://en.wikipedia.org/wiki/Aglaonema_commutatum",
   attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
   reasons: ["Diese Art hast du noch nicht gefangen."],
+  exploration: false,
   ...extra,
 });
 const show = (s: Suggestion) => render(<SuggestionCard suggestion={s} onSwipe={() => undefined} />);
@@ -67,5 +68,21 @@ describe("US-QS-06 sources and licenses on the suggestion card (FR-POK-07)", () 
   it("US-QS-06 nothing from Wikipedia on the card: no attribution", () => {
     show(suggestion({ summary: null, imageUrl: null, sourceUrl: null }));
     expect(screen.queryByText(/Wikipedia/)).toBeNull();
+  });
+});
+
+describe("US-ENT-06 exploration cards are marked", () => {
+  it("US-ENT-06 marks an exploration card as something different, and a normal card not", () => {
+    show(
+      suggestion({
+        exploration: true,
+        reasons: ["Aus der Ordnung Cycadales hast du noch keine Art im Pokédex."],
+      }),
+    );
+    expect(screen.getByText("Mal etwas anderes")).toBeTruthy();
+    expect(screen.getByText(/Aus der Ordnung Cycadales/)).toBeTruthy();
+    cleanup();
+    show(suggestion());
+    expect(screen.queryByText("Mal etwas anderes")).toBeNull();
   });
 });

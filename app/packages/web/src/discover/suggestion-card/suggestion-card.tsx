@@ -1,5 +1,6 @@
 import type { Suggestion, SuggestionAttributes } from "@pflanzendex/core";
 import { useRef, type PointerEvent } from "react";
+import { Badge } from "@/components/ui/display/badge/badge";
 import { cn } from "@/lib/utils";
 import { swipeDirection } from "../swipe/swipe";
 import { WikipediaSource } from "@/components/collector-card/collector-card";
@@ -114,6 +115,11 @@ export function SuggestionCard(props: {
     >
       <Picture s={s} />
       <div>
+        {s.exploration && (
+          <Badge variant="secondary" className="mb-1">
+            Mal etwas anderes
+          </Badge>
+        )}
         <h2 id="suggestion-title" tabIndex={-1} className="m-0 scroll-mb-24 text-xl font-semibold">
           {s.species}
         </h2>

@@ -18,6 +18,7 @@ const suggestion = (
   sourceUrl: "https://de.wikipedia.org/wiki/Zimmerpflanze",
   attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
   reasons: [reason],
+  exploration: false,
 });
 
 const deck: SuggestionDeck = {

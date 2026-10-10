@@ -8,6 +8,7 @@ const card = (extra: Partial<CollectorCard>): CollectorCard => ({
   number: 1,
   species: "Ficus benjamina",
   state: "missing",
+  order: null,
   germanName: null,
   germanNameFull: null,
   summary: null,

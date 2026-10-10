@@ -6,6 +6,9 @@ import type { WishStore, ZoneStockSource } from "../../wishlist";
 /** Starting value of the deck size (DM-ENT-03, assumption, readjustable). */
 export const DECK_SIZE = 10;
 
+/** Starting value of the exploration cards per deck (DM-ENT-03, US-ENT-06, assumption, readjustable). */
+export const EXPLORATION_PER_DECK = 2;
+
 /**
  * The attributes of DM-ENT-01. The catalog does not carry them yet, so every value is `null` ("unbekannt", FR-ENT-04)
  * until the enrichment exists; no value is guessed (P-08).
@@ -36,6 +39,8 @@ export interface Suggestion {
   readonly attributes: SuggestionAttributes;
   /** 1 to 3 reasons from the own data, no percentage and no "match" (FR-ENT-06). */
   readonly reasons: readonly string[];
+  /** An exploration card, shown as "something different" (US-ENT-06): outside the keeper's pattern. */
+  readonly exploration: boolean;
 }
 
 /** Why there is nothing to suggest, and what to do next (P-09). */
@@ -59,4 +64,6 @@ export interface SuggestionsDependencies {
   readonly wishes: Pick<WishStore, "open" | "bought" | "discarded">;
   /** Stock per light zone 2 to 4 (US-LIC-02) for the space reason; without it no space reason arises (P-08). */
   readonly stock?: Pick<ZoneStockSource, "stock">;
+  /** The clock for the local day that fixes the exploration picks (FR-ENT-05); defaults to the system clock. */
+  readonly clock?: () => Date;
 }

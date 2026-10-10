@@ -20,6 +20,7 @@ const card = (species: string, extra: Partial<CollectorCard> = {}): CollectorCar
   imageUrl: "https://upload.example/x.jpg",
   sourceUrl: "https://de.wikipedia.org/wiki/X",
   family: "Moraceae",
+  order: null,
   caughtDate: null,
   specimenCount: 0,
   ...extra,
@@ -128,7 +129,8 @@ describe("US-ENT-01 suggestions", () => {
     const anna = await suggestions(deps, "anna", "Europe/Berlin");
     expect(names(anna.suggestions)).toEqual(["Ficus lyrata"]);
     const ben = await suggestions(deps, "ben", "Europe/Berlin");
-    expect(names(ben.suggestions)).toEqual(["Aloe vera", "Ficus lyrata"]);
+    // One of the two explores (US-ENT-06) and moves inside the deck; both are there.
+    expect(names(ben.suggestions).sort()).toEqual(["Aloe vera", "Ficus lyrata"]);
   });
 
   it("US-ENT-01 says the catalog is empty when the tree has no species", async () => {

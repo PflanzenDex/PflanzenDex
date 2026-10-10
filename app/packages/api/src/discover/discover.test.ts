@@ -29,7 +29,11 @@ const get = (sub: string | null, query = "timeZone=Europe%2FBerlin") =>
   app.request(`/discover/suggestions?${query}`, {
     headers: sub ? { authorization: `Bearer valid:${sub}` } : {},
   });
-type Deck = { deck: number; suggestions: { species: string; reasons: string[] }[]; empty: unknown };
+type Deck = {
+  deck: number;
+  suggestions: { species: string; reasons: string[]; exploration: boolean }[];
+  empty: unknown;
+};
 const mine = async (sub: string, query?: string) => (await (await get(sub, query)).json()) as Deck;
 // All decks in order, not only the first: foreign taxa left in the shared database may fill deck 1 (size 10).
 const cards = async (sub: string) => {
@@ -223,10 +227,33 @@ describe("US-ENT-05 suggestions learn from decisions through the API", () => {
       body: JSON.stringify({ species: liked, decision: "yes", timeZone: "Europe/Berlin" }),
     });
     expect(yes.status).toBe(200);
-    const mineCard = (await cards(other)).find((s) => s.species === `${genus} verwandt`);
-    expect(mineCard?.reasons.join(" ")).toContain("Du hast 1 Art der Gattung");
-    const theirs = (await cards(keeper)).find((s) => s.species === `${genus} verwandt`);
+    // One species of the family explores (US-ENT-06) and shows its own reason; the others show the preference.
+    const genusCards = (sub: string) =>
+      cards(sub).then((all) => all.filter((c) => c.species.startsWith(genus) && !c.exploration));
+    expect((await genusCards(other)).map((c) => c.reasons.join(" "))).toContainEqual(
+      expect.stringContaining("Du hast 1 Art der Gattung"),
+    );
     // The keeper has decided on other species: the count comes from the own wishes only.
-    expect(theirs?.reasons.join(" ")).not.toContain("Du hast 1 Art der Gattung");
+    expect((await genusCards(keeper)).map((c) => c.reasons.join(" ")).join(" ")).not.toContain(
+      "Du hast 1 Art der Gattung",
+    );
+  });
+});
+
+describe("US-ENT-06 exploration through the API", () => {
+  it("US-ENT-06 marks exploration cards with a reason from the own Pokédex and shows no card twice", async () => {
+    const all = await cards(other);
+    const exploring = all.filter((s) => s.exploration);
+    expect(exploring.length).toBeGreaterThan(0);
+    for (const s of exploring)
+      expect(s.reasons[0]).toMatch(
+        /^Aus der (Ordnung|Familie) .* hast du noch keine Art im Pokédex\.$/,
+      );
+    const names = all.map((s) => s.species);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  it("US-ENT-06 the same account and day get the same first deck on every reload (FR-ENT-05)", async () => {
+    expect(await mine(other)).toEqual(await mine(other));
   });
 });

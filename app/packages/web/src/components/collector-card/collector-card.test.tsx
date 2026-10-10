@@ -10,6 +10,7 @@ const card = (extra: Partial<Card> = {}): Card => ({
   number: 7,
   species: "Ficus benjamina",
   state: "missing",
+  order: null,
   germanName: "Birkenfeige",
   germanNameFull: "Birkenfeige (Zimmerlinde)",
   summary: "Ein Baum.",

@@ -10,29 +10,15 @@ import {
   type Decisions,
   type Tally,
 } from "../preferences";
+import { localToday } from "../../kernel";
+import { explorationPlan } from "../exploration";
 import {
-  DECK_SIZE,
-  type NoSuggestions,
+  EXPLORATION_PER_DECK,
   type Suggestion,
   type SuggestionDeck,
   type SuggestionsDependencies,
 } from "./types";
-
-const NOTHING_LEFT: NoSuggestions = {
-  reason: "all_decided",
-  text: "Keine neuen Vorschläge: Du besitzt alle Arten des Katalogs oder hast dich schon entschieden.",
-  nextAction: "Schlage eine neue Art für den Katalog vor.",
-};
-const EMPTY_CATALOG: NoSuggestions = {
-  reason: "catalog_empty",
-  text: "Keine neuen Vorschläge: Der Katalog hat noch keine Arten.",
-  nextAction: "Schlage eine Art für den Katalog vor.",
-};
-const DECK_DONE: NoSuggestions = {
-  reason: "deck_exhausted",
-  text: "Keine weiteren Vorschläge: Dieser Stapel ist der letzte.",
-  nextAction: "Schlage eine neue Art für den Katalog vor.",
-};
+import { EMPTY_CATALOG, exploringDeckOf } from "./deck";
 
 /** At most 3 reasons are shown (US-ENT-03). */
 const MAX_REASONS = 3;
@@ -90,6 +76,7 @@ function suggestionOf(card: CollectorCard, reasons: readonly string[]): Suggesti
     sourceUrl: card.sourceUrl,
     attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
     reasons,
+    exploration: false,
   };
 }
 
@@ -118,18 +105,6 @@ export function candidatesOf(
   return scored.sort((a, b) => b.rank - a.rank).map(({ c, reasons }) => suggestionOf(c, reasons));
 }
 
-/** Pure: deck number `deck` (1-based) of `size` cards, or the reason why there is none. */
-export function deckOf(
-  candidates: readonly Suggestion[],
-  deck: number,
-  size: number = DECK_SIZE,
-): SuggestionDeck {
-  const suggestions = candidates.slice((deck - 1) * size, deck * size);
-  if (suggestions.length > 0) return { deck, suggestions, empty: null };
-  const reason = deck > 1 && candidates.length > 0 ? DECK_DONE : NOTHING_LEFT;
-  return { deck, suggestions, empty: reason };
-}
-
 /** The ordered candidates of the account with the zone stock and the wished names they were derived from (P-04). */
 export async function candidatesFor(
   deps: SuggestionsDependencies,
@@ -152,6 +127,7 @@ export async function candidatesFor(
   };
   return {
     catalogEmpty: cards.length === 0,
+    cards,
     names,
     stock,
     candidates: candidatesOf(cards, names, stock, decisions),
@@ -165,7 +141,13 @@ export async function suggestions(
   timeZone: string,
   deck = 1,
 ): Promise<SuggestionDeck> {
-  const { catalogEmpty, candidates } = await candidatesFor(deps, userId, timeZone);
+  const { catalogEmpty, candidates, cards, names } = await candidatesFor(deps, userId, timeZone);
   if (catalogEmpty) return { deck, suggestions: [], empty: EMPTY_CATALOG };
-  return deckOf(candidates, deck);
+  // The picks are fixed per account and local day (FR-ENT-05); the deck number is part of the choice inside a group.
+  const seed = `${userId}|${localToday((deps.clock ?? (() => new Date()))(), timeZone)}`;
+  return exploringDeckOf(
+    candidates,
+    explorationPlan(cards, names, seed, EXPLORATION_PER_DECK),
+    deck,
+  );
 }
