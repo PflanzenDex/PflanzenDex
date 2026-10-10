@@ -7,7 +7,8 @@
     "dev": "tsx watch src/main.ts",
     "typecheck": "tsc --noEmit -p .",
     "test": "vitest run",
-    "perf:measure": "tsx perf/measure.ts"
+    "perf:measure": "tsx perf/measure.ts",
+    "seed:catalog": "tsx perf/catalog-seed/run-seed.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1147.0",
