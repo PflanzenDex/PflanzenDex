@@ -31,4 +31,5 @@ export const FIXTURES_AI_ACCESS: Fixtures = {
       source: "https://example.test/source",
     };
   },
+  ai_task: () => ({ type: "species_profile", reference: "Fixture", label: "Fixture" }),
 };

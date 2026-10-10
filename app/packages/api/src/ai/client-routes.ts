@@ -7,11 +7,13 @@ import {
   type ConnectionStore,
   type PhotoSource,
   type StatusSource,
+  type TaskStore,
 } from "@pflanzendex/core";
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import { errorBody, statusFor } from "../kernel";
 import { clientPhotoRoutes } from "./client-photo-routes";
+import { clientTaskRoutes } from "./tasks/client-task-routes";
 import { clientDraftRoutes } from "./client-draft-routes";
 import { clientAuthentication, type AiEnv } from "./client-auth";
 import type { AiAccessOptions } from "./ai-routes";
@@ -32,9 +34,10 @@ export function clientRoutes(
     photo: PhotoSource;
     drafts: DraftStore;
     types: DraftTypes;
+    tasks: TaskStore;
   },
 ): Hono<AiEnv> {
-  const { connections, log, status, drafts, types, photo } = stores;
+  const { connections, log, status, drafts, types, photo, tasks } = stores;
   const client = new Hono<AiEnv>();
   const clock = opt.clock ?? (() => new Date());
   const metadataUrl = `${new URL(opt.resource).origin}${WELL_KNOWN}`;
@@ -73,6 +76,7 @@ export function clientRoutes(
     return r.ok ? c.json(r.value) : c.json(errorBody(r.error), statusFor(r.error));
   });
   client.route("/", clientPhotoRoutes(guard, { photo, log }, clock));
-  client.route("/", clientDraftRoutes(guard, { drafts, types, log }, clock));
+  client.route("/", clientDraftRoutes(guard, { drafts, types, log, tasks }, clock));
+  client.route("/", clientTaskRoutes(guard, { tasks, log }, opt.resource, clock));
   return client;
 }

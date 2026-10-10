@@ -12,6 +12,7 @@ import {
   ConnectionsPostgres,
   DraftsPostgres,
   IdempotencyPostgres,
+  TasksPostgres,
 } from "@pflanzendex/db";
 import { Hono, type MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
@@ -20,9 +21,10 @@ import type { TokenVerifier } from "../account";
 import { clientRoutes } from "./client-routes";
 import { draftRoutes } from "./draft-routes";
 import { draftTypes } from "./draft-types";
+import { taskRoutes } from "./tasks/task-routes";
 
 /** Paths the sign-in guard of the web app (bearer token) must cover: the keeper's list of connections. */
-const KEEPER_PATHS = ["/ai/connections", "/ai/log", "/ai/drafts"] as const;
+const KEEPER_PATHS = ["/ai/connections", "/ai/log", "/ai/drafts", "/ai/tasks"] as const;
 export interface AiAccessOptions {
   /** Verifies the tokens of AI clients (audience = `resource`). */
   readonly verifier: TokenVerifier;
@@ -80,6 +82,8 @@ export function aiAccessRoutes(
   const drafts = new DraftsPostgres(pool);
   const types = draftTypes(pool);
   routes.route("/", draftRoutes(pool, { drafts, types, log }, clock));
-  routes.route("/", clientRoutes(pool, opt, { connections, log, ...ports, drafts, types }));
+  const tasks = new TasksPostgres(pool);
+  routes.route("/", taskRoutes(pool, { tasks, connections }, opt.resource, clock));
+  routes.route("/", clientRoutes(pool, opt, { connections, log, ...ports, drafts, types, tasks }));
   return routes;
 }
