@@ -8,10 +8,10 @@ import {
   orNull,
   shape,
   textField,
-} from "../../kernel";
-import type { SpecimenStore } from "../../collection";
-import { measurementPhotoFile, type PhotoFileDependencies } from "./capture/file";
-import { MEASUREMENT_LIMITS, QUALITIES, type MeasurementStore } from "./types";
+} from "../../../kernel";
+import type { SpecimenStore } from "../../../collection";
+import { measurementPhotoFile, type PhotoFileDependencies } from "../capture/file";
+import { MEASUREMENT_LIMITS, QUALITIES, type MeasurementStore } from "../types";
 
 export interface AssessDependencies {
   readonly measurements: Pick<MeasurementStore, "get" | "assess">;

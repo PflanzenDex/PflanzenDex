@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { execute } from "../../kernel";
-import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
-import { InMemoryMeasurements } from "../shared/test-helpers";
+import { execute } from "../../../kernel";
+import { InMemoryIdempotencyStore } from "../../../kernel/test-helpers";
+import { InMemoryMeasurements } from "../../shared/test-helpers";
 import { measurementAssess } from "./assess";
 
 const idempotency = new InMemoryIdempotencyStore();
