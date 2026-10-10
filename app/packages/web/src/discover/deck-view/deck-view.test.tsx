@@ -27,6 +27,7 @@ const saveOk = async () => ({
 const deck: SuggestionDeck = {
   deck: 1,
   empty: null,
+  zoneFilter: null,
   suggestions: [suggestion("Ficus lyrata"), suggestion("Aloe vera")],
 };
 
@@ -56,5 +57,42 @@ describe("US-QS-14 decision buttons stay with the card", () => {
     render(<DeckView deck={deck} onDecide={saveOk} onNewDeck={() => undefined} />);
     const row = screen.getByRole("button", { name: "Ja" }).parentElement?.parentElement;
     expect(row?.className).toContain("[@media(max-height:30rem)]:static");
+  });
+});
+
+describe("US-ENT-07 deck for one zone", () => {
+  const filtered = (shortfall: { text: string; nextAction: string } | null): SuggestionDeck => ({
+    ...deck,
+    zoneFilter: { zone: 3, name: "Lampe 3", available: 2, shortfall },
+  });
+
+  it("US-ENT-07 names the zone the deck is filtered to", () => {
+    render(<DeckView deck={filtered(null)} onDecide={saveOk} onNewDeck={() => undefined} />);
+    expect(screen.getByText("Vorschläge für Lampe 3")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Art vorschlagen" })).toBeNull();
+  });
+
+  it("US-ENT-07 says the catalog does not suffice and offers the proposal of a species (P-09)", () => {
+    const text = "Für Lampe 3 gibt es im Katalog nur 2 passende Arten (Puffer: 3).";
+    render(
+      <DeckView
+        deck={filtered({ text, nextAction: "Du kannst eine Art vorschlagen." })}
+        onDecide={saveOk}
+        onNewDeck={() => undefined}
+      />,
+    );
+    expect(screen.getByText(text)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Art vorschlagen" })).toBeTruthy();
+  });
+
+  it("US-ENT-07 an empty zone still shows the shortfall, not only the generic empty text (P-10)", () => {
+    const text = "Für Lampe 3 gibt es im Katalog nur 0 passende Arten (Puffer: 2).";
+    const empty: SuggestionDeck = {
+      ...filtered({ text, nextAction: "Du kannst eine Art vorschlagen." }),
+      suggestions: [],
+      empty: { reason: "all_decided", text: "Keine neuen Vorschläge.", nextAction: "Weiter." },
+    };
+    render(<DeckView deck={empty} onDecide={saveOk} onNewDeck={() => undefined} />);
+    expect(screen.getByText(text)).toBeTruthy();
   });
 });

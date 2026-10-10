@@ -134,7 +134,7 @@ describe("US-ENT-06 the deck", () => {
     wishes: new InMemoryWishes(),
     clock: () => new Date(`${day}T12:00:00Z`),
   });
-  const deck = (day: string, n = 1) => suggestions(deps(day), "anna", "Europe/Berlin", n);
+  const deck = (day: string, n = 1) => suggestions(deps(day), "anna", "Europe/Berlin", { deck: n });
 
   it("US-ENT-06 puts the exploration cards into the deck, marked as something different, within the deck size", async () => {
     const first = await deck("2026-10-10");

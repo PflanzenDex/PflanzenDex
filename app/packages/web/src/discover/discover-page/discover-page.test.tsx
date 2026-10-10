@@ -23,10 +23,16 @@ const suggestion = (species: string, extra: Record<string, unknown> = {}) => ({
   ],
   ...extra,
 });
-const deckOf = (...suggestions: unknown[]) => ({ deck: 1, suggestions, empty: null });
+const deckOf = (...suggestions: unknown[]) => ({
+  deck: 1,
+  suggestions,
+  empty: null,
+  zoneFilter: null,
+});
 const nothing = {
   deck: 1,
   suggestions: [],
+  zoneFilter: null,
   empty: {
     reason: "all_decided",
     text: "Keine neuen Vorschläge: Du besitzt alle Arten des Katalogs oder hast dich schon entschieden.",
@@ -298,5 +304,27 @@ describe("US-ENT-04 decisions are saved", () => {
     expect(await screen.findByRole("alert")).toBeTruthy();
     expect(screen.getByText("Vorschlag 1 von 2")).toBeTruthy();
     expect(screen.queryByText(/Für heute durch/)).toBeNull();
+  });
+});
+
+describe("US-ENT-07 Discover for a zone", () => {
+  it("US-ENT-07 asks the server for the zone and shows which zone the deck is for", async () => {
+    const fetchFn = fakeServer(async () =>
+      response(200, {
+        ...deckOf(suggestion("Aspidistra elatior")),
+        zoneFilter: { zone: 3, name: "Lampe 3", available: 5, shortfall: null },
+      }),
+    );
+    render(<DiscoverPage api="http://api" token={token} zone={3} />);
+    await card();
+    expect(screen.getByText("Vorschläge für Lampe 3")).toBeTruthy();
+    expect(String(fetchFn.mock.calls[0]?.[0])).toContain("zone=3");
+  });
+
+  it("US-ENT-07 without a zone the request carries no zone", async () => {
+    const fetchFn = fakeServer(async () => response(200, deckOf(suggestion("Aspidistra elatior"))));
+    render(<DiscoverPage api="http://api" token={token} />);
+    await card();
+    expect(String(fetchFn.mock.calls[0]?.[0])).not.toContain("zone=");
   });
 });

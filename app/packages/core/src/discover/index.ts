@@ -7,5 +7,7 @@ export type {
   Suggestion,
   SuggestionAttributes,
   SuggestionDeck,
+  SuggestionOptions,
+  ZoneFilter,
   SuggestionsDependencies,
 } from "./suggestions";

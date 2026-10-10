@@ -231,3 +231,70 @@ describe("US-ENT-03 reasons from own data", () => {
     expect(withStock.suggestions).toHaveLength(1);
   });
 });
+
+describe("US-ENT-07 deck filtered to a light zone", () => {
+  const facts = (latinName: string, lightZone: number) => ({
+    latinName,
+    germanName: null,
+    difficulty: 2,
+    lightZone,
+  });
+  const depsWith = (
+    zoneOf: Record<string, number>,
+    buffer?: number,
+  ): Parameters<typeof suggestions>[0] => ({
+    ownership: {
+      specimens: { list: async () => [] },
+      species: { find: async () => null, findMany: async () => [] },
+    },
+    tree: {
+      tree: async () => Object.keys(zoneOf).map((n) => row(n)),
+      facts: async () => Object.entries(zoneOf).map(([n, z]) => facts(n, z)),
+    },
+    wishes: new InMemoryWishes(),
+    stock: {
+      stock: async () => stock(1, 1, 1),
+      ...(buffer === undefined ? {} : { buffer: async () => buffer }),
+    },
+  });
+
+  it("US-ENT-07 shows only species of the chosen zone and names the zone", async () => {
+    const deps = depsWith({ "Ficus a": 3, "Ficus b": 4, "Ficus c": 3, "Ficus d": 3 });
+    const deck = await suggestions(deps, "anna", "Europe/Berlin", { zone: 3 });
+    expect(names(deck.suggestions).sort()).toEqual(["Ficus a", "Ficus c", "Ficus d"]);
+    expect(deck.zoneFilter).toMatchObject({ zone: 3, name: "Lampe 3", available: 3 });
+    expect(deck.zoneFilter?.shortfall).toBeNull();
+  });
+
+  it("US-ENT-07 says so and offers the proposal when fewer candidates than the buffer remain", async () => {
+    const deps = depsWith({ "Ficus a": 3, "Ficus b": 4 }, 2);
+    const deck = await suggestions(deps, "anna", "Europe/Berlin", { zone: 3 });
+    expect(deck.zoneFilter?.available).toBe(1);
+    expect(deck.zoneFilter?.shortfall?.text).toContain("Lampe 3");
+    expect(deck.zoneFilter?.shortfall?.nextAction).toContain("vorschlagen");
+  });
+
+  it("US-ENT-07 reads the buffer from the account and falls back to the default (2)", async () => {
+    const one = await suggestions(depsWith({ "Ficus a": 3 }, 1), "anna", "Europe/Berlin", {
+      zone: 3,
+    });
+    expect(one.zoneFilter?.shortfall).toBeNull();
+    const dflt = await suggestions(depsWith({ "Ficus a": 3 }), "anna", "Europe/Berlin", {
+      zone: 3,
+    });
+    expect(dflt.zoneFilter?.shortfall).not.toBeNull();
+  });
+
+  it("US-ENT-07 an empty zone gives an empty deck that still carries the shortfall (nothing disappears silently, P-10)", async () => {
+    const deck = await suggestions(depsWith({ "Ficus a": 4 }), "anna", "Europe/Berlin", {
+      zone: 3,
+    });
+    expect(deck.suggestions).toEqual([]);
+    expect(deck.zoneFilter?.shortfall).not.toBeNull();
+  });
+
+  it("US-ENT-07 without a filter the deck carries no zone filter", async () => {
+    const deck = await suggestions(depsWith({ "Ficus a": 3 }), "anna", "Europe/Berlin");
+    expect(deck.zoneFilter).toBeNull();
+  });
+});

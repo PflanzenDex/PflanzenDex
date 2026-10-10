@@ -90,6 +90,21 @@ describe("US-ENT-01 suggestions through the API", () => {
     }
   });
 
+  it("US-ENT-07 answers 400 input.invalid for a zone outside 2 to 4 and a zone filter for a valid one", async () => {
+    for (const zone of ["1", "5", "x", "2.5"]) {
+      const bad = await get(keeper, `timeZone=Europe%2FBerlin&zone=${zone}`);
+      expect(bad.status).toBe(400);
+      expect(((await bad.json()) as { error: { code: string } }).error.code).toBe("input.invalid");
+    }
+    const ok = (await (await get(keeper, "timeZone=Europe%2FBerlin&zone=3")).json()) as {
+      zoneFilter: { zone: number; shortfall: unknown };
+    };
+    expect(ok.zoneFilter.zone).toBe(3);
+    expect(ok.zoneFilter.shortfall).not.toBeUndefined();
+    const none = (await (await get(keeper)).json()) as { zoneFilter: unknown };
+    expect(none.zoneFilter).toBeNull();
+  });
+
   it("US-ENT-01 suggests a species with reasons and leaves out the species of an own wish, for the own account only", async () => {
     expect(await species(keeper)).toEqual(expect.arrayContaining([wished, open]));
     const made = await app.request("/wishes", {

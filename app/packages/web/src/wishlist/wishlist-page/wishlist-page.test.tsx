@@ -171,6 +171,7 @@ describe("US-WUN-01 page of the candidate list", () => {
         zones: [
           {
             zoneId: "z3",
+            zoneNumber: 3,
             name: "Fenster 3",
             open: 1,
             text: "Nachschub nötig: Fenster 3 (1 offener Kandidat)",

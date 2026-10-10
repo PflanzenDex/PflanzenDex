@@ -50,12 +50,33 @@ export interface NoSuggestions {
   readonly nextAction: string;
 }
 
+/** The deck is filtered to one light zone (US-ENT-07); says whether the catalog suffices for it. */
+export interface ZoneFilter {
+  /** Light zone 2 to 4 of the catalog. */
+  readonly zone: number;
+  /** Name of the account's zone; `null` = the account has no such zone. */
+  readonly name: string | null;
+  /** Candidates of the zone after the filters (all decks). */
+  readonly available: number;
+  /** Set when fewer candidates than the buffer remain: what the view says and what to do next (P-09). */
+  readonly shortfall: { readonly text: string; readonly nextAction: string } | null;
+}
+
 export interface SuggestionDeck {
   /** Deck number, starting at 1. */
   readonly deck: number;
   readonly suggestions: readonly Suggestion[];
   /** `null` while there are suggestions. */
   readonly empty: NoSuggestions | null;
+  /** `null` without a zone filter (US-ENT-07). */
+  readonly zoneFilter: ZoneFilter | null;
+}
+
+export interface SuggestionOptions {
+  /** Deck number, starting at 1 (default 1). */
+  readonly deck?: number;
+  /** Only species of this light zone 2 to 4 (US-ENT-07, "Discover for <zone>"). */
+  readonly zone?: number;
 }
 
 export interface SuggestionsDependencies {
@@ -63,7 +84,7 @@ export interface SuggestionsDependencies {
   readonly tree: TaxonCardSource;
   readonly wishes: Pick<WishStore, "open" | "bought" | "discarded">;
   /** Stock per light zone 2 to 4 (US-LIC-02) for the space reason; without it no space reason arises (P-08). */
-  readonly stock?: Pick<ZoneStockSource, "stock">;
+  readonly stock?: Pick<ZoneStockSource, "stock" | "buffer">;
   /** The clock for the local day that fixes the exploration picks (FR-ENT-05); defaults to the system clock. */
   readonly clock?: () => Date;
 }
