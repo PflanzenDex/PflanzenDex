@@ -51,6 +51,13 @@ export class InMemoryExchange implements ExchangeStore {
     };
   }
 
+  provenance: Record<string, Record<string, { from: string | null; date: string }>> = {};
+
+  async provenanceFor(userId: string, ids: readonly string[]) {
+    const mine = this.provenance[userId] ?? {};
+    return new Map(ids.flatMap((id) => (mine[id] ? [[id, mine[id]] as const] : [])));
+  }
+
   async cancelOrphaned(): Promise<number> {
     this.orphaned += 1;
     return 0;

@@ -45,16 +45,53 @@ function typeOf(s: SharedSpecimen, first: ReadonlyMap<string, string>): FeedType
 export function deriveEvents(friend: Friend, specimens: readonly SharedSpecimen[]): FeedEvent[] {
   const first = firstDays(specimens);
   const groups = new Map<string, FeedEvent>();
-  for (const s of specimens) {
-    const type = typeOf(s, first);
-    const id = JSON.stringify([speciesKey(s) ?? s.id, s.caughtAt, type]);
+  const add = (s: SharedSpecimen, type: FeedType, date: string | null) => {
+    const id = JSON.stringify([speciesKey(s) ?? s.id, date, type]);
     groups.set(id, {
       friendId: friend.id,
       friendName: friend.name,
       type,
       speciesLatin: s.speciesLatin,
       speciesGerman: s.speciesGerman,
-      date: s.caughtAt,
+      date,
+      count: (groups.get(id)?.count ?? 0) + 1,
+    });
+  };
+  for (const s of specimens) {
+    add(s, typeOf(s, first), s.caughtAt);
+    // "Potted" only with a known repot day: a shared plant that was never repotted, or whose day is unknown, adds none (P-08).
+    if (s.repottedAt) add(s, "potted", s.repottedAt);
+  }
+  return [...groups.values()];
+}
+
+/** A handed-over swap the viewer took part in (US-SOZ-11), as the port `SwappedSource` gives it. */
+export interface SwappedFact {
+  readonly otherId: string;
+  /** The handover instant (ISO 8601, UTC). */
+  readonly date: string;
+  readonly speciesLatin: string | null;
+  readonly speciesGerman: string | null;
+  readonly direction: "given" | "received";
+}
+
+/** "Swapped" events of the viewer with one current friend, one per species and local day (summarized). */
+export function swappedEvents(
+  friend: Friend,
+  facts: readonly SwappedFact[],
+  dayOf: (instant: string) => string,
+): FeedEvent[] {
+  const groups = new Map<string, FeedEvent>();
+  for (const f of facts) {
+    const date = dayOf(f.date);
+    const id = JSON.stringify([f.speciesLatin ?? f.speciesGerman, date]);
+    groups.set(id, {
+      friendId: friend.id,
+      friendName: friend.name,
+      type: "swapped",
+      speciesLatin: f.speciesLatin,
+      speciesGerman: f.speciesGerman,
+      date,
       count: (groups.get(id)?.count ?? 0) + 1,
     });
   }

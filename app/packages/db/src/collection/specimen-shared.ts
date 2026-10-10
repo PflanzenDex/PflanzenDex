@@ -13,6 +13,7 @@ export interface SpecimenRow {
   readonly createdAt: string | null;
   readonly archivedAt: string | null;
   readonly archivedReason: string | null;
+  readonly repottedAt: string | null;
 }
 
 // `date` and `timestamptz` come back as text: the driver would turn it into a `Date` in the server's time zone (NFR-08).
@@ -20,7 +21,7 @@ export const COLUMNS = `id, species_id as "speciesId", name, marker, location_id
   to_char(caught_at, 'YYYY-MM-DD') as "caughtAt",
   to_char(created_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as "createdAt",
   to_char(archived_at, 'YYYY-MM-DD') as "archivedAt",
-  archived_reason as "archivedReason"`;
+  archived_reason as "archivedReason", to_char(repotted_at, 'YYYY-MM-DD') as "repottedAt"`;
 
 export const FOREIGN_KEY = "23503";
 export const pgError = (e: unknown) => e as { code?: string; constraint?: string };

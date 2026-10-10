@@ -34,6 +34,7 @@ export async function friendView(
       name: f.name,
       caughtAt: f.caughtAt,
       isCutting: f.isCutting,
+      repottedAt: f.repottedAt ?? null,
       photoShared: photos.get(f.id) === true,
     })),
   };

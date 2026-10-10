@@ -1,5 +1,7 @@
 {
   "unreleased": [
+    "Neu bei Freunden: Der Block zeigt jetzt auch „Eingetopft“ (ein freigegebener Steckling wurde eingetopft) und „Getauscht“ (ein Tausch, an dem du beteiligt warst).",
+    "Tauschverlauf: In der Tauschbörse siehst du alle abgeschlossenen und beendeten Tausche mit Datum, Freund und Stand, auch nachdem eine Freundschaft beendet wurde. Ein getauschtes Exemplar zeigt auf seiner Karte, von wem du es erhalten hast.",
     "Übergabe bestätigen: Ist ein Tausch zugesagt, bestätigen beide Seiten die Übergabe. Dann wird das Exemplar bei dir archiviert und beim Freund als neues Exemplar angelegt, in einem Schritt. Gelingt etwas nicht, bleibt alles wie es war.",
     "Tauschanfragen beantworten: In der Tauschbörse siehst du die Anfragen an dich und deine eigenen Anfragen mit ihrem Stand. Du kannst annehmen, ablehnen (auf Wunsch mit Grund), etwas anderes vorschlagen oder eine Zusage zurückziehen. Wird ein Angebot zurückgezogen oder eine Freundschaft beendet, werden offene Anfragen abgebrochen.",
     "Angebote von Freunden: In der Tauschbörse siehst du jetzt, was deine Freunde zum Tausch oder Verschenken anbieten, mit Hinweis, wenn dir die Art fehlt oder auf deiner Wunschliste steht. Mit „Anfragen“ bittest du um das Exemplar, auf Wunsch mit einem eigenen Exemplar als Gegenangebot.",

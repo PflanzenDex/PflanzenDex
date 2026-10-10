@@ -1,6 +1,7 @@
 import {
   NO_TREATMENTS,
   NO_MEASUREMENTS,
+  NO_PROVENANCE,
   NO_TARGET_LOCATION,
   specimenCreate,
   specimenCorrectCatchDate,
@@ -13,6 +14,7 @@ import {
   isTimeZone,
   type TreatmentSource,
   type MeasurementSource,
+  type ProvenanceSource,
   type TargetLocationSource,
 } from "@pflanzendex/core";
 import {
@@ -43,6 +45,8 @@ export type SpecimenOptions = {
   measurements?: MeasurementSource | undefined;
   /** Open treatments per specimen; implemented by `care` (BEH), until then there are none (US-BES-06). */
   treatments?: TreatmentSource | undefined;
+  /** From whom received specimens came; implemented by `swap` (US-SOZ-13), until then the cards show none. */
+  provenance?: ProvenanceSource | undefined;
 };
 
 /** What the cards read (US-BES-06); the care profiles give the same effective zone as the distribution (#592). */
@@ -53,6 +57,7 @@ const cardsDependencies = (pool: Pool, specimens: SpecimenPostgres, opt: Specime
   zones: new ZonePostgres(pool),
   measurements: opt.measurements ?? NO_MEASUREMENTS,
   treatments: opt.treatments ?? NO_TREATMENTS,
+  provenance: opt.provenance ?? NO_PROVENANCE,
   profiles: new CareProfilePostgres(pool),
 });
 
@@ -71,7 +76,7 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
     targetLocation: opt.targetLocation ?? NO_TARGET_LOCATION,
     clock,
   });
-  const repot = specimenRepot({ specimens });
+  const repot = specimenRepot({ specimens, clock });
   const correct = specimenCorrectCatchDate({ specimens, clock });
   const cardsDeps = cardsDependencies(pool, specimens, opt);
   const routes = new Hono<AuthEnv>();
@@ -115,7 +120,7 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   );
   // US-BES-04: a cutting becomes a plant; only the status changes (P-03, with `Idempotency-Key`).
   routes.post("/specimens/:id/repot", async (c) =>
-    write(c, deps, repot, { input: { specimenId: c.req.param("id") } }),
+    write(c, deps, repot, { input: { ...(await body(c)), specimenId: c.req.param("id") } }),
   );
   // US-BES-11: correct the catch date; only `caught_at` changes, same rules as on creation (P-03, `Idempotency-Key`).
   routes.post("/specimens/:id/catch-date", async (c) =>

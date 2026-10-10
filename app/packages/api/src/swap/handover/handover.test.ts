@@ -12,12 +12,9 @@ type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 let pool: Pool;
 let admin: Pool;
 let releaseTaxa: (() => Promise<void>) | undefined;
-const [subA, subB, subC, subOp] = [0, 1, 2, 3].map(() => `soz11-${randomUUID()}`) as [
-  string,
-  string,
-  string,
-  string,
-];
+const [subA, subB, subC, subD, subE, subOp] = [0, 1, 2, 3, 4, 5].map(
+  () => `soz11-${randomUUID()}`,
+) as [string, string, string, string, string, string];
 const reviewer: TokenVerifier = async (token) => {
   const [kind, sub] = token.split(":");
   return kind === "valid" && sub
@@ -94,7 +91,7 @@ beforeAll(async () => {
   releaseTaxa = await holdTaxonLock(admin);
   await migrate(pool);
   app = createApp({ reviewer, pool, clock: () => NOW });
-  for (const sub of [subA, subB, subC, subOp]) await call(sub, "GET", "/account");
+  for (const sub of [subA, subB, subC, subD, subE, subOp]) await call(sub, "GET", "/account");
   await admin.query(
     "insert into account_role (account, role) select id, 'operator' from account where subject = $1",
     [subOp],
@@ -121,10 +118,12 @@ beforeAll(async () => {
   await call(subOp, "POST", `/review/${entry?.reviewCase.id}/decide`, { status: "reviewed" });
   await befriend(subA, subB);
   await befriend(subA, subC);
+  await befriend(subA, subD);
+  await befriend(subA, subE);
 }, 120_000);
 afterAll(async () => {
   const accounts = "select id from account where subject = any($1)";
-  const subs = [[subA, subB, subC, subOp]];
+  const subs = [[subA, subB, subC, subD, subE, subOp]];
   await admin.query(`delete from swap where account_id in (${accounts})`, subs);
   await admin.query(`delete from offer where account_id in (${accounts})`, subs);
   await admin.query(`delete from specimen where account_id in (${accounts})`, subs);
@@ -275,5 +274,146 @@ describe("US-SOZ-09 approved species, 'you lack it' and the wishlist hint in the
     const r = await call(subC, "GET", "/exchange/offers?timeZone=Europe%2FBerlin");
     expect(r.body.offers.find((x: { offerId: string }) => x.offerId === o).onWishlist).toBe(true);
     expect(JSON.stringify(r.body)).not.toContain('"wishes"');
+  });
+});
+
+describe("US-SOZ-13 swap history and provenance through the API", () => {
+  const history = async (sub: string | null) => call(sub, "GET", "/swaps/history");
+  type Entry = {
+    swapId: string;
+    friend: string | null;
+    direction: string;
+    status: string;
+    species: string | null;
+  };
+
+  it("without a token 401; a stranger has no history (P-04)", async () => {
+    expect((await history(null)).status).toBe(401);
+    expect((await history(subOp)).body.entries).toEqual([]);
+  });
+
+  it("both sides see the handed-over swap with the right direction, the friend's name and the species; open swaps are not history", async () => {
+    const done = await accepted("T2", "swap", subD);
+    await confirm(subA, done.swapId);
+    await confirm(subD, done.swapId, { marker: "t2" });
+    const open = await accepted("T3", "swap", subD);
+    const mine = (await history(subA)).body.entries as Entry[];
+    expect(mine.find((e) => e.swapId === done.swapId)).toMatchObject({
+      direction: "given",
+      status: "handed_over",
+      friend: expect.any(String),
+    });
+    expect(mine.map((e) => e.swapId)).not.toContain(open.swapId);
+    const theirs = (await history(subD)).body.entries as Entry[];
+    expect(theirs.find((e) => e.swapId === done.swapId)).toMatchObject({
+      direction: "received",
+      status: "handed_over",
+    });
+  });
+
+  it("declined, withdrawn and canceled swaps are part of the history with their reason", async () => {
+    const id = await specimen(subA, "T4");
+    await call(subA, "PUT", `/sharing/specimens/${id}`, { share: "friends" });
+    const offerId = (
+      await call(subA, "POST", "/offers", { specimenId: id, type: "cutting", mode: "swap" })
+    ).body.id as string;
+    const swapId = (await call(subB, "POST", `/offers/${offerId}/request`, {})).body
+      .swapId as string;
+    await call(subA, "POST", `/swaps/${swapId}/answer`, { action: "decline", reason: "Zu klein" });
+    const e = ((await history(subB)).body.entries as (Entry & { reason: string | null })[]).find(
+      (x) => x.swapId === swapId,
+    );
+    expect(e).toMatchObject({ status: "declined", reason: "Zu klein", direction: "received" });
+  });
+
+  it("the card of the received specimen shows from whom and when; the giver's and other cards show none", async () => {
+    const a = await accepted("T5", "swap", subD);
+    await confirm(subA, a.swapId);
+    const done = await confirm(subD, a.swapId, { marker: "t5" });
+    const cards = (await call(subD, "GET", "/specimens/cards?timeZone=Europe%2FBerlin")).body
+      .cards as {
+      id: string;
+      provenance: { from: string | null; date: string } | null;
+    }[];
+    const card = cards.find((c) => c.id === done.body.receivedSpecimenId);
+    expect(card?.provenance?.from).toBeTruthy();
+    expect(card?.provenance?.date).toMatch(/^2026-10-/);
+    const giverCards = (await call(subA, "GET", "/specimens/cards?timeZone=Europe%2FBerlin")).body
+      .cards as { provenance: unknown }[];
+    expect(giverCards.every((c) => c.provenance === null)).toBe(true);
+  });
+
+  it("the history and the provenance stay after the friendship ended, with the stored name", async () => {
+    const a = await accepted("T6", "swap", subE);
+    await confirm(subA, a.swapId);
+    await confirm(subE, a.swapId, { marker: "t6" });
+    const before = ((await history(subE)).body.entries as Entry[]).find(
+      (e) => e.swapId === a.swapId,
+    )?.friend;
+    const friends = (await call(subA, "GET", "/friends")).body.friends as {
+      id: string;
+      displayName: string | null;
+    }[];
+    const link = await admin.query(
+      "select f.id from friendship f join account a on a.id = f.account_id where a.subject = $1 and f.other_id = (select id from account where subject = $2)",
+      [subA, subE],
+    );
+    expect(friends.map((f) => f.id)).toContain(link.rows[0].id);
+    expect((await call(subA, "POST", `/friends/${link.rows[0].id}/end`, {})).status).toBe(200);
+    const after = ((await history(subE)).body.entries as Entry[]).find(
+      (e) => e.swapId === a.swapId,
+    );
+    expect(after).toMatchObject({ status: "handed_over", friend: before });
+    const cards = (await call(subE, "GET", "/specimens/cards?timeZone=Europe%2FBerlin")).body
+      .cards as { provenance: { from: string | null } | null }[];
+    expect(cards.some((c) => c.provenance?.from === before)).toBe(true);
+  });
+});
+
+describe("US-SOZ-05 feed events Swapped and Potted through the API", () => {
+  type Ev = {
+    type: string;
+    friendName: string | null;
+    speciesLatin: string | null;
+    date: string | null;
+    count: number;
+  };
+  const feed = async (sub: string) =>
+    (await call(sub, "GET", "/feed?timeZone=Europe%2FBerlin&days=365")).body.events as Ev[];
+
+  it("a swap I took part in shows as 'Getauscht' with the friend and the species on the handover day, for both sides", async () => {
+    const a = await accepted("F1", "swap", subD);
+    await confirm(subA, a.swapId);
+    await confirm(subD, a.swapId, { marker: "f1" });
+    for (const sub of [subA, subD]) {
+      const e = (await feed(sub)).filter((x) => x.type === "swapped");
+      expect(e.length).toBeGreaterThan(0);
+      expect(e[0]).toMatchObject({ date: "2026-10-10", count: expect.any(Number) });
+      expect(e[0]?.friendName).toBeTruthy();
+    }
+  });
+
+  it("a stranger sees no swap event of two others (only if I am involved)", async () => {
+    expect((await feed(subOp)).filter((x) => x.type === "swapped")).toEqual([]);
+  });
+
+  it("repotting a shared cutting creates 'Eingetopft' with the keeper's local day; the friend sees it, a private one stays private", async () => {
+    const id = await specimen(subA, "F2");
+    await call(subA, "PUT", `/sharing/specimens/${id}`, { share: "friends" });
+    const cutting = (
+      await call(subA, "POST", "/specimens", {
+        timeZone: "Europe/Berlin",
+        speciesId,
+        marker: "F3",
+        status: "cutting",
+      })
+    ).body.id as string;
+    await call(subA, "PUT", `/sharing/specimens/${cutting}`, { share: "friends" });
+    const repotted = await call(subA, "POST", `/specimens/${cutting}/repot`, {
+      timeZone: "Europe/Berlin",
+    });
+    expect(repotted.status).toBe(200);
+    const potted = (await feed(subB)).filter((x) => x.type === "potted");
+    expect(potted.map((x) => x.date)).toContain("2026-10-10");
   });
 });

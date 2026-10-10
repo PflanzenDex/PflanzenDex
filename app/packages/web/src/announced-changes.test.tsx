@@ -22,6 +22,7 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   photo: null,
   lastMeasurement: null,
   treatment: null,
+  provenance: null,
   moreTreatments: 0,
   ...extra,
 });

@@ -23,6 +23,7 @@ const card = (id: string, name: string, species: string, where: [string, string]
     photo: null,
     lastMeasurement: { date: "2026-10-01", value: 24, quality: "healthy", note: null },
     treatment: null,
+    provenance: null,
     moreTreatments: 0,
   }) satisfies SpecimenCard;
 

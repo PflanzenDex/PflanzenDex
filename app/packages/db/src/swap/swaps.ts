@@ -161,6 +161,26 @@ export class SwapsPostgres {
     return runHandover(this.pool, userId, work);
   }
 
+  /**
+   * From whom the caller received each of the given specimens (US-SOZ-13): the stored name of the giver and the
+   * handover instant. Only specimens received in a handed-over swap are in the answer; foreign ids are invisible.
+   */
+  async provenanceFor(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, { from: string | null; date: string }>> {
+    if (specimenIds.length === 0) return new Map();
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<{ id: string; from: string | null; date: string }>(
+        `select received_specimen_id as id, other_name as "from",
+                to_char(handed_over_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as date
+           from swap where role = 'recipient' and status = 'handed_over' and received_specimen_id = any($1)`,
+        [specimenIds],
+      ),
+    );
+    return new Map(r.rows.map((z) => [z.id, { from: z.from, date: z.date }]));
+  }
+
   /** The caller's own side of every swap, newest first. */
   async list(userId: string): Promise<readonly SwapRow[]> {
     const r = await withAccount(this.pool, userId, (c) =>

@@ -4,6 +4,8 @@ export type { ExchangeQuery } from "./read/list";
 export { swapRequest } from "./write/request";
 export { swapAnswer } from "./write/answer";
 export { swapOverview } from "./read/overview";
+export { swapHistory, swapProvenance } from "./read/history";
+export type { HistoryEntry } from "./read/history";
 export { swapHandover } from "./write/handover/handover";
 export type { HandoverDependencies, HandoverResult } from "./write/handover/handover";
 export type { SwapOverview } from "./read/overview";
