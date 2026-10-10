@@ -4,7 +4,6 @@ import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp, type AppOptions } from "../app";
-import { createSharpProcessor } from "../media";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 
@@ -73,7 +72,7 @@ beforeAll(async () => {
   app = createApp({
     reviewer,
     pool,
-    media: { store: photos, processor: createSharpProcessor() },
+    media: { store: photos, processor: {} as never /* the photo is only read in these tests */ },
     ai: { verifier: aiVerifier, resource: RESOURCE, issuer: "https://login.example/realms/p" },
   });
   for (const sub of [subA, subB]) await call(web(sub), "GET", "/account");
