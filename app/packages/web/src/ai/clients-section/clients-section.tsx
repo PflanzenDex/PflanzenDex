@@ -7,7 +7,7 @@ import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
 import { allowAgain, loadConnections, revokeConnection, setRights } from "../api/connections-api";
 
 type Token = () => Promise<string | undefined>;
-const KEY = ["ai-access", "connections"] as const;
+const KEY = ["ai", "connections"] as const;
 
 const RIGHTS_TEXT: Record<AiRights, string> = {
   read: "Lesen",

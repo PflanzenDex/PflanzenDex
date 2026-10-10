@@ -1,4 +1,4 @@
-// Public interface of the module `ai-access` (ADR 0003, ADR 0013, epic KI): the connection of the keeper's AI client.
+// Public interface of the module `ai` (ADR 0003, ADR 0013, epic KI): the connection of the keeper's AI client.
 export {
   AI_OPERATION_CLASSES,
   AI_RIGHTS,

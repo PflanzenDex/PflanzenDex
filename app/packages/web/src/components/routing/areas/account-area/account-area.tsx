@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router";
 import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
 import { useSectionAnchor } from "@/components/routing/areas/shared/area-section/use-section-anchor";
 import { RemindersSection } from "@/monitoring";
-import { AiClientsSection } from "@/ai-access";
+import { AiClientsSection } from "@/ai";
 import { AccountView, MeasuredView, SettingsPage } from "@/account";
 import type { Account } from "@/account";
 import { Button } from "@/components/ui/button/button";

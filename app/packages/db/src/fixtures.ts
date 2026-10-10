@@ -10,7 +10,7 @@ import { FIXTURES_POKEDEX } from "./pokedex/index.ts";
 import { FIXTURES_SOCIAL } from "./social/index.ts";
 import { FIXTURES_SWAP } from "./swap/index.ts";
 import { FIXTURES_MONITORING } from "./monitoring/index.ts";
-import { FIXTURES_AI_ACCESS } from "./ai-access/index.ts";
+import { FIXTURES_AI_ACCESS } from "./ai/index.ts";
 
 // One example per table with an account id for the remaining columns (without the id, the test sets it).
 // The entries live in their respective module; they are collected here. A new table without an entry

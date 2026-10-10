@@ -10,7 +10,7 @@ import type {
   ImageProcessor,
 } from "@pflanzendex/core";
 import type { TokenVerifier } from "./account";
-import type { AiAccessOptions } from "./ai-access";
+import type { AiAccessOptions } from "./ai";
 import type { WishImageSources } from "./wishlist";
 
 export type AppOptions = {

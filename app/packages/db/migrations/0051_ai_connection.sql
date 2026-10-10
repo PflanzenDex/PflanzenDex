@@ -1,4 +1,4 @@
--- module: ai-access
+-- module: ai
 -- US-KI-07, DM-KI-01, KI-R6, KI-R8, FR-KI-04, P-04, P-05, P-10: the connection of an AI client to one account.
 -- One row per connection: the OAuth client (`client_id`, the `azp` of its token), its display name, the rights the keeper
 -- allows (`read < drafts < write`, ascending; the access token can only narrow them), a higher right the client asked

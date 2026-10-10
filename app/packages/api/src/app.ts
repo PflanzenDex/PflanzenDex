@@ -28,7 +28,7 @@ import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
 import { discoverRoutes } from "./discover";
 import { monitoringRoutes } from "./monitoring";
-import { aiAccessRoutes } from "./ai-access";
+import { aiAccessRoutes } from "./ai";
 import type { AppOptions } from "./app-options";
 import {
   CARE_PATHS,
