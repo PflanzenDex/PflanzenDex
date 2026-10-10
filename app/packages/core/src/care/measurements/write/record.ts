@@ -10,11 +10,11 @@ import {
   textField,
   choiceField,
   timeZoneField,
-} from "../../kernel";
-import type { SpecimenStore } from "../../collection";
-import { dateField, gridField } from "../shared/fields";
-import { MEASUREMENT_LIMITS, QUALITIES } from "./types";
-import type { MeasurementStore } from "./types";
+} from "../../../kernel";
+import type { SpecimenStore } from "../../../collection";
+import { dateField, gridField } from "../../shared/fields";
+import { MEASUREMENT_LIMITS, QUALITIES } from "../types";
+import type { MeasurementStore } from "../types";
 
 export interface RecordDependencies {
   readonly measurements: MeasurementStore;

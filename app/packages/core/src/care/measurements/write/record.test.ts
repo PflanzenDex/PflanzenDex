@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { execute } from "../../kernel/operation";
-import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
-import { measurementView, measurementRecord } from "../index";
-import { SpecimenStub, InMemoryMeasurements, speciesStub } from "../shared/test-helpers";
+import { execute } from "../../../kernel/operation";
+import { InMemoryIdempotencyStore } from "../../../kernel/test-helpers";
+import { measurementView, measurementRecord } from "../../index";
+import { SpecimenStub, InMemoryMeasurements, speciesStub } from "../../shared/test-helpers";
 
 const E1 = "00000000-0000-4000-8000-000000000001";
 const E2 = "00000000-0000-4000-8000-000000000002";
