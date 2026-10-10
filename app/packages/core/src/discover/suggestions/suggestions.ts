@@ -1,8 +1,8 @@
 // Suggestions (US-ENT-01): the species of the catalog tree that the keeper neither owns nor has a wish for, ordered
-// without a score: species of a family the keeper has not caught yet first, then the tree order (FR-ENT-05: same data,
-// same deck, same order). Reasons name own data only and carry no percentage (FR-ENT-06, P-08).
+// by the shares they have (space, new family; US-ENT-03, FR-ENT-02), then the tree order (FR-ENT-05: same data, same
+// deck, same order). Reasons name own data only and carry no percentage (FR-ENT-06, P-08).
 import { pokedexOwnership, readCollectorCards, type CollectorCard } from "../../pokedex";
-import { wishNameKey } from "../../wishlist";
+import { wishNameKey, type ZoneStock } from "../../wishlist";
 import {
   DECK_SIZE,
   type NoSuggestions,
@@ -27,14 +27,42 @@ const DECK_DONE: NoSuggestions = {
   nextAction: "Schlage eine neue Art für den Katalog vor.",
 };
 
-function reasonsOf(card: CollectorCard, newFamily: boolean): string[] {
-  const reasons = ["Diese Art hast du noch nicht gefangen."];
-  if (newFamily && card.family !== null)
-    reasons.push(`Neue Familie: ${card.family} fehlt dir noch im Pokédex.`);
-  return reasons;
+/** At most 3 reasons are shown (US-ENT-03). */
+const MAX_REASONS = 3;
+
+/**
+ * The space share of FR-ENT-02 (US-LIC-02): the zone of the species is the zone with the fewest plants of the account.
+ * Zone number n is the n-th zone of the account (zone 1 is the cutting light; `stock` holds zones 2 to 4 in order). An
+ * unknown zone, a tie of all zones and an account without a counted plant give no reason (P-08, FR-ENT-04).
+ */
+function spaceReason(zone: number | null, stock: readonly ZoneStock[]): string | null {
+  const own = zone === null ? undefined : stock[zone - 2];
+  if (!own || stock.every((z) => z.count === stock[0]?.count)) return null;
+  if (own.count !== Math.min(...stock.map((z) => z.count))) return null;
+  return own.count === 0
+    ? `In ${own.name} steht noch keine Pflanze.`
+    : `${own.name} hat die wenigsten Pflanzen (${own.count}).`;
 }
 
-function suggestionOf(card: CollectorCard, newFamily: boolean): Suggestion {
+interface Shares {
+  /** The reasons in the order of their strength; the plain "not caught" fact comes last and is no share. */
+  readonly reasons: string[];
+  /** Number of scoring shares (FR-ENT-02, every share weighs 1: starting value, assumption). */
+  readonly score: number;
+}
+
+function sharesOf(card: CollectorCard, newFamily: boolean, stock: readonly ZoneStock[]): Shares {
+  const reasons: string[] = [];
+  const space = spaceReason(card.lightZone, stock);
+  if (space) reasons.push(space);
+  if (newFamily && card.family !== null)
+    reasons.push(`Neue Familie: ${card.family} fehlt dir noch im Pokédex.`);
+  const score = reasons.length;
+  reasons.push("Diese Art hast du noch nicht gefangen.");
+  return { reasons: reasons.slice(0, MAX_REASONS), score };
+}
+
+function suggestionOf(card: CollectorCard, reasons: readonly string[]): Suggestion {
   return {
     species: card.species,
     germanName: card.germanName,
@@ -46,23 +74,26 @@ function suggestionOf(card: CollectorCard, newFamily: boolean): Suggestion {
     imageUrl: card.imageUrl,
     sourceUrl: card.sourceUrl,
     attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
-    reasons: reasonsOf(card, newFamily),
+    reasons,
   };
 }
 
-/** Pure: the ordered candidates of the account; a species with a wish of any status is excluded (US-ENT-02 reads on). */
+/**
+ * Pure: the ordered candidates of the account; a species with a wish of any status is excluded (US-ENT-02 reads on).
+ * Order: most shares first (space, new family; FR-ENT-02), the tree order inside a group (FR-ENT-05).
+ */
 export function candidatesOf(
   cards: readonly CollectorCard[],
   wishedNames: readonly string[],
+  stock: readonly ZoneStock[] = [],
 ): Suggestion[] {
   const wished = new Set(wishedNames.map(wishNameKey));
   const owned = new Set(cards.filter((c) => c.state === "caught").map((c) => c.family));
   const open = cards.filter((c) => c.state === "missing" && !wished.has(wishNameKey(c.species)));
   const fresh = (c: CollectorCard) => c.family !== null && !owned.has(c.family);
-  // Array.prototype.sort is stable, so the tree order stays inside both groups.
-  return [...open]
-    .sort((a, b) => Number(fresh(b)) - Number(fresh(a)))
-    .map((c) => suggestionOf(c, fresh(c)));
+  const scored = open.map((c) => ({ c, ...sharesOf(c, fresh(c), stock) }));
+  // Array.prototype.sort is stable, so the tree order stays inside equal scores.
+  return scored.sort((a, b) => b.score - a.score).map(({ c, reasons }) => suggestionOf(c, reasons));
 }
 
 /** Pure: deck number `deck` (1-based) of `size` cards, or the reason why there is none. */
@@ -85,13 +116,14 @@ export async function suggestions(
   deck = 1,
 ): Promise<SuggestionDeck> {
   const { caught } = await pokedexOwnership(deps.ownership, userId, timeZone);
-  const [cards, open, bought, discarded] = await Promise.all([
+  const [cards, open, bought, discarded, stock] = await Promise.all([
     readCollectorCards(deps.tree, userId, caught),
     deps.wishes.open(userId),
     deps.wishes.bought(userId),
     deps.wishes.discarded(userId),
+    deps.stock?.stock(userId) ?? [],
   ]);
   if (cards.length === 0) return { deck, suggestions: [], empty: EMPTY_CATALOG };
   const names = [...open, ...bought, ...discarded].map((w) => w.name);
-  return deckOf(candidatesOf(cards, names), deck);
+  return deckOf(candidatesOf(cards, names, stock), deck);
 }

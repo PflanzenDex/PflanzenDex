@@ -1,4 +1,4 @@
-import { appError, isTimeZone, suggestions } from "@pflanzendex/core";
+import { appError, isTimeZone, suggestions, type ZoneStockSource } from "@pflanzendex/core";
 import {
   SpeciesPostgres,
   SpecimenPostgres,
@@ -8,6 +8,7 @@ import {
 import { Hono, type Context, type MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
 import { errorBody, type AuthEnv } from "../kernel";
+import { zoneStockFor } from "../zone-stock";
 
 /** Paths the sign-in guard (bearer token) must cover. */
 const DISCOVER_PATHS = ["/discover"] as const;
@@ -18,9 +19,14 @@ const MAX_DECK = 1000;
  * Discover (US-ENT-01): `GET /discover/suggestions?timeZone=<IANA>&deck=<n>` answers one deck of suggestions as a
  * derived view (P-01): catalog tree, ownership and wishes of the own account only (P-04, P-05); nothing is stored.
  * `deck` starts at 1 and defaults to 1 ("New deck" asks for the next one). Without a valid `timeZone` or `deck` the
- * answer is 400 `input.invalid`. The guard is applied here, so the module needs only this one line in the app.
+ * answer is 400 `input.invalid`. The reasons (US-ENT-03) name the own stock per light zone, read through the port
+ * `ZoneStockSource` that the app root fills from the light distribution (US-LIC-02). The guard is applied here, so the module needs only this one line in the app.
  */
-export function discoverRoutes(pool: Pool, auth: MiddlewareHandler): Hono<AuthEnv> {
+export function discoverRoutes(
+  pool: Pool,
+  auth: MiddlewareHandler,
+  stock: ZoneStockSource = zoneStockFor(pool),
+): Hono<AuthEnv> {
   const specimens = new SpecimenPostgres(pool);
   const species = new SpeciesPostgres(pool);
   const taxa = new TaxonomyPostgres(pool);
@@ -28,6 +34,7 @@ export function discoverRoutes(pool: Pool, auth: MiddlewareHandler): Hono<AuthEn
     ownership: { specimens, species },
     tree: { tree: () => taxa.tree(), facts: (userId: string) => species.approvedFacts(userId) },
     wishes: new WishesPostgres(pool),
+    stock,
   };
   const routes = new Hono<AuthEnv>();
   for (const path of DISCOVER_PATHS) routes.use(path, auth).use(`${path}/*`, auth);

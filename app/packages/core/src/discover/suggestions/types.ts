@@ -1,7 +1,7 @@
 // Discover suggestions (US-ENT-01): derived on every request from the catalog tree, the ownership and the wishes; nothing
 // is stored (P-01, NFR-04). Unknown values stay `null`, the interface shows "unbekannt" (P-08).
 import type { OwnershipDependencies, TaxonCardSource } from "../../pokedex";
-import type { WishStore } from "../../wishlist";
+import type { WishStore, ZoneStockSource } from "../../wishlist";
 
 /** Starting value of the deck size (DM-ENT-03, assumption, readjustable). */
 export const DECK_SIZE = 10;
@@ -57,4 +57,6 @@ export interface SuggestionsDependencies {
   readonly ownership: OwnershipDependencies;
   readonly tree: TaxonCardSource;
   readonly wishes: Pick<WishStore, "open" | "bought" | "discarded">;
+  /** Stock per light zone 2 to 4 (US-LIC-02) for the space reason; without it no space reason arises (P-08). */
+  readonly stock?: Pick<ZoneStockSource, "stock">;
 }
