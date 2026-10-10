@@ -240,3 +240,34 @@ describe("US-WAC-02 quality of a measurement in the database", () => {
     expect(await measurements.list(anna, ex)).toEqual([]);
   });
 });
+
+describe("US-KI-04 assess a measurement in the database", () => {
+  it("US-KI-04 reads one measurement by id and sets quality, note and who rated, the value stays", async () => {
+    const z = await measurements.create(anna, values({ date: "2026-10-04" }));
+    if (z === "specimen_unknown") throw new Error("setup");
+    expect(await measurements.get(anna, z.id)).toMatchObject({ id: z.id, value: 12.5 });
+    expect(
+      await measurements.assess(anna, z.id, {
+        quality: "etiolated",
+        note: "Streckt sich.",
+        ratedBy: "ai_adopted",
+      }),
+    ).toBe(true);
+    expect(await measurements.get(anna, z.id)).toMatchObject({
+      quality: "etiolated",
+      note: "Streckt sich.",
+      ratedBy: "ai_adopted",
+      value: 12.5,
+    });
+  });
+
+  it("US-KI-04 P-04 a foreign measurement is neither read nor assessed", async () => {
+    const z = await measurements.create(anna, values({ date: "2026-10-05" }));
+    if (z === "specimen_unknown") throw new Error("setup");
+    expect(await measurements.get(ben, z.id)).toBeNull();
+    expect(
+      await measurements.assess(ben, z.id, { quality: "etiolated", note: null, ratedBy: "keeper" }),
+    ).toBe(false);
+    expect((await measurements.get(anna, z.id))?.quality).toBe("healthy");
+  });
+});
