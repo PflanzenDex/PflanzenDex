@@ -73,6 +73,13 @@ export const ERROR_TEXTS = {
     "Für dieses Exemplar gibt es schon ein offenes Angebot. Ziehe es zurück, bevor du ein neues erstellst.",
   "offer.treatment_open":
     "Für dieses Exemplar läuft noch eine Behandlung. Bestätige ausdrücklich, dass du es trotzdem anbieten willst.",
+  "swap.own_offer": "Das ist dein eigenes Angebot. Du kannst es nicht selbst anfragen.",
+  "swap.already_requested":
+    "Du hast dieses Angebot schon angefragt. Warte auf die Antwort; es wurde nichts doppelt gesendet.",
+  "swap.counter_not_allowed":
+    "Zu einem Geschenk gibt es kein Gegenangebot. Frage ohne Gegenangebot an; es wurde nichts gesendet.",
+  "swap.counter_not_shared":
+    "Dein Gegenangebot muss für Freunde freigegeben sein. Gib das Exemplar frei oder wähle ein anderes; es wurde nichts gesendet.",
   "offer.not_found": "Dieses Angebot gibt es nicht. Lade die Liste neu.",
   "offer.not_active":
     "Dieses Angebot ist schon übergeben und kann nicht mehr zurückgezogen werden. Es wurde nichts geändert.",
