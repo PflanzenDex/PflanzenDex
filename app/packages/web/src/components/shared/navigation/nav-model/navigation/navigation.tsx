@@ -81,6 +81,7 @@ export const LEGACY_SETTINGS_PATH = "/settings";
 export const ACCOUNT_SECTIONS = {
   profile: "profil",
   settings: "einstellungen",
+  reminders: "erinnerungen",
   measured: "gemessen",
 } as const;
 export type AccountSection = keyof typeof ACCOUNT_SECTIONS;

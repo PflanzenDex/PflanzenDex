@@ -98,6 +98,7 @@ describe("US-MON-08 reminder settings through the API", () => {
     for (const [method, path] of [
       ["GET", "/reminders"],
       ["GET", "/reminders/settings"],
+      ["GET", "/reminders/subscriptions"],
       ["PUT", "/reminders/settings"],
       ["POST", "/reminders/subscriptions"],
       ["DELETE", "/reminders/subscriptions"],
@@ -130,6 +131,13 @@ describe("US-MON-08 reminder settings through the API", () => {
     });
     expect(bad).toMatchObject({ status: 400, body: { error: { code: "input.invalid" } } });
     const channels = new ChannelsPostgres(pool);
+    // The list shows the endpoints only, never the keys, and only the own ones (US-MON-08, P-04).
+    expect((await call(subA, "GET", "/reminders/subscriptions")).body).toEqual({
+      subscriptions: [{ endpoint: s.endpoint }],
+    });
+    expect((await call(subB, "GET", "/reminders/subscriptions")).body).toEqual({
+      subscriptions: [],
+    });
     expect(await channels.subscriptions(await accountId(subA))).toHaveLength(1);
     expect(await channels.subscriptions(await accountId(subB))).toEqual([]);
     expect(
