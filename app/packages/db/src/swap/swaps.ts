@@ -1,5 +1,6 @@
 import type { Pool } from "pg";
 import { withAccount } from "../kernel/index.ts";
+import { runHandover, type HandoverSession, type ReceiveRefusal } from "./handover.ts";
 
 // Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
 export interface FriendOfferRow {
@@ -53,6 +54,14 @@ export interface SwapRow {
   /** The giver changed the counter-offer ("propose something else"). */
   readonly proposal: boolean;
   readonly decidedAt: string | null;
+  readonly confirmedGiver: boolean;
+  readonly confirmedRecipient: boolean;
+  /** The marker the recipient chose for the new specimen. */
+  readonly recipientMarker: string | null;
+  /** The specimen the giver gave (giver's row) and the one the recipient received (recipient's row). */
+  readonly givenSpecimenId: string | null;
+  readonly receivedSpecimenId: string | null;
+  readonly handedOverAt: string | null;
 }
 
 /** What an answer changes: the action, the optional reason (decline, cancel) and the proposal (propose). */
@@ -74,7 +83,10 @@ const SWAP_COLUMNS = `swap_id as "swapId", role, other_id as "otherId", other_na
   species_latin as "speciesLatin", species_german as "speciesGerman", type, mode, counter_name as "counterName",
   counter_text as "counterText", status,
   to_char(requested_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "requestedAt", reason, cause, proposal,
-  to_char(decided_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "decidedAt"`;
+  to_char(decided_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "decidedAt",
+  confirmed_giver as "confirmedGiver", confirmed_recipient as "confirmedRecipient", recipient_marker as "recipientMarker",
+  given_specimen_id as "givenSpecimenId", received_specimen_id as "receivedSpecimenId",
+  to_char(handed_over_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "handedOverAt"`;
 
 /**
  * Adapter for swaps and the offers of friends (US-SOZ-09, ADR 0012). Friends' offers come only through the function
@@ -135,7 +147,18 @@ export class SwapsPostgres {
     const r = await withAccount(this.pool, userId, (c) =>
       c.query<{ n: number }>("select cancel_orphaned_swaps() as n"),
     );
-    return r.rows[0]?.n ?? 0;
+    return (r.rows[0] as { n: number }).n;
+  }
+
+  /**
+   * The handover as one transaction as the caller (US-SOZ-11, ADR 0012): `work` runs the steps through the session and
+   * decides whether to commit; a refused step rolls everything back and comes back as `{ refused }`.
+   */
+  handover<T>(
+    userId: string,
+    work: (session: HandoverSession) => Promise<{ readonly commit: boolean; readonly value: T }>,
+  ): Promise<T | { readonly refused: ReceiveRefusal | "specimen_gone" }> {
+    return runHandover(this.pool, userId, work);
   }
 
   /** The caller's own side of every swap, newest first. */

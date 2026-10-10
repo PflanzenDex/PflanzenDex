@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/display/badge/badge";
 import { Button } from "@/components/ui/button/button";
 import type { AnswerInput } from "../../../api/swaps-api";
 import { MODE_TEXT, TYPE_TEXT } from "../../offer-form/health-text";
+import { HandoverBox } from "../handover-box/handover-box";
 import { ReasonForm } from "../reason-form/reason-form";
 import { CAUSE_TEXT, STATUS_TEXT, swapTitle } from "../swap-text";
 
@@ -136,6 +137,7 @@ export function SwapCard(props: {
   s: SwapSide;
   busy: boolean;
   onAnswer: (a: AnswerInput) => void;
+  onHandover: (marker: string | null) => void;
 }) {
   const { s } = props;
   const waiting = s.status === "requested" || s.status === "accepted";
@@ -158,6 +160,7 @@ export function SwapCard(props: {
           </Button>
         )}
       </span>
+      <HandoverBox s={s} busy={props.busy} onConfirm={props.onHandover} />
       {s.role === "giver" && <GiverActions s={s} busy={props.busy} onAnswer={props.onAnswer} />}
     </li>
   );

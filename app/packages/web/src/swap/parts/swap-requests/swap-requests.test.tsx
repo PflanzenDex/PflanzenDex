@@ -25,6 +25,11 @@ const side = (extra: Record<string, unknown> = {}) => ({
   cause: null,
   proposal: false,
   decidedAt: null,
+  confirmedGiver: false,
+  confirmedRecipient: false,
+  givenSpecimenId: null,
+  receivedSpecimenId: null,
+  handedOverAt: null,
   ...extra,
 });
 
@@ -180,5 +185,63 @@ describe("US-SOZ-10 requests I sent", () => {
     server({});
     show();
     expect(await screen.findByText(/Noch keine Anfragen/)).toBeTruthy();
+  });
+});
+
+describe("US-SOZ-11 confirming the handover", () => {
+  const accepted = (extra: Record<string, unknown> = {}) => side({ status: "accepted", ...extra });
+
+  it("an accepted swap offers 'confirm handover' to the giver and sends it with the time zone", async () => {
+    const posts = server({ received: [accepted()] }, () => response(200, { status: "waiting" }));
+    show();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Übergabe bestätigen: Echte Aloe" }),
+    );
+    expect(await screen.findByText(/Deine Bestätigung ist gespeichert/)).toBeTruthy();
+    expect(posts[0]?.path).toBe("/swaps/s1/handover");
+    expect(posts[0]?.body).toMatchObject({ timeZone: expect.any(String) });
+    expect(posts[0]?.body["marker"]).toBeUndefined();
+  });
+
+  it("after my confirmation the card says I am waiting for the other side and the button is gone (P-09)", async () => {
+    server({ received: [accepted({ confirmedGiver: true })] });
+    show();
+    const item = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
+    expect(item.textContent).toContain("Du hast die Übergabe bestätigt. Ben muss noch bestätigen.");
+    expect(screen.queryByRole("button", { name: /Übergabe bestätigen/ })).toBeNull();
+  });
+
+  it("the recipient confirms the receipt, optionally with a marker, and is told where the specimen is now", async () => {
+    const posts = server({ sent: [accepted({ role: "recipient", otherName: "Anna" })] }, () =>
+      response(200, { status: "handed_over", receivedSpecimenId: "r1" }),
+    );
+    show();
+    await userEvent.type(await screen.findByLabelText(/Kennzeichen/), "rot");
+    await userEvent.click(screen.getByRole("button", { name: "Erhalt bestätigen: Echte Aloe" }));
+    expect(await screen.findByText(/Die Übergabe ist abgeschlossen/)).toBeTruthy();
+    expect(posts[0]?.body).toMatchObject({ marker: "rot" });
+  });
+
+  it("a refusal (marker needed) shows the German text of its code and keeps the form (P-10)", async () => {
+    server({ sent: [accepted({ role: "recipient" })] }, () =>
+      response(409, { error: { code: "specimen.marker_required", text: "raw server text" } }),
+    );
+    show();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Erhalt bestätigen: Echte Aloe" }),
+    );
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).not.toContain("raw server text");
+    expect(alert.textContent?.length).toBeGreaterThan(10);
+    expect(screen.getByLabelText(/Kennzeichen/)).toBeTruthy();
+  });
+
+  it("a requested or finished swap has no handover button", async () => {
+    server({ received: [side({ swapId: "a" }), side({ swapId: "b", status: "handed_over" })] });
+    show();
+    await screen.findAllByRole("listitem");
+    expect(
+      screen.queryByRole("button", { name: /Übergabe bestätigen|Erhalt bestätigen/ }),
+    ).toBeNull();
   });
 });

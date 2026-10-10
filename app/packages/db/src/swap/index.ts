@@ -12,3 +12,5 @@ export type {
   SwapRow,
 } from "./swaps.ts";
 export { FIXTURES_SWAP } from "./fixtures.ts";
+export { HandoverSession } from "./handover.ts";
+export type { HandoverContext, HandoverOutcome, ReceiveRefusal } from "./handover.ts";

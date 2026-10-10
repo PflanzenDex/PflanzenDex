@@ -127,6 +127,11 @@ describe("US-SOZ-09 the exchange list", () => {
         cause: null,
         proposal: false,
         decidedAt: null,
+        confirmedGiver: false,
+        confirmedRecipient: false,
+        givenSpecimenId: null,
+        receivedSpecimenId: null,
+        handedOverAt: null,
       },
     ];
     const r = await list(deps);

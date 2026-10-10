@@ -21,6 +21,11 @@ const side = (extra: Partial<SwapSide> = {}): SwapSide => ({
   cause: null,
   proposal: false,
   decidedAt: null,
+  confirmedGiver: false,
+  confirmedRecipient: false,
+  givenSpecimenId: null,
+  receivedSpecimenId: null,
+  handedOverAt: null,
   ...extra,
 });
 

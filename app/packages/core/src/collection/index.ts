@@ -41,6 +41,7 @@ export { specimenArchived } from "./specimen/archived";
 export type { ArchivedDependencies, ArchivedEntry } from "./specimen/archived";
 export { specimenLoad, specimenList } from "./shared/read";
 export { speciesDisplayName, specimenName } from "./shared/name";
+export { planMarkers } from "./shared/markers";
 export { NO_TARGET_LOCATION } from "./placement/target-location";
 export { NO_TREATMENTS, NO_MEASUREMENTS, specimenCards, dueDate } from "./cards/cards";
 export type { CardsDependencies } from "./cards/cards";

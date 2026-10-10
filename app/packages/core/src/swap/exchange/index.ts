@@ -4,6 +4,8 @@ export type { ExchangeQuery } from "./read/list";
 export { swapRequest } from "./write/request";
 export { swapAnswer } from "./write/answer";
 export { swapOverview } from "./read/overview";
+export { swapHandover } from "./write/handover/handover";
+export type { HandoverDependencies, HandoverResult } from "./write/handover/handover";
 export type { SwapOverview } from "./read/overview";
 export { SWAP_ACTIONS } from "./types";
 export type {
@@ -20,3 +22,10 @@ export type {
   SwapStatus,
   WishHints,
 } from "./types";
+export type {
+  HandoverContext,
+  HandoverSpecimen,
+  HandoverSteps,
+  HandoverStore,
+  ReceiveRefusal,
+} from "./write/handover/ports";

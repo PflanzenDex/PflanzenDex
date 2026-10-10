@@ -1,4 +1,4 @@
-import type { Pool } from "pg";
+import type { Pool, PoolClient } from "pg";
 import { withAccount } from "../kernel/index.ts";
 
 // Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
@@ -62,4 +62,75 @@ export async function setCaughtAt(
     const there = await c.query("select 1 from specimen where id = $1", [id]);
     return there.rowCount ? "after_archived" : "not_found";
   });
+}
+
+/** A specimen of the marker assignments that is unknown, foreign, archived or already has a marker: the transaction is undone. */
+export class UnknownSpecimen extends Error {}
+
+export interface NewSpecimen {
+  readonly speciesId: string;
+  readonly name: string;
+  readonly marker: string | null;
+  readonly locationId: string | null;
+  readonly caughtAt: string | null;
+  readonly status?: "plant" | "cutting";
+}
+
+/**
+ * Creates a specimen inside the open transaction of `c`, as the account the connection is set to (ADR 0012: the
+ * handover of a swap runs this for the recipient in the transaction of the giver's archiving). First the markers of the
+ * existing specimens (US-BES-03), then the new specimen; the database decides uniqueness of name and marker. Errors are
+ * thrown for the caller to map (`UnknownSpecimen`, `SpeciesGone`, unique and foreign key violations); it never opens
+ * or ends a transaction itself.
+ */
+export async function createSpecimenOn(
+  c: PoolClient,
+  userId: string,
+  w: NewSpecimen,
+  assignments: readonly { specimenId: string; name: string; marker: string }[] = [],
+): Promise<SpecimenRow> {
+  for (const a of assignments) {
+    const done = await c.query(
+      `update specimen set name = $2, marker = $3 where id = $1 and status <> 'archived' and marker is null`,
+      [a.specimenId, a.name, a.marker],
+    );
+    if (!done.rowCount) throw new UnknownSpecimen();
+  }
+  const r = await c.query<SpecimenRow>(
+    `insert into specimen (account_id, species_id, name, marker, location_id, caught_at, status)
+     values ($1, $2, $3, $4, $5, $6, $7) returning ${COLUMNS}`,
+    [userId, w.speciesId, w.name, w.marker, w.locationId, w.caughtAt, w.status ?? "plant"],
+  );
+  await ensureSpeciesVisible(c, w.speciesId);
+  return r.rows[0] as SpecimenRow;
+}
+
+/**
+ * Archives a specimen inside the open transaction of `c` (US-BES-07): status `archived`, date and reason; an archived one
+ * is left as it is (`null`), a foreign or unknown one is invisible to the row rule (`null` as well).
+ */
+export async function archiveSpecimenOn(
+  c: PoolClient,
+  id: string,
+  reason: string,
+  date: string,
+): Promise<SpecimenRow | null> {
+  const r = await c.query<SpecimenRow>(
+    `update specimen set status_before_archived = status, status = 'archived', archived_at = $2,
+       archived_reason = $3 where id = $1 and status <> 'archived' returning ${COLUMNS}`,
+    [id, date, reason],
+  );
+  return r.rows[0] ?? null;
+}
+
+/** The specimens of the account the connection is set to, by name; for the naming rule of a new one (DM-BES-03). */
+export async function listSpecimensOn(c: PoolClient): Promise<readonly SpecimenRow[]> {
+  const r = await c.query<SpecimenRow>(`select ${COLUMNS} from specimen order by lower(name)`);
+  return r.rows;
+}
+
+/** One specimen of the account the connection is set to; `null` if there is none (a foreign one is invisible, P-04). */
+export async function findSpecimenOn(c: PoolClient, id: string): Promise<SpecimenRow | null> {
+  const r = await c.query<SpecimenRow>(`select ${COLUMNS} from specimen where id = $1`, [id]);
+  return r.rows[0] ?? null;
 }

@@ -43,6 +43,13 @@ export interface SwapSide {
   /** The giver changed the counter-offer ("propose something else"). */
   readonly proposal: boolean;
   readonly decidedAt: string | null;
+  /** Which sides confirmed the handover (US-SOZ-11); it counts only when both did. */
+  readonly confirmedGiver: boolean;
+  readonly confirmedRecipient: boolean;
+  /** The specimen the giver gave (giver's row) and the one the recipient received (recipient's row). */
+  readonly givenSpecimenId: string | null;
+  readonly receivedSpecimenId: string | null;
+  readonly handedOverAt: string | null;
 }
 
 export type SwapCause = "already_given" | "friendship_ended" | "offer_withdrawn";
