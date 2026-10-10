@@ -1,7 +1,9 @@
 import {
+  carePhasesList,
   isActive,
   localToday,
   measurementOverdue,
+  phaseChangeOccasions,
   todayStatus,
   type Occasion,
   type OccasionSource,
@@ -15,7 +17,8 @@ import { todayDependencies, type TodayOptions } from "./today-routes";
  * the two cannot disagree. Treatments due or overdue (US-MON-03) come from it; the overdue measurement (US-MON-04) is
  * derived from the last measurement of each active plant (a cutting is left out until E-11 is decided). An occasion that
  * the keeper switched off in the profile (US-ACC-02) is not reported; a pause is applied later, when the bundle is built.
- * Not built yet: the phase change (US-MON-02) and watering (US-MON-05).
+ * The phase change (US-MON-02) comes from the phase list, the same rows and the same deviation rule as the Today list
+ * (`phaseChangeOccasions`). Not built yet: watering (US-MON-05).
  */
 export function reminderOccasionsFor(pool: Pool, opt: TodayOptions): OccasionSource {
   const profiles = new ProfilePostgres(pool);
@@ -33,6 +36,8 @@ export function reminderOccasionsFor(pool: Pool, opt: TodayOptions): OccasionSou
           text: i.text,
           nextAction: i.nextAction,
         }));
+      const phases = await carePhasesList(deps, userId, timeZone);
+      if (!phases.ok) throw new Error(phases.error.code);
       const [rows, settings, profile] = await Promise.all([
         deps.specimens.list(userId),
         reminders.settings(userId),
@@ -54,7 +59,9 @@ export function reminderOccasionsFor(pool: Pool, opt: TodayOptions): OccasionSou
         settings.measurementDays,
       );
       const off = (o: Occasion) => profile?.notifications[o.occasion] === false;
-      return [...treatments, ...measurements].filter((o) => !off(o));
+      return [...treatments, ...phaseChangeOccasions(phases.value), ...measurements].filter(
+        (o) => !off(o),
+      );
     },
   };
 }

@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { PhaseLocationSource } from "@pflanzendex/core";
 import { ProfilePostgres, migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -41,10 +42,16 @@ async function call(method: string, path: string, body?: unknown) {
 }
 
 const noMeasurements = { forSpecimens: async () => new Map() };
+// The care profile (US-BES-09) is played by a test source: target location per species and phase.
+const targets: Record<string, { dormancy?: string; growth?: string }> = {};
+const phaseLocation: PhaseLocationSource = {
+  phaseLocation: async (_user, speciesId, phase) => targets[speciesId]?.[phase] ?? null,
+};
 const source = () =>
   reminderOccasionsFor(pool, {
     measurements: noMeasurements,
     zoneStock: { stock: async () => [] },
+    phaseLocation,
   });
 const ids = async (now: Date) =>
   (await source().occasions(account, "Europe/Berlin", now)).map((o) => o.id);
@@ -136,5 +143,80 @@ describe("US-MON-03 US-MON-04 the occasions of the reminders", () => {
     expect((today["items"] as { kind: string }[]).some((i) => i.kind === "treatment_overdue")).toBe(
       true,
     );
+  });
+});
+
+describe("US-MON-02 the reminder at the phase change", () => {
+  const FIRST_DORMANCY_DAY = new Date("2026-10-31T23:30:00Z"); // 1 November in Berlin, 31 October in UTC (NFR-08)
+  let sleepy = "";
+  let summer = "";
+  let winter = "";
+
+  beforeAll(async () => {
+    const species = await call("POST", "/species", {
+      latinName: `Ruhe${run} test`,
+      germanName: `Ruhe ${run}`,
+      difficulty: 2,
+      standardLevel: 3,
+      lightDemandLux: 40000,
+      growthMeasure: "rosette_diameter",
+      etiolationSigns: "Rosette streckt sich.",
+      successCriteria: "Dichte, flache Rosette.",
+      dormancyFrom: "11-01",
+      dormancyUntil: "03-15",
+    });
+    const place = async (name: string) =>
+      (
+        await call("POST", "/locations", {
+          name: `${name} ${run}`,
+          kind: "indoor",
+          lightZoneId: null,
+        })
+      )["id"] as string;
+    summer = await place("Sommer");
+    winter = await place("Winter");
+    targets[species["id"] as string] = { dormancy: winter, growth: summer };
+    sleepy = (
+      await call("POST", "/specimens", {
+        speciesId: species["id"],
+        marker: "ruhe",
+        timeZone: "Europe/Berlin",
+        locationId: summer,
+      })
+    )["id"] as string;
+  });
+
+  it("US-MON-02 on the first day of the dormancy a specimen at the summer location is reminded, once", async () => {
+    const list = await source().occasions(account, "Europe/Berlin", FIRST_DORMANCY_DAY);
+    const o = list.find((i) => i.id === `phase_change:${sleepy}:2026-11-01`);
+    expect(o?.occasion).toBe("phase");
+    expect(o?.text).toContain("heute beginnt die Ruhephase");
+    expect(list.filter((i) => i.id.startsWith("phase_change:"))).toHaveLength(1);
+  });
+
+  it("US-MON-02 the day before and the day after there is no reminder", async () => {
+    for (const day of ["2026-10-30T12:00:00Z", "2026-11-02T12:00:00Z"])
+      expect((await ids(new Date(day))).some((i) => i.startsWith("phase_change:"))).toBe(false);
+  });
+
+  it("US-MON-02 no reminder once the specimen stands at the new location", async () => {
+    await call("POST", `/specimens/${sleepy}/location`, { locationId: winter });
+    expect((await ids(FIRST_DORMANCY_DAY)).some((i) => i.startsWith("phase_change:"))).toBe(false);
+  });
+
+  it("US-MON-02 an occasion switched off in the profile (phase) is not reported", async () => {
+    await call("POST", `/specimens/${sleepy}/location`, { locationId: summer });
+    expect((await ids(FIRST_DORMANCY_DAY)).some((i) => i.startsWith("phase_change:"))).toBe(true);
+    const profiles = new ProfilePostgres(pool);
+    const own = await profiles.find(account);
+    await profiles.update(account, {
+      displayName: own?.displayName ?? null,
+      timeZone: "Europe/Berlin",
+      everythingPrivate: false,
+      noRecommendations: false,
+      notifications: { ...own?.notifications, phase: false },
+      replenishBuffer: null,
+    });
+    expect((await ids(FIRST_DORMANCY_DAY)).some((i) => i.startsWith("phase_change:"))).toBe(false);
   });
 });
