@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button/button";
+import { copyText } from "@/platform/clipboard";
 
 /** How to connect an AI client: the address of the interface and the steps (US-KI-07). */
 export function HowTo({ address }: { address: string }) {
@@ -20,7 +21,7 @@ export function HowTo({ address }: { address: string }) {
         variant="secondary"
         size="sm"
         className="self-start"
-        onClick={() => void navigator.clipboard?.writeText(address)}
+        onClick={() => void copyText(address)}
       >
         Adresse kopieren
       </Button>

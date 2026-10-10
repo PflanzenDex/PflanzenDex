@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import type { AiConnection, AiRights } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
-import { HowTo } from "./how-to";
+import { HowTo } from "./how-to/how-to";
 import { Select } from "@/components/ui/fields/select/select";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
 import { allowAgain, loadConnections, revokeConnection, setRights } from "../api/connections-api";
