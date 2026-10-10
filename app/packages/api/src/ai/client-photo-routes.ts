@@ -1,6 +1,6 @@
 import { aiMeasurementPhoto, type AiLogStore, type PhotoSource } from "@pflanzendex/core";
 import { Hono } from "hono";
-import { errorBody, statusFor } from "../kernel";
+import { errorBody, imageBody, statusFor } from "../kernel";
 import { clientAuthentication, type AiEnv, type ClientGuardOptions } from "./client-auth";
 
 /**
@@ -24,10 +24,7 @@ export function clientPhotoRoutes(
       now: clock(),
     });
     if (!r.ok) return c.json(errorBody(r.error), statusFor(r.error));
-    return c.body(r.value.bytes as unknown as ArrayBuffer, 200, {
-      "content-type": r.value.contentType,
-      "cache-control": "no-store",
-    });
+    return imageBody(c, r.value, "no-store");
   });
   return client;
 }

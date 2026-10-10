@@ -38,3 +38,15 @@ export async function body(c: Ctx): Promise<Record<string, unknown>> {
   const b: unknown = await c.req.json().catch(() => null);
   return b && typeof b === "object" && !Array.isArray(b) ? (b as Record<string, unknown>) : {};
 }
+
+/** An image answer: the bytes with their content type and the given cache rule (the owner's photos are private). */
+export function imageBody(
+  c: Context,
+  file: { readonly bytes: Uint8Array; readonly contentType: string },
+  cache: string,
+) {
+  return c.body(file.bytes as unknown as ArrayBuffer, 200, {
+    "content-type": file.contentType,
+    "cache-control": cache,
+  });
+}
