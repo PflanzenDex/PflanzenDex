@@ -2,7 +2,7 @@ import { REMINDER_OCCASIONS, type ReminderOccasion } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/fields/input/input";
 import { Label } from "@/components/ui/display/label/label";
-import { currentTimeZone } from "../../kernel";
+import { currentTimeZone } from "../../../kernel";
 import { addDays, localToday } from "./pause";
 
 export type Paused = Readonly<Partial<Record<ReminderOccasion, string>>>;

@@ -3,9 +3,9 @@ import { useCallback, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/fields/input/input";
 import { Label } from "@/components/ui/display/label/label";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
-import { loadReminderSettings, saveReminderSettings } from "../api/reminders-api";
-import { PauseRows, withPause, type Paused } from "./pause-rows";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
+import { loadReminderSettings, saveReminderSettings } from "../../api/reminders-api";
+import { PauseRows, withPause, type Paused } from "../pause-rows/pause-rows";
 
 type Token = () => Promise<string | undefined>;
 

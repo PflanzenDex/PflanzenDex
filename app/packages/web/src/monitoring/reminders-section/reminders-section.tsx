@@ -1,6 +1,6 @@
 import { Inbox } from "../inbox/inbox";
-import { ReminderSettingsForm } from "../settings/settings-form";
-import { Subscriptions } from "../settings/subscriptions";
+import { ReminderSettingsForm } from "../settings/settings-form/settings-form";
+import { Subscriptions } from "../settings/subscriptions/subscriptions";
 
 type Token = () => Promise<string | undefined>;
 

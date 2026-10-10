@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Button } from "@/components/ui/button/button";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
-import { loadSubscriptions, removeSubscription } from "../api/reminders-api";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
+import { loadSubscriptions, removeSubscription } from "../../api/reminders-api";
 
 type Token = () => Promise<string | undefined>;
 const KEY = ["monitoring", "subscriptions"] as const;
