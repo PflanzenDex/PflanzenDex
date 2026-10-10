@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openFixturePool, openOwnerPool, holdTaxonLock } from "@pflanzendex/db";
+import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
@@ -9,9 +9,7 @@ type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
 // US-SOZ-09: the offers of friends and requesting them through the API (real PostgreSQL).
 let pool: Pool;
 let admin: Pool; // superuser fixture pool: cross-tenant setup and cleanup (QG-D1)
-let releaseTaxa: (() => Promise<void>) | undefined;
-const [subA, subB, subC, subD, subOp] = [0, 1, 2, 3, 4].map(() => `soz9-${randomUUID()}`) as [
-  string,
+const [subA, subB, subC, subD] = [0, 1, 2, 3].map(() => `soz9-${randomUUID()}`) as [
   string,
   string,
   string,
@@ -45,11 +43,17 @@ async function call(
 }
 
 const tz = "timeZone=Europe%2FBerlin";
-let speciesId = "";
-let latin = "";
+// Every account keeps its own, unapproved species proposal: no review, so no taxon lock; a friend sees such a species as
+// unknown (P-05). The approved species are covered by exchange-species.test.ts.
+const speciesOf: Record<string, string> = {};
 const specimen = async (sub: string, marker: string) =>
-  (await call(sub, "POST", "/specimens", { timeZone: "Europe/Berlin", speciesId, marker })).body
-    .id as string;
+  (
+    await call(sub, "POST", "/specimens", {
+      timeZone: "Europe/Berlin",
+      speciesId: speciesOf[sub],
+      marker,
+    })
+  ).body.id as string;
 const share = (sub: string, id: string) =>
   call(sub, "PUT", `/sharing/specimens/${id}`, { share: "friends" });
 async function befriend(inviter: string, redeemer: string) {
@@ -79,40 +83,29 @@ const exchange = (sub: string | null, query = "") =>
 beforeAll(async () => {
   pool = openOwnerPool();
   admin = openFixturePool();
-  releaseTaxa = await holdTaxonLock(admin);
   await migrate(pool);
   app = createApp({ reviewer, pool });
-  for (const sub of [subA, subB, subC, subD, subOp]) await call(sub, "GET", "/account");
-  await admin.query(
-    "insert into account_role (account, role) select id, 'operator' from account where subject = $1",
-    [subOp],
-  );
-  latin = `Exchangus${randomUUID()
-    .replace(/[0-9-]/g, "x")
-    .slice(0, 8)} novus`;
-  speciesId = (
-    await call(subA, "POST", "/species", {
-      latinName: latin,
-      difficulty: 2,
-      standardLevel: 2,
-      lightDemandLux: 15000,
-      growthMeasure: "rosette_diameter",
-      etiolationSigns: "Rosette streckt sich.",
-      successCriteria: "Dichte, flache Rosette.",
-      source: "RHS",
-    })
-  ).body.id;
-  const entries = (await call(subOp, "GET", "/review")).body.entries as {
-    species: { id: string } | null;
-    reviewCase: { id: string };
-  }[];
-  const entry = entries.find((e) => e.species?.id === speciesId);
-  await call(subOp, "POST", `/review/${entry?.reviewCase.id}/decide`, { status: "reviewed" });
+  for (const sub of [subA, subB, subC, subD]) await call(sub, "GET", "/account");
+  for (const sub of [subA, subB])
+    speciesOf[sub] = (
+      await call(sub, "POST", "/species", {
+        latinName: `Exchangus${randomUUID()
+          .replace(/[0-9-]/g, "x")
+          .slice(0, 8)} novus`,
+        difficulty: 2,
+        standardLevel: 2,
+        lightDemandLux: 15000,
+        growthMeasure: "rosette_diameter",
+        etiolationSigns: "Rosette streckt sich.",
+        successCriteria: "Dichte, flache Rosette.",
+        source: "RHS",
+      })
+    ).body.id;
   await befriend(subA, subB);
 });
 afterAll(async () => {
   const accounts = "select id from account where subject = any($1)";
-  const subs = [[subA, subB, subC, subD, subOp]];
+  const subs = [[subA, subB, subC, subD]];
   await admin.query(`delete from swap where account_id in (${accounts})`, subs);
   await admin.query(`delete from offer where account_id in (${accounts})`, subs);
   await admin.query(`delete from specimen where account_id in (${accounts})`, subs);
@@ -123,7 +116,6 @@ afterAll(async () => {
   await admin.query(`delete from friendship where account_id in (${accounts})`, subs);
   await admin.query("delete from account where subject = any($1)", subs);
   await pool.end();
-  await releaseTaxa?.();
   await admin.end();
 });
 
@@ -137,16 +129,17 @@ describe("US-SOZ-09 the exchange list through the API", () => {
     expect((await exchange(subB, "&lack=maybe")).status).toBe(400);
   });
 
-  it("a friend sees the open offer with species, health, 'you lack it' and the name of the giver; a stranger sees nothing", async () => {
+  it("a friend sees the open offer with health and the name of the giver, an unapproved species stays unknown (P-05); a stranger sees nothing", async () => {
     const o = await offer(subA, "L1", { note: "Gut bewurzelt" });
     const mine = (await exchange(subB)).body.offers.find(
       (x: { offerId: string }) => x.offerId === o.offerId,
     );
     expect(mine).toMatchObject({
-      speciesLatin: latin,
+      speciesLatin: null,
+      speciesGerman: null,
       type: "cutting",
       mode: "swap",
-      lack: true,
+      lack: null,
       onWishlist: false,
       requested: false,
       note: "Gut bewurzelt",
@@ -171,16 +164,8 @@ describe("US-SOZ-09 the exchange list through the API", () => {
     const ids = async (q: string) =>
       (await exchange(subB, q)).body.offers.map((x: { offerId: string }) => x.offerId);
     expect(await ids("&type=plant")).toEqual([plant.offerId]);
-    expect(await ids("&lack=true")).toEqual(expect.arrayContaining([plant.offerId]));
-  });
-
-  it("the species is on my wishlist: a hint appears, and the wishlist itself is not part of the answer (FR-WUN-07)", async () => {
-    await call(subB, "POST", "/wishes", { name: latin });
-    const o = await offer(subA, "L4");
-    const r = await exchange(subB);
-    const found = r.body.offers.find((x: { offerId: string }) => x.offerId === o.offerId);
-    expect(found.onWishlist).toBe(true);
-    expect(JSON.stringify(r.body)).not.toContain('"wishes"');
+    // A species that is unknown is not "lacking" (P-08), so the filter leaves it out.
+    expect(await ids("&lack=true")).toEqual([]);
   });
 });
 
@@ -211,6 +196,33 @@ describe("US-SOZ-09 'Everything private' hides the offers (P-05)", () => {
     expect((await exchange(subB)).body.offers.map((x: { offerId: string }) => x.offerId)).toContain(
       o.offerId,
     );
+  });
+});
+
+describe("US-SOZ-09 the privacy switch of another account never hides an offer (regression of migration 0044)", () => {
+  it("the viewer's own 'Everything private' neither hides a friend's offers nor blocks a request", async () => {
+    const o = await offer(subA, "P2");
+    await call(subB, "PUT", "/account/profile", {
+      displayName: "Ben",
+      timeZone: "Europe/Berlin",
+      everythingPrivate: true,
+      noRecommendations: false,
+      notifications: {},
+    });
+    try {
+      expect(
+        (await exchange(subB)).body.offers.map((x: { offerId: string }) => x.offerId),
+      ).toContain(o.offerId);
+      expect((await call(subB, "POST", `/offers/${o.offerId}/request`, {})).status).toBe(201);
+    } finally {
+      await call(subB, "PUT", "/account/profile", {
+        displayName: "Ben",
+        timeZone: "Europe/Berlin",
+        everythingPrivate: false,
+        noRecommendations: false,
+        notifications: {},
+      });
+    }
   });
 });
 

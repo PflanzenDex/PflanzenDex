@@ -79,7 +79,7 @@ beforeAll(async () => {
   }[];
   const entry = entries.find((e) => e.species?.id === speciesId);
   await call(subOp, "POST", `/review/${entry?.reviewCase.id}/decide`, { status: "reviewed" });
-});
+}, 120_000); // waits for the taxon lock of the other test files
 afterAll(async () => {
   const accounts = "select id from account where subject = any($1)";
   const subs = [[subA, subB, subOp]];

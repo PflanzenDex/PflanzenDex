@@ -46,12 +46,35 @@ export interface SwapRow {
   readonly counterText: string | null;
   readonly status: "requested" | "accepted" | "handed_over" | "declined" | "canceled" | "withdrawn";
   readonly requestedAt: string;
+  /** The reason a person gave with a decline or cancelation. */
+  readonly reason: string | null;
+  /** Why the system ended the swap: another request was accepted, the friendship ended, the offer was withdrawn. */
+  readonly cause: "already_given" | "friendship_ended" | "offer_withdrawn" | null;
+  /** The giver changed the counter-offer ("propose something else"). */
+  readonly proposal: boolean;
+  readonly decidedAt: string | null;
+}
+
+/** What an answer changes: the action, the optional reason (decline, cancel) and the proposal (propose). */
+export interface SwapChange {
+  readonly action: SwapAction;
+  readonly reason: string | null;
+  readonly proposal: string | null;
+}
+
+export type SwapAction = "accept" | "decline" | "propose" | "cancel" | "withdraw";
+export type AnswerOutcome =
+  "ok" | "not_found" | "not_allowed" | "wrong_state" | "offer_not_open" | "friendship_ended";
+export interface AnswerResult {
+  readonly outcome: AnswerOutcome;
+  readonly status: SwapRow["status"] | null;
 }
 
 const SWAP_COLUMNS = `swap_id as "swapId", role, other_id as "otherId", other_name as "otherName", offer_id as "offerId",
   species_latin as "speciesLatin", species_german as "speciesGerman", type, mode, counter_name as "counterName",
   counter_text as "counterText", status,
-  to_char(requested_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "requestedAt"`;
+  to_char(requested_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "requestedAt", reason, cause, proposal,
+  to_char(decided_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as "decidedAt"`;
 
 /**
  * Adapter for swaps and the offers of friends (US-SOZ-09, ADR 0012). Friends' offers come only through the function
@@ -89,6 +112,30 @@ export class SwapsPostgres {
       ),
     );
     return r.rows[0] as RequestResult;
+  }
+
+  /**
+   * Answers or changes a swap of the caller (see `answer_swap()`): the giver accepts, declines, proposes something else
+   * or cancels an accepted swap, the requester withdraws. Both sides change together; nothing is written on a refusal.
+   */
+  async answer(userId: string, swapId: string, change: SwapChange): Promise<AnswerResult> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<AnswerResult>(`select outcome, status from answer_swap($1, $2, $3, $4)`, [
+        swapId,
+        change.action,
+        change.reason,
+        change.proposal,
+      ]),
+    );
+    return r.rows[0] as AnswerResult;
+  }
+
+  /** Cancels the open swaps of the caller whose friendship is gone (the hook after ending a friendship); the count. */
+  async cancelOrphaned(userId: string): Promise<number> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<{ n: number }>("select cancel_orphaned_swaps() as n"),
+    );
+    return r.rows[0]?.n ?? 0;
   }
 
   /** The caller's own side of every swap, newest first. */

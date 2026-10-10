@@ -76,6 +76,8 @@ export class OffersPostgres {
         `update offer set status = 'withdrawn', updated_at = now() where id = $1 returning ${COLUMNS}`,
         [id],
       );
+      // The open requests of the withdrawn offer are canceled on both sides, in the same transaction (US-SOZ-10).
+      await c.query("select cancel_swaps_for_offer($1)", [id]);
       return r.rows[0] as OfferRow;
     });
   }

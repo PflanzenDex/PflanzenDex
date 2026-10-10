@@ -34,13 +34,17 @@ export const FRIEND_PATHS = ["/friends"] as const;
  * - GET /friends/:id/collection (US-SOZ-07): the friend's shared collection as cards with "you have it"
  * - GET /friends/:id/shared (US-SOZ-04): what this friend shares with the caller, whitelisted facts only
  */
-export function friendRoutes(pool: Pool, clock: () => Date = () => new Date()): Hono<AuthEnv> {
+export function friendRoutes(
+  pool: Pool,
+  clock: () => Date = () => new Date(),
+  afterEnd?: (userId: string) => Promise<void>,
+): Hono<AuthEnv> {
   const friends = new FriendsPostgres(pool);
   const deps = { idempotency: new IdempotencyPostgres(pool) };
   const invite = friendInvite({ friends, random: (n) => randomBytes(n), now: clock });
   const request = friendRequest({ friends });
   const answer = friendAnswer({ friends });
-  const end = friendEnd({ friends });
+  const end = friendEnd({ friends, ...(afterEnd ? { afterEnd } : {}) });
   const sharing = new SharingPostgres(pool);
   const ports = sharingPorts(pool);
   const sharedSpecies = (viewerId: string, ownerId: string) =>

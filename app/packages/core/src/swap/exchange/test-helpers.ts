@@ -1,4 +1,5 @@
 import type {
+  SwapAnswerOutcome,
   ExchangeStore,
   FriendOffer,
   OfferFacts,
@@ -17,6 +18,15 @@ export class InMemoryExchange implements ExchangeStore {
   }[] = [];
   readonly sides: Record<string, SwapSide[]> = {};
   outcome: RequestOutcome = "requested";
+  answerOutcome: SwapAnswerOutcome = "ok";
+  readonly answers: {
+    userId: string;
+    swapId: string;
+    action: string;
+    reason: string | null;
+    proposal: string | null;
+  }[] = [];
+  orphaned = 0;
 
   constructor(private readonly released: Readonly<Record<string, readonly FriendOffer[]>>) {}
 
@@ -27,6 +37,23 @@ export class InMemoryExchange implements ExchangeStore {
   async request(userId: string, offerId: string, counter: string | null, text: string | null) {
     this.requests.push({ userId, offerId, counter, text });
     return { outcome: this.outcome, swapId: this.outcome === "requested" ? "s-1" : null };
+  }
+
+  async answer(
+    userId: string,
+    swapId: string,
+    change: { action: string; reason: string | null; proposal: string | null },
+  ) {
+    this.answers.push({ userId, swapId, ...change });
+    return {
+      outcome: this.answerOutcome,
+      status: this.answerOutcome === "ok" ? ("accepted" as const) : null,
+    };
+  }
+
+  async cancelOrphaned(): Promise<number> {
+    this.orphaned += 1;
+    return 0;
   }
 
   async list(userId: string): Promise<readonly SwapSide[]> {
