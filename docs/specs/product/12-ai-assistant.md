@@ -60,7 +60,7 @@ Acceptance criteria:
 - The profile receives `ai-created, unreviewed` with a note of the connection and can be set to `reviewed` only by the operator or a reviewer (FR-BES-06, FR-KI-09).
 - Without AI the keeper creates the profile in the form (FR-KI-05, US-BES-01).
 
-### US-KI-04 · Have a photo assessed qualitatively · ⬜ (prototype ✅)
+### US-KI-04 · Have a photo assessed qualitatively · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
