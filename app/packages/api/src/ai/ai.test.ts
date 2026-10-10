@@ -214,3 +214,79 @@ describe("US-KI-02 daily status through the AI interface", () => {
     expect((await status(subB)).body["error"].code).toBe("ai.connection_revoked");
   });
 });
+
+describe("US-KI-09 drafts through the AI interface", () => {
+  const wish = (name: string) => ({
+    type: "wish",
+    source: "https://example.test/quelle",
+    content: { name },
+  });
+  const propose = (sub: string, scope: string, payload: unknown) =>
+    call(ai(sub, scope), "POST", "/mcp/drafts", payload);
+  const drafts = async (sub: string) => (await call(web(sub), "GET", "/ai/drafts")).body["drafts"];
+  const name = `Draft ${randomUUID()}`;
+
+  it("US-KI-09 a client with only 'read' cannot deliver; incomplete content stores nothing", async () => {
+    expect((await propose(subA, "pflanzen:read", wish(name))).status).toBe(403);
+    expect((await propose(subA, "pflanzen:draft", { ...wish(name), content: {} })).status).toBe(
+      400,
+    );
+    expect((await propose(subA, "pflanzen:draft", { ...wish(name), type: "nope" })).status).toBe(
+      400,
+    );
+    expect(await drafts(subA)).toEqual([]);
+  });
+
+  it("US-KI-09 US-KI-05 a delivered wish is a draft, not a wish, until the keeper adopts it", async () => {
+    const r = await propose(subA, "pflanzen:draft", wish(name));
+    expect(r.status).toBe(201);
+    expect(JSON.stringify((await call(web(subA), "GET", "/wishes/candidates")).body)).not.toContain(
+      name,
+    );
+    const [d] = await drafts(subA);
+    expect(d).toMatchObject({
+      type: "wish",
+      status: "open",
+      source: "https://example.test/quelle",
+    });
+    expect((await propose(subA, "pflanzen:draft", wish(name))).status).toBe(200);
+    expect(await drafts(subA)).toHaveLength(1);
+  });
+
+  it("US-KI-09 KI-R6 a stranger sees, adopts and discards nothing", async () => {
+    const [d] = await drafts(subA);
+    expect(await drafts(subB)).toEqual([]);
+    expect((await call(web(subB), "POST", `/ai/drafts/${d.id}/adopt`)).status).toBe(404);
+    expect((await call(web(subB), "POST", `/ai/drafts/${d.id}/discard`)).status).toBe(404);
+    expect((await call(ai(subA, "pflanzen:write"), "GET", "/ai/drafts")).status).toBe(401);
+  });
+
+  it("US-KI-09 adopting creates the wish through the same operation as the form, once", async () => {
+    const [d] = await drafts(subA);
+    const r = await call(web(subA), "POST", `/ai/drafts/${d.id}/adopt`);
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ id: d.id, status: "adopted" });
+    expect(JSON.stringify((await call(web(subA), "GET", "/wishes/candidates")).body)).toContain(
+      name,
+    );
+    expect((await call(web(subA), "POST", `/ai/drafts/${d.id}/adopt`)).status).toBe(409);
+    expect((await drafts(subA))[0].status).toBe("adopted");
+  });
+
+  it("US-KI-09 a refused adoption (duplicate name) leaves the draft open; discard keeps it viewable", async () => {
+    await propose(subA, "pflanzen:draft", wish(name));
+    const open = (await drafts(subA)).find((d: { status: string }) => d.status === "open");
+    const r = await call(web(subA), "POST", `/ai/drafts/${open.id}/adopt`);
+    expect(r.body["error"].code).toBe("wish.name_taken");
+    expect((await drafts(subA)).find((d: { id: string }) => d.id === open.id).status).toBe("open");
+    expect((await call(web(subA), "POST", `/ai/drafts/${open.id}/discard`)).status).toBe(200);
+    expect((await drafts(subA)).find((d: { id: string }) => d.id === open.id).status).toBe(
+      "discarded",
+    );
+  });
+
+  it("US-KI-10 the deliveries show in the log", async () => {
+    const log = (await call(web(subA), "GET", "/ai/log")).body["log"];
+    expect(log.some((e: { operation: string }) => e.operation === "propose_draft")).toBe(true);
+  });
+});

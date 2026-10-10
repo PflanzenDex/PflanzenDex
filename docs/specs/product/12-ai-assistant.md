@@ -112,7 +112,7 @@ Acceptance criteria:
 - If no client is connected, the app says so and offers the manual path as well as "Copy task as text". No silent task arises that is never processed (P-10).
 - Tasks for the same reference and type are merged; repeating is idempotent (US-QS-03). A task expires after 14 days (assumption).
 
-### US-KI-09 · Review and adopt drafts · ⬜ new
+### US-KI-09 · Review and adopt drafts · 🟨 new
 
 As a **plant keeper** I want to review every AI result before it counts (KI-R3).
 

@@ -22,3 +22,19 @@ export type {
 } from "./connection";
 export { AI_LOG_LIMIT, aiLog, aiStatus } from "./status";
 export type { AiLogRow, AiLogStore, StatusCall, StatusDependencies, StatusSource } from "./status";
+export {
+  DRAFT_EXPIRY_DAYS,
+  aiAdoptDraft,
+  aiDiscardDraft,
+  aiDrafts,
+  aiProposeDraft,
+} from "./drafts";
+export type {
+  AiDraft,
+  DraftDependencies,
+  DraftStatus,
+  DraftStore,
+  DraftType,
+  DraftTypes,
+  ProposeCall,
+} from "./drafts";

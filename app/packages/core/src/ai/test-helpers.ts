@@ -2,6 +2,7 @@
 import { rankOf } from "./rights";
 import type { AiConnection, ConnectionStore } from "./connection";
 import type { AiLogRow, AiLogStore } from "./status";
+import { DRAFT_EXPIRY_DAYS, type AiDraft, type DraftStore } from "./drafts";
 
 type Stored = AiConnection & { userId: string };
 
@@ -96,5 +97,67 @@ export class InMemoryAiLog implements AiLogStore {
       .filter((r) => r.userId === userId)
       .reverse()
       .slice(0, limit);
+  }
+}
+
+type StoredDraft = AiDraft & { userId: string; key: string };
+
+export class InMemoryDrafts implements DraftStore {
+  readonly rows: StoredDraft[] = [];
+
+  async create(
+    userId: string,
+    d: Parameters<DraftStore["create"]>[1],
+    now: Date,
+  ): Promise<{ draft: AiDraft; created: boolean }> {
+    const same = this.rows.find(
+      (r) =>
+        r.userId === userId && r.type === d.type && r.key === d.contentKey && r.status === "open",
+    );
+    if (same) return { draft: same, created: false };
+    const row: StoredDraft = {
+      id: `00000000-0000-4000-8000-${String(this.rows.length + 1).padStart(12, "0")}`,
+      userId,
+      key: d.contentKey,
+      connectionId: d.connectionId,
+      clientName: "Claude",
+      type: d.type,
+      reference: d.reference,
+      content: d.content,
+      source: d.source,
+      status: "open",
+      createdAt: now.toISOString(),
+      decidedAt: null,
+    };
+    this.rows.push(row);
+    return { draft: row, created: true };
+  }
+
+  private view(r: StoredDraft, now: Date): AiDraft {
+    const old = now.getTime() - Date.parse(r.createdAt) > DRAFT_EXPIRY_DAYS * 86400000;
+    return { ...r, status: r.status === "open" && old ? "expired" : r.status };
+  }
+
+  async list(userId: string, now: Date) {
+    return this.rows
+      .filter((r) => r.userId === userId)
+      .reverse()
+      .map((r) => this.view(r, now));
+  }
+
+  async find(userId: string, id: string, now: Date) {
+    const r = this.rows.find((x) => x.userId === userId && x.id === id);
+    return r ? this.view(r, now) : null;
+  }
+
+  async decide(userId: string, id: string, status: "adopted" | "discarded" | "open", now: Date) {
+    const i = this.rows.findIndex((x) => x.userId === userId && x.id === id);
+    const r = this.rows[i];
+    if (!r) return false;
+    const from = status === "open" ? "adopted" : "open";
+    if (r.status !== from || (status !== "open" && this.view(r, now).status === "expired"))
+      return false;
+    this.rows[i] = { ...r, status, decidedAt: status === "open" ? null : now.toISOString() };
+    return true;
   }
 }
