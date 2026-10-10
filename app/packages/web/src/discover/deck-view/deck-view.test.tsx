@@ -18,6 +18,7 @@ const suggestion = (species: string): Suggestion => ({
   sourceUrl: null,
   attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
   reasons: ["Diese Art hast du noch nicht gefangen."],
+  exploration: false,
 });
 const saveOk = async () => ({
   ok: true as const,

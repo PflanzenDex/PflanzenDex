@@ -95,7 +95,7 @@ Acceptance criteria:
 
 Assumptions, decided by the PO (revisable): the factor looks at the attributes the catalog carries today: family, genus, light zone and difficulty (the DM-ENT-01 attributes join when the catalog has them; unknown values are neutral). A decision is attributed through the catalog card of the same name key, with the catalog's light zone and difficulty; a wish for a species outside the catalog changes nothing. The score is the factor times (1 + the number of shares), so the factor also orders species without a share (starting value of the base, assumption; without decisions the order stays that of US-ENT-03). The reason "You have N species of the genus (family) X on the wishlist" appears only where yes outnumbers no (genus first, then family); there is no reason for a rejection. Not built yet: the proximity and growth shares of FR-ENT-02 and the exploration quota that keeps rejected families from disappearing (US-ENT-06).
 
-### US-ENT-06 · Also see the surprising · ⬜ new
+### US-ENT-06 · Also see the surprising · 🟨 new
 
 As a **plant keeper** I want to see something outside my pattern now and then, so that the catalog does not shrink to one corner.
 
@@ -104,6 +104,8 @@ Acceptance criteria:
 - Per deck 2 of 10 cards (starting values) are exploration suggestions: species from orders or families without a caught species, orders with the fewest species first (like _Explorer_, US-POK-11).
 - Hard filters (US-ENT-02) apply here too.
 - The selection is fixed per account, day and deck number, so that reloading shows the same deck (FR-ENT-05).
+
+Assumptions, decided by the PO (revisable): the exploration cards per deck are 2 of 10 (`EXPLORATION_PER_DECK`, DM-ENT-03 starting value, not adjustable yet). A species explores if its order has no caught species, or, where the order has one, its family has none; the groups are ordered by their size in the catalog tree (fewest species first, name as tie-break). Deck n takes one species from each of the next 2 groups, so the groups of earlier decks are used up first; inside a group the species is chosen by a stable hash of account, local day, deck number and group, so the choice varies per day but a reload shows the same deck. Species that explore in any deck are left out of the normal order, so no card shows twice; the normal cards fill the rest of the deck in rank order, and the exploration cards sit spread between them. An exploration card carries the badge "Mal etwas anderes" and the reasons "Aus der Ordnung X hast du noch keine Art im Pokédex" (or Familie) and the plain not-caught fact; its preference reasons are left out. Species without a known order and family never explore (P-08). The wish written by US-ENT-04 takes the reasons of the normal card. The hard filters of US-ENT-02 are not built yet and will apply to the groups.
 
 ### US-ENT-07 · Discover directly from the buffer warning · ⬜ new
 

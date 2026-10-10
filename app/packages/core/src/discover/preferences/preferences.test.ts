@@ -20,6 +20,7 @@ const card = (species: string, extra: Partial<CollectorCard> = {}): CollectorCar
   imageUrl: null,
   sourceUrl: null,
   family: "Moraceae",
+  order: null,
   caughtDate: null,
   specimenCount: 0,
   ...extra,
