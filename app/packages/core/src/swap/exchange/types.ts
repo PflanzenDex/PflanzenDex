@@ -36,7 +36,23 @@ export interface SwapSide {
   readonly counterText: string | null;
   readonly status: SwapStatus;
   readonly requestedAt: string;
+  /** The reason a person gave with a decline or cancelation. */
+  readonly reason: string | null;
+  /** Why the system ended the swap on its own; the screen turns the code into text. */
+  readonly cause: SwapCause | null;
+  /** The giver changed the counter-offer ("propose something else"). */
+  readonly proposal: boolean;
+  readonly decidedAt: string | null;
 }
+
+export type SwapCause = "already_given" | "friendship_ended" | "offer_withdrawn";
+
+/** Actions on a swap: the giver accepts, declines, proposes something else or cancels an accepted swap; the requester withdraws. */
+export const SWAP_ACTIONS = ["accept", "decline", "propose", "cancel", "withdraw"] as const;
+export type SwapAction = (typeof SWAP_ACTIONS)[number];
+
+export type SwapAnswerOutcome =
+  "ok" | "not_found" | "not_allowed" | "wrong_state" | "offer_not_open" | "friendship_ended";
 
 export type RequestOutcome =
   | "requested"
@@ -61,6 +77,14 @@ export interface ExchangeStore {
   ): Promise<{ readonly outcome: RequestOutcome; readonly swapId: string | null }>;
   /** The caller's own side of every swap, newest first. */
   list(userId: string): Promise<readonly SwapSide[]>;
+  /** Answers or changes a swap; both sides change together, nothing is written on a refusal. */
+  answer(
+    userId: string,
+    swapId: string,
+    change: { action: SwapAction; reason: string | null; proposal: string | null },
+  ): Promise<{ readonly outcome: SwapAnswerOutcome; readonly status: SwapStatus | null }>;
+  /** Cancels the open swaps of the caller whose friendship is gone; the number of canceled swaps. */
+  cancelOrphaned(userId: string): Promise<number>;
 }
 
 /** What the wishlist can say about a species without handing its list over (FR-WUN-07): a yes or no per Latin name. */

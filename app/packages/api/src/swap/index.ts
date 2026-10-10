@@ -2,3 +2,4 @@
 export { OFFER_PATHS, offerRoutes } from "./offers/offer-routes";
 export { offerDependencies } from "./offers/wiring";
 export { EXCHANGE_PATHS, exchangeRoutes } from "./exchange/exchange-routes";
+export { SWAP_PATHS, cancelOrphanedSwaps, swapRoutes } from "./answer/swap-routes";

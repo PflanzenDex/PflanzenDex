@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Tauschanfragen beantworten: In der Tauschbörse siehst du die Anfragen an dich und deine eigenen Anfragen mit ihrem Stand. Du kannst annehmen, ablehnen (auf Wunsch mit Grund), etwas anderes vorschlagen oder eine Zusage zurückziehen. Wird ein Angebot zurückgezogen oder eine Freundschaft beendet, werden offene Anfragen abgebrochen.",
     "Angebote von Freunden: In der Tauschbörse siehst du jetzt, was deine Freunde zum Tausch oder Verschenken anbieten, mit Hinweis, wenn dir die Art fehlt oder auf deiner Wunschliste steht. Mit „Anfragen“ bittest du um das Exemplar, auf Wunsch mit einem eigenen Exemplar als Gegenangebot.",
     "Wunschlisten-Puffer: In den Einstellungen legst du fest, ab wie vielen offenen Wünschen je Zone die Wunschliste warnt (0 bis 10, Vorgabe 2). Die Warnung und „Heute“ nutzen den Wert sofort.",
     "Zonen-Hinweise: Wünsche ohne Zone oder mit dem Stecklingslicht stehen jetzt in einem eigenen Hinweis „Wünsche ohne passende Zone“, mit Grund und nächstem Schritt. Nichts wird dabei gelöscht.",

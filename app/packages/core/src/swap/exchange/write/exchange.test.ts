@@ -123,6 +123,10 @@ describe("US-SOZ-09 the exchange list", () => {
         counterText: null,
         status: "requested",
         requestedAt: "2026-10-09T10:00:00.000Z",
+        reason: null,
+        cause: null,
+        proposal: false,
+        decidedAt: null,
       },
     ];
     const r = await list(deps);

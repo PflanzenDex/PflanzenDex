@@ -216,3 +216,225 @@ describe("US-SOZ-09 requesting an offer", () => {
     expect((await swaps.request(dora, o.offerId, null, null)).outcome).toBe("offer_unknown");
   });
 });
+
+describe("US-SOZ-10 answering a swap request", () => {
+  /** A request of `by` for a fresh offer of Anna; `counter` is free text. */
+  async function requested(
+    by = ben,
+    name = `Antwort ${randomUUID().slice(0, 6)}`,
+    mode: "swap" | "give_away" = "swap",
+  ) {
+    const o = await offer(anna, name, mode);
+    const r = await swaps.request(by, o.offerId, null, null);
+    return { ...o, swapId: r.swapId as string, by };
+  }
+  const row = async (user: string, swapId: string) =>
+    (await swaps.list(user)).find((s) => s.swapId === swapId);
+  const offerStatus = async (offerId: string) =>
+    (await admin.query("select status from offer where id = $1", [offerId])).rows[0]
+      .status as string;
+
+  it("accepting reserves the offer, shows the state on both sides and takes the offer off the exchange list", async () => {
+    const r = await requested();
+    expect(
+      await swaps.answer(anna, r.swapId, { action: "accept", reason: null, proposal: null }),
+    ).toEqual({
+      outcome: "ok",
+      status: "accepted",
+    });
+    expect((await row(anna, r.swapId))?.status).toBe("accepted");
+    expect((await row(ben, r.swapId))?.status).toBe("accepted");
+    expect(await offerStatus(r.offerId)).toBe("reserved");
+    expect((await swaps.friendOffers(cleo)).map((o) => o.offerId)).not.toContain(r.offerId);
+  });
+
+  it("accepting declines the other open requests for the same offer automatically, with the cause 'already given'", async () => {
+    const first = await requested(ben);
+    const second = await swaps.request(cleo, first.offerId, null, null);
+    await swaps.answer(anna, first.swapId, { action: "accept", reason: null, proposal: null });
+    expect(await row(cleo, second.swapId as string)).toMatchObject({
+      status: "declined",
+      cause: "already_given",
+    });
+    expect(await row(anna, second.swapId as string)).toMatchObject({
+      status: "declined",
+      cause: "already_given",
+    });
+    expect((await row(ben, first.swapId))?.status).toBe("accepted");
+  });
+
+  it("declining records the optional reason on both sides, the offer stays open", async () => {
+    const r = await requested();
+    expect(
+      await swaps.answer(anna, r.swapId, { action: "decline", reason: "Zu klein", proposal: null }),
+    ).toEqual({
+      outcome: "ok",
+      status: "declined",
+    });
+    expect(await row(ben, r.swapId)).toMatchObject({
+      status: "declined",
+      reason: "Zu klein",
+      cause: null,
+    });
+    expect(await offerStatus(r.offerId)).toBe("open");
+    expect((await swaps.request(ben, r.offerId, null, null)).outcome).toBe("requested");
+  });
+
+  it("proposing something else replaces the counter-offer on both sides and keeps the request open", async () => {
+    const r = await requested();
+    await swaps.answer(anna, r.swapId, {
+      action: "propose",
+      reason: null,
+      proposal: "Lieber eine Aloe",
+    });
+    for (const user of [anna, ben])
+      expect(await row(user, r.swapId)).toMatchObject({
+        status: "requested",
+        counterText: "Lieber eine Aloe",
+        proposal: true,
+      });
+  });
+
+  it("the requester withdraws a request or an acceptance; an acceptance gives the offer back", async () => {
+    const plain = await requested();
+    expect(
+      await swaps.answer(ben, plain.swapId, { action: "withdraw", reason: null, proposal: null }),
+    ).toEqual({
+      outcome: "ok",
+      status: "withdrawn",
+    });
+    expect((await row(anna, plain.swapId))?.status).toBe("withdrawn");
+    const taken = await requested();
+    await swaps.answer(anna, taken.swapId, { action: "accept", reason: null, proposal: null });
+    await swaps.answer(ben, taken.swapId, { action: "withdraw", reason: null, proposal: null });
+    expect(await offerStatus(taken.offerId)).toBe("open");
+    expect((await swaps.friendOffers(cleo)).map((o) => o.offerId)).toContain(taken.offerId);
+  });
+
+  it("the giver cancels an accepted swap and the offer is open again", async () => {
+    const r = await requested();
+    await swaps.answer(anna, r.swapId, { action: "accept", reason: null, proposal: null });
+    expect(
+      await swaps.answer(anna, r.swapId, {
+        action: "cancel",
+        reason: "Doch behalten",
+        proposal: null,
+      }),
+    ).toEqual({
+      outcome: "ok",
+      status: "canceled",
+    });
+    expect(await row(ben, r.swapId)).toMatchObject({ status: "canceled", reason: "Doch behalten" });
+    expect(await offerStatus(r.offerId)).toBe("open");
+  });
+
+  it("states only move forward: no accepting after declining, no declining after accepting; repeating holds", async () => {
+    const r = await requested();
+    await swaps.answer(anna, r.swapId, { action: "decline", reason: null, proposal: null });
+    expect(
+      (await swaps.answer(anna, r.swapId, { action: "accept", reason: null, proposal: null }))
+        .outcome,
+    ).toBe("wrong_state");
+    expect(
+      (await swaps.answer(anna, r.swapId, { action: "decline", reason: null, proposal: null }))
+        .outcome,
+    ).toBe("ok");
+    const a = await requested();
+    await swaps.answer(anna, a.swapId, { action: "accept", reason: null, proposal: null });
+    expect(
+      (await swaps.answer(anna, a.swapId, { action: "decline", reason: null, proposal: null }))
+        .outcome,
+    ).toBe("wrong_state");
+    expect(
+      (await swaps.answer(anna, a.swapId, { action: "accept", reason: null, proposal: null }))
+        .outcome,
+    ).toBe("ok");
+    expect(
+      (await swaps.answer(anna, a.swapId, { action: "propose", reason: null, proposal: "x" }))
+        .outcome,
+    ).toBe("wrong_state");
+  });
+
+  it("each side may do only its own actions; a stranger and an unknown id are not found (P-04)", async () => {
+    const r = await requested();
+    expect(
+      (await swaps.answer(ben, r.swapId, { action: "accept", reason: null, proposal: null }))
+        .outcome,
+    ).toBe("not_allowed");
+    expect(
+      (await swaps.answer(anna, r.swapId, { action: "withdraw", reason: null, proposal: null }))
+        .outcome,
+    ).toBe("not_allowed");
+    expect(
+      (
+        await swaps.answer(anna, r.swapId, {
+          action: "explode" as never,
+          reason: null,
+          proposal: null,
+        })
+      ).outcome,
+    ).toBe("not_allowed");
+    expect(
+      (await swaps.answer(cleo, r.swapId, { action: "decline", reason: null, proposal: null }))
+        .outcome,
+    ).toBe("not_found");
+    expect(
+      (await swaps.answer(anna, randomUUID(), { action: "accept", reason: null, proposal: null }))
+        .outcome,
+    ).toBe("not_found");
+    expect((await row(anna, r.swapId))?.status).toBe("requested");
+  });
+
+  it("withdrawing the offer cancels its open and accepted requests on both sides", async () => {
+    const a = await requested(ben);
+    const b = await swaps.request(cleo, a.offerId, null, null);
+    await offers.withdraw(anna, a.offerId);
+    for (const [user, id] of [
+      [ben, a.swapId],
+      [cleo, b.swapId as string],
+      [anna, b.swapId as string],
+    ] as const)
+      expect(await row(user, id)).toMatchObject({ status: "canceled", cause: "offer_withdrawn" });
+    const c = await requested(ben);
+    await swaps.answer(anna, c.swapId, { action: "accept", reason: null, proposal: null });
+    await offers.withdraw(anna, c.offerId);
+    expect(await row(ben, c.swapId)).toMatchObject({
+      status: "canceled",
+      cause: "offer_withdrawn",
+    });
+  });
+
+  it("ending the friendship cancels the open swaps (hook) and an accepted one gives the offer back; the lazy check does the same", async () => {
+    const link = await befriend(anna, dora);
+    const hooked = await requested(dora);
+    await swaps.answer(anna, hooked.swapId, { action: "accept", reason: null, proposal: null });
+    const lazy = await requested(dora);
+    await friends.end(anna, link);
+    expect(await swaps.cancelOrphaned(anna)).toBeGreaterThanOrEqual(1);
+    expect(await row(dora, hooked.swapId)).toMatchObject({
+      status: "canceled",
+      cause: "friendship_ended",
+    });
+    expect(await offerStatus(hooked.offerId)).toBe("open");
+    expect(await swaps.cancelOrphaned(anna)).toBe(0);
+    // `lazy` was still requested when the friendship ended: a transition notices and cancels instead.
+    expect((await row(anna, lazy.swapId))?.status).toBe("canceled");
+  });
+
+  it("the lazy check: a transition after the friendship ended answers friendship_ended and writes the cancelation", async () => {
+    const link = await befriend(anna, dora);
+    const r = await requested(dora);
+    await friends.end(anna, link);
+    expect(
+      await swaps.answer(anna, r.swapId, { action: "accept", reason: null, proposal: null }),
+    ).toEqual({
+      outcome: "friendship_ended",
+      status: "canceled",
+    });
+    expect(await row(dora, r.swapId)).toMatchObject({
+      status: "canceled",
+      cause: "friendship_ended",
+    });
+    expect(await offerStatus(r.offerId)).toBe("open");
+  });
+});

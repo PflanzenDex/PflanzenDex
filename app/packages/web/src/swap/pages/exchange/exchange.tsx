@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button/button";
 import { errorText } from "@/lib/error-text";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
 import { loadExchange, withdrawOffer, type ExchangeData } from "../../api/offers-api";
+import { SwapRequests } from "../../parts/swap-requests/swap-requests";
 import { FriendOffers } from "../../parts/friend-offers/friend-offers";
 import { OfferForm } from "../../parts/offer-form/offer-form";
 import { OfferList } from "../../parts/offer-list/offer-list";
@@ -38,6 +39,7 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
           )
         }
       />
+      <SwapRequests api={api} token={props.token} />
       <FriendOffers api={api} token={props.token} />
       <OfferForm
         api={api}

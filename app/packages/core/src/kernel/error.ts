@@ -73,6 +73,13 @@ export const ERROR_TEXTS = {
     "Für dieses Exemplar gibt es schon ein offenes Angebot. Ziehe es zurück, bevor du ein neues erstellst.",
   "offer.treatment_open":
     "Für dieses Exemplar läuft noch eine Behandlung. Bestätige ausdrücklich, dass du es trotzdem anbieten willst.",
+  "swap.not_found": "Diese Anfrage gibt es nicht. Lade die Liste neu.",
+  "swap.not_allowed":
+    "Diese Antwort ist hier nicht möglich. Die Anfrage kann nur die andere Seite so beantworten.",
+  "swap.wrong_state":
+    "Die Anfrage ist schon beantwortet und kann so nicht mehr geändert werden. Lade die Liste neu.",
+  "swap.friendship_ended":
+    "Ihr seid nicht mehr befreundet. Die Anfrage wurde abgebrochen; es wurde nichts übergeben.",
   "swap.own_offer": "Das ist dein eigenes Angebot. Du kannst es nicht selbst anfragen.",
   "swap.already_requested":
     "Du hast dieses Angebot schon angefragt. Warte auf die Antwort; es wurde nichts doppelt gesendet.",
