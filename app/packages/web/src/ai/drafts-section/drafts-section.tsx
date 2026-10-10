@@ -6,7 +6,7 @@ import { adoptDraft, discardDraft, loadDrafts, type AiDraftRow } from "../api/co
 type Token = () => Promise<string | undefined>;
 const KEY = ["ai", "drafts"] as const;
 
-const TYPE_TEXT: Record<string, string> = { wish: "Wunsch" };
+const TYPE_TEXT: Record<string, string> = { wish: "Wunsch", species: "Artprofil" };
 const STATUS_TEXT: Record<AiDraftRow["status"], string> = {
   open: "Offen",
   adopted: "Übernommen",
@@ -15,8 +15,9 @@ const STATUS_TEXT: Record<AiDraftRow["status"], string> = {
 };
 
 const title = (d: AiDraftRow) => {
-  const content = d.content as { name?: unknown } | null;
-  const name = typeof content?.name === "string" ? content.name : "";
+  const content = d.content as { name?: unknown; latinName?: unknown } | null;
+  const label = content?.name ?? content?.latinName;
+  const name = typeof label === "string" ? label : "";
   return `${TYPE_TEXT[d.type] ?? d.type}${name ? `: ${name}` : ""}`;
 };
 

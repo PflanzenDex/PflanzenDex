@@ -48,7 +48,7 @@ Acceptance criteria:
 - "What is due today?" returns a prioritized answer from the operation `status` (the same code as "Today" and reminders, FR-MON-03). The client only phrases.
 - Every item says what to do (P-09). No item is invented or left out.
 
-### US-KI-03 · Deliver a species profile as a draft · ⬜ (prototype ✅)
+### US-KI-03 · Deliver a species profile as a draft · 🟨 (prototype ✅)
 
 As a **plant keeper** I want to get a complete profile for an unknown species.
 

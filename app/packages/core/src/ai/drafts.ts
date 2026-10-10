@@ -115,8 +115,9 @@ export async function aiProposeDraft(
       connectionId: call.connectionId,
       type: head.value.type,
       reference: head.value.reference,
-      content: content.value,
-      contentKey: canonical(content.value),
+      // The raw content is stored: the schema only checks it, adopting runs the operation on the same input as the form.
+      content: input["content"],
+      contentKey: canonical(input["content"]),
       source: head.value.source,
     },
     call.now,
@@ -156,11 +157,12 @@ export const aiAdoptDraft = (deps: DraftDependencies, now: () => Date = () => ne
       if (!draft) return failed(appError("ai.draft_not_found"));
       const type = deps.types[draft.type];
       if (!type || draft.status !== "open") return failed(appError("ai.draft_closed"));
-      const content = input.changes === undefined ? ok(draft.content) : type.schema(input.changes);
+      const raw = input.changes === undefined ? draft.content : input.changes;
+      const content = type.schema(raw);
       if (!content.ok) return content;
       if (!(await deps.drafts.decide(userId, draft.id, "adopted", now())))
         return failed(appError("ai.draft_closed"));
-      const done = await type.adopt(userId, content.value, `ai-draft:${draft.id}`);
+      const done = await type.adopt(userId, raw, `ai-draft:${draft.id}`);
       if (!done.ok) {
         await deps.drafts.decide(userId, draft.id, "open", now());
         return done;
