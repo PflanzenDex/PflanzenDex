@@ -6,6 +6,7 @@ import { InMemoryAiLog, InMemoryDrafts } from "./test-helpers";
 
 const now = new Date("2026-10-10T08:00:00Z");
 const idempotency = new InMemoryIdempotencyStore();
+let counter = 0;
 const adopted: unknown[] = [];
 const types = (refuse = false): DraftTypes => ({
   wish: {
@@ -37,7 +38,7 @@ const propose = (
 const call = (userId: string | null, input: unknown) => ({
   context: { userId, timeZone: "Europe/Berlin" },
   input,
-  idempotencyKey: crypto.randomUUID(),
+  idempotencyKey: `k${++counter}`,
 });
 const code = (r: { ok: boolean; error?: { code: string } }) => (r.ok ? "ok" : r.error?.code);
 
