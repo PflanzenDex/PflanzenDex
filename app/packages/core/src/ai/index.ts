@@ -20,3 +20,5 @@ export type {
   ConnectionDependencies,
   ConnectionStore,
 } from "./connection";
+export { AI_LOG_LIMIT, aiLog, aiStatus } from "./status";
+export type { AiLogRow, AiLogStore, StatusCall, StatusDependencies, StatusSource } from "./status";

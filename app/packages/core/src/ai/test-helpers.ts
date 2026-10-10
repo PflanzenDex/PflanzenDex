@@ -1,6 +1,7 @@
 // In-memory adapter for tests only; the PostgreSQL adapter lives in `db`.
 import { rankOf } from "./rights";
 import type { AiConnection, ConnectionStore } from "./connection";
+import type { AiLogRow, AiLogStore } from "./status";
 
 type Stored = AiConnection & { userId: string };
 
@@ -69,5 +70,31 @@ export class InMemoryConnections implements ConnectionStore {
     if (row.revokedAt) return "already" as const;
     this.change(userId, id, (r) => ({ ...r, revokedAt: now.toISOString() }));
     return "revoked" as const;
+  }
+}
+
+export class InMemoryAiLog implements AiLogStore {
+  readonly rows: (AiLogRow & { userId: string })[] = [];
+
+  async record(
+    userId: string,
+    entry: { connectionId: string; operation: string; effect: string },
+    now: Date,
+  ) {
+    this.rows.push({
+      ...entry,
+      userId,
+      id: `l${this.rows.length + 1}`,
+      clientName: "Claude",
+      createdAt: now.toISOString(),
+      undoneAt: null,
+    });
+  }
+
+  async list(userId: string, limit: number) {
+    return this.rows
+      .filter((r) => r.userId === userId)
+      .reverse()
+      .slice(0, limit);
   }
 }

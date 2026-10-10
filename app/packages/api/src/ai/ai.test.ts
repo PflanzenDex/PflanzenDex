@@ -173,3 +173,44 @@ describe("US-KI-07 connect and manage", () => {
     expect(await list(subB)).toHaveLength(1);
   });
 });
+
+describe("US-KI-02 daily status through the AI interface", () => {
+  const status = (sub: string, scope = "pflanzen:read", zone = "Europe/Berlin") =>
+    call(ai(sub, scope), "GET", `/mcp/status?timeZone=${zone}`);
+
+  it("US-KI-02 needs a token of the AI audience, a right and a valid time zone", async () => {
+    expect((await call(web(subA), "GET", "/mcp/status?timeZone=Europe/Berlin")).status).toBe(401);
+    expect((await status(subA, "openid")).status).toBe(403);
+    expect((await status(subA, "pflanzen:read", "Mars/Olympus")).status).toBe(400);
+  });
+
+  it("US-KI-02 answers the same list as Today for the connected account and nothing of other accounts", async () => {
+    const own = await call(web(subA), "GET", "/today?timeZone=Europe/Berlin");
+    const viaAi = await status(subA);
+    expect(viaAi.status).toBe(200);
+    expect(viaAi.body["items"]).toEqual(own.body["items"]);
+    expect(viaAi.body["date"]).toBe(own.body["date"]);
+    expect(viaAi.body["dataFields"]).toContain("items[].text");
+    const other = await status(subB);
+    expect(other.body["items"]).toEqual(
+      (await call(web(subB), "GET", "/today?timeZone=Europe/Berlin")).body["items"],
+    );
+  });
+
+  it("US-KI-02 every successful call shows in the keeper's log, not in anybody else's", async () => {
+    const before = (await call(web(subB), "GET", "/ai/log")).body["log"].length;
+    await status(subB);
+    const mine = (await call(web(subB), "GET", "/ai/log")).body["log"];
+    expect(mine).toHaveLength(before + 1);
+    expect(mine[0]).toMatchObject({ operation: "status", clientName: CLIENT });
+    const logA = (await call(web(subA), "GET", "/ai/log")).body["log"];
+    expect(logA.every((e: { id: string }) => e.id !== mine[0].id)).toBe(true);
+    expect((await call(ai(subB, "pflanzen:read"), "GET", "/ai/log")).status).toBe(401);
+  });
+
+  it("US-KI-02 a revoked connection gets no status any more", async () => {
+    const list = (await call(web(subB), "GET", "/ai/connections")).body["connections"];
+    await call(web(subB), "POST", `/ai/connections/${list[0].id}/revoke`);
+    expect((await status(subB)).body["error"].code).toBe("ai.connection_revoked");
+  });
+});

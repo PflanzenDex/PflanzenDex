@@ -1,22 +1,21 @@
 import {
-  AI_SCOPES,
   aiAllowAgain,
   aiConnections,
+  aiLog,
   aiRevoke,
   aiSetRights,
+  type StatusSource,
   type ConnectionStore,
 } from "@pflanzendex/core";
-import { ConnectionsPostgres, IdempotencyPostgres } from "@pflanzendex/db";
+import { AiLogPostgres, ConnectionsPostgres, IdempotencyPostgres } from "@pflanzendex/db";
 import { Hono, type MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
 import { body, write, type AuthEnv } from "../kernel";
 import type { TokenVerifier } from "../account";
-import { clientAuthentication, type AiEnv } from "./client-auth";
+import { clientRoutes } from "./client-routes";
 
 /** Paths the sign-in guard of the web app (bearer token) must cover: the keeper's list of connections. */
-const KEEPER_PATHS = ["/ai/connections"] as const;
-export const WELL_KNOWN = "/.well-known/oauth-protected-resource";
-
+const KEEPER_PATHS = ["/ai/connections", "/ai/log"] as const;
 export interface AiAccessOptions {
   /** Verifies the tokens of AI clients (audience = `resource`). */
   readonly verifier: TokenVerifier;
@@ -44,14 +43,14 @@ export function aiAccessRoutes(
   pool: Pool,
   auth: MiddlewareHandler<AuthEnv>,
   opt: AiAccessOptions | undefined,
+  status: StatusSource,
 ): Hono<AuthEnv> {
   if (!opt) return new Hono<AuthEnv>();
   const connections = opt.connections ?? new ConnectionsPostgres(pool);
+  const log = new AiLogPostgres(pool);
   const deps = { connections };
   const writes = { idempotency: new IdempotencyPostgres(pool) };
-  const metadataUrl = `${new URL(opt.resource).origin}${WELL_KNOWN}`;
   const routes = new Hono<AuthEnv>();
-  const client = new Hono<AiEnv>();
 
   for (const path of KEEPER_PATHS) routes.use(path, auth).use(`${path}/*`, auth);
   routes.get("/ai/connections", async (c) =>
@@ -70,25 +69,8 @@ export function aiAccessRoutes(
     }),
   );
 
-  client.get(WELL_KNOWN, (c) =>
-    c.json({
-      resource: opt.resource,
-      authorization_servers: [opt.issuer],
-      scopes_supported: Object.values(AI_SCOPES),
-      bearer_methods_supported: ["header"],
-    }),
-  );
-  const guard = {
-    verifier: opt.verifier,
-    pool,
-    connections,
-    metadataUrl,
-    ...(opt.clock ? { clock: opt.clock } : {}),
-  };
-  client.get("/mcp/session", clientAuthentication(guard, "read"), (c) => {
-    const { connection, rights } = c.get("ai");
-    return c.json({ client: connection.clientName, rights });
-  });
-  routes.route("/", client);
+  routes.get("/ai/log", async (c) => c.json({ log: await aiLog({ log }, c.get("account").id) }));
+
+  routes.route("/", clientRoutes(pool, opt, { connections, log, status }));
   return routes;
 }

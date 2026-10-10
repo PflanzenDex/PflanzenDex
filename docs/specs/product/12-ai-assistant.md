@@ -41,7 +41,7 @@ Acceptance criteria:
 - Given an invalid input (unknown location, impossible number), then the operation rejects, returns an error code with a reason, and nothing is written.
 - Every operation returns in structured form what was changed; the action appears in the log with "undo" (US-KI-10).
 
-### US-KI-02 · Daily status on request · ⬜ new
+### US-KI-02 · Daily status on request · 🟨 new
 
 Acceptance criteria:
 
