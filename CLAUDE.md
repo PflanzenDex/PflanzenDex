@@ -29,7 +29,7 @@ Start with `docs/specs/product/readme.md` (index, conventions, replacement table
 
 - **New features go into `docs/specs/product/`.** Only touch `docs/specs/prototype/` to correct the description of the vault's actual state.
 - Product IDs: `US-<EPIC>-nn`, `FR-<EPIC>-nn`, `DM-<EPIC>-nn`, `NFR-nn`, decisions `E-nn`. Stories taken over from the prototype **keep their prototype ID** so the two can be compared. IDs are never renumbered.
-- Product epics: ACC, BES, LIC, PHA, WAC, BEH, WUN, POK, MON, SOZ, EQU, KI, QS, ENT (`17-discover.md`, swipe suggestions from the catalog into the wishlist).
+- Product epics: ACC, BES, LIC, PHA, WAC, BEH, WUN, POK, MON, SOZ, EQU, KI, QS, ENT (`17-discover.md`, swipe suggestions from the catalog into the wishlist), ACH (`20-achievements.md`, achievements and rewards for care and growth).
 - When adding a product epic: new numbered file, then update the file and status tables in `docs/specs/product/readme.md`, cross-reference the affected epics, add glossary terms to `00`, and place it in the release cut in `16`.
 - Product specs are **technology-neutral**: behavior, data and limits. Technology choices belong in `16` as decisions.
 - Acceptance criteria use a short Given/When/Then form and are meant to become tests (P-06).
