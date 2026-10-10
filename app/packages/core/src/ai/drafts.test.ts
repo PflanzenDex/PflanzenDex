@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { appError, execute, failed, ok, shape, textField } from "../kernel";
 import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
-import { aiAdoptDraft, aiDiscardDraft, aiDrafts, aiProposeDraft, type DraftTypes } from "./drafts";
+import { aiAdoptDraft, aiDiscardDraft, aiDrafts, type DraftTypes } from "./drafts";
+import { aiProposeDraft } from "./propose";
 import { InMemoryAiLog, InMemoryDrafts } from "./test-helpers";
 
 const now = new Date("2026-10-10T08:00:00Z");

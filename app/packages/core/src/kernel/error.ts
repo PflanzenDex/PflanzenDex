@@ -71,6 +71,11 @@ export const ERROR_TEXTS = {
   "ai.draft_not_found": "Diesen Entwurf gibt es nicht. Lade die Liste neu.",
   "ai.draft_closed":
     "Dieser Entwurf ist schon übernommen, verworfen oder abgelaufen. Es wurde nichts geändert.",
+  "ai.task_not_found": "Diesen Auftrag gibt es nicht. Lade die Liste neu.",
+  "ai.task_closed":
+    "Dieser Auftrag ist schon erledigt, abgelehnt oder abgelaufen. Es wurde nichts geändert.",
+  "ai.no_client":
+    "Es ist kein KI-Client verbunden, darum wurde kein Auftrag angelegt. Verbinde einen KI-Client oder kopiere den Auftrag als Text.",
   "friend.own_code": "Das ist dein eigener Freundescode. Gib ihn an jemand anderen weiter.",
   "friend.already_linked":
     "Mit dieser Person gibt es schon eine Anfrage oder Freundschaft. Es wurde nichts geändert und der Code ist nicht verbraucht.",

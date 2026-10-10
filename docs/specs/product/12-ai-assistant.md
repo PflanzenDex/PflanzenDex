@@ -100,7 +100,7 @@ Acceptance criteria:
 - List "Connected AI clients": name, rights, connected since, last use. Revocation takes effect immediately; a revoked or expired access is rejected.
 - A connection belongs to exactly one account (KI-R6). Instructions for connecting (copy link, example flows) are in the app.
 
-### US-KI-08 · Tasks from the app to the AI client · ⬜ new
+### US-KI-08 · Tasks from the app to the AI client · 🟨 new
 
 As a **plant keeper** I want to trigger something in the app that my AI client handles (path B).
 
@@ -111,6 +111,8 @@ Acceptance criteria:
 - Because a client does not wake up on its own, every task offers "Open in AI client": the app puts a ready-made prompt on the clipboard (or opens the client via a link where it can). The prompt contains task id, type, the instruction in plain text, the name of the reference (e.g. species or zone), the operations the client should call, and the note to deliver the result as a draft. It contains no credentials and no data the client could not retrieve anyway with its rights. The keeper sees the text before copying and does not have to add anything.
 - If no client is connected, the app says so and offers the manual path as well as "Copy task as text". No silent task arises that is never processed (P-10).
 - Tasks for the same reference and type are merged; repeating is idempotent (US-QS-03). A task expires after 14 days (assumption).
+
+Decided by the PO (assumption): task types are `species_profile` (reference: species name), `wish_candidates` (reference: light zone 2 to 4) and `photo_assessment` (reference: measurement id), each completed by a draft of the matching type (`species`, `wish`, `photo_assessment`). The client delivers a draft with `taskId`; the first draft sets the task to `done`, the same connection may add more (wish candidates). The client may decline a task (`declined`), the keeper may withdraw it (also `declined`); `expired` is derived after 14 days and stays visible. Without a connected client with the right "create drafts" no task is stored (`ai.no_client`); "Copy task as text" then works without storing anything. Open for the keeper: the entry points in the forms of US-BES-01, US-WUN-02/04 and US-WAC-06 (the creation lives in "Konto" so far) and opening the client by a link (no client offers one yet; the clipboard path is built).
 
 ### US-KI-09 · Review and adopt drafts · 🟨 new
 
