@@ -20,11 +20,12 @@ export class WateringPostgres {
     userId: string,
     specimenIds: readonly string[],
   ): Promise<ReadonlyMap<string, string>> {
-    if (specimenIds.length === 0) return new Map();
     const r = await withAccount(this.pool, userId, (c) =>
       c.query<{ specimenId: string; date: string }>(
         `select specimen_id as "specimenId", to_char(max(watered_on), 'YYYY-MM-DD') as date
-         from watering_log where specimen_id = any($1) group by specimen_id`,
+           from watering_log
+          where specimen_id = any($1::uuid[])
+          group by specimen_id`,
         [specimenIds],
       ),
     );
