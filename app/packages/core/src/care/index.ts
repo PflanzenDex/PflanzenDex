@@ -51,4 +51,5 @@ export type {
   TreatmentStatusKind,
 } from "./treatments/treatment-list";
 export { phaseStatus } from "./phases/phase-status";
+export { phaseChangeOccasions } from "./phases/change/phase-change";
 export type { PhaseStatus } from "./phases/phase-status";
