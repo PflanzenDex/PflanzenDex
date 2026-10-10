@@ -11,7 +11,7 @@ Prototype reference: epic MON was only a spec there (no code). Here **phase 1 (r
 
 ## User stories
 
-### US-MON-01 · Be notified only when action is needed · ⬜ new
+### US-MON-01 · Be notified only when action is needed · 🟨 new
 
 As a **plant keeper** I want a notification only when something needs doing, and no "all ok" messages.
 
@@ -23,17 +23,25 @@ Acceptance criteria:
 - Without need for action nothing is sent.
 - Channel: web push; Telegram or email are optional (E-10).
 
+Assumptions, decided by the PO (revisable): **E-10 is decided: web push plus optional email.** Built first is only what needs no external account: the daily job `monitoring.send_reminders` (one job per account and local day through the job queue, TE-06; a tick every 5 minutes orders the checks that have come due, the day row `reminder` is unique per account and local day, so a rerun, a second process or a restart neither derives nor sends twice, FR-MON-02), the bundle of one message per day, the in-app inbox (`GET /reminders`, newest first; a day with nothing to do stores only a marker with status `none`, nothing is sent and the inbox does not list it), the data model for push subscriptions (`delivery_channel`, `POST`/`DELETE /reminders/subscriptions`) and the delivery behind the port `ReminderChannel` with a stub adapter that sends nothing out and logs it. Without a push subscription the reminder stays in the inbox with status `in_app`. The days run in the time zone of the profile (NFR-08); an account without a time zone gets no reminder (nothing is guessed). The occasions come from the central status function (FR-MON-03: the same function as the Today list). What does not exist yet: the buttons "watered", "done", "moved" in the message (they need the real push channel and a service worker), the settings and subscription screens in the web app, and the occasions of US-MON-02 and US-MON-05.
+
+**Tasks for the operator** (not built, needs accounts only a human can create): (1) generate a VAPID key pair for web push (`npx web-push generate-vapid-keys`) and keep the private key as a secret of the deployment; (2) for the optional email channel a transactional mail account or SMTP server with sender address and credentials (cost and sender domain are the owner's decision); (3) the real adapters for `ReminderChannel` (web push with the VAPID key, SMTP) replace the stub in `api/src/monitoring/runtime.ts`; (4) a service worker in the web app that shows the push and handles the action buttons.
+
 ### US-MON-02 · Be reminded at the phase change · ⬜ new (prototype: spec)
 
 Acceptance criteria: trigger = the dormancy phase begins or ends today **and** the location is still the old one. The calculation is the same as in `US-PHA-01`, not rewritten (FR-MON-03).
 
-### US-MON-03 · Be reminded of a due treatment · ⬜ new
+### US-MON-03 · Be reminded of a due treatment · 🟨 new
 
 Acceptance criteria: trigger = open treatment with date ≤ today. "Done" in the message ticks it off (US-BEH-03).
 
-### US-MON-04 · Be reminded of an overdue measurement · ⬜ new
+Assumptions, decided by the PO (revisable): the occasion is each item `treatment_due` or `treatment_overdue` of the central status function, with its text and next action; the "Done" button in the message waits for the real push channel (the tick-off itself exists, US-BEH-03).
+
+### US-MON-04 · Be reminded of an overdue measurement · 🟨 new
 
 Acceptance criteria: trigger = last measurement older than N days (default 30, adjustable) or none. Cuttings per decision (FR-WAC-08).
+
+Assumptions, decided by the PO (revisable): N is the setting `measurementDays` (1 to 365, default 30). "Older than N days" means more than N whole local days (NFR-08). A plant without any measurement counts from its catch date and says "noch nie gemessen"; a plant without a known date is not reported (P-08). Cuttings and archived specimens are left out until E-11 (rhythm of cuttings) is decided. The overdue measurement is derived in the reminder only; the Today list does not show it yet.
 
 ### US-MON-05 · Be reminded to water by interval without a sensor · ⬜ new
 
@@ -64,13 +72,15 @@ Acceptance criteria:
 - Climate: display and warning on outliers (e.g. plant in dormancy clearly warmer than its dormancy location), no control.
 - Light measurement per zone once with a phone app (PPFD), with date and method (US-EQU-03).
 
-### US-MON-08 · Control reminders · ⬜ new
+### US-MON-08 · Control reminders · 🟨 new
 
 Acceptance criteria:
 
 - Per occasion (phase, treatment, measurement, watering, swap, friends) on/off, time, quiet hours.
 - An occasion can be paused ("do not remind for a week") without losing data.
 - Switching off a reminder does not change the calculation; "Today" still shows everything due (FR-MON-03).
+
+Assumptions, decided by the PO (revisable): saved as one settings row per account (`reminder_setting`, `PUT /reminders/settings`): time of the daily check (`HH:MM`, default 08:00), quiet hours (both times or none; a window may reach over midnight; when the chosen time falls into it the message goes out at its end and is never dropped), a pause per occasion until a local date (inclusive; the occasion is left out of the message, nothing else changes) and the days of an overdue measurement. Switching an occasion off for good stays with the profile switches (US-ACC-02), which the occasion source respects. The data model for push subscriptions (`delivery_channel`, at most 10 per account, only https endpoints) is part of this story. Not built yet: the screens of the web app, the occasion "swap" and "friends" (reminders for them come with US-SOZ-12), and the pause by "do not remind for a week" as a button (the API takes the date).
 
 ## Requirements
 

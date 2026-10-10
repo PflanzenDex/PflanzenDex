@@ -9,6 +9,7 @@ import { FIXTURES_WISHLIST } from "./wishlist/index.ts";
 import { FIXTURES_POKEDEX } from "./pokedex/index.ts";
 import { FIXTURES_SOCIAL } from "./social/index.ts";
 import { FIXTURES_SWAP } from "./swap/index.ts";
+import { FIXTURES_MONITORING } from "./monitoring/index.ts";
 
 // One example per table with an account id for the remaining columns (without the id, the test sets it).
 // The entries live in their respective module; they are collected here. A new table without an entry
@@ -24,6 +25,7 @@ export const FIXTURES: Fixtures = {
   ...FIXTURES_POKEDEX,
   ...FIXTURES_SOCIAL,
   ...FIXTURES_SWAP,
+  ...FIXTURES_MONITORING,
 };
 
 // Test helpers for tables of another module (AB-9): tests of one module write no SQL on foreign tables,
@@ -39,6 +41,17 @@ export const createAccountWithName = (pool: Pool, id: string, name: string | nul
       "insert into account_data (account_id, email, display_name) values ($1, $2, $3)",
       [id, `${id}@example.test`, name],
     );
+  });
+
+/** An account with its data row and time zone (AB-9): tests of the reminders need accounts with and without a zone. */
+export const createAccountWithTimeZone = (pool: Pool, id: string, timeZone: string | null) =>
+  withAccount(pool, id, async (c) => {
+    await c.query("insert into account (id) values ($1) on conflict do nothing", [id]);
+    await c.query("insert into account_data (account_id, email, time_zone) values ($1, $2, $3)", [
+      id,
+      `${id}@example.test`,
+      timeZone,
+    ]);
   });
 
 /** The application role may neither read nor write the role table (both must fail with `permission denied`). */

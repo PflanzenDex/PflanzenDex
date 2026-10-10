@@ -4,6 +4,10 @@ import { createApp } from "./app";
 import { createWikimediaDownload } from "./wishlist";
 import { createJobWorker, JOB_HANDLERS } from "./jobs";
 import { checkTaxonomy, pokedexJobHandlers, scheduleChecks } from "./pokedex";
+import { remindersRuntime } from "./monitoring";
+import { reminderOccasionsFor } from "./today";
+import { measurementSourceFor } from "./care";
+import { zoneStockFor } from "./zone-stock";
 import { createMemorySourceCache, createSourceClient } from "./kernel";
 import { createTokenVerifier } from "./account";
 import { createS3ObjectStore, createSharpProcessor, s3ConfigFromEnv } from "./media";
@@ -46,9 +50,18 @@ serve({ fetch: app.fetch, port }, (info) => {
 });
 
 // Background jobs (TE-06) run in the same process; the queue hands out each job once, also with several processes.
+// Reminders (US-MON-01): the occasions come from the central status function; delivery is a stub until the operator
+// provides the web push keys and a mail account (E-10, docs/specs/product/09-reminders-and-sensors.md).
+const reminders = remindersRuntime({
+  pool,
+  source: reminderOccasionsFor(pool, {
+    measurements: measurementSourceFor(pool),
+    zoneStock: zoneStockFor(pool),
+  }),
+});
 const worker = createJobWorker({
   queue: new JobsPostgres(pool),
-  handlers: { ...JOB_HANDLERS, ...pokedexJobHandlers({ pool, sources }) },
+  handlers: { ...JOB_HANDLERS, ...pokedexJobHandlers({ pool, sources }), ...reminders.handlers },
 });
 worker.start();
 // The taxonomy build runs when the catalog differs from the stored tree (US-POK-03).
@@ -56,5 +69,12 @@ scheduleChecks(
   () => checkTaxonomy(pool, () => new Date()),
   60 * 60 * 1000,
   (error) => console.error("taxonomy check failed", error),
+);
+// The daily reminder checks that have come due are ordered every 5 minutes (starting value, assumption); a failure is
+// reported and the next tick tries again.
+scheduleChecks(
+  () => reminders.tick(new Date()),
+  5 * 60 * 1000,
+  (error) => console.error("reminder scheduling failed", error),
 );
 process.on("SIGTERM", () => void worker.stop().then(() => process.exit(0)));
