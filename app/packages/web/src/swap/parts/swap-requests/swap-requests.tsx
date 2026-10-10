@@ -1,8 +1,8 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import type { SwapOverview, SwapSide } from "@pflanzendex/core";
 import { errorText } from "@/lib/error-text";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
-import { answerSwap, loadSwaps, type AnswerInput } from "../../api/swaps-api";
+import { answerSwap, confirmHandover, loadSwaps, type AnswerInput } from "../../api/swaps-api";
 import { SwapCard } from "./swap-card/swap-card";
 import { swapTitle } from "./swap-text";
 
@@ -27,12 +27,22 @@ function doneText(s: SwapSide, a: AnswerInput): string {
   }
 }
 
+/** What the keeper reads after confirming the handover: waiting for the other side, or done (P-09, P-10). */
+function handoverText(s: SwapSide, status: "waiting" | "handed_over"): string {
+  if (status === "waiting")
+    return `Deine Bestätigung ist gespeichert. Sobald ${s.otherName ?? "der Freund"} auch bestätigt hat, wird übergeben.`;
+  return s.role === "recipient"
+    ? "Die Übergabe ist abgeschlossen. Das Exemplar ist jetzt in deinem Bestand."
+    : "Die Übergabe ist abgeschlossen. Dein Exemplar ist archiviert, der Freund hat ein neues.";
+}
+
 function Section(props: {
   id: string;
   title: string;
   rows: readonly SwapSide[];
   busy: boolean;
   onAnswer: (s: SwapSide, a: AnswerInput) => void;
+  onHandover: (s: SwapSide, marker: string | null) => void;
 }) {
   if (props.rows.length === 0) return null;
   return (
@@ -42,7 +52,13 @@ function Section(props: {
       </h3>
       <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0" aria-label={props.title}>
         {props.rows.map((s) => (
-          <SwapCard key={s.swapId} s={s} busy={props.busy} onAnswer={(a) => props.onAnswer(s, a)} />
+          <SwapCard
+            key={s.swapId}
+            s={s}
+            busy={props.busy}
+            onAnswer={(a) => props.onAnswer(s, a)}
+            onHandover={(m) => props.onHandover(s, m)}
+          />
         ))}
       </ul>
     </section>
@@ -52,8 +68,20 @@ function Section(props: {
 function Body(props: { data: SwapOverview; api: string; token: Token; onWritten: () => void }) {
   const { data, api } = props;
   const write = useWriteAction(props.token, props.onWritten);
-  const answer = (s: SwapSide, a: AnswerInput) =>
+  // The handover answers `waiting` or `handed_over`, so its message depends on the answer (P-09).
+  const [handed, setHanded] = useState<string | null>(null);
+  const answer = (s: SwapSide, a: AnswerInput) => {
+    setHanded(null);
     void write.run((t) => answerSwap({ api, token: t }, s.swapId, a), doneText(s, a));
+  };
+  const handover = (s: SwapSide, marker: string | null) => {
+    setHanded(null);
+    void write.run(async (t) => {
+      const r = await confirmHandover({ api, token: t }, s.swapId, marker);
+      if (r.ok) setHanded(handoverText(s, r.value.status));
+      return r;
+    }, "");
+  };
   if (data.received.length === 0 && data.sent.length === 0)
     return (
       <p className="rounded-lg border border-dashed border-border p-3">
@@ -63,9 +91,9 @@ function Body(props: { data: SwapOverview; api: string; token: Token; onWritten:
     );
   return (
     <>
-      {write.message && (
+      {(write.message || handed) && (
         <p role="status" className="rounded-lg border border-border p-3">
-          {write.message}
+          {write.message || handed}
         </p>
       )}
       {write.error && (
@@ -79,6 +107,7 @@ function Body(props: { data: SwapOverview; api: string; token: Token; onWritten:
         rows={data.received}
         busy={write.running}
         onAnswer={answer}
+        onHandover={handover}
       />
       <Section
         id="swaps-sent"
@@ -86,6 +115,7 @@ function Body(props: { data: SwapOverview; api: string; token: Token; onWritten:
         rows={data.sent}
         busy={write.running}
         onAnswer={answer}
+        onHandover={handover}
       />
     </>
   );

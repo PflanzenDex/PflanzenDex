@@ -3,6 +3,8 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createAccountWithName, createFixtureSpecimen } from "../fixtures.ts";
 import { migrate, openFixturePool, openOwnerPool, withAccount } from "../kernel/index.ts";
+import { MeasurementsPostgres, TreatmentsPostgres } from "../care/index.ts";
+import { SpecimenPostgres } from "../collection/index.ts";
 import { FriendsPostgres, SharingPostgres } from "../social/index.ts";
 import { OffersPostgres, SwapsPostgres } from "./index.ts";
 
@@ -436,5 +438,229 @@ describe("US-SOZ-10 answering a swap request", () => {
       cause: "friendship_ended",
     });
     expect(await offerStatus(r.offerId)).toBe("open");
+  });
+});
+
+describe("US-SOZ-11 the handover in one transaction", () => {
+  const suffix = () => randomUUID().slice(0, 6);
+  /** An accepted swap of a fresh offer of Anna, requested by `by`. */
+  async function accepted(by = ben) {
+    const o = await offer(anna, `Übergabe ${suffix()}`);
+    const r = await swaps.request(by, o.offerId, null, null);
+    await swaps.answer(anna, r.swapId as string, {
+      action: "accept",
+      reason: null,
+      proposal: null,
+    });
+    return { ...o, swapId: r.swapId as string, by };
+  }
+  const row = async (user: string, swapId: string) =>
+    (await swaps.list(user)).find((s) => s.swapId === swapId);
+  const specimenOf = async (owner: string, id: string) =>
+    new SpecimenPostgres(pool).find(owner, id);
+
+  /** What core does, in the same order: confirm, and as the second one archive, create, finish. */
+  async function confirmAs(
+    user: string,
+    a: Awaited<ReturnType<typeof accepted>>,
+    opts: { name?: string; marker?: string | null } = {},
+  ) {
+    return swaps.handover(user, async (s) => {
+      const ctx = await s.confirm(a.swapId, opts.marker ?? null);
+      if (ctx.outcome !== "ok" || !ctx.both)
+        return { commit: true, value: { ctx, received: null as string | null } };
+      const giver = ctx.role === "giver" ? user : (ctx.otherId as string);
+      const recipient = ctx.role === "giver" ? (ctx.otherId as string) : user;
+      const given = await s.giverSpecimen(giver, ctx.specimenId as string);
+      await s.archiveGiven(giver, a.specimenId, "Getauscht mit Test", "2026-10-10");
+      const made = await s.createReceived(
+        recipient,
+        {
+          speciesId: (given as { speciesId: string }).speciesId,
+          name: opts.name ?? `Erhalten ${suffix()}`,
+          marker: ctx.marker,
+          locationId: null,
+          caughtAt: "2026-10-10",
+          status: "cutting",
+        },
+        [],
+      );
+      await s.finish(a.swapId, a.specimenId, made.id);
+      return { commit: true, value: { ctx, received: made.id } };
+    });
+  }
+
+  it("one confirmation alone changes nothing in the collection; the second completes it for both sides", async () => {
+    const a = await accepted();
+    const first = (await confirmAs(ben, a)) as { ctx: { both: boolean }; received: string | null };
+    expect([first.ctx.both, first.received]).toEqual([false, null]);
+    expect((await specimenOf(anna, a.specimenId))?.status).not.toBe("archived");
+    expect(await row(ben, a.swapId)).toMatchObject({
+      status: "accepted",
+      confirmedRecipient: true,
+      confirmedGiver: false,
+    });
+    const second = (await confirmAs(anna, a)) as { ctx: { both: boolean }; received: string };
+    expect(second.ctx.both).toBe(true);
+    expect(await specimenOf(anna, a.specimenId)).toMatchObject({
+      status: "archived",
+      archivedReason: "Getauscht mit Test",
+    });
+    expect(await specimenOf(ben, second.received)).toMatchObject({
+      status: "cutting",
+      locationId: null,
+      caughtAt: "2026-10-10",
+    });
+    expect(await specimenOf(anna, second.received)).toBeNull();
+    expect(await row(anna, a.swapId)).toMatchObject({
+      status: "handed_over",
+      givenSpecimenId: a.specimenId,
+    });
+    expect(await row(ben, a.swapId)).toMatchObject({
+      status: "handed_over",
+      receivedSpecimenId: second.received,
+    });
+    expect(
+      (await admin.query("select status from offer where id = $1", [a.offerId])).rows[0].status,
+    ).toBe("handed_over");
+  });
+
+  it("the recipient starts with an empty history: nothing but the species is passed on", async () => {
+    const a = await accepted();
+    await confirmAs(anna, a);
+    const done = (await confirmAs(ben, a)) as { received: string };
+    const treatments = new TreatmentsPostgres(pool);
+    expect(await new MeasurementsPostgres(pool).list(ben, done.received)).toEqual([]);
+    expect(await treatments.done(ben, done.received)).toEqual([]);
+    expect((await treatments.open(ben, [done.received])).get(done.received) ?? []).toEqual([]);
+  });
+
+  it("a refused step rolls everything back: the swap stays accepted, nobody's collection changed, the confirmation is not kept", async () => {
+    const a = await accepted();
+    await confirmAs(ben, a);
+    const taken = `Besetzt ${suffix()}`;
+    await specimen(ben, taken);
+    const refused = await confirmAs(anna, a, { name: taken });
+    expect(refused).toEqual({ refused: "name_taken" });
+    expect((await specimenOf(anna, a.specimenId))?.status).not.toBe("archived");
+    expect(await row(anna, a.swapId)).toMatchObject({
+      status: "accepted",
+      confirmedGiver: false,
+      confirmedRecipient: true,
+    });
+    expect(await row(ben, a.swapId)).toMatchObject({ status: "accepted" });
+    expect(
+      (await admin.query("select status from offer where id = $1", [a.offerId])).rows[0].status,
+    ).toBe("reserved");
+    expect(((await confirmAs(anna, a)) as { received: string | null }).received).toBeTruthy();
+  });
+
+  it("repeating a confirmation changes nothing, a completed handover answers already_handed_over", async () => {
+    const a = await accepted();
+    await confirmAs(ben, a);
+    expect(((await confirmAs(ben, a)) as { ctx: { outcome: string } }).ctx.outcome).toBe("ok");
+    await confirmAs(anna, a);
+    expect(((await confirmAs(anna, a)) as { ctx: { outcome: string } }).ctx.outcome).toBe(
+      "already_handed_over",
+    );
+  });
+
+  it("only an accepted swap can be handed over; a stranger and an unknown id are not found (P-04); the friendship is checked", async () => {
+    const o = await offer(anna, `Nicht angenommen ${suffix()}`);
+    const r = await swaps.request(ben, o.offerId, null, null);
+    const waiting = { ...o, swapId: r.swapId as string, by: ben };
+    expect(((await confirmAs(ben, waiting)) as { ctx: { outcome: string } }).ctx.outcome).toBe(
+      "wrong_state",
+    );
+    const a = await accepted();
+    expect(((await confirmAs(cleo, a)) as { ctx: { outcome: string } }).ctx.outcome).toBe(
+      "not_found",
+    );
+    const link = await befriend(anna, dora);
+    const b = await accepted(dora);
+    await friends.end(anna, link);
+    expect(((await confirmAs(dora, b)) as { ctx: { outcome: string } }).ctx.outcome).toBe(
+      "friendship_ended",
+    );
+    expect((await row(anna, b.swapId))?.status).toBe("canceled");
+  });
+
+  it("finish_handover refuses a swap that is not confirmed by both sides", async () => {
+    const a = await accepted();
+    const ok = await swaps.handover(anna, async (s) => ({
+      commit: true,
+      value: await s.finish(a.swapId, a.specimenId, randomUUID()),
+    }));
+    expect(ok).toBe(false);
+  });
+
+  it("the steps read the recipient's specimens and refuse what cannot be done: a gone specimen, a taken marker, an unknown species", async () => {
+    const a = await accepted();
+    await specimen(ben, "x");
+    const mineBen = await new SpecimenPostgres(pool).list(ben);
+    const result = await swaps.handover(anna, async (s) => {
+      expect((await s.recipientSpecimens(ben)).map((z) => z.id)).toEqual(mineBen.map((z) => z.id));
+      return { commit: false, value: "read" };
+    });
+    expect(result).toBe("read");
+    const gone = await swaps.handover(anna, async (s) => {
+      await s.archiveGiven(anna, a.specimenId, "x", "2026-10-10");
+      await s.archiveGiven(anna, a.specimenId, "x", "2026-10-10");
+      return { commit: true, value: "done" };
+    });
+    expect(gone).toEqual({ refused: "specimen_gone" });
+    expect((await specimenOf(anna, a.specimenId))?.status).not.toBe("archived");
+    const base = await specimenOf(anna, a.specimenId);
+    const species = (base as { speciesId: string }).speciesId;
+    const rival = await swaps.handover(anna, async (s) => {
+      await s.createReceived(
+        ben,
+        {
+          speciesId: species,
+          name: `Marke ${suffix()}`,
+          marker: "gleich",
+          locationId: null,
+          caughtAt: null,
+        },
+        [],
+      );
+      await s.createReceived(
+        ben,
+        {
+          speciesId: species,
+          name: `Marke ${suffix()}`,
+          marker: "gleich",
+          locationId: null,
+          caughtAt: null,
+        },
+        [],
+      );
+      return { commit: true, value: "done" };
+    });
+    expect(rival).toEqual({ refused: "marker_taken" });
+    const unknown = await swaps.handover(anna, async (s) => {
+      await s.createReceived(
+        ben,
+        {
+          speciesId: randomUUID(),
+          name: `Art ${suffix()}`,
+          marker: null,
+          locationId: null,
+          caughtAt: null,
+        },
+        [],
+      );
+      return { commit: true, value: "done" };
+    });
+    expect(unknown).toEqual({ refused: "species_unknown" });
+  });
+
+  it("an unexpected database error is not hidden: it rolls back and is thrown (P-10)", async () => {
+    await expect(
+      swaps.handover(anna, async (s) => ({
+        commit: true,
+        value: await s.finish("not-a-uuid", randomUUID(), randomUUID()),
+      })),
+    ).rejects.toThrow();
   });
 });

@@ -1,5 +1,5 @@
 import type { SwapAction, SwapOverview } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../../kernel";
+import { call, createWrite, currentTimeZone, type Response } from "../../kernel";
 
 type FetchFn = typeof fetch;
 
@@ -30,4 +30,18 @@ export async function answerSwap(
     input,
   );
   return r.ok ? { ok: true, value: r.value as { status: string } } : r;
+}
+
+/** Confirms the handover (US-SOZ-11) with the keeper's time zone for the local date; `marker` only for the recipient. */
+export async function confirmHandover(
+  access: { api: string; token: string; fetchFn?: FetchFn },
+  swapId: string,
+  marker: string | null,
+): Promise<Response<{ status: "waiting" | "handed_over" }>> {
+  const r = await createWrite(access.api, access.token, access.fetchFn ?? fetch)(
+    "POST",
+    `/swaps/${encodeURIComponent(swapId)}/handover`,
+    { timeZone: currentTimeZone(), ...(marker ? { marker } : {}) },
+  );
+  return r.ok ? { ok: true, value: r.value as { status: "waiting" | "handed_over" } } : r;
 }

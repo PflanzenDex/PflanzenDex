@@ -35,6 +35,6 @@ export function bindFriends(app: Hono, pool: Pool, auth: MiddlewareHandler, cloc
   app.route("/", feedRoutes(pool, clock));
   const swapOptions = { ...(clock ? { clock } : {}) };
   app.route("/", offerRoutes(pool, swapOptions));
-  app.route("/", swapRoutes(pool));
+  app.route("/", swapRoutes(pool, clock));
   app.route("/", exchangeRoutes(pool, offerDependencies(pool, swapOptions)));
 }
