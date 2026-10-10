@@ -23,7 +23,7 @@ Acceptance criteria:
 - Without need for action nothing is sent.
 - Channel: web push; Telegram or email are optional (E-10).
 
-Assumptions, decided by the PO (revisable): **E-10 is decided: web push plus optional email.** Built first is only what needs no external account: the daily job `monitoring.send_reminders` (one job per account and local day through the job queue, TE-06; a tick every 5 minutes orders the checks that have come due, the day row `reminder` is unique per account and local day, so a rerun, a second process or a restart neither derives nor sends twice, FR-MON-02), the bundle of one message per day, the in-app inbox (`GET /reminders`, newest first; a day with nothing to do stores only a marker with status `none`, nothing is sent and the inbox does not list it), the data model for push subscriptions (`delivery_channel`, `POST`/`DELETE /reminders/subscriptions`) and the delivery behind the port `ReminderChannel` with a stub adapter that sends nothing out and logs it. Without a push subscription the reminder stays in the inbox with status `in_app`. The days run in the time zone of the profile (NFR-08); an account without a time zone gets no reminder (nothing is guessed). The occasions come from the central status function (FR-MON-03: the same function as the Today list). What does not exist yet: the buttons "watered", "done", "moved" in the message (they need the real push channel and a service worker), and the occasion of US-MON-05.
+Assumptions, decided by the PO (revisable): **E-10 is decided: web push plus optional email.** Built first is only what needs no external account: the daily job `monitoring.send_reminders` (one job per account and local day through the job queue, TE-06; a tick every 5 minutes orders the checks that have come due, the day row `reminder` is unique per account and local day, so a rerun, a second process or a restart neither derives nor sends twice, FR-MON-02), the bundle of one message per day, the in-app inbox (`GET /reminders`, newest first; a day with nothing to do stores only a marker with status `none`, nothing is sent and the inbox does not list it), the data model for push subscriptions (`delivery_channel`, `POST`/`DELETE /reminders/subscriptions`) and the delivery behind the port `ReminderChannel` with a stub adapter that sends nothing out and logs it. Without a push subscription the reminder stays in the inbox with status `in_app`. The days run in the time zone of the profile (NFR-08); an account without a time zone gets no reminder (nothing is guessed). The occasions come from the central status function (FR-MON-03: the same function as the Today list). What does not exist yet: the buttons "watered", "done", "moved" in the message (they need the real push channel and a service worker).
 
 **Tasks for the operator** (not built, needs accounts only a human can create): (1) generate a VAPID key pair for web push (`npx web-push generate-vapid-keys`) and keep the private key as a secret of the deployment; (2) for the optional email channel a transactional mail account or SMTP server with sender address and credentials (cost and sender domain are the owner's decision); (3) the real adapters for `ReminderChannel` (web push with the VAPID key, SMTP) replace the stub in `api/src/monitoring/runtime.ts`; (4) a service worker in the web app that shows the push and handles the action buttons.
 
@@ -45,7 +45,7 @@ Acceptance criteria: trigger = last measurement older than N days (default 30, a
 
 Assumptions, decided by the PO (revisable): N is the setting `measurementDays` (1 to 365, default 30). "Older than N days" means more than N whole local days (NFR-08). A plant without any measurement counts from its catch date and says "noch nie gemessen"; a plant without a known date is not reported (P-08). Cuttings and archived specimens are left out until E-11 (rhythm of cuttings) is decided. The overdue measurement is derived in the reminder only; the Today list does not show it yet.
 
-### US-MON-05 · Be reminded to water by interval without a sensor · ⬜ new
+### US-MON-05 · Be reminded to water by interval without a sensor · 🟨 new
 
 As a **plant keeper** I want watering reminders and a watering log also without a sensor.
 
@@ -55,6 +55,15 @@ Acceptance criteria:
 - Trigger = last entry + interval of the **current** phase ≤ today.
 - "Watered" (in the app or the message) writes a log entry; bulk action for several specimens.
 - Starting values for intervals come from the species' watering hint and are adjustable.
+
+Assumptions, decided by the PO (revisable):
+
+- **The interval is only what the keeper entered.** The catalog's watering hint is free text, and a number derived from it would be an invented one (P-08). So the interval per species and phase is the keeper's own entry in the care profile (`wateringGrowthDays`, `wateringDormancyDays`, US-BES-09), shown next to the hint, which is the "starting value" the keeper reads and copies. Without an interval for the current phase the plant is not reported, and the empty state of the list says where to set it (P-09).
+- **Phase:** the one of the phase list (US-PHA-01, FR-MON-03); a species without a dormancy period is always in the growth phase.
+- **Trigger:** last log entry plus interval ≤ today (local calendar date in the zone of the profile, NFR-08). Without a log entry the catch date is the start ("noch nie als gegossen eingetragen"); without any known date nothing is reported. Cuttings and archived specimens are left out until E-11 is decided (as for US-MON-04).
+- **Log:** table `watering_log` (`specimen`, `watered_on`, `source`), one entry per specimen, day and source. Only `manual` is written; `sensor` is reserved for US-MON-06. The entry always carries today's date: a watering of an earlier day cannot be entered yet.
+- **"Watered":** `POST /watering` (`monitoring.water`, `Idempotency-Key`) takes one or several specimen IDs; all or nothing (an unknown or foreign specimen is `specimen.not_found`, an archived one `specimen.archived`); a repeat or a double tap writes once. In the app it is the section "Gießen" of "Heute" (`GET /watering/due`, derived on every request): a button per plant and marking several for one step. The button in the message waits for the real push channel.
+- The occasion is `watering:<specimen>` and part of the daily reminder; the switch "Gießen" of the profile (US-ACC-02) and a pause (US-MON-08) apply. The central Today list ("Jetzt dran") does not show it yet, as for the overdue measurement; the section "Gießen" below it does.
 
 ### US-MON-06 · Capture soil moisture by sensor · ⬜ new (later)
 
