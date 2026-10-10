@@ -5,6 +5,7 @@ import {
   swapOverview,
   swapProvenance,
   type ProvenanceSource,
+  type SwappedSource,
 } from "@pflanzendex/core";
 import { IdempotencyPostgres, SpeciesPostgres, SwapsPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
@@ -59,3 +60,21 @@ export const cancelOrphanedSwaps = (pool: Pool) => {
 /** The port "Provenance per specimen" of the specimen cards (US-SOZ-13), fed by the handed-over swaps (ADR 0012). */
 export const provenanceSourceFor = (pool: Pool): ProvenanceSource =>
   swapProvenance({ swaps: new SwapsPostgres(pool) });
+
+/** The port "handed-over swaps I took part in" of the feed (US-SOZ-05, ADR 0012): `social` defines it, `swap` answers it. */
+export const swappedSourceFor = (pool: Pool): SwappedSource => {
+  const swaps = new SwapsPostgres(pool);
+  return {
+    async handedOver(userId) {
+      return (await swaps.list(userId))
+        .filter((s) => s.status === "handed_over" && s.handedOverAt !== null)
+        .map((s) => ({
+          otherId: s.otherId,
+          date: s.handedOverAt as string,
+          speciesLatin: s.speciesLatin,
+          speciesGerman: s.speciesGerman,
+          direction: s.role === "giver" ? ("given" as const) : ("received" as const),
+        }));
+    },
+  };
+};

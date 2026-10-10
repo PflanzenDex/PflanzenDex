@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { FriendStore } from "../../friendship";
 import { InMemoryFacts, InMemoryPrivacy, InMemorySharing } from "../../sharing/test-helpers";
 import { daysBetween } from "./derive";
-import { friendFeed } from "../index";
+import { friendFeed, type SwappedSource } from "../index";
 
 const TODAY = "2026-10-06";
 type Facts = ConstructorParameters<typeof InMemoryFacts>[0];
@@ -10,7 +10,7 @@ const spec = (
   id: string,
   latin: string | null,
   caughtAt: string | null,
-  extra: { isCutting?: boolean } = {},
+  extra: { isCutting?: boolean; repottedAt?: string | null } = {},
 ) => ({
   id,
   speciesLatin: latin,
@@ -18,11 +18,13 @@ const spec = (
   name: id,
   caughtAt,
   isCutting: extra.isCutting ?? false,
+  repottedAt: extra.repottedAt ?? null,
 });
 
 let sharing: InMemorySharing;
 let privacy: InMemoryPrivacy;
 let facts: Facts;
+let swapped: SwappedSource;
 const friends = {
   async friends() {
     return [
@@ -35,6 +37,7 @@ const feed = (q: Partial<Parameters<typeof friendFeed>[2]> = {}) =>
   friendFeed(
     {
       friends,
+      swapped,
       sharing,
       privacy,
       facts: new InMemoryFacts(facts),
@@ -54,6 +57,7 @@ beforeEach(() => {
   sharing.friends.add("me>anna");
   sharing.friends.add("me>ben");
   facts = {};
+  swapped = { handedOver: async () => [] };
 });
 
 describe("US-SOZ-05 new among friends", () => {
@@ -183,5 +187,109 @@ describe("US-SOZ-05 calendar arithmetic", () => {
     expect(daysBetween("2026-03-28", "2026-03-30")).toBe(2);
     expect(daysBetween("2026-10-06", "2026-10-06")).toBe(0);
     expect(daysBetween("2024-02-28", "2024-03-01")).toBe(2);
+  });
+});
+
+describe("US-SOZ-05 the event types Potted and Swapped", () => {
+  it("a shared plant that was repotted adds the event Potted on its real day; an unknown day lists it as unknown (P-08)", async () => {
+    facts = {
+      a1: spec("a1", "Aloe vera", "2026-09-01", { repottedAt: "2026-10-03" }),
+      a2: spec("a2", "Ficus", "2026-09-02", { repottedAt: null }),
+    };
+    await share("anna", "a1", "a2");
+    const { events } = await feed();
+    expect(
+      events.filter((e) => e.type === "potted").map((e) => [e.speciesLatin, e.date, e.count]),
+    ).toEqual([["Aloe vera", "2026-10-03", 1]]);
+  });
+
+  it("a repot outside the period is not shown, a private repotted specimen never (P-05)", async () => {
+    facts = {
+      a1: spec("a1", "Aloe vera", "2026-01-01", { repottedAt: "2026-01-05" }),
+      a2: spec("a2", "Ficus", "2026-09-30", { repottedAt: "2026-10-02" }),
+    };
+    await share("anna", "a1");
+    expect((await feed()).events.filter((e) => e.type === "potted")).toEqual([]);
+  });
+
+  it("a swap I took part in with a current friend is an event Swapped on the handover day, summarized per species", async () => {
+    swapped = {
+      handedOver: async () => [
+        {
+          otherId: "anna",
+          date: "2026-10-05T22:30:00.000Z",
+          speciesLatin: "Aloe vera",
+          speciesGerman: "Echte Aloe",
+          direction: "received",
+        },
+        {
+          otherId: "anna",
+          date: "2026-10-05T10:00:00.000Z",
+          speciesLatin: "Aloe vera",
+          speciesGerman: "Echte Aloe",
+          direction: "received",
+        },
+        {
+          otherId: "stranger",
+          date: "2026-10-05T10:00:00.000Z",
+          speciesLatin: "X",
+          speciesGerman: null,
+          direction: "given",
+        },
+      ],
+    };
+    const { events } = await feed({ timeZone: "Europe/Berlin" });
+    const e = events.filter((x) => x.type === "swapped");
+    expect(e).toHaveLength(2);
+    expect(e[0]).toMatchObject({
+      friendName: "Anna",
+      friendId: "f-anna",
+      date: "2026-10-06",
+      count: 1,
+    });
+    expect(e[1]).toMatchObject({ date: "2026-10-05", count: 1 });
+    expect(events.map((x) => x.friendName)).not.toContain(null);
+  });
+
+  it("a swap needs no sharing and works while the friend shares nothing; the friend filter and the period apply", async () => {
+    swapped = {
+      handedOver: async () => [
+        {
+          otherId: "anna",
+          date: "2026-10-05T10:00:00.000Z",
+          speciesLatin: "A",
+          speciesGerman: null,
+          direction: "given",
+        },
+        {
+          otherId: "ben",
+          date: "2026-01-05T10:00:00.000Z",
+          speciesLatin: "B",
+          speciesGerman: null,
+          direction: "given",
+        },
+      ],
+    };
+    expect((await feed()).events.map((x) => x.speciesLatin)).toEqual(["A"]);
+    expect(
+      (await feed({ friendId: "f-ben", days: 400 })).events.map((x) => x.speciesLatin),
+    ).toEqual(["B"]);
+    expect((await feed({ onlyNewSpecies: true })).events).toEqual([]);
+  });
+
+  it("an 'Everything private' friend still shows a swap I took part in, because I am involved", async () => {
+    privacy.on.add("anna");
+    swapped = {
+      handedOver: async () => [
+        {
+          otherId: "anna",
+          date: "2026-10-05T10:00:00.000Z",
+          speciesLatin: "A",
+          speciesGerman: null,
+          direction: "given",
+        },
+      ],
+    };
+    expect((await feed()).events.map((x) => x.type)).toEqual(["swapped"]);
   });
 });

@@ -1,5 +1,14 @@
-/** The kinds of event a friend's shared specimen can create (US-SOZ-05). "Potted" and "Swapped" need history that does not exist yet. */
-export const FEED_TYPES = ["new_species", "new_cutting", "new_specimen"] as const;
+/**
+ * The kinds of event (US-SOZ-05). "Potted" comes from the repot day of a shared specimen (US-BES-04); "Swapped" from a
+ * handed-over swap the viewer took part in (US-SOZ-11).
+ */
+export const FEED_TYPES = [
+  "new_species",
+  "new_cutting",
+  "new_specimen",
+  "potted",
+  "swapped",
+] as const;
 export type FeedType = (typeof FEED_TYPES)[number];
 
 /** Default period in days (US-SOZ-05; the spec's starting value). */
@@ -28,6 +37,8 @@ export interface FeedQuery {
   readonly days?: number;
   /** Only the events of this friend (the friendship id). */
   readonly friendId?: string;
+  /** The viewer's time zone: the handover instant of a swap becomes its local calendar day (NFR-08). */
+  readonly timeZone?: string;
   /** Only the type "new species". */
   readonly onlyNewSpecies?: boolean;
 }

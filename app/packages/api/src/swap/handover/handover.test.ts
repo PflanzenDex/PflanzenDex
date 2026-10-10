@@ -369,3 +369,51 @@ describe("US-SOZ-13 swap history and provenance through the API", () => {
     expect(cards.some((c) => c.provenance?.from === before)).toBe(true);
   });
 });
+
+describe("US-SOZ-05 feed events Swapped and Potted through the API", () => {
+  type Ev = {
+    type: string;
+    friendName: string | null;
+    speciesLatin: string | null;
+    date: string | null;
+    count: number;
+  };
+  const feed = async (sub: string) =>
+    (await call(sub, "GET", "/feed?timeZone=Europe%2FBerlin&days=365")).body.events as Ev[];
+
+  it("a swap I took part in shows as 'Getauscht' with the friend and the species on the handover day, for both sides", async () => {
+    const a = await accepted("F1", "swap", subD);
+    await confirm(subA, a.swapId);
+    await confirm(subD, a.swapId, { marker: "f1" });
+    for (const sub of [subA, subD]) {
+      const e = (await feed(sub)).filter((x) => x.type === "swapped");
+      expect(e.length).toBeGreaterThan(0);
+      expect(e[0]).toMatchObject({ date: "2026-10-10", count: expect.any(Number) });
+      expect(e[0]?.friendName).toBeTruthy();
+    }
+  });
+
+  it("a stranger sees no swap event of two others (only if I am involved)", async () => {
+    expect((await feed(subOp)).filter((x) => x.type === "swapped")).toEqual([]);
+  });
+
+  it("repotting a shared cutting creates 'Eingetopft' with the keeper's local day; the friend sees it, a private one stays private", async () => {
+    const id = await specimen(subA, "F2");
+    await call(subA, "PUT", `/sharing/specimens/${id}`, { share: "friends" });
+    const cutting = (
+      await call(subA, "POST", "/specimens", {
+        timeZone: "Europe/Berlin",
+        speciesId,
+        marker: "F3",
+        status: "cutting",
+      })
+    ).body.id as string;
+    await call(subA, "PUT", `/sharing/specimens/${cutting}`, { share: "friends" });
+    const repotted = await call(subA, "POST", `/specimens/${cutting}/repot`, {
+      timeZone: "Europe/Berlin",
+    });
+    expect(repotted.status).toBe(200);
+    const potted = (await feed(subB)).filter((x) => x.type === "potted");
+    expect(potted.map((x) => x.date)).toContain("2026-10-10");
+  });
+});

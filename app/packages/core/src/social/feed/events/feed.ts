@@ -1,10 +1,21 @@
 import type { FriendStore } from "../../friendship";
 import { friendView, type FriendViewDependencies } from "../../sharing";
-import { daysBetween, deriveEvents } from "./derive";
+import { localToday } from "../../../kernel";
+import { daysBetween, deriveEvents, swappedEvents, type SwappedFact } from "./derive";
 import { FEED_DAYS, type Feed, type FeedEvent, type FeedQuery } from "../types";
+
+/**
+ * Port: the handed-over swaps the viewer took part in (US-SOZ-11); the app root fills it from `swap` (ADR 0012: `social`
+ * never imports `swap`). Each account reads only its own swap rows (P-04).
+ */
+export interface SwappedSource {
+  handedOver(userId: string): Promise<readonly SwappedFact[]>;
+}
 
 export interface FeedDependencies extends FriendViewDependencies {
   readonly friends: FriendStore;
+  /** Handed-over swaps of the viewer for the event "Swapped"; without it there are none. */
+  readonly swapped?: SwappedSource;
   /** The clock, for `asOf`; `core` has no I/O. */
   readonly now: () => Date;
 }
@@ -52,7 +63,8 @@ function hintFor(friends: number, events: number, shared: number): Feed["hint"] 
  * what they share (`friendView`, so only through a confirmed friendship, never while a friend has "Everything private" on,
  * never a table of another module). Period default 30 days; filters by friend and "only new species". Events without a
  * known date come last: they cannot be placed in a period and are never guessed (P-08, P-10). No ranking and no
- * comparison between friends (FR-SOZ-11).
+ * comparison between friends (FR-SOZ-11). "Potted" is the repot day of a shared specimen, "Swapped" a handed-over swap
+ * I took part in with a current friend (a swap with a former friend stays in the swap history, US-SOZ-13).
  */
 export async function friendFeed(
   deps: FeedDependencies,
@@ -65,9 +77,17 @@ export async function friendFeed(
   const views = await Promise.all(
     friends.map(async (f) => ({ f, view: await friendView(deps, userId, f.accountId) })),
   );
-  const all = views.flatMap(({ f, view }) =>
-    deriveEvents({ id: f.id, name: f.name }, view.specimens),
-  );
+  const swaps = (await deps.swapped?.handedOver(userId)) ?? [];
+  const dayOf = (instant: string) => localToday(new Date(instant), query.timeZone ?? "UTC");
+  const all = views.flatMap(({ f, view }) => [
+    ...deriveEvents({ id: f.id, name: f.name }, view.specimens),
+    // A swap I took part in counts even if the friend shares nothing or is "Everything private": I am involved.
+    ...swappedEvents(
+      { id: f.id, name: f.name },
+      swaps.filter((x) => x.otherId === f.accountId),
+      dayOf,
+    ),
+  ]);
   const events = all
     .filter((e) => inPeriod(e, query))
     .filter((e) => !query.onlyNewSpecies || e.type === "new_species")
