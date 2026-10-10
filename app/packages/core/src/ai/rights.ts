@@ -37,6 +37,8 @@ export type OperationClass = "read" | "draft" | "write" | "never";
 export const AI_OPERATION_CLASSES: Readonly<Record<string, OperationClass>> = {
   // Released (US-KI-02 adds `status`, US-KI-01 the reversible writes).
   status: "read",
+  // Content results are drafts (KI-R3): the keeper adopts them in the app.
+  propose_draft: "draft",
   // Never released via connections (FR-KI-10): friends' data, sharing, swaps, account, connections, partners.
   friends_data: "never",
   sharing_settings: "never",

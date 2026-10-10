@@ -1,6 +1,8 @@
 import {
   AI_SCOPES,
   aiStatus,
+  type DraftStore,
+  type DraftTypes,
   type AiLogStore,
   type ConnectionStore,
   type StatusSource,
@@ -8,6 +10,7 @@ import {
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import { errorBody, statusFor } from "../kernel";
+import { clientDraftRoutes } from "./client-draft-routes";
 import { clientAuthentication, type AiEnv } from "./client-auth";
 import type { AiAccessOptions } from "./ai-routes";
 
@@ -20,10 +23,17 @@ export const WELL_KNOWN = "/.well-known/oauth-protected-resource";
 export function clientRoutes(
   pool: Pool,
   opt: AiAccessOptions,
-  stores: { connections: ConnectionStore; log: AiLogStore; status: StatusSource },
+  stores: {
+    connections: ConnectionStore;
+    log: AiLogStore;
+    status: StatusSource;
+    drafts: DraftStore;
+    types: DraftTypes;
+  },
 ): Hono<AiEnv> {
-  const { connections, log, status } = stores;
+  const { connections, log, status, drafts, types } = stores;
   const client = new Hono<AiEnv>();
+  const clock = opt.clock ?? (() => new Date());
   const metadataUrl = `${new URL(opt.resource).origin}${WELL_KNOWN}`;
   client.get(WELL_KNOWN, (c) =>
     c.json({
@@ -59,5 +69,6 @@ export function clientRoutes(
     );
     return r.ok ? c.json(r.value) : c.json(errorBody(r.error), statusFor(r.error));
   });
+  client.route("/", clientDraftRoutes(guard, { drafts, types, log }, clock));
   return client;
 }

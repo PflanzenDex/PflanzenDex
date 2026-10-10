@@ -1,21 +1,27 @@
 import {
   aiAllowAgain,
   aiConnections,
-  aiLog,
   aiRevoke,
   aiSetRights,
   type StatusSource,
   type ConnectionStore,
 } from "@pflanzendex/core";
-import { AiLogPostgres, ConnectionsPostgres, IdempotencyPostgres } from "@pflanzendex/db";
+import {
+  AiLogPostgres,
+  ConnectionsPostgres,
+  DraftsPostgres,
+  IdempotencyPostgres,
+} from "@pflanzendex/db";
 import { Hono, type MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
 import { body, write, type AuthEnv } from "../kernel";
 import type { TokenVerifier } from "../account";
 import { clientRoutes } from "./client-routes";
+import { draftRoutes } from "./draft-routes";
+import { draftTypes } from "./draft-types";
 
 /** Paths the sign-in guard of the web app (bearer token) must cover: the keeper's list of connections. */
-const KEEPER_PATHS = ["/ai/connections", "/ai/log"] as const;
+const KEEPER_PATHS = ["/ai/connections", "/ai/log", "/ai/drafts"] as const;
 export interface AiAccessOptions {
   /** Verifies the tokens of AI clients (audience = `resource`). */
   readonly verifier: TokenVerifier;
@@ -69,8 +75,10 @@ export function aiAccessRoutes(
     }),
   );
 
-  routes.get("/ai/log", async (c) => c.json({ log: await aiLog({ log }, c.get("account").id) }));
-
-  routes.route("/", clientRoutes(pool, opt, { connections, log, status }));
+  const clock = opt.clock ?? (() => new Date());
+  const drafts = new DraftsPostgres(pool);
+  const types = draftTypes(pool);
+  routes.route("/", draftRoutes(pool, { drafts, types, log }, clock));
+  routes.route("/", clientRoutes(pool, opt, { connections, log, status, drafts, types }));
   return routes;
 }

@@ -46,6 +46,8 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "ai.scope_insufficient": 403,
   "ai.connection_not_found": 404,
   "ai.connection_active": 409,
+  "ai.draft_not_found": 404,
+  "ai.draft_closed": 409,
   "friend.own_code": 409,
   "friend.already_linked": 409,
   "friend.request_not_found": 404,
