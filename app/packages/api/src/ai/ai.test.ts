@@ -75,6 +75,11 @@ beforeAll(async () => {
   for (const sub of [subA, subB]) await call(web(sub), "GET", "/account");
 });
 afterAll(async () => {
+  await admin.query(
+    `delete from species where id in (select object_id from review_case
+       where account_id in (select id from account where subject = any($1)))`,
+    [[subA, subB]],
+  );
   await admin.query("delete from account where subject = any($1)", [[subA, subB]]);
   await pool.end();
   await admin.end();
@@ -288,5 +293,52 @@ describe("US-KI-09 drafts through the AI interface", () => {
   it("US-KI-10 the deliveries show in the log", async () => {
     const log = (await call(web(subA), "GET", "/ai/log")).body["log"];
     expect(log.some((e: { operation: string }) => e.operation === "propose_draft")).toBe(true);
+  });
+});
+
+describe("US-KI-03 species profile as a draft", () => {
+  const tag = randomUUID()
+    .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
+    .replace(/-/g, "")
+    .slice(0, 10);
+  const profile = {
+    latinName: `Kidraft${tag} test`,
+    germanName: `Kientwurf ${tag}`,
+    difficulty: 2,
+    standardLevel: 3,
+    lightDemandLux: 40000,
+    growthMeasure: "rosette_diameter",
+    etiolationSigns: "Rosette streckt sich.",
+    successCriteria: "Dichte, flache Rosette.",
+    source: "https://de.wikipedia.org/wiki/Test",
+  };
+  const send = (content: unknown) =>
+    call(ai(subA, "pflanzen:draft"), "POST", "/mcp/drafts", {
+      type: "species",
+      source: "https://de.wikipedia.org/wiki/Test",
+      content,
+    });
+  const found = async (sub: string) =>
+    JSON.stringify(
+      (await call(web(sub), "GET", `/species?q=${profile.latinName.split(" ")[0]}`)).body,
+    );
+
+  it("US-KI-03 incomplete profiles and statements without a source are not stored", async () => {
+    const incomplete = { ...profile, etiolationSigns: undefined };
+    const r = await send(incomplete);
+    expect(r.status).toBe(400);
+    expect(JSON.stringify(r.body)).toContain("etiolationSigns");
+    const unsourced = { ...profile, source: undefined };
+    expect(JSON.stringify((await send(unsourced)).body)).toContain("source");
+  });
+
+  it("US-KI-03 a complete profile is a draft; adopting creates a proposal like the form, visible only to the keeper", async () => {
+    const r = await send(profile);
+    expect(r.status).toBe(201);
+    expect(await found(subA)).not.toContain(profile.latinName);
+    const adopt = await call(web(subA), "POST", `/ai/drafts/${r.body["id"]}/adopt`);
+    expect(adopt.status).toBe(200);
+    expect(await found(subA)).toContain(profile.latinName);
+    expect(await found(subB)).not.toContain(profile.latinName);
   });
 });
