@@ -92,6 +92,3 @@ export function aiAccessRoutes(
   routes.route("/", client);
   return routes;
 }
-
-export { clientAuthentication } from "./client-auth";
-export type { AiEnv } from "./client-auth";
