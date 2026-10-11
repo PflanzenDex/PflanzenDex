@@ -194,7 +194,7 @@ browser --https--> Tailscale edge --relay (does not decrypt)--> ts-app / ts-auth
 
    (Merge into the existing policy. `autogroup:member` gets `funnel` by default; the explicit rule keeps it to the tagged nodes if you restrict it later.) The tagged nodes need no other access rule: they accept no tailnet traffic.
 
-4. Settings, Keys, **Generate auth key**: reusable, pre-approved, **not ephemeral**, tag `tag:pflanzendex-funnel`, expiry as you like (the key is needed only to register the nodes; later restarts use the state volumes). Copy it into `.env` as `TS_AUTHKEY` and treat it as a secret.
+4. Settings, Keys, **Generate auth key**: reusable (two nodes register with it), pre-approved, **not ephemeral**, tag `tag:pflanzendex-funnel`, **expiry 1 day**. Copy it into `.env` as `TS_AUTHKEY` and treat it as a secret. The key is needed only to register the nodes; later starts use the state volumes (`tsstate-app`, `tsstate-auth`). Whoever holds a valid key can register further nodes with the tag, and with it the Funnel right, in your tailnet; so after the first start (step 5) delete the `TS_AUTHKEY` line from `.env`, recreate the two nodes so the key leaves their environment (`docker compose --env-file app/config/deploy/.env up -d ts-app ts-auth`; `docker inspect` must no longer show it), and revoke the key in the admin console. A key is needed again only if a state volume is lost.
 5. After the first start check in the admin console (Machines) that both nodes carry the tag and that their key expiry is disabled (tagged nodes have none by default); otherwise they drop out after the key lifetime.
 
 ### `.env` for Funnel
@@ -207,7 +207,7 @@ Start from `.env.example`; in addition to the variables of "Test environment beh
 | `APP_HOST`, `AUTH_HOST`        | the same names without scheme                                                                                           |
 | `CADDY_SCHEME`                 | `http://`                                                                                                               |
 | `TRUSTED_PROXIES`              | `172.29.40.2/32 172.29.40.3/32`                                                                                         |
-| `TS_AUTHKEY`                   | the auth key from step 4                                                                                                |
+| `TS_AUTHKEY`                   | the auth key from step 4, only until both nodes are registered (then delete the line and revoke the key)                |
 | `TS_APP_NAME`, `TS_AUTH_NAME`  | `app`, `auth` (first labels of the public names; choose names that fit your tailnet, they become public)                |
 | `TS_TAG`                       | optional, default `tag:pflanzendex-funnel` (must be a tag of the auth key)                                              |
 | `MAIL_UI_USER`, `MAIL_UI_HASH` | user and bcrypt hash, see below                                                                                         |

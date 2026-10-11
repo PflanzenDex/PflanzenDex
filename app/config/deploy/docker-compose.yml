@@ -179,6 +179,10 @@ services:
       APP_HOST: ${APP_HOST:?APP_HOST is missing}
       AUTH_HOST: ${AUTH_HOST:?AUTH_HOST is missing}
       TRUSTED_PROXIES: ${TRUSTED_PROXIES:-127.0.0.1/32}
+      # Allowed in the app's Content-Security-Policy (connect-src, frame-src; proxy.Caddyfile).
+      AUTH_URL: ${AUTH_URL:?AUTH_URL is missing}
+      # Target of the redirect from the sign-in host's root (proxy.Caddyfile).
+      APP_URL: ${APP_URL:?APP_URL is missing}
     ports:
       - "${HTTP_PORT:-80}:80"
       - "${HTTPS_PORT:-443}:443"
