@@ -23,6 +23,7 @@ export const accountRoutes = {
       watering: true,
       swap: false,
       friends: true,
+      equipment: true,
     },
   },
 };
