@@ -1,6 +1,6 @@
 # Release, deploy and rollback
 
-Covers US-DEV-06 (release process), E-13 (branch model) and E-14 (production deploy is a deliberate step; the test environment deploys automatically from `dev`, see `staging-deploy-and-backup.md`). Host setup, backups and restore: `staging-deploy-and-backup.md`.
+Covers US-DEV-06 (release process), E-13 (branch model) and E-14 (every deploy is a deliberate, manual step; production only from `main` with a stable release tag, see "Deploying with GitHub Actions (TE-19)" in `staging-deploy-and-backup.md`). Host setup, backups and restore: `staging-deploy-and-backup.md`.
 
 ## Release chain
 

@@ -120,7 +120,7 @@ curl -s -H 'Host: auth.example.test' -H 'X-Forwarded-Proto: https' http://127.0.
 # expected issuer: https://auth.example.test/realms/pflanzendex
 ```
 
-Note: `deploy.sh` checks out the ref in the checkout (detached HEAD). Production stays a deliberate step (E-14); the test environment is deployed by `deploy-test.yml` (see "Automatic deploy of the test environment (TE-19)").
+Note: `deploy.sh` checks out the ref in the checkout (detached HEAD). Every deploy is a deliberate, manual step (E-14); from GitHub it is the workflow `deploy.yml` (see "Deploying with GitHub Actions (TE-19)").
 
 ### First account and the operator role
 
@@ -280,68 +280,75 @@ Then register the first account and follow "First account and the operator role"
 - Certificates are requested per name and node; recreating state volumes repeatedly hits Let's Encrypt rate limits (up to 34 hours of lockout).
 - Production should run on a VPS or a host with its own domain: `CADDY_SCHEME` empty (Caddy gets certificates), no `docker-compose.test.yml` (real `SMTP_*` instead of the mail catcher) and no Funnel overlay. The path blocks in `proxy.Caddyfile` apply there too.
 
-## Automatic deploy of the test environment (TE-19)
+## Deploying with GitHub Actions (TE-19)
 
-Ticket TE-19 (#749). Production stays a deliberate step (E-14, release tag); the test environment deploys itself from `dev` after green CI. The workflow is `.github/workflows/deploy-test.yml`.
+Ticket TE-19 (#749). The workflow `.github/workflows/deploy.yml` ("Deploy") deploys a ref to the environment `test` or `prod`. It runs **only when started by hand** (Actions, "Deploy", "Run workflow"); nothing deploys as a side effect of a merge (E-14).
 
 ```text
-merge into dev -> CI (push run on dev) green -> deploy-test.yml (GitHub-hosted runner)
-  -> joins the tailnet as a short-lived node tag:ci (Tailscale OAuth client, secrets of the environment "test")
-  -> Tailscale SSH as user "deploy" to the test host (tag:pflanzendex-deploy)
-  -> app/config/deploy/scripts/deploy.sh <sha>   (backup, migrations, smoke test, automatic rollback)
+Run workflow (environment, ref) -> guard on the runner -> joins the tailnet as a short-lived node tag:ci
+  -> Tailscale SSH as user "deploy" to the host of that environment
+  -> app/config/deploy/scripts/deploy.sh <full sha>   (backup, migrations, smoke test, automatic rollback)
 ```
 
-### What happens on a merge
+### Rules per environment
 
-1. The squash merge creates a push to `dev`; the workflow `CI` runs for it (the PR run already checked the change, this run checks the merged result).
-2. When that run succeeds, `deploy-test.yml` starts (`workflow_run`). It ignores runs that failed, that are not push runs, that belong to another branch or that come from a fork.
-3. The job waits for the environment `test` (deployment branches limited to `dev`), joins the tailnet with the Tailscale action (pinned to a commit SHA) and runs `deploy.sh <full SHA of the tested commit>` on the host over SSH. Only one deploy runs at a time (`concurrency: deploy-test`, a running deploy is never cancelled).
-4. The log tail and the line `Deploy ok: <version> (<sha>, <ref>)` are in the job summary. The deployment shows up under "Deployments" of the repository and in the environment `test`.
+| Environment | Allowed refs                                                                   | Version                                              |
+| ----------- | ------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| `test`      | any branch, tag or commit of this repository                                   | snapshots allowed (`git describe` = `vX.Y.Z-N-g<sha>`) |
+| `prod`      | only a commit on `main` that carries a stable release tag `vX.Y.Z`             | non-snapshot only                                    |
+
+- **Snapshot** means every state that is not exactly a release (ADR 0002: releases are the tags `vX.Y.Z` that semantic-release creates on `main`; `deploy.sh` shows the version as `git describe --tags --always`, so anything after a tag reads `vX.Y.Z-N-g<sha>`). **Non-snapshot** means: the resolved commit has a tag matching `^vX.Y.Z$` (digits only, no pre-release suffix) and is an ancestor of `origin/main`. The seed tag `v0.0.0` is not a release.
+- The guard runs on the runner right after checkout (full history and tags), before the tailnet join and before any contact with the host. It resolves the ref to a full SHA, checks the rule above and the configuration, and fails with a clear message, for example `prod refused: <sha> is a snapshot, not a stable release tag (vX.Y.Z) on main.` or `Variable DEPLOY_HOST is not set in the GitHub environment prod`.
+- `ref` defaults to the branch the workflow is run from. For `prod` run the workflow from `main` and enter the release tag (for example `v0.4.0`) as `ref`.
+- Only people with write access can start workflows; forks cannot. The host receives the full SHA, never a branch name, and fetches `origin` with tags before it checks the commit out.
+- One deploy per environment at a time (`concurrency: deploy-<environment>`, a running deploy is never cancelled).
 
 ### One-time setup (owner)
 
-Nothing below goes into the repo: hostnames, tailnet name and secrets stay with the owner (the repo is public). Placeholders: `<host>` is the tailnet name of the test host, `<repo-path>` is the checkout on the host.
+Nothing below goes into the repo: hostnames, tailnet name and secrets stay with the owner (the repo is public). Placeholders: `<host>` is the tailnet name of the host, `<repo-path>` the checkout on it.
 
-1. **Host:** install `tailscaled` as a system service in userspace mode (no TUN device, outbound only) and join with Tailscale SSH and the tag, using an auth key or OAuth client that may create nodes with this tag: `tailscale up --ssh --advertise-tags=tag:pflanzendex-deploy`. Create the Linux user `deploy` (member of the `docker` group, owner of the checkout, `git fetch` works from it). Give the host a stable machine name; this is `<host>`.
-2. **Tailnet policy:** add the tags and exactly one SSH rule for `tag:ci`:
+1. **Test host:** install `tailscaled` as a system service in userspace mode (no TUN device, outbound only) and join with Tailscale SSH and the tag: `tailscale up --ssh --advertise-tags=tag:pflanzendex-deploy`. Create the Linux user `deploy` (member of the `docker` group, owner of the checkout, `git fetch` works from it).
+2. **Prod host (does not exist yet):** the same with `--advertise-tags=tag:pflanzendex-prod`. Until it exists, leave `DEPLOY_HOST` unset in the environment `prod`; the workflow then fails at once with a clear message.
+3. **Tailnet policy:** the tags and one SSH rule per target; `tag:ci` gets nothing else:
 
    ```json
    "tagOwners": {
      "tag:ci": ["autogroup:admin"],
-     "tag:pflanzendex-deploy": ["autogroup:admin"]
+     "tag:pflanzendex-deploy": ["autogroup:admin"],
+     "tag:pflanzendex-prod": ["autogroup:admin"]
    },
    "ssh": [
-     { "action": "accept", "src": ["tag:ci"], "dst": ["tag:pflanzendex-deploy"], "users": ["deploy"] }
+     { "action": "accept", "src": ["tag:ci"], "dst": ["tag:pflanzendex-deploy"], "users": ["deploy"] },
+     { "action": "accept", "src": ["tag:ci"], "dst": ["tag:pflanzendex-prod"], "users": ["deploy"] }
    ]
    ```
 
-   Add no `acls` entry for `tag:ci` (the SSH rule is enough for Tailscale SSH, nothing else in the tailnet becomes reachable). If the policy has a catch-all `acls` rule such as `*:*`, tighten it so that `tag:ci` is not covered.
+   Add no `acls` entry for `tag:ci`; if a catch-all `*:*` rule exists, tighten it so `tag:ci` is not covered.
 
-3. **OAuth client** (Tailscale admin console, Settings, OAuth clients): scope "Auth Keys" with write access, tag `tag:ci` only. Copy the client id and secret once.
-4. **GitHub environment `test`** (repository Settings, Environments): "Deployment branches and tags" limited to the selected branch `dev`; no other branch can use the environment. Add the **environment secrets** (not repository secrets, so a pull request from a fork never sees them) `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_SECRET`, and the **environment variables** `TEST_HOST` (`<host>`, a MagicDNS name) and `TEST_REPO_PATH` (`<repo-path>`; default if unset: `/opt/pflanzendex`). Required reviewers are optional; with them the deploy waits for an approval.
-5. **CI on `dev`:** `ci.yml` must run for pushes to `dev` (`on.push.branches: [main, dev]`); without that run there is nothing for `deploy-test.yml` to wait for.
-6. **Check:** run the workflow by hand (below) and watch the job summary; then merge a small change into `dev` and confirm that the deployment appears without a manual step. Check the isolation once: `tailscale ssh` as `tag:ci` to any other node is refused, and a push to another branch cannot start the job (the environment rejects it).
+4. **OAuth client** (Tailscale admin console, Settings, OAuth clients): scope "Auth Keys" with write access, tag `tag:ci` only. One client for both environments, or one per environment (then the prod client can be revoked on its own).
+5. **GitHub environments** (repository Settings, Environments). Both use the same names, set per environment: **secrets** `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`; **variables** `DEPLOY_HOST` (`<host>`, a MagicDNS name) and `DEPLOY_REPO_PATH` (`<repo-path>`, default if unset: `/opt/pflanzendex`).
+   - `test`: "Deployment branches and tags" set to **all branches** (no restriction), because the test environment may deploy from any branch. Its secrets are still out of reach for fork pull requests: nothing on `pull_request` uses the environment, forks cannot dispatch workflows, and environment secrets are never given to fork runs.
+   - `prod`: "Deployment branches and tags" limited to the branch `main` and the tag pattern `v*`; optionally add required reviewers so every prod deploy waits for an approval.
+6. **Check:** run "Deploy" for `test` with `dev`, then try `prod` with a branch and with `main` (both must be refused by the guard before the tailnet join), and later with a release tag.
 
 ### Deploy by hand
 
-Actions, "Deploy test environment", "Run workflow": pick `dev` as the workflow's branch (the environment accepts no other) and optionally a `ref` (branch, tag or commit; default `dev`). The ref must be part of `dev`, so this also rolls back to an earlier commit of `dev`. The workflow resolves it to a full SHA first.
+Actions, "Deploy", "Run workflow": choose the workflow's branch (`main` for prod), the environment and optionally a `ref`. This also rolls back: choose an earlier commit (test) or an earlier release tag (prod).
 
-### Pause auto-deploy
+### Pause deploys
 
-- Disable the workflow: Actions, "Deploy test environment", menu, "Disable workflow" (or `gh workflow disable deploy-test.yml`). Enable it again the same way.
-- Or hard stop: remove the secret `TS_OAUTH_SECRET` from the environment, or add required reviewers to it. Revoking the OAuth client in the Tailscale admin console cuts the path completely.
+Disable the workflow (Actions, "Deploy", menu, "Disable workflow", or `gh workflow disable deploy.yml`), or remove `TS_OAUTH_SECRET` from the environment. Revoking the OAuth client in the Tailscale admin console cuts the path completely.
 
 ### Reading a failed run
 
-Open the run, step "deploy": the last 60 lines of the `deploy.sh` output are printed and repeated in the summary. `deploy.sh` rolls back to the previous ref by itself when the build, a migration, the health checks or the smoke test fail, so the test environment keeps running the previous version; the step still exits non-zero and the run is red. Lines to look for: `ERROR: deploy of ... failed; rolling back`, then `ROLLBACK ok` (previous version is live again) or `ROLLBACK FAILED` (manual intervention on the host, see `release-and-rollback.md`). Migrations are not rolled back (restore the pre-deploy backup for data problems). An SSH or Tailscale error before any `deploy.sh` output means a setup problem (policy, tag, expired or revoked OAuth client, wrong `TEST_HOST`); the host was not touched. The queue keeps only the newest waiting run, so after a burst of merges the latest commit wins.
+Open the run. A red "target" step is a guard or configuration failure (nothing was contacted). In the step "deploy" the last 60 lines of the `deploy.sh` output are printed and repeated in the summary. `deploy.sh` rolls back to the previous ref by itself when the build, a migration, the health checks or the smoke test fail, so the environment keeps running the previous version; the run is still red. Lines to look for: `ERROR: deploy of ... failed; rolling back`, then `ROLLBACK ok` (previous version live again) or `ROLLBACK FAILED` (manual intervention on the host, see `release-and-rollback.md`). Migrations are not rolled back (restore the pre-deploy backup for data problems). An SSH or Tailscale error before any `deploy.sh` output means a setup problem (policy, tag, revoked OAuth client, wrong `DEPLOY_HOST`); the host was not touched.
 
 ### Security notes
 
-- **Who can run code on the host:** whoever controls the workflow file or the OAuth secret can run commands as `deploy` (member of the `docker` group) on the test host. Contained by the isolated network of the host (no inbound connections), the environment restriction to `dev` (merging into `dev` needs a pull request and green `ci-status`; workflow files are gate files that the owner reviews), and the single SSH rule for `tag:ci`.
-- **Forks and other branches:** environment secrets and variables are released only to jobs on `dev`. Fork pull requests do not get secrets at all; `workflow_run` is ignored for runs whose head repository is not this repository; the job also checks that the branch is `dev`.
-- **Untrusted input:** the job never puts event data into a shell script; everything arrives through `env:`, is validated (full SHA, host name, path) and quoted. The job does not check out or run repository code on the runner; only the host runs `deploy.sh`.
-- **Blast radius of `tag:ci`:** it can open Tailscale SSH sessions as `deploy` on `tag:pflanzendex-deploy` and nothing else. The node is ephemeral and disappears after the run.
-- **Host key:** Tailscale SSH authenticates the host by its tailnet node key, so the SSH host key adds nothing on top. The workflow uses `StrictHostKeyChecking=accept-new` (the runner starts with an empty `known_hosts`; `yes` would fail on every run, `no` would also accept a changed key).
+- **Who can run code on a host:** whoever can edit the workflow on a branch the environment accepts, or holds the OAuth secret, can run commands as `deploy` (member of the `docker` group) on that host. Contained by the isolated network of the hosts (no inbound connections), the single SSH rule per target for `tag:ci`, the `prod` restriction to `main` and `v*` tags (changing `main` needs a pull request and a green `ci-status`; workflow files are gate files that the owner reviews), and optional required reviewers. The `test` environment accepts all branches, so a writer can deploy any branch there; that is the intended trade-off and why the test host holds no real data.
+- **Untrusted input:** the workflow never puts event data into a shell script; inputs arrive through `env:`, are validated (ref, host name, path, full SHA) and quoted. The runner checks out the repository only to read history and tags and runs no repository code; only the host runs `deploy.sh`.
+- **Blast radius of `tag:ci`:** it can open Tailscale SSH sessions as `deploy` on the tagged hosts and nothing else. The node is ephemeral and disappears after the run.
+- **Host key:** Tailscale SSH authenticates the host by its tailnet node key. The workflow uses `StrictHostKeyChecking=accept-new` (the runner starts with an empty `known_hosts`; `yes` would fail on every run, `no` would also accept a changed key).
 
 ## Health check (US-DEV-09)
 
