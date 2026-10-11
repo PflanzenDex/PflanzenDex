@@ -1,33 +1,52 @@
 #!/usr/bin/env bash
-# Database backup (NFR-15, TE-03): pg_dump in custom format, verified with pg_restore -l.
+# Database backup (NFR-15, TE-03): pg_dump in custom format, verified with pg_restore -l. Two files per run:
+# pflanzendex-<time>.dump (app) and keycloak-<time>.dump (sign-in service, only if its database exists).
 # Retention per BACKUP_RETENTION_DAYS; optional second target via rsync (BACKUP_REMOTE, R-11).
-# Environment: config/deploy/.env (if present); PG_EXEC overrides how the Postgres container is reached (for tests).
+# Environment: config/deploy/.env (if present; its COMPOSE_FILE selects the overlay files); PG_EXEC overrides how the Postgres container is reached (for tests).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 if [ -f .env ]; then set -a; . ./.env; set +a; fi
-PG_EXEC="${PG_EXEC:-docker compose --env-file .env -f docker-compose.yml exec -T db}"
+PG_EXEC="${PG_EXEC:-docker compose --env-file .env exec -T db}"
 BACKUP_DIR="${BACKUP_DIR:-./backups}"
 RETENTION="${BACKUP_RETENTION_DAYS:-14}"
 
+KEYCLOAK_DB_NAME="${KEYCLOAK_DB_NAME:-keycloak}"
+
 mkdir -p "$BACKUP_DIR"
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
-target="$BACKUP_DIR/pflanzendex-$stamp.dump"
-partial="$target.partial"
-trap 'rm -f "$partial"' EXIT
+partial=""
+trap '[ -z "$partial" ] || rm -f "$partial"' EXIT
 
-# The dump is created inside the container; user and database come from its environment.
-$PG_EXEC sh -c 'pg_dump -Fc -U "$POSTGRES_USER" "$POSTGRES_DB"' > "$partial"
+# Dumps one database into $BACKUP_DIR/<prefix>-<stamp>.dump and checks that it is readable.
+# The dump is created inside the container; user and default database come from its environment.
+dump_database() {
+  local prefix="$1" database="${2:-}"
+  local target="$BACKUP_DIR/$prefix-$stamp.dump"
+  partial="$target.partial"
+  $PG_EXEC sh -c 'pg_dump -Fc -U "$POSTGRES_USER" "${1:-$POSTGRES_DB}"' sh "$database" > "$partial"
+  if [ ! -s "$partial" ]; then echo "ERROR: backup of ${database:-the app database} is empty" >&2; exit 1; fi
+  if ! $PG_EXEC pg_restore -l < "$partial" > /dev/null; then
+    echo "ERROR: backup of ${database:-the app database} is not readable (pg_restore -l)" >&2; exit 1
+  fi
+  mv "$partial" "$target"
+  partial=""
+  echo "Backup written: $target"
+}
 
-if [ ! -s "$partial" ]; then echo "ERROR: backup is empty" >&2; exit 1; fi
-if ! $PG_EXEC pg_restore -l < "$partial" > /dev/null; then
-  echo "ERROR: backup is not readable (pg_restore -l)" >&2; exit 1
-fi
-mv "$partial" "$target"
-trap - EXIT
-echo "Backup written: $target"
+# True if the sign-in service's database exists (TE-03); older stacks without Keycloak have none.
+keycloak_database_exists() {
+  local found
+  found="$(echo "select 1 from pg_database where datname = :'db'" |
+    $PG_EXEC sh -c 'psql -U "$POSTGRES_USER" -d postgres -tA -v db="$1"' sh "$KEYCLOAK_DB_NAME")"
+  [ "$found" = 1 ]
+}
 
-find "$BACKUP_DIR" -name 'pflanzendex-*.dump' -mtime +"$RETENTION" -delete
+dump_database pflanzendex
+# The sign-in service's accounts and sessions are part of the data: without them nobody could sign in after a restore.
+if keycloak_database_exists; then dump_database keycloak "$KEYCLOAK_DB_NAME"; fi
+
+find "$BACKUP_DIR" \( -name 'pflanzendex-*.dump' -o -name 'keycloak-*.dump' \) -mtime +"$RETENTION" -delete
 
 if [ -n "${BACKUP_REMOTE:-}" ]; then
   rsync -a --ignore-existing "$BACKUP_DIR"/ "$BACKUP_REMOTE"/

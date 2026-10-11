@@ -14,6 +14,9 @@ import { createS3ObjectStore, createSharpProcessor, s3ConfigFromEnv } from "./me
 
 // Configuration from the environment only (no secrets in the repo). The defaults match `make auth-up`.
 const issuer = process.env["OIDC_ISSUER"] ?? "http://localhost:18081/realms/pflanzendex";
+// Where the keys come from, if not the issuer's public address (inside the deploy network, TE-03).
+const jwksUrl = process.env["OIDC_JWKS_URL"];
+const jwks = jwksUrl ? { jwksUrl } : {};
 const pool = openPool(process.env["DATABASE_URL"] ?? testDatabaseUrl());
 // Photo storage (US-WAC-06): without S3_* variables the photo upload answers 502 (the rest of the app is unaffected).
 const s3 = s3ConfigFromEnv(process.env);
@@ -38,12 +41,13 @@ const app = createApp({
   reviewer: createTokenVerifier({
     issuer,
     audience: process.env["OIDC_AUDIENCE"] ?? "pflanzendex-api",
+    ...jwks,
   }),
   // The AI interface (US-KI-07): its tokens have their own audience, the URL of the interface (RFC 8707, spike TE-15).
   ai: {
     resource: aiResource,
     issuer,
-    verifier: createTokenVerifier({ issuer, audience: aiResource }),
+    verifier: createTokenVerifier({ issuer, audience: aiResource, ...jwks }),
   },
   version: process.env["APP_VERSION"],
   commit: process.env["GIT_SHA"],

@@ -1,3 +1,5 @@
+import { createServer, type Server } from "node:http";
+import type { AddressInfo } from "node:net";
 import { exportJWK, generateKeyPair, SignJWT, createLocalJWKSet, type JWK } from "jose";
 import { beforeAll, describe, expect, it } from "vitest";
 import { createTokenVerifier } from "./token";
@@ -62,5 +64,35 @@ describe("verify token (US-ACC-01)", () => {
     expect(await reviewer("no-token")).toBeNull();
     const without = `${btoa('{"alg":"none"}')}.${btoa(`{"iss":"${ISSUER}","aud":"${AUDIENCE}","sub":"x"}`)}.`;
     expect(await reviewer(without)).toBeNull();
+  });
+});
+
+describe("keys from a separate address (TE-03)", () => {
+  it("TE-03 fetches the keys from jwksUrl while the issuer stays the public address", async () => {
+    const pair = await generateKeyPair("RS256");
+    const jwk: JWK = { ...(await exportJWK(pair.publicKey)), kid: "k1", alg: "RS256" };
+    const requested: string[] = [];
+    const server: Server = createServer((req, res) => {
+      requested.push(req.url ?? "");
+      res.setHeader("content-type", "application/json").end(JSON.stringify({ keys: [jwk] }));
+    });
+    await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
+    try {
+      const { port } = server.address() as AddressInfo;
+      const verify = createTokenVerifier({
+        issuer: ISSUER,
+        audience: AUDIENCE,
+        jwksUrl: `http://127.0.0.1:${port}/internal/certs`,
+      });
+      const good = await sign({}, { key: pair.privateKey });
+      expect((await verify(good))?.["sub"]).toBe("abc");
+      expect(requested).toEqual(["/internal/certs"]);
+      // The issuer check still uses the public address.
+      expect(
+        await verify(await sign({}, { key: pair.privateKey, issuer: "http://evil.test" })),
+      ).toBeNull();
+    } finally {
+      await new Promise((done) => server.close(done));
+    }
   });
 });
