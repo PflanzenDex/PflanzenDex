@@ -72,6 +72,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "offer.not_active": 409,
   "discover.not_suggested": 409,
   "wish.name_taken": 409,
+  "equipment.name_taken": 409,
   "wish.not_found": 404,
   "wish.image_source_unsupported": 422,
   "wish.image_not_found": 404,

@@ -21,6 +21,7 @@ import {
 import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
 import { provenanceSourceFor } from "./swap";
 import { WISH_PATHS, wishRoutes, wishZoneUsageFor } from "./wishlist";
+import { EQUIPMENT_PATHS, equipmentRoutes } from "./equipment";
 import { bindFriends } from "./friends-bindings";
 import { zoneStockFor } from "./zone-stock";
 import { bindHealth } from "./health";
@@ -84,6 +85,12 @@ function bindWishlist(app: Hono, pool: Pool, auth: MiddlewareHandler, opt: AppOp
   for (const path of WISH_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   const image = opt.wishImage && opt.media ? { ...opt.wishImage, media: opt.media } : undefined;
   app.route("/", wishRoutes(pool, opt.zoneStock ?? zoneStockFor(pool), image));
+}
+
+/** The module `equipment`: sign-in guard in front of the paths, then the routes (US-EQU-01). */
+function bindEquipment(app: Hono, pool: Pool, auth: MiddlewareHandler) {
+  for (const path of EQUIPMENT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", equipmentRoutes(pool));
 }
 
 /** What `care` takes from the app options: clock, location per phase and the media port (photos, US-WAC-06). */
@@ -153,6 +160,7 @@ export function createApp(opt: AppOptions = {}): Hono {
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", careProfileRoutes(opt.pool));
     bindWishlist(app, opt.pool, auth, opt);
+    bindEquipment(app, opt.pool, auth);
     bindFriends(app, opt.pool, auth, {
       ...(opt.clock ? { clock: opt.clock } : {}),
       targetLocation: opt.targetLocation ?? targetLocationFor(opt.pool),

@@ -18,7 +18,7 @@ Replacement: replaces `../prototype/13-equipment-and-affiliate.md`. Dropped: equ
 
 ## User stories
 
-### US-EQU-01 · Record equipment · ⬜ new
+### US-EQU-01 · Record equipment · 🟨 new
 
 Acceptance criteria:
 
@@ -26,6 +26,8 @@ Acceptance criteria:
 - Required: `Type`, `Name`. Everything else (manufacturer, model, price, purchase date, product id) optional; what is missing appears as "unknown", never guessed (P-08).
 - The name is unique; for multiples ` – <distinction>`.
 - From a photo or product link the AI may **suggest** fields; the keeper confirms before saving.
+
+Decisions (assumption, decided by the PO): limits are starting values (name 80, other texts 80, product id 60, note 500 characters, price 0 to 100,000 EUR with at most two decimals). A device starts `active`; a consumable type (Substrate, Fertilizer, Plant agent) has no status. The product id must not be a URL (FR-EQU-03). The name is unique per account, case-insensitive. The AI suggestion path (US-KI-05, draft type equipment) is open.
 
 ### US-EQU-02 · Bind lamps to light zones · ⬜ new
 

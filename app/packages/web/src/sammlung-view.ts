@@ -6,7 +6,7 @@ import {
   MANAGE_PARAM,
 } from "./components/shared/navigation/nav-model/navigation/navigation";
 
-export type SammlungView = "plants" | "species" | "wishlist";
+export type SammlungView = "plants" | "species" | "wishlist" | "equipment";
 /** How the species mode is arranged: the Pokédex, or the comparison by difficulty (US-BES-05). */
 export type SpeciesSort = "pokedex" | "difficulty";
 
@@ -19,6 +19,7 @@ export const SAMMLUNG_VIEWS: readonly { value: SammlungView; label: string }[] =
   { value: "plants", label: "Pflanzen" },
   { value: "species", label: "Arten" },
   { value: "wishlist", label: "Wunschliste" },
+  { value: "equipment", label: "Equipment" },
 ];
 
 /** The query parameter of the arrangement of the species, e.g. `/collection?view=species&sort=difficulty` (US-QS-14). */
@@ -29,7 +30,7 @@ export const SPECIES_SORTS: readonly { value: SpeciesSort; label: string }[] = [
 ];
 
 const parse = (v: string | null | undefined): SammlungView | null =>
-  v === "plants" || v === "species" || v === "wishlist" ? v : null;
+  v === "plants" || v === "species" || v === "wishlist" || v === "equipment" ? v : null;
 
 /**
  * The mode of the destination "Sammlung" (US-QS-14): from the address, else the one remembered on this device, else
