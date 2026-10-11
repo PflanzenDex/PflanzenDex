@@ -77,7 +77,18 @@ export interface MaintenanceData {
   readonly lifetimeSource: string | null;
 }
 
+/** How much of a consumable is left (US-EQU-05). */
+export const SUPPLY_LEVELS = ["available", "low", "empty"] as const;
+export type SupplyLevel = (typeof SUPPLY_LEVELS)[number];
+
+/** Limit of the link between a plant agent and the free text of a treatment (US-EQU-05); assumption (starting value). */
+export const SUPPLY_LIMITS = { agentLink: { min: 1, max: 80 } } as const;
+
 export interface EquipmentRow extends EquipmentValues, MaintenanceData {
+  /** The supply of a consumable; `null` for a device. A new consumable starts `available` (US-EQU-05). */
+  readonly supply: SupplyLevel | null;
+  /** The text of a plant agent that occurs in `Treatment.Agent`; `null` = no link (DM-EQU-03). */
+  readonly agentLink: string | null;
   /** Local calendar date `YYYY-MM-DD` of the last check the keeper confirmed; `null` = never (US-EQU-04). */
   readonly lastCheckedOn: string | null;
   readonly id: string;
@@ -124,6 +135,18 @@ export interface EquipmentStore {
     id: string,
     data: MaintenanceData,
   ): Promise<ChangeResult<"consumable">>;
+  /** Sets the supply of a consumable (US-EQU-05). */
+  setSupply(
+    userId: string,
+    id: string,
+    supply: SupplyLevel,
+  ): Promise<ChangeResult<"not_consumable">>;
+  /** Links a plant agent to the text of `Treatment.Agent`; `null` removes the link. */
+  setAgentLink(
+    userId: string,
+    id: string,
+    agentLink: string | null,
+  ): Promise<ChangeResult<"not_plant_agent">>;
   /** Notes that the keeper checked a device on this date. */
   markChecked(userId: string, id: string, checkedOn: string): Promise<ChangeResult<"consumable">>;
   /** The lamps that serve a light zone, by name, whatever their state. */

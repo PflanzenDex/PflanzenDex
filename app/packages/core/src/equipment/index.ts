@@ -3,6 +3,8 @@ export { equipmentRecord } from "./record";
 export type { RecordEquipmentDependencies } from "./record";
 export { equipmentChecksDue, equipmentMarkChecked, equipmentSetMaintenance } from "./maintenance";
 export type { CheckDue, ChecksDueDependencies } from "./maintenance";
+export { equipmentLinkAgent, equipmentSetSupply, plantAgents } from "./supply";
+export type { PlantAgent, PlantAgentsDependencies } from "./supply";
 export { equipmentSetStatus } from "./status";
 export type { SetStatusDependencies } from "./status";
 export {

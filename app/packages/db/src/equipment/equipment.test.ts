@@ -223,3 +223,57 @@ describe("US-EQU-04 operation and maintenance in the database", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("US-EQU-05 consumables and supply in the database", () => {
+  const consumable = async (user: string, name: string, type: "Substrate" | "Plant agent") => {
+    const row = await equipment.create(user, { ...bare, name, type }, null);
+    if (typeof row === "string") throw new Error(row);
+    return row;
+  };
+
+  it("a new consumable starts available, a device has no supply", async () => {
+    expect(await consumable(anna, "Erde Vorrat", "Substrate")).toMatchObject({
+      supply: "available",
+      status: null,
+    });
+    const lamp = await equipment.create(anna, { ...bare, name: "Vorratslampe" }, "active");
+    expect(lamp).toMatchObject({ supply: null });
+  });
+
+  it("sets the supply by tap; a device has none; another account sees it missing (P-04)", async () => {
+    const soil = await consumable(anna, "Erde Tap", "Substrate");
+    expect(await equipment.setSupply(anna, soil.id, "low")).toMatchObject({ supply: "low" });
+    expect(await equipment.setSupply(anna, soil.id, "empty")).toMatchObject({ supply: "empty" });
+    const lamp = await equipment.create(anna, { ...bare, name: "Tap-Lampe" }, "active");
+    if (typeof lamp === "string") throw new Error(lamp);
+    expect(await equipment.setSupply(anna, lamp.id, "low")).toBe("not_consumable");
+    expect(await equipment.setSupply(ben, soil.id, "low")).toBe("not_found");
+    expect(await equipment.setSupply(anna, randomUUID(), "low")).toBe("not_found");
+  });
+
+  it("links and unlinks a plant agent; other types and other accounts are refused", async () => {
+    const agent = await consumable(anna, "Neem Link", "Plant agent");
+    expect(await equipment.setAgentLink(anna, agent.id, "Neemöl")).toMatchObject({
+      agentLink: "Neemöl",
+    });
+    expect(await equipment.setAgentLink(anna, agent.id, null)).toMatchObject({ agentLink: null });
+    const soil = await consumable(anna, "Erde Link", "Substrate");
+    expect(await equipment.setAgentLink(anna, soil.id, "x")).toBe("not_plant_agent");
+    expect(await equipment.setAgentLink(ben, agent.id, "x")).toBe("not_found");
+  });
+
+  it("the database refuses a supply on a device and a link on another type", async () => {
+    const lamp = await equipment.create(anna, { ...bare, name: "Grenz-Vorrat" }, "active");
+    if (typeof lamp === "string") throw new Error(lamp);
+    await expect(
+      withAccount(pool, anna, (c) =>
+        c.query("update equipment set supply = 'low' where id = $1", [lamp.id]),
+      ),
+    ).rejects.toThrow();
+    await expect(
+      withAccount(pool, anna, (c) =>
+        c.query("update equipment set agent_link = 'x' where id = $1", [lamp.id]),
+      ),
+    ).rejects.toThrow();
+  });
+});

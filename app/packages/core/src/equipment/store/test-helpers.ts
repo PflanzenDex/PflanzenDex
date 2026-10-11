@@ -5,6 +5,7 @@ import type {
   EquipmentStore,
   EquipmentValues,
   MaintenanceData,
+  SupplyLevel,
 } from "./types";
 import type {
   DeviationLimitStore,
@@ -50,6 +51,8 @@ export class InMemoryEquipment implements EquipmentStore {
       lifetimeValue: null,
       lifetimeSource: null,
       lastCheckedOn: null,
+      supply: status === null ? ("available" as const) : null,
+      agentLink: null,
       id: equipmentId(this.rows.length + 1),
       userId,
     };
@@ -98,6 +101,26 @@ export class InMemoryEquipment implements EquipmentStore {
     const row = this.own(userId, id);
     if (!row) return "not_found";
     return row.type === "Lamp" ? this.replace(row, data) : "not_lamp";
+  }
+
+  async setSupply(
+    userId: string,
+    id: string,
+    supply: SupplyLevel,
+  ): Promise<ChangeResult<"not_consumable">> {
+    const row = this.own(userId, id);
+    if (!row) return "not_found";
+    return row.supply === null ? "not_consumable" : this.replace(row, { supply });
+  }
+
+  async setAgentLink(
+    userId: string,
+    id: string,
+    agentLink: string | null,
+  ): Promise<ChangeResult<"not_plant_agent">> {
+    const row = this.own(userId, id);
+    if (!row) return "not_found";
+    return row.type === "Plant agent" ? this.replace(row, { agentLink }) : "not_plant_agent";
   }
 
   async setMaintenance(
