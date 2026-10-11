@@ -5,6 +5,7 @@ import { LightPage } from "@/light";
 import { CarePhasesPage, MeasurePage } from "@/care";
 import { PokedexPage } from "@/pokedex";
 import { WishlistPage, type WishToPlant } from "@/wishlist";
+import { EquipmentPage } from "@/equipment";
 import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skeleton";
 import { SammlungHeader } from "@/components/sammlung-header/sammlung-header";
 import { PlantControls } from "@/components/sammlung-header/plant-controls/plant-controls";
@@ -96,7 +97,7 @@ export function CollectionArea(props: {
 }
 
 type ModeProps = Parameters<typeof CollectionArea>[0] & {
-  view: "plants" | "species" | "wishlist";
+  view: "plants" | "species" | "wishlist" | "equipment";
   sort: "pokedex" | "difficulty";
   group: PlantGroup;
   managing: boolean;
@@ -109,6 +110,7 @@ type ModeProps = Parameters<typeof CollectionArea>[0] & {
 /** The page of the chosen mode. */
 function Mode(p: ModeProps) {
   const { api, token, host } = p;
+  if (p.view === "equipment") return <EquipmentPage api={api} token={token} host={host} />;
   if (p.view === "wishlist")
     return (
       <WishlistPage

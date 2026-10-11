@@ -1,4 +1,5 @@
 import { AiClientsSection } from "../clients-section/clients-section";
+import { LogSection } from "../log-section/log-section";
 import { TasksSection } from "../tasks-section/tasks-section";
 import { DraftsSection } from "../drafts-section/drafts-section";
 
@@ -16,6 +17,10 @@ export function AiSection(props: { api: string; token: Token }) {
       <div className="flex flex-col gap-3">
         <h3 className="m-0 text-lg font-semibold">Entwürfe</h3>
         <DraftsSection {...props} />
+      </div>
+      <div className="flex flex-col gap-3">
+        <h3 className="m-0 text-lg font-semibold">Protokoll</h3>
+        <LogSection {...props} />
       </div>
     </div>
   );

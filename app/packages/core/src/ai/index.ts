@@ -23,8 +23,9 @@ export type {
 export { AI_LOG_LIMIT, aiLog, aiStatus } from "./status";
 export type { AiLogRow, AiLogStore, StatusCall, StatusDependencies, StatusSource } from "./status";
 export { DRAFT_EXPIRY_DAYS, aiAdoptDraft, aiDiscardDraft, aiDrafts } from "./drafts";
-export { aiProposeDraft } from "./propose";
-export type { ProposeCall } from "./propose";
+export { DEFAULT_DAILY_LIMIT, checkDailyLimit, dayWindow } from "./limit/limit";
+export { aiProposeDraft } from "./results/propose";
+export type { ProposeCall } from "./results/propose";
 export type {
   AiDraft,
   DraftDependencies,
@@ -33,8 +34,8 @@ export type {
   DraftType,
   DraftTypes,
 } from "./drafts";
-export { aiMeasurementPhoto } from "./photo";
-export type { PhotoCall, PhotoFile, PhotoSource } from "./photo";
+export { aiMeasurementPhoto } from "./results/photo";
+export type { PhotoCall, PhotoFile, PhotoSource } from "./results/photo";
 // Tasks from the app to the AI client (US-KI-08).
 export { aiClaimTask, aiClientTasks, aiDeclineClientTask } from "./tasks/client";
 export type { ClientTaskCall } from "./tasks/client";
@@ -52,3 +53,5 @@ export type { AiTask, TaskStatus, TaskStore, TaskTransition, TaskType } from "./
 export { taskPrompt } from "./tasks/prompt/prompt";
 export type { PromptTask } from "./tasks/prompt/prompt";
 export { TASK_INSTRUCTIONS, TASK_TITLES } from "./tasks/prompt/texts";
+export { aiDiscoverDecide, aiDiscoverSuggestions } from "./discover";
+export type { DiscoverCall, DiscoverOutcome, DiscoverSource } from "./discover";

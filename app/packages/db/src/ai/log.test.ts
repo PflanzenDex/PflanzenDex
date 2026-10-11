@@ -66,3 +66,20 @@ describe("US-KI-02 log of AI actions", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("US-KI-06 count for the daily limit", () => {
+  it("US-KI-06 counts the logged calls of one connection since an instant, own account only", async () => {
+    const [a, b] = [await newAccount(), await newAccount()];
+    const conn = await new ConnectionsPostgres(pool).create(
+      a,
+      { clientId: "x", clientName: "Claude", rights: "read" },
+      now,
+    );
+    const log = new AiLogPostgres(pool);
+    await log.record(a, { connectionId: conn.id, operation: "status", effect: "x" }, now);
+    const yesterday = new Date("2026-10-09T08:00:00Z");
+    await log.record(a, { connectionId: conn.id, operation: "status", effect: "x" }, yesterday);
+    expect(await log.countSince(a, conn.id, new Date("2026-10-10T00:00:00Z"))).toBe(1);
+    expect(await log.countSince(b, conn.id, new Date("2026-10-01T00:00:00Z"))).toBe(0);
+  });
+});

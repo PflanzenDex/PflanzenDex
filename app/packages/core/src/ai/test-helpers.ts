@@ -92,6 +92,15 @@ export class InMemoryAiLog implements AiLogStore {
     });
   }
 
+  async countSince(userId: string, connectionId: string, since: Date) {
+    return this.rows.filter(
+      (r) =>
+        r.userId === userId &&
+        r.connectionId === connectionId &&
+        Date.parse(r.createdAt) >= since.getTime(),
+    ).length;
+  }
+
   async list(userId: string, limit: number) {
     return this.rows
       .filter((r) => r.userId === userId)

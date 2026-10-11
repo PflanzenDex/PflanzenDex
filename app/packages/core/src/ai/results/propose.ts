@@ -9,11 +9,11 @@ import {
   shape,
   textField,
   type Result,
-} from "../kernel";
-import type { AiDraft, DraftDependencies } from "./drafts";
-import { mayCall, type AiRights } from "./rights";
-import type { AiLogStore } from "./status";
-import { TASK_DRAFT_TYPE, type AiTask, type TaskStore } from "./tasks/model";
+} from "../../kernel";
+import type { AiDraft, DraftDependencies } from "../drafts";
+import { mayCall, type AiRights } from "../rights";
+import type { AiLogStore } from "../status";
+import { TASK_DRAFT_TYPE, type AiTask, type TaskStore } from "../tasks/model";
 
 export interface ProposeCall {
   readonly userId: string;

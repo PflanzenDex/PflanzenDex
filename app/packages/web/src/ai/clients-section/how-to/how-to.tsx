@@ -17,6 +17,11 @@ export function HowTo({ address }: { address: string }) {
           ausdrücklich.
         </li>
       </ol>
+      <p className="m-0 text-sm text-muted-foreground">
+        Wichtig: Dein KI-Anbieter erhält die Daten, die dein Client bei PflanzenDex abruft. Die App
+        selbst sendet nichts an einen KI-Dienst. Pro Verbindung gibt es ein Tageslimit an Aufrufen;
+        ist es erreicht, funktionieren alle Formulare der App weiter.
+      </p>
       <Button
         variant="secondary"
         size="sm"

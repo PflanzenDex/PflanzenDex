@@ -1,0 +1,5 @@
+# Test environment only (docker-compose.test.yml mounts this file): the mail catcher UI under /mail/ of the sign-in host.
+# It shows every email in the realm, so it must never exist where real people sign in.
+handle /mail/* {
+	reverse_proxy mailpit:8025
+}

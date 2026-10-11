@@ -6,6 +6,7 @@ import { FIXTURES_ACCOUNT } from "./account/index.ts";
 import { FIXTURES_LIGHT } from "./light/index.ts";
 import { FIXTURES_CARE } from "./care/index.ts";
 import { FIXTURES_WISHLIST } from "./wishlist/index.ts";
+import { FIXTURES_EQUIPMENT } from "./equipment/index.ts";
 import { FIXTURES_POKEDEX } from "./pokedex/index.ts";
 import { FIXTURES_SOCIAL } from "./social/index.ts";
 import { FIXTURES_SWAP } from "./swap/index.ts";
@@ -23,6 +24,7 @@ export const FIXTURES: Fixtures = {
   ...FIXTURES_COLLECTION,
   ...FIXTURES_CARE,
   ...FIXTURES_WISHLIST,
+  ...FIXTURES_EQUIPMENT,
   ...FIXTURES_POKEDEX,
   ...FIXTURES_SOCIAL,
   ...FIXTURES_SWAP,

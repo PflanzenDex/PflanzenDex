@@ -73,4 +73,13 @@ describe("US-KI-09 inbox of AI drafts", () => {
     expect(calls).toEqual(["POST /ai/drafts/d1/adopt", "POST /ai/drafts/d1/discard"]);
     expect(screen.queryByRole("button", { name: "Wunsch: Alt übernehmen" })).toBeNull();
   });
+
+  it("US-ENT-08 names a decision of Discover with the species and the answer", async () => {
+    fakeServer([
+      row({ type: "discover_decision", content: { species: "Ficus carica", decision: "yes" } }),
+    ]);
+    show();
+    const list = await screen.findByRole("list", { name: "KI-Entwürfe" });
+    expect(list.textContent).toContain("Entscheidung bei Entdecken: Ficus carica (Ja)");
+  });
 });

@@ -1,14 +1,16 @@
-# Local and staging (E-01: one host, Docker Compose). All values come from the environment, see .env.example.
+# Local, test and staging (E-01: one host, Docker Compose). All values come from the environment, see .env.example.
 # Start: docker compose --env-file config/deploy/.env -f config/deploy/docker-compose.yml up -d --build
+# Test environment with a mail catcher: add `-f config/deploy/docker-compose.test.yml` (or set COMPOSE_FILE in .env).
+# Memory limits (`deploy.resources.limits`) are starting values for a 3 GB host (assumption, TE-03); measure and adjust.
 name: pflanzendex
 services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER fehlt}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt}
-      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB fehlt}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is missing}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is missing}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is missing}
     volumes:
       - dbdata:/var/lib/postgresql/data
     healthcheck:
@@ -16,15 +18,42 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+  # One-shot: creates the sign-in service's own role and database in the same server, idempotently (also on an existing
+  # volume). The role has no right on the app database, so tenant isolation stays untouched (P-04, TE-03).
+  keycloak-db:
+    image: postgres:16-alpine
+    restart: "no"
+    entrypoint: ["sh", "/init-db.sh"]
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      APP_DB: ${POSTGRES_DB}
+      KC_DB_NAME: ${KEYCLOAK_DB_NAME:-keycloak}
+      KC_DB_USER: ${KEYCLOAK_DB_USER:-keycloak}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?KEYCLOAK_DB_PASSWORD is missing}
+    volumes:
+      - ./keycloak/init-db.sh:/init-db.sh:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 64m
   # One-shot: applies pending migrations (forward only, advisory lock) before the api starts (#201, US-DEV-07).
   # A failing migration fails `up`, so deploy.sh rolls back the code and the api never serves a half-migrated schema.
   migrate:
     build:
       context: ../..
-      dockerfile: config/deploy/api.Dockerfile
+      dockerfile: config/deploy/docker/api.Dockerfile
       args:
-        GIT_SHA: ${GIT_SHA:-unbekannt}
-        APP_VERSION: ${APP_VERSION:-unbekannt}
+        GIT_SHA: ${GIT_SHA:-unknown}
+        APP_VERSION: ${APP_VERSION:-unknown}
     restart: "no"
     working_dir: /srv/app/packages/db
     command: ["npx", "tsx", "src/kernel/migrate-cli.ts"]
@@ -33,17 +62,80 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+  # Sign-in service (E-03): production mode, own database in `db`. TLS ends at the proxy in front, so Keycloak speaks
+  # plain HTTP inside the network and trusts the forwarded headers (the proxy only forwards them from TRUSTED_PROXIES).
+  # The realm is imported on the first start only; later changes to the file do not touch an existing realm.
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.0
+    restart: unless-stopped
+    command: ["start", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://db:5432/${KEYCLOAK_DB_NAME:-keycloak}
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USER:-keycloak}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?KEYCLOAK_DB_PASSWORD is missing}
+      KC_HOSTNAME: ${AUTH_URL:?AUTH_URL is missing}
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD is missing}
+      # JVM heap: starting values for a 3 GB host (assumption).
+      JAVA_OPTS_KC_HEAP: ${KEYCLOAK_JAVA_HEAP:--Xms128m -Xmx512m}
+      # Placeholders of the realm file (keycloak/pflanzendex-realm.json).
+      WEB_BASE_URL: ${APP_URL:?APP_URL is missing}
+      # Production: a real SMTP server from .env. Empty means no mail (sign-up confirmation then fails visibly).
+      KC_SMTP_HOST: ${SMTP_HOST:-}
+      KC_SMTP_PORT: ${SMTP_PORT:-587}
+      KC_SMTP_FROM: ${SMTP_FROM:-noreply@pflanzendex.invalid}
+      KC_SMTP_AUTH: ${SMTP_AUTH:-false}
+      KC_SMTP_USER: ${SMTP_USER:-}
+      KC_SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      KC_SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+      KC_SMTP_SSL: ${SMTP_SSL:-false}
+    volumes:
+      - ./keycloak/pflanzendex-realm.json:/opt/keycloak/data/import/pflanzendex-realm.json:ro
+      - ../dev/keycloak-theme/pflanzendex:/opt/keycloak/themes/pflanzendex:ro
+    healthcheck:
+      # The image has no curl; the management port 9000 answers /health/ready.
+      test:
+        - CMD-SHELL
+        - |
+          exec 3<>/dev/tcp/127.0.0.1/9000
+          printf 'GET /health/ready HTTP/1.0\r\n\r\n' >&3
+          grep -q '"status": "UP"' <&3
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    depends_on:
+      keycloak-db:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          memory: 900m
   api:
     build:
       context: ../..
-      dockerfile: config/deploy/api.Dockerfile
+      dockerfile: config/deploy/docker/api.Dockerfile
       args:
-        GIT_SHA: ${GIT_SHA:-unbekannt}
-        APP_VERSION: ${APP_VERSION:-unbekannt}
+        GIT_SHA: ${GIT_SHA:-unknown}
+        APP_VERSION: ${APP_VERSION:-unknown}
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       PORT: "3000"
+      # Tokens carry the public issuer; the keys are fetched inside the network (no detour over the public address).
+      OIDC_ISSUER: ${AUTH_URL:?AUTH_URL is missing}/realms/pflanzendex
+      OIDC_JWKS_URL: http://keycloak:8080/realms/pflanzendex/protocol/openid-connect/certs
+      OIDC_AUDIENCE: pflanzendex-api
+      WEB_ORIGIN: ${APP_URL:?APP_URL is missing}
+      AI_RESOURCE_URL: ${APP_URL}/api/mcp
     depends_on:
       db:
         condition: service_healthy
@@ -54,18 +146,33 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512m
   web:
     build:
       context: ../..
-      dockerfile: config/deploy/web.Dockerfile
+      dockerfile: config/deploy/docker/web.Dockerfile
       args:
-        APP_VERSION: ${APP_VERSION:-unbekannt}
+        APP_VERSION: ${APP_VERSION:-unknown}
+        VITE_OIDC_AUTHORITY: ${AUTH_URL:?AUTH_URL is missing}/realms/pflanzendex
+        VITE_OIDC_CLIENT_ID: pflanzendex-web
+        VITE_API_URL: ${APP_URL}/api
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 96m
+  # Public entry. CADDY_SCHEME=http:// (TLS ends at a proxy in front) or empty (Caddy gets certificates itself).
   proxy:
     image: caddy:2-alpine
     restart: unless-stopped
     environment:
-      SITE_ADDRESS: ${SITE_ADDRESS:?SITE_ADDRESS fehlt}
+      CADDY_SCHEME: ${CADDY_SCHEME:-}
+      APP_HOST: ${APP_HOST:?APP_HOST is missing}
+      AUTH_HOST: ${AUTH_HOST:?AUTH_HOST is missing}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-127.0.0.1/32}
     ports:
       - "${HTTP_PORT:-80}:80"
       - "${HTTPS_PORT:-443}:443"
@@ -75,6 +182,11 @@ services:
     depends_on:
       - api
       - web
+      - keycloak
+    deploy:
+      resources:
+        limits:
+          memory: 64m
 volumes:
   dbdata:
   caddydata:

@@ -3,6 +3,7 @@ import {
   aiConnections,
   aiRevoke,
   aiSetRights,
+  type DiscoverSource,
   type PhotoSource,
   type StatusSource,
   type ConnectionStore,
@@ -19,8 +20,8 @@ import type { Pool } from "pg";
 import { body, write, type AuthEnv } from "../kernel";
 import type { TokenVerifier } from "../account";
 import { clientRoutes } from "./client-routes";
-import { draftRoutes } from "./draft-routes";
-import { draftTypes } from "./draft-types";
+import { draftRoutes } from "./drafts/draft-routes";
+import { draftTypes } from "./drafts/draft-types";
 import { taskRoutes } from "./tasks/task-routes";
 
 /** Paths the sign-in guard of the web app (bearer token) must cover: the keeper's list of connections. */
@@ -33,6 +34,8 @@ export interface AiAccessOptions {
   /** The authorization server (E-03, FR-KI-13): the sign-in service. The app builds none of its own. */
   readonly issuer: string;
   readonly clock?: () => Date;
+  /** Calls per AI connection and UTC day (US-KI-06); default 500 (assumption). */
+  readonly dailyLimit?: number;
   /** Replaces the PostgreSQL adapter (tests only). */
   readonly connections?: ConnectionStore;
 }
@@ -52,7 +55,7 @@ export function aiAccessRoutes(
   pool: Pool,
   auth: MiddlewareHandler<AuthEnv>,
   opt: AiAccessOptions | undefined,
-  ports: { status: StatusSource; photo: PhotoSource },
+  ports: { status: StatusSource; photo: PhotoSource; discover: DiscoverSource },
 ): Hono<AuthEnv> {
   if (!opt) return new Hono<AuthEnv>();
   const connections = opt.connections ?? new ConnectionsPostgres(pool);
@@ -80,10 +83,22 @@ export function aiAccessRoutes(
 
   const clock = opt.clock ?? (() => new Date());
   const drafts = new DraftsPostgres(pool);
-  const types = draftTypes(pool);
-  routes.route("/", draftRoutes(pool, { drafts, types, log }, clock));
+  routes.route(
+    "/",
+    draftRoutes(pool, { drafts, types: draftTypes(pool, ports.discover), log }, clock),
+  );
   const tasks = new TasksPostgres(pool);
   routes.route("/", taskRoutes(pool, { tasks, connections }, opt.resource, clock));
-  routes.route("/", clientRoutes(pool, opt, { connections, log, ...ports, drafts, types, tasks }));
+  routes.route(
+    "/",
+    clientRoutes(pool, opt, {
+      connections,
+      log,
+      ...ports,
+      drafts,
+      types: draftTypes(pool, ports.discover),
+      tasks,
+    }),
+  );
   return routes;
 }

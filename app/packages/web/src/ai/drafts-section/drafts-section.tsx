@@ -10,7 +10,9 @@ const TYPE_TEXT: Record<string, string> = {
   wish: "Wunsch",
   species: "Artprofil",
   photo_assessment: "Fotobeurteilung",
+  discover_decision: "Entscheidung bei Entdecken",
 };
+const DECISION_TEXT: Record<string, string> = { yes: "Ja", no: "Nein" };
 const QUALITY_TEXT: Record<string, string> = { healthy: "gesund", etiolated: "vergeilt" };
 const STATUS_TEXT: Record<AiDraftRow["status"], string> = {
   open: "Offen",
@@ -20,8 +22,18 @@ const STATUS_TEXT: Record<AiDraftRow["status"], string> = {
 };
 
 const title = (d: AiDraftRow) => {
-  const content = d.content as { name?: unknown; latinName?: unknown; quality?: unknown } | null;
-  const label = content?.name ?? content?.latinName ?? QUALITY_TEXT[String(content?.quality)];
+  const content = d.content as {
+    name?: unknown;
+    latinName?: unknown;
+    quality?: unknown;
+    species?: unknown;
+    decision?: unknown;
+  } | null;
+  const decided = content?.species
+    ? `${String(content.species)} (${DECISION_TEXT[String(content.decision)] ?? ""})`
+    : undefined;
+  const label =
+    content?.name ?? content?.latinName ?? decided ?? QUALITY_TEXT[String(content?.quality)];
   const name = typeof label === "string" ? label : "";
   return `${TYPE_TEXT[d.type] ?? d.type}${name ? `: ${name}` : ""}`;
 };

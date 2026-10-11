@@ -18,7 +18,7 @@ Replacement: replaces `../prototype/13-equipment-and-affiliate.md`. Dropped: equ
 
 ## User stories
 
-### US-EQU-01 · Record equipment · ⬜ new
+### US-EQU-01 · Record equipment · 🟨 new
 
 Acceptance criteria:
 
@@ -27,7 +27,9 @@ Acceptance criteria:
 - The name is unique; for multiples ` – <distinction>`.
 - From a photo or product link the AI may **suggest** fields; the keeper confirms before saving.
 
-### US-EQU-02 · Bind lamps to light zones · ⬜ new
+Decisions (assumption, decided by the PO): limits are starting values (name 80, other texts 80, product id 60, note 500 characters, price 0 to 100,000 EUR with at most two decimals). A device starts `active`; a consumable type (Substrate, Fertilizer, Plant agent) has no status. The product id must not be a URL (FR-EQU-03). The name is unique per account, case-insensitive. The AI suggestion path (US-KI-05, draft type equipment) is open.
+
+### US-EQU-02 · Bind lamps to light zones · 🟨 new
 
 Acceptance criteria:
 
@@ -36,6 +38,8 @@ Acceptance criteria:
 - Warning if a zone 2–4 has specimens but **no active lamp device** (P-10).
 - Hint (no error) if an active lamp device serves no occupied zone (unused capacity).
 - The distribution of the specimens (US-LIC-02) stays unchanged; equipment extends it with the device list.
+
+Decisions (assumption, decided by the PO): the warning and the hint apply to the zones that US-LIC-02 counts (zones 2 to 4); the cutting light (zone 1) has no specimen count, so it shows its lamps but no warning or hint (P-08). The state of a device is set with its own operation (`active`, `defective`, `retired`; consumables have none). A zone with a lamp cannot be deleted (P-10); move the lamp first. Lamps recorded before the zone was required stay valid and are listed as "without zone" until the keeper assigns one.
 
 ### US-EQU-03 · Record the measured light intensity per lamp · ⬜ new
 

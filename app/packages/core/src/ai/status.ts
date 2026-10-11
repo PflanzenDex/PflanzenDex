@@ -25,6 +25,8 @@ export interface AiLogStore {
     now: Date,
   ): Promise<void>;
   list(userId: string, limit: number): Promise<readonly AiLogRow[]>;
+  /** Logged calls of one connection since the instant (the day's measure for the limit, US-KI-06). */
+  countSince(userId: string, connectionId: string, since: Date): Promise<number>;
 }
 
 export interface StatusDependencies {

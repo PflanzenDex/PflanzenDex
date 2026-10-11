@@ -1,0 +1,127 @@
+import type { Pool } from "pg";
+import { withAccount } from "../kernel/index.ts";
+
+// The shapes are the types of `core` (type-only import through its public entry, AB-2).
+import type {
+  ChangeResult,
+  EquipmentRow,
+  EquipmentStatus,
+  EquipmentValues,
+} from "@pflanzendex/core";
+export type { EquipmentRow, EquipmentStatus, EquipmentValues };
+
+const UNIQUE = "23505";
+const FOREIGN_KEY = "23503";
+const ZONE_KEY = "equipment_light_zone";
+
+/** Only the foreign key of the zone means "unknown zone"; any other violation is a real fault (P-10). */
+const isZoneKey = (e: unknown): boolean =>
+  (e as { code?: string }).code === FOREIGN_KEY &&
+  (e as { constraint?: string }).constraint === ZONE_KEY;
+
+// Dates leave as text `YYYY-MM-DD` (NFR-08), the price as a number.
+const COLUMNS = `id, type, name, status, manufacturer, model, product_id as "productId",
+  price_eur::float8 as "priceEur", to_char(bought_at, 'YYYY-MM-DD') as "boughtAt", note,
+  light_zone_id as "lightZoneId"`;
+
+/**
+ * Adapter for equipment; every call runs as the account of the caller under the row rules (P-04, P-05). The light zone
+ * of a lamp hangs on the own account through the composite foreign key (account_id, light_zone_id).
+ */
+export class EquipmentPostgres {
+  constructor(private readonly pool: Pool) {}
+
+  async list(userId: string): Promise<readonly EquipmentRow[]> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<EquipmentRow>(`select ${COLUMNS} from equipment order by lower(name)`),
+    );
+    return r.rows;
+  }
+
+  async create(
+    userId: string,
+    v: EquipmentValues,
+    status: EquipmentStatus | null,
+  ): Promise<EquipmentRow | "name_taken" | "zone_unknown"> {
+    try {
+      const r = await withAccount(this.pool, userId, (c) =>
+        c.query<EquipmentRow>(
+          `insert into equipment (account_id, type, name, status, manufacturer, model, product_id, price_eur, bought_at, note, light_zone_id)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9::date, $10, $11) returning ${COLUMNS}`,
+          [
+            userId,
+            v.type,
+            v.name,
+            status,
+            v.manufacturer,
+            v.model,
+            v.productId,
+            v.priceEur,
+            v.boughtAt,
+            v.note,
+            v.lightZoneId,
+          ],
+        ),
+      );
+      return r.rows[0] as EquipmentRow;
+    } catch (e) {
+      return this.translate(e);
+    }
+  }
+
+  private translate(e: unknown): "name_taken" | "zone_unknown" {
+    const code = (e as { code?: string }).code;
+    if (code === UNIQUE) return "name_taken";
+    if (isZoneKey(e)) return "zone_unknown";
+    throw e;
+  }
+
+  async setZone(
+    userId: string,
+    id: string,
+    lightZoneId: string,
+  ): Promise<ChangeResult<"not_lamp" | "zone_unknown">> {
+    try {
+      const r = await withAccount(this.pool, userId, async (c) => {
+        const changed = await c.query<EquipmentRow>(
+          `update equipment set light_zone_id = $2 where id = $1 and type = 'Lamp' returning ${COLUMNS}`,
+          [id, lightZoneId],
+        );
+        if (changed.rows[0]) return changed.rows[0];
+        const known = await c.query("select 1 from equipment where id = $1", [id]);
+        return known.rowCount ? "not_lamp" : "not_found";
+      });
+      return r;
+    } catch (e) {
+      if (isZoneKey(e)) return "zone_unknown";
+      throw e;
+    }
+  }
+
+  async setStatus(
+    userId: string,
+    id: string,
+    status: EquipmentStatus,
+  ): Promise<ChangeResult<"no_status">> {
+    return withAccount(this.pool, userId, async (c) => {
+      const changed = await c.query<EquipmentRow>(
+        `update equipment set status = $2 where id = $1 and status is not null returning ${COLUMNS}`,
+        [id, status],
+      );
+      if (changed.rows[0]) return changed.rows[0];
+      const known = await c.query("select 1 from equipment where id = $1", [id]);
+      return known.rowCount ? "no_status" : "not_found";
+    });
+  }
+
+  /** The lamps of a zone, by name (usage source for "delete zone", port ZoneUsage in core). */
+  async usingZone(userId: string, lightZoneId: string): Promise<readonly EquipmentRow[]> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<EquipmentRow>(
+        `select ${COLUMNS} from equipment where light_zone_id = $1 order by lower(name), id`,
+        [lightZoneId],
+      ),
+    );
+    return r.rows;
+  }
+}
