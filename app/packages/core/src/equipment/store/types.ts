@@ -59,7 +59,38 @@ export const LAMP_LIMITS = {
   deviationPercent: { min: 1, max: 100 },
 } as const;
 
-export interface EquipmentRow extends EquipmentValues {
+/** Limits of the operation and maintenance data (US-EQU-04); assumptions (starting values). */
+export const MAINTENANCE_LIMITS = {
+  /** How often a device is checked, in days (up to ten years). */
+  intervalDays: { min: 1, max: 3_650 },
+  lifetimeValue: { min: 1, max: 80 },
+  lifetimeSource: { min: 1, max: 80 },
+} as const;
+
+/** What the keeper says about the operation of a device (DM-EQU-01, DM-EQU-02); `null` is unknown, never a guess (P-08). */
+export interface MaintenanceData {
+  /** Local calendar date `YYYY-MM-DD` (NFR-08). */
+  readonly inOperationSince: string | null;
+  readonly checkIntervalDays: number | null;
+  /** The manufacturer's statement about the lifetime, always together with its source. */
+  readonly lifetimeValue: string | null;
+  readonly lifetimeSource: string | null;
+}
+
+/** How much of a consumable is left (US-EQU-05). */
+export const SUPPLY_LEVELS = ["available", "low", "empty"] as const;
+export type SupplyLevel = (typeof SUPPLY_LEVELS)[number];
+
+/** Limit of the link between a plant agent and the free text of a treatment (US-EQU-05); assumption (starting value). */
+export const SUPPLY_LIMITS = { agentLink: { min: 1, max: 80 } } as const;
+
+export interface EquipmentRow extends EquipmentValues, MaintenanceData {
+  /** The supply of a consumable; `null` for a device. A new consumable starts `available` (US-EQU-05). */
+  readonly supply: SupplyLevel | null;
+  /** The text of a plant agent that occurs in `Treatment.Agent`; `null` = no link (DM-EQU-03). */
+  readonly agentLink: string | null;
+  /** Local calendar date `YYYY-MM-DD` of the last check the keeper confirmed; `null` = never (US-EQU-04). */
+  readonly lastCheckedOn: string | null;
   readonly id: string;
   /** Power of a lamp in watt, as the manufacturer states it; `null` for unknown and for every other type. */
   readonly powerW: number | null;
@@ -98,6 +129,26 @@ export interface EquipmentStore {
     id: string,
     data: { powerW: number | null; luxStatement: number | null },
   ): Promise<ChangeResult<"not_lamp">>;
+  /** Sets the operation and maintenance data of a device; only a device has them, a consumable does not. */
+  setMaintenance(
+    userId: string,
+    id: string,
+    data: MaintenanceData,
+  ): Promise<ChangeResult<"consumable">>;
+  /** Sets the supply of a consumable (US-EQU-05). */
+  setSupply(
+    userId: string,
+    id: string,
+    supply: SupplyLevel,
+  ): Promise<ChangeResult<"not_consumable">>;
+  /** Links a plant agent to the text of `Treatment.Agent`; `null` removes the link. */
+  setAgentLink(
+    userId: string,
+    id: string,
+    agentLink: string | null,
+  ): Promise<ChangeResult<"not_plant_agent">>;
+  /** Notes that the keeper checked a device on this date. */
+  markChecked(userId: string, id: string, checkedOn: string): Promise<ChangeResult<"consumable">>;
   /** The lamps that serve a light zone, by name, whatever their state. */
   usingZone(userId: string, lightZoneId: string): Promise<readonly EquipmentRow[]>;
 }

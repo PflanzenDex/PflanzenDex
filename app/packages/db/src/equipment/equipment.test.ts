@@ -156,3 +156,124 @@ describe("US-EQU-02 lamps and light zones in the database", () => {
     expect(await equipment.setStatus(ben, lamp.id, "defective")).toBe("not_found");
   });
 });
+
+describe("US-EQU-04 operation and maintenance in the database", () => {
+  const none = {
+    inOperationSince: null,
+    checkIntervalDays: null,
+    lifetimeValue: null,
+    lifetimeSource: null,
+  };
+
+  it("sets, reads back and clears the operation data and the last check of a device", async () => {
+    const row = await equipment.create(anna, { ...bare, name: "Wartungslampe" }, "active");
+    if (typeof row === "string") throw new Error(row);
+    expect(row).toMatchObject({ ...none, lastCheckedOn: null });
+    const data = {
+      inOperationSince: "2026-01-10",
+      checkIntervalDays: 90,
+      lifetimeValue: "50.000 Stunden",
+      lifetimeSource: "Datenblatt",
+    };
+    expect(await equipment.setMaintenance(anna, row.id, data)).toMatchObject(data);
+    expect(await equipment.markChecked(anna, row.id, "2026-09-01")).toMatchObject({
+      lastCheckedOn: "2026-09-01",
+      checkIntervalDays: 90,
+    });
+    expect(await equipment.setMaintenance(anna, row.id, none)).toMatchObject(none);
+  });
+
+  it("a consumable has none of it; an unknown or foreign record looks missing (P-04)", async () => {
+    const soil = await equipment.create(
+      anna,
+      { ...bare, name: "Erde Maint", type: "Substrate" },
+      null,
+    );
+    if (typeof soil === "string") throw new Error(soil);
+    expect(await equipment.setMaintenance(anna, soil.id, { ...none, checkIntervalDays: 7 })).toBe(
+      "consumable",
+    );
+    expect(await equipment.markChecked(anna, soil.id, "2026-09-01")).toBe("consumable");
+    const lamp = await equipment.create(anna, { ...bare, name: "Annas-Wartung" }, "active");
+    if (typeof lamp === "string") throw new Error(lamp);
+    expect(await equipment.setMaintenance(ben, lamp.id, none)).toBe("not_found");
+    expect(await equipment.markChecked(ben, lamp.id, "2026-09-01")).toBe("not_found");
+    expect(await equipment.markChecked(anna, randomUUID(), "2026-09-01")).toBe("not_found");
+  });
+
+  it("the database refuses a lifetime without source, an interval out of range and data on a consumable", async () => {
+    const lamp = await equipment.create(anna, { ...bare, name: "Grenzlampe" }, "active");
+    if (typeof lamp === "string") throw new Error(lamp);
+    await expect(
+      equipment.setMaintenance(anna, lamp.id, { ...none, lifetimeValue: "10 h" }),
+    ).rejects.toThrow();
+    await expect(
+      equipment.setMaintenance(anna, lamp.id, { ...none, checkIntervalDays: 0 }),
+    ).rejects.toThrow();
+    const soil = await equipment.create(
+      anna,
+      { ...bare, name: "Erde Grenze", type: "Substrate" },
+      null,
+    );
+    if (typeof soil === "string") throw new Error(soil);
+    await expect(
+      withAccount(pool, anna, (c) =>
+        c.query("update equipment set check_interval_days = 5 where id = $1", [soil.id]),
+      ),
+    ).rejects.toThrow();
+  });
+});
+
+describe("US-EQU-05 consumables and supply in the database", () => {
+  const consumable = async (user: string, name: string, type: "Substrate" | "Plant agent") => {
+    const row = await equipment.create(user, { ...bare, name, type }, null);
+    if (typeof row === "string") throw new Error(row);
+    return row;
+  };
+
+  it("a new consumable starts available, a device has no supply", async () => {
+    expect(await consumable(anna, "Erde Vorrat", "Substrate")).toMatchObject({
+      supply: "available",
+      status: null,
+    });
+    const lamp = await equipment.create(anna, { ...bare, name: "Vorratslampe" }, "active");
+    expect(lamp).toMatchObject({ supply: null });
+  });
+
+  it("sets the supply by tap; a device has none; another account sees it missing (P-04)", async () => {
+    const soil = await consumable(anna, "Erde Tap", "Substrate");
+    expect(await equipment.setSupply(anna, soil.id, "low")).toMatchObject({ supply: "low" });
+    expect(await equipment.setSupply(anna, soil.id, "empty")).toMatchObject({ supply: "empty" });
+    const lamp = await equipment.create(anna, { ...bare, name: "Tap-Lampe" }, "active");
+    if (typeof lamp === "string") throw new Error(lamp);
+    expect(await equipment.setSupply(anna, lamp.id, "low")).toBe("not_consumable");
+    expect(await equipment.setSupply(ben, soil.id, "low")).toBe("not_found");
+    expect(await equipment.setSupply(anna, randomUUID(), "low")).toBe("not_found");
+  });
+
+  it("links and unlinks a plant agent; other types and other accounts are refused", async () => {
+    const agent = await consumable(anna, "Neem Link", "Plant agent");
+    expect(await equipment.setAgentLink(anna, agent.id, "Neemöl")).toMatchObject({
+      agentLink: "Neemöl",
+    });
+    expect(await equipment.setAgentLink(anna, agent.id, null)).toMatchObject({ agentLink: null });
+    const soil = await consumable(anna, "Erde Link", "Substrate");
+    expect(await equipment.setAgentLink(anna, soil.id, "x")).toBe("not_plant_agent");
+    expect(await equipment.setAgentLink(ben, agent.id, "x")).toBe("not_found");
+  });
+
+  it("the database refuses a supply on a device and a link on another type", async () => {
+    const lamp = await equipment.create(anna, { ...bare, name: "Grenz-Vorrat" }, "active");
+    if (typeof lamp === "string") throw new Error(lamp);
+    await expect(
+      withAccount(pool, anna, (c) =>
+        c.query("update equipment set supply = 'low' where id = $1", [lamp.id]),
+      ),
+    ).rejects.toThrow();
+    await expect(
+      withAccount(pool, anna, (c) =>
+        c.query("update equipment set agent_link = 'x' where id = $1", [lamp.id]),
+      ),
+    ).rejects.toThrow();
+  });
+});

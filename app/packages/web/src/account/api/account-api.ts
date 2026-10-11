@@ -21,6 +21,7 @@ export const OCCASIONS = [
   "watering",
   "swap",
   "friends",
+  "equipment",
 ] as const;
 export type Occasion = (typeof OCCASIONS)[number];
 

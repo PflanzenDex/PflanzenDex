@@ -1,0 +1,132 @@
+# Deploy with GitHub Actions (TE-19, #749, E-14, FR-QG-14): manual only. Pick the environment (`test` or `prod`) and
+# a ref; a GitHub-hosted runner joins the owner's tailnet as a short-lived node (`tag:ci`) and runs
+# `app/config/deploy/scripts/deploy.sh <sha>` on that environment's host over Tailscale SSH. The script backs up,
+# migrates, smoke-tests and rolls back by itself; a non-zero exit turns this run red.
+#   test: any branch, tag or commit of this repository; snapshot versions (`git describe` = vX.Y.Z-N-g<sha>) are fine.
+#   prod: only a commit on `main` that carries a stable release tag `vX.Y.Z` (no suffix, not the seed tag v0.0.0).
+# The guard runs on the runner before anything connects. Secrets and variables live in the GitHub environments
+# `test` and `prod` (same names in both), never in the repo.
+# Setup: docs/guides/operations/staging-deploy-and-backup.md, section "Deploying with GitHub Actions (TE-19)".
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment (prod: only a stable release tag on main)"
+        type: choice
+        options: [test, prod]
+        default: test
+        required: true
+      ref:
+        description: "Branch, tag or commit of this repository (default: the branch this workflow is run from)"
+        type: string
+        required: false
+
+# One deploy per environment at a time; a running deploy is never cancelled (it could stop in the middle of a migration).
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read # fetch the history and tags for the guard; nothing is written
+    steps:
+      # actions/checkout v7.0.1; full history and tags so the guard can look at `main` and the release tags.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # Resolve the ref to a full SHA, check the environment rules and the configuration. No network contact with the
+      # host happens before this step passes.
+      - id: target
+        env:
+          TARGET_ENV: ${{ inputs.environment }}
+          INPUT_REF: ${{ inputs.ref }}
+          DISPATCH_REF: ${{ github.ref_name }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_REPO_PATH: ${{ vars.DEPLOY_REPO_PATH }}
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::$1"; exit 1; }
+          case "$TARGET_ENV" in test | prod) ;; *) fail "Unknown environment." ;; esac
+          if [ -z "$DEPLOY_HOST" ]; then
+            fail "Variable DEPLOY_HOST is not set in the GitHub environment $TARGET_ENV (the host does not exist yet?)."
+          fi
+          printf '%s' "$DEPLOY_HOST" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9.-]{0,252}$' || fail "DEPLOY_HOST is invalid."
+          repo_path="${DEPLOY_REPO_PATH:-/opt/pflanzendex}"
+          printf '%s' "$repo_path" | grep -Eq '^/[A-Za-z0-9._/-]+$' || fail "DEPLOY_REPO_PATH is invalid."
+
+          ref="${INPUT_REF:-$DISPATCH_REF}"
+          printf '%s' "$ref" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$' || fail "Invalid ref."
+          sha="$(git rev-parse --verify --quiet "refs/remotes/origin/$ref^{commit}" \
+            || git rev-parse --verify --quiet "refs/tags/$ref^{commit}" \
+            || git rev-parse --verify --quiet "$ref^{commit}" || true)"
+          [ -n "$sha" ] || fail "Ref '$ref' is not a branch, tag or commit of this repository."
+          printf '%s' "$sha" | grep -Eq '^[0-9a-f]{40}$' || fail "Not a full commit SHA."
+
+          # Snapshot = any state that is not exactly a stable release tag (ADR 0002): `git describe` would print
+          # vX.Y.Z-N-g<sha>. A release is a commit on `main` that carries a tag vX.Y.Z (no pre-release suffix);
+          # v0.0.0 is the seed tag, not a release.
+          release="$(git tag --points-at "$sha" | grep -E '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$' | grep -vx 'v0.0.0' | sort -V | tail -n 1 || true)"
+          if [ "$TARGET_ENV" = "prod" ]; then
+            git merge-base --is-ancestor "$sha" refs/remotes/origin/main \
+              || fail "prod refused: $sha is not on main."
+            [ -n "$release" ] \
+              || fail "prod refused: $sha is a snapshot, not a stable release tag (vX.Y.Z) on main."
+          fi
+          {
+            echo "sha=$sha"
+            echo "version=${release:-snapshot}"
+            echo "ref=$ref"
+          } >> "$GITHUB_OUTPUT"
+
+      # tailscale/github-action v4.2.0, pinned to the commit.
+      - uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      # Tailscale SSH authenticates both sides through the tailnet (WireGuard node keys, policy rule tag:ci -> deploy),
+      # so there is no key or password and no known_hosts file on the runner. `accept-new` records the host key on first
+      # contact without asking; a changed key on a later contact would still be refused. `BatchMode` never prompts.
+      - id: deploy
+        env:
+          TARGET_ENV: ${{ inputs.environment }}
+          SHA: ${{ steps.target.outputs.sha }}
+          VERSION: ${{ steps.target.outputs.version }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_REPO_PATH: ${{ vars.DEPLOY_REPO_PATH }}
+        run: |
+          set -euo pipefail
+          repo_path="${DEPLOY_REPO_PATH:-/opt/pflanzendex}"
+          remote="cd $(printf '%q' "$repo_path") && app/config/deploy/scripts/deploy.sh $(printf '%q' "$SHA")"
+          status=0
+          ssh -o BatchMode=yes -o ConnectTimeout=30 -o StrictHostKeyChecking=accept-new \
+            "deploy@$DEPLOY_HOST" -- "$remote" > "$RUNNER_TEMP/deploy.log" 2>&1 || status=$?
+          echo "--- last 60 lines of the deploy output ---"
+          tail -n 60 "$RUNNER_TEMP/deploy.log"
+          {
+            echo "### Deploy to $TARGET_ENV"
+            echo "Commit: \`$SHA\` (release: $VERSION)"
+            echo
+            if [ "$status" -eq 0 ]; then
+              echo "Result: ok. $(grep -E '^Deploy ok: ' "$RUNNER_TEMP/deploy.log" | tail -n 1)"
+            else
+              echo "Result: FAILED (exit $status). \`deploy.sh\` rolls back to the previous version by itself; see the log."
+            fi
+            echo
+            echo '```text'
+            tail -n 30 "$RUNNER_TEMP/deploy.log"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"

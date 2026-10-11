@@ -8,7 +8,10 @@ import {
   setLampZone,
   type EquipmentStatus,
 } from "../../equipment-api";
+import { linkAgent, markChecked, setMaintenance, setSupply } from "../../upkeep-api";
 import type { LampLightActions } from "../../lamp-light/lamp-light";
+import type { MaintenanceActions } from "../maintenance/maintenance";
+import type { SupplyActions } from "../supply/supply";
 
 type Token = () => Promise<string | undefined>;
 
@@ -59,12 +62,50 @@ function lightWrites(api: string, write: Write): LampLightActions {
   };
 }
 
+/** The writes on the operation of a device (US-EQU-04): the operation data and "checked". */
+function maintenanceWrites(api: string, write: Write): MaintenanceActions {
+  return {
+    busy: write.running,
+    onSave: (item, input) =>
+      void write.run(
+        (t) => setMaintenance(api, t, { id: item.id, input }),
+        `Betriebsdaten von „${item.name}“ gespeichert.`,
+      ),
+    onChecked: (item, checkedOn) =>
+      void write.run(
+        (t) => markChecked(api, t, { id: item.id, checkedOn }),
+        `„${item.name}“ als geprüft vermerkt.`,
+      ),
+  };
+}
+
+/** The writes on a consumable (US-EQU-05): its supply and the link of a plant agent. */
+function supplyWrites(api: string, write: Write): SupplyActions {
+  return {
+    busy: write.running,
+    onSupply: (item, supply) =>
+      void write.run(
+        (t) => setSupply(api, t, { id: item.id, supply }),
+        `Vorrat von „${item.name}“ gespeichert.`,
+      ),
+    onLink: (item, agentLink) =>
+      void write.run(
+        (t) => linkAgent(api, t, { id: item.id, agentLink }),
+        agentLink === null
+          ? `Verknüpfung von „${item.name}“ entfernt.`
+          : `„${item.name}“ ist mit „${agentLink}“ verknüpft.`,
+      ),
+  };
+}
+
 /** One write state for everything on a lamp, so the answer shown above the zones is always the latest (P-10). */
 export function useLampActions(api: string, token: Token, onWritten: () => void) {
   const write = useWriteAction(token, onWritten);
   return {
     actions: zoneWrites(api, write),
     light: lightWrites(api, write),
+    maintenance: maintenanceWrites(api, write),
+    supply: supplyWrites(api, write),
     message: write.message,
     error: write.error,
   };

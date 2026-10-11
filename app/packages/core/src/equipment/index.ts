@@ -1,6 +1,10 @@
 // Public interface of the module `equipment` (ADR 0003): equipment records (US-EQU-01), lamps in light zones (US-EQU-02).
 export { equipmentRecord } from "./record";
 export type { RecordEquipmentDependencies } from "./record";
+export { equipmentChecksDue, equipmentMarkChecked, equipmentSetMaintenance } from "./maintenance";
+export type { CheckDue, ChecksDueDependencies } from "./maintenance";
+export { equipmentLinkAgent, equipmentSetSupply, plantAgents } from "./supply";
+export type { PlantAgent, PlantAgentsDependencies } from "./supply";
 export { equipmentSetStatus } from "./status";
 export type { SetStatusDependencies } from "./status";
 export {

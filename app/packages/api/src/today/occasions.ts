@@ -38,6 +38,15 @@ export function reminderOccasionsFor(pool: Pool, opt: TodayOptions): OccasionSou
           text: i.text,
           nextAction: i.nextAction,
         }));
+      // A device check due (US-EQU-04) is an occasion of its own, so it can be switched off or paused (US-MON-08).
+      const checks = today.value.items
+        .filter((i) => i.kind === "equipment_check_due")
+        .map((i): Occasion => ({
+          id: i.id,
+          occasion: "equipment",
+          text: i.text,
+          nextAction: i.nextAction,
+        }));
       const phases = await carePhasesList(deps, userId, timeZone);
       if (!phases.ok) throw new Error(phases.error.code);
       const watering = wateringOccasions(await wateringDueFor(pool, userId, timeZone, now));
@@ -64,6 +73,7 @@ export function reminderOccasionsFor(pool: Pool, opt: TodayOptions): OccasionSou
       const off = (o: Occasion) => profile?.notifications[o.occasion] === false;
       return [
         ...treatments,
+        ...checks,
         ...phaseChangeOccasions(phases.value),
         ...watering,
         ...measurements,

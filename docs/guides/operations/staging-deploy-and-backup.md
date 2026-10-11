@@ -81,11 +81,11 @@ browser --https--> upstream proxy --http :80--> proxy (Caddy) --+--> web        
 How it fits together:
 
 - **One variable picks the mode.** `CADDY_SCHEME=http://` makes Caddy serve both hostnames on plain HTTP :80 without certificates (this setup). Empty makes Caddy get its own certificates (host facing the internet). Forwarded headers are believed only from `TRUSTED_PROXIES` (the upstream proxy's address); from anyone else they are overwritten. Keycloak builds its public links from them (`KC_PROXY_HEADERS=xforwarded`) and from `KC_HOSTNAME` (= `AUTH_URL`), so make the upstream proxy pass `X-Forwarded-Proto: https`.
-- **Keycloak** (`quay.io/keycloak/keycloak:26.8.0`, same as `make auth-up`) runs in production mode (`start`) with HTTP enabled inside the network. Its data lives in its own database `keycloak` with its own role in the existing `db` service (a second PostgreSQL would cost 100+ MB of the scarce memory). The one-shot `keycloak-db` creates role and database idempotently on every `up`, also on an existing volume, and revokes `CONNECT` on the app database from everyone but the cluster user: the sign-in role cannot reach tenant data (P-04). Port 8080 and the management port 9000 are not published.
+- **Keycloak** (`quay.io/keycloak/keycloak:26.8.0`, same as `make auth-up`) runs in production mode (`start`) with HTTP enabled inside the network. Its data lives in its own database `keycloak` with its own role in the existing `db` service (a second PostgreSQL would cost 100+ MB of the scarce memory). The one-shot `keycloak-db` creates role and database idempotently on every `up`, also on an existing volume, and revokes `CONNECT` on the app database from everyone but the cluster user: the sign-in role cannot reach tenant data (P-04). Port 8080 is published only on the host's loopback (`127.0.0.1:${KEYCLOAK_ADMIN_PORT}`, default 8180) for the admin console over an SSH tunnel (see "Admin console over an SSH tunnel"); the management port 9000 is not published.
 - **Realm** `pflanzendex` is imported on the first start from `app/config/deploy/keycloak/pflanzendex-realm.json`. It matches the development realm (clients `pflanzendex-api` and `pflanzendex-web` with S256 PKCE, audience mapper, `fullScopeAllowed: false`, access token 5 minutes (ADR 0009), password policy `length(10)`, login theme `pflanzendex`, email verification, self-registration) and differs in three ways: no test users, redirect addresses and web origin come from `APP_URL` (placeholder `${WEB_BASE_URL}`), SMTP comes from `SMTP_*` (placeholders `${KC_SMTP_*}`). Checked on 2026-10-11 with Keycloak 26.8.0: string placeholders (also inside arrays and empty values) are resolved; for booleans they are not reliable (see `invitation-phase.md`), which is why `registrationAllowed` stays a command, not a placeholder. **A changed realm file does not touch an existing realm** (`IGNORE_EXISTING`): change a live realm in the admin console or with `kcadm.sh`; to re-import, drop the `keycloak` database (`docker compose ... stop keycloak`, then drop and re-run `up`) and lose its accounts.
 - **API settings.** `OIDC_ISSUER` is the public issuer (`${AUTH_URL}/realms/pflanzendex`), because tokens carry it in `iss`. The API does not fetch keys through that public address (that would need the host to reach its own proxy and TLS): `OIDC_JWKS_URL=http://keycloak:8080/realms/pflanzendex/protocol/openid-connect/certs` points the key fetch inside the network, while signature, issuer and audience (`OIDC_AUDIENCE=pflanzendex-api`) are still checked as before (test `token.test.ts`, TE-03). `WEB_ORIGIN=${APP_URL}` sets CORS; `AI_RESOURCE_URL=${APP_URL}/api/mcp`.
 - **Web build.** `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID` and `VITE_API_URL=${APP_URL}/api` are build arguments of `web.Dockerfile` (Vite compiles them into the bundle), so changing `APP_URL` or `AUTH_URL` needs a rebuild (`make deploy` does it). The API is reached under `/api` on the same origin, so there is no cross-origin call; the proxy removes the `/api` prefix.
-- **Mail.** The realm requires email confirmation. `docker-compose.test.yml` adds Mailpit (no ports published) and a Caddy route to its UI at `https://auth.example.test/mail/`; the realm sends to it by default. It shows every email, so it must exist only in the test environment. Production sets `SMTP_*` in `.env` and does not load the overlay.
+- **Mail.** The realm requires email confirmation. `docker-compose.test.yml` adds Mailpit (no ports published) and a Caddy route to its UI at `https://auth.example.test/mail/` behind basic auth (`MAIL_UI_USER`, `MAIL_UI_HASH`, see "Public test environment through Tailscale Funnel"); the realm sends to it by default. It shows every email, so it must exist only in the test environment. Production sets `SMTP_*` in `.env` and does not load the overlay.
 
 ### One-time setup
 
@@ -120,13 +120,13 @@ curl -s -H 'Host: auth.example.test' -H 'X-Forwarded-Proto: https' http://127.0.
 # expected issuer: https://auth.example.test/realms/pflanzendex
 ```
 
-Note: `deploy.sh` checks out the ref in the checkout (detached HEAD). Deploying stays a deliberate step (E-14).
+Note: `deploy.sh` checks out the ref in the checkout (detached HEAD). Every deploy is a deliberate, manual step (E-14); from GitHub it is the workflow `deploy.yml` (see "Deploying with GitHub Actions (TE-19)").
 
 ### First account and the operator role
 
 1. Open `https://app.example.test`, press the sign-in button and choose register (self-registration is on in the test environment). Keycloak asks for email confirmation.
 2. Open `https://auth.example.test/mail/` (the mail catcher), open the email and follow the link; set the password (at least 10 characters). Sign in; the first sign-in creates the account.
-3. Make the account the operator: follow `invitation-phase.md` steps 4 to 5. The subject is the Keycloak user id (admin console `https://auth.example.test/admin/`, realm `pflanzendex`, Users; or `kcadm.sh get users -r pflanzendex -q email=<email> --fields id`). `compose` there stands for `docker compose --env-file app/config/deploy/.env`; the compose files come from `COMPOSE_FILE`, so no `-f` is needed. The tab "Betreiber" appears after a reload.
+3. Make the account the operator: follow `invitation-phase.md` steps 4 to 5. The subject is the Keycloak user id (`kcadm.sh get users -r pflanzendex -q email=<email> --fields id`; the admin console `/admin/` is blocked on the public name; open it over an SSH tunnel, see "Admin console over an SSH tunnel"). `compose` there stands for `docker compose --env-file app/config/deploy/.env`; the compose files come from `COMPOSE_FILE`, so no `-f` is needed. The tab "Betreiber" appears after a reload.
 
 ### Closing self-registration
 
@@ -161,6 +161,212 @@ Test log (test environment):
 | Date       | Where                                | Result                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ---------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-10-11 | development machine (Docker Compose) | Stack with Keycloak and Mailpit started. Through port 80 with `Host` and `X-Forwarded-Proto: https`: `/health` ok, web served (zstd, `no-cache`), discovery document with the public https issuer, Mailpit UI at `/mail/`, verification email link on the public address, password-grant token accepted by `GET /api/account` (issuer public, keys fetched inside), foreign redirect address refused (400). Backup wrote both dumps; restore into check databases and over the live sign-in database worked, sign-in still worked afterwards. `make restore-test` passed for both databases. Not covered: the real upstream proxy, the browser flow, the target host. The development machine's bridge networking was broken (veth module missing), so the run used host networking with a local override outside the repo. |
+
+## Public test environment through Tailscale Funnel
+
+Goal: make the test environment reachable from the public internet without a reverse proxy, without an inbound port and without a domain, for a host that only has outbound internet (for example an unprivileged LXC container without `/dev/net/tun`). Visitors need no VPN and no Tailscale account. Overlay: `app/config/deploy/docker-compose.funnel.yml`, serve config: `app/config/deploy/docker/tailscale/serve.json`. Checked statically by `deploy-config.test.ts` (TE-03).
+
+```text
+browser --https--> Tailscale edge --relay (does not decrypt)--> ts-app / ts-auth (tailscaled, TLS ends here)
+                                                                      |--http :80 (Docker network)--> proxy (Caddy) --> web, api, keycloak, mailpit
+```
+
+- **Two public names, two Tailscale nodes.** `ts-app` (name `TS_APP_NAME`) serves the app, `ts-auth` (name `TS_AUTH_NAME`) serves the sign-in service. Each runs `tailscale/tailscale` (exact tag pinned in the overlay) in userspace networking (`TS_USERSPACE=true`): no tun device, no capabilities, only outbound connections. State lives in the volumes `tsstate-app` and `tsstate-auth`; without them every restart would register a new node and use up the name. The public names are `<TS_APP_NAME>.<tailnet>.ts.net` and `<TS_AUTH_NAME>.<tailnet>.ts.net` (below: `app.example-tailnet.ts.net` and `auth.example-tailnet.ts.net`).
+- **Serve config.** Both nodes load the same `serve.json`: HTTPS on 443, `AllowFunnel` for `${TS_CERT_DOMAIN}:443` (the container replaces the variable with its own name), everything proxied to `http://proxy:80`. 443 is the only Funnel port in use (Funnel also allows 8443 and 10000).
+- **Caddy stays in plain HTTP mode** (`CADDY_SCHEME=http://`) and routes by `Host`: the two site blocks are keyed by `APP_HOST` and `AUTH_HOST`, which are now the `ts.net` names. tailscaled's serve proxy forwards the original `Host` and adds `X-Forwarded-For` (the visitor), `X-Forwarded-Proto: https` and `X-Forwarded-Host`; Keycloak builds its https links from `KC_HOSTNAME` (= `AUTH_URL`) and these headers. This header behavior comes from the tailscaled source and was **not** observed on the real host yet; check it once after the first start (see "Verify" below).
+- **Trusted proxies.** The overlay pins the stack network to `172.29.40.0/24` and the two Tailscale nodes to `172.29.40.2` and `172.29.40.3`; `TRUSTED_PROXIES=172.29.40.2/32 172.29.40.3/32`. Only from these two addresses Caddy believes `X-Forwarded-*`; from anyone else (another container on the network) it overwrites them. If the subnet collides with another network on the host, change it in the overlay and in `TRUSTED_PROXIES` together (the test `deploy-config.test.ts` expects the documented values).
+- **Nothing public on the host.** The overlay drops the base file's mappings for ports 80 and 443 (`ports: !override`) and publishes only `127.0.0.1:${HTTP_PORT}:80`. That loopback port is what `deploy.sh` needs for its smoke test (`http://127.0.0.1:$HTTP_PORT` with the `Host` header of `APP_HOST`), so `deploy.sh` needs no change. Check with `ss -ltn`: nothing but `127.0.0.1:80` (and SSH) may listen.
+- **Path blocks live in the base `proxy.Caddyfile`**, not in an overlay: the sign-in host answers 404 for `/admin*`, `/realms/master*`, `/metrics*` and `/health*`. Production behind a TLS proxy or with its own certificates faces the same internet, and with an overlay a forgotten `COMPOSE_FILE` would silently expose the admin console. The login pages need only `/realms/pflanzendex/*`, `/resources/*` and `/js/*`, which stay open (also `/realms/pflanzendex/account` and the registration page). Management port 9000 is not routed at all.
+- **Mail catcher UI** `https://auth.example-tailnet.ts.net/mail/` shows every email of the realm, so it is behind HTTP basic auth (`basic_auth` in `proxy.mail.caddy`, user `MAIL_UI_USER`, bcrypt hash `MAIL_UI_HASH`). Testers need it to read their confirmation email: give them the user and password through a separate channel. Without both variables `docker-compose.test.yml` refuses to start (`:?`).
+
+### One-time Tailscale steps
+
+1. Create a Tailscale account (free plan is enough) and note the tailnet name (`<tailnet>.ts.net`, admin console, DNS).
+2. Admin console, DNS: enable **MagicDNS** and **HTTPS certificates**. Optionally rename the tailnet to something neutral (the name is public in the URLs).
+3. Access controls (policy file): declare the tag and allow your admin to own it, and grant the `funnel` node attribute to it:
+
+   ```json
+   {
+     "tagOwners": { "tag:pflanzendex-funnel": ["autogroup:admin"] },
+     "nodeAttrs": [{ "target": ["tag:pflanzendex-funnel"], "attr": ["funnel"] }]
+   }
+   ```
+
+   (Merge into the existing policy. `autogroup:member` gets `funnel` by default; the explicit rule keeps it to the tagged nodes if you restrict it later.) The tagged nodes need no other access rule: they accept no tailnet traffic.
+
+4. Settings, Keys, **Generate auth key**: reusable (two nodes register with it), pre-approved, **not ephemeral**, tag `tag:pflanzendex-funnel`, **expiry 1 day**. Copy it into `.env` as `TS_AUTHKEY` and treat it as a secret. The key is needed only to register the nodes; later starts use the state volumes (`tsstate-app`, `tsstate-auth`). Whoever holds a valid key can register further nodes with the tag, and with it the Funnel right, in your tailnet; so after the first start (step 5) delete the `TS_AUTHKEY` line from `.env`, recreate the two nodes so the key leaves their environment (`docker compose --env-file app/config/deploy/.env up -d ts-app ts-auth`; `docker inspect` must no longer show it), and revoke the key in the admin console. A key is needed again only if a state volume is lost.
+5. After the first start check in the admin console (Machines) that both nodes carry the tag and that their key expiry is disabled (tagged nodes have none by default); otherwise they drop out after the key lifetime.
+
+### `.env` for Funnel
+
+Start from `.env.example`; in addition to the variables of "Test environment behind a reverse proxy" set:
+
+| Variable                       | Value                                                                                                                   |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `APP_URL`, `AUTH_URL`          | `https://app.example-tailnet.ts.net`, `https://auth.example-tailnet.ts.net`                                             |
+| `APP_HOST`, `AUTH_HOST`        | the same names without scheme                                                                                           |
+| `CADDY_SCHEME`                 | `http://`                                                                                                               |
+| `TRUSTED_PROXIES`              | `172.29.40.2/32 172.29.40.3/32`                                                                                         |
+| `TS_AUTHKEY`                   | the auth key from step 4, only until both nodes are registered (then delete the line and revoke the key)                |
+| `TS_APP_NAME`, `TS_AUTH_NAME`  | `app`, `auth` (first labels of the public names; choose names that fit your tailnet, they become public)                |
+| `TS_TAG`                       | optional, default `tag:pflanzendex-funnel` (must be a tag of the auth key)                                              |
+| `MAIL_UI_USER`, `MAIL_UI_HASH` | user and bcrypt hash, see below                                                                                         |
+| `COMPOSE_FILE`                 | `docker-compose.yml:docker-compose.test.yml:docker-compose.funnel.yml` (read by `deploy.sh`, `backup.sh`, `restore.sh`) |
+
+Create the mail hash (no Caddy install needed) and keep the single quotes in `.env`; the hash contains `$`, which the shell scripts and Compose would otherwise expand:
+
+```bash
+docker run --rm caddy:2-alpine caddy hash-password --plaintext 'the-password'
+# .env:  MAIL_UI_HASH='$2a$14$...'
+```
+
+### First start and verify
+
+```bash
+app/config/deploy/scripts/deploy.sh origin/dev
+docker compose --env-file app/config/deploy/.env logs ts-app ts-auth | tail     # "Funnel on: https://..."
+```
+
+The first sign-in of a node fetches a certificate from Let's Encrypt (a few seconds). Then, from any machine outside (phone on mobile data):
+
+```bash
+curl -s https://app.example-tailnet.ts.net/health
+curl -s https://auth.example-tailnet.ts.net/realms/pflanzendex/.well-known/openid-configuration | grep -o '"issuer":"[^"]*"'
+curl -s -o /dev/null -w '%{http_code}\n' https://auth.example-tailnet.ts.net/admin/        # 404
+curl -s -o /dev/null -w '%{http_code}\n' https://auth.example-tailnet.ts.net/mail/         # 401
+```
+
+If the app answers 404 or the issuer shows `http://`, the forwarded headers are not as described above: temporarily add `log` to the site blocks of `proxy.Caddyfile` on the host (do not commit it), read `docker compose logs proxy` and report what `Host` and `X-Forwarded-*` look like.
+
+Then register the first account and follow "First account and the operator role" with these differences: the admin console is **not** reachable on the public name; use the SSH tunnel ("Admin console over an SSH tunnel" below) or `kcadm.sh` ("Operator work without the admin console"). The mail catcher is `https://auth.example-tailnet.ts.net/mail/` with the basic-auth login.
+
+### Switching an existing installation to the Funnel names
+
+`APP_URL`/`AUTH_URL` are compiled into the web bundle (rebuild) and the realm is imported only once (`IGNORE_EXISTING`), so its redirect addresses still name the old host. Either:
+
+1. **Update the live realm** (keeps accounts). After setting the new `.env` and running `deploy.sh` (it rebuilds `web`):
+
+   ```bash
+   c="docker compose --env-file app/config/deploy/.env"
+   $c exec keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin   # asks for the password
+   id=$($c exec keycloak /opt/keycloak/bin/kcadm.sh get clients -r pflanzendex -q clientId=pflanzendex-web --fields id --format csv --noquotes | tr -d '\r')
+   $c exec keycloak /opt/keycloak/bin/kcadm.sh update "clients/$id" -r pflanzendex \
+     -s rootUrl=https://app.example-tailnet.ts.net \
+     -s 'redirectUris=["https://app.example-tailnet.ts.net/*"]' \
+     -s 'webOrigins=["https://app.example-tailnet.ts.net"]' \
+     -s 'attributes."post.logout.redirect.uris"=https://app.example-tailnet.ts.net/*'
+   ```
+
+   Existing sessions and tokens carry the old issuer, so everyone signs in again.
+
+2. **Start the sign-in database over** when no accounts exist yet (the realm is imported with the new values): `docker compose ... stop keycloak`, then
+
+   ```bash
+   $c exec db psql -U "$POSTGRES_USER" -d postgres -c 'DROP DATABASE keycloak'     # name from KEYCLOAK_DB_NAME
+   $c up -d keycloak-db keycloak
+   ```
+
+   (`keycloak-db` creates the empty database again; the bootstrap admin is created again from `KEYCLOAK_ADMIN_*`.) This loses all accounts and sessions.
+
+### Admin console over an SSH tunnel
+
+**Why `/admin/` answers 404 on the public name.** `proxy.Caddyfile` blocks `/admin*`, `/realms/master*`, `/metrics*` and `/health*` on the sign-in host. The admin console controls every account and the realm settings; on a public name anyone could try passwords against it. The block lives in the base Caddyfile, so it applies to every installation, not only the test environment.
+
+**How the console is reached instead.** Keycloak gives the admin console and the master realm their own address, `KC_HOSTNAME_ADMIN=http://localhost:${KEYCLOAK_ADMIN_PORT}` (default port 8180), and publishes its HTTP port on the host's loopback only (`127.0.0.1:8180`). Nothing on the network can reach that port; only someone who can log in to the host over SSH can forward it. The public issuer (`AUTH_URL/realms/pflanzendex`) and the login pages stay unchanged.
+
+1. On your workstation, open the tunnel (keeps running in that terminal):
+
+   ```bash
+   ssh -N -L 8180:127.0.0.1:8180 <host>
+   ```
+
+2. Open `http://localhost:8180/admin/master/console/` in the browser on that workstation.
+3. Log in as `KEYCLOAK_ADMIN_USER` (default `admin`) with `KEYCLOAK_ADMIN_PASSWORD` from `app/config/deploy/.env` on the host. Read it there without copying the file anywhere: `ssh <host> "grep '^KEYCLOAK_ADMIN_PASSWORD=' <repo>/app/config/deploy/.env | cut -d= -f2"`. Change it in the console afterwards if you like (the `.env` value is used only for the first start of an empty database).
+4. Close the tunnel with Ctrl+C when done.
+
+If port 8180 is taken on the host or the workstation, set `KEYCLOAK_ADMIN_PORT` in `.env`, redeploy, and use the same number on both sides of `-L`. The local port in the browser must equal `KEYCLOAK_ADMIN_PORT`, because Keycloak builds the console's links from it.
+
+### Operator work without the admin console
+
+Everything the console does also works on the command line inside the container, without a tunnel: `docker compose --env-file app/config/deploy/.env exec keycloak /opt/keycloak/bin/kcadm.sh ...` (log in first with `kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin`, as in "Closing self-registration"). The operator role steps of `invitation-phase.md` use `kcadm.sh get users` and need no console.
+
+### Limits and when to leave this setup
+
+- Funnel is a beta feature of Tailscale; it can change or be withdrawn. Bandwidth is limited and not configurable; this suits a test group, not production traffic.
+- Funnel serves only ports 443, 8443 and 10000 and only names in your tailnet domain `<tailnet>.ts.net`; the names are public and appear in certificate transparency logs.
+- TLS ends at tailscaled in your container. Tailscale's relays carry the encrypted stream and do not decrypt it.
+- Certificates are requested per name and node; recreating state volumes repeatedly hits Let's Encrypt rate limits (up to 34 hours of lockout).
+- Production should run on a VPS or a host with its own domain: `CADDY_SCHEME` empty (Caddy gets certificates), no `docker-compose.test.yml` (real `SMTP_*` instead of the mail catcher) and no Funnel overlay. The path blocks in `proxy.Caddyfile` apply there too.
+
+## Deploying with GitHub Actions (TE-19)
+
+Ticket TE-19 (#749). The workflow `.github/workflows/deploy.yml` ("Deploy") deploys a ref to the environment `test` or `prod`. It runs **only when started by hand** (Actions, "Deploy", "Run workflow"); nothing deploys as a side effect of a merge (E-14).
+
+```text
+Run workflow (environment, ref) -> guard on the runner -> joins the tailnet as a short-lived node tag:ci
+  -> Tailscale SSH as user "deploy" to the host of that environment
+  -> app/config/deploy/scripts/deploy.sh <full sha>   (backup, migrations, smoke test, automatic rollback)
+```
+
+### Rules per environment
+
+| Environment | Allowed refs                                                                   | Version                                              |
+| ----------- | ------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| `test`      | any branch, tag or commit of this repository                                   | snapshots allowed (`git describe` = `vX.Y.Z-N-g<sha>`) |
+| `prod`      | only a commit on `main` that carries a stable release tag `vX.Y.Z`             | non-snapshot only                                    |
+
+- **Snapshot** means every state that is not exactly a release (ADR 0002: releases are the tags `vX.Y.Z` that semantic-release creates on `main`; `deploy.sh` shows the version as `git describe --tags --always`, so anything after a tag reads `vX.Y.Z-N-g<sha>`). **Non-snapshot** means: the resolved commit has a tag matching `^vX.Y.Z$` (digits only, no pre-release suffix) and is an ancestor of `origin/main`. The seed tag `v0.0.0` is not a release.
+- The guard runs on the runner right after checkout (full history and tags), before the tailnet join and before any contact with the host. It resolves the ref to a full SHA, checks the rule above and the configuration, and fails with a clear message, for example `prod refused: <sha> is a snapshot, not a stable release tag (vX.Y.Z) on main.` or `Variable DEPLOY_HOST is not set in the GitHub environment prod`.
+- `ref` defaults to the branch the workflow is run from. For `prod` run the workflow from `main` and enter the release tag (for example `v0.4.0`) as `ref`.
+- Only people with write access can start workflows; forks cannot. The host receives the full SHA, never a branch name, and fetches `origin` with tags before it checks the commit out.
+- One deploy per environment at a time (`concurrency: deploy-<environment>`, a running deploy is never cancelled).
+
+### One-time setup (owner)
+
+Nothing below goes into the repo: hostnames, tailnet name and secrets stay with the owner (the repo is public). Placeholders: `<host>` is the tailnet name of the host, `<repo-path>` the checkout on it.
+
+1. **Test host:** install `tailscaled` as a system service in userspace mode (no TUN device, outbound only) and join with Tailscale SSH and the tag: `tailscale up --ssh --advertise-tags=tag:pflanzendex-deploy`. Create the Linux user `deploy` (member of the `docker` group, owner of the checkout, `git fetch` works from it).
+2. **Prod host (does not exist yet):** the same with `--advertise-tags=tag:pflanzendex-prod`. Until it exists, leave `DEPLOY_HOST` unset in the environment `prod`; the workflow then fails at once with a clear message.
+3. **Tailnet policy:** the tags and one SSH rule per target; `tag:ci` gets nothing else:
+
+   ```json
+   "tagOwners": {
+     "tag:ci": ["autogroup:admin"],
+     "tag:pflanzendex-deploy": ["autogroup:admin"],
+     "tag:pflanzendex-prod": ["autogroup:admin"]
+   },
+   "ssh": [
+     { "action": "accept", "src": ["tag:ci"], "dst": ["tag:pflanzendex-deploy"], "users": ["deploy"] },
+     { "action": "accept", "src": ["tag:ci"], "dst": ["tag:pflanzendex-prod"], "users": ["deploy"] }
+   ]
+   ```
+
+   Add no `acls` entry for `tag:ci`; if a catch-all `*:*` rule exists, tighten it so `tag:ci` is not covered.
+
+4. **OAuth client** (Tailscale admin console, Settings, OAuth clients): scope "Auth Keys" with write access, tag `tag:ci` only. One client for both environments, or one per environment (then the prod client can be revoked on its own).
+5. **GitHub environments** (repository Settings, Environments). Both use the same names, set per environment: **secrets** `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`; **variables** `DEPLOY_HOST` (`<host>`, a MagicDNS name) and `DEPLOY_REPO_PATH` (`<repo-path>`, default if unset: `/opt/pflanzendex`).
+   - `test`: "Deployment branches and tags" set to **all branches** (no restriction), because the test environment may deploy from any branch. Its secrets are still out of reach for fork pull requests: nothing on `pull_request` uses the environment, forks cannot dispatch workflows, and environment secrets are never given to fork runs.
+   - `prod`: "Deployment branches and tags" limited to the branch `main` and the tag pattern `v*`; optionally add required reviewers so every prod deploy waits for an approval.
+6. **Check:** run "Deploy" for `test` with `dev`, then try `prod` with a branch and with `main` (both must be refused by the guard before the tailnet join), and later with a release tag.
+
+### Deploy by hand
+
+Actions, "Deploy", "Run workflow": choose the workflow's branch (`main` for prod), the environment and optionally a `ref`. This also rolls back: choose an earlier commit (test) or an earlier release tag (prod).
+
+### Pause deploys
+
+Disable the workflow (Actions, "Deploy", menu, "Disable workflow", or `gh workflow disable deploy.yml`), or remove `TS_OAUTH_SECRET` from the environment. Revoking the OAuth client in the Tailscale admin console cuts the path completely.
+
+### Reading a failed run
+
+Open the run. A red "target" step is a guard or configuration failure (nothing was contacted). In the step "deploy" the last 60 lines of the `deploy.sh` output are printed and repeated in the summary. `deploy.sh` rolls back to the previous ref by itself when the build, a migration, the health checks or the smoke test fail, so the environment keeps running the previous version; the run is still red. Lines to look for: `ERROR: deploy of ... failed; rolling back`, then `ROLLBACK ok` (previous version live again) or `ROLLBACK FAILED` (manual intervention on the host, see `release-and-rollback.md`). Migrations are not rolled back (restore the pre-deploy backup for data problems). An SSH or Tailscale error before any `deploy.sh` output means a setup problem (policy, tag, revoked OAuth client, wrong `DEPLOY_HOST`); the host was not touched.
+
+### Security notes
+
+- **Who can run code on a host:** whoever can edit the workflow on a branch the environment accepts, or holds the OAuth secret, can run commands as `deploy` (member of the `docker` group) on that host. Contained by the isolated network of the hosts (no inbound connections), the single SSH rule per target for `tag:ci`, the `prod` restriction to `main` and `v*` tags (changing `main` needs a pull request and a green `ci-status`; workflow files are gate files that the owner reviews), and optional required reviewers. The `test` environment accepts all branches, so a writer can deploy any branch there; that is the intended trade-off and why the test host holds no real data.
+- **Untrusted input:** the workflow never puts event data into a shell script; inputs arrive through `env:`, are validated (ref, host name, path, full SHA) and quoted. The runner checks out the repository only to read history and tags and runs no repository code; only the host runs `deploy.sh`.
+- **Blast radius of `tag:ci`:** it can open Tailscale SSH sessions as `deploy` on the tagged hosts and nothing else. The node is ephemeral and disappears after the run.
+- **Host key:** Tailscale SSH authenticates the host by its tailnet node key. The workflow uses `StrictHostKeyChecking=accept-new` (the runner starts with an empty `known_hosts`; `yes` would fail on every run, `no` would also accept a changed key).
 
 ## Health check (US-DEV-09)
 
@@ -221,6 +427,6 @@ None of this is done or made up:
 - **Monitoring and alerts:** `/health` now reports database and job queue (see "Health check"); an external monitor that polls it and alerts, and a check of the backup age, are not set up yet (DEV-09, #172).
 - **Image pins:** base images are pinned to major versions, not digests; Renovate (FR-QG-15) pins digests once it is active.
 - **Migrations:** applied by the deploy itself (see above, #201). `deploy.sh` backs up before every deploy while the DB is running (DEV-07, #170); on the very first deploy there is no database to back up.
-- **Sign-in service:** now in the stack (see "Test environment behind a reverse proxy"). Still open for production: a real SMTP server (`SMTP_*`), keeping `/admin/` of the sign-in host away from the internet (the proxy exposes the whole host; restrict it at the upstream proxy), a realm review for production (the file is shared with the test environment), Keycloak's own security updates, and the invitation phase on a public deployment (`invitation-phase.md`, #301).
+- **Sign-in service:** now in the stack (see "Test environment behind a reverse proxy"). The admin, master realm and management paths are blocked in `proxy.Caddyfile`. Still open for production: a real SMTP server (`SMTP_*`), a realm review for production (the file is shared with the test environment), Keycloak's own security updates, and the invitation phase on a public deployment (`invitation-phase.md`, #301).
 - **Test environment on the real host:** not yet run on the target LXC container behind the real upstream proxy; the figures above come from a development machine. The browser sign-in flow (redirect, PKCE, token refresh) was not repeated by hand here; the pieces (redirect address, issuer, key fetch, mail link) were each checked.
 - **Confirmation:** `restore.sh` over the production database now expects `CONFIRM=yes` (was `CONFIRM=ja` before the tooling was translated).

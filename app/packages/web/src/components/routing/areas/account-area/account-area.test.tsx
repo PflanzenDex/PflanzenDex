@@ -28,6 +28,7 @@ const profile = {
     watering: true,
     swap: true,
     friends: true,
+    equipment: true,
   },
   replenishBuffer: 2,
 };

@@ -18,6 +18,7 @@ export const NOTIFICATION_OCCASIONS = [
   "watering",
   "swap",
   "friends",
+  "equipment",
 ] as const;
 
 export type NotificationOccasion = (typeof NOTIFICATION_OCCASIONS)[number];

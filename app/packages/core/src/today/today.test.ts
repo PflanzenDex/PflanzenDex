@@ -49,6 +49,15 @@ interface Extra {
   readonly stock?: readonly ZoneStock[];
   /** The buffer of the account (US-WUN-02); without it the default applies. */
   readonly buffer?: number;
+  /** Devices of the account (US-EQU-04); only what the check derivation reads. */
+  readonly devices?: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly status: "active" | "defective" | "retired" | null;
+    readonly checkIntervalDays: number | null;
+    readonly inOperationSince: string | null;
+    readonly lastCheckedOn: string | null;
+  }[];
 }
 const asked: string[][] = [];
 
@@ -106,6 +115,8 @@ async function setUp(
         );
       },
     },
+    equipment: { list: async (u: string) => (u === "anna" ? (extra.devices ?? []) : []) as never },
+    lampMeasurements: { list: async () => [] },
     wishes: { open: async () => (extra.wishes ?? []) as readonly WishRow[] },
     stock: {
       stock: async () => extra.stock ?? [],
@@ -323,5 +334,43 @@ describe("US-QS-04 deviations become visible in the today list", () => {
       "specimen_incomplete:Zeder",
       "buffer_low:null",
     ]);
+  });
+});
+
+describe("US-EQU-04 a due device check in the today list", () => {
+  const device = (extra: Record<string, unknown> = {}) => ({
+    id: "d1",
+    name: "Timer A",
+    status: "active" as const,
+    checkIntervalDays: 30,
+    inOperationSince: null,
+    lastCheckedOn: "2026-08-01",
+    ...extra,
+  });
+
+  it("US-EQU-04 lists 'Prüfung fällig' with a next action, after the treatments", async () => {
+    const today = await setUp([row("e2", "Aloe")], [["e2", "2026-10-03", "Heute"]], {
+      devices: [device()],
+    });
+    const r = await today();
+    expect(kinds(r)).toEqual(["treatment_due:Aloe", "equipment_check_due:null"]);
+    if (!r.ok) throw new Error("failed");
+    expect(r.value.items[1]).toMatchObject({
+      id: "equipment-check:d1",
+      target: "equipment",
+      text: "Prüfung fällig: Timer A – zuletzt geprüft am 01.08.2026.",
+    });
+    expect(r.value.items[1]?.nextAction.length).toBeGreaterThan(0);
+  });
+
+  it("US-EQU-04 without an interval, with a recent check or for another account nothing is listed", async () => {
+    const none = await setUp([], [], { devices: [device({ checkIntervalDays: null })] });
+    expect(kinds(await none())).toEqual([]);
+    const recent = await setUp([], [], { devices: [device({ lastCheckedOn: "2026-10-01" })] });
+    expect(kinds(await recent())).toEqual([]);
+    const foreign = await setUp([], [], { devices: [device()] });
+    expect(kinds(await foreign("Europe/Berlin", "ben")).join()).not.toContain(
+      "equipment_check_due",
+    );
   });
 });

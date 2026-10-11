@@ -15,6 +15,7 @@ const PROFILE = {
     watering: true,
     swap: true,
     friends: true,
+    equipment: true,
   },
 };
 

@@ -148,7 +148,7 @@ Acceptance criteria:
 - **User-facing changelog:** for `feat:` and `fix:` QG-U3 demands a short German entry ("New in this version") that the app displays. For internal changes `[skip-changelog]` suffices.
 - **Cut:** release contents follow R0 to R6 (`16-…`). A release is approved only when the core flows of its cut are green (FR-QG-08) and, for social releases, QG-D1/QG-D2 stand.
 - **Feature flags:** social functions (R2, R3), AI (R4) and recommendations (R5) can be switched off per account or globally. This allows shipping code early and opening the function first for the three start users.
-- **Deploy:** deliberate approval (E-14), then an automatic **smoke test** against the health endpoint and a core flow (sign in, Today list); if it fails, **automatic fallback** to the previous version.
+- **Deploy:** deliberate, manual deploy (E-14; production only from `main` with a released, non-snapshot version, the test environment from any branch), then an automatic **smoke test** against the health endpoint and a core flow (sign in, Today list); if it fails, **automatic fallback** to the previous version.
 - **Fallback and hotfix:** the previous container stays available; a hotfix is a branch from `main`, via PR with the full suite to `main`, only a small cut, not past the gates; afterwards back-merge into `dev`.
 - **Release checklist** (skill `release-checklist`): CI green, migrations checked and backup fresh, changelog complete, feature flags set, privacy gates green, fallback plan known, operator informed.
 - `make release-dry-run` shows version and notes without publishing.

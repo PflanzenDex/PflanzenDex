@@ -3,11 +3,19 @@ import type {
   EquipmentStatus,
   LampLightView,
   LampMeasurement,
+  SupplyLevel,
   ZoneEquipmentView,
 } from "@pflanzendex/core";
 import { call, createWrite, type Response } from "../kernel";
 
-export type { EquipmentRow, EquipmentStatus, LampLightView, LampMeasurement, ZoneEquipmentView };
+export type {
+  EquipmentRow,
+  EquipmentStatus,
+  LampLightView,
+  LampMeasurement,
+  SupplyLevel,
+  ZoneEquipmentView,
+};
 
 /** The fields of the API input of `equipment.record`; empty ones stay out (unknown, P-08). */
 export interface EquipmentInput {

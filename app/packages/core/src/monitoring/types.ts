@@ -10,6 +10,7 @@ export const REMINDER_OCCASIONS = [
   "watering",
   "swap",
   "friends",
+  "equipment",
 ] as const;
 export type ReminderOccasion = (typeof REMINDER_OCCASIONS)[number];
 

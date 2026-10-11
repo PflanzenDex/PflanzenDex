@@ -93,6 +93,7 @@ beforeAll(async () => {
   });
 });
 afterAll(async () => {
+  await admin.query("delete from equipment where account_id = $1", [account]);
   await admin.query("delete from specimen where account_id = $1", [account]);
   await admin.query(
     `delete from species where id in (select object_id from review_case where account_id = $1)`,
@@ -218,5 +219,33 @@ describe("US-MON-02 the reminder at the phase change", () => {
       replenishBuffer: null,
     });
     expect((await ids(FIRST_DORMANCY_DAY)).some((i) => i.startsWith("phase_change:"))).toBe(false);
+  });
+});
+
+describe("US-EQU-04 the device check as an occasion of the reminders", () => {
+  it("US-EQU-04 a check due is an occasion with the id of the Today list and can be switched off (US-MON-08)", async () => {
+    const created = await call("POST", "/equipment", { type: "Timer", name: `Prüf-Timer ${run}` });
+    const id = created["equipment"].id as string;
+    expect(await ids(CREATED)).not.toContain(`equipment-check:${id}`);
+    await call("POST", `/equipment/${id}/maintenance`, {
+      inOperationSince: "2026-01-01",
+      checkIntervalDays: 30,
+    });
+    const list = await source().occasions(account, "Europe/Berlin", CREATED);
+    expect(list.find((o) => o.id === `equipment-check:${id}`)).toMatchObject({
+      occasion: "equipment",
+      text: expect.stringContaining("Prüfung fällig"),
+    });
+    const profiles = new ProfilePostgres(pool);
+    const own = await profiles.find(account);
+    await profiles.update(account, {
+      displayName: own?.displayName ?? null,
+      timeZone: "Europe/Berlin",
+      everythingPrivate: false,
+      noRecommendations: false,
+      notifications: { ...own?.notifications, equipment: false },
+      replenishBuffer: null,
+    });
+    expect(await ids(CREATED)).not.toContain(`equipment-check:${id}`);
   });
 });

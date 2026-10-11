@@ -112,6 +112,7 @@ describe("US-ACC-02 · notifications per occasion", () => {
       watering: true,
       swap: false,
       friends: true,
+      equipment: true,
     });
   });
 
