@@ -4,7 +4,8 @@ import { withAccount } from "../kernel/index.ts";
 // Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
 export interface OccasionRow {
   readonly id: string;
-  readonly occasion: "phase" | "treatment" | "measurement" | "watering" | "swap" | "friends";
+  readonly occasion:
+    "phase" | "treatment" | "measurement" | "watering" | "swap" | "friends" | "equipment";
   readonly text: string;
   readonly nextAction: string;
 }

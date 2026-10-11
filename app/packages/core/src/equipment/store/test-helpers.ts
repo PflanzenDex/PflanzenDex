@@ -4,6 +4,7 @@ import type {
   EquipmentStatus,
   EquipmentStore,
   EquipmentValues,
+  MaintenanceData,
 } from "./types";
 import type {
   DeviationLimitStore,
@@ -44,6 +45,11 @@ export class InMemoryEquipment implements EquipmentStore {
       status,
       powerW: null,
       luxStatement: null,
+      inOperationSince: null,
+      checkIntervalDays: null,
+      lifetimeValue: null,
+      lifetimeSource: null,
+      lastCheckedOn: null,
       id: equipmentId(this.rows.length + 1),
       userId,
     };
@@ -92,6 +98,26 @@ export class InMemoryEquipment implements EquipmentStore {
     const row = this.own(userId, id);
     if (!row) return "not_found";
     return row.type === "Lamp" ? this.replace(row, data) : "not_lamp";
+  }
+
+  async setMaintenance(
+    userId: string,
+    id: string,
+    data: MaintenanceData,
+  ): Promise<ChangeResult<"consumable">> {
+    const row = this.own(userId, id);
+    if (!row) return "not_found";
+    return row.status === null ? "consumable" : this.replace(row, data);
+  }
+
+  async markChecked(
+    userId: string,
+    id: string,
+    checkedOn: string,
+  ): Promise<ChangeResult<"consumable">> {
+    const row = this.own(userId, id);
+    if (!row) return "not_found";
+    return row.status === null ? "consumable" : this.replace(row, { lastCheckedOn: checkedOn });
   }
 
   async usingZone(userId: string, lightZoneId: string): Promise<readonly EquipmentRow[]> {

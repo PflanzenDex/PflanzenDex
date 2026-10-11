@@ -156,3 +156,70 @@ describe("US-EQU-02 lamps and light zones in the database", () => {
     expect(await equipment.setStatus(ben, lamp.id, "defective")).toBe("not_found");
   });
 });
+
+describe("US-EQU-04 operation and maintenance in the database", () => {
+  const none = {
+    inOperationSince: null,
+    checkIntervalDays: null,
+    lifetimeValue: null,
+    lifetimeSource: null,
+  };
+
+  it("sets, reads back and clears the operation data and the last check of a device", async () => {
+    const row = await equipment.create(anna, { ...bare, name: "Wartungslampe" }, "active");
+    if (typeof row === "string") throw new Error(row);
+    expect(row).toMatchObject({ ...none, lastCheckedOn: null });
+    const data = {
+      inOperationSince: "2026-01-10",
+      checkIntervalDays: 90,
+      lifetimeValue: "50.000 Stunden",
+      lifetimeSource: "Datenblatt",
+    };
+    expect(await equipment.setMaintenance(anna, row.id, data)).toMatchObject(data);
+    expect(await equipment.markChecked(anna, row.id, "2026-09-01")).toMatchObject({
+      lastCheckedOn: "2026-09-01",
+      checkIntervalDays: 90,
+    });
+    expect(await equipment.setMaintenance(anna, row.id, none)).toMatchObject(none);
+  });
+
+  it("a consumable has none of it; an unknown or foreign record looks missing (P-04)", async () => {
+    const soil = await equipment.create(
+      anna,
+      { ...bare, name: "Erde Maint", type: "Substrate" },
+      null,
+    );
+    if (typeof soil === "string") throw new Error(soil);
+    expect(await equipment.setMaintenance(anna, soil.id, { ...none, checkIntervalDays: 7 })).toBe(
+      "consumable",
+    );
+    expect(await equipment.markChecked(anna, soil.id, "2026-09-01")).toBe("consumable");
+    const lamp = await equipment.create(anna, { ...bare, name: "Annas-Wartung" }, "active");
+    if (typeof lamp === "string") throw new Error(lamp);
+    expect(await equipment.setMaintenance(ben, lamp.id, none)).toBe("not_found");
+    expect(await equipment.markChecked(ben, lamp.id, "2026-09-01")).toBe("not_found");
+    expect(await equipment.markChecked(anna, randomUUID(), "2026-09-01")).toBe("not_found");
+  });
+
+  it("the database refuses a lifetime without source, an interval out of range and data on a consumable", async () => {
+    const lamp = await equipment.create(anna, { ...bare, name: "Grenzlampe" }, "active");
+    if (typeof lamp === "string") throw new Error(lamp);
+    await expect(
+      equipment.setMaintenance(anna, lamp.id, { ...none, lifetimeValue: "10 h" }),
+    ).rejects.toThrow();
+    await expect(
+      equipment.setMaintenance(anna, lamp.id, { ...none, checkIntervalDays: 0 }),
+    ).rejects.toThrow();
+    const soil = await equipment.create(
+      anna,
+      { ...bare, name: "Erde Grenze", type: "Substrate" },
+      null,
+    );
+    if (typeof soil === "string") throw new Error(soil);
+    await expect(
+      withAccount(pool, anna, (c) =>
+        c.query("update equipment set check_interval_days = 5 where id = $1", [soil.id]),
+      ),
+    ).rejects.toThrow();
+  });
+});

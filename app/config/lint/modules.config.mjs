@@ -137,7 +137,7 @@ const MODULES = [
     name: "today",
     epics: [],
     tables: [],
-    dependsOn: ["kernel", "light", "collection", "care", "wishlist", "monitoring"],
+    dependsOn: ["kernel", "light", "collection", "care", "wishlist", "monitoring", "equipment"],
     ports: [],
   },
   {

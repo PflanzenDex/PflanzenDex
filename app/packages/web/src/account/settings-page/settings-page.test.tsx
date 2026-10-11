@@ -21,6 +21,7 @@ const PROFILE = {
     watering: true,
     swap: true,
     friends: true,
+    equipment: true,
   },
   replenishBuffer: 2,
 };
@@ -217,7 +218,7 @@ describe("US-ACC-02 settings page: time zone", () => {
 });
 
 describe("US-ACC-02 settings page: notifications and global switches", () => {
-  it("US-ACC-02 switches single occasions off and sends all six", async () => {
+  it("US-ACC-02 switches single occasions off and sends all seven", async () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     show();
@@ -235,7 +236,15 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
   it("US-ACC-02 offers a switch for every occasion", async () => {
     fakeServer();
     show();
-    for (const name of ["Pflegephasen", "Behandlungen", "Messungen", "Gießen", "Tausch", "Freunde"])
+    for (const name of [
+      "Pflegephasen",
+      "Behandlungen",
+      "Messungen",
+      "Gießen",
+      "Tausch",
+      "Freunde",
+      "Equipment-Prüfung",
+    ])
       expect(await screen.findByRole("checkbox", { name })).toBeTruthy();
   });
 

@@ -24,6 +24,7 @@ export const profileSchema = z.object({
     watering: z.boolean(),
     swap: z.boolean(),
     friends: z.boolean(),
+    equipment: z.boolean(),
   }),
 });
 export type ProfileFields = z.infer<typeof profileSchema>;

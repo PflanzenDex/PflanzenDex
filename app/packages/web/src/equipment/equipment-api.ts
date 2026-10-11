@@ -139,3 +139,41 @@ export async function setDeviationLimit(
   const r = await createWrite(api, token, fetchFn)("POST", "/equipment/lamps/limit", { percent });
   return r.ok ? { ok: true, value: r.value as { percent: number | null } } : r;
 }
+
+/** The operation data of a device; empty ones are `null` (unknown, P-08). A lifetime comes with its source. */
+export interface MaintenanceInput {
+  inOperationSince: string | null;
+  checkIntervalDays: number | null;
+  lifetimeValue: string | null;
+  lifetimeSource: string | null;
+}
+
+/** Sets since when a device runs, its check interval and the manufacturer's lifetime statement (US-EQU-04). */
+export async function setMaintenance(
+  api: string,
+  token: string,
+  target: { id: string; input: MaintenanceInput },
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<EquipmentRow>> {
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/equipment/${encodeURIComponent(target.id)}/maintenance`,
+    target.input,
+  );
+  return r.ok ? { ok: true, value: r.value as EquipmentRow } : r;
+}
+
+/** Notes that the keeper checked a device on a day (US-EQU-04). */
+export async function markChecked(
+  api: string,
+  token: string,
+  target: { id: string; checkedOn: string },
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<EquipmentRow>> {
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/equipment/${encodeURIComponent(target.id)}/checked`,
+    { checkedOn: target.checkedOn },
+  );
+  return r.ok ? { ok: true, value: r.value as EquipmentRow } : r;
+}

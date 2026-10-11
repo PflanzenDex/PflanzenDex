@@ -22,6 +22,7 @@ const VIEW: Partial<Record<TodayDestination, LinkTarget>> = {
   // Measuring and the wishlist live in the Sammlung (US-QS-14, US-QS-04).
   measurements: "collection",
   wishlist: "collection",
+  equipment: "collection",
 };
 
 const NAMES: Record<string, string> = {

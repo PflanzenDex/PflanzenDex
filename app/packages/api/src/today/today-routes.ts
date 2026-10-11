@@ -7,6 +7,8 @@ import {
 } from "@pflanzendex/core";
 import {
   CareProfilePostgres,
+  EquipmentPostgres,
+  LampMeasurementsPostgres,
   LocationPostgres,
   SpeciesPostgres,
   SpecimenPostgres,
@@ -44,6 +46,8 @@ export function todayDependencies(pool: Pool, opt: TodayOptions) {
     targets: opt.phaseLocation ?? careProfileLocations(profiles),
     clock: opt.clock ?? (() => new Date()),
     measurements: opt.measurements,
+    equipment: new EquipmentPostgres(pool),
+    lampMeasurements: new LampMeasurementsPostgres(pool),
     wishes: new WishesPostgres(pool),
     stock: opt.zoneStock,
   };
