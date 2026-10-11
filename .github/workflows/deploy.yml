@@ -83,9 +83,11 @@ jobs:
             [ -n "$release" ] \
               || fail "prod refused: $sha is a snapshot, not a stable release tag (vX.Y.Z) on main."
           fi
-          echo "sha=$sha" >> "$GITHUB_OUTPUT"
-          echo "version=${release:-snapshot}" >> "$GITHUB_OUTPUT"
-          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          {
+            echo "sha=$sha"
+            echo "version=${release:-snapshot}"
+            echo "ref=$ref"
+          } >> "$GITHUB_OUTPUT"
 
       # tailscale/github-action v4.2.0, pinned to the commit.
       - uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd
