@@ -77,7 +77,7 @@ Acceptance criteria:
 - Image URLs, sources and licenses are checked by the **server** for reachability and license (operation `check_image_source`); the client cannot claim them as checked.
 - Adoption one by one in the app (US-KI-09).
 
-### US-KI-06 · Limits, transparency and privacy · ⬜ new
+### US-KI-06 · Limits, transparency and privacy · 🟨 new
 
 As an **operator** I want to limit the use of the interface and as a **keeper** to know where my data goes.
 
@@ -124,7 +124,7 @@ Acceptance criteria:
 - Per draft: adopt, change and adopt, discard. Adopting runs through the same validating operation as the form (date local, `Assessed_By: AI suggestion accepted`).
 - A draft is never adopted automatically. Unprocessed drafts expire and remain viewable as discarded.
 
-### US-KI-10 · Log of AI actions and undo · ⬜ new
+### US-KI-10 · Log of AI actions and undo · 🟨 new
 
 As a **plant keeper** I want to trace and take back what the AI client did.
 

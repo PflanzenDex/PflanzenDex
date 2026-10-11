@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { appError, execute, failed, ok, shape, textField } from "../../kernel";
 import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
 import type { DraftTypes } from "../drafts";
-import { aiProposeDraft } from "../propose";
+import { aiProposeDraft } from "../results/propose";
 import { InMemoryAiLog, InMemoryConnections, InMemoryDrafts } from "../test-helpers";
 import { aiClaimTask, aiClientTasks, aiDeclineClientTask } from "./client";
 import { aiCancelTask, aiCreateTask, aiTaskPreview, aiTasks } from "./tasks";

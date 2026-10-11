@@ -88,3 +88,21 @@ export const previewTask = (api: string, token: string, type: AiTaskType, refere
 
 export const cancelTask = (api: string, token: string, id: string) =>
   createWrite(api, token)("POST", `/ai/tasks/${id}/cancel`);
+
+export interface AiLogEntry {
+  readonly id: string;
+  readonly clientName: string;
+  readonly operation: string;
+  readonly effect: string;
+  readonly createdAt: string;
+}
+
+/** What the connected AI clients did, newest first (US-KI-10). */
+export async function loadLog(
+  api: string,
+  token: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<readonly AiLogEntry[]>> {
+  const r = await call<{ log: readonly AiLogEntry[] }>(fetchFn, `${api}/ai/log`, token);
+  return r.ok ? { ok: true, value: r.value.log } : r;
+}
