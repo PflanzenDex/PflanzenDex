@@ -109,6 +109,7 @@ export const ERROR_TEXTS = {
     "Dieses Angebot ist schon übergeben und kann nicht mehr zurückgezogen werden. Es wurde nichts geändert.",
   "discover.not_suggested":
     "Diese Art wird dir gerade nicht vorgeschlagen: Du hast sie schon gefangen oder sie fehlt im Katalog. Lade die Vorschläge neu.",
+  "equipment.name_taken": "Dieses Equipment gibt es schon. Hänge „ – Regal 2“ o. Ä. an den Namen.",
   "wish.name_taken":
     "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
   "wish.image_source_unsupported":
@@ -173,7 +174,6 @@ export const ERROR_TEXTS = {
 } as const;
 
 export type ErrorCode = keyof typeof ERROR_TEXTS;
-
 export const ERROR_CODE_FORMAT = /^[a-z_]+\.[a-z_]+$/;
 
 export interface ErrorDetail {
