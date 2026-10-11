@@ -1,7 +1,13 @@
-import type { EquipmentRow, EquipmentStatus, ZoneEquipmentView } from "@pflanzendex/core";
+import type {
+  EquipmentRow,
+  EquipmentStatus,
+  LampLightView,
+  LampMeasurement,
+  ZoneEquipmentView,
+} from "@pflanzendex/core";
 import { call, createWrite, type Response } from "../kernel";
 
-export type { EquipmentRow, EquipmentStatus, ZoneEquipmentView };
+export type { EquipmentRow, EquipmentStatus, LampLightView, LampMeasurement, ZoneEquipmentView };
 
 /** The fields of the API input of `equipment.record`; empty ones stay out (unknown, P-08). */
 export interface EquipmentInput {
@@ -20,21 +26,27 @@ export interface EquipmentInput {
 export interface EquipmentData {
   readonly items: readonly EquipmentRow[];
   readonly zones: ZoneEquipmentView;
+  readonly light: LampLightView;
 }
 
-/** Loads the equipment (US-EQU-01) and the lamps per light zone (US-EQU-02); private by default (P-05). */
+/** Loads the equipment (US-EQU-01), the lamps per light zone (US-EQU-02) and their light intensity (US-EQU-03); private by default (P-05). */
 export async function loadEquipment(
   api: string,
   token: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<Response<EquipmentData>> {
-  const [list, zones] = await Promise.all([
+  const [list, zones, light] = await Promise.all([
     call<{ equipment: EquipmentRow[] }>(fetchFn, `${api}/equipment`, token),
     call<ZoneEquipmentView>(fetchFn, `${api}/equipment/zones`, token),
+    call<LampLightView>(fetchFn, `${api}/equipment/lamps`, token),
   ]);
   if (!list.ok) return list;
   if (!zones.ok) return zones;
-  return { ok: true, value: { items: list.value.equipment, zones: zones.value } };
+  if (!light.ok) return light;
+  return {
+    ok: true,
+    value: { items: list.value.equipment, zones: zones.value, light: light.value },
+  };
 }
 
 /** Records a piece of equipment (US-EQU-01) through the validating operation. */
@@ -76,4 +88,54 @@ export async function setEquipmentStatus(
     { status: target.status },
   );
   return r.ok ? { ok: true, value: r.value as EquipmentRow } : r;
+}
+
+/** The fields of one measurement; distance and method stay out when unknown (P-08). */
+export interface MeasurementInput {
+  measuredOn: string;
+  lux: number;
+  distanceCm?: number;
+  method?: string;
+}
+
+/** Adds a measured light intensity to the log of a lamp (US-EQU-03). */
+export async function measureLamp(
+  api: string,
+  token: string,
+  target: { id: string; input: MeasurementInput },
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<LampMeasurement>> {
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/equipment/${encodeURIComponent(target.id)}/measurements`,
+    target.input,
+  );
+  return r.ok ? { ok: true, value: (r.value as { measurement: LampMeasurement }).measurement } : r;
+}
+
+/** Sets what the manufacturer states about a lamp; `null` clears a value back to unknown (US-EQU-03). */
+export async function describeLamp(
+  api: string,
+  token: string,
+  target: { id: string; powerW: number | null; luxStatement: number | null },
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<EquipmentRow>> {
+  const { id, ...data } = target;
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/equipment/${encodeURIComponent(id)}/lamp-data`,
+    data,
+  );
+  return r.ok ? { ok: true, value: r.value as EquipmentRow } : r;
+}
+
+/** Sets the share by which a measurement may deviate from the zone ceiling; `null` = no check (US-EQU-03). */
+export async function setDeviationLimit(
+  api: string,
+  token: string,
+  percent: number | null,
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<{ percent: number | null }>> {
+  const r = await createWrite(api, token, fetchFn)("POST", "/equipment/lamps/limit", { percent });
+  return r.ok ? { ok: true, value: r.value as { percent: number | null } } : r;
 }

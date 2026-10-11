@@ -49,8 +49,22 @@ export interface EquipmentValues {
   readonly lightZoneId: string | null;
 }
 
+/** Limits of the lamp data (US-EQU-03, DM-EQU-02); assumptions (starting values). */
+export const LAMP_LIMITS = {
+  powerW: { min: 1, max: 10_000 },
+  lux: { min: 1, max: 200_000 },
+  distanceCm: { min: 1, max: 1_000 },
+  method: { min: 1, max: 60 },
+  /** The share of the zone ceiling a measurement may deviate before "Check zone" appears, in percent. */
+  deviationPercent: { min: 1, max: 100 },
+} as const;
+
 export interface EquipmentRow extends EquipmentValues {
   readonly id: string;
+  /** Power of a lamp in watt, as the manufacturer states it; `null` for unknown and for every other type. */
+  readonly powerW: number | null;
+  /** The manufacturer's light statement of a lamp in lux (not measured, FR-LIC-06); `null` for unknown. */
+  readonly luxStatement: number | null;
   /** `null` for consumables. */
   readonly status: EquipmentStatus | null;
 }
@@ -78,6 +92,12 @@ export interface EquipmentStore {
     id: string,
     status: EquipmentStatus,
   ): Promise<ChangeResult<"no_status">>;
+  /** Sets what the manufacturer states about a lamp; `null` clears a value back to unknown. */
+  setLampData(
+    userId: string,
+    id: string,
+    data: { powerW: number | null; luxStatement: number | null },
+  ): Promise<ChangeResult<"not_lamp">>;
   /** The lamps that serve a light zone, by name, whatever their state. */
   usingZone(userId: string, lightZoneId: string): Promise<readonly EquipmentRow[]>;
 }

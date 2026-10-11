@@ -107,7 +107,7 @@ const MODULES = [
   {
     name: "equipment",
     epics: ["EQU"],
-    tables: ["equipment", "supply", "recommendation"],
+    tables: ["equipment", "supply", "recommendation", "lamp_measurement", "equipment_setting"],
     dependsOn: ["kernel", "light", "collection", "wishlist", "monitoring"],
     ports: [],
   },

@@ -38,8 +38,27 @@ const zone = (extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 const NO_ZONES = { zones: [], unassigned: [] };
+const NO_LIGHT = { limit: null, lamps: [] };
+const lightOf = (extra: Record<string, unknown> = {}) => ({
+  id: "l1",
+  name: "Lampe Regal",
+  status: "active",
+  zone: { id: "z2", name: "Lampe 2", luxCeiling: 15000 },
+  powerW: null,
+  manufacturerLux: null,
+  last: null,
+  measurements: [],
+  effective: { lux: 15000, basis: "zone" },
+  check: null,
+  ...extra,
+});
 
-function fakeServer(initial: unknown[], post?: () => Promise<Response>, zones: unknown = NO_ZONES) {
+function fakeServer(
+  initial: unknown[],
+  post?: () => Promise<Response>,
+  zones: unknown = NO_ZONES,
+  light: unknown = NO_LIGHT,
+) {
   let current = initial;
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
     const path = new URL(String(url)).pathname;
@@ -49,6 +68,7 @@ function fakeServer(initial: unknown[], post?: () => Promise<Response>, zones: u
       return r;
     }
     if (path === "/equipment/zones") return response(200, zones);
+    if (path === "/equipment/lamps") return response(200, light);
     if (path === "/equipment") return response(200, { equipment: current });
     return response(404, {});
   });
@@ -147,6 +167,7 @@ describe("US-EQU-01 equipment page", () => {
         return response(200, { ...item({ id: "l1" }), status: "defective" });
       if (path === "/equipment/zones")
         return response(200, { zones: [zone({ lamps: [lampOf()] })], unassigned: [] });
+      if (path === "/equipment/lamps") return response(200, NO_LIGHT);
       return response(200, { equipment: [] });
     });
     render(<EquipmentPage api="http://api" token={token} />);
@@ -188,5 +209,192 @@ describe("US-EQU-01 equipment page", () => {
     await user.type(screen.getByLabelText("Name"), "Lampe 3");
     await user.click(screen.getByRole("button", { name: "Equipment speichern" }));
     expect(await screen.findByText(/Dieses Equipment gibt es schon/)).toBeTruthy();
+  });
+
+  it("US-EQU-03 a lamp without a measurement says not measured and shows the zone value", async () => {
+    fakeServer([], undefined, NO_ZONES, { limit: null, lamps: [lightOf()] });
+    render(<EquipmentPage api="http://api" token={token} />);
+    const card = (await screen.findByRole("heading", { name: "Lampe Regal", level: 3 })).closest(
+      "li",
+    ) as HTMLElement;
+    expect(card.textContent).toContain("nicht gemessen");
+    expect(card.textContent).toContain("Wert der Zone, nicht gemessen");
+    expect(card.textContent).toContain("15.000 lx");
+    expect(card.textContent).toContain("Herstellerangabeunbekannt");
+    expect(screen.getByText(/Noch keine Grenze festgelegt/)).toBeTruthy();
+  });
+
+  it("US-EQU-03 shows the measurement apart from the manufacturer's statement and warns with Check zone", async () => {
+    fakeServer([], undefined, NO_ZONES, {
+      limit: 20,
+      lamps: [
+        lightOf({
+          manufacturerLux: 20000,
+          powerW: 40,
+          last: {
+            id: "m1",
+            equipmentId: "l1",
+            measuredOn: "2026-10-01",
+            lux: 6000,
+            distanceCm: 30,
+            method: "Luxmeter",
+          },
+          effective: { lux: 6000, basis: "measured" },
+          check: {
+            deviationPercent: 60,
+            text: "Die letzte Messung weicht um 60 % ab.",
+            nextAction: "Prüfe die Zone.",
+          },
+        }),
+      ],
+    });
+    render(<EquipmentPage api="http://api" token={token} />);
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Zone prüfen.");
+    expect(alert.textContent).toContain("Prüfe die Zone.");
+    const card = alert.closest("li") as HTMLElement;
+    expect(card.textContent).toContain("20.000 lx");
+    expect(card.textContent).toContain("6.000 lx am 2026-10-01 (Abstand 30 cm, Luxmeter)");
+    expect(card.textContent).toContain("6.000 lx (gemessen)");
+  });
+
+  it("US-EQU-03 sends a measurement with the given fields only and refuses a missing lux value", async () => {
+    const fetchFn = fakeServer([], undefined, NO_ZONES, { limit: null, lamps: [lightOf()] });
+    fetchFn.mockImplementation(async (url, init) => {
+      const path = new URL(String(url)).pathname;
+      if (init?.method === "POST") return response(201, { measurement: { id: "m1" } });
+      if (path === "/equipment/lamps") return response(200, { limit: null, lamps: [lightOf()] });
+      if (path === "/equipment/zones") return response(200, NO_ZONES);
+      return response(200, { equipment: [] });
+    });
+    render(<EquipmentPage api="http://api" token={token} />);
+    const user = userEvent.setup();
+    const form = await screen.findByRole("form", { name: "Messung für Lampe Regal" });
+    await user.click(within(form).getByRole("button", { name: "Messung speichern" }));
+    expect(within(form).getByRole("alert").textContent).toContain("Lux-Messung");
+    expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+    await user.type(within(form).getByLabelText("Lux"), "12000");
+    await user.click(within(form).getByRole("button", { name: "Messung speichern" }));
+    const post = await vi.waitFor(() => {
+      const call = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
+      if (!call) throw new Error("not sent yet");
+      return call;
+    });
+    expect(String(post[0])).toContain("/equipment/l1/measurements");
+    expect(JSON.parse(String(post[1]?.body))).toMatchObject({ lux: 12000 });
+    expect(JSON.parse(String(post[1]?.body))).not.toHaveProperty("distanceCm");
+  });
+
+  it("US-EQU-03 saves the limit and refuses a value outside 1 to 100", async () => {
+    const fetchFn = fakeServer([], undefined, NO_ZONES, { limit: null, lamps: [lightOf()] });
+    render(<EquipmentPage api="http://api" token={token} />);
+    const user = userEvent.setup();
+    const form = await screen.findByRole("form", { name: "Abweichungsgrenze" });
+    await user.type(within(form).getByLabelText(/Abweichungsgrenze in Prozent/), "150");
+    await user.click(within(form).getByRole("button", { name: "Grenze speichern" }));
+    expect(within(form).getByRole("alert").textContent).toContain("1 bis 100");
+    expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+  });
+
+  const postsTo = (fetchFn: ReturnType<typeof fakeServer>) =>
+    vi.waitFor(() => {
+      const call = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
+      if (!call) throw new Error("not sent yet");
+      return call;
+    });
+  const answerAll = (fetchFn: ReturnType<typeof fakeServer>, zones: unknown, light: unknown) =>
+    fetchFn.mockImplementation(async (url, init) => {
+      const path = new URL(String(url)).pathname;
+      if (init?.method === "POST") return response(200, { ...item({ id: "l1" }), percent: 25 });
+      if (path === "/equipment/lamps") return response(200, light);
+      if (path === "/equipment/zones") return response(200, zones);
+      return response(200, { equipment: [] });
+    });
+
+  it("US-EQU-03 saves the manufacturer's statement and refuses text instead of numbers", async () => {
+    const light = { limit: null, lamps: [lightOf()] };
+    const fetchFn = fakeServer([], undefined, NO_ZONES, light);
+    answerAll(fetchFn, NO_ZONES, light);
+    render(<EquipmentPage api="http://api" token={token} />);
+    const user = userEvent.setup();
+    await user.click(await screen.findByText("Herstellerangabe ändern"));
+    const form = screen.getByRole("form", { name: "Herstellerangabe für Lampe Regal" });
+    await user.type(within(form).getByLabelText(/Leistung in Watt/), "abc");
+    await user.click(within(form).getByRole("button", { name: "Herstellerangabe speichern" }));
+    expect(within(form).getByRole("alert").textContent).toContain("ganze Zahlen");
+    expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+    await user.clear(within(form).getByLabelText(/Leistung in Watt/));
+    await user.type(within(form).getByLabelText(/Leistung in Watt/), "40");
+    await user.type(within(form).getByLabelText(/Lichtstärke laut Hersteller/), "20000");
+    await user.click(within(form).getByRole("button", { name: "Herstellerangabe speichern" }));
+    const post = await postsTo(fetchFn);
+    expect(String(post[0])).toContain("/equipment/l1/lamp-data");
+    expect(JSON.parse(String(post[1]?.body))).toEqual({ powerW: 40, luxStatement: 20000 });
+  });
+
+  it("US-EQU-03 saves the limit and clears it with an empty field", async () => {
+    const light = { limit: 25, lamps: [lightOf()] };
+    const fetchFn = fakeServer([], undefined, NO_ZONES, light);
+    answerAll(fetchFn, NO_ZONES, light);
+    render(<EquipmentPage api="http://api" token={token} />);
+    const user = userEvent.setup();
+    const form = await screen.findByRole("form", { name: "Abweichungsgrenze" });
+    expect(form.textContent).toContain("mehr als 25 %");
+    await user.clear(within(form).getByLabelText(/Abweichungsgrenze in Prozent/));
+    await user.click(within(form).getByRole("button", { name: "Grenze speichern" }));
+    const post = await postsTo(fetchFn);
+    expect(String(post[0])).toContain("/equipment/lamps/limit");
+    expect(JSON.parse(String(post[1]?.body))).toEqual({ percent: null });
+    expect(await screen.findByText("Die Prüfung ist aus.")).toBeTruthy();
+  });
+
+  it("US-EQU-03 lists the whole log of a lamp and refuses a distance that is no number", async () => {
+    const m = (id: string, measuredOn: string, luxValue: number) => ({
+      id,
+      equipmentId: "l1",
+      measuredOn,
+      lux: luxValue,
+      distanceCm: null,
+      method: null,
+    });
+    const light = {
+      limit: null,
+      lamps: [
+        lightOf({
+          last: m("a", "2026-10-05", 9000),
+          measurements: [m("a", "2026-10-05", 9000), m("b", "2026-10-01", 12000)],
+          effective: { lux: 9000, basis: "measured" },
+        }),
+      ],
+    };
+    fakeServer([], undefined, NO_ZONES, light);
+    render(<EquipmentPage api="http://api" token={token} />);
+    const user = userEvent.setup();
+    await user.click(await screen.findByText("Alle Messungen (2)"));
+    expect(screen.getByText("2026-10-01: 12.000 lx")).toBeTruthy();
+    const form = screen.getByRole("form", { name: "Messung für Lampe Regal" });
+    await user.type(within(form).getByLabelText("Lux"), "500");
+    await user.type(within(form).getByLabelText(/Abstand in cm/), "x");
+    await user.click(within(form).getByRole("button", { name: "Messung speichern" }));
+    expect(within(form).getByRole("alert").textContent).toContain("Abstand");
+  });
+
+  it("US-EQU-02 moving a lamp to another zone sends the zone", async () => {
+    const zones = {
+      zones: [
+        zone({ lamps: [lampOf()] }),
+        zone({ zoneId: "z3", name: "Lampe 3", specimens: 1, lamps: [] }),
+      ],
+      unassigned: [],
+    };
+    const fetchFn = fakeServer([], undefined, zones);
+    answerAll(fetchFn, zones, NO_LIGHT);
+    render(<EquipmentPage api="http://api" token={token} />);
+    const user = userEvent.setup();
+    const list = await screen.findByRole("list", { name: "Lampen in Lampe 2" });
+    await user.selectOptions(within(list).getByLabelText("Lichtzone"), "z3");
+    const post = await postsTo(fetchFn);
+    expect(String(post[0])).toContain("/equipment/l1/zone");
+    expect(JSON.parse(String(post[1]?.body))).toEqual({ lightZoneId: "z3" });
   });
 });

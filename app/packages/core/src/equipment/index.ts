@@ -3,9 +3,25 @@ export { equipmentRecord } from "./record";
 export type { RecordEquipmentDependencies } from "./record";
 export { equipmentSetStatus } from "./status";
 export type { SetStatusDependencies } from "./status";
-export { equipmentSetZone, equipmentZoneUsage, zoneEquipment } from "./lamps";
+export {
+  equipmentDescribeLamp,
+  equipmentMeasure,
+  equipmentSetDeviationLimit,
+  equipmentSetZone,
+  equipmentZoneUsage,
+  lampLight,
+  zoneEquipment,
+} from "./lamps";
 export type {
+  DeviationLimitStore,
   Lamp,
+  LampLight,
+  LampLightDependencies,
+  LampLightView,
+  LampMeasurement,
+  LampMeasurementStore,
+  LampMeasurementValues,
+  ZoneCheck,
   SetZoneDependencies,
   ZoneEquipment,
   ZoneEquipmentDependencies,
