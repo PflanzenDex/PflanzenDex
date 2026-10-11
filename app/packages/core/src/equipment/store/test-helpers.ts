@@ -7,16 +7,12 @@ import type {
   MaintenanceData,
   SupplyLevel,
 } from "./types";
-import type {
-  DeviationLimitStore,
-  LampMeasurement,
-  LampMeasurementStore,
-  LampMeasurementValues,
-} from "../lamps/measurements/types";
 
 /** A valid UUID for the n-th record, as the operations expect. */
 export const equipmentId = (n: number): string =>
   `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+
+export { InMemoryLampLog } from "./lamp-log-helper";
 
 /** In-memory adapter for tests only; the real adapter lives in `db`. */
 export class InMemoryEquipment implements EquipmentStore {
@@ -24,7 +20,13 @@ export class InMemoryEquipment implements EquipmentStore {
   writes = 0;
 
   /** The light zones each account owns; a zone of another account is unknown (P-04). */
-  constructor(private readonly zones: Readonly<Record<string, readonly string[]>> = {}) {}
+  constructor(
+    private readonly zones: Readonly<Record<string, readonly string[]>> = {},
+    /** The specimens and locations each account owns, for the assignment of sensors (US-EQU-06). */
+    private readonly known: Readonly<
+      Record<string, { specimens?: readonly string[]; locations?: readonly string[] }>
+    > = {},
+  ) {}
 
   async list(userId: string): Promise<readonly EquipmentRow[]> {
     return this.rows.filter((r) => r.userId === userId);
@@ -51,6 +53,8 @@ export class InMemoryEquipment implements EquipmentStore {
       lifetimeValue: null,
       lifetimeSource: null,
       lastCheckedOn: null,
+      assignedSpecimenId: null,
+      assignedLocationId: null,
       supply: status === null ? ("available" as const) : null,
       agentLink: null,
       id: equipmentId(this.rows.length + 1),
@@ -103,6 +107,31 @@ export class InMemoryEquipment implements EquipmentStore {
     return row.type === "Lamp" ? this.replace(row, data) : "not_lamp";
   }
 
+  private targetKnown(
+    userId: string,
+    target: { specimenId: string | null; locationId: string | null },
+  ): boolean {
+    const own = this.known[userId];
+    const specimenOk = target.specimenId === null || !!own?.specimens?.includes(target.specimenId);
+    const locationOk = target.locationId === null || !!own?.locations?.includes(target.locationId);
+    return specimenOk && locationOk;
+  }
+
+  async setSensorTarget(
+    userId: string,
+    id: string,
+    target: { specimenId: string | null; locationId: string | null },
+  ): Promise<ChangeResult<"not_sensor" | "target_unknown">> {
+    const row = this.own(userId, id);
+    if (!row) return "not_found";
+    if (row.type !== "Sensor") return "not_sensor";
+    if (!this.targetKnown(userId, target)) return "target_unknown";
+    return this.replace(row, {
+      assignedSpecimenId: target.specimenId,
+      assignedLocationId: target.locationId,
+    });
+  }
+
   async setSupply(
     userId: string,
     id: string,
@@ -145,45 +174,5 @@ export class InMemoryEquipment implements EquipmentStore {
 
   async usingZone(userId: string, lightZoneId: string): Promise<readonly EquipmentRow[]> {
     return this.rows.filter((r) => r.userId === userId && r.lightZoneId === lightZoneId);
-  }
-}
-
-/** In-memory measurement log and deviation limit for tests only; the real adapters live in `db`. */
-export class InMemoryLampLog implements LampMeasurementStore, DeviationLimitStore {
-  readonly rows: (LampMeasurement & { userId: string })[] = [];
-  private readonly limits = new Map<string, number | null>();
-
-  constructor(private readonly equipment: InMemoryEquipment) {}
-
-  async add(
-    userId: string,
-    values: LampMeasurementValues,
-  ): Promise<LampMeasurement | "not_found" | "not_lamp"> {
-    const lamp = this.equipment.rows.find(
-      (r) => r.userId === userId && r.id === values.equipmentId,
-    );
-    if (!lamp) return "not_found";
-    if (lamp.type !== "Lamp") return "not_lamp";
-    const row = { ...values, id: equipmentId(1000 + this.rows.length), userId };
-    this.rows.push(row);
-    return row;
-  }
-
-  /** Newest date first; of the same date the later entry first. */
-  async list(userId: string): Promise<readonly LampMeasurement[]> {
-    return this.rows
-      .filter((r) => r.userId === userId)
-      .map((r, i) => ({ r, i }))
-      .sort((a, b) => b.r.measuredOn.localeCompare(a.r.measuredOn) || b.i - a.i)
-      .map(({ r }) => r);
-  }
-
-  async limit(userId: string): Promise<number | null> {
-    return this.limits.get(userId) ?? null;
-  }
-
-  async setLimit(userId: string, percent: number | null): Promise<number | null> {
-    this.limits.set(userId, percent);
-    return percent;
   }
 }

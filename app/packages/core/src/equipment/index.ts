@@ -5,6 +5,8 @@ export { equipmentChecksDue, equipmentMarkChecked, equipmentSetMaintenance } fro
 export type { CheckDue, ChecksDueDependencies } from "./maintenance";
 export { equipmentLinkAgent, equipmentSetSupply, plantAgents } from "./supply";
 export type { PlantAgent, PlantAgentsDependencies } from "./supply";
+export { equipmentAssignSensor, sensorAssignments } from "./sensors";
+export type { SensorAssignment, SensorAssignmentsDependencies, SensorView } from "./sensors";
 export { equipmentSetStatus } from "./status";
 export type { SetStatusDependencies } from "./status";
 export {

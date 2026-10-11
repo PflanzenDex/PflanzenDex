@@ -76,7 +76,8 @@ describe("TE-03 · public test environment through Tailscale Funnel", () => {
     expect(funnel).toMatch(/image: tailscale\/tailscale:v\d+\.\d+\.\d+\n/);
     expect(funnel).toContain('TS_USERSPACE: "true"');
     expect(funnel).not.toMatch(/\/dev\/net\/tun|cap_add|privileged/);
-    expect(funnel).toContain("TS_AUTHKEY: ${TS_AUTHKEY:?");
+    // Optional: after the first registration the state volume is enough and the key leaves .env.
+    expect(funnel).toContain("TS_AUTHKEY: ${TS_AUTHKEY:-}");
     for (const [name, env] of [
       ["ts-app", "TS_APP_NAME"],
       ["ts-auth", "TS_AUTH_NAME"],
@@ -173,6 +174,30 @@ describe("TE-03 · sign-in service in the stack", () => {
     expect(initDb).not.toMatch(/grant [^\n]*:'appdb'[^\n]*:'kcuser'/);
     expect(compose.match(/^\s+ports:/gm)).toHaveLength(2);
     expect(service(compose, "proxy")).toContain("ports:");
+  });
+
+  it("TE-03 the sign-in host's root redirects to the app, not to the admin console", () => {
+    expect(proxy).toMatch(/handle \/ \{\s+redir \{\$APP_URL\} 302\s+\}/);
+    expect(service(compose, "proxy")).toContain("APP_URL: ${APP_URL:?");
+  });
+
+  it("TE-03 the app host sends security headers and allows only itself and the sign-in host", () => {
+    const app = proxy.slice(proxy.indexOf("{$APP_HOST} {"), proxy.indexOf("{$AUTH_HOST} {"));
+    for (const h of [
+      "Strict-Transport-Security",
+      'X-Content-Type-Options "nosniff"',
+      "Referrer-Policy",
+      'X-Frame-Options "DENY"',
+      "-Server",
+      "-Via",
+    ])
+      expect(app, h).toContain(h);
+    const csp = /Content-Security-Policy "([^"]+)"/.exec(app)?.[1] ?? "";
+    expect(csp).toContain("script-src 'self';");
+    expect(csp).not.toMatch(/script-src[^;]*unsafe/);
+    expect(csp).toContain("connect-src 'self' {$AUTH_URL}");
+    expect(csp).toContain("frame-ancestors 'none'");
+    expect(service(compose, "proxy")).toContain("AUTH_URL: ${AUTH_URL:?");
   });
 
   it("TE-03 the admin console has its own address on the host's loopback only", () => {

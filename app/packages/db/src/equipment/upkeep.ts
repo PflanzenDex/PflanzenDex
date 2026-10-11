@@ -68,3 +68,24 @@ export const setAgentLink = (pool: Pool, userId: string, id: string, agentLink: 
     sql: "update equipment set agent_link = $2 where id = $1 and type = 'Plant agent'",
     params: [agentLink],
   });
+
+const FOREIGN_KEY = "23503";
+
+/** Assigns a sensor to a specimen or a location of the account; a foreign or unknown target looks unknown (P-04). */
+export async function setSensorTarget(
+  pool: Pool,
+  userId: string,
+  id: string,
+  target: { specimenId: string | null; locationId: string | null },
+): Promise<ChangeResult<"not_sensor" | "target_unknown">> {
+  try {
+    return await change(pool, userId, id, {
+      wrong: "not_sensor",
+      sql: "update equipment set assigned_specimen_id = $2, assigned_location_id = $3 where id = $1 and type = 'Sensor'",
+      params: [target.specimenId, target.locationId],
+    });
+  } catch (e) {
+    if ((e as { code?: string }).code === FOREIGN_KEY) return "target_unknown";
+    throw e;
+  }
+}

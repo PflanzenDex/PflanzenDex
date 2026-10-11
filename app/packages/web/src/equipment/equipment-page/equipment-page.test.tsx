@@ -27,6 +27,8 @@ const item = (extra: Record<string, unknown> = {}) => ({
   lifetimeSource: null,
   supply: null,
   agentLink: null,
+  assignedSpecimenId: null,
+  assignedLocationId: null,
   ...extra,
 });
 
@@ -45,6 +47,7 @@ const zone = (extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 const NO_ZONES = { zones: [], unassigned: [] };
+const NO_SENSORS = { sensors: [], specimens: [], locations: [] };
 const NO_LIGHT = { limit: null, lamps: [] };
 const lightOf = (extra: Record<string, unknown> = {}) => ({
   id: "l1",
@@ -76,6 +79,7 @@ function fakeServer(
     }
     if (path === "/equipment/zones") return response(200, zones);
     if (path === "/equipment/lamps") return response(200, light);
+    if (path === "/equipment/sensors") return response(200, NO_SENSORS);
     if (path === "/equipment") return response(200, { equipment: current });
     return response(404, {});
   });
@@ -176,6 +180,7 @@ describe("US-EQU-01 equipment page", () => {
       if (path === "/equipment/zones")
         return response(200, { zones: [zone({ lamps: [lampOf()] })], unassigned: [] });
       if (path === "/equipment/lamps") return response(200, NO_LIGHT);
+      if (path === "/equipment/sensors") return response(200, NO_SENSORS);
       return response(200, { equipment: [] });
     });
     render(<EquipmentPage api="http://api" token={token} />);
@@ -272,6 +277,7 @@ describe("US-EQU-01 equipment page", () => {
       const path = new URL(String(url)).pathname;
       if (init?.method === "POST") return response(201, { measurement: { id: "m1" } });
       if (path === "/equipment/lamps") return response(200, { limit: null, lamps: [lightOf()] });
+      if (path === "/equipment/sensors") return response(200, NO_SENSORS);
       if (path === "/equipment/zones") return response(200, NO_ZONES);
       return response(200, { equipment: [] });
     });
@@ -315,6 +321,7 @@ describe("US-EQU-01 equipment page", () => {
       const path = new URL(String(url)).pathname;
       if (init?.method === "POST") return response(200, { ...item({ id: "l1" }), percent: 25 });
       if (path === "/equipment/lamps") return response(200, light);
+      if (path === "/equipment/sensors") return response(200, NO_SENSORS);
       if (path === "/equipment/zones") return response(200, zones);
       return response(200, { equipment: [] });
     });

@@ -14,6 +14,7 @@ import type { Pool } from "pg";
 import { body, write, type AuthEnv } from "../kernel";
 import { addLampRoutes } from "./lamps";
 import { addMaintenanceRoutes } from "./maintenance";
+import { addSensorRoutes } from "./sensors";
 import { addSupplyRoutes } from "./supply";
 
 /** Paths the sign-in guard (bearer token) must cover. */
@@ -64,5 +65,6 @@ export function equipmentRoutes(pool: Pool, zoneStock: ZoneStockSource): Hono<Au
   addLampRoutes(routes, pool, deps);
   addMaintenanceRoutes(routes, pool, deps);
   addSupplyRoutes(routes, pool, deps);
+  addSensorRoutes(routes, pool, deps);
   return routes;
 }

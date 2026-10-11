@@ -68,3 +68,19 @@ export async function linkAgent(
   );
   return r.ok ? { ok: true, value: r.value as EquipmentRow } : r;
 }
+
+/** Assigns a sensor to a specimen or a location, or to none (US-EQU-06). */
+export async function setSensorTarget(
+  api: string,
+  token: string,
+  target: { id: string; specimenId: string | null; locationId: string | null },
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<EquipmentRow>> {
+  const { id, ...data } = target;
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/equipment/${encodeURIComponent(id)}/sensor-target`,
+    data,
+  );
+  return r.ok ? { ok: true, value: r.value as EquipmentRow } : r;
+}

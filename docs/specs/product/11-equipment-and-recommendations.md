@@ -73,13 +73,15 @@ Acceptance criteria:
 
 Decisions (assumption, decided by the PO): the consumable types are `Substrate`, `Fertilizer` and `Plant agent`; `Other` stays a device with a state, because a generic record cannot be both. A new consumable starts `available`; a consumable recorded before has no value and reads `available`; a device has no supply. The supply changes by tap and may jump to any level. `Agent_Link` is a text of up to 80 characters that the keeper links to a plant agent; it is matched against `Treatment.Agent` case-insensitively and never changes the free text of a treatment. The entry in "Rebuy" is derived by US-EQU-07, not stored. The link from the species' `Substrate` to a consumable is open: a species is shared, equipment is private to the account (P-05), so the link needs its own decision.
 
-### US-EQU-06 · Assign sensors and accessories · ⬜ new
+### US-EQU-06 · Assign sensors and accessories · 🟨 new
 
 Acceptance criteria:
 
 - Sensors are devices (`Type: Sensor`) with optional assignment to a specimen or location.
 - A savings goal "sensor set" can turn into equipment on purchase (US-EQU-08).
 - Raw values are not part of equipment (FR-MON-07).
+
+Decisions (assumption, decided by the PO): a sensor sits at one specimen or at one location, never both; both empty means not assigned. Only active specimens are offered; if the specimen is archived the sensor reads as not assigned and stays listed. If a target is deleted the assignment is cleared and the sensor stays. Accessories are recorded as `Other` and need no assignment. The turn from a savings goal into equipment comes with US-EQU-08.
 
 ### US-EQU-07 · What is missing? Derive need from own data · ⬜ new
 
