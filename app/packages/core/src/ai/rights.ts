@@ -41,6 +41,10 @@ export const AI_OPERATION_CLASSES: Readonly<Record<string, OperationClass>> = {
   propose_draft: "draft",
   measurement_photo: "read",
   // Tasks from the app (US-KI-08): the client lists them, takes one over or declines it; the result is a draft.
+  // Discover (US-ENT-08): the deck is read; "Yes"/"No" needs the right to draft, and runs at once only with "write".
+  discover_suggestions: "read",
+  discover_draft: "draft",
+  discover_decide: "write",
   list_tasks: "read",
   claim_task: "draft",
   decline_task: "draft",
