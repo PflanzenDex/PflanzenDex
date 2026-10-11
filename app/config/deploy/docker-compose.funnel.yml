@@ -55,10 +55,13 @@ services:
       - "127.0.0.1:${HTTP_PORT:-80}:80"
 networks:
   # Fixed subnet and addresses so that TRUSTED_PROXIES can name exactly the two Tailscale nodes.
+  # Docker hands out dynamic addresses from the start of the subnet; ip_range keeps them in the upper half, so the
+  # containers that start before the Tailscale nodes can never take .2 or .3 ("Address already in use").
   default:
     ipam:
       config:
         - subnet: 172.29.40.0/24
+          ip_range: 172.29.40.128/25
 volumes:
   tsstate-app:
   tsstate-auth:
