@@ -62,7 +62,7 @@ Acceptance criteria:
 
 Decisions (assumption, decided by the PO): only a device (a record with a state) has operation data; a consumable has none. `In_Operation_Since` is a calendar date, `Check_Interval_Days` is 1 to 3,650 (starting values), `Lifetime_Statement` is free text up to 80 characters and is stored only together with its source (up to 80 characters), never alone (P-08). The keeper confirms a check with "Jetzt geprüft" (date of today in the keeper's time zone); for a lamp the last measurement counts as a check as well, the newer one wins. A check is due when the days since the last check reach the interval; before the first check the interval counts from `In_Operation_Since`, and with neither the device counts as never checked and is due (the keeper asked for checks, none happened). A `defective` or `retired` device is not reported (it needs repair or replacement, US-EQU-07). The reminder is its own occasion `equipment` ("Equipment-Prüfung") that can be switched off or paused like the others (US-MON-08).
 
-### US-EQU-05 · Consumables and supply · ⬜ new
+### US-EQU-05 · Consumables and supply · 🟨 new
 
 Acceptance criteria:
 
@@ -70,6 +70,8 @@ Acceptance criteria:
 - `low`/`empty` creates an entry in "Rebuy" (US-EQU-07).
 - A plant agent can be linked to `Treatment.Agent`; without a link the free text stays unchanged.
 - The species' `Substrate` stays free text; optional link to a consumable.
+
+Decisions (assumption, decided by the PO): the consumable types are `Substrate`, `Fertilizer` and `Plant agent`; `Other` stays a device with a state, because a generic record cannot be both. A new consumable starts `available`; a consumable recorded before has no value and reads `available`; a device has no supply. The supply changes by tap and may jump to any level. `Agent_Link` is a text of up to 80 characters that the keeper links to a plant agent; it is matched against `Treatment.Agent` case-insensitively and never changes the free text of a treatment. The entry in "Rebuy" is derived by US-EQU-07, not stored. The link from the species' `Substrate` to a consumable is open: a species is shared, equipment is private to the account (P-05), so the link needs its own decision.
 
 ### US-EQU-06 · Assign sensors and accessories · ⬜ new
 

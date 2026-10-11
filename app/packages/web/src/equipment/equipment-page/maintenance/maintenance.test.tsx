@@ -24,6 +24,8 @@ const device = (extra: Partial<EquipmentRow> = {}): EquipmentRow => ({
   lastCheckedOn: null,
   lifetimeValue: null,
   lifetimeSource: null,
+  supply: null,
+  agentLink: null,
   ...extra,
 });
 

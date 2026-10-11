@@ -1,5 +1,7 @@
-import type { Pool, PoolClient } from "pg";
+import type { Pool } from "pg";
 import { withAccount } from "../kernel/index.ts";
+import { COLUMNS } from "./columns.ts";
+import * as upkeep from "./upkeep.ts";
 
 // The shapes are the types of `core` (type-only import through its public entry, AB-2).
 import type {
@@ -8,6 +10,7 @@ import type {
   EquipmentStatus,
   EquipmentValues,
   MaintenanceData,
+  SupplyLevel,
 } from "@pflanzendex/core";
 export type { EquipmentRow, EquipmentStatus, EquipmentValues };
 
@@ -19,14 +22,6 @@ const ZONE_KEY = "equipment_light_zone";
 const isZoneKey = (e: unknown): boolean =>
   (e as { code?: string }).code === FOREIGN_KEY &&
   (e as { constraint?: string }).constraint === ZONE_KEY;
-
-// Dates leave as text `YYYY-MM-DD` (NFR-08), the price as a number.
-const COLUMNS = `id, type, name, status, manufacturer, model, product_id as "productId",
-  price_eur::float8 as "priceEur", to_char(bought_at, 'YYYY-MM-DD') as "boughtAt", note,
-  light_zone_id as "lightZoneId", power_w as "powerW", lux_statement as "luxStatement",
-  to_char(in_operation_since, 'YYYY-MM-DD') as "inOperationSince", check_interval_days as "checkIntervalDays",
-  to_char(last_checked_on, 'YYYY-MM-DD') as "lastCheckedOn", lifetime_value as "lifetimeValue",
-  lifetime_source as "lifetimeSource"`;
 
 /**
  * Adapter for equipment; every call runs as the account of the caller under the row rules (P-04, P-05). The light zone
@@ -50,8 +45,8 @@ export class EquipmentPostgres {
     try {
       const r = await withAccount(this.pool, userId, (c) =>
         c.query<EquipmentRow>(
-          `insert into equipment (account_id, type, name, status, manufacturer, model, product_id, price_eur, bought_at, note, light_zone_id)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9::date, $10, $11) returning ${COLUMNS}`,
+          `insert into equipment (account_id, type, name, status, manufacturer, model, product_id, price_eur, bought_at, note, light_zone_id, supply)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9::date, $10, $11, case when $4::text is null then 'available' end) returning ${COLUMNS}`,
           [
             userId,
             v.type,
@@ -136,46 +131,35 @@ export class EquipmentPostgres {
   }
 
   /** Sets the operation data of a device (not of a consumable); `null` clears a value back to unknown. */
-  async setMaintenance(
+  setMaintenance(
     userId: string,
     id: string,
     data: MaintenanceData,
   ): Promise<ChangeResult<"consumable">> {
-    return withAccount(this.pool, userId, async (c) => {
-      const changed = await c.query<EquipmentRow>(
-        `update equipment set in_operation_since = $2::date, check_interval_days = $3, lifetime_value = $4,
-           lifetime_source = $5 where id = $1 and status is not null returning ${COLUMNS}`,
-        [
-          id,
-          data.inOperationSince,
-          data.checkIntervalDays,
-          data.lifetimeValue,
-          data.lifetimeSource,
-        ],
-      );
-      return changed.rows[0] ?? (await this.missing(c, id));
-    });
+    return upkeep.setMaintenance(this.pool, userId, id, data);
+  }
+
+  /** Sets the supply of a consumable; a device has none. */
+  setSupply(
+    userId: string,
+    id: string,
+    supply: SupplyLevel,
+  ): Promise<ChangeResult<"not_consumable">> {
+    return upkeep.setSupply(this.pool, userId, id, supply);
+  }
+
+  /** Links a plant agent to the text of `Treatment.Agent`; `null` removes the link. */
+  setAgentLink(
+    userId: string,
+    id: string,
+    agentLink: string | null,
+  ): Promise<ChangeResult<"not_plant_agent">> {
+    return upkeep.setAgentLink(this.pool, userId, id, agentLink);
   }
 
   /** Notes the date the keeper checked a device. */
-  async markChecked(
-    userId: string,
-    id: string,
-    checkedOn: string,
-  ): Promise<ChangeResult<"consumable">> {
-    return withAccount(this.pool, userId, async (c) => {
-      const changed = await c.query<EquipmentRow>(
-        `update equipment set last_checked_on = $2::date where id = $1 and status is not null returning ${COLUMNS}`,
-        [id, checkedOn],
-      );
-      return changed.rows[0] ?? (await this.missing(c, id));
-    });
-  }
-
-  /** Why an update on a device found nothing: no such record, or a consumable. */
-  private async missing(c: PoolClient, id: string): Promise<"consumable" | "not_found"> {
-    const known = await c.query("select 1 from equipment where id = $1", [id]);
-    return known.rowCount ? "consumable" : "not_found";
+  markChecked(userId: string, id: string, checkedOn: string): Promise<ChangeResult<"consumable">> {
+    return upkeep.markChecked(this.pool, userId, id, checkedOn);
   }
 
   /** The lamps of a zone, by name (usage source for "delete zone", port ZoneUsage in core). */

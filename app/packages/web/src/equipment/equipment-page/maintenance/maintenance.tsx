@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button/button";
 import { FormRoot } from "@/components/ui/fields/form/form";
 import { Input } from "@/components/ui/fields/input/input";
 import { currentTimeZone } from "../../../kernel";
-import type { EquipmentRow, MaintenanceInput } from "../../equipment-api";
+import type { EquipmentRow } from "../../equipment-api";
+import type { MaintenanceInput } from "../../upkeep-api";
 import { wholeNumber } from "../../lamp-light/parse";
 
 const LABEL = "flex min-w-0 flex-col gap-1 text-sm";

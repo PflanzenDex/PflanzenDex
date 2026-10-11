@@ -5,6 +5,8 @@ export {
   EQUIPMENT_TYPES,
   LAMP_LIMITS,
   MAINTENANCE_LIMITS,
+  SUPPLY_LEVELS,
+  SUPPLY_LIMITS,
 } from "./types";
 export type {
   ChangeResult,
@@ -14,4 +16,5 @@ export type {
   EquipmentType,
   EquipmentValues,
   MaintenanceData,
+  SupplyLevel,
 } from "./types";

@@ -14,6 +14,7 @@ import type { Pool } from "pg";
 import { body, write, type AuthEnv } from "../kernel";
 import { addLampRoutes } from "./lamps";
 import { addMaintenanceRoutes } from "./maintenance";
+import { addSupplyRoutes } from "./supply";
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const EQUIPMENT_PATHS = ["/equipment"] as const;
@@ -62,5 +63,6 @@ export function equipmentRoutes(pool: Pool, zoneStock: ZoneStockSource): Hono<Au
   );
   addLampRoutes(routes, pool, deps);
   addMaintenanceRoutes(routes, pool, deps);
+  addSupplyRoutes(routes, pool, deps);
   return routes;
 }

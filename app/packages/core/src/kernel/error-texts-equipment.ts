@@ -6,5 +6,9 @@ export const EQUIPMENT_ERROR_TEXTS = {
     "Nur eine Lampe gehört zu einer Lichtzone. Dieses Equipment ist keine Lampe; es wurde nichts geändert.",
   "equipment.not_a_device":
     "Verbrauchsmaterial ist kein Gerät und hat keine Betriebsdaten oder Prüfungen. Es wurde nichts geändert.",
+  "equipment.not_a_consumable":
+    "Nur Verbrauchsmaterial hat einen Vorrat. Dieses Equipment ist ein Gerät; es wurde nichts geändert.",
+  "equipment.not_a_plant_agent":
+    "Nur ein Pflanzenmittel lässt sich mit dem Mittel einer Behandlung verknüpfen. Es wurde nichts geändert.",
   "equipment.no_status": "Verbrauchsmaterial hat keinen Betriebszustand. Es wurde nichts geändert.",
 } as const;
