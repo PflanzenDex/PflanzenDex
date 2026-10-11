@@ -22,7 +22,7 @@ const isZoneKey = (e: unknown): boolean =>
 // Dates leave as text `YYYY-MM-DD` (NFR-08), the price as a number.
 const COLUMNS = `id, type, name, status, manufacturer, model, product_id as "productId",
   price_eur::float8 as "priceEur", to_char(bought_at, 'YYYY-MM-DD') as "boughtAt", note,
-  light_zone_id as "lightZoneId"`;
+  light_zone_id as "lightZoneId", power_w as "powerW", lux_statement as "luxStatement"`;
 
 /**
  * Adapter for equipment; every call runs as the account of the caller under the row rules (P-04, P-05). The light zone
@@ -111,6 +111,23 @@ export class EquipmentPostgres {
       if (changed.rows[0]) return changed.rows[0];
       const known = await c.query("select 1 from equipment where id = $1", [id]);
       return known.rowCount ? "no_status" : "not_found";
+    });
+  }
+
+  /** Sets power and light statement of a lamp; `null` clears a value back to unknown. */
+  async setLampData(
+    userId: string,
+    id: string,
+    data: { powerW: number | null; luxStatement: number | null },
+  ): Promise<ChangeResult<"not_lamp">> {
+    return withAccount(this.pool, userId, async (c) => {
+      const changed = await c.query<EquipmentRow>(
+        `update equipment set power_w = $2, lux_statement = $3 where id = $1 and type = 'Lamp' returning ${COLUMNS}`,
+        [id, data.powerW, data.luxStatement],
+      );
+      if (changed.rows[0]) return changed.rows[0];
+      const known = await c.query("select 1 from equipment where id = $1", [id]);
+      return known.rowCount ? "not_lamp" : "not_found";
     });
   }
 

@@ -5,6 +5,12 @@ import type {
   EquipmentStore,
   EquipmentValues,
 } from "./types";
+import type {
+  DeviationLimitStore,
+  LampMeasurement,
+  LampMeasurementStore,
+  LampMeasurementValues,
+} from "../lamps/measurements/types";
 
 /** A valid UUID for the n-th record, as the operations expect. */
 export const equipmentId = (n: number): string =>
@@ -33,7 +39,14 @@ export class InMemoryEquipment implements EquipmentStore {
     const key = values.name.toLowerCase();
     if (this.rows.some((r) => r.userId === userId && r.name.toLowerCase() === key))
       return "name_taken";
-    const row = { ...values, status, id: equipmentId(this.rows.length + 1), userId };
+    const row = {
+      ...values,
+      status,
+      powerW: null,
+      luxStatement: null,
+      id: equipmentId(this.rows.length + 1),
+      userId,
+    };
     this.rows.push(row);
     return row;
   }
@@ -71,7 +84,57 @@ export class InMemoryEquipment implements EquipmentStore {
     return row.status === null ? "no_status" : this.replace(row, { status });
   }
 
+  async setLampData(
+    userId: string,
+    id: string,
+    data: { powerW: number | null; luxStatement: number | null },
+  ): Promise<ChangeResult<"not_lamp">> {
+    const row = this.own(userId, id);
+    if (!row) return "not_found";
+    return row.type === "Lamp" ? this.replace(row, data) : "not_lamp";
+  }
+
   async usingZone(userId: string, lightZoneId: string): Promise<readonly EquipmentRow[]> {
     return this.rows.filter((r) => r.userId === userId && r.lightZoneId === lightZoneId);
+  }
+}
+
+/** In-memory measurement log and deviation limit for tests only; the real adapters live in `db`. */
+export class InMemoryLampLog implements LampMeasurementStore, DeviationLimitStore {
+  readonly rows: (LampMeasurement & { userId: string })[] = [];
+  private readonly limits = new Map<string, number | null>();
+
+  constructor(private readonly equipment: InMemoryEquipment) {}
+
+  async add(
+    userId: string,
+    values: LampMeasurementValues,
+  ): Promise<LampMeasurement | "not_found" | "not_lamp"> {
+    const lamp = this.equipment.rows.find(
+      (r) => r.userId === userId && r.id === values.equipmentId,
+    );
+    if (!lamp) return "not_found";
+    if (lamp.type !== "Lamp") return "not_lamp";
+    const row = { ...values, id: equipmentId(1000 + this.rows.length), userId };
+    this.rows.push(row);
+    return row;
+  }
+
+  /** Newest date first; of the same date the later entry first. */
+  async list(userId: string): Promise<readonly LampMeasurement[]> {
+    return this.rows
+      .filter((r) => r.userId === userId)
+      .map((r, i) => ({ r, i }))
+      .sort((a, b) => b.r.measuredOn.localeCompare(a.r.measuredOn) || b.i - a.i)
+      .map(({ r }) => r);
+  }
+
+  async limit(userId: string): Promise<number | null> {
+    return this.limits.get(userId) ?? null;
+  }
+
+  async setLimit(userId: string, percent: number | null): Promise<number | null> {
+    this.limits.set(userId, percent);
+    return percent;
   }
 }

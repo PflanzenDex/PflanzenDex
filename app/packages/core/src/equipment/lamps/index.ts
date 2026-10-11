@@ -9,3 +9,19 @@ export type {
   ZoneEquipmentView,
   ZoneNote,
 } from "./zones";
+export {
+  equipmentDescribeLamp,
+  equipmentMeasure,
+  equipmentSetDeviationLimit,
+  lampLight,
+} from "./measurements";
+export type {
+  DeviationLimitStore,
+  LampLight,
+  LampLightDependencies,
+  LampLightView,
+  LampMeasurement,
+  LampMeasurementStore,
+  LampMeasurementValues,
+  ZoneCheck,
+} from "./measurements";

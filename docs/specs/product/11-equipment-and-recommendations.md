@@ -41,7 +41,7 @@ Acceptance criteria:
 
 Decisions (assumption, decided by the PO): the warning and the hint apply to the zones that US-LIC-02 counts (zones 2 to 4); the cutting light (zone 1) has no specimen count, so it shows its lamps but no warning or hint (P-08). The state of a device is set with its own operation (`active`, `defective`, `retired`; consumables have none). A zone with a lamp cannot be deleted (P-10); move the lamp first. Lamps recorded before the zone was required stay valid and are listed as "without zone" until the keeper assigns one.
 
-### US-EQU-03 · Record the measured light intensity per lamp · ⬜ new
+### US-EQU-03 · Record the measured light intensity per lamp · 🟨 new
 
 Acceptance criteria:
 
@@ -49,6 +49,8 @@ Acceptance criteria:
 - The display separates **manufacturer value** and **measured** (last measurement with date); without a measurement "not measured".
 - If the last measurement deviates from the zone ceiling by more than a configurable share (default open, **to be set by the keeper**), "Check zone" appears.
 - Fulfills FR-LIC-06.
+
+Decisions (assumption, decided by the PO): `Date` and `Lux` are required, `Distance_cm` and `Method` are optional and read "unknown" when empty; lux 1 to 200,000, distance 1 to 1,000 cm, method up to 60 characters (starting values). The log is append-only: a wrong entry is corrected by a newer measurement. The latest measurement is the newest date. The deviation is `|last lux − zone ceiling| / zone ceiling`, below or above, as a whole percent; the share is one setting per account, 1 to 100 percent, without a default: until the keeper sets it no check runs and the view says so (P-08). `Power_W` and `Lux_Statement` (DM-EQU-02) are set with their own operation; `Lux_Statement` is the manufacturer's value and never replaces a measurement.
 
 ### US-EQU-04 · Keep operation and maintenance in view · ⬜ new
 
