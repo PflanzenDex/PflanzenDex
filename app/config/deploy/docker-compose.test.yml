@@ -21,6 +21,10 @@ services:
     depends_on:
       - mailpit
   proxy:
+    environment:
+      # Basic auth of the mail catcher UI (proxy.mail.caddy); a bcrypt hash, see .env.example.
+      MAIL_UI_USER: ${MAIL_UI_USER:?MAIL_UI_USER is missing}
+      MAIL_UI_HASH: ${MAIL_UI_HASH:?MAIL_UI_HASH is missing}
     volumes:
       - ./proxy.mail.caddy:/etc/caddy/conf.d/mail.caddy:ro
     depends_on:
