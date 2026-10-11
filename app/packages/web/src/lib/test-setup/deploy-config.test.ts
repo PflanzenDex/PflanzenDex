@@ -171,8 +171,17 @@ describe("TE-03 · sign-in service in the stack", () => {
   it("TE-03 the sign-in role cannot reach the app database and only the proxy is published", () => {
     expect(initDb).toContain("revoke connect on database %I from public', :'appdb'");
     expect(initDb).not.toMatch(/grant [^\n]*:'appdb'[^\n]*:'kcuser'/);
-    expect(compose.match(/^\s+ports:/gm)).toHaveLength(1);
+    expect(compose.match(/^\s+ports:/gm)).toHaveLength(2);
     expect(service(compose, "proxy")).toContain("ports:");
+  });
+
+  it("TE-03 the admin console has its own address on the host's loopback only", () => {
+    expect(keycloak).toContain("KC_HOSTNAME_ADMIN: http://localhost:${KEYCLOAK_ADMIN_PORT:-8180}");
+    expect(keycloak).toContain('- "127.0.0.1:${KEYCLOAK_ADMIN_PORT:-8180}:8080"');
+    const published = [...compose.matchAll(/^\s+- "([^"]+:\d+)"$/gm)].map((m) => m[1] ?? "");
+    const keycloakPorts = published.filter((p) => p.endsWith(":8080"));
+    expect(keycloakPorts).toHaveLength(1);
+    for (const port of keycloakPorts) expect(port, port).toMatch(/^127\.0\.0\.1:/);
   });
 
   it("TE-03 every service has a memory limit", () => {

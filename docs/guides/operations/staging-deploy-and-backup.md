@@ -81,7 +81,7 @@ browser --https--> upstream proxy --http :80--> proxy (Caddy) --+--> web        
 How it fits together:
 
 - **One variable picks the mode.** `CADDY_SCHEME=http://` makes Caddy serve both hostnames on plain HTTP :80 without certificates (this setup). Empty makes Caddy get its own certificates (host facing the internet). Forwarded headers are believed only from `TRUSTED_PROXIES` (the upstream proxy's address); from anyone else they are overwritten. Keycloak builds its public links from them (`KC_PROXY_HEADERS=xforwarded`) and from `KC_HOSTNAME` (= `AUTH_URL`), so make the upstream proxy pass `X-Forwarded-Proto: https`.
-- **Keycloak** (`quay.io/keycloak/keycloak:26.8.0`, same as `make auth-up`) runs in production mode (`start`) with HTTP enabled inside the network. Its data lives in its own database `keycloak` with its own role in the existing `db` service (a second PostgreSQL would cost 100+ MB of the scarce memory). The one-shot `keycloak-db` creates role and database idempotently on every `up`, also on an existing volume, and revokes `CONNECT` on the app database from everyone but the cluster user: the sign-in role cannot reach tenant data (P-04). Port 8080 and the management port 9000 are not published.
+- **Keycloak** (`quay.io/keycloak/keycloak:26.8.0`, same as `make auth-up`) runs in production mode (`start`) with HTTP enabled inside the network. Its data lives in its own database `keycloak` with its own role in the existing `db` service (a second PostgreSQL would cost 100+ MB of the scarce memory). The one-shot `keycloak-db` creates role and database idempotently on every `up`, also on an existing volume, and revokes `CONNECT` on the app database from everyone but the cluster user: the sign-in role cannot reach tenant data (P-04). Port 8080 is published only on the host's loopback (`127.0.0.1:${KEYCLOAK_ADMIN_PORT}`, default 8180) for the admin console over an SSH tunnel (see "Admin console over an SSH tunnel"); the management port 9000 is not published.
 - **Realm** `pflanzendex` is imported on the first start from `app/config/deploy/keycloak/pflanzendex-realm.json`. It matches the development realm (clients `pflanzendex-api` and `pflanzendex-web` with S256 PKCE, audience mapper, `fullScopeAllowed: false`, access token 5 minutes (ADR 0009), password policy `length(10)`, login theme `pflanzendex`, email verification, self-registration) and differs in three ways: no test users, redirect addresses and web origin come from `APP_URL` (placeholder `${WEB_BASE_URL}`), SMTP comes from `SMTP_*` (placeholders `${KC_SMTP_*}`). Checked on 2026-10-11 with Keycloak 26.8.0: string placeholders (also inside arrays and empty values) are resolved; for booleans they are not reliable (see `invitation-phase.md`), which is why `registrationAllowed` stays a command, not a placeholder. **A changed realm file does not touch an existing realm** (`IGNORE_EXISTING`): change a live realm in the admin console or with `kcadm.sh`; to re-import, drop the `keycloak` database (`docker compose ... stop keycloak`, then drop and re-run `up`) and lose its accounts.
 - **API settings.** `OIDC_ISSUER` is the public issuer (`${AUTH_URL}/realms/pflanzendex`), because tokens carry it in `iss`. The API does not fetch keys through that public address (that would need the host to reach its own proxy and TLS): `OIDC_JWKS_URL=http://keycloak:8080/realms/pflanzendex/protocol/openid-connect/certs` points the key fetch inside the network, while signature, issuer and audience (`OIDC_AUDIENCE=pflanzendex-api`) are still checked as before (test `token.test.ts`, TE-03). `WEB_ORIGIN=${APP_URL}` sets CORS; `AI_RESOURCE_URL=${APP_URL}/api/mcp`.
 - **Web build.** `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID` and `VITE_API_URL=${APP_URL}/api` are build arguments of `web.Dockerfile` (Vite compiles them into the bundle), so changing `APP_URL` or `AUTH_URL` needs a rebuild (`make deploy` does it). The API is reached under `/api` on the same origin, so there is no cross-origin call; the proxy removes the `/api` prefix.
@@ -126,7 +126,7 @@ Note: `deploy.sh` checks out the ref in the checkout (detached HEAD). Production
 
 1. Open `https://app.example.test`, press the sign-in button and choose register (self-registration is on in the test environment). Keycloak asks for email confirmation.
 2. Open `https://auth.example.test/mail/` (the mail catcher), open the email and follow the link; set the password (at least 10 characters). Sign in; the first sign-in creates the account.
-3. Make the account the operator: follow `invitation-phase.md` steps 4 to 5. The subject is the Keycloak user id (`kcadm.sh get users -r pflanzendex -q email=<email> --fields id`; the admin console `/admin/` is blocked on the public name by the path blocks, see "Public test environment through Tailscale Funnel"). `compose` there stands for `docker compose --env-file app/config/deploy/.env`; the compose files come from `COMPOSE_FILE`, so no `-f` is needed. The tab "Betreiber" appears after a reload.
+3. Make the account the operator: follow `invitation-phase.md` steps 4 to 5. The subject is the Keycloak user id (`kcadm.sh get users -r pflanzendex -q email=<email> --fields id`; the admin console `/admin/` is blocked on the public name; open it over an SSH tunnel, see "Admin console over an SSH tunnel"). `compose` there stands for `docker compose --env-file app/config/deploy/.env`; the compose files come from `COMPOSE_FILE`, so no `-f` is needed. The tab "Betreiber" appears after a reload.
 
 ### Closing self-registration
 
@@ -238,7 +238,7 @@ curl -s -o /dev/null -w '%{http_code}\n' https://auth.example-tailnet.ts.net/mai
 
 If the app answers 404 or the issuer shows `http://`, the forwarded headers are not as described above: temporarily add `log` to the site blocks of `proxy.Caddyfile` on the host (do not commit it), read `docker compose logs proxy` and report what `Host` and `X-Forwarded-*` look like.
 
-Then register the first account and follow "First account and the operator role" with these differences: the admin console is **not** reachable on the public name; use `kcadm.sh` ("Operator work without the admin console" below). The mail catcher is `https://auth.example-tailnet.ts.net/mail/` with the basic-auth login.
+Then register the first account and follow "First account and the operator role" with these differences: the admin console is **not** reachable on the public name; use the SSH tunnel ("Admin console over an SSH tunnel" below) or `kcadm.sh` ("Operator work without the admin console"). The mail catcher is `https://auth.example-tailnet.ts.net/mail/` with the basic-auth login.
 
 ### Switching an existing installation to the Funnel names
 
@@ -268,9 +268,27 @@ Then register the first account and follow "First account and the operator role"
 
    (`keycloak-db` creates the empty database again; the bootstrap admin is created again from `KEYCLOAK_ADMIN_*`.) This loses all accounts and sessions.
 
+### Admin console over an SSH tunnel
+
+**Why `/admin/` answers 404 on the public name.** `proxy.Caddyfile` blocks `/admin*`, `/realms/master*`, `/metrics*` and `/health*` on the sign-in host. The admin console controls every account and the realm settings; on a public name anyone could try passwords against it. The block lives in the base Caddyfile, so it applies to every installation, not only the test environment.
+
+**How the console is reached instead.** Keycloak gives the admin console and the master realm their own address, `KC_HOSTNAME_ADMIN=http://localhost:${KEYCLOAK_ADMIN_PORT}` (default port 8180), and publishes its HTTP port on the host's loopback only (`127.0.0.1:8180`). Nothing on the network can reach that port; only someone who can log in to the host over SSH can forward it. The public issuer (`AUTH_URL/realms/pflanzendex`) and the login pages stay unchanged.
+
+1. On your workstation, open the tunnel (keeps running in that terminal):
+
+   ```bash
+   ssh -N -L 8180:127.0.0.1:8180 <host>
+   ```
+
+2. Open `http://localhost:8180/admin/master/console/` in the browser on that workstation.
+3. Log in as `KEYCLOAK_ADMIN_USER` (default `admin`) with `KEYCLOAK_ADMIN_PASSWORD` from `app/config/deploy/.env` on the host. Read it there without copying the file anywhere: `ssh <host> "grep '^KEYCLOAK_ADMIN_PASSWORD=' <repo>/app/config/deploy/.env | cut -d= -f2"`. Change it in the console afterwards if you like (the `.env` value is used only for the first start of an empty database).
+4. Close the tunnel with Ctrl+C when done.
+
+If port 8180 is taken on the host or the workstation, set `KEYCLOAK_ADMIN_PORT` in `.env`, redeploy, and use the same number on both sides of `-L`. The local port in the browser must equal `KEYCLOAK_ADMIN_PORT`, because Keycloak builds the console's links from it.
+
 ### Operator work without the admin console
 
-`/admin*` is blocked on the public name, so run realm work inside the container (`docker compose --env-file app/config/deploy/.env exec keycloak /opt/keycloak/bin/kcadm.sh ...`, as in "Closing self-registration") or, for the admin console in a browser, publish `127.0.0.1:8080:8080` for `keycloak` in a local, uncommitted override file and forward it with `ssh -L 8080:127.0.0.1:8080 <host>`. The operator role steps of `invitation-phase.md` use `kcadm.sh get users` and need no console.
+Everything the console does also works on the command line inside the container, without a tunnel: `docker compose --env-file app/config/deploy/.env exec keycloak /opt/keycloak/bin/kcadm.sh ...` (log in first with `kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin`, as in "Closing self-registration"). The operator role steps of `invitation-phase.md` use `kcadm.sh get users` and need no console.
 
 ### Limits and when to leave this setup
 

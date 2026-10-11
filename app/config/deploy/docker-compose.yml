@@ -79,6 +79,9 @@ services:
       KC_DB_USERNAME: ${KEYCLOAK_DB_USER:-keycloak}
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?KEYCLOAK_DB_PASSWORD is missing}
       KC_HOSTNAME: ${AUTH_URL:?AUTH_URL is missing}
+      # The admin console and the master realm are blocked on the public name (proxy.Caddyfile). They get their own
+      # address on the host's loopback, reached only through an SSH tunnel (runbook "Admin console over an SSH tunnel").
+      KC_HOSTNAME_ADMIN: http://localhost:${KEYCLOAK_ADMIN_PORT:-8180}
       KC_HTTP_ENABLED: "true"
       KC_PROXY_HEADERS: xforwarded
       KC_HEALTH_ENABLED: "true"
@@ -97,6 +100,9 @@ services:
       KC_SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       KC_SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
       KC_SMTP_SSL: ${SMTP_SSL:-false}
+    # Loopback of the host only, never a public interface: the admin console over an SSH tunnel.
+    ports:
+      - "127.0.0.1:${KEYCLOAK_ADMIN_PORT:-8180}:8080"
     volumes:
       - ./keycloak/pflanzendex-realm.json:/opt/keycloak/data/import/pflanzendex-realm.json:ro
       - ../dev/keycloak-theme/pflanzendex:/opt/keycloak/themes/pflanzendex:ro
