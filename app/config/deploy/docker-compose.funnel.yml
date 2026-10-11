@@ -1,0 +1,67 @@
+# Public test environment through Tailscale Funnel (TE-03). No reverse proxy in front of the host, no inbound port:
+# two Tailscale nodes (one per public name) in userspace networking (no tun device, no extra capabilities) dial out to
+# Tailscale, terminate TLS themselves and forward plain HTTP to the Caddy `proxy` on the Docker network.
+# Use: COMPOSE_FILE=docker-compose.yml:docker-compose.test.yml:docker-compose.funnel.yml in .env.
+# The serve config is docker/tailscale/serve.json.
+# Memory limits are starting values (assumption, TE-03); measure and adjust.
+x-tailscale: &tailscale
+  image: tailscale/tailscale:v1.102.3
+  restart: unless-stopped
+  environment: &tailscale-env
+    TS_USERSPACE: "true"
+    TS_STATE_DIR: /var/lib/tailscale
+    TS_AUTHKEY: ${TS_AUTHKEY:?TS_AUTHKEY is missing}
+    # An auth key carries its tags; this must name the same tag (the admin policy must let it own `tag:` nodes).
+    TS_EXTRA_ARGS: --advertise-tags=${TS_TAG:-tag:pflanzendex-funnel}
+    # ${TS_CERT_DOMAIN} inside the file is filled in by the container with the node's own <name>.<tailnet>.ts.net.
+    TS_SERVE_CONFIG: /config/serve.json
+  depends_on:
+    - proxy
+  deploy:
+    resources:
+      limits:
+        memory: 96m
+services:
+  # Public name of the app (web, /api, /health).
+  ts-app:
+    <<: *tailscale
+    hostname: ${TS_APP_NAME:?TS_APP_NAME is missing}
+    environment:
+      <<: *tailscale-env
+      TS_HOSTNAME: ${TS_APP_NAME}
+    volumes:
+      - ./docker/tailscale:/config:ro
+      - tsstate-app:/var/lib/tailscale
+    networks:
+      default:
+        ipv4_address: 172.29.40.2
+  # Public name of the sign-in service (Keycloak, and the mail catcher under /mail/ behind basic auth).
+  ts-auth:
+    <<: *tailscale
+    hostname: ${TS_AUTH_NAME:?TS_AUTH_NAME is missing}
+    environment:
+      <<: *tailscale-env
+      TS_HOSTNAME: ${TS_AUTH_NAME}
+    volumes:
+      - ./docker/tailscale:/config:ro
+      - tsstate-auth:/var/lib/tailscale
+    networks:
+      default:
+        ipv4_address: 172.29.40.3
+  # Nothing is published on a public interface. Port 80 stays on loopback only: deploy.sh smoke-tests
+  # http://127.0.0.1:$HTTP_PORT with the Host header. `!override` drops the base file's 80 and 443 mappings.
+  proxy:
+    ports: !override
+      - "127.0.0.1:${HTTP_PORT:-80}:80"
+networks:
+  # Fixed subnet and addresses so that TRUSTED_PROXIES can name exactly the two Tailscale nodes.
+  # Docker hands out dynamic addresses from the start of the subnet; ip_range keeps them in the upper half, so the
+  # containers that start before the Tailscale nodes can never take .2 or .3 ("Address already in use").
+  default:
+    ipam:
+      config:
+        - subnet: 172.29.40.0/24
+          ip_range: 172.29.40.128/25
+volumes:
+  tsstate-app:
+  tsstate-auth:

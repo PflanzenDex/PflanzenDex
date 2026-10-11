@@ -8,6 +8,12 @@ const proxy = read("deploy/proxy.Caddyfile");
 const compose = read("deploy/docker-compose.yml");
 const testOverlay = read("deploy/docker-compose.test.yml");
 const mailRoute = read("deploy/proxy.mail.caddy");
+const funnel = read("deploy/docker-compose.funnel.yml");
+const serveConfig = JSON.parse(read("deploy/docker/tailscale/serve.json")) as {
+  TCP: Record<string, { HTTPS: boolean }>;
+  Web: Record<string, { Handlers: Record<string, { Proxy: string }> }>;
+  AllowFunnel: Record<string, boolean>;
+};
 const initDb = read("deploy/keycloak/init-db.sh");
 const envExample = read("deploy/.env.example");
 const realmFile = read("deploy/keycloak/pflanzendex-realm.json");
@@ -52,9 +58,78 @@ describe("TE-03 · reverse proxy in front of the host", () => {
     expect(proxy).toContain("import /etc/caddy/conf.d/*");
     expect(proxy).not.toContain("mailpit");
     expect(compose).not.toContain("mailpit");
-    expect(mailRoute).toMatch(/handle \/mail\/\* \{\s*reverse_proxy mailpit:8025/);
+    expect(mailRoute).toMatch(/handle \/mail\/\* \{[\s\S]*reverse_proxy mailpit:8025/);
     expect(testOverlay).toContain("./proxy.mail.caddy:/etc/caddy/conf.d/mail.caddy:ro");
     expect(testOverlay).toContain("MP_WEBROOT: /mail");
+  });
+});
+
+describe("TE-03 · public test environment through Tailscale Funnel", () => {
+  it("TE-03 the funnel overlay publishes no host port except the proxy's port 80 on loopback", () => {
+    const mappings = [...funnel.matchAll(/^\s+- "([^"]*:\d+)"$/gm)].map((m) => m[1]);
+    expect(mappings).toEqual(["127.0.0.1:${HTTP_PORT:-80}:80"]);
+    expect(service(funnel, "proxy")).toContain("ports: !override");
+    expect(funnel).not.toContain("443:");
+  });
+
+  it("TE-03 two Tailscale nodes in userspace mode, pinned image, state volumes and memory limits", () => {
+    expect(funnel).toMatch(/image: tailscale\/tailscale:v\d+\.\d+\.\d+\n/);
+    expect(funnel).toContain('TS_USERSPACE: "true"');
+    expect(funnel).not.toMatch(/\/dev\/net\/tun|cap_add|privileged/);
+    expect(funnel).toContain("TS_AUTHKEY: ${TS_AUTHKEY:?");
+    for (const [name, env] of [
+      ["ts-app", "TS_APP_NAME"],
+      ["ts-auth", "TS_AUTH_NAME"],
+    ] as const) {
+      const block = service(funnel, name);
+      expect(block, name).toContain(`TS_HOSTNAME: \${${env}}`);
+      expect(block, name).toContain(`tsstate-${name.slice(3)}:/var/lib/tailscale`);
+    }
+    expect(funnel).toMatch(/limits:\s+memory: \d+m/);
+  });
+
+  it("TE-03 the serve config allows Funnel on 443 only and proxies to the proxy service", () => {
+    const host = "${TS_CERT_DOMAIN}:443";
+    expect(Object.keys(serveConfig.TCP)).toEqual(["443"]);
+    expect(serveConfig.TCP["443"]?.HTTPS).toBe(true);
+    expect(serveConfig.AllowFunnel).toEqual({ [host]: true });
+    expect(Object.keys(serveConfig.Web)).toEqual([host]);
+    expect(serveConfig.Web[host]?.Handlers["/"]?.Proxy).toBe("http://proxy:80");
+    expect(funnel).toContain("TS_SERVE_CONFIG: /config/serve.json");
+  });
+
+  it("TE-03 only the two Tailscale nodes are trusted proxies: fixed subnet and addresses", () => {
+    expect(funnel).toContain("subnet: 172.29.40.0/24");
+    // Dynamic addresses stay outside the fixed ones, otherwise an earlier container takes .2 or .3.
+    expect(funnel).toContain("ip_range: 172.29.40.128/25");
+    expect(service(funnel, "ts-app")).toContain("ipv4_address: 172.29.40.2");
+    expect(service(funnel, "ts-auth")).toContain("ipv4_address: 172.29.40.3");
+    expect(envExample).toContain("TRUSTED_PROXIES=172.29.40.2/32 172.29.40.3/32");
+  });
+
+  it("TE-03 the sign-in host denies Keycloak's admin, master realm and management paths", () => {
+    const auth = proxy.slice(proxy.indexOf("{$CADDY_SCHEME}{$AUTH_HOST} {"));
+    for (const path of ["/admin*", "/realms/master*", "/metrics*", "/health*"])
+      expect(auth, path).toContain(`handle ${path} {\n\t\trespond 404\n\t}`);
+    expect(auth.indexOf("respond 404")).toBeLessThan(auth.indexOf("import /etc/caddy/conf.d/*"));
+    expect(auth).not.toMatch(/handle \/(realms\/pflanzendex|resources|js)/);
+  });
+
+  it("TE-03 the mail catcher UI requires basic auth with a hash from the environment", () => {
+    expect(mailRoute).toMatch(/basic_auth \{\s+\{\$MAIL_UI_USER\} \{\$MAIL_UI_HASH\}/);
+    expect(mailRoute.indexOf("basic_auth")).toBeLessThan(mailRoute.indexOf("reverse_proxy"));
+    expect(service(testOverlay, "proxy")).toContain("MAIL_UI_HASH: ${MAIL_UI_HASH:?");
+    expect(envExample).toMatch(/^MAIL_UI_HASH='[^']*'$/m);
+  });
+
+  it("TE-03 .env.example names every funnel variable and holds no real key", () => {
+    const names = [...funnel.matchAll(/\$\{(TS_[A-Z_]+)[:}]/g)]
+      .map((m) => m[1])
+      .filter((n) => n !== "TS_CERT_DOMAIN");
+    expect(names.length).toBeGreaterThan(2);
+    const assigned = envExample.split("\n").map((line) => line.replace(/^#/, "").split("=")[0]);
+    for (const name of new Set(names)) expect(assigned, name).toContain(name);
+    expect(envExample).toMatch(/^TS_AUTHKEY=PUT_A_TAILSCALE_AUTH_KEY_HERE$/m);
   });
 });
 
