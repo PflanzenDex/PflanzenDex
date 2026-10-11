@@ -59,7 +59,27 @@ export const LAMP_LIMITS = {
   deviationPercent: { min: 1, max: 100 },
 } as const;
 
-export interface EquipmentRow extends EquipmentValues {
+/** Limits of the operation and maintenance data (US-EQU-04); assumptions (starting values). */
+export const MAINTENANCE_LIMITS = {
+  /** How often a device is checked, in days (up to ten years). */
+  intervalDays: { min: 1, max: 3_650 },
+  lifetimeValue: { min: 1, max: 80 },
+  lifetimeSource: { min: 1, max: 80 },
+} as const;
+
+/** What the keeper says about the operation of a device (DM-EQU-01, DM-EQU-02); `null` is unknown, never a guess (P-08). */
+export interface MaintenanceData {
+  /** Local calendar date `YYYY-MM-DD` (NFR-08). */
+  readonly inOperationSince: string | null;
+  readonly checkIntervalDays: number | null;
+  /** The manufacturer's statement about the lifetime, always together with its source. */
+  readonly lifetimeValue: string | null;
+  readonly lifetimeSource: string | null;
+}
+
+export interface EquipmentRow extends EquipmentValues, MaintenanceData {
+  /** Local calendar date `YYYY-MM-DD` of the last check the keeper confirmed; `null` = never (US-EQU-04). */
+  readonly lastCheckedOn: string | null;
   readonly id: string;
   /** Power of a lamp in watt, as the manufacturer states it; `null` for unknown and for every other type. */
   readonly powerW: number | null;
@@ -98,6 +118,14 @@ export interface EquipmentStore {
     id: string,
     data: { powerW: number | null; luxStatement: number | null },
   ): Promise<ChangeResult<"not_lamp">>;
+  /** Sets the operation and maintenance data of a device; only a device has them, a consumable does not. */
+  setMaintenance(
+    userId: string,
+    id: string,
+    data: MaintenanceData,
+  ): Promise<ChangeResult<"consumable">>;
+  /** Notes that the keeper checked a device on this date. */
+  markChecked(userId: string, id: string, checkedOn: string): Promise<ChangeResult<"consumable">>;
   /** The lamps that serve a light zone, by name, whatever their state. */
   usingZone(userId: string, lightZoneId: string): Promise<readonly EquipmentRow[]>;
 }

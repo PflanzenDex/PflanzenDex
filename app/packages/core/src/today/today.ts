@@ -15,11 +15,13 @@ import {
 } from "../care";
 import type { TodayItem, TodayList } from "./today-types";
 import { bufferItems, etiolatedItems, type DeviationDependencies } from "./deviations";
+import { equipmentCheckItems, type EquipmentCheckDependencies } from "./equipment-checks";
 
 export type TodayDependencies = TreatmentListDependencies &
   PhasesDependencies &
   HintsDependencies &
-  DeviationDependencies;
+  DeviationDependencies &
+  EquipmentCheckDependencies;
 
 const PHASE_NAME = { growth: "Wachstumsphase", dormancy: "Ruhephase" } as const;
 
@@ -53,7 +55,8 @@ const treatmentOrder = (rows: readonly TreatmentListRow[]) =>
 /**
  * What needs action today (TE-07, US-QS-04): treatments overdue or due today, specimens away from the target location
  * of their phase (US-PHA-02), etiolated last measurements, incomplete specimens (US-BES-08) and zones below the buffer
- * of open candidates (US-WUN-02), in this order of urgency: what is bound to a date first, the account-wide last.
+ * of open candidates (US-WUN-02), in this order of urgency: what is bound to a date first, the account-wide last. A device whose check is due
+ * (US-EQU-04) is bound to a date and follows the treatments.
  * A specimen without location is reported once, as incomplete data, not again as a phase deviation (P-10 without
  * duplicates). `today` is the date in `timeZone`, taken from one reading of the clock for all parts (NFR-08).
  */
@@ -68,12 +71,13 @@ export async function todayStatus(
     );
   const now = deps.clock();
   const same = { ...deps, clock: () => now };
-  const [treatments, phases, hints, etiolated, buffer] = await Promise.all([
+  const [treatments, phases, hints, etiolated, buffer, checks] = await Promise.all([
     treatmentOpenList(same, userId, timeZone),
     carePhasesList(same, userId, timeZone),
     specimenHints(same, userId),
     deps.specimens.list(userId).then((rows) => etiolatedItems(deps, userId, rows)),
     bufferItems(deps, userId),
+    equipmentCheckItems(deps, userId, localToday(now, timeZone)),
   ]);
   if (!treatments.ok) return treatments;
   if (!phases.ok) return phases;
@@ -92,6 +96,7 @@ export async function todayStatus(
     date: localToday(now, timeZone),
     items: [
       ...due,
+      ...checks,
       ...deviations.sort(byName),
       ...etiolated.sort(byName),
       ...incomplete.sort(byName),

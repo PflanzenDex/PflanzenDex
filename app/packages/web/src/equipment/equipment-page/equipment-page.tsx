@@ -12,6 +12,7 @@ import {
 import { STATUS_LABELS, TYPE_LABELS } from "../labels";
 import { LampLightView } from "../lamp-light/lamp-light";
 import { LampOutcome, useLampActions } from "./lamp-actions/lamp-actions";
+import { Maintenance, type MaintenanceActions } from "./maintenance/maintenance";
 import { ZonesView } from "../zones-view/zones-view";
 import { EquipmentPageSkeleton } from "./equipment-page.skeleton";
 
@@ -25,7 +26,12 @@ const focusForm = () =>
     ?.focus();
 
 /** One record: what is missing reads "unbekannt", never a guess (P-08). */
-function Card({ item, zone }: { item: EquipmentRow; zone: string | undefined }) {
+function Card(props: {
+  item: EquipmentRow;
+  zone: string | undefined;
+  maintenance: MaintenanceActions;
+}) {
+  const { item, zone } = props;
   const maker = [item.manufacturer, item.model].filter(Boolean).join(" ");
   const price =
     item.priceEur === null ? UNKNOWN : `${item.priceEur.toFixed(2).replace(".", ",")} €`;
@@ -53,6 +59,7 @@ function Card({ item, zone }: { item: EquipmentRow; zone: string | undefined }) 
         <dd className="m-0">{item.boughtAt ?? UNKNOWN}</dd>
       </dl>
       {item.note ? <p className="mt-2 break-words text-sm">{item.note}</p> : null}
+      <Maintenance item={item} actions={props.maintenance} />
     </li>
   );
 }
@@ -85,7 +92,12 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
           aria-label="Dein Equipment"
         >
           {items.map((item) => (
-            <Card key={item.id} item={item} zone={zoneNames.get(item.lightZoneId ?? "")} />
+            <Card
+              key={item.id}
+              item={item}
+              zone={zoneNames.get(item.lightZoneId ?? "")}
+              maintenance={lamps.maintenance}
+            />
           ))}
         </ul>
       )}

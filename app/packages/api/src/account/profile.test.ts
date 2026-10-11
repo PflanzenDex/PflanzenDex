@@ -76,6 +76,7 @@ describe("US-ACC-02 · GET /account/profile", () => {
         watering: true,
         swap: true,
         friends: true,
+        equipment: true,
       },
       replenishBuffer: 2,
     });

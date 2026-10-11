@@ -20,6 +20,11 @@ const item = (extra: Record<string, unknown> = {}) => ({
   boughtAt: null,
   note: null,
   lightZoneId: null,
+  inOperationSince: null,
+  checkIntervalDays: null,
+  lastCheckedOn: null,
+  lifetimeValue: null,
+  lifetimeSource: null,
   ...extra,
 });
 
@@ -88,7 +93,8 @@ describe("US-EQU-01 equipment page", () => {
     const card = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
     expect(within(card).getByRole("heading", { name: "Lampe 3" })).toBeTruthy();
     expect(card.textContent).toContain("Lampe · Aktiv");
-    expect(card.textContent?.match(/unbekannt/g)).toHaveLength(4);
+    // Four on the card, two more in "Betrieb und Wartung" (since when it runs, lifetime; US-EQU-04).
+    expect(card.textContent?.match(/unbekannt/g)).toHaveLength(6);
     expect(card.textContent).toContain("ohne Zone");
   });
 

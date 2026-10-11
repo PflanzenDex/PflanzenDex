@@ -4,5 +4,7 @@ export const EQUIPMENT_ERROR_TEXTS = {
   "equipment.not_found": "Dieses Equipment gibt es nicht. Lade die Liste neu.",
   "equipment.not_a_lamp":
     "Nur eine Lampe gehört zu einer Lichtzone. Dieses Equipment ist keine Lampe; es wurde nichts geändert.",
+  "equipment.not_a_device":
+    "Verbrauchsmaterial ist kein Gerät und hat keine Betriebsdaten oder Prüfungen. Es wurde nichts geändert.",
   "equipment.no_status": "Verbrauchsmaterial hat keinen Betriebszustand. Es wurde nichts geändert.",
 } as const;

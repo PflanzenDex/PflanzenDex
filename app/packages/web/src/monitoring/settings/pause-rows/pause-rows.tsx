@@ -14,6 +14,7 @@ export const OCCASION_TEXT: Record<ReminderOccasion, string> = {
   watering: "Gießen",
   swap: "Tausch",
   friends: "Freunde",
+  equipment: "Equipment-Prüfung",
 };
 
 /** `paused` with the pause of `o` set to `until`, or removed when `until` is empty. */

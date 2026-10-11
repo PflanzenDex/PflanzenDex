@@ -52,13 +52,15 @@ Acceptance criteria:
 
 Decisions (assumption, decided by the PO): `Date` and `Lux` are required, `Distance_cm` and `Method` are optional and read "unknown" when empty; lux 1 to 200,000, distance 1 to 1,000 cm, method up to 60 characters (starting values). The log is append-only: a wrong entry is corrected by a newer measurement. The latest measurement is the newest date. The deviation is `|last lux − zone ceiling| / zone ceiling`, below or above, as a whole percent; the share is one setting per account, 1 to 100 percent, without a default: until the keeper sets it no check runs and the view says so (P-08). `Power_W` and `Lux_Statement` (DM-EQU-02) are set with their own operation; `Lux_Statement` is the manufacturer's value and never replaces a measurement.
 
-### US-EQU-04 · Keep operation and maintenance in view · ⬜ new
+### US-EQU-04 · Keep operation and maintenance in view · 🟨 new
 
 Acceptance criteria:
 
 - Optional `In_Operation_Since` and `Check_Interval_Days` (set by the keeper).
 - If an interval is set and the last check (for lamps: last measurement) is older, "Check due: <device>" appears in "Today" and as a reminder (US-MON-01).
 - No lifetime or wear values without an entry; manufacturer values only as `Lifetime_Statement` with `Source`. Without an interval no due date.
+
+Decisions (assumption, decided by the PO): only a device (a record with a state) has operation data; a consumable has none. `In_Operation_Since` is a calendar date, `Check_Interval_Days` is 1 to 3,650 (starting values), `Lifetime_Statement` is free text up to 80 characters and is stored only together with its source (up to 80 characters), never alone (P-08). The keeper confirms a check with "Jetzt geprüft" (date of today in the keeper's time zone); for a lamp the last measurement counts as a check as well, the newer one wins. A check is due when the days since the last check reach the interval; before the first check the interval counts from `In_Operation_Since`, and with neither the device counts as never checked and is due (the keeper asked for checks, none happened). A `defective` or `retired` device is not reported (it needs repair or replacement, US-EQU-07). The reminder is its own occasion `equipment` ("Equipment-Prüfung") that can be switched off or paused like the others (US-MON-08).
 
 ### US-EQU-05 · Consumables and supply · ⬜ new
 
