@@ -5,7 +5,10 @@ import {
   authorizeClient,
   type AiRights,
   type Authorized,
+  type AiLogStore,
   type ConnectionStore,
+  checkDailyLimit,
+  DEFAULT_DAILY_LIMIT,
 } from "@pflanzendex/core";
 import { admitAccount } from "@pflanzendex/db";
 import type { MiddlewareHandler } from "hono";
@@ -25,6 +28,24 @@ export interface ClientGuardOptions {
   /** Address of the protected resource metadata (RFC 9728), named in every challenge. */
   readonly metadataUrl: string;
   readonly clock?: () => Date;
+  /** The log counts the calls for the daily limit per connection (US-KI-06). */
+  readonly log?: Pick<AiLogStore, "countSince">;
+  /** Calls per connection and UTC day; default `DEFAULT_DAILY_LIMIT` (assumption). */
+  readonly dailyLimit?: number;
+}
+
+/** The refusal for a connection over its daily limit, with `Retry-After` in seconds (US-KI-06), else `null`. */
+async function overLimit(opt: ClientGuardOptions, userId: string, connectionId: string, now: Date) {
+  if (!opt.log) return null;
+  const r = await checkDailyLimit(opt.log, {
+    userId,
+    connectionId,
+    now,
+    limit: opt.dailyLimit ?? DEFAULT_DAILY_LIMIT,
+  });
+  if (r.ok) return null;
+  const wait = Math.max(1, Math.ceil(((r.retryAt?.getTime() ?? 0) - now.getTime()) / 1000));
+  return { error: r.error, headers: { "Retry-After": String(wait) } };
 }
 
 const challenge = (metadataUrl: string, extra = "") =>
@@ -77,6 +98,8 @@ export function clientAuthentication(
           : {};
       return c.json(errorBody(r.error), statusFor(r.error), headers);
     }
+    const limited = await overLimit(opt, id, r.value.connection.id, clock());
+    if (limited) return c.json(errorBody(limited.error), statusFor(limited.error), limited.headers);
     c.set("account", { id, data });
     c.set("ai", r.value);
     await next();

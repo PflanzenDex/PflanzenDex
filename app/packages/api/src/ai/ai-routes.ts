@@ -34,6 +34,8 @@ export interface AiAccessOptions {
   /** The authorization server (E-03, FR-KI-13): the sign-in service. The app builds none of its own. */
   readonly issuer: string;
   readonly clock?: () => Date;
+  /** Calls per AI connection and UTC day (US-KI-06); default 500 (assumption). */
+  readonly dailyLimit?: number;
   /** Replaces the PostgreSQL adapter (tests only). */
   readonly connections?: ConnectionStore;
 }

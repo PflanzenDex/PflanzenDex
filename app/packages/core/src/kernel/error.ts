@@ -68,6 +68,7 @@ export const ERROR_TEXTS = {
     "Dafür reichen die Rechte dieser Verbindung nicht. Erlaube dem KI-Client in der App das nötige Recht und verbinde ihn neu.",
   "ai.connection_not_found": "Diese Verbindung gibt es nicht. Lade die Liste neu.",
   "ai.connection_active": "Dieser KI-Client ist schon wieder verbunden. Es wurde nichts geändert.",
+  "ai.rate_limited": "Das Tageslimit des KI-Clients ist erreicht. Morgen geht es weiter.",
   "ai.draft_not_found": "Diesen Entwurf gibt es nicht. Lade die Liste neu.",
   "ai.draft_closed":
     "Dieser Entwurf ist schon übernommen, verworfen oder abgelaufen. Es wurde nichts geändert.",

@@ -1,8 +1,8 @@
 // The cleaned photo of a measurement for the AI client (US-KI-04): own account only, read right, logged. The client
 // may suggest a quality and a note as a draft (`photo_assessment`); the code writes only after the keeper adopts it.
-import { appError, failed, type Result } from "../kernel";
-import { mayCall, type AiRights } from "./rights";
-import type { AiLogStore } from "./status";
+import { appError, failed, type Result } from "../../kernel";
+import { mayCall, type AiRights } from "../rights";
+import type { AiLogStore } from "../status";
 
 export type PhotoFile = { readonly bytes: Uint8Array; readonly contentType: string };
 

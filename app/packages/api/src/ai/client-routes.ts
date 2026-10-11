@@ -57,6 +57,8 @@ export function clientRoutes(
     pool,
     connections,
     metadataUrl,
+    log,
+    ...(opt.dailyLimit === undefined ? {} : { dailyLimit: opt.dailyLimit }),
     ...(opt.clock ? { clock: opt.clock } : {}),
   };
   client.get("/mcp/session", clientAuthentication(guard, "read"), (c) => {

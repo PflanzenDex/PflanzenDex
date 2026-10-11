@@ -32,6 +32,17 @@ export class AiLogPostgres {
     );
   }
 
+  /** Logged calls of one connection since the instant (US-KI-06). */
+  async countSince(userId: string, connectionId: string, since: Date): Promise<number> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<{ n: number }>(
+        "select count(*)::int as n from ai_log where connection_id = $1 and created_at >= $2",
+        [connectionId, since],
+      ),
+    );
+    return r.rows[0]?.n ?? 0;
+  }
+
   /** Newest first. */
   async list(userId: string, limit: number): Promise<readonly AiLogRow[]> {
     const r = await withAccount(this.pool, userId, (c) =>
