@@ -152,6 +152,8 @@ describe("US-ENT-05 derived live from the own wishes", () => {
     },
     tree: { tree: async () => tree, facts: async () => [] },
     wishes,
+    // A fixed day: the exploration pick is seeded by the day and must not make the order flaky.
+    clock: () => new Date("2026-10-10T12:00:00Z"),
   });
   const order = async (wishes: InMemoryWishes, userId: string) =>
     (await suggestions(deps(wishes), userId, "Europe/Berlin")).suggestions.map((s) => s.species);
