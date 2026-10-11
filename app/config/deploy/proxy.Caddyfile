@@ -34,6 +34,21 @@
 
 {$CADDY_SCHEME}{$AUTH_HOST} {
 	import compress
+	# Keycloak's management and master-realm surface is never served on the public name (the host may face the
+	# internet, e.g. through Tailscale Funnel). Operator work goes around the proxy: `docker compose exec keycloak
+	# kcadm.sh` or an SSH port forward to the container. Login pages need /realms/pflanzendex/*, /resources/*, /js/*.
+	handle /admin* {
+		respond 404
+	}
+	handle /realms/master* {
+		respond 404
+	}
+	handle /metrics* {
+		respond 404
+	}
+	handle /health* {
+		respond 404
+	}
 	# Files in /etc/caddy/conf.d/ add routes of the test environment (the mail catcher UI); none in production.
 	import /etc/caddy/conf.d/*
 	handle {
