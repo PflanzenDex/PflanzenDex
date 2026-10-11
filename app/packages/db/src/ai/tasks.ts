@@ -61,8 +61,7 @@ export class TasksPostgres {
         id,
         now,
       ]);
-      const task = r.rows[0];
-      if (!task) throw new Error("Task could not be stored");
+      const task = r.rows[0] as TaskRow; // the row was just inserted or found by the unique index
       return { task, created: ins.rows[0] !== undefined };
     });
   }
@@ -106,7 +105,7 @@ export class TasksPostgres {
         id,
         now,
       ]);
-      return r.rows[0] ?? null;
+      return r.rows[0] as TaskRow; // the row was just updated
     });
   }
 }

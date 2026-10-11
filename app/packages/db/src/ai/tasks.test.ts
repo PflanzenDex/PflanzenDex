@@ -93,6 +93,15 @@ describe("US-KI-08 tasks in the database", () => {
     expect((await store.find(id, t.id, later))?.status).toBe("expired");
   });
 
+  it("US-KI-08 the keeper can withdraw a task without a connection", async () => {
+    const { id } = await setup();
+    const store = new TasksPostgres(pool);
+    const { task: t } = await store.create(id, task(), now);
+    expect(
+      await store.transition(id, t.id, { from: ["open", "in_progress"], to: "declined" }, now),
+    ).toMatchObject({ status: "declined", connectionId: null, clientName: null });
+  });
+
   it("US-KI-08 KI-R6 a task never leaves its account", async () => {
     const [a, b] = [await setup(), await setup()];
     const store = new TasksPostgres(pool);
