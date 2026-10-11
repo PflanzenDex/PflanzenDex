@@ -1,4 +1,4 @@
-import { isCalendarDate, isTimeZone } from "../date";
+import { isCalendarDate, isTimeZone } from "./date";
 import { appError, type ErrorDetail } from "../error";
 import { failed, ok, type Result } from "../result";
 

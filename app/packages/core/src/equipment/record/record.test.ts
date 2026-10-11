@@ -2,8 +2,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { execute } from "../../kernel/operation";
 import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
 import { equipmentRecord } from "./index";
-import { InMemoryEquipment } from "../test-helpers";
+import { InMemoryEquipment } from "../store/test-helpers";
 
+const ZONE = "00000000-0000-4000-8000-0000000000a1";
 const anna = { userId: "anna" };
 let equipment: InMemoryEquipment;
 let idem: InMemoryIdempotencyStore;
@@ -15,10 +16,15 @@ const record = (input: unknown, context = anna, key = `k${++counter}`) =>
     { idempotency: idem },
     { context, input, idempotencyKey: key },
   );
-const lamp = (extra: Record<string, unknown> = {}) => ({ type: "Lamp", name: "Lampe 3", ...extra });
+const lamp = (extra: Record<string, unknown> = {}) => ({
+  type: "Lamp",
+  name: "Lampe 3",
+  lightZoneId: ZONE,
+  ...extra,
+});
 
 beforeEach(() => {
-  equipment = new InMemoryEquipment();
+  equipment = new InMemoryEquipment({ anna: [ZONE], ben: [ZONE] });
   idem = new InMemoryIdempotencyStore();
 });
 
@@ -37,6 +43,7 @@ describe("US-EQU-01 record equipment (DM-EQU-01, P-08, FR-EQU-03)", () => {
         priceEur: null,
         boughtAt: null,
         note: null,
+        lightZoneId: ZONE,
       },
     });
   });

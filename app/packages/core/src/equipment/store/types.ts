@@ -45,6 +45,8 @@ export interface EquipmentValues {
   /** Local calendar date `YYYY-MM-DD` (NFR-08). */
   readonly boughtAt: string | null;
   readonly note: string | null;
+  /** The light zone of a lamp (DM-EQU-02, US-EQU-02); `null` for every other type. */
+  readonly lightZoneId: string | null;
 }
 
 export interface EquipmentRow extends EquipmentValues {
@@ -53,6 +55,9 @@ export interface EquipmentRow extends EquipmentValues {
   readonly status: EquipmentStatus | null;
 }
 
+/** What a write on one record can answer besides the changed record. */
+export type ChangeResult<R extends string> = EquipmentRow | "not_found" | R;
+
 /** Every call applies only to the account `userId` (P-04); names are unique per account, case-insensitive. */
 export interface EquipmentStore {
   list(userId: string): Promise<readonly EquipmentRow[]>;
@@ -60,5 +65,19 @@ export interface EquipmentStore {
     userId: string,
     values: EquipmentValues,
     status: EquipmentStatus | null,
-  ): Promise<EquipmentRow | "name_taken">;
+  ): Promise<EquipmentRow | "name_taken" | "zone_unknown">;
+  /** Moves a lamp to another light zone of the same account (a foreign zone looks unknown, P-04). */
+  setZone(
+    userId: string,
+    id: string,
+    lightZoneId: string,
+  ): Promise<ChangeResult<"not_lamp" | "zone_unknown">>;
+  /** Sets the state of a device; a consumable has none. */
+  setStatus(
+    userId: string,
+    id: string,
+    status: EquipmentStatus,
+  ): Promise<ChangeResult<"no_status">>;
+  /** The lamps that serve a light zone, by name, whatever their state. */
+  usingZone(userId: string, lightZoneId: string): Promise<readonly EquipmentRow[]>;
 }

@@ -38,15 +38,28 @@ async function call(
   return { status: res.status, body: (await res.json()) as Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
+let zoneA: Record<string, string> = {};
+const defaults = async (sub: string) => {
+  const r = await call(sub, "POST", "/light-zones/defaults", {});
+  return Object.fromEntries(
+    (r.body["zones"] as { id: string; name: string }[]).map((z) => [z.name, z.id]),
+  ) as Record<string, string>;
+};
+
 beforeAll(async () => {
   pool = openOwnerPool();
   admin = openFixturePool();
   await migrate(pool);
   app = createApp({ reviewer, pool });
+  zoneA = await defaults(subA);
 });
 afterAll(async () => {
   await admin.query(
     "delete from equipment where account_id in (select id from account where subject = any($1))",
+    [[subA, subB]],
+  );
+  await admin.query(
+    "delete from light_zone where account_id in (select id from account where subject = any($1))",
     [[subA, subB]],
   );
   await admin.query("delete from account where subject = any($1)", [[subA, subB]]);
@@ -61,7 +74,11 @@ describe("US-EQU-01 record equipment through the API", () => {
   });
 
   it("US-EQU-01 records a device with type and name only and lists it", async () => {
-    const r = await call(subA, "POST", "/equipment", { type: "Lamp", name: "Lampe 3" });
+    const r = await call(subA, "POST", "/equipment", {
+      type: "Lamp",
+      name: "Lampe 3",
+      lightZoneId: zoneA["Lampe 3"],
+    });
     expect(r.status).toBe(201);
     expect(r.body["equipment"]).toMatchObject({
       type: "Lamp",
@@ -95,7 +112,7 @@ describe("US-EQU-01 record equipment through the API", () => {
 
   it("P-04 another account sees nothing and may use the same name", async () => {
     expect((await call(subB, "GET", "/equipment")).body["equipment"]).toEqual([]);
-    const r = await call(subB, "POST", "/equipment", { type: "Lamp", name: "Lampe 3" });
+    const r = await call(subB, "POST", "/equipment", { type: "Timer", name: "Lampe 3" });
     expect(r.status).toBe(201);
     expect((await call(subA, "GET", "/equipment")).body["equipment"]).toHaveLength(1);
   });

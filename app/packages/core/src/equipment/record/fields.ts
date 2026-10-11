@@ -1,13 +1,14 @@
 import {
   calendarDateField,
   choiceField,
+  idField,
   numberField,
   orNull,
   shape,
   textField,
   type ErrorDetail,
 } from "../../kernel";
-import { EQUIPMENT_LIMITS, EQUIPMENT_TYPES } from "../types";
+import { EQUIPMENT_LIMITS, EQUIPMENT_TYPES } from "../store/types";
 
 /** The product id says what the product is, never where to buy it: no URL (FR-EQU-03). */
 function productIdField(field: string) {
@@ -42,4 +43,5 @@ export const recordSchema = shape({
   priceEur: orNull(priceField("priceEur")),
   boughtAt: orNull(calendarDateField("boughtAt")),
   note: orNull(textField("note", EQUIPMENT_LIMITS.note)),
+  lightZoneId: orNull(idField("lightZoneId")),
 });
