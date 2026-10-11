@@ -5,6 +5,11 @@ export type TokenVerifier = (token: string) => Promise<Record<string, unknown> |
 export type VerifierOptions = {
   issuer: string;
   audience: string;
+  /**
+   * Where to fetch the keys when that differs from the issuer's address, e.g. inside a container network while the
+   * issuer is the public address (TE-03). The `iss` claim is still checked against `issuer`.
+   */
+  jwksUrl?: string;
   /** Key source; otherwise the sign-in service's keys (JWKS) are loaded and cached. */
   key?: JWTVerifyGetKey;
 };
@@ -17,7 +22,9 @@ export type VerifierOptions = {
 export function createTokenVerifier(opt: VerifierOptions): TokenVerifier {
   const key =
     opt.key ??
-    createRemoteJWKSet(new URL(`${opt.issuer.replace(/\/$/, "")}/protocol/openid-connect/certs`));
+    createRemoteJWKSet(
+      new URL(opt.jwksUrl ?? `${opt.issuer.replace(/\/$/, "")}/protocol/openid-connect/certs`),
+    );
   return async (token) => {
     try {
       const { payload } = await jwtVerify(token, key, {

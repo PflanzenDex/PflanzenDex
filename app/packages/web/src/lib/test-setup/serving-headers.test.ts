@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const read = (name: string) =>
   readFileSync(new URL(`../../../../../config/deploy/${name}`, import.meta.url), "utf8");
-const web = read("web.Caddyfile");
+const web = read("docker/web.Caddyfile");
 const proxy = read("proxy.Caddyfile");
 
 /** The body of the `handle` block that starts with the given matcher. */

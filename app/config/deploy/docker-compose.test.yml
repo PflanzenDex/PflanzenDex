@@ -1,0 +1,27 @@
+# Test environment overlay (TE-03): a mail catcher for the confirmation emails of the sign-in service.
+# Not for production: there the realm sends through a real SMTP server (SMTP_* in .env).
+# Use: COMPOSE_FILE=docker-compose.yml:docker-compose.test.yml in .env, or a second `-f` option.
+services:
+  mailpit:
+    image: axllent/mailpit:v1.21
+    restart: unless-stopped
+    environment:
+      # The UI lives under /mail/ on the sign-in hostname (proxy.mail.caddy); nothing is published on the host.
+      MP_WEBROOT: /mail
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+  # The realm sends to the mail catcher (unless SMTP_HOST is set); it needs no login and no TLS.
+  keycloak:
+    environment:
+      KC_SMTP_HOST: ${SMTP_HOST:-mailpit}
+      KC_SMTP_PORT: ${SMTP_PORT:-1025}
+      KC_SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+    depends_on:
+      - mailpit
+  proxy:
+    volumes:
+      - ./proxy.mail.caddy:/etc/caddy/conf.d/mail.caddy:ro
+    depends_on:
+      - mailpit
