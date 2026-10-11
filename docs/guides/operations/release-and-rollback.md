@@ -1,6 +1,6 @@
 # Release, deploy and rollback
 
-Covers US-DEV-06 (release process), E-13 (branch model) and E-14 (deploy is a deliberate step). Host setup, backups and restore: `staging-deploy-and-backup.md`.
+Covers US-DEV-06 (release process), E-13 (branch model) and E-14 (production deploy is a deliberate step; the test environment deploys automatically from `dev`, see `staging-deploy-and-backup.md`). Host setup, backups and restore: `staging-deploy-and-backup.md`.
 
 ## Release chain
 
