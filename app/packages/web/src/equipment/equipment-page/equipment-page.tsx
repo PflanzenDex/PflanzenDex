@@ -1,14 +1,20 @@
 import { useCallback, useEffect } from "react";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
+import { errorText } from "@/lib/error-text";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { EquipmentForm } from "../equipment-form/equipment-form";
 import {
   loadEquipment,
   recordEquipment,
+  setEquipmentStatus,
+  setLampZone,
+  type EquipmentData,
   type EquipmentInput,
   type EquipmentRow,
+  type EquipmentStatus,
 } from "../equipment-api";
 import { STATUS_LABELS, TYPE_LABELS } from "../labels";
+import { ZonesView } from "../zones-view/zones-view";
 import { EquipmentPageSkeleton } from "./equipment-page.skeleton";
 
 const KEY = ["equipment", "list"] as const;
@@ -21,7 +27,7 @@ const focusForm = () =>
     ?.focus();
 
 /** One record: what is missing reads "unbekannt", never a guess (P-08). */
-function Card({ item }: { item: EquipmentRow }) {
+function Card({ item, zone }: { item: EquipmentRow; zone: string | undefined }) {
   const maker = [item.manufacturer, item.model].filter(Boolean).join(" ");
   const price =
     item.priceEur === null ? UNKNOWN : `${item.priceEur.toFixed(2).replace(".", ",")} €`;
@@ -37,6 +43,12 @@ function Card({ item }: { item: EquipmentRow }) {
         <dd className="m-0">{maker || UNKNOWN}</dd>
         <dt>Produkt-ID</dt>
         <dd className="m-0 break-all">{item.productId ?? UNKNOWN}</dd>
+        {item.type === "Lamp" ? (
+          <>
+            <dt>Lichtzone</dt>
+            <dd className="m-0">{zone ?? "ohne Zone"}</dd>
+          </>
+        ) : null}
         <dt>Preis</dt>
         <dd className="m-0">{price}</dd>
         <dt>Gekauft am</dt>
@@ -47,13 +59,46 @@ function Card({ item }: { item: EquipmentRow }) {
   );
 }
 
-function Body(props: {
-  items: readonly EquipmentRow[];
-  api: string;
-  token: Token;
-  onWritten: () => void;
-}) {
+type LampRef = { id: string; name: string };
+
+/** The writes on a lamp (US-EQU-02): move it to another zone, set its state; the answer is shown above the zones. */
+function useLampActions(api: string, token: Token, onWritten: () => void) {
+  const write = useWriteAction(token, onWritten);
+  const actions = {
+    busy: write.running,
+    onZone: (lamp: LampRef, lightZoneId: string) =>
+      void write.run(
+        (t) => setLampZone(api, t, { id: lamp.id, lightZoneId }),
+        `Lampe „${lamp.name}“ umgezogen.`,
+      ),
+    onStatus: (lamp: LampRef, status: EquipmentStatus) =>
+      void write.run(
+        (t) => setEquipmentStatus(api, t, { id: lamp.id, status }),
+        `Zustand von „${lamp.name}“ gespeichert.`,
+      ),
+  };
+  return { actions, message: write.message, error: write.error };
+}
+
+function LampOutcome(props: { message: string | null; error: { code: string } | null }) {
+  if (props.error)
+    return (
+      <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
+        {errorText(props.error.code)}
+      </p>
+    );
+  return props.message ? (
+    <p role="status" className="rounded-lg border border-border p-3">
+      {props.message}
+    </p>
+  ) : null;
+}
+
+function Body(props: { data: EquipmentData; api: string; token: Token; onWritten: () => void }) {
   const write = useWriteAction(props.token, props.onWritten);
+  const lamps = useLampActions(props.api, props.token, props.onWritten);
+  const items = props.data.items;
+  const zoneNames = new Map(props.data.zones.zones.map((z) => [z.zoneId, z.name]));
   const send = async (input: EquipmentInput): Promise<boolean> => {
     let saved = false;
     await write.run(async (t) => {
@@ -65,7 +110,7 @@ function Body(props: {
   };
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      {props.items.length === 0 ? (
+      {items.length === 0 ? (
         <EmptyState
           title="Noch kein Equipment erfasst"
           description="Erfasse Lampen, Zeitschaltuhren, Substrat und mehr. Nur Art und Name sind nötig."
@@ -76,12 +121,15 @@ function Body(props: {
           className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3"
           aria-label="Dein Equipment"
         >
-          {props.items.map((item) => (
-            <Card key={item.id} item={item} />
+          {items.map((item) => (
+            <Card key={item.id} item={item} zone={zoneNames.get(item.lightZoneId ?? "")} />
           ))}
         </ul>
       )}
+      <LampOutcome message={lamps.message} error={lamps.error} />
+      <ZonesView view={props.data.zones} actions={lamps.actions} />
       <EquipmentForm
+        zones={props.data.zones.zones}
         running={write.running}
         message={write.message}
         error={write.error}
@@ -132,10 +180,10 @@ export function EquipmentPage(props: { api: string; token: Token; host?: Host })
           loadingText="Equipment wird geladen …"
           loadingFallback={<EquipmentPageSkeleton label="Equipment wird geladen …" />}
         >
-          {(items: readonly EquipmentRow[]) => (
+          {(data: EquipmentData) => (
             <>
-              <ReportCaption host={host} count={items.length} />
-              <Body items={items} api={api} token={token} onWritten={reload} />
+              <ReportCaption host={host} count={data.items.length} />
+              <Body data={data} api={api} token={token} onWritten={reload} />
             </>
           )}
         </LoadFrame>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button/button";
 import { Form, FormRoot } from "@/components/ui/fields/form/form";
 import { errorText } from "@/lib/error-text";
 import type { ApiError } from "../../kernel";
-import { OptionalFields, RequiredFields } from "./fields/fields";
+import { OptionalFields, RequiredFields, ZoneField } from "./fields/fields";
 import {
   EMPTY_FIELDS,
   equipmentSchema,
@@ -33,6 +33,7 @@ function useServerRefusal(error: ApiError | null, setError: UseFormSetError<Equi
 
 /** The form to record equipment (US-EQU-01): only type and name are required, the rest stays unknown (P-08). */
 export function EquipmentForm(props: {
+  zones: readonly { zoneId: string; name: string }[];
   running: boolean;
   message: string | null;
   error: ApiError | null;
@@ -72,6 +73,7 @@ export function EquipmentForm(props: {
       <Form {...form}>
         <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
           <RequiredFields control={form.control} />
+          <ZoneField control={form.control} zones={props.zones} />
           <OptionalFields control={form.control} />
           <Button type="submit" size="touch" disabled={pending}>
             {pending ? "Speichert …" : "Equipment speichern"}

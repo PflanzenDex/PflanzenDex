@@ -1,4 +1,4 @@
-import type { Control } from "react-hook-form";
+import { useWatch, type Control } from "react-hook-form";
 import { EQUIPMENT_LIMITS, EQUIPMENT_TYPES } from "@pflanzendex/core";
 import {
   FormControl,
@@ -40,6 +40,40 @@ function TextField(props: {
             />
           </FormControl>
           {props.hint ? <FormDescription>{props.hint}</FormDescription> : null}
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
+/** A lamp belongs to exactly one light zone, chosen from the list (US-EQU-02); no other type has one. */
+export function ZoneField(props: {
+  control: Control<EquipmentFields>;
+  zones: readonly { zoneId: string; name: string }[];
+}) {
+  const type = useWatch({ control: props.control, name: "type" });
+  if (type !== "Lamp") return null;
+  return (
+    <FormField
+      control={props.control}
+      name="lightZoneId"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Lichtzone</FormLabel>
+          <FormControl>
+            <Select {...field}>
+              <option value="">Bitte wählen</option>
+              {props.zones.map((z) => (
+                <option key={z.zoneId} value={z.zoneId}>
+                  {z.name}
+                </option>
+              ))}
+            </Select>
+          </FormControl>
+          <FormDescription>
+            Ohne Lichtzonen lege zuerst unter „Standorte verwalten“ die Zonen an.
+          </FormDescription>
           <FormMessage />
         </FormItem>
       )}
