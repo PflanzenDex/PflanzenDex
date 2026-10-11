@@ -81,7 +81,7 @@ browser --https--> upstream proxy --http :80--> proxy (Caddy) --+--> web        
 How it fits together:
 
 - **One variable picks the mode.** `CADDY_SCHEME=http://` makes Caddy serve both hostnames on plain HTTP :80 without certificates (this setup). Empty makes Caddy get its own certificates (host facing the internet). Forwarded headers are believed only from `TRUSTED_PROXIES` (the upstream proxy's address); from anyone else they are overwritten. Keycloak builds its public links from them (`KC_PROXY_HEADERS=xforwarded`) and from `KC_HOSTNAME` (= `AUTH_URL`), so make the upstream proxy pass `X-Forwarded-Proto: https`.
-- **Keycloak** (`quay.io/keycloak/keycloak:26.8.0`, same as `make auth-up`) runs in production mode (`start`) with HTTP enabled inside the network. Its data lives in its own database `keycloak` with its own role in the existing `db` service (a second PostgreSQL would cost 100+ MB of the scarce memory). The one-shot `keycloak-db` creates role and database idempotently on every `up`, also on an existing volume, and revokes `CONNECT` on the app database from everyone but the cluster user: the sign-in role cannot reach tenant data (P-04). Port 8080 and the management port 9000 are not published.
+- **Keycloak** (`quay.io/keycloak/keycloak:26.8.0`, same as `make auth-up`) runs in production mode (`start`) with HTTP enabled inside the network. Its data lives in its own database `keycloak` with its own role in the existing `db` service (a second PostgreSQL would cost 100+ MB of the scarce memory). The one-shot `keycloak-db` creates role and database idempotently on every `up`, also on an existing volume, and revokes `CONNECT` on the app database from everyone but the cluster user: the sign-in role cannot reach tenant data (P-04). Port 8080 is published only on the host's loopback (`127.0.0.1:${KEYCLOAK_ADMIN_PORT}`, default 8180) for the admin console over an SSH tunnel (see "Admin console over an SSH tunnel"); the management port 9000 is not published.
 - **Realm** `pflanzendex` is imported on the first start from `app/config/deploy/keycloak/pflanzendex-realm.json`. It matches the development realm (clients `pflanzendex-api` and `pflanzendex-web` with S256 PKCE, audience mapper, `fullScopeAllowed: false`, access token 5 minutes (ADR 0009), password policy `length(10)`, login theme `pflanzendex`, email verification, self-registration) and differs in three ways: no test users, redirect addresses and web origin come from `APP_URL` (placeholder `${WEB_BASE_URL}`), SMTP comes from `SMTP_*` (placeholders `${KC_SMTP_*}`). Checked on 2026-10-11 with Keycloak 26.8.0: string placeholders (also inside arrays and empty values) are resolved; for booleans they are not reliable (see `invitation-phase.md`), which is why `registrationAllowed` stays a command, not a placeholder. **A changed realm file does not touch an existing realm** (`IGNORE_EXISTING`): change a live realm in the admin console or with `kcadm.sh`; to re-import, drop the `keycloak` database (`docker compose ... stop keycloak`, then drop and re-run `up`) and lose its accounts.
 - **API settings.** `OIDC_ISSUER` is the public issuer (`${AUTH_URL}/realms/pflanzendex`), because tokens carry it in `iss`. The API does not fetch keys through that public address (that would need the host to reach its own proxy and TLS): `OIDC_JWKS_URL=http://keycloak:8080/realms/pflanzendex/protocol/openid-connect/certs` points the key fetch inside the network, while signature, issuer and audience (`OIDC_AUDIENCE=pflanzendex-api`) are still checked as before (test `token.test.ts`, TE-03). `WEB_ORIGIN=${APP_URL}` sets CORS; `AI_RESOURCE_URL=${APP_URL}/api/mcp`.
 - **Web build.** `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID` and `VITE_API_URL=${APP_URL}/api` are build arguments of `web.Dockerfile` (Vite compiles them into the bundle), so changing `APP_URL` or `AUTH_URL` needs a rebuild (`make deploy` does it). The API is reached under `/api` on the same origin, so there is no cross-origin call; the proxy removes the `/api` prefix.
@@ -120,13 +120,13 @@ curl -s -H 'Host: auth.example.test' -H 'X-Forwarded-Proto: https' http://127.0.
 # expected issuer: https://auth.example.test/realms/pflanzendex
 ```
 
-Note: `deploy.sh` checks out the ref in the checkout (detached HEAD). Production stays a deliberate step (E-14); the test environment is deployed by `deploy-test.yml` (see "Automatic deploy of the test environment (TE-19)").
+Note: `deploy.sh` checks out the ref in the checkout (detached HEAD). Every deploy is a deliberate, manual step (E-14); from GitHub it is the workflow `deploy.yml` (see "Deploying with GitHub Actions (TE-19)").
 
 ### First account and the operator role
 
 1. Open `https://app.example.test`, press the sign-in button and choose register (self-registration is on in the test environment). Keycloak asks for email confirmation.
 2. Open `https://auth.example.test/mail/` (the mail catcher), open the email and follow the link; set the password (at least 10 characters). Sign in; the first sign-in creates the account.
-3. Make the account the operator: follow `invitation-phase.md` steps 4 to 5. The subject is the Keycloak user id (`kcadm.sh get users -r pflanzendex -q email=<email> --fields id`; the admin console `/admin/` is blocked on the public name by the path blocks, see "Public test environment through Tailscale Funnel"). `compose` there stands for `docker compose --env-file app/config/deploy/.env`; the compose files come from `COMPOSE_FILE`, so no `-f` is needed. The tab "Betreiber" appears after a reload.
+3. Make the account the operator: follow `invitation-phase.md` steps 4 to 5. The subject is the Keycloak user id (`kcadm.sh get users -r pflanzendex -q email=<email> --fields id`; the admin console `/admin/` is blocked on the public name; open it over an SSH tunnel, see "Admin console over an SSH tunnel"). `compose` there stands for `docker compose --env-file app/config/deploy/.env`; the compose files come from `COMPOSE_FILE`, so no `-f` is needed. The tab "Betreiber" appears after a reload.
 
 ### Closing self-registration
 
@@ -238,7 +238,7 @@ curl -s -o /dev/null -w '%{http_code}\n' https://auth.example-tailnet.ts.net/mai
 
 If the app answers 404 or the issuer shows `http://`, the forwarded headers are not as described above: temporarily add `log` to the site blocks of `proxy.Caddyfile` on the host (do not commit it), read `docker compose logs proxy` and report what `Host` and `X-Forwarded-*` look like.
 
-Then register the first account and follow "First account and the operator role" with these differences: the admin console is **not** reachable on the public name; use `kcadm.sh` ("Operator work without the admin console" below). The mail catcher is `https://auth.example-tailnet.ts.net/mail/` with the basic-auth login.
+Then register the first account and follow "First account and the operator role" with these differences: the admin console is **not** reachable on the public name; use the SSH tunnel ("Admin console over an SSH tunnel" below) or `kcadm.sh` ("Operator work without the admin console"). The mail catcher is `https://auth.example-tailnet.ts.net/mail/` with the basic-auth login.
 
 ### Switching an existing installation to the Funnel names
 
@@ -268,9 +268,27 @@ Then register the first account and follow "First account and the operator role"
 
    (`keycloak-db` creates the empty database again; the bootstrap admin is created again from `KEYCLOAK_ADMIN_*`.) This loses all accounts and sessions.
 
+### Admin console over an SSH tunnel
+
+**Why `/admin/` answers 404 on the public name.** `proxy.Caddyfile` blocks `/admin*`, `/realms/master*`, `/metrics*` and `/health*` on the sign-in host. The admin console controls every account and the realm settings; on a public name anyone could try passwords against it. The block lives in the base Caddyfile, so it applies to every installation, not only the test environment.
+
+**How the console is reached instead.** Keycloak gives the admin console and the master realm their own address, `KC_HOSTNAME_ADMIN=http://localhost:${KEYCLOAK_ADMIN_PORT}` (default port 8180), and publishes its HTTP port on the host's loopback only (`127.0.0.1:8180`). Nothing on the network can reach that port; only someone who can log in to the host over SSH can forward it. The public issuer (`AUTH_URL/realms/pflanzendex`) and the login pages stay unchanged.
+
+1. On your workstation, open the tunnel (keeps running in that terminal):
+
+   ```bash
+   ssh -N -L 8180:127.0.0.1:8180 <host>
+   ```
+
+2. Open `http://localhost:8180/admin/master/console/` in the browser on that workstation.
+3. Log in as `KEYCLOAK_ADMIN_USER` (default `admin`) with `KEYCLOAK_ADMIN_PASSWORD` from `app/config/deploy/.env` on the host. Read it there without copying the file anywhere: `ssh <host> "grep '^KEYCLOAK_ADMIN_PASSWORD=' <repo>/app/config/deploy/.env | cut -d= -f2"`. Change it in the console afterwards if you like (the `.env` value is used only for the first start of an empty database).
+4. Close the tunnel with Ctrl+C when done.
+
+If port 8180 is taken on the host or the workstation, set `KEYCLOAK_ADMIN_PORT` in `.env`, redeploy, and use the same number on both sides of `-L`. The local port in the browser must equal `KEYCLOAK_ADMIN_PORT`, because Keycloak builds the console's links from it.
+
 ### Operator work without the admin console
 
-`/admin*` is blocked on the public name, so run realm work inside the container (`docker compose --env-file app/config/deploy/.env exec keycloak /opt/keycloak/bin/kcadm.sh ...`, as in "Closing self-registration") or, for the admin console in a browser, publish `127.0.0.1:8080:8080` for `keycloak` in a local, uncommitted override file and forward it with `ssh -L 8080:127.0.0.1:8080 <host>`. The operator role steps of `invitation-phase.md` use `kcadm.sh get users` and need no console.
+Everything the console does also works on the command line inside the container, without a tunnel: `docker compose --env-file app/config/deploy/.env exec keycloak /opt/keycloak/bin/kcadm.sh ...` (log in first with `kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin`, as in "Closing self-registration"). The operator role steps of `invitation-phase.md` use `kcadm.sh get users` and need no console.
 
 ### Limits and when to leave this setup
 
@@ -280,68 +298,75 @@ Then register the first account and follow "First account and the operator role"
 - Certificates are requested per name and node; recreating state volumes repeatedly hits Let's Encrypt rate limits (up to 34 hours of lockout).
 - Production should run on a VPS or a host with its own domain: `CADDY_SCHEME` empty (Caddy gets certificates), no `docker-compose.test.yml` (real `SMTP_*` instead of the mail catcher) and no Funnel overlay. The path blocks in `proxy.Caddyfile` apply there too.
 
-## Automatic deploy of the test environment (TE-19)
+## Deploying with GitHub Actions (TE-19)
 
-Ticket TE-19 (#749). Production stays a deliberate step (E-14, release tag); the test environment deploys itself from `dev` after green CI. The workflow is `.github/workflows/deploy-test.yml`.
+Ticket TE-19 (#749). The workflow `.github/workflows/deploy.yml` ("Deploy") deploys a ref to the environment `test` or `prod`. It runs **only when started by hand** (Actions, "Deploy", "Run workflow"); nothing deploys as a side effect of a merge (E-14).
 
 ```text
-merge into dev -> CI (push run on dev) green -> deploy-test.yml (GitHub-hosted runner)
-  -> joins the tailnet as a short-lived node tag:ci (Tailscale OAuth client, secrets of the environment "test")
-  -> Tailscale SSH as user "deploy" to the test host (tag:pflanzendex-deploy)
-  -> app/config/deploy/scripts/deploy.sh <sha>   (backup, migrations, smoke test, automatic rollback)
+Run workflow (environment, ref) -> guard on the runner -> joins the tailnet as a short-lived node tag:ci
+  -> Tailscale SSH as user "deploy" to the host of that environment
+  -> app/config/deploy/scripts/deploy.sh <full sha>   (backup, migrations, smoke test, automatic rollback)
 ```
 
-### What happens on a merge
+### Rules per environment
 
-1. The squash merge creates a push to `dev`; the workflow `CI` runs for it (the PR run already checked the change, this run checks the merged result).
-2. When that run succeeds, `deploy-test.yml` starts (`workflow_run`). It ignores runs that failed, that are not push runs, that belong to another branch or that come from a fork.
-3. The job waits for the environment `test` (deployment branches limited to `dev`), joins the tailnet with the Tailscale action (pinned to a commit SHA) and runs `deploy.sh <full SHA of the tested commit>` on the host over SSH. Only one deploy runs at a time (`concurrency: deploy-test`, a running deploy is never cancelled).
-4. The log tail and the line `Deploy ok: <version> (<sha>, <ref>)` are in the job summary. The deployment shows up under "Deployments" of the repository and in the environment `test`.
+| Environment | Allowed refs                                                                   | Version                                              |
+| ----------- | ------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| `test`      | any branch, tag or commit of this repository                                   | snapshots allowed (`git describe` = `vX.Y.Z-N-g<sha>`) |
+| `prod`      | only a commit on `main` that carries a stable release tag `vX.Y.Z`             | non-snapshot only                                    |
+
+- **Snapshot** means every state that is not exactly a release (ADR 0002: releases are the tags `vX.Y.Z` that semantic-release creates on `main`; `deploy.sh` shows the version as `git describe --tags --always`, so anything after a tag reads `vX.Y.Z-N-g<sha>`). **Non-snapshot** means: the resolved commit has a tag matching `^vX.Y.Z$` (digits only, no pre-release suffix) and is an ancestor of `origin/main`. The seed tag `v0.0.0` is not a release.
+- The guard runs on the runner right after checkout (full history and tags), before the tailnet join and before any contact with the host. It resolves the ref to a full SHA, checks the rule above and the configuration, and fails with a clear message, for example `prod refused: <sha> is a snapshot, not a stable release tag (vX.Y.Z) on main.` or `Variable DEPLOY_HOST is not set in the GitHub environment prod`.
+- `ref` defaults to the branch the workflow is run from. For `prod` run the workflow from `main` and enter the release tag (for example `v0.4.0`) as `ref`.
+- Only people with write access can start workflows; forks cannot. The host receives the full SHA, never a branch name, and fetches `origin` with tags before it checks the commit out.
+- One deploy per environment at a time (`concurrency: deploy-<environment>`, a running deploy is never cancelled).
 
 ### One-time setup (owner)
 
-Nothing below goes into the repo: hostnames, tailnet name and secrets stay with the owner (the repo is public). Placeholders: `<host>` is the tailnet name of the test host, `<repo-path>` is the checkout on the host.
+Nothing below goes into the repo: hostnames, tailnet name and secrets stay with the owner (the repo is public). Placeholders: `<host>` is the tailnet name of the host, `<repo-path>` the checkout on it.
 
-1. **Host:** install `tailscaled` as a system service in userspace mode (no TUN device, outbound only) and join with Tailscale SSH and the tag, using an auth key or OAuth client that may create nodes with this tag: `tailscale up --ssh --advertise-tags=tag:pflanzendex-deploy`. Create the Linux user `deploy` (member of the `docker` group, owner of the checkout, `git fetch` works from it). Give the host a stable machine name; this is `<host>`.
-2. **Tailnet policy:** add the tags and exactly one SSH rule for `tag:ci`:
+1. **Test host:** install `tailscaled` as a system service in userspace mode (no TUN device, outbound only) and join with Tailscale SSH and the tag: `tailscale up --ssh --advertise-tags=tag:pflanzendex-deploy`. Create the Linux user `deploy` (member of the `docker` group, owner of the checkout, `git fetch` works from it).
+2. **Prod host (does not exist yet):** the same with `--advertise-tags=tag:pflanzendex-prod`. Until it exists, leave `DEPLOY_HOST` unset in the environment `prod`; the workflow then fails at once with a clear message.
+3. **Tailnet policy:** the tags and one SSH rule per target; `tag:ci` gets nothing else:
 
    ```json
    "tagOwners": {
      "tag:ci": ["autogroup:admin"],
-     "tag:pflanzendex-deploy": ["autogroup:admin"]
+     "tag:pflanzendex-deploy": ["autogroup:admin"],
+     "tag:pflanzendex-prod": ["autogroup:admin"]
    },
    "ssh": [
-     { "action": "accept", "src": ["tag:ci"], "dst": ["tag:pflanzendex-deploy"], "users": ["deploy"] }
+     { "action": "accept", "src": ["tag:ci"], "dst": ["tag:pflanzendex-deploy"], "users": ["deploy"] },
+     { "action": "accept", "src": ["tag:ci"], "dst": ["tag:pflanzendex-prod"], "users": ["deploy"] }
    ]
    ```
 
-   Add no `acls` entry for `tag:ci` (the SSH rule is enough for Tailscale SSH, nothing else in the tailnet becomes reachable). If the policy has a catch-all `acls` rule such as `*:*`, tighten it so that `tag:ci` is not covered.
+   Add no `acls` entry for `tag:ci`; if a catch-all `*:*` rule exists, tighten it so `tag:ci` is not covered.
 
-3. **OAuth client** (Tailscale admin console, Settings, OAuth clients): scope "Auth Keys" with write access, tag `tag:ci` only. Copy the client id and secret once.
-4. **GitHub environment `test`** (repository Settings, Environments): "Deployment branches and tags" limited to the selected branch `dev`; no other branch can use the environment. Add the **environment secrets** (not repository secrets, so a pull request from a fork never sees them) `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_SECRET`, and the **environment variables** `TEST_HOST` (`<host>`, a MagicDNS name) and `TEST_REPO_PATH` (`<repo-path>`; default if unset: `/opt/pflanzendex`). Required reviewers are optional; with them the deploy waits for an approval.
-5. **CI on `dev`:** `ci.yml` must run for pushes to `dev` (`on.push.branches: [main, dev]`); without that run there is nothing for `deploy-test.yml` to wait for.
-6. **Check:** run the workflow by hand (below) and watch the job summary; then merge a small change into `dev` and confirm that the deployment appears without a manual step. Check the isolation once: `tailscale ssh` as `tag:ci` to any other node is refused, and a push to another branch cannot start the job (the environment rejects it).
+4. **OAuth client** (Tailscale admin console, Settings, OAuth clients): scope "Auth Keys" with write access, tag `tag:ci` only. One client for both environments, or one per environment (then the prod client can be revoked on its own).
+5. **GitHub environments** (repository Settings, Environments). Both use the same names, set per environment: **secrets** `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`; **variables** `DEPLOY_HOST` (`<host>`, a MagicDNS name) and `DEPLOY_REPO_PATH` (`<repo-path>`, default if unset: `/opt/pflanzendex`).
+   - `test`: "Deployment branches and tags" set to **all branches** (no restriction), because the test environment may deploy from any branch. Its secrets are still out of reach for fork pull requests: nothing on `pull_request` uses the environment, forks cannot dispatch workflows, and environment secrets are never given to fork runs.
+   - `prod`: "Deployment branches and tags" limited to the branch `main` and the tag pattern `v*`; optionally add required reviewers so every prod deploy waits for an approval.
+6. **Check:** run "Deploy" for `test` with `dev`, then try `prod` with a branch and with `main` (both must be refused by the guard before the tailnet join), and later with a release tag.
 
 ### Deploy by hand
 
-Actions, "Deploy test environment", "Run workflow": pick `dev` as the workflow's branch (the environment accepts no other) and optionally a `ref` (branch, tag or commit; default `dev`). The ref must be part of `dev`, so this also rolls back to an earlier commit of `dev`. The workflow resolves it to a full SHA first.
+Actions, "Deploy", "Run workflow": choose the workflow's branch (`main` for prod), the environment and optionally a `ref`. This also rolls back: choose an earlier commit (test) or an earlier release tag (prod).
 
-### Pause auto-deploy
+### Pause deploys
 
-- Disable the workflow: Actions, "Deploy test environment", menu, "Disable workflow" (or `gh workflow disable deploy-test.yml`). Enable it again the same way.
-- Or hard stop: remove the secret `TS_OAUTH_SECRET` from the environment, or add required reviewers to it. Revoking the OAuth client in the Tailscale admin console cuts the path completely.
+Disable the workflow (Actions, "Deploy", menu, "Disable workflow", or `gh workflow disable deploy.yml`), or remove `TS_OAUTH_SECRET` from the environment. Revoking the OAuth client in the Tailscale admin console cuts the path completely.
 
 ### Reading a failed run
 
-Open the run, step "deploy": the last 60 lines of the `deploy.sh` output are printed and repeated in the summary. `deploy.sh` rolls back to the previous ref by itself when the build, a migration, the health checks or the smoke test fail, so the test environment keeps running the previous version; the step still exits non-zero and the run is red. Lines to look for: `ERROR: deploy of ... failed; rolling back`, then `ROLLBACK ok` (previous version is live again) or `ROLLBACK FAILED` (manual intervention on the host, see `release-and-rollback.md`). Migrations are not rolled back (restore the pre-deploy backup for data problems). An SSH or Tailscale error before any `deploy.sh` output means a setup problem (policy, tag, expired or revoked OAuth client, wrong `TEST_HOST`); the host was not touched. The queue keeps only the newest waiting run, so after a burst of merges the latest commit wins.
+Open the run. A red "target" step is a guard or configuration failure (nothing was contacted). In the step "deploy" the last 60 lines of the `deploy.sh` output are printed and repeated in the summary. `deploy.sh` rolls back to the previous ref by itself when the build, a migration, the health checks or the smoke test fail, so the environment keeps running the previous version; the run is still red. Lines to look for: `ERROR: deploy of ... failed; rolling back`, then `ROLLBACK ok` (previous version live again) or `ROLLBACK FAILED` (manual intervention on the host, see `release-and-rollback.md`). Migrations are not rolled back (restore the pre-deploy backup for data problems). An SSH or Tailscale error before any `deploy.sh` output means a setup problem (policy, tag, revoked OAuth client, wrong `DEPLOY_HOST`); the host was not touched.
 
 ### Security notes
 
-- **Who can run code on the host:** whoever controls the workflow file or the OAuth secret can run commands as `deploy` (member of the `docker` group) on the test host. Contained by the isolated network of the host (no inbound connections), the environment restriction to `dev` (merging into `dev` needs a pull request and green `ci-status`; workflow files are gate files that the owner reviews), and the single SSH rule for `tag:ci`.
-- **Forks and other branches:** environment secrets and variables are released only to jobs on `dev`. Fork pull requests do not get secrets at all; `workflow_run` is ignored for runs whose head repository is not this repository; the job also checks that the branch is `dev`.
-- **Untrusted input:** the job never puts event data into a shell script; everything arrives through `env:`, is validated (full SHA, host name, path) and quoted. The job does not check out or run repository code on the runner; only the host runs `deploy.sh`.
-- **Blast radius of `tag:ci`:** it can open Tailscale SSH sessions as `deploy` on `tag:pflanzendex-deploy` and nothing else. The node is ephemeral and disappears after the run.
-- **Host key:** Tailscale SSH authenticates the host by its tailnet node key, so the SSH host key adds nothing on top. The workflow uses `StrictHostKeyChecking=accept-new` (the runner starts with an empty `known_hosts`; `yes` would fail on every run, `no` would also accept a changed key).
+- **Who can run code on a host:** whoever can edit the workflow on a branch the environment accepts, or holds the OAuth secret, can run commands as `deploy` (member of the `docker` group) on that host. Contained by the isolated network of the hosts (no inbound connections), the single SSH rule per target for `tag:ci`, the `prod` restriction to `main` and `v*` tags (changing `main` needs a pull request and a green `ci-status`; workflow files are gate files that the owner reviews), and optional required reviewers. The `test` environment accepts all branches, so a writer can deploy any branch there; that is the intended trade-off and why the test host holds no real data.
+- **Untrusted input:** the workflow never puts event data into a shell script; inputs arrive through `env:`, are validated (ref, host name, path, full SHA) and quoted. The runner checks out the repository only to read history and tags and runs no repository code; only the host runs `deploy.sh`.
+- **Blast radius of `tag:ci`:** it can open Tailscale SSH sessions as `deploy` on the tagged hosts and nothing else. The node is ephemeral and disappears after the run.
+- **Host key:** Tailscale SSH authenticates the host by its tailnet node key. The workflow uses `StrictHostKeyChecking=accept-new` (the runner starts with an empty `known_hosts`; `yes` would fail on every run, `no` would also accept a changed key).
 
 ## Health check (US-DEV-09)
 
