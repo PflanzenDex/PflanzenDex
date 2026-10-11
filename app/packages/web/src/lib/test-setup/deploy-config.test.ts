@@ -100,6 +100,8 @@ describe("TE-03 · public test environment through Tailscale Funnel", () => {
 
   it("TE-03 only the two Tailscale nodes are trusted proxies: fixed subnet and addresses", () => {
     expect(funnel).toContain("subnet: 172.29.40.0/24");
+    // Dynamic addresses stay outside the fixed ones, otherwise an earlier container takes .2 or .3.
+    expect(funnel).toContain("ip_range: 172.29.40.128/25");
     expect(service(funnel, "ts-app")).toContain("ipv4_address: 172.29.40.2");
     expect(service(funnel, "ts-auth")).toContain("ipv4_address: 172.29.40.3");
     expect(envExample).toContain("TRUSTED_PROXIES=172.29.40.2/32 172.29.40.3/32");
