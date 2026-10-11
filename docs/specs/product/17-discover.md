@@ -118,7 +118,7 @@ Acceptance criteria:
 
 Assumptions, decided by the PO (revisable): the warning offers one button "Entdecken für <zone>" per zone below the buffer; it opens Discover at `/discover?view=suggestions&zone=<n>` (n = zone number 2 to 4, the n-th zone of the account, as in US-ENT-03). `GET /discover/suggestions` takes the same `zone` parameter (anything but 2 to 4 is `input.invalid`) and answers `zoneFilter` with the zone, its name, the number of candidates of the zone and, if that number is below the account's buffer (US-WUN-02, default 2), a `shortfall` with the text and the next action. The filter keeps species whose catalog light zone equals the zone; exploration picks of other zones are left out; a species without a known zone is not shown as fitting (P-08). The view names the zone and shows the shortfall with the link "Art vorschlagen" (US-BES-01; newly proposed species go through the catalog and its review, US-POK-02). Not built yet: the "Fetch suggestions" (AI research, US-WUN-04) offer in the shortfall, because that story does not exist; the other keeper filters of US-ENT-02.
 
-### US-ENT-08 · Suggestions via the AI client · ⬜ new
+### US-ENT-08 · Suggestions via the AI client · 🟨 new
 
 As a **plant keeper** I want to be able to ask "What fits me next?" and get the same suggestions as in the view.
 
@@ -129,7 +129,7 @@ Acceptance criteria:
 - If the client adds knowledge about the species, it marks what does not come from the catalog (KI-R5).
 - Discover works completely without AI (FR-KI-05).
 
-Gap, noted by the PO assistant (US-ENT-08 not started): the operations `suggestions` (`GET /discover/suggestions`) and `decide` (`POST /discover/decisions`) exist and run without AI (FR-KI-05), so the part that needs no AI client is in place. Missing and blocked by the AI access (release R4): the connection of the client (US-KI-07, E-04), the tool definitions that expose both operations to it, the right model "write, otherwise draft" for `decide` (US-KI-09) and the marking of knowledge that does not come from the catalog (KI-R5).
+Built (assumption, decided by the PO): `GET /mcp/discover/suggestions` (read) and `POST /mcp/discover/decisions` (with "write" at once through `discover.decide`, with "create drafts" as a draft `discover_decision` the keeper adopts; "Later" writes nothing). Still open: the marking of the client's own knowledge (KI-R5), an undo of a written decision and the MCP wrapper. The earlier gap note follows for history. Gap, noted by the PO assistant (US-ENT-08 not started): the operations `suggestions` (`GET /discover/suggestions`) and `decide` (`POST /discover/decisions`) exist and run without AI (FR-KI-05), so the part that needs no AI client is in place. Missing and blocked by the AI access (release R4): the connection of the client (US-KI-07, E-04), the tool definitions that expose both operations to it, the right model "write, otherwise draft" for `decide` (US-KI-09) and the marking of knowledge that does not come from the catalog (KI-R5).
 
 ## Data model
 

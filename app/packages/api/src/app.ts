@@ -26,7 +26,7 @@ import { zoneStockFor } from "./zone-stock";
 import { bindHealth } from "./health";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
-import { discoverRoutes } from "./discover";
+import { discoverRoutes, discoverSourceFor } from "./discover";
 import { monitoringRoutes } from "./monitoring";
 import { aiAccessRoutes } from "./ai";
 import type { AppOptions } from "./app-options";
@@ -166,6 +166,7 @@ export function createApp(opt: AppOptions = {}): Hono {
       aiAccessRoutes(opt.pool, auth, opt.ai, {
         status: todayStatusSource(opt.pool, today),
         photo: measurementPhotoSourceFor(opt.pool, opt.media),
+        discover: discoverSourceFor(opt.pool, opt.zoneStock),
       }),
     );
   }

@@ -35,11 +35,7 @@ const MAX_DECK = 1000;
  * `source: discover`, No a discarded one, Later nothing. A species that is not suggested to the account is refused with
  * 409 `discover.not_suggested`. The decision is as private as the wishlist (P-04, FR-ENT-08).
  */
-export function discoverRoutes(
-  pool: Pool,
-  auth: MiddlewareHandler,
-  stock: ZoneStockSource = zoneStockFor(pool),
-): Hono<AuthEnv> {
+export function discoverDependencies(pool: Pool, stock: ZoneStockSource = zoneStockFor(pool)) {
   const specimens = new SpecimenPostgres(pool);
   const species = new SpeciesPostgres(pool);
   const taxa = new TaxonomyPostgres(pool);
@@ -49,7 +45,15 @@ export function discoverRoutes(
     wishes: new WishesPostgres(pool),
     stock,
   };
-  const decide = discoverDecide({ ...deps, clock: () => new Date() });
+  return { deps, decide: discoverDecide({ ...deps, clock: () => new Date() }) };
+}
+
+export function discoverRoutes(
+  pool: Pool,
+  auth: MiddlewareHandler,
+  stock: ZoneStockSource = zoneStockFor(pool),
+): Hono<AuthEnv> {
+  const { deps, decide } = discoverDependencies(pool, stock);
   const writes = { idempotency: new IdempotencyPostgres(pool) };
   const routes = new Hono<AuthEnv>();
   for (const path of DISCOVER_PATHS) routes.use(path, auth).use(`${path}/*`, auth);

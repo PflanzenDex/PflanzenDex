@@ -5,6 +5,7 @@ import {
   measurementAssess,
   speciesPropose,
   wishCreate,
+  type DiscoverSource,
   type DraftTypes,
 } from "@pflanzendex/core";
 import {
@@ -26,7 +27,7 @@ import type { Pool } from "pg";
  *   with `Assessed_By: AI suggestion accepted`; the code writes only after the keeper adopts it.
  * - `wish`: a wish candidate (US-KI-05, US-WUN-04), adopted through `wish.create` like the wishlist form.
  */
-export function draftTypes(pool: Pool): DraftTypes {
+export function draftTypes(pool: Pool, discover: DiscoverSource): DraftTypes {
   const wishes = new WishesPostgres(pool);
   const writes = { idempotency: new IdempotencyPostgres(pool) };
   const create = wishCreate({ wishes });
@@ -59,6 +60,11 @@ export function draftTypes(pool: Pool): DraftTypes {
           input: asSuggestion(content),
           idempotencyKey: key,
         }),
+    },
+    // A "Yes"/"No" on a suggestion of Discover (US-ENT-08): adopting runs `discover.decide` like the swipe buttons.
+    discover_decision: {
+      schema: discover.schema,
+      adopt: (userId, content, key) => discover.decide(userId, content, key),
     },
     wish: {
       schema: create.schema,
