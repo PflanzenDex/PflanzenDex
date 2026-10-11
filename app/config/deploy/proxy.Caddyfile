@@ -1,14 +1,42 @@
-# Reverse proxy with an automatic certificate (Let's Encrypt). The address comes from the environment (.env).
-# Locally: SITE_ADDRESS=localhost (Caddy then uses its internal CA, no public certificate).
-{$SITE_ADDRESS} {
+# Public entry for two hostnames: the app (web, /api, /health) and the sign-in service (Keycloak).
+# All values come from the environment (.env):
+#   CADDY_SCHEME     "http://" when TLS ends at a proxy in front of this host (plain HTTP on port 80, no certificates here);
+#                    empty when this host faces the internet (Caddy then gets certificates from Let's Encrypt;
+#                    locally with localhost names it uses its internal CA).
+#   APP_HOST, AUTH_HOST   bare hostnames without scheme.
+#   TRUSTED_PROXIES  addresses of the proxy in front; only from there X-Forwarded-* is believed (the sign-in service
+#                    builds its public links from them). Anything else gets its forwarded headers overwritten.
+{
+	servers {
+		trusted_proxies static {$TRUSTED_PROXIES}
+	}
+}
+
+(compress) {
 	# Text compression (NFR-12): Caddy negotiates zstd or gzip from Accept-Encoding; it skips images and other
 	# already-compressed types. Brotli would need a Caddy plugin, so it is not used (zstd compresses as well).
 	encode zstd gzip
-	@api path /health /api/*
-	handle @api {
+}
+
+{$CADDY_SCHEME}{$APP_HOST} {
+	import compress
+	# The API serves its routes without a prefix: /api/x is forwarded as /x. /health stays at the top.
+	handle /health {
+		reverse_proxy api:3000
+	}
+	handle_path /api/* {
 		reverse_proxy api:3000
 	}
 	handle {
 		reverse_proxy web:8080
+	}
+}
+
+{$CADDY_SCHEME}{$AUTH_HOST} {
+	import compress
+	# Files in /etc/caddy/conf.d/ add routes of the test environment (the mail catcher UI); none in production.
+	import /etc/caddy/conf.d/*
+	handle {
+		reverse_proxy keycloak:8080
 	}
 }

@@ -13,8 +13,8 @@ COPY config/project/tsconfig.base.json config/project/
 COPY packages/core packages/core
 COPY packages/db packages/db
 COPY packages/api packages/api
-ARG GIT_SHA=unbekannt
-ARG APP_VERSION=unbekannt
+ARG GIT_SHA=unknown
+ARG APP_VERSION=unknown
 ENV NODE_ENV=production GIT_SHA=$GIT_SHA APP_VERSION=$APP_VERSION PORT=3000
 USER node
 EXPOSE 3000

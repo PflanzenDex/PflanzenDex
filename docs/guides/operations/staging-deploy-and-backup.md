@@ -1,25 +1,28 @@
 # Runbook: deploy staging, back up, restore
 
-Ticket TE-03 (#40). Basis: E-01 (self-hosting, Docker Compose, one host), R-09, R-11, NFR-15, QG-S1. All files live in `app/config/deploy/`.
+Ticket TE-03 (#40). Basis: E-01 (self-hosting, Docker Compose, one host), R-09, R-11, NFR-15, QG-S1. All files live in `app/config/deploy/` (`docker/` holds the Dockerfiles and the web server config, `keycloak/` the realm and the database init).
 
 ## Overview
 
-| Service   | Job                                                                                               |
-| --------- | ------------------------------------------------------------------------------------------------- |
-| `proxy`   | Caddy: HTTPS with an automatic certificate; `/health` and `/api/*` go to the API, the rest to web |
-| `api`     | Hono API (Node 24, through tsx, because `core` is exported as TypeScript source)                  |
-| `web`     | static PWA (Vite build, Caddy)                                                                    |
-| `db`      | PostgreSQL 16, data in the `dbdata` volume                                                        |
-| `migrate` | one-shot, same image as `api`: applies pending SQL migrations, then exits (#201)                  |
+| Service       | Job                                                                                                                                                                                                                                       |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `proxy`       | Caddy: two hostnames (app, sign-in); plain HTTP behind a TLS-terminating proxy or HTTPS with automatic certificates; `/health` and `/api/*` (prefix removed) go to the API, the rest of the app host to web, the sign-in host to Keycloak |
+| `api`         | Hono API (Node 24, through tsx, because `core` is exported as TypeScript source)                                                                                                                                                          |
+| `web`         | static PWA (Vite build, Caddy)                                                                                                                                                                                                            |
+| `db`          | PostgreSQL 16, data in the `dbdata` volume                                                                                                                                                                                                |
+| `migrate`     | one-shot, same image as `api`: applies pending SQL migrations, then exits (#201)                                                                                                                                                          |
+| `keycloak`    | sign-in service (Keycloak 26.8, production mode), data in its own database in `db`; imports the realm `pflanzendex` on its first start                                                                                                    |
+| `keycloak-db` | one-shot: creates the sign-in role and database in `db`, idempotently (also on an existing volume)                                                                                                                                        |
+| `mailpit`     | test environment only (`docker-compose.test.yml`): catches the confirmation emails                                                                                                                                                        |
 
-The database is not exposed. Only the proxy listens (ports from `HTTP_PORT`/`HTTPS_PORT`).
+The database and Keycloak are not exposed. Only the proxy listens (ports from `HTTP_PORT`/`HTTPS_PORT`). Every service has a memory limit (starting values for a 3 GB host, assumptions; see "Memory" below).
 
-**Compression and caching (NFR-12):** the proxy compresses text responses (HTML, JS, CSS, JSON, SVG) with zstd or gzip, whichever `Accept-Encoding` asks for; Brotli would need a Caddy plugin and is not used. `web` sends `Cache-Control: public, max-age=31536000, immutable` for the hashed files under `/assets/` and `no-cache` (revalidate) for `index.html`, the service worker, the web manifest and SPA routes. The config is `app/config/deploy/proxy.Caddyfile` and `app/config/deploy/web.Caddyfile`; the test is `serving-headers.test.ts` in `app/packages/web/src/lib/test-setup/`.
+**Compression and caching (NFR-12):** the proxy compresses text responses (HTML, JS, CSS, JSON, SVG) with zstd or gzip, whichever `Accept-Encoding` asks for; Brotli would need a Caddy plugin and is not used. `web` sends `Cache-Control: public, max-age=31536000, immutable` for the hashed files under `/assets/` and `no-cache` (revalidate) for `index.html`, the service worker, the web manifest and SPA routes. The config is `app/config/deploy/proxy.Caddyfile` and `app/config/deploy/docker/web.Caddyfile`; the test is `serving-headers.test.ts` in `app/packages/web/src/lib/test-setup/`.
 
 ## One-time setup (host)
 
 1. Install Docker and Docker Compose, clone the repo.
-2. `cp app/config/deploy/.env.example app/config/deploy/.env` and fill in the values (a long random password, `SITE_ADDRESS` = domain). The file is in `.gitignore`; secrets never go into the repo (QG-S1).
+2. `cp app/config/deploy/.env.example app/config/deploy/.env` and fill in the values (long random passwords, `APP_URL`/`AUTH_URL` and `APP_HOST`/`AUTH_HOST` = the two public addresses, `KEYCLOAK_*`, `SMTP_*`; the template explains each). The file is in `.gitignore`; secrets never go into the repo (QG-S1).
 3. Schedule backups with cron or a timer, e.g. daily: `0 3 * * * cd /path/to/repo && make backup`.
 
 ## Deploy from `main`
@@ -32,22 +35,23 @@ To try another state: `app/config/deploy/scripts/deploy.sh origin/dev`. Builds a
 Migrations run on every deploy: the one-shot `migrate` service (same image as `api`, `packages/db/migrations`) applies pending files before the `api` starts (`depends_on: service_completed_successfully`). They are forward only and guarded by an advisory lock and checksums. A failing migration fails `compose up`, so `deploy.sh` rolls back to the previous ref and the API never runs against a half-migrated schema. Check with `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml logs migrate`. Migrations are not rolled back; use the pre-deploy backup (restore below) for data problems. Manual run: `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml run --rm migrate`.
 Rollback: `app/config/deploy/scripts/deploy.sh <earlier commit>`; for data problems, restore (below).
 
-Trying it locally (without a domain): `.env` with `SITE_ADDRESS=localhost`, then `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml up -d --build` and `curl -k https://localhost:8443/health`.
+Trying it locally (without a domain): `.env` with `CADDY_SCHEME=` (empty), `APP_HOST=localhost`, `AUTH_HOST=auth.localhost`, `APP_URL=https://localhost:8443`, `AUTH_URL=https://auth.localhost:8443`, then `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml up -d --build` and `curl -k https://localhost:8443/health`.
 
 ## Backup
 
 ```bash
-make backup          # app/config/deploy/backups/pflanzendex-<UTC time>.dump (pg_dump -Fc)
+make backup          # app/config/deploy/backups/pflanzendex-<UTC time>.dump and keycloak-<UTC time>.dump (pg_dump -Fc)
 ```
 
-The script verifies the file with `pg_restore -l`, deletes backups older than `BACKUP_RETENTION_DAYS` and copies them to `BACKUP_REMOTE` with `rsync` if set (second location, R-11). An unreadable backup fails with an error (a backup that cannot be restored is an incident, NFR-15).
+Each run writes two files when the sign-in service exists: `pflanzendex-*.dump` (app data) and `keycloak-*.dump` (identities, sessions, realm settings; without it nobody could sign in after a restore). The script verifies the file with `pg_restore -l`, deletes backups older than `BACKUP_RETENTION_DAYS` and copies them to `BACKUP_REMOTE` with `rsync` if set (second location, R-11). An unreadable backup fails with an error (a backup that cannot be restored is an incident, NFR-15).
 
 ## Restore
 
 ```bash
 # into a second database (safe, for checking):
 app/config/deploy/scripts/restore.sh app/config/deploy/backups/<file>.dump pdx_check
-# over the production database (overwrites it; stop the API first):
+# over the production database (overwrites it; stop the API first; a keycloak-*.dump goes into the sign-in database,
+# stop `keycloak` first instead):
 docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml stop api
 CONFIRM=yes app/config/deploy/scripts/restore.sh app/config/deploy/backups/<file>.dump
 docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml start api
@@ -63,16 +67,111 @@ Test log:
 | ---------- | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
 | 2026-10-03 | development machine (Docker) | `make restore-test` passed (500 rows, same checksum); backup and restore run against the Compose stack |
 
+## Test environment behind a reverse proxy
+
+Goal: a self-contained test environment with sign-in on one x86_64 Linux host (for example an LXC container with Docker, 2 cores, 3 GB RAM). TLS ends at a reverse proxy in front of the host; it forwards plain HTTP to the host's port 80 and sets `X-Forwarded-Proto`, `X-Forwarded-For` and `X-Forwarded-Host`. Two public hostnames point at the proxy (placeholders below, use your own): `app.example.test` (web, `/api`, `/health`) and `auth.example.test` (sign-in service, and the mail catcher under `/mail/`).
+
+```text
+browser --https--> upstream proxy --http :80--> proxy (Caddy) --+--> web          app.example.test/
+                                                                |--> api          app.example.test/api/*, /health
+                                                                |--> keycloak     auth.example.test/
+                                                                `--> mailpit      auth.example.test/mail/   (test only)
+```
+
+How it fits together:
+
+- **One variable picks the mode.** `CADDY_SCHEME=http://` makes Caddy serve both hostnames on plain HTTP :80 without certificates (this setup). Empty makes Caddy get its own certificates (host facing the internet). Forwarded headers are believed only from `TRUSTED_PROXIES` (the upstream proxy's address); from anyone else they are overwritten. Keycloak builds its public links from them (`KC_PROXY_HEADERS=xforwarded`) and from `KC_HOSTNAME` (= `AUTH_URL`), so make the upstream proxy pass `X-Forwarded-Proto: https`.
+- **Keycloak** (`quay.io/keycloak/keycloak:26.8.0`, same as `make auth-up`) runs in production mode (`start`) with HTTP enabled inside the network. Its data lives in its own database `keycloak` with its own role in the existing `db` service (a second PostgreSQL would cost 100+ MB of the scarce memory). The one-shot `keycloak-db` creates role and database idempotently on every `up`, also on an existing volume, and revokes `CONNECT` on the app database from everyone but the cluster user: the sign-in role cannot reach tenant data (P-04). Port 8080 and the management port 9000 are not published.
+- **Realm** `pflanzendex` is imported on the first start from `app/config/deploy/keycloak/pflanzendex-realm.json`. It matches the development realm (clients `pflanzendex-api` and `pflanzendex-web` with S256 PKCE, audience mapper, `fullScopeAllowed: false`, access token 5 minutes (ADR 0009), password policy `length(10)`, login theme `pflanzendex`, email verification, self-registration) and differs in three ways: no test users, redirect addresses and web origin come from `APP_URL` (placeholder `${WEB_BASE_URL}`), SMTP comes from `SMTP_*` (placeholders `${KC_SMTP_*}`). Checked on 2026-10-11 with Keycloak 26.8.0: string placeholders (also inside arrays and empty values) are resolved; for booleans they are not reliable (see `invitation-phase.md`), which is why `registrationAllowed` stays a command, not a placeholder. **A changed realm file does not touch an existing realm** (`IGNORE_EXISTING`): change a live realm in the admin console or with `kcadm.sh`; to re-import, drop the `keycloak` database (`docker compose ... stop keycloak`, then drop and re-run `up`) and lose its accounts.
+- **API settings.** `OIDC_ISSUER` is the public issuer (`${AUTH_URL}/realms/pflanzendex`), because tokens carry it in `iss`. The API does not fetch keys through that public address (that would need the host to reach its own proxy and TLS): `OIDC_JWKS_URL=http://keycloak:8080/realms/pflanzendex/protocol/openid-connect/certs` points the key fetch inside the network, while signature, issuer and audience (`OIDC_AUDIENCE=pflanzendex-api`) are still checked as before (test `token.test.ts`, TE-03). `WEB_ORIGIN=${APP_URL}` sets CORS; `AI_RESOURCE_URL=${APP_URL}/api/mcp`.
+- **Web build.** `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID` and `VITE_API_URL=${APP_URL}/api` are build arguments of `web.Dockerfile` (Vite compiles them into the bundle), so changing `APP_URL` or `AUTH_URL` needs a rebuild (`make deploy` does it). The API is reached under `/api` on the same origin, so there is no cross-origin call; the proxy removes the `/api` prefix.
+- **Mail.** The realm requires email confirmation. `docker-compose.test.yml` adds Mailpit (no ports published) and a Caddy route to its UI at `https://auth.example.test/mail/`; the realm sends to it by default. It shows every email, so it must exist only in the test environment. Production sets `SMTP_*` in `.env` and does not load the overlay.
+
+### One-time setup
+
+1. Install Docker and the Compose plugin, clone the repo, check out `dev`.
+2. Configure the upstream proxy: both hostnames to `http://<host>:80`, WebSocket not needed, forward `Host`, `X-Forwarded-Proto: https`, `X-Forwarded-For`. Note the proxy's address as seen from the host.
+3. `cp app/config/deploy/.env.example app/config/deploy/.env` and set at least:
+
+   | Variable                                                               | Value                                                                                                          |
+   | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+   | `POSTGRES_PASSWORD`, `KEYCLOAK_DB_PASSWORD`, `KEYCLOAK_ADMIN_PASSWORD` | three different random values, e.g. `openssl rand -hex 24` (hex only: the scripts source the file)             |
+   | `APP_URL`, `AUTH_URL`                                                  | `https://app.example.test`, `https://auth.example.test` (what the browser shows, no trailing slash)            |
+   | `APP_HOST`, `AUTH_HOST`                                                | `app.example.test`, `auth.example.test`                                                                        |
+   | `CADDY_SCHEME`                                                         | `http://`                                                                                                      |
+   | `TRUSTED_PROXIES`                                                      | the upstream proxy's address(es) as CIDR, space separated, e.g. `192.0.2.10/32`                                |
+   | `COMPOSE_FILE`                                                         | `docker-compose.yml:docker-compose.test.yml` (adds Mailpit; `deploy.sh`, `backup.sh` and `restore.sh` read it) |
+
+   `POSTGRES_USER`, `POSTGRES_DB`, `KEYCLOAK_ADMIN_USER` have defaults in the template; `SMTP_*`, `KEYCLOAK_DB_NAME`, `KEYCLOAK_DB_USER`, `KEYCLOAK_JAVA_HEAP`, `HTTP_PORT`, `BACKUP_*` are optional (all listed in `.env.example`). The file is in `.gitignore`; no secret goes into the repo (QG-S1). Never write real hostnames or addresses into the repo either: it is public.
+
+4. Schedule backups, e.g. `0 3 * * * cd /path/to/repo && make backup`.
+
+### First start
+
+```bash
+app/config/deploy/scripts/deploy.sh origin/dev      # fetches, backs up (if db runs), builds, starts, waits for api and keycloak, smoke test
+```
+
+The first start takes a few minutes on 2 cores (image builds, then Keycloak builds its optimized runtime and imports the realm, about 30 to 60 seconds). Check from the host (replace the hostnames; the `Host` header and `X-Forwarded-Proto` imitate the upstream proxy):
+
+```bash
+curl -s -H 'Host: app.example.test' -H 'X-Forwarded-Proto: https' http://127.0.0.1/health
+curl -s -H 'Host: auth.example.test' -H 'X-Forwarded-Proto: https' http://127.0.0.1/realms/pflanzendex/.well-known/openid-configuration | grep -o '"issuer":"[^"]*"'
+# expected issuer: https://auth.example.test/realms/pflanzendex
+```
+
+Note: `deploy.sh` checks out the ref in the checkout (detached HEAD). Deploying stays a deliberate step (E-14).
+
+### First account and the operator role
+
+1. Open `https://app.example.test`, press the sign-in button and choose register (self-registration is on in the test environment). Keycloak asks for email confirmation.
+2. Open `https://auth.example.test/mail/` (the mail catcher), open the email and follow the link; set the password (at least 10 characters). Sign in; the first sign-in creates the account.
+3. Make the account the operator: follow `invitation-phase.md` steps 4 to 5. The subject is the Keycloak user id (admin console `https://auth.example.test/admin/`, realm `pflanzendex`, Users; or `kcadm.sh get users -r pflanzendex -q email=<email> --fields id`). `compose` there stands for `docker compose --env-file app/config/deploy/.env`; the compose files come from `COMPOSE_FILE`, so no `-f` is needed. The tab "Betreiber" appears after a reload.
+
+### Closing self-registration
+
+Registration is a per-installation switch, not part of the build (`invitation-phase.md`). When the test environment should accept only invited people: realm switch `docker compose --env-file app/config/deploy/.env exec keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin` (asks for the password), then `... kcadm.sh update realms/pflanzendex -s registrationAllowed=false`; and the app switch "nur mit Einladungscode" in the operator area. Both layers and the consequence (the operator creates the identities) are described in `invitation-phase.md`. To reopen: `-s registrationAllowed=true`.
+
+### Deploy and update
+
+`app/config/deploy/scripts/deploy.sh origin/dev` (backup first, migrations through the one-shot `migrate`, rollback to the previous ref if the api or Keycloak does not become healthy or the smoke test fails). With `CADDY_SCHEME=http://` the smoke test calls `http://127.0.0.1:$HTTP_PORT` with the `Host` header of `APP_HOST`; set `SMOKE_URL` to test through the public address instead. A Keycloak image update is a change of the tag in `docker-compose.yml` (keep it equal to `app/config/dev/compose.yaml`).
+
+### Backup and restore
+
+`make backup` writes `pflanzendex-*.dump` and `keycloak-*.dump` (see "Backup"). Restore the sign-in database into a check database: `app/config/deploy/scripts/restore.sh app/config/deploy/backups/keycloak-<time>.dump kc_check`; over the live one: stop `keycloak`, `CONFIRM=yes app/config/deploy/scripts/restore.sh app/config/deploy/backups/keycloak-<time>.dump`, start `keycloak`. The restored objects keep their owner (the `keycloak` role). Restore app and sign-in dump from the same run so account subjects and identities match. `make restore-test` covers both databases.
+
+### Memory
+
+Limits in `docker-compose.yml` are starting values for a 3 GB host (assumptions): `db` 256 MB, `keycloak` 900 MB (JVM heap `-Xms128m -Xmx512m`), `api` 512 MB, `migrate` 512 MB (only while it runs), `web` 96 MB, `proxy` 64 MB, `mailpit` 64 MB, `keycloak-db` 64 MB (only while it runs). Measured on 2026-10-11 on a development machine (not the target host) after the first requests, one registered account (`docker stats --no-stream`):
+
+| Container  | Memory used   | Limit  |
+| ---------- | ------------- | ------ |
+| `keycloak` | 522 MiB       | 900 MB |
+| `api`      | 116 MiB       | 512 MB |
+| `db`       | 76 MiB        | 256 MB |
+| `web`      | 43 MiB        | 96 MB  |
+| `mailpit`  | 41 MiB        | 64 MB  |
+| `proxy`    | 16 MiB        | 64 MB  |
+| total      | about 815 MiB | 1.9 GB |
+
+That leaves room on a 3 GB host for the OS, Docker and image builds (`vite build` and `npm ci` need a few hundred MB while they run; build on the host only when nothing else peaks, or add swap). Keycloak's first start peaks higher than its idle figure; the 900 MB limit was not hit in the local run. Recheck on the real host.
+
+Test log (test environment):
+
+| Date       | Where                                | Result                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-11 | development machine (Docker Compose) | Stack with Keycloak and Mailpit started. Through port 80 with `Host` and `X-Forwarded-Proto: https`: `/health` ok, web served (zstd, `no-cache`), discovery document with the public https issuer, Mailpit UI at `/mail/`, verification email link on the public address, password-grant token accepted by `GET /api/account` (issuer public, keys fetched inside), foreign redirect address refused (400). Backup wrote both dumps; restore into check databases and over the live sign-in database worked, sign-in still worked afterwards. `make restore-test` passed for both databases. Not covered: the real upstream proxy, the browser flow, the target host. The development machine's bridge networking was broken (veth module missing), so the run used host networking with a local override outside the repo. |
+
 ## Health check (US-DEV-09)
 
 `GET /health` (no sign-in) answers with version, commit and `checks`:
 
-| Field             | Values                                                                 | Meaning                                                                                                         |
-| ----------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `status`          | `ok`, `degraded`, `error`                                              | `error` (HTTP 503) when the database does not answer within 2 s (assumption); `degraded` (HTTP 200) for the job queue |
-| `checks.database` | `ok`, `error`, `not_configured`                                        | `select 1` against the API's pool; the error text is never passed on                                            |
-| `checks.jobs`     | `{ status: ok \| dead_jobs, queued, running, dead }`, `error`, `not_configured` | counts of the job queue (TE-06); `dead_jobs` = at least one job gave up with its error kept                      |
-| `checks.storage`  | `configured`, `not_configured`                                         | whether the photo storage (S3) is set up; it is not called on every check                                       |
+| Field             | Values                                                                          | Meaning                                                                                                               |
+| ----------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `status`          | `ok`, `degraded`, `error`                                                       | `error` (HTTP 503) when the database does not answer within 2 s (assumption); `degraded` (HTTP 200) for the job queue |
+| `checks.database` | `ok`, `error`, `not_configured`                                                 | `select 1` against the API's pool; the error text is never passed on                                                  |
+| `checks.jobs`     | `{ status: ok \| dead_jobs, queued, running, dead }`, `error`, `not_configured` | counts of the job queue (TE-06); `dead_jobs` = at least one job gave up with its error kept                           |
+| `checks.storage`  | `configured`, `not_configured`                                                  | whether the photo storage (S3) is set up; it is not called on every check                                             |
 
 The Compose health check of `api` and `make deploy` use it: a 503 marks the container unhealthy and fails the deploy, which then rolls back. Monitoring should alert on `status != "ok"` and on HTTP 503.
 
@@ -116,11 +215,12 @@ Each runbook: what you see, what to check, what to do. Restoring a backup and th
 None of this is done or made up:
 
 - **Host:** the hardware for staging/production is not named yet; scripts and Compose were only checked locally.
-- **Domain and DNS:** there is no public address. Needed: a domain, an A/AAAA record (dynamic DNS if the IP changes) or a tunnel, ports 80/443 forwarded to the host. Without these Caddy cannot get a public certificate. Reachability from outside over HTTPS (criterion from #40) is therefore **not** proven (R-11, spike TE-15).
+- **Domain and DNS:** the test environment needs two hostnames at the upstream proxy; there is no public address yet for staging/production. Needed: a domain, an A/AAAA record (dynamic DNS if the IP changes) or a tunnel, ports 80/443 forwarded to the host. Without these Caddy cannot get a public certificate. Reachability from outside over HTTPS (criterion from #40) is therefore **not** proven (R-11, spike TE-15).
 - **Security updates:** set up automatic updates on the host (e.g. `unattended-upgrades`, reboot policy) and document them here.
 - **Backup to a second location:** decide the target for `BACKUP_REMOTE` (second machine, external storage) and how the copy is encrypted. Photos/object storage are not backed up yet because they do not exist yet (TE-05).
 - **Monitoring and alerts:** `/health` now reports database and job queue (see "Health check"); an external monitor that polls it and alerts, and a check of the backup age, are not set up yet (DEV-09, #172).
 - **Image pins:** base images are pinned to major versions, not digests; Renovate (FR-QG-15) pins digests once it is active.
 - **Migrations:** applied by the deploy itself (see above, #201). `deploy.sh` backs up before every deploy while the DB is running (DEV-07, #170); on the very first deploy there is no database to back up.
-- **Sign-in service and invitation phase:** the stack has no Keycloak yet; closing self-registration and switching the registration mode on for a public deployment are described in `invitation-phase.md` (#301).
+- **Sign-in service:** now in the stack (see "Test environment behind a reverse proxy"). Still open for production: a real SMTP server (`SMTP_*`), keeping `/admin/` of the sign-in host away from the internet (the proxy exposes the whole host; restrict it at the upstream proxy), a realm review for production (the file is shared with the test environment), Keycloak's own security updates, and the invitation phase on a public deployment (`invitation-phase.md`, #301).
+- **Test environment on the real host:** not yet run on the target LXC container behind the real upstream proxy; the figures above come from a development machine. The browser sign-in flow (redirect, PKCE, token refresh) was not repeated by hand here; the pieces (redirect address, issuer, key fetch, mail link) were each checked.
 - **Confirmation:** `restore.sh` over the production database now expects `CONFIRM=yes` (was `CONFIRM=ja` before the tooling was translated).
