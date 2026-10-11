@@ -1,0 +1,117 @@
+# Deploy of the test environment (TE-19, #749, E-14, FR-QG-14): after a green CI run for a push to `dev`, a GitHub-hosted
+# runner joins the owner's tailnet as a short-lived node (`tag:ci`) and runs `app/config/deploy/scripts/deploy.sh <sha>`
+# on the test host over Tailscale SSH. The script backs up, migrates, smoke-tests and rolls back by itself; a non-zero
+# exit turns this run red. Production is NOT deployed here: it stays a deliberate step (release tag).
+# Secrets and variables live in the GitHub environment `test` (deployment branches limited to `dev`), never in the repo.
+# Setup: docs/guides/operations/staging-deploy-and-backup.md, section "Automatic deploy of the test environment (TE-19)".
+name: Deploy test environment
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [dev]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag or commit of this repository to deploy (must be on dev)"
+        required: false
+        default: dev
+
+# One deploy at a time; a running deploy is never cancelled (it could stop in the middle of a migration).
+concurrency:
+  group: deploy-test
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    # workflow_run: only a successful push run of CI for this repository (not a fork). `branches: [dev]` above filters the branch.
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || (github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.event == 'push'
+      && github.event.workflow_run.head_branch == 'dev'
+      && github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: test
+    permissions:
+      contents: read # resolve and check the commit through the API; the job does not check out code
+    steps:
+      # The commit that passed CI (workflow_run) or the resolved manual ref. Always a full SHA that is part of `dev`.
+      - id: target
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          INPUT_REF: ${{ inputs.ref }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "workflow_run" ]; then
+            sha="$RUN_SHA"
+          else
+            ref="${INPUT_REF:-dev}"
+            if ! printf '%s' "$ref" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$'; then
+              echo "::error::Invalid ref."; exit 1
+            fi
+            sha="$(gh api "repos/$REPO/commits/$ref" --jq .sha)"
+            status="$(gh api "repos/$REPO/compare/dev...$sha" --jq .status)"
+            case "$status" in
+              identical | behind) ;;
+              *) echo "::error::Commit $sha is not part of dev (status: $status)."; exit 1 ;;
+            esac
+          fi
+          if ! printf '%s' "$sha" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::Not a full commit SHA."; exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      # tailscale/github-action v4.2.0, pinned to the commit.
+      - uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      # Tailscale SSH authenticates both sides through the tailnet (WireGuard node keys, policy rule tag:ci -> deploy),
+      # so there is no key or password and no known_hosts file on the runner. `accept-new` records the host key on first
+      # contact without asking; a changed key on a later contact would still be refused. `BatchMode` never prompts.
+      - id: deploy
+        env:
+          SHA: ${{ steps.target.outputs.sha }}
+          TEST_HOST: ${{ vars.TEST_HOST }}
+          TEST_REPO_PATH: ${{ vars.TEST_REPO_PATH }}
+        run: |
+          set -euo pipefail
+          repo_path="${TEST_REPO_PATH:-/opt/pflanzendex}"
+          if ! printf '%s' "$TEST_HOST" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9.-]{0,252}$'; then
+            echo "::error::Environment variable TEST_HOST is missing or invalid."; exit 1
+          fi
+          if ! printf '%s' "$repo_path" | grep -Eq '^/[A-Za-z0-9._/-]+$'; then
+            echo "::error::Environment variable TEST_REPO_PATH is invalid."; exit 1
+          fi
+          remote="cd $(printf '%q' "$repo_path") && app/config/deploy/scripts/deploy.sh $(printf '%q' "$SHA")"
+          status=0
+          ssh -o BatchMode=yes -o ConnectTimeout=30 -o StrictHostKeyChecking=accept-new \
+            "deploy@$TEST_HOST" -- "$remote" > "$RUNNER_TEMP/deploy.log" 2>&1 || status=$?
+          echo "--- last 60 lines of the deploy output ---"
+          tail -n 60 "$RUNNER_TEMP/deploy.log"
+          {
+            echo "### Deploy of the test environment"
+            echo "Commit: \`$SHA\`"
+            echo
+            if [ "$status" -eq 0 ]; then
+              echo "Result: ok. $(grep -E '^Deploy ok: ' "$RUNNER_TEMP/deploy.log" | tail -n 1)"
+            else
+              echo "Result: FAILED (exit $status). \`deploy.sh\` rolls back to the previous version by itself; see the log."
+            fi
+            echo
+            echo '```text'
+            tail -n 30 "$RUNNER_TEMP/deploy.log"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
