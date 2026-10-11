@@ -2,8 +2,9 @@
 # Staging deploy (TE-03, US-DEV-06): fetches origin/main, builds images, restarts, waits for health,
 # runs the smoke test and rolls back to the previous ref automatically if it fails.
 # Usage on the host, in the checkout:  make deploy   (or config/deploy/scripts/deploy.sh [ref], default origin/main)
-# Production stays a deliberate step (E-14). The test environment is deployed by .github/workflows/deploy-test.yml
-# (TE-19) after green CI on `dev`: it calls this script over Tailscale SSH with the commit SHA.
+# Every deploy is a deliberate, manual step (E-14). From GitHub: the workflow .github/workflows/deploy.yml (TE-19),
+# started by hand with an environment (test or prod) and a ref, calls this script over Tailscale SSH with the full SHA.
+# The workflow's guard allows prod only for a stable release tag on `main`; this script itself does not check that.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
