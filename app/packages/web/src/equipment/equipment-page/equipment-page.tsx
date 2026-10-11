@@ -1,19 +1,17 @@
 import { useCallback, useEffect } from "react";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
-import { errorText } from "@/lib/error-text";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { EquipmentForm } from "../equipment-form/equipment-form";
 import {
   loadEquipment,
   recordEquipment,
-  setEquipmentStatus,
-  setLampZone,
   type EquipmentData,
   type EquipmentInput,
   type EquipmentRow,
-  type EquipmentStatus,
 } from "../equipment-api";
 import { STATUS_LABELS, TYPE_LABELS } from "../labels";
+import { LampLightView } from "../lamp-light/lamp-light";
+import { LampOutcome, useLampActions } from "./lamp-actions/lamp-actions";
 import { ZonesView } from "../zones-view/zones-view";
 import { EquipmentPageSkeleton } from "./equipment-page.skeleton";
 
@@ -59,41 +57,6 @@ function Card({ item, zone }: { item: EquipmentRow; zone: string | undefined }) 
   );
 }
 
-type LampRef = { id: string; name: string };
-
-/** The writes on a lamp (US-EQU-02): move it to another zone, set its state; the answer is shown above the zones. */
-function useLampActions(api: string, token: Token, onWritten: () => void) {
-  const write = useWriteAction(token, onWritten);
-  const actions = {
-    busy: write.running,
-    onZone: (lamp: LampRef, lightZoneId: string) =>
-      void write.run(
-        (t) => setLampZone(api, t, { id: lamp.id, lightZoneId }),
-        `Lampe „${lamp.name}“ umgezogen.`,
-      ),
-    onStatus: (lamp: LampRef, status: EquipmentStatus) =>
-      void write.run(
-        (t) => setEquipmentStatus(api, t, { id: lamp.id, status }),
-        `Zustand von „${lamp.name}“ gespeichert.`,
-      ),
-  };
-  return { actions, message: write.message, error: write.error };
-}
-
-function LampOutcome(props: { message: string | null; error: { code: string } | null }) {
-  if (props.error)
-    return (
-      <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
-        {errorText(props.error.code)}
-      </p>
-    );
-  return props.message ? (
-    <p role="status" className="rounded-lg border border-border p-3">
-      {props.message}
-    </p>
-  ) : null;
-}
-
 function Body(props: { data: EquipmentData; api: string; token: Token; onWritten: () => void }) {
   const write = useWriteAction(props.token, props.onWritten);
   const lamps = useLampActions(props.api, props.token, props.onWritten);
@@ -128,6 +91,7 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
       )}
       <LampOutcome message={lamps.message} error={lamps.error} />
       <ZonesView view={props.data.zones} actions={lamps.actions} />
+      <LampLightView view={props.data.light} actions={lamps.light} />
       <EquipmentForm
         zones={props.data.zones.zones}
         running={write.running}

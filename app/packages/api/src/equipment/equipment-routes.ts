@@ -12,6 +12,7 @@ import { EquipmentPostgres, IdempotencyPostgres, ZonePostgres } from "@pflanzend
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import { body, write, type AuthEnv } from "../kernel";
+import { addLampRoutes } from "./lamps";
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const EQUIPMENT_PATHS = ["/equipment"] as const;
@@ -58,5 +59,6 @@ export function equipmentRoutes(pool: Pool, zoneStock: ZoneStockSource): Hono<Au
       wrapper: (item: EquipmentRow) => ({ equipment: item }),
     }),
   );
+  addLampRoutes(routes, pool, deps);
   return routes;
 }
