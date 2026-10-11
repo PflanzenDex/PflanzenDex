@@ -149,9 +149,9 @@ const MODULES = [
   },
   {
     name: "ai",
-    // The keeper's AI client (ADR 0013, epic KI). Further tables follow with their stories: task.
+    // The keeper's AI client (ADR 0013, epic KI). Further tables follow with their stories.
     epics: ["KI"],
-    tables: ["ai_connection", "ai_log", "ai_draft"],
+    tables: ["ai_connection", "ai_log", "ai_draft", "ai_task"],
     dependsOn: ["kernel", "account", "today"],
     ports: [],
   },

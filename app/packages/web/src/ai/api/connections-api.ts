@@ -51,3 +51,40 @@ export const adoptDraft = (api: string, token: string, id: string) =>
 
 export const discardDraft = (api: string, token: string, id: string) =>
   createWrite(api, token)("POST", `/ai/drafts/${id}/discard`);
+
+export type AiTaskType = "species_profile" | "wish_candidates" | "photo_assessment";
+
+export interface AiTaskRow {
+  readonly id: string;
+  readonly type: AiTaskType;
+  readonly title: string;
+  readonly reference: string;
+  readonly label: string;
+  readonly status: "open" | "in_progress" | "done" | "declined" | "expired";
+  readonly clientName: string | null;
+  readonly createdAt: string;
+  /** The ready-made prompt for open and in-progress tasks (US-KI-08), else `null`. */
+  readonly prompt: string | null;
+}
+
+/** The tasks to the AI client with the status and whether a client is connected (US-KI-08). */
+export async function loadTasks(
+  api: string,
+  token: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<{ clientConnected: boolean; tasks: readonly AiTaskRow[] }>> {
+  return call(fetchFn, `${api}/ai/tasks`, token);
+}
+
+export const createTask = (api: string, token: string, type: AiTaskType, reference: string) =>
+  createWrite(api, token)("POST", "/ai/tasks", { type, reference });
+
+export const previewTask = (api: string, token: string, type: AiTaskType, reference: string) =>
+  call<{ prompt: string }>(fetch, `${api}/ai/tasks/preview`, token, {
+    method: "POST",
+    body: { type, reference },
+    key: crypto.randomUUID(),
+  });
+
+export const cancelTask = (api: string, token: string, id: string) =>
+  createWrite(api, token)("POST", `/ai/tasks/${id}/cancel`);

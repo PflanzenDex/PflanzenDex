@@ -12,6 +12,7 @@ let pool: Pool;
 let admin: Pool;
 const subA = `ki-${randomUUID()}`;
 const subB = `ki-${randomUUID()}`;
+const subC = `ki-${randomUUID()}`; // never connects a client (US-KI-08)
 const RESOURCE = "https://pflanzendex.example/mcp";
 const CLIENT = "https://claude.ai/oauth/mcp-oauth-client-metadata";
 // Web tokens: `valid:<sub>`. AI tokens: `ai:<sub>:<client>:<scope with + for space>`.
@@ -75,19 +76,19 @@ beforeAll(async () => {
     media: { store: photos, processor: {} as never /* the photo is only read in these tests */ },
     ai: { verifier: aiVerifier, resource: RESOURCE, issuer: "https://login.example/realms/p" },
   });
-  for (const sub of [subA, subB]) await call(web(sub), "GET", "/account");
+  for (const sub of [subA, subB, subC]) await call(web(sub), "GET", "/account");
 });
 afterAll(async () => {
   await admin.query(
     "delete from specimen where account_id in (select id from account where subject = any($1))",
-    [[subA, subB]],
+    [[subA, subB, subC]],
   );
   await admin.query(
     `delete from species where id in (select object_id from review_case
        where account_id in (select id from account where subject = any($1)))`,
-    [[subA, subB]],
+    [[subA, subB, subC]],
   );
-  await admin.query("delete from account where subject = any($1)", [[subA, subB]]);
+  await admin.query("delete from account where subject = any($1)", [[subA, subB, subC]]);
   await pool.end();
   await admin.end();
 });
@@ -443,5 +444,118 @@ describe("US-KI-04 photo assessment", () => {
       (await admin.query("select quality from measurement where id = $1", [measurementId])).rows[0]
         .quality,
     ).toBe("etiolated");
+  });
+});
+
+describe("US-KI-08 tasks from the app to the AI client", () => {
+  const create = (sub: string, type: string, reference: string) =>
+    call(web(sub), "POST", "/ai/tasks", { type, reference });
+  const tasks = async (sub: string) => (await call(web(sub), "GET", "/ai/tasks")).body;
+  const find = async (sub: string, id: string) =>
+    (await tasks(sub))["tasks"].find((t: { id: string }) => t.id === id);
+  const zone = `${2 + (Date.now() % 3)}`;
+  let speciesTask = "";
+
+  it("US-KI-08 without a connected client no task arises; the text can still be copied", async () => {
+    // subC has no connection at all.
+    const refused = await create(subC, "species_profile", "Aloe vera");
+    expect([refused.status, refused.body["error"]?.code]).toEqual([409, "ai.no_client"]);
+    const t = await tasks(subC);
+    expect([t["clientConnected"], t["tasks"]]).toEqual([false, []]);
+    const preview = await call(web(subC), "POST", "/ai/tasks/preview", {
+      type: "wish_candidates",
+      reference: "3",
+    });
+    expect(preview.status).toBe(200);
+    expect(preview.body["prompt"]).toContain("Lichtzone 3");
+    expect(await tasks(subC)).toMatchObject({ tasks: [] });
+  });
+
+  it("US-KI-08 a task has type, reference and status and carries the prompt for the client", async () => {
+    await call(ai(subA, "pflanzen:draft"), "GET", "/mcp/session");
+    const bad = await create(subA, "species_profile", "");
+    expect(bad.status).toBe(400);
+    const r = await create(subA, "species_profile", "Aloe vera");
+    expect(r.status).toBe(200);
+    speciesTask = r.body["task"].id;
+    expect(r.body["task"]).toMatchObject({ type: "species_profile", status: "open" });
+    expect(r.body["task"].prompt).toContain(
+      `https://pflanzendex.example/mcp/tasks/${speciesTask}/claim`,
+    );
+    expect(r.body["task"].prompt).not.toMatch(/bearer|token/i);
+    expect((await create(subA, "species_profile", "Aloe vera")).body["task"].id).toBe(speciesTask);
+  });
+
+  it("US-KI-08 the client lists, claims and the keeper sees in progress; a read client cannot claim", async () => {
+    const listed = await call(ai(subA, "pflanzen:read"), "GET", "/mcp/tasks");
+    expect(listed.body["tasks"].map((t: { id: string }) => t.id)).toContain(speciesTask);
+    expect(
+      (await call(ai(subA, "pflanzen:read"), "POST", `/mcp/tasks/${speciesTask}/claim`)).status,
+    ).toBe(403);
+    const claimed = await call(
+      ai(subA, "pflanzen:draft"),
+      "POST",
+      `/mcp/tasks/${speciesTask}/claim`,
+    );
+    expect(claimed.body).toMatchObject({ status: "in_progress" });
+    expect((await find(subA, speciesTask)).status).toBe("in_progress");
+  });
+
+  it("US-KI-08 KI-R6 a stranger sees and changes no task, a web token has no way to the client routes", async () => {
+    expect((await call(web(subB), "POST", `/ai/tasks/${speciesTask}/cancel`)).status).toBe(404);
+    expect(
+      (await call(ai(subB, "pflanzen:draft"), "POST", `/mcp/tasks/${speciesTask}/claim`)).status,
+    ).toBe(401);
+    expect((await call(web(subA), "GET", "/mcp/tasks")).status).toBe(401);
+    expect((await call(ai(subA, "pflanzen:read"), "GET", "/ai/tasks")).status).toBe(401);
+  });
+
+  it("US-KI-08 US-KI-09 the draft with the task id completes the task; the keeper still adopts it", async () => {
+    const made = await create(subA, "wish_candidates", zone);
+    const id = made.body["task"].id;
+    const name = `Taskwish ${randomUUID()}`;
+    const send = (taskId: string, type = "wish") =>
+      call(ai(subA, "pflanzen:draft"), "POST", "/mcp/drafts", {
+        type,
+        taskId,
+        source: "https://example.test/q",
+        content: { name },
+      });
+    expect((await send(id, "species")).status).toBe(400);
+    expect((await send(randomUUID())).body["error"].code).toBe("ai.task_not_found");
+    const r = await send(id);
+    expect(r.status).toBe(201);
+    expect(await find(subA, id)).toMatchObject({ status: "done", draftId: r.body["id"] });
+    expect(JSON.stringify((await call(web(subA), "GET", "/wishes/candidates")).body)).not.toContain(
+      name,
+    );
+  });
+
+  it("US-KI-08 a cancelled or declined task takes no draft and stays visible", async () => {
+    const id = (await create(subA, "wish_candidates", "4")).body["task"].id;
+    expect((await call(web(subA), "POST", `/ai/tasks/${id}/cancel`)).body).toMatchObject({
+      status: "declined",
+    });
+    expect((await call(web(subA), "POST", `/ai/tasks/${id}/cancel`)).body["error"].code).toBe(
+      "ai.task_closed",
+    );
+    const r = await call(ai(subA, "pflanzen:draft"), "POST", "/mcp/drafts", {
+      type: "wish",
+      taskId: id,
+      source: "s",
+      content: { name: "Closed" },
+    });
+    expect(r.body["error"].code).toBe("ai.task_closed");
+    expect((await find(subA, id)).status).toBe("declined");
+    const other = (await create(subA, "species_profile", "Gasteria")).body["task"].id;
+    expect(
+      (await call(ai(subA, "pflanzen:draft"), "POST", `/mcp/tasks/${other}/decline`)).body,
+    ).toMatchObject({ status: "declined" });
+  });
+
+  it("US-KI-08 US-KI-10 claiming and listing show in the log", async () => {
+    const log = (await call(web(subA), "GET", "/ai/log")).body["log"];
+    const ops = log.map((e: { operation: string }) => e.operation);
+    expect(ops).toEqual(expect.arrayContaining(["list_tasks", "claim_task", "decline_task"]));
   });
 });

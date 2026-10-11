@@ -3,19 +3,14 @@
 // operation as the form (KI-R1, P-03). Incomplete content is never stored (US-KI-03).
 import {
   appError,
-  canonical,
   defineOperation,
   failed,
   idField,
   ok,
-  orNull,
   shape,
-  textField,
   type Result,
   type Schema,
 } from "../kernel";
-import { mayCall, type AiRights } from "./rights";
-import type { AiLogStore } from "./status";
 
 export type DraftStatus = "open" | "adopted" | "discarded" | "expired";
 
@@ -74,65 +69,6 @@ export interface DraftDependencies {
 
 /** An open draft expires after 14 days (assumption, DM-KI-03). */
 export const DRAFT_EXPIRY_DAYS = 14;
-
-export interface ProposeCall {
-  readonly userId: string;
-  readonly connectionId: string;
-  readonly rights: AiRights;
-  readonly input: unknown;
-  readonly now: Date;
-}
-
-const envelope = shape({
-  type: textField("type", { min: 1, max: 50 }),
-  reference: orNull(textField("reference", { min: 1, max: 200 })),
-  source: textField("source", { min: 1, max: 1000 }),
-});
-
-/**
- * Stores a draft from the client (KI-R3, KI-R8): the right "create drafts" is checked here again, the type must be
- * known, the source is mandatory, and the content must pass the schema of the target operation, otherwise nothing is
- * stored and the refusal names the fields. The call is logged with type only (P-10).
- */
-export async function aiProposeDraft(
-  deps: DraftDependencies & { readonly log: AiLogStore },
-  call: ProposeCall,
-): Promise<Result<{ draft: AiDraft; created: boolean }>> {
-  if (!mayCall(call.rights, "propose_draft")) return failed(appError("ai.scope_insufficient"));
-  const input = (call.input ?? {}) as Record<string, unknown>;
-  const head = envelope(input);
-  if (!head.ok) return head;
-  const type = deps.types[head.value.type];
-  if (!type)
-    return failed(
-      appError("input.invalid", { details: [{ field: "type", code: "input.invalid" }] }),
-    );
-  const content = type.schema(input["content"]);
-  if (!content.ok) return content;
-  const stored = await deps.drafts.create(
-    call.userId,
-    {
-      connectionId: call.connectionId,
-      type: head.value.type,
-      reference: head.value.reference,
-      // The raw content is stored: the schema only checks it, adopting runs the operation on the same input as the form.
-      content: input["content"],
-      contentKey: canonical(input["content"]),
-      source: head.value.source,
-    },
-    call.now,
-  );
-  await deps.log.record(
-    call.userId,
-    {
-      connectionId: call.connectionId,
-      operation: "propose_draft",
-      effect: `draft: ${head.value.type}${stored.created ? "" : " (already open)"}`,
-    },
-    call.now,
-  );
-  return ok(stored);
-}
 
 /** The drafts of the account for the inbox, newest first, with the connection that delivered them (US-KI-09). */
 export const aiDrafts = (deps: Pick<DraftDependencies, "drafts">, userId: string, now: Date) =>

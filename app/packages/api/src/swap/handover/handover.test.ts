@@ -397,6 +397,8 @@ describe("US-SOZ-05 feed events Swapped and Potted through the API", () => {
     const a = await accepted("F1", "swap", subD);
     await confirm(subA, a.swapId);
     await confirm(subD, a.swapId, { marker: "f1" });
+    // The database stamps the handover with its own clock; pin it to the test day so the test does not age.
+    await admin.query("update swap set handed_over_at = $2 where swap_id = $1", [a.swapId, NOW]);
     for (const sub of [subA, subD]) {
       const e = (await feed(sub)).filter((x) => x.type === "swapped");
       expect(e.length).toBeGreaterThan(0);

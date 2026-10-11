@@ -40,6 +40,10 @@ export const AI_OPERATION_CLASSES: Readonly<Record<string, OperationClass>> = {
   // Content results are drafts (KI-R3): the keeper adopts them in the app.
   propose_draft: "draft",
   measurement_photo: "read",
+  // Tasks from the app (US-KI-08): the client lists them, takes one over or declines it; the result is a draft.
+  list_tasks: "read",
+  claim_task: "draft",
+  decline_task: "draft",
   // Never released via connections (FR-KI-10): friends' data, sharing, swaps, account, connections, partners.
   friends_data: "never",
   sharing_settings: "never",

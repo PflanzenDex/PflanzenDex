@@ -64,6 +64,7 @@ function fakeServer(status = 200) {
       if (path === "/reminders/subscriptions") return response(200, { subscriptions: [] });
       if (path === "/ai/connections") return response(200, { connections: [] });
       if (path === "/ai/drafts") return response(200, { drafts: [] });
+      if (path === "/ai/tasks") return response(200, { clientConnected: false, tasks: [] });
       if (path !== "/account/profile") return response(404, {});
       if (init?.method === "PUT") {
         const body = JSON.parse(String(init.body)) as Record<string, unknown>;
