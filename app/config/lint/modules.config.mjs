@@ -72,8 +72,15 @@ const MODULES = [
   {
     name: "monitoring",
     epics: ["MON"],
-    tables: ["reminder", "watering_log", "sensor", "measurements", "delivery_channel"],
-    dependsOn: ["kernel", "collection"],
+    tables: [
+      "reminder",
+      "reminder_setting",
+      "watering_log",
+      "sensor",
+      "measurements",
+      "delivery_channel",
+    ],
+    dependsOn: ["kernel", "collection", "jobs"],
     ports: ["OccasionSource"],
   },
   {
@@ -141,10 +148,11 @@ const MODULES = [
     ports: [],
   },
   {
-    name: "ai-access",
-    epics: ["AI"],
-    tables: ["connection", "task", "draft", "ai_log"],
-    dependsOn: ["kernel", "account"],
+    name: "ai",
+    // The keeper's AI client (ADR 0013, epic KI). Further tables follow with their stories.
+    epics: ["KI"],
+    tables: ["ai_connection", "ai_log", "ai_draft", "ai_task"],
+    dependsOn: ["kernel", "account", "today"],
     ports: [],
   },
 ];

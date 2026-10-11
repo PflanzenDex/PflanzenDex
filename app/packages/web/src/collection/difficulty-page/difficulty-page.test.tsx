@@ -109,11 +109,64 @@ describe("US-BES-05 page of the difficulty overview", () => {
     expect(text[1]).toContain("Zweite");
   });
 
+  it("US-BES-05 · US-BES-09 shows my care-profile zone and watering and says where they come from (#306)", async () => {
+    fakeServer(() =>
+      response(200, {
+        rows: [
+          row({ zoneSource: "profile", ownWatering: { growthDays: 7, dormancyDays: 21 } }),
+          row({
+            speciesId: "sp2",
+            botanicalName: "Aloe vera",
+            zoneSource: "species",
+            ownWatering: { growthDays: 5, dormancyDays: null },
+          }),
+        ],
+      }),
+    );
+    render(<DifficultyPage api="http://api" token={token} />);
+    await screen.findByRole("table");
+    expect(screen.getByText("Lampe 2 (dein Pflegeprofil)")).toBeTruthy();
+    expect(
+      screen.getByText("alle 7 Tage, in der Ruhe alle 21 Tage (dein Pflegeprofil)"),
+    ).toBeTruthy();
+    expect(screen.getByText("alle 5 Tage (dein Pflegeprofil)")).toBeTruthy();
+  });
+
+  it("US-BES-05 without a care profile the catalog values stand without a note", async () => {
+    fakeServer(() => response(200, { rows: [row({ zoneSource: "species", ownWatering: null })] }));
+    render(<DifficultyPage api="http://api" token={token} />);
+    await screen.findByRole("table");
+    expect(screen.getByText("alle 10 Tage")).toBeTruthy();
+    expect(screen.queryByText(/dein Pflegeprofil/)).toBeNull();
+  });
+
   it("US-BES-05 says what to do without a species (P-09)", async () => {
     fakeServer(() => response(200, { rows: [] }));
     render(<DifficultyPage api="http://api" token={token} />);
     expect((await screen.findByText(/Noch keine Art/)).textContent).toContain("Exemplar");
     expect(screen.queryByRole("table")).toBeNull();
+  });
+
+  it("US-BES-05 · P-10 names the species that are missing because they cannot be read", async () => {
+    fakeServer(() => response(200, { rows: [row()], unreadable: 2 }));
+    render(<DifficultyPage api="http://api" token={token} />);
+    await screen.findByRole("table");
+    expect(screen.getByText(/2 Arten deiner Exemplare kannst du nicht mehr lesen/)).toBeTruthy();
+  });
+
+  it("US-BES-05 · P-10 without readable species the empty state still names the missing ones", async () => {
+    fakeServer(() => response(200, { rows: [], unreadable: 1 }));
+    render(<DifficultyPage api="http://api" token={token} />);
+    expect(
+      await screen.findByText(/1 Art deiner Exemplare kannst du nicht mehr lesen/),
+    ).toBeTruthy();
+  });
+
+  it("US-BES-05 without unreadable species there is no note", async () => {
+    fakeServer(() => response(200, { rows: [row()], unreadable: 0 }));
+    render(<DifficultyPage api="http://api" token={token} />);
+    await screen.findByRole("table");
+    expect(screen.queryByText(/nicht mehr lesen/)).toBeNull();
   });
 
   it("US-BES-05 keeps an error visible and reloads on request (P-10)", async () => {

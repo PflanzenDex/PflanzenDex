@@ -44,6 +44,7 @@ const setMode = (input: unknown, userId: string | null = "olga", key = `k${++cou
 
 beforeEach(() => {
   access = new InMemoryAccess({ olga: ["operator"], rita: ["reviewer"], kai: [] });
+  access.clock = () => NOW.getTime();
   idem = new InMemoryIdempotencyStore();
 });
 

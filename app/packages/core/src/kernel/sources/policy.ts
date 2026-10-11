@@ -11,10 +11,13 @@ export const SOURCE_POLICY = {
   foundTtlMs: 7 * 24 * 3_600_000,
   notFoundTtlMs: 24 * 3_600_000,
   /** Minimum distance between two requests to the same source (throttling). */
-  minIntervalMs: { wikipedia: 200, wikidata: 200, gbif: 100, opentree: 500 } satisfies Record<
-    SourceName,
-    number
-  >,
+  minIntervalMs: {
+    wikipedia: 200,
+    wikidata: 200,
+    gbif: 100,
+    opentree: 500,
+    commons: 200,
+  } satisfies Record<SourceName, number>,
 } as const;
 
 export type StatusClass = "ok" | "not_found" | "retry" | "rejected";

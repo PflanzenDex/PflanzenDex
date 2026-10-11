@@ -53,6 +53,8 @@ export interface CollectorCard {
   /** Wikipedia article the text and image come from (CC BY-SA, FR-POK-07). */
   readonly sourceUrl: string | null;
   readonly family: string | null;
+  /** Order of the taxonomy tree; `null` = unknown (P-08). */
+  readonly order: string | null;
   readonly caughtDate: CatchDate | null;
   readonly specimenCount: number;
 }
@@ -101,6 +103,7 @@ function cardOf(
     imageUrl: t.imageUrl,
     sourceUrl: t.pageUrl,
     family: t.family,
+    order: t.order,
     caughtDate: mine ? mine.caughtDate : null,
     specimenCount: mine ? mine.specimenCount : 0,
   };

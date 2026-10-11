@@ -28,6 +28,8 @@ export interface SpecimenRow {
   readonly archivedAt: string | null;
   /** Reason of the archiving (`received`, `given_away`, … or free); `null` as long as not archived. */
   readonly archivedReason: string | null;
+  /** Local calendar date a cutting was repotted (US-BES-04, US-SOZ-05); `null`/missing = unknown (P-08). */
+  readonly repottedAt?: string | null;
 }
 
 /** Archived specimens are missing from all lists and evaluations (US-BES-07); every evaluation filters with this. */
@@ -114,7 +116,11 @@ export interface SpecimenStore {
     date: string,
   ): Promise<SpecimenRow | "not_found" | "already_archived">;
   /** A cutting becomes a plant (US-BES-04); any other specimen stays unchanged and reports `not_a_cutting`. */
-  repot(userId: string, id: string): Promise<SpecimenRow | "not_found" | "not_a_cutting">;
+  repot(
+    userId: string,
+    id: string,
+    date: string | null,
+  ): Promise<SpecimenRow | "not_found" | "not_a_cutting">;
   /**
    * Sets the location of one or several active specimens in one transaction (US-PHA-03, BES-08). All or nothing: an
    * unknown or foreign specimen answers `specimen_unknown`, an archived one `archived`, a location of another account

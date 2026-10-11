@@ -29,5 +29,5 @@ export type {
   IdempotencyStore,
   Context,
 } from "./ports/ports";
-export { localToday, isTimeZone, isCalendarDate } from "./date";
+export { localToday, isTimeZone, isCalendarDate, localInstant, daysBetween } from "./date";
 export * from "./sources";

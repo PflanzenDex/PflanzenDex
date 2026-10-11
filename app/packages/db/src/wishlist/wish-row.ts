@@ -5,7 +5,7 @@ import type { WishChange, WishPurchase, WishRow, WishValues } from "@pflanzendex
 export type { WishChange, WishPurchase, WishRow, WishValues };
 
 export const COLUMNS = `id, name, german, target_zone_id as "targetZoneId", difficulty, reasoning, image_url as "imageUrl",
-  image_source as "imageSource", license, type, status, specimen_id as "specimenId"`;
+  image_source as "imageSource", license, image_object as "imageObject", type, status, specimen_id as "specimenId"`;
 
 /** The plant wish with the ID as the row rules show it to the account; `undefined` when there is none (or it is foreign). */
 export async function findWish(c: PoolClient, wishId: string): Promise<WishRow | undefined> {

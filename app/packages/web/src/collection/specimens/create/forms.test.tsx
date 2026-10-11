@@ -28,6 +28,7 @@ const card = (id: string, marker: string | null): SpecimenCard => ({
   photo: null,
   lastMeasurement: null,
   treatment: null,
+  provenance: null,
   moreTreatments: 0,
 });
 

@@ -39,7 +39,7 @@ export async function repotSpecimen(
   const r = await createWrite(api, token, fetchFn)(
     "POST",
     `/specimens/${encodeURIComponent(id)}/repot`,
-    {},
+    { timeZone: currentTimeZone() },
   );
   return r.ok ? { ok: true, value: r.value as Specimen } : r;
 }

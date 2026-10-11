@@ -1,10 +1,16 @@
 import type { CaughtSpecies } from "@pflanzendex/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-/** Marks the history entry that stands for the open detail view, so Back can be told apart from other entries. */
-const DETAIL_STATE = { pokedexDetail: true };
-const isDetailEntry = () =>
-  (window.history.state as { pokedexDetail?: boolean } | null)?.pokedexDetail === true;
+/**
+ * Marks the history entry that stands for an open detail view and names its species, so Back can be told apart from
+ * other entries and Forward (or Back from a later page) opens the same species again instead of an empty entry (#306).
+ */
+type DetailState = { pokedexDetail?: boolean; species?: string };
+const detailState = (species: string): DetailState => ({ pokedexDetail: true, species });
+const isDetailEntry = () => (window.history.state as DetailState | null)?.pokedexDetail === true;
+/** The species of the current history entry when it is a detail entry, else `null`. */
+const entrySpecies = () =>
+  isDetailEntry() ? ((window.history.state as DetailState).species ?? null) : null;
 
 /**
  * The one open detail view (US-POK-09): at most one species is selected. Opening pushes a history entry, so the browser
@@ -12,7 +18,7 @@ const isDetailEntry = () =>
  * back. After closing, the focus returns to the card that opened it and the list scrolls back to where it was.
  */
 export function useDetail(caught: readonly CaughtSpecies[]) {
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(entrySpecies);
   const opener = useRef<string | null>(null);
   const scrollY = useRef(0);
   // Set when a close went into the history; a second trigger before popstate must not pop again.
@@ -21,7 +27,7 @@ export function useDetail(caught: readonly CaughtSpecies[]) {
     opener.current = c.species;
     scrollY.current = window.scrollY;
     closing.current = false;
-    window.history.pushState(DETAIL_STATE, "");
+    window.history.pushState(detailState(c.species), "");
     setSelected(c.species);
   }, []);
   // Closing goes through the history; the popstate listener below then closes the view (one path for Back and buttons).
@@ -32,15 +38,15 @@ export function useDetail(caught: readonly CaughtSpecies[]) {
       window.history.back();
     } else setSelected(null);
   }, []);
+  // Every move through the history shows what its entry stands for: a detail entry opens its species, any other closes.
   useEffect(() => {
-    if (selected === null) return;
     const onPop = () => {
       closing.current = false;
-      setSelected(null);
+      setSelected(entrySpecies());
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
-  }, [selected]);
+  }, []);
   useEffect(() => {
     if (selected !== null || opener.current === null) return;
     const cards = document.querySelectorAll<HTMLElement>("[data-species]");

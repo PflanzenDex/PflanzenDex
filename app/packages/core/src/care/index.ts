@@ -5,8 +5,9 @@ export { GROWTH_DEFAULTS, growthTrend } from "./measurements/growth";
 export type { GrowthSignal, GrowthTrend, Trend } from "./measurements/growth";
 export { measurementSource } from "./measurements/capture/source";
 export type { SourceDependencies } from "./measurements/capture/source";
-export { measurementRecord } from "./measurements/record";
-export type { RecordDependencies } from "./measurements/record";
+export { measurementRecord } from "./measurements/write/record";
+export { measurementAssess, measurementPhotoById } from "./measurements/write/assess";
+export type { RecordDependencies } from "./measurements/write/record";
 export { measurementPhoto } from "./measurements/capture/photo";
 export type { PhotoDependencies, PhotoResult, PhotoStorage } from "./measurements/capture/photo";
 export { measurementPhotoFile } from "./measurements/capture/file";
@@ -51,4 +52,5 @@ export type {
   TreatmentStatusKind,
 } from "./treatments/treatment-list";
 export { phaseStatus } from "./phases/phase-status";
+export { phaseChangeOccasions } from "./phases/change/phase-change";
 export type { PhaseStatus } from "./phases/phase-status";

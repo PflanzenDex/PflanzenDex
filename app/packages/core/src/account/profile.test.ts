@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { ERROR_TEXTS, execute } from "../kernel";
 import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
-import { accountUpdateProfile, defaultNotifications } from "./index";
+import { accountUpdateProfile, defaultNotifications, REPLENISH_BUFFER_LIMITS } from "./index";
 import { InMemoryProfiles } from "./test-helpers";
 
 let profiles: InMemoryProfiles;
@@ -186,5 +186,45 @@ describe("US-ACC-02 · writing rules (P-03, P-04)", () => {
   it("an account without data row is denied", async () => {
     const r = await save(valid(), "carla");
     expect(!r.ok && r.error.code).toBe("access.denied");
+  });
+});
+
+describe("US-WUN-02 · the replenish buffer is an account setting", () => {
+  it("is 2 until the keeper changes it", async () => {
+    expect(profiles.rows.get("anna")?.replenishBuffer).toBe(REPLENISH_BUFFER_LIMITS.default);
+    expect(REPLENISH_BUFFER_LIMITS).toEqual({ min: 0, max: 10, default: 2 });
+  });
+
+  it.each([0, 1, 5, 10])("saves the whole number %i", async (replenishBuffer) => {
+    const r = await save(valid({ replenishBuffer }));
+    expect(r.ok && r.value.replenishBuffer).toBe(replenishBuffer);
+    expect(profiles.rows.get("anna")?.replenishBuffer).toBe(replenishBuffer);
+  });
+
+  it.each([-1, 11, 2.5, "3", Number.NaN, Number.POSITIVE_INFINITY, true])(
+    "refuses %j and names the field, nothing is written",
+    async (replenishBuffer) => {
+      const r = await save(valid({ replenishBuffer }));
+      expect(!r.ok && r.error.details).toEqual([
+        { field: "replenishBuffer", code: "input.invalid" },
+      ]);
+      expect(profiles.writes).toBe(0);
+    },
+  );
+
+  it.each([null, undefined])(
+    "%s keeps the stored value, so an older client cannot reset it",
+    async (v) => {
+      await save(valid({ replenishBuffer: 4 }));
+      const r = await save(valid({ replenishBuffer: v, timeZone: "UTC" }));
+      expect(r.ok && r.value).toMatchObject({ replenishBuffer: 4, timeZone: "UTC" });
+    },
+  );
+
+  it("changes only the own account", async () => {
+    await save(valid({ replenishBuffer: 6 }), "ben");
+    await save(valid({ replenishBuffer: 1 }));
+    expect(profiles.rows.get("ben")?.replenishBuffer).toBe(6);
+    expect(profiles.rows.get("anna")?.replenishBuffer).toBe(1);
   });
 });

@@ -4,6 +4,7 @@ import {
   feedMarkSeen,
   friendBanner,
   friendFeed,
+  type SwappedSource,
   isTimeZone,
   localToday,
 } from "@pflanzendex/core";
@@ -26,7 +27,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /**
  * "Neu bei Freunden" (US-SOZ-05, DM-SOZ-04): `GET /feed?timeZone=...` returns `{ events, hint }`, derived on every request
  * from what friends share (never stored, P-01; read only through `friendView`, so only through a confirmed friendship).
- * "Today" is the local date of the requested time zone (NFR-08). Filters: `days` (1 to 365, default 30), `friend` (the
+ * The types are new species, new specimen, new cutting, "potted" (the repot day of a shared specimen) and "swapped" (a
+ * handed-over swap I took part in with a current friend; the app root fills the port from `swap`). "Today" is the local date of the requested time zone (NFR-08). Filters: `days` (1 to 365, default 30), `friend` (the
  * friendship id from `GET /friends`), `onlyNewSpecies=true`. A bad parameter answers 400 `input.invalid` naming the field.
  * The answer carries `asOf` (the instant it was read), so a screen that only has an older copy can say "Stand" (FR-SOZ-03).
  * - GET /feed/banner (US-SOZ-06): `{ firstVisit, count, items, asOf }`, what became visible to me since I last marked the feed as
@@ -34,7 +36,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * - POST /feed/seen `{ upTo }` (with `Idempotency-Key`): "Okay" and the silent creation of the first visit; marks the feed as seen
  *   up to `upTo` (the `asOf` of the banner), never backwards and never past now
  */
-export function feedRoutes(pool: Pool, clock: () => Date = () => new Date()): Hono<AuthEnv> {
+export function feedRoutes(
+  pool: Pool,
+  clock: () => Date = () => new Date(),
+  swapped?: SwappedSource,
+): Hono<AuthEnv> {
   const friends = new FriendsPostgres(pool);
   const sharing = new SharingPostgres(pool);
   const { privacy, facts } = sharingPorts(pool);
@@ -58,10 +64,11 @@ export function feedRoutes(pool: Pool, clock: () => Date = () => new Date()): Ho
       return c.json(errorBody(appError("input.invalid", { details })), 400);
     }
     const feed = await friendFeed(
-      { friends, sharing, privacy, facts, now: clock },
+      { friends, sharing, privacy, facts, now: clock, ...(swapped ? { swapped } : {}) },
       c.get("account").id,
       {
         today: localToday(clock(), timeZone),
+        timeZone,
         days: days === undefined ? FEED_DAYS : Number(days),
         ...(friend === undefined ? {} : { friendId: friend }),
         ...(c.req.query("onlyNewSpecies") === "true" ? { onlyNewSpecies: true } : {}),

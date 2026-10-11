@@ -13,12 +13,14 @@ export interface CreateInput {
 
 /**
  * What the checked form sends (US-BES-03): empty fields stay out (unknown, P-08), an unchanged catch date sends
- * nothing, so the server uses the keeper's local today.
+ * nothing, so the server uses the keeper's local today. "Unchanged" is the state of the field, not a comparison with
+ * today: a form left open past local midnight still holds yesterday's preset, which must not become a back-dated
+ * catch date (FR-BES-04, #306).
  */
 export function toCreateInput(
   f: CreateFields,
   missing: readonly { id: string }[],
-  today: string,
+  catchDateChanged: boolean,
 ): CreateInput {
   const marker = f.marker.trim();
   const markers = missing.map((s) => ({
@@ -29,7 +31,7 @@ export function toCreateInput(
     ...(marker ? { marker } : {}),
     ...(markers.length > 0 ? { markers } : {}),
     ...(f.locationId ? { locationId: f.locationId } : {}),
-    ...(f.catchDate && f.catchDate !== today ? { catchDate: f.catchDate } : {}),
+    ...(catchDateChanged && f.catchDate ? { catchDate: f.catchDate } : {}),
     ...(f.cutting ? { status: "cutting" as const } : {}),
   };
 }

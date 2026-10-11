@@ -40,8 +40,8 @@ describe("US-SOZ-04 what a friend sees", () => {
     await sharing.setMany("anna", ["private-one"], false, false);
     const { specimens } = await view("ben", "anna");
     expect(specimens).toEqual([
-      { ...facts[S1], photoShared: false },
-      { ...facts[S2], photoShared: false },
+      { ...facts[S1], repottedAt: null, photoShared: false },
+      { ...facts[S2], repottedAt: null, photoShared: false },
     ]);
     // Nothing beyond the whitelist can be in an entry (location, markers, treatments, prices, notes).
     for (const s of specimens)
@@ -52,6 +52,7 @@ describe("US-SOZ-04 what a friend sees", () => {
           "isCutting",
           "name",
           "photoShared",
+          "repottedAt",
           "speciesGerman",
           "speciesLatin",
         ].sort(),

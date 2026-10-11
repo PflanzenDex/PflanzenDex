@@ -71,7 +71,11 @@ export const SPECIES_MODE_ADDRESS = `${PATHS.collection}?view=species`;
 export const LEGACY_TREATMENTS_PATH = "/treatments";
 export const LEGACY_HINTS_PATH = "/hints";
 /** The sections of "Heute" below "Jetzt dran" by the anchor in the address, e.g. `/today#behandlungen` (US-QS-14). */
-export const TODAY_SECTIONS = { treatments: "behandlungen", hints: "fehlt-noch" } as const;
+export const TODAY_SECTIONS = {
+  treatments: "behandlungen",
+  watering: "giessen",
+  hints: "fehlt-noch",
+} as const;
 export type TodaySection = keyof typeof TODAY_SECTIONS;
 export const todayAddress = (section: TodaySection) => `${PATHS.today}#${TODAY_SECTIONS[section]}`;
 
@@ -81,6 +85,8 @@ export const LEGACY_SETTINGS_PATH = "/settings";
 export const ACCOUNT_SECTIONS = {
   profile: "profil",
   settings: "einstellungen",
+  reminders: "erinnerungen",
+  aiClients: "ki-clients",
   measured: "gemessen",
 } as const;
 export type AccountSection = keyof typeof ACCOUNT_SECTIONS;

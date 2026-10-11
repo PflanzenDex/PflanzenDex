@@ -49,7 +49,7 @@ Acceptance criteria (hard filters before any scoring):
 - Catalog profiles with review status `ai-created, unreviewed` appear only with a label (FR-BES-06).
 - Optional filters of the keeper (DM-ENT-03): light zone, highest difficulty, "pet-safe". A filter on an **unknown** attribute does not exclude the species but shows "Pets: unknown" (P-08, P-10).
 
-### US-ENT-03 · Understand why something is suggested · ⬜ new
+### US-ENT-03 · Understand why something is suggested · 🟨 new
 
 As a **plant keeper** I want to see why a species shows up, so that I trust the suggestions.
 
@@ -64,7 +64,9 @@ Acceptance criteria:
 - At most the 3 strongest reasons. Reasons arise from the domain logic, never from the model (P-01, KI-R2).
 - Exploration suggestions (US-ENT-06) are marked as "something different".
 
-### US-ENT-04 · Decision lands in the wishlist immediately · ⬜ new
+Assumptions, decided by the PO (revisable): the reasons that can be proven from existing own data are built first: "<Zone> has the fewest plants (n)" or "No plant stands in <Zone> yet" (the stock per zone 2 to 4 of US-LIC-02 through the port `ZoneStockSource`; zone number n of the catalog is the n-th zone of the account; a tie of all zones, an unknown zone and an account without a counted plant give no reason, P-08), "New family: <family> is still missing in your Pokédex" and the plain fact "You have not caught this species yet" (no share, always last). Scoring (FR-ENT-02) so far: every share (space, new family) weighs 1 (starting value, assumption); the deck is ordered by the number of shares, the tree order breaks ties (FR-ENT-05). No invented fit rule: a reason that needs "thriving" waits for its derivation.
+
+### US-ENT-04 · Decision lands in the wishlist immediately · 🟨 new
 
 As a **plant keeper** I want yes and no to be saved without a further form.
 
@@ -77,7 +79,9 @@ Acceptance criteria:
 - Idempotent: if a wish already exists for the species, no second one arises (FR-WUN-06).
 - A wrong decision can be changed in the wishlist (reset status); the species then appears again in Discover.
 
-### US-ENT-05 · Suggestions learn from my decisions · ⬜ new
+Assumptions, decided by the PO (revisable): the client names only the species and the decision; the server derives the wish from the suggestion itself (a made-up card cannot be written) and refuses a species that is not suggested to the account (`discover.not_suggested`). The "catalog reference" of the wish is the Latin name, because the wish has no species column yet (the name key keeps it unique, FR-WUN-06). The target zone is the account's n-th zone (as in US-ENT-03), the license stays unknown because the card carries none (P-08), the image source is the card's source link, and `Reasoning` holds the displayed reasons joined into one text. A repeated decision on a species that has a wish of any status writes nothing (`saved: false`). A swipe to the right is "Yes", to the left "No". Not built yet: resetting a wish back to open from the wishlist (so a discarded species appears again).
+
+### US-ENT-05 · Suggestions learn from my decisions · 🟨 new
 
 As a **plant keeper** I want my decisions to change the next suggestions.
 
@@ -89,7 +93,9 @@ Acceptance criteria:
 - Example: after 5× No for Crassulaceae and 0× Yes the family factor drops to 1/6. Crassulaceae appear much less often, but not never (US-ENT-06).
 - Only the own decisions count; decisions of other users do not flow in (FR-ENT-07).
 
-### US-ENT-06 · Also see the surprising · ⬜ new
+Assumptions, decided by the PO (revisable): the factor looks at the attributes the catalog carries today: family, genus, light zone and difficulty (the DM-ENT-01 attributes join when the catalog has them; unknown values are neutral). A decision is attributed through the catalog card of the same name key, with the catalog's light zone and difficulty; a wish for a species outside the catalog changes nothing. The score is the factor times (1 + the number of shares), so the factor also orders species without a share (starting value of the base, assumption; without decisions the order stays that of US-ENT-03). The reason "You have N species of the genus (family) X on the wishlist" appears only where yes outnumbers no (genus first, then family); there is no reason for a rejection. Not built yet: the proximity and growth shares of FR-ENT-02 and the exploration quota that keeps rejected families from disappearing (US-ENT-06).
+
+### US-ENT-06 · Also see the surprising · 🟨 new
 
 As a **plant keeper** I want to see something outside my pattern now and then, so that the catalog does not shrink to one corner.
 
@@ -99,7 +105,9 @@ Acceptance criteria:
 - Hard filters (US-ENT-02) apply here too.
 - The selection is fixed per account, day and deck number, so that reloading shows the same deck (FR-ENT-05).
 
-### US-ENT-07 · Discover directly from the buffer warning · ⬜ new
+Assumptions, decided by the PO (revisable): the exploration cards per deck are 2 of 10 (`EXPLORATION_PER_DECK`, DM-ENT-03 starting value, not adjustable yet). A species explores if its order has no caught species, or, where the order has one, its family has none; the groups are ordered by their size in the catalog tree (fewest species first, name as tie-break). Deck n takes one species from each of the next 2 groups, so the groups of earlier decks are used up first; inside a group the species is chosen by a stable hash of account, local day, deck number and group, so the choice varies per day but a reload shows the same deck. Species that explore in any deck are left out of the normal order, so no card shows twice; the normal cards fill the rest of the deck in rank order, and the exploration cards sit spread between them. An exploration card carries the badge "Mal etwas anderes" and the reasons "Aus der Ordnung X hast du noch keine Art im Pokédex" (or Familie) and the plain not-caught fact; its preference reasons are left out. Species without a known order and family never explore (P-08). The wish written by US-ENT-04 takes the reasons of the normal card. The hard filters of US-ENT-02 are not built yet and will apply to the groups.
+
+### US-ENT-07 · Discover directly from the buffer warning · 🟨 new
 
 As a **plant keeper** I want to see matching suggestions immediately on "Replenishment needed".
 
@@ -107,6 +115,8 @@ Acceptance criteria:
 
 - Besides "Fetch suggestions" (AI research, US-WUN-04) the buffer warning (US-WUN-02) offers the action "Discover for <zone>", which opens a deck with a filter on this zone.
 - If the catalog does not suffice for the zone (fewer candidates than the buffer after filters), the view says so and offers the AI research or "Propose species" (US-BES-01). Newly researched species go via the catalog (US-POK-02), not past it.
+
+Assumptions, decided by the PO (revisable): the warning offers one button "Entdecken für <zone>" per zone below the buffer; it opens Discover at `/discover?view=suggestions&zone=<n>` (n = zone number 2 to 4, the n-th zone of the account, as in US-ENT-03). `GET /discover/suggestions` takes the same `zone` parameter (anything but 2 to 4 is `input.invalid`) and answers `zoneFilter` with the zone, its name, the number of candidates of the zone and, if that number is below the account's buffer (US-WUN-02, default 2), a `shortfall` with the text and the next action. The filter keeps species whose catalog light zone equals the zone; exploration picks of other zones are left out; a species without a known zone is not shown as fitting (P-08). The view names the zone and shows the shortfall with the link "Art vorschlagen" (US-BES-01; newly proposed species go through the catalog and its review, US-POK-02). Not built yet: the "Fetch suggestions" (AI research, US-WUN-04) offer in the shortfall, because that story does not exist; the other keeper filters of US-ENT-02.
 
 ### US-ENT-08 · Suggestions via the AI client · ⬜ new
 
@@ -118,6 +128,8 @@ Acceptance criteria:
 - "Yes" or "No" in the conversation calls `decide` (right "write", otherwise draft), with the same effect as US-ENT-04.
 - If the client adds knowledge about the species, it marks what does not come from the catalog (KI-R5).
 - Discover works completely without AI (FR-KI-05).
+
+Gap, noted by the PO assistant (US-ENT-08 not started): the operations `suggestions` (`GET /discover/suggestions`) and `decide` (`POST /discover/decisions`) exist and run without AI (FR-KI-05), so the part that needs no AI client is in place. Missing and blocked by the AI access (release R4): the connection of the client (US-KI-07, E-04), the tool definitions that expose both operations to it, the right model "write, otherwise draft" for `decide` (US-KI-09) and the marking of knowledge that does not come from the catalog (KI-R5).
 
 ## Data model
 

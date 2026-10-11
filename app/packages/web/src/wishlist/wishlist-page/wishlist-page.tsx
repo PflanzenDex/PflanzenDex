@@ -6,8 +6,9 @@ import { useCandidateWrite, WriteOutcome, type WishToPlant } from "../actions/ac
 import { BoughtList } from "../history/bought-list/bought-list";
 import { CandidateCard } from "../candidate-card/candidate-card";
 import { DiscardedList } from "../history/discarded-list/discarded-list";
-import { ReplenishWarning } from "../replenish-warning/replenish-warning";
-import { DuplicateWishes, useRepair } from "../duplicate-wishes/duplicate-wishes";
+import { ReplenishWarning } from "../hints/replenish-warning/replenish-warning";
+import { DuplicateWishes, useRepair } from "../hints/duplicate-wishes/duplicate-wishes";
+import { UnfitWishes } from "../hints/unfit-wishes/unfit-wishes";
 import { WishForm } from "../wish-form/wish-form";
 import { WishlistPageSkeleton } from "./wishlist-page.skeleton";
 import { createWish, loadWishlist, type WishInput, type Wishlist } from "../wishlist-api";
@@ -17,7 +18,6 @@ const focusForm = () =>
   document
     .querySelector<HTMLElement>('section[aria-labelledby="wish-form-title"] input[name="name"]')
     ?.focus();
-
 const KEY = ["wishlist", "candidates"] as const;
 type Token = () => Promise<string | undefined>;
 type Last = "write" | "repair";
@@ -26,6 +26,8 @@ function Candidates(props: {
   list: CandidateList;
   onBuy: (c: Candidate) => void;
   onDiscard: (c: Candidate) => void;
+  onStoreImage: (c: Candidate) => void;
+  photoAccess: { api: string; token: Token };
   busy: boolean;
 }) {
   const { list } = props;
@@ -54,6 +56,8 @@ function Candidates(props: {
             rank={i + 1}
             onBuy={props.onBuy}
             onDiscard={props.onDiscard}
+            onStoreImage={props.onStoreImage}
+            photoAccess={props.photoAccess}
             busy={props.busy}
           />
         ))}
@@ -98,10 +102,13 @@ function Body(props: {
       />
       <ReplenishWarning replenishment={data.list.replenishment} />
       <DuplicateWishes list={data.list} repair={repair} />
+      <UnfitWishes wishes={data.list.unfit} />
       <Candidates
         list={data.list}
         onBuy={candidate.buy}
         onDiscard={candidate.discard}
+        onStoreImage={candidate.storeImage}
+        photoAccess={{ api, token }}
         busy={candidate.running}
       />
       <WishForm

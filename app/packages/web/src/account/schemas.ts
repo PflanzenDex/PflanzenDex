@@ -1,4 +1,8 @@
-import { OPERATOR_COST_CENTS, INVITATION_VALIDITY_DAYS } from "@pflanzendex/core";
+import {
+  INVITATION_VALIDITY_DAYS,
+  OPERATOR_COST_CENTS,
+  REPLENISH_BUFFER_LIMITS as BUFFER,
+} from "@pflanzendex/core";
 import { z } from "zod";
 import { OCCASIONS, type AccountProfile } from "./api/account-api";
 
@@ -8,6 +12,11 @@ export const profileSchema = z.object({
   timeZone: z.string(),
   everythingPrivate: z.boolean(),
   noRecommendations: z.boolean(),
+  /** Whole number as text; the server decides again (P-03). */
+  replenishBuffer: z.string().refine((text) => {
+    const n = Number(text);
+    return /^\d+$/.test(text.trim()) && n >= BUFFER.min && n <= BUFFER.max;
+  }, `Gib eine ganze Zahl von ${BUFFER.min} bis ${BUFFER.max} ein.`),
   notifications: z.object({
     phase: z.boolean(),
     treatment: z.boolean(),
@@ -27,6 +36,7 @@ export const toProfileFields = (p: AccountProfile, deviceZone: string | null): P
   timeZone: p.timeZone ?? deviceZone ?? "",
   everythingPrivate: p.everythingPrivate,
   noRecommendations: p.noRecommendations,
+  replenishBuffer: String(p.replenishBuffer),
   notifications: { ...p.notifications },
 });
 
@@ -41,12 +51,13 @@ export function toProfile(f: ProfileFields, saved: AccountProfile): AccountProfi
     timeZone: f.timeZone === "" ? null : f.timeZone,
     everythingPrivate: f.everythingPrivate,
     noRecommendations: f.noRecommendations,
+    replenishBuffer: Number(f.replenishBuffer.trim()),
     notifications: { ...f.notifications },
   };
 }
 
 /** Fields of the settings form a server refusal can point at, in the order of the form. */
-export const PROFILE_REFUSABLE = ["displayName", "timeZone"] as const;
+export const PROFILE_REFUSABLE = ["displayName", "timeZone", "replenishBuffer"] as const;
 
 export const invitationCodeSchema = z.object({
   code: z.string().trim().min(1, "Bitte gib deinen Einladungscode ein."),

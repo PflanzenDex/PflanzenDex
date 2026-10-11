@@ -3,7 +3,7 @@ import type { Candidate } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
 import { errorText } from "@/lib/error-text";
 import { useWriteAction, type ApiError, type Response } from "../../kernel";
-import { buyWish, discardWish } from "../wishlist-api";
+import { buyWish, discardWish, storeWishImage } from "../wishlist-api";
 
 type Token = () => Promise<string | undefined>;
 type Hint = { text: string; nextAction: string };
@@ -57,6 +57,25 @@ export function useCandidateWrite(
   return {
     buy: (c: Candidate) => run(c, (t) => buyWish(api, t, c.id), true),
     discard: (c: Candidate) => run(c, (t) => discardWish(api, t, c.id), false),
+    storeImage: (c: Candidate) => {
+      onRun();
+      void write.run(async (t) => {
+        const r = await storeWishImage(api, t, c.id);
+        setDone(
+          r.ok
+            ? {
+                hint: {
+                  text: `Das Bild von „${c.title}“ ist bei dir gespeichert. Quelle und Lizenz stehen am Bild.`,
+                  nextAction:
+                    "Entscheide jetzt: Gekauft oder Verwerfen, oder schau dir die nächste Karte an.",
+                },
+                toPlant: null,
+              }
+            : null,
+        );
+        return r;
+      }, "");
+    },
     done,
     running: write.running,
     error: write.error,

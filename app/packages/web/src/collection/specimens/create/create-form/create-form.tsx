@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, type UseFormReturn } from "react-hook-form";
 import { speciesDisplayName, type Species, type LightLocation } from "@pflanzendex/core";
 import { Form, FormRoot } from "@/components/ui/fields/form/form";
 import type { ApiError } from "../../../../kernel";
@@ -43,6 +43,13 @@ function ErrorBox({ text, error }: { text: string; error: ApiError }) {
   );
 }
 
+/** The input to send; the catch date counts as chosen only when the keeper changed the field (FR-BES-04, #306). */
+const inputOf = (
+  form: UseFormReturn<CreateFields>,
+  values: CreateFields,
+  missing: readonly { id: string }[],
+) => toCreateInput(values, missing, form.getFieldState("catchDate").isDirty);
+
 /**
  * Create specimen (US-BES-02, US-BES-03): only the species is required for the first specimen. The name is fixed
  * before saving and is already shown here (DM-BES-03). From the second specimen on the marker is required (preset
@@ -79,7 +86,7 @@ export function CreateForm(props: {
   );
   const speciesName = speciesDisplayName(props.species);
   const submit = form.handleSubmit(async (values) =>
-    setError(await props.onSend(toCreateInput(values, rule.missing, today))),
+    setError(await props.onSend(inputOf(form, values, rule.missing))),
   );
   return (
     <section aria-labelledby="create-title">

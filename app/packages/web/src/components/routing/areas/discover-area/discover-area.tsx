@@ -1,10 +1,17 @@
 import { Suspense, type ReactNode } from "react";
+import { useSearchParams } from "react-router";
 import type { Species } from "@pflanzendex/core";
 import { DiscoverPage } from "@/discover";
 import { SpeciesPage } from "@/catalog";
 import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skeleton";
 import { SammlungHeader } from "@/components/sammlung-header/sammlung-header";
 import { DISCOVER_VIEWS, useDiscoverView } from "./discover-view";
+
+/** The light zone of "Discover for <zone>" from the address (`?zone=3`, US-ENT-07); anything but 2 to 4 means no filter. */
+function zoneOf(value: string | null): number | undefined {
+  const n = Number(value);
+  return value !== null && Number.isInteger(n) && n >= 2 && n <= 4 ? n : undefined;
+}
 
 type Token = () => Promise<string | undefined>;
 
@@ -25,6 +32,7 @@ export function DiscoverArea(props: {
   searchStart?: string;
 }) {
   const { view, choose } = useDiscoverView();
+  const zone = zoneOf(useSearchParams()[0].get("zone"));
   return (
     <>
       <SammlungHeader
@@ -47,7 +55,12 @@ export function DiscoverArea(props: {
             {...(props.searchStart ? { initialSearch: props.searchStart } : {})}
           />
         ) : (
-          <DiscoverPage api={props.api} token={props.token} embedded />
+          <DiscoverPage
+            api={props.api}
+            token={props.token}
+            embedded
+            {...(zone === undefined ? {} : { zone })}
+          />
         )}
       </Suspense>
     </>

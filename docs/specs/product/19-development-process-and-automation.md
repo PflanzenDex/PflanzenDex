@@ -153,7 +153,7 @@ Acceptance criteria:
 - **Release checklist** (skill `release-checklist`): CI green, migrations checked and backup fresh, changelog complete, feature flags set, privacy gates green, fallback plan known, operator informed.
 - `make release-dry-run` shows version and notes without publishing.
 
-### US-DEV-07 · Database migrations are safe · ⬜
+### US-DEV-07 · Database migrations are safe · 🟨
 
 As an **operator** I want schema changes without data loss and without downtime.
 
@@ -164,6 +164,8 @@ Acceptance criteria:
 - Every migration has a test on a database with realistic data (test data set in the order of magnitude of the prototype data, 13 species, 17 specimens, measurement series (as a fixture, no import); pattern: test data script in Tombola).
 - Before every migration in production a fresh, **restorable** backup exists (NFR-15).
 - Row-level rules of the tenant isolation (NFR-09) are migrated along and checked by QG-D1; a migration that removes a rule fails QG-D1.
+
+State of implementation: migrations are versioned SQL files in the repo, forward only with a checksum, applied in one transaction each under an advisory lock; the deploy runs them in the one-shot `migrate` service before the API starts and rolls back the code when one fails (#201). `deploy.sh` takes a backup (verified with `pg_restore -l`) before every deploy while the database runs; `make restore-test` proves a backup restores (NFR-15). A test (`packages/db/src/realistic-migration.test.ts`) migrates a scratch database to `0012`, fills it with a fixture of prototype size (2 accounts, 13 species, 17 specimens with locations and zones, measurement series) and applies every later migration over it, checking counts, values, references and the row rules per account; every new migration runs through it automatically. The row rules are also checked by QG-D1 (`tenant.test.ts`). **Open:** a machine check of expand/contract (that the previous app version still works on the new schema); today it is a rule for the author (`.agents/skills/db-migration`).
 
 ### US-DEV-08 · Parallel work without collisions · 🟨
 
@@ -180,7 +182,7 @@ Acceptance criteria:
 - **Agents:** do not commit unasked, change no foreign files without an assignment and report before writing if a file has changed since reading (the tool already reports that).
 - **One story, one assignee (claim):** whoever starts a story or enabler claims it first with `make claim ISSUE=<n>`. Given the issue has an assignee, an open or merged PR, or a branch on `origin` with the story ID when the claim is made, then it aborts with the finding and writes nothing. It first checks that `node_modules` exists and that `origin/dev` has a `Makefile`. Otherwise it creates the branch, sets the assignee and the project status "In Progress" and opens a draft PR with a "Handoff" section. If a step fails, it undoes the steps already written (branch deleted, assignee removed, status "Todo"); a re-run then works cleanly. `make board` shows per open story the assignee, PR and age of the last commit and marks stale claims (starting value 48 hours without a commit, assumption) and double claims; `make worktree` rejects stories that belong to someone else; a push is not checked. The check is local (no CI gate); operation: `docs/guides/operations/parallel-work.md`, principle PRIN-010.
 
-### US-DEV-09 · Operation: health, alarms, runbooks · ⬜
+### US-DEV-09 · Operation: health, alarms, runbooks · 🟨
 
 As an **operator** I want to know when something is wrong before users report it.
 
@@ -191,6 +193,8 @@ Acceptance criteria:
 - Runbooks under `docs/guides/operations/` for: restoring a backup, fallback, migration fails, photo storage full, AI interface disturbed or abused (block connection), reminders do not run, GDPR deletion, security incident.
 - A failure of an external source or of the AI impairs no core function (NFR-17, FR-KI-05).
 - Operating metrics: availability, error rate, job runtime, cost per account (NFR-16).
+
+State of implementation: `GET /health` reports version and commit plus `checks` of the database (`select 1`, 2 s timeout, assumption), the job queue (queued, running, dead) and whether the photo storage is configured; a database that does not answer gives 503 (`error`), dead jobs or an unreadable queue give `degraded` with 200; no error text leaves the endpoint. The Compose health check and the deploy use it. Runbooks in `docs/guides/operations/`: restoring a backup and the fallback (existing), migration fails, database not reachable, dead jobs, photo storage full or unavailable, security incident. **Open:** a live check of the object storage, operator messages for errors and failed jobs (NFR-18), the runbooks for the AI interface, reminders and the GDPR deletion (with their features), an external monitor with alerts, operating metrics (NFR-16).
 
 ### US-DEV-10 · Repository statistics in the README · ✅ new
 

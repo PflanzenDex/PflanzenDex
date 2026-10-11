@@ -12,6 +12,8 @@ const TYPE_TEXT: Record<FeedType, string> = {
   new_species: "Neue Art gefangen",
   new_cutting: "Neuer Steckling",
   new_specimen: "Neues Exemplar",
+  potted: "Eingetopft",
+  swapped: "Getauscht",
 };
 const PERIODS = [7, 30, 90] as const;
 

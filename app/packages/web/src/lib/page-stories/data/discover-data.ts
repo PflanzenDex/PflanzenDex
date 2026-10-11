@@ -18,11 +18,13 @@ const suggestion = (
   sourceUrl: "https://de.wikipedia.org/wiki/Zimmerpflanze",
   attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
   reasons: [reason],
+  exploration: false,
 });
 
 const deck: SuggestionDeck = {
   deck: 1,
   empty: null,
+  zoneFilter: null,
   suggestions: [
     suggestion(
       "Haworthia fasciata",
@@ -90,6 +92,7 @@ export const discoverEmpty = {
   "/discover/suggestions": {
     deck: 1,
     suggestions: [],
+    zoneFilter: null,
     empty: {
       reason: "all_decided",
       text: "Du hast alle Vorschläge entschieden.",

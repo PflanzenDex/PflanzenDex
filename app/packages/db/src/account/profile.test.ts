@@ -24,6 +24,7 @@ const PROFILE = {
   everythingPrivate: true,
   noRecommendations: true,
   notifications: NOTIFICATIONS,
+  replenishBuffer: 2,
 };
 
 async function newAccount(withData = true): Promise<string> {
@@ -61,6 +62,7 @@ describe("US-ACC-02 · profile in the database", () => {
       everythingPrivate: false,
       noRecommendations: false,
       notifications: {},
+      replenishBuffer: 2,
     });
   });
 
@@ -132,5 +134,30 @@ describe("US-ACC-02 · profile in the database", () => {
     );
     expect(touched.rowCount).toBe(0);
     expect(await profiles.find(a)).toEqual(PROFILE);
+  });
+});
+
+describe("US-WUN-02 · the replenish buffer in the database", () => {
+  it("starts at 2, is saved and read back, and null keeps the stored value", async () => {
+    const id = await newAccount();
+    expect((await profiles.find(id))?.replenishBuffer).toBe(2);
+    expect((await profiles.update(id, { ...PROFILE, replenishBuffer: 5 }))?.replenishBuffer).toBe(
+      5,
+    );
+    const kept = await profiles.update(id, { ...PROFILE, replenishBuffer: null, timeZone: "UTC" });
+    expect(kept).toMatchObject({ replenishBuffer: 5, timeZone: "UTC" });
+  });
+
+  it("the database refuses a value outside 0 to 10", async () => {
+    const id = await newAccount();
+    for (const replenishBuffer of [-1, 11])
+      await expect(profiles.update(id, { ...PROFILE, replenishBuffer })).rejects.toThrow();
+  });
+
+  it("tenant: another account keeps its own buffer (P-04)", async () => {
+    const a = await newAccount();
+    const b = await newAccount();
+    await profiles.update(a, { ...PROFILE, replenishBuffer: 7 });
+    expect((await profiles.find(b))?.replenishBuffer).toBe(2);
   });
 });

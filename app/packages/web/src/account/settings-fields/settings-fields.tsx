@@ -28,6 +28,29 @@ const zones = (): string[] => {
 
 type FieldProps = { control: Control<Fields> };
 
+/** The buffer of the wishlist warning (US-WUN-02), an account setting next to the time zone. */
+function BufferField({ control }: FieldProps) {
+  return (
+    <FormField
+      control={control}
+      name="replenishBuffer"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Mindestzahl offener Wünsche je Zone</FormLabel>
+          <FormControl>
+            <Input {...field} inputMode="numeric" autoComplete="off" />
+          </FormControl>
+          <FormDescription>
+            Die Wunschliste warnt, wenn eine Zone 2 bis 4 weniger offene Wünsche hat. Ganze Zahl von
+            0 bis 10, 2 ist die Vorgabe; 0 schaltet die Warnung aus.
+          </FormDescription>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
 export function ProfileFields({ control, fromDevice }: FieldProps & { fromDevice: boolean }) {
   return (
     <>
@@ -71,6 +94,7 @@ export function ProfileFields({ control, fromDevice }: FieldProps & { fromDevice
           </FormItem>
         )}
       />
+      <BufferField control={control} />
     </>
   );
 }

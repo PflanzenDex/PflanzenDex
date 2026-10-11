@@ -16,7 +16,7 @@ Start users: the three people from the prototype circle.
 
 1. **Says what to do.** Change location, treatment due, measurement overdue, lamp level does not fit. Not just watering.
 2. **Measures against your own history.** Growth trend against your own average, etiolation never counts as success.
-3. **Rewards collecting.** Pokédex with rank, milestones and "N more until …".
+3. **Rewards collecting and caring.** Pokédex with rank, milestones and "N more until …"; achievements, care rhythm and personal records for care and growth (ACH), always against your own history.
 4. **Connects.** New among friends, swap exchange, provenance of every plant.
 5. **AI as an entry point.** Care by voice and photo, profiles and research on request, without the AI calculating or writing data freely.
 
@@ -106,5 +106,8 @@ Technology-neutral. Every entity belongs to an account, except the species catal
 | Provenance             | Origin, source and date of a catalog value: source, AI, community, reviewer or operator (DM-BES-06).                                                                                          |
 | Source snapshot        | The raw answer of one data source for one species, stored once and reused for every view (DM-BES-05, US-BES-12).                                                                              |
 | Thriving               | Active specimen with ≥ 2 measurements, overall rate > 0 and last quality `Healthy`; basis for suggestions (epic ENT).                                                                         |
+| Achievement            | Named, verifiable event in the keeper's own data (e.g. cutting rooted), derived live, earned once per account (epic ACH).                                                                     |
+| Care rhythm            | Run of calendar weeks in which all due care tasks were done on time; replaces a streak, a missed week is never shown as a loss (US-ACH-04).                                                   |
+| Calm mode              | Account setting that hides all achievement and celebration elements (US-ACH-08).                                                                                                              |
 | Module                 | Domain-cut part of the one deployable with its own public interface, own tables and allowed dependencies (E-20, ADR 0003). Not to be confused with an epic: a module can carry several epics. |
 | Port                   | Interface defined by the owning module through which another module supplies or queries data, instead of touching its tables or code (e.g. `ZoneUsage`, LIC-05).                              |

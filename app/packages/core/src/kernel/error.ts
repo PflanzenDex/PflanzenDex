@@ -60,6 +60,22 @@ export const ERROR_TEXTS = {
     "Diesen Freundescode gibt es nicht. Prüfe die Eingabe oder bitte um einen neuen Code.",
   "friend.code_used": "Dieser Freundescode wurde schon benutzt. Bitte um einen neuen Code.",
   "friend.code_expired": "Dieser Freundescode ist abgelaufen. Bitte um einen neuen Code.",
+  "monitoring.subscription_limit":
+    "Du hast schon so viele Geräte für Benachrichtigungen angemeldet, wie möglich sind. Entferne ein Gerät und versuche es erneut.",
+  "ai.connection_revoked":
+    "Dieser KI-Client wurde von dir getrennt und hat keinen Zugriff mehr. Du kannst ihn in der Liste der verbundenen KI-Clients wieder zulassen.",
+  "ai.scope_insufficient":
+    "Dafür reichen die Rechte dieser Verbindung nicht. Erlaube dem KI-Client in der App das nötige Recht und verbinde ihn neu.",
+  "ai.connection_not_found": "Diese Verbindung gibt es nicht. Lade die Liste neu.",
+  "ai.connection_active": "Dieser KI-Client ist schon wieder verbunden. Es wurde nichts geändert.",
+  "ai.draft_not_found": "Diesen Entwurf gibt es nicht. Lade die Liste neu.",
+  "ai.draft_closed":
+    "Dieser Entwurf ist schon übernommen, verworfen oder abgelaufen. Es wurde nichts geändert.",
+  "ai.task_not_found": "Diesen Auftrag gibt es nicht. Lade die Liste neu.",
+  "ai.task_closed":
+    "Dieser Auftrag ist schon erledigt, abgelehnt oder abgelaufen. Es wurde nichts geändert.",
+  "ai.no_client":
+    "Es ist kein KI-Client verbunden, darum wurde kein Auftrag angelegt. Verbinde einen KI-Client oder kopiere den Auftrag als Text.",
   "friend.own_code": "Das ist dein eigener Freundescode. Gib ihn an jemand anderen weiter.",
   "friend.already_linked":
     "Mit dieser Person gibt es schon eine Anfrage oder Freundschaft. Es wurde nichts geändert und der Code ist nicht verbraucht.",
@@ -73,11 +89,33 @@ export const ERROR_TEXTS = {
     "Für dieses Exemplar gibt es schon ein offenes Angebot. Ziehe es zurück, bevor du ein neues erstellst.",
   "offer.treatment_open":
     "Für dieses Exemplar läuft noch eine Behandlung. Bestätige ausdrücklich, dass du es trotzdem anbieten willst.",
+  "swap.not_found": "Diese Anfrage gibt es nicht. Lade die Liste neu.",
+  "swap.not_allowed":
+    "Diese Antwort ist hier nicht möglich. Die Anfrage kann nur die andere Seite so beantworten.",
+  "swap.wrong_state":
+    "Die Anfrage ist schon beantwortet und kann so nicht mehr geändert werden. Lade die Liste neu.",
+  "swap.friendship_ended":
+    "Ihr seid nicht mehr befreundet. Die Anfrage wurde abgebrochen; es wurde nichts übergeben.",
+  "swap.own_offer": "Das ist dein eigenes Angebot. Du kannst es nicht selbst anfragen.",
+  "swap.already_requested":
+    "Du hast dieses Angebot schon angefragt. Warte auf die Antwort; es wurde nichts doppelt gesendet.",
+  "swap.counter_not_allowed":
+    "Zu einem Geschenk gibt es kein Gegenangebot. Frage ohne Gegenangebot an; es wurde nichts gesendet.",
+  "swap.counter_not_shared":
+    "Dein Gegenangebot muss für Freunde freigegeben sein. Gib das Exemplar frei oder wähle ein anderes; es wurde nichts gesendet.",
   "offer.not_found": "Dieses Angebot gibt es nicht. Lade die Liste neu.",
   "offer.not_active":
     "Dieses Angebot ist schon übergeben und kann nicht mehr zurückgezogen werden. Es wurde nichts geändert.",
+  "discover.not_suggested":
+    "Diese Art wird dir gerade nicht vorgeschlagen: Du hast sie schon gefangen oder sie fehlt im Katalog. Lade die Vorschläge neu.",
   "wish.name_taken":
     "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
+  "wish.image_source_unsupported":
+    "Das Bild kann nur von Wikimedia Commons gespeichert werden. Trage die Adresse einer Datei von commons.wikimedia.org ein; es wurde nichts gespeichert.",
+  "wish.image_not_found":
+    "Dieses Bild gibt es bei Wikimedia Commons nicht (mehr). Prüfe die Adresse; es wurde nichts gespeichert.",
+  "wish.image_license_unsupported":
+    "Die Lizenz dieses Bildes erlaubt kein Speichern oder ist nicht angegeben. Nimm ein Bild mit freier Lizenz (CC0, CC BY, CC BY-SA oder gemeinfrei); es wurde nichts gespeichert.",
   "wish.not_found": "Diesen Wunsch gibt es nicht. Lade die Wunschliste neu.",
   "wish.not_open":
     "Dieser Wunsch ist verworfen und nicht mehr offen. Nur ein offener Wunsch kann als gekauft vermerkt werden; es wurde nichts geändert.",

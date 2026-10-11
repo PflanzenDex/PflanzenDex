@@ -31,15 +31,31 @@ export interface WishRow {
   /** Always set together with `imageUrl`. */
   readonly imageSource: string | null;
   readonly license: string | null;
+  /**
+   * Object name of the stored copy of the image (US-WUN-04, `<uuid>.jpg` in the object store); `null` until it is
+   * stored. The address above is only the origin, it is never loaded by a viewer (P-05).
+   */
+  readonly imageObject: string | null;
   readonly type: "plant";
   readonly status: WishStatus;
   /** The specimen this wish became ("bought → specimen", US-WUN-05); `null` until it is linked. */
   readonly specimenId: string | null;
 }
 
-/** The values of a new wish; `nameKey` is derived from the name (`wishNameKey`) and makes the name unique per account. */
-export type WishValues = Omit<WishRow, "id" | "type" | "status" | "specimenId"> & {
+/** Where a wish came from (DM-ENT-02); a wish without a given source is `manual`. */
+export const WISH_SOURCES = ["manual", "discover"] as const;
+export type WishSource = (typeof WISH_SOURCES)[number];
+
+/**
+ * The values of a new wish; `nameKey` is derived from the name (`wishNameKey`) and makes the name unique per account.
+ * `source`, `decidedAt` (local date of the decision) and `status` are set by a Discover decision (US-ENT-04); without
+ * them a wish is an open `manual` wish.
+ */
+export type WishValues = Omit<WishRow, "id" | "type" | "status" | "specimenId" | "imageObject"> & {
   readonly nameKey: string;
+  readonly source?: WishSource;
+  readonly decidedAt?: string;
+  readonly status?: "wishlist" | "discarded";
 };
 
 /** A wish after a status change ("Bought", US-WUN-03; "Discarded", US-WUN-05). `changed` is false when nothing was written. */
@@ -54,6 +70,17 @@ export type WishPurchase = WishChange;
 export interface WishStore {
   /** `name_taken`: a wish of the account has that name (FR-WUN-06); `zone_unknown`: not a zone of the account. */
   create(userId: string, values: WishValues): Promise<WishRow | "name_taken" | "zone_unknown">;
+  /** One wish of the account of any status; `null` if there is none (a foreign one looks the same, P-04). */
+  find(userId: string, wishId: string): Promise<WishRow | null>;
+  /**
+   * Records the stored copy of the wish image with its verified source and license (US-WUN-04). `null`: no wish of the
+   * account (nothing written, P-04).
+   */
+  setImage(
+    userId: string,
+    wishId: string,
+    image: { readonly object: string; readonly source: string; readonly license: string },
+  ): Promise<WishRow | null>;
   /** Open plant wishes (`status = wishlist`, FR-WUN-02), oldest first. */
   open(userId: string): Promise<readonly WishRow[]>;
   /**
@@ -116,4 +143,17 @@ export interface ZoneStock {
  */
 export interface ZoneStockSource {
   stock(userId: string): Promise<readonly ZoneStock[]>;
+  /** The zones of the account that do not count (the cutting light); only used to name them in hints (FR-WUN-03). */
+  uncounted?(userId: string): Promise<readonly OutsideZone[]>;
+  /**
+   * The buffer of open candidates per zone the account wants (US-WUN-02, account setting of US-ACC-02); without this
+   * method the default applies.
+   */
+  buffer?(userId: string): Promise<number>;
+}
+
+/** A zone that is not among zones 2 to 4 (the cutting light, FR-LIC-02). */
+export interface OutsideZone {
+  readonly zoneId: string;
+  readonly name: string;
 }

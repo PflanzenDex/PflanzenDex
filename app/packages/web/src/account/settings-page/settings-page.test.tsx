@@ -22,6 +22,7 @@ const PROFILE = {
     swap: true,
     friends: true,
   },
+  replenishBuffer: 2,
 };
 
 type Put = { body: Record<string, unknown>; key: string | undefined };
@@ -338,5 +339,65 @@ describe("US-ACC-02 · DS-48 states and primitives", () => {
     await screen.findAllByRole("alert");
     await user.type(name, "y");
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+});
+
+describe("US-WUN-02 settings page: buffer of the wishlist warning", () => {
+  const field = async () => screen.findByLabelText<HTMLInputElement>(/Mindestzahl offener Wünsche/);
+
+  it("shows the saved buffer and says what it does and that 0 switches the warning off", async () => {
+    fakeServer({ ...PROFILE, replenishBuffer: 4 });
+    show();
+    expect((await field()).value).toBe("4");
+    expect(screen.getByText(/0 schaltet die Warnung aus/)).toBeTruthy();
+  });
+
+  it("saves a whole number from 0 to 10 with the profile", async () => {
+    const puts = fakeServer();
+    const user = userEvent.setup();
+    show();
+    const input = await field();
+    await user.clear(input);
+    await user.type(input, "5");
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    expect((await screen.findByRole("status")).textContent).toBe("Einstellungen gespeichert.");
+    expect(puts[0]?.body["replenishBuffer"]).toBe(5);
+  });
+
+  it.each(["11", "-1", "2,5", "abc", ""])(
+    "refuses %j before sending and names the fix",
+    async (text) => {
+      const puts = fakeServer();
+      const user = userEvent.setup();
+      show();
+      const input = await field();
+      await user.clear(input);
+      if (text) await user.type(input, text);
+      await user.click(screen.getByRole("button", { name: "Speichern" }));
+      expect((await screen.findAllByRole("alert"))[0]?.textContent).toContain(
+        "ganze Zahl von 0 bis 10",
+      );
+      expect(puts).toHaveLength(0);
+    },
+  );
+
+  it("a server refusal of the field marks it (P-10)", async () => {
+    fakeServer(PROFILE, () =>
+      response(400, {
+        error: {
+          code: "input.invalid",
+          text: "x",
+          details: [{ field: "replenishBuffer", code: "input.invalid" }],
+        },
+      }),
+    );
+    const user = userEvent.setup();
+    show();
+    const input = await field();
+    await user.clear(input);
+    await user.type(input, "3");
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await screen.findByRole("alert");
+    expect(input.getAttribute("aria-invalid")).toBe("true");
   });
 });

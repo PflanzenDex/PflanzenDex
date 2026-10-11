@@ -87,3 +87,38 @@ describe("US-SOZ-03 end a friendship", () => {
     expect((await friendList({ friends }, "ben")).friends).toMatchObject([{ name: "Anna" }]);
   });
 });
+
+describe("US-SOZ-10 the hook after ending a friendship", () => {
+  it("runs once for the caller after the friendship ended, so the swap module can cancel open swaps", async () => {
+    const ids = await befriend();
+    const calls: string[] = [];
+    const r = await run(
+      friendEnd({ friends, afterEnd: async (userId) => void calls.push(userId) }),
+      anna,
+      { friendId: ids.anna },
+    );
+    expect(r.ok).toBe(true);
+    expect(calls).toEqual(["anna"]);
+  });
+
+  it("does not run when nothing ended (unknown friend), and a failing hook never undoes the ending (P-10)", async () => {
+    const calls: string[] = [];
+    const hook = async (userId: string) => void calls.push(userId);
+    expect(
+      errorOf(
+        await run(friendEnd({ friends, afterEnd: hook }), anna, {
+          friendId: "00000000-0000-4000-8000-0000000000ff",
+        }),
+      ),
+    ).toBe("friend.not_found");
+    expect(calls).toEqual([]);
+    const ids = await befriend(2);
+    const r = await run(
+      friendEnd({ friends, afterEnd: async () => Promise.reject(new Error("hook down")) }),
+      anna,
+      { friendId: ids.anna },
+    );
+    expect(r.ok).toBe(true);
+    expect((await friendList({ friends }, "anna")).friends).toEqual([]);
+  });
+});

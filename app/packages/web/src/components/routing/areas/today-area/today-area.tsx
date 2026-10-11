@@ -5,6 +5,7 @@ import { useSectionAnchor } from "@/components/routing/areas/shared/area-section
 import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 import { HintsPage } from "@/collection";
 import { TreatmentsPage } from "@/care";
+import { WateringList } from "@/monitoring";
 import { TodayPage, type TodayDestination } from "@/today";
 import {
   TODAY_SECTIONS,
@@ -25,12 +26,13 @@ const VIEW: Partial<Record<TodayDestination, LinkTarget>> = {
 
 const NAMES: Record<string, string> = {
   [TODAY_SECTIONS.treatments]: "Behandlungen",
+  [TODAY_SECTIONS.watering]: "Gießen",
   [TODAY_SECTIONS.hints]: "Fehlt noch",
 };
 
 /**
  * The destination "Heute" (US-QS-14): the list "Jetzt dran" (`today`), the open treatments with planning and history
- * (`care`) and the hints about incomplete plants (`collection`) as sections one below the other. The app wires the
+ * (`care`), the watering (`monitoring`, US-MON-05) and the hints about incomplete plants (`collection`) as sections one below the other. The app wires the
  * modules (they do not know each other); every section is its own lazy part, so the shell does not carry them. The
  * old addresses of "Behandlung" and "Hinweise" lead to the anchors of the sections.
  */
@@ -59,6 +61,9 @@ export function TodayArea(props: {
         loading="Behandlungen werden geladen …"
       >
         <TreatmentsPage api={props.api} token={props.token} host />
+      </Section>
+      <Section anchor={TODAY_SECTIONS.watering} title="Gießen" loading="Gießliste wird geladen …">
+        <WateringList api={props.api} token={props.token} />
       </Section>
       <Section anchor={TODAY_SECTIONS.hints} title="Fehlt noch" loading="Hinweise werden geladen …">
         <HintsPage api={props.api} token={props.token} onOpen={props.onOpen} host />

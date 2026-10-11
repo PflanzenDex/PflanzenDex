@@ -23,10 +23,16 @@ const suggestion = (species: string, extra: Record<string, unknown> = {}) => ({
   ],
   ...extra,
 });
-const deckOf = (...suggestions: unknown[]) => ({ deck: 1, suggestions, empty: null });
+const deckOf = (...suggestions: unknown[]) => ({
+  deck: 1,
+  suggestions,
+  empty: null,
+  zoneFilter: null,
+});
 const nothing = {
   deck: 1,
   suggestions: [],
+  zoneFilter: null,
   empty: {
     reason: "all_decided",
     text: "Keine neuen Vorschläge: Du besitzt alle Arten des Katalogs oder hast dich schon entschieden.",
@@ -34,9 +40,15 @@ const nothing = {
   },
 };
 
-function fakeServer(answer: (deck: number) => Promise<Response>) {
-  const fetchFn = vi.fn<typeof fetch>(async (url) => {
+function fakeServer(
+  answer: (deck: number) => Promise<Response>,
+  decision: (body: { species: string; decision: string }) => Promise<Response> = async (b) =>
+    response(200, { decision: b.decision, saved: true }),
+) {
+  const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
     const u = new URL(String(url));
+    if (u.pathname === "/discover/decisions")
+      return decision(JSON.parse(String(init?.body)) as { species: string; decision: string });
     return u.pathname === "/discover/suggestions"
       ? answer(Number(u.searchParams.get("deck")))
       : response(404, {});
@@ -134,9 +146,9 @@ describe("US-ENT-01 suggestions as a card", () => {
       fireEvent.pointerUp(el, { clientX: to, clientY: 105 });
     };
     swipe(await card(), 200, 60);
-    expect(within(await card()).getByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
     swipe(await card(), 60, 200);
-    expect(within(await card()).getByRole("heading", { name: "Aloe vera" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Aloe vera" })).toBeTruthy();
     swipe(await card(), 100, 120);
     expect(within(await card()).getByRole("heading", { name: "Aloe vera" })).toBeTruthy();
   });
@@ -149,13 +161,15 @@ describe("US-ENT-01 suggestions as a card", () => {
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
     await user.click(screen.getByRole("button", { name: "Ja" }));
-    expect(await screen.findByText("Für heute durch. 0 neu auf der Wunschliste.")).toBeTruthy();
+    expect(await screen.findByText("Für heute durch. 1 neu auf der Wunschliste.")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Neuer Stapel" }));
     expect(await screen.findByText(/Keine neuen Vorschläge/)).toBeTruthy();
-    expect(fetchFn.mock.calls.map(([u]) => new URL(String(u)).searchParams.get("deck"))).toEqual([
-      "1",
-      "2",
-    ]);
+    expect(
+      fetchFn.mock.calls
+        .map(([u]) => new URL(String(u)))
+        .filter((u) => u.pathname === "/discover/suggestions")
+        .map((u) => u.searchParams.get("deck")),
+    ).toEqual(["1", "2"]);
   });
 
   it("US-ENT-01 without candidates says why and offers to propose a species", async () => {
@@ -218,5 +232,99 @@ describe("US-QS-14 focus follows the view (SC 2.4.3)", () => {
     await user.click(await screen.findByRole("button", { name: "Neuer Stapel" }));
     const heading = await screen.findByRole("heading", { name: /Keine neuen Vorschläge/ });
     expect(document.activeElement).toBe(heading);
+  });
+});
+
+describe("US-ENT-04 decisions are saved", () => {
+  const two = () => deckOf(suggestion("Aspidistra elatior"), suggestion("Ficus lyrata"));
+  const posts = (fetchFn: ReturnType<typeof fakeServer>) =>
+    fetchFn.mock.calls
+      .filter(([u]) => new URL(String(u)).pathname === "/discover/decisions")
+      .map(([, init]) => JSON.parse(String(init?.body)) as Record<string, unknown>);
+
+  it("US-ENT-04 Ja and Nein write the decision at once and move on; Später writes nothing", async () => {
+    const fetchFn = fakeServer(async () =>
+      response(
+        200,
+        deckOf(
+          suggestion("Aspidistra elatior"),
+          suggestion("Ficus lyrata"),
+          suggestion("Aloe vera"),
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    render(<DiscoverPage api="http://api" token={token} />);
+    await card();
+    await user.click(screen.getByRole("button", { name: "Ja" }));
+    expect(
+      within(await screen.findByRole("article")).getByRole("heading", { name: "Ficus lyrata" }),
+    ).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Nein" }));
+    expect(
+      within(await screen.findByRole("article")).getByRole("heading", { name: "Aloe vera" }),
+    ).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Später" }));
+    expect(posts(fetchFn)).toEqual([
+      expect.objectContaining({ species: "Aspidistra elatior", decision: "yes" }),
+      expect.objectContaining({ species: "Ficus lyrata", decision: "no" }),
+    ]);
+    expect(await screen.findByText("Für heute durch. 1 neu auf der Wunschliste.")).toBeTruthy();
+  });
+
+  it("US-ENT-04 a swipe to the right decides Ja, a swipe to the left Nein", async () => {
+    const fetchFn = fakeServer(async () => response(200, two()));
+    render(<DiscoverPage api="http://api" token={token} />);
+    const swipe = (el: HTMLElement, from: number, to: number) => {
+      fireEvent.pointerDown(el, { clientX: from, clientY: 100 });
+      fireEvent.pointerUp(el, { clientX: to, clientY: 105 });
+    };
+    swipe(await card(), 60, 200);
+    await screen.findByRole("heading", { name: "Ficus lyrata" });
+    swipe(await card(), 200, 60);
+    await screen.findByText(/Für heute durch/);
+    expect(posts(fetchFn).map((b) => b.decision)).toEqual(["yes", "no"]);
+  });
+
+  it("US-ENT-04 a refused write keeps the card, shows the error and loses nothing (P-10)", async () => {
+    fakeServer(
+      async () => response(200, two()),
+      async () =>
+        response(409, {
+          error: {
+            code: "discover.not_suggested",
+            text: "Diese Art wird dir gerade nicht vorgeschlagen.",
+          },
+        }),
+    );
+    const user = userEvent.setup();
+    render(<DiscoverPage api="http://api" token={token} />);
+    await card();
+    await user.click(screen.getByRole("button", { name: "Ja" }));
+    expect(await screen.findByRole("alert")).toBeTruthy();
+    expect(screen.getByText("Vorschlag 1 von 2")).toBeTruthy();
+    expect(screen.queryByText(/Für heute durch/)).toBeNull();
+  });
+});
+
+describe("US-ENT-07 Discover for a zone", () => {
+  it("US-ENT-07 asks the server for the zone and shows which zone the deck is for", async () => {
+    const fetchFn = fakeServer(async () =>
+      response(200, {
+        ...deckOf(suggestion("Aspidistra elatior")),
+        zoneFilter: { zone: 3, name: "Lampe 3", available: 5, shortfall: null },
+      }),
+    );
+    render(<DiscoverPage api="http://api" token={token} zone={3} />);
+    await card();
+    expect(screen.getByText("Vorschläge für Lampe 3")).toBeTruthy();
+    expect(String(fetchFn.mock.calls[0]?.[0])).toContain("zone=3");
+  });
+
+  it("US-ENT-07 without a zone the request carries no zone", async () => {
+    const fetchFn = fakeServer(async () => response(200, deckOf(suggestion("Aspidistra elatior"))));
+    render(<DiscoverPage api="http://api" token={token} />);
+    await card();
+    expect(String(fetchFn.mock.calls[0]?.[0])).not.toContain("zone=");
   });
 });

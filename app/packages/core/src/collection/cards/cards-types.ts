@@ -47,6 +47,25 @@ export interface TreatmentSource {
   ): Promise<ReadonlyMap<string, readonly OpenTreatment[]>>;
 }
 
+/** Where a received specimen came from (US-SOZ-13): the giver's display name as stored at the request and the handover date. */
+export interface SpecimenProvenance {
+  /** `null` = the giver has no display name (P-08). */
+  readonly from: string | null;
+  /** UTC instant or local date of the handover (ISO 8601). */
+  readonly date: string;
+}
+
+/**
+ * Port "SpecimenProvenance per specimen" (US-SOZ-13): `swap` implements it. A specimen that was received in a swap is in the
+ * answer, every other one is missing. Only specimens of the account `userId` are asked for.
+ */
+export interface ProvenanceSource {
+  forSpecimens(
+    userId: string,
+    specimenIds: readonly string[],
+  ): Promise<ReadonlyMap<string, SpecimenProvenance>>;
+}
+
 export interface DueDate {
   readonly kind: "overdue" | "today" | "soon";
   /** Amount in calendar days (0 for "today"). */
@@ -69,6 +88,8 @@ export interface SpecimenCard {
   /** Where the zone comes from; `null` when the zone is unknown. */
   readonly lightZoneSource: ZoneSource | null;
   readonly caughtAt: string | null;
+  /** From whom the specimen was received in a swap; `null` for a specimen that is the keeper's own (US-SOZ-13). */
+  readonly provenance: SpecimenProvenance | null;
   readonly photo: CardMeasurementView["photo"];
   /** `null` = no measurement yet. */
   readonly lastMeasurement: LastMeasurement | null;

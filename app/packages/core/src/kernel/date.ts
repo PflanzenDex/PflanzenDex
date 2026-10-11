@@ -38,3 +38,40 @@ export function isCalendarDate(value: unknown): value is string {
     date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
   );
 }
+
+const OFFSET = {
+  hourCycle: "h23",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+} as const;
+
+/** Milliseconds the wall clock of `timeZone` is ahead of UTC at the instant `at` (DST respected). */
+function offsetMs(at: number, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-CA", { ...OFFSET, timeZone }).formatToParts(
+    new Date(at),
+  );
+  const n = (t: string) => Number(parts.find((p) => p.type === t)?.value);
+  return Date.UTC(n("year"), n("month") - 1, n("day"), n("hour"), n("minute"), n("second")) - at;
+}
+
+/**
+ * The instant at which the wall clock of `timeZone` shows `date` (`YYYY-MM-DD`) at `time` (`HH:MM`): "08:00 local" as a
+ * point in time (NFR-08). A time that does not exist (spring forward) lands just after the gap.
+ */
+export function localInstant(date: string, time: string, timeZone: string): Date {
+  const [y, mo, d] = date.split("-").map(Number) as [number, number, number];
+  const [h, mi] = time.split(":").map(Number) as [number, number];
+  const wall = Date.UTC(y, mo - 1, d, h, mi);
+  const first = wall - offsetMs(wall, timeZone);
+  return new Date(wall - offsetMs(first, timeZone));
+}
+
+/** Whole days from calendar date `from` to calendar date `to` (negative when `to` is earlier); no clock, no zone. */
+export function daysBetween(from: string, to: string): number {
+  const ms = (v: string) => Date.parse(`${v}T00:00:00Z`);
+  return Math.round((ms(to) - ms(from)) / 86_400_000);
+}

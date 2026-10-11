@@ -5,7 +5,8 @@ import {
   COLUMNS,
   FOREIGN_KEY,
   SpeciesGone,
-  ensureSpeciesVisible,
+  UnknownSpecimen,
+  createSpecimenOn,
   pgError,
   setCaughtAt,
   type SpecimenRow,
@@ -25,9 +26,6 @@ export interface MarkerAssignment {
 }
 
 const UNIQUE = "23505";
-
-/** A specimen of `assignments` that is unknown, foreign, archived or already has a marker: the transaction is undone. */
-class UnknownSpecimen extends Error {}
 
 /** Which unique rule a failed write violated: the name per account or the marker per species (US-BES-03). */
 function takenBy(e: unknown): "name_taken" | "marker_taken" | null {
@@ -91,23 +89,9 @@ export class SpecimenPostgres {
     | "species_unknown"
   > {
     try {
-      return await withAccount(this.pool, userId, async (c) => {
-        for (const a of assignments) {
-          const done = await c.query(
-            `update specimen set name = $2, marker = $3
-             where id = $1 and status <> 'archived' and marker is null`,
-            [a.specimenId, a.name, a.marker],
-          );
-          if (!done.rowCount) throw new UnknownSpecimen();
-        }
-        const r = await c.query<SpecimenRow>(
-          `insert into specimen (account_id, species_id, name, marker, location_id, caught_at, status)
-           values ($1, $2, $3, $4, $5, $6, $7) returning ${COLUMNS}`,
-          [userId, w.speciesId, w.name, w.marker, w.locationId, w.caughtAt, w.status ?? "plant"],
-        );
-        await ensureSpeciesVisible(c, w.speciesId);
-        return r.rows[0] as SpecimenRow;
-      });
+      return await withAccount(this.pool, userId, (c) =>
+        createSpecimenOn(c, userId, w, assignments),
+      );
     } catch (e) {
       if (e instanceof UnknownSpecimen) return "specimen_unknown";
       if (e instanceof SpeciesGone) return "species_unknown";
@@ -143,9 +127,13 @@ export class SpecimenPostgres {
    * One statement: only a cutting becomes a plant (US-BES-04). Plants and archived specimens stay unchanged and report
    * `not_a_cutting`; foreign specimens are invisible to the row rule.
    */
-  async repot(userId: string, id: string): Promise<SpecimenRow | "not_found" | "not_a_cutting"> {
-    const sql = `update specimen set status = 'plant' where id = $1 and status = 'cutting' returning ${COLUMNS}`;
-    return this.change(userId, { sql, parameter: [id] }, "not_a_cutting");
+  async repot(
+    userId: string,
+    id: string,
+    date: string | null,
+  ): Promise<SpecimenRow | "not_found" | "not_a_cutting"> {
+    const sql = `update specimen set status = 'plant', repotted_at = $2::date where id = $1 and status = 'cutting' returning ${COLUMNS}`;
+    return this.change(userId, { sql, parameter: [id, date] }, "not_a_cutting");
   }
 
   /**

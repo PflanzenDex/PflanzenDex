@@ -23,6 +23,24 @@ describe("Input (US-QS-07, DS-15, DS-19, DS-38)", () => {
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
+  it("FR-BES-04 · DS-51 a date field names its format for browsers that show a plain text field instead (#306)", () => {
+    render(<Input aria-label="Fangdatum" type="date" />);
+    const el = screen.getByLabelText("Fangdatum");
+    expect(el.getAttribute("placeholder")).toBe("JJJJ-MM-TT");
+    expect(el.getAttribute("pattern")).toBe("\\d{4}-\\d{2}-\\d{2}");
+  });
+
+  it("FR-BES-04 a text field gets no date hint, and a caller's own placeholder wins", () => {
+    render(
+      <>
+        <Input aria-label="Name" />
+        <Input aria-label="Tag" type="date" placeholder="z. B. 2026-03-09" />
+      </>,
+    );
+    expect(screen.getByLabelText("Name").hasAttribute("placeholder")).toBe(false);
+    expect(screen.getByLabelText("Tag").getAttribute("placeholder")).toBe("z. B. 2026-03-09");
+  });
+
   it("US-QS-07 · DS-36 forwards the ref and merges caller classes last", () => {
     const ref = createRef<HTMLInputElement>();
     render(<Input ref={ref} aria-label="Name" className="min-h-16" />);

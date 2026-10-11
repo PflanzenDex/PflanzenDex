@@ -23,6 +23,7 @@ const card = (id: string, name: string, species: string, where: [string, string]
     photo: null,
     lastMeasurement: { date: "2026-10-01", value: 24, quality: "healthy", note: null },
     treatment: null,
+    provenance: null,
     moreTreatments: 0,
   }) satisfies SpecimenCard;
 
@@ -113,6 +114,7 @@ const candidates: CandidateList = {
   zones: [{ zoneId: "z3", name: "Zone 3", count: 1 }],
   hint: { text: "Zwei Kandidaten warten.", nextAction: "Kaufe zuerst für die dünnste Zone." },
   duplicates: [],
+  unfit: [],
   duplicateHint: null,
   replenishment: {
     buffer: 3,

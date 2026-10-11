@@ -1,19 +1,16 @@
-import type { SuggestionDeck } from "@pflanzendex/core";
+import type { DecideResult, SuggestionDeck } from "@pflanzendex/core";
 import { useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
+import { Banner } from "@/components/shared/states/banner/banner";
 import { Button } from "@/components/ui/button/button";
+import { errorText } from "@/lib/error-text";
+import type { Response } from "../../kernel";
 import { CATALOG_ADDRESS } from "@/components/shared/navigation/nav-model/navigation/navigation";
 import { cn } from "@/lib/utils";
 import { SuggestionCard } from "../suggestion-card/suggestion-card";
 
-/**
- * What the keeper decided on a card. "Ja" and "Nein" are not saved yet (US-ENT-04 writes them); until then they only
- * move on, and the view says so (P-10).
- */
+/** What the keeper decided on a card (US-ENT-04): "Ja" and "Nein" are written at once, "Später" writes nothing. */
 type Decision = "no" | "later" | "yes";
-
-/** Wishes saved by this deck. Nothing is saved before US-ENT-04, so this is honestly 0, not the number of taps. */
-const SAVED = 0;
 
 /** "Nein · Später · Ja" as buttons; they are the way without a swipe gesture (NFR-13). */
 function Actions(props: { onDecide: (d: Decision) => void }) {
@@ -52,15 +49,75 @@ function Actions(props: { onDecide: (d: Decision) => void }) {
   );
 }
 
+type OnDecide = (species: string, decision: "yes" | "no") => Promise<Response<DecideResult>>;
+
+/**
+ * Writes "Ja" and "Nein" (US-ENT-04) and moves on only after the write succeeded; a refusal stays visible and the card
+ * stays (P-10). Counts the saved "Ja" of this deck, not the taps. One write at a time.
+ */
+function useDecisions(onDecide: OnDecide, advance: () => void) {
+  const [saved, setSaved] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const busy = useRef(false);
+  const decide = async (species: string, d: Decision) => {
+    if (busy.current) return;
+    if (d === "later") {
+      setError(null);
+      advance();
+      return;
+    }
+    busy.current = true;
+    const r = await onDecide(species, d);
+    busy.current = false;
+    if (!r.ok) {
+      setError(errorText(r.error.code));
+      return;
+    }
+    setError(null);
+    if (d === "yes" && r.value.saved) setSaved((n) => n + 1);
+    advance();
+  };
+  return { saved, error, decide };
+}
+
+/** The zone the deck is filtered to and, if the catalog does not suffice for it, what to do next (US-ENT-07, P-09). */
+function ZoneNotice(props: {
+  filter: NonNullable<SuggestionDeck["zoneFilter"]>;
+  /** The empty state below already offers the proposal. */
+  offerProposal: boolean;
+}) {
+  const { filter, offerProposal } = props;
+  const { shortfall } = filter;
+  return (
+    <div className="grid gap-2">
+      <p className="m-0 font-semibold">{`Vorschläge für ${filter.name ?? `Zone ${filter.zone}`}`}</p>
+      {shortfall !== null && (
+        <Banner variant="warning">
+          <p className="m-0">{shortfall.text}</p>
+          <p className="m-0">{shortfall.nextAction}</p>
+          {offerProposal && (
+            <Button asChild variant="outline" size="touch" className="mt-2">
+              <a href={CATALOG_ADDRESS}>Art vorschlagen</a>
+            </Button>
+          )}
+        </Banner>
+      )}
+    </div>
+  );
+}
+
 /** One deck, one card at a time; after the last card "Für heute durch" and "Neuer Stapel" (US-ENT-01). */
-export function DeckView(props: {
+function Cards(props: {
   deck: SuggestionDeck;
+  /** Writes "Ja" or "Nein" (US-ENT-04); the card moves on only after it is saved, so nothing is lost silently (P-10). */
+  onDecide: OnDecide;
   onNewDeck: () => void;
   /** True for a deck the keeper asked for ("Neuer Stapel"): the button that had the focus is gone, so the focus moves here (SC 2.4.3). */
   takeFocus?: boolean;
 }) {
   const { deck } = props;
   const [position, setPosition] = useState(0);
+  const { saved, error, decide } = useDecisions(props.onDecide, () => setPosition((p) => p + 1));
   const endTitle = useRef<HTMLHeadingElement>(null);
   const takeFocus = props.takeFocus === true;
   useEffect(() => {
@@ -81,24 +138,37 @@ export function DeckView(props: {
   if (current === undefined)
     return (
       <EmptyState
-        title={`Für heute durch. ${SAVED} neu auf der Wunschliste.`}
+        title={`Für heute durch. ${saved} neu auf der Wunschliste.`}
         description="Weitere Vorschläge gibt es mit einem neuen Stapel."
         titleRef={endTitle}
         action={{ label: "Neuer Stapel", onClick: props.onNewDeck }}
       />
     );
-  const advance = () => setPosition((p) => p + 1);
   return (
     <div className="grid min-w-0 gap-3">
       <p aria-live="polite" className="m-0 text-center text-sm text-muted-foreground">
         {`Vorschlag ${position + 1} von ${deck.suggestions.length}`}
       </p>
-      <SuggestionCard key={current.species} suggestion={current} onSwipe={advance} />
+      <SuggestionCard
+        key={current.species}
+        suggestion={current}
+        onSwipe={(side) => void decide(current.species, side === "right" ? "yes" : "no")}
+      />
+      {error !== null && <Banner variant="error">{error}</Banner>}
       <p className="m-0 text-center text-sm text-muted-foreground">
-        Deine Entscheidungen werden noch nicht gespeichert: „Ja“ und „Nein“ blättern vorerst nur
-        weiter.
+        „Ja“ legt die Art auf die Wunschliste, „Nein“ verwirft sie dort, „Später“ speichert nichts.
       </p>
-      <Actions onDecide={advance} />
+      <Actions onDecide={(d) => void decide(current.species, d)} />
+    </div>
+  );
+}
+
+export function DeckView(props: Parameters<typeof Cards>[0]) {
+  const filter = props.deck.zoneFilter;
+  return (
+    <div className="grid min-w-0 gap-3">
+      {filter !== null && <ZoneNotice filter={filter} offerProposal={props.deck.empty === null} />}
+      <Cards {...props} />
     </div>
   );
 }

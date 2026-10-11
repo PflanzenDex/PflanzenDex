@@ -27,8 +27,8 @@ export class WishesPostgres {
     try {
       const r = await withAccount(this.pool, userId, (c) =>
         c.query<WishRow>(
-          `insert into wish (account_id, name, german, target_zone_id, difficulty, reasoning, image_url, image_source, license, name_key)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning ${COLUMNS}`,
+          `insert into wish (account_id, name, german, target_zone_id, difficulty, reasoning, image_url, image_source, license, name_key, source, decided_at, status)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) returning ${COLUMNS}`,
           [
             userId,
             v.name,
@@ -40,6 +40,9 @@ export class WishesPostgres {
             v.imageSource,
             v.license,
             v.nameKey,
+            v.source ?? "manual",
+            v.decidedAt ?? null,
+            v.status ?? "wishlist",
           ],
         ),
       );
@@ -51,6 +54,27 @@ export class WishesPostgres {
       if (f.code === FOREIGN_KEY && f.constraint === "wish_target_zone") return "zone_unknown";
       throw e;
     }
+  }
+
+  /** One wish of the account; the row rules hide a foreign one (P-04). */
+  async find(userId: string, wishId: string): Promise<WishRow | null> {
+    return (await withAccount(this.pool, userId, (c) => findWish(c, wishId))) ?? null;
+  }
+
+  /** Records the stored copy with its verified source and license (US-WUN-04); `null` if the wish is not the account's. */
+  async setImage(
+    userId: string,
+    wishId: string,
+    image: { object: string; source: string; license: string },
+  ): Promise<WishRow | null> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<WishRow>(
+        `update wish set image_object = $2, image_source = $3, license = $4
+         where id = $1 and type = 'plant' returning ${COLUMNS}`,
+        [wishId, image.object, image.source, image.license],
+      ),
+    );
+    return r.rows[0] ?? null;
   }
 
   /** Open plant wishes (FR-WUN-02), oldest first; the row rules show only the own ones. */

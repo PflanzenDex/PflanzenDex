@@ -23,7 +23,16 @@ export interface Candidate {
   readonly zoneText: string;
   readonly difficulty: number | null;
   readonly reasoning: string | null;
-  readonly image: { readonly url: string; readonly source: string } | null;
+  /**
+   * The picture: origin address, source, license (`null` while unknown, P-08) and whether a local copy is stored
+   * (US-WUN-04). The copy is served only to the owner; its object name is never exposed (P-05).
+   */
+  readonly image: {
+    readonly url: string;
+    readonly source: string;
+    readonly license: string | null;
+    readonly stored: boolean;
+  } | null;
   readonly priority: { readonly kind: PriorityKind; readonly text: string };
 }
 
@@ -34,9 +43,23 @@ export interface DuplicateWish {
   readonly title: string;
 }
 
+/** An open wish that does not count in the space question and what to do about it (FR-WUN-03, P-09, P-10). */
+export interface UnfitWish {
+  readonly id: string;
+  readonly title: string;
+  /** `zone_unknown`: no target zone; `zone_outside`: the cutting light, not among zones 2 to 4. */
+  readonly kind: "zone_unknown" | "zone_outside";
+  /** The zone it points to; `null` if there is none or its name is not known (P-08). */
+  readonly zone: string | null;
+  readonly reason: string;
+  readonly nextAction: string;
+}
+
 /** A zone 2 to 4 with fewer open candidates than the buffer (US-WUN-02). */
 export interface ReplenishZone {
   readonly zoneId: string;
+  /** Zone number 2 to 4 of the catalog (the n-th zone of the account), the filter of "Discover for <zone>" (US-ENT-07). */
+  readonly zoneNumber: number;
   readonly name: string;
   readonly open: number;
   /** "Nachschub nötig: <zone> (N offene Kandidaten)". */
@@ -66,6 +89,8 @@ export interface CandidateList {
   /** Says what is wrong and what to do (P-09); `null` when there are no duplicates. */
   /** The warning before the list runs empty (US-WUN-02). */
   readonly replenishment: Replenishment;
+  /** Open wishes without a fitting zone (FR-WUN-03); empty when every wish has a zone 2 to 4. */
+  readonly unfit: readonly UnfitWish[];
   readonly duplicateHint: { readonly text: string; readonly nextAction: string } | null;
 }
 

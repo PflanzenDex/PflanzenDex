@@ -173,6 +173,7 @@ describe("US-SOZ-04 what a friend sees", () => {
       "isCutting",
       "name",
       "photoShared",
+      "repottedAt",
       "speciesGerman",
       "speciesLatin",
     ]);

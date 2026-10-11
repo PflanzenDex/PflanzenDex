@@ -244,7 +244,7 @@ describe("US-BES-04 cutting in the database", () => {
       status: "cutting",
     });
     if (typeof z === "string") throw new Error(z);
-    const r = await specimens.repot(anna, z.id);
+    const r = await specimens.repot(anna, z.id, null);
     expect(r).toEqual({ ...z, status: "plant" });
     expect(await specimens.find(anna, z.id)).toEqual({ ...z, status: "plant" });
   });
@@ -258,8 +258,8 @@ describe("US-BES-04 cutting in the database", () => {
     });
     if (typeof plant === "string" || typeof archived === "string") throw new Error("create");
     await specimens.archive(anna, archived.id, "abgegeben", "2026-10-03");
-    expect(await specimens.repot(anna, plant.id)).toBe("not_a_cutting");
-    expect(await specimens.repot(anna, archived.id)).toBe("not_a_cutting");
+    expect(await specimens.repot(anna, plant.id, null)).toBe("not_a_cutting");
+    expect(await specimens.repot(anna, archived.id, null)).toBe("not_a_cutting");
     expect((await specimens.find(anna, archived.id))?.status).toBe("archived");
     expect(await specimens.find(anna, plant.id)).toEqual(plant);
   });
@@ -271,12 +271,12 @@ describe("US-BES-04 cutting in the database", () => {
       status: "cutting",
     });
     if (typeof z === "string") throw new Error(z);
-    expect(await specimens.repot(ben, z.id)).toBe("not_found");
+    expect(await specimens.repot(ben, z.id, null)).toBe("not_found");
     expect((await specimens.find(anna, z.id))?.status).toBe("cutting");
   });
 
   it("US-BES-04: an unknown id is not found", async () => {
-    expect(await specimens.repot(anna, randomUUID())).toBe("not_found");
+    expect(await specimens.repot(anna, randomUUID(), null)).toBe("not_found");
   });
 });
 
@@ -338,5 +338,36 @@ describe("US-BES-11 correct the catch date in the database", () => {
     expect(await specimens.setCaughtAt(ben, z.id, "2020-01-01")).toBe("not_found");
     expect(await specimens.setCaughtAt(anna, randomUUID(), "2020-01-01")).toBe("not_found");
     expect(await specimens.find(anna, z.id)).toMatchObject({ caughtAt: "2026-10-03" });
+  });
+});
+
+describe("US-SOZ-05 the day of the repot", () => {
+  it("is stored with the repot, read back as a calendar date and null while unknown; a plant is not repotted again", async () => {
+    const species = await createFixtureSpeciesAt();
+    const make = async (name: string) => {
+      const r = await new SpecimenPostgres(pool).create(anna, {
+        speciesId: species,
+        name,
+        marker: null,
+        locationId: null,
+        caughtAt: "2026-09-01",
+        status: "cutting",
+      });
+      if (typeof r === "string") throw new Error(r);
+      return r.id;
+    };
+    const dated = await make("Datiert");
+    const undated = await make("Undatiert");
+    const repo = new SpecimenPostgres(pool);
+    expect(await repo.repot(anna, dated, "2026-10-10")).toMatchObject({
+      status: "plant",
+      repottedAt: "2026-10-10",
+    });
+    expect(await repo.repot(anna, undated, null)).toMatchObject({
+      status: "plant",
+      repottedAt: null,
+    });
+    expect(await repo.repot(anna, dated, "2026-10-11")).toBe("not_a_cutting");
+    expect((await repo.find(anna, dated))?.repottedAt).toBe("2026-10-10");
   });
 });

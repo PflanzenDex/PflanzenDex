@@ -46,6 +46,7 @@ export function sharingPorts(pool: Pool) {
           name: row.marker !== null && s ? speciesDisplayName(s) : row.name,
           caughtAt: row.caughtAt,
           isCutting: row.status === "cutting",
+          repottedAt: row.repottedAt ?? null,
         });
       }
       return out;

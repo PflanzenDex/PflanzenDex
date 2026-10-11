@@ -42,6 +42,7 @@ const cardFrom = (e: Specimen): SpecimenCard => ({
   photo: null,
   lastMeasurement: null,
   treatment: null,
+  provenance: null,
   moreTreatments: 0,
 });
 const location = { id: "s1", name: "Regal Süd", lightZoneId: null, kind: "indoor" as const };

@@ -109,6 +109,29 @@ export class InMemoryMeasurements implements MeasurementStore {
     return newest ?? null;
   }
 
+  async get(userId: string, measurementId: string): Promise<MeasurementRow | null> {
+    const row = this.rows.find((z) => z.userId === userId && z.id === measurementId);
+    if (!row) return null;
+    const { userId: owner, ...rest } = row;
+    void owner;
+    return rest;
+  }
+
+  async assess(
+    userId: string,
+    measurementId: string,
+    rating: {
+      quality: MeasurementRow["quality"];
+      note: string | null;
+      ratedBy: MeasurementRow["ratedBy"];
+    },
+  ): Promise<boolean> {
+    const row = this.rows.find((z) => z.userId === userId && z.id === measurementId);
+    if (!row) return false;
+    this.rows[this.rows.indexOf(row)] = { ...row, ...rating };
+    return true;
+  }
+
   async setPhoto(userId: string, measurementId: string, photo: string): Promise<boolean> {
     const row = this.rows.find((z) => z.userId === userId && z.id === measurementId);
     if (!row) return false;

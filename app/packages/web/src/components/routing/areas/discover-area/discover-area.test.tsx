@@ -13,6 +13,7 @@ const response = (status: number, body: unknown) =>
 const empty = {
   deck: 1,
   suggestions: [],
+  zoneFilter: null,
   empty: {
     reason: "all_decided",
     text: "Keine neuen Vorschläge.",
@@ -90,6 +91,20 @@ describe("US-QS-14 the destination Entdecken with its switch Vorschläge | Katal
     expect(checked("Katalog")).toBe(true);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Entdecken");
+  });
+
+  it("US-ENT-07 the address with zone=3 asks for the suggestions of that zone; a bad zone asks for none", async () => {
+    renderAt("/discover?zone=3");
+    await suggestionsShown();
+    const asked = () => vi.mocked(fetch).mock.calls.map(([u]) => String(u));
+    expect(asked().some((u) => u.includes("/discover/suggestions") && u.includes("zone=3"))).toBe(
+      true,
+    );
+    cleanup();
+    vi.mocked(fetch).mockClear();
+    renderAt("/discover?zone=9");
+    await suggestionsShown();
+    expect(asked().some((u) => u.includes("zone="))).toBe(false);
   });
 
   it("US-QS-14 the stored choice is used when the address has none", async () => {

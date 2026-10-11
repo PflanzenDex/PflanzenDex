@@ -39,6 +39,11 @@ const base = {
   imageSource: null,
   license: null,
 };
+const IMAGE = {
+  object: "img-1.jpg",
+  source: "Anna, https://commons.wikimedia.org/wiki/File:A.jpg",
+  license: "CC BY 4.0",
+};
 
 async function zone(account: string, name: string): Promise<string> {
   const z = await zones.create(account, { name, luxCeiling: 15000, ppfd: null, sortOrder: null });
@@ -396,5 +401,82 @@ describe("FR-WUN-06 #303 repair of key-less duplicate wishes", () => {
     expect((await admin.query("select name from wish where id = $1", [id])).rows[0].name).toBe(
       "Annas Doppel",
     );
+  });
+});
+
+describe("US-WUN-04 the stored copy of a wish image", () => {
+  it("records object, source and license on the wish and reads them back", async () => {
+    const w = await wishes.create(
+      anna,
+      values({
+        name: "Image wish",
+        imageUrl: "https://commons.wikimedia.org/wiki/File:A.jpg",
+        imageSource: "Wikipedia",
+      }),
+    );
+    if (typeof w === "string") throw new Error(w);
+    expect(w.imageObject).toBeNull();
+    const updated = await wishes.setImage(anna, w.id, IMAGE);
+    expect(updated).toMatchObject({
+      imageObject: "img-1.jpg",
+      imageSource: IMAGE.source,
+      license: "CC BY 4.0",
+    });
+    expect(await wishes.find(anna, w.id)).toMatchObject({ imageObject: "img-1.jpg" });
+  });
+
+  it("tenant: another account neither finds nor changes the wish (P-04)", async () => {
+    const w = await wishes.create(
+      anna,
+      values({
+        name: "Private image",
+        imageUrl: "https://commons.wikimedia.org/wiki/File:B.jpg",
+        imageSource: "x",
+      }),
+    );
+    if (typeof w === "string") throw new Error(w);
+    expect(await wishes.find(ben, w.id)).toBeNull();
+    expect(await wishes.setImage(ben, w.id, IMAGE)).toBeNull();
+    expect((await wishes.find(anna, w.id))?.imageObject).toBeNull();
+  });
+
+  it("the database refuses an object name that is not a stored JPEG name", async () => {
+    const w = await wishes.create(anna, values({ name: "Bad object" }));
+    if (typeof w === "string") throw new Error(w);
+    await expect(wishes.setImage(anna, w.id, { ...IMAGE, object: "../x.png" })).rejects.toThrow();
+  });
+});
+
+describe("US-ENT-04 decision columns", () => {
+  it("US-ENT-04 stores source, decision date and discarded status of a Discover decision, private to the account", async () => {
+    const r = await wishes.create(
+      anna,
+      values({
+        name: "Discover rara",
+        source: "discover",
+        decidedAt: "2026-10-03",
+        status: "discarded",
+      }),
+    );
+    expect(r).toMatchObject({ name: "Discover rara", status: "discarded" });
+    const own = await withAccount(pool, anna, (c) =>
+      c.query("select source, to_char(decided_at, 'YYYY-MM-DD') as d from wish where name = $1", [
+        "Discover rara",
+      ]),
+    );
+    expect(own.rows).toEqual([{ source: "discover", d: "2026-10-03" }]);
+    const foreign = await withAccount(pool, ben, (c) =>
+      c.query("select 1 from wish where name = $1", ["Discover rara"]),
+    );
+    expect(foreign.rows).toEqual([]);
+    expect(await wishes.discarded(ben)).toEqual([]);
+  });
+
+  it("US-ENT-04 a wish written without a source is a manual wish without a decision date", async () => {
+    await wishes.create(anna, values({ name: "Manuell rara" }));
+    const r = await withAccount(pool, anna, (c) =>
+      c.query("select source, decided_at from wish where name = $1", ["Manuell rara"]),
+    );
+    expect(r.rows).toEqual([{ source: "manual", decided_at: null }]);
   });
 });

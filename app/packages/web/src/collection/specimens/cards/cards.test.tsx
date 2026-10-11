@@ -25,6 +25,7 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   photo: null,
   lastMeasurement: null,
   treatment: null,
+  provenance: null,
   moreTreatments: 0,
   ...extra,
 });
@@ -50,6 +51,22 @@ describe("US-BES-06 client of the cards API", () => {
       ok: false,
       error: { code: "input.invalid" },
     });
+  });
+});
+
+describe("US-SOZ-13 card: from whom a specimen was received", () => {
+  it("shows from whom and when for a received specimen", () => {
+    const h = html([card({ provenance: { from: "Ben", date: "2026-10-10T10:00:00.000Z" } })]);
+    expect(h).toContain("Erhalten von Ben am 10.10.2026");
+  });
+
+  it("a giver without a display name is called 'einem Freund', nothing is made up (P-08)", () => {
+    const h = html([card({ provenance: { from: null, date: "2026-10-10T10:00:00.000Z" } })]);
+    expect(h).toContain("Erhalten von einem Freund am 10.10.2026");
+  });
+
+  it("an own specimen has no such line", () => {
+    expect(html([card()])).not.toContain("Erhalten von");
   });
 });
 

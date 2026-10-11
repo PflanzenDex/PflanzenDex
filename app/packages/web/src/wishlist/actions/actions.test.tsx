@@ -28,6 +28,7 @@ const candidates = (open: unknown[]) => ({
   zones: [],
   hint: { text: "Als Nächstes dran: Korbmarante.", nextAction: "Besorge diese Pflanze zuerst." },
   duplicates: [],
+  unfit: [],
   duplicateHint: null,
   replenishment: {
     buffer: 2,

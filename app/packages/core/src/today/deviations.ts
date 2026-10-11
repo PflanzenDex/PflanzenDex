@@ -50,8 +50,12 @@ export async function bufferItems(
   deps: DeviationDependencies,
   userId: string,
 ): Promise<TodayItem[]> {
-  const [open, zones] = await Promise.all([deps.wishes.open(userId), deps.stock.stock(userId)]);
-  const r = replenishment(open, zones);
+  const [open, zones, buffer] = await Promise.all([
+    deps.wishes.open(userId),
+    deps.stock.stock(userId),
+    deps.stock.buffer?.(userId),
+  ]);
+  const r = replenishment(open, zones, buffer);
   if (r.nextAction === null) return [];
   const nextAction = r.nextAction;
   return r.zones.map((z) => ({

@@ -10,6 +10,8 @@ export * from "./care";
 export * from "./today";
 export * from "./wishlist";
 export * from "./jobs";
+export * from "./monitoring";
+export * from "./ai";
 export * from "./pokedex";
 export * from "./discover";
 export * from "./social";

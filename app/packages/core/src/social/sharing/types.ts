@@ -67,6 +67,8 @@ export interface SharedSpecimen {
   /** Local calendar date, `null` = unknown (P-08). */
   readonly caughtAt: string | null;
   readonly isCutting: boolean;
+  /** Local calendar date the cutting was repotted (US-BES-04); `null` = unknown (P-08). */
+  readonly repottedAt?: string | null;
   readonly photoShared: boolean;
 }
 

@@ -65,6 +65,7 @@ function fakeServer(setup: Setup = {}) {
           response(200, { date: "2026-10-03", upcoming: 0, items: setup.items ?? [] }),
         "/treatments": () =>
           post ? response(201, { treatments: [{}] }) : response(200, { treatments: open }),
+        "/watering/due": () => response(200, { due: [] }),
         "/specimens": () => response(200, { specimens: setup.specimens ?? SPECIMENS }),
         "/specimens/hints": hints,
         "/locations": () => response(200, { locations: LOCATIONS }),
@@ -104,6 +105,7 @@ beforeAll(async () => {
     import("@/today/today-page/today-page"),
     import("@/care/treatments/treatments-page/treatments-page"),
     import("@/collection/hints-page/hints-page"),
+    import("@/monitoring/watering/watering-list/watering-list"),
   ]);
 }, 30_000);
 
@@ -113,7 +115,7 @@ afterEach(() => {
 });
 
 describe("US-QS-14 Heute with its sections", () => {
-  it("US-QS-14 one h1 and the sections Jetzt dran, Behandlungen, Fehlt noch as h2 in this order", async () => {
+  it("US-QS-14 one h1 and the sections Jetzt dran, Behandlungen, Gießen, Fehlt noch as h2 in this order", async () => {
     fakeServer();
     show();
     await screen.findByText(noLocation.text);
@@ -124,7 +126,12 @@ describe("US-QS-14 Heute with its sections", () => {
         .map((h) => h.textContent),
     ).toEqual(["Heute"]);
     const h2 = within(main).getAllByRole("heading", { level: 2 });
-    expect(h2.map((h) => h.textContent)).toEqual(["Jetzt dran", "Behandlungen", "Fehlt noch"]);
+    expect(h2.map((h) => h.textContent)).toEqual([
+      "Jetzt dran",
+      "Behandlungen",
+      "Gießen",
+      "Fehlt noch",
+    ]);
     // The module headings inside the sections are one level lower.
     expect(
       within(main).getByRole("heading", { level: 3, name: "Offene Behandlungen" }),

@@ -1,7 +1,8 @@
 // Candidates sorted by the space need (US-WUN-01, FR-LIC-04): a pure derivation over the open wishes and the stock per
 // zone 2 to 4, never stored (P-01). The stock comes through the port `ZoneStockSource`; nothing is compared with an
 // average (P-08), only with the other zones of the same account.
-import { replenishment } from "./replenishment";
+import { replenishment } from "./hints/replenishment";
+import { unfitWishes } from "./hints/unfit";
 import type {
   Candidate,
   CandidateList,
@@ -86,7 +87,15 @@ function candidate(w: WishRow, zones: readonly ZoneStock[], s: Standing): Candid
     difficulty: w.difficulty,
     reasoning: w.reasoning,
     // The source always travels with the picture (DM-WUN-01); a picture without one is not shown.
-    image: w.imageUrl && w.imageSource ? { url: w.imageUrl, source: w.imageSource } : null,
+    image:
+      w.imageUrl && w.imageSource
+        ? {
+            url: w.imageUrl,
+            source: w.imageSource,
+            license: w.license,
+            stored: w.imageObject !== null,
+          }
+        : null,
     priority: priority(zone, s, w.targetZoneId !== null),
   };
 }
@@ -145,10 +154,12 @@ export async function wishCandidates(
   deps: CandidatesDependencies,
   userId: string,
 ): Promise<CandidateList> {
-  const [open, zones, keyless] = await Promise.all([
+  const [open, zones, keyless, outside, buffer] = await Promise.all([
     deps.wishes.open(userId),
     deps.stock.stock(userId),
     deps.wishes.keyless(userId),
+    deps.stock.uncounted?.(userId) ?? [],
+    deps.stock.buffer?.(userId),
   ]);
   const s = standing(zones);
   const candidates = open.map((w) => candidate(w, zones, s)).sort(byStock(zones));
@@ -158,7 +169,8 @@ export async function wishCandidates(
     zones,
     hint: hintFor(candidates),
     duplicates,
-    replenishment: replenishment(open, zones),
+    unfit: unfitWishes(open, zones, outside, titleOf),
+    replenishment: replenishment(open, zones, buffer),
     duplicateHint: duplicates.length > 0 ? DUPLICATE_HINT : null,
   };
 }

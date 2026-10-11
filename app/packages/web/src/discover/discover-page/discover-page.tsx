@@ -3,7 +3,12 @@ import { useCallback, useState } from "react";
 import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 import { LoadFrame } from "../../kernel";
 import { DeckView } from "../deck-view/deck-view";
-import { loadSuggestions } from "./discover-api";
+import { decideSuggestion, loadSuggestions } from "./discover-api";
+
+const SIGN_IN_NEEDED = {
+  ok: false as const,
+  error: { code: "access.not_signed_in", text: "Bitte melde dich an." },
+};
 
 /** Placeholder with the layout of a card on a phone: image, name, text, three buttons (DS-52). */
 function DeckSkeleton({ label }: { label: string }) {
@@ -26,17 +31,29 @@ export function DiscoverPage(props: {
   token: () => Promise<string | undefined>;
   /** The destination Entdecken shows the page below its title: no heading of its own (US-QS-14). */
   embedded?: boolean;
+  /** Only species of this light zone 2 to 4 (US-ENT-07, "Discover for <zone>" from the buffer warning). */
+  zone?: number;
 }) {
-  const { api, token, embedded } = props;
+  const { api, token, embedded, zone } = props;
   const [deck, setDeck] = useState(1);
-  const load = useCallback((t: string) => loadSuggestions(api, t, deck), [api, deck]);
+  const load = useCallback(
+    (t: string) => loadSuggestions(api, t, zone === undefined ? { deck } : { deck, zone }),
+    [api, deck, zone],
+  );
+  const decide = useCallback(
+    async (species: string, decision: "yes" | "no") => {
+      const t = await token();
+      return t ? decideSuggestion(api, t, { species, decision }) : SIGN_IN_NEEDED;
+    },
+    [api, token],
+  );
   return (
     <section
       {...(embedded ? { "aria-label": "Vorschläge" } : { "aria-labelledby": "discover-title" })}
       className="min-w-0"
     >
       <LoadFrame
-        queryKey={["discover", deck]}
+        queryKey={["discover", deck, zone ?? null]}
         token={token}
         load={load}
         loadingText="Vorschläge werden geladen …"
@@ -55,6 +72,7 @@ export function DiscoverPage(props: {
               key={deck}
               takeFocus={deck > 1}
               deck={value}
+              onDecide={decide}
               onNewDeck={() => setDeck((d) => d + 1)}
             />
           </>

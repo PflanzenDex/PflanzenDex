@@ -44,11 +44,42 @@ beforeEach(() => {
   idem = new InMemoryIdempotencyStore();
 });
 
+describe("US-SOZ-05 the day of the repot is recorded as a local date", () => {
+  it("records today in the given time zone, not UTC (NFR-08); without a time zone no date is guessed (P-08)", async () => {
+    const withZone = await create("anna", "Bogenhanf", "cutting");
+    const noZone = await create("anna", "Bogenhanf 2", "cutting");
+    const run = (specimenId: string, input: object) =>
+      execute(
+        specimenRepot({ specimens, clock: () => new Date("2026-10-09T23:30:00Z") }),
+        { idempotency: idem },
+        { context: anna, input: { specimenId, ...input }, idempotencyKey: `k${++counter}` },
+      );
+    expect((await run(withZone.id, { timeZone: "Europe/Berlin" })).ok).toBe(true);
+    expect((await specimens.find("anna", withZone.id))?.repottedAt).toBe("2026-10-10");
+    expect((await run(noZone.id, {})).ok).toBe(true);
+    expect((await specimens.find("anna", noZone.id))?.repottedAt).toBeNull();
+  });
+
+  it("refuses an invalid time zone", async () => {
+    const c = await create("anna", "Bogenhanf", "cutting");
+    const r = await execute(
+      specimenRepot({ specimens }),
+      { idempotency: idem },
+      {
+        context: anna,
+        input: { specimenId: c.id, timeZone: "Mars/Base" },
+        idempotencyKey: `k${++counter}`,
+      },
+    );
+    expect(!r.ok && r.error.code).toBe("input.invalid");
+  });
+});
+
 describe("US-BES-04 repotted", () => {
   it("US-BES-04: a cutting becomes a plant, everything else stays unchanged", async () => {
     const cutting = await create("anna", "Bogenhanf", "cutting");
     const r = await repot(cutting.id);
-    expect(r.ok && r.value).toEqual({ ...cutting, status: "plant" });
+    expect(r.ok && r.value).toEqual({ ...cutting, status: "plant", repottedAt: null });
   });
 
   it("US-BES-04: a plant is not a cutting, the status stays and nothing is written", async () => {
