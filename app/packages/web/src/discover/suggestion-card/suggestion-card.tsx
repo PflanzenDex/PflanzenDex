@@ -3,9 +3,8 @@ import { useRef, type PointerEvent } from "react";
 import { Badge } from "@/components/ui/display/badge/badge";
 import { cn } from "@/lib/utils";
 import { swipeDirection } from "../swipe/swipe";
-import { WikipediaSource } from "@/components/collector-card/collector-card";
+import { DifficultyStars, WikipediaSource } from "@/components/collector-card/collector-card";
 
-const stars = (n: number) => "★".repeat(n) + "☆".repeat(3 - n);
 const LEVEL = { low: "niedrig", medium: "mittel", high: "hoch" } as const;
 const SIZE = { small: "klein", medium: "mittel", large: "groß" } as const;
 const UNKNOWN = "unbekannt";
@@ -64,11 +63,12 @@ function Facts({ s }: { s: Suggestion }) {
       <dt className="text-muted-foreground">Lichtzone</dt>
       <dd className="m-0">{s.lightZone === null ? UNKNOWN : `Zone ${s.lightZone}`}</dd>
       <dt className="text-muted-foreground">Schwierigkeit</dt>
-      <dd
-        className="m-0"
-        {...(s.difficulty === null ? {} : { "aria-label": `${s.difficulty} von 3` })}
-      >
-        {s.difficulty === null ? UNKNOWN : stars(s.difficulty)}
+      <dd className="m-0">
+        {s.difficulty === null ? (
+          UNKNOWN
+        ) : (
+          <DifficultyStars level={s.difficulty} label={`${s.difficulty} von 3`} />
+        )}
       </dd>
       {attributeRows(s.attributes).flatMap(([name, value]) => [
         <dt key={`${name}-t`} className="text-muted-foreground">

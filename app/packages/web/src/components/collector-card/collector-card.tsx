@@ -5,6 +5,19 @@ import { catchText } from "./catch-text";
 
 const stars = (n: number) => "★".repeat(n) + "☆".repeat(3 - n);
 
+/**
+ * Difficulty as stars with a text alternative every screen reader exposes (US-QS-14, WCAG 1.1.1): the stars are
+ * hidden from assistive technology, the visually hidden `label` is read instead of an aria-label on a plain element.
+ */
+export function DifficultyStars(props: { level: number; label: string }) {
+  return (
+    <>
+      <span aria-hidden="true">{stars(props.level)}</span>
+      <span className="sr-only">{props.label}</span>
+    </>
+  );
+}
+
 /** The image is a link to its source, not a copy (P-05); without one a neutral sprout stands in. */
 function Picture(props: { card: Card }) {
   const c = props.card;
@@ -37,8 +50,8 @@ function Facts(props: { card: Card }) {
       {c.difficulty === null ? (
         <span className="text-sm">Schwierigkeit unbekannt</span>
       ) : (
-        <span className="text-sm" aria-label={`Schwierigkeit ${c.difficulty} von 3`}>
-          {stars(c.difficulty)}
+        <span className="text-sm">
+          <DifficultyStars level={c.difficulty} label={`Schwierigkeit ${c.difficulty} von 3`} />
         </span>
       )}
       <span className="text-sm">

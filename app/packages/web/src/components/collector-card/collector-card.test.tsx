@@ -37,8 +37,14 @@ describe("US-POK-01 collector card", () => {
     expect(screen.getByText("Birkenfeige").getAttribute("title")).toBe("Birkenfeige (Zimmerlinde)");
     expect(screen.getByText("Ein Baum.")).toBeTruthy();
     expect(screen.getByText("Gattung: 800 Arten")).toBeTruthy();
-    expect(screen.getByLabelText("Schwierigkeit 2 von 3").textContent).toBe("★★☆");
+    expect(screen.getByText("★★☆").getAttribute("aria-hidden")).toBe("true");
     expect(screen.getByText("Lichtzone 3")).toBeTruthy();
+  });
+
+  it("US-QS-14 the difficulty is plain text for screen readers, not an aria-label on a span", () => {
+    show(card());
+    expect(screen.getByText("Schwierigkeit 2 von 3").className).toContain("sr-only");
+    expect(document.querySelector("span[aria-label]")).toBeNull();
   });
 
   it("US-POK-01 a missing card keeps name and text visible and says it is not caught yet", () => {
