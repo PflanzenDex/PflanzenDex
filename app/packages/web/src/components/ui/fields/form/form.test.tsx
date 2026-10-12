@@ -115,6 +115,66 @@ describe("Form (US-QS-07 · DS-47, DS-48)", () => {
   });
 });
 
+function Bare({ withMessageText = false }: { withMessageText?: boolean }) {
+  const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: "" } });
+  return (
+    <Form {...form}>
+      <FormRoot onSubmit={form.handleSubmit(() => {})}>
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              {withMessageText ? <FormMessage>Optional</FormMessage> : <FormMessage />}
+            </FormItem>
+          )}
+        />
+        <button type="submit">Speichern</button>
+      </FormRoot>
+    </Form>
+  );
+}
+
+function describedIds(element: HTMLElement) {
+  return (element.getAttribute("aria-describedby") ?? "").split(" ").filter(Boolean);
+}
+
+describe("Form aria-describedby (US-QS-14)", () => {
+  it("US-QS-14 · a field without description and error has no aria-describedby", () => {
+    render(<Bare />);
+    expect(screen.getByRole("textbox", { name: "Name" }).hasAttribute("aria-describedby")).toBe(
+      false,
+    );
+  });
+
+  it("US-QS-14 · a field without description points only at its error message", async () => {
+    render(<Bare />);
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    const alert = await screen.findByRole("alert");
+    expect(describedIds(screen.getByRole("textbox", { name: "Name" }))).toEqual([alert.id]);
+  });
+
+  it("US-QS-14 · a visible caller message without error is linked to the field", () => {
+    render(<Bare withMessageText />);
+    const ids = describedIds(screen.getByRole("textbox", { name: "Name" }));
+    expect(ids.map((id) => document.getElementById(id)?.textContent)).toEqual(["Optional"]);
+  });
+
+  it("US-QS-14 · every id in aria-describedby exists, before and after an error", async () => {
+    render(<Demo />);
+    const input = screen.getByRole("textbox", { name: "Name" });
+    expect(describedIds(input)).toHaveLength(1);
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await screen.findByRole("alert");
+    expect(describedIds(input)).toHaveLength(2);
+    for (const id of describedIds(input)) expect(document.getElementById(id)).not.toBeNull();
+  });
+});
+
 describe("FormRoot (US-QS-07 · DS-48)", () => {
   it("US-QS-07 · DS-48 renders a native form without browser validation bubbles", () => {
     render(<FormRoot aria-label="Pflanze" />);
