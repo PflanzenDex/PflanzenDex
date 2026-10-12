@@ -31,6 +31,8 @@ function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
           className={cn(
             stackedItem,
             "h-auto flex-1 rounded-none hover:bg-transparent",
+            // Like the links beside it, the item has no box in forced colors; the icon pill shows the state (US-QS-14).
+            "forced-colors:border-0",
             stackedLabel(active),
           )}
         >
