@@ -2,6 +2,16 @@
 :8080 {
 	root * /srv/web
 
+	# Dotfile paths (/.env, /.git/config, also nested) are never part of the app: a 404 through the error handler below
+	# instead of the SPA shell, so scanners and monitoring see the truth. /.well-known/ stays open (TE-03).
+	@dotfile {
+		path /.* */.*
+		not path /.well-known/*
+	}
+	handle @dotfile {
+		error 404
+	}
+
 	# Vite emits content-hashed files under /assets/: cache for a year, never revalidate.
 	# No try_files here, so a missing hashed file is a 404 and never an HTML page cached as immutable.
 	handle /assets/* {
