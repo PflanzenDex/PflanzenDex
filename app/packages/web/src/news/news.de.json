@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Equipment-Wünsche: Unter „Equipment“ kannst du Wünsche für Geräte und Verbrauchsmaterial erfassen, getrennt von deinen Pflanzenwünschen. Mit „Gekauft“ öffnet sich das Formular für das Equipment, Name, Produkt-ID, Art und Preis sind schon ausgefüllt. Ohne Preis bleibt er unbekannt; Puffer und Zonen-Hinweise der Pflanzenwünsche ändern sich nicht.",
     "Fehlt / Nachkaufen: Unter „Equipment“ zeigt ein neuer Block, was dir nach deinen eigenen Angaben fehlt: Vorräte, die knapp sind oder leer, Lichtzonen mit Pflanzen aber ohne aktive Lampe, Wünsche für eine Zone ohne Lampe und defekte oder ausgemusterte Geräte ohne Ersatz. Jeder Eintrag nennt den Grund, die Quelle und den nächsten Schritt. Werbung oder Preise gibt es dort nicht.",
     "Sensoren zuordnen: Unter „Equipment“ ordnest du jeden Sensor einem Exemplar oder einem Standort zu, oder keinem von beiden. Messwerte der Sensoren speichert diese Ansicht nicht.",
     "Vorrat: Substrat, Dünger und Pflanzenmittel haben unter „Equipment“ einen Vorrat. Mit einem Tipp stellst du ihn auf „Vorhanden“, „Wird knapp“ oder „Leer“. Ein Pflanzenmittel kannst du mit dem Text deiner Behandlungen verknüpfen; der freie Text der Behandlungen bleibt, wie er ist.",

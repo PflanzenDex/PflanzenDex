@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type UseFormSetError } from "react-hook-form";
+import { useForm, type UseFormReturn, type UseFormSetError } from "react-hook-form";
 import { Button } from "@/components/ui/button/button";
 import { Form, FormRoot } from "@/components/ui/fields/form/form";
 import { errorText } from "@/lib/error-text";
@@ -14,6 +14,7 @@ import {
   type EquipmentFields,
 } from "../schemas";
 import type { EquipmentInput } from "../equipment-api";
+import type { EquipmentPrefill } from "../overviews/wishes-view/wishes-api";
 
 /** Hands a server refusal to the form: the fields it names get the German text of its error code (P-10). */
 function useServerRefusal(error: ApiError | null, setError: UseFormSetError<EquipmentFields>) {
@@ -31,9 +32,28 @@ function useServerRefusal(error: ApiError | null, setError: UseFormSetError<Equi
   return { alertText, alertRef };
 }
 
+/** "Gekauft" on an equipment wish fills the form with what the wish knows (US-EQU-08); the rest stays empty (P-08). */
+function usePrefill(
+  form: UseFormReturn<EquipmentFields>,
+  prefill: EquipmentPrefill | null | undefined,
+) {
+  useEffect(() => {
+    if (!prefill) return;
+    form.reset({
+      ...EMPTY_FIELDS,
+      type: prefill.type,
+      name: prefill.name,
+      productId: prefill.productId ?? "",
+      priceEur: prefill.priceEur === null ? "" : String(prefill.priceEur).replace(".", ","),
+    });
+  }, [prefill, form]);
+}
+
 /** The form to record equipment (US-EQU-01): only type and name are required, the rest stays unknown (P-08). */
 export function EquipmentForm(props: {
   zones: readonly { zoneId: string; name: string }[];
+  /** Set by "Gekauft" on an equipment wish: fills type, name, product id and price (US-EQU-08). */
+  prefill?: EquipmentPrefill | null;
   running: boolean;
   message: string | null;
   error: ApiError | null;
@@ -45,6 +65,7 @@ export function EquipmentForm(props: {
     defaultValues: EMPTY_FIELDS,
   });
   const { alertText, alertRef } = useServerRefusal(props.error, form.setError);
+  usePrefill(form, props.prefill);
   const refused = Object.keys(form.formState.errors).length > 0;
   const pending = props.running || form.formState.isSubmitting;
   const submit = form.handleSubmit(async (values) => {

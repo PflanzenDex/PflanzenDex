@@ -22,6 +22,7 @@ import { addLampRoutes } from "./lamps";
 import { addMaintenanceRoutes } from "./maintenance";
 import { addSensorRoutes } from "./sensors";
 import { addSupplyRoutes } from "./supply";
+import { addWishRoutes } from "./wishes";
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const EQUIPMENT_PATHS = ["/equipment"] as const;
@@ -85,5 +86,6 @@ export function equipmentRoutes(pool: Pool, zoneStock: ZoneStockSource): Hono<Au
   addMaintenanceRoutes(routes, pool, deps);
   addSupplyRoutes(routes, pool, deps);
   addSensorRoutes(routes, pool, deps);
+  addWishRoutes(routes, pool, deps);
   return routes;
 }

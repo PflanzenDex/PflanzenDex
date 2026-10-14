@@ -37,3 +37,19 @@ export type {
   ZoneNote,
 } from "./lamps";
 export * from "./store";
+export {
+  equipmentWishBuy,
+  equipmentWishCreate,
+  equipmentWishDiscard,
+  equipmentWishes,
+} from "./wishes";
+export type {
+  EquipmentPrefill,
+  EquipmentWishBuyResult,
+  EquipmentWishChange,
+  EquipmentWishDependencies,
+  EquipmentWishList,
+  EquipmentWishRow,
+  EquipmentWishStore,
+  EquipmentWishValues,
+} from "./wishes";
