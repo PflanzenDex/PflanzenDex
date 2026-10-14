@@ -1,3 +1,4 @@
+import type { WishStatus } from "../../wishlist";
 import { wishNameKey } from "../../wishlist/repair/name-key";
 import type {
   EquipmentWishChange,
@@ -8,7 +9,7 @@ import type {
 
 /** In-memory adapter for tests only; the real adapter lives in `db`. */
 export class InMemoryEquipmentWishes implements EquipmentWishStore {
-  readonly rows: (EquipmentWishRow & { userId: string })[] = [];
+  readonly rows: (Omit<EquipmentWishRow, "status"> & { status: WishStatus; userId: string })[] = [];
   writes = 0;
 
   async create(userId: string, v: EquipmentWishValues): Promise<EquipmentWishRow | "name_taken"> {
