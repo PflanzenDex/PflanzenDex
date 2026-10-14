@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { EquipmentForm } from "../equipment-form/equipment-form";
@@ -16,6 +16,9 @@ import { Maintenance, type MaintenanceActions } from "./maintenance/maintenance"
 import { Supply, type SupplyActions } from "./supply/supply";
 import { NeedsView } from "../overviews/needs-view/needs-view";
 import { SensorsView } from "../overviews/sensors-view/sensors-view";
+import { useWishActions } from "../overviews/wishes-view/use-wish-actions";
+import { WishesView } from "../overviews/wishes-view/wishes-view";
+import type { EquipmentPrefill } from "../overviews/wishes-view/wishes-api";
 import { ZonesView } from "../overviews/zones-view/zones-view";
 import { EquipmentPageSkeleton } from "./equipment-page.skeleton";
 
@@ -72,6 +75,9 @@ function Card(props: {
 function Body(props: { data: EquipmentData; api: string; token: Token; onWritten: () => void }) {
   const write = useWriteAction(props.token, props.onWritten);
   const lamps = useLampActions(props.api, props.token, props.onWritten);
+  // "Gekauft" on a wish fills the form below (US-EQU-08).
+  const [prefill, setPrefill] = useState<EquipmentPrefill | null>(null);
+  const wishes = useWishActions(props.api, props.token, props.onWritten, setPrefill);
   const items = props.data.items;
   const zoneNames = new Map(props.data.zones.zones.map((z) => [z.zoneId, z.name]));
   const send = async (input: EquipmentInput): Promise<boolean> => {
@@ -108,11 +114,14 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
         </ul>
       )}
       <LampOutcome message={lamps.message} error={lamps.error} />
+      <LampOutcome message={wishes.message} error={wishes.error} />
       <NeedsView needs={props.data.needs} />
       <ZonesView view={props.data.zones} actions={lamps.actions} />
       <LampLightView view={props.data.light} actions={lamps.light} />
       <SensorsView view={props.data.sensors} actions={lamps.sensors} />
+      <WishesView wishes={props.data.wishes} actions={wishes.actions} />
       <EquipmentForm
+        prefill={prefill}
         zones={props.data.zones.zones}
         running={write.running}
         message={write.message}

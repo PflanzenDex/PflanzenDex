@@ -11,7 +11,7 @@ import {
 import { EQUIPMENT_LIMITS, EQUIPMENT_TYPES } from "../store/types";
 
 /** The product id says what the product is, never where to buy it: no URL (FR-EQU-03). */
-function productIdField(field: string) {
+export function productIdField(field: string) {
   const text = textField(field, EQUIPMENT_LIMITS.productId);
   return (value: unknown): string | ErrorDetail => {
     const checked = text(value);
@@ -23,7 +23,7 @@ function productIdField(field: string) {
 }
 
 /** A price in euro with at most two decimals (assumption: no fractions of a cent). */
-function priceField(field: string) {
+export function priceField(field: string) {
   const number = numberField(field, EQUIPMENT_LIMITS.priceEur);
   return (value: unknown): number | ErrorDetail => {
     const checked = number(value);

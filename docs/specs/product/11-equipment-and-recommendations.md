@@ -96,13 +96,15 @@ Acceptance criteria:
 
 Decisions (assumption, decided by the PO): the zone rule counts only zones 2 to 4 with specimens, as in US-EQU-02. A wish counts when its target zone has no active lamp, whether or not the zone holds specimens; wishes of one zone are one item. A defective or retired device has a replacement when another active device of the same type exists; for a lamp the replacement must serve the same zone. Items are listed by kind in the order above and carry no priority, urgency or price (P-08). The block also appears when nothing is missing and then says so. Showing the items in "Today" is open.
 
-### US-EQU-08 · Take over a purchase · ⬜ new
+### US-EQU-08 · Take over a purchase · 🟨 new
 
 Acceptance criteria:
 
 - The wishlist knows wishes of type equipment; "Bought" opens US-EQU-01 with prefilled fields (name, product id, type).
 - Price and purchase date go, if set, into the cost view (US-EQU-09); if they are missing, nothing is invented.
 - Plant and equipment wishes are counted separately; the buffer check (US-WUN-02) counts only plants.
+
+Decisions (assumption, decided by the PO): an equipment wish lives in the same table as the plant wishes (`Type: equipment`) with the equipment `Type`, an optional product id and an optional planned price; it has no target zone and no difficulty. The name is unique among all wishes of the account (FR-WUN-06). It is created, bought and discarded through its own operations (`equipment_wish.*`); every plant query keeps filtering on `Type: plant`, so the candidate list, the buffer and the zone hints of the plant wishes are unchanged and the equipment wishes are counted apart. "Bought" sets the status `bought`, keeps the wish under "bought" (P-10) and returns the prefill (type, name, product id, price) that fills the form of US-EQU-01; the keeper confirms the form, the wish is not linked to the record. The purchase date is not prefilled (nothing invented, P-08); the price only reaches the cost view (US-EQU-09) once the equipment is recorded. The schema change is additive (expand, migration 0061); the previous app version ignores it.
 
 ### US-EQU-09 · See costs · ⬜ new
 
