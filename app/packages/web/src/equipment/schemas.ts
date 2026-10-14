@@ -1,6 +1,7 @@
 import { EQUIPMENT_LIMITS, EQUIPMENT_TYPES } from "@pflanzendex/core";
 import { z } from "zod";
 import type { EquipmentInput } from "./equipment-api";
+import type { EquipmentWishInput } from "./overviews/wishes-view/wishes-api";
 
 const NOT_URL = "Die Produkt-ID sagt, was das Produkt ist, und ist keine Adresse: Bitte keine URL.";
 
@@ -96,4 +97,37 @@ export function fieldsOfRefusal(error: {
   if (error.code === "light_zone.not_found") found.add("lightZoneId");
   for (const d of error.details ?? []) found.add(d.field);
   return REFUSABLE.filter((f) => found.has(f));
+}
+
+/** The form to record an equipment wish (US-EQU-08): type and name are required, the rest stays unknown (P-08). */
+export const wishSchema = z.object({
+  type: z.enum(EQUIPMENT_TYPES, { error: "Bitte wähle eine Art." }),
+  name: z.string().trim().min(EQUIPMENT_LIMITS.name.min, "Bitte gib einen Namen an."),
+  productId: z
+    .string()
+    .trim()
+    .refine((v) => !v.includes("://") && !v.toLowerCase().startsWith("www."), NOT_URL),
+  priceEur: z
+    .string()
+    .trim()
+    .refine((v) => v === "" || isPrice(v), "Bitte gib einen Preis in Euro an, zum Beispiel 49,90."),
+});
+
+export type WishFields = z.input<typeof wishSchema>;
+
+export const EMPTY_WISH: WishFields = {
+  type: "" as WishFields["type"],
+  name: "",
+  productId: "",
+  priceEur: "",
+};
+
+/** The API input of a checked wish form: empty fields stay out (unknown, P-08). */
+export function toWishInput(f: WishFields): EquipmentWishInput {
+  return {
+    equipmentType: f.type,
+    name: f.name.trim(),
+    ...(f.productId.trim() ? { productId: f.productId.trim() } : {}),
+    ...(f.priceEur.trim() ? { priceEur: Number(f.priceEur.trim().replace(",", ".")) } : {}),
+  };
 }

@@ -1,9 +1,6 @@
-import { useState, type FormEvent } from "react";
-import { EQUIPMENT_LIMITS, EQUIPMENT_TYPES } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/fields/input/input";
-import { Select } from "@/components/ui/fields/select/select";
 import { TYPE_LABELS } from "../../labels";
+import { WishForm } from "./wish-form/wish-form";
 import type { EquipmentWishInput, EquipmentWishList, EquipmentWishRow } from "./wishes-api";
 
 export interface WishActions {
@@ -17,71 +14,6 @@ export interface WishActions {
 const UNKNOWN = "unbekannt";
 const price = (w: EquipmentWishRow) =>
   w.priceEur === null ? UNKNOWN : `${w.priceEur.toFixed(2).replace(".", ",")} €`;
-
-/** The form input of a wish: empty fields stay out (unknown, P-08); a price takes a comma or a point. */
-function toInput(f: { type: string; name: string; productId: string; price: string }) {
-  const priceText = f.price.trim().replace(",", ".");
-  return {
-    equipmentType: f.type,
-    name: f.name.trim(),
-    ...(f.productId.trim() ? { productId: f.productId.trim() } : {}),
-    ...(priceText ? { priceEur: Number(priceText) } : {}),
-  };
-}
-
-function WishForm(props: { actions: WishActions }) {
-  const [f, setF] = useState({ type: "", name: "", productId: "", price: "" });
-  const set = (key: keyof typeof f) => (e: { target: { value: string } }) =>
-    setF((old) => ({ ...old, [key]: e.target.value }));
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (await props.actions.onCreate(toInput(f)))
-      setF({ type: "", name: "", productId: "", price: "" });
-  };
-  return (
-    <form
-      onSubmit={submit}
-      className="flex max-w-xl flex-col gap-3"
-      aria-label="Equipment-Wunsch erfassen"
-    >
-      <label className="flex flex-col gap-1">
-        Art des Wunsches
-        <Select value={f.type} onChange={set("type")} required>
-          <option value="">Bitte wählen</option>
-          {EQUIPMENT_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {TYPE_LABELS[t]}
-            </option>
-          ))}
-        </Select>
-      </label>
-      <label className="flex flex-col gap-1">
-        Name des Wunsches
-        <Input
-          value={f.name}
-          onChange={set("name")}
-          maxLength={EQUIPMENT_LIMITS.name.max}
-          required
-        />
-      </label>
-      <label className="flex flex-col gap-1">
-        Produkt-ID des Wunsches (optional)
-        <Input
-          value={f.productId}
-          onChange={set("productId")}
-          maxLength={EQUIPMENT_LIMITS.productId.max}
-        />
-      </label>
-      <label className="flex flex-col gap-1">
-        Geplanter Preis in Euro (optional)
-        <Input value={f.price} onChange={set("price")} inputMode="decimal" />
-      </label>
-      <Button type="submit" size="touch" disabled={props.actions.busy}>
-        Wunsch speichern
-      </Button>
-    </form>
-  );
-}
 
 function Group(props: {
   title: string;
@@ -150,7 +82,7 @@ export function WishesView(props: { wishes: EquipmentWishList; actions: WishActi
       <Group title="Offene Equipment-Wünsche" items={wishes.open} actions={actions} />
       <Group title="Gekaufte Equipment-Wünsche" items={wishes.bought} />
       <Group title="Verworfene Equipment-Wünsche" items={wishes.discarded} />
-      <WishForm actions={actions} />
+      <WishForm busy={actions.busy} onCreate={actions.onCreate} />
     </section>
   );
 }

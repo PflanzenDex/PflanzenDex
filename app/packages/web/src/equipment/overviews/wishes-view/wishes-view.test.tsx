@@ -29,6 +29,8 @@ function fakeServer(wishes: { open: unknown[]; bought: unknown[]; discarded: unk
         prefill: { type: "Lamp", name: "Growlight X", productId: "GL-1", priceEur: 49.9 },
         hint: { text: "ok", nextAction: "next" },
       });
+    if (path === "/equipment/wishes" && init?.method === "POST")
+      return response(201, { wish: wish() });
     if (path === "/equipment/wishes") return response(200, wishes);
     if (path === "/equipment/zones") return response(200, { zones: [], unassigned: [] });
     if (path === "/equipment/lamps") return response(200, { limit: null, lamps: [] });
@@ -77,5 +79,24 @@ describe("US-EQU-08 equipment wishes in the equipment page", () => {
     fakeServer({ open: [], bought: [], discarded: [] });
     render(<EquipmentPage api="http://api" token={token} />);
     expect(await screen.findByText(/Kein offener Equipment-Wunsch/)).toBeTruthy();
+  });
+
+  it("US-EQU-08 sends only the given fields of a new wish and refuses a missing name before sending", async () => {
+    const fetchFn = fakeServer({ open: [], bought: [], discarded: [] });
+    render(<EquipmentPage api="http://api" token={token} />);
+    const form = await screen.findByRole("form", { name: "Equipment-Wunsch erfassen" });
+    const user = userEvent.setup();
+    await user.selectOptions(within(form).getByLabelText("Art des Wunsches"), "Timer");
+    await user.click(within(form).getByRole("button", { name: "Wunsch speichern" }));
+    expect(await within(form).findByText("Bitte gib einen Namen an.")).toBeTruthy();
+    expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+    await user.type(within(form).getByLabelText("Name des Wunsches"), "Zeitschaltuhr");
+    await user.click(within(form).getByRole("button", { name: "Wunsch speichern" }));
+    await screen.findByText("Equipment-Wunsch „Zeitschaltuhr“ gespeichert.");
+    const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
+    expect(JSON.parse(String(post?.[1]?.body))).toEqual({
+      equipmentType: "Timer",
+      name: "Zeitschaltuhr",
+    });
   });
 });
