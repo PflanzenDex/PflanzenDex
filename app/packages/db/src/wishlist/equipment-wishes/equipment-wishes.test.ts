@@ -2,8 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, openFixturePool, openOwnerPool, withAccount } from "../../kernel/index.ts";
-import { WishesPostgres } from "../../wishlist/index.ts";
-import { EquipmentWishesPostgres } from "../index.ts";
+import { EquipmentWishesPostgres, WishesPostgres } from "../index.ts";
 
 // US-EQU-08, DM-WUN-01, P-04: wishes of type equipment per account (real PostgreSQL, `make db-up`).
 let pool: Pool;

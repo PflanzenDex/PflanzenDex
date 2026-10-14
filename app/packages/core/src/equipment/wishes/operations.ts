@@ -9,7 +9,7 @@ import {
   shape,
   textField,
 } from "../../kernel";
-import { wishNameKey } from "../../wishlist/repair/name-key";
+import { wishNameKey } from "../../wishlist";
 import { priceField, productIdField } from "../record";
 import { EQUIPMENT_LIMITS, EQUIPMENT_TYPES, type EquipmentType } from "../store/types";
 import type { EquipmentWishRow, EquipmentWishStore } from "./types";

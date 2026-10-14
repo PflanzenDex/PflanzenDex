@@ -1,4 +1,4 @@
--- module: equipment
+-- module: wishlist
 -- US-EQU-08, DM-WUN-01: a wish of type equipment (`wish.type = 'equipment'`, allowed since 0019) carries the equipment
 -- type, an optional product id and an optional planned price. Plant wishes keep all three empty and every plant query
 -- still filters on `type = 'plant'`, so the buffer and the zone hints of the plant wishes stay as they are. Forward-only

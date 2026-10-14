@@ -1,5 +1,5 @@
 import type { WishStatus } from "../../wishlist";
-import { wishNameKey } from "../../wishlist/repair/name-key";
+import { wishNameKey } from "../../wishlist";
 import type {
   EquipmentWishChange,
   EquipmentWishRow,
