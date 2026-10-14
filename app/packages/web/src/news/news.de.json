@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Kosten: Unter „Equipment“ siehst du die Summe deiner Anschaffungskosten je Art und insgesamt, nur über das Equipment mit eingetragenem Preis. Es steht dabei, für wie viele Teile der Preis fehlt; ohne bekannten Preis steht „unbekannt“ statt 0. Strom- und Ersatzkosten werden nicht geschätzt.",
     "Equipment-Wünsche: Unter „Equipment“ kannst du Wünsche für Geräte und Verbrauchsmaterial erfassen, getrennt von deinen Pflanzenwünschen. Mit „Gekauft“ öffnet sich das Formular für das Equipment, Name, Produkt-ID, Art und Preis sind schon ausgefüllt. Ohne Preis bleibt er unbekannt; Puffer und Zonen-Hinweise der Pflanzenwünsche ändern sich nicht.",
     "Fehlt / Nachkaufen: Unter „Equipment“ zeigt ein neuer Block, was dir nach deinen eigenen Angaben fehlt: Vorräte, die knapp sind oder leer, Lichtzonen mit Pflanzen aber ohne aktive Lampe, Wünsche für eine Zone ohne Lampe und defekte oder ausgemusterte Geräte ohne Ersatz. Jeder Eintrag nennt den Grund, die Quelle und den nächsten Schritt. Werbung oder Preise gibt es dort nicht.",
     "Sensoren zuordnen: Unter „Equipment“ ordnest du jeden Sensor einem Exemplar oder einem Standort zu, oder keinem von beiden. Messwerte der Sensoren speichert diese Ansicht nicht.",

@@ -106,13 +106,15 @@ Acceptance criteria:
 
 Decisions (assumption, decided by the PO): an equipment wish lives in the same table as the plant wishes (`Type: equipment`) with the equipment `Type`, an optional product id and an optional planned price; it has no target zone and no difficulty. The name is unique among all wishes of the account (FR-WUN-06). It is created, bought and discarded through its own operations (`equipment_wish.*`); every plant query keeps filtering on `Type: plant`, so the candidate list, the buffer and the zone hints of the plant wishes are unchanged and the equipment wishes are counted apart. "Bought" sets the status `bought`, keeps the wish under "bought" (P-10) and returns the prefill (type, name, product id, price) that fills the form of US-EQU-01; the keeper confirms the form, the wish is not linked to the record. The purchase date is not prefilled (nothing invented, P-08); the price only reaches the cost view (US-EQU-09) once the equipment is recorded. The schema change is additive (expand, migration 0061); the previous app version ignores it.
 
-### US-EQU-09 · See costs · ⬜ new
+### US-EQU-09 · See costs · 🟨 new
 
 Acceptance criteria:
 
 - Sum of the acquisition costs per type and in total, **only** across devices with a set price.
 - The display states for how many devices the price is missing ("sum over 7 of 11 devices").
 - No estimate of electricity or replacement costs without input.
+
+Decisions (assumption, decided by the PO): "devices" means every equipment record, consumables included, because each has an optional price (DM-EQU-01). The sum is derived on every view from the keeper's own records (`equipmentCosts`), nothing is stored, and it uses only the `Price` and never a purchase date, so no time range or depreciation is implied. Per type and in total the view shows the sum, how many records have a price and how many exist; where no record of a type has a price the sum reads "unbekannt", never 0, while a price of 0 counts as a price. Sums are added in whole cents (at most two decimals). A line says what is not included: electricity and replacement costs. The price of a wish (US-EQU-08) enters only once the equipment is recorded. Friends never see prices (US-EQU-12).
 
 ### US-EQU-10 · See matching recommendations · ⬜ new
 

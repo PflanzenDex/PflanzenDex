@@ -53,3 +53,5 @@ export type {
   EquipmentWishStore,
   EquipmentWishValues,
 } from "./wishes";
+export { equipmentCosts } from "./costs";
+export type { CostLine, CostView } from "./costs";

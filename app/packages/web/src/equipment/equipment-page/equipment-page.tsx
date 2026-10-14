@@ -14,6 +14,7 @@ import { LampLightView } from "../lamp-light/lamp-light";
 import { LampOutcome, useLampActions } from "./lamp-actions/lamp-actions";
 import { Maintenance, type MaintenanceActions } from "./maintenance/maintenance";
 import { Supply, type SupplyActions } from "./supply/supply";
+import { CostsView } from "../overviews/costs-view/costs-view";
 import { NeedsView } from "../overviews/needs-view/needs-view";
 import { SensorsView } from "../overviews/sensors-view/sensors-view";
 import { useWishActions } from "../overviews/wishes-view/use-wish-actions";
@@ -115,6 +116,7 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
       )}
       <LampOutcome message={lamps.message} error={lamps.error} />
       <LampOutcome message={wishes.message} error={wishes.error} />
+      <CostsView items={items} />
       <NeedsView needs={props.data.needs} />
       <ZonesView view={props.data.zones} actions={lamps.actions} />
       <LampLightView view={props.data.light} actions={lamps.light} />
