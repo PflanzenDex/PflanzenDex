@@ -26,6 +26,8 @@ const consumable = (extra: Partial<EquipmentRow> = {}): EquipmentRow => ({
   lifetimeSource: null,
   supply: "available",
   agentLink: null,
+  assignedSpecimenId: null,
+  assignedLocationId: null,
   ...extra,
 });
 

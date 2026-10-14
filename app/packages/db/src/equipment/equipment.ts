@@ -139,6 +139,15 @@ export class EquipmentPostgres {
     return upkeep.setMaintenance(this.pool, userId, id, data);
   }
 
+  /** Assigns a sensor to a specimen or a location of the account, or to none. */
+  setSensorTarget(
+    userId: string,
+    id: string,
+    target: { specimenId: string | null; locationId: string | null },
+  ): Promise<ChangeResult<"not_sensor" | "target_unknown">> {
+    return upkeep.setSensorTarget(this.pool, userId, id, target);
+  }
+
   /** Sets the supply of a consumable; a device has none. */
   setSupply(
     userId: string,

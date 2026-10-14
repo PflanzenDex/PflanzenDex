@@ -14,6 +14,7 @@ import { LampLightView } from "../lamp-light/lamp-light";
 import { LampOutcome, useLampActions } from "./lamp-actions/lamp-actions";
 import { Maintenance, type MaintenanceActions } from "./maintenance/maintenance";
 import { Supply, type SupplyActions } from "./supply/supply";
+import { SensorsView } from "../sensors-view/sensors-view";
 import { ZonesView } from "../zones-view/zones-view";
 import { EquipmentPageSkeleton } from "./equipment-page.skeleton";
 
@@ -108,6 +109,7 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
       <LampOutcome message={lamps.message} error={lamps.error} />
       <ZonesView view={props.data.zones} actions={lamps.actions} />
       <LampLightView view={props.data.light} actions={lamps.light} />
+      <SensorsView view={props.data.sensors} actions={lamps.sensors} />
       <EquipmentForm
         zones={props.data.zones.zones}
         running={write.running}

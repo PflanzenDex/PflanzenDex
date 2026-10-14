@@ -76,6 +76,8 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "equipment.not_found": 404,
   "equipment.not_a_lamp": 409,
   "equipment.not_a_device": 409,
+  "equipment.not_a_sensor": 409,
+  "equipment.target_unknown": 404,
   "equipment.not_a_consumable": 409,
   "equipment.not_a_plant_agent": 409,
   "equipment.no_status": 409,

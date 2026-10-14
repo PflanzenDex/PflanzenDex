@@ -85,6 +85,10 @@ export type SupplyLevel = (typeof SUPPLY_LEVELS)[number];
 export const SUPPLY_LIMITS = { agentLink: { min: 1, max: 80 } } as const;
 
 export interface EquipmentRow extends EquipmentValues, MaintenanceData {
+  /** The specimen a sensor sits at; `null` = none (US-EQU-06). At most one of specimen and location is set. */
+  readonly assignedSpecimenId: string | null;
+  /** The location a sensor sits at; `null` = none. */
+  readonly assignedLocationId: string | null;
   /** The supply of a consumable; `null` for a device. A new consumable starts `available` (US-EQU-05). */
   readonly supply: SupplyLevel | null;
   /** The text of a plant agent that occurs in `Treatment.Agent`; `null` = no link (DM-EQU-03). */
@@ -135,6 +139,12 @@ export interface EquipmentStore {
     id: string,
     data: MaintenanceData,
   ): Promise<ChangeResult<"consumable">>;
+  /** Assigns a sensor to a specimen or a location of the account, or to none (both `null`). */
+  setSensorTarget(
+    userId: string,
+    id: string,
+    target: { specimenId: string | null; locationId: string | null },
+  ): Promise<ChangeResult<"not_sensor" | "target_unknown">>;
   /** Sets the supply of a consumable (US-EQU-05). */
   setSupply(
     userId: string,

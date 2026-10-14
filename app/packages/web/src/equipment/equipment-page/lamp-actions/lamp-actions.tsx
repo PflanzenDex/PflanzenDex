@@ -8,7 +8,14 @@ import {
   setLampZone,
   type EquipmentStatus,
 } from "../../equipment-api";
-import { linkAgent, markChecked, setMaintenance, setSupply } from "../../upkeep-api";
+import {
+  linkAgent,
+  markChecked,
+  setMaintenance,
+  setSensorTarget,
+  setSupply,
+} from "../../upkeep-api";
+import type { SensorActions } from "../../sensors-view/sensors-view";
 import type { LampLightActions } from "../../lamp-light/lamp-light";
 import type { MaintenanceActions } from "../maintenance/maintenance";
 import type { SupplyActions } from "../supply/supply";
@@ -98,6 +105,18 @@ function supplyWrites(api: string, write: Write): SupplyActions {
   };
 }
 
+/** The writes on a sensor (US-EQU-06): where it sits. */
+function sensorWrites(api: string, write: Write): SensorActions {
+  return {
+    busy: write.running,
+    onTarget: (sensor, target) =>
+      void write.run(
+        (t) => setSensorTarget(api, t, { id: sensor.id, ...target }),
+        `Zuordnung von „${sensor.name}“ gespeichert.`,
+      ),
+  };
+}
+
 /** One write state for everything on a lamp, so the answer shown above the zones is always the latest (P-10). */
 export function useLampActions(api: string, token: Token, onWritten: () => void) {
   const write = useWriteAction(token, onWritten);
@@ -106,6 +125,7 @@ export function useLampActions(api: string, token: Token, onWritten: () => void)
     light: lightWrites(api, write),
     maintenance: maintenanceWrites(api, write),
     supply: supplyWrites(api, write),
+    sensors: sensorWrites(api, write),
     message: write.message,
     error: write.error,
   };

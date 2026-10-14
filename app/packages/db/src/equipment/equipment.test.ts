@@ -277,3 +277,43 @@ describe("US-EQU-05 consumables and supply in the database", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("US-EQU-06 sensor assignment in the database", () => {
+  const sensor = async (user: string, name: string, type: "Sensor" | "Timer" = "Sensor") => {
+    const row = await equipment.create(user, { ...bare, name, type }, "active");
+    if (typeof row === "string") throw new Error(row);
+    return row;
+  };
+  const nobody = { specimenId: null, locationId: null };
+
+  it("a sensor starts unassigned; an unknown location looks unknown", async () => {
+    const s = await sensor(anna, "Sensor Start");
+    expect(s).toMatchObject({ assignedSpecimenId: null, assignedLocationId: null });
+    expect(await equipment.setSensorTarget(anna, s.id, nobody)).toMatchObject({
+      assignedSpecimenId: null,
+    });
+    expect(
+      await equipment.setSensorTarget(anna, s.id, { specimenId: null, locationId: randomUUID() }),
+    ).toBe("target_unknown");
+  });
+
+  it("only a sensor is assigned; another account sees it missing (P-04)", async () => {
+    const timer = await sensor(anna, "Timer Ziel", "Timer");
+    expect(await equipment.setSensorTarget(anna, timer.id, nobody)).toBe("not_sensor");
+    const s = await sensor(anna, "Sensor Fremd");
+    expect(await equipment.setSensorTarget(ben, s.id, nobody)).toBe("not_found");
+    expect(await equipment.setSensorTarget(anna, randomUUID(), nobody)).toBe("not_found");
+  });
+
+  it("the database refuses two places at once and a target on a device that is no sensor", async () => {
+    const timer = await sensor(anna, "Timer Grenze", "Timer");
+    await expect(
+      withAccount(pool, anna, (c) =>
+        c.query("update equipment set assigned_specimen_id = $2 where id = $1", [
+          timer.id,
+          randomUUID(),
+        ]),
+      ),
+    ).rejects.toThrow();
+  });
+});
