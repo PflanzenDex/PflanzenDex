@@ -83,7 +83,7 @@ Acceptance criteria:
 
 Decisions (assumption, decided by the PO): a sensor sits at one specimen or at one location, never both; both empty means not assigned. Only active specimens are offered; if the specimen is archived the sensor reads as not assigned and stays listed. If a target is deleted the assignment is cleared and the sensor stays. Accessories are recorded as `Other` and need no assignment. The turn from a savings goal into equipment comes with US-EQU-08.
 
-### US-EQU-07 · What is missing? Derive need from own data · ⬜ new
+### US-EQU-07 · What is missing? Derive need from own data · 🟨 new
 
 Acceptance criteria:
 
@@ -93,6 +93,8 @@ Acceptance criteria:
   3. Wish with a target zone without an active lamp device.
   4. Device `defective`/`retired` without replacement.
 - Every item says what to do (P-09), without invented urgency. Purely computed (NFR-04).
+
+Decisions (assumption, decided by the PO): the zone rule counts only zones 2 to 4 with specimens, as in US-EQU-02. A wish counts when its target zone has no active lamp, whether or not the zone holds specimens; wishes of one zone are one item. A defective or retired device has a replacement when another active device of the same type exists; for a lamp the replacement must serve the same zone. Items are listed by kind in the order above and carry no priority, urgency or price (P-08). The block also appears when nothing is missing and then says so. Showing the items in "Today" is open.
 
 ### US-EQU-08 · Take over a purchase · ⬜ new
 

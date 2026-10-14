@@ -15,7 +15,7 @@ import {
   setSensorTarget,
   setSupply,
 } from "../../upkeep-api";
-import type { SensorActions } from "../../sensors-view/sensors-view";
+import type { SensorActions } from "../../overviews/sensors-view/sensors-view";
 import type { LampLightActions } from "../../lamp-light/lamp-light";
 import type { MaintenanceActions } from "../maintenance/maintenance";
 import type { SupplyActions } from "../supply/supply";

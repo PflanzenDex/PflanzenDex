@@ -1,4 +1,5 @@
 import {
+  equipmentNeeds,
   equipmentRecord,
   equipmentSetStatus,
   equipmentSetZone,
@@ -8,7 +9,12 @@ import {
   type ZoneStockSource,
   type ZoneUsage,
 } from "@pflanzendex/core";
-import { EquipmentPostgres, IdempotencyPostgres, ZonePostgres } from "@pflanzendex/db";
+import {
+  EquipmentPostgres,
+  IdempotencyPostgres,
+  WishesPostgres,
+  ZonePostgres,
+} from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import { body, write, type AuthEnv } from "../kernel";
@@ -48,6 +54,19 @@ export function equipmentRoutes(pool: Pool, zoneStock: ZoneStockSource): Hono<Au
         c.get("account").id,
       ),
     ),
+  );
+  routes.get("/equipment/needs", async (c) =>
+    c.json({
+      needs: await equipmentNeeds(
+        {
+          equipment,
+          zones: new ZonePostgres(pool),
+          stock: zoneStock,
+          wishes: new WishesPostgres(pool),
+        },
+        c.get("account").id,
+      ),
+    }),
   );
   routes.post("/equipment/:id/zone", async (c) =>
     write(c, deps, setZone, { input: { ...(await body(c)), id: c.req.param("id") } }),

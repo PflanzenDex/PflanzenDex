@@ -46,6 +46,7 @@ function fakeServer() {
     if (path === "/equipment/zones") return response(200, { zones: [], unassigned: [] });
     if (path === "/equipment/lamps") return response(200, { limit: null, lamps: [] });
     if (path === "/equipment/sensors") return response(200, SENSORS);
+    if (path === "/equipment/needs") return response(200, { needs: [] });
     if (path === "/equipment") return response(200, { equipment: ITEMS });
     return response(404, {});
   });
