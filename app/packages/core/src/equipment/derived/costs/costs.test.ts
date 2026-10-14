@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { EquipmentRow, EquipmentType } from "../store/types";
+import type { EquipmentRow, EquipmentType } from "../../store/types";
 import { equipmentCosts } from "./index";
 
 // US-EQU-09: sum per type and in total only over records with a price; the gap is stated, nothing is estimated (P-08).

@@ -1,4 +1,4 @@
-import { EQUIPMENT_TYPES, type EquipmentRow, type EquipmentType } from "../store/types";
+import { EQUIPMENT_TYPES, type EquipmentRow, type EquipmentType } from "../../store/types";
 
 /** The acquisition costs of one type, or of all equipment: only records with a set price count (P-08). */
 export interface CostLine {

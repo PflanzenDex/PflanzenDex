@@ -1,7 +1,7 @@
-import type { ZoneStore } from "../../light";
-import type { WishStore, ZoneStockSource } from "../../wishlist";
-import { zoneEquipment } from "../lamps/zones";
-import type { EquipmentRow, EquipmentStore } from "../store/types";
+import type { ZoneStore } from "../../../light";
+import type { WishStore, ZoneStockSource } from "../../../wishlist";
+import { zoneEquipment } from "../../lamps/zones";
+import type { EquipmentRow, EquipmentStore } from "../../store/types";
 
 export type NeedKind = "supply_low" | "zone_without_lamp" | "wish_without_lamp" | "no_replacement";
 
