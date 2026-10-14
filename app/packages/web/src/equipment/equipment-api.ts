@@ -3,6 +3,7 @@ import type {
   EquipmentStatus,
   LampLightView,
   LampMeasurement,
+  Need,
   SensorView,
   SupplyLevel,
   ZoneEquipmentView,
@@ -14,6 +15,7 @@ export type {
   EquipmentStatus,
   LampLightView,
   LampMeasurement,
+  Need,
   SensorView,
   SupplyLevel,
   ZoneEquipmentView,
@@ -38,6 +40,7 @@ export interface EquipmentData {
   readonly zones: ZoneEquipmentView;
   readonly light: LampLightView;
   readonly sensors: SensorView;
+  readonly needs: readonly Need[];
 }
 
 /** Loads the equipment (US-EQU-01), the lamps per light zone (US-EQU-02) and their light intensity (US-EQU-03); private by default (P-05). */
@@ -46,16 +49,18 @@ export async function loadEquipment(
   token: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<Response<EquipmentData>> {
-  const [list, zones, light, sensors] = await Promise.all([
+  const [list, zones, light, sensors, needs] = await Promise.all([
     call<{ equipment: EquipmentRow[] }>(fetchFn, `${api}/equipment`, token),
     call<ZoneEquipmentView>(fetchFn, `${api}/equipment/zones`, token),
     call<LampLightView>(fetchFn, `${api}/equipment/lamps`, token),
     call<SensorView>(fetchFn, `${api}/equipment/sensors`, token),
+    call<{ needs: Need[] }>(fetchFn, `${api}/equipment/needs`, token),
   ]);
   if (!list.ok) return list;
   if (!zones.ok) return zones;
   if (!light.ok) return light;
   if (!sensors.ok) return sensors;
+  if (!needs.ok) return needs;
   return {
     ok: true,
     value: {
@@ -63,6 +68,7 @@ export async function loadEquipment(
       zones: zones.value,
       light: light.value,
       sensors: sensors.value,
+      needs: needs.value.needs,
     },
   };
 }

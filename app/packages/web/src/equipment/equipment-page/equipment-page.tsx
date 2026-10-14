@@ -14,8 +14,9 @@ import { LampLightView } from "../lamp-light/lamp-light";
 import { LampOutcome, useLampActions } from "./lamp-actions/lamp-actions";
 import { Maintenance, type MaintenanceActions } from "./maintenance/maintenance";
 import { Supply, type SupplyActions } from "./supply/supply";
-import { SensorsView } from "../sensors-view/sensors-view";
-import { ZonesView } from "../zones-view/zones-view";
+import { NeedsView } from "../overviews/needs-view/needs-view";
+import { SensorsView } from "../overviews/sensors-view/sensors-view";
+import { ZonesView } from "../overviews/zones-view/zones-view";
 import { EquipmentPageSkeleton } from "./equipment-page.skeleton";
 
 const KEY = ["equipment", "list"] as const;
@@ -107,6 +108,7 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
         </ul>
       )}
       <LampOutcome message={lamps.message} error={lamps.error} />
+      <NeedsView needs={props.data.needs} />
       <ZonesView view={props.data.zones} actions={lamps.actions} />
       <LampLightView view={props.data.light} actions={lamps.light} />
       <SensorsView view={props.data.sensors} actions={lamps.sensors} />

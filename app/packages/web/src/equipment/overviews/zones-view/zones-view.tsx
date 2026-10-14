@@ -1,8 +1,8 @@
 import type { Lamp, ZoneEquipment, ZoneEquipmentView } from "@pflanzendex/core";
 import { EQUIPMENT_STATUSES } from "@pflanzendex/core";
 import { Select } from "@/components/ui/fields/select/select";
-import { STATUS_LABELS } from "../labels";
-import type { EquipmentStatus } from "../equipment-api";
+import { STATUS_LABELS } from "../../labels";
+import type { EquipmentStatus } from "../../equipment-api";
 
 export interface LampActions {
   onZone: (lamp: Lamp, lightZoneId: string) => void;
