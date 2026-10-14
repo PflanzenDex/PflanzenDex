@@ -42,3 +42,17 @@ describe("NFR-12 · compression and cache headers of the serving layer", () => {
     expect(block("handle_errors")).toContain('Cache-Control "no-store"');
   });
 });
+
+describe("NFR-10 · dotfile paths are no SPA routes (TE-03 hardening)", () => {
+  it("NFR-10 a dotfile path (/.env, /.git/config) is a 404 through the error handler, not the shell", () => {
+    expect(web).toMatch(
+      /^\s*@dotfile \{\n\s*path \/\.\* \*\/\.\*\n\s*not path \/\.well-known\/\*\n\s*\}$/m,
+    );
+    expect(block("handle @dotfile")).toMatch(/^\s*error 404\s*$/m);
+  });
+
+  it("NFR-10 the dotfile block comes before the SPA fallback", () => {
+    expect(web.indexOf("handle @dotfile")).toBeGreaterThan(-1);
+    expect(web.indexOf("handle @dotfile")).toBeLessThan(web.lastIndexOf("handle {"));
+  });
+});

@@ -22,10 +22,8 @@ export class InMemoryEquipment implements EquipmentStore {
   /** The light zones each account owns; a zone of another account is unknown (P-04). */
   constructor(
     private readonly zones: Readonly<Record<string, readonly string[]>> = {},
-    /** The specimens and locations each account owns, for the assignment of sensors (US-EQU-06). */
-    private readonly known: Readonly<
-      Record<string, { specimens?: readonly string[]; locations?: readonly string[] }>
-    > = {},
+    /** The locations each account owns, for the assignment of sensors (US-EQU-06). */
+    private readonly known: Readonly<Record<string, { locations?: readonly string[] }>> = {},
   ) {}
 
   async list(userId: string): Promise<readonly EquipmentRow[]> {
@@ -111,10 +109,9 @@ export class InMemoryEquipment implements EquipmentStore {
     userId: string,
     target: { specimenId: string | null; locationId: string | null },
   ): boolean {
-    const own = this.known[userId];
-    const specimenOk = target.specimenId === null || !!own?.specimens?.includes(target.specimenId);
-    const locationOk = target.locationId === null || !!own?.locations?.includes(target.locationId);
-    return specimenOk && locationOk;
+    return (
+      target.locationId === null || !!this.known[userId]?.locations?.includes(target.locationId)
+    );
   }
 
   async setSensorTarget(

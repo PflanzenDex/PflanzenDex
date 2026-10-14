@@ -20,11 +20,12 @@ export function addSensorRoutes(
   deps: { idempotency: IdempotencyPostgres },
 ): void {
   const equipment = new EquipmentPostgres(pool);
-  const assign = equipmentAssignSensor({ equipment });
+  const specimens = new SpecimenPostgres(pool);
+  const assign = equipmentAssignSensor({ equipment, specimens });
   routes.get("/equipment/sensors", async (c) =>
     c.json(
       await sensorAssignments(
-        { equipment, specimens: new SpecimenPostgres(pool), locations: new LocationPostgres(pool) },
+        { equipment, specimens, locations: new LocationPostgres(pool) },
         c.get("account").id,
       ),
     ),

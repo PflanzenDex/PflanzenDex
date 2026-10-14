@@ -286,15 +286,12 @@ describe("US-EQU-06 sensor assignment in the database", () => {
   };
   const nobody = { specimenId: null, locationId: null };
 
-  it("a sensor starts unassigned; an unknown specimen or location looks unknown", async () => {
+  it("a sensor starts unassigned; an unknown location looks unknown", async () => {
     const s = await sensor(anna, "Sensor Start");
     expect(s).toMatchObject({ assignedSpecimenId: null, assignedLocationId: null });
     expect(await equipment.setSensorTarget(anna, s.id, nobody)).toMatchObject({
       assignedSpecimenId: null,
     });
-    expect(
-      await equipment.setSensorTarget(anna, s.id, { specimenId: randomUUID(), locationId: null }),
-    ).toBe("target_unknown");
     expect(
       await equipment.setSensorTarget(anna, s.id, { specimenId: null, locationId: randomUUID() }),
     ).toBe("target_unknown");

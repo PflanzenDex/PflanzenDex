@@ -96,11 +96,16 @@ beforeAll(async () => {
   }[];
   const entry = entries.find((e) => e.species?.id === speciesId);
   await call(subOp, "POST", `/review/${entry?.reviewCase.id}/decide`, { status: "reviewed" });
+  // The database checks a friend code's expiry against now(): a code from the fixed clock expires
+  // a week after it, so the friends pair up on the real clock.
+  const fixed = app;
+  app = createApp({ reviewer, pool });
   const { code } = (await call(subA, "POST", "/friends/invitations", {})).body;
   await call(subB, "POST", "/friends/requests", { code });
   const incoming = (await call(subA, "GET", "/friends/requests")).body.incoming[0].id;
   await call(subA, "POST", `/friends/requests/${incoming}/answer`, { decision: "accept" });
   friendOfBen = (await call(subB, "GET", "/friends")).body.friends[0].id;
+  app = fixed;
 });
 afterAll(async () => {
   const accounts = "select id from account where subject = any($1)";

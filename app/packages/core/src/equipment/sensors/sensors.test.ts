@@ -31,7 +31,14 @@ const record = async (type: string, name: string) => {
   return r.ok ? r.value.id : "";
 };
 const assign = (id: string, input: Record<string, unknown>, context = anna) =>
-  run(equipmentAssignSensor({ equipment }), { id, ...input }, context);
+  run(
+    equipmentAssignSensor({
+      equipment,
+      specimens: { list: async (u: string) => (u === "anna" ? rows : []) },
+    }),
+    { id, ...input },
+    context,
+  );
 const view = (user = "anna") =>
   sensorAssignments(
     {
@@ -46,7 +53,7 @@ const view = (user = "anna") =>
   );
 
 beforeEach(() => {
-  equipment = new InMemoryEquipment({}, { anna: { specimens: [S1], locations: [L1] } });
+  equipment = new InMemoryEquipment({}, { anna: { locations: [L1] } });
   idem = new InMemoryIdempotencyStore();
   rows = [specimen()];
 });
@@ -105,7 +112,7 @@ describe("US-EQU-06 sensors and accessories", () => {
       ok: false,
       error: { code: "equipment.target_unknown" },
     });
-    expect(await assign(id, { specimenId: S1 }, bert)).toMatchObject({
+    expect(await assign(id, {}, bert)).toMatchObject({
       ok: false,
       error: { code: "equipment.not_found" },
     });

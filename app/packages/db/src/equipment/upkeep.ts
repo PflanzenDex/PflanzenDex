@@ -71,7 +71,10 @@ export const setAgentLink = (pool: Pool, userId: string, id: string, agentLink: 
 
 const FOREIGN_KEY = "23503";
 
-/** Assigns a sensor to a specimen or a location of the account; a foreign or unknown target looks unknown (P-04). */
+/**
+ * Assigns a sensor to a specimen or a location of the account; a foreign or unknown location looks unknown (P-04). The
+ * specimen belongs to another module and has no foreign key: the operation in `core` checks it through its port.
+ */
 export async function setSensorTarget(
   pool: Pool,
   userId: string,
