@@ -1,5 +1,5 @@
 import type { EquipmentSharingRow } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../../../kernel";
+import { call, createWrite, type Response } from "../../../../kernel";
 
 export type { EquipmentSharingRow };
 

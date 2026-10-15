@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button/button";
 import { FormRoot } from "@/components/ui/fields/form/form";
 import { Input } from "@/components/ui/fields/input/input";
-import type { EquipmentRow, SupplyLevel } from "../../equipment-api";
-import { SUPPLY_LABELS } from "../../labels";
+import type { EquipmentRow, SupplyLevel } from "../../../equipment-api";
+import { SUPPLY_LABELS } from "../../../labels";
 
 const LEVELS = ["available", "low", "empty"] as const satisfies readonly SupplyLevel[];
 const LABEL = "flex min-w-0 flex-col gap-1 text-sm";

@@ -17,10 +17,10 @@ import {
 } from "../../upkeep-api";
 import type { SensorActions } from "../../overviews/sensors-view/sensors-view";
 import type { LampLightActions } from "../../lamp-light/lamp-light";
-import type { MaintenanceActions } from "../maintenance/maintenance";
-import type { SupplyActions } from "../supply/supply";
-import { setEquipmentSharing } from "../sharing/sharing-api";
-import type { SharingActions } from "../sharing/sharing";
+import type { MaintenanceActions } from "../parts/maintenance/maintenance";
+import type { SupplyActions } from "../parts/supply/supply";
+import { setEquipmentSharing } from "../parts/sharing/sharing-api";
+import type { SharingActions } from "../parts/sharing/sharing";
 
 type Token = () => Promise<string | undefined>;
 

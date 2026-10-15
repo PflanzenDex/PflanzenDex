@@ -12,7 +12,7 @@ import { call, createWrite, type Response } from "../kernel";
 import {
   loadEquipmentSharing,
   type EquipmentSharingRow,
-} from "./equipment-page/sharing/sharing-api";
+} from "./equipment-page/parts/sharing/sharing-api";
 import { loadEquipmentWishes, type EquipmentWishList } from "./overviews/wishes-view/wishes-api";
 
 export type {

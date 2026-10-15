@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { FormRoot } from "@/components/ui/fields/form/form";
 import { Input } from "@/components/ui/fields/input/input";
 import { Select } from "@/components/ui/fields/select/select";
-import type { EquipmentRow } from "../../equipment-api";
+import type { EquipmentRow } from "../../../equipment-api";
 
 export interface SharingActions {
   busy: boolean;

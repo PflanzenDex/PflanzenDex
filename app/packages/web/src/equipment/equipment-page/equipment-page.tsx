@@ -12,9 +12,9 @@ import {
 import { STATUS_LABELS, TYPE_LABELS } from "../labels";
 import { LampLightView } from "../lamp-light/lamp-light";
 import { LampOutcome, useLampActions } from "./lamp-actions/lamp-actions";
-import { Maintenance, type MaintenanceActions } from "./maintenance/maintenance";
-import { Supply, type SupplyActions } from "./supply/supply";
-import { Sharing, type SharingActions } from "./sharing/sharing";
+import { Maintenance, type MaintenanceActions } from "./parts/maintenance/maintenance";
+import { Supply, type SupplyActions } from "./parts/supply/supply";
+import { Sharing, type SharingActions } from "./parts/sharing/sharing";
 import { CostsView } from "../overviews/costs-view/costs-view";
 import { NeedsView } from "../overviews/needs-view/needs-view";
 import { SensorsView } from "../overviews/sensors-view/sensors-view";

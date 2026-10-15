@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { EquipmentRow } from "../../equipment-api";
+import type { EquipmentRow } from "../../../equipment-api";
 import { Sharing } from "./sharing";
 
 const item = { id: "e1", type: "Lamp", name: "Lampe Alpha" } as unknown as EquipmentRow;
