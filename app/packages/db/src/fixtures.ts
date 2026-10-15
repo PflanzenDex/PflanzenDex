@@ -11,6 +11,7 @@ import { FIXTURES_POKEDEX } from "./pokedex/index.ts";
 import { FIXTURES_SOCIAL } from "./social/index.ts";
 import { FIXTURES_SWAP } from "./swap/index.ts";
 import { FIXTURES_MONITORING } from "./monitoring/index.ts";
+import { FIXTURES_ACHIEVEMENTS } from "./achievements/index.ts";
 import { FIXTURES_AI_ACCESS } from "./ai/index.ts";
 
 // One example per table with an account id for the remaining columns (without the id, the test sets it).
@@ -26,6 +27,7 @@ export const FIXTURES: Fixtures = {
   ...FIXTURES_WISHLIST,
   ...FIXTURES_EQUIPMENT,
   ...FIXTURES_POKEDEX,
+  ...FIXTURES_ACHIEVEMENTS,
   ...FIXTURES_SOCIAL,
   ...FIXTURES_SWAP,
   ...FIXTURES_MONITORING,

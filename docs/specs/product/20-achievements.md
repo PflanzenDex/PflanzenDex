@@ -29,7 +29,7 @@ Delimitation from the non-goals in `16`: no leaderboards, no rank comparison bet
 
 ## User stories
 
-### US-ACH-01 · Earn achievements for care and growth · ⬜ new
+### US-ACH-01 · Earn achievements for care and growth · 🟨 new
 
 As a **plant keeper** I want to earn achievements for real successes in my collection, so that care feels rewarded and not only collecting.
 
@@ -46,6 +46,7 @@ Acceptance criteria:
 - Given the basis of an achievement is an archived specimen, when I look at my achievements, then it stays earned (archive keeps the event, P-10).
 - Given a criterion cannot be evaluated because data is missing (no measurements, no phase), when I look at the achievement, then it is open and says what is missing, never "failed" (P-08).
 - Achievements are **derived**, not stored; only the "seen" state is stored (US-ACH-03, FR-ACH-02).
+- Status: the criteria are pure functions in `core` over a plain facts value (module `achievements`, ADR 0014); reading the keeper's data into facts comes with the overview (US-ACH-02). Assumption, decided by the PO: "Cutting rooted" is the repot date of a cutting (US-BES-04); "through a dormancy phase" is a full dormancy period that began on or after the catch date and ended while the specimen was still with me (archive date bounds it); "12 months" is the same calendar day one year later.
 
 ### US-ACH-02 · See my achievements and what comes next · ⬜ new
 
@@ -119,7 +120,7 @@ Acceptance criteria:
 - The view is private by default (P-05). It is not shared in this epic: sharing would need its own field in the friend view whitelist (US-SOZ-04, QG-D2) and is an open question (no. 5). Friends never see it by default, and never a rank or comparison (FR-SOZ-11, FR-ACH-04).
 - No percentage, no "better than last year" rating; two years may be shown side by side as plain numbers.
 
-### US-ACH-08 · Switch gamification off · ⬜ new
+### US-ACH-08 · Switch gamification off · 🟨 new
 
 As a **plant keeper** I want to turn all game elements off, so that the app stays a calm care tool if I do not want them.
 
@@ -128,6 +129,7 @@ Acceptance criteria:
 - Given calm mode is on, then the achievement banners, the overview entry, the care rhythm, personal records, anniversaries and the year in review are not shown. POK rank and milestones follow the setting of the Pokédex view and stay unchanged.
 - Given calm mode is switched off again, then earned achievements are still there (they are derived) and none appear as new (they count as seen).
 - Calm mode is a per-account setting, off by default for new accounts (assumption, revisable), and reachable from the profile (US-ACC-02). It ships together with the first visible ACH element (see build order).
+- Status: the setting exists (table `achievement_setting`, `GET /achievements/settings`, `PUT /achievements/settings/calm-mode`, switch "Ruhemodus" on the settings page, off by default) and core answers `showsAchievements(settings)`; the elements that must obey it arrive with US-ACH-02 and the following stories, each of which checks the setting. Assumption, decided by the PO: the switch saves on its own (no Save button), and the AI client interface (KI-R2) asks the same function once ACH text reaches it.
 - The state "calm mode" is respected by every ACH element and by the AI client interface (no hidden gamified text, KI-R2).
 
 ## Dependencies and build order

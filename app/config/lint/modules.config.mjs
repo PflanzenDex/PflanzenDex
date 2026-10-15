@@ -43,7 +43,7 @@ const MODULES = [
     name: "account",
     epics: ["ACC"],
     tables: ["account_data", "account_role", "invitation", "access_setting", "operator_cost"],
-    dependsOn: ["kernel"],
+    dependsOn: ["kernel", "achievements"], // web only: the calm mode switch sits on the settings page (US-ACH-08)
     ports: [],
   },
   {
@@ -124,6 +124,15 @@ const MODULES = [
     epics: [],
     tables: ["offer", "swap"],
     dependsOn: ["kernel", "social", "collection", "catalog", "care"],
+    ports: [],
+  },
+  {
+    // Achievements (ADR 0014, epic ACH): pure logic over facts about the keeper's own data. Sources are read by
+    // adapters in the api; the module itself imports nothing but the kernel. The per-account settings table is `achievement_setting` (US-ACH-08); the seen state follows with US-ACH-03.
+    name: "achievements",
+    epics: ["ACH"],
+    tables: ["achievement_setting"],
+    dependsOn: ["kernel"],
     ports: [],
   },
   {

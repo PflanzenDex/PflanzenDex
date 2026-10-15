@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button/button";
+import { CalmModeSection } from "../../achievements";
 import { Form, FormRoot } from "@/components/ui/fields/form/form";
 import {
   LoadFrame,
@@ -113,7 +114,12 @@ export function SettingsPage(props: { api: string; token: Token; host?: boolean 
         loadingText={loading}
         loadingFallback={<SettingsPageSkeleton label={loading} />}
       >
-        {(profile) => <SettingsForm api={props.api} token={props.token} profile={profile} />}
+        {(profile) => (
+          <>
+            <SettingsForm api={props.api} token={props.token} profile={profile} />
+            <CalmModeSection api={props.api} token={props.token} />
+          </>
+        )}
       </LoadFrame>
     </div>
   );
