@@ -1,1 +1,1 @@
-export { addSharingRoutes, type FriendEquipmentPorts } from "./sharing-routes";
+export { addSharingRoutes } from "./sharing-routes";
