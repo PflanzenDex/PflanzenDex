@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { execute } from "../../kernel/operation";
-import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
-import { equipmentSetSupply } from "../supply";
-import { equipmentSetStatus } from "../status";
-import { equipmentRecord } from "../record";
-import { InMemoryEquipment } from "../store/test-helpers";
+import { execute } from "../../../kernel/operation";
+import { InMemoryIdempotencyStore } from "../../../kernel/test-helpers";
+import { equipmentSetSupply } from "../../supply";
+import { equipmentSetStatus } from "../../status";
+import { equipmentRecord } from "../../record";
+import { InMemoryEquipment } from "../../store/test-helpers";
 import { equipmentNeeds } from "./index";
 
 const Z2 = "00000000-0000-4000-8000-0000000000a2";
