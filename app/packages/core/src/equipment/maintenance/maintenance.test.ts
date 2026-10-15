@@ -3,7 +3,7 @@ import { execute } from "../../kernel/operation";
 import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
 import { equipmentMeasure } from "../lamps";
 import { equipmentRecord } from "../record";
-import { equipmentSetStatus } from "../status";
+import { equipmentSetStatus } from "../record";
 import { InMemoryEquipment, InMemoryLampLog } from "../store/test-helpers";
 import { equipmentChecksDue, equipmentMarkChecked, equipmentSetMaintenance } from "./index";
 

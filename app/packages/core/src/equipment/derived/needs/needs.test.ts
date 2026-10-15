@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { execute } from "../../../kernel/operation";
 import { InMemoryIdempotencyStore } from "../../../kernel/test-helpers";
 import { equipmentSetSupply } from "../../supply";
-import { equipmentSetStatus } from "../../status";
+import { equipmentSetStatus } from "../../record";
 import { equipmentRecord } from "../../record";
 import { InMemoryEquipment } from "../../store/test-helpers";
 import { equipmentNeeds } from "./index";

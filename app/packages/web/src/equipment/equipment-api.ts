@@ -9,6 +9,10 @@ import type {
   ZoneEquipmentView,
 } from "@pflanzendex/core";
 import { call, createWrite, type Response } from "../kernel";
+import {
+  loadEquipmentSharing,
+  type EquipmentSharingRow,
+} from "./equipment-page/sharing/sharing-api";
 import { loadEquipmentWishes, type EquipmentWishList } from "./overviews/wishes-view/wishes-api";
 
 export type {
@@ -43,6 +47,7 @@ export interface EquipmentData {
   readonly sensors: SensorView;
   readonly needs: readonly Need[];
   readonly wishes: EquipmentWishList;
+  readonly sharing: readonly EquipmentSharingRow[];
 }
 
 /** Loads the equipment (US-EQU-01), the lamps per light zone (US-EQU-02) and their light intensity (US-EQU-03); private by default (P-05). */
@@ -51,13 +56,14 @@ export async function loadEquipment(
   token: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<Response<EquipmentData>> {
-  const [list, zones, light, sensors, needs, wishes] = await Promise.all([
+  const [list, zones, light, sensors, needs, wishes, sharing] = await Promise.all([
     call<{ equipment: EquipmentRow[] }>(fetchFn, `${api}/equipment`, token),
     call<ZoneEquipmentView>(fetchFn, `${api}/equipment/zones`, token),
     call<LampLightView>(fetchFn, `${api}/equipment/lamps`, token),
     call<SensorView>(fetchFn, `${api}/equipment/sensors`, token),
     call<{ needs: Need[] }>(fetchFn, `${api}/equipment/needs`, token),
     loadEquipmentWishes(api, token, fetchFn),
+    loadEquipmentSharing(api, token, fetchFn),
   ]);
   if (!list.ok) return list;
   if (!zones.ok) return zones;
@@ -65,6 +71,7 @@ export async function loadEquipment(
   if (!sensors.ok) return sensors;
   if (!needs.ok) return needs;
   if (!wishes.ok) return wishes;
+  if (!sharing.ok) return sharing;
   return {
     ok: true,
     value: {
@@ -74,6 +81,7 @@ export async function loadEquipment(
       sensors: sensors.value,
       needs: needs.value.needs,
       wishes: wishes.value,
+      sharing: sharing.value.shared,
     },
   };
 }

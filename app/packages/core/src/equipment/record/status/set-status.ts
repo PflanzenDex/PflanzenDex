@@ -1,5 +1,13 @@
-import { appError, choiceField, defineOperation, failed, idField, ok, shape } from "../../kernel";
-import { EQUIPMENT_STATUSES, type EquipmentStore } from "../store/types";
+import {
+  appError,
+  choiceField,
+  defineOperation,
+  failed,
+  idField,
+  ok,
+  shape,
+} from "../../../kernel";
+import { EQUIPMENT_STATUSES, type EquipmentStore } from "../../store/types";
 
 export interface SetStatusDependencies {
   readonly equipment: EquipmentStore;

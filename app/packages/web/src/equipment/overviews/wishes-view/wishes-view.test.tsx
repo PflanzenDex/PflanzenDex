@@ -37,6 +37,7 @@ function fakeServer(wishes: { open: unknown[]; bought: unknown[]; discarded: unk
     if (path === "/equipment/sensors")
       return response(200, { sensors: [], specimens: [], locations: [] });
     if (path === "/equipment/needs") return response(200, { needs: [] });
+    if (path === "/equipment/sharing") return response(200, { shared: [] });
     if (path === "/equipment") return response(200, { equipment: [] });
     return response(404, {});
   });

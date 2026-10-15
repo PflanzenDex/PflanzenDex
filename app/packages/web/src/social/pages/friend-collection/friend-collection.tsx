@@ -7,6 +7,7 @@ import { LoadFrame, useWriteAction } from "../../../kernel";
 import { errorText } from "@/lib/error-text";
 import { addToWishlist, loadFriendCollection } from "../../api/friends-api";
 import { nameOf } from "../../parts/request-list/request-list";
+import { FriendEquipment } from "./friend-equipment/friend-equipment";
 import { FriendCard } from "./friend-card/friend-card";
 import { FriendCollectionSkeleton } from "./friend-collection.skeleton";
 
@@ -55,8 +56,8 @@ function Body(props: {
     <div className="flex min-w-0 flex-col gap-3">
       <p className="text-muted-foreground">
         Das ist die freigegebene Sammlung von {name}: nur Art, Anzahl und Fangdatum. Es gibt keine
-        Wertung und keinen Vergleich der Sammlungen untereinander. Die Geräte eines Freundes
-        (US-EQU-12) folgen später.
+        Wertung und keinen Vergleich der Sammlungen untereinander. Die freigegebenen Geräte stehen
+        weiter unten.
       </p>
       <SegmentedControl label="Filter" options={FILTERS} value={filter} onChange={setFilter} />
       {wish.message && (
@@ -126,7 +127,15 @@ export function FriendCollectionPage(props: {
           heading="Sammlung eines Freundes"
         >
           {(data) => (
-            <Body name={data.friend.name} cards={data.cards} api={api} token={props.token} />
+            <>
+              <Body name={data.friend.name} cards={data.cards} api={api} token={props.token} />
+              <FriendEquipment
+                api={api}
+                token={props.token}
+                friendId={friendId}
+                name={nameOf(data.friend.name)}
+              />
+            </>
           )}
         </LoadFrame>
       </section>

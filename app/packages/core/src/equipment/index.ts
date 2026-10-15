@@ -9,8 +9,8 @@ export { equipmentAssignSensor, sensorAssignments } from "./sensors";
 export type { SensorAssignment, SensorAssignmentsDependencies, SensorView } from "./sensors";
 export { equipmentNeeds, equipmentCosts } from "./derived";
 export type { CostLine, CostView, Need, NeedKind, NeedsDependencies } from "./derived";
-export { equipmentSetStatus } from "./status";
-export type { SetStatusDependencies } from "./status";
+export { equipmentSetStatus } from "./record";
+export type { SetStatusDependencies } from "./record";
 export {
   equipmentDescribeLamp,
   equipmentMeasure,
@@ -53,3 +53,19 @@ export type {
   EquipmentWishStore,
   EquipmentWishValues,
 } from "./wishes";
+export {
+  EQUIPMENT_SHARE,
+  SHARE_NOTE_LIMITS,
+  equipmentSetSharing,
+  equipmentSharing,
+  friendEquipment,
+} from "./sharing";
+export type {
+  EquipmentShare,
+  EquipmentSharingRow,
+  EquipmentSharingStore,
+  EverythingPrivate,
+  FriendEquipmentDependencies,
+  SetSharingDependencies,
+  SharedDevice,
+} from "./sharing";

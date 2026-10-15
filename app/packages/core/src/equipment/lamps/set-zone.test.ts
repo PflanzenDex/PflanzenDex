@@ -3,7 +3,7 @@ import { execute } from "../../kernel/operation";
 import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
 import { equipmentRecord } from "../record";
 import { InMemoryEquipment, equipmentId } from "../store/test-helpers";
-import { equipmentSetStatus } from "../status";
+import { equipmentSetStatus } from "../record";
 import { equipmentSetZone, equipmentZoneUsage } from "./index";
 
 const Z1 = "00000000-0000-4000-8000-0000000000a1";

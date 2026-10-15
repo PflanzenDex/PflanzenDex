@@ -82,6 +82,7 @@ function fakeServer(
     if (path === "/equipment/sensors") return response(200, NO_SENSORS);
     if (path === "/equipment/needs") return response(200, { needs: [] });
     if (path === "/equipment/wishes") return response(200, { open: [], bought: [], discarded: [] });
+    if (path === "/equipment/sharing") return response(200, { shared: [] });
     if (path === "/equipment") return response(200, { equipment: current });
     return response(404, {});
   });
@@ -186,6 +187,7 @@ describe("US-EQU-01 equipment page", () => {
       if (path === "/equipment/needs") return response(200, { needs: [] });
       if (path === "/equipment/wishes")
         return response(200, { open: [], bought: [], discarded: [] });
+      if (path === "/equipment/sharing") return response(200, { shared: [] });
       return response(200, { equipment: [] });
     });
     render(<EquipmentPage api="http://api" token={token} />);
@@ -286,6 +288,7 @@ describe("US-EQU-01 equipment page", () => {
       if (path === "/equipment/needs") return response(200, { needs: [] });
       if (path === "/equipment/wishes")
         return response(200, { open: [], bought: [], discarded: [] });
+      if (path === "/equipment/sharing") return response(200, { shared: [] });
       if (path === "/equipment/zones") return response(200, NO_ZONES);
       return response(200, { equipment: [] });
     });
@@ -333,6 +336,7 @@ describe("US-EQU-01 equipment page", () => {
       if (path === "/equipment/needs") return response(200, { needs: [] });
       if (path === "/equipment/wishes")
         return response(200, { open: [], bought: [], discarded: [] });
+      if (path === "/equipment/sharing") return response(200, { shared: [] });
       if (path === "/equipment/zones") return response(200, zones);
       return response(200, { equipment: [] });
     });

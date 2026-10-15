@@ -4,6 +4,7 @@ import type {
   FriendCard,
   FriendRequest,
   OpenRequests,
+  SharedDevice,
   SharingRow,
   SpecimenRow,
 } from "@pflanzendex/core";
@@ -146,4 +147,14 @@ export async function addToWishlist(
   fetchFn: FetchFn = fetch,
 ): Promise<Response<unknown>> {
   return createWrite(api, token, fetchFn)("POST", "/wishes", { name: latinName });
+}
+
+/** The devices of one friend (US-EQU-12); `friendId` is the friendship id. Only the whitelist, only what the friend shares. */
+export function loadFriendEquipment(
+  api: string,
+  token: string,
+  friendId: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<{ friend: { name: string | null }; devices: readonly SharedDevice[] }>> {
+  return call(fetchFn, `${api}/equipment/friends/${encodeURIComponent(friendId)}`, token);
 }
