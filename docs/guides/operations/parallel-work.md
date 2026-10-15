@@ -68,6 +68,18 @@ The ranges are an assumption (starting values). With 500 slots per service colli
 - Touch shared files (Makefile, `package.json`) as little as possible; put your own logic into your own scripts.
 - Report before writing if a file has changed since it was read.
 
+## Short output for agents (US-DEV-12)
+
+Long commands print hundreds of lines that cost tokens. Run them through the wrapper; it writes the full output to a log file (default `.cache/agent-logs/run-<time>.log`, ignored by git) and prints the path:
+
+```bash
+node app/tools/dev/agent/quiet.mjs -- make ci                 # success: one line; failure: failure lines + last 15 lines
+node app/tools/dev/agent/quiet.mjs --tail 30 --log /tmp/gates.log -- make gates
+node app/tools/dev/agent/pr-status.mjs 775                    # "N green, M open, K red" plus the names of non-green jobs
+```
+
+The exit code of the command is passed through. The wrapper only shortens what is printed; read the log file when the digest is not enough. Agent rule files (`AGENTS.md`) are gate files: a human adds the reference there.
+
 ## Open
 
 A test lock for shared resources (pattern `with-test-lock.cjs`) only makes sense now that the test database (TE-02, PR #186) exists. Until then, unique ports and database names per worktree prevent collisions (the alternative the criterion allows). TE-02 and TE-03 have to read these variables instead of fixed ports.

@@ -224,6 +224,18 @@ Acceptance criteria:
 - **Idempotent and quiet:** given the generated body equals the current body, when the script runs, then it edits nothing. The body contains no clock time, only the date of the latest day and of the latest event.
 - **Least privilege (FR-DEV-08):** the workflow has `issues: write` and `contents: read`, nothing else.
 
+### US-DEV-12 · Quiet command wrapper for agents · 🟨 new
+
+As an **AI agent or developer in a session with a token budget** I want to run long commands (`make ci`, `make gates`, tests) with shortened output, so that I do not read hundreds of lines of passing steps.
+
+Acceptance criteria:
+
+- **Full output kept, short output shown (P-10):** given a command, when it runs through `node app/tools/dev/agent/quiet.mjs [--tail N] [--log <file>] -- <command...>`, then the full output goes to a log file whose path is printed, and the exit code of the command is passed through.
+- **Success is one line:** given the command succeeds, then only one line with exit code, duration and log path is printed.
+- **Failure is a digest:** given the command fails, then the output adds the lines that look like failures (`error`, `FAIL`, `✗`, `Error:`; at most 20, assumption) and the last N lines (default 15, assumption).
+- **Compact PR checks:** given a pull request, when `node app/tools/dev/agent/pr-status.mjs <pr>` runs, then only jobs that are not green are listed, plus a summary "N green, M open, K red"; it does not poll.
+- **No gate is weakened:** the wrapper only shortens what is printed; the Makefile, hooks and workflows are unchanged.
+
 ## Requirements
 
 | ID        | Requirement                                                                                                                                                                                                                                                                                                                                                                   | Status |
