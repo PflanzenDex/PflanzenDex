@@ -1,9 +1,9 @@
 // Criteria of the group "growth" (US-ACH-01). Etiolated growth never counts as success (US-WAC-04, FR-ACH-05).
 import { ACHIEVEMENT_LIMITS } from "../types";
-import type { Criterion, Earned, MeasurementFact } from "../types";
+import type { Criterion, Earned, AchievementMeasurementFact } from "../types";
 
 /** Chronological order; equal dates keep the order of the input (the one recorded last comes last). */
-const byDate = (list: readonly MeasurementFact[]): MeasurementFact[] =>
+const byDate = (list: readonly AchievementMeasurementFact[]): AchievementMeasurementFact[] =>
   list
     .map((m, i) => ({ m, i }))
     .sort((a, b) => (a.m.date < b.m.date ? -1 : a.m.date > b.m.date ? 1 : a.i - b.i))
@@ -43,8 +43,8 @@ export const healthyForAYear: Criterion = (facts) => {
     if (list.length >= need) enough = true;
     for (let i = need - 1; i < list.length; i++) {
       const window = list.slice(i - need + 1, i + 1);
-      const last = window[need - 1] as MeasurementFact;
-      const first = window[0] as MeasurementFact;
+      const last = window[need - 1] as AchievementMeasurementFact;
+      const first = window[0] as AchievementMeasurementFact;
       if (window.every((m) => m.quality === "healthy") && oneYearLater(first.date) <= last.date) {
         found.push({ earnedOn: last.date, specimenId: s.id });
         break;

@@ -1,5 +1,5 @@
 // Criteria of the group "care" (US-ACH-01). Pure functions over the keeper's own facts (FR-ACH-01).
-import type { Criterion, Earned, SpecimenFact } from "../types";
+import type { Criterion, Earned, AchievementSpecimenFact } from "../types";
 
 const earliest = (events: readonly Earned[]): Earned | null =>
   events.reduce<Earned | null>((a, e) => (a === null || e.earnedOn < a.earnedOn ? e : a), null);
@@ -34,7 +34,7 @@ export const cuttingRooted: Criterion = (facts) => {
 };
 
 /** First full dormancy period of the specimen that began after it was caught and ended while it was still with me. */
-function lastedDormancy(s: SpecimenFact, today: string): string | null {
+function lastedDormancy(s: AchievementSpecimenFact, today: string): string | null {
   if (!s.caughtOn || !s.dormancy) return null;
   const limit = s.archivedOn && s.archivedOn < today ? s.archivedOn : today;
   const { from, until } = s.dormancy;

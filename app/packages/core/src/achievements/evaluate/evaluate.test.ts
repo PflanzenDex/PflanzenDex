@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { evaluateAchievements } from "../index";
-import type { AchievementFacts, AchievementStatus, MeasurementFact, SpecimenFact } from "../index";
+import type {
+  AchievementFacts,
+  AchievementStatus,
+  AchievementMeasurementFact,
+  AchievementSpecimenFact,
+} from "../index";
 
-const specimen = (extra: Partial<SpecimenFact> = {}): SpecimenFact => ({
+const specimen = (extra: Partial<AchievementSpecimenFact> = {}): AchievementSpecimenFact => ({
   id: "s1",
   name: "Aloe vera 1",
   caughtOn: null,
@@ -11,7 +16,10 @@ const specimen = (extra: Partial<SpecimenFact> = {}): SpecimenFact => ({
   dormancy: null,
   ...extra,
 });
-const m = (date: string, extra: Partial<MeasurementFact> = {}): MeasurementFact => ({
+const m = (
+  date: string,
+  extra: Partial<AchievementMeasurementFact> = {},
+): AchievementMeasurementFact => ({
   specimenId: "s1",
   date,
   quality: "healthy",

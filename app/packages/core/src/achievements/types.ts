@@ -27,7 +27,7 @@ export type MissingData =
 /** Starting values (assumptions): 4 measurements and 12 months for "healthy for a year" (US-ACH-01). */
 export const ACHIEVEMENT_LIMITS = { healthyMeasurements: 4 } as const;
 
-export interface SpecimenFact {
+export interface AchievementSpecimenFact {
   readonly id: string;
   readonly name: string;
   /** Local calendar date the keeper caught the specimen (US-POK-07); `null` = unknown (P-08). */
@@ -40,7 +40,7 @@ export interface SpecimenFact {
   readonly dormancy: { readonly from: string; readonly until: string } | null;
 }
 
-export interface MeasurementFact {
+export interface AchievementMeasurementFact {
   readonly specimenId: string;
   /** Local calendar date `YYYY-MM-DD` (NFR-08). */
   readonly date: string;
@@ -49,13 +49,13 @@ export interface MeasurementFact {
   readonly hasPhoto: boolean;
 }
 
-export interface TreatmentCourseFact {
+export interface AchievementTreatmentFact {
   readonly specimenId: string;
   /** One entry per date of the course; `doneOn` is the local date it was ticked off, `null` = open (US-BEH-03). */
   readonly dates: readonly { readonly doneOn: string | null }[];
 }
 
-export interface HandoverFact {
+export interface AchievementHandoverFact {
   /** Local date of the handover confirmed by both sides (US-SOZ-11). */
   readonly date: string;
   readonly specimenId: string | null;
@@ -63,10 +63,10 @@ export interface HandoverFact {
 
 /** Plain facts about one keeper, assembled by an adapter from the keeper's own data only (P-04). */
 export interface AchievementFacts {
-  readonly specimens: readonly SpecimenFact[];
-  readonly measurements: readonly MeasurementFact[];
-  readonly treatmentCourses: readonly TreatmentCourseFact[];
-  readonly handovers: readonly HandoverFact[];
+  readonly specimens: readonly AchievementSpecimenFact[];
+  readonly measurements: readonly AchievementMeasurementFact[];
+  readonly treatmentCourses: readonly AchievementTreatmentFact[];
+  readonly handovers: readonly AchievementHandoverFact[];
 }
 
 /** The event that fulfilled a criterion. */
