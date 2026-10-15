@@ -22,7 +22,7 @@ Note: the catalog enrichment (US-BES-12, US-BES-13) feeds the Discover attribute
 
 Note: ENT (Discover) needs only R1 (catalog, Pokédex, wishlist, measurements) and no friends; it can also come directly after R1. The species attributes (DM-ENT-01) grow with the catalog, AI-supported from R4 (US-ENT-08). Without attributes the shares for space, Pokédex, proximity and preferences already work.
 
-Note: ACH (achievements) needs only R1 data (measurements, treatments, cuttings, phases, Pokédex) and no friends, so its core comes with R2. The care rhythm (US-ACH-04) needs the reminders and interval watering of R3 (MON-03 to MON-05); the year in review (US-ACH-07) is only meaningful after a year of data. Friends see achievements only as shared facts (open question 1 in `20`).
+Note: ACH (achievements) needs only R1 data (measurements, treatments, cuttings, phases, Pokédex) and no friends, so its core comes with R2. The care rhythm (US-ACH-04) needs the reminders and interval watering of R3 (MON-03 to MON-05); the year in review (US-ACH-07) is only meaningful after a year of data. Friends see achievements only as shared facts (open question 1 in `20`). Build order and dependencies: `20` section "Dependencies and build order" (01, 08, 02, 03, 05, 06 in R2; 04 and 07 in R3). Calm mode (US-ACH-08) ships before the first visible element.
 
 ## Technical enablers
 

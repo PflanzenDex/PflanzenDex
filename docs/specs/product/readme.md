@@ -39,7 +39,7 @@ What is taken over from the prototype: the **domain behavior** (phases, growth t
 | [17-Discover.md](17-discover.md)                                                     | Epic ENT: swipe suggestions from the catalog, matching light and thriving plants, filling the wishlist              |
 | [18-Architecture-and-Quality-Gates.md](18-architecture-and-quality-gates.md)         | Epic QG: hooks, CI, structure rules, architecture boundaries, complexity, privacy gates, DoD                        |
 | [19-Development-Process-and-Automation.md](19-development-process-and-automation.md) | Epic DEV: task runner, hooks, routines, skills, process, release, migrations, operations                            |
-| [20-Achievements.md](20-achievements.md)                                             | Epic ACH: achievements for care and growth, care rhythm, personal records, anniversaries, year in review, calm mode |
+| [20-achievements.md](20-achievements.md)                                             | Epic ACH: achievements for care and growth, care rhythm, personal records, anniversaries, year in review, calm mode |
 
 ## Conventions
 
