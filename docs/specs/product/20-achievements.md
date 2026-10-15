@@ -36,14 +36,13 @@ As a **plant keeper** I want to earn achievements for real successes in my colle
 Acceptance criteria:
 
 - Given the first event of a kind happens in my data, when the domain logic evaluates my data, then the matching achievement counts as earned with the local date of that event (`earned on`).
-- Starting set (assumption, revisable; each criterion must be checkable from existing data):
+- Starting set (assumption, revisable; each criterion must be checkable from existing data). Nothing in the set rewards buying or acquiring a plant: "wish became a caught species" was dropped, because collecting is rewarded by POK only (FR-ACH-05):
   - **First measurement with photo** (US-WAC-01, US-WAC-05)
   - **Cutting rooted:** a cutting became its own specimen (US-BES cutting flow)
   - **Treatment completed:** all dates of a course ticked off (US-BEH-03)
   - **Through a dormancy phase:** a specimen lived through a full dormancy phase with me (US-PHA-01)
-  - **Healthy for a year:** a specimen with `Healthy` quality in its last 4 measurements over at least 12 months
+  - **Healthy for a year:** a specimen with `Healthy` quality in its last 4 measurements over at least 12 months (4 measurements and 12 months are assumptions)
   - **First handover:** a swap confirmed by both sides (US-SOZ-11)
-  - **From the wishlist to the pot:** a wish became a caught species (US-WUN, US-POK-06)
 - Given the basis of an achievement is an archived specimen, when I look at my achievements, then it stays earned (archive keeps the event, P-10).
 - Given a criterion cannot be evaluated because data is missing (no measurements, no phase), when I look at the achievement, then it is open and says what is missing, never "failed" (P-08).
 - Achievements are **derived**, not stored; only the "seen" state is stored (US-ACH-03, FR-ACH-02).
@@ -56,7 +55,7 @@ Acceptance criteria:
 
 - Given I open the overview, then earned achievements show name, `earned on` and the specimen or species that led to it (link); open ones show the **next step** as an action (P-09), e.g. "Tick off the last date of the course on <Specimen>".
 - Groups: Care · Growth · Swapping · Collecting. The group "Collecting" shows the POK rank, progress and milestones from US-POK-10/11 as they are, with a link to the Pokédex.
-- Order: earned newest first; open ones with the smallest remaining effort first.
+- Order: earned newest first; open ones in the fixed order of the definitions (DM-ACH-01), not ranked by an invented "effort" (P-08).
 - No percentage of other users, no "rarer than x %", no total score (P-08, FR-ACH-04).
 - Given I have no data yet, then the overview names the first step ("Record a measurement with a photo") instead of an empty list.
 
@@ -92,9 +91,9 @@ As a **plant keeper** I want to see when a plant beats its own best, so that gro
 
 Acceptance criteria:
 
-- Given a specimen has at least 2 measurements and the last quality is `Healthy`, when a measurement is saved, then the app can show "<N> cm since <first measurement date>" and, if the yearly rate beats the specimen's own earlier best, "new personal record: <rate> cm/year".
+- Given a specimen has at least 2 measurements spanning at least 90 days (assumption, so that a short interval cannot produce an extreme yearly rate) and the last quality is `Healthy`, when a measurement is saved, then the app can show "<N> cm since <first measurement date>" and, if the yearly rate beats the specimen's own earlier best, "new personal record: <rate> cm/year".
 - Given the last quality is `Etiolated/thin` or the trend is "slower", then no record, no growth moment and no achievement is shown: etiolated growth never counts as success (US-WAC-04).
-- Given fewer than 2 measurements exist, then the specimen shows "unknown", not a record (P-08).
+- Given fewer than 2 measurements exist or they span less than 90 days, then the specimen shows "unknown", not a record (P-08).
 - The comparison is always against the specimen's own history, never against other specimens' averages or other users (P-08).
 - A growth moment appears on the measurement result and in the specimen's history (US-WAC-05); it is not repeated every visit.
 
@@ -106,7 +105,7 @@ Acceptance criteria:
 
 - Given a specimen has a catch date (US-POK-07), when today is the half-year or yearly anniversary (local date, NFR-08), then the "Today" list (US-QS-01) shows "<Specimen> is 1 year with you" with the first and the latest photo, if present.
 - Given the specimen has no catch date or was archived, then no anniversary appears (unknown stays unknown, P-08).
-- Given the anniversary day passed without a visit, then the entry stays on the Today list until the end of that week, then it disappears (P-10: the specimen's history still shows the age).
+- Given the anniversary day passed without a visit, then the entry stays on the Today list until the end of that week (assumption), then it disappears (P-10: the specimen's history still shows the age).
 - Anniversaries do not create push notifications unless I enabled them in the reminder settings (US-MON-08).
 
 ### US-ACH-07 · Year in review · ⬜ new
@@ -117,7 +116,7 @@ Acceptance criteria:
 
 - Given a calendar year has ended or I open the view for the running year, then it shows only counted facts from my data: species caught, cuttings rooted, treatments completed, measurements recorded, handovers, achievements earned, the specimen with the largest healthy growth (own rate, quality `Healthy`) and the photo pair first/last of the year.
 - Each fact names its basis; unknown values show "unknown" (P-08). Years without data show what would fill the view.
-- The view is private by default (P-05). Sharing is a separate, explicit action that publishes **facts only**, no rank and no comparison, to chosen friends (FR-SOZ-11, FR-ACH-04).
+- The view is private by default (P-05). It is not shared in this epic: sharing would need its own field in the friend view whitelist (US-SOZ-04, QG-D2) and is an open question (no. 5). Friends never see it by default, and never a rank or comparison (FR-SOZ-11, FR-ACH-04).
 - No percentage, no "better than last year" rating; two years may be shown side by side as plain numbers.
 
 ### US-ACH-08 · Switch gamification off · ⬜ new
@@ -128,8 +127,23 @@ Acceptance criteria:
 
 - Given calm mode is on, then the achievement banners, the overview entry, the care rhythm, personal records, anniversaries and the year in review are not shown. POK rank and milestones follow the setting of the Pokédex view and stay unchanged.
 - Given calm mode is switched off again, then earned achievements are still there (they are derived) and none appear as new (they count as seen).
-- Calm mode is a per-account setting, off by default for new accounts (assumption, revisable), and reachable from the profile (US-ACC-03).
+- Calm mode is a per-account setting, off by default for new accounts (assumption, revisable), and reachable from the profile (US-ACC-02). It ships together with the first visible ACH element (see build order).
 - The state "calm mode" is respected by every ACH element and by the AI client interface (no hidden gamified text, KI-R2).
+
+## Dependencies and build order
+
+Decided by the PO after the principles review. All stories are ⬜; the stories they build on are mostly done or in progress (US-WAC-01/05, US-BEH-02/03, US-PHA-01, US-POK-10/11/12, US-SOZ-11, US-QS-01); US-MON-03 to 05 and US-MON-08 are in progress.
+
+| Order | Story     | Release | Depends on                 | Why here                                                                  |
+| ----- | --------- | ------- | -------------------------- | ------------------------------------------------------------------------- |
+| 1     | US-ACH-01 | R2      | WAC, BEH, BES, PHA, SOZ-11 | Pure core logic, needed by all others, no UI                              |
+| 2     | US-ACH-08 | R2      | US-ACC-02 (profile)        | Off switch exists before anything visible ships                           |
+| 3     | US-ACH-02 | R2      | 01, 08, POK-10/11          | Overview with next steps, first visible element                           |
+| 4     | US-ACH-03 | R2      | 01, 02, POK-12 pattern     | Banner and seen state                                                     |
+| 5     | US-ACH-05 | R2      | WAC-02/04/05, 08           | Own-history records, etiolation guard                                     |
+| 6     | US-ACH-06 | R2      | POK-07, QS-01, 08          | Today list entry, no push without MON-08                                  |
+| 7     | US-ACH-04 | R3      | MON-03/04/05, 08           | Needs due tasks and interval watering                                     |
+| 8     | US-ACH-07 | R3      | 01, 05, 08                 | Meaningful after a year of data; private, sharing only after question 1/5 |
 
 ## Data model
 
@@ -162,10 +176,11 @@ Acceptance criteria:
 
 ## Open questions
 
-1. **Friends feed:** may a keeper opt in to show earned achievements in "New among friends" (US-SOZ-04) as facts? Proposal: not before R3 and only as an explicit per-achievement share, never automatic.
+1. **Friends feed (also for the year in review):** may a keeper opt in to show earned achievements in "New among friends" (US-SOZ-04) as facts? Proposal: not before R3 and only as an explicit per-achievement share, never automatic. Any shared fact needs a field on the friend view whitelist (US-SOZ-04, QG-D2) and a contract test first.
 2. **Deleted data:** if a specimen is deleted for good (not archived), its achievements disappear because the basis is gone. Accept this or keep the earned achievement as a stored fact? Today P-10 argues for stating it in the delete confirmation.
 3. **Starting set and thresholds:** the starting set, the grace period (1 day) and the pause limit (4 weeks) are assumptions. Review after a few weeks of use with the three start users.
-4. **Calm mode default:** off for everyone, or asked once in onboarding (US-ACC-02)?
+4. **Calm mode default:** off for everyone, or asked once in onboarding (US-ACC-03)? Decided by the PO for now: off, with a hint in the profile (US-ACC-02).
+5. **Sharing the year in review:** only after question 1 is decided; until then it stays private.
 
 ## Risks
 
