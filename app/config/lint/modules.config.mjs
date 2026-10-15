@@ -127,6 +127,15 @@ const MODULES = [
     ports: [],
   },
   {
+    // Achievements (ADR 0014, epic ACH): pure logic over facts about the keeper's own data. Sources are read by
+    // adapters in the api; the module itself imports nothing but the kernel. The seen state table follows with US-ACH-03.
+    name: "achievements",
+    epics: ["ACH"],
+    tables: [],
+    dependsOn: ["kernel"],
+    ports: [],
+  },
+  {
     name: "discover",
     epics: ["ENT"],
     tables: ["proposal_entscheidung"],
