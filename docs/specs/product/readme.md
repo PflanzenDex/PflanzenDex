@@ -71,9 +71,9 @@ What is taken over from the prototype: the **domain behavior** (phases, growth t
 | MIG Migration (dropped) | 0       | 0                      | 0      |
 | ENT Discover            | 8       | 0                      | 8      |
 | QG Quality gates        | 9       | 0                      | 9      |
-| DEV Development process | 11      | 0                      | 11     |
+| DEV Development process | 12      | 0                      | 12     |
 | ACH Achievements        | 8       | 0                      | 8      |
-| **Total**               | **149** | **52**                 | **97** |
+| **Total**               | **150** | **52**                 | **98** |
 
 ## Replacing existing documents
 
