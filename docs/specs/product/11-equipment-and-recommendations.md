@@ -136,7 +136,7 @@ Acceptance criteria:
 - The page "What is measured?" names data for recommendations and click counting (FR-EQU-08).
 - The keeper can delete their recommendation data (hidden items, consents) without losing equipment.
 
-### US-EQU-12 · Share equipment with friends (optional) · ⬜ new
+### US-EQU-12 · Share equipment with friends (optional) · 🟨 new
 
 Acceptance criteria:
 
@@ -144,6 +144,8 @@ Acceptance criteria:
 - At most type, name/model, light zone level and a free-text experience note are shared. **Never** price, place of purchase, serial number, location, purchase date.
 - A shared device does not appear in the feed (US-SOZ-05), only in the friend's device list (US-SOZ-07).
 - Sharing triggers **no** recommendation for others; a friend never becomes the keeper's sales channel (FR-EQU-07).
+
+Decisions (assumption, decided by the PO): the setting `private` (default) or `friends` is per piece of equipment, devices and consumables alike, stored on the equipment record (`shared`, `share_note`); no setting means private. The experience note is free text of 1 to 300 characters (starting value) and exists only while shared; withdrawing clears it, and a note together with `private` is refused. "Light zone level" is the lux ceiling of the lamp's zone (a number, not the zone name, which is the keeper's own); a device that is not a lamp has none. A retired device is not listed to friends; the status is not shared. Friends read through a database function that returns the whitelist only, and only while both sides of the friendship are confirmed (P-05, like US-SOZ-04); the global switch "Everything private" suspends it without deleting (P-10), ending a friendship withdraws everything at once. Withdrawing takes effect for the next retrieval; what was delivered cannot be retrieved. The devices appear only in the friend's collection page (US-SOZ-07), not in the feed (US-SOZ-05), and show no recommendation, link or price.
 
 ## Data model
 

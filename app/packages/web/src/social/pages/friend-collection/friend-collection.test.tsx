@@ -30,8 +30,12 @@ const CARDS = [
   card({ speciesLatin: null, speciesGerman: null, specimens: 1, cuttings: 0, iHave: null }),
 ];
 
-function show(body: unknown, status = 200) {
-  const fetchFn = vi.fn<typeof fetch>(async () => response(status, body));
+const NO_DEVICES = { friend: { name: "Anna" }, devices: [] };
+
+function show(body: unknown, status = 200, devices: unknown = NO_DEVICES) {
+  const fetchFn = vi.fn<typeof fetch>(async (url) =>
+    String(url).includes("/equipment/friends/") ? response(200, devices) : response(status, body),
+  );
   vi.stubGlobal("fetch", fetchFn);
   render(
     <MemoryRouter>
@@ -117,7 +121,9 @@ describe("US-SOZ-07 a friend's shared collection", () => {
         ? JSON.parse(String(init.body)).name === "Aloe vera"
           ? response(201, { wish: {} })
           : response(409, { error: { code: "wish.name_taken", text: "x" } })
-        : response(200, { friend: { name: "Anna" }, cards: CARDS }),
+        : String(_u).includes("/equipment/friends/")
+          ? response(200, NO_DEVICES)
+          : response(200, { friend: { name: "Anna" }, cards: CARDS }),
     );
     vi.stubGlobal("fetch", fetchFn);
     render(
@@ -134,5 +140,46 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     ).toBeNull();
     const post = fetchFn.mock.calls.find(([, i]) => i?.method === "POST");
     expect(String(post?.[0])).toBe("http://api/wishes");
+  });
+
+  it("US-EQU-12 shows the devices a friend shares with type, model, light level and the note, and nothing else", async () => {
+    const fetchFn = show({ friend: { name: "Anna" }, cards: CARDS }, 200, {
+      friend: { name: "Anna" },
+      devices: [
+        {
+          id: "d1",
+          type: "Lamp",
+          name: "Lampe Alpha",
+          model: "GL-9",
+          luxCeiling: 15000,
+          note: "sehr hell",
+        },
+        {
+          id: "d2",
+          type: "Timer",
+          name: "Zeitschaltuhr",
+          model: null,
+          luxCeiling: null,
+          note: null,
+        },
+      ],
+    });
+    const list = await screen.findByRole("list", { name: "Geräte von Anna" });
+    expect(fetchFn.mock.calls.some(([u]) => String(u) === "http://api/equipment/friends/f1")).toBe(
+      true,
+    );
+    const [lamp, timer] = within(list).getAllByRole("listitem");
+    expect(lamp?.textContent).toContain("Lampe Alpha");
+    expect(lamp?.textContent).toContain("GL-9");
+    expect(lamp?.textContent).toMatch(/bis 15\.000 lx/);
+    expect(lamp?.textContent).toContain("sehr hell");
+    expect(lamp?.textContent).not.toMatch(/Preis|Kaufdatum|Seriennummer/);
+    expect(timer?.textContent).toContain("Modell");
+    expect(timer?.textContent).toContain("unbekannt");
+  });
+
+  it("US-EQU-12 a friend who shares no device says what to do next (P-09)", async () => {
+    show({ friend: { name: "Anna" }, cards: CARDS });
+    expect(await screen.findByText(/Anna hat noch kein Gerät freigegeben/)).toBeTruthy();
   });
 });

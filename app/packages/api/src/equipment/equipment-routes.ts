@@ -21,6 +21,8 @@ import { body, write, type AuthEnv } from "../kernel";
 import { addLampRoutes } from "./lamps";
 import { addMaintenanceRoutes } from "./maintenance";
 import { addSensorRoutes } from "./sensors";
+import { addSharingRoutes } from "./sharing";
+import { friendEquipmentPorts } from "./sharing/ports";
 import { addSupplyRoutes } from "./supply";
 import { addWishRoutes } from "./wishes";
 
@@ -87,5 +89,6 @@ export function equipmentRoutes(pool: Pool, zoneStock: ZoneStockSource): Hono<Au
   addSupplyRoutes(routes, pool, deps);
   addSensorRoutes(routes, pool, deps);
   addWishRoutes(routes, pool, deps);
+  addSharingRoutes(routes, pool, deps, friendEquipmentPorts(pool));
   return routes;
 }

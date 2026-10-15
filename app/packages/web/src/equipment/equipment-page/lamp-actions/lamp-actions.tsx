@@ -17,8 +17,10 @@ import {
 } from "../../upkeep-api";
 import type { SensorActions } from "../../overviews/sensors-view/sensors-view";
 import type { LampLightActions } from "../../lamp-light/lamp-light";
-import type { MaintenanceActions } from "../maintenance/maintenance";
-import type { SupplyActions } from "../supply/supply";
+import type { MaintenanceActions } from "../parts/maintenance/maintenance";
+import type { SupplyActions } from "../parts/supply/supply";
+import { setEquipmentSharing } from "../parts/sharing/sharing-api";
+import type { SharingActions } from "../parts/sharing/sharing";
 
 type Token = () => Promise<string | undefined>;
 
@@ -117,8 +119,32 @@ function sensorWrites(api: string, write: Write): SensorActions {
   };
 }
 
+/** The writes on sharing (US-EQU-12): who may see a piece of equipment. */
+function sharingWrites(
+  api: string,
+  write: Write,
+  shared: ReadonlyMap<string, string | null>,
+): SharingActions {
+  return {
+    busy: write.running,
+    shared,
+    onShare: (item, share, note) =>
+      void write.run(
+        (t) => setEquipmentSharing(api, t, { id: item.id, share, note }),
+        share === "friends"
+          ? `„${item.name}“ ist für Freunde sichtbar.`
+          : `„${item.name}“ ist wieder privat.`,
+      ),
+  };
+}
+
 /** One write state for everything on a lamp, so the answer shown above the zones is always the latest (P-10). */
-export function useLampActions(api: string, token: Token, onWritten: () => void) {
+export function useLampActions(
+  api: string,
+  token: Token,
+  onWritten: () => void,
+  shared: readonly { equipmentId: string; note: string | null }[],
+) {
   const write = useWriteAction(token, onWritten);
   return {
     actions: zoneWrites(api, write),
@@ -126,6 +152,7 @@ export function useLampActions(api: string, token: Token, onWritten: () => void)
     maintenance: maintenanceWrites(api, write),
     supply: supplyWrites(api, write),
     sensors: sensorWrites(api, write),
+    sharing: sharingWrites(api, write, new Map(shared.map((r) => [r.equipmentId, r.note]))),
     message: write.message,
     error: write.error,
   };

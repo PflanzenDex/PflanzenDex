@@ -12,8 +12,9 @@ import {
 import { STATUS_LABELS, TYPE_LABELS } from "../labels";
 import { LampLightView } from "../lamp-light/lamp-light";
 import { LampOutcome, useLampActions } from "./lamp-actions/lamp-actions";
-import { Maintenance, type MaintenanceActions } from "./maintenance/maintenance";
-import { Supply, type SupplyActions } from "./supply/supply";
+import { Maintenance, type MaintenanceActions } from "./parts/maintenance/maintenance";
+import { Supply, type SupplyActions } from "./parts/supply/supply";
+import { Sharing, type SharingActions } from "./parts/sharing/sharing";
 import { CostsView } from "../overviews/costs-view/costs-view";
 import { NeedsView } from "../overviews/needs-view/needs-view";
 import { SensorsView } from "../overviews/sensors-view/sensors-view";
@@ -38,6 +39,7 @@ function Card(props: {
   zone: string | undefined;
   maintenance: MaintenanceActions;
   supply: SupplyActions;
+  sharing: SharingActions;
 }) {
   const { item, zone } = props;
   const maker = [item.manufacturer, item.model].filter(Boolean).join(" ");
@@ -69,13 +71,14 @@ function Card(props: {
       {item.note ? <p className="mt-2 break-words text-sm">{item.note}</p> : null}
       <Supply item={item} actions={props.supply} />
       <Maintenance item={item} actions={props.maintenance} />
+      <Sharing item={item} actions={props.sharing} />
     </li>
   );
 }
 
 function Body(props: { data: EquipmentData; api: string; token: Token; onWritten: () => void }) {
   const write = useWriteAction(props.token, props.onWritten);
-  const lamps = useLampActions(props.api, props.token, props.onWritten);
+  const lamps = useLampActions(props.api, props.token, props.onWritten, props.data.sharing);
   // "Gekauft" on a wish fills the form below (US-EQU-08).
   const [prefill, setPrefill] = useState<EquipmentPrefill | null>(null);
   const wishes = useWishActions(props.api, props.token, props.onWritten, setPrefill);
@@ -110,6 +113,7 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
               zone={zoneNames.get(item.lightZoneId ?? "")}
               maintenance={lamps.maintenance}
               supply={lamps.supply}
+              sharing={lamps.sharing}
             />
           ))}
         </ul>
