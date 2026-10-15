@@ -95,7 +95,9 @@ describe("US-EQU-12 share equipment with friends through the API", () => {
         note: "sehr hell, läuft ruhig",
       },
     ]);
-    expect(JSON.stringify(seen)).not.toMatch(/SN-12345|99|2026-01-02|geheime|Meine Zone/);
+    expect(JSON.stringify(seen)).not.toMatch(
+      /SN-12345|"price|priceEur|boughtAt|2026-01-02|geheime|Meine Zone/,
+    );
     expect((await call(subA, "GET", "/equipment/sharing")).body.shared).toEqual([
       { equipmentId: lampId, note: "sehr hell, läuft ruhig" },
     ]);
