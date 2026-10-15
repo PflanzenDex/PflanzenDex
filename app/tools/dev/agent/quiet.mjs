@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // US-DEV-12: run a command with shortened output. The full output goes to a log file.
 import { spawnSync } from "node:child_process";
-import { closeSync, mkdirSync, openSync, readFileSync, writeFileSync } from "node:fs";
+import { closeSync, fstatSync, mkdirSync, openSync, readSync, writeSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -31,15 +31,21 @@ export function runQuiet({ tail, log, command }) {
   const started = Date.now();
   const logPath = log ?? join(process.cwd(), ".cache", "agent-logs", `run-${started}.log`);
   mkdirSync(dirname(logPath), { recursive: true });
-  const fd = openSync(logPath, "w");
+  const fd = openSync(logPath, "w+");
   const res = spawnSync(command[0], command.slice(1), { stdio: ["inherit", fd, fd] });
-  closeSync(fd);
-  if (res.error) writeFileSync(logPath, `${res.error.message}\n`, { flag: "a" });
+  if (res.error) writeSync(fd, `${res.error.message}\n`);
   const code = res.status ?? (res.error ? 127 : 1);
   const seconds = ((Date.now() - started) / 1000).toFixed(1);
   const head = `${code === 0 ? "ok" : "FAILED"}: exit ${code} in ${seconds}s, full log: ${logPath}`;
-  if (code === 0) return { code, report: head };
-  const lines = readFileSync(logPath, "utf8").split("\n");
+  if (code === 0) {
+    closeSync(fd);
+    return { code, report: head };
+  }
+  // Read through the open descriptor, not the path again (no check-then-use race).
+  const buf = Buffer.alloc(fstatSync(fd).size);
+  readSync(fd, buf, 0, buf.length, 0);
+  closeSync(fd);
+  const lines = buf.toString("utf8").split("\n");
   while (lines.length && lines.at(-1) === "") lines.pop();
   const d = digest(lines, tail);
   const parts = [head];
