@@ -39,6 +39,9 @@ async function problemsInEveryView(page: Page, prepare?: () => Promise<unknown>)
   return found;
 }
 
+// Every test opens all views, the orientation test twice: more than the default minute.
+test.describe.configure({ timeout: 180_000 });
+
 test.describe("US-QS-12 adaptable display: reflow, zoom and orientation", () => {
   test("US-QS-12 every view works at 320 CSS px without sideways scrolling or cut-off content (1.4.10)", async ({
     page,

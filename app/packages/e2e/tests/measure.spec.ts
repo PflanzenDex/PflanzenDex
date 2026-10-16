@@ -4,22 +4,31 @@ import type { Page } from "@playwright/test";
 
 // Core flow R1: record a measurement (US-WAC-01), signed in, against the real API and database.
 async function withSpecimen(page: Page, species: string): Promise<void> {
+  // The catalog is the mode "Katalog" of Entdecken (US-QS-14).
+  await page.getByRole("link", { name: "Entdecken", exact: true }).click();
+  await page.getByRole("button", { name: "Katalog" }).click();
   await page.getByRole("button", { name: "Art vorschlagen" }).first().click();
   const proposal = page.getByRole("form", { name: "Art vorschlagen" });
-  await proposal.getByLabel("Lateinischer Name *").fill(species);
-  await proposal.getByLabel("Schwierigkeit *").selectOption({ index: 1 });
-  await proposal.getByLabel("Standard-Stufe (Lichtzone) *").selectOption("3");
+  await proposal.getByLabel("Lateinischer Name").fill(species);
+  await proposal.getByLabel("Schwierigkeit").selectOption({ index: 1 });
+  await proposal.getByLabel("Standard-Stufe (Lichtzone)").selectOption("3");
   await proposal.getByLabel(/Lichtbedarf/).fill("40000");
-  await proposal.getByLabel("Wachstumsmaß *").selectOption("rosette_diameter");
-  await proposal.getByLabel("Vergeilung-Anzeichen *").fill("Die Rosette streckt sich.");
-  await proposal.getByLabel("Erfolgskriterien *").fill("Dichte, flache Rosette.");
+  await proposal.getByLabel("Wachstumsmaß").selectOption("rosette_diameter");
+  await proposal.getByLabel("Vergeilung-Anzeichen").fill("Die Rosette streckt sich.");
+  await proposal.getByLabel("Erfolgskriterien").fill("Dichte, flache Rosette.");
   await proposal.getByRole("button", { name: "Vorschlag speichern" }).click();
   await page.getByRole("button", { name: "Diese Art wählen" }).click();
   await page
     .getByRole("form", { name: "Exemplar anlegen" })
     .getByRole("button", { name: "Exemplar anlegen" })
     .click();
-  await expect(page.getByRole("heading", { level: 1, name: "Bestand" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Sammlung" })).toBeVisible();
+}
+
+/** From any view: the Sammlung, then the measuring view of the first plant. */
+async function measureFromCollection(page: Page): Promise<void> {
+  await page.getByRole("link", { name: "Sammlung", exact: true }).click();
+  await page.getByRole("button", { name: /^Messen: / }).click();
 }
 
 test.describe("US-WAC-01 Messung erfassen", () => {
@@ -45,7 +54,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
 
     await expect(page.getByText(/^Gespeichert: 12,5 cm am \d\d\.\d\d\.\d{4}\.$/)).toBeVisible();
     await expect(page.getByRole("heading", { level: 3, name: /^12,5 cm · / })).toBeVisible();
-    await expect(page.getByText("nach dem Umtopfen")).toBeVisible();
+    await expect(page.getByText("nach dem Umtopfen", { exact: true })).toBeVisible();
     await axeReport(page, info, "measure-erfasst");
 
     // Back-filling: an earlier date and the quality "Etiolated/thin".
@@ -61,8 +70,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
 
     // Nothing is lost silently (P-10): after reloading the measurements from the database are there again.
     await page.reload();
-    await page.getByRole("button", { name: "Bestand" }).click();
-    await page.getByRole("button", { name: /^Messen: / }).click();
+    await measureFromCollection(page);
     await expect(page.getByRole("heading", { level: 3, name: "10 cm · 02.01.2026" })).toBeVisible();
   });
 
