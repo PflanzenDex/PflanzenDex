@@ -10,7 +10,6 @@ import {
   InvitationPage,
   type State,
 } from "../../account";
-import { AchievementNewsBanner } from "../../achievements";
 import { useClearOnSignOut } from "../../kernel";
 import { AppRoutes } from "../../routes";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
@@ -138,7 +137,6 @@ export function App() {
             <PathNotes {...wishPath.notes} />
           </Suspense>
         )}
-        <AchievementNewsBanner api={api} token={s.token} />
         <AppRoutes
           api={api}
           session={s}

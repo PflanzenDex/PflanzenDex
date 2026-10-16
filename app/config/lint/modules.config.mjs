@@ -128,10 +128,10 @@ const MODULES = [
   },
   {
     // Achievements (ADR 0014, epic ACH): pure logic over facts about the keeper's own data. Sources are read by
-    // adapters in the api; the module itself imports nothing but the kernel. The per-account settings table is `achievement_setting` (US-ACH-08); the seen state follows with US-ACH-03.
+    // adapters in the api; the module itself imports nothing but the kernel. The per-account tables are `achievement_setting` (US-ACH-08) and `achievement_seen` (US-ACH-03).
     name: "achievements",
     epics: ["ACH"],
-    tables: ["achievement_setting"],
+    tables: ["achievement_setting", "achievement_seen"],
     dependsOn: ["kernel"],
     ports: [],
   },
