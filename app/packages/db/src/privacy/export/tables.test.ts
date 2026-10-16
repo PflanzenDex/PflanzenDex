@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Pool } from "pg";
-import { migrate, openOwnerPool, WITHOUT_ACCOUNT_ID } from "../kernel/index.ts";
-import { CONTRIBUTED_TABLES } from "../catalog/index.ts";
+import { migrate, openOwnerPool, WITHOUT_ACCOUNT_ID } from "../../kernel/index.ts";
+import { CONTRIBUTED_TABLES } from "../../catalog/index.ts";
 import { allTableNames, accountTables, NOT_EXPORTED, PHOTO_COLUMNS } from "./tables.ts";
 
 let pool: Pool;

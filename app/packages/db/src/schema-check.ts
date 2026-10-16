@@ -3,6 +3,7 @@ import { CATALOG_TENANT_EXCEPTIONS } from "./catalog/index.ts";
 import { JOBS_TENANT_EXCEPTIONS } from "./jobs/index.ts";
 import { SOCIAL_TENANT_EXCEPTIONS } from "./social/index.ts";
 import { POKEDEX_TENANT_EXCEPTIONS } from "./pokedex/index.ts";
+import { PRIVACY_TENANT_EXCEPTIONS } from "./privacy/index.ts";
 import { checkSchema, WITHOUT_ACCOUNT_ID, type TenantExceptions } from "./kernel/index.ts";
 
 // Composition root of the schema check (ADR 0003): the kernel checks, the modules contribute their exceptions.
@@ -13,6 +14,7 @@ const EXCEPTIONS: TenantExceptions = {
     ...JOBS_TENANT_EXCEPTIONS.withoutAccountId,
     ...SOCIAL_TENANT_EXCEPTIONS.withoutAccountId,
     ...POKEDEX_TENANT_EXCEPTIONS.withoutAccountId,
+    ...PRIVACY_TENANT_EXCEPTIONS.withoutAccountId,
   },
   ruleRequired: [
     ...CATALOG_TENANT_EXCEPTIONS.ruleRequired,

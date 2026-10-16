@@ -6,8 +6,8 @@ import {
   migrate,
   openFixturePool,
   openOwnerPool,
-} from "../kernel/index.ts";
-import { FIXTURES, createFixtureSpeciesAt } from "../fixtures.ts";
+} from "../../kernel/index.ts";
+import { FIXTURES, createFixtureSpeciesAt } from "../../fixtures.ts";
 import { AccountDataPostgres } from "./data-export.ts";
 import { accountTables, NOT_EXPORTED } from "./tables.ts";
 

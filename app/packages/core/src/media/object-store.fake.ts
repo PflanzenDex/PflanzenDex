@@ -32,6 +32,15 @@ export class InMemoryObjectStore implements ObjectStore {
     return key.ok ? ok(this.objects.has(key.value)) : key;
   }
 
+  async deleteAll(a: string): Promise<Result<number>> {
+    const prefix = objectKey(a, "x.jpg");
+    if (!prefix.ok) return prefix;
+    const own = prefix.value.slice(0, prefix.value.length - "x.jpg".length);
+    const names = [...this.objects.keys()].filter((key) => key.startsWith(own));
+    for (const key of names) this.objects.delete(key);
+    return ok(names.length);
+  }
+
   objectCount(): number {
     return this.objects.size;
   }

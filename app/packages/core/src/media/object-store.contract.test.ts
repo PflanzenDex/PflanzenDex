@@ -30,6 +30,20 @@ export function objectStoreContract(name: string, make: () => ObjectStore | Prom
       expect((await s.delete(A, "never.jpg")).ok).toBe(true);
     });
 
+    it("US-ACC-04 deleteAll removes every object of the account and nothing of another, and repeats harmlessly", async () => {
+      const s = await make();
+      await s.put(A, "one.jpg", bytes(1), "image/jpeg");
+      await s.put(A, "two.jpg", bytes(2), "image/jpeg");
+      await s.put(B, "keep.jpg", bytes(3), "image/jpeg");
+      expect(await s.deleteAll(A)).toEqual({ ok: true, value: 2 });
+      expect(await s.exists(A, "one.jpg")).toEqual({ ok: true, value: false });
+      expect(await s.exists(B, "keep.jpg")).toEqual({ ok: true, value: true });
+      expect(await s.deleteAll(A)).toEqual({ ok: true, value: 0 });
+      const bad = await s.deleteAll("../" + B);
+      expect(!bad.ok && bad.error.code).toBe("media.name_invalid");
+      await s.deleteAll(B);
+    });
+
     it("TE-05 put refuses a content type that is not an image type and an oversize object", async () => {
       const s = await make();
       const type = await s.put(A, "p.jpg", bytes(1), "text/html");

@@ -67,7 +67,7 @@ export function deriveEvents(friend: Friend, specimens: readonly SharedSpecimen[
 
 /** A handed-over swap the viewer took part in (US-SOZ-11), as the port `SwappedSource` gives it. */
 export interface SwappedFact {
-  readonly otherId: string;
+  readonly otherId: string | null;
   /** The handover instant (ISO 8601, UTC). */
   readonly date: string;
   readonly speciesLatin: string | null;

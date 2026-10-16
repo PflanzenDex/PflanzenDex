@@ -1,5 +1,5 @@
 import type { Pool, PoolClient } from "pg";
-import { tenantsTables } from "../kernel/index.ts";
+import { tenantsTables } from "../../kernel/index.ts";
 
 // Which tables hold personal data of an account, and what happens to each in the export and the deletion
 // (US-ACC-04, P-04, P-10). The list of tables is read from the catalog, not maintained by hand: a new table with an
@@ -18,6 +18,7 @@ export const NOT_EXPORTED: Record<string, string> = {
   invitation: "Invitation codes of the installation (hashes only), not the keeper's data",
   access_setting: "One row for the whole installation",
   operator_cost: "One row for the whole installation",
+  deletion_log: "Anonymous record of finished deletions (no account), kept for the operator",
   friend_code:
     "Single-use friend codes (hash only, closed to the application role); the friendship is exported",
 };

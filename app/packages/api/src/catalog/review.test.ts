@@ -96,6 +96,8 @@ afterAll(async () => {
       `delete from species where id in (select object_id from review_case where account_id in ${accounts})`,
       subs,
     );
+    // A review case outlives its creator now (US-ACC-04); these cases go with their species.
+    await client.query(`delete from review_case where account_id in ${accounts}`, subs);
     await client.query("set local session_replication_role = default");
     await client.query(`delete from account where id in ${accounts}`, subs);
     await client.query("commit");
