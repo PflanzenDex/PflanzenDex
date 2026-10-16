@@ -3,10 +3,13 @@ import {
   isTimeZone,
   pokedexMarkSeen,
   pokedexOwnership,
+  readAppRarityBasis,
   readCollectorCards,
 } from "@pflanzendex/core";
 import {
+  ActiveSpeciesPostgres,
   IdempotencyPostgres,
+  ProfilePostgres,
   PokedexStatePostgres,
   SpeciesPostgres,
   SpecimenPostgres,
@@ -60,6 +63,16 @@ export function pokedexRoutes(pool: Pool): Hono<AuthEnv> {
   const tree = {
     tree: () => taxa.tree(),
     facts: (userId: string) => deps.species.approvedFacts(userId),
+    // Rarity in PflanzenDex (US-POK-14): only counts of the consenting accounts, never an account.
+    appRarity: (userId: string) =>
+      readAppRarityBasis(
+        {
+          participants: new ProfilePostgres(pool),
+          owned: new ActiveSpeciesPostgres(pool),
+          species: deps.species,
+        },
+        userId,
+      ),
   };
   routes.get("/pokedex/cards", async (c) => {
     const timeZone = zoneOf(c);

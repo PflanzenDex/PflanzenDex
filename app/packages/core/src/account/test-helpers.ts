@@ -24,6 +24,7 @@ export class InMemoryProfiles implements ProfileStore {
         noRecommendations: false,
         notifications: defaultNotifications(),
         replenishBuffer: REPLENISH_BUFFER_LIMITS.default,
+        rarityConsent: false,
       });
   }
 
@@ -40,6 +41,7 @@ export class InMemoryProfiles implements ProfileStore {
       ...changes,
       displayName: changes.displayName ?? stored.displayName,
       replenishBuffer: changes.replenishBuffer ?? stored.replenishBuffer,
+      rarityConsent: changes.rarityConsent ?? stored.rarityConsent,
     };
     this.rows.set(userId, saved);
     return saved;

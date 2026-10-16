@@ -89,6 +89,7 @@ beforeAll(async () => {
     noRecommendations: false,
     notifications: {},
     replenishBuffer: null,
+    rarityConsent: null,
   });
   account = (await admin.query("select id from account where subject = $1", [subA])).rows[0].id;
   const sunny = await species("Gießen", { dormancyFrom: "11-01", dormancyUntil: "03-15" });
@@ -107,6 +108,7 @@ beforeAll(async () => {
     noRecommendations: false,
     notifications: {},
     replenishBuffer: null,
+    rarityConsent: null,
   });
 });
 afterAll(async () => {

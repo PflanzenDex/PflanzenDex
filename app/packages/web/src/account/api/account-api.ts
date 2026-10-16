@@ -36,6 +36,8 @@ export type AccountProfile = {
   notifications: Record<Occasion, boolean>;
   /** Open wishlist candidates per zone 2 to 4 below which the wishlist warns (US-WUN-02). */
   replenishBuffer: number;
+  /** The collection counts in the rarity in PflanzenDex (US-POK-14); off until switched on. */
+  rarityConsent: boolean;
 };
 
 type Environment = Record<string, string | undefined>;

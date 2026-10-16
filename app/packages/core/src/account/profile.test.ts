@@ -229,3 +229,40 @@ describe("US-WUN-02 · the replenish buffer is an account setting", () => {
     expect(profiles.rows.get("anna")?.replenishBuffer).toBe(1);
   });
 });
+
+describe("US-POK-14 · the rarity consent is an account setting", () => {
+  it("is off until the keeper switches it on", () => {
+    expect(profiles.rows.get("anna")?.rarityConsent).toBe(false);
+  });
+
+  it.each([true, false])("saves %s", async (rarityConsent) => {
+    const r = await save(valid({ rarityConsent }));
+    expect(r.ok && r.value.rarityConsent).toBe(rarityConsent);
+    expect(profiles.rows.get("anna")?.rarityConsent).toBe(rarityConsent);
+  });
+
+  it.each([1, "true", 0, {}, []])(
+    "refuses %j and names the field, nothing is written",
+    async (v) => {
+      const r = await save(valid({ rarityConsent: v }));
+      expect(!r.ok && r.error.details).toEqual([{ field: "rarityConsent", code: "input.invalid" }]);
+      expect(profiles.writes).toBe(0);
+    },
+  );
+
+  it.each([null, undefined])(
+    "%s keeps the stored value, so an older client cannot reset it",
+    async (v) => {
+      await save(valid({ rarityConsent: true }));
+      const r = await save(valid({ rarityConsent: v, timeZone: "UTC" }));
+      expect(r.ok && r.value).toMatchObject({ rarityConsent: true, timeZone: "UTC" });
+    },
+  );
+
+  it("changes only the own account", async () => {
+    await save(valid({ rarityConsent: true }), "ben");
+    await save(valid({ rarityConsent: false }));
+    expect(profiles.rows.get("ben")?.rarityConsent).toBe(true);
+    expect(profiles.rows.get("anna")?.rarityConsent).toBe(false);
+  });
+});

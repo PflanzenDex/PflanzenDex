@@ -1,4 +1,4 @@
-import type { CollectorCard as Card } from "@pflanzendex/core";
+import type { AppRarity, CollectorCard as Card } from "@pflanzendex/core";
 
 type Rarity = Card["natureRarity"];
 
@@ -57,5 +57,27 @@ export function RarityNote(props: { rarity: Rarity }) {
         </span>
       )}
     </>
+  );
+}
+
+/** "40 %", but never "0 %" for a species somebody owns and never "100 %" while one account lacks it. */
+function percentText(r: AppRarity): string {
+  if (r.owners > 0 && r.percent === 0) return "weniger als 1 %";
+  if (r.owners < r.participants && r.percent === 100) return "mehr als 99 %";
+  return `${r.percent} %`;
+}
+
+/**
+ * Rarity in PflanzenDex (US-POK-14): the share of the participating accounts that own the species, always with its
+ * basis; unknown without participants (P-08). Information only, labelled "in PflanzenDex", never merged with the
+ * rarity in nature.
+ */
+export function AppRarityNote(props: { rarity: AppRarity | null }) {
+  const r = props.rarity;
+  if (r === null)
+    return <span className="text-sm">In PflanzenDex: unbekannt (noch kein Konto nimmt teil)</span>;
+  const accounts = r.participants === 1 ? "Konto" : "Konten";
+  return (
+    <span className="text-sm">{`In PflanzenDex: ${percentText(r)} (${r.owners} von ${r.participants} ${accounts})`}</span>
   );
 }

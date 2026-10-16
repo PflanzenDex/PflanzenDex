@@ -47,14 +47,18 @@ export interface AccountProfile {
   readonly notifications: NotificationSwitches;
   /** Open candidates per zone 2 to 4 below which the wishlist warns (US-WUN-02, REPLENISH_BUFFER_LIMITS). */
   readonly replenishBuffer: number;
+  /** The collection counts in the rarity in PflanzenDex (US-POK-14); off until switched on (decided by the PO). */
+  readonly rarityConsent: boolean;
 }
 
 /**
  * A save of the profile: like the profile, but `displayName: null` keeps the stored name (US-ACC-02) and
- * `replenishBuffer: null` keeps the stored buffer, so an older client cannot reset it.
+ * `replenishBuffer: null` and `rarityConsent: null` keep the stored values, so an older client cannot reset them.
  */
-export type ProfileChanges = Omit<AccountProfile, "replenishBuffer"> & {
+export type ProfileChanges = Omit<AccountProfile, "replenishBuffer" | "rarityConsent"> & {
   readonly replenishBuffer: number | null;
+  /** `null` keeps the stored consent. */
+  readonly rarityConsent: boolean | null;
 };
 
 /** Port for persistence; the adapter lives in `db` (AB-1) and runs as the account of the caller (P-04). */
@@ -100,6 +104,7 @@ const schema = shape({
   noRecommendations: flag("noRecommendations"),
   notifications: notificationsField("notifications"),
   replenishBuffer: orNull(bufferField("replenishBuffer")),
+  rarityConsent: orNull(flag("rarityConsent")),
 });
 
 export interface ProfileDependencies {
