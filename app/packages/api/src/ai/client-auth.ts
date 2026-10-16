@@ -13,7 +13,7 @@ import {
 import { admitAccount } from "@pflanzendex/db";
 import type { MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
-import { errorBody, statusFor, type AuthEnv } from "../kernel";
+import { errorBody, statusFor, type AuthEnv, type FeatureAccess } from "../kernel";
 import type { TokenVerifier } from "../account";
 
 export type AiEnv = {
@@ -32,6 +32,8 @@ export interface ClientGuardOptions {
   readonly log?: Pick<AiLogStore, "countSince">;
   /** Calls per connection and UTC day; default `DEFAULT_DAILY_LIMIT` (assumption). */
   readonly dailyLimit?: number;
+  /** While "ai" is off for the account the interface answers 404, like a path that does not exist (US-DEV-06). */
+  readonly features?: FeatureAccess;
 }
 
 /** The refusal for a connection over its daily limit, with `Retry-After` in seconds (US-KI-06), else `null`. */
@@ -47,6 +49,10 @@ async function overLimit(opt: ClientGuardOptions, userId: string, connectionId: 
   const wait = Math.max(1, Math.ceil(((r.retryAt?.getTime() ?? 0) - now.getTime()) / 1000));
   return { error: r.error, headers: { "Retry-After": String(wait) } };
 }
+
+/** Whether the function group "ai" is off for the account (US-DEV-06); without a switch it is on. */
+const aiIsOff = async (opt: ClientGuardOptions, id: string) =>
+  opt.features !== undefined && !(await opt.features.enabled("ai", id));
 
 const challenge = (metadataUrl: string, extra = "") =>
   `Bearer ${extra}resource_metadata="${metadataUrl}"`;
@@ -76,6 +82,7 @@ export function clientAuthentication(
       const required = appError("invitation.required");
       return c.json(errorBody(required), statusFor(required));
     }
+    if (await aiIsOff(opt, id)) return c.notFound();
     const clientId = typeof claims["azp"] === "string" ? claims["azp"] : "";
     if (clientId === "")
       return c.json({ error: { code: "not_signed_in" } }, 401, {

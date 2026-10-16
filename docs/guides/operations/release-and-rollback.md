@@ -55,6 +55,18 @@ On the host, in the checkout: `make deploy` does not take a ref, so call the scr
 3. Deploy the new tag deliberately.
 4. Merge `main` back into `dev` through a pull request so the branches do not drift.
 
+## Feature switches (US-DEV-06)
+
+Three function groups can be switched: `social` (friends, feed, swap, sharing, shared equipment), `ai` (the `/mcp/*` interface, `/ai/*`, the AI clients section in the account) and `recommendations` (placeholder, nothing is built yet).
+
+- **Global:** the environment variable `FEATURES`, a comma separated list, e.g. `FEATURES=social,ai` in `app/config/deploy/.env`. In production (`NODE_ENV=production`, set by the image) nothing set means all off; in development and tests nothing set means all on. An unknown name stops the start. Changing it needs a restart of the api (`docker compose up -d api`).
+- **Per account:** the operator opens a function for single accounts without the global switch. A function is on for an account when the global switch is on **or** the account switch is on. In the database console (`docker compose exec db psql`):
+  - on: `insert into account_feature (account, feature) values ('<account id>', 'social');` (the account id is `id` from `GET /account`, or `select id from account_data where email = '...'`)
+  - off again: `delete from account_feature where account = '<account id>' and feature = 'social';`
+  - look: `select account, feature from account_feature;`
+- **What off means:** the API answers 404 like a path that does not exist, the navigation and sections of the web app do not appear, and no job of the function runs. The data stays untouched; switching on restores everything. The public metadata `/.well-known/oauth-protected-resource` stays reachable because it has no account.
+- **Before a release:** check the values in `.env` (the release checklist asks for it). Open the three start users first with the account switch, leave `FEATURES` empty.
+
 ## Open
 
 - FR-DEV-05: check that the latest `v*` tag on `main` was created by semantic-release (no manual tags). Not implemented, no simple CI check exists; options are a tag ruleset on GitHub (only the release workflow may create `v*` tags) or a scheduled check.

@@ -8,7 +8,15 @@ import type { EverythingPrivate } from "@pflanzendex/core";
 import { EquipmentSharingPostgres, type IdempotencyPostgres } from "@pflanzendex/db";
 import type { Hono } from "hono";
 import type { Pool } from "pg";
-import { body, errorBody, statusFor, write, type AuthEnv } from "../../kernel";
+import {
+  body,
+  errorBody,
+  featureGate,
+  statusFor,
+  write,
+  type AuthEnv,
+  type FeatureAccess,
+} from "../../kernel";
 
 /** What the app root supplies for the view of a friend's devices: the friend of a friendship id, and the privacy switch. */
 export interface FriendEquipmentPorts {
@@ -18,6 +26,15 @@ export interface FriendEquipmentPorts {
     friendshipId: string,
   ): Promise<{ accountId: string; name: string | null } | null>;
   privacy: EverythingPrivate;
+}
+
+/** Sharing with friends belongs to "social" (US-DEV-06): off means 404, the stored settings stay untouched. */
+export function gateSharingRoutes(routes: Hono<AuthEnv>, features: FeatureAccess): void {
+  const gate = featureGate(features, "social");
+  routes
+    .use("/equipment/sharing", gate)
+    .use("/equipment/friends/*", gate)
+    .use("/equipment/:id/sharing", gate);
 }
 
 /**

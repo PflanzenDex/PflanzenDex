@@ -31,3 +31,13 @@ export type {
 } from "./ports/ports";
 export { localToday, isTimeZone, isCalendarDate, localInstant, daysBetween } from "./input/date";
 export * from "./sources";
+export {
+  ALL_FEATURES,
+  FEATURES,
+  NO_FEATURES,
+  featureEnabled,
+  featureStates,
+  featuresFromEnv,
+  knownFeatures,
+} from "./meta/features";
+export type { Feature, FeatureSet } from "./meta/features";

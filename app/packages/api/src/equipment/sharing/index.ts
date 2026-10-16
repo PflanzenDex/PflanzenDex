@@ -1,1 +1,1 @@
-export { addSharingRoutes } from "./sharing-routes";
+export { addSharingRoutes, gateSharingRoutes } from "./sharing-routes";

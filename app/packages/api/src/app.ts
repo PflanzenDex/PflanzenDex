@@ -1,13 +1,8 @@
-import { Hono, type MiddlewareHandler } from "hono";
+import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { Pool } from "pg";
 import { COLLECTION_REPOINTERS } from "@pflanzendex/db";
-import {
-  type PhaseLocationSource,
-  type ObjectStore,
-  type ImageProcessor,
-  type ZoneStockSource,
-} from "@pflanzendex/core";
+import { ALL_FEATURES } from "@pflanzendex/core";
 import {
   OPERATOR_PATHS,
   accountRoutes,
@@ -24,11 +19,10 @@ import {
   specimenRoutes,
 } from "./collection";
 import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
-import { provenanceSourceFor } from "./swap";
-import { WISH_PATHS, wishRoutes, wishZoneUsageFor } from "./wishlist";
-import { EQUIPMENT_PATHS, equipmentRoutes, equipmentZoneUsageFor } from "./equipment";
+import { wishZoneUsageFor } from "./wishlist";
+import { equipmentZoneUsageFor } from "./equipment";
 import { bindFriends } from "./friends-bindings";
-import { zoneStockFor } from "./zone-stock";
+import { featureAccess, type FeatureAccess } from "./kernel";
 import { bindHealth } from "./health";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
@@ -38,93 +32,26 @@ import { monitoringRoutes } from "./monitoring";
 import { aiAccessRoutes } from "./ai";
 import type { AppOptions } from "./app-options";
 import {
-  CARE_PATHS,
-  CARE_PHASES_PATHS,
-  TREATMENT_PATHS,
-  careRoutes,
-  treatmentRoutes,
-  carePhasesRoutes,
-  measurementSourceFor,
-  measurementPhotoSourceFor,
-  treatmentSourceFor,
-  targetLocationFor,
-} from "./care";
-import { TODAY_PATHS, todayRoutes, todayStatusSource, type TodayOptions } from "./today";
+  bindCareOne,
+  bindEquipment,
+  bindToday,
+  bindWishlist,
+  careOptions,
+  careSources,
+  todaySources,
+} from "./app-bindings";
+import { measurementPhotoSourceFor, targetLocationFor } from "./care";
+import { todayStatusSource } from "./today";
 
 export type { AppOptions } from "./app-options";
 
-/** The module `care` (measurements, care phases and treatments): sign-in guard in front of the paths, then the routes. */
-function bindCareOne(
-  app: Hono,
-  pool: Pool,
-  auth: MiddlewareHandler,
-  opt: {
-    clock?: () => Date;
-    phaseLocation?: PhaseLocationSource;
-    media?: { store: ObjectStore; processor: ImageProcessor };
-  },
-) {
-  for (const path of CARE_PATHS) app.use(path, auth);
-  app.route("/", careRoutes(pool, opt));
-  for (const path of CARE_PHASES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-  app.route("/", carePhasesRoutes(pool, opt));
-  for (const path of TREATMENT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-  app.route("/", treatmentRoutes(pool, opt));
-}
-
-/** The module `today` (TE-07): sign-in guard in front of the path, then the read-only route. */
-function bindToday(app: Hono, pool: Pool, auth: MiddlewareHandler, opt: TodayOptions) {
-  for (const path of TODAY_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-  app.route("/", todayRoutes(pool, opt));
-}
-
-/** What "Today" reads from `care` and `wishlist` (US-QS-04): last measurements and the stock per zone, unless tests replace them. */
-function todaySources(pool: Pool, opt: AppOptions) {
-  return {
-    measurements: opt.measurements ?? measurementSourceFor(pool),
-    zoneStock: opt.zoneStock ?? zoneStockFor(pool),
-  };
-}
-
-/** The module `wishlist`: sign-in guard in front of the paths, then the routes; the stock per zone comes from `collection` unless tests replace it. */
-function bindWishlist(app: Hono, pool: Pool, auth: MiddlewareHandler, opt: AppOptions) {
-  for (const path of WISH_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-  const image = opt.wishImage && opt.media ? { ...opt.wishImage, media: opt.media } : undefined;
-  app.route("/", wishRoutes(pool, opt.zoneStock ?? zoneStockFor(pool), image));
-}
-
-/** The module `equipment`: sign-in guard in front of the paths, then the routes (US-EQU-01). */
-function bindEquipment(
-  app: Hono,
-  pool: Pool,
-  auth: MiddlewareHandler,
-  stock: ZoneStockSource | undefined,
-) {
-  for (const path of EQUIPMENT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-  app.route("/", equipmentRoutes(pool, stock ?? zoneStockFor(pool)));
-}
-
-/** What `care` takes from the app options: clock, location per phase and the media port (photos, US-WAC-06). */
-function careOptions(opt: AppOptions) {
-  return {
-    ...(opt.clock ? { clock: opt.clock } : {}),
-    ...(opt.phaseLocation ? { phaseLocation: opt.phaseLocation } : {}),
-    ...(opt.media ? { media: opt.media } : {}),
-  };
-}
-
-/** What `care` feeds into the collection: target location, measurements and treatments, unless tests replace them. */
-function careSources(pool: Pool, opt: AppOptions) {
-  return {
-    targetLocation: opt.targetLocation ?? targetLocationFor(pool),
-    measurements: opt.measurements ?? measurementSourceFor(pool),
-    treatments: opt.treatments ?? treatmentSourceFor(pool),
-    provenance: opt.provenance ?? provenanceSourceFor(pool),
-  };
-}
-
 /** The module `account`: registration (before the guard, no account yet), the guard itself, own account, operator area. */
-function bindAccount(app: Hono, verifier: TokenVerifier, pool: Pool, opt: AppOptions) {
+function bindAccount(
+  app: Hono,
+  verifier: TokenVerifier,
+  pool: Pool,
+  opt: AppOptions & { access: FeatureAccess },
+) {
   const auth = authentication(
     verifier,
     pool,
@@ -133,10 +60,58 @@ function bindAccount(app: Hono, verifier: TokenVerifier, pool: Pool, opt: AppOpt
   app.route("/", registrationRoutes(pool, verifier));
   app.use("/account", auth);
   app.use("/account/*", auth);
-  app.route("/account", accountRoutes(pool));
+  app.route("/account", accountRoutes(pool, opt.access));
   for (const path of OPERATOR_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", operatorRoutes(pool, opt.clock));
   return auth;
+}
+
+/** The protected routes of all modules behind the sign-in guard. */
+function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool) {
+  const features = featureAccess(pool, opt.features ?? ALL_FEATURES);
+  const auth = bindAccount(app, reviewer, pool, { ...opt, access: features });
+  for (const path of LIGHT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route(
+    "/",
+    lightRoutes(pool, [
+      careProfileZoneUsageFor(pool),
+      wishZoneUsageFor(pool),
+      equipmentZoneUsageFor(pool),
+    ]),
+  );
+  for (const path of SPECIES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", speciesRoutes(pool));
+  for (const path of REVIEW_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", reviewRoutes(pool, COLLECTION_REPOINTERS));
+  for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", specimenRoutes(pool, { clock: opt.clock, ...careSources(pool, opt) }));
+  for (const path of POKEDEX_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", pokedexRoutes(pool));
+  app.route("/", discoverRoutes(pool, auth, opt.zoneStock));
+  app.route("/", achievementsRoutes(pool, auth, opt.clock));
+  app.route("/", monitoringRoutes(pool, auth));
+  for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", careProfileRoutes(pool));
+  bindWishlist(app, pool, auth, opt);
+  bindEquipment(app, pool, auth, { zoneStock: opt.zoneStock, features });
+  const clock = opt.clock ? { clock: opt.clock } : {};
+  bindFriends(app, pool, auth, {
+    ...clock,
+    targetLocation: opt.targetLocation ?? targetLocationFor(pool),
+    features,
+  });
+  const care = careOptions(opt);
+  bindCareOne(app, pool, auth, care);
+  const today = { ...care, ...todaySources(pool, opt) };
+  bindToday(app, pool, auth, today);
+  app.route(
+    "/",
+    aiAccessRoutes(pool, auth, opt.ai && { ...opt.ai, features }, {
+      status: todayStatusSource(pool, today),
+      photo: measurementPhotoSourceFor(pool, opt.media),
+      discover: discoverSourceFor(pool, opt.zoneStock),
+    }),
+  );
 }
 
 export function createApp(opt: AppOptions = {}): Hono {
@@ -151,48 +126,6 @@ export function createApp(opt: AppOptions = {}): Hono {
       }),
     );
   bindHealth(app, { pool: opt.pool, version, commit, storage: opt.media !== undefined });
-  if (opt.reviewer && opt.pool) {
-    const auth = bindAccount(app, opt.reviewer, opt.pool, opt);
-    for (const path of LIGHT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-    app.route(
-      "/",
-      lightRoutes(opt.pool, [
-        careProfileZoneUsageFor(opt.pool),
-        wishZoneUsageFor(opt.pool),
-        equipmentZoneUsageFor(opt.pool),
-      ]),
-    );
-    for (const path of SPECIES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-    app.route("/", speciesRoutes(opt.pool));
-    for (const path of REVIEW_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-    app.route("/", reviewRoutes(opt.pool, COLLECTION_REPOINTERS));
-    for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-    app.route("/", specimenRoutes(opt.pool, { clock: opt.clock, ...careSources(opt.pool, opt) }));
-    for (const path of POKEDEX_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-    app.route("/", pokedexRoutes(opt.pool));
-    app.route("/", discoverRoutes(opt.pool, auth, opt.zoneStock));
-    app.route("/", achievementsRoutes(opt.pool, auth, opt.clock));
-    app.route("/", monitoringRoutes(opt.pool, auth));
-    for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-    app.route("/", careProfileRoutes(opt.pool));
-    bindWishlist(app, opt.pool, auth, opt);
-    bindEquipment(app, opt.pool, auth, opt.zoneStock);
-    bindFriends(app, opt.pool, auth, {
-      ...(opt.clock ? { clock: opt.clock } : {}),
-      targetLocation: opt.targetLocation ?? targetLocationFor(opt.pool),
-    });
-    const care = careOptions(opt);
-    bindCareOne(app, opt.pool, auth, care);
-    const today = { ...care, ...todaySources(opt.pool, opt) };
-    bindToday(app, opt.pool, auth, today);
-    app.route(
-      "/",
-      aiAccessRoutes(opt.pool, auth, opt.ai, {
-        status: todayStatusSource(opt.pool, today),
-        photo: measurementPhotoSourceFor(opt.pool, opt.media),
-        discover: discoverSourceFor(opt.pool, opt.zoneStock),
-      }),
-    );
-  }
+  if (opt.reviewer && opt.pool) bindApi(app, opt, opt.reviewer, opt.pool);
   return app;
 }
