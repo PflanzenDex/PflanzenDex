@@ -162,3 +162,27 @@ describe("US-ACH-03 news and seen state through the API", () => {
     expect((await news(subD)).body["calmMode"]).toBe(false);
   });
 });
+
+describe("US-ACH-05 growth moments through the API", () => {
+  const subE = `ach05-${randomUUID()}`;
+  const growth = (sub: string | null, id: string = randomUUID()) =>
+    call(sub, "GET", `/achievements/growth/${id}`);
+  afterAll(async () => {
+    await admin.query("delete from account where subject = $1", [subE]);
+  });
+
+  it("US-ACH-05 without a token: 401; an unknown or foreign specimen: 404 specimen.not_found", async () => {
+    expect((await growth(null)).status).toBe(401);
+    const r = await growth(subE);
+    expect(r.status).toBe(404);
+    expect(r.body["error"].code).toBe("specimen.not_found");
+    expect((await growth(subE, "nope")).status).toBe(404);
+  });
+
+  it("US-ACH-08 calm mode hides the growth moments, for that account only", async () => {
+    await setCalm(subE, true);
+    expect((await growth(subE)).body).toEqual({ calmMode: true });
+    await setCalm(subE, false);
+    expect((await growth(subE)).status).toBe(404);
+  });
+});

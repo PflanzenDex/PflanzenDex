@@ -30,3 +30,5 @@ export type {
   AchievementMarkSeenDependencies,
   SeenReconciliation,
 } from "./seen/seen";
+export { growthMoments, RECORD_LIMITS } from "./records/records";
+export type { GrowthMoment, GrowthMoments, RecordPoint } from "./records/records";
