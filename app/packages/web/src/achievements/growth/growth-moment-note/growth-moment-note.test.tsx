@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { GrowthMomentNote } from "./growth-moment-note";
-import type { GrowthMoments } from "./use-growth-moments";
+import type { GrowthMoments } from "../use-growth-moments";
 
 afterEach(cleanup);
 const moments = (latest: GrowthMoments["latest"]): GrowthMoments => ({

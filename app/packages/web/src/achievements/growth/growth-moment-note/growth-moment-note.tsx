@@ -1,5 +1,5 @@
 import { dateText } from "@/lib/format";
-import type { GrowthMoments } from "./use-growth-moments";
+import type { GrowthMoments } from "../use-growth-moments";
 
 const number = (n: number): string => n.toLocaleString("de-DE", { maximumFractionDigits: 1 });
 
