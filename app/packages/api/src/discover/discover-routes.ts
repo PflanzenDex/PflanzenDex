@@ -2,6 +2,7 @@ import {
   appError,
   discoverDecide,
   isTimeZone,
+  NO_APP_RARITY,
   suggestions,
   type ZoneStockSource,
 } from "@pflanzendex/core";
@@ -41,7 +42,12 @@ export function discoverDependencies(pool: Pool, stock: ZoneStockSource = zoneSt
   const taxa = new TaxonomyPostgres(pool);
   const deps = {
     ownership: { specimens, species },
-    tree: { tree: () => taxa.tree(), facts: (userId: string) => species.approvedFacts(userId) },
+    tree: {
+      tree: () => taxa.tree(),
+      facts: (userId: string) => species.approvedFacts(userId),
+      // Discover never uses the rarity (US-POK-13/14: not a criterion): an empty basis.
+      appRarity: async () => NO_APP_RARITY,
+    },
     wishes: new WishesPostgres(pool),
     stock,
   };

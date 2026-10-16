@@ -32,6 +32,7 @@ const profile = {
     equipment: true,
   },
   replenishBuffer: 2,
+  rarityConsent: false,
 };
 
 /** A server for the settings section; `status` is the answer to loading the profile, PUT returns what is sent. */

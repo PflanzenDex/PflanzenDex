@@ -25,6 +25,7 @@ const card = (species: string, order: string | null, extra: Partial<CollectorCar
     genus: species.split(" ")[0] ?? species,
     genusSpeciesCount: null,
     natureRarity: { iucn: null, occurrences: null, threatened: false },
+    appRarity: null,
     speciesPoor: false,
     difficulty: null,
     lightZone: null,
@@ -132,7 +133,11 @@ describe("US-ENT-06 the deck", () => {
       specimens: { list: async () => [] },
       species: { find: async () => null, findMany: async () => [] },
     },
-    tree: { tree: async () => tree, facts: async () => [] },
+    tree: {
+      tree: async () => tree,
+      facts: async () => [],
+      appRarity: async () => ({ participants: 0, owners: new Map() }),
+    },
     wishes: new InMemoryWishes(),
     clock: () => new Date(`${day}T12:00:00Z`),
   });

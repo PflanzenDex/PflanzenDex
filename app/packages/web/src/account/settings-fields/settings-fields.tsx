@@ -108,7 +108,7 @@ const NOTE = "mt-1 text-sm text-muted-foreground";
 /** One switch as a full-row 44 px target; the label text is the accessible name. */
 function Switch(props: {
   control: Control<Fields>;
-  name: "everythingPrivate" | "noRecommendations" | `notifications.${Occasion}`;
+  name: "everythingPrivate" | "noRecommendations" | "rarityConsent" | `notifications.${Occasion}`;
   label: string;
 }) {
   return (
@@ -155,9 +155,15 @@ export function SwitchFields({ control }: FieldProps) {
         <legend className={LEGEND}>Datenschutz und Empfehlungen</legend>
         <Switch control={control} name="everythingPrivate" label="Alles privat" />
         <Switch control={control} name="noRecommendations" label="Keine Empfehlungen" />
+        <Switch
+          control={control}
+          name="rarityConsent"
+          label="Meine Sammlung in die Seltenheit in PflanzenDex einrechnen"
+        />
         <p className={NOTE}>
           „Alles privat“ setzt alle Freigaben aus, ohne sie zu löschen. Ohne Empfehlungen zeigt die
-          App keine Ausrüstungsvorschläge.
+          App keine Ausrüstungsvorschläge. Die Seltenheit in PflanzenDex zählt nur Konten, die hier
+          zustimmen (Vorgabe: aus); es fließt nur eine Zahl pro Art ein, nie wer eine Art besitzt.
         </p>
       </fieldset>
     </>

@@ -205,3 +205,22 @@ describe("US-POK-13 rarity in nature on the card", () => {
     ]);
   });
 });
+
+describe("US-POK-14 rarity in PflanzenDex on the card", () => {
+  const basis = { participants: 5, owners: new Map([["Ficus benjamina", 2]]) };
+
+  it("US-POK-14 puts owners, participants and percent on the card, unknown without a basis", () => {
+    const [known] = collectorCards([row("Ficus benjamina")], [], [], basis);
+    expect(known?.appRarity).toEqual({ owners: 2, participants: 5, percent: 40 });
+    const [unknown] = collectorCards([row("Ficus benjamina")], [], []);
+    expect(unknown?.appRarity).toBeNull();
+  });
+
+  it("US-POK-14 does not change the order or numbers (no sorting by rarity)", () => {
+    const cards = collectorCards([row("Ficus b"), row("Ficus a")], [], [], {
+      participants: 5,
+      owners: new Map([["Ficus b", 5]]),
+    });
+    expect(cards.map((c) => c.species)).toEqual(["Ficus a", "Ficus b"]);
+  });
+});

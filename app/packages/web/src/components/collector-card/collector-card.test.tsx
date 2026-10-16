@@ -26,6 +26,7 @@ const card = (extra: Partial<Card> = {}): Card => ({
   caughtDate: null,
   specimenCount: 0,
   natureRarity: { iucn: null, occurrences: null, threatened: false },
+  appRarity: null,
   ...extra,
 });
 const show = (c: Card) => render(<CollectorCard card={c} />);
@@ -183,5 +184,37 @@ describe("US-POK-13 rarity in nature on the card", () => {
       }),
     );
     expect(screen.queryByRole("link", { name: /GBIF, abgerufen/ })).toBeNull();
+  });
+});
+
+describe("US-POK-14 rarity in PflanzenDex on the card", () => {
+  it("US-POK-14 says unknown when no account takes part", () => {
+    show(card());
+    expect(screen.getByText("In PflanzenDex: unbekannt (noch kein Konto nimmt teil)")).toBeTruthy();
+  });
+
+  it("US-POK-14 shows the share with its basis, labelled 'in PflanzenDex'", () => {
+    show(card({ appRarity: { owners: 2, participants: 5, percent: 40 } }));
+    expect(screen.getByText("In PflanzenDex: 40 % (2 von 5 Konten)")).toBeTruthy();
+  });
+
+  it("US-POK-14 rounds honestly at the edges and uses the singular for one account", () => {
+    const texts = [
+      [
+        { owners: 1, participants: 300, percent: 0 },
+        "In PflanzenDex: weniger als 1 % (1 von 300 Konten)",
+      ],
+      [
+        { owners: 299, participants: 300, percent: 100 },
+        "In PflanzenDex: mehr als 99 % (299 von 300 Konten)",
+      ],
+      [{ owners: 0, participants: 4, percent: 0 }, "In PflanzenDex: 0 % (0 von 4 Konten)"],
+      [{ owners: 1, participants: 1, percent: 100 }, "In PflanzenDex: 100 % (1 von 1 Konto)"],
+    ] as const;
+    for (const [appRarity, text] of texts) {
+      show(card({ appRarity }));
+      expect(screen.getByText(text)).toBeTruthy();
+      cleanup();
+    }
   });
 });

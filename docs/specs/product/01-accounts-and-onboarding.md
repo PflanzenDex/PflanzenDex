@@ -32,6 +32,7 @@ Acceptance criteria:
 - Notifications can be switched on and off per occasion (US-MON-08).
 - Global switches "Everything private" (US-SOZ-04) and "No recommendations" (US-EQU-11).
 - Buffer of the wishlist warning (US-WUN-02): whole number 0 to 10, 2 until changed (assumption, decided by the PO), 0 switches the warning off; `null` or left out keeps the stored value, a value outside the range or not a whole number is refused with `input.invalid` naming `replenishBuffer`. The wishlist warning and the Today list use the saved value at once.
+- Global switch "Include my collection in the rarity of PflanzenDex" (US-POK-14): off until switched on (decided by the PO), `null` or left out keeps the stored value, anything but a boolean is refused with `input.invalid` naming `rarityConsent`.
 
 ### US-ACC-03 · Guided onboarding · ✅ new
 

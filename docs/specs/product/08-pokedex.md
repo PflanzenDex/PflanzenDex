@@ -137,6 +137,27 @@ Status 🟨: the build job stores the IUCN category and the GBIF occurrence coun
 
 Operator tasks: (1) CITES appendix only with a CITES Species+ API token, because Wikidata does not carry the appendix; until the operator provides one the card says nothing about CITES, which does not mean "not listed". (2) IUCN categories and GBIF counts are shown with the source named; check the terms of use (E-12).
 
+### US-POK-14 · Rarity of a species in PflanzenDex · 🟨 (new)
+
+As a **keeper** I want to see how many of the participating accounts keep a species, with the basis shown, so that I can tell how common it is in this community.
+
+This is the second statement about rarity, kept apart from "in nature" (US-POK-13): the card labels it "in PflanzenDex" and never merges the two.
+
+Acceptance criteria:
+
+- Given the global setting "Include my collection in the rarity of PflanzenDex" in the account settings (US-ACC-02), then it is **off** until the keeper switches it on (default decided by the PO); the setting is saved through `account.update_profile` (`null` or left out keeps the stored value) and applies to the keeper's whole account, not to single plants.
+- Given a species, then its rarity in PflanzenDex is the share of **participating accounts** (setting on) that own the species with at least one **active** specimen: per account, not per specimen; archived specimens do not count; a cultivar counts for its species (same species key as US-POK-06). It is derived live on each read and never stored (P-01).
+- Given the share, then the card always shows its basis, honestly rounded, for example "In PflanzenDex: 40 % (2 von 5 Konten)"; a share that is above 0 but rounds to 0 reads "weniger als 1 %", one below 100 that rounds to 100 reads "mehr als 99 %".
+- Given no participating account, then the card says "In PflanzenDex: unbekannt" (P-08).
+- Given a non-participating account, then its specimens never enter the share, and no response names an account or lists who owns a species; only the two counts leave the database (P-04, P-05).
+- Given the keeper switches the setting off, then the account no longer counts from the next read on.
+- Given any list or view, then this rarity is **not** a sort key, filter, badge, ranking or reward either; the achievements (ACH) do not use it, the recommendations (EQU) do not use it, and it is no purchase incentive (decided by the PO).
+- No minimum number of accounts applies (decided by the PO, responsibility with the operator): with few participants a share can allow conclusions about single accounts. The interface therefore always shows the basis ("2 von 5 Konten") instead of hiding small numbers.
+
+Operator task: the privacy policy must name the evaluation (counts of accounts that own a species, only for accounts that opted in) before the setting is offered to users (E-12).
+
+Status 🟨: setting, aggregation (database function that returns only counts), and the card line are implemented. Missing: the species detail view of caught species (US-POK-09) does not show it yet.
+
 ## Requirements
 
 | ID        | Requirement                                                                                                                                                                                                                                                    | Status |

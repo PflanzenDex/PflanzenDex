@@ -12,6 +12,7 @@ export const profileSchema = z.object({
   timeZone: z.string(),
   everythingPrivate: z.boolean(),
   noRecommendations: z.boolean(),
+  rarityConsent: z.boolean(),
   /** Whole number as text; the server decides again (P-03). */
   replenishBuffer: z.string().refine((text) => {
     const n = Number(text);
@@ -37,6 +38,7 @@ export const toProfileFields = (p: AccountProfile, deviceZone: string | null): P
   timeZone: p.timeZone ?? deviceZone ?? "",
   everythingPrivate: p.everythingPrivate,
   noRecommendations: p.noRecommendations,
+  rarityConsent: p.rarityConsent,
   replenishBuffer: String(p.replenishBuffer),
   notifications: { ...p.notifications },
 });
@@ -52,6 +54,7 @@ export function toProfile(f: ProfileFields, saved: AccountProfile): AccountProfi
     timeZone: f.timeZone === "" ? null : f.timeZone,
     everythingPrivate: f.everythingPrivate,
     noRecommendations: f.noRecommendations,
+    rarityConsent: f.rarityConsent,
     replenishBuffer: Number(f.replenishBuffer.trim()),
     notifications: { ...f.notifications },
   };

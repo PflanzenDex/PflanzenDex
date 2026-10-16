@@ -24,6 +24,7 @@ const PROFILE = {
     equipment: true,
   },
   replenishBuffer: 2,
+  rarityConsent: false,
 };
 
 type Put = { body: Record<string, unknown>; key: string | undefined };
@@ -258,6 +259,20 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     await screen.findByRole("status");
     expect(puts[0]?.body).toMatchObject({ everythingPrivate: true, noRecommendations: true });
+  });
+
+  it("US-POK-14 the rarity consent is off by default and is saved when switched on", async () => {
+    const puts = fakeServer();
+    const user = userEvent.setup();
+    show();
+    const box = await screen.findByRole("checkbox", {
+      name: "Meine Sammlung in die Seltenheit in PflanzenDex einrechnen",
+    });
+    expect((box as HTMLInputElement).checked).toBe(false);
+    await user.click(box);
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await screen.findByRole("status");
+    expect(puts[0]?.body).toMatchObject({ rarityConsent: true });
   });
 
   it("US-ACC-02 a private default account shows both switches off", async () => {

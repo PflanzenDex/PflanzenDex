@@ -68,6 +68,7 @@ beforeAll(async () => {
     noRecommendations: false,
     notifications: {},
     replenishBuffer: null,
+    rarityConsent: null,
   });
   account = (await admin.query("select id from account where subject = $1", [sub])).rows[0].id;
   const species = await call("POST", "/species", {
@@ -136,6 +137,7 @@ describe("US-MON-03 US-MON-04 the occasions of the reminders", () => {
       noRecommendations: false,
       notifications: { ...own?.notifications, treatment: false },
       replenishBuffer: null,
+      rarityConsent: null,
     });
     const list = await ids(new Date("2026-11-05T12:00:00Z"));
     expect(list.some((i) => i.startsWith("treatment:"))).toBe(false);
@@ -217,6 +219,7 @@ describe("US-MON-02 the reminder at the phase change", () => {
       noRecommendations: false,
       notifications: { ...own?.notifications, phase: false },
       replenishBuffer: null,
+      rarityConsent: null,
     });
     expect((await ids(FIRST_DORMANCY_DAY)).some((i) => i.startsWith("phase_change:"))).toBe(false);
   });
@@ -245,6 +248,7 @@ describe("US-EQU-04 the device check as an occasion of the reminders", () => {
       noRecommendations: false,
       notifications: { ...own?.notifications, equipment: false },
       replenishBuffer: null,
+      rarityConsent: null,
     });
     expect(await ids(CREATED)).not.toContain(`equipment-check:${id}`);
   });

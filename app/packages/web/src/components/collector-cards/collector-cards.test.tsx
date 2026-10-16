@@ -16,6 +16,7 @@ const card = (extra: Partial<CollectorCard>): CollectorCard => ({
   genus: "Ficus",
   genusSpeciesCount: null,
   natureRarity: { iucn: null, occurrences: null, threatened: false },
+  appRarity: null,
   speciesPoor: false,
   difficulty: null,
   lightZone: null,

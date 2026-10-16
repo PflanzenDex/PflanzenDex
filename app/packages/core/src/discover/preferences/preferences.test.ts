@@ -15,6 +15,7 @@ const card = (species: string, extra: Partial<CollectorCard> = {}): CollectorCar
   genus: species.split(" ")[0] ?? species,
   genusSpeciesCount: null,
   natureRarity: { iucn: null, occurrences: null, threatened: false },
+  appRarity: null,
   speciesPoor: false,
   difficulty: 2,
   lightZone: 3,
@@ -152,7 +153,11 @@ describe("US-ENT-05 derived live from the own wishes", () => {
       specimens: { list: async () => [] },
       species: { find: async () => null, findMany: async () => [] },
     },
-    tree: { tree: async () => tree, facts: async () => [] },
+    tree: {
+      tree: async () => tree,
+      facts: async () => [],
+      appRarity: async () => ({ participants: 0, owners: new Map() }),
+    },
     wishes,
     // A fixed day: the exploration pick is seeded by the day and must not make the order flaky.
     clock: () => new Date("2026-10-10T12:00:00Z"),
