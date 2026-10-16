@@ -1,6 +1,6 @@
 import type { Pool, PoolClient } from "pg";
-import { contributedRows } from "../catalog/index.ts";
-import { withAccount } from "../kernel/index.ts";
+import { contributedRows } from "../../catalog/index.ts";
+import { withAccount } from "../../kernel/index.ts";
 import {
   accountTables,
   PHOTO_COLUMNS,

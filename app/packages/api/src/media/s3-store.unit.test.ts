@@ -45,6 +45,36 @@ describe("TE-05 S3 adapter with a scripted client", () => {
     );
   });
 
+  it("US-ACC-04 deleteAll lists the account prefix page by page and removes what it finds", async () => {
+    let page = 0;
+    const { sent, store } = scripted((c) => {
+      if (c.constructor.name === "ListObjectsV2Command") {
+        page += 1;
+        return page === 1
+          ? { Contents: [{ Key: `${A}/a.jpg` }], IsTruncated: true, NextContinuationToken: "t" }
+          : { Contents: [{ Key: `${A}/b.jpg` }, { Key: `${A}/c.jpg` }], IsTruncated: false };
+      }
+      return {};
+    });
+    expect(await store.deleteAll(A)).toEqual({ ok: true, value: 3 });
+    const lists = sent.filter((s) => s.type === "ListObjectsV2Command");
+    expect(lists.map((l) => (l.input as unknown as { Prefix: string }).Prefix)).toEqual([
+      `${A}/`,
+      `${A}/`,
+    ]);
+    expect(sent.filter((s) => s.type === "DeleteObjectsCommand")).toHaveLength(2);
+  });
+
+  it("US-ACC-04 deleteAll does not report success when the store could not remove an object", async () => {
+    const { store } = scripted((c) =>
+      c.constructor.name === "ListObjectsV2Command"
+        ? { Contents: [{ Key: `${A}/a.jpg` }] }
+        : { Errors: [{ Key: `${A}/a.jpg` }] },
+    );
+    const r = await store.deleteAll(A);
+    expect(!r.ok && r.error.code).toBe("media.storage_unavailable");
+  });
+
   it("maps a missing object to media.not_found and exists=false", async () => {
     const { store } = scripted(() => {
       throw named("NoSuchKey");

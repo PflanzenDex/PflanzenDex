@@ -11,6 +11,7 @@ import { measurementSourceFor } from "./care";
 import { zoneStockFor } from "./zone-stock";
 import { createMemorySourceCache, createSourceClient } from "./kernel";
 import { createTokenVerifier } from "./account";
+import { deleteAccountHandlers, NO_STORE } from "./privacy";
 import { createS3ObjectStore, createSharpProcessor, s3ConfigFromEnv } from "./media";
 
 // Configuration from the environment only (no secrets in the repo). The defaults match `make auth-up`.
@@ -76,7 +77,12 @@ const reminders = remindersRuntime({
 });
 const worker = createJobWorker({
   queue: new JobsPostgres(pool),
-  handlers: { ...JOB_HANDLERS, ...pokedexJobHandlers({ pool, sources }), ...reminders.handlers },
+  handlers: {
+    ...JOB_HANDLERS,
+    ...pokedexJobHandlers({ pool, sources }),
+    ...reminders.handlers,
+    ...deleteAccountHandlers(pool, media?.store ?? NO_STORE),
+  },
 });
 worker.start();
 // The taxonomy build runs when the catalog differs from the stored tree (US-POK-03).

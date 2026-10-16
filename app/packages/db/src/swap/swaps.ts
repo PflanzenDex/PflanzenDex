@@ -36,7 +36,7 @@ export interface RequestResult {
 export interface SwapRow {
   readonly swapId: string;
   readonly role: "giver" | "recipient";
-  readonly otherId: string;
+  readonly otherId: string | null;
   readonly otherName: string | null;
   readonly offerId: string;
   readonly speciesLatin: string | null;

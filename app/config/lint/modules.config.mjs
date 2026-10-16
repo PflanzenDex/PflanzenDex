@@ -140,11 +140,11 @@ const MODULES = [
     ports: [],
   },
   {
-    // Export and deletion of all data of one account (US-ACC-04); reads the tables from the catalog, owns none.
+    // Export and deletion of all data of one account (US-ACC-04); reads the data tables from the catalog, owns only its request and log.
     name: "privacy",
     epics: ["ACC"],
-    tables: [],
-    dependsOn: ["kernel", "media", "catalog"],
+    tables: ["account_deletion", "deletion_log"],
+    dependsOn: ["kernel", "media", "catalog", "jobs"],
     ports: ["AccountDataSource"],
   },
   {

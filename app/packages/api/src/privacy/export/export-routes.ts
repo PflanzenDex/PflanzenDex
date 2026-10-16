@@ -1,17 +1,10 @@
-import { appError, exportAccountData, type ObjectStore } from "@pflanzendex/core";
+import { exportAccountData, type ObjectStore } from "@pflanzendex/core";
 import { AccountDataPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { errorBody, statusFor, type AuthEnv } from "../kernel";
+import { errorBody, statusFor, type AuthEnv } from "../../kernel";
+import { NO_STORE } from "../unavailable-store";
 import { zipArchive } from "./zip";
-
-/** Used when no object store is configured: photos then cannot be read, and the export says so instead of omitting them. */
-const NO_STORE: ObjectStore = {
-  put: async () => ({ ok: false, error: appError("media.storage_unavailable") }),
-  get: async () => ({ ok: false, error: appError("media.storage_unavailable") }),
-  delete: async () => ({ ok: false, error: appError("media.storage_unavailable") }),
-  exists: async () => ({ ok: false, error: appError("media.storage_unavailable") }),
-};
 
 /**
  * `GET /account/export` (US-ACC-04): all data of the caller as a ZIP archive, `data.json` plus `photos/<name>`. Reads
