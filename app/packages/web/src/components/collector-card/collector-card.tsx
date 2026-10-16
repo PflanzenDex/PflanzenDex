@@ -2,6 +2,7 @@ import type { CollectorCard as Card } from "@pflanzendex/core";
 import { Badge } from "@/components/ui/display/badge/badge";
 import { cn } from "@/lib/utils";
 import { catchText } from "./catch-text";
+import { RarityNote } from "./rarity-note/rarity-note";
 
 const stars = (n: number) => "★".repeat(n) + "☆".repeat(3 - n);
 
@@ -112,6 +113,7 @@ export function CollectorCard(props: { card: Card }) {
       )}
       <span className="text-sm">{c.summary ?? "Keine Beschreibung vorhanden."}</span>
       <Facts card={c} />
+      <RarityNote rarity={c.natureRarity} />
       <span className="flex flex-wrap gap-1.5">
         <Badge variant={caught ? "default" : "outline"}>
           {c.caughtDate === null ? "noch nicht gefangen" : catchText(c.caughtDate)}

@@ -1,5 +1,7 @@
 import type { Pool, PoolClient } from "pg";
 
+type IucnCategory = "LC" | "NT" | "VU" | "EN" | "CR" | "EW" | "EX" | "DD";
+
 // Same shapes as `TaxonomyBuild` in `core` (structurally equal; `db` does not import values from `core`).
 interface Provenance {
   readonly source: string;
@@ -24,6 +26,10 @@ export interface TaxonRecord {
     readonly provenance: Provenance;
   } | null;
   readonly genusSpeciesCount: { readonly value: number; readonly provenance: Provenance } | null;
+  readonly natureRarity: {
+    readonly iucn: { readonly category: IucnCategory; readonly provenance: Provenance } | null;
+    readonly occurrences: { readonly count: number; readonly provenance: Provenance } | null;
+  };
 }
 export interface TaxonomyRecord {
   readonly fingerprint: string;
@@ -33,8 +39,18 @@ export interface TaxonomyRecord {
 }
 
 const INSERT = `insert into taxon (latin_name, status, failure_code, accepted_name, genus, family, order_name, ott_id,
-  summary, summary_language, image_url, page_url, genus_species_count, provenance, catalog_fingerprint, built_at)
-  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`;
+  summary, summary_language, image_url, page_url, genus_species_count, provenance, catalog_fingerprint, built_at,
+  nature_iucn_category, nature_gbif_occurrences)
+  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`;
+
+// Source, URL and retrieval time of every stored value group; a group without a value has no entry.
+const provenanceOf = (t: TaxonRecord) => ({
+  lineage: t.lineage.provenance,
+  ...(t.text ? { text: t.text.provenance } : {}),
+  ...(t.genusSpeciesCount ? { genus_count: t.genusSpeciesCount.provenance } : {}),
+  ...(t.natureRarity.iucn ? { iucn: t.natureRarity.iucn.provenance } : {}),
+  ...(t.natureRarity.occurrences ? { occurrences: t.natureRarity.occurrences.provenance } : {}),
+});
 
 const resolvedRow = (t: TaxonRecord, b: TaxonomyRecord) => [
   t.latinName,
@@ -50,13 +66,11 @@ const resolvedRow = (t: TaxonRecord, b: TaxonomyRecord) => [
   t.text?.imageUrl ?? null,
   t.text?.pageUrl ?? null,
   t.genusSpeciesCount?.value ?? null,
-  JSON.stringify({
-    lineage: t.lineage.provenance,
-    ...(t.text ? { text: t.text.provenance } : {}),
-    ...(t.genusSpeciesCount ? { genus_count: t.genusSpeciesCount.provenance } : {}),
-  }),
+  JSON.stringify(provenanceOf(t)),
   b.fingerprint,
   b.builtAt,
+  t.natureRarity.iucn?.category ?? null,
+  t.natureRarity.occurrences?.count ?? null,
 ];
 
 const failedRow = (f: TaxonomyRecord["failures"][number], b: TaxonomyRecord) => [
@@ -76,6 +90,8 @@ const failedRow = (f: TaxonomyRecord["failures"][number], b: TaxonomyRecord) => 
   "{}",
   b.fingerprint,
   b.builtAt,
+  null,
+  null,
 ];
 
 /** One resolved species of the tree for the collector cards (US-POK-01); same shape as `TaxonCardRow` in `core`. */
@@ -89,13 +105,52 @@ export interface TaxonCardRecord {
   readonly imageUrl: string | null;
   readonly pageUrl: string | null;
   readonly genusSpeciesCount: number | null;
+  readonly natureRarity: {
+    readonly iucn: {
+      readonly category: IucnCategory;
+      readonly url: string;
+      readonly retrievedAt: string;
+    } | null;
+    readonly occurrences: {
+      readonly count: number;
+      readonly url: string;
+      readonly retrievedAt: string;
+    } | null;
+  };
 }
 
 // Resolved species only; the catalog facts (German name, difficulty, light zone) come through the catalog port.
 const CARDS = `select latin_name as "latinName", genus, family, order_name as "order", summary,
     summary_language as "summaryLanguage",
-    image_url as "imageUrl", page_url as "pageUrl", genus_species_count as "genusSpeciesCount"
+    image_url as "imageUrl", page_url as "pageUrl", genus_species_count as "genusSpeciesCount",
+    nature_iucn_category as "iucnCategory", provenance->'iucn' as "iucnSource",
+    nature_gbif_occurrences as "gbifOccurrences", provenance->'occurrences' as "occurrencesSource"
   from taxon where status = 'resolved'`;
+
+interface CardRow extends Omit<TaxonCardRecord, "natureRarity"> {
+  readonly iucnCategory: IucnCategory | null;
+  readonly iucnSource: { url: string; retrievedAt: string } | null;
+  readonly gbifOccurrences: string | null;
+  readonly occurrencesSource: { url: string; retrievedAt: string } | null;
+}
+
+// A value without its source is dropped: every shown value names its source (P-08).
+function natureRarityOf(r: CardRow): TaxonCardRecord["natureRarity"] {
+  return {
+    iucn:
+      r.iucnCategory !== null && r.iucnSource
+        ? { category: r.iucnCategory, url: r.iucnSource.url, retrievedAt: r.iucnSource.retrievedAt }
+        : null,
+    occurrences:
+      r.gbifOccurrences !== null && r.occurrencesSource
+        ? {
+            count: Number(r.gbifOccurrences),
+            url: r.occurrencesSource.url,
+            retrievedAt: r.occurrencesSource.retrievedAt,
+          }
+        : null,
+  };
+}
 
 /** Adapter for the taxonomy tree. Writing needs the owner connection: the application role may only read `taxon`. */
 export class TaxonomyPostgres {
@@ -110,7 +165,19 @@ export class TaxonomyPostgres {
 
   /** The resolved tree for the collector cards: shared by all accounts, no user data (readable by the application role). */
   async tree(): Promise<readonly TaxonCardRecord[]> {
-    return (await this.pool.query<TaxonCardRecord>(CARDS)).rows;
+    const rows = (await this.pool.query<CardRow>(CARDS)).rows;
+    return rows.map(
+      ({ iucnCategory, iucnSource, gbifOccurrences, occurrencesSource, ...rest }) => ({
+        ...rest,
+        natureRarity: natureRarityOf({
+          ...rest,
+          iucnCategory,
+          iucnSource,
+          gbifOccurrences,
+          occurrencesSource,
+        }),
+      }),
+    );
   }
 
   /** Replaces the whole tree in one transaction: on any error nothing changes (US-POK-03). */

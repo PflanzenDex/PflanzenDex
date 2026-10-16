@@ -30,11 +30,14 @@ export {
   fingerprintOf,
   orderTaxonomyBuild,
   runTaxonomyBuild,
+  IUCN_CATEGORIES,
   shortText,
 } from "./taxonomy";
 export type {
   CatalogNames,
   GenusCount,
+  IucnCategory,
+  NatureRarity,
   Taxon,
   TaxonFailure,
   TaxonLineage,
@@ -44,4 +47,10 @@ export type {
   TaxonomyStore,
 } from "./taxonomy";
 export { collectorCards, readCollectorCards, shortGermanName } from "./cards";
-export type { CollectorCard, SpeciesFacts, TaxonCardRow, TaxonCardSource } from "./cards";
+export type {
+  CollectorCard,
+  NatureRarityRow,
+  SpeciesFacts,
+  TaxonCardRow,
+  TaxonCardSource,
+} from "./cards";

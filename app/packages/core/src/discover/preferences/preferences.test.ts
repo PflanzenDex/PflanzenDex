@@ -14,6 +14,7 @@ const card = (species: string, extra: Partial<CollectorCard> = {}): CollectorCar
   summaryLanguage: null,
   genus: species.split(" ")[0] ?? species,
   genusSpeciesCount: null,
+  natureRarity: { iucn: null, occurrences: null, threatened: false },
   speciesPoor: false,
   difficulty: 2,
   lightZone: 3,
@@ -136,6 +137,7 @@ const row = (latinName: string, family: string): TaxonCardRow => ({
   imageUrl: null,
   pageUrl: null,
   genusSpeciesCount: null,
+  natureRarity: { iucn: null, occurrences: null },
 });
 
 describe("US-ENT-05 derived live from the own wishes", () => {

@@ -17,6 +17,7 @@ const row = (latinName: string, family = "Moraceae"): TaxonCardRow => ({
   imageUrl: "https://upload.example/x.jpg",
   pageUrl: "https://de.wikipedia.org/wiki/X",
   genusSpeciesCount: null,
+  natureRarity: { iucn: null, occurrences: null },
 });
 
 let wishes: InMemoryWishes;

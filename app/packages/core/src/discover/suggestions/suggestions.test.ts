@@ -14,6 +14,7 @@ const card = (species: string, extra: Partial<CollectorCard> = {}): CollectorCar
   summaryLanguage: "de",
   genus: species.split(" ")[0] ?? species,
   genusSpeciesCount: null,
+  natureRarity: { iucn: null, occurrences: null, threatened: false },
   speciesPoor: false,
   difficulty: 2,
   lightZone: 3,
@@ -35,6 +36,7 @@ const row = (latinName: string, family = "Moraceae"): TaxonCardRow => ({
   imageUrl: null,
   pageUrl: null,
   genusSpeciesCount: null,
+  natureRarity: { iucn: null, occurrences: null },
 });
 const names = (list: readonly { species: string }[]) => list.map((s) => s.species);
 

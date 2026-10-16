@@ -117,6 +117,26 @@ Acceptance criteria:
 - The banner "Newly caught: …" stays until "Okay", which writes `seen`.
 - Read errors do not break the page; no banner appears then.
 
+### US-POK-13 · Rarity of a species in nature · 🟨 (new)
+
+As a **keeper** I want to see how rare a species is in the wild, with the source, so that I can value what I keep without being steered to buy it.
+
+This is the first of two separate statements about rarity. The second, "rarity in PflanzenDex", is a story of its own (US-POK-14); the two are never merged into one number or one label.
+
+Acceptance criteria:
+
+- Given a species of the taxonomy tree, when the build job enriches it, then it stores up to two values with their source, source URL and retrieval date: the **IUCN Red List category** (LC, NT, VU, EN, CR, EW, EX, DD) and the **number of GBIF occurrence records** of the species (assumption, decided by the PO: GBIF as the source of both, because it needs no key or account).
+- Given a value that no source gave (no GBIF match, no assessment, a category outside that list, an occurrence count of 0), then it is stored as unknown (NULL) and shown as "unbekannt"; nothing is estimated and no category is derived from other data (P-08).
+- Given a species name that GBIF matches only approximately or only at another rank, then no value is taken (exact species match only).
+- Given a source failure, then the build fails as a whole and keeps the previous tree (P-10, as US-POK-03); "no hit" is cached as a result.
+- Given a collector card, then the card shows "In der Natur: <category>" and "In der Natur: N Fundmeldungen (GBIF)" with the retrieval date, each with a link to its source; the label always says "in der Natur" (assumption, decided by the PO).
+- Given a species with the category VU, EN, CR or EW, then the card shows a neutral note that the species is threatened in the wild (informs, never blocks and never promotes buying).
+- Given any list, ranking or view, then rarity is **not** a sort key, filter, badge, ranking or reward; the achievements (ACH) do not use it as a criterion and the recommendations (EQU) do not use it (assumption, decided by the PO).
+
+Status 🟨: the build job stores the IUCN category and the GBIF occurrence count of the accepted species name with source and retrieval date (migration 0066), and the collector card shows them with the note. Missing: the CITES appendix, and a refresh without a catalog change (values are retrieved with each taxonomy build, which runs when the catalog changes).
+
+Operator tasks: (1) CITES appendix only with a CITES Species+ API token, because Wikidata does not carry the appendix; until the operator provides one the card says nothing about CITES, which does not mean "not listed". (2) IUCN categories and GBIF counts are shown with the source named; check the terms of use (E-12).
+
 ## Requirements
 
 | ID        | Requirement                                                                                                                                                                                                                                                    | Status |

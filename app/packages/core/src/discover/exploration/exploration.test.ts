@@ -24,6 +24,7 @@ const card = (species: string, order: string | null, extra: Partial<CollectorCar
     summaryLanguage: null,
     genus: species.split(" ")[0] ?? species,
     genusSpeciesCount: null,
+    natureRarity: { iucn: null, occurrences: null, threatened: false },
     speciesPoor: false,
     difficulty: null,
     lightZone: null,
@@ -115,6 +116,7 @@ const row = (latinName: string, order: string, family = `${order}aceae`): TaxonC
   imageUrl: null,
   pageUrl: null,
   genusSpeciesCount: null,
+  natureRarity: { iucn: null, occurrences: null },
 });
 
 describe("US-ENT-06 the deck", () => {

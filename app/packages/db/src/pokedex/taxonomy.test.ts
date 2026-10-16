@@ -34,6 +34,7 @@ const build = (fingerprint: string, extra: Partial<TaxonomyRecord> = {}): Taxono
         provenance: { ...provenance, source: "wikipedia" },
       },
       genusSpeciesCount: null,
+      natureRarity: { iucn: null, occurrences: null },
     },
   ],
   failures: [{ latinName: "Nonexistus plantus", reason: "taxonomy.no_match" }],
@@ -120,7 +121,55 @@ describe("US-POK-03 taxonomy tree in the database", () => {
         imageUrl: null,
         pageUrl: "https://de.wikipedia.org/wiki/Ficus_benjamina",
         genusSpeciesCount: null,
+        natureRarity: { iucn: null, occurrences: null },
       },
     ]);
+  });
+});
+
+describe("US-POK-13 rarity in nature in the database", () => {
+  const gbif = {
+    source: "gbif",
+    url: "https://api.gbif.org/v1/x",
+    retrievedAt: "2026-10-16T10:00:00Z",
+  };
+  const withRarity = (natureRarity: TaxonRecord["natureRarity"]): TaxonomyRecord => {
+    const base = build("f1");
+    return { ...base, taxa: [{ ...(base.taxa[0] as TaxonRecord), natureRarity }] };
+  };
+
+  it("US-POK-13 stores category and count with their sources and returns them for the cards", async () => {
+    await store.replace(
+      withRarity({
+        iucn: { category: "VU", provenance: gbif },
+        occurrences: { count: 1231, provenance: gbif },
+      }),
+    );
+    const [card] = await store.tree();
+    expect(card?.natureRarity).toEqual({
+      iucn: { category: "VU", url: gbif.url, retrievedAt: gbif.retrievedAt },
+      occurrences: { count: 1231, url: gbif.url, retrievedAt: gbif.retrievedAt },
+    });
+  });
+
+  it("US-POK-13 keeps unknown as NULL and never invents a value (P-08)", async () => {
+    await store.replace(withRarity({ iucn: null, occurrences: null }));
+    const [card] = await store.tree();
+    expect(card?.natureRarity).toEqual({ iucn: null, occurrences: null });
+    const r = await pool.query(
+      "select nature_iucn_category, nature_gbif_occurrences from taxon where status = 'resolved'",
+    );
+    expect(r.rows).toEqual([{ nature_iucn_category: null, nature_gbif_occurrences: null }]);
+  });
+
+  it("US-POK-13 rejects a category outside the known list and a count of 0", async () => {
+    await expect(
+      store.replace(
+        withRarity({ iucn: { category: "XX" as "LC", provenance: gbif }, occurrences: null }),
+      ),
+    ).rejects.toThrow();
+    await expect(
+      store.replace(withRarity({ iucn: null, occurrences: { count: 0, provenance: gbif } })),
+    ).rejects.toThrow();
   });
 });
