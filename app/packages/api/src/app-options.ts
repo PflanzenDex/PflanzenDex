@@ -8,12 +8,15 @@ import type {
   ZoneStockSource,
   ObjectStore,
   ImageProcessor,
+  FeatureSet,
 } from "@pflanzendex/core";
 import type { TokenVerifier } from "./account";
 import type { AiAccessOptions } from "./ai";
 import type { WishImageSources } from "./wishlist";
 
 export type AppOptions = {
+  /** The global feature switch (US-DEV-06, env `FEATURES`); without it every function is on (development and tests). */
+  features?: FeatureSet;
   /** Verifies access tokens of the sign-in service; without it there are no protected routes. */
   reviewer?: TokenVerifier;
   pool?: Pool;

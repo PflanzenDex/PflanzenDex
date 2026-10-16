@@ -1,10 +1,9 @@
 // Module register (AB-13): the single source for the module boundary checks (AB-7 to AB-14, FR-QG-19, ADR 0003, 0012).
-// Read by tools/check/code/check-boundaries.mjs (imports, structure, migrations) and by findSchemaViolations in db.
+// Read by tools/check/code/check-boundaries.mjs (imports, structure, migrations) and findSchemaViolations in db.
 // A module folder is `packages/<core|db|api|web>/src/<name>/` with an `index.ts` as its public interface; without such
 // folders the gate is idle. `dependsOn` is the dependency matrix: `A -> B` may be imported only if B is listed for A; a
 // new edge changes this file in the same PR, cycles are always an error (AB-8). `epics` maps epics to modules (report only).
 // Foreign keys across modules only tenant-safe as (account_id, id) on allowed dependencies (O-2), plus reference tables.
-
 import {
   KERNEL_GLOSSARY_WORDS,
   LEGACY_MIGRATIONS,
@@ -23,8 +22,7 @@ const MODULES = [
     ports: ["DataSource", "IdempotencyStore"],
   },
   {
-    // Platform module (TE-06, ADR 0003 table "jobs"): PostgreSQL job queue and the runner. Has its own folder because the
-    // queue has domain-free rules of its own (lease, retry, merge); MON, POK and KI depend on it, never the other way.
+    // Platform module (TE-06, ADR 0003 table "jobs"): PostgreSQL job queue and runner; MON, POK and KI depend on it, not back.
     name: "jobs",
     epics: ["TE"],
     tables: ["job"],
@@ -42,7 +40,14 @@ const MODULES = [
   {
     name: "account",
     epics: ["ACC"],
-    tables: ["account_data", "account_role", "invitation", "access_setting", "operator_cost"],
+    tables: [
+      "account_data",
+      "account_role",
+      "invitation",
+      "access_setting",
+      "operator_cost",
+      "account_feature",
+    ],
     dependsOn: ["kernel", "achievements"], // web only: the calm mode switch sits on the settings page (US-ACH-08)
     ports: [],
   },
@@ -51,8 +56,7 @@ const MODULES = [
     epics: ["BES"],
     tables: ["species", "species_name", "species_version", "review_case"],
     dependsOn: ["kernel"],
-    // SpeciesRepointer (db): the merge of a proposal re-points the references of higher modules; each of them
-    // implements the port for its own tables (US-BES-10), the API composes them.
+    // SpeciesRepointer (db): a merge re-points references of higher modules; each implements it for its tables (US-BES-10).
     ports: ["SpeciesRepointer"],
   },
   {
@@ -127,8 +131,7 @@ const MODULES = [
     ports: [],
   },
   {
-    // Achievements (ADR 0014, epic ACH): pure logic over facts about the keeper's own data. Sources are read by
-    // adapters in the api; the module itself imports nothing but the kernel. The per-account tables are `achievement_setting` (US-ACH-08) and `achievement_seen` (US-ACH-03).
+    // Achievements (ADR 0014, epic ACH): pure logic over facts of the keeper's data, adapters in the api, imports only the kernel.
     name: "achievements",
     epics: ["ACH"],
     tables: ["achievement_setting", "achievement_seen"],

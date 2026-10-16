@@ -1,4 +1,5 @@
 import { serve } from "@hono/node-server";
+import { featuresFromEnv } from "@pflanzendex/core";
 import { JobsPostgres, openPool, testDatabaseUrl } from "@pflanzendex/db";
 import { createApp } from "./app";
 import { createWikimediaDownload } from "./wishlist";
@@ -35,7 +36,10 @@ const sources = createSourceClient({
   userAgent,
 });
 const aiResource = process.env["AI_RESOURCE_URL"] ?? "http://localhost:3000/mcp";
+// Feature switches (US-DEV-06): `FEATURES=social,ai`; in production nothing set means all off, elsewhere all on.
+const features = featuresFromEnv(process.env);
 const app = createApp({
+  features,
   ...(media ? { media } : {}),
   wishImage: { sources, download: createWikimediaDownload({ fetch, userAgent }) },
   reviewer: createTokenVerifier({

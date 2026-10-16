@@ -4,3 +4,5 @@ export type { AuthEnv } from "./auth-env";
 export { body, imageBody, write } from "./route-helpers";
 export type { ResponseShape, Ctx } from "./route-helpers";
 export { createMemorySourceCache, createSourceClient } from "./sources";
+export { featureAccess, featureGate } from "./feature-gate";
+export type { FeatureAccess } from "./feature-gate";

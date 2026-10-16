@@ -142,6 +142,8 @@ services:
       OIDC_AUDIENCE: pflanzendex-api
       WEB_ORIGIN: ${APP_URL:?APP_URL is missing}
       AI_RESOURCE_URL: ${APP_URL}/api/mcp
+      # Global feature switches (US-DEV-06): e.g. `social,ai`. Empty: all off in production.
+      FEATURES: ${FEATURES:-}
     depends_on:
       db:
         condition: service_healthy

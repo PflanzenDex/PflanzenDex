@@ -6,6 +6,8 @@ export const WITHOUT_ACCOUNT_ID: Record<string, string> = {
   schema_migrations: "Tool bookkeeping of the migration tool, no user data",
   account_role:
     "Role assignment is the installation operator's job: the application role has no rights on the table and reads only its own role via roles_of_account() (TE-08)",
+  account_feature:
+    "Per-account opening of a function group is the installation operator's job (US-DEV-06): the application role has no rights on the table and reads only its own rows via features_of_account()",
   invitation:
     "Invitation codes belong to the installation, not to an account (US-ACC-05): the application role has no rights on the table; the operator reaches it only through create_invitation() and list_invitations(), which check the role again, and registration through redeem_invitation(). Only hashes are stored",
   access_setting:

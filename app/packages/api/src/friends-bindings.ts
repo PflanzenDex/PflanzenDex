@@ -1,6 +1,7 @@
 import type { TargetLocationSource } from "@pflanzendex/core";
 import type { Hono, MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
+import { featureGate, type FeatureAccess } from "./kernel";
 import {
   FEED_PATHS,
   FRIEND_PATHS,
@@ -26,9 +27,14 @@ export function bindFriends(
   app: Hono,
   pool: Pool,
   auth: MiddlewareHandler,
-  sources: { clock?: () => Date; targetLocation?: TargetLocationSource } = {},
+  sources: {
+    clock?: () => Date;
+    targetLocation?: TargetLocationSource;
+    features?: FeatureAccess;
+  } = {},
 ) {
-  const { clock, targetLocation } = sources;
+  const { clock, targetLocation, features } = sources;
+  const gate = features && featureGate(features, "social");
   for (const path of [
     ...FRIEND_PATHS,
     ...SHARING_PATHS,
@@ -36,8 +42,11 @@ export function bindFriends(
     ...OFFER_PATHS,
     ...EXCHANGE_PATHS,
     ...SWAP_PATHS,
-  ])
+  ]) {
     app.use(path, auth).use(`${path}/*`, auth);
+    // Behind the sign-in guard: while "social" is off for the account these paths answer 404 (US-DEV-06).
+    if (gate) app.use(path, gate).use(`${path}/*`, gate);
+  }
   app.route("/", friendRoutes(pool, clock, cancelOrphanedSwaps(pool)));
   app.route("/", sharingRoutes(pool));
   app.route("/", feedRoutes(pool, clock, swappedSourceFor(pool)));

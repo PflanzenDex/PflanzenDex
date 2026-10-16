@@ -17,11 +17,11 @@ import {
 } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { body, write, type AuthEnv } from "../kernel";
+import { body, write, type AuthEnv, type FeatureAccess } from "../kernel";
 import { addLampRoutes } from "./lamps";
 import { addMaintenanceRoutes } from "./maintenance";
 import { addSensorRoutes } from "./sensors";
-import { addSharingRoutes } from "./sharing";
+import { addSharingRoutes, gateSharingRoutes } from "./sharing";
 import { friendEquipmentPorts } from "./sharing/ports";
 import { addSupplyRoutes } from "./supply";
 import { addWishRoutes } from "./wishes";
@@ -40,7 +40,11 @@ export function equipmentZoneUsageFor(pool: Pool): ZoneUsage {
  * without any partner integration (FR-EQU-01). The devices per light zone (US-EQU-02) are derived on every request from
  * the lamps, the zones and the stock per zone, which the app root supplies through the port `ZoneStockSource`.
  */
-export function equipmentRoutes(pool: Pool, zoneStock: ZoneStockSource): Hono<AuthEnv> {
+export function equipmentRoutes(
+  pool: Pool,
+  zoneStock: ZoneStockSource,
+  features?: FeatureAccess,
+): Hono<AuthEnv> {
   const equipment = new EquipmentPostgres(pool);
   const record = equipmentRecord({ equipment });
   const setZone = equipmentSetZone({ equipment });
@@ -89,6 +93,7 @@ export function equipmentRoutes(pool: Pool, zoneStock: ZoneStockSource): Hono<Au
   addSupplyRoutes(routes, pool, deps);
   addSensorRoutes(routes, pool, deps);
   addWishRoutes(routes, pool, deps);
+  if (features) gateSharingRoutes(routes, features);
   addSharingRoutes(routes, pool, deps, friendEquipmentPorts(pool));
   return routes;
 }

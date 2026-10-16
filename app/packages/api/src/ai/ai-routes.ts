@@ -17,7 +17,7 @@ import {
 } from "@pflanzendex/db";
 import { Hono, type MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
-import { body, write, type AuthEnv } from "../kernel";
+import { body, featureGate, write, type AuthEnv, type FeatureAccess } from "../kernel";
 import type { TokenVerifier } from "../account";
 import { clientRoutes } from "./client-routes";
 import { draftRoutes } from "./drafts/draft-routes";
@@ -38,6 +38,8 @@ export interface AiAccessOptions {
   readonly dailyLimit?: number;
   /** Replaces the PostgreSQL adapter (tests only). */
   readonly connections?: ConnectionStore;
+  /** The feature switch (US-DEV-06): while "ai" is off for the account every route of the interface answers 404. */
+  readonly features?: FeatureAccess;
 }
 
 /**
@@ -64,7 +66,13 @@ export function aiAccessRoutes(
   const writes = { idempotency: new IdempotencyPostgres(pool) };
   const routes = new Hono<AuthEnv>();
 
-  for (const path of KEEPER_PATHS) routes.use(path, auth).use(`${path}/*`, auth);
+  for (const path of KEEPER_PATHS) {
+    routes.use(path, auth).use(`${path}/*`, auth);
+    if (opt.features) {
+      const gate = featureGate(opt.features, "ai");
+      routes.use(path, gate).use(`${path}/*`, gate);
+    }
+  }
   routes.get("/ai/connections", async (c) =>
     c.json({ connections: await aiConnections(deps, c.get("account").id) }),
   );

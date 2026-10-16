@@ -58,6 +58,7 @@ export function clientRoutes(
     connections,
     metadataUrl,
     log,
+    ...(opt.features ? { features: opt.features } : {}),
     ...(opt.dailyLimit === undefined ? {} : { dailyLimit: opt.dailyLimit }),
     ...(opt.clock ? { clock: opt.clock } : {}),
   };
