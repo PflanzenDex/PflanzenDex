@@ -1,5 +1,5 @@
 // Stable, machine-readable error codes `<domain>.<reason>` (FR-QG-11). Codes are never renamed.
-import { EQUIPMENT_ERROR_TEXTS } from "./error-texts-equipment";
+import { ACHIEVEMENT_ERROR_TEXTS } from "./error-texts/achievements";
 export const ERROR_TEXTS = {
   "input.invalid": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
   "access.not_signed_in": "Du bist nicht angemeldet. Bitte melde dich an.",
@@ -110,7 +110,7 @@ export const ERROR_TEXTS = {
     "Dieses Angebot ist schon übergeben und kann nicht mehr zurückgezogen werden. Es wurde nichts geändert.",
   "discover.not_suggested":
     "Diese Art wird dir gerade nicht vorgeschlagen: Du hast sie schon gefangen oder sie fehlt im Katalog. Lade die Vorschläge neu.",
-  ...EQUIPMENT_ERROR_TEXTS,
+  ...ACHIEVEMENT_ERROR_TEXTS,
   "wish.name_taken":
     "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
   "wish.image_source_unsupported":

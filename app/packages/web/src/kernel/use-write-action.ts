@@ -3,6 +3,9 @@ import { useAnnounce } from "@/platform/announcer/context";
 import { isOnline } from "@/platform/network";
 import type { ApiError, Response } from "./api";
 
+/** Fired on `window` after every write that succeeded, so quiet observers (the achievement banner) can look again. */
+export const WRITE_SUCCEEDED = "pflanzendex:write-succeeded";
+
 export const SIGN_IN: ApiError = { code: "access.not_signed_in", text: "Bitte melde dich neu an." };
 
 /**
@@ -35,6 +38,7 @@ export function useWriteAction(token: () => Promise<string | undefined>, after: 
       setRunning(false);
       setError(r.ok ? null : r.error);
       setMessage(r.ok ? success : null);
+      if (r.ok) window.dispatchEvent(new Event(WRITE_SUCCEEDED));
       // Also after a refusal: the page may have been stale (e.g. archived elsewhere), the error stays on screen.
       after();
     },

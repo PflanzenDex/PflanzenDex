@@ -111,3 +111,54 @@ describe("US-ACH-02 overview through the API", () => {
     expect((await overview(subB)).body["calmMode"]).toBe(false);
   });
 });
+
+describe("US-ACH-03 news and seen state through the API", () => {
+  const subC = `ach03-${randomUUID()}`;
+  const subD = `ach03-${randomUUID()}`;
+  const news = (sub: string | null, zone = "Europe/Berlin") =>
+    call(sub, "GET", `/achievements/news?timeZone=${encodeURIComponent(zone)}`);
+  const markSeen = (sub: string | null, achievements: unknown, timeZone = "Europe/Berlin") =>
+    call(sub, "POST", "/achievements/seen", { achievements, timeZone });
+  afterAll(async () => {
+    await admin.query("delete from account where subject = any($1)", [[subC, subD]]);
+  });
+
+  it("US-ACH-03 without a token: 401; without a valid time zone: 400", async () => {
+    expect((await news(null)).status).toBe(401);
+    expect((await markSeen(null, [])).status).toBe(401);
+    const bad = await news(subC, "Mars/Base");
+    expect(bad.status).toBe(400);
+    expect(bad.body["error"].code).toBe("input.invalid");
+  });
+
+  it("US-ACH-03 a new account has nothing new; the first write creates the state, afterwards none is due", async () => {
+    expect((await news(subC)).body).toEqual({
+      calmMode: false,
+      fresh: [],
+      acknowledge: [],
+      needsWrite: true,
+    });
+    expect((await markSeen(subC, [])).status).toBe(200);
+    expect((await news(subC)).body["needsWrite"]).toBe(false);
+  });
+
+  it("US-ACH-03 refuses an achievement that is not earned: 409 achievements.not_earned", async () => {
+    const r = await markSeen(subC, ["first-handover"]);
+    expect(r.status).toBe(409);
+    expect(r.body["error"].code).toBe("achievements.not_earned");
+    expect((await markSeen(subC, "x")).status).toBe(400);
+  });
+
+  it("US-ACH-03 the seen state belongs to the account (P-04)", async () => {
+    await markSeen(subC, []);
+    expect((await news(subD)).body["needsWrite"]).toBe(true);
+  });
+
+  it("US-ACH-08 calm mode hides the news, for that account only", async () => {
+    await setCalm(subD, true);
+    expect((await news(subD)).body).toEqual({ calmMode: true });
+    expect((await news(subC)).body["calmMode"]).toBe(false);
+    await setCalm(subD, false);
+    expect((await news(subD)).body["calmMode"]).toBe(false);
+  });
+});

@@ -23,3 +23,10 @@ export {
   showsAchievements,
 } from "./settings/settings";
 export type { AchievementSettings, AchievementSettingsStore } from "./settings/settings";
+export { achievementsMarkSeen, reconcileSeen } from "./seen/seen";
+export type {
+  AchievementSeenState,
+  AchievementSeenStore,
+  AchievementMarkSeenDependencies,
+  SeenReconciliation,
+} from "./seen/seen";

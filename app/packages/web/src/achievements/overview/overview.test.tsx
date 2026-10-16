@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AchievementsOverviewSection } from "./overview";
@@ -9,6 +10,7 @@ const response = (status: number, body: unknown) =>
 const token = async () => "tok";
 const item = (id: string, extra: Record<string, unknown> = {}) => ({
   id,
+  isNew: false,
   earnedOn: null,
   specimenId: null,
   specimenName: null,
@@ -45,6 +47,7 @@ describe("US-ACH-02 achievements overview", () => {
     serve({
       calmMode: false,
       earnedCount: 1,
+      newCount: 0,
       firstStep: null,
       groups: [
         {
@@ -113,5 +116,46 @@ describe("US-ACH-02 achievements overview", () => {
     serve({ calmMode: true });
     await vi.waitFor(() => expect(screen.queryByRole("status")).toBeNull());
     expect(screen.queryByRole("region")).toBeNull();
+  });
+});
+
+describe("US-ACH-03 new achievements in the overview", () => {
+  const withNew = (isNew: boolean) => ({
+    calmMode: false,
+    earnedCount: 1,
+    newCount: isNew ? 1 : 0,
+    firstStep: null,
+    groups: [
+      {
+        group: "care",
+        earned: [item("cutting-rooted", { earnedOn: "2026-05-04", isNew })],
+        open: [],
+      },
+      empty("growth"),
+      empty("swapping"),
+      empty("collecting"),
+    ],
+  });
+
+  it("US-ACH-03 marks a new achievement with text and Okay writes the seen state with its id", async () => {
+    serve(withNew(true));
+    expect((await screen.findAllByText(/\(neu\)/)).length).toBe(1);
+    expect(screen.getByText(/1 neuer Erfolg/)).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Okay" }));
+    await waitFor(() => {
+      const post = vi
+        .mocked(fetch)
+        .mock.calls.find(([, init]) => (init as RequestInit | undefined)?.method === "POST");
+      expect(JSON.parse(String((post?.[1] as RequestInit).body))).toMatchObject({
+        achievements: ["cutting-rooted"],
+      });
+    });
+  });
+
+  it("US-ACH-03 an achievement that is not new carries no mark and no Okay", async () => {
+    serve(withNew(false));
+    await screen.findByText("Steckling bewurzelt");
+    expect(screen.queryByText(/\(neu\)/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Okay" })).toBeNull();
   });
 });

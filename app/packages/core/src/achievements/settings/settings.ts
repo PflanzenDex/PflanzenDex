@@ -36,11 +36,19 @@ const schema = shape({
 
 /**
  * Switches calm mode on or off (US-ACH-08). Only the setting is written: earned achievements are derived and stay
- * untouched, so switching off again brings them back (and they count as seen there, US-ACH-03).
+ * untouched, so switching off again brings them back; they count as seen then (US-ACH-08, US-ACH-03).
  */
-export const achievementsSetCalmMode = (deps: { settings: AchievementSettingsStore }) =>
+export const achievementsSetCalmMode = (deps: {
+  settings: AchievementSettingsStore;
+  /** Marks what is earned as seen; called when calm mode goes off, so nothing earned meanwhile counts as new (US-ACH-03). */
+  acknowledge?: (userId: string) => Promise<void>;
+}) =>
   defineOperation({
     name: "achievements.set_calm_mode",
     schema,
-    run: async ({ userId }, { calmMode }) => ok(await deps.settings.setCalmMode(userId, calmMode)),
+    run: async ({ userId }, { calmMode }) => {
+      const stored = await deps.settings.setCalmMode(userId, calmMode);
+      if (!calmMode) await deps.acknowledge?.(userId);
+      return ok(stored);
+    },
   });

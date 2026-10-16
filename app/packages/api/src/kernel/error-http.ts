@@ -38,6 +38,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "species.duplicate": 409,
   "specimen.name_taken": 409,
   "pokedex.not_caught": 409,
+  "achievements.not_earned": 409,
   "friend.unknown_code": 404,
   "friend.code_used": 409,
   "friend.code_expired": 409,
