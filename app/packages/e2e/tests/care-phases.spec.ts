@@ -10,8 +10,10 @@ test.describe("US-PHA-01 Pflegephasen", () => {
     account,
   }, info) => {
     await signIn(page, account);
-    await page.getByRole("button", { name: "Pflegephasen" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Pflegephasen" })).toBeVisible();
+    // The care phases are a grouping of the plants in the Sammlung (US-QS-14).
+    await page.getByRole("link", { name: "Sammlung", exact: true }).click();
+    await page.getByRole("button", { name: "Nach Pflegephase" }).click();
+    await expect(page.getByRole("heading", { level: 2, name: "Pflegephasen" })).toBeVisible();
     await expect(
       page.getByText("Lege im Bestand ein Exemplar einer solchen Art an."),
     ).toBeVisible();

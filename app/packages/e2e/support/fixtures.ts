@@ -9,14 +9,14 @@ export async function signIn(page: Page, account: TestAccount): Promise<void> {
   await page.locator("#username").fill(account.email);
   await page.locator("#password").fill(account.password);
   await page.locator("#kc-login").click();
-  // The header row of destinations is hidden below md; the brand in the banner stands on every width.
-  await expect(page.getByRole("banner").getByRole("link", { name: "PflanzenDéx" })).toBeVisible();
+  // The brand link stands on every width: in the top bar on the phone, in the side navigation on desktop.
+  await expect(page.getByRole("link", { name: "PflanzenDéx, zur Startseite" })).toBeVisible();
 }
 
-/** Login, then open the locations-and-light view (the start view is the species search since US-BES-01). */
+/** Login, then open the management of locations and light zones (below the plants of the Sammlung, US-QS-14). */
 export async function signInAtLight(page: Page, account: TestAccount): Promise<void> {
   await signIn(page, account);
-  await page.getByRole("button", { name: "Standorte und Licht" }).click();
+  await openLocations(page);
   await expect(
     page.getByRole("heading", { level: 1, name: /Standorte und Lichtzonen/ }),
   ).toBeVisible();
@@ -29,3 +29,9 @@ export const test = base.extend<{ account: TestAccount }>({
     await use(await createTestAccount());
   },
 });
+
+/** From any signed-in view: the Sammlung, then "Standorte verwalten" (the former destination "Standorte und Licht"). */
+export async function openLocations(page: Page): Promise<void> {
+  await page.getByRole("link", { name: "Sammlung", exact: true }).click();
+  await page.getByRole("button", { name: "Standorte verwalten" }).click();
+}

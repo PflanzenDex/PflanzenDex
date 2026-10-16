@@ -38,22 +38,31 @@ async function stopsWithoutFocusIndicator(page: Page, needRing: boolean): Promis
 test.describe("US-QS-12 adaptable display: reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
 
-  test("US-QS-12 with reduced motion the menu sheet and the controls do not animate (2.3.3, DS-19)", async ({
+  test("US-QS-12 with reduced motion the bar, the menu sheet and the controls do not animate (2.3.3, DS-19)", async ({
     page,
     account,
   }, info) => {
     test.skip(info.project.name !== "mobil", "the sheet with more destinations exists below md");
     await signInToApp(page, account);
     await openView(page, "/");
-    await page.getByRole("button", { name: "Mehr" }).click();
-    await expect(page.getByRole("dialog", { name: "Mehr" })).toBeVisible();
+    // The bar holds the 5 destinations of a plain account; "Mehr" appears only with more (reviewer, operator, DS-25).
+    const more = page.getByRole("button", { name: "Mehr" });
+    if (await more.isVisible()) {
+      await more.click();
+      await expect(page.getByRole("dialog", { name: "Mehr" })).toBeVisible();
+    }
     expect(await longAnimations(page)).toEqual([]);
-    const link = page.getByRole("dialog", { name: "Mehr" }).getByRole("link").first();
+    const link = page
+      .getByRole("navigation", { name: "Navigation unten" })
+      .getByRole("link")
+      .first();
     expect(await link.evaluate((el) => getComputedStyle(el).transitionDuration)).toMatch(
       /^0s$|^0\.0+\d*s$|^1e-0\ds$/,
     );
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog", { name: "Mehr" })).toHaveCount(0);
+    if (await page.getByRole("dialog", { name: "Mehr" }).isVisible()) {
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("dialog", { name: "Mehr" })).toHaveCount(0);
+    }
   });
 });
 

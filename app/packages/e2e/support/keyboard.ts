@@ -75,6 +75,8 @@ export interface WalkStep {
   hidden: boolean;
   /** Has a visible focus indicator: an outline or a box shadow ring (2.4.7). */
   indicator: boolean;
+  /** A date or time field: the browser gives it several Tab stops (segments, then the picker button). */
+  pickerField: boolean;
 }
 
 /** What the focused element is, and whether a sticky part covers it completely. */
@@ -101,10 +103,14 @@ function describeFocus(): WalkStep | null {
     (style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0) ||
     style.boxShadow !== "none";
   const label = el.getAttribute("aria-label") ?? el.textContent?.trim().slice(0, 40) ?? "";
+  const pickerField =
+    el instanceof HTMLInputElement &&
+    ["date", "time", "datetime-local", "month", "week"].includes(el.type);
   return {
     name: `${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""} "${label}"`,
     hidden: offscreen || covers.some(coveredBy),
     indicator,
+    pickerField,
   };
 }
 
@@ -145,6 +151,11 @@ export async function keyboardWalk(page: Page): Promise<WalkStep[]> {
       );
       return steps;
     }
+    // The last Tab stop of a date or time field is the browser's own picker button: it draws the browser's
+    // focus ring inside the field and not the app's ring on the input, so it counts with the segments before it.
+    const before = steps.at(-1);
+    if (step.pickerField && !step.indicator && before?.name === step.name && before.indicator)
+      step.indicator = true;
     steps.push(step);
   }
   throw new Error(
