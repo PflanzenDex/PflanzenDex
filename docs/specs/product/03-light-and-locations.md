@@ -40,7 +40,7 @@ Acceptance criteria:
 - Count per zone 2–4 at specimen level (the specimen's light zone before the species'); cutting light does not count.
 - The display names the thinnest zone. On a tie all equally placed ones, with a hint to the wishlist.
 
-### US-LIC-03 · Know how close the plant belongs to the lamp · 🟨 (prototype ✅)
+### US-LIC-03 · Know how close the plant belongs to the lamp · ✅ (prototype ✅)
 
 As a **plant keeper** I want an overview by light hunger with a position recommendation.
 
@@ -58,6 +58,7 @@ Acceptance criteria:
   | below    | may stand further away   |
 
 - Columns: plant, zone, lux demand (locale-formatted), position. The thresholds are defaults and adjustable.
+- The four thresholds are an account setting in Account > Settings (`account.update_profile`, `positionThresholds`): four whole lux values from 1 to 200,000, strictly descending; not set means the defaults of the table (assumption, starting values, decided by the PO). The light overview uses the thresholds of the asking account only (P-04); an invalid input is refused with the field named (P-10).
 
 ### US-LIC-04 · Look up the classification rules · ✅ (prototype ✅)
 
@@ -89,5 +90,5 @@ Acceptance criteria:
 | FR-LIC-02 | A specimen's light zone overrides that of the species (cutting → cutting light).                                                                                                   | 🟨 In the distribution (LIC-02) and on the card (BES-06), one shared rule: status cutting, zone of the location, else the species zone; an own zone field on the specimen follows (BES-04) |
 | FR-LIC-03 | If the lux demand is missing, the species drops out of the light overview and appears in "Hints".                                                                                  | ⬜                                                                                                                                                                                         |
 | FR-LIC-04 | Distribution and wishlist prioritization use the same counting (specimen level, only zones 2–4).                                                                                   | 🟨 Counting as a reusable function (LIC-02); the wishlist (WUN) does not use it yet                                                                                                        |
-| FR-LIC-05 | The light overview (species view) uses the species' lux demand also for cuttings; the distribution (specimen view) respects the override. Intended and explained in the interface. | ⬜                                                                                                                                                                                         |
+| FR-LIC-05 | The light overview (species view) uses the species' lux demand also for cuttings; the distribution (specimen view) respects the override. Intended and explained in the interface. | 🟨 Thresholds are an account setting (LIC-03); the cutting rule and its explanation in the interface are open                                                                              |
 | FR-LIC-06 | A measured light intensity per lamp (phone app) can be stored per device (US-EQU-03). If it is missing, the zone's value applies, marked as "not measured".                        | 🟨                                                                                                                                                                                         |

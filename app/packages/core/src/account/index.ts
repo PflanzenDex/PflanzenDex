@@ -6,6 +6,7 @@ export {
   DISPLAY_NAME_LIMITS,
   NOTIFICATION_OCCASIONS,
   REPLENISH_BUFFER_LIMITS,
+  POSITION_THRESHOLD_LIMITS,
 } from "./profile";
 export type {
   AccountProfile,

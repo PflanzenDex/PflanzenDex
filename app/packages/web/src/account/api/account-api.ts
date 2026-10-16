@@ -38,6 +38,8 @@ export type AccountProfile = {
   replenishBuffer: number;
   /** The collection counts in the rarity in PflanzenDex (US-POK-14); off until switched on. */
   rarityConsent: boolean;
+  /** Lux lower bounds of the four closest positions in the light overview (US-LIC-03); `null` = standard values. */
+  positionThresholds: number[] | null;
 };
 
 type Environment = Record<string, string | undefined>;

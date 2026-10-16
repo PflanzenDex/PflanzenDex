@@ -8,6 +8,7 @@ const PROFILE = {
   everythingPrivate: true,
   noRecommendations: false,
   replenishBuffer: 2,
+  positionThresholds: null,
   rarityConsent: false,
   notifications: {
     phase: true,

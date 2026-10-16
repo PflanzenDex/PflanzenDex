@@ -26,6 +26,7 @@ const PROFILE = {
   notifications: NOTIFICATIONS,
   replenishBuffer: 2,
   rarityConsent: false,
+  positionThresholds: null,
 };
 
 async function newAccount(withData = true): Promise<string> {
@@ -65,6 +66,7 @@ describe("US-ACC-02 · profile in the database", () => {
       notifications: {},
       replenishBuffer: 2,
       rarityConsent: false,
+      positionThresholds: null,
     });
   });
 
@@ -199,5 +201,24 @@ describe("US-POK-14 · the rarity consent in the database", () => {
       c.query("select account_id from account_data where rarity_consent"),
     );
     expect(direct.rows).toEqual([]);
+  });
+});
+
+describe("US-LIC-03 · position thresholds in the database", () => {
+  it("are null for a new account, saved as a list, kept by null, and invisible to other accounts (P-04)", async () => {
+    const a = await newAccount();
+    const b = await newAccount();
+    expect((await profiles.find(a))?.positionThresholds).toBeNull();
+    const own = [60_000, 20_000, 9_000, 3_000];
+    expect(
+      (await profiles.update(a, { ...PROFILE, positionThresholds: own }))?.positionThresholds,
+    ).toEqual(own);
+    const kept = await profiles.update(a, {
+      ...PROFILE,
+      positionThresholds: null,
+      timeZone: "UTC",
+    });
+    expect(kept).toMatchObject({ positionThresholds: own, timeZone: "UTC" });
+    expect((await profiles.find(b))?.positionThresholds).toBeNull();
   });
 });

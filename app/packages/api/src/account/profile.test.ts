@@ -80,6 +80,7 @@ describe("US-ACC-02 · GET /account/profile", () => {
       },
       replenishBuffer: 2,
       rarityConsent: false,
+      positionThresholds: null,
     });
   });
 
