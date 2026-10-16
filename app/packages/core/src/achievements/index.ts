@@ -14,3 +14,10 @@ export type {
   AchievementSpecimenFact,
   AchievementTreatmentFact,
 } from "./types";
+export {
+  DEFAULT_ACHIEVEMENT_SETTINGS,
+  achievementsSetCalmMode,
+  readAchievementSettings,
+  showsAchievements,
+} from "./settings/settings";
+export type { AchievementSettings, AchievementSettingsStore } from "./settings/settings";

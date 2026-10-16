@@ -37,6 +37,7 @@ function fakeServer(
     "fetch",
     vi.fn<typeof fetch>(async (url, init) => {
       const path = new URL(String(url)).pathname;
+      if (path === "/achievements/settings") return response(200, { calmMode: false });
       if (path !== "/account/profile") return response(404, {});
       if (init?.method === "PUT") {
         const body = JSON.parse(String(init.body)) as Record<string, unknown>;
@@ -408,5 +409,14 @@ describe("US-WUN-02 settings page: buffer of the wishlist warning", () => {
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     await screen.findByRole("alert");
     expect(input.getAttribute("aria-invalid")).toBe("true");
+  });
+});
+
+describe("US-ACH-08 calm mode on the profile page", () => {
+  it("US-ACH-08 the profile offers the calm mode switch, off by default", async () => {
+    fakeServer();
+    show();
+    const box = await screen.findByRole<HTMLInputElement>("checkbox", { name: "Ruhemodus" });
+    expect(box.checked).toBe(false);
   });
 });

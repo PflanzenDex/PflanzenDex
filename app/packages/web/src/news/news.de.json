@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Ruhemodus: In deinen Einstellungen gibt es jetzt einen Schalter, der künftige Erfolge, Glückwünsche und Rückblicke ausblendet. Er ist standardmäßig aus. Rang und Meilensteine im Pokédex ändern sich nicht.",
     "Geräte mit Freunden teilen: Unter „Equipment“ kannst du je Gerät festlegen, ob Freunde es sehen, und eine Erfahrung dazuschreiben. Freunde sehen nur Art, Name, Modell, Lichtstufe und diese Erfahrung, nie Preis, Kaufort, Seriennummer, Standort oder Kaufdatum, und nur auf der Sammlungsseite des Freundes, nicht im Feed. Standardmäßig ist alles privat; „Alles privat“ und das Beenden einer Freundschaft blenden es sofort aus.",
     "Kosten: Unter „Equipment“ siehst du die Summe deiner Anschaffungskosten je Art und insgesamt, nur über das Equipment mit eingetragenem Preis. Es steht dabei, für wie viele Teile der Preis fehlt; ohne bekannten Preis steht „unbekannt“ statt 0. Strom- und Ersatzkosten werden nicht geschätzt.",
     "Equipment-Wünsche: Unter „Equipment“ kannst du Wünsche für Geräte und Verbrauchsmaterial erfassen, getrennt von deinen Pflanzenwünschen. Mit „Gekauft“ öffnet sich das Formular für das Equipment, Name, Produkt-ID, Art und Preis sind schon ausgefüllt. Ohne Preis bleibt er unbekannt; Puffer und Zonen-Hinweise der Pflanzenwünsche ändern sich nicht.",
