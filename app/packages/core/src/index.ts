@@ -3,6 +3,7 @@
 export * from "./kernel";
 export * from "./media";
 export * from "./account";
+export * from "./privacy";
 export * from "./catalog";
 export * from "./light";
 export * from "./collection";

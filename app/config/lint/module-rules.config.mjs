@@ -53,3 +53,14 @@ export const LEGACY_TABLE_NAMES = {
   exemplar: "specimen",
   messung: "measurement",
 };
+
+// Global reference tables (AB-10, ADR 0003 O-2): tables without an account id (justified in db/src/kernel/schema.ts) that
+// other modules may point to with a plain foreign key on `(id)`, only from a module that may depend on the owner, with
+// `on delete restrict` (P-10). Every entry needs a reason; the list grows only through review. Only `species`.
+export const GLOBAL_REFERENCE_TABLES = {
+  species: {
+    owner: "catalog",
+    reason:
+      "The shared species catalog (E-02) has no account_id by design, so the tenant-safe (account_id, id) form cannot exist; Specimens and later wishes point to a species, and the database must refuse unknown species and the deletion of species in use.",
+  },
+};
