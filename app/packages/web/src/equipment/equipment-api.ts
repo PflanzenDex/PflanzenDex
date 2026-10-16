@@ -55,7 +55,13 @@ export async function loadEquipment(
   api: string,
   token: string,
   fetchFn: typeof fetch = fetch,
+  /** `sharing: false` while "social" is off (US-DEV-06): the sharing settings are not asked for, the route would answer 404. */
+  options: { sharing?: boolean } = {},
 ): Promise<Response<EquipmentData>> {
+  const ownSharing =
+    options.sharing === false
+      ? Promise.resolve({ ok: true as const, value: { shared: [] } })
+      : loadEquipmentSharing(api, token, fetchFn);
   const [list, zones, light, sensors, needs, wishes, sharing] = await Promise.all([
     call<{ equipment: EquipmentRow[] }>(fetchFn, `${api}/equipment`, token),
     call<ZoneEquipmentView>(fetchFn, `${api}/equipment/zones`, token),
@@ -63,7 +69,7 @@ export async function loadEquipment(
     call<SensorView>(fetchFn, `${api}/equipment/sensors`, token),
     call<{ needs: Need[] }>(fetchFn, `${api}/equipment/needs`, token),
     loadEquipmentWishes(api, token, fetchFn),
-    loadEquipmentSharing(api, token, fetchFn),
+    ownSharing,
   ]);
   if (!list.ok) return list;
   if (!zones.ok) return zones;

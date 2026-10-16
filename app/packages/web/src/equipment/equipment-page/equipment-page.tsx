@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
+import { LoadFrame, useFeature, useInvalidate, useWriteAction } from "../../kernel";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { EquipmentForm } from "../equipment-form/equipment-form";
 import {
@@ -42,6 +42,7 @@ function Card(props: {
   sharing: SharingActions;
 }) {
   const { item, zone } = props;
+  const social = useFeature("social");
   const maker = [item.manufacturer, item.model].filter(Boolean).join(" ");
   const price =
     item.priceEur === null ? UNKNOWN : `${item.priceEur.toFixed(2).replace(".", ",")} €`;
@@ -71,7 +72,7 @@ function Card(props: {
       {item.note ? <p className="mt-2 break-words text-sm">{item.note}</p> : null}
       <Supply item={item} actions={props.supply} />
       <Maintenance item={item} actions={props.maintenance} />
-      <Sharing item={item} actions={props.sharing} />
+      {social && <Sharing item={item} actions={props.sharing} />}
     </li>
   );
 }
@@ -155,7 +156,11 @@ function ReportCaption({ host, count }: { host: Host | undefined; count: number 
 export function EquipmentPage(props: { api: string; token: Token; host?: Host }) {
   const { api, token, host } = props;
   const reload = useInvalidate(KEY);
-  const load = useCallback((t: string) => loadEquipment(api, t), [api]);
+  const social = useFeature("social");
+  const load = useCallback(
+    (t: string) => loadEquipment(api, t, fetch, { sharing: social }),
+    [api, social],
+  );
   return (
     <div className={host ? "min-w-0" : "rounded-2xl border border-border bg-card px-4 py-6 md:p-7"}>
       <section aria-labelledby="equipment-title" className="flex min-w-0 flex-col gap-3">

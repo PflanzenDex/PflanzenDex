@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useFeature } from "@/kernel";
 import { Link, useLocation } from "react-router";
 import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
 import { useSectionAnchor } from "@/components/routing/areas/shared/area-section/use-section-anchor";
@@ -92,10 +93,13 @@ function AchievementsSection(props: { api: string; token: Token }) {
 /** Calm mode hides the entry and the section of the achievements altogether (US-ACH-08). */
 function useVisibleSections(api: string, token: Token) {
   const achievements = useAchievementsVisible(api, token);
+  const ai = useFeature("ai");
   const sections = SECTIONS.filter(
-    (s) => achievements || s.anchor !== ACCOUNT_SECTIONS.achievements,
+    (s) =>
+      (achievements || s.anchor !== ACCOUNT_SECTIONS.achievements) &&
+      (ai || s.anchor !== ACCOUNT_SECTIONS.aiClients),
   );
-  return { sections, achievements };
+  return { sections, achievements, ai };
 }
 
 /**
@@ -115,7 +119,7 @@ export function AccountArea(props: {
   onEverywhereSignOut: () => void;
 }) {
   useSectionAnchor(NAMES);
-  const { sections, achievements } = useVisibleSections(props.api, props.token);
+  const { sections, achievements, ai } = useVisibleSections(props.api, props.token);
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <h1 className="text-2xl font-semibold">Konto</h1>
@@ -143,13 +147,15 @@ export function AccountArea(props: {
           >
             <RemindersSection api={props.api} token={props.token} />
           </AreaSection>
-          <AreaSection
-            anchor={ACCOUNT_SECTIONS.aiClients}
-            title="KI-Clients"
-            loading="KI-Clients werden geladen …"
-          >
-            <AiSection api={props.api} token={props.token} />
-          </AreaSection>
+          {ai && (
+            <AreaSection
+              anchor={ACCOUNT_SECTIONS.aiClients}
+              title="KI-Clients"
+              loading="KI-Clients werden geladen …"
+            >
+              <AiSection api={props.api} token={props.token} />
+            </AreaSection>
+          )}
           <AreaSection
             anchor={ACCOUNT_SECTIONS.measured}
             title="Was wird gemessen?"

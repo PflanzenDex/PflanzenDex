@@ -1,11 +1,10 @@
-import type { ComponentType } from "react";
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router";
 import type { Species, Specimen } from "@pflanzendex/core";
-import { OperatorPage, useSession, type State } from "./account";
+import { useSession, type State } from "./account";
 import { AchievementNewsBanner } from "@/components/routing/areas/shared/lazy-news-banner/lazy-news-banner";
 import { CareProfileSection } from "./collection";
-import { ReviewPage, SpeciesPage } from "./catalog";
-import { FriendCollectionPage, FriendsPage } from "./social";
+import { SpeciesPage } from "./catalog";
+import { FriendCollectionPage } from "./social";
 import { ExchangePage } from "./swap";
 import type { WishToPlant } from "./wishlist";
 import { StartPage } from "./shell";
@@ -17,6 +16,7 @@ import {
   DiscoverArea,
   TodayArea,
 } from "@/components/routing/areas/shared/lazy-areas";
+import { simpleRoutes } from "@/components/routing/areas/shared/simple-routes/simple-routes";
 import { legacyRoutes } from "@/components/routing/legacy-routes/legacy-routes";
 import {
   EXCHANGE_PATH,
@@ -27,12 +27,6 @@ import {
 } from "./components/shared/navigation/nav-model/navigation/navigation";
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
-/** The views that need nothing but the API address and the token. */
-const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Token }>>> = {
-  friends: FriendsPage,
-  review: ReviewPage,
-  operator: OperatorPage,
-};
 /** A friend's shared collection has its own address; the friendship id comes from it (US-SOZ-07). */
 function FriendCollectionRoute(props: { api: string; token: Token }) {
   const { friendId } = useParams();
@@ -63,32 +57,6 @@ function SpeciesProfileRoute(props: { api: string; token: Token; onChoose: (s: S
       profileSection={careProfile(props.api, props.token)}
     />
   );
-}
-
-/** Shown on the start page when a role-bound address is opened without the role (P-10). */
-const NO_ACCESS: Partial<Record<View, string>> = {
-  review: "Die Prüfliste ist nur für Prüfende und den Betreiber sichtbar.",
-  operator: "Der Betreiberbereich ist nur für den Betreiber sichtbar.",
-};
-
-/** One route per page that needs only the API address and the token; role-bound ones redirect without the role (P-10). */
-function simpleRoutes(api: string, token: Token, roles: Partial<Record<View, boolean>>) {
-  return (Object.keys(SIMPLE_VIEWS) as View[]).map((v) => {
-    const Simple = SIMPLE_VIEWS[v];
-    return Simple ? (
-      <Route
-        key={v}
-        path={PATHS[v]}
-        element={
-          roles[v] === false ? (
-            <Navigate to={PATHS.start} replace state={{ hint: NO_ACCESS[v] }} />
-          ) : (
-            <Simple api={api} token={token} />
-          )
-        }
-      />
-    ) : null;
-  });
 }
 
 type HandOver = {
@@ -143,6 +111,14 @@ function handOverRoutes(api: string, token: Token, h: HandOver, open: (id: strin
   ];
 }
 
+/** What the account may open: the role-bound views and, while "social" is on, "Freunde" (US-DEV-06). */
+const rolesOf = (account: SignedIn): Partial<Record<View, boolean>> => ({
+  review: account.reviewer === true,
+  operator: account.operator === true,
+  friends: account.features?.social !== false,
+});
+
+/** "Freunde" and the exchange have routes only while "social" is on for the account (US-DEV-06); otherwise the address leads to the start page without a hint. */
 export function AppRoutes(props: {
   api: string;
   session: ReturnType<typeof useSession>;
@@ -153,10 +129,8 @@ export function AppRoutes(props: {
   handOver: HandOver;
 }) {
   const { api, session: s, account, handOver: h } = props;
-  const roles: Partial<Record<View, boolean>> = {
-    review: account.reviewer === true,
-    operator: account.operator === true,
-  };
+  const roles = rolesOf(account);
+  const social = roles.friends !== false;
   const { pathname } = useLocation();
   return (
     <RouteBoundary resetKey={pathname}>
@@ -181,11 +155,15 @@ export function AppRoutes(props: {
             <StartPage api={api} token={s.token} accountId={account.id} onOpen={props.onOpen} />
           }
         />
-        <Route path={EXCHANGE_PATH} element={<ExchangePage api={api} token={s.token} />} />
-        <Route
-          path={`${PATHS.friends}/:friendId`}
-          element={<FriendCollectionRoute api={api} token={s.token} />}
-        />
+        {social && (
+          <Route path={EXCHANGE_PATH} element={<ExchangePage api={api} token={s.token} />} />
+        )}
+        {social && (
+          <Route
+            path={`${PATHS.friends}/:friendId`}
+            element={<FriendCollectionRoute api={api} token={s.token} />}
+          />
+        )}
         <Route
           path={PATHS.today}
           element={<TodayArea api={api} token={s.token} onOpen={props.onOpen} />}
