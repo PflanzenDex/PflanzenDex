@@ -9,9 +9,12 @@ export {
 } from "./build";
 export type { TaxonomyDependencies } from "./build";
 export { shortText } from "./enrich";
+export { IUCN_CATEGORIES } from "./types";
 export type {
   CatalogNames,
   GenusCount,
+  IucnCategory,
+  NatureRarity,
   Taxon,
   TaxonFailure,
   TaxonLineage,

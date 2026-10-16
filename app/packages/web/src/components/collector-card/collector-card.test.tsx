@@ -25,6 +25,7 @@ const card = (extra: Partial<Card> = {}): Card => ({
   family: "Moraceae",
   caughtDate: null,
   specimenCount: 0,
+  natureRarity: { iucn: null, occurrences: null, threatened: false },
   ...extra,
 });
 const show = (c: Card) => render(<CollectorCard card={c} />);
@@ -117,5 +118,70 @@ describe("US-QS-06 sources and licenses on the collector card (FR-POK-07)", () =
   it("US-QS-06 nothing from Wikipedia on the card: no attribution", () => {
     show(card({ summary: null, imageUrl: null, sourceUrl: null }));
     expect(screen.queryByText(/Wikipedia/)).toBeNull();
+  });
+});
+
+describe("US-POK-13 rarity in nature on the card", () => {
+  const src = {
+    url: "https://api.gbif.org/v1/species/42/iucnRedListCategory",
+    retrievedAt: "2026-10-16T10:00:00.000Z",
+  };
+
+  it("US-POK-13 says unknown when no source gave a value (P-08)", () => {
+    show(card());
+    expect(screen.getByText("In der Natur: Gefährdung unbekannt")).toBeTruthy();
+    expect(screen.getByText("In der Natur: Fundmeldungen unbekannt")).toBeTruthy();
+    expect(screen.queryByText(/Hinweis/)).toBeNull();
+  });
+
+  it("US-POK-13 labels category and occurrence count 'in der Natur' with source link and retrieval date", () => {
+    show(
+      card({
+        natureRarity: {
+          iucn: { category: "VU", ...src },
+          occurrences: {
+            count: 1231,
+            ...src,
+            url: "https://api.gbif.org/v1/occurrence/count?taxonKey=42",
+          },
+          threatened: true,
+        },
+      }),
+    );
+    expect(screen.getByText("In der Natur: gefährdet (VU)")).toBeTruthy();
+    expect(screen.getByText("In der Natur: 1.231 Fundmeldungen (GBIF)")).toBeTruthy();
+    const links = screen.getAllByRole("link", { name: /Quelle: GBIF, abgerufen 16\.10\.2026/ });
+    expect(links).toHaveLength(2);
+    expect(links[0]?.getAttribute("href")).toBe(src.url);
+  });
+
+  it("US-POK-13 shows a neutral note for a threatened species and none for a safe one", () => {
+    show(
+      card({
+        natureRarity: { iucn: { category: "LC", ...src }, occurrences: null, threatened: false },
+      }),
+    );
+    expect(screen.getByText("In der Natur: nicht gefährdet (LC)")).toBeTruthy();
+    expect(screen.queryByText(/Hinweis/)).toBeNull();
+    cleanup();
+    show(
+      card({
+        natureRarity: { iucn: { category: "EN", ...src }, occurrences: null, threatened: true },
+      }),
+    );
+    expect(screen.getByText("Hinweis: Diese Art gilt in der Natur als bedroht.")).toBeTruthy();
+  });
+
+  it("US-POK-13 does not link a source that is not https", () => {
+    show(
+      card({
+        natureRarity: {
+          iucn: { category: "LC", ...src, url: "javascript:alert(1)" },
+          occurrences: null,
+          threatened: false,
+        },
+      }),
+    );
+    expect(screen.queryByRole("link", { name: /GBIF, abgerufen/ })).toBeNull();
   });
 });

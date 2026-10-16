@@ -28,6 +28,17 @@ export interface GenusCount {
   readonly provenance: Provenance;
 }
 
+/** IUCN Red List categories shown in the app; any other value of a source is treated as unknown (P-08). */
+export const IUCN_CATEGORIES = ["LC", "NT", "VU", "EN", "CR", "EW", "EX", "DD"] as const;
+export type IucnCategory = (typeof IUCN_CATEGORIES)[number];
+
+/** Rarity in nature (US-POK-13): each value names its source and retrieval date; `null` = unknown, never estimated. */
+export interface NatureRarity {
+  readonly iucn: { readonly category: IucnCategory; readonly provenance: Provenance } | null;
+  /** GBIF occurrence records of the species; 0 counts as unknown. */
+  readonly occurrences: { readonly count: number; readonly provenance: Provenance } | null;
+}
+
 export interface Taxon {
   /** Name as the catalog writes it: the key of the row. */
   readonly latinName: string;
@@ -35,6 +46,7 @@ export interface Taxon {
   readonly text: TaxonText | null;
   /** Accepted species of the genus (GBIF); `null` also for a count of 0 (= unknown). */
   readonly genusSpeciesCount: GenusCount | null;
+  readonly natureRarity: NatureRarity;
 }
 
 export type FailureReason = Extract<

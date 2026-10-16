@@ -1,7 +1,25 @@
 // Collector cards (US-POK-01): one card per species of the taxonomy tree, caught or missing. "Caught" is derived live
 // from the ownership, never stored (P-01). Unknown values stay `null` and the interface shows "unbekannt" (P-08).
 import { SPECIES_POOR_MAX } from "../browse";
+import type { IucnCategory } from "../taxonomy";
 import type { CatchDate, CaughtSpecies } from "../types";
+
+/** Rarity in nature (US-POK-13): each value with the link to its source and the retrieval date; `null` = unknown. */
+export interface NatureRarityRow {
+  readonly iucn: {
+    readonly category: IucnCategory;
+    readonly url: string;
+    readonly retrievedAt: string;
+  } | null;
+  readonly occurrences: {
+    readonly count: number;
+    readonly url: string;
+    readonly retrievedAt: string;
+  } | null;
+}
+
+/** Categories that make the card say the species is threatened in the wild. */
+const THREATENED: readonly IucnCategory[] = ["VU", "EN", "CR", "EW"];
 
 /** One resolved species of the tree. */
 export interface TaxonCardRow {
@@ -16,6 +34,7 @@ export interface TaxonCardRow {
   readonly imageUrl: string | null;
   readonly pageUrl: string | null;
   readonly genusSpeciesCount: number | null;
+  readonly natureRarity: NatureRarityRow;
 }
 
 /** What the approved catalog says about a species of the tree; `null` means "unknown" (P-08). */
@@ -57,6 +76,11 @@ export interface CollectorCard {
   readonly order: string | null;
   readonly caughtDate: CatchDate | null;
   readonly specimenCount: number;
+  /**
+   * Rarity in nature (US-POK-13), shown as information only: never a sort key, filter, badge or reward. `threatened`
+   * (VU, EN, CR, EW) only drives a neutral note.
+   */
+  readonly natureRarity: NatureRarityRow & { readonly threatened: boolean };
 }
 
 /** "Birkenfeige (Zimmerlinde)" becomes "Birkenfeige". */
@@ -106,6 +130,10 @@ function cardOf(
     order: t.order,
     caughtDate: mine ? mine.caughtDate : null,
     specimenCount: mine ? mine.specimenCount : 0,
+    natureRarity: {
+      ...t.natureRarity,
+      threatened: t.natureRarity.iucn !== null && THREATENED.includes(t.natureRarity.iucn.category),
+    },
   };
 }
 

@@ -17,6 +17,7 @@ const row = (latinName: string, extra: Partial<TaxonCardRow> = {}): TaxonCardRow
   imageUrl: "https://upload.example/ficus.jpg",
   pageUrl: "https://de.wikipedia.org/wiki/Ficus",
   genusSpeciesCount: 800,
+  natureRarity: { iucn: null, occurrences: null },
   ...extra,
 });
 const facts = (latinName: string, extra: Partial<SpeciesFacts> = {}): SpeciesFacts => ({
@@ -161,5 +162,46 @@ describe("US-POK-01 collector cards", () => {
   it("US-POK-01 links the source of a card that has a text or image", () => {
     const [card] = collectorCards([row("Ficus benjamina")], [], []);
     expect(card?.sourceUrl).toBe("https://de.wikipedia.org/wiki/Ficus");
+  });
+});
+
+describe("US-POK-13 rarity in nature on the card", () => {
+  const source = { url: "https://api.gbif.org/v1/x", retrievedAt: "2026-10-16T10:00:00.000Z" };
+  const rarity = (category: "LC" | "VU" | "EW" | "DD") => ({
+    iucn: { category, ...source },
+    occurrences: { count: 1231, ...source },
+  });
+
+  it("US-POK-13 carries the values with their sources and flags only threatened categories", () => {
+    const cards = collectorCards(
+      [
+        row("Ficus a", { natureRarity: rarity("LC") }),
+        row("Ficus b", { natureRarity: rarity("VU") }),
+        row("Ficus c", { natureRarity: rarity("EW") }),
+        row("Ficus d", { natureRarity: rarity("DD") }),
+        row("Ficus e"),
+      ],
+      [],
+      [],
+    );
+    expect(cards.map((c) => c.natureRarity.threatened)).toEqual([false, true, true, false, false]);
+    expect(cards[0]?.natureRarity.iucn).toEqual({ category: "LC", ...source });
+    expect(cards[0]?.natureRarity.occurrences).toEqual({ count: 1231, ...source });
+    expect(cards[4]?.natureRarity).toMatchObject({ iucn: null, occurrences: null });
+  });
+
+  it("US-POK-13 does not change the tree order or the numbers (no sorting by rarity)", () => {
+    const withRarity = collectorCards(
+      [
+        row("Ficus a", { natureRarity: rarity("VU") }),
+        row("Ficus b", { natureRarity: rarity("LC") }),
+      ],
+      [],
+      [],
+    );
+    expect(withRarity.map((c) => [c.number, c.species])).toEqual([
+      [1, "Ficus a"],
+      [2, "Ficus b"],
+    ]);
   });
 });
