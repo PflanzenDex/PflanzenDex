@@ -29,6 +29,7 @@ import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
 import { achievementsRoutes } from "./achievements";
 import { discoverRoutes, discoverSourceFor } from "./discover";
 import { monitoringRoutes } from "./monitoring";
+import { exportRoutes } from "./privacy";
 import { aiAccessRoutes } from "./ai";
 import type { AppOptions } from "./app-options";
 import {
@@ -61,6 +62,7 @@ function bindAccount(
   app.use("/account", auth);
   app.use("/account/*", auth);
   app.route("/account", accountRoutes(pool, opt.access));
+  app.route("/account", exportRoutes(pool, opt.media?.store));
   for (const path of OPERATOR_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", operatorRoutes(pool, opt.clock));
   return auth;
@@ -123,6 +125,7 @@ export function createApp(opt: AppOptions = {}): Hono {
       cors({
         origin: opt.webOrigin,
         allowHeaders: ["Authorization", "Content-Type", "Idempotency-Key"],
+        exposeHeaders: ["Content-Disposition", "X-Missing-Photos"],
       }),
     );
   bindHealth(app, { pool: opt.pool, version, commit, storage: opt.media !== undefined });

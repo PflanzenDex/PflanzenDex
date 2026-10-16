@@ -45,7 +45,7 @@ Acceptance criteria:
 - Without a plant the start page shows a clear next action instead of an empty page.
 - Given an account whose plants are all archived, when it opens the start page, then it is a returning keeper: it gets the normal start page with "next plant" as the next action, never the onboarding for a new account (owner decision 2026-10-04). The onboarding is only for an account without active and without archived plants.
 
-### US-ACC-04 · Export data and delete account · ⬜ new
+### US-ACC-04 · Export data and delete account · 🟨 new
 
 As a **plant keeper** I want to be able to take my data with me or remove it completely.
 
@@ -54,6 +54,8 @@ Acceptance criteria:
 - Export of all own data (specimens, measurements, treatments, wishlist, equipment, swap and friend data) in an open format; photos as files. The export is reproducible (same data, same file).
 - Deleting the account removes all personal data, photos and sharing settings. Completed swaps remain with the swap partner with the stored display name, without any further connection.
 - Deleting requires a confirmation and names what is removed. Running swaps are canceled (`canceled`, see US-SOZ-10).
+
+State of implementation (export): `GET /account/export` answers a ZIP archive with `data.json` (every table row the keeper owns, read from the database catalog so a new table is included automatically; the guard test `privacy/tables.test.ts` fails for a table that is neither exported nor listed with a reason) and `photos/<name>` (measurement photos and stored wish images). The same data gives the same bytes (sorted keys and rows, fixed dates in the archive). Credentials (push endpoint and keys) and the operator's tables are left out; a photo the store no longer holds is listed with `file: null` and counted in the header `X-Missing-Photos` (P-10). Function groups that are switched off are exported all the same. Friendships and swaps appear with the keeper's own side. **Open:** deleting the account and the screens.
 
 ### US-ACC-05 · Access by invitation only (initial phase) · 🟨 new
 

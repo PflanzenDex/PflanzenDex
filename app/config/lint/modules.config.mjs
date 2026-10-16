@@ -5,6 +5,7 @@
 // new edge changes this file in the same PR, cycles are always an error (AB-8). `epics` maps epics to modules (report only).
 // Foreign keys across modules only tenant-safe as (account_id, id) on allowed dependencies (O-2), plus reference tables.
 import {
+  GLOBAL_REFERENCE_TABLES,
   KERNEL_GLOSSARY_WORDS,
   LEGACY_MIGRATIONS,
   LEGACY_TABLE_NAMES,
@@ -139,6 +140,14 @@ const MODULES = [
     ports: [],
   },
   {
+    // Export and deletion of all data of one account (US-ACC-04); reads the tables from the catalog, owns none.
+    name: "privacy",
+    epics: ["ACC"],
+    tables: [],
+    dependsOn: ["kernel", "media", "catalog"],
+    ports: ["AccountDataSource"],
+  },
+  {
     name: "discover",
     epics: ["ENT"],
     tables: ["proposal_entscheidung"],
@@ -175,17 +184,6 @@ const UNMODULED_FOLDERS = {};
 
 // Module-named folders that exist but do not meet the rules yet (ratchet, like the list above).
 const MODULE_FOLDERS_IN_TRANSITION = {};
-
-// Global reference tables (AB-10, ADR 0003 O-2): tables without an account id (justified in db/src/kernel/schema.ts) that
-// other modules may point to with a plain foreign key on `(id)`, only from a module that may depend on the owner, with
-// `on delete restrict` (P-10). Every entry needs a reason; the list grows only through review. Only `species`.
-const GLOBAL_REFERENCE_TABLES = {
-  species: {
-    owner: "catalog",
-    reason:
-      "The shared species catalog (E-02) has no account_id by design, so the tenant-safe (account_id, id) form cannot exist; Specimens and later wishes point to a species, and the database must refuse unknown species and the deletion of species in use.",
-  },
-};
 
 const KERNEL = "kernel";
 export const MODULE_CONFIG = {
