@@ -171,7 +171,7 @@ export function createApp(opt: AppOptions = {}): Hono {
     for (const path of POKEDEX_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", pokedexRoutes(opt.pool));
     app.route("/", discoverRoutes(opt.pool, auth, opt.zoneStock));
-    app.route("/", achievementsRoutes(opt.pool, auth));
+    app.route("/", achievementsRoutes(opt.pool, auth, opt.clock));
     app.route("/", monitoringRoutes(opt.pool, auth));
     for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
     app.route("/", careProfileRoutes(opt.pool));

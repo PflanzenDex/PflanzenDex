@@ -34,7 +34,7 @@ const profile = {
 };
 
 /** A server for the settings section; `status` is the answer to loading the profile, PUT returns what is sent. */
-function fakeServer(status = 200) {
+function fakeServer(status = 200, calmMode = false) {
   const puts: Record<string, unknown>[] = [];
   vi.stubGlobal(
     "fetch",
@@ -63,6 +63,14 @@ function fakeServer(status = 200) {
           measurementDays: 30,
         });
       if (path === "/reminders/subscriptions") return response(200, { subscriptions: [] });
+      if (path === "/achievements/settings") return response(200, { calmMode });
+      if (path === "/achievements")
+        return response(200, {
+          calmMode: false,
+          earnedCount: 0,
+          firstStep: { key: "first-measurement-photo.next", specimenId: null, specimenName: null },
+          groups: [],
+        });
       if (path === "/ai/connections") return response(200, { connections: [] });
       if (path === "/ai/drafts") return response(200, { drafts: [] });
       if (path === "/ai/tasks") return response(200, { clientConnected: false, tasks: [] });
@@ -109,16 +117,28 @@ describe("US-QS-14 Konto with its sections", () => {
     fakeServer();
     show();
     await screen.findByLabelText("Anzeigename");
+    await screen.findByRole("heading", { level: 2, name: "Erfolge" });
     expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
       "Konto",
     ]);
     expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
       "Profil",
       "Einstellungen",
+      "Erfolge",
       "Erinnerungen",
       "KI-Clients",
       "Was wird gemessen?",
     ]);
+  });
+
+  it("US-ACH-08 in calm mode the section Erfolge and its entry in the list are gone", async () => {
+    fakeServer(200, true);
+    show();
+    await screen.findByLabelText("Anzeigename");
+    await screen.findByRole("checkbox", { name: "Ruhemodus" });
+    expect(screen.queryByRole("heading", { level: 2, name: "Erfolge" })).toBeNull();
+    const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
+    expect(within(list).queryByRole("link", { name: "Erfolge" })).toBeNull();
   });
 
   it("US-QS-14 · US-ACC-01 the section Profil shows name, e-mail and both ways to sign out", async () => {
@@ -200,10 +220,12 @@ describe("US-QS-14 the address points at a section", () => {
     fakeServer();
     show();
     const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
+    await within(list).findByRole("link", { name: "Erfolge" });
     const links = within(list).getAllByRole("link");
     expect(links.map((l) => l.textContent)).toEqual([
       "Profil",
       "Einstellungen",
+      "Erfolge",
       "Erinnerungen",
       "KI-Clients",
       "Was wird gemessen?",

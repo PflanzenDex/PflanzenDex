@@ -29,7 +29,7 @@ Delimitation from the non-goals in `16`: no leaderboards, no rank comparison bet
 
 ## User stories
 
-### US-ACH-01 · Earn achievements for care and growth · 🟨 new
+### US-ACH-01 · Earn achievements for care and growth · ✅ new
 
 As a **plant keeper** I want to earn achievements for real successes in my collection, so that care feels rewarded and not only collecting.
 
@@ -46,9 +46,9 @@ Acceptance criteria:
 - Given the basis of an achievement is an archived specimen, when I look at my achievements, then it stays earned (archive keeps the event, P-10).
 - Given a criterion cannot be evaluated because data is missing (no measurements, no phase), when I look at the achievement, then it is open and says what is missing, never "failed" (P-08).
 - Achievements are **derived**, not stored; only the "seen" state is stored (US-ACH-03, FR-ACH-02).
-- Status: the criteria are pure functions in `core` over a plain facts value (module `achievements`, ADR 0014); reading the keeper's data into facts comes with the overview (US-ACH-02). Assumption, decided by the PO: "Cutting rooted" is the repot date of a cutting (US-BES-04); "through a dormancy phase" is a full dormancy period that began on or after the catch date and ended while the specimen was still with me (archive date bounds it); "12 months" is the same calendar day one year later.
+- Status: the criteria are pure functions in `core` over a plain facts value (module `achievements`, ADR 0014); the API reads the keeper's own data into facts (`api/src/achievements/facts.ts`) for the overview (US-ACH-02). Assumption, decided by the PO: "Cutting rooted" is the repot date of a cutting (US-BES-04); "through a dormancy phase" is a full dormancy period that began on or after the catch date and ended while the specimen was still with me (archive date bounds it); "12 months" is the same calendar day one year later.
 
-### US-ACH-02 · See my achievements and what comes next · ⬜ new
+### US-ACH-02 · See my achievements and what comes next · 🟨 new
 
 As a **plant keeper** I want one overview of earned and open achievements, so that I know what I could do next.
 
@@ -59,6 +59,7 @@ Acceptance criteria:
 - Order: earned newest first; open ones in the fixed order of the definitions (DM-ACH-01), not ranked by an invented "effort" (P-08).
 - No percentage of other users, no "rarer than x %", no total score (P-08, FR-ACH-04).
 - Given I have no data yet, then the overview names the first step ("Record a measurement with a photo") instead of an empty list.
+- Status: the overview is the section "Erfolge" of the destination "Konto" (`/account#erfolge`), hidden in calm mode (US-ACH-08). Assumptions, decided by the PO: the specimen link leads to the Sammlung (there is no deep link to one specimen yet); the group "Collecting" links to the Pokédex instead of repeating rank and milestones; a course is the set of treatments with one course id (a single treatment is no course); the collection is read one request per specimen (starting value, small collections).
 
 ### US-ACH-03 · A quiet moment of success · ⬜ new
 

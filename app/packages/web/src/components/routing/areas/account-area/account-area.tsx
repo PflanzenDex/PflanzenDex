@@ -4,6 +4,7 @@ import { AreaSection } from "@/components/routing/areas/shared/area-section/area
 import { useSectionAnchor } from "@/components/routing/areas/shared/area-section/use-section-anchor";
 import { RemindersSection } from "@/monitoring";
 import { AiSection } from "@/ai";
+import { AchievementsOverviewSection, useAchievementsVisible } from "@/achievements";
 import { AccountView, MeasuredView, SettingsPage } from "@/account";
 import type { Account } from "@/account";
 import { Button } from "@/components/ui/button/button";
@@ -19,6 +20,7 @@ type Token = () => Promise<string | undefined>;
 const SECTIONS = [
   { anchor: ACCOUNT_SECTIONS.profile, title: "Profil" },
   { anchor: ACCOUNT_SECTIONS.settings, title: "Einstellungen" },
+  { anchor: ACCOUNT_SECTIONS.achievements, title: "Erfolge" },
   { anchor: ACCOUNT_SECTIONS.reminders, title: "Erinnerungen" },
   { anchor: ACCOUNT_SECTIONS.aiClients, title: "KI-Clients" },
   { anchor: ACCOUNT_SECTIONS.measured, title: "Was wird gemessen?" },
@@ -29,13 +31,13 @@ const LINK =
   "flex min-h-11 items-center rounded-lg px-3 text-[15px] font-medium text-foreground hover:bg-muted";
 
 /** The in-page list of the sections for wide screens: the current one (anchor, "Profil" without) is marked by colour and `aria-current`. */
-function SectionNav() {
+function SectionNav({ sections }: { sections: readonly (typeof SECTIONS)[number][] }) {
   const { hash } = useLocation();
   const current = NAMES[hash.slice(1)] ? hash.slice(1) : ACCOUNT_SECTIONS.profile;
   return (
     <nav aria-label="Abschnitte von Konto" className="hidden xl:block">
       <ul className="sticky top-6 m-0 flex w-[200px] list-none flex-col gap-1 p-0">
-        {SECTIONS.map((s) => (
+        {sections.map((s) => (
           <li key={s.anchor}>
             <Link
               to={{ pathname: PATHS.account, hash: s.anchor }}
@@ -74,6 +76,28 @@ function SettingsSection(props: { api: string; token: Token }) {
   );
 }
 
+/** The overview of the achievements (US-ACH-02) as a section of "Konto". */
+function AchievementsSection(props: { api: string; token: Token }) {
+  return (
+    <AreaSection
+      anchor={ACCOUNT_SECTIONS.achievements}
+      title="Erfolge"
+      loading="Erfolge werden geladen …"
+    >
+      <AchievementsOverviewSection api={props.api} token={props.token} />
+    </AreaSection>
+  );
+}
+
+/** Calm mode hides the entry and the section of the achievements altogether (US-ACH-08). */
+function useVisibleSections(api: string, token: Token) {
+  const achievements = useAchievementsVisible(api, token);
+  const sections = SECTIONS.filter(
+    (s) => achievements || s.anchor !== ACCOUNT_SECTIONS.achievements,
+  );
+  return { sections, achievements };
+}
+
 /**
  * The destination "Konto" (US-QS-14): the profile with the ways to sign out (US-ACC-01) and the settings (US-ACC-02)
  * as sections one below the other, with a list of the sections beside them on wide screens. The app wires the modules;
@@ -91,11 +115,12 @@ export function AccountArea(props: {
   onEverywhereSignOut: () => void;
 }) {
   useSectionAnchor(NAMES);
+  const { sections, achievements } = useVisibleSections(props.api, props.token);
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <h1 className="text-2xl font-semibold">Konto</h1>
       <div className="flex min-w-0 gap-8">
-        <SectionNav />
+        <SectionNav sections={sections} />
         <div className="flex min-w-0 flex-1 flex-col gap-8">
           <AreaSection
             anchor={ACCOUNT_SECTIONS.profile}
@@ -110,6 +135,7 @@ export function AccountArea(props: {
             />
           </AreaSection>
           <SettingsSection api={props.api} token={props.token} />
+          {achievements && <AchievementsSection api={props.api} token={props.token} />}
           <AreaSection
             anchor={ACCOUNT_SECTIONS.reminders}
             title="Erinnerungen"

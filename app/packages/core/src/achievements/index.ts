@@ -1,5 +1,7 @@
 // Public interface of the module `achievements` (ADR 0014, epic ACH): achievements derived from the keeper's own data.
 export { evaluateAchievements } from "./evaluate/evaluate";
+export { achievementOverview } from "./evaluate/overview";
+export type { AchievementOverview, OverviewGroup } from "./evaluate/overview";
 export { ACHIEVEMENT_DEFINITIONS } from "./evaluate/definitions";
 export { ACHIEVEMENT_GROUPS, ACHIEVEMENT_IDS, ACHIEVEMENT_LIMITS } from "./types";
 export type {

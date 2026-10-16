@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
 import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 import { errorText } from "@/lib/error-text";
-import { LoadFrame, SIGN_IN, type ApiError } from "../../kernel";
+import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../../kernel";
 import {
   loadAchievementSettings,
   setCalmMode,
@@ -20,6 +20,7 @@ function CalmModeSwitch(props: { api: string; token: Token; settings: Achievemen
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const busy = useRef(false);
+  const refresh = useInvalidate(["achievements"]);
 
   const change = async (next: boolean) => {
     if (busy.current) return;
@@ -30,6 +31,7 @@ function CalmModeSwitch(props: { api: string; token: Token; settings: Achievemen
     setError(r.ok ? null : r.error);
     if (!r.ok) return setMessage(null);
     setCalm(r.value.calmMode);
+    refresh();
     setMessage(r.value.calmMode ? "Ruhemodus ist an." : "Ruhemodus ist aus.");
   };
 
