@@ -1,2 +1,4 @@
-// Public interface of the module `achievements` (ADR 0014): the switch for calm mode (US-ACH-08).
+// Public interface of the module `achievements` (ADR 0014): calm mode switch (US-ACH-08), overview (US-ACH-02).
 export { CalmModeSection } from "./calm-mode/calm-mode";
+export { useAchievementsVisible } from "./calm-mode/use-achievements-visible";
+export { AchievementsOverviewSection } from "./overview/overview";

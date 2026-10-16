@@ -85,6 +85,7 @@ export const LEGACY_SETTINGS_PATH = "/settings";
 export const ACCOUNT_SECTIONS = {
   profile: "profil",
   settings: "einstellungen",
+  achievements: "erfolge",
   reminders: "erinnerungen",
   aiClients: "ki-clients",
   measured: "gemessen",

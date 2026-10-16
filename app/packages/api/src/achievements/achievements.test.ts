@@ -73,3 +73,41 @@ describe("US-ACH-08 calm mode through the API", () => {
     expect((await settings(subA)).body).toEqual({ calmMode: false });
   });
 });
+
+describe("US-ACH-02 overview through the API", () => {
+  const overview = (sub: string | null, zone = "Europe/Berlin") =>
+    call(sub, "GET", `/achievements?timeZone=${encodeURIComponent(zone)}`);
+
+  it("US-ACH-02 without a token: 401; without a valid time zone: 400", async () => {
+    expect((await overview(null)).status).toBe(401);
+    const bad = await overview(subA, "Mars/Base");
+    expect(bad.status).toBe(400);
+    expect(bad.body["error"].code).toBe("input.invalid");
+  });
+
+  it("US-ACH-02 a new account sees every achievement open and the first step named", async () => {
+    const r = await overview(subA);
+    expect(r.status).toBe(200);
+    expect(r.body["calmMode"]).toBe(false);
+    expect(r.body["earnedCount"]).toBe(0);
+    expect(r.body["firstStep"]).toEqual({
+      key: "first-measurement-photo.next",
+      specimenId: null,
+      specimenName: null,
+    });
+    expect(r.body["groups"].map((g: { group: string }) => g.group)).toEqual([
+      "care",
+      "growth",
+      "swapping",
+      "collecting",
+    ]);
+  });
+
+  it("US-ACH-08 in calm mode the overview is hidden, for that account only", async () => {
+    await setCalm(subB, true);
+    expect((await overview(subB)).body).toEqual({ calmMode: true });
+    expect((await overview(subA)).body["calmMode"]).toBe(false);
+    await setCalm(subB, false);
+    expect((await overview(subB)).body["calmMode"]).toBe(false);
+  });
+});
