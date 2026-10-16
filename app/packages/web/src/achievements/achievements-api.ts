@@ -98,3 +98,27 @@ export async function markSeen(
   });
   return r.ok ? { ok: true, value: r.value as { seen: string[] } } : r;
 }
+
+/** The growth moment of a measurement (US-ACH-05); the same shape the API returns. */
+export type GrowthMoment =
+  | { kind: "unknown" }
+  | { kind: "none" }
+  | {
+      kind: "moment";
+      since: string;
+      growth: number;
+      ratePerYear: number;
+      record: { ratePerYear: number } | null;
+    };
+export type GrowthAnswer =
+  { calmMode: true } | { calmMode: false; latest: GrowthMoment; records: string[] };
+
+/** Growth moment and personal records of a specimen from its own measurements (US-ACH-05). */
+export function loadGrowth(
+  api: string,
+  token: string,
+  specimenId: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<GrowthAnswer>> {
+  return call<GrowthAnswer>(fetchFn, `${api}/achievements/growth/${specimenId}`, token);
+}

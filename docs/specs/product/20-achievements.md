@@ -88,7 +88,7 @@ Acceptance criteria:
 - Given I pause (holiday, `Dormancy` of all specimens, or an explicit pause of up to 4 weeks, assumption), then the weeks of the pause are neutral.
 - The rhythm counts only tasks that exist because of the plants' needs. A task created only to be ticked off earns nothing: the rhythm never rewards doing more than due (watering earlier than the interval does not count more, FR-ACH-05).
 
-### US-ACH-05 · Personal records and growth moments · ⬜ new
+### US-ACH-05 · Personal records and growth moments · ✅ new
 
 As a **plant keeper** I want to see when a plant beats its own best, so that growth becomes a visible success.
 
@@ -99,6 +99,7 @@ Acceptance criteria:
 - Given fewer than 2 measurements exist or they span less than 90 days, then the specimen shows "unknown", not a record (P-08).
 - The comparison is always against the specimen's own history, never against other specimens' averages or other users (P-08).
 - A growth moment appears on the measurement result and in the specimen's history (US-WAC-05); it is not repeated every visit.
+- Status: the logic is `growthMoments` in `core` (module `achievements`), the API answers `GET /achievements/growth/:specimenId` (`{ calmMode: true }` in calm mode), the Measure view shows the moment and marks records. Nothing is stored (FR-ACH-02). Assumptions, decided by the PO: the yearly rate is the rate from the first measurement to the measurement in question (cm/year), so every measurement has one rate; a record needs an earlier healthy rate to beat (the first usable rate is a growth moment, not a record); a growth moment also needs real growth since the first measurement (no growth, no moment); the trend "slower" is the one of US-WAC-03 on the measurements up to that point; the moment shows right after a measurement was saved on the Measure view, the history marks the measurements that set a record (a quiet text mark, derived on every visit, no pop-up); unknown shows the text "unknown" with what is needed.
 
 ### US-ACH-06 · Anniversaries with the plant · ⬜ new
 

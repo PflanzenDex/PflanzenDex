@@ -9,6 +9,8 @@ import { QUALITY_NAME, dateText, valueText } from "../../shared/text";
 /** The measurements of a specimen, newest first. Without a measurement the list says what to do (P-09). */
 export function MeasurementList(props: {
   measurements: readonly MeasurementRow[];
+  /** Ids of the measurements that set a personal record of the specimen (US-ACH-05); none in calm mode. */
+  records?: ReadonlySet<string> | undefined;
   /** What the photos need to be loaded privately (P-05). */
   photo: { api: string; token: () => Promise<string | undefined>; specimenId: string };
   /** Reloads the course after a photo was saved. */
@@ -38,6 +40,11 @@ export function MeasurementList(props: {
                   {valueText(m.value)} · {dateText(m.date)}
                 </h3>
                 <p className="text-muted-foreground">{QUALITY_NAME[m.quality]}</p>
+                {props.records?.has(m.id) && (
+                  <p className="text-sm">
+                    Persönlicher Rekord: schnellstes Wachstum dieses Exemplars bis hier.
+                  </p>
+                )}
                 {m.note && <p className="text-muted-foreground">{m.note}</p>}
                 {m.photo && (
                   <MeasurementPhoto {...props.photo} measurementId={m.id} date={m.date} />
