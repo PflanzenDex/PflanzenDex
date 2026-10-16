@@ -24,7 +24,7 @@ export async function befriend(admin: Pool, a: Person, b: Person) {
 }
 
 export const friendshipsOf = async (admin: Pool, account: string) =>
-  (await admin.query("select 1 from friendship where account_id = $1", [account])).rowCount ?? 0;
+  (await admin.query("select 1 from friendship where account_id = $1", [account])).rows.length;
 
 /** Both sides of one swap: `giver` offers, `recipient` asks. */
 export async function createSwap(
@@ -87,7 +87,7 @@ export async function createCatalogContributions(
 
 /** What is left of the two contributions: the case of the shared one (creator and status) and the row counts. */
 export async function catalogContributions(admin: Pool, ids: { shared: string; proposal: string }) {
-  const count = async (sql: string, id: string) => (await admin.query(sql, [id])).rowCount ?? 0;
+  const count = async (sql: string, id: string) => (await admin.query(sql, [id])).rows.length;
   return {
     sharedCase: (
       await admin.query("select account_id, status from review_case where object_id = $1", [
@@ -113,4 +113,10 @@ export async function removeCatalogContributions(admin: Pool, ids: string[], acc
   } finally {
     c.release();
   }
+}
+
+/** Gives the account's measurement and wish a stored photo each, so the export has files to name. */
+export async function attachPhotos(admin: Pool, account: string, names: [string, string]) {
+  await admin.query("update measurement set photo = $2 where account_id = $1", [account, names[0]]);
+  await admin.query("update wish set image_object = $2 where account_id = $1", [account, names[1]]);
 }

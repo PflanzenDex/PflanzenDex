@@ -8,6 +8,11 @@ import {
   openOwnerPool,
 } from "../../kernel/index.ts";
 import { FIXTURES, createFixtureSpeciesAt } from "../../fixtures.ts";
+import {
+  attachPhotos,
+  createCatalogContributions,
+  removeCatalogContributions,
+} from "../../erasure-fixtures.ts";
 import { AccountDataPostgres } from "./data-export.ts";
 import { accountTables, NOT_EXPORTED } from "./tables.ts";
 
@@ -15,6 +20,8 @@ let pool: Pool;
 let admin: Pool;
 const mine = randomUUID();
 const other = randomUUID();
+const shared = randomUUID();
+const proposal = randomUUID();
 
 beforeAll(async () => {
   pool = openOwnerPool();
@@ -24,9 +31,11 @@ beforeAll(async () => {
   for (const id of [mine, other]) await admin.query("insert into account (id) values ($1)", [id]);
   await fillAccountWithFixtures(pool, FIXTURES, mine);
   await fillAccountWithFixtures(pool, FIXTURES, other);
+  await attachPhotos(admin, mine, ["m-photo.jpg", "w-photo.jpg"]);
+  await createCatalogContributions(admin, mine, { shared, proposal });
 });
 afterAll(async () => {
-  await admin.query("delete from account where id = any($1)", [[mine, other]]);
+  await removeCatalogContributions(admin, [shared, proposal], [mine, other]);
   await admin.end();
   await pool.end();
 });
@@ -57,5 +66,17 @@ describe("US-ACC-04 AccountDataSource: export of all own data", () => {
 
   it("US-ACC-04 answers null for an account that does not exist", async () => {
     expect(await new AccountDataPostgres(pool).read(randomUUID())).toBeNull();
+  });
+
+  it("US-ACC-04 names the stored photos of measurements and wishes, and the species the keeper contributed", async () => {
+    const snapshot = await new AccountDataPostgres(pool).read(mine);
+    expect(snapshot?.photos).toEqual(
+      expect.arrayContaining([
+        { table: "measurement", column: "photo", name: "m-photo.jpg" },
+        { table: "wish", column: "image_object", name: "w-photo.jpg" },
+      ]),
+    );
+    const species = (snapshot?.tables["species"] ?? []).map((r) => r["id"]);
+    expect(species).toEqual(expect.arrayContaining([shared, proposal]));
   });
 });
