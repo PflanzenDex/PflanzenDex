@@ -2,7 +2,7 @@ import type { ComponentType } from "react";
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router";
 import type { Species, Specimen } from "@pflanzendex/core";
 import { OperatorPage, useSession, type State } from "./account";
-import { AchievementNewsBanner } from "./achievements";
+import { AchievementNewsBanner } from "@/components/routing/areas/shared/lazy-news-banner/lazy-news-banner";
 import { CareProfileSection } from "./collection";
 import { ReviewPage, SpeciesPage } from "./catalog";
 import { FriendCollectionPage, FriendsPage } from "./social";

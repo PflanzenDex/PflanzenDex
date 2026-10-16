@@ -1,10 +1,10 @@
 import { lazy, Suspense } from "react";
 
 const Banner = lazy(() =>
-  import("../news-banner/news-banner").then((m) => ({ default: m.AchievementNewsBanner })),
+  import("@/achievements").then((m) => ({ default: m.AchievementNewsBanner })),
 );
 
-/** The banner loads on its own after the first paint, so it adds nothing to the initial bundle (DS-08). */
+/** The module of the achievements loads on its own after the first paint, so the banner adds nothing to the initial bundle (DS-08). */
 export function AchievementNewsBanner(props: {
   api: string;
   token: () => Promise<string | undefined>;
