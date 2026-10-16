@@ -16,15 +16,14 @@ test.describe("US-ACC-01 sign-in", () => {
     account,
   }, info) => {
     await signIn(page, account);
-    await page.getByRole("button", { name: "Konto" }).click();
-    await expect(
-      page.getByRole("heading", { level: 1, name: `Hallo, ${account.displayName}` }),
-    ).toBeVisible();
+    await page.getByRole("link", { name: "Konto", exact: true }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Konto" })).toBeVisible();
+    await expect(page.getByText(`Hallo, ${account.displayName}`)).toBeVisible();
     await expect(page.getByText(account.email)).toBeVisible();
     await axeReport(page, info, "account");
     await page.reload();
     // After reloading the app is back at the start view, without signing in again at the sign-in service.
-    await expect(page.getByRole("navigation", { name: "Hauptnavigation" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "PflanzenDéx, zur Startseite" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Anmelden" })).toHaveCount(0);
   });
 
@@ -43,7 +42,7 @@ test.describe("US-ACC-01 sign-in", () => {
 
   test("US-ACC-01 signing out ends the session and says so", async ({ page, account }) => {
     await signIn(page, account);
-    await page.getByRole("button", { name: "Konto" }).click();
+    await page.getByRole("link", { name: "Konto", exact: true }).click();
     await page.getByRole("button", { name: "Abmelden", exact: true }).click();
     await expect(page.getByText("Du bist abgemeldet.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Anmelden" })).toBeVisible();
