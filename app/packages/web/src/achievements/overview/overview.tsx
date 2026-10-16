@@ -5,9 +5,12 @@ import {
   SPECIES_MODE_ADDRESS,
 } from "@/components/shared/navigation/nav-model/navigation/navigation";
 import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
-import { LoadFrame } from "../../kernel";
+import { Button } from "@/components/ui/button/button";
+import { errorText } from "@/lib/error-text";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
 import {
   loadAchievements,
+  markSeen,
   type AchievementItem,
   type AchievementsOverview,
 } from "../achievements-api";
@@ -22,7 +25,10 @@ const CARD =
 function Earned({ item }: { item: AchievementItem }) {
   return (
     <li className={CARD}>
-      <p className="m-0 font-semibold">{ACHIEVEMENT_NAMES[item.id] ?? item.id}</p>
+      <p className="m-0 font-semibold">
+        {ACHIEVEMENT_NAMES[item.id] ?? item.id}
+        {item.isNew && <span className="ml-2 text-sm font-normal">(neu)</span>}
+      </p>
       <p className="m-0 text-sm text-muted-foreground">
         Erreicht am {item.earnedOn ? germanDate(item.earnedOn) : "unbekannt"}
         {item.specimenName && (
@@ -55,10 +61,43 @@ function Open({ item }: { item: AchievementItem }) {
   );
 }
 
-function Groups({ overview }: { overview: Shown }) {
+/** "Okay" writes the seen state of the new achievements; they stay earned and only lose the mark (US-ACH-03). */
+function NewNotice(props: { api: string; token: Token; ids: string[] }) {
+  const { api, token, ids } = props;
+  const reload = useInvalidate(["achievements"]);
+  const write = useWriteAction(token, reload);
+  return (
+    <div
+      role="status"
+      className="flex flex-wrap items-center gap-2 rounded-lg border border-primary p-3"
+    >
+      <p className="m-0">
+        {ids.length === 1 ? "1 neuer Erfolg." : `${ids.length} neue Erfolge.`} Sie sind unten mit
+        „neu“ markiert.
+      </p>
+      <Button
+        variant="outline"
+        pending={write.running}
+        pendingLabel="Wird gespeichert …"
+        onClick={() => void write.run((t) => markSeen(api, t, ids), "")}
+      >
+        Okay
+      </Button>
+      {write.error && (
+        <p role="alert" className="m-0 text-destructive">
+          {errorText(write.error.code)}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Groups({ overview, api, token }: { overview: Shown; api: string; token: Token }) {
+  const newIds = overview.groups.flatMap((g) => g.earned.filter((i) => i.isNew).map((i) => i.id));
   const allEarned = overview.groups.every((g) => g.open.length === 0);
   return (
     <div className="flex min-w-0 max-w-xl flex-col gap-4">
+      {newIds.length > 0 && <NewNotice api={api} token={token} ids={newIds} />}
       {overview.firstStep && (
         <p className="m-0 rounded-lg border border-border p-3">
           Dein erster Schritt:{" "}
@@ -123,7 +162,11 @@ export function AchievementsOverviewSection(props: { api: string; token: Token }
         </SkeletonGroup>
       }
     >
-      {(overview) => (overview.calmMode ? null : <Groups overview={overview} />)}
+      {(overview) =>
+        overview.calmMode ? null : (
+          <Groups overview={overview} api={props.api} token={props.token} />
+        )
+      }
     </LoadFrame>
   );
 }

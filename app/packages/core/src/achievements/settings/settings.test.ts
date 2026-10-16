@@ -66,3 +66,25 @@ describe("US-ACH-08 calm mode", () => {
     expect(settings.rows.size).toBe(0);
   });
 });
+
+describe("US-ACH-03 calm mode off marks what is earned as seen", () => {
+  it("US-ACH-03 switching off acknowledges, switching on does not", async () => {
+    const settings = new InMemorySettings();
+    const idempotency = new InMemoryIdempotencyStore();
+    const acknowledged: string[] = [];
+    const op = achievementsSetCalmMode({
+      settings,
+      acknowledge: async (userId) => void acknowledged.push(userId),
+    });
+    const run = (calmMode: boolean, key: string) =>
+      execute(
+        op,
+        { idempotency },
+        { context: { userId: "anna" }, input: { calmMode }, idempotencyKey: key },
+      );
+    await run(true, "a");
+    expect(acknowledged).toEqual([]);
+    await run(false, "b");
+    expect(acknowledged).toEqual(["anna"]);
+  });
+});

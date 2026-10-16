@@ -48,7 +48,7 @@ Acceptance criteria:
 - Achievements are **derived**, not stored; only the "seen" state is stored (US-ACH-03, FR-ACH-02).
 - Status: the criteria are pure functions in `core` over a plain facts value (module `achievements`, ADR 0014); the API reads the keeper's own data into facts (`api/src/achievements/facts.ts`) for the overview (US-ACH-02). Assumption, decided by the PO: "Cutting rooted" is the repot date of a cutting (US-BES-04); "through a dormancy phase" is a full dormancy period that began on or after the catch date and ended while the specimen was still with me (archive date bounds it); "12 months" is the same calendar day one year later.
 
-### US-ACH-02 · See my achievements and what comes next · 🟨 new
+### US-ACH-02 · See my achievements and what comes next · ✅ new
 
 As a **plant keeper** I want one overview of earned and open achievements, so that I know what I could do next.
 
@@ -61,7 +61,7 @@ Acceptance criteria:
 - Given I have no data yet, then the overview names the first step ("Record a measurement with a photo") instead of an empty list.
 - Status: the overview is the section "Erfolge" of the destination "Konto" (`/account#erfolge`), hidden in calm mode (US-ACH-08). Assumptions, decided by the PO: the specimen link leads to the Sammlung (there is no deep link to one specimen yet); the group "Collecting" links to the Pokédex instead of repeating rank and milestones; a course is the set of treatments with one course id (a single treatment is no course); the collection is read one request per specimen (starting value, small collections).
 
-### US-ACH-03 · A quiet moment of success · ⬜ new
+### US-ACH-03 · A quiet moment of success · ✅ new
 
 As a **plant keeper** I want to notice an earned achievement at the moment it happens, so that the reward lands without distracting me from the task.
 
@@ -73,6 +73,7 @@ Acceptance criteria:
 - Given reduced motion is set, then no animation runs; assistive technology hears the text (NFR-13). The celebration is never the only signal.
 - Read errors do not break the page; no banner appears then.
 - No push notification, no e-mail for achievements (FR-ACH-06).
+- Status: the seen state is the table `achievement_seen` (one row per account with the seen ids and the definitions the account knew, DM-ACH-02; the row is also the marker of the first evaluation), `GET /achievements/news` and `POST /achievements/seen` (operation `achievements.mark_seen`, refuses achievements that are not earned). The overview marks new ones with "(neu)" and "Okay" writes `seen`. Assumptions, decided by the PO: the banner appears after any write of the app that succeeded and made an achievement new (the page looks again after each write); it stays until "Schließen" and does not write `seen`, so what was already new when the app opened is left to the overview; switching calm mode off marks everything earned as seen (US-ACH-08); a definition added later whose criterion is already met is created silently as seen (FR-ACH-09).
 
 ### US-ACH-04 · Care rhythm instead of a streak · ⬜ new
 

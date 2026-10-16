@@ -32,6 +32,8 @@ export type AchievementStep = {
 };
 export type AchievementItem = {
   id: string;
+  /** Earned and not yet acknowledged with "Okay" (US-ACH-03). */
+  isNew: boolean;
   earnedOn: string | null;
   specimenId: string | null;
   specimenName: string | null;
@@ -43,6 +45,7 @@ export type AchievementsOverview =
   | {
       calmMode: false;
       earnedCount: number;
+      newCount: number;
       firstStep: AchievementStep | null;
       groups: { group: AchievementGroup; earned: AchievementItem[]; open: AchievementItem[] }[];
     };
@@ -58,4 +61,40 @@ export function loadAchievements(
     `${api}/achievements?timeZone=${encodeURIComponent(currentTimeZone())}`,
     token,
   );
+}
+
+/** What is new (earned minus seen) and what to create silently as seen (US-ACH-03); `{ calmMode: true }` hides it. */
+export type AchievementNews =
+  | { calmMode: true }
+  | {
+      calmMode: false;
+      fresh: { id: string; earnedOn: string | null; specimenName: string | null }[];
+      acknowledge: string[];
+      needsWrite: boolean;
+    };
+
+export function loadNews(
+  api: string,
+  token: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<AchievementNews>> {
+  return call<AchievementNews>(
+    fetchFn,
+    `${api}/achievements/news?timeZone=${encodeURIComponent(currentTimeZone())}`,
+    token,
+  );
+}
+
+/** Marks achievements as seen (US-ACH-03): "Okay" in the overview, and the silent creation of the state. */
+export async function markSeen(
+  api: string,
+  token: string,
+  achievements: readonly string[],
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<{ seen: string[] }>> {
+  const r = await createWrite(api, token, fetchFn)("POST", "/achievements/seen", {
+    achievements,
+    timeZone: currentTimeZone(),
+  });
+  return r.ok ? { ok: true, value: r.value as { seen: string[] } } : r;
 }

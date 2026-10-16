@@ -105,12 +105,11 @@ describe("US-ACH-01 facts from the own data", () => {
 
 describe("US-ACH-02 overview view", () => {
   it("US-ACH-02 earned items carry the specimen name, open ones the next step with a name", async () => {
-    const v = await achievementsView(
-      sources(),
-      "anna",
-      "Europe/Berlin",
-      new Date("2026-10-15T10:00:00Z"),
-    );
+    const v = await achievementsView(sources(), null, {
+      userId: "anna",
+      timeZone: "Europe/Berlin",
+      now: new Date("2026-10-15T10:00:00Z"),
+    });
     expect(v.calmMode).toBe(false);
     expect(v.firstStep).toBeNull();
     const care = v.groups[0];
@@ -134,12 +133,11 @@ describe("US-ACH-02 overview view", () => {
       specimens: { list: async () => [] },
       swaps: { list: async () => [] },
     });
-    const v = await achievementsView(
-      empty,
-      "anna",
-      "Europe/Berlin",
-      new Date("2026-10-15T10:00:00Z"),
-    );
+    const v = await achievementsView(empty, null, {
+      userId: "anna",
+      timeZone: "Europe/Berlin",
+      now: new Date("2026-10-15T10:00:00Z"),
+    });
     expect(v.earnedCount).toBe(0);
     expect(v.firstStep).toEqual({
       key: "first-measurement-photo.next",
