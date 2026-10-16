@@ -1,5 +1,5 @@
 // Stable, machine-readable error codes `<domain>.<reason>` (FR-QG-11). Codes are never renamed.
-import { ACHIEVEMENT_ERROR_TEXTS } from "./error-texts-achievements";
+import { ACHIEVEMENT_ERROR_TEXTS } from "./error-texts/achievements";
 export const ERROR_TEXTS = {
   "input.invalid": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
   "access.not_signed_in": "Du bist nicht angemeldet. Bitte melde dich an.",

@@ -1,6 +1,6 @@
 // German texts of the achievement errors (epic ACH). They also carry the equipment texts, so `error.ts` stays under the
 // file size limit with one spread.
-import { EQUIPMENT_ERROR_TEXTS } from "./error-texts-equipment";
+import { EQUIPMENT_ERROR_TEXTS } from "./equipment";
 
 export const ACHIEVEMENT_ERROR_TEXTS = {
   ...EQUIPMENT_ERROR_TEXTS,
