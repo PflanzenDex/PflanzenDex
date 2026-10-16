@@ -2,4 +2,4 @@
 export { CalmModeSection } from "./calm-mode/calm-mode";
 export { useAchievementsVisible } from "./calm-mode/use-achievements-visible";
 export { AchievementsOverviewSection } from "./overview/overview";
-export { AchievementNewsBanner } from "./news-banner/lazy-news-banner";
+export { AchievementNewsBanner } from "./lazy-news-banner/lazy-news-banner";
