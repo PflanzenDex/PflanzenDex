@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/fields/form/form";
 import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
 import { Input } from "@/components/ui/fields/input/input";
+import { useFeature } from "@/kernel";
 import { OCCASIONS, type Occasion } from "../api/account-api";
 import type { ProfileFields as Fields } from "../schemas";
 
@@ -133,12 +134,16 @@ function Switch(props: {
   );
 }
 
+/** The occasions about swapping and friends have no meaning while "social" is off (US-DEV-06); the stored values stay. */
+const SOCIAL_OCCASIONS: readonly Occasion[] = ["swap", "friends"];
+
 export function SwitchFields({ control }: FieldProps) {
+  const social = useFeature("social");
   return (
     <>
       <fieldset className={GROUP}>
         <legend className={LEGEND}>Benachrichtigungen</legend>
-        {OCCASIONS.map((o) => (
+        {OCCASIONS.filter((o) => social || !SOCIAL_OCCASIONS.includes(o)).map((o) => (
           <Switch key={o} control={control} name={`notifications.${o}`} label={OCCASION_TEXT[o]} />
         ))}
         <p className={NOTE}>

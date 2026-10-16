@@ -47,6 +47,15 @@ describe("US-BES-10 navigation", () => {
   });
 });
 
+describe("US-DEV-06 navigation", () => {
+  it("US-DEV-06 Freunde is hidden only while the function group social is off", () => {
+    expect(labels({})).toContain("Freunde");
+    expect(labels({ social: true } as never)).toContain("Freunde");
+    expect(labels({ social: false } as never)).not.toContain("Freunde");
+    expect(labels({ social: false } as never)).toContain("Konto");
+  });
+});
+
 describe("US-ACC-05 navigation", () => {
   it("US-ACC-05 the operator tab is shown to the operator only, not to reviewers", () => {
     expect(labels({ reviewer: true })).not.toContain("Betreiber");

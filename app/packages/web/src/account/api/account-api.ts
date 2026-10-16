@@ -12,6 +12,8 @@ export type Account = {
   reviewer?: boolean;
   /** The operator: shows the operator area (US-ACC-05). Only a hint; the server checks the role again. */
   operator?: boolean;
+  /** Which function groups are on for this account (US-DEV-06); absent counts as on. */
+  features?: { social: boolean; ai: boolean; recommendations: boolean };
 };
 
 export const OCCASIONS = [

@@ -3,6 +3,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { FeaturesProvider } from "@/kernel";
 import { AccountArea } from "./account-area";
 
 const response = (status: number, body: unknown) =>
@@ -110,6 +111,32 @@ beforeAll(async () => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+});
+
+describe("US-DEV-06 Konto without the AI function", () => {
+  it("US-DEV-06 the section KI-Clients and its entry are gone while ai is off, nothing is asked of /ai", async () => {
+    fakeServer();
+    render(
+      <FeaturesProvider features={{ social: true, ai: false, recommendations: false }}>
+        <MemoryRouter initialEntries={["/account"]}>
+          <AccountArea
+            api="http://api"
+            token={async () => "tok"}
+            account={account}
+            onSignOut={() => undefined}
+            onEverywhereSignOut={() => undefined}
+          />
+        </MemoryRouter>
+      </FeaturesProvider>,
+    );
+    await screen.findByLabelText("Anzeigename");
+    await screen.findByRole("heading", { level: 2, name: "Erinnerungen" });
+    expect(screen.queryByRole("heading", { level: 2, name: "KI-Clients" })).toBeNull();
+    const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
+    expect(within(list).queryByRole("link", { name: "KI-Clients" })).toBeNull();
+    const asked = vi.mocked(fetch).mock.calls.map(([u]) => new URL(String(u)).pathname);
+    expect(asked.some((path) => path.startsWith("/ai"))).toBe(false);
+  });
 });
 
 describe("US-QS-14 Konto with its sections", () => {

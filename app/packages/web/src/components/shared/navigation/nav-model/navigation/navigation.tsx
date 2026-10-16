@@ -122,19 +122,27 @@ export const viewAddress = (v: LinkTarget): string =>
           ? SPECIES_MODE_ADDRESS
           : PATHS[v];
 
-const visible = (
-  id: View,
-  who: { reviewer?: boolean | undefined; operator?: boolean | undefined },
-) => (id === "review" ? who.reviewer === true : id === "operator" ? who.operator === true : true);
+type Who = {
+  reviewer?: boolean | undefined;
+  operator?: boolean | undefined;
+  /** `false` hides "Freunde" (the function group "social" is off for the account, US-DEV-06). */
+  social?: boolean | undefined;
+};
+
+const visible = (id: View, who: Who) =>
+  id === "review"
+    ? who.reviewer === true
+    : id === "operator"
+      ? who.operator === true
+      : id === "friends"
+        ? who.social !== false
+        : true;
 
 /**
  * The destinations for the shared shell (US-QS-07, DS-25). The review list is only for operators and reviewers
  * (US-BES-10), the operator area only for the operator (US-ACC-05); everybody else never sees these entries.
  */
-export function navItems(who: {
-  reviewer?: boolean | undefined;
-  operator?: boolean | undefined;
-}): NavItem[] {
+export function navItems(who: Who): NavItem[] {
   return ENTRIES.filter((e) => visible(e.id, who)).map((e) => ({
     href: PATHS[e.id],
     label: e.text,

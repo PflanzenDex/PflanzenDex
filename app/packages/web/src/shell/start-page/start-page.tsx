@@ -8,7 +8,7 @@ import {
 } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
 import { loadSpecimenCount } from "../../collection";
-import { LoadFrame } from "../../kernel";
+import { LoadFrame, useFeature } from "../../kernel";
 import { loadLocations, loadZones } from "../../light";
 import { OnboardingWizard } from "../onboarding-wizard/onboarding-wizard";
 import { readStored, writeStored } from "../../platform/storage";
@@ -84,6 +84,7 @@ function Content(props: {
   onOpen: (t: Target) => void;
 }) {
   const { accountId, counts } = props;
+  const social = useFeature("social");
   const [skipped, setSkipped] = useState(() => readSkipped(accountId));
   // Leaving the guide (finished, skipped or ended) is remembered: switching tabs must not bring it back.
   const leave = () => {
@@ -103,9 +104,11 @@ function Content(props: {
     );
   return (
     <>
-      <Suspense fallback={null}>
-        <FriendsBanner api={props.api} token={props.token} quiet requests />
-      </Suspense>
+      {social && (
+        <Suspense fallback={null}>
+          <FriendsBanner api={props.api} token={props.token} quiet requests />
+        </Suspense>
+      )}
       <Overview counts={counts} onOpen={props.onOpen} />
     </>
   );

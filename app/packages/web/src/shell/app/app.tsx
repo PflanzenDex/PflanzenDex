@@ -10,7 +10,7 @@ import {
   InvitationPage,
   type State,
 } from "../../account";
-import { useClearOnSignOut } from "../../kernel";
+import { FeaturesProvider, useClearOnSignOut } from "../../kernel";
 import { AppRoutes } from "../../routes";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
 import { AppShell } from "../../components/shared/navigation/app-shell/app-shell";
@@ -119,35 +119,38 @@ export function App() {
       </main>
     );
   return (
-    <AppShell
-      titleOf={viewTitle}
-      items={navItems({
-        reviewer: z.account.reviewer === true,
-        operator: z.account.operator === true,
-      })}
-    >
-      <div className="mx-auto w-full max-w-180">
-        {navState?.hint && (
-          <p role="alert" className="mb-3 rounded-lg border border-border p-3">
-            {navState.hint}
-          </p>
-        )}
-        {(wishPath.notes.wish || wishPath.notes.notice) && (
-          <Suspense fallback={null}>
-            <PathNotes {...wishPath.notes} />
-          </Suspense>
-        )}
-        <AppRoutes
-          api={api}
-          session={s}
-          account={z.account}
-          {...(z.error ? { error: z.error } : {})}
-          onOpen={setView}
-          onOpenProfile={openProfile}
-          handOver={wishPath.handOver}
-        />
-      </div>
-      {footer}
-    </AppShell>
+    <FeaturesProvider features={z.account.features}>
+      <AppShell
+        titleOf={viewTitle}
+        items={navItems({
+          reviewer: z.account.reviewer === true,
+          operator: z.account.operator === true,
+          social: z.account.features?.social,
+        })}
+      >
+        <div className="mx-auto w-full max-w-180">
+          {navState?.hint && (
+            <p role="alert" className="mb-3 rounded-lg border border-border p-3">
+              {navState.hint}
+            </p>
+          )}
+          {(wishPath.notes.wish || wishPath.notes.notice) && (
+            <Suspense fallback={null}>
+              <PathNotes {...wishPath.notes} />
+            </Suspense>
+          )}
+          <AppRoutes
+            api={api}
+            session={s}
+            account={z.account}
+            {...(z.error ? { error: z.error } : {})}
+            onOpen={setView}
+            onOpenProfile={openProfile}
+            handOver={wishPath.handOver}
+          />
+        </div>
+        {footer}
+      </AppShell>
+    </FeaturesProvider>
   );
 }
