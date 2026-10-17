@@ -116,7 +116,7 @@ Acceptance criteria:
 
 Decisions (assumption, decided by the PO): "devices" means every equipment record, consumables included, because each has an optional price (DM-EQU-01). The sum is derived on every view from the keeper's own records (`equipmentCosts`), nothing is stored, and it uses only the `Price` and never a purchase date, so no time range or depreciation is implied. Per type and in total the view shows the sum, how many records have a price and how many exist; where no record of a type has a price the sum reads "unbekannt", never 0, while a price of 0 counts as a price. Sums are added in whole cents (at most two decimals). A line says what is not included: electricity and replacement costs. The price of a wish (US-EQU-08) enters only once the equipment is recorded. Friends never see prices (US-EQU-12).
 
-### US-EQU-10 · See matching recommendations · ⬜ new
+### US-EQU-10 · See matching recommendations · 🟨 new
 
 Acceptance criteria:
 
@@ -126,6 +126,8 @@ Acceptance criteria:
 - Prices only with source and retrieval date ("As of DD.MM.YYYY"); otherwise no price.
 - There is always a non-commissioned path: product name and manufacturer are displayed, the keeper can buy elsewhere.
 - The **order** follows the fit to the need (zone, lux, area), **not** the commission (FR-EQU-06).
+
+Decisions (assumption, decided by the PO): the first slice is a pure function over the needs of US-EQU-07 and an operator catalog (`ProductEntry`: product id, name, manufacturer, the kinds of need it serves, fit 0 to 1, source and retrieval date, optional price with its own source and date). The catalog is empty until the operator supplies one, so nothing is recommended and nothing is invented (FR-EQU-09, P-08). An entry without source or retrieval date is dropped; a price without both is left out. The order is fit, then name; the entry has no commission field (FR-EQU-06). Every item is labeled "Empfehlung" and says the keeper may buy anywhere. This slice builds no link, so the advertising label at the link, partner configuration and click measurement wait for TE-11 (legal). `GET /equipment/recommendations` exists; the web view is open.
 
 ### US-EQU-11 · Control and understand recommendations · ⬜ new
 

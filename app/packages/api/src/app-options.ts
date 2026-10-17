@@ -9,6 +9,7 @@ import type {
   ObjectStore,
   ImageProcessor,
   FeatureSet,
+  ProductEntry,
 } from "@pflanzendex/core";
 import type { TokenVerifier } from "./account";
 import type { AiAccessOptions } from "./ai";
@@ -47,4 +48,6 @@ export type AppOptions = {
   phaseLocation?: PhaseLocationSource;
   /** Replaces the light distribution as source of the stock per zone for the wishlist (tests); without it `collection` answers (US-LIC-02). */
   zoneStock?: ZoneStockSource;
+  /** The operator's product catalog for equipment recommendations (US-EQU-10); without it nothing is recommended. */
+  products?: readonly ProductEntry[];
 };

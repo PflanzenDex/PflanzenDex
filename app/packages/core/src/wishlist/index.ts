@@ -4,7 +4,7 @@
 export { REPLENISH_BUFFER, replenishment, wishCandidates } from "./candidates";
 export { wishCreate } from "./create";
 export { wishNameKey } from "./repair/name-key";
-export { wishImageFile, wishStoreImage } from "./image";
+export { checkCommonsImage, wishImageFile, wishStoreImage } from "./image";
 export type {
   ImageDownload,
   WishImageDependencies,
