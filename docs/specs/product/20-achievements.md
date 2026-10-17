@@ -134,7 +134,7 @@ Acceptance criteria:
 
 - Given calm mode is on, then the achievement banners, the overview entry, the care rhythm, personal records, anniversaries and the year in review are not shown. POK rank and milestones follow the setting of the Pokédex view and stay unchanged.
 - Given calm mode is switched off again, then earned achievements are still there (they are derived) and none appear as new (they count as seen).
-- Calm mode is a per-account setting, off by default for new accounts (assumption, revisable), and reachable from the profile (US-ACC-02). It ships together with the first visible ACH element (see build order).
+- Calm mode is a per-account setting, off by default for new accounts (assumption, revisable), and reachable from the profile (US-ACC-02). It ships together with the first visible ACH element (see build order). Calm mode also switches off the introduction hints (US-ONB-07) and hides the staged ACH entries without announcing them (US-ONB-05).
 - Status: the setting exists (table `achievement_setting`, `GET /achievements/settings`, `PUT /achievements/settings/calm-mode`, switch "Ruhemodus" on the settings page, off by default) and core answers `showsAchievements(settings)`; the elements that must obey it arrive with US-ACH-02 and the following stories, each of which checks the setting. Assumption, decided by the PO: the switch saves on its own (no Save button), and the AI client interface (KI-R2) asks the same function once ACH text reaches it.
 - The state "calm mode" is respected by every ACH element and by the AI client interface (no hidden gamified text, KI-R2).
 
@@ -150,7 +150,7 @@ Decided by the PO after the principles review. All stories are ⬜; the stories 
 | 4     | US-ACH-03 | R2      | 01, 02, POK-12 pattern     | Banner and seen state                                                     |
 | 5     | US-ACH-05 | R2      | WAC-02/04/05, 08           | Own-history records, etiolation guard                                     |
 | 6     | US-ACH-06 | R2      | POK-07, QS-01, 08          | Today list entry, no push without MON-08                                  |
-| 7     | US-ACH-04 | R3      | MON-03/04, 08               | Needs due tasks; interval watering is out of scope (see story status)     |
+| 7     | US-ACH-04 | R3      | MON-03/04, 08              | Needs due tasks; interval watering is out of scope (see story status)     |
 | 8     | US-ACH-07 | R3      | 01, 05, 08                 | Meaningful after a year of data; private, sharing only after question 1/5 |
 
 ## Data model

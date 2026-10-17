@@ -1,17 +1,14 @@
 /** What the account already has; the onboarding is derived from it live and never stored (US-ACC-03). */
 export interface OnboardingCounts {
-  readonly locations: number;
-  readonly zones: number;
   readonly specimens: number;
   /** Archived specimens: an account that had plants is a returning keeper, not a new one (#291). */
   readonly archivedSpecimens: number;
 }
 
-export type OnboardingStepId = "locations" | "zones" | "first_plant";
+export type OnboardingStepId = "species" | "save" | "first_plant";
 
 export interface OnboardingStep {
   readonly id: OnboardingStepId;
-  readonly done: boolean;
   readonly title: string;
   /** The label of the button that does it; the only place that spells it. */
   readonly actionLabel: string;
@@ -19,39 +16,29 @@ export interface OnboardingStep {
   readonly nextAction: string;
 }
 
-export interface OnboardingHint {
-  readonly id: "locations" | "zones";
-  readonly text: string;
-  readonly actionLabel: string;
-  readonly nextAction: string;
-}
+/** Locations and light zones are not asked before the first plant; the first plant has at most this many steps (US-ONB-01). */
+export const FIRST_PLANT_STEPS: readonly OnboardingStep[] = [
+  {
+    id: "species",
+    title: "Art wählen",
+    actionLabel: "Weiter",
+    nextAction: "Tippe den Namen deiner Pflanze, wir suchen die Art.",
+  },
+  {
+    id: "save",
+    title: "Pflanze speichern",
+    actionLabel: "Pflanze speichern",
+    nextAction: "Der Lichtbedarf kommt von der Art. Du kannst ihn ändern.",
+  },
+];
 
-/** The three questions of the onboarding, in order. Every step can be skipped; "done" only says the account has data. */
-export function onboardingSteps(c: OnboardingCounts): readonly OnboardingStep[] {
-  return [
-    {
-      id: "locations",
-      done: c.locations > 0,
-      title: "Standorte",
-      actionLabel: "Standorte anlegen",
-      nextAction: "Lege an, wo deine Pflanzen stehen, zum Beispiel Fensterbank oder Balkon.",
-    },
-    {
-      id: "zones",
-      done: c.zones > 0,
-      title: "Lichtzonen",
-      actionLabel: "Lichtzonen einrichten",
-      nextAction: "Übernimm die vier Standardstufen oder passe sie später an.",
-    },
-    {
-      id: "first_plant",
-      done: c.specimens > 0,
-      title: "Erste Pflanze",
-      actionLabel: "Art im Katalog wählen",
-      nextAction: "Wähle im Katalog eine Art und lege dein erstes Exemplar an.",
-    },
-  ];
-}
+/** The start page's one action without a plant: choose the species, which leads to the first plant (P-09). */
+const FIRST_PLANT: OnboardingStep = {
+  id: "first_plant",
+  title: "Deine erste Pflanze",
+  actionLabel: "Art im Katalog wählen",
+  nextAction: "Wähle im Katalog eine Art und lege dein erstes Exemplar an.",
+};
 
 /** The guide is for new accounts only: no active and no archived plant (an account with only archived ones returns). */
 export function isNewAccount(c: OnboardingCounts): boolean {
@@ -64,33 +51,11 @@ export function isNewAccount(c: OnboardingCounts): boolean {
  */
 export function startAction(c: OnboardingCounts): OnboardingStep | null {
   if (c.specimens > 0) return null;
-  const first = onboardingSteps(c).find((s) => s.id === "first_plant");
-  if (!first || isNewAccount(c)) return first ?? null;
+  if (isNewAccount(c)) return FIRST_PLANT;
   return {
-    ...first,
+    ...FIRST_PLANT,
     title: "Nächste Pflanze",
     nextAction:
       "Deine bisherigen Pflanzen sind archiviert. Wähle im Katalog eine Art für deine nächste Pflanze.",
   };
-}
-
-const HINT_TEXT = {
-  locations: "Du hast noch keinen Standort angelegt.",
-  zones: "Du hast noch keine Lichtzonen.",
-} as const;
-
-/** Details skipped in the onboarding show up later as a hint (US-ACC-03), never as an error. */
-export function onboardingHints(c: OnboardingCounts): readonly OnboardingHint[] {
-  return onboardingSteps(c).flatMap((s) =>
-    !s.done && (s.id === "locations" || s.id === "zones")
-      ? [
-          {
-            id: s.id,
-            text: HINT_TEXT[s.id],
-            actionLabel: s.actionLabel,
-            nextAction: s.nextAction,
-          },
-        ]
-      : [],
-  );
 }

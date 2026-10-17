@@ -111,7 +111,7 @@ Acceptance criteria:
 
 - Given any view, then it has a unique German page title ("Heute – PflanzenDex"), exactly one main heading and the regions header, navigation and main content (2.4.2, 1.3.1, 2.4.6).
 - Given I change the view, when the new view has loaded, then the focus moves to its main heading and the new title is announced; going back restores the focus to the element that opened the view (2.4.3).
-- Given a flow with more than one step (onboarding, creating a specimen, measuring with photo), then every step shows "Schritt n von m" and its name, going back keeps what I already entered, and I am never asked twice for data I gave in the same flow (3.3.7).
+- Given a flow with more than one step (onboarding, creating a specimen, measuring with photo), then every step shows "Schritt n von m" and its name, going back keeps what I already entered, and I am never asked twice for data I gave in the same flow (3.3.7). The first-use flow and the staged functions follow epic ONB (US-ONB-01, US-ONB-05, US-ONB-06): locked entries stay visible with reason and way, the overview "Was die App kann" is in the help entry.
 - Given a help or contact entry, then it is in the same place in every view (3.2.6), and navigation entries keep their order and names across views (3.2.3, 3.2.4).
 - Given sign-in or sign-up, then no step requires solving a puzzle or remembering a code by heart; pasting passwords and codes and password managers work (3.3.8).
 - Given a view has nothing to do, then it says so and names the next step (P-09), also for screen reader users.

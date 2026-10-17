@@ -12,14 +12,3 @@ export function LightPageSkeleton({ label }: { label: string }) {
     </SkeletonGroup>
   );
 }
-
-/** Placeholder of an onboarding step: a list entry and the form (DS-52). */
-export function SetupStepSkeleton({ label }: { label: string }) {
-  return (
-    <SkeletonGroup label={label} className="flex min-w-0 flex-col gap-3">
-      <Skeleton className="h-20 w-full" />
-      <Skeleton className="h-11 w-full" />
-      <Skeleton className="h-11 w-full" />
-    </SkeletonGroup>
-  );
-}

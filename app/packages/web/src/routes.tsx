@@ -3,10 +3,11 @@ import type { Species, Specimen } from "@pflanzendex/core";
 import { useSession, type State } from "./account";
 import { AchievementNewsBanner } from "@/components/routing/areas/shared/lazy-news-banner/lazy-news-banner";
 import { CareProfileSection } from "./collection";
-import { SpeciesPage } from "./catalog";
+import { loadSpecies, searchSpecies, SpeciesPage } from "./catalog";
 import { FriendCollectionPage } from "./social";
 import { ExchangePage } from "./swap";
 import type { WishToPlant } from "./wishlist";
+import type { ComponentProps } from "react";
 import { StartPage } from "./shell";
 import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
@@ -25,6 +26,11 @@ import {
   type LinkTarget,
   type View,
 } from "./components/shared/navigation/nav-model/navigation/navigation";
+/** The start page finds species through the catalog without importing it (ADR 0003). */
+const SPECIES_LOOKUP = { search: searchSpecies, load: loadSpecies };
+function Start(props: Omit<ComponentProps<typeof StartPage>, "lookup">) {
+  return <StartPage lookup={SPECIES_LOOKUP} {...props} />;
+}
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 /** A friend's shared collection has its own address; the friendship id comes from it (US-SOZ-07). */
@@ -151,9 +157,7 @@ export function AppRoutes(props: {
         />
         <Route
           path={PATHS.start}
-          element={
-            <StartPage api={api} token={s.token} accountId={account.id} onOpen={props.onOpen} />
-          }
+          element={<Start api={api} token={s.token} accountId={account.id} onOpen={props.onOpen} />}
         />
         {social && (
           <Route path={EXCHANGE_PATH} element={<ExchangePage api={api} token={s.token} />} />
