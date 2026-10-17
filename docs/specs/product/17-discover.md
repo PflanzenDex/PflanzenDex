@@ -131,6 +131,19 @@ Acceptance criteria:
 
 Built (assumption, decided by the PO): `GET /mcp/discover/suggestions` (read) and `POST /mcp/discover/decisions` (with "write" at once through `discover.decide`, with "create drafts" as a draft `discover_decision` the keeper adopts; "Later" writes nothing). Still open: the marking of the client's own knowledge (KI-R5), an undo of a written decision and the MCP wrapper. The earlier gap note follows for history. Gap, noted by the PO assistant (US-ENT-08 not started): the operations `suggestions` (`GET /discover/suggestions`) and `decide` (`POST /discover/decisions`) exist and run without AI (FR-KI-05), so the part that needs no AI client is in place. Missing and blocked by the AI access (release R4): the connection of the client (US-KI-07, E-04), the tool definitions that expose both operations to it, the right model "write, otherwise draft" for `decide` (US-KI-09) and the marking of knowledge that does not come from the catalog (KI-R5).
 
+### US-ENT-09 · Species attributes with source and license per field · 🟨 new
+
+As a **plant keeper** I want the attributes of a suggestion (humidity, minimum temperature, growth size, toxic to pets) to show where each value comes from, so that I can check it before I buy.
+
+Acceptance criteria:
+
+- Given a researched value, When it has one of the citable sources (GBIF, Wikipedia, Wikidata), an https link, a free license and a retrieval date, Then it is accepted and stored per species and field (DM-ENT-01).
+- Given a value without such a source, link, license or date, or from an AI statement, or with a wrong type or range, Then it is refused with every problem named and nothing is stored (P-08, US-KI-06).
+- Given a species without a stored value for a field, Then the field stays unknown, acts neutrally and is shown as "unbekannt" (FR-ENT-04, P-08).
+- Given a newer research for the same species and field, Then the value is replaced, never duplicated.
+
+Assumptions, decided by the PO (revisable): built so far is the data layer: the table `taxon_attribute` (migration `0073`, shared, no account id, read-only for the application role, one row per species and field with source, link, license and retrieval date), the pure check `checkAttributeFact` and `attributesOf` in `core`, and the store `TaxonAttributesPostgres`. Accepted licenses are CC0-1.0, CC-BY-4.0, CC-BY-SA-4.0 and CC-BY-SA-3.0; the minimum temperature must lie between -30 and 30 degrees Celsius (an outside value is an extraction error); "needs dormancy" is derived and not stored. Not built yet: the research job that fills the table (open decision 1: which fields first, operator batch or AI with review status, US-BES-13), the review status of FR-BES-06, and the display of attributes with their source on the card (the deck still shows every attribute as unknown).
+
 ## Data model
 
 ### DM-ENT-01 Species attributes (extension of DM-BES-01)

@@ -70,11 +70,11 @@ What is taken over from the prototype: the **domain behavior** (phases, growth t
 | KI AI access            | 10      | 3                      | 7      |
 | QS Cross-cutting        | 14      | 8                      | 6      |
 | MIG Migration (dropped) | 0       | 0                      | 0      |
-| ENT Discover            | 8       | 0                      | 8      |
+| ENT Discover            | 9       | 0                      | 9      |
 | QG Quality gates        | 9       | 0                      | 9      |
 | DEV Development process | 12      | 0                      | 12     |
 | ACH Achievements        | 8       | 5                      | 3      |
-| **Total**               | **152** | **57**                 | **95** |
+| **Total**               | **153** | **57**                 | **96** |
 
 ## Replacing existing documents
 
