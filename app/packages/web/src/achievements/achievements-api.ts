@@ -150,3 +150,28 @@ export function loadAnniversaries(
     token,
   );
 }
+
+export type RhythmWeekState = "on_time" | "open" | "pending" | "none";
+export type RhythmAnswer =
+  | { calmMode: true }
+  | {
+      calmMode: false;
+      weeks: { start: string; state: RhythmWeekState }[];
+      currentRun: number;
+      longestRun: number;
+      openTasks: number;
+      hasTasks: boolean;
+    };
+
+/** The care rhythm of the last 12 weeks (US-ACH-04); `{ calmMode: true }` hides it (US-ACH-08). */
+export function loadRhythm(
+  api: string,
+  token: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<RhythmAnswer>> {
+  return call<RhythmAnswer>(
+    fetchFn,
+    `${api}/achievements/rhythm?timeZone=${encodeURIComponent(currentTimeZone())}`,
+    token,
+  );
+}

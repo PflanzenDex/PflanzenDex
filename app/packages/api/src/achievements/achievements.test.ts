@@ -213,3 +213,39 @@ describe("US-ACH-06 anniversaries through the API", () => {
     expect((await list(subF)).body["calmMode"]).toBe(false);
   });
 });
+
+describe("US-ACH-04 care rhythm through the API", () => {
+  const subG = `ach04-${randomUUID()}`;
+  const rhythm = (sub: string | null, zone = "Europe/Berlin") =>
+    call(sub, "GET", `/achievements/rhythm?timeZone=${encodeURIComponent(zone)}`);
+  afterAll(async () => {
+    await admin.query("delete from account where subject = $1", [subG]);
+  });
+
+  it("US-ACH-04 without a token: 401; without a valid time zone: 400", async () => {
+    expect((await rhythm(null)).status).toBe(401);
+    const bad = await rhythm(subG, "Mars/Base");
+    expect(bad.status).toBe(400);
+    expect(bad.body["error"].code).toBe("input.invalid");
+  });
+
+  it("US-ACH-04 a new account has no rhythm yet: twelve neutral weeks, nothing invented (P-08)", async () => {
+    const r = await rhythm(subG);
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({
+      calmMode: false,
+      currentRun: 0,
+      longestRun: 0,
+      openTasks: 0,
+      hasTasks: false,
+    });
+    expect(r.body["weeks"]).toHaveLength(12);
+  });
+
+  it("US-ACH-08 calm mode hides the care rhythm, for that account only", async () => {
+    await setCalm(subG, true);
+    expect((await rhythm(subG)).body).toEqual({ calmMode: true });
+    await setCalm(subG, false);
+    expect((await rhythm(subG)).body["calmMode"]).toBe(false);
+  });
+});
