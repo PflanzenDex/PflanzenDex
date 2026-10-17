@@ -21,7 +21,7 @@ Acceptance criteria:
 - The message contains actions ("watered", "done", "moved") that execute directly, without searching the app.
 - The same occasion is not reported twice on the same day (idempotency).
 - Without need for action nothing is sent.
-- Channel: web push; Telegram or email are optional (E-10).
+- Channel: web push; email is optional (E-10).
 
 Assumptions, decided by the PO (revisable): **E-10 is decided: web push plus optional email.** Built first is only what needs no external account: the daily job `monitoring.send_reminders` (one job per account and local day through the job queue, TE-06; a tick every 5 minutes orders the checks that have come due, the day row `reminder` is unique per account and local day, so a rerun, a second process or a restart neither derives nor sends twice, FR-MON-02), the bundle of one message per day, the in-app inbox (`GET /reminders`, newest first; a day with nothing to do stores only a marker with status `none`, nothing is sent and the inbox does not list it), the data model for push subscriptions (`delivery_channel`, `POST`/`DELETE /reminders/subscriptions`) and the delivery behind the port `ReminderChannel` with a stub adapter that sends nothing out and logs it. Without a push subscription the reminder stays in the inbox with status `in_app`. The days run in the time zone of the profile (NFR-08); an account without a time zone gets no reminder (nothing is guessed). The occasions come from the central status function (FR-MON-03: the same function as the Today list). What does not exist yet: the buttons "watered", "done", "moved" in the message (they need the real push channel and a service worker).
 
@@ -41,9 +41,9 @@ Assumptions, decided by the PO (revisable): the occasion is each item `treatment
 
 ### US-MON-04 · Be reminded of an overdue measurement · 🟨 new
 
-Acceptance criteria: trigger = last measurement older than N days (default 30, adjustable) or none. Cuttings per decision (FR-WAC-08).
+Acceptance criteria: trigger = last measurement older than N days (default 30, adjustable) or none. Cuttings use the same interval (E-11, FR-WAC-08).
 
-Assumptions, decided by the PO (revisable): N is the setting `measurementDays` (1 to 365, default 30). "Older than N days" means more than N whole local days (NFR-08). A plant without any measurement counts from its catch date and says "noch nie gemessen"; a plant without a known date is not reported (P-08). Cuttings and archived specimens are left out until E-11 (rhythm of cuttings) is decided. The overdue measurement is derived in the reminder only; the Today list does not show it yet.
+Assumptions, decided by the PO (revisable): N is the setting `measurementDays` (1 to 365, default 30). "Older than N days" means more than N whole local days (NFR-08). A plant without any measurement counts from its catch date and says "noch nie gemessen"; a plant without a known date is not reported (P-08). Cuttings are included with the same interval (E-11, decided by the PO); archived specimens are left out. Not built yet: the reminder still skips cuttings until this change is implemented. The overdue measurement is derived in the reminder only; the Today list does not show it yet.
 
 ### US-MON-05 · Be reminded to water by interval without a sensor · 🟨 new
 
@@ -137,7 +137,7 @@ Automatic watering, fertilizer tracking, photo evaluation for moisture or height
 ## Open questions
 
 1. Are intervals per phase enough without a sensor, or a finer watering description per plant?
-2. Which delivery channel is the default (web push, Telegram, email), and who pays its costs if any?
+2. Decided (E-10): web push plus optional email; the operator provides the VAPID and SMTP keys and carries any costs.
 3. Wireless (Zigbee) or wired? Decision after the pilot.
 4. Which plants are the "delicate" ones for the pilot?
 5. How often may messages be sent (daily bundled or on weekdays)?
