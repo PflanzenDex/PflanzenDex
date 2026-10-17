@@ -5,6 +5,7 @@ import { SpeciesStub, InMemorySpecimens, testSpecies } from "../shared/test-help
 
 const SPECIES_LOW = "11111111-1111-4111-8111-111111111111"; // 15.000 Lux, Stufe 2: Lampe 2
 const SPECIES_HIGH = "22222222-2222-4222-8222-222222222222"; // 40.000 Lux, Stufe 3: Lampe 3
+const SPECIES_SOFT = "33333333-3333-4333-8333-333333333333"; // 100.000 Lux, soft leaf: stays in Lampe 2
 const SPECIES_FOREIGN = "99999999-9999-4999-8999-999999999999"; // visible only to ben
 
 const light = new InMemoryLight();
@@ -12,6 +13,13 @@ const species = new SpeciesStub([
   { species: testSpecies(SPECIES_LOW, { lightDemandLux: 15000, standardLevel: 2 }) },
   { species: testSpecies(SPECIES_HIGH, { lightDemandLux: 40000, standardLevel: 3 }) },
   { species: testSpecies(SPECIES_FOREIGN), only: "ben" },
+  {
+    species: testSpecies(SPECIES_SOFT, {
+      lightDemandLux: 100_000,
+      standardLevel: 2,
+      softLeaf: true,
+    }),
+  },
 ]);
 let specimens: InMemorySpecimens;
 let n = 0;
@@ -112,6 +120,15 @@ describe("US-LIC-02 count per zone 2 to 4 at specimen level", () => {
     expect(await counts("anna")).toEqual([
       ["Lampe 2", 1],
       ["Lampe 3", 1],
+      ["Lampe 4", 0],
+    ]);
+  });
+
+  it("US-LIC-01: Given a species marked soft-leaved C3, when its zone is derived, then it is not promoted by its lux need", async () => {
+    await create("anna", "Kiste", { speciesId: SPECIES_SOFT });
+    expect(await counts("anna")).toEqual([
+      ["Lampe 2", 1],
+      ["Lampe 3", 0],
       ["Lampe 4", 0],
     ]);
   });
