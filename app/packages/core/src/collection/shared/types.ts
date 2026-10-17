@@ -30,6 +30,11 @@ export interface SpecimenRow {
   readonly archivedReason: string | null;
   /** Local calendar date a cutting was repotted (US-BES-04, US-SOZ-05); `null`/missing = unknown (P-08). */
   readonly repottedAt?: string | null;
+  /**
+   * Own light zone of the specimen (US-LIC-02, US-BES-04): overrides the zone of location and species in the effective
+   * zone. `null`/missing = not set, the zone is derived (P-08).
+   */
+  readonly lightZoneId?: string | null;
 }
 
 /** Archived specimens are missing from all lists and evaluations (US-BES-07); every evaluation filters with this. */
@@ -57,7 +62,11 @@ export type CreateStatus = (typeof CREATE_STATUS)[number];
 export type SpecimenValues = Pick<
   SpecimenRow,
   "speciesId" | "name" | "marker" | "locationId" | "caughtAt"
-> & { readonly status?: CreateStatus };
+> & {
+  readonly status?: CreateStatus;
+  /** Own light zone from the start (US-LIC-02); missing/`null` = the zone is derived. */
+  readonly lightZoneId?: string | null;
+};
 
 /**
  * An existing specimen that receives its marker together with a new one (US-BES-03: from the third specimen on every
@@ -80,8 +89,8 @@ export interface SpecimenStore {
   list(userId: string): Promise<readonly SpecimenRow[]>;
   find(userId: string, id: string): Promise<SpecimenRow | null>;
   /**
-   * All or nothing; with a taken name, a taken marker (per species, case-insensitive), a foreign location or an
-   * unknown specimen in `assignments` nothing is written (FR-BES-03, US-BES-03). The `assignments` are written in
+   * All or nothing; with a taken name, a taken marker (per species, case-insensitive), a foreign location, a foreign
+   * light zone or an unknown specimen in `assignments` nothing is written (FR-BES-03, US-BES-03). The `assignments` are written in
    * the same transaction as the new specimen.
    */
   create(
@@ -93,6 +102,7 @@ export interface SpecimenStore {
     | "name_taken"
     | "marker_taken"
     | "location_unknown"
+    | "zone_unknown"
     | "specimen_unknown"
     | "species_unknown"
   >;
@@ -131,6 +141,16 @@ export interface SpecimenStore {
     userId: string,
     assignments: readonly LocationAssignment[],
   ): Promise<readonly SpecimenRow[] | "specimen_unknown" | "archived" | "location_unknown">;
+  /**
+   * Sets or clears (`null`) the own light zone of one active specimen (US-LIC-02). A foreign or unknown specimen
+   * answers `not_found`, an archived one `archived`, a zone of another account `zone_unknown`; nothing is written then.
+   * Setting the zone it already has is a no-op, so the call is idempotent (US-QS-03).
+   */
+  setLightZone(
+    userId: string,
+    id: string,
+    lightZoneId: string | null,
+  ): Promise<SpecimenRow | "not_found" | "archived" | "zone_unknown">;
   /** Restores the status from before the archiving and deletes date and reason (US-BES-07). */
   restore(userId: string, id: string): Promise<SpecimenRow | "not_found" | "not_archived">;
 }

@@ -73,8 +73,8 @@ export function AreaField(props: Base & { rows: number; maxLength?: number }) {
 }
 
 /** One labelled choice; the empty first option asks to choose and counts as "not answered". */
-export function ChoiceField(props: Base & { options: [string, string][] }) {
-  const { control, name, label, required, options } = props;
+export function ChoiceField(props: Base & { options: [string, string][]; emptyLabel?: string }) {
+  const { control, name, label, help, required, options, emptyLabel } = props;
   return (
     <FormField
       control={control}
@@ -84,7 +84,7 @@ export function ChoiceField(props: Base & { options: [string, string][] }) {
           <FormLabel required={required ?? false}>{label}</FormLabel>
           <FormControl>
             <Select {...field} required={required ?? false}>
-              <option value="">Bitte wählen</option>
+              <option value="">{emptyLabel ?? "Bitte wählen"}</option>
               {options.map(([value, text]) => (
                 <option key={value} value={value}>
                   {text}
@@ -92,6 +92,7 @@ export function ChoiceField(props: Base & { options: [string, string][] }) {
               ))}
             </Select>
           </FormControl>
+          {help ? <FormDescription>{help}</FormDescription> : null}
           <FormMessage />
         </FormItem>
       )}

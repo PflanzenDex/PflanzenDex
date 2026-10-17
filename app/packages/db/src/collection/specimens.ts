@@ -11,13 +11,13 @@ import {
   setCaughtAt,
   type SpecimenRow,
 } from "./specimen-shared.ts";
-import { setLocations } from "./specimen-locations.ts";
+import { setLightZone, setLocations, zoneUsers } from "./specimen-locations.ts";
 
 export type { SpecimenRow };
 export type SpecimenValues = Pick<
   SpecimenRow,
   "speciesId" | "name" | "marker" | "locationId" | "caughtAt"
-> & { readonly status?: "plant" | "cutting" };
+> & { readonly status?: "plant" | "cutting"; readonly lightZoneId?: string | null };
 
 export interface MarkerAssignment {
   readonly specimenId: string;
@@ -85,6 +85,7 @@ export class SpecimenPostgres {
     | "name_taken"
     | "marker_taken"
     | "location_unknown"
+    | "zone_unknown"
     | "specimen_unknown"
     | "species_unknown"
   > {
@@ -99,6 +100,8 @@ export class SpecimenPostgres {
       if (taken) return taken;
       if (pgError(e).code === FOREIGN_KEY && pgError(e).constraint === "specimen_location")
         return "location_unknown";
+      if (pgError(e).code === FOREIGN_KEY && pgError(e).constraint === "specimen_light_zone")
+        return "zone_unknown";
       throw e;
     }
   }
@@ -157,6 +160,16 @@ export class SpecimenPostgres {
     assignments: readonly { readonly specimenId: string; readonly locationId: string }[],
   ): Promise<readonly SpecimenRow[] | "specimen_unknown" | "archived" | "location_unknown"> {
     return setLocations(this.pool, userId, assignments);
+  }
+
+  /** Own light zone of a specimen (US-LIC-02); see `setLightZone` in `specimen-locations.ts`. */
+  async setLightZone(userId: string, id: string, lightZoneId: string | null) {
+    return setLightZone(this.pool, userId, id, lightZoneId);
+  }
+
+  /** The specimens that carry the zone (port "zone usage", US-LIC-05); see `zoneUsers` in `specimen-locations.ts`. */
+  async zoneUsers(userId: string, lightZoneId: string) {
+    return zoneUsers(this.pool, userId, lightZoneId);
   }
 
   /** Corrects the catch date (US-BES-11); see `setCaughtAt` in `specimen-shared.ts`. */

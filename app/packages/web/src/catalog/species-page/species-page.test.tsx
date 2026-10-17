@@ -162,6 +162,17 @@ describe("US-BES-01 Seite Arten", () => {
     expect(screen.queryByText(/liegt in der Prüfliste/)).toBeNull();
   });
 
+  it("US-LIC-01 the form asks for the soft-leaf flag and explains its effect on the zone derivation", async () => {
+    fakeServer();
+    render(page());
+    await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
+    const field = screen.getByLabelText(/Weichblättrige C3-Pflanze/) as HTMLSelectElement;
+    expect(field.value).toBe("");
+    expect(field.required).toBe(false);
+    expect(field.getAttribute("aria-describedby")).toBeTruthy();
+    expect(screen.getByText(/nie automatisch in die stärkere Zone/)).toBeTruthy();
+  });
+
   it("a duplicate offers the existing species and opens it", async () => {
     fakeServer({
       proposal: () =>
