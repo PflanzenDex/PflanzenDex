@@ -25,6 +25,7 @@ import { MarkerForm } from "../markers/marker/marker-form/marker-form";
 import {
   CatchDateForm,
   useCatchDate,
+  type CatchDateTarget,
 } from "../markers/catch-date/catch-date-field/catch-date-field";
 import { DistributionView } from "../insights/distribution-view/distribution-view";
 
@@ -156,6 +157,10 @@ function List(p: { data: Loaded; created: Specimen | null; actions: Actions; pro
   const { archived, potted, marked, caught, clearMessages } = actions;
   const message = caught.message ?? marked.message ?? archived.message ?? potted.message;
   const error = archived.error ?? potted.error;
+  const openCatchDate = (e: CatchDateTarget) => {
+    clearMessages();
+    caught.setOpen(e);
+  };
   return (
     <>
       {message ? <Status>{message}</Status> : p.created && <Created specimen={p.created} />}
@@ -172,28 +177,23 @@ function List(p: { data: Loaded; created: Specimen | null; actions: Actions; pro
           archived.setOpen(e);
         }}
         onRepot={(e) => {
-          archived.setMessage(null);
-          marked.setMessage(null);
-          caught.setMessage(null);
+          clearMessages();
           void potted.repot(e);
         }}
         onMark={(e) => {
           clearMessages();
           marked.setOpen(e);
         }}
-        onCatchDate={(e) => {
-          clearMessages();
-          caught.setOpen(e);
-        }}
+        onCatchDate={openCatchDate}
         {...(p.props.onMeasure ? { onMeasure: p.props.onMeasure } : {})}
       />
       <ArchivedList
         entries={data.archived}
         onRestore={(e) => {
-          marked.setMessage(null);
-          caught.setMessage(null);
+          clearMessages();
           void archived.restore(e);
         }}
+        onCatchDate={openCatchDate}
       />
     </>
   );
