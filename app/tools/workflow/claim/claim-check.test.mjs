@@ -71,3 +71,12 @@ test("US-DEV-08: the handoff text has the four parts and closes the issue", () =
     assert.ok(body.includes(part), part);
   }
 });
+
+test("US-DEV-08: the handoff carries a reserved migration number only when one is given", () => {
+  const issue = { number: 62, title: "US-BES-06 · Delete specimen", url: "https://x/62" };
+  assert.doesNotMatch(handoffBody(issue, "feat/bes-06-x", "max"), /Migration number/);
+  assert.match(
+    handoffBody(issue, "feat/bes-06-x", "max", "0067"),
+    /\*\*Migration number:\*\* 0067/,
+  );
+});

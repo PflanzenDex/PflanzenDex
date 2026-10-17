@@ -1,6 +1,7 @@
 // `make claim ISSUE=<n>` (US-DEV-08): claim a story before working on it, so nobody builds it twice.
 // Refuses (exit 1) when the issue has an assignee, a PR references it or an origin branch carries its
 // story ID. Otherwise: assignee, project status, branch <type>/<story-id>-<slug>, draft PR with "## Handoff".
+// RESERVE_MIGRATION=1 also reserves the next migration number in the Handoff (issue #831).
 // Waive merged PRs only (follow-up work on a story): ALLOW_PRIOR_WORK=1. Everything else needs a human decision.
 import { writeFileSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -9,6 +10,8 @@ import { fileURLToPath } from "node:url";
 import { fetchBranches, fetchIssue, fetchPrs, me, realClient } from "./lib/claim-client.mjs";
 import { branchName, findConflicts } from "./lib/claim-lib.mjs";
 import { preflight, PreflightFailed } from "./claim-preflight.mjs";
+import { collect } from "./migration/git-view.mjs";
+import { nextNumber, pad } from "./migration/migration-lib.mjs";
 import { PRIORITY_HINT } from "../actions/project-status/project-status-lib.mjs";
 import { missingPriority } from "../actions/project-status/project-status.mjs";
 import {
@@ -85,6 +88,13 @@ async function rollBack(undo, log) {
   }
 }
 
+/** RESERVE_MIGRATION=1: the next free migration number, seen from origin/dev and all open PRs (issue #831). */
+function reserveMigration(client, env) {
+  if (env.RESERVE_MIGRATION !== "1") return undefined;
+  const { taken } = collect({ cwd: client.cwd ?? process.cwd(), branch: "" });
+  return pad(nextNumber({ taken }));
+}
+
 /** Warning only, never a failure: the claim is done; a failed lookup is reported, not swallowed (P-10). */
 async function warnNoPriority(client, number, log) {
   try {
@@ -126,7 +136,7 @@ export async function claim(
     await projectStatus(client, issue, STATUS_IN_PROGRESS, log);
     undo.push(["project status", () => projectStatus(client, issue, STATUS_TODO, log)]);
     const file = path.join(mkdtempSync(path.join(tmpdir(), "claim-")), "body.md");
-    writeFileSync(file, handoffBody(issue, branch, login));
+    writeFileSync(file, handoffBody(issue, branch, login, reserveMigration(client, env)));
     const url = (
       await client.run("gh", [
         "pr",
