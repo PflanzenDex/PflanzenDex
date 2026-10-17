@@ -35,6 +35,13 @@ export type { GrowthMoment, GrowthMoments, RecordPoint } from "./records/records
 export { anniversaries, ANNIVERSARY_LIMITS } from "./anniversaries/anniversaries";
 export type { Anniversary, AnniversarySpecimen } from "./anniversaries/anniversaries";
 export { careRhythm, RHYTHM_LIMITS } from "./rhythm/rhythm";
+export {
+  achievementsAddRhythmPause,
+  achievementsRemoveRhythmPause,
+  MAX_PAUSE_DAYS,
+  restPauses,
+} from "./rhythm/pause";
+export type { RestPeriod, RhythmPauseStore, StoredRhythmPause } from "./rhythm/pause";
 export type {
   CareRhythm,
   RhythmPause,
