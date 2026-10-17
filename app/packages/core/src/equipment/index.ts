@@ -26,6 +26,7 @@ export {
   equipmentSetDeviationLimit,
   equipmentSetZone,
   equipmentZoneUsage,
+  equipmentLocationUsage,
   lampLight,
   zoneEquipment,
 } from "./lamps";

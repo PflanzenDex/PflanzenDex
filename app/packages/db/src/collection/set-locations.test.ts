@@ -180,3 +180,14 @@ describe("US-LIC-02 own light zone of a specimen in the database", () => {
     ).toBe("zone_unknown");
   });
 });
+
+describe("US-ONB-02 removing a location a specimen stands at", () => {
+  it("US-ONB-02 a location with a specimen is kept (foreign key), an empty one is removed", async () => {
+    const used = await location(anna, "Belegt-ONB");
+    await specimen(anna, "Steht dort", used);
+    expect(await locations.remove(anna, used)).toBe("in_use");
+    expect((await locations.list(anna)).some((l) => l.id === used)).toBe(true);
+    const free = await location(anna, "Frei-ONB");
+    expect(await locations.remove(anna, free)).toBe("deleted");
+  });
+});

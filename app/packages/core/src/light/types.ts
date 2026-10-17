@@ -64,6 +64,8 @@ export interface LightLocationStore {
     id: string,
     values: LocationValues,
   ): Promise<LightLocation | "name_taken" | "not_found" | "zone_unknown">;
+  /** The adapter reports `in_use` when a specimen, care profile or sensor still points to the location (P-10). */
+  remove(userId: string, id: string): Promise<"deleted" | "not_found" | "in_use">;
 }
 
 export type ZoneUserKind =
@@ -82,4 +84,9 @@ export interface ZoneUser {
  */
 export interface ZoneUsage {
   user(userId: string, lightZoneId: string): Promise<readonly ZoneUser[]>;
+}
+
+/** Port "location usage": a module that links a location (a sensor) names its users, so a delete is never silent (P-10). */
+export interface LocationUsage {
+  user(userId: string, locationId: string): Promise<readonly ZoneUser[]>;
 }

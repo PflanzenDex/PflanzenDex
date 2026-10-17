@@ -18,3 +18,5 @@ const locationFields = {
 };
 export const locationSchema = shape(locationFields);
 export const locationUpdateSchema = shape({ id: idField("id"), ...locationFields });
+export const locationIdSchema = shape({ id: idField("id") });
+export const noInputSchema = shape({});

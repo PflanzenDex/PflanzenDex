@@ -156,6 +156,21 @@ describe("US-LIC-05 locations in the database", () => {
   });
 });
 
+describe("US-ONB-02 removing a location in the database", () => {
+  it("US-ONB-02 removes an own location, a foreign or unknown one is not found (P-04)", async () => {
+    const mine = await locations.create(anna, {
+      name: "Weg-Standort",
+      lightZoneId: null,
+      kind: "indoor",
+    });
+    if (typeof mine === "string") throw new Error(mine);
+    expect(await locations.remove(ben, mine.id)).toBe("not_found");
+    expect(await locations.remove(anna, mine.id)).toBe("deleted");
+    expect(await locations.remove(anna, mine.id)).toBe("not_found");
+    expect((await locations.list(anna)).some((l) => l.id === mine.id)).toBe(false);
+  });
+});
+
 describe("repeat guard in the database", () => {
   const s = (userId: string, key = "k1") => ({ userId, operation: "t.t", key });
 
