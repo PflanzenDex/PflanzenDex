@@ -68,7 +68,7 @@ Acceptance criteria:
 - Only what is visible is assessed; no estimation of height, substrate moisture or roots. If the basis is missing, the note stays empty.
 - A client with image understanding is a precondition. Without it the keeper assesses themselves (US-WAC-02).
 
-### US-KI-05 · Research via the AI client (wishlist, equipment, catalog) · ⬜ (prototype ✅)
+### US-KI-05 · Research via the AI client (wishlist, equipment, catalog) · 🟨 (prototype ✅)
 
 Acceptance criteria:
 

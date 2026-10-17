@@ -7,8 +7,17 @@ export { equipmentLinkAgent, equipmentSetSupply, plantAgents } from "./supply";
 export type { PlantAgent, PlantAgentsDependencies } from "./supply";
 export { equipmentAssignSensor, sensorAssignments } from "./sensors";
 export type { SensorAssignment, SensorAssignmentsDependencies, SensorView } from "./sensors";
-export { equipmentNeeds, equipmentCosts } from "./derived";
-export type { CostLine, CostView, Need, NeedKind, NeedsDependencies } from "./derived";
+export { equipmentNeeds, equipmentCosts, equipmentRecommendations } from "./derived";
+export type {
+  CostLine,
+  CostView,
+  Need,
+  NeedKind,
+  NeedsDependencies,
+  ProductEntry,
+  ProductPrice,
+  Recommendation,
+} from "./derived";
 export { equipmentSetStatus } from "./record";
 export type { SetStatusDependencies } from "./record";
 export {

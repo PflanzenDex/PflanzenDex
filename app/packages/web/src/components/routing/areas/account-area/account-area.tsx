@@ -9,6 +9,7 @@ import { PrivacySection } from "@/privacy";
 import {
   AchievementsOverviewSection,
   CareRhythmSection,
+  YearInReviewSection,
   useAchievementsVisible,
 } from "@/achievements";
 import { AccountView, MeasuredView, SettingsPage } from "@/account";
@@ -94,6 +95,7 @@ function AchievementsSection(props: { api: string; token: Token }) {
       <div className="flex min-w-0 flex-col gap-6">
         <CareRhythmSection api={props.api} token={props.token} />
         <AchievementsOverviewSection api={props.api} token={props.token} />
+        <YearInReviewSection api={props.api} token={props.token} />
       </div>
     </AreaSection>
   );

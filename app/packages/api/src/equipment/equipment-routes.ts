@@ -1,5 +1,5 @@
 import {
-  equipmentNeeds,
+  type ProductEntry,
   equipmentRecord,
   equipmentSetStatus,
   equipmentSetZone,
@@ -9,17 +9,13 @@ import {
   type ZoneStockSource,
   type ZoneUsage,
 } from "@pflanzendex/core";
-import {
-  EquipmentPostgres,
-  IdempotencyPostgres,
-  WishesPostgres,
-  ZonePostgres,
-} from "@pflanzendex/db";
+import { EquipmentPostgres, IdempotencyPostgres, ZonePostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import { body, write, type AuthEnv, type FeatureAccess } from "../kernel";
 import { addLampRoutes } from "./lamps";
 import { addMaintenanceRoutes } from "./maintenance";
+import { addNeedRoutes } from "./needs";
 import { addSensorRoutes } from "./sensors";
 import { addSharingRoutes, gateSharingRoutes } from "./sharing";
 import { friendEquipmentPorts } from "./sharing/ports";
@@ -44,6 +40,7 @@ export function equipmentRoutes(
   pool: Pool,
   zoneStock: ZoneStockSource,
   features?: FeatureAccess,
+  products: readonly ProductEntry[] = [],
 ): Hono<AuthEnv> {
   const equipment = new EquipmentPostgres(pool);
   const record = equipmentRecord({ equipment });
@@ -62,19 +59,7 @@ export function equipmentRoutes(
       ),
     ),
   );
-  routes.get("/equipment/needs", async (c) =>
-    c.json({
-      needs: await equipmentNeeds(
-        {
-          equipment,
-          zones: new ZonePostgres(pool),
-          stock: zoneStock,
-          wishes: new WishesPostgres(pool),
-        },
-        c.get("account").id,
-      ),
-    }),
-  );
+  addNeedRoutes(routes, { equipment, pool, zoneStock, products });
   routes.post("/equipment/:id/zone", async (c) =>
     write(c, deps, setZone, { input: { ...(await body(c)), id: c.req.param("id") } }),
   );
