@@ -40,6 +40,7 @@ What is taken over from the prototype: the **domain behavior** (phases, growth t
 | [18-Architecture-and-Quality-Gates.md](18-architecture-and-quality-gates.md)         | Epic QG: hooks, CI, structure rules, architecture boundaries, complexity, privacy gates, DoD                        |
 | [19-Development-Process-and-Automation.md](19-development-process-and-automation.md) | Epic DEV: task runner, hooks, routines, skills, process, release, migrations, operations                            |
 | [20-achievements.md](20-achievements.md)                                             | Epic ACH: achievements for care and growth, care rhythm, personal records, anniversaries, year in review, calm mode |
+| [21-swipe-matching.md](21-swipe-matching.md)                                         | Epic TAU: swipe matching of friends' swap offers against the own wishlist, yes/no/later, fits both ways             |
 
 ## Conventions
 
@@ -77,7 +78,8 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | QG Quality gates        | 9       | 0      | 7       | 2      | 2 · 5 · 16                | 0                      | 9       |
 | DEV Development process | 12      | 1      | 9       | 2      | 1 · 1 · 7                 | 0                      | 12      |
 | ACH Achievements        | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
-| **Total**               | **152** | **29** | **103** | **20** |                           | **50**                 | **102** |
+| TAU Swipe matching      | 7       | 0      | 0       | 7      | 0 · 0 · 10                | 0                      | 7       |
+| **Total**               | **159** | **29** | **103** | **27** |                           | **50**                 | **109** |
 
 <!-- spec-status:end -->
 
