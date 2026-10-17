@@ -61,6 +61,6 @@ export class AchievementSettingsPostgres implements AchievementSettingsStore, Rh
     const r = await withAccount(this.pool, userId, (c) =>
       c.query("delete from achievement_rhythm_pause where id = $1", [id]),
     );
-    return (r.rowCount ?? 0) > 0;
+    return r.rowCount === 1;
   }
 }
