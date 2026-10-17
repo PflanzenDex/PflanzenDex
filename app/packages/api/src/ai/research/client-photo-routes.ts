@@ -1,7 +1,7 @@
 import { aiMeasurementPhoto, type AiLogStore, type PhotoSource } from "@pflanzendex/core";
 import { Hono } from "hono";
-import { errorBody, imageBody, statusFor } from "../kernel";
-import { clientAuthentication, type AiEnv, type ClientGuardOptions } from "./client-auth";
+import { errorBody, imageBody, statusFor } from "../../kernel";
+import { clientAuthentication, type AiEnv, type ClientGuardOptions } from "../client-auth";
 
 /**
  * `GET /mcp/measurements/:id/photo` (US-KI-04, read right): the cleaned photo of a measurement of the connected
