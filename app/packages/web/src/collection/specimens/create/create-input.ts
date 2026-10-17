@@ -5,6 +5,8 @@ export interface CreateInput {
   /** Markers for existing specimens that have none yet, from the 3rd specimen on (US-BES-03). */
   markers?: { specimenId: string; marker: string }[];
   locationId?: string;
+  /** Own light zone chosen from the own zones (US-LIC-02); omitted = derived. */
+  lightZoneId?: string;
   /** Only "cutting" is sent; without a value the specimen is a plant (US-BES-04). */
   status?: "cutting";
   /** Back-dated catch date `YYYY-MM-DD`; omitted means today's local date (FR-BES-04). */
@@ -31,6 +33,7 @@ export function toCreateInput(
     ...(marker ? { marker } : {}),
     ...(markers.length > 0 ? { markers } : {}),
     ...(f.locationId ? { locationId: f.locationId } : {}),
+    ...(f.lightZoneId ? { lightZoneId: f.lightZoneId } : {}),
     ...(catchDateChanged && f.catchDate ? { catchDate: f.catchDate } : {}),
     ...(f.cutting ? { status: "cutting" as const } : {}),
   };

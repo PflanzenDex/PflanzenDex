@@ -63,7 +63,7 @@ export function prTitle(issue) {
 }
 
 /** Draft PR text; the "## Handoff" section is what the next person (or agent) reads first. */
-export function handoffBody(issue, branch, login) {
+export function handoffBody(issue, branch, login, migrationNumber) {
   return [
     `Closes #${issue.number}`,
     "",
@@ -79,6 +79,11 @@ export function handoffBody(issue, branch, login) {
     "- **Done:** nothing yet, only the claim",
     "- **Missing:** everything in the acceptance criteria of the issue",
     "- **Verification:** not run yet (`make ci`)",
+    ...(migrationNumber === undefined
+      ? []
+      : [
+          `- **Migration number:** ${migrationNumber} (reserved by \`make claim\`; \`make migration\` uses it)`,
+        ]),
     "- **Next steps:** `make worktree BRANCH=" + branch + "`, then `spec-to-tests`",
     "",
     "## Test evidence",

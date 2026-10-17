@@ -72,6 +72,8 @@ beforeAll(async () => {
       noRecommendations: false,
       notifications: {},
       replenishBuffer: null,
+      rarityConsent: null,
+      positionThresholds: null,
     });
 });
 afterAll(async () => {

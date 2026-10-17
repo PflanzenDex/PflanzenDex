@@ -18,6 +18,8 @@ export const createSchema = (rule: { required: boolean; missing: readonly Siblin
       answers: z.record(z.string(), z.string()),
       cutting: z.boolean(),
       locationId: z.string(),
+      /** Own light zone of the specimen (US-LIC-02); empty = derived from location and species. */
+      lightZoneId: z.string(),
       catchDate: z.string(),
     })
     .superRefine((f, ctx) => {

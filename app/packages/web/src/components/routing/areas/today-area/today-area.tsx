@@ -6,6 +6,7 @@ import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skelet
 import { HintsPage } from "@/collection";
 import { TreatmentsPage } from "@/care";
 import { WateringList } from "@/monitoring";
+import { LazyAnniversaries } from "@/components/routing/areas/shared/lazy-anniversaries/lazy-anniversaries";
 import { TodayPage, type TodayDestination } from "@/today";
 import {
   TODAY_SECTIONS,
@@ -22,6 +23,7 @@ const VIEW: Partial<Record<TodayDestination, LinkTarget>> = {
   // Measuring and the wishlist live in the Sammlung (US-QS-14, US-QS-04).
   measurements: "collection",
   wishlist: "collection",
+  equipment: "collection",
 };
 
 const NAMES: Record<string, string> = {
@@ -32,7 +34,7 @@ const NAMES: Record<string, string> = {
 
 /**
  * The destination "Heute" (US-QS-14): the list "Jetzt dran" (`today`), the open treatments with planning and history
- * (`care`), the watering (`monitoring`, US-MON-05) and the hints about incomplete plants (`collection`) as sections one below the other. The app wires the
+ * (`care`), the anniversaries with the plant (`achievements`, US-ACH-06), the watering (`monitoring`, US-MON-05) and the hints about incomplete plants (`collection`) as sections one below the other. The app wires the
  * modules (they do not know each other); every section is its own lazy part, so the shell does not carry them. The
  * old addresses of "Behandlung" and "Hinweise" lead to the anchors of the sections.
  */
@@ -55,6 +57,11 @@ export function TodayArea(props: {
       <Suspense fallback={<TodaySkeleton />}>
         <TodayPage api={props.api} token={props.token} onOpen={open} />
       </Suspense>
+      <LazyAnniversaries
+        api={props.api}
+        token={props.token}
+        onOpen={() => props.onOpen("collection")}
+      />
       <Section
         anchor={TODAY_SECTIONS.treatments}
         title="Behandlungen"

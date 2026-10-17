@@ -17,6 +17,7 @@ const row = (latinName: string, family = "Moraceae"): TaxonCardRow => ({
   imageUrl: "https://upload.example/x.jpg",
   pageUrl: "https://de.wikipedia.org/wiki/X",
   genusSpeciesCount: null,
+  natureRarity: { iucn: null, occurrences: null },
 });
 
 let wishes: InMemoryWishes;
@@ -32,6 +33,7 @@ const decide = (input: Record<string, unknown>, userId: string | null = "anna") 
       tree: {
         tree: async () => [row("Aloe vera", "Asphodelaceae"), row("Ficus lyrata")],
         facts: async () => [],
+        appRarity: async () => ({ participants: 0, owners: new Map() }),
       },
       wishes,
       stock: { stock: async () => [{ zoneId: "z2", name: "Lampe 2", count: 0 }] },

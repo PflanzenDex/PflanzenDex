@@ -7,7 +7,7 @@ import {
 import { IdempotencyPostgres, ProfilePostgres, withAccount } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
-import { body, errorBody, statusFor, write, type AuthEnv } from "../kernel";
+import { body, errorBody, statusFor, write, type AuthEnv, type FeatureAccess } from "../kernel";
 
 type Identity = { email: string; displayName: string | null; emailConfirmed: boolean };
 
@@ -34,7 +34,7 @@ async function ensureRow(pool: Pool, id: string, data: Identity) {
  * overwritten by a sign-in. The profile (US-ACC-02) is written only through `account.update_profile` (P-03, with
  * `Idempotency-Key`) for the account of the caller (P-04); reading is derived from the same row.
  */
-export function accountRoutes(pool: Pool): Hono<AuthEnv> {
+export function accountRoutes(pool: Pool, features: FeatureAccess): Hono<AuthEnv> {
   const profiles = new ProfilePostgres(pool);
   const update = accountUpdateProfile({ profiles });
   const deps = { idempotency: new IdempotencyPostgres(pool) };
@@ -59,6 +59,8 @@ export function accountRoutes(pool: Pool): Hono<AuthEnv> {
       mayShareWithFriends: mayShareWithFriends(data),
       reviewer: roles?.reviewer === true,
       operator: roles?.operator === true,
+      // Which function groups are switched on for this account (US-DEV-06): the web hides what is off.
+      features: await features.states(id),
     });
   });
 

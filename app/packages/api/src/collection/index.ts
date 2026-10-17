@@ -5,3 +5,4 @@ export {
   careProfileRoutes,
   careProfileZoneUsageFor,
 } from "./care-profile/care-profile-routes";
+export { specimenZoneUsageFor } from "./markers/location-routes";

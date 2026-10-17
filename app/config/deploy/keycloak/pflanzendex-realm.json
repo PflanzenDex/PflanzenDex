@@ -1,0 +1,76 @@
+{
+  "realm": "pflanzendex",
+  "enabled": true,
+  "displayName": "PflanzenDex",
+  "loginTheme": "pflanzendex",
+  "sslRequired": "external",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "verifyEmail": true,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "editUsernameAllowed": false,
+  "internationalizationEnabled": true,
+  "supportedLocales": ["de", "en"],
+  "defaultLocale": "de",
+  "passwordPolicy": "length(10)",
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 2592000,
+  "ssoSessionMaxLifespan": 7776000,
+  "ssoSessionIdleTimeoutRememberMe": 2592000,
+  "ssoSessionMaxLifespanRememberMe": 7776000,
+  "smtpServer": {
+    "host": "${KC_SMTP_HOST}",
+    "port": "${KC_SMTP_PORT}",
+    "from": "${KC_SMTP_FROM}",
+    "fromDisplayName": "PflanzenDex",
+    "auth": "${KC_SMTP_AUTH}",
+    "user": "${KC_SMTP_USER}",
+    "password": "${KC_SMTP_PASSWORD}",
+    "starttls": "${KC_SMTP_STARTTLS}",
+    "ssl": "${KC_SMTP_SSL}"
+  },
+  "clients": [
+    {
+      "clientId": "pflanzendex-api",
+      "name": "PflanzenDex API",
+      "enabled": true,
+      "bearerOnly": true
+    },
+    {
+      "clientId": "pflanzendex-web",
+      "name": "PflanzenDex Web",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "fullScopeAllowed": false,
+      "rootUrl": "${WEB_BASE_URL}",
+      "redirectUris": ["${WEB_BASE_URL}/*"],
+      "webOrigins": ["${WEB_BASE_URL}"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "${WEB_BASE_URL}/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "pflanzendex-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ]
+}

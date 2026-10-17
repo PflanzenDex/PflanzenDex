@@ -25,6 +25,8 @@ const PROFILE = {
   noRecommendations: true,
   notifications: NOTIFICATIONS,
   replenishBuffer: 2,
+  rarityConsent: false,
+  positionThresholds: null,
 };
 
 async function newAccount(withData = true): Promise<string> {
@@ -63,6 +65,8 @@ describe("US-ACC-02 · profile in the database", () => {
       noRecommendations: false,
       notifications: {},
       replenishBuffer: 2,
+      rarityConsent: false,
+      positionThresholds: null,
     });
   });
 
@@ -159,5 +163,62 @@ describe("US-WUN-02 · the replenish buffer in the database", () => {
     const b = await newAccount();
     await profiles.update(a, { ...PROFILE, replenishBuffer: 7 });
     expect((await profiles.find(b))?.replenishBuffer).toBe(2);
+  });
+});
+
+describe("US-POK-14 · the rarity consent in the database", () => {
+  it("is off for a new account and a null keeps the stored value", async () => {
+    const id = await newAccount();
+    expect((await profiles.find(id))?.rarityConsent).toBe(false);
+    expect((await profiles.update(id, { ...PROFILE, rarityConsent: true }))?.rarityConsent).toBe(
+      true,
+    );
+    const kept = await profiles.update(id, { ...PROFILE, rarityConsent: null, timeZone: "UTC" });
+    expect(kept).toMatchObject({ rarityConsent: true, timeZone: "UTC" });
+    expect((await profiles.update(id, { ...PROFILE, rarityConsent: false }))?.rarityConsent).toBe(
+      false,
+    );
+  });
+
+  it("lists exactly the accounts that consented, and an account that withdrew drops out (P-04)", async () => {
+    const yes = await newAccount();
+    const no = await newAccount();
+    const withdrawn = await newAccount();
+    await profiles.update(yes, { ...PROFILE, rarityConsent: true });
+    await profiles.update(withdrawn, { ...PROFILE, rarityConsent: true });
+    await profiles.update(withdrawn, { ...PROFILE, rarityConsent: false });
+    const listed = await profiles.rarityParticipants();
+    expect(listed).toContain(yes);
+    expect(listed).not.toContain(no);
+    expect(listed).not.toContain(withdrawn);
+  });
+
+  it("the application role cannot read the consent of other accounts directly, only through the list", async () => {
+    const a = await newAccount();
+    const b = await newAccount();
+    await profiles.update(a, { ...PROFILE, rarityConsent: true });
+    const direct = await withAccount(pool, b, (c) =>
+      c.query("select account_id from account_data where rarity_consent"),
+    );
+    expect(direct.rows).toEqual([]);
+  });
+});
+
+describe("US-LIC-03 · position thresholds in the database", () => {
+  it("are null for a new account, saved as a list, kept by null, and invisible to other accounts (P-04)", async () => {
+    const a = await newAccount();
+    const b = await newAccount();
+    expect((await profiles.find(a))?.positionThresholds).toBeNull();
+    const own = [60_000, 20_000, 9_000, 3_000];
+    expect(
+      (await profiles.update(a, { ...PROFILE, positionThresholds: own }))?.positionThresholds,
+    ).toEqual(own);
+    const kept = await profiles.update(a, {
+      ...PROFILE,
+      positionThresholds: null,
+      timeZone: "UTC",
+    });
+    expect(kept).toMatchObject({ positionThresholds: own, timeZone: "UTC" });
+    expect((await profiles.find(b))?.positionThresholds).toBeNull();
   });
 });

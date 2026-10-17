@@ -75,7 +75,7 @@ describe("US-ENT-01 suggestions as a card", () => {
     expect(c.getByText("Schusterpalme")).toBeTruthy();
     expect(c.getByText("Eine robuste Zimmerpflanze.")).toBeTruthy();
     expect(c.getByText("Zone 3")).toBeTruthy();
-    expect(c.getByLabelText("2 von 3").textContent).toBe("★★☆");
+    expect(c.getByText("Schwierigkeit").nextElementSibling?.textContent).toBe("★★☆2 von 3");
     for (const name of ["Luftfeuchte", "Mindesttemperatur", "Haustiere", "Wuchsgröße"])
       expect(c.getByText(name).nextElementSibling?.textContent).toBe("unbekannt");
     expect(c.getByRole("link", { name: /Wikipedia \(CC BY-SA\)/ }).getAttribute("href")).toBe(

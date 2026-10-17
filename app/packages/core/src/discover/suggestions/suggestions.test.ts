@@ -14,6 +14,8 @@ const card = (species: string, extra: Partial<CollectorCard> = {}): CollectorCar
   summaryLanguage: "de",
   genus: species.split(" ")[0] ?? species,
   genusSpeciesCount: null,
+  natureRarity: { iucn: null, occurrences: null, threatened: false },
+  appRarity: null,
   speciesPoor: false,
   difficulty: 2,
   lightZone: 3,
@@ -35,6 +37,7 @@ const row = (latinName: string, family = "Moraceae"): TaxonCardRow => ({
   imageUrl: null,
   pageUrl: null,
   genusSpeciesCount: null,
+  natureRarity: { iucn: null, occurrences: null },
 });
 const names = (list: readonly { species: string }[]) => list.map((s) => s.species);
 
@@ -123,6 +126,7 @@ describe("US-ENT-01 suggestions", () => {
       tree: {
         tree: async () => [row("Aloe vera", "Asphodelaceae"), row("Ficus lyrata")],
         facts: async () => [],
+        appRarity: async () => ({ participants: 0, owners: new Map() }),
       },
       wishes,
     };
@@ -139,7 +143,11 @@ describe("US-ENT-01 suggestions", () => {
         specimens: { list: async () => [] },
         species: { find: async () => null, findMany: async () => [] },
       },
-      tree: { tree: async () => [], facts: async () => [] },
+      tree: {
+        tree: async () => [],
+        facts: async () => [],
+        appRarity: async () => ({ participants: 0, owners: new Map() }),
+      },
       wishes: new InMemoryWishes(),
     };
     expect((await suggestions(deps, "anna", "Europe/Berlin")).empty?.reason).toBe("catalog_empty");
@@ -209,7 +217,11 @@ describe("US-ENT-03 reasons from own data", () => {
         specimens: { list: async () => [] },
         species: { find: async () => null, findMany: async () => [] },
       },
-      tree: { tree: async () => [row("Aloe vera", "Asphodelaceae")], facts: async () => [] },
+      tree: {
+        tree: async () => [row("Aloe vera", "Asphodelaceae")],
+        facts: async () => [],
+        appRarity: async () => ({ participants: 0, owners: new Map() }),
+      },
       wishes: new InMemoryWishes(),
     };
     const bare = await suggestions(deps, "anna", "Europe/Berlin");
@@ -250,6 +262,7 @@ describe("US-ENT-07 deck filtered to a light zone", () => {
     tree: {
       tree: async () => Object.keys(zoneOf).map((n) => row(n)),
       facts: async () => Object.entries(zoneOf).map(([n, z]) => facts(n, z)),
+      appRarity: async () => ({ participants: 0, owners: new Map() }),
     },
     wishes: new InMemoryWishes(),
     stock: {

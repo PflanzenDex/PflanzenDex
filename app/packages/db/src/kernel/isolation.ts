@@ -47,6 +47,20 @@ async function clear(observer: Pool, tables: TenantsTableName[], accounts: strin
     await observer.query(`delete from ${q(t.name)} where ${q(t.id)} = any($1)`, [accounts]);
 }
 
+/**
+ * Gives the account one example row in every table with an account id (the fixtures of all modules), so a test can
+ * prove something about "all data of an account" (US-ACC-04). The account must exist. Returns the tables filled.
+ */
+export async function fillAccountWithFixtures(
+  pool: Pool,
+  fixtures: Fixtures,
+  accountId: string,
+): Promise<string[]> {
+  const tables = (await tenantsTables(pool)).filter((t) => t.name !== "account");
+  for (const t of tables) await insert(pool, t, accountId, fixtures);
+  return tables.map((t) => t.name);
+}
+
 /** As `attacker`, tries to read, change, delete or inject foreign rows of `victim`. */
 async function attack(
   { pool, observer }: Connections,

@@ -62,11 +62,25 @@ The ranges are an assumption (starting values). With 500 slots per service colli
 - `.github/CODEOWNERS` names an owner per folder; changes to it require review.
 - `make gates` includes `check-specs`: duplicate file numbers in `docs/specs/product/` and IDs defined twice (`US-/FR-/DM-/E-`) fail the run. Whoever adds a number checks the highest free number on the current `origin/dev`; on a conflict the later PR rebases and renumbers (IDs of existing entries are never renumbered).
 
+**Migration numbers:** `make migration NAME=<module>_<short_name>` creates the file with the next number that is free on `origin/dev`, in every open PR branch and in numbers reserved in a PR Handoff (one `gh pr list` call, `git ls-tree` per branch). `RESERVE_MIGRATION=1 make claim ISSUE=<n>` writes the next free number into the draft PR's Handoff (`- **Migration number:** 0067`); `make migration` on that branch uses it. The gate `npm run migration-numbers` (part of `make gates`, `app/tools/workflow/claim/migration/`) fails on two migrations with the same number and on a new migration whose number is not above the highest on `origin/dev`; fix: merge `origin/dev`, rename only your own new file with `make migration`. Applied migrations are never renumbered.
+
 ## Rules for agents
 
 - Do not commit without being asked; do not change other people's files without a task.
 - Touch shared files (Makefile, `package.json`) as little as possible; put your own logic into your own scripts.
 - Report before writing if a file has changed since it was read.
+
+## Short output for agents (US-DEV-12)
+
+Long commands print hundreds of lines that cost tokens. Run them through the wrapper; it writes the full output to a log file (default `.cache/agent-logs/run-<time>.log`, ignored by git) and prints the path:
+
+```bash
+node app/tools/dev/agent/quiet.mjs -- make ci                 # success: one line; failure: failure lines + last 15 lines
+node app/tools/dev/agent/quiet.mjs --tail 30 --log /tmp/gates.log -- make gates
+node app/tools/dev/agent/pr-status.mjs 775                    # "N green, M open, K red" plus the names of non-green jobs
+```
+
+The exit code of the command is passed through. The wrapper only shortens what is printed; read the log file when the digest is not enough. Agent rule files (`AGENTS.md`) are gate files: a human adds the reference there.
 
 ## Open
 

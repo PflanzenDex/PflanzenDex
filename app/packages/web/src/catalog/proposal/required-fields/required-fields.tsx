@@ -35,6 +35,17 @@ function ChoiceFields({ control }: { control: Control<ProposalFields> }) {
       />
       <ChoiceField
         control={control}
+        name="softLeaf"
+        label="Weichblättrige C3-Pflanze (sonnenliebend)"
+        emptyLabel="Nein (Standard)"
+        options={[
+          ["no", "Nein"],
+          ["yes", "Ja"],
+        ]}
+        help="Bei „Ja“ steigt die Art bei der Lichtzonen-Ableitung nie automatisch in die stärkere Zone auf; bleibt es leer, gilt „Nein“."
+      />
+      <ChoiceField
+        control={control}
         name="growthMeasure"
         label="Wachstumsmaß"
         required

@@ -3,6 +3,7 @@
 import {
   recommendPosition,
   type PositionRecommendation,
+  type PositionThresholds,
   zoneDerive,
   type LightZone,
 } from "../../light";
@@ -31,9 +32,13 @@ interface Dependencies {
 /**
  * Light overview: one row per species with at least one active specimen and a set lux demand,
  * sorted descending by lux demand. Includes the zone derived from the lux demand and a position
- * recommendation (US-LIC-03).
+ * recommendation (US-LIC-03). The position uses the keeper's thresholds (FR-LIC-05), the defaults without.
  */
-export async function lightOverview(deps: Dependencies, userId: string): Promise<LightOverview> {
+export async function lightOverview(
+  deps: Dependencies,
+  userId: string,
+  thresholds?: PositionThresholds,
+): Promise<LightOverview> {
   const [specimens, allZones] = await Promise.all([
     deps.specimens.list(userId),
     deps.zones.list(userId),
@@ -59,16 +64,15 @@ export async function lightOverview(deps: Dependencies, userId: string): Promise
     // so every readable species has one; only a corrupt value has no recommendation and is skipped.
     if (!speciesId || !species) continue;
 
-    const position = recommendPosition(species.lightDemandLux);
+    const position = recommendPosition(species.lightDemandLux, thresholds);
     if (!position) continue;
 
-    // Limitation: the catalog has no "soft-leaved C3 plant" field yet (US-LIC-01 is still 🟨 for it), so
-    // `softLeaf` is false here, exactly as in the distribution and the care profile.
+    // `softLeaf` is the catalog field of the species, as in the distribution and the care profile (US-LIC-01).
     const derivation = zoneDerive(
       {
         lightDemandLux: species.lightDemandLux,
         standardLevel: species.standardLevel,
-        softLeaf: false,
+        softLeaf: species.softLeaf,
       },
       zones,
     );

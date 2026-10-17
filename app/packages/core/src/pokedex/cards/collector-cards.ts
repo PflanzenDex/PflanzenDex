@@ -1,7 +1,26 @@
 // Collector cards (US-POK-01): one card per species of the taxonomy tree, caught or missing. "Caught" is derived live
 // from the ownership, never stored (P-01). Unknown values stay `null` and the interface shows "unbekannt" (P-08).
 import { SPECIES_POOR_MAX } from "../browse";
+import { appRarityOf, NO_APP_RARITY, type AppRarity, type AppRarityBasis } from "../rarity";
+import type { IucnCategory } from "../taxonomy";
 import type { CatchDate, CaughtSpecies } from "../types";
+
+/** Rarity in nature (US-POK-13): each value with the link to its source and the retrieval date; `null` = unknown. */
+export interface NatureRarityRow {
+  readonly iucn: {
+    readonly category: IucnCategory;
+    readonly url: string;
+    readonly retrievedAt: string;
+  } | null;
+  readonly occurrences: {
+    readonly count: number;
+    readonly url: string;
+    readonly retrievedAt: string;
+  } | null;
+}
+
+/** Categories that make the card say the species is threatened in the wild. */
+const THREATENED: readonly IucnCategory[] = ["VU", "EN", "CR", "EW"];
 
 /** One resolved species of the tree. */
 export interface TaxonCardRow {
@@ -16,6 +35,7 @@ export interface TaxonCardRow {
   readonly imageUrl: string | null;
   readonly pageUrl: string | null;
   readonly genusSpeciesCount: number | null;
+  readonly natureRarity: NatureRarityRow;
 }
 
 /** What the approved catalog says about a species of the tree; `null` means "unknown" (P-08). */
@@ -31,6 +51,8 @@ export interface SpeciesFacts {
 export interface TaxonCardSource {
   tree(): Promise<readonly TaxonCardRow[]>;
   facts(userId: string): Promise<readonly SpeciesFacts[]>;
+  /** Counts for the rarity in PflanzenDex (US-POK-14); only numbers, no account (P-04). */
+  appRarity(userId: string): Promise<AppRarityBasis>;
 }
 
 export interface CollectorCard {
@@ -57,6 +79,16 @@ export interface CollectorCard {
   readonly order: string | null;
   readonly caughtDate: CatchDate | null;
   readonly specimenCount: number;
+  /**
+   * Rarity in nature (US-POK-13), shown as information only: never a sort key, filter, badge or reward. `threatened`
+   * (VU, EN, CR, EW) only drives a neutral note.
+   */
+  readonly natureRarity: NatureRarityRow & { readonly threatened: boolean };
+  /**
+   * Rarity in PflanzenDex (US-POK-14): owners and participants of the consenting accounts; `null` = unknown. Information
+   * only, like the rarity in nature: never a sort key, filter, badge or reward.
+   */
+  readonly appRarity: AppRarity | null;
 }
 
 /** "Birkenfeige (Zimmerlinde)" becomes "Birkenfeige". */
@@ -81,12 +113,15 @@ const byTree = (a: TaxonCardRow, b: TaxonCardRow) =>
 
 const NO_FACTS = { germanName: null, difficulty: null, lightZone: null };
 
-function cardOf(
-  number: number,
-  t: TaxonCardRow,
-  f: Omit<SpeciesFacts, "latinName">,
-  mine: CaughtSpecies | undefined,
-): CollectorCard {
+/** What the card needs besides the tree row: catalog facts, own ownership and the rarity counts. */
+interface CardContext {
+  readonly facts: Omit<SpeciesFacts, "latinName">;
+  readonly mine: CaughtSpecies | undefined;
+  readonly basis: AppRarityBasis;
+}
+
+function cardOf(number: number, t: TaxonCardRow, ctx: CardContext): CollectorCard {
+  const { facts: f, mine, basis } = ctx;
   return {
     number,
     species: t.latinName,
@@ -106,6 +141,11 @@ function cardOf(
     order: t.order,
     caughtDate: mine ? mine.caughtDate : null,
     specimenCount: mine ? mine.specimenCount : 0,
+    appRarity: appRarityOf(basis, t.latinName),
+    natureRarity: {
+      ...t.natureRarity,
+      threatened: t.natureRarity.iucn !== null && THREATENED.includes(t.natureRarity.iucn.category),
+    },
   };
 }
 
@@ -113,12 +153,17 @@ export function collectorCards(
   tree: readonly TaxonCardRow[],
   facts: readonly SpeciesFacts[],
   caught: readonly CaughtSpecies[],
+  basis: AppRarityBasis = NO_APP_RARITY,
 ): CollectorCard[] {
   const owned = new Map(caught.map((c) => [c.species, c]));
   const known = new Map(facts.map((f) => [f.latinName, f]));
-  return [...tree]
-    .sort(byTree)
-    .map((t, i) => cardOf(i + 1, t, known.get(t.latinName) ?? NO_FACTS, owned.get(t.latinName)));
+  return [...tree].sort(byTree).map((t, i) =>
+    cardOf(i + 1, t, {
+      facts: known.get(t.latinName) ?? NO_FACTS,
+      mine: owned.get(t.latinName),
+      basis,
+    }),
+  );
 }
 
 /** Cards of the account: the tree through the port, ownership derived by the caller (P-04). */
@@ -127,6 +172,10 @@ export async function readCollectorCards(
   userId: string,
   caught: readonly CaughtSpecies[],
 ): Promise<CollectorCard[]> {
-  const [tree, facts] = await Promise.all([source.tree(), source.facts(userId)]);
-  return collectorCards(tree, facts, caught);
+  const [tree, facts, basis] = await Promise.all([
+    source.tree(),
+    source.facts(userId),
+    source.appRarity(userId),
+  ]);
+  return collectorCards(tree, facts, caught, basis);
 }

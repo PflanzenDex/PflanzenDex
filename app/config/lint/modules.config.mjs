@@ -1,11 +1,11 @@
 // Module register (AB-13): the single source for the module boundary checks (AB-7 to AB-14, FR-QG-19, ADR 0003, 0012).
-// Read by tools/check/code/check-boundaries.mjs (imports, structure, migrations) and by findSchemaViolations in db.
+// Read by tools/check/code/check-boundaries.mjs (imports, structure, migrations) and findSchemaViolations in db.
 // A module folder is `packages/<core|db|api|web>/src/<name>/` with an `index.ts` as its public interface; without such
 // folders the gate is idle. `dependsOn` is the dependency matrix: `A -> B` may be imported only if B is listed for A; a
 // new edge changes this file in the same PR, cycles are always an error (AB-8). `epics` maps epics to modules (report only).
 // Foreign keys across modules only tenant-safe as (account_id, id) on allowed dependencies (O-2), plus reference tables.
-
 import {
+  GLOBAL_REFERENCE_TABLES,
   KERNEL_GLOSSARY_WORDS,
   LEGACY_MIGRATIONS,
   LEGACY_TABLE_NAMES,
@@ -23,8 +23,7 @@ const MODULES = [
     ports: ["DataSource", "IdempotencyStore"],
   },
   {
-    // Platform module (TE-06, ADR 0003 table "jobs"): PostgreSQL job queue and the runner. Has its own folder because the
-    // queue has domain-free rules of its own (lease, retry, merge); MON, POK and KI depend on it, never the other way.
+    // Platform module (TE-06, ADR 0003 table "jobs"): PostgreSQL job queue and runner; MON, POK and KI depend on it, not back.
     name: "jobs",
     epics: ["TE"],
     tables: ["job"],
@@ -42,8 +41,15 @@ const MODULES = [
   {
     name: "account",
     epics: ["ACC"],
-    tables: ["account_data", "account_role", "invitation", "access_setting", "operator_cost"],
-    dependsOn: ["kernel"],
+    tables: [
+      "account_data",
+      "account_role",
+      "invitation",
+      "access_setting",
+      "operator_cost",
+      "account_feature",
+    ],
+    dependsOn: ["kernel", "achievements"], // web only: the calm mode switch sits on the settings page (US-ACH-08)
     ports: [],
   },
   {
@@ -51,8 +57,7 @@ const MODULES = [
     epics: ["BES"],
     tables: ["species", "species_name", "species_version", "review_case"],
     dependsOn: ["kernel"],
-    // SpeciesRepointer (db): the merge of a proposal re-points the references of higher modules; each of them
-    // implements the port for its own tables (US-BES-10), the API composes them.
+    // SpeciesRepointer (db): a merge re-points references of higher modules; each implements it for its tables (US-BES-10).
     ports: ["SpeciesRepointer"],
   },
   {
@@ -87,7 +92,7 @@ const MODULES = [
     name: "care",
     epics: ["PHA", "BEH", "WAC"],
     tables: ["treatment", "measurement"],
-    dependsOn: ["kernel", "catalog", "light", "collection", "monitoring"],
+    dependsOn: ["kernel", "catalog", "light", "collection", "monitoring", "achievements"],
     ports: [],
   },
   {
@@ -107,7 +112,7 @@ const MODULES = [
   {
     name: "equipment",
     epics: ["EQU"],
-    tables: ["equipment", "supply", "recommendation"],
+    tables: ["equipment", "supply", "recommendation", "lamp_measurement", "equipment_setting"],
     dependsOn: ["kernel", "light", "collection", "wishlist", "monitoring"],
     ports: [],
   },
@@ -127,6 +132,22 @@ const MODULES = [
     ports: [],
   },
   {
+    // Achievements (ADR 0014, epic ACH): pure logic over facts of the keeper's data, adapters in the api, imports only the kernel.
+    name: "achievements",
+    epics: ["ACH"],
+    tables: ["achievement_setting", "achievement_seen", "achievement_rhythm_pause"],
+    dependsOn: ["kernel"],
+    ports: [],
+  },
+  {
+    // Export and deletion of all data of one account (US-ACC-04); reads the data tables from the catalog, owns only its request and log.
+    name: "privacy",
+    epics: ["ACC"],
+    tables: ["account_deletion", "deletion_log"],
+    dependsOn: ["kernel", "media", "catalog", "jobs"],
+    ports: ["AccountDataSource"],
+  },
+  {
     name: "discover",
     epics: ["ENT"],
     tables: ["proposal_entscheidung"],
@@ -137,7 +158,7 @@ const MODULES = [
     name: "today",
     epics: [],
     tables: [],
-    dependsOn: ["kernel", "light", "collection", "care", "wishlist", "monitoring"],
+    dependsOn: ["kernel", "light", "collection", "care", "wishlist", "monitoring", "equipment"],
     ports: [],
   },
   {
@@ -148,10 +169,11 @@ const MODULES = [
     ports: [],
   },
   {
-    name: "ai-access",
-    epics: ["AI"],
-    tables: ["connection", "task", "draft", "ai_log"],
-    dependsOn: ["kernel", "account"],
+    name: "ai",
+    // The keeper's AI client (ADR 0013, epic KI). Further tables follow with their stories.
+    epics: ["KI"],
+    tables: ["ai_connection", "ai_log", "ai_draft", "ai_task"],
+    dependsOn: ["kernel", "account", "today"],
     ports: [],
   },
 ];
@@ -162,17 +184,6 @@ const UNMODULED_FOLDERS = {};
 
 // Module-named folders that exist but do not meet the rules yet (ratchet, like the list above).
 const MODULE_FOLDERS_IN_TRANSITION = {};
-
-// Global reference tables (AB-10, ADR 0003 O-2): tables without an account id (justified in db/src/kernel/schema.ts) that
-// other modules may point to with a plain foreign key on `(id)`, only from a module that may depend on the owner, with
-// `on delete restrict` (P-10). Every entry needs a reason; the list grows only through review. Only `species`.
-const GLOBAL_REFERENCE_TABLES = {
-  species: {
-    owner: "catalog",
-    reason:
-      "The shared species catalog (E-02) has no account_id by design, so the tenant-safe (account_id, id) form cannot exist; Specimens and later wishes point to a species, and the database must refuse unknown species and the deletion of species in use.",
-  },
-};
 
 const KERNEL = "kernel";
 export const MODULE_CONFIG = {

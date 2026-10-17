@@ -206,7 +206,7 @@ describe("US-QS-14 the third mode Wunschliste", () => {
     expect(screen.getByText("Erfasse einen Wunsch.")).toBeTruthy();
   });
 
-  it("US-QS-14 the switch offers three modes in the order Pflanzen, Arten, Wunschliste", async () => {
+  it("US-QS-14 the switch offers four modes in the order Pflanzen, Arten, Wunschliste, Equipment (US-EQU-01)", async () => {
     renderAt("/collection");
     await screen.findByText("Du hast noch kein Exemplar", { exact: false });
     const group = screen.getByRole("group", { name: "Ansicht der Sammlung" });
@@ -214,7 +214,7 @@ describe("US-QS-14 the third mode Wunschliste", () => {
       within(group)
         .getAllByRole("button")
         .map((b) => b.textContent),
-    ).toEqual(["Pflanzen", "Arten", "Wunschliste"]);
+    ).toEqual(["Pflanzen", "Arten", "Wunschliste", "Equipment"]);
   });
 
   it("US-QS-14 a click on Wunschliste changes the address, remembers it, announces it and keeps the focus", async () => {

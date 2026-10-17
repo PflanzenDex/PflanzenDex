@@ -25,6 +25,8 @@ const card = (extra: Partial<Card> = {}): Card => ({
   family: "Moraceae",
   caughtDate: null,
   specimenCount: 0,
+  natureRarity: { iucn: null, occurrences: null, threatened: false },
+  appRarity: null,
   ...extra,
 });
 const show = (c: Card) => render(<CollectorCard card={c} />);
@@ -37,8 +39,14 @@ describe("US-POK-01 collector card", () => {
     expect(screen.getByText("Birkenfeige").getAttribute("title")).toBe("Birkenfeige (Zimmerlinde)");
     expect(screen.getByText("Ein Baum.")).toBeTruthy();
     expect(screen.getByText("Gattung: 800 Arten")).toBeTruthy();
-    expect(screen.getByLabelText("Schwierigkeit 2 von 3").textContent).toBe("★★☆");
+    expect(screen.getByText("★★☆").getAttribute("aria-hidden")).toBe("true");
     expect(screen.getByText("Lichtzone 3")).toBeTruthy();
+  });
+
+  it("US-QS-14 the difficulty is plain text for screen readers, not an aria-label on a span", () => {
+    show(card());
+    expect(screen.getByText("Schwierigkeit 2 von 3").className).toContain("sr-only");
+    expect(document.querySelector("span[aria-label]")).toBeNull();
   });
 
   it("US-POK-01 a missing card keeps name and text visible and says it is not caught yet", () => {
@@ -111,5 +119,102 @@ describe("US-QS-06 sources and licenses on the collector card (FR-POK-07)", () =
   it("US-QS-06 nothing from Wikipedia on the card: no attribution", () => {
     show(card({ summary: null, imageUrl: null, sourceUrl: null }));
     expect(screen.queryByText(/Wikipedia/)).toBeNull();
+  });
+});
+
+describe("US-POK-13 rarity in nature on the card", () => {
+  const src = {
+    url: "https://api.gbif.org/v1/species/42/iucnRedListCategory",
+    retrievedAt: "2026-10-16T10:00:00.000Z",
+  };
+
+  it("US-POK-13 says unknown when no source gave a value (P-08)", () => {
+    show(card());
+    expect(screen.getByText("In der Natur: Gefährdung unbekannt")).toBeTruthy();
+    expect(screen.getByText("In der Natur: Fundmeldungen unbekannt")).toBeTruthy();
+    expect(screen.queryByText(/Hinweis/)).toBeNull();
+  });
+
+  it("US-POK-13 labels category and occurrence count 'in der Natur' with source link and retrieval date", () => {
+    show(
+      card({
+        natureRarity: {
+          iucn: { category: "VU", ...src },
+          occurrences: {
+            count: 1231,
+            ...src,
+            url: "https://api.gbif.org/v1/occurrence/count?taxonKey=42",
+          },
+          threatened: true,
+        },
+      }),
+    );
+    expect(screen.getByText("In der Natur: gefährdet (VU)")).toBeTruthy();
+    expect(screen.getByText("In der Natur: 1.231 Fundmeldungen (GBIF)")).toBeTruthy();
+    const links = screen.getAllByRole("link", { name: /Quelle: GBIF, abgerufen 16\.10\.2026/ });
+    expect(links).toHaveLength(2);
+    expect(links[0]?.getAttribute("href")).toBe(src.url);
+  });
+
+  it("US-POK-13 shows a neutral note for a threatened species and none for a safe one", () => {
+    show(
+      card({
+        natureRarity: { iucn: { category: "LC", ...src }, occurrences: null, threatened: false },
+      }),
+    );
+    expect(screen.getByText("In der Natur: nicht gefährdet (LC)")).toBeTruthy();
+    expect(screen.queryByText(/Hinweis/)).toBeNull();
+    cleanup();
+    show(
+      card({
+        natureRarity: { iucn: { category: "EN", ...src }, occurrences: null, threatened: true },
+      }),
+    );
+    expect(screen.getByText("Hinweis: Diese Art gilt in der Natur als bedroht.")).toBeTruthy();
+  });
+
+  it("US-POK-13 does not link a source that is not https", () => {
+    show(
+      card({
+        natureRarity: {
+          iucn: { category: "LC", ...src, url: "javascript:alert(1)" },
+          occurrences: null,
+          threatened: false,
+        },
+      }),
+    );
+    expect(screen.queryByRole("link", { name: /GBIF, abgerufen/ })).toBeNull();
+  });
+});
+
+describe("US-POK-14 rarity in PflanzenDex on the card", () => {
+  it("US-POK-14 says unknown when no account takes part", () => {
+    show(card());
+    expect(screen.getByText("In PflanzenDex: unbekannt (noch kein Konto nimmt teil)")).toBeTruthy();
+  });
+
+  it("US-POK-14 shows the share with its basis, labelled 'in PflanzenDex'", () => {
+    show(card({ appRarity: { owners: 2, participants: 5, percent: 40 } }));
+    expect(screen.getByText("In PflanzenDex: 40 % (2 von 5 Konten)")).toBeTruthy();
+  });
+
+  it("US-POK-14 rounds honestly at the edges and uses the singular for one account", () => {
+    const texts = [
+      [
+        { owners: 1, participants: 300, percent: 0 },
+        "In PflanzenDex: weniger als 1 % (1 von 300 Konten)",
+      ],
+      [
+        { owners: 299, participants: 300, percent: 100 },
+        "In PflanzenDex: mehr als 99 % (299 von 300 Konten)",
+      ],
+      [{ owners: 0, participants: 4, percent: 0 }, "In PflanzenDex: 0 % (0 von 4 Konten)"],
+      [{ owners: 1, participants: 1, percent: 100 }, "In PflanzenDex: 100 % (1 von 1 Konto)"],
+    ] as const;
+    for (const [appRarity, text] of texts) {
+      show(card({ appRarity }));
+      expect(screen.getByText(text)).toBeTruthy();
+      cleanup();
+    }
   });
 });

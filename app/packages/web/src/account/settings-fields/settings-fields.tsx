@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/fields/form/form";
 import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
 import { Input } from "@/components/ui/fields/input/input";
+import { POSITION_THRESHOLD_DEFAULTS as DEFAULTS } from "@pflanzendex/core";
+import { useFeature } from "@/kernel";
 import { OCCASIONS, type Occasion } from "../api/account-api";
 import type { ProfileFields as Fields } from "../schemas";
 
@@ -19,6 +21,7 @@ const OCCASION_TEXT: Record<Occasion, string> = {
   watering: "Gießen",
   swap: "Tausch",
   friends: "Freunde",
+  equipment: "Equipment-Prüfung",
 };
 
 const zones = (): string[] => {
@@ -43,6 +46,30 @@ function BufferField({ control }: FieldProps) {
           <FormDescription>
             Die Wunschliste warnt, wenn eine Zone 2 bis 4 weniger offene Wünsche hat. Ganze Zahl von
             0 bis 10, 2 ist die Vorgabe; 0 schaltet die Warnung aus.
+          </FormDescription>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
+/** The thresholds of the position recommendation in the light overview (US-LIC-03, FR-LIC-05). */
+function ThresholdsField({ control }: FieldProps) {
+  return (
+    <FormField
+      control={control}
+      name="positionThresholds"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Schwellen der Positionsempfehlung (Lux)</FormLabel>
+          <FormControl>
+            <Input {...field} inputMode="numeric" autoComplete="off" />
+          </FormControl>
+          <FormDescription>
+            Vier Lux-Werte von hoch nach niedrig: ab dem ersten steht die Pflanze direkt unter der
+            Lampe, dann sehr nah, nah und in mittlerem Abstand. Vorgabe: {DEFAULTS.join(", ")} (eine
+            Annahme, du kannst sie anpassen). Die Übersicht „Lichthunger“ nutzt diese Werte.
           </FormDescription>
           <FormMessage />
         </FormItem>
@@ -95,6 +122,7 @@ export function ProfileFields({ control, fromDevice }: FieldProps & { fromDevice
         )}
       />
       <BufferField control={control} />
+      <ThresholdsField control={control} />
     </>
   );
 }
@@ -106,7 +134,7 @@ const NOTE = "mt-1 text-sm text-muted-foreground";
 /** One switch as a full-row 44 px target; the label text is the accessible name. */
 function Switch(props: {
   control: Control<Fields>;
-  name: "everythingPrivate" | "noRecommendations" | `notifications.${Occasion}`;
+  name: "everythingPrivate" | "noRecommendations" | "rarityConsent" | `notifications.${Occasion}`;
   label: string;
 }) {
   return (
@@ -132,12 +160,16 @@ function Switch(props: {
   );
 }
 
+/** The occasions about swapping and friends have no meaning while "social" is off (US-DEV-06); the stored values stay. */
+const SOCIAL_OCCASIONS: readonly Occasion[] = ["swap", "friends"];
+
 export function SwitchFields({ control }: FieldProps) {
+  const social = useFeature("social");
   return (
     <>
       <fieldset className={GROUP}>
         <legend className={LEGEND}>Benachrichtigungen</legend>
-        {OCCASIONS.map((o) => (
+        {OCCASIONS.filter((o) => social || !SOCIAL_OCCASIONS.includes(o)).map((o) => (
           <Switch key={o} control={control} name={`notifications.${o}`} label={OCCASION_TEXT[o]} />
         ))}
         <p className={NOTE}>
@@ -149,9 +181,15 @@ export function SwitchFields({ control }: FieldProps) {
         <legend className={LEGEND}>Datenschutz und Empfehlungen</legend>
         <Switch control={control} name="everythingPrivate" label="Alles privat" />
         <Switch control={control} name="noRecommendations" label="Keine Empfehlungen" />
+        <Switch
+          control={control}
+          name="rarityConsent"
+          label="Meine Sammlung in die Seltenheit in PflanzenDex einrechnen"
+        />
         <p className={NOTE}>
           „Alles privat“ setzt alle Freigaben aus, ohne sie zu löschen. Ohne Empfehlungen zeigt die
-          App keine Ausrüstungsvorschläge.
+          App keine Ausrüstungsvorschläge. Die Seltenheit in PflanzenDex zählt nur Konten, die hier
+          zustimmen (Vorgabe: aus); es fließt nur eine Zahl pro Art ein, nie wer eine Art besitzt.
         </p>
       </fieldset>
     </>

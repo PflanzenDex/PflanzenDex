@@ -1,4 +1,5 @@
 import { serve } from "@hono/node-server";
+import { featuresFromEnv } from "@pflanzendex/core";
 import { JobsPostgres, openPool, testDatabaseUrl } from "@pflanzendex/db";
 import { createApp } from "./app";
 import { createWikimediaDownload } from "./wishlist";
@@ -10,10 +11,14 @@ import { measurementSourceFor } from "./care";
 import { zoneStockFor } from "./zone-stock";
 import { createMemorySourceCache, createSourceClient } from "./kernel";
 import { createTokenVerifier } from "./account";
+import { deleteAccountHandlers, NO_STORE } from "./privacy";
 import { createS3ObjectStore, createSharpProcessor, s3ConfigFromEnv } from "./media";
 
 // Configuration from the environment only (no secrets in the repo). The defaults match `make auth-up`.
 const issuer = process.env["OIDC_ISSUER"] ?? "http://localhost:18081/realms/pflanzendex";
+// Where the keys come from, if not the issuer's public address (inside the deploy network, TE-03).
+const jwksUrl = process.env["OIDC_JWKS_URL"];
+const jwks = jwksUrl ? { jwksUrl } : {};
 const pool = openPool(process.env["DATABASE_URL"] ?? testDatabaseUrl());
 // Photo storage (US-WAC-06): without S3_* variables the photo upload answers 502 (the rest of the app is unaffected).
 const s3 = s3ConfigFromEnv(process.env);
@@ -31,13 +36,24 @@ const sources = createSourceClient({
   cache: createMemorySourceCache(),
   userAgent,
 });
+const aiResource = process.env["AI_RESOURCE_URL"] ?? "http://localhost:3000/mcp";
+// Feature switches (US-DEV-06): `FEATURES=social,ai`; in production nothing set means all off, elsewhere all on.
+const features = featuresFromEnv(process.env);
 const app = createApp({
+  features,
   ...(media ? { media } : {}),
   wishImage: { sources, download: createWikimediaDownload({ fetch, userAgent }) },
   reviewer: createTokenVerifier({
     issuer,
     audience: process.env["OIDC_AUDIENCE"] ?? "pflanzendex-api",
+    ...jwks,
   }),
+  // The AI interface (US-KI-07): its tokens have their own audience, the URL of the interface (RFC 8707, spike TE-15).
+  ai: {
+    resource: aiResource,
+    issuer,
+    verifier: createTokenVerifier({ issuer, audience: aiResource, ...jwks }),
+  },
   version: process.env["APP_VERSION"],
   commit: process.env["GIT_SHA"],
   pool,
@@ -61,7 +77,12 @@ const reminders = remindersRuntime({
 });
 const worker = createJobWorker({
   queue: new JobsPostgres(pool),
-  handlers: { ...JOB_HANDLERS, ...pokedexJobHandlers({ pool, sources }), ...reminders.handlers },
+  handlers: {
+    ...JOB_HANDLERS,
+    ...pokedexJobHandlers({ pool, sources }),
+    ...reminders.handlers,
+    ...deleteAccountHandlers(pool, media?.store ?? NO_STORE),
+  },
 });
 worker.start();
 // The taxonomy build runs when the catalog differs from the stored tree (US-POK-03).

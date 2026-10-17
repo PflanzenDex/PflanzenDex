@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const read = (name: string) =>
   readFileSync(new URL(`../../../../../config/deploy/${name}`, import.meta.url), "utf8");
-const web = read("web.Caddyfile");
+const web = read("docker/web.Caddyfile");
 const proxy = read("proxy.Caddyfile");
 
 /** The body of the `handle` block that starts with the given matcher. */
@@ -40,5 +40,19 @@ describe("NFR-12 · compression and cache headers of the serving layer", () => {
 
   it("NFR-12 an error response (such as a missing hashed file) is never cached", () => {
     expect(block("handle_errors")).toContain('Cache-Control "no-store"');
+  });
+});
+
+describe("NFR-10 · dotfile paths are no SPA routes (TE-03 hardening)", () => {
+  it("NFR-10 a dotfile path (/.env, /.git/config) is a 404 through the error handler, not the shell", () => {
+    expect(web).toMatch(
+      /^\s*@dotfile \{\n\s*path \/\.\* \*\/\.\*\n\s*not path \/\.well-known\/\*\n\s*\}$/m,
+    );
+    expect(block("handle @dotfile")).toMatch(/^\s*error 404\s*$/m);
+  });
+
+  it("NFR-10 the dotfile block comes before the SPA fallback", () => {
+    expect(web.indexOf("handle @dotfile")).toBeGreaterThan(-1);
+    expect(web.indexOf("handle @dotfile")).toBeLessThan(web.lastIndexOf("handle {"));
   });
 });

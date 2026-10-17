@@ -14,6 +14,8 @@ const card = (species: string, extra: Partial<CollectorCard> = {}): CollectorCar
   summaryLanguage: null,
   genus: species.split(" ")[0] ?? species,
   genusSpeciesCount: null,
+  natureRarity: { iucn: null, occurrences: null, threatened: false },
+  appRarity: null,
   speciesPoor: false,
   difficulty: 2,
   lightZone: 3,
@@ -136,6 +138,7 @@ const row = (latinName: string, family: string): TaxonCardRow => ({
   imageUrl: null,
   pageUrl: null,
   genusSpeciesCount: null,
+  natureRarity: { iucn: null, occurrences: null },
 });
 
 describe("US-ENT-05 derived live from the own wishes", () => {
@@ -150,8 +153,14 @@ describe("US-ENT-05 derived live from the own wishes", () => {
       specimens: { list: async () => [] },
       species: { find: async () => null, findMany: async () => [] },
     },
-    tree: { tree: async () => tree, facts: async () => [] },
+    tree: {
+      tree: async () => tree,
+      facts: async () => [],
+      appRarity: async () => ({ participants: 0, owners: new Map() }),
+    },
     wishes,
+    // A fixed day: the exploration pick is seeded by the day and must not make the order flaky.
+    clock: () => new Date("2026-10-10T12:00:00Z"),
   });
   const order = async (wishes: InMemoryWishes, userId: string) =>
     (await suggestions(deps(wishes), userId, "Europe/Berlin")).suggestions.map((s) => s.species);

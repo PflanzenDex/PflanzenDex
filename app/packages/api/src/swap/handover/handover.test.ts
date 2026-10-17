@@ -23,6 +23,8 @@ const reviewer: TokenVerifier = async (token) => {
 };
 // 2026-10-09 23:30 UTC: already 10 October in Berlin (NFR-08).
 const NOW = new Date("2026-10-09T23:30:00Z");
+// Friend codes are checked against the database clock, so befriending runs on the real time.
+let clockNow = NOW;
 let app: ReturnType<typeof createApp>;
 type Res = { status: number; body: any }; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -54,6 +56,7 @@ const specimen = async (sub: string, marker?: string) =>
     })
   ).body.id as string;
 async function befriend(inviter: string, redeemer: string) {
+  clockNow = new Date();
   const { code } = (await call(inviter, "POST", "/friends/invitations", {})).body;
   await call(redeemer, "POST", "/friends/requests", { code });
   const incoming = (await call(inviter, "GET", "/friends/requests")).body.incoming as {
@@ -62,6 +65,7 @@ async function befriend(inviter: string, redeemer: string) {
   await call(inviter, "POST", `/friends/requests/${incoming[0]?.id}/answer`, {
     decision: "accept",
   });
+  clockNow = NOW;
 }
 /** An accepted swap: A offers a fresh specimen (marker `m`), B requests, A accepts. */
 async function accepted(m: string, mode: "swap" | "give_away" = "swap", by = subB) {
@@ -90,7 +94,7 @@ beforeAll(async () => {
   admin = openFixturePool();
   releaseTaxa = await holdTaxonLock(admin);
   await migrate(pool);
-  app = createApp({ reviewer, pool, clock: () => NOW });
+  app = createApp({ reviewer, pool, clock: () => clockNow });
   for (const sub of [subA, subB, subC, subD, subE, subOp]) await call(sub, "GET", "/account");
   await admin.query(
     "insert into account_role (account, role) select id, 'operator' from account where subject = $1",
@@ -397,6 +401,8 @@ describe("US-SOZ-05 feed events Swapped and Potted through the API", () => {
     const a = await accepted("F1", "swap", subD);
     await confirm(subA, a.swapId);
     await confirm(subD, a.swapId, { marker: "f1" });
+    // The database stamps the handover with its own clock; pin it to the test day so the test does not age.
+    await admin.query("update swap set handed_over_at = $2 where swap_id = $1", [a.swapId, NOW]);
     for (const sub of [subA, subD]) {
       const e = (await feed(sub)).filter((x) => x.type === "swapped");
       expect(e.length).toBeGreaterThan(0);

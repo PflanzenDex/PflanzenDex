@@ -23,8 +23,19 @@ export type {
 } from "./types";
 export { GAP_MAX, PROMOTE_FROM, zoneDerive, zoneDeriveReviewed } from "./derive";
 export type { Derivation, DerivationInput, DerivationReason } from "./derive";
-export { recommendPosition, POSITIONS } from "./classification";
-export type { PositionRecommendation, PositionCategory } from "./classification";
+export {
+  recommendPosition,
+  positionThresholdsOrDefault,
+  isPositionThresholds,
+  POSITIONS,
+  POSITION_THRESHOLD_DEFAULTS,
+  POSITION_THRESHOLD_MAX,
+} from "./classification";
+export type {
+  PositionRecommendation,
+  PositionCategory,
+  PositionThresholds,
+} from "./classification";
 export { classificationRules } from "./classification";
 export type {
   ClassificationIndicator,

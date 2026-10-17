@@ -1,10 +1,27 @@
 import {
   INVITATION_VALIDITY_DAYS,
   OPERATOR_COST_CENTS,
+  POSITION_THRESHOLD_DEFAULTS,
+  POSITION_THRESHOLD_LIMITS as THRESHOLDS,
   REPLENISH_BUFFER_LIMITS as BUFFER,
 } from "@pflanzendex/core";
 import { z } from "zod";
 import { OCCASIONS, type AccountProfile } from "./api/account-api";
+
+/** "50000, 15000, 8000, 4000" to the four numbers; `null` while the text is not four whole numbers in the limits, descending. */
+export function parseThresholds(text: string): number[] | null {
+  const parts = text.split(/[\s,;]+/).filter((x) => x !== "");
+  if (parts.length !== THRESHOLDS.count || !parts.every((x) => /^\d+$/.test(x))) return null;
+  const numbers = parts.map(Number);
+  const ok = numbers.every(
+    (n, i) =>
+      n >= THRESHOLDS.min && n <= THRESHOLDS.max && (i === 0 || n < (numbers[i - 1] as number)),
+  );
+  return ok ? numbers : null;
+}
+
+const sameNumbers = (a: readonly number[], b: readonly number[]) =>
+  a.length === b.length && a.every((x, i) => x === b[i]);
 
 /** The fields of the settings form (US-ACC-02, DS-47): texts stay texts, the server operation decides (P-03). */
 export const profileSchema = z.object({
@@ -12,11 +29,19 @@ export const profileSchema = z.object({
   timeZone: z.string(),
   everythingPrivate: z.boolean(),
   noRecommendations: z.boolean(),
+  rarityConsent: z.boolean(),
   /** Whole number as text; the server decides again (P-03). */
   replenishBuffer: z.string().refine((text) => {
     const n = Number(text);
     return /^\d+$/.test(text.trim()) && n >= BUFFER.min && n <= BUFFER.max;
   }, `Gib eine ganze Zahl von ${BUFFER.min} bis ${BUFFER.max} ein.`),
+  /** Four whole lux values, descending, as one text (US-LIC-03); the server decides again (P-03). */
+  positionThresholds: z
+    .string()
+    .refine(
+      (text) => parseThresholds(text) !== null,
+      `Gib vier ganze Lux-Werte von ${THRESHOLDS.min} bis ${THRESHOLDS.max} ein, von hoch nach niedrig, getrennt durch Kommas.`,
+    ),
   notifications: z.object({
     phase: z.boolean(),
     treatment: z.boolean(),
@@ -24,6 +49,7 @@ export const profileSchema = z.object({
     watering: z.boolean(),
     swap: z.boolean(),
     friends: z.boolean(),
+    equipment: z.boolean(),
   }),
 });
 export type ProfileFields = z.infer<typeof profileSchema>;
@@ -36,7 +62,9 @@ export const toProfileFields = (p: AccountProfile, deviceZone: string | null): P
   timeZone: p.timeZone ?? deviceZone ?? "",
   everythingPrivate: p.everythingPrivate,
   noRecommendations: p.noRecommendations,
+  rarityConsent: p.rarityConsent,
   replenishBuffer: String(p.replenishBuffer),
+  positionThresholds: (p.positionThresholds ?? POSITION_THRESHOLD_DEFAULTS).join(", "),
   notifications: { ...p.notifications },
 });
 
@@ -51,13 +79,27 @@ export function toProfile(f: ProfileFields, saved: AccountProfile): AccountProfi
     timeZone: f.timeZone === "" ? null : f.timeZone,
     everythingPrivate: f.everythingPrivate,
     noRecommendations: f.noRecommendations,
+    rarityConsent: f.rarityConsent,
     replenishBuffer: Number(f.replenishBuffer.trim()),
+    positionThresholds: thresholdsToSave(f.positionThresholds, saved.positionThresholds),
     notifications: { ...f.notifications },
   };
 }
 
+/** Standard values stay "not set" (`null`) while the keeper did not change them (P-08: the default is no own number). */
+function thresholdsToSave(text: string, stored: number[] | null): number[] | null {
+  const numbers = parseThresholds(text);
+  if (numbers === null) return stored;
+  return stored === null && sameNumbers(numbers, POSITION_THRESHOLD_DEFAULTS) ? null : numbers;
+}
+
 /** Fields of the settings form a server refusal can point at, in the order of the form. */
-export const PROFILE_REFUSABLE = ["displayName", "timeZone", "replenishBuffer"] as const;
+export const PROFILE_REFUSABLE = [
+  "displayName",
+  "timeZone",
+  "replenishBuffer",
+  "positionThresholds",
+] as const;
 
 export const invitationCodeSchema = z.object({
   code: z.string().trim().min(1, "Bitte gib deinen Einladungscode ein."),

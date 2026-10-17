@@ -23,6 +23,16 @@ const suggestion = (extra: Partial<Suggestion> = {}): Suggestion => ({
 });
 const show = (s: Suggestion) => render(<SuggestionCard suggestion={s} onSwipe={() => undefined} />);
 
+describe("US-QS-14 difficulty stars have a text alternative", () => {
+  it("US-QS-14 hides the stars and reads the level as text, without an aria-label on the dd", () => {
+    show(suggestion({ difficulty: 2 }));
+    const value = screen.getByText("Schwierigkeit").nextElementSibling;
+    expect(value?.hasAttribute("aria-label")).toBe(false);
+    expect(screen.getByText("★★☆").getAttribute("aria-hidden")).toBe("true");
+    expect(screen.getByText("2 von 3").className).toContain("sr-only");
+  });
+});
+
 describe("US-QS-14 language of the card texts (WCAG 3.1.2)", () => {
   it("US-QS-14 marks an English summary with lang=en and a visible hint", () => {
     show(suggestion());

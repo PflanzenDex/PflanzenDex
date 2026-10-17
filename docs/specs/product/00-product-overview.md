@@ -16,7 +16,7 @@ Start users: the three people from the prototype circle.
 
 1. **Says what to do.** Change location, treatment due, measurement overdue, lamp level does not fit. Not just watering.
 2. **Measures against your own history.** Growth trend against your own average, etiolation never counts as success.
-3. **Rewards collecting.** Pokédex with rank, milestones and "N more until …".
+3. **Rewards collecting and caring.** Pokédex with rank, milestones and "N more until …"; achievements, care rhythm and personal records for care and growth (ACH), always against your own history.
 4. **Connects.** New among friends, swap exchange, provenance of every plant.
 5. **AI as an entry point.** Care by voice and photo, profiles and research on request, without the AI calculating or writing data freely.
 
@@ -79,32 +79,40 @@ Technology-neutral. Every entity belongs to an account, except the species catal
 
 ## Glossary
 
-| Term                   | Meaning                                                                                                                                                                                       |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PflanzenDéx            | Display name in the UI and its metadata (US-QS-14); identifiers, repository and docs keep "PflanzenDex".                                                                                      |
-| Species / specimen     | Species = knowledge (1× in the catalog), specimen = one pot of a keeper.                                                                                                                      |
-| Care phase             | Growth phase or dormancy phase, computed from the calendar and the species period.                                                                                                            |
-| Cutting                | Specimen in the status cutting: not yet potted, cutting light, excluded from the phase tracker.                                                                                               |
-| Etiolation             | Elongation caused by lack of light: length, but thin and pale. Does not count as success.                                                                                                     |
-| Marker                 | Distinguishes several specimens of the same species (in the prototype the color of a clothespin).                                                                                             |
-| Light zone             | Level with a defined light intensity (lamp 1 to 4 in the prototype).                                                                                                                          |
-| Buffer                 | Minimum number of open wish candidates per light zone.                                                                                                                                        |
-| Caught                 | Species is owned in the Pokédex: the keeper has an active specimen.                                                                                                                           |
-| Cultivar               | Named variety in quotation marks at the end of a Latin name. Accepted in a catalog name, shown as a chip (US-POK-06), not part of the Pokédex species assignment.                             |
-| Species-poor           | Genus with at most 10 species according to GBIF; badge on the card.                                                                                                                           |
-| Sharing setting        | Visibility for friends, set per specimen.                                                                                                                                                     |
-| Swap                   | Request → acceptance → handover confirmed by both sides; ownership changes.                                                                                                                   |
-| Provenance             | Note of who a specimen came from and when.                                                                                                                                                    |
-| Need                   | Gap derived from your own data (lamp missing, supply empty), basis for recommendations.                                                                                                       |
-| Suggestion / deck      | Species from the catalog that Discover offers as a card (yes/no/later); a deck is a limited sequence of them (epic ENT). Not to be confused with an equipment recommendation.                 |
-| AI client / connection | The keeper's AI assistant and its approval with the rights `read`, `create drafts`, `write` (epic KI).                                                                                        |
-| Task (AI)              | Task triggered from the app that the connected AI client picks up and answers as a draft (US-KI-08).                                                                                          |
-| Draft                  | AI result that counts only after the keeper's review (US-KI-09).                                                                                                                              |
-| Care profile           | Account-specific deviations from the catalog values of a species; private (DM-BES-04).                                                                                                        |
-| Correction (catalog)   | A keeper's report or proposed value for one field of an approved species, decided by a reviewer (DM-BES-07, US-BES-14).                                                                       |
-| Proposal (catalog)     | Species proposed by a user, visible only to them until a reviewer approves it (US-BES-10). Not to be confused with a suggestion in Discover.                                                  |
-| Provenance             | Origin, source and date of a catalog value: source, AI, community, reviewer or operator (DM-BES-06).                                                                                          |
-| Source snapshot        | The raw answer of one data source for one species, stored once and reused for every view (DM-BES-05, US-BES-12).                                                                              |
-| Thriving               | Active specimen with ≥ 2 measurements, overall rate > 0 and last quality `Healthy`; basis for suggestions (epic ENT).                                                                         |
-| Module                 | Domain-cut part of the one deployable with its own public interface, own tables and allowed dependencies (E-20, ADR 0003). Not to be confused with an epic: a module can carry several epics. |
-| Port                   | Interface defined by the owning module through which another module supplies or queries data, instead of touching its tables or code (e.g. `ZoneUsage`, LIC-05).                              |
+| Term                    | Meaning                                                                                                                                                                                       |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PflanzenDéx             | Display name in the UI and its metadata (US-QS-14); identifiers, repository and docs keep "PflanzenDex".                                                                                      |
+| Species / specimen      | Species = knowledge (1× in the catalog), specimen = one pot of a keeper.                                                                                                                      |
+| Care phase              | Growth phase or dormancy phase, computed from the calendar and the species period.                                                                                                            |
+| Cutting                 | Specimen in the status cutting: not yet potted, cutting light, excluded from the phase tracker.                                                                                               |
+| Etiolation              | Elongation caused by lack of light: length, but thin and pale. Does not count as success.                                                                                                     |
+| Marker                  | Distinguishes several specimens of the same species (in the prototype the color of a clothespin).                                                                                             |
+| Light zone              | Level with a defined light intensity (lamp 1 to 4 in the prototype).                                                                                                                          |
+| Buffer                  | Minimum number of open wish candidates per light zone.                                                                                                                                        |
+| Caught                  | Species is owned in the Pokédex: the keeper has an active specimen.                                                                                                                           |
+| Cultivar                | Named variety in quotation marks at the end of a Latin name. Accepted in a catalog name, shown as a chip (US-POK-06), not part of the Pokédex species assignment.                             |
+| Species-poor            | Genus with at most 10 species according to GBIF; badge on the card.                                                                                                                           |
+| Sharing setting         | Visibility for friends, set per specimen.                                                                                                                                                     |
+| Swap                    | Request → acceptance → handover confirmed by both sides; ownership changes.                                                                                                                   |
+| Provenance              | Note of who a specimen came from and when.                                                                                                                                                    |
+| Need                    | Gap derived from your own data (lamp missing, supply empty), basis for recommendations.                                                                                                       |
+| Suggestion / deck       | Species from the catalog that Discover offers as a card (yes/no/later); a deck is a limited sequence of them (epic ENT). Not to be confused with an equipment recommendation.                 |
+| AI client / connection  | The keeper's AI assistant and its approval with the rights `read`, `create drafts`, `write` (epic KI).                                                                                        |
+| Task (AI)               | Task triggered from the app that the connected AI client picks up and answers as a draft (US-KI-08).                                                                                          |
+| Draft                   | AI result that counts only after the keeper's review (US-KI-09).                                                                                                                              |
+| Care profile            | Account-specific deviations from the catalog values of a species; private (DM-BES-04).                                                                                                        |
+| Correction (catalog)    | A keeper's report or proposed value for one field of an approved species, decided by a reviewer (DM-BES-07, US-BES-14).                                                                       |
+| Proposal (catalog)      | Species proposed by a user, visible only to them until a reviewer approves it (US-BES-10). Not to be confused with a suggestion in Discover.                                                  |
+| Provenance              | Origin, source and date of a catalog value: source, AI, community, reviewer or operator (DM-BES-06).                                                                                          |
+| Source snapshot         | The raw answer of one data source for one species, stored once and reused for every view (DM-BES-05, US-BES-12).                                                                              |
+| Thriving                | Active specimen with ≥ 2 measurements, overall rate > 0 and last quality `Healthy`; basis for suggestions (epic ENT).                                                                         |
+| Achievement             | Named, verifiable event in the keeper's own data (e.g. cutting rooted), derived live, earned once per account (epic ACH).                                                                     |
+| Care rhythm             | Run of calendar weeks in which all due care tasks were done on time; replaces a streak, a missed week is never shown as a loss (US-ACH-04).                                                   |
+| Calm mode               | Account setting that hides all achievement and celebration elements (US-ACH-08).                                                                                                              |
+| Match card / match deck | Open offer of a friend whose species is on the keeper's own wishlist, shown as a swipe card; the deck is the not yet decided sequence (epic TAU). Not to be confused with a suggestion (ENT). |
+| Fits both ways          | Chip on a match card: the giver also wants a species the keeper offers; a fact, never a rank (US-TAU-05).                                                                                     |
+| Keeper style            | Account setting `few` (a few plants) or `many` (everything at once), chosen at the start and changeable at any time; no level or rank (epic ONB).                                             |
+| Unlock / lock state     | A staged function is `open`, `locked` (with reason and way), `unlockable` or `switched_off` by the operator; derived live, the keeper may open it by one tap (US-ONB-04, US-ONB-05).          |
+| Function overview       | The fixed page "Was die App kann" in the account help: every function with its state (US-ONB-06).                                                                                             |
+| Module                  | Domain-cut part of the one deployable with its own public interface, own tables and allowed dependencies (E-20, ADR 0003). Not to be confused with an epic: a module can carry several epics. |
+| Port                    | Interface defined by the owning module through which another module supplies or queries data, instead of touching its tables or code (e.g. `ZoneUsage`, LIC-05).                              |

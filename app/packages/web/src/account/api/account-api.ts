@@ -12,6 +12,8 @@ export type Account = {
   reviewer?: boolean;
   /** The operator: shows the operator area (US-ACC-05). Only a hint; the server checks the role again. */
   operator?: boolean;
+  /** Which function groups are on for this account (US-DEV-06); absent counts as on. */
+  features?: { social: boolean; ai: boolean; recommendations: boolean };
 };
 
 export const OCCASIONS = [
@@ -21,6 +23,7 @@ export const OCCASIONS = [
   "watering",
   "swap",
   "friends",
+  "equipment",
 ] as const;
 export type Occasion = (typeof OCCASIONS)[number];
 
@@ -33,6 +36,10 @@ export type AccountProfile = {
   notifications: Record<Occasion, boolean>;
   /** Open wishlist candidates per zone 2 to 4 below which the wishlist warns (US-WUN-02). */
   replenishBuffer: number;
+  /** The collection counts in the rarity in PflanzenDex (US-POK-14); off until switched on. */
+  rarityConsent: boolean;
+  /** Lux lower bounds of the four closest positions in the light overview (US-LIC-03); `null` = standard values. */
+  positionThresholds: number[] | null;
 };
 
 type Environment = Record<string, string | undefined>;

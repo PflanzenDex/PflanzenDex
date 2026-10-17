@@ -5,6 +5,7 @@ import { SpeciesStub, InMemorySpecimens, testSpecies } from "../shared/test-help
 
 const SPECIES_LOW = "11111111-1111-4111-8111-111111111111"; // 15.000 Lux, Stufe 2: Lampe 2
 const SPECIES_HIGH = "22222222-2222-4222-8222-222222222222"; // 40.000 Lux, Stufe 3: Lampe 3
+const SPECIES_SOFT = "33333333-3333-4333-8333-333333333333"; // 100.000 Lux, soft leaf: stays in Lampe 2
 const SPECIES_FOREIGN = "99999999-9999-4999-8999-999999999999"; // visible only to ben
 
 const light = new InMemoryLight();
@@ -12,6 +13,13 @@ const species = new SpeciesStub([
   { species: testSpecies(SPECIES_LOW, { lightDemandLux: 15000, standardLevel: 2 }) },
   { species: testSpecies(SPECIES_HIGH, { lightDemandLux: 40000, standardLevel: 3 }) },
   { species: testSpecies(SPECIES_FOREIGN), only: "ben" },
+  {
+    species: testSpecies(SPECIES_SOFT, {
+      lightDemandLux: 100_000,
+      standardLevel: 2,
+      softLeaf: true,
+    }),
+  },
 ]);
 let specimens: InMemorySpecimens;
 let n = 0;
@@ -116,6 +124,15 @@ describe("US-LIC-02 count per zone 2 to 4 at specimen level", () => {
     ]);
   });
 
+  it("US-LIC-01: Given a species marked soft-leaved C3, when its zone is derived, then it is not promoted by its lux need", async () => {
+    await create("anna", "Kiste", { speciesId: SPECIES_SOFT });
+    expect(await counts("anna")).toEqual([
+      ["Lampe 2", 1],
+      ["Lampe 3", 0],
+      ["Lampe 4", 0],
+    ]);
+  });
+
   it("cutting light does not count: status cutting and location in the lowest zone", async () => {
     await create("anna", "Fensterbank", { status: "cutting" });
     await create("anna", "Steckling-Ecke");
@@ -161,6 +178,7 @@ describe("US-LIC-02 thinnest zone and tie", () => {
     expect(v.thinnest.map((z) => z.name)).toEqual(["Lampe 3", "Lampe 4"]);
     expect(v.hint.text).toContain("Lampe 3 und Lampe 4");
     expect(v.hint.nextAction).toContain("Wunschliste");
+    expect(v.hint.nextAction).toContain("eigene Lichtzone"); // US-LIC-02, P-09: names the second way as well
   });
 
   it("with a tie of all three zones all three are in the list", async () => {
@@ -208,6 +226,56 @@ describe("US-LIC-02 tenant: only own specimens and zones", () => {
     expect(await counts("ben")).toEqual([
       ["Bens 2", 0],
       ["Bens 3", 2],
+    ]);
+  });
+});
+
+/** Sets the own light zone of the last specimen created (US-LIC-02), as the operation would. */
+const own = (zoneName: string, userId = "anna") => {
+  const i = specimens.rows.length - 1;
+  const row = specimens.rows[i];
+  if (row) specimens.rows[i] = { ...row, lightZoneId: zoneId[`${userId}:${zoneName}`] ?? null };
+};
+
+describe("US-LIC-02 / US-BES-04 own light zone of the specimen", () => {
+  it("US-LIC-02: Given a specimen with its own zone, when the distribution is counted, then the own zone beats location and species", async () => {
+    await create("anna", "Fensterbank", { speciesId: SPECIES_LOW }); // location and species say lamp 2
+    own("Lampe 4");
+    expect(await counts("anna")).toEqual([
+      ["Lampe 2", 0],
+      ["Lampe 3", 0],
+      ["Lampe 4", 1],
+    ]);
+  });
+
+  it("US-LIC-02: Given a specimen without a location and with its own zone, when counted, then it counts there instead of the species zone", async () => {
+    await create("anna", null, { speciesId: SPECIES_LOW });
+    own("Lampe 3");
+    expect(await counts("anna")).toEqual([
+      ["Lampe 2", 0],
+      ["Lampe 3", 1],
+      ["Lampe 4", 0],
+    ]);
+  });
+
+  it("US-BES-04: a cutting stays under cutting light even with an own zone, an archived specimen does not count", async () => {
+    await create("anna", null, { status: "cutting" });
+    own("Lampe 4");
+    await create("anna", null, { status: "archived" });
+    own("Lampe 4");
+    const v = await zoneDistribution(deps(), "anna");
+    expect(v.zones.map((z) => z.count)).toEqual([0, 0, 0]);
+    expect(v.notCounted).toMatchObject({ cuttingLight: 1, archived: 1 });
+  });
+
+  it("US-LIC-02 (P-04): a zone of another account on the row is not found among the own zones and does not count", async () => {
+    await zoneCreate("ben", ["Bens 1", "Bens 2"]);
+    await create("anna", null, { speciesId: SPECIES_LOW });
+    own("Bens 2", "ben");
+    expect(await counts("anna")).toEqual([
+      ["Lampe 2", 1], // falls back to the species zone
+      ["Lampe 3", 0],
+      ["Lampe 4", 0],
     ]);
   });
 });

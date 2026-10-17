@@ -41,14 +41,14 @@ Acceptance criteria:
 - Given an invalid input (unknown location, impossible number), then the operation rejects, returns an error code with a reason, and nothing is written.
 - Every operation returns in structured form what was changed; the action appears in the log with "undo" (US-KI-10).
 
-### US-KI-02 · Daily status on request · ⬜ new
+### US-KI-02 · Daily status on request · 🟨 new
 
 Acceptance criteria:
 
 - "What is due today?" returns a prioritized answer from the operation `status` (the same code as "Today" and reminders, FR-MON-03). The client only phrases.
 - Every item says what to do (P-09). No item is invented or left out.
 
-### US-KI-03 · Deliver a species profile as a draft · ⬜ (prototype ✅)
+### US-KI-03 · Deliver a species profile as a draft · 🟨 (prototype ✅)
 
 As a **plant keeper** I want to get a complete profile for an unknown species.
 
@@ -60,7 +60,7 @@ Acceptance criteria:
 - The profile receives `ai-created, unreviewed` with a note of the connection and can be set to `reviewed` only by the operator or a reviewer (FR-BES-06, FR-KI-09).
 - Without AI the keeper creates the profile in the form (FR-KI-05, US-BES-01).
 
-### US-KI-04 · Have a photo assessed qualitatively · ⬜ (prototype ✅)
+### US-KI-04 · Have a photo assessed qualitatively · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
@@ -68,7 +68,7 @@ Acceptance criteria:
 - Only what is visible is assessed; no estimation of height, substrate moisture or roots. If the basis is missing, the note stays empty.
 - A client with image understanding is a precondition. Without it the keeper assesses themselves (US-WAC-02).
 
-### US-KI-05 · Research via the AI client (wishlist, equipment, catalog) · ⬜ (prototype ✅)
+### US-KI-05 · Research via the AI client (wishlist, equipment, catalog) · 🟨 (prototype ✅)
 
 Acceptance criteria:
 
@@ -77,7 +77,7 @@ Acceptance criteria:
 - Image URLs, sources and licenses are checked by the **server** for reachability and license (operation `check_image_source`); the client cannot claim them as checked.
 - Adoption one by one in the app (US-KI-09).
 
-### US-KI-06 · Limits, transparency and privacy · ⬜ new
+### US-KI-06 · Limits, transparency and privacy · 🟨 new
 
 As an **operator** I want to limit the use of the interface and as a **keeper** to know where my data goes.
 
@@ -88,7 +88,7 @@ Acceptance criteria:
 - When connecting, the app states: the chosen AI provider receives the data the client retrieves. The app itself sends nothing to an AI service; the operator has no data processor for it (E-04, NFR-11).
 - Fields on toxicity, species protection and plant agents deliver source and date or "unknown", never a factual claim without a source.
 
-### US-KI-07 · Connect the AI client and manage access · ⬜ new
+### US-KI-07 · Connect the AI client and manage access · 🟨 new
 
 As a **plant keeper** I want to connect my AI client to my account and define exactly what it may do.
 
@@ -100,7 +100,7 @@ Acceptance criteria:
 - List "Connected AI clients": name, rights, connected since, last use. Revocation takes effect immediately; a revoked or expired access is rejected.
 - A connection belongs to exactly one account (KI-R6). Instructions for connecting (copy link, example flows) are in the app.
 
-### US-KI-08 · Tasks from the app to the AI client · ⬜ new
+### US-KI-08 · Tasks from the app to the AI client · 🟨 new
 
 As a **plant keeper** I want to trigger something in the app that my AI client handles (path B).
 
@@ -112,7 +112,9 @@ Acceptance criteria:
 - If no client is connected, the app says so and offers the manual path as well as "Copy task as text". No silent task arises that is never processed (P-10).
 - Tasks for the same reference and type are merged; repeating is idempotent (US-QS-03). A task expires after 14 days (assumption).
 
-### US-KI-09 · Review and adopt drafts · ⬜ new
+Decided by the PO (assumption): task types are `species_profile` (reference: species name), `wish_candidates` (reference: light zone 2 to 4) and `photo_assessment` (reference: measurement id), each completed by a draft of the matching type (`species`, `wish`, `photo_assessment`). The client delivers a draft with `taskId`; the first draft sets the task to `done`, the same connection may add more (wish candidates). The client may decline a task (`declined`), the keeper may withdraw it (also `declined`); `expired` is derived after 14 days and stays visible. Without a connected client with the right "create drafts" no task is stored (`ai.no_client`); "Copy task as text" then works without storing anything. Open for the keeper: the entry points in the forms of US-BES-01, US-WUN-02/04 and US-WAC-06 (the creation lives in "Konto" so far) and opening the client by a link (no client offers one yet; the clipboard path is built).
+
+### US-KI-09 · Review and adopt drafts · 🟨 new
 
 As a **plant keeper** I want to review every AI result before it counts (KI-R3).
 
@@ -122,7 +124,7 @@ Acceptance criteria:
 - Per draft: adopt, change and adopt, discard. Adopting runs through the same validating operation as the form (date local, `Assessed_By: AI suggestion accepted`).
 - A draft is never adopted automatically. Unprocessed drafts expire and remain viewable as discarded.
 
-### US-KI-10 · Log of AI actions and undo · ⬜ new
+### US-KI-10 · Log of AI actions and undo · 🟨 new
 
 As a **plant keeper** I want to trace and take back what the AI client did.
 
@@ -178,4 +180,4 @@ Built-in chat with operator quota (E-19), operator billing of AI calls, long-liv
 2. **Built-in chat (E-19):** add later if paths A and B are not enough?
 3. **Friends' data via AI:** open later? If so, with which protections against injection (FR-KI-07)?
 4. How many clients should be tested for real before R4 (FR-KI-06)?
-5. **Consent without deselecting individual rights:** Keycloak's default consent page only knows "yes" or "no" for all requested scopes (spike TE-15). US-KI-07 requires deselecting individual rights. Either a consent step of its own (theme or own dialog) or adjusting the story.
+5. **Consent without deselecting individual rights (assumption, decided by the PO, ADR 0013):** the sign-in service keeps its all-or-nothing consent; the rights the keeper allows are set in the app ("KI-Clients" in "Konto"), default `drafts`, and the token can only narrow them. A higher right that a token carries becomes a request the keeper confirms in the app. User task for production: the consent page of the sign-in service names client, requested rights and the AI provider (US-KI-06). Original question: Keycloak's default consent page only knows "yes" or "no" for all requested scopes (spike TE-15). US-KI-07 requires deselecting individual rights. Either a consent step of its own (theme or own dialog) or adjusting the story.

@@ -7,6 +7,8 @@ import {
 } from "@pflanzendex/core";
 import {
   CareProfilePostgres,
+  EquipmentPostgres,
+  LampMeasurementsPostgres,
   LocationPostgres,
   SpeciesPostgres,
   SpecimenPostgres,
@@ -44,10 +46,17 @@ export function todayDependencies(pool: Pool, opt: TodayOptions) {
     targets: opt.phaseLocation ?? careProfileLocations(profiles),
     clock: opt.clock ?? (() => new Date()),
     measurements: opt.measurements,
+    equipment: new EquipmentPostgres(pool),
+    lampMeasurements: new LampMeasurementsPostgres(pool),
     wishes: new WishesPostgres(pool),
     stock: opt.zoneStock,
   };
 }
+
+/** The central status function as a port for the AI interface (US-KI-02): the same derivation as "Today" and the reminders. */
+export const todayStatusSource =
+  (pool: Pool, opt: TodayOptions) => (userId: string, timeZone: unknown) =>
+    todayStatus(todayDependencies(pool, opt), userId, timeZone);
 
 /**
  * The central "Today" list (TE-07): read only, derived on every request from the keeper's own data (P-01, P-04), through

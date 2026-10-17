@@ -105,6 +105,7 @@ export const FULL = {
   difficulty: 1,
   standardLevel: 2,
   lightDemandLux: 15000,
+  softLeaf: false,
   growthMeasure: "height",
   etiolationSigns: "Blätter werden schmal und kippen zur Seite.",
   successCriteria: "Neue Blätter wachsen aufrecht und kräftig gefärbt.",

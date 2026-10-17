@@ -203,3 +203,38 @@ describe("US-LIC-03: light overview", () => {
     ]);
   });
 });
+
+describe("US-LIC-03: adjustable thresholds (FR-LIC-05)", () => {
+  const save = async (sub: string, positionThresholds: unknown) => {
+    await call(sub, "GET", "/account/profile");
+    return call(sub, "PUT", "/account/profile", {
+      displayName: "Thea",
+      timeZone: "Europe/Berlin",
+      everythingPrivate: false,
+      noRecommendations: false,
+      notifications: {},
+      positionThresholds,
+    });
+  };
+
+  it("positions follow the thresholds of the own account only", async () => {
+    const mine = `lic3-${randomUUID()}`;
+    const other = `lic3-${randomUUID()}`;
+    subjects.push(mine, other);
+    for (const sub of [mine, other])
+      await specimen(sub, "P", await newSpecies(sub, "Thr", 20000, 2));
+
+    expect((await save(mine, [100000, 30000, 25000, 10000])).status).toBe(200);
+
+    expect((await lightOverview(mine)).body.rows[0].position.category).toBe("medium_distance");
+    expect((await lightOverview(other)).body.rows[0].position.category).toBe("very_close");
+  });
+
+  it("refuses thresholds that are not descending and keeps the stored ones", async () => {
+    const sub = `lic3-${randomUUID()}`;
+    subjects.push(sub);
+    await specimen(sub, "P", await newSpecies(sub, "Thr", 20000, 2));
+    expect((await save(sub, [1000, 2000, 3000, 4000])).status).toBe(400);
+    expect((await lightOverview(sub)).body.rows[0].position.category).toBe("very_close");
+  });
+});

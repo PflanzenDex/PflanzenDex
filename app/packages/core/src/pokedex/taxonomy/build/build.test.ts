@@ -110,6 +110,38 @@ const happy = (extra: Handler[] = []) =>
     ...extra,
   );
 
+describe("US-POK-13 taxonomy build rarity in nature", () => {
+  const speciesRarity: Handler = (r) => {
+    if (r.path === "/species/match" && r.query?.rank === "SPECIES")
+      return ok(found("gbif", { usageKey: 9, rank: "SPECIES", matchType: "EXACT" }));
+    if (r.path === "/species/9/iucnRedListCategory") return ok(found("gbif", { code: "VU" }));
+    if (r.path === "/occurrence/count") return ok(found("gbif", 1231));
+    return undefined;
+  };
+
+  it("US-POK-13 stores the rarity in nature of each species with its source", async () => {
+    const { sources } = client(
+      speciesRarity,
+      tnrs(match("Ficus benjamina")),
+      lineage,
+      wikipedia({ de: article("Eine Art.") }),
+      wikidata(),
+      gbif(),
+    );
+    const r = await buildTaxonomy(sources, ["Ficus benjamina"]);
+    expect(r.ok && r.value.taxa[0]?.natureRarity).toMatchObject({
+      iucn: { category: "VU", provenance: { source: "gbif", retrievedAt: T } },
+      occurrences: { count: 1231, provenance: { source: "gbif" } },
+    });
+  });
+
+  it("US-POK-13 leaves the rarity unknown when GBIF has no exact species match", async () => {
+    const { sources } = happy();
+    const r = await buildTaxonomy(sources, ["Ficus benjamina"]);
+    expect(r.ok && r.value.taxa[0]?.natureRarity).toEqual({ iucn: null, occurrences: null });
+  });
+});
+
 describe("US-POK-03 taxonomy build", () => {
   it("US-POK-03 resolves order, family and genus with the source of each value", async () => {
     const { sources } = happy();

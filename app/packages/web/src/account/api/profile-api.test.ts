@@ -8,6 +8,8 @@ const PROFILE = {
   everythingPrivate: true,
   noRecommendations: false,
   replenishBuffer: 2,
+  positionThresholds: null,
+  rarityConsent: false,
   notifications: {
     phase: true,
     treatment: false,
@@ -15,6 +17,7 @@ const PROFILE = {
     watering: true,
     swap: true,
     friends: true,
+    equipment: true,
   },
 };
 

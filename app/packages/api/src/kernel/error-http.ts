@@ -1,6 +1,6 @@
 import type { AppError, ErrorCode } from "@pflanzendex/core";
 
-type Status = 400 | 401 | 403 | 404 | 409 | 413 | 415 | 422 | 500 | 502 | 504;
+type Status = 400 | 401 | 403 | 404 | 409 | 413 | 415 | 422 | 429 | 500 | 502 | 504;
 
 // Stable mapping of error code -> HTTP status (FR-QG-11). Unknown codes are a server error, never a success.
 const STATUS: Partial<Record<ErrorCode, Status>> = {
@@ -38,10 +38,23 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "species.duplicate": 409,
   "specimen.name_taken": 409,
   "pokedex.not_caught": 409,
+  "achievements.not_earned": 409,
+  "achievements.pause_too_long": 422,
+  "achievements.pause_not_found": 404,
   "friend.unknown_code": 404,
   "friend.code_used": 409,
   "friend.code_expired": 409,
   "monitoring.subscription_limit": 409,
+  "ai.connection_revoked": 401,
+  "ai.scope_insufficient": 403,
+  "ai.connection_not_found": 404,
+  "ai.connection_active": 409,
+  "ai.draft_not_found": 404,
+  "ai.draft_closed": 409,
+  "ai.rate_limited": 429,
+  "ai.task_not_found": 404,
+  "ai.task_closed": 409,
+  "ai.no_client": 409,
   "friend.own_code": 409,
   "friend.already_linked": 409,
   "friend.request_not_found": 404,
@@ -62,6 +75,15 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "offer.not_active": 409,
   "discover.not_suggested": 409,
   "wish.name_taken": 409,
+  "equipment.name_taken": 409,
+  "equipment.not_found": 404,
+  "equipment.not_a_lamp": 409,
+  "equipment.not_a_device": 409,
+  "equipment.not_a_sensor": 409,
+  "equipment.target_unknown": 404,
+  "equipment.not_a_consumable": 409,
+  "equipment.not_a_plant_agent": 409,
+  "equipment.no_status": 409,
   "wish.not_found": 404,
   "wish.image_source_unsupported": 422,
   "wish.image_not_found": 404,

@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check ci-reuse merge clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -55,6 +55,9 @@ db-down: ## Remove the test database
 
 migrate: ## Apply migrations (DATABASE_URL, otherwise the test database)
 	cd $(APP) && npm run migrate -w @pflanzendex/db
+
+migration: ## New migration with the next free number, seen from origin/dev and all open PRs (NAME=<module>_<short_name>, issue #831)
+	cd $(APP) && node tools/workflow/claim/migration/new-migration.mjs "$(NAME)"
 
 auth-up: ## Start the auth server (Keycloak) and mail catcher; admin password in app/config/dev/.env (not in the repo)
 	@test -f $(APP)/config/dev/.env || echo "KC_ADMIN_PASSWORD=$$(head -c 18 /dev/urandom | base64 | tr -dc A-Za-z0-9)" > $(APP)/config/dev/.env
@@ -188,6 +191,9 @@ board: ## Who works on which open story of the milestone; flags STALE and DOUBLE
 
 status-check: ## Project status vs. pull requests and missing priorities (US-DEV-05); exit 1 on drift
 	cd $(APP) && node tools/workflow/actions/project-status/project-status.mjs check
+
+retro: ## Issue flow retro: created vs. closed per day, burndown (US-DEV-11); prints it, WRITE=1 rewrites the pinned report issue
+	cd $(APP) && node tools/workflow/actions/retro/retro.mjs $(if $(WRITE),--write)
 
 clean: ## Remove build output and node_modules
 	cd $(APP) && rm -rf node_modules packages/*/node_modules packages/*/dist

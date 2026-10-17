@@ -112,6 +112,7 @@ describe("US-ACC-02 · notifications per occasion", () => {
       watering: true,
       swap: false,
       friends: true,
+      equipment: true,
     });
   });
 
@@ -226,5 +227,88 @@ describe("US-WUN-02 · the replenish buffer is an account setting", () => {
     await save(valid({ replenishBuffer: 1 }));
     expect(profiles.rows.get("ben")?.replenishBuffer).toBe(6);
     expect(profiles.rows.get("anna")?.replenishBuffer).toBe(1);
+  });
+});
+
+describe("US-POK-14 · the rarity consent is an account setting", () => {
+  it("is off until the keeper switches it on", () => {
+    expect(profiles.rows.get("anna")?.rarityConsent).toBe(false);
+  });
+
+  it.each([true, false])("saves %s", async (rarityConsent) => {
+    const r = await save(valid({ rarityConsent }));
+    expect(r.ok && r.value.rarityConsent).toBe(rarityConsent);
+    expect(profiles.rows.get("anna")?.rarityConsent).toBe(rarityConsent);
+  });
+
+  it.each([1, "true", 0, {}, []])(
+    "refuses %j and names the field, nothing is written",
+    async (v) => {
+      const r = await save(valid({ rarityConsent: v }));
+      expect(!r.ok && r.error.details).toEqual([{ field: "rarityConsent", code: "input.invalid" }]);
+      expect(profiles.writes).toBe(0);
+    },
+  );
+
+  it.each([null, undefined])(
+    "%s keeps the stored value, so an older client cannot reset it",
+    async (v) => {
+      await save(valid({ rarityConsent: true }));
+      const r = await save(valid({ rarityConsent: v, timeZone: "UTC" }));
+      expect(r.ok && r.value).toMatchObject({ rarityConsent: true, timeZone: "UTC" });
+    },
+  );
+
+  it("changes only the own account", async () => {
+    await save(valid({ rarityConsent: true }), "ben");
+    await save(valid({ rarityConsent: false }));
+    expect(profiles.rows.get("ben")?.rarityConsent).toBe(true);
+    expect(profiles.rows.get("anna")?.rarityConsent).toBe(false);
+  });
+});
+
+describe("US-LIC-03 · adjustable position thresholds (FR-LIC-05)", () => {
+  it("saves four descending whole lux values", async () => {
+    const r = await save(valid({ positionThresholds: [60_000, 20_000, 9_000, 3_000] }));
+    expect(r.ok && r.value.positionThresholds).toEqual([60_000, 20_000, 9_000, 3_000]);
+  });
+
+  it("a new account has no thresholds of its own (standard values apply)", async () => {
+    const r = await save(valid());
+    expect(r.ok && r.value.positionThresholds).toBeNull();
+  });
+
+  it.each([
+    ["not descending", [4_000, 8_000, 15_000, 50_000]],
+    ["equal neighbours", [50_000, 15_000, 15_000, 4_000]],
+    ["too few", [50_000, 15_000, 8_000]],
+    ["too many", [50_000, 15_000, 8_000, 4_000, 1_000]],
+    ["fractions", [50_000, 15_000, 8_000, 4_000.5]],
+    ["zero", [50_000, 15_000, 8_000, 0]],
+    ["above the catalog maximum", [200_001, 15_000, 8_000, 4_000]],
+    ["text", ["50000", 15_000, 8_000, 4_000]],
+    ["not a list", { a: 1 }],
+  ])("refuses thresholds that are %s and names the field, nothing is written", async (_, v) => {
+    const r = await save(valid({ positionThresholds: v }));
+    expect(!r.ok && r.error.details).toEqual([
+      { field: "positionThresholds", code: "input.invalid" },
+    ]);
+    expect(profiles.writes).toBe(0);
+  });
+
+  it.each([null, undefined])("%s keeps the stored thresholds", async (v) => {
+    await save(valid({ positionThresholds: [60_000, 20_000, 9_000, 3_000] }));
+    const r = await save(valid({ positionThresholds: v, timeZone: "UTC" }));
+    expect(r.ok && r.value).toMatchObject({
+      positionThresholds: [60_000, 20_000, 9_000, 3_000],
+      timeZone: "UTC",
+    });
+  });
+
+  it("changes only the own account", async () => {
+    await save(valid({ positionThresholds: [60_000, 20_000, 9_000, 3_000] }), "ben");
+    await save(valid({ positionThresholds: [70_000, 20_000, 9_000, 3_000] }));
+    expect(profiles.rows.get("ben")?.positionThresholds?.[0]).toBe(60_000);
+    expect(profiles.rows.get("anna")?.positionThresholds?.[0]).toBe(70_000);
   });
 });

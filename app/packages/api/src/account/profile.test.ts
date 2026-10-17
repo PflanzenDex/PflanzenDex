@@ -76,8 +76,11 @@ describe("US-ACC-02 · GET /account/profile", () => {
         watering: true,
         swap: true,
         friends: true,
+        equipment: true,
       },
       replenishBuffer: 2,
+      rarityConsent: false,
+      positionThresholds: null,
     });
   });
 
@@ -94,6 +97,19 @@ describe("US-ACC-02 · GET /account/profile", () => {
 });
 
 describe("US-ACC-02 · PUT /account/profile", () => {
+  it("US-POK-14 saves the rarity consent, keeps it when an older client leaves it out, refuses a non-boolean", async () => {
+    expect((await put(subA, { ...profile, rarityConsent: true })).status).toBe(200);
+    expect((await read(subA)).rarityConsent).toBe(true);
+    expect((await put(subA, profile)).status).toBe(200);
+    expect((await read(subA)).rarityConsent).toBe(true);
+    const bad = await put(subA, { ...profile, rarityConsent: "yes" });
+    expect(bad.status).toBe(400);
+    expect(((await bad.json()) as { error: { details: unknown } }).error.details).toEqual([
+      { field: "rarityConsent", code: "input.invalid" },
+    ]);
+    expect((await read(subB)).rarityConsent).toBe(false);
+  });
+
   it("saves the whole profile and returns it; GET and GET /account show it", async () => {
     const res = await put(subA, profile);
     expect(res.status).toBe(200);

@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef } from "react";
+import { GrowthMomentNote, useGrowthMoments } from "@/achievements";
 import { Button } from "@/components/ui/button/button";
 import { LoadFrame, useInvalidate } from "../../../kernel";
 import { MeasureForm } from "../measure-form/measure-form";
@@ -35,6 +36,7 @@ export function MeasurePage(props: {
     specimenId: specimen.id,
     invalidate,
   });
+  const moments = useGrowthMoments(api, token, specimen.id);
   const loading = "Messungen werden geladen …";
   return (
     <section aria-labelledby="measure-title" className="flex min-w-0 flex-col gap-4">
@@ -52,10 +54,12 @@ export function MeasurePage(props: {
           <>
             <MeasurementHeader view={view} />
             {saved && <StatusNote>Gespeichert: {saved}.</StatusNote>}
+            <GrowthMomentNote moments={moments} justSaved={Boolean(saved)} />
             {photoRefusal && <RefusalAlert error={photoRefusal} />}
             <MeasureForm unit="cm" signs={view.etiolationSigns} onSend={send} focusRef={valueRef} />
             <MeasurementList
               measurements={view.measurements}
+              records={moments?.records}
               photo={{ api, token, specimenId: specimen.id }}
               onPhotoSaved={invalidate}
               onAdd={() => valueRef.current?.focus()}

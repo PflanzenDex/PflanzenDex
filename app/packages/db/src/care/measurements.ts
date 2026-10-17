@@ -92,6 +92,30 @@ export class MeasurementsPostgres {
     return r.rows[0] ?? null;
   }
 
+  async get(userId: string, measurementId: string): Promise<MeasurementRow | null> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query<MeasurementRow>(`select ${COLUMNS} from measurement where id = $1`, [measurementId]),
+    );
+    return r.rows[0] ?? null;
+  }
+
+  /** The row rules hide a foreign measurement: then nothing is updated and the answer is `false` (P-04). */
+  async assess(
+    userId: string,
+    measurementId: string,
+    rating: { quality: string; note: string | null; ratedBy: string },
+  ): Promise<boolean> {
+    const r = await withAccount(this.pool, userId, (c) =>
+      c.query("update measurement set quality = $2, note = $3, rated_by = $4 where id = $1", [
+        measurementId,
+        rating.quality,
+        rating.note,
+        rating.ratedBy,
+      ]),
+    );
+    return r.rowCount === 1;
+  }
+
   /** The row rules hide a foreign measurement: then nothing is updated and the answer is `false` (P-04). */
   async setPhoto(userId: string, measurementId: string, photo: string): Promise<boolean> {
     const r = await withAccount(this.pool, userId, (c) =>

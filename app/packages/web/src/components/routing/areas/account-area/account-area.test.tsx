@@ -3,6 +3,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { FeaturesProvider } from "@/kernel";
 import { AccountArea } from "./account-area";
 
 const response = (status: number, body: unknown) =>
@@ -28,12 +29,15 @@ const profile = {
     watering: true,
     swap: true,
     friends: true,
+    equipment: true,
   },
   replenishBuffer: 2,
+  positionThresholds: null,
+  rarityConsent: false,
 };
 
 /** A server for the settings section; `status` is the answer to loading the profile, PUT returns what is sent. */
-function fakeServer(status = 200) {
+function fakeServer(status = 200, calmMode = false) {
   const puts: Record<string, unknown>[] = [];
   vi.stubGlobal(
     "fetch",
@@ -62,6 +66,18 @@ function fakeServer(status = 200) {
           measurementDays: 30,
         });
       if (path === "/reminders/subscriptions") return response(200, { subscriptions: [] });
+      if (path === "/achievements/settings") return response(200, { calmMode });
+      if (path === "/achievements")
+        return response(200, {
+          calmMode: false,
+          earnedCount: 0,
+          firstStep: { key: "first-measurement-photo.next", specimenId: null, specimenName: null },
+          groups: [],
+        });
+      if (path === "/ai/connections") return response(200, { connections: [] });
+      if (path === "/ai/drafts") return response(200, { drafts: [] });
+      if (path === "/ai/tasks") return response(200, { clientConnected: false, tasks: [] });
+      if (path === "/ai/log") return response(200, { log: [] });
       if (path !== "/account/profile") return response(404, {});
       if (init?.method === "PUT") {
         const body = JSON.parse(String(init.body)) as Record<string, unknown>;
@@ -99,20 +115,60 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe("US-DEV-06 Konto without the AI function", () => {
+  it("US-DEV-06 the section KI-Clients and its entry are gone while ai is off, nothing is asked of /ai", async () => {
+    fakeServer();
+    render(
+      <FeaturesProvider features={{ social: true, ai: false, recommendations: false }}>
+        <MemoryRouter initialEntries={["/account"]}>
+          <AccountArea
+            api="http://api"
+            token={async () => "tok"}
+            account={account}
+            onSignOut={() => undefined}
+            onEverywhereSignOut={() => undefined}
+          />
+        </MemoryRouter>
+      </FeaturesProvider>,
+    );
+    await screen.findByLabelText("Anzeigename");
+    await screen.findByRole("heading", { level: 2, name: "Erinnerungen" });
+    expect(screen.queryByRole("heading", { level: 2, name: "KI-Clients" })).toBeNull();
+    const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
+    expect(within(list).queryByRole("link", { name: "KI-Clients" })).toBeNull();
+    const asked = vi.mocked(fetch).mock.calls.map(([u]) => new URL(String(u)).pathname);
+    expect(asked.some((path) => path.startsWith("/ai"))).toBe(false);
+  });
+});
+
 describe("US-QS-14 Konto with its sections", () => {
   it("US-QS-14 · US-ACC-01 one h1 Konto and the sections Profil, Einstellungen, Erinnerungen, Was wird gemessen? as h2 in this order", async () => {
     fakeServer();
     show();
     await screen.findByLabelText("Anzeigename");
+    await screen.findByRole("heading", { level: 2, name: "Erfolge" });
     expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
       "Konto",
     ]);
     expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
       "Profil",
       "Einstellungen",
+      "Erfolge",
       "Erinnerungen",
+      "KI-Clients",
       "Was wird gemessen?",
+      "Meine Daten",
     ]);
+  });
+
+  it("US-ACH-08 in calm mode the section Erfolge and its entry in the list are gone", async () => {
+    fakeServer(200, true);
+    show();
+    await screen.findByLabelText("Anzeigename");
+    await screen.findByRole("checkbox", { name: "Ruhemodus" });
+    expect(screen.queryByRole("heading", { level: 2, name: "Erfolge" })).toBeNull();
+    const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
+    expect(within(list).queryByRole("link", { name: "Erfolge" })).toBeNull();
   });
 
   it("US-QS-14 · US-ACC-01 the section Profil shows name, e-mail and both ways to sign out", async () => {
@@ -194,12 +250,16 @@ describe("US-QS-14 the address points at a section", () => {
     fakeServer();
     show();
     const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
+    await within(list).findByRole("link", { name: "Erfolge" });
     const links = within(list).getAllByRole("link");
     expect(links.map((l) => l.textContent)).toEqual([
       "Profil",
       "Einstellungen",
+      "Erfolge",
       "Erinnerungen",
+      "KI-Clients",
       "Was wird gemessen?",
+      "Meine Daten",
     ]);
     expect(links[0]?.getAttribute("aria-current")).toBe("location");
     await userEvent.click(links[1] as HTMLElement);

@@ -11,6 +11,8 @@ import { UNKNOWN, dateText } from "../../specimens/model/text";
 export function ArchivedList(props: {
   entries: readonly ArchivedEntry[];
   onRestore: (e: { id: string; name: string }) => void;
+  /** Opens the catch date correction (US-BES-11); archived specimens still count for the Pokédex date. */
+  onCatchDate?: (e: { id: string; name: string; caughtAt: string | null }) => void;
 }) {
   if (props.entries.length === 0) return null;
   return (
@@ -27,9 +29,21 @@ export function ArchivedList(props: {
             <Card nested className="grid gap-1 break-words">
               <h3 className="text-lg font-semibold">{e.name}</h3>
               <Quiet>Art: {e.speciesName ?? UNKNOWN}</Quiet>
+              <Quiet>Fangdatum: {e.caughtAt ? dateText(e.caughtAt) : UNKNOWN}</Quiet>
               <Quiet>Archiviert am {dateText(e.archivedAt)}</Quiet>
               <Quiet>Grund: {e.archivedReason}</Quiet>
               <Actions>
+                {props.onCatchDate && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    aria-label={`Fangdatum korrigieren: ${e.name}`}
+                    onClick={() => props.onCatchDate?.(e)}
+                  >
+                    Fangdatum
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="outline"

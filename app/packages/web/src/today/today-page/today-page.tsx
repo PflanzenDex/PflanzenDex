@@ -18,6 +18,7 @@ const LABEL: Record<TodayKind, string> = {
   measurement_etiolated: "Vergeilt",
   specimen_incomplete: "Angaben fehlen",
   buffer_low: "Nachschub",
+  equipment_check_due: "Prüfung fällig",
 };
 const GO: Record<TodayTarget, string> = {
   treatments: "Zu Behandlung",
@@ -25,6 +26,7 @@ const GO: Record<TodayTarget, string> = {
   measurements: "Zum Messen",
   hints: "Zu Hinweisen",
   wishlist: "Zur Wunschliste",
+  equipment: "Zum Equipment",
 };
 const CARD =
   "min-w-0 rounded-card bg-card p-3 text-card-foreground shadow-elevation-1 [overflow-wrap:anywhere]";

@@ -6,6 +6,7 @@ export {
   DISPLAY_NAME_LIMITS,
   NOTIFICATION_OCCASIONS,
   REPLENISH_BUFFER_LIMITS,
+  POSITION_THRESHOLD_LIMITS,
 } from "./profile";
 export type {
   AccountProfile,
@@ -14,13 +15,8 @@ export type {
   ProfileDependencies,
   ProfileStore,
 } from "./profile";
-export { isNewAccount, onboardingHints, onboardingSteps, startAction } from "./onboarding";
-export type {
-  OnboardingCounts,
-  OnboardingHint,
-  OnboardingStep,
-  OnboardingStepId,
-} from "./onboarding";
+export { FIRST_PLANT_STEPS, isNewAccount, startAction } from "./onboarding";
+export type { OnboardingCounts, OnboardingStep, OnboardingStepId } from "./onboarding";
 export { isOperator } from "./access";
 export type {
   AccessCounts,

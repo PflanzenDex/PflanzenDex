@@ -14,9 +14,20 @@ import { VIEWS, openView } from "../../support/display";
 // US-QS-08 Operable by keyboard alone: keyboard-only variants of the everyday flows (US-QS-07) and a keyboard walk
 // over every view of the navigation, on the phone and on desktop. No step clicks or taps.
 
+/** The management of locations and light zones, below the plants of the Sammlung (US-QS-14). */
+async function locationsByKeyboard(page: Page): Promise<void> {
+  await openByKeyboard(page, "Sammlung");
+  await press(page, page.getByRole("button", { name: "Standorte verwalten" }));
+  await expect(
+    page.getByRole("heading", { level: 1, name: /Standorte und Lichtzonen/ }),
+  ).toBeVisible();
+}
+
 /** Proposes a species and creates a specimen of it, keyboard only (the start of every care flow). */
 async function specimenByKeyboard(page: Page, species: string): Promise<void> {
-  await openByKeyboard(page, "Arten");
+  // The catalog is the mode "Katalog" of Entdecken (US-QS-14).
+  await openByKeyboard(page, "Entdecken");
+  await press(page, page.getByRole("button", { name: "Katalog" }));
   await press(page, page.getByRole("button", { name: /Art vorschlagen/ }).first());
   const form = page.getByRole("form", { name: "Art vorschlagen" });
   await typeInto(page, form.getByLabel(/^Lateinischer Name/), species);
@@ -30,7 +41,7 @@ async function specimenByKeyboard(page: Page, species: string): Promise<void> {
   await press(page, page.getByRole("button", { name: "Diese Art wählen" }));
   const create = page.getByRole("form", { name: "Exemplar anlegen" });
   await press(page, create.getByRole("button", { name: "Exemplar anlegen" }));
-  await expect(page.getByRole("heading", { level: 1, name: "Bestand" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Sammlung" })).toBeVisible();
 }
 
 test.describe("US-QS-08 Operable by keyboard alone", () => {
@@ -93,7 +104,7 @@ test.describe("US-QS-08 keyboard-only everyday flows: light and measuring", () =
     account,
   }) => {
     await signInByKeyboard(page, account);
-    await openByKeyboard(page, "Standorte und Licht");
+    await locationsByKeyboard(page);
     await press(page, page.getByRole("button", { name: "Standard-Lampen übernehmen" }));
     await expect(page.getByRole("heading", { level: 3, name: "Lampe 2" })).toBeVisible();
     await press(page, page.locator("summary", { hasText: "Neuer Standort" }));
@@ -126,7 +137,8 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
     test.setTimeout(120_000);
     await signInByKeyboard(page, account);
     await specimenByKeyboard(page, "Aloe polyphylla");
-    await openByKeyboard(page, "Behandlung");
+    await openByKeyboard(page, "Heute");
+    await press(page, page.getByRole("button", { name: "Behandlung planen" }).first());
     const plan = page.getByRole("form", { name: /Behandlung planen/ });
     await press(page, plan.getByRole("checkbox").first(), "Space");
     await expect(plan.getByRole("checkbox").first()).toBeChecked();
@@ -143,7 +155,7 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
   }) => {
     test.setTimeout(120_000);
     await signInByKeyboard(page, account);
-    await openByKeyboard(page, "Standorte und Licht");
+    await locationsByKeyboard(page);
     await press(page, page.locator("summary", { hasText: "Neuer Standort" }));
     const form = page.getByRole("form", { name: "Standort anlegen" });
     await typeInto(page, form.getByLabel("Name"), "Regal");
@@ -151,7 +163,7 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
     await expect(page.getByRole("heading", { level: 3, name: "Regal" })).toBeVisible();
     await specimenByKeyboard(page, "Haworthia cooperi");
     // The hint "Standort fehlt" carries the action that sets the location (US-PHA-03).
-    await openByKeyboard(page, "Hinweise");
+    await openByKeyboard(page, "Heute");
     const select = page.getByLabel(/^Standort für „/);
     await chooseByArrows(page, select, 1);
     await press(page, page.getByRole("button", { name: /^Standort setzen: / }));
@@ -162,7 +174,7 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
 test.describe("US-QS-08 focus order", () => {
   test("US-QS-08 Shift+Tab walks back in the reverse order (2.4.3)", async ({ page, account }) => {
     await signInByKeyboard(page, account);
-    await openByKeyboard(page, "Standorte und Licht");
+    await locationsByKeyboard(page);
     const first = page.getByRole("button", { name: "Standard-Lampen übernehmen" });
     await tabTo(page, first);
     await page.keyboard.press("Tab");

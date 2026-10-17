@@ -74,7 +74,7 @@ export async function difficultyOverview(
       {
         lightDemandLux: species.lightDemandLux,
         standardLevel: species.standardLevel,
-        softLeaf: false,
+        softLeaf: species.softLeaf,
       },
       zones,
     );

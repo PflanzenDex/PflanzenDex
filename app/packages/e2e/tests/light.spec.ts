@@ -1,5 +1,5 @@
 import { axeReport } from "../support/axe";
-import { signInAtLight, expect, test } from "../support/fixtures";
+import { openLocations, signInAtLight, expect, test } from "../support/fixtures";
 
 // Core flow R1: set up locations and light zones (US-LIC-05), signed in, against the real API and database.
 test.describe("US-LIC-05 locations and light zones", () => {
@@ -8,9 +8,9 @@ test.describe("US-LIC-05 locations and light zones", () => {
     account,
   }, info) => {
     await signInAtLight(page, account);
-    await expect(page.getByText("Noch keine Lichtzonen.")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Noch keine Lichtzonen" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Standard-Lampen übernehmen" })).toBeVisible();
-    await expect(page.getByText("Noch keine Standorte.")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Noch keine Standorte" })).toBeVisible();
     await axeReport(page, info, "light-empty");
   });
 
@@ -36,7 +36,7 @@ test.describe("US-LIC-05 locations and light zones", () => {
 
     // Nothing is lost silently (P-10): after reloading the data from the database is there again.
     await page.reload();
-    await page.getByRole("button", { name: "Standorte und Licht" }).click();
+    await openLocations(page);
     await expect(page.getByRole("heading", { level: 3, name: "Balkon" })).toBeVisible();
   });
 

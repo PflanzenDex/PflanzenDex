@@ -27,6 +27,7 @@ const CREATED = new Date("2026-10-02T23:30:00Z");
 let app: ReturnType<typeof createApp>;
 let account = "";
 let specimenId = "";
+let speciesIdOf = "";
 
 async function call(method: string, path: string, body?: unknown) {
   const res = await app.request(path, {
@@ -68,6 +69,8 @@ beforeAll(async () => {
     noRecommendations: false,
     notifications: {},
     replenishBuffer: null,
+    rarityConsent: null,
+    positionThresholds: null,
   });
   account = (await admin.query("select id from account where subject = $1", [sub])).rows[0].id;
   const species = await call("POST", "/species", {
@@ -86,6 +89,7 @@ beforeAll(async () => {
     timeZone: "Europe/Berlin",
   });
   specimenId = created["id"] as string;
+  speciesIdOf = species["id"] as string;
   await call("POST", "/treatments", {
     specimenIds: [specimenId],
     reason: "Wollläuse",
@@ -93,6 +97,7 @@ beforeAll(async () => {
   });
 });
 afterAll(async () => {
+  await admin.query("delete from equipment where account_id = $1", [account]);
   await admin.query("delete from specimen where account_id = $1", [account]);
   await admin.query(
     `delete from species where id in (select object_id from review_case where account_id = $1)`,
@@ -125,6 +130,23 @@ describe("US-MON-03 US-MON-04 the occasions of the reminders", () => {
     expect(m?.text).toContain("noch nie gemessen");
   });
 
+  it("US-MON-04 a cutting follows the same measuring interval as a plant (E-11)", async () => {
+    const cutting = await call("POST", "/specimens", {
+      speciesId: speciesIdOf,
+      marker: "steckling-messung",
+      status: "cutting",
+      timeZone: "Europe/Berlin",
+    });
+    const id = `measurement:${cutting["id"] as string}`;
+    expect(await ids(new Date("2026-11-01T12:00:00Z"))).not.toContain(id);
+    const late = await source().occasions(
+      account,
+      "Europe/Berlin",
+      new Date("2026-11-05T12:00:00Z"),
+    );
+    expect(late.find((o) => o.id === id)?.occasion).toBe("measurement");
+  });
+
   it("US-MON-08 an occasion switched off in the profile is not reported, the Today list still shows the treatment (FR-MON-03)", async () => {
     const profiles = new ProfilePostgres(pool);
     const own = await profiles.find(account);
@@ -135,6 +157,8 @@ describe("US-MON-03 US-MON-04 the occasions of the reminders", () => {
       noRecommendations: false,
       notifications: { ...own?.notifications, treatment: false },
       replenishBuffer: null,
+      rarityConsent: null,
+      positionThresholds: null,
     });
     const list = await ids(new Date("2026-11-05T12:00:00Z"));
     expect(list.some((i) => i.startsWith("treatment:"))).toBe(false);
@@ -216,7 +240,39 @@ describe("US-MON-02 the reminder at the phase change", () => {
       noRecommendations: false,
       notifications: { ...own?.notifications, phase: false },
       replenishBuffer: null,
+      rarityConsent: null,
+      positionThresholds: null,
     });
     expect((await ids(FIRST_DORMANCY_DAY)).some((i) => i.startsWith("phase_change:"))).toBe(false);
+  });
+});
+
+describe("US-EQU-04 the device check as an occasion of the reminders", () => {
+  it("US-EQU-04 a check due is an occasion with the id of the Today list and can be switched off (US-MON-08)", async () => {
+    const created = await call("POST", "/equipment", { type: "Timer", name: `Prüf-Timer ${run}` });
+    const id = created["equipment"].id as string;
+    expect(await ids(CREATED)).not.toContain(`equipment-check:${id}`);
+    await call("POST", `/equipment/${id}/maintenance`, {
+      inOperationSince: "2026-01-01",
+      checkIntervalDays: 30,
+    });
+    const list = await source().occasions(account, "Europe/Berlin", CREATED);
+    expect(list.find((o) => o.id === `equipment-check:${id}`)).toMatchObject({
+      occasion: "equipment",
+      text: expect.stringContaining("Prüfung fällig"),
+    });
+    const profiles = new ProfilePostgres(pool);
+    const own = await profiles.find(account);
+    await profiles.update(account, {
+      displayName: own?.displayName ?? null,
+      timeZone: "Europe/Berlin",
+      everythingPrivate: false,
+      noRecommendations: false,
+      notifications: { ...own?.notifications, equipment: false },
+      replenishBuffer: null,
+      rarityConsent: null,
+      positionThresholds: null,
+    });
+    expect(await ids(CREATED)).not.toContain(`equipment-check:${id}`);
   });
 });

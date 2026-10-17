@@ -46,7 +46,7 @@ function catalogZone(species: Species, zones: readonly LightZone[]): string | nu
     {
       lightDemandLux: species.lightDemandLux,
       standardLevel: species.standardLevel,
-      softLeaf: false,
+      softLeaf: species.softLeaf,
     },
     zones,
   );

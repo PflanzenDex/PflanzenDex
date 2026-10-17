@@ -1,4 +1,5 @@
 // Stable, machine-readable error codes `<domain>.<reason>` (FR-QG-11). Codes are never renamed.
+import { ACHIEVEMENT_ERROR_TEXTS } from "./error-texts/achievements";
 export const ERROR_TEXTS = {
   "input.invalid": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
   "access.not_signed_in": "Du bist nicht angemeldet. Bitte melde dich an.",
@@ -62,6 +63,21 @@ export const ERROR_TEXTS = {
   "friend.code_expired": "Dieser Freundescode ist abgelaufen. Bitte um einen neuen Code.",
   "monitoring.subscription_limit":
     "Du hast schon so viele Geräte für Benachrichtigungen angemeldet, wie möglich sind. Entferne ein Gerät und versuche es erneut.",
+  "ai.connection_revoked":
+    "Dieser KI-Client wurde von dir getrennt und hat keinen Zugriff mehr. Du kannst ihn in der Liste der verbundenen KI-Clients wieder zulassen.",
+  "ai.scope_insufficient":
+    "Dafür reichen die Rechte dieser Verbindung nicht. Erlaube dem KI-Client in der App das nötige Recht und verbinde ihn neu.",
+  "ai.connection_not_found": "Diese Verbindung gibt es nicht. Lade die Liste neu.",
+  "ai.connection_active": "Dieser KI-Client ist schon wieder verbunden. Es wurde nichts geändert.",
+  "ai.rate_limited": "Das Tageslimit des KI-Clients ist erreicht. Morgen geht es weiter.",
+  "ai.draft_not_found": "Diesen Entwurf gibt es nicht. Lade die Liste neu.",
+  "ai.draft_closed":
+    "Dieser Entwurf ist schon übernommen, verworfen oder abgelaufen. Es wurde nichts geändert.",
+  "ai.task_not_found": "Diesen Auftrag gibt es nicht. Lade die Liste neu.",
+  "ai.task_closed":
+    "Dieser Auftrag ist schon erledigt, abgelehnt oder abgelaufen. Es wurde nichts geändert.",
+  "ai.no_client":
+    "Es ist kein KI-Client verbunden, darum wurde kein Auftrag angelegt. Verbinde einen KI-Client oder kopiere den Auftrag als Text.",
   "friend.own_code": "Das ist dein eigener Freundescode. Gib ihn an jemand anderen weiter.",
   "friend.already_linked":
     "Mit dieser Person gibt es schon eine Anfrage oder Freundschaft. Es wurde nichts geändert und der Code ist nicht verbraucht.",
@@ -94,6 +110,7 @@ export const ERROR_TEXTS = {
     "Dieses Angebot ist schon übergeben und kann nicht mehr zurückgezogen werden. Es wurde nichts geändert.",
   "discover.not_suggested":
     "Diese Art wird dir gerade nicht vorgeschlagen: Du hast sie schon gefangen oder sie fehlt im Katalog. Lade die Vorschläge neu.",
+  ...ACHIEVEMENT_ERROR_TEXTS,
   "wish.name_taken":
     "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
   "wish.image_source_unsupported":
@@ -156,9 +173,7 @@ export const ERROR_TEXTS = {
   "operator_cost.month_in_future":
     "Dieser Monat liegt in der Zukunft. Trage die Kosten eines Monats ein, der schon begonnen hat.",
 } as const;
-
 export type ErrorCode = keyof typeof ERROR_TEXTS;
-
 export const ERROR_CODE_FORMAT = /^[a-z_]+\.[a-z_]+$/;
 
 export interface ErrorDetail {

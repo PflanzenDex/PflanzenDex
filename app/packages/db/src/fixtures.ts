@@ -6,10 +6,14 @@ import { FIXTURES_ACCOUNT } from "./account/index.ts";
 import { FIXTURES_LIGHT } from "./light/index.ts";
 import { FIXTURES_CARE } from "./care/index.ts";
 import { FIXTURES_WISHLIST } from "./wishlist/index.ts";
+import { FIXTURES_EQUIPMENT } from "./equipment/index.ts";
 import { FIXTURES_POKEDEX } from "./pokedex/index.ts";
 import { FIXTURES_SOCIAL } from "./social/index.ts";
 import { FIXTURES_SWAP } from "./swap/index.ts";
 import { FIXTURES_MONITORING } from "./monitoring/index.ts";
+import { FIXTURES_ACHIEVEMENTS } from "./achievements/index.ts";
+import { FIXTURES_AI_ACCESS } from "./ai/index.ts";
+import { FIXTURES_PRIVACY } from "./privacy/index.ts";
 
 // One example per table with an account id for the remaining columns (without the id, the test sets it).
 // The entries live in their respective module; they are collected here. A new table without an entry
@@ -22,10 +26,14 @@ export const FIXTURES: Fixtures = {
   ...FIXTURES_COLLECTION,
   ...FIXTURES_CARE,
   ...FIXTURES_WISHLIST,
+  ...FIXTURES_EQUIPMENT,
   ...FIXTURES_POKEDEX,
+  ...FIXTURES_ACHIEVEMENTS,
   ...FIXTURES_SOCIAL,
   ...FIXTURES_SWAP,
   ...FIXTURES_MONITORING,
+  ...FIXTURES_AI_ACCESS,
+  ...FIXTURES_PRIVACY,
 };
 
 // Test helpers for tables of another module (AB-9): tests of one module write no SQL on foreign tables,
@@ -142,6 +150,9 @@ export async function deleteAccountsWithCatalog(accounts: readonly string[]): Pr
       "delete from species where id in (select object_id from review_case where account_id = any($1))",
       [accounts],
     );
+    // A review case now outlives its creator (the creator becomes null, US-ACC-04); the cases of these test accounts go
+    // with their species, so no case is left pointing at a species that is gone.
+    await client.query("delete from review_case where account_id = any($1)", [accounts]);
     await client.query("set local session_replication_role = default");
     await client.query("delete from account where id = any($1)", [accounts]);
     await client.query("commit");

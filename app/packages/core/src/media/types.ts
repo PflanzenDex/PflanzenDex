@@ -40,6 +40,11 @@ export interface ObjectStore {
   get(accountId: string, name: string): Promise<Result<StoredObject>>;
   delete(accountId: string, name: string): Promise<Result<void>>;
   exists(accountId: string, name: string): Promise<Result<boolean>>;
+  /**
+   * Removes every object of the account, whether a row still names it or not (deleting the account, US-ACC-04), and
+   * answers how many were removed. Repeating it removes nothing more. Only objects below the account's own prefix.
+   */
+  deleteAll(accountId: string): Promise<Result<number>>;
 }
 
 /** An image after processing: JPEG, rotated upright, shrunk, free of EXIF/GPS and all other metadata. */

@@ -1,7 +1,9 @@
 import {
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
@@ -55,6 +57,25 @@ export const createS3Client = (config: S3Config) =>
     ...(config.endpoint ? { endpoint: config.endpoint } : {}),
   });
 
+/** Removes every object below the prefix, page by page; throws if the store reports an object it could not remove (P-10). */
+async function removePrefix(client: Pick<S3Client, "send">, Bucket: string, Prefix: string) {
+  let removed = 0;
+  let ContinuationToken: string | undefined;
+  do {
+    const page = await client.send(new ListObjectsV2Command({ Bucket, Prefix, ContinuationToken }));
+    const keys = (page.Contents ?? []).flatMap((o) => (o.Key ? [{ Key: o.Key }] : []));
+    if (keys.length > 0) {
+      const done = await client.send(
+        new DeleteObjectsCommand({ Bucket, Delete: { Objects: keys, Quiet: true } }),
+      );
+      if ((done.Errors ?? []).length > 0) throw new Error("object removal failed");
+      removed += keys.length;
+    }
+    ContinuationToken = page.IsTruncated ? page.NextContinuationToken : undefined;
+  } while (ContinuationToken);
+  return removed;
+}
+
 /** `ObjectStore` on S3. The key is always `objectKey(accountId, name)`: one account can never address another's object. */
 export function createS3ObjectStore(
   config: S3Config,
@@ -95,6 +116,10 @@ export function createS3ObjectStore(
       run(objectKey(accountId, name), async (Key) => {
         await client.send(new DeleteObjectCommand({ Bucket, Key }));
       }),
+    deleteAll: (accountId) =>
+      run(objectKey(accountId, "x.jpg"), (probe) =>
+        removePrefix(client, Bucket, probe.slice(0, probe.length - "x.jpg".length)),
+      ),
     exists: (accountId, name) =>
       run(
         objectKey(accountId, name),

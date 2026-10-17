@@ -24,6 +24,8 @@ export class InMemoryProfiles implements ProfileStore {
         noRecommendations: false,
         notifications: defaultNotifications(),
         replenishBuffer: REPLENISH_BUFFER_LIMITS.default,
+        rarityConsent: false,
+        positionThresholds: null,
       });
   }
 
@@ -40,6 +42,8 @@ export class InMemoryProfiles implements ProfileStore {
       ...changes,
       displayName: changes.displayName ?? stored.displayName,
       replenishBuffer: changes.replenishBuffer ?? stored.replenishBuffer,
+      rarityConsent: changes.rarityConsent ?? stored.rarityConsent,
+      positionThresholds: changes.positionThresholds ?? stored.positionThresholds,
     };
     this.rows.set(userId, saved);
     return saved;
@@ -55,6 +59,8 @@ export class InMemoryAccess implements AccessStore {
   readonly registered: string[] = [];
   readonly existing = new Set<string>();
   invitationOnly = false;
+  /** The clock of the store; tests that create codes with a fixed clock set the same one. */
+  clock: () => number = Date.now;
   modeWrites = 0;
   readonly modeSetBy: string[] = [];
   readonly overviewFor: string[] = [];
@@ -116,7 +122,7 @@ export class InMemoryAccess implements AccessStore {
   async register(subject: string, code: string): Promise<"registered" | "existing" | "invalid"> {
     if (this.existing.has(subject)) return "existing";
     const invitation = this.invitations.find((i) => i.code === code);
-    if (!invitation || invitation.redeemed || Date.parse(invitation.expiresAt) <= Date.now())
+    if (!invitation || invitation.redeemed || Date.parse(invitation.expiresAt) <= this.clock())
       return "invalid";
     invitation.redeemed = true;
     this.registered.push(subject);

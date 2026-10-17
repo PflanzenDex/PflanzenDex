@@ -3,10 +3,12 @@ import {
   specimenHints,
   zoneDistribution,
   lightOverview,
+  positionThresholdsOrDefault,
 } from "@pflanzendex/core";
 import {
   CareProfilePostgres,
   LocationPostgres,
+  ProfilePostgres,
   SpeciesPostgres,
   SpecimenPostgres,
   ZonePostgres,
@@ -32,9 +34,13 @@ export function derivedRoutes(pool: Pool): Hono<AuthEnv> {
   routes.get("/specimens/distribution", async (c) =>
     c.json({ distribution: await zoneDistribution(deps, c.get("account").id) }),
   );
-  routes.get("/specimens/light-overview", async (c) =>
-    c.json(await lightOverview(deps, c.get("account").id)),
-  );
+  const accounts = new ProfilePostgres(pool);
+  // The position uses the thresholds of the account (US-LIC-03, FR-LIC-05); the standard values while none are set.
+  routes.get("/specimens/light-overview", async (c) => {
+    const userId = c.get("account").id;
+    const stored = (await accounts.find(userId))?.positionThresholds;
+    return c.json(await lightOverview(deps, userId, positionThresholdsOrDefault(stored)));
+  });
   routes.get("/specimens/difficulty", async (c) =>
     c.json(await difficultyOverview(deps, c.get("account").id)),
   );

@@ -2,8 +2,22 @@ import type { CollectorCard as Card } from "@pflanzendex/core";
 import { Badge } from "@/components/ui/display/badge/badge";
 import { cn } from "@/lib/utils";
 import { catchText } from "./catch-text";
+import { AppRarityNote, RarityNote } from "./rarity-note/rarity-note";
 
 const stars = (n: number) => "★".repeat(n) + "☆".repeat(3 - n);
+
+/**
+ * Difficulty as stars with a text alternative every screen reader exposes (US-QS-14, WCAG 1.1.1): the stars are
+ * hidden from assistive technology, the visually hidden `label` is read instead of an aria-label on a plain element.
+ */
+export function DifficultyStars(props: { level: number; label: string }) {
+  return (
+    <>
+      <span aria-hidden="true">{stars(props.level)}</span>
+      <span className="sr-only">{props.label}</span>
+    </>
+  );
+}
 
 /** The image is a link to its source, not a copy (P-05); without one a neutral sprout stands in. */
 function Picture(props: { card: Card }) {
@@ -37,8 +51,8 @@ function Facts(props: { card: Card }) {
       {c.difficulty === null ? (
         <span className="text-sm">Schwierigkeit unbekannt</span>
       ) : (
-        <span className="text-sm" aria-label={`Schwierigkeit ${c.difficulty} von 3`}>
-          {stars(c.difficulty)}
+        <span className="text-sm">
+          <DifficultyStars level={c.difficulty} label={`Schwierigkeit ${c.difficulty} von 3`} />
         </span>
       )}
       <span className="text-sm">
@@ -99,6 +113,8 @@ export function CollectorCard(props: { card: Card }) {
       )}
       <span className="text-sm">{c.summary ?? "Keine Beschreibung vorhanden."}</span>
       <Facts card={c} />
+      <RarityNote rarity={c.natureRarity} />
+      <AppRarityNote rarity={c.appRarity} />
       <span className="flex flex-wrap gap-1.5">
         <Badge variant={caught ? "default" : "outline"}>
           {c.caughtDate === null ? "noch nicht gefangen" : catchText(c.caughtDate)}

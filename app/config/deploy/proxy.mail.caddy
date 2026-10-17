@@ -1,0 +1,9 @@
+# Test environment only (docker-compose.test.yml mounts this file): the mail catcher UI under /mail/ of the sign-in host.
+# It shows every email in the realm, so it must never exist where real people sign in, and it is never open:
+# HTTP basic auth with a bcrypt hash from .env (MAIL_UI_USER, MAIL_UI_HASH; create one with `caddy hash-password`).
+handle /mail/* {
+	basic_auth {
+		{$MAIL_UI_USER} {$MAIL_UI_HASH}
+	}
+	reverse_proxy mailpit:8025
+}

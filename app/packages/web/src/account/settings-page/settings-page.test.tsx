@@ -21,8 +21,11 @@ const PROFILE = {
     watering: true,
     swap: true,
     friends: true,
+    equipment: true,
   },
   replenishBuffer: 2,
+  positionThresholds: null,
+  rarityConsent: false,
 };
 
 type Put = { body: Record<string, unknown>; key: string | undefined };
@@ -36,6 +39,7 @@ function fakeServer(
     "fetch",
     vi.fn<typeof fetch>(async (url, init) => {
       const path = new URL(String(url)).pathname;
+      if (path === "/achievements/settings") return response(200, { calmMode: false });
       if (path !== "/account/profile") return response(404, {});
       if (init?.method === "PUT") {
         const body = JSON.parse(String(init.body)) as Record<string, unknown>;
@@ -217,7 +221,7 @@ describe("US-ACC-02 settings page: time zone", () => {
 });
 
 describe("US-ACC-02 settings page: notifications and global switches", () => {
-  it("US-ACC-02 switches single occasions off and sends all six", async () => {
+  it("US-ACC-02 switches single occasions off and sends all seven", async () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     show();
@@ -235,7 +239,15 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
   it("US-ACC-02 offers a switch for every occasion", async () => {
     fakeServer();
     show();
-    for (const name of ["Pflegephasen", "Behandlungen", "Messungen", "Gießen", "Tausch", "Freunde"])
+    for (const name of [
+      "Pflegephasen",
+      "Behandlungen",
+      "Messungen",
+      "Gießen",
+      "Tausch",
+      "Freunde",
+      "Equipment-Prüfung",
+    ])
       expect(await screen.findByRole("checkbox", { name })).toBeTruthy();
   });
 
@@ -248,6 +260,20 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     await screen.findByRole("status");
     expect(puts[0]?.body).toMatchObject({ everythingPrivate: true, noRecommendations: true });
+  });
+
+  it("US-POK-14 the rarity consent is off by default and is saved when switched on", async () => {
+    const puts = fakeServer();
+    const user = userEvent.setup();
+    show();
+    const box = await screen.findByRole("checkbox", {
+      name: "Meine Sammlung in die Seltenheit in PflanzenDex einrechnen",
+    });
+    expect((box as HTMLInputElement).checked).toBe(false);
+    await user.click(box);
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await screen.findByRole("status");
+    expect(puts[0]?.body).toMatchObject({ rarityConsent: true });
   });
 
   it("US-ACC-02 a private default account shows both switches off", async () => {
@@ -399,5 +425,66 @@ describe("US-WUN-02 settings page: buffer of the wishlist warning", () => {
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     await screen.findByRole("alert");
     expect(input.getAttribute("aria-invalid")).toBe("true");
+  });
+});
+
+describe("US-LIC-03 settings page: thresholds of the position recommendation", () => {
+  const field = async () =>
+    screen.findByLabelText<HTMLInputElement>(/Schwellen der Positionsempfehlung/);
+
+  it("shows the standard values as an assumption while none are set", async () => {
+    fakeServer();
+    show();
+    expect((await field()).value).toBe("50000, 15000, 8000, 4000");
+    expect(screen.getByText(/eine Annahme/)).toBeTruthy();
+  });
+
+  it("saves four descending values with the profile", async () => {
+    const puts = fakeServer();
+    const user = userEvent.setup();
+    show();
+    const input = await field();
+    await user.clear(input);
+    await user.type(input, "60000, 20000, 9000, 3000");
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    expect((await screen.findByRole("status")).textContent).toBe("Einstellungen gespeichert.");
+    expect(puts[0]?.body["positionThresholds"]).toEqual([60000, 20000, 9000, 3000]);
+  });
+
+  it("keeps the standard values unset when only another setting changes", async () => {
+    const puts = fakeServer();
+    const user = userEvent.setup();
+    show();
+    await field();
+    await user.click(screen.getByRole("checkbox", { name: "Alles privat" }));
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await screen.findByRole("status");
+    expect(puts[0]?.body["positionThresholds"]).toBeNull();
+  });
+
+  it.each(["1, 2, 3", "4000, 8000, 15000, 50000", "50000, 15000, 8000, 0", "a, b, c, d", ""])(
+    "refuses %j before sending and names the fix",
+    async (text) => {
+      const puts = fakeServer();
+      const user = userEvent.setup();
+      show();
+      const input = await field();
+      await user.clear(input);
+      if (text) await user.type(input, text);
+      await user.click(screen.getByRole("button", { name: "Speichern" }));
+      expect((await screen.findAllByRole("alert"))[0]?.textContent).toContain(
+        "von hoch nach niedrig",
+      );
+      expect(puts).toHaveLength(0);
+    },
+  );
+});
+
+describe("US-ACH-08 calm mode on the profile page", () => {
+  it("US-ACH-08 the profile offers the calm mode switch, off by default", async () => {
+    fakeServer();
+    show();
+    const box = await screen.findByRole<HTMLInputElement>("checkbox", { name: "Ruhemodus" });
+    expect(box.checked).toBe(false);
   });
 });

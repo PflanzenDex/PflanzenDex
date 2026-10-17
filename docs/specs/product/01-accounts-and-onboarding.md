@@ -32,6 +32,7 @@ Acceptance criteria:
 - Notifications can be switched on and off per occasion (US-MON-08).
 - Global switches "Everything private" (US-SOZ-04) and "No recommendations" (US-EQU-11).
 - Buffer of the wishlist warning (US-WUN-02): whole number 0 to 10, 2 until changed (assumption, decided by the PO), 0 switches the warning off; `null` or left out keeps the stored value, a value outside the range or not a whole number is refused with `input.invalid` naming `replenishBuffer`. The wishlist warning and the Today list use the saved value at once.
+- Global switch "Include my collection in the rarity of PflanzenDex" (US-POK-14): off until switched on (decided by the PO), `null` or left out keeps the stored value, anything but a boolean is refused with `input.invalid` naming `rarityConsent`.
 
 ### US-ACC-03 · Guided onboarding · ✅ new
 
@@ -39,12 +40,12 @@ As a **plant keeper** I want to get to my first plant quickly.
 
 Acceptance criteria:
 
-- The onboarding asks for: locations (where plants stand), light zones (take over the default four levels or adjust), first plant.
+- The onboarding asks for: locations (where plants stand), light zones (take over the default four levels or adjust), first plant. Order and scope are replaced by epic ONB: first plant first, locations and zones later with defaults (US-ONB-01, US-ONB-02); the other criteria stay valid.
 - Every step can be skipped; the app is usable afterwards. Missing details are shown later as a hint, never as an error.
 - Without a plant the start page shows a clear next action instead of an empty page.
 - Given an account whose plants are all archived, when it opens the start page, then it is a returning keeper: it gets the normal start page with "next plant" as the next action, never the onboarding for a new account (owner decision 2026-10-04). The onboarding is only for an account without active and without archived plants.
 
-### US-ACC-04 · Export data and delete account · ⬜ new
+### US-ACC-04 · Export data and delete account · ✅ new
 
 As a **plant keeper** I want to be able to take my data with me or remove it completely.
 
@@ -53,6 +54,12 @@ Acceptance criteria:
 - Export of all own data (specimens, measurements, treatments, wishlist, equipment, swap and friend data) in an open format; photos as files. The export is reproducible (same data, same file).
 - Deleting the account removes all personal data, photos and sharing settings. Completed swaps remain with the swap partner with the stored display name, without any further connection.
 - Deleting requires a confirmation and names what is removed. Running swaps are canceled (`canceled`, see US-SOZ-10).
+
+State of implementation (export): `GET /account/export` answers a ZIP archive with `data.json` (every table row the keeper owns, read from the database catalog so a new table is included automatically; the guard test `privacy/tables.test.ts` fails for a table that is neither exported nor listed with a reason) and `photos/<name>` (measurement photos and stored wish images). The same data gives the same bytes (sorted keys and rows, fixed dates in the archive). Credentials (push endpoint and keys) and the operator's tables are left out; a photo the store no longer holds is listed with `file: null` and counted in the header `X-Missing-Photos` (P-10). Function groups that are switched off are exported all the same. Friendships and swaps appear with the keeper's own side.
+
+State of implementation (deletion): `POST /account/deletion` with `{ "confirm": true }` requests the deletion; nothing is removed for **7 days** (assumption, decided by the PO deputy: long enough to change one's mind, short enough for the GDPR deadline of one month), `DELETE /account/deletion` withdraws it, `GET /account/deletion` says whether and when. After the deadline the background job `privacy.delete_account` (repeatable, retries while the object store is down) empties the object store by account prefix (also photos no row names any more), then calls `erase_account()`: running swaps are canceled with the cause `account_deleted` (visible to the partner), every table with an `account_id` loses the rows of the account (the generic test fills all tables with the module fixtures and checks that no row is left; a new table is covered by its foreign key and fails the test if it is not), friendships disappear on the partner's side, completed swaps stay with the partner with the stored display name and no connection (`other_id` null). Contributions to the shared catalog: approved species stay, anonymized (the creator of the review case becomes null); proposals nobody else can see are removed with the keeper's own specimens and care profiles that point at them. The log `deletion_log` keeps one anonymous row per deletion with the sign-in subject until the operator has removed the user at the sign-in service (stub `identityKept`; runbook `docs/guides/reference/account-deletion.md`).
+
+State of implementation (screens): "Konto" has the section "Meine Daten" (`#daten`) with the download ("Daten herunterladen", says what the archive holds and names missing photos) and "Konto löschen …": the dialog names what is removed and what stays, asks to type the word LÖSCHEN, and afterwards the section shows the date of the deletion with "Löschung zurücknehmen". Not tried by hand in a real browser yet (no test protocol).
 
 ### US-ACC-05 · Access by invitation only (initial phase) · 🟨 new
 
