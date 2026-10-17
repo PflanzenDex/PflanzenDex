@@ -28,7 +28,6 @@ import {
   type CatchDateTarget,
 } from "../markers/catch-date/catch-date-field/catch-date-field";
 import { DistributionView } from "../insights/distribution-view/distribution-view";
-
 function Created({ specimen }: { specimen: Specimen }) {
   return (
     <Status>
@@ -123,6 +122,7 @@ function Views(p: {
         species={props.newSpecies}
         siblings={data.cards.filter((k) => k.speciesId === id)}
         locations={data.locations}
+        zones={create.zones}
         onSend={create.send}
         onCancel={props.onSpeciesChoose}
       />

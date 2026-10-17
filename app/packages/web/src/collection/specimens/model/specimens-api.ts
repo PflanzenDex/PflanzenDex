@@ -15,6 +15,7 @@ export async function createSpecimen(
     /** Markers for existing specimens that have none yet, from the 3rd specimen on (US-BES-03). */
     markers?: { specimenId: string; marker: string }[];
     locationId?: string;
+    lightZoneId?: string;
     status?: "cutting";
     /** Back-dated catch date `YYYY-MM-DD` (FR-BES-04); without it the server uses today's local date. */
     catchDate?: string;
