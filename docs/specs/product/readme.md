@@ -75,13 +75,13 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | KI AI access                   | 10      | 0      | 9       | 1      | 0 · 0 · 13                | 3                      | 7       |
 | QS Cross-cutting               | 14      | 0      | 10      | 4      | 0 · 0 · 0                 | 6                      | 8       |
 | MIG Migration (dropped)        | 0       | 0      | 0       | 0      | 0 · 0 · 0                 | 0                      | 0       |
-| ENT Discover                   | 8       | 0      | 7       | 1      | 0 · 0 · 9                 | 0                      | 8       |
+| ENT Discover                   | 9       | 0      | 8       | 1      | 0 · 0 · 9                 | 0                      | 9       |
 | QG Quality gates               | 9       | 0      | 7       | 2      | 2 · 5 · 16                | 0                      | 9       |
 | DEV Development process        | 12      | 1      | 9       | 2      | 1 · 1 · 7                 | 0                      | 12      |
 | ACH Achievements               | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
 | TAU Swipe matching             | 7       | 0      | 0       | 7      | 0 · 0 · 10                | 0                      | 7       |
 | ONB Introduction and unlocking | 8       | 0      | 1       | 7      | 0 · 0 · 10                | 0                      | 8       |
-| **Total**                      | **167** | **30** | **103** | **34** |                           | **50**                 | **117** |
+| **Total**                      | **168** | **30** | **104** | **34** |                           | **50**                 | **118** |
 
 <!-- spec-status:end -->
 

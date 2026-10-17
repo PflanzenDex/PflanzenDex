@@ -105,7 +105,7 @@ const MODULES = [
   {
     name: "pokedex",
     epics: ["POK"],
-    tables: ["taxon", "pokedex_state"],
+    tables: ["taxon", "taxon_attribute", "pokedex_state"],
     dependsOn: ["kernel", "catalog", "collection"],
     ports: [],
   },
