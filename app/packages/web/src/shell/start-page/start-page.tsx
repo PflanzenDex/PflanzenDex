@@ -1,35 +1,29 @@
-import { Card } from "@/components/data-display/card/card";
 import { Suspense, useCallback, useState } from "react";
-import {
-  isNewAccount,
-  onboardingHints,
-  startAction,
-  type OnboardingCounts,
-} from "@pflanzendex/core";
+import { isNewAccount, startAction, type OnboardingCounts } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
 import { loadSpecimenCount } from "../../collection";
-import { LoadFrame, useFeature } from "../../kernel";
-import { loadLocations, loadZones } from "../../light";
+import { LoadFrame, useFeature, useInvalidate } from "../../kernel";
+import type { SpeciesLookup } from "../onboarding-wizard/species-step/species-step";
 import { OnboardingWizard } from "../onboarding-wizard/onboarding-wizard";
 import { readStored, writeStored } from "../../platform/storage";
 import type { LinkTarget } from "../../components/shared/navigation/nav-model/navigation/navigation";
 import { FriendsBanner } from "../../social";
 
+const COUNTS_KEY = ["start", "counts"];
 const ACTIONS = "flex flex-col gap-3 sm:flex-row";
 
 type Token = () => Promise<string | undefined>;
-type Target = Extract<LinkTarget, "species" | "light" | "collection">;
+type Target = Extract<LinkTarget, "species" | "collection">;
 
 const key = (accountId: string) => `pflanzendex.onboarding-skipped.${accountId}`;
 
-/** Per-device convenience only: the counts that drive the hints are derived live, so nothing here can go stale. */
+/** Per-device convenience only: the counts are derived live, so nothing here can go stale. */
 const readSkipped = (accountId: string): boolean => readStored(key(accountId)) === "1";
 // Without storage the onboarding is simply offered again next time.
 const writeSkipped = (accountId: string): void => void writeStored(key(accountId), "1");
 
 function Overview(props: { counts: OnboardingCounts; onOpen: (t: Target) => void }) {
   const action = startAction(props.counts);
-  const hints = onboardingHints(props.counts);
   return (
     <section aria-labelledby="start-title" className="flex flex-col gap-3">
       <h1 id="start-title" className="text-2xl font-semibold">
@@ -55,28 +49,12 @@ function Overview(props: { counts: OnboardingCounts; onOpen: (t: Target) => void
           </Button>
         </div>
       )}
-      {hints.length > 0 && (
-        <ul className="m-0 grid list-none gap-3 p-0" aria-label="Hinweise zur Einrichtung">
-          {hints.map((h) => (
-            <li key={h.id}>
-              <Card nested className="grid content-start gap-1">
-                <p>{h.text}</p>
-                <p className="text-sm text-muted-foreground">{h.nextAction}</p>
-                <div className={ACTIONS}>
-                  <Button type="button" variant="secondary" onClick={() => props.onOpen("light")}>
-                    {h.actionLabel}
-                  </Button>
-                </div>
-              </Card>
-            </li>
-          ))}
-        </ul>
-      )}
     </section>
   );
 }
 
 function Content(props: {
+  lookup: SpeciesLookup;
   api: string;
   token: Token;
   accountId: string;
@@ -85,6 +63,7 @@ function Content(props: {
 }) {
   const { accountId, counts } = props;
   const social = useFeature("social");
+  const refresh = useInvalidate(COUNTS_KEY);
   const [skipped, setSkipped] = useState(() => readSkipped(accountId));
   // Leaving the guide (finished, skipped or ended) is remembered: switching tabs must not bring it back.
   const leave = () => {
@@ -94,12 +73,16 @@ function Content(props: {
   if (isNewAccount(counts) && !skipped)
     return (
       <OnboardingWizard
+        lookup={props.lookup}
         api={props.api}
         token={props.token}
-        counts={counts}
         onChoosePlant={() => props.onOpen("species")}
-        onFinish={leave}
-        onEnd={leave}
+        onSkip={leave}
+        onCreated={() => {
+          leave();
+          refresh();
+          props.onOpen("collection");
+        }}
       />
     );
   return (
@@ -115,11 +98,14 @@ function Content(props: {
 }
 
 /**
- * The start page (US-ACC-03). A new account is guided through locations, light zones and the first plant; every step
- * can be skipped. An account whose plants are all archived is a returning keeper and gets the overview, not the guide. Afterwards the page never stays empty: without a plant it names the next action, skipped details
- * come back as hints (P-09), never as an error.
+ * The start page (US-ACC-03, US-ONB-01). A new account starts with its first plant: species, light need from the
+ * species, save; no location and no light zone is asked. An account whose plants are all archived is a returning
+ * keeper and gets the overview, not the guide. Afterwards the page never stays empty: without a plant it names the
+ * next action (P-09); nothing is shown as missing for a location or light zone.
  */
 export function StartPage(props: {
+  /** Species search and profile, handed in by the app (the shell does not import the catalog). */
+  lookup: SpeciesLookup;
   api: string;
   token: Token;
   accountId: string;
@@ -128,17 +114,9 @@ export function StartPage(props: {
   const { api } = props;
   const load = useCallback(
     async (t: string) => {
-      const [zones, locations, specimens] = await Promise.all([
-        loadZones(api, t),
-        loadLocations(api, t),
-        loadSpecimenCount(api, t),
-      ]);
-      if (!zones.ok) return zones;
-      if (!locations.ok) return locations;
+      const specimens = await loadSpecimenCount(api, t);
       if (!specimens.ok) return specimens;
       const counts: OnboardingCounts = {
-        zones: zones.value.length,
-        locations: locations.value.length,
         specimens: specimens.value.active,
         archivedSpecimens: specimens.value.archived,
       };
@@ -149,7 +127,7 @@ export function StartPage(props: {
   return (
     <div className="min-w-0 rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7">
       <LoadFrame
-        queryKey={["start", "counts"]}
+        queryKey={COUNTS_KEY}
         token={props.token}
         load={load}
         loadingText="Start wird geladen …"

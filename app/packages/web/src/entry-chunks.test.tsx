@@ -12,11 +12,6 @@ vi.mock("./shell/start-page/start-page", () => {
   return { StartPage: () => null };
 });
 
-vi.mock("./light/views/setup-steps/setup-steps", () => {
-  loaded.pages.push("setup-steps");
-  return { LocationsStep: () => null, ZonesStep: () => null };
-});
-
 vi.mock("./pokedex/pokedex-page/pokedex-page", () => {
   loaded.pages.push("pokedex");
   return { PokedexPage: () => null };
@@ -81,11 +76,6 @@ describe("#451 · DS-08 the entry bundle stays small", () => {
   it("#451 the start page (with the onboarding forms) loads only when its route opens", async () => {
     await import("./shell/app/app");
     expect(loaded.pages).not.toContain("start");
-  });
-
-  it("#451 the onboarding steps (forms and validation) load only when a step opens", async () => {
-    await import("./shell/app/app");
-    expect(loaded.pages).not.toContain("setup-steps");
   });
 
   it("US-QS-14 · DS-08 the species page of the Sammlung loads only when Arten is chosen", async () => {

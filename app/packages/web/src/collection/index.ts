@@ -13,3 +13,4 @@ export const DifficultyPage = lazyPage(() =>
   import("./difficulty-page/difficulty-page").then((m) => ({ default: m.DifficultyPage })),
 );
 export { loadSpecimenCount } from "./specimens/cards/cards-api";
+export { createSpecimen } from "./specimens/model/specimens-api";
