@@ -27,19 +27,9 @@ import {
   useCatchDate,
   type CatchDateTarget,
 } from "../markers/catch-date/catch-date-field/catch-date-field";
+import { LightZoneForm, useLightZone } from "../markers/locate/light-zone-form/light-zone-form";
+import { Created } from "./created/created";
 import { DistributionView } from "../insights/distribution-view/distribution-view";
-function Created({ specimen }: { specimen: Specimen }) {
-  return (
-    <Status>
-      {specimen.status === "cutting" ? "Steckling" : "Exemplar"} „{specimen.name}“ ist angelegt.
-      {specimen.status === "cutting" &&
-        " Er steht unter Stecklingslicht; tippe auf der Karte „Eingetopft“, sobald du ihn eintopfst."}
-      {specimen.locationId === null &&
-        " Der Standort ist unbekannt, denn ein Soll-Standort steht erst mit den Pflegephasen fest."}
-    </Status>
-  );
-}
-
 type Props = {
   api: string;
   token: Token;
@@ -65,10 +55,11 @@ export function CollectionPage(props: Props) {
   const potted = useRepot(api, token, afterAction);
   const marked = useMarker(api, token, afterAction);
   const caught = useCatchDate(api, token, afterAction);
+  const zoned = useLightZone(api, token, afterAction);
   const clearMessages = useCallback(() => {
-    for (const a of [archived, potted, marked, caught]) a.setMessage(null);
-  }, [archived, potted, marked, caught]);
-  const formOpen = !!(newSpecies || archived.open || marked.open || caught.open);
+    for (const a of [archived, potted, marked, caught, zoned]) a.setMessage(null);
+  }, [archived, potted, marked, caught, zoned]);
+  const formOpen = !!(newSpecies || archived.open || marked.open || caught.open || zoned.open);
   useHostReport(props.host, request.value?.cards.length, formOpen);
   const create = useCreate(api, token, newSpecies, {
     after: afterAction,
@@ -89,7 +80,7 @@ export function CollectionPage(props: Props) {
           <Views
             data={request.value}
             create={create}
-            actions={{ archived, potted, marked, caught, clearMessages }}
+            actions={{ archived, potted, marked, caught, zoned, clearMessages }}
             props={props}
           />
         )}
@@ -103,6 +94,7 @@ type Actions = {
   potted: ReturnType<typeof useRepot>;
   marked: ReturnType<typeof useMarker>;
   caught: ReturnType<typeof useCatchDate>;
+  zoned: ReturnType<typeof useLightZone>;
   clearMessages: () => void;
 };
 
@@ -114,7 +106,7 @@ function Views(p: {
   props: Props;
 }) {
   const { data, create, props } = p;
-  const { archived, marked, caught } = p.actions;
+  const { archived, marked, caught, zoned } = p.actions;
   if (props.newSpecies) {
     const id = props.newSpecies.id;
     return (
@@ -149,13 +141,15 @@ function Views(p: {
     );
   }
   if (caught.open) return <CatchDateForm state={{ ...caught, open: caught.open }} />;
+  if (zoned.open) return <LightZoneForm state={{ ...zoned, open: zoned.open }} />;
   return <List data={data} created={create.created} actions={p.actions} props={props} />;
 }
 
 function List(p: { data: Loaded; created: Specimen | null; actions: Actions; props: Props }) {
   const { data, actions } = p;
-  const { archived, potted, marked, caught, clearMessages } = actions;
-  const message = caught.message ?? marked.message ?? archived.message ?? potted.message;
+  const { archived, potted, marked, caught, zoned, clearMessages } = actions;
+  const message =
+    zoned.message ?? caught.message ?? marked.message ?? archived.message ?? potted.message;
   const error = archived.error ?? potted.error;
   const openCatchDate = (e: CatchDateTarget) => {
     clearMessages();
@@ -185,6 +179,10 @@ function List(p: { data: Loaded; created: Specimen | null; actions: Actions; pro
           marked.setOpen(e);
         }}
         onCatchDate={openCatchDate}
+        onLightZone={(e) => {
+          clearMessages();
+          zoned.setOpen(e);
+        }}
         {...(p.props.onMeasure ? { onMeasure: p.props.onMeasure } : {})}
       />
       <ArchivedList

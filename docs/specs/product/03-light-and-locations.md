@@ -31,7 +31,7 @@ Acceptance criteria:
 - Move up only if the demand reaches at least 80 % of the lux ceiling of the current level. If the demand is more than 30 % below the ceiling, the species stays there (more light brings stress).
 - C3 plants with soft leaves ("sun-loving") are not automatically classified into the strong zone.
 
-### US-LIC-02 · Know where there is still room · 🟨 (prototype ✅)
+### US-LIC-02 · Know where there is still room · ✅ (prototype ✅)
 
 As a **plant keeper** I want to see the distribution of my specimens across the zones.
 
@@ -39,6 +39,8 @@ Acceptance criteria:
 
 - Count per zone 2–4 at specimen level (the specimen's own light zone before that of its location and of its species); cutting light does not count.
 - The display names the thinnest zone. On a tie all equally placed ones, with a hint to the wishlist.
+
+State of implementation: complete for the criteria above. The distribution (`GET /specimens/distribution`, derived live, P-01) counts the effective zone of each active specimen (FR-LIC-02: own zone of the specimen before location and species; cutting light does not count), names the thinnest zone, on a tie all tied ones, and the hint points to the wishlist or to the own light zone of a specimen. The own zone of an existing specimen is set, changed or cleared with the card action "Lichtzone" (`POST /specimens/:id/light-zone`, zone chosen from the own zones; clearing says which zone applies again, or that it is unknown and what to do next, P-08, P-09; a refusal stays visible in the form, P-10), and at creation with the field "Eigene Lichtzone".
 
 ### US-LIC-03 · Know how close the plant belongs to the lamp · ✅ (prototype ✅)
 

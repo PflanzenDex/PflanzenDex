@@ -63,7 +63,8 @@ export function DistributionView({ distribution }: { distribution: Distribution 
         </ul>
       )}
       <Quiet>
-        Stecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.
+        Stecklingslicht zählt nicht; es zählt die eigene Zone des Exemplars, sonst die des
+        Standorts, sonst die der Art.
       </Quiet>
       {rest && <Quiet>{rest}</Quiet>}
     </section>
