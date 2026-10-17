@@ -281,13 +281,13 @@ describe("US-ACC-01 App", () => {
     );
   });
 
-  it("US-ACC-03 signed in: starts on the start page with the guided onboarding for a new account", async () => {
+  it("US-ONB-01 signed in: starts on the start page with the first plant for a new account", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    expect(await screen.findByRole("heading", { name: "Wo stehen deine Pflanzen?" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Deine erste Pflanze" })).toBeTruthy();
     expectStartPage();
-    await userEvent.click(screen.getByRole("button", { name: "Einstieg beenden" }));
+    await userEvent.click(screen.getByRole("button", { name: "Überspringen" }));
     expect(await screen.findByRole("heading", { name: "Start" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Art im Katalog wählen" }));
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();

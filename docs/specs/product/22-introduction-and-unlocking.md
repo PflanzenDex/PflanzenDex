@@ -53,7 +53,7 @@ An account that already owns data when the rules ship counts every row whose con
 
 ## User stories
 
-### US-ONB-01 · Start with the first plant · ⬜ new
+### US-ONB-01 · Start with the first plant · 🟨 new
 
 As a **new plant keeper** I want to begin with my first plant and nothing else, so that I see the app work within a minute.
 
@@ -68,6 +68,8 @@ Acceptance criteria:
 - Given a returning keeper (all plants archived), then this flow is not shown; "next plant" stays the next action (US-ACC-03).
 - Measurable (US-ONB-08): median time from first open to the saved first plant at most 90 seconds, at most 3 steps.
 - Status: replaces the order of ACC-03 (locations, zones, first plant) by first plant first.
+
+State of implementation: a new account (`isNewAccount`) opens the start page on "Deine erste Pflanze" with two steps, each marked "Schritt n von 2" (species search by name, then "Pflanze speichern"); no location and no light zone is asked or loaded. The light need is the zone derived live from the species (`zoneDerive`, shown as "Lampe 2 (laut Art)" in a select the keeper may change); only a changed zone is sent as the specimen's own zone, the derived one is never stored (P-01). A new account without light zones gets the standard lamps silently (`POST /light-zones/defaults`, the minimum of US-ONB-02). After saving the page names "Miss deine Pflanze" and opens the collection. The permanent start-page cards for missing locations and zones, and the old steps "Standorte" and "Lichtzonen", are removed. "Überspringen" shows the normal first-plant action (US-ACC-03). **Open:** the free name and the optional first photo (step 1 of the criteria: the specimen has no free name yet, only species and marker, and photos exist only on measurements, US-WAC-05); landing directly on the new plant instead of the collection; storing the skip per account instead of per device (DM-ONB-03, US-ONB-07); the measurement of US-ONB-08; the question "Wo steht sie?" and the default location "Zuhause" (US-ONB-02).
 
 ### US-ONB-02 · Places and light come later, with sensible defaults · ⬜ new
 
