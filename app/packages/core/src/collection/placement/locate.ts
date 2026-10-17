@@ -1,4 +1,4 @@
-import { defineOperation, appError, failed, idField, shape, ok } from "../../kernel";
+import { defineOperation, appError, failed, idField, orNull, shape, ok } from "../../kernel";
 import type { SpecimenRow, SpecimenStore } from "../shared/types";
 
 export interface LocateDependencies {
@@ -29,5 +29,38 @@ export const specimenSetLocation = (deps: LocateDependencies) =>
         { specimenId: input.specimenId, locationId: input.locationId },
       ]);
       return typeof r === "string" ? failed(appError(LOCATE_ERROR[r])) : ok(r[0] as SpecimenRow);
+    },
+  });
+
+export interface SpecimenLightZoneDependencies {
+  readonly specimens: Pick<SpecimenStore, "setLightZone">;
+}
+
+const zoneSchema = shape({
+  specimenId: idField("specimenId"),
+  lightZoneId: orNull(idField("lightZoneId")),
+});
+
+/** Store answers that mean the call was refused, with the code the user sees. */
+export const LIGHT_ZONE_ERROR = {
+  not_found: "specimen.not_found",
+  archived: "specimen.archived",
+  zone_unknown: "light_zone.not_found",
+} as const;
+
+/**
+ * Sets or clears the own light zone of a specimen (US-LIC-02, US-BES-04, FR-LIC-02). The zone is selected by ID, never
+ * typed; the composite foreign key of the database ties it to the own account (P-04), so a zone of another account looks
+ * like an unknown zone. `null` takes the own zone away: the zone is derived again from location and species. A cutting
+ * may carry the field too, but stands under cutting light as long as it is a cutting (US-BES-04). An archived specimen
+ * stays unchanged (US-BES-07); setting the zone it already has changes nothing, so a repeat is harmless (US-QS-03).
+ */
+export const specimenSetLightZone = (deps: SpecimenLightZoneDependencies) =>
+  defineOperation({
+    name: "specimen.set_light_zone",
+    schema: zoneSchema,
+    run: async ({ userId }, input) => {
+      const r = await deps.specimens.setLightZone(userId, input.specimenId, input.lightZoneId);
+      return typeof r === "string" ? failed(appError(LIGHT_ZONE_ERROR[r])) : ok(r);
     },
   });

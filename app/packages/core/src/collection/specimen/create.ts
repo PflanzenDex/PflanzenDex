@@ -27,6 +27,7 @@ import type {
 const REFUSED = {
   marker_taken: "specimen.marker_taken",
   location_unknown: "location.not_found",
+  zone_unknown: "light_zone.not_found",
   specimen_unknown: "specimen.not_found",
   species_unknown: "species.not_found",
 } as const;
@@ -54,6 +55,8 @@ const schema = shape({
   // Markers for existing specimens without one, from the 3rd specimen on (US-BES-03).
   markers: markerAnswersField,
   locationId: orNull(idField("locationId")),
+  // Own light zone from the start (US-LIC-02); chosen by ID from the own zones.
+  lightZoneId: orNull(idField("lightZoneId")),
   status: orNull(choiceField("status", CREATE_STATUS)),
   // Back-dating (FR-BES-04): a calendar date `YYYY-MM-DD`, not after the keeper's local today.
   catchDate: orNull(calendarDateField("catchDate")),
@@ -65,7 +68,7 @@ const schema = shape({
  * specimen needs a marker, and from the third active one on the active specimens without a marker need one too
  * (`markers`); `planMarkers` decides, the store writes everything or nothing (US-BES-03).
  * `caught_at` is the given `catchDate` (back-dating, never after the keeper's local today, else
- * `specimen.caught_in_future`) or today's date in the user's time zone (FR-BES-04). The location is the chosen one, else
+ * `specimen.caught_in_future`) or today's date in the user's time zone (FR-BES-04). An own light zone (US-LIC-02) is the chosen one of the own zones or none. The location is the chosen one, else
  * the target location from the port, else unknown (P-08). A cutting (`status: "cutting"`, US-BES-04) stands at the
  * location of the growth phase, even when the species is dormant right now; without a value the specimen is a plant.
  */
@@ -103,6 +106,7 @@ export const specimenCreate = (deps: CreateDependencies) =>
           name,
           marker: input.marker,
           locationId,
+          lightZoneId: input.lightZoneId,
           caughtAt: input.catchDate ?? today,
           status,
         },

@@ -5,8 +5,8 @@ import type { Species } from "../../catalog";
 import { cuttingLight } from "./cutting-light";
 import type { SpecimenRow } from "../shared/types";
 
-/** Where the zone comes from: cutting light, the location, my care profile (US-BES-09) or the species' lux need. */
-export type ZoneSource = "cutting" | "location" | "profile" | "species";
+/** Where the zone comes from: cutting light, the specimen's own field, the location, my care profile (US-BES-09) or the species' lux need. */
+export type ZoneSource = "cutting" | "specimen" | "location" | "profile" | "species";
 
 export interface EffectiveZone {
   readonly zone: LightZone;
@@ -39,14 +39,16 @@ function speciesZone(z: SpecimenRow, k: ZoneContext): EffectiveZone | null {
 }
 
 /**
- * The zone a specimen stands in: a cutting under cutting light (US-BES-04), otherwise the zone of its location
- * (specimen before species), otherwise the zone of its species. Archiving is the caller's concern.
+ * The zone a specimen stands in: a cutting under cutting light (US-BES-04), otherwise the own zone of the specimen
+ * (US-LIC-02: the specimen field overrides the species), then the zone of its location, then the zone of its species. Archiving is the caller's concern.
  */
 export function effectiveZone(z: SpecimenRow, k: ZoneContext): EffectiveZone | null {
   if (z.status === "cutting") {
     const lowest = cuttingLight(k.zones);
     return lowest ? { zone: lowest, source: "cutting" } : null;
   }
+  const mine = k.zones.find((l) => l.id === z.lightZoneId);
+  if (mine) return { zone: mine, source: "specimen" };
   const location = k.locations.find((s) => s.id === z.locationId);
   const own = k.zones.find((l) => l.id === location?.lightZoneId);
   return own ? { zone: own, source: "location" } : speciesZone(z, k);

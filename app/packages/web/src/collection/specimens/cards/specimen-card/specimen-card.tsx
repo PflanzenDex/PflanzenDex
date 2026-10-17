@@ -12,6 +12,7 @@ const STATUS_TEXT = {
 } as const;
 /** Where the effective zone comes from (FR-LIC-02, #592): the same rule as the distribution. */
 const ZONE_SOURCE_TEXT: Record<ZoneSource, string> = {
+  specimen: "von dir für dieses Exemplar gesetzt",
   location: "vom Standort",
   profile: "aus deinem Pflegeprofil",
   species: "aus dem Lichtbedarf der Art",

@@ -3,7 +3,7 @@ import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, withAccount, openOwnerPool, openFixturePool } from "../kernel/index.ts";
 import { createFixtureSpeciesAt } from "../fixtures.ts";
-import { LocationPostgres } from "../light/index.ts";
+import { LocationPostgres, ZonePostgres } from "../light/index.ts";
 import { SpecimenPostgres } from "./index.ts";
 import type { SpecimenRow } from "./specimens.ts";
 
@@ -13,6 +13,7 @@ let pool: Pool;
 let admin: Pool;
 let specimens: SpecimenPostgres;
 let locations: LocationPostgres;
+let zones: ZonePostgres;
 const anna = randomUUID();
 const ben = randomUUID();
 let species = "";
@@ -24,6 +25,7 @@ beforeAll(async () => {
   species = await createFixtureSpeciesAt();
   specimens = new SpecimenPostgres(pool);
   locations = new LocationPostgres(pool);
+  zones = new ZonePostgres(pool);
   for (const id of [anna, ben])
     await withAccount(pool, id, (c) => c.query("insert into account (id) values ($1)", [id]));
 });
@@ -113,5 +115,57 @@ describe("US-PHA-03 set locations in the database", () => {
       "specimen_unknown",
     );
     expect((await specimens.find(anna, z.id))?.locationId).toBe(a);
+  });
+});
+
+// US-LIC-02, US-BES-04, QG-D1, P-04: the own light zone of a specimen.
+const zone = async (account: string, name: string) => {
+  const z = await zones.create(account, { name, luxCeiling: 20_000, ppfd: null, sortOrder: null });
+  if (typeof z === "string") throw new Error(z);
+  return z.id;
+};
+describe("US-LIC-02 own light zone of a specimen in the database", () => {
+  it("US-LIC-02: a new specimen has no own zone; set, repeat and clear", async () => {
+    const z = await specimen(anna, "Zone Eins");
+    expect(z.lightZoneId ?? null).toBeNull();
+    const a = await zone(anna, "Zone A");
+    expect(await specimens.setLightZone(anna, z.id, a)).toMatchObject({ id: z.id, lightZoneId: a });
+    expect(await specimens.setLightZone(anna, z.id, a)).toMatchObject({ lightZoneId: a });
+    expect((await specimens.find(anna, z.id))?.lightZoneId).toBe(a);
+    expect(await specimens.setLightZone(anna, z.id, null)).toMatchObject({ lightZoneId: null });
+  });
+
+  it("QG-D1, P-04: a zone of another account violates the same-account foreign key", async () => {
+    const z = await specimen(anna, "Zone Fremd");
+    const bens = await zone(ben, "Bens Zone");
+    expect(await specimens.setLightZone(anna, z.id, bens)).toBe("zone_unknown");
+    expect((await specimens.find(anna, z.id))?.lightZoneId ?? null).toBeNull();
+  });
+
+  it("QG-D1, P-04: a foreign specimen is invisible, so it looks unknown and stays unchanged", async () => {
+    const z = await specimen(ben, "Bens Exemplar");
+    const a = await zone(anna, "Zone B");
+    expect(await specimens.setLightZone(anna, z.id, a)).toBe("not_found");
+    expect((await specimens.find(ben, z.id))?.lightZoneId ?? null).toBeNull();
+  });
+
+  it("US-BES-07: an archived specimen stays unchanged", async () => {
+    const z = await specimen(anna, "Zone Archiv");
+    await specimens.archive(anna, z.id, "eingegangen", "2026-10-04");
+    const a = await zone(anna, "Zone C");
+    expect(await specimens.setLightZone(anna, z.id, a)).toBe("archived");
+  });
+
+  it("US-LIC-05, P-10: a zone a specimen carries is named as user and cannot be deleted unnoticed", async () => {
+    const z = await specimen(anna, "Zone Nutzer");
+    const a = await zone(anna, "Zone D");
+    await specimens.setLightZone(anna, z.id, a);
+    expect(await specimens.zoneUsers(anna, a)).toEqual([
+      { kind: "specimen", id: z.id, name: "Zone Nutzer" },
+    ]);
+    expect(await specimens.zoneUsers(ben, a)).toEqual([]);
+    expect(await zones.remove(anna, a)).toBe("in_use");
+    await specimens.setLightZone(anna, z.id, null);
+    expect(await zones.remove(anna, a)).toBe("deleted");
   });
 });
