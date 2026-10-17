@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { catalogList } from "./list";
-import { speciesPropose } from "./species";
-import { FULL, ReviewWorld } from "./test-helpers";
+import { speciesPropose } from "../species";
+import { FULL, ReviewWorld } from "../test-helpers";
 
 describe("US-BES-10 review list", () => {
   it("US-BES-10 shows open proposals with required-field issues, similar species, count and oldest date", async () => {
