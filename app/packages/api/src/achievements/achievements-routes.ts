@@ -76,6 +76,7 @@ export function achievementsRoutes(
   routes.post("/achievements/seen", async (c) =>
     write(c, w.writeDeps, w.markSeen, { input: await body(c) }),
   );
+  pauseRoutes(routes, w);
   routes.get("/achievements/settings", async (c) =>
     c.json(await readAchievementSettings(w.settings, c.get("account").id)),
   );
@@ -83,4 +84,14 @@ export function achievementsRoutes(
     write(c, w.writeDeps, w.setCalmMode, { input: await body(c) }),
   );
   return routes;
+}
+
+/** The explicit pauses of the care rhythm (US-ACH-04), written through validating operations (P-03). */
+function pauseRoutes(routes: Hono<AuthEnv>, w: ReturnType<typeof achievementsWiring>) {
+  routes.post("/achievements/rhythm/pauses", async (c) =>
+    write(c, w.writeDeps, w.addPause, { input: await body(c), success: 201 }),
+  );
+  routes.delete("/achievements/rhythm/pauses/:id", async (c) =>
+    write(c, w.writeDeps, w.removePause, { input: { id: c.req.param("id") } }),
+  );
 }

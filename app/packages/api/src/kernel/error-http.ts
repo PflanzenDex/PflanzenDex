@@ -39,6 +39,8 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "specimen.name_taken": 409,
   "pokedex.not_caught": 409,
   "achievements.not_earned": 409,
+  "achievements.pause_too_long": 422,
+  "achievements.pause_not_found": 404,
   "friend.unknown_code": 404,
   "friend.code_used": 409,
   "friend.code_expired": 409,

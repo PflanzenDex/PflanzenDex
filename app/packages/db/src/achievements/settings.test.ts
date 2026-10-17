@@ -46,3 +46,24 @@ describe("US-ACH-08 calm mode per account", () => {
     expect(await settings.find(anna)).toEqual({ calmMode: true });
   });
 });
+
+describe("US-ACH-04 pauses of the care rhythm per account", () => {
+  it("US-ACH-04 stores, lists and removes a pause as local dates, only for the own account (P-04)", async () => {
+    const added = await settings.addPause(anna, { from: "2026-07-01", until: "2026-07-14" });
+    expect(added).toMatchObject({ from: "2026-07-01", until: "2026-07-14" });
+    expect(await settings.listPauses(anna)).toEqual([added]);
+    expect(await settings.listPauses(ben)).toEqual([]);
+    expect(await settings.removePause(ben, added.id)).toBe(false);
+    expect(await settings.removePause(anna, added.id)).toBe(true);
+    expect(await settings.listPauses(anna)).toEqual([]);
+  });
+
+  it("US-ACH-04 the database refuses a pause longer than 28 days or ending before it starts", async () => {
+    await expect(
+      settings.addPause(anna, { from: "2026-07-01", until: "2026-07-29" }),
+    ).rejects.toThrow();
+    await expect(
+      settings.addPause(anna, { from: "2026-07-10", until: "2026-07-09" }),
+    ).rejects.toThrow();
+  });
+});

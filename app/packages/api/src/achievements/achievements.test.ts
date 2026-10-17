@@ -242,6 +242,36 @@ describe("US-ACH-04 care rhythm through the API", () => {
     expect(r.body["weeks"]).toHaveLength(12);
   });
 
+  it("US-ACH-04 an explicit pause is added, listed in the rhythm and removed; only own pauses count (P-04)", async () => {
+    const other = `ach04b-${randomUUID()}`;
+    const added = await call(subG, "POST", "/achievements/rhythm/pauses", {
+      from: "2026-07-01",
+      until: "2026-07-14",
+    });
+    expect(added.status).toBe(201);
+    expect((await rhythm(subG)).body["pauses"]).toEqual([added.body]);
+    expect((await rhythm(other)).body["pauses"]).toEqual([]);
+    const foreign = await call(other, "DELETE", `/achievements/rhythm/pauses/${added.body["id"]}`);
+    expect(foreign.status).toBe(404);
+    expect(foreign.body["error"].code).toBe("achievements.pause_not_found");
+    const removed = await call(subG, "DELETE", `/achievements/rhythm/pauses/${added.body["id"]}`);
+    expect(removed.status).toBe(200);
+    expect((await rhythm(subG)).body["pauses"]).toEqual([]);
+    await admin.query("delete from account where subject = $1", [other]);
+  });
+
+  it("US-ACH-04 a pause longer than 4 weeks: 422 achievements.pause_too_long; bad dates: 400; no token: 401", async () => {
+    const long = await call(subG, "POST", "/achievements/rhythm/pauses", {
+      from: "2026-07-01",
+      until: "2026-08-01",
+    });
+    expect(long.status).toBe(422);
+    expect(long.body["error"].code).toBe("achievements.pause_too_long");
+    const bad = await call(subG, "POST", "/achievements/rhythm/pauses", { from: "x", until: "y" });
+    expect(bad.status).toBe(400);
+    expect((await call(null, "POST", "/achievements/rhythm/pauses", {})).status).toBe(401);
+  });
+
   it("US-ACH-08 calm mode hides the care rhythm, for that account only", async () => {
     await setCalm(subG, true);
     expect((await rhythm(subG)).body).toEqual({ calmMode: true });
