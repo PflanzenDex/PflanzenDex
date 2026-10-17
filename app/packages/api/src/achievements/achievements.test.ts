@@ -242,10 +242,71 @@ describe("US-ACH-04 care rhythm through the API", () => {
     expect(r.body["weeks"]).toHaveLength(12);
   });
 
+  it("US-ACH-04 an explicit pause is added, listed in the rhythm and removed; only own pauses count (P-04)", async () => {
+    const other = `ach04b-${randomUUID()}`;
+    const added = await call(subG, "POST", "/achievements/rhythm/pauses", {
+      from: "2026-07-01",
+      until: "2026-07-14",
+    });
+    expect(added.status).toBe(201);
+    expect((await rhythm(subG)).body["pauses"]).toEqual([added.body]);
+    expect((await rhythm(other)).body["pauses"]).toEqual([]);
+    const foreign = await call(other, "DELETE", `/achievements/rhythm/pauses/${added.body["id"]}`);
+    expect(foreign.status).toBe(404);
+    expect(foreign.body["error"].code).toBe("achievements.pause_not_found");
+    const removed = await call(subG, "DELETE", `/achievements/rhythm/pauses/${added.body["id"]}`);
+    expect(removed.status).toBe(200);
+    expect((await rhythm(subG)).body["pauses"]).toEqual([]);
+    await admin.query("delete from account where subject = $1", [other]);
+  });
+
+  it("US-ACH-04 a pause longer than 4 weeks: 422 achievements.pause_too_long; bad dates: 400; no token: 401", async () => {
+    const long = await call(subG, "POST", "/achievements/rhythm/pauses", {
+      from: "2026-07-01",
+      until: "2026-08-01",
+    });
+    expect(long.status).toBe(422);
+    expect(long.body["error"].code).toBe("achievements.pause_too_long");
+    const bad = await call(subG, "POST", "/achievements/rhythm/pauses", { from: "x", until: "y" });
+    expect(bad.status).toBe(400);
+    expect((await call(null, "POST", "/achievements/rhythm/pauses", {})).status).toBe(401);
+  });
+
   it("US-ACH-08 calm mode hides the care rhythm, for that account only", async () => {
     await setCalm(subG, true);
     expect((await rhythm(subG)).body).toEqual({ calmMode: true });
     await setCalm(subG, false);
     expect((await rhythm(subG)).body["calmMode"]).toBe(false);
+  });
+});
+
+describe("US-ACH-07 year in review through the API", () => {
+  const subF = `ach07-${randomUUID()}`;
+  const year = (sub: string | null, query = "timeZone=Europe/Berlin") =>
+    call(sub, "GET", `/achievements/year?${query}`);
+  afterAll(async () => {
+    await admin.query("delete from account where subject = $1", [subF]);
+  });
+
+  it("US-ACH-07 without a token: 401; a bad time zone or year: 400 input.invalid", async () => {
+    expect((await year(null)).status).toBe(401);
+    expect((await year(subF, "timeZone=Mars/Base")).status).toBe(400);
+    const future = await year(subF, "timeZone=Europe/Berlin&year=9999");
+    expect(future.status).toBe(400);
+    expect(future.body["error"].code).toBe("input.invalid");
+  });
+
+  it("US-ACH-07 a new account gets an empty year with counts of zero, no rank and no rating", async () => {
+    const r = await year(subF);
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ calmMode: false, hasData: false, growth: null, photos: null });
+    expect(Object.values(r.body["counts"]).every((n) => n === 0)).toBe(true);
+  });
+
+  it("US-ACH-08 calm mode hides the year in review", async () => {
+    await setCalm(subF, true);
+    expect((await year(subF)).body).toEqual({ calmMode: true });
+    await setCalm(subF, false);
+    expect((await year(subF)).body["calmMode"]).toBe(false);
   });
 });

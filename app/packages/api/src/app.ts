@@ -16,6 +16,7 @@ import {
   SPECIMEN_PATHS,
   careProfileRoutes,
   careProfileZoneUsageFor,
+  specimenZoneUsageFor,
   specimenRoutes,
 } from "./collection";
 import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
@@ -78,6 +79,7 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
     "/",
     lightRoutes(pool, [
       careProfileZoneUsageFor(pool),
+      specimenZoneUsageFor(pool),
       wishZoneUsageFor(pool),
       equipmentZoneUsageFor(pool),
     ]),
@@ -96,7 +98,7 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
   for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", careProfileRoutes(pool));
   bindWishlist(app, pool, auth, opt);
-  bindEquipment(app, pool, auth, { zoneStock: opt.zoneStock, features });
+  bindEquipment(app, pool, auth, { zoneStock: opt.zoneStock, features, products: opt.products });
   const clock = opt.clock ? { clock: opt.clock } : {};
   bindFriends(app, pool, auth, {
     ...clock,
@@ -113,6 +115,7 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
       status: todayStatusSource(pool, today),
       photo: measurementPhotoSourceFor(pool, opt.media),
       discover: discoverSourceFor(pool, opt.zoneStock),
+      ...(opt.wishImage ? { sources: opt.wishImage.sources } : {}),
     }),
   );
 }

@@ -31,6 +31,7 @@ const show = (onSend = vi.fn(async (): Promise<ApiError | null> => null)) => {
       species={species}
       siblings={[]}
       locations={[]}
+      zones={{ items: [], failed: false }}
       onSend={onSend}
       onCancel={vi.fn()}
     />,

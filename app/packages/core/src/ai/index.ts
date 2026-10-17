@@ -55,3 +55,5 @@ export type { PromptTask } from "./tasks/prompt/prompt";
 export { TASK_INSTRUCTIONS, TASK_TITLES } from "./tasks/prompt/texts";
 export { aiDiscoverDecide, aiDiscoverSuggestions } from "./discover";
 export type { DiscoverCall, DiscoverOutcome, DiscoverSource } from "./discover";
+export { aiCheckImageSource } from "./results/image-source";
+export type { ImageSourceCall, ImageSourceChecker } from "./results/image-source";

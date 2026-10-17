@@ -51,6 +51,13 @@ describe("US-BES-02 client of the specimen API", () => {
     expect(body["timeZone"]).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
   });
 
+  it("US-LIC-02: the own light zone goes into the request body only when chosen", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => response(201, specimen()));
+    await createSpecimen("http://api", "tok", { speciesId: "a1", lightZoneId: "z3" }, fetchFn);
+    const body = JSON.parse(String(fetchFn.mock.calls[0]?.[1]?.body)) as Record<string, unknown>;
+    expect(body["lightZoneId"]).toBe("z3");
+  });
+
   it("a taken name stays an error with code and the existing specimens", async () => {
     const error = {
       code: "specimen.name_taken",
@@ -71,6 +78,7 @@ describe('US-BES-02 form "Create specimen"', () => {
         species={species}
         siblings={[]}
         locations={locations}
+        zones={{ items: [], failed: false }}
         onSend={async () => null}
         onCancel={vi.fn()}
         {...extra}
@@ -91,6 +99,25 @@ describe('US-BES-02 form "Create specimen"', () => {
     expect(h).toContain("Balkon");
     expect(h).toContain("Kennzeichen (optional)");
     expect(h.split("<").filter((t) => t.includes("required"))).toEqual([]);
+  });
+
+  it("US-LIC-02: offers the own light zone from the own zones; without a choice it is derived", () => {
+    const h = html({
+      zones: {
+        items: [{ id: "z3", name: "Lampe 3", luxCeiling: 40000, ppfd: null, sortOrder: 3 }],
+        failed: false,
+      },
+    });
+    expect(h).toContain("Eigene Lichtzone");
+    expect(h).toContain("Aus Standort und Art ableiten");
+    expect(h).toContain("Lampe 3");
+    expect(h).toContain("Stecklingslicht");
+  });
+
+  it("US-LIC-02 (P-10): when the zones cannot be loaded the form says so instead of hiding it", () => {
+    expect(html({ zones: { items: [], failed: true } })).toContain(
+      "Die Lichtzonen konnten nicht geladen werden",
+    );
   });
 
   it("offers the catch date (default today, FR-BES-04) and names no invented location", () => {

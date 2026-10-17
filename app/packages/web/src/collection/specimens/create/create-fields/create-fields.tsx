@@ -1,5 +1,5 @@
 import { useWatch, type Control } from "react-hook-form";
-import { specimenName, type Species, type LightLocation } from "@pflanzendex/core";
+import { specimenName, type Species, type LightLocation, type LightZone } from "@pflanzendex/core";
 import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
 import {
   FormControl,
@@ -14,9 +14,44 @@ import { CatchDateField } from "../../../markers/catch-date/catch-date-field/cat
 import { TITLE } from "../../cards/parts/parts";
 import type { CreateFields } from "../../model/schemas";
 
+/** The own light zone of the specimen, chosen from the own zones (US-LIC-02); empty = derived (P-08). */
+function ZoneField(props: {
+  control: Control<CreateFields>;
+  zones: { items: readonly LightZone[]; failed: boolean };
+}) {
+  return (
+    <FormField
+      control={props.control}
+      name="lightZoneId"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Eigene Lichtzone</FormLabel>
+          <FormControl>
+            <Select {...field}>
+              <option value="">Aus Standort und Art ableiten</option>
+              {props.zones.items.map((z) => (
+                <option key={z.id} value={z.id}>
+                  {z.name}
+                </option>
+              ))}
+            </Select>
+          </FormControl>
+          <FormDescription>
+            {props.zones.failed
+              ? "Die Lichtzonen konnten nicht geladen werden. Du kannst die Zone später setzen."
+              : "Überschreibt die Zone von Standort und Art. Ohne Auswahl wird sie abgeleitet; ein Steckling steht trotzdem unter Stecklingslicht."}
+          </FormDescription>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
 export function OtherFields(props: {
   control: Control<CreateFields>;
   locations: readonly LightLocation[];
+  zones: { items: readonly LightZone[]; failed: boolean };
   today: string;
 }) {
   return (
@@ -65,6 +100,7 @@ export function OtherFields(props: {
           </FormItem>
         )}
       />
+      <ZoneField control={props.control} zones={props.zones} />
       <CatchDateField control={props.control} today={props.today} />
     </>
   );

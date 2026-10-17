@@ -1,5 +1,5 @@
 // Public interface of the feature `image`: a local copy of a wish image with source and license (US-WUN-04).
-export { wishStoreImage } from "./store-image";
+export { checkCommonsImage, wishStoreImage } from "./store-image";
 export type {
   ImageDownload,
   WishImageDependencies,

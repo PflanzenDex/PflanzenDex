@@ -1,4 +1,10 @@
-import { achievementsMarkSeen, achievementsSetCalmMode, ACHIEVEMENT_IDS } from "@pflanzendex/core";
+import {
+  achievementsAddRhythmPause,
+  achievementsMarkSeen,
+  achievementsRemoveRhythmPause,
+  achievementsSetCalmMode,
+  ACHIEVEMENT_IDS,
+} from "@pflanzendex/core";
 import {
   AchievementSeenPostgres,
   AchievementSettingsPostgres,
@@ -28,13 +34,19 @@ export function achievementsWiring(pool: Pool, clock: () => Date) {
   };
   const earned = (userId: string, timeZone: string) =>
     earnedAchievementIds(sources, userId, timeZone, clock());
-  const rhythmSources = { ...sources, reminders: new RemindersPostgres(pool) };
+  const rhythmSources = {
+    ...sources,
+    reminders: new RemindersPostgres(pool),
+    pauses: settings,
+  };
   return {
     settings,
     rhythmSources,
     seen,
     sources,
     writeDeps: { idempotency: new IdempotencyPostgres(pool) },
+    addPause: achievementsAddRhythmPause({ pauses: settings }),
+    removePause: achievementsRemoveRhythmPause({ pauses: settings }),
     markSeen: achievementsMarkSeen({ seen, earned }),
     // Switching calm mode off marks what is earned as seen: nothing earned meanwhile counts as new (US-ACH-08).
     setCalmMode: achievementsSetCalmMode({

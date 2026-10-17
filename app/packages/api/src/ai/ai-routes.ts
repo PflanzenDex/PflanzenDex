@@ -5,6 +5,7 @@ import {
   aiSetRights,
   type DiscoverSource,
   type PhotoSource,
+  type SourceClient,
   type StatusSource,
   type ConnectionStore,
 } from "@pflanzendex/core";
@@ -57,7 +58,12 @@ export function aiAccessRoutes(
   pool: Pool,
   auth: MiddlewareHandler<AuthEnv>,
   opt: AiAccessOptions | undefined,
-  ports: { status: StatusSource; photo: PhotoSource; discover: DiscoverSource },
+  ports: {
+    status: StatusSource;
+    photo: PhotoSource;
+    discover: DiscoverSource;
+    sources?: SourceClient;
+  },
 ): Hono<AuthEnv> {
   if (!opt) return new Hono<AuthEnv>();
   const connections = opt.connections ?? new ConnectionsPostgres(pool);

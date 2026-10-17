@@ -38,6 +38,8 @@ export interface SpeciesValues {
   readonly difficulty: number;
   readonly standardLevel: number;
   readonly lightDemandLux: number;
+  /** C3 plant with a soft leaf ("sun-loving"): the zone derivation never promotes it automatically (US-LIC-01). */
+  readonly softLeaf: boolean;
   /** Month-day `MM-DD`; both or none. */
   readonly dormancyFrom: string | null;
   readonly dormancyUntil: string | null;

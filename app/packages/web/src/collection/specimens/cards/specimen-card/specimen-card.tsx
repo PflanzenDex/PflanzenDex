@@ -1,26 +1,15 @@
 import { cva } from "class-variance-authority";
-import type { SpecimenCard, MeasurementQuality, ZoneSource } from "@pflanzendex/core";
+import type { SpecimenCard, MeasurementQuality } from "@pflanzendex/core";
 import type { PhotoAccess } from "@/lib/use-stored-photo";
 import { Button } from "@/components/ui/button/button";
 import { Actions, CARD, Photo, Quiet } from "../parts/parts";
-import { UNKNOWN, dateText, valueText } from "../../model/text";
+import { UNKNOWN, dateText, valueText, zoneText } from "../../model/text";
 
 const STATUS_TEXT = {
   plant: "Pflanze",
   cutting: "Steckling",
   archived: "Archiviert",
 } as const;
-/** Where the effective zone comes from (FR-LIC-02, #592): the same rule as the distribution. */
-const ZONE_SOURCE_TEXT: Record<ZoneSource, string> = {
-  location: "vom Standort",
-  profile: "aus deinem Pflegeprofil",
-  species: "aus dem Lichtbedarf der Art",
-  cutting: "Stecklingslicht",
-};
-const zoneText = (card: SpecimenCard): string =>
-  card.lightZone && card.lightZoneSource
-    ? `${card.lightZone} (${ZONE_SOURCE_TEXT[card.lightZoneSource]})`
-    : UNKNOWN;
 const QUALITY_TEXT: Record<MeasurementQuality, string> = {
   healthy: "Gesund",
   etiolated: "Vergeilt/dünn",
@@ -112,26 +101,51 @@ function Action(props: { text: string; aria: string; on: () => void }) {
   );
 }
 
-/** A specimen card (US-BES-06): state and need for action at a glance, from derived data only. */
-export function SpecimenCardView(props: {
-  card: SpecimenCard;
-  onMeasure?: ((e: { id: string; name: string }) => void) | undefined;
+type On = ((e: SpecimenCard) => void) | undefined;
+type Handlers = {
+  onMeasure?: On;
   /** Opens the archiving (US-BES-07). */
-  onArchive?: ((e: { id: string; name: string }) => void) | undefined;
+  onArchive?: On;
   /** Repots a cutting (US-BES-04); only cuttings get the button. */
-  onRepot?: ((e: { id: string; name: string }) => void) | undefined;
+  onRepot?: On;
   /** Gives the specimen a marker or changes it (US-BES-03). */
-  onMark?: ((e: SpecimenCard) => void) | undefined;
+  onMark?: On;
   /** Corrects the catch date (US-BES-11). */
-  onCatchDate?: ((e: SpecimenCard) => void) | undefined;
-  /** How the private photo is fetched (US-WAC-05);  */
-  photoAccess: PhotoAccess;
-}) {
-  const { card, onMeasure, onArchive, onRepot, onMark, onCatchDate } = props;
-  const repot = card.status === "cutting" ? onRepot : undefined;
+  onCatchDate?: On;
+  /** Sets, changes or clears the own light zone (US-LIC-02, US-BES-04). */
+  onLightZone?: On;
+};
+
+/** The buttons of a card: one per handler that is wired; a repot only for a cutting. */
+function CardActions({ card, ...h }: Handlers & { card: SpecimenCard }) {
+  const n = card.name;
+  const items: [On, string, string][] = [
+    [h.onMeasure, "Messen", `Messen: ${n}`],
+    [card.status === "cutting" ? h.onRepot : undefined, "Eingetopft", `Eingetopft: ${n}`],
+    [h.onMark, "Kennzeichen", `Kennzeichen ändern: ${n}`],
+    [h.onCatchDate, "Fangdatum", `Fangdatum korrigieren: ${n}`],
+    [h.onLightZone, "Lichtzone", `Lichtzone ändern: ${n}`],
+    [h.onArchive, "Archivieren", `Archivieren: ${n}`],
+  ];
+  const wired = items.flatMap(([on, text, aria]) => (on ? [{ on, text, aria }] : []));
+  if (wired.length === 0) return null;
+  return (
+    <Actions>
+      {wired.map((a) => (
+        <Action key={a.text} text={a.text} aria={a.aria} on={() => a.on(card)} />
+      ))}
+    </Actions>
+  );
+}
+
+/** A specimen card (US-BES-06): state and need for action at a glance, from derived data only. */
+export function SpecimenCardView(
+  props: Handlers & { card: SpecimenCard; photoAccess: PhotoAccess },
+) {
+  const { card, photoAccess, ...handlers } = props;
   return (
     <li className={`animate-list-in ${CARD}`}>
-      <Photo card={card} access={props.photoAccess} />
+      <Photo card={card} access={photoAccess} />
       <h2 className="mt-2 text-lg font-semibold">{card.name}</h2>
       <Quiet>Art: {card.speciesName ?? UNKNOWN}</Quiet>
       <Quiet>
@@ -141,37 +155,7 @@ export function SpecimenCardView(props: {
       <Provenance value={card.provenance} />
       <Measurement card={card} />
       <Treatment card={card} />
-      {(onMeasure || onArchive || repot || onMark || onCatchDate) && (
-        <Actions>
-          {onMeasure && (
-            <Action text="Messen" aria={`Messen: ${card.name}`} on={() => onMeasure(card)} />
-          )}
-          {repot && (
-            <Action text="Eingetopft" aria={`Eingetopft: ${card.name}`} on={() => repot(card)} />
-          )}
-          {onMark && (
-            <Action
-              text="Kennzeichen"
-              aria={`Kennzeichen ändern: ${card.name}`}
-              on={() => onMark(card)}
-            />
-          )}
-          {onCatchDate && (
-            <Action
-              text="Fangdatum"
-              aria={`Fangdatum korrigieren: ${card.name}`}
-              on={() => onCatchDate(card)}
-            />
-          )}
-          {onArchive && (
-            <Action
-              text="Archivieren"
-              aria={`Archivieren: ${card.name}`}
-              on={() => onArchive(card)}
-            />
-          )}
-        </Actions>
-      )}
+      <CardActions card={card} {...handlers} />
     </li>
   );
 }

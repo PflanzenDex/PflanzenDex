@@ -71,6 +71,8 @@ State of implementation: partly done. The way from purchase to plant (the tab "W
 
 `Name`, `German`, `Species?` (reference into the catalog), `Target_Light_Zone`, `Difficulty` (number 1–3), `Reasoning`, `Image`, `Image_Source`, `License`, `Type` (`Plant` | `Equipment`), `Status` (`Wishlist` | `Bought` | `Discarded`), `Specimen?` (reference after purchase), `Source` and `Decided_At` (DM-ENT-02).
 
+A wish of type `Plant` can carry the optional flag `Visible_To_Friends` (default no, DM-TAU-02) so that friends' swipe matching can show "fits both ways" (US-TAU-05); without it the wishlist stays private (FR-WUN-07). Friends' open offers that match a wish are shown as cards in epic TAU (`21-swipe-matching.md`).
+
 New wishes also arise via yes/no in Discover (`17-Discover.md`); `Discarded` is a decision of its own there and a learning signal (US-ENT-05).
 
 ## Requirements

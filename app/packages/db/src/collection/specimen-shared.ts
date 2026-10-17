@@ -14,6 +14,8 @@ export interface SpecimenRow {
   readonly archivedAt: string | null;
   readonly archivedReason: string | null;
   readonly repottedAt: string | null;
+  /** Own light zone of the specimen (US-LIC-02); `null` = not set, the zone is derived. */
+  readonly lightZoneId?: string | null;
 }
 
 // `date` and `timestamptz` come back as text: the driver would turn it into a `Date` in the server's time zone (NFR-08).
@@ -21,7 +23,8 @@ export const COLUMNS = `id, species_id as "speciesId", name, marker, location_id
   to_char(caught_at, 'YYYY-MM-DD') as "caughtAt",
   to_char(created_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as "createdAt",
   to_char(archived_at, 'YYYY-MM-DD') as "archivedAt",
-  archived_reason as "archivedReason", to_char(repotted_at, 'YYYY-MM-DD') as "repottedAt"`;
+  archived_reason as "archivedReason", to_char(repotted_at, 'YYYY-MM-DD') as "repottedAt",
+  light_zone_id as "lightZoneId"`;
 
 export const FOREIGN_KEY = "23503";
 export const pgError = (e: unknown) => e as { code?: string; constraint?: string };
@@ -73,6 +76,7 @@ export interface NewSpecimen {
   readonly name: string;
   readonly marker: string | null;
   readonly locationId: string | null;
+  readonly lightZoneId?: string | null;
   readonly caughtAt: string | null;
   readonly status?: "plant" | "cutting";
 }
@@ -98,9 +102,18 @@ export async function createSpecimenOn(
     if (!done.rowCount) throw new UnknownSpecimen();
   }
   const r = await c.query<SpecimenRow>(
-    `insert into specimen (account_id, species_id, name, marker, location_id, caught_at, status)
-     values ($1, $2, $3, $4, $5, $6, $7) returning ${COLUMNS}`,
-    [userId, w.speciesId, w.name, w.marker, w.locationId, w.caughtAt, w.status ?? "plant"],
+    `insert into specimen (account_id, species_id, name, marker, location_id, caught_at, status, light_zone_id)
+     values ($1, $2, $3, $4, $5, $6, $7, $8) returning ${COLUMNS}`,
+    [
+      userId,
+      w.speciesId,
+      w.name,
+      w.marker,
+      w.locationId,
+      w.caughtAt,
+      w.status ?? "plant",
+      w.lightZoneId ?? null,
+    ],
   );
   await ensureSpeciesVisible(c, w.speciesId);
   return r.rows[0] as SpecimenRow;

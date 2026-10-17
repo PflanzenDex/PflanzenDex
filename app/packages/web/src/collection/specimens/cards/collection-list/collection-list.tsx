@@ -18,6 +18,8 @@ type Handlers = {
   onMark?: (e: SpecimenCard) => void;
   /** Corrects the catch date of a specimen (US-BES-11). */
   onCatchDate?: (e: SpecimenCard) => void;
+  /** Sets, changes or clears the own light zone of a specimen (US-LIC-02, US-BES-04). */
+  onLightZone?: (e: SpecimenCard) => void;
   /** How the private photos on the cards are fetched (US-WAC-05, P-05). */
   photoAccess: PhotoAccess;
 };
@@ -34,6 +36,7 @@ function Grid(props: Handlers & { cards: readonly SpecimenCard[] }) {
           onRepot={props.onRepot}
           onMark={props.onMark}
           onCatchDate={props.onCatchDate}
+          onLightZone={props.onLightZone}
           photoAccess={props.photoAccess}
         />
       ))}

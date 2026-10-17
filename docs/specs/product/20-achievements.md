@@ -75,7 +75,7 @@ Acceptance criteria:
 - No push notification, no e-mail for achievements (FR-ACH-06).
 - Status: the seen state is the table `achievement_seen` (one row per account with the seen ids and the definitions the account knew, DM-ACH-02; the row is also the marker of the first evaluation), `GET /achievements/news` and `POST /achievements/seen` (operation `achievements.mark_seen`, refuses achievements that are not earned). The overview marks new ones with "(neu)" and "Okay" writes `seen`. Assumptions, decided by the PO: the banner appears after any write of the app that succeeded and made an achievement new (the page looks again after each write); it stays until "Schließen" and does not write `seen`, so what was already new when the app opened is left to the overview; switching calm mode off marks everything earned as seen (US-ACH-08); a definition added later whose criterion is already met is created silently as seen (FR-ACH-09).
 
-### US-ACH-04 · Care rhythm instead of a streak · 🟨 new
+### US-ACH-04 · Care rhythm instead of a streak · ✅ new
 
 As a **plant keeper** I want to see how steadily I have cared, without being punished for a missed week.
 
@@ -87,7 +87,7 @@ Acceptance criteria:
 - Given I miss a week, when I look at the view, then the current run starts again, the longest run stays, and the text names the open tasks (P-09), not a loss ("2 dates are open", not "streak broken").
 - Given I pause (holiday, `Dormancy` of all specimens, or an explicit pause of up to 4 weeks, assumption), then the weeks of the pause are neutral.
 - The rhythm counts only tasks that exist because of the plants' needs. A task created only to be ticked off earns nothing: the rhythm never rewards doing more than due (watering earlier than the interval does not count more, FR-ACH-05).
-- Status: the logic is `careRhythm` in `core` (module `achievements`), the API answers `GET /achievements/rhythm?timeZone=` (`{ calmMode: true }` in calm mode, US-ACH-08) and the section "Erfolge" of "Konto" shows the 12 weeks, the current and the longest run. Nothing is stored (FR-ACH-02). Done: treatment dates (US-BEH-02/03) and measurement intervals (US-MON-04: due `measurementDays` after the last measurement or the catch date; measuring earlier counts the same; cuttings left out as in the reminders, E-11). Assumptions, decided by the PO: a week runs Monday to Sunday and belongs to the due date of a task; a week with a task that is open or was done late is "offen" and restarts the current run; a task within the grace day or due later in the week leaves the week undecided; the tasks still open when a specimen was archived are dropped. Not yet: interval watering (US-MON-05, the watering log keeps no history of the interval in force), the explicit pause up to 4 weeks (setting `care rhythm pause until`, DM-ACH-03) and the neutral weeks while all specimens are dormant; `careRhythm` already takes pauses as input. The story stays 🟨 until these are done.
+- Status: the logic is `careRhythm` and `restPauses` in `core` (module `achievements`), the API answers `GET /achievements/rhythm` (`{ calmMode: true }` in calm mode, which also hides the pause form), the pauses are written through `achievements.add_rhythm_pause` and `achievements.remove_rhythm_pause` (`POST /achievements/rhythm/pauses`, `DELETE /achievements/rhythm/pauses/:id`, table `achievement_rhythm_pause`, DM-ACH-03); a pause over 4 weeks is refused with `achievements.pause_too_long`. The section "Erfolge" shows the 12 weeks, both runs, the open tasks and the pause form. Tasks: treatment dates (open or done, US-BEH-02/03) and the measurement interval of every plant (US-MON-04: due `measurementDays` after the last measurement or the catch date, measuring earlier counts the same; a cutting has none, E-11); a week runs Monday to Sunday and belongs to the due date of a task, a week with a task that is open or done late is "offen" and restarts the current run; a task of an archived specimen that was still open at archiving is dropped. Assumptions, decided by the PO: several explicit pauses can exist (a later pause never rewrites an earlier one, because the rhythm is derived); the pause may lie in the past; a day is a day of rest when every active plant has a dormancy period and is in it (a plant without a known period never rests, P-08; today's specimens and periods are applied to the past); a task is neutral when its due date lies in a pause or a day of rest. **Interval watering (US-MON-05) is out of scope, decided by the PO:** the watering log keeps no history of the interval in force on a past day, so a past due date could only be invented (P-08); the criterion mentions it as a task source, it is added when such a history exists.
 
 ### US-ACH-05 · Personal records and growth moments · ✅ new
 
@@ -114,7 +114,7 @@ Acceptance criteria:
 - Anniversaries do not create push notifications unless I enabled them in the reminder settings (US-MON-08).
 - Status: the logic is `anniversaries` in `core` (module `achievements`), the API answers `GET /achievements/anniversaries?timeZone=` (`{ calmMode: true }` in calm mode, US-ACH-08) with the first and the latest photo from the measurements, and the Today view shows the entries in the section below "Jetzt dran". Nothing is stored (FR-ACH-02). Assumptions, decided by the PO: anniversaries fall every 6 months after the catch date; a day that does not exist in the target month (31 August, 29 February) falls on the last day of that month; the week ends on Sunday; with a single photo only the first photo is shown. There are no push notifications for anniversaries yet, because the reminder settings (US-MON-08) have no such occasion.
 
-### US-ACH-07 · Year in review · ⬜ new
+### US-ACH-07 · Year in review · ✅ new
 
 As a **plant keeper** I want a summary of my plant year, so that I can look back at what worked.
 
@@ -124,6 +124,7 @@ Acceptance criteria:
 - Each fact names its basis; unknown values show "unknown" (P-08). Years without data show what would fill the view.
 - The view is private by default (P-05). It is not shared in this epic: sharing would need its own field in the friend view whitelist (US-SOZ-04, QG-D2) and is an open question (no. 5). Friends never see it by default, and never a rank or comparison (FR-SOZ-11, FR-ACH-04).
 - No percentage, no "better than last year" rating; two years may be shown side by side as plain numbers.
+- Status: the logic is `yearInReview` in `core` (module `achievements`), the API answers `GET /achievements/year?year=&timeZone=` (`{ calmMode: true }` in calm mode, 400 `input.invalid` for a future or malformed year), the section "Jahresrückblick" sits below the overview in "Erfolge" and has "Vorjahr" / "Folgejahr" to browse. Nothing is stored (FR-ACH-02). Assumptions, decided by the PO: a fact counts the events dated in the year (caught: catch date; cuttings rooted: repotting date of the cutting; treatments completed: courses whose every date is ticked off and whose last tick falls in the year; measurements; handovers confirmed by both sides; achievements by their `earned on`); the largest healthy growth is the own yearly rate from the first to the last healthy measurement of the year, with at least 90 days between them (as in US-ACH-05), real growth, the specimen with the highest rate wins; the photo pair is the first and last photo of the year of the specimen with the most photos in it (at least two); two years side by side are not built, the keeper browses them one after the other.
 
 ### US-ACH-08 · Switch gamification off · 🟨 new
 
@@ -149,7 +150,7 @@ Decided by the PO after the principles review. All stories are ⬜; the stories 
 | 4     | US-ACH-03 | R2      | 01, 02, POK-12 pattern     | Banner and seen state                                                     |
 | 5     | US-ACH-05 | R2      | WAC-02/04/05, 08           | Own-history records, etiolation guard                                     |
 | 6     | US-ACH-06 | R2      | POK-07, QS-01, 08          | Today list entry, no push without MON-08                                  |
-| 7     | US-ACH-04 | R3      | MON-03/04/05, 08           | Needs due tasks and interval watering                                     |
+| 7     | US-ACH-04 | R3      | MON-03/04, 08               | Needs due tasks; interval watering is out of scope (see story status)     |
 | 8     | US-ACH-07 | R3      | 01, 05, 08                 | Meaningful after a year of data; private, sharing only after question 1/5 |
 
 ## Data model
@@ -164,7 +165,7 @@ Decided by the PO after the principles review. All stories are ⬜; the stories 
 
 ### DM-ACH-03 Settings (per account)
 
-`calm mode` (bool, default off), `care rhythm pause until` (local date, optional, at most 4 weeks ahead).
+`calm mode` (bool, default off), the explicit pauses of the care rhythm are rows of their own (`achievement_rhythm_pause`: first and last day as local dates, at most 28 days each, several per account; US-ACH-04).
 
 ## Requirements
 

@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { dateText } from "@/lib/format";
 import { useRequest } from "../../kernel";
+import { RhythmPauses } from "./rhythm-pauses/rhythm-pauses";
 import { loadRhythm, type RhythmWeekState } from "../achievements-api";
 
 type Token = () => Promise<string | undefined>;
@@ -65,6 +66,7 @@ export function CareRhythmSection(props: { api: string; token: Token }) {
           </li>
         ))}
       </ol>
+      <RhythmPauses api={api} token={token} pauses={v.pauses ?? []} />
     </section>
   );
 }

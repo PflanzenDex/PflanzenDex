@@ -7,13 +7,14 @@ import {
   type AiLogStore,
   type ConnectionStore,
   type PhotoSource,
+  type SourceClient,
   type StatusSource,
   type TaskStore,
 } from "@pflanzendex/core";
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import { errorBody, statusFor } from "../kernel";
-import { clientPhotoRoutes } from "./client-photo-routes";
+import { clientResearchRoutes } from "./research/client-research-routes";
 import { clientDiscoverRoutes } from "./discover/client-discover-routes";
 import { clientTaskRoutes } from "./tasks/client-task-routes";
 import { clientDraftRoutes } from "./drafts/client-draft-routes";
@@ -22,25 +23,25 @@ import type { AiAccessOptions } from "./ai-routes";
 
 export const WELL_KNOWN = "/.well-known/oauth-protected-resource";
 
+/** What the client routes read from: the stores of the connection, drafts and tasks and the ports of the app. */
+export interface ClientStores {
+  connections: ConnectionStore;
+  log: AiLogStore;
+  status: StatusSource;
+  photo: PhotoSource;
+  drafts: DraftStore;
+  types: DraftTypes;
+  tasks: TaskStore;
+  discover: DiscoverSource;
+  sources?: SourceClient;
+}
+
 /**
  * Client side of the AI interface (AI token): the protected resource metadata (RFC 9728), the session of the
  * connection (US-KI-07) and the daily status (US-KI-02). Every route runs behind the guard of its right (KI-R8).
  */
-export function clientRoutes(
-  pool: Pool,
-  opt: AiAccessOptions,
-  stores: {
-    connections: ConnectionStore;
-    log: AiLogStore;
-    status: StatusSource;
-    photo: PhotoSource;
-    drafts: DraftStore;
-    types: DraftTypes;
-    tasks: TaskStore;
-    discover: DiscoverSource;
-  },
-): Hono<AiEnv> {
-  const { connections, log, status, drafts, types, photo, tasks, discover } = stores;
+export function clientRoutes(pool: Pool, opt: AiAccessOptions, stores: ClientStores): Hono<AiEnv> {
+  const { connections, log, status, drafts, types, tasks, discover } = stores;
   const client = new Hono<AiEnv>();
   const clock = opt.clock ?? (() => new Date());
   const metadataUrl = `${new URL(opt.resource).origin}${WELL_KNOWN}`;
@@ -81,7 +82,7 @@ export function clientRoutes(
     );
     return r.ok ? c.json(r.value) : c.json(errorBody(r.error), statusFor(r.error));
   });
-  client.route("/", clientPhotoRoutes(guard, { photo, log }, clock));
+  client.route("/", clientResearchRoutes(guard, stores, clock));
   client.route("/", clientDraftRoutes(guard, { drafts, types, log, tasks }, clock));
   client.route("/", clientDiscoverRoutes(guard, { discover, drafts, log }, clock));
   client.route("/", clientTaskRoutes(guard, { tasks, log }, opt.resource, clock));

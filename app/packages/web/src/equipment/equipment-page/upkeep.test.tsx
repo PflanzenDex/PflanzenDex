@@ -47,6 +47,7 @@ function fakeServer() {
     if (path === "/equipment/lamps") return response(200, { limit: null, lamps: [] });
     if (path === "/equipment/sensors") return response(200, SENSORS);
     if (path === "/equipment/needs") return response(200, { needs: [] });
+    if (path === "/equipment/recommendations") return response(200, { recommendations: [] });
     if (path === "/equipment/wishes") return response(200, { open: [], bought: [], discarded: [] });
     if (path === "/equipment/sharing") return response(200, { shared: [] });
     if (path === "/equipment") return response(200, { equipment: ITEMS });
