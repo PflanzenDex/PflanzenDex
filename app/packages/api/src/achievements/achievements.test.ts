@@ -249,3 +249,34 @@ describe("US-ACH-04 care rhythm through the API", () => {
     expect((await rhythm(subG)).body["calmMode"]).toBe(false);
   });
 });
+
+describe("US-ACH-07 year in review through the API", () => {
+  const subF = `ach07-${randomUUID()}`;
+  const year = (sub: string | null, query = "timeZone=Europe/Berlin") =>
+    call(sub, "GET", `/achievements/year?${query}`);
+  afterAll(async () => {
+    await admin.query("delete from account where subject = $1", [subF]);
+  });
+
+  it("US-ACH-07 without a token: 401; a bad time zone or year: 400 input.invalid", async () => {
+    expect((await year(null)).status).toBe(401);
+    expect((await year(subF, "timeZone=Mars/Base")).status).toBe(400);
+    const future = await year(subF, "timeZone=Europe/Berlin&year=9999");
+    expect(future.status).toBe(400);
+    expect(future.body["error"].code).toBe("input.invalid");
+  });
+
+  it("US-ACH-07 a new account gets an empty year with counts of zero, no rank and no rating", async () => {
+    const r = await year(subF);
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ calmMode: false, hasData: false, growth: null, photos: null });
+    expect(Object.values(r.body["counts"]).every((n) => n === 0)).toBe(true);
+  });
+
+  it("US-ACH-08 calm mode hides the year in review", async () => {
+    await setCalm(subF, true);
+    expect((await year(subF)).body).toEqual({ calmMode: true });
+    await setCalm(subF, false);
+    expect((await year(subF)).body["calmMode"]).toBe(false);
+  });
+});

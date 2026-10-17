@@ -42,3 +42,12 @@ export type {
   RhythmWeek,
   RhythmWeekState,
 } from "./rhythm/rhythm";
+export { yearInReview } from "./records/year-in-review";
+export type {
+  YearGrowth,
+  YearInput,
+  YearInReview,
+  YearMeasurement,
+  YearPhotoPair,
+  YearSpecimen,
+} from "./records/year-in-review";
