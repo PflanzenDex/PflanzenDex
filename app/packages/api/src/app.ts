@@ -16,6 +16,7 @@ import {
   SPECIMEN_PATHS,
   careProfileRoutes,
   careProfileZoneUsageFor,
+  specimenZoneUsageFor,
   specimenRoutes,
 } from "./collection";
 import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
@@ -78,6 +79,7 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
     "/",
     lightRoutes(pool, [
       careProfileZoneUsageFor(pool),
+      specimenZoneUsageFor(pool),
       wishZoneUsageFor(pool),
       equipmentZoneUsageFor(pool),
     ]),

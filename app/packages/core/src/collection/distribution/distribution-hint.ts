@@ -8,7 +8,7 @@ const specimens = (n: number) => `${n} ${n === 1 ? "Exemplar" : "Exemplare"}`;
 
 /**
  * Says where there is still room, and always what to do next (P-09). With a tie all tied ones are named in the text and
- * the action points to the wishlist (US-LIC-02).
+ * the action points to the wishlist or to the own light zone of a specimen (US-LIC-02).
  */
 export function distributionHint(
   zones: readonly ZoneCount[],
@@ -30,7 +30,8 @@ export function distributionHint(
   if (thinnest.length > 1)
     return {
       text: `${name(names)} sind gleich dünn besetzt (je ${specimens(count)}).`,
-      nextAction: "Setze Arten für diese Zonen auf die Wunschliste.",
+      nextAction:
+        "Setze Arten für diese Zonen auf die Wunschliste oder wähle bei einem Exemplar eine dieser Zonen als eigene Lichtzone.",
     };
   return {
     text: `${name(names)} ist die dünnste Zone (${specimens(count)}).`,

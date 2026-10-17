@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { execute } from "../../kernel";
 import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
-import { specimenSetLocation } from "../index";
+import { specimenSetLightZone, specimenSetLocation } from "../index";
 import { InMemorySpecimens } from "../shared/test-helpers";
 
 const SPECIES = "11111111-1111-4111-8111-111111111111";
@@ -125,5 +125,109 @@ describe("US-PHA-03 set the location of a specimen", () => {
     const z = await create("anna", "Bogenhanf");
     const r = await locate(z.id, LOC_A, { context: { userId: null } });
     expect(!r.ok && r.error.code).toBe("access.not_signed_in");
+  });
+});
+
+const ZONE_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const ZONE_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+const ZONE_BEN = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+
+let zoned: InMemorySpecimens;
+
+const setZone = (
+  specimenId: unknown,
+  lightZoneId: unknown,
+  opt: { context?: { userId: string | null }; key?: string } = {},
+) =>
+  execute(
+    specimenSetLightZone({ specimens: zoned }),
+    { idempotency: idem },
+    {
+      context: opt.context ?? anna,
+      input: { specimenId, lightZoneId },
+      idempotencyKey: opt.key ?? `k${++counter}`,
+    },
+  );
+
+const createZoned = async (userId: string, name: string, status: "plant" | "cutting" = "plant") => {
+  const r = await zoned.create(userId, {
+    speciesId: SPECIES,
+    name,
+    marker: null,
+    locationId: null,
+    caughtAt: "2026-09-01",
+    status,
+  });
+  if (typeof r === "string") throw new Error(r);
+  return r;
+};
+
+beforeEach(() => {
+  zoned = new InMemorySpecimens({}, { anna: [ZONE_A, ZONE_B], ben: [ZONE_BEN] });
+  idem = new InMemoryIdempotencyStore();
+});
+
+describe("US-LIC-02 / US-BES-04 own light zone of a specimen", () => {
+  it("US-LIC-02: Given a specimen without a zone, when I choose one of my zones, then the specimen carries it and nothing else changes", async () => {
+    const z = await createZoned("anna", "Bogenhanf");
+    const r = await setZone(z.id, ZONE_A);
+    expect(r.ok && r.value).toEqual({ ...z, lightZoneId: ZONE_A });
+  });
+
+  it("US-LIC-02: Given a specimen with its own zone, when I clear it with null, then the zone is derived again", async () => {
+    const z = await createZoned("anna", "Bogenhanf");
+    await setZone(z.id, ZONE_A);
+    const r = await setZone(z.id, null);
+    expect(r.ok && r.value.lightZoneId).toBeNull();
+  });
+
+  it("US-BES-04: a cutting may carry the field", async () => {
+    const z = await createZoned("anna", "Ableger", "cutting");
+    const r = await setZone(z.id, ZONE_B);
+    expect(r.ok && r.value.lightZoneId).toBe(ZONE_B);
+  });
+
+  it("US-QS-03: the same Idempotency-Key writes once, the same zone again changes nothing", async () => {
+    const z = await createZoned("anna", "Bogenhanf");
+    await setZone(z.id, ZONE_A, { key: "same" });
+    const writes = zoned.writes;
+    await setZone(z.id, ZONE_A, { key: "same" });
+    expect(zoned.writes).toBe(writes);
+    const again = await setZone(z.id, ZONE_A);
+    expect(again.ok && again.value.lightZoneId).toBe(ZONE_A);
+  });
+
+  it("QG-D1, P-04: a zone of another account is refused as light_zone.not_found and nothing is written", async () => {
+    const z = await createZoned("anna", "Bogenhanf");
+    const r = await setZone(z.id, ZONE_BEN);
+    expect(!r.ok && r.error.code).toBe("light_zone.not_found");
+    expect((await zoned.find("anna", z.id))?.lightZoneId ?? null).toBeNull();
+  });
+
+  it("QG-D1, P-04: a foreign specimen looks like an unknown one", async () => {
+    const foreign = await createZoned("ben", "Bens Pflanze");
+    const r = await setZone(foreign.id, ZONE_A);
+    expect(!r.ok && r.error.code).toBe("specimen.not_found");
+    expect((await zoned.find("ben", foreign.id))?.lightZoneId ?? null).toBeNull();
+  });
+
+  it("US-BES-07: an archived specimen stays unchanged", async () => {
+    const z = await createZoned("anna", "Bogenhanf");
+    await zoned.archive("anna", z.id, "eingegangen", "2026-10-01");
+    const r = await setZone(z.id, ZONE_A);
+    expect(!r.ok && r.error.code).toBe("specimen.archived");
+  });
+
+  it("P-03: a malformed ID is refused before anything is written", async () => {
+    const z = await createZoned("anna", "Bogenhanf");
+    const r = await setZone(z.id, "not-an-id");
+    expect(!r.ok && r.error.code).toBe("input.invalid");
+  });
+
+  it("P-03: without a signed-in account nothing is written", async () => {
+    const z = await createZoned("anna", "Bogenhanf");
+    const r = await setZone(z.id, ZONE_A, { context: { userId: null } });
+    expect(r.ok).toBe(false);
+    expect((await zoned.find("anna", z.id))?.lightZoneId ?? null).toBeNull();
   });
 });

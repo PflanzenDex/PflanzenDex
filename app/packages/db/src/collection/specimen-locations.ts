@@ -44,3 +44,46 @@ export async function setLocations(
     throw e;
   }
 }
+
+/**
+ * One statement (US-LIC-02): sets or clears the own light zone of one active specimen. A zone of another account
+ * violates the composite foreign key (`zone_unknown`, P-04); an archived specimen stays unchanged; a foreign one is
+ * invisible to the row rule (`not_found`). Setting the same zone again just writes the same value.
+ */
+export async function setLightZone(
+  pool: Pool,
+  userId: string,
+  id: string,
+  lightZoneId: string | null,
+): Promise<SpecimenRow | "not_found" | "archived" | "zone_unknown"> {
+  try {
+    return await withAccount(pool, userId, async (c) => {
+      const r = await c.query<SpecimenRow>(
+        `update specimen set light_zone_id = $2 where id = $1 and status <> 'archived' returning ${COLUMNS}`,
+        [id, lightZoneId],
+      );
+      if (r.rows[0]) return r.rows[0];
+      const there = await c.query("select 1 from specimen where id = $1", [id]);
+      return there.rowCount ? "archived" : "not_found";
+    });
+  } catch (e) {
+    if (pgError(e).code === FOREIGN_KEY && pgError(e).constraint === "specimen_light_zone")
+      return "zone_unknown";
+    throw e;
+  }
+}
+
+/** The specimens that stand in the zone by their own field (port "zone usage", US-LIC-05): a zone in use is not deleted unnoticed. */
+export async function zoneUsers(
+  pool: Pool,
+  userId: string,
+  lightZoneId: string,
+): Promise<readonly { kind: "specimen"; id: string; name: string }[]> {
+  const r = await withAccount(pool, userId, (c) =>
+    c.query<{ kind: "specimen"; id: string; name: string }>(
+      `select 'specimen' as kind, id, name from specimen where light_zone_id = $1 order by lower(name)`,
+      [lightZoneId],
+    ),
+  );
+  return r.rows;
+}
