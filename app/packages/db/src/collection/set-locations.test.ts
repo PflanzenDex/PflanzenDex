@@ -168,4 +168,15 @@ describe("US-LIC-02 own light zone of a specimen in the database", () => {
     await specimens.setLightZone(anna, z.id, null);
     expect(await zones.remove(anna, a)).toBe("deleted");
   });
+
+  it("US-LIC-02: a specimen can be created with its own zone; a zone of another account is refused", async () => {
+    const mine = await zone(anna, "Zone Neu");
+    const bens = await zone(ben, "Bens Zone Neu");
+    const base = { speciesId: species, marker: null, locationId: null, caughtAt: "2026-10-03" };
+    const made = await specimens.create(anna, { ...base, name: "Zone Neu", lightZoneId: mine });
+    expect(made).toMatchObject({ name: "Zone Neu", lightZoneId: mine });
+    expect(
+      await specimens.create(anna, { ...base, name: "Zone Fremd Neu", lightZoneId: bens }),
+    ).toBe("zone_unknown");
+  });
 });
