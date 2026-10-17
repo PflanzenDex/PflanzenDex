@@ -89,6 +89,7 @@ export const ACCOUNT_SECTIONS = {
   reminders: "erinnerungen",
   aiClients: "ki-clients",
   measured: "gemessen",
+  data: "daten",
 } as const;
 export type AccountSection = keyof typeof ACCOUNT_SECTIONS;
 export const accountAddress = (section: AccountSection) =>

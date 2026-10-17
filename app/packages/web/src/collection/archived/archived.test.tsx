@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ArchivedEntry, SpecimenCard } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -52,6 +52,7 @@ function fakeServer(opts: { archivedError?: Response; startArchived?: ArchivedEn
         key: (init.headers as Record<string, string>)["Idempotency-Key"],
       });
       if (opts.archivedError) return opts.archivedError.clone();
+      if (path.endsWith("/catch-date")) return response(200, { caughtAt: body["catchDate"] });
       const id = path.split("/")[2] ?? "";
       if (path.endsWith("/archive")) {
         const i = cards.findIndex((k) => k.id === id);
@@ -204,6 +205,46 @@ describe("US-BES-07 archive and restore", () => {
     expect(archived.textContent).toContain("Grund: eingegangen");
   });
 
+  it("US-BES-11 an archive entry offers the catch date correction; it posts the new date and says what changed (P-09)", async () => {
+    const { posts } = fakeServer({ startArchived: [entry()] });
+    render(page());
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Fangdatum korrigieren: Alter Ficus" }),
+    );
+    const field = (await screen.findByLabelText("Fangdatum")) as HTMLInputElement;
+    expect(field.value).toBe("2026-01-05");
+    fireEvent.change(field, { target: { value: "2025-12-24" } });
+    await userEvent.click(screen.getByRole("button", { name: "Fangdatum speichern" }));
+    await vi.waitFor(() => expect(posts).toHaveLength(1));
+    expect(posts[0]?.path).toBe("/specimens/e9/catch-date");
+    expect(posts[0]?.body["catchDate"]).toBe("2025-12-24");
+    expect((await screen.findByRole("status")).textContent).toContain("Alter Ficus");
+    expect(await screen.findByRole("region", { name: "Archiv" })).toBeTruthy();
+  });
+
+  it("US-BES-11 a refused date after the archiving stays in the form with the error text (P-10)", async () => {
+    fakeServer({
+      startArchived: [entry()],
+      archivedError: new Response(
+        JSON.stringify({
+          error: {
+            code: "specimen.caught_after_archived",
+            text: "Das Fangdatum liegt nach dem Archivierungsdatum.",
+            details: [{ field: "catchDate", code: "specimen.caught_after_archived" }],
+          },
+        }),
+        { status: 422 },
+      ),
+    });
+    render(page());
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Fangdatum korrigieren: Alter Ficus" }),
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Fangdatum speichern" }));
+    expect(await screen.findByText(/nach dem Tag, an dem das Exemplar archiviert/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Fangdatum speichern" })).toBeTruthy();
+  });
+
   it("restoring sends the request and brings the specimen back into the cards", async () => {
     const { posts } = fakeServer({ startArchived: [entry({ id: "e1", name: "Bogenhanf" })] });
     render(page());
@@ -231,6 +272,6 @@ describe("US-BES-07 archive and restore", () => {
       await screen.findByRole("button", { name: "Wiederherstellen: Alter Ficus" }),
     );
     expect((await screen.findByRole("alert")).textContent).toContain("ist nicht archiviert");
-    expect(screen.getByRole("region", { name: "Archiv" })).toBeTruthy();
+    expect(await screen.findByRole("region", { name: "Archiv" })).toBeTruthy();
   });
 });

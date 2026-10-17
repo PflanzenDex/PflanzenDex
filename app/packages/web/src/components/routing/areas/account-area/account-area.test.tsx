@@ -157,6 +157,7 @@ describe("US-QS-14 Konto with its sections", () => {
       "Erinnerungen",
       "KI-Clients",
       "Was wird gemessen?",
+      "Meine Daten",
     ]);
   });
 
@@ -258,6 +259,7 @@ describe("US-QS-14 the address points at a section", () => {
       "Erinnerungen",
       "KI-Clients",
       "Was wird gemessen?",
+      "Meine Daten",
     ]);
     expect(links[0]?.getAttribute("aria-current")).toBe("location");
     await userEvent.click(links[1] as HTMLElement);
