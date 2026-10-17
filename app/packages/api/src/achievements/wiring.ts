@@ -5,6 +5,7 @@ import {
   CareProfilePostgres,
   IdempotencyPostgres,
   MeasurementsPostgres,
+  RemindersPostgres,
   SpeciesPostgres,
   SpecimenPostgres,
   SwapsPostgres,
@@ -27,8 +28,10 @@ export function achievementsWiring(pool: Pool, clock: () => Date) {
   };
   const earned = (userId: string, timeZone: string) =>
     earnedAchievementIds(sources, userId, timeZone, clock());
+  const rhythmSources = { ...sources, reminders: new RemindersPostgres(pool) };
   return {
     settings,
+    rhythmSources,
     seen,
     sources,
     writeDeps: { idempotency: new IdempotencyPostgres(pool) },

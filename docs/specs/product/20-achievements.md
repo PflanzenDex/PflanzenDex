@@ -75,7 +75,7 @@ Acceptance criteria:
 - No push notification, no e-mail for achievements (FR-ACH-06).
 - Status: the seen state is the table `achievement_seen` (one row per account with the seen ids and the definitions the account knew, DM-ACH-02; the row is also the marker of the first evaluation), `GET /achievements/news` and `POST /achievements/seen` (operation `achievements.mark_seen`, refuses achievements that are not earned). The overview marks new ones with "(neu)" and "Okay" writes `seen`. Assumptions, decided by the PO: the banner appears after any write of the app that succeeded and made an achievement new (the page looks again after each write); it stays until "Schließen" and does not write `seen`, so what was already new when the app opened is left to the overview; switching calm mode off marks everything earned as seen (US-ACH-08); a definition added later whose criterion is already met is created silently as seen (FR-ACH-09).
 
-### US-ACH-04 · Care rhythm instead of a streak · ⬜ new
+### US-ACH-04 · Care rhythm instead of a streak · 🟨 new
 
 As a **plant keeper** I want to see how steadily I have cared, without being punished for a missed week.
 
@@ -87,6 +87,7 @@ Acceptance criteria:
 - Given I miss a week, when I look at the view, then the current run starts again, the longest run stays, and the text names the open tasks (P-09), not a loss ("2 dates are open", not "streak broken").
 - Given I pause (holiday, `Dormancy` of all specimens, or an explicit pause of up to 4 weeks, assumption), then the weeks of the pause are neutral.
 - The rhythm counts only tasks that exist because of the plants' needs. A task created only to be ticked off earns nothing: the rhythm never rewards doing more than due (watering earlier than the interval does not count more, FR-ACH-05).
+- Status: the logic is `careRhythm` in `core` (module `achievements`), the API answers `GET /achievements/rhythm?timeZone=` (`{ calmMode: true }` in calm mode, US-ACH-08) and the section "Erfolge" of "Konto" shows the 12 weeks, the current and the longest run. Nothing is stored (FR-ACH-02). Done: treatment dates (US-BEH-02/03) and measurement intervals (US-MON-04: due `measurementDays` after the last measurement or the catch date; measuring earlier counts the same; cuttings left out as in the reminders, E-11). Assumptions, decided by the PO: a week runs Monday to Sunday and belongs to the due date of a task; a week with a task that is open or was done late is "offen" and restarts the current run; a task within the grace day or due later in the week leaves the week undecided; the tasks still open when a specimen was archived are dropped. Not yet: interval watering (US-MON-05, the watering log keeps no history of the interval in force), the explicit pause up to 4 weeks (setting `care rhythm pause until`, DM-ACH-03) and the neutral weeks while all specimens are dormant; `careRhythm` already takes pauses as input. The story stays 🟨 until these are done.
 
 ### US-ACH-05 · Personal records and growth moments · ✅ new
 

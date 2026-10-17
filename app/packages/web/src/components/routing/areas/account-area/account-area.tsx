@@ -6,7 +6,11 @@ import { useSectionAnchor } from "@/components/routing/areas/shared/area-section
 import { RemindersSection } from "@/monitoring";
 import { AiSection } from "@/ai";
 import { PrivacySection } from "@/privacy";
-import { AchievementsOverviewSection, useAchievementsVisible } from "@/achievements";
+import {
+  AchievementsOverviewSection,
+  CareRhythmSection,
+  useAchievementsVisible,
+} from "@/achievements";
 import { AccountView, MeasuredView, SettingsPage } from "@/account";
 import type { Account } from "@/account";
 import { Button } from "@/components/ui/button/button";
@@ -87,7 +91,10 @@ function AchievementsSection(props: { api: string; token: Token }) {
       title="Erfolge"
       loading="Erfolge werden geladen …"
     >
-      <AchievementsOverviewSection api={props.api} token={props.token} />
+      <div className="flex min-w-0 flex-col gap-6">
+        <CareRhythmSection api={props.api} token={props.token} />
+        <AchievementsOverviewSection api={props.api} token={props.token} />
+      </div>
     </AreaSection>
   );
 }
