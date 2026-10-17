@@ -3,18 +3,27 @@ import { Hono, type MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
 import { body, errorBody, write, type AuthEnv, type Ctx } from "../kernel";
 import { achievementsAnniversaries } from "./anniversaries";
-import { achievementsGrowth } from "./growth";
+import { achievementsGrowth } from "./history/growth";
 import { achievementsRhythm } from "./rhythm";
 import { achievementsNews } from "./news";
 import { achievementsView } from "./view";
+import { achievementsYearRoute } from "./history/year";
 import { achievementsWiring } from "./wiring";
 
 const ACHIEVEMENT_PATHS = ["/achievements"] as const;
+const invalidTimeZone = (c: Ctx) =>
+  c.json(
+    errorBody(
+      appError("input.invalid", { details: [{ field: "timeZone", code: "input.invalid" }] }),
+    ),
+    400,
+  );
+type Keeper = { userId: string; timeZone: string; now: Date };
 
 /**
  * Achievements of the keeper (epic ACH). `GET /achievements?timeZone=` answers the overview derived from the own data
  * (US-ACH-02); in calm mode it answers `{ calmMode: true }` and nothing else (US-ACH-08). `GET /achievements/news?timeZone=`
- * answers what is new (earned minus seen) and what to create silently as seen (US-ACH-03); `GET /achievements/growth/:specimenId` answers the growth moment and the personal records of a specimen from its own measurements (US-ACH-05); `GET /achievements/rhythm?timeZone=` answers the care rhythm of the last 12 weeks (US-ACH-04); `GET /achievements/anniversaries?timeZone=` answers the anniversaries due today with the first and latest photo (US-ACH-06); `POST /achievements/seen`
+ * answers what is new (earned minus seen) and what to create silently as seen (US-ACH-03); `GET /achievements/growth/:specimenId` answers the growth moment and the personal records of a specimen from its own measurements (US-ACH-05); `GET /achievements/rhythm?timeZone=` answers the care rhythm of the last 12 weeks (US-ACH-04); `GET /achievements/anniversaries?timeZone=` answers the anniversaries due today with the first and latest photo (US-ACH-06); `GET /achievements/year?year=&timeZone=` answers the counted facts of a calendar year, the running one by default (US-ACH-07); `POST /achievements/seen`
  * marks achievements as seen through `achievements.mark_seen` (P-03, with `Idempotency-Key`). `GET /achievements/settings`
  * answers `{ calmMode }`; `PUT /achievements/settings/calm-mode` switches it through `achievements.set_calm_mode` (P-03,
  * with `Idempotency-Key`). All only touch the own account (P-04).
@@ -27,24 +36,19 @@ export function achievementsRoutes(
   const w = achievementsWiring(pool, clock);
   const routes = new Hono<AuthEnv>();
   for (const path of ACHIEVEMENT_PATHS) routes.use(path, auth).use(`${path}/*`, auth);
-  /** Both reads need a valid time zone and answer `{ calmMode: true }` and nothing else in calm mode (US-ACH-08). */
-  type Keeper = { userId: string; timeZone: string; now: Date };
-  const keeperRead = (answer: (keeper: Keeper) => Promise<object>) => async (c: Ctx) => {
-    const userId = c.get("account").id;
-    const timeZone = c.req.query("timeZone");
-    if (!isTimeZone(timeZone)) {
-      return c.json(
-        errorBody(
-          appError("input.invalid", { details: [{ field: "timeZone", code: "input.invalid" }] }),
-        ),
-        400,
-      );
-    }
-    if ((await readAchievementSettings(w.settings, userId)).calmMode) {
-      return c.json({ calmMode: true });
-    }
-    return c.json(await answer({ userId, timeZone, now: clock() }));
-  };
+  const keeperRead =
+    (answer: (keeper: Keeper, c: Ctx) => Promise<object | Response>) => async (c: Ctx) => {
+      const userId = c.get("account").id;
+      const timeZone = c.req.query("timeZone");
+      if (!isTimeZone(timeZone)) {
+        return invalidTimeZone(c);
+      }
+      if ((await readAchievementSettings(w.settings, userId)).calmMode) {
+        return c.json({ calmMode: true });
+      }
+      const answered = await answer({ userId, timeZone, now: clock() }, c);
+      return answered instanceof Response ? answered : c.json(answered);
+    };
   routes.get(
     "/achievements",
     keeperRead(async (k) => achievementsView(w.sources, await w.seen.find(k.userId), k)),
@@ -53,9 +57,9 @@ export function achievementsRoutes(
     "/achievements/news",
     keeperRead((k) => achievementsNews(w.sources, w.seen, k)),
   );
-  // Derived reads of the own data (US-ACH-06, US-ACH-04): `/achievements/<name>?timeZone=`.
   const derived = {
     anniversaries: (k: Keeper) => achievementsAnniversaries(w.sources, k.userId, k.timeZone, k.now),
+    year: (k: Keeper, c: Ctx) => achievementsYearRoute(w.sources, k, c),
     rhythm: (k: Keeper) => achievementsRhythm(w.rhythmSources, k.userId, k.timeZone, k.now),
   };
   for (const [name, answer] of Object.entries(derived)) {
@@ -72,6 +76,7 @@ export function achievementsRoutes(
   routes.post("/achievements/seen", async (c) =>
     write(c, w.writeDeps, w.markSeen, { input: await body(c) }),
   );
+  pauseRoutes(routes, w);
   routes.get("/achievements/settings", async (c) =>
     c.json(await readAchievementSettings(w.settings, c.get("account").id)),
   );
@@ -79,4 +84,14 @@ export function achievementsRoutes(
     write(c, w.writeDeps, w.setCalmMode, { input: await body(c) }),
   );
   return routes;
+}
+
+/** The explicit pauses of the care rhythm (US-ACH-04), written through validating operations (P-03). */
+function pauseRoutes(routes: Hono<AuthEnv>, w: ReturnType<typeof achievementsWiring>) {
+  routes.post("/achievements/rhythm/pauses", async (c) =>
+    write(c, w.writeDeps, w.addPause, { input: await body(c), success: 201 }),
+  );
+  routes.delete("/achievements/rhythm/pauses/:id", async (c) =>
+    write(c, w.writeDeps, w.removePause, { input: { id: c.req.param("id") } }),
+  );
 }

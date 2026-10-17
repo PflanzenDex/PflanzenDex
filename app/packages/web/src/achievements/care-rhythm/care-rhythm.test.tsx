@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../kernel";
@@ -19,6 +19,7 @@ const answer = (over: object = {}) => ({
   longestRun: 5,
   openTasks: 0,
   hasTasks: true,
+  pauses: [],
   ...over,
 });
 
@@ -72,5 +73,76 @@ describe("US-ACH-04 care rhythm", () => {
       expect(view.container.textContent).toBe("");
       cleanup();
     }
+  });
+});
+
+describe("US-ACH-04 explicit pause", () => {
+  function showWithWrites(
+    body: unknown,
+    write: (url: string, method: string, body: string) => Response,
+  ) {
+    const calls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url, init) => {
+        const u = new URL(String(url));
+        if (init?.method && init.method !== "GET") {
+          calls.push(`${init.method} ${u.pathname}`);
+          return write(u.pathname, init.method, String(init.body ?? ""));
+        }
+        return new Response(JSON.stringify(body), { status: 200 });
+      }),
+    );
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <CareRhythmSection api="http://api" token={token} />
+      </QueryClientProvider>,
+    );
+    return calls;
+  }
+
+  it("US-ACH-04 lists the pauses and removes one; the rhythm is loaded again", async () => {
+    const pause = { id: "p1", from: "2026-07-01", until: "2026-07-14" };
+    const calls = showWithWrites(
+      answer({ pauses: [pause] }),
+      () => new Response("{}", { status: 200 }),
+    );
+    fireEvent.click(await screen.findByRole("button", { name: /Pause vom 01.07.2026 entfernen/ }));
+    expect(await screen.findByText("Pause entfernt.")).toBeTruthy();
+    expect(calls).toEqual(["DELETE /achievements/rhythm/pauses/p1"]);
+  });
+
+  it("US-ACH-04 sends the dates of a new pause", async () => {
+    const calls = showWithWrites(answer(), (_p, _m, body) => {
+      expect(JSON.parse(body)).toEqual({ from: "2026-07-01", until: "2026-07-14" });
+      return new Response(JSON.stringify({ id: "p2", from: "2026-07-01", until: "2026-07-14" }), {
+        status: 201,
+      });
+    });
+    await screen.findByText(/Aktueller Rhythmus/);
+    fireEvent.change(screen.getByLabelText("Von"), { target: { value: "2026-07-01" } });
+    fireEvent.change(screen.getByLabelText("Bis (einschließlich)"), {
+      target: { value: "2026-07-14" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Pause eintragen" }));
+    expect(await screen.findByText("Pause eingetragen.")).toBeTruthy();
+    expect(calls).toEqual(["POST /achievements/rhythm/pauses"]);
+  });
+
+  it("US-ACH-04 a pause longer than 4 weeks is refused with its reason and stays visible", async () => {
+    showWithWrites(
+      answer(),
+      () =>
+        new Response(JSON.stringify({ error: { code: "achievements.pause_too_long" } }), {
+          status: 422,
+        }),
+    );
+    await screen.findByText(/Aktueller Rhythmus/);
+    fireEvent.change(screen.getByLabelText("Von"), { target: { value: "2026-07-01" } });
+    fireEvent.change(screen.getByLabelText("Bis (einschließlich)"), {
+      target: { value: "2026-09-01" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Pause eintragen" }));
+    expect((await screen.findByRole("alert")).textContent).toMatch(/höchstens 4 Wochen/);
   });
 });

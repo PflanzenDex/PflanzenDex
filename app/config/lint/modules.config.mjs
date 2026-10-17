@@ -135,7 +135,7 @@ const MODULES = [
     // Achievements (ADR 0014, epic ACH): pure logic over facts of the keeper's data, adapters in the api, imports only the kernel.
     name: "achievements",
     epics: ["ACH"],
-    tables: ["achievement_setting", "achievement_seen"],
+    tables: ["achievement_setting", "achievement_seen", "achievement_rhythm_pause"],
     dependsOn: ["kernel"],
     ports: [],
   },

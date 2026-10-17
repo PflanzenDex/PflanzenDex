@@ -2,6 +2,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { FeaturesProvider } from "@/kernel";
 import { EquipmentPage } from "./equipment-page";
 
 const response = (status: number, body: unknown) =>
@@ -81,6 +82,7 @@ function fakeServer(
     if (path === "/equipment/lamps") return response(200, light);
     if (path === "/equipment/sensors") return response(200, NO_SENSORS);
     if (path === "/equipment/needs") return response(200, { needs: [] });
+    if (path === "/equipment/recommendations") return response(200, { recommendations: [] });
     if (path === "/equipment/wishes") return response(200, { open: [], bought: [], discarded: [] });
     if (path === "/equipment/sharing") return response(200, { shared: [] });
     if (path === "/equipment") return response(200, { equipment: current });
@@ -185,6 +187,7 @@ describe("US-EQU-01 equipment page", () => {
       if (path === "/equipment/lamps") return response(200, NO_LIGHT);
       if (path === "/equipment/sensors") return response(200, NO_SENSORS);
       if (path === "/equipment/needs") return response(200, { needs: [] });
+      if (path === "/equipment/recommendations") return response(200, { recommendations: [] });
       if (path === "/equipment/wishes")
         return response(200, { open: [], bought: [], discarded: [] });
       if (path === "/equipment/sharing") return response(200, { shared: [] });
@@ -286,6 +289,7 @@ describe("US-EQU-01 equipment page", () => {
       if (path === "/equipment/lamps") return response(200, { limit: null, lamps: [lightOf()] });
       if (path === "/equipment/sensors") return response(200, NO_SENSORS);
       if (path === "/equipment/needs") return response(200, { needs: [] });
+      if (path === "/equipment/recommendations") return response(200, { recommendations: [] });
       if (path === "/equipment/wishes")
         return response(200, { open: [], bought: [], discarded: [] });
       if (path === "/equipment/sharing") return response(200, { shared: [] });
@@ -334,6 +338,7 @@ describe("US-EQU-01 equipment page", () => {
       if (path === "/equipment/lamps") return response(200, light);
       if (path === "/equipment/sensors") return response(200, NO_SENSORS);
       if (path === "/equipment/needs") return response(200, { needs: [] });
+      if (path === "/equipment/recommendations") return response(200, { recommendations: [] });
       if (path === "/equipment/wishes")
         return response(200, { open: [], bought: [], discarded: [] });
       if (path === "/equipment/sharing") return response(200, { shared: [] });
@@ -426,5 +431,29 @@ describe("US-EQU-01 equipment page", () => {
     const post = await postsTo(fetchFn);
     expect(String(post[0])).toContain("/equipment/l1/zone");
     expect(JSON.parse(String(post[1]?.body))).toEqual({ lightZoneId: "z3" });
+  });
+});
+
+describe("US-EQU-10 recommendations on the equipment page", () => {
+  it("US-EQU-10 shows the block with its empty state while the switch is on", async () => {
+    fakeServer([]);
+    render(<EquipmentPage api="http://api" token={token} />);
+    expect(
+      await screen.findByRole("heading", { name: "Empfehlungen zu deinem Bedarf" }),
+    ).toBeTruthy();
+  });
+
+  it("US-EQU-10 hides the block and does not ask the API while the switch is off", async () => {
+    const fetchFn = fakeServer([]);
+    render(
+      <FeaturesProvider features={{ recommendations: false }}>
+        <EquipmentPage api="http://api" token={token} />
+      </FeaturesProvider>,
+    );
+    await screen.findByText("Noch kein Equipment erfasst");
+    expect(screen.queryByRole("heading", { name: "Empfehlungen zu deinem Bedarf" })).toBeNull();
+    expect(fetchFn.mock.calls.some(([u]) => String(u).includes("/equipment/recommendations"))).toBe(
+      false,
+    );
   });
 });

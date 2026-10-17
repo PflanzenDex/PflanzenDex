@@ -45,6 +45,8 @@ export const AI_OPERATION_CLASSES: Readonly<Record<string, OperationClass>> = {
   discover_suggestions: "read",
   discover_draft: "draft",
   discover_decide: "write",
+  // Research (US-KI-05): the server checks an image address for reachability and license; the client cannot claim it.
+  check_image_source: "read",
   list_tasks: "read",
   claim_task: "draft",
   decline_task: "draft",

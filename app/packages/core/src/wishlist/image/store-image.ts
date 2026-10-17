@@ -46,13 +46,23 @@ export interface WishImageResult {
 
 const schema = shape({ wishId: idField("wishId") });
 
-type Verified = { readonly downloadUrl: string; readonly license: string; readonly source: string };
+export type Verified = {
+  readonly downloadUrl: string;
+  readonly license: string;
+  readonly source: string;
+};
 
-/** Looks the file up at Commons and reads address, license and source; nothing is downloaded yet. */
-async function verify(deps: WishImageDependencies, wish: WishRow): Promise<Result<Verified>> {
-  const title = wish.imageUrl ? commonsTitle(wish.imageUrl) : null;
+/**
+ * Looks an image address up at Commons and reads download address, license and source; nothing is downloaded. Used by
+ * the wish image (US-WUN-04) and by the AI operation `check_image_source` (US-KI-05): the server decides, not the client.
+ */
+export async function checkCommonsImage(
+  sources: SourceClient,
+  address: string | null,
+): Promise<Result<Verified>> {
+  const title = address ? commonsTitle(address) : null;
   if (!title) return failed(appError("wish.image_source_unsupported"));
-  const looked = await deps.sources.get(commonsRequest(title));
+  const looked = await sources.get(commonsRequest(title));
   if (!looked.ok) return looked;
   if (looked.value.kind === "not_found") return failed(appError("wish.image_not_found"));
   const read = readCommons(looked.value.data);
@@ -63,6 +73,9 @@ async function verify(deps: WishImageDependencies, wish: WishRow): Promise<Resul
     ),
   );
 }
+
+const verify = (deps: WishImageDependencies, wish: WishRow) =>
+  checkCommonsImage(deps.sources, wish.imageUrl);
 
 /**
  * Stores a local copy of the wish's image (US-WUN-04, P-05: a viewer never loads a foreign address). Only Wikimedia

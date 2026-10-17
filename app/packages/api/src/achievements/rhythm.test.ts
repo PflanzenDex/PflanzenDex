@@ -6,7 +6,7 @@ const spec = (
   id: string,
   caughtAt: string | null,
   over: { status?: string; archivedAt?: string | null } = {},
-) => ({ id, name: id, caughtAt, archivedAt: null, status: "plant", ...over });
+) => ({ id, name: id, speciesId: "s", caughtAt, archivedAt: null, status: "plant", ...over });
 const treatment = (dueAt: string, doneAt: string | null) => ({
   dueAt,
   done: doneAt !== null,
@@ -21,6 +21,8 @@ function deps(
     dates?: Record<string, string[]>;
     days?: number;
     users?: string[];
+    pauses?: { id: string; from: string; until: string }[];
+    dormancy?: { dormancyFrom: string | null; dormancyUntil: string | null };
   } = {},
 ) {
   return {
@@ -38,6 +40,12 @@ function deps(
       list: async (_u: string, id: string) =>
         (opt.dates?.[id] ?? []).map((date) => ({ date })).reverse(),
     },
+    pauses: { listPauses: async () => opt.pauses ?? [] },
+    species: {
+      findMany: async (_u: string, ids: string[]) =>
+        ids.map(() => opt.dormancy ?? { dormancyFrom: null, dormancyUntil: null }),
+    },
+    profiles: { list: async () => [] },
     reminders: { settings: async () => ({ measurementDays: opt.days ?? 30 }) },
   } as unknown as Parameters<typeof achievementsRhythm>[0];
 }
@@ -97,5 +105,38 @@ describe("US-ACH-04 care rhythm through the API logic", () => {
     const r = await run(deps([], { users }));
     expect(users).toEqual(["anna"]);
     expect(r).toMatchObject({ hasTasks: false, currentRun: 0, longestRun: 0 });
+  });
+
+  it("US-ACH-04 an explicit pause makes its weeks neutral: the open task inside it is not counted", async () => {
+    const tasks = { open: { a: [treatment("2026-09-22", null)] } };
+    const plain = await run(deps([spec("a", null, { status: "cutting" })], tasks));
+    expect(plain.openTasks).toBe(1);
+    const paused = await run(
+      deps([spec("a", null, { status: "cutting" })], {
+        ...tasks,
+        pauses: [{ id: "p1", from: "2026-09-20", until: "2026-09-26" }],
+      }),
+    );
+    expect(paused.openTasks).toBe(0);
+    expect(paused.hasTasks).toBe(false);
+    expect(paused.pauses).toEqual([{ id: "p1", from: "2026-09-20", until: "2026-09-26" }]);
+  });
+
+  it("US-ACH-04 weeks in which every plant is dormant are neutral, one plant in growth keeps them counted", async () => {
+    const rows = [spec("p", "2026-08-01")];
+    const base = { open: { p: [treatment("2026-09-22", null)] }, dates: { p: ["2026-08-05"] } };
+    const growth = await run(deps(rows, base));
+    expect(growth.openTasks).toBeGreaterThan(0);
+    const dormant = await run(
+      deps(rows, { ...base, dormancy: { dormancyFrom: "09-01", dormancyUntil: "10-31" } }),
+    );
+    expect(dormant.openTasks).toBe(0);
+  });
+
+  it("US-ACH-04 a plant whose species has no dormancy period is never at rest (P-08)", async () => {
+    const r = await run(
+      deps([spec("p", "2026-08-01")], { open: { p: [treatment("2026-09-22", null)] } }),
+    );
+    expect(r.openTasks).toBeGreaterThan(0);
   });
 });

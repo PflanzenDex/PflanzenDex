@@ -52,7 +52,7 @@ export interface CareRhythm {
 const MS_PER_DAY = 86_400_000;
 const two = (n: number): string => String(n).padStart(2, "0");
 
-function addDays(date: string, days: number): string {
+export function addDays(date: string, days: number): string {
   const [y, m, d] = date.split("-").map(Number) as [number, number, number];
   const t = new Date(Date.UTC(y, m - 1, d) + days * MS_PER_DAY);
   return `${t.getUTCFullYear()}-${two(t.getUTCMonth() + 1)}-${two(t.getUTCDate())}`;

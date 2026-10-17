@@ -161,7 +161,10 @@ export type RhythmAnswer =
       longestRun: number;
       openTasks: number;
       hasTasks: boolean;
+      /** The explicit pauses of the keeper, earliest first (up to 4 weeks each). */
+      pauses: RhythmPauseItem[];
     };
+export type RhythmPauseItem = { id: string; from: string; until: string };
 
 /** The care rhythm of the last 12 weeks (US-ACH-04); `{ calmMode: true }` hides it (US-ACH-08). */
 export function loadRhythm(
