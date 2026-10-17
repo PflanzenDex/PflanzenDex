@@ -19,7 +19,14 @@ import {
   specimenZoneUsageFor,
   specimenRoutes,
 } from "./collection";
-import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
+import {
+  GAP_PATHS,
+  SPECIES_PATHS,
+  REVIEW_PATHS,
+  gapRoutes,
+  speciesRoutes,
+  reviewRoutes,
+} from "./catalog";
 import { wishZoneUsageFor } from "./wishlist";
 import { equipmentZoneUsageFor } from "./equipment";
 import { bindFriends } from "./friends-bindings";
@@ -88,6 +95,8 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
   app.route("/", speciesRoutes(pool));
   for (const path of REVIEW_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", reviewRoutes(pool, COLLECTION_REPOINTERS));
+  for (const path of GAP_PATHS) app.use(path, auth);
+  app.route("/", gapRoutes(pool));
   for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", specimenRoutes(pool, { clock: opt.clock, ...careSources(pool, opt) }));
   for (const path of POKEDEX_PATHS) app.use(path, auth).use(`${path}/*`, auth);

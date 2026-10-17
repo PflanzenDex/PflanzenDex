@@ -6,3 +6,4 @@ export type { SpeciesRepointer, RepointRequest } from "./repointer.ts";
 export { CATALOG_TENANT_EXCEPTIONS } from "./tenant-exceptions.ts";
 export { CONTRIBUTED_TABLES, contributedRows } from "./contribution.ts";
 export { CatalogFillPostgres } from "./fill-store.ts";
+export { CatalogGapsPostgres } from "./gaps/index.ts";
