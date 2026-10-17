@@ -101,7 +101,7 @@ Acceptance criteria:
 - A growth moment appears on the measurement result and in the specimen's history (US-WAC-05); it is not repeated every visit.
 - Status: the logic is `growthMoments` in `core` (module `achievements`), the API answers `GET /achievements/growth/:specimenId` (`{ calmMode: true }` in calm mode), the Measure view shows the moment and marks records. Nothing is stored (FR-ACH-02). Assumptions, decided by the PO: the yearly rate is the rate from the first measurement to the measurement in question (cm/year), so every measurement has one rate; a record needs an earlier healthy rate to beat (the first usable rate is a growth moment, not a record); a growth moment also needs real growth since the first measurement (no growth, no moment); the trend "slower" is the one of US-WAC-03 on the measurements up to that point; the moment shows right after a measurement was saved on the Measure view, the history marks the measurements that set a record (a quiet text mark, derived on every visit, no pop-up); unknown shows the text "unknown" with what is needed.
 
-### US-ACH-06 · Anniversaries with the plant · ⬜ new
+### US-ACH-06 · Anniversaries with the plant · ✅ new
 
 As a **plant keeper** I want to be reminded how long a plant has been with me, so that I see the story behind the pot.
 
@@ -111,6 +111,7 @@ Acceptance criteria:
 - Given the specimen has no catch date or was archived, then no anniversary appears (unknown stays unknown, P-08).
 - Given the anniversary day passed without a visit, then the entry stays on the Today list until the end of that week (assumption), then it disappears (P-10: the specimen's history still shows the age).
 - Anniversaries do not create push notifications unless I enabled them in the reminder settings (US-MON-08).
+- Status: the logic is `anniversaries` in `core` (module `achievements`), the API answers `GET /achievements/anniversaries?timeZone=` (`{ calmMode: true }` in calm mode, US-ACH-08) with the first and the latest photo from the measurements, and the Today view shows the entries in the section below "Jetzt dran". Nothing is stored (FR-ACH-02). Assumptions, decided by the PO: anniversaries fall every 6 months after the catch date; a day that does not exist in the target month (31 August, 29 February) falls on the last day of that month; the week ends on Sunday; with a single photo only the first photo is shown. There are no push notifications for anniversaries yet, because the reminder settings (US-MON-08) have no such occasion.
 
 ### US-ACH-07 · Year in review · ⬜ new
 

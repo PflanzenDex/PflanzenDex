@@ -6,3 +6,4 @@ export { AchievementNewsBanner } from "./news-banner/news-banner";
 export { GrowthMomentNote } from "./growth/growth-moment-note/growth-moment-note";
 export { useGrowthMoments } from "./growth/use-growth-moments";
 export type { GrowthMoments } from "./growth/use-growth-moments";
+export { Anniversaries } from "./anniversaries/anniversaries";
