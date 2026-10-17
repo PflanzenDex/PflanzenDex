@@ -261,7 +261,7 @@ State of implementation: done (the manual test protocol is missing). "Tauschverl
 | FR-SOZ-07 | No invented data: date and catch status come from shared specimens; "unknown" instead of guessing (P-08).                                                                                                         | ⬜                        |
 | FR-SOZ-08 | Display names are freely chosen and no proof of identity. Friendship and swap require the mutual confirmation of the person; no open user search.                                                                 | ⬜                        |
 | FR-SOZ-09 | **Plant law and health:** notices on species protection and pest infestation when offering. They do not prevent offering and replace no legal review. Shipping across national borders is not part of the system. | ⬜                        |
-| FR-SOZ-10 | Deletion: a keeper can delete and export their social data completely (US-ACC-04). Completed swaps remain with the partner with the stored display name.                                                          | ⬜                        |
+| FR-SOZ-10 | Deletion: a keeper can delete and export their social data completely (US-ACC-04). Completed swaps remain with the partner with the stored display name.                                                          | ✅                        |
 | FR-SOZ-11 | Out of scope: chat between friends, public profiles, leaderboards, selling for money, shipping handling, groups.                                                                                                  | ⬜ (deliberate, see E-07) |
 
 ## Open questions

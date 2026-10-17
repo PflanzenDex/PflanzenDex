@@ -5,6 +5,7 @@ import { AreaSection } from "@/components/routing/areas/shared/area-section/area
 import { useSectionAnchor } from "@/components/routing/areas/shared/area-section/use-section-anchor";
 import { RemindersSection } from "@/monitoring";
 import { AiSection } from "@/ai";
+import { PrivacySection } from "@/privacy";
 import { AchievementsOverviewSection, useAchievementsVisible } from "@/achievements";
 import { AccountView, MeasuredView, SettingsPage } from "@/account";
 import type { Account } from "@/account";
@@ -25,6 +26,7 @@ const SECTIONS = [
   { anchor: ACCOUNT_SECTIONS.reminders, title: "Erinnerungen" },
   { anchor: ACCOUNT_SECTIONS.aiClients, title: "KI-Clients" },
   { anchor: ACCOUNT_SECTIONS.measured, title: "Was wird gemessen?" },
+  { anchor: ACCOUNT_SECTIONS.data, title: "Meine Daten" },
 ] as const;
 const NAMES: Record<string, string> = Object.fromEntries(SECTIONS.map((s) => [s.anchor, s.title]));
 
@@ -90,6 +92,19 @@ function AchievementsSection(props: { api: string; token: Token }) {
   );
 }
 
+/** Download of all own data and deleting the account (US-ACC-04). */
+function DataSection(props: { api: string; token: Token }) {
+  return (
+    <AreaSection
+      anchor={ACCOUNT_SECTIONS.data}
+      title="Meine Daten"
+      loading="Meine Daten werden geladen …"
+    >
+      <PrivacySection api={props.api} token={props.token} />
+    </AreaSection>
+  );
+}
+
 /** Calm mode hides the entry and the section of the achievements altogether (US-ACH-08). */
 function useVisibleSections(api: string, token: Token) {
   const achievements = useAchievementsVisible(api, token);
@@ -107,8 +122,7 @@ function useVisibleSections(api: string, token: Token) {
  * as sections one below the other, with a list of the sections beside them on wide screens. The app wires the modules;
  * the settings are their own lazy part. The old address of "Einstellungen" leads to the anchor of its section.
  * The settings end with a link to the management of the locations and light zones, which lives in the Sammlung.
- * Invitations to friends belong to "Freunde" (US-SOZ), not to the account, so there is no section for them. The last
- * section says what is recorded about the use (US-QS-05).
+ * Invitations to friends belong to "Freunde" (US-SOZ), not to the account, so there is no section for them. The section before the last says what is recorded about the use (US-QS-05); the last one is the download of all own data and deleting the account (US-ACC-04).
  */
 export function AccountArea(props: {
   api: string;
@@ -163,6 +177,7 @@ export function AccountArea(props: {
           >
             <MeasuredView />
           </AreaSection>
+          <DataSection api={props.api} token={props.token} />
         </div>
       </div>
     </div>
