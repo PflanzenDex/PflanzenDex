@@ -4,6 +4,7 @@ import { JobsPostgres, openPool, testDatabaseUrl } from "@pflanzendex/db";
 import { createApp } from "./app";
 import { createWikimediaDownload } from "./wishlist";
 import { createJobWorker, JOB_HANDLERS } from "./jobs";
+import { catalogFillEnabled, catalogFillJobHandlers, checkCatalogFill } from "./catalog";
 import { checkTaxonomy, pokedexJobHandlers, scheduleChecks } from "./pokedex";
 import { remindersRuntime } from "./monitoring";
 import { reminderOccasionsFor } from "./today";
@@ -39,6 +40,8 @@ const sources = createSourceClient({
 const aiResource = process.env["AI_RESOURCE_URL"] ?? "http://localhost:3000/mcp";
 // Feature switches (US-DEV-06): `FEATURES=social,ai`; in production nothing set means all off, elsewhere all on.
 const features = featuresFromEnv(process.env);
+// Catalog fill from open sources (US-BES-12): asks foreign servers, so only `CATALOG_FILL=on` starts it (P-08, FR-BES-18).
+const catalogFill = catalogFillEnabled(process.env);
 const app = createApp({
   features,
   ...(media ? { media } : {}),
@@ -80,6 +83,7 @@ const worker = createJobWorker({
   handlers: {
     ...JOB_HANDLERS,
     ...pokedexJobHandlers({ pool, sources }),
+    ...(catalogFill ? catalogFillJobHandlers({ pool, sources }) : {}),
     ...reminders.handlers,
     ...deleteAccountHandlers(pool, media?.store ?? NO_STORE),
   },
@@ -91,6 +95,14 @@ scheduleChecks(
   60 * 60 * 1000,
   (error) => console.error("taxonomy check failed", error),
 );
+// First start of the catalog fill: orders the job for the approved species with gaps, then re-checks hourly (starting
+// value, assumption) for species approved later. Without `CATALOG_FILL=on` nothing is ordered and no request leaves.
+if (catalogFill)
+  scheduleChecks(
+    () => checkCatalogFill(pool, () => new Date()),
+    60 * 60 * 1000,
+    (error) => console.error("catalog fill check failed", error),
+  );
 // The daily reminder checks that have come due are ordered every 5 minutes (starting value, assumption); a failure is
 // reported and the next tick tries again.
 scheduleChecks(

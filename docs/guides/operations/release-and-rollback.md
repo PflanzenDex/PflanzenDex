@@ -65,6 +65,7 @@ Three function groups can be switched: `social` (friends, feed, swap, sharing, s
   - off again: `delete from account_feature where account = '<account id>' and feature = 'social';`
   - look: `select account, feature from account_feature;`
 - **What off means:** the API answers 404 like a path that does not exist, the navigation and sections of the web app do not appear, and no job of the function runs. The data stays untouched; switching on restores everything. The public metadata `/.well-known/oauth-protected-resource` stays reachable because it has no account.
+- **Catalog fill from open sources (US-BES-12):** the environment variable `CATALOG_FILL=on` in `app/config/deploy/.env` lets the api order and run the job `catalog.fill_from_sources`, which asks GBIF, Wikipedia and Wikidata for approved species with gaps (throttled, cached, with the user agent of the api). Unset or `off` means no foreign request at all; any other value stops the start. Restart the api after changing it.
 - **Before a release:** check the values in `.env` (the release checklist asks for it). Open the three start users first with the account switch, leave `FEATURES` empty.
 
 ## Open
