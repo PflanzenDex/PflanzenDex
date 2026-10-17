@@ -7,11 +7,11 @@ import {
   idField,
   shape,
   choiceField,
-} from "../kernel";
+} from "../../kernel";
 import { checkApprovalReadiness } from "./approval";
-import { isReviewer } from "./permissions";
-import type { SpeciesStore } from "./species";
-import { DECISION_STATUS, REASON_MAX, OPEN, type ReviewStore } from "./types";
+import { isReviewer } from "../permissions";
+import type { SpeciesStore } from "../species";
+import { DECISION_STATUS, REASON_MAX, OPEN, type ReviewStore } from "../types";
 
 // The reason is optional in the schema; whether it is required depends on the status (see run).
 const reasonField = (value: unknown): string | null | ErrorDetail => {
