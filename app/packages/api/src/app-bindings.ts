@@ -5,6 +5,7 @@ import type {
   ObjectStore,
   ImageProcessor,
   ZoneStockSource,
+  ProductEntry,
 } from "@pflanzendex/core";
 import { provenanceSourceFor } from "./swap";
 import { WISH_PATHS, wishRoutes } from "./wishlist";
@@ -70,10 +71,17 @@ export function bindEquipment(
   app: Hono,
   pool: Pool,
   auth: MiddlewareHandler,
-  opt: { zoneStock?: ZoneStockSource | undefined; features: FeatureAccess },
+  opt: {
+    zoneStock?: ZoneStockSource | undefined;
+    features: FeatureAccess;
+    products?: readonly ProductEntry[] | undefined;
+  },
 ) {
   for (const path of EQUIPMENT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
-  app.route("/", equipmentRoutes(pool, opt.zoneStock ?? zoneStockFor(pool), opt.features));
+  app.route(
+    "/",
+    equipmentRoutes(pool, opt.zoneStock ?? zoneStockFor(pool), opt.features, opt.products),
+  );
 }
 
 /** What `care` takes from the app options: clock, location per phase and the media port (photos, US-WAC-06). */
