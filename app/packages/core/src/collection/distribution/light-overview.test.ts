@@ -127,3 +127,12 @@ describe("US-LIC-03 tenant: only own specimens and zones", () => {
     ]);
   });
 });
+
+describe("US-LIC-03 adjustable thresholds (FR-LIC-05)", () => {
+  it("uses the thresholds of the keeper for the position, the standard values without", async () => {
+    await plant("anna", SP_MID);
+    expect((await overview("anna"))[0]?.position.category).toBe("very_close");
+    const own = (await lightOverview(deps(), "anna", [100_000, 30_000, 20_000, 10_000])).rows;
+    expect(own[0]?.position.category).toBe("medium_distance");
+  });
+});

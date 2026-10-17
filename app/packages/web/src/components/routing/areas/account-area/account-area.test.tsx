@@ -32,6 +32,7 @@ const profile = {
     equipment: true,
   },
   replenishBuffer: 2,
+  positionThresholds: null,
   rarityConsent: false,
 };
 

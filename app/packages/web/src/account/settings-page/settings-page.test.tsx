@@ -24,6 +24,7 @@ const PROFILE = {
     equipment: true,
   },
   replenishBuffer: 2,
+  positionThresholds: null,
   rarityConsent: false,
 };
 
@@ -425,6 +426,58 @@ describe("US-WUN-02 settings page: buffer of the wishlist warning", () => {
     await screen.findByRole("alert");
     expect(input.getAttribute("aria-invalid")).toBe("true");
   });
+});
+
+describe("US-LIC-03 settings page: thresholds of the position recommendation", () => {
+  const field = async () =>
+    screen.findByLabelText<HTMLInputElement>(/Schwellen der Positionsempfehlung/);
+
+  it("shows the standard values as an assumption while none are set", async () => {
+    fakeServer();
+    show();
+    expect((await field()).value).toBe("50000, 15000, 8000, 4000");
+    expect(screen.getByText(/eine Annahme/)).toBeTruthy();
+  });
+
+  it("saves four descending values with the profile", async () => {
+    const puts = fakeServer();
+    const user = userEvent.setup();
+    show();
+    const input = await field();
+    await user.clear(input);
+    await user.type(input, "60000, 20000, 9000, 3000");
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    expect((await screen.findByRole("status")).textContent).toBe("Einstellungen gespeichert.");
+    expect(puts[0]?.body["positionThresholds"]).toEqual([60000, 20000, 9000, 3000]);
+  });
+
+  it("keeps the standard values unset when only another setting changes", async () => {
+    const puts = fakeServer();
+    const user = userEvent.setup();
+    show();
+    await field();
+    await user.click(screen.getByRole("checkbox", { name: "Alles privat" }));
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await screen.findByRole("status");
+    expect(puts[0]?.body["positionThresholds"]).toBeNull();
+  });
+
+  it.each(["1, 2, 3", "4000, 8000, 15000, 50000", "50000, 15000, 8000, 0", "a, b, c, d", ""])(
+    "refuses %j before sending and names the fix",
+    async (text) => {
+      const puts = fakeServer();
+      const user = userEvent.setup();
+      show();
+      const input = await field();
+      await user.clear(input);
+      if (text) await user.type(input, text);
+      await user.click(screen.getByRole("button", { name: "Speichern" }));
+      expect((await screen.findAllByRole("alert"))[0]?.textContent).toContain(
+        "von hoch nach niedrig",
+      );
+      expect(puts).toHaveLength(0);
+    },
+  );
 });
 
 describe("US-ACH-08 calm mode on the profile page", () => {

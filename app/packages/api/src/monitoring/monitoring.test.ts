@@ -73,6 +73,7 @@ beforeAll(async () => {
       notifications: {},
       replenishBuffer: null,
       rarityConsent: null,
+      positionThresholds: null,
     });
 });
 afterAll(async () => {
