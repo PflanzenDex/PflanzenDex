@@ -13,6 +13,7 @@ export const NOT_EXPORTED: Record<string, string> = {
   idempotency: "Technical keys that make a repeated request harmless; no content of its own",
   job: "Background job queue; payloads carry ids, never copies of user data (P-05)",
   taxon: "Shared taxonomy cache of the Pokedex catalog, no account",
+  taxon_attribute: "Shared researched species attributes with source and license, no account",
   account_role: "Role assignment of the installation operator, not the keeper's data",
   account_feature: "Opening of function groups by the installation operator, not the keeper's data",
   invitation: "Invitation codes of the installation (hashes only), not the keeper's data",
