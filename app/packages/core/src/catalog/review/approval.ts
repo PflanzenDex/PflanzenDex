@@ -3,7 +3,7 @@
  * for light demand and dormancy. Pure; the approve operation calls it, so a reviewer cannot approve an incomplete
  * profile (P-03).
  */
-import type { SpeciesValues } from "./species";
+import type { SpeciesValues } from "../species";
 
 export interface ApprovalIssue {
   readonly field: keyof SpeciesValues;

@@ -1,7 +1,7 @@
-import { defineOperation, appError, ok, failed, idField, shape } from "../kernel";
-import { isReviewer } from "./permissions";
-import type { SpeciesStore } from "./species";
-import { OPEN, type ReviewStore } from "./types";
+import { defineOperation, appError, ok, failed, idField, shape } from "../../kernel";
+import { isReviewer } from "../permissions";
+import type { SpeciesStore } from "../species";
+import { OPEN, type ReviewStore } from "../types";
 
 const mergeSchema = shape({
   proposalId: idField("proposalId"),

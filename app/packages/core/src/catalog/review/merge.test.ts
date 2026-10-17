@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { catalogMerge } from "./merge";
-import { FULL, ReviewWorld } from "./test-helpers";
+import { FULL, ReviewWorld } from "../test-helpers";
 
 const setup = async () => {
   const w = new ReviewWorld();

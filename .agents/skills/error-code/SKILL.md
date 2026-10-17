@@ -11,7 +11,7 @@ description: Use when an operation, API route or screen needs a new user-visible
 4. Return it from the operation with `failed(error("<domain>.<reason>"))`; use `details` for field-specific problems and `data` for facts the UI shows (e.g. which entries use a zone, P-10).
 5. Map it to an HTTP status in `STATUS` in `app/packages/api/src/kernel/error-http.ts` (400 input, 401 not signed in, 403 forbidden, 404 not found, 409 conflict). An unmapped code becomes 500 on purpose.
 6. UI and API translate by `code`, never by comparing the text. Show the server text unless the screen needs its own wording; look at `app/packages/web/src/light/` for how a screen reacts to codes.
-7. Tests: the operation test asserts `r.error.code` (see `app/packages/core/src/catalog/review.test.ts`), the API test asserts status and `error.code`. The format and non-empty text of all codes are already checked in `app/packages/core/src/kernel/error.test.ts`.
+7. Tests: the operation test asserts `r.error.code` (see `app/packages/core/src/catalog/review/review.test.ts`), the API test asserts status and `error.code`. The format and non-empty text of all codes are already checked in `app/packages/core/src/kernel/error.test.ts`.
 
 ## Check
 

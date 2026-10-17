@@ -62,7 +62,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | Epic                           | Stories | ✅     | 🟨      | ⬜     | Requirements ✅ · 🟨 · ⬜ | Tried in the prototype | New     |
 | ------------------------------ | ------- | ------ | ------- | ------ | ------------------------- | ---------------------- | ------- |
 | ACC Accounts                   | 6       | 3      | 2       | 1      | 2 · 0 · 4                 | 0                      | 6       |
-| BES Collection                 | 16      | 2      | 9       | 5      | 0 · 8 · 13                | 8                      | 8       |
+| BES Collection                 | 16      | 2      | 10      | 4      | 0 · 8 · 13                | 8                      | 8       |
 | LIC Light and locations        | 5       | 4      | 1       | 0      | 0 · 5 · 1                 | 4                      | 1       |
 | PHA Care phases                | 4       | 2      | 2       | 0      | 1 · 0 · 5                 | 4                      | 0       |
 | WAC Growth/photos              | 6       | 4      | 2       | 0      | 5 · 0 · 1                 | 6                      | 0       |
@@ -81,7 +81,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | ACH Achievements               | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
 | TAU Swipe matching             | 7       | 0      | 0       | 7      | 0 · 0 · 10                | 0                      | 7       |
 | ONB Introduction and unlocking | 8       | 0      | 1       | 7      | 0 · 0 · 10                | 0                      | 8       |
-| **Total**                      | **167** | **30** | **103** | **34** |                           | **50**                 | **117** |
+| **Total**                      | **167** | **30** | **104** | **33** |                           | **50**                 | **117** |
 
 <!-- spec-status:end -->
 

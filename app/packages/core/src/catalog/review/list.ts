@@ -1,7 +1,7 @@
-import { appError, failed, ok, type Result } from "../kernel";
+import { appError, failed, ok, type Result } from "../../kernel";
 import { checkApprovalReadiness, type ApprovalIssue } from "./approval";
-import { normalize, type Species, type SpeciesStore } from "./species";
-import { OPEN, type ReviewCase, type ReviewStore } from "./types";
+import { normalize, type Species, type SpeciesStore } from "../species";
+import { OPEN, type ReviewCase, type ReviewStore } from "../types";
 
 /** An existing approved species that looks like the proposal (duplicate hint, US-BES-10). */
 export interface SimilarSpecies {

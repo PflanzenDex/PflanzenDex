@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { Operation } from "../kernel";
-import { execute } from "../kernel";
-import { catalogCurate, catalogReview, catalogPropose } from "./index";
-import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
-import { InMemoryReview } from "./test-helpers";
-import { InMemorySpecies } from "./species/test-helpers";
+import type { Operation } from "../../kernel";
+import { execute } from "../../kernel";
+import { catalogCurate, catalogReview, catalogPropose } from "../index";
+import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
+import { InMemoryReview } from "../test-helpers";
+import { InMemorySpecies } from "../species/test-helpers";
 
 const OBJECT = "6f1c2f0e-4b8a-4c52-9d51-0a3f6f2c7e11";
 let idem: InMemoryIdempotencyStore;

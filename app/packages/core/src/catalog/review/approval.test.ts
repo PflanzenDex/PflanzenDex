@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { checkApprovalReadiness } from "./approval";
 import { catalogReview } from "./review";
-import { FULL, ReviewWorld } from "./test-helpers";
-import type { SpeciesValues } from "./species";
+import { FULL, ReviewWorld } from "../test-helpers";
+import type { SpeciesValues } from "../species";
 
 const base: SpeciesValues = {
   latinName: "Dracaena trifasciata",
