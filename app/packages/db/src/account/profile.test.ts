@@ -1,0 +1,224 @@
+import { randomUUID } from "node:crypto";
+import type { Pool } from "pg";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { migrate, openOwnerPool, withAccount, openFixturePool } from "../kernel/index.ts";
+import { findOrCreateAccount, ProfilePostgres } from "./index.ts";
+
+let pool: Pool;
+// Deliberate cross-tenant cleanup/observation of FORCE-d tables: needs the superuser, the suite owner is under row security (#294).
+let admin: Pool;
+let profiles: ProfilePostgres;
+const subjects: string[] = [];
+
+const NOTIFICATIONS = {
+  phase: true,
+  treatment: false,
+  measurement: true,
+  watering: true,
+  swap: true,
+  friends: true,
+};
+const PROFILE = {
+  displayName: "Anna",
+  timeZone: "Europe/Berlin",
+  everythingPrivate: true,
+  noRecommendations: true,
+  notifications: NOTIFICATIONS,
+  replenishBuffer: 2,
+  rarityConsent: false,
+  positionThresholds: null,
+};
+
+async function newAccount(withData = true): Promise<string> {
+  const subject = `test-${randomUUID()}`;
+  subjects.push(subject);
+  const id = await findOrCreateAccount(pool, subject);
+  if (withData)
+    await withAccount(pool, id, (c) =>
+      c.query("insert into account_data (account_id, email) values ($1, $2)", [
+        id,
+        `${randomUUID()}@example.test`,
+      ]),
+    );
+  return id;
+}
+
+beforeAll(async () => {
+  pool = openOwnerPool();
+  admin = openFixturePool();
+  await migrate(pool);
+  profiles = new ProfilePostgres(pool);
+});
+afterAll(async () => {
+  await admin.query("delete from account where subject = any($1)", [subjects]);
+  await admin.end();
+  await pool.end();
+});
+
+describe("US-ACC-02 · profile in the database", () => {
+  it("a new account starts without name and time zone, private by default, all notifications on", async () => {
+    const id = await newAccount();
+    expect(await profiles.find(id)).toEqual({
+      displayName: null,
+      timeZone: null,
+      everythingPrivate: false,
+      noRecommendations: false,
+      notifications: {},
+      replenishBuffer: 2,
+      rarityConsent: false,
+      positionThresholds: null,
+    });
+  });
+
+  it("saves and reads back the whole profile", async () => {
+    const id = await newAccount();
+    expect(await profiles.update(id, PROFILE)).toEqual(PROFILE);
+    expect(await profiles.find(id)).toEqual(PROFILE);
+  });
+
+  it("an account without data row has no profile and nothing is written", async () => {
+    const id = await newAccount(false);
+    expect(await profiles.find(id)).toBeNull();
+    expect(await profiles.update(id, PROFILE)).toBeNull();
+  });
+
+  it("a null display name keeps the stored one; the other fields are written", async () => {
+    const id = await newAccount();
+    await profiles.update(id, PROFILE);
+    const saved = await profiles.update(id, { ...PROFILE, displayName: null, timeZone: "UTC" });
+    expect(saved).toMatchObject({ displayName: "Anna", timeZone: "UTC" });
+    expect((await profiles.find(id))?.displayName).toBe("Anna");
+  });
+
+  it("two accounts: a null name of account B keeps B's name and never touches A's", async () => {
+    const a = await newAccount();
+    const b = await newAccount();
+    await profiles.update(a, PROFILE);
+    await profiles.update(b, { ...PROFILE, displayName: "Ben" });
+    await profiles.update(b, { ...PROFILE, displayName: null });
+    expect((await profiles.find(b))?.displayName).toBe("Ben");
+    expect(await profiles.find(a)).toEqual(PROFILE);
+  });
+
+  it("the display name is not unique", async () => {
+    const a = await newAccount();
+    const b = await newAccount();
+    await profiles.update(a, PROFILE);
+    expect((await profiles.update(b, PROFILE))?.displayName).toBe("Anna");
+  });
+
+  it("the database refuses a time zone that is obviously no IANA name and a non-object switch list", async () => {
+    const id = await newAccount();
+    await expect(profiles.update(id, { ...PROFILE, timeZone: "+02:00" })).rejects.toThrow(
+      /account_data_time_zone_check/,
+    );
+    await expect(
+      withAccount(pool, id, (c) =>
+        c.query("update account_data set notification_settings = '[]'::jsonb"),
+      ),
+    ).rejects.toThrow(/notification_settings_check/);
+  });
+
+  it("two accounts: account B neither reads nor changes the profile of account A (P-04)", async () => {
+    const a = await newAccount();
+    const b = await newAccount();
+    await profiles.update(a, PROFILE);
+
+    const seenByB = await profiles.find(b);
+    expect(seenByB?.displayName).toBeNull();
+    expect(seenByB?.everythingPrivate).toBe(false);
+
+    // B writes its own profile; A stays as it was.
+    await profiles.update(b, { ...PROFILE, displayName: "Ben", everythingPrivate: false });
+    expect(await profiles.find(a)).toEqual(PROFILE);
+
+    // Even a statement that names A's row directly cannot reach it as B (row rule).
+    const touched = await withAccount(pool, b, (c) =>
+      c.query("update account_data set display_name = 'x' where account_id = $1", [a]),
+    );
+    expect(touched.rowCount).toBe(0);
+    expect(await profiles.find(a)).toEqual(PROFILE);
+  });
+});
+
+describe("US-WUN-02 · the replenish buffer in the database", () => {
+  it("starts at 2, is saved and read back, and null keeps the stored value", async () => {
+    const id = await newAccount();
+    expect((await profiles.find(id))?.replenishBuffer).toBe(2);
+    expect((await profiles.update(id, { ...PROFILE, replenishBuffer: 5 }))?.replenishBuffer).toBe(
+      5,
+    );
+    const kept = await profiles.update(id, { ...PROFILE, replenishBuffer: null, timeZone: "UTC" });
+    expect(kept).toMatchObject({ replenishBuffer: 5, timeZone: "UTC" });
+  });
+
+  it("the database refuses a value outside 0 to 10", async () => {
+    const id = await newAccount();
+    for (const replenishBuffer of [-1, 11])
+      await expect(profiles.update(id, { ...PROFILE, replenishBuffer })).rejects.toThrow();
+  });
+
+  it("tenant: another account keeps its own buffer (P-04)", async () => {
+    const a = await newAccount();
+    const b = await newAccount();
+    await profiles.update(a, { ...PROFILE, replenishBuffer: 7 });
+    expect((await profiles.find(b))?.replenishBuffer).toBe(2);
+  });
+});
+
+describe("US-POK-14 · the rarity consent in the database", () => {
+  it("is off for a new account and a null keeps the stored value", async () => {
+    const id = await newAccount();
+    expect((await profiles.find(id))?.rarityConsent).toBe(false);
+    expect((await profiles.update(id, { ...PROFILE, rarityConsent: true }))?.rarityConsent).toBe(
+      true,
+    );
+    const kept = await profiles.update(id, { ...PROFILE, rarityConsent: null, timeZone: "UTC" });
+    expect(kept).toMatchObject({ rarityConsent: true, timeZone: "UTC" });
+    expect((await profiles.update(id, { ...PROFILE, rarityConsent: false }))?.rarityConsent).toBe(
+      false,
+    );
+  });
+
+  it("lists exactly the accounts that consented, and an account that withdrew drops out (P-04)", async () => {
+    const yes = await newAccount();
+    const no = await newAccount();
+    const withdrawn = await newAccount();
+    await profiles.update(yes, { ...PROFILE, rarityConsent: true });
+    await profiles.update(withdrawn, { ...PROFILE, rarityConsent: true });
+    await profiles.update(withdrawn, { ...PROFILE, rarityConsent: false });
+    const listed = await profiles.rarityParticipants();
+    expect(listed).toContain(yes);
+    expect(listed).not.toContain(no);
+    expect(listed).not.toContain(withdrawn);
+  });
+
+  it("the application role cannot read the consent of other accounts directly, only through the list", async () => {
+    const a = await newAccount();
+    const b = await newAccount();
+    await profiles.update(a, { ...PROFILE, rarityConsent: true });
+    const direct = await withAccount(pool, b, (c) =>
+      c.query("select account_id from account_data where rarity_consent"),
+    );
+    expect(direct.rows).toEqual([]);
+  });
+});
+
+describe("US-LIC-03 · position thresholds in the database", () => {
+  it("are null for a new account, saved as a list, kept by null, and invisible to other accounts (P-04)", async () => {
+    const a = await newAccount();
+    const b = await newAccount();
+    expect((await profiles.find(a))?.positionThresholds).toBeNull();
+    const own = [60_000, 20_000, 9_000, 3_000];
+    expect(
+      (await profiles.update(a, { ...PROFILE, positionThresholds: own }))?.positionThresholds,
+    ).toEqual(own);
+    const kept = await profiles.update(a, {
+      ...PROFILE,
+      positionThresholds: null,
+      timeZone: "UTC",
+    });
+    expect(kept).toMatchObject({ positionThresholds: own, timeZone: "UTC" });
+    expect((await profiles.find(b))?.positionThresholds).toBeNull();
+  });
+});

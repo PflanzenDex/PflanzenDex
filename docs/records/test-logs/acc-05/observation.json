@@ -1,0 +1,416 @@
+[
+  {
+    "view": "desktop",
+    "key": "keeper-sees-operator-tab",
+    "value": 0
+  },
+  {
+    "view": "desktop",
+    "key": "keeper-GET-/operator/overview",
+    "value": {
+      "status": 403,
+      "body": {
+        "error": {
+          "code": "access.denied",
+          "text": "Darauf hast du keinen Zugriff."
+        }
+      }
+    }
+  },
+  {
+    "view": "desktop",
+    "key": "keeper-POST-invitation",
+    "value": 403
+  },
+  {
+    "view": "desktop",
+    "key": "keeper-PUT-registration",
+    "value": 403
+  },
+  {
+    "view": "desktop",
+    "key": "overview-text",
+    "value": "Betreiber\nKonten\n22\nAktive Nutzer (letzte 30 Tage)\n22\nKosten pro Nutzer\nunbekannt (die Kostenmessung gibt es noch nicht)\n\nDu siehst nur Zahlen, nie Inhalte einzelner Konten.\n\nRegistrierung\n\nIm Moment: offen für alle\n\nBestehende Konten melden sich in beiden Fällen wie gewohnt an. Nur neue Personen brauchen bei Einladungspflicht einen Code.\n\nNur mit Einladungscode erlauben\nEinladungscodes\nGültig für (Tage)Code erstellen\neingelöst · erstellt 04.10.2026, 21:00 · gültig bis 11.10.2026, 21:00 · eingelöst 04.10.2026, 21:01\neingelöst · erstellt 04.10.2026, 21:00 · gültig bis 11.10.2026, 21:00 · eingelöst 04.10.2026, 21:00\neingelöst · erstellt 04.10.2026, 21:00 · gültig bis 11.10.2026, 21:00 · eingelöst 04.10.2026, 21:00\neingelöst · erstellt 04.10.2026, 21:00 · gültig bis 11.10.2026, 21:00 · eingelöst 04.10.2026, 21:00\noffen · erstellt 04.10.2026, 20:55 · gültig bis 11.10.2026, 20:55\neingelöst · erstellt 04.10.2026, 20:55 · gültig bis 11.10.2026, 20:55 · eingelöst 04.10.2026, 20:56\noffen · erstellt 04.10.2026, 20:55 · gültig bis 11.10.2026, 20:55\neingelöst · erstellt 04.10.2026, 20:55 · gültig bis 11.10.2026, 20:55 · eingelöst 04.10.2026, 20:55\nabgelaufen · erstellt 02.10.2026, 21:01 · gültig bis 03.10.2026, 21:01\nabgelaufen · erstellt 02.10.2026, 21:00 · gültig bis 03.10.2026, 21:00\neingelöst · erstellt 02.10.2026, 20:55 · gültig bis 03.10.2026, 20:55 · eingelöst 04.10.2026, 20:55\neingelöst · erstellt 02.10.2026, 20:55 · gültig bis 03.10.2026, 20:55 · eingelöst 04.10.2026, 20:55"
+  },
+  {
+    "view": "desktop",
+    "key": "layout-operator",
+    "value": {
+      "overflow": false,
+      "small": []
+    }
+  },
+  {
+    "view": "desktop",
+    "key": "axe-operator",
+    "value": []
+  },
+  {
+    "view": "desktop",
+    "key": "codes-shown",
+    "value": [
+      "TZ6D-ZW39-FC3J-MTS4-YDZM-7SXX",
+      "ANK4-WRX5-0FPV-58VS-8SNK-VMER",
+      "25DD-SV5V-3AKC-HRMH-VZ84-FB58"
+    ]
+  },
+  {
+    "view": "desktop",
+    "key": "codes-distinct",
+    "value": 3
+  },
+  {
+    "view": "desktop",
+    "key": "code-in-page-after-reload",
+    "value": false
+  },
+  {
+    "view": "desktop",
+    "key": "status-after-switch",
+    "value": "Registrierung: ab jetzt nur mit Einladungscode."
+  },
+  {
+    "view": "desktop",
+    "key": "newcomer-no-nav",
+    "value": 0
+  },
+  {
+    "view": "desktop",
+    "key": "newcomer-accounts-before",
+    "value": 0
+  },
+  {
+    "view": "desktop",
+    "key": "layout-invitation",
+    "value": {
+      "overflow": false,
+      "small": []
+    }
+  },
+  {
+    "view": "desktop",
+    "key": "axe-invitation",
+    "value": []
+  },
+  {
+    "view": "desktop",
+    "key": "wrong-code-text",
+    "value": "Dieser Einladungscode ist ungültig, abgelaufen oder schon benutzt. Prüfe die Eingabe oder bitte um einen neuen Code."
+  },
+  {
+    "view": "desktop",
+    "key": "wrong-code-focus-on-field",
+    "value": "INPUT"
+  },
+  {
+    "view": "desktop",
+    "key": "newcomer-accounts-after-wrong",
+    "value": 0
+  },
+  {
+    "view": "desktop",
+    "key": "newcomer-accounts-after-valid",
+    "value": 1
+  },
+  {
+    "view": "desktop",
+    "key": "newcomer-sees-operator-tab",
+    "value": 0
+  },
+  {
+    "view": "desktop",
+    "key": "used-code-text",
+    "value": "Dieser Einladungscode ist ungültig, abgelaufen oder schon benutzt. Prüfe die Eingabe oder bitte um einen neuen Code."
+  },
+  {
+    "view": "desktop",
+    "key": "used-same-text-as-wrong",
+    "value": true
+  },
+  {
+    "view": "desktop",
+    "key": "used-accounts",
+    "value": 0
+  },
+  {
+    "view": "desktop",
+    "key": "expired-code-text",
+    "value": "Dieser Einladungscode ist ungültig, abgelaufen oder schon benutzt. Prüfe die Eingabe oder bitte um einen neuen Code."
+  },
+  {
+    "view": "desktop",
+    "key": "expired-same-text-as-wrong",
+    "value": true
+  },
+  {
+    "view": "desktop",
+    "key": "expired-accounts",
+    "value": 0
+  },
+  {
+    "view": "desktop",
+    "key": "expired-then-valid-accounts",
+    "value": 1
+  },
+  {
+    "view": "desktop",
+    "key": "db-invitation-states",
+    "value": [
+      {
+        "redeemed": false,
+        "expired": true,
+        "count": 1
+      },
+      {
+        "redeemed": true,
+        "expired": false,
+        "count": 2
+      }
+    ]
+  },
+  {
+    "view": "desktop",
+    "key": "db-plain-code-anywhere",
+    "value": 0
+  },
+  {
+    "view": "desktop",
+    "key": "keeper-signs-in-while-mode-on",
+    "value": true
+  },
+  {
+    "view": "desktop",
+    "key": "overview-after",
+    "value": "Betreiber\nKonten\n24\nAktive Nutzer (letzte 30 Tage)\n24\nKosten pro Nutzer\nunbekannt (die Kostenmessung gibt es noch nicht)\n\nDu siehst nur Zahlen, nie Inhalte einzelner Konten.\n\nRegistrierung\n\nIm Moment: nur mit Einladungscode\n\nBestehende Konten melden sich in beiden Fällen wie gewohnt an. Nur neue Personen brauchen bei Einladungspflicht einen Code.\n\nFür alle öffnen\nEinladungscodes\nGültig für (Tage)Code erstellen\neingelöst · erstellt 04.10.2026, 21:01 · gültig bis 11.10.2026, 21:01 · eingelöst 04.10.2026, 21:01\neingelöst · erstellt 04.10.2026, 21:01 · gültig bis 11.10.2026, 21:01 · eingelöst 04.10.2026, 21:01\neingelöst · erstellt 04.10.2026, 21:00 · gültig bis 11.10.2026, 21:00 · eingelöst 04.10.2026, 21:01\neingelöst · erstellt 04.10.2026, 21:00 · gültig bis 11.10.2026, 21:00 · eingelöst 04.10.2026, 21:00\neingelöst · erstellt 04.10.2026, 21:00 · gültig bis 11.10.2026, 21:00 · eingelöst 04.10.2026, 21:00\neingelöst · erstellt 04.10.2026, 21:00 · gültig bis 11.10.2026, 21:00 · eingelöst 04.10.2026, 21:00\noffen · erstellt 04.10.2026, 20:55 · gültig bis 11.10.2026, 20:55\neingelöst · erstellt 04.10.2026, 20:55 · gültig bis 11.10.2026, 20:55 · eingelöst 04.10.2026, 20:56\noffen · erstellt 04.10.2026, 20:55 · gültig bis 11.10.2026, 20:55\neingelöst · erstellt 04.10.2026, 20:55 · gültig bis 11.10.2026, 20:55 · eingelöst 04.10.2026, 20:55\nabgelaufen · erstellt 02.10.2026, 21:01 · gültig bis 03.10.2026, 21:01\nabgelaufen · erstellt 02.10.2026, 21:01 · gültig bis 03.10.2026, 21:01\nabgelaufen · erstellt 02.10.2026, 21:00 · gültig bis 03.10.2026, 21:00\neingelöst · erstellt 02.10.2026, 20:55 · gültig bis 03.10.2026, 20:55 · eingelöst 04.10.2026, 20:55\neingelöst · erstellt 02.10.2026, 20:55 · gültig bis 03.10.2026, 20:55 · eingelöst 04.10.2026, 20:55"
+  },
+  {
+    "view": "desktop",
+    "key": "layout-operator",
+    "value": {
+      "overflow": false,
+      "small": []
+    }
+  },
+  {
+    "view": "desktop",
+    "key": "axe-operator",
+    "value": []
+  },
+  {
+    "view": "desktop",
+    "key": "status-after-open",
+    "value": "Registrierung: ab jetzt offen für alle."
+  },
+  {
+    "view": "desktop",
+    "key": "open-registration-no-code-account",
+    "value": 1
+  },
+  {
+    "view": "mobil",
+    "key": "keeper-sees-operator-tab",
+    "value": 0
+  },
+  {
+    "view": "mobil",
+    "key": "keeper-GET-/operator/overview",
+    "value": {
+      "status": 403,
+      "body": {
+        "error": {
+          "code": "access.denied",
+          "text": "Darauf hast du keinen Zugriff."
+        }
+      }
+    }
+  },
+  {
+    "view": "mobil",
+    "key": "keeper-POST-invitation",
+    "value": 403
+  },
+  {
+    "view": "mobil",
+    "key": "keeper-PUT-registration",
+    "value": 403
+  },
+  {
+    "view": "mobil",
+    "key": "overview-text",
+    "value": "Betreiber\nKonten\n27\nAktive Nutzer (letzte 30 Tage)\n27\nKosten pro Nutzer\nunbekannt (die Kostenmessung gibt es noch nicht)\n\nDu siehst nur Zahlen, nie Inhalte einzelner Konten.\n\nRegistrierung\n\nIm Moment: offen für alle\n\nBestehende Konten melden sich in beiden Fällen wie gewohnt an. Nur neue Personen brauchen bei Einladungspflicht einen Code.\n\nNur mit Einladungscode erlauben\nEinladungscodes\nGültig für (Tage)Code erstellen\neingelöst · erstellt 04.10.2026, 21:01 · gültig bis 11.10.2026, 21:01 · eingelöst 04.10.2026, 21:01\neingelöst · erstellt 04.10.2026, 21:01 · gültig bis 11.10.2026, 21:01 · eingelöst 04.10.2026, 21:01\neingelöst · erstellt 04.10.2026, 21:00 · gültig bis 11.10.2026, 21:00 · eingelöst 04.10.2026, 21:01\neingelöst · erstellt 04.10.2026, 21:00 · gültig bis 11.10.2026, 21:00 · eingelöst 04.10.2026, 21:00\neingelöst · erstellt 04.10.2026, 21:00 · gültig bis 11.10.2026, 21:00 · eingelöst 04.10.2026, 21:00\neingelöst · erstellt 04.10.2026, 21:00 · gültig bis 11.10.2026, 21:00 · eingelöst 04.10.2026, 21:00\noffen · erstellt 04.10.2026, 20:55 · gültig bis 11.10.2026, 20:55\neingelöst · erstellt 04.10.2026, 20:55 · gültig bis 11.10.2026, 20:55 · eingelöst 04.10.2026, 20:56\noffen · erstellt 04.10.2026, 20:55 · gültig bis 11.10.2026, 20:55\neingelöst · erstellt 04.10.2026, 20:55 · gültig bis 11.10.2026, 20:55 · eingelöst 04.10.2026, 20:55\nabgelaufen · erstellt 02.10.2026, 21:01 · gültig bis 03.10.2026, 21:01\nabgelaufen · erstellt 02.10.2026, 21:01 · gültig bis 03.10.2026, 21:01\nabgelaufen · erstellt 02.10.2026, 21:00 · gültig bis 03.10.2026, 21:00\neingelöst · erstellt 02.10.2026, 20:55 · gültig bis 03.10.2026, 20:55 · eingelöst 04.10.2026, 20:55\neingelöst · erstellt 02.10.2026, 20:55 · gültig bis 03.10.2026, 20:55 · eingelöst 04.10.2026, 20:55"
+  },
+  {
+    "view": "mobil",
+    "key": "layout-operator",
+    "value": {
+      "overflow": false,
+      "small": []
+    }
+  },
+  {
+    "view": "mobil",
+    "key": "axe-operator",
+    "value": []
+  },
+  {
+    "view": "mobil",
+    "key": "codes-shown",
+    "value": [
+      "VETT-3FP9-Z3BN-B92G-VD9Q-2KPW",
+      "SH87-8PA9-8VBS-J66K-J91W-0PA2",
+      "9MYF-QC2W-883V-4PM0-GB3S-K9RE"
+    ]
+  },
+  {
+    "view": "mobil",
+    "key": "codes-distinct",
+    "value": 3
+  },
+  {
+    "view": "mobil",
+    "key": "code-in-page-after-reload",
+    "value": false
+  },
+  {
+    "view": "mobil",
+    "key": "status-after-switch",
+    "value": "Registrierung: ab jetzt nur mit Einladungscode."
+  },
+  {
+    "view": "mobil",
+    "key": "newcomer-no-nav",
+    "value": 0
+  },
+  {
+    "view": "mobil",
+    "key": "newcomer-accounts-before",
+    "value": 0
+  },
+  {
+    "view": "mobil",
+    "key": "layout-invitation",
+    "value": {
+      "overflow": false,
+      "small": []
+    }
+  },
+  {
+    "view": "mobil",
+    "key": "axe-invitation",
+    "value": []
+  },
+  {
+    "view": "mobil",
+    "key": "wrong-code-text",
+    "value": "Dieser Einladungscode ist ungültig, abgelaufen oder schon benutzt. Prüfe die Eingabe oder bitte um einen neuen Code."
+  },
+  {
+    "view": "mobil",
+    "key": "wrong-code-focus-on-field",
+    "value": "INPUT"
+  },
+  {
+    "view": "mobil",
+    "key": "newcomer-accounts-after-wrong",
+    "value": 0
+  },
+  {
+    "view": "mobil",
+    "key": "newcomer-accounts-after-valid",
+    "value": 1
+  },
+  {
+    "view": "mobil",
+    "key": "newcomer-sees-operator-tab",
+    "value": 0
+  },
+  {
+    "view": "mobil",
+    "key": "used-code-text",
+    "value": "Dieser Einladungscode ist ungültig, abgelaufen oder schon benutzt. Prüfe die Eingabe oder bitte um einen neuen Code."
+  },
+  {
+    "view": "mobil",
+    "key": "used-same-text-as-wrong",
+    "value": true
+  },
+  {
+    "view": "mobil",
+    "key": "used-accounts",
+    "value": 0
+  },
+  {
+    "view": "mobil",
+    "key": "expired-code-text",
+    "value": "Dieser Einladungscode ist ungültig, abgelaufen oder schon benutzt. Prüfe die Eingabe oder bitte um einen neuen Code."
+  },
+  {
+    "view": "mobil",
+    "key": "expired-same-text-as-wrong",
+    "value": true
+  },
+  {
+    "view": "mobil",
+    "key": "expired-accounts",
+    "value": 0
+  },
+  {
+    "view": "mobil",
+    "key": "expired-then-valid-accounts",
+    "value": 1
+  },
+  {
+    "view": "mobil",
+    "key": "db-invitation-states",
+    "value": [
+      {
+        "redeemed": false,
+        "expired": true,
+        "count": 1
+      },
+      {
+        "redeemed": true,
+        "expired": false,
+        "count": 2
+      }
+    ]
+  },
+  {
+    "view": "mobil",
+    "key": "db-plain-code-anywhere",
+    "value": 0
+  },
+  {
+    "view": "mobil",
+    "key": "keeper-signs-in-while-mode-on",
+    "value": true
+  },
+  {
+    "view": "mobil",
+    "key": "overview-after",
+    "value": "Betreiber\nKonten\n29\nAktive Nutzer (letzte 30 Tage)\n29\nKosten pro Nutzer\nunbekannt (die Kostenmessung gibt es noch nicht)\n\nDu siehst nur Zahlen, nie Inhalte einzelner Konten.\n\nRegistrierung\n\nIm Moment: nur mit Einladungscode\n\nBestehende Konten melden sich in beiden Fällen wie gewohnt an. Nur neue Personen brauchen bei Einladungspflicht einen Code.\n\nFür alle öffnen\nEinladungscodes\nGültig für (Tage)Code erstellen\neingelöst · erstellt 04.10.2026, 21:01 · gültig bis 11.10.2026, 21:01 · eingelöst 04.10.2026, 21:01\neingelöst · erstellt 04.10.2026, 21:01 · gültig bis 11.10.2026, 21:01 · eingelöst 04.10.2026, 21:01\neingelöst · erstellt 04.10.2026, 21:01 · gültig bis 11.10.2026, 21:01 · eingelöst 04.10.2026, 21:01\neingelöst · erstellt 04.10.2026, 21:01 · gültig bis 11.10.2026, 21:01 · eingelöst 04.10.2026, 21:01\neingelöst · erstellt 04.10.2026, 21:00 · gültig bis 11.10.2026, 21:00 · eingelöst 04.10.2026, 21:01\neingelöst · erstellt 04.10.2026, 21:00 · gültig bis 11.10.2026, 21:00 · eingelöst 04.10.2026, 21:00\neingelöst · erstellt 04.10.2026, 21:00 · gültig bis 11.10.2026, 21:00 · eingelöst 04.10.2026, 21:00\neingelöst · erstellt 04.10.2026, 21:00 · gültig bis 11.10.2026, 21:00 · eingelöst 04.10.2026, 21:00\noffen · erstellt 04.10.2026, 20:55 · gültig bis 11.10.2026, 20:55\neingelöst · erstellt 04.10.2026, 20:55 · gültig bis 11.10.2026, 20:55 · eingelöst 04.10.2026, 20:56\noffen · erstellt 04.10.2026, 20:55 · gültig bis 11.10.2026, 20:55\neingelöst · erstellt 04.10.2026, 20:55 · gültig bis 11.10.2026, 20:55 · eingelöst 04.10.2026, 20:55\nabgelaufen · erstellt 02.10.2026, 21:01 · gültig bis 03.10.2026, 21:01\nabgelaufen · erstellt 02.10.2026, 21:01 · gültig bis 03.10.2026, 21:01\nabgelaufen · erstellt 02.10.2026, 21:01 · gültig bis 03.10.2026, 21:01\nabgelaufen · erstellt 02.10.2026, 21:00 · gültig bis 03.10.2026, 21:00\neingelöst · erstellt 02.10.2026, 20:55 · gültig bis 03.10.2026, 20:55 · eingelöst 04.10.2026, 20:55\neingelöst · erstellt 02.10.2026, 20:55 · gültig bis 03.10.2026, 20:55 · eingelöst 04.10.2026, 20:55"
+  },
+  {
+    "view": "mobil",
+    "key": "layout-operator",
+    "value": {
+      "overflow": false,
+      "small": []
+    }
+  },
+  {
+    "view": "mobil",
+    "key": "axe-operator",
+    "value": []
+  },
+  {
+    "view": "mobil",
+    "key": "status-after-open",
+    "value": "Registrierung: ab jetzt offen für alle."
+  },
+  {
+    "view": "mobil",
+    "key": "open-registration-no-code-account",
+    "value": 1
+  }
+]

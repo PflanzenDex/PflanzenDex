@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Messen mobil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif}
+button,input{font-family:inherit}
+button{cursor:pointer}
+.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.card{background:var(--surface);border-radius:22px;box-shadow:0 1px 2px var(--shadow),0 6px 16px var(--shadow)}
+.btn{min-height:52px;padding:0 20px;border-radius:26px;border:0;background:var(--primary);color:var(--onprimary);font-size:16px;font-weight:700;width:100%}
+.btn2{min-height:48px;padding:0 16px;border-radius:24px;border:2px solid var(--line);background:transparent;color:var(--text);font-weight:600;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.mut{color:var(--muted)}
+.t{font-size:13px;color:var(--muted);font-weight:500}
+</style>
+</helmet>
+<div style="{{vars}};width:360px;height:760px;box-sizing:border-box;display:flex;flex-direction:column;background:var(--bg);color:var(--text);overflow:hidden">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+<symbol id="check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+</defs></svg>
+<header style="padding:16px 12px 8px;display:flex;align-items:center;gap:8px">
+<button aria-label="Messen abbrechen" style="width:44px;height:44px;border-radius:50%;border:0;background:var(--surface);color:var(--text);display:flex;align-items:center;justify-content:center"><svg class="i"><use href="#x"/></svg></button>
+<div style="flex:1"><div class="t">Sansevieria „Sol“ messen</div><div style="font-size:15px;font-weight:700">Schritt 1 von 3</div></div>
+</header>
+<div style="padding:0 16px"><div style="display:flex;gap:6px"><div style="flex:1;height:6px;border-radius:3px;background:var(--primary)"></div><div style="flex:1;height:6px;border-radius:3px;background:var(--line)"></div><div style="flex:1;height:6px;border-radius:3px;background:var(--line)"></div></div></div>
+<div style="flex:1;min-height:0;overflow:hidden;padding:24px 16px 0;display:flex;flex-direction:column;gap:16px">
+<h1 style="margin:0;font-size:28px;line-height:1.15;font-weight:700;letter-spacing:-.4px">Wie lang ist das längste Blatt?</h1>
+<div class="card" style="padding:20px;display:flex;flex-direction:column;gap:10px">
+<label for="v" class="t">Blattlänge in cm</label>
+<div style="display:flex;align-items:baseline;gap:8px"><input id="v" inputmode="decimal" value="19,5" style="width:100%;font-size:44px;font-weight:700;border:0;border-bottom:3px solid var(--primary);background:transparent;color:var(--text);padding:4px 0;outline:none;font-variant-numeric:tabular-nums"><span style="font-size:20px;font-weight:600" class="mut">cm</span></div>
+<div class="mut" style="font-size:14px">Letzte Messung: 18,5 cm vor 21 Tagen. Das ist dein eigener Verlauf.</div>
+</div>
+<label style="display:flex;align-items:center;gap:12px;min-height:48px;font-size:15px;font-weight:500"><input type="checkbox" style="width:24px;height:24px;accent-color:var(--primary)">Weiß ich nicht (wird als „unbekannt“ gespeichert)</label>
+<button class="btn2"><svg class="i"><use href="#camera"/></svg>Foto aufnehmen</button>
+</div>
+<div style="padding:12px 16px 20px;display:flex;flex-direction:column;gap:8px"><button class="btn">Weiter</button></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = (this.props.theme ?? 'light') === 'dark';
+const P = dark
+? {bg:'#0F1612',surface:'#18221C',text:'#E6EFE9',muted:'#A5B6AB',line:'#2B3B31',primary:'#7BD3A0',onprimary:'#0B2316',shadow:'rgba(0,0,0,0.35)'}
+: {bg:'#F2F6F3',surface:'#FFFFFF',text:'#14201A',muted:'#4B5C52',line:'#D3DED6',primary:'#1B6B4A',onprimary:'#FFFFFF',shadow:'rgba(20,40,28,0.08)'};
+return { vars: Object.keys(P).map(k => '--' + k + ':' + P[k]).join(';') };
+}
+}
+</script>
+</body>
+</html>

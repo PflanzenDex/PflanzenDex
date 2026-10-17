@@ -1,0 +1,54 @@
+{
+  "emptyText": "Offene Behandlungen\n\nKeine offenen Behandlungen.\n\nPlane unten einen Termin, dann erscheint er hier.",
+  "01-empty-desktop": {
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "small": 0,
+    "axe": []
+  },
+  "01-empty-mobile": {
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "small": 0,
+    "axe": []
+  },
+  "listText": "Offene Behandlungen\n\n1 Termin ist überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.\n\nBehzwei a – eins\n\nGrund: Wollläuse\n\nMittel: Neemöl\n\nFällig am: 02.10.2026\n\nüberfällig seit 2 Tagen\n\nBehzwei a – zwei\n\nGrund: Spinnmilben\n\nMittel: —\n\nFällig am: 04.10.2026\n\nheute fällig\n\nBehzwei a – zwei\n\nGrund: Spinnmilben Kontrolle\n\nMittel: —\n\nFällig am: 05.10.2026\n\nin 1 Tag\n\nBehzwei a – drei\n\nGrund: Schildläuse\n\nMittel: —\n\nFällig am: 06.10.2026\n\nin 2 Tagen\n\nBehzwei a – vier\n\nGrund: Pilzbefall\n\nMittel: Fungizid\n\nFällig am: 14.10.2026\n\n14.10.2026",
+  "02-list-desktop": {
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "small": 0,
+    "axe": []
+  },
+  "02-list-mobile": {
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "small": 0,
+    "axe": []
+  },
+  "afterPlan": "Offene Behandlungen\n\n2 Termine sind überfällig, 1 ist heute fällig. Behandle diese Exemplare zuerst.\n\nBehzwei a – eins\n\nGrund: Wollläuse\n\nMittel: Neemöl\n\nFällig am: 02.10.2026\n\nüberfällig seit 2 Tagen\n\nBehzwei a – eins\n\nGrund: Blattläuse\n\nMittel: —\n\nFällig am: 03.10.2026\n\nüberfällig seit 1 Tag\n\nBehzwei a – zwei\n\nGrund: Spinnmilben\n\nMittel: —\n\nFällig am: 04.10.2026\n\nheute fällig\n\nBehzwei a – zwei\n\nGrund: Spinnmilben Kontrolle\n\nMittel: —\n\nFällig am: 05.10.2026\n\nin 1 Tag\n\nBehzwei a – drei\n\nGrund: Schildläuse\n\nMittel: —\n\nFällig am: 06.10.2026\n\nin 2 Tagen\n\nBehzwei a – vier\n\nGrund: Pilzbefall\n\nMittel: Fungizid\n\nFällig am: 14.10.2026\n\n14.10.2026",
+  "03-after-plan-desktop": {
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "small": 0,
+    "axe": []
+  },
+  "03-after-plan-mobile": {
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "small": 0,
+    "axe": []
+  },
+  "benText": "Offene Behandlungen\n\n1 Termin ist überfällig. Behandle diese Exemplare zuerst.\n\nBehzwei b – fremd\n\nGrund: Nur Ben\n\nMittel: —\n\nFällig am: 25.09.2026\n\nüberfällig seit 9 Tagen",
+  "04-other-account-desktop": {
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "small": 0,
+    "axe": []
+  },
+  "04-other-account-mobile": {
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "small": 0,
+    "axe": []
+  }
+}

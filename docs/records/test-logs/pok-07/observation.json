@@ -1,0 +1,33 @@
+{
+  "today": "4.10.2026",
+  "obs": {
+    "caught-dates-desktop": {
+      "cards": [
+        "Aloe vera | Aloe | gefangen ≈ 16.08.2026 | 1 Exemplar",
+        "Citrus limon | Citrus | gefangen 03.02.2025 | 1 Exemplar",
+        "Echeveria elegans | Echeveria | gefangen 04.10.2026 | 1 Exemplar"
+      ],
+      "horizontalScroll": false,
+      "axe": []
+    },
+    "caught-dates-mobile": {
+      "cards": [
+        "Aloe vera | Aloe | gefangen ≈ 16.08.2026 | 1 Exemplar",
+        "Citrus limon | Citrus | gefangen 03.02.2025 | 1 Exemplar",
+        "Echeveria elegans | Echeveria | gefangen 04.10.2026 | 1 Exemplar"
+      ],
+      "horizontalScroll": false,
+      "axe": []
+    },
+    "other-account-empty-desktop": {
+      "cards": [],
+      "horizontalScroll": false,
+      "axe": []
+    },
+    "other-account-empty-mobile": {
+      "cards": [],
+      "horizontalScroll": false,
+      "axe": []
+    }
+  }
+}

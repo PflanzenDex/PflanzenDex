@@ -1,0 +1,124 @@
+{
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "findings": [
+    {
+      "step": "signed-out",
+      "status": "✅",
+      "note": "screenshot 01-signed-out-desktop.png"
+    },
+    {
+      "step": "login",
+      "status": "✅",
+      "note": "screenshot 02-login-desktop.png"
+    },
+    {
+      "step": "start",
+      "status": "✅",
+      "note": "screenshot 03-start-desktop.png"
+    },
+    {
+      "step": "light-empty",
+      "status": "✅",
+      "note": "screenshot 04-light-empty-desktop.png"
+    },
+    {
+      "step": "light-set-up",
+      "status": "✅",
+      "note": "screenshot 05-light-set-up-desktop.png"
+    },
+    {
+      "step": "species-search",
+      "status": "✅",
+      "note": "screenshot 06-species-search-desktop.png"
+    },
+    {
+      "step": "species-proposal",
+      "status": "✅",
+      "note": "screenshot 07-species-proposal-desktop.png"
+    },
+    {
+      "step": "specimen-new",
+      "status": "✅",
+      "note": "screenshot 08-specimen-new-desktop.png"
+    },
+    {
+      "step": "collection",
+      "status": "✅",
+      "note": "screenshot 09-collection-desktop.png"
+    },
+    {
+      "step": "measure",
+      "status": "✅",
+      "note": "screenshot 10-measure-desktop.png"
+    },
+    {
+      "step": "measure-invalid",
+      "status": "✅",
+      "note": "screenshot 11-measure-invalid-desktop.png"
+    },
+    {
+      "step": "start-with-data",
+      "status": "✅",
+      "note": "screenshot 12-start-with-data-desktop.png"
+    },
+    {
+      "step": "pokedex",
+      "status": "✅",
+      "note": "screenshot 13-pokedex-desktop.png"
+    },
+    {
+      "step": "wishlist",
+      "status": "✅",
+      "note": "screenshot 14-wishlist-desktop.png"
+    },
+    {
+      "step": "care-phases",
+      "status": "✅",
+      "note": "screenshot 15-care-phases-desktop.png"
+    },
+    {
+      "step": "treatments",
+      "status": "✅",
+      "note": "screenshot 16-treatments-desktop.png"
+    },
+    {
+      "step": "hints",
+      "status": "✅",
+      "note": "screenshot 17-hints-desktop.png"
+    },
+    {
+      "step": "care-profile",
+      "status": "✅",
+      "note": "screenshot 18-care-profile-desktop.png"
+    },
+    {
+      "step": "difficulty",
+      "status": "✅",
+      "note": "screenshot 19-difficulty-desktop.png"
+    },
+    {
+      "step": "light-with-specimen",
+      "status": "✅",
+      "note": "screenshot 20-light-with-specimen-desktop.png"
+    },
+    {
+      "step": "account",
+      "status": "✅",
+      "note": "screenshot 21-account-desktop.png"
+    },
+    {
+      "step": "settings",
+      "status": "✅",
+      "note": "screenshot 22-settings-desktop.png"
+    },
+    {
+      "step": "review-no-role",
+      "status": "✅",
+      "note": "screenshot 23-review-no-role-desktop.png"
+    }
+  ],
+  "consoleErrors": []
+}

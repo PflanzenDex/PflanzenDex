@@ -1,0 +1,247 @@
+{
+  "desktop": {
+    "zonen": [
+      201,
+      201,
+      201
+    ],
+    "hakenStart": false,
+    "formularText": "Name: Stecklingcd vera Kennzeichen (optional) Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe. Das ist ein Steckling Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“. Standort Standort noch unbekannt Regal Süd Ohne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum). Exemplar anlegen Zurück zur Art",
+    "axeFormular": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "ziele": [
+          "footer"
+        ]
+      }
+    ],
+    "angelegtMeldung": "Steckling „Stecklingcd vera“ ist angelegt. Er steht unter Stecklingslicht; tippe auf der Karte „Eingetopft“, sobald du ihn eintopfst.",
+    "kartenSteckling": [
+      {
+        "name": "Stecklingcd vera",
+        "status": "cutting",
+        "lightZone": "Lampe 1",
+        "location": "Regal Süd"
+      }
+    ],
+    "pflanzeAngelegt": 201,
+    "eintopfenKnoepfe": 1,
+    "karteTexte": [],
+    "distributionBefore": {
+      "zones": [
+        {
+          "zone": {
+            "id": "52bbe1ee-7889-49f5-9e5a-868fcfc3cea9",
+            "name": "Lampe 2",
+            "luxCeiling": 40000,
+            "ppfd": null,
+            "sortOrder": 2
+          },
+          "count": 1
+        }
+      ],
+      "thinnest": [
+        {
+          "id": "52bbe1ee-7889-49f5-9e5a-868fcfc3cea9",
+          "name": "Lampe 2",
+          "luxCeiling": 40000,
+          "ppfd": null,
+          "sortOrder": 2
+        }
+      ],
+      "notCounted": {
+        "cuttingLight": 1,
+        "archived": 0,
+        "zoneUnknown": 0
+      },
+      "hint": {
+        "text": "Lampe 2 ist die dünnste Zone (1 Exemplar).",
+        "nextAction": "Hier ist noch Platz: Plane das nächste Exemplar für diese Zone."
+      }
+    },
+    "axeBestand": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "ziele": [
+          "footer"
+        ]
+      }
+    ],
+    "eingetopftMeldung": "„Stecklingcd vera“ ist eingetopft und eine Pflanze. Ab jetzt gilt die Lichtzone seines Standorts oder der Art.",
+    "kartenNach": [
+      {
+        "name": "Stecklingcd vera",
+        "status": "plant",
+        "lightZone": "Lampe 2"
+      },
+      {
+        "name": "Stecklingcd vera – Pflanze",
+        "status": "plant",
+        "lightZone": "Lampe 2"
+      }
+    ],
+    "distributionAfter": {
+      "zones": [
+        {
+          "zone": {
+            "id": "52bbe1ee-7889-49f5-9e5a-868fcfc3cea9",
+            "name": "Lampe 2",
+            "luxCeiling": 40000,
+            "ppfd": null,
+            "sortOrder": 2
+          },
+          "count": 2
+        }
+      ],
+      "thinnest": [
+        {
+          "id": "52bbe1ee-7889-49f5-9e5a-868fcfc3cea9",
+          "name": "Lampe 2",
+          "luxCeiling": 40000,
+          "ppfd": null,
+          "sortOrder": 2
+        }
+      ],
+      "notCounted": {
+        "cuttingLight": 0,
+        "archived": 0,
+        "zoneUnknown": 0
+      },
+      "hint": {
+        "text": "Lampe 2 ist die dünnste Zone (2 Exemplare).",
+        "nextAction": "Hier ist noch Platz: Plane das nächste Exemplar für diese Zone."
+      }
+    },
+    "nachReloadKnoepfe": 0,
+    "pflanzeEintopfen": "specimen.not_a_cutting",
+    "benKartenApi": 0,
+    "benEintopfenMaras": 404,
+    "scrollBreite": 1440,
+    "kleineZiele": []
+  },
+  "mobil": {
+    "zonen": [
+      201,
+      201,
+      201
+    ],
+    "hakenStart": false,
+    "formularText": "Name: Stecklingbb vera Kennzeichen (optional) Nur nötig, wenn du schon ein Exemplar dieser Art hast: Dann unterscheidet das Kennzeichen die Töpfe. Das ist ein Steckling Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“. Standort Standort noch unbekannt Regal Süd Ohne Auswahl bleibt der Standort unbekannt. Gefangen am: heute (nach deinem lokalen Datum). Exemplar anlegen Zurück zur Art",
+    "axeFormular": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "ziele": [
+          "footer"
+        ]
+      }
+    ],
+    "angelegtMeldung": "Steckling „Stecklingbb vera“ ist angelegt. Er steht unter Stecklingslicht; tippe auf der Karte „Eingetopft“, sobald du ihn eintopfst.",
+    "kartenSteckling": [
+      {
+        "name": "Stecklingbb vera",
+        "status": "cutting",
+        "lightZone": "Lampe 1",
+        "location": "Regal Süd"
+      }
+    ],
+    "pflanzeAngelegt": 201,
+    "eintopfenKnoepfe": 1,
+    "karteTexte": [],
+    "distributionBefore": {
+      "zones": [
+        {
+          "zone": {
+            "id": "7668e989-cd88-48ab-b351-7ad6b15ad610",
+            "name": "Lampe 2",
+            "luxCeiling": 40000,
+            "ppfd": null,
+            "sortOrder": 2
+          },
+          "count": 1
+        }
+      ],
+      "thinnest": [
+        {
+          "id": "7668e989-cd88-48ab-b351-7ad6b15ad610",
+          "name": "Lampe 2",
+          "luxCeiling": 40000,
+          "ppfd": null,
+          "sortOrder": 2
+        }
+      ],
+      "notCounted": {
+        "cuttingLight": 1,
+        "archived": 0,
+        "zoneUnknown": 0
+      },
+      "hint": {
+        "text": "Lampe 2 ist die dünnste Zone (1 Exemplar).",
+        "nextAction": "Hier ist noch Platz: Plane das nächste Exemplar für diese Zone."
+      }
+    },
+    "axeBestand": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "ziele": [
+          "footer"
+        ]
+      }
+    ],
+    "eingetopftMeldung": "„Stecklingbb vera“ ist eingetopft und eine Pflanze. Ab jetzt gilt die Lichtzone seines Standorts oder der Art.",
+    "kartenNach": [
+      {
+        "name": "Stecklingbb vera",
+        "status": "plant",
+        "lightZone": "Lampe 2"
+      },
+      {
+        "name": "Stecklingbb vera – Pflanze",
+        "status": "plant",
+        "lightZone": "Lampe 2"
+      }
+    ],
+    "distributionAfter": {
+      "zones": [
+        {
+          "zone": {
+            "id": "7668e989-cd88-48ab-b351-7ad6b15ad610",
+            "name": "Lampe 2",
+            "luxCeiling": 40000,
+            "ppfd": null,
+            "sortOrder": 2
+          },
+          "count": 2
+        }
+      ],
+      "thinnest": [
+        {
+          "id": "7668e989-cd88-48ab-b351-7ad6b15ad610",
+          "name": "Lampe 2",
+          "luxCeiling": 40000,
+          "ppfd": null,
+          "sortOrder": 2
+        }
+      ],
+      "notCounted": {
+        "cuttingLight": 0,
+        "archived": 0,
+        "zoneUnknown": 0
+      },
+      "hint": {
+        "text": "Lampe 2 ist die dünnste Zone (2 Exemplare).",
+        "nextAction": "Hier ist noch Platz: Plane das nächste Exemplar für diese Zone."
+      }
+    },
+    "nachReloadKnoepfe": 0,
+    "pflanzeEintopfen": "specimen.not_a_cutting",
+    "benKartenApi": 0,
+    "benEintopfenMaras": 404,
+    "scrollBreite": 375,
+    "kleineZiele": []
+  },
+  "dunkelAxe": []
+}

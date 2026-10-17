@@ -1,0 +1,82 @@
+      [33mclass[39m=[32m"wish-card candidate"[39m
+      [33mdata-priority[39m=[32m"first"[39m
+    [36m>[39m
+      [36m<figure[39m
+        [33mclass[39m=[32m"candidate-figure"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"wish-photo wish-placeholder"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mhref[39m=[32m"https://user:password@example.com/image.jpg"[39m
+            [33mreferrerpolicy[39m=[32m"no-referrer"[39m
+            [33mrel[39m=[32m"noopener noreferrer"[39m
+            [33mtarget[39m=[32m"_blank"[39m
+          [36m>[39m
+            [0mBild ansehen (öffnet extern)[0m
+          [36m</a>[39m
+        [36m</span>[39m
+        [36m<figcaption[39m
+          [33mclass[39m=[32m"quiet"[39m
+        [36m>[39m
+          [0mQuelle: [0m
+          [0mExample[0m
+        [36m</figcaption>[39m
+      [36m</figure>[39m
+      [36m<h2>[39m
+        [0mGeigenfeige (Ficus lyrata)[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"candidate-rank"[39m
+      [36m>[39m
+        [0mPlatz [0m
+        [0m1[0m
+        [0m der Liste[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [36m<strong>[39m
+          [0mLampe 3 — 1 Pflanze[0m
+        [36m</strong>[39m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mSchwierigkeit: [0m
+        [0mMittel[0m
+      [36m</p>[39m
+      [36m<p>[39m
+        [0mMehr Platz in Lampe 4[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"quiet priority-first"[39m
+      [36m>[39m
+        [0mHier steht schon 1 Pflanze.[0m
+      [36m</p>[39m
+    [36m</li>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/wishlist/candidate-card.test.tsx:30:19
+     28|
+     29|     render(<CandidateCard c={candidate} rank={1} />);
+     30|     expect(screen.getByText("Kein Bild")).toBeTruthy();
+       |                   ^
+     31|     expect(screen.queryByRole("link")).toBeNull();
+     32|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  08:10:30
+   Duration  894ms (environment 74%, import 14%, tests 5%, transform 5%, worker 1%)
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/polish-296/app/packages/web
+npm error workspace @pflanzendex/web
+npm error location /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/polish-296/app/packages/web
+
+exit code recorded when run: 1

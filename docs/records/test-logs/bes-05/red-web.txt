@@ -1,0 +1,334 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-05/app/packages/web
+
+ ❯ src/collection/DifficultyPage.test.tsx (0 test)
+ ❯ src/App.test.tsx (9 tests | 1 failed) 1660ms
+   ❯ US-ACC-01 App (9)
+     × US-BES-05 the tab Artenvergleich opens the difficulty overview and says what to do without a species 1008ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/DifficultyPage.test.tsx [ src/collection/DifficultyPage.test.tsx ]
+Error: Failed to resolve import "./DifficultyPage" from "src/collection/DifficultyPage.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-05/app/packages/web/src/collection/DifficultyPage.test.tsx:5:31
+  3  |  import userEvent from "@testing-library/user-event";
+  4  |  import { afterEach, describe, expect, it, vi } from "vitest";
+  5  |  import { DifficultyPage } from "./DifficultyPage";
+     |                                  ^
+  6  |  var _jsxFileName = "/home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-05/app/packages/web/src/collection/Difficu...
+  7  |  import { jsxDEV as _jsxDEV } from "react/jsx-dev-runtime";
+ ❯ TransformPluginContext._formatLog ../../node_modules/vite/dist/node/chunks/node.js:8766:39
+ ❯ TransformPluginContext.error ../../node_modules/vite/dist/node/chunks/node.js:8763:14
+ ❯ normalizeUrl ../../node_modules/vite/dist/node/chunks/node.js:26423:18
+ ❯ ../../node_modules/vite/dist/node/chunks/node.js:26493:30
+ ❯ TransformPluginContext.transform ../../node_modules/vite/dist/node/chunks/node.js:26459:4
+ ❯ EnvironmentPluginContainer.transform ../../node_modules/vite/dist/node/chunks/node.js:8545:14
+ ❯ loadAndTransform ../../node_modules/vite/dist/node/chunks/node.js:19988:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/App.test.tsx > US-ACC-01 App > US-BES-05 the tab Artenvergleich opens the difficulty overview and says what to do without a species
+TestingLibraryElementError: Unable to find role="button" and name "Artenvergleich"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"frame"[39m
+      [36m>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Hauptnavigation"[39m
+          [33mclass[39m=[32m"navigation"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-current[39m=[32m"page"[39m
+            [33mclass[39m=[32m"tab active"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mArten[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mBestand[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mBehandlung[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mHinweise[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPflegephasen[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPflegeprofil[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPokédex[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mStandorte und Licht[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mKonto[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mEinstellungen[0m
+          [36m</button>[39m
+        [36m</nav>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"light species"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-labelledby[39m=[32m"search-title"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mid[39m=[32m"search-title"[39m
+            [36m>[39m
+              [0mArt wählen[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"lead"[39m
+            [36m>[39m
+              [0mSuche die Art deiner Pflanze im Katalog. Findest du sie nicht, schlage sie vor.[0m
+            [36m</p>[39m
+            [36m<form[39m
+              [33mclass[39m=[32m"form"[39m
+              [33mrole[39m=[32m"search"[39m
+            [36m>[39m
+              [36m<label>[39m
+                [0mLateinischer oder deutscher Name[0m
+                [36m<input[39m
+                  [33mautocomplete[39m=[32m"off"[39m
+                  [33mmaxlength[39m=[32m"120"[39m
+                  [33mname[39m=[32m"search"[39m
+                  [33mtype[39m=[32m"search"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+            [36m</form>[39m
+            [36m<div[39m
+              [33maria-live[39m=[32m"polite"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"empty"[39m
+            [36m>[39m
+              [36m<p>[39m
+                [0mDer gemeinsame Katalog ist noch leer. Schlage die erste Art vor.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"primary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mArt vorschlagen[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"version-footer"[39m
+      [36m>[39m
+        [0mVersion [0m
+        [0munbekannt[0m
+      [36m</footer>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"frame"[39m
+      [36m>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Hauptnavigation"[39m
+          [33mclass[39m=[32m"navigation"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-current[39m=[32m"page"[39m
+            [33mclass[39m=[32m"tab active"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mArten[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mBestand[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mBehandlung[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mHinweise[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPflegephasen[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPflegeprofil[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPokédex[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mStandorte und Licht[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mKonto[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"tab"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mEinstellungen[0m
+          [36m</button>[39m
+        [36m</nav>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"light species"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-labelledby[39m=[32m"search-title"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mid[39m=[32m"search-title"[39m
+            [36m>[39m
+              [0mArt wählen[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"lead"[39m
+            [36m>[39m
+              [0mSuche die Art deiner Pflanze im Katalog. Findest du sie nicht, schlage sie vor.[0m
+            [36m</p>[39m
+            [36m<form[39m
+              [33mclass[39m=[32m"form"[39m
+              [33mrole[39m=[32m"search"[39m
+            [36m>[39m
+              [36m<label>[39m
+                [0mLateinischer oder deutscher Name[0m
+                [36m<input[39m
+                  [33mautocomplete[39m=[32m"off"[39m
+                  [33mmaxlength[39m=[32m"120"[39m
+                  [33mname[39m=[32m"search"[39m
+                  [33mtype[39m=[32m"search"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+            [36m</form>[39m
+            [36m<div[39m
+              [33maria-live[39m=[32m"polite"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"empty"[39m
+            [36m>[39m
+              [36m<p>[39m
+                [0mDer gemeinsame Katalog ist noch leer. Schlage die erste Art vor.[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"actions"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"primary"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mArt vorschlagen[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"version-footer"[39m
+      [36m>[39m
+        [0mVersion [0m
+        [0munbekannt[0m
+      [36m</footer>[39m
+    [36m</main>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/App.test.tsx:147:40
+    145|     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: fals…
+    146|     render(<App />);
+    147|     await userEvent.click(await screen.findByRole("button", { name: "A…
+       |                                        ^
+    148|     expect(await screen.findByRole("heading", { name: "Artenvergleich"…
+    149|     expect(screen.getByText(/Noch keine Art/)).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  1 failed | 8 passed (9)
+   Start at  16:38:56
+   Duration  3.09s (tests 46%, environment 32%, transform 15%, import 6%)
+
+exit code: 1

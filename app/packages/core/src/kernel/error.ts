@@ -1,0 +1,200 @@
+// Stable, machine-readable error codes `<domain>.<reason>` (FR-QG-11). Codes are never renamed.
+import { ACHIEVEMENT_ERROR_TEXTS } from "./error-texts/achievements";
+export const ERROR_TEXTS = {
+  "input.invalid": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
+  "access.not_signed_in": "Du bist nicht angemeldet. Bitte melde dich an.",
+  "access.denied": "Darauf hast du keinen Zugriff.",
+  "idempotency.key_missing": "Der Wiederholungsschutz-Schlüssel fehlt.",
+  "idempotency.key_conflict":
+    "Dieser Schlüssel wurde bereits mit anderen Angaben verwendet. Bitte versuche es neu.",
+  "idempotency.in_progress": "Dieselbe Aktion läuft noch. Bitte warte einen Moment.",
+  "system.unexpected":
+    "Es ist ein unerwarteter Fehler aufgetreten. Bitte versuche es später erneut.",
+  "invitation.invalid":
+    "Dieser Einladungscode ist ungültig, abgelaufen oder schon benutzt. Prüfe die Eingabe oder bitte um einen neuen Code.",
+  "invitation.required":
+    "Die Registrierung ist im Moment nur mit Einladungscode möglich. Gib den Code ein, den du bekommen hast.",
+  "review.already_exists": "Für dieses Objekt läuft schon eine Prüfung.",
+  "review.not_found": "Diesen Prüfvorgang gibt es nicht.",
+  "review.status_invalid": "Dieser Vorgang ist schon entschieden.",
+  "review.reason_missing": "Zum Zurückweisen gehört ein Grund, den der Ersteller sehen kann.",
+  "review.approval_incomplete":
+    "Die Art ist nicht vollständig genug zur Freigabe. Prüfe die fehlenden Angaben und Quellen.",
+  "review.merge_target_invalid":
+    "Mit dieser Art lässt sich der Vorschlag nicht zusammenführen. Wähle eine bereits freigegebene Art, die nicht der Vorschlag selbst ist.",
+  "review.merge_conflict":
+    "Das Zusammenführen ist nicht möglich, weil der Ersteller bei der Zielart schon ein Exemplar mit demselben Kennzeichen hat. Es wurde nichts geändert; lass ihn das Kennzeichen ändern oder gib den Vorschlag frei.",
+  "review.merge_lock_failed":
+    "Der Vorschlag konnte für das Zusammenführen gerade nicht gesperrt werden. Es wurde nichts geändert; versuche es gleich noch einmal.",
+  "species.duplicate":
+    "Diese Art gibt es schon (gleicher Name oder Synonym). Wähle die vorhandene Art, statt eine zweite anzulegen.",
+  "species.not_found": "Diese Art gibt es nicht.",
+  "catalog.name_hybrid":
+    "Hybridzeichen (× oder x) gehören nicht in den Katalog. Trage die Art ohne Hybridzeichen ein, zum Beispiel „Citrus limon“ statt „Citrus x limon“.",
+  "catalog.name_addition":
+    "Zusätze wie var., subsp., f. oder cv. gehören nicht in den Katalog. Trage nur Gattung und Art ein; den Zusatz hältst du beim Exemplar fest.",
+  "specimen.name_taken":
+    "Ein Exemplar mit diesem Namen gibt es schon. Gib ein Kennzeichen an (zum Beispiel eine Farbe), damit du die Töpfe unterscheiden kannst.",
+  "specimen.marker_taken":
+    "Dieses Kennzeichen gibt es bei dieser Art schon. Wähle ein anderes, damit du die Töpfe unterscheiden kannst.",
+  "specimen.marker_required":
+    "Du hast schon ein Exemplar dieser Art. Gib dem neuen ein Kennzeichen, damit du die Töpfe unterscheiden kannst.",
+  "specimen.markers_missing":
+    "Ab dem dritten Exemplar braucht jedes Exemplar der Art ein Kennzeichen. Vergib die fehlenden Kennzeichen, dann wird gespeichert.",
+  "specimen.caught_in_future":
+    "Das Fangdatum liegt in der Zukunft. Wähle heute oder ein früheres Datum.",
+  "specimen.caught_after_archived":
+    "Das Fangdatum liegt nach dem Tag, an dem das Exemplar archiviert wurde. Wähle das Archivierungsdatum oder ein früheres Datum.",
+  "specimen.not_found": "Dieses Exemplar gibt es nicht.",
+  "specimen.not_a_cutting": "Dieses Exemplar ist kein Steckling und muss nicht eingetopft werden.",
+  "specimen.already_archived": "Dieses Exemplar ist schon archiviert.",
+  "specimen.not_archived": "Dieses Exemplar ist nicht archiviert.",
+  "specimen.archived":
+    "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her, dann kannst du damit arbeiten.",
+  "measurement.not_found":
+    "Für diesen Tag gibt es noch keine Messung. Erfasse zuerst die Messung, dann kannst du das Foto dazu speichern; es wurde nichts gespeichert.",
+  "measurement.photo_not_found": "Zu dieser Messung gibt es kein Foto.",
+  "measurement.photo_exists":
+    "Zu dieser Messung gibt es schon ein Foto. Bestätige, dass es ersetzt werden soll; bis dahin bleibt das alte Foto unverändert.",
+  "treatment.not_found": "Diese Behandlung gibt es nicht.",
+  "friend.unknown_code":
+    "Diesen Freundescode gibt es nicht. Prüfe die Eingabe oder bitte um einen neuen Code.",
+  "friend.code_used": "Dieser Freundescode wurde schon benutzt. Bitte um einen neuen Code.",
+  "friend.code_expired": "Dieser Freundescode ist abgelaufen. Bitte um einen neuen Code.",
+  "monitoring.subscription_limit":
+    "Du hast schon so viele Geräte für Benachrichtigungen angemeldet, wie möglich sind. Entferne ein Gerät und versuche es erneut.",
+  "ai.connection_revoked":
+    "Dieser KI-Client wurde von dir getrennt und hat keinen Zugriff mehr. Du kannst ihn in der Liste der verbundenen KI-Clients wieder zulassen.",
+  "ai.scope_insufficient":
+    "Dafür reichen die Rechte dieser Verbindung nicht. Erlaube dem KI-Client in der App das nötige Recht und verbinde ihn neu.",
+  "ai.connection_not_found": "Diese Verbindung gibt es nicht. Lade die Liste neu.",
+  "ai.connection_active": "Dieser KI-Client ist schon wieder verbunden. Es wurde nichts geändert.",
+  "ai.rate_limited": "Das Tageslimit des KI-Clients ist erreicht. Morgen geht es weiter.",
+  "ai.draft_not_found": "Diesen Entwurf gibt es nicht. Lade die Liste neu.",
+  "ai.draft_closed":
+    "Dieser Entwurf ist schon übernommen, verworfen oder abgelaufen. Es wurde nichts geändert.",
+  "ai.task_not_found": "Diesen Auftrag gibt es nicht. Lade die Liste neu.",
+  "ai.task_closed":
+    "Dieser Auftrag ist schon erledigt, abgelehnt oder abgelaufen. Es wurde nichts geändert.",
+  "ai.no_client":
+    "Es ist kein KI-Client verbunden, darum wurde kein Auftrag angelegt. Verbinde einen KI-Client oder kopiere den Auftrag als Text.",
+  "friend.own_code": "Das ist dein eigener Freundescode. Gib ihn an jemand anderen weiter.",
+  "friend.already_linked":
+    "Mit dieser Person gibt es schon eine Anfrage oder Freundschaft. Es wurde nichts geändert und der Code ist nicht verbraucht.",
+  "friend.request_not_found": "Diese Freundschaftsanfrage gibt es nicht. Lade die Liste neu.",
+  "friend.request_answered":
+    "Diese Anfrage hast du schon anders beantwortet. Es wurde nichts geändert.",
+  "friend.not_found": "Diesen Freund gibt es nicht. Lade die Liste neu.",
+  "offer.not_shared":
+    "Dieses Exemplar ist nicht für Freunde freigegeben. Gib es zuerst unter „Was Freunde sehen“ frei, dann kannst du es anbieten.",
+  "offer.already_open":
+    "Für dieses Exemplar gibt es schon ein offenes Angebot. Ziehe es zurück, bevor du ein neues erstellst.",
+  "offer.treatment_open":
+    "Für dieses Exemplar läuft noch eine Behandlung. Bestätige ausdrücklich, dass du es trotzdem anbieten willst.",
+  "swap.not_found": "Diese Anfrage gibt es nicht. Lade die Liste neu.",
+  "swap.not_allowed":
+    "Diese Antwort ist hier nicht möglich. Die Anfrage kann nur die andere Seite so beantworten.",
+  "swap.wrong_state":
+    "Die Anfrage ist schon beantwortet und kann so nicht mehr geändert werden. Lade die Liste neu.",
+  "swap.friendship_ended":
+    "Ihr seid nicht mehr befreundet. Die Anfrage wurde abgebrochen; es wurde nichts übergeben.",
+  "swap.own_offer": "Das ist dein eigenes Angebot. Du kannst es nicht selbst anfragen.",
+  "swap.already_requested":
+    "Du hast dieses Angebot schon angefragt. Warte auf die Antwort; es wurde nichts doppelt gesendet.",
+  "swap.counter_not_allowed":
+    "Zu einem Geschenk gibt es kein Gegenangebot. Frage ohne Gegenangebot an; es wurde nichts gesendet.",
+  "swap.counter_not_shared":
+    "Dein Gegenangebot muss für Freunde freigegeben sein. Gib das Exemplar frei oder wähle ein anderes; es wurde nichts gesendet.",
+  "offer.not_found": "Dieses Angebot gibt es nicht. Lade die Liste neu.",
+  "offer.not_active":
+    "Dieses Angebot ist schon übergeben und kann nicht mehr zurückgezogen werden. Es wurde nichts geändert.",
+  "discover.not_suggested":
+    "Diese Art wird dir gerade nicht vorgeschlagen: Du hast sie schon gefangen oder sie fehlt im Katalog. Lade die Vorschläge neu.",
+  ...ACHIEVEMENT_ERROR_TEXTS,
+  "wish.name_taken":
+    "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
+  "wish.image_source_unsupported":
+    "Das Bild kann nur von Wikimedia Commons gespeichert werden. Trage die Adresse einer Datei von commons.wikimedia.org ein; es wurde nichts gespeichert.",
+  "wish.image_not_found":
+    "Dieses Bild gibt es bei Wikimedia Commons nicht (mehr). Prüfe die Adresse; es wurde nichts gespeichert.",
+  "wish.image_license_unsupported":
+    "Die Lizenz dieses Bildes erlaubt kein Speichern oder ist nicht angegeben. Nimm ein Bild mit freier Lizenz (CC0, CC BY, CC BY-SA oder gemeinfrei); es wurde nichts gespeichert.",
+  "wish.not_found": "Diesen Wunsch gibt es nicht. Lade die Wunschliste neu.",
+  "wish.not_open":
+    "Dieser Wunsch ist verworfen und nicht mehr offen. Nur ein offener Wunsch kann als gekauft vermerkt werden; es wurde nichts geändert.",
+  "wish.already_bought":
+    "Dieser Wunsch ist schon als gekauft vermerkt und lässt sich nicht mehr verwerfen. Es wurde nichts geändert.",
+  "wish.not_bought":
+    "Dieser Wunsch ist nicht als gekauft vermerkt. Nur ein gekaufter Wunsch wird mit einem Exemplar verknüpft; es wurde nichts geändert.",
+  "wish.already_linked":
+    "Dieser Wunsch ist schon mit einem anderen Exemplar verknüpft, oder das Exemplar gehört schon zu einem anderen Wunsch. Es wurde nichts geändert.",
+  "wish.not_duplicate":
+    "Dieser Wunsch hat keinen doppelten Namen und lässt sich hier nicht umbenennen oder löschen. Lade die Wunschliste neu; es wurde nichts geändert.",
+  "pokedex.not_caught":
+    "Diese Art hast du noch nicht gefangen und kann deshalb nicht als gesehen vermerkt werden. Lade den Pokédex neu; es wurde nichts geändert.",
+  "care.no_phase":
+    "Dieses Exemplar hat keine Pflegephase (Steckling oder Art ohne Ruhephasen-Zeitraum) und wird nicht umgestellt.",
+  "care.target_unknown":
+    "Für dieses Exemplar ist noch kein Soll-Standort bekannt. Weise den Standort stattdessen selbst zu.",
+  "location.name_taken": "Einen Standort mit diesem Namen gibt es schon.",
+  "location.not_found": "Diesen Standort gibt es nicht.",
+  "light_zone.name_taken": "Eine Lichtzone mit diesem Namen gibt es schon.",
+  "light_zone.not_found": "Diese Lichtzone gibt es nicht.",
+  "light_zone.in_use":
+    "Diese Lichtzone wird noch genutzt und kann nicht gelöscht werden. Ordne die genannten Einträge zuerst einer anderen Zone zu.",
+  "light_zone.not_empty":
+    "Du hast schon Lichtzonen. Die Voreinstellung ist nur für ein Konto ohne Zonen.",
+  "source.unavailable":
+    "Eine externe Datenquelle antwortet gerade nicht. Deine Daten sind nicht betroffen; die Anreicherung wird später erneut versucht.",
+  "source.timeout":
+    "Eine externe Datenquelle hat zu langsam geantwortet. Deine Daten sind nicht betroffen; versuche es später erneut.",
+  "source.rate_limited":
+    "Eine externe Datenquelle bremst gerade die Abfragen. Deine Daten sind nicht betroffen; versuche es später erneut.",
+  "source.response_invalid":
+    "Eine externe Datenquelle hat eine unlesbare Antwort geliefert. Es wurde nichts übernommen; der letzte gute Stand bleibt bestehen.",
+  "source.request_rejected":
+    "Eine externe Datenquelle hat die Abfrage abgelehnt. Es wurde nichts übernommen; der Betreiber wird informiert.",
+  "taxonomy.no_match":
+    "Zu dieser Art gibt es in der Pflanzen-Taxonomie keinen Treffer. Prüfe den lateinischen Namen; Familie und Gattung bleiben unbekannt.",
+  "taxonomy.not_species":
+    "Der Treffer der Pflanzen-Taxonomie ist keine Art (zum Beispiel nur eine Gattung). Familie und Gattung bleiben unbekannt.",
+  "taxonomy.lineage_missing":
+    "Zu dieser Art fehlt in der Pflanzen-Taxonomie die Einordnung in Gattung und Familie. Sie bleibt unbekannt.",
+  "media.name_invalid": "Der Bildname ist ungültig. Es wurde nichts gespeichert.",
+  "media.not_found": "Dieses Bild gibt es nicht.",
+  "media.too_large":
+    "Das Bild ist zu groß. Wähle ein kleineres Foto (höchstens 15 MB); es wurde nichts gespeichert.",
+  "media.type_unsupported":
+    "Dieses Bildformat wird nicht unterstützt. Nimm ein Foto als JPEG, PNG oder WebP auf; es wurde nichts gespeichert.",
+  "media.not_an_image":
+    "Die Datei lässt sich nicht als Bild lesen. Wähle ein anderes Foto; es wurde nichts gespeichert.",
+  "media.storage_unavailable":
+    "Der Bildspeicher antwortet gerade nicht. Deine Daten sind nicht betroffen; versuche es später erneut.",
+  "operator_cost.month_in_future":
+    "Dieser Monat liegt in der Zukunft. Trage die Kosten eines Monats ein, der schon begonnen hat.",
+} as const;
+export type ErrorCode = keyof typeof ERROR_TEXTS;
+export const ERROR_CODE_FORMAT = /^[a-z_]+\.[a-z_]+$/;
+
+export interface ErrorDetail {
+  readonly field: string;
+  readonly code: ErrorCode;
+}
+
+export interface AppError {
+  readonly code: ErrorCode;
+  /** German text from ERROR_TEXTS; UI and AI translate by `code`, never by the text. */
+  readonly text: string;
+  readonly details?: readonly ErrorDetail[];
+  /** Domain details for display, e.g. which entries use a zone (P-10: nothing disappears silently). */
+  readonly data?: unknown;
+  /** For logs only, never for display (FR-QG-11). */
+  readonly cause?: unknown;
+}
+
+export function appError(
+  code: ErrorCode,
+  extra: { details?: readonly ErrorDetail[]; data?: unknown; cause?: unknown } = {},
+): AppError {
+  return { code, text: ERROR_TEXTS[code], ...extra };
+}

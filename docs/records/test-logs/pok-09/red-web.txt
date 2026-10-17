@@ -1,0 +1,28 @@
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ card src/pokedex/PokedexDetail.test.tsx:53:39
+     51|   await screen.findByRole("heading", { level: 1, name: "Pokédex" });
+     52| };
+     53| const card = (name: string) => screen.getByRole("button", { name: `Det…
+       |                                       ^
+     54| const detail = () => screen.getByRole("region", { name: /Details/ });
+     55|
+ ❯ src/pokedex/PokedexDetail.test.tsx:158:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  10 failed | 8 passed (18)
+   Start at  16:39:09
+   Duration  3.21s (tests 66%, environment 19%, transform 9%, import 6%)
+
+exit 
+
+[note] The exit code was lost by the capturing pipeline (shown empty above); the runner reported failed tests, which makes vitest exit non-zero. Captured before the implementation, with the type-only fields added so the pre-push typecheck gate could run.

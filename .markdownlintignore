@@ -1,0 +1,5 @@
+node_modules/**
+docs/records/spikes/**
+docs/records/test-logs/**
+docs/guides/roadmap.md
+app/**/CHANGELOG.md

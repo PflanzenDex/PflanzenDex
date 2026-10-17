@@ -1,0 +1,321 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/feat-acc-03-gefuehrter-einstieg/app
+
+ ❯ packages/web/src/start-page.test.tsx (11 tests | 2 failed) 1388ms
+   ❯ US-ACC-03 start page and guided onboarding (11)
+     × US-ACC-03 ending the onboarding is remembered per account on this device 1007ms
+     × US-ACC-03 focus moves to the heading of the new step and the step is announced politely 35ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/web/src/start-page.test.tsx > US-ACC-03 start page and guided onboarding > US-ACC-03 ending the onboarding is remembered per account on this device
+TestingLibraryElementError: Unable to find role="button" and name "Einstieg beenden"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection start-page"
+    >
+      <div
+        class="onboarding"
+      >
+        <p
+          class="onboarding-progress"
+        >
+          Schritt 1 von 3
+        </p>
+        <section
+          class="onboarding-step"
+        >
+          <h2>
+            Wo stehen deine Pflanzen?
+          </h2>
+          <p
+            class="quiet"
+          >
+            Lege Standorte an, zum Beispiel Fensterbank oder Balkon. Du kannst das auch später tun.
+          </p>
+          <form
+            aria-label="Standort anlegen"
+            class="form"
+          >
+            <label>
+              Name
+              <input
+                autocomplete="off"
+                maxlength="60"
+                name="name"
+                required=""
+                value=""
+              />
+            </label>
+            <label>
+              Lichtzone
+              <select
+                name="lightZoneId"
+              >
+                <option
+                  selected=""
+                  value=""
+                >
+                  Keine Lichtzone (erscheint in den Hinweisen)
+                </option>
+              </select>
+            </label>
+            <label>
+              Art
+              <select
+                name="kind"
+              >
+                <option
+                  selected=""
+                  value="indoor"
+                >
+                  innen
+                </option>
+                <option
+                  value="outdoor"
+                >
+                  außen
+                </option>
+              </select>
+            </label>
+            <div
+              class="actions"
+            >
+              <button
+                class="primary"
+                type="submit"
+              >
+                Standort anlegen
+              </button>
+            </div>
+          </form>
+          <div
+            class="actions"
+          >
+            <button
+              class="secondary"
+              type="button"
+            >
+              Überspringen
+            </button>
+          </div>
+        </section>
+        <div
+          class="actions"
+        >
+          <button
+            class="secondary"
+            type="button"
+          >
+            Einstieg später fortsetzen
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="light collection start-page"
+    >
+      <div
+        class="onboarding"
+      >
+        <p
+          class="onboarding-progress"
+        >
+          Schritt 1 von 3
+        </p>
+        <section
+          class="onboarding-step"
+        >
+          <h2>
+            Wo stehen deine Pflanzen?
+          </h2>
+          <p
+            class="quiet"
+          >
+            Lege Standorte an, zum Beispiel Fensterbank oder Balkon. Du kannst das auch später tun.
+          </p>
+          <form
+            aria-label="Standort anlegen"
+            class="form"
+          >
+            <label>
+              Name
+              <input
+                autocomplete="off"
+                maxlength="60"
+                name="name"
+                required=""
+                value=""
+              />
+            </label>
+            <label>
+              Lichtzone
+              <select
+                name="lightZoneId"
+              >
+                <option
+                  selected=""
+                  value=""
+                >
+                  Keine Lichtzone (erscheint in den Hinweisen)
+                </option>
+              </select>
+            </label>
+            <label>
+              Art
+              <select
+                name="kind"
+              >
+                <option
+                  selected=""
+                  value="indoor"
+                >
+                  innen
+                </option>
+                <option
+                  value="outdoor"
+                >
+                  außen
+                </option>
+              </select>
+            </label>
+            <div
+              class="actions"
+            >
+              <button
+                class="primary"
+                type="submit"
+              >
+                Standort anlegen
+              </button>
+            </div>
+          </form>
+          <div
+            class="actions"
+          >
+            <button
+              class="secondary"
+              type="button"
+            >
+              Überspringen
+            </button>
+          </div>
+        </section>
+        <div
+          class="actions"
+        >
+          <button
+            class="secondary"
+            type="button"
+          >
+            Einstieg später fortsetzen
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ packages/web/src/start-page.test.tsx:97:40
+     95|     fakeServer({ zones: [], locations: [], cards: [] });
+     96|     view();
+     97|     await userEvent.click(await screen.findByRole("button", { name: "E…
+       |                                        ^
+     98|     expect(await screen.findByRole("heading", { name: "Start" })).toBe…
+     99|     cleanup();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  packages/web/src/start-page.test.tsx > US-ACC-03 start page and guided onboarding > US-ACC-03 focus moves to the heading of the new step and the step is announced politely
+AssertionError: expected <body><div>…(1)</div></body> to be <h2></h2> // Object.is equality
+
+- Expected
++ Received
+
++ <body>
++   <div>
++     <div
++       class="light collection start-page"
++     >
++       <div
++         class="onboarding"
++       >
++         <p
++           class="onboarding-progress"
++         >
++           Schritt 2 von 3
++         </p>
++         <section
++           class="onboarding-step"
++         >
+            <h2>
+              Wie hell ist es?
+            </h2>
++           <p
++             class="quiet"
++           >
++             Die vier Standard-Lampen passen für den Anfang. Anpassen kannst du sie jederzeit unter „Standorte und Licht“.
++           </p>
++           <div
++             class="actions"
++           >
++             <button
++               class="primary"
++               type="button"
++             >
++               Standard-Lampen übernehmen
++             </button>
++           </div>
++           <div
++             class="actions"
++           >
++             <button
++               class="secondary"
++               type="button"
++             >
++               Überspringen
++             </button>
++           </div>
++         </section>
++         <div
++           class="actions"
++         >
++           <button
++             class="secondary"
++             type="button"
++           >
++             Einstieg später fortsetzen
++           </button>
++         </div>
++       </div>
++     </div>
++   </div>
++ </body>
+
+ ❯ packages/web/src/start-page.test.tsx:150:36
+    148|     await userEvent.click(await screen.findByRole("button", { name: "Ü…
+    149|     const heading = await screen.findByRole("heading", { name: "Wie he…
+    150|     expect(document.activeElement).toBe(heading);
+       |                                    ^
+    151|     expect(heading.getAttribute("tabindex")).toBe("-1");
+    152|     const marker = screen.getByText("Schritt 2 von 3");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)
+   Start at  20:06:09
+   Duration  2.66s (tests 54%, environment 23%, transform 15%, import 7%)
+
+exit 1

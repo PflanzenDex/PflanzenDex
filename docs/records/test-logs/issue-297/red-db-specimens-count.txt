@@ -1,0 +1,28 @@
+
+ RUN  v5.0.3 <worktree>
+
+ ❯ src/collection/specimens.test.ts (21 tests | 1 failed) 305ms
+   ❯ US-ACC-03 count of the active specimens (start page) (1)
+     × US-ACC-03 counts the active specimens of the account only, archived ones not, and writes nothing 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/specimens.test.ts > US-ACC-03 count of the active specimens (start page) > US-ACC-03 counts the active specimens of the account only, archived ones not, and writes nothing
+TypeError: specimens.countActive is not a function
+ ❯ src/collection/specimens.test.ts:283:28
+    281|     const carla = randomUUID();
+    282|     await withAccount(pool, carla, (c) => c.query("insert into account…
+    283|     expect(await specimens.countActive(carla)).toBe(0);
+       |                            ^
+    284|     const a = await specimens.create(carla, { ...values, name: "Zähler…
+    285|     await specimens.create(carla, { ...values, name: "Zähler 2" });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 20 passed (21)
+   Start at  08:17:53
+   Duration  616ms (tests 60%, transform 30%, import 9%, worker 1%)
+
+exit code: 1

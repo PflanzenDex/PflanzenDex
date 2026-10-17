@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>B Heute mobil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="{{vars}};width:360px;height:760px;box-sizing:border-box;display:flex;flex-direction:column;background:var(--bg);color:var(--text);overflow:hidden">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19l8-8"/></symbol>
+<symbol id="book" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3V4zM8 17h11"/></symbol>
+<symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+<symbol id="more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></symbol>
+<symbol id="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+</defs></svg>
+<header style="padding:20px 16px 12px;border-bottom:1px solid var(--line)">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);letter-spacing:0.04em">MI 07.10.</div>
+<h1 style="margin:2px 0 0;font-size:26px;line-height:1.15;font-weight:700;letter-spacing:-0.3px">Heute</h1>
+</header>
+<div style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column">
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding:14px 16px 6px"><h2 style="margin:0;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Fällig</h2><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted)">3</span></div>
+<sc-for list="{{tasks}}" as="t" hint-placeholder-count="3">
+<a href="#" style="display:flex;align-items:center;gap:12px;min-height:64px;padding:10px 16px;border-top:1px solid var(--line);text-decoration:none;color:var(--text)">
+<div style="width:44px;height:44px;border-radius:6px;background:{{t.bg}};flex:none;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="{{t.fg}}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#leaf"/></svg></div>
+<div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600;line-height:1.3">{{t.name}}</div><div style="font-size:13px;color:var(--muted);line-height:1.35">{{t.what}}</div></div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text);text-align:right;line-height:1.3">{{t.when}}</div>
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#chev"/></svg>
+</a>
+</sc-for>
+<div style="border-top:1px solid var(--line);margin-top:0"></div>
+<div style="margin:16px;padding:12px 14px;border:1px solid var(--warnline);border-radius:6px;background:var(--warnbg);color:var(--warntext);font-size:14px;line-height:1.45;display:flex;flex-direction:column;gap:8px">
+<div><b>Ficus lyrata:</b> Lichtzone unbekannt. Ohne Zone kein Pflegeplan.</div>
+<button style="align-self:flex-start;min-height:44px;padding:0 16px;border-radius:6px;border:1px solid var(--warntext);background:transparent;color:var(--warntext);font-weight:600;font-size:14px;font-family:inherit">Zone festlegen</button>
+</div>
+<div style="padding:4px 16px 0;display:flex;align-items:baseline;justify-content:space-between"><h2 style="margin:0;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Freunde</h2></div>
+<div style="padding:8px 16px;font-size:14px;line-height:1.45"><b>Mara</b> hat <i>Hoya kerrii</i> gefangen. <a href="#" style="color:var(--primary);font-weight:600;display:inline-flex;min-height:44px;align-items:center">Ansehen</a></div>
+</div>
+<nav aria-label="Hauptnavigation" style="display:flex;padding:0 0 12px;background:var(--surface);border-top:1px solid var(--line)">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="5">
+<a href="#" style="flex:1;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;font-size:11.5px;font-weight:600;color:{{n.color}};border-top:3px solid {{n.bar}};margin-top:-1px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="{{n.icon}}"/></svg>{{n.label}}</a>
+</sc-for>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = (this.props.theme ?? 'light') === 'dark';
+const P = dark
+? {bg:'#0E0F12',surface:'#16181D',text:'#ECEDEF',muted:'#A0A4AD',line:'#2C2F37',primary:'#9DB0FF',onprimary:'#0B1235',soft:'#1F2748',softtext:'#BCC9FF',warnbg:'#382A10',warntext:'#F0C070',warnline:'#5A4519'}
+: {bg:'#F6F6F4',surface:'#FFFFFF',text:'#121212',muted:'#54565C',line:'#D0D1CC',primary:'#2443C9',onprimary:'#FFFFFF',soft:'#E3E8FB',softtext:'#1B3294',warnbg:'#FFE9C7',warntext:'#6A3E00',warnline:'#E8C98F'};
+const vars = Object.keys(P).map(k => '--' + k + ':' + P[k]).join(';');
+const a = dark ? ['#1F2748','#9DB0FF'] : ['#E3E8FB','#2443C9'];
+const b = dark ? ['#2A2D33','#C9CCD3'] : ['#E8E8E4','#3A3C42'];
+const tasks = [
+{name:'Monstera deliciosa „Frida“',what:'Gießen · Zone 3',when:'heute\nvor 8 T',bg:a[0],fg:a[1]},
+{name:'Pilea, Steckling',what:'Wurzeln prüfen · Zone 1',when:'heute\nTag 12',bg:b[0],fg:b[1]},
+{name:'Sansevieria „Sol“',what:'Messen · zuletzt vor 21 T',when:'seit 7 T\nüberfällig',bg:a[0],fg:a[1]}
+];
+const items = [['Heute','#sun'],['Sammlung','#leaf'],['Pokédex','#book'],['Entdecken','#compass'],['Mehr','#more']];
+const nav = items.map((x,i) => ({label:x[0],icon:x[1],color:i===0?'var(--primary)':'var(--muted)',bar:i===0?'var(--primary)':'transparent'}));
+return { vars, tasks: tasks.map(t => ({...t, when: t.when.replace('\n',' · ')})), nav };
+}
+}
+</script>
+</body>
+</html>

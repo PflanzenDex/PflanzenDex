@@ -1,0 +1,215 @@
+{
+  "which": "lic",
+  "started": "2026-10-03T20:22:32.377Z",
+  "checks": [
+    {
+      "id": "1 no zones: result",
+      "expected": "Lichtzone: unbekannt",
+      "observed": "Lichtzone: unbekannt",
+      "ok": true
+    },
+    {
+      "id": "1 no zones: reason names the next action",
+      "expected": {},
+      "observed": "Du hast keine Zone für erwachsene Pflanzen. Lege eine zweite Lichtzone an (die erste ist Stecklingslicht).",
+      "ok": true
+    },
+    {
+      "id": "2a need 10,000 lux, level 2",
+      "expected": "Lichtzone: Lampe 2 / /bleibt bei ihrer Standard-Stufe/",
+      "observed": "Lichtzone: Lampe 2 / Die Art bleibt bei ihrer Standard-Stufe: die nächste Zone wäre mehr Licht als sie braucht (mehr Licht bringt Stress).",
+      "ok": true
+    },
+    {
+      "id": "2b need 14,000 lux, level 2",
+      "expected": "Lichtzone: Lampe 2 / /bleibt bei ihrer Standard-Stufe/",
+      "observed": "Lichtzone: Lampe 2 / Die Art bleibt bei ihrer Standard-Stufe: die nächste Zone wäre mehr Licht als sie braucht (mehr Licht bringt Stress).",
+      "ok": true
+    },
+    {
+      "id": "2c need 75,000 lux, level 2 (promoted one step)",
+      "expected": "Lichtzone: Lampe 3 / /Sie bleibt hier/",
+      "observed": "Lichtzone: Lampe 3 / Die nächste Zone wäre mehr Licht als die Art braucht (mehr Licht bringt Stress). Sie bleibt hier.",
+      "ok": true
+    },
+    {
+      "id": "2d need 80,000 lux, level 2 (promoted two steps)",
+      "expected": "Lichtzone: Lampe 4 / /mindestens 80 %/",
+      "observed": "Lichtzone: Lampe 4 / Der Lux-Bedarf erreicht mindestens 80 % der Lux-Decke der Stufe darunter und liegt nicht mehr als 30 % unter der Decke dieser Zone.",
+      "ok": true
+    },
+    {
+      "id": "2e soft-leaf C3, need 80,000 lux, level 2",
+      "expected": "Lichtzone: Lampe 2 / /Weichblättrige C3-Pflanzen/",
+      "observed": "Lichtzone: Lampe 2 / Weichblättrige C3-Pflanzen werden nicht automatisch in eine stärkere Zone eingestuft. Sie bleibt bei der Standard-Stufe.",
+      "ok": true
+    },
+    {
+      "id": "2f need 20,000 lux, level 3 (stays at the default level)",
+      "expected": "Lichtzone: Lampe 3 / /bleibt bei ihrer Standard-Stufe/",
+      "observed": "Lichtzone: Lampe 3 / Die Art bleibt bei ihrer Standard-Stufe: die nächste Zone wäre mehr Licht als sie braucht (mehr Licht bringt Stress).",
+      "ok": true
+    },
+    {
+      "id": "2g need 100,000 lux, level 4 (top zone)",
+      "expected": "Lichtzone: Lampe 4 / /höchste Zone/",
+      "observed": "Lichtzone: Lampe 4 / Das ist die höchste Zone deines Kontos.",
+      "ok": true
+    },
+    {
+      "id": "2h need 500 lux, level 2 (cutting light is never the target)",
+      "expected": "Lichtzone: Lampe 2 / /bleibt bei ihrer Standard-Stufe/",
+      "observed": "Lichtzone: Lampe 2 / Die Art bleibt bei ihrer Standard-Stufe: die nächste Zone wäre mehr Licht als sie braucht (mehr Licht bringt Stress).",
+      "ok": true
+    },
+    {
+      "id": "3 specimen of species (need 75,000, level 2) counts in Lampe 3",
+      "expected": "Lampe 3: 1 Exemplar",
+      "observed": "Lampe 2: 0 Exemplare · dünnste Zone | Lampe 3: 1 Exemplar | Lampe 4: 0 Exemplare · dünnste Zone",
+      "ok": true
+    },
+    {
+      "id": "4 second account without zones: same input, own zones",
+      "expected": "Lichtzone: unbekannt",
+      "observed": "Lichtzone: unbekannt",
+      "ok": true
+    },
+    {
+      "id": "5 browser validation rejects 0",
+      "expected": false,
+      "observed": false,
+      "ok": true
+    },
+    {
+      "id": "5 browser validation rejects 200001",
+      "expected": false,
+      "observed": false,
+      "ok": true
+    }
+  ],
+  "axe": [
+    {
+      "name": "01-no-zones-unknown",
+      "viewport": "desktop",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            "footer"
+          ],
+          "detail": "Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "name": "01-no-zones-unknown",
+      "viewport": "mobile",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            "footer"
+          ],
+          "detail": "Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "name": "02-derivation-promoted-one-step",
+      "viewport": "desktop",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            "footer"
+          ],
+          "detail": "Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "name": "02-derivation-promoted-one-step",
+      "viewport": "mobile",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            "footer"
+          ],
+          "detail": "Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "name": "05-species-counted-in-derived-zone",
+      "viewport": "desktop",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            "footer"
+          ],
+          "detail": "Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "name": "05-species-counted-in-derived-zone",
+      "viewport": "mobile",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            "footer"
+          ],
+          "detail": "Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "layout": [
+    {
+      "name": "01-no-zones-unknown",
+      "scrollWidth": 375,
+      "small44": [],
+      "small48": 0
+    },
+    {
+      "name": "02-derivation-promoted-one-step",
+      "scrollWidth": 375,
+      "small44": [],
+      "small48": 0
+    },
+    {
+      "name": "03-derivation-soft-leaf",
+      "scrollWidth": 375,
+      "small44": [],
+      "small48": 0
+    },
+    {
+      "name": "04-derivation-top-zone",
+      "scrollWidth": 375,
+      "small44": [],
+      "small48": 0
+    },
+    {
+      "name": "05-species-counted-in-derived-zone",
+      "scrollWidth": 375,
+      "small44": [],
+      "small48": 0
+    },
+    {
+      "name": "06-other-account-unknown",
+      "scrollWidth": 375,
+      "small44": [],
+      "small48": 0
+    }
+  ],
+  "finished": "2026-10-03T20:22:44.590Z"
+}

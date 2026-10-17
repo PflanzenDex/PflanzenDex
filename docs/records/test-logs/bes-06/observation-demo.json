@@ -1,0 +1,31 @@
+{
+  "03-karten-mit-demo-ports-desktop": {
+    "spalten": 2,
+    "scrollBreite": 1440,
+    "fensterBreite": 1440,
+    "kleineZiele": [],
+    "karten": 4
+  },
+  "03-karten-mit-demo-ports-mobil": {
+    "spalten": 1,
+    "scrollBreite": 375,
+    "fensterBreite": 375,
+    "kleineZiele": [],
+    "karten": 4
+  },
+  "notizOffen": true,
+  "fokusFoto": "solid 3px",
+  "fotoHref": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3",
+  "fotoTarget": "_blank",
+  "axe-light": [
+    {
+      "id": "color-contrast",
+      "n": 1,
+      "impact": "serious",
+      "ziel": [
+        "footer :: Element has insufficient color contrast of 4.01 (foreground color: #727c73, background color: #f4f7f2, font size: 9.0pt (12px), font weight: normal). Expected c"
+      ]
+    }
+  ],
+  "axe-dark": []
+}

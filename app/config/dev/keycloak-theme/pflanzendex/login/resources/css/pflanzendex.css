@@ -1,0 +1,84 @@
+/* PflanzenDex colours for the Keycloak pages (#205). Values copied from packages/web/src/styles/tokens.css (light and dark). */
+:root {
+  --pdx-background: #f4f7f2;
+  --pdx-foreground: #1b2a1f;
+  --pdx-card: #ffffff;
+  --pdx-primary: #2f7d4f;
+  --pdx-primary-hover: #25663f;
+  --pdx-primary-text: #ffffff;
+  --pdx-border: #74897a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --pdx-background: #121a14;
+    --pdx-foreground: #e8f1ea;
+    --pdx-card: #1b261e;
+    --pdx-primary: #5fbf86;
+    --pdx-primary-hover: #7bd09b;
+    --pdx-primary-text: #0d1a11;
+    --pdx-border: #648069;
+  }
+}
+
+.login-pf body,
+.pf-v5-c-login {
+  background: var(--pdx-background);
+  color: var(--pdx-foreground);
+}
+
+.pf-v5-c-login__main {
+  background: var(--pdx-card);
+  color: var(--pdx-foreground);
+  border-radius: 0.625rem;
+}
+
+.pf-v5-c-login__main-header .pf-v5-c-title,
+.pf-v5-c-form__label-text {
+  color: var(--pdx-foreground);
+}
+
+.pf-v5-c-form-control {
+  --pf-v5-c-form-control--BorderColor: var(--pdx-border);
+}
+
+.pf-v5-c-button.pf-m-primary {
+  --pf-v5-c-button--m-primary--BackgroundColor: var(--pdx-primary);
+  --pf-v5-c-button--m-primary--hover--BackgroundColor: var(--pdx-primary-hover);
+  --pf-v5-c-button--m-primary--focus--BackgroundColor: var(--pdx-primary-hover);
+  --pf-v5-c-button--m-primary--active--BackgroundColor: var(--pdx-primary-hover);
+  --pf-v5-c-button--m-primary--Color: var(--pdx-primary-text);
+  --pf-v5-c-button--m-primary--hover--Color: var(--pdx-primary-text);
+  --pf-v5-c-button--m-primary--focus--Color: var(--pdx-primary-text);
+  --pf-v5-c-button--m-primary--active--Color: var(--pdx-primary-text);
+  min-height: 48px;
+}
+
+a {
+  color: var(--pdx-primary);
+}
+
+/* Brand header and accent colours (the v2 theme defaults to white text and PatternFly blue). */
+#kc-header #kc-header-wrapper {
+  --pf-v5-global--Color--light-100: var(--pdx-foreground);
+}
+
+:root {
+  --pf-v5-global--primary-color--100: var(--pdx-primary);
+  --pf-v5-global--primary-color--200: var(--pdx-primary-hover);
+  --pf-v5-global--link--Color: var(--pdx-primary);
+  --pf-v5-global--active-color--100: var(--pdx-primary);
+}
+
+.pf-v5-c-login__main {
+  border-top: 3px solid var(--pdx-primary);
+}
+
+.pf-v5-c-login__main {
+  --pf-v5-c-login__main--BorderTopColor: var(--pdx-primary);
+}
+
+.pf-v5-c-form-control {
+  --pf-v5-c-form-control--focus--BorderBottomColor: var(--pdx-primary);
+  --pf-v5-c-form-control--hover--BorderBottomColor: var(--pdx-primary);
+}

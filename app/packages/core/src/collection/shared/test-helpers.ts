@@ -1,0 +1,176 @@
+import type { SpecimenStore, SpecimenValues, SpecimenRow } from "./types";
+import type { MarkerAssignment, LocationAssignment } from "./types";
+
+export { testSpecies, SpeciesStub } from "./test-helpers.species";
+
+/** In-memory adapter for tests only; the real adapter lives in `db`. Known locations replace the foreign key. */
+export class InMemorySpecimens implements SpecimenStore {
+  readonly rows: (SpecimenRow & { userId: string })[] = [];
+  writes = 0;
+
+  constructor(
+    private readonly locations: Readonly<Record<string, readonly string[]>> = {},
+    private readonly zones: Readonly<Record<string, readonly string[]>> = {},
+  ) {}
+
+  async list(userId: string): Promise<readonly SpecimenRow[]> {
+    return this.rows
+      .filter((z) => z.userId === userId)
+      .map((z) => {
+        const { userId: owner, ...row } = z;
+        void owner;
+        return row;
+      });
+  }
+
+  async find(userId: string, id: string): Promise<SpecimenRow | null> {
+    return (await this.list(userId)).find((z) => z.id === id) ?? null;
+  }
+
+  private markerTaken(userId: string, speciesId: string, marker: string, except: string[] = []) {
+    return this.rows.some(
+      (z) =>
+        z.userId === userId &&
+        z.speciesId === speciesId &&
+        !except.includes(z.id) &&
+        z.marker?.toLowerCase() === marker.toLowerCase(),
+    );
+  }
+
+  /** Why the new specimen and the renames cannot be written together (the real adapter has constraints). */
+  private conflict(
+    userId: string,
+    w: SpecimenValues,
+    assignments: readonly MarkerAssignment[],
+  ): "name_taken" | "marker_taken" | "specimen_unknown" | null {
+    const ids = assignments.map((a) => a.specimenId);
+    if (ids.some((id) => !this.rows.some((z) => z.userId === userId && z.id === id)))
+      return "specimen_unknown";
+    const names = [w.name, ...assignments.map((a) => a.name)].map((n) => n.toLowerCase());
+    const taken = this.rows.some(
+      (z) => z.userId === userId && !ids.includes(z.id) && names.includes(z.name.toLowerCase()),
+    );
+    if (taken || new Set(names).size < names.length) return "name_taken";
+    const markers = [w.marker, ...assignments.map((a) => a.marker)];
+    const own = markers.filter((m): m is string => m !== null).map((m) => m.toLowerCase());
+    const clash = markers.some((m) => m && this.markerTaken(userId, w.speciesId, m, ids));
+    return new Set(own).size < own.length || clash ? "marker_taken" : null;
+  }
+
+  /** A location or zone that is not among those of the account (the real adapter has the foreign keys). */
+  private unknownReference(userId: string, w: SpecimenValues) {
+    if (w.locationId && !this.locations[userId]?.includes(w.locationId))
+      return "location_unknown" as const;
+    if (w.lightZoneId && !this.zones[userId]?.includes(w.lightZoneId))
+      return "zone_unknown" as const;
+    return null;
+  }
+
+  async create(
+    userId: string,
+    w: SpecimenValues,
+    assignments: readonly MarkerAssignment[] = [],
+  ): Promise<
+    | SpecimenRow
+    | "name_taken"
+    | "marker_taken"
+    | "location_unknown"
+    | "zone_unknown"
+    | "specimen_unknown"
+  > {
+    this.writes += 1;
+    const conflict = this.conflict(userId, w, assignments);
+    if (conflict) return conflict;
+    const unknown = this.unknownReference(userId, w);
+    if (unknown) return unknown;
+    for (const a of assignments)
+      this.replace(userId, a.specimenId, { name: a.name, marker: a.marker });
+    const row: SpecimenRow = {
+      ...w,
+      createdAt: "2026-10-01T10:00:00Z",
+      id: `00000000-0000-4000-8000-${String(this.rows.length + 1).padStart(12, "0")}`,
+      status: w.status ?? "plant",
+      archivedAt: null,
+      archivedReason: null,
+    };
+    this.rows.push({ ...row, userId });
+    return row;
+  }
+
+  async mark(userId: string, id: string, w: { name: string; marker: string }) {
+    const z = await this.find(userId, id);
+    if (!z) return "not_found" as const;
+    if (z.status === "archived") return "archived" as const;
+    if (this.markerTaken(userId, z.speciesId, w.marker, [id])) return "marker_taken" as const;
+    const name = w.name.toLowerCase();
+    if (this.rows.some((r) => r.userId === userId && r.id !== id && r.name.toLowerCase() === name))
+      return "name_taken" as const;
+    return this.replace(userId, id, { name: w.name, marker: w.marker }) as SpecimenRow;
+  }
+
+  /** Status before the archiving per row (the real adapter keeps it in a column). */
+  private readonly before = new Map<string, SpecimenRow["status"]>();
+
+  private replace(userId: string, id: string, fresh: Partial<SpecimenRow>) {
+    const i = this.rows.findIndex((z) => z.userId === userId && z.id === id);
+    const alt = this.rows[i];
+    if (!alt) return null;
+    this.writes += 1;
+    const row = { ...alt, ...fresh };
+    this.rows[i] = row;
+    const { userId: owner, ...without } = row;
+    void owner;
+    return without;
+  }
+
+  async archive(userId: string, id: string, reason: string, date: string) {
+    const z = await this.find(userId, id);
+    if (!z) return "not_found" as const;
+    if (z.status === "archived") return "already_archived" as const;
+    this.before.set(id, z.status);
+    return this.replace(userId, id, {
+      status: "archived",
+      archivedAt: date,
+      archivedReason: reason,
+    }) as SpecimenRow;
+  }
+
+  async repot(userId: string, id: string, date: string | null) {
+    const z = await this.find(userId, id);
+    if (!z) return "not_found" as const;
+    if (z.status !== "cutting") return "not_a_cutting" as const;
+    return this.replace(userId, id, { status: "plant", repottedAt: date }) as SpecimenRow;
+  }
+
+  async setLocations(userId: string, assignments: readonly LocationAssignment[]) {
+    const rows = await Promise.all(assignments.map((a) => this.find(userId, a.specimenId)));
+    if (rows.includes(null)) return "specimen_unknown" as const;
+    if (rows.some((z) => z?.status === "archived")) return "archived" as const;
+    const known = (id: string) => this.locations[userId]?.includes(id);
+    if (!assignments.every((a) => known(a.locationId))) return "location_unknown" as const;
+    const set = (a: LocationAssignment) =>
+      this.replace(userId, a.specimenId, { locationId: a.locationId }) as SpecimenRow;
+    return assignments.map(set);
+  }
+
+  async setLightZone(userId: string, id: string, lightZoneId: string | null) {
+    const z = await this.find(userId, id);
+    if (!z) return "not_found" as const;
+    if (z.status === "archived") return "archived" as const;
+    if (lightZoneId && !this.zones[userId]?.includes(lightZoneId)) return "zone_unknown" as const;
+    return this.replace(userId, id, { lightZoneId }) as SpecimenRow;
+  }
+
+  async restore(userId: string, id: string) {
+    const z = await this.find(userId, id);
+    if (!z) return "not_found" as const;
+    if (z.status !== "archived") return "not_archived" as const;
+    return this.replace(userId, id, {
+      status: this.before.get(id) ?? "plant",
+      archivedAt: null,
+      archivedReason: null,
+    }) as SpecimenRow;
+  }
+}
+
+export { TargetLocationStub } from "../placement/target-location-stub";

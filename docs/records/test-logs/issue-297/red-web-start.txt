@@ -1,0 +1,867 @@
+
+ RUN  v5.0.3 <worktree>
+
+ ❯ src/start-page.test.tsx (13 tests | 12 failed) 12074ms
+   ❯ US-ACC-03 start page and guided onboarding (13)
+     × US-ACC-03 a new account is guided: first step asks for locations, with skip 1019ms
+     × US-ACC-03 every step can be skipped; afterwards the start page shows hints and the next action, no error 1004ms
+     × US-ACC-03 after skipping the last step the guide does not come back when the start tab is opened again 1004ms
+     × US-ACC-03 the first plant step leads to the catalog 1004ms
+     × US-ACC-03 ending the onboarding is remembered per account on this device 1004ms
+     × US-ACC-03 without a plant the start page shows a clear next action instead of an empty page 1003ms
+     × US-ACC-03 with a plant and full setup the start page is usable and points to the collection 1004ms
+     × US-ACC-03 with a plant but skipped details the hints stay, each leads to the place that fixes it 1004ms
+     × US-ACC-03 focus moves to the heading of the new step and the step is announced politely 1003ms
+     × US-ACC-03 a wizard step shows a visible progress marker, not only an aria attribute 1003ms
+     × US-ACC-03 the start page counts the specimens with the count route, it does not load the card list 1004ms
+     × US-ACC-03 the guide and the overview both have exactly one h1, the steps are h2 1002ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/start-page.test.tsx > US-ACC-03 start page and guided onboarding > US-ACC-03 a new account is guided: first step asks for locations, with skip
+TestingLibraryElementError: Unable to find role="heading" and name "Wo stehen deine Pflanzen?"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/start-page.test.tsx:52:25
+     50|     fakeServer({ zones: [], locations: [], cards: [] });
+     51|     view();
+     52|     expect(await screen.findByRole("heading", { name: "Wo stehen deine…
+       |                         ^
+     53|     expect(screen.getByText("Schritt 1 von 3")).toBeTruthy();
+     54|     expect(screen.getByRole("button", { name: "Überspringen" })).toBeT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  src/start-page.test.tsx > US-ACC-03 start page and guided onboarding > US-ACC-03 every step can be skipped; afterwards the start page shows hints and the next action, no error
+TestingLibraryElementError: Unable to find role="button" and name "Überspringen"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/start-page.test.tsx:60:40
+     58|     fakeServer({ zones: [], locations: [], cards: [] });
+     59|     view();
+     60|     await userEvent.click(await screen.findByRole("button", { name: "Ü…
+       |                                        ^
+     61|     expect(await screen.findByRole("heading", { name: "Wie hell ist es…
+     62|     expect(screen.getByText("Schritt 2 von 3")).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  src/start-page.test.tsx > US-ACC-03 start page and guided onboarding > US-ACC-03 after skipping the last step the guide does not come back when the start tab is opened again
+TestingLibraryElementError: Unable to find role="button" and name "Überspringen"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/start-page.test.tsx:79:40
+     77|     fakeServer({ zones: [ZONE], locations: [LOCATION], cards: [] });
+     78|     view();
+     79|     await userEvent.click(await screen.findByRole("button", { name: "Ü…
+       |                                        ^
+     80|     expect(await screen.findByRole("heading", { name: "Start" })).toBe…
+     81|     cleanup();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  src/start-page.test.tsx > US-ACC-03 start page and guided onboarding > US-ACC-03 the first plant step leads to the catalog
+TestingLibraryElementError: Unable to find role="heading" and name "Deine erste Pflanze"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/start-page.test.tsx:90:25
+     88|     fakeServer({ zones: [ZONE], locations: [LOCATION], cards: [] });
+     89|     view();
+     90|     expect(await screen.findByRole("heading", { name: "Deine erste Pfl…
+       |                         ^
+     91|     await userEvent.click(screen.getByRole("button", { name: "Art im K…
+     92|     expect(open).toHaveBeenCalledWith("species");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  src/start-page.test.tsx > US-ACC-03 start page and guided onboarding > US-ACC-03 ending the onboarding is remembered per account on this device
+TestingLibraryElementError: Unable to find role="button" and name "Einstieg beenden"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/start-page.test.tsx:98:40
+     96|     fakeServer({ zones: [], locations: [], cards: [] });
+     97|     view();
+     98|     await userEvent.click(await screen.findByRole("button", { name: "E…
+       |                                        ^
+     99|     expect(await screen.findByRole("heading", { name: "Start" })).toBe…
+    100|     cleanup();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  src/start-page.test.tsx > US-ACC-03 start page and guided onboarding > US-ACC-03 without a plant the start page shows a clear next action instead of an empty page
+TestingLibraryElementError: Unable to find role="heading" and name "Start"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/start-page.test.tsx:110:25
+    108|     fakeServer({ zones: [ZONE], locations: [LOCATION], cards: [] });
+    109|     view();
+    110|     expect(await screen.findByRole("heading", { name: "Start" })).toBe…
+       |                         ^
+    111|     expect(screen.getByText(/Wähle im Katalog eine Art/)).toBeTruthy();
+    112|     expect(screen.getByRole("button", { name: "Art im Katalog wählen" …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  src/start-page.test.tsx > US-ACC-03 start page and guided onboarding > US-ACC-03 with a plant and full setup the start page is usable and points to the collection
+TestingLibraryElementError: Unable to find role="heading" and name "Start"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/start-page.test.tsx:118:25
+    116|     fakeServer({ zones: [ZONE], locations: [LOCATION], cards: [{ id: "…
+    117|     view();
+    118|     expect(await screen.findByRole("heading", { name: "Start" })).toBe…
+       |                         ^
+    119|     expect(screen.queryByRole("heading", { name: "Wo stehen deine Pfla…
+    120|     await userEvent.click(screen.getByRole("button", { name: "Zum Best…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  src/start-page.test.tsx > US-ACC-03 start page and guided onboarding > US-ACC-03 with a plant but skipped details the hints stay, each leads to the place that fixes it
+TestingLibraryElementError: Unable to find an element with the text: Du hast noch keinen Standort angelegt.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/start-page.test.tsx:127:25
+    125|     fakeServer({ zones: [], locations: [], cards: [{ id: "e1" }] });
+    126|     view();
+    127|     expect(await screen.findByText("Du hast noch keinen Standort angel…
+       |                         ^
+    128|     await userEvent.click(screen.getByRole("button", { name: "Standort…
+    129|     expect(open).toHaveBeenCalledWith("light");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  src/start-page.test.tsx > US-ACC-03 start page and guided onboarding > US-ACC-03 focus moves to the heading of the new step and the step is announced politely
+TestingLibraryElementError: Unable to find role="button" and name "Überspringen"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/start-page.test.tsx:149:40
+    147|     fakeServer({ zones: [], locations: [], cards: [] });
+    148|     view();
+    149|     await userEvent.click(await screen.findByRole("button", { name: "Ü…
+       |                                        ^
+    150|     const heading = await screen.findByRole("heading", { name: "Wie he…
+    151|     expect(document.activeElement).toBe(heading);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  src/start-page.test.tsx > US-ACC-03 start page and guided onboarding > US-ACC-03 a wizard step shows a visible progress marker, not only an aria attribute
+TestingLibraryElementError: Unable to find an element with the text: Schritt 1 von 3. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/start-page.test.tsx:164:33
+    162|     fakeServer({ zones: [], locations: [], cards: [] });
+    163|     view();
+    164|     const marker = await screen.findByText("Schritt 1 von 3");
+       |                                 ^
+    165|     expect(marker.className).toContain("onboarding-progress");
+    166|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  src/start-page.test.tsx > US-ACC-03 start page and guided onboarding > US-ACC-03 the start page counts the specimens with the count route, it does not load the card list
+TestingLibraryElementError: Unable to find role="heading" and name "Start"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/start-page.test.tsx:171:18
+    169|     fakeServer({ zones: [], locations: [], cards: [{ id: "e1" }] });
+    170|     view();
+    171|     await screen.findByRole("heading", { name: "Start" });
+       |                  ^
+    172|     const paths = (fetch as ReturnType<typeof vi.fn>).mock.calls.map(
+    173|       ([u]) => new URL(String(u)).pathname,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  src/start-page.test.tsx > US-ACC-03 start page and guided onboarding > US-ACC-03 the guide and the overview both have exactly one h1, the steps are h2
+TestingLibraryElementError: Unable to find role="heading" and name "Wo stehen deine Pflanzen?"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"light collection start-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"warning"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mDer Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mErneut laden[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/start-page.test.tsx:182:18
+    180|     fakeServer({ zones: [], locations: [], cards: [] });
+    181|     view();
+    182|     await screen.findByRole("heading", { name: "Wo stehen deine Pflanz…
+       |                  ^
+    183|     expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.t…
+    184|       "Start",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 1 passed (13)
+   Start at  08:17:19
+   Duration  13.39s (tests 91%, environment 4%, transform 3%, import 2%)
+
+exit code: 1

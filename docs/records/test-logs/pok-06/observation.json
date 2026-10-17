@@ -1,0 +1,119 @@
+{
+  "steps": {
+    "emptyText": "Pokédex\n\nNoch keine Art gefangen. Lege ein Exemplar mit bestimmter Art an, dann zählt es.",
+    "emptyShots": {
+      "desktop": {
+        "horizontalScroll": false
+      },
+      "mobile": {
+        "horizontalScroll": false
+      }
+    },
+    "cuttingCreated": 201,
+    "caughtText": "Pokédex\n\n4 Arten gefangen\n\nAloe vera\nAloe\n1 Exemplar\nCitrus limon\nCitrus\n1 Exemplar\nFicus lyrata\nFicus\n1 Exemplar\nOpuntia microdasys\nOpuntia\n'Albispina'\n2 Exemplare\nNoch nicht gezählt\n„Hippeastrum – Amaryllis“ (Hippeastrum) hat noch keine bestimmte Art, das Exemplar zählt noch nicht.\nBestimme die Art, dann zählt es.",
+    "caughtShots": {
+      "desktop": {
+        "horizontalScroll": false
+      },
+      "mobile": {
+        "horizontalScroll": false
+      }
+    },
+    "caughtCards": 5,
+    "archive": 200,
+    "afterArchiveText": "Pokédex\n\n3 Arten gefangen\n\nCitrus limon\nCitrus\n1 Exemplar\nFicus lyrata\nFicus\n1 Exemplar\nOpuntia microdasys\nOpuntia\n'Albispina'\n2 Exemplare\nNoch nicht gezählt\n„Hippeastrum – Amaryllis“ (Hippeastrum) hat noch keine bestimmte Art, das Exemplar zählt noch nicht.\nBestimme die Art, dann zählt es.",
+    "afterArchiveShots": {
+      "desktop": {
+        "horizontalScroll": false
+      },
+      "mobile": {
+        "horizontalScroll": false
+      }
+    },
+    "axeLight": [],
+    "navTargets": [
+      {
+        "text": "Arten",
+        "w": 85,
+        "h": 48
+      },
+      {
+        "text": "Bestand",
+        "w": 105,
+        "h": 48
+      },
+      {
+        "text": "Behandlung",
+        "w": 136,
+        "h": 48
+      },
+      {
+        "text": "Hinweise",
+        "w": 150,
+        "h": 48
+      },
+      {
+        "text": "Pflegephasen",
+        "w": 185,
+        "h": 48
+      },
+      {
+        "text": "Pflegeprofil",
+        "w": 180,
+        "h": 48
+      },
+      {
+        "text": "Pokédex",
+        "w": 155,
+        "h": 48
+      },
+      {
+        "text": "Standorte und Licht",
+        "w": 223,
+        "h": 48
+      },
+      {
+        "text": "Konto",
+        "w": 112,
+        "h": 48
+      }
+    ],
+    "focusAfterTab": "Standorte und Licht",
+    "axeDark": [],
+    "benText": "Pokédex\n\nNoch keine Art gefangen. Lege ein Exemplar mit bestimmter Art an, dann zählt es.",
+    "benShots": {
+      "desktop": {
+        "horizontalScroll": false
+      },
+      "mobile": {
+        "horizontalScroll": false
+      }
+    },
+    "benLeaks": [],
+    "benOwnText": "Pokédex\n\n1 Art gefangen\n\nEcheveria elegans\nEcheveria\n'Perle'\n1 Exemplar",
+    "benOwnLeaks": [],
+    "benOwnShots": {
+      "desktop": {
+        "horizontalScroll": false
+      },
+      "mobile": {
+        "horizontalScroll": false
+      }
+    },
+    "annaApiSeenByBen": {
+      "ownership": {
+        "caught": [
+          {
+            "species": "Echeveria elegans",
+            "genus": "Echeveria",
+            "chips": [
+              "'Perle'"
+            ],
+            "specimenCount": 1
+          }
+        ],
+        "unidentified": []
+      }
+    }
+  }
+}

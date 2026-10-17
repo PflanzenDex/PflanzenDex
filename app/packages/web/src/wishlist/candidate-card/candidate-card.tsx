@@ -1,0 +1,193 @@
+import { useState } from "react";
+import type { Candidate } from "@pflanzendex/core";
+import { Button } from "@/components/ui/button/button";
+import { cn } from "@/lib/utils";
+import { useStoredPhoto, type PhotoAccess } from "@/lib/use-stored-photo";
+import { errorText } from "@/lib/error-text";
+import { isPlainHttps } from "../schemas";
+
+const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
+const UNKNOWN = "unbekannt";
+
+/** The thinnest zone is marked in words and by a border, not by colour alone; unknown or outside zones get a dashed border. */
+const PRIORITY_BORDER: Record<string, string> = {
+  thinnest: "border-2 border-primary",
+  zone_unknown: "border-dashed",
+  zone_outside: "border-dashed",
+};
+
+const placeholder =
+  "grid min-h-18 place-items-center rounded-lg border border-dashed border-border text-muted-foreground";
+
+/** The local copy (US-WUN-04): fetched with the token, so a viewer's browser never contacts a third-party host (P-05). */
+function StoredPicture(props: {
+  c: Candidate;
+  image: NonNullable<Candidate["image"]>;
+  access: PhotoAccess;
+}) {
+  const { c, image } = props;
+  const state = useStoredPhoto(props.access, `/wishes/${encodeURIComponent(c.id)}/image`);
+  return (
+    <figure className="m-0 grid gap-1">
+      {typeof state === "string" ? (
+        <img
+          src={state}
+          alt={`Bild von ${c.title}`}
+          className="max-h-64 w-full rounded-lg object-cover"
+        />
+      ) : (
+        <span role="status" className={placeholder}>
+          {state ? errorText(state.code) : "Bild wird geladen …"}
+        </span>
+      )}
+      <figcaption className="text-sm text-muted-foreground">
+        Quelle: {image.source} · Lizenz: {image.license ?? UNKNOWN}
+      </figcaption>
+    </figure>
+  );
+}
+
+/**
+ * The picture of a candidate. A stored copy (US-WUN-04) is shown from the own storage. Otherwise the address, typed by
+ * a keeper, is only a link the viewer follows on purpose: loading it would make every viewer's browser contact a
+ * third-party host (IP address, browser, referrer) and breaks P-05. "Bild speichern" fetches a copy from Wikimedia
+ * Commons with its license; the server refuses everything else with a clear text.
+ */
+function Picture(props: {
+  c: Candidate;
+  access: PhotoAccess | undefined;
+  onStoreImage: ((c: Candidate) => void) | undefined;
+  busy: boolean;
+}) {
+  const { c, access, onStoreImage } = props;
+  const image = c.image;
+  if (!image || !isPlainHttps(image.url)) return <span className={placeholder}>Kein Bild</span>;
+  if (image.stored && access) return <StoredPicture c={c} image={image} access={access} />;
+  return (
+    <figure className="m-0 grid gap-1">
+      <span className={placeholder}>
+        <a
+          href={image.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          referrerPolicy="no-referrer"
+          className="inline-flex min-h-[44px] items-center p-3 text-center text-primary underline decoration-2 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Bild ansehen (öffnet extern)
+        </a>
+      </span>
+      <figcaption className="text-sm text-muted-foreground">Quelle: {image.source}</figcaption>
+      {onStoreImage && (
+        <Button
+          type="button"
+          variant="outline"
+          size="touch"
+          disabled={props.busy}
+          aria-label={`Bild speichern: ${c.title}`}
+          onClick={() => onStoreImage(c)}
+        >
+          Bild speichern
+        </Button>
+      )}
+    </figure>
+  );
+}
+
+/** "Verwerfen" asks before it writes: the wish stays stored under "Verworfen", but there is no way back yet (P-10). */
+function Discard(props: { c: Candidate; onDiscard: (c: Candidate) => void; busy: boolean }) {
+  const { c } = props;
+  const [asking, setAsking] = useState(false);
+  if (!asking)
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size="touch"
+        className="rounded-full"
+        disabled={props.busy}
+        aria-label={`Verwerfen: ${c.title}`}
+        onClick={() => setAsking(true)}
+      >
+        Verwerfen
+      </Button>
+    );
+  return (
+    <div className="grid gap-2">
+      <p>Wirklich verwerfen? Der Wunsch bleibt unter „Verworfen“ gespeichert.</p>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          variant="destructive"
+          size="touch"
+          disabled={props.busy}
+          aria-label={`Ja, verwerfen: ${c.title}`}
+          onClick={() => props.onDiscard(c)}
+        >
+          Ja, verwerfen
+        </Button>
+        <Button type="button" variant="outline" size="touch" onClick={() => setAsking(false)}>
+          Abbrechen
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * One open candidate (US-WUN-01): picture link with its source, title, target zone with stock, difficulty, reasoning
+ * and why it stands here; "Gekauft" records the purchase (US-WUN-03), "Verwerfen" discards the wish (US-WUN-05).
+ */
+export function CandidateCard(props: {
+  c: Candidate;
+  rank: number;
+  /** Records the purchase; without it the card has no action. */
+  onBuy?: (c: Candidate) => void;
+  /** Sets the wish to discarded (US-WUN-05); asks first. Without it the card has no such action. */
+  onDiscard?: (c: Candidate) => void;
+  /** A write is running: the action waits, so a double tap writes once. */
+  busy?: boolean;
+  /** How the stored image is fetched privately (US-WUN-04, P-05). */
+  photoAccess?: PhotoAccess;
+  /** Stores a local copy of the image from Wikimedia Commons (US-WUN-04); without it the card has no such action. */
+  onStoreImage?: (c: Candidate) => void;
+}) {
+  const { c, rank, onBuy, onDiscard } = props;
+  return (
+    <li
+      data-priority={c.priority.kind}
+      className={cn(
+        "animate-list-in grid min-w-0 content-start gap-1 break-words rounded-card border border-border bg-card p-3 text-card-foreground shadow-elevation-1",
+        PRIORITY_BORDER[c.priority.kind],
+      )}
+    >
+      <Picture
+        c={c}
+        access={props.photoAccess}
+        onStoreImage={props.onStoreImage}
+        busy={props.busy === true}
+      />
+      <h2 className="mt-2 text-lg font-semibold">{c.title}</h2>
+      <p className="w-fit rounded-full bg-muted px-3 py-0.5 text-sm font-semibold text-muted-foreground">
+        Platz {rank} der Liste
+      </p>
+      <p className="font-bold">{c.zoneText}</p>
+      <p>Schwierigkeit: {c.difficulty ? (LEVELS[c.difficulty] ?? UNKNOWN) : UNKNOWN}</p>
+      {c.reasoning && <p>{c.reasoning}</p>}
+      <p className="text-sm text-muted-foreground">{c.priority.text}</p>
+      {onBuy && (
+        <Button
+          type="button"
+          variant="outline"
+          size="touch"
+          className="mt-2 rounded-full"
+          disabled={props.busy === true}
+          aria-label={`Gekauft: ${c.title}`}
+          onClick={() => onBuy(c)}
+        >
+          Gekauft
+        </Button>
+      )}
+      {onDiscard && <Discard c={c} onDiscard={onDiscard} busy={props.busy === true} />}
+    </li>
+  );
+}

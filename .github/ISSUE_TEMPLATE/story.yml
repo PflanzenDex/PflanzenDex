@@ -1,0 +1,36 @@
+name: Story or enabler
+description: Work item from the spec. The spec is authoritative; the issue only points to it.
+labels: [story]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        New features start in `docs/specs/product/` (a story with Given/When/Then criteria); the issue comes second.
+  - type: input
+    id: id
+    attributes:
+      label: Story ID
+      placeholder: US-XXX-nn
+    validations:
+      required: true
+  - type: dropdown
+    id: release
+    attributes:
+      label: Release
+      options: [R0 Foundation, R1 Parity, R2 Social, R3 Swapping and reminders, R4 AI access, R5 Equipment, R6 Sensors]
+    validations:
+      required: true
+  - type: textarea
+    id: criteria
+    attributes:
+      label: Description and acceptance criteria
+      description: copied unchanged from the spec; if they differ, the spec wins
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      value: |
+        **Blocked by:**
+        **Blocks:**

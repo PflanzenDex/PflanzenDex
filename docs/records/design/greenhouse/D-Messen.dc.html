@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Messen Desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif}
+button,input{font-family:inherit}
+button{cursor:pointer}
+.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.card{background:var(--surface);border-radius:24px;box-shadow:0 1px 2px var(--shadow),0 8px 20px var(--shadow)}
+.btn{min-height:52px;padding:0 28px;border-radius:26px;border:0;background:var(--primary);color:var(--onprimary);font-size:16px;font-weight:700}
+.btn2{min-height:48px;padding:0 20px;border-radius:24px;border:2px solid var(--line);background:transparent;color:var(--text);font-weight:600;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px}
+.mut{color:var(--muted)}
+.t{font-size:13px;color:var(--muted);font-weight:500}
+.side{width:248px;flex:none;box-sizing:border-box;padding:24px 16px;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.side a{min-height:44px;box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:14px;text-decoration:none;font-size:15px;font-weight:600;color:var(--muted)}
+.side a.on{background:var(--soft);color:var(--softtext)}
+.hr{display:flex;align-items:center;justify-content:space-between;min-height:48px;border-top:1px solid var(--line);font-size:15px}
+</style>
+</helmet>
+<div style="{{vars}};width:1280px;height:800px;box-sizing:border-box;display:flex;background:var(--bg);color:var(--text);overflow:hidden">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19l8-8"/></symbol>
+<symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+<symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5a3 3 0 010 6M18 14c2 .6 3 2.6 3 6"/></symbol>
+<symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></symbol>
+<symbol id="camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+<symbol id="back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+</defs></svg>
+<aside class="side">
+<div style="font-size:20px;font-weight:700;padding:0 12px 20px;display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:10px;background:var(--primary);color:var(--onprimary);display:flex;align-items:center;justify-content:center"><svg class="i" style="width:20px;height:20px"><use href="#leaf"/></svg></span>PflanzenDéx</div>
+<nav aria-label="Hauptnavigation" style="display:flex;flex-direction:column;gap:4px">
+<a href="#"><svg class="i"><use href="#sun"/></svg>Heute</a>
+<a href="#" class="on"><svg class="i"><use href="#leaf"/></svg>Sammlung</a>
+<a href="#"><svg class="i"><use href="#compass"/></svg>Entdecken</a>
+<a href="#"><svg class="i"><use href="#users"/></svg>Freunde</a>
+<a href="#"><svg class="i"><use href="#user"/></svg>Konto</a>
+</nav>
+</aside>
+<main style="flex:1;min-width:0;padding:28px 40px;display:flex;flex-direction:column;gap:18px">
+<a href="#" style="display:inline-flex;align-items:center;gap:6px;min-height:44px;font-size:14px;font-weight:600;color:var(--primary);text-decoration:none"><svg class="i" style="width:18px;height:18px"><use href="#back"/></svg>Sansevieria „Sol“</a>
+<div><div class="t">Messung · Schritt 1 von 3</div><h1 style="margin:2px 0 0;font-size:36px;line-height:1.15;font-weight:700;letter-spacing:-.6px">Wie lang ist das längste Blatt?</h1></div>
+<div style="display:flex;gap:6px;max-width:520px"><div style="flex:1;height:6px;border-radius:3px;background:var(--primary)"></div><div style="flex:1;height:6px;border-radius:3px;background:var(--line)"></div><div style="flex:1;height:6px;border-radius:3px;background:var(--line)"></div></div>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,520px) minmax(0,1fr);gap:32px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="card" style="padding:24px;display:flex;flex-direction:column;gap:10px"><label for="v" class="t">Blattlänge in cm</label><div style="display:flex;align-items:baseline;gap:8px"><input id="v" inputmode="decimal" value="19,5" style="width:100%;font-size:52px;font-weight:700;border:0;border-bottom:3px solid var(--primary);background:transparent;color:var(--text);padding:4px 0;outline:none;font-variant-numeric:tabular-nums"><span style="font-size:22px;font-weight:600" class="mut">cm</span></div><div class="mut" style="font-size:14px">Letzte Messung: 18,5 cm vor 21 Tagen. Das ist dein eigener Verlauf.</div></div>
+<label style="display:flex;align-items:center;gap:12px;min-height:48px;font-size:15px;font-weight:500"><input type="checkbox" style="width:24px;height:24px;accent-color:var(--primary)">Weiß ich nicht (wird als „unbekannt“ gespeichert)</label>
+<div style="display:flex;gap:12px"><button class="btn2"><svg class="i"><use href="#camera"/></svg>Foto aufnehmen</button><button class="btn" style="margin-left:auto">Weiter</button></div>
+</div>
+<aside class="card" style="padding:20px 24px;align-self:start"><h2 style="margin:0 0 10px;font-size:16px;font-weight:700">Bisherige Messungen</h2>
+<div class="hr"><span>vor 21 Tagen</span><b style="font-variant-numeric:tabular-nums">18,5 cm</b></div>
+<div class="hr"><span>vor 50 Tagen</span><b style="font-variant-numeric:tabular-nums">17,8 cm</b></div>
+<div class="hr"><span>vor 80 Tagen</span><b>unbekannt</b></div>
+<div class="hr" style="border-bottom:1px solid var(--line)"><span>vor 110 Tagen</span><b style="font-variant-numeric:tabular-nums">16,9 cm</b></div></aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"dark","options":["light","dark"]}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = (this.props.theme ?? 'dark') === 'dark';
+const P = dark
+? {bg:'#0F1612',surface:'#18221C',text:'#E6EFE9',muted:'#A5B6AB',line:'#2B3B31',primary:'#7BD3A0',onprimary:'#0B2316',soft:'#1F3A2B',softtext:'#A9E8C4',shadow:'rgba(0,0,0,0.35)'}
+: {bg:'#F2F6F3',surface:'#FFFFFF',text:'#14201A',muted:'#4B5C52',line:'#D3DED6',primary:'#1B6B4A',onprimary:'#FFFFFF',soft:'#D8EEDF',softtext:'#124A32',shadow:'rgba(20,40,28,0.08)'};
+return { vars: Object.keys(P).map(k => '--' + k + ':' + P[k]).join(';') };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+
+ RUN  v5.0.3 <worktree>
+
+ ❯ src/wishlist/name-key.test.ts (0 test)
+ ❯ src/wishlist/create.test.ts (24 tests | 1 failed) 16ms
+   ❯ US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) (22)
+     × US-WUN-01 a duplicate that differs only in diacritics or Unicode composition is refused (FR-WUN-06) 4ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/wishlist/name-key.test.ts [ src/wishlist/name-key.test.ts ]
+Error: Cannot find module './name-key' imported from <worktree>
+ ❯ src/wishlist/name-key.test.ts:2:1
+      1| import { describe, expect, it } from "vitest";
+      2| import { wishNameKey } from "./name-key";
+       | ^
+      3|
+      4| describe("US-WUN-01 the key that makes wish names unique (FR-WUN-06)",…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/wishlist/create.test.ts > US-WUN-01 record a wish (FR-WUN-01, FR-WUN-04, FR-WUN-06) > US-WUN-01 a duplicate that differs only in diacritics or Unicode composition is refused (FR-WUN-06)
+AssertionError: expected undefined to be 'wish.name_taken' // Object.is equality
+
+- Expected:
+"wish.name_taken"
+
++ Received:
+undefined
+
+ ❯ src/wishlist/create.test.ts:118:32
+    116|     for (const name of ["Cafe Pflanze", "CAFÉ PFLANZE", "Cafe\u0301 Pf…
+    117|       const r = await create(input({ name }));
+    118|       expect(errorOf(r)?.code).toBe("wish.name_taken");
+       |                                ^
+    119|     }
+    120|     expect(wishes.rows).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  1 failed | 41 passed (42)
+   Start at  08:12:00
+   Duration  209ms (transform 53%, import 27%, tests 14%, worker 5%)
+
+exit code: 1

@@ -1,0 +1,14 @@
+{
+  "name": "@pflanzendex/e2e",
+  "private": true,
+  "type": "module",
+  "description": "End-to-end tests (QG-T3): Playwright against the real stack (Keycloak, PostgreSQL, API, Vite), mobile and desktop",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.12.0",
+    "@playwright/test": "^1.60.0"
+  }
+}

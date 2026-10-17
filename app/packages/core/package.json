@@ -1,0 +1,13 @@
+{
+  "name": "@pflanzendex/core",
+  "private": true,
+  "type": "module",
+  "description": "Domain logic without I/O (P-02): pure functions, no imports from API, web, database, file system or network (AB-1)",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run"
+  }
+}

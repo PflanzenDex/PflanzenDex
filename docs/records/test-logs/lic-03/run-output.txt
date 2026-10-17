@@ -1,0 +1,21 @@
+EMPTY text: Noch keine Arten mit aktivem Exemplar und gesetztem Lux-Bedarf. Lege ein Exemplar an oder aktualisiere den Lux-Bedarf einer Art.
+
+Zum Bestand
+SHOT 01-empty desktop: scrollWidth=1440 clientWidth=1440 horizontalScroll=false; targets<48px: []
+SHOT 01-empty mobil: scrollWidth=375 clientWidth=375 horizontalScroll=false; targets<48px: []
+AXE 01-empty: 0 violations []
+AFTER Zum Bestand aria-current tab: Bestand | url: http://localhost:55402/
+ROWS [["Alpha pro","Lampe 4","110.000","direkt unter der Lampe"],["Bravo fifty","Lampe 3","50.000","direkt unter der Lampe"],["Charlie edge","Lampe 3","49.999","sehr nah (~10 cm)"],["Delta fifteen","Lampe 2","15.000","sehr nah (~10 cm)"],["Echo eight","Lampe 2","8.000","nah (~20–30 cm)"],["Foxtrot four","Lampe 2","4.000","mittlerer Abstand (~40 cm)"],["Golf under","Lampe 2","3.999","darf weiter weg stehen"]]
+SHOT 02-overview desktop: scrollWidth=1440 clientWidth=1440 horizontalScroll=false; targets<48px: []
+SHOT 02-overview mobil: scrollWidth=375 clientWidth=375 horizontalScroll=false; targets<48px: []
+AXE 02-overview: 0 violations []
+ROWS without zones [["Alpha pro","unbekannt","110.000","direkt unter der Lampe"],["Bravo fifty","unbekannt","50.000","direkt unter der Lampe"],["Charlie edge","unbekannt","49.999","sehr nah (~10 cm)"],["Delta fifteen","unbekannt","15.000","sehr nah (~10 cm)"],["Echo eight","unbekannt","8.000","nah (~20–30 cm)"],["Foxtrot four","unbekannt","4.000","mittlerer Abstand (~40 cm)"],["Golf under","unbekannt","3.999","darf weiter weg stehen"]]
+SHOT 03-zone-unknown desktop: scrollWidth=1440 clientWidth=1440 horizontalScroll=false; targets<48px: []
+SHOT 03-zone-unknown mobil: scrollWidth=375 clientWidth=375 horizontalScroll=false; targets<48px: []
+BEN overview: Lichthunger
+
+Noch keine Arten mit aktivem Exemplar und gesetztem Lux-Bedarf. Lege ein Exemplar an oder aktualisiere den Lux-Bedarf einer Art.
+
+Zum Bestand
+SHOT 04-other-account desktop: scrollWidth=1440 clientWidth=1440 horizontalScroll=false; targets<48px: []
+SHOT 04-other-account mobil: scrollWidth=375 clientWidth=375 horizontalScroll=false; targets<48px: []

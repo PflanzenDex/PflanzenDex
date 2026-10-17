@@ -1,0 +1,237 @@
+$ cd app/packages/web && npx vitest run src/wishlist  (round 2: link instead of img, per-field errors)
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/wun-01/app/packages/web
+
+ ❯ src/wishlist/WishlistPage.test.tsx (14 tests | 10 failed) 5011ms
+   ❯ US-WUN-01 page of the candidate list (4)
+     × US-WUN-01 shows per candidate title, zone with stock, difficulty word, reasoning, picture with source and the why 208ms
+   ❯ US-WUN-01 no remote picture is loaded (P-05) (1)
+     × US-WUN-01 an address that is not https is not linked and nothing is embedded 12ms
+   ❯ US-WUN-01 recording a wish (9)
+     × US-WUN-01 marks the name field when the name is taken: text next to it, focus, value kept, no success 1062ms
+     × US-WUN-01 marks the zone field when the server says the zone is not the keeper's 1087ms
+     × US-WUN-01 marks the field the server names in the details 1074ms
+     × US-WUN-01 a refusal that names no field stays in an alert that takes the focus 1071ms
+     × US-WUN-01 refuses an empty name before sending: field marked, described, focused 34ms
+     × US-WUN-01 refuses a picture address without source: the source field is marked and focused, values kept 122ms
+     × US-WUN-01 refuses an address that is not https and one with credentials on the address field 150ms
+     × US-WUN-01 a field loses its mark again when the next input is fine 31ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/wishlist/WishlistPage.test.tsx > US-WUN-01 page of the candidate list > US-WUN-01 shows per candidate title, zone with stock, difficulty word, reasoning, picture with source and the why
+AssertionError: expected <img …(3)></img> to be null
+
+- Expected:
+null
+
++ Received:
+<img
+  alt="Foto: Korbmarante (Calathea orbifolia)"
+  loading="lazy"
+  src="https://upload.example/c.jpg"
+/>
+
+ ❯ src/wishlist/WishlistPage.test.tsx:77:39
+     75|     expect(item.textContent).toContain("Quelle: Wikimedia Commons");
+     76|     // P-05: no remote picture is loaded in the keeper's browser; only…
+     77|     expect(item.querySelector("img")).toBeNull();
+       |                                       ^
+     78|     const link = within(item).getByRole("link", { name: "Bild ansehen …
+     79|     expect(link.getAttribute("href")).toBe("https://upload.example/c.j…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/wishlist/WishlistPage.test.tsx > US-WUN-01 no remote picture is loaded (P-05) > US-WUN-01 an address that is not https is not linked and nothing is embedded
+AssertionError: expected <img …(3)></img> to be null
+
+- Expected:
+null
+
++ Received:
+<img
+  alt="Foto: Korbmarante (Calathea orbifolia)"
+  loading="lazy"
+  src="javascript:alert(1)"
+/>
+
+ ❯ src/wishlist/WishlistPage.test.tsx:150:39
+    148|     render(<WishlistPage api="http://api" token={token} />);
+    149|     const item = (await screen.findAllByRole("listitem"))[0] as HTMLEl…
+    150|     expect(item.querySelector("img")).toBeNull();
+       |                                       ^
+    151|     expect(item.querySelector("a")).toBeNull();
+    152|     expect(item.textContent).toContain("Kein Bild");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/wishlist/WishlistPage.test.tsx > US-WUN-01 recording a wish > US-WUN-01 marks the name field when the name is taken: text next to it, focus, value kept, no success
+AssertionError: expected null to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ src/wishlist/WishlistPage.test.tsx:201:70
+    199|     await save();
+    200|     const name = screen.getByLabelText("Name") as HTMLInputElement;
+    201|     await vi.waitFor(() => expect(name.getAttribute("aria-invalid")).t…
+       |                                                                      ^
+    202|     expect(describedText(name)).toContain("gibt es schon");
+    203|     expect(document.activeElement).toBe(name);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/wishlist/WishlistPage.test.tsx > US-WUN-01 recording a wish > US-WUN-01 marks the zone field when the server says the zone is not the keeper's
+AssertionError: expected null to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ src/wishlist/WishlistPage.test.tsx:219:70
+    217|     await save();
+    218|     const zone = screen.getByLabelText("Ziel-Lichtzone") as HTMLSelect…
+    219|     await vi.waitFor(() => expect(zone.getAttribute("aria-invalid")).t…
+       |                                                                      ^
+    220|     expect(describedText(zone)).toContain("gibt es nicht");
+    221|     expect(document.activeElement).toBe(zone);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/wishlist/WishlistPage.test.tsx > US-WUN-01 recording a wish > US-WUN-01 marks the field the server names in the details
+AssertionError: expected null to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ src/wishlist/WishlistPage.test.tsx:236:69
+    234|     await save();
+    235|     const url = screen.getByLabelText("Bild-Adresse (https)");
+    236|     await vi.waitFor(() => expect(url.getAttribute("aria-invalid")).to…
+       |                                                                     ^
+    237|     expect(document.activeElement).toBe(url);
+    238|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/wishlist/WishlistPage.test.tsx > US-WUN-01 recording a wish > US-WUN-01 a refusal that names no field stays in an alert that takes the focus
+AssertionError: expected <button type="submit" …(1)></button> to be <div role="alert" class="warning">…(1)</div> // Object.is equality
+
+- Expected
++ Received
+
+- <div
+-   class="warning"
+-   role="alert"
++ <button
++   class="primary"
++   type="submit"
+  >
+-   <p>
+-     Der Server antwortet nicht.
+-   </p>
+- </div>
++   Wunsch speichern
++ </button>
+
+ ❯ src/wishlist/WishlistPage.test.tsx:247:59
+    245|     const alert = await screen.findByRole("alert");
+    246|     expect(alert.textContent).toContain("Der Server antwortet nicht.");
+    247|     await vi.waitFor(() => expect(document.activeElement).toBe(alert));
+       |                                                           ^
+    248|     expect(screen.getByLabelText("Name").getAttribute("aria-invalid"))…
+    249|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/wishlist/WishlistPage.test.tsx > US-WUN-01 recording a wish > US-WUN-01 refuses an empty name before sending: field marked, described, focused
+AssertionError: expected null to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ src/wishlist/WishlistPage.test.tsx:257:47
+    255|     await save();
+    256|     const name = screen.getByLabelText("Name");
+    257|     expect(name.getAttribute("aria-invalid")).toBe("true");
+       |                                               ^
+    258|     expect(describedText(name)).toContain("Name");
+    259|     await vi.waitFor(() => expect(document.activeElement).toBe(name));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/wishlist/WishlistPage.test.tsx > US-WUN-01 recording a wish > US-WUN-01 refuses a picture address without source: the source field is marked and focused, values kept
+AssertionError: expected null to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ src/wishlist/WishlistPage.test.tsx:270:49
+    268|     await save();
+    269|     const source = screen.getByLabelText("Bildquelle");
+    270|     expect(source.getAttribute("aria-invalid")).toBe("true");
+       |                                                 ^
+    271|     expect(describedText(source)).toContain("Quelle");
+    272|     await vi.waitFor(() => expect(document.activeElement).toBe(source)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/wishlist/WishlistPage.test.tsx > US-WUN-01 recording a wish > US-WUN-01 refuses an address that is not https and one with credentials on the address field
+AssertionError: expected null to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ src/wishlist/WishlistPage.test.tsx:288:46
+    286|     await userEvent.type(url, "http://x.example/a.jpg");
+    287|     await save();
+    288|     expect(url.getAttribute("aria-invalid")).toBe("true");
+       |                                              ^
+    289|     await userEvent.clear(url);
+    290|     await userEvent.type(url, "https://me:pw@x.example/a.jpg");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/wishlist/WishlistPage.test.tsx > US-WUN-01 recording a wish > US-WUN-01 a field loses its mark again when the next input is fine
+AssertionError: expected null to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ src/wishlist/WishlistPage.test.tsx:302:47
+    300|     await save();
+    301|     const name = screen.getByLabelText("Name");
+    302|     expect(name.getAttribute("aria-invalid")).toBe("true");
+       |                                               ^
+    303|     await userEvent.type(name, "Neu");
+    304|     await save();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 4 passed (14)
+   Start at  21:22:42
+   Duration  6.29s (tests 81%, environment 11%, transform 5%, import 3%)
+
+exit code: 1

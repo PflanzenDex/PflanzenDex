@@ -1,0 +1,31 @@
+{
+  "config": {
+    "default": true,
+    // Line length: German text and tables naturally exceed 80 chars
+    "MD013": false,
+    // Table column style: Docs use compact formatting without spaces around pipes
+    "MD060": false,
+    // First line heading: Not required for all docs, often not applicable
+    "MD041": false,
+    // Inline HTML: May be used in German docs for formatting
+    "MD033": false,
+    // Emphasis for headings: Style preference, not content
+    "MD036": false,
+    // Strong emphasis for headings: Style preference, not content
+    "MD039": false,
+    // Fenced code language: Not always required, context-dependent
+    "MD040": false,
+    // Blanks around headings: Docs have dense header sections (style preference)
+    "MD022": false,
+    // Blanks around lists: Docs have dense list sections (style preference)
+    "MD032": false,
+    // No space in code: German docs use inline code with special formatting
+    "MD038": false,
+    // Ordered list prefix: Docs use natural numbering (1, 2, 3) not all 1s
+    "MD029": false,
+    // Bare URLs: URLs embedded in text are acceptable in documentation
+    "MD034": false,
+    // Table column count: Used for informational tables with varying content
+    "MD056": false
+  }
+}

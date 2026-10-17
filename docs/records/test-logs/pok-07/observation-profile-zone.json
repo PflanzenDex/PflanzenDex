@@ -1,0 +1,63 @@
+{
+  "today": "4.10.2026",
+  "obs": {
+    "profile-zone-desktop": {
+      "deviceZoneBefore": [
+        "Aloe vera | Aloe | gefangen ≈ 16.08.2026 | 1 Exemplar",
+        "Citrus limon | Citrus | gefangen 03.02.2025 | 1 Exemplar",
+        "Echeveria elegans | Echeveria | gefangen 04.10.2026 | 1 Exemplar"
+      ],
+      "afterSavingProfileZone": [
+        "Aloe vera | Aloe | gefangen ≈ 15.08.2026 | 1 Exemplar",
+        "Citrus limon | Citrus | gefangen 03.02.2025 | 1 Exemplar",
+        "Echeveria elegans | Echeveria | gefangen 04.10.2026 | 1 Exemplar"
+      ],
+      "afterReload": [
+        "Aloe vera | Aloe | gefangen ≈ 15.08.2026 | 1 Exemplar",
+        "Citrus limon | Citrus | gefangen 03.02.2025 | 1 Exemplar",
+        "Echeveria elegans | Echeveria | gefangen 04.10.2026 | 1 Exemplar"
+      ],
+      "requests": [
+        "http://localhost:54953/pokedex/ownership?timeZone=Europe/Berlin",
+        "http://localhost:54953/pokedex/ownership?timeZone=Europe/Berlin",
+        "http://localhost:54953/pokedex/ownership?timeZone=Pacific/Honolulu",
+        "http://localhost:54953/pokedex/ownership?timeZone=Pacific/Honolulu",
+        "http://localhost:55453/src/pokedex/ownership-api.ts",
+        "http://localhost:55453/@fs/home/konradhe/IdeaProjects/PflanzenDex/.worktrees/pok-07/app/packages/core/src/pokedex/ownership.ts",
+        "http://localhost:54953/pokedex/ownership?timeZone=Pacific/Honolulu",
+        "http://localhost:54953/pokedex/ownership?timeZone=Pacific/Honolulu"
+      ],
+      "horizontalScroll": false,
+      "axe": []
+    },
+    "profile-zone-mobile": {
+      "deviceZoneBefore": [
+        "Aloe vera | Aloe | gefangen ≈ 16.08.2026 | 1 Exemplar",
+        "Citrus limon | Citrus | gefangen 03.02.2025 | 1 Exemplar",
+        "Echeveria elegans | Echeveria | gefangen 04.10.2026 | 1 Exemplar"
+      ],
+      "afterSavingProfileZone": [
+        "Aloe vera | Aloe | gefangen ≈ 15.08.2026 | 1 Exemplar",
+        "Citrus limon | Citrus | gefangen 03.02.2025 | 1 Exemplar",
+        "Echeveria elegans | Echeveria | gefangen 04.10.2026 | 1 Exemplar"
+      ],
+      "afterReload": [
+        "Aloe vera | Aloe | gefangen ≈ 15.08.2026 | 1 Exemplar",
+        "Citrus limon | Citrus | gefangen 03.02.2025 | 1 Exemplar",
+        "Echeveria elegans | Echeveria | gefangen 04.10.2026 | 1 Exemplar"
+      ],
+      "requests": [
+        "http://localhost:54953/pokedex/ownership?timeZone=Europe/Berlin",
+        "http://localhost:54953/pokedex/ownership?timeZone=Europe/Berlin",
+        "http://localhost:54953/pokedex/ownership?timeZone=Pacific/Honolulu",
+        "http://localhost:54953/pokedex/ownership?timeZone=Pacific/Honolulu",
+        "http://localhost:55453/src/pokedex/ownership-api.ts",
+        "http://localhost:55453/@fs/home/konradhe/IdeaProjects/PflanzenDex/.worktrees/pok-07/app/packages/core/src/pokedex/ownership.ts",
+        "http://localhost:54953/pokedex/ownership?timeZone=Pacific/Honolulu",
+        "http://localhost:54953/pokedex/ownership?timeZone=Pacific/Honolulu"
+      ],
+      "horizontalScroll": false,
+      "axe": []
+    }
+  }
+}

@@ -1,0 +1,201 @@
+# 20 – Epic ACH: Achievements (Rewards for Care and Growth)
+
+Goal: the app rewards **looking after plants**, not only collecting them. Today the Pokédex (POK) rewards buying something new; nothing says "well done" when a cutting roots, a treatment is finished or a plant has grown for a year. ACH closes this gap with achievements, a care rhythm, personal records, anniversaries and a year in review. All of it is derived from the keeper's own data and measured against the keeper's own history.
+
+Prototype reference: none, idea from 2026-10-10. Builds on POK (rank US-POK-10, milestones US-POK-11, "newly caught" US-POK-12), WAC (measurement, trend, etiolation), BEH (treatments), BES (cutting, archive), PHA (care phases), MON (reminders), SOZ (handover US-SOZ-11) and QS (accessibility, today list).
+
+Delimitation from POK: rank and milestones stay in POK (they reward **collecting**). ACH rewards **acting and growing** and shows the POK rank and milestones as one group in its overview (US-ACH-02) without duplicating their logic.
+
+Delimitation from the non-goals in `16`: no leaderboards, no rank comparison between friends, no rating (FR-POK-11, FR-SOZ-11). ACH adds no social pressure and no penalty.
+
+## Problem
+
+1. **Only collecting is rewarded:** the loop "catch → new card" works, but the daily work (measuring, treating, watering, rooting cuttings) gets no feedback when it succeeds.
+2. **Success is invisible:** growth trends and photo history exist (US-WAC-03/05), but no moment says "this plant grew 12 cm since March".
+3. **Typical game mechanics hurt here:** streaks that reset, daily login bonuses and rankings would pressure keepers into care that harms plants (over-watering, measuring for points) and contradict P-08 and P-10.
+
+## Terms
+
+| Term            | Meaning                                                                                                                                                            |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Achievement     | A named, verifiable event in the keeper's own data (e.g. "first cutting rooted"). Defined in the domain logic, never by the model (P-01). Earned once per account. |
+| Earned on       | The local calendar date of the event that fulfilled the criterion (NFR-08), not the date the app noticed it.                                                       |
+| Next step       | For every open achievement the one action that would fulfil it (P-09).                                                                                             |
+| Care rhythm     | Run of consecutive calendar weeks in which every due care task (treatment, measurement, interval watering) was done on time. A gentler replacement for a streak.   |
+| Personal record | Best value of a metric in the keeper's own history, with quality `Healthy` (US-WAC-02/04).                                                                         |
+| Anniversary     | The yearly (or half-yearly) date of a specimen's catch date (US-POK-07).                                                                                           |
+| Year in review  | Private summary of one calendar year, derived from the keeper's data.                                                                                              |
+| Calm mode       | Account setting that hides all ACH elements and celebrations (US-ACH-08).                                                                                          |
+
+## User stories
+
+### US-ACH-01 · Earn achievements for care and growth · ✅ new
+
+As a **plant keeper** I want to earn achievements for real successes in my collection, so that care feels rewarded and not only collecting.
+
+Acceptance criteria:
+
+- Given the first event of a kind happens in my data, when the domain logic evaluates my data, then the matching achievement counts as earned with the local date of that event (`earned on`).
+- Starting set (assumption, revisable; each criterion must be checkable from existing data). Nothing in the set rewards buying or acquiring a plant: "wish became a caught species" was dropped, because collecting is rewarded by POK only (FR-ACH-05):
+  - **First measurement with photo** (US-WAC-01, US-WAC-05)
+  - **Cutting rooted:** a cutting became its own specimen (US-BES cutting flow)
+  - **Treatment completed:** all dates of a course ticked off (US-BEH-03)
+  - **Through a dormancy phase:** a specimen lived through a full dormancy phase with me (US-PHA-01)
+  - **Healthy for a year:** a specimen with `Healthy` quality in its last 4 measurements over at least 12 months (4 measurements and 12 months are assumptions)
+  - **First handover:** a swap confirmed by both sides (US-SOZ-11)
+- Given the basis of an achievement is an archived specimen, when I look at my achievements, then it stays earned (archive keeps the event, P-10).
+- Given a criterion cannot be evaluated because data is missing (no measurements, no phase), when I look at the achievement, then it is open and says what is missing, never "failed" (P-08).
+- Achievements are **derived**, not stored; only the "seen" state is stored (US-ACH-03, FR-ACH-02).
+- Status: the criteria are pure functions in `core` over a plain facts value (module `achievements`, ADR 0014); the API reads the keeper's own data into facts (`api/src/achievements/facts.ts`) for the overview (US-ACH-02). Assumption, decided by the PO: "Cutting rooted" is the repot date of a cutting (US-BES-04); "through a dormancy phase" is a full dormancy period that began on or after the catch date and ended while the specimen was still with me (archive date bounds it); "12 months" is the same calendar day one year later.
+
+### US-ACH-02 · See my achievements and what comes next · ✅ new
+
+As a **plant keeper** I want one overview of earned and open achievements, so that I know what I could do next.
+
+Acceptance criteria:
+
+- Given I open the overview, then earned achievements show name, `earned on` and the specimen or species that led to it (link); open ones show the **next step** as an action (P-09), e.g. "Tick off the last date of the course on <Specimen>".
+- Groups: Care · Growth · Swapping · Collecting. The group "Collecting" shows the POK rank, progress and milestones from US-POK-10/11 as they are, with a link to the Pokédex.
+- Order: earned newest first; open ones in the fixed order of the definitions (DM-ACH-01), not ranked by an invented "effort" (P-08).
+- No percentage of other users, no "rarer than x %", no total score (P-08, FR-ACH-04).
+- Given I have no data yet, then the overview names the first step ("Record a measurement with a photo") instead of an empty list.
+- Status: the overview is the section "Erfolge" of the destination "Konto" (`/account#erfolge`), hidden in calm mode (US-ACH-08). Assumptions, decided by the PO: the specimen link leads to the Sammlung (there is no deep link to one specimen yet); the group "Collecting" links to the Pokédex instead of repeating rank and milestones; a course is the set of treatments with one course id (a single treatment is no course); the collection is read one request per specimen (starting value, small collections).
+
+### US-ACH-03 · A quiet moment of success · ✅ new
+
+As a **plant keeper** I want to notice an earned achievement at the moment it happens, so that the reward lands without distracting me from the task.
+
+Acceptance criteria:
+
+- Given an action fulfils an achievement (e.g. I tick off the last treatment date), when the action succeeds, then a short banner "Achievement: <name>" appears with a link to the overview. It never blocks the action and needs no confirmation to continue.
+- The "seen" state is stored per account on the server (not in the browser), like US-POK-12: `new` = earned − `seen`. On the first evaluation of an existing account, existing achievements are created silently as seen (no flood of banners).
+- Given I miss the moment, then the overview marks the achievement as new until "Okay" writes `seen`.
+- Given reduced motion is set, then no animation runs; assistive technology hears the text (NFR-13). The celebration is never the only signal.
+- Read errors do not break the page; no banner appears then.
+- No push notification, no e-mail for achievements (FR-ACH-06).
+- Status: the seen state is the table `achievement_seen` (one row per account with the seen ids and the definitions the account knew, DM-ACH-02; the row is also the marker of the first evaluation), `GET /achievements/news` and `POST /achievements/seen` (operation `achievements.mark_seen`, refuses achievements that are not earned). The overview marks new ones with "(neu)" and "Okay" writes `seen`. Assumptions, decided by the PO: the banner appears after any write of the app that succeeded and made an achievement new (the page looks again after each write); it stays until "Schließen" and does not write `seen`, so what was already new when the app opened is left to the overview; switching calm mode off marks everything earned as seen (US-ACH-08); a definition added later whose criterion is already met is created silently as seen (FR-ACH-09).
+
+### US-ACH-04 · Care rhythm instead of a streak · ✅ new
+
+As a **plant keeper** I want to see how steadily I have cared, without being punished for a missed week.
+
+Acceptance criteria:
+
+- Given I have due care tasks (treatment dates US-BEH-02, overdue measurements US-MON-04, interval watering US-MON-05), when every task due in a calendar week was done by its due date plus a grace period (assumption: 1 day), then the week counts as "on time".
+- Weeks without any due task are neutral: they neither extend nor break the rhythm.
+- Display: the last 12 weeks as a bar, the current run and the **longest run so far** (personal record). Nothing is shown as "lost".
+- Given I miss a week, when I look at the view, then the current run starts again, the longest run stays, and the text names the open tasks (P-09), not a loss ("2 dates are open", not "streak broken").
+- Given I pause (holiday, `Dormancy` of all specimens, or an explicit pause of up to 4 weeks, assumption), then the weeks of the pause are neutral.
+- The rhythm counts only tasks that exist because of the plants' needs. A task created only to be ticked off earns nothing: the rhythm never rewards doing more than due (watering earlier than the interval does not count more, FR-ACH-05).
+- Status: the logic is `careRhythm` and `restPauses` in `core` (module `achievements`), the API answers `GET /achievements/rhythm` (`{ calmMode: true }` in calm mode, which also hides the pause form), the pauses are written through `achievements.add_rhythm_pause` and `achievements.remove_rhythm_pause` (`POST /achievements/rhythm/pauses`, `DELETE /achievements/rhythm/pauses/:id`, table `achievement_rhythm_pause`, DM-ACH-03); a pause over 4 weeks is refused with `achievements.pause_too_long`. The section "Erfolge" shows the 12 weeks, both runs, the open tasks and the pause form. Tasks: treatment dates (open or done, US-BEH-02/03) and the measurement interval of every plant (US-MON-04: due `measurementDays` after the last measurement or the catch date, measuring earlier counts the same; a cutting has none, E-11); a week runs Monday to Sunday and belongs to the due date of a task, a week with a task that is open or done late is "offen" and restarts the current run; a task of an archived specimen that was still open at archiving is dropped. Assumptions, decided by the PO: several explicit pauses can exist (a later pause never rewrites an earlier one, because the rhythm is derived); the pause may lie in the past; a day is a day of rest when every active plant has a dormancy period and is in it (a plant without a known period never rests, P-08; today's specimens and periods are applied to the past); a task is neutral when its due date lies in a pause or a day of rest. **Interval watering (US-MON-05) is out of scope, decided by the PO:** the watering log keeps no history of the interval in force on a past day, so a past due date could only be invented (P-08); the criterion mentions it as a task source, it is added when such a history exists.
+
+### US-ACH-05 · Personal records and growth moments · ✅ new
+
+As a **plant keeper** I want to see when a plant beats its own best, so that growth becomes a visible success.
+
+Acceptance criteria:
+
+- Given a specimen has at least 2 measurements spanning at least 90 days (assumption, so that a short interval cannot produce an extreme yearly rate) and the last quality is `Healthy`, when a measurement is saved, then the app can show "<N> cm since <first measurement date>" and, if the yearly rate beats the specimen's own earlier best, "new personal record: <rate> cm/year".
+- Given the last quality is `Etiolated/thin` or the trend is "slower", then no record, no growth moment and no achievement is shown: etiolated growth never counts as success (US-WAC-04).
+- Given fewer than 2 measurements exist or they span less than 90 days, then the specimen shows "unknown", not a record (P-08).
+- The comparison is always against the specimen's own history, never against other specimens' averages or other users (P-08).
+- A growth moment appears on the measurement result and in the specimen's history (US-WAC-05); it is not repeated every visit.
+- Status: the logic is `growthMoments` in `core` (module `achievements`), the API answers `GET /achievements/growth/:specimenId` (`{ calmMode: true }` in calm mode), the Measure view shows the moment and marks records. Nothing is stored (FR-ACH-02). Assumptions, decided by the PO: the yearly rate is the rate from the first measurement to the measurement in question (cm/year), so every measurement has one rate; a record needs an earlier healthy rate to beat (the first usable rate is a growth moment, not a record); a growth moment also needs real growth since the first measurement (no growth, no moment); the trend "slower" is the one of US-WAC-03 on the measurements up to that point; the moment shows right after a measurement was saved on the Measure view, the history marks the measurements that set a record (a quiet text mark, derived on every visit, no pop-up); unknown shows the text "unknown" with what is needed.
+
+### US-ACH-06 · Anniversaries with the plant · ✅ new
+
+As a **plant keeper** I want to be reminded how long a plant has been with me, so that I see the story behind the pot.
+
+Acceptance criteria:
+
+- Given a specimen has a catch date (US-POK-07), when today is the half-year or yearly anniversary (local date, NFR-08), then the "Today" list (US-QS-01) shows "<Specimen> is 1 year with you" with the first and the latest photo, if present.
+- Given the specimen has no catch date or was archived, then no anniversary appears (unknown stays unknown, P-08).
+- Given the anniversary day passed without a visit, then the entry stays on the Today list until the end of that week (assumption), then it disappears (P-10: the specimen's history still shows the age).
+- Anniversaries do not create push notifications unless I enabled them in the reminder settings (US-MON-08).
+- Status: the logic is `anniversaries` in `core` (module `achievements`), the API answers `GET /achievements/anniversaries?timeZone=` (`{ calmMode: true }` in calm mode, US-ACH-08) with the first and the latest photo from the measurements, and the Today view shows the entries in the section below "Jetzt dran". Nothing is stored (FR-ACH-02). Assumptions, decided by the PO: anniversaries fall every 6 months after the catch date; a day that does not exist in the target month (31 August, 29 February) falls on the last day of that month; the week ends on Sunday; with a single photo only the first photo is shown. There are no push notifications for anniversaries yet, because the reminder settings (US-MON-08) have no such occasion.
+
+### US-ACH-07 · Year in review · ✅ new
+
+As a **plant keeper** I want a summary of my plant year, so that I can look back at what worked.
+
+Acceptance criteria:
+
+- Given a calendar year has ended or I open the view for the running year, then it shows only counted facts from my data: species caught, cuttings rooted, treatments completed, measurements recorded, handovers, achievements earned, the specimen with the largest healthy growth (own rate, quality `Healthy`) and the photo pair first/last of the year.
+- Each fact names its basis; unknown values show "unknown" (P-08). Years without data show what would fill the view.
+- The view is private by default (P-05). It is not shared in this epic: sharing would need its own field in the friend view whitelist (US-SOZ-04, QG-D2) and is an open question (no. 5). Friends never see it by default, and never a rank or comparison (FR-SOZ-11, FR-ACH-04).
+- No percentage, no "better than last year" rating; two years may be shown side by side as plain numbers.
+- Status: the logic is `yearInReview` in `core` (module `achievements`), the API answers `GET /achievements/year?year=&timeZone=` (`{ calmMode: true }` in calm mode, 400 `input.invalid` for a future or malformed year), the section "Jahresrückblick" sits below the overview in "Erfolge" and has "Vorjahr" / "Folgejahr" to browse. Nothing is stored (FR-ACH-02). Assumptions, decided by the PO: a fact counts the events dated in the year (caught: catch date; cuttings rooted: repotting date of the cutting; treatments completed: courses whose every date is ticked off and whose last tick falls in the year; measurements; handovers confirmed by both sides; achievements by their `earned on`); the largest healthy growth is the own yearly rate from the first to the last healthy measurement of the year, with at least 90 days between them (as in US-ACH-05), real growth, the specimen with the highest rate wins; the photo pair is the first and last photo of the year of the specimen with the most photos in it (at least two); two years side by side are not built, the keeper browses them one after the other.
+
+### US-ACH-08 · Switch gamification off · 🟨 new
+
+As a **plant keeper** I want to turn all game elements off, so that the app stays a calm care tool if I do not want them.
+
+Acceptance criteria:
+
+- Given calm mode is on, then the achievement banners, the overview entry, the care rhythm, personal records, anniversaries and the year in review are not shown. POK rank and milestones follow the setting of the Pokédex view and stay unchanged.
+- Given calm mode is switched off again, then earned achievements are still there (they are derived) and none appear as new (they count as seen).
+- Calm mode is a per-account setting, off by default for new accounts (assumption, revisable), and reachable from the profile (US-ACC-02). It ships together with the first visible ACH element (see build order).
+- Status: the setting exists (table `achievement_setting`, `GET /achievements/settings`, `PUT /achievements/settings/calm-mode`, switch "Ruhemodus" on the settings page, off by default) and core answers `showsAchievements(settings)`; the elements that must obey it arrive with US-ACH-02 and the following stories, each of which checks the setting. Assumption, decided by the PO: the switch saves on its own (no Save button), and the AI client interface (KI-R2) asks the same function once ACH text reaches it.
+- The state "calm mode" is respected by every ACH element and by the AI client interface (no hidden gamified text, KI-R2).
+
+## Dependencies and build order
+
+Decided by the PO after the principles review. All stories are ⬜; the stories they build on are mostly done or in progress (US-WAC-01/05, US-BEH-02/03, US-PHA-01, US-POK-10/11/12, US-SOZ-11, US-QS-01); US-MON-03 to 05 and US-MON-08 are in progress.
+
+| Order | Story     | Release | Depends on                 | Why here                                                                  |
+| ----- | --------- | ------- | -------------------------- | ------------------------------------------------------------------------- |
+| 1     | US-ACH-01 | R2      | WAC, BEH, BES, PHA, SOZ-11 | Pure core logic, needed by all others, no UI                              |
+| 2     | US-ACH-08 | R2      | US-ACC-02 (profile)        | Off switch exists before anything visible ships                           |
+| 3     | US-ACH-02 | R2      | 01, 08, POK-10/11          | Overview with next steps, first visible element                           |
+| 4     | US-ACH-03 | R2      | 01, 02, POK-12 pattern     | Banner and seen state                                                     |
+| 5     | US-ACH-05 | R2      | WAC-02/04/05, 08           | Own-history records, etiolation guard                                     |
+| 6     | US-ACH-06 | R2      | POK-07, QS-01, 08          | Today list entry, no push without MON-08                                  |
+| 7     | US-ACH-04 | R3      | MON-03/04, 08               | Needs due tasks; interval watering is out of scope (see story status)     |
+| 8     | US-ACH-07 | R3      | 01, 05, 08                 | Meaningful after a year of data; private, sharing only after question 1/5 |
+
+## Data model
+
+### DM-ACH-01 Achievement definition (in the domain logic, not in the database)
+
+`id` (stable key, e.g. `cutting-rooted`), `group` (care, growth, swapping, collecting), `criterion` (pure function over the keeper's data), `next step` (action text key) and `version`. German texts live in the message tables (UI language rule), the criterion in `core`.
+
+### DM-ACH-02 Seen achievements (per account)
+
+`account id`, `achievement id`, `seen at`. Row-level isolation by account (P-04). Earned state and `earned on` are **not** stored.
+
+### DM-ACH-03 Settings (per account)
+
+`calm mode` (bool, default off), the explicit pauses of the care rhythm are rows of their own (`achievement_rhythm_pause`: first and last day as local dates, at most 28 days each, several per account; US-ACH-04).
+
+## Requirements
+
+| ID        | Requirement                                                                                                                                                                        |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FR-ACH-01 | Criteria, rhythm, records and recaps are pure domain logic without I/O with tests named with the story ID (P-02, P-06). Views only render.                                         |
+| FR-ACH-02 | Derived, not stored: earned state, `earned on`, rhythm, records. Stored are only the seen state and the settings (DM-ACH-02/03).                                                   |
+| FR-ACH-03 | Every achievement is verifiable from the keeper's own data. No achievement depends on a claim by the keeper that cannot be checked or on a model's judgement (P-01).               |
+| FR-ACH-04 | **No ranking, no comparison:** no leaderboards, no "x % of keepers", no total score, no comparison with species averages. Friends see at most facts the keeper shared (FR-POK-11). |
+| FR-ACH-05 | **No harm incentives:** nothing is rewarded for more watering, more measuring or more purchases than needed. Etiolated growth never counts as success (US-WAC-04).                 |
+| FR-ACH-06 | **No pressure:** no loss messages, no countdowns, no daily login bonus, no notification about achievements. Anniversaries notify only if enabled (US-MON-08).                      |
+| FR-ACH-07 | Dates are local calendar dates of the keeper (NFR-08). A time zone change does not change `earned on` of an existing achievement.                                                  |
+| FR-ACH-08 | Accessibility: all feedback is text first, animation optional and off under reduced motion, no information by colour alone (NFR-13).                                               |
+| FR-ACH-09 | Achievement definitions are versioned; a new definition appears for existing accounts as earned silently if its criterion was already met (seen on creation, US-ACH-03).           |
+| FR-ACH-10 | Out of scope: points or levels beyond the POK rank, virtual currency, shop for rewards, time-limited events, public profiles, rankings (non-goals in `16`).                        |
+
+## Open questions
+
+1. **Friends feed (also for the year in review):** may a keeper opt in to show earned achievements in "New among friends" (US-SOZ-04) as facts? Proposal: not before R3 and only as an explicit per-achievement share, never automatic. Any shared fact needs a field on the friend view whitelist (US-SOZ-04, QG-D2) and a contract test first.
+2. **Deleted data:** if a specimen is deleted for good (not archived), its achievements disappear because the basis is gone. Accept this or keep the earned achievement as a stored fact? Today P-10 argues for stating it in the delete confirmation.
+3. **Starting set and thresholds:** the starting set, the grace period (1 day) and the pause limit (4 weeks) are assumptions. Review after a few weeks of use with the three start users.
+4. **Calm mode default:** off for everyone, or asked once in onboarding (US-ACC-03)? Decided by the PO for now: off, with a hint in the profile (US-ACC-02).
+5. **Sharing the year in review:** only after question 1 is decided; until then it stays private.
+
+## Risks
+
+| Risk                                                                             | Countermeasure                                                                                      |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Rewards push keepers to harmful care (over-watering, measuring for points).      | FR-ACH-05: only needs-based events count; no volume-based achievements.                             |
+| Gamification annoys keepers who want a plain tool.                               | Calm mode (US-ACH-08), no push (FR-ACH-06), quiet banner (US-ACH-03).                               |
+| Few data for new accounts makes the overview look empty.                         | Open achievements show the next step (US-ACH-02); no invented numbers (P-08).                       |
+| A changed definition floods existing accounts with banners.                      | FR-ACH-09: silent creation as seen.                                                                 |
+| Achievements derived from fields that change later flip between earned and open. | Criteria use event dates and archived data; evaluate in tests with fixtures of changed data (P-06). |

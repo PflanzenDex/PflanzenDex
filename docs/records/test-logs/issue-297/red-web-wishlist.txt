@@ -1,0 +1,28 @@
+
+ RUN  v5.0.3 <worktree>
+
+ ❯ src/wishlist/WishlistPage.test.tsx (16 tests | 1 failed) 1169ms
+   ❯ US-WUN-01 recording a wish (11)
+     × US-WUN-01 a server refusal of a field disappears as soon as that field is edited, without moving the focus 63ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/wishlist/WishlistPage.test.tsx > US-WUN-01 recording a wish > US-WUN-01 a server refusal of a field disappears as soon as that field is edited, without moving the focus
+AssertionError: expected 'true' not to be 'true' // Object.is equality
+ ❯ src/wishlist/WishlistPage.test.tsx:320:51
+    318|     await vi.waitFor(() => expect(name.getAttribute("aria-invalid")).t…
+    319|     await userEvent.type(name, "x");
+    320|     expect(name.getAttribute("aria-invalid")).not.toBe("true");
+       |                                                   ^
+    321|     expect(screen.queryByText(/gibt es schon/)).toBeNull();
+    322|     expect(document.activeElement).toBe(name);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  08:13:49
+   Duration  2.31s (tests 53%, environment 25%, transform 14%, import 8%)
+
+exit code: 1

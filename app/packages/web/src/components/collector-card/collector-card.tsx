@@ -1,0 +1,134 @@
+import type { CollectorCard as Card } from "@pflanzendex/core";
+import { Badge } from "@/components/ui/display/badge/badge";
+import { cn } from "@/lib/utils";
+import { catchText } from "./catch-text";
+import { AppRarityNote, RarityNote } from "./rarity-note/rarity-note";
+
+const stars = (n: number) => "★".repeat(n) + "☆".repeat(3 - n);
+
+/**
+ * Difficulty as stars with a text alternative every screen reader exposes (US-QS-14, WCAG 1.1.1): the stars are
+ * hidden from assistive technology, the visually hidden `label` is read instead of an aria-label on a plain element.
+ */
+export function DifficultyStars(props: { level: number; label: string }) {
+  return (
+    <>
+      <span aria-hidden="true">{stars(props.level)}</span>
+      <span className="sr-only">{props.label}</span>
+    </>
+  );
+}
+
+/** The image is a link to its source, not a copy (P-05); without one a neutral sprout stands in. */
+function Picture(props: { card: Card }) {
+  const c = props.card;
+  if (c.imageUrl === null)
+    return (
+      <span aria-hidden="true" className="text-4xl">
+        🌱
+      </span>
+    );
+  return (
+    <img
+      src={c.imageUrl}
+      alt={`Bild von ${c.species}`}
+      loading="lazy"
+      className={cn("h-32 w-full rounded-tile object-cover", c.state === "missing" && "grayscale")}
+    />
+  );
+}
+
+/** Genus count, difficulty and light zone; every unknown value says "unbekannt" (P-08). */
+function Facts(props: { card: Card }) {
+  const c = props.card;
+  return (
+    <>
+      <span className="text-sm text-muted-foreground">
+        {c.genusSpeciesCount === null
+          ? "Gattung: Artenzahl unbekannt"
+          : `Gattung: ${c.genusSpeciesCount} Arten`}
+      </span>
+      {c.difficulty === null ? (
+        <span className="text-sm">Schwierigkeit unbekannt</span>
+      ) : (
+        <span className="text-sm">
+          <DifficultyStars level={c.difficulty} label={`Schwierigkeit ${c.difficulty} von 3`} />
+        </span>
+      )}
+      <span className="text-sm">
+        {c.lightZone === null ? "Lichtzone unbekannt" : `Lichtzone ${c.lightZone}`}
+      </span>
+    </>
+  );
+}
+
+/**
+ * Source and license of Wikipedia content (US-QS-06, FR-POK-07): a link when the source is known; when text or image are
+ * shown without one, the source and license are still named, as text (P-08). Without Wikipedia content: nothing.
+ */
+export function WikipediaSource(props: {
+  label: string;
+  sourceUrl: string | null;
+  shown: boolean;
+  className?: string;
+}) {
+  const text = `${props.label}: Wikipedia (CC BY-SA)`;
+  if (props.sourceUrl !== null)
+    return (
+      <a
+        href={props.sourceUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cn("text-sm underline", props.className)}
+      >
+        {text}
+      </a>
+    );
+  if (!props.shown) return null;
+  return <span className="text-sm text-muted-foreground">{`${text}, Link unbekannt`}</span>;
+}
+
+/**
+ * Collector card of one species (US-POK-01). Caught is colored, missing keeps name and text visible and shows the
+ * image in grey. A species-poor genus gets a badge, a caught one also a rarity frame.
+ */
+export function CollectorCard(props: { card: Card }) {
+  const c = props.card;
+  const caught = c.state === "caught";
+  const rare = caught && c.speciesPoor;
+  return (
+    <li
+      data-state={c.state}
+      {...(rare ? { "data-rarity": "" } : {})}
+      className={cn(
+        "animate-list-in grid min-w-0 content-start gap-1 break-words rounded-card bg-card p-3 text-card-foreground shadow-elevation-1",
+        rare && "border-2 border-warning-border",
+      )}
+    >
+      <Picture card={c} />
+      <span className="text-sm text-muted-foreground">{`#${String(c.number).padStart(3, "0")}`}</span>
+      <span className="font-semibold">{c.species}</span>
+      {c.germanName !== null && (
+        <span title={c.germanNameFull ?? c.germanName}>{c.germanName}</span>
+      )}
+      <span className="text-sm">{c.summary ?? "Keine Beschreibung vorhanden."}</span>
+      <Facts card={c} />
+      <RarityNote rarity={c.natureRarity} />
+      <AppRarityNote rarity={c.appRarity} />
+      <span className="flex flex-wrap gap-1.5">
+        <Badge variant={caught ? "default" : "outline"}>
+          {c.caughtDate === null ? "noch nicht gefangen" : catchText(c.caughtDate)}
+        </Badge>
+        {c.speciesPoor && <Badge variant="warning">Artenarm</Badge>}
+      </span>
+      {c.specimenCount > 1 && (
+        <span className="text-muted-foreground">{`${c.specimenCount} Exemplare`}</span>
+      )}
+      <WikipediaSource
+        label="Quelle"
+        sourceUrl={c.sourceUrl}
+        shown={c.summary !== null || c.imageUrl !== null}
+      />
+    </li>
+  );
+}

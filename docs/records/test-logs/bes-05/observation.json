@@ -1,0 +1,64 @@
+{
+  "api": "http://localhost:55245",
+  "notes": [],
+  "01-empty-desktop-scroll": {
+    "scrollW": 1440,
+    "clientW": 1440
+  },
+  "01-empty-mobil-scroll": {
+    "scrollW": 375,
+    "clientW": 375
+  },
+  "axe-01-empty-desktop": [],
+  "empty-text": "Artenvergleich\n\nNoch keine Art mit aktivem Exemplar: Lege im Bestand ein Exemplar an, dann erscheint seine Art hier.",
+  "02-overview-desktop-scroll": {
+    "scrollW": 1440,
+    "clientW": 1440
+  },
+  "02-overview-mobil-scroll": {
+    "scrollW": 375,
+    "clientW": 375
+  },
+  "axe-02-overview-desktop": [],
+  "axe-02-overview-mobil": [],
+  "rows": [
+    "Aloe | Aloe vera | Lampe 3 | unbekannt | unbekannt | unbekannt | Dichte, flache Rosette. | Leicht",
+    "Bogenhanf | Dracaena trifasciata | Lampe 2 | alle 10 Tage | Kakteenerde | selten | Dichte, flache Rosette. | Leicht",
+    "Calathea orbifolia | Calathea orbifolia | Lampe 2 | unbekannt | unbekannt | unbekannt | Dichte, flache Rosette. | Mittel",
+    "Kannenpflanze | Nepenthes ventricosa | Lampe 2 | immer feucht, Regenwasser | Torf und Perlit | Triebe nach der Blüte einkürzen | Dichte, flache Rosette. | Schwer"
+  ],
+  "headers": [
+    "Art",
+    "Botanischer Name",
+    "Lichtzone",
+    "Gießregel",
+    "Substrat",
+    "Schnitt",
+    "Erfolgskriterium",
+    "Schwierigkeit"
+  ],
+  "archived-species-listed": false,
+  "one-row-for-two-specimens": 1,
+  "unknown-cells": 2,
+  "mobil-table-scrollable": {
+    "scrollW": 805,
+    "clientW": 307
+  },
+  "03-zone-unknown-desktop-scroll": {
+    "scrollW": 1440,
+    "clientW": 1440
+  },
+  "03-zone-unknown-mobil-scroll": {
+    "scrollW": 375,
+    "clientW": 375
+  },
+  "zones-cells": [
+    "unbekannt",
+    "unbekannt",
+    "unbekannt",
+    "unbekannt"
+  ],
+  "other-account-rows": 0,
+  "other-account-text": "Artenvergleich\n\nNoch keine Art mit aktivem Exemplar: Lege im Bestand ein Exemplar an, dann erscheint seine Art hier.",
+  "mobil-small-targets": []
+}

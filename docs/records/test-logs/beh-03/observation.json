@@ -1,0 +1,137 @@
+{
+  "desktop-cardBefore": "Noch kein Foto | Aloe behdrei desktop bfgslt – Eins | Art: Aloe behdrei desktop bfgslt | Lichtzone: unbekannt · Status: Pflanze | Standort: unbekannt | noch keine Messung | Behandlung: Wollläuse · überfällig seit 2 Tg. · +2 weitere | Messen | Kennzeichen | Archivieren",
+  "desktop-listBefore": "Aloe behdrei desktop bfgslt – Eins\n\nGrund: Wollläuse\n\nMittel: Neemöl\n\nFällig am: 02.10.2026\n\nüberfällig seit 2 Tagen\n\nErledigt\nAloe behdrei desktop bfgslt – Zwei\n\nGrund: Trauermücken\n\nMittel: —\n\nFällig am: 04.10.2026\n\nheute fällig\n\nErledigt\nAloe behdrei desktop bfgslt – Eins\n\nGrund: Spinnmilben\n\nMittel: —\n\nFällig am: 07.10.2026\n\nin 3 Tagen\n\nErledigt\nAloe behdrei desktop bfgslt – Eins\n\nGrund: Spinnmilben\n\nMittel: —\n\nFällig am: 14.10.2026\n\n14.10.2026\n\nErledigt",
+  "02-list-desktop": {
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "small": [],
+    "axe": []
+  },
+  "desktop-message": "„Aloe behdrei desktop bfgslt – Eins“: „Wollläuse“ als erledigt eingetragen am 04.10.2026.",
+  "desktop-listAfter": "Aloe behdrei desktop bfgslt – Zwei\n\nGrund: Trauermücken\n\nMittel: —\n\nFällig am: 04.10.2026\n\nheute fällig\n\nErledigt\nAloe behdrei desktop bfgslt – Eins\n\nGrund: Spinnmilben\n\nMittel: —\n\nFällig am: 07.10.2026\n\nin 3 Tagen\n\nErledigt\nAloe behdrei desktop bfgslt – Eins\n\nGrund: Spinnmilben\n\nMittel: —\n\nFällig am: 14.10.2026\n\n14.10.2026\n\nErledigt",
+  "desktop-wolllaeuseGone": true,
+  "03-after-done-desktop": {
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "small": [],
+    "axe": []
+  },
+  "desktop-history": "Wollläuse\n\nMittel: Neemöl\n\nFällig am: 02.10.2026\n\nErledigt am: 04.10.2026",
+  "04-history-desktop": {
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "small": [],
+    "axe": []
+  },
+  "desktop-cardAfter": "Noch kein Foto | Aloe behdrei desktop bfgslt – Eins | Art: Aloe behdrei desktop bfgslt | Lichtzone: unbekannt · Status: Pflanze | Standort: unbekannt | noch keine Messung | Behandlung: Spinnmilben · in 3 Tg. · +1 weitere | Messen | Kennzeichen | Archivieren",
+  "desktop-secondTap": {
+    "status": 200,
+    "treatment": {
+      "id": "136be3dc-0763-46f2-9f9f-99dfe0456f35",
+      "specimenId": "b511c046-5158-4f04-aaf3-2664d6678c5c",
+      "reason": "Wollläuse",
+      "agent": "Neemöl",
+      "dueAt": "2026-10-02",
+      "done": true,
+      "doneAt": "2026-10-04",
+      "courseId": null
+    }
+  },
+  "desktop-parallel": {
+    "statuses": [
+      200,
+      200
+    ],
+    "same": true,
+    "doneAt": "2026-10-04"
+  },
+  "desktop-today": "2026-10-04",
+  "desktop-benComplete": {
+    "status": 404,
+    "code": "treatment.not_found"
+  },
+  "desktop-benHistory": {
+    "status": 404,
+    "code": "specimen.not_found"
+  },
+  "desktop-maraStillOpen": true,
+  "desktop-archived": {
+    "status": 409,
+    "code": "specimen.archived"
+  },
+  "desktop-archivedHistory": {
+    "status": 200,
+    "count": 1
+  },
+  "mobile-cardBefore": "Noch kein Foto | Aloe behdrei mobile jpxlhq – Eins | Art: Aloe behdrei mobile jpxlhq | Lichtzone: unbekannt · Status: Pflanze | Standort: unbekannt | noch keine Messung | Behandlung: Wollläuse · überfällig seit 2 Tg. · +2 weitere | Messen | Kennzeichen | Archivieren",
+  "mobile-listBefore": "Aloe behdrei mobile jpxlhq – Eins\n\nGrund: Wollläuse\n\nMittel: Neemöl\n\nFällig am: 02.10.2026\n\nüberfällig seit 2 Tagen\n\nErledigt\nAloe behdrei mobile jpxlhq – Zwei\n\nGrund: Trauermücken\n\nMittel: —\n\nFällig am: 04.10.2026\n\nheute fällig\n\nErledigt\nAloe behdrei mobile jpxlhq – Eins\n\nGrund: Spinnmilben\n\nMittel: —\n\nFällig am: 07.10.2026\n\nin 3 Tagen\n\nErledigt\nAloe behdrei mobile jpxlhq – Eins\n\nGrund: Spinnmilben\n\nMittel: —\n\nFällig am: 14.10.2026\n\n14.10.2026\n\nErledigt",
+  "02-list-mobile": {
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "small": [],
+    "axe": []
+  },
+  "mobile-message": "„Aloe behdrei mobile jpxlhq – Eins“: „Wollläuse“ als erledigt eingetragen am 04.10.2026.",
+  "mobile-listAfter": "Aloe behdrei mobile jpxlhq – Zwei\n\nGrund: Trauermücken\n\nMittel: —\n\nFällig am: 04.10.2026\n\nheute fällig\n\nErledigt\nAloe behdrei mobile jpxlhq – Eins\n\nGrund: Spinnmilben\n\nMittel: —\n\nFällig am: 07.10.2026\n\nin 3 Tagen\n\nErledigt\nAloe behdrei mobile jpxlhq – Eins\n\nGrund: Spinnmilben\n\nMittel: —\n\nFällig am: 14.10.2026\n\n14.10.2026\n\nErledigt",
+  "mobile-wolllaeuseGone": true,
+  "03-after-done-mobile": {
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "small": [],
+    "axe": []
+  },
+  "mobile-history": "Wollläuse\n\nMittel: Neemöl\n\nFällig am: 02.10.2026\n\nErledigt am: 04.10.2026",
+  "04-history-mobile": {
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "small": [],
+    "axe": []
+  },
+  "mobile-cardAfter": "Noch kein Foto | Aloe behdrei mobile jpxlhq – Eins | Art: Aloe behdrei mobile jpxlhq | Lichtzone: unbekannt · Status: Pflanze | Standort: unbekannt | noch keine Messung | Behandlung: Spinnmilben · in 3 Tg. · +1 weitere | Messen | Kennzeichen | Archivieren",
+  "mobile-secondTap": {
+    "status": 200,
+    "treatment": {
+      "id": "14227c8c-0f63-4001-b64f-eb88f215801b",
+      "specimenId": "5f7bfef9-8bf7-45c1-bfe2-b91ab5103ba2",
+      "reason": "Wollläuse",
+      "agent": "Neemöl",
+      "dueAt": "2026-10-02",
+      "done": true,
+      "doneAt": "2026-10-04",
+      "courseId": null
+    }
+  },
+  "mobile-parallel": {
+    "statuses": [
+      200,
+      200
+    ],
+    "same": true,
+    "doneAt": "2026-10-04"
+  },
+  "mobile-today": "2026-10-04",
+  "mobile-benComplete": {
+    "status": 404,
+    "code": "treatment.not_found"
+  },
+  "mobile-benHistory": {
+    "status": 404,
+    "code": "specimen.not_found"
+  },
+  "mobile-maraStillOpen": true,
+  "mobile-archived": {
+    "status": 409,
+    "code": "specimen.archived"
+  },
+  "mobile-archivedHistory": {
+    "status": 200,
+    "count": 1
+  },
+  "benList": "Aloe behdrei ben\n\nGrund: Nur Ben\n\nMittel: —\n\nFällig am: 03.10.2026\n\nüberfällig seit 1 Tag\n\nErledigt",
+  "06-other-account-mobile": {
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "small": [],
+    "axe": []
+  }
+}

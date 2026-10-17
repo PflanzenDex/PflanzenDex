@@ -1,0 +1,535 @@
+{
+  "env": {
+    "db": "postgres://postgres:***@127.0.0.1:54738/pflanzendex_test"
+  },
+  "steps": [
+    {
+      "name": "accounts in own DB (proves API uses worktree DB 54738)",
+      "value": "8"
+    },
+    {
+      "name": "flow-desktop",
+      "value": {
+        "view": "desktop",
+        "defaultList": [
+          "Aloe vera",
+          "Citrus limon",
+          "Ficus elastica",
+          "Ficus lyrata",
+          "Opuntia microdasys"
+        ],
+        "defaultCount": "5 Arten gefangen",
+        "filterStates": [
+          {
+            "text": "Alle",
+            "pressed": "true",
+            "disabled": false,
+            "selectedClass": true,
+            "marker": "\"✓ \""
+          },
+          {
+            "text": "Gefangen",
+            "pressed": "false",
+            "disabled": false,
+            "selectedClass": false,
+            "marker": "none"
+          },
+          {
+            "text": "Fehlend",
+            "pressed": "false",
+            "disabled": true,
+            "selectedClass": false,
+            "marker": "none"
+          },
+          {
+            "text": "Artenarm",
+            "pressed": "false",
+            "disabled": true,
+            "selectedClass": false,
+            "marker": "none"
+          }
+        ],
+        "hint": "Fehlende Arten brauchen den Katalogaufbau (US-POK-03), bis dahin ist „Fehlend“ nicht verfügbar. „Artenarm“ braucht die Artenzahl der Gattung und ist ebenfalls noch nicht verfügbar.",
+        "checksDefault": {
+          "horizontalScroll": false,
+          "smallTargets": []
+        },
+        "searchFicus": [
+          "Ficus elastica",
+          "Ficus lyrata"
+        ],
+        "countLine": "2 von 5 Arten",
+        "searchGerman": [
+          "Ficus lyrata"
+        ],
+        "searchFamily": [
+          "Opuntia microdasys"
+        ],
+        "searchGermanUmlaut": [
+          "Opuntia microdasys"
+        ],
+        "searchGenus": [
+          "Opuntia microdasys"
+        ],
+        "noHit": true,
+        "afterResetFocus": "search",
+        "afterResetList": [
+          "Aloe vera",
+          "Citrus limon",
+          "Ficus elastica",
+          "Ficus lyrata",
+          "Opuntia microdasys"
+        ],
+        "focusedAfterTab": "Gefangen",
+        "filterGefangenPressed": "true",
+        "filterGefangenMarker": "\"✓ \"",
+        "sortDate": [
+          "Citrus limon",
+          "Ficus elastica",
+          "Ficus lyrata",
+          "Aloe vera",
+          "Opuntia microdasys"
+        ],
+        "sortDateCards": [
+          "gefangen 04.10.2026",
+          "gefangen 01.08.2026",
+          "gefangen 05.03.2026",
+          "gefangen 10.01.2025",
+          "gefangen 01.06.2024"
+        ],
+        "sortCount": [
+          "Aloe vera",
+          "Citrus limon",
+          "Ficus elastica",
+          "Ficus lyrata",
+          "Opuntia microdasys"
+        ],
+        "sortCountHint": "Die Artenzahl der Gattungen ist noch unbekannt (US-POK-03), deshalb stehen die Arten alphabetisch.",
+        "groups": [
+          "▾ Asphodelaceae · 1 / unbekannt",
+          "▾ Cactaceae (Kakteengewächse) · 1 / unbekannt",
+          "▾ Moraceae (Maulbeergewächse) · 2 / unbekannt",
+          "▾ Familie unbekannt · 1 / unbekannt"
+        ],
+        "groupsExpanded": [
+          "true",
+          "true",
+          "true",
+          "true"
+        ],
+        "collapsedAfterSpace": "false",
+        "shownCollapsed": [
+          "Aloe vera",
+          "Opuntia microdasys",
+          "Citrus limon"
+        ],
+        "expandedAfterEnter": "true",
+        "checksFamily": {
+          "horizontalScroll": false,
+          "smallTargets": []
+        },
+        "groupsWithSearch": [
+          "▾ Moraceae (Maulbeergewächse) · 2 / unbekannt"
+        ]
+      }
+    },
+    {
+      "name": "flow-mobile",
+      "value": {
+        "view": "mobile",
+        "defaultList": [
+          "Aloe vera",
+          "Citrus limon",
+          "Ficus elastica",
+          "Ficus lyrata",
+          "Opuntia microdasys"
+        ],
+        "defaultCount": "5 Arten gefangen",
+        "filterStates": [
+          {
+            "text": "Alle",
+            "pressed": "true",
+            "disabled": false,
+            "selectedClass": true,
+            "marker": "\"✓ \""
+          },
+          {
+            "text": "Gefangen",
+            "pressed": "false",
+            "disabled": false,
+            "selectedClass": false,
+            "marker": "none"
+          },
+          {
+            "text": "Fehlend",
+            "pressed": "false",
+            "disabled": true,
+            "selectedClass": false,
+            "marker": "none"
+          },
+          {
+            "text": "Artenarm",
+            "pressed": "false",
+            "disabled": true,
+            "selectedClass": false,
+            "marker": "none"
+          }
+        ],
+        "hint": "Fehlende Arten brauchen den Katalogaufbau (US-POK-03), bis dahin ist „Fehlend“ nicht verfügbar. „Artenarm“ braucht die Artenzahl der Gattung und ist ebenfalls noch nicht verfügbar.",
+        "checksDefault": {
+          "horizontalScroll": false,
+          "smallTargets": []
+        },
+        "searchFicus": [
+          "Ficus elastica",
+          "Ficus lyrata"
+        ],
+        "countLine": "2 von 5 Arten",
+        "searchGerman": [
+          "Ficus lyrata"
+        ],
+        "searchFamily": [
+          "Opuntia microdasys"
+        ],
+        "searchGermanUmlaut": [
+          "Opuntia microdasys"
+        ],
+        "searchGenus": [
+          "Opuntia microdasys"
+        ],
+        "noHit": true,
+        "afterResetFocus": "search",
+        "afterResetList": [
+          "Aloe vera",
+          "Citrus limon",
+          "Ficus elastica",
+          "Ficus lyrata",
+          "Opuntia microdasys"
+        ],
+        "focusedAfterTab": "Gefangen",
+        "filterGefangenPressed": "true",
+        "filterGefangenMarker": "\"✓ \"",
+        "sortDate": [
+          "Citrus limon",
+          "Ficus elastica",
+          "Ficus lyrata",
+          "Aloe vera",
+          "Opuntia microdasys"
+        ],
+        "sortDateCards": [
+          "gefangen 04.10.2026",
+          "gefangen 01.08.2026",
+          "gefangen 05.03.2026",
+          "gefangen 10.01.2025",
+          "gefangen 01.06.2024"
+        ],
+        "sortCount": [
+          "Aloe vera",
+          "Citrus limon",
+          "Ficus elastica",
+          "Ficus lyrata",
+          "Opuntia microdasys"
+        ],
+        "sortCountHint": "Die Artenzahl der Gattungen ist noch unbekannt (US-POK-03), deshalb stehen die Arten alphabetisch.",
+        "groups": [
+          "▾ Asphodelaceae · 1 / unbekannt",
+          "▾ Cactaceae (Kakteengewächse) · 1 / unbekannt",
+          "▾ Moraceae (Maulbeergewächse) · 2 / unbekannt",
+          "▾ Familie unbekannt · 1 / unbekannt"
+        ],
+        "groupsExpanded": [
+          "true",
+          "true",
+          "true",
+          "true"
+        ],
+        "collapsedAfterSpace": "false",
+        "shownCollapsed": [
+          "Aloe vera",
+          "Opuntia microdasys",
+          "Citrus limon"
+        ],
+        "expandedAfterEnter": "true",
+        "checksFamily": {
+          "horizontalScroll": false,
+          "smallTargets": []
+        },
+        "groupsWithSearch": [
+          "▾ Moraceae (Maulbeergewächse) · 2 / unbekannt"
+        ]
+      }
+    }
+  ],
+  "desktop": {
+    "view": "desktop",
+    "defaultList": [
+      "Aloe vera",
+      "Citrus limon",
+      "Ficus elastica",
+      "Ficus lyrata",
+      "Opuntia microdasys"
+    ],
+    "defaultCount": "5 Arten gefangen",
+    "filterStates": [
+      {
+        "text": "Alle",
+        "pressed": "true",
+        "disabled": false,
+        "selectedClass": true,
+        "marker": "\"✓ \""
+      },
+      {
+        "text": "Gefangen",
+        "pressed": "false",
+        "disabled": false,
+        "selectedClass": false,
+        "marker": "none"
+      },
+      {
+        "text": "Fehlend",
+        "pressed": "false",
+        "disabled": true,
+        "selectedClass": false,
+        "marker": "none"
+      },
+      {
+        "text": "Artenarm",
+        "pressed": "false",
+        "disabled": true,
+        "selectedClass": false,
+        "marker": "none"
+      }
+    ],
+    "hint": "Fehlende Arten brauchen den Katalogaufbau (US-POK-03), bis dahin ist „Fehlend“ nicht verfügbar. „Artenarm“ braucht die Artenzahl der Gattung und ist ebenfalls noch nicht verfügbar.",
+    "checksDefault": {
+      "horizontalScroll": false,
+      "smallTargets": []
+    },
+    "searchFicus": [
+      "Ficus elastica",
+      "Ficus lyrata"
+    ],
+    "countLine": "2 von 5 Arten",
+    "searchGerman": [
+      "Ficus lyrata"
+    ],
+    "searchFamily": [
+      "Opuntia microdasys"
+    ],
+    "searchGermanUmlaut": [
+      "Opuntia microdasys"
+    ],
+    "searchGenus": [
+      "Opuntia microdasys"
+    ],
+    "noHit": true,
+    "afterResetFocus": "search",
+    "afterResetList": [
+      "Aloe vera",
+      "Citrus limon",
+      "Ficus elastica",
+      "Ficus lyrata",
+      "Opuntia microdasys"
+    ],
+    "focusedAfterTab": "Gefangen",
+    "filterGefangenPressed": "true",
+    "filterGefangenMarker": "\"✓ \"",
+    "sortDate": [
+      "Citrus limon",
+      "Ficus elastica",
+      "Ficus lyrata",
+      "Aloe vera",
+      "Opuntia microdasys"
+    ],
+    "sortDateCards": [
+      "gefangen 04.10.2026",
+      "gefangen 01.08.2026",
+      "gefangen 05.03.2026",
+      "gefangen 10.01.2025",
+      "gefangen 01.06.2024"
+    ],
+    "sortCount": [
+      "Aloe vera",
+      "Citrus limon",
+      "Ficus elastica",
+      "Ficus lyrata",
+      "Opuntia microdasys"
+    ],
+    "sortCountHint": "Die Artenzahl der Gattungen ist noch unbekannt (US-POK-03), deshalb stehen die Arten alphabetisch.",
+    "groups": [
+      "▾ Asphodelaceae · 1 / unbekannt",
+      "▾ Cactaceae (Kakteengewächse) · 1 / unbekannt",
+      "▾ Moraceae (Maulbeergewächse) · 2 / unbekannt",
+      "▾ Familie unbekannt · 1 / unbekannt"
+    ],
+    "groupsExpanded": [
+      "true",
+      "true",
+      "true",
+      "true"
+    ],
+    "collapsedAfterSpace": "false",
+    "shownCollapsed": [
+      "Aloe vera",
+      "Opuntia microdasys",
+      "Citrus limon"
+    ],
+    "expandedAfterEnter": "true",
+    "checksFamily": {
+      "horizontalScroll": false,
+      "smallTargets": []
+    },
+    "groupsWithSearch": [
+      "▾ Moraceae (Maulbeergewächse) · 2 / unbekannt"
+    ]
+  },
+  "mobile": {
+    "view": "mobile",
+    "defaultList": [
+      "Aloe vera",
+      "Citrus limon",
+      "Ficus elastica",
+      "Ficus lyrata",
+      "Opuntia microdasys"
+    ],
+    "defaultCount": "5 Arten gefangen",
+    "filterStates": [
+      {
+        "text": "Alle",
+        "pressed": "true",
+        "disabled": false,
+        "selectedClass": true,
+        "marker": "\"✓ \""
+      },
+      {
+        "text": "Gefangen",
+        "pressed": "false",
+        "disabled": false,
+        "selectedClass": false,
+        "marker": "none"
+      },
+      {
+        "text": "Fehlend",
+        "pressed": "false",
+        "disabled": true,
+        "selectedClass": false,
+        "marker": "none"
+      },
+      {
+        "text": "Artenarm",
+        "pressed": "false",
+        "disabled": true,
+        "selectedClass": false,
+        "marker": "none"
+      }
+    ],
+    "hint": "Fehlende Arten brauchen den Katalogaufbau (US-POK-03), bis dahin ist „Fehlend“ nicht verfügbar. „Artenarm“ braucht die Artenzahl der Gattung und ist ebenfalls noch nicht verfügbar.",
+    "checksDefault": {
+      "horizontalScroll": false,
+      "smallTargets": []
+    },
+    "searchFicus": [
+      "Ficus elastica",
+      "Ficus lyrata"
+    ],
+    "countLine": "2 von 5 Arten",
+    "searchGerman": [
+      "Ficus lyrata"
+    ],
+    "searchFamily": [
+      "Opuntia microdasys"
+    ],
+    "searchGermanUmlaut": [
+      "Opuntia microdasys"
+    ],
+    "searchGenus": [
+      "Opuntia microdasys"
+    ],
+    "noHit": true,
+    "afterResetFocus": "search",
+    "afterResetList": [
+      "Aloe vera",
+      "Citrus limon",
+      "Ficus elastica",
+      "Ficus lyrata",
+      "Opuntia microdasys"
+    ],
+    "focusedAfterTab": "Gefangen",
+    "filterGefangenPressed": "true",
+    "filterGefangenMarker": "\"✓ \"",
+    "sortDate": [
+      "Citrus limon",
+      "Ficus elastica",
+      "Ficus lyrata",
+      "Aloe vera",
+      "Opuntia microdasys"
+    ],
+    "sortDateCards": [
+      "gefangen 04.10.2026",
+      "gefangen 01.08.2026",
+      "gefangen 05.03.2026",
+      "gefangen 10.01.2025",
+      "gefangen 01.06.2024"
+    ],
+    "sortCount": [
+      "Aloe vera",
+      "Citrus limon",
+      "Ficus elastica",
+      "Ficus lyrata",
+      "Opuntia microdasys"
+    ],
+    "sortCountHint": "Die Artenzahl der Gattungen ist noch unbekannt (US-POK-03), deshalb stehen die Arten alphabetisch.",
+    "groups": [
+      "▾ Asphodelaceae · 1 / unbekannt",
+      "▾ Cactaceae (Kakteengewächse) · 1 / unbekannt",
+      "▾ Moraceae (Maulbeergewächse) · 2 / unbekannt",
+      "▾ Familie unbekannt · 1 / unbekannt"
+    ],
+    "groupsExpanded": [
+      "true",
+      "true",
+      "true",
+      "true"
+    ],
+    "collapsedAfterSpace": "false",
+    "shownCollapsed": [
+      "Aloe vera",
+      "Opuntia microdasys",
+      "Citrus limon"
+    ],
+    "expandedAfterEnter": "true",
+    "checksFamily": {
+      "horizontalScroll": false,
+      "smallTargets": []
+    },
+    "groupsWithSearch": [
+      "▾ Moraceae (Maulbeergewächse) · 2 / unbekannt"
+    ]
+  },
+  "otherAccount": {
+    "text": "Noch keine Art gefangen. Lege ein Exemplar mit bestimmter Art an, dann zählt es.",
+    "hasSearch": 0,
+    "cards": 0
+  },
+  "axe": {
+    "01-default-desktop": [],
+    "02-search-ficus-desktop": [],
+    "03-no-hit-desktop": [],
+    "04-filter-caught-desktop": [],
+    "05-sort-catch-date-desktop": [],
+    "06-sort-species-count-desktop": [],
+    "07-sort-family-desktop": [],
+    "08-family-collapsed-desktop": [],
+    "01-default-mobile": [],
+    "02-search-ficus-mobile": [],
+    "03-no-hit-mobile": [],
+    "04-filter-caught-mobile": [],
+    "05-sort-catch-date-mobile": [],
+    "06-sort-species-count-mobile": [],
+    "07-sort-family-mobile": [],
+    "08-family-collapsed-mobile": [],
+    "09-family-dark-desktop": [],
+    "09-family-dark-mobile": [],
+    "10-other-account-desktop": []
+  }
+}

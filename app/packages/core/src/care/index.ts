@@ -1,0 +1,56 @@
+// Public interface of the module `care` (ADR 0003): measurements (US-WAC-01).
+export { measurementView } from "./measurements/view";
+export type { ViewDependencies } from "./measurements/view";
+export { GROWTH_DEFAULTS, growthTrend } from "./measurements/growth";
+export type { GrowthSignal, GrowthTrend, Trend } from "./measurements/growth";
+export { measurementSource } from "./measurements/capture/source";
+export type { SourceDependencies } from "./measurements/capture/source";
+export { measurementRecord } from "./measurements/write/record";
+export { measurementAssess, measurementPhotoById } from "./measurements/write/assess";
+export type { RecordDependencies } from "./measurements/write/record";
+export { measurementPhoto } from "./measurements/capture/photo";
+export type { PhotoDependencies, PhotoResult, PhotoStorage } from "./measurements/capture/photo";
+export { measurementPhotoFile } from "./measurements/capture/file";
+export type { PhotoFileDependencies } from "./measurements/capture/file";
+export { RATED_BY, MEASUREMENT_LIMITS, QUALITIES } from "./measurements/types";
+export type {
+  RatedBy,
+  MeasurementView,
+  MeasurementStore,
+  MeasurementValues,
+  MeasurementRow,
+  Quality,
+} from "./measurements/types";
+export { CARE_PHASES, monthTag, carePhase, nextPhaseChange } from "./phases/phase";
+export type { CarePhase, NextPhaseChange } from "./phases/phase";
+export { NO_PHASE_LOCATION } from "./phases/phase-location";
+export type { PhaseLocationSource } from "./phases/phase-location";
+export { careProfileLocations, careProfileTargetLocation } from "./switching/profile-location";
+export { phaseSwitchConfirm, MAX_SWITCH } from "./switching/switch";
+export type { SwitchDependencies, SwitchedSpecimen } from "./switching/switch";
+export { carePhasesList } from "./phases/phases";
+export type { PhasesDependencies, PhasesRow } from "./phases/phases";
+export { treatmentPlan } from "./treatments/treatment-plan";
+export type { PlanDependencies, PlanResult } from "./treatments/treatment-plan";
+export { treatmentComplete } from "./treatments/treatment-complete";
+export type { CompleteDependencies, CompleteResult } from "./treatments/treatment-complete";
+export { treatmentHistory } from "./treatments/treatment-history";
+export type { HistoryDependencies } from "./treatments/treatment-history";
+export { treatmentSource } from "./treatments/treatment-source";
+export type { TreatmentSourceDependencies } from "./treatments/treatment-source";
+export { TREATMENT_LIMITS, COURSE_DEFAULTS } from "./treatment-data/treatment-types";
+export type {
+  TreatmentRow,
+  TreatmentValues,
+  TreatmentStore,
+} from "./treatment-data/treatment-types";
+export { treatmentOpenList, treatmentStatus } from "./treatments/treatment-list";
+export type {
+  TreatmentListDependencies,
+  TreatmentListRow,
+  TreatmentStatus,
+  TreatmentStatusKind,
+} from "./treatments/treatment-list";
+export { phaseStatus } from "./phases/phase-status";
+export { phaseChangeOccasions } from "./phases/change/phase-change";
+export type { PhaseStatus } from "./phases/phase-status";

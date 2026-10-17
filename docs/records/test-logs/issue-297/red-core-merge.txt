@@ -1,0 +1,35 @@
+
+ RUN  v5.0.3 <worktree>
+
+ ❯ src/catalog/merge.test.ts (10 tests | 1 failed) 36ms
+   ❯ US-BES-10 merge with an existing species (FR-BES-11, P-10) (10)
+     × US-BES-10 a lock that cannot be taken has its own code and is not reported as decided 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/catalog/merge.test.ts > US-BES-10 merge with an existing species (FR-BES-11, P-10) > US-BES-10 a lock that cannot be taken has its own code and is not reported as decided
+AssertionError: expected false to be 'review.merge_lock_failed' // Object.is equality
+
+- Expected:
+"review.merge_lock_failed"
+
++ Received:
+false
+
+ ❯ src/catalog/merge.test.ts:121:35
+    119|       targetSpeciesId: target.speciesId,
+    120|     });
+    121|     expect(!r.ok && r.error.code).toBe("review.merge_lock_failed");
+       |                                   ^
+    122|     expect(w.reviews.rows.find((z) => z.id === proposal.caseId)?.statu…
+    123|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  08:15:42
+   Duration  439ms (transform 71%, tests 13%, import 13%, worker 2%)
+
+exit code: 1

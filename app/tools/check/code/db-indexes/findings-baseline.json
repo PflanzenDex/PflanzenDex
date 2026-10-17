@@ -1,0 +1,3 @@
+{
+  "species": ["fk(object_kind, id)"]
+}

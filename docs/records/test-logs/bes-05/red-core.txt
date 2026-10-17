@@ -1,0 +1,26 @@
+
+ RUN  v5.0.3 /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-05/app/packages/core
+
+ ❯ src/collection/difficulty-overview.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/difficulty-overview.test.ts [ src/collection/difficulty-overview.test.ts ]
+Error: Cannot find module './difficulty-overview' imported from /home/konradhe/IdeaProjects/PflanzenDex/.worktrees/bes-05/app/packages/core/src/collection/difficulty-overview.test.ts
+ ❯ src/collection/difficulty-overview.test.ts:4:1
+      2| import { beforeEach, describe, expect, it } from "vitest";
+      3| import { InMemoryLight } from "../light/test-helpers";
+      4| import { difficultyOverview } from "./difficulty-overview";
+       | ^
+      5| import { InMemorySpecimens, SpeciesStub, testSpecies } from "./test-he…
+      6|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  16:38:23
+   Duration  182ms (worker 96%, environment 4%)
+
+exit code: 1

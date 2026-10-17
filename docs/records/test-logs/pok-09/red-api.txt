@@ -1,0 +1,28 @@
+      "genusSpeciesCount": null,
+      "germanName": "Opuntiangimglpald microdasys",
+-     "source": "https://example.test/opuntia",
+      "species": "Opuntiangimglpald microdasys",
+-     "speciesId": "6c60a91c-eee1-469a-aea0-481c6a14e000",
+      "specimenCount": 2,
+    },
+  ]
+
+ ❯ src/pokedex/ownership.test.ts:123:22
+    121|     expect(r.status).toBe(200);
+    122|     const o = r.body["ownership"];
+    123|     expect(o.caught).toEqual([
+       |                      ^
+    124|       {
+    125|         species: `Opuntia${run} microdasys`,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  16:39:13
+   Duration  1.72s (tests 69%, transform 23%, import 8%)
+
+exit 
+
+[note] The exit code was lost by the capturing pipeline (shown empty above); the runner reported failed tests, which makes vitest exit non-zero. Captured before the implementation, with the type-only fields added so the pre-push typecheck gate could run.

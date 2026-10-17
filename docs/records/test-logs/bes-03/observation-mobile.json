@@ -1,0 +1,133 @@
+[
+ {
+  "k": "first: marker label mobile",
+  "v": "Kennzeichen (optional)"
+ },
+ {
+  "k": "first: name preview mobile",
+  "v": "Name: Aloe bessmall"
+ },
+ {
+  "k": "layout 01-first-form mobile",
+  "v": {
+   "scrollW": 375,
+   "innerW": 375
+  }
+ },
+ {
+  "k": "second: preset mobile",
+  "v": "Klammer"
+ },
+ {
+  "k": "second: name preview mobile",
+  "v": "Name: Aloe bessmall – Klammer"
+ },
+ {
+  "k": "layout 02-second-form mobile",
+  "v": {
+   "scrollW": 375,
+   "innerW": 375
+  }
+ },
+ {
+  "k": "third: missing field mobile",
+  "v": 1
+ },
+ {
+  "k": "layout 03-third-form-missing mobile",
+  "v": {
+   "scrollW": 375,
+   "innerW": 375
+  }
+ },
+ {
+  "k": "third: error text mobile",
+  "v": "Bitte vergib zuerst alle fehlenden Kennzeichen, bevor du speicherst."
+ },
+ {
+  "k": "third: POSTs after blocked submit mobile",
+  "v": 0
+ },
+ {
+  "k": "layout 04-third-blocked mobile",
+  "v": {
+   "scrollW": 375,
+   "innerW": 375
+  }
+ },
+ {
+  "k": "third: rename preview mobile",
+  "v": "„Aloe bessmall“ heißt dann „Aloe bessmall – blau“."
+ },
+ {
+  "k": "layout 05-third-form-filled mobile",
+  "v": {
+   "scrollW": 375,
+   "innerW": 375
+  }
+ },
+ {
+  "k": "list names mobile",
+  "v": [
+   "Aloe bessmall – blau",
+   "Aloe bessmall – Klammer",
+   "Aloe bessmall – rot"
+  ]
+ },
+ {
+  "k": "layout 06-list-three mobile",
+  "v": {
+   "scrollW": 375,
+   "innerW": 375
+  }
+ },
+ {
+  "k": "layout 07-rename-form mobile",
+  "v": {
+   "scrollW": 375,
+   "innerW": 375
+  }
+ },
+ {
+  "k": "rename duplicate: error mobile",
+  "v": "Dieses Kennzeichen gibt es bei dieser Art schon. Wähle ein anderes, damit du die Töpfe unterscheiden kannst."
+ },
+ {
+  "k": "layout 08-rename-duplicate mobile",
+  "v": {
+   "scrollW": 375,
+   "innerW": 375
+  }
+ },
+ {
+  "k": "rename preview mobile",
+  "v": "Name: Aloe bessmall – grün"
+ },
+ {
+  "k": "rename message mobile",
+  "v": "„Aloe bessmall – blau“ heißt jetzt „Aloe bessmall – grün“. Die Historie bleibt beim Exemplar."
+ },
+ {
+  "k": "list names after rename mobile",
+  "v": [
+   "Aloe bessmall – grün",
+   "Aloe bessmall – Klammer",
+   "Aloe bessmall – rot"
+  ]
+ },
+ {
+  "k": "layout 09-renamed mobile",
+  "v": {
+   "scrollW": 375,
+   "innerW": 375
+  }
+ },
+ {
+  "k": "after reload mobile",
+  "v": [
+   "Aloe bessmall – grün",
+   "Aloe bessmall – Klammer",
+   "Aloe bessmall – rot"
+  ]
+ }
+]

@@ -1,0 +1,45 @@
+
+ RUN  v5.0.3 <worktree>
+
+ ❯ src/collection/cards.test.ts (11 tests | 1 failed) 468ms
+   ❯ US-ACC-03 cheap specimen count for the start page (2)
+     × US-ACC-03 counts the active specimens of the caller, never those of another account (P-04), and is not read as a specimen ID 9ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/collection/cards.test.ts > US-ACC-03 cheap specimen count for the start page > US-ACC-03 counts the active specimens of the caller, never those of another account (P-04), and is not read as a specimen ID
+AssertionError: expected { status: 404, …(1) } to match object { status: 200, body: { count: +0 } }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "body": {
+-     "count": 0,
++     "error": {
++       "code": "specimen.not_found",
++       "text": "Dieses Exemplar gibt es nicht.",
++     },
+    },
+-   "status": 200,
++   "status": 404,
+  }
+
+ ❯ src/collection/cards.test.ts:246:31
+    244|
+    245|   it("US-ACC-03 counts the active specimens of the caller, never those…
+    246|     expect(await count(subB)).toMatchObject({ status: 200, body: { cou…
+       |                               ^
+    247|     const speciesId = await newSpecies(subB, `Zaehla${run} vera`, `Zäh…
+    248|     await create(subB, { speciesId, name: `Zähler eins ${run}` });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  08:17:54
+   Duration  1.17s (tests 44%, transform 39%, import 16%)
+
+exit code: 1

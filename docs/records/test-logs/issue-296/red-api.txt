@@ -1,0 +1,21 @@
+❯ src/account/access.test.ts (1)
+   ❯ US-ACC-05 · the operator area (role checked in the operation and in the database) (1)
+     × US-ACC-05 POST /operator/invitations sets Cache-Control: no-store to prevent the code from being cached
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/account/access.test.ts > US-ACC-05 · the operator area (role checked in the operation and in the database) > US-ACC-05 POST /operator/invitations sets Cache-Control: no-store to prevent the code from being cached
+AssertionError: expected undefined to be 'no-store'
+
+ ❯ src/account/access.test.ts:252:19
+    250|   it("US-ACC-05 POST /operator/invitations sets Cache-Control: no-store to prevent the code from being cached", async () => {
+    251|     const r = await call(open, subOperator, "POST", "/operator/invitations", {});
+    252|     expect(r.headers?.get("cache-control")).toBe("no-store");
+       |                   ^
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  08:12:30
+   Duration  850ms
+
+exit code recorded when run: 1

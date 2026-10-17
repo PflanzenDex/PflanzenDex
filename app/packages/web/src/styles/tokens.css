@@ -1,0 +1,295 @@
+/*
+ * Design system stack and tokens (US-QS-07, DS-20, DS-27, DS-28, DS-30, DS-33). Tailwind v4 theme, preflight
+ * (the base layer reset) and utilities. This is the only stylesheet of the web package; everything else is utility
+ * classes on components (#347 retired style.css and the module stylesheets).
+ *
+ * Tokens are CSS variables on :root, redefined for dark mode with the system setting (ADR 0007 decision 6),
+ * exposed to Tailwind with @theme inline. Names are by role, not by hue. style-contrast.test.ts checks every
+ * pair in light and dark, and fails when a colour token has no pair.
+ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/preflight" layer(base);
+@import "tailwindcss/utilities" layer(utilities);
+
+/* Figtree (SIL OFL 1.1, fonts/ofl.txt), self-hosted: Latin subset incl. German umlauts and ß, variable weight axis. */
+@font-face {
+  font-family: "Figtree";
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url("./fonts/figtree-latin-wght-normal.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Dark mode follows the system, as today (ADR 0007 decision 6). */
+@custom-variant dark (@media (prefers-color-scheme: dark));
+
+:root {
+  --background: #f2f6f3;
+  --foreground: #14201a;
+  --card: #ffffff;
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: #1b6b4a;
+  --primary-foreground: #ffffff;
+  --secondary: #e6eee8;
+  --secondary-foreground: #14201a;
+  --muted: #e6eee8;
+  --muted-foreground: #4b5c52;
+  --accent: #d8eedf;
+  --accent-foreground: #124a32;
+  --destructive: #b3261e; /* invalid field border and error text */
+  --destructive-foreground: #ffffff;
+  --border: #d3ded6; /* decorative lines of cards and dividers */
+  --input: #6b8274; /* field boundary: 3.8:1 on background, 4.1:1 on card (WCAG 1.4.11); --border stays decorative */
+  --ring: #1b6b4a;
+
+  /* Elevation (ADR 0011 decision 4) and motion (decision 5); radius, type scale and easing are in @theme below. */
+  --elevation-1: 0 1px 2px rgb(20 40 28 / 0.08), 0 6px 16px rgb(20 40 28 / 0.08);
+  --elevation-2: 0 8px 24px rgb(20 40 28 / 0.08); /* sheets, dialogs, floating action */
+  --elevation-2-border: transparent; /* dark mode draws a 1px border, where shadows are weak */
+
+  --motion-fast: 120ms; /* press, toggle (starting values, assumption) */
+  --motion-base: 200ms; /* list entry, chip, sheet content */
+  --motion-slow: 320ms; /* route transition, card to detail */
+
+  /* Warning (etiolation, deviation): fill, text on it, border. */
+  --warning: #fff1cf;
+  --warning-foreground: #6b4700;
+  --warning-border: #8a5a00;
+
+  /* Domain colours (DS-30): light zones 1 to 4 and care phases, used as text or marks on background and card. */
+  --zone-1: #8a5a00;
+  --zone-2: #4d6b00;
+  --zone-3: #1f6b3a;
+  --zone-4: #0b6a8a;
+  --phase-growth: #1f6b3a;
+  --phase-dormancy: #3f5f9a;
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f1612;
+    --foreground: #e6efe9;
+    --card: #18221c;
+    --primary: #7bd3a0;
+    --primary-foreground: #0b2316;
+    --secondary: #223028;
+    --secondary-foreground: #e6efe9;
+    --muted: #18221c;
+    --muted-foreground: #a5b6ab;
+    --accent: #1f3a2b;
+    --accent-foreground: #a9e8c4;
+    --destructive: #ff8a80; /* 8.0:1 on --background, 7.2:1 on --card */
+    --destructive-foreground: #2a0a08;
+    --border: #2b3b31;
+    --input: #6f8c79; /* 5.0:1 on background, 4.4:1 on card */
+    --ring: #7bd3a0;
+    --elevation-1: 0 1px 2px rgb(0 0 0 / 0.35), 0 6px 16px rgb(0 0 0 / 0.35);
+    --elevation-2: 0 8px 24px rgb(0 0 0 / 0.35);
+    --elevation-2-border: var(--border);
+
+    --warning: #3a2f10;
+    --warning-foreground: #f2c766;
+    --warning-border: #e0a92e;
+
+    --zone-1: #e0a92e;
+    --zone-2: #b4d15a;
+    --zone-3: #5fbf86;
+    --zone-4: #6cc4e3;
+    --phase-growth: #7fd29d;
+    --phase-dormancy: #9db8f0;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-border: var(--warning-border);
+  --color-zone-1: var(--zone-1);
+  --color-zone-2: var(--zone-2);
+  --color-zone-3: var(--zone-3);
+  --color-zone-4: var(--zone-4);
+  --color-phase-growth: var(--phase-growth);
+  --color-phase-dormancy: var(--phase-dormancy);
+  --shadow-elevation-1: var(--elevation-1);
+  --shadow-elevation-2: var(--elevation-2), 0 0 0 1px var(--elevation-2-border);
+}
+
+/* Values that do not change with the colour scheme are plain theme variables (ADR 0011 decisions 3 to 5). */
+@theme {
+  /* Radius: tokens plus the Tailwind steps components already use, so existing classes resolve to the new radii. */
+  --radius-control: 14px; /* inputs, small buttons, chips with text */
+  --radius-tile: 16px; /* photo tiles */
+  --radius-card: 22px; /* cards (24px from 1280px is set by the shell) */
+  --radius-pill: 9999px; /* primary buttons, navigation indicators, filter chips */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: var(--radius-control);
+  --radius-xl: var(--radius-tile);
+  --radius-2xl: var(--radius-card);
+
+  --font-sans: "Figtree", system-ui, sans-serif;
+  --text-xs: 0.75rem;
+  --text-label: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.25;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 1.25;
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 1.25;
+  --text-4xl: 2.5rem;
+  --text-4xl--line-height: 1.25;
+
+  --ease-enter: cubic-bezier(0.2, 0, 0, 1);
+  --ease-leave: cubic-bezier(0.4, 0, 1, 1);
+
+  /* PlantLoader (US-QS-07): grow and sway, durations are multiples of the motion token, so 0ms under reduced motion. */
+  --animate-plant-grow: plant-grow calc(var(--motion-slow) * 6) var(--ease-enter) infinite;
+  --animate-plant-sway: plant-sway calc(var(--motion-slow) * 8) ease-in-out infinite;
+  @keyframes plant-grow {
+    0% {
+      transform: scale(0.35);
+    }
+    60%,
+    100% {
+      transform: scale(1);
+    }
+  }
+  @keyframes plant-sway {
+    0%,
+    100% {
+      transform: rotate(-4deg);
+    }
+    50% {
+      transform: rotate(4deg);
+    }
+  }
+  /* List entry (US-QS-14): a card rises and fades in; transform and opacity only, so nothing shifts, and 0ms under reduced motion. */
+  --animate-list-in: list-in var(--motion-base) var(--ease-enter) both;
+  @keyframes list-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+  }
+  /* Toast (US-QS-07): enters with a short rise, duration from the motion token, so no movement under reduced motion. */
+  --animate-toast-in: toast-in var(--motion-base) var(--ease-enter) both;
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+  }
+}
+
+/* Base layer (DS-33): the page colours and the pointer for real controls, which preflight resets to the default arrow. */
+@layer base {
+  body {
+    @apply bg-background font-sans text-foreground;
+    font-size: 1rem;
+    line-height: 1.45; /* running text; headings 1.25 */
+  }
+  h1,
+  h2,
+  h3 {
+    line-height: 1.25;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/*
+ * Adaptable display (US-QS-12). These two blocks stay outside the layers on purpose: unlayered rules win over the
+ * utilities layer and over the styles that third-party parts inject at runtime (the Vaul sheet), in any order.
+ */
+
+/*
+ * Reduced motion (WCAG 2.3.3, DS-19): with the system setting, animations and transitions end at once. `!important`
+ * is the one exception to DS-33 here, because libraries set transitions as inline styles while a sheet moves.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+  *,
+  ::before,
+  ::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * Route transition (US-QS-14, ADR 0011 decision 5): while a view change runs (the marker is set by the router for its
+ * duration only), the main content cross-fades over `--motion-slow`; the app bar and navigation stay still. The page
+ * snapshot does not animate, and the main group does not morph, so the content never stretches. Under reduced
+ * motion the router starts no transition; the zero duration is the second line of defence.
+ */
+:root[data-route-transition] main {
+  view-transition-name: page;
+}
+:root[data-route-transition]::view-transition-old(root),
+:root[data-route-transition]::view-transition-new(root),
+::view-transition-group(page) {
+  animation: none;
+}
+::view-transition-old(page),
+::view-transition-new(page) {
+  animation-duration: var(--motion-slow);
+  animation-timing-function: var(--ease-enter);
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0s !important;
+  }
+}
+
+/*
+ * Forced colors (Windows contrast themes; WCAG 2.4.7, 1.4.11, DS-37): the focus ring is a box shadow, which forced
+ * colors drop, so a system-coloured outline carries the focus for every focusable element, also for future ones.
+ */
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}

@@ -1,0 +1,48 @@
+
+ RUN  v5.0.3 <worktree>
+
+ ❯ src/pokedex/ownership.test.ts (16 tests | 1 failed) 31ms
+   ❯ US-POK-08 two cultivars without a plain species (issue 297) (1)
+     × US-POK-08 the German name, the ID and the chips do not depend on the order of the specimens 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pokedex/ownership.test.ts > US-POK-08 two cultivars without a plain species (issue 297) > US-POK-08 the German name, the ID and the chips do not depend on the order of the specimens
+AssertionError: expected [ { …(11) } ] to deeply equal [ { …(11) } ]
+
+- Expected
++ Received
+
+@@ -10,12 +10,12 @@
+      ],
+      "familyGerman": null,
+      "familyLatin": null,
+      "genus": "Opuntia",
+      "genusSpeciesCount": null,
+-     "germanName": "Rote Sorte",
++     "germanName": "Weisse Sorte",
+      "source": null,
+      "species": "Opuntia microdasys",
+-     "speciesId": "99999999-9999-4999-8999-999999999999",
++     "speciesId": "88888888-8888-4888-8888-888888888888",
+      "specimenCount": 2,
+    },
+  ]
+
+ ❯ src/pokedex/ownership.test.ts:284:26
+    282|     await add("anna", second);
+    283|     const other = await pokedexOwnership({ specimens, species: own }, …
+    284|     expect(other.caught).toEqual(one.caught);
+       |                          ^
+    285|     expect(one.caught[0]?.germanName).toBe("Weisse Sorte");
+    286|     expect(one.caught[0]?.speciesId).toBe(first);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  08:10:18
+   Duration  338ms (transform 67%, import 17%, tests 13%, worker 3%)
+
+exit code: 1

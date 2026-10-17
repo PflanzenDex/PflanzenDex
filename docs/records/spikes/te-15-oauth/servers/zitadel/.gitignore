@@ -1,0 +1,4 @@
+secrets/
+upstream-*
+.env
+compose.yaml

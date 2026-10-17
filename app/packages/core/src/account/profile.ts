@@ -1,0 +1,160 @@
+import {
+  appError,
+  defineOperation,
+  failed,
+  ok,
+  orNull,
+  shape,
+  textField,
+  timeZoneField,
+  type ErrorDetail,
+} from "../kernel";
+
+/** The occasions a reminder can be switched for (US-MON-08). */
+export const NOTIFICATION_OCCASIONS = [
+  "phase",
+  "treatment",
+  "measurement",
+  "watering",
+  "swap",
+  "friends",
+  "equipment",
+] as const;
+
+export type NotificationOccasion = (typeof NOTIFICATION_OCCASIONS)[number];
+
+/** On or off per occasion. A switch that was never touched is on (starting value, assumption). */
+export type NotificationSwitches = Readonly<Record<NotificationOccasion, boolean>>;
+
+/** Limit of the display name in characters (assumption, starting value). */
+export const DISPLAY_NAME_LIMITS = { min: 1, max: 80 } as const;
+
+/**
+ * The buffer of open candidates every zone 2 to 4 should have (US-WUN-02): whole number from 0 to 10, 2 until changed.
+ * Assumption, decided by the PO.
+ */
+export const REPLENISH_BUFFER_LIMITS = { min: 0, max: 10, default: 2 } as const;
+
+/**
+ * Limits of the four position thresholds in lux (US-LIC-03, FR-LIC-05): whole numbers from 1 to 200,000 (the upper end
+ * of the catalog's lux demand), strictly descending. Assumption, decided by the PO. The standard values live in the
+ * light module; `null` means "standard".
+ */
+export const POSITION_THRESHOLD_LIMITS = { count: 4, min: 1, max: 200_000 } as const;
+
+/** Profile and settings of one account (US-ACC-02); the display name is not unique (FR-SOZ-08). */
+export interface AccountProfile {
+  readonly displayName: string | null;
+  /** IANA name, e.g. `Europe/Berlin`; `null` = not chosen yet, the device decides (NFR-08). */
+  readonly timeZone: string | null;
+  /** Suspends all sharing settings without deleting them (US-SOZ-04). */
+  readonly everythingPrivate: boolean;
+  /** No affiliate or equipment recommendations (US-EQU-11). */
+  readonly noRecommendations: boolean;
+  readonly notifications: NotificationSwitches;
+  /** Open candidates per zone 2 to 4 below which the wishlist warns (US-WUN-02, REPLENISH_BUFFER_LIMITS). */
+  readonly replenishBuffer: number;
+  /** The collection counts in the rarity in PflanzenDex (US-POK-14); off until switched on (decided by the PO). */
+  readonly rarityConsent: boolean;
+  /** Lux lower bounds of the four closest positions in the light overview (US-LIC-03); `null` = standard values. */
+  readonly positionThresholds: readonly number[] | null;
+}
+
+/**
+ * A save of the profile: like the profile, but `displayName: null` keeps the stored name (US-ACC-02) and
+ * `replenishBuffer: null` and `rarityConsent: null` keep the stored values, so an older client cannot reset them.
+ */
+export type ProfileChanges = Omit<
+  AccountProfile,
+  "replenishBuffer" | "rarityConsent" | "positionThresholds"
+> & {
+  readonly replenishBuffer: number | null;
+  /** `null` keeps the stored consent. */
+  readonly rarityConsent: boolean | null;
+  /** `null` keeps the stored thresholds; the standard values are sent explicitly to go back to them. */
+  readonly positionThresholds: readonly number[] | null;
+};
+
+/** Port for persistence; the adapter lives in `db` (AB-1) and runs as the account of the caller (P-04). */
+export interface ProfileStore {
+  /** `null` while the account has no data row yet. */
+  find(userId: string): Promise<AccountProfile | null>;
+  /** Writes the changes in one statement; `displayName: null` leaves the stored name as it is. */
+  update(userId: string, changes: ProfileChanges): Promise<AccountProfile | null>;
+}
+
+export const defaultNotifications = (): NotificationSwitches =>
+  Object.fromEntries(NOTIFICATION_OCCASIONS.map((o) => [o, true])) as NotificationSwitches;
+
+const flag = (field: string) => (value: unknown) =>
+  typeof value === "boolean" ? value : ({ field, code: "input.invalid" } as ErrorDetail);
+
+/** Known occasions only, each a boolean; missing ones stay on. Anything else is refused, never dropped silently (P-10). */
+function notificationsField(field: string) {
+  return (value: unknown): NotificationSwitches | ErrorDetail => {
+    const bad: ErrorDetail = { field, code: "input.invalid" };
+    if (value === undefined || value === null) return defaultNotifications();
+    if (typeof value !== "object" || Array.isArray(value)) return bad;
+    const given = value as Record<string, unknown>;
+    const known: readonly string[] = NOTIFICATION_OCCASIONS;
+    if (Object.keys(given).some((k) => !known.includes(k))) return bad;
+    if (Object.values(given).some((v) => typeof v !== "boolean")) return bad;
+    return { ...defaultNotifications(), ...(given as Partial<NotificationSwitches>) };
+  };
+}
+
+const bufferField = (field: string) => (value: unknown) =>
+  typeof value === "number" &&
+  Number.isInteger(value) &&
+  value >= REPLENISH_BUFFER_LIMITS.min &&
+  value <= REPLENISH_BUFFER_LIMITS.max
+    ? value
+    : ({ field, code: "input.invalid" } as ErrorDetail);
+
+/** Four whole lux values in the limits, each lower than the one before (US-LIC-03); anything else is refused (P-10). */
+const thresholdsField = (field: string) => (value: unknown) => {
+  const bad = { field, code: "input.invalid" } as ErrorDetail;
+  const { count, min, max } = POSITION_THRESHOLD_LIMITS;
+  if (!Array.isArray(value) || value.length !== count) return bad;
+  const ok = value.every(
+    (v, i) =>
+      typeof v === "number" &&
+      Number.isInteger(v) &&
+      v >= min &&
+      v <= max &&
+      (i === 0 || v < (value[i - 1] as number)),
+  );
+  return ok ? (value as readonly number[]) : bad;
+};
+
+const schema = shape({
+  displayName: orNull(textField("displayName", DISPLAY_NAME_LIMITS)),
+  timeZone: orNull(timeZoneField("timeZone")),
+  everythingPrivate: flag("everythingPrivate"),
+  noRecommendations: flag("noRecommendations"),
+  notifications: notificationsField("notifications"),
+  replenishBuffer: orNull(bufferField("replenishBuffer")),
+  rarityConsent: orNull(flag("rarityConsent")),
+  positionThresholds: orNull(thresholdsField("positionThresholds")),
+});
+
+export interface ProfileDependencies {
+  readonly profiles: ProfileStore;
+}
+
+/**
+ * Saves the profile as a whole (US-ACC-02, P-03): display name (free, not unique; `null` or left out keeps the stored
+ * name, so a name can be changed but never removed), the buffer of the wishlist warning (whole number 0 to 10, `null` or left out keeps the stored value), the position thresholds of the light overview (US-LIC-03: four whole lux values, descending; `null` or left out keeps the stored ones), time zone (IANA name, validated
+ * against the time zone database), the two global switches and the switch per notification occasion. Only the own
+ * account can be written; the account is the one of the caller, never part of the input (P-04). Writing the same
+ * values twice changes nothing. An account without a data row yet answers `access.denied`.
+ */
+export const accountUpdateProfile = (deps: ProfileDependencies) =>
+  defineOperation({
+    name: "account.update_profile",
+    schema,
+    run: async ({ userId }, input) => {
+      const saved = await deps.profiles.update(userId, input);
+      return saved ? ok(saved) : failed(appError("access.denied"));
+    },
+  });

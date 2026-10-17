@@ -1,0 +1,107 @@
+{
+  "mode": "mobile",
+  "steps": {
+    "phasesBefore": {
+      "axe": [],
+      "smallTargets": [],
+      "scrollWidth": [
+        375,
+        375
+      ]
+    },
+    "hintsBefore": "Hinweise\n\nDiese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.\n\n„Dracaena – Eins“ hat noch keinen Standort.\n\nWeise dem Exemplar einen Standort zu.\n\nStandort für „Dracaena – Eins“\nStandort wählen …\nKühler Flur\nWohnzimmer\nStandort setzen\n\n„Dracaena – Zwei“ hat noch keinen Standort.\n\nWeise dem Exemplar einen Standort zu.\n\nStandort für „Dracaena – Zwei“\nStandort wählen …\nKühler Flur\nWohnzimmer\nStandort setzen\n\n„Epipremnum“ hat noch keinen Standort.\n\nWeise dem Exemplar einen Standort zu.\n\nStandort für „Epipremnum“\nStandort wählen …\nKühler Flur\nWohnzimmer\nStandort setzen",
+    "profileEmpty": {
+      "axe": [],
+      "smallTargets": [],
+      "scrollWidth": [
+        375,
+        375
+      ]
+    },
+    "profileText": "Dracaena\n\n2 aktive Exemplare\n\nKatalog: unbekannt\n\nSoll-Standort Wachstumsphase für „Dracaena“\nKatalog gilt\nKühler Flur\nWohnzimmer\nAuf Katalog zurücksetzen\n\nKatalog: unbekannt\n\nSoll-Standort Ruhephase für „Dracaena“\nKatalog gilt\nKühler Flur\nWohnzimmer\nAuf Katalog zurücksetzen\n\nKatalog: Zone 3\n\nLichtzone für „Dracaena“\nKatalog gilt\nZone 1\nZone 2\nZone 3\nZone 4\nAuf Katalog zurücksetzen\n\nKatalog: 01.11. bis 15.03.\n\nRuhephase von (Monat) für „Dracaena“\nMonat\nJanuar\nFebruar\nMärz\nApril\nMai\nJuni\nJuli\nAugust\nSeptember\nOktober\nNovember\nDezember\nRuhephase von (Tag) für „Dracaena“\nTag\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\nRuhephase bis (Monat) für „Dracaena“\nMonat\nJanuar\nFebruar\nMärz\nApril\nMai\nJuni\nJuli\nAugust\nSeptember\nOktober\nNovember\nDezember\nRuhephase bis (Tag) für „Dracaena“\nTag\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\nAuf Katalog zurücksetzen\n\nKatalog: unbekannt\n\nGießintervall Wachstumsphase (Tage) für „Dracaena“\nAuf Katalog zurücksetzen\n\nKatalog: unbekannt\n\nGießintervall Ruhephase (Tage) für „Dracaena“\nAuf Katalog zurücksetzen\n\nHinweis der Art: Alle zwei Wochen gießen, im Winter sparsam.\n\nKatalog: keine\n\nEigene Hinweise für „Dracaena“\nAuf Katalog zurücksetzen\nSpeichern",
+    "saved": "Pflegeprofil für „Dracaena“ gespeichert.",
+    "apiProfile": [
+      {
+        "s": "Dracaena",
+        "deviates": true,
+        "growth": {
+          "catalog": null,
+          "own": "30332c51-858e-4ab4-91ce-616cc9eafb45",
+          "effective": "30332c51-858e-4ab4-91ce-616cc9eafb45",
+          "source": "profile"
+        },
+        "hints": "Steht im Winter kühl und fast trocken."
+      },
+      {
+        "s": "Epipremnum",
+        "deviates": false,
+        "growth": {
+          "catalog": null,
+          "own": null,
+          "effective": null,
+          "source": "unknown"
+        },
+        "hints": null
+      }
+    ],
+    "phasesAfterProfile": {
+      "axe": [],
+      "smallTargets": [],
+      "scrollWidth": [
+        375,
+        375
+      ]
+    },
+    "switched": "„Dracaena – Eins“ steht jetzt am Standort „Wohnzimmer“.",
+    "eins": true,
+    "hintsAfter": "Hinweise\n\nDiese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.\n\n„Dracaena – Zwei“ hat noch keinen Standort.\n\nWeise dem Exemplar einen Standort zu.\n\nStandort für „Dracaena – Zwei“\nStandort wählen …\nKühler Flur\nWohnzimmer\nStandort setzen\n\n„Epipremnum“ hat noch keinen Standort.\n\nWeise dem Exemplar einen Standort zu.\n\nStandort für „Epipremnum“\nStandort wählen …\nKühler Flur\nWohnzimmer\nStandort setzen",
+    "reset": "„Soll-Standort Ruhephase“ für „Dracaena“ gilt wieder nach Katalog.",
+    "afterResetDormancyLocation": "",
+    "phasesDormancyOverride": "Dracaena – Eins\n\nSoll-Phase heute: Ruhephase\n\nStandort: Wohnzimmer\n\nSoll-Standort: Kühler Flur\n\nStelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.\n\nJetzt umgestellt\nDracaena – Zwei\n\nSoll-Phase heute: Ruhephase\n\nStandort: unbekannt\n\nSoll-Standort: Kühler Flur\n\nStelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.\n\nJetzt umgestellt",
+    "halfPeriod": "Gib Beginn und Ende der Ruhephase vollständig an (Monat und Tag).",
+    "zoneDeleteRefused": {
+      "status": 409,
+      "body": {
+        "error": {
+          "code": "light_zone.in_use",
+          "text": "Diese Lichtzone wird noch genutzt und kann nicht gelöscht werden. Ordne die genannten Einträge zuerst einer anderen Zone zu.",
+          "data": [
+            {
+              "kind": "care_profile",
+              "id": "ab125366-537e-4929-9a60-f075adb98086",
+              "name": "Dracaena"
+            }
+          ]
+        }
+      }
+    },
+    "distribution": [
+      "Zone 2:0",
+      "Zone 3:2",
+      "Zone 4:1"
+    ],
+    "benView": "Pflegeprofil\n\nHier weichst du von den Katalogwerten ab, wo dein Standort oder dein Klima es verlangt. Der Katalog bleibt unverändert. Dein Pflegeprofil ist privat und nie Teil einer Freigabe.\n\nDu hast noch keinen Standort angelegt. Lege zuerst unter „Standorte und Licht“ einen Standort an, dann kannst du Soll-Standorte je Phase wählen.\n\nNoch keine Art im Bestand: Lege zuerst im Bestand ein Exemplar an, dann kannst du hier das Pflegeprofil der Art anpassen.",
+    "benAttackSpecies": "species.not_found",
+    "benList": 0,
+    "maraAttackBensLocation": "location.not_found",
+    "maraAttackBensZone": "light_zone.not_found",
+    "catalogField": {
+      "code": "input.invalid",
+      "text": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
+      "details": [
+        {
+          "field": "latinName",
+          "code": "input.invalid"
+        }
+      ]
+    },
+    "maraStill": true
+  },
+  "setup": {
+    "bogen": "ab125366-537e-4929-9a60-f075adb98086",
+    "efeu": "352b3f9b-9a08-411a-8553-fc8be6749ee7",
+    "living": "30332c51-858e-4ab4-91ce-616cc9eafb45",
+    "cold": "7a83b5fa-70cf-4b76-b32e-56d1fb898177",
+    "specimenWithoutLocation": null
+  }
+}

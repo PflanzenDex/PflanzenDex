@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Start mobil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.card{background:var(--surface);border-radius:22px;box-shadow:0 1px 2px var(--shadow),0 6px 16px var(--shadow)}
+.btn{min-height:52px;padding:0 20px;border-radius:26px;border:0;background:var(--primary);color:var(--onprimary);font-size:16px;font-weight:700;width:100%}
+.btn2{min-height:48px;padding:0 16px;border-radius:24px;border:0;background:transparent;color:var(--text);font-weight:600;font-size:15px;width:100%}
+.mut{color:var(--muted)}
+.st{display:flex;align-items:center;gap:12px;padding:12px 14px;min-height:56px}
+.st b{display:block;font-size:15px;font-weight:600}.st small{display:block;font-size:13px;color:var(--muted)}
+.dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none}
+</style>
+</helmet>
+<div style="{{vars}};width:360px;height:760px;box-sizing:border-box;display:flex;flex-direction:column;background:var(--bg);color:var(--text);overflow:hidden">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19l8-8"/></symbol>
+<symbol id="check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+</defs></svg>
+<div style="flex:1;min-height:0;overflow:hidden;padding:48px 20px 0;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700"><span style="width:34px;height:34px;border-radius:11px;background:var(--primary);color:var(--onprimary);display:flex;align-items:center;justify-content:center"><svg class="i"><use href="#leaf"/></svg></span>PflanzenDéx</div>
+<div style="height:200px;border-radius:28px;background:var(--t1b);color:var(--t1f);display:flex;align-items:center;justify-content:center"><svg class="i" style="width:96px;height:96px;stroke-width:1.1"><use href="#leaf"/></svg></div>
+<div><h1 style="margin:0;font-size:30px;line-height:1.15;font-weight:700;letter-spacing:-.5px">Fang deine erste Pflanze</h1><p class="mut" style="margin:8px 0 0;font-size:15.5px;line-height:1.5">Trage eine Pflanze ein, die du besitzt. Danach zeigen wir dir, was als Nächstes zu tun ist.</p></div>
+<div class="card" style="overflow:hidden">
+<div class="st"><span class="dot" style="background:var(--primary);color:var(--onprimary)"><svg class="i" style="width:16px;height:16px"><use href="#check"/></svg></span><div><b>Konto erstellt</b></div></div>
+<div class="st" style="border-top:1px solid var(--line)"><span class="dot" style="background:var(--soft);color:var(--softtext)">2</span><div><b>Pflanze hinzufügen</b><small>Nächster Schritt</small></div></div>
+<div class="st" style="border-top:1px solid var(--line)"><span class="dot" style="background:var(--bg);color:var(--muted)">3</span><div><b>Lichtzonen einrichten</b><small>Optional, hilft bei der Pflege</small></div></div>
+</div>
+</div>
+<div style="padding:12px 20px 24px;display:flex;flex-direction:column;gap:4px"><button class="btn">Pflanze hinzufügen</button><button class="btn2">Später</button></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = (this.props.theme ?? 'light') === 'dark';
+const P = dark
+? {bg:'#0F1612',surface:'#18221C',text:'#E6EFE9',muted:'#A5B6AB',line:'#2B3B31',primary:'#7BD3A0',onprimary:'#0B2316',soft:'#1F3A2B',softtext:'#A9E8C4',shadow:'rgba(0,0,0,0.35)',t1b:'#27432F',t1f:'#7BD3A0'}
+: {bg:'#F2F6F3',surface:'#FFFFFF',text:'#14201A',muted:'#4B5C52',line:'#D3DED6',primary:'#1B6B4A',onprimary:'#FFFFFF',soft:'#D8EEDF',softtext:'#124A32',shadow:'rgba(20,40,28,0.08)',t1b:'#CFE8D6',t1f:'#1B6B4A'};
+return { vars: Object.keys(P).map(k => '--' + k + ':' + P[k]).join(';') };
+}
+}
+</script>
+</body>
+</html>

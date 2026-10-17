@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/coverage
+# ...except the coverage settings that vite.config.ts imports (web.Dockerfile).
+!tools/check/quality/coverage/coverage-config.mjs
+**/*.log
+.env
+.env.*
+config/deploy/.env
+config/deploy/backups

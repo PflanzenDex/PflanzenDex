@@ -1,0 +1,193 @@
+# 11 – Epic EQU: Equipment and Recommendations
+
+Goal: the keeper records their plant equipment (lamps, timers, sensors, substrate, fertilizer, pots, …). This ties the light zones to real devices, makes gaps and maintenance visible and is the **honest basis for labeled affiliate recommendations** (stage 2 in `13-Business-Case.md`). The recommendation is a by-product of a real need, not the purpose of the tracking.
+
+Replacement: replaces `../prototype/13-equipment-and-affiliate.md`. Dropped: equipment notes in the vault, `processFrontMatter`, "equipment in the vault is the truth" (FR-EQU-02). In terms of content the stories and the rules for recommendations apply unchanged.
+
+## Terms
+
+| Term           | Meaning                                                                                                           |
+| -------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Equipment      | Everything material for care except the plants. One record per device or per consumable type.                     |
+| Device         | Equipment with lifetime and operation (lamp, timer, sensor, fan, pump).                                           |
+| Consumable     | Is used up (substrate, fertilizer, plant agents); has supply instead of operating data.                           |
+| Lamp device    | Device of type lamp, assigned to a light zone (US-LIC-05).                                                        |
+| Product id     | Manufacturer-neutral (manufacturer, model, optional GTIN/EAN). Belongs in the record, the affiliate URL does not. |
+| Recommendation | Product suggestion shown by the system with reasoning from own data.                                              |
+| Affiliate link | Labeled product link with commission; arises only at display time.                                                |
+
+## User stories
+
+### US-EQU-01 · Record equipment · 🟨 new
+
+Acceptance criteria:
+
+- A form or AI input ("I have a new lamp …") creates a record (DM-EQU-01).
+- Required: `Type`, `Name`. Everything else (manufacturer, model, price, purchase date, product id) optional; what is missing appears as "unknown", never guessed (P-08).
+- The name is unique; for multiples ` – <distinction>`.
+- From a photo or product link the AI may **suggest** fields; the keeper confirms before saving.
+
+Decisions (assumption, decided by the PO): limits are starting values (name 80, other texts 80, product id 60, note 500 characters, price 0 to 100,000 EUR with at most two decimals). A device starts `active`; a consumable type (Substrate, Fertilizer, Plant agent) has no status. The product id must not be a URL (FR-EQU-03). The name is unique per account, case-insensitive. The AI suggestion path (US-KI-05, draft type equipment) is open.
+
+### US-EQU-02 · Bind lamps to light zones · 🟨 new
+
+Acceptance criteria:
+
+- A lamp device belongs to exactly one light zone (selection, no text).
+- The zone view shows per zone the assigned devices and their state (`active`, `defective`, `retired`).
+- Warning if a zone 2–4 has specimens but **no active lamp device** (P-10).
+- Hint (no error) if an active lamp device serves no occupied zone (unused capacity).
+- The distribution of the specimens (US-LIC-02) stays unchanged; equipment extends it with the device list.
+
+Decisions (assumption, decided by the PO): the warning and the hint apply to the zones that US-LIC-02 counts (zones 2 to 4); the cutting light (zone 1) has no specimen count, so it shows its lamps but no warning or hint (P-08). The state of a device is set with its own operation (`active`, `defective`, `retired`; consumables have none). A zone with a lamp cannot be deleted (P-10); move the lamp first. Lamps recorded before the zone was required stay valid and are listed as "without zone" until the keeper assigns one.
+
+### US-EQU-03 · Record the measured light intensity per lamp · 🟨 new
+
+Acceptance criteria:
+
+- Measurement log per lamp device: `{Date, Lux, Distance_cm, Method}`; one entry makes it "measured".
+- The display separates **manufacturer value** and **measured** (last measurement with date); without a measurement "not measured".
+- If the last measurement deviates from the zone ceiling by more than a configurable share (default open, **to be set by the keeper**), "Check zone" appears.
+- Fulfills FR-LIC-06.
+
+Decisions (assumption, decided by the PO): `Date` and `Lux` are required, `Distance_cm` and `Method` are optional and read "unknown" when empty; lux 1 to 200,000, distance 1 to 1,000 cm, method up to 60 characters (starting values). The log is append-only: a wrong entry is corrected by a newer measurement. The latest measurement is the newest date. The deviation is `|last lux − zone ceiling| / zone ceiling`, below or above, as a whole percent; the share is one setting per account, 1 to 100 percent, without a default: until the keeper sets it no check runs and the view says so (P-08). `Power_W` and `Lux_Statement` (DM-EQU-02) are set with their own operation; `Lux_Statement` is the manufacturer's value and never replaces a measurement.
+
+### US-EQU-04 · Keep operation and maintenance in view · 🟨 new
+
+Acceptance criteria:
+
+- Optional `In_Operation_Since` and `Check_Interval_Days` (set by the keeper).
+- If an interval is set and the last check (for lamps: last measurement) is older, "Check due: <device>" appears in "Today" and as a reminder (US-MON-01).
+- No lifetime or wear values without an entry; manufacturer values only as `Lifetime_Statement` with `Source`. Without an interval no due date.
+
+Decisions (assumption, decided by the PO): only a device (a record with a state) has operation data; a consumable has none. `In_Operation_Since` is a calendar date, `Check_Interval_Days` is 1 to 3,650 (starting values), `Lifetime_Statement` is free text up to 80 characters and is stored only together with its source (up to 80 characters), never alone (P-08). The keeper confirms a check with "Jetzt geprüft" (date of today in the keeper's time zone); for a lamp the last measurement counts as a check as well, the newer one wins. A check is due when the days since the last check reach the interval; before the first check the interval counts from `In_Operation_Since`, and with neither the device counts as never checked and is due (the keeper asked for checks, none happened). A `defective` or `retired` device is not reported (it needs repair or replacement, US-EQU-07). The reminder is its own occasion `equipment` ("Equipment-Prüfung") that can be switched off or paused like the others (US-MON-08).
+
+### US-EQU-05 · Consumables and supply · 🟨 new
+
+Acceptance criteria:
+
+- A consumable has `Type` (`Substrate | Fertilizer | Plant agent | Other`) and `Supply` (`available | low | empty`); change by tap.
+- `low`/`empty` creates an entry in "Rebuy" (US-EQU-07).
+- A plant agent can be linked to `Treatment.Agent`; without a link the free text stays unchanged.
+- The species' `Substrate` stays free text; optional link to a consumable.
+
+Decisions (assumption, decided by the PO): the consumable types are `Substrate`, `Fertilizer` and `Plant agent`; `Other` stays a device with a state, because a generic record cannot be both. A new consumable starts `available`; a consumable recorded before has no value and reads `available`; a device has no supply. The supply changes by tap and may jump to any level. `Agent_Link` is a text of up to 80 characters that the keeper links to a plant agent; it is matched against `Treatment.Agent` case-insensitively and never changes the free text of a treatment. The entry in "Rebuy" is derived by US-EQU-07, not stored. The link from the species' `Substrate` to a consumable is open: a species is shared, equipment is private to the account (P-05), so the link needs its own decision.
+
+### US-EQU-06 · Assign sensors and accessories · 🟨 new
+
+Acceptance criteria:
+
+- Sensors are devices (`Type: Sensor`) with optional assignment to a specimen or location.
+- A savings goal "sensor set" can turn into equipment on purchase (US-EQU-08).
+- Raw values are not part of equipment (FR-MON-07).
+
+Decisions (assumption, decided by the PO): a sensor sits at one specimen or at one location, never both; both empty means not assigned. Only active specimens are offered; if the specimen is archived the sensor reads as not assigned and stays listed. If a target is deleted the assignment is cleared and the sensor stays. Accessories are recorded as `Other` and need no assignment. The turn from a savings goal into equipment comes with US-EQU-08.
+
+### US-EQU-07 · What is missing? Derive need from own data · 🟨 new
+
+Acceptance criteria:
+
+- Block "Missing / Rebuy": derived items, each with reason and source:
+  1. Consumable `low`/`empty`.
+  2. Zone without an active lamp device.
+  3. Wish with a target zone without an active lamp device.
+  4. Device `defective`/`retired` without replacement.
+- Every item says what to do (P-09), without invented urgency. Purely computed (NFR-04).
+
+Decisions (assumption, decided by the PO): the zone rule counts only zones 2 to 4 with specimens, as in US-EQU-02. A wish counts when its target zone has no active lamp, whether or not the zone holds specimens; wishes of one zone are one item. A defective or retired device has a replacement when another active device of the same type exists; for a lamp the replacement must serve the same zone. Items are listed by kind in the order above and carry no priority, urgency or price (P-08). The block also appears when nothing is missing and then says so. Showing the items in "Today" is open.
+
+### US-EQU-08 · Take over a purchase · 🟨 new
+
+Acceptance criteria:
+
+- The wishlist knows wishes of type equipment; "Bought" opens US-EQU-01 with prefilled fields (name, product id, type).
+- Price and purchase date go, if set, into the cost view (US-EQU-09); if they are missing, nothing is invented.
+- Plant and equipment wishes are counted separately; the buffer check (US-WUN-02) counts only plants.
+
+Decisions (assumption, decided by the PO): an equipment wish lives in the same table as the plant wishes (`Type: equipment`) with the equipment `Type`, an optional product id and an optional planned price; it has no target zone and no difficulty. The name is unique among all wishes of the account (FR-WUN-06). It is created, bought and discarded through its own operations (`equipment_wish.*`); every plant query keeps filtering on `Type: plant`, so the candidate list, the buffer and the zone hints of the plant wishes are unchanged and the equipment wishes are counted apart. "Bought" sets the status `bought`, keeps the wish under "bought" (P-10) and returns the prefill (type, name, product id, price) that fills the form of US-EQU-01; the keeper confirms the form, the wish is not linked to the record. The purchase date is not prefilled (nothing invented, P-08); the price only reaches the cost view (US-EQU-09) once the equipment is recorded. The schema change is additive (expand, migration 0061); the previous app version ignores it.
+
+### US-EQU-09 · See costs · 🟨 new
+
+Acceptance criteria:
+
+- Sum of the acquisition costs per type and in total, **only** across devices with a set price.
+- The display states for how many devices the price is missing ("sum over 7 of 11 devices").
+- No estimate of electricity or replacement costs without input.
+
+Decisions (assumption, decided by the PO): "devices" means every equipment record, consumables included, because each has an optional price (DM-EQU-01). The sum is derived on every view from the keeper's own records (`equipmentCosts`), nothing is stored, and it uses only the `Price` and never a purchase date, so no time range or depreciation is implied. Per type and in total the view shows the sum, how many records have a price and how many exist; where no record of a type has a price the sum reads "unbekannt", never 0, while a price of 0 counts as a price. Sums are added in whole cents (at most two decimals). A line says what is not included: electricity and replacement costs. The price of a wish (US-EQU-08) enters only once the equipment is recorded. Friends never see prices (US-EQU-12).
+
+### US-EQU-10 · See matching recommendations · 🟨 new
+
+Acceptance criteria:
+
+- Recommendations appear **only in the context of a derived need** (US-EQU-07), not as an advertising block of their own, not on plant, Pokédex or swap cards.
+- Every recommendation names the product (product id), **reasoning from own data** ("Lamp 3 has no active device, 4 specimens need it"), source of the product data and date.
+- Every affiliate link is labeled as advertising **directly at the link** ("Advertisement · affiliate link").
+- Prices only with source and retrieval date ("As of DD.MM.YYYY"); otherwise no price.
+- There is always a non-commissioned path: product name and manufacturer are displayed, the keeper can buy elsewhere.
+- The **order** follows the fit to the need (zone, lux, area), **not** the commission (FR-EQU-06).
+
+Decisions (assumption, decided by the PO): the first slice is a pure function over the needs of US-EQU-07 and an operator catalog (`ProductEntry`: product id, name, manufacturer, the kinds of need it serves, fit 0 to 1, source and retrieval date, optional price with its own source and date). The catalog is empty until the operator supplies one, so nothing is recommended and nothing is invented (FR-EQU-09, P-08). An entry without source or retrieval date is dropped; a price without both is left out. The order is fit, then name; the entry has no commission field (FR-EQU-06). Every item is labeled "Empfehlung" and says the keeper may buy anywhere. This slice builds no link, so the advertising label at the link, partner configuration and click measurement wait for TE-11 (legal). `GET /equipment/recommendations` exists and answers 404 while the switch `recommendations` is off (US-DEV-06). The equipment page shows the block "Empfehlungen zu deinem Bedarf" below "Fehlt / Nachkaufen": label, reason, source with date, price only with source and date, no link; without a catalog or match it says what to do next (P-09); with the switch off the block is hidden and the route is not asked.
+
+### US-EQU-11 · Control and understand recommendations · ⬜ new
+
+Acceptance criteria:
+
+- The global option "No recommendations" hides all affiliate links; equipment tracking and derived lists stay unchanged (FR-EQU-01).
+- Per recommendation "Why do I see this?" and "Do not show again" (per need or product).
+- The page "What is measured?" names data for recommendations and click counting (FR-EQU-08).
+- The keeper can delete their recommendation data (hidden items, consents) without losing equipment.
+
+### US-EQU-12 · Share equipment with friends (optional) · 🟨 new
+
+Acceptance criteria:
+
+- Sharing setting `private` (default) or `friends` per device.
+- At most type, name/model, light zone level and a free-text experience note are shared. **Never** price, place of purchase, serial number, location, purchase date.
+- A shared device does not appear in the feed (US-SOZ-05), only in the friend's device list (US-SOZ-07).
+- Sharing triggers **no** recommendation for others; a friend never becomes the keeper's sales channel (FR-EQU-07).
+
+Decisions (assumption, decided by the PO): the setting `private` (default) or `friends` is per piece of equipment, devices and consumables alike, stored on the equipment record (`shared`, `share_note`); no setting means private. The experience note is free text of 1 to 300 characters (starting value) and exists only while shared; withdrawing clears it, and a note together with `private` is refused. "Light zone level" is the lux ceiling of the lamp's zone (a number, not the zone name, which is the keeper's own); a device that is not a lamp has none. A retired device is not listed to friends; the status is not shared. Friends read through a database function that returns the whitelist only, and only while both sides of the friendship are confirmed (P-05, like US-SOZ-04); the global switch "Everything private" suspends it without deleting (P-10), ending a friendship withdraws everything at once. Withdrawing takes effect for the next retrieval; what was delivered cannot be retrieved. The devices appear only in the friend's collection page (US-SOZ-07), not in the feed (US-SOZ-05), and show no recommendation, link or price.
+
+## Data model
+
+### DM-EQU-01 Equipment
+
+| Field                                                                 | Required | Meaning                                                                                                    |
+| --------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------- |
+| `Type`                                                                | yes      | `Lamp \| Timer \| Sensor \| Ventilation \| Pump \| Pot \| Substrate \| Fertilizer \| Plant agent \| Other` |
+| `Name`                                                                | yes      | Display name, unique                                                                                       |
+| `Status`                                                              | yes      | `active \| defective \| retired` (not used for consumables)                                                |
+| `Manufacturer`, `Model`                                               | no       | Free text                                                                                                  |
+| `Product_Id`                                                          | no       | GTIN/EAN or manufacturer + model; **no URL**                                                               |
+| `Price_EUR`, `Bought_At`, `In_Operation_Since`, `Check_Interval_Days` | no       |                                                                                                            |
+| `Location`                                                            | no       | Reference to a location (US-LIC-05)                                                                        |
+| `Share`                                                               | no       | `private` (default) or `friends`                                                                           |
+| `Note`                                                                | no       | Free text                                                                                                  |
+
+### DM-EQU-02 Lamp device (extension)
+
+`Light_Zone` (required), `Power_W`, `Lux_Statement`, `Lifetime_Statement` (`{Value, Source}`), `Measurements` (`{Date, Lux, Distance_cm, Method}`).
+
+### DM-EQU-03 Consumable (extension)
+
+`Supply` (required), `Agent_Link` (text that occurs in `Treatment.Agent`).
+
+### DM-EQU-04 Recommendation configuration
+
+Per account: `Recommendations_Active` (default `true`), `Hidden`, `Click_Measurement_Consent` (date or empty). The **partner configuration** (programs, partner IDs) belongs to the operator and never to user data (FR-EQU-04).
+
+## Requirements
+
+| ID        | Requirement                                                                                                                                                                                                                          | Status |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| FR-EQU-01 | Equipment tracking is independent of recommendations: all stories except US-EQU-10/11 work without partner integration.                                                                                                              | ⬜     |
+| FR-EQU-02 | Equipment data belongs to the account. Friends see it only after sharing (US-EQU-12).                                                                                                                                                | ⬜     |
+| FR-EQU-03 | **Product id instead of URL:** what is stored is _what_ the product is. Affiliate URLs arise only at display time from product id + partner configuration. A program change changes no record.                                       | ⬜     |
+| FR-EQU-04 | Partner IDs live with the operator, never in user data, never in the export. Link generation is a pure function with tests.                                                                                                          | ⬜     |
+| FR-EQU-05 | **Labeling duty:** every affiliate link is labeled as advertising. Obligations from the partner program and law (DE/EU: advertising labeling, privacy) are to be checked **before** stage 2; this document replaces no legal review. | ⬜     |
+| FR-EQU-06 | **Need before commission:** selection and order follow the fit, never the commission level. Test: a changed commission table does not change the order.                                                                              | ⬜     |
+| FR-EQU-07 | **No recommendations in sensitive contexts:** no links on plant agents against pests/diseases (approval, health), none in friend views, in the Pokédex or in swap offers.                                                            | ⬜     |
+| FR-EQU-08 | **Data minimization:** collection data (plants, locations, measurements, photos) never goes to partners. Click measurement only aggregated and only with consent.                                                                    | ⬜     |
+| FR-EQU-09 | **No invented product data:** names, prices, availability come from a citable source with retrieval date. The AI may **research and suggest** products, but writes them only after confirmation and with a source (US-KI-05).        | ⬜     |
+| FR-EQU-10 | **Lock no function behind recommendations:** no purchase obligation, no dark pattern, no restriction of tracking under "No recommendations".                                                                                         | ⬜     |
