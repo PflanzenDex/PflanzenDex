@@ -32,6 +32,7 @@ const COLUMN: Record<Exclude<keyof SpeciesValues, "synonyms">, string> = {
   difficulty: "difficulty",
   standardLevel: "standard_level",
   lightDemandLux: "light_demand_lux",
+  softLeaf: "soft_leaf",
   dormancyFrom: "dormancy_from",
   dormancyUntil: "dormancy_until",
   locationHint: "location_hint",
@@ -55,7 +56,6 @@ const SELECTION = `a.id, ${FIELDS.map((f) => `a.${COLUMN[f]} as "${f}"`).join(",
   (select v.reason from review_case v where v.object_kind = 'species' and v.object_id = a.id
       and v.account_id = current_account()) as "reviewReason",
   a.created_by as "createdBy", species_own(a.id) as "own", a.version`;
-
 // What the application shows: approved species and own proposals (FR-BES-11). Reviewers may additionally read foreign
 // open proposals by row rule (US-BES-10); only `findForReview` asks for them.
 const VISIBLE = "species_status(a.id) is not null";

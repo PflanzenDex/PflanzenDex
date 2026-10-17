@@ -64,8 +64,8 @@ export interface MeasuredSpecimen {
 
 /**
  * US-MON-04: the specimens whose last measurement is older than `days` (or that never had one and were caught longer
- * ago than that). A specimen without any known date is not reported: nothing is invented (P-08). Cuttings and archived
- * specimens are left out by the caller (FR-WAC-08 is open, E-11).
+ * ago than that). A specimen without any known date is not reported: nothing is invented (P-08). Archived specimens are
+ * left out by the caller; cuttings use the same interval (FR-WAC-08, E-11).
  */
 export function measurementOverdue(
   specimens: readonly MeasuredSpecimen[],

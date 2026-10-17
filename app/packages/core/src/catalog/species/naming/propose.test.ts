@@ -68,6 +68,15 @@ describe("US-BES-01 propose species (path without AI, FR-KI-05)", () => {
     expect(store.rows).toHaveLength(0);
   });
 
+  it("US-LIC-01: Given the soft-leaf flag, when proposing, then it is kept; missing means false; a non-boolean is rejected", async () => {
+    const soft = await propose({ ...profile, softLeaf: true });
+    expect(soft.ok && soft.value.softLeaf).toBe(true);
+    const plain = await propose({ ...profile, latinName: "Aloe vera" });
+    expect(plain.ok && plain.value.softLeaf).toBe(false);
+    const bad = await propose({ ...profile, latinName: "Aloe ferox", softLeaf: "yes" });
+    expect(!bad.ok && bad.error.details?.map((d) => d.field)).toEqual(["softLeaf"]);
+  });
+
   it("checks limits: difficulty 1 to 3, default level 2 to 4 (never level 1), lux integer", async () => {
     const deviations = [
       { difficulty: 4 },

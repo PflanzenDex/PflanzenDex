@@ -53,6 +53,16 @@ export const monthTag = (field: string) => (value: unknown) => {
   return m && validTag(Number(m[1]), Number(m[2])) ? m[0] : invalid(field);
 };
 
+/** A flag that may be missing: missing means false, anything but a boolean is invalid. */
+const flag =
+  (field: string) =>
+  (value: unknown): boolean | ErrorDetail =>
+    value === undefined || value === null
+      ? false
+      : typeof value === "boolean"
+        ? value
+        : invalid(field);
+
 const base = shape({
   latinName: latinField,
   germanName: optional("germanName", SPECIES_LIMITS.name.max),
@@ -63,6 +73,7 @@ const base = shape({
   difficulty: integerField("difficulty", SPECIES_LIMITS.difficulty),
   standardLevel: integerField("standardLevel", SPECIES_LIMITS.standardLevel),
   lightDemandLux: integerField("lightDemandLux", SPECIES_LIMITS.lightDemandLux),
+  softLeaf: flag("softLeaf"),
   dormancyFrom: monthTag("dormancyFrom"),
   dormancyUntil: monthTag("dormancyUntil"),
   locationHint: optional("locationHint", SPECIES_LIMITS.short.max),
