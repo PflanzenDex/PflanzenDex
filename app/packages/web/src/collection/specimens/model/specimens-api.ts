@@ -95,3 +95,21 @@ export async function correctCatchDate(
   );
   return r.ok ? { ok: true, value: r.value as Specimen } : r;
 }
+
+/**
+ * Sets the own light zone of a specimen or, with `null`, clears it so the zone is derived again (US-LIC-02,
+ * US-BES-04). The zone is chosen by ID; the repeat-guard key is created per call.
+ */
+export async function setLightZone(
+  api: string,
+  token: string,
+  input: { id: string; lightZoneId: string | null },
+  fetchFn: FetchFn = fetch,
+): Promise<Response<Specimen>> {
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/specimens/${encodeURIComponent(input.id)}/light-zone`,
+    { lightZoneId: input.lightZoneId },
+  );
+  return r.ok ? { ok: true, value: r.value as Specimen } : r;
+}
