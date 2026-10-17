@@ -114,7 +114,7 @@ Acceptance criteria:
 - Anniversaries do not create push notifications unless I enabled them in the reminder settings (US-MON-08).
 - Status: the logic is `anniversaries` in `core` (module `achievements`), the API answers `GET /achievements/anniversaries?timeZone=` (`{ calmMode: true }` in calm mode, US-ACH-08) with the first and the latest photo from the measurements, and the Today view shows the entries in the section below "Jetzt dran". Nothing is stored (FR-ACH-02). Assumptions, decided by the PO: anniversaries fall every 6 months after the catch date; a day that does not exist in the target month (31 August, 29 February) falls on the last day of that month; the week ends on Sunday; with a single photo only the first photo is shown. There are no push notifications for anniversaries yet, because the reminder settings (US-MON-08) have no such occasion.
 
-### US-ACH-07 · Year in review · ⬜ new
+### US-ACH-07 · Year in review · ✅ new
 
 As a **plant keeper** I want a summary of my plant year, so that I can look back at what worked.
 
@@ -124,6 +124,7 @@ Acceptance criteria:
 - Each fact names its basis; unknown values show "unknown" (P-08). Years without data show what would fill the view.
 - The view is private by default (P-05). It is not shared in this epic: sharing would need its own field in the friend view whitelist (US-SOZ-04, QG-D2) and is an open question (no. 5). Friends never see it by default, and never a rank or comparison (FR-SOZ-11, FR-ACH-04).
 - No percentage, no "better than last year" rating; two years may be shown side by side as plain numbers.
+- Status: the logic is `yearInReview` in `core` (module `achievements`), the API answers `GET /achievements/year?year=&timeZone=` (`{ calmMode: true }` in calm mode, 400 `input.invalid` for a future or malformed year), the section "Jahresrückblick" sits below the overview in "Erfolge" and has "Vorjahr" / "Folgejahr" to browse. Nothing is stored (FR-ACH-02). Assumptions, decided by the PO: a fact counts the events dated in the year (caught: catch date; cuttings rooted: repotting date of the cutting; treatments completed: courses whose every date is ticked off and whose last tick falls in the year; measurements; handovers confirmed by both sides; achievements by their `earned on`); the largest healthy growth is the own yearly rate from the first to the last healthy measurement of the year, with at least 90 days between them (as in US-ACH-05), real growth, the specimen with the highest rate wins; the photo pair is the first and last photo of the year of the specimen with the most photos in it (at least two); two years side by side are not built, the keeper browses them one after the other.
 
 ### US-ACH-08 · Switch gamification off · 🟨 new
 
