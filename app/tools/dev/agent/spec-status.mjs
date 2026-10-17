@@ -29,6 +29,7 @@ const EPICS = {
   QG: "Quality gates",
   DEV: "Development process",
   ACH: "Achievements",
+  TAU: "Swipe matching",
 };
 
 /** @param {string[]} texts contents of the numbered spec files */

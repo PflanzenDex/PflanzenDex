@@ -6,6 +6,8 @@ Prototype reference: none, idea from 2026-10-02. Builds on POK (catalog, ownersh
 
 Delimitation from EQU: a **suggestion** is a species from the catalog, not a product recommendation. Discover contains no affiliate or shop links (FR-EQU-07 already excludes the Pokédex, ENT takes this over).
 
+Delimitation from TAU: Discover suggests catalog species; the epic TAU (`21-swipe-matching.md`) shows concrete offers of friends that match the wishlist. FR-ENT-07 (chip "<friend> offers it") is the only bridge between the two.
+
 Note (US-QS-14): the suggestion cards are the mode "Vorschläge" of the destination "Entdecken", next to the mode "Katalog" with the species catalog of the collection epic (BES); the empty state of the deck leads to "Art vorschlagen" in the catalog mode.
 
 ## Problem
