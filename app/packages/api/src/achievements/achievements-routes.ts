@@ -2,6 +2,7 @@ import { appError, isTimeZone, readAchievementSettings } from "@pflanzendex/core
 import { Hono, type MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
 import { body, errorBody, write, type AuthEnv, type Ctx } from "../kernel";
+import { achievementsAnniversaries } from "./anniversaries";
 import { achievementsGrowth } from "./growth";
 import { achievementsNews } from "./news";
 import { achievementsView } from "./view";
@@ -12,7 +13,7 @@ const ACHIEVEMENT_PATHS = ["/achievements"] as const;
 /**
  * Achievements of the keeper (epic ACH). `GET /achievements?timeZone=` answers the overview derived from the own data
  * (US-ACH-02); in calm mode it answers `{ calmMode: true }` and nothing else (US-ACH-08). `GET /achievements/news?timeZone=`
- * answers what is new (earned minus seen) and what to create silently as seen (US-ACH-03); `GET /achievements/growth/:specimenId` answers the growth moment and the personal records of a specimen from its own measurements (US-ACH-05); `POST /achievements/seen`
+ * answers what is new (earned minus seen) and what to create silently as seen (US-ACH-03); `GET /achievements/growth/:specimenId` answers the growth moment and the personal records of a specimen from its own measurements (US-ACH-05); `GET /achievements/anniversaries?timeZone=` answers the anniversaries due today with the first and latest photo (US-ACH-06); `POST /achievements/seen`
  * marks achievements as seen through `achievements.mark_seen` (P-03, with `Idempotency-Key`). `GET /achievements/settings`
  * answers `{ calmMode }`; `PUT /achievements/settings/calm-mode` switches it through `achievements.set_calm_mode` (P-03,
  * with `Idempotency-Key`). All only touch the own account (P-04).
@@ -51,6 +52,10 @@ export function achievementsRoutes(
   routes.get(
     "/achievements/news",
     keeperRead((k) => achievementsNews(w.sources, w.seen, k)),
+  );
+  routes.get(
+    "/achievements/anniversaries",
+    keeperRead((k) => achievementsAnniversaries(w.sources, k.userId, k.timeZone, k.now)),
   );
   routes.get("/achievements/growth/:specimenId", async (c) => {
     const userId = c.get("account").id;

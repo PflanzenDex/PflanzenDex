@@ -32,3 +32,5 @@ export type {
 } from "./seen/seen";
 export { growthMoments, RECORD_LIMITS } from "./records/records";
 export type { GrowthMoment, GrowthMoments, RecordPoint } from "./records/records";
+export { anniversaries, ANNIVERSARY_LIMITS } from "./anniversaries/anniversaries";
+export type { Anniversary, AnniversarySpecimen } from "./anniversaries/anniversaries";

@@ -122,3 +122,31 @@ export function loadGrowth(
 ): Promise<Response<GrowthAnswer>> {
   return call<GrowthAnswer>(fetchFn, `${api}/achievements/growth/${specimenId}`, token);
 }
+
+/** A photo of an anniversary: the API path of the private image and the measurement date (P-05). */
+export type AnniversaryPhoto = { url: string; date: string };
+export type AnniversaryItem = {
+  specimenId: string;
+  name: string;
+  /** Months with the keeper: 6, 12, 18, … */
+  months: number;
+  date: string;
+  caughtOn: string;
+  first: AnniversaryPhoto | null;
+  latest: AnniversaryPhoto | null;
+};
+export type AnniversariesAnswer =
+  { calmMode: true } | { calmMode: false; items: AnniversaryItem[] };
+
+/** The anniversaries due today (US-ACH-06); `{ calmMode: true }` hides them (US-ACH-08). */
+export function loadAnniversaries(
+  api: string,
+  token: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<AnniversariesAnswer>> {
+  return call<AnniversariesAnswer>(
+    fetchFn,
+    `${api}/achievements/anniversaries?timeZone=${encodeURIComponent(currentTimeZone())}`,
+    token,
+  );
+}

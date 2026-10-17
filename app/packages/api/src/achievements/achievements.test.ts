@@ -186,3 +186,30 @@ describe("US-ACH-05 growth moments through the API", () => {
     expect((await growth(subE)).status).toBe(404);
   });
 });
+
+describe("US-ACH-06 anniversaries through the API", () => {
+  const subF = `ach06-${randomUUID()}`;
+  const list = (sub: string | null, zone = "Europe/Berlin") =>
+    call(sub, "GET", `/achievements/anniversaries?timeZone=${encodeURIComponent(zone)}`);
+  afterAll(async () => {
+    await admin.query("delete from account where subject = $1", [subF]);
+  });
+
+  it("US-ACH-06 without a token: 401; without a valid time zone: 400", async () => {
+    expect((await list(null)).status).toBe(401);
+    const bad = await list(subF, "Mars/Base");
+    expect(bad.status).toBe(400);
+    expect(bad.body["error"].code).toBe("input.invalid");
+  });
+
+  it("US-ACH-06 a new account has no anniversary", async () => {
+    expect((await list(subF)).body).toEqual({ calmMode: false, items: [] });
+  });
+
+  it("US-ACH-08 calm mode hides the anniversaries, for that account only", async () => {
+    await setCalm(subF, true);
+    expect((await list(subF)).body).toEqual({ calmMode: true });
+    await setCalm(subF, false);
+    expect((await list(subF)).body["calmMode"]).toBe(false);
+  });
+});
