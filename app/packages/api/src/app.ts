@@ -113,6 +113,7 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
       status: todayStatusSource(pool, today),
       photo: measurementPhotoSourceFor(pool, opt.media),
       discover: discoverSourceFor(pool, opt.zoneStock),
+      ...(opt.wishImage ? { sources: opt.wishImage.sources } : {}),
     }),
   );
 }
