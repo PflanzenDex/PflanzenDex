@@ -4,6 +4,7 @@ import type {
   LampLightView,
   LampMeasurement,
   Need,
+  Recommendation,
   SensorView,
   SupplyLevel,
   ZoneEquipmentView,
@@ -21,6 +22,7 @@ export type {
   LampLightView,
   LampMeasurement,
   Need,
+  Recommendation,
   SensorView,
   SupplyLevel,
   ZoneEquipmentView,
@@ -46,6 +48,8 @@ export interface EquipmentData {
   readonly light: LampLightView;
   readonly sensors: SensorView;
   readonly needs: readonly Need[];
+  /** Empty while "recommendations" is off (US-DEV-06): the route is not asked. */
+  readonly recommendations: readonly Recommendation[];
   readonly wishes: EquipmentWishList;
   readonly sharing: readonly EquipmentSharingRow[];
 }
@@ -55,14 +59,22 @@ export async function loadEquipment(
   api: string,
   token: string,
   fetchFn: typeof fetch = fetch,
-  /** `sharing: false` while "social" is off (US-DEV-06): the sharing settings are not asked for, the route would answer 404. */
-  options: { sharing?: boolean } = {},
+  /** `sharing: false` while "social" is off, `recommendations: false` while "recommendations" is off (US-DEV-06): those routes are not asked for, they would answer 404. */
+  options: { sharing?: boolean; recommendations?: boolean } = {},
 ): Promise<Response<EquipmentData>> {
   const ownSharing =
     options.sharing === false
       ? Promise.resolve({ ok: true as const, value: { shared: [] } })
       : loadEquipmentSharing(api, token, fetchFn);
-  const [list, zones, light, sensors, needs, wishes, sharing] = await Promise.all([
+  const ownRecommendations =
+    options.recommendations === false
+      ? Promise.resolve({ ok: true as const, value: { recommendations: [] as Recommendation[] } })
+      : call<{ recommendations: Recommendation[] }>(
+          fetchFn,
+          `${api}/equipment/recommendations`,
+          token,
+        );
+  const [list, zones, light, sensors, needs, wishes, sharing, recs] = await Promise.all([
     call<{ equipment: EquipmentRow[] }>(fetchFn, `${api}/equipment`, token),
     call<ZoneEquipmentView>(fetchFn, `${api}/equipment/zones`, token),
     call<LampLightView>(fetchFn, `${api}/equipment/lamps`, token),
@@ -70,6 +82,7 @@ export async function loadEquipment(
     call<{ needs: Need[] }>(fetchFn, `${api}/equipment/needs`, token),
     loadEquipmentWishes(api, token, fetchFn),
     ownSharing,
+    ownRecommendations,
   ]);
   if (!list.ok) return list;
   if (!zones.ok) return zones;
@@ -78,6 +91,7 @@ export async function loadEquipment(
   if (!needs.ok) return needs;
   if (!wishes.ok) return wishes;
   if (!sharing.ok) return sharing;
+  if (!recs.ok) return recs;
   return {
     ok: true,
     value: {
@@ -86,6 +100,7 @@ export async function loadEquipment(
       light: light.value,
       sensors: sensors.value,
       needs: needs.value.needs,
+      recommendations: recs.value.recommendations,
       wishes: wishes.value,
       sharing: sharing.value.shared,
     },

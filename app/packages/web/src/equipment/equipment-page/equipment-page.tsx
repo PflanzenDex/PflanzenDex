@@ -17,6 +17,7 @@ import { Supply, type SupplyActions } from "./parts/supply/supply";
 import { Sharing, type SharingActions } from "./parts/sharing/sharing";
 import { CostsView } from "../overviews/costs-view/costs-view";
 import { NeedsView } from "../overviews/needs-view/needs-view";
+import { RecommendationsView } from "../overviews/needs-view/recommendations-view/recommendations-view";
 import { SensorsView } from "../overviews/sensors-view/sensors-view";
 import { useWishActions } from "../overviews/wishes-view/use-wish-actions";
 import { WishesView } from "../overviews/wishes-view/wishes-view";
@@ -77,13 +78,12 @@ function Card(props: {
   );
 }
 
+/** "Gekauft" on a wish fills the form below (US-EQU-08). */
 function Body(props: { data: EquipmentData; api: string; token: Token; onWritten: () => void }) {
   const write = useWriteAction(props.token, props.onWritten);
   const lamps = useLampActions(props.api, props.token, props.onWritten, props.data.sharing);
-  // "Gekauft" on a wish fills the form below (US-EQU-08).
   const [prefill, setPrefill] = useState<EquipmentPrefill | null>(null);
   const wishes = useWishActions(props.api, props.token, props.onWritten, setPrefill);
-  const items = props.data.items;
   const zoneNames = new Map(props.data.zones.zones.map((z) => [z.zoneId, z.name]));
   const send = async (input: EquipmentInput): Promise<boolean> => {
     let saved = false;
@@ -96,7 +96,7 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
   };
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      {items.length === 0 ? (
+      {props.data.items.length === 0 ? (
         <EmptyState
           title="Noch kein Equipment erfasst"
           description="Erfasse Lampen, Zeitschaltuhren, Substrat und mehr. Nur Art und Name sind nötig."
@@ -107,7 +107,7 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
           className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3"
           aria-label="Dein Equipment"
         >
-          {items.map((item) => (
+          {props.data.items.map((item) => (
             <Card
               key={item.id}
               item={item}
@@ -121,8 +121,9 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
       )}
       <LampOutcome message={lamps.message} error={lamps.error} />
       <LampOutcome message={wishes.message} error={wishes.error} />
-      <CostsView items={items} />
+      <CostsView items={props.data.items} />
       <NeedsView needs={props.data.needs} />
+      <RecommendationsView data={props.data} />
       <ZonesView view={props.data.zones} actions={lamps.actions} />
       <LampLightView view={props.data.light} actions={lamps.light} />
       <SensorsView view={props.data.sensors} actions={lamps.sensors} />
@@ -157,9 +158,10 @@ export function EquipmentPage(props: { api: string; token: Token; host?: Host })
   const { api, token, host } = props;
   const reload = useInvalidate(KEY);
   const social = useFeature("social");
+  const recommendations = useFeature("recommendations");
   const load = useCallback(
-    (t: string) => loadEquipment(api, t, fetch, { sharing: social }),
-    [api, social],
+    (t: string) => loadEquipment(api, t, fetch, { sharing: social, recommendations }),
+    [api, social, recommendations],
   );
   return (
     <div className={host ? "min-w-0" : "rounded-2xl border border-border bg-card px-4 py-6 md:p-7"}>
