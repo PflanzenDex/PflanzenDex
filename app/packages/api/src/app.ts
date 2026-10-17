@@ -21,7 +21,7 @@ import {
 } from "./collection";
 import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
 import { wishZoneUsageFor } from "./wishlist";
-import { equipmentZoneUsageFor } from "./equipment";
+import { equipmentLocationUsageFor, equipmentZoneUsageFor } from "./equipment";
 import { bindFriends } from "./friends-bindings";
 import { featureAccess, type FeatureAccess } from "./kernel";
 import { bindHealth } from "./health";
@@ -77,12 +77,16 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
   for (const path of LIGHT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route(
     "/",
-    lightRoutes(pool, [
-      careProfileZoneUsageFor(pool),
-      specimenZoneUsageFor(pool),
-      wishZoneUsageFor(pool),
-      equipmentZoneUsageFor(pool),
-    ]),
+    lightRoutes(
+      pool,
+      [
+        careProfileZoneUsageFor(pool),
+        specimenZoneUsageFor(pool),
+        wishZoneUsageFor(pool),
+        equipmentZoneUsageFor(pool),
+      ],
+      [equipmentLocationUsageFor(pool)],
+    ),
   );
   for (const path of SPECIES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", speciesRoutes(pool));

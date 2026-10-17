@@ -40,6 +40,7 @@ const locations: LightLocationStore = {
       : [],
   create: async () => "name_taken",
   update: async () => "not_found",
+  remove: async () => "not_found",
 };
 
 /** What `care` and `wishlist` deliver for a test: last measurement per specimen, open wishes, stock per zone 2 to 4. */

@@ -4,6 +4,7 @@ import { Select } from "@/components/ui/fields/select/select";
 import { Label } from "@/components/ui/display/label/label";
 import { createWrite } from "../../../kernel";
 import { loadZones } from "../../../light";
+import { ensureHome } from "../where-question/where-question";
 
 type Token = () => Promise<string | undefined>;
 
@@ -13,9 +14,14 @@ async function ownZones(api: string, token: Token): Promise<readonly LightZone[]
   if (!t) return [];
   const first = await loadZones(api, t);
   if (!first.ok) return [];
-  if (first.value.length > 0) return first.value;
+  if (first.value.length > 0) {
+    await ensureHome(api, t);
+    return first.value;
+  }
   const made = await createWrite(api, t)("POST", "/light-zones/defaults", {});
   if (!made.ok) return [];
+  // The default location "Zuhause" comes with the default lamps (US-ONB-02).
+  await ensureHome(api, t);
   const again = await loadZones(api, t);
   return again.ok ? again.value : [];
 }

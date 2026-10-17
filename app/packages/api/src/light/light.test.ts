@@ -201,6 +201,61 @@ describe("US-LIC-05 tenant isolation via the API (P-04)", () => {
   });
 });
 
+describe("US-ONB-02 default location and removing locations", () => {
+  const sub = `licht-${randomUUID()}`;
+  const other = `licht-${randomUUID()}`;
+  afterAll(async () => {
+    await admin.query("delete from account where subject = any($1)", [[sub, other]]);
+  });
+
+  it("the default location Zuhause stands under the second lamp; a second call is refused", async () => {
+    await call(sub, "POST", "/light-zones/defaults", {});
+    const r = await call(sub, "POST", "/locations/defaults", {});
+    expect(r.status).toBe(201);
+    expect(r.body).toMatchObject({ name: "Zuhause", kind: "indoor" });
+    const zones = (await call(sub, "GET", "/light-zones")).body["zones"];
+    expect(r.body["lightZoneId"]).toBe(zones[1].id);
+    const again = await call(sub, "POST", "/locations/defaults", {});
+    expect(again).toMatchObject({ status: 409, body: { error: { code: "location.not_empty" } } });
+  });
+
+  it("the default is a normal row: an unused location can be removed, a used one cannot", async () => {
+    const list = (await call(sub, "GET", "/locations")).body["locations"];
+    const home = list[0];
+    const species = await call(sub, "POST", "/species", {
+      latinName: `Onbus ${randomUUID()
+        .replace(/[0-9-]/g, "")
+        .slice(0, 8)}`,
+      germanName: "Testpflanze",
+      difficulty: 2,
+      standardLevel: 3,
+      lightDemandLux: 40000,
+      growthMeasure: "rosette_diameter",
+      etiolationSigns: "Rosette streckt sich.",
+      successCriteria: "Dichte, flache Rosette.",
+    });
+    const made = await call(sub, "POST", "/specimens", {
+      speciesId: species.body["id"],
+      locationId: home.id,
+      timeZone: "Europe/Berlin",
+    });
+    expect(made).toMatchObject({ status: 201 });
+    const refused = await call(sub, "DELETE", `/locations/${home.id}`);
+    expect(refused).toMatchObject({ status: 409, body: { error: { code: "location.in_use" } } });
+    const spare = await call(sub, "POST", "/locations", { name: "Leer", kind: "indoor" });
+    expect((await call(sub, "DELETE", `/locations/${spare.body["id"]}`)).status).toBe(200);
+    expect((await call(sub, "DELETE", `/locations/${spare.body["id"]}`)).status).toBe(404);
+  });
+
+  it("another account cannot remove a location (P-04)", async () => {
+    const mine = await call(sub, "POST", "/locations", { name: "Privat", kind: "indoor" });
+    expect((await call(other, "DELETE", `/locations/${mine.body["id"]}`)).status).toBe(404);
+    expect((await call(sub, "GET", "/locations")).body["locations"]).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: "Privat" })]),
+    );
+  });
+});
+
 describe("US-LIC-01 derive the zone of the species", () => {
   const query = (lux: number | string, level: number | string, soft = false) =>
     `/light-zones/derivation?lightDemandLux=${lux}&standardLevel=${level}${soft ? "&softLeaf=true" : ""}`;

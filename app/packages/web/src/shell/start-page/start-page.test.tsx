@@ -21,7 +21,27 @@ interface World {
   cards: unknown[];
   archived?: number;
   hits?: unknown[];
+  locations?: { id: string; name: string; lightZoneId: string | null; kind: string }[];
   writes: { method: string; path: string; body: Record<string, unknown> }[];
+}
+
+/** The writes of US-ONB-02: the default location and placing the plant. */
+function placeWrite(w: World, path: string, method = "POST"): Promise<Response> | null {
+  if (method === "GET" && path === "/locations")
+    return response(200, { locations: w.locations ?? [] });
+  if (method === "GET") return null;
+  if (path === "/locations/defaults") {
+    w.locations = [{ id: "l1", name: "Zuhause", lightZoneId: null, kind: "indoor" }];
+    return response(201, w.locations[0]);
+  }
+  if (path === "/specimens/e1/location") return response(200, { id: "e1" });
+  if (path === "/locations/l1") return response(200, { id: "l1" });
+  if (path === "/light-zones/defaults") {
+    w.zones = ZONES;
+    return response(201, { zones: ZONES });
+  }
+  if (path === "/specimens") return response(201, { id: "e1", speciesId: "sp1" });
+  return null;
 }
 
 function fakeServer(w: World) {
@@ -30,14 +50,13 @@ function fakeServer(w: World) {
     vi.fn<typeof fetch>(async (url, init) => {
       const u = new URL(String(url));
       const method = init?.method ?? "GET";
+      const read = method === "GET" ? placeWrite(w, u.pathname, method) : null;
+      if (read) return read;
       if (method !== "GET") {
         const body = init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : {};
         w.writes.push({ method, path: u.pathname, body });
-        if (u.pathname === "/light-zones/defaults") {
-          w.zones = ZONES;
-          return response(201, { zones: ZONES });
-        }
-        if (u.pathname === "/specimens") return response(201, { id: "e1", speciesId: "sp1" });
+        const made = placeWrite(w, u.pathname);
+        if (made) return made;
         return response(404, {});
       }
       if (u.pathname === "/light-zones") return response(200, { zones: w.zones });
@@ -215,6 +234,76 @@ describe("US-ONB-01 start with the first plant", () => {
     expect(await screen.findByRole("heading", { name: "Nächste Pflanze" })).toBeTruthy();
     expect(screen.queryByText(/Schritt 1 von/)).toBeNull();
     expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+  });
+});
+
+async function saveFirstPlant() {
+  await pickSpecies();
+  await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Pflanze speichern" }));
+  await screen.findByRole("heading", { name: /ist angelegt/ });
+}
+
+describe("US-ONB-02 places and light come later, with defaults", () => {
+  it("US-ONB-02 a new account gets the location Zuhause from the start, nothing is asked before the plant", async () => {
+    const w = world({ zones: [] });
+    fakeServer(w);
+    view();
+    await pickSpecies();
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await screen.findByLabelText("Lichtbedarf");
+    await vi.waitFor(() => expect(w.writes.map((x) => x.path)).toContain("/locations/defaults"));
+
+    expect(screen.queryByText("Wo steht sie?")).toBeNull();
+  });
+
+  it("US-ONB-02 an account that already has a location gets no second one", async () => {
+    const w = world({
+      locations: [{ id: "l9", name: "Balkon", lightZoneId: "z4", kind: "outdoor" }],
+    });
+    fakeServer(w);
+    view();
+    await saveFirstPlant();
+    expect(w.writes.map((x) => x.path)).not.toContain("/locations/defaults");
+  });
+
+  it("US-ONB-02 after saving, one question 'Wo steht sie?' sets the location of the plant", async () => {
+    const w = world();
+    fakeServer(w);
+    view();
+    await saveFirstPlant();
+    expect(await screen.findByLabelText("Wo steht sie?")).toBeTruthy();
+    await userEvent.selectOptions(screen.getByLabelText("Licht bei Zuhause"), "z3");
+    await userEvent.click(screen.getByRole("button", { name: "Hier steht sie" }));
+    await vi.waitFor(() =>
+      expect(w.writes.find((x) => x.path === "/specimens/e1/location")?.body).toEqual({
+        locationId: "l1",
+      }),
+    );
+    expect(w.writes.find((x) => x.path === "/locations/l1")?.body).toMatchObject({
+      lightZoneId: "z3",
+    });
+    expect(screen.queryByLabelText("Wo steht sie?")).toBeNull();
+    expect(screen.getByRole("button", { name: "Miss deine Pflanze" })).toBeTruthy();
+  });
+
+  it("US-ONB-02 'Später' leaves the plant without a place, no error, the next action stays", async () => {
+    const w = world();
+    fakeServer(w);
+    view();
+    await saveFirstPlant();
+    await userEvent.click(await screen.findByRole("button", { name: "Später" }));
+    expect(w.writes.map((x) => x.path)).not.toContain("/specimens/e1/location");
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByLabelText("Wo steht sie?")).toBeNull();
+    expect(screen.getByRole("button", { name: "Miss deine Pflanze" })).toBeTruthy();
+  });
+
+  it("US-ONB-02 the start page shows no permanent card about missing locations or light zones", async () => {
+    fakeServer(world({ zones: [], cards: [{ id: "e1" }] }));
+    view();
+    await screen.findByRole("heading", { name: "Start" });
+    expect(screen.queryByText(/noch keinen Standort|keine Lichtzonen/)).toBeNull();
   });
 });
 

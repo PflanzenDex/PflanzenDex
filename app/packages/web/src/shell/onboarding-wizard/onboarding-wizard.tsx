@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { FIRST_PLANT_STEPS } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
 import { SaveStep } from "./save-step/save-step";
 import { SpeciesStep, type SpeciesLookup } from "./species-step/species-step";
 import { useFirstPlant } from "./use-first-plant";
+import { WhereQuestion } from "./where-question/where-question";
 
 const ACTIONS = "flex flex-col gap-3 sm:flex-row";
 
@@ -10,13 +12,28 @@ type Token = () => Promise<string | undefined>;
 type Flow = ReturnType<typeof useFirstPlant>;
 
 /** After saving: the plant exists and the app names one next action (P-09). */
-function Created(props: { name: string; onOpen: () => void }) {
+function Created(props: {
+  name: string;
+  specimenId: string;
+  api: string;
+  token: Token;
+  onOpen: () => void;
+}) {
+  const [asked, setAsked] = useState(false);
   return (
     <section className="flex flex-col gap-3">
       <h2 tabIndex={-1} className="text-xl font-semibold">
         {props.name} ist angelegt
       </h2>
       <p className="m-0">Miss deine Pflanze: so siehst du, wie sie wächst.</p>
+      {!asked && (
+        <WhereQuestion
+          api={props.api}
+          token={props.token}
+          specimenId={props.specimenId}
+          onDone={() => setAsked(true)}
+        />
+      )}
       <div className={ACTIONS}>
         <Button type="button" onClick={props.onOpen}>
           Miss deine Pflanze
@@ -109,7 +126,13 @@ export function OnboardingWizard(props: {
     <div className="flex flex-col gap-3" ref={f.box}>
       <h1 className="text-2xl font-semibold">Start</h1>
       {f.created !== null ? (
-        <Created name={f.created} onOpen={props.onCreated} />
+        <Created
+          name={f.created.name}
+          specimenId={f.created.id}
+          api={props.api}
+          token={props.token}
+          onOpen={props.onCreated}
+        />
       ) : (
         <>
           <p

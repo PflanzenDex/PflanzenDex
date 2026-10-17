@@ -4,11 +4,14 @@ import {
   lightZoneDelete,
   lightZoneDefault,
   locationUpdate,
+  locationDefault,
+  locationDelete,
   locationSetUp,
   locationHints,
   zoneDeriveReviewed,
   type Operation,
   type ZoneUsage,
+  type LocationUsage,
 } from "@pflanzendex/core";
 import { IdempotencyPostgres, LocationPostgres, ZonePostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
@@ -46,7 +49,11 @@ async function derivation(c: Ctx, zones: ZonePostgres) {
  * only through its location, which the location source already reports. Whoever first lets a field point to a zone
  * (zone override of cuttings BES-04, care profile BES-09) supplies its source via `additionalUsage`.
  */
-export function lightRoutes(pool: Pool, additionalUsage: readonly ZoneUsage[] = []): Hono<AuthEnv> {
+export function lightRoutes(
+  pool: Pool,
+  additionalUsage: readonly ZoneUsage[] = [],
+  locationUsage: readonly LocationUsage[] = [],
+): Hono<AuthEnv> {
   const zones = new ZonePostgres(pool);
   const locations = new LocationPostgres(pool);
   const deps = { idempotency: new IdempotencyPostgres(pool) };
@@ -90,7 +97,13 @@ export function lightRoutes(pool: Pool, additionalUsage: readonly ZoneUsage[] = 
   routes.post("/locations", async (c) =>
     write(c, locationSetUp(locations), await body(c), { success: 201 }),
   );
+  routes.post("/locations/defaults", async (c) =>
+    write(c, locationDefault(locations, zones), {}, { success: 201 }),
+  );
   routes.put("/locations/:id", async (c) => write(c, locationUpdate(locations), await withId(c)));
+  routes.delete("/locations/:id", async (c) =>
+    write(c, locationDelete(locations, locationUsage), { id: c.req.param("id") }),
+  );
 
   // Hints (US-BES-08): the central hints page follows with BES-08; here LIC-05 supplies its hints.
   routes.get("/hints", async (c) =>

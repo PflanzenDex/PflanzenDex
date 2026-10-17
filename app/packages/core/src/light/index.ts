@@ -5,7 +5,13 @@ export {
   lightZoneDelete,
   lightZoneDefault,
 } from "./zones";
-export { locationUpdate, locationSetUp } from "./locations";
+export {
+  LOCATION_DEFAULT,
+  locationDefault,
+  locationDelete,
+  locationUpdate,
+  locationSetUp,
+} from "./locations";
 export { locationHints } from "./hints";
 export type { Hint } from "./hints";
 export { LIMITS as LIGHT_LIMITS, LOCATION_KINDS } from "./types";
@@ -18,6 +24,7 @@ export type {
   ZoneUser,
   ZoneUserKind,
   ZoneUsage,
+  LocationUsage,
   ZoneStore,
   ZoneValues,
 } from "./types";
