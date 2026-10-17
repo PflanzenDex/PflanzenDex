@@ -62,6 +62,8 @@ The ranges are an assumption (starting values). With 500 slots per service colli
 - `.github/CODEOWNERS` names an owner per folder; changes to it require review.
 - `make gates` includes `check-specs`: duplicate file numbers in `docs/specs/product/` and IDs defined twice (`US-/FR-/DM-/E-`) fail the run. Whoever adds a number checks the highest free number on the current `origin/dev`; on a conflict the later PR rebases and renumbers (IDs of existing entries are never renumbered).
 
+**Migration numbers:** `make migration NAME=<module>_<short_name>` creates the file with the next number that is free on `origin/dev`, in every open PR branch and in numbers reserved in a PR Handoff (one `gh pr list` call, `git ls-tree` per branch). `RESERVE_MIGRATION=1 make claim ISSUE=<n>` writes the next free number into the draft PR's Handoff (`- **Migration number:** 0067`); `make migration` on that branch uses it. The gate `npm run migration-numbers` (part of `make gates`, `app/tools/workflow/claim/migration/`) fails on two migrations with the same number and on a new migration whose number is not above the highest on `origin/dev`; fix: merge `origin/dev`, rename only your own new file with `make migration`. Applied migrations are never renumbered.
+
 ## Rules for agents
 
 - Do not commit without being asked; do not change other people's files without a task.
