@@ -7,6 +7,7 @@ const fields = (extra: Partial<CreateFields> = {}): CreateFields => ({
   answers: {},
   cutting: false,
   locationId: "",
+  lightZoneId: "",
   catchDate: "2026-10-08",
   ...extra,
 });
@@ -25,5 +26,17 @@ describe("FR-BES-04 · #306 the catch date is sent only when the keeper changed 
 
   it("FR-BES-04 an emptied field sends no date (unknown stays unknown, P-08)", () => {
     expect(toCreateInput(fields({ catchDate: "" }), [], true)).not.toHaveProperty("catchDate");
+  });
+});
+
+describe("US-LIC-02 the own light zone is sent only when the keeper chose one", () => {
+  it("US-LIC-02 an untouched zone field sends nothing, so the zone stays derived", () => {
+    expect(toCreateInput(fields(), [], false)).not.toHaveProperty("lightZoneId");
+  });
+
+  it("US-LIC-02 a chosen zone is sent as lightZoneId", () => {
+    expect(toCreateInput(fields({ lightZoneId: "z3" }), [], false)).toMatchObject({
+      lightZoneId: "z3",
+    });
   });
 });
