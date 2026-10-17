@@ -25,6 +25,7 @@ export const proposalSchema = z
         (v) => v === "" || (/^\d+$/.test(v) && Number(v) >= 1 && Number(v) <= LUX_MAX),
         "Bitte gib den Lichtbedarf als ganze Zahl zwischen 1 und 200.000 Lux an.",
       ),
+    softLeaf: z.enum(["", "yes", "no"]),
     growthMeasure: required("Bitte wähle das Wachstumsmaß."),
     etiolationSigns: required("Bitte beschreibe die Vergeilung-Anzeichen."),
     successCriteria: required("Bitte beschreibe die Erfolgskriterien."),
@@ -65,6 +66,7 @@ export const EMPTY_PROPOSAL: ProposalFields = {
   difficulty: "",
   standardLevel: "",
   lightDemandLux: "",
+  softLeaf: "",
   growthMeasure: "",
   etiolationSigns: "",
   successCriteria: "",
@@ -92,6 +94,10 @@ export function toProposalInput(f: ProposalFields): Record<string, unknown> {
   for (const [name, raw] of Object.entries(f)) {
     const text = raw.trim();
     if (text === "") continue;
+    if (name === "softLeaf") {
+      input[name] = text === "yes";
+      continue;
+    }
     if (name === "synonyms")
       input[name] = text
         .split(/\n/)
