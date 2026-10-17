@@ -21,7 +21,7 @@ export interface ZoneContext {
   readonly overrides: ReadonlyMap<string, string>;
 }
 
-/** Zone of the species: my override first, else derived from the lux need. "Soft leaf" is never assumed. */
+/** Zone of the species: my override first, else derived from the lux need. "Soft leaf" comes from the catalog field of the species (US-LIC-01). */
 function speciesZone(z: SpecimenRow, k: ZoneContext): EffectiveZone | null {
   const species = k.species.get(z.speciesId);
   if (!species) return null;
@@ -31,7 +31,7 @@ function speciesZone(z: SpecimenRow, k: ZoneContext): EffectiveZone | null {
     {
       lightDemandLux: species.lightDemandLux,
       standardLevel: species.standardLevel,
-      softLeaf: false,
+      softLeaf: species.softLeaf,
     },
     k.zones,
   );

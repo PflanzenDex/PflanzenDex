@@ -67,13 +67,12 @@ export async function lightOverview(
     const position = recommendPosition(species.lightDemandLux, thresholds);
     if (!position) continue;
 
-    // Limitation: the catalog has no "soft-leaved C3 plant" field yet (US-LIC-01 is still 🟨 for it), so
-    // `softLeaf` is false here, exactly as in the distribution and the care profile.
+    // `softLeaf` is the catalog field of the species, as in the distribution and the care profile (US-LIC-01).
     const derivation = zoneDerive(
       {
         lightDemandLux: species.lightDemandLux,
         standardLevel: species.standardLevel,
-        softLeaf: false,
+        softLeaf: species.softLeaf,
       },
       zones,
     );

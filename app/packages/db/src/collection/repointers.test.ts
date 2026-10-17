@@ -38,6 +38,7 @@ const values = (name: string): SpeciesValues => ({
   difficulty: 1,
   standardLevel: 2,
   lightDemandLux: 15000,
+  softLeaf: false,
   dormancyFrom: null,
   dormancyUntil: null,
   locationHint: null,

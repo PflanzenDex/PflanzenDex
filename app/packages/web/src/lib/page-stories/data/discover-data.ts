@@ -59,6 +59,7 @@ const hit = (id: string, latin: string, german: string): SpeciesHit => ({
   difficulty: 1,
   standardLevel: 3,
   lightDemandLux: 8000,
+  softLeaf: false,
   dormancyFrom: null,
   dormancyUntil: null,
   locationHint: null,

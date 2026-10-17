@@ -28,6 +28,7 @@ const values = (name: string, extra: Partial<SpeciesValues> = {}): SpeciesValues
   difficulty: 1,
   standardLevel: 2,
   lightDemandLux: 15000,
+  softLeaf: false,
   dormancyFrom: null,
   dormancyUntil: null,
   locationHint: null,
@@ -86,6 +87,15 @@ afterAll(async () => {
   await admin.query("delete from account where id = any($1)", [all]);
   await admin.end();
   await pool.end();
+});
+
+describe("US-LIC-01 soft-leaf flag of the species", () => {
+  it("is stored with the species and read back; the default is false", async () => {
+    const soft = await create(anna, values(name("Aloe mollis "), { softLeaf: true }));
+    const plain = await create(anna, values(name("Aloe durus ")));
+    expect(await species.find(anna, soft.id)).toMatchObject({ softLeaf: true });
+    expect(await species.find(anna, plain.id)).toMatchObject({ softLeaf: false });
+  });
 });
 
 describe("species catalog: proposal is private (FR-BES-11, P-04, P-05)", () => {
