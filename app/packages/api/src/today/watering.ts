@@ -19,8 +19,8 @@ import type { Pool } from "pg";
  * The plants that are due to be watered today (US-MON-05), for the list in the app and for the reminders. The interval
  * is the keeper's own entry for the phase of today in the care profile (US-BES-09), the phase is the one of the phase
  * list (FR-MON-03; a species without a dormancy period is always in the growth phase). Without an interval nothing is
- * reported and nothing is invented (P-08). Cuttings and archived specimens are left out, as for the overdue measurement
- * (E-11 is open). `today` is the date in `timeZone` (NFR-08).
+ * reported and nothing is invented (P-08). Cuttings and archived specimens are left out (E-11 decides only the measuring
+ * rhythm). `today` is the date in `timeZone` (NFR-08).
  */
 export async function wateringDueFor(
   pool: Pool,

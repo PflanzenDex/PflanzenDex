@@ -27,6 +27,7 @@ const CREATED = new Date("2026-10-02T23:30:00Z");
 let app: ReturnType<typeof createApp>;
 let account = "";
 let specimenId = "";
+let speciesIdOf = "";
 
 async function call(method: string, path: string, body?: unknown) {
   const res = await app.request(path, {
@@ -88,6 +89,7 @@ beforeAll(async () => {
     timeZone: "Europe/Berlin",
   });
   specimenId = created["id"] as string;
+  speciesIdOf = species["id"] as string;
   await call("POST", "/treatments", {
     specimenIds: [specimenId],
     reason: "Wollläuse",
@@ -126,6 +128,23 @@ describe("US-MON-03 US-MON-04 the occasions of the reminders", () => {
     const m = late.find((o) => o.id === `measurement:${specimenId}`);
     expect(m?.occasion).toBe("measurement");
     expect(m?.text).toContain("noch nie gemessen");
+  });
+
+  it("US-MON-04 a cutting follows the same measuring interval as a plant (E-11)", async () => {
+    const cutting = await call("POST", "/specimens", {
+      speciesId: speciesIdOf,
+      marker: "steckling-messung",
+      status: "cutting",
+      timeZone: "Europe/Berlin",
+    });
+    const id = `measurement:${cutting["id"] as string}`;
+    expect(await ids(new Date("2026-11-01T12:00:00Z"))).not.toContain(id);
+    const late = await source().occasions(
+      account,
+      "Europe/Berlin",
+      new Date("2026-11-05T12:00:00Z"),
+    );
+    expect(late.find((o) => o.id === id)?.occasion).toBe("measurement");
   });
 
   it("US-MON-08 an occasion switched off in the profile is not reported, the Today list still shows the treatment (FR-MON-03)", async () => {

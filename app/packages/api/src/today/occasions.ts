@@ -17,7 +17,7 @@ import { todayDependencies, type TodayOptions } from "./today-routes";
 /**
  * The occasions of the reminders (US-MON-01, FR-MON-03): derived from the same status function as the "Today" list, so
  * the two cannot disagree. Treatments due or overdue (US-MON-03) come from it; the overdue measurement (US-MON-04) is
- * derived from the last measurement of each active plant (a cutting is left out until E-11 is decided). An occasion that
+ * derived from the last measurement of each active plant and cutting (same interval, E-11). An occasion that
  * the keeper switched off in the profile (US-ACC-02) is not reported; a pause is applied later, when the bundle is built.
  * The phase change (US-MON-02) comes from the phase list, the same rows and the same deviation rule as the Today list
  * (`phaseChangeOccasions`); watering (US-MON-05) from the keeper's own intervals and the watering log (`wateringDueFor`).
@@ -55,7 +55,7 @@ export function reminderOccasionsFor(pool: Pool, opt: TodayOptions): OccasionSou
         reminders.settings(userId),
         profiles.find(userId),
       ]);
-      const plants = rows.filter((r) => isActive(r) && r.status === "plant");
+      const plants = rows.filter(isActive);
       const last = await deps.measurements.forSpecimens(
         userId,
         plants.map((r) => r.id),
