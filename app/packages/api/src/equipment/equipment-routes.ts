@@ -59,7 +59,7 @@ export function equipmentRoutes(
       ),
     ),
   );
-  addNeedRoutes(routes, { equipment, pool, zoneStock, products });
+  addNeedRoutes(routes, { equipment, pool, zoneStock, products, features });
   routes.post("/equipment/:id/zone", async (c) =>
     write(c, deps, setZone, { input: { ...(await body(c)), id: c.req.param("id") } }),
   );

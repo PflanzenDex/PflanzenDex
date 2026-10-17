@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { NO_FEATURES } from "@pflanzendex/core";
 import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import { createApp, type AppOptions } from "../../app";
 
@@ -92,5 +93,12 @@ describe("US-EQU-10 recommendations through the API", () => {
       retrievedOn: "2026-10-01",
     });
     expect(await recs(subB)).toEqual([]);
+  });
+
+  it("US-EQU-10 answers 404 while the recommendations switch is off, needs stay reachable", async () => {
+    const off = createApp({ reviewer, pool, products: catalog, features: NO_FEATURES });
+    const headers = { authorization: `Bearer valid:${subA}` };
+    expect((await off.request("/equipment/recommendations", { headers })).status).toBe(404);
+    expect((await off.request("/equipment/needs", { headers })).status).toBe(200);
   });
 });
