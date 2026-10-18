@@ -64,3 +64,24 @@ export type {
   GapSpeciesEntry,
   GapStore,
 } from "./gaps";
+export {
+  CORRECTION_FIELDS,
+  CORRECTION_LIMITS,
+  catalogCorrect,
+  catalogCorrectionAccept,
+  catalogCorrectionReject,
+  catalogCorrections,
+  catalogFieldHistory,
+  catalogFieldRevert,
+  myCorrections,
+} from "./corrections";
+export type {
+  Correction,
+  CorrectionEntry,
+  CorrectionField,
+  CorrectionReviewList,
+  CorrectionStatus,
+  CorrectionStore,
+  FieldVersion,
+  Origin,
+} from "./corrections";

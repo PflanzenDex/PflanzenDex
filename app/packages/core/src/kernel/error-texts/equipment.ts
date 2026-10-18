@@ -1,5 +1,8 @@
 // German texts of the equipment errors (epic EQU) and the location errors (US-ONB-02), kept apart so `error.ts` stays under the file size limit.
+import { CORRECTION_ERROR_TEXTS } from "./catalog";
+
 export const EQUIPMENT_ERROR_TEXTS = {
+  ...CORRECTION_ERROR_TEXTS,
   "equipment.name_taken": "Dieses Equipment gibt es schon. Hänge „ – Regal 2“ o. Ä. an den Namen.",
   "equipment.not_found": "Dieses Equipment gibt es nicht. Lade die Liste neu.",
   "equipment.not_a_lamp":
