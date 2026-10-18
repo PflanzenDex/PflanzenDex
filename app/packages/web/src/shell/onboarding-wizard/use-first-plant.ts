@@ -15,7 +15,7 @@ export function useFirstPlant(api: string, token: Token) {
   const [zoneId, setZoneId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [created, setCreated] = useState<string | null>(null);
+  const [created, setCreated] = useState<{ name: string; id: string } | null>(null);
   const zones = useOwnZones(api, token, species !== null);
   // A button that unmounts takes the focus with it: move it to the heading of the new step (not on first render).
   const box = useRef<HTMLDivElement>(null);
@@ -43,7 +43,7 @@ export function useFirstPlant(api: string, token: Token) {
     setSaving(false);
     if (!r) return setError(errorText(SIGN_IN.code));
     if (!r.ok) return setError(errorText(r.error.code));
-    setCreated(specimenName(speciesDisplayName(species), null));
+    setCreated({ name: specimenName(speciesDisplayName(species), null), id: r.value.id });
   };
   return {
     box,

@@ -71,7 +71,7 @@ Acceptance criteria:
 
 State of implementation: a new account (`isNewAccount`) opens the start page on "Deine erste Pflanze" with two steps, each marked "Schritt n von 2" (species search by name, then "Pflanze speichern"); no location and no light zone is asked or loaded. The light need is the zone derived live from the species (`zoneDerive`, shown as "Lampe 2 (laut Art)" in a select the keeper may change); only a changed zone is sent as the specimen's own zone, the derived one is never stored (P-01). A new account without light zones gets the standard lamps silently (`POST /light-zones/defaults`, the minimum of US-ONB-02). After saving the page names "Miss deine Pflanze" and opens the collection. The permanent start-page cards for missing locations and zones, and the old steps "Standorte" and "Lichtzonen", are removed. "Überspringen" shows the normal first-plant action (US-ACC-03). **Open:** the free name and the optional first photo (step 1 of the criteria: the specimen has no free name yet, only species and marker, and photos exist only on measurements, US-WAC-05); landing directly on the new plant instead of the collection; storing the skip per account instead of per device (DM-ONB-03, US-ONB-07); the measurement of US-ONB-08; the question "Wo steht sie?" and the default location "Zuhause" (US-ONB-02).
 
-### US-ONB-02 · Places and light come later, with sensible defaults · ⬜ new
+### US-ONB-02 · Places and light come later, with sensible defaults · 🟨 new
 
 As a **plant keeper** I want the app to take care of locations and light zones with good defaults, so that I am not asked for structure before I have anything to put in it.
 
@@ -84,6 +84,8 @@ Acceptance criteria:
 - Given I open "Standorte verwalten", then locations and zones can be renamed, added and removed as today (US-LIC-01, US-LIC-02); the defaults are normal data, owned by the account (P-04), and removing them is allowed when no specimen uses them.
 - The permanent start-page cards "Du hast noch keinen Standort" and "… keine Lichtzonen" are removed; the information is the plant's own hint (US-ONB-07).
 - Status: replaces the steps "Standorte" and "Lichtzonen" of ACC-03.
+
+State of implementation: the four default lamps (since US-ONB-01) and one location "Zuhause" (indoor, no zone) are laid out silently when the first plant flow needs them, only for an account that has none; an account with a location gets no second one. After saving the first plant, the plant page of the flow shows the question "Wo steht sie?" with the own locations; a location without a light zone also offers the zone to set ("Licht bei Zuhause", "Keine Angabe" by default, never invented). "Hier steht sie" sets the location of the plant, "Später" leaves it open without any error. The permanent cards are gone and the locations page is unchanged. **Open:** asking again for a second plant after "Später" and the dismissal state (needs the hint registry of US-ONB-07); creating the defaults at registration instead of in the first-plant flow; the "ohne Standort" wording on the plant itself (today "Standort fehlt" in phases and the Hinweise tab).
 
 ### US-ONB-03 · Choose how I use the app · ⬜ new
 
@@ -99,7 +101,7 @@ Acceptance criteria:
 - The style has no name like level, rank, title or badge anywhere in the app, in the feed or for friends (FR-ONB-08); friends never see it (P-05).
 - Status: stored as DM-ONB-01; changing it is a validating operation (P-03).
 
-### US-ONB-04 · Unlock rules as pure domain logic · ⬜ new
+### US-ONB-04 · Unlock rules as pure domain logic · ✅ new
 
 As a **developer** I want the unlock rules in one pure function, so that menu, start page, overview and AI client always agree.
 
@@ -112,6 +114,8 @@ Acceptance criteria:
 - Given a day count, then it uses calendar dates in the keeper's time zone: "noch 112 Tage" is `unlock date - today`, never a duration in hours.
 - Tests: one per row of the table and per boundary (4 / 5 plants, day 27 / 28 / 29, first plant archived or deleted: history stays, so days still count from the first specimen ever created); every test carries the story ID (P-06).
 - Given an unknown function id, then the function refuses with a stable code (FR-QG-11), nothing is silently open.
+
+State of implementation: `unlockState` and `unlockStates` in `app/packages/core/src/account/unlock/` take the style, the active specimen count, the local date of the first specimen, today's local date, calm mode, the effective switches, the manual unlocks and the functions with existing data. The registry `UNLOCK_FUNCTIONS` (18 functions in navigation order, each with epic, destination, rule and optional switch) and the rule table `UNLOCK_RULES` hold the starting values. A met rule or a manual unlock or existing data gives `open`; an unmet rule gives `locked` with the conditions (`reasons`), one way per condition (add plants, wait until a calendar date, add the first plant) and `mayUnlockNow`. A switched-off function is `switched_off` and never announced, whatever else is true. Calm mode does not change the state; it only sets `announced` to false for the three ACH functions (US-ONB-05). An unknown id gives `onboarding.unknown_function`. The state `unlockable` is part of the type but not produced yet: the table reads "open when", so a met rule is `open`, and every locked function already offers the tap (`mayUnlockNow`); US-ONB-05 decides whether a met rule needs the keeper's tap first. Persistence of the style (US-ONB-03) and of manual unlocks (DM-ONB-02) is not part of this story: the function takes them as input. No API route and no UI.
 
 ### US-ONB-05 · See what is locked, why and how to open it · ⬜ new
 

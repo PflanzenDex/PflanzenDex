@@ -2,7 +2,15 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { execute } from "../kernel/operation";
 import type { Operation } from "../kernel/operation";
 import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
-import { lightZoneCreate, locationUpdate, locationSetUp, locationHints } from "./index";
+import {
+  lightZoneCreate,
+  lightZoneDefault,
+  locationDefault,
+  locationDelete,
+  locationUpdate,
+  locationSetUp,
+  locationHints,
+} from "./index";
 import { InMemoryLight } from "./test-helpers";
 
 let store: InMemoryLight;
@@ -116,5 +124,52 @@ describe('US-LIC-05 locations without a zone appear in "Hints"', () => {
 
   it("without affected locations there are no hints", () => {
     expect(locationHints([])).toEqual([]);
+  });
+});
+
+describe("US-ONB-02 default location and removal", () => {
+  const makeDefault = () => locationDefault(store.locationAdapter(), store.zoneAdapter());
+
+  it("creates Zuhause under the second lamp when the account has the standard lamps", async () => {
+    await call(lightZoneDefault(store.zoneAdapter()), {});
+    const r = await call(makeDefault(), {});
+    expect(r.ok && r.value).toMatchObject({ name: "Zuhause", kind: "indoor" });
+    const lamp2 = store.listZones("anna")[1];
+    expect(r.ok && r.value.lightZoneId).toBe(lamp2?.id);
+  });
+
+  it("creates Zuhause without a zone when there are no zones", async () => {
+    const r = await call(makeDefault(), {});
+    expect(r.ok && r.value.lightZoneId).toBeNull();
+  });
+
+  it("is refused for an account that already has a location, and is per account", async () => {
+    await call(setUp(), { name: "Fensterbank", kind: "indoor" });
+    const r = await call(makeDefault(), {});
+    expect(!r.ok && r.error.code).toBe("location.not_empty");
+    expect((await call(makeDefault(), {}, ben)).ok).toBe(true);
+  });
+
+  it("removes an unused location, refuses a used one and a foreign or unknown one", async () => {
+    const made = await call(setUp(), { name: "Flur", kind: "indoor" });
+    if (!made.ok) throw new Error("setup");
+    const del = locationDelete(store.locationAdapter(), []);
+    const foreign = await call(del, { id: made.value.id }, ben);
+    expect(!foreign.ok && foreign.error.code).toBe("location.not_found");
+    store.occupied.add(made.value.id);
+    const used = await call(del, { id: made.value.id });
+    expect(!used.ok && used.error.code).toBe("location.in_use");
+    store.occupied.clear();
+    expect((await call(del, { id: made.value.id })).ok).toBe(true);
+    expect(store.listLocations("anna")).toHaveLength(0);
+  });
+
+  it("US-ONB-02 refuses to remove a location a module still uses, e.g. a sensor (P-10)", async () => {
+    const made = await call(setUp(), { name: "Flur", kind: "indoor" });
+    if (!made.ok) throw new Error("setup");
+    const sensor = { user: async () => [{ kind: "equipment" as const, id: "q1", name: "Sensor" }] };
+    const r = await call(locationDelete(store.locationAdapter(), [sensor]), { id: made.value.id });
+    expect(!r.ok && r.error.code).toBe("location.in_use");
+    expect(store.listLocations("anna")).toHaveLength(1);
   });
 });

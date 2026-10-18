@@ -103,6 +103,8 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "specimen.caught_after_archived": 409,
   "light_zone.name_taken": 409,
   "location.name_taken": 409,
+  "location.in_use": 409,
+  "location.not_empty": 409,
   "light_zone.in_use": 409,
   "light_zone.not_empty": 409,
   "idempotency.key_conflict": 409,

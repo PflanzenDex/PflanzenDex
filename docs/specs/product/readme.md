@@ -80,8 +80,8 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | DEV Development process        | 12      | 1      | 9       | 2      | 1 · 1 · 7                 | 0                      | 12      |
 | ACH Achievements               | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
 | TAU Swipe matching             | 7       | 0      | 0       | 7      | 0 · 0 · 10                | 0                      | 7       |
-| ONB Introduction and unlocking | 8       | 0      | 1       | 7      | 0 · 0 · 10                | 0                      | 8       |
-| **Total**                      | **168** | **30** | **106** | **32** |                           | **50**                 | **118** |
+| ONB Introduction and unlocking | 8       | 1      | 2       | 5      | 0 · 0 · 10                | 0                      | 8       |
+| **Total**                      | **168** | **31** | **107** | **30** |                           | **50**                 | **118** |
 
 <!-- spec-status:end -->
 
