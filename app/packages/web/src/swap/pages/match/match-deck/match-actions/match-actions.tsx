@@ -131,16 +131,36 @@ export function UndoButton(props: { onClick: () => void }) {
 export function Confirm(props: {
   c: Card;
   busy: boolean;
-  onYes: () => void;
+  onYes: (counterSpecimenId: string | null) => void;
   onCancel: () => void;
 }) {
+  const { c } = props;
+  const both = c.reasons.find((r) => r.kind === "both_ways");
+  const mine = both ? (both.speciesGerman ?? both.speciesLatin ?? "dein Angebot") : null;
   return (
     <Banner variant="info">
-      <p className="m-0">{`Bei ${props.c.ownerName ?? "dem Freund"} anfragen: ${title(props.c)}?`}</p>
-      <div className="mt-2 flex gap-2">
-        <Button size="touch" disabled={props.busy} onClick={props.onYes}>
-          Ja, anfragen
+      <p className="m-0">{`Bei ${c.ownerName ?? "dem Freund"} anfragen: ${title(c)}?`}</p>
+      {both && (
+        <p className="m-0 mt-1">{`Als Gegengabe schlagen wir dein Angebot vor: ${mine}. Du kannst auch ohne Gegengabe anfragen.`}</p>
+      )}
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Button
+          size="touch"
+          disabled={props.busy}
+          onClick={() => props.onYes(both ? both.specimenId : null)}
+        >
+          {both ? `Ja, mit ${mine} anfragen` : "Ja, anfragen"}
         </Button>
+        {both && (
+          <Button
+            variant="outline"
+            size="touch"
+            disabled={props.busy}
+            onClick={() => props.onYes(null)}
+          >
+            Ohne Gegengabe anfragen
+          </Button>
+        )}
         <Button variant="outline" size="touch" onClick={props.onCancel}>
           Abbrechen
         </Button>

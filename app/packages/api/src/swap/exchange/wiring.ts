@@ -2,10 +2,19 @@ import {
   speciesDisplayName,
   wishNameKey,
   type ExchangeDependencies,
+  type MatchContext,
   type OfferDependencies,
   type WishHints,
 } from "@pflanzendex/core";
-import { SpeciesPostgres, SpecimenPostgres, SwapsPostgres, WishesPostgres } from "@pflanzendex/db";
+import {
+  FriendsPostgres,
+  MatchAnswersPostgres,
+  OffersPostgres,
+  SpeciesPostgres,
+  SpecimenPostgres,
+  SwapsPostgres,
+  WishesPostgres,
+} from "@pflanzendex/db";
 import type { Pool } from "pg";
 
 /**
@@ -82,6 +91,45 @@ function wishHints(wishes: WishesPostgres): WishHints {
           return text !== undefined ? [[n, text] as const] : [];
         }),
       );
+    },
+  };
+}
+
+/**
+ * What the match deck needs besides the exchange (US-TAU-02, US-TAU-05, US-TAU-07): the private answers, the clock, the
+ * counts that explain an empty deck, and the keeper's own open offers for "fits both ways". Everything is read as the
+ * keeper under the row rules (P-04); the species names of the own offers come from the same facts port as the exchange.
+ */
+export function matchContext(
+  pool: Pool,
+  deps: ExchangeDependencies,
+  clock: () => Date,
+): MatchContext {
+  const friends = new FriendsPostgres(pool);
+  const wishes = new WishesPostgres(pool);
+  const offers = new OffersPostgres(pool);
+  return {
+    answers: new MatchAnswersPostgres(pool),
+    clock,
+    counts: {
+      friends: async (userId) => (await friends.friends(userId)).length,
+      wishes: async (userId) => (await wishes.open(userId)).length,
+    },
+    mine: {
+      async open(userId) {
+        const open = (await offers.list(userId)).filter((o) => o.status === "open");
+        const facts = await deps.facts.describe(
+          userId,
+          open.map((o) => o.specimenId),
+        );
+        const byId = new Map(facts.map((f) => [f.id, f]));
+        return open.map((o) => ({
+          offerId: o.id,
+          specimenId: o.specimenId,
+          speciesLatin: byId.get(o.specimenId)?.speciesLatin ?? null,
+          speciesGerman: byId.get(o.specimenId)?.speciesGerman ?? null,
+        }));
+      },
     },
   };
 }

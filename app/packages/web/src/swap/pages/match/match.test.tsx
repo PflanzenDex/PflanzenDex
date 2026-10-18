@@ -57,6 +57,7 @@ function server(
 ) {
   const posts: string[] = [];
   const answers: string[] = [];
+  const bodies: string[] = [];
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url, init) => {
@@ -71,6 +72,7 @@ function server(
       }
       if (init?.method === "POST") {
         posts.push(u.pathname);
+        bodies.push(typeof init.body === "string" ? init.body : "");
         return yes(u.pathname.split("/")[3] ?? "");
       }
       return u.pathname === "/exchange/match"
@@ -78,7 +80,7 @@ function server(
         : response(404, {});
     }),
   );
-  return Object.assign(posts, { answers });
+  return Object.assign(posts, { answers, bodies });
 }
 const open = (calm = false) =>
   render(
@@ -326,6 +328,62 @@ describe("US-TAU-02 answering with buttons and swipe, stored privately", () => {
     await swipe(100, 190);
     expect(screen.getByRole("heading", { name: "Echte Aloe 1" })).toBeTruthy();
     expect(posts.answers).toEqual([]);
+  });
+});
+
+const BOTH = {
+  kind: "both_ways",
+  giverName: "Ben1",
+  offerId: "mine1",
+  specimenId: "spec-mine",
+  speciesLatin: "Echeveria elegans",
+  speciesGerman: "Echeverie",
+};
+const bothCard = (n: number) =>
+  card(n, { reasons: [{ kind: "wishlist", species: `Aloe vera ${n}`, reasoning: null }, BOTH] });
+
+describe("US-TAU-05 fits both ways in the web app", () => {
+  it("US-TAU-05 the chip and the sentence name my offer; a card without it says nothing about the giver's wishes", async () => {
+    server([bothCard(1), card(2)]);
+    open();
+    const c = within(await current());
+    expect(c.getByText("Passt in beide Richtungen")).toBeTruthy();
+    expect(c.getByText("Ben1 möchte Echeverie von dir.")).toBeTruthy();
+    await press(/^Nein/);
+    await screen.findByRole("heading", { name: "Echte Aloe 2" });
+    expect(screen.queryByText("Passt in beide Richtungen")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/%|Punkte|Sterne/);
+  });
+
+  it("US-TAU-07 US-TAU-05 calm mode keeps the chip: it is information, not a reward", async () => {
+    server([bothCard(1)]);
+    open(true);
+    expect(within(await current()).getByText("Passt in beide Richtungen")).toBeTruthy();
+  });
+
+  it("US-TAU-05 Ja on such a card asks for one more confirmation and proposes my offer; nothing is sent before it", async () => {
+    const posts = server([bothCard(1), card(2)]);
+    open();
+    await current();
+    await press(/^Ja, anfragen/);
+    expect(
+      await screen.findByText(/Als Gegengabe schlagen wir dein Angebot vor: Echeverie/),
+    ).toBeTruthy();
+    expect([...posts]).toEqual([]);
+    await press("Ja, mit Echeverie anfragen");
+    expect(await screen.findByRole("heading", { name: "Echte Aloe 2" })).toBeTruthy();
+    expect([...posts]).toEqual(["/exchange/match/o1/yes"]);
+    expect(posts.bodies.map((b) => JSON.parse(b))).toEqual([{ counterSpecimenId: "spec-mine" }]);
+  });
+
+  it("US-TAU-05 the counter-offer can be dropped before sending", async () => {
+    const posts = server([bothCard(1), card(2)]);
+    open();
+    await current();
+    await press(/^Ja, anfragen/);
+    await press("Ohne Gegengabe anfragen");
+    expect(await screen.findByRole("heading", { name: "Echte Aloe 2" })).toBeTruthy();
+    expect(posts.bodies.map((b) => JSON.parse(b))).toEqual([{}]);
   });
 });
 

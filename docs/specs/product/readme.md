@@ -79,9 +79,9 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | QG Quality gates               | 9       | 0      | 7       | 2      | 2 · 5 · 16                | 0                      | 9       |
 | DEV Development process        | 12      | 1      | 9       | 2      | 1 · 1 · 7                 | 0                      | 12      |
 | ACH Achievements               | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
-| TAU Swipe matching             | 7       | 0      | 6       | 1      | 1 · 5 · 4                 | 0                      | 7       |
+| TAU Swipe matching             | 7       | 0      | 7       | 0      | 1 · 5 · 4                 | 0                      | 7       |
 | ONB Introduction and unlocking | 8       | 5      | 3       | 0      | 1 · 0 · 9                 | 0                      | 8       |
-| **Total**                      | **168** | **35** | **117** | **16** |                           | **50**                 | **118** |
+| **Total**                      | **168** | **35** | **118** | **15** |                           | **50**                 | **118** |
 
 <!-- spec-status:end -->
 

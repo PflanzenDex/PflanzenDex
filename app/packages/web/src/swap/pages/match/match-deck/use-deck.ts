@@ -5,7 +5,10 @@ import type { Response } from "../../../../kernel";
 import { cardTitle, deckReducer, initialDeck, type DeckAction } from "./deck-state";
 import type { Answer } from "./match-actions/match-actions";
 
-export type OnYes = (offerId: string) => Promise<Response<MatchYesResult>>;
+export type OnYes = (
+  offerId: string,
+  counterSpecimenId: string | null,
+) => Promise<Response<MatchYesResult>>;
 export type OnAnswer = (
   offerId: string,
   answer: "no" | "later",
@@ -25,8 +28,8 @@ const YES_NOTICE: Record<MatchYesResult["outcome"], (c: Card) => string> = {
 const GONE = new Set(["offer.not_active", "offer.not_found"]);
 
 /** Asks for the offer and turns the answer into a deck action; a refusal that is not "gone" keeps the card (P-10). */
-async function askFor(c: Card, onYes: OnYes): Promise<DeckAction> {
-  const r = await onYes(c.offerId);
+async function askFor(c: Card, onYes: OnYes, counter: string | null): Promise<DeckAction> {
+  const r = await onYes(c.offerId, counter);
   if (r.ok)
     return {
       type: "yes",
@@ -37,6 +40,27 @@ async function askFor(c: Card, onYes: OnYes): Promise<DeckAction> {
   if (GONE.has(r.error.code))
     return { type: "gone", notice: `${errorText(r.error.code)} (${title(c)})` };
   return { type: "refused", error: errorText(r.error.code) };
+}
+
+/** Stores "Nein" or "Später" and turns the answer into a deck action; a refusal keeps the card (P-10). */
+function storeAnswer(c: Card, a: "no" | "later", onAnswer: OnAnswer): Promise<DeckAction> {
+  return onAnswer(c.offerId, a).then((r) => {
+    if (!r.ok) return { type: "refused", error: errorText(r.error.code) };
+    const answeredOn = r.value.answeredOn;
+    return a === "no"
+      ? {
+          type: "no",
+          card: c,
+          answeredOn,
+          notice: `Nein: ${title(c)}. Der Freund erfährt davon nichts.`,
+        }
+      : {
+          type: "later",
+          card: c,
+          answeredOn,
+          notice: `Später: ${title(c)}. Du findest die Karte unter „Später ansehen“.`,
+        };
+  });
 }
 
 /**
@@ -68,27 +92,18 @@ export function useDeck(props: {
       dispatch(action);
     });
   };
-  const store = (c: Card, a: "no" | "later"): Promise<DeckAction> =>
-    props.onAnswer(c.offerId, a).then((r) => {
-      if (!r.ok) return { type: "refused", error: errorText(r.error.code) };
-      const answeredOn = r.value.answeredOn;
-      return a === "no"
-        ? {
-            type: "no",
-            card: c,
-            answeredOn,
-            notice: `Nein: ${title(c)}. Der Freund erfährt davon nichts.`,
-          }
-        : {
-            type: "later",
-            card: c,
-            answeredOn,
-            notice: `Später: ${title(c)}. Du findest die Karte unter „Später ansehen“.`,
-          };
-    });
+  const store = (c: Card, a: "no" | "later") => storeAnswer(c, a, props.onAnswer);
+  /** Sends the request, with an own offer as the counter-offer when the keeper chose one (US-TAU-05). */
+  const ask = (counter: string | null) => {
+    if (current && !busy) run(() => askFor(current, props.onYes, counter));
+  };
   const answer = (a: Answer) => {
     if (!current || busy) return;
-    if (a === "yes") return run(() => askFor(current, props.onYes));
+    // A card that fits both ways asks for one more confirmation first, so the counter-offer can be chosen (US-TAU-05).
+    if (a === "yes")
+      return current.reasons.some((r) => r.kind === "both_ways")
+        ? dispatch({ type: "confirm", on: true })
+        : ask(null);
     run(() => store(current, a));
   };
   const takeBack = (offerId: string, done: DeckAction) => {
@@ -101,5 +116,5 @@ export function useDeck(props: {
   };
   const last = s.round[s.pos - 1];
   const undo = () => last && takeBack(last.offerId, { type: "undo" });
-  return { s, dispatch, busy, current, heading, answer, undo, takeBack };
+  return { s, dispatch, busy, current, heading, answer, ask, undo, takeBack };
 }

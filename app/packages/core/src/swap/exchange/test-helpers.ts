@@ -109,3 +109,30 @@ export class StubWishHints implements WishHints {
     return new Map(latinNames.flatMap((n) => (own[n] ? [[n, own[n] as string] as const] : [])));
   }
 }
+
+/** One side of a swap for tests: Anna's offer `o1` requested by `ben`; override what the test needs. */
+export const swapSide = (extra: Partial<SwapSide> = {}): SwapSide => ({
+  swapId: "s1",
+  role: "giver",
+  otherId: "ben",
+  otherName: "Ben",
+  offerId: "o1",
+  speciesLatin: "Aloe vera",
+  speciesGerman: "Echte Aloe",
+  type: "cutting",
+  mode: "swap",
+  counterName: null,
+  counterText: null,
+  status: "requested",
+  requestedAt: "2026-10-09T10:00:00.000Z",
+  reason: null,
+  cause: null,
+  proposal: false,
+  decidedAt: null,
+  confirmedGiver: false,
+  confirmedRecipient: false,
+  givenSpecimenId: null,
+  receivedSpecimenId: null,
+  handedOverAt: null,
+  ...extra,
+});

@@ -56,6 +56,7 @@ function Current(props: {
   c: Card;
   busy: boolean;
   answer: (a: Answer) => void;
+  ask: (counter: string | null) => void;
   undo: () => void;
   lists: ReactNode;
   dispatch: (a: DeckAction) => void;
@@ -82,7 +83,7 @@ function Current(props: {
         <Confirm
           c={c}
           busy={props.busy}
-          onYes={() => props.answer("yes")}
+          onYes={props.ask}
           onCancel={() => dispatch({ type: "confirm", on: false })}
         />
       )}
@@ -114,7 +115,7 @@ export function MatchDeck(props: {
   onAnswer: OnAnswer;
   onUndo: OnUndo;
 }) {
-  const { s, dispatch, busy, current, heading, answer, undo, takeBack } = useDeck(props);
+  const { s, dispatch, busy, current, heading, answer, ask, undo, takeBack } = useDeck(props);
   const lists = (
     <AnswerLists
       entries={s.entries}
@@ -143,6 +144,7 @@ export function MatchDeck(props: {
       c={current}
       busy={busy}
       answer={answer}
+      ask={ask}
       undo={undo}
       lists={lists}
       dispatch={dispatch}
