@@ -1,9 +1,14 @@
-import type { ComponentType } from "react";
-import { Navigate, Route } from "react-router";
+import type { ComponentType, ReactNode } from "react";
+import { Navigate, Route, useParams } from "react-router";
 import { OperatorPage } from "@/account";
 import { ReviewPage } from "@/catalog";
-import { FriendsPage } from "@/social";
-import { PATHS, type View } from "@/components/shared/navigation/nav-model/navigation/navigation";
+import { FriendCollectionPage, FriendsPage } from "@/social";
+import { ExchangePage } from "@/swap";
+import {
+  EXCHANGE_PATH,
+  PATHS,
+  type View,
+} from "@/components/shared/navigation/nav-model/navigation/navigation";
 
 type Token = () => Promise<string | undefined>;
 
@@ -21,7 +26,13 @@ const NO_ACCESS: Partial<Record<View, string>> = {
 };
 
 /** One route per page that needs only the API address and the token; role-bound ones redirect without the role (P-10). */
-export function simpleRoutes(api: string, token: Token, roles: Partial<Record<View, boolean>>) {
+export function simpleRoutes(
+  api: string,
+  token: Token,
+  roles: Partial<Record<View, boolean>>,
+  /** A page that replaces the view while its function is not open yet (US-ONB-05). */
+  locked: Partial<Record<View, ReactNode>> = {},
+) {
   return (Object.keys(SIMPLE_VIEWS) as View[]).map((v) => {
     const Simple = SIMPLE_VIEWS[v];
     return Simple ? (
@@ -31,6 +42,8 @@ export function simpleRoutes(api: string, token: Token, roles: Partial<Record<Vi
         element={
           roles[v] === false ? (
             <Navigate to={PATHS.start} replace state={{ hint: NO_ACCESS[v] }} />
+          ) : locked[v] ? (
+            locked[v]
           ) : (
             <Simple api={api} token={token} />
           )
@@ -38,4 +51,34 @@ export function simpleRoutes(api: string, token: Token, roles: Partial<Record<Vi
       />
     ) : null;
   });
+}
+
+/** A friend's shared collection has its own address; the friendship id comes from it (US-SOZ-07). */
+function FriendCollectionRoute(props: { api: string; token: Token }) {
+  const { friendId } = useParams();
+  return <FriendCollectionPage {...props} friendId={friendId ?? ""} />;
+}
+
+/**
+ * The exchange and a friend's collection (US-SOZ-07, US-SOZ-08); while their function is not open yet the address
+ * shows its lock page instead (US-ONB-05, FR-ONB-02).
+ */
+export function socialRoutes(
+  api: string,
+  token: Token,
+  lockPage: (id: string) => ReactNode | undefined,
+) {
+  const page = (id: string, open: ReactNode) => lockPage(id) ?? open;
+  return [
+    <Route
+      key="exchange"
+      path={EXCHANGE_PATH}
+      element={page("swapping", <ExchangePage api={api} token={token} />)}
+    />,
+    <Route
+      key="friend"
+      path={`${PATHS.friends}/:friendId`}
+      element={page("friends", <FriendCollectionRoute api={api} token={token} />)}
+    />,
+  ];
 }

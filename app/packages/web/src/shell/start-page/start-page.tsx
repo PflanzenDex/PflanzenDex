@@ -8,6 +8,7 @@ import { OnboardingWizard } from "../onboarding-wizard/onboarding-wizard";
 import { readStored, writeStored } from "../../platform/storage";
 import type { LinkTarget } from "../../components/shared/navigation/nav-model/navigation/navigation";
 import { FriendsBanner } from "../../social";
+import { LockedRows } from "../unlock";
 
 const COUNTS_KEY = ["start", "counts"];
 const ACTIONS = "flex flex-col gap-3 sm:flex-row";
@@ -93,6 +94,7 @@ function Content(props: {
         </Suspense>
       )}
       <Overview counts={counts} onOpen={props.onOpen} />
+      <LockedRows />
     </>
   );
 }

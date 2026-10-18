@@ -13,7 +13,8 @@ import {
   SpecimenPostgres,
 } from "@pflanzendex/db";
 import type { Pool } from "pg";
-import type { FeatureAccess } from "../../kernel";
+import type { FeatureAccess } from "../../../kernel";
+import { existingDataOf } from "./existing-data";
 
 /** The ports and the facts of the lock rules for one account, read live from its own data (FR-ONB-01, P-04). */
 export function unlockSources(
@@ -27,6 +28,7 @@ export function unlockSources(
   const clock = opt.clock ?? (() => new Date());
   const unlocks = new ManualUnlockPostgres(pool);
   const specimens = new SpecimenPostgres(pool);
+  const existing = existingDataOf(pool);
   const calm = new AchievementSettingsPostgres(pool);
   const styles = new KeeperStylePostgres(pool);
   const style = opt.style ?? ((userId: string) => readKeeperStyle(styles, userId));
@@ -50,7 +52,7 @@ export function unlockSources(
       calmMode: (await readAchievementSettings(calm, userId)).calmMode,
       features: await featureSet(userId),
       manualUnlocks: new Set((await unlocks.list(userId)).map((u) => u.id)),
-      existingData: new Set(),
+      existingData: await existing(userId),
     };
   };
   return { unlocks, styles, featureSet, facts };

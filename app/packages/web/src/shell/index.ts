@@ -6,3 +6,7 @@ export { App } from "./app/app";
 export const StartPage = lazyPage(() =>
   import("./start-page/start-page").then((m) => ({ default: m.StartPage })),
 );
+export const UnlockPage = lazyPage(() =>
+  import("./unlock/unlock-page/unlock-page").then((m) => ({ default: m.UnlockPage })),
+);
+export { useUnlocks, isShownLocked } from "./unlock";

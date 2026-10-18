@@ -10,6 +10,7 @@ import {
   stackedPill,
   type NavItem,
 } from "../nav-model/nav-item";
+import { NavNote } from "../nav-model/nav-note/nav-note";
 
 /** The first four destinations are the primary ones (the bottom bar); a hairline separates the rest in the sidebar. */
 const PRIMARY = 4;
@@ -49,6 +50,7 @@ function NavRail({ items, className }: { items: NavItem[]; className?: string })
               <>
                 <span className={stackedPill(isActive)}>{item.icon}</span>
                 <span className="max-w-full break-words hyphens-auto">{item.label}</span>
+                <NavNote text={item.note} />
               </>
             )}
           </NavLink>
@@ -103,6 +105,7 @@ function NavSidebar({ items, className }: { items: NavItem[]; className?: string
             >
               {item.icon}
               <span className="min-w-0 break-words">{item.label}</span>
+              <NavNote text={item.note} inline />
             </NavLink>
           </Fragment>
         ))}
