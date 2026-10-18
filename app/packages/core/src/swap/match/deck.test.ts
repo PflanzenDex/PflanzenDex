@@ -5,6 +5,7 @@ import type { ExchangeDependencies, FriendOffer } from "../exchange";
 import { execute } from "../../kernel/operation";
 import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
 import { matchDeck, matchYes } from "./index";
+import { InMemoryMatchAnswers } from "./answer/test-helpers";
 
 const id = (n: number) => `00000000-0000-4000-8000-0000000000${n.toString(16).padStart(2, "0")}`;
 const sp = (latin: string | null) => ({
@@ -34,7 +35,7 @@ function setup(offers: FriendOffer[], wished = ["Aloe vera", "Echeveria elegans"
   return deps;
 }
 const deck = (deps: ExchangeDependencies, user = "anna") =>
-  matchDeck(deps, user, { timeZone: "Europe/Berlin" });
+  matchDeck(deps, new InMemoryMatchAnswers(), user, { timeZone: "Europe/Berlin" });
 const offer = (n: number, extra: Partial<FriendOffer> = {}) =>
   friendOffer({ offerId: id(n + 100), specimenId: id(n), ...extra });
 
@@ -88,7 +89,9 @@ describe("US-TAU-01 match deck", () => {
   });
 
   it("refuses an invalid time zone", async () => {
-    const r = await matchDeck(setup([offer(1)]), "anna", { timeZone: "nope" });
+    const r = await matchDeck(setup([offer(1)]), new InMemoryMatchAnswers(), "anna", {
+      timeZone: "nope",
+    });
     expect(!r.ok && r.error.code).toBe("input.invalid");
   });
 });
@@ -102,7 +105,7 @@ describe("US-TAU-03 Yes on a card creates exactly one request", () => {
     key = "k1",
   ) =>
     execute(
-      matchYes(deps),
+      matchYes(deps, new InMemoryMatchAnswers()),
       { idempotency: new InMemoryIdempotencyStore() },
       { context: { userId: user }, input, idempotencyKey: key },
     );
@@ -147,7 +150,7 @@ describe("US-TAU-03 Yes on a card creates exactly one request", () => {
     const deps = setup([offer(1)]);
     const idem = { idempotency: new InMemoryIdempotencyStore() };
     const call = () =>
-      execute(matchYes(deps), idem, {
+      execute(matchYes(deps, new InMemoryMatchAnswers()), idem, {
         context: { userId: "anna" },
         input: { offerId: A },
         idempotencyKey: "k9",

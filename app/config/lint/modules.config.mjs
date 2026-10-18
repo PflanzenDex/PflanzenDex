@@ -130,7 +130,7 @@ const MODULES = [
     // Swapping (ADR 0012): no back edge, `social` and `collection` never import it.
     name: "swap",
     epics: [],
-    tables: ["offer", "swap"],
+    tables: ["offer", "swap", "swap_match_answer"],
     dependsOn: ["kernel", "social", "collection", "catalog", "care"],
     ports: [],
   },

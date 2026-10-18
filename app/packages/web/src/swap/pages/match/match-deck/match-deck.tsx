@@ -7,9 +7,18 @@ import { errorText } from "@/lib/error-text";
 import type { Response } from "../../../../kernel";
 import { MatchCard } from "../match-card/match-card";
 import { cardTitle, deckReducer, initialDeck, type DeckAction, type DeckState } from "./deck-state";
-import { Actions, Confirm, Empty, UndoButton, type Answer } from "./match-actions/match-actions";
+import {
+  Actions,
+  Confirm,
+  Empty,
+  LaterSection,
+  UndoButton,
+  type Answer,
+} from "./match-actions/match-actions";
 
 export type OnYes = (offerId: string) => Promise<Response<MatchYesResult>>;
+export type OnAnswer = (offerId: string, answer: "no" | "later") => Promise<Response<unknown>>;
+export type OnUndo = (offerId: string) => Promise<Response<unknown>>;
 
 const title = cardTitle;
 
@@ -39,6 +48,7 @@ async function askFor(c: Card, onYes: OnYes): Promise<DeckAction> {
 
 function End(props: {
   s: DeckState;
+  undo: () => void;
   dispatch: (a: DeckAction) => void;
   heading: Ref<HTMLHeadingElement>;
 }) {
@@ -65,7 +75,7 @@ function End(props: {
             : { label: "Anfragen ansehen", href: EXCHANGE_PATH }
         }
       />
-      {s.last !== null && <UndoButton onClick={() => dispatch({ type: "undo" })} />}
+      {s.last !== null && <UndoButton onClick={props.undo} />}
     </div>
   );
 }
@@ -75,6 +85,7 @@ function Current(props: {
   c: Card;
   busy: boolean;
   answer: (a: Answer) => void;
+  undo: () => void;
   dispatch: (a: DeckAction) => void;
 }) {
   const { s, c, dispatch } = props;
@@ -104,11 +115,12 @@ function Current(props: {
         />
       )}
       {s.error !== null && <Banner variant="error">{s.error}</Banner>}
-      {s.last !== null && <UndoButton onClick={() => dispatch({ type: "undo" })} />}
+      {s.last !== null && <UndoButton onClick={props.undo} />}
       <p className="m-0 text-center text-sm text-muted-foreground">
-        „Ja“ fragt das Angebot an, „Nein“ und „Später“ merkt sich nur diese Sitzung. Der Freund
+        „Ja“ fragt das Angebot an, „Nein“ und „Später“ bleiben bei dir gespeichert. Der Freund
         erfährt davon nichts. Bei Tauschangeboten ergänzt du die Gegengabe unter Anfragen.
       </p>
+      <LaterSection cards={s.later} onShow={() => dispatch({ type: "again" })} />
       <Actions card={c} busy={props.busy} onAnswer={props.answer} />
     </div>
   );
@@ -116,11 +128,20 @@ function Current(props: {
 
 /**
  * The match deck, one card at a time (US-TAU-01). "Ja" asks for the offer (US-TAU-03) and the card moves on only after the
- * write was answered; a refusal stays visible (P-10). "Nein" and "Später" are kept in this session only (the stored
- * answer is DM-TAU-01).
+ * write was answered; a refusal stays visible (P-10). "Nein" and "Später" are stored privately and the card moves on
+ * only after they were stored (US-TAU-02, DM-TAU-01); "Rückgängig" takes the last one back. Cards answered with "Später"
+ * stay findable in their own section (P-10).
  */
-export function MatchDeck(props: { cards: readonly Card[]; onYes: OnYes }) {
-  const [s, dispatch] = useReducer(deckReducer, props.cards, initialDeck);
+export function MatchDeck(props: {
+  cards: readonly Card[];
+  later: readonly Card[];
+  onYes: OnYes;
+  onAnswer: OnAnswer;
+  onUndo: OnUndo;
+}) {
+  const [s, dispatch] = useReducer(deckReducer, undefined, () =>
+    initialDeck(props.cards, props.later),
+  );
   const [busy, setBusy] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -128,22 +149,43 @@ export function MatchDeck(props: { cards: readonly Card[]; onYes: OnYes }) {
     if (s.moved) (heading.current ?? document.getElementById("match-title"))?.focus();
   }, [s.pos, s.round, s.moved]);
   const current = s.round[s.pos];
-  const answer = (a: Answer) => {
-    if (!current || busy) return;
-    if (a === "no")
-      return dispatch({
-        type: "no",
-        notice: `Nein: ${title(current)}. Das gilt nur für diese Sitzung.`,
-      });
-    if (a === "later")
-      return dispatch({ type: "later", card: current, notice: `Später: ${title(current)}.` });
+  /** Runs one write; the deck moves on only when it succeeded, a refusal stays visible (P-10). */
+  const run = (write: () => Promise<DeckAction>) => {
     setBusy(true);
-    void askFor(current, props.onYes).then((action) => {
+    void write().then((action) => {
       setBusy(false);
       dispatch(action);
     });
   };
-  if (props.cards.length === 0) return <Empty />;
-  if (!current) return <End s={s} dispatch={dispatch} heading={heading} />;
-  return <Current s={s} c={current} busy={busy} answer={answer} dispatch={dispatch} />;
+  const store = (c: Card, a: "no" | "later"): Promise<DeckAction> =>
+    props.onAnswer(c.offerId, a).then((r) =>
+      r.ok
+        ? a === "no"
+          ? { type: "no", notice: `Nein: ${title(c)}. Der Freund erfährt davon nichts.` }
+          : {
+              type: "later",
+              card: c,
+              notice: `Später: ${title(c)}. Du findest die Karte unter „Später ansehen“.`,
+            }
+        : { type: "refused", error: errorText(r.error.code) },
+    );
+  const answer = (a: Answer) => {
+    if (!current || busy) return;
+    if (a === "yes") return run(() => askFor(current, props.onYes));
+    run(() => store(current, a));
+  };
+  const undo = () => {
+    const last = s.round[s.pos - 1];
+    if (!last || busy) return;
+    run(() =>
+      props
+        .onUndo(last.offerId)
+        .then((r) =>
+          r.ok ? { type: "undo" } : { type: "refused", error: errorText(r.error.code) },
+        ),
+    );
+  };
+  if (props.cards.length === 0 && props.later.length === 0) return <Empty />;
+  if (!current) return <End s={s} undo={undo} dispatch={dispatch} heading={heading} />;
+  return <Current s={s} c={current} busy={busy} answer={answer} undo={undo} dispatch={dispatch} />;
 }

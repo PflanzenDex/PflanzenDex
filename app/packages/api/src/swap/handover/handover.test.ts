@@ -389,6 +389,85 @@ describe("US-TAU-03 Yes on a match card through the API", () => {
   });
 });
 
+describe("US-TAU-02 No and Later through the API", () => {
+  const TZ = "Europe/Berlin";
+  const answer = (sub: string | null, offerId: string, a: string) =>
+    call(sub, "PUT", `/exchange/match/${offerId}/answer`, { answer: a, timeZone: TZ });
+  const undo = (sub: string | null, offerId: string) =>
+    call(sub, "DELETE", `/exchange/match/${offerId}/answer`);
+  type Deck = { cards: { offerId: string }[]; later: { offerId: string }[] };
+  const deck = async (sub: string) =>
+    (await call(sub, "GET", `/exchange/match?timeZone=Europe%2FBerlin`)).body as Deck;
+  /** An open offer of subA whose species is on the wishlist of subE. */
+  const matching = async (m: string) => {
+    const id = await specimen(subA, m);
+    await call(subA, "PUT", `/sharing/specimens/${id}`, { share: "friends" });
+    const offerId = (
+      await call(subA, "POST", "/offers", { specimenId: id, type: "cutting", mode: "swap" })
+    ).body.id as string;
+    const latin = (
+      await call(subE, "GET", "/exchange/offers?timeZone=Europe%2FBerlin")
+    ).body.offers.find((x: { offerId: string }) => x.offerId === offerId).speciesLatin as string;
+    await call(subE, "POST", "/wishes", { name: latin });
+    return offerId;
+  };
+
+  it("without a token 401, a bad answer or time zone 400, an unknown offer 404 and nothing is stored", async () => {
+    const offerId = await matching("T20");
+    expect((await answer(null, offerId, "no")).status).toBe(401);
+    expect((await answer(subE, offerId, "yes")).status).toBe(400);
+    expect(
+      (await call(subE, "PUT", `/exchange/match/${offerId}/answer`, { answer: "no" })).status,
+    ).toBe(400);
+    expect((await answer(subE, randomUUID(), "no")).status).toBe(404);
+    expect((await deck(subE)).cards.map((c) => c.offerId)).toContain(offerId);
+  });
+
+  it("Later keeps the card in `later`, No removes it from the deck, undo brings it back; the answer survives a reload", async () => {
+    const offerId = await matching("T21");
+    expect(await answer(subE, offerId, "later")).toMatchObject({ status: 200 });
+    let d = await deck(subE);
+    expect(d.cards.map((c) => c.offerId)).not.toContain(offerId);
+    expect(d.later.map((c) => c.offerId)).toContain(offerId);
+    expect((await answer(subE, offerId, "no")).status).toBe(200);
+    d = await deck(subE);
+    expect([...d.cards, ...d.later].map((c) => c.offerId)).not.toContain(offerId);
+    expect((await undo(subE, offerId)).status).toBe(200);
+    expect((await deck(subE)).cards.map((c) => c.offerId)).toContain(offerId);
+    expect(await undo(subE, offerId)).toMatchObject({
+      status: 404,
+      body: { error: { code: "offer.not_found" } },
+    });
+  });
+
+  it("FR-TAU-02 P-04 P-05 answers are private: the giver and others see no change, and cannot answer or take back for me", async () => {
+    const offerId = await matching("T22");
+    const before = (await swaps(subA)).received.length;
+    await answer(subE, offerId, "later");
+    expect((await answer(subA, offerId, "no")).status).toBe(404);
+    expect((await answer(subOp, offerId, "no")).status).toBe(404);
+    expect((await undo(subOp, offerId)).status).toBe(404);
+    expect((await deck(subE)).later.map((c) => c.offerId)).toContain(offerId);
+    // No request and no change reaches the giver (FR-TAU-02).
+    expect((await swaps(subA)).received).toHaveLength(before);
+  });
+
+  it("a Yes after Later requests the offer and clears the Later entry (the request is the record)", async () => {
+    const offerId = await matching("T23");
+    await answer(subE, offerId, "later");
+    expect(await call(subE, "POST", `/exchange/match/${offerId}/yes`, {})).toMatchObject({
+      status: 201,
+      body: { outcome: "requested" },
+    });
+    // The offer stays a card, now marked as requested; the stored Later is gone.
+    const d = await deck(subE);
+    expect(d.later.map((c) => c.offerId)).not.toContain(offerId);
+    expect(
+      (d.cards as { offerId: string; requested: boolean }[]).find((c) => c.offerId === offerId),
+    ).toMatchObject({ requested: true });
+  });
+});
+
 describe("US-SOZ-13 swap history and provenance through the API", () => {
   const history = async (sub: string | null) => call(sub, "GET", "/swaps/history");
   type Entry = {
