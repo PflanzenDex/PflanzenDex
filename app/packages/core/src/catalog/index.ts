@@ -71,6 +71,7 @@ export {
   catalogCorrectionAccept,
   catalogCorrectionReject,
   catalogCorrectionVote,
+  catalogCorrectionWithdraw,
   catalogCorrections,
   catalogFieldHistory,
   catalogFieldRevert,

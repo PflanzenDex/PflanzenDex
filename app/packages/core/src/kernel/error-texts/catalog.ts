@@ -15,4 +15,6 @@ export const CORRECTION_ERROR_TEXTS = {
     "Das ist dein eigener Vorschlag. Darüber stimmen andere ab; es wurde nichts geändert.",
   "correction.vote_rate_limited":
     "Du hast in kurzer Zeit sehr viele Stimmen abgegeben. Versuche es in einer Stunde noch einmal.",
+  "correction.no_value":
+    "Diese Meldung enthält keinen Vorschlag und kann nicht übernommen werden. Lehne sie mit einer Begründung ab oder lass sie offen.",
 } as const;

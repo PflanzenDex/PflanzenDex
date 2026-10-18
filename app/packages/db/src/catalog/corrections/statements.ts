@@ -1,7 +1,7 @@
 import type { Pool, PoolClient } from "pg";
 import { withAccount } from "../../kernel/index.ts";
 import type { CorrectionField, OpenCorrection, Vote, VoteOutcome } from "@pflanzendex/core";
-import { FIELD, ISO } from "./fields.ts";
+import { COLUMN, FIELD, ISO } from "./fields.ts";
 
 /** Sets, changes or (`null`) withdraws the vote of the account; the database function checks every rule (US-BES-15). */
 export async function castVote(
@@ -38,7 +38,7 @@ export async function openCorrectionsOfSpecies(
     const r = await c.query<{
       id: string;
       field: string;
-      proposedValue: string;
+      proposedValue: string | null;
       reason: string;
       source: string | null;
       createdAt: string;
@@ -66,4 +66,54 @@ export async function voteCounts(
     [ids],
   );
   return new Map(r.rows.map((x) => [x.id, x]));
+}
+
+// Decisions on corrections and reverts: database functions that check the role or the creator themselves (P-03, P-04).
+
+export async function acceptCorrection(pool: Pool, userId: string, id: string) {
+  const r = await withAccount(pool, userId, (c) =>
+    c.query<{ outcome: string; version: number | null }>(
+      "select outcome, version from accept_catalog_correction($1)",
+      [id],
+    ),
+  );
+  const row = r.rows[0];
+  if (row?.outcome === "accepted" && row.version !== null) return { version: row.version };
+  if (row?.outcome === "no_value") return "no_value" as const;
+  return row?.outcome === "decided" ? ("decided" as const) : ("not_found" as const);
+}
+
+export async function withdrawCorrection(pool: Pool, userId: string, id: string) {
+  const r = await withAccount(pool, userId, (c) =>
+    c.query<{ outcome: string }>("select withdraw_catalog_correction($1) as outcome", [id]),
+  );
+  const outcome = r.rows[0]?.outcome;
+  return outcome === "withdrawn" || outcome === "decided" ? outcome : ("not_found" as const);
+}
+
+export async function rejectCorrection(pool: Pool, userId: string, id: string, reason: string) {
+  const r = await withAccount(pool, userId, (c) =>
+    c.query<{ outcome: string }>("select reject_catalog_correction($1, $2) as outcome", [
+      id,
+      reason,
+    ]),
+  );
+  const outcome = r.rows[0]?.outcome;
+  return outcome === "rejected" || outcome === "decided" ? outcome : ("not_found" as const);
+}
+
+export async function revertField(
+  pool: Pool,
+  userId: string,
+  target: { speciesId: string; field: CorrectionField; version: number },
+) {
+  const r = await withAccount(pool, userId, (c) =>
+    c.query<{ outcome: string; version: number | null }>(
+      "select outcome, version from revert_catalog_field($1, $2, $3)",
+      [target.speciesId, COLUMN[target.field], target.version],
+    ),
+  );
+  const row = r.rows[0];
+  if (row?.outcome === "reverted" && row.version !== null) return { version: row.version };
+  return row?.outcome === "unchanged" ? ("unchanged" as const) : ("not_found" as const);
 }

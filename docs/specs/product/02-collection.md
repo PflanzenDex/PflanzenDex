@@ -191,7 +191,7 @@ Acceptance criteria:
 
 State of implementation (cut 1, the gap list): `catalog.gaps` (`buildGapList`, `catalogGaps`; `GET /catalog/gaps`, read only, derived live, never stored) lists, for operators and reviewers only (`access.denied` for keepers, P-04), per approved species the fields still unknown (German and English name, German and Latin family, dormancy, location hint, watering hint, substrate, pruning, growth hacks, botanical story; a field with a value is never listed, nothing is estimated, P-08), the source and time of the most recent source check (DM-BES-05) or `null` when no source was asked yet, and per gap the next step (P-09): `fill_job` while an open source could still fill it (fillable field, GBIF and Wikipedia not yet asked), otherwise `research` (AI client or operator). Species without gaps are left out. **Open (not started):** the AI research itself: a validating operation that hands in a value for an existing species with a mandatory source, the marking `ai-created, unreviewed` and the AI connection (KI-R5), stored as origin `ai` next to the open-source values (the table `catalog_field_provenance` already allows the origin, but it only covers three fields and no operation writes it), the rule that a value never replaces one from an open source but becomes a correction (needs US-BES-16), the refusal of toxicity without a citable source (DM-ENT-01 has no field yet), and the AI marking for keepers.
 
-### US-BES-14 · Report a wrong value or propose a correction · ⬜ new
+### US-BES-14 · Report a wrong value or propose a correction · 🟨 new
 
 As a **plant keeper** I want to say that a value in a species profile is wrong or missing and propose the right one, so that the shared catalog gets better from what keepers observe.
 
@@ -204,6 +204,8 @@ Acceptance criteria:
 - Given an open correction by me or someone else for the same field and value, when I want to propose the same, then I am pointed to the open one and can confirm it (US-BES-15) instead of creating a duplicate.
 - Given my own care profile, when I disagree with a catalog value only for my location, then the view points me to the care profile (US-BES-09) instead of a correction; a correction is for values that are wrong for everyone.
 - After submitting, the view says what happens next: who reviews it and that I get a hint with the result (P-09).
+
+_Built (cut 1): propose a value or report a field as wrong without a value (reviewers can only reject a report), refusal of wrong length, open duplicates are pointed to, the creator withdraws an open correction (status stays visible), open corrections per species are listed for confirming (US-BES-15). Open: required sources for the five care fields (those fields are not correctable yet), the pointer to the own care profile, and the web screens._
 
 ### US-BES-15 · Confirm or dispute catalog values and corrections · 🟨 new
 

@@ -1,7 +1,15 @@
 import type { Pool } from "pg";
 import { withAccount } from "../../kernel/index.ts";
 import { COLUMN, FIELD, ISO } from "./fields.ts";
-import { castVote, openCorrectionsOfSpecies, voteCounts } from "./votes.ts";
+import {
+  acceptCorrection,
+  castVote,
+  openCorrectionsOfSpecies,
+  rejectCorrection,
+  revertField,
+  voteCounts,
+  withdrawCorrection,
+} from "./statements.ts";
 // Shapes of `core` (type-only import through its public entry, AB-2).
 import type {
   Correction,
@@ -22,7 +30,7 @@ interface Row {
   latinName: string;
   field: string;
   oldValue: string | null;
-  proposedValue: string;
+  proposedValue: string | null;
   reason: string;
   source: string | null;
   status: Correction["status"];
@@ -125,27 +133,16 @@ export class CorrectionPostgres implements CorrectionStore {
     return r.rows.map(toCorrection);
   }
 
-  async accept(userId: string, id: string) {
-    const r = await withAccount(this.pool, userId, (c) =>
-      c.query<{ outcome: string; version: number | null }>(
-        "select outcome, version from accept_catalog_correction($1)",
-        [id],
-      ),
-    );
-    const row = r.rows[0];
-    if (row?.outcome === "accepted" && row.version !== null) return { version: row.version };
-    return row?.outcome === "decided" ? ("decided" as const) : ("not_found" as const);
+  accept(userId: string, id: string) {
+    return acceptCorrection(this.pool, userId, id);
   }
 
-  async reject(userId: string, id: string, reason: string) {
-    const r = await withAccount(this.pool, userId, (c) =>
-      c.query<{ outcome: string }>("select reject_catalog_correction($1, $2) as outcome", [
-        id,
-        reason,
-      ]),
-    );
-    const outcome = r.rows[0]?.outcome;
-    return outcome === "rejected" || outcome === "decided" ? outcome : ("not_found" as const);
+  withdraw(userId: string, id: string) {
+    return withdrawCorrection(this.pool, userId, id);
+  }
+
+  reject(userId: string, id: string, reason: string) {
+    return rejectCorrection(this.pool, userId, id, reason);
   }
 
   async history(userId: string, speciesId: string, field: CorrectionField) {
@@ -186,15 +183,7 @@ export class CorrectionPostgres implements CorrectionStore {
     });
   }
 
-  async revert(userId: string, speciesId: string, field: CorrectionField, version: number) {
-    const r = await withAccount(this.pool, userId, (c) =>
-      c.query<{ outcome: string; version: number | null }>(
-        "select outcome, version from revert_catalog_field($1, $2, $3)",
-        [speciesId, COLUMN[field], version],
-      ),
-    );
-    const row = r.rows[0];
-    if (row?.outcome === "reverted" && row.version !== null) return { version: row.version };
-    return row?.outcome === "unchanged" ? ("unchanged" as const) : ("not_found" as const);
+  revert(userId: string, speciesId: string, field: CorrectionField, version: number) {
+    return revertField(this.pool, userId, { speciesId, field, version });
   }
 }

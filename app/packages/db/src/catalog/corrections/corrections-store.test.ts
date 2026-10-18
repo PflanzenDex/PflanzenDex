@@ -64,7 +64,12 @@ async function approvedSpecies(approve = true): Promise<string> {
   }
   return r.value.id;
 }
-const propose = (user: string, species: string, value: string, source: string | null = null) =>
+const propose = (
+  user: string,
+  species: string,
+  value: string | null,
+  source: string | null = null,
+) =>
   store.create(user, {
     speciesId: species,
     field: "germanName",
@@ -363,5 +368,53 @@ describe("US-BES-15 votes are a signal; tenant and rights (P-04, P-05)", () => {
     await store.vote(bert, correction, "confirm");
     const entry = (await store.listOpen(reviewer)).find((e) => e.id === correction);
     expect(entry).toMatchObject({ confirmations: 1, disputes: 0 });
+  });
+});
+
+describe("US-BES-14 withdraw and report without a value (P-03, P-04, P-10)", () => {
+  it("only the creator withdraws; the row stays, leaves the review list and cannot be voted on", async () => {
+    const id = await approvedSpecies();
+    const c = await propose(anna, id, "Neu");
+    const cid = "id" in c ? c.id : "";
+    expect(await store.withdraw(bert, cid)).toBe("not_found");
+    expect(await store.withdraw(reviewer, cid)).toBe("not_found");
+    expect(await store.withdraw(anna, cid)).toBe("withdrawn");
+    expect(await store.withdraw(anna, cid)).toBe("decided");
+    expect((await store.listMine(anna)).find((k) => k.id === cid)?.status).toBe("withdrawn");
+    expect((await store.listOpen(reviewer)).some((k) => k.id === cid)).toBe(false);
+    expect(await store.vote(bert, cid, "confirm")).toBe("decided");
+    expect(await store.accept(reviewer, cid)).toBe("decided");
+    expect(await germanName(id)).toMatchObject({ german_name: "Alt", version: 1 });
+    // The same value can be proposed again once the first is no longer open.
+    expect("id" in (await propose(bert, id, "Neu"))).toBe(true);
+  });
+
+  it("a withdrawn correction cannot be reopened through plain SQL (P-03)", async () => {
+    const id = await approvedSpecies();
+    const c = await propose(anna, id, "Neu");
+    const cid = "id" in c ? c.id : "";
+    await store.withdraw(anna, cid);
+    await expect(
+      withAccount(owner, anna, (x) =>
+        x.query("update catalog_correction set status = 'open', decided_at = null where id = $1", [
+          cid,
+        ]),
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("a report without a value is stored open, shown to reviewers, rejectable, never acceptable", async () => {
+    const id = await approvedSpecies();
+    const r = await propose(anna, id, null);
+    const rid = "id" in r ? r.id : "";
+    expect(r).toMatchObject({ status: "open", proposedValue: null, oldValue: "Alt" });
+    expect((await store.listOpen(reviewer)).find((k) => k.id === rid)?.proposedValue).toBeNull();
+    expect((await store.listForSpecies(bert, id))?.[0]).toMatchObject({
+      id: rid,
+      proposedValue: null,
+    });
+    expect(await store.accept(reviewer, rid)).toBe("no_value");
+    expect(await germanName(id)).toMatchObject({ german_name: "Alt", version: 1 });
+    expect(await store.reject(reviewer, rid, "Quelle fehlt")).toBe("rejected");
   });
 });

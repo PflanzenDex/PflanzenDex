@@ -7,6 +7,7 @@ import {
   catalogCorrectionAccept,
   catalogCorrectionReject,
   catalogCorrectionVote,
+  catalogCorrectionWithdraw,
   catalogCorrections,
   speciesCorrections,
   catalogFieldHistory,
@@ -128,6 +129,7 @@ class FakeStore implements CorrectionStore {
     const row = this.rows[i];
     if (!row) return "not_found" as const;
     if (row.status !== "open") return "decided" as const;
+    if (row.proposedValue === null) return "no_value" as const;
     this.value = row.proposedValue;
     this.version += 1;
     this.rows[i] = { ...row, status: "accepted", decidedAt: "2026-10-03T00:00:00Z" };
@@ -143,6 +145,14 @@ class FakeStore implements CorrectionStore {
       setBy: userId,
     });
     return { version: this.version };
+  }
+  async withdraw(userId: string, id: string) {
+    const i = this.find(id);
+    const row = this.rows[i];
+    if (!row || this.creators.get(id) !== userId) return "not_found" as const;
+    if (row.status !== "open") return "decided" as const;
+    this.rows[i] = { ...row, status: "withdrawn", decidedAt: "2026-10-03T00:00:00Z" };
+    return "withdrawn" as const;
   }
   async reject(_u: string, id: string, reason: string) {
     const i = this.find(id);
@@ -491,5 +501,76 @@ describe("US-BES-15 confirm or dispute an open correction (a signal, E-26)", () 
       ok: false,
       error: { code: "species.not_found" },
     });
+  });
+});
+
+describe("US-BES-14 withdraw a correction and report a wrong value without a proposal", () => {
+  const withdraw = (user: string | null, id: string) =>
+    call(catalogCorrectionWithdraw(store), user, { id });
+  const created = async (extra: object = {}) => {
+    const r = await propose("keeper", extra);
+    if (!r.ok) throw new Error("propose failed");
+    return r.value.id;
+  };
+
+  it("the creator withdraws an open correction; it stays in the list of their own with status withdrawn (P-10)", async () => {
+    const id = await created();
+    expect((await withdraw("keeper", id)).ok).toBe(true);
+    const mine = await myCorrections(store, "keeper");
+    expect(mine.ok && mine.value[0]).toMatchObject({ id, status: "withdrawn" });
+    expect(store.value).toBe("Alt");
+    expect(await withdraw("keeper", id)).toMatchObject({
+      ok: false,
+      error: { code: "correction.decided" },
+    });
+  });
+
+  it("somebody else's correction answers like a missing one; it needs sign-in", async () => {
+    const id = await created();
+    expect(await withdraw("bert", id)).toMatchObject({
+      ok: false,
+      error: { code: "correction.not_found" },
+    });
+    expect(await withdraw(null, id)).toMatchObject({
+      ok: false,
+      error: { code: "access.not_signed_in" },
+    });
+    expect(store.rows[0]?.status).toBe("open");
+  });
+
+  it("reports a field as wrong without a value or a source; it stays open and changes nothing", async () => {
+    const r = await call(catalogCorrect(store), "keeper", {
+      speciesId: SPECIES,
+      field: "germanName",
+      reason: "Heißt in Wirklichkeit anders",
+    });
+    expect(r).toMatchObject({ ok: true, value: { status: "open", proposedValue: null } });
+    expect(store.value).toBe("Alt");
+  });
+
+  it("a report cannot be accepted, only rejected with a reason", async () => {
+    const r = await call(catalogCorrect(store), "keeper", {
+      speciesId: SPECIES,
+      field: "germanName",
+      reason: "Falsch",
+    });
+    const id = r.ok ? r.value.id : "";
+    expect(await call(catalogCorrectionAccept(store, review), "reviewer", { id })).toMatchObject({
+      ok: false,
+      error: { code: "correction.no_value" },
+    });
+    expect(
+      (
+        await call(catalogCorrectionReject(store, review), "reviewer", {
+          id,
+          reason: "Quelle fehlt",
+        })
+      ).ok,
+    ).toBe(true);
+  });
+
+  it("still refuses a value of the wrong length and a missing reason (P-03)", async () => {
+    expect(await propose("keeper", { value: "x".repeat(121) })).toMatchObject({ ok: false });
+    expect(await propose("keeper", { reason: "" })).toMatchObject({ ok: false });
   });
 });

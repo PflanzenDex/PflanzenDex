@@ -3,6 +3,7 @@ export {
   catalogCorrectionAccept,
   catalogCorrectionReject,
   catalogCorrectionVote,
+  catalogCorrectionWithdraw,
   catalogFieldRevert,
 } from "./operations";
 export {
