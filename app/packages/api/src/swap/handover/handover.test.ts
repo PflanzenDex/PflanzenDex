@@ -330,6 +330,15 @@ describe("US-TAU-01 the match deck through the API", () => {
       );
   });
 
+  it("US-TAU-07 an empty deck names the reason from the own numbers: no friends for a stranger, no wishes for a friend without a wish", async () => {
+    expect((await deck(subOp)).body).toMatchObject({ cards: [], empty: "no_friends" });
+    const noWish = (await deck(subD)).body as { cards: Card[]; empty: string | null };
+    expect(noWish.cards).toEqual([]);
+    expect(noWish.empty).toBe("no_wishes");
+    // A friend with a card has no reason.
+    expect(((await deck(subE)).body as { empty: string | null }).empty).toBeNull();
+  });
+
   it("US-TAU-04 the card carries the reasoning of my wish exactly as written; a stranger never gets it", async () => {
     const id = await specimen(subA, "T1b");
     await call(subA, "PUT", `/sharing/specimens/${id}`, { share: "friends" });

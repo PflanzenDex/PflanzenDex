@@ -121,6 +121,40 @@ describe("US-TAU-01 match deck", () => {
   });
 });
 
+describe("US-TAU-07 an empty deck names the reason, from the keeper's own numbers", () => {
+  const withCounts = (friends: number, wishes: number) => ({
+    answers: new InMemoryMatchAnswers(),
+    clock: () => new Date(),
+    counts: { friends: async () => friends, wishes: async () => wishes },
+  });
+  const empty = async (offers: FriendOffer[], friends: number, wishes: number) => {
+    const r = await matchDeck(setup(offers, ["Aloe vera"]), withCounts(friends, wishes), "anna", {
+      timeZone: "Europe/Berlin",
+    });
+    return r.ok ? r.value.empty : "error";
+  };
+
+  it("US-TAU-07 names the first missing step: no friends, then no wishes, then no offers, then no match", async () => {
+    expect(await empty([], 0, 0)).toBe("no_friends");
+    expect(await empty([], 2, 0)).toBe("no_wishes");
+    expect(await empty([], 2, 3)).toBe("no_offers");
+    expect(await empty([offer(3)], 2, 3)).toBe("no_match");
+  });
+
+  it("US-TAU-07 there is no reason while a card exists, and none without counts (P-08: nothing is guessed)", async () => {
+    expect(await empty([offer(1)], 2, 3)).toBeNull();
+    const r = await matchDeck(
+      setup([]),
+      { answers: new InMemoryMatchAnswers(), clock: () => new Date() },
+      "anna",
+      {
+        timeZone: "Europe/Berlin",
+      },
+    );
+    expect(r.ok && r.value.empty).toBeNull();
+  });
+});
+
 describe("US-TAU-03 Yes on a card creates exactly one request", () => {
   const A = id(101);
   const run = (

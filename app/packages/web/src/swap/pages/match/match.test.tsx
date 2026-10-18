@@ -42,6 +42,9 @@ const entry = (n: number, answer: "no" | "later", state = "open") => ({
   card: state === "open" ? card(n) : null,
 });
 
+/** The reason the server gives for an empty deck (US-TAU-07); reset after each test. */
+let emptyReason: string | null = null;
+
 function server(
   cards: unknown[],
   yes: (id: string) => Promise<Response> = async () =>
@@ -71,22 +74,23 @@ function server(
         return yes(u.pathname.split("/")[3] ?? "");
       }
       return u.pathname === "/exchange/match"
-        ? response(200, { cards, entries })
+        ? response(200, { cards, entries, empty: emptyReason })
         : response(404, {});
     }),
   );
   return Object.assign(posts, { answers });
 }
-const open = () =>
+const open = (calm = false) =>
   render(
     <MemoryRouter>
-      <MatchPage api="http://api" token={token} />
+      <MatchPage api="http://api" token={token} calm={calm} />
     </MemoryRouter>,
   );
 const current = () => screen.findByRole("article");
 const press = (name: RegExp | string) => userEvent.click(screen.getByRole("button", { name }));
 
 afterEach(() => {
+  emptyReason = null;
   cleanup();
   vi.unstubAllGlobals();
 });
@@ -322,5 +326,40 @@ describe("US-TAU-02 answering with buttons and swipe, stored privately", () => {
     await swipe(100, 190);
     expect(screen.getByRole("heading", { name: "Echte Aloe 1" })).toBeTruthy();
     expect(posts.answers).toEqual([]);
+  });
+});
+
+describe("US-TAU-07 empty states and calm mode", () => {
+  it.each([
+    ["no_friends", /noch keine Freunde/, "Freund einladen", "/friends"],
+    ["no_wishes", /Wunschliste ist leer/, "Wunsch hinzufügen", "/collection?view=wishlist"],
+    ["no_offers", /bieten gerade nichts an/, "Tauschbörse öffnen", "/friends/exchange"],
+    ["no_match", /passt kein Angebot/, "Tauschbörse öffnen", "/friends/exchange"],
+  ])(
+    "US-TAU-07 P-09 an empty deck (%s) names the reason and the next step",
+    async (reason, text, label, href) => {
+      emptyReason = reason;
+      server([]);
+      open();
+      expect(await screen.findByText(text)).toBeTruthy();
+      expect(screen.getByRole("link", { name: label }).getAttribute("href")).toBe(href);
+    },
+  );
+
+  it("US-TAU-07 US-ACH-08 calm mode shows no counters at the end of the deck, normal mode does", async () => {
+    server([card(1)]);
+    open(true);
+    await current();
+    await press(/^Nein/);
+    expect(await screen.findByText("Für jetzt durch.")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/angefragt,|für später,/);
+    cleanup();
+    server([card(1)]);
+    open(false);
+    await current();
+    await press(/^Nein/);
+    expect(
+      await screen.findByText(/Für jetzt durch. 0 angefragt, 0 für später, 1 abgelehnt./),
+    ).toBeTruthy();
   });
 });

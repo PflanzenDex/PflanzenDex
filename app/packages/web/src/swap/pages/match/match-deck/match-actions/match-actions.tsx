@@ -1,4 +1,4 @@
-import type { MatchCard as Card } from "@pflanzendex/core";
+import type { EmptyReason, MatchCard as Card } from "@pflanzendex/core";
 import { Link } from "react-router";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { Banner } from "@/components/shared/states/banner/banner";
@@ -55,21 +55,63 @@ export function Actions(props: { card: Card; onAnswer: (a: Answer) => void; busy
   );
 }
 
-export function Empty() {
+const EMPTY_TEXT: Record<EmptyReason, { title: string; description: string }> = {
+  no_friends: {
+    title: "Du hast noch keine Freunde in der App.",
+    description:
+      "Passende Angebote kommen von Freunden. Lade zuerst einen Freund ein; sobald er etwas anbietet, das auf deiner Wunschliste steht, erscheint es hier.",
+  },
+  no_wishes: {
+    title: "Deine Wunschliste ist leer.",
+    description:
+      "Hier erscheinen Angebote deiner Freunde, deren Art auf deiner Wunschliste steht. Lege einen Wunsch an oder entdecke Arten, die dir gefallen könnten.",
+  },
+  no_offers: {
+    title: "Deine Freunde bieten gerade nichts an.",
+    description:
+      "Sobald ein Freund etwas anbietet, das auf deiner Wunschliste steht, erscheint es hier. In der Tauschbörse siehst du alle Angebote.",
+  },
+  no_match: {
+    title: "Zurzeit passt kein Angebot zu deiner Wunschliste.",
+    description:
+      "Hier erscheinen offene Angebote deiner Freunde, deren Art auf deiner Wunschliste steht. Lege Wünsche an oder sieh dir alle Angebote in der Tauschbörse an.",
+  },
+};
+
+/** The empty deck names the reason and the next step (US-TAU-07, P-09); the links lead to the places that fix it. */
+export function Empty(props: { reason?: EmptyReason | null }) {
+  const reason = props.reason ?? "no_match";
+  const text = EMPTY_TEXT[reason];
+  const invite = reason === "no_friends";
   return (
     <div className="grid gap-3">
       <EmptyState
-        title="Zurzeit passt kein Angebot zu deiner Wunschliste."
-        description="Hier erscheinen offene Angebote deiner Freunde, deren Art auf deiner Wunschliste steht. Lege Wünsche an, lade Freunde ein oder sieh dir alle Angebote in der Tauschbörse an."
-        action={{ label: "Tauschbörse öffnen", href: EXCHANGE_PATH }}
+        title={text.title}
+        description={text.description}
+        action={
+          invite
+            ? { label: "Freund einladen", href: PATHS.friends }
+            : reason === "no_wishes"
+              ? { label: "Wunsch hinzufügen", href: WISHLIST_MODE_ADDRESS }
+              : { label: "Tauschbörse öffnen", href: EXCHANGE_PATH }
+        }
       />
       <div className="flex flex-wrap justify-center gap-2">
-        <Button asChild variant="outline" size="touch">
-          <Link to={WISHLIST_MODE_ADDRESS}>Wunsch hinzufügen</Link>
-        </Button>
-        <Button asChild variant="outline" size="touch">
-          <Link to={PATHS.friends}>Freunde einladen</Link>
-        </Button>
+        {reason === "no_wishes" && (
+          <Button asChild variant="outline" size="touch">
+            <Link to={PATHS.discover}>Arten entdecken</Link>
+          </Button>
+        )}
+        {!invite && reason !== "no_wishes" && (
+          <Button asChild variant="outline" size="touch">
+            <Link to={WISHLIST_MODE_ADDRESS}>Wunsch hinzufügen</Link>
+          </Button>
+        )}
+        {!invite && (
+          <Button asChild variant="outline" size="touch">
+            <Link to={PATHS.friends}>Freunde einladen</Link>
+          </Button>
+        )}
       </div>
     </div>
   );

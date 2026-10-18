@@ -8,7 +8,12 @@ import {
   type OfferDependencies,
   type Result,
 } from "@pflanzendex/core";
-import { IdempotencyPostgres, MatchAnswersPostgres } from "@pflanzendex/db";
+import {
+  FriendsPostgres,
+  IdempotencyPostgres,
+  MatchAnswersPostgres,
+  WishesPostgres,
+} from "@pflanzendex/db";
 import { Hono, type Context } from "hono";
 import type { Pool } from "pg";
 import { body, errorBody, statusFor, write, type AuthEnv } from "../../kernel";
@@ -31,7 +36,8 @@ function reply<T>(c: Context<AuthEnv>, r: Result<T>) {
  *   species on the own wishlist, each with its `reasons`, oldest offer first; no score and no ranking (FR-TAU-06).
  *   `cards` are the offers without an answer plus those answered with Later on an earlier day (US-TAU-06); `entries`
  *   are all answers of the caller (No and Later) with `answeredOn`, the `state` of the offer (`open`, `requested`,
- *   `wish_done`, `unavailable`) and the `card` while it is open, so nothing disappears silently (P-10)
+ *   `wish_done`, `unavailable`) and the `card` while it is open, so nothing disappears silently (P-10); `empty` names why
+ *   there is no card (`no_friends`, `no_wishes`, `no_offers`, `no_match`) or is `null` (US-TAU-07)
  * - PUT /exchange/match/:offerId/answer `{ answer: "no" | "later", timeZone }` (with `Idempotency-Key`; US-TAU-02):
  *   stores the private answer of the caller, 200 `{ answeredOn }`; 404 `offer.not_found` for an offer that is no card of
  *   the caller (also for a foreign one, P-05); the giver learns nothing (FR-TAU-02)
@@ -53,6 +59,12 @@ export function exchangeRoutes(
   const idem = { idempotency: new IdempotencyPostgres(pool) };
   const request = swapRequest(deps);
   const answers = new MatchAnswersPostgres(pool);
+  const friends = new FriendsPostgres(pool);
+  const wishes = new WishesPostgres(pool);
+  const counts = {
+    friends: async (userId: string) => (await friends.friends(userId)).length,
+    wishes: async (userId: string) => (await wishes.open(userId)).length,
+  };
   const yes = matchYes(deps, answers);
   const answer = matchAnswer(deps, answers, clock);
   const undo = matchUndo(answers);
@@ -61,7 +73,7 @@ export function exchangeRoutes(
     reply(c, await exchangeList(deps, c.get("account").id, c.req.query())),
   );
   routes.get("/exchange/match", async (c) =>
-    reply(c, await matchDeck(deps, { answers, clock }, c.get("account").id, c.req.query())),
+    reply(c, await matchDeck(deps, { answers, clock, counts }, c.get("account").id, c.req.query())),
   );
   routes.put("/exchange/match/:offerId/answer", async (c) =>
     write(c, idem, answer, { input: { ...(await body(c)), offerId: c.req.param("offerId") } }),

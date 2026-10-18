@@ -56,10 +56,22 @@ export function deckOrder(a: MatchCard, b: MatchCard): number {
   );
 }
 
-/** What the deck needs besides the exchange: the private answers and the clock (NFR-08). */
+/** Why the deck has no card to decide, in the order the keeper can act on it (US-TAU-07, P-09). */
+export type EmptyReason = "no_friends" | "no_wishes" | "no_offers" | "no_match";
+
+/** Numbers of the keeper's own data that explain an empty deck; never data of a friend (P-05). */
+export interface MatchCounts {
+  /** Confirmed friends of the caller. */
+  friends(userId: string): Promise<number>;
+  /** Open plant wishes of the caller. */
+  wishes(userId: string): Promise<number>;
+}
+
+/** What the deck needs besides the exchange: the private answers, the clock (NFR-08) and, to explain an empty deck, the counts. */
 export interface MatchContext {
   readonly answers: MatchAnswers;
   readonly clock: () => Date;
+  readonly counts?: MatchCounts;
 }
 
 /**
@@ -78,7 +90,12 @@ export async function matchDeck(
   userId: string,
   query: Pick<ExchangeQuery, "timeZone">,
 ): Promise<
-  Result<{ readonly cards: readonly MatchCard[]; readonly entries: readonly MatchEntry[] }>
+  Result<{
+    readonly cards: readonly MatchCard[];
+    readonly entries: readonly MatchEntry[];
+    /** Set when `cards` is empty and the counts are known: the reason and so the next step (US-TAU-07). */
+    readonly empty: EmptyReason | null;
+  }>
 > {
   if (!isTimeZone(query.timeZone))
     return failed(
@@ -113,7 +130,9 @@ export async function matchDeck(
   const entries = [...given.values()]
     .map((a) => entryOf(a, byId.get(a.offerId), cardById.get(a.offerId) ?? null))
     .sort((a, b) => compare(a.answeredOn, b.answeredOn) || compare(a.offerId, b.offerId));
-  return ok({ cards, entries });
+  const empty =
+    cards.length > 0 ? null : await emptyReason(context.counts, userId, list.value.offers.length);
+  return ok({ cards, entries, empty });
 }
 
 /** Whole calendar days from `from` to `to` (both `YYYY-MM-DD`). */
@@ -144,4 +163,20 @@ function entryOf(
     state,
     card: state === "open" ? card : null,
   };
+}
+
+/**
+ * The first thing missing for a card, from the keeper's own numbers: no friends, then an empty wishlist, then no open
+ * offers of friends at all, otherwise offers exist but none matches a wish. Nothing is guessed (P-08); `null` while the
+ * counts are not asked.
+ */
+async function emptyReason(
+  counts: MatchCounts | undefined,
+  userId: string,
+  offers: number,
+): Promise<EmptyReason | null> {
+  if (!counts) return null;
+  if ((await counts.friends(userId)) === 0) return "no_friends";
+  if ((await counts.wishes(userId)) === 0) return "no_wishes";
+  return offers === 0 ? "no_offers" : "no_match";
 }

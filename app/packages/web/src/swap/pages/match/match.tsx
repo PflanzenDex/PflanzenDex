@@ -30,14 +30,8 @@ function DeckSkeleton({ label }: { label: string }) {
   );
 }
 
-/**
- * The match deck (US-TAU-01, epic TAU): open offers of friends that match the own wishlist, one card at a time with "Ja",
- * "Nein" and "Später" or a swipe; Nein and Später are stored privately (US-TAU-02). A second view on the data of the exchange (US-SOZ-09), no new way to reach strangers.
- * Private by default (P-05); no ranking, no score (FR-TAU-06).
- */
-export function MatchPage(props: { api: string; token: Token }) {
-  const { api, token } = props;
-  const load = useCallback((t: string) => loadMatchDeck(api, t), [api]);
+/** The writes of the deck, each with a fresh token; without a token they answer "sign in" (P-10). */
+function useWrites(api: string, token: Token) {
   const yes = useCallback(
     async (offerId: string): ReturnType<typeof answerYes> => {
       const t = await token();
@@ -59,6 +53,18 @@ export function MatchPage(props: { api: string; token: Token }) {
     },
     [api, token],
   );
+  return { yes, answer, undo };
+}
+
+/**
+ * The match deck (US-TAU-01, epic TAU): open offers of friends that match the own wishlist, one card at a time with "Ja",
+ * "Nein" and "Später" or a swipe; Nein and Später are stored privately (US-TAU-02). A second view on the data of the exchange (US-SOZ-09), no new way to reach strangers.
+ * Private by default (P-05); no ranking, no score (FR-TAU-06).
+ */
+export function MatchPage(props: { api: string; token: Token; calm?: boolean }) {
+  const { api, token } = props;
+  const load = useCallback((t: string) => loadMatchDeck(api, t), [api]);
+  const { yes, answer, undo } = useWrites(api, token);
   return (
     <section aria-labelledby="match-page-title" className="flex min-w-0 flex-col gap-3">
       <div>
@@ -85,6 +91,8 @@ export function MatchPage(props: { api: string; token: Token }) {
           <MatchDeck
             cards={deck.cards}
             entries={deck.entries}
+            empty={deck.empty ?? null}
+            calm={props.calm ?? false}
             onYes={yes}
             onAnswer={answer}
             onUndo={undo}
