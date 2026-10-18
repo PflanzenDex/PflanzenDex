@@ -31,13 +31,26 @@ const card = (n: number, extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 
+const entry = (n: number, answer: "no" | "later", state = "open") => ({
+  offerId: `o${n}`,
+  answer,
+  answeredOn: "2026-10-12",
+  speciesLatin: `Aloe vera ${n}`,
+  speciesGerman: `Echte Aloe ${n}`,
+  giverName: `Ben${n}`,
+  state,
+  card: state === "open" ? card(n) : null,
+});
+
 function server(
   cards: unknown[],
   yes: (id: string) => Promise<Response> = async () =>
     response(201, { outcome: "requested", swapId: "sw1" }),
-  later: unknown[] = [],
-  answer: (id: string, method: string) => Promise<Response> = async () =>
-    response(200, { answeredOn: "2026-10-18" }),
+  entries: unknown[] = [],
+  answer: (id: string, method: string) => Promise<Response> = async (_id, method) =>
+    method === "DELETE"
+      ? response(200, { undone: true })
+      : response(200, { answeredOn: "2026-10-18" }),
 ) {
   const posts: string[] = [];
   const answers: string[] = [];
@@ -57,7 +70,9 @@ function server(
         posts.push(u.pathname);
         return yes(u.pathname.split("/")[3] ?? "");
       }
-      return u.pathname === "/exchange/match" ? response(200, { cards, later }) : response(404, {});
+      return u.pathname === "/exchange/match"
+        ? response(200, { cards, entries })
+        : response(404, {});
     }),
   );
   return Object.assign(posts, { answers });
@@ -207,20 +222,63 @@ describe("US-TAU-02 answering with buttons and swipe, stored privately", () => {
   });
 
   it("US-TAU-02 P-10 cards answered with Später earlier are findable in their own section and can be shown again", async () => {
-    server([card(2)], undefined, [card(1)]);
+    server([card(2)], undefined, [entry(1, "later")]);
     open();
     await current();
     const section = within(screen.getByRole("region", { name: "Später ansehen (1)" }));
-    expect(section.getByText("Echte Aloe 1 von Ben1")).toBeTruthy();
+    expect(section.getByText("Echte Aloe 1 von Ben1 · 12.10.2026")).toBeTruthy();
     await userEvent.click(section.getByRole("button", { name: "Diese Karten jetzt ansehen" }));
     expect(await screen.findByRole("heading", { name: "Echte Aloe 1" })).toBeTruthy();
   });
 
   it("US-TAU-02 with only Später cards left the deck says so instead of looking empty", async () => {
-    server([], undefined, [card(1)]);
+    server([], undefined, [entry(1, "later")]);
     open();
     expect(await screen.findByText(/Für jetzt durch. 0 angefragt, 1 für später/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Später-Karten ansehen" })).toBeTruthy();
+  });
+
+  it("US-TAU-06 the lists show Später and Abgelehnt with dates; Wieder ansehen puts a declined card back into the deck", async () => {
+    const posts = server([card(2)], undefined, [entry(1, "no"), entry(3, "later")]);
+    open();
+    await current();
+    const declined = within(screen.getByRole("region", { name: "Abgelehnt (1)" }));
+    expect(declined.getByText("Echte Aloe 1 von Ben1 · 12.10.2026")).toBeTruthy();
+    expect(
+      within(screen.getByRole("region", { name: "Später ansehen (1)" })).getByText(
+        "Echte Aloe 3 von Ben3 · 12.10.2026",
+      ),
+    ).toBeTruthy();
+    await userEvent.click(declined.getByRole("button", { name: /^Wieder ansehen/ }));
+    expect(await screen.findByRole("region", { name: "Abgelehnt (0)" })).toBeTruthy();
+    expect(posts.answers).toEqual(["DELETE o1"]);
+    await press(/^Nein/);
+    expect(await screen.findByRole("heading", { name: "Echte Aloe 1" })).toBeTruthy();
+  });
+
+  it("US-TAU-06 P-10 an entry whose offer ended says why and is removed only by the keeper", async () => {
+    const posts = server([card(2)], undefined, [
+      entry(1, "later", "unavailable"),
+      entry(4, "no", "wish_done"),
+    ]);
+    open();
+    await current();
+    expect(screen.getByText(/Nicht mehr verfügbar/)).toBeTruthy();
+    expect(screen.getByText(/Wunsch erledigt/)).toBeTruthy();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Aus der Liste entfernen: Echte Aloe 1 von Ben1" }),
+    );
+    expect(await screen.findByRole("region", { name: "Später ansehen (0)" })).toBeTruthy();
+    expect(posts.answers).toEqual(["DELETE o1"]);
+    expect(screen.getByText(/Wunsch erledigt/)).toBeTruthy();
+  });
+
+  it("US-TAU-06 P-09 an empty list says what to do next", async () => {
+    server([card(2)]);
+    open();
+    await current();
+    expect(screen.getByText(/Noch nichts auf später gesetzt/)).toBeTruthy();
+    expect(screen.getByText(/Noch nichts abgelehnt/)).toBeTruthy();
   });
 
   it("US-TAU-02 a swipe to the left is Nein", async () => {

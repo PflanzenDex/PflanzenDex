@@ -7,9 +7,13 @@ export interface MatchAnswerRow {
   readonly answer: "no" | "later";
   /** Local calendar date `YYYY-MM-DD` of the keeper (NFR-08). */
   readonly answeredOn: string;
+  readonly speciesLatin: string | null;
+  readonly speciesGerman: string | null;
+  readonly giverName: string | null;
 }
 
-const COLUMNS = `offer_id as "offerId", answer, to_char(answered_on, 'YYYY-MM-DD') as "answeredOn"`;
+const COLUMNS = `offer_id as "offerId", answer, to_char(answered_on, 'YYYY-MM-DD') as "answeredOn",
+  species_latin as "speciesLatin", species_german as "speciesGerman", giver_name as "giverName"`;
 
 /**
  * Adapter for the private answers No and Later (US-TAU-02, DM-TAU-01). Every call runs as the account of the caller under

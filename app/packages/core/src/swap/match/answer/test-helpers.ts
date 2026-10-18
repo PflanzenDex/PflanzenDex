@@ -2,7 +2,7 @@ import type { MatchAnswers, StoredMatchAnswer } from "./types";
 
 /** In-memory answers for tests only; the real adapter lives in `db`. Every account has its own list (P-04). */
 export class InMemoryMatchAnswers implements MatchAnswers {
-  readonly rows: Record<string, Map<string, StoredMatchAnswer & { giverName: string | null }>> = {};
+  readonly rows: Record<string, Map<string, StoredMatchAnswer>> = {};
 
   private of(userId: string) {
     return (this.rows[userId] ??= new Map());
@@ -17,6 +17,8 @@ export class InMemoryMatchAnswers implements MatchAnswers {
       offerId: v.offerId,
       answer: v.answer,
       answeredOn: v.answeredOn,
+      speciesLatin: v.speciesLatin,
+      speciesGerman: v.speciesGerman,
       giverName: v.giverName,
     });
   }

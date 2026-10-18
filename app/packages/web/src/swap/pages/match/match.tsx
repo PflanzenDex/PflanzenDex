@@ -84,7 +84,7 @@ export function MatchPage(props: { api: string; token: Token }) {
         {(deck: DeckData) => (
           <MatchDeck
             cards={deck.cards}
-            later={deck.later}
+            entries={deck.entries}
             onYes={yes}
             onAnswer={answer}
             onUndo={undo}
