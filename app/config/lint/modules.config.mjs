@@ -13,7 +13,6 @@ import {
 } from "./module-rules.config.mjs";
 
 const MODULE_RULES = { KERNEL_GLOSSARY_WORDS, PORTS_WITHOUT_CONTRACT_TEST };
-
 const MODULES = [
   {
     name: "kernel",
@@ -50,6 +49,7 @@ const MODULES = [
       "account_feature",
       "account_unlock",
       "account_style",
+      "account_hint",
     ],
     dependsOn: ["kernel", "achievements"], // web only: the calm mode switch sits on the settings page (US-ACH-08)
     ports: [],

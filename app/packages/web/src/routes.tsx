@@ -164,7 +164,7 @@ export function AppRoutes(props: {
         />
         <Route
           path={PATHS.start}
-          element={<Start api={api} token={s.token} accountId={account.id} onOpen={props.onOpen} />}
+          element={<Start api={api} token={s.token} onOpen={props.onOpen} />}
         />
         <Route path="/unlock/:id" element={<UnlockPage api={api} token={s.token} />} />
         {social && socialRoutes(api, s.token, lockPageOf)}

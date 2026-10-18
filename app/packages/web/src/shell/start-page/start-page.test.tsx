@@ -2,6 +2,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { HINT_MAX_WORDS } from "@pflanzendex/core";
+import { HINT_TEXTS } from "./hint/hint-texts";
 import { StartPage } from "./start-page";
 
 const response = (status: number, body: unknown) =>
@@ -22,6 +24,9 @@ interface World {
   archived?: number;
   /** The keeper style answer of the account (US-ONB-03); `chosen: false` until the question is answered. */
   style?: { style: string; chosen: boolean };
+  /** The hint state of the account (US-ONB-07, DM-ONB-03): the due hint and the stored end of the guide. */
+  hint?: string | null;
+  guideEnded?: boolean;
   hits?: unknown[];
   locations?: { id: string; name: string; lightZoneId: string | null; kind: string }[];
   writes: { method: string; path: string; body: Record<string, unknown> }[];
@@ -29,9 +34,22 @@ interface World {
 
 /** The keeper style question of US-ONB-03: the stored answer and its change. */
 function styleAnswer(w: World, path: string, method: string): Promise<Response> | null {
+  const hint = hintAnswer(w, path, method);
+  if (hint) return hint;
   if (path !== "/onboarding/style") return null;
   if (method === "GET") return response(200, w.style ?? { style: "few", chosen: true });
   return response(200, { style: w.writes.at(-1)?.body["style"] });
+}
+
+/** The hints of US-ONB-07: the account's state, and its changes (the guide ends per account). */
+function hintAnswer(w: World, path: string, method: string): Promise<Response> | null {
+  if (path === "/onboarding/hints")
+    return response(200, { hint: w.hint ?? null, guideEnded: !!w.guideEnded });
+  if (!path.startsWith("/onboarding/hints/") || method === "GET") return null;
+  const last = w.writes.at(-1);
+  if (path.endsWith("/first_plant_guide") && last?.body["state"] === "dismissed")
+    w.guideEnded = true;
+  return response(200, { occasion: path.split("/").at(-1) });
 }
 
 /** The writes of US-ONB-02: the default location and placing the plant. */
@@ -95,7 +113,7 @@ const LOOKUP = {
 };
 const open = vi.fn();
 const view = () =>
-  render(<StartPage lookup={LOOKUP} api="http://api" token={token} accountId="a1" onOpen={open} />);
+  render(<StartPage lookup={LOOKUP} api="http://api" token={token} onOpen={open} />);
 const world = (over: Partial<World> = {}): World => ({
   zones: ZONES,
   cards: [],
@@ -112,7 +130,6 @@ async function pickSpecies() {
 
 beforeEach(() => {
   open.mockClear();
-  window.localStorage.clear();
 });
 afterEach(() => {
   cleanup();
@@ -234,6 +251,33 @@ describe("US-ONB-01 start with the first plant", () => {
     await userEvent.click(screen.getByRole("button", { name: "Art im Katalog wählen" }));
     expect(open).toHaveBeenCalledWith("species");
     cleanup();
+    view();
+    expect(await screen.findByRole("button", { name: "Art im Katalog wählen" })).toBeTruthy();
+    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+  });
+
+  it("US-ONB-07 · DM-ONB-03 ending the guide is stored for the account, not for the device", async () => {
+    const w = world();
+    fakeServer(w);
+    view();
+    await userEvent.click(await screen.findByRole("button", { name: "Überspringen" }));
+    await vi.waitFor(() =>
+      expect(w.writes).toContainEqual({
+        method: "PUT",
+        path: "/onboarding/hints/first_plant_guide",
+        body: { state: "dismissed", timeZone: expect.any(String) },
+      }),
+    );
+    expect(window.localStorage.length).toBe(0);
+    cleanup();
+    // another device of the same account: the guide stays ended
+    view();
+    expect(await screen.findByRole("button", { name: "Art im Katalog wählen" })).toBeTruthy();
+    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+  });
+
+  it("US-ONB-07 a guide that ended on another device does not come back here", async () => {
+    fakeServer(world({ guideEnded: true }));
     view();
     expect(await screen.findByRole("button", { name: "Art im Katalog wählen" })).toBeTruthy();
     expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
@@ -364,6 +408,57 @@ describe("US-ONB-03 the style question after the first plant", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Später" }));
     await vi.waitFor(() => expect(paths()).toContain("/onboarding/style"));
     expect(screen.queryByText("Wie nutzt du die App?")).toBeNull();
+  });
+});
+
+describe("US-ONB-07 calm hints on the start page", () => {
+  it("US-ONB-07 a due hint is a short note without modal; it is recorded as shown and 'Okay' dismisses it for good", async () => {
+    const w = world({ cards: [{ id: "e1" }], hint: "first_plant_saved" });
+    fakeServer(w);
+    view();
+    const note = await screen.findByRole("status", { name: "Hinweis" });
+    expect(note.textContent).toContain("Deine erste Pflanze ist da.");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await vi.waitFor(() =>
+      expect(w.writes.map((x) => `${x.path}:${String(x.body["state"])}`)).toContain(
+        "/onboarding/hints/first_plant_saved:shown",
+      ),
+    );
+    // looking for something is never held back: the normal action stays
+    expect(screen.getByRole("button", { name: "Zum Bestand" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Okay" }));
+    await vi.waitFor(() => expect(screen.queryByRole("status", { name: "Hinweis" })).toBeNull());
+    expect(w.writes.map((x) => `${x.path}:${String(x.body["state"])}`)).toContain(
+      "/onboarding/hints/first_plant_saved:dismissed",
+    );
+  });
+
+  it("US-ONB-07 no hint is due (dismissed, expired, calm mode or style many): no note", async () => {
+    fakeServer(world({ cards: [{ id: "e1" }], hint: null }));
+    view();
+    await screen.findByRole("button", { name: "Zum Bestand" });
+    expect(screen.queryByRole("status", { name: "Hinweis" })).toBeNull();
+  });
+
+  it("US-ONB-07 a hint that cannot be saved stays and says so, nothing disappears silently (P-10)", async () => {
+    const w = world({ cards: [{ id: "e1" }], hint: "first_plant_saved" });
+    fakeServer(w);
+    view();
+    await screen.findByRole("status", { name: "Hinweis" });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => response(500, { error: { code: "server.error" } })),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Okay" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("nicht speichern");
+    expect(screen.getByRole("status", { name: "Hinweis" })).toBeTruthy();
+  });
+
+  it("US-ONB-07 the hint texts have at most 12 words and name no level, rank or pressure", () => {
+    for (const text of Object.values(HINT_TEXTS)) {
+      expect(text.split(/\s+/).length).toBeLessThanOrEqual(HINT_MAX_WORDS);
+      expect(text).not.toMatch(/Level|Rang|Stufe|nur noch|schnell/i);
+    }
   });
 });
 

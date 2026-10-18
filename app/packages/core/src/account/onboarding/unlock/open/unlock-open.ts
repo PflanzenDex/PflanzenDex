@@ -10,8 +10,8 @@ import {
   shape,
   textField,
   type FeatureSet,
-} from "../../../kernel";
-import { UNLOCK_FUNCTIONS } from "../unlock/unlock-registry";
+} from "../../../../kernel";
+import { UNLOCK_FUNCTIONS } from "../unlock-registry";
 
 export interface ManualUnlock {
   readonly id: string;
