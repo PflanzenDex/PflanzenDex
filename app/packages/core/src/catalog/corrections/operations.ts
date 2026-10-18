@@ -23,14 +23,15 @@ import {
 const proposeSchema = shape({
   speciesId: idField("speciesId"),
   field: choiceField("field", CORRECTION_FIELDS),
-  value: textField("value", { min: 1, max: 1000 }),
+  value: orNull(textField("value", { min: 1, max: 1000 })),
   reason: textField("reason", { min: 1, max: REASON_MAX }),
   source: orNull(textField("source", { min: 1, max: SOURCE_MAX })),
 });
 
 /**
- * A keeper proposes another value for one field of an approved species (US-BES-14 cut, FR-BES-19). It is stored open
- * and changes nothing in the catalog until a reviewer accepts it. None of the three fields needs a source (FR-BES-14
+ * A keeper proposes another value for one field of an approved species, or reports the field as wrong without a value
+ * (`value` empty, US-BES-14, FR-BES-19). It is stored open and changes nothing in the catalog until a reviewer accepts
+ * it; a report can only be rejected. None of the three fields needs a source (FR-BES-14
  * names light demand, dormancy, temperature, humidity, toxicity); a given source is kept. The same open proposal is
  * pointed to, not duplicated.
  */
@@ -39,14 +40,15 @@ export const catalogCorrect = (store: CorrectionStore) =>
     name: "catalog.correct",
     schema: proposeSchema,
     run: async (context, input) => {
-      if (input.value.length > CORRECTION_LIMITS[input.field]) {
+      if (input.value !== null && input.value.length > CORRECTION_LIMITS[input.field]) {
         return failed(
           appError("input.invalid", { details: [{ field: "value", code: "input.invalid" }] }),
         );
       }
       const current = await store.speciesValue(context.userId, input.speciesId, input.field);
       if (!current) return failed(appError("species.not_found"));
-      if (current.value === input.value) return failed(appError("correction.no_change"));
+      if (input.value !== null && current.value === input.value)
+        return failed(appError("correction.no_change"));
       const created = await store.create(context.userId, {
         speciesId: input.speciesId,
         field: input.field,
@@ -77,6 +79,7 @@ export const catalogCorrectionAccept = (store: CorrectionStore, review: ReviewSt
       const r = await store.accept(context.userId, input.id);
       if (r === "not_found") return failed(appError("correction.not_found"));
       if (r === "decided") return failed(appError("correction.decided"));
+      if (r === "no_value") return failed(appError("correction.no_value"));
       return ok({ id: input.id, status: "accepted" as const, version: r.version });
     },
   });
@@ -153,5 +156,21 @@ export const catalogCorrectionVote = (store: CorrectionStore) =>
       if (r === "own") return failed(appError("correction.own_vote"));
       if (r === "rate_limited") return failed(appError("correction.vote_rate_limited"));
       return ok({ id: input.id, vote: input.vote });
+    },
+  });
+
+/**
+ * The creator withdraws their open correction (US-BES-14). The row stays with status `withdrawn` (P-10); someone
+ * else's correction answers like a missing one (P-04).
+ */
+export const catalogCorrectionWithdraw = (store: CorrectionStore) =>
+  defineOperation({
+    name: "catalog.correction_withdraw",
+    schema: idSchema,
+    run: async (context, input) => {
+      const r = await store.withdraw(context.userId, input.id);
+      if (r === "not_found") return failed(appError("correction.not_found"));
+      if (r === "decided") return failed(appError("correction.decided"));
+      return ok({ id: input.id, status: "withdrawn" as const });
     },
   });

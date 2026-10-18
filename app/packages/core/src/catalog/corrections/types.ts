@@ -1,5 +1,5 @@
 // Corrections of catalog values and the version history of every field (US-BES-16, DM-BES-06, DM-BES-07, FR-BES-12,
-// FR-BES-19). Cut 1: the three text fields the open sources fill; votes (US-BES-15) are in; withdrawing a correction (US-BES-14) is later.
+// FR-BES-19). Cut 1: the three text fields the open sources fill; votes (US-BES-15), withdrawing and reports without a value (US-BES-14) are in.
 
 /** Fields a correction can name, with their limits (match the database checks). */
 export const CORRECTION_LIMITS = {
@@ -23,7 +23,8 @@ export interface Correction {
   readonly field: CorrectionField;
   /** The catalog value when the correction was made; `null` = it was unknown (P-08). */
   readonly oldValue: string | null;
-  readonly proposedValue: string;
+  /** `null` = a report "Stimmt nicht" without a proposed value (US-BES-14); it can only be rejected, never accepted. */
+  readonly proposedValue: string | null;
   readonly reason: string;
   readonly source: string | null;
   readonly status: CorrectionStatus;
@@ -51,7 +52,7 @@ export const VOTES_PER_HOUR = 50;
 export interface OpenCorrection extends VoteCounts {
   readonly id: string;
   readonly field: CorrectionField;
-  readonly proposedValue: string;
+  readonly proposedValue: string | null;
   readonly reason: string;
   readonly source: string | null;
   readonly createdAt: string;
@@ -96,7 +97,7 @@ export interface CorrectionStore {
     v: {
       speciesId: string;
       field: CorrectionField;
-      proposedValue: string;
+      proposedValue: string | null;
       reason: string;
       source: string | null;
     },
@@ -109,7 +110,9 @@ export interface CorrectionStore {
   listOpen(userId: string): Promise<readonly CorrectionEntry[]>;
   /** The caller's own corrections of any status, newest first. */
   listMine(userId: string): Promise<readonly Correction[]>;
-  accept(userId: string, id: string): Promise<{ version: number } | DecisionOutcome>;
+  accept(userId: string, id: string): Promise<{ version: number } | DecisionOutcome | "no_value">;
+  /** The creator withdraws their own open correction; somebody else's answers `not_found` (P-04). */
+  withdraw(userId: string, id: string): Promise<"withdrawn" | DecisionOutcome>;
   reject(userId: string, id: string, reason: string): Promise<"rejected" | DecisionOutcome>;
   /** All versions of a field, newest first; `null` if the species is not visible to the caller. */
   history(

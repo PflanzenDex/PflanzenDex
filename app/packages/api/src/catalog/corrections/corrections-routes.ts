@@ -3,11 +3,13 @@ import {
   catalogCorrectionAccept,
   catalogCorrectionReject,
   catalogCorrectionVote,
+  catalogCorrectionWithdraw,
   catalogCorrections,
   catalogFieldHistory,
   catalogFieldRevert,
   myCorrections,
   speciesCorrections,
+  type Operation,
   type Result,
 } from "@pflanzendex/core";
 import { CorrectionPostgres, IdempotencyPostgres, ReviewPostgres } from "@pflanzendex/db";
@@ -27,7 +29,9 @@ export const CORRECTION_PATHS = [
  * US-BES-14). Proposing is open to every signed-in keeper; deciding and reverting are for operators and reviewers only
  * (the operations check the role, the database functions check it again, P-03, P-04). An AI connection never has the
  * role and can therefore never accept, reject or revert (FR-BES-06, FR-KI-09).
- * - POST /catalog/corrections: propose a value `{ speciesId, field, value, reason, source? }`
+ * - POST /catalog/corrections: propose a value `{ speciesId, field, value?, reason, source? }`; without `value` it is a
+ *   report that the field is wrong (US-BES-14)
+ * - POST /catalog/corrections/:id/withdraw: the creator withdraws an open correction
  * - GET /catalog/corrections: open corrections for the review list (reviewers)
  * - GET /catalog/corrections/mine: the caller's own corrections with status and decision reason
  * - POST /catalog/corrections/:id/accept | /reject `{ reason }`: decide (reviewers)
@@ -54,24 +58,17 @@ export function correctionRoutes(pool: Pool): Hono<AuthEnv> {
   routes.get("/catalog/corrections", async (c) =>
     read(c, await catalogCorrections(corrections, review, c.get("account").id)),
   );
-  routes.post("/catalog/corrections/:id/accept", async (c) =>
-    write(c, deps, catalogCorrectionAccept(corrections, review), {
-      input: { id: c.req.param("id") },
-      success: 200,
-    }),
-  );
-  routes.post("/catalog/corrections/:id/reject", async (c) =>
-    write(c, deps, catalogCorrectionReject(corrections, review), {
-      input: { ...(await body(c)), id: c.req.param("id") },
-      success: 200,
-    }),
-  );
-  routes.post("/catalog/corrections/:id/vote", async (c) =>
-    write(c, deps, catalogCorrectionVote(corrections), {
-      input: { ...(await body(c)), id: c.req.param("id") },
-      success: 200,
-    }),
-  );
+  const decide = <E, A>(action: string, operation: Operation<E, A>, withBody: boolean) =>
+    routes.post(`/catalog/corrections/:id/${action}`, async (c) =>
+      write(c, deps, operation, {
+        input: { ...(withBody ? await body(c) : {}), id: c.req.param("id") },
+        success: 200,
+      }),
+    );
+  decide("accept", catalogCorrectionAccept(corrections, review), false);
+  decide("reject", catalogCorrectionReject(corrections, review), true);
+  decide("withdraw", catalogCorrectionWithdraw(corrections), false);
+  decide("vote", catalogCorrectionVote(corrections), true);
   routes.get("/catalog/species/:speciesId/corrections", async (c) =>
     read(c, await speciesCorrections(corrections, c.get("account").id, c.req.param("speciesId"))),
   );

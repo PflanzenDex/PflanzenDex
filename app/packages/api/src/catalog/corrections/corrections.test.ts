@@ -117,6 +117,7 @@ describe("US-BES-16 corrections over HTTP", () => {
       ["GET", "/catalog/corrections/mine"],
       ["POST", `/catalog/corrections/${randomUUID()}/accept`],
       ["POST", `/catalog/corrections/${randomUUID()}/vote`],
+      ["POST", `/catalog/corrections/${randomUUID()}/withdraw`],
       ["GET", `/catalog/species/${randomUUID()}/corrections`],
       ["GET", `/catalog/history/${randomUUID()}/germanName`],
       ["POST", `/catalog/history/${randomUUID()}/germanName/revert`],
@@ -321,5 +322,42 @@ describe("US-BES-15 votes over HTTP: a signal for reviewers, never an automatism
     ).toMatchObject({
       status: 404,
     });
+  });
+});
+
+describe("US-BES-14 withdraw and report without a value over HTTP", () => {
+  it("US-BES-14 two accounts: the creator withdraws, the other account cannot; a report needs no value", async () => {
+    const id = await approvedSpecies("withdraw");
+    const cid = (await propose(id, "Neu")).body["id"] as string;
+    expect(await call(subOther, "POST", `/catalog/corrections/${cid}/withdraw`)).toMatchObject({
+      status: 404,
+      body: { error: { code: "correction.not_found" } },
+    });
+    expect(await call(subKeeper, "POST", `/catalog/corrections/${cid}/withdraw`)).toMatchObject({
+      status: 200,
+      body: { status: "withdrawn" },
+    });
+    expect(await call(subKeeper, "POST", `/catalog/corrections/${cid}/withdraw`)).toMatchObject({
+      status: 409,
+      body: { error: { code: "correction.decided" } },
+    });
+    const mine = await call(subKeeper, "GET", "/catalog/corrections/mine");
+    expect(mine.body).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: cid, status: "withdrawn" })]),
+    );
+
+    const report = await call(subOther, "POST", "/catalog/corrections", {
+      speciesId: id,
+      field: "germanName",
+      reason: "Falscher Name",
+    });
+    expect(report).toMatchObject({ status: 201, body: { status: "open", proposedValue: null } });
+    expect(
+      await call(subOperator, "POST", `/catalog/corrections/${report.body["id"]}/accept`),
+    ).toMatchObject({
+      status: 409,
+      body: { error: { code: "correction.no_value" } },
+    });
+    expect(await germanName(id)).toMatchObject({ german_name: "Alt", version: 1 });
   });
 });

@@ -35,6 +35,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "correction.duplicate_open": 409,
   "correction.unchanged": 409,
   "correction.own_vote": 409,
+  "correction.no_value": 409,
   "correction.vote_rate_limited": 429,
   "review.already_exists": 409,
   "review.status_invalid": 409,
