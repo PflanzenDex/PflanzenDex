@@ -47,7 +47,7 @@ describe("US-ONB-08 figures of the introduction in the operator area", () => {
       vi.fn<typeof fetch>(async () =>
         json(200, {
           ...base,
-          accounts: 2,
+          accounts: null,
           medianSecondsToFirstPlant: { known: false, reason: "too_few_accounts" },
           withoutPlantPercent: { known: false, reason: "too_few_accounts" },
         }),
@@ -57,6 +57,7 @@ describe("US-ONB-08 figures of the introduction in the operator area", () => {
     expect(
       await screen.findByText("unbekannt (zu wenige Konten) · Ziel: höchstens 90 Sekunden"),
     ).toBeTruthy();
+    expect(screen.getByText(/\(unbekannt, weniger als/)).toBeTruthy();
   });
 
   it("US-ONB-08 · P-10 a failing request shows its error with a retry, nothing is invented", async () => {

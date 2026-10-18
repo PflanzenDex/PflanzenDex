@@ -21,16 +21,19 @@ export const INTRODUCTION_TARGETS = {
   withoutPlantPercent: 25,
 } as const;
 
-/** What the database counts; only numbers, no account (structurally equal to the adapter in `db`). */
+/**
+ * What the database counts; only numbers, no account (structurally equal to the adapter in `db`). The database already
+ * answers `null` for every count below `INTRODUCTION_MIN_ACCOUNTS` (P-05); the check below repeats it.
+ */
 export interface IntroductionRaw {
-  /** Accounts created within the window. */
-  readonly accounts: number;
-  /** Of them: at least `INTRODUCTION_SETTLE_DAYS` days old. */
-  readonly settled: number;
-  /** Of the settled ones: without any specimen (an archived one counts as a plant). */
-  readonly settledWithoutPlant: number;
-  /** Accounts of the window with a first specimen. */
-  readonly withPlant: number;
+  /** Accounts created within the window; `null` below the minimum. */
+  readonly accounts: number | null;
+  /** Of them: at least `INTRODUCTION_SETTLE_DAYS` days old; `null` below the minimum. */
+  readonly settled: number | null;
+  /** Of the settled ones: without any specimen (an archived one counts as a plant); `null` below the minimum. */
+  readonly settledWithoutPlant: number | null;
+  /** Accounts of the window with a first specimen; `null` below the minimum. */
+  readonly withPlant: number | null;
   /** Median seconds from the creation of the account to the creation of its first specimen; `null` without any. */
   readonly medianSeconds: number | null;
 }
@@ -44,7 +47,8 @@ export interface IntroductionFigures {
   readonly windowDays: number;
   readonly settleDays: number;
   readonly minAccounts: number;
-  readonly accounts: number;
+  /** `null` (unknown) below the minimum of accounts. */
+  readonly accounts: number | null;
   /** Steps to the first plant by construction (the guide), not measured per person. */
   readonly steps: { readonly value: number; readonly targetMet: boolean };
   /** From the creation of the account (not from "first open", which is not stored) to its first specimen. */
@@ -55,36 +59,41 @@ export interface IntroductionFigures {
 
 const TOO_FEW = { known: false, reason: "too_few_accounts" } as const;
 
+/** A count counts only from the minimum of accounts on; `null` (masked by the database) never does. */
+const enough = (n: number | null): n is number => n !== null && n >= INTRODUCTION_MIN_ACCOUNTS;
+
+function medianFigure(raw: IntroductionRaw): IntroductionFigure {
+  if (!enough(raw.withPlant) || raw.medianSeconds === null) return TOO_FEW;
+  return {
+    known: true,
+    value: raw.medianSeconds,
+    targetMet: raw.medianSeconds <= INTRODUCTION_TARGETS.medianSecondsToFirstPlant,
+  };
+}
+
+function withoutPlantFigure(raw: IntroductionRaw): IntroductionFigure {
+  if (!enough(raw.settled) || raw.settledWithoutPlant === null) return TOO_FEW;
+  const percent = Math.round((raw.settledWithoutPlant / raw.settled) * 100);
+  return {
+    known: true,
+    value: percent,
+    targetMet: percent <= INTRODUCTION_TARGETS.withoutPlantPercent,
+  };
+}
+
 /** Pure: turns the counts into figures; a figure below the minimum of accounts stays unknown (P-08, P-05). */
 export function introductionFigures(raw: IntroductionRaw): IntroductionFigures {
-  const median =
-    raw.withPlant >= INTRODUCTION_MIN_ACCOUNTS && raw.medianSeconds !== null
-      ? {
-          known: true as const,
-          value: raw.medianSeconds,
-          targetMet: raw.medianSeconds <= INTRODUCTION_TARGETS.medianSecondsToFirstPlant,
-        }
-      : TOO_FEW;
-  const percent = Math.round((raw.settledWithoutPlant / Math.max(raw.settled, 1)) * 100);
-  const without =
-    raw.settled >= INTRODUCTION_MIN_ACCOUNTS
-      ? {
-          known: true as const,
-          value: percent,
-          targetMet: percent <= INTRODUCTION_TARGETS.withoutPlantPercent,
-        }
-      : TOO_FEW;
   return {
     windowDays: INTRODUCTION_WINDOW_DAYS,
     settleDays: INTRODUCTION_SETTLE_DAYS,
     minAccounts: INTRODUCTION_MIN_ACCOUNTS,
-    accounts: raw.accounts,
+    accounts: enough(raw.accounts) ? raw.accounts : null,
     steps: {
       value: FIRST_PLANT_STEPS.length,
       targetMet: FIRST_PLANT_STEPS.length <= INTRODUCTION_TARGETS.steps,
     },
-    medianSecondsToFirstPlant: median,
-    withoutPlantPercent: without,
+    medianSecondsToFirstPlant: medianFigure(raw),
+    withoutPlantPercent: withoutPlantFigure(raw),
   };
 }
 

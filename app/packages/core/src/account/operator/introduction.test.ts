@@ -46,7 +46,23 @@ describe("US-ONB-08 figures of the introduction", () => {
       medianSeconds: null,
     });
     expect(none.withoutPlantPercent.known).toBe(false);
-    expect(none.accounts).toBe(0);
+    expect(none.accounts).toBeNull();
+  });
+
+  it("US-ONB-08 · P-05 counts the database already masked (null) stay unknown, and the count of accounts below the minimum is not shown", () => {
+    const masked = introductionFigures({
+      accounts: null,
+      settled: null,
+      settledWithoutPlant: null,
+      withPlant: null,
+      medianSeconds: null,
+    });
+    expect(masked.accounts).toBeNull();
+    expect(masked.medianSecondsToFirstPlant.known).toBe(false);
+    expect(masked.withoutPlantPercent.known).toBe(false);
+    expect(
+      introductionFigures({ ...RAW, accounts: INTRODUCTION_MIN_ACCOUNTS - 1 }).accounts,
+    ).toBeNull();
   });
 
   it("US-ONB-08 · P-04 only the operator reads the figures; a reviewer and a keeper get access.denied and the store is not asked", async () => {

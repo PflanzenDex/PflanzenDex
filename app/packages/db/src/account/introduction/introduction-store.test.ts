@@ -11,7 +11,7 @@ let admin: Pool;
 let store: IntroductionPostgres;
 const operator = randomUUID();
 const keeper = randomUUID();
-const ids = [operator, keeper, ...Array.from({ length: 6 }, () => randomUUID())];
+const ids = [operator, keeper, ...Array.from({ length: 8 }, () => randomUUID())];
 
 beforeAll(async () => {
   pool = openOwnerPool();
@@ -36,20 +36,49 @@ describe("US-ONB-08 figures of the introduction", () => {
   });
 
   it("US-ONB-08 counts accounts, settled ones without a plant, accounts with a plant and the median seconds to the first specimen", async () => {
-    // Four accounts are 10 days old; two of them get a first specimen now, two stay without a plant.
-    const old = ids.slice(2, 6);
+    // Eight accounts are 10 days old; five of them get a first specimen now (the threshold of the median), three stay
+    // without a plant.
+    const old = ids.slice(2, 10);
     await admin.query(
       "update account set created_at = now() - interval '10 days' where id = any($1)",
       [old],
     );
-    await createFixtureSpecimen(pool, old[0] as string, "figure-a");
-    await createFixtureSpecimen(pool, old[1] as string, "figure-b");
+    for (const [i, id] of old.slice(0, 5).entries())
+      await createFixtureSpecimen(pool, id, `figure-${i}`);
     const f = await store.figures(operator, 90, 7);
     // Other test files add accounts in parallel: the figures are at least what this test created.
-    expect(f.settled).toBeGreaterThanOrEqual(4);
-    expect(f.settledWithoutPlant).toBeGreaterThanOrEqual(2);
-    expect(f.withPlant).toBeGreaterThanOrEqual(2);
+    expect(f.settled).toBeGreaterThanOrEqual(8);
+    expect(f.settledWithoutPlant).toBeGreaterThanOrEqual(3);
+    expect(f.withPlant).toBeGreaterThanOrEqual(5);
     expect(f.accounts).toBeGreaterThanOrEqual(ids.length);
     expect(f.medianSeconds).toBeGreaterThan(0);
+  });
+
+  it("US-ONB-08 · P-05 · P-08 below 5 accounts behind a figure the database answers NULL, also for the count of accounts", async () => {
+    // A window of 0 days holds no account; a settle age of 100000 days leaves no settled account.
+    const none = await store.figures(operator, 0, 7);
+    expect(none).toEqual({
+      accounts: null,
+      settled: null,
+      settledWithoutPlant: null,
+      withPlant: null,
+      medianSeconds: null,
+    });
+    const unsettled = await store.figures(operator, 90, 100000);
+    expect(unsettled.settled).toBeNull();
+    expect(unsettled.settledWithoutPlant).toBeNull();
+    expect(unsettled.accounts).toBeGreaterThanOrEqual(5);
+  });
+
+  it("US-ONB-08 · P-04 the function gives the caller's account back and no rule opens `specimen` to the owner", async () => {
+    const after = await withAccount(pool, operator, async (c) => {
+      await c.query("select * from operator_introduction(90, 7)");
+      return c.query("select current_setting('app.account_id') as id");
+    });
+    expect(after.rows[0].id).toBe(operator);
+    const rules = await admin.query(
+      "select polname from pg_policy where polrelid = 'specimen'::regclass",
+    );
+    expect(rules.rows.map((r) => r.polname)).toEqual(["tenant"]);
   });
 });
