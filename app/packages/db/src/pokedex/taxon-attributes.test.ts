@@ -54,6 +54,12 @@ describe("US-ENT-09 species attributes in the database", () => {
     expect(await store.forSpecies([])).toEqual([]);
   });
 
+  it("US-ENT-09 names the species that already have a fact for the field", async () => {
+    await store.save([fact("growthSize", "small")]);
+    expect(await store.speciesWith("growthSize")).toContain(SPECIES);
+    expect(await store.speciesWith("humidity")).not.toContain(SPECIES);
+  });
+
   it("US-ENT-09 a new research replaces the value of the field instead of adding a second row", async () => {
     await store.save([fact("humidity", "low")]);
     await store.save([

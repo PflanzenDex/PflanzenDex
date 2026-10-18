@@ -82,4 +82,13 @@ export class TaxonAttributesPostgres {
       },
     }));
   }
+
+  /** The Latin names that already have a stored fact for the field (they are not researched again). */
+  async speciesWith(field: Field): Promise<string[]> {
+    const { rows } = await this.pool.query<{ latin_name: string }>(
+      "select latin_name from taxon_attribute where field = $1 order by latin_name",
+      [COLUMN[field]],
+    );
+    return rows.map((r) => r.latin_name);
+  }
 }
