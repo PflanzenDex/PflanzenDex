@@ -11,6 +11,7 @@ import {
   AchievementsSection,
   LowerSections,
   SettingsSection,
+  type Locks,
 } from "./account-sections/account-sections";
 import {
   ACCOUNT_SECTIONS,
@@ -91,6 +92,8 @@ export function AccountArea(props: {
   onEverywhereSignOut: () => void;
   /** The overview "Was die App kann" (US-ONB-06) from the shell, which no area imports; without it the section is missing. */
   overview?: ReactNode;
+  /** The locked rows inside the sections (US-ONB-05): AI access and the achievements; the app wires it. */
+  locks?: Locks;
 }) {
   useSectionAnchor(NAMES);
   const { sections, achievements, ai } = useVisibleSections(
@@ -117,8 +120,16 @@ export function AccountArea(props: {
             />
           </AreaSection>
           <SettingsSection api={props.api} token={props.token} />
-          {achievements && <AchievementsSection api={props.api} token={props.token} />}
-          <LowerSections api={props.api} token={props.token} ai={ai} overview={props.overview} />
+          {achievements && (
+            <AchievementsSection api={props.api} token={props.token} locks={props.locks} />
+          )}
+          <LowerSections
+            api={props.api}
+            token={props.token}
+            ai={ai}
+            overview={props.overview}
+            locks={props.locks}
+          />
         </div>
       </div>
     </div>
