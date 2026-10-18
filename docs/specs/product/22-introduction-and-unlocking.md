@@ -101,7 +101,7 @@ Acceptance criteria:
 - The style has no name like level, rank, title or badge anywhere in the app, in the feed or for friends (FR-ONB-08); friends never see it (P-05).
 - Status: stored as DM-ONB-01; changing it is a validating operation (P-03).
 
-### US-ONB-04 · Unlock rules as pure domain logic · ⬜ new
+### US-ONB-04 · Unlock rules as pure domain logic · ✅ new
 
 As a **developer** I want the unlock rules in one pure function, so that menu, start page, overview and AI client always agree.
 
@@ -114,6 +114,8 @@ Acceptance criteria:
 - Given a day count, then it uses calendar dates in the keeper's time zone: "noch 112 Tage" is `unlock date - today`, never a duration in hours.
 - Tests: one per row of the table and per boundary (4 / 5 plants, day 27 / 28 / 29, first plant archived or deleted: history stays, so days still count from the first specimen ever created); every test carries the story ID (P-06).
 - Given an unknown function id, then the function refuses with a stable code (FR-QG-11), nothing is silently open.
+
+State of implementation: `unlockState` and `unlockStates` in `app/packages/core/src/account/unlock/` take the style, the active specimen count, the local date of the first specimen, today's local date, calm mode, the effective switches, the manual unlocks and the functions with existing data. The registry `UNLOCK_FUNCTIONS` (18 functions in navigation order, each with epic, destination, rule and optional switch) and the rule table `UNLOCK_RULES` hold the starting values. A met rule or a manual unlock or existing data gives `open`; an unmet rule gives `locked` with the conditions (`reasons`), one way per condition (add plants, wait until a calendar date, add the first plant) and `mayUnlockNow`. A switched-off function is `switched_off` and never announced, whatever else is true. Calm mode does not change the state; it only sets `announced` to false for the three ACH functions (US-ONB-05). An unknown id gives `onboarding.unknown_function`. The state `unlockable` is part of the type but not produced yet: the table reads "open when", so a met rule is `open`, and every locked function already offers the tap (`mayUnlockNow`); US-ONB-05 decides whether a met rule needs the keeper's tap first. Persistence of the style (US-ONB-03) and of manual unlocks (DM-ONB-02) is not part of this story: the function takes them as input. No API route and no UI.
 
 ### US-ONB-05 · See what is locked, why and how to open it · ⬜ new
 
