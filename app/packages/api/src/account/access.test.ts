@@ -189,6 +189,7 @@ describe("US-ACC-05 · the operator area (role checked in the operation and in t
 
   it.each([
     ["GET", "/operator/overview"],
+    ["GET", "/operator/introduction"],
     ["PUT", "/operator/registration"],
     ["POST", "/operator/invitations"],
   ])("US-ACC-05 %s %s without token: 401", async (method, path) => {
@@ -199,6 +200,7 @@ describe("US-ACC-05 · the operator area (role checked in the operation and in t
 
   it.each([
     ["GET", "/operator/overview", undefined],
+    ["GET", "/operator/introduction", undefined],
     ["PUT", "/operator/registration", { invitationOnly: false }],
     ["POST", "/operator/invitations", {}],
   ])(
@@ -263,6 +265,25 @@ describe("US-ACC-05 · the operator area (role checked in the operation and in t
   it("US-ACC-05 refuses a validity outside 1 to 30 days with input.invalid", async () => {
     const r = await call(open, subOperator, "POST", "/operator/invitations", { validForDays: 99 });
     expect([r.status, r.body["error"].code]).toEqual([400, "input.invalid"]);
+  });
+
+  it("US-ONB-08 the operator reads the figures of the introduction: counts and figures against the targets, no account", async () => {
+    const r = await call(open, subOperator, "GET", "/operator/introduction");
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({
+      windowDays: 90,
+      settleDays: 7,
+      steps: { value: 2, targetMet: true },
+    });
+    expect(Object.keys(r.body).sort()).toEqual([
+      "accounts",
+      "medianSecondsToFirstPlant",
+      "minAccounts",
+      "settleDays",
+      "steps",
+      "windowDays",
+      "withoutPlantPercent",
+    ]);
   });
 
   it("US-ACC-05 the overview: accounts, active users, cost per user unknown without a figure, no content", async () => {

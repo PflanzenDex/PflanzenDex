@@ -35,6 +35,16 @@ function serve(extra: Handler = () => json(404, {})) {
       const body = init.body ? JSON.parse(String(init.body)) : undefined;
       calls.push({ method, path, body, headers: init.headers as Record<string, string> });
       if (path === "/operator/overview") return json(200, current);
+      if (path === "/operator/introduction")
+        return json(200, {
+          windowDays: 90,
+          settleDays: 7,
+          minAccounts: 5,
+          accounts: 0,
+          steps: { value: 2, targetMet: true },
+          medianSecondsToFirstPlant: { known: false, reason: "too_few_accounts" },
+          withoutPlantPercent: { known: false, reason: "too_few_accounts" },
+        });
       return extra(path, init);
     }),
   );

@@ -1,11 +1,12 @@
 import { randomBytes } from "node:crypto";
 import {
   invitationCreate,
+  operatorIntroduction,
   operatorCostSet,
   operatorOverview,
   registrationSetMode,
 } from "@pflanzendex/core";
-import { AccessPostgres, IdempotencyPostgres } from "@pflanzendex/db";
+import { AccessPostgres, IdempotencyPostgres, IntroductionPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import { body, errorBody, statusFor, write, type AuthEnv } from "../kernel";
@@ -18,6 +19,8 @@ export const OPERATOR_PATHS = ["/operator"] as const;
  * (P-04). It shows counts and invitation states, never content of an account (P-05).
  * - GET /operator/overview: accounts, active accounts, monthly cost figure and cost per user (or why it is unknown,
  *   P-08), mode, invitations
+ * - GET /operator/introduction: the figures of the introduction against the targets (US-ONB-08): counts and one
+ *   median from creation instants, unknown below a minimum of accounts, never an account
  * - PUT /operator/cost `{ amountCents, currency, month }`: the real hosting cost of one month (NFR-16)
  * - PUT /operator/registration `{ invitationOnly }`: registration with or without invitation code
  * - POST /operator/invitations `{ validForDays? }`: 201 with the code, shown this once
@@ -31,6 +34,11 @@ export function operatorRoutes(pool: Pool, clock: () => Date = () => new Date())
   const routes = new Hono<AuthEnv>();
   routes.get("/operator/overview", async (c) => {
     const r = await operatorOverview({ access }, c.get("account").id);
+    return r.ok ? c.json(r.value) : c.json(errorBody(r.error), statusFor(r.error));
+  });
+  const introduction = new IntroductionPostgres(pool);
+  routes.get("/operator/introduction", async (c) => {
+    const r = await operatorIntroduction({ access, store: introduction }, c.get("account").id);
     return r.ok ? c.json(r.value) : c.json(errorBody(r.error), statusFor(r.error));
   });
   routes.put("/operator/registration", async (c) =>

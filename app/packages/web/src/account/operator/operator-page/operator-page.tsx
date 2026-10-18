@@ -7,6 +7,7 @@ import {
   setOperatorCost,
   setRegistrationMode,
 } from "../../api/access-api";
+import { IntroductionSection } from "../introduction-section/introduction-section";
 import { CostForm, costPerUserText, moneyText, monthText } from "../operator-cost/operator-cost";
 import { InvitationsArea, ModeSection } from "../operator-parts/operator-parts";
 import { OperatorPageSkeleton } from "./operator-page.skeleton";
@@ -140,6 +141,7 @@ export function OperatorPage(props: { api: string; token: Token }) {
         {(overview: OperatorOverview) => (
           <>
             <Numbers overview={overview} />
+            <IntroductionSection api={api} token={token} />
             <CostSection
               cost={overview.cost}
               running={actions.running}

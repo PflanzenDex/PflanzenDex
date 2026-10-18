@@ -37,3 +37,15 @@ export { ACTIVE_WINDOW_DAYS, operatorOverview } from "./operator/operator-overvi
 export { costPerUser, OPERATOR_COST_CENTS, operatorCostSet } from "./operator/operator-cost";
 export type { CostPerUser, OperatorCostFigure } from "./operator/operator-cost";
 export type { OperatorOverview } from "./operator/operator-overview";
+export {
+  INTRODUCTION_MIN_ACCOUNTS,
+  INTRODUCTION_TARGETS,
+  introductionFigures,
+  operatorIntroduction,
+} from "./operator/introduction";
+export type {
+  IntroductionFigure,
+  IntroductionFigures,
+  IntroductionRaw,
+  IntroductionStore,
+} from "./operator/introduction";
