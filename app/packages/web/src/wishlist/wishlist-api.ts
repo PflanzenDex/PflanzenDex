@@ -8,6 +8,7 @@ import type {
   WishRemoveResult,
   WishRenameResult,
   WishRow,
+  WishVisibilityResult,
 } from "@pflanzendex/core";
 import { call, createWrite, type Response } from "../kernel";
 
@@ -156,4 +157,28 @@ export async function storeWishImage(
     fetchFn,
   )("POST", `/wishes/${encodeURIComponent(wishId)}/image`);
   return r.ok ? { ok: true, value: r.value as { changed: boolean } } : r;
+}
+
+/** The IDs of the open wishes the keeper marked as visible to friends (DM-TAU-02); read on its own, never part of the list. */
+export function loadVisibleToFriends(
+  api: string,
+  token: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<{ wishIds: readonly string[] }>> {
+  return call<{ wishIds: readonly string[] }>(fetchFn, `${api}/wishes/visible-to-friends`, token);
+}
+
+/** Marks a wish as visible to confirmed friends as wanted, or takes the mark back (DM-TAU-02, US-TAU-05). */
+export async function setWishVisibleToFriends(
+  api: string,
+  token: string,
+  target: { wishId: string; visible: boolean },
+  fetchFn: typeof fetch = fetch,
+): Promise<Response<WishVisibilityResult>> {
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/wishes/${encodeURIComponent(target.wishId)}/visibility`,
+    { visible: target.visible },
+  );
+  return r.ok ? { ok: true, value: r.value as WishVisibilityResult } : r;
 }

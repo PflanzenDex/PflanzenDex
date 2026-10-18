@@ -8,10 +8,10 @@ import {
   orNull,
   shape,
   textField,
-} from "../kernel";
+} from "../../kernel";
 import { httpsUrlField } from "./fields";
-import { wishNameKey } from "./repair/name-key";
-import { WISH_LIMITS, type WishStore } from "./types";
+import { wishNameKey } from "../repair/name-key";
+import { WISH_LIMITS, type WishStore } from "../types";
 
 export interface CreateWishDependencies {
   readonly wishes: WishStore;

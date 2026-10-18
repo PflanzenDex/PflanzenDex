@@ -101,6 +101,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "wish.image_not_found": 404,
   "wish.image_license_unsupported": 422,
   "wish.not_open": 409,
+  "wish.not_open_for_friends": 409,
   "wish.not_duplicate": 409,
   "wish.already_bought": 409,
   "wish.not_bought": 409,

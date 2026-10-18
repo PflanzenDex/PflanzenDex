@@ -182,6 +182,70 @@ describe("US-TAU-05 fits both ways", () => {
     expect((await read(withRequest(), [{ ...mine, offerId: "o2" }]))[0]?.reasons).toHaveLength(1);
   });
 
+  const readWith = async (
+    deps: ExchangeDependencies,
+    wanted: Record<string, string[]>,
+    asked: string[][] = [],
+  ) => {
+    const r = await matchDeck(
+      deps,
+      {
+        answers: new InMemoryMatchAnswers(),
+        clock: () => new Date(),
+        mine: { open: async () => [mine] as never },
+        friendWishes: {
+          wantedBy: async (_user, names) => {
+            asked.push([...names]);
+            return new Map(
+              Object.entries(wanted).map(([k, v]) => [
+                k,
+                new Set(v.filter((n) => names.includes(n))),
+              ]),
+            );
+          },
+        },
+      },
+      "anna",
+      { timeZone: "Europe/Berlin" },
+    );
+    return r.ok ? r.value.cards : [];
+  };
+  const bothOf = (c: unknown) =>
+    (c as { reasons: { kind: string }[] }).reasons.filter((r) => r.kind === "both_ways");
+
+  it("US-TAU-05 DM-TAU-02 a giver who marked a wish for the species of my open offer shows the chip naming my offer", async () => {
+    const asked: string[][] = [];
+    const cards = await readWith(
+      setup([offer(1), offer(2, { ownerId: "cleo", ownerName: "Cleo" })]),
+      { ben: ["Echeveria elegans"] },
+      asked,
+    );
+    expect(bothOf(cards[0])).toEqual([
+      expect.objectContaining({
+        giverName: "Ben",
+        offerId: "o1",
+        speciesLatin: "Echeveria elegans",
+      }),
+    ]);
+    expect(bothOf(cards[1])).toEqual([]);
+    // Only the species of my own open offers is asked, never a list (FR-WUN-07).
+    expect(asked).toEqual([["Echeveria elegans"]]);
+  });
+
+  it("US-TAU-05 a giver without a marked wish gets no chip, and a request plus a marked wish name my offer once", async () => {
+    expect(bothOf((await readWith(setup([offer(1)]), {}))[0])).toEqual([]);
+    const deps = setup([offer(1)]);
+    (deps.swaps as InMemoryExchange).sides["anna"] = [swapSide()];
+    expect(bothOf((await readWith(deps, { ben: ["Echeveria elegans"] }))[0])).toHaveLength(1);
+  });
+
+  it("US-TAU-05 FR-TAU-06 a marked wish does not move the card in the deck", async () => {
+    const offers = [offer(1), offer(2, { ownerId: "cleo", ownerName: "Cleo" })];
+    const plain = await readWith(setup(offers), {});
+    const marked = await readWith(setup(offers), { cleo: ["Echeveria elegans"] });
+    expect(marked.map((c) => c.offerId)).toEqual(plain.map((c) => c.offerId));
+  });
+
   it("US-TAU-05 without the own-offers port nothing is said", async () => {
     const r = await matchDeck(
       withRequest(),

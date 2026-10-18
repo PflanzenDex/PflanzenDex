@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useStoredPhoto, type PhotoAccess } from "@/lib/use-stored-photo";
 import { errorText } from "@/lib/error-text";
 import { isPlainHttps } from "../schemas";
+import { LazyFriendsSwitch } from "./lazy-friends-switch/lazy-friends-switch";
 
 const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
 const UNKNOWN = "unbekannt";
@@ -146,7 +147,7 @@ export function CandidateCard(props: {
   onDiscard?: (c: Candidate) => void;
   /** A write is running: the action waits, so a double tap writes once. */
   busy?: boolean;
-  /** How the stored image is fetched privately (US-WUN-04, P-05). */
+  /** How the stored image is fetched privately (US-WUN-04, P-05); the same access serves the switch "Für Freunde als gesucht zeigen" (DM-TAU-02). */
   photoAccess?: PhotoAccess;
   /** Stores a local copy of the image from Wikimedia Commons (US-WUN-04); without it the card has no such action. */
   onStoreImage?: (c: Candidate) => void;
@@ -188,6 +189,9 @@ export function CandidateCard(props: {
         </Button>
       )}
       {onDiscard && <Discard c={c} onDiscard={onDiscard} busy={props.busy === true} />}
+      {props.photoAccess && (
+        <LazyFriendsSwitch {...props.photoAccess} wishId={c.id} title={c.title} />
+      )}
     </li>
   );
 }
