@@ -1,17 +1,17 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openFixturePool, openOwnerPool, withAccount } from "../kernel/index.ts";
-import { assignRole } from "../fixtures.ts";
-import { findSchemaViolations } from "../schema-check.ts";
+import { migrate, openFixturePool, openOwnerPool, withAccount } from "../../kernel/index.ts";
+import { assignRole } from "../../fixtures.ts";
+import { findSchemaViolations } from "../../schema-check.ts";
 import {
   CatalogFillPostgres,
   CatalogGapsPostgres,
   ReviewPostgres,
   SpeciesPostgres,
-} from "./index.ts";
+} from "../index.ts";
 import type { FieldValueRecord, SnapshotRecord } from "./fill-store.ts";
-import type { SpeciesName, SpeciesValues } from "./species.ts";
+import type { SpeciesName, SpeciesValues } from "../species.ts";
 
 // US-BES-12, DM-BES-05, DM-BES-06, FR-BES-12, FR-BES-19: the database side of the catalog fill (`make db-up`).
 let owner: Pool;

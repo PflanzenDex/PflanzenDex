@@ -62,7 +62,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | Epic                           | Stories | ✅     | 🟨      | ⬜     | Requirements ✅ · 🟨 · ⬜ | Tried in the prototype | New     |
 | ------------------------------ | ------- | ------ | ------- | ------ | ------------------------- | ---------------------- | ------- |
 | ACC Accounts                   | 6       | 3      | 2       | 1      | 2 · 0 · 4                 | 0                      | 6       |
-| BES Collection                 | 16      | 2      | 11      | 3      | 0 · 8 · 13                | 8                      | 8       |
+| BES Collection                 | 16      | 2      | 12      | 2      | 0 · 8 · 13                | 8                      | 8       |
 | LIC Light and locations        | 5       | 4      | 1       | 0      | 0 · 5 · 1                 | 4                      | 1       |
 | PHA Care phases                | 4       | 2      | 2       | 0      | 1 · 0 · 5                 | 4                      | 0       |
 | WAC Growth/photos              | 6       | 4      | 2       | 0      | 5 · 0 · 1                 | 6                      | 0       |
@@ -80,8 +80,8 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | DEV Development process        | 12      | 1      | 9       | 2      | 1 · 1 · 7                 | 0                      | 12      |
 | ACH Achievements               | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
 | TAU Swipe matching             | 7       | 0      | 0       | 7      | 0 · 0 · 10                | 0                      | 7       |
-| ONB Introduction and unlocking | 8       | 1      | 3       | 4      | 0 · 0 · 10                | 0                      | 8       |
-| **Total**                      | **168** | **31** | **108** | **29** |                           | **50**                 | **118** |
+| ONB Introduction and unlocking | 8       | 2      | 3       | 3      | 1 · 0 · 9                 | 0                      | 8       |
+| **Total**                      | **168** | **32** | **109** | **27** |                           | **50**                 | **118** |
 
 <!-- spec-status:end -->
 

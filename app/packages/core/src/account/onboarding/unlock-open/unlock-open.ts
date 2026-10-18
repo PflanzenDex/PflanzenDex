@@ -23,7 +23,12 @@ export interface ManualUnlock {
 export interface ManualUnlockStore {
   list(userId: string): Promise<readonly ManualUnlock[]>;
   /** Stores the unlock once; a function that is already open keeps its first date. Returns the stored row. */
-  add(userId: string, id: string, unlockedOn: string): Promise<ManualUnlock>;
+  add(
+    userId: string,
+    id: string,
+    unlockedOn: string,
+    source?: "tap" | "style_many",
+  ): Promise<ManualUnlock>;
 }
 
 const schema = shape({ id: textField("id", { min: 1, max: 40 }), on: calendarDateField("on") });

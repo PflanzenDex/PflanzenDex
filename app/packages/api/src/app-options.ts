@@ -33,7 +33,7 @@ export type AppOptions = {
   invitationOnly?: boolean;
   /** The clock for "today" (NFR-08); defaults to system time. */
   clock?: () => Date;
-  /** The keeper style per account (tests; US-ONB-03 stores it); without it every account counts as `many`. */
+  /** Replaces the stored keeper style per account (tests; US-ONB-03). */
   keeperStyle?: (userId: string) => Promise<"few" | "many">;
   /** Replaces the care profile as source of the target location of new specimens (tests). */
   targetLocation?: TargetLocationSource;

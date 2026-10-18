@@ -2,11 +2,13 @@ import {
   isActive,
   localToday,
   readAchievementSettings,
+  readKeeperStyle,
   type KeeperStyle,
   type UnlockInput,
 } from "@pflanzendex/core";
 import {
   AchievementSettingsPostgres,
+  KeeperStylePostgres,
   ManualUnlockPostgres,
   SpecimenPostgres,
 } from "@pflanzendex/db";
@@ -26,7 +28,8 @@ export function unlockSources(
   const unlocks = new ManualUnlockPostgres(pool);
   const specimens = new SpecimenPostgres(pool);
   const calm = new AchievementSettingsPostgres(pool);
-  const style = opt.style ?? (async () => "many" as const);
+  const styles = new KeeperStylePostgres(pool);
+  const style = opt.style ?? ((userId: string) => readKeeperStyle(styles, userId));
   const featureSet = async (userId: string) =>
     new Set(
       Object.entries(await opt.features.states(userId))
@@ -50,5 +53,5 @@ export function unlockSources(
       existingData: new Set(),
     };
   };
-  return { unlocks, featureSet, facts };
+  return { unlocks, styles, featureSet, facts };
 }

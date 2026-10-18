@@ -125,12 +125,91 @@ describe("US-ONB-05 lock states through the API", () => {
   });
 });
 
-describe("US-ONB-05 default style until US-ONB-03", () => {
-  it("US-ONB-05 without a stored style nothing is locked (FR-ONB-06)", async () => {
-    const plain = createApp({ reviewer, pool, clock: () => NOW });
-    const list = (await call(plain, subA, "GET", `/onboarding/unlocks${TZ}`)).body["functions"] as {
-      state: string;
+describe("US-ONB-03 keeper style through the API", () => {
+  const plain = () => createApp({ reviewer, pool, clock: () => NOW });
+  const states = async (sub: string) =>
+    Object.fromEntries(
+      (
+        (await call(plain(), sub, "GET", `/onboarding/unlocks${TZ}`)).body["functions"] as {
+          id: string;
+          state: string;
+        }[]
+      ).map((f) => [f.id, f.state]),
+    );
+  const subC = `onb03-${randomUUID()}`;
+  const subD = `onb03-${randomUUID()}`;
+  afterAll(async () => {
+    await admin.query("delete from account where subject = any($1)", [[subC, subD]]);
+  });
+
+  it("US-ONB-03 without a token: 401", async () => {
+    expect((await call(plain(), null, "GET", "/onboarding/style")).status).toBe(401);
+    expect((await call(plain(), null, "PUT", "/onboarding/style", {})).status).toBe(401);
+  });
+
+  it("US-ONB-03 a new account has not chosen yet, counts as few and has staged functions", async () => {
+    const r = await call(plain(), subC, "GET", "/onboarding/style");
+    expect(r.body).toEqual({ style: "few", chosen: false });
+    expect((await states(subC))["year_in_review"]).toBe("locked");
+  });
+
+  it("US-ONB-03 skipping the question stores few; the question is not asked again", async () => {
+    const r = await call(plain(), subC, "PUT", "/onboarding/style", {
+      style: "few",
+      timeZone: "Europe/Berlin",
+    });
+    expect(r.status).toBe(200);
+    expect(r.body).toEqual({ style: "few", chosenOn: "2026-10-18" });
+    expect((await call(plain(), subC, "GET", "/onboarding/style")).body).toEqual({
+      style: "few",
+      chosen: true,
+    });
+  });
+
+  it("US-ONB-03 many opens every function at once, the unlock date is the switch date", async () => {
+    await call(plain(), subC, "PUT", "/onboarding/style", {
+      style: "many",
+      timeZone: "Europe/Berlin",
+    });
+    expect(Object.values(await states(subC)).every((s) => s === "open")).toBe(true);
+  });
+
+  it("US-ONB-03 back to few: what was opened stays open (P-10)", async () => {
+    await call(plain(), subC, "PUT", "/onboarding/style", {
+      style: "few",
+      timeZone: "Europe/Berlin",
+    });
+    const after = await states(subC);
+    expect(Object.values(after).every((s) => s === "open")).toBe(true);
+  });
+
+  it("US-ONB-03 the style of one account does not reach another (P-04, P-05)", async () => {
+    expect((await call(plain(), subD, "GET", "/onboarding/style")).body).toEqual({
+      style: "few",
+      chosen: false,
+    });
+    expect((await states(subD))["year_in_review"]).toBe("locked");
+  });
+
+  it("US-ONB-03 an unknown style or a bad time zone is refused with input.invalid and nothing is stored", async () => {
+    for (const input of [
+      { style: "level3", timeZone: "Europe/Berlin" },
+      { timeZone: "Europe/Berlin" },
+      { style: "many", timeZone: "x" },
+    ]) {
+      const r = await call(plain(), subD, "PUT", "/onboarding/style", input);
+      expect(r.status).toBe(400);
+      expect(r.body["error"].code).toBe("input.invalid");
+    }
+    expect((await call(plain(), subD, "GET", "/onboarding/style")).body["chosen"]).toBe(false);
+  });
+
+  it("US-ONB-03 a switched-off function stays unannounced under many (FR-ONB-03)", async () => {
+    const off = createApp({ reviewer, pool, clock: () => NOW, features: NO_FEATURES });
+    await call(off, subD, "PUT", "/onboarding/style", { style: "many", timeZone: "Europe/Berlin" });
+    const list = (await call(off, subD, "GET", `/onboarding/unlocks${TZ}`)).body["functions"] as {
+      id: string;
     }[];
-    expect(list.every((f) => f.state === "open")).toBe(true);
+    expect(list.map((f) => f.id)).not.toContain("friends");
   });
 });

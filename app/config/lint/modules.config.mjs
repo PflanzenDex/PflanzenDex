@@ -49,6 +49,7 @@ const MODULES = [
       "operator_cost",
       "account_feature",
       "account_unlock",
+      "account_style",
     ],
     dependsOn: ["kernel", "achievements"], // web only: the calm mode switch sits on the settings page (US-ACH-08)
     ports: [],
@@ -57,7 +58,7 @@ const MODULES = [
     name: "catalog",
     epics: ["BES"],
     // prettier-ignore
-    tables: ["species", "species_name", "species_version", "review_case", "catalog_source_snapshot", "catalog_field_provenance"],
+    tables: ["species", "species_name", "species_version", "review_case", "catalog_source_snapshot", "catalog_field_provenance", "catalog_correction"],
     dependsOn: ["kernel"],
     // SpeciesRepointer (db): a merge re-points references of higher modules; each implements it for its tables (US-BES-10).
     ports: ["SpeciesRepointer"],
@@ -186,7 +187,6 @@ const UNMODULED_FOLDERS = {};
 
 // Module-named folders that exist but do not meet the rules yet (ratchet, like the list above).
 const MODULE_FOLDERS_IN_TRANSITION = {};
-
 const KERNEL = "kernel";
 export const MODULE_CONFIG = {
   MODULES,

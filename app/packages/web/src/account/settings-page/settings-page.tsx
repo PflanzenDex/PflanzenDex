@@ -12,6 +12,7 @@ import {
   type ApiError,
 } from "../../kernel";
 import { loadProfile, saveProfile, type AccountProfile } from "../api/account-api";
+import { KeeperStyleSection } from "./keeper-style/keeper-style";
 import { ALERT_CLASSES, useServerRefusal } from "../refusal";
 import { PROFILE_REFUSABLE, profileSchema, toProfile, toProfileFields } from "../schemas";
 import type { ProfileFields as Fields } from "../schemas";
@@ -117,6 +118,7 @@ export function SettingsPage(props: { api: string; token: Token; host?: boolean 
         {(profile) => (
           <>
             <SettingsForm api={props.api} token={props.token} profile={profile} />
+            <KeeperStyleSection api={props.api} token={props.token} />
             <CalmModeSection api={props.api} token={props.token} />
           </>
         )}

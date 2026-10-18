@@ -21,9 +21,11 @@ import {
   specimenRoutes,
 } from "./collection";
 import {
+  CORRECTION_PATHS,
   GAP_PATHS,
   SPECIES_PATHS,
   REVIEW_PATHS,
+  correctionRoutes,
   gapRoutes,
   speciesRoutes,
   reviewRoutes,
@@ -102,6 +104,8 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
   app.route("/", reviewRoutes(pool, COLLECTION_REPOINTERS));
   for (const path of GAP_PATHS) app.use(path, auth);
   app.route("/", gapRoutes(pool));
+  for (const path of CORRECTION_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", correctionRoutes(pool));
   for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", specimenRoutes(pool, { clock: opt.clock, ...careSources(pool, opt) }));
   for (const path of POKEDEX_PATHS) app.use(path, auth).use(`${path}/*`, auth);
