@@ -70,10 +70,13 @@ export {
   catalogCorrect,
   catalogCorrectionAccept,
   catalogCorrectionReject,
+  catalogCorrectionVote,
   catalogCorrections,
   catalogFieldHistory,
   catalogFieldRevert,
   myCorrections,
+  speciesCorrections,
+  VOTES_PER_HOUR,
 } from "./corrections";
 export type {
   Correction,
@@ -83,5 +86,9 @@ export type {
   CorrectionStatus,
   CorrectionStore,
   FieldVersion,
+  OpenCorrection,
   Origin,
+  Vote,
+  VoteCounts,
+  VoteOutcome,
 } from "./corrections";

@@ -2,10 +2,12 @@ import {
   catalogCorrect,
   catalogCorrectionAccept,
   catalogCorrectionReject,
+  catalogCorrectionVote,
   catalogCorrections,
   catalogFieldHistory,
   catalogFieldRevert,
   myCorrections,
+  speciesCorrections,
   type Result,
 } from "@pflanzendex/core";
 import { CorrectionPostgres, IdempotencyPostgres, ReviewPostgres } from "@pflanzendex/db";
@@ -14,7 +16,11 @@ import type { Pool } from "pg";
 import { body, errorBody, statusFor, write, type AuthEnv } from "../../kernel";
 
 /** Paths the sign-in guard (bearer token) must cover. */
-export const CORRECTION_PATHS = ["/catalog/corrections", "/catalog/history"] as const;
+export const CORRECTION_PATHS = [
+  "/catalog/corrections",
+  "/catalog/history",
+  "/catalog/species",
+] as const;
 
 /**
  * Corrections of catalog values and the version history of a field (US-BES-16; the proposal is the first cut of
@@ -25,6 +31,8 @@ export const CORRECTION_PATHS = ["/catalog/corrections", "/catalog/history"] as 
  * - GET /catalog/corrections: open corrections for the review list (reviewers)
  * - GET /catalog/corrections/mine: the caller's own corrections with status and decision reason
  * - POST /catalog/corrections/:id/accept | /reject `{ reason }`: decide (reviewers)
+ * - POST /catalog/corrections/:id/vote `{ vote: confirm | dispute | none }`: a signal for the reviewers (US-BES-15)
+ * - GET /catalog/species/:speciesId/corrections: the open corrections of a species with counts and the own vote
  * - GET /catalog/history/:speciesId/:field: every version of a field with value, source, origin and date
  * - POST /catalog/history/:speciesId/:field/revert `{ version }`: the earlier value comes back as a new version
  */
@@ -57,6 +65,15 @@ export function correctionRoutes(pool: Pool): Hono<AuthEnv> {
       input: { ...(await body(c)), id: c.req.param("id") },
       success: 200,
     }),
+  );
+  routes.post("/catalog/corrections/:id/vote", async (c) =>
+    write(c, deps, catalogCorrectionVote(corrections), {
+      input: { ...(await body(c)), id: c.req.param("id") },
+      success: 200,
+    }),
+  );
+  routes.get("/catalog/species/:speciesId/corrections", async (c) =>
+    read(c, await speciesCorrections(corrections, c.get("account").id, c.req.param("speciesId"))),
   );
   routes.get("/catalog/history/:speciesId/:field", async (c) =>
     read(

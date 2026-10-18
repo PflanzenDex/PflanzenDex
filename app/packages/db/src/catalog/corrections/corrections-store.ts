@@ -1,6 +1,7 @@
 import type { Pool } from "pg";
 import { withAccount } from "../../kernel/index.ts";
-
+import { COLUMN, FIELD, ISO } from "./fields.ts";
+import { castVote, openCorrectionsOfSpecies, voteCounts } from "./votes.ts";
 // Shapes of `core` (type-only import through its public entry, AB-2).
 import type {
   Correction,
@@ -8,20 +9,12 @@ import type {
   CorrectionField,
   CorrectionStore,
   FieldVersion,
+  OpenCorrection,
+  Vote,
+  VoteOutcome,
 } from "@pflanzendex/core";
 
-const COLUMN: Record<CorrectionField, string> = {
-  familyLatin: "family_latin",
-  germanName: "german_name",
-  botanicalStory: "botanical_story",
-};
-const FIELD = Object.fromEntries(Object.entries(COLUMN).map(([k, v]) => [v, k])) as Record<
-  string,
-  CorrectionField
->;
 const UNIQUE_VIOLATION = "23505";
-const ISO = (column: string) =>
-  `to_char(${column} at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')`;
 
 interface Row {
   id: string;
@@ -92,16 +85,33 @@ export class CorrectionPostgres implements CorrectionStore {
   }
 
   async listOpen(userId: string): Promise<readonly CorrectionEntry[]> {
-    const r = await withAccount(this.pool, userId, (c) =>
-      c.query<Row & { currentValue: string | null }>(
+    return withAccount(this.pool, userId, async (c) => {
+      const r = await c.query<Row & { currentValue: string | null }>(
         `select id, species_id as "speciesId", latin_name as "latinName", field, old_value as "oldValue",
                 proposed_value as "proposedValue", reason, source, status,
                 ${ISO("created_at")} as "createdAt", ${ISO("decided_at")} as "decidedAt",
                 decision_reason as "decisionReason", current_value as "currentValue"
            from open_catalog_corrections()`,
-      ),
-    );
-    return r.rows.map((x) => ({ ...toCorrection(x), currentValue: x.currentValue }));
+      );
+      const byId = await voteCounts(
+        c,
+        r.rows.map((x) => x.id),
+      );
+      return r.rows.map((x) => ({
+        ...toCorrection(x),
+        currentValue: x.currentValue,
+        confirmations: byId.get(x.id)?.confirmations ?? 0,
+        disputes: byId.get(x.id)?.disputes ?? 0,
+      }));
+    });
+  }
+
+  vote(userId: string, id: string, vote: Vote | null): Promise<VoteOutcome> {
+    return castVote(this.pool, userId, id, vote);
+  }
+
+  listForSpecies(userId: string, speciesId: string): Promise<readonly OpenCorrection[] | null> {
+    return openCorrectionsOfSpecies(this.pool, userId, speciesId);
   }
 
   async listMine(userId: string): Promise<readonly Correction[]> {

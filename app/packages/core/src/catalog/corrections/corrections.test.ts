@@ -6,7 +6,9 @@ import {
   catalogCorrect,
   catalogCorrectionAccept,
   catalogCorrectionReject,
+  catalogCorrectionVote,
   catalogCorrections,
+  speciesCorrections,
   catalogFieldHistory,
   catalogFieldRevert,
   myCorrections,
@@ -17,6 +19,9 @@ import type {
   CorrectionField,
   CorrectionStore,
   FieldVersion,
+  OpenCorrection,
+  Vote,
+  VoteOutcome,
 } from "./types";
 
 const SPECIES = "6f1c2f0e-4b8a-4c52-9d51-0a3f6f2c7e11";
@@ -71,10 +76,46 @@ class FakeStore implements CorrectionStore {
     this.creators.set(row.id, userId);
     return row;
   }
+  votes = new Map<string, Vote>(); // `${user}|${correction}`
+  voteCalls = 0;
+  private counts(id: string) {
+    const v = [...this.votes].filter(([k]) => k.endsWith(`|${id}`)).map(([, x]) => x);
+    return {
+      confirmations: v.filter((x) => x === "confirm").length,
+      disputes: v.filter((x) => x === "dispute").length,
+    };
+  }
+  async vote(userId: string, id: string, vote: Vote | null): Promise<VoteOutcome> {
+    const row = this.rows[this.find(id)];
+    if (!row) return "not_found";
+    if (row.status !== "open") return "decided";
+    if (this.creators.get(id) === userId) return "own";
+    if (this.voteCalls >= 3) return "rate_limited";
+    this.voteCalls += 1;
+    if (vote === null) this.votes.delete(`${userId}|${id}`);
+    else this.votes.set(`${userId}|${id}`, vote);
+    return "voted";
+  }
+  async listForSpecies(userId: string, id: string): Promise<OpenCorrection[] | null> {
+    if (id !== SPECIES) return null;
+    return this.rows
+      .filter((r) => r.status === "open")
+      .map((r) => ({
+        id: r.id,
+        field: r.field,
+        proposedValue: r.proposedValue,
+        reason: r.reason,
+        source: r.source,
+        createdAt: r.createdAt,
+        ...this.counts(r.id),
+        myVote: this.votes.get(`${userId}|${r.id}`) ?? null,
+        mine: this.creators.get(r.id) === userId,
+      }));
+  }
   async listOpen(): Promise<CorrectionEntry[]> {
     return this.rows
       .filter((r) => r.status === "open")
-      .map((r) => ({ ...r, currentValue: this.value }));
+      .map((r) => ({ ...r, currentValue: this.value, ...this.counts(r.id) }));
   }
   async listMine(userId: string) {
     return this.rows.filter((r) => this.creators.get(r.id) === userId);
@@ -335,5 +376,120 @@ describe("US-BES-16 review list and history", () => {
       field: "wateringHint",
     });
     expect(!bad.ok && bad.error.code).toBe("input.invalid");
+  });
+});
+
+describe("US-BES-15 confirm or dispute an open correction (a signal, E-26)", () => {
+  const vote = (user: string | null, id: string, v: string) =>
+    call(catalogCorrectionVote(store), user, { id, vote: v });
+  const open = async () => {
+    const c = await propose("keeper");
+    if (!c.ok) throw new Error("propose failed");
+    return c.value.id;
+  };
+
+  it("stores one vote per account and correction; choosing again changes it and none withdraws it", async () => {
+    const id = await open();
+    expect((await vote("bert", id, "confirm")).ok).toBe(true);
+    expect((await vote("bert", id, "dispute")).ok).toBe(true);
+    const mine = await speciesCorrections(store, "bert", SPECIES);
+    expect(mine.ok && mine.value[0]).toMatchObject({
+      confirmations: 0,
+      disputes: 1,
+      myVote: "dispute",
+    });
+    await vote("bert", id, "none");
+    const after = await speciesCorrections(store, "bert", SPECIES);
+    expect(after.ok && after.value[0]).toMatchObject({
+      confirmations: 0,
+      disputes: 0,
+      myVote: null,
+    });
+  });
+
+  it("shows counts to everybody and never who voted or who proposed", async () => {
+    const id = await open();
+    await vote("bert", id, "confirm");
+    await vote("cleo", id, "confirm");
+    const r = await speciesCorrections(store, "dora", SPECIES);
+    expect(r.ok && r.value[0]).toMatchObject({
+      confirmations: 2,
+      disputes: 0,
+      myVote: null,
+      mine: false,
+    });
+    expect(JSON.stringify(r)).not.toMatch(/bert|cleo|keeper/);
+  });
+
+  it("changes nothing in the catalog by itself, however many confirm (E-26, FR-BES-19)", async () => {
+    const id = await open();
+    for (const u of ["a", "b"]) await vote(u, id, "confirm");
+    expect(store.value).toBe("Alt");
+    expect(store.version).toBe(1);
+    expect(store.rows[0]?.status).toBe("open");
+  });
+
+  it("orders the review list by confirmations first and carries the counts", async () => {
+    const first = await open();
+    const second = (await propose("keeper2", { value: "Neuer" })) as {
+      ok: true;
+      value: { id: string };
+    };
+    await vote("bert", second.value.id, "confirm");
+    await vote("bert", first, "dispute");
+    const list = await catalogCorrections(store, review, "reviewer");
+    expect(list.ok && list.value.entries.map((e) => [e.id, e.confirmations, e.disputes])).toEqual([
+      [second.value.id, 1, 0],
+      [first, 0, 1],
+    ]);
+  });
+
+  it("refuses the own proposal, a decided one, an unknown one and a bad choice", async () => {
+    const id = await open();
+    expect(await vote("keeper", id, "confirm")).toMatchObject({
+      ok: false,
+      error: { code: "correction.own_vote" },
+    });
+    expect(await vote("bert", "00000000-0000-4000-8000-0000000000ff", "confirm")).toMatchObject({
+      ok: false,
+      error: { code: "correction.not_found" },
+    });
+    expect(await vote("bert", id, "maybe")).toMatchObject({
+      ok: false,
+      error: { code: "input.invalid" },
+    });
+    await call(catalogCorrectionReject(store, review), "reviewer", { id, reason: "Nein" });
+    expect(await vote("bert", id, "confirm")).toMatchObject({
+      ok: false,
+      error: { code: "correction.decided" },
+    });
+  });
+
+  it("refuses too many votes in a short time with a hint to try later", async () => {
+    const ids = [await open()];
+    for (const v of ["B", "C", "D"]) {
+      const c = (await propose("keeper2", { value: v })) as { ok: true; value: { id: string } };
+      ids.push(c.value.id);
+    }
+    for (const id of ids.slice(0, 3)) await vote("bert", id, "confirm");
+    expect(await vote("bert", ids[3] ?? "", "confirm")).toMatchObject({
+      ok: false,
+      error: { code: "correction.vote_rate_limited" },
+    });
+  });
+
+  it("needs sign-in; an unknown species answers like a missing one", async () => {
+    const id = await open();
+    expect(await vote(null, id, "confirm")).toMatchObject({
+      ok: false,
+      error: { code: "access.not_signed_in" },
+    });
+    expect(await speciesCorrections(store, null, SPECIES)).toMatchObject({ ok: false });
+    expect(
+      await speciesCorrections(store, "bert", "00000000-0000-4000-8000-0000000000aa"),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "species.not_found" },
+    });
   });
 });

@@ -264,3 +264,104 @@ describe("US-BES-16 accept, reject, history and revert", () => {
     expect(await store.history(bert, id, "germanName")).toBeNull();
   });
 });
+
+describe("US-BES-15 votes are a signal; tenant and rights (P-04, P-05)", () => {
+  const open = async (user = anna) => {
+    const id = await approvedSpecies();
+    const c = await propose(user, id, "Neu");
+    return { species: id, correction: "id" in c ? c.id : "" };
+  };
+  const mineOf = (user: string, species: string) =>
+    store.listForSpecies(user, species).then((l) => l?.[0]);
+
+  it("one vote per account: a second choice changes it, withdrawing clears it, the catalog stays (E-26)", async () => {
+    const { species, correction } = await open();
+    expect(await store.vote(bert, correction, "confirm")).toBe("voted");
+    expect(await store.vote(bert, correction, "dispute")).toBe("voted");
+    expect(await mineOf(bert, species)).toMatchObject({
+      confirmations: 0,
+      disputes: 1,
+      myVote: "dispute",
+    });
+    expect(await store.vote(bert, correction, null)).toBe("voted");
+    expect(await mineOf(bert, species)).toMatchObject({
+      confirmations: 0,
+      disputes: 0,
+      myVote: null,
+    });
+    const rows = await admin.query(
+      "select count(*)::int as n from catalog_correction_vote where correction_id = $1",
+      [correction],
+    );
+    expect(rows.rows[0].n).toBe(1);
+    expect(await germanName(species)).toMatchObject({ german_name: "Alt", version: 1 });
+  });
+
+  it("counts are visible to everybody, who voted is not; foreign vote rows are invisible", async () => {
+    const { species, correction } = await open();
+    await store.vote(bert, correction, "confirm");
+    const asReviewer = await mineOf(reviewer, species);
+    expect(asReviewer).toMatchObject({ confirmations: 1, disputes: 0, myVote: null, mine: false });
+    expect(JSON.stringify(asReviewer)).not.toContain(bert);
+    const seen = await withAccount(owner, anna, (c) =>
+      c.query("select * from catalog_correction_vote"),
+    );
+    expect(seen.rowCount).toBe(0);
+    expect(await mineOf(anna, species)).toMatchObject({ mine: true, confirmations: 1 });
+  });
+
+  it("the creator cannot vote on their own proposal; a decided or unknown one is refused", async () => {
+    const { correction } = await open();
+    expect(await store.vote(anna, correction, "confirm")).toBe("own");
+    expect(await store.vote(bert, randomUUID(), "confirm")).toBe("not_found");
+    await store.reject(reviewer, correction, "Nein");
+    expect(await store.vote(bert, correction, "confirm")).toBe("decided");
+  });
+
+  it("a proposal of a private species cannot be voted on and is not listed (FR-BES-11)", async () => {
+    const id = await approvedSpecies(false);
+    expect(await store.listForSpecies(bert, id)).toBeNull();
+    expect(await store.vote(bert, randomUUID(), "confirm")).toBe("not_found");
+  });
+
+  it("refuses the 51st corrections voted on within an hour, also through plain SQL", async () => {
+    const id = await approvedSpecies();
+    const bert = randomUUID(); // fresh: votes of the other tests count within the hour
+    await withAccount(owner, bert, (c) => c.query("insert into account (id) values ($1)", [bert]));
+    const ids: string[] = [];
+    for (let i = 0; i < 51; i++) {
+      const c = await propose(anna, id, `Wert ${i}`);
+      ids.push("id" in c ? c.id : "");
+    }
+    for (const c of ids.slice(0, 50)) expect(await store.vote(bert, c, "confirm")).toBe("voted");
+    expect(await store.vote(bert, ids[50] ?? "", "confirm")).toBe("rate_limited");
+    expect(await store.vote(bert, ids[0] ?? "", "dispute")).toBe("voted");
+    await expect(
+      withAccount(owner, bert, (x) =>
+        x.query(
+          "insert into catalog_correction_vote (account_id, correction_id, vote) values ($1, $2, 'confirm')",
+          [bert, ids[50]],
+        ),
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("a hand-made vote for another account is refused by the row rule (P-04)", async () => {
+    const { correction } = await open();
+    await expect(
+      withAccount(owner, bert, (x) =>
+        x.query(
+          "insert into catalog_correction_vote (account_id, correction_id, vote) values ($1, $2, 'confirm')",
+          [anna, correction],
+        ),
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("the review list carries the counts", async () => {
+    const { correction } = await open();
+    await store.vote(bert, correction, "confirm");
+    const entry = (await store.listOpen(reviewer)).find((e) => e.id === correction);
+    expect(entry).toMatchObject({ confirmations: 1, disputes: 0 });
+  });
+});

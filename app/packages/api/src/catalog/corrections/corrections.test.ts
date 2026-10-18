@@ -116,6 +116,8 @@ describe("US-BES-16 corrections over HTTP", () => {
       ["GET", "/catalog/corrections"],
       ["GET", "/catalog/corrections/mine"],
       ["POST", `/catalog/corrections/${randomUUID()}/accept`],
+      ["POST", `/catalog/corrections/${randomUUID()}/vote`],
+      ["GET", `/catalog/species/${randomUUID()}/corrections`],
       ["GET", `/catalog/history/${randomUUID()}/germanName`],
       ["POST", `/catalog/history/${randomUUID()}/germanName/revert`],
     ] as const)
@@ -257,5 +259,67 @@ describe("US-BES-16 corrections over HTTP", () => {
     expect(
       (await call(subKeeper, "GET", `/catalog/history/${randomUUID()}/wateringHint`)).status,
     ).toBe(400);
+  });
+});
+
+describe("US-BES-15 votes over HTTP: a signal for reviewers, never an automatism", () => {
+  it("US-BES-15 two accounts: counts without names, one vote each, the creator cannot vote, the catalog stays", async () => {
+    const id = await approvedSpecies("vote");
+    const created = await propose(id, "Neu");
+    const cid = created.body["id"] as string;
+    const url = `/catalog/corrections/${cid}/vote`;
+
+    expect(await call(subKeeper, "POST", url, { vote: "confirm" })).toMatchObject({
+      status: 409,
+      body: { error: { code: "correction.own_vote" } },
+    });
+    expect((await call(subOther, "POST", url, { vote: "confirm" })).status).toBe(200);
+    expect((await call(subOther, "POST", url, { vote: "dispute" })).status).toBe(200);
+    expect(await call(subOther, "POST", url, { vote: "maybe" })).toMatchObject({ status: 400 });
+
+    const seen = await call(subOther, "GET", `/catalog/species/${id}/corrections`);
+    expect(seen.body).toMatchObject([
+      { id: cid, confirmations: 0, disputes: 1, myVote: "dispute", mine: false },
+    ]);
+    const asCreator = await call(subKeeper, "GET", `/catalog/species/${id}/corrections`);
+    expect(asCreator.body).toMatchObject([{ id: cid, disputes: 1, myVote: null, mine: true }]);
+    expect(JSON.stringify([seen.body, asCreator.body])).not.toMatch(/keeper-|other-|operator-/);
+
+    const list = await call(subOperator, "GET", "/catalog/corrections");
+    expect(list.body["entries"].find((e: { id: string }) => e.id === cid)).toMatchObject({
+      confirmations: 0,
+      disputes: 1,
+    });
+    expect(await germanName(id)).toMatchObject({ german_name: "Alt", version: 1 });
+
+    expect((await call(subOther, "POST", url, { vote: "none" })).status).toBe(200);
+    expect(
+      (await call(subOther, "GET", `/catalog/species/${id}/corrections`)).body[0],
+    ).toMatchObject({
+      disputes: 0,
+      myVote: null,
+    });
+  });
+
+  it("US-BES-15 a decided or unknown correction and an unknown species answer like missing ones", async () => {
+    const id = await approvedSpecies("voteb");
+    const cid = (await propose(id, "Neu")).body["id"] as string;
+    await call(subOperator, "POST", `/catalog/corrections/${cid}/reject`, { reason: "Nein" });
+    expect(
+      await call(subOther, "POST", `/catalog/corrections/${cid}/vote`, { vote: "confirm" }),
+    ).toMatchObject({
+      status: 409,
+      body: { error: { code: "correction.decided" } },
+    });
+    expect(
+      await call(subOther, "POST", `/catalog/corrections/${randomUUID()}/vote`, {
+        vote: "confirm",
+      }),
+    ).toMatchObject({ status: 404, body: { error: { code: "correction.not_found" } } });
+    expect(
+      await call(subOther, "GET", `/catalog/species/${randomUUID()}/corrections`),
+    ).toMatchObject({
+      status: 404,
+    });
   });
 });

@@ -126,3 +126,32 @@ export const catalogFieldRevert = (store: CorrectionStore, review: ReviewStore) 
       return ok({ speciesId: input.speciesId, field: input.field, version: r.version });
     },
   });
+
+const voteSchema = shape({
+  id: idField("id"),
+  vote: choiceField("vote", ["confirm", "dispute", "none"] as const),
+});
+
+/**
+ * "Stimmt" / "Stimmt nicht" on an open correction, stored once per account and correction; choosing again changes it,
+ * "none" withdraws it (US-BES-15). The vote is a signal for the reviewers and changes nothing in the catalog by itself
+ * (E-26, FR-BES-19); there is no ranking of people. The creator does not vote on their own proposal, and more than
+ * VOTES_PER_HOUR corrections per hour are refused (assumption).
+ */
+export const catalogCorrectionVote = (store: CorrectionStore) =>
+  defineOperation({
+    name: "catalog.correction_vote",
+    schema: voteSchema,
+    run: async (context, input) => {
+      const r = await store.vote(
+        context.userId,
+        input.id,
+        input.vote === "none" ? null : input.vote,
+      );
+      if (r === "not_found") return failed(appError("correction.not_found"));
+      if (r === "decided") return failed(appError("correction.decided"));
+      if (r === "own") return failed(appError("correction.own_vote"));
+      if (r === "rate_limited") return failed(appError("correction.vote_rate_limited"));
+      return ok({ id: input.id, vote: input.vote });
+    },
+  });

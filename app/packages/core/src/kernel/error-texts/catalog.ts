@@ -11,4 +11,8 @@ export const CORRECTION_ERROR_TEXTS = {
     "Diese Version des Feldes gibt es nicht. Öffne den Verlauf und wähle eine vorhandene Version.",
   "correction.unchanged":
     "Das Feld hat diesen Wert schon. Wähle eine frühere Version mit einem anderen Wert; es wurde nichts geändert.",
+  "correction.own_vote":
+    "Das ist dein eigener Vorschlag. Darüber stimmen andere ab; es wurde nichts geändert.",
+  "correction.vote_rate_limited":
+    "Du hast in kurzer Zeit sehr viele Stimmen abgegeben. Versuche es in einer Stunde noch einmal.",
 } as const;
