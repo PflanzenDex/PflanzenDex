@@ -117,7 +117,7 @@ Acceptance criteria:
 
 State of implementation: `unlockState` and `unlockStates` in `app/packages/core/src/account/unlock/` take the style, the active specimen count, the local date of the first specimen, today's local date, calm mode, the effective switches, the manual unlocks and the functions with existing data. The registry `UNLOCK_FUNCTIONS` (18 functions in navigation order, each with epic, destination, rule and optional switch) and the rule table `UNLOCK_RULES` hold the starting values. A met rule or a manual unlock or existing data gives `open`; an unmet rule gives `locked` with the conditions (`reasons`), one way per condition (add plants, wait until a calendar date, add the first plant) and `mayUnlockNow`. A switched-off function is `switched_off` and never announced, whatever else is true. Calm mode does not change the state; it only sets `announced` to false for the three ACH functions (US-ONB-05). An unknown id gives `onboarding.unknown_function`. The state `unlockable` is part of the type but not produced yet: the table reads "open when", so a met rule is `open`, and every locked function already offers the tap (`mayUnlockNow`); US-ONB-05 decides whether a met rule needs the keeper's tap first. Persistence of the style (US-ONB-03) and of manual unlocks (DM-ONB-02) is not part of this story: the function takes them as input. No API route and no UI.
 
-### US-ONB-05 · See what is locked, why and how to open it · ⬜ new
+### US-ONB-05 · See what is locked, why and how to open it · 🟨 new
 
 As a **plant keeper** I want a function I cannot use yet to stay visible with the reason and the way, so that nothing is hidden and I know what to do next.
 
@@ -131,6 +131,10 @@ Acceptance criteria:
 - Given at most five main destinations (US-QS-14), then a locked destination (Entdecken, Freunde) keeps its place and order in the navigation (US-QS-09: order and names do not change); locked parts inside a destination show as a row with the same marking.
 - Given a direct link to a locked function (bookmark, AI client), then the page described above opens; the API answers with the stable code `onboarding.locked` and the same data (reason, way) and never hides the function (FR-ONB-02).
 - No countdown pressure: no animation, no colour alarm, no sound; the text is a plain fact (FR-ONB-08).
+
+Decision of the PO: a met rule is `open` at once and needs no extra tap, so the state `unlockable` stays unused; `locked` functions offer "Jetzt freischalten" (the tap, `mayUnlockNow`). A switched-off function is never announced.
+
+State of implementation (data and API): the table `account_unlock` (DM-ONB-02, migration `0079`, same-account row rule, isolation test) holds the keeper's decision; the validating operation `onboarding.unlock_function` stores it once (a second tap keeps the first date, nothing is deleted) and refuses an unknown or switched-off function with `onboarding.unknown_function`. `GET /onboarding/unlocks?timeZone=` lists every function that may be announced with state, reasons and ways as data (switched-off ones are missing); `GET /onboarding/unlocks/:id` answers `409 onboarding.locked` with the same data while locked; `POST /onboarding/unlocks/:id` with `{ timeZone }` unlocks. No other route checks a lock (FR-ONB-04). Until US-ONB-03 stores the keeper style every account counts as `many`, so nothing is locked yet (FR-ONB-06); the data of existing wishes, friends and invitations (`existingData`) is not read yet. **Open:** the web part (rows "Noch gesperrt" / "Bald" in menu and start page, the lock page with reason and way, the button), the German texts of the reasons and ways, and the calm-mode check in the web.
 
 ### US-ONB-06 · "Was die App kann": one fixed overview · ⬜ new
 

@@ -9,6 +9,7 @@ import {
   authentication,
   operatorRoutes,
   registrationRoutes,
+  unlockRoutes,
   type TokenVerifier,
 } from "./account";
 import {
@@ -98,6 +99,14 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
   app.route("/", pokedexRoutes(pool));
   app.route("/", discoverRoutes(pool, auth, opt.zoneStock));
   app.route("/", achievementsRoutes(pool, auth, opt.clock));
+  app.route(
+    "/",
+    unlockRoutes(pool, auth, {
+      features,
+      ...(opt.clock ? { clock: opt.clock } : {}),
+      ...(opt.keeperStyle ? { style: opt.keeperStyle } : {}),
+    }),
+  );
   app.route("/", monitoringRoutes(pool, auth));
   for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", careProfileRoutes(pool));

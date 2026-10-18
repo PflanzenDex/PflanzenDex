@@ -6,4 +6,6 @@ export const ONBOARDING_ERROR_TEXTS = {
   ...ACHIEVEMENT_ERROR_TEXTS,
   "onboarding.unknown_function":
     "Diese Funktion kennt die App nicht. Öffne sie über die Navigation oder über „Was die App kann“; es wurde nichts geändert.",
+  "onboarding.locked":
+    "Diese Funktion ist noch gesperrt. Grund und Weg stehen dabei; du kannst sie jederzeit selbst freischalten.",
 } as const;

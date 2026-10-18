@@ -41,6 +41,8 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "achievements.not_earned": 409,
   "achievements.pause_too_long": 422,
   "achievements.pause_not_found": 404,
+  "onboarding.unknown_function": 404,
+  "onboarding.locked": 409,
   "friend.unknown_code": 404,
   "friend.code_used": 409,
   "friend.code_expired": 409,
