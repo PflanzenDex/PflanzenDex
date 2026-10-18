@@ -2,7 +2,30 @@
 // may be stored and turns stored facts into the attributes of a suggestion. A value without a citable source and a free
 // license is rejected, an unknown value stays `null` and acts neutrally (P-08, FR-ENT-04). Nothing here is a statement
 // of an AI: only the three citable sources below are accepted (US-KI-06).
-import type { SuggestionAttributes } from "../suggestions";
+
+/**
+ * The attributes of DM-ENT-01 of one suggestion. A value without a stored fact is `null` ("unbekannt", FR-ENT-04); no
+ * value is guessed (P-08).
+ */
+export interface SuggestionAttributes {
+  readonly humidity: "low" | "medium" | "high" | null;
+  readonly minTemperature: number | null;
+  readonly toxicToPets: boolean | null;
+  readonly growthSize: "small" | "medium" | "large" | null;
+}
+
+/** Where one stored attribute value comes from (US-ENT-09, P-08): shown beside the value. */
+export interface AttributeSource {
+  readonly field: keyof SuggestionAttributes;
+  readonly source: AttributeSourceName;
+  /** https link to the exact page or record. */
+  readonly url: string;
+  readonly license: string;
+  /** Calendar date (YYYY-MM-DD) of the retrieval. */
+  readonly retrievedAt: string;
+  /** Review status of the value (FR-BES-06): every stored value counts as unreviewed until a review exists. */
+  readonly review: "unreviewed";
+}
 
 /** The fields of DM-ENT-01 that carry a value. "Needs dormancy" is derived from the dormancy period, not stored. */
 export const ATTRIBUTE_FIELDS = [
@@ -134,4 +157,38 @@ export function attributesOf(facts: readonly AttributeFact[]): SuggestionAttribu
     toxicToPets: value<boolean>("toxicToPets"),
     growthSize: value<"small" | "medium" | "large">("growthSize"),
   };
+}
+
+/** The source of each stored fact, in field order; a field without a fact has none and stays unknown (P-08). */
+export function sourcesOf(facts: readonly AttributeFact[]): AttributeSource[] {
+  return ATTRIBUTE_FIELDS.flatMap((field) => {
+    const e = facts.find((f) => f.field === field)?.evidence;
+    if (e === undefined) return [];
+    const { source, url, license, retrievedAt } = e;
+    return [{ field, source, url, license, retrievedAt, review: "unreviewed" as const }];
+  });
+}
+
+/**
+ * Adds the stored facts with their sources to the cards (one read for all of them); a card without a fact keeps its
+ * unknown attributes and gets no source (P-08). Without a source port every attribute stays unknown.
+ */
+export async function withAttributes<
+  S extends {
+    readonly species: string;
+    readonly attributes: SuggestionAttributes;
+    readonly attributeSources?: readonly AttributeSource[];
+  },
+>(
+  cards: readonly S[],
+  source: { forSpecies(names: readonly string[]): Promise<readonly AttributeFact[]> } | undefined,
+): Promise<S[]> {
+  if (source === undefined || cards.length === 0) return [...cards];
+  const facts = await source.forSpecies(cards.map((c) => c.species));
+  return cards.map((c) => {
+    const own = facts.filter((f) => f.species === c.species);
+    return own.length === 0
+      ? c
+      : { ...c, attributes: attributesOf(own), attributeSources: sourcesOf(own) };
+  });
 }

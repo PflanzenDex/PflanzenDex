@@ -96,3 +96,40 @@ describe("US-ENT-06 exploration cards are marked", () => {
     expect(screen.queryByText("Mal etwas anderes")).toBeNull();
   });
 });
+
+describe("US-ENT-09 attributes show their source", () => {
+  it("US-ENT-09 shows a known value with source link, license, date and review status", () => {
+    show(
+      suggestion({
+        attributes: {
+          humidity: null,
+          minTemperature: null,
+          toxicToPets: null,
+          growthSize: "small",
+        },
+        attributeSources: [
+          {
+            field: "growthSize",
+            source: "wikidata",
+            url: "https://www.wikidata.org/wiki/Q42",
+            license: "CC0-1.0",
+            retrievedAt: "2026-10-18",
+            review: "unreviewed",
+          },
+        ],
+      }),
+    );
+    expect(screen.getByText("Wuchsgröße").nextElementSibling?.textContent).toBe("klein");
+    const list = screen.getByRole("list", { name: "Quellen der Merkmale" });
+    expect(list.textContent).toContain("CC0-1.0, abgerufen am 18.10.2026), ungeprüft");
+    expect(screen.getByRole("link", { name: "Wikidata" }).getAttribute("href")).toBe(
+      "https://www.wikidata.org/wiki/Q42",
+    );
+  });
+
+  it("US-ENT-09 lists no source and keeps every attribute unknown without a stored fact (P-08)", () => {
+    show(suggestion());
+    expect(screen.queryByRole("list", { name: "Quellen der Merkmale" })).toBeNull();
+    expect(screen.getAllByText("unbekannt")).toHaveLength(4);
+  });
+});

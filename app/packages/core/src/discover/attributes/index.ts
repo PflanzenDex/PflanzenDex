@@ -4,5 +4,14 @@ export {
   ATTRIBUTE_SOURCES,
   attributesOf,
   checkAttributeFact,
+  sourcesOf,
+  withAttributes,
 } from "./attributes";
-export type { AttributeCheck, AttributeFact, AttributeField, AttributeProblem } from "./attributes";
+export type {
+  AttributeCheck,
+  AttributeFact,
+  AttributeField,
+  AttributeProblem,
+  AttributeSource,
+  SuggestionAttributes,
+} from "./attributes";

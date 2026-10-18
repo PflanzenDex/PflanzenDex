@@ -13,6 +13,7 @@ import { zoneStockFor } from "./zone-stock";
 import { createMemorySourceCache, createSourceClient } from "./kernel";
 import { createTokenVerifier } from "./account";
 import { deleteAccountHandlers, NO_STORE } from "./privacy";
+import { attributeFillEnabled, attributeFillJobHandlers, checkAttributeFill } from "./discover";
 import { createS3ObjectStore, createSharpProcessor, s3ConfigFromEnv } from "./media";
 
 // Configuration from the environment only (no secrets in the repo). The defaults match `make auth-up`.
@@ -42,6 +43,9 @@ const aiResource = process.env["AI_RESOURCE_URL"] ?? "http://localhost:3000/mcp"
 const features = featuresFromEnv(process.env);
 // Catalog fill from open sources (US-BES-12): asks foreign servers, so only `CATALOG_FILL=on` starts it (P-08, FR-BES-18).
 const catalogFill = catalogFillEnabled(process.env);
+// Attribute fill (US-ENT-09): turns answers the catalog fill stored into species attributes, sends no request itself;
+// only `ATTRIBUTE_FILL=on` starts it (P-08).
+const attributeFill = attributeFillEnabled(process.env);
 const app = createApp({
   features,
   ...(media ? { media } : {}),
@@ -84,6 +88,7 @@ const worker = createJobWorker({
     ...JOB_HANDLERS,
     ...pokedexJobHandlers({ pool, sources }),
     ...(catalogFill ? catalogFillJobHandlers({ pool, sources }) : {}),
+    ...(attributeFill ? attributeFillJobHandlers({ pool }) : {}),
     ...reminders.handlers,
     ...deleteAccountHandlers(pool, media?.store ?? NO_STORE),
   },
@@ -102,6 +107,13 @@ if (catalogFill)
     () => checkCatalogFill(pool, () => new Date()),
     60 * 60 * 1000,
     (error) => console.error("catalog fill check failed", error),
+  );
+// The attribute fill is checked hourly (starting value, assumption) for species whose source answers arrived since.
+if (attributeFill)
+  scheduleChecks(
+    () => checkAttributeFill(pool, () => new Date()),
+    60 * 60 * 1000,
+    (error) => console.error("attribute fill check failed", error),
   );
 // The daily reminder checks that have come due are ordered every 5 minutes (starting value, assumption); a failure is
 // reported and the next tick tries again.

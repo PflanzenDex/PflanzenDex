@@ -17,5 +17,20 @@ export {
   ATTRIBUTE_SOURCES,
   attributesOf,
   checkAttributeFact,
+  sourcesOf,
 } from "./attributes";
-export type { AttributeCheck, AttributeFact, AttributeField, AttributeProblem } from "./attributes";
+export type {
+  AttributeCheck,
+  AttributeFact,
+  AttributeField,
+  AttributeProblem,
+  AttributeSource,
+} from "./attributes";
+export {
+  ATTRIBUTE_FILL_JOB_TYPE,
+  deriveGrowthSize,
+  GROWTH_SIZE_LIMITS_M,
+  orderAttributeFill,
+  runAttributeFill,
+} from "./attributes/fill";
+export type { AttributeFillStore, HeightCandidate } from "./attributes/fill";

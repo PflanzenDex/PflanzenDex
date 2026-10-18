@@ -1,6 +1,9 @@
 // Discover suggestions (US-ENT-01): derived on every request from the catalog tree, the ownership and the wishes; nothing
 // is stored (P-01, NFR-04). Unknown values stay `null`, the interface shows "unbekannt" (P-08).
 import type { OwnershipDependencies, TaxonCardSource } from "../../pokedex";
+import type { AttributeFact, AttributeSource, SuggestionAttributes } from "../attributes";
+
+export type { AttributeSource, SuggestionAttributes };
 import type { WishStore, ZoneStockSource } from "../../wishlist";
 
 /** Starting value of the deck size (DM-ENT-03, assumption, readjustable). */
@@ -8,17 +11,6 @@ export const DECK_SIZE = 10;
 
 /** Starting value of the exploration cards per deck (DM-ENT-03, US-ENT-06, assumption, readjustable). */
 export const EXPLORATION_PER_DECK = 2;
-
-/**
- * The attributes of DM-ENT-01. The catalog does not carry them yet, so every value is `null` ("unbekannt", FR-ENT-04)
- * until the enrichment exists; no value is guessed (P-08).
- */
-export interface SuggestionAttributes {
-  readonly humidity: "low" | "medium" | "high" | null;
-  readonly minTemperature: number | null;
-  readonly toxicToPets: boolean | null;
-  readonly growthSize: "small" | "medium" | "large" | null;
-}
 
 export interface Suggestion {
   /** Latin name of the species. */
@@ -37,6 +29,8 @@ export interface Suggestion {
   /** Source of text and image (Wikipedia, CC BY-SA, FR-POK-07); `null` = unknown. */
   readonly sourceUrl: string | null;
   readonly attributes: SuggestionAttributes;
+  /** Source per known attribute; an attribute without an entry is unknown (P-08). Absent = none known. */
+  readonly attributeSources?: readonly AttributeSource[];
   /** 1 to 3 reasons from the own data, no percentage and no "match" (FR-ENT-06). */
   readonly reasons: readonly string[];
   /** An exploration card, shown as "something different" (US-ENT-06): outside the keeper's pattern. */
@@ -87,4 +81,6 @@ export interface SuggestionsDependencies {
   readonly stock?: Pick<ZoneStockSource, "stock" | "buffer">;
   /** The clock for the local day that fixes the exploration picks (FR-ENT-05); defaults to the system clock. */
   readonly clock?: () => Date;
+  /** The stored attribute facts of species with source and license (US-ENT-09); without it every attribute is unknown. */
+  readonly attributes?: { forSpecies(names: readonly string[]): Promise<readonly AttributeFact[]> };
 }
