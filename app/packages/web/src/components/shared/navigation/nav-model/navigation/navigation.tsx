@@ -89,6 +89,7 @@ export const ACCOUNT_SECTIONS = {
   reminders: "erinnerungen",
   aiClients: "ki-clients",
   measured: "gemessen",
+  functions: "funktionen",
   data: "daten",
 } as const;
 export type AccountSection = keyof typeof ACCOUNT_SECTIONS;

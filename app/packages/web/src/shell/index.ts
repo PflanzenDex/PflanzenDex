@@ -9,4 +9,6 @@ export const StartPage = lazyPage(() =>
 export const UnlockPage = lazyPage(() =>
   import("./unlock/unlock-page/unlock-page").then((m) => ({ default: m.UnlockPage })),
 );
+/** The overview "Was die App kann" (US-ONB-06) is its own chunk: it loads when "Konto" shows it (DS-08). */
+export const FunctionOverview = lazyPage(() => import("./function-overview/function-overview"));
 export { useUnlocks, isShownLocked } from "./unlock";
