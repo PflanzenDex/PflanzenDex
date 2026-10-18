@@ -6,7 +6,8 @@ Template. Copy it to `docs/records/test-logs/onb-usability-<date>.md` for every 
 **Version / commit of the app:**
 **Environment (device, browser, screen size):**
 **Moderator / observer:**
-**Release or PR the run belongs to:**
+**Release or PR the run belongs to:** (link it in the release PR, US-DEV-06)
+**Order or unlock rules changed since the last run (yes / no, what):**
 
 ## 1. Method
 
@@ -18,6 +19,8 @@ Template. Copy it to `docs/records/test-logs/onb-usability-<date>.md` for every 
 
 ## 2. Targets (starting values, assumptions; from US-ONB-08)
 
+The operator area ("Betreiber", section "Einstieg") shows the same targets from existing data (account and first plant creation dates, aggregated, from 5 accounts on). The test below adds what numbers cannot show: where people hesitate and what they ask.
+
 | Measure                                       | Target             |
 | --------------------------------------------- | ------------------ |
 | Time from first open to the saved first plant | at most 90 seconds |
@@ -27,13 +30,13 @@ Template. Copy it to `docs/records/test-logs/onb-usability-<date>.md` for every 
 
 ## 3. Results per person
 
-| Person | Age group / plant experience | Time to first plant (s) | Steps | Help asked (yes / no, what) | Abandoned (yes / no, where) | Hesitation or wrong turn (screen, what) |
-| ------ | ---------------------------- | ----------------------- | ----- | --------------------------- | --------------------------- | --------------------------------------- |
-| P1     |                              |                         |       |                             |                             |                                         |
-| P2     |                              |                         |       |                             |                             |                                         |
-| P3     |                              |                         |       |                             |                             |                                         |
-| P4     |                              |                         |       |                             |                             |                                         |
-| P5     |                              |                         |       |                             |                             |                                         |
+| Person | Age group / plant experience | Time to first plant (s) | Steps | Questions asked (wording) | Help given (yes / no, what) | Abandoned (yes / no, where) | Hesitation or wrong turn (screen, what) |
+| ------ | ---------------------------- | ----------------------- | ----- | ------------------------- | --------------------------- | --------------------------- | --------------------------------------- |
+| P1     |                              |                         |       |                           |                             |                             |                                         |
+| P2     |                              |                         |       |                           |                             |                             |                                         |
+| P3     |                              |                         |       |                           |                             |                             |                                         |
+| P4     |                              |                         |       |                           |                             |                             |                                         |
+| P5     |                              |                         |       |                           |                             |                             |                                         |
 
 Median time: (calculated from the table, empty if fewer than 3 values)
 
