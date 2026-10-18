@@ -205,7 +205,7 @@ Acceptance criteria:
 - Given my own care profile, when I disagree with a catalog value only for my location, then the view points me to the care profile (US-BES-09) instead of a correction; a correction is for values that are wrong for everyone.
 - After submitting, the view says what happens next: who reviews it and that I get a hint with the result (P-09).
 
-### US-BES-15 · Confirm or dispute catalog values and corrections · ⬜ new
+### US-BES-15 · Confirm or dispute catalog values and corrections · 🟨 new
 
 As a **plant keeper** I want to confirm or dispute a value or an open correction, so that reviewers see which entries the community trusts and which need a look first.
 
@@ -217,6 +217,8 @@ Acceptance criteria:
 - Given votes, when a reviewer decides, then the votes are a signal and never change the catalog by themselves (E-26).
 - Given an account that votes on many items in a short time (more than 50 votes per hour, starting value, assumption), when it votes again, then the vote is refused with a hint to try later.
 - Given a species that is still a private proposal (FR-BES-11), when another keeper looks for it, then it cannot be voted on.
+
+_Built (cut 1): votes on **open corrections** (one per account, change or withdraw, counts without names, no vote on the own proposal, 50 per hour), counts in the review list ordered by confirmations, `GET /catalog/species/:id/corrections`. Open: votes on catalog values, the disputed-values entries in the review list, and the web screens._
 
 ### US-BES-16 · Review corrections and keep the history of every value · 🟨 new
 

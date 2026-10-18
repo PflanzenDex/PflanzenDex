@@ -58,7 +58,7 @@ const MODULES = [
     name: "catalog",
     epics: ["BES"],
     // prettier-ignore
-    tables: ["species", "species_name", "species_version", "review_case", "catalog_source_snapshot", "catalog_field_provenance", "catalog_correction"],
+    tables: ["species", "species_name", "species_version", "review_case", "catalog_source_snapshot", "catalog_field_provenance", "catalog_correction", "catalog_correction_vote"],
     dependsOn: ["kernel"],
     // SpeciesRepointer (db): a merge re-points references of higher modules; each implements it for its tables (US-BES-10).
     ports: ["SpeciesRepointer"],
