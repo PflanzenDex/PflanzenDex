@@ -1,4 +1,4 @@
-import type { MatchCard as Card, MatchEntry } from "@pflanzendex/core";
+import type { EmptyReason, MatchCard as Card, MatchEntry } from "@pflanzendex/core";
 import type { ReactNode, Ref } from "react";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { Banner } from "@/components/shared/states/banner/banner";
@@ -10,6 +10,7 @@ import { Actions, Confirm, Empty, UndoButton, type Answer } from "./match-action
 import { useDeck, type OnAnswer, type OnUndo, type OnYes } from "./use-deck";
 
 function End(props: {
+  calm: boolean;
   s: DeckState;
   undo: () => void;
   lists: ReactNode;
@@ -26,7 +27,12 @@ function End(props: {
         </p>
       )}
       <EmptyState
-        title={`Für jetzt durch. ${s.requested} angefragt, ${later} für später, ${countOf(s, "no")} abgelehnt.`}
+        title={
+          // Calm mode: no counters (US-TAU-07, US-ACH-08).
+          props.calm
+            ? "Für jetzt durch."
+            : `Für jetzt durch. ${s.requested} angefragt, ${later} für später, ${countOf(s, "no")} abgelehnt.`
+        }
         description={
           later > 0
             ? "Die Karten für später kannst du jetzt noch einmal ansehen. Anfragen verfolgst du in der Tauschbörse."
@@ -100,6 +106,10 @@ function Current(props: {
 export function MatchDeck(props: {
   cards: readonly Card[];
   entries: readonly MatchEntry[];
+  /** Why there is no card, from the server (US-TAU-07). */
+  empty?: EmptyReason | null;
+  /** Calm mode: no counters (US-TAU-07, US-ACH-08). */
+  calm?: boolean;
   onYes: OnYes;
   onAnswer: OnAnswer;
   onUndo: OnUndo;
@@ -114,9 +124,19 @@ export function MatchDeck(props: {
       onRemove={(offerId) => takeBack(offerId, { type: "remove", offerId })}
     />
   );
-  if (props.cards.length === 0 && props.entries.length === 0) return <Empty />;
+  if (props.cards.length === 0 && props.entries.length === 0)
+    return <Empty reason={props.empty ?? null} />;
   if (!current)
-    return <End s={s} undo={undo} lists={lists} dispatch={dispatch} heading={heading} />;
+    return (
+      <End
+        calm={props.calm ?? false}
+        s={s}
+        undo={undo}
+        lists={lists}
+        dispatch={dispatch}
+        heading={heading}
+      />
+    );
   return (
     <Current
       s={s}

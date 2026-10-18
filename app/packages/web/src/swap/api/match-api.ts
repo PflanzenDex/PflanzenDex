@@ -1,4 +1,4 @@
-import type { MatchCard, MatchEntry, MatchYesResult } from "@pflanzendex/core";
+import type { EmptyReason, MatchCard, MatchEntry, MatchYesResult } from "@pflanzendex/core";
 import { call, createWrite, currentTimeZone, type Response } from "../../kernel";
 
 type FetchFn = typeof fetch;
@@ -7,6 +7,8 @@ type FetchFn = typeof fetch;
 export interface DeckData {
   readonly cards: readonly MatchCard[];
   readonly entries: readonly MatchEntry[];
+  /** Why there is no card to decide (US-TAU-07); `null` when there is one. */
+  readonly empty?: EmptyReason | null;
 }
 
 /** The match deck (US-TAU-01): open offers of friends whose species is on the own wishlist, derived on every request. */

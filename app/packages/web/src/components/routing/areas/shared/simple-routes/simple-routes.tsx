@@ -3,7 +3,8 @@ import { Navigate, Route, useParams } from "react-router";
 import { OperatorPage } from "@/account";
 import { ReviewPage } from "@/catalog";
 import { FriendCollectionPage, FriendsPage } from "@/social";
-import { ExchangePage, MatchPage } from "@/swap";
+import { ExchangePage } from "@/swap";
+import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import {
   EXCHANGE_PATH,
   MATCH_PATH,
@@ -12,6 +13,11 @@ import {
 } from "@/components/shared/navigation/nav-model/navigation/navigation";
 
 type Token = () => Promise<string | undefined>;
+
+/** The match deck knows calm mode (US-TAU-07); the settings load only with it, not with the first load (DS-08). */
+const MatchRoute = lazyPage(() =>
+  import("./match-route/match-route").then((m) => ({ default: m.MatchRoute })),
+);
 
 /** The views that need nothing but the API address and the token. */
 const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Token }>>> = {
@@ -79,7 +85,7 @@ export function socialRoutes(
     <Route
       key="match"
       path={MATCH_PATH}
-      element={page("swapping", <MatchPage api={api} token={token} />)}
+      element={page("swapping", <MatchRoute api={api} token={token} />)}
     />,
     <Route
       key="friend"

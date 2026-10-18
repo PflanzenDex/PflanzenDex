@@ -106,7 +106,7 @@ Acceptance criteria:
 - The lists are private: the giver sees neither No nor Later (FR-TAU-02).
 - Every list and every empty list says what to do next (P-09).
 
-### US-TAU-07 · Respect the social switch, calm mode and empty states · ⬜ new
+### US-TAU-07 · Respect the social switch, calm mode and empty states · 🟨 new
 
 As a **plant keeper** I want the match deck to follow my settings and to tell me what to do when it is empty, so that it never nags or dead-ends.
 
@@ -142,7 +142,7 @@ Acceptance criteria:
 | FR-TAU-07 | Every view says what to do next, including every empty state (P-09). Nothing disappears silently: Later, No and ended offers stay findable until the keeper removes them (P-10).                                                                            | 🟨              |
 | FR-TAU-08 | Accessibility (NFR-13): all actions as buttons with text, operable by keyboard, announced by screen reader, 360 px layout, targets large enough, reduced motion respected; the swipe is only an extra.                                                      | ⬜              |
 | FR-TAU-09 | Out of scope: endless feed, notifications about new match cards, matching against strangers or the public, rankings, chat, selling for money, matching by genus or family, suggestions of species the giver does not offer (that is ENT).                   | ⬜ (deliberate) |
-| FR-TAU-10 | Hidden with the feature switch `social` (US-DEV-06) and under calm mode as described in US-TAU-07; dates are local dates (NFR-08).                                                                                                                          | ⬜              |
+| FR-TAU-10 | Hidden with the feature switch `social` (US-DEV-06) and under calm mode as described in US-TAU-07; dates are local dates (NFR-08).                                                                                                                          | 🟨              |
 
 ## Assumptions, decided by the PO (revisable)
 
