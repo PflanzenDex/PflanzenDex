@@ -48,6 +48,31 @@ describe("US-BES-10 navigation", () => {
 });
 
 describe("US-DEV-06 navigation", () => {
+  it("US-ONB-05 a locked destination keeps its place, order and name and carries a text mark", () => {
+    const plain = navItems({});
+    const marked = navItems({ locks: { friends: "Noch gesperrt" } });
+    expect(marked.map((i) => i.label)).toEqual(plain.map((i) => i.label));
+    expect(marked.find((i) => i.label === "Freunde")?.note).toBe("Noch gesperrt");
+    expect(marked.filter((i) => i.note)).toHaveLength(1);
+    render(
+      <MemoryRouter>
+        <AppShell items={marked}>
+          <p>Inhalt</p>
+        </AppShell>
+      </MemoryRouter>,
+    );
+    const link = within(screen.getByRole("navigation", { name: "Hauptnavigation" })).getByRole(
+      "link",
+      { name: /Freunde/ },
+    );
+    expect(link.textContent).toContain("Noch gesperrt");
+  });
+
+  it("US-ONB-05 / FR-ONB-06 without locks (style many) the navigation is exactly as before", () => {
+    expect(navItems({ locks: {} })).toEqual(navItems({}));
+    expect(navItems({}).some((i) => i.note)).toBe(false);
+  });
+
   it("US-DEV-06 Freunde is hidden only while the function group social is off", () => {
     expect(labels({})).toContain("Freunde");
     expect(labels({ social: true } as never)).toContain("Freunde");

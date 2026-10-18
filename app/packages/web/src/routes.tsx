@@ -4,11 +4,9 @@ import { useSession, type State } from "./account";
 import { AchievementNewsBanner } from "@/components/routing/areas/shared/lazy-news-banner/lazy-news-banner";
 import { CareProfileSection } from "./collection";
 import { loadSpecies, searchSpecies, SpeciesPage } from "./catalog";
-import { FriendCollectionPage } from "./social";
-import { ExchangePage } from "./swap";
 import type { WishToPlant } from "./wishlist";
 import type { ComponentProps } from "react";
-import { StartPage } from "./shell";
+import { StartPage, UnlockPage, isShownLocked, useUnlocks } from "./shell";
 import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
 import {
@@ -17,10 +15,12 @@ import {
   DiscoverArea,
   TodayArea,
 } from "@/components/routing/areas/shared/lazy-areas";
-import { simpleRoutes } from "@/components/routing/areas/shared/simple-routes/simple-routes";
+import {
+  simpleRoutes,
+  socialRoutes,
+} from "@/components/routing/areas/shared/simple-routes/simple-routes";
 import { legacyRoutes } from "@/components/routing/legacy-routes/legacy-routes";
 import {
-  EXCHANGE_PATH,
   PATHS,
   PROFILE_BASE,
   type LinkTarget,
@@ -33,12 +33,6 @@ function Start(props: Omit<ComponentProps<typeof StartPage>, "lookup">) {
 }
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
-/** A friend's shared collection has its own address; the friendship id comes from it (US-SOZ-07). */
-function FriendCollectionRoute(props: { api: string; token: Token }) {
-  const { friendId } = useParams();
-  return <FriendCollectionPage {...props} friendId={friendId ?? ""} />;
-}
-
 /** My care profile is a section of the species profile (US-BES-09, US-QS-14); the app wires `collection` into `catalog`. */
 const careProfile = (api: string, token: Token) =>
   function CareProfile(species: Species) {
@@ -117,6 +111,17 @@ function handOverRoutes(api: string, token: Token, h: HandOver, open: (id: strin
   ];
 }
 
+/** A function that is not open yet shows its lock page at its own address, never a blank page (US-ONB-05, FR-ONB-02). */
+function useLockPages(api: string, token: Token) {
+  const locked = new Set(
+    useUnlocks()
+      .entries.filter(isShownLocked)
+      .map((e) => e.id),
+  );
+  return (id: string) =>
+    locked.has(id) ? <UnlockPage api={api} token={token} id={id} /> : undefined;
+}
+
 /** What the account may open: the role-bound views and, while "social" is on, "Freunde" (US-DEV-06). */
 const rolesOf = (account: SignedIn): Partial<Record<View, boolean>> => ({
   review: account.reviewer === true,
@@ -138,6 +143,7 @@ export function AppRoutes(props: {
   const roles = rolesOf(account);
   const social = roles.friends !== false;
   const { pathname } = useLocation();
+  const lockPageOf = useLockPages(api, s.token);
   return (
     <RouteBoundary resetKey={pathname}>
       <AchievementNewsBanner api={api} token={s.token} />
@@ -159,21 +165,21 @@ export function AppRoutes(props: {
           path={PATHS.start}
           element={<Start api={api} token={s.token} accountId={account.id} onOpen={props.onOpen} />}
         />
-        {social && (
-          <Route path={EXCHANGE_PATH} element={<ExchangePage api={api} token={s.token} />} />
-        )}
-        {social && (
-          <Route
-            path={`${PATHS.friends}/:friendId`}
-            element={<FriendCollectionRoute api={api} token={s.token} />}
-          />
-        )}
+        <Route path="/unlock/:id" element={<UnlockPage api={api} token={s.token} />} />
+        {social && socialRoutes(api, s.token, lockPageOf)}
         <Route
           path={PATHS.today}
           element={<TodayArea api={api} token={s.token} onOpen={props.onOpen} />}
         />
         {legacyRoutes()}
-        {simpleRoutes(api, s.token, roles)}
+        {simpleRoutes(
+          api,
+          s.token,
+          roles,
+          lockPageOf("friends")
+            ? { friends: <UnlockPage api={api} token={s.token} id="friends" /> }
+            : {},
+        )}
         {handOverRoutes(api, s.token, h, props.onOpenProfile)}
         <Route path="*" element={<Navigate to={PATHS.start} replace />} />
       </Routes>

@@ -12,7 +12,7 @@ import { IdempotencyPostgres } from "@pflanzendex/db";
 import { Hono, type MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
 import { styleRoutes } from "./style-routes";
-import { unlockSources } from "./unlock-sources";
+import { unlockSources } from "./sources/unlock-sources";
 import { body, errorBody, write, type AuthEnv, type Ctx, type FeatureAccess } from "../../kernel";
 
 /** The parts of the app options the lock routes read. */

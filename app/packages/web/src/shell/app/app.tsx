@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router";
 import type { Species } from "@pflanzendex/core";
 import {
@@ -24,6 +24,7 @@ import {
 } from "../../components/shared/navigation/nav-model/navigation/navigation";
 import { PathNotes } from "../../wishlist";
 import { useWishHandOver } from "../../wish-to-specimen";
+import { UnlocksProvider, isShownLocked, lockMark, useUnlocks } from "../unlock";
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
 
@@ -53,6 +54,26 @@ function useSpeciesHandOver(setView: (v: LinkTarget) => void) {
 }
 
 type Session = ReturnType<typeof useSession>;
+type SignedInAccount = Extract<State, { kind: "signedIn" }>["account"];
+
+/** The shell with its navigation; a destination that is not open yet stays in place, marked with text (US-ONB-05). */
+function SignedInShell(props: { account: SignedInAccount; children: ReactNode }) {
+  const { account } = props;
+  const friends = useUnlocks().entries.find((e) => e.id === "friends");
+  return (
+    <AppShell
+      titleOf={viewTitle}
+      items={navItems({
+        reviewer: account.reviewer === true,
+        operator: account.operator === true,
+        social: account.features?.social,
+        locks: friends && isShownLocked(friends) ? { friends: lockMark(friends) } : {},
+      })}
+    >
+      {props.children}
+    </AppShell>
+  );
+}
 
 /** The page title before there is an account to work with (US-QS-09, WCAG 2.4.2); signed in, the shell sets it per view. */
 const ENTRY_TITLES: Record<Exclude<State["kind"], "signedIn">, string | undefined> = {
@@ -120,37 +141,32 @@ export function App() {
     );
   return (
     <FeaturesProvider features={z.account.features}>
-      <AppShell
-        titleOf={viewTitle}
-        items={navItems({
-          reviewer: z.account.reviewer === true,
-          operator: z.account.operator === true,
-          social: z.account.features?.social,
-        })}
-      >
-        <div className="mx-auto w-full max-w-180">
-          {navState?.hint && (
-            <p role="alert" className="mb-3 rounded-lg border border-border p-3">
-              {navState.hint}
-            </p>
-          )}
-          {(wishPath.notes.wish || wishPath.notes.notice) && (
-            <Suspense fallback={null}>
-              <PathNotes {...wishPath.notes} />
-            </Suspense>
-          )}
-          <AppRoutes
-            api={api}
-            session={s}
-            account={z.account}
-            {...(z.error ? { error: z.error } : {})}
-            onOpen={setView}
-            onOpenProfile={openProfile}
-            handOver={wishPath.handOver}
-          />
-        </div>
-        {footer}
-      </AppShell>
+      <UnlocksProvider api={api} token={s.token}>
+        <SignedInShell account={z.account}>
+          <div className="mx-auto w-full max-w-180">
+            {navState?.hint && (
+              <p role="alert" className="mb-3 rounded-lg border border-border p-3">
+                {navState.hint}
+              </p>
+            )}
+            {(wishPath.notes.wish || wishPath.notes.notice) && (
+              <Suspense fallback={null}>
+                <PathNotes {...wishPath.notes} />
+              </Suspense>
+            )}
+            <AppRoutes
+              api={api}
+              session={s}
+              account={z.account}
+              {...(z.error ? { error: z.error } : {})}
+              onOpen={setView}
+              onOpenProfile={openProfile}
+              handOver={wishPath.handOver}
+            />
+          </div>
+          {footer}
+        </SignedInShell>
+      </UnlocksProvider>
     </FeaturesProvider>
   );
 }

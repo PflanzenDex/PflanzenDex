@@ -11,6 +11,7 @@ import {
   stackedPill,
   type NavItem,
 } from "../nav-model/nav-item";
+import { NavNote } from "../nav-model/nav-note/nav-note";
 
 /** At most 5 slots in the bar (DS-25): 5 destinations, or 4 plus "Mehr". */
 const BAR_SLOTS = 5;
@@ -58,6 +59,7 @@ function MoreDrawer({ items, active }: { items: NavItem[]; active: boolean }) {
               >
                 {item.icon}
                 {item.label}
+                <NavNote text={item.note} inline />
               </NavLink>
             </li>
           ))}
@@ -96,6 +98,7 @@ export function MobileNavBar({ items }: { items: NavItem[] }) {
             <>
               <span className={stackedPill(active)}>{item.icon}</span>
               <span className="max-w-full break-words hyphens-auto">{item.label}</span>
+              <NavNote text={item.note} />
             </>
           )}
         </NavLink>

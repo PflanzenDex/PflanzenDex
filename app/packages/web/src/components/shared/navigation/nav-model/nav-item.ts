@@ -7,6 +7,8 @@ export type NavItem = {
   label: string;
   /** Decorative icon; the label carries the meaning (DS-17). */
   icon: ReactNode;
+  /** Text mark of a destination that is not open yet ("Bald", "Noch gesperrt"); the label itself never changes (US-ONB-05, NFR-13). */
+  note?: string;
 };
 
 /** Same look for the bottom bar and the rail: a 56x30 px pill behind a 22 px icon, the label under it (ADR 0011 decision 6). */

@@ -128,6 +128,8 @@ type Who = {
   operator?: boolean | undefined;
   /** `false` hides "Freunde" (the function group "social" is off for the account, US-DEV-06). */
   social?: boolean | undefined;
+  /** Destinations that are not open yet, with their text mark; they keep place, order and name (US-ONB-05, US-QS-09). */
+  locks?: Partial<Record<View, string>> | undefined;
 };
 
 const visible = (id: View, who: Who) =>
@@ -148,6 +150,7 @@ export function navItems(who: Who): NavItem[] {
     href: PATHS[e.id],
     label: e.text,
     icon: <e.icon aria-hidden="true" className="size-5 shrink-0" />,
+    ...(who.locks?.[e.id] ? { note: who.locks[e.id] } : {}),
   }));
 }
 

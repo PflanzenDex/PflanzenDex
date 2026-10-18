@@ -104,6 +104,23 @@ describe("US-ONB-05 lock states through the API", () => {
     );
   });
 
+  it("US-ONB-05 a function whose data exists is open whatever the rule says: a wish opens wishlist and discover (P-10)", async () => {
+    const sub = `onb05-${randomUUID()}`;
+    await call(app, sub, "GET", `/onboarding/unlocks${TZ}`);
+    const id = (await admin.query("select id from account where subject = $1", [sub])).rows[0].id;
+    await admin.query(
+      "insert into wish (account_id, name, name_key) values ($1, 'Monstera', 'monstera')",
+      [id],
+    );
+    const r = await call(app, sub, "GET", `/onboarding/unlocks${TZ}`);
+    const state = (fn: string) =>
+      r.body["functions"].find((f: { id: string }) => f.id === fn).state;
+    expect(state("wishlist")).toBe("open");
+    expect(state("discover")).toBe("open");
+    expect(state("friends")).toBe("locked");
+    await admin.query("delete from account where subject = $1", [sub]);
+  });
+
   it("US-ONB-05 a unknown function cannot be unlocked: 404 and nothing is written", async () => {
     const r = await call(app, subA, "POST", "/onboarding/unlocks/nonsense", {
       timeZone: "Europe/Berlin",
