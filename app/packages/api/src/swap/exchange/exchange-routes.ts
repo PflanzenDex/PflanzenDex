@@ -1,4 +1,10 @@
-import { exchangeList, swapRequest, type OfferDependencies, type Result } from "@pflanzendex/core";
+import {
+  exchangeList,
+  matchDeck,
+  swapRequest,
+  type OfferDependencies,
+  type Result,
+} from "@pflanzendex/core";
 import { IdempotencyPostgres } from "@pflanzendex/db";
 import { Hono, type Context } from "hono";
 import type { Pool } from "pg";
@@ -18,6 +24,8 @@ function reply<T>(c: Context<AuthEnv>, r: Result<T>) {
  * - GET /exchange/offers?timeZone=…[&type=cutting|plant|offshoot][&lack=true]: `{ offers }`, the open offers of
  *   friends with species, type, mode, health details (reason and date only), phase, `lack` ("you lack it", `null` =
  *   unknown), `onWishlist` (a hint, the list is never transmitted, FR-WUN-07) and `requested`
+ * - GET /exchange/match?timeZone=…: `{ cards }`, the match deck (US-TAU-01): the same offers narrowed to species on the
+ *   own wishlist, each with its `reasons`, oldest offer first; no score and no ranking (FR-TAU-06)
  * - POST /offers/:id/request `{ counterSpecimenId?, counterText? }` (with `Idempotency-Key`): 201 `{ swapId }`; 404
  *   `offer.not_found` (also for a foreign or unknown offer), 409 `swap.own_offer`, `offer.not_active`,
  *   `swap.already_requested`, `swap.counter_not_allowed`, `swap.counter_not_shared`, 404 `specimen.not_found`
@@ -29,6 +37,9 @@ export function exchangeRoutes(pool: Pool, offer: OfferDependencies): Hono<AuthE
   const routes = new Hono<AuthEnv>();
   routes.get("/exchange/offers", async (c) =>
     reply(c, await exchangeList(deps, c.get("account").id, c.req.query())),
+  );
+  routes.get("/exchange/match", async (c) =>
+    reply(c, await matchDeck(deps, c.get("account").id, c.req.query())),
   );
   routes.post("/offers/:id/request", async (c) =>
     write(c, idem, request, {

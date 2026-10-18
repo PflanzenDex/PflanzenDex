@@ -30,7 +30,7 @@ Delimitation from the non-goals in `16`: no leaderboards, no ranking of friends 
 
 ## User stories
 
-### US-TAU-01 · See matching offers of friends as cards · ⬜ new
+### US-TAU-01 · See matching offers of friends as cards · 🟨 new
 
 As a **plant keeper** I want to see the open offers of my friends that match my wishlist one by one as a card, so that I find a swap without scrolling through the whole exchange.
 
@@ -133,11 +133,11 @@ Acceptance criteria:
 
 | ID        | Requirement                                                                                                                                                                                                                                                 | Status          |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
-| FR-TAU-01 | Matching, order and reasons are pure domain logic without I/O with tests (P-02, P-06). Deck, list and AI client use the same logic.                                                                                                                         | ⬜              |
+| FR-TAU-01 | Matching, order and reasons are pure domain logic without I/O with tests (P-02, P-06). Deck, list and AI client use the same logic.                                                                                                                         | 🟨              |
 | FR-TAU-02 | **Private by default:** only confirmed friends, only offers they have shared (`Share = friends`), never strangers. The answers No and Later and the wishlist are invisible to friends (P-05, FR-WUN-07). Tenant isolation is tested (P-04, NFR-09).         | ⬜              |
 | FR-TAU-03 | A swap request arises only from an explicit Yes through the operation of US-SOZ-09; no operation creates a request from a swipe without it, and a gesture alone never sends anything irreversible without the visible undo or confirmation of US-TAU-02/05. | ⬜              |
 | FR-TAU-04 | No invented values: the fit is the species of a wish and nothing else; unknown stays "unknown" (P-08).                                                                                                                                                      | ⬜              |
-| FR-TAU-05 | Same data, same date and same viewer yield the same deck in the same order.                                                                                                                                                                                 | ⬜              |
+| FR-TAU-05 | Same data, same date and same viewer yield the same deck in the same order.                                                                                                                                                                                 | ✅              |
 | FR-TAU-06 | No ranking, no score, no percentage, no sorting of friends or offers by popularity or match strength; "Fits both ways" is a chip, not an order (FR-SOZ-11, P-08).                                                                                           | ⬜              |
 | FR-TAU-07 | Every view says what to do next, including every empty state (P-09). Nothing disappears silently: Later, No and ended offers stay findable until the keeper removes them (P-10).                                                                            | ⬜              |
 | FR-TAU-08 | Accessibility (NFR-13): all actions as buttons with text, operable by keyboard, announced by screen reader, 360 px layout, targets large enough, reduced motion respected; the swipe is only an extra.                                                      | ⬜              |
