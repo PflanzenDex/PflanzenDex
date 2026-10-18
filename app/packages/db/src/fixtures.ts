@@ -118,6 +118,13 @@ export async function createFixtureSpecimen(
   return r.id;
 }
 
+/** The ids of the specimens the application role sees as `account`, optionally after running `prelude` in the same transaction. */
+export const visibleSpecimenIds = (pool: Pool, account: string, prelude?: string) =>
+  withAccount(pool, account, async (c) => {
+    if (prelude) await c.query(prelude);
+    return (await c.query<{ id: string }>("select id from specimen")).rows.map((r) => r.id);
+  });
+
 /** Deleting a species with owner rights and as the application (AB-9: tests of foreign modules write no SQL on `species`). */
 export const deleteSpecies = (speciesId: string) =>
   fixtures().query("delete from species where id = $1", [speciesId]);
