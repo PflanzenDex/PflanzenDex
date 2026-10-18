@@ -6,7 +6,7 @@ import { CareProfileSection } from "./collection";
 import { loadSpecies, searchSpecies, SpeciesPage } from "./catalog";
 import type { WishToPlant } from "./wishlist";
 import type { ComponentProps } from "react";
-import { StartPage, UnlockPage, isShownLocked, useUnlocks } from "./shell";
+import { FunctionOverview, StartPage, UnlockPage, isShownLocked, useUnlocks } from "./shell";
 import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
 import {
@@ -157,6 +157,7 @@ export function AppRoutes(props: {
               account={account}
               onSignOut={s.signOut}
               onEverywhereSignOut={() => void s.everywhereSignOut()}
+              overview={<FunctionOverview api={api} token={s.token} />}
               {...(props.error ? { error: props.error } : {})}
             />
           }

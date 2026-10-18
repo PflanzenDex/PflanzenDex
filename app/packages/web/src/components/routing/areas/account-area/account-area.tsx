@@ -1,23 +1,19 @@
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useFeature } from "@/kernel";
 import { Link, useLocation } from "react-router";
 import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
 import { useSectionAnchor } from "@/components/routing/areas/shared/area-section/use-section-anchor";
-import { RemindersSection } from "@/monitoring";
-import { AiSection } from "@/ai";
-import { PrivacySection } from "@/privacy";
-import {
-  AchievementsOverviewSection,
-  CareRhythmSection,
-  YearInReviewSection,
-  useAchievementsVisible,
-} from "@/achievements";
-import { AccountView, MeasuredView, SettingsPage } from "@/account";
+import { useAchievementsVisible } from "@/achievements";
+import { AccountView } from "@/account";
 import type { Account } from "@/account";
-import { Button } from "@/components/ui/button/button";
+import {
+  AchievementsSection,
+  LowerSections,
+  SettingsSection,
+} from "./account-sections/account-sections";
 import {
   ACCOUNT_SECTIONS,
-  MANAGE_ADDRESS,
   PATHS,
 } from "@/components/shared/navigation/nav-model/navigation/navigation";
 
@@ -31,6 +27,7 @@ const SECTIONS = [
   { anchor: ACCOUNT_SECTIONS.reminders, title: "Erinnerungen" },
   { anchor: ACCOUNT_SECTIONS.aiClients, title: "KI-Clients" },
   { anchor: ACCOUNT_SECTIONS.measured, title: "Was wird gemessen?" },
+  { anchor: ACCOUNT_SECTIONS.functions, title: "Was die App kann" },
   { anchor: ACCOUNT_SECTIONS.data, title: "Meine Daten" },
 ] as const;
 const NAMES: Record<string, string> = Object.fromEntries(SECTIONS.map((s) => [s.anchor, s.title]));
@@ -65,63 +62,15 @@ function SectionNav({ sections }: { sections: readonly (typeof SECTIONS)[number]
   );
 }
 
-/** The settings with the link to the management of the locations and light zones, which lives in the Sammlung. */
-function SettingsSection(props: { api: string; token: Token }) {
-  return (
-    <AreaSection
-      anchor={ACCOUNT_SECTIONS.settings}
-      title="Einstellungen"
-      loading="Einstellungen werden geladen …"
-    >
-      <SettingsPage api={props.api} token={props.token} host />
-      <p className="text-sm text-muted-foreground">
-        Standorte und Lichtzonen legst du in der Sammlung an und änderst sie dort.
-      </p>
-      <Button asChild variant="secondary" className="self-start">
-        <Link to={MANAGE_ADDRESS}>Standorte und Lichtzonen verwalten</Link>
-      </Button>
-    </AreaSection>
-  );
-}
-
-/** The overview of the achievements (US-ACH-02) as a section of "Konto". */
-function AchievementsSection(props: { api: string; token: Token }) {
-  return (
-    <AreaSection
-      anchor={ACCOUNT_SECTIONS.achievements}
-      title="Erfolge"
-      loading="Erfolge werden geladen …"
-    >
-      <div className="flex min-w-0 flex-col gap-6">
-        <CareRhythmSection api={props.api} token={props.token} />
-        <AchievementsOverviewSection api={props.api} token={props.token} />
-        <YearInReviewSection api={props.api} token={props.token} />
-      </div>
-    </AreaSection>
-  );
-}
-
-/** Download of all own data and deleting the account (US-ACC-04). */
-function DataSection(props: { api: string; token: Token }) {
-  return (
-    <AreaSection
-      anchor={ACCOUNT_SECTIONS.data}
-      title="Meine Daten"
-      loading="Meine Daten werden geladen …"
-    >
-      <PrivacySection api={props.api} token={props.token} />
-    </AreaSection>
-  );
-}
-
 /** Calm mode hides the entry and the section of the achievements altogether (US-ACH-08). */
-function useVisibleSections(api: string, token: Token) {
+function useVisibleSections(api: string, token: Token, withOverview: boolean) {
   const achievements = useAchievementsVisible(api, token);
   const ai = useFeature("ai");
   const sections = SECTIONS.filter(
     (s) =>
       (achievements || s.anchor !== ACCOUNT_SECTIONS.achievements) &&
-      (ai || s.anchor !== ACCOUNT_SECTIONS.aiClients),
+      (ai || s.anchor !== ACCOUNT_SECTIONS.aiClients) &&
+      (withOverview || s.anchor !== ACCOUNT_SECTIONS.functions),
   );
   return { sections, achievements, ai };
 }
@@ -140,9 +89,15 @@ export function AccountArea(props: {
   error?: string;
   onSignOut: () => void;
   onEverywhereSignOut: () => void;
+  /** The overview "Was die App kann" (US-ONB-06) from the shell, which no area imports; without it the section is missing. */
+  overview?: ReactNode;
 }) {
   useSectionAnchor(NAMES);
-  const { sections, achievements, ai } = useVisibleSections(props.api, props.token);
+  const { sections, achievements, ai } = useVisibleSections(
+    props.api,
+    props.token,
+    props.overview !== undefined,
+  );
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <h1 className="text-2xl font-semibold">Konto</h1>
@@ -163,30 +118,7 @@ export function AccountArea(props: {
           </AreaSection>
           <SettingsSection api={props.api} token={props.token} />
           {achievements && <AchievementsSection api={props.api} token={props.token} />}
-          <AreaSection
-            anchor={ACCOUNT_SECTIONS.reminders}
-            title="Erinnerungen"
-            loading="Erinnerungen werden geladen …"
-          >
-            <RemindersSection api={props.api} token={props.token} />
-          </AreaSection>
-          {ai && (
-            <AreaSection
-              anchor={ACCOUNT_SECTIONS.aiClients}
-              title="KI-Clients"
-              loading="KI-Clients werden geladen …"
-            >
-              <AiSection api={props.api} token={props.token} />
-            </AreaSection>
-          )}
-          <AreaSection
-            anchor={ACCOUNT_SECTIONS.measured}
-            title="Was wird gemessen?"
-            loading="Wird geladen …"
-          >
-            <MeasuredView />
-          </AreaSection>
-          <DataSection api={props.api} token={props.token} />
+          <LowerSections api={props.api} token={props.token} ai={ai} overview={props.overview} />
         </div>
       </div>
     </div>
