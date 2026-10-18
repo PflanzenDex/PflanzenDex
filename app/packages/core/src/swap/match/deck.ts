@@ -8,6 +8,8 @@ export interface FitReason {
   readonly kind: "wishlist";
   /** The Latin name of the species; the wish is named by it. */
   readonly species: string;
+  /** The reasoning the keeper wrote for the wish, exactly as written; `null` = none (US-TAU-04). */
+  readonly reasoning: string | null;
 }
 
 /** A match card (US-TAU-01): an open offer of a friend plus the reasons it is shown. No score, no percentage (FR-TAU-06). */
@@ -86,12 +88,21 @@ export async function matchDeck(
   if (!list.ok) return list;
   const today = localToday(context.clock(), query.timeZone);
   const given = new Map((await context.answers.list(userId)).map((a) => [a.offerId, a]));
-  const matching = list.value.offers
-    .flatMap((o): MatchCard[] =>
-      o.onWishlist && o.speciesLatin !== null
-        ? [{ ...o, reasons: [{ kind: "wishlist", species: o.speciesLatin }] }]
-        : [],
-    )
+  const wished = list.value.offers.filter((o) => o.onWishlist && o.speciesLatin !== null);
+  const reasoning = await deps.wishes.reasoningOf(userId, [
+    ...new Set(wished.map((o) => o.speciesLatin as string)),
+  ]);
+  const matching = wished
+    .map((o): MatchCard => ({
+      ...o,
+      reasons: [
+        {
+          kind: "wishlist",
+          species: o.speciesLatin as string,
+          reasoning: reasoning.get(o.speciesLatin as string) ?? null,
+        },
+      ],
+    }))
     .sort(deckOrder);
   const cards = matching.filter((c) => {
     const a = given.get(c.offerId);

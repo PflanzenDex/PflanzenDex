@@ -3,6 +3,7 @@ import {
   wishNameKey,
   type ExchangeDependencies,
   type OfferDependencies,
+  type WishHints,
 } from "@pflanzendex/core";
 import { SpeciesPostgres, SpecimenPostgres, SwapsPostgres, WishesPostgres } from "@pflanzendex/db";
 import type { Pool } from "pg";
@@ -55,11 +56,32 @@ export function exchangeDependencies(pool: Pool, offer: OfferDependencies): Exch
         return names.filter((n): n is string => n !== null);
       },
     },
-    wishes: {
-      async onWishlist(userId, latinNames) {
-        const keys = new Set((await wishes.open(userId)).map((w) => wishNameKey(w.name)));
-        return new Set(latinNames.filter((n) => keys.has(wishNameKey(n))));
-      },
+    wishes: wishHints(wishes),
+  };
+}
+
+/**
+ * The wishlist answers a yes or no per species and the own reasoning of the wish, never its list (FR-WUN-07): a wish counts
+ * for a species when its folded name equals the folded Latin name (US-TAU-04).
+ */
+function wishHints(wishes: WishesPostgres): WishHints {
+  return {
+    async onWishlist(userId, latinNames) {
+      const keys = new Set((await wishes.open(userId)).map((w) => wishNameKey(w.name)));
+      return new Set(latinNames.filter((n) => keys.has(wishNameKey(n))));
+    },
+    async reasoningOf(userId, latinNames) {
+      const written = new Map(
+        (await wishes.open(userId)).flatMap((w) =>
+          w.reasoning !== null ? [[wishNameKey(w.name), w.reasoning] as const] : [],
+        ),
+      );
+      return new Map(
+        latinNames.flatMap((n) => {
+          const text = written.get(wishNameKey(n));
+          return text !== undefined ? [[n, text] as const] : [];
+        }),
+      );
     },
   };
 }

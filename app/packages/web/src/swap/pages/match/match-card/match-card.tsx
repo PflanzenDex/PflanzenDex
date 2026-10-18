@@ -57,6 +57,14 @@ export function MatchCard(props: { card: Card; onSwipe: (side: "left" | "right")
         {c.reasons.map((r) => (
           <Badge key={r.species} variant="outline">{`Auf deiner Wunschliste: ${r.species}`}</Badge>
         ))}
+        {c.reasons.map(
+          (r) =>
+            r.reasoning !== null && (
+              <p key={`${r.species}-why`} className="m-0 w-full whitespace-pre-line text-sm">
+                {`Dein Grund: ${r.reasoning}`}
+              </p>
+            ),
+        )}
       </section>
     </article>
   );
