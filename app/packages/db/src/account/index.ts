@@ -3,4 +3,5 @@ export { admitAccount, findOrCreateAccount } from "./sign-in.ts";
 export { AccessPostgres } from "./access.ts";
 export { AccountFeaturesPostgres } from "./features.ts";
 export { ProfilePostgres } from "./profile.ts";
+export { ManualUnlockPostgres } from "./unlock/index.ts";
 export { FIXTURES_ACCOUNT } from "./fixtures.ts";
