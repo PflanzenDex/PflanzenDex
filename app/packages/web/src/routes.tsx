@@ -6,7 +6,14 @@ import { CareProfileSection } from "./collection";
 import { loadSpecies, searchSpecies, SpeciesPage } from "./catalog";
 import type { WishToPlant } from "./wishlist";
 import type { ComponentProps } from "react";
-import { FunctionOverview, StartPage, UnlockPage, isShownLocked, useUnlocks } from "./shell";
+import {
+  ContextHint,
+  FunctionOverview,
+  StartPage,
+  UnlockPage,
+  isShownLocked,
+  useUnlocks,
+} from "./shell";
 import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
 import {
@@ -87,6 +94,7 @@ function handOverRoutes(api: string, token: Token, h: HandOver, open: (id: strin
           onCompleted={h.onCreated}
           onOpenSpecies={open}
           onCreateSpecimen={h.startFromWish}
+          renderHint={(a) => <ContextHint api={api} token={token} applicable={a} />}
         />
       }
     />,

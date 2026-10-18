@@ -1,10 +1,5 @@
-import { Suspense, type ReactNode, useCallback, useEffect, useState } from "react";
-import {
-  FIRST_PLANT_GUIDE,
-  isNewAccount,
-  startAction,
-  type OnboardingCounts,
-} from "@pflanzendex/core";
+import { Suspense, type ReactNode, useCallback } from "react";
+import { isNewAccount, startAction, type OnboardingCounts } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
 import { loadSpecimenCount } from "../../collection";
 import { LoadFrame, useFeature, useInvalidate } from "../../kernel";
@@ -13,54 +8,14 @@ import { OnboardingWizard } from "../onboarding-wizard/onboarding-wizard";
 import type { LinkTarget } from "../../components/shared/navigation/nav-model/navigation/navigation";
 import { FriendsBanner } from "../../social";
 import { LockedRows } from "../unlock";
-import { HintNote, loadHints, saveHint, type HintState } from "./hint";
+import { HintNote } from "./hint";
+import { useGuideEnd, useHints } from "./use-hints";
 
 const COUNTS_KEY = ["start", "counts"];
 const ACTIONS = "flex flex-col gap-3 sm:flex-row";
 
 type Token = () => Promise<string | undefined>;
 type Target = Extract<LinkTarget, "species" | "collection">;
-
-/** The one hint of the start page (US-ONB-07): the first plant exists. The server decides whether it is due. */
-const applicableOf = (counts: OnboardingCounts): string[] =>
-  counts.specimens === 1 ? ["first_plant_saved"] : [];
-
-/**
- * The hint state and the end of the guide of the account (DM-ONB-03), read once per start page. `null` while loading;
- * a failed request fails open: no hint, and the guide counts as not ended, so nothing is held back (P-10).
- */
-function useHints(api: string, token: Token, counts: OnboardingCounts) {
-  const [state, setState] = useState<HintState | "failed" | null>(null);
-  const key = applicableOf(counts).join(",");
-  useEffect(() => {
-    let current = true;
-    void (async () => {
-      const t = await token();
-      const r = t ? await loadHints(api, t, key ? key.split(",") : []) : null;
-      if (current) setState(r?.ok ? r.value : "failed");
-    })();
-    return () => {
-      current = false;
-    };
-  }, [api, token, key]);
-  return [state, setState] as const;
-}
-
-/** Leaving the guide (finished, skipped or ended) is stored per account: switching tabs or devices must not bring it back. */
-function useGuideEnd(api: string, token: Token, hints: HintState | "failed" | null) {
-  const [endedHere, setEndedHere] = useState(false);
-  const leave = () => {
-    setEndedHere(true);
-    void (async () => {
-      const t = await token();
-      if (t) await saveHint(api, t, FIRST_PLANT_GUIDE, "dismissed");
-    })();
-  };
-  return [
-    endedHere || (typeof hints === "object" && hints !== null && hints.guideEnded),
-    leave,
-  ] as const;
-}
 
 function Overview(props: {
   counts: OnboardingCounts;
@@ -138,7 +93,7 @@ function Content(props: {
         counts={counts}
         onOpen={props.onOpen}
         hint={
-          due === "first_plant_saved" ? (
+          due === "first_plant_saved" || due === "function_unlocked" ? (
             <Suspense fallback={null}>
               <HintNote
                 occasion={due}

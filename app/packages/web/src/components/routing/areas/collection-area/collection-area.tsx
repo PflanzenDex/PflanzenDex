@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo, useState, type ReactNode } from "react";
 import type { Species, Specimen } from "@pflanzendex/core";
 import { CollectionPage, DifficultyPage } from "@/collection";
 import { LightPage } from "@/light";
@@ -42,6 +42,8 @@ export function CollectionArea(props: {
   onOpenSpecies?: (id: string) => void;
   /** Starts the way from a bought wish to its specimen (US-WUN-05); the app wires it. */
   onCreateSpecimen?: (wish: WishToPlant) => void;
+  /** The calm hint at the list of plants (US-ONB-07); the app wires it, because the shell is not imported here. */
+  renderHint?: (applicable: readonly string[]) => ReactNode;
 }) {
   const { view: chosen, choose } = useSammlungView();
   const { sort, choose: chooseSort } = useSpeciesSort();
@@ -160,6 +162,7 @@ function Mode(p: ModeProps) {
       onSpeciesChoose={p.onSpeciesChoose}
       onCompleted={p.onCompleted}
       host={host}
+      {...(p.renderHint ? { renderHint: p.renderHint } : {})}
       {...(p.group === "location" ? { groupBy: "location" as const } : {})}
       onMeasure={p.setMeasure}
     />
