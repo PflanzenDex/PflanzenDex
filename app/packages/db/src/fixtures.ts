@@ -172,3 +172,10 @@ export async function deleteAccountsWithCatalog(accounts: readonly string[]): Pr
     client.release();
   }
 }
+
+// Superuser-owner mode and the friendship helper live in their own file (file length limit), same entry point (#907).
+export {
+  befriend,
+  createSuperuserOwnerDatabase,
+  type SuperuserOwnerDatabase,
+} from "./fixtures-superuser-owner.ts";

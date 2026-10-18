@@ -1,16 +1,13 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createAccountWithName, createFixtureSpecimen } from "../fixtures.ts";
 import {
-  migrate,
-  openAdminPool,
-  openFixturePool,
-  openOwnerPool,
-  openPool,
-  testDatabaseUrl,
-  withAccount,
-} from "../kernel/index.ts";
+  createAccountWithName,
+  createFixtureSpecimen,
+  createSuperuserOwnerDatabase,
+  type SuperuserOwnerDatabase,
+} from "../fixtures.ts";
+import { migrate, openFixturePool, openOwnerPool, withAccount } from "../kernel/index.ts";
 import { MeasurementsPostgres, TreatmentsPostgres } from "../care/index.ts";
 import { SpecimenPostgres } from "../collection/index.ts";
 import { FriendsPostgres, SharingPostgres } from "../social/index.ts";
@@ -689,32 +686,17 @@ describe("US-SOZ-11 the handover in one transaction", () => {
 // #891: the `security definer` functions must give the same answer when the owner of the tables bypasses row security
 // (a superuser: the cluster user of the Docker image and of `make dev`). A scratch database owned by the superuser.
 describe("US-SOZ-09 / US-TAU-03 requesting a friend's offer with a superuser as table owner (#891)", () => {
-  const DB = `swap_su_${randomUUID()
-    .replace(/[0-9-]/g, "")
-    .slice(0, 8)}`;
   const [clara, benno, fremd] = [randomUUID(), randomUUID(), randomUUID()];
-  let adminSu: Pool;
+  let db: SuperuserOwnerDatabase;
   let su: Pool;
   beforeAll(async () => {
-    adminSu = openAdminPool();
-    await adminSu.query(`create database ${DB}`);
-    const url = new URL(testDatabaseUrl());
-    url.pathname = `/${DB}`;
-    su = openPool(url.toString());
-    su.on("error", () => undefined);
-    await migrate(su);
-    expect(
-      (await su.query("select rolsuper from pg_roles where rolname = current_user")).rows[0],
-    ).toEqual({
-      rolsuper: true,
-    });
+    db = await createSuperuserOwnerDatabase("swap");
+    su = db.pool;
     for (const id of [clara, benno, fremd])
       await createAccountWithName(su, id, `S-${id.slice(0, 4)}`);
   });
   afterAll(async () => {
-    await su.end();
-    await adminSu.query(`drop database if exists ${DB} with (force)`);
-    await adminSu.end();
+    await db.drop();
   });
 
   async function suOffer(owner: string, name: string) {
