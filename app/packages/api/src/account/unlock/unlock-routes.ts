@@ -11,16 +11,14 @@ import {
 import { IdempotencyPostgres } from "@pflanzendex/db";
 import { Hono, type MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
+import { styleRoutes } from "./style-routes";
 import { unlockSources } from "./unlock-sources";
 import { body, errorBody, write, type AuthEnv, type Ctx, type FeatureAccess } from "../../kernel";
 
 /** The parts of the app options the lock routes read. */
 interface UnlockRouteOptions {
   readonly clock?: (() => Date) | undefined;
-  /**
-   * The keeper style of the account (DM-ONB-01, US-ONB-03). Until that story stores it, every account counts as `many`:
-   * everything is open and nothing is announced as locked (FR-ONB-06: nobody loses a function).
-   */
+  /** Replaces the stored keeper style of the account (tests; DM-ONB-01, US-ONB-03). */
   readonly keeperStyle?: ((userId: string) => Promise<"few" | "many">) | undefined;
 }
 
@@ -54,7 +52,7 @@ export function unlockRoutes(
   opt: UnlockRouteOptions,
 ): Hono<AuthEnv> {
   const clock = opt.clock ?? (() => new Date());
-  const { unlocks, featureSet, facts } = unlockSources(pool, {
+  const { unlocks, styles, featureSet, facts } = unlockSources(pool, {
     features,
     clock: opt.clock,
     style: opt.keeperStyle,
@@ -63,6 +61,7 @@ export function unlockRoutes(
   const deps = { idempotency: new IdempotencyPostgres(pool) };
 
   const routes = new Hono<AuthEnv>();
+  styleRoutes(routes, auth, { styles, unlocks, facts, deps, clock });
   routes.use("/onboarding/unlocks", auth).use("/onboarding/unlocks/*", auth);
   routes.get("/onboarding/unlocks", async (c) => {
     const timeZone = c.req.query("timeZone");

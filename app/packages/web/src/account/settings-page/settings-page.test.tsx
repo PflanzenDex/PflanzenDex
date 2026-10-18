@@ -40,6 +40,7 @@ function fakeServer(
     vi.fn<typeof fetch>(async (url, init) => {
       const path = new URL(String(url)).pathname;
       if (path === "/achievements/settings") return response(200, { calmMode: false });
+      if (path === "/onboarding/style") return response(200, { style: "few", chosen: true });
       if (path !== "/account/profile") return response(404, {});
       if (init?.method === "PUT") {
         const body = JSON.parse(String(init.body)) as Record<string, unknown>;
@@ -486,5 +487,16 @@ describe("US-ACH-08 calm mode on the profile page", () => {
     show();
     const box = await screen.findByRole<HTMLInputElement>("checkbox", { name: "Ruhemodus" });
     expect(box.checked).toBe(false);
+  });
+});
+
+describe("US-ONB-03 keeper style on the profile page", () => {
+  it("US-ONB-03 the profile offers 'Wie nutzt du die App?' with the stored style", async () => {
+    fakeServer();
+    show();
+    const select = await screen.findByRole<HTMLSelectElement>("combobox", {
+      name: "Wie nutzt du die App?",
+    });
+    expect(select.value).toBe("few");
   });
 });
