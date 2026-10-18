@@ -26,10 +26,10 @@ export type DeckAction =
   | { type: "undo" }
   | { type: "again" };
 
-export const initialDeck = (cards: readonly Card[]): DeckState => ({
+export const initialDeck = (cards: readonly Card[], later: readonly Card[] = []): DeckState => ({
   round: cards,
   pos: 0,
-  later: [],
+  later,
   declined: 0,
   requested: 0,
   last: null,
@@ -81,7 +81,8 @@ export function deckReducer(s: DeckState, a: DeckAction): DeckState {
     case "undo":
       return undo(s);
     case "again":
-      return { ...initialDeck(s.later), moved: true };
+      // The Later cards first, then the cards not yet decided (none at the end of the deck).
+      return { ...initialDeck([...s.later, ...s.round.slice(s.pos)]), moved: true };
   }
 }
 

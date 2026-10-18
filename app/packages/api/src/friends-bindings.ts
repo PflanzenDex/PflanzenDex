@@ -53,5 +53,5 @@ export function bindFriends(
   const swapOptions = { ...(clock ? { clock } : {}) };
   app.route("/", offerRoutes(pool, swapOptions));
   app.route("/", swapRoutes(pool, clock, targetLocation));
-  app.route("/", exchangeRoutes(pool, offerDependencies(pool, swapOptions)));
+  app.route("/", exchangeRoutes(pool, offerDependencies(pool, swapOptions), clock));
 }

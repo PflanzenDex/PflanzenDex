@@ -1,11 +1,16 @@
 import { useCallback } from "react";
 import { Link } from "react-router";
-import type { MatchCard } from "@pflanzendex/core";
 import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 import { EXCHANGE_PATH } from "@/components/shared/navigation/nav-model/navigation/navigation";
 import { Button } from "@/components/ui/button/button";
 import { LoadFrame, type Response } from "../../../kernel";
-import { answerYes, loadMatchDeck } from "../../api/match-api";
+import {
+  answerYes,
+  loadMatchDeck,
+  saveAnswer,
+  undoAnswer,
+  type DeckData,
+} from "../../api/match-api";
 import { MatchDeck } from "./match-deck/match-deck";
 
 type Token = () => Promise<string | undefined>;
@@ -27,7 +32,7 @@ function DeckSkeleton({ label }: { label: string }) {
 
 /**
  * The match deck (US-TAU-01, epic TAU): open offers of friends that match the own wishlist, one card at a time with "Ja",
- * "Nein" and "Später" or a swipe. A second view on the data of the exchange (US-SOZ-09), no new way to reach strangers.
+ * "Nein" and "Später" or a swipe; Nein and Später are stored privately (US-TAU-02). A second view on the data of the exchange (US-SOZ-09), no new way to reach strangers.
  * Private by default (P-05); no ranking, no score (FR-TAU-06).
  */
 export function MatchPage(props: { api: string; token: Token }) {
@@ -37,6 +42,20 @@ export function MatchPage(props: { api: string; token: Token }) {
     async (offerId: string): ReturnType<typeof answerYes> => {
       const t = await token();
       return t ? answerYes(api, t, offerId) : (SIGN_IN_NEEDED as Response<never>);
+    },
+    [api, token],
+  );
+  const answer = useCallback(
+    async (offerId: string, a: "no" | "later") => {
+      const t = await token();
+      return t ? saveAnswer(api, t, offerId, a) : (SIGN_IN_NEEDED as Response<never>);
+    },
+    [api, token],
+  );
+  const undo = useCallback(
+    async (offerId: string) => {
+      const t = await token();
+      return t ? undoAnswer(api, t, offerId) : (SIGN_IN_NEEDED as Response<never>);
     },
     [api, token],
   );
@@ -62,7 +81,15 @@ export function MatchPage(props: { api: string; token: Token }) {
         heading="Passende Angebote"
         fresh
       >
-        {(cards: readonly MatchCard[]) => <MatchDeck cards={cards} onYes={yes} />}
+        {(deck: DeckData) => (
+          <MatchDeck
+            cards={deck.cards}
+            later={deck.later}
+            onYes={yes}
+            onAnswer={answer}
+            onUndo={undo}
+          />
+        )}
       </LoadFrame>
     </section>
   );
