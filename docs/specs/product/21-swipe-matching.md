@@ -69,7 +69,7 @@ Acceptance criteria:
 - Writing happens only through the validating operations (P-03). The request is the record of the Yes; no second copy of it is stored (NFR-04).
 - The giver is notified about the request as for any request (US-SOZ-12), with nothing that tells them the request came from a swipe.
 
-### US-TAU-04 · Understand why a card appears · ⬜ new
+### US-TAU-04 · Understand why a card appears · 🟨 new
 
 As a **plant keeper** I want to see why an offer is shown to me, so that I trust the deck.
 
@@ -136,7 +136,7 @@ Acceptance criteria:
 | FR-TAU-01 | Matching, order and reasons are pure domain logic without I/O with tests (P-02, P-06). Deck, list and AI client use the same logic.                                                                                                                         | 🟨              |
 | FR-TAU-02 | **Private by default:** only confirmed friends, only offers they have shared (`Share = friends`), never strangers. The answers No and Later and the wishlist are invisible to friends (P-05, FR-WUN-07). Tenant isolation is tested (P-04, NFR-09).         | 🟨              |
 | FR-TAU-03 | A swap request arises only from an explicit Yes through the operation of US-SOZ-09; no operation creates a request from a swipe without it, and a gesture alone never sends anything irreversible without the visible undo or confirmation of US-TAU-02/05. | ⬜              |
-| FR-TAU-04 | No invented values: the fit is the species of a wish and nothing else; unknown stays "unknown" (P-08).                                                                                                                                                      | ⬜              |
+| FR-TAU-04 | No invented values: the fit is the species of a wish and nothing else; unknown stays "unknown" (P-08).                                                                                                                                                      | 🟨              |
 | FR-TAU-05 | Same data, same date and same viewer yield the same deck in the same order.                                                                                                                                                                                 | ✅              |
 | FR-TAU-06 | No ranking, no score, no percentage, no sorting of friends or offers by popularity or match strength; "Fits both ways" is a chip, not an order (FR-SOZ-11, P-08).                                                                                           | ⬜              |
 | FR-TAU-07 | Every view says what to do next, including every empty state (P-09). Nothing disappears silently: Later, No and ended offers stay findable until the keeper removes them (P-10).                                                                            | 🟨              |

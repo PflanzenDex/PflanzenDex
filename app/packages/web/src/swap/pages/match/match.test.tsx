@@ -27,7 +27,7 @@ const card = (n: number, extra: Record<string, unknown> = {}) => ({
   lack: true,
   onWishlist: true,
   requested: false,
-  reasons: [{ kind: "wishlist", species: `Aloe vera ${n}` }],
+  reasons: [{ kind: "wishlist", species: `Aloe vera ${n}`, reasoning: null }],
   ...extra,
 });
 
@@ -105,6 +105,22 @@ describe("US-TAU-01 match card in the web app", () => {
     expect(c.getByText("Auf deiner Wunschliste: Aloe vera 1")).toBeTruthy();
     expect(screen.getByText("Karte 1 von 2")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/%|Punkte|Sterne/);
+  });
+
+  it("US-TAU-04 shows the own reasoning of the wish exactly as written, and nothing when there is none", async () => {
+    server([
+      card(1, {
+        reasons: [{ kind: "wishlist", species: "Aloe vera 1", reasoning: "Bleibt klein!" }],
+      }),
+      card(2),
+    ]);
+    open();
+    const c = within(await current());
+    expect(c.getByText("Dein Grund: Bleibt klein!")).toBeTruthy();
+    expect(c.getByText("Auf deiner Wunschliste: Aloe vera 1")).toBeTruthy();
+    await press(/^Nein/);
+    await screen.findByRole("heading", { name: "Echte Aloe 2" });
+    expect(screen.queryByText(/Dein Grund/)).toBeNull();
   });
 
   it("US-TAU-01 offers Nein, Später and Ja as buttons that name species and giver (NFR-13)", async () => {

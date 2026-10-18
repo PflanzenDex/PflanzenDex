@@ -299,7 +299,7 @@ describe("US-TAU-01 the match deck through the API", () => {
   type Card = {
     offerId: string;
     speciesLatin: string;
-    reasons: { kind: string; species: string }[];
+    reasons: { kind: string; species: string; reasoning: string | null }[];
   };
 
   it("without a token 401; an invalid time zone 400", async () => {
@@ -322,12 +322,29 @@ describe("US-TAU-01 the match deck through the API", () => {
     await call(subE, "POST", "/wishes", { name: latin });
     const mine = ((await deck(subE)).body.cards as Card[]).filter((c) => c.offerId === offerId);
     expect(mine).toHaveLength(1);
-    expect(mine[0]?.reasons).toEqual([{ kind: "wishlist", species: latin }]);
+    expect(mine[0]?.reasons).toEqual([{ kind: "wishlist", species: latin, reasoning: null }]);
     expect(JSON.stringify((await deck(subE)).body)).not.toContain('"wishes"');
     for (const other of [subD, subOp, subA])
       expect(((await deck(other)).body.cards as Card[]).map((c) => c.offerId)).not.toContain(
         offerId,
       );
+  });
+
+  it("US-TAU-04 the card carries the reasoning of my wish exactly as written; a stranger never gets it", async () => {
+    const id = await specimen(subA, "T1b");
+    await call(subA, "PUT", `/sharing/specimens/${id}`, { share: "friends" });
+    const offerId = (
+      await call(subA, "POST", "/offers", { specimenId: id, type: "plant", mode: "give_away" })
+    ).body.id as string;
+    const latin = (
+      await call(subB, "GET", "/exchange/offers?timeZone=Europe%2FBerlin")
+    ).body.offers.find((x: { offerId: string }) => x.offerId === offerId).speciesLatin as string;
+    const reasoning = "Bleibt klein, für das Fensterbrett.";
+    expect((await call(subB, "POST", "/wishes", { name: latin, reasoning })).status).toBe(201);
+    const card = ((await deck(subB)).body.cards as Card[]).find((c) => c.offerId === offerId);
+    expect(card?.reasons).toEqual([{ kind: "wishlist", species: latin, reasoning }]);
+    for (const other of [subD, subE, subOp, subA])
+      expect(JSON.stringify((await deck(other)).body)).not.toContain(reasoning);
   });
 });
 

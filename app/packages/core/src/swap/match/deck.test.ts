@@ -14,7 +14,11 @@ const sp = (latin: string | null) => ({
   speciesGerman: latin ? "Deutsch" : null,
 });
 
-function setup(offers: FriendOffer[], wished = ["Aloe vera", "Echeveria elegans"]) {
+function setup(
+  offers: FriendOffer[],
+  wished = ["Aloe vera", "Echeveria elegans"],
+  reasoning: Record<string, string> = {},
+) {
   const facts = new StubFacts({
     [id(1)]: sp("Aloe vera"),
     [id(2)]: sp("Echeveria elegans"),
@@ -30,7 +34,7 @@ function setup(offers: FriendOffer[], wished = ["Aloe vera", "Echeveria elegans"
     } as unknown as ExchangeDependencies["treatments"],
     phases: new StubPhases({}),
     mine: { latinNamesOf: async () => [] },
-    wishes: new StubWishHints({ anna: wished }),
+    wishes: new StubWishHints({ anna: wished }, { anna: reasoning }),
   };
   return deps;
 }
@@ -51,8 +55,24 @@ describe("US-TAU-01 match deck", () => {
       ownerName: "Ben",
       type: "cutting",
       mode: "swap",
-      reasons: [{ kind: "wishlist", species: "Aloe vera" }],
+      reasons: [{ kind: "wishlist", species: "Aloe vera", reasoning: null }],
     });
+  });
+
+  it("US-TAU-04 the reason names the wish and carries my own reasoning exactly as written, never rewritten", async () => {
+    const text = "  Bleibt klein, passt aufs Fensterbrett!\nUnbedingt ein Steckling.  ";
+    const r = await deck(setup([offer(1), offer(2)], undefined, { "Aloe vera": text }));
+    const reasons = r.ok ? r.value.cards.map((c) => c.reasons) : [];
+    expect(reasons).toEqual([
+      [{ kind: "wishlist", species: "Aloe vera", reasoning: text }],
+      [{ kind: "wishlist", species: "Echeveria elegans", reasoning: null }],
+    ]);
+  });
+
+  it("US-TAU-04 FR-TAU-04 P-08 the reason is the species of the wish and nothing else: no genus fallback, unknown species never match", async () => {
+    // Haworthia fasciata is not wished; Aloe vera is. A wish on the genus or an unknown species creates no card.
+    const r = await deck(setup([offer(3), offer(4)], ["Haworthia", "Aloe"]));
+    expect(r.ok && r.value.cards).toEqual([]);
   });
 
   it("leaves out offers that match no wish and offers of an unknown species (P-08)", async () => {

@@ -96,9 +96,16 @@ export class StubFacts implements OfferFacts {
 }
 
 export class StubWishHints implements WishHints {
-  constructor(private readonly names: Readonly<Record<string, readonly string[]>> = {}) {}
+  constructor(
+    private readonly names: Readonly<Record<string, readonly string[]>> = {},
+    private readonly reasoning: Readonly<Record<string, Readonly<Record<string, string>>>> = {},
+  ) {}
   async onWishlist(userId: string, latinNames: readonly string[]) {
     const own = new Set(this.names[userId] ?? []);
     return new Set(latinNames.filter((n) => own.has(n)));
+  }
+  async reasoningOf(userId: string, latinNames: readonly string[]) {
+    const own = this.reasoning[userId] ?? {};
+    return new Map(latinNames.flatMap((n) => (own[n] ? [[n, own[n] as string] as const] : [])));
   }
 }

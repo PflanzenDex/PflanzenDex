@@ -103,6 +103,11 @@ export interface ExchangeStore {
 export interface WishHints {
   /** The subset of `latinNames` that is on the caller's open wishlist. */
   onWishlist(userId: string, latinNames: readonly string[]): Promise<ReadonlySet<string>>;
+  /**
+   * The reasoning the caller wrote for the open wish of a species, as written (US-TAU-04); a species without a wish or
+   * without a reasoning is missing. Own data of the caller, asked per species and never as a list (FR-WUN-07).
+   */
+  reasoningOf(userId: string, latinNames: readonly string[]): Promise<ReadonlyMap<string, string>>;
 }
 
 /** Species and name of a shared specimen of a friend, read as the owner after the database released it. */
