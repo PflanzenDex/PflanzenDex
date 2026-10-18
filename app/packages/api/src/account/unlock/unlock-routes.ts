@@ -14,14 +14,14 @@ import type { Pool } from "pg";
 import { unlockSources } from "./unlock-sources";
 import { body, errorBody, write, type AuthEnv, type Ctx, type FeatureAccess } from "../../kernel";
 
-export interface UnlockRouteOptions {
-  readonly clock?: () => Date;
-  readonly features: FeatureAccess;
+/** The parts of the app options the lock routes read. */
+interface UnlockRouteOptions {
+  readonly clock?: (() => Date) | undefined;
   /**
    * The keeper style of the account (DM-ONB-01, US-ONB-03). Until that story stores it, every account counts as `many`:
    * everything is open and nothing is announced as locked (FR-ONB-06: nobody loses a function).
    */
-  readonly style?: (userId: string) => Promise<"few" | "many">;
+  readonly keeperStyle?: ((userId: string) => Promise<"few" | "many">) | undefined;
 }
 
 const badZone = (c: Ctx) =>
@@ -50,10 +50,15 @@ const entry = (s: UnlockStatus) => {
 export function unlockRoutes(
   pool: Pool,
   auth: MiddlewareHandler,
+  features: FeatureAccess,
   opt: UnlockRouteOptions,
 ): Hono<AuthEnv> {
   const clock = opt.clock ?? (() => new Date());
-  const { unlocks, featureSet, facts } = unlockSources(pool, opt);
+  const { unlocks, featureSet, facts } = unlockSources(pool, {
+    features,
+    clock: opt.clock,
+    style: opt.keeperStyle,
+  });
   const unlock = onboardingUnlockFunction({ unlocks, features: featureSet });
   const deps = { idempotency: new IdempotencyPostgres(pool) };
 

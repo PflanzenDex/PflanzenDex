@@ -17,9 +17,9 @@ import type { FeatureAccess } from "../../kernel";
 export function unlockSources(
   pool: Pool,
   opt: {
-    readonly clock?: () => Date;
+    readonly clock?: (() => Date) | undefined;
     readonly features: FeatureAccess;
-    readonly style?: (userId: string) => Promise<KeeperStyle>;
+    readonly style?: ((userId: string) => Promise<KeeperStyle>) | undefined;
   },
 ) {
   const clock = opt.clock ?? (() => new Date());

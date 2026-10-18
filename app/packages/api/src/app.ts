@@ -20,7 +20,14 @@ import {
   specimenZoneUsageFor,
   specimenRoutes,
 } from "./collection";
-import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
+import {
+  GAP_PATHS,
+  SPECIES_PATHS,
+  REVIEW_PATHS,
+  gapRoutes,
+  speciesRoutes,
+  reviewRoutes,
+} from "./catalog";
 import { wishZoneUsageFor } from "./wishlist";
 import { equipmentLocationUsageFor, equipmentZoneUsageFor } from "./equipment";
 import { bindFriends } from "./friends-bindings";
@@ -93,20 +100,15 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
   app.route("/", speciesRoutes(pool));
   for (const path of REVIEW_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", reviewRoutes(pool, COLLECTION_REPOINTERS));
+  for (const path of GAP_PATHS) app.use(path, auth);
+  app.route("/", gapRoutes(pool));
   for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", specimenRoutes(pool, { clock: opt.clock, ...careSources(pool, opt) }));
   for (const path of POKEDEX_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", pokedexRoutes(pool));
   app.route("/", discoverRoutes(pool, auth, opt.zoneStock));
   app.route("/", achievementsRoutes(pool, auth, opt.clock));
-  app.route(
-    "/",
-    unlockRoutes(pool, auth, {
-      features,
-      ...(opt.clock ? { clock: opt.clock } : {}),
-      ...(opt.keeperStyle ? { style: opt.keeperStyle } : {}),
-    }),
-  );
+  app.route("/", unlockRoutes(pool, auth, features, opt));
   app.route("/", monitoringRoutes(pool, auth));
   for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", careProfileRoutes(pool));
