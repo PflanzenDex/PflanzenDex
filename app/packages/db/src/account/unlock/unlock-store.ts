@@ -16,12 +16,17 @@ export class ManualUnlockPostgres implements ManualUnlockStore {
     return r.rows;
   }
 
-  async add(userId: string, id: string, unlockedOn: string): Promise<ManualUnlock> {
+  async add(
+    userId: string,
+    id: string,
+    unlockedOn: string,
+    source: "tap" | "style_many" = "tap",
+  ): Promise<ManualUnlock> {
     const r = await withAccount(this.pool, userId, async (c) => {
       await c.query(
         `insert into account_unlock (account_id, function_id, unlocked_on, source)
-         values ($1, $2, $3, 'tap') on conflict (account_id, function_id) do nothing`,
-        [userId, id, unlockedOn],
+         values ($1, $2, $3, $4) on conflict (account_id, function_id) do nothing`,
+        [userId, id, unlockedOn, source],
       );
       return c.query<ManualUnlock>(
         `select function_id as id, to_char(unlocked_on, 'YYYY-MM-DD') as "unlockedOn"

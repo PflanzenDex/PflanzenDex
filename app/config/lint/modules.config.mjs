@@ -49,6 +49,7 @@ const MODULES = [
       "operator_cost",
       "account_feature",
       "account_unlock",
+      "account_style",
     ],
     dependsOn: ["kernel", "achievements"], // web only: the calm mode switch sits on the settings page (US-ACH-08)
     ports: [],
@@ -186,7 +187,6 @@ const UNMODULED_FOLDERS = {};
 
 // Module-named folders that exist but do not meet the rules yet (ratchet, like the list above).
 const MODULE_FOLDERS_IN_TRANSITION = {};
-
 const KERNEL = "kernel";
 export const MODULE_CONFIG = {
   MODULES,

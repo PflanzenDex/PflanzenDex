@@ -67,6 +67,7 @@ function fakeServer(status = 200, calmMode = false) {
         });
       if (path === "/reminders/subscriptions") return response(200, { subscriptions: [] });
       if (path === "/achievements/settings") return response(200, { calmMode });
+      if (path === "/onboarding/style") return response(200, { style: "few", chosen: true });
       if (path === "/achievements")
         return response(200, {
           calmMode: false,

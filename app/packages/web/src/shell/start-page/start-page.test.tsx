@@ -20,15 +20,26 @@ interface World {
   zones: unknown[];
   cards: unknown[];
   archived?: number;
+  /** The keeper style answer of the account (US-ONB-03); `chosen: false` until the question is answered. */
+  style?: { style: string; chosen: boolean };
   hits?: unknown[];
   locations?: { id: string; name: string; lightZoneId: string | null; kind: string }[];
   writes: { method: string; path: string; body: Record<string, unknown> }[];
+}
+
+/** The keeper style question of US-ONB-03: the stored answer and its change. */
+function styleAnswer(w: World, path: string, method: string): Promise<Response> | null {
+  if (path !== "/onboarding/style") return null;
+  if (method === "GET") return response(200, w.style ?? { style: "few", chosen: true });
+  return response(200, { style: w.writes.at(-1)?.body["style"] });
 }
 
 /** The writes of US-ONB-02: the default location and placing the plant. */
 function placeWrite(w: World, path: string, method = "POST"): Promise<Response> | null {
   if (method === "GET" && path === "/locations")
     return response(200, { locations: w.locations ?? [] });
+  const style = styleAnswer(w, path, method);
+  if (style) return style;
   if (method === "GET") return null;
   if (path === "/locations/defaults") {
     w.locations = [{ id: "l1", name: "Zuhause", lightZoneId: null, kind: "indoor" }];
@@ -304,6 +315,55 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
     view();
     await screen.findByRole("heading", { name: "Start" });
     expect(screen.queryByText(/noch keinen Standort|keine Lichtzonen/)).toBeNull();
+  });
+});
+
+describe("US-ONB-03 the style question after the first plant", () => {
+  const ask = () => world({ style: { style: "few", chosen: false } });
+
+  it("US-ONB-03 it is not asked before the plant is saved", async () => {
+    fakeServer(ask());
+    view();
+    await pickSpecies();
+    expect(screen.queryByText("Wie nutzt du die App?")).toBeNull();
+    expect(paths()).not.toContain("/onboarding/style");
+  });
+
+  it("US-ONB-03 after saving and answering the place, one question with two answers, no level or rank", async () => {
+    fakeServer(ask());
+    view();
+    await saveFirstPlant();
+    await userEvent.click(await screen.findByRole("button", { name: "Später" }));
+    expect(
+      await screen.findByRole("button", { name: "Ich pflege ein paar Pflanzen" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ich verwalte viel, zeig mir alles" })).toBeTruthy();
+    expect(screen.queryByText(/Level|Rang|Stufe/i)).toBeNull();
+  });
+
+  it("US-ONB-03 an answer is stored once; 'Später' on the question stores few", async () => {
+    const w = ask();
+    fakeServer(w);
+    view();
+    await saveFirstPlant();
+    await userEvent.click(await screen.findByRole("button", { name: "Später" }));
+    await userEvent.click(await screen.findByRole("button", { name: /zeig mir alles/ }));
+    await vi.waitFor(() =>
+      expect(w.writes.find((x) => x.path === "/onboarding/style")?.body).toMatchObject({
+        style: "many",
+      }),
+    );
+    expect(screen.queryByText("Wie nutzt du die App?")).toBeNull();
+    expect(screen.getByRole("button", { name: "Miss deine Pflanze" })).toBeTruthy();
+  });
+
+  it("US-ONB-03 an account that already answered (or an existing one with many) is not asked", async () => {
+    fakeServer(world({ style: { style: "many", chosen: true } }));
+    view();
+    await saveFirstPlant();
+    await userEvent.click(await screen.findByRole("button", { name: "Später" }));
+    await vi.waitFor(() => expect(paths()).toContain("/onboarding/style"));
+    expect(screen.queryByText("Wie nutzt du die App?")).toBeNull();
   });
 });
 

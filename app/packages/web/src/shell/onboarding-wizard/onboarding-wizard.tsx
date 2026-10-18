@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { FIRST_PLANT_STEPS } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
+import { KeeperStyleQuestion } from "../../account";
 import { SaveStep } from "./save-step/save-step";
 import { SpeciesStep, type SpeciesLookup } from "./species-step/species-step";
 import { useFirstPlant } from "./use-first-plant";
@@ -33,6 +34,11 @@ function Created(props: {
           specimenId={props.specimenId}
           onDone={() => setAsked(true)}
         />
+      )}
+      {asked && (
+        <Suspense fallback={null}>
+          <KeeperStyleQuestion api={props.api} token={props.token} />
+        </Suspense>
       )}
       <div className={ACTIONS}>
         <Button type="button" onClick={props.onOpen}>
