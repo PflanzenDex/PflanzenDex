@@ -7,3 +7,4 @@ export {
   catalogFillStore,
   checkCatalogFill,
 } from "./fill-job";
+export { GAP_PATHS, gapRoutes } from "./gaps";

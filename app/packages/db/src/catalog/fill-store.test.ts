@@ -4,7 +4,12 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, openFixturePool, openOwnerPool, withAccount } from "../kernel/index.ts";
 import { assignRole } from "../fixtures.ts";
 import { findSchemaViolations } from "../schema-check.ts";
-import { CatalogFillPostgres, ReviewPostgres, SpeciesPostgres } from "./index.ts";
+import {
+  CatalogFillPostgres,
+  CatalogGapsPostgres,
+  ReviewPostgres,
+  SpeciesPostgres,
+} from "./index.ts";
 import type { FieldValueRecord, SnapshotRecord } from "./fill-store.ts";
 import type { SpeciesName, SpeciesValues } from "./species.ts";
 
@@ -237,5 +242,19 @@ describe("US-BES-12 database adapter of the catalog fill", () => {
 
   it("US-BES-12 the schema check accepts the new shared tables", async () => {
     expect(await findSchemaViolations(owner)).toEqual([]);
+  });
+});
+
+describe("US-BES-13 gap list store", () => {
+  it("US-BES-13 returns approved species with unknown fields as null and their source snapshots, not proposals", async () => {
+    const approved = await create(values(`Gapstore ${run}`, { substrate: "Sand" }), true);
+    const proposal = await create(values(`Gapproposal ${run}`), false);
+    await store.record(approved, [snapshot(approved, "gbif")], []);
+    const rows = await new CatalogGapsPostgres(owner).approvedSpecies(anna);
+    const found = rows.find((r) => r.id === approved);
+    expect(found?.values.substrate).toBe("Sand");
+    expect(found?.values.germanName).toBeNull();
+    expect(found?.checks).toEqual([{ source: "gbif", retrievedAt: "2026-10-18T10:00:00Z" }]);
+    expect(rows.some((r) => r.id === proposal)).toBe(false);
   });
 });
