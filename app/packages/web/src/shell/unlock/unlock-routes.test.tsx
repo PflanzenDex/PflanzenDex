@@ -72,4 +72,14 @@ describe("US-ONB-05 routes of locked functions", () => {
     expect(screen.queryByRole("button", { name: "Jetzt freischalten" })).toBeNull();
     expect(screen.queryByText("Noch gesperrt")).toBeNull();
   });
+
+  it("US-ONB-05 the Sammlung keeps wishlist and equipment as rows with reason and way, and never blocks the mode", async () => {
+    renderAt("/collection?view=wishlist", [
+      entry("wishlist", "locked"),
+      entry("equipment", "open"),
+    ]);
+    const row = await screen.findByRole("link", { name: /Wunschliste: lege noch 3 Pflanzen an/ });
+    expect(row.getAttribute("href")).toBe("/unlock/wishlist");
+    expect(screen.queryByRole("link", { name: /Ausrüstung:/ })).toBeNull();
+  });
 });

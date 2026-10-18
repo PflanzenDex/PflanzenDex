@@ -61,6 +61,7 @@ const page = (path: string) =>
         <Routes>
           <Route path="/unlock/:id" element={<UnlockPage api="http://api" token={token} />} />
           <Route path="/" element={<LockedRows />} />
+          <Route path="/inside" element={<LockedRows only={["wishlist", "ai_access"]} />} />
         </Routes>
       </UnlocksProvider>
     </MemoryRouter>,
@@ -177,5 +178,20 @@ describe("US-ONB-05 locked rows", () => {
     const { container } = page("/");
     await vi.waitFor(() => expect(vi.mocked(fetch)).toHaveBeenCalled());
     expect(container.textContent).toBe("");
+  });
+
+  it("US-ONB-05 inside a destination only the rows of that part show, one heading level down, same marking", async () => {
+    server(() => [
+      swapping(),
+      swapping({ id: "wishlist" } as Partial<UnlockEntry>),
+      open("ai_access"),
+    ]);
+    page("/inside");
+    const row = await screen.findByRole("link", { name: /Wunschliste: lege noch 3 Pflanzen an/ });
+    expect(within(row).getByText("Noch gesperrt")).toBeTruthy();
+    expect(row.getAttribute("href")).toBe("/unlock/wishlist");
+    expect(screen.getByRole("heading", { level: 3, name: "Noch nicht geöffnet" })).toBeTruthy();
+    expect(screen.queryByText(/Tauschen/)).toBeNull();
+    expect(screen.queryByText(/KI-Zugang/)).toBeNull();
   });
 });

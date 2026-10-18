@@ -9,6 +9,7 @@ import type { ComponentProps } from "react";
 import {
   ContextHint,
   FunctionOverview,
+  LockedRows,
   StartPage,
   UnlockPage,
   isShownLocked,
@@ -94,6 +95,7 @@ function handOverRoutes(api: string, token: Token, h: HandOver, open: (id: strin
           onCompleted={h.onCreated}
           onOpenSpecies={open}
           onCreateSpecimen={h.startFromWish}
+          locks={(ids) => <LockedRows only={ids} />}
           renderHint={(a) => <ContextHint api={api} token={token} applicable={a} />}
         />
       }
@@ -166,6 +168,7 @@ export function AppRoutes(props: {
               onSignOut={s.signOut}
               onEverywhereSignOut={() => void s.everywhereSignOut()}
               overview={<FunctionOverview api={api} token={s.token} />}
+              locks={(ids) => <LockedRows only={ids} />}
               {...(props.error ? { error: props.error } : {})}
             />
           }

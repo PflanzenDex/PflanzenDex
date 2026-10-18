@@ -228,6 +228,28 @@ describe("US-QS-14 Konto with its sections", () => {
   });
 });
 
+describe("US-ONB-05 locked parts inside Konto", () => {
+  it("US-ONB-05 the app hands the locked rows of AI access and the achievement parts to their sections", async () => {
+    fakeServer();
+    render(
+      <MemoryRouter initialEntries={["/account"]}>
+        <AccountArea
+          api="http://api"
+          token={async () => "tok"}
+          account={account}
+          onSignOut={() => undefined}
+          onEverywhereSignOut={() => undefined}
+          locks={(ids) => {
+            return <p>{`Zeile ${ids.join(",")}`}</p>;
+          }}
+        />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText("Zeile ai_access")).toBeTruthy();
+    expect(await screen.findByText("Zeile care_rhythm,anniversaries,year_in_review")).toBeTruthy();
+  });
+});
+
 describe("US-QS-14 the address points at a section", () => {
   it.each([
     ["#profil", "Profil"],

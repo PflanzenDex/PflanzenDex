@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Link } from "react-router";
 import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
 import { RemindersSection } from "@/monitoring";
@@ -17,6 +17,12 @@ import {
 } from "@/components/shared/navigation/nav-model/navigation/navigation";
 
 type Token = () => Promise<string | undefined>;
+/** Renders the locked rows of some functions inside a section (US-ONB-05); wired by the app. */
+export type Locks = (ids: readonly string[]) => ReactNode;
+
+function LocksHere(props: { locks: Locks | undefined; ids: readonly string[] }) {
+  return props.locks ? <Suspense fallback={null}>{props.locks(props.ids)}</Suspense> : null;
+}
 
 /** The settings with the link to the management of the locations and light zones, which lives in the Sammlung. */
 export function SettingsSection(props: { api: string; token: Token }) {
@@ -38,7 +44,11 @@ export function SettingsSection(props: { api: string; token: Token }) {
 }
 
 /** The overview of the achievements (US-ACH-02) as a section of "Konto". */
-export function AchievementsSection(props: { api: string; token: Token }) {
+export function AchievementsSection(props: {
+  api: string;
+  token: Token;
+  locks?: Locks | undefined;
+}) {
   return (
     <AreaSection
       anchor={ACCOUNT_SECTIONS.achievements}
@@ -46,6 +56,7 @@ export function AchievementsSection(props: { api: string; token: Token }) {
       loading="Erfolge werden geladen …"
     >
       <div className="flex min-w-0 flex-col gap-6">
+        <LocksHere locks={props.locks} ids={["care_rhythm", "anniversaries", "year_in_review"]} />
         <CareRhythmSection api={props.api} token={props.token} />
         <AchievementsOverviewSection api={props.api} token={props.token} />
         <YearInReviewSection api={props.api} token={props.token} />
@@ -73,6 +84,7 @@ export function LowerSections(props: {
   token: Token;
   ai: boolean;
   overview: ReactNode;
+  locks?: Locks | undefined;
 }) {
   const { api, token, ai, overview } = props;
   return (
@@ -90,6 +102,7 @@ export function LowerSections(props: {
           title="KI-Clients"
           loading="KI-Clients werden geladen …"
         >
+          <LocksHere locks={props.locks} ids={["ai_access"]} />
           <AiSection api={api} token={token} />
         </AreaSection>
       )}
