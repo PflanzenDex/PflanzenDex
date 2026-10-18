@@ -2,15 +2,19 @@ import { isTimeZone, localToday, ok, type Result, failed, appError } from "../..
 import { exchangeList, type ExchangeQuery } from "../exchange";
 import type { ExchangeDependencies, ExchangeOffer } from "../exchange";
 import type { MatchAnswers, StoredMatchAnswer } from "./answer/types";
+import { bothWays, ownOffersAsked, type BothWaysReason, type MyOffers } from "./both-ways";
 
-/** The verifiable fact why a card appears (US-TAU-04): the wish and the species it names, nothing more (P-08). */
-export interface FitReason {
+/** The wish behind a card (US-TAU-04): the species it names and the keeper's own reasoning, nothing more (P-08). */
+export interface WishlistReason {
   readonly kind: "wishlist";
   /** The Latin name of the species; the wish is named by it. */
   readonly species: string;
   /** The reasoning the keeper wrote for the wish, exactly as written; `null` = none (US-TAU-04). */
   readonly reasoning: string | null;
 }
+
+/** The verifiable fact why a card appears or what makes it special; every reason comes from domain data, never a model (P-01). */
+export type FitReason = WishlistReason | BothWaysReason;
 
 /** A match card (US-TAU-01): an open offer of a friend plus the reasons it is shown. No score, no percentage (FR-TAU-06). */
 export interface MatchCard extends ExchangeOffer {
@@ -67,11 +71,12 @@ export interface MatchCounts {
   wishes(userId: string): Promise<number>;
 }
 
-/** What the deck needs besides the exchange: the private answers, the clock (NFR-08) and, to explain an empty deck, the counts. */
+/** What the deck needs besides the exchange: the private answers, the clock (NFR-08), the counts that explain an empty deck and the own offers for "fits both ways". */
 export interface MatchContext {
   readonly answers: MatchAnswers;
   readonly clock: () => Date;
   readonly counts?: MatchCounts;
+  readonly mine?: MyOffers;
 }
 
 /**
@@ -109,6 +114,7 @@ export async function matchDeck(
   const reasoning = await deps.wishes.reasoningOf(userId, [
     ...new Set(wished.map((o) => o.speciesLatin as string)),
   ]);
+  const asked = await ownOffersAsked(deps, context.mine, userId);
   const matching = wished
     .map((o): MatchCard => ({
       ...o,
@@ -118,6 +124,7 @@ export async function matchDeck(
           species: o.speciesLatin as string,
           reasoning: reasoning.get(o.speciesLatin as string) ?? null,
         },
+        ...bothWays(o, asked),
       ],
     }))
     .sort(deckOrder);

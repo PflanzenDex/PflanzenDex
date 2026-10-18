@@ -13,6 +13,34 @@ export function swipeSide(dx: number, dy: number, width: number): "left" | "righ
   return dx < 0 ? "left" : "right";
 }
 
+/** Why the card appears and what makes it special: the wish with the own reasoning, and "fits both ways" as a fact (US-TAU-04, US-TAU-05). */
+function Reasons(props: { card: Card }) {
+  const c = props.card;
+  const wishes = c.reasons.flatMap((r) => (r.kind === "wishlist" ? [r] : []));
+  const both = c.reasons.flatMap((r) => (r.kind === "both_ways" ? [r] : []));
+  return (
+    <section aria-label="Grund" className="flex flex-wrap items-center gap-2">
+      {wishes.map((r) => (
+        <Badge key={r.species} variant="outline">{`Auf deiner Wunschliste: ${r.species}`}</Badge>
+      ))}
+      {wishes.map(
+        (r) =>
+          r.reasoning !== null && (
+            <p key={`${r.species}-why`} className="m-0 w-full whitespace-pre-line text-sm">
+              {`Dein Grund: ${r.reasoning}`}
+            </p>
+          ),
+      )}
+      {both.length > 0 && <Badge variant="secondary">Passt in beide Richtungen</Badge>}
+      {both.map((r) => (
+        <p key={r.offerId} className="m-0 w-full text-sm">
+          {`${c.ownerName ?? "Ein Freund"} möchte ${r.speciesGerman ?? r.speciesLatin ?? "dein Angebot"} von dir.`}
+        </p>
+      ))}
+    </section>
+  );
+}
+
 /** One offer of a friend as a card (US-TAU-01): names, giver, type, mode, note, health and the reason it is shown (US-TAU-04). No score. */
 export function MatchCard(props: { card: Card; onSwipe: (side: "left" | "right") => void }) {
   const { card: c } = props;
@@ -53,19 +81,7 @@ export function MatchCard(props: { card: Card; onSwipe: (side: "left" | "right")
       {c.phase === "dormancy" && (
         <p className="m-0 text-sm text-muted-foreground">Zurzeit in der Ruhephase.</p>
       )}
-      <section aria-label="Grund" className="flex flex-wrap items-center gap-2">
-        {c.reasons.map((r) => (
-          <Badge key={r.species} variant="outline">{`Auf deiner Wunschliste: ${r.species}`}</Badge>
-        ))}
-        {c.reasons.map(
-          (r) =>
-            r.reasoning !== null && (
-              <p key={`${r.species}-why`} className="m-0 w-full whitespace-pre-line text-sm">
-                {`Dein Grund: ${r.reasoning}`}
-              </p>
-            ),
-        )}
-      </section>
+      <Reasons card={c} />
     </article>
   );
 }

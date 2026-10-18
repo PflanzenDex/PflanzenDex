@@ -50,17 +50,17 @@ export async function undoAnswer(
   )("DELETE", `/exchange/match/${encodeURIComponent(offerId)}/answer`);
 }
 
-/** "Ja" on a card (US-TAU-03): the swap request of US-SOZ-09; asking twice answers `already_requested`. */
+/** "Ja" on a card (US-TAU-03): the swap request of US-SOZ-09; asking twice answers `already_requested`. On a card that fits both ways an own offer can be proposed as the counter-offer (US-TAU-05). */
 export async function answerYes(
   api: string,
   token: string,
   offerId: string,
-  fetchFn: FetchFn = fetch,
+  counterSpecimenId: string | null = null,
 ): Promise<Response<MatchYesResult>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token)(
     "POST",
     `/exchange/match/${encodeURIComponent(offerId)}/yes`,
-    {},
+    counterSpecimenId === null ? {} : { counterSpecimenId },
   );
   return r.ok ? { ok: true, value: r.value as MatchYesResult } : r;
 }

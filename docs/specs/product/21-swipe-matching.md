@@ -81,7 +81,7 @@ Acceptance criteria:
 - No comparison with species averages, no similarity guess by genus or family: the match is the species of the wish and nothing else (P-08).
 - Reasons arise from the domain logic, never from a model (P-01).
 
-### US-TAU-05 · See that it fits both ways · ⬜ new
+### US-TAU-05 · See that it fits both ways · 🟨 new
 
 As a **plant keeper** I want to see when the giver also wants something I offer, so that I can propose a fair swap.
 

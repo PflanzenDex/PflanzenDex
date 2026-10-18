@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { StubPhases } from "../offer/test-helpers";
-import { InMemoryExchange, StubFacts, StubWishHints, friendOffer } from "../exchange/test-helpers";
+import {
+  InMemoryExchange,
+  StubFacts,
+  StubWishHints,
+  friendOffer,
+  swapSide,
+} from "../exchange/test-helpers";
 import type { ExchangeDependencies, FriendOffer } from "../exchange";
 import { execute } from "../../kernel/operation";
 import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
@@ -118,6 +124,91 @@ describe("US-TAU-01 match deck", () => {
       { timeZone: "nope" },
     );
     expect(!r.ok && r.error.code).toBe("input.invalid");
+  });
+});
+
+describe("US-TAU-05 fits both ways", () => {
+  const mine = {
+    offerId: "o1",
+    specimenId: id(9),
+    speciesLatin: "Echeveria elegans",
+    speciesGerman: "Echeverie",
+  };
+  const read = async (deps: ExchangeDependencies, open: unknown[] = [mine]) => {
+    const r = await matchDeck(
+      deps,
+      {
+        answers: new InMemoryMatchAnswers(),
+        clock: () => new Date(),
+        mine: { open: async () => open as never },
+      },
+      "anna",
+      { timeZone: "Europe/Berlin" },
+    );
+    return r.ok ? r.value.cards : [];
+  };
+  const withRequest = (extra = {}) => {
+    const deps = setup([offer(1), offer(2, { ownerId: "cleo", ownerName: "Cleo" })]);
+    (deps.swaps as InMemoryExchange).sides["anna"] = [swapSide(extra)];
+    return deps;
+  };
+
+  it("US-TAU-05 the card of a giver who has an open request on my offer says it fits both ways and names my offer", async () => {
+    const cards = await read(withRequest());
+    const both = (c: (typeof cards)[number]) => c.reasons.filter((r) => r.kind === "both_ways");
+    expect(both(cards[0] as never)).toEqual([
+      {
+        kind: "both_ways",
+        giverName: "Ben",
+        offerId: "o1",
+        specimenId: id(9),
+        speciesLatin: "Echeveria elegans",
+        speciesGerman: "Echeverie",
+      },
+    ]);
+    // Another giver, who did not ask for anything, gets no chip and nothing is said about their wishes (P-05).
+    expect(both(cards[1] as never)).toEqual([]);
+  });
+
+  it("US-TAU-05 FR-TAU-06 the chip is a fact, not an order: the same cards in the same order with or without it", async () => {
+    const without = await read(withRequest(), []);
+    const with_ = await read(withRequest());
+    expect(with_.map((c) => c.offerId)).toEqual(without.map((c) => c.offerId));
+  });
+
+  it("US-TAU-05 only an open request counts: a decided one, a request I made myself or an offer that is not open does not", async () => {
+    expect((await read(withRequest({ status: "declined" })))[0]?.reasons).toHaveLength(1);
+    expect((await read(withRequest({ role: "recipient" })))[0]?.reasons).toHaveLength(1);
+    expect((await read(withRequest(), [{ ...mine, offerId: "o2" }]))[0]?.reasons).toHaveLength(1);
+  });
+
+  it("US-TAU-05 without the own-offers port nothing is said", async () => {
+    const r = await matchDeck(
+      withRequest(),
+      { answers: new InMemoryMatchAnswers(), clock: () => new Date() },
+      "anna",
+      {
+        timeZone: "Europe/Berlin",
+      },
+    );
+    expect(r.ok && r.value.cards[0]?.reasons).toHaveLength(1);
+  });
+
+  it("US-TAU-05 a Yes on such a card proposes my offer as the counter-offer, checked by the store", async () => {
+    const deps = withRequest();
+    const r = await execute(
+      matchYes(deps, new InMemoryMatchAnswers()),
+      { idempotency: new InMemoryIdempotencyStore() },
+      {
+        context: { userId: "anna" },
+        input: { offerId: id(101), counterSpecimenId: id(9) },
+        idempotencyKey: "kc",
+      },
+    );
+    expect(r.ok).toBe(true);
+    expect((deps.swaps as InMemoryExchange).requests).toEqual([
+      { userId: "anna", offerId: id(101), counter: id(9), text: null },
+    ]);
   });
 });
 

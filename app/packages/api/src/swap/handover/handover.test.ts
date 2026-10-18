@@ -502,6 +502,45 @@ describe("US-TAU-02 No and Later through the API", () => {
     expect((await raw(subE)).entries.map((x) => x.offerId)).not.toContain(offerId);
   });
 
+  it("US-TAU-05 a card fits both ways when the giver asked for an own offer of mine; a Yes proposes it as the counter-offer; other friends see nothing", async () => {
+    const theirs = await matching("T25");
+    // My own open offer, shared with friends, which the giver (subA) asks for.
+    const mineSpecimen = await specimen(subE, "T25mine");
+    await call(subE, "PUT", `/sharing/specimens/${mineSpecimen}`, { share: "friends" });
+    const mine = (
+      await call(subE, "POST", "/offers", {
+        specimenId: mineSpecimen,
+        type: "cutting",
+        mode: "swap",
+      })
+    ).body.id as string;
+    expect((await call(subA, "POST", `/offers/${mine}/request`, {})).status).toBe(201);
+    const cards = (await raw(subE)).cards as unknown as {
+      offerId: string;
+      reasons: { kind: string; offerId?: string; specimenId?: string }[];
+    }[];
+    const card = cards.find((c) => c.offerId === theirs);
+    expect(card?.reasons.filter((r) => r.kind === "both_ways")).toMatchObject([
+      { offerId: mine, specimenId: mineSpecimen },
+    ]);
+    // Nobody else learns that the giver wants something: no chip for another friend, none in the giver's own deck.
+    for (const other of [subB, subC, subD])
+      expect(
+        JSON.stringify((await call(other, "GET", "/exchange/match?timeZone=Europe%2FBerlin")).body),
+      ).not.toContain(mine);
+    const yes = await call(subE, "POST", `/exchange/match/${theirs}/yes`, {
+      counterSpecimenId: mineSpecimen,
+    });
+    expect(yes).toMatchObject({ status: 201, body: { outcome: "requested" } });
+    const sent = (await swaps(subE)).sent.find((r) => r.swapId === yes.body.swapId);
+    expect(sent).toBeTruthy();
+    // A specimen that is not mine cannot be proposed.
+    const other = await matching("T26");
+    expect(
+      await call(subE, "POST", `/exchange/match/${other}/yes`, { counterSpecimenId: randomUUID() }),
+    ).toMatchObject({ status: 404, body: { error: { code: "specimen.not_found" } } });
+  });
+
   it("a Yes after Later requests the offer and clears the Later entry (the request is the record)", async () => {
     const offerId = await matching("T23");
     await answer(subE, offerId, "later");

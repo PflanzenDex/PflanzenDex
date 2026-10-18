@@ -33,9 +33,9 @@ function DeckSkeleton({ label }: { label: string }) {
 /** The writes of the deck, each with a fresh token; without a token they answer "sign in" (P-10). */
 function useWrites(api: string, token: Token) {
   const yes = useCallback(
-    async (offerId: string): ReturnType<typeof answerYes> => {
+    async (offerId: string, counter: string | null): ReturnType<typeof answerYes> => {
       const t = await token();
-      return t ? answerYes(api, t, offerId) : (SIGN_IN_NEEDED as Response<never>);
+      return t ? answerYes(api, t, offerId, counter) : (SIGN_IN_NEEDED as Response<never>);
     },
     [api, token],
   );
