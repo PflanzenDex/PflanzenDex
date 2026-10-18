@@ -1,12 +1,12 @@
-import type { MatchCard, MatchYesResult } from "@pflanzendex/core";
+import type { MatchCard, MatchEntry, MatchYesResult } from "@pflanzendex/core";
 import { call, createWrite, currentTimeZone, type Response } from "../../kernel";
 
 type FetchFn = typeof fetch;
 
-/** The deck: cards without an answer, and the cards answered with "Später" (US-TAU-02). */
+/** The deck: the cards to decide now and every stored answer with the state of its offer (US-TAU-02, US-TAU-06). */
 export interface DeckData {
   readonly cards: readonly MatchCard[];
-  readonly later: readonly MatchCard[];
+  readonly entries: readonly MatchEntry[];
 }
 
 /** The match deck (US-TAU-01): open offers of friends whose species is on the own wishlist, derived on every request. */
@@ -25,14 +25,16 @@ export async function saveAnswer(
   token: string,
   offerId: string,
   answer: "no" | "later",
-): Promise<Response<unknown>> {
-  return createWrite(api, token)("PUT", `/exchange/match/${encodeURIComponent(offerId)}/answer`, {
-    answer,
-    timeZone: currentTimeZone(),
-  });
+): Promise<Response<{ answeredOn: string }>> {
+  const r = await createWrite(api, token)(
+    "PUT",
+    `/exchange/match/${encodeURIComponent(offerId)}/answer`,
+    { answer, timeZone: currentTimeZone() },
+  );
+  return r.ok ? { ok: true, value: r.value as { answeredOn: string } } : r;
 }
 
-/** "Rückgängig" after Nein or Später: takes the stored answer back, the card is open again. */
+/** "Rückgängig" after Nein or Später, "Wieder ansehen" and "Aus der Liste entfernen" (US-TAU-06): takes the stored answer back. */
 export async function undoAnswer(
   api: string,
   token: string,

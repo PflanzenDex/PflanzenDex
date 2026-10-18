@@ -4,6 +4,10 @@ export interface StoredMatchAnswer {
   readonly answer: "no" | "later";
   /** Local calendar date `YYYY-MM-DD` of the keeper (NFR-08). */
   readonly answeredOn: string;
+  /** Copied when the answer was given, so the entry stays readable when the offer ends (P-10). */
+  readonly speciesLatin: string | null;
+  readonly speciesGerman: string | null;
+  readonly giverName: string | null;
 }
 
 /** Port for the private answers No and Later; the adapter lives in `db` and runs under the row rule (P-04, P-05). */

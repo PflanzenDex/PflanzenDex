@@ -75,29 +75,6 @@ export function Empty() {
   );
 }
 
-/** The cards answered with "Später" stay findable (P-10, US-TAU-02); the keeper can look at them again at any time. */
-export function LaterSection(props: { cards: readonly Card[]; onShow: () => void }) {
-  if (props.cards.length === 0) return null;
-  return (
-    <section
-      aria-labelledby="later-title"
-      className="grid gap-2 rounded-lg border border-border p-3"
-    >
-      <h2 id="later-title" className="m-0 text-base font-semibold">
-        {`Später ansehen (${props.cards.length})`}
-      </h2>
-      <ul className="m-0 list-none p-0 text-sm">
-        {props.cards.map((c) => (
-          <li key={c.offerId}>{SIGN(c)}</li>
-        ))}
-      </ul>
-      <Button variant="outline" size="touch" onClick={props.onShow}>
-        Diese Karten jetzt ansehen
-      </Button>
-    </section>
-  );
-}
-
 export function UndoButton(props: { onClick: () => void }) {
   return (
     <div className="text-center">

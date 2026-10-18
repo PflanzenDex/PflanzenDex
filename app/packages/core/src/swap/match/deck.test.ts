@@ -35,7 +35,9 @@ function setup(offers: FriendOffer[], wished = ["Aloe vera", "Echeveria elegans"
   return deps;
 }
 const deck = (deps: ExchangeDependencies, user = "anna") =>
-  matchDeck(deps, new InMemoryMatchAnswers(), user, { timeZone: "Europe/Berlin" });
+  matchDeck(deps, { answers: new InMemoryMatchAnswers(), clock: () => new Date() }, user, {
+    timeZone: "Europe/Berlin",
+  });
 const offer = (n: number, extra: Partial<FriendOffer> = {}) =>
   friendOffer({ offerId: id(n + 100), specimenId: id(n), ...extra });
 
@@ -89,9 +91,12 @@ describe("US-TAU-01 match deck", () => {
   });
 
   it("refuses an invalid time zone", async () => {
-    const r = await matchDeck(setup([offer(1)]), new InMemoryMatchAnswers(), "anna", {
-      timeZone: "nope",
-    });
+    const r = await matchDeck(
+      setup([offer(1)]),
+      { answers: new InMemoryMatchAnswers(), clock: () => new Date() },
+      "anna",
+      { timeZone: "nope" },
+    );
     expect(!r.ok && r.error.code).toBe("input.invalid");
   });
 });

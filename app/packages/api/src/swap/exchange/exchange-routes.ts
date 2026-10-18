@@ -27,14 +27,16 @@ function reply<T>(c: Context<AuthEnv>, r: Result<T>) {
  * - GET /exchange/offers?timeZone=…[&type=cutting|plant|offshoot][&lack=true]: `{ offers }`, the open offers of
  *   friends with species, type, mode, health details (reason and date only), phase, `lack` ("you lack it", `null` =
  *   unknown), `onWishlist` (a hint, the list is never transmitted, FR-WUN-07) and `requested`
- * - GET /exchange/match?timeZone=…: `{ cards, later }`, the match deck (US-TAU-01): the same offers narrowed to species
- *   on the own wishlist, each with its `reasons`, oldest offer first; no score and no ranking (FR-TAU-06). `cards` are
- *   the offers without an answer, `later` those answered with Later (US-TAU-02); an offer answered with No is not listed
+ * - GET /exchange/match?timeZone=…: `{ cards, entries }`, the match deck (US-TAU-01): the same offers narrowed to
+ *   species on the own wishlist, each with its `reasons`, oldest offer first; no score and no ranking (FR-TAU-06).
+ *   `cards` are the offers without an answer plus those answered with Later on an earlier day (US-TAU-06); `entries`
+ *   are all answers of the caller (No and Later) with `answeredOn`, the `state` of the offer (`open`, `requested`,
+ *   `wish_done`, `unavailable`) and the `card` while it is open, so nothing disappears silently (P-10)
  * - PUT /exchange/match/:offerId/answer `{ answer: "no" | "later", timeZone }` (with `Idempotency-Key`; US-TAU-02):
  *   stores the private answer of the caller, 200 `{ answeredOn }`; 404 `offer.not_found` for an offer that is no card of
  *   the caller (also for a foreign one, P-05); the giver learns nothing (FR-TAU-02)
- * - DELETE /exchange/match/:offerId/answer (with `Idempotency-Key`): takes the answer back, 200 `{ undone: true }`; 404
- *   `offer.not_found` when there is none
+ * - DELETE /exchange/match/:offerId/answer (with `Idempotency-Key`): takes the answer back (undo, "Reconsider", "Remove
+ *   from list"), 200 `{ undone: true }`; 404 `offer.not_found` when there is none
  * - POST /exchange/match/:offerId/yes (with `Idempotency-Key`; US-TAU-03): the same request as below, without a return;
  *   201 `{ outcome: "requested", swapId }` or `{ outcome: "already_requested", swapId: null }` (no second request); the
  *   refusals are those of the request: 404 `offer.not_found`, 409 `offer.not_active`, `swap.own_offer`
@@ -59,7 +61,7 @@ export function exchangeRoutes(
     reply(c, await exchangeList(deps, c.get("account").id, c.req.query())),
   );
   routes.get("/exchange/match", async (c) =>
-    reply(c, await matchDeck(deps, answers, c.get("account").id, c.req.query())),
+    reply(c, await matchDeck(deps, { answers, clock }, c.get("account").id, c.req.query())),
   );
   routes.put("/exchange/match/:offerId/answer", async (c) =>
     write(c, idem, answer, { input: { ...(await body(c)), offerId: c.req.param("offerId") } }),

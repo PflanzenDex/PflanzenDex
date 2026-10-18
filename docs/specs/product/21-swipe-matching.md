@@ -93,7 +93,7 @@ Acceptance criteria:
 - Given the card fits both ways and I answer Yes, then the request proposes my matching offer as the counter-offer (US-SOZ-09) and I can change it before sending (one extra confirmation step, not a second swipe).
 - The mutual matching is optional for the giver: marking a wish as visible is a deliberate action per wish, off by default (assumption, decided by the PO), and can be taken back at any time; the chip then disappears at the next view.
 
-### US-TAU-06 · Find Later and No again · ⬜ new
+### US-TAU-06 · Find Later and No again · 🟨 new
 
 As a **plant keeper** I want to find the cards I answered with Later or No, so that nothing disappears silently.
 
@@ -139,7 +139,7 @@ Acceptance criteria:
 | FR-TAU-04 | No invented values: the fit is the species of a wish and nothing else; unknown stays "unknown" (P-08).                                                                                                                                                      | ⬜              |
 | FR-TAU-05 | Same data, same date and same viewer yield the same deck in the same order.                                                                                                                                                                                 | ✅              |
 | FR-TAU-06 | No ranking, no score, no percentage, no sorting of friends or offers by popularity or match strength; "Fits both ways" is a chip, not an order (FR-SOZ-11, P-08).                                                                                           | ⬜              |
-| FR-TAU-07 | Every view says what to do next, including every empty state (P-09). Nothing disappears silently: Later, No and ended offers stay findable until the keeper removes them (P-10).                                                                            | ⬜              |
+| FR-TAU-07 | Every view says what to do next, including every empty state (P-09). Nothing disappears silently: Later, No and ended offers stay findable until the keeper removes them (P-10).                                                                            | 🟨              |
 | FR-TAU-08 | Accessibility (NFR-13): all actions as buttons with text, operable by keyboard, announced by screen reader, 360 px layout, targets large enough, reduced motion respected; the swipe is only an extra.                                                      | ⬜              |
 | FR-TAU-09 | Out of scope: endless feed, notifications about new match cards, matching against strangers or the public, rankings, chat, selling for money, matching by genus or family, suggestions of species the giver does not offer (that is ENT).                   | ⬜ (deliberate) |
 | FR-TAU-10 | Hidden with the feature switch `social` (US-DEV-06) and under calm mode as described in US-TAU-07; dates are local dates (NFR-08).                                                                                                                          | ⬜              |

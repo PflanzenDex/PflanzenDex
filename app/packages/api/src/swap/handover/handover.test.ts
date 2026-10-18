@@ -395,9 +395,15 @@ describe("US-TAU-02 No and Later through the API", () => {
     call(sub, "PUT", `/exchange/match/${offerId}/answer`, { answer: a, timeZone: TZ });
   const undo = (sub: string | null, offerId: string) =>
     call(sub, "DELETE", `/exchange/match/${offerId}/answer`);
-  type Deck = { cards: { offerId: string }[]; later: { offerId: string }[] };
-  const deck = async (sub: string) =>
-    (await call(sub, "GET", `/exchange/match?timeZone=Europe%2FBerlin`)).body as Deck;
+  type Entry = { offerId: string; answer: string; state: string; answeredOn: string };
+  type Raw = { cards: { offerId: string; requested: boolean }[]; entries: Entry[] };
+  const raw = async (sub: string) =>
+    (await call(sub, "GET", `/exchange/match?timeZone=Europe%2FBerlin`)).body as Raw;
+  /** The open cards and the offers answered with Later, as the deck page shows them. */
+  const deck = async (sub: string) => {
+    const r = await raw(sub);
+    return { cards: r.cards, later: r.entries.filter((e) => e.answer === "later") };
+  };
   /** An open offer of subA whose species is on the wishlist of subE. */
   const matching = async (m: string) => {
     const id = await specimen(subA, m);
@@ -431,7 +437,14 @@ describe("US-TAU-02 No and Later through the API", () => {
     expect(d.later.map((c) => c.offerId)).toContain(offerId);
     expect((await answer(subE, offerId, "no")).status).toBe(200);
     d = await deck(subE);
-    expect([...d.cards, ...d.later].map((c) => c.offerId)).not.toContain(offerId);
+    expect(d.cards.map((c) => c.offerId)).not.toContain(offerId);
+    expect(d.later.map((c) => c.offerId)).not.toContain(offerId);
+    // US-TAU-06: the declined offer is still findable, with its date and state.
+    expect((await raw(subE)).entries.find((e) => e.offerId === offerId)).toMatchObject({
+      answer: "no",
+      state: "open",
+      answeredOn: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+    });
     expect((await undo(subE, offerId)).status).toBe(200);
     expect((await deck(subE)).cards.map((c) => c.offerId)).toContain(offerId);
     expect(await undo(subE, offerId)).toMatchObject({
@@ -452,6 +465,17 @@ describe("US-TAU-02 No and Later through the API", () => {
     expect((await swaps(subA)).received).toHaveLength(before);
   });
 
+  it("US-TAU-06 an offer that was withdrawn stays listed as unavailable and is removed only by the keeper (P-10)", async () => {
+    const offerId = await matching("T24");
+    await answer(subE, offerId, "later");
+    await call(subA, "POST", `/offers/${offerId}/withdraw`, {});
+    const e = (await raw(subE)).entries.find((x) => x.offerId === offerId);
+    expect(e).toMatchObject({ state: "unavailable", answer: "later" });
+    expect((await raw(subE)).cards.map((c) => c.offerId)).not.toContain(offerId);
+    expect((await undo(subE, offerId)).status).toBe(200);
+    expect((await raw(subE)).entries.map((x) => x.offerId)).not.toContain(offerId);
+  });
+
   it("a Yes after Later requests the offer and clears the Later entry (the request is the record)", async () => {
     const offerId = await matching("T23");
     await answer(subE, offerId, "later");
@@ -462,9 +486,7 @@ describe("US-TAU-02 No and Later through the API", () => {
     // The offer stays a card, now marked as requested; the stored Later is gone.
     const d = await deck(subE);
     expect(d.later.map((c) => c.offerId)).not.toContain(offerId);
-    expect(
-      (d.cards as { offerId: string; requested: boolean }[]).find((c) => c.offerId === offerId),
-    ).toMatchObject({ requested: true });
+    expect(d.cards.find((c) => c.offerId === offerId)).toMatchObject({ requested: true });
   });
 });
 

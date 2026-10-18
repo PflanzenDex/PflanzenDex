@@ -37,11 +37,14 @@ export const matchAnswer = (deps: ExchangeDependencies, answers: MatchAnswers, c
       timeZone: timeZoneField("timeZone"),
     }),
     run: async ({ userId }, input) => {
-      const deck = await matchDeck(deps, answers, userId, { timeZone: input.timeZone });
+      const deck = await matchDeck(deps, { answers, clock }, userId, {
+        timeZone: input.timeZone,
+      });
       if (!deck.ok) return deck;
-      const card = [...deck.value.cards, ...deck.value.later].find(
-        (c) => c.offerId === input.offerId,
-      );
+      const card = [
+        ...deck.value.cards,
+        ...deck.value.entries.flatMap((e) => (e.card ? [e.card] : [])),
+      ].find((c) => c.offerId === input.offerId);
       if (!card) return failed(appError("offer.not_found"));
       const answeredOn = localToday(clock(), input.timeZone);
       await answers.save(userId, {
@@ -57,8 +60,10 @@ export const matchAnswer = (deps: ExchangeDependencies, answers: MatchAnswers, c
   });
 
 /**
- * "Undo" after No or Later (US-TAU-02): the answer is taken back and the card is open again. Only the caller's own
- * answer can be found; an unknown one is `offer.not_found`. A Yes is no answer here: it is withdrawn in "Requests".
+ * Takes an answer back (P-03): "Undo" after No or Later (US-TAU-02), "Reconsider" on a declined offer and "Remove from
+ * list" for an entry whose offer ended (US-TAU-06). The card is open again if the offer is still a match. Only the
+ * caller's own answer can be found; an unknown one is `offer.not_found`. A Yes is no answer here: it is withdrawn in
+ * "Requests".
  */
 export const matchUndo = (answers: MatchAnswers) =>
   defineOperation<{ offerId: string }, { undone: true }>({

@@ -38,7 +38,16 @@ describe("US-TAU-02 match answers in the database", () => {
   it("US-TAU-02 stores one answer per offer, replaces it and takes it back", async () => {
     await answers.save(anna, value("later"));
     await answers.save(anna, value("no", { answeredOn: "2026-10-19" }));
-    expect(await answers.list(anna)).toEqual([{ offerId, answer: "no", answeredOn: "2026-10-19" }]);
+    expect(await answers.list(anna)).toEqual([
+      {
+        offerId,
+        answer: "no",
+        answeredOn: "2026-10-19",
+        speciesLatin: "Aloe vera",
+        speciesGerman: "Echte Aloe",
+        giverName: "Ben",
+      },
+    ]);
     expect(await answers.remove(anna, offerId)).toBe(true);
     expect(await answers.remove(anna, offerId)).toBe(false);
     expect(await answers.list(anna)).toEqual([]);
