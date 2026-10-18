@@ -43,7 +43,7 @@ Acceptance criteria:
 - Order: oldest open offer first, then giver name, then species. The order is fixed for the same data (FR-TAU-05) and contains no ranking.
 - Given I am on a 360 px viewport, then one card fills the width and the three actions are reachable with one thumb (NFR-13, US-QS-14).
 
-### US-TAU-02 · Answer with Yes, No or Later · ⬜ new
+### US-TAU-02 · Answer with Yes, No or Later · 🟨 new
 
 As a **plant keeper** I want to answer a card with buttons or a swipe, so that deciding is quick and works without a gesture.
 

@@ -1,7 +1,5 @@
 import { useCallback, useState } from "react";
-import { Link } from "react-router";
 import type { CreatedFriendCode } from "@pflanzendex/core";
-import { Button } from "@/components/ui/button/button";
 import { LoadFrame, SIGN_IN, useInvalidate, useWriteAction, type ApiError } from "../../../kernel";
 import { errorText } from "@/lib/error-text";
 import {
@@ -21,6 +19,7 @@ import { FeedBlock } from "../../feed/feed-block/feed-block";
 import { SharingPanel } from "../../parts/sharing-panel/sharing-panel";
 import { InviteCard } from "../../parts/invite-card/invite-card";
 import { nameOf, RequestList } from "../../parts/request-list/request-list";
+import { FriendsLinks } from "./friends-links/friends-links";
 import { FriendsPageSkeleton } from "./friends-page.skeleton";
 
 const KEY = ["social", "friends"] as const;
@@ -179,11 +178,7 @@ export function FriendsPage(props: { api: string; token: Token }) {
           Freunde findest du nur über einen Code, den ihr außerhalb der App austauscht. Was sie von
           dir sehen, bestimmst du; ohne deine Freigabe sieht niemand etwas.
         </p>
-        <div>
-          <Button asChild variant="outline" size="touch">
-            <Link to="/friends/exchange">Zur Tauschbörse</Link>
-          </Button>
-        </div>
+        <FriendsLinks />
         <LoadFrame
           queryKey={KEY}
           token={token}

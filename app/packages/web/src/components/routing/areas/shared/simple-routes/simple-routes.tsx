@@ -3,9 +3,10 @@ import { Navigate, Route, useParams } from "react-router";
 import { OperatorPage } from "@/account";
 import { ReviewPage } from "@/catalog";
 import { FriendCollectionPage, FriendsPage } from "@/social";
-import { ExchangePage } from "@/swap";
+import { ExchangePage, MatchPage } from "@/swap";
 import {
   EXCHANGE_PATH,
+  MATCH_PATH,
   PATHS,
   type View,
 } from "@/components/shared/navigation/nav-model/navigation/navigation";
@@ -74,6 +75,11 @@ export function socialRoutes(
       key="exchange"
       path={EXCHANGE_PATH}
       element={page("swapping", <ExchangePage api={api} token={token} />)}
+    />,
+    <Route
+      key="match"
+      path={MATCH_PATH}
+      element={page("swapping", <MatchPage api={api} token={token} />)}
     />,
     <Route
       key="friend"

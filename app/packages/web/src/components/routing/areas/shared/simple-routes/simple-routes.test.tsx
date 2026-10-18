@@ -32,7 +32,7 @@ describe("US-DEV-06 routes of the function group social", () => {
       "fetch",
       vi.fn(async () => new Response("{}", { status: 404 })),
     );
-    for (const path of ["/friends", "/friends/exchange", "/friends/abc"]) {
+    for (const path of ["/friends", "/friends/exchange", "/friends/match", "/friends/abc"]) {
       renderAt(path, { social: false });
       expect(await screen.findByText("START"), path).toBeTruthy();
       cleanup();

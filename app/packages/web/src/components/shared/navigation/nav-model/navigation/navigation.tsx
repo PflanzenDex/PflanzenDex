@@ -29,6 +29,8 @@ const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
 
 /** The exchange (ADR 0012) lives below "Freunde", no destination of its own (US-SOZ-08). */
 export const EXCHANGE_PATH = "/friends/exchange";
+/** The match deck (epic TAU) is a mode of "Freunde" next to the exchange, no destination of its own (US-QS-14). */
+export const MATCH_PATH = "/friends/match";
 
 /** One URL path per view (English); the link texts above stay German. */
 export const PATHS: Record<View, string> = {
@@ -170,6 +172,7 @@ export function viewTitle(pathname: string): string {
   const entry = ENTRIES.find((e) => PATHS[e.id] === pathname);
   if (entry) return pageTitle(entry.text);
   if (pathname === EXCHANGE_PATH) return pageTitle("Tauschbörse");
+  if (pathname === MATCH_PATH) return pageTitle("Passende Angebote");
   if (pathname.startsWith(`${PATHS.friends}/`)) return pageTitle("Sammlung eines Freundes");
   return pathname.startsWith(`${PROFILE_BASE}/`) ? pageTitle("Artenprofil") : pageTitle();
 }
