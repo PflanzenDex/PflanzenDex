@@ -12,3 +12,7 @@ export const UnlockPage = lazyPage(() =>
 /** The overview "Was die App kann" (US-ONB-06) is its own chunk: it loads when "Konto" shows it (DS-08). */
 export const FunctionOverview = lazyPage(() => import("./function-overview/function-overview"));
 export { useUnlocks, isShownLocked } from "./unlock";
+/** The calm hint of other views (US-ONB-07) is its own chunk: it loads only when an occasion applies (DS-08). */
+export const ContextHint = lazyPage(() =>
+  import("./start-page/hint/context-hint/context-hint").then((m) => ({ default: m.ContextHint })),
+);

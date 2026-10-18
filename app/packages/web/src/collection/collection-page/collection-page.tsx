@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, type ReactNode } from "react";
 import type { Species, Specimen } from "@pflanzendex/core";
 import { useInvalidate } from "../../kernel";
 import { RequestState } from "@/components/shared/states/request-state/request-state";
@@ -29,6 +29,7 @@ import {
 } from "../markers/catch-date/catch-date-field/catch-date-field";
 import { LightZoneForm, useLightZone } from "../markers/locate/light-zone-form/light-zone-form";
 import { Created } from "./created/created";
+import { ListHint } from "./hint-occasions/hint-occasions";
 import { DistributionView } from "../insights/distribution-view/distribution-view";
 type Props = {
   api: string;
@@ -40,12 +41,12 @@ type Props = {
   /** Set when the destination "Sammlung" shows the page below its title: demoted heading, count line (US-QS-14). */
   host?: Host;
   groupBy?: "location"; // grouping by location and zone (US-QS-14)
+  renderHint?: (applicable: readonly string[]) => ReactNode; // calm hint (US-ONB-07)
 };
 
 /**
- * Collection, create a specimen (US-BES-02), tell specimens apart by marker (US-BES-03) and archive (US-BES-07). With a
- * chosen species the page shows the form, otherwise the list with the archive below. The choice of the species comes
- * from the catalog (`catalog` does not know `collection`, the wiring is done by the app).
+ * Collection, create (US-BES-02), markers (US-BES-03), archive (US-BES-07): the form with a chosen species, otherwise the
+ * list with the archive below. The species comes from the catalog; the app wires the two.
  */
 export function CollectionPage(props: Props) {
   const { api, token, newSpecies } = props;
@@ -159,6 +160,7 @@ function List(p: { data: Loaded; created: Specimen | null; actions: Actions; pro
     <>
       {message ? <Status>{message}</Status> : p.created && <Created specimen={p.created} />}
       {error && <Warning>{refusalText(error)}</Warning>}
+      {p.created === null && <ListHint cards={data.cards} render={p.props.renderHint} />}
       <DistributionView distribution={data.distribution} />
       <CollectionList
         cards={data.cards}
