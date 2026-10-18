@@ -2,7 +2,13 @@ import { isTimeZone, localToday, ok, type Result, failed, appError } from "../..
 import { exchangeList, type ExchangeQuery } from "../exchange";
 import type { ExchangeDependencies, ExchangeOffer } from "../exchange";
 import type { MatchAnswers, StoredMatchAnswer } from "./answer/types";
-import { bothWays, ownOffersAsked, type BothWaysReason, type MyOffers } from "./both-ways";
+import {
+  bothWays,
+  ownOffersAsked,
+  type BothWaysReason,
+  type FriendWishes,
+  type MyOffers,
+} from "./both-ways";
 
 /** The wish behind a card (US-TAU-04): the species it names and the keeper's own reasoning, nothing more (P-08). */
 export interface WishlistReason {
@@ -77,6 +83,8 @@ export interface MatchContext {
   readonly clock: () => Date;
   readonly counts?: MatchCounts;
   readonly mine?: MyOffers;
+  /** The marked wishes of friends for "fits both ways" (DM-TAU-02); without it only open requests count. */
+  readonly friendWishes?: FriendWishes;
 }
 
 /**
@@ -114,7 +122,7 @@ export async function matchDeck(
   const reasoning = await deps.wishes.reasoningOf(userId, [
     ...new Set(wished.map((o) => o.speciesLatin as string)),
   ]);
-  const asked = await ownOffersAsked(deps, context.mine, userId);
+  const asked = await ownOffersAsked(deps, context.mine, userId, context.friendWishes);
   const matching = wished
     .map((o): MatchCard => ({
       ...o,

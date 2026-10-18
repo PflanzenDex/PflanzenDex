@@ -1,5 +1,5 @@
-import { textField, type ErrorDetail } from "../kernel";
-import { WISH_LIMITS } from "./types";
+import { textField, type ErrorDetail } from "../../kernel";
+import { WISH_LIMITS } from "../types";
 
 const SCHEME = "https://";
 

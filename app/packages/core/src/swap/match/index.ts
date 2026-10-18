@@ -15,4 +15,4 @@ export type { MatchYesResult } from "./yes";
 export { matchAnswer, matchUndo, MATCH_ANSWERS } from "./answer/answer";
 export type { MatchAnswer } from "./answer/answer";
 export type { MatchAnswers, StoredMatchAnswer } from "./answer/types";
-export type { BothWaysReason, MyOffer, MyOffers } from "./both-ways";
+export type { BothWaysReason, FriendWishes, MyOffer, MyOffers } from "./both-ways";

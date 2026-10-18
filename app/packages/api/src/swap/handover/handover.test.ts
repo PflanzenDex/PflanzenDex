@@ -357,6 +357,88 @@ describe("US-TAU-01 the match deck through the API", () => {
   });
 });
 
+describe("DM-TAU-02 US-TAU-05 the wish flag and 'fits both ways' through the API", () => {
+  const deck = async (sub: string | null) =>
+    call(sub, "GET", "/exchange/match?timeZone=Europe%2FBerlin");
+  type Card = {
+    offerId: string;
+    reasons: { kind: string; giverName?: string; offerId?: string }[];
+  };
+  const visible = (sub: string | null, wishId: string, value: unknown, key?: string | null) =>
+    call(sub, "POST", `/wishes/${wishId}/visibility`, { visible: value }, key);
+  const chip = async (sub: string, offerId: string) =>
+    ((await deck(sub)).body.cards as Card[])
+      .find((c) => c.offerId === offerId)
+      ?.reasons.filter((r) => r.kind === "both_ways");
+
+  it("the flag is private by default; the chip shows only for a marked wish, and only to confirmed friends, and goes when taken back", async () => {
+    const id = await specimen(subA, "W1");
+    await call(subA, "PUT", `/sharing/specimens/${id}`, { share: "friends" });
+    const offerId = (
+      await call(subA, "POST", "/offers", { specimenId: id, type: "plant", mode: "give_away" })
+    ).body.id as string;
+    const latin = (
+      await call(subB, "GET", "/exchange/offers?timeZone=Europe%2FBerlin")
+    ).body.offers.find((x: { offerId: string }) => x.offerId === offerId).speciesLatin as string;
+    // E wishes for the species and offers one of its own, so that the giver's wish can fit E's offer.
+    await call(subE, "POST", "/wishes", { name: latin });
+    const own = await specimen(subE, "W1b");
+    await call(subE, "PUT", `/sharing/specimens/${own}`, { share: "friends" });
+    const made = await call(subE, "POST", "/offers", {
+      specimenId: own,
+      type: "cutting",
+      mode: "swap",
+    });
+    const eOffer = made.body.id as string;
+    // The giver wishes for the species, not marked: nothing is said (P-05, FR-WUN-07).
+    const wishId = (await call(subA, "POST", "/wishes", { name: latin })).body.wish.id as string;
+    expect((await call(subA, "GET", "/wishes/visible-to-friends")).body).toEqual({ wishIds: [] });
+    expect(await chip(subE, offerId)).toEqual([]);
+    // Marked: the card of the giver's offer fits both ways and names E's own offer.
+    const set = await visible(subA, wishId, true);
+    expect(set.status).toBe(200);
+    expect(set.body).toMatchObject({ visible: true, changed: true });
+    expect((await call(subA, "GET", "/wishes/visible-to-friends")).body).toEqual({
+      wishIds: [wishId],
+    });
+    expect(await chip(subE, offerId)).toEqual([
+      expect.objectContaining({ kind: "both_ways", offerId: eOffer }),
+    ]);
+    // A stranger sees no card and nothing of the wish.
+    expect(JSON.stringify((await deck(subOp)).body)).not.toContain(wishId);
+    expect(JSON.stringify((await deck(subE)).body)).not.toContain('"visible"');
+    // The marked wish does not move the card (FR-TAU-06) and taking it back removes the chip at the next view.
+    expect((await visible(subA, wishId, false)).status).toBe(200);
+    expect(await chip(subE, offerId)).toEqual([]);
+  });
+
+  it("without a token 401, without Idempotency-Key 400, a non-boolean 400; a foreign or unknown wish 404 and untouched (P-04)", async () => {
+    const wishId = (await call(subC, "POST", "/wishes", { name: "Flagus testus" })).body.wish
+      .id as string;
+    expect((await visible(null, wishId, true)).status).toBe(401);
+    expect((await visible(subC, wishId, true, null)).status).toBe(400);
+    const bad = await visible(subC, wishId, "yes");
+    expect(bad.status).toBe(400);
+    expect(bad.body.error.code).toBe("input.invalid");
+    const foreign = await visible(subD, wishId, true);
+    expect(foreign.status).toBe(404);
+    expect(foreign.body.error.code).toBe("wish.not_found");
+    expect((await visible(subC, randomUUID(), true)).status).toBe(404);
+    expect((await call(subC, "GET", "/wishes/visible-to-friends")).body).toEqual({ wishIds: [] });
+    expect((await call(subD, "GET", "/wishes/visible-to-friends")).body).toEqual({ wishIds: [] });
+  });
+
+  it("a bought wish cannot be made visible: 409 wish.not_open_for_friends with a German text", async () => {
+    const wishId = (await call(subC, "POST", "/wishes", { name: "Boughtus flagus" })).body.wish
+      .id as string;
+    await call(subC, "POST", `/wishes/${wishId}/buy`, {});
+    const r = await visible(subC, wishId, true);
+    expect(r.status).toBe(409);
+    expect(r.body.error.code).toBe("wish.not_open_for_friends");
+    expect(r.body.error.text).toContain("gekauft");
+  });
+});
+
 describe("US-TAU-03 Yes on a match card through the API", () => {
   const yes = (sub: string | null, offerId: string) =>
     call(sub, "POST", `/exchange/match/${offerId}/yes`, {});

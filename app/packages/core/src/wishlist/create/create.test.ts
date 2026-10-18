@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { execute } from "../kernel/operation";
-import { InMemoryIdempotencyStore } from "../kernel/test-helpers";
-import { wishCreate, wishZoneUsage } from "./index";
-import { InMemoryWishes } from "./test-helpers";
+import { execute } from "../../kernel/operation";
+import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
+import { wishCreate, wishZoneUsage } from "../index";
+import { InMemoryWishes } from "../test-helpers";
 
 const ZONE = "00000000-0000-4000-8000-0000000000a3";
 const FOREIGN_ZONE = "00000000-0000-4000-8000-0000000000b3";

@@ -1,5 +1,6 @@
 // Stable, machine-readable error codes `<domain>.<reason>` (FR-QG-11). Codes are never renamed.
 import { ONBOARDING_ERROR_TEXTS } from "./error-texts/onboarding";
+import { WUN_ERROR_TEXTS } from "./error-texts/wun";
 export const ERROR_TEXTS = {
   "input.invalid": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
   "access.not_signed_in": "Du bist nicht angemeldet. Bitte melde dich an.",
@@ -111,25 +112,7 @@ export const ERROR_TEXTS = {
   "discover.not_suggested":
     "Diese Art wird dir gerade nicht vorgeschlagen: Du hast sie schon gefangen oder sie fehlt im Katalog. Lade die Vorschläge neu.",
   ...ONBOARDING_ERROR_TEXTS,
-  "wish.name_taken":
-    "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
-  "wish.image_source_unsupported":
-    "Das Bild kann nur von Wikimedia Commons gespeichert werden. Trage die Adresse einer Datei von commons.wikimedia.org ein; es wurde nichts gespeichert.",
-  "wish.image_not_found":
-    "Dieses Bild gibt es bei Wikimedia Commons nicht (mehr). Prüfe die Adresse; es wurde nichts gespeichert.",
-  "wish.image_license_unsupported":
-    "Die Lizenz dieses Bildes erlaubt kein Speichern oder ist nicht angegeben. Nimm ein Bild mit freier Lizenz (CC0, CC BY, CC BY-SA oder gemeinfrei); es wurde nichts gespeichert.",
-  "wish.not_found": "Diesen Wunsch gibt es nicht. Lade die Wunschliste neu.",
-  "wish.not_open":
-    "Dieser Wunsch ist verworfen und nicht mehr offen. Nur ein offener Wunsch kann als gekauft vermerkt werden; es wurde nichts geändert.",
-  "wish.already_bought":
-    "Dieser Wunsch ist schon als gekauft vermerkt und lässt sich nicht mehr verwerfen. Es wurde nichts geändert.",
-  "wish.not_bought":
-    "Dieser Wunsch ist nicht als gekauft vermerkt. Nur ein gekaufter Wunsch wird mit einem Exemplar verknüpft; es wurde nichts geändert.",
-  "wish.already_linked":
-    "Dieser Wunsch ist schon mit einem anderen Exemplar verknüpft, oder das Exemplar gehört schon zu einem anderen Wunsch. Es wurde nichts geändert.",
-  "wish.not_duplicate":
-    "Dieser Wunsch hat keinen doppelten Namen und lässt sich hier nicht umbenennen oder löschen. Lade die Wunschliste neu; es wurde nichts geändert.",
+  ...WUN_ERROR_TEXTS,
   "pokedex.not_caught":
     "Diese Art hast du noch nicht gefangen und kann deshalb nicht als gesehen vermerkt werden. Lade den Pokédex neu; es wurde nichts geändert.",
   "care.no_phase":

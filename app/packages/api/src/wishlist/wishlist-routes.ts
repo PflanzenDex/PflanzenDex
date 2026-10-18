@@ -16,12 +16,14 @@ import {
   wishLinkSpecimen,
   wishRemove,
   wishRename,
+  wishVisibility,
+  wishVisibleList,
   wishZoneUsage,
   type WishRow,
   type ZoneStockSource,
   type ZoneUsage,
 } from "@pflanzendex/core";
-import { IdempotencyPostgres, WishesPostgres } from "@pflanzendex/db";
+import { IdempotencyPostgres, WishesPostgres, WishVisibilityPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import { randomUUID } from "node:crypto";
@@ -45,6 +47,9 @@ export function wishZoneUsageFor(pool: Pool): ZoneUsage {
  * "Bought" (US-WUN-03) goes through `wish.buy`; the bought wishes stay readable as the history (`GET /wishes/bought`).
  * The path to the plant (US-WUN-05): `wish.link_specimen` links a bought wish to the specimen it became, `wish.discard`
  * sets an open wish to discarded; discarded wishes stay readable (`GET /wishes/discarded`, P-10).
+ * The flag "visible to friends as wanted" (DM-TAU-02, US-TAU-05): `GET /wishes/visible-to-friends` lists the IDs of the open
+ * wishes that carry it; `POST /wishes/:id/visibility { visible: boolean }` sets or takes it back through
+ * `wish.set_visible_to_friends` (with `Idempotency-Key`; 404 `wish.not_found`, 409 `wish.not_open_for_friends`).
  */
 export function wishRoutes(
   pool: Pool,
@@ -58,6 +63,8 @@ export function wishRoutes(
   const link = wishLinkSpecimen({ wishes });
   const rename = wishRename({ wishes });
   const removeDuplicate = wishRemove({ wishes });
+  const visibility = new WishVisibilityPostgres(pool);
+  const setVisible = wishVisibility({ visibility });
   const deps = { idempotency: new IdempotencyPostgres(pool) };
   const routes = new Hono<AuthEnv>();
   routes.get("/wishes/candidates", async (c) =>
@@ -90,6 +97,12 @@ export function wishRoutes(
   );
   routes.post("/wishes/:id/remove-duplicate", async (c) =>
     write(c, deps, removeDuplicate, { input: { wishId: c.req.param("id") } }),
+  );
+  routes.get("/wishes/visible-to-friends", async (c) =>
+    c.json(await wishVisibleList({ visibility }, c.get("account").id)),
+  );
+  routes.post("/wishes/:id/visibility", async (c) =>
+    write(c, deps, setVisible, { input: { ...(await body(c)), wishId: c.req.param("id") } }),
   );
   if (image) addImageRoutes(routes, wishes, deps, image);
   else addNoImageRoutes(routes);

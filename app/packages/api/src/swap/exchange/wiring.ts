@@ -14,6 +14,7 @@ import {
   SpecimenPostgres,
   SwapsPostgres,
   WishesPostgres,
+  WishVisibilityPostgres,
 } from "@pflanzendex/db";
 import type { Pool } from "pg";
 
@@ -108,9 +109,23 @@ export function matchContext(
   const friends = new FriendsPostgres(pool);
   const wishes = new WishesPostgres(pool);
   const offers = new OffersPostgres(pool);
+  const visibility = new WishVisibilityPostgres(pool);
   return {
     answers: new MatchAnswersPostgres(pool),
     clock,
+    // The marked wishes of friends answer only for the species of the keeper's own open offers (DM-TAU-02, FR-WUN-07).
+    friendWishes: {
+      async wantedBy(userId, latinNames) {
+        const byKey = new Map(latinNames.map((n) => [wishNameKey(n), n]));
+        const found = await visibility.friendWants(userId, [...byKey.keys()]);
+        return new Map(
+          [...found].map(([friend, keys]) => [
+            friend,
+            new Set([...keys].flatMap((k) => (byKey.has(k) ? [byKey.get(k) as string] : []))),
+          ]),
+        );
+      },
+    },
     counts: {
       friends: async (userId) => (await friends.friends(userId)).length,
       wishes: async (userId) => (await wishes.open(userId)).length,
