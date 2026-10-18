@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { StubPhases } from "../offer/test-helpers";
 import { InMemoryExchange, StubFacts, StubWishHints, friendOffer } from "../exchange/test-helpers";
 import type { ExchangeDependencies, FriendOffer } from "../exchange";
-import { matchDeck } from "./deck";
+import { execute } from "../../kernel/operation";
+import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
+import { matchDeck, matchYes } from "./index";
 
 const id = (n: number) => `00000000-0000-4000-8000-0000000000${n.toString(16).padStart(2, "0")}`;
 const sp = (latin: string | null) => ({
@@ -88,5 +90,70 @@ describe("US-TAU-01 match deck", () => {
   it("refuses an invalid time zone", async () => {
     const r = await matchDeck(setup([offer(1)]), "anna", { timeZone: "nope" });
     expect(!r.ok && r.error.code).toBe("input.invalid");
+  });
+});
+
+describe("US-TAU-03 Yes on a card creates exactly one request", () => {
+  const A = id(101);
+  const run = (
+    deps: ExchangeDependencies,
+    input: unknown,
+    user: string | null = "anna",
+    key = "k1",
+  ) =>
+    execute(
+      matchYes(deps),
+      { idempotency: new InMemoryIdempotencyStore() },
+      { context: { userId: user }, input, idempotencyKey: key },
+    );
+
+  it("creates one request through the exchange store, with an open return", async () => {
+    const deps = setup([offer(1)]);
+    const r = await run(deps, { offerId: A });
+    expect(r).toEqual({ ok: true, value: { outcome: "requested", swapId: "s-1" } });
+    expect((deps.swaps as InMemoryExchange).requests).toEqual([
+      { userId: "anna", offerId: A, counter: null, text: null },
+    ]);
+  });
+
+  it("an offer that is already requested is reported, not an error and not a second request", async () => {
+    const deps = setup([offer(1)]);
+    (deps.swaps as InMemoryExchange).outcome = "already_requested";
+    expect(await run(deps, { offerId: A })).toEqual({
+      ok: true,
+      value: { outcome: "already_requested", swapId: null },
+    });
+  });
+
+  it.each([
+    ["offer_unknown", "offer.not_found"],
+    ["own_offer", "swap.own_offer"],
+    ["not_open", "offer.not_active"],
+  ] as const)("the outcome %s is the visible error %s (P-10)", async (outcome, code) => {
+    const deps = setup([offer(1)]);
+    (deps.swaps as InMemoryExchange).outcome = outcome;
+    const r = await run(deps, { offerId: A });
+    expect(!r.ok && r.error.code).toBe(code);
+  });
+
+  it("refuses a bad id and needs sign-in before asking the store", async () => {
+    const deps = setup([offer(1)]);
+    expect((await run(deps, { offerId: "x" })).ok).toBe(false);
+    expect((await run(deps, { offerId: A }, null)).ok).toBe(false);
+    expect((deps.swaps as InMemoryExchange).requests).toEqual([]);
+  });
+
+  it("the same Idempotency-Key replays the first answer without a second request", async () => {
+    const deps = setup([offer(1)]);
+    const idem = { idempotency: new InMemoryIdempotencyStore() };
+    const call = () =>
+      execute(matchYes(deps), idem, {
+        context: { userId: "anna" },
+        input: { offerId: A },
+        idempotencyKey: "k9",
+      });
+    await call();
+    await call();
+    expect((deps.swaps as InMemoryExchange).requests).toHaveLength(1);
   });
 });

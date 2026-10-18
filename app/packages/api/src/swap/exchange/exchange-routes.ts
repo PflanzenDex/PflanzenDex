@@ -1,6 +1,7 @@
 import {
   exchangeList,
   matchDeck,
+  matchYes,
   swapRequest,
   type OfferDependencies,
   type Result,
@@ -26,6 +27,9 @@ function reply<T>(c: Context<AuthEnv>, r: Result<T>) {
  *   unknown), `onWishlist` (a hint, the list is never transmitted, FR-WUN-07) and `requested`
  * - GET /exchange/match?timeZone=…: `{ cards }`, the match deck (US-TAU-01): the same offers narrowed to species on the
  *   own wishlist, each with its `reasons`, oldest offer first; no score and no ranking (FR-TAU-06)
+ * - POST /exchange/match/:offerId/yes (with `Idempotency-Key`; US-TAU-03): the same request as below, without a return;
+ *   201 `{ outcome: "requested", swapId }` or `{ outcome: "already_requested", swapId: null }` (no second request); the
+ *   refusals are those of the request: 404 `offer.not_found`, 409 `offer.not_active`, `swap.own_offer`
  * - POST /offers/:id/request `{ counterSpecimenId?, counterText? }` (with `Idempotency-Key`): 201 `{ swapId }`; 404
  *   `offer.not_found` (also for a foreign or unknown offer), 409 `swap.own_offer`, `offer.not_active`,
  *   `swap.already_requested`, `swap.counter_not_allowed`, `swap.counter_not_shared`, 404 `specimen.not_found`
@@ -34,12 +38,16 @@ export function exchangeRoutes(pool: Pool, offer: OfferDependencies): Hono<AuthE
   const deps = exchangeDependencies(pool, offer);
   const idem = { idempotency: new IdempotencyPostgres(pool) };
   const request = swapRequest(deps);
+  const yes = matchYes(deps);
   const routes = new Hono<AuthEnv>();
   routes.get("/exchange/offers", async (c) =>
     reply(c, await exchangeList(deps, c.get("account").id, c.req.query())),
   );
   routes.get("/exchange/match", async (c) =>
     reply(c, await matchDeck(deps, c.get("account").id, c.req.query())),
+  );
+  routes.post("/exchange/match/:offerId/yes", async (c) =>
+    write(c, idem, yes, { input: { offerId: c.req.param("offerId") }, success: 201 }),
   );
   routes.post("/offers/:id/request", async (c) =>
     write(c, idem, request, {

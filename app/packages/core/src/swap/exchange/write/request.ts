@@ -12,7 +12,7 @@ import {
 import { OFFER_LIMITS } from "../../offer";
 import type { ExchangeDependencies, RequestOutcome } from "../types";
 
-const REFUSAL: Record<Exclude<RequestOutcome, "requested">, ErrorCode> = {
+export const REFUSAL: Record<Exclude<RequestOutcome, "requested">, ErrorCode> = {
   offer_unknown: "offer.not_found",
   own_offer: "swap.own_offer",
   not_open: "offer.not_active",

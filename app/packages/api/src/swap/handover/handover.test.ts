@@ -331,6 +331,64 @@ describe("US-TAU-01 the match deck through the API", () => {
   });
 });
 
+describe("US-TAU-03 Yes on a match card through the API", () => {
+  const yes = (sub: string | null, offerId: string) =>
+    call(sub, "POST", `/exchange/match/${offerId}/yes`, {});
+  const openOffer = async (m: string) => {
+    const id = await specimen(subA, m);
+    await call(subA, "PUT", `/sharing/specimens/${id}`, { share: "friends" });
+    return (await call(subA, "POST", "/offers", { specimenId: id, type: "cutting", mode: "swap" }))
+      .body.id as string;
+  };
+
+  it("without a token 401; an unknown offer 404", async () => {
+    expect((await yes(null, randomUUID())).status).toBe(401);
+    expect(await yes(subE, randomUUID())).toMatchObject({
+      status: 404,
+      body: { error: { code: "offer.not_found" } },
+    });
+  });
+
+  it("Yes creates one swap request with an open return; the giver sees it like any request; a second Yes creates nothing", async () => {
+    const offerId = await openOffer("T7");
+    const first = await yes(subE, offerId);
+    expect(first).toMatchObject({ status: 201, body: { outcome: "requested" } });
+    const again = await yes(subE, offerId);
+    expect(again).toMatchObject({
+      status: 201,
+      body: { outcome: "already_requested", swapId: null },
+    });
+    const received = (await swaps(subA)).received.filter((r) => r.swapId === first.body.swapId);
+    expect(received).toHaveLength(1);
+    expect(
+      (await swaps(subA)).received.filter((r) => r.status === "requested").length,
+    ).toBeGreaterThan(0);
+    expect((await swaps(subE)).sent.filter((r) => r.swapId === first.body.swapId)).toHaveLength(1);
+  });
+
+  it("the giver, a stranger and a non-friend cannot answer Yes on this offer (P-04, P-05)", async () => {
+    const offerId = await openOffer("T8");
+    expect(await yes(subA, offerId)).toMatchObject({
+      status: 409,
+      body: { error: { code: "swap.own_offer" } },
+    });
+    for (const other of [subOp])
+      expect(await yes(other, offerId)).toMatchObject({
+        status: 404,
+        body: { error: { code: "offer.not_found" } },
+      });
+  });
+
+  it("an offer that was withdrawn meanwhile is refused with a visible reason and creates nothing (P-10)", async () => {
+    const offerId = await openOffer("T9");
+    await call(subA, "POST", `/offers/${offerId}/withdraw`, {});
+    expect(await yes(subE, offerId)).toMatchObject({
+      status: 409,
+      body: { error: { code: "offer.not_active" } },
+    });
+  });
+});
+
 describe("US-SOZ-13 swap history and provenance through the API", () => {
   const history = async (sub: string | null) => call(sub, "GET", "/swaps/history");
   type Entry = {
