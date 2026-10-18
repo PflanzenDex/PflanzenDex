@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ALL_FEATURES, NO_FEATURES } from "../../../kernel";
-import { execute } from "../../../kernel/operation";
-import { InMemoryIdempotencyStore } from "../../../kernel/test-helpers";
+import { ALL_FEATURES, NO_FEATURES } from "../../../../kernel";
+import { execute } from "../../../../kernel/operation";
+import { InMemoryIdempotencyStore } from "../../../../kernel/test-helpers";
 import { onboardingUnlockFunction, type ManualUnlock, type ManualUnlockStore } from "./index";
 
 class InMemoryUnlocks implements ManualUnlockStore {

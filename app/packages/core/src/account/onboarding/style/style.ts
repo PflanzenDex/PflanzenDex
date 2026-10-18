@@ -10,7 +10,7 @@ import {
   shape,
   timeZoneField,
 } from "../../../kernel";
-import type { ManualUnlockStore } from "../unlock-open";
+import type { ManualUnlockStore } from "../unlock/open";
 import type { KeeperStyle } from "../unlock";
 
 export const KEEPER_STYLES: readonly KeeperStyle[] = ["few", "many"];

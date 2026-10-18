@@ -11,6 +11,7 @@ import {
 import { IdempotencyPostgres } from "@pflanzendex/db";
 import { Hono, type MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
+import { hintRoutes } from "../hint";
 import { styleRoutes } from "./style-routes";
 import { unlockSources } from "./sources/unlock-sources";
 import { body, errorBody, write, type AuthEnv, type Ctx, type FeatureAccess } from "../../kernel";
@@ -52,7 +53,7 @@ export function unlockRoutes(
   opt: UnlockRouteOptions,
 ): Hono<AuthEnv> {
   const clock = opt.clock ?? (() => new Date());
-  const { unlocks, styles, featureSet, facts } = unlockSources(pool, {
+  const { unlocks, styles, featureSet, facts, hints, hintContext } = unlockSources(pool, {
     features,
     clock: opt.clock,
     style: opt.keeperStyle,
@@ -62,6 +63,7 @@ export function unlockRoutes(
 
   const routes = new Hono<AuthEnv>();
   styleRoutes(routes, auth, { styles, unlocks, facts, deps, clock });
+  hintRoutes(routes, auth, { hints, context: hintContext, deps, clock });
   routes.use("/onboarding/unlocks", auth).use("/onboarding/unlocks/*", auth);
   routes.get("/onboarding/unlocks", async (c) => {
     const timeZone = c.req.query("timeZone");

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { execute } from "../../../kernel/operation";
 import { InMemoryIdempotencyStore } from "../../../kernel/test-helpers";
-import type { ManualUnlock, ManualUnlockStore } from "../unlock-open";
+import type { ManualUnlock, ManualUnlockStore } from "../unlock/open";
 import {
   DEFAULT_KEEPER_STYLE,
   onboardingSetStyle,

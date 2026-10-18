@@ -8,6 +8,7 @@ import {
 } from "@pflanzendex/core";
 import {
   AchievementSettingsPostgres,
+  HintPostgres,
   KeeperStylePostgres,
   ManualUnlockPostgres,
   SpecimenPostgres,
@@ -55,5 +56,11 @@ export function unlockSources(
       existingData: await existing(userId),
     };
   };
-  return { unlocks, styles, featureSet, facts };
+  const hints = new HintPostgres(pool);
+  // What decides whether a hint shows at all (US-ONB-07): the keeper style and calm mode.
+  const hintContext = async (userId: string) => ({
+    style: await style(userId),
+    calmMode: (await readAchievementSettings(calm, userId)).calmMode,
+  });
+  return { unlocks, styles, featureSet, facts, hints, hintContext };
 }
