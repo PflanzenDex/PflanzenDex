@@ -293,6 +293,44 @@ describe("US-SOZ-09 approved species, 'you lack it' and the wishlist hint in the
   });
 });
 
+describe("US-TAU-01 the match deck through the API", () => {
+  const deck = async (sub: string | null) =>
+    call(sub, "GET", "/exchange/match?timeZone=Europe%2FBerlin");
+  type Card = {
+    offerId: string;
+    speciesLatin: string;
+    reasons: { kind: string; species: string }[];
+  };
+
+  it("without a token 401; an invalid time zone 400", async () => {
+    expect((await deck(null)).status).toBe(401);
+    expect((await call(subE, "GET", "/exchange/match")).status).toBe(400);
+  });
+
+  it("a friend with the species on the wishlist sees the card with its reason; a friend without the wish, a stranger and the giver see none (P-04, P-05, FR-TAU-02)", async () => {
+    const id = await specimen(subA, "T1");
+    await call(subA, "PUT", `/sharing/specimens/${id}`, { share: "friends" });
+    const offerId = (
+      await call(subA, "POST", "/offers", { specimenId: id, type: "plant", mode: "give_away" })
+    ).body.id as string;
+    const latin = (
+      await call(subE, "GET", "/exchange/offers?timeZone=Europe%2FBerlin")
+    ).body.offers.find((x: { offerId: string }) => x.offerId === offerId).speciesLatin as string;
+    expect(((await deck(subE)).body.cards as Card[]).filter((c) => c.offerId === offerId)).toEqual(
+      [],
+    );
+    await call(subE, "POST", "/wishes", { name: latin });
+    const mine = ((await deck(subE)).body.cards as Card[]).filter((c) => c.offerId === offerId);
+    expect(mine).toHaveLength(1);
+    expect(mine[0]?.reasons).toEqual([{ kind: "wishlist", species: latin }]);
+    expect(JSON.stringify((await deck(subE)).body)).not.toContain('"wishes"');
+    for (const other of [subD, subOp, subA])
+      expect(((await deck(other)).body.cards as Card[]).map((c) => c.offerId)).not.toContain(
+        offerId,
+      );
+  });
+});
+
 describe("US-SOZ-13 swap history and provenance through the API", () => {
   const history = async (sub: string | null) => call(sub, "GET", "/swaps/history");
   type Entry = {
