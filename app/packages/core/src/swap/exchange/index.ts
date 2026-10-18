@@ -1,7 +1,7 @@
 // Public interface of the feature `exchange` (US-SOZ-09): the open offers of friends and requesting them.
 export { exchangeList } from "./read/list";
 export type { ExchangeQuery } from "./read/list";
-export { swapRequest } from "./write/request";
+export { swapRequest, REFUSAL as SWAP_REQUEST_REFUSAL } from "./write/request";
 export { swapAnswer } from "./write/answer";
 export { swapOverview } from "./read/overview";
 export { swapHistory, swapProvenance } from "./read/history";

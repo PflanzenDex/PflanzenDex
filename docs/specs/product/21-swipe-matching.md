@@ -56,7 +56,7 @@ Acceptance criteria:
 - Given a swipe is shorter than the threshold or ends in a scroll, then no answer is recorded (starting value of the threshold: 40 percent of the card width, assumption).
 - After the last card: "Done for now. N requested, M for later." with the next step (open "Requests" or the Later list, P-09).
 
-### US-TAU-03 · A request arises only from Yes · ⬜ new
+### US-TAU-03 · A request arises only from Yes · 🟨 new
 
 As a **plant keeper** I want a swap request to be created only when I say Yes, so that nobody is bothered by a swipe that I did not mean.
 
