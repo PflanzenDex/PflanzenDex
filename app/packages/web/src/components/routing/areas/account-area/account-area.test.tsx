@@ -250,6 +250,31 @@ describe("US-ONB-05 locked parts inside Konto", () => {
   });
 });
 
+describe("US-ONB-06 the overview is reachable on a phone", () => {
+  it("US-ONB-06 a link under the heading leads to Was die App kann outside the section list that small screens hide", async () => {
+    fakeServer();
+    render(
+      <MemoryRouter initialEntries={["/account"]}>
+        <AccountArea
+          api="http://api"
+          token={async () => "tok"}
+          account={account}
+          onSignOut={() => undefined}
+          onEverywhereSignOut={() => undefined}
+          overview={<p>Übersicht</p>}
+        />
+      </MemoryRouter>,
+    );
+    const nav = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
+    const links = screen.getAllByRole("link", { name: "Was die App kann" });
+    const own = links.find((l) => !nav.contains(l));
+    expect(own?.getAttribute("href")).toBe("/account#funktionen");
+    await userEvent.click(own as HTMLElement);
+    const heading = await screen.findByRole("heading", { level: 2, name: "Was die App kann" });
+    await waitFor(() => expect(document.activeElement).toBe(heading));
+  });
+});
+
 describe("US-QS-14 the address points at a section", () => {
   it.each([
     ["#profil", "Profil"],
