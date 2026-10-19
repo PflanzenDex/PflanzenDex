@@ -104,6 +104,14 @@ export function AccountArea(props: {
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <h1 className="text-2xl font-semibold">Konto</h1>
+      {props.overview !== undefined && (
+        <Link
+          to={{ pathname: PATHS.account, hash: ACCOUNT_SECTIONS.functions }}
+          className="-mt-3 self-start text-[15px] font-medium underline xl:hidden"
+        >
+          Was die App kann
+        </Link>
+      )}
       <div className="flex min-w-0 gap-8">
         <SectionNav sections={sections} />
         <div className="flex min-w-0 flex-1 flex-col gap-8">
