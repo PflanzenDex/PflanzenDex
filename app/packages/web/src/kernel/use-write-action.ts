@@ -1,10 +1,9 @@
 import { useCallback, useRef, useState } from "react";
 import { useAnnounce } from "@/platform/announcer/context";
 import { isOnline } from "@/platform/network";
-import type { ApiError, Response } from "./api";
+import { WRITE_SUCCEEDED, type ApiError, type Response } from "./api";
 
-/** Fired on `window` after every write that succeeded, so quiet observers (the achievement banner) can look again. */
-export const WRITE_SUCCEEDED = "pflanzendex:write-succeeded";
+export { WRITE_SUCCEEDED };
 
 export const SIGN_IN: ApiError = { code: "access.not_signed_in", text: "Bitte melde dich neu an." };
 
