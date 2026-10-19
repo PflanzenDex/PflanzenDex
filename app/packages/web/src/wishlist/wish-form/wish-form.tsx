@@ -1,11 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type UseFormSetError } from "react-hook-form";
+import { useForm, type UseFormReturn, type UseFormSetError } from "react-hook-form";
 import type { ZoneStock } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
 import { Form, FormRoot } from "@/components/ui/fields/form/form";
 import { errorText } from "@/lib/error-text";
 import type { ApiError } from "../../kernel";
+import { SpeciesPick } from "./species-pick/species-pick";
 import { ChoiceFields, ImageFields, NameFields } from "./wish-fields/wish-fields";
 import {
   EMPTY_FIELDS,
@@ -36,8 +37,49 @@ function useServerRefusal(error: ApiError | null, setError: UseFormSetError<Wish
   return { alertText, alertRef };
 }
 
+/** The species pick as the main way, the free fields as the fallback below "Mehr Angaben" (opens by itself on a refusal). */
+function FieldGroups(props: {
+  form: UseFormReturn<WishFields>;
+  access: { api: string; token: () => Promise<string | undefined> };
+  zones: readonly ZoneStock[];
+}) {
+  const { form } = props;
+  const [more, setMore] = useState(false);
+  const [chosen, setChosen] = useState<string | null>(null);
+  const refused = Object.keys(form.formState.errors).length > 0;
+  useEffect(() => {
+    if (refused) setMore(true);
+  }, [refused]);
+  useEffect(() => {
+    // A saved wish empties the form: the pick starts again.
+    if (!form.formState.isDirty) setChosen(null);
+  }, [form.formState.isDirty]);
+  return (
+    <>
+      <SpeciesPick
+        {...props.access}
+        chosen={chosen}
+        onPick={(h) => {
+          form.setValue("name", h.latinName, { shouldValidate: true, shouldDirty: true });
+          form.setValue("german", h.germanName ?? "");
+          setChosen(h.germanName ? `${h.latinName} (${h.germanName})` : h.latinName);
+        }}
+      />
+      <details open={more} onToggle={(e) => setMore(e.currentTarget.open)}>
+        <summary className="flex min-h-11 cursor-pointer items-center">Mehr Angaben</summary>
+        <div className="mt-3 flex flex-col gap-4">
+          <NameFields control={form.control} />
+          <ChoiceFields control={form.control} zones={props.zones} />
+          <ImageFields control={form.control} />
+        </div>
+      </details>
+    </>
+  );
+}
+
 /** The form to record a wish (FR-WUN-01): only the name is required, the rest stays unknown instead of guessed (P-08). */
 export function WishForm(props: {
+  access: { api: string; token: () => Promise<string | undefined> };
   zones: readonly ZoneStock[];
   running: boolean;
   message: string | null;
@@ -77,9 +119,7 @@ export function WishForm(props: {
       )}
       <Form {...form}>
         <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
-          <NameFields control={form.control} />
-          <ChoiceFields control={form.control} zones={props.zones} />
-          <ImageFields control={form.control} />
+          <FieldGroups form={form} access={props.access} zones={props.zones} />
           <Button type="submit" size="touch" disabled={pending}>
             {pending ? "Speichert …" : "Wunsch speichern"}
           </Button>
