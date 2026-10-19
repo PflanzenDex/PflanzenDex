@@ -123,7 +123,7 @@ describe('US-BES-02 form "Create specimen"', () => {
   it("offers the catch date (default today, FR-BES-04) and names no invented location", () => {
     const h = html();
     expect(h).toContain("Fangdatum");
-    expect(h).toContain("Ohne Auswahl bleibt der Standort unbekannt");
+    expect(h).toContain("Standort noch unbekannt");
   });
 
   it("with a taken name: error with the existing specimens and the prompt for a marker (P-09)", () => {

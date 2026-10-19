@@ -8,8 +8,7 @@ export function Created({ specimen }: { specimen: Specimen }) {
       {specimen.status === "cutting" ? "Steckling" : "Exemplar"} „{specimen.name}“ ist angelegt.
       {specimen.status === "cutting" &&
         " Er steht unter Stecklingslicht; tippe auf der Karte „Eingetopft“, sobald du ihn eintopfst."}
-      {specimen.locationId === null &&
-        " Der Standort ist unbekannt, denn ein Soll-Standort steht erst mit den Pflegephasen fest."}
+      {specimen.locationId === null && " Den Standort kannst du später setzen."}
     </Status>
   );
 }

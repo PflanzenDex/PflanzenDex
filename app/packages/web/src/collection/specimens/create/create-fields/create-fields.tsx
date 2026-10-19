@@ -39,7 +39,7 @@ function ZoneField(props: {
           <FormDescription>
             {props.zones.failed
               ? "Die Lichtzonen konnten nicht geladen werden. Du kannst die Zone später setzen."
-              : "Überschreibt die Zone von Standort und Art. Ohne Auswahl wird sie abgeleitet; ein Steckling steht trotzdem unter Stecklingslicht."}
+              : "Ohne Auswahl wird die Zone abgeleitet."}
           </FormDescription>
           <FormMessage />
         </FormItem>
@@ -95,7 +95,6 @@ export function OtherFields(props: {
                 ))}
               </Select>
             </FormControl>
-            <FormDescription>Ohne Auswahl bleibt der Standort unbekannt.</FormDescription>
             <FormMessage />
           </FormItem>
         )}
