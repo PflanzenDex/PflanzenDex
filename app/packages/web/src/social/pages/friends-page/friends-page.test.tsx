@@ -303,6 +303,23 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(await screen.findByText(/Noch keine Freunde/)).toBeTruthy();
   });
 
+  it("US-SOZ-01 · P-09 the next action comes first: invite and enter a code stand before the feed, requests and the privacy text", async () => {
+    fakeServer();
+    render(
+      <MemoryRouter>
+        <FriendsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
+    const names = ["Freund einladen", "Code eingeben", "Neu bei Freunden", "Was Freunde sehen"];
+    const heads = (await screen.findAllByRole("heading", { level: 2 })).map((h) => h.textContent);
+    const at = names.map((n) => heads.findIndex((h) => h?.includes(n)));
+    expect(at.every((i) => i >= 0)).toBe(true);
+    expect([...at].sort((a, b) => a - b)).toEqual(at);
+    const privacy = screen.getByText(/Alles ist privat, bis du es freigibst/);
+    expect(privacy.textContent?.split(" ").length).toBeLessThanOrEqual(10);
+    expect(screen.getByText(/nie Standort, Messwerte/).closest("details")).not.toBeNull();
+  });
+
   it("US-SOZ-04 everything is private by default; sharing a specimen says what friends see, withdrawing says when it takes effect", async () => {
     const { calls } = fakeServer();
     render(

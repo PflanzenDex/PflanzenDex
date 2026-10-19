@@ -85,13 +85,17 @@ export function SharingPanel(props: {
       <h2 id="friend-sharing-title" className="text-xl font-semibold">
         Was Freunde sehen
       </h2>
-      <p className="text-muted-foreground">
-        Alles ist privat, bis du es freigibst. Freunde sehen von einem freigegebenen Exemplar nur
-        die Art, den Namen, das Fangdatum und ob es ein Steckling ist, nie Standort, Messwerte,
-        Behandlungen, Kennzeichen oder Preise. Ein Zurückziehen gilt ab dem nächsten Abruf; was
-        schon angezeigt wurde, lässt sich nicht zurückholen. „Alles privat“ in den Einstellungen
-        setzt alle Freigaben aus, ohne sie zu löschen.
-      </p>
+      <p className="text-muted-foreground">Alles ist privat, bis du es freigibst.</p>
+      <details>
+        <summary className="cursor-pointer">Was Freunde genau sehen</summary>
+        <p className="text-muted-foreground">
+          Freunde sehen von einem freigegebenen Exemplar nur die Art, den Namen, das Fangdatum und
+          ob es ein Steckling ist, nie Standort, Messwerte, Behandlungen, Kennzeichen oder Preise.
+          Ein Zurückziehen gilt ab dem nächsten Abruf; was schon angezeigt wurde, lässt sich nicht
+          zurückholen. „Alles privat“ in den Einstellungen setzt alle Freigaben aus, ohne sie zu
+          löschen.
+        </p>
+      </details>
       {list.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-3">
           Du hast noch keine Exemplare, die du freigeben könntest. Lege zuerst unter „Bestand“ ein

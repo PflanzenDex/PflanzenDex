@@ -93,6 +93,14 @@ describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
     );
   });
 
+  it("US-SOZ-08 · P-09 the offer dialog stands above the lists", async () => {
+    server();
+    view();
+    const empty = await screen.findByText(/Du hast noch nichts angeboten/);
+    const dialog = screen.getByLabelText(/Exemplar/, { selector: "select" });
+    expect(dialog.compareDocumentPosition(empty) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("US-SOZ-08 lists my offers with type, mode, wish, health details without agent and the dormancy phase", async () => {
     server({ offers: [offer()] });
     view();
