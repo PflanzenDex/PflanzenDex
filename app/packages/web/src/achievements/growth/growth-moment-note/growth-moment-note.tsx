@@ -17,7 +17,7 @@ export function GrowthMomentNote(props: { moments: GrowthMoments | null; justSav
   if (m.kind === "unknown") {
     return (
       <p role="status" className="m-0 text-sm text-muted-foreground">
-        Wachstumsmoment: unbekannt. Dafür braucht es mindestens zwei Messungen im Abstand von 90
+        Dein Wachstum ist noch unbekannt. Es zeigt sich nach einer zweiten Messung in mindestens 90
         Tagen.
       </p>
     );
