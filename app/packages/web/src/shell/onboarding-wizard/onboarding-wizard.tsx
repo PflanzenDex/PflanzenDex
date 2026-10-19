@@ -21,6 +21,7 @@ function Created(props: {
   onOpen: () => void;
 }) {
   const [asked, setAsked] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
   return (
     <section className="flex flex-col gap-3">
       <h2 tabIndex={-1} className="text-xl font-semibold">
@@ -32,8 +33,16 @@ function Created(props: {
           api={props.api}
           token={props.token}
           specimenId={props.specimenId}
-          onDone={() => setAsked(true)}
+          onDone={(n) => {
+            setNote(n ?? null);
+            setAsked(true);
+          }}
         />
+      )}
+      {note && (
+        <p role="status" className="m-0">
+          {note}
+        </p>
       )}
       {asked && (
         <Suspense fallback={null}>

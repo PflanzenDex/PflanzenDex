@@ -327,7 +327,7 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
     fakeServer(w);
     view();
     await saveFirstPlant();
-    expect(await screen.findByLabelText("Wo steht sie?")).toBeTruthy();
+    expect(await screen.findByText(/Wo steht sie\?/)).toBeTruthy();
     await userEvent.selectOptions(screen.getByLabelText("Licht bei Zuhause"), "z3");
     await userEvent.click(screen.getByRole("button", { name: "Hier steht sie" }));
     await vi.waitFor(() =>
@@ -338,8 +338,25 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
     expect(w.writes.find((x) => x.path === "/locations/l1")?.body).toMatchObject({
       lightZoneId: "z3",
     });
-    expect(screen.queryByLabelText("Wo steht sie?")).toBeNull();
+    expect(screen.queryByText(/Wo steht sie\?/)).toBeNull();
     expect(screen.getByRole("button", { name: "Miss deine Pflanze" })).toBeTruthy();
+    expect((await screen.findByRole("status")).textContent).toBe(
+      "Standort gespeichert: Zuhause, Lampe 3.",
+    );
+  });
+
+  it("US-ONB-02 · P-10 a location shows the light it brings before it is chosen and the save says it", async () => {
+    const w = world({
+      locations: [{ id: "l9", name: "Balkon", lightZoneId: "z4", kind: "outdoor" }],
+    });
+    fakeServer(w);
+    view();
+    await saveFirstPlant();
+    expect(await screen.findByText("Balkon (Lampe 4)")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Hier steht sie" }));
+    expect((await screen.findByRole("status")).textContent).toBe(
+      "Standort gespeichert: Balkon, Lampe 4.",
+    );
   });
 
   it("US-ONB-02 'Später' leaves the plant without a place, no error, the next action stays", async () => {
@@ -350,7 +367,7 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Später" }));
     expect(w.writes.map((x) => x.path)).not.toContain("/specimens/e1/location");
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(screen.queryByLabelText("Wo steht sie?")).toBeNull();
+    expect(screen.queryByText(/Wo steht sie\?/)).toBeNull();
     expect(screen.getByRole("button", { name: "Miss deine Pflanze" })).toBeTruthy();
   });
 
@@ -399,6 +416,7 @@ describe("US-ONB-03 the style question after the first plant", () => {
     );
     expect(screen.queryByText("Wie nutzt du die App?")).toBeNull();
     expect(screen.getByRole("button", { name: "Miss deine Pflanze" })).toBeTruthy();
+    expect(await screen.findByText("Alles ist jetzt offen.")).toBeTruthy();
   });
 
   it("US-ONB-03 an account that already answered (or an existing one with many) is not asked", async () => {
