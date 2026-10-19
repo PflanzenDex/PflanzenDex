@@ -34,6 +34,8 @@
   "users": [
     {
       "username": "test",
+      "firstName": "Test",
+      "lastName": "Test",
       "email": "test@example.test",
       "enabled": true,
       "emailVerified": true,
@@ -42,6 +44,8 @@
     },
     {
       "username": "test2",
+      "firstName": "Test",
+      "lastName": "Test2",
       "email": "test2@example.test",
       "enabled": true,
       "emailVerified": true,
@@ -50,6 +54,8 @@
     },
     {
       "username": "test3",
+      "firstName": "Test",
+      "lastName": "Test3",
       "email": "test3@example.test",
       "enabled": true,
       "emailVerified": true,
