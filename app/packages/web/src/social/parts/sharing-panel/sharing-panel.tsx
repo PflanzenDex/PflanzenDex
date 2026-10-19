@@ -87,7 +87,9 @@ export function SharingPanel(props: {
       </h2>
       <p className="text-muted-foreground">Alles ist privat, bis du es freigibst.</p>
       <details>
-        <summary className="cursor-pointer">Was Freunde genau sehen</summary>
+        <summary className="flex min-h-11 cursor-pointer items-center">
+          Was Freunde genau sehen
+        </summary>
         <p className="text-muted-foreground">
           Freunde sehen von einem freigegebenen Exemplar nur die Art, den Namen, das Fangdatum und
           ob es ein Steckling ist, nie Standort, Messwerte, Behandlungen, Kennzeichen oder Preise.
