@@ -12,6 +12,7 @@ Ticket TE-03 (#40). Basis: E-01 (self-hosting, Docker Compose, one host), R-09, 
 | `db`          | PostgreSQL 16, data in the `dbdata` volume                                                                                                                                                                                                |
 | `migrate`     | one-shot, same image as `api`: applies pending SQL migrations, then exits (#201)                                                                                                                                                          |
 | `keycloak`    | sign-in service (Keycloak 26.8, production mode), data in its own database in `db`; imports the realm `pflanzendex` on its first start                                                                                                    |
+| `db-roles`    | one-shot: creates the application role and the plain schema owner role, hands an existing database to it (#907, "DB roles in production")                                                                                                 |
 | `keycloak-db` | one-shot: creates the sign-in role and database in `db`, idempotently (also on an existing volume)                                                                                                                                        |
 | `mailpit`     | test environment only (`docker-compose.test.yml`): catches the confirmation emails                                                                                                                                                        |
 
@@ -93,14 +94,14 @@ How it fits together:
 2. Configure the upstream proxy: both hostnames to `http://<host>:80`, WebSocket not needed, forward `Host`, `X-Forwarded-Proto: https`, `X-Forwarded-For`. Note the proxy's address as seen from the host.
 3. `cp app/config/deploy/.env.example app/config/deploy/.env` and set at least:
 
-   | Variable                                                               | Value                                                                                                          |
-   | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-   | `POSTGRES_PASSWORD`, `KEYCLOAK_DB_PASSWORD`, `KEYCLOAK_ADMIN_PASSWORD` | three different random values, e.g. `openssl rand -hex 24` (hex only: the scripts source the file)             |
-   | `APP_URL`, `AUTH_URL`                                                  | `https://app.example.test`, `https://auth.example.test` (what the browser shows, no trailing slash)            |
-   | `APP_HOST`, `AUTH_HOST`                                                | `app.example.test`, `auth.example.test`                                                                        |
-   | `CADDY_SCHEME`                                                         | `http://`                                                                                                      |
-   | `TRUSTED_PROXIES`                                                      | the upstream proxy's address(es) as CIDR, space separated, e.g. `192.0.2.10/32`                                |
-   | `COMPOSE_FILE`                                                         | `docker-compose.yml:docker-compose.test.yml` (adds Mailpit; `deploy.sh`, `backup.sh` and `restore.sh` read it) |
+   | Variable                                                                                    | Value                                                                                                          |
+   | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+   | `POSTGRES_PASSWORD`, `DB_OWNER_PASSWORD`, `KEYCLOAK_DB_PASSWORD`, `KEYCLOAK_ADMIN_PASSWORD` | four different random values, e.g. `openssl rand -hex 24` (hex only: the scripts source the file)              |
+   | `APP_URL`, `AUTH_URL`                                                                       | `https://app.example.test`, `https://auth.example.test` (what the browser shows, no trailing slash)            |
+   | `APP_HOST`, `AUTH_HOST`                                                                     | `app.example.test`, `auth.example.test`                                                                        |
+   | `CADDY_SCHEME`                                                                              | `http://`                                                                                                      |
+   | `TRUSTED_PROXIES`                                                                           | the upstream proxy's address(es) as CIDR, space separated, e.g. `192.0.2.10/32`                                |
+   | `COMPOSE_FILE`                                                                              | `docker-compose.yml:docker-compose.test.yml` (adds Mailpit; `deploy.sh`, `backup.sh` and `restore.sh` read it) |
 
    `POSTGRES_USER`, `POSTGRES_DB`, `KEYCLOAK_ADMIN_USER` have defaults in the template; `SMTP_*`, `KEYCLOAK_DB_NAME`, `KEYCLOAK_DB_USER`, `KEYCLOAK_JAVA_HEAP`, `HTTP_PORT`, `BACKUP_*` are optional (all listed in `.env.example`). The file is in `.gitignore`; no secret goes into the repo (QG-S1). Never write real hostnames or addresses into the repo either: it is public.
 
@@ -310,10 +311,10 @@ Run workflow (environment, ref) -> guard on the runner -> joins the tailnet as a
 
 ### Rules per environment
 
-| Environment | Allowed refs                                                                   | Version                                              |
-| ----------- | ------------------------------------------------------------------------------ | ---------------------------------------------------- |
-| `test`      | any branch, tag or commit of this repository                                   | snapshots allowed (`git describe` = `vX.Y.Z-N-g<sha>`) |
-| `prod`      | only a commit on `main` that carries a stable release tag `vX.Y.Z`             | non-snapshot only                                    |
+| Environment | Allowed refs                                                       | Version                                                |
+| ----------- | ------------------------------------------------------------------ | ------------------------------------------------------ |
+| `test`      | any branch, tag or commit of this repository                       | snapshots allowed (`git describe` = `vX.Y.Z-N-g<sha>`) |
+| `prod`      | only a commit on `main` that carries a stable release tag `vX.Y.Z` | non-snapshot only                                      |
 
 - **Snapshot** means every state that is not exactly a release (ADR 0002: releases are the tags `vX.Y.Z` that semantic-release creates on `main`; `deploy.sh` shows the version as `git describe --tags --always`, so anything after a tag reads `vX.Y.Z-N-g<sha>`). **Non-snapshot** means: the resolved commit has a tag matching `^vX.Y.Z$` (digits only, no pre-release suffix) and is an ancestor of `origin/main`. The seed tag `v0.0.0` is not a release.
 - The guard runs on the runner right after checkout (full history and tags), before the tailnet join and before any contact with the host. It resolves the ref to a full SHA, checks the rule above and the configuration, and fails with a clear message, for example `prod refused: <sha> is a snapshot, not a stable release tag (vX.Y.Z) on main.` or `Variable DEPLOY_HOST is not set in the GitHub environment prod`.
@@ -367,6 +368,40 @@ Open the run. A red "target" step is a guard or configuration failure (nothing w
 - **Untrusted input:** the workflow never puts event data into a shell script; inputs arrive through `env:`, are validated (ref, host name, path, full SHA) and quoted. The runner checks out the repository only to read history and tags and runs no repository code; only the host runs `deploy.sh`.
 - **Blast radius of `tag:ci`:** it can open Tailscale SSH sessions as `deploy` on the tagged hosts and nothing else. The node is ephemeral and disappears after the run.
 - **Host key:** Tailscale SSH authenticates the host by its tailnet node key. The workflow uses `StrictHostKeyChecking=accept-new` (the runner starts with an empty `known_hosts`; `yes` would fail on every run, `no` would also accept a changed key).
+
+## DB roles in production
+
+Issue #907. Why: a `security definer` function runs with the rights of the table owner. Row-level security does not bind a superuser or a role with `BYPASSRLS`, so with such an owner every function that trusted the row rule saw all accounts (audit: `docs/guides/reference/security-definer-audit.md`; the functions now name the account, this is the second line of defence). The postgres image's cluster user is a superuser, so the schema must not belong to it.
+
+| Role                                          | Is                                                        | Used by                                                                                 |
+| --------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `POSTGRES_USER` (cluster user)                | superuser                                                 | administration only: `backup.sh`, `restore.sh`, the one-shots `db-roles`, `keycloak-db` |
+| `DB_OWNER_USER` (default `pflanzendex_owner`) | login, NOSUPERUSER, NOBYPASSRLS, NOCREATEROLE, NOCREATEDB | owns the schema; connection of `migrate` and `api` (background jobs run as it)          |
+| `pflanzendex_app`                             | NOLOGIN, NOSUPERUSER, NOBYPASSRLS                         | the api switches to it per transaction (`set local role`), all row rules apply          |
+| `keycloak` (`KEYCLOAK_DB_USER`)               | login, own database only                                  | the sign-in service                                                                     |
+
+The migration role is the owner role. A separate runtime role is not possible yet: the background jobs and the checked functions need the owner's rights, and the policies that name the owner (`owner_count`, `owner_decides`, `lock_for_merge`, ...) are bound to whoever runs the migrations (migration 0094 keeps them on the current owner).
+
+### Checklist
+
+1. `.env` has `DB_OWNER_PASSWORD` (random hex, different from the other secrets; `DB_OWNER_USER` only if you want another name than `pflanzendex_owner`). `docker compose` stops with "DB_OWNER_PASSWORD is missing" otherwise.
+2. `docker compose ... up -d` runs the one-shot `db-roles` (as the cluster user) before `migrate`: it creates `pflanzendex_app` and the owner role, makes the owner the database owner and, on an existing volume, moves every table, sequence, type and function of schema `public` from the cluster user to the owner (`app/config/deploy/docker/db-roles/`). Idempotent; the password follows `.env` on every run.
+3. `migrate` and `api` connect as the owner and run with `DB_ROLE_CHECK=enforce`: they refuse to start when the connection role, the owner of the tables or `pflanzendex_app` is a superuser or has `BYPASSRLS`. The existing deployment is converted in place by the next `make deploy`; migration 0094 then re-targets the owner policies. Take `make backup` first (the deploy does).
+4. Check afterwards:
+
+   ```bash
+   c="docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml"
+   $c exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atf -' <<'SQL'
+   select r.rolname, r.rolsuper, r.rolbypassrls from pg_class c join pg_roles r on r.oid = c.relowner where c.relname = 'account';
+   select count(*) from pg_proc p join pg_roles r on r.oid = p.proowner where p.pronamespace = 'public'::regnamespace and (r.rolsuper or r.rolbypassrls);
+   SQL
+   ```
+
+   Expected: `pflanzendex_owner|f|f` and `0`. `$c logs api | grep "DB role check"` prints nothing.
+
+5. Restore: `restore.sh` restores the app dump as `DB_OWNER_USER` (`pg_restore --role`), so a restore keeps the ownership; the role must exist (run `up` once on a fresh host before restoring). `make restore-test` proves it. Never restore the app dump with another tool as the cluster user: the objects would belong to the superuser again and the api would refuse to start.
+6. Local development (`make dev`, `make db-up`) still uses the image's superuser; `DB_ROLE_CHECK` defaults to `warn` there and logs the finding. The test suite runs as a plain owner (QG-D1) and in a superuser-owner scratch database for the functions that matter.
+7. Rolling back to a release before this change works without touching the database: the old compose file connects as the cluster user (a superuser can use everything the owner owns), the policies already follow the owner. Do not move the ownership back; fix forward.
 
 ## Health check (US-DEV-09)
 

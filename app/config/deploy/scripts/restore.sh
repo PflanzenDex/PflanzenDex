@@ -15,10 +15,14 @@ KEYCLOAK_DB_NAME="${KEYCLOAK_DB_NAME:-keycloak}"
 
 # A keycloak-*.dump belongs to the sign-in service database (TE-03); it keeps its owner (the sign-in role), the
 # app dump is restored without owners. Without a target the production database of that kind is overwritten.
+# The app dump is restored as the schema owner role (DB_OWNER_USER, #907): without it the objects would belong to the
+# cluster superuser, and every `security definer` function would ignore row-level security again. The role must exist
+# (created by the `db-roles` one-shot on `docker compose up`).
 OWNER_OPTION=--no-owner
+OWNER_ROLE="${DB_OWNER_USER-pflanzendex_owner}" # default as in docker-compose.yml; explicitly empty = legacy, objects stay with the superuser
 PRODUCTION_DB=""
 case "$(basename "$file")" in
-  keycloak-*) OWNER_OPTION=""; PRODUCTION_DB="$KEYCLOAK_DB_NAME" ;;
+  keycloak-*) OWNER_OPTION=""; OWNER_ROLE=""; PRODUCTION_DB="$KEYCLOAK_DB_NAME" ;;
 esac
 
 if [ -z "$RESTORE_DB" ]; then
@@ -33,9 +37,12 @@ fi
 $PG_EXEC sh -c '
   set -e
   db="${1:-${3:-$POSTGRES_DB}}"
+  owner_clause=""
+  role_option=""
+  if [ -n "$4" ]; then owner_clause="OWNER \"$4\""; role_option="--role=$4"; fi
   if [ "$db" != "$POSTGRES_DB" ] && [ "$db" != "$3" ]; then
-    psql -U "$POSTGRES_USER" -d postgres -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS \"$db\"" -c "CREATE DATABASE \"$db\""
+    psql -U "$POSTGRES_USER" -d postgres -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS \"$db\"" -c "CREATE DATABASE \"$db\" $owner_clause"
   fi
-  pg_restore -U "$POSTGRES_USER" -d "$db" --clean --if-exists $2 --exit-on-error
-' sh "$RESTORE_DB" "$OWNER_OPTION" "$PRODUCTION_DB" < "$file"
+  pg_restore -U "$POSTGRES_USER" -d "$db" --clean --if-exists $2 $role_option --exit-on-error
+' sh "$RESTORE_DB" "$OWNER_OPTION" "$PRODUCTION_DB" "$OWNER_ROLE" < "$file"
 echo "Restored from $file"

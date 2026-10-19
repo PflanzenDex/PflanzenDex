@@ -1,6 +1,12 @@
 import { serve } from "@hono/node-server";
 import { featuresFromEnv } from "@pflanzendex/core";
-import { JobsPostgres, openPool, testDatabaseUrl } from "@pflanzendex/db";
+import {
+  checkDbRoles,
+  JobsPostgres,
+  openPool,
+  roleCheckMode,
+  testDatabaseUrl,
+} from "@pflanzendex/db";
 import { createApp } from "./app";
 import { createWikimediaDownload } from "./wishlist";
 import { createJobWorker, JOB_HANDLERS } from "./jobs";
@@ -22,6 +28,9 @@ const issuer = process.env["OIDC_ISSUER"] ?? "http://localhost:18081/realms/pfla
 const jwksUrl = process.env["OIDC_JWKS_URL"];
 const jwks = jwksUrl ? { jwksUrl } : {};
 const pool = openPool(process.env["DATABASE_URL"] ?? testDatabaseUrl());
+// Database roles (#907, P-04): a superuser or BYPASSRLS owner makes `security definer` functions ignore row security.
+// `DB_ROLE_CHECK=enforce` (the compose deployment) stops the start; the default only warns (local dev uses the image's superuser).
+await checkDbRoles(pool, roleCheckMode(process.env), (message) => console.warn(message));
 // Photo storage (US-WAC-06): without S3_* variables the photo upload answers 502 (the rest of the app is unaffected).
 const s3 = s3ConfigFromEnv(process.env);
 if (s3 && !("bucket" in s3)) console.warn(`Photo storage disabled, missing: ${s3.join(", ")}`);

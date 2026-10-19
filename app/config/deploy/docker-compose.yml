@@ -45,6 +45,29 @@ services:
       resources:
         limits:
           memory: 64m
+  # One-shot: makes the schema owner of the app database a plain role (no superuser, no BYPASSRLS) and creates the
+  # application role, idempotently, also on an existing volume (#907, P-04). A superuser as table owner makes every
+  # `security definer` function ignore row-level security. Runs as the cluster user, which nothing else connects as.
+  db-roles:
+    image: postgres:16-alpine
+    restart: "no"
+    entrypoint: ["sh", "/db-roles/init-db-roles.sh"]
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      APP_DB: ${POSTGRES_DB}
+      DB_OWNER_USER: ${DB_OWNER_USER:-pflanzendex_owner}
+      DB_OWNER_PASSWORD: ${DB_OWNER_PASSWORD:?DB_OWNER_PASSWORD is missing (see .env.example)}
+    volumes:
+      - ./docker/db-roles:/db-roles:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 64m
   # One-shot: applies pending migrations (forward only, advisory lock) before the api starts (#201, US-DEV-07).
   # A failing migration fails `up`, so deploy.sh rolls back the code and the api never serves a half-migrated schema.
   migrate:
@@ -58,10 +81,14 @@ services:
     working_dir: /srv/app/packages/db
     command: ["npx", "tsx", "src/kernel/migrate-cli.ts"]
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      # The schema owner, never the cluster user (#907). DB_ROLE_CHECK=enforce refuses a superuser or BYPASSRLS role.
+      DATABASE_URL: postgres://${DB_OWNER_USER:-pflanzendex_owner}:${DB_OWNER_PASSWORD:?DB_OWNER_PASSWORD is missing}@db:5432/${POSTGRES_DB}
+      DB_ROLE_CHECK: enforce
     depends_on:
       db:
         condition: service_healthy
+      db-roles:
+        condition: service_completed_successfully
     deploy:
       resources:
         limits:
@@ -134,7 +161,10 @@ services:
         APP_VERSION: ${APP_VERSION:-unknown}
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      # The schema owner, never the cluster user (#907); it also runs the background jobs, the requests switch to the
+      # application role per transaction. DB_ROLE_CHECK=enforce refuses to start with a superuser or BYPASSRLS role.
+      DATABASE_URL: postgres://${DB_OWNER_USER:-pflanzendex_owner}:${DB_OWNER_PASSWORD:?DB_OWNER_PASSWORD is missing}@db:5432/${POSTGRES_DB}
+      DB_ROLE_CHECK: enforce
       PORT: "3000"
       # Tokens carry the public issuer; the keys are fetched inside the network (no detour over the public address).
       OIDC_ISSUER: ${AUTH_URL:?AUTH_URL is missing}/realms/pflanzendex

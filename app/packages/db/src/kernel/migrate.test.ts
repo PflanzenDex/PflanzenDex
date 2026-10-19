@@ -4,7 +4,7 @@ import { join } from "node:path";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate } from "./migrate.ts";
-import { openOwnerPool } from "./connection.ts";
+import { openOwnerPool } from "./connection/connection.ts";
 
 const TABLE_NAME = "schema_migrations_test";
 let pool: Pool;

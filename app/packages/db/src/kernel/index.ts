@@ -17,6 +17,12 @@ export {
   openOwnerPool,
   openPool,
   testDatabaseUrl,
-} from "./connection.ts";
+} from "./connection/connection.ts";
 export { IdempotencyPostgres } from "./idempotency.ts";
+export {
+  checkDbRoles,
+  dbRoleFindings,
+  roleCheckMode,
+  type RoleCheckMode,
+} from "./connection/role-check.ts";
 export { FIXTURES_KERNEL } from "./fixtures.ts";
