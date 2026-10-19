@@ -174,5 +174,6 @@ export function viewTitle(pathname: string): string {
   if (pathname === EXCHANGE_PATH) return pageTitle("Tauschbörse");
   if (pathname === MATCH_PATH) return pageTitle("Passende Angebote");
   if (pathname.startsWith(`${PATHS.friends}/`)) return pageTitle("Sammlung eines Freundes");
+  if (pathname.startsWith("/unlock/")) return pageTitle("Funktion freischalten");
   return pathname.startsWith(`${PROFILE_BASE}/`) ? pageTitle("Artenprofil") : pageTitle();
 }

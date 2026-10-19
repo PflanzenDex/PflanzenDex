@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Link, useParams } from "react-router";
 import { Button } from "@/components/ui/button/button";
 import { PlantLoader } from "@/components/shared/states/plant-loader/plant-loader";
@@ -79,6 +79,15 @@ function LockedBody(props: { entry: Entry; name: string; running: boolean; onUnl
   );
 }
 
+/** The tap removes the button the focus was on: the heading takes it, the status line is announced as before. */
+function useFocusOn(message: string | null) {
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (message) heading.current?.focus();
+  }, [message]);
+  return heading;
+}
+
 /**
  * The page of a function that is not open yet, reached from a row, a bookmark or the AI client (US-ONB-05, FR-ONB-02):
  * the reason and the way in plain words and "Jetzt freischalten". It is never blank, never an error and never a 404
@@ -91,6 +100,7 @@ export function UnlockPage(props: { api: string; token: Token; id?: string }) {
   const refresh = useInvalidate(UNLOCKS_KEY);
   const write = useWriteAction(props.token, refresh);
   const { run } = write;
+  const heading = useFocusOn(write.message);
   const name = functionName(id);
   const entry = unlocks.entries.find((e) => e.id === id);
   const unlock = useCallback(
@@ -108,7 +118,7 @@ export function UnlockPage(props: { api: string; token: Token; id?: string }) {
   const locked = entry.state === "locked" && entry.announced;
   return (
     <section aria-labelledby="unlock-title" className="flex flex-col gap-3">
-      <h1 id="unlock-title" className="text-2xl font-semibold">
+      <h1 ref={heading} tabIndex={-1} id="unlock-title" className="text-2xl font-semibold">
         {name}
       </h1>
       {write.message && (
