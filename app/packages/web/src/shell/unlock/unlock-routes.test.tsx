@@ -40,6 +40,7 @@ const renderAt = (path: string, functions: unknown[]) => {
             setNewSpecies: () => undefined,
             choose: () => undefined,
             toTheCatalog: () => undefined,
+            toAddPlant: () => undefined,
             onCreated: () => undefined,
             startFromWish: () => undefined,
           }}

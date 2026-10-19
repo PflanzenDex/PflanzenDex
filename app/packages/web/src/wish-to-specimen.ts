@@ -121,6 +121,7 @@ type Base = {
   setNewSpecies: (s: Species | null) => void;
   choose: (s: Species) => void;
   toTheCatalog: () => void;
+  toAddPlant: () => void;
 };
 
 /**

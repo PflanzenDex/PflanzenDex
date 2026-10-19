@@ -36,6 +36,7 @@ type Props = {
   token: Token;
   newSpecies: Species | null;
   onSpeciesChoose: () => void;
+  onAdd?: () => void; // quick flow for a further plant instead of the catalog (US-ONB-01)
   onCompleted: (specimen: Specimen) => void;
   onMeasure?: (e: { id: string; name: string }) => void;
   /** Set when the destination "Sammlung" shows the page below its title: demoted heading, count line (US-QS-14). */
@@ -98,7 +99,6 @@ type Actions = {
   zoned: ReturnType<typeof useLightZone>;
   clearMessages: () => void;
 };
-
 /** One view at a time: the create form, the archive form, the marker form or the list. */
 function Views(p: {
   data: Loaded;
@@ -164,7 +164,7 @@ function List(p: { data: Loaded; created: Specimen | null; actions: Actions; pro
       <DistributionView distribution={data.distribution} />
       <CollectionList
         cards={data.cards}
-        onSpeciesChoose={p.props.onSpeciesChoose}
+        onSpeciesChoose={p.props.onAdd ?? p.props.onSpeciesChoose}
         embedded={p.props.host !== undefined}
         photoAccess={{ api: p.props.api, token: p.props.token }}
         {...(p.props.groupBy ? { groupBy: p.props.groupBy } : {})}
