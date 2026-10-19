@@ -53,8 +53,6 @@ export function CollectionArea(props: {
   onCreateSpecimen?: (wish: WishToPlant) => void;
   /** The calm hint at the list of plants (US-ONB-07); the app wires it, because the shell is not imported here. */
   renderHint?: (applicable: readonly string[]) => ReactNode;
-  /** The locked parts inside this destination (US-ONB-05): wishlist and equipment; the app wires it. */
-  locks?: (ids: readonly string[]) => ReactNode;
 }) {
   const { view: chosen, choose } = useSammlungView();
   const { sort, choose: chooseSort } = useSpeciesSort();
@@ -89,7 +87,7 @@ export function CollectionArea(props: {
         </SammlungHeader>
       )}
       <Suspense fallback={<PageSkeleton />}>
-        <Mode
+        <ModeBody
           {...props}
           view={view}
           sort={sort}
@@ -105,13 +103,6 @@ export function CollectionArea(props: {
   );
 }
 
-/** The locked modes of the destination (US-ONB-05): wishlist and equipment stay visible with reason and way. */
-function LockedModes(props: { locks: ((ids: readonly string[]) => ReactNode) | undefined }) {
-  return props.locks ? (
-    <Suspense fallback={null}>{props.locks(["wishlist", "equipment"])}</Suspense>
-  ) : null;
-}
-
 type ModeProps = Parameters<typeof CollectionArea>[0] & {
   view: "plants" | "species" | "wishlist" | "equipment";
   sort: "pokedex" | "difficulty";
@@ -122,16 +113,6 @@ type ModeProps = Parameters<typeof CollectionArea>[0] & {
   measure: { id: string; name: string } | null;
   setMeasure: (m: { id: string; name: string } | null) => void;
 };
-
-/** The locked modes, then the page of the chosen mode. */
-function Mode(p: ModeProps) {
-  return (
-    <>
-      {p.measure || p.managing ? null : <LockedModes locks={p.locks} />}
-      <ModeBody {...p} />
-    </>
-  );
-}
 
 function ModeBody(p: ModeProps) {
   const { api, token, host } = p;

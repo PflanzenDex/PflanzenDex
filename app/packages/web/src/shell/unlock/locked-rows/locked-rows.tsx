@@ -7,7 +7,7 @@ import { useUnlocks } from "../model/unlocks/unlocks";
  * "Noch gesperrt", then reason and way as a plain fact. A row opens the lock page. Renders nothing while nothing is
  * locked, so an account in style "many" sees exactly what it saw before (FR-ONB-06). Switched-off functions and, in
  * calm mode, the achievement functions never appear (FR-ONB-03, US-ACH-08). With `only` the rows of a destination
- * show the locked parts inside it (wishlist and equipment mode, AI access, the achievement sections), same marking.
+ * show the locked parts inside it (AI access, the achievement sections), same marking.
  */
 export function LockedRows(props: { only?: readonly string[] }) {
   const { only } = props;
