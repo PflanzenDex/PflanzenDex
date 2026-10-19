@@ -1,10 +1,13 @@
 import { migrate } from "./migrate.ts";
-import { openPool } from "./connection.ts";
+import { openPool } from "./connection/connection.ts";
+import { checkDbRoles, roleCheckMode } from "./connection/role-check.ts";
 
 // Aufruf: `DATABASE_URL=postgres://... npm run migrate -w @pflanzendex/db`
 const url = process.env["DATABASE_URL"] ?? process.env["PFLANZENDEX_TEST_DATABASE_URL"];
 const pool = openPool(url);
 try {
+  // Before the first statement: the migrations create the policies and functions that depend on who the owner is (#907).
+  await checkDbRoles(pool, roleCheckMode(process.env), (message) => console.warn(message));
   const fresh = await migrate(pool);
   console.log(fresh.length ? `Applied: ${fresh.join(", ")}` : "Schema is up to date.");
 } finally {

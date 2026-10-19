@@ -24,6 +24,10 @@ done
 # The sign-in service's database (TE-03) travels in the same backup run.
 docker exec "$name" psql -U pdxtest -d postgres -v ON_ERROR_STOP=1 -c "create database $KEYCLOAK_DB_NAME" > /dev/null
 
+# The schema owner role of the deployment (#907): the app dump is restored as this role, not as the cluster user.
+docker exec "$name" psql -U pdxtest -d postgres -v ON_ERROR_STOP=1 -c "create role pdxowner login" > /dev/null
+export DB_OWNER_USER=pdxowner
+
 export PG_EXEC="docker exec -i $name"
 psql_q() { docker exec "$name" psql -U pdxtest -d "$1" -v ON_ERROR_STOP=1 -tAc "$2"; }
 
@@ -40,6 +44,11 @@ export BACKUP_DIR="$workdir/backups" BACKUP_REMOTE=""
 dump="$(ls "$BACKUP_DIR"/pflanzendex-*.dump)"
 ./scripts/restore.sh "$dump" pdx_restored
 
+owner="$(psql_q pdx_restored "select tableowner from pg_tables where tablename = 'specimen'")"
+if [ "$owner" != "pdxowner" ]; then
+  echo "ERROR: restored tables belong to $owner, not to the schema owner role (DB_OWNER_USER)" >&2
+  exit 1
+fi
 actual="$(psql_q pdx_restored "select count(*) || ':' || md5(string_agg(name || coalesce(note,''), ',' order by id)) from specimen")"
 if [ "$expected" != "$actual" ]; then
   echo "ERROR: restore differs (expected $expected, actual $actual)" >&2

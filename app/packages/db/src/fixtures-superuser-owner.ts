@@ -7,6 +7,10 @@ import { FriendsPostgres } from "./social/index.ts";
 export interface SuperuserOwnerDatabase {
   /** Pool of the superuser owner on the scratch database; hand it to the adapters under test (they use the app role). */
   readonly pool: Pool;
+  /** Name of the scratch database. */
+  readonly name: string;
+  /** Connection string of the superuser owner (a test may connect as another role by changing user and password). */
+  readonly url: string;
   /** Drops the scratch database (also when a test failed half way). */
   drop(): Promise<void>;
 }
@@ -20,8 +24,12 @@ export interface SuperuserOwnerDatabase {
  *
  * Creates and migrates a scratch database next to the suite's databases; the adapters under test still switch to the
  * application role per transaction (`withAccount`), only the function owner differs. Call `drop()` in `afterAll`.
+ * `options.directory`: migrate from another folder (a test that wants to stop short of the newest migrations).
  */
-export async function createSuperuserOwnerDatabase(label: string): Promise<SuperuserOwnerDatabase> {
+export async function createSuperuserOwnerDatabase(
+  label: string,
+  options: { directory?: string } = {},
+): Promise<SuperuserOwnerDatabase> {
   const name = `su_${label.replace(/[^a-z]/g, "").slice(0, 10)}_${randomUUID()
     .replace(/[0-9-]/g, "")
     .slice(0, 8)}`;
@@ -32,7 +40,7 @@ export async function createSuperuserOwnerDatabase(label: string): Promise<Super
   const pool = openPool(url.toString());
   pool.on("error", () => undefined);
   try {
-    await migrate(pool);
+    await migrate(pool, options.directory ? { directory: options.directory } : {});
     const me = await pool.query<{ rolsuper: boolean }>(
       "select rolsuper from pg_roles where rolname = current_user",
     );
@@ -46,6 +54,8 @@ export async function createSuperuserOwnerDatabase(label: string): Promise<Super
   }
   return {
     pool,
+    name,
+    url: url.toString(),
     drop: async () => {
       await pool.end();
       await admin.query(`drop database if exists ${name} with (force)`);
