@@ -74,13 +74,14 @@ describe("US-ONB-05 routes of locked functions", () => {
     expect(screen.queryByText("Noch gesperrt")).toBeNull();
   });
 
-  it("US-ONB-05 the Sammlung keeps wishlist and equipment as rows with reason and way, and never blocks the mode", async () => {
+  it("US-ONB-05 · FR-ONB-04 a usable target shows no locked row: the wishlist in the Sammlung opens without Noch gesperrt", async () => {
     renderAt("/collection?view=wishlist", [
       entry("wishlist", "locked"),
-      entry("equipment", "open"),
+      entry("equipment", "locked"),
     ]);
-    const row = await screen.findByRole("link", { name: /Wunschliste: lege noch 3 Pflanzen an/ });
-    expect(row.getAttribute("href")).toBe("/unlock/wishlist");
+    await screen.findByRole("heading", { level: 1 });
+    expect(screen.queryByRole("link", { name: /Wunschliste: lege noch 3 Pflanzen an/ })).toBeNull();
+    expect(screen.queryByText(/Noch gesperrt/)).toBeNull();
     expect(screen.queryByRole("link", { name: /Ausrüstung:/ })).toBeNull();
   });
 });

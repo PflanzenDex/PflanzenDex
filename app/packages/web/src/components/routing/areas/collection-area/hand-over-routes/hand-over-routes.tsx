@@ -3,7 +3,7 @@ import type { Species, Specimen } from "@pflanzendex/core";
 import { CareProfileSection } from "@/collection";
 import { loadSpecies, searchSpecies, SpeciesPage } from "@/catalog";
 import type { WishToPlant } from "@/wishlist";
-import { AddPlant, ContextHint, LockedRows } from "@/shell";
+import { AddPlant, ContextHint } from "@/shell";
 import { AreaSection } from "../../shared/area-section/area-section";
 import { CollectionArea, DiscoverArea } from "../../shared/lazy-areas";
 import {
@@ -86,7 +86,6 @@ export function handOverRoutes(api: string, token: Token, h: HandOver, open: (id
           onCompleted={h.onCreated}
           onOpenSpecies={open}
           onCreateSpecimen={h.startFromWish}
-          locks={(ids) => <LockedRows only={ids} />}
           renderHint={(a) => <ContextHint api={api} token={token} applicable={a} />}
         />
       }
