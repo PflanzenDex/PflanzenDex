@@ -82,6 +82,17 @@ describe("US-ONB-05 lock page", () => {
     expect(screen.getByRole("button", { name: "Jetzt freischalten" })).toBeTruthy();
   });
 
+  it("US-ONB-05 the lock page says in one sentence what the function is for and leads back to the overview", async () => {
+    server(() => [swapping()]);
+    page("/unlock/swapping");
+    expect(
+      await screen.findByText("Tausche Pflanzen und Stecklinge mit deinen Freunden."),
+    ).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Alle Funktionen ansehen" }).getAttribute("href")).toBe(
+      "/account#funktionen",
+    );
+  });
+
   it("US-ONB-05 one tap unlocks with the time zone and a key, then says what may be empty and what to do next", async () => {
     let unlocked = false;
     const posts = server(
