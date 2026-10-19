@@ -35,24 +35,24 @@ const REGISTER: Record<string, readonly [Status, string]> = {
   answer_friendship: ["scoped", "friendship rows by explicit account"],
   end_friendship: ["scoped", "friendship rows by explicit account"],
   friendship_holds: ["scoped", "friendship rows by explicit account"],
-  friend_shares: ["open", "sharing rows of every account after a mutual friendship"],
-  friend_shares_since: ["open", "sharing rows of every account after a mutual friendship"],
-  friend_equipment: ["open", "shared equipment of every account after a mutual friendship"],
+  friend_shares: ["fixed", "0090"],
+  friend_shares_since: ["fixed", "0090"],
+  friend_equipment: ["fixed", "0091"],
   friend_offers: ["fixed", "0089"],
   request_swap: ["fixed", "0089"],
   friend_wants: ["scoped", "wish of the friend by explicit account"],
-  set_swap_state: ["open", "both rows of the swap by swap_id only (benign: same values)"],
-  reopen_offer: ["open", "offer by id only (benign while callers pass the giver)"],
+  set_swap_state: ["fixed", "0092"],
+  reopen_offer: ["fixed", "0092"],
   answer_swap: ["id-bound", "own swap row; offer id taken from it"],
   cancel_orphaned_swaps: ["scoped", "own swap rows"],
   cancel_swaps_for_offer: ["scoped", "own swap rows"],
   cancel_swaps_of_deleted_account: ["scoped", "own swap rows"],
-  confirm_handover: ["id-bound", "own swap row; both rows get the same values"],
-  finish_handover: ["open", "both swap rows get both specimen ids"],
+  confirm_handover: ["fixed", "0092"],
+  finish_handover: ["fixed", "0092"],
   reminder_accounts: ["gated", "worker only, id and time zone of accounts with a zone"],
   features_of_account: ["scoped", "own switches"],
   rarity_participants: ["gated", "ids of accounts that consented, nothing else"],
-  active_species_of: ["open", "specimens of every account, not only the asked ones"],
+  active_species_of: ["fixed", "0093"],
   erase_catalog_contributions: ["scoped", "own cases, specimens and profiles"],
   erase_account: ["scoped", "own account"],
   accept_catalog_correction: ["gated", "reviewer"],
@@ -69,16 +69,9 @@ const REGISTER: Record<string, readonly [Status, string]> = {
   ],
   withdraw_catalog_correction: ["scoped", "own correction"],
 };
-// The functions that still rely on row security. Fixed in the next change; this list only shrinks.
-const OPEN = [
-  "active_species_of",
-  "finish_handover",
-  "friend_equipment",
-  "friend_shares",
-  "friend_shares_since",
-  "reopen_offer",
-  "set_swap_state",
-];
+// The functions that still rely on row security. Must stay empty: fix a new finding in a migration and register it as
+// fixed (with a test that runs in the superuser-owner database).
+const OPEN: string[] = [];
 
 let pool: Pool;
 beforeAll(async () => {
@@ -97,7 +90,7 @@ describe("QG-D1 #907 the register of security definer functions", () => {
     expect(r.rows.map((x) => x.name)).toEqual(Object.keys(REGISTER).sort());
   });
 
-  it("QG-D1 the functions that still rely on row security are exactly the known open ones", () => {
+  it("QG-D1 no function relies on row security for its scope", () => {
     const open = Object.entries(REGISTER)
       .filter(([, [status]]) => status === "open")
       .map(([name]) => name)
