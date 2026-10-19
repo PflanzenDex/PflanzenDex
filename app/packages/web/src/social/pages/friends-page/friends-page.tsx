@@ -112,6 +112,18 @@ function Body(props: { data: FriendsData; api: string; token: Token; onWritten: 
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <Outcome message={message ?? null} error={error ?? null} />
+      <InviteCard
+        created={created}
+        running={invite.running}
+        onCreate={() =>
+          void invite.run(async (t) => {
+            const r = await createFriendCode(api, t);
+            if (r.ok) setCreated(r.value);
+            return r;
+          }, "Code erzeugt.")
+        }
+      />
+      <CodeForm running={request.write.running} refusal={request.refusal} onSend={request.send} />
       <FriendsBanner api={api} token={token} />
       <FeedBlock
         api={api}
@@ -143,25 +155,13 @@ function Body(props: { data: FriendsData; api: string; token: Token; onWritten: 
         }
       />
       <SharingSection data={data} api={api} token={token} onWritten={props.onWritten} />
-      <InviteCard
-        created={created}
-        running={invite.running}
-        onCreate={() =>
-          void invite.run(async (t) => {
-            const r = await createFriendCode(api, t);
-            if (r.ok) setCreated(r.value);
-            return r;
-          }, "Code erzeugt.")
-        }
-      />
-      <CodeForm running={request.write.running} refusal={request.refusal} onSend={request.send} />
     </div>
   );
 }
 
 /**
  * The page "Freunde" (US-SOZ-01, US-SOZ-02): open requests with accept and decline, the confirmed friends, a button to
- * invite with a code and the field to enter a code. Nothing here shows a friend's collection: private by default
+ * invite with a code and the field to enter a code (these two come first: the next action before the lists, P-09). Nothing here shows a friend's collection: private by default
  * (P-05), and there are no rankings between friends. A write reloads everything (P-10).
  */
 export function FriendsPage(props: { api: string; token: Token }) {

@@ -30,6 +30,12 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
           {errorText(withdraw.error.code)}
         </p>
       )}
+      <OfferForm
+        api={api}
+        token={props.token}
+        specimens={props.data.specimens}
+        onChanged={props.onWritten}
+      />
       <OfferList
         offers={props.data.offers}
         busy={withdraw.running}
@@ -43,19 +49,13 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
       <SwapRequests api={api} token={props.token} />
       <FriendOffers api={api} token={props.token} />
       <SwapHistory api={api} token={props.token} />
-      <OfferForm
-        api={api}
-        token={props.token}
-        specimens={props.data.specimens}
-        onChanged={props.onWritten}
-      />
     </div>
   );
 }
 
 /**
  * The exchange (US-SOZ-08, ADR 0012): my offers and the dialog to offer a specimen for swapping or giving away. The offers of
- * friends and requesting them (US-SOZ-09) sit above the dialog. Private by default: nothing is offered without the sharing of the
+ * friends and requesting them (US-SOZ-09) sit below the dialog: the next action comes first (P-09). Private by default: nothing is offered without the sharing of the
  * specimen (P-05), and there are no rankings (FR-SOZ-11).
  */
 export function ExchangePage(props: { api: string; token: Token }) {

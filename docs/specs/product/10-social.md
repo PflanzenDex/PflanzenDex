@@ -33,6 +33,7 @@ Assumptions, decided by the PO (revisable):
 - Unknown, used and expired codes are rejected with their own error (`friend.unknown_code`, `friend.code_used`, `friend.code_expired`); unlike the access invitation this reveals nothing worth protecting, because the person holds the code.
 - Both sides store the display name of the other side at the time of the request; a side without a display name is stored as unknown (P-08). After an ended friendship a new request is allowed and reuses the stored rows.
 - Open requests are visible only to their two sides, with the display name and nothing else (P-04, P-05). The number of open codes per account is not limited yet (assumption: no abuse expected; revisit with US-SOZ-12).
+- Order of the page "Freunde" (assumption, decided by the PO, revisable, #899): the next action comes first (P-09). "Freund einladen" and "Code eingeben" stand before the feed, the requests and the friends list; the privacy text is one short sentence ("Alles ist privat, bis du es freigibst.") with the details folded below it.
 
 ### US-SOZ-02 · Answer a friendship request · 🟨 new
 
@@ -167,6 +168,7 @@ Assumptions, decided by the PO (revisable):
 - The plant law notice (FR-SOZ-09) is one static text that mentions CITES as an example and says it is no legal advice; it informs and never blocks. There is no list of protected species in the system, so none is invented (P-08).
 - Withdrawing works at any time while the offer is open or reserved, repeating it changes nothing, a handed-over offer is `offer.not_active`; withdrawn offers stay in the list (P-10). Canceling the open requests comes with the requests (US-SOZ-09, US-SOZ-10).
 - Limits (assumption, starting values): wish 1 to 200 characters, note 1 to 500.
+- On the page "Tauschbörse" the offer dialog stands above the lists of offers, requests and history (assumption, decided by the PO, revisable, #899).
 
 ### US-SOZ-09 · See offers from friends and request them · 🟨 new
 
