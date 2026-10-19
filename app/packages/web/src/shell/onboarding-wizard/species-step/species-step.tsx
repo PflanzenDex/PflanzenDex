@@ -112,6 +112,13 @@ export function SpeciesStep(props: {
       {(failed || refused) && (
         <p role="alert">{refused ?? "Die Suche hat nicht geklappt. Versuche es noch einmal."}</p>
       )}
+      <p role="status" className="sr-only">
+        {!text.trim() || failed
+          ? ""
+          : hits.length === 0
+            ? "Nichts gefunden."
+            : `${Math.min(hits.length, 8)} Treffer, wähle eine Art.`}
+      </p>
       <HitList hits={hits} chosen={species?.id} onPick={(id) => void pick(id)} />
       {text.trim() && hits.length === 0 && !failed && (
         <p className="m-0 text-sm">

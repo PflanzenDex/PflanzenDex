@@ -63,9 +63,19 @@ function Buttons(props: { f: Flow; onSkip: () => void }) {
   return (
     <div className={ACTIONS}>
       {f.index === 0 ? (
-        <Button type="button" disabled={f.species === null} onClick={() => f.setIndex(1)}>
-          {FIRST_PLANT_STEPS[0]?.actionLabel}
-        </Button>
+        <>
+          <Button
+            type="button"
+            disabled={f.species === null}
+            aria-describedby="first-plant-next-hint"
+            onClick={() => f.setIndex(1)}
+          >
+            {FIRST_PLANT_STEPS[0]?.actionLabel}
+          </Button>
+          <p id="first-plant-next-hint" className="m-0 self-center text-sm text-muted-foreground">
+            {f.species === null ? "Wähle zuerst eine Art aus den Treffern." : ""}
+          </p>
+        </>
       ) : (
         <>
           <Button
