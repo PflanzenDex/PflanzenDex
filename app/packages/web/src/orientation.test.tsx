@@ -62,6 +62,7 @@ function renderAt(path: string, answer: (url: string) => unknown = () => undefin
             setNewSpecies: () => undefined,
             choose: () => undefined,
             toTheCatalog: () => undefined,
+            toAddPlant: () => undefined,
             onCreated: () => undefined,
             startFromWish: () => undefined,
           }}

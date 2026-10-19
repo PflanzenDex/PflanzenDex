@@ -177,6 +177,15 @@ describe("US-BES-02 Seite Bestand", () => {
     expect(onSpeciesChoose).toHaveBeenCalledOnce();
   });
 
+  it("US-ONB-01 Weiteres Exemplar opens the quick flow, not the species choice", async () => {
+    fakeServer({ specimens: [specimen()] });
+    const [onAdd, onSpeciesChoose] = [vi.fn(), vi.fn()];
+    render(page({ onAdd, onSpeciesChoose }));
+    await userEvent.click(await screen.findByRole("button", { name: "Weiteres Exemplar" }));
+    expect(onAdd).toHaveBeenCalledOnce();
+    expect(onSpeciesChoose).not.toHaveBeenCalled();
+  });
+
   it("after creating with an unknown location the list says why it is unknown", async () => {
     fakeServer();
     const { rerender } = render(page({ newSpecies: species }));

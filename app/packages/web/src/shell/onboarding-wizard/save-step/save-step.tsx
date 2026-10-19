@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { zoneDerive, type LightZone, type Species } from "@pflanzendex/core";
 import { Select } from "@/components/ui/fields/select/select";
 import { Label } from "@/components/ui/display/label/label";
@@ -64,6 +64,8 @@ export function SaveStep(props: {
   zoneId: string;
   onZone: (id: string) => void;
   error: string | null;
+  /** More fields of the step, e.g. the suggested place of a further plant. */
+  children?: ReactNode;
 }) {
   const { species, zones } = props;
   const derived = zones ? derivedZone(species, zones) : null;
@@ -95,6 +97,7 @@ export function SaveStep(props: {
       <p className="m-0 text-sm text-muted-foreground">
         Der Lichtbedarf kommt von der Art. Du kannst ihn ändern.
       </p>
+      {props.children}
       {props.error && <p role="alert">{props.error}</p>}
     </section>
   );

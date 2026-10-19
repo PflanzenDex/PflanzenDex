@@ -24,6 +24,14 @@ import {
 
 type Token = () => Promise<string | undefined>;
 
+/** What the shown mode reports to the area: its caption and whether it is a full view with its own heading. */
+function useHostState() {
+  const [caption, setCaption] = useState<string | null>(null);
+  const [fullView, setFullView] = useState(false);
+  const host = useMemo(() => ({ onCaption: setCaption, onFullView: setFullView }), []);
+  return { caption, fullView, host };
+}
+
 /**
  * The destination "Sammlung" (US-QS-14): a switch between the plants (`collection`, with measuring from `care`), the
  * species (`pokedex`, or the comparison by difficulty from `collection`) and the wishlist (`wishlist`). The plants can be
@@ -38,6 +46,7 @@ export function CollectionArea(props: {
   token: Token;
   newSpecies: Species | null;
   onSpeciesChoose: () => void;
+  onAdd?: () => void;
   onCompleted: (specimen: Specimen) => void;
   onOpenSpecies?: (id: string) => void;
   /** Starts the way from a bought wish to its specimen (US-WUN-05); the app wires it. */
@@ -54,9 +63,7 @@ export function CollectionArea(props: {
   // A species handed over from the catalog is created in the plants, whatever mode was remembered (US-BES-02).
   const view = props.newSpecies ? "plants" : chosen;
   const [measure, setMeasure] = useState<{ id: string; name: string } | null>(null);
-  const [caption, setCaption] = useState<string | null>(null);
-  const [fullView, setFullView] = useState(false);
-  const host = useMemo(() => ({ onCaption: setCaption, onFullView: setFullView }), []);
+  const { caption, fullView, host } = useHostState();
   const managing = view === "plants" && manage.open && !props.newSpecies;
   const own = view === "plants" && (measure !== null || fullView || managing);
   return (
@@ -176,6 +183,7 @@ function ModeBody(p: ModeProps) {
       token={token}
       newSpecies={p.newSpecies}
       onSpeciesChoose={p.onSpeciesChoose}
+      {...(p.onAdd ? { onAdd: p.onAdd } : {})}
       onCompleted={p.onCompleted}
       host={host}
       {...(p.renderHint ? { renderHint: p.renderHint } : {})}

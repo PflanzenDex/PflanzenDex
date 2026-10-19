@@ -1,13 +1,13 @@
-import { Navigate, Route, Routes, useLocation, useParams } from "react-router";
-import type { Species, Specimen } from "@pflanzendex/core";
+import { Navigate, Route, Routes, useLocation } from "react-router";
+import {
+  handOverRoutes,
+  SPECIES_LOOKUP,
+  type HandOver,
+} from "@/components/routing/areas/collection-area/hand-over-routes/hand-over-routes";
 import { useSession, type State } from "./account";
 import { AchievementNewsBanner } from "@/components/routing/areas/shared/lazy-news-banner/lazy-news-banner";
-import { CareProfileSection } from "./collection";
-import { loadSpecies, searchSpecies, SpeciesPage } from "./catalog";
-import type { WishToPlant } from "./wishlist";
 import type { ComponentProps } from "react";
 import {
-  ContextHint,
   FunctionOverview,
   LockedRows,
   StartPage,
@@ -15,14 +15,8 @@ import {
   isShownLocked,
   useUnlocks,
 } from "./shell";
-import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
-import {
-  AccountArea,
-  CollectionArea,
-  DiscoverArea,
-  TodayArea,
-} from "@/components/routing/areas/shared/lazy-areas";
+import { AccountArea, TodayArea } from "@/components/routing/areas/shared/lazy-areas";
 import {
   simpleRoutes,
   socialRoutes,
@@ -30,97 +24,14 @@ import {
 import { legacyRoutes } from "@/components/routing/legacy-routes/legacy-routes";
 import {
   PATHS,
-  PROFILE_BASE,
   type LinkTarget,
   type View,
 } from "./components/shared/navigation/nav-model/navigation/navigation";
-/** The start page finds species through the catalog without importing it (ADR 0003). */
-const SPECIES_LOOKUP = { search: searchSpecies, load: loadSpecies };
 function Start(props: Omit<ComponentProps<typeof StartPage>, "lookup">) {
   return <StartPage lookup={SPECIES_LOOKUP} {...props} />;
 }
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
-/** My care profile is a section of the species profile (US-BES-09, US-QS-14); the app wires `collection` into `catalog`. */
-const careProfile = (api: string, token: Token) =>
-  function CareProfile(species: Species) {
-    return (
-      <AreaSection
-        anchor="pflegeprofil"
-        title="Mein Pflegeprofil"
-        loading="Pflegeprofil wird geladen …"
-      >
-        <CareProfileSection api={api} token={token} speciesId={species.id} />
-      </AreaSection>
-    );
-  };
-
-/** The species profile has its own address; the id comes from it (US-POK-09). */
-function SpeciesProfileRoute(props: { api: string; token: Token; onChoose: (s: Species) => void }) {
-  const { profileId } = useParams();
-  return (
-    <SpeciesPage
-      {...props}
-      openId={profileId ?? null}
-      profileSection={careProfile(props.api, props.token)}
-    />
-  );
-}
-
-type HandOver = {
-  newSpecies: Species | null;
-  setNewSpecies: (s: Species | null) => void;
-  choose: (s: Species) => void;
-  toTheCatalog: () => void;
-  /** A specimen was created for the chosen species: the app links it to its bought wish, if any (US-WUN-05). */
-  onCreated: (specimen: Specimen) => void;
-  /** Starts the way from a bought wish to its specimen (US-WUN-05). */
-  startFromWish: (wish: WishToPlant) => void;
-  /** The catalog search starts with this text while a bought wish is on its way to the specimen (US-WUN-05). */
-  searchStart?: string;
-};
-
-/** The catalog and the collection hand the chosen species over to each other (US-BES-02); the wishlist starts the way to the plant (US-WUN-05). */
-function handOverRoutes(api: string, token: Token, h: HandOver, open: (id: string) => void) {
-  return [
-    <Route
-      key="collection"
-      path={PATHS.collection}
-      element={
-        <CollectionArea
-          api={api}
-          token={token}
-          newSpecies={h.newSpecies}
-          onSpeciesChoose={h.toTheCatalog}
-          onCompleted={h.onCreated}
-          onOpenSpecies={open}
-          onCreateSpecimen={h.startFromWish}
-          locks={(ids) => <LockedRows only={ids} />}
-          renderHint={(a) => <ContextHint api={api} token={token} applicable={a} />}
-        />
-      }
-    />,
-    <Route
-      key="discover"
-      path={PATHS.discover}
-      element={
-        <DiscoverArea
-          api={api}
-          token={token}
-          onChoose={h.choose}
-          profileSection={careProfile(api, token)}
-          {...(h.searchStart ? { searchStart: h.searchStart } : {})}
-        />
-      }
-    />,
-    <Route
-      key="profile"
-      path={`${PROFILE_BASE}/:profileId`}
-      element={<SpeciesProfileRoute api={api} token={token} onChoose={h.choose} />}
-    />,
-  ];
-}
-
 /** A function that is not open yet shows its lock page at its own address, never a blank page (US-ONB-05, FR-ONB-02). */
 function useLockPages(api: string, token: Token) {
   const locked = new Set(
