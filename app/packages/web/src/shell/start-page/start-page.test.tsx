@@ -147,6 +147,19 @@ describe("US-ONB-01 start with the first plant", () => {
     expect(paths()).not.toContain("/light-zones");
   });
 
+  it("US-ONB-01 · NFR-13 the hits are announced politely and the disabled Weiter says why", async () => {
+    fakeServer(world());
+    view();
+    await screen.findByRole("heading", { name: "Deine erste Pflanze" });
+    expect(screen.getByRole("button", { name: "Weiter" }).getAttribute("aria-describedby")).toBe(
+      "first-plant-next-hint",
+    );
+    expect(screen.getByText("Wähle zuerst eine Art aus den Treffern.")).toBeTruthy();
+    await pickSpecies();
+    expect(await screen.findByText(/\d+ Treffer, wähle eine Art/)).toBeTruthy();
+    expect(screen.queryByText("Wähle zuerst eine Art aus den Treffern.")).toBeNull();
+  });
+
   it("US-ONB-01 picking a species prefills the light need from the species as a value to change", async () => {
     fakeServer(world());
     view();
