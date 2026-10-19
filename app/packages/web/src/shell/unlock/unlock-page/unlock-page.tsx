@@ -4,7 +4,12 @@ import { Button } from "@/components/ui/button/button";
 import { PlantLoader } from "@/components/shared/states/plant-loader/plant-loader";
 import { errorText } from "@/lib/error-text";
 import { useInvalidate, useWriteAction } from "../../../kernel";
-import { PATHS } from "../../../components/shared/navigation/nav-model/navigation/navigation";
+import {
+  PATHS,
+  accountAddress,
+} from "../../../components/shared/navigation/nav-model/navigation/navigation";
+import type { UnlockFunctionId } from "@pflanzendex/core";
+import { FUNCTION_PURPOSES } from "../../function-overview/function-purposes";
 import { unlockFunction } from "../model/unlock-api";
 import {
   functionAddress,
@@ -79,6 +84,28 @@ function LockedBody(props: { entry: Entry; name: string; running: boolean; onUnl
   );
 }
 
+/** The outcome of the tap: what changed (announced politely) or the refusal, which stays visible (P-10). */
+function WriteNotes(props: {
+  message: string | null;
+  error: { code: string; text: string } | null;
+}) {
+  const { message, error } = props;
+  return (
+    <>
+      {message && (
+        <p role="status" className="rounded-lg border border-border p-3">
+          {message}
+        </p>
+      )}
+      {error && (
+        <p role="alert" className={ALERT}>
+          {error.code === "network.not_reachable" ? error.text : errorText(error.code)}
+        </p>
+      )}
+    </>
+  );
+}
+
 /** The tap removes the button the focus was on: the heading takes it, the status line is announced as before. */
 function useFocusOn(message: string | null) {
   const heading = useRef<HTMLHeadingElement>(null);
@@ -121,18 +148,7 @@ export function UnlockPage(props: { api: string; token: Token; id?: string }) {
       <h1 ref={heading} tabIndex={-1} id="unlock-title" className="text-2xl font-semibold">
         {name}
       </h1>
-      {write.message && (
-        <p role="status" className="rounded-lg border border-border p-3">
-          {write.message}
-        </p>
-      )}
-      {write.error && (
-        <p role="alert" className={ALERT}>
-          {write.error.code === "network.not_reachable"
-            ? write.error.text
-            : errorText(write.error.code)}
-        </p>
-      )}
+      <WriteNotes message={write.message} error={write.error} />
       {locked ? (
         <LockedBody
           entry={entry}
@@ -148,6 +164,10 @@ export function UnlockPage(props: { api: string; token: Token; id?: string }) {
           </Link>
         </>
       )}
+      <p className="m-0">{FUNCTION_PURPOSES[id as UnlockFunctionId]}</p>
+      <Link to={accountAddress("functions")} className={LINK}>
+        Alle Funktionen ansehen
+      </Link>
     </section>
   );
 }
