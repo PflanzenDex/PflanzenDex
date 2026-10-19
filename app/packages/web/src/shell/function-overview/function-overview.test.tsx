@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { UNLOCK_FUNCTIONS } from "@pflanzendex/core";
@@ -8,6 +8,7 @@ import {
   navItems,
   PATHS,
 } from "../../components/shared/navigation/nav-model/navigation/navigation";
+import { createWrite } from "../../kernel";
 import { UnlocksProvider } from "../unlock/model/unlocks/unlocks";
 import { FUNCTION_EMPTY, FUNCTION_NAMES, functionAddress } from "../unlock/model/unlock-texts";
 import FunctionOverview from "./function-overview";
@@ -118,6 +119,41 @@ describe("US-ONB-06 function overview", () => {
     expect(names()).not.toContain("Freunde");
     expect(names()).not.toContain("Jahresrückblick");
     expect(names()).toContain("Tauschen");
+  });
+
+  it("US-ONB-06 · US-ACH-08 switching calm mode on removes the achievement functions at once, without a reload", async () => {
+    let calm = false;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url, init) => {
+        const path = new URL(String(url)).pathname;
+        if (init?.method === "PUT" && path === "/achievements/settings/calm-mode") {
+          calm = true;
+          return json(200, { calmMode: true });
+        }
+        return json(200, {
+          functions: many.map((e) =>
+            calm && ["care_rhythm", "anniversaries", "year_in_review"].includes(e.id)
+              ? { ...e, announced: false }
+              : e,
+          ),
+        });
+      }),
+    );
+    render(
+      <MemoryRouter>
+        <UnlocksProvider api="http://api.test" token={async () => "tok"}>
+          <FunctionOverview api="http://api.test" token={async () => "tok"} />
+        </UnlocksProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByText("Jahresrückblick");
+    await createWrite("http://api.test", "tok")("PUT", "/achievements/settings/calm-mode", {
+      calmMode: true,
+    });
+    await waitFor(() => expect(names()).not.toContain("Jahresrückblick"));
+    expect(names()).not.toContain("Jahrestage");
+    expect(names()).not.toContain("Pflegerhythmus");
   });
 
   it("US-ONB-06 unlocks with one tap and says what may still be empty", async () => {
