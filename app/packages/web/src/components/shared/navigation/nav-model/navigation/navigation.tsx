@@ -14,7 +14,7 @@ export type View =
   "start" | "today" | "collection" | "discover" | "friends" | "review" | "operator" | "account";
 
 /** What a link inside the app can open: a destination, or one of the three views that moved into the Sammlung (US-QS-14). */
-export type LinkTarget = View | "species" | "light" | "carePhases" | "careProfile";
+export type LinkTarget = View | "species" | "light" | "carePhases" | "careProfile" | "addPlant";
 
 /** Pflegephasen, Pflegeprofil and Standorte und Licht are no destinations any more: they live in the Sammlung (US-QS-14). */
 const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
@@ -51,6 +51,8 @@ export const PATHS: Record<View, string> = {
  * (`/discover/species/:id`), so the navigation keeps "Entdecken" as the current destination; the old
  * `/species/:id` redirects there.
  */
+/** The quick flow for a further plant, below the Sammlung (US-ONB-01). */
+export const ADD_PLANT_PATH = `${PATHS.collection}/new`;
 export const LEGACY_SPECIES_PATH = "/species";
 export const CATALOG_ADDRESS = `${PATHS.discover}?view=catalog`;
 export const PROFILE_BASE = `${PATHS.discover}/species`;
@@ -124,7 +126,9 @@ export const viewAddress = (v: LinkTarget): string =>
         ? PHASES_ADDRESS
         : v === "careProfile"
           ? SPECIES_MODE_ADDRESS
-          : PATHS[v];
+          : v === "addPlant"
+            ? ADD_PLANT_PATH
+            : PATHS[v];
 
 type Who = {
   reviewer?: boolean | undefined;
@@ -171,6 +175,7 @@ export function viewTitle(pathname: string): string {
   if (pathname === PATHS.start) return pageTitle("Start");
   const entry = ENTRIES.find((e) => PATHS[e.id] === pathname);
   if (entry) return pageTitle(entry.text);
+  if (pathname === ADD_PLANT_PATH) return pageTitle("Pflanze anlegen");
   if (pathname === EXCHANGE_PATH) return pageTitle("Tauschbörse");
   if (pathname === MATCH_PATH) return pageTitle("Passende Angebote");
   if (pathname.startsWith(`${PATHS.friends}/`)) return pageTitle("Sammlung eines Freundes");

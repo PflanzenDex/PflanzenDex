@@ -263,6 +263,6 @@ describe("US-BES-06 grid and operation", () => {
   });
 
   it("the button for another specimen stays below the cards", () => {
-    expect(html([card()])).toContain("Weiteres Exemplar: Art wählen");
+    expect(html([card()])).toContain("Weiteres Exemplar");
   });
 });

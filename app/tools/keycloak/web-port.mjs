@@ -58,8 +58,8 @@ function adminPassword() {
   const fromEnv = process.env["KC_ADMIN_PASSWORD"];
   if (fromEnv) return fromEnv;
   const found =
-    readEnvFile(join(appDir, "dev", ".env"), "KC_ADMIN_PASSWORD") ??
-    readEnvFile(join(mainCheckout(), "app", "dev", ".env"), "KC_ADMIN_PASSWORD");
+    readEnvFile(join(appDir, "config", "dev", ".env"), "KC_ADMIN_PASSWORD") ??
+    readEnvFile(join(mainCheckout(), "app", "config", "dev", ".env"), "KC_ADMIN_PASSWORD");
   if (!found) throw new Error("KC_ADMIN_PASSWORD missing: run `make auth-up` first");
   return found;
 }

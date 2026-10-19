@@ -67,6 +67,7 @@ function Cards(props: Handlers & { cards: readonly SpecimenCard[]; groupBy?: "lo
 export function CollectionList(
   props: Handlers & {
     cards: readonly SpecimenCard[];
+    /** Adds a plant: the app opens the quick flow (US-ONB-01), otherwise the species catalog. */
     onSpeciesChoose: () => void;
     /** Shown below the title of a destination (US-QS-14): the heading is then a screen reader section name, not the page title. */
     embedded?: boolean;
@@ -96,7 +97,7 @@ export function CollectionList(
           <Cards {...props} />
           <Actions>
             <Button type="button" size="touch" onClick={props.onSpeciesChoose}>
-              Weiteres Exemplar: Art wählen
+              Weiteres Exemplar
             </Button>
           </Actions>
         </>

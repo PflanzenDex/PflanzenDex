@@ -50,7 +50,11 @@ function useSpeciesHandOver(setView: (v: LinkTarget) => void) {
     setNewSpecies(null);
     setView("species");
   };
-  return { newSpecies, setNewSpecies, choose, toTheCatalog };
+  const toAddPlant = () => {
+    setNewSpecies(null);
+    setView("addPlant");
+  };
+  return { newSpecies, setNewSpecies, choose, toTheCatalog, toAddPlant };
 }
 
 type Session = ReturnType<typeof useSession>;

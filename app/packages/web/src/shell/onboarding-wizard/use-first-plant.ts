@@ -13,6 +13,8 @@ export function useFirstPlant(api: string, token: Token) {
   const [text, setText] = useState("");
   const [species, setSpecies] = useState<Species | null>(null);
   const [zoneId, setZoneId] = useState("");
+  // Only the flow for further plants offers a place; a shown and changeable value, never stored unseen (US-ONB-01).
+  const [locationId, setLocationId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [created, setCreated] = useState<{ name: string; id: string } | null>(null);
@@ -38,6 +40,7 @@ export function useFirstPlant(api: string, token: Token) {
       ? await createSpecimen(api, t, {
           speciesId: species.id,
           ...(zoneId ? { lightZoneId: zoneId } : {}),
+          ...(locationId ? { locationId } : {}),
         })
       : null;
     setSaving(false);
@@ -55,6 +58,8 @@ export function useFirstPlant(api: string, token: Token) {
     pick,
     zoneId,
     setZoneId,
+    locationId,
+    setLocationId,
     error,
     saving,
     created,

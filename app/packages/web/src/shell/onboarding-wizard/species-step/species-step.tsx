@@ -70,6 +70,14 @@ function HitList(props: {
   );
 }
 
+/** What a screen reader hears about the hits. */
+const announcement = (text: string, failed: boolean, count: number) =>
+  !text.trim() || failed
+    ? ""
+    : count === 0
+      ? "Nichts gefunden."
+      : `${Math.min(count, 8)} Treffer, wähle eine Art.`;
+
 /** Step 1 of the first plant (US-ONB-01): search the species by name; picking one loads its profile. */
 export function SpeciesStep(props: {
   lookup: SpeciesLookup;
@@ -80,6 +88,7 @@ export function SpeciesStep(props: {
   species: Species | null;
   onPick: (species: Species) => void;
   onCatalog: () => void;
+  title?: string;
 }) {
   const { api, token, text, species } = props;
   const { hits, failed } = useHits(props.lookup, api, token, text);
@@ -96,7 +105,7 @@ export function SpeciesStep(props: {
   return (
     <section className="flex flex-col gap-3">
       <h2 tabIndex={-1} className="text-xl font-semibold">
-        Deine erste Pflanze
+        {props.title ?? "Deine erste Pflanze"}
       </h2>
       <Label htmlFor="first-plant-search">Name der Pflanze</Label>
       <Input
@@ -113,11 +122,7 @@ export function SpeciesStep(props: {
         <p role="alert">{refused ?? "Die Suche hat nicht geklappt. Versuche es noch einmal."}</p>
       )}
       <p role="status" className="sr-only">
-        {!text.trim() || failed
-          ? ""
-          : hits.length === 0
-            ? "Nichts gefunden."
-            : `${Math.min(hits.length, 8)} Treffer, wähle eine Art.`}
+        {announcement(text, failed, hits.length)}
       </p>
       <HitList hits={hits} chosen={species?.id} onPick={(id) => void pick(id)} />
       {text.trim() && hits.length === 0 && !failed && (

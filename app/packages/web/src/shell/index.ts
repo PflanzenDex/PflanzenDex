@@ -17,3 +17,7 @@ export { useUnlocks, isShownLocked, LockedRows } from "./unlock";
 export const ContextHint = lazyPage(() =>
   import("./start-page/hint/context-hint/context-hint").then((m) => ({ default: m.ContextHint })),
 );
+/** The quick flow for a further plant (US-ONB-01) is its own chunk: it loads at its address (DS-08). */
+export const AddPlant = lazyPage(() =>
+  import("./add-plant/add-plant").then((m) => ({ default: m.AddPlant })),
+);
