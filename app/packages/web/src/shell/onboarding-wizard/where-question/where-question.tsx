@@ -43,6 +43,12 @@ function usePlaces(api: string, token: Token): Places | null {
   return places;
 }
 
+/** The location with the light it stands under, so the choice shows what it brings with it (P-10). */
+const zoneOf = (l: LightLocation, zones: readonly LightZone[]) => {
+  const z = zones.find((x) => x.id === l.lightZoneId);
+  return z ? `${l.name} (${z.name})` : l.name;
+};
+
 function ZoneChoice(props: {
   name: string;
   zones: readonly LightZone[];
@@ -94,7 +100,8 @@ export function WhereQuestion(props: {
   api: string;
   token: Token;
   specimenId: string;
-  onDone: () => void;
+  /** `note` says what was saved (P-10); without it nothing was changed. */
+  onDone: (note?: string) => void;
 }) {
   const places = usePlaces(props.api, props.token);
   const [locationId, setLocationId] = useState("");
@@ -109,31 +116,40 @@ export function WhereQuestion(props: {
     const r = await placeSpecimen(props, chosen, zoneId);
     setSaving(false);
     if (!r.ok) return setError(errorText(r.error.code));
-    props.onDone();
+    const zone = places.zones.find((z) => z.id === (chosen.lightZoneId ?? zoneId));
+    props.onDone(`Standort gespeichert: ${chosen.name}${zone ? `, ${zone.name}` : ""}.`);
   };
   return (
     <section className="flex flex-col gap-3">
-      <Label htmlFor="first-plant-location">Wo steht sie?</Label>
-      <Select
-        id="first-plant-location"
-        value={chosen?.id ?? ""}
-        onChange={(e) => setLocationId(e.target.value)}
-      >
-        {places.locations.map((l) => (
-          <option key={l.id} value={l.id}>
-            {l.name}
-          </option>
-        ))}
-      </Select>
+      {places.locations.length === 1 && chosen ? (
+        <p className="m-0">
+          Wo steht sie? <strong>{zoneOf(chosen, places.zones)}</strong>
+        </p>
+      ) : (
+        <>
+          <Label htmlFor="first-plant-location">Wo steht sie?</Label>
+          <Select
+            id="first-plant-location"
+            value={chosen?.id ?? ""}
+            onChange={(e) => setLocationId(e.target.value)}
+          >
+            {places.locations.map((l) => (
+              <option key={l.id} value={l.id}>
+                {zoneOf(l, places.zones)}
+              </option>
+            ))}
+          </Select>
+        </>
+      )}
       {chosen && chosen.lightZoneId === null && (
         <ZoneChoice name={chosen.name} zones={places.zones} value={zoneId} onChange={setZoneId} />
       )}
       {error && <p role="alert">{error}</p>}
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Button type="button" disabled={saving} onClick={() => void save()}>
+        <Button type="button" variant="secondary" disabled={saving} onClick={() => void save()}>
           Hier steht sie
         </Button>
-        <Button type="button" variant="secondary" onClick={props.onDone}>
+        <Button type="button" variant="ghost" onClick={() => props.onDone()}>
           Später
         </Button>
       </div>

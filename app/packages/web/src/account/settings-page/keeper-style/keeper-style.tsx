@@ -7,17 +7,16 @@ import { Refusal, StyleButtons, StyleSelect, useSaveStyle } from "./style-parts/
 
 type Token = () => Promise<string | undefined>;
 
+const styleMessage = (style: string) =>
+  style === "many" ? "Alles ist jetzt offen." : "Neue Funktionen zeigt dir die App nach und nach.";
+
 function StyleFieldset(props: { api: string; token: Token; state: KeeperStyleState }) {
   const [style, setStyle] = useState(props.state.style);
   const [message, setMessage] = useState<string | null>(null);
   const refresh = useInvalidate(["onboarding"]);
   const { save, saving, error } = useSaveStyle(props, (s) => {
     setStyle(s.style);
-    setMessage(
-      s.style === "many"
-        ? "Alles ist jetzt offen."
-        : "Neue Funktionen zeigt dir die App nach und nach.",
-    );
+    setMessage(styleMessage(s.style));
     refresh();
   });
   return (
@@ -59,7 +58,7 @@ export function KeeperStyleSection(props: { api: string; token: Token }) {
   );
 }
 
-function Question(props: { api: string; token: Token; onDone: () => void }) {
+function Question(props: { api: string; token: Token; onDone: (s: KeeperStyleState) => void }) {
   const { save, saving, error } = useSaveStyle(props, props.onDone);
   return (
     <section aria-label="Wie nutzt du die App?" className="flex flex-col gap-2">
@@ -87,6 +86,7 @@ function Question(props: { api: string; token: Token; onDone: () => void }) {
  */
 export function KeeperStyleQuestion(props: { api: string; token: Token; onDone?: () => void }) {
   const [state, setState] = useState<"loading" | "ask" | "done">("loading");
+  const [saved, setSaved] = useState<string | null>(null);
   useEffect(() => {
     let current = true;
     void (async () => {
@@ -98,12 +98,19 @@ export function KeeperStyleQuestion(props: { api: string; token: Token; onDone?:
       current = false;
     };
   }, [props.api, props.token]);
+  if (state === "done" && saved)
+    return (
+      <p role="status" className="m-0">
+        {saved}
+      </p>
+    );
   if (state !== "ask") return null;
   return (
     <Question
       api={props.api}
       token={props.token}
-      onDone={() => {
+      onDone={(s) => {
+        setSaved(styleMessage(s.style));
         setState("done");
         props.onDone?.();
       }}
