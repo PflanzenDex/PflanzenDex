@@ -103,6 +103,10 @@ describe("US-ONB-05 lock page", () => {
     expect(posts[0]?.key).toBeTruthy();
     expect(await screen.findByRole("link", { name: "Tauschen öffnen" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Jetzt freischalten" })).toBeNull();
+    // The button is gone: the focus is on the heading, not on the body (WCAG 2.4.3).
+    expect(document.activeElement).toBe(
+      screen.getByRole("heading", { level: 1, name: "Tauschen" }),
+    );
   });
 
   it("US-ONB-05 a refused unlock stays visible with the German text of its code (P-10)", async () => {

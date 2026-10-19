@@ -213,6 +213,7 @@ describe("US-QS-14 Behandlung and Hinweise are sections of Heute", () => {
     expect(todayAddress("treatments")).toBe("/today#behandlungen");
     expect(todayAddress("hints")).toBe("/today#fehlt-noch");
     expect(viewTitle("/today")).toBe("Heute – PflanzenDéx");
+    expect(viewTitle("/unlock/equipment")).toBe("Funktion freischalten – PflanzenDéx");
   });
 });
 
