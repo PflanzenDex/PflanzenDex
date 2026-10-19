@@ -76,6 +76,10 @@ function fakeServer(initial: unknown, post?: () => Promise<Response>) {
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
     const path = new URL(String(url)).pathname;
     if (path === "/wishes/candidates") return response(200, current);
+    if (path === "/species")
+      return response(200, {
+        species: [{ id: "sp9", latinName: "Epipremnum aureum", germanName: "Efeutute" }],
+      });
     if (path === "/wishes/bought") return response(200, NONE_BOUGHT);
     if (path === "/wishes" && init?.method === "POST" && post) {
       const r = await post();
@@ -486,7 +490,35 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
     render(<WishlistPage api="http://api" token={token} />);
     await screen.findByText("Keine offenen Kandidaten in der Wunschliste.");
     await userEvent.click(screen.getByRole("button", { name: "Wunsch erfassen" }));
-    expect(document.activeElement).toBe(screen.getByLabelText("Name"));
+    // The species pick is the main way into the form (#902), so the focus goes there.
+    expect(document.activeElement).toBe(screen.getByLabelText("Art suchen"));
+  });
+
+  it("US-WUN-01 · #902 picking a species from the catalog fills the wish; the free fields stay below Mehr Angaben", async () => {
+    const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
+    render(<WishlistPage api="http://api" token={token} />);
+    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    expect(screen.getByLabelText("Name").closest("details")?.open).toBe(false);
+    await userEvent.type(screen.getByLabelText("Art suchen"), "Epip");
+    await userEvent.click(await screen.findByRole("button", { name: /Epipremnum aureum/ }));
+    expect(await screen.findByText(/Gewählt: Epipremnum aureum \(Efeutute\)/)).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
+    await screen.findByText(/Wunsch „Epipremnum aureum“ gespeichert/);
+    const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
+    expect(JSON.parse(String(post?.[1]?.body))).toEqual({
+      name: "Epipremnum aureum",
+      german: "Efeutute",
+    });
+    expect(screen.queryByText(/Gewählt:/)).toBeNull();
+  });
+
+  it("US-WUN-01 · #902 saving without a species opens Mehr Angaben and names the missing name", async () => {
+    fakeServer(list([candidate()]));
+    render(<WishlistPage api="http://api" token={token} />);
+    await screen.findByRole("heading", { name: "Wunsch erfassen" });
+    await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
+    expect(await screen.findByText("Bitte gib einen Namen an.")).toBeTruthy();
+    expect(screen.getByLabelText("Name").closest("details")?.open).toBe(true);
   });
 
   it("US-WUN-01 · DS-50 the save button is disabled while the write runs, so a double tap writes once", async () => {

@@ -14,10 +14,7 @@ import { WishlistPageSkeleton } from "./wishlist-page.skeleton";
 import { createWish, loadWishlist, type WishInput, type Wishlist } from "../wishlist-api";
 
 /** Next action of an empty list: take the keeper to the form below. */
-const focusForm = () =>
-  document
-    .querySelector<HTMLElement>('section[aria-labelledby="wish-form-title"] input[name="name"]')
-    ?.focus();
+const focusForm = () => document.getElementById("wish-species-search")?.focus();
 const KEY = ["wishlist", "candidates"] as const;
 type Token = () => Promise<string | undefined>;
 type Last = "write" | "repair";
@@ -112,6 +109,7 @@ function Body(props: {
         busy={candidate.running}
       />
       <WishForm
+        access={{ api, token }}
         zones={data.list.zones}
         running={write.running}
         message={write.message}
