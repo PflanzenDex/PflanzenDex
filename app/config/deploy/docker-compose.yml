@@ -3,8 +3,16 @@
 # Test environment with a mail catcher: add `-f config/deploy/docker-compose.test.yml` (or set COMPOSE_FILE in .env).
 # Memory limits (`deploy.resources.limits`) are starting values for a 3 GB host (assumption, TE-03); measure and adjust.
 name: pflanzendex
+# Every service keeps at most 3 log files of 10 MB (TE-03, #762; starting values, assumption): a noisy client cannot
+# fill the host's disk. The overlay files repeat the same values for their own services.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
 services:
   db:
+    logging: *logging
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
@@ -25,6 +33,7 @@ services:
   # One-shot: creates the sign-in service's own role and database in the same server, idempotently (also on an existing
   # volume). The role has no right on the app database, so tenant isolation stays untouched (P-04, TE-03).
   keycloak-db:
+    logging: *logging
     image: postgres:16-alpine
     restart: "no"
     entrypoint: ["sh", "/init-db.sh"]
@@ -49,6 +58,7 @@ services:
   # application role, idempotently, also on an existing volume (#907, P-04). A superuser as table owner makes every
   # `security definer` function ignore row-level security. Runs as the cluster user, which nothing else connects as.
   db-roles:
+    logging: *logging
     image: postgres:16-alpine
     restart: "no"
     entrypoint: ["sh", "/db-roles/init-db-roles.sh"]
@@ -71,6 +81,7 @@ services:
   # One-shot: applies pending migrations (forward only, advisory lock) before the api starts (#201, US-DEV-07).
   # A failing migration fails `up`, so deploy.sh rolls back the code and the api never serves a half-migrated schema.
   migrate:
+    logging: *logging
     build:
       context: ../..
       dockerfile: config/deploy/docker/api.Dockerfile
@@ -97,6 +108,7 @@ services:
   # plain HTTP inside the network and trusts the forwarded headers (the proxy only forwards them from TRUSTED_PROXIES).
   # The realm is imported on the first start only; later changes to the file do not touch an existing realm.
   keycloak:
+    logging: *logging
     image: quay.io/keycloak/keycloak:26.8.0
     restart: unless-stopped
     command: ["start", "--import-realm"]
@@ -153,6 +165,7 @@ services:
         limits:
           memory: 900m
   api:
+    logging: *logging
     build:
       context: ../..
       dockerfile: config/deploy/docker/api.Dockerfile
@@ -189,6 +202,7 @@ services:
         limits:
           memory: 512m
   web:
+    logging: *logging
     build:
       context: ../..
       dockerfile: config/deploy/docker/web.Dockerfile
@@ -204,6 +218,7 @@ services:
           memory: 96m
   # Public entry. CADDY_SCHEME=http:// (TLS ends at a proxy in front) or empty (Caddy gets certificates itself).
   proxy:
+    logging: *logging
     image: caddy:2-alpine
     restart: unless-stopped
     environment:

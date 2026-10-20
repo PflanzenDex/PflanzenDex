@@ -146,6 +146,40 @@ describe("TE-03 · public test environment through Tailscale Funnel", () => {
   });
 });
 
+describe("TE-03 · log size limits (#762)", () => {
+  const services = (text: string) =>
+    [...text.slice(text.indexOf("\nservices:\n")).matchAll(/^ {2}([a-z][a-z-]*):$/gm)]
+      .map((m) => m[1] as string)
+      .filter((name) => !["dbdata", "caddydata", "default"].includes(name));
+  const limit = /logging:\s+driver: json-file\s+options:\s+max-size: 10m\s+max-file: "3"/;
+
+  it("TE-03 every service of the base stack keeps at most 3 log files of 10 MB", () => {
+    expect(compose).toMatch(
+      /x-logging: &logging\s+driver: json-file\s+options:\s+max-size: 10m\s+max-file: "3"/,
+    );
+    const names = services(compose.slice(0, compose.indexOf("\nvolumes:")));
+    expect(names).toEqual([
+      "db",
+      "keycloak-db",
+      "db-roles",
+      "migrate",
+      "keycloak",
+      "api",
+      "web",
+      "proxy",
+    ]);
+    for (const name of names) expect(service(compose, name), name).toContain("logging: *logging");
+  });
+
+  it("TE-03 the services of the test and funnel overlays have the same limit", () => {
+    expect(service(testOverlay, "mailpit")).toMatch(limit);
+    const anchor = funnel.slice(funnel.indexOf("x-tailscale:"), funnel.indexOf("\nservices:"));
+    expect(anchor).toMatch(limit);
+    for (const name of ["ts-app", "ts-auth"])
+      expect(service(funnel, name)).toContain("<<: *tailscale");
+  });
+});
+
 describe("TE-03 · sign-in service in the stack", () => {
   const keycloak = service(compose, "keycloak");
   const api = service(compose, "api");

@@ -33,7 +33,7 @@ import {
 import { wishZoneUsageFor } from "./wishlist";
 import { equipmentLocationUsageFor, equipmentZoneUsageFor } from "./equipment";
 import { bindFriends } from "./friends-bindings";
-import { featureAccess, type FeatureAccess } from "./kernel";
+import { featureAccess, writeLimit, type FeatureAccess } from "./kernel";
 import { bindHealth } from "./health";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
@@ -151,6 +151,7 @@ export function createApp(opt: AppOptions = {}): Hono {
         exposeHeaders: ["Content-Disposition", "X-Missing-Photos"],
       }),
     );
+  if (opt.writeLimit) app.use("*", writeLimit(opt.writeLimit));
   bindHealth(app, { pool: opt.pool, version, commit, storage: opt.media !== undefined });
   if (opt.reviewer && opt.pool) bindApi(app, opt, opt.reviewer, opt.pool);
   return app;
