@@ -548,6 +548,40 @@ export function SpecimenCardSkeleton() {
 }
 ```
 
+### 4.4 Component inventory
+
+Every component in `components/ui` and `components/shared` that exists today. Look here before you build a new one; a new component gets its row in the same PR (`make reference-check`, rule RF-3, US-QG-10). The path is relative to `app/packages/web/src/components/`.
+
+| Component         | Path                                      | Use it for                                                                                    |
+| ----------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `Button`          | `ui/button/`                              | every button; variants by role, 44 px hit area on touch (DS-15, DS-34, DS-35)                 |
+| `Badge`           | `ui/display/badge/`                       | a short, non-interactive status label; text carries the meaning (DS-38)                       |
+| `Label`           | `ui/display/label/`                       | the label of a form control (DS-36)                                                           |
+| `Skeleton`        | `ui/display/skeleton/`                    | one placeholder block with the size of the content it mirrors; `SkeletonGroup` (DS-52, DS-56) |
+| `Table`           | `ui/display/table/`                       | semantic table with its parts (`TableRow`, `TableCell`, …); on phones use `ResponsiveTable`   |
+| `Checkbox`        | `ui/fields/checkbox/`                     | styled native checkbox, the whole label row is the hit area                                   |
+| `Form`            | `ui/fields/form/`                         | the form family on react-hook-form + zod (section 4.2, DS-47, DS-48)                          |
+| `Input`           | `ui/fields/input/`                        | single-line field; `fieldClasses` is the shared look of `Input`, `Textarea` and `Select`      |
+| `Select`          | `ui/fields/select/`                       | styled native select (ADR 0007)                                                               |
+| `Textarea`        | `ui/fields/textarea/`                     | multi-line field                                                                              |
+| `Dialog`          | `ui/overlays/dialog/`                     | modal dialog with focus trap; for forms on phones use `ResponsiveModal` (DS-23, DS-40)        |
+| `Sheet`           | `ui/overlays/sheet/`                      | bottom sheet, loaded on demand (DS-08)                                                        |
+| `EmptyState`      | `shared/empty-state/`                     | empty or error state of a list or view with the next action (DS-26, P-09)                     |
+| `AppShell`        | `shared/navigation/app-shell/`            | the frame of every signed-in page: header, sidebar, bottom bar                                |
+| `GlobalHeader`    | `shared/navigation/global-header/`        | the top bar below `md` (DS-25)                                                                |
+| `MobileNavBar`    | `shared/navigation/mobile-nav-bar/`       | the bottom bar, at most 5 slots (DS-25)                                                       |
+| `SideNav`         | `shared/navigation/side-nav/`             | the sidebar from `md`                                                                         |
+| `NavNote`         | `shared/navigation/nav-model/nav-note/`   | the text mark of a destination that is not open yet (US-ONB-05)                               |
+| `Navigation`      | `shared/navigation/nav-model/navigation/` | the navigation model: views, link targets and paths, not a visible component                  |
+| `ResponsiveModal` | `shared/responsive/responsive-modal/`     | content a phone user fills in: bottom sheet below `md`, dialog from `md` (DS-23)              |
+| `ResponsiveTable` | `shared/responsive/responsive-table/`     | a list of rows: cards below `md`, `Table` from `md`, one column definition (DS-24)            |
+| `Banner`          | `shared/states/banner/`                   | a page-level message with icon and text, optional action (DS-34, DS-38)                       |
+| `PageSkeleton`    | `shared/states/page-skeleton/`            | Suspense fallback of a route page (DS-55, DS-56)                                              |
+| `PlantLoader`     | `shared/states/plant-loader/`             | the growing-sprout loading indicator                                                          |
+| `RequestState`    | `shared/states/request-state/`            | the one pattern for pending, error, empty and ready of a request (DS-09, DS-26)               |
+| `ToastItem`       | `shared/states/toast/toast-item/`         | one toast; durations by kind (P-10)                                                           |
+| `ToastProvider`   | `shared/states/toast/toast-provider/`     | provider for `useToast()`, the confirmation after a write                                     |
+
 ---
 
 ## 5. AI implementation checklist (Claude Code, before delivering a component or page)

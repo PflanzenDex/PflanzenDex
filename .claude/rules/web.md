@@ -12,5 +12,6 @@ paths:
 - Every view says what to do next (P-09): empty states and errors offer an action.
 - Unknown values show "unbekannt", never an invented number (P-08).
 - Tokens come from OIDC with PKCE; passwords never touch our code (FR-ACC-03). No secrets in `VITE_*` variables.
+- Before building a component, check the component inventory in `docs/guides/reference/design-system.md` (section 4.4); a new component in `components/ui` or `components/shared` gets its row there (`make reference-check`, US-QG-10).
 - Tests carry the story ID in the name; components are tested through what the user sees.
 - Styling is Tailwind utility classes on components; `styles/tokens.css` (tokens, `@theme`, base layer with preflight) is the only stylesheet. No `*.css` next to components, no legacy class names, no `!` overrides (DS-27, DS-33).

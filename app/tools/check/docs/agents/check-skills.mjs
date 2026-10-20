@@ -52,7 +52,7 @@ export function checkSkills({ skills, links, makeTargets, exists }) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const root = fileURLToPath(new URL("../../../..", import.meta.url));
+  const root = fileURLToPath(new URL("../../../../..", import.meta.url));
   const dir = (p) => (fs.existsSync(path.join(root, p)) ? fs.readdirSync(path.join(root, p)) : []);
   const skills = Object.fromEntries(
     dir(".agents/skills").map((n) => [
