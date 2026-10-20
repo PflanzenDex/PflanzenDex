@@ -64,6 +64,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "ai.draft_not_found": 404,
   "ai.draft_closed": 409,
   "ai.rate_limited": 429,
+  "request.rate_limited": 429,
   "ai.task_not_found": 404,
   "ai.task_closed": 409,
   "ai.no_client": 409,
