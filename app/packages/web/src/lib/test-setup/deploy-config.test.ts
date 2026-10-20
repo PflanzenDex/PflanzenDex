@@ -161,6 +161,14 @@ describe("TE-03 · sign-in service in the stack", () => {
     expect(keycloak).toMatch(/KC_BOOTSTRAP_ADMIN_PASSWORD: \$\{KEYCLOAK_ADMIN_PASSWORD:\?/);
   });
 
+  it("TE-03 the deploy turns on brute-force protection in the master realm after Keycloak is healthy (#758)", () => {
+    const deploy = read("deploy/scripts/deploy.sh");
+    const healthy = deploy.indexOf("wait_healthy keycloak");
+    expect(healthy).toBeGreaterThan(-1);
+    expect(deploy.indexOf("./keycloak/master-realm.sh || return 1")).toBeGreaterThan(healthy);
+    expect(keycloak).toContain("KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER");
+  });
+
   it("TE-03 the same Keycloak version as the development stack", () => {
     const dev = read("dev/compose.yaml");
     const image = /image: (quay\.io\/keycloak\/keycloak:\S+)/;
