@@ -6,7 +6,7 @@ Ticket TE-03 (#40). Basis: E-01 (self-hosting, Docker Compose, one host), R-09, 
 
 | Service       | Job                                                                                                                                                                                                                                       |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `proxy`       | Caddy: two hostnames (app, sign-in); plain HTTP behind a TLS-terminating proxy or HTTPS with automatic certificates; `/health` and `/api/*` (prefix removed) go to the API, the rest of the app host to web, the sign-in host to Keycloak |
+| `proxy`       | Caddy: two hostnames (app, sign-in); plain HTTP behind a TLS-terminating proxy or HTTPS with automatic certificates; `/health` (status only) and `/api/*` (prefix removed) go to the API, `/health/*` and `/api/health/*` answer 404, the rest of the app host to web, the sign-in host to Keycloak |
 | `api`         | Hono API (Node 24, through tsx, because `core` is exported as TypeScript source)                                                                                                                                                          |
 | `web`         | static PWA (Vite build, Caddy)                                                                                                                                                                                                            |
 | `db`          | PostgreSQL 16, data in the `dbdata` volume                                                                                                                                                                                                |
@@ -32,7 +32,7 @@ The database and Keycloak are not exposed. Only the proxy listens (ports from `H
 make deploy          # fetches origin/main, backs up the DB (if it runs), builds, starts, waits for /health
 ```
 
-To try another state: `app/config/deploy/scripts/deploy.sh origin/dev`. Builds are reproducible: `npm ci` from the lock file, base images pinned to major versions (`node:24-alpine`, `postgres:16-alpine`, `caddy:2-alpine`). `GET /health` shows the running version (`version` = commit hash).
+To try another state: `app/config/deploy/scripts/deploy.sh origin/dev`. Builds are reproducible: `npm ci` from the lock file, base images pinned to major versions (`node:24-alpine`, `postgres:16-alpine`, `caddy:2-alpine`). `GET /health/details` (inside the stack, see "Health check") shows the running version (`version` = commit hash).
 Migrations run on every deploy: the one-shot `migrate` service (same image as `api`, `packages/db/migrations`) applies pending files before the `api` starts (`depends_on: service_completed_successfully`). They are forward only and guarded by an advisory lock and checksums. A failing migration fails `compose up`, so `deploy.sh` rolls back to the previous ref and the API never runs against a half-migrated schema. Check with `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml logs migrate`. Migrations are not rolled back; use the pre-deploy backup (restore below) for data problems. Manual run: `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml run --rm migrate`.
 Rollback: `app/config/deploy/scripts/deploy.sh <earlier commit>`; for data problems, restore (below).
 
@@ -405,7 +405,7 @@ The migration role is the owner role. A separate runtime role is not possible ye
 
 ## Health check (US-DEV-09)
 
-`GET /health` (no sign-in) answers with version, commit and `checks`:
+`GET /health` (no sign-in, public) answers only the status, for example `{"status":"ok"}` (HTTP 503 with `{"status":"error"}`). Version, commit and queue counts would help an attacker match the deployment to known issues (#759), so they are on `GET /health/details`, which the proxy answers with 404 on the public name (also as `/api/health/details`). Read it inside the stack: `docker compose --env-file .env exec -T api wget -qO- http://127.0.0.1:3000/health/details`. It answers with version, commit and `checks`:
 
 | Field             | Values                                                                          | Meaning                                                                                                               |
 | ----------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
@@ -414,7 +414,7 @@ The migration role is the owner role. A separate runtime role is not possible ye
 | `checks.jobs`     | `{ status: ok \| dead_jobs, queued, running, dead }`, `error`, `not_configured` | counts of the job queue (TE-06); `dead_jobs` = at least one job gave up with its error kept                           |
 | `checks.storage`  | `configured`, `not_configured`                                                  | whether the photo storage (S3) is set up; it is not called on every check                                             |
 
-The Compose health check of `api` and `make deploy` use it: a 503 marks the container unhealthy and fails the deploy, which then rolls back. Monitoring should alert on `status != "ok"` and on HTTP 503.
+The Compose health check of `api` uses `/health`: a 503 marks the container unhealthy and fails the deploy, which then rolls back. The smoke test of `make deploy` reads the version from `/health/details` inside the api container. Monitoring needs only the public status: alert on `status != "ok"` and on HTTP 503.
 
 ## Runbooks for incidents (US-DEV-09)
 
@@ -428,19 +428,19 @@ Each runbook: what you see, what to check, what to do. Restoring a backup and th
 
 ### Database not reachable
 
-- **You see:** `/health` answers 503 with `checks.database: "error"`; the API container is unhealthy.
+- **You see:** `/health` answers 503 with `status: "error"`, `/health/details` shows `checks.database: "error"`; the API container is unhealthy.
 - **Check:** `docker compose … ps db`, `docker compose … logs db` (disk full, crash loop, wrong password in `.env`).
 - **Do:** free disk space or fix `.env`, `docker compose … up -d db`, wait for `/health` to answer 200. If the data volume is damaged: restore the latest backup (above).
 
 ### Dead jobs
 
-- **You see:** `/health` answers `degraded` with `checks.jobs.status: "dead_jobs"`.
+- **You see:** `/health` answers `degraded`, `/health/details` shows `checks.jobs.status: "dead_jobs"`.
 - **Check:** on the database, `select type, last_error, finished_at from job where status = 'dead' order by finished_at desc limit 20;` (owner role). Handlers are repeatable (US-QS-03).
 - **Do:** fix the cause (external source down, bug), then order the job again through the feature that creates it (the queue merges duplicates). Old finished jobs are purged by the worker.
 
 ### Photo storage full or unavailable
 
-- **You see:** photo uploads fail with `media.storage_unavailable` (HTTP 502); measurements are still saved without photo. `/health` shows `checks.storage: "configured"`, because the storage is not called on every check.
+- **You see:** photo uploads fail with `media.storage_unavailable` (HTTP 502); measurements are still saved without photo. `/health/details` shows `checks.storage: "configured"`, because the storage is not called on every check.
 - **Check:** the S3 provider's console (quota, credentials, bucket); the `S3_*` variables of the API (`S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, optional `S3_ENDPOINT`).
 - **Do:** raise the quota or fix the credentials, restart `api`. Nothing has to be repaired in the database: a failed upload stores nothing (P-10).
 
