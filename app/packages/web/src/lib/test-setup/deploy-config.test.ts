@@ -45,7 +45,7 @@ describe("TE-03 · reverse proxy in front of the host", () => {
 
   it("TE-03 routes /health and /api to the API (prefix removed) and the rest to web", () => {
     expect(proxy).toMatch(/handle \/health \{\s*reverse_proxy api:3000/);
-    expect(proxy).toMatch(/handle_path \/api\/\* \{\s*reverse_proxy api:3000/);
+    expect(proxy).toMatch(/handle_path \/api\/\* \{[\s\S]*?handle \{\s*reverse_proxy api:3000/);
     expect(proxy).toMatch(/handle \{\s*reverse_proxy web:8080/);
   });
 
@@ -106,6 +106,18 @@ describe("TE-03 · public test environment through Tailscale Funnel", () => {
     expect(service(funnel, "ts-app")).toContain("ipv4_address: 172.29.40.2");
     expect(service(funnel, "ts-auth")).toContain("ipv4_address: 172.29.40.3");
     expect(envExample).toContain("TRUSTED_PROXIES=172.29.40.2/32 172.29.40.3/32");
+  });
+
+  it("TE-03 the app host serves only the status of /health; the details stay inside the stack (#759)", () => {
+    const app = proxy.slice(
+      proxy.indexOf("{$CADDY_SCHEME}{$APP_HOST} {"),
+      proxy.indexOf("{$CADDY_SCHEME}{$AUTH_HOST} {"),
+    );
+    expect(app).toContain("handle /health/* {\n\t\trespond 404\n\t}");
+    expect(app).toMatch(/handle_path \/api\/\* \{\s*handle \/health\/\* \{\s*respond 404/);
+    expect(read("deploy/scripts/deploy.sh")).toContain(
+      "exec -T api wget -qO- http://127.0.0.1:3000/health/details",
+    );
   });
 
   it("TE-03 the sign-in host denies Keycloak's admin, master realm and management paths", () => {

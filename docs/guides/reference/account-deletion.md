@@ -24,7 +24,7 @@ How a keeper's account is removed, and what the operator has to do by hand.
   ```
 
   Deadline: GDPR asks for one month from the request; `due_at` plus this step must stay inside it. A row older than 21 days in `deletion_log` without `identity_removed_at` is an incident (`docs/specs/product/19-development-process-and-automation.md`).
-- **Dead jobs.** The job retries for about a day with growing delays. If it ends `dead` (see `/health` job counts or `select last_error from job where type = 'privacy.delete_account'`), fix the cause (usually the object store), then set the job row back to `queued` (`update job set status = 'queued', attempts = 0, run_at = now() where id = '<id>'`). Without an object store configured the job fails on purpose: photos are never skipped silently.
+- **Dead jobs.** The job retries for about a day with growing delays. If it ends `dead` (see the job counts on `/health/details` or `select last_error from job where type = 'privacy.delete_account'`), fix the cause (usually the object store), then set the job row back to `queued` (`update job set status = 'queued', attempts = 0, run_at = now() where id = '<id>'`). Without an object store configured the job fails on purpose: photos are never skipped silently.
 - **Backups.** Backups made before the deletion still contain the data until they expire (`docs/guides/operations/staging-deploy-and-backup.md`). A restore must run the open deletions again: `select requested_at from deletion_log` tells which accounts to remove after a restore.
 
 ## What stays

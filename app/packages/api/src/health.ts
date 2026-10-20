@@ -41,16 +41,19 @@ async function jobs(pool: Pool | undefined): Promise<Jobs> {
 }
 
 /**
- * `GET /health` (TE-01, TE-03, US-DEV-09): version, commit and the checks of database and job queue, without sign-in
- * and without secrets. The database down answers 503, so the container check and the deploy see it; a dead job or an
- * unreadable queue is `degraded` with 200, because the API still serves. Photo storage is only reported as configured
- * or not: a live call to the object store on every health check would cost money and time (assumption).
+ * Health of the API (TE-01, TE-03, US-DEV-09), without sign-in and without secrets. `GET /health` is public and answers
+ * only the status keyword: version, commit and queue counts would help an attacker match the deployment to known issues
+ * (#759). `GET /health/details` adds version, commit and the checks of database and job queue; the proxy does not
+ * serve it on the public name, the deploy's smoke test reads it inside the stack. The database down answers 503, so
+ * the container check and the deploy see it; a dead job or an unreadable queue is `degraded` with 200, because the API
+ * still serves. Photo storage is only reported as configured or not: a live call to the object store on every health
+ * check would cost money and time (assumption).
  */
 export function bindHealth(
   app: Hono,
   opt: { pool?: Pool | undefined; version: string; commit: string; storage: boolean },
 ) {
-  app.get("/health", async (c) => {
+  const check = async () => {
     const [db, queue] = await Promise.all([database(opt.pool), jobs(opt.pool)]);
     const status =
       db === "error"
@@ -58,6 +61,14 @@ export function bindHealth(
         : queue.status === "ok" || queue.status === "not_configured"
           ? "ok"
           : "degraded";
+    return { status, db, queue } as const;
+  };
+  app.get("/health", async (c) => {
+    const { status } = await check();
+    return c.json({ status }, status === "error" ? 503 : 200);
+  });
+  app.get("/health/details", async (c) => {
+    const { status, db, queue } = await check();
     const body = {
       status,
       product: productTitle(),
