@@ -38,6 +38,37 @@ Rollback: `app/config/deploy/scripts/deploy.sh <earlier commit>`; for data probl
 
 Trying it locally (without a domain): `.env` with `CADDY_SCHEME=` (empty), `APP_HOST=localhost`, `AUTH_HOST=auth.localhost`, `APP_URL=https://localhost:8443`, `AUTH_URL=https://auth.localhost:8443`, then `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml up -d --build` and `curl -k https://localhost:8443/health`.
 
+## Realm security defaults (#757)
+
+The deployment realm is stricter than the development realm, because anyone may register on a public installation. The development realm keeps `length(10)` and its long sessions, so its test users and their passwords stay valid.
+
+| Setting                                                      | Deployment realm                                             | Why                                                                                                                                   |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `passwordPolicy`                                             | `length(12) and maxLength(128) and notUsername and notEmail` | at least 12 characters (starting value, assumption); Keycloak shows its own German messages ("muss mindestens 12 Zeichen beinhalten") |
+| `ssoSessionIdleTimeout` / `ssoSessionMaxLifespan`            | 1 day / 7 days                                               | a forgotten session on a shared device ends after a day without use (starting values, assumption)                                     |
+| `ssoSessionIdleTimeoutRememberMe` / `…MaxLifespanRememberMe` | 7 days / 30 days                                             | "Angemeldet bleiben" on the own phone: sign in again at the latest after a month (starting values, assumption)                        |
+| `eventsEnabled`, `eventsExpiration`                          | on, 30 days                                                  | failed and successful sign-ins can be traced after an incident; they hold IP addresses, so they expire (assumption)                   |
+| `adminEventsEnabled`, `adminEventsDetailsEnabled`            | on, without details                                          | every change in the admin console is logged; the details would copy whole representations into the log                                |
+
+A list of forbidden passwords (`passwordBlacklist`) needs a file inside the Keycloak container and is not set yet. Whether self-registration stays on is decided per installation (test: on; invitation phase: off, `invitation-phase.md`).
+
+**Existing realm.** The realm file is imported only on the first start (`IGNORE_EXISTING`), so apply the change to a running installation with `kcadm.sh` (checked on 2026-10-20 with Keycloak 26.8.0: afterwards the realm has the same values as a fresh import):
+
+```bash
+c="docker compose --env-file app/config/deploy/.env exec -T keycloak /opt/keycloak/bin/kcadm.sh"
+docker compose --env-file app/config/deploy/.env exec keycloak /opt/keycloak/bin/kcadm.sh config credentials \
+  --server http://localhost:8080 --realm master --user <admin>
+$c update realms/pflanzendex \
+  -s 'passwordPolicy=length(12) and maxLength(128) and notUsername and notEmail' \
+  -s ssoSessionIdleTimeout=86400 -s ssoSessionMaxLifespan=604800 \
+  -s ssoSessionIdleTimeoutRememberMe=604800 -s ssoSessionMaxLifespanRememberMe=2592000
+$c update events/config -r pflanzendex \
+  -s eventsEnabled=true -s eventsExpiration=2592000 -s adminEventsEnabled=true -s adminEventsDetailsEnabled=false
+$c get realms/pflanzendex --fields passwordPolicy,ssoSessionIdleTimeout,ssoSessionMaxLifespan,eventsEnabled
+```
+
+`config credentials` asks for the password interactively (QG-S1). The new password policy applies to passwords set from now on; existing passwords stay valid until they are changed. Running sessions keep their old limits until they end.
+
 ## Backup
 
 ```bash
@@ -85,7 +116,7 @@ How it fits together:
 
 - **One variable picks the mode.** `CADDY_SCHEME=http://` makes Caddy serve both hostnames on plain HTTP :80 without certificates (this setup). Empty makes Caddy get its own certificates (host facing the internet). Forwarded headers are believed only from `TRUSTED_PROXIES` (the upstream proxy's address); from anyone else they are overwritten. Keycloak builds its public links from them (`KC_PROXY_HEADERS=xforwarded`) and from `KC_HOSTNAME` (= `AUTH_URL`), so make the upstream proxy pass `X-Forwarded-Proto: https`.
 - **Keycloak** (`quay.io/keycloak/keycloak:26.8.0`, same as `make auth-up`) runs in production mode (`start`) with HTTP enabled inside the network. Its data lives in its own database `keycloak` with its own role in the existing `db` service (a second PostgreSQL would cost 100+ MB of the scarce memory). The one-shot `keycloak-db` creates role and database idempotently on every `up`, also on an existing volume, and revokes `CONNECT` on the app database from everyone but the cluster user: the sign-in role cannot reach tenant data (P-04). Port 8080 is published only on the host's loopback (`127.0.0.1:${KEYCLOAK_ADMIN_PORT}`, default 8180) for the admin console over an SSH tunnel (see "Admin console over an SSH tunnel"); the management port 9000 is not published.
-- **Realm** `pflanzendex` is imported on the first start from `app/config/deploy/keycloak/pflanzendex-realm.json`. It matches the development realm (clients `pflanzendex-api` and `pflanzendex-web` with S256 PKCE, audience mapper, `fullScopeAllowed: false`, access token 5 minutes (ADR 0009), password policy `length(10)`, login theme `pflanzendex`, email verification, self-registration) and differs in three ways: no test users, redirect addresses and web origin come from `APP_URL` (placeholder `${WEB_BASE_URL}`), SMTP comes from `SMTP_*` (placeholders `${KC_SMTP_*}`). Checked on 2026-10-11 with Keycloak 26.8.0: string placeholders (also inside arrays and empty values) are resolved; for booleans they are not reliable (see `invitation-phase.md`), which is why `registrationAllowed` stays a command, not a placeholder. **A changed realm file does not touch an existing realm** (`IGNORE_EXISTING`): change a live realm in the admin console or with `kcadm.sh`; to re-import, drop the `keycloak` database (`docker compose ... stop keycloak`, then drop and re-run `up`) and lose its accounts.
+- **Realm** `pflanzendex` is imported on the first start from `app/config/deploy/keycloak/pflanzendex-realm.json`. It matches the development realm (clients `pflanzendex-api` and `pflanzendex-web` with S256 PKCE, audience mapper, `fullScopeAllowed: false`, access token 5 minutes (ADR 0009), login theme `pflanzendex`, email verification, self-registration) and differs in four ways: no test users, redirect addresses and web origin come from `APP_URL` (placeholder `${WEB_BASE_URL}`), SMTP comes from `SMTP_*` (placeholders `${KC_SMTP_*}`), and stronger security defaults (see "Realm security defaults" below). Checked on 2026-10-11 with Keycloak 26.8.0: string placeholders (also inside arrays and empty values) are resolved; for booleans they are not reliable (see `invitation-phase.md`), which is why `registrationAllowed` stays a command, not a placeholder. **A changed realm file does not touch an existing realm** (`IGNORE_EXISTING`): change a live realm in the admin console or with `kcadm.sh`; to re-import, drop the `keycloak` database (`docker compose ... stop keycloak`, then drop and re-run `up`) and lose its accounts.
 - **API settings.** `OIDC_ISSUER` is the public issuer (`${AUTH_URL}/realms/pflanzendex`), because tokens carry it in `iss`. The API does not fetch keys through that public address (that would need the host to reach its own proxy and TLS): `OIDC_JWKS_URL=http://keycloak:8080/realms/pflanzendex/protocol/openid-connect/certs` points the key fetch inside the network, while signature, issuer and audience (`OIDC_AUDIENCE=pflanzendex-api`) are still checked as before (test `token.test.ts`, TE-03). `WEB_ORIGIN=${APP_URL}` sets CORS; `AI_RESOURCE_URL=${APP_URL}/api/mcp`.
 - **Web build.** `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID` and `VITE_API_URL=${APP_URL}/api` are build arguments of `web.Dockerfile` (Vite compiles them into the bundle), so changing `APP_URL` or `AUTH_URL` needs a rebuild (`make deploy` does it). The API is reached under `/api` on the same origin, so there is no cross-origin call; the proxy removes the `/api` prefix.
 - **Mail.** The realm requires email confirmation. `docker-compose.test.yml` adds Mailpit (no ports published) and a Caddy route to its UI at `https://auth.example.test/mail/` behind basic auth (`MAIL_UI_USER`, `MAIL_UI_HASH`, see "Public test environment through Tailscale Funnel"); the realm sends to it by default. It shows every email, so it must exist only in the test environment. Production sets `SMTP_*` in `.env` and does not load the overlay.
@@ -128,7 +159,7 @@ Note: `deploy.sh` checks out the ref in the checkout (detached HEAD). Every depl
 ### First account and the operator role
 
 1. Open `https://app.example.test`, press the sign-in button and choose register (self-registration is on in the test environment). Keycloak asks for email confirmation.
-2. Open `https://auth.example.test/mail/` (the mail catcher), open the email and follow the link; set the password (at least 10 characters). Sign in; the first sign-in creates the account.
+2. Open `https://auth.example.test/mail/` (the mail catcher), open the email and follow the link; set the password (at least 12 characters, not the username or the email address). Sign in; the first sign-in creates the account.
 3. Make the account the operator: follow `invitation-phase.md` steps 4 to 5. The subject is the Keycloak user id (`kcadm.sh get users -r pflanzendex -q email=<email> --fields id`; the admin console `/admin/` is blocked on the public name; open it over an SSH tunnel, see "Admin console over an SSH tunnel"). `compose` there stands for `docker compose --env-file app/config/deploy/.env`; the compose files come from `COMPOSE_FILE`, so no `-f` is needed. The tab "Betreiber" appears after a reload.
 
 ### Closing self-registration
