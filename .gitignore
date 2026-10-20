@@ -14,3 +14,6 @@ coverage/
 app/packages/e2e/test-results/
 app/packages/e2e/playwright-report/
 *.tsbuildinfo
+# Database backups hold password hashes and realm keys; the old default folder of backup.sh lay inside the repo.
+app/config/deploy/backups/
+*.dump
