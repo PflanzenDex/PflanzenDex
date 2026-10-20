@@ -4,17 +4,17 @@ Ticket TE-03 (#40). Basis: E-01 (self-hosting, Docker Compose, one host), R-09, 
 
 ## Overview
 
-| Service       | Job                                                                                                                                                                                                                                       |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Service       | Job                                                                                                                                                                                                                                                                                                 |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `proxy`       | Caddy: two hostnames (app, sign-in); plain HTTP behind a TLS-terminating proxy or HTTPS with automatic certificates; `/health` (status only) and `/api/*` (prefix removed) go to the API, `/health/*` and `/api/health/*` answer 404, the rest of the app host to web, the sign-in host to Keycloak |
-| `api`         | Hono API (Node 24, through tsx, because `core` is exported as TypeScript source)                                                                                                                                                          |
-| `web`         | static PWA (Vite build, Caddy)                                                                                                                                                                                                            |
-| `db`          | PostgreSQL 16, data in the `dbdata` volume                                                                                                                                                                                                |
-| `migrate`     | one-shot, same image as `api`: applies pending SQL migrations, then exits (#201)                                                                                                                                                          |
-| `keycloak`    | sign-in service (Keycloak 26.8, production mode), data in its own database in `db`; imports the realm `pflanzendex` on its first start                                                                                                    |
-| `db-roles`    | one-shot: creates the application role and the plain schema owner role, hands an existing database to it (#907, "DB roles in production")                                                                                                 |
-| `keycloak-db` | one-shot: creates the sign-in role and database in `db`, idempotently (also on an existing volume)                                                                                                                                        |
-| `mailpit`     | test environment only (`docker-compose.test.yml`): catches the confirmation emails                                                                                                                                                        |
+| `api`         | Hono API (Node 24, through tsx, because `core` is exported as TypeScript source)                                                                                                                                                                                                                    |
+| `web`         | static PWA (Vite build, Caddy)                                                                                                                                                                                                                                                                      |
+| `db`          | PostgreSQL 16, data in the `dbdata` volume                                                                                                                                                                                                                                                          |
+| `migrate`     | one-shot, same image as `api`: applies pending SQL migrations, then exits (#201)                                                                                                                                                                                                                    |
+| `keycloak`    | sign-in service (Keycloak 26.8, production mode), data in its own database in `db`; imports the realm `pflanzendex` on its first start                                                                                                                                                              |
+| `db-roles`    | one-shot: creates the application role and the plain schema owner role, hands an existing database to it (#907, "DB roles in production")                                                                                                                                                           |
+| `keycloak-db` | one-shot: creates the sign-in role and database in `db`, idempotently (also on an existing volume)                                                                                                                                                                                                  |
+| `mailpit`     | test environment only (`docker-compose.test.yml`): catches the confirmation emails                                                                                                                                                                                                                  |
 
 The database and Keycloak are not exposed. Only the proxy listens (ports from `HTTP_PORT`/`HTTPS_PORT`). Every service has a memory limit (starting values for a 3 GB host, assumptions; see "Memory" below).
 
@@ -41,8 +41,10 @@ Trying it locally (without a domain): `.env` with `CADDY_SCHEME=` (empty), `APP_
 ## Backup
 
 ```bash
-make backup          # app/config/deploy/backups/pflanzendex-<UTC time>.dump and keycloak-<UTC time>.dump (pg_dump -Fc)
+make backup          # $BACKUP_DIR/pflanzendex-<UTC time>.dump and keycloak-<UTC time>.dump (pg_dump -Fc)
 ```
+
+`BACKUP_DIR` defaults to `~/pflanzendex-backups`, outside the repository: the dumps hold password hashes and the realm keys, and a folder inside the checkout could be committed by a `git add -A` on the host (#760). The script runs with `umask 077`, so the folder is 0700 and every dump 0600; dumps of earlier runs are tightened to 0600 on the next run. `.gitignore` also ignores the old folder `app/config/deploy/backups/` and every `*.dump`. A host whose `.env` still says `BACKUP_DIR=./backups` keeps working; move the folder and the setting when convenient (`mv app/config/deploy/backups ~/pflanzendex-backups`, then `BACKUP_DIR=${HOME}/pflanzendex-backups` in `.env`).
 
 Each run writes two files when the sign-in service exists: `pflanzendex-*.dump` (app data) and `keycloak-*.dump` (identities, sessions, realm settings; without it nobody could sign in after a restore). The script verifies the file with `pg_restore -l`, deletes backups older than `BACKUP_RETENTION_DAYS` and copies them to `BACKUP_REMOTE` with `rsync` if set (second location, R-11). An unreadable backup fails with an error (a backup that cannot be restored is an incident, NFR-15).
 
@@ -50,11 +52,11 @@ Each run writes two files when the sign-in service exists: `pflanzendex-*.dump` 
 
 ```bash
 # into a second database (safe, for checking):
-app/config/deploy/scripts/restore.sh app/config/deploy/backups/<file>.dump pdx_check
+app/config/deploy/scripts/restore.sh ~/pflanzendex-backups/<file>.dump pdx_check
 # over the production database (overwrites it; stop the API first; a keycloak-*.dump goes into the sign-in database,
 # stop `keycloak` first instead):
 docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml stop api
-CONFIRM=yes app/config/deploy/scripts/restore.sh app/config/deploy/backups/<file>.dump
+CONFIRM=yes app/config/deploy/scripts/restore.sh ~/pflanzendex-backups/<file>.dump
 docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml start api
 ```
 
@@ -139,7 +141,7 @@ Registration is a per-installation switch, not part of the build (`invitation-ph
 
 ### Backup and restore
 
-`make backup` writes `pflanzendex-*.dump` and `keycloak-*.dump` (see "Backup"). Restore the sign-in database into a check database: `app/config/deploy/scripts/restore.sh app/config/deploy/backups/keycloak-<time>.dump kc_check`; over the live one: stop `keycloak`, `CONFIRM=yes app/config/deploy/scripts/restore.sh app/config/deploy/backups/keycloak-<time>.dump`, start `keycloak`. The restored objects keep their owner (the `keycloak` role). Restore app and sign-in dump from the same run so account subjects and identities match. `make restore-test` covers both databases.
+`make backup` writes `pflanzendex-*.dump` and `keycloak-*.dump` (see "Backup"). Restore the sign-in database into a check database: `app/config/deploy/scripts/restore.sh ~/pflanzendex-backups/keycloak-<time>.dump kc_check`; over the live one: stop `keycloak`, `CONFIRM=yes app/config/deploy/scripts/restore.sh ~/pflanzendex-backups/keycloak-<time>.dump`, start `keycloak`. The restored objects keep their owner (the `keycloak` role). Restore app and sign-in dump from the same run so account subjects and identities match. `make restore-test` covers both databases.
 
 ### Memory
 
