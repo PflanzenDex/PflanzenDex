@@ -247,7 +247,7 @@ describe("TE-03 · realm for deployments", () => {
     expect(web["webOrigins"]).toEqual(["${WEB_BASE_URL}"]);
   });
 
-  it("TE-03 keeps clients, audience mapper, token lifetimes, password policy and theme of the development realm", () => {
+  it("TE-03 keeps clients, audience mapper, token lifetimes and theme of the development realm", () => {
     const skip = ["rootUrl", "redirectUris", "webOrigins", "attributes"];
     const strip = (c: Client) =>
       Object.fromEntries(Object.entries(c).filter(([k]) => !skip.includes(k)));
@@ -258,16 +258,54 @@ describe("TE-03 · realm for deployments", () => {
     );
     for (const key of [
       "loginTheme",
-      "passwordPolicy",
       "accessTokenLifespan",
-      "ssoSessionIdleTimeout",
-      "ssoSessionMaxLifespan",
       "verifyEmail",
       "registrationAllowed",
       "bruteForceProtected",
       "sslRequired",
     ])
       expect(realm[key], key).toEqual(devRealm[key]);
+  });
+
+  // Deliberately stricter than the development realm, whose test users and their passwords stay as they are (#757).
+  it("TE-03 deployments get a stronger password policy, shorter sessions and login events (#757)", () => {
+    expect(realm["passwordPolicy"]).toBe(
+      "length(12) and maxLength(128) and notUsername and notEmail",
+    );
+    expect(devRealm["passwordPolicy"]).toBe("length(10)");
+    const day = 86400;
+    expect(realm).toMatchObject({
+      ssoSessionIdleTimeout: day,
+      ssoSessionMaxLifespan: 7 * day,
+      ssoSessionIdleTimeoutRememberMe: 7 * day,
+      ssoSessionMaxLifespanRememberMe: 30 * day,
+      eventsEnabled: true,
+      eventsExpiration: 30 * day,
+      adminEventsEnabled: true,
+      adminEventsDetailsEnabled: false,
+    });
+  });
+
+  it("TE-03 the runbook applies the same realm defaults to an existing realm with kcadm.sh (#757)", () => {
+    const runbook = readFileSync(
+      new URL(
+        "../../../../../../docs/guides/operations/staging-deploy-and-backup.md",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    expect(runbook).toContain(`-s 'passwordPolicy=${String(realm["passwordPolicy"])}'`);
+    for (const key of [
+      "ssoSessionIdleTimeout",
+      "ssoSessionMaxLifespan",
+      "ssoSessionIdleTimeoutRememberMe",
+      "ssoSessionMaxLifespanRememberMe",
+      "eventsEnabled",
+      "eventsExpiration",
+      "adminEventsEnabled",
+      "adminEventsDetailsEnabled",
+    ])
+      expect(runbook, key).toContain(`-s ${key}=${String(realm[key])}`);
   });
 
   it("TE-03 ships no users and sends mail through a configurable server", () => {
