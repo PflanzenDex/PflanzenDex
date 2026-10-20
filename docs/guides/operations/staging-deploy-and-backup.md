@@ -315,14 +315,40 @@ Then register the first account and follow "First account and the operator role"
    ```
 
 2. Open `http://localhost:8180/admin/master/console/` in the browser on that workstation.
-3. Log in as `KEYCLOAK_ADMIN_USER` (default `admin`) with `KEYCLOAK_ADMIN_PASSWORD` from `app/config/deploy/.env` on the host. Read it there without copying the file anywhere: `ssh <host> "grep '^KEYCLOAK_ADMIN_PASSWORD=' <repo>/app/config/deploy/.env | cut -d= -f2"`. Change it in the console afterwards if you like (the `.env` value is used only for the first start of an empty database).
+3. Log in as `KEYCLOAK_ADMIN_USER` (default `admin`) with `KEYCLOAK_ADMIN_PASSWORD` from `app/config/deploy/.env` on the host. Read it there without copying the file anywhere: `ssh <host> "grep '^KEYCLOAK_ADMIN_PASSWORD=' <repo>/app/config/deploy/.env | cut -d= -f2"`. After the first start, hand the master realm over to a named admin with a second factor (see "Master realm and admin handover").
 4. Close the tunnel with Ctrl+C when done.
 
 If port 8180 is taken on the host or the workstation, set `KEYCLOAK_ADMIN_PORT` in `.env`, redeploy, and use the same number on both sides of `-L`. The local port in the browser must equal `KEYCLOAK_ADMIN_PORT`, because Keycloak builds the console's links from it.
 
 ### Operator work without the admin console
 
-Everything the console does also works on the command line inside the container, without a tunnel: `docker compose --env-file app/config/deploy/.env exec keycloak /opt/keycloak/bin/kcadm.sh ...` (log in first with `kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin`, as in "Closing self-registration"). The operator role steps of `invitation-phase.md` use `kcadm.sh get users` and need no console.
+Everything the console does also works on the command line inside the container, without a tunnel: `docker compose --env-file app/config/deploy/.env exec keycloak /opt/keycloak/bin/kcadm.sh ...` (log in first with `kcadm.sh config credentials --server http://localhost:8080 --realm master --user <admin>`, as in "Closing self-registration"; after the handover `<admin>` is the named admin). The operator role steps of `invitation-phase.md` use `kcadm.sh get users` and need no console.
+
+### Master realm and admin handover (#758)
+
+The master realm controls every realm. It is blocked on the public name, but every container on the stack network reaches Keycloak directly, so it needs a lockout of its own.
+
+**Brute-force protection.** `deploy.sh` runs `app/config/deploy/keycloak/master-realm.sh` after Keycloak is healthy. It signs in as the bootstrap admin with the credentials the container already has (`KC_BOOTSTRAP_ADMIN_*`, no password on the host's command line) and sets `bruteForceProtected=true` and `failureFactor=5` (as in the app realm; starting value, assumption) in the master realm, every time, idempotently. So a fresh installation ends with the protection on. After the handover below the bootstrap admin no longer exists: the script prints `master realm: the bootstrap admin cannot sign in ...` and the deploy goes on; from then on the named admin owns the setting (check it in step 4).
+
+**Hand over the bootstrap admin.** The bootstrap admin (`KEYCLOAK_ADMIN_USER`, default `admin`) is a permanent user with a password only. Replace it with a named admin who needs a one-time code (TOTP), once per installation:
+
+1. Create the named admin as the bootstrap admin (the `config credentials` line asks for `KEYCLOAK_ADMIN_PASSWORD` interactively, QG-S1; `set-password` without `--new-password` asks too):
+
+   ```bash
+   c="docker compose --env-file app/config/deploy/.env exec keycloak /opt/keycloak/bin/kcadm.sh"
+   $c config credentials --server http://localhost:8080 --realm master --user admin
+   $c create users -r master -s username=<name> -s email=<email> -s emailVerified=true -s enabled=true \
+     -s 'requiredActions=["CONFIGURE_TOTP"]'
+   $c set-password -r master --username <name>
+   $c add-roles -r master --uusername <name> --rolename admin
+   ```
+
+2. Open the admin console over the SSH tunnel (above) and sign in as `<name>`. Keycloak asks to set up the authenticator app right away (`CONFIGURE_TOTP`). Sign out and in again to check that the code is asked for.
+3. As `<name>`, in the console: realm `master` > Users > `admin` > Delete. (With kcadm: `$c get users -r master -q username=admin -q exact=true --fields id`, then `$c delete users/<id> -r master`.)
+4. Still as `<name>`: realm `master` > Realm settings > Security defenses > Brute force detection is on ("Lockout temporarily", 5 failures).
+5. Replace `KEYCLOAK_ADMIN_PASSWORD` in `.env` with a new random value (`openssl rand -hex 24`) and keep it nowhere else. The compose file still requires the variable, because Keycloak creates a bootstrap admin from it whenever its database is empty (a restore into a new volume, the re-import above); on an existing database it is not used, so the old password no longer opens anything.
+
+Checked on 2026-10-20 with Keycloak 26.8.0 in a local container: the script turned the protection on (it was off with `failureFactor` 30), a second run changed nothing, steps 1 and 3 worked with kcadm, and after deleting `admin` the script printed the handover message and exited 0. Step 2 (TOTP in the browser) and the run on the test environment are still to do. If every admin is locked out, Keycloak can create a temporary admin with `kc.sh bootstrap-admin user` against the same database (Keycloak documentation "Recovering the admin account"; not tried here).
 
 ### Limits and when to leave this setup
 
