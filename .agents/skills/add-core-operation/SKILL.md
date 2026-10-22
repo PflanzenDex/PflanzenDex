@@ -16,6 +16,7 @@ Writes never bypass the operations layer (P-03): the API, the UI and later the A
 7. Tests in `core` (use the `spec-to-tests` skill): valid input writes, invalid input writes nothing, another account gets `access.verweigert` or sees nothing, the same idempotency key does not write twice.
 8. Database adapter in `app/packages/db` with tenant isolation (`account_id`, `tenant_protection()`, entry in `fixtures.ts`) so the generic tenant test covers the new table.
 9. API route in `app/packages/api` that calls `execute(op, deps, { context, input, idempotencyKey })` with the `Idempotency-Key` header (see `api/src/light/light-routes.ts`).
+10. Name the operation (`domain.verb`) and the route (`METHOD /path`) in the section of the story in `docs/guides/reference/app.md`; `make reference-check` fails otherwise (US-QG-10).
 
 ## Check
 

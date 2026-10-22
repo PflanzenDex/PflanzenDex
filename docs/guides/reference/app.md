@@ -2,6 +2,8 @@
 
 Monorepo (npm workspaces) with four packages. Every task runs through the `Makefile` in the repo root (`make help`). Tooling and docs are English; domain code uses the German glossary terms from the specs (`account`, `specimen`, `review_case`, …).
 
+This file is the index of what the API and `core` offer: look up a route or operation here before you build one. A new API route is named as `METHOD /path` and a new core operation as `domain.verb` in the section of its story; `make reference-check` enforces it, and the routes and operations from before the rule wait in `app/config/gates/baselines/reference-baseline.json` until their section names them (US-QG-10). Shared UI components are listed in the component inventory of `design-system.md` (section 4.4).
+
 | Package         | Contents                                        | Rule                                                                                                                                            |
 | --------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/core` | Domain logic, pure functions                    | imports nothing from API, web, database, file system or network (AB-1); every directory with code has an `index.ts`                             |
