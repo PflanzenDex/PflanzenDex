@@ -51,8 +51,8 @@ async function dormancyPeriods(
 /**
  * The care rhythm (US-ACH-04), derived on every request from the own data (FR-ACH-02). Tasks exist because of the
  * plants' needs: every treatment date (open or done, US-BEH-02/03) and every measurement interval of a plant (US-MON-04:
- * the next measurement is due `measurementDays` after the last one, or after the catch date; a cutting is left out as
- * for the reminders, E-11). A measurement made earlier than due counts the same (FR-ACH-05). The tasks of an archived
+ * the next measurement is due `measurementDays` after the last one, or after the catch date; a cutting has the same
+ * interval as for the reminders, E-11). A measurement made earlier than due counts the same (FR-ACH-05). The tasks of an archived
  * specimen that were still open when it was archived are dropped: the archive ends the need (P-10 keeps the history).
  * Weeks are neutral inside the explicit pauses of the keeper (up to 4 weeks) and on the days on which every active plant
  * is in its dormancy (current specimens and dormancy periods applied to the past: assumption). Interval watering
@@ -77,7 +77,7 @@ export async function achievementsRhythm(
     tasks.push(
       ...treatments.map((t) => ({ dueOn: t.dueAt, doneOn: t.done ? t.doneAt : null })).filter(keep),
     );
-    if (r.status !== "plant") continue;
+    if (r.status === "archived") continue;
     const dates = (await src.measurements.list(userId, r.id)).map((m) => m.date).sort();
     const starts = [...(r.caughtAt ? [r.caughtAt] : []), ...dates];
     // Each start (the catch date, then every measurement) opens a task that the next measurement closes.
