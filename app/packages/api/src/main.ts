@@ -12,7 +12,7 @@ import { createWikimediaDownload } from "./wishlist";
 import { createJobWorker, JOB_HANDLERS } from "./jobs";
 import { catalogFillEnabled, catalogFillJobHandlers, checkCatalogFill } from "./catalog";
 import { checkTaxonomy, pokedexJobHandlers, scheduleChecks } from "./pokedex";
-import { remindersRuntime } from "./monitoring";
+import { reminderChannelFromEnv, remindersRuntime } from "./monitoring";
 import { reminderOccasionsFor } from "./today";
 import { measurementSourceFor } from "./care";
 import { zoneStockFor } from "./zone-stock";
@@ -84,10 +84,11 @@ serve({ fetch: app.fetch, port }, (info) => {
 });
 
 // Background jobs (TE-06) run in the same process; the queue hands out each job once, also with several processes.
-// Reminders (US-MON-01): the occasions come from the central status function; delivery is a stub until the operator
-// provides the web push keys and a mail account (E-10, docs/specs/product/09-reminders-and-sensors.md).
+// Reminders (US-MON-01): the occasions come from the central status function; delivery is Web Push once the operator
+// sets the VAPID keys, otherwise a stub (E-10, ADR 0015, docs/specs/product/09-reminders-and-sensors.md).
 const reminders = remindersRuntime({
   pool,
+  channel: reminderChannelFromEnv(pool, process.env),
   source: reminderOccasionsFor(pool, {
     measurements: measurementSourceFor(pool),
     zoneStock: zoneStockFor(pool),

@@ -71,6 +71,14 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Reset:** there is no `db-reset` target yet. To start clean: `make db-down && make db-up && make migrate`, then run the seed again (this removes the whole test database of this checkout). To remove only the three accounts: delete them in a SQL shell as superuser (`delete from account where subject in (...)` cascades) and run the seed again.
 - **Test:** `perf/demo-seed/demo-seed.test.ts` runs the seed twice against a scratch database (second run changes no count), checks that the three tenants stay apart and that the command refuses `prod`, an unknown and an unset environment.
 
+## Reminder delivery by Web Push (US-MON-01, #941)
+
+- **Adapter:** `WebPushReminderChannel` (`api/src/monitoring/push/web-push-channel.ts`) implements the port `ReminderChannel` of the daily job `monitoring.send_reminders`. It sends one push per subscription of the account (`delivery_channel`) with `webPushSender` (`push/web-push-config.ts`): the library `web-push` encrypts the payload (RFC 8291, `aes128gcm`) and signs with VAPID (RFC 8292); the request goes straight to the subscription's endpoint with `fetch` (`TTL` one day, `Urgency: normal`, 10 s timeout). No FCM, no push vendor (ADR 0015).
+- **Outcomes:** 2xx = delivered; 404 or 410 = the subscription is dead and removed (`ChannelStore.remove`); anything else or a network error = failed. One delivered subscription is enough; otherwise the send throws, the job retries and the third failure leaves the reminder `failed` (FR-MON-08). Logs and errors name only the host of an endpoint, never its path.
+- **Payload:** `pushPayload` builds `{ title, body, url, items, more }` in the order of the bundle and cuts `items` to `PUSH_PAYLOAD_LIMIT` (3000 bytes, starting value); `more` counts the rest, the inbox keeps everything.
+- **Configuration:** `reminderChannelFromEnv` (`api/src/monitoring/runtime.ts`, used in `main.ts`): `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`. None set: `StubReminderChannel` (sends nothing, logs). Partly set or invalid keys: the stub stays and the API logs what is missing or invalid at start. Keys: `npx web-push generate-vapid-keys`.
+- **Limits:** no route for the public key, no subscribe flow and no service worker in the web app yet (follow-ups of US-MON-01), so no browser registers a subscription; no email channel.
+
 ## Operator role and review status (TE-08)
 
 - **Roles:** table `account_role` (`operator`, `reviewer`), granted only through admin access, never through the application (the application role has no rights on the table; it only reads its own role through `roles_of_account()`). A role grants no access to other accounts' content (P-04).
