@@ -84,7 +84,20 @@ describe("US-DEV-01 demo seed fills test, test2 and test3 (#924)", () => {
     await run();
     first = await counts();
     expect(await own(SUBJECTS.test, "specimen")).toBe(3);
-    expect(await own(SUBJECTS.test2, "specimen")).toBeGreaterThanOrEqual(40);
+    expect(await own(SUBJECTS.test2, "specimen")).toBe(50);
+    // #939: Ben's cuttings carry measurements too (E-11), so the reminder and the care rhythm show them.
+    const benCuttingsMeasured = await accountId(SUBJECTS.test2).then((id) =>
+      withAccount(pool, id, async (c) =>
+        Number(
+          (
+            await c.query(
+              "select count(distinct s.id) n from specimen s join measurement m on m.specimen_id = s.id where s.status = 'cutting'",
+            )
+          ).rows[0].n,
+        ),
+      ),
+    );
+    expect(benCuttingsMeasured).toBe(7);
     expect(await own(SUBJECTS.test3, "specimen")).toBeGreaterThanOrEqual(5);
     expect(first["measurement"]).toBeGreaterThan(150);
     expect(first["offer"]).toBe(3);

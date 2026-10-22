@@ -13,7 +13,7 @@ import {
   type Ctx,
   type Id,
 } from "../common/shared.ts";
-import { BEN_LOCATIONS, BEN_SPECIMENS, seriesFor } from "./ben-plants.ts";
+import { BEN_LOCATIONS, BEN_SPECIMENS, CUTTING_SERIES, seriesFor } from "./ben-plants.ts";
 import { seedCareProfiles, seedTreatments } from "./ben-care.ts";
 import { seedBenEquipment } from "./ben-gear.ts";
 
@@ -48,6 +48,10 @@ export async function seedBen(
       photos += 1;
     }
     index += 1;
+  }
+  for (const [key, series] of Object.entries(CUTTING_SERIES)) {
+    const id = specimens.get(key);
+    if (id) await ensureMeasurements(ctx, id, series);
   }
   await seedCareProfiles(ctx, species, locations);
   const pick = (...latin: string[]) =>
