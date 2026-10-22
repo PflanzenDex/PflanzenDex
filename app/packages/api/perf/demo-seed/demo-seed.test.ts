@@ -83,7 +83,7 @@ describe("US-DEV-01 demo seed fills test, test2 and test3 (#924)", () => {
   it("US-DEV-01 the first run creates the content of each account", async () => {
     await run();
     first = await counts();
-    expect(await own(SUBJECTS.test, "specimen")).toBe(3);
+    expect(await own(SUBJECTS.test, "specimen")).toBe(4); // 3 plants and the cutting Clara handed over (#943)
     expect(await own(SUBJECTS.test2, "specimen")).toBe(50);
     // #939: Ben's cuttings carry measurements too (E-11), so the reminder and the care rhythm show them.
     const benCuttingsMeasured = await accountId(SUBJECTS.test2).then((id) =>
@@ -100,8 +100,8 @@ describe("US-DEV-01 demo seed fills test, test2 and test3 (#924)", () => {
     expect(benCuttingsMeasured).toBe(7);
     expect(await own(SUBJECTS.test3, "specimen")).toBeGreaterThanOrEqual(5);
     expect(first["measurement"]).toBeGreaterThan(150);
-    expect(first["offer"]).toBe(3);
-    expect(first["swap"]).toBeGreaterThanOrEqual(1);
+    expect(first["offer"]).toBe(4);
+    expect(first["swap"]).toBe(6); // one row per side: open (Clara-Ben), handed over and declined (Clara-Anna)
     expect(first["catalog_correction"]).toBe(1);
     expect(first["treatment"]).toBeGreaterThan(0);
     expect(
@@ -115,6 +115,26 @@ describe("US-DEV-01 demo seed fills test, test2 and test3 (#924)", () => {
     );
     expect(style.rows.map((r) => r.style)).toEqual(["few", "many"]);
   }, 180_000);
+
+  it("US-DEV-01 the swap history shows a handed-over and a declined swap (#943, US-SOZ-13)", async () => {
+    const api = new Caller(pool, new Map());
+    const history = (await api.ok(SUBJECTS.test, "GET", "/swaps/history"))["entries"] as {
+      status: string;
+      friend: string | null;
+      direction: string;
+      reason: string | null;
+    }[];
+    expect(history.map((e) => e.status).sort()).toEqual(["declined", "handed_over"]);
+    expect(history.every((e) => e.friend === "Clara" && e.direction === "received")).toBe(true);
+    expect(history.find((e) => e.status === "declined")?.reason).toBeTruthy();
+    const clara = (await api.ok(SUBJECTS.test3, "GET", "/swaps/history"))["entries"] as {
+      status: string;
+    }[];
+    expect(clara.map((e) => e.status).sort()).toEqual(["declined", "handed_over"]);
+    // Clara's request for Ben's cutting stays open.
+    const ben = await api.ok(SUBJECTS.test2, "GET", "/swaps?timeZone=Europe/Berlin");
+    expect((ben["received"] as { status: string }[]).map((s) => s.status)).toEqual(["requested"]);
+  });
 
   it("US-DEV-01 a second run changes nothing (idempotent)", async () => {
     await run();
@@ -136,7 +156,7 @@ describe("US-DEV-01 demo seed fills test, test2 and test3 (#924)", () => {
     const benList = (await api.ok(SUBJECTS.test2, "GET", "/specimens"))["specimens"] as {
       id: string;
     }[];
-    expect(annaList).toHaveLength(3);
+    expect(annaList).toHaveLength(4);
     const foreign = await api.call(SUBJECTS.test, "GET", `/specimens/${benList[0]?.id}`);
     expect(foreign.status).toBe(404);
     expect((await api.ok(SUBJECTS.test, "GET", "/wishes/candidates"))["candidates"]).toEqual([]);
