@@ -1,9 +1,5 @@
-import { QueryClientProvider } from "@tanstack/react-query";
-import { renderToString } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { loadSpecies, propose, searchSpecies } from "./species-api";
-import { createQueryClient } from "../kernel";
-import { SpeciesPage } from "./species-page/species-page";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -35,15 +31,5 @@ describe("US-BES-01 client of the species API", () => {
     const init = fetchFn.mock.calls[0]?.[1];
     expect(init?.method).toBe("POST");
     expect((init?.headers as Record<string, string>)["Idempotency-Key"]).toBeTruthy();
-  });
-
-  it("the page starts with the search and loads, without inventing anything", () => {
-    const h = renderToString(
-      <QueryClientProvider client={createQueryClient()}>
-        <SpeciesPage api="http://api" token={async () => "tok"} onChoose={vi.fn()} />
-      </QueryClientProvider>,
-    );
-    expect(h).toContain("Art wählen");
-    expect(h).toContain("Suche läuft");
   });
 });

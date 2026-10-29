@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from "react";
+import { useSearchParams } from "react-router";
 import type { Species } from "@pflanzendex/core";
+import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { OFFLINE_NOTE } from "@/components/shared/states/request-state/request-state";
 import type { ApiError, Request } from "../../kernel";
@@ -10,7 +12,10 @@ import { ProposalForm } from "../proposal/proposal-form/proposal-form";
 import { ProfileSkeleton } from "../profile-view/profile-view.skeleton";
 import { refusalText } from "../shared/refusal";
 
-type View = { kind: "search" } | { kind: "proposal" } | { kind: "profile" };
+type View = { kind: "search" } | { kind: "profile" };
+
+/** The layer with the proposal form (`?sheet=propose`, US-QS-21). */
+const PROPOSE_LAYER = "propose";
 
 function ProfilePage(props: {
   profile: Request<Species>;
@@ -98,9 +103,17 @@ export function SpeciesPage(props: SpeciesPageProps) {
   const [searchText, setSearchText] = useState(props.initialSearch ?? "");
   const [fresh, setNew] = useState(false);
   const [profileId, setProfileId] = useOpenId(openId);
+  const [params, setParams] = useSearchParams();
+  const propose = useLayer(PROPOSE_LAYER);
   const search = useSearch(api, token, searchText);
   const profile = useProfile(api, token, profileId);
   const open = (id: string) => {
+    // The profile is no place for a layer: it leaves the address (replace, no new entry); the page of the list stays.
+    if (params.has("sheet")) {
+      const next = new URLSearchParams(params);
+      next.delete("sheet");
+      setParams(next, { replace: true });
+    }
     setView({ kind: "profile" });
     setProfileId(id);
   };
@@ -124,18 +137,13 @@ export function SpeciesPage(props: SpeciesPageProps) {
           failed={searchError !== null}
           onSearch={setSearchText}
           onOpen={open}
-          onPropose={() => setView({ kind: "proposal" })}
+          onPropose={() => propose.openLayer()}
           embedded={props.embedded}
-        />
-      )}
-      {view.kind === "proposal" && (
-        <ProposalForm
-          start={searchText}
-          onSend={send}
-          onCancel={back}
-          onExisting={open}
-          embedded={props.embedded}
-        />
+        >
+          <LayerSheet id={PROPOSE_LAYER} title="Art vorschlagen">
+            <ProposalForm start={searchText} onSend={send} onExisting={open} />
+          </LayerSheet>
+        </SpeciesSearch>
       )}
       {view.kind === "profile" && (
         <ProfilePage

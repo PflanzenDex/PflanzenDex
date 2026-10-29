@@ -331,6 +331,21 @@ Acceptance criteria:
 
 State of implementation: `FriendsPage` (`web/src/social/pages/friends-page`) with `friend-tiles` and `friend-layers`; calm mode arrives through `CalmGate` (`components/routing/areas/shared/simple-routes/calm-gate`, shared with the match deck), and the route of "Freunde" moved into `socialRoutes`. The shell frame stays in the scrolling mode: its opt-in `fit` is global to the app shell, so it is left off here and the overview fits by its own size. Status 🟨 until a real phone check.
 
+### US-QS-21 · "Entdecken" fits one screen and opens its parts as layers · 🟨 new
+
+As a **plant keeper** I want "Entdecken" to fit one screen in both modes and to open filters and the proposal as layers, so that I search the catalog without scrolling a page that was 3.5 phone screens long (owner decision 2026-10-29, after a UI review; applies US-QS-15 to US-QS-14).
+
+Acceptance criteria:
+
+- Given a viewport of 360x640 px (starting value, assumption), when I open "Entdecken" in either mode ("Vorschläge" or "Katalog"), then it fits without page scroll: the heading, the mode switch and the content of the mode.
+- Given "Katalog", then the search field and a page of compact results (name, scientific name and one fact each) show; the results are paged with the pager of US-QS-15 and the page is in the address (`?page=n`); a new search or a changed filter starts at page 1; the filters live in a layer (`?sheet=filters`) and the chosen ones show as removable chips.
+- When I choose a result, then the species profile opens as before (its own page with a way back, US-QS-14), and "Diese Art wählen" still leads to the form of a specimen (US-BES-02).
+- Given "Art vorschlagen", then the proposal form opens as a layer (`?sheet=propose`) with one filled primary action; a refusal shows its text by error code (FR-QG-11).
+- Given "Vorschläge", then the deck stays as it is, its empty state names the next action (P-09), and help is one line.
+- Given no result, loading or an error, then the region shows that state with its next action (P-09, P-10).
+
+State of implementation: in the mode "Katalog" (`SpeciesSearch`, `HitList` with three rows per page as a starting value, `FiltersLayer` with difficulty and "Nur meine Vorschläge" applied to the loaded hits, `FilterChips`, the proposal in a `LayerSheet`) the criteria for the search, paging, filters, chips and the proposal layer are implemented and tested. The fit at 360x640 px was calculated from the row heights, not yet measured in a browser, and the mode "Vorschläge" was not changed (its deck fitted already), so the status stays 🟨.
+
 ### US-QS-23 · A plant opens as a layer with tabs · 🟨 new
 
 As a **plant keeper** I want a plant to open as a layer with tabs, so that next to the plant I measure, water or treat it with one hand and find the rest one layer deeper, without scrolling through one long card (US-QS-15, P-11).
