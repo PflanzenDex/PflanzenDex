@@ -385,9 +385,19 @@ Run workflow (environment, ref) -> guard on the runner -> joins the tailnet as a
 
 Nothing below goes into the repo: hostnames, tailnet name and secrets stay with the owner (the repo is public). Placeholders: `<host>` is the tailnet name of the host, `<repo-path>` the checkout on it.
 
-1. **Test host:** install `tailscaled` as a system service in userspace mode (no TUN device, outbound only) and join with Tailscale SSH and the tag: `tailscale up --ssh --advertise-tags=tag:pflanzendex-deploy`. Create the Linux user `deploy` (member of the `docker` group, owner of the checkout, `git fetch` works from it).
+1. **Test host:** install `tailscaled` as a system service in userspace mode (no TUN device, outbound only) and join with Tailscale SSH and the tag. This is a node of its own, next to the two Funnel containers; it gets its own tag so a public Funnel node is never a deploy target. Do it after step 3, or `tailscale up` refuses the tag:
+
+   ```bash
+   curl -fsSL https://tailscale.com/install.sh | sh
+   # Change only FLAGS: /etc/default/tailscaled also holds PORT, and without it tailscaled fails to start (--port=).
+   sudo sed -i 's/^FLAGS=.*/FLAGS="--tun=userspace-networking"/' /etc/default/tailscaled
+   sudo systemctl restart tailscaled
+   sudo tailscale up --ssh --advertise-tags=tag:pflanzendex-deploy --hostname=<host-label>
+   ```
+
+   `tailscale up` prints a login link; approve it in the admin console. Create the Linux user `deploy`: member of the `docker` group, owner of the checkout and of `app/config/deploy/.env`, `git fetch` works from it. Give it **no** `sudo` (no group, no `/etc/sudoers.d` entry): whoever deploys gets a shell as `deploy`, and `deploy.sh` needs only Docker. Administer the host as another user or as root from the hypervisor.
 2. **Prod host (does not exist yet):** the same with `--advertise-tags=tag:pflanzendex-prod`. Until it exists, leave `DEPLOY_HOST` unset in the environment `prod`; the workflow then fails at once with a clear message.
-3. **Tailnet policy:** the tags and one SSH rule per target; `tag:ci` gets nothing else:
+3. **Tailnet policy:** the tags, a network grant for port 22 only and one SSH rule per target; `tag:ci` gets nothing else. Merge into the existing policy (keep the Funnel tag and its `nodeAttrs`):
 
    ```json
    "tagOwners": {
@@ -395,19 +405,37 @@ Nothing below goes into the repo: hostnames, tailnet name and secrets stay with 
      "tag:pflanzendex-deploy": ["autogroup:admin"],
      "tag:pflanzendex-prod": ["autogroup:admin"]
    },
+   "grants": [
+     { "src": ["tag:ci"], "dst": ["tag:pflanzendex-deploy", "tag:pflanzendex-prod"], "ip": ["tcp:22"] }
+   ],
    "ssh": [
      { "action": "accept", "src": ["tag:ci"], "dst": ["tag:pflanzendex-deploy"], "users": ["deploy"] },
      { "action": "accept", "src": ["tag:ci"], "dst": ["tag:pflanzendex-prod"], "users": ["deploy"] }
+   ],
+   "sshTests": [
+     { "src": "tag:ci", "dst": ["tag:pflanzendex-deploy"], "accept": ["deploy"], "deny": ["root"] }
    ]
    ```
 
-   Add no `acls` entry for `tag:ci`; if a catch-all `*:*` rule exists, tighten it so `tag:ci` is not covered.
+   The first working setup (2026-10-29) used exactly this; whether Tailscale SSH works without the `tcp:22` grant was not tested. `accept` (not `check`) because a runner cannot answer a browser check. If a catch-all rule exists, make sure its `src` does not cover `tag:ci` (a rule with `src: ["autogroup:member"]` does not). Right after joining, `tailscale status` on the host may warn "access controls don't allow anyone to access this device" (seen on 2026-10-29 before the first run, gone after it; the cause was not pinned down). Run the check in step 7; if the "deploy" step then fails with an SSH error, the policy is missing one of the rules above.
 
 4. **OAuth client** (Tailscale admin console, Settings, OAuth clients): scope "Auth Keys" with write access, tag `tag:ci` only. One client for both environments, or one per environment (then the prod client can be revoked on its own).
 5. **GitHub environments** (repository Settings, Environments). Both use the same names, set per environment: **secrets** `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`; **variables** `DEPLOY_HOST` (`<host>`, a MagicDNS name) and `DEPLOY_REPO_PATH` (`<repo-path>`, default if unset: `/opt/pflanzendex`).
    - `test`: "Deployment branches and tags" set to **all branches** (no restriction), because the test environment may deploy from any branch. Its secrets are still out of reach for fork pull requests: nothing on `pull_request` uses the environment, forks cannot dispatch workflows, and environment secrets are never given to fork runs.
    - `prod`: "Deployment branches and tags" limited to the branch `main` and the tag pattern `v*`; optionally add required reviewers so every prod deploy waits for an approval.
-6. **Check:** run "Deploy" for `test` with `dev`, then try `prod` with a branch and with `main` (both must be refused by the guard before the tailnet join), and later with a release tag.
+6. **`.env` up to date:** compare the variable names of `app/config/deploy/.env.example` at the ref you deploy with the host's `.env` (names only, never print values); a missing required one stops `docker compose` and the deploy rolls back. Example: `DB_OWNER_PASSWORD` (#910), `openssl rand -hex 24`.
+7. **Check:** run "Deploy" for `test` with `dev`, then try `prod` with a branch and with `main` (both must be refused by the guard before the tailnet join), and later with a release tag.
+
+### First deploy of a host on an old version
+
+`deploy.sh` is the script of the commit the host has checked out **before** the deploy; it checks out the target and then calls that commit's helper scripts (`smoke.sh`, `keycloak/master-realm.sh`). When the two versions disagree, the deploy fails although the target is fine. Seen on 2026-10-29 when the test host was still on `v0.1.0`: the old `deploy.sh` called the new `smoke.sh` without `SMOKE_DETAILS_CMD`, `smoke.sh` asked the proxy for `/health/details` (no longer public, #759), got 404 and rolled back. Bridge it once on the host, as `deploy`, in the checkout:
+
+```bash
+SMOKE_DETAILS_CMD="docker compose --env-file .env exec -T api wget -qO- http://127.0.0.1:3000/health/details" \
+  app/config/deploy/scripts/deploy.sh <full sha>
+```
+
+(The command runs in `app/config/deploy`, hence `.env`.) After that the host runs the new script and the workflow works as is. The workflow shows only the last 60 lines, which are mostly the rollback; to see the first error, run `deploy.sh` once on the host with the output in a file and look at the lines before `ERROR: deploy of`.
 
 ### Deploy by hand
 
