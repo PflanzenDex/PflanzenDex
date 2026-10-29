@@ -34,3 +34,11 @@ configure({ asyncUtilTimeout: 4000 });
 // jsdom has no `matchMedia`; the layers and the paged tiles read the breakpoints, so a phone-sized viewport is the
 // default. A test that needs another width calls `setViewportWidth` itself.
 if (typeof window !== "undefined" && typeof window.matchMedia !== "function") setViewportWidth(360);
+
+// jsdom has no pointer capture; the bottom sheet (Vaul) calls it on a pointer press, which the phone-sized default
+// viewport opens, so a click in a sheet threw an unhandled error.
+if (typeof Element !== "undefined" && typeof Element.prototype.setPointerCapture !== "function") {
+  Element.prototype.setPointerCapture = () => undefined;
+  Element.prototype.releasePointerCapture = () => undefined;
+  Element.prototype.hasPointerCapture = () => false;
+}
