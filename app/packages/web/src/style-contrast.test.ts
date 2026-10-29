@@ -1,10 +1,13 @@
 // US-QS-07 · DS-20: every text pair of the semantic tokens reaches WCAG AA (4.5:1 text, 3:1 UI) in light and dark.
-// Issue #249 (footer text) stays covered. The tokens live in styles/tokens.css (DS-28, DS-30).
+// Issue #249 (small muted text, formerly the footer) stays covered by the version line (US-QS-17). The tokens live in styles/tokens.css (DS-28, DS-30).
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const tokensCss = readFileSync(new URL("./styles/tokens.css", import.meta.url), "utf8");
-const appSource = readFileSync(new URL("./shell/app/app.tsx", import.meta.url), "utf8");
+const appSource = readFileSync(
+  new URL("./shell/function-overview/function-overview.tsx", import.meta.url),
+  "utf8",
+);
 
 type Rgb = [number, number, number];
 
@@ -179,9 +182,9 @@ describe("US-QS-07 · DS-20 colour helper", () => {
   });
 });
 
-// --- Issue #249: footer ----------------------------------------------------------------------------------------
+// --- Issue #249: the version line (was the footer) ----------------------------------------------------------------------------------------
 
-const footerClasses = /<footer className="([^"]*)"/.exec(appSource)?.[1] ?? "";
+const footerClasses = /<p className="([^"]*)">Version /.exec(appSource)?.[1] ?? "";
 const footerToken =
   /(?:^|\s)text-([a-z-]+)(?=\s|$)/.exec(
     footerClasses.replace(/text-(xs|sm|base|center)/g, ""),
@@ -193,15 +196,15 @@ function footerRatio(decl: Map<string, string>): number {
   return contrast(blend(resolve(decl, footerToken), bg, opacity), bg);
 }
 
-describe("Issue #249 footer contrast", () => {
-  it("Issue #249: the footer does not fade its text with opacity", () => {
+describe("Issue #249 version line contrast", () => {
+  it("Issue #249: the version line does not fade its text with opacity", () => {
     expect(footerClasses).toBeTruthy();
     expect(footerClasses).not.toMatch(/opacity/);
   });
-  it("Issue #249: footer text reaches 4.5:1 on the page background in the light scheme", () => {
+  it("Issue #249: version line text reaches 4.5:1 on the page background in the light scheme", () => {
     expect(footerRatio(lightDecl)).toBeGreaterThanOrEqual(4.5);
   });
-  it("Issue #249: footer text reaches 4.5:1 on the page background in the dark scheme", () => {
+  it("Issue #249: version line text reaches 4.5:1 on the page background in the dark scheme", () => {
     expect(footerRatio(darkDecl)).toBeGreaterThanOrEqual(4.5);
   });
 });

@@ -43,7 +43,8 @@ test.describe("US-ACC-01 sign-in", () => {
   test("US-ACC-01 signing out ends the session and says so", async ({ page, account }) => {
     await signIn(page, account);
     await page.getByRole("link", { name: "Konto", exact: true }).click();
-    await page.getByRole("button", { name: "Abmelden", exact: true }).click();
+    await page.getByRole("button", { name: "Abmelden…", exact: true }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Abmelden", exact: true }).click();
     await expect(page.getByText("Du bist abgemeldet.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Anmelden" })).toBeVisible();
   });

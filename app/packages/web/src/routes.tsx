@@ -70,7 +70,7 @@ export function AppRoutes(props: {
       <AchievementNewsBanner api={api} token={s.token} />
       <Routes>
         <Route
-          path={PATHS.account}
+          path={`${PATHS.account}/*`}
           element={
             <AccountArea
               api={api}

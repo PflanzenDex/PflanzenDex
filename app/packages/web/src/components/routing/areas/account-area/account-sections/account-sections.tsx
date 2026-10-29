@@ -1,6 +1,5 @@
 import { Suspense, type ReactNode } from "react";
 import { Link } from "react-router";
-import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
 import { RemindersSection } from "@/monitoring";
 import { AiSection } from "@/ai";
 import { PrivacySection } from "@/privacy";
@@ -9,11 +8,12 @@ import {
   AchievementsOverviewSection,
   YearInReviewSection,
 } from "@/achievements";
-import { MeasuredView, SettingsPage } from "@/account";
+import { AccountView, MeasuredView, SettingsPage } from "@/account";
+import type { Account } from "@/account";
 import { Button } from "@/components/ui/button/button";
 import {
-  ACCOUNT_SECTIONS,
   MANAGE_ADDRESS,
+  type AccountSection,
 } from "@/components/shared/navigation/nav-model/navigation/navigation";
 
 type Token = () => Promise<string | undefined>;
@@ -24,14 +24,22 @@ function LocksHere(props: { locks: Locks | undefined; ids: readonly string[] }) 
   return props.locks ? <Suspense fallback={null}>{props.locks(props.ids)}</Suspense> : null;
 }
 
+export type SectionProps = {
+  api: string;
+  token: Token;
+  account: Account;
+  error?: string | undefined;
+  onSignOut: () => void;
+  onEverywhereSignOut: () => void;
+  /** The overview "Was die App kann" (US-ONB-06) from the shell, which no area imports. */
+  overview?: ReactNode;
+  locks?: Locks | undefined;
+};
+
 /** The settings with the link to the management of the locations and light zones, which lives in the Sammlung. */
-export function SettingsSection(props: { api: string; token: Token }) {
+function SettingsContent(props: { api: string; token: Token }) {
   return (
-    <AreaSection
-      anchor={ACCOUNT_SECTIONS.settings}
-      title="Einstellungen"
-      loading="Einstellungen werden geladen …"
-    >
+    <>
       <SettingsPage api={props.api} token={props.token} host />
       <p className="text-sm text-muted-foreground">
         Standorte und Lichtzonen legst du in der Sammlung an und änderst sie dort.
@@ -39,90 +47,51 @@ export function SettingsSection(props: { api: string; token: Token }) {
       <Button asChild variant="secondary" className="self-start">
         <Link to={MANAGE_ADDRESS}>Standorte und Lichtzonen verwalten</Link>
       </Button>
-    </AreaSection>
-  );
-}
-
-/** The overview of the achievements (US-ACH-02) as a section of "Konto". */
-export function AchievementsSection(props: {
-  api: string;
-  token: Token;
-  locks?: Locks | undefined;
-}) {
-  return (
-    <AreaSection
-      anchor={ACCOUNT_SECTIONS.achievements}
-      title="Erfolge"
-      loading="Erfolge werden geladen …"
-    >
-      <div className="flex min-w-0 flex-col gap-6">
-        <LocksHere locks={props.locks} ids={["care_rhythm", "anniversaries", "year_in_review"]} />
-        <CareRhythmSection api={props.api} token={props.token} />
-        <AchievementsOverviewSection api={props.api} token={props.token} />
-        <YearInReviewSection api={props.api} token={props.token} />
-      </div>
-    </AreaSection>
-  );
-}
-
-/** Download of all own data and deleting the account (US-ACC-04). */
-function DataSection(props: { api: string; token: Token }) {
-  return (
-    <AreaSection
-      anchor={ACCOUNT_SECTIONS.data}
-      title="Meine Daten"
-      loading="Meine Daten werden geladen …"
-    >
-      <PrivacySection api={props.api} token={props.token} />
-    </AreaSection>
-  );
-}
-
-/** The sections from the reminders on: the AI clients only while the function is on, the overview when the shell hands it in. */
-export function LowerSections(props: {
-  api: string;
-  token: Token;
-  ai: boolean;
-  overview: ReactNode;
-  locks?: Locks | undefined;
-}) {
-  const { api, token, ai, overview } = props;
-  return (
-    <>
-      <AreaSection
-        anchor={ACCOUNT_SECTIONS.reminders}
-        title="Erinnerungen"
-        loading="Erinnerungen werden geladen …"
-      >
-        <RemindersSection api={api} token={token} />
-      </AreaSection>
-      {ai && (
-        <AreaSection
-          anchor={ACCOUNT_SECTIONS.aiClients}
-          title="KI-Clients"
-          loading="KI-Clients werden geladen …"
-        >
-          <LocksHere locks={props.locks} ids={["ai_access"]} />
-          <AiSection api={api} token={token} />
-        </AreaSection>
-      )}
-      <AreaSection
-        anchor={ACCOUNT_SECTIONS.measured}
-        title="Was wird gemessen?"
-        loading="Wird geladen …"
-      >
-        <MeasuredView />
-      </AreaSection>
-      {overview !== undefined && (
-        <AreaSection
-          anchor={ACCOUNT_SECTIONS.functions}
-          title="Was die App kann"
-          loading="Funktionen werden geladen …"
-        >
-          {overview}
-        </AreaSection>
-      )}
-      <DataSection api={api} token={token} />
     </>
   );
+}
+
+/**
+ * The content of one section of "Konto" (US-QS-17), without its heading: the view of the section names it. Every part
+ * comes from its own module and is a lazy chunk (QG-U6). The section before the last says what is recorded about the
+ * use (US-QS-05); the last one is the download of all own data and deleting the account (US-ACC-04).
+ */
+export function SectionContent({ section, ...p }: SectionProps & { section: AccountSection }) {
+  switch (section) {
+    case "profile":
+      return (
+        <AccountView
+          account={p.account}
+          onSignOut={p.onSignOut}
+          onEverywhereSignOut={p.onEverywhereSignOut}
+          {...(p.error ? { error: p.error } : {})}
+        />
+      );
+    case "settings":
+      return <SettingsContent api={p.api} token={p.token} />;
+    case "achievements":
+      return (
+        <div className="flex min-w-0 flex-col gap-6">
+          <LocksHere locks={p.locks} ids={["care_rhythm", "anniversaries", "year_in_review"]} />
+          <CareRhythmSection api={p.api} token={p.token} />
+          <AchievementsOverviewSection api={p.api} token={p.token} />
+          <YearInReviewSection api={p.api} token={p.token} />
+        </div>
+      );
+    case "reminders":
+      return <RemindersSection api={p.api} token={p.token} />;
+    case "aiClients":
+      return (
+        <>
+          <LocksHere locks={p.locks} ids={["ai_access"]} />
+          <AiSection api={p.api} token={p.token} />
+        </>
+      );
+    case "measured":
+      return <MeasuredView />;
+    case "functions":
+      return <>{p.overview}</>;
+    case "data":
+      return <PrivacySection api={p.api} token={p.token} />;
+  }
 }

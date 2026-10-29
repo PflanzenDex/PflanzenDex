@@ -85,20 +85,31 @@ export const todayAddress = (section: TodaySection) => `${PATHS.today}#${TODAY_S
 
 /** The former address of the destination "Einstellungen": it opens the section "Einstellungen" of "Konto" (US-QS-14). */
 export const LEGACY_SETTINGS_PATH = "/settings";
-/** The sections of "Konto" by the anchor in the address, e.g. `/account#einstellungen` (US-QS-14). */
+/** The sections of "Konto" by their path segment, e.g. `/account/settings` (US-QS-17, replaces the anchors of US-QS-14). */
 export const ACCOUNT_SECTIONS = {
-  profile: "profil",
-  settings: "einstellungen",
-  achievements: "erfolge",
-  reminders: "erinnerungen",
-  aiClients: "ki-clients",
-  measured: "gemessen",
-  functions: "funktionen",
-  data: "daten",
+  profile: "profile",
+  settings: "settings",
+  achievements: "achievements",
+  reminders: "reminders",
+  aiClients: "ai-clients",
+  measured: "measured",
+  functions: "functions",
+  data: "data",
 } as const;
 export type AccountSection = keyof typeof ACCOUNT_SECTIONS;
 export const accountAddress = (section: AccountSection) =>
-  `${PATHS.account}#${ACCOUNT_SECTIONS[section]}`;
+  `${PATHS.account}/${ACCOUNT_SECTIONS[section]}`;
+/** The former anchors of the stacked "Konto" (`/account#erfolge`): old links and bookmarks lead to the matching section (US-QS-17). */
+export const LEGACY_ACCOUNT_ANCHORS: Readonly<Record<string, AccountSection>> = {
+  profil: "profile",
+  einstellungen: "settings",
+  erfolge: "achievements",
+  erinnerungen: "reminders",
+  "ki-clients": "aiClients",
+  gemessen: "measured",
+  funktionen: "functions",
+  daten: "data",
+};
 
 /** The former addresses of "Pflegephasen", "Pflegeprofil" and "Standorte und Licht" (US-QS-14). */
 export const LEGACY_CARE_PHASES_PATH = "/care-phases";
@@ -180,5 +191,6 @@ export function viewTitle(pathname: string): string {
   if (pathname === MATCH_PATH) return pageTitle("Passende Angebote");
   if (pathname.startsWith(`${PATHS.friends}/`)) return pageTitle("Sammlung eines Freundes");
   if (pathname.startsWith("/unlock/")) return pageTitle("Funktion freischalten");
+  if (pathname.startsWith(`${PATHS.account}/`)) return pageTitle("Konto");
   return pathname.startsWith(`${PROFILE_BASE}/`) ? pageTitle("Artenprofil") : pageTitle();
 }

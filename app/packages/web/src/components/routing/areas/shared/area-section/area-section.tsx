@@ -11,6 +11,8 @@ export function AreaSection(props: {
   anchor: string;
   title: string;
   loading: string;
+  /** The section is a view of its own (US-QS-17): its name is the one main heading (level 1). */
+  main?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -19,7 +21,13 @@ export function AreaSection(props: {
       aria-labelledby={headingId(props.anchor)}
       className="flex min-w-0 scroll-mt-4 flex-col gap-3"
     >
-      <SectionLabel id={headingId(props.anchor)}>{props.title}</SectionLabel>
+      {props.main === true ? (
+        <h1 id={headingId(props.anchor)} className="text-2xl font-semibold">
+          {props.title}
+        </h1>
+      ) : (
+        <SectionLabel id={headingId(props.anchor)}>{props.title}</SectionLabel>
+      )}
       <Suspense
         fallback={
           <SkeletonGroup label={props.loading} className="flex min-w-0 flex-col gap-3">

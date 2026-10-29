@@ -21,3 +21,4 @@ export type { State } from "./session";
 export const InvitationPage = lazyPage(() =>
   import("./invitation-page/invitation-page").then((m) => ({ default: m.InvitationPage })),
 );
+export { loadProfile } from "./api/account-api";

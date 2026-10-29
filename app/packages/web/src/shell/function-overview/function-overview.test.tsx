@@ -65,6 +65,19 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe("US-QS-17 the version in Was die App kann", () => {
+  it("US-QS-17 · P-08 shows the app version, and unbekannt when it is not known", async () => {
+    vi.stubEnv("VITE_APP_VERSION", "1.2.3");
+    show(few);
+    expect(await screen.findByText("Version 1.2.3")).toBeTruthy();
+    cleanup();
+    vi.stubEnv("VITE_APP_VERSION", "");
+    show(few);
+    expect(await screen.findByText("Version unbekannt")).toBeTruthy();
+    vi.unstubAllEnvs();
+  });
+});
+
 describe("US-ONB-06 function overview", () => {
   it("US-ONB-06 lists every function in registry order with state, purpose and a link", async () => {
     show(few);

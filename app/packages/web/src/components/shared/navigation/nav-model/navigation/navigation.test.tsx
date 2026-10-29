@@ -239,8 +239,8 @@ describe("US-QS-14 Konto and Einstellungen are one destination", () => {
     expect(labels).toContain("Konto");
     expect(labels).not.toContain("Einstellungen");
     expect(Object.values(PATHS)).not.toContain("/settings");
-    expect(accountAddress("settings")).toBe("/account#einstellungen");
-    expect(accountAddress("profile")).toBe("/account#profil");
+    expect(accountAddress("settings")).toBe("/account/settings");
+    expect(accountAddress("profile")).toBe("/account/profile");
     expect(viewTitle("/account")).toBe("Konto – PflanzenDéx");
   });
 });

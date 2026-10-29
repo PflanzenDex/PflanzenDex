@@ -197,8 +197,8 @@ Acceptance criteria:
 - Given a link or bookmark to the former addresses of "Behandlung" or "Hinweise", when I open it, then I land on "Heute" at the matching section, the section name is announced politely and the focus is on its heading; the former addresses are no entries of the navigation.
 - Given one of the sections is empty, fails to load or is loading, then it shows that state with its next action (P-09, P-10) while the other sections stay usable.
 - Given "Heute" is opened, then the sections load as their own parts, so the initial JavaScript does not carry them (QG-U6).
-- Given the main destinations, then "Konto" and "Einstellungen" are one destination "Konto" with one main heading and the sections "Profil" (name, e-mail, ways to sign out; US-ACC-01) and "Einstellungen" (display name, time zone, notifications, privacy; US-ACC-02) in this order, each named by a heading below the main heading; "Einstellungen" is no entry of the navigation.
-- Given a wide screen (1280 px), then a list of the sections beside them links to each section and marks the current one by more than colour; on a small screen the sections are stacked without the list.
+- Given the main destinations, then "Konto" and "Einstellungen" are one destination "Konto" with one main heading and the sections "Profil" (name, e-mail, ways to sign out; US-ACC-01) and "Einstellungen" (display name, time zone, notifications, privacy; US-ACC-02) in this order, each named by a heading below the main heading; "Einstellungen" is no entry of the navigation. Superseded by US-QS-17 (2026-10-29): "Konto" is an index of its sections, each a view of its own.
+- Given a wide screen (1280 px), then a list of the sections beside them links to each section and marks the current one by more than colour; on a small screen the sections are stacked without the list. Superseded by US-QS-17 (2026-10-29): the index stands beside the open section at 1280 px and nothing is stacked.
 - Given a link or bookmark to the former address of "Einstellungen", when I open it, then I land on "Konto" at the section "Einstellungen", the section name is announced politely and the focus is on its heading.
 - Given the section "Einstellungen" fails to load or is loading, then it shows that state with its next action (P-09, P-10) while the section "Profil" stays usable; saving settings works as before (US-ACC-02).
 - Given "Konto" is opened, then the settings load as their own part, so the initial JavaScript does not carry them (QG-U6). Invitations to friends stay in "Freunde" (US-SOZ); "Konto" has no section for them.
@@ -221,6 +221,20 @@ Acceptance criteria:
 - Given the component catalog (Storybook), then page stories show the real screens "Heute", "Sammlung" (each mode), "Entdecken" (each mode), "Freunde" and "Konto" with fixture data and no network, in light and dark and at 360 px and 1280 px; they pass the conformance run (QG-U5) and are not part of the production bundle.
 
 Decision and tokens: ADR [0011](../../adr/0011-redesign-direction-greenhouse.md), E-24.
+
+### US-QS-17 · "Konto" is an index of its sections · 🟨 new
+
+As a **plant keeper** I want "Konto" to be a short list of its parts instead of eight stacked sections, so that I find a setting without scrolling a long page on my phone (owner decision 2026-10-29, after a UI review that measured 14 phone screens).
+
+Acceptance criteria:
+
+- Given I open "Konto" on a phone (360x640 px, starting value, assumption), then it fits without page scroll: a profile row (name, e-mail), the sections as rows, each with its name and its current value where one exists (Einstellungen: display name and time zone; Erinnerungen: on or off; Erfolge: hidden in calm mode or the count; KI-Clients: the number of clients; the others without a value), and a row "Abmelden…"; an unknown value reads "unbekannt" (P-08).
+- When I choose a row, then the section opens as a view of its own at `/account/<section>` (`profile`, `settings`, `achievements`, `reminders`, `ai-clients`, `measured`, `functions`, `data`) with one main heading, a way back "Konto" and the focus on its heading; Back returns to the index with the focus on the row I came from.
+- Given a link or bookmark to a former address `/account#<anchor>`, when I open it, then the matching section opens and the address is replaced (back does not return to it).
+- Given "Abmelden…", when I choose it, then a confirmation opens (sheet on a phone, dialog on a large screen) with "Abmelden", "Auf allen Geräten abmelden" and a way to cancel.
+- Given a wide screen (1280 px), then the index stands beside the open section and marks the current one by more than colour.
+- Given a section is loading, empty or failing, then it shows that state with its next action (P-09, P-10); each section loads as its own part (QG-U6).
+- Given any view, then no footer line shows the version; the section "Was die App kann" shows the app version ("unbekannt" when it is not known, P-08).
 
 ## Non-functional requirements
 
