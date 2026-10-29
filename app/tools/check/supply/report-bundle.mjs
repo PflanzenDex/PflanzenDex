@@ -11,8 +11,8 @@ import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
 import { initialChunks, readBudget, formatKb } from "./check-bundle-budget.mjs";
 
-// Working target in gzip bytes (assumption, starting value; report only, never fails).
-export const WORKING_TARGET_BYTES = 140000;
+// Goal in gzip bytes (owner decision, ADR 0018): where the initial JS should stay; report only, never fails.
+export const GOAL_BYTES = 125000;
 const MAX_PACKAGE_ROWS = 25;
 const UNATTRIBUTED = "(unattributed)";
 const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -135,16 +135,16 @@ const row = (name, bytes, total) =>
 
 export function renderMarkdown(report, { limit = readBudget() } = {}) {
   const { total, chunks, packages, hasMaps } = report;
-  const target = WORKING_TARGET_BYTES;
-  const vsTarget =
-    total > target
-      ? `${formatKb(total - target)} over the working target`
-      : `${formatKb(target - total)} under the working target (room for new code)`;
+  const goal = GOAL_BYTES;
+  const vsGoal =
+    total > goal
+      ? `${formatKb(total - goal)} over the goal (move code out of the first load, DS-08)`
+      : `${formatKb(goal - total)} under the goal`;
   const out = [
     "### Initial JS bundle (QG-U6, DS-08)",
     "",
-    `Total **${formatKb(total)}** gzip. Hard limit (blocking gate, only ever lowered): ${formatKb(limit)}, ${formatKb(limit - total)} left. ` +
-      `Working target: ${formatKb(target)} (assumption, starting value; report only, never fails): ${vsTarget}.`,
+    `Total **${formatKb(total)}** gzip. Goal: ${formatKb(goal)} (report only, never fails): ${vsGoal}. ` +
+      `Hard limit (blocking gate, ADR 0018): ${formatKb(limit)}, ${formatKb(limit - total)} left.`,
     "",
     "#### Per chunk",
     "",
