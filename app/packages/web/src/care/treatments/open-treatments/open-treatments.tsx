@@ -1,12 +1,12 @@
 import type { TreatmentListRow } from "@pflanzendex/core";
 import { useCallback, useRef, useState } from "react";
 import { EmptyState, type EmptyStateAction } from "@/components/shared/empty-state/empty-state";
-import { Sprout } from "lucide-react";
-import { Button } from "@/components/ui/button/button";
+import { Pager } from "@/components/shared/responsive/pager/pager";
 import { isOnline } from "@/platform/network";
 import { useAnnounce } from "@/platform/announcer/context";
 import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../../../kernel";
-import { ATTENTION_CLASSES, LIST_CLASSES, RefusalAlert, StatusNote } from "../../shared/notices";
+import { LIST_CLASSES, RefusalAlert, StatusNote } from "../../shared/notices";
+import { PAGE_SIZE, Row } from "./treatment-row/treatment-row";
 import { OpenTreatmentsSkeleton } from "./open-treatments.skeleton";
 import { completeTreatment, loadOpenTreatments } from "../../shared/api/treatments-api";
 import { OPEN_KEY, TREATMENTS } from "../../shared/api/query-keys";
@@ -74,51 +74,6 @@ function useCompletion(api: string, token: Token, onChanged: () => void) {
   return { runningId, doneIds, message, error, complete };
 }
 
-/** The status chip of an overdue or due-today row: the status text says it first, the tint only underlines it (never by colour alone). */
-const CHIP = new Set(["overdue", "today"]);
-
-function Row(props: {
-  row: TreatmentListRow;
-  running: boolean;
-  onDone: () => void;
-  /** Shown as a section of another page: the specimen name is one heading level lower (US-QS-14). */
-  host: boolean;
-}) {
-  const { row } = props;
-  const Name = props.host ? "h4" : "h3";
-  return (
-    <li className="flex min-w-0 items-center gap-3 rounded-card bg-card p-3 text-card-foreground shadow-elevation-1 [overflow-wrap:anywhere]">
-      <span
-        aria-hidden="true"
-        className="flex size-13 shrink-0 items-center justify-center rounded-tile bg-accent text-accent-foreground"
-      >
-        <Sprout className="size-6" />
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <Name className="text-[15px] font-semibold">{row.specimenName}</Name>
-        <p className="text-[12.5px] text-muted-foreground">Grund: {row.reason}</p>
-        <p className="text-[12.5px] text-muted-foreground">Mittel: {row.agent ?? "—"}</p>
-        <p className="text-[12.5px] text-muted-foreground">Fällig am: {dateText(row.dueAt)}</p>
-        <p
-          className={`w-fit rounded-control px-2.5 py-0.5 text-[12.5px] font-semibold ${CHIP.has(row.status.kind) ? ATTENTION_CLASSES : ""}`}
-        >
-          {row.status.text}
-        </p>
-      </div>
-      <Button
-        type="button"
-        size="lg"
-        className="shrink-0 rounded-full"
-        disabled={props.running}
-        aria-label={`${row.reason} bei ${row.specimenName} als erledigt abhaken`}
-        onClick={props.onDone}
-      >
-        Erledigt
-      </Button>
-    </li>
-  );
-}
-
 function OpenList(props: {
   all: readonly TreatmentListRow[];
   completion: ReturnType<typeof useCompletion>;
@@ -144,17 +99,35 @@ function OpenList(props: {
   return (
     <>
       {next && <p className="font-semibold">{next}</p>}
-      <ul className={LIST_CLASSES} aria-label="Offene Behandlungen">
-        {rows.map((row) => (
-          <Row
-            key={row.id}
-            row={row}
-            running={completion.runningId === row.id}
-            onDone={() => void completion.complete(row)}
-            host={props.host}
-          />
-        ))}
-      </ul>
+      {props.host ? (
+        <Pager
+          items={rows}
+          pageSize={PAGE_SIZE}
+          label="Offene Behandlungen"
+          getKey={(row) => row.id}
+          renderItem={(row) => (
+            <Row
+              row={row}
+              running={completion.runningId === row.id}
+              onDone={() => void completion.complete(row)}
+              host
+            />
+          )}
+        />
+      ) : (
+        <ul className={LIST_CLASSES} aria-label="Offene Behandlungen">
+          {rows.map((row) => (
+            <li key={row.id}>
+              <Row
+                row={row}
+                running={completion.runningId === row.id}
+                onDone={() => void completion.complete(row)}
+                host={false}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
     </>
   );
 }

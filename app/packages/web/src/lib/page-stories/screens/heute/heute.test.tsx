@@ -11,11 +11,11 @@ const { Phone, NothingDue } = composeStories(stories);
 describe("US-QS-14 · page story Heute", () => {
   afterEach(cleanup);
 
-  it("US-QS-14 · the story lists what is due, the treatments and the hints", async () => {
+  it("US-QS-18 · US-QS-14 the story shows the most urgent item, the summary and the tiles of the categories", async () => {
     await Phone.run();
     expect(await screen.findByText("3 Dinge stehen an.")).toBeTruthy();
     expect((await screen.findAllByText(/Läuse/)).length).toBeGreaterThan(0);
-    expect(await screen.findByRole("heading", { name: "Fehlt noch" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Fehlt noch/ })).toBeTruthy();
     expect(screen.queryByText(/wird geladen/)).toBeNull();
   });
 

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { HintsPage } from "./hints-page";
 
@@ -115,16 +116,24 @@ describe("US-BES-08 page of the hints about incomplete specimens", () => {
 describe("US-QS-14 · US-BES-08 the hints as a section of Heute (host)", () => {
   it("US-QS-14 has no title of its own, so the one h1 stays with the page, and shows the hints in warning cards", async () => {
     fakeServer(() => response(200, { hints: [noZone] }));
-    render(<HintsPage api="http://api" token={token} onOpen={noop} host />);
+    render(
+      <MemoryRouter>
+        <HintsPage api="http://api" token={token} onOpen={noop} host />
+      </MemoryRouter>,
+    );
     expect(await screen.findByText(noZone.text)).toBeTruthy();
     expect(screen.queryByRole("heading")).toBeNull();
-    expect(screen.getByText(noZone.text).closest("li")?.className).toContain("bg-warning");
+    expect(screen.getByText(noZone.text).closest("div")?.className).toContain("bg-warning");
   });
 
   it("US-QS-14 · US-BES-08 without hints the empty state is a level 3 heading with the way to the collection", async () => {
     fakeServer(() => response(200, { hints: [] }));
     const open = vi.fn();
-    render(<HintsPage api="http://api" token={token} onOpen={open} host />);
+    render(
+      <MemoryRouter>
+        <HintsPage api="http://api" token={token} onOpen={open} host />
+      </MemoryRouter>,
+    );
     expect(await screen.findByRole("heading", { level: 3, name: "Keine Hinweise" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zum Bestand" }));
     expect(open).toHaveBeenCalledWith("collection");
@@ -132,7 +141,11 @@ describe("US-QS-14 · US-BES-08 the hints as a section of Heute (host)", () => {
 
   it("US-QS-14 · P-10 a failed load keeps the error and the retry", async () => {
     fakeServer(() => response(500, serverError));
-    render(<HintsPage api="http://api" token={token} onOpen={noop} host />);
+    render(
+      <MemoryRouter>
+        <HintsPage api="http://api" token={token} onOpen={noop} host />
+      </MemoryRouter>,
+    );
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("Der Server antwortet nicht.");
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();

@@ -1,14 +1,11 @@
-import { useCallback } from "react";
+import { useCallback, type ReactNode } from "react";
 import type { LightLocation, SpecimenHint } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Button } from "@/components/ui/button/button";
+import { Pager } from "@/components/shared/responsive/pager/pager";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
 import { HintsPageSkeleton } from "./hints-page.skeleton";
 import {
-  Actions,
-  CARD,
   GRID,
-  NextAction,
   PageFrame,
   Plain,
   Quiet,
@@ -20,16 +17,10 @@ import { refusalText } from "../specimens/model/refusal";
 import { loadLocations } from "../../light";
 import { loadSpecimenHints } from "../insights/api/hints-api";
 import { setSpecimenLocation } from "../specimens/model/specimens-api";
-import { LocateControl } from "../markers/locate/locate-control/locate-control";
+import { HintCount, type useHintCount } from "../insights/api/hint-count/hint-count";
+import { HintCard, type HintTarget } from "./hint-card/hint-card";
 
-/** Where a hint is fixed: the app wires the target to a tab (the modules do not know each other). */
-export type HintTarget = "collection" | "light";
-
-/** Hints with a link to the place that fixes them; "location missing" is fixed right here (US-PHA-03). */
-const ACTION: Partial<Record<SpecimenHint["kind"], { target: HintTarget; label: string }>> = {
-  species_missing: { target: "collection", label: "Zum Bestand" },
-  location_without_zone: { target: "light", label: "Standorte verwalten" },
-};
+export type { HintTarget };
 
 interface Data {
   readonly hints: readonly SpecimenHint[];
@@ -43,13 +34,34 @@ interface Data {
  */
 const KEY = ["collection", "hints"] as const;
 
-export function HintsPage(props: {
+type Token = () => Promise<string | undefined>;
+
+/**
+ * With `count` the page renders nothing of its own and hands the number of hints to `count` (US-QS-18): the overview
+ * of "Heute" shows it on a tile and in its summary. It shares the request and the cached copy with the list.
+ */
+export function HintsPage(
+  props: HintsListProps & { count?: (hints: ReturnType<typeof useHintCount>) => ReactNode },
+) {
+  const { count, ...list } = props;
+  if (count)
+    return (
+      <HintCount api={props.api} token={props.token}>
+        {count}
+      </HintCount>
+    );
+  return <HintsList {...list} />;
+}
+
+type HintsListProps = {
   api: string;
-  token: () => Promise<string | undefined>;
+  token: Token;
   onOpen: (target: HintTarget) => void;
   /** Shown as a section of "Heute" (US-QS-14): no card frame and no title of its own, the area names the section. */
   host?: boolean;
-}) {
+};
+
+function HintsList(props: HintsListProps) {
   const { api, onOpen, token } = props;
   const host = props.host === true;
   const Frame = host ? Plain : PageFrame;
@@ -104,43 +116,8 @@ export function HintsPage(props: {
   );
 }
 
-/** A hint of the section "Fehlt noch": the warning tokens say it needs a step, the text says which (US-QS-14). */
-const HOST_CARD =
-  "grid min-w-0 content-start gap-1 break-words rounded-card bg-warning p-3 text-warning-foreground shadow-elevation-1";
-
-function HintCard(props: {
-  host: boolean;
-  hint: SpecimenHint;
-  locations: readonly LightLocation[];
-  busy: boolean;
-  onOpen: (t: HintTarget) => void;
-  onLocate: (specimenId: string, locationId: string, success: string) => void;
-}) {
-  const { hint: h } = props;
-  const action = ACTION[h.kind];
-  return (
-    <li className={props.host ? HOST_CARD : CARD}>
-      <p>{h.text}</p>
-      <NextAction>{h.nextAction}</NextAction>
-      {h.kind === "location_missing" && (
-        <LocateControl
-          specimenName={h.specimenName}
-          locations={props.locations}
-          busy={props.busy}
-          onLocate={(locationId, success) => props.onLocate(h.specimenId, locationId, success)}
-          onCreateLocation={() => props.onOpen("light")}
-        />
-      )}
-      {action && (
-        <Actions>
-          <Button type="button" variant="outline" onClick={() => props.onOpen(action.target)}>
-            {action.label}
-          </Button>
-        </Actions>
-      )}
-    </li>
-  );
-}
+/** Hints per page of the layer (starting value, assumption; US-QS-18). */
+const PAGE_SIZE = 3;
 
 function HintList(props: {
   host: boolean;
@@ -149,6 +126,16 @@ function HintList(props: {
   onOpen: (t: HintTarget) => void;
   onLocate: (specimenId: string, locationId: string, success: string) => void;
 }) {
+  const card = (h: SpecimenHint) => (
+    <HintCard
+      hint={h}
+      host={props.host}
+      locations={props.data.locations}
+      busy={props.busy}
+      onOpen={props.onOpen}
+      onLocate={props.onLocate}
+    />
+  );
   return (
     <section aria-labelledby={props.host ? undefined : "hints-title"}>
       {!props.host && (
@@ -169,19 +156,21 @@ function HintList(props: {
             Diese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung
             auf die Lichtzonen.
           </Quiet>
-          <ul className={GRID}>
-            {props.data.hints.map((h) => (
-              <HintCard
-                key={`${h.specimenId}-${h.kind}`}
-                hint={h}
-                host={props.host}
-                locations={props.data.locations}
-                busy={props.busy}
-                onOpen={props.onOpen}
-                onLocate={props.onLocate}
-              />
-            ))}
-          </ul>
+          {props.host ? (
+            <Pager
+              items={props.data.hints}
+              pageSize={PAGE_SIZE}
+              label="Fehlende Angaben"
+              getKey={(h) => `${h.specimenId}-${h.kind}`}
+              renderItem={(h) => card(h)}
+            />
+          ) : (
+            <ul className={GRID}>
+              {props.data.hints.map((h) => (
+                <li key={`${h.specimenId}-${h.kind}`}>{card(h)}</li>
+              ))}
+            </ul>
+          )}
         </>
       )}
     </section>
