@@ -227,6 +227,15 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+  /* Touch (US-QS-15): no double-tap zoom delay on controls, and a calm tap flash from the primary token. */
+  button,
+  a,
+  [role="button"],
+  summary,
+  label {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: color-mix(in oklab, var(--color-primary) 15%, transparent);
+  }
 }
 
 /*

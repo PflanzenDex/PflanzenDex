@@ -66,6 +66,8 @@ function fakeServer(setup: Setup = {}) {
         "/treatments": () =>
           post ? response(201, { treatments: [{}] }) : response(200, { treatments: open }),
         "/watering/due": () => response(200, { due: [] }),
+        "/specimens/count": () => response(200, { count: 1, archived: 0 }),
+        "/onboarding/hints": () => response(200, { hint: null, guideEnded: false }),
         "/specimens": () => response(200, { specimens: setup.specimens ?? SPECIMENS }),
         "/specimens/hints": hints,
         "/locations": () => response(200, { locations: LOCATIONS }),
@@ -141,11 +143,11 @@ describe("US-QS-14 Heute with its sections", () => {
     ).toBeTruthy();
   });
 
-  it("US-QS-14 · US-BEH-02 the sections show a skeleton with one loading status each before the data is there", () => {
+  it("US-QS-14 · US-BEH-02 the sections show a skeleton with one loading status each before the data is there", async () => {
     fakeServer();
     show();
-    expect(screen.getAllByRole("status").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByRole("heading", { level: 2, name: "Behandlungen" })).toBeTruthy();
+    expect(screen.getAllByRole("status").length).toBeGreaterThanOrEqual(1);
+    expect(await screen.findByRole("heading", { level: 2, name: "Behandlungen" })).toBeTruthy();
     expect(screen.getByRole("heading", { level: 2, name: "Fehlt noch" })).toBeTruthy();
   });
 
@@ -247,7 +249,7 @@ describe("US-QS-14 the address points at a section", () => {
   ])("US-QS-14 /today%s focuses the heading %s", async (hash, name) => {
     fakeServer();
     show(`/today${hash}`);
-    const heading = screen.getByRole("heading", { level: 2, name });
+    const heading = await screen.findByRole("heading", { level: 2, name });
     await waitFor(() => expect(document.activeElement).toBe(heading));
   });
 

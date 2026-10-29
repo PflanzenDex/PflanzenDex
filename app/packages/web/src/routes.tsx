@@ -6,11 +6,10 @@ import {
 } from "@/components/routing/areas/collection-area/hand-over-routes/hand-over-routes";
 import { useSession, type State } from "./account";
 import { AchievementNewsBanner } from "@/components/routing/areas/shared/lazy-news-banner/lazy-news-banner";
-import type { ComponentProps } from "react";
 import {
   FunctionOverview,
   LockedRows,
-  StartPage,
+  TodayIntro,
   UnlockPage,
   isShownLocked,
   useUnlocks,
@@ -27,9 +26,6 @@ import {
   type LinkTarget,
   type View,
 } from "./components/shared/navigation/nav-model/navigation/navigation";
-function Start(props: Omit<ComponentProps<typeof StartPage>, "lookup">) {
-  return <StartPage lookup={SPECIES_LOOKUP} {...props} />;
-}
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 /** A function that is not open yet shows its lock page at its own address, never a blank page (US-ONB-05, FR-ONB-02). */
@@ -43,6 +39,28 @@ function useLockPages(api: string, token: Token) {
     locked.has(id) ? <UnlockPage api={api} token={token} id={id} /> : undefined;
 }
 
+/** "Heute" with the introduction around its sections (US-QS-16): the app wires the shell into the area. */
+function TodayRoute(props: { api: string; token: Token; onOpen: (v: LinkTarget) => void }) {
+  return (
+    <TodayArea
+      api={props.api}
+      token={props.token}
+      onOpen={props.onOpen}
+      intro={(sections, fallback) => (
+        <TodayIntro
+          lookup={SPECIES_LOOKUP}
+          api={props.api}
+          token={props.token}
+          onOpen={props.onOpen}
+          fallback={fallback}
+        >
+          {sections}
+        </TodayIntro>
+      )}
+    />
+  );
+}
+
 /** What the account may open: the role-bound views and, while "social" is on, "Freunde" (US-DEV-06). */
 const rolesOf = (account: SignedIn): Partial<Record<View, boolean>> => ({
   review: account.reviewer === true,
@@ -50,7 +68,7 @@ const rolesOf = (account: SignedIn): Partial<Record<View, boolean>> => ({
   friends: account.features?.social !== false,
 });
 
-/** "Freunde" and the exchange have routes only while "social" is on for the account (US-DEV-06); otherwise the address leads to the start page without a hint. */
+/** "Freunde" and the exchange have routes only while "social" is on for the account (US-DEV-06); otherwise the address leads to "Heute" without a hint. */
 export function AppRoutes(props: {
   api: string;
   session: ReturnType<typeof useSession>;
@@ -84,15 +102,13 @@ export function AppRoutes(props: {
             />
           }
         />
-        <Route
-          path={PATHS.start}
-          element={<Start api={api} token={s.token} onOpen={props.onOpen} />}
-        />
+        {/* "Heute" is the home screen: the root address, old bookmarks and the brand lead there (US-QS-16). */}
+        <Route path="/" element={<Navigate to={PATHS.today} replace />} />
         <Route path="/unlock/:id" element={<UnlockPage api={api} token={s.token} />} />
         {social && socialRoutes(api, s.token, lockPageOf)}
         <Route
           path={PATHS.today}
-          element={<TodayArea api={api} token={s.token} onOpen={props.onOpen} />}
+          element={<TodayRoute api={api} token={s.token} onOpen={props.onOpen} />}
         />
         {legacyRoutes()}
         {simpleRoutes(
@@ -104,7 +120,7 @@ export function AppRoutes(props: {
             : {},
         )}
         {handOverRoutes(api, s.token, h, props.onOpenProfile)}
-        <Route path="*" element={<Navigate to={PATHS.start} replace />} />
+        <Route path="*" element={<Navigate to={PATHS.today} replace />} />
       </Routes>
     </RouteBoundary>
   );

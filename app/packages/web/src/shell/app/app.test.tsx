@@ -42,11 +42,10 @@ const renderApp = (path = "/") =>
 /** The main navigation of the shared shell: the header row lists every destination as a link (DS-25). */
 const header = () => within(screen.getByRole("navigation", { name: "Hauptnavigation" }));
 const tab = (name: string) => header().getByRole("link", { name });
-/** The start page is no destination (US-QS-14): the brand link leads there and no entry is marked active. */
-const expectStartPage = () => {
-  expect(header().getByRole("link", { name: "PflanzenDéx, zur Startseite" })).toBeTruthy();
-  for (const link of header().getAllByRole("link"))
-    expect(link.getAttribute("aria-current")).toBeNull();
+/** "Heute" is the home screen (US-QS-16): the brand link leads there and its entry is the current one. */
+const expectHeute = () => {
+  expect(header().getByRole("link", { name: "PflanzenDéx, zu Heute" })).toBeTruthy();
+  expect(tab("Heute").getAttribute("aria-current")).toBe("page");
 };
 const queryTab = (name: string) => header().queryByRole("link", { name });
 const findTab = async (name: string) => {
@@ -156,12 +155,13 @@ const ANSWERS: Record<string, unknown> = {
   "/specimens/difficulty": { rows: [] },
 };
 
-function fakeServer(accountStatus = 200) {
+function fakeServer(accountStatus = 200, plants = 0) {
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url) => {
       const path = new URL(String(url)).pathname;
       if (path === "/account") return response(accountStatus, account);
+      if (path === "/specimens/count") return response(200, { count: plants, archived: 0 });
       if (path in ANSWERS) return response(200, ANSWERS[path]);
       if (path in WISHLIST) return response(200, WISHLIST[path]);
       return response(404);
@@ -187,6 +187,7 @@ beforeAll(async () => {
     import("../../today/today-page/today-page"),
     import("../../care/treatments/treatments-page/treatments-page"),
     import("../../collection/hints-page/hints-page"),
+    import("../today-intro/today-intro"),
   ]);
 }, 30_000);
 
@@ -281,20 +282,17 @@ describe("US-ACC-01 App", () => {
     );
   });
 
-  it("US-ONB-01 signed in: starts on the start page with the first plant for a new account", async () => {
+  it("US-QS-16 · US-ONB-01 signed in: starts on Heute with the first plant for a new account", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
     expect(await screen.findByRole("heading", { name: "Deine erste Pflanze" })).toBeTruthy();
-    expectStartPage();
+    expectHeute();
     await userEvent.click(screen.getByRole("button", { name: "Überspringen" }));
-    expect(await screen.findByRole("heading", { name: "Start" })).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Art im Katalog wählen" }));
-    expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
-    expect(tab("Entdecken").getAttribute("aria-current")).toBe("page");
-    expect(screen.getByRole("button", { name: "Katalog" }).getAttribute("aria-pressed")).toBe(
-      "true",
-    );
+    expect(await screen.findByRole("heading", { name: "Heute" })).toBeTruthy();
+    await userEvent.click(await screen.findByRole("button", { name: "Zum Bestand" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
+    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
   });
 
   it("signed in: the navigation switches between all views", async () => {
@@ -391,7 +389,7 @@ describe("US-ACC-01 App", () => {
   });
 
   it("US-QS-14 · US-BES-08 the old address /hints lands on the section Fehlt noch of Heute; its action leads to the view that fixes it", async () => {
-    fakeServer();
+    fakeServer(200, 1);
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/hints");
     expect(await screen.findByText(SPECIMEN_HINTS[0]?.text ?? "")).toBeTruthy();
@@ -532,12 +530,12 @@ describe("US-ACC-01 App", () => {
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
   });
 
-  it("US-QS-07 · an unknown address lands on the start page", async () => {
+  it("US-QS-07 · an unknown address lands on Heute", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/gibt-es-nicht");
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
-    await waitFor(() => expectStartPage());
+    await waitFor(() => expectHeute());
   });
 
   it("US-QS-07 · the address shows the page and a species profile has its own address", async () => {
@@ -553,20 +551,20 @@ describe("US-ACC-01 App", () => {
     );
   });
 
-  it("US-BES-10 · without the reviewer role /review lands on the start page with a German hint", async () => {
+  it("US-BES-10 · without the reviewer role /review lands on Heute with a German hint", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/review");
     expect((await screen.findByRole("alert")).textContent).toContain("Prüfliste");
-    expectStartPage();
+    expectHeute();
   });
 
-  it("US-ACC-05 · without the operator role /operator lands on the start page with a German hint", async () => {
+  it("US-ACC-05 · without the operator role /operator lands on Heute with a German hint", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/operator");
     expect((await screen.findByRole("alert")).textContent).toContain("Betreiber");
-    expectStartPage();
+    expectHeute();
   });
 });
 
@@ -591,8 +589,8 @@ describe("US-QS-07 browser history", () => {
     expect((await findTab("Sammlung")).getAttribute("aria-current")).toBe("page");
     await act(async () => {
       window.history.back();
-      await waitFor(() => expect(window.location.pathname).toBe("/"));
+      await waitFor(() => expect(window.location.pathname).toBe("/today"));
     });
-    await waitFor(() => expectStartPage());
+    await waitFor(() => expectHeute());
   });
 });

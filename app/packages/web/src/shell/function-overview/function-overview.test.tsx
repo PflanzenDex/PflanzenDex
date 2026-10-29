@@ -207,7 +207,7 @@ describe("US-ONB-06 registry test (FR-ONB-02, P-06)", () => {
       expect(FUNCTION_NAMES[id], id).toBeTruthy();
       expect(FUNCTION_PURPOSES[id], id).toBeTruthy();
       expect(FUNCTION_EMPTY[id], id).toBeTruthy();
-      expect(functionAddress(id), id).not.toBe(PATHS.start);
+      if (id !== "today") expect(functionAddress(id), id).not.toBe(PATHS.today);
     }
     expect(Object.keys(FUNCTION_PURPOSES).sort()).toEqual(allIds.slice().sort());
   });

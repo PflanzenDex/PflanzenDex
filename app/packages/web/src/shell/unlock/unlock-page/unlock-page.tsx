@@ -55,7 +55,7 @@ function Unavailable(props: { name: string; status: "pending" | "error" | "unkno
         Diese Funktion gibt es hier nicht
       </h1>
       <p>Zurück zum Start findest du alles, was die App für dich bereithält.</p>
-      <Link to={PATHS.start} className={LINK}>
+      <Link to={PATHS.today} className={LINK}>
         Zum Start
       </Link>
     </section>

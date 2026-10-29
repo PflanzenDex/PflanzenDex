@@ -3,6 +3,7 @@ import { Leaf } from "lucide-react";
 import { Link, NavLink } from "react-router";
 import { cn } from "@/lib/utils";
 import {
+  BRAND_HREF,
   BRAND_LINK_LABEL,
   DISPLAY_NAME,
   stackedItem,
@@ -32,7 +33,7 @@ function NavRail({ items, className }: { items: NavItem[]; className?: string })
       )}
     >
       <Link
-        to="/"
+        to={BRAND_HREF}
         aria-label={BRAND_LINK_LABEL}
         className="mx-auto mb-2 flex size-11 shrink-0 items-center justify-center rounded-control bg-primary text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
@@ -76,7 +77,7 @@ function NavSidebar({ items, className }: { items: NavItem[]; className?: string
       )}
     >
       <Link
-        to="/"
+        to={BRAND_HREF}
         aria-label={BRAND_LINK_LABEL}
         className="mb-3 flex min-h-[44px] shrink-0 items-center gap-3 rounded-control px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >

@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { AreaSection as Section } from "@/components/routing/areas/shared/area-section/area-section";
 import { useSectionAnchor } from "@/components/routing/areas/shared/area-section/use-section-anchor";
@@ -42,9 +42,13 @@ export function TodayArea(props: {
   api: string;
   token: Token;
   onOpen: (view: LinkTarget) => void;
+  /**
+   * The introduction around the sections (US-QS-16): the app wires it in, because the area must not import the shell
+   * (the shell imports the routes). Without it the sections show alone.
+   */
+  intro?: (sections: ReactNode, fallback: ReactNode) => ReactNode;
 }) {
   const navigate = useNavigate();
-  useSectionAnchor(NAMES);
   const open = (d: TodayDestination) => {
     // Same page: the state keeps the focus where useSectionAnchor puts it (RouteFocus leaves it alone).
     if (d === "treatments" || d === "hints")
@@ -54,6 +58,29 @@ export function TodayArea(props: {
   };
   return (
     <div className="flex min-w-0 flex-col gap-6">
+      <Suspense fallback={<TodaySkeleton />}>
+        {props.intro ? (
+          props.intro(<Tasks {...props} open={open} />, <TodaySkeleton />)
+        ) : (
+          <Tasks {...props} open={open} />
+        )}
+      </Suspense>
+    </div>
+  );
+}
+
+/** The day's tasks: the sections one below the other. */
+function Tasks(props: {
+  api: string;
+  token: Token;
+  onOpen: (view: LinkTarget) => void;
+  open: (d: TodayDestination) => void;
+}) {
+  const open = props.open;
+  // Here and not above: the sections exist only once the introduction has decided to show them.
+  useSectionAnchor(NAMES);
+  return (
+    <>
       <Suspense fallback={<TodaySkeleton />}>
         <TodayPage api={props.api} token={props.token} onOpen={open} />
       </Suspense>
@@ -75,7 +102,7 @@ export function TodayArea(props: {
       <Section anchor={TODAY_SECTIONS.hints} title="Fehlt noch" loading="Hinweise werden geladen …">
         <HintsPage api={props.api} token={props.token} onOpen={props.onOpen} host />
       </Section>
-    </div>
+    </>
   );
 }
 

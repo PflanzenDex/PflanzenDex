@@ -22,8 +22,8 @@ test.describe("US-ACC-01 sign-in", () => {
     await expect(page.getByText(account.email)).toBeVisible();
     await axeReport(page, info, "account");
     await page.reload();
-    // After reloading the app is back at the start view, without signing in again at the sign-in service.
-    await expect(page.getByRole("link", { name: "PflanzenDéx, zur Startseite" })).toBeVisible();
+    // After reloading the app is back on Heute, without signing in again at the sign-in service.
+    await expect(page.getByRole("link", { name: "PflanzenDéx, zu Heute" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Anmelden" })).toHaveCount(0);
   });
 

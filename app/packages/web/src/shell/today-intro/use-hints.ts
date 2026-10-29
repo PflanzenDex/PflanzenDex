@@ -11,7 +11,7 @@ const STAGED = new Set<string>(
 );
 
 /**
- * The occasions of the start page (US-ONB-07): the first plant exists, a staged function is open. The server decides
+ * The occasions of Heute (US-ONB-07): the first plant exists, a staged function is open. The server decides
  * whether one is due.
  */
 const applicableOf = (counts: OnboardingCounts, unlocked: boolean): string[] => [
@@ -20,7 +20,7 @@ const applicableOf = (counts: OnboardingCounts, unlocked: boolean): string[] => 
 ];
 
 /**
- * The hint state and the end of the guide of the account (DM-ONB-03), read once per start page. `null` while loading;
+ * The hint state and the end of the guide of the account (DM-ONB-03), read once per visit of Heute. `null` while loading;
  * a failed request fails open: no hint, and the guide counts as not ended, so nothing is held back (P-10).
  */
 export function useHints(api: string, token: Token, counts: OnboardingCounts) {
