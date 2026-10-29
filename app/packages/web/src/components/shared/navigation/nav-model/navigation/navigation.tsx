@@ -73,14 +73,9 @@ export const SPECIES_MODE_ADDRESS = `${PATHS.collection}?view=species`;
 /** The former addresses of the destinations "Behandlung" and "Hinweise": they open the sections of "Heute" (US-QS-14). */
 export const LEGACY_TREATMENTS_PATH = "/treatments";
 export const LEGACY_HINTS_PATH = "/hints";
-/** The sections of "Heute" below "Jetzt dran" by the anchor in the address, e.g. `/today#behandlungen` (US-QS-14). */
-export const TODAY_SECTIONS = {
-  treatments: "behandlungen",
-  watering: "giessen",
-  hints: "fehlt-noch",
-} as const;
-export type TodaySection = keyof typeof TODAY_SECTIONS;
-export const todayAddress = (section: TodaySection) => `${PATHS.today}#${TODAY_SECTIONS[section]}`;
+/** The address that opens the layer of a topic of "Heute", e.g. `/today?sheet=treatments` (US-QS-18). */
+export type TodaySection = "treatments" | "watering" | "hints";
+export const todayAddress = (section: TodaySection) => `${PATHS.today}?sheet=${section}`;
 
 /** The former address of the destination "Einstellungen": it opens the section "Einstellungen" of "Konto" (US-QS-14). */
 export const LEGACY_SETTINGS_PATH = "/settings";

@@ -3,7 +3,7 @@ import { isNewAccount, type OnboardingCounts } from "@pflanzendex/core";
 import { loadSpecimenCount } from "../../collection";
 import { useFeature, useRequest } from "../../kernel";
 import { FriendsBanner } from "../../social";
-import { LockedRows } from "../unlock";
+import { CollapsedLockedRows } from "../unlock/locked-rows/collapsed-rows/collapsed-rows";
 import { HintNote } from "./hint";
 import { FirstPlantGuide } from "./first-plant-guide/first-plant-guide";
 import type { SpeciesLookup } from "../onboarding-wizard/species-step/species-step";
@@ -59,7 +59,7 @@ function Content(props: {
         </Suspense>
       )}
       {props.children}
-      <LockedRows />
+      <CollapsedLockedRows />
     </>
   );
 }
