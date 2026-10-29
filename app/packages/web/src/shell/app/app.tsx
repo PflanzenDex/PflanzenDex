@@ -28,8 +28,6 @@ import { UnlocksProvider, isShownLocked, lockMark, useUnlocks } from "../unlock"
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
 
-const version = (import.meta.env as Record<string, string | undefined>)["VITE_APP_VERSION"];
-
 /** The active view comes from the address; going to a view is a navigation, so back and deep links work (US-QS-07). */
 function useViews() {
   const navigate = useNavigate();
@@ -131,16 +129,10 @@ export function App() {
   const z = s.state;
   useClearOnSignOut(z.kind === "signedIn");
   useEntryTitle(z.kind);
-  const footer = (
-    <footer className="mt-8 text-center text-xs text-muted-foreground">
-      Version {version || "unbekannt"}
-    </footer>
-  );
   if (z.kind !== "signedIn")
     return (
       <main className="flex min-h-dvh flex-col items-center px-4 py-6 md:pt-20">
         <EntryStates state={z} session={s} />
-        {footer}
       </main>
     );
   return (
@@ -168,7 +160,6 @@ export function App() {
               handOver={wishPath.handOver}
             />
           </div>
-          {footer}
         </SignedInShell>
       </UnlocksProvider>
     </FeaturesProvider>
