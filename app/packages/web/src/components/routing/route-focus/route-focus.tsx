@@ -9,6 +9,7 @@ function viewSearch(search: string): string {
   const params = new URLSearchParams(search);
   params.delete("sheet");
   params.delete("page");
+  params.delete("lpage");
   return params.toString();
 }
 

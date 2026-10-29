@@ -172,7 +172,8 @@ export function LayerSheet({
         if (!next) closeLayer();
       }}
     >
-      <LayerBody primaryAction={primaryAction}>{children}</LayerBody>
+      {/* The modal keeps its children mounted when closed; a closed layer must not load data or hold a pager (US-QS-22). */}
+      {open ? <LayerBody primaryAction={primaryAction}>{children}</LayerBody> : null}
     </ResponsiveModal>
   );
 }

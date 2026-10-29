@@ -31,6 +31,12 @@ function Example({ at = "/" }: { at?: string }) {
 }
 
 describe("LayerSheet (US-QS-15)", () => {
+  it("US-QS-22 a closed layer mounts no content, so it loads nothing and holds no pager", () => {
+    setViewportWidth(360);
+    render(<Example />);
+    expect(screen.queryByText("Inhalt")).toBeNull();
+  });
+
   it("US-QS-15 an address with ?sheet= opens the layer after reload or copied link", async () => {
     setViewportWidth(360);
     render(<Example at="/?sheet=licht" />);

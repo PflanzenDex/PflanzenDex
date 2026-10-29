@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 /** Horizontal distance of a swipe that turns the page (starting value, assumption; US-QS-15). */
 const SWIPE_PX = 48;
 const PARAM = "page";
+/** The address part of the pages of a list inside a layer, so it does not compete with the screen behind it (US-QS-22). */
+export const LAYER_PARAM = "lpage";
 
 /** Pointer handlers that turn a horizontal swipe into a page change, as an alternative to the buttons. */
 function useSwipe(page: number, pages: number, go: (target: number) => void) {
@@ -68,7 +70,7 @@ export type PagerProps<T> = {
   listClassName?: string;
   /** A changed value (filter, search) starts again at page 1. */
   resetKey?: string | number;
-  /** Name of the address part that holds the page; `page` unless another pager shares the address (a layer above a list). */
+  /** Name of the address part that holds the page; `page` unless another pager shares the address (a list in a layer passes `LAYER_PARAM`). */
   param?: string;
   /** Replaces the history entry instead of pushing one, so Back leaves a layer in one step. */
   replace?: boolean;

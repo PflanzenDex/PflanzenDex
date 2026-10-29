@@ -105,3 +105,22 @@ describe("Pager (US-QS-15)", () => {
     expect(screen.getByTestId("address").textContent).toBe("?page=2&verlauf=2");
   });
 });
+
+describe("Pager in a layer (US-QS-22)", () => {
+  it("US-QS-22 a list in a layer keeps its page in its own address part, apart from the page of the screen", async () => {
+    render(
+      <MemoryRouter initialEntries={["/?page=2"]}>
+        <Pager items={items} pageSize={3} label="Pflanzen" renderItem={(t) => t} />
+        <Pager items={items} pageSize={3} label="Im Layer" param="lpage" renderItem={(t) => t} />
+        <Where />
+      </MemoryRouter>,
+    );
+    const layerList = screen.getByRole("list", { name: "Im Layer" });
+    // The layer starts at its first page although the screen behind stands on page 2.
+    expect(layerList.textContent).toContain("Pflanze 1");
+    await userEvent.click(screen.getAllByRole("button", { name: "Weiter" })[1] as HTMLElement);
+    expect(screen.getByTestId("address").textContent).toBe("?page=2&lpage=2");
+    expect(screen.getByRole("list", { name: "Im Layer" }).textContent).toContain("Pflanze 4");
+    expect(screen.getByRole("list", { name: "Pflanzen" }).textContent).toContain("Pflanze 4");
+  });
+});

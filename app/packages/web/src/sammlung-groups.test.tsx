@@ -123,12 +123,19 @@ describe("US-QS-19 the first screen of the plants", () => {
     expect(screen.queryByText("Noch kein Foto")).toBeNull();
   });
 
-  it("US-QS-19 the area asks the frame to fit one screen only for the plants", async () => {
+  it("US-QS-19 · US-QS-22 the area asks the frame to fit one screen for every mode", async () => {
     const { container } = renderAt("/collection?view=plants");
     await screen.findByText("4 Pflanzen");
     expect(container.querySelector("[data-fit-screen]")).not.toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Arten" }));
-    await waitFor(() => expect(container.querySelector("[data-fit-screen]")).toBeNull());
+    for (const mode of ["Arten", "Wunschliste"]) {
+      await userEvent.click(screen.getByRole("button", { name: mode }));
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: mode }).getAttribute("aria-pressed")).toBe(
+          "true",
+        ),
+      );
+      expect(container.querySelector("[data-fit-screen]")).not.toBeNull();
+    }
   });
 });
 

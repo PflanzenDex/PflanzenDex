@@ -1,14 +1,14 @@
-import { useState } from "react";
 import type { Candidate } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
 import { cn } from "@/lib/utils";
 import { useStoredPhoto, type PhotoAccess } from "@/lib/use-stored-photo";
 import { errorText } from "@/lib/error-text";
 import { isPlainHttps } from "../schemas";
+import { Discard } from "./discard/discard";
 import { LazyFriendsSwitch } from "./lazy-friends-switch/lazy-friends-switch";
 
-const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
-const UNKNOWN = "unbekannt";
+export const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
+export const UNKNOWN = "unbekannt";
 
 /** The thinnest zone is marked in words and by a border, not by colour alone; unknown or outside zones get a dashed border. */
 const PRIORITY_BORDER: Record<string, string> = {
@@ -91,46 +91,6 @@ function Picture(props: {
         </Button>
       )}
     </figure>
-  );
-}
-
-/** "Verwerfen" asks before it writes: the wish stays stored under "Verworfen", but there is no way back yet (P-10). */
-function Discard(props: { c: Candidate; onDiscard: (c: Candidate) => void; busy: boolean }) {
-  const { c } = props;
-  const [asking, setAsking] = useState(false);
-  if (!asking)
-    return (
-      <Button
-        type="button"
-        variant="outline"
-        size="touch"
-        className="rounded-full"
-        disabled={props.busy}
-        aria-label={`Verwerfen: ${c.title}`}
-        onClick={() => setAsking(true)}
-      >
-        Verwerfen
-      </Button>
-    );
-  return (
-    <div className="grid gap-2">
-      <p>Wirklich verwerfen? Der Wunsch bleibt unter „Verworfen“ gespeichert.</p>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          variant="destructive"
-          size="touch"
-          disabled={props.busy}
-          aria-label={`Ja, verwerfen: ${c.title}`}
-          onClick={() => props.onDiscard(c)}
-        >
-          Ja, verwerfen
-        </Button>
-        <Button type="button" variant="outline" size="touch" onClick={() => setAsking(false)}>
-          Abbrechen
-        </Button>
-      </div>
-    </div>
   );
 }
 
