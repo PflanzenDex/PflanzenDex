@@ -204,10 +204,10 @@ Acceptance criteria:
 - Given the section "Einstellungen" fails to load or is loading, then it shows that state with its next action (P-09, P-10) while the section "Profil" stays usable; saving settings works as before (US-ACC-02).
 - Given "Konto" is opened, then the settings load as their own part, so the initial JavaScript does not carry them (QG-U6). Invitations to friends stay in "Freunde" (US-SOZ); "Konto" has no section for them.
 - Given the main destinations, then care phases (US-PHA-01, US-PHA-03), the own care profile (US-BES-09) and locations and light zones (US-LIC) are not destinations of their own: "Pflegephasen", "Pflegeprofil" and "Standorte und Licht" are no entries of the navigation.
-- Given the view "Pflanzen" of the "Sammlung", then below the switch I can group my plants "Alle", "Nach Pflegephase" or "Nach Standort", the address names the grouping so that back, forward and a copied link lead to the same view, and the choice keeps the focus on the control and is announced politely.
+- Given the view "Pflanzen" of the "Sammlung", then below the switch I can group my plants "Alle", "Nach Pflegephase" or "Nach Standort", the address names the grouping so that back, forward and a copied link lead to the same view, and the choice keeps the focus on the control and is announced politely. _Superseded by US-QS-19 (2026-10-29): the grouping is chosen in the layer "Ansicht" (`?sheet=view`), not below the switch; the groups are chosen from a row and their plants are paged instead of stacked._
 - Given I choose "Nach Pflegephase", then the expected phase and the target location per plant show as before, including "Jetzt umgestellt" (US-PHA-01, US-PHA-03), under the same main heading, and the count line names the number of plants with a phase; with no plant that has a phase, the view says what to do next (P-09).
-- Given I choose "Nach Standort", then my plants stand in groups, one per location in alphabetical order, each heading naming the location, its light zone and the number of plants; plants without a known location form the last group "Standort unbekannt", and an unknown zone reads "Zone unbekannt" (P-08, P-10).
-- Given the view "Pflanzen", when I choose "Standorte verwalten", then the existing management of locations and light zones opens inside the "Sammlung" as a view of its own with its heading, a button "Zurück zur Sammlung" and its own empty, loading and error states with their next actions (US-LIC, P-09, P-10); the address names the open view, back leads to the plants with the same grouping, and the focus moves to the heading of the view that appears.
+- Given I choose "Nach Standort", then my plants stand in groups, one per location in alphabetical order, each heading naming the location, its light zone and the number of plants; plants without a known location form the last group "Standort unbekannt", and an unknown zone reads "Zone unbekannt" (P-08, P-10). _Superseded by US-QS-19 (2026-10-29) where it stacks all groups: the groups are chosen from a row of choices with their counts and one group pages at a time; the order, the names "Standort unbekannt" and "Zone unbekannt" stay._
+- Given the view "Pflanzen", when I choose "Standorte verwalten" (US-QS-19: "Standorte und Lichtzonen verwalten" in the layer "Ansicht"), then the existing management of locations and light zones opens inside the "Sammlung" as a view of its own with its heading, a button "Zurück zur Sammlung" and its own empty, loading and error states with their next actions (US-LIC, P-09, P-10); the address names the open view, back leads to the plants with the same grouping, and the focus moves to the heading of the view that appears.
 - Given the section "Einstellungen" of "Konto", then it ends with a link "Standorte und Lichtzonen verwalten" that opens this management in the "Sammlung".
 - Given the profile of a species (in the catalog, reached from the species view of the "Sammlung"), then below the profile a section "Mein Pflegeprofil" shows the catalog value and my deviation side by side for this species only (US-BES-09); when I keep no specimen of the species, the section says so and names the next action (create a specimen with "Diese Art wählen"), and the section loads as its own part.
 - Given a link or bookmark to the former addresses of "Pflegephasen", "Pflegeprofil" or "Standorte und Licht", when I open it, then I land on the plants grouped by care phase, on the species view of the "Sammlung" (the entry point to the species and so to the care profile of a species; a keeper without a chosen species finds the next step there) or on the plants with the management of locations open, the focus stays where it was, and the former addresses are no entries of the navigation.
@@ -291,6 +291,45 @@ Acceptance criteria:
 - Given a wide screen (from 1024 px), then the open layer stands beside the overview as a pane.
 
 State of implementation: `TodayArea` (`web/src/components/routing/areas/today-area`) shows `TodayPage` (the `today` module: title, date, most urgent item, opener for the rest) with a summary and tiles (`today-overview`) and holds the layers `LayerSheet` for `treatments` (`TreatmentsPage host`), `watering` (`WateringList`) and `hints` (`HintsPage host`); their lists use `Pager`. The counts come from the same requests as the lists (the `count` mode of `TreatmentsPage`, `WateringList` and `HintsPage`, one cached copy each), so no new API route exists. `AppShell` runs in `fit` mode on `/today` only. `CollapsedLockedRows` (`shell/unlock`) is the row and its layer; it lives in the chunk of the introduction because the initial bundle has no headroom (QG-U6).
+
+### US-QS-19 · Sammlung "Pflanzen" fits one screen with paged tiles · 🟨 new
+
+As a **plant keeper** I want my plants as a page of compact tiles instead of a long column of cards, so that I see my collection at a glance on the phone without scrolling.
+
+Decision (owner, 2026-10-29, after a UI review): the mode "Pflanzen" was 27 phone screens for 50 plants; long lists are paged (US-QS-15), not scrolled. Arten, Wunschliste and Equipment are not part of this story.
+
+Acceptance criteria:
+
+- Given a viewport of 360 x 640 px (starting value, assumption), when I open the mode "Pflanzen", then it fits without page scroll: the heading with the count, one row of modes, one insight row about the light zones and a page of compact plant tiles.
+- Given the tiles, then each shows the photo or the initial of the name, the name, the light zone as text and one state ("Behandeln" for an open treatment, "Vergeilt/dünn", "Gesund", or "unbekannt" when there is no measurement, P-08); the plants are paged with `Pager` (page size 6 below 768 px, 12 from 768 px, 16 from 1024 px; starting values, assumption) and the page is in the address.
+- When I choose "Ansicht", then a layer (`?sheet=view`) holds the grouping ("Alle", "Nach Pflegephase", "Nach Standort"; still in the address as `group=`), the sorting if one exists (none yet) and "Standorte und Lichtzonen verwalten"; a changed grouping starts at page 1.
+- Given a grouping, then I choose the group from a row of choices, each with its count ("Standort unbekannt" and "Zone unbekannt" as before; the care phases for "Nach Pflegephase"), the group is in the address (`part=`), and its plants page as above; "Jetzt umgestellt" of the phase grouping keeps working (US-PHA-03).
+- When I choose the light-zone insight row, then a layer (`?sheet=zones`) shows the distribution per zone with the thinnest zone named in text, the note about cutting light in one line and the way to the management.
+- When I choose a tile, then the plant opens the way it does today, with its card and the same actions, as a layer (`?sheet=plant-<id>`); a detail layer with tabs is a later story (US-QS-15).
+- Given archived plants, then the insight row also leads to the archive in a layer (`?sheet=archive`), so nothing disappears silently (P-10).
+- Given no plant, loading or an error, then the mode shows that state with its next action (P-09, P-10).
+
+State of implementation: `PlantsScreen` (`web/src/collection/plants-screen`) with `PlantTile`, the layer "Ansicht" and the zone insight; `PagedGroups` (`components/shared/responsive/paged-groups`, with the row `GroupChoices`) holds the groups and their pages and is reused for the care phases; `Pager` got `listClassName` for a grid. The mode "Pflanzen" asks the frame to fit one screen with `data-fit-screen` (CSS `:has` in `tokens.css`), so the app shell needs no code for it (QG-U6).
+
+### US-QS-20 · "Freunde" fits one screen and opens its parts as layers · 🟨 new
+
+As a **plant keeper** I want "Freunde" to show what matters on one screen and open each part as a layer, so that I add a friend or answer a request without scrolling through a page of four sections (US-QS-15).
+
+Decision (owner, 2026-10-29, after a UI review): the page of 13.6 phone screens becomes an overview; invitation, request, news, friends and sharing are layers. The exchange (US-SOZ-09) and the match deck (US-TAU-01) keep their views.
+
+Acceptance criteria:
+
+- Given 360 x 640 px (starting value, assumption), when I open "Freunde", then it fits without page scroll and shows: the heading, one filled action "Freund hinzufügen", tiles "Anfragen" and "Neu bei Freunden" with counts and tiles "Tauschbörse" and "Passende Angebote", a row "Meine Freunde" with the number of friends, a row "Was Freunde sehen" with the current choice ("Alles privat" or "n von m Exemplaren geteilt"), and one line of help ("Ohne deine Freigabe sieht niemand etwas.") with "Mehr erfahren". The tiles for the exchange and the matching offers show no count, because the swap data is not loaded here (assumption).
+- Given "Mehr erfahren", then the full explanation of friends and sharing opens as a layer (`?sheet=help`).
+- Given I choose "Freund hinzufügen", then a layer (`?sheet=add`) offers "Einladen" (create and copy the code, US-SOZ-01) and "Code eingeben" (send a request) as two tabs with the existing behaviour; a refused code shows its German text by code at the field (FR-QG-11, P-10).
+- Given I choose "Anfragen", "Neu bei Freunden", "Meine Freunde" or "Was Freunde sehen", then each opens as a layer (`?sheet=requests|news|friends|sharing`) with the existing content (US-SOZ-02 to US-SOZ-05); lists longer than the layer are paged with the pager (US-QS-15); a layer loads its data only while it is open.
+- Given "Tauschbörse" or "Passende Angebote", then they lead to their existing views.
+- Given calm mode (US-ACH-08, US-TAU-07), then the tiles show their names without counts.
+- Given a function that is locked (US-ONB-05), then its tile keeps its place and leads to the lock page at its address, as the address does today; the tile carries no mark of its own (assumption: the first-load budget, QG-U6, leaves no room for passing the lock state into the tiles).
+- Given no friend yet, then the screen says so and names "Freund hinzufügen" as the next step (P-09); a part that is loading or fails to load shows that state (P-10).
+- Given a layer, then it has at most one filled primary action: "Annehmen" is the quiet filled kind of button and the other actions are outline buttons (US-QS-15).
+
+State of implementation: `FriendsPage` (`web/src/social/pages/friends-page`) with `friend-tiles` and `friend-layers`; calm mode arrives through `CalmGate` (`components/routing/areas/shared/simple-routes/calm-gate`, shared with the match deck), and the route of "Freunde" moved into `socialRoutes`. The shell frame stays in the scrolling mode: its opt-in `fit` is global to the app shell, so it is left off here and the overview fits by its own size. Status 🟨 until a real phone check.
 
 ## Non-functional requirements
 

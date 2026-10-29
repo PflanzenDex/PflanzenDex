@@ -1,7 +1,7 @@
 import type { LightLocation, SpecimenHint } from "@pflanzendex/core";
 import { Button } from "@/components/ui/button/button";
-import { Actions, CARD, NextAction } from "../../specimens/cards/parts/parts";
-import { LocateControl } from "../../markers/locate/locate-control/locate-control";
+import { Actions, CARD, NextAction } from "../../../specimens/cards/parts/parts";
+import { LocateControl } from "../../../markers/locate/locate-control/locate-control";
 
 /** Where a hint is fixed: the app wires the target to a tab (the modules do not know each other). */
 export type HintTarget = "collection" | "light";

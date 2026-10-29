@@ -17,7 +17,8 @@ import { VIEWS, openView } from "../../support/display";
 /** The management of locations and light zones, below the plants of the Sammlung (US-QS-14). */
 async function locationsByKeyboard(page: Page): Promise<void> {
   await openByKeyboard(page, "Sammlung");
-  await press(page, page.getByRole("button", { name: "Standorte verwalten" }));
+  await press(page, page.getByRole("button", { name: "Ansicht" }));
+  await press(page, page.getByRole("button", { name: "Standorte und Lichtzonen verwalten" }));
   await expect(
     page.getByRole("heading", { level: 1, name: /Standorte und Lichtzonen/ }),
   ).toBeVisible();
@@ -119,6 +120,7 @@ test.describe("US-QS-08 keyboard-only everyday flows: light and measuring", () =
     test.setTimeout(120_000);
     await signInByKeyboard(page, account);
     await specimenByKeyboard(page, "Echeveria elegans");
+    await press(page, page.getByRole("list", { name: "Pflanzen" }).getByRole("button").first());
     await press(page, page.getByRole("button", { name: /^Messen: / }));
     await expect(page.getByRole("heading", { level: 1, name: /^Messen: / })).toBeVisible();
     const form = page.getByRole("form", { name: "Messung erfassen" });

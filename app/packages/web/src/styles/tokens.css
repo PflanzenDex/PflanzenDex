@@ -236,6 +236,21 @@
     touch-action: manipulation;
     -webkit-tap-highlight-color: color-mix(in oklab, var(--color-primary) 15%, transparent);
   }
+  /*
+   * One screen (US-QS-15, DS-61, US-QS-19): a view that holds an element with `data-fit-screen` makes the frame exactly
+   * the viewport; the main content scrolls inside itself only when it cannot fit (zoom, large text). Done in CSS with
+   * `:has`, so the app shell needs no code for it and the initial JavaScript stays within its budget (QG-U6).
+   */
+  div:has(> div > main:has([data-fit-screen])) {
+    height: 100dvh;
+  }
+  div:has(> main:has([data-fit-screen])) {
+    min-height: 0;
+  }
+  main:has([data-fit-screen]) {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
 }
 
 /*

@@ -140,13 +140,13 @@ function CardActions({ card, ...h }: Handlers & { card: SpecimenCard }) {
 
 /** A specimen card (US-BES-06): state and need for action at a glance, from derived data only. */
 export function SpecimenCardView(
-  props: Handlers & { card: SpecimenCard; photoAccess: PhotoAccess },
+  props: Handlers & { card: SpecimenCard; photoAccess: PhotoAccess; showName?: boolean },
 ) {
-  const { card, photoAccess, ...handlers } = props;
+  const { card, photoAccess, showName = true, ...handlers } = props;
   return (
     <li className={`animate-list-in ${CARD}`}>
       <Photo card={card} access={photoAccess} />
-      <h2 className="mt-2 text-lg font-semibold">{card.name}</h2>
+      {showName ? <h2 className="mt-2 text-lg font-semibold">{card.name}</h2> : null}
       <Quiet>Art: {card.speciesName ?? UNKNOWN}</Quiet>
       <Quiet>
         Lichtzone: {zoneText(card)} · Status: {STATUS_TEXT[card.status]}

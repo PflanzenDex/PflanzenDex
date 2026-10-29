@@ -30,8 +30,14 @@ export const test = base.extend<{ account: TestAccount }>({
   },
 });
 
-/** From any signed-in view: the Sammlung, then "Standorte verwalten" (the former destination "Standorte und Licht"). */
+/** From any signed-in view: the Sammlung, the layer "Ansicht", then "Standorte und Lichtzonen verwalten" (US-QS-19). */
 export async function openLocations(page: Page): Promise<void> {
   await page.getByRole("link", { name: "Sammlung", exact: true }).click();
-  await page.getByRole("button", { name: "Standorte verwalten" }).click();
+  await page.getByRole("button", { name: "Ansicht" }).click();
+  await page.getByRole("button", { name: "Standorte und Lichtzonen verwalten" }).click();
+}
+
+/** The first plant of the Sammlung as a layer with its card and actions (US-QS-19). */
+export async function openFirstPlant(page: Page): Promise<void> {
+  await page.getByRole("list", { name: "Pflanzen" }).getByRole("button").first().click();
 }

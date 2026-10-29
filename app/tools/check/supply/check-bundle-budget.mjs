@@ -9,8 +9,8 @@
 //   3. every chunk those files import statically (`import ... from "./x.js"`, `import "./x.js"`), recursively.
 // Dynamic `import("./x.js")` is not followed: lazily loaded route chunks (DS-08) are not initial.
 // CSS, images and fonts are not counted. Size is the gzip size (level 9) of the files, 1 kB = 1000 bytes
-// (the unit Vite prints). The limit lives in quality-limits.json (`bundle.initialJsGzipBytes`, FR-QG-16/18):
-// measured value plus headroom, only ever lowered.
+// (the unit Vite prints). The limit lives in quality-limits.json (`bundle.initialJsGzipBytes`, FR-QG-16/18): a fixed
+// ceiling above the goal in report-bundle.mjs, changed only by an owner decision (ADR 0018).
 import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
@@ -82,7 +82,7 @@ export function checkBudget(total, max = INITIAL_JS_BUDGET_BYTES) {
   const message = ok
     ? `initial JS ${formatKb(total)} gzip, allowed ${formatKb(max)}`
     : `initial JS is ${formatKb(total)} gzip, allowed ${formatKb(max)} (over by ${formatKb(total - max)}). ` +
-      `Load the new code lazily (React.lazy, DS-08) or lower the cost; the limit is bundle.initialJsGzipBytes in app/config/gates/quality-limits.json and is only ever lowered.`;
+      `Load the new code lazily (React.lazy, DS-08) or lower the cost; the limit is bundle.initialJsGzipBytes in app/config/gates/quality-limits.json, a fixed ceiling (ADR 0018).`;
   return { ok, message };
 }
 

@@ -117,7 +117,7 @@ beforeAll(async () => {
   await Promise.all([
     import("@/today/today-page/today-page"),
     import("@/care/treatments/treatments-page/treatments-page"),
-    import("@/collection/hints-page/hints-page"),
+    import("@/collection/other-pages/hints-page/hints-page"),
     import("@/monitoring/watering/watering-list/watering-list"),
   ]);
 }, 30_000);

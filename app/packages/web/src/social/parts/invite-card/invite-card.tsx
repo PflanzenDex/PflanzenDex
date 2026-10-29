@@ -6,7 +6,7 @@ export const dateText = (iso: string): string =>
   new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 
 /**
- * "Freund einladen" (US-SOZ-01): creates a single-use code that is passed on outside the app. There is no user
+ * "Einladen", the first tab of the layer "Freund hinzufügen" (US-SOZ-01, US-QS-20): creates a single-use code that is passed on outside the app. There is no user
  * search, friends find each other only this way (FR-SOZ-08). The code is shown exactly once (only its hash exists).
  */
 export function InviteCard(props: {
@@ -16,14 +16,8 @@ export function InviteCard(props: {
 }) {
   const { created } = props;
   return (
-    <section aria-labelledby="friend-invite-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="friend-invite-title" className="text-xl font-semibold">
-        Freund einladen
-      </h2>
-      <p className="text-muted-foreground">
-        Erzeuge einen Code und gib ihn außerhalb der App weiter. Wer ihn eingibt, schickt dir eine
-        Anfrage; erst wenn du sie annimmst, seid ihr befreundet.
-      </p>
+    <section aria-label="Freund einladen" className="flex min-w-0 flex-col gap-3">
+      <p className="text-muted-foreground">Gib den Code außerhalb der App weiter.</p>
       <div>
         <Button type="button" size="touch" disabled={props.running} onClick={props.onCreate}>
           {props.running ? "Erzeugt …" : "Einladungscode erzeugen"}

@@ -2,7 +2,7 @@ import { useCallback, type ReactNode } from "react";
 import type { LightLocation, SpecimenHint } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { Pager } from "@/components/shared/responsive/pager/pager";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../kernel";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
 import { HintsPageSkeleton } from "./hints-page.skeleton";
 import {
   GRID,
@@ -12,12 +12,12 @@ import {
   Status,
   TITLE,
   Warning,
-} from "../specimens/cards/parts/parts";
-import { refusalText } from "../specimens/model/refusal";
-import { loadLocations } from "../../light";
-import { loadSpecimenHints } from "../insights/api/hints-api";
-import { setSpecimenLocation } from "../specimens/model/specimens-api";
-import { HintCount, type useHintCount } from "../insights/api/hint-count/hint-count";
+} from "../../specimens/cards/parts/parts";
+import { refusalText } from "../../specimens/model/refusal";
+import { loadLocations } from "../../../light";
+import { loadSpecimenHints } from "../../insights/api/hints-api";
+import { setSpecimenLocation } from "../../specimens/model/specimens-api";
+import { HintCount, type useHintCount } from "../../insights/api/hint-count/hint-count";
 import { HintCard, type HintTarget } from "./hint-card/hint-card";
 
 export type { HintTarget };
