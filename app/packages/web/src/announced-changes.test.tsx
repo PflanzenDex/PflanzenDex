@@ -38,7 +38,7 @@ const list = (cards: SpecimenCard[]) =>
 
 describe("US-QS-10 · a form with errors guides to the fix (3.3.1, 3.3.3, DS-38)", () => {
   it("US-QS-10 submitting an empty proposal focuses the first invalid field and every error names the field and the fix", async () => {
-    render(<ProposalForm onSend={async () => null} onCancel={vi.fn()} onExisting={vi.fn()} />);
+    render(<ProposalForm onSend={async () => null} onExisting={vi.fn()} />);
     await userEvent.click(screen.getByRole("button", { name: /speichern|vorschlagen|senden/i }));
     const first = screen.getByRole("textbox", { name: /lateinischer Name/i });
     await waitFor(() => expect(document.activeElement).toBe(first));

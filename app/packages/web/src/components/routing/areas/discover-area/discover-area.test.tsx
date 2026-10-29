@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { setViewportWidth } from "@/lib/viewport-mock";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
@@ -66,6 +67,7 @@ beforeAll(async () => {
 }, 30_000);
 
 beforeEach(() => {
+  setViewportWidth(360);
   window.localStorage.clear();
   stubServer();
 });
