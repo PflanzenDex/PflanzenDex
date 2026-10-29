@@ -2,7 +2,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Suspense, lazy } from "react";
-import { Link, MemoryRouter, Route, Routes, useNavigate } from "react-router";
+import { Link, MemoryRouter, Route, Routes, useNavigate, useSearchParams } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { AnnouncerProvider } from "@/platform/announcer/announcer";
 import { RouteFocus } from "./route-focus";
@@ -146,5 +146,31 @@ describe("US-QS-09 · RouteFocus (2.4.2, 2.4.3)", () => {
     await screen.findByRole("heading", { name: "Langsame Seite" });
     await new Promise((r) => setTimeout(r, 50));
     expect(document.activeElement).toBe(focused);
+  });
+
+  it("US-QS-18 · US-QS-15 opening a layer or turning a page (?sheet, ?page) is no new view: the focus stays", async () => {
+    function Opener() {
+      const [, setParams] = useSearchParams();
+      return (
+        <button type="button" onClick={() => setParams({ sheet: "tasks", page: "2" })}>
+          Ebene
+        </button>
+      );
+    }
+    render(
+      <MemoryRouter initialEntries={["/b"]}>
+        <AnnouncerProvider>
+          <main id="inhalt" tabIndex={-1}>
+            <RouteFocus titleOf={titleOf} />
+            <h1>Zweite Seite</h1>
+            <Opener />
+          </main>
+        </AnnouncerProvider>
+      </MemoryRouter>,
+    );
+    const opener = screen.getByRole("button", { name: "Ebene" });
+    await userEvent.click(opener);
+    await new Promise((r) => setTimeout(r, 400));
+    expect(document.activeElement).toBe(opener);
   });
 });

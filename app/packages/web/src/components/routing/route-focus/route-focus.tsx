@@ -11,13 +11,19 @@ const load = () => import("./focus-moves").then((m) => m.createFocusMover());
  * (US-QS-08). A navigation with the state `keepFocus` only sets the title. Render it inside the main region; it renders nothing itself.
  */
 export function RouteFocus({ titleOf }: { titleOf: (pathname: string) => string }) {
-  const { pathname, key, state } = useLocation();
+  const { pathname, search, key, state } = useLocation();
   // A switch inside a view (a mode of a destination) keeps the focus on its control and announces itself (US-QS-14).
   const keepFocus = (state as { keepFocus?: boolean } | null)?.keepFocus === true;
   const type = useNavigationType();
   const title = titleOf(pathname);
   const announcer = useAnnounce();
   const previous = useRef<string | null>(null);
+  // A layer or a page of a list (`?sheet=`, `?page=`) is no new view: the layer and the pager manage their own focus (US-QS-15).
+  const params = new URLSearchParams(search);
+  params.delete("sheet");
+  params.delete("page");
+  const view = `${pathname}?${params.toString()}`;
+  const previousView = useRef<string | null>(null);
   const mover = useRef<Promise<Awaited<ReturnType<typeof load>>> | null>(null);
 
   useEffect(() => {
@@ -29,8 +35,10 @@ export function RouteFocus({ titleOf }: { titleOf: (pathname: string) => string 
   useEffect(() => {
     document.title = title;
     const left = previous.current;
+    const sameView = previousView.current === view;
     previous.current = key;
-    if (left === null || left === key || keepFocus) return;
+    previousView.current = view;
+    if (left === null || left === key || keepFocus || sameView) return;
     let stop = () => {};
     let cancelled = false;
     void mover.current?.then((m) => {
@@ -40,7 +48,7 @@ export function RouteFocus({ titleOf }: { titleOf: (pathname: string) => string 
       cancelled = true;
       stop();
     };
-  }, [key, type, title, announcer, keepFocus]);
+  }, [key, type, title, announcer, keepFocus, view]);
 
   return null;
 }
