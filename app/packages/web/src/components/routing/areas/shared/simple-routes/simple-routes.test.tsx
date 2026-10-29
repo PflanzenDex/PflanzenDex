@@ -3,7 +3,9 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/shell/start-page/start-page", () => ({ StartPage: () => <p>START</p> }));
+vi.mock("@/components/routing/areas/today-area/today-area", () => ({
+  TodayArea: () => <p>START</p>,
+}));
 
 import { AppRoutes } from "@/routes";
 
@@ -27,7 +29,7 @@ afterEach(() => {
 });
 
 describe("US-DEV-06 routes of the function group social", () => {
-  it("US-DEV-06 Freunde, a friend's collection and the exchange lead to the start page while social is off", async () => {
+  it("US-DEV-06 Freunde, a friend's collection and the exchange lead to Heute while social is off", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => new Response("{}", { status: 404 })),

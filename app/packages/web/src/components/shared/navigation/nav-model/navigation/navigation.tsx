@@ -11,7 +11,7 @@ import {
 import { DISPLAY_NAME, type NavItem } from "../nav-item";
 
 export type View =
-  "start" | "today" | "collection" | "discover" | "friends" | "review" | "operator" | "account";
+  "today" | "collection" | "discover" | "friends" | "review" | "operator" | "account";
 
 /** What a link inside the app can open: a destination, or one of the three views that moved into the Sammlung (US-QS-14). */
 export type LinkTarget = View | "species" | "light" | "carePhases" | "careProfile" | "addPlant";
@@ -34,7 +34,6 @@ export const MATCH_PATH = "/friends/match";
 
 /** One URL path per view (English); the link texts above stay German. */
 export const PATHS: Record<View, string> = {
-  start: "/",
   today: "/today",
   collection: "/collection",
   discover: "/discover",
@@ -171,8 +170,6 @@ export const pageTitle = (view?: string) => (view ? `${view} – ${PRODUCT}` : P
  * agree; a species profile has its own address below `/discover/species`. Unknown addresses redirect, so they only get the product.
  */
 export function viewTitle(pathname: string): string {
-  // The start page is no destination (brand link, landing page) but keeps its page title.
-  if (pathname === PATHS.start) return pageTitle("Start");
   const entry = ENTRIES.find((e) => PATHS[e.id] === pathname);
   if (entry) return pageTitle(entry.text);
   if (pathname === ADD_PLANT_PATH) return pageTitle("Pflanze anlegen");
