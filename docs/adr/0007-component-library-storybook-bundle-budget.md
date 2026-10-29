@@ -75,7 +75,7 @@ This ADR contains six decisions. Each states status, reason, alternatives and co
 
 ## Decision 5 · Bundle budget (DS-08)
 
-- **Status:** starting value is an assumption; the measured number is decided in the budget issue and confirmed by the owner there.
+- **Status:** amended by ADR 0018 (2026-10-29): the limit is a fixed ceiling of 140 kB with a goal of 125 kB, no longer a ratchet. The rest of this decision (measure first, no invented numbers) stands.
 - **Decision:** the budget for initial JavaScript (gzipped) is set from a measurement, not in advance. `docs/guides/reference/design-system.md` DS-08 names 170 kB as a starting value; that is an assumption, not a measurement. The budget issue measures the real first load (`make lighthouse`, `vite build` size output), then writes the measured number plus a stated headroom into the budget. Until then no hard limit is enforced on the strength of 170 kB.
 - **Reason:** P-08 and FR-QG-09 forbid invented numbers; a limit that was never measured is either always red or meaningless.
 - **Alternatives:** fix 170 kB now (rejected: unmeasured); no budget (rejected: DS-08 asks for route-level splitting to be checkable).

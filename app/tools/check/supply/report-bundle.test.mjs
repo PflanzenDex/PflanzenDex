@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {
-  WORKING_TARGET_BYTES,
+  GOAL_BYTES,
   decodeMappings,
   attributeBytes,
   groupOf,
@@ -219,23 +219,22 @@ describe("QG-U6 · report: whole dist and Markdown", () => {
     assert.match(renderMarkdown(report, { limit: 152000 }), /no sourcemaps/i);
   });
 
-  test("QG-U6 · FR-QG-10 Markdown names the 140 kB working target as an assumption, report only, and the hard limit", () => {
+  test("QG-U6 · FR-QG-10 Markdown names the 125 kB goal as report only, and the hard limit with what is left", () => {
     const md = renderMarkdown(
       {
-        total: 151700,
+        total: 131700,
         hasMaps: true,
-        chunks: [{ file: "assets/index.js", gzip: 151700 }],
+        chunks: [{ file: "assets/index.js", gzip: 131700 }],
         packages: [{ group: "react", gzip: 60000 }],
       },
-      { limit: 152000 },
+      { limit: 140000 },
     );
-    assert.equal(WORKING_TARGET_BYTES, 140000);
-    assert.match(md, /140\.0 kB/);
-    assert.match(md, /assumption/i);
+    assert.equal(GOAL_BYTES, 125000);
+    assert.match(md, /Goal: 125\.0 kB/);
     assert.match(md, /report only/i);
-    assert.match(md, /152\.0 kB/);
+    assert.match(md, /Hard limit[^:]*: 140\.0 kB, 8\.3 kB left/);
     assert.match(md, /\| react \| 60\.0 kB \|/);
-    assert.match(md, /11\.7 kB over/);
+    assert.match(md, /6\.7 kB over the goal/);
   });
 
   test("QG-U6 · FR-QG-10 long package lists are cut after 25 rows, the rest is one summed row", () => {
@@ -257,11 +256,11 @@ describe("QG-U6 · report: whole dist and Markdown", () => {
     assert.equal(buildReport(dist).total, plain);
   });
 
-  test("QG-U6 · FR-QG-10 under the working target the report says there is room left", () => {
+  test("QG-U6 · FR-QG-10 under the goal the report says by how much", () => {
     const md = renderMarkdown(
-      { total: 130000, hasMaps: true, chunks: [], packages: [] },
-      { limit: 152000 },
+      { total: 120000, hasMaps: true, chunks: [], packages: [] },
+      { limit: 140000 },
     );
-    assert.match(md, /10\.0 kB (under|below)/);
+    assert.match(md, /5\.0 kB under the goal/);
   });
 });

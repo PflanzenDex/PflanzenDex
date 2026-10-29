@@ -11,21 +11,21 @@
 
 ## Targets
 
-| Number                    | Value  | Effect                                                                                                       |
-| ------------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
-| Hard limit                | 136 kB | `bundle.initialJsGzipBytes` in `app/config/gates/quality-limits.json`; the blocking gate; only ever lowered. |
-| Working target (starting) | 140 kB | Assumption (owner decision 2026-10-06, phones are the main target). Report only, never blocks.               |
+| Number     | Value  | Effect                                                                                                                |
+| ---------- | ------ | --------------------------------------------------------------------------------------------------------------------- |
+| Goal       | 125 kB | `GOAL_BYTES` in `report-bundle.mjs` (owner decision 2026-10-29, ADR 0018). Report only, never blocks.                 |
+| Hard limit | 140 kB | `bundle.initialJsGzipBytes` in `app/config/gates/quality-limits.json`; the blocking gate; a fixed ceiling (ADR 0018). |
 
-The gap between the target and the limit is not room to spend: the target is where the bundle should move, the limit is the ratchet.
+The gap between the goal and the limit is room for a story that cannot load its code lazily, not room to spend: the goal is where the bundle should stay, the limit is where a PR stops.
 
 ## How to read it
 
-1. Compare the total with the target line at the top. "Over the working target" is the current state, not an error.
+1. Compare the total with the goal line at the top. "Over the goal" is not an error, but the PR says why and what will bring it back.
 2. Per package, look for large shares that a story did not need on first load: a library used by one route (load it lazily, DS-08), a second library for the same job, an icon import that pulls a whole set.
 3. A new entry in the table after your change names the package that grew the bundle; check whether it can load with its route.
 
-## When the ratchet may be lowered
+## When the numbers change
 
-- After a change that makes the measured total clearly smaller (lazy loading, a dropped dependency), lower `bundle.initialJsGzipBytes` to the new measurement plus a small headroom, in the same PR or a follow-up (FR-QG-16/18). Never raise it.
-- Lowering is a change to a gate file: its own PR with the reason, human merge (US-QG-07).
-- The working target is lowered or dropped only by the project owner. It is not a gate; do not byte-golf below the hard limit just to meet it.
+- The hard limit is a fixed ceiling, not a ratchet: it stays at 140 kB when the bundle shrinks (ADR 0018). Until 2026-10-29 it was lowered to the measurement plus about 5 kB after every saving (170 → 152 → 136 → 125 kB); at 125.0 of 125.0 kB every web change failed the gate, and freeing room would have meant byte-golfing in the framework code (react-dom, react-router, tailwind-merge), not in our own.
+- Changing the limit or the goal is an owner decision and a change to a gate file: its own PR with the reason, human merge (US-QG-07). Raising the limit again needs a new ADR that names what the extra code buys.
+- When the total is over the goal, the next story that touches the web app first looks for code that can leave the first load (a library used by one route, DS-08).
