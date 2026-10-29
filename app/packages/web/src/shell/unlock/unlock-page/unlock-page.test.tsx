@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { UnlockEntry } from "../model/unlock-api";
 import { UnlocksProvider } from "../model/unlocks/unlocks";
 import { LockedRows } from "../locked-rows/locked-rows";
+import { CollapsedLockedRows } from "../locked-rows/collapsed-rows/collapsed-rows";
 import { UnlockPage } from "./unlock-page";
 
 const response = (status: number, body: unknown) =>
@@ -61,6 +62,7 @@ const page = (path: string) =>
         <Routes>
           <Route path="/unlock/:id" element={<UnlockPage api="http://api" token={token} />} />
           <Route path="/" element={<LockedRows />} />
+          <Route path="/collapsed" element={<CollapsedLockedRows />} />
           <Route path="/inside" element={<LockedRows only={["wishlist", "ai_access"]} />} />
         </Routes>
       </UnlocksProvider>
@@ -208,5 +210,41 @@ describe("US-ONB-05 locked rows", () => {
     expect(screen.getByRole("heading", { level: 3, name: "Noch nicht geöffnet" })).toBeTruthy();
     expect(screen.queryByText(/Tauschen/)).toBeNull();
     expect(screen.queryByText(/KI-Zugang/)).toBeNull();
+  });
+});
+
+describe("US-QS-18 locked functions on Heute", () => {
+  beforeAll(() => {
+    Element.prototype.setPointerCapture ??= () => undefined;
+    window.matchMedia ??= ((query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+      onchange: null,
+    })) as unknown as typeof window.matchMedia;
+  });
+
+  it("US-QS-18 the locked functions are one row 'n Funktionen noch nicht geöffnet' that opens a layer with the rows", async () => {
+    server(() => [swapping(), swapping({ id: "wishlist" })]);
+    page("/collapsed");
+    const row = await screen.findByRole("button", {
+      name: /^2\u00a0Funktionen noch nicht geöffnet$/,
+    });
+    expect(screen.queryByRole("link")).toBeNull();
+    await userEvent.click(row);
+    const layer = await screen.findByRole("dialog", { name: "Weitere Funktionen" });
+    expect(within(layer).getAllByRole("link")).toHaveLength(2);
+  });
+
+  it("US-QS-18 nothing locked shows no row", async () => {
+    server(() => [open("swapping")]);
+    page("/collapsed");
+    await waitFor(() => expect(vi.mocked(fetch)).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.queryByRole("button")).toBeNull();
   });
 });

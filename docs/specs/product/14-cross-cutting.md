@@ -192,6 +192,7 @@ Acceptance criteria:
 - Given a missing species in the Pokédex offers "Auf die Wunschliste" (US-POK-09), when I choose it, then the wishlist mode of the "Sammlung" opens.
 - Given I switch between the modes or the arrangements with the keyboard or a screen reader, then every choice is at least 44 px, the choice is marked by more than colour, the focus stays on the control and the new view is announced politely; a mode that is loading, empty or failing keeps its next action (P-09, P-10).
 - Given the main destinations, then treatments (US-BEH) and the hints about incomplete plants (US-BES-08) are not destinations of their own: "Heute" shows them as sections after "Jetzt dran", in the order "Jetzt dran", "Behandlungen", "Fehlt noch", each named by a heading below the one main heading of the page.
+  Superseded 2026-10-29 by US-QS-18: "Heute" no longer shows the topics as sections one below the other; each opens as a layer from a tile (`?sheet=treatments|watering|hints`), and the former anchors `/today#behandlungen`, `#giessen` and `#fehlt-noch` open that layer. The criteria below that speak of sections apply to the content of the layers.
 - Given the section "Behandlungen", then I see the open dates by urgency with "Erledigt" (US-BEH-02, US-BEH-03), plan new ones in a form that opens as a sheet on a phone and as a dialog on a large screen (US-BEH-01), and reach the done treatments per plant (US-BEH-03).
 - Given the section "Fehlt noch", then each hint names what is missing and offers the action that fixes it, including choosing a location for a plant without one right there (US-BES-08, US-PHA-03).
 - Given a link or bookmark to the former addresses of "Behandlung" or "Hinweise", when I open it, then I land on "Heute" at the matching section, the section name is announced politely and the focus is on its heading; the former addresses are no entries of the navigation.
@@ -239,7 +240,7 @@ Acceptance criteria:
 - Given `prefers-reduced-motion: reduce`, then layers and pages change without sliding.
 - Given a number with its unit or a count, then number and unit never break apart and digits in counts and measurements are tabular.
 
-State of implementation: the building blocks exist in `app/packages/web` (`LayerSheet` and `useLayer` for the layers, `Pager` for the pages, the opt-in `fit` mode of `AppShell` for the one-screen frame, touch defaults in the base layer; rules DS-58 to DS-63 in the design system reference), with tests and stories. No destination uses them yet, so every criterion stays open until the destinations are converted (the objects with tabs, the help text rule and the unit rule come with those conversions). Status 🟨 because the building blocks are in place.
+State of implementation: the building blocks exist in `app/packages/web` (`LayerSheet` and `useLayer` for the layers, `Pager` for the pages, the opt-in `fit` mode of `AppShell` for the one-screen frame, touch defaults in the base layer; rules DS-58 to DS-63 in the design system reference), with tests and stories. No destination uses them yet, so every criterion stays open until the destinations are converted (the objects with tabs, the help text rule and the unit rule come with those conversions). Status 🟨 because the building blocks are in place. "Heute" is the first destination to use them (US-QS-18).
 
 ### US-QS-16 · "Heute" is the home screen · 🟨 new
 
@@ -272,6 +273,24 @@ Acceptance criteria:
 - Given a wide screen (1280 px), then the index stands beside the open section and marks the current one by more than colour.
 - Given a section is loading, empty or failing, then it shows that state with its next action (P-09, P-10); each section loads as its own part (QG-U6).
 - Given any view, then no footer line shows the version; the section "Was die App kann" shows the app version ("unbekannt" when it is not known, P-08).
+
+### US-QS-18 · "Heute" fits one screen and opens its topics as layers · 🟨 new
+
+As a **plant keeper** I want "Heute" to show what needs my care on one screen and open each topic as a layer, so that I see the day at a glance instead of scrolling through a long page.
+
+Decision (owner, 2026-10-29, after a UI review): no page scroll, layered content, long lists paged. "Heute" was 6.8 phone screens long (treatments, watering and hints as sections, one identical warning card per overdue treatment).
+
+Acceptance criteria:
+
+- Given a viewport of 360 x 640 px (starting value, assumption), when I open "Heute" with open items, then it fits without page scroll and shows the date, a summary of the open items per category (counts as text, colour only as an extra cue), the single most urgent item ("Jetzt dran") with its action, and one tile per category ("Behandeln", "Gießen", "Fehlt noch") with its count; further tasks of the day's list (phase deviations, etiolated plants, buffer, equipment checks) are one opener "Weitere Aufgaben" with their count (`?sheet=tasks`).
+- Given I choose a tile, then its items open as a layer (`?sheet=treatments|watering|hints`) using the layer of US-QS-15, ordered by urgency and paged (starting values: 3 treatments, 4 plants to water, 3 hints per page) when they do not fit; each item keeps its existing actions ("Erledigt" and planning, US-BEH-01 to US-BEH-03; "Gegossen", US-MON-05; fixing a hint, US-BES-08, US-PHA-03).
+- Given a former section address `/today#behandlungen`, `/today#giessen` or `/today#fehlt-noch`, or the former addresses of "Behandlung" and "Hinweise", when I open it, then the matching layer opens and the address is replaced; an unknown anchor changes nothing.
+- Given an overdue item, then its state is a short chip ("10 Tage überfällig") instead of a repeated heading and sentence; number and unit never break apart (non-breaking space) and digits in counts are tabular.
+- Given nothing is open, then "Heute" says so and names the next step (P-09); a category that is loading or fails keeps its state on its tile and in its layer with a retry (P-10) while the rest stays usable.
+- Given the introduction of US-QS-16 applies (new account, calm hint, locked functions), then it still shows on "Heute"; the locked functions are one row "n Funktionen noch nicht geöffnet" that opens a layer (`?sheet=locked`) with the rows (US-ONB-05).
+- Given a wide screen (from 1024 px), then the open layer stands beside the overview as a pane.
+
+State of implementation: `TodayArea` (`web/src/components/routing/areas/today-area`) shows `TodayPage` (the `today` module: title, date, most urgent item, opener for the rest) with a summary and tiles (`today-overview`) and holds the layers `LayerSheet` for `treatments` (`TreatmentsPage host`), `watering` (`WateringList`) and `hints` (`HintsPage host`); their lists use `Pager`. The counts come from the same requests as the lists (the `count` mode of `TreatmentsPage`, `WateringList` and `HintsPage`, one cached copy each), so no new API route exists. `AppShell` runs in `fit` mode on `/today` only. `CollapsedLockedRows` (`shell/unlock`) is the row and its layer; it lives in the chunk of the introduction because the initial bundle has no headroom (QG-U6).
 
 ### US-QS-19 · Sammlung "Pflanzen" fits one screen with paged tiles · 🟨 new
 
@@ -311,6 +330,21 @@ Acceptance criteria:
 - Given a layer, then it has at most one filled primary action: "Annehmen" is the quiet filled kind of button and the other actions are outline buttons (US-QS-15).
 
 State of implementation: `FriendsPage` (`web/src/social/pages/friends-page`) with `friend-tiles` and `friend-layers`; calm mode arrives through `CalmGate` (`components/routing/areas/shared/simple-routes/calm-gate`, shared with the match deck), and the route of "Freunde" moved into `socialRoutes`. The shell frame stays in the scrolling mode: its opt-in `fit` is global to the app shell, so it is left off here and the overview fits by its own size. Status 🟨 until a real phone check.
+
+### US-QS-21 · "Entdecken" fits one screen and opens its parts as layers · 🟨 new
+
+As a **plant keeper** I want "Entdecken" to fit one screen in both modes and to open filters and the proposal as layers, so that I search the catalog without scrolling a page that was 3.5 phone screens long (owner decision 2026-10-29, after a UI review; applies US-QS-15 to US-QS-14).
+
+Acceptance criteria:
+
+- Given a viewport of 360x640 px (starting value, assumption), when I open "Entdecken" in either mode ("Vorschläge" or "Katalog"), then it fits without page scroll: the heading, the mode switch and the content of the mode.
+- Given "Katalog", then the search field and a page of compact results (name, scientific name and one fact each) show; the results are paged with the pager of US-QS-15 and the page is in the address (`?page=n`); a new search or a changed filter starts at page 1; the filters live in a layer (`?sheet=filters`) and the chosen ones show as removable chips.
+- When I choose a result, then the species profile opens as before (its own page with a way back, US-QS-14), and "Diese Art wählen" still leads to the form of a specimen (US-BES-02).
+- Given "Art vorschlagen", then the proposal form opens as a layer (`?sheet=propose`) with one filled primary action; a refusal shows its text by error code (FR-QG-11).
+- Given "Vorschläge", then the deck stays as it is, its empty state names the next action (P-09), and help is one line.
+- Given no result, loading or an error, then the region shows that state with its next action (P-09, P-10).
+
+State of implementation: in the mode "Katalog" (`SpeciesSearch`, `HitList` with three rows per page as a starting value, `FiltersLayer` with difficulty and "Nur meine Vorschläge" applied to the loaded hits, `FilterChips`, the proposal in a `LayerSheet`) the criteria for the search, paging, filters, chips and the proposal layer are implemented and tested. The fit at 360x640 px was calculated from the row heights, not yet measured in a browser, and the mode "Vorschläge" was not changed (its deck fitted already), so the status stays 🟨.
 
 ### US-QS-22 · Sammlung "Arten", "Wunschliste" and "Equipment" fit one screen · 🟨 new
 

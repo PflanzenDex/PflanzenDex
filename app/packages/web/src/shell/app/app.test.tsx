@@ -173,6 +173,7 @@ function fakeServer(accountStatus = 200, plants = 0) {
 
 // Heute and its sections are lazy parts: loading them first keeps the waits on the data, not on a cold import (#444).
 beforeAll(async () => {
+  Element.prototype.setPointerCapture ??= () => undefined;
   // jsdom has no matchMedia: the planning form of the treatments section reads it.
   window.matchMedia ??= ((query: string) => ({
     matches: false,
@@ -397,15 +398,12 @@ describe("US-ACC-01 App", () => {
     expect(header().queryByRole("link", { name: "Wunschliste" })).toBeNull();
   });
 
-  it("US-QS-14 · US-BES-08 the old address /hints lands on the section Fehlt noch of Heute; its action leads to the view that fixes it", async () => {
+  it("US-QS-14 · US-QS-18 · US-BES-08 the old address /hints lands on the layer Fehlt noch of Heute; its action leads to the view that fixes it", async () => {
     fakeServer(200, 1);
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/hints");
     expect(await screen.findByText(SPECIMEN_HINTS[0]?.text ?? "")).toBeTruthy();
-    expect(screen.getByRole("heading", { level: 2, name: "Fehlt noch" })).toBeTruthy();
-    expect(tab("Heute").getAttribute("aria-current")).toBe("page");
-    expect(header().queryByRole("link", { name: "Hinweise" })).toBeNull();
-    expect(header().queryByRole("link", { name: "Behandlung" })).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Fehlt noch" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Standorte verwalten" }));
     expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");

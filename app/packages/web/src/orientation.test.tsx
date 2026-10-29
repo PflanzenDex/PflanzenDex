@@ -146,14 +146,15 @@ describe("US-QS-09 · a view with nothing to do says so and names the next step 
       "/specimens/difficulty": { rows: [] },
     })[path];
 
-  it("US-QS-09 · US-QS-14 the empty hints (a section of Heute) say so in text with a button to the next place, after the one heading", async () => {
+  it("US-QS-09 · US-QS-18 the empty hints (a layer of Heute) say so in text with a button to the next place, under the layer heading", async () => {
     renderAt("/hints", empty);
-    const note = await screen.findByRole("heading", { level: 3, name: "Keine Hinweise" });
-    const main = screen.getByRole("main");
-    expect(main.contains(note)).toBe(true);
-    const h1 = await within(main).findByRole("heading", { level: 1 });
-    expect(h1.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(within(main).getByRole("button", { name: "Zum Bestand" })).toBeTruthy();
+    const layer = await screen.findByRole("dialog", { name: "Fehlt noch" });
+    expect(
+      await within(layer).findByRole("heading", { level: 3, name: "Keine Hinweise" }),
+    ).toBeTruthy();
+    expect(within(layer).getByRole("button", { name: "Zum Bestand" })).toBeTruthy();
+    // The page behind keeps its one main heading.
+    expect(screen.getByRole("heading", { level: 1, name: "Heute", hidden: true })).toBeTruthy();
   });
 
   it("US-QS-09 the empty species comparison names what to do in its text", async () => {

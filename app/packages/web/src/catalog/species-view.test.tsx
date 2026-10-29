@@ -1,8 +1,7 @@
 import { renderToString as render } from "react-dom/server";
-import type { Species, SpeciesHit } from "@pflanzendex/core";
+import type { Species } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";
 import { SpeciesProfile } from "./profile-view/profile-view";
-import { SpeciesSearch } from "./search-view/search-view";
 import { ProposalForm } from "./proposal/proposal-form/proposal-form";
 import { duplicate } from "./proposal/form";
 import { SearchResultsSkeleton } from "./search-view/search-view.skeleton";
@@ -44,7 +43,6 @@ const species: Species = {
   own: false,
   version: 1,
 };
-const hit = (a: Species, t: SpeciesHit["hit"] = null): SpeciesHit => ({ ...a, hit: t });
 
 describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
   it('shows the details; unknown means "unknown", nothing is invented (P-08)', () => {
@@ -88,68 +86,9 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
   });
 });
 
-describe("US-BES-01 search", () => {
-  const actions = { onSearch: vi.fn(), onOpen: vi.fn(), onPropose: vi.fn() };
-
-  it("the search field has a label and searches by Latin or German name", () => {
-    const h = renderToString(<SpeciesSearch searchText="" hit={[]} {...actions} />);
-    expect(h).toContain("Lateinischer oder deutscher Name");
-    expect(h).toContain('type="search"');
-  });
-
-  it("for a hit via synonym, names what the species was found by (Sansevieria -> Dracaena)", () => {
-    const h = renderToString(
-      <SpeciesSearch
-        searchText="sansevieria"
-        hit={[hit(species, { field: "synonym", display: "Sansevieria trifasciata" })]}
-        {...actions}
-      />,
-    );
-    expect(h).toContain("Dracaena trifasciata");
-    expect(h).toContain("Gefunden über Synonym: Sansevieria trifasciata");
-  });
-
-  it("marks own proposals in the list", () => {
-    const h = renderToString(
-      <SpeciesSearch
-        searchText=""
-        hit={[hit({ ...species, reviewStatus: "proposal", own: true })]}
-        {...actions}
-      />,
-    );
-    expect(h).toContain("Vorschlag, nur für dich sichtbar");
-  });
-
-  it("US-QS-14 renders only the first 20 hits and offers Mehr laden with the total", () => {
-    const many = Array.from({ length: 45 }, (_, i) => hit({ ...species, id: `s${i}` }));
-    const h = renderToString(<SpeciesSearch searchText="" hit={many} {...actions} />);
-    expect(h.match(/<li /g)).toHaveLength(20);
-    expect(h).toContain("20 von 45 angezeigt");
-    expect(h).toContain("Mehr laden");
-  });
-
-  it("US-QS-14 shows no Mehr laden for a short list", () => {
-    const h = renderToString(<SpeciesSearch searchText="" hit={[hit(species)]} {...actions} />);
-    expect(h).not.toContain("Mehr laden");
-  });
-
-  it('without hits: offers "Propose species" (P-09)', () => {
-    const h = renderToString(<SpeciesSearch searchText="Zzyzx" hit={[]} {...actions} />);
-    expect(h).toContain("Keine Art zu „Zzyzx“ gefunden");
-    expect(h).toContain("Art vorschlagen");
-  });
-});
-
 describe('US-BES-01 form "Propose species" (path without AI)', () => {
   const html = () =>
-    renderToString(
-      <ProposalForm
-        start="Aloe"
-        onSend={async () => null}
-        onCancel={vi.fn()}
-        onExisting={vi.fn()}
-      />,
-    );
+    renderToString(<ProposalForm start="Aloe" onSend={async () => null} onExisting={vi.fn()} />);
 
   it("requires all required fields from DM-BES-01", () => {
     const h = html();

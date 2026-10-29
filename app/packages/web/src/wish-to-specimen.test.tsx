@@ -23,6 +23,7 @@ vi.mock("oidc-client-ts", () => ({
   },
 }));
 
+import { setViewportWidth } from "@/lib/viewport-mock";
 import { App } from "./shell/app/app";
 import { EMPTY_DISTRIBUTION } from "./collection/insights/distribution-test-helpers";
 
@@ -141,6 +142,7 @@ const open = async () => {
 };
 
 beforeEach(() => {
+  setViewportWidth(360);
   mgr.getUser.mockReset();
   window.sessionStorage.clear();
   window.sessionStorage.setItem("pflanzendex.silent_tried", "1");

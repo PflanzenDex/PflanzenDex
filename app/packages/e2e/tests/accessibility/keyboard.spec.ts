@@ -140,6 +140,8 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
     await signInByKeyboard(page, account);
     await specimenByKeyboard(page, "Aloe polyphylla");
     await openByKeyboard(page, "Heute");
+    // The treatments are a layer above the overview of "Heute" (US-QS-18): the tile opens it.
+    await press(page, page.getByRole("button", { name: /^Behandeln/ }));
     await press(page, page.getByRole("button", { name: "Behandlung planen" }).first());
     const plan = page.getByRole("form", { name: /Behandlung planen/ });
     await press(page, plan.getByRole("checkbox").first(), "Space");
@@ -166,6 +168,8 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
     await specimenByKeyboard(page, "Haworthia cooperi");
     // The hint "Standort fehlt" carries the action that sets the location (US-PHA-03).
     await openByKeyboard(page, "Heute");
+    // The hints are a layer above the overview of "Heute" (US-QS-18): the tile opens it.
+    await press(page, page.getByRole("button", { name: /^Fehlt noch/ }));
     const select = page.getByLabel(/^Standort für „/);
     await chooseByArrows(page, select, 1);
     await press(page, page.getByRole("button", { name: /^Standort setzen: / }));

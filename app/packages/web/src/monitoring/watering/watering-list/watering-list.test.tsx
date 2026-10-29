@@ -2,6 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../../kernel";
 import { WateringList } from "./watering-list";
@@ -47,7 +48,9 @@ function fakeServer(initial: unknown[]) {
 const show = () =>
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <WateringList api="http://api" token={token} />
+      <MemoryRouter>
+        <WateringList api="http://api" token={token} />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 afterEach(() => {
