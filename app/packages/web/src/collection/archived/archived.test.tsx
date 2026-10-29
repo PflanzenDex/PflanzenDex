@@ -2,6 +2,8 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ArchivedEntry, SpecimenCard } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
+import { findCardButton, openArchive } from "../specimens/tests/plants-test-helpers";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { archiveSpecimen, loadArchived, restoreSpecimen } from "./archived-api";
 import { CollectionPage } from "../collection-page/collection-page";
@@ -74,13 +76,15 @@ function fakeServer(opts: { archivedError?: Response; startArchived?: ArchivedEn
   return { fetchFn, posts };
 }
 const page = () => (
-  <CollectionPage
-    api="http://api"
-    token={async () => "tok"}
-    newSpecies={null}
-    onSpeciesChoose={vi.fn()}
-    onCompleted={vi.fn()}
-  />
+  <MemoryRouter>
+    <CollectionPage
+      api="http://api"
+      token={async () => "tok"}
+      newSpecies={null}
+      onSpeciesChoose={vi.fn()}
+      onCompleted={vi.fn()}
+    />
+  </MemoryRouter>
 );
 
 afterEach(() => {
@@ -126,7 +130,7 @@ describe("US-BES-07 archive on the collection page", () => {
   it('every card has "Archivieren"; the dialog offers the reasons and cancels without a request', async () => {
     const { posts } = fakeServer();
     render(page());
-    await userEvent.click(await screen.findByRole("button", { name: "Archivieren: Bogenhanf" }));
+    await userEvent.click(await findCardButton("Archivieren: Bogenhanf"));
     const form = screen.getByRole("form", { name: "Exemplar archivieren" });
     for (const g of ["eingegangen", "abgegeben", "getauscht", "verschenkt", "verkauft"])
       expect(within(form).getByRole("option", { name: g })).toBeTruthy();
@@ -139,7 +143,7 @@ describe("US-BES-07 archive on the collection page", () => {
   it("archives with the chosen reason, takes the card out of the list and says where it is now (P-09, P-10)", async () => {
     const { posts } = fakeServer();
     render(page());
-    await userEvent.click(await screen.findByRole("button", { name: "Archivieren: Bogenhanf" }));
+    await userEvent.click(await findCardButton("Archivieren: Bogenhanf"));
     await userEvent.selectOptions(screen.getByLabelText("Grund"), "verkauft");
     await userEvent.click(screen.getByRole("button", { name: "Archivieren" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
@@ -151,14 +155,14 @@ describe("US-BES-07 archive on the collection page", () => {
     const status = await screen.findByRole("status");
     expect(status.textContent).toContain("„Bogenhanf“ ist archiviert");
     expect(status.textContent).toContain("Archiv");
-    expect(screen.queryByRole("button", { name: "Archivieren: Bogenhanf" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Archivieren: Bogenhanf – rot" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Bogenhanf, / })).toBeNull();
+    expect(screen.getByRole("button", { name: /^Bogenhanf – rot, / })).toBeTruthy();
   });
 
   it("a free reason is sent trimmed; an empty one is not sent", async () => {
     const { posts } = fakeServer();
     render(page());
-    await userEvent.click(await screen.findByRole("button", { name: "Archivieren: Bogenhanf" }));
+    await userEvent.click(await findCardButton("Archivieren: Bogenhanf"));
     await userEvent.selectOptions(screen.getByLabelText("Grund"), "anderer Grund …");
     await userEvent.click(screen.getByRole("button", { name: "Archivieren" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Grund");
@@ -182,7 +186,7 @@ describe("US-BES-07 archive on the collection page", () => {
       ),
     });
     render(page());
-    await userEvent.click(await screen.findByRole("button", { name: "Archivieren: Bogenhanf" }));
+    await userEvent.click(await findCardButton("Archivieren: Bogenhanf"));
     await userEvent.click(screen.getByRole("button", { name: "Archivieren" }));
     expect((await screen.findByRole("alert")).textContent).toContain("schon archiviert");
     expect(screen.getByRole("form", { name: "Exemplar archivieren" })).toBeTruthy();
@@ -198,6 +202,7 @@ describe("US-BES-07 archive and restore", () => {
     cleanup();
     fakeServer({ startArchived: [entry()] });
     render(page());
+    await openArchive();
     const archived = await screen.findByRole("region", { name: "Archiv" });
     expect(archived.textContent).toContain("Alter Ficus");
     expect(archived.textContent).toContain("Art: Birkenfeige");
@@ -208,6 +213,7 @@ describe("US-BES-07 archive and restore", () => {
   it("US-BES-11 an archive entry offers the catch date correction; it posts the new date and says what changed (P-09)", async () => {
     const { posts } = fakeServer({ startArchived: [entry()] });
     render(page());
+    await openArchive();
     await userEvent.click(
       await screen.findByRole("button", { name: "Fangdatum korrigieren: Alter Ficus" }),
     );
@@ -219,6 +225,7 @@ describe("US-BES-07 archive and restore", () => {
     expect(posts[0]?.path).toBe("/specimens/e9/catch-date");
     expect(posts[0]?.body["catchDate"]).toBe("2025-12-24");
     expect((await screen.findByRole("status")).textContent).toContain("Alter Ficus");
+    await openArchive();
     expect(await screen.findByRole("region", { name: "Archiv" })).toBeTruthy();
   });
 
@@ -237,6 +244,7 @@ describe("US-BES-07 archive and restore", () => {
       ),
     });
     render(page());
+    await openArchive();
     await userEvent.click(
       await screen.findByRole("button", { name: "Fangdatum korrigieren: Alter Ficus" }),
     );
@@ -248,6 +256,7 @@ describe("US-BES-07 archive and restore", () => {
   it("restoring sends the request and brings the specimen back into the cards", async () => {
     const { posts } = fakeServer({ startArchived: [entry({ id: "e1", name: "Bogenhanf" })] });
     render(page());
+    await openArchive();
     await userEvent.click(
       await screen.findByRole("button", { name: "Wiederherstellen: Bogenhanf" }),
     );
@@ -268,10 +277,12 @@ describe("US-BES-07 archive and restore", () => {
       ),
     });
     render(page());
+    await openArchive();
     await userEvent.click(
       await screen.findByRole("button", { name: "Wiederherstellen: Alter Ficus" }),
     );
     expect((await screen.findByRole("alert")).textContent).toContain("ist nicht archiviert");
+    await openArchive();
     expect(await screen.findByRole("region", { name: "Archiv" })).toBeTruthy();
   });
 });

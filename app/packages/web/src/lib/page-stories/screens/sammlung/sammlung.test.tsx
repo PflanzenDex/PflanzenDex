@@ -11,9 +11,15 @@ const { PlantsPhone, SpeciesDesktopDark, WishlistPhone, PlantsEmpty } = composeS
 describe("US-QS-14 · page story Sammlung", () => {
   afterEach(cleanup);
 
-  it("US-QS-14 · the plants mode shows the cards with their data and no loading state", async () => {
+  it("US-QS-19 · the plants mode shows the tiles with their data and no loading state", async () => {
     await PlantsPhone.run();
-    expect((await screen.findAllByText(/Letzte Messung/)).length).toBe(3);
+    expect(
+      (
+        await screen.findAllByRole("button", {
+          name: /, (Gesund|Vergeilt\/dünn|Behandeln|unbekannt)$/,
+        })
+      ).length,
+    ).toBe(3);
     expect(screen.getAllByText("Aloe").length).toBeGreaterThan(0);
     expect(screen.queryByText(/wird geladen|Lädt/)).toBeNull();
   });

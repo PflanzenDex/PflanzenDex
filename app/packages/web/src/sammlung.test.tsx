@@ -91,7 +91,7 @@ beforeAll(async () => {
     import("./collection/collection-page/collection-page"),
     import("./pokedex/pokedex-page/pokedex-page"),
     import("./wishlist/wishlist-page/wishlist-page"),
-    import("./collection/difficulty-page/difficulty-page"),
+    import("./collection/other-pages/difficulty-page/difficulty-page"),
   ]);
 }, 30_000);
 
@@ -157,6 +157,8 @@ describe("US-QS-14 the destination Sammlung with its switch", () => {
   it("US-QS-14 the switch works from the keyboard and the focus stays on it", async () => {
     renderAt("/collection");
     await screen.findByText("Du hast noch kein Exemplar", { exact: false });
+    await userEvent.tab();
+    expect(document.activeElement).toBe(radio("Ansicht"));
     await userEvent.tab();
     expect(document.activeElement).toBe(radio("Pflanzen"));
     await userEvent.tab();

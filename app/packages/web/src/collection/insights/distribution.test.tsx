@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import type { LightZone, Distribution } from "@pflanzendex/core";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../collection-page/collection-page";
 import { loadDistribution } from "./api/distribution-api";
@@ -189,13 +191,15 @@ describe("US-QS-07 · DS-32 distribution bars", () => {
 
 describe("US-LIC-02 collection page shows the distribution", () => {
   const page = () => (
-    <CollectionPage
-      api="http://api"
-      token={async () => "tok"}
-      newSpecies={null}
-      onSpeciesChoose={vi.fn()}
-      onCompleted={vi.fn()}
-    />
+    <MemoryRouter>
+      <CollectionPage
+        api="http://api"
+        token={async () => "tok"}
+        newSpecies={null}
+        onSpeciesChoose={vi.fn()}
+        onCompleted={vi.fn()}
+      />
+    </MemoryRouter>
   );
 
   it("loads cards, locations and distribution and shows the distribution above the list", async () => {
@@ -211,6 +215,7 @@ describe("US-LIC-02 collection page shows the distribution", () => {
       }),
     );
     render(page());
+    await userEvent.click(await screen.findByRole("button", { name: /Dünnste Zone: Lampe 3/ }));
     expect(
       await screen.findByRole("heading", { name: "Verteilung auf die Lichtzonen" }),
     ).toBeTruthy();

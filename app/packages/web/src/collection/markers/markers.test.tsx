@@ -2,6 +2,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Species, SpecimenCard } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
+import { findCardButton } from "../specimens/tests/plants-test-helpers";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../insights/distribution-test-helpers";
@@ -63,14 +65,16 @@ function fakeServer(cards: SpecimenCard[], answer?: () => Promise<Response>) {
 }
 
 const page = (extra: Partial<Parameters<typeof CollectionPage>[0]> = {}) => (
-  <CollectionPage
-    api="http://api"
-    token={async () => "tok"}
-    newSpecies={null}
-    onSpeciesChoose={vi.fn()}
-    onCompleted={vi.fn()}
-    {...extra}
-  />
+  <MemoryRouter>
+    <CollectionPage
+      api="http://api"
+      token={async () => "tok"}
+      newSpecies={null}
+      onSpeciesChoose={vi.fn()}
+      onCompleted={vi.fn()}
+      {...extra}
+    />
+  </MemoryRouter>
 );
 const apiError = (code: string, text: string) =>
   response(409, { error: { code, text, data: { name: "Bogenhanf", existing: [] } } });
@@ -185,9 +189,7 @@ describe("US-BES-03 form: the marker of the 2nd and 3rd specimen", () => {
 
 describe("US-BES-03 rename: change the marker on the card", () => {
   const open = async () => {
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Kennzeichen ändern: Bogenhanf" }),
-    );
+    await userEvent.click(await findCardButton("Kennzeichen ändern: Bogenhanf"));
   };
 
   it("renames via the form, says the new name and reloads the list", async () => {
@@ -210,9 +212,7 @@ describe("US-BES-03 rename: change the marker on the card", () => {
   it("starts with the current marker", async () => {
     fakeServer([card("e2", "Klammer")]);
     render(page());
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Kennzeichen ändern: Bogenhanf – Klammer" }),
-    );
+    await userEvent.click(await findCardButton("Kennzeichen ändern: Bogenhanf – Klammer"));
     expect(((await screen.findByLabelText("Kennzeichen")) as HTMLInputElement).value).toBe(
       "Klammer",
     );
@@ -246,9 +246,7 @@ describe("US-BES-03 rename: change the marker on the card", () => {
     render(page());
     await open();
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
-    expect(
-      await screen.findByRole("button", { name: "Kennzeichen ändern: Bogenhanf" }),
-    ).toBeTruthy();
+    expect(await findCardButton("Kennzeichen ändern: Bogenhanf")).toBeTruthy();
     expect(posts).toHaveLength(0);
   });
 });

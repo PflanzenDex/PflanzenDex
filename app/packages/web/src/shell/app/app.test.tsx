@@ -2,6 +2,7 @@
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import "../../collection/specimens/tests/plants-test-helpers";
 
 // The sign-in service is a foreign system: UserManager is replaced, app and modules run for real.
 const mgr = vi.hoisted(() => ({
@@ -186,7 +187,7 @@ beforeAll(async () => {
     import("@/components/routing/areas/today-area/today-area"),
     import("../../today/today-page/today-page"),
     import("../../care/treatments/treatments-page/treatments-page"),
-    import("../../collection/hints-page/hints-page"),
+    import("../../collection/other-pages/hints-page/hints-page"),
     import("../today-intro/today-intro"),
   ]);
 }, 30_000);
@@ -310,7 +311,10 @@ describe("US-ACC-01 App", () => {
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
     expect(species.getAttribute("aria-current")).toBeNull();
 
-    await userEvent.click(screen.getByRole("button", { name: "Standorte verwalten" }));
+    await userEvent.click(screen.getByRole("button", { name: "Ansicht" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Standorte und Lichtzonen verwalten" }),
+    );
     expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
 
     await userEvent.click(tab("Konto"));
@@ -345,9 +349,13 @@ describe("US-ACC-01 App", () => {
     renderApp("/care-phases");
     expect(await screen.findByText("Noch kein Exemplar hat eine Phase.")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Ansicht" }));
     expect(
-      screen.getByRole("button", { name: /Nach Pflegephase/ }).getAttribute("aria-pressed"),
+      (await screen.findByRole("button", { name: /Nach Pflegephase/ })).getAttribute(
+        "aria-pressed",
+      ),
     ).toBe("true");
+    await userEvent.keyboard("{Escape}");
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
     expect(queryTab("Pflegephasen")).toBeNull();
   });
@@ -361,7 +369,7 @@ describe("US-ACC-01 App", () => {
     expect(queryTab("Standorte und Licht")).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
     expect(await screen.findByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Standorte verwalten" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ansicht" })).toBeTruthy();
   });
 
   it("US-QS-14 · US-BES-05 the old address /difficulty opens the comparison in the species mode of the Sammlung and says what to do without a species", async () => {

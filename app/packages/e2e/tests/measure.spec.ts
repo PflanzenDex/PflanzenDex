@@ -1,5 +1,5 @@
 import { axeReport } from "../support/axe";
-import { signIn, expect, test } from "../support/fixtures";
+import { openFirstPlant, signIn, expect, test } from "../support/fixtures";
 import type { Page } from "@playwright/test";
 
 // Core flow R1: record a measurement (US-WAC-01), signed in, against the real API and database.
@@ -28,6 +28,7 @@ async function withSpecimen(page: Page, species: string): Promise<void> {
 /** From any view: the Sammlung, then the measuring view of the first plant. */
 async function measureFromCollection(page: Page): Promise<void> {
   await page.getByRole("link", { name: "Sammlung", exact: true }).click();
+  await openFirstPlant(page);
   await page.getByRole("button", { name: /^Messen: / }).click();
 }
 
@@ -38,6 +39,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
   }, info) => {
     await signIn(page, account);
     await withSpecimen(page, "Echeveria elegans");
+    await openFirstPlant(page);
     await page.getByRole("button", { name: /^Messen: / }).click();
 
     await expect(page.getByRole("heading", { level: 1, name: /^Messen: / })).toBeVisible();
@@ -77,6 +79,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
   test("US-WAC-01 an invalid input is rejected and writes nothing", async ({ page, account }) => {
     await signIn(page, account);
     await withSpecimen(page, "Aloe polyphylla");
+    await openFirstPlant(page);
     await page.getByRole("button", { name: /^Messen: / }).click();
     const form = page.getByRole("form", { name: "Messung erfassen" });
     for (const value of ["abc", "-3"]) {
