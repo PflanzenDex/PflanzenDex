@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ProposalForm } from "./catalog/proposal/proposal-form/proposal-form";
-import { SpecimenCardView } from "./collection/specimens/cards/specimen-card/specimen-card";
+import { PlantOverview } from "./collection/plants-screen/plant-layers/plant-layer/plant-overview/plant-overview";
 
 afterEach(cleanup);
 
@@ -32,7 +32,9 @@ const list = (cards: SpecimenCard[]) =>
   render(
     <ul>
       {cards.map((c) => (
-        <SpecimenCardView key={c.id} card={c} photoAccess={ACCESS} />
+        <li key={c.id}>
+          <PlantOverview card={c} access={ACCESS} onTreat={() => undefined} />
+        </li>
       ))}
     </ul>,
   );
@@ -84,9 +86,9 @@ describe("US-QS-10 · a status is also text (1.4.1, 1.3.3)", () => {
         lastMeasurement: { date: "2026-10-01", value: 12.5, quality: "etiolated", note: null },
       }),
     ]);
-    const strong = screen.getByText("Vergeilt/dünn");
-    expect(strong.textContent).toBe("Vergeilt/dünn");
-    expect(within(strong.closest("p") as HTMLElement).getByText("Vergeilt/dünn")).toBeTruthy();
+    const [strong] = screen.getAllByText("Vergeilt/dünn");
+    expect(strong?.textContent).toBe("Vergeilt/dünn");
+    expect(within(strong?.closest("p") as HTMLElement).getByText("Vergeilt/dünn")).toBeTruthy();
   });
 
   it("US-QS-10 the status of a specimen is spoken as words (care phase of the specimen: plant, cutting, archived)", () => {

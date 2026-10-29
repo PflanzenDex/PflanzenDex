@@ -3,7 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
-import { findCardButton, openPlant } from "../../specimens/tests/plants-test-helpers";
+import { findCardButton, openPlant, openTab } from "../../specimens/tests/plants-test-helpers";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../../insights/distribution-test-helpers";
@@ -124,6 +124,7 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
     const status = await screen.findByRole("status");
     expect(status.textContent).toContain("„Bogenhanf“ ist jetzt „Lampe 3“");
     await openPlant("Bogenhanf");
+    await openTab("Standort");
     expect(await screen.findByText(/Lampe 3 \(von dir für dieses Exemplar gesetzt\)/)).toBeTruthy();
   });
 

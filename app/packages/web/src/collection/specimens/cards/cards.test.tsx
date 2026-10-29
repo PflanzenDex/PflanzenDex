@@ -3,8 +3,8 @@ import { cleanup, render as rtl, screen } from "@testing-library/react";
 import { renderToString as render } from "react-dom/server";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { SpecimenCardView } from "./specimen-card/specimen-card";
-import { GRID } from "./parts/parts";
+import { PlantLocation } from "../../plants-screen/plant-layers/plant-layer/plant-location/plant-location";
+import { PlantOverview } from "../../plants-screen/plant-layers/plant-layer/plant-overview/plant-overview";
 import { loadCards } from "./cards-api";
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
@@ -31,12 +31,15 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   ...extra,
 });
 const ACCESS = { api: "http://api", token: async () => "tok" };
-/** The cards as the plant layer shows them: a list of `SpecimenCardView` in the card grid (US-QS-19). */
+/** The facts of a card as the plant layer shows them: the tabs "Überblick" and "Standort" (US-QS-23). */
 function CardList({ cards }: { cards: SpecimenCard[] }) {
   return (
-    <ul className={GRID}>
+    <ul>
       {cards.map((c) => (
-        <SpecimenCardView key={c.id} card={c} photoAccess={ACCESS} />
+        <li key={c.id}>
+          <PlantOverview card={c} access={ACCESS} onTreat={() => undefined} />
+          <PlantLocation card={c} />
+        </li>
       ))}
     </ul>
   );
@@ -246,22 +249,5 @@ describe("US-BES-06 Karte: offene Behandlung", () => {
     const b = treatment("in 2 Tg.", "soon", 2);
     expect(html([card({ treatment: b, moreTreatments: 2 })])).toContain("+2 weitere");
     expect(html([card({ treatment: b })])).not.toContain("more");
-  });
-});
-
-describe("US-BES-06 grid and operation", () => {
-  it("a grid of list items, one card per specimen, with a heading per card", () => {
-    const h = html([card(), card({ id: "e2", name: "Aloe" })]);
-    expect(h.match(/<li /g)).toHaveLength(2);
-    expect(h).toContain("<ul ");
-    expect(h).toContain("<h2");
-  });
-
-  it("the grid adapts to the width: one to two columns on the phone, more on wide screens", () => {
-    const h = html([card()]);
-    expect(h).toContain("grid-cols-1");
-    expect(h).toContain("sm:grid-cols-2");
-    expect(h).toContain("lg:grid-cols-3");
-    expect(h).not.toMatch(/\bmax-(sm|md|lg|xl):/);
   });
 });

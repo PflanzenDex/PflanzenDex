@@ -93,11 +93,25 @@ export function FormButtons(props: {
 }
 
 /** The latest photo (US-WAC-05): private, fetched with the token and shown from an object URL (P-05, P-10). */
-export function Photo({ card, access }: { card: SpecimenCard; access: PhotoAccess }) {
+export function Photo({
+  card,
+  access,
+  compact = false,
+}: {
+  card: SpecimenCard;
+  access: PhotoAccess;
+  /** A thumbnail beside the facts instead of the full-width picture, so the overview fits one screen (US-QS-23). */
+  compact?: boolean;
+}) {
   const state = useStoredPhoto(access, card.photo?.url);
   if (!card.photo) {
     return (
-      <div className="grid min-h-[72px] place-items-center rounded-lg border border-dashed border-border text-muted-foreground">
+      <div
+        className={cn(
+          "grid place-items-center rounded-lg border border-dashed border-border text-center text-muted-foreground",
+          compact ? "size-24 shrink-0 p-1 text-sm" : "min-h-[72px]",
+        )}
+      >
         <span>Noch kein Foto</span>
       </div>
     );
@@ -105,7 +119,10 @@ export function Photo({ card, access }: { card: SpecimenCard; access: PhotoAcces
   if (typeof state !== "string") return <Quiet>{state ? refusalText(state) : "Lädt …"}</Quiet>;
   return (
     <a
-      className="block aspect-[4/3] overflow-hidden rounded-lg bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className={cn(
+        "block overflow-hidden rounded-lg bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        compact ? "size-24 shrink-0" : "aspect-[4/3]",
+      )}
       href={state}
       target="_blank"
       rel="noopener noreferrer"

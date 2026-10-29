@@ -12,13 +12,39 @@ export async function openPlant(name: string): Promise<void> {
   );
 }
 
+/** The rarer actions sit in the menu "Mehr" of the plant layer (US-QS-23); the others are buttons of a tab. */
+const MENU = new Set(["Eingetopft", "Kennzeichen ändern", "Fangdatum korrigieren", "Archivieren"]);
+const MENU_ITEM: Record<string, string> = {
+  Eingetopft: "Eingetopft",
+  "Kennzeichen ändern": "Kennzeichen",
+  "Fangdatum korrigieren": "Fangdatum",
+  Archivieren: "Archivieren",
+};
+
+/** Opens a tab of the open plant layer (US-QS-23). */
+export async function openTab(name: string): Promise<void> {
+  await userEvent.click(await screen.findByRole("tab", { name }));
+}
+
 /**
- * Finds a card button such as "Archivieren: Bogenhanf": the plant is named after the colon, and its layer is opened
- * first unless a layer holds the button already (US-QS-19).
+ * Finds an action of a plant such as "Archivieren: Bogenhanf": the plant is named after the colon and its layer is
+ * opened first. A rare action is a menu item of "Mehr" (opened here), "Lichtzone ändern" is on the tab "Standort", and
+ * "Messen" is the primary action of the overview (US-QS-23).
  */
 export async function findCardButton(label: string): Promise<HTMLElement> {
-  const name = label.slice(label.indexOf(": ") + 2);
-  if (!screen.queryByRole("button", { name: label })) await openPlant(name);
+  const [action, name] = [
+    label.slice(0, label.indexOf(": ")),
+    label.slice(label.indexOf(": ") + 2),
+  ];
+  if (!screen.queryByRole("tab", { name: "Überblick" })) await openPlant(name);
+  if (MENU.has(action)) {
+    const item = MENU_ITEM[action] ?? action;
+    if (!screen.queryByRole("menuitem", { name: item })) {
+      await userEvent.click(await screen.findByRole("button", { name: "Mehr" }));
+    }
+    return screen.findByRole("menuitem", { name: item });
+  }
+  if (action === "Lichtzone ändern") await openTab("Standort");
   return screen.findByRole("button", { name: label });
 }
 

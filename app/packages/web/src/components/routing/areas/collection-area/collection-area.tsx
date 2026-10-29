@@ -7,6 +7,7 @@ import { PokedexPage } from "@/pokedex";
 import { WishlistPage, type WishToPlant } from "@/wishlist";
 import { EquipmentPage } from "@/equipment";
 import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skeleton";
+import { plantSlots } from "./plant-slots/plant-slots";
 import { AreaHeader } from "./area-header/area-header";
 import { Button } from "@/components/ui/button/button";
 import {
@@ -164,6 +165,13 @@ function ModeBody(p: ModeProps) {
     );
   if (p.group === "phase" && !p.newSpecies)
     return <CarePhasesPage api={api} token={token} host={host} />;
+  return <PlantsMode {...p} />;
+}
+
+/** The plants themselves, with the parts of other modules wired into the plant layer (US-QS-23). */
+function PlantsMode(p: ModeProps) {
+  const { api, token, host } = p;
+  const slots = plantSlots(api, token);
   return (
     <CollectionPage
       api={api}
@@ -177,6 +185,7 @@ function ModeBody(p: ModeProps) {
       {...(p.group === "location" ? { groupBy: "location" as const } : {})}
       onMeasure={p.setMeasure}
       onManage={p.onOpenManage}
+      plantSlots={slots}
     />
   );
 }
