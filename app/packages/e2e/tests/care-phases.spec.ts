@@ -12,6 +12,7 @@ test.describe("US-PHA-01 Pflegephasen", () => {
     await signIn(page, account);
     // The care phases are a grouping of the plants in the Sammlung (US-QS-14).
     await page.getByRole("link", { name: "Sammlung", exact: true }).click();
+    await page.getByRole("button", { name: "Ansicht" }).click();
     await page.getByRole("button", { name: "Nach Pflegephase" }).click();
     await expect(page.getByRole("heading", { level: 2, name: "Pflegephasen" })).toBeVisible();
     await expect(

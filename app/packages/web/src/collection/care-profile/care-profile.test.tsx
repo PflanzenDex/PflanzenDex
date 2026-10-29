@@ -3,8 +3,8 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CareProfileEntry, Layered } from "@pflanzendex/core";
-import { CareProfileSection } from "./care-profile-page/care-profile-page";
-import { loadCareProfiles, saveCareProfile } from "./care-profile/care-profile-api";
+import { CareProfileSection } from "../care-profile-page/care-profile-page";
+import { loadCareProfiles, saveCareProfile } from "./care-profile-api";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));

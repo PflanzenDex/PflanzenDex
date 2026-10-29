@@ -39,7 +39,7 @@ const setText = (card: SpecimenCard, zone: LightZone): string =>
   `Die Lichtzone von „${card.name}“ ist jetzt „${zone.name}“ (von dir gesetzt). ` +
   (card.status === "cutting"
     ? "Als Steckling steht es weiter unter Stecklingslicht; die Zone gilt, sobald du es eintopfst."
-    : "Die Verteilung unten zählt das Exemplar dort mit.");
+    : "Die Verteilung unter „Lichtzonen“ zählt das Exemplar dort mit.");
 
 /**
  * State and action for the own light zone of an existing specimen (US-LIC-02, US-BES-04). A zone is set or changed
