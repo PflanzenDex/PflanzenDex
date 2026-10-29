@@ -156,9 +156,10 @@ describe("US-BES-04 repotted on the card", () => {
     render(page());
     expect(await findCardButton("Eingetopft: Ableger")).toBeTruthy();
     await userEvent.keyboard("{Escape}");
+    await userEvent.keyboard("{Escape}");
     await openPlant("Alte Pflanze");
-    expect(await screen.findByRole("button", { name: "Archivieren: Alte Pflanze" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Eingetopft: Alte Pflanze" })).toBeNull();
+    expect(await findCardButton("Archivieren: Alte Pflanze")).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: "Eingetopft" })).toBeNull();
   });
 
   it("US-BES-04: repotting sends the request, reloads and says what happens next (P-09)", async () => {
@@ -172,7 +173,7 @@ describe("US-BES-04 repotted on the card", () => {
     expect(status.textContent).toContain("„Ableger“ ist eingetopft");
     expect(status.textContent).toContain("Lichtzone");
     await vi.waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Eingetopft: Ableger" })).toBeNull(),
+      expect(screen.queryByRole("menuitem", { name: "Eingetopft" })).toBeNull(),
     );
   });
 
