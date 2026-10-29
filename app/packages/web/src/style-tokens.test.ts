@@ -1,4 +1,5 @@
-// US-QS-14 · ADR 0011 decisions 2 to 5: the Greenhouse tokens (colour values, type scale, radius, elevation, motion).
+// US-QS-14 · ADR 0011 decisions 2 to 5: the Greenhouse tokens (colour values, type scale, radius, elevation, motion);
+// ADR 0017: neutral surfaces, green only for intent.
 // The contrast of every pair is in style-contrast.test.ts; this file pins the values and the structure of tokens.css.
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
@@ -13,42 +14,42 @@ const decl = (text: string, name: string): string | undefined =>
   [...text.matchAll(/--([\w-]+):\s*([^;]+);/g)].find((m) => m[1] === name)?.[2]?.trim();
 
 const LIGHT = {
-  background: "#f2f6f3",
-  foreground: "#14201a",
+  background: "#fafafa",
+  foreground: "#18181b",
   card: "#ffffff",
   primary: "#1b6b4a",
   "primary-foreground": "#ffffff",
-  secondary: "#e6eee8",
-  "secondary-foreground": "#14201a",
-  muted: "#e6eee8",
-  "muted-foreground": "#4b5c52",
+  secondary: "#f4f4f5",
+  "secondary-foreground": "#18181b",
+  muted: "#f4f4f5",
+  "muted-foreground": "#52525b",
   accent: "#d8eedf",
   "accent-foreground": "#124a32",
   destructive: "#b3261e",
   "destructive-foreground": "#ffffff",
-  border: "#d3ded6",
-  input: "#6b8274",
+  border: "#e4e4e7",
+  input: "#71717a",
   ring: "#1b6b4a",
   warning: "#fff1cf",
   "warning-foreground": "#6b4700",
   "warning-border": "#8a5a00",
 };
 const DARK = {
-  background: "#0f1612",
-  foreground: "#e6efe9",
-  card: "#18221c",
+  background: "#0b0b0c",
+  foreground: "#f4f4f5",
+  card: "#161618",
   primary: "#7bd3a0",
   "primary-foreground": "#0b2316",
-  secondary: "#223028",
-  "secondary-foreground": "#e6efe9",
-  muted: "#18221c",
-  "muted-foreground": "#a5b6ab",
+  secondary: "#232326",
+  "secondary-foreground": "#f4f4f5",
+  muted: "#1f1f22",
+  "muted-foreground": "#a1a1aa",
   accent: "#1f3a2b",
   "accent-foreground": "#a9e8c4",
   destructive: "#ff8a80",
   "destructive-foreground": "#2a0a08",
-  border: "#2b3b31",
-  input: "#6f8c79",
+  border: "#27272a",
+  input: "#7c7c86",
   ring: "#7bd3a0",
   warning: "#3a2f10",
   "warning-foreground": "#f2c766",
@@ -71,7 +72,7 @@ const ZONES_DARK = {
   "phase-dormancy": "#9db8f0",
 };
 
-describe("US-QS-14 · ADR 0011 decision 2 colour tokens", () => {
+describe("US-QS-14 · ADR 0011 decision 2 and ADR 0017 colour tokens", () => {
   it.each(Object.entries(LIGHT))("US-QS-14 light --%s is %s", (name, value) => {
     expect(decl(css.slice(0, darkAt), name)).toBe(value);
   });
@@ -151,12 +152,12 @@ describe("US-QS-14 · ADR 0011 decision 4 radius and elevation", () => {
     ]);
     expect(css).not.toMatch(/--radius:/);
   });
-  it("US-QS-14 elevation uses rgb(20 40 28 / 0.08) in light and rgb(0 0 0 / 0.35) plus a border in dark", () => {
+  it("US-QS-14 elevation uses neutral rgb(0 0 0 / 0.06) in light and rgb(0 0 0 / 0.35) plus a border in dark", () => {
     const light = css.slice(0, darkAt);
     expect(decl(light, "elevation-1")).toBe(
-      "0 1px 2px rgb(20 40 28 / 0.08), 0 6px 16px rgb(20 40 28 / 0.08)",
+      "0 1px 2px rgb(0 0 0 / 0.06), 0 6px 16px rgb(0 0 0 / 0.06)",
     );
-    expect(decl(light, "elevation-2")).toContain("rgb(20 40 28 / 0.08)");
+    expect(decl(light, "elevation-2")).toContain("rgb(0 0 0 / 0.06)");
     const dark = block(darkAt);
     expect(decl(dark, "elevation-1")).toBe(
       "0 1px 2px rgb(0 0 0 / 0.35), 0 6px 16px rgb(0 0 0 / 0.35)",
