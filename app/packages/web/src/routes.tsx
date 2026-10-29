@@ -111,14 +111,7 @@ export function AppRoutes(props: {
           element={<TodayRoute api={api} token={s.token} onOpen={props.onOpen} />}
         />
         {legacyRoutes()}
-        {simpleRoutes(
-          api,
-          s.token,
-          roles,
-          lockPageOf("friends")
-            ? { friends: <UnlockPage api={api} token={s.token} id="friends" /> }
-            : {},
-        )}
+        {simpleRoutes(api, s.token, roles)}
         {handOverRoutes(api, s.token, h, props.onOpenProfile)}
         <Route path="*" element={<Navigate to={PATHS.today} replace />} />
       </Routes>

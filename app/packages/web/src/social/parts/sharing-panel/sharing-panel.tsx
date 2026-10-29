@@ -1,8 +1,24 @@
 import type { SharingRow, SpecimenRow } from "@pflanzendex/core";
+import { Pager } from "@/components/shared/responsive/pager/pager";
 import { Button } from "@/components/ui/button/button";
 import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
 
 type Specimen = Pick<SpecimenRow, "id" | "speciesId" | "name" | "status">;
+
+/** Species groups per page in the layer (starting value, assumption; US-QS-20). */
+const PAGE_SIZE = 2;
+
+/** What the row "Was Freunde sehen" shows as the current choice: all private, or how many specimens are shared. */
+export function sharingChoice(
+  specimens: readonly Specimen[],
+  shared: readonly SharingRow[],
+): string {
+  const active = specimens.filter((s) => s.status !== "archived");
+  if (active.length === 0) return "Noch keine Exemplare";
+  const ids = new Set(shared.map((r) => r.specimenId));
+  const count = active.filter((s) => ids.has(s.id)).length;
+  return count === 0 ? "Alles privat" : `${count} von ${active.length} Exemplaren geteilt`;
+}
 
 /** The species part of a specimen name (`Species – marker`, DM-BES-03): the marker is never needed here. */
 const speciesTitle = (name: string) => name.split(" – ")[0] ?? name;
@@ -67,9 +83,10 @@ function SpeciesGroup(props: {
 }
 
 /**
- * "Was Freunde sehen" (US-SOZ-04): per specimen "Mit Freunden teilen" (off by default: everything is private, P-05),
- * and per species the bulk actions. Says what a friend can see and what never leaves the account (FR-SOZ-01), and that
- * withdrawing works from the next retrieval on, because what was already delivered cannot be retrieved (P-10).
+ * The content of the layer "Was Freunde sehen" (US-SOZ-04, US-QS-20): per specimen "Mit Freunden teilen" (off by default:
+ * everything is private, P-05), and per species the bulk actions, in pages. The full explanation of what a friend can see
+ * and what never leaves the account (FR-SOZ-01), and that withdrawing works from the next retrieval on (P-10), is the help
+ * layer; here one line stays.
  */
 export function SharingPanel(props: {
   specimens: readonly Specimen[];
@@ -81,39 +98,29 @@ export function SharingPanel(props: {
   const shared = new Set(props.shared.map((r) => r.specimenId));
   const list = groups(props.specimens);
   return (
-    <section aria-labelledby="friend-sharing-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="friend-sharing-title" className="text-xl font-semibold">
-        Was Freunde sehen
-      </h2>
+    <section aria-label="Was Freunde sehen" className="flex min-w-0 flex-col gap-3">
       <p className="text-muted-foreground">Alles ist privat, bis du es freigibst.</p>
-      <details>
-        <summary className="flex min-h-11 cursor-pointer items-center">
-          Was Freunde genau sehen
-        </summary>
-        <p className="text-muted-foreground">
-          Freunde sehen von einem freigegebenen Exemplar nur die Art, den Namen, das Fangdatum und
-          ob es ein Steckling ist, nie Standort, Messwerte, Behandlungen, Kennzeichen oder Preise.
-          Ein Zurückziehen gilt ab dem nächsten Abruf; was schon angezeigt wurde, lässt sich nicht
-          zurückholen. „Alles privat“ in den Einstellungen setzt alle Freigaben aus, ohne sie zu
-          löschen.
-        </p>
-      </details>
       {list.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-3">
           Du hast noch keine Exemplare, die du freigeben könntest. Lege zuerst unter „Bestand“ ein
           Exemplar an.
         </p>
       ) : (
-        list.map((g) => (
-          <SpeciesGroup
-            key={g.speciesId}
-            group={g}
-            shared={shared}
-            busy={props.busy}
-            onSet={props.onSet}
-            onSetSpecies={props.onSetSpecies}
-          />
-        ))
+        <Pager
+          items={list}
+          pageSize={PAGE_SIZE}
+          label="Arten zum Teilen"
+          getKey={(g) => g.speciesId}
+          renderItem={(g) => (
+            <SpeciesGroup
+              group={g}
+              shared={shared}
+              busy={props.busy}
+              onSet={props.onSet}
+              onSetSpecies={props.onSetSpecies}
+            />
+          )}
+        />
       )}
     </section>
   );
