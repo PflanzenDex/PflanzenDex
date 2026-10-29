@@ -89,7 +89,7 @@ describe("US-ONB-05 lock page", () => {
       await screen.findByText("Tausche Pflanzen und Stecklinge mit deinen Freunden."),
     ).toBeTruthy();
     expect(screen.getByRole("link", { name: "Alle Funktionen ansehen" }).getAttribute("href")).toBe(
-      "/account#funktionen",
+      "/account/functions",
     );
   });
 

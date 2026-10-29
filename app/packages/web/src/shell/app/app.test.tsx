@@ -315,7 +315,7 @@ describe("US-ACC-01 App", () => {
 
     await userEvent.click(tab("Konto"));
     expect(await screen.findByRole("heading", { level: 1, name: "Konto" })).toBeTruthy();
-    expect(await screen.findByText("Hallo, Lena")).toBeTruthy();
+    expect(await screen.findByRole("link", { name: /Lena/ })).toBeTruthy();
     expect(screen.getByText("lena@example.test")).toBeTruthy();
   });
 
@@ -514,11 +514,12 @@ describe("US-ACC-01 App", () => {
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
   });
 
-  it("a version line is at the end of the page", async () => {
+  it("US-QS-17 no page shows a version footer", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue(null);
     renderApp();
-    expect((await screen.findByText(/^Version /)).textContent).toMatch(/^Version \S+/);
+    await screen.findByRole("button", { name: "Anmelden" });
+    expect(screen.queryByText(/^Version /)).toBeNull();
   });
 
   it("US-QS-07 · a deep link opens the page of its address", async () => {
