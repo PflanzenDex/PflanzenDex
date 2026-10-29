@@ -33,7 +33,7 @@ export async function signInToApp(page: Page, account: TestAccount): Promise<voi
   await page.locator("#username").fill(account.email);
   await page.locator("#password").fill(account.password);
   await page.locator("#kc-login").click();
-  await expect(page.getByRole("link", { name: "PflanzenDéx, zur Startseite" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "PflanzenDéx, zu Heute" })).toBeVisible();
 }
 
 /** Opens a view and waits until it has loaded: a main heading and no running request. */

@@ -3,7 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { AppShell } from "../../app-shell/app-shell";
-import { BRAND_LINK_LABEL, DISPLAY_NAME } from "../nav-item";
+import { BRAND_HREF, BRAND_LINK_LABEL, DISPLAY_NAME } from "../nav-item";
 import {
   CATALOG_ADDRESS,
   DIFFICULTY_ADDRESS,
@@ -93,11 +93,7 @@ describe("US-ACC-05 navigation", () => {
 describe("US-QS-07 · DS-25 navigation items", () => {
   it("US-QS-07 · DS-25 every destination links to the address of its view", () => {
     const items = navItems({ reviewer: true, operator: true });
-    expect(items.map((i) => i.href).sort()).toEqual(
-      Object.values(PATHS)
-        .filter((p) => p !== PATHS.start)
-        .sort(),
-    );
+    expect(items.map((i) => i.href).sort()).toEqual(Object.values(PATHS).sort());
   });
 
   it("US-QS-07 · DS-25 the bottom bar shows at most 5 destinations, the rest sit in the drawer", () => {
@@ -116,10 +112,10 @@ describe("US-QS-07 · DS-25 navigation items", () => {
   });
 });
 
-describe("US-QS-14 · the start page is no destination", () => {
-  it("US-QS-14 · on / the brand link leads home and no destination is marked active", () => {
+describe("US-QS-16 · the brand leads to Heute", () => {
+  it("US-QS-16 · the brand link leads to Heute, and on a destination only that one is marked active", () => {
     render(
-      <MemoryRouter initialEntries={["/"]}>
+      <MemoryRouter initialEntries={["/collection"]}>
         <AppShell items={navItems({ reviewer: true, operator: true })}>
           <p>Inhalt</p>
         </AppShell>
@@ -128,20 +124,22 @@ describe("US-QS-14 · the start page is no destination", () => {
     for (const name of ["Navigation unten", "Navigation seitlich", "Hauptnavigation"]) {
       const nav = within(screen.getByRole("navigation", { name }));
       for (const link of nav.getAllByRole("link"))
-        expect(link.getAttribute("aria-current"), link.textContent ?? "").toBeNull();
+        expect(link.getAttribute("aria-current") === "page", link.textContent ?? "").toBe(
+          link.textContent === "Sammlung",
+        );
     }
     const brand = within(screen.getByRole("navigation", { name: "Hauptnavigation" })).getByRole(
       "link",
-      { name: "PflanzenDéx, zur Startseite" },
+      { name: "PflanzenDéx, zu Heute" },
     );
-    expect(brand.getAttribute("href")).toBe("/");
+    expect(brand.getAttribute("href")).toBe("/today");
   });
 });
 
 describe("US-QS-07 · DS-22 navigation icons", () => {
   it("US-QS-07 · DS-22 every destination has a decorative icon", () => {
     const items = navItems({ reviewer: true, operator: true });
-    expect(items.length).toBe(Object.values(PATHS).length - 1);
+    expect(items.length).toBe(Object.values(PATHS).length);
     for (const item of items) expect(item.icon, item.label).not.toBeNull();
   });
 
@@ -227,7 +225,8 @@ describe("US-QS-14 the destination Sammlung", () => {
 describe("display name (US-QS-14)", () => {
   it("US-QS-14: the product is displayed as PflanzenDéx and titles end with it", () => {
     expect(DISPLAY_NAME).toBe("PflanzenDéx");
-    expect(BRAND_LINK_LABEL).toBe("PflanzenDéx, zur Startseite");
+    expect(BRAND_LINK_LABEL).toBe("PflanzenDéx, zu Heute");
+    expect(BRAND_HREF).toBe(PATHS.today);
     expect(pageTitle("X")).toBe("X – PflanzenDéx");
     expect(pageTitle()).toBe("PflanzenDéx");
   });

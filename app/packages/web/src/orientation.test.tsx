@@ -79,7 +79,7 @@ describe("US-QS-09 · every view has a unique German title (2.4.2)", () => {
     const titles = [...VIEWS.map(([, path]) => viewTitle(path)), viewTitle(profileAddress("abc"))];
     expect(new Set(titles).size).toBe(titles.length);
     for (const t of titles) expect(t).toMatch(/^.+ – PflanzenDéx$/);
-    expect(viewTitle(PATHS.start)).toBe("Start – PflanzenDéx");
+    expect(viewTitle("/")).toBe("PflanzenDéx");
     expect(viewTitle("/gibt-es-nicht")).toBe("PflanzenDéx");
   });
 
@@ -122,12 +122,11 @@ describe("US-QS-09 · the navigation is the same in every view (3.2.3, 3.2.4)", 
       cleanup();
     }
     for (const links of seen) expect(links).toEqual(seen[0]);
-    // "/" (Start) is no destination: the brand link leads there (US-QS-14).
-    expect(seen[0]?.length).toBe(Object.keys(PATHS).length - 1);
+    expect(seen[0]?.length).toBe(Object.keys(PATHS).length);
   }, 20_000); // renders every view in one test: ~1 s alone, over the 5 s default under machine load (#200)
 
   it("US-QS-09 keyboard only: choosing an entry moves the focus to the heading of the new view", async () => {
-    renderAt(PATHS.start);
+    renderAt(PATHS.today);
     const bar = screen.getByRole("navigation", { name: "Hauptnavigation" });
     const link = within(bar).getByRole("link", { name: "Sammlung" });
     link.focus();
