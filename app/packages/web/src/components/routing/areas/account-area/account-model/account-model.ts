@@ -1,8 +1,31 @@
 import {
-  ACCOUNT_SECTIONS,
   PATHS,
   type AccountSection,
 } from "@/components/shared/navigation/nav-model/navigation/navigation";
+
+/** The path segment of each section (US-QS-17); `accountAddress` derives the same segments. */
+export const ACCOUNT_SECTIONS = {
+  profile: "profile",
+  settings: "settings",
+  achievements: "achievements",
+  reminders: "reminders",
+  aiClients: "ai-clients",
+  measured: "measured",
+  functions: "functions",
+  data: "data",
+} as const;
+
+/** The former anchors of the stacked "Konto" (`/account#erfolge`): old links and bookmarks lead to the matching section (US-QS-17). */
+export const LEGACY_ACCOUNT_ANCHORS: Readonly<Record<string, AccountSection>> = {
+  profil: "profile",
+  einstellungen: "settings",
+  erfolge: "achievements",
+  erinnerungen: "reminders",
+  "ki-clients": "aiClients",
+  gemessen: "measured",
+  funktionen: "functions",
+  daten: "data",
+};
 
 /** The sections of "Konto" in the order of the index (US-QS-17): key, name and the loading text. */
 export const SECTIONS: readonly { key: AccountSection; title: string; loading: string }[] = [

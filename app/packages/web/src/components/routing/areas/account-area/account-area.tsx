@@ -6,13 +6,17 @@ import { AreaSection } from "@/components/routing/areas/shared/area-section/area
 import { headingId } from "@/components/routing/areas/shared/area-section/use-section-anchor";
 import type { Account } from "@/account";
 import {
-  ACCOUNT_SECTIONS,
-  LEGACY_ACCOUNT_ANCHORS,
   PATHS,
   type AccountSection,
 } from "@/components/shared/navigation/nav-model/navigation/navigation";
 import { AccountIndex } from "./account-index/account-index";
-import { SECTIONS, rowId, sectionOf } from "./account-model/account-model";
+import {
+  ACCOUNT_SECTIONS,
+  LEGACY_ACCOUNT_ANCHORS,
+  SECTIONS,
+  rowId,
+  sectionOf,
+} from "./account-model/account-model";
 import { SectionContent, type Locks } from "./account-sections/account-sections";
 
 type Token = () => Promise<string | undefined>;
@@ -56,7 +60,11 @@ function SectionView(props: Props & { section: AccountSection }) {
         anchor={ACCOUNT_SECTIONS[props.section]}
         title={info.title}
         loading={info.loading}
-        main
+        heading={
+          <h1 id={id} className="text-2xl font-semibold">
+            {info.title}
+          </h1>
+        }
       >
         <SectionContent {...props} />
       </AreaSection>

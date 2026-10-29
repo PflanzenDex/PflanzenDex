@@ -170,7 +170,7 @@ describe("US-QS-17 Konto with its sections as views", () => {
     const signOut = vi.fn();
     show("/account/profile", { signOut });
     const profileSection = screen.getByRole("region", { name: "Profil" });
-    expect(within(profileSection).getByText("Hallo, Lena")).toBeTruthy();
+    expect(await within(profileSection).findByText("Hallo, Lena")).toBeTruthy();
     expect(within(profileSection).getByText("lena@example.test")).toBeTruthy();
     await userEvent.click(within(profileSection).getByRole("button", { name: "Abmelden" }));
     expect(signOut).toHaveBeenCalledOnce();
@@ -179,11 +179,12 @@ describe("US-QS-17 Konto with its sections as views", () => {
     ).toBeTruthy();
   });
 
-  it("US-QS-17 · US-ACC-01 a sign-in error stays visible in the section Profil", () => {
+  it("US-QS-17 · US-ACC-01 a sign-in error stays visible in the section Profil", async () => {
     fakeServer();
     show("/account/profile", { error: "Die Abmeldung ist fehlgeschlagen." });
     expect(
-      within(screen.getByRole("region", { name: "Profil" })).getByRole("alert").textContent,
+      (await within(screen.getByRole("region", { name: "Profil" })).findByRole("alert"))
+        .textContent,
     ).toContain("Abmeldung ist fehlgeschlagen");
   });
 
@@ -223,11 +224,11 @@ describe("US-QS-17 Konto with its sections as views", () => {
     expect(link.getAttribute("href")).toBe("/collection?view=plants&manage=locations");
   });
 
-  it("US-QS-17 · US-QS-05 the section Was wird gemessen? names what is recorded about the use", () => {
+  it("US-QS-17 · US-QS-05 the section Was wird gemessen? names what is recorded about the use", async () => {
     fakeServer();
     show("/account/measured");
     const section = within(screen.getByRole("region", { name: "Was wird gemessen?" }));
-    expect(section.getByText(/Keine Klickzählung und keine Nutzungsanalyse/)).toBeTruthy();
+    expect(await section.findByText(/Keine Klickzählung und keine Nutzungsanalyse/)).toBeTruthy();
     expect(section.getByText(/wann du zuletzt aktiv warst/)).toBeTruthy();
     expect(section.getByText(/nur die Zahl der aktiven Konten/)).toBeTruthy();
     expect(section.getByText(/Ort- und Kameradaten/)).toBeTruthy();

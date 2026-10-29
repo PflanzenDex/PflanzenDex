@@ -84,31 +84,19 @@ export const todayAddress = (section: TodaySection) => `${PATHS.today}#${TODAY_S
 
 /** The former address of the destination "Einstellungen": it opens the section "Einstellungen" of "Konto" (US-QS-14). */
 export const LEGACY_SETTINGS_PATH = "/settings";
-/** The sections of "Konto" by their path segment, e.g. `/account/settings` (US-QS-17, replaces the anchors of US-QS-14). */
-export const ACCOUNT_SECTIONS = {
-  profile: "profile",
-  settings: "settings",
-  achievements: "achievements",
-  reminders: "reminders",
-  aiClients: "ai-clients",
-  measured: "measured",
-  functions: "functions",
-  data: "data",
-} as const;
-export type AccountSection = keyof typeof ACCOUNT_SECTIONS;
+/** The sections of "Konto", each with its own address `/account/<segment>`, e.g. `/account/settings` (US-QS-17). */
+export type AccountSection =
+  | "profile"
+  | "settings"
+  | "achievements"
+  | "reminders"
+  | "aiClients"
+  | "measured"
+  | "functions"
+  | "data";
+/** The path segment of a section is its key in kebab-case (`aiClients` is `ai-clients`). */
 export const accountAddress = (section: AccountSection) =>
-  `${PATHS.account}/${ACCOUNT_SECTIONS[section]}`;
-/** The former anchors of the stacked "Konto" (`/account#erfolge`): old links and bookmarks lead to the matching section (US-QS-17). */
-export const LEGACY_ACCOUNT_ANCHORS: Readonly<Record<string, AccountSection>> = {
-  profil: "profile",
-  einstellungen: "settings",
-  erfolge: "achievements",
-  erinnerungen: "reminders",
-  "ki-clients": "aiClients",
-  gemessen: "measured",
-  funktionen: "functions",
-  daten: "data",
-};
+  `${PATHS.account}/${section.replace(/[A-Z]/g, (c) => "-" + c.toLowerCase())}`;
 
 /** The former addresses of "Pflegephasen", "Pflegeprofil" and "Standorte und Licht" (US-QS-14). */
 export const LEGACY_CARE_PHASES_PATH = "/care-phases";
@@ -181,13 +169,15 @@ export const pageTitle = (view?: string) => (view ? `${view} – ${PRODUCT}` : P
  * agree; a species profile has its own address below `/discover/species`. Unknown addresses redirect, so they only get the product.
  */
 export function viewTitle(pathname: string): string {
-  const entry = ENTRIES.find((e) => PATHS[e.id] === pathname);
+  const entry = ENTRIES.find(
+    (e) =>
+      PATHS[e.id] === pathname || (e.id === "account" && pathname.startsWith(`${PATHS.account}/`)),
+  );
   if (entry) return pageTitle(entry.text);
   if (pathname === ADD_PLANT_PATH) return pageTitle("Pflanze anlegen");
   if (pathname === EXCHANGE_PATH) return pageTitle("Tauschbörse");
   if (pathname === MATCH_PATH) return pageTitle("Passende Angebote");
   if (pathname.startsWith(`${PATHS.friends}/`)) return pageTitle("Sammlung eines Freundes");
   if (pathname.startsWith("/unlock/")) return pageTitle("Funktion freischalten");
-  if (pathname.startsWith(`${PATHS.account}/`)) return pageTitle("Konto");
   return pathname.startsWith(`${PROFILE_BASE}/`) ? pageTitle("Artenprofil") : pageTitle();
 }

@@ -6,7 +6,14 @@ export const SettingsPage = lazyPage(() =>
 export const OperatorPage = lazyPage(() =>
   import("./operator/operator-page/operator-page").then((m) => ({ default: m.OperatorPage })),
 );
-export { AppError, AccountView, Loading, MeasuredView, Welcome } from "./views/views";
+export { AppError, Loading, Welcome } from "./views/views";
+/** Parts of "Konto" only: they load with their section (DS-08, QG-U6). */
+export const AccountView = lazyPage(() =>
+  import("./views/account-views/account-views").then((m) => ({ default: m.AccountView })),
+);
+export const MeasuredView = lazyPage(() =>
+  import("./views/account-views/account-views").then((m) => ({ default: m.MeasuredView })),
+);
 export { apiUrl } from "./api/account-api";
 export type { Account } from "./api/account-api";
 /** The question after the first plant (US-ONB-03): its code loads only when the first plant was saved (DS-08). */
