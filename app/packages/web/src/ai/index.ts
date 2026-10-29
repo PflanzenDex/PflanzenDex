@@ -3,3 +3,4 @@ import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 export const AiSection = lazyPage(() =>
   import("./ai-section/ai-section").then((m) => ({ default: m.AiSection })),
 );
+export { loadConnections } from "./api/connections-api";

@@ -34,52 +34,22 @@ function ProfileRedirect() {
  * target view puts it (the section heading), instead of RouteFocus moving it to the main heading.
  */
 export function legacyRoutes() {
+  const keep = { keepFocus: true };
+  const redirects: [string, string][] = [
+    [LEGACY_TREATMENTS_PATH, todayAddress("treatments")],
+    [LEGACY_HINTS_PATH, todayAddress("hints")],
+    [LEGACY_SETTINGS_PATH, accountAddress("settings")],
+    [LEGACY_WISHLIST_PATH, WISHLIST_MODE_ADDRESS],
+    [LEGACY_DIFFICULTY_PATH, DIFFICULTY_ADDRESS],
+    [LEGACY_CARE_PHASES_PATH, PHASES_ADDRESS],
+    [LEGACY_CARE_PROFILE_PATH, SPECIES_MODE_ADDRESS],
+    [LEGACY_LIGHT_PATH, MANAGE_ADDRESS],
+    [LEGACY_SPECIES_PATH, CATALOG_ADDRESS],
+  ];
   return [
-    <Route
-      key="treatments"
-      path={LEGACY_TREATMENTS_PATH}
-      element={<Navigate to={todayAddress("treatments")} replace state={{ keepFocus: true }} />}
-    />,
-    <Route
-      key="hints"
-      path={LEGACY_HINTS_PATH}
-      element={<Navigate to={todayAddress("hints")} replace state={{ keepFocus: true }} />}
-    />,
-    <Route
-      key="settings"
-      path={LEGACY_SETTINGS_PATH}
-      element={<Navigate to={accountAddress("settings")} replace state={{ keepFocus: true }} />}
-    />,
-    <Route
-      key="wishlist"
-      path={LEGACY_WISHLIST_PATH}
-      element={<Navigate to={WISHLIST_MODE_ADDRESS} replace state={{ keepFocus: true }} />}
-    />,
-    <Route
-      key="difficulty"
-      path={LEGACY_DIFFICULTY_PATH}
-      element={<Navigate to={DIFFICULTY_ADDRESS} replace state={{ keepFocus: true }} />}
-    />,
-    <Route
-      key="care-phases"
-      path={LEGACY_CARE_PHASES_PATH}
-      element={<Navigate to={PHASES_ADDRESS} replace state={{ keepFocus: true }} />}
-    />,
-    <Route
-      key="care-profile"
-      path={LEGACY_CARE_PROFILE_PATH}
-      element={<Navigate to={SPECIES_MODE_ADDRESS} replace state={{ keepFocus: true }} />}
-    />,
-    <Route
-      key="light"
-      path={LEGACY_LIGHT_PATH}
-      element={<Navigate to={MANAGE_ADDRESS} replace state={{ keepFocus: true }} />}
-    />,
-    <Route
-      key="species"
-      path={LEGACY_SPECIES_PATH}
-      element={<Navigate to={CATALOG_ADDRESS} replace state={{ keepFocus: true }} />}
-    />,
+    ...redirects.map(([path, to]) => (
+      <Route key={path} path={path} element={<Navigate to={to} replace state={keep} />} />
+    )),
     <Route
       key="species-profile"
       path={`${LEGACY_SPECIES_PATH}/:profileId`}
