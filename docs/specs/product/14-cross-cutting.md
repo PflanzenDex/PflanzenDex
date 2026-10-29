@@ -222,6 +222,25 @@ Acceptance criteria:
 
 Decision and tokens: ADR [0011](../../adr/0011-redesign-direction-greenhouse.md), E-24.
 
+### US-QS-15 · One screen per layer · 🟨 new
+
+As a **plant keeper** I want every main destination to fit on one screen and open its topics as layers above it, so that I find things without scrolling through a long page.
+
+Acceptance criteria:
+
+- Given a viewport of 360 x 640 px or larger (starting value, assumption), when I open a main destination, then its overview fits between the app bar and the navigation without page scroll and shows a summary, the next action (P-09) and at most 6 entries into its topics (starting value, assumption).
+- Given an overview, when I open a topic, then it opens as a layer above it (a bottom sheet below 768 px, a pane beside the list from 1024 px; a dialog in between); the address names the layer (`?sheet=<topic>`), so Back closes it and a reload or a copied link reopens it; focus moves to the layer heading and returns to the control that opened it when it closes; Escape closes it.
+- Given a list longer than its region (plants, species, wishes, offers, friends), then it shows pages of whole entries with "Zurück" and "Weiter", the position "Seite n von m", and swipe as an alternative to the buttons (threshold 48 px, starting value, assumption); the page is in the address (`?page=n`); a page outside the range shows the nearest valid one; a changed filter or search starts at page 1; the new page is announced politely.
+- Given one object (plant, friend, offer), when I open it, then its detail is a layer with tabs instead of one long column, and the active tab is in the address.
+- Given a layer, then it has at most one filled primary action; other actions are outline buttons, rows or tiles.
+- Given help text in a layer, then at most one line shows; more opens behind "Mehr erfahren".
+- Given free text longer than its region (privacy notice, accessibility statement, AI log), then only that region scrolls and it does not pass the scroll on to the page.
+- Given 400 % zoom or 200 % text size, then content that no longer fits scrolls inside its region instead of being cut off (WCAG 1.4.4, 1.4.10); this is the one exception to "no page scroll".
+- Given `prefers-reduced-motion: reduce`, then layers and pages change without sliding.
+- Given a number with its unit or a count, then number and unit never break apart and digits in counts and measurements are tabular.
+
+State of implementation: the building blocks exist in `app/packages/web` (`LayerSheet` and `useLayer` for the layers, `Pager` for the pages, the opt-in `fit` mode of `AppShell` for the one-screen frame, touch defaults in the base layer; rules DS-58 to DS-63 in the design system reference), with tests and stories. No destination uses them yet, so every criterion stays open until the destinations are converted (the objects with tabs, the help text rule and the unit rule come with those conversions). Status 🟨 because the building blocks are in place.
+
 ### US-QS-16 · "Heute" is the home screen · 🟨 new
 
 As a **plant keeper** I want the app to open on "Heute", so that I see at once what needs my care and the introduction, hints and locked functions are not a page of their own that I have to leave first.

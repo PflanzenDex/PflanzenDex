@@ -9,6 +9,8 @@ import * as emptyState from "../../empty-state/empty-state.stories";
 import * as pageSkeleton from "../../states/page-skeleton/page-skeleton.stories";
 import * as plantLoader from "../../states/plant-loader/plant-loader.stories";
 import * as requestState from "../../states/request-state/request-state.stories";
+import * as layerSheet from "../../responsive/layer-sheet/layer-sheet.stories";
+import * as pager from "../../responsive/pager/pager.stories";
 import * as responsiveModal from "../../responsive/responsive-modal/responsive-modal.stories";
 import * as responsiveTable from "../../responsive/responsive-table/responsive-table.stories";
 import * as toast from "../../states/toast/toast.stories";
@@ -18,6 +20,8 @@ setProjectAnnotations([preview]);
 const catalog = {
   Banner: composeStories(banner),
   EmptyState: composeStories(emptyState),
+  LayerSheet: composeStories(layerSheet),
+  Pager: composeStories(pager),
   PageSkeleton: composeStories(pageSkeleton),
   PlantLoader: composeStories(plantLoader),
   RequestState: composeStories(requestState),

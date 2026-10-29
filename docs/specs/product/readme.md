@@ -73,7 +73,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | SOZ Social                     | 13      | 3      | 10      | 0      | 1 · 0 · 10                | 0                      | 13      |
 | EQU Equipment                  | 12      | 0      | 11      | 1      | 0 · 0 · 10                | 0                      | 12      |
 | KI AI access                   | 10      | 0      | 9       | 1      | 0 · 0 · 13                | 3                      | 7       |
-| QS Cross-cutting               | 15      | 0      | 11      | 4      | 0 · 0 · 0                 | 6                      | 9       |
+| QS Cross-cutting               | 16      | 0      | 12      | 4      | 0 · 0 · 0                 | 6                      | 10      |
 | MIG Migration (dropped)        | 0       | 0      | 0       | 0      | 0 · 0 · 0                 | 0                      | 0       |
 | ENT Discover                   | 9       | 0      | 8       | 1      | 0 · 0 · 9                 | 0                      | 9       |
 | QG Quality gates               | 10      | 0      | 8       | 2      | 2 · 6 · 16                | 0                      | 10      |
@@ -81,7 +81,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | ACH Achievements               | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
 | TAU Swipe matching             | 7       | 1      | 6       | 0      | 1 · 5 · 4                 | 0                      | 7       |
 | ONB Introduction and unlocking | 8       | 5      | 3       | 0      | 1 · 0 · 9                 | 0                      | 8       |
-| **Total**                      | **170** | **36** | **119** | **15** |                           | **50**                 | **120** |
+| **Total**                      | **171** | **36** | **120** | **15** |                           | **50**                 | **121** |
 
 <!-- spec-status:end -->
 
