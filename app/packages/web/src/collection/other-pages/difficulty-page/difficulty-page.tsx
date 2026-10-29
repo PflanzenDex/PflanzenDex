@@ -1,10 +1,11 @@
 import { useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router";
 import type { DifficultyOverview, DifficultyRow } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import {
-  ResponsiveTable,
-  type ResponsiveColumn,
-} from "@/components/shared/responsive/responsive-table/responsive-table";
+import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { Pager } from "@/components/shared/responsive/pager/pager";
+import { useRowPageSize } from "@/components/shared/responsive/pager/row-page-size";
+import { Button } from "@/components/ui/button/button";
 import { LoadFrame } from "../../../kernel";
 import { loadDifficulty } from "../../insights/api/difficulty-api";
 import { DifficultyPageSkeleton } from "./difficulty-page.skeleton";
@@ -29,9 +30,8 @@ function wateringText(r: DifficultyRow): string {
   return `${parts.join(", ")}${OWN}`;
 }
 
-/** One column definition for the card stack (phone) and the table (from `md`), so the two cannot drift (DS-24). */
-const COLUMNS: ResponsiveColumn<DifficultyRow>[] = [
-  { key: "species", header: "Art", cell: (r) => <strong>{r.speciesName}</strong> },
+/** The values of one species in the order of the comparison; the layer shows them all, the entry the first ones (DS-24). */
+const COLUMNS: { key: string; header: string; cell: (r: DifficultyRow) => string }[] = [
   { key: "botanical", header: "Botanischer Name", cell: (r) => r.botanicalName },
   { key: "zone", header: "Lichtzone", cell: zoneText },
   { key: "watering", header: "Gießregel", cell: wateringText },
@@ -40,6 +40,9 @@ const COLUMNS: ResponsiveColumn<DifficultyRow>[] = [
   { key: "success", header: "Erfolgskriterium", cell: (r) => r.successCriteria },
   { key: "difficulty", header: "Schwierigkeit", cell: (r) => LEVELS[r.difficulty] ?? UNKNOWN },
 ];
+
+/** The layer of one species of the comparison: `?sheet=compare-<id>` (US-QS-22). */
+const layerId = (r: DifficultyRow): string => `compare-${r.speciesId}`;
 
 /** Set when a destination shows this page below its own title (US-QS-14). */
 type Host = { onCaption: (text: string | null) => void };
@@ -92,9 +95,47 @@ function UnreadableNote({ count }: { count: number }) {
   if (count === 0) return null;
   const species = count === 1 ? "1 Art" : `${count} Arten`;
   return (
-    <Quiet className="mb-3">
+    <Quiet>
       {`${species} deiner Exemplare kannst du nicht mehr lesen; sie fehlen in diesem Vergleich.`}
     </Quiet>
+  );
+}
+
+function Entry({ row }: { row: DifficultyRow }) {
+  const { openLayer, open } = useLayer(layerId(row));
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      aria-haspopup="dialog"
+      aria-expanded={open}
+      aria-label={`Vergleichswerte: ${row.speciesName}`}
+      className="h-auto w-full justify-between gap-2 whitespace-normal px-3 py-2 text-left"
+      onClick={(event) => openLayer(event.currentTarget)}
+    >
+      <span className="grid min-w-0 gap-0 break-words">
+        <span className="font-semibold">{row.speciesName}</span>
+        <span className="text-sm font-normal text-muted-foreground">
+          {`${LEVELS[row.difficulty] ?? UNKNOWN} · ${zoneText(row)}`}
+        </span>
+      </span>
+      <span className="text-2xl leading-none text-muted-foreground" aria-hidden="true">
+        ›
+      </span>
+    </Button>
+  );
+}
+
+function Values({ row }: { row: DifficultyRow }) {
+  return (
+    <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 break-words text-sm">
+      {COLUMNS.map((c) => (
+        <div key={c.key} className="contents">
+          <dt className="font-semibold">{c.header}</dt>
+          <dd className="m-0">{c.cell(row)}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -104,8 +145,11 @@ function DifficultyTable(props: {
   host: boolean;
 }) {
   const { rows, host } = props;
+  const size = useRowPageSize();
+  const [params] = useSearchParams();
+  const chosen = rows.find((r) => layerId(r) === params.get("sheet"));
   return (
-    <section aria-labelledby="difficulty-title">
+    <section aria-labelledby="difficulty-title" className="flex min-w-0 flex-col gap-2">
       {host ? (
         <h2 id="difficulty-title" className="sr-only">
           Artenvergleich
@@ -120,21 +164,26 @@ function DifficultyTable(props: {
         <EmptyState
           title="Noch keine Art mit aktivem Exemplar"
           description="Lege im Bestand ein Exemplar an, dann erscheint seine Art hier."
+          action={{ label: "Exemplar anlegen", href: "/collection" }}
         />
       ) : (
         <>
-          <Quiet className="mb-3">
-            Deine Arten nach Schwierigkeit, die leichtesten zuerst. So schlägst du Pflegeregeln
-            nach, ohne jede Art zu öffnen.
-          </Quiet>
-          <ResponsiveTable
-            caption="Artenvergleich"
-            columns={COLUMNS}
-            rows={[...rows]}
-            getRowKey={(r) => r.speciesId}
+          <Quiet>Deine Arten nach Schwierigkeit, die leichtesten zuerst.</Quiet>
+          <Pager
+            items={rows}
+            pageSize={size}
+            label="Artenvergleich"
+            getKey={(r) => r.speciesId}
+            listClassName="md:grid md:grid-cols-2"
+            renderItem={(r) => <Entry row={r} />}
           />
         </>
       )}
+      {chosen ? (
+        <LayerSheet id={layerId(chosen)} title={chosen.speciesName}>
+          <Values row={chosen} />
+        </LayerSheet>
+      ) : null}
     </section>
   );
 }

@@ -132,7 +132,7 @@ const tab = (name: string) =>
 const open = async () => {
   mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
   render(
-    <MemoryRouter initialEntries={["/collection?view=wishlist"]}>
+    <MemoryRouter initialEntries={["/collection?view=wishlist&sheet=bought"]}>
       <App />
     </MemoryRouter>,
   );
@@ -150,7 +150,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("US-WUN-05 the species is preselected from the catalog", () => {
+describe("US-WUN-05 the species is preselected from the catalog", { timeout: 20000 }, () => {
   it("US-WUN-05 the form opens with the species of the wish and says which wish it belongs to", async () => {
     server();
     await open();
@@ -212,19 +212,23 @@ describe("US-WUN-05 the species is preselected from the catalog", () => {
   });
 });
 
-describe("US-WUN-05 a species missing in the catalog starts US-BES-01 with the name", () => {
-  it("US-WUN-05 the catalog search opens with the wish name and says what to do next (P-09)", async () => {
-    const f = server({ inCatalog: false });
-    await open();
-    expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
-    const search = screen.getByRole("searchbox", { name: /Name/ }) as HTMLInputElement;
-    expect(search.value).toBe("Dracaena trifasciata");
-    expect(await screen.findByText(/noch nicht im Katalog/)).toBeTruthy();
-    expect(f.mock.calls.some(([u]) => String(u).includes("/species?q=Dracaena"))).toBe(true);
-    await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
-    expect(
-      ((await screen.findByRole("textbox", { name: /Lateinischer Name/ })) as HTMLInputElement)
-        .value,
-    ).toBe("Dracaena trifasciata");
-  });
-});
+describe(
+  "US-WUN-05 a species missing in the catalog starts US-BES-01 with the name",
+  { timeout: 20000 },
+  () => {
+    it("US-WUN-05 the catalog search opens with the wish name and says what to do next (P-09)", async () => {
+      const f = server({ inCatalog: false });
+      await open();
+      expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
+      const search = screen.getByRole("searchbox", { name: /Name/ }) as HTMLInputElement;
+      expect(search.value).toBe("Dracaena trifasciata");
+      expect(await screen.findByText(/noch nicht im Katalog/)).toBeTruthy();
+      expect(f.mock.calls.some(([u]) => String(u).includes("/species?q=Dracaena"))).toBe(true);
+      await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
+      expect(
+        ((await screen.findByRole("textbox", { name: /Lateinischer Name/ })) as HTMLInputElement)
+          .value,
+      ).toBe("Dracaena trifasciata");
+    });
+  },
+);

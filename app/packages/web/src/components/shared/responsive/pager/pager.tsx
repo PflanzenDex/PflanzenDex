@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 /** Horizontal distance of a swipe that turns the page (starting value, assumption; US-QS-15). */
 const SWIPE_PX = 48;
 const PARAM = "page";
+/** The address part of the pages of a list inside a layer, so it does not compete with the screen behind it (US-QS-22). */
+export const LAYER_PARAM = "lpage";
 
 /** Pointer handlers that turn a horizontal swipe into a page change, as an alternative to the buttons. */
 function useSwipe(page: number, pages: number, go: (target: number) => void) {
@@ -68,6 +70,8 @@ export type PagerProps<T> = {
   listClassName?: string;
   /** A changed value (filter, search) starts again at page 1. */
   resetKey?: string | number;
+  /** The address part of the page; a list in a layer passes `LAYER_PARAM`. Default `page`. */
+  param?: string;
 };
 
 function parsePage(raw: string | null): number {
@@ -88,32 +92,33 @@ export function Pager<T>({
   label,
   listClassName,
   resetKey,
+  param = PARAM,
 }: PagerProps<T>) {
   const [params, setParams] = useSearchParams();
   const pages = Math.max(1, Math.ceil(items.length / pageSize));
-  const raw = parsePage(params.get(PARAM));
+  const raw = parsePage(params.get(param));
   const page = Math.min(raw, pages);
 
   const go = React.useCallback(
     (target: number, replace = false) => {
       const next = new URLSearchParams(params);
-      if (target <= 1) next.delete(PARAM);
-      else next.set(PARAM, String(target));
+      if (target <= 1) next.delete(param);
+      else next.set(param, String(target));
       setParams(next, { replace });
     },
-    [params, setParams],
+    [params, setParams, param],
   );
 
   // A page outside the range is corrected in the address as well.
   React.useEffect(() => {
-    if (params.has(PARAM) && raw !== page) go(page, true);
+    if (params.has(param) && raw !== page) go(page, true);
   }, [params, raw, page, go]);
 
   const lastKey = React.useRef(resetKey);
   React.useEffect(() => {
     if (lastKey.current === resetKey) return;
     lastKey.current = resetKey;
-    if (params.has(PARAM)) go(1, true);
+    if (params.has(param)) go(1, true);
   }, [resetKey, params, go]);
 
   const swipe = useSwipe(page, pages, go);

@@ -41,6 +41,7 @@ function stubServer() {
         return response(200, {
           candidates: [],
           zones: [],
+          duplicates: [],
           unfit: [],
           hint: { text: "Keine offenen Kandidaten.", nextAction: "Erfasse einen Wunsch." },
           replenishment: {

@@ -1,9 +1,20 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import type { ReactElement } from "react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WishlistPage } from "./wishlist-page";
+
+/** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
+let at = "/";
+const view = (ui: ReactElement, url = at) =>
+  render(<MemoryRouter initialEntries={[url]}>{ui}</MemoryRouter>);
+
+// The layers are dialogs and drawers; jsdom lacks pointer capture, which they use.
+Element.prototype.setPointerCapture ??= () => undefined;
+Element.prototype.releasePointerCapture ??= () => undefined;
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -93,32 +104,41 @@ function fakeServer(initial: unknown, post?: () => Promise<Response>) {
 }
 
 afterEach(() => {
+  at = "/";
   cleanup();
   vi.unstubAllGlobals();
 });
 
 describe("US-WUN-01 page of the candidate list", () => {
-  it("US-WUN-01 shows per candidate title, zone with stock, difficulty word, reasoning, picture with source and the why", async () => {
+  it("US-WUN-01 · US-QS-22 shows per candidate the rank, title, zone with stock and difficulty word on a compact row", async () => {
     fakeServer(list([candidate()]));
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     expect(screen.getByRole("status").textContent).toContain("geladen");
     const item = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
-    expect(
-      within(item).getByRole("heading", { name: "Korbmarante (Calathea orbifolia)" }),
-    ).toBeTruthy();
+    expect(item.textContent).toContain("1. Korbmarante (Calathea orbifolia)");
     expect(item.textContent).toContain("Fenster 3 — 1 Pflanze");
     expect(item.textContent).toContain("Mittel");
-    expect(item.textContent).toContain("Mag gleichmäßig feuchte Erde.");
-    expect(item.textContent).toContain("hier ist am meisten Platz");
-    expect(item.textContent).toContain("Quelle: Wikimedia Commons");
+    expect(screen.getByText("Besorge diese Pflanze zuerst.")).toBeTruthy();
+  });
+
+  it("US-WUN-01 · US-QS-22 a row opens the full card in a layer: reasoning, picture with source and the why", async () => {
+    fakeServer(list([candidate()]));
+    view(<WishlistPage api="http://api" token={token} />, "/?sheet=wish-w1");
+    const item = await screen.findByRole("heading", {
+      name: "Korbmarante (Calathea orbifolia)",
+      level: 2,
+    });
+    const card = item.closest("li") as HTMLElement;
+    expect(card.textContent).toContain("Mag gleichmäßig feuchte Erde.");
+    expect(card.textContent).toContain("hier ist am meisten Platz");
+    expect(card.textContent).toContain("Quelle: Wikimedia Commons");
     // P-05: no remote picture is loaded in the keeper's browser; only an explicit link to the address (until US-WUN-04).
-    expect(item.querySelector("img")).toBeNull();
-    const link = within(item).getByRole("link", { name: "Bild ansehen (öffnet extern)" });
+    expect(card.querySelector("img")).toBeNull();
+    const link = within(card).getByRole("link", { name: "Bild ansehen (öffnet extern)" });
     expect(link.getAttribute("href")).toBe("https://upload.example/c.jpg");
     expect(link.getAttribute("target")).toBe("_blank");
     expect(link.getAttribute("rel")).toBe("noopener noreferrer");
     expect(link.getAttribute("referrerpolicy")).toBe("no-referrer");
-    expect(screen.getByText("Besorge diese Pflanze zuerst.")).toBeTruthy();
   });
 
   it("US-WUN-01 keeps the order of the server and says unknown instead of guessing", async () => {
@@ -143,15 +163,39 @@ describe("US-WUN-01 page of the candidate list", () => {
         }),
       ]),
     );
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await screen.findAllByRole("listitem");
-    const titles = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
-    expect(titles.slice(0, 2)).toEqual(["Korbmarante (Calathea orbifolia)", "Ficus"]);
-    const second = screen.getAllByRole("listitem")[1] as HTMLElement;
-    expect(second.textContent).toContain("Ziel-Zone unbekannt");
-    expect(second.textContent).toContain("Schwierigkeit: unbekannt");
-    expect(second.textContent).toContain("Kein Bild");
-    expect(second.querySelector("img")).toBeNull();
+    const rows = screen.getAllByRole("listitem");
+    expect(rows[0]?.textContent).toContain("1. Korbmarante (Calathea orbifolia)");
+    expect(rows[1]?.textContent).toContain("2. Ficus");
+    expect(rows[1]?.textContent).toContain("Ziel-Zone unbekannt · unbekannt");
+  });
+
+  it("US-WUN-01 · US-QS-22 the card of a wish without picture says 'Kein Bild' and 'Schwierigkeit: unbekannt'", async () => {
+    fakeServer(
+      list([
+        candidate({
+          id: "w9",
+          name: "Ficus",
+          german: null,
+          title: "Ficus",
+          zone: null,
+          stock: null,
+          zoneText: "Ziel-Zone unbekannt",
+          difficulty: null,
+          reasoning: null,
+          image: null,
+          priority: { kind: "zone_unknown", text: "Ziel-Lichtzone unbekannt." },
+        }),
+      ]),
+    );
+    view(<WishlistPage api="http://api" token={token} />, "/?sheet=wish-w9");
+    const card = (await screen.findByRole("heading", { name: "Ficus", level: 2 })).closest(
+      "li",
+    ) as HTMLElement;
+    expect(card.textContent).toContain("Schwierigkeit: unbekannt");
+    expect(card.textContent).toContain("Kein Bild");
+    expect(card.querySelector("img")).toBeNull();
   });
 
   it("US-WUN-01 without open candidates says so and what to do next", async () => {
@@ -161,13 +205,13 @@ describe("US-WUN-01 page of the candidate list", () => {
         nextAction: "Erfasse einen Wunsch mit Ziel-Lichtzone.",
       }),
     );
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await screen.findByText("Keine offenen Kandidaten in der Wunschliste.");
     expect(screen.getByText("Erfasse einen Wunsch mit Ziel-Lichtzone.")).toBeTruthy();
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
   });
 
-  it("US-WUN-02 shows the replenishment warning of the server above the list", async () => {
+  it("US-WUN-02 shows the replenishment warning of the server in the layer Hinweise (US-QS-22)", async () => {
     fakeServer({
       ...list([candidate()]),
       replenishment: {
@@ -185,7 +229,8 @@ describe("US-WUN-01 page of the candidate list", () => {
         nextAction: "Erfasse einen Wunsch mit Ziel-Zone Fenster 3.",
       },
     });
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Hinweise (1)" }));
     expect(await screen.findByText("Nachschub nötig: Fenster 3 (1 offener Kandidat)")).toBeTruthy();
     expect(screen.getByText("Erfasse einen Wunsch mit Ziel-Zone Fenster 3.")).toBeTruthy();
   });
@@ -197,7 +242,7 @@ describe("US-WUN-01 page of the candidate list", () => {
         response(500, { error: { code: "server.error", text: "Der Server antwortet nicht." } }),
       ),
     );
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await screen.findByText("Der Server antwortet nicht.");
     expect(screen.getByRole("button", { name: /Erneut versuchen/ })).toBeTruthy();
   });
@@ -209,7 +254,7 @@ describe("US-QS-07 · DS-09 wishlist on the data layer", () => {
       "fetch",
       vi.fn(() => new Promise<Response>(() => undefined)),
     );
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     expect(screen.getAllByRole("status")).toHaveLength(1);
     expect(screen.getByRole("status").textContent).toContain("Wunschliste wird geladen");
   });
@@ -224,10 +269,10 @@ describe("US-QS-07 · DS-09 wishlist on the data layer", () => {
           : boughtOr(url, list([candidate()])),
       ),
     );
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await screen.findByText("Der Server antwortet nicht.");
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
-    expect(await screen.findByText("Korbmarante (Calathea orbifolia)")).toBeTruthy();
+    expect(await screen.findByText(/Korbmarante \(Calathea orbifolia\)/)).toBeTruthy();
   });
 
   it("US-QS-07 · DS-09 offline after an earlier load shows the cached list with the note", async () => {
@@ -248,31 +293,36 @@ describe("US-QS-07 · DS-09 wishlist on the data layer", () => {
         </>
       );
     }
-    render(<Toggle />);
-    await screen.findByText("Korbmarante (Calathea orbifolia)");
+    view(<Toggle />);
+    await screen.findByText(/Korbmarante \(Calathea orbifolia\)/);
     offline = true;
     await userEvent.click(screen.getByRole("button", { name: "umschalten" }));
     await userEvent.click(screen.getByRole("button", { name: "umschalten" }));
     expect(await screen.findByText("Offline - zuletzt geladene Daten")).toBeTruthy();
-    expect(screen.getByText("Korbmarante (Calathea orbifolia)")).toBeTruthy();
+    expect(screen.getByText(/Korbmarante \(Calathea orbifolia\)/)).toBeTruthy();
   });
 
   it("US-QS-07 · DS-09 a saved wish refreshes the list without a page reload", async () => {
     fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
-    render(<WishlistPage api="http://api" token={token} />);
-    await screen.findByText("Korbmarante (Calathea orbifolia)");
-    await userEvent.type(screen.getByLabelText("Name"), "Neu");
+    view(<WishlistPage api="http://api" token={token} />);
+    await screen.findByText(/Korbmarante \(Calathea orbifolia\)/);
+    await userEvent.click(screen.getByRole("button", { name: "Wunsch erfassen" }));
+    await userEvent.type(await screen.findByLabelText("Name"), "Neu");
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
-    expect(await screen.findByRole("heading", { name: "Neu" })).toBeTruthy();
-    expect(screen.queryByText("Korbmarante (Calathea orbifolia)")).toBeNull();
+    // The layer closes and the new row stands in the list (US-QS-22).
+    expect(await screen.findByText("1. Neu")).toBeTruthy();
+    expect(screen.queryByText(/Korbmarante \(Calathea orbifolia\)/)).toBeNull();
+    await waitFor(() => expect(screen.queryByLabelText("Name")).toBeNull());
   });
 });
 
 describe("US-WUN-01 no remote picture is loaded (P-05)", () => {
   it("US-WUN-01 an address that is not https is not linked and nothing is embedded", async () => {
     fakeServer(list([candidate({ image: { url: "javascript:alert(1)", source: "Irgendwer" } })]));
-    render(<WishlistPage api="http://api" token={token} />);
-    const item = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
+    view(<WishlistPage api="http://api" token={token} />, "/?sheet=wish-w1");
+    const item = (await screen.findByRole("heading", { name: /Korbmarante/, level: 2 })).closest(
+      "li",
+    ) as HTMLElement;
     expect(item.querySelector("img")).toBeNull();
     expect(item.querySelector("a")).toBeNull();
     expect(item.textContent).toContain("Kein Bild");
@@ -280,6 +330,9 @@ describe("US-WUN-01 no remote picture is loaded (P-05)", () => {
 });
 
 describe("US-WUN-01 recording a wish", () => {
+  beforeEach(() => {
+    at = "/?sheet=new-wish";
+  });
   const fill = async (name: string) => {
     await screen.findByRole("heading", { name: "Wunsch erfassen" });
     await userEvent.type(screen.getByLabelText("Name"), name);
@@ -287,7 +340,7 @@ describe("US-WUN-01 recording a wish", () => {
 
   it("US-WUN-01 sends the wish with the chosen zone and difficulty, reloads the list and confirms", async () => {
     const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
     await userEvent.selectOptions(screen.getByLabelText("Ziel-Lichtzone"), "z2");
     await userEvent.selectOptions(screen.getByLabelText("Schwierigkeit"), "3");
@@ -300,10 +353,9 @@ describe("US-WUN-01 recording a wish", () => {
       difficulty: 3,
     });
     expect((post?.[1]?.headers as Record<string, string>)["Idempotency-Key"]).toBeTruthy();
-    expect(
-      (await screen.findAllByRole("heading", { level: 2 })).map((h) => h.textContent),
-    ).toContain("Neu");
-    expect((screen.getByLabelText("Name") as HTMLInputElement).value).toBe("");
+    // The saved wish stands in the list, the layer is closed and its form is gone (US-QS-22).
+    expect(await screen.findByText("1. Neu")).toBeTruthy();
+    await waitFor(() => expect(screen.queryByLabelText("Name")).toBeNull());
   });
 
   const refusal = (status: number, code: string, text: string, details?: unknown) => () =>
@@ -320,7 +372,7 @@ describe("US-WUN-01 recording a wish", () => {
       list([candidate()]),
       refusal(409, "wish.name_taken", "Einen Wunsch mit diesem Namen gibt es schon."),
     );
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
     await save();
     const name = screen.getByLabelText("Name") as HTMLInputElement;
@@ -337,7 +389,7 @@ describe("US-WUN-01 recording a wish", () => {
       list([candidate()]),
       refusal(404, "light_zone.not_found", "Diese Lichtzone gibt es nicht."),
     );
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
     await userEvent.selectOptions(screen.getByLabelText("Ziel-Lichtzone"), "z2");
     await save();
@@ -355,7 +407,7 @@ describe("US-WUN-01 recording a wish", () => {
         { field: "imageUrl", code: "input.invalid" },
       ]),
     );
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
     await save();
     const url = screen.getByLabelText("Bild-Adresse (https)");
@@ -365,7 +417,7 @@ describe("US-WUN-01 recording a wish", () => {
 
   it("US-WUN-01 a refusal that names no field stays in an alert that takes the focus", async () => {
     fakeServer(list([candidate()]), refusal(500, "system.unexpected", "NullPointer at line 3"));
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
     await save();
     const alert = await screen.findByRole("alert");
@@ -378,7 +430,7 @@ describe("US-WUN-01 recording a wish", () => {
 
   it("US-WUN-01 refuses an empty name before sending: field marked, described, focused", async () => {
     const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: {} }));
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await screen.findByRole("heading", { name: "Wunsch erfassen" });
     await save();
     const name = screen.getByLabelText("Name");
@@ -390,7 +442,7 @@ describe("US-WUN-01 recording a wish", () => {
 
   it("US-WUN-01 refuses a picture address without source: the source field is marked and focused, values kept", async () => {
     const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: {} }));
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
     await userEvent.type(screen.getByLabelText("Bild-Adresse (https)"), "https://x.example/a.jpg");
     await save();
@@ -407,7 +459,7 @@ describe("US-WUN-01 recording a wish", () => {
 
   it("US-WUN-01 refuses an address that is not https and one with credentials on the address field", async () => {
     fakeServer(list([candidate()]));
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
     await userEvent.type(screen.getByLabelText("Bildquelle"), "Quelle");
     const url = screen.getByLabelText("Bild-Adresse (https)");
@@ -423,7 +475,7 @@ describe("US-WUN-01 recording a wish", () => {
 
   it("US-WUN-01 a field loses its mark again when the next input is fine", async () => {
     fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await screen.findByRole("heading", { name: "Wunsch erfassen" });
     await save();
     const name = screen.getByLabelText("Name");
@@ -439,7 +491,7 @@ describe("US-WUN-01 recording a wish", () => {
       list([candidate()]),
       refusal(409, "wish.name_taken", "Einen Wunsch mit diesem Namen gibt es schon."),
     );
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
     await save();
     const name = screen.getByLabelText("Name") as HTMLInputElement;
@@ -456,7 +508,7 @@ describe("US-WUN-01 recording a wish", () => {
       list([candidate()]),
       refusal(409, "wish.name_taken", "Einen Wunsch mit diesem Namen gibt es schon."),
     );
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await fill("Neu");
     await save();
     const name = screen.getByLabelText("Name");
@@ -473,7 +525,7 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
       "fetch",
       vi.fn(() => new Promise<Response>(() => {})),
     );
-    const { container } = render(<WishlistPage api="http://api" token={token} />);
+    const { container } = view(<WishlistPage api="http://api" token={token} />);
     const status = screen.getByRole("status");
     expect(status.textContent).toContain("Wunschliste wird geladen");
     expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(3);
@@ -487,7 +539,7 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
         nextAction: "Erfasse einen Wunsch mit Ziel-Lichtzone.",
       }),
     );
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await screen.findByText("Keine offenen Kandidaten in der Wunschliste.");
     await userEvent.click(screen.getByRole("button", { name: "Wunsch erfassen" }));
     // The species pick is the main way into the form (#902), so the focus goes there.
@@ -496,7 +548,7 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
 
   it("US-WUN-01 · #902 picking a species from the catalog fills the wish; the free fields stay below Mehr Angaben", async () => {
     const fetchFn = fakeServer(list([candidate()]), () => response(201, { wish: { id: "w2" } }));
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
     await screen.findByRole("heading", { name: "Wunsch erfassen" });
     expect(screen.getByLabelText("Name").closest("details")?.open).toBe(false);
     await userEvent.type(screen.getByLabelText("Art suchen"), "Epip");
@@ -514,7 +566,7 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
 
   it("US-WUN-01 · #902 saving without a species opens Mehr Angaben and names the missing name", async () => {
     fakeServer(list([candidate()]));
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
     await screen.findByRole("heading", { name: "Wunsch erfassen" });
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
     expect(await screen.findByText("Bitte gib einen Namen an.")).toBeTruthy();
@@ -527,7 +579,7 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
       list([candidate()]),
       () => new Promise<Response>((resolve) => (release = resolve)),
     );
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
     await screen.findByRole("heading", { name: "Wunsch erfassen" });
     await userEvent.type(screen.getByLabelText("Name"), "Neu");
     await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
@@ -588,7 +640,7 @@ describe("US-WUN-03 record a purchase on the page", () => {
 
   it("US-WUN-03 each open candidate offers 'Gekauft'", async () => {
     buyServer();
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     const item = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
     expect(
       within(item).getByRole("button", { name: "Gekauft: Korbmarante (Calathea orbifolia)" }),
@@ -597,7 +649,7 @@ describe("US-WUN-03 record a purchase on the page", () => {
 
   it("US-WUN-03 'Gekauft' sends the purchase with a repeat-guard key, hides the candidate and keeps it under 'Gekauft'", async () => {
     const fetchFn = buyServer();
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: /^Gekauft: / }));
     const done = await screen.findByText(BOUGHT_HINT.text);
     const status = done.closest('[role="status"]') as HTMLElement;
@@ -607,22 +659,25 @@ describe("US-WUN-03 record a purchase on the page", () => {
     expect(posts).toHaveLength(1);
     expect(new Headers(posts[0]?.[1]?.headers).get("Idempotency-Key")).toBeTruthy();
     expect(await screen.findByText("Keine offenen Kandidaten in der Wunschliste.")).toBeTruthy();
-    const history = screen.getByRole("list", { name: "Gekaufte Wünsche" });
+    // The history is the layer "Gekauft" (US-QS-22); the row of controls names its count.
+    await userEvent.click(await screen.findByRole("button", { name: "Gekauft (1)" }));
+    const history = await screen.findByRole("list", { name: "Gekaufte Wünsche" });
     expect(within(history).getByText("Korbmarante (Calathea orbifolia)")).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Gekauft" })).toBeTruthy();
+    expect(screen.getAllByRole("heading", { name: "Gekauft" }).length).toBeGreaterThan(0);
     expect(screen.getByText(/lege sie dort als Exemplar an/)).toBeTruthy();
   });
 
   it("US-WUN-03 without bought wishes there is no 'Gekauft' section", async () => {
     buyServer();
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await screen.findAllByRole("listitem");
+    expect(screen.queryByRole("button", { name: /^Gekauft \(/ })).toBeNull();
     expect(screen.queryByRole("heading", { name: "Gekauft" })).toBeNull();
   });
 
   it("US-WUN-03 a refusal shows the German text of its code, never the raw server text (P-10)", async () => {
     buyServer({ status: 409, code: "wish.not_open" });
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: /^Gekauft: / }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("nicht mehr offen");
@@ -640,7 +695,7 @@ describe("US-WUN-03 record a purchase on the page", () => {
       return fallback(url);
     });
     vi.stubGlobal("fetch", fetchFn);
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     const button = (await screen.findByRole("button", { name: /^Gekauft: / })) as HTMLButtonElement;
     await userEvent.click(button);
     await vi.waitFor(() => expect(button.disabled).toBe(true));
@@ -656,6 +711,9 @@ describe("US-WUN-03 record a purchase on the page", () => {
 });
 
 describe("FR-WUN-06 #303 repair of duplicate wish names on the page", () => {
+  beforeEach(() => {
+    at = "/?sheet=hints";
+  });
   const HINT = {
     text: "Diese Wünsche heißen gleich wie ein anderer: umbenennen oder zusammenführen.",
     nextAction: "Benenne jeden dieser Wünsche um oder lösche ihn.",
@@ -694,9 +752,9 @@ describe("FR-WUN-06 #303 repair of duplicate wish names on the page", () => {
   const posts = (f: ReturnType<typeof repairServer>) =>
     f.mock.calls.filter(([, init]) => init?.method === "POST");
 
-  it("FR-WUN-06 #303 shows the hint and each duplicate with its actions, above the candidates", async () => {
+  it("FR-WUN-06 #303 shows the hint and each duplicate with its actions, in the layer Hinweise (US-QS-22)", async () => {
     repairServer();
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     const section = await screen.findByRole("region", { name: "Doppelte Namen" });
     expect(within(section).getByText(HINT.text)).toBeTruthy();
     expect(within(section).getByText(HINT.nextAction)).toBeTruthy();
@@ -707,14 +765,14 @@ describe("FR-WUN-06 #303 repair of duplicate wish names on the page", () => {
 
   it("FR-WUN-06 #303 without duplicates there is no such section", async () => {
     fakeServer(list([candidate()]));
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />, "/");
     await screen.findAllByRole("listitem");
     expect(screen.queryByRole("region", { name: "Doppelte Namen" })).toBeNull();
   });
 
   it("FR-WUN-06 #303 rename sends the new name with a repeat-guard key and the hint goes away", async () => {
     const f = repairServer();
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     const field = await screen.findByLabelText("Neuer Name für Cafe");
     await userEvent.clear(field);
     await userEvent.type(field, "Cafe au lait");
@@ -730,7 +788,7 @@ describe("FR-WUN-06 #303 repair of duplicate wish names on the page", () => {
 
   it("FR-WUN-06 #303 a blank name sends nothing and says so", async () => {
     const f = repairServer();
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     const field = await screen.findByLabelText("Neuer Name für Cafe");
     await userEvent.clear(field);
     await userEvent.click(screen.getByRole("button", { name: "Umbenennen: Cafe" }));
@@ -740,7 +798,7 @@ describe("FR-WUN-06 #303 repair of duplicate wish names on the page", () => {
 
   it("FR-WUN-06 #303 a taken name shows the German text of its code, never the raw server text (P-10)", async () => {
     repairServer({ status: 409, code: "wish.name_taken" });
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: "Umbenennen: Cafe" }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("Einen Wunsch mit diesem Namen gibt es schon");
@@ -750,7 +808,7 @@ describe("FR-WUN-06 #303 repair of duplicate wish names on the page", () => {
 
   it("FR-WUN-06 #303 delete asks first and sends nothing until it is confirmed", async () => {
     const f = repairServer();
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: "Löschen: Cafe" }));
     expect(screen.getByText(/Wirklich löschen/)).toBeTruthy();
     expect(posts(f)).toHaveLength(0);
@@ -776,7 +834,7 @@ describe("FR-WUN-06 #303 repair of duplicate wish names on the page", () => {
       return fallback(url);
     });
     vi.stubGlobal("fetch", fetchFn);
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     const button = (await screen.findByRole("button", {
       name: "Umbenennen: Cafe",
     })) as HTMLButtonElement;
@@ -798,12 +856,74 @@ describe("US-QS-14 · US-WUN-01 the wishlist hosted by the Sammlung", () => {
   it("US-QS-14 · US-WUN-01 with a host it has no main heading, names its section and reports the count line", async () => {
     fakeServer(list([candidate()]));
     const onCaption = vi.fn();
-    const view = render(<WishlistPage api="http://api" token={token} host={{ onCaption }} />);
+    const shown = view(<WishlistPage api="http://api" token={token} host={{ onCaption }} />);
     await screen.findByRole("list", { name: "Offene Kandidaten" });
     expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
     expect(screen.getByRole("heading", { level: 2, name: "Wunschliste" })).toBeTruthy();
     expect(onCaption).toHaveBeenLastCalledWith("1 offener Wunsch");
-    view.unmount();
+    shown.unmount();
     expect(onCaption).toHaveBeenLastCalledWith(null);
+  });
+});
+
+describe("US-QS-22 the wishlist fits one screen", () => {
+  const many = (n: number) =>
+    list(
+      Array.from({ length: n }, (_, i) =>
+        candidate({ id: `w${i + 1}`, title: `Wunsch ${i + 1}`, name: `Wunsch ${i + 1}` }),
+      ),
+    );
+
+  it("US-QS-22 the wishes are compact rows in pages, ranked as before", async () => {
+    fakeServer(many(6));
+    view(<WishlistPage api="http://api" token={token} />);
+    await screen.findByText("1. Wunsch 1");
+    expect(screen.getAllByRole("listitem")).toHaveLength(4);
+    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    expect(await screen.findByText("5. Wunsch 5")).toBeTruthy();
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+  });
+
+  it("US-QS-22 'Wunsch erfassen' is the one filled primary action and opens the form as a layer", async () => {
+    fakeServer(many(2));
+    view(<WishlistPage api="http://api" token={token} />);
+    const primary = await screen.findByRole("button", { name: "Wunsch erfassen" });
+    await waitFor(() => expect(screen.queryByLabelText("Name")).toBeNull());
+    // The other controls are outline buttons.
+    expect(screen.queryByRole("button", { name: /^Gekauft \(/ })).toBeNull();
+    await userEvent.click(primary);
+    const layer = await screen.findByRole("dialog", { name: "Neuer Wunsch" });
+    expect(within(layer).getByLabelText("Name")).toBeTruthy();
+  });
+
+  it("US-QS-22 · P-10 the bought and the discarded wishes and the hints are reachable from the row of controls", async () => {
+    fakeServer({
+      ...many(1),
+      duplicates: [{ id: "w9", name: "Cafe", title: "Cafe" }],
+      duplicateHint: { text: "Doppelt.", nextAction: "Benenne um." },
+    });
+    view(<WishlistPage api="http://api" token={token} />);
+    const hints = await screen.findByRole("button", { name: "Hinweise (1)" });
+    await userEvent.click(hints);
+    expect(await screen.findByRole("dialog", { name: "Hinweise" })).toBeTruthy();
+  });
+
+  it("US-QS-22 · P-09 an empty list says what to do next: the primary action stands above it", async () => {
+    fakeServer(
+      list([], { text: "Keine offenen Kandidaten.", nextAction: "Erfasse einen Wunsch." }),
+    );
+    view(<WishlistPage api="http://api" token={token} />);
+    await screen.findByText("Keine offenen Kandidaten.");
+    expect(screen.getByText("Erfasse einen Wunsch.")).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "Wunsch erfassen" })).toHaveLength(1);
+  });
+
+  it("US-QS-22 a layer mounts its content only while it is open", async () => {
+    fakeServer(many(1));
+    view(<WishlistPage api="http://api" token={token} />);
+    await screen.findByText("1. Wunsch 1");
+    expect(screen.queryByLabelText("Art suchen")).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

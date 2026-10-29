@@ -1,4 +1,5 @@
 import type { BoughtList as Bought } from "@pflanzendex/core";
+import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
 import { CreateSpecimenButton, type WishToPlant } from "../../actions/actions";
 
 /**
@@ -14,7 +15,7 @@ export function BoughtList(props: {
   const { bought, onCreateSpecimen } = props;
   if (bought.bought.length === 0) return null;
   return (
-    <section aria-labelledby="bought-title" className="mt-7 flex min-w-0 flex-col gap-2">
+    <section aria-labelledby="bought-title" className="flex min-w-0 flex-col gap-2">
       <h2 id="bought-title" className="text-xl font-semibold">
         Gekauft
       </h2>
@@ -22,9 +23,14 @@ export function BoughtList(props: {
         {bought.hint.text} Sie stehen nicht mehr in der Wunschliste, bleiben aber hier erhalten.
       </p>
       <p className="font-semibold">{bought.hint.nextAction}</p>
-      <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0" aria-label="Gekaufte Wünsche">
-        {bought.bought.map((w) => (
-          <li key={w.id} className="grid break-words rounded-lg border border-border p-3">
+      <Pager
+        items={bought.bought}
+        pageSize={4}
+        label="Gekaufte Wünsche"
+        param={LAYER_PARAM}
+        getKey={(w) => w.id}
+        renderItem={(w) => (
+          <div className="grid break-words rounded-lg border border-border p-3">
             <span>{w.title}</span>
             {w.specimenId !== null ? (
               <span className="text-sm text-muted-foreground">Gekauft → Exemplar angelegt</span>
@@ -37,9 +43,9 @@ export function BoughtList(props: {
                 />
               )
             )}
-          </li>
-        ))}
-      </ul>
+          </div>
+        )}
+      />
     </section>
   );
 }

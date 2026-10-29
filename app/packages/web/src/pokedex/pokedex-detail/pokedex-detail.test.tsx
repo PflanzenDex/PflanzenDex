@@ -1,8 +1,18 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import type { ReactElement } from "react";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PokedexPage } from "../pokedex-page/pokedex-page";
+
+/** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
+const view = (ui: ReactElement, url = "/") =>
+  render(<MemoryRouter initialEntries={[url]}>{ui}</MemoryRouter>);
+
+// The layers are dialogs and drawers; jsdom lacks pointer capture, which they use.
+Element.prototype.setPointerCapture ??= () => undefined;
+Element.prototype.releasePointerCapture ??= () => undefined;
 
 const species = (name: string, extra: Record<string, unknown> = {}) => ({
   species: name,
@@ -40,7 +50,7 @@ const open = async (onOpenSpecies?: (id: string) => void) => {
       ),
     ),
   );
-  render(
+  view(
     <PokedexPage api="http://api" token={token} {...(onOpenSpecies ? { onOpenSpecies } : {})} />,
   );
   await screen.findByRole("heading", { level: 1, name: "Pokédex" });
@@ -51,16 +61,14 @@ const detail = () => screen.getByRole("region", { name: /Details/ });
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
-  // jsdom keeps the history across tests; a detail entry left behind would open its species in the next test.
-  window.history.replaceState(null, "");
 });
 
 describe("US-POK-09 view details of a species", () => {
-  it("US-POK-09 a tap on the card opens the details with name, genus, status, count, chips, date and source", async () => {
+  it("US-POK-09 a tap on the entry opens the details in a layer with name, genus, status, count, chips, date and source", async () => {
     await open();
     await userEvent.click(card("Ficus lyrata"));
+    expect(await screen.findByRole("dialog", { name: "Geigenfeige" })).toBeTruthy();
     const d = within(detail());
-    expect(d.getByRole("heading", { level: 2, name: "Geigenfeige" })).toBeTruthy();
     expect(d.getByText("Ficus lyrata")).toBeTruthy();
     expect(d.getByText(/Gattung: Ficus/)).toBeTruthy();
     expect(d.getByText(/Familie: Moraceae \(Maulbeergewächse\)/)).toBeTruthy();
@@ -106,7 +114,7 @@ describe("US-POK-09 view details of a species", () => {
         ),
       ),
     );
-    render(<PokedexPage api="http://api" token={token} />);
+    view(<PokedexPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: "Details zu Aloe vera" }));
     const link = within(detail()).getByRole("link", { name: /Quelle/ });
     expect(link.getAttribute("href")).toBe("https://example.org/aloe");
@@ -130,29 +138,25 @@ describe("US-POK-09 view details of a species", () => {
         ),
       ),
     );
-    render(<PokedexPage api="http://api" token={token} />);
+    view(<PokedexPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: "Details zu Aloe vera" }));
     const d = within(detail());
     expect(d.queryByRole("link", { name: /Quelle/ })).toBeNull();
     expect(d.getByText(/Quelle: javascript:alert\(1\)/)).toBeTruthy();
   });
 
-  it("US-POK-09 at most one detail view is open; it replaces the list and closing is unambiguous", async () => {
+  it("US-POK-09 · US-QS-22 at most one layer is open; closing returns to the list", async () => {
     await open();
     await userEvent.click(card("Ficus lyrata"));
     expect(screen.getAllByRole("region", { name: /Details/ })).toHaveLength(1);
-    expect(screen.queryByRole("button", { name: "Details zu Aloe vera" })).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("region", { name: /Details/ })).toBeNull();
     expect(screen.getAllByRole("listitem").length).toBeGreaterThan(1);
   });
 
-  it("US-POK-09 Escape closes the details and the focus returns to the card", async () => {
+  it("US-POK-09 Escape closes the details and the focus returns to the entry", async () => {
     await open();
     await userEvent.click(card("Ficus lyrata"));
-    expect(document.activeElement).toBe(
-      screen.getByRole("heading", { level: 2, name: "Geigenfeige" }),
-    );
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("region", { name: /Details/ })).toBeNull();
     expect(document.activeElement).toBe(card("Ficus lyrata"));
@@ -162,7 +166,7 @@ describe("US-POK-09 view details of a species", () => {
     await open();
     card("Aloe vera").focus();
     await userEvent.keyboard("{Enter}");
-    expect(within(detail()).getByRole("heading", { level: 2, name: "Aloe vera" })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Aloe vera" })).toBeTruthy();
   });
 
   it("US-POK-09 the link to the species profile reports the species ID outward", async () => {
@@ -187,65 +191,29 @@ describe("US-POK-09 view details of a species", () => {
   });
 });
 
-describe("US-POK-09 follow-ups of the detail view (issue 297)", () => {
-  it("US-POK-09 the browser Back button closes the detail view instead of leaving the page", async () => {
-    await open();
-    await userEvent.click(card("Ficus lyrata"));
-    expect(screen.getByRole("region", { name: /Details/ })).toBeTruthy();
-    window.history.back();
-    await waitFor(() => expect(screen.queryByRole("region", { name: /Details/ })).toBeNull());
-    expect(card("Ficus lyrata")).toBeTruthy();
-  });
-
-  it("US-POK-09 Forward after Back opens the same species again instead of a stale, empty entry (#306)", async () => {
-    await open();
-    await userEvent.click(card("Ficus lyrata"));
-    window.history.back();
-    await waitFor(() => expect(screen.queryByRole("region", { name: /Details/ })).toBeNull());
-    window.history.forward();
-    await waitFor(() => expect(detail().textContent).toContain("Ficus lyrata"));
-  });
-
-  it("US-POK-09 a detail entry reached from elsewhere in the history opens its species (#306)", async () => {
-    window.history.pushState({ pokedexDetail: true, species: "Aloe vera" }, "");
-    await open();
-    expect((await screen.findByRole("region", { name: /Details/ })).textContent).toContain(
-      "Aloe vera",
+describe("US-POK-09 · US-QS-22 the layer of a species is in the address", () => {
+  it("US-POK-09 · US-QS-22 an address with the layer of a species opens its details", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({ ownership: { caught: [lyrata, aloe], unidentified: [] } }),
+            { status: 200 },
+          ),
+        ),
+      ),
     );
-    window.history.back();
-    await waitFor(() => expect(screen.queryByRole("region", { name: /Details/ })).toBeNull());
+    view(<PokedexPage api="http://api" token={token} />, "/?sheet=species-Aloe vera");
+    expect((await screen.findByRole("region", { name: /Details/ })).textContent).toContain(
+      "Gattung: Aloe",
+    );
   });
 
-  it("US-POK-09 closing with the button takes back the history entry the opening pushed (one Back, no extra entry)", async () => {
-    await open();
-    const push = vi.spyOn(window.history, "pushState");
-    const back = vi.spyOn(window.history, "back");
-    await userEvent.click(card("Ficus lyrata"));
-    await userEvent.click(screen.getByRole("button", { name: "Schließen" }));
-    await waitFor(() => expect(screen.queryByRole("region", { name: /Details/ })).toBeNull());
-    expect(push).toHaveBeenCalledTimes(1);
-    expect(back).toHaveBeenCalledTimes(1);
-    push.mockRestore();
-    back.mockRestore();
-  });
-
-  it("US-POK-09 every card shows a visible tap marker (chevron), not only the hover state", async () => {
+  it("US-POK-09 every entry shows a visible tap marker (chevron), not only the hover state", async () => {
     await open();
     const marker = card("Ficus lyrata").closest("li")?.querySelector("[data-chevron]");
     expect(marker?.textContent).toBe("›");
     expect(marker?.getAttribute("aria-hidden")).toBe("true");
-  });
-
-  it("US-POK-09 two rapid close triggers (double click, double Escape) take the history entry back only once", async () => {
-    await open();
-    const back = vi.spyOn(window.history, "back");
-    await userEvent.click(card("Ficus lyrata"));
-    const close = screen.getByRole("button", { name: "Schließen" });
-    fireEvent.click(close);
-    fireEvent.click(close);
-    fireEvent.keyDown(document, { key: "Escape" });
-    await waitFor(() => expect(screen.queryByRole("region", { name: /Details/ })).toBeNull());
-    expect(back).toHaveBeenCalledTimes(1);
-    back.mockRestore();
   });
 });
