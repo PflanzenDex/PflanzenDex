@@ -2,6 +2,7 @@
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { deliverBuffered } from "@/platform/announcer/outbox";
 import { AnnouncerProvider } from "@/platform/announcer/announcer";
@@ -190,7 +191,7 @@ const due = (
 });
 
 describe("US-BEH-02 offene Behandlungen", () => {
-  it("US-BEH-02 shows plant, reason, agent or a dash, due date and status in the order of the server", async () => {
+  it("US-BEH-02 · US-QS-18 shows plant, reason, agent or a dash, due date and status in the order of the server", async () => {
     fakeServer([specimen("e1", "Bogenhanf")], undefined, () =>
       response(200, {
         treatments: [
@@ -208,20 +209,20 @@ describe("US-BEH-02 offene Behandlungen", () => {
     expect(items[0]?.textContent).toContain("Grund a");
     expect(items[0]?.textContent).toContain("Neemöl");
     expect(items[0]?.textContent).toContain("01.10.2026");
-    expect(items[0]?.textContent).toContain("überfällig seit 2 Tagen");
+    expect(items[0]?.textContent).toContain("2\u00a0Tage überfällig");
     expect(items[1]?.textContent).toContain("Mittel: —");
     expect(items[1]?.textContent).toContain("heute fällig");
     expect(items[2]?.textContent).toContain("20.10.2026");
   });
 
-  it("US-QS-14 the status chip is a soft box, not a pill, so a wrapped status text keeps a calm shape", async () => {
+  it("US-QS-14 · US-QS-18 the status chip is a soft box, not a pill, so a wrapped status text keeps a calm shape", async () => {
     fakeServer([specimen("e1", "Bogenhanf")], undefined, () =>
       response(200, {
         treatments: [due("a", "Aloe", "2026-10-01", "overdue", "überfällig seit 13 Tagen")],
       }),
     );
     show();
-    const chip = await screen.findByText("überfällig seit 13 Tagen");
+    const chip = await screen.findByText("13 Tage überfällig");
     expect(chip.className).toContain("rounded-control");
     expect(chip.className).not.toContain("rounded-full");
   });
@@ -523,7 +524,12 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
       onchange: null,
     })) as unknown as typeof window.matchMedia;
   });
-  const showHost = () => render(<TreatmentsPage api="http://api" token={token} host />);
+  const showHost = () =>
+    render(
+      <MemoryRouter>
+        <TreatmentsPage api="http://api" token={token} host />
+      </MemoryRouter>,
+    );
 
   it("US-QS-14 has no h1 and no title of its own; its headings are level 3", async () => {
     doneServer();
@@ -540,9 +546,7 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
     doneServer();
     showHost();
     const list = await screen.findByRole("list", { name: "Offene Behandlungen" });
-    expect(within(list).getByText("überfällig seit 2 Tagen").className).toContain(
-      "rounded-control",
-    );
+    expect(within(list).getByText("2 Tage überfällig").className).toContain("rounded-control");
   });
 
   it("US-QS-14 · US-BEH-01 the form is not on the page until Behandlung planen is chosen", async () => {
