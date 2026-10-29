@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter, useLocation } from "react-router";
 import { ERROR_TEXTS, type Species } from "@pflanzendex/core";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/lib/viewport-mock";
 import { SpeciesPage } from "./species-page";
 
 const response = (status: number, body: unknown) =>
@@ -56,9 +58,17 @@ function fakeServer(opts: { species?: unknown[]; proposal?: () => Promise<Respon
 }
 
 const page = (extra: Partial<Parameters<typeof SpeciesPage>[0]> = {}) => (
-  <SpeciesPage api="http://api" token={async () => "tok"} onChoose={vi.fn()} {...extra} />
+  <MemoryRouter>
+    <SpeciesPage api="http://api" token={async () => "tok"} onChoose={vi.fn()} {...extra} />
+  </MemoryRouter>
 );
 const hit = { ...species, hit: null };
+
+beforeAll(() => {
+  Element.prototype.setPointerCapture ??= () => undefined;
+  Element.prototype.releasePointerCapture ??= () => undefined;
+});
+beforeEach(() => setViewportWidth(360));
 
 afterEach(() => {
   cleanup();
@@ -148,6 +158,7 @@ describe("US-BES-01 Seite Arten", () => {
     fakeServer();
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
+    await screen.findByRole("dialog", { name: "Art vorschlagen" });
     await userEvent.type(screen.getByLabelText(/Lateinischer Name/), "Dracaena trifasciata");
     await userEvent.selectOptions(screen.getByLabelText(/Schwierigkeit/), "1");
     await userEvent.selectOptions(screen.getByLabelText(/Standard-Stufe/), "2");
@@ -166,6 +177,7 @@ describe("US-BES-01 Seite Arten", () => {
     fakeServer();
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
+    await screen.findByRole("dialog", { name: "Art vorschlagen" });
     const field = screen.getByLabelText(/Weichblättrige C3-Pflanze/) as HTMLSelectElement;
     expect(field.value).toBe("");
     expect(field.required).toBe(false);
@@ -187,6 +199,7 @@ describe("US-BES-01 Seite Arten", () => {
     });
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
+    await screen.findByRole("dialog", { name: "Art vorschlagen" });
     await userEvent.type(screen.getByLabelText(/Lateinischer Name/), "Dracaena trifasciata");
     await userEvent.selectOptions(screen.getByLabelText(/Schwierigkeit/), "1");
     await userEvent.selectOptions(screen.getByLabelText(/Standard-Stufe/), "2");
@@ -210,6 +223,7 @@ describe("US-BES-01 Seite Arten", () => {
     fakeServer();
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
+    await screen.findByRole("dialog", { name: "Art vorschlagen" });
     await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
     const name = screen.getByLabelText(/Lateinischer Name/);
     await vi.waitFor(() => expect(document.activeElement).toBe(name));
@@ -222,18 +236,11 @@ describe("US-BES-01 Seite Arten", () => {
     fakeServer();
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
+    await screen.findByRole("dialog", { name: "Art vorschlagen" });
     await userEvent.type(screen.getByLabelText(/Lichtbedarf/), "0");
     await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
     expect(await screen.findByText(/ganze Zahl zwischen 1 und 200.000/)).toBeTruthy();
     expect(vi.mocked(fetch).mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
-  });
-
-  it("cancel in the proposal form leads back to the search", async () => {
-    fakeServer();
-    render(page());
-    await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
-    await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
-    expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
   });
 });
 
@@ -259,4 +266,78 @@ describe("US-QS-14 · US-BES-09 a section of another module below the profile", 
       await screen.findByRole("heading", { name: "Mein Pflegeprofil von Bogenhanf" }),
     ).toBeTruthy();
   });
+});
+
+describe("US-BES-01 the page starts with the search", () => {
+  it("the page starts with the search and loads, without inventing anything", () => {
+    fakeServer();
+    render(page());
+    expect(screen.getByRole("heading", { name: "Art wählen" })).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain("Suche läuft");
+  });
+});
+
+describe("US-QS-21 the proposal opens as a layer", () => {
+  function Address() {
+    const l = useLocation();
+    return <output data-testid="address">{l.pathname + l.search}</output>;
+  }
+  const at = (path: string) => (
+    <MemoryRouter initialEntries={[path]}>
+      <SpeciesPage api="http://api" token={async () => "tok"} onChoose={vi.fn()} embedded />
+      <Address />
+    </MemoryRouter>
+  );
+
+  it("US-QS-21 'Art vorschlagen' opens the layer named in the address with one primary action; Escape closes it", async () => {
+    fakeServer({ species: [hit] });
+    render(at("/discover?view=catalog"));
+    await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
+    const layer = await screen.findByRole("dialog", { name: "Art vorschlagen" });
+    expect(screen.getByTestId("address").textContent).toContain("sheet=propose");
+    const filled = within(layer)
+      .getAllByRole("button")
+      .filter((b) => b.className.includes("bg-primary"));
+    expect(filled.map((b) => b.textContent)).toEqual(["Vorschlag speichern"]);
+    await userEvent.keyboard("{Escape}");
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("US-QS-21 a link with ?sheet=propose opens the layer, and saving leaves it for the new profile", async () => {
+    fakeServer();
+    render(at("/discover?view=catalog&sheet=propose"));
+    await screen.findByRole("dialog", { name: "Art vorschlagen" });
+    await userEvent.type(screen.getByLabelText(/Lateinischer Name/), "Dracaena trifasciata");
+    await userEvent.selectOptions(screen.getByLabelText(/Schwierigkeit/), "1");
+    await userEvent.selectOptions(screen.getByLabelText(/Standard-Stufe/), "2");
+    await userEvent.type(screen.getByLabelText(/Lichtbedarf/), "15000");
+    await userEvent.selectOptions(screen.getByLabelText(/Wachstumsmaß/), "height");
+    await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), "x");
+    await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), "y");
+    await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
+    expect(await screen.findByRole("heading", { name: "Dracaena trifasciata" })).toBeTruthy();
+    expect(screen.getByTestId("address").textContent).not.toContain("sheet=");
+  }, 20_000);
+
+  it("US-QS-21 a refusal by code shows its German text in the layer (FR-QG-11)", async () => {
+    fakeServer({
+      proposal: () =>
+        response(409, {
+          error: { code: "species.duplicate", text: "roh", data: { existing: species } },
+        }),
+    });
+    render(at("/discover?view=catalog&sheet=propose"));
+    await screen.findByRole("dialog", { name: "Art vorschlagen" });
+    await userEvent.type(screen.getByLabelText(/Lateinischer Name/), "Dracaena trifasciata");
+    await userEvent.selectOptions(screen.getByLabelText(/Schwierigkeit/), "1");
+    await userEvent.selectOptions(screen.getByLabelText(/Standard-Stufe/), "2");
+    await userEvent.type(screen.getByLabelText(/Lichtbedarf/), "15000");
+    await userEvent.selectOptions(screen.getByLabelText(/Wachstumsmaß/), "height");
+    await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), "x");
+    await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), "y");
+    await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain(ERROR_TEXTS["species.duplicate"]);
+    expect(alert.textContent).not.toContain("roh");
+  }, 20_000);
 });
