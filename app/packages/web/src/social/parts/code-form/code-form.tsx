@@ -16,7 +16,7 @@ const refusalText = (e: ApiError) =>
   e.code === "network.not_reachable" ? e.text : errorText(e.code);
 
 /**
- * "Code eingeben" (US-SOZ-01): sends a friendship request with the code someone passed on. A refused code (unknown,
+ * "Code eingeben", the second tab of the layer "Freund hinzufügen" (US-SOZ-01, US-QS-20): sends a friendship request with the code someone passed on. A refused code (unknown,
  * used, expired, own, already linked) stays visible at the field with its German text and the focus returns to it (P-10).
  * `onSend` resolves with the refusal, or `null` when the request was sent.
  */
@@ -37,13 +37,8 @@ export function CodeForm(props: {
   });
   const pending = props.running || form.formState.isSubmitting;
   return (
-    <section aria-labelledby="friend-code-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="friend-code-title" className="text-xl font-semibold">
-        Code eingeben
-      </h2>
-      <p className="text-muted-foreground">
-        Du hast einen Code bekommen? Gib ihn hier ein, dann geht deine Anfrage an die Person.
-      </p>
+    <section aria-label="Code eingeben" className="flex min-w-0 flex-col gap-3">
+      <p className="text-muted-foreground">Dein Code geht als Anfrage an die Person.</p>
       <Form {...form}>
         <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
           <TextField

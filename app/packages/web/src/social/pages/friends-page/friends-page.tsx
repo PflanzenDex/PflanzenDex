@@ -1,171 +1,101 @@
-import { useCallback, useState } from "react";
-import type { CreatedFriendCode } from "@pflanzendex/core";
-import { LoadFrame, SIGN_IN, useInvalidate, useWriteAction, type ApiError } from "../../../kernel";
-import { errorText } from "@/lib/error-text";
+import { useCallback } from "react";
+import { Button } from "@/components/ui/button/button";
+import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LoadFrame, useInvalidate, useRequest } from "../../../kernel";
+import { loadFriends, type FriendsData } from "../../api/friends-api";
+import { loadBanner } from "../../api/feed-api";
+import { sharingChoice } from "../../parts/sharing-panel/sharing-panel";
+import { AddFriendLayer } from "./friend-layers/add-friend-layer/add-friend-layer";
+import { HelpLayer, ListLayers } from "./friend-layers/friend-layers";
 import {
-  answerFriendRequest,
-  createFriendCode,
-  endFriendship,
-  loadFriends,
-  setSpeciesSharing,
-  setSpecimenSharing,
-  sendFriendRequest,
-  type FriendsData,
-} from "../../api/friends-api";
-import { CodeForm } from "../../parts/code-form/code-form";
-import { FriendList } from "../../parts/friend-list/friend-list";
-import { FriendsBanner } from "../../feed/friends-banner/friends-banner";
-import { FeedBlock } from "../../feed/feed-block/feed-block";
-import { SharingPanel } from "../../parts/sharing-panel/sharing-panel";
-import { InviteCard } from "../../parts/invite-card/invite-card";
-import { nameOf, RequestList } from "../../parts/request-list/request-list";
-import { FriendsLinks } from "./friends-links/friends-links";
+  HelpOpener,
+  LayerRow,
+  LayerTile,
+  LinkTile,
+  type TileCount,
+} from "./friend-tiles/friend-tiles";
 import { FriendsPageSkeleton } from "./friends-page.skeleton";
 
 const KEY = ["social", "friends"] as const;
 type Token = () => Promise<string | undefined>;
 
-/** Sends the code form's request and hands a refusal back to the field; one request at a time (a double tap sends one). */
-function useSendRequest(api: string, token: Token, reload: () => void) {
-  const write = useWriteAction(token, reload);
-  const [refusal, setRefusal] = useState<ApiError | null>(null);
-  const send = async (code: string): Promise<boolean> => {
-    let ok = false;
-    await write.run(async (t) => {
-      const r = await sendFriendRequest(api, t, code);
-      ok = r.ok;
-      setRefusal(r.ok ? null : r.error);
-      return r;
-    }, "Anfrage gesendet. Sobald die Person sie annimmt, seid ihr befreundet.");
-    return ok;
-  };
-  return { send, refusal, write };
+/** Calm mode shows no counts (US-ACH-08, US-TAU-07); otherwise the count of the news banner while it loads or fails (P-10). */
+function useNewsCount(api: string, token: Token, calm: boolean): TileCount {
+  const load = useCallback((t: string) => loadBanner(api, t), [api]);
+  const r = useRequest({ queryKey: ["social", "banner"], token, load });
+  if (calm) return "hidden";
+  if (r.status === "error") return "error";
+  return r.value === undefined ? "loading" : r.value.firstVisit ? 0 : r.value.count;
 }
 
-/** What the last write did: a notice, or the German text of its refusal (P-10). */
-function Outcome(props: { message: string | null; error: ApiError | null }) {
-  const { message, error } = props;
-  return (
-    <>
-      {message && (
-        <p role="status" className="rounded-lg border border-border p-3">
-          {message}
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
-          {error.code === SIGN_IN.code ? SIGN_IN.text : errorText(error.code)}
-        </p>
-      )}
-    </>
-  );
-}
+type Options = {
+  /** Calm mode is on or not known yet: the tiles show their names without counts (US-ACH-08). */
+  calm: boolean;
+};
 
-/** The sharing panel with its own writes and their outcome (US-SOZ-04): one request at a time, the page reloads after each. */
-function SharingSection(props: {
+const friendsText = (n: number) => (n === 0 ? "Noch keine" : n === 1 ? "1 Freund" : `${n} Freunde`);
+
+function Body(props: {
   data: FriendsData;
   api: string;
   token: Token;
   onWritten: () => void;
+  options: Options;
 }) {
-  const { api, data } = props;
-  const sharing = useWriteAction(props.token, props.onWritten);
-  const set = (specimenId: string, share: boolean) =>
-    void sharing.run(
-      (t) => setSpecimenSharing(api, t, { specimenId, share }),
-      share
-        ? "Freigegeben: Freunde sehen dieses Exemplar ab jetzt."
-        : "Zurückgezogen: Freunde sehen dieses Exemplar ab dem nächsten Abruf nicht mehr.",
-    );
-  const setSpecies = (speciesId: string, share: boolean) =>
-    void sharing.run(
-      (t) => setSpeciesSharing(api, t, { speciesId, share }),
-      share
-        ? "Alle Exemplare dieser Art sind für Freunde freigegeben."
-        : "Alle Exemplare dieser Art sind zurückgezogen.",
-    );
+  const { api, token, data, options } = props;
+  const news = useNewsCount(api, token, options.calm);
+  const add = useLayer("add");
+  const open = data.requests.incoming.length;
   return (
-    <>
-      <Outcome message={sharing.message} error={sharing.error} />
-      <SharingPanel
-        specimens={data.specimens}
-        shared={data.shared}
-        busy={sharing.running}
-        onSet={set}
-        onSetSpecies={setSpecies}
-      />
-    </>
-  );
-}
-
-function Body(props: { data: FriendsData; api: string; token: Token; onWritten: () => void }) {
-  const { api, token, data } = props;
-  const [created, setCreated] = useState<CreatedFriendCode | null>(null);
-  const invite = useWriteAction(token, props.onWritten);
-  const answer = useWriteAction(token, props.onWritten);
-  const ending = useWriteAction(token, props.onWritten);
-  const request = useSendRequest(api, token, props.onWritten);
-  const message = [invite.message, answer.message, ending.message, request.write.message].find(
-    (m) => m !== null,
-  );
-  const error = invite.error ?? answer.error ?? ending.error;
-  return (
-    <div className="flex min-w-0 flex-col gap-6">
-      <Outcome message={message ?? null} error={error ?? null} />
-      <InviteCard
-        created={created}
-        running={invite.running}
-        onCreate={() =>
-          void invite.run(async (t) => {
-            const r = await createFriendCode(api, t);
-            if (r.ok) setCreated(r.value);
-            return r;
-          }, "Code erzeugt.")
-        }
-      />
-      <CodeForm running={request.write.running} refusal={request.refusal} onSend={request.send} />
-      <FriendsBanner api={api} token={token} />
-      <FeedBlock
-        api={api}
-        token={token}
-        friends={data.friends.map((f) => ({ id: f.id, name: f.name }))}
-      />
-      <RequestList
-        requests={data.requests}
-        busy={answer.running}
-        onAnswer={(id, decision) =>
-          void answer.run(
-            (t) => answerFriendRequest(api, t, { requestId: id, decision }),
-            decision === "accept"
-              ? `Du bist jetzt mit ${nameOf(
-                  data.requests.incoming.find((r) => r.id === id)?.otherName ?? null,
-                )} befreundet.`
-              : "Anfrage abgelehnt. Die Person erfährt nur, dass sie nicht angenommen wurde.",
-          )
-        }
-      />
-      <FriendList
-        friends={data.friends}
-        busy={ending.running}
-        onEnd={(f) =>
-          void ending.run(
-            (t) => endFriendship(api, t, f.id),
-            `Freundschaft mit ${nameOf(f.name)} beendet. Ihr seht nichts mehr voneinander; deine eigenen Daten bleiben.`,
-          )
-        }
-      />
-      <SharingSection data={data} api={api} token={token} onWritten={props.onWritten} />
+    <div className="flex min-w-0 flex-col gap-4">
+      {data.friends.length === 0 && (
+        <p className="rounded-lg border border-dashed border-border p-3">
+          Noch keine Freunde. „Freund hinzufügen“ ist der nächste Schritt.
+        </p>
+      )}
+      <Button
+        type="button"
+        size="touch"
+        aria-haspopup="dialog"
+        aria-expanded={add.open}
+        onClick={(event) => add.openLayer(event.currentTarget)}
+      >
+        Freund hinzufügen
+      </Button>
+      <div className="grid grid-cols-2 gap-2">
+        <LayerTile id="requests" name="Anfragen" count={options.calm ? "hidden" : open} />
+        <LayerTile id="news" name="Neu bei Freunden" count={news} />
+        <LinkTile to="/friends/exchange" name="Tauschbörse" />
+        <LinkTile to="/friends/match" name="Passende Angebote" />
+      </div>
+      <div className="flex flex-col gap-2">
+        <LayerRow id="friends" name="Meine Freunde" state={friendsText(data.friends.length)} />
+        <LayerRow
+          id="sharing"
+          name="Was Freunde sehen"
+          state={sharingChoice(data.specimens, data.shared)}
+        />
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Ohne deine Freigabe sieht niemand etwas. <HelpOpener />
+      </p>
+      <AddFriendLayer api={api} token={token} onWritten={props.onWritten} />
+      <ListLayers api={api} token={token} data={data} onWritten={props.onWritten} />
+      <HelpLayer />
     </div>
   );
 }
 
 /**
- * The page "Freunde" (US-SOZ-01, US-SOZ-02): open requests with accept and decline, the confirmed friends, a button to
- * invite with a code and the field to enter a code (these two come first: the next action before the lists, P-09). Nothing here shows a friend's collection: private by default
- * (P-05), and there are no rankings between friends. A write reloads everything (P-10).
+ * The page "Freunde" as one screen (US-QS-20, US-SOZ-01, US-SOZ-02): the one filled action "Freund hinzufügen", tiles for the
+ * requests, the news, the exchange and the matching offers, rows for the friends and for what friends see, and one line of
+ * help. Every part opens as a layer (`?sheet=add|requests|news|friends|sharing|help`) and lists are paged. Nothing here
+ * shows a friend's collection: private by default (P-05), and there are no rankings between friends. A write reloads
+ * everything (P-10). Calm mode shows the tiles without counts.
  */
-export function FriendsPage(props: { api: string; token: Token }) {
+export function FriendsPage(props: { api: string; token: Token; calm?: boolean }) {
   const { api, token } = props;
+  const options: Options = { calm: props.calm ?? false };
   const reload = useInvalidate(KEY);
   const load = useCallback((t: string) => loadFriends(api, t), [api]);
   return (
@@ -174,11 +104,6 @@ export function FriendsPage(props: { api: string; token: Token }) {
         <h1 id="friends-title" className="text-2xl font-semibold">
           Freunde
         </h1>
-        <p className="text-muted-foreground">
-          Freunde findest du nur über einen Code, den ihr außerhalb der App austauscht. Was sie von
-          dir sehen, bestimmst du; ohne deine Freigabe sieht niemand etwas.
-        </p>
-        <FriendsLinks />
         <LoadFrame
           queryKey={KEY}
           token={token}
@@ -186,7 +111,9 @@ export function FriendsPage(props: { api: string; token: Token }) {
           loadingText="Freunde werden geladen …"
           loadingFallback={<FriendsPageSkeleton label="Freunde werden geladen …" />}
         >
-          {(data: FriendsData) => <Body data={data} api={api} token={token} onWritten={reload} />}
+          {(data: FriendsData) => (
+            <Body data={data} api={api} token={token} onWritten={reload} options={options} />
+          )}
         </LoadFrame>
       </section>
     </div>
