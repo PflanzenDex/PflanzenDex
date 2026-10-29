@@ -93,6 +93,17 @@ describe("Pager (US-QS-15)", () => {
     );
     expect(screen.queryByRole("status")).toBeNull();
   });
+
+  it("US-QS-23 a pager with its own address part leaves the page of the list behind it alone", async () => {
+    render(
+      <MemoryRouter initialEntries={["/?page=2"]}>
+        <Pager items={items} pageSize={3} label="Verlauf" param="verlauf" renderItem={(t) => t} />
+        <Where />
+      </MemoryRouter>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    expect(screen.getByTestId("address").textContent).toBe("?page=2&verlauf=2");
+  });
 });
 
 describe("Pager in a layer (US-QS-22)", () => {

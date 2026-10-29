@@ -8,7 +8,13 @@ import { refusalText } from "../../../shared/notices/notices";
  * from an object URL, never from a public link. A failure says why by its error code (P-10).
  */
 export function MeasurementPhoto(
-  props: PhotoAccess & { specimenId: string; measurementId: string; date: string },
+  props: PhotoAccess & {
+    specimenId: string;
+    measurementId: string;
+    date: string;
+    /** A small picture for a paged list in a layer (US-QS-23). */
+    compact?: boolean;
+  },
 ) {
   const { api, token, specimenId, measurementId, date } = props;
   const path = `/specimens/${encodeURIComponent(specimenId)}/measurements/${encodeURIComponent(measurementId)}/photo`;
@@ -16,7 +22,7 @@ export function MeasurementPhoto(
   if (state === null)
     return (
       <div role="status">
-        <Skeleton className="h-40 w-full max-w-xs" />
+        <Skeleton className={props.compact ? "h-20 w-full max-w-xs" : "h-40 w-full max-w-xs"} />
         <span className="sr-only">Foto wird geladen …</span>
       </div>
     );
@@ -30,7 +36,7 @@ export function MeasurementPhoto(
     <img
       src={state}
       alt={`Foto der Messung vom ${dateText(date)}`}
-      className="max-h-64 w-auto max-w-full rounded-lg object-contain"
+      className={`${props.compact ? "max-h-24" : "max-h-64"} w-auto max-w-full rounded-lg object-contain`}
     />
   );
 }

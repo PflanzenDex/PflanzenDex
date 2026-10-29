@@ -146,14 +146,13 @@ describe("US-QS-19 the layers of the plants", () => {
     expect(onManage).toHaveBeenCalledOnce();
   });
 
-  it("US-QS-19 choosing a tile opens the plant as a layer with its card and the same actions", async () => {
+  it("US-QS-19 choosing a tile opens the plant as a layer, addressed by ?sheet=plant-<id>, with the same actions", async () => {
     const onMeasure = vi.fn();
     screenWith([card(1, { name: "Aloe" })], { onMeasure });
     await openPlant("Aloe");
     const layer = await screen.findByRole("dialog", { name: "Aloe" });
     expect(screen.getByTestId("address").textContent).toBe("?sheet=plant-e1");
-    expect(within(layer).getByText("Art: Bogenhanf")).toBeTruthy();
-    expect(within(layer).getByText("Standort: Regal Süd")).toBeTruthy();
+    expect(within(layer).getByText("Art: Bogenhanf · Status: Pflanze")).toBeTruthy();
     await userEvent.click(within(layer).getByRole("button", { name: "Messen: Aloe" }));
     expect(onMeasure).toHaveBeenCalledOnce();
   });

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useSearchParams } from "react-router";
+import { useLocation, useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button/button";
 import { cn } from "@/lib/utils";
 
@@ -70,8 +70,10 @@ export type PagerProps<T> = {
   listClassName?: string;
   /** A changed value (filter, search) starts again at page 1. */
   resetKey?: string | number;
-  /** The address part of the page; a list in a layer passes `LAYER_PARAM`. Default `page`. */
+  /** Name of the address part that holds the page; `page` unless another pager shares the address (a list in a layer passes `LAYER_PARAM`). */
   param?: string;
+  /** Replaces the history entry instead of pushing one, so Back leaves a layer in one step. */
+  replace?: boolean;
 };
 
 function parsePage(raw: string | null): number {
@@ -93,8 +95,10 @@ export function Pager<T>({
   listClassName,
   resetKey,
   param = PARAM,
+  replace: replaceEntry = false,
 }: PagerProps<T>) {
   const [params, setParams] = useSearchParams();
+  const location = useLocation();
   const pages = Math.max(1, Math.ceil(items.length / pageSize));
   const raw = parsePage(params.get(param));
   const page = Math.min(raw, pages);
@@ -104,22 +108,23 @@ export function Pager<T>({
       const next = new URLSearchParams(params);
       if (target <= 1) next.delete(param);
       else next.set(param, String(target));
-      setParams(next, { replace });
+      // Keep the history state: a layer opened by the app closes by going back (`useLayer`).
+      setParams(next, { replace: replace || replaceEntry, state: location.state });
     },
-    [params, setParams, param],
+    [params, setParams, param, replaceEntry, location.state],
   );
 
   // A page outside the range is corrected in the address as well.
   React.useEffect(() => {
     if (params.has(param) && raw !== page) go(page, true);
-  }, [params, raw, page, go]);
+  }, [params, raw, page, go, param]);
 
   const lastKey = React.useRef(resetKey);
   React.useEffect(() => {
     if (lastKey.current === resetKey) return;
     lastKey.current = resetKey;
     if (params.has(param)) go(1, true);
-  }, [resetKey, params, go]);
+  }, [resetKey, params, go, param]);
 
   const swipe = useSwipe(page, pages, go);
   const visible = items.slice((page - 1) * pageSize, page * pageSize);

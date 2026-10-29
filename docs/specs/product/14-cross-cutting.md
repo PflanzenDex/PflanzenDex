@@ -305,7 +305,7 @@ Acceptance criteria:
 - When I choose "Ansicht", then a layer (`?sheet=view`) holds the grouping ("Alle", "Nach Pflegephase", "Nach Standort"; still in the address as `group=`), the sorting if one exists (none yet) and "Standorte und Lichtzonen verwalten"; a changed grouping starts at page 1.
 - Given a grouping, then I choose the group from a row of choices, each with its count ("Standort unbekannt" and "Zone unbekannt" as before; the care phases for "Nach Pflegephase"), the group is in the address (`part=`), and its plants page as above; "Jetzt umgestellt" of the phase grouping keeps working (US-PHA-03).
 - When I choose the light-zone insight row, then a layer (`?sheet=zones`) shows the distribution per zone with the thinnest zone named in text, the note about cutting light in one line and the way to the management.
-- When I choose a tile, then the plant opens the way it does today, with its card and the same actions, as a layer (`?sheet=plant-<id>`); a detail layer with tabs is a later story (US-QS-15).
+- When I choose a tile, then the plant opens the way it does today, with its card and the same actions, as a layer (`?sheet=plant-<id>`); a detail layer with tabs is a later story (US-QS-15). _Superseded by US-QS-23 (2026-10-29): the layer has tabs instead of the long card._
 - Given archived plants, then the insight row also leads to the archive in a layer (`?sheet=archive`), so nothing disappears silently (P-10).
 - Given no plant, loading or an error, then the mode shows that state with its next action (P-09, P-10).
 
@@ -368,6 +368,26 @@ Acceptance criteria:
 - Given a layer, then it has at most one filled primary action (US-QS-15).
 
 State of implementation: the modes use `Pager` and `LayerSheet`; the screens are `PokedexPage`, `DifficultyPage`, `WishlistPage` and `EquipmentPage` in their modules; `CollectionArea` asks the frame to fit one screen for every mode (`data-fit-screen`, as US-QS-19). Equipment belongs to the epic EQU and ships with R5; its screen layout ships with the other modes because the mode exists in the "Sammlung" already. Status 🟨 until a real phone check.
+
+### US-QS-23 · A plant opens as a layer with tabs · 🟨 new
+
+As a **plant keeper** I want a plant to open as a layer with tabs, so that next to the plant I measure, water or treat it with one hand and find the rest one layer deeper, without scrolling through one long card (US-QS-15, P-11).
+
+Decision (owner, 2026-10-29, after a UI review): layered content (overview, then topic, then detail, then action), one filled primary action per layer, no page scroll. The long card of US-BES-06 is replaced by the tabs; what it showed and did stays reachable.
+
+Acceptance criteria:
+
+- Given the plants of the Sammlung, when I choose a tile, then the plant opens as a layer (`?sheet=plant-<id>`, as before) with the name, its chips (light zone, location, open treatment; an unknown value reads "Zone unbekannt" or "Standort unbekannt", P-08) and the tabs "Überblick", "Verlauf", "Pflege" and "Standort"; the active tab is in the address (`&tab=ueberblick|verlauf|pflege|standort`, an absent or unknown value means "Überblick"), a tab change replaces the entry so Back leaves the layer in one step, and a reload or a copied link opens the same tab.
+- Given "Überblick", then it fits the layer without scroll on a phone (360 x 640 px, starting value, assumption) and shows: the latest photo or a placeholder as a thumbnail, the last measurement with its date, the growth trend from the own history only (P-08, never against species averages; etiolated growth never counts as success), the state, the open treatment, the species and status, and one filled primary action "Messen"; "Gießen" (US-MON-05) and "Behandeln" are outline buttons, and "Behandeln" leads to the tab "Pflege".
+- Given "Verlauf", then the measurements and their photos are paged with `Pager` (3 per page, starting value, assumption), newest first; the page has its own address part (`verlauf=n`), so the list behind the layer keeps its page.
+- Given "Pflege", then the open treatments of this plant (with "Erledigt", US-BEH-02, US-BEH-03), the planning of a treatment with this plant ticked (US-BEH-01), the done treatments, the care phase with "Jetzt umgestellt" (US-PHA-01, US-PHA-03) and the own care profile of its species (US-BES-09) show with their existing actions; a plant without a care phase reads "unbekannt" and says where to enter the period.
+- Given "Standort", then the location and the light zone with its source show ("unbekannt" where unknown), with the actions to change them: "Lichtzone ändern" (US-LIC-02) and the choice of a location from the own locations (US-PHA-03; without a location it leads to the management).
+- Given the rarer actions (markers US-BES-03, catch date US-BES-11, repot of a cutting US-BES-04, archive US-BES-07), then they sit in a menu "Mehr" at the top of the layer, beside the chips, each closing the layer and opening its existing flow; archiving keeps its confirmation form (P-10).
+- Given a part that loads or fails, then the tab shows that state with its next action ("Erneut versuchen", P-09, P-10); each part of "Pflege" loads and fails on its own.
+- Given a wide screen (from 1024 px), then the layer stands beside the tiles (US-QS-15).
+- Given the layer, then it has one filled primary action at most ("Messen", only on the overview); every write goes through the existing validating operation (P-03).
+
+State of implementation: `PlantLayer` (`web/src/collection/plants-screen/plant-layers/plant-layer`) with the tabs "Überblick", "Standort" and the frame of "Pflege". The parts that belong to other modules arrive as slots wired by `CollectionArea` (`PlantSlots`; `collection` does not know `care` or `monitoring`): `PlantGrowth`, `PlantHistory` and `PlantCare` (`care/plant-detail`) and `WaterAction` (`monitoring`). `Pager` got `param` and `replace` for a pager inside a layer; `TreatmentForm` got `chosen`. The facts of the former card (`Measurement`, `Treatment`, `Provenance`) are reused from `specimens/cards/specimen-card`. Status 🟨 until a real phone check of the fit at 360 x 640 px (jsdom has no layout, so the fit is checked by structure only: no scroll area inside the overview).
 
 ## Non-functional requirements
 

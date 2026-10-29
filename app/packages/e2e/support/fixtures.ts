@@ -37,7 +37,8 @@ export async function openLocations(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Standorte und Lichtzonen verwalten" }).click();
 }
 
-/** The first plant of the Sammlung as a layer with its card and actions (US-QS-19). */
+/** The first plant of the Sammlung as a layer with tabs; the overview holds "Messen" (US-QS-19, US-QS-23). */
 export async function openFirstPlant(page: Page): Promise<void> {
   await page.getByRole("list", { name: "Pflanzen" }).getByRole("button").first().click();
+  await expect(page.getByRole("tab", { name: "Überblick", selected: true })).toBeVisible();
 }
