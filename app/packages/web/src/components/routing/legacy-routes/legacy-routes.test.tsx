@@ -35,9 +35,9 @@ describe("US-QS-14 old addresses keep working", () => {
     expect(screen.getByTestId("address").textContent).toBe("/today?sheet=hints true");
   });
 
-  it("US-QS-14 · US-ACC-02 /settings leads to the section Einstellungen of Konto and keeps the focus handling to the section", () => {
+  it("US-QS-17 · US-ACC-02 /settings leads to the section Einstellungen of Konto and keeps the focus handling to the section", () => {
     open("/settings");
-    expect(screen.getByTestId("address").textContent).toBe("/account#einstellungen true");
+    expect(screen.getByTestId("address").textContent).toBe("/account/settings true");
   });
 
   it("US-QS-14 · US-WUN-01 /wishlist leads to the wishlist mode of the Sammlung and keeps the focus on the control", () => {

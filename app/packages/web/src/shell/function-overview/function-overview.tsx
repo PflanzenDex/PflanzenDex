@@ -83,7 +83,7 @@ function Row(props: { entry: UnlockEntry; running: boolean; onUnlock: (id: strin
  * operator switched off is not listed (FR-ONB-03). A failure stays visible with a retry (P-10); without locked
  * functions it says "Alles ist offen." and names the next step (P-09).
  */
-export default function FunctionOverview(props: { api: string; token: Token }) {
+function Overview(props: { api: string; token: Token }) {
   const unlocks = useUnlocks();
   const refresh = useInvalidate(UNLOCKS_KEY);
   const write = useWriteAction(props.token, refresh);
@@ -140,6 +140,19 @@ export default function FunctionOverview(props: { api: string; token: Token }) {
           <Row key={e.id} entry={e} running={write.running} onUnlock={(id) => void unlock(id)} />
         ))}
       </ul>
+    </div>
+  );
+}
+
+const appVersion = () =>
+  (import.meta.env as Record<string, string | undefined>)["VITE_APP_VERSION"];
+
+/** The overview and below it the version of the app, which no page footer shows any more (US-QS-17, P-08). */
+export default function FunctionOverview(props: { api: string; token: Token }) {
+  return (
+    <div className="flex flex-col gap-6">
+      <Overview {...props} />
+      <p className="m-0 text-sm text-muted-foreground">Version {appVersion() || "unbekannt"}</p>
     </div>
   );
 }

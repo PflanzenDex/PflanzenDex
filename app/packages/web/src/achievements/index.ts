@@ -9,3 +9,4 @@ export type { GrowthMoments } from "./growth/use-growth-moments";
 export { Anniversaries } from "./anniversaries/anniversaries";
 export { CareRhythmSection } from "./care-rhythm/care-rhythm";
 export { YearInReviewSection } from "./year-in-review/year-in-review";
+export { loadAchievements } from "./achievements-api";
