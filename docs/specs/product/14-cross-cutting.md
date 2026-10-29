@@ -259,6 +259,26 @@ Acceptance criteria:
 
 State of implementation: `/` and the fallback are `<Navigate to="/today" replace />` in `routes.tsx`; the brand link leads to `PATHS.today` with the name "PflanzenDéx, zu Heute"; the view `start` and `PATHS.start` are gone. `TodayIntro` (`web/src/shell/today-intro`) wraps the sections of `TodayArea`: guide (`first-plant-guide`), note (`HintNote`, own chunk), `LockedRows`.
 
+### US-QS-20 · "Freunde" fits one screen and opens its parts as layers · 🟨 new
+
+As a **plant keeper** I want "Freunde" to show what matters on one screen and open each part as a layer, so that I add a friend or answer a request without scrolling through a page of four sections (US-QS-15).
+
+Decision (owner, 2026-10-29, after a UI review): the page of 13.6 phone screens becomes an overview; invitation, request, news, friends and sharing are layers. The exchange (US-SOZ-09) and the match deck (US-TAU-01) keep their views.
+
+Acceptance criteria:
+
+- Given 360 x 640 px (starting value, assumption), when I open "Freunde", then it fits without page scroll and shows: the heading, one filled action "Freund hinzufügen", tiles "Anfragen" and "Neu bei Freunden" with counts and tiles "Tauschbörse" and "Passende Angebote", a row "Meine Freunde" with the number of friends, a row "Was Freunde sehen" with the current choice ("Alles privat" or "n von m Exemplaren geteilt"), and one line of help ("Ohne deine Freigabe sieht niemand etwas.") with "Mehr erfahren". The tiles for the exchange and the matching offers show no count, because the swap data is not loaded here (assumption).
+- Given "Mehr erfahren", then the full explanation of friends and sharing opens as a layer (`?sheet=help`).
+- Given I choose "Freund hinzufügen", then a layer (`?sheet=add`) offers "Einladen" (create and copy the code, US-SOZ-01) and "Code eingeben" (send a request) as two tabs with the existing behaviour; a refused code shows its German text by code at the field (FR-QG-11, P-10).
+- Given I choose "Anfragen", "Neu bei Freunden", "Meine Freunde" or "Was Freunde sehen", then each opens as a layer (`?sheet=requests|news|friends|sharing`) with the existing content (US-SOZ-02 to US-SOZ-05); lists longer than the layer are paged with the pager (US-QS-15); a layer loads its data only while it is open.
+- Given "Tauschbörse" or "Passende Angebote", then they lead to their existing views.
+- Given calm mode (US-ACH-08, US-TAU-07), then the tiles show their names without counts.
+- Given a function that is locked (US-ONB-05), then its tile keeps its place and leads to the lock page at its address, as the address does today; the tile carries no mark of its own (assumption: the first-load budget, QG-U6, leaves no room for passing the lock state into the tiles).
+- Given no friend yet, then the screen says so and names "Freund hinzufügen" as the next step (P-09); a part that is loading or fails to load shows that state (P-10).
+- Given a layer, then it has at most one filled primary action: "Annehmen" is the quiet filled kind of button and the other actions are outline buttons (US-QS-15).
+
+State of implementation: `FriendsPage` (`web/src/social/pages/friends-page`) with `friend-tiles` and `friend-layers`; calm mode arrives through `CalmGate` (`components/routing/areas/shared/simple-routes/calm-gate`, shared with the match deck), and the route of "Freunde" moved into `socialRoutes`. The shell frame stays in the scrolling mode: its opt-in `fit` is global to the app shell, so it is left off here and the overview fits by its own size. Status 🟨 until a real phone check.
+
 ## Non-functional requirements
 
 | ID     | Requirement                                                                                                                                                                                                                                                                                                                                                                    | Status |

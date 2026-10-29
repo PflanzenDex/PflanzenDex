@@ -11,10 +11,11 @@ const { Phone, NoFriendsYet } = composeStories(stories);
 describe("US-QS-14 · page story Freunde", () => {
   afterEach(cleanup);
 
-  it("US-QS-14 · the story shows friends, requests and sharing", async () => {
+  it("US-QS-20 · the story shows the one-screen overview with its action, tiles and rows", async () => {
     await Phone.run();
-    expect(await screen.findByText("Sven möchte mit dir befreundet sein.")).toBeTruthy();
-    expect(screen.getByText("befreundet seit 14.08.2026")).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Freund hinzufügen" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Meine Freunde/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Was Freunde sehen/ })).toBeTruthy();
   });
 
   it("US-QS-14 · a new account is asked to invite a friend", async () => {
