@@ -1,9 +1,12 @@
-import { useCallback } from "react";
+import { useCallback, type ReactNode } from "react";
 import type { TodayItem, TodayKind, TodayList, TodayTarget } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { SectionLabel } from "@/components/section-label/section-label";
 import { Button } from "@/components/ui/button/button";
-import { dateText } from "@/lib/format";
+import { LayerOpener, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { Pager } from "@/components/shared/responsive/pager/pager";
+import { cn } from "@/lib/utils";
+import { dateText, keepTogether, overdueChip, withoutOverdue } from "@/lib/format";
 import { LoadFrame } from "../../kernel";
 import { loadToday } from "../today-api";
 
@@ -31,14 +34,26 @@ const GO: Record<TodayTarget, string> = {
 const CARD =
   "min-w-0 rounded-card bg-card p-3 text-card-foreground shadow-elevation-1 [overflow-wrap:anywhere]";
 const URGENT = "border-warning-border bg-warning text-warning-foreground";
+/** Items per page of the layer with the further tasks (starting value, assumption; US-QS-18). */
+const PAGE_SIZE = 3;
+const TASKS = "tasks";
+
+/** The state as a short chip ("10 Tage überfällig"), never a repeated heading and sentence (US-QS-18). */
+function chipOf(item: TodayItem): string {
+  return (item.kind === "treatment_overdue" ? overdueChip(item.text) : null) ?? LABEL[item.kind];
+}
 
 function Item(props: { item: TodayItem; onOpen: (d: TodayDestination) => void }) {
   const { item } = props;
   const urgent = item.kind === "treatment_overdue" || item.kind === "treatment_due";
   return (
-    <li className={`${CARD} flex flex-col gap-1 ${urgent ? URGENT : ""}`}>
-      <p className="font-bold">{LABEL[item.kind]}</p>
-      <p>{item.text}</p>
+    <div className={cn(CARD, "flex flex-col gap-1", urgent && URGENT)}>
+      <p className="w-fit rounded-control border border-current px-2 text-sm font-semibold tabular-nums">
+        {chipOf(item)}
+      </p>
+      <p>
+        {keepTogether(item.kind === "treatment_overdue" ? withoutOverdue(item.text) : item.text)}
+      </p>
       <p className="text-sm">{item.nextAction}</p>
       <Button
         type="button"
@@ -50,7 +65,7 @@ function Item(props: { item: TodayItem; onOpen: (d: TodayDestination) => void })
       >
         {GO[item.target]}
       </Button>
-    </li>
+    </div>
   );
 }
 
@@ -59,34 +74,51 @@ const laterText = (n: number): string =>
     ? "Ein weiterer Behandlungstermin steht später an."
     : `${n} weitere Behandlungstermine stehen später an.`;
 
+/** The single most urgent item; the rest opens as a layer (US-QS-18). */
 function Content(props: { list: TodayList; onOpen: (d: TodayDestination) => void }) {
   const { list } = props;
-  if (list.items.length === 0)
-    return (
-      <EmptyState
-        title="Heute steht nichts an."
-        level={3}
-        description={
-          list.upcoming > 0
-            ? laterText(list.upcoming)
-            : "Keine Behandlung ist fällig, keine Pflanze steht falsch und keine Angabe fehlt."
-        }
-        action={{ label: "Zum Bestand", onClick: () => props.onOpen("collection") }}
-      />
-    );
+  const [first, ...rest] = list.items;
   return (
     <>
-      <p className="font-semibold">
-        {list.items.length === 1 ? "1 Sache steht an." : `${list.items.length} Dinge stehen an.`}
-      </p>
-      <ul className="m-0 flex list-none flex-col gap-3 p-0" aria-label="Heute zu tun">
-        {list.items.map((item) => (
-          <Item key={item.id} item={item} onOpen={props.onOpen} />
-        ))}
-      </ul>
-      {list.upcoming > 0 && (
+      {first ? (
+        <>
+          <p className="font-semibold">
+            {list.items.length === 1
+              ? "1 Sache steht an."
+              : `${list.items.length} Dinge stehen an.`}
+          </p>
+          <Item item={first} onOpen={props.onOpen} />
+        </>
+      ) : (
+        <EmptyState
+          title="Heute steht nichts an."
+          level={3}
+          description={
+            list.upcoming > 0
+              ? laterText(list.upcoming)
+              : "Keine Behandlung ist fällig, keine Pflanze steht falsch und keine Angabe fehlt."
+          }
+          action={{ label: "Zum Bestand", onClick: () => props.onOpen("collection") }}
+        />
+      )}
+      {first && list.upcoming > 0 && (
         <p className="text-sm text-muted-foreground">{laterText(list.upcoming)}</p>
       )}
+      {rest.length > 0 && (
+        <LayerOpener id={TASKS} className="w-full justify-between">
+          <span>Weitere Aufgaben</span>
+          <span className="tabular-nums">{rest.length}</span>
+        </LayerOpener>
+      )}
+      <LayerSheet id={TASKS} title="Weitere Aufgaben">
+        <Pager
+          items={rest}
+          pageSize={PAGE_SIZE}
+          label="Weitere Aufgaben"
+          getKey={(item) => item.id}
+          renderItem={(item) => <Item item={item} onOpen={props.onOpen} />}
+        />
+      </LayerSheet>
     </>
   );
 }
@@ -101,6 +133,10 @@ export function TodayPage(props: {
   api: string;
   token: () => Promise<string | undefined>;
   onOpen: (d: TodayDestination) => void;
+  /** The summary of the open items per category, below the title (US-QS-18); the area knows the other modules. */
+  summary?: ReactNode;
+  /** The tiles of the categories, below "Jetzt dran" (US-QS-18). */
+  tiles?: ReactNode;
 }) {
   const { api } = props;
   const load = useCallback((t: string) => loadToday(api, t), [api]);
@@ -110,6 +146,7 @@ export function TodayPage(props: {
       <h1 id="today-title" className="text-2xl font-semibold">
         Heute
       </h1>
+      {props.summary}
       <section aria-labelledby="now-title" className="flex min-w-0 flex-col gap-3">
         <SectionLabel id="now-title">Jetzt dran</SectionLabel>
         <LoadFrame queryKey={KEY} token={props.token} load={load} loadingText={loading}>
@@ -121,6 +158,7 @@ export function TodayPage(props: {
           )}
         </LoadFrame>
       </section>
+      {props.tiles}
     </div>
   );
 }

@@ -207,9 +207,9 @@ describe("US-QS-14 Behandlung and Hinweise are sections of Heute", () => {
     expect(Object.values(PATHS)).not.toContain("/hints");
   });
 
-  it("US-QS-14 the sections have addresses on Heute, and Heute keeps its title", () => {
-    expect(todayAddress("treatments")).toBe("/today#behandlungen");
-    expect(todayAddress("hints")).toBe("/today#fehlt-noch");
+  it("US-QS-14 · US-QS-18 the topics have layer addresses on Heute, and Heute keeps its title", () => {
+    expect(todayAddress("treatments")).toBe("/today?sheet=treatments");
+    expect(todayAddress("hints")).toBe("/today?sheet=hints");
     expect(viewTitle("/today")).toBe("Heute – PflanzenDéx");
     expect(viewTitle("/unlock/equipment")).toBe("Funktion freischalten – PflanzenDéx");
   });
