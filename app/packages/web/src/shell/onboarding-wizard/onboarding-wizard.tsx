@@ -140,7 +140,7 @@ export function OnboardingWizard(props: {
   token: Token;
   /** Leaves for the species catalog (a species that is not found yet). */
   onChoosePlant: () => void;
-  /** Skipped: the start page shows the normal first-plant action (US-ACC-03). */
+  /** Skipped: Heute shows the normal first-plant action (US-ACC-03). */
   onSkip: () => void;
   /** The first plant is saved and the keeper goes on to the collection. */
   onCreated: () => void;
@@ -149,7 +149,7 @@ export function OnboardingWizard(props: {
   const step = FIRST_PLANT_STEPS[f.index];
   return (
     <div className="flex flex-col gap-3" ref={f.box}>
-      <h1 className="text-2xl font-semibold">Start</h1>
+      <h1 className="text-2xl font-semibold">Heute</h1>
       {f.created !== null ? (
         <Created
           name={f.created.name}

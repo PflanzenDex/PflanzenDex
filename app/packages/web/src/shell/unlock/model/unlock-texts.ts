@@ -87,7 +87,7 @@ const lookup = (table: Readonly<Record<string, string>>, id: string, fallback: s
   (Object.hasOwn(table, id) ? table[id] : undefined) ?? fallback;
 
 export const functionName = (id: string): string => lookup(FUNCTION_NAMES, id, "Diese Funktion");
-export const functionAddress = (id: string): string => lookup(ADDRESSES, id, PATHS.start);
+export const functionAddress = (id: string): string => lookup(ADDRESSES, id, PATHS.today);
 export const functionEmpty = (id: string): string => lookup(FUNCTION_EMPTY, id, "");
 
 const plants = (n: number) => `${n} ${n === 1 ? "Pflanze" : "Pflanzen"}`;

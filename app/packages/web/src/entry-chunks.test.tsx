@@ -7,9 +7,9 @@ vi.mock("./account/invitation-page/invitation-page", () => {
   loaded.pages.push("invitation");
   return { InvitationPage: () => null };
 });
-vi.mock("./shell/start-page/start-page", () => {
-  loaded.pages.push("start");
-  return { StartPage: () => null };
+vi.mock("./shell/today-intro/today-intro", () => {
+  loaded.pages.push("today-intro");
+  return { TodayIntro: () => null };
 });
 
 vi.mock("./pokedex/pokedex-page/pokedex-page", () => {
@@ -73,9 +73,9 @@ describe("#451 · DS-08 the entry bundle stays small", () => {
     expect(loaded.pages).not.toContain("invitation");
   });
 
-  it("#451 the start page (with the onboarding forms) loads only when its route opens", async () => {
+  it("US-QS-16 · QG-U6 the onboarding parts of Heute (guide with its forms) load only when Heute opens", async () => {
     await import("./shell/app/app");
-    expect(loaded.pages).not.toContain("start");
+    expect(loaded.pages).not.toContain("today-intro");
   });
 
   it("US-QS-14 · DS-08 the species page of the Sammlung loads only when Arten is chosen", async () => {
