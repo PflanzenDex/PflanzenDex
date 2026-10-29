@@ -15,12 +15,17 @@ export function SammlungHeader<V extends string>(props: {
   switchLabel?: string;
   /** A second control that belongs to the chosen view, e.g. the arrangement of the species. */
   children?: ReactNode;
+  /** A control beside the heading, e.g. the opener of the layer "Ansicht" (US-QS-19). */
+  action?: ReactNode;
 }) {
   return (
-    <div className="mb-4 flex flex-col gap-3">
-      <div>
-        <h1 className="text-2xl font-semibold">{props.title ?? "Sammlung"}</h1>
-        {props.caption ? <p className="text-sm text-muted-foreground">{props.caption}</p> : null}
+    <div className="mb-3 flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">{props.title ?? "Sammlung"}</h1>
+          {props.caption ? <p className="text-sm text-muted-foreground">{props.caption}</p> : null}
+        </div>
+        {props.action}
       </div>
       <SegmentedControl
         label={props.switchLabel ?? "Ansicht der Sammlung"}

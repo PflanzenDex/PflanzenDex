@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button/button";
+import { cn } from "@/lib/utils";
 
 /** Horizontal distance of a swipe that turns the page (starting value, assumption; US-QS-15). */
 const SWIPE_PX = 48;
@@ -29,6 +30,31 @@ function useSwipe(page: number, pages: number, go: (target: number) => void) {
   };
 }
 
+/** "Zurück", the position and "Weiter" (US-QS-15). */
+function PagerBar({
+  page,
+  pages,
+  go,
+}: {
+  page: number;
+  pages: number;
+  go: (target: number) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <Button type="button" variant="outline" disabled={page <= 1} onClick={() => go(page - 1)}>
+        Zurück
+      </Button>
+      <p role="status" aria-live="polite" className="text-sm tabular-nums text-muted-foreground">
+        Seite {page} von {pages}
+      </p>
+      <Button type="button" variant="outline" disabled={page >= pages} onClick={() => go(page + 1)}>
+        Weiter
+      </Button>
+    </div>
+  );
+}
+
 export type PagerProps<T> = {
   items: readonly T[];
   /** Whole entries per page; the caller sizes it to its region. */
@@ -38,6 +64,8 @@ export type PagerProps<T> = {
   getKey?: (item: T, index: number) => React.Key;
   /** Accessible name of the list (German). */
   label: string;
+  /** Classes of the list, e.g. a grid of tiles; the default is a column. */
+  listClassName?: string;
   /** A changed value (filter, search) starts again at page 1. */
   resetKey?: string | number;
 };
@@ -52,7 +80,15 @@ function parsePage(raw: string | null): number {
  * in a polite live region, swipe as an alternative. The page is in the address (`?page=n`, 1-based); a page outside the
  * range shows the nearest valid one. Pages change without sliding, so reduced motion needs nothing extra.
  */
-export function Pager<T>({ items, pageSize, renderItem, getKey, label, resetKey }: PagerProps<T>) {
+export function Pager<T>({
+  items,
+  pageSize,
+  renderItem,
+  getKey,
+  label,
+  listClassName,
+  resetKey,
+}: PagerProps<T>) {
   const [params, setParams] = useSearchParams();
   const pages = Math.max(1, Math.ceil(items.length / pageSize));
   const raw = parsePage(params.get(PARAM));
@@ -86,33 +122,12 @@ export function Pager<T>({ items, pageSize, renderItem, getKey, label, resetKey 
 
   return (
     <div className="flex flex-col gap-3 [touch-action:pan-y]" {...swipe}>
-      <ul aria-label={label} className="flex flex-col gap-2">
+      <ul aria-label={label} className={cn("flex flex-col gap-2", listClassName)}>
         {visible.map((item, i) => (
           <li key={getKey ? getKey(item, first + i) : first + i}>{renderItem(item, first + i)}</li>
         ))}
       </ul>
-      {pages > 1 ? (
-        <div className="flex items-center justify-between gap-2">
-          <Button type="button" variant="outline" disabled={page <= 1} onClick={() => go(page - 1)}>
-            Zurück
-          </Button>
-          <p
-            role="status"
-            aria-live="polite"
-            className="text-sm tabular-nums text-muted-foreground"
-          >
-            Seite {page} von {pages}
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={page >= pages}
-            onClick={() => go(page + 1)}
-          >
-            Weiter
-          </Button>
-        </div>
-      ) : null}
+      {pages > 1 ? <PagerBar page={page} pages={pages} go={go} /> : null}
     </div>
   );
 }

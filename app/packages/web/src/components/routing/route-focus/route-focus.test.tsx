@@ -53,6 +53,8 @@ function Harness() {
         <Link to="/b">Zweite</Link>
         <Link to="/slow">Langsame</Link>
         <Link to="/none">Ohne</Link>
+        <Link to="/?sheet=zones">Mit Ebene</Link>
+        <Link to="/?page=2">Mit Seite</Link>
       </nav>
       <main id="inhalt" tabIndex={-1}>
         <RouteFocus titleOf={titleOf} />
@@ -77,6 +79,19 @@ const view = () =>
       </MemoryRouter>
     </AnnouncerProvider>,
   );
+
+describe("US-QS-19 · RouteFocus leaves layers and pages alone (US-QS-15)", () => {
+  it("US-QS-19 opening a layer or turning a page does not move the focus to the heading", async () => {
+    view();
+    const link = screen.getByRole("link", { name: "Erste" });
+    link.focus();
+    await userEvent.click(screen.getByRole("link", { name: "Mit Ebene" }));
+    await userEvent.click(screen.getByRole("link", { name: "Mit Seite" }));
+    await new Promise((r) => setTimeout(r, 60));
+    expect(document.activeElement).not.toBe(screen.getByRole("heading", { level: 1 }));
+    expect(document.title).toBe("Erste – PflanzenDéx");
+  });
+});
 
 describe("US-QS-09 · RouteFocus (2.4.2, 2.4.3)", () => {
   it("US-QS-09 sets the German page title of the view, without stealing the focus on first load", () => {

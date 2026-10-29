@@ -6,9 +6,7 @@ import { CollectionPageSkeleton } from "./collection-page.skeleton";
 import { PageFrame, Status, Warning } from "../specimens/cards/parts/parts";
 import { refusalText } from "../specimens/model/refusal";
 import { CreateForm } from "../specimens/create/create-form/create-form";
-import { ArchivedList } from "../archived/archived-list/archived-list";
 import { ArchiveForm } from "../archived/archived-form/archived-form";
-import { CollectionList } from "../specimens/cards/collection-list/collection-list";
 import {
   COLLECTION_KEY,
   useCollection,
@@ -30,7 +28,7 @@ import {
 import { LightZoneForm, useLightZone } from "../markers/locate/light-zone-form/light-zone-form";
 import { Created } from "./created/created";
 import { ListHint } from "./hint-occasions/hint-occasions";
-import { DistributionView } from "../insights/distribution-view/distribution-view";
+import { PlantsScreen } from "../plants-screen/plants-screen";
 type Props = {
   api: string;
   token: Token;
@@ -41,6 +39,8 @@ type Props = {
   onMeasure?: (e: { id: string; name: string }) => void;
   /** Set when the destination "Sammlung" shows the page below its title: demoted heading, count line (US-QS-14). */
   host?: Host;
+  /** Opens the management of locations and light zones from the layers of the plants (US-QS-19). */
+  onManage?: () => void;
   groupBy?: "location"; // grouping by location and zone (US-QS-14)
   renderHint?: (applicable: readonly string[]) => ReactNode; // calm hint (US-ONB-07)
 };
@@ -161,10 +161,12 @@ function List(p: { data: Loaded; created: Specimen | null; actions: Actions; pro
       {message ? <Status>{message}</Status> : p.created && <Created specimen={p.created} />}
       {error && <Warning>{refusalText(error)}</Warning>}
       {p.created === null && <ListHint cards={data.cards} render={p.props.renderHint} />}
-      <DistributionView distribution={data.distribution} />
-      <CollectionList
+      <PlantsScreen
         cards={data.cards}
+        distribution={data.distribution}
+        archived={data.archived}
         onSpeciesChoose={p.props.onAdd ?? p.props.onSpeciesChoose}
+        onManage={p.props.onManage ?? p.props.onSpeciesChoose}
         embedded={p.props.host !== undefined}
         photoAccess={{ api: p.props.api, token: p.props.token }}
         {...(p.props.groupBy ? { groupBy: p.props.groupBy } : {})}
@@ -185,15 +187,12 @@ function List(p: { data: Loaded; created: Specimen | null; actions: Actions; pro
           clearMessages();
           zoned.setOpen(e);
         }}
-        {...(p.props.onMeasure ? { onMeasure: p.props.onMeasure } : {})}
-      />
-      <ArchivedList
-        entries={data.archived}
         onRestore={(e) => {
           clearMessages();
           void archived.restore(e);
         }}
-        onCatchDate={openCatchDate}
+        onArchivedCatchDate={openCatchDate}
+        {...(p.props.onMeasure ? { onMeasure: p.props.onMeasure } : {})}
       />
     </>
   );

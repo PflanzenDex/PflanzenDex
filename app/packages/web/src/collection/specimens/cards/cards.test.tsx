@@ -3,7 +3,8 @@ import { cleanup, render as rtl, screen } from "@testing-library/react";
 import { renderToString as render } from "react-dom/server";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { CollectionList } from "./collection-list/collection-list";
+import { SpecimenCardView } from "./specimen-card/specimen-card";
+import { GRID } from "./parts/parts";
 import { loadCards } from "./cards-api";
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
@@ -30,8 +31,17 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   ...extra,
 });
 const ACCESS = { api: "http://api", token: async () => "tok" };
-const html = (cards: SpecimenCard[]) =>
-  renderToString(<CollectionList cards={cards} onSpeciesChoose={vi.fn()} photoAccess={ACCESS} />);
+/** The cards as the plant layer shows them: a list of `SpecimenCardView` in the card grid (US-QS-19). */
+function CardList({ cards }: { cards: SpecimenCard[] }) {
+  return (
+    <ul className={GRID}>
+      {cards.map((c) => (
+        <SpecimenCardView key={c.id} card={c} photoAccess={ACCESS} />
+      ))}
+    </ul>
+  );
+}
+const html = (cards: SpecimenCard[]) => renderToString(<CardList cards={cards} />);
 
 describe("US-BES-06 client of the cards API", () => {
   it("loads the cards with bearer token and the time zone of the device", async () => {
@@ -113,8 +123,7 @@ describe("US-WAC-05 the latest photo on the card is private (P-05)", () => {
   const withPhoto = card({
     photo: { url: "/specimens/e1/measurements/m1/photo", date: "2026-09-28" },
   });
-  const show = () =>
-    rtl(<CollectionList cards={[withPhoto]} onSpeciesChoose={vi.fn()} photoAccess={ACCESS} />);
+  const show = () => rtl(<CardList cards={[withPhoto]} />);
   beforeEach(() => {
     URL.createObjectURL = vi.fn(() => "blob:card");
     URL.revokeObjectURL = vi.fn();
@@ -254,15 +263,5 @@ describe("US-BES-06 grid and operation", () => {
     expect(h).toContain("sm:grid-cols-2");
     expect(h).toContain("lg:grid-cols-3");
     expect(h).not.toMatch(/\bmax-(sm|md|lg|xl):/);
-  });
-
-  it("without specimens: says what to do (P-09), and offers the species choice", () => {
-    const h = html([]);
-    expect(h).toContain("Du hast noch kein Exemplar");
-    expect(h).toContain("Art wählen");
-  });
-
-  it("the button for another specimen stays below the cards", () => {
-    expect(html([card()])).toContain("Weiteres Exemplar");
   });
 });

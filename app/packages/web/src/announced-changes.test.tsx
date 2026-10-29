@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ProposalForm } from "./catalog/proposal/proposal-form/proposal-form";
-import { CollectionList } from "./collection/specimens/cards/collection-list/collection-list";
+import { SpecimenCardView } from "./collection/specimens/cards/specimen-card/specimen-card";
 
 afterEach(cleanup);
 
@@ -27,13 +27,14 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   ...extra,
 });
 
+const ACCESS = { api: "http://api", token: async () => "tok" };
 const list = (cards: SpecimenCard[]) =>
   render(
-    <CollectionList
-      cards={cards}
-      onSpeciesChoose={vi.fn()}
-      photoAccess={{ api: "http://api", token: async () => "tok" }}
-    />,
+    <ul>
+      {cards.map((c) => (
+        <SpecimenCardView key={c.id} card={c} photoAccess={ACCESS} />
+      ))}
+    </ul>,
   );
 
 describe("US-QS-10 · a form with errors guides to the fix (3.3.1, 3.3.3, DS-38)", () => {
@@ -64,15 +65,7 @@ describe("US-QS-10 · photos have an alternative text (1.1.1)", () => {
       vi.fn<typeof fetch>(async () => new Response(new Uint8Array([1]), { status: 200 })),
     );
     URL.createObjectURL = vi.fn(() => "blob:card");
-    render(
-      <CollectionList
-        cards={[
-          card({ photo: { url: "/specimens/e1/measurements/m1/photo", date: "2026-09-28" } }),
-        ]}
-        onSpeciesChoose={vi.fn()}
-        photoAccess={{ api: "http://api", token: async () => "tok" }}
-      />,
-    );
+    list([card({ photo: { url: "/specimens/e1/measurements/m1/photo", date: "2026-09-28" } })]);
     expect(await screen.findByAltText("Foto von Bogenhanf vom 28.09.2026")).toBeTruthy();
     vi.unstubAllGlobals();
   });
