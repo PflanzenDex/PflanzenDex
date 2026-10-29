@@ -3,17 +3,23 @@
 # pflanzendex-<time>.dump (app) and keycloak-<time>.dump (sign-in service, only if its database exists).
 # Retention per BACKUP_RETENTION_DAYS; optional second target via rsync (BACKUP_REMOTE, R-11).
 # Environment: config/deploy/.env (if present; its COMPOSE_FILE selects the overlay files); PG_EXEC overrides how the Postgres container is reached (for tests).
+# The dumps hold password hashes and realm keys: only the owner may read them (0600 in a 0700 folder), and the
+# default folder lies outside the repository, so a `git add -A` on the host cannot pick them up (#760).
 set -euo pipefail
+umask 077
 cd "$(dirname "$0")/.."
 
 if [ -f .env ]; then set -a; . ./.env; set +a; fi
 PG_EXEC="${PG_EXEC:-docker compose --env-file .env exec -T db}"
-BACKUP_DIR="${BACKUP_DIR:-./backups}"
+BACKUP_DIR="${BACKUP_DIR:-$HOME/pflanzendex-backups}"
 RETENTION="${BACKUP_RETENTION_DAYS:-14}"
 
 KEYCLOAK_DB_NAME="${KEYCLOAK_DB_NAME:-keycloak}"
 
 mkdir -p "$BACKUP_DIR"
+chmod 700 "$BACKUP_DIR"
+# Dumps of earlier runs were written with the default umask (0664); tighten them on the next run.
+find "$BACKUP_DIR" -maxdepth 1 \( -name 'pflanzendex-*.dump' -o -name 'keycloak-*.dump' \) -exec chmod 600 {} +
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 partial=""
 trap '[ -z "$partial" ] || rm -f "$partial"' EXIT

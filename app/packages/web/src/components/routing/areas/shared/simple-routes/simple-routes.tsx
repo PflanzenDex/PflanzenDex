@@ -26,7 +26,7 @@ const SIMPLE_VIEWS: Partial<Record<View, ComponentType<{ api: string; token: Tok
   operator: OperatorPage,
 };
 
-/** Shown on the start page when a role-bound address is opened without the role (P-10). */
+/** Shown on "Heute" when a role-bound address is opened without the role (P-10). */
 const NO_ACCESS: Partial<Record<View, string>> = {
   review: "Die Prüfliste ist nur für Prüfende und den Betreiber sichtbar.",
   operator: "Der Betreiberbereich ist nur für den Betreiber sichtbar.",
@@ -48,7 +48,7 @@ export function simpleRoutes(
         path={PATHS[v]}
         element={
           roles[v] === false ? (
-            <Navigate to={PATHS.start} replace state={{ hint: NO_ACCESS[v] }} />
+            <Navigate to={PATHS.today} replace state={{ hint: NO_ACCESS[v] }} />
           ) : locked[v] ? (
             locked[v]
           ) : (

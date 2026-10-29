@@ -9,6 +9,8 @@ export const ERROR_TEXTS = {
   "idempotency.key_conflict":
     "Dieser Schlüssel wurde bereits mit anderen Angaben verwendet. Bitte versuche es neu.",
   "idempotency.in_progress": "Dieselbe Aktion läuft noch. Bitte warte einen Moment.",
+  "request.rate_limited":
+    "Zu viele Änderungen in kurzer Zeit. Warte eine Minute und versuche es dann erneut.",
   "system.unexpected":
     "Es ist ein unerwarteter Fehler aufgetreten. Bitte versuche es später erneut.",
   "invitation.invalid":

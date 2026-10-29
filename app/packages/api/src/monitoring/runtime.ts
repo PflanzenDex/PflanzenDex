@@ -9,12 +9,13 @@ import {
 } from "@pflanzendex/core";
 import { ChannelsPostgres, JobsPostgres, RemindersPostgres, RosterPostgres } from "@pflanzendex/db";
 import type { Pool } from "pg";
+import { WebPushReminderChannel } from "./push/web-push-channel";
+import { webPushConfigFromEnv, webPushSender } from "./push/web-push-config";
 
 /**
- * The delivery channel until real sending exists (E-10 decided: web push plus optional email): it sends nothing out and
- * says so in the log. The real adapter needs a VAPID key pair for web push and an SMTP account for email; both are
- * tasks of the operator (docs/specs/product/09-reminders-and-sensors.md) and are not built yet. A reminder is stored in
- * the in-app inbox before any send, so nothing is lost meanwhile (P-10).
+ * The delivery channel while the operator has not set up web push (local development, or VAPID keys missing): it sends
+ * nothing out and says so in the log. A reminder is stored in the in-app inbox before any send, so nothing is lost
+ * meanwhile (P-10). Email (E-10) is not built yet.
  */
 export class StubReminderChannel implements ReminderChannel {
   constructor(private readonly log: (line: string) => void = console.info) {}
@@ -24,6 +25,29 @@ export class StubReminderChannel implements ReminderChannel {
       `reminder (stub, nothing sent): account ${userId}, ${message.items.length} item(s), "${message.body}"`,
     );
   }
+}
+
+/**
+ * The channel the server composes (ADR 0015): Web Push when `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `VAPID_SUBJECT`
+ * are set; the stub when none is set. A partial or invalid configuration keeps the stub and names what is wrong, so the
+ * API still starts and the reminders stay in the inbox (P-10).
+ */
+export function reminderChannelFromEnv(
+  pool: Pool,
+  env: NodeJS.ProcessEnv,
+  log: (line: string) => void = console.warn,
+): ReminderChannel {
+  const config = webPushConfigFromEnv(env);
+  if (config === null) return new StubReminderChannel();
+  if ("length" in config) {
+    log(`Web push is off, reminders stay in the inbox: ${config.join(", ")} missing or invalid.`);
+    return new StubReminderChannel();
+  }
+  return new WebPushReminderChannel({
+    send: webPushSender(config),
+    channels: new ChannelsPostgres(pool),
+    log,
+  });
 }
 
 export interface RemindersRuntimeOptions {

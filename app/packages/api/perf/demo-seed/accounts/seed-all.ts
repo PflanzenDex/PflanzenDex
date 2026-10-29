@@ -5,6 +5,7 @@ import { seedAnna } from "./anna.ts";
 import { seedBen } from "./ben/ben.ts";
 import { seedClara } from "./clara.ts";
 import { befriend, ensureOffer, ensureRequest } from "./common/social.ts";
+import { seedSwapHistory } from "./common/swap-history.ts";
 import type { Ctx } from "./common/shared.ts";
 
 export type SeedOptions = {
@@ -50,11 +51,17 @@ export async function seedAll(pool: Pool, opt: SeedOptions): Promise<void> {
         note: "Bewurzelt, bereit zum Eintopfen.",
       })
     : undefined;
+  const claraOffers = new Map<string, string>();
   for (const key of ["Hoya carnosa|Ableger", "Tradescantia zebrina|Ableger"]) {
     const id = claraData.specimens.get(key);
     if (id) {
       await api.ok(clara.sub, "PUT", `/sharing/specimens/${id}`, { share: "friends" });
-      await ensureOffer(clara, id, { type: "cutting", mode: "swap", wish: "Gerne etwas Seltenes" });
+      const offer = await ensureOffer(clara, id, {
+        type: "cutting",
+        mode: "swap",
+        wish: "Gerne etwas Seltenes",
+      });
+      if (offer) claraOffers.set(key, offer);
     }
   }
   const claraCounter = claraData.specimens.get("Chlorophytum comosum|Kindel") ?? null;
@@ -62,4 +69,7 @@ export async function seedAll(pool: Pool, opt: SeedOptions): Promise<void> {
     await api.ok(clara.sub, "PUT", `/sharing/specimens/${claraCounter}`, { share: "friends" });
   if (benOffer) await ensureRequest(clara, benOffer, claraCounter);
   log("Friendships, offers and one open swap request are in place.");
+  // The swap history (#943): Clara gives Anna a cutting and declines Anna's request for her Hoya cutting.
+  const hoyaOffer = claraOffers.get("Hoya carnosa|Ableger");
+  if (hoyaOffer) await seedSwapHistory(clara, anna, hoyaOffer);
 }

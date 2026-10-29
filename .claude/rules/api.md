@@ -11,4 +11,4 @@ paths:
 - Every request sets the account through auth middleware (Bearer token: signature via JWKS, issuer, audience `pflanzendex-api`) and `withAccount`. Unauthenticated requests get 401, foreign data stays invisible (P-04).
 - Configuration comes from environment variables (`OIDC_ISSUER`, `OIDC_AUDIENCE`, `DATABASE_URL`, `WEB_URSPUNG`); no secrets in code.
 - Tests (`*.test.ts`) carry the story ID in the name and cover the error shape and tenant isolation of each new route.
-- New or changed routes are documented in `docs/guides/reference/app.md`.
+- New or changed routes are documented in `docs/guides/reference/app.md` as `METHOD /path` (`make reference-check`, US-QG-10).

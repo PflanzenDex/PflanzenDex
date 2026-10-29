@@ -22,6 +22,7 @@ Closes #
 - [ ] Module boundaries respected, no magic strings
 - [ ] `feat:`/`fix:` PR: short German entry in `app/packages/web/src/news/news.de.json` ("Neu in dieser Version"), or `[skip-changelog]` in the title/description for internal changes (QG-U3)
 - [ ] Spec status and counters in `docs/specs/product/readme.md` updated in this PR
+- [ ] New API routes and core operations named in `docs/guides/reference/app.md`, new shared UI components in the inventory of `docs/guides/reference/design-system.md` (`make reference-check`, US-QG-10)
 - [ ] `make ci` green locally
 
 ## AI involvement

@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HINT_MAX_WORDS } from "@pflanzendex/core";
 import { HINT_TEXTS } from "./hint/hint-texts";
-import { StartPage } from "./start-page";
+import { TodayIntro } from "./today-intro";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -113,7 +113,17 @@ const LOOKUP = {
 };
 const open = vi.fn();
 const view = () =>
-  render(<StartPage lookup={LOOKUP} api="http://api" token={token} onOpen={open} />);
+  render(
+    <TodayIntro
+      lookup={LOOKUP}
+      api="http://api"
+      token={token}
+      onOpen={open}
+      fallback={<p role="status">Heute wird geladen …</p>}
+    >
+      <p>Aufgaben des Tages</p>
+    </TodayIntro>,
+  );
 const world = (over: Partial<World> = {}): World => ({
   zones: ZONES,
   cards: [],
@@ -136,7 +146,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("US-ONB-01 start with the first plant", () => {
+describe("US-ONB-01 start with the first plant on Heute", () => {
   it("US-ONB-01 a new account starts with the first plant; no location and no light zone is asked or loaded", async () => {
     fakeServer(world());
     view();
@@ -250,22 +260,21 @@ describe("US-ONB-01 start with the first plant", () => {
     expect(marker.getAttribute("role")).toBe("status");
     expect(marker.className).toMatch(/rounded-full.*border/);
     expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
-      "Start",
+      "Heute",
     ]);
   });
 
-  it("US-ONB-01 skipping shows the normal first-plant action and no card about locations or light zones", async () => {
+  it("US-QS-16 · US-ONB-01 skipping shows the day's tasks in place of the guide and no card about locations or light zones", async () => {
     fakeServer(world({ zones: [] }));
     view();
+    expect(screen.queryByText("Aufgaben des Tages")).toBeNull();
     await userEvent.click(await screen.findByRole("button", { name: "Überspringen" }));
-    expect(await screen.findByRole("heading", { name: "Deine erste Pflanze" })).toBeTruthy();
+    expect(await screen.findByText("Aufgaben des Tages")).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
     expect(screen.queryByText(/Standort|Lichtzone/)).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Art im Katalog wählen" }));
-    expect(open).toHaveBeenCalledWith("species");
     cleanup();
     view();
-    expect(await screen.findByRole("button", { name: "Art im Katalog wählen" })).toBeTruthy();
+    expect(await screen.findByText("Aufgaben des Tages")).toBeTruthy();
     expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
   });
 
@@ -285,21 +294,21 @@ describe("US-ONB-01 start with the first plant", () => {
     cleanup();
     // another device of the same account: the guide stays ended
     view();
-    expect(await screen.findByRole("button", { name: "Art im Katalog wählen" })).toBeTruthy();
+    expect(await screen.findByText("Aufgaben des Tages")).toBeTruthy();
     expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
   });
 
   it("US-ONB-07 a guide that ended on another device does not come back here", async () => {
     fakeServer(world({ guideEnded: true }));
     view();
-    expect(await screen.findByRole("button", { name: "Art im Katalog wählen" })).toBeTruthy();
+    expect(await screen.findByText("Aufgaben des Tages")).toBeTruthy();
     expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
   });
 
-  it("US-ONB-01 a returning keeper (all plants archived) gets the next plant, not the flow (#291)", async () => {
+  it("US-ONB-01 a returning keeper (all plants archived) gets the day's tasks, not the flow (#291)", async () => {
     fakeServer(world({ archived: 2 }));
     view();
-    expect(await screen.findByRole("heading", { name: "Nächste Pflanze" })).toBeTruthy();
+    expect(await screen.findByText("Aufgaben des Tages")).toBeTruthy();
     expect(screen.queryByText(/Schritt 1 von/)).toBeNull();
     expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
   });
@@ -384,10 +393,10 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
     expect(screen.getByRole("button", { name: "Miss deine Pflanze" })).toBeTruthy();
   });
 
-  it("US-ONB-02 the start page shows no permanent card about missing locations or light zones", async () => {
+  it("US-ONB-02 Heute shows no permanent card about missing locations or light zones", async () => {
     fakeServer(world({ zones: [], cards: [{ id: "e1" }] }));
     view();
-    await screen.findByRole("heading", { name: "Start" });
+    await screen.findByText("Aufgaben des Tages");
     expect(screen.queryByText(/noch keinen Standort|keine Lichtzonen/)).toBeNull();
   });
 });
@@ -442,7 +451,7 @@ describe("US-ONB-03 the style question after the first plant", () => {
   });
 });
 
-describe("US-ONB-07 calm hints on the start page", () => {
+describe("US-ONB-07 calm hints on Heute", () => {
   it("US-ONB-07 a due hint is a short note without modal; it is recorded as shown and 'Okay' dismisses it for good", async () => {
     const w = world({ cards: [{ id: "e1" }], hint: "first_plant_saved" });
     fakeServer(w);
@@ -455,8 +464,9 @@ describe("US-ONB-07 calm hints on the start page", () => {
         "/onboarding/hints/first_plant_saved:shown",
       ),
     );
-    // looking for something is never held back: the normal action stays
-    expect(screen.getByRole("button", { name: "Zum Bestand" })).toBeTruthy();
+    // looking for something is never held back: the tasks stay, the note comes above them
+    const tasks = screen.getByText("Aufgaben des Tages");
+    expect(note.compareDocumentPosition(tasks) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Okay" }));
     await vi.waitFor(() => expect(screen.queryByRole("status", { name: "Hinweis" })).toBeNull());
     expect(w.writes.map((x) => `${x.path}:${String(x.body["state"])}`)).toContain(
@@ -467,7 +477,7 @@ describe("US-ONB-07 calm hints on the start page", () => {
   it("US-ONB-07 no hint is due (dismissed, expired, calm mode or style many): no note", async () => {
     fakeServer(world({ cards: [{ id: "e1" }], hint: null }));
     view();
-    await screen.findByRole("button", { name: "Zum Bestand" });
+    await screen.findByText("Aufgaben des Tages");
     expect(screen.queryByRole("status", { name: "Hinweis" })).toBeNull();
   });
 
@@ -493,25 +503,24 @@ describe("US-ONB-07 calm hints on the start page", () => {
   });
 });
 
-describe("US-ACC-03 start page", () => {
-  it("US-ACC-03 with a plant the start page points to the collection, without hints about setup", async () => {
+describe("US-QS-16 · US-ACC-03 the onboarding parts of Heute", () => {
+  it("US-QS-16 · US-ACC-03 with a plant Heute shows the tasks, without hints about setup", async () => {
     fakeServer(world({ zones: [], cards: [{ id: "e1" }] }));
     view();
-    expect(await screen.findByRole("heading", { name: "Start" })).toBeTruthy();
+    expect(await screen.findByText("Aufgaben des Tages")).toBeTruthy();
     expect(screen.queryByLabelText("Hinweise zur Einrichtung")).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Zum Bestand" }));
-    expect(open).toHaveBeenCalledWith("collection");
+    expect(screen.queryByRole("heading", { name: "Start" })).toBeNull();
   });
 
-  it("US-ACC-03 the start page counts the specimens with the count route, it does not load the card list", async () => {
+  it("US-ACC-03 Heute counts the specimens with the count route, it does not load the card list", async () => {
     fakeServer(world({ cards: [{ id: "e1" }] }));
     view();
-    await screen.findByRole("heading", { name: "Start" });
+    await screen.findByText("Aufgaben des Tages");
     expect(paths()).toContain("/specimens/count");
     expect(paths()).not.toContain("/specimens/cards");
   });
 
-  it("US-ACC-03 a load error is shown with a retry, never a blank start page", async () => {
+  it("US-QS-16 when the count is not there the tasks still show, Heute is never blank", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>(async () =>
@@ -519,7 +528,6 @@ describe("US-ACC-03 start page", () => {
       ),
     );
     view();
-    expect((await screen.findByRole("alert")).textContent).toContain("Der Server antwortet nicht.");
-    expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
+    expect(await screen.findByText("Aufgaben des Tages")).toBeTruthy();
   });
 });

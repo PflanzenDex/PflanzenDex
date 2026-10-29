@@ -116,9 +116,9 @@ describe("GlobalHeader (US-QS-07, US-QS-14, DS-25)", () => {
     const header = screen.getByRole("banner");
     expect(header.className).toContain("md:hidden");
     expect(within(header).queryByRole("navigation")).toBeNull();
-    expect(
-      screen.getByRole("link", { name: "PflanzenDéx, zur Startseite" }).getAttribute("href"),
-    ).toBe("/");
+    expect(screen.getByRole("link", { name: "PflanzenDéx, zu Heute" }).getAttribute("href")).toBe(
+      "/today",
+    );
   });
 });
 
@@ -151,10 +151,8 @@ describe("SideNav, rail (US-QS-14, DS-25, DS-44)", () => {
     for (const link of within(rail()).getAllByRole("link", { name: /^Ziel/ }))
       expect(link.className).toContain("min-h-[44px]");
     expect(
-      within(rail())
-        .getByRole("link", { name: "PflanzenDéx, zur Startseite" })
-        .getAttribute("href"),
-    ).toBe("/");
+      within(rail()).getByRole("link", { name: "PflanzenDéx, zu Heute" }).getAttribute("href"),
+    ).toBe("/today");
   });
 });
 

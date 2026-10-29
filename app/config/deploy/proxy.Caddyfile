@@ -35,12 +35,21 @@
 		-Via
 		defer
 	}
-	# The API serves its routes without a prefix: /api/x is forwarded as /x. /health stays at the top.
+	# The API serves its routes without a prefix: /api/x is forwarded as /x. /health stays at the top and answers only
+	# the status; the details (version, commit, queue counts) stay inside the stack for the deploy's smoke test (#759).
 	handle /health {
 		reverse_proxy api:3000
 	}
+	handle /health/* {
+		respond 404
+	}
 	handle_path /api/* {
-		reverse_proxy api:3000
+		handle /health/* {
+			respond 404
+		}
+		handle {
+			reverse_proxy api:3000
+		}
 	}
 	handle {
 		reverse_proxy web:8080

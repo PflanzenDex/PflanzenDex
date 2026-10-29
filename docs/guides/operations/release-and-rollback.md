@@ -14,7 +14,7 @@ There is one source: the git tag. No version is written into versioned files.
 
 - `deploy.sh` computes `APP_VERSION="$(git describe --tags --always)"`, for example `v0.1.0` (exactly on the tag) or `v0.1.0-3-gabc1234` (3 commits after it), and `GIT_SHA` (short commit).
 - `docker-compose.yml` passes both as build args. The api image sets them as env vars, the web image as `VITE_APP_VERSION` at build time.
-- `GET /health` returns `{"status":"ok","product":"PflanzenDex","version":"<describe>","commit":"<sha>","checks":{…}}` (checks of database and job queue, see `staging-deploy-and-backup.md`). Both show `unknown` if the build did not get a value (P-08).
+- `GET /health/details` returns `{"status":"ok","product":"PflanzenDex","version":"<describe>","commit":"<sha>","checks":{…}}` (checks of database and job queue, see `staging-deploy-and-backup.md`). The proxy does not serve it on the public name; the public `GET /health` answers only `{"status":"ok"}` (#759). Both show `unknown` if the build did not get a value (P-08).
 - The web app shows `Version <describe>` in the footer.
 - Local dev (`make dev`) has no build arg, so both show `unknown`.
 
@@ -28,7 +28,8 @@ Steps: fetch (with tags), remember the current commit as the rollback target, ba
 
 `app/config/deploy/scripts/smoke.sh <base-url> <expected-version>` passes only if
 
-- `GET <base-url>/health` answers 200 and its `version` equals the version just deployed, and
+- `GET <base-url>/health` answers 200 with the status only (no `version`, `commit` or `checks`),
+- `/health/details` reports the version just deployed as its `version`; `deploy.sh` reads it inside the api container (`SMOKE_DETAILS_CMD`, default: `curl <base-url>/health/details`), and
 - `GET <base-url>/` (web root, through the proxy) answers 200.
 
 It retries (`SMOKE_RETRIES`, default 15, every `SMOKE_DELAY`, default 2 s) because the proxy needs a moment. `deploy.sh` derives the base URL from `SITE_ADDRESS`/`HTTPS_PORT` in `deploy/.env`; override with `SMOKE_URL`. For `localhost` it uses `curl -k` (internal Caddy CA).
@@ -46,7 +47,7 @@ Limits: database migrations are not reverted. Migrations must be expand/contract
 
 ## Manual rollback
 
-On the host, in the checkout: `make deploy` does not take a ref, so call the script: `app/config/deploy/scripts/deploy.sh v0.1.0` (the last good tag). The script runs the same backup, build and smoke test. Check afterwards with `curl -s https://<host>/health`.
+On the host, in the checkout: `make deploy` does not take a ref, so call the script: `app/config/deploy/scripts/deploy.sh v0.1.0` (the last good tag). The script runs the same backup, build and smoke test. Check afterwards with `curl -s https://<host>/health` (status) and, on the host, `docker compose --env-file .env exec -T api wget -qO- http://127.0.0.1:3000/health/details` (version).
 
 ## Hotfix path (E-13)
 

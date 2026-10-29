@@ -17,7 +17,10 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        outline: "border border-border bg-background hover:bg-accent hover:text-accent-foreground",
+        // Green marks intent (ADR 0017): the outline carries the primary colour, its border reaches 6:1 (WCAG 1.4.11).
+        // Ghost stays neutral, because tabs, segments, navigation and accordions build on it.
+        outline:
+          "border border-primary bg-transparent text-primary hover:bg-accent hover:text-accent-foreground",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         link: "text-primary underline-offset-4 hover:underline",

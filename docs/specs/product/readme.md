@@ -73,15 +73,15 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | SOZ Social                     | 13      | 3      | 10      | 0      | 1 · 0 · 10                | 0                      | 13      |
 | EQU Equipment                  | 12      | 0      | 11      | 1      | 0 · 0 · 10                | 0                      | 12      |
 | KI AI access                   | 10      | 0      | 9       | 1      | 0 · 0 · 13                | 3                      | 7       |
-| QS Cross-cutting               | 14      | 0      | 10      | 4      | 0 · 0 · 0                 | 6                      | 8       |
+| QS Cross-cutting               | 16      | 0      | 12      | 4      | 0 · 0 · 0                 | 6                      | 10      |
 | MIG Migration (dropped)        | 0       | 0      | 0       | 0      | 0 · 0 · 0                 | 0                      | 0       |
 | ENT Discover                   | 9       | 0      | 8       | 1      | 0 · 0 · 9                 | 0                      | 9       |
-| QG Quality gates               | 9       | 0      | 7       | 2      | 2 · 5 · 16                | 0                      | 9       |
+| QG Quality gates               | 10      | 0      | 8       | 2      | 2 · 6 · 16                | 0                      | 10      |
 | DEV Development process        | 12      | 1      | 9       | 2      | 1 · 1 · 7                 | 0                      | 12      |
 | ACH Achievements               | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
 | TAU Swipe matching             | 7       | 1      | 6       | 0      | 1 · 5 · 4                 | 0                      | 7       |
 | ONB Introduction and unlocking | 8       | 5      | 3       | 0      | 1 · 0 · 9                 | 0                      | 8       |
-| **Total**                      | **168** | **36** | **117** | **15** |                           | **50**                 | **118** |
+| **Total**                      | **171** | **36** | **120** | **15** |                           | **50**                 | **121** |
 
 <!-- spec-status:end -->
 

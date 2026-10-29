@@ -34,8 +34,12 @@ deploy_ref() {
   wait_healthy api 30 || return 1
   # The sign-in service starts slowly on a small host (first start imports the realm), hence the longer wait.
   wait_healthy keycloak 90 || return 1
+  # Brute-force protection in the master realm (#758); idempotent, a no-op after the admin handover.
+  ./keycloak/master-realm.sh || return 1
   smoke_target
-  ./scripts/smoke.sh "$SMOKE_BASE" "$APP_VERSION"
+  # The version is only on /health/details, which the proxy does not serve publicly (#759): read it inside the api.
+  SMOKE_DETAILS_CMD="${SMOKE_DETAILS_CMD:-${compose[*]} exec -T api wget -qO- http://127.0.0.1:3000/health/details}" \
+    ./scripts/smoke.sh "$SMOKE_BASE" "$APP_VERSION"
 }
 
 # Smoke target: SMOKE_URL, else the proxy on this host. Behind a TLS-terminating proxy (CADDY_SCHEME=http://) the

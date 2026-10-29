@@ -12,8 +12,8 @@ const fakePool = (answer: (sql: string) => unknown) =>
     },
   }) as unknown as Pool;
 const statusRows = (rows: { status: string; n: number }[]) => ({ rows });
-const health = async (pool?: Pool) => {
-  const res = await createApp(pool ? { pool } : {}).request("/health");
+const health = async (pool?: Pool, path = "/health/details") => {
+  const res = await createApp(pool ? { pool } : {}).request(path);
   return { status: res.status, body: (await res.json()) as Record<string, unknown> };
 };
 
@@ -68,5 +68,17 @@ describe("US-DEV-09 health endpoint with checks", () => {
         checks: { database: "not_configured", jobs: { status: "not_configured" } },
       },
     });
+  });
+
+  it("TE-03 the public /health answers the status keyword only: no version, commit or counters (#759)", async () => {
+    const pool = fakePool((sql) =>
+      sql.includes("from job") ? statusRows([{ status: "dead", n: 3 }]) : { rows: [{ ok: 1 }] },
+    );
+    expect(await health(pool, "/health")).toEqual({ status: 200, body: { status: "degraded" } });
+  });
+
+  it("TE-03 the public /health keeps the 503 of a database that does not answer (#759)", async () => {
+    const pool = fakePool(() => new Error("down"));
+    expect(await health(pool, "/health")).toEqual({ status: 503, body: { status: "error" } });
   });
 });

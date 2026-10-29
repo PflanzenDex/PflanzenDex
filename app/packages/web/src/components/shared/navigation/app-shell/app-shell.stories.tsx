@@ -17,3 +17,4 @@ export const Default: Story = {};
 export const ActiveInDrawer: Story = { parameters: { path: "/settings" } };
 export const FewDestinations: Story = { args: { items: items.slice(0, 4) } };
 export const Tablet: Story = { globals: { viewport: { value: "tablet", isRotated: false } } };
+export const Fit: Story = { args: { fit: true } };

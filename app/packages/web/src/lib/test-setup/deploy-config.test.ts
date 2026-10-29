@@ -45,7 +45,7 @@ describe("TE-03 · reverse proxy in front of the host", () => {
 
   it("TE-03 routes /health and /api to the API (prefix removed) and the rest to web", () => {
     expect(proxy).toMatch(/handle \/health \{\s*reverse_proxy api:3000/);
-    expect(proxy).toMatch(/handle_path \/api\/\* \{\s*reverse_proxy api:3000/);
+    expect(proxy).toMatch(/handle_path \/api\/\* \{[\s\S]*?handle \{\s*reverse_proxy api:3000/);
     expect(proxy).toMatch(/handle \{\s*reverse_proxy web:8080/);
   });
 
@@ -108,6 +108,18 @@ describe("TE-03 · public test environment through Tailscale Funnel", () => {
     expect(envExample).toContain("TRUSTED_PROXIES=172.29.40.2/32 172.29.40.3/32");
   });
 
+  it("TE-03 the app host serves only the status of /health; the details stay inside the stack (#759)", () => {
+    const app = proxy.slice(
+      proxy.indexOf("{$CADDY_SCHEME}{$APP_HOST} {"),
+      proxy.indexOf("{$CADDY_SCHEME}{$AUTH_HOST} {"),
+    );
+    expect(app).toContain("handle /health/* {\n\t\trespond 404\n\t}");
+    expect(app).toMatch(/handle_path \/api\/\* \{\s*handle \/health\/\* \{\s*respond 404/);
+    expect(read("deploy/scripts/deploy.sh")).toContain(
+      "exec -T api wget -qO- http://127.0.0.1:3000/health/details",
+    );
+  });
+
   it("TE-03 the sign-in host denies Keycloak's admin, master realm and management paths", () => {
     const auth = proxy.slice(proxy.indexOf("{$CADDY_SCHEME}{$AUTH_HOST} {"));
     for (const path of ["/admin*", "/realms/master*", "/metrics*", "/health*"])
@@ -134,6 +146,40 @@ describe("TE-03 · public test environment through Tailscale Funnel", () => {
   });
 });
 
+describe("TE-03 · log size limits (#762)", () => {
+  const services = (text: string) =>
+    [...text.slice(text.indexOf("\nservices:\n")).matchAll(/^ {2}([a-z][a-z-]*):$/gm)]
+      .map((m) => m[1] as string)
+      .filter((name) => !["dbdata", "caddydata", "default"].includes(name));
+  const limit = /logging:\s+driver: json-file\s+options:\s+max-size: 10m\s+max-file: "3"/;
+
+  it("TE-03 every service of the base stack keeps at most 3 log files of 10 MB", () => {
+    expect(compose).toMatch(
+      /x-logging: &logging\s+driver: json-file\s+options:\s+max-size: 10m\s+max-file: "3"/,
+    );
+    const names = services(compose.slice(0, compose.indexOf("\nvolumes:")));
+    expect(names).toEqual([
+      "db",
+      "keycloak-db",
+      "db-roles",
+      "migrate",
+      "keycloak",
+      "api",
+      "web",
+      "proxy",
+    ]);
+    for (const name of names) expect(service(compose, name), name).toContain("logging: *logging");
+  });
+
+  it("TE-03 the services of the test and funnel overlays have the same limit", () => {
+    expect(service(testOverlay, "mailpit")).toMatch(limit);
+    const anchor = funnel.slice(funnel.indexOf("x-tailscale:"), funnel.indexOf("\nservices:"));
+    expect(anchor).toMatch(limit);
+    for (const name of ["ts-app", "ts-auth"])
+      expect(service(funnel, name)).toContain("<<: *tailscale");
+  });
+});
+
 describe("TE-03 · sign-in service in the stack", () => {
   const keycloak = service(compose, "keycloak");
   const api = service(compose, "api");
@@ -147,6 +193,14 @@ describe("TE-03 · sign-in service in the stack", () => {
     expect(keycloak).toContain("KC_HOSTNAME: ${AUTH_URL");
     expect(keycloak).toContain("KC_HEALTH_ENABLED");
     expect(keycloak).toMatch(/KC_BOOTSTRAP_ADMIN_PASSWORD: \$\{KEYCLOAK_ADMIN_PASSWORD:\?/);
+  });
+
+  it("TE-03 the deploy turns on brute-force protection in the master realm after Keycloak is healthy (#758)", () => {
+    const deploy = read("deploy/scripts/deploy.sh");
+    const healthy = deploy.indexOf("wait_healthy keycloak");
+    expect(healthy).toBeGreaterThan(-1);
+    expect(deploy.indexOf("./keycloak/master-realm.sh || return 1")).toBeGreaterThan(healthy);
+    expect(keycloak).toContain("KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER");
   });
 
   it("TE-03 the same Keycloak version as the development stack", () => {
@@ -235,7 +289,7 @@ describe("TE-03 · realm for deployments", () => {
     expect(web["webOrigins"]).toEqual(["${WEB_BASE_URL}"]);
   });
 
-  it("TE-03 keeps clients, audience mapper, token lifetimes, password policy and theme of the development realm", () => {
+  it("TE-03 keeps clients, audience mapper, token lifetimes and theme of the development realm", () => {
     const skip = ["rootUrl", "redirectUris", "webOrigins", "attributes"];
     const strip = (c: Client) =>
       Object.fromEntries(Object.entries(c).filter(([k]) => !skip.includes(k)));
@@ -246,16 +300,54 @@ describe("TE-03 · realm for deployments", () => {
     );
     for (const key of [
       "loginTheme",
-      "passwordPolicy",
       "accessTokenLifespan",
-      "ssoSessionIdleTimeout",
-      "ssoSessionMaxLifespan",
       "verifyEmail",
       "registrationAllowed",
       "bruteForceProtected",
       "sslRequired",
     ])
       expect(realm[key], key).toEqual(devRealm[key]);
+  });
+
+  // Deliberately stricter than the development realm, whose test users and their passwords stay as they are (#757).
+  it("TE-03 deployments get a stronger password policy, shorter sessions and login events (#757)", () => {
+    expect(realm["passwordPolicy"]).toBe(
+      "length(12) and maxLength(128) and notUsername and notEmail",
+    );
+    expect(devRealm["passwordPolicy"]).toBe("length(10)");
+    const day = 86400;
+    expect(realm).toMatchObject({
+      ssoSessionIdleTimeout: day,
+      ssoSessionMaxLifespan: 7 * day,
+      ssoSessionIdleTimeoutRememberMe: 7 * day,
+      ssoSessionMaxLifespanRememberMe: 30 * day,
+      eventsEnabled: true,
+      eventsExpiration: 30 * day,
+      adminEventsEnabled: true,
+      adminEventsDetailsEnabled: false,
+    });
+  });
+
+  it("TE-03 the runbook applies the same realm defaults to an existing realm with kcadm.sh (#757)", () => {
+    const runbook = readFileSync(
+      new URL(
+        "../../../../../../docs/guides/operations/staging-deploy-and-backup.md",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    expect(runbook).toContain(`-s 'passwordPolicy=${String(realm["passwordPolicy"])}'`);
+    for (const key of [
+      "ssoSessionIdleTimeout",
+      "ssoSessionMaxLifespan",
+      "ssoSessionIdleTimeoutRememberMe",
+      "ssoSessionMaxLifespanRememberMe",
+      "eventsEnabled",
+      "eventsExpiration",
+      "adminEventsEnabled",
+      "adminEventsDetailsEnabled",
+    ])
+      expect(runbook, key).toContain(`-s ${key}=${String(realm[key])}`);
   });
 
   it("TE-03 ships no users and sends mail through a configurable server", () => {

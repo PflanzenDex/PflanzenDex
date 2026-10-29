@@ -4,19 +4,19 @@ Ticket TE-03 (#40). Basis: E-01 (self-hosting, Docker Compose, one host), R-09, 
 
 ## Overview
 
-| Service       | Job                                                                                                                                                                                                                                       |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `proxy`       | Caddy: two hostnames (app, sign-in); plain HTTP behind a TLS-terminating proxy or HTTPS with automatic certificates; `/health` and `/api/*` (prefix removed) go to the API, the rest of the app host to web, the sign-in host to Keycloak |
-| `api`         | Hono API (Node 24, through tsx, because `core` is exported as TypeScript source)                                                                                                                                                          |
-| `web`         | static PWA (Vite build, Caddy)                                                                                                                                                                                                            |
-| `db`          | PostgreSQL 16, data in the `dbdata` volume                                                                                                                                                                                                |
-| `migrate`     | one-shot, same image as `api`: applies pending SQL migrations, then exits (#201)                                                                                                                                                          |
-| `keycloak`    | sign-in service (Keycloak 26.8, production mode), data in its own database in `db`; imports the realm `pflanzendex` on its first start                                                                                                    |
-| `db-roles`    | one-shot: creates the application role and the plain schema owner role, hands an existing database to it (#907, "DB roles in production")                                                                                                 |
-| `keycloak-db` | one-shot: creates the sign-in role and database in `db`, idempotently (also on an existing volume)                                                                                                                                        |
-| `mailpit`     | test environment only (`docker-compose.test.yml`): catches the confirmation emails                                                                                                                                                        |
+| Service       | Job                                                                                                                                                                                                                                                                                                 |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `proxy`       | Caddy: two hostnames (app, sign-in); plain HTTP behind a TLS-terminating proxy or HTTPS with automatic certificates; `/health` (status only) and `/api/*` (prefix removed) go to the API, `/health/*` and `/api/health/*` answer 404, the rest of the app host to web, the sign-in host to Keycloak |
+| `api`         | Hono API (Node 24, through tsx, because `core` is exported as TypeScript source)                                                                                                                                                                                                                    |
+| `web`         | static PWA (Vite build, Caddy)                                                                                                                                                                                                                                                                      |
+| `db`          | PostgreSQL 16, data in the `dbdata` volume                                                                                                                                                                                                                                                          |
+| `migrate`     | one-shot, same image as `api`: applies pending SQL migrations, then exits (#201)                                                                                                                                                                                                                    |
+| `keycloak`    | sign-in service (Keycloak 26.8, production mode), data in its own database in `db`; imports the realm `pflanzendex` on its first start                                                                                                                                                              |
+| `db-roles`    | one-shot: creates the application role and the plain schema owner role, hands an existing database to it (#907, "DB roles in production")                                                                                                                                                           |
+| `keycloak-db` | one-shot: creates the sign-in role and database in `db`, idempotently (also on an existing volume)                                                                                                                                                                                                  |
+| `mailpit`     | test environment only (`docker-compose.test.yml`): catches the confirmation emails                                                                                                                                                                                                                  |
 
-The database and Keycloak are not exposed. Only the proxy listens (ports from `HTTP_PORT`/`HTTPS_PORT`). Every service has a memory limit (starting values for a 3 GB host, assumptions; see "Memory" below).
+The database and Keycloak are not exposed. Only the proxy listens (ports from `HTTP_PORT`/`HTTPS_PORT`). Every service has a memory limit (starting values for a 3 GB host, assumptions; see "Memory" below) and keeps at most 3 log files of 10 MB (`json-file` driver, anchor `x-logging`; the overlays repeat it; starting values, assumption), so a noisy client cannot fill the disk. The API limits writes per client (120 per minute, 429 `request.rate_limited`; `docs/guides/reference/app.md`). The limit applies when a container is created: `docker compose up -d` recreates the services with the new setting; `docker inspect --format '{{.HostConfig.LogConfig}}' <container>` shows it.
 
 **Compression and caching (NFR-12):** the proxy compresses text responses (HTML, JS, CSS, JSON, SVG) with zstd or gzip, whichever `Accept-Encoding` asks for; Brotli would need a Caddy plugin and is not used. `web` sends `Cache-Control: public, max-age=31536000, immutable` for the hashed files under `/assets/` and `no-cache` (revalidate) for `index.html`, the service worker, the web manifest and SPA routes. The config is `app/config/deploy/proxy.Caddyfile` and `app/config/deploy/docker/web.Caddyfile`; the test is `serving-headers.test.ts` in `app/packages/web/src/lib/test-setup/`.
 
@@ -32,17 +32,50 @@ The database and Keycloak are not exposed. Only the proxy listens (ports from `H
 make deploy          # fetches origin/main, backs up the DB (if it runs), builds, starts, waits for /health
 ```
 
-To try another state: `app/config/deploy/scripts/deploy.sh origin/dev`. Builds are reproducible: `npm ci` from the lock file, base images pinned to major versions (`node:24-alpine`, `postgres:16-alpine`, `caddy:2-alpine`). `GET /health` shows the running version (`version` = commit hash).
+To try another state: `app/config/deploy/scripts/deploy.sh origin/dev`. Builds are reproducible: `npm ci` from the lock file, base images pinned to major versions (`node:24-alpine`, `postgres:16-alpine`, `caddy:2-alpine`). `GET /health/details` (inside the stack, see "Health check") shows the running version (`version` = commit hash).
 Migrations run on every deploy: the one-shot `migrate` service (same image as `api`, `packages/db/migrations`) applies pending files before the `api` starts (`depends_on: service_completed_successfully`). They are forward only and guarded by an advisory lock and checksums. A failing migration fails `compose up`, so `deploy.sh` rolls back to the previous ref and the API never runs against a half-migrated schema. Check with `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml logs migrate`. Migrations are not rolled back; use the pre-deploy backup (restore below) for data problems. Manual run: `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml run --rm migrate`.
 Rollback: `app/config/deploy/scripts/deploy.sh <earlier commit>`; for data problems, restore (below).
 
 Trying it locally (without a domain): `.env` with `CADDY_SCHEME=` (empty), `APP_HOST=localhost`, `AUTH_HOST=auth.localhost`, `APP_URL=https://localhost:8443`, `AUTH_URL=https://auth.localhost:8443`, then `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml up -d --build` and `curl -k https://localhost:8443/health`.
 
+## Realm security defaults (#757)
+
+The deployment realm is stricter than the development realm, because anyone may register on a public installation. The development realm keeps `length(10)` and its long sessions, so its test users and their passwords stay valid.
+
+| Setting                                                      | Deployment realm                                             | Why                                                                                                                                   |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `passwordPolicy`                                             | `length(12) and maxLength(128) and notUsername and notEmail` | at least 12 characters (starting value, assumption); Keycloak shows its own German messages ("muss mindestens 12 Zeichen beinhalten") |
+| `ssoSessionIdleTimeout` / `ssoSessionMaxLifespan`            | 1 day / 7 days                                               | a forgotten session on a shared device ends after a day without use (starting values, assumption)                                     |
+| `ssoSessionIdleTimeoutRememberMe` / `…MaxLifespanRememberMe` | 7 days / 30 days                                             | "Angemeldet bleiben" on the own phone: sign in again at the latest after a month (starting values, assumption)                        |
+| `eventsEnabled`, `eventsExpiration`                          | on, 30 days                                                  | failed and successful sign-ins can be traced after an incident; they hold IP addresses, so they expire (assumption)                   |
+| `adminEventsEnabled`, `adminEventsDetailsEnabled`            | on, without details                                          | every change in the admin console is logged; the details would copy whole representations into the log                                |
+
+A list of forbidden passwords (`passwordBlacklist`) needs a file inside the Keycloak container and is not set yet. Whether self-registration stays on is decided per installation (test: on; invitation phase: off, `invitation-phase.md`).
+
+**Existing realm.** The realm file is imported only on the first start (`IGNORE_EXISTING`), so apply the change to a running installation with `kcadm.sh` (checked on 2026-10-20 with Keycloak 26.8.0: afterwards the realm has the same values as a fresh import):
+
+```bash
+c="docker compose --env-file app/config/deploy/.env exec -T keycloak /opt/keycloak/bin/kcadm.sh"
+docker compose --env-file app/config/deploy/.env exec keycloak /opt/keycloak/bin/kcadm.sh config credentials \
+  --server http://localhost:8080 --realm master --user <admin>
+$c update realms/pflanzendex \
+  -s 'passwordPolicy=length(12) and maxLength(128) and notUsername and notEmail' \
+  -s ssoSessionIdleTimeout=86400 -s ssoSessionMaxLifespan=604800 \
+  -s ssoSessionIdleTimeoutRememberMe=604800 -s ssoSessionMaxLifespanRememberMe=2592000
+$c update events/config -r pflanzendex \
+  -s eventsEnabled=true -s eventsExpiration=2592000 -s adminEventsEnabled=true -s adminEventsDetailsEnabled=false
+$c get realms/pflanzendex --fields passwordPolicy,ssoSessionIdleTimeout,ssoSessionMaxLifespan,eventsEnabled
+```
+
+`config credentials` asks for the password interactively (QG-S1). The new password policy applies to passwords set from now on; existing passwords stay valid until they are changed. Running sessions keep their old limits until they end.
+
 ## Backup
 
 ```bash
-make backup          # app/config/deploy/backups/pflanzendex-<UTC time>.dump and keycloak-<UTC time>.dump (pg_dump -Fc)
+make backup          # $BACKUP_DIR/pflanzendex-<UTC time>.dump and keycloak-<UTC time>.dump (pg_dump -Fc)
 ```
+
+`BACKUP_DIR` defaults to `~/pflanzendex-backups`, outside the repository: the dumps hold password hashes and the realm keys, and a folder inside the checkout could be committed by a `git add -A` on the host (#760). The script runs with `umask 077`, so the folder is 0700 and every dump 0600; dumps of earlier runs are tightened to 0600 on the next run. `.gitignore` also ignores the old folder `app/config/deploy/backups/` and every `*.dump`. A host whose `.env` still says `BACKUP_DIR=./backups` keeps working; move the folder and the setting when convenient (`mv app/config/deploy/backups ~/pflanzendex-backups`, then `BACKUP_DIR=${HOME}/pflanzendex-backups` in `.env`).
 
 Each run writes two files when the sign-in service exists: `pflanzendex-*.dump` (app data) and `keycloak-*.dump` (identities, sessions, realm settings; without it nobody could sign in after a restore). The script verifies the file with `pg_restore -l`, deletes backups older than `BACKUP_RETENTION_DAYS` and copies them to `BACKUP_REMOTE` with `rsync` if set (second location, R-11). An unreadable backup fails with an error (a backup that cannot be restored is an incident, NFR-15).
 
@@ -50,11 +83,11 @@ Each run writes two files when the sign-in service exists: `pflanzendex-*.dump` 
 
 ```bash
 # into a second database (safe, for checking):
-app/config/deploy/scripts/restore.sh app/config/deploy/backups/<file>.dump pdx_check
+app/config/deploy/scripts/restore.sh ~/pflanzendex-backups/<file>.dump pdx_check
 # over the production database (overwrites it; stop the API first; a keycloak-*.dump goes into the sign-in database,
 # stop `keycloak` first instead):
 docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml stop api
-CONFIRM=yes app/config/deploy/scripts/restore.sh app/config/deploy/backups/<file>.dump
+CONFIRM=yes app/config/deploy/scripts/restore.sh ~/pflanzendex-backups/<file>.dump
 docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml start api
 ```
 
@@ -83,7 +116,7 @@ How it fits together:
 
 - **One variable picks the mode.** `CADDY_SCHEME=http://` makes Caddy serve both hostnames on plain HTTP :80 without certificates (this setup). Empty makes Caddy get its own certificates (host facing the internet). Forwarded headers are believed only from `TRUSTED_PROXIES` (the upstream proxy's address); from anyone else they are overwritten. Keycloak builds its public links from them (`KC_PROXY_HEADERS=xforwarded`) and from `KC_HOSTNAME` (= `AUTH_URL`), so make the upstream proxy pass `X-Forwarded-Proto: https`.
 - **Keycloak** (`quay.io/keycloak/keycloak:26.8.0`, same as `make auth-up`) runs in production mode (`start`) with HTTP enabled inside the network. Its data lives in its own database `keycloak` with its own role in the existing `db` service (a second PostgreSQL would cost 100+ MB of the scarce memory). The one-shot `keycloak-db` creates role and database idempotently on every `up`, also on an existing volume, and revokes `CONNECT` on the app database from everyone but the cluster user: the sign-in role cannot reach tenant data (P-04). Port 8080 is published only on the host's loopback (`127.0.0.1:${KEYCLOAK_ADMIN_PORT}`, default 8180) for the admin console over an SSH tunnel (see "Admin console over an SSH tunnel"); the management port 9000 is not published.
-- **Realm** `pflanzendex` is imported on the first start from `app/config/deploy/keycloak/pflanzendex-realm.json`. It matches the development realm (clients `pflanzendex-api` and `pflanzendex-web` with S256 PKCE, audience mapper, `fullScopeAllowed: false`, access token 5 minutes (ADR 0009), password policy `length(10)`, login theme `pflanzendex`, email verification, self-registration) and differs in three ways: no test users, redirect addresses and web origin come from `APP_URL` (placeholder `${WEB_BASE_URL}`), SMTP comes from `SMTP_*` (placeholders `${KC_SMTP_*}`). Checked on 2026-10-11 with Keycloak 26.8.0: string placeholders (also inside arrays and empty values) are resolved; for booleans they are not reliable (see `invitation-phase.md`), which is why `registrationAllowed` stays a command, not a placeholder. **A changed realm file does not touch an existing realm** (`IGNORE_EXISTING`): change a live realm in the admin console or with `kcadm.sh`; to re-import, drop the `keycloak` database (`docker compose ... stop keycloak`, then drop and re-run `up`) and lose its accounts.
+- **Realm** `pflanzendex` is imported on the first start from `app/config/deploy/keycloak/pflanzendex-realm.json`. It matches the development realm (clients `pflanzendex-api` and `pflanzendex-web` with S256 PKCE, audience mapper, `fullScopeAllowed: false`, access token 5 minutes (ADR 0009), login theme `pflanzendex`, email verification, self-registration) and differs in four ways: no test users, redirect addresses and web origin come from `APP_URL` (placeholder `${WEB_BASE_URL}`), SMTP comes from `SMTP_*` (placeholders `${KC_SMTP_*}`), and stronger security defaults (see "Realm security defaults" below). Checked on 2026-10-11 with Keycloak 26.8.0: string placeholders (also inside arrays and empty values) are resolved; for booleans they are not reliable (see `invitation-phase.md`), which is why `registrationAllowed` stays a command, not a placeholder. **A changed realm file does not touch an existing realm** (`IGNORE_EXISTING`): change a live realm in the admin console or with `kcadm.sh`; to re-import, drop the `keycloak` database (`docker compose ... stop keycloak`, then drop and re-run `up`) and lose its accounts.
 - **API settings.** `OIDC_ISSUER` is the public issuer (`${AUTH_URL}/realms/pflanzendex`), because tokens carry it in `iss`. The API does not fetch keys through that public address (that would need the host to reach its own proxy and TLS): `OIDC_JWKS_URL=http://keycloak:8080/realms/pflanzendex/protocol/openid-connect/certs` points the key fetch inside the network, while signature, issuer and audience (`OIDC_AUDIENCE=pflanzendex-api`) are still checked as before (test `token.test.ts`, TE-03). `WEB_ORIGIN=${APP_URL}` sets CORS; `AI_RESOURCE_URL=${APP_URL}/api/mcp`.
 - **Web build.** `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID` and `VITE_API_URL=${APP_URL}/api` are build arguments of `web.Dockerfile` (Vite compiles them into the bundle), so changing `APP_URL` or `AUTH_URL` needs a rebuild (`make deploy` does it). The API is reached under `/api` on the same origin, so there is no cross-origin call; the proxy removes the `/api` prefix.
 - **Mail.** The realm requires email confirmation. `docker-compose.test.yml` adds Mailpit (no ports published) and a Caddy route to its UI at `https://auth.example.test/mail/` behind basic auth (`MAIL_UI_USER`, `MAIL_UI_HASH`, see "Public test environment through Tailscale Funnel"); the realm sends to it by default. It shows every email, so it must exist only in the test environment. Production sets `SMTP_*` in `.env` and does not load the overlay.
@@ -126,7 +159,7 @@ Note: `deploy.sh` checks out the ref in the checkout (detached HEAD). Every depl
 ### First account and the operator role
 
 1. Open `https://app.example.test`, press the sign-in button and choose register (self-registration is on in the test environment). Keycloak asks for email confirmation.
-2. Open `https://auth.example.test/mail/` (the mail catcher), open the email and follow the link; set the password (at least 10 characters). Sign in; the first sign-in creates the account.
+2. Open `https://auth.example.test/mail/` (the mail catcher), open the email and follow the link; set the password (at least 12 characters, not the username or the email address). Sign in; the first sign-in creates the account.
 3. Make the account the operator: follow `invitation-phase.md` steps 4 to 5. The subject is the Keycloak user id (`kcadm.sh get users -r pflanzendex -q email=<email> --fields id`; the admin console `/admin/` is blocked on the public name; open it over an SSH tunnel, see "Admin console over an SSH tunnel"). `compose` there stands for `docker compose --env-file app/config/deploy/.env`; the compose files come from `COMPOSE_FILE`, so no `-f` is needed. The tab "Betreiber" appears after a reload.
 
 ### Closing self-registration
@@ -139,7 +172,7 @@ Registration is a per-installation switch, not part of the build (`invitation-ph
 
 ### Backup and restore
 
-`make backup` writes `pflanzendex-*.dump` and `keycloak-*.dump` (see "Backup"). Restore the sign-in database into a check database: `app/config/deploy/scripts/restore.sh app/config/deploy/backups/keycloak-<time>.dump kc_check`; over the live one: stop `keycloak`, `CONFIRM=yes app/config/deploy/scripts/restore.sh app/config/deploy/backups/keycloak-<time>.dump`, start `keycloak`. The restored objects keep their owner (the `keycloak` role). Restore app and sign-in dump from the same run so account subjects and identities match. `make restore-test` covers both databases.
+`make backup` writes `pflanzendex-*.dump` and `keycloak-*.dump` (see "Backup"). Restore the sign-in database into a check database: `app/config/deploy/scripts/restore.sh ~/pflanzendex-backups/keycloak-<time>.dump kc_check`; over the live one: stop `keycloak`, `CONFIRM=yes app/config/deploy/scripts/restore.sh ~/pflanzendex-backups/keycloak-<time>.dump`, start `keycloak`. The restored objects keep their owner (the `keycloak` role). Restore app and sign-in dump from the same run so account subjects and identities match. `make restore-test` covers both databases.
 
 ### Memory
 
@@ -282,14 +315,40 @@ Then register the first account and follow "First account and the operator role"
    ```
 
 2. Open `http://localhost:8180/admin/master/console/` in the browser on that workstation.
-3. Log in as `KEYCLOAK_ADMIN_USER` (default `admin`) with `KEYCLOAK_ADMIN_PASSWORD` from `app/config/deploy/.env` on the host. Read it there without copying the file anywhere: `ssh <host> "grep '^KEYCLOAK_ADMIN_PASSWORD=' <repo>/app/config/deploy/.env | cut -d= -f2"`. Change it in the console afterwards if you like (the `.env` value is used only for the first start of an empty database).
+3. Log in as `KEYCLOAK_ADMIN_USER` (default `admin`) with `KEYCLOAK_ADMIN_PASSWORD` from `app/config/deploy/.env` on the host. Read it there without copying the file anywhere: `ssh <host> "grep '^KEYCLOAK_ADMIN_PASSWORD=' <repo>/app/config/deploy/.env | cut -d= -f2"`. After the first start, hand the master realm over to a named admin with a second factor (see "Master realm and admin handover").
 4. Close the tunnel with Ctrl+C when done.
 
 If port 8180 is taken on the host or the workstation, set `KEYCLOAK_ADMIN_PORT` in `.env`, redeploy, and use the same number on both sides of `-L`. The local port in the browser must equal `KEYCLOAK_ADMIN_PORT`, because Keycloak builds the console's links from it.
 
 ### Operator work without the admin console
 
-Everything the console does also works on the command line inside the container, without a tunnel: `docker compose --env-file app/config/deploy/.env exec keycloak /opt/keycloak/bin/kcadm.sh ...` (log in first with `kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin`, as in "Closing self-registration"). The operator role steps of `invitation-phase.md` use `kcadm.sh get users` and need no console.
+Everything the console does also works on the command line inside the container, without a tunnel: `docker compose --env-file app/config/deploy/.env exec keycloak /opt/keycloak/bin/kcadm.sh ...` (log in first with `kcadm.sh config credentials --server http://localhost:8080 --realm master --user <admin>`, as in "Closing self-registration"; after the handover `<admin>` is the named admin). The operator role steps of `invitation-phase.md` use `kcadm.sh get users` and need no console.
+
+### Master realm and admin handover (#758)
+
+The master realm controls every realm. It is blocked on the public name, but every container on the stack network reaches Keycloak directly, so it needs a lockout of its own.
+
+**Brute-force protection.** `deploy.sh` runs `app/config/deploy/keycloak/master-realm.sh` after Keycloak is healthy. It signs in as the bootstrap admin with the credentials the container already has (`KC_BOOTSTRAP_ADMIN_*`, no password on the host's command line) and sets `bruteForceProtected=true` and `failureFactor=5` (as in the app realm; starting value, assumption) in the master realm, every time, idempotently. So a fresh installation ends with the protection on. After the handover below the bootstrap admin no longer exists: the script prints `master realm: the bootstrap admin cannot sign in ...` and the deploy goes on; from then on the named admin owns the setting (check it in step 4).
+
+**Hand over the bootstrap admin.** The bootstrap admin (`KEYCLOAK_ADMIN_USER`, default `admin`) is a permanent user with a password only. Replace it with a named admin who needs a one-time code (TOTP), once per installation:
+
+1. Create the named admin as the bootstrap admin (the `config credentials` line asks for `KEYCLOAK_ADMIN_PASSWORD` interactively, QG-S1; `set-password` without `--new-password` asks too):
+
+   ```bash
+   c="docker compose --env-file app/config/deploy/.env exec keycloak /opt/keycloak/bin/kcadm.sh"
+   $c config credentials --server http://localhost:8080 --realm master --user admin
+   $c create users -r master -s username=<name> -s email=<email> -s emailVerified=true -s enabled=true \
+     -s 'requiredActions=["CONFIGURE_TOTP"]'
+   $c set-password -r master --username <name>
+   $c add-roles -r master --uusername <name> --rolename admin
+   ```
+
+2. Open the admin console over the SSH tunnel (above) and sign in as `<name>`. Keycloak asks to set up the authenticator app right away (`CONFIGURE_TOTP`). Sign out and in again to check that the code is asked for.
+3. As `<name>`, in the console: realm `master` > Users > `admin` > Delete. (With kcadm: `$c get users -r master -q username=admin -q exact=true --fields id`, then `$c delete users/<id> -r master`.)
+4. Still as `<name>`: realm `master` > Realm settings > Security defenses > Brute force detection is on ("Lockout temporarily", 5 failures).
+5. Replace `KEYCLOAK_ADMIN_PASSWORD` in `.env` with a new random value (`openssl rand -hex 24`) and keep it nowhere else. The compose file still requires the variable, because Keycloak creates a bootstrap admin from it whenever its database is empty (a restore into a new volume, the re-import above); on an existing database it is not used, so the old password no longer opens anything.
+
+Checked on 2026-10-20 with Keycloak 26.8.0 in a local container: the script turned the protection on (it was off with `failureFactor` 30), a second run changed nothing, steps 1 and 3 worked with kcadm, and after deleting `admin` the script printed the handover message and exited 0. Step 2 (TOTP in the browser) and the run on the test environment are still to do. If every admin is locked out, Keycloak can create a temporary admin with `kc.sh bootstrap-admin user` against the same database (Keycloak documentation "Recovering the admin account"; not tried here).
 
 ### Limits and when to leave this setup
 
@@ -326,9 +385,19 @@ Run workflow (environment, ref) -> guard on the runner -> joins the tailnet as a
 
 Nothing below goes into the repo: hostnames, tailnet name and secrets stay with the owner (the repo is public). Placeholders: `<host>` is the tailnet name of the host, `<repo-path>` the checkout on it.
 
-1. **Test host:** install `tailscaled` as a system service in userspace mode (no TUN device, outbound only) and join with Tailscale SSH and the tag: `tailscale up --ssh --advertise-tags=tag:pflanzendex-deploy`. Create the Linux user `deploy` (member of the `docker` group, owner of the checkout, `git fetch` works from it).
+1. **Test host:** install `tailscaled` as a system service in userspace mode (no TUN device, outbound only) and join with Tailscale SSH and the tag. This is a node of its own, next to the two Funnel containers; it gets its own tag so a public Funnel node is never a deploy target. Do it after step 3, or `tailscale up` refuses the tag:
+
+   ```bash
+   curl -fsSL https://tailscale.com/install.sh | sh
+   # Change only FLAGS: /etc/default/tailscaled also holds PORT, and without it tailscaled fails to start (--port=).
+   sudo sed -i 's/^FLAGS=.*/FLAGS="--tun=userspace-networking"/' /etc/default/tailscaled
+   sudo systemctl restart tailscaled
+   sudo tailscale up --ssh --advertise-tags=tag:pflanzendex-deploy --hostname=<host-label>
+   ```
+
+   `tailscale up` prints a login link; approve it in the admin console. Create the Linux user `deploy`: member of the `docker` group, owner of the checkout and of `app/config/deploy/.env`, `git fetch` works from it. Give it **no** `sudo` (no group, no `/etc/sudoers.d` entry): whoever deploys gets a shell as `deploy`, and `deploy.sh` needs only Docker. Administer the host as another user or as root from the hypervisor.
 2. **Prod host (does not exist yet):** the same with `--advertise-tags=tag:pflanzendex-prod`. Until it exists, leave `DEPLOY_HOST` unset in the environment `prod`; the workflow then fails at once with a clear message.
-3. **Tailnet policy:** the tags and one SSH rule per target; `tag:ci` gets nothing else:
+3. **Tailnet policy:** the tags, a network grant for port 22 only and one SSH rule per target; `tag:ci` gets nothing else. Merge into the existing policy (keep the Funnel tag and its `nodeAttrs`):
 
    ```json
    "tagOwners": {
@@ -336,19 +405,37 @@ Nothing below goes into the repo: hostnames, tailnet name and secrets stay with 
      "tag:pflanzendex-deploy": ["autogroup:admin"],
      "tag:pflanzendex-prod": ["autogroup:admin"]
    },
+   "grants": [
+     { "src": ["tag:ci"], "dst": ["tag:pflanzendex-deploy", "tag:pflanzendex-prod"], "ip": ["tcp:22"] }
+   ],
    "ssh": [
      { "action": "accept", "src": ["tag:ci"], "dst": ["tag:pflanzendex-deploy"], "users": ["deploy"] },
      { "action": "accept", "src": ["tag:ci"], "dst": ["tag:pflanzendex-prod"], "users": ["deploy"] }
+   ],
+   "sshTests": [
+     { "src": "tag:ci", "dst": ["tag:pflanzendex-deploy"], "accept": ["deploy"], "deny": ["root"] }
    ]
    ```
 
-   Add no `acls` entry for `tag:ci`; if a catch-all `*:*` rule exists, tighten it so `tag:ci` is not covered.
+   The first working setup (2026-10-29) used exactly this; whether Tailscale SSH works without the `tcp:22` grant was not tested. `accept` (not `check`) because a runner cannot answer a browser check. If a catch-all rule exists, make sure its `src` does not cover `tag:ci` (a rule with `src: ["autogroup:member"]` does not). Right after joining, `tailscale status` on the host may warn "access controls don't allow anyone to access this device" (seen on 2026-10-29 before the first run, gone after it; the cause was not pinned down). Run the check in step 7; if the "deploy" step then fails with an SSH error, the policy is missing one of the rules above.
 
 4. **OAuth client** (Tailscale admin console, Settings, OAuth clients): scope "Auth Keys" with write access, tag `tag:ci` only. One client for both environments, or one per environment (then the prod client can be revoked on its own).
 5. **GitHub environments** (repository Settings, Environments). Both use the same names, set per environment: **secrets** `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`; **variables** `DEPLOY_HOST` (`<host>`, a MagicDNS name) and `DEPLOY_REPO_PATH` (`<repo-path>`, default if unset: `/opt/pflanzendex`).
    - `test`: "Deployment branches and tags" set to **all branches** (no restriction), because the test environment may deploy from any branch. Its secrets are still out of reach for fork pull requests: nothing on `pull_request` uses the environment, forks cannot dispatch workflows, and environment secrets are never given to fork runs.
    - `prod`: "Deployment branches and tags" limited to the branch `main` and the tag pattern `v*`; optionally add required reviewers so every prod deploy waits for an approval.
-6. **Check:** run "Deploy" for `test` with `dev`, then try `prod` with a branch and with `main` (both must be refused by the guard before the tailnet join), and later with a release tag.
+6. **`.env` up to date:** compare the variable names of `app/config/deploy/.env.example` at the ref you deploy with the host's `.env` (names only, never print values); a missing required one stops `docker compose` and the deploy rolls back. Example: `DB_OWNER_PASSWORD` (#910), `openssl rand -hex 24`.
+7. **Check:** run "Deploy" for `test` with `dev`, then try `prod` with a branch and with `main` (both must be refused by the guard before the tailnet join), and later with a release tag.
+
+### First deploy of a host on an old version
+
+`deploy.sh` is the script of the commit the host has checked out **before** the deploy; it checks out the target and then calls that commit's helper scripts (`smoke.sh`, `keycloak/master-realm.sh`). When the two versions disagree, the deploy fails although the target is fine. Seen on 2026-10-29 when the test host was still on `v0.1.0`: the old `deploy.sh` called the new `smoke.sh` without `SMOKE_DETAILS_CMD`, `smoke.sh` asked the proxy for `/health/details` (no longer public, #759), got 404 and rolled back. Bridge it once on the host, as `deploy`, in the checkout:
+
+```bash
+SMOKE_DETAILS_CMD="docker compose --env-file .env exec -T api wget -qO- http://127.0.0.1:3000/health/details" \
+  app/config/deploy/scripts/deploy.sh <full sha>
+```
+
+(The command runs in `app/config/deploy`, hence `.env`.) After that the host runs the new script and the workflow works as is. The workflow shows only the last 60 lines, which are mostly the rollback; to see the first error, run `deploy.sh` once on the host with the output in a file and look at the lines before `ERROR: deploy of`.
 
 ### Deploy by hand
 
@@ -405,7 +492,7 @@ The migration role is the owner role. A separate runtime role is not possible ye
 
 ## Health check (US-DEV-09)
 
-`GET /health` (no sign-in) answers with version, commit and `checks`:
+`GET /health` (no sign-in, public) answers only the status, for example `{"status":"ok"}` (HTTP 503 with `{"status":"error"}`). Version, commit and queue counts would help an attacker match the deployment to known issues (#759), so they are on `GET /health/details`, which the proxy answers with 404 on the public name (also as `/api/health/details`). Read it inside the stack: `docker compose --env-file .env exec -T api wget -qO- http://127.0.0.1:3000/health/details`. It answers with version, commit and `checks`:
 
 | Field             | Values                                                                          | Meaning                                                                                                               |
 | ----------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
@@ -414,7 +501,7 @@ The migration role is the owner role. A separate runtime role is not possible ye
 | `checks.jobs`     | `{ status: ok \| dead_jobs, queued, running, dead }`, `error`, `not_configured` | counts of the job queue (TE-06); `dead_jobs` = at least one job gave up with its error kept                           |
 | `checks.storage`  | `configured`, `not_configured`                                                  | whether the photo storage (S3) is set up; it is not called on every check                                             |
 
-The Compose health check of `api` and `make deploy` use it: a 503 marks the container unhealthy and fails the deploy, which then rolls back. Monitoring should alert on `status != "ok"` and on HTTP 503.
+The Compose health check of `api` uses `/health`: a 503 marks the container unhealthy and fails the deploy, which then rolls back. The smoke test of `make deploy` reads the version from `/health/details` inside the api container. Monitoring needs only the public status: alert on `status != "ok"` and on HTTP 503.
 
 ## Runbooks for incidents (US-DEV-09)
 
@@ -428,19 +515,19 @@ Each runbook: what you see, what to check, what to do. Restoring a backup and th
 
 ### Database not reachable
 
-- **You see:** `/health` answers 503 with `checks.database: "error"`; the API container is unhealthy.
+- **You see:** `/health` answers 503 with `status: "error"`, `/health/details` shows `checks.database: "error"`; the API container is unhealthy.
 - **Check:** `docker compose … ps db`, `docker compose … logs db` (disk full, crash loop, wrong password in `.env`).
 - **Do:** free disk space or fix `.env`, `docker compose … up -d db`, wait for `/health` to answer 200. If the data volume is damaged: restore the latest backup (above).
 
 ### Dead jobs
 
-- **You see:** `/health` answers `degraded` with `checks.jobs.status: "dead_jobs"`.
+- **You see:** `/health` answers `degraded`, `/health/details` shows `checks.jobs.status: "dead_jobs"`.
 - **Check:** on the database, `select type, last_error, finished_at from job where status = 'dead' order by finished_at desc limit 20;` (owner role). Handlers are repeatable (US-QS-03).
 - **Do:** fix the cause (external source down, bug), then order the job again through the feature that creates it (the queue merges duplicates). Old finished jobs are purged by the worker.
 
 ### Photo storage full or unavailable
 
-- **You see:** photo uploads fail with `media.storage_unavailable` (HTTP 502); measurements are still saved without photo. `/health` shows `checks.storage: "configured"`, because the storage is not called on every check.
+- **You see:** photo uploads fail with `media.storage_unavailable` (HTTP 502); measurements are still saved without photo. `/health/details` shows `checks.storage: "configured"`, because the storage is not called on every check.
 - **Check:** the S3 provider's console (quota, credentials, bucket); the `S3_*` variables of the API (`S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, optional `S3_ENDPOINT`).
 - **Do:** raise the quota or fix the credentials, restart `api`. Nothing has to be repaired in the database: a failed upload stores nothing (P-10).
 
