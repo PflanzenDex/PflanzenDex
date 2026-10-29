@@ -28,7 +28,7 @@ Source files: `docs/records/design` (the canvas sources: `directions/` holds the
 
 ## Decision 2 · Colour tokens (light and dark)
 
-- **Status:** proposed.
+- **Status:** proposed; the surface and text values are superseded by ADR [0017](0017-neutral-surfaces-green-for-intent.md) (neutral surfaces, green only for intent, 2026-10-29). The green, accent, status and domain values below still apply.
 - **Decision:** keep the existing role names of `tokens.css` (no new names, so `style-contrast.test.ts` keeps covering every pair) and change the values. The tokens below were checked with a WCAG 2.2 contrast calculation (relative luminance, as in `style-contrast.test.ts`); all pairs pass. The PR that applies the tokens extends the test where a new pair appears.
 
 | Token                     | Light     | Dark                  |
