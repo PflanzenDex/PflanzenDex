@@ -34,7 +34,7 @@ export function PlantCareTab(props: { card: SpecimenCard; access: PhotoAccess; c
             speciesId={props.card.speciesId}
           />
         </Suspense>
-        <Quiet>Das Profil gilt für alle deine Exemplare dieser Art.</Quiet>
+        <Quiet>Das Profil gilt für alle deine Pflanzen dieser Art.</Quiet>
       </section>
     </div>
   );

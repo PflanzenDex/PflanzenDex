@@ -32,7 +32,7 @@ describe("US-LIC-03: light overview view", () => {
     const open = vi.fn();
     render(<LightOverviewView data={{ rows: [] }} onOpenCollection={open} />);
     expect(screen.getByText(/noch keine arten/i)).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Zum Bestand" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zur Sammlung" }));
     expect(open).toHaveBeenCalledTimes(1);
   });
 

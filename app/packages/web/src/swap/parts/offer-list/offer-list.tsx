@@ -27,7 +27,7 @@ export function OfferList(props: {
       </h2>
       {props.offers.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-3">
-          Du hast noch nichts angeboten. Gib ein Exemplar für Freunde frei und biete es unten zum
+          Du hast noch nichts angeboten. Gib eine Pflanze für Freunde frei und biete sie unten zum
           Tausch an.
         </p>
       ) : (
@@ -36,7 +36,7 @@ export function OfferList(props: {
             const active = o.status === "open" || o.status === "reserved";
             return (
               <li key={o.id} className="grid break-words rounded-lg border border-border p-3">
-                <span className="font-semibold">{o.specimenName ?? "Exemplar unbekannt"}</span>
+                <span className="font-semibold">{o.specimenName ?? "Pflanze unbekannt"}</span>
                 <span className="text-sm">
                   {TYPE_TEXT[o.type]} · {MODE_TEXT[o.mode]}
                 </span>
@@ -54,7 +54,7 @@ export function OfferList(props: {
                       size="touch"
                       variant="outline"
                       disabled={props.busy}
-                      aria-label={`Angebot für ${o.specimenName ?? "Exemplar"} zurückziehen`}
+                      aria-label={`Angebot für ${o.specimenName ?? "Pflanze"} zurückziehen`}
                       onClick={() => props.onWithdraw(o)}
                     >
                       Zurückziehen

@@ -32,8 +32,8 @@ function handoverText(s: SwapSide, status: "waiting" | "handed_over"): string {
   if (status === "waiting")
     return `Deine Bestätigung ist gespeichert. Sobald ${s.otherName ?? "der Freund"} auch bestätigt hat, wird übergeben.`;
   return s.role === "recipient"
-    ? "Die Übergabe ist abgeschlossen. Das Exemplar ist jetzt in deinem Bestand."
-    : "Die Übergabe ist abgeschlossen. Dein Exemplar ist archiviert, der Freund hat ein neues.";
+    ? "Die Übergabe ist abgeschlossen. Die Pflanze ist jetzt in deiner Sammlung."
+    : "Die Übergabe ist abgeschlossen. Deine Pflanze ist archiviert, der Freund hat ein neues.";
 }
 
 function Section(props: {

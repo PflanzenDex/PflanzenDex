@@ -36,7 +36,7 @@ export function useArchive(api: string, token: Token, after: () => void) {
       const r = t ? await restoreSpecimen(api, t, e.id) : { ok: false as const, error: SIGN_IN };
       setError(r.ok ? null : r.error);
       if (!r.ok) return;
-      setMessage(`„${e.name}“ ist wiederhergestellt und steht wieder im Bestand.`);
+      setMessage(`„${e.name}“ ist wiederhergestellt und steht wieder in der Sammlung.`);
       after();
     },
     [api, token, after],

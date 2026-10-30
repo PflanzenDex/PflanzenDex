@@ -26,7 +26,7 @@ function Next(props: { total: number; shown: number; filter: Filter; name: strin
   if (props.total === 0)
     return (
       <p className="rounded-lg border border-dashed border-border p-3">
-        {props.name} hat noch nichts freigegeben. Frag nach, ob {props.name} Exemplare unter „Was
+        {props.name} hat noch nichts freigegeben. Frag nach, ob {props.name} Pflanzen unter „Was
         Freunde sehen“ freigibt, und gib selbst etwas frei.
       </p>
     );

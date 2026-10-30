@@ -8,7 +8,7 @@ import type {
 
 const numberFormat = new Intl.NumberFormat("de-DE");
 
-export const lux = (n: number) => `${numberFormat.format(n)} Lux`;
+export const lux = (n: number) => `${numberFormat.format(n)}\u00a0Lux`;
 export const ppfd = (n: number | null) =>
   n === null ? "PPFD unbekannt" : `PPFD ${numberFormat.format(n)} µmol/m²/s`;
 export const kindText = (a: LightLocation["kind"]) => (a === "indoor" ? "innen" : "außen");
@@ -28,7 +28,7 @@ const FIELDS: Record<string, string> = {
 };
 const ZONE_USER_KIND: Record<ZoneUser["kind"], string> = {
   location: "Standort",
-  specimen: "Exemplar",
+  specimen: "Pflanze",
   species: "Art",
   care_profile: "Pflegeprofil der Art",
   wish: "Wunsch",

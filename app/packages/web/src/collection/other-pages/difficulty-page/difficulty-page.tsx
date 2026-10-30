@@ -10,6 +10,7 @@ import { LoadFrame } from "../../../kernel";
 import { loadDifficulty } from "../../insights/api/difficulty-api";
 import { DifficultyPageSkeleton } from "./difficulty-page.skeleton";
 import { PageFrame, Plain, Quiet, TITLE } from "../../specimens/cards/parts/parts";
+import { keepTogether } from "@/lib/format";
 
 const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
 const UNKNOWN = "unbekannt";
@@ -24,8 +25,8 @@ function wateringText(r: DifficultyRow): string {
   const own = r.ownWatering;
   if (!own) return r.wateringHint ?? UNKNOWN;
   const parts = [
-    own.growthDays === null ? null : `alle ${own.growthDays} Tage`,
-    own.dormancyDays === null ? null : `in der Ruhe alle ${own.dormancyDays} Tage`,
+    own.growthDays === null ? null : keepTogether(`alle ${own.growthDays} Tage`),
+    own.dormancyDays === null ? null : keepTogether(`in der Ruhe alle ${own.dormancyDays} Tage`),
   ].filter((p): p is string => p !== null);
   return `${parts.join(", ")}${OWN}`;
 }
@@ -96,7 +97,7 @@ function UnreadableNote({ count }: { count: number }) {
   const species = count === 1 ? "1 Art" : `${count} Arten`;
   return (
     <Quiet>
-      {`${species} deiner Exemplare kannst du nicht mehr lesen; sie fehlen in diesem Vergleich.`}
+      {`${species} deiner Pflanzen kannst du nicht mehr lesen; sie fehlen in diesem Vergleich.`}
     </Quiet>
   );
 }
@@ -162,9 +163,9 @@ function DifficultyTable(props: {
       <UnreadableNote count={props.unreadable} />
       {rows.length === 0 ? (
         <EmptyState
-          title="Noch keine Art mit aktivem Exemplar"
-          description="Lege im Bestand ein Exemplar an, dann erscheint seine Art hier."
-          action={{ label: "Exemplar anlegen", href: "/collection" }}
+          title="Noch keine Art mit aktiver Pflanze"
+          description="Lege in der Sammlung eine Pflanze an, dann erscheint ihre Art hier."
+          action={{ label: "Pflanze anlegen", href: "/collection" }}
         />
       ) : (
         <>

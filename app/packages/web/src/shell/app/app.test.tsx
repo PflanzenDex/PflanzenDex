@@ -293,7 +293,7 @@ describe("US-ACC-01 App", () => {
     expectHeute();
     await userEvent.click(screen.getByRole("button", { name: "Überspringen" }));
     expect(await screen.findByRole("heading", { name: "Heute" })).toBeTruthy();
-    await userEvent.click(await screen.findByRole("button", { name: "Zum Bestand" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Zur Sammlung" }));
     expect(await screen.findByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
   });
@@ -309,7 +309,7 @@ describe("US-ACC-01 App", () => {
     expect(species.getAttribute("aria-current")).toBe("page");
 
     await userEvent.click(tab("Sammlung"));
-    expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
+    expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
     expect(species.getAttribute("aria-current")).toBeNull();
 
@@ -342,14 +342,14 @@ describe("US-ACC-01 App", () => {
     expect(
       await screen.findByRole("heading", { level: 2, name: "Mein Pflegeprofil" }),
     ).toBeTruthy();
-    expect(await screen.findByText(/Du hast noch kein Exemplar dieser Art/)).toBeTruthy();
+    expect(await screen.findByText(/Du hast noch keine Pflanze dieser Art/)).toBeTruthy();
   });
 
   it("US-QS-14 · US-PHA-01 the old address /care-phases opens the plants grouped by care phase", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/care-phases");
-    expect(await screen.findByText("Noch kein Exemplar hat eine Phase.")).toBeTruthy();
+    expect(await screen.findByText("Noch keine Pflanze hat eine Phase.")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Ansicht" }));
     expect(
@@ -414,13 +414,13 @@ describe("US-ACC-01 App", () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/light");
-    await userEvent.click(await screen.findByRole("button", { name: "Zum Bestand" }));
-    expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
+    await userEvent.click(await screen.findByRole("button", { name: "Zur Sammlung" }));
+    expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
     expect(screen.queryByRole("heading", { name: "Standorte" })).toBeNull();
   });
 
-  it('choosing a species in the catalog leads to the form "Exemplar anlegen"; back leads to the catalog (US-BES-02)', async () => {
+  it('choosing a species in the catalog leads to the form "Pflanze anlegen"; back leads to the catalog (US-BES-02)', async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>(async (url) => {
@@ -457,7 +457,7 @@ describe("US-ACC-01 App", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Katalog" }));
     await userEvent.click(await screen.findByRole("button", { name: /Dracaena trifasciata/ }));
     await userEvent.click(await screen.findByRole("button", { name: "Diese Art wählen" }));
-    expect(await screen.findByRole("heading", { name: "Exemplar anlegen" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Pflanze anlegen" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zurück zur Art" }));
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
   });
@@ -533,7 +533,7 @@ describe("US-ACC-01 App", () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/collection");
-    expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
+    expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
   });
 

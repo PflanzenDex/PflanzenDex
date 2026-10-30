@@ -41,7 +41,7 @@ function Choice(props: {
       aria-describedby={error ? messageId : undefined}
       className="m-0 flex min-w-0 flex-col rounded-lg border-2 border-border px-3 pb-2 pt-1"
     >
-      <legend className="px-1 font-semibold">Exemplare</legend>
+      <legend className="px-1 font-semibold">Pflanzen</legend>
       {props.specimens.map((z, i) => (
         <Checkbox
           key={z.id}

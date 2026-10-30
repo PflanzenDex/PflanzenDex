@@ -31,8 +31,7 @@ function hintFor(count: number): BoughtList["hint"] {
       count === 1
         ? "1 Wunsch ist als gekauft vermerkt."
         : `${count} Wünsche sind als gekauft vermerkt.`,
-    nextAction:
-      "Fehlt eine dieser Pflanzen noch in deiner Sammlung, lege sie dort als Exemplar an.",
+    nextAction: "Fehlt eine dieser Pflanzen noch in deiner Sammlung, lege sie dort an.",
   };
 }
 

@@ -194,8 +194,8 @@ describe("US-LIC-02 thinnest zone and tie", () => {
   it("without counted specimens there is no thinnest zone, but a hint to the next specimen", async () => {
     const v = await zoneDistribution(deps(), "anna");
     expect(v.thinnest).toEqual([]);
-    expect(v.hint.text).toContain("Noch kein Exemplar");
-    expect(v.hint.nextAction).toContain("Exemplar");
+    expect(v.hint.text).toContain("Noch keine Pflanze");
+    expect(v.hint.nextAction).toContain("Pflanze");
   });
 
   it("without zones for adults (fewer than two light zones) the hint says to create zones", async () => {

@@ -121,11 +121,11 @@ describe("US-BES-04 create a cutting in the form", () => {
     render(page(species));
     const tick = await screen.findByRole("checkbox", { name: /Das ist ein Steckling/ });
     expect((tick as HTMLInputElement).checked).toBe(false);
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]?.body).not.toHaveProperty("status");
     await userEvent.click(tick);
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await vi.waitFor(() => expect(posts).toHaveLength(2));
     expect(posts[1]?.body["status"]).toBe("cutting");
   });
@@ -181,7 +181,7 @@ describe("US-BES-04 repotted on the card", () => {
     fakeServer({
       repotError: new Response(
         JSON.stringify({
-          error: { code: "specimen.not_a_cutting", text: "Dieses Exemplar ist kein Steckling." },
+          error: { code: "specimen.not_a_cutting", text: "Diese Pflanze ist kein Steckling." },
         }),
         { status: 409 },
       ),

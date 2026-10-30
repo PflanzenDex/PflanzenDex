@@ -18,7 +18,7 @@ export function useRepot(api: string, token: Token, after: () => void) {
       setError(r.ok ? null : r.error);
       if (!r.ok) return setMessage(null);
       setMessage(
-        `„${e.name}“ ist eingetopft und eine Pflanze. Ab jetzt gilt die Lichtzone seines Standorts oder der Art.`,
+        `„${e.name}“ ist eingetopft und eine Pflanze. Ab jetzt gilt die Lichtzone ihres Standorts oder der Art.`,
       );
       after();
     },

@@ -31,7 +31,7 @@ describe("US-LIC-05 view locations and light zones", () => {
 
   it("shows zone with lux ceiling, PPFD and order; missing PPFD means unknown (P-08)", () => {
     const h = html({ ...empty, zones: [zone, { ...zone, id: "z2", name: "Lampe 9", ppfd: null }] });
-    expect(h).toContain("bis 15.000 Lux");
+    expect(h).toContain("bis 15.000\u00a0Lux");
     expect(h).toContain("PPFD 300 µmol/m²/s");
     expect(h).toContain("PPFD unbekannt");
   });
@@ -95,7 +95,7 @@ describe("US-LIC-05 error message when deleting a used zone", () => {
     );
     expect(h).toContain('role="alert"');
     expect(h).toContain("Standort: Regal");
-    expect(h).toContain("Exemplar: Monstera Nr. 1");
+    expect(h).toContain("Pflanze: Monstera Nr. 1");
     expect(h).toContain("Art: Echinopsis");
     expect(h).toContain("Pflegeprofil der Art: Bogenhanf"); // US-BES-09: the zone override of a care profile
   });

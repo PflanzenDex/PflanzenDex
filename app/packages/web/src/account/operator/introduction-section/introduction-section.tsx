@@ -2,6 +2,7 @@ import type { IntroductionFigure, IntroductionFigures } from "@pflanzendex/core"
 import { useCallback } from "react";
 import { LoadFrame } from "../../../kernel";
 import { loadIntroduction } from "../../api/access-api";
+import { keepTogether } from "@/lib/format";
 
 type Token = () => Promise<string | undefined>;
 
@@ -39,7 +40,9 @@ function Figures(props: { figures: IntroductionFigures }) {
         </dd>
       </dl>
       <p className="mt-3 text-sm text-muted-foreground">
-        {`Gezählt werden Konten der letzten ${f.windowDays} Tage (${f.accounts ?? `unbekannt, weniger als ${f.minAccounts}`}). Die Zeit läuft von der Anlage des Kontos bis zur Anlage der ersten Pflanze, nicht ab dem ersten Öffnen. Eine Zahl erscheint erst ab ${f.minAccounts} Konten; es wird kein einzelnes Konto und kein Klick erfasst. Die Schritte ergeben sich aus dem Aufbau des Einstiegs.`}
+        {keepTogether(
+          `Gezählt werden Konten der letzten ${f.windowDays} Tage (${f.accounts ?? `unbekannt, weniger als ${f.minAccounts}`}). Die Zeit läuft von der Anlage des Kontos bis zur Anlage der ersten Pflanze, nicht ab dem ersten Öffnen. Eine Zahl erscheint erst ab ${f.minAccounts} Konten; es wird kein einzelnes Konto und kein Klick erfasst. Die Schritte ergeben sich aus dem Aufbau des Einstiegs.`,
+        )}
       </p>
     </>
   );

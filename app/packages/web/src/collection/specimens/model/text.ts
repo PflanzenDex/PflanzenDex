@@ -22,7 +22,7 @@ export function nameConflict(error: ApiError): NameConflict | null {
 
 /** Where the effective zone comes from (FR-LIC-02, #592): the same rule as the distribution. */
 export const ZONE_SOURCE_TEXT: Record<ZoneSource, string> = {
-  specimen: "von dir für dieses Exemplar gesetzt",
+  specimen: "von dir für diese Pflanze gesetzt",
   location: "vom Standort",
   profile: "aus deinem Pflegeprofil",
   species: "aus dem Lichtbedarf der Art",

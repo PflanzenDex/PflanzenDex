@@ -32,7 +32,7 @@ export function FriendCard(props: { card: Card; busy: boolean; onWish: (card: Ca
       <span className="font-semibold">{card.speciesLatin ?? "Art unbekannt"}</span>
       {card.speciesGerman !== null && <span>{card.speciesGerman}</span>}
       <span className="text-sm">
-        {card.specimens === 1 ? "1 Exemplar" : `${card.specimens} Exemplare`}
+        {card.specimens === 1 ? "1 Pflanze" : `${card.specimens} Pflanzen`}
         {card.cuttings > 0
           ? `, davon ${card.cuttings === 1 ? "1 Steckling" : `${card.cuttings} Stecklinge`}`
           : ""}

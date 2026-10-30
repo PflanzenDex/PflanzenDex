@@ -111,7 +111,7 @@ describe("US-WAC-01 Seite Messen", () => {
     await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
     expect(await screen.findByText("Gespeichert: 12,5 cm am 01.10.2026.")).toBeTruthy();
     expect(
-      await screen.findByRole("heading", { level: 3, name: "12,5 cm · 01.10.2026" }),
+      await screen.findByRole("heading", { level: 3, name: "12,5\u00a0cm · 01.10.2026" }),
     ).toBeTruthy();
     expect(posts[0]?.body).toMatchObject({ value: 12.5, quality: "healthy" });
     expect(posts[0]?.key).toBeTruthy();
@@ -153,7 +153,7 @@ describe("US-WAC-01 Seite Messen", () => {
     fakeServer({
       save: () =>
         response(404, {
-          error: { code: "specimen.not_found", text: "Das Exemplar gibt es nicht." },
+          error: { code: "specimen.not_found", text: "Die Pflanze gibt es nicht." },
         }),
     });
     show();
@@ -198,7 +198,7 @@ describe("US-WAC-01 Seite Messen", () => {
     fakeServer();
     const back = vi.fn();
     show(async () => "tok", back);
-    await userEvent.click(screen.getByRole("button", { name: "Zurück zum Bestand" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
     expect(back).toHaveBeenCalledOnce();
   });
 

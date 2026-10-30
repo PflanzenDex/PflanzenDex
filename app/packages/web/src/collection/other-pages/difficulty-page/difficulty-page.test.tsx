@@ -141,7 +141,7 @@ describe("US-BES-05 page of the difficulty overview", () => {
     const values = await valuesOf("Bogenhanf");
     expect(values.get("Lichtzone")).toBe("Lampe 2 (dein Pflegeprofil)");
     expect(values.get("Gießregel")).toBe(
-      "alle 7 Tage, in der Ruhe alle 21 Tage (dein Pflegeprofil)",
+      "alle 7\u00a0Tage, in der Ruhe alle 21\u00a0Tage (dein Pflegeprofil)",
     );
   });
 
@@ -156,7 +156,7 @@ describe("US-BES-05 page of the difficulty overview", () => {
   it("US-BES-05 says what to do without a species (P-09)", async () => {
     fakeServer(() => response(200, { rows: [] }));
     view(<DifficultyPage api="http://api" token={token} />);
-    expect((await screen.findByText(/Noch keine Art/)).textContent).toContain("Exemplar");
+    expect((await screen.findByText(/Noch keine Art/)).textContent).toContain("Pflanze");
     expect(screen.queryByRole("list", { name: "Artenvergleich" })).toBeNull();
   });
 
@@ -164,14 +164,14 @@ describe("US-BES-05 page of the difficulty overview", () => {
     fakeServer(() => response(200, { rows: [row()], unreadable: 2 }));
     view(<DifficultyPage api="http://api" token={token} />);
     await screen.findByRole("list", { name: "Artenvergleich" });
-    expect(screen.getByText(/2 Arten deiner Exemplare kannst du nicht mehr lesen/)).toBeTruthy();
+    expect(screen.getByText(/2 Arten deiner Pflanzen kannst du nicht mehr lesen/)).toBeTruthy();
   });
 
   it("US-BES-05 · P-10 without readable species the empty state still names the missing ones", async () => {
     fakeServer(() => response(200, { rows: [], unreadable: 1 }));
     view(<DifficultyPage api="http://api" token={token} />);
     expect(
-      await screen.findByText(/1 Art deiner Exemplare kannst du nicht mehr lesen/),
+      await screen.findByText(/1 Art deiner Pflanzen kannst du nicht mehr lesen/),
     ).toBeTruthy();
   });
 

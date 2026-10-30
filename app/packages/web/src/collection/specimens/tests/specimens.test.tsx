@@ -87,7 +87,7 @@ describe('US-BES-02 form "Create specimen"', () => {
 
   it("shows the chosen species and the name fixed before saving", () => {
     const h = html();
-    expect(h).toContain("Exemplar anlegen");
+    expect(h).toContain("Pflanze anlegen");
     expect(h).toContain("Dracaena trifasciata");
     expect(h).toContain("Name: Bogenhanf");
   });
@@ -129,12 +129,12 @@ describe('US-BES-02 form "Create specimen"', () => {
   it("with a taken name: error with the existing specimens and the prompt for a marker (P-09)", () => {
     const error = {
       code: "specimen.name_taken",
-      text: "Ein Exemplar mit diesem Namen gibt es schon. Gib ein Kennzeichen an (zum Beispiel eine Farbe).",
+      text: "Eine Pflanze mit diesem Namen gibt es schon. Gib ein Kennzeichen an (zum Beispiel eine Farbe).",
       data: { name: "Bogenhanf", existing: [{ id: "e1", name: "Bogenhanf" }] },
     } as unknown as Parameters<typeof nameConflict>[0];
     const h = html({ errorStart: error });
-    expect(h).toContain("Ein Exemplar mit diesem Namen gibt es schon. Gib ein Kennzeichen an");
+    expect(h).toContain("Eine Pflanze mit diesem Namen gibt es schon. Gib ein Kennzeichen an");
     expect(h).toContain("Schon vorhanden: Bogenhanf");
-    expect(h).toContain("heißt das neue Exemplar dann „Bogenhanf – Kennzeichen“");
+    expect(h).toContain("heißt die neue Pflanze dann „Bogenhanf – Kennzeichen“");
   });
 });

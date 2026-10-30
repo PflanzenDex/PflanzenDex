@@ -340,7 +340,7 @@ describe("US-WUN-03 record a purchase through the API", () => {
       body: { changed: true, wish: { id, status: "bought" } },
     });
     expect(r.body["hint"].text).toContain(`Kauf ${run} deutsch (Kauf ${run})`);
-    expect(r.body["hint"].nextAction).toContain("Exemplar");
+    expect(r.body["hint"].nextAction).toContain("Pflanze");
     expect(await names(subA)).not.toContain(`Kauf ${run}`);
     const history = await bought(subA);
     expect(history.status).toBe(200);

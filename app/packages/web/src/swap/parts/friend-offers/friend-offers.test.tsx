@@ -131,7 +131,7 @@ describe("US-SOZ-09 offers of friends in the exchange", () => {
     const { posts } = server();
     show();
     await userEvent.click(await screen.findByRole("button", { name: "Anfragen: Echte Aloe" }));
-    const select = screen.getByLabelText("Eigenes Exemplar als Gegenangebot");
+    const select = screen.getByLabelText("Eigene Pflanze als Gegenangebot");
     const names = within(select)
       .getAllByRole("option")
       .map((o) => o.textContent);
@@ -146,7 +146,7 @@ describe("US-SOZ-09 offers of friends in the exchange", () => {
     server({ offers: [offer({ mode: "give_away" })] });
     show();
     await userEvent.click(await screen.findByRole("button", { name: "Anfragen: Echte Aloe" }));
-    expect(screen.queryByLabelText("Eigenes Exemplar als Gegenangebot")).toBeNull();
+    expect(screen.queryByLabelText("Eigene Pflanze als Gegenangebot")).toBeNull();
     expect(screen.queryByLabelText(/Was bietest du an/)).toBeNull();
     expect(screen.getByRole("button", { name: "Anfrage senden" })).toBeTruthy();
   });

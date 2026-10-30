@@ -40,8 +40,8 @@ async function specimenByKeyboard(page: Page, species: string): Promise<void> {
   await typeInto(page, form.getByLabel(/^Erfolgskriterien/), "Dichte, flache Rosette.");
   await press(page, form.getByRole("button", { name: "Vorschlag speichern" }));
   await press(page, page.getByRole("button", { name: "Diese Art wählen" }));
-  const create = page.getByRole("form", { name: "Exemplar anlegen" });
-  await press(page, create.getByRole("button", { name: "Exemplar anlegen" }));
+  const create = page.getByRole("form", { name: "Pflanze anlegen" });
+  await press(page, create.getByRole("button", { name: "Pflanze anlegen" }));
   await expect(page.getByRole("heading", { level: 1, name: "Sammlung" })).toBeVisible();
 }
 

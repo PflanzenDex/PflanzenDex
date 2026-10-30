@@ -28,14 +28,14 @@ export function LightOverviewView(props: { data: LightOverview; onOpenCollection
       </h2>
       {data.rows.length === 0 ? (
         <EmptyState
-          title="Noch keine Arten mit aktivem Exemplar und gesetztem Lux-Bedarf"
-          description="Lege ein Exemplar an oder aktualisiere den Lux-Bedarf einer Art."
-          action={{ label: "Zum Bestand", onClick: onOpenCollection }}
+          title="Noch keine Arten mit aktiver Pflanze und gesetztem Lux-Bedarf"
+          description="Lege eine Pflanze an oder aktualisiere den Lux-Bedarf einer Art."
+          action={{ label: "Zur Sammlung", onClick: onOpenCollection }}
         />
       ) : (
         <>
           <p className="text-sm text-muted-foreground">
-            Arten sortiert nach Lux-Bedarf mit Positionsempfehlung. Höher = näher zur Lampe nötig.
+            Arten nach Lux-Bedarf sortiert; höher heißt näher an die Lampe.
           </p>
           <ResponsiveTable
             caption="Lichthunger der Arten"

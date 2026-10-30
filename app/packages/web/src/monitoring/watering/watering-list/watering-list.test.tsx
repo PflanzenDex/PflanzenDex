@@ -107,7 +107,7 @@ describe("US-MON-05 watering list", () => {
       vi.fn<typeof fetch>(async (url, init) =>
         init?.method === "POST"
           ? response(404, {
-              error: { code: "specimen.not_found", text: "Dieses Exemplar gibt es nicht." },
+              error: { code: "specimen.not_found", text: "Diese Pflanze gibt es nicht." },
             })
           : response(200, { due: [ficus] }),
       ),
@@ -115,7 +115,7 @@ describe("US-MON-05 watering list", () => {
     const user = userEvent.setup();
     show();
     await user.click(await screen.findByRole("button", { name: "Ficus als gegossen eintragen" }));
-    expect((await screen.findByRole("alert")).textContent).toBe("Dieses Exemplar gibt es nicht.");
+    expect((await screen.findByRole("alert")).textContent).toBe("Diese Pflanze gibt es nicht.");
     expect(screen.getByText("Ficus")).toBeTruthy();
   });
 });

@@ -42,8 +42,8 @@ export const wishLinkSpecimen = (deps: LinkDependencies) =>
         ...r,
         hint: {
           text: r.changed
-            ? `Der Wunsch „${title}“ ist mit deinem neuen Exemplar verknüpft.`
-            : `Der Wunsch „${title}“ war mit diesem Exemplar schon verknüpft; es wurde nichts geändert.`,
+            ? `Der Wunsch „${title}“ ist mit deiner neuen Pflanze verknüpft.`
+            : `Der Wunsch „${title}“ war mit dieser Pflanze schon verknüpft; es wurde nichts geändert.`,
         },
       });
     },

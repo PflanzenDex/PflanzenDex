@@ -93,7 +93,7 @@ export function ArchiveForm(props: {
   return (
     <section aria-labelledby="archive-title">
       <h1 id="archive-title" className={TITLE}>
-        Exemplar archivieren
+        Pflanze archivieren
       </h1>
       <p className="mb-2 text-muted-foreground">
         „{props.name}“ verschwindet aus der Liste und aus den Auswertungen.
@@ -104,7 +104,7 @@ export function ArchiveForm(props: {
       <Form {...form}>
         <FormRoot
           onSubmit={submit}
-          aria-label="Exemplar archivieren"
+          aria-label="Pflanze archivieren"
           className="flex max-w-xl flex-col gap-4"
         >
           <ReasonChoice control={form.control} />

@@ -94,7 +94,7 @@ describe("US-ACC-05 operator area: counts, no content", () => {
     });
     serve();
     await open();
-    expect(document.body.textContent).not.toMatch(/@|Exemplar|Art /);
+    expect(document.body.textContent).not.toMatch(/@|Pflanze|Art /);
   });
 
   it("US-ACC-05 a plant keeper's refusal (403 access.denied) is shown with a way to reload (P-09, P-10)", async () => {

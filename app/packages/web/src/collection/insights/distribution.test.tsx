@@ -72,12 +72,12 @@ describe("US-LIC-02 client of the distribution API", () => {
 describe("US-LIC-02 view of the distribution", () => {
   it("shows the number of specimens per zone 2 to 4 and marks the thinnest zones", () => {
     render(<DistributionView distribution={distribution()} />);
-    const list = screen.getByRole("list", { name: "Exemplare je Lichtzone" });
+    const list = screen.getByRole("list", { name: "Pflanzen je Lichtzone" });
     const rows = within(list).getAllByRole("listitem");
     expect(rows.map((z) => z.textContent)).toEqual([
-      expect.stringContaining("Lampe 2: 3 Exemplare"),
-      expect.stringContaining("Lampe 3: 1 Exemplar"),
-      expect.stringContaining("Lampe 4: 1 Exemplar"),
+      expect.stringContaining("Lampe 2: 3 Pflanzen"),
+      expect.stringContaining("Lampe 3: 1 Pflanze"),
+      expect.stringContaining("Lampe 4: 1 Pflanze"),
     ]);
     expect(rows[1]?.textContent).toContain("dünnste Zone");
     expect(rows[0]?.textContent).not.toContain("dünnste Zone");
@@ -145,7 +145,7 @@ describe("US-LIC-02 view of the distribution", () => {
         })}
       />,
     );
-    expect(screen.queryByRole("list", { name: "Exemplare je Lichtzone" })).toBeNull();
+    expect(screen.queryByRole("list", { name: "Pflanzen je Lichtzone" })).toBeNull();
     expect(screen.getByText(/Lege mindestens zwei Lichtzonen an/)).toBeTruthy();
   });
 });

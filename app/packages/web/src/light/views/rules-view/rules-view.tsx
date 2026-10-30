@@ -4,6 +4,7 @@ import {
   type ResponsiveColumn,
 } from "@/components/shared/responsive/responsive-table/responsive-table";
 import type { LightZone } from "../../shared/light-api/light-api";
+import { MoreHelp } from "@/components/ui/display/more-help/more-help";
 
 const number = new Intl.NumberFormat("de-DE");
 const H2 = "text-xl font-semibold";
@@ -47,12 +48,11 @@ export function RulesView({ zones }: { zones: readonly LightZone[] }) {
           getRowKey={(z) => z.id}
         />
       )}
-      <p className="text-sm text-muted-foreground">
-        Die niedrigste Zone ist Stecklingslicht und nie Ziel für erwachsene Pflanzen. Eine Art
-        steigt auf, wenn ihr Bedarf mindestens {promoteFromPercent} % der Lux-Obergrenze ihrer Zone
-        erreicht; liegt er mehr als {stayBelowGapPercent} % unter der Obergrenze der nächsten Zone,
-        bleibt sie, denn mehr Licht bringt dann Stress.
-      </p>
+      <MoreHelp
+        more={`Eine Art steigt auf, wenn ihr Bedarf mindestens ${promoteFromPercent}\u00a0% der Lux-Obergrenze ihrer Zone erreicht; liegt er mehr als ${stayBelowGapPercent}\u00a0% unter der Obergrenze der nächsten Zone, bleibt sie, denn mehr Licht bringt dann Stress.`}
+      >
+        Die niedrigste Zone ist Stecklingslicht und nie Ziel für erwachsene Pflanzen.
+      </MoreHelp>
       <h3 className={H3}>Indikatoren für höhere Stufen</h3>
       <ul className={LIST}>
         {rules.indicators.map((i) => (

@@ -97,7 +97,7 @@ describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
     server();
     view();
     const empty = await screen.findByText(/Du hast noch nichts angeboten/);
-    const dialog = screen.getByLabelText(/Exemplar/, { selector: "select" });
+    const dialog = screen.getByLabelText(/Pflanze/, { selector: "select" });
     expect(dialog.compareDocumentPosition(empty) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
@@ -129,7 +129,7 @@ describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
   it("US-SOZ-08 the dialog offers only active specimens and shows the plant law notice for the chosen one", async () => {
     server();
     view();
-    const select = await screen.findByLabelText("Exemplar");
+    const select = await screen.findByLabelText("Pflanze");
     expect(within(select).queryByRole("option", { name: "Aloe" })).toBeNull();
     await userEvent.selectOptions(select, "s1");
     expect(await screen.findByText(/CITES/)).toBeTruthy();
@@ -139,13 +139,13 @@ describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
   it("US-SOZ-08 a private specimen cannot be offered until it is shared; the dialog sets the sharing", async () => {
     const calls = server({ preview: preview({ shared: false }) });
     view();
-    await userEvent.selectOptions(await screen.findByLabelText("Exemplar"), "s1");
+    await userEvent.selectOptions(await screen.findByLabelText("Pflanze"), "s1");
     expect(await screen.findByText(/nicht für Freunde freigegeben/)).toBeTruthy();
     expect(
       (screen.getByRole("button", { name: "Angebot erstellen" }) as HTMLButtonElement).disabled,
     ).toBe(true);
     await userEvent.click(screen.getByRole("button", { name: "Jetzt für Freunde freigeben" }));
-    expect(await screen.findByText(/Freigegeben: Freunde sehen dieses Exemplar/)).toBeTruthy();
+    expect(await screen.findByText(/Freigegeben: Freunde sehen diese Pflanze/)).toBeTruthy();
     expect(calls[0]).toMatchObject({ method: "PUT", path: "/sharing/specimens/s1" });
     await vi.waitFor(() =>
       expect(
@@ -159,7 +159,7 @@ describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
       preview: preview({ health: { treatmentOpen: true, lastTreated: null } }),
     });
     view();
-    await userEvent.selectOptions(await screen.findByLabelText("Exemplar"), "s1");
+    await userEvent.selectOptions(await screen.findByLabelText("Pflanze"), "s1");
     expect(await screen.findByText("Behandlung offen")).toBeTruthy();
     const button = screen.getByRole("button", { name: "Angebot erstellen" }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
@@ -180,7 +180,7 @@ describe("US-SOZ-08 exchange page: my offers and the dialog", () => {
   it("US-SOZ-08 a specimen with an open offer cannot be offered twice", async () => {
     server({ preview: preview({ offered: true }) });
     view();
-    await userEvent.selectOptions(await screen.findByLabelText("Exemplar"), "s1");
+    await userEvent.selectOptions(await screen.findByLabelText("Pflanze"), "s1");
     expect(await screen.findByText(/schon ein offenes Angebot/)).toBeTruthy();
     expect(
       (screen.getByRole("button", { name: "Angebot erstellen" }) as HTMLButtonElement).disabled,

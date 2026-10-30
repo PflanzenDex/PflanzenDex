@@ -122,7 +122,7 @@ describe("US-BES-09 the care profile page shows the catalog value and my deviati
     fakeServer({ entries: [entry()] });
     open();
     expect(await screen.findByRole("heading", { name: "Bogenhanf" })).toBeTruthy();
-    expect(screen.getByText(/2 aktive Exemplare/)).toBeTruthy();
+    expect(screen.getByText(/2 aktive Pflanzen/)).toBeTruthy();
     expect(screen.getByText("Katalog: Zone 3")).toBeTruthy();
     expect(screen.getByText("Katalog: 01.11. bis 15.03.")).toBeTruthy();
     expect(screen.getAllByText("Katalog: unbekannt").length).toBeGreaterThanOrEqual(2);
@@ -184,7 +184,7 @@ describe("US-BES-09 the care profile page shows the catalog value and my deviati
   it("US-BES-09 without a species in the collection the page says what to do next (P-09)", async () => {
     fakeServer({ entries: [] });
     open();
-    expect(await screen.findByText(/Du hast noch kein Exemplar dieser Art/)).toBeTruthy();
+    expect(await screen.findByText(/Du hast noch keine Pflanze dieser Art/)).toBeTruthy();
   });
 
   it("US-BES-09 without sign-in nothing is requested and the user is asked to sign in", async () => {

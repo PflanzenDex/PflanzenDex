@@ -58,7 +58,7 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     const [zebra, aloe, unknown] = within(list).getAllByRole("listitem");
     expect(zebra?.textContent).toContain("Haworthia fasciata");
     expect(zebra?.textContent).toContain("Zebra-Haworthie");
-    expect(zebra?.textContent).toContain("2 Exemplare, davon 1 Steckling");
+    expect(zebra?.textContent).toContain("2 Pflanzen, davon 1 Steckling");
     expect(zebra?.textContent).toContain("Gefangen seit 01.05.2026");
     expect(zebra?.textContent).toContain("Du hast sie");
     expect(aloe?.textContent).toContain("Fangdatum unbekannt");

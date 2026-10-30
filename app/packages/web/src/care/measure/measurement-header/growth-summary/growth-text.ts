@@ -8,7 +8,7 @@ export const TREND_TEXT: Record<Trend, string> = {
 
 /** "36,5 cm/Jahr": measures are in centimeters (US-WAC-01). */
 export const rateText = (perYear: number): string =>
-  `${perYear.toLocaleString("de-DE", { maximumFractionDigits: 1 })} cm/Jahr`;
+  `${perYear.toLocaleString("de-DE", { maximumFractionDigits: 1 })}\u00a0cm/Jahr`;
 
 export interface GrowthLines {
   readonly rate: string;

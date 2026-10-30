@@ -289,7 +289,7 @@ describe("US-EQU-01 equipment page", () => {
     expect(alert.textContent).toContain("Prüfe die Zone.");
     const card = alert.closest("li") as HTMLElement;
     expect(card.textContent).toContain("20.000 lx");
-    expect(card.textContent).toContain("6.000 lx am 2026-10-01 (Abstand 30 cm, Luxmeter)");
+    expect(card.textContent).toContain("6.000 lx am 2026-10-01 (Abstand 30\u00a0cm, Luxmeter)");
     expect(card.textContent).toContain("6.000 lx (gemessen)");
   });
 
@@ -485,7 +485,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(await tile("Kosten")).toContain("unbekannt");
     expect(await tile("Bedarf")).toContain("nichts fehlt");
     expect(await tile("Sensoren")).toContain("0 Sensoren");
-    expect(await tile("Wünsche")).toContain("0 offene");
+    expect(await tile("Wunschliste")).toContain("0 offene");
   });
 
   it("US-QS-22 'Equipment erfassen' is the one primary action and opens the form as a layer", async () => {

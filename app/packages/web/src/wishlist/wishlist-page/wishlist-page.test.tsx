@@ -594,14 +594,13 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
 describe("US-WUN-03 record a purchase on the page", () => {
   const BOUGHT_HINT = {
     text: "„Korbmarante (Calathea orbifolia)“ ist als gekauft vermerkt. Der Wunsch steht nicht mehr in der Wunschliste, sondern unter „Gekauft“.",
-    nextAction: "Lege die Pflanze jetzt als Exemplar in deiner Sammlung an.",
+    nextAction: "Lege die Pflanze jetzt als Pflanze in deiner Sammlung an.",
   };
   const historyOf = (titles: string[]) => ({
     bought: titles.map((title, i) => ({ id: `b${i}`, name: title, title, specimenId: null })),
     hint: {
       text: `${titles.length} Wünsche sind als gekauft vermerkt.`,
-      nextAction:
-        "Fehlt eine dieser Pflanzen noch in deiner Sammlung, lege sie dort als Exemplar an.",
+      nextAction: "Fehlt eine dieser Pflanzen noch in deiner Sammlung, lege sie dort an.",
     },
   });
 
@@ -664,7 +663,7 @@ describe("US-WUN-03 record a purchase on the page", () => {
     const history = await screen.findByRole("list", { name: "Gekaufte Wünsche" });
     expect(within(history).getByText("Korbmarante (Calathea orbifolia)")).toBeTruthy();
     expect(screen.getAllByRole("heading", { name: "Gekauft" }).length).toBeGreaterThan(0);
-    expect(screen.getByText(/lege sie dort als Exemplar an/)).toBeTruthy();
+    expect(screen.getByText(/lege sie dort an/)).toBeTruthy();
   });
 
   it("US-WUN-03 without bought wishes there is no 'Gekauft' section", async () => {

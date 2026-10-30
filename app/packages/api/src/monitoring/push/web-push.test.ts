@@ -16,8 +16,8 @@ import { PUSH_TTL_SECONDS, webPushConfigFromEnv, webPushSender } from "./web-pus
 const occasion = (n: number): Occasion => ({
   id: `measurement:${n}`,
   occasion: "measurement",
-  text: `„Exemplar ${n}“ wurde seit mehr als 30 Tagen nicht gemessen.`,
-  nextAction: "Miss das Exemplar und trage die Messung ein.",
+  text: `„Pflanze ${n}“ wurde seit mehr als 30 Tagen nicht gemessen.`,
+  nextAction: "Miss die Pflanze und trage die Messung ein.",
 });
 const message = (n: number): ReminderMessage => ({
   title: "PflanzenDex",

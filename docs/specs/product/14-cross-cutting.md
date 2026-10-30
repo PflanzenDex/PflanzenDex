@@ -389,6 +389,30 @@ Acceptance criteria:
 
 State of implementation: `PlantLayer` (`web/src/collection/plants-screen/plant-layers/plant-layer`) with the tabs "Überblick", "Standort" and the frame of "Pflege". The parts that belong to other modules arrive as slots wired by `CollectionArea` (`PlantSlots`; `collection` does not know `care` or `monitoring`): `PlantGrowth`, `PlantHistory` and `PlantCare` (`care/plant-detail`) and `WaterAction` (`monitoring`). `Pager` got `param` and `replace` for a pager inside a layer; `TreatmentForm` got `chosen`. The facts of the former card (`Measurement`, `Treatment`, `Provenance`) are reused from `specimens/cards/specimen-card`. Status 🟨 until a real phone check of the fit at 360 x 640 px (jsdom has no layout, so the fit is checked by structure only: no scroll area inside the overview).
 
+### US-QS-24 · One word per concept, one line of help, numbers that read well · 🟨 new
+
+As a **plant keeper** I want every thing in the app to have one name, help to be one line and numbers to read as one piece, so that I do not wonder whether "Bestand" and "Sammlung" are two places and no value jumps or breaks in the middle (US-QS-15, P-09).
+
+Decision (owner, 2026-10-29, after a UI review against the Web Interface Guidelines): the review found several words for one thing, paragraphs above the content, numbers split from their units ("seit 10 / Tagen"), digits that jitter and "..." instead of "…". The term table below is the single source for the German UI words; the glossary in `00-product-overview.md` stays the English source of the concepts.
+
+| Glossary term   | UI word                  | Words that are no longer used                 | Reason                                                                                                                                                                                                |
+| --------------- | ------------------------ | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Collection      | Sammlung                 | Bestand, "im Bestand", "Zum Bestand"          | The destination and its tab already read "Sammlung"; a second word made keepers look for a second place.                                                                                              |
+| Specimen        | Pflanze                  | Exemplar, Exemplare                           | Keepers say "Pflanze"; "Exemplar" sounds like a catalog. The contrast to the species is carried by "Art" ("eine Pflanze dieser Art"), so "Exemplar" is not needed even where the distinction matters. |
+| Species         | Art                      | Spezies, Sorte                                | Unchanged, "Art" is already the only word.                                                                                                                                                            |
+| Light zone 1    | Stecklingslicht (Zone 1) | "Lampe 1"                                     | A lamp is a piece of equipment (EQU) and a zone is a place; "Lampe 1" mixed both. The zone keeps its role name, equipment keeps "Lampe".                                                              |
+| Wishlist (mode) | Wunschliste              | Wunschzettel, "Wünsche" as the name of a list | The mode and the list are "Wunschliste".                                                                                                                                                              |
+| Wish (entry)    | Wunsch, Wünsche          | Wunschzettel                                  | One entry is a "Wunsch"; the plural names the entries, not the list.                                                                                                                                  |
+
+Acceptance criteria:
+
+- Given any view, then each concept has one German UI word from the term table; a test fails when a retired word appears in a UI text (it scans the string literals of the `.ts` and `.tsx` files and the `.de.json` files of the web package; an explicit, commented exception list is allowed only for quoted prototype or legal texts and for dated release notes).
+- Given a layer or an overview, then help text is at most one line; a longer explanation opens behind "Mehr erfahren".
+- Given a number with a unit (cm, Lux, Tage, %, kB, ...) or a date range, then they never break apart (a non-breaking space through the shared helper `keepTogether`/`withUnit`), and counts, measurements, dates and money use tabular digits.
+- Given a text with an omission or a follow-up action ("Wird geladen …", "Pflanze wählen …"), then it uses the ellipsis character "…", never three dots (a test scans the texts).
+
+State of implementation: the term table is applied across `web`, the German texts of `core` (`ERROR_TEXTS`, hints) and the e2e specs; error codes are unchanged. `lib/text-rules/term-table.ts` holds the retired words and the exception list, `retired-words.test.ts` and `number-unit.test.ts` check them; `MoreHelp` (`components/ui/display/more-help`) is the "Mehr erfahren" block for the layers of light zones. Not yet: the friends screen and the files PR 964 changes (exception list) and the remaining paragraphs in forms. Status 🟨 until then.
+
 ## Non-functional requirements
 
 | ID     | Requirement                                                                                                                                                                                                                                                                                                                                                                    | Status |

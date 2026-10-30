@@ -176,7 +176,7 @@ describe("US-BES-06 Karte: letzte Messung", () => {
       }),
     ]);
     expect(h).toContain("Letzte Messung: ");
-    expect(h).toContain("12,5 cm");
+    expect(h).toContain("12,5\u00a0cm");
     expect(h).toContain(">Gesund</strong> am 01.10.2026");
     expect(h).not.toContain("noch keine Messung");
   });
@@ -185,7 +185,7 @@ describe("US-BES-06 Karte: letzte Messung", () => {
     const h = html([
       card({ lastMeasurement: { date: "2026-10-01", value: 14, quality: "healthy", note: null } }),
     ]);
-    expect(h).toContain("14 cm");
+    expect(h).toContain("14\u00a0cm");
   });
 
   it("etiolated/thin is never a success: warning class, no success word, hint to the success criteria", () => {

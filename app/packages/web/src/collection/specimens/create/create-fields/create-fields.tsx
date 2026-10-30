@@ -73,8 +73,7 @@ export function OtherFields(props: {
               </Checkbox>
             </FormControl>
             <FormDescription>
-              Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der
-              Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.
+              Ein Steckling steht unter Stecklingslicht und fehlt in Phasen und Lichtverteilung.
             </FormDescription>
           </FormItem>
         )}
@@ -109,7 +108,7 @@ export function Heading({ species }: { species: Species }) {
   return (
     <>
       <h1 id="create-title" className={TITLE}>
-        Exemplar anlegen
+        Pflanze anlegen
       </h1>
       <p className="mb-5 text-muted-foreground">
         Art: <i>{species.latinName}</i>

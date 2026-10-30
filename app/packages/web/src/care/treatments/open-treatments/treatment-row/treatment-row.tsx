@@ -32,7 +32,9 @@ export function Row(props: {
         <Name className="text-[15px] font-semibold">{row.specimenName}</Name>
         <p className="text-[12.5px] text-muted-foreground">Grund: {row.reason}</p>
         <p className="text-[12.5px] text-muted-foreground">Mittel: {row.agent ?? "—"}</p>
-        <p className="text-[12.5px] text-muted-foreground">Fällig am: {dateText(row.dueAt)}</p>
+        <p className="text-[12.5px] tabular-nums text-muted-foreground">
+          Fällig am: {dateText(row.dueAt)}
+        </p>
         <p
           className={`w-fit rounded-control px-2.5 py-0.5 text-[12.5px] font-semibold ${CHIP.has(row.status.kind) ? ATTENTION_CLASSES : ""}`}
         >

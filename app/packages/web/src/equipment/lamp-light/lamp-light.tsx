@@ -4,6 +4,7 @@ import { LimitForm } from "./limit-form/limit-form";
 import { MeasureForm } from "./measure-form/measure-form";
 import { lux } from "./parse";
 import type { MeasurementInput } from "../equipment-api";
+import { keepTogether } from "@/lib/format";
 
 export interface LampLightActions {
   busy: boolean;
@@ -18,12 +19,13 @@ const UNKNOWN = "unbekannt";
 function Values({ lamp }: { lamp: LampLight }) {
   const last = lamp.last;
   const detail = last
-    ? [last.distanceCm !== null ? `Abstand ${last.distanceCm} cm` : null, last.method].filter(
-        Boolean,
-      )
+    ? [
+        last.distanceCm !== null ? keepTogether(`Abstand ${last.distanceCm} cm`) : null,
+        last.method,
+      ].filter(Boolean)
     : [];
   return (
-    <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+    <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm tabular-nums">
       <dt>Herstellerangabe</dt>
       <dd className="m-0">{lamp.manufacturerLux === null ? UNKNOWN : lux(lamp.manufacturerLux)}</dd>
       <dt>Leistung</dt>

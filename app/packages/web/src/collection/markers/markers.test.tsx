@@ -129,7 +129,7 @@ describe("US-BES-03 form: the marker of the 2nd and 3rd specimen", () => {
     await userEvent.clear(field);
     await userEvent.type(field, "rot");
     expect(screen.getByText("Name: Bogenhanf – rot")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]?.body).toMatchObject({ speciesId: "a1", marker: "rot" });
     expect(posts[0]?.body["markers"]).toBeUndefined();
@@ -139,7 +139,7 @@ describe("US-BES-03 form: the marker of the 2nd and 3rd specimen", () => {
     const posts = fakeServer([card("e1", null)]);
     render(page({ newSpecies: species }));
     await userEvent.clear(await screen.findByLabelText("Kennzeichen"));
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Kennzeichen");
     expect(posts).toHaveLength(0);
   });
@@ -160,13 +160,13 @@ describe("US-BES-03 form: the marker of the 2nd and 3rd specimen", () => {
     expect(missing.required).toBe(true);
     await userEvent.type(screen.getByLabelText("Kennzeichen"), "rot");
 
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     expect(posts).toHaveLength(0);
     expect((await screen.findByRole("alert")).textContent).toContain("fehlenden Kennzeichen");
 
     await userEvent.type(missing, "blau");
     expect(screen.getByText(/„Bogenhanf“ heißt dann „Bogenhanf – blau“/)).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]?.body).toMatchObject({
       marker: "rot",
@@ -179,7 +179,7 @@ describe("US-BES-03 form: the marker of the 2nd and 3rd specimen", () => {
       apiError("specimen.marker_taken", "Dieses Kennzeichen gibt es bei dieser Art schon."),
     );
     render(page({ newSpecies: species }));
-    await userEvent.click(await screen.findByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Pflanze anlegen" }));
     expect((await screen.findByRole("alert")).textContent).toContain(
       "gibt es bei dieser Art schon",
     );

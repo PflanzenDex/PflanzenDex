@@ -331,13 +331,13 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     show("sharing");
     await screen.findByRole("checkbox", { name: "Zebra – M2: mit Freunden teilen" });
     expect(screen.queryByRole("checkbox", { name: /M3/ })).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Alle Exemplare von Zebra teilen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Alle Pflanzen von Zebra teilen" }));
     expect(
       await screen.findByText(/Alle Exemplare dieser Art sind für Freunde freigegeben/),
     ).toBeTruthy();
     expect(calls[0]).toEqual({ path: "/sharing/species/sp1", body: { share: "friends" } });
     await userEvent.click(
-      screen.getByRole("button", { name: "Alle Exemplare von Zebra zurückziehen" }),
+      screen.getByRole("button", { name: "Alle Pflanzen von Zebra zurückziehen" }),
     );
     expect(await screen.findByText(/Alle Exemplare dieser Art sind zurückgezogen/)).toBeTruthy();
   });

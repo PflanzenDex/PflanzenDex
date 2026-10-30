@@ -87,8 +87,8 @@ function NothingCaught() {
   return (
     <EmptyState
       title="Noch keine Art gefangen."
-      description="Lege ein Exemplar mit bestimmter Art an, dann zählt es."
-      action={{ label: "Exemplar anlegen", href: "/collection" }}
+      description="Lege eine Pflanze mit bestimmter Art an, dann zählt sie."
+      action={{ label: "Pflanze anlegen", href: "/collection" }}
     />
   );
 }

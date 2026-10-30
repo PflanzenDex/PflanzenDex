@@ -65,7 +65,7 @@ describe("US-PHA-01 page of the care phases", () => {
       "/locations": () => response(200, { locations: [] }),
     });
     render(<CarePhasesPage api="http://api" token={token} />);
-    const link = await screen.findByRole("link", { name: "Zum Bestand" });
+    const link = await screen.findByRole("link", { name: "Zur Sammlung" });
     expect(link.getAttribute("href")).toBe("/collection");
   });
 

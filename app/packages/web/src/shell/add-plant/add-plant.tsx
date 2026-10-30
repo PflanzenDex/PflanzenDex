@@ -30,7 +30,7 @@ function Done(props: { name: string; onAnother: () => void }) {
       </h2>
       <div className={ACTIONS}>
         <Button type="button" onClick={() => void navigate(PATHS.collection)}>
-          Zum Bestand
+          Zur Sammlung
         </Button>
         <Button type="button" variant="secondary" onClick={props.onAnother}>
           Noch eine Pflanze
@@ -110,7 +110,7 @@ function Flow(props: Props & { onAnother: () => void }) {
 /**
  * A further plant (US-ONB-01): the same two steps as the first plant (species, then save with a changeable light
  * need). The place of the last plant is suggested with its light, never stored unseen (P-10); "Mehr Angaben" opens the
- * long form "Exemplar anlegen" for the chosen species.
+ * long form "Pflanze anlegen" for the chosen species.
  */
 export function AddPlant(props: Props) {
   const [round, setRound] = useState(0);

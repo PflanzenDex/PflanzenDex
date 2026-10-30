@@ -73,7 +73,7 @@ describe("US-WAC-01 collection wired with measuring", () => {
     await screen.findByRole("button", { name: /^Bogenhanf, / }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
     expect(await screen.findByRole("heading", { name: "Messen: Bogenhanf" })).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Zurück zum Bestand" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
     expect(await screen.findByRole("heading", { name: "Sammlung" })).toBeTruthy();
   });
 });

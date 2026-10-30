@@ -79,7 +79,7 @@ export function ProgressRow(props: {
   const uncounted =
     props.uncounted === 0
       ? ""
-      : ` ${props.uncounted} ${props.uncounted === 1 ? "Exemplar zählt" : "Exemplare zählen"} noch nicht.`;
+      : ` ${props.uncounted} ${props.uncounted === 1 ? "Pflanze zählt" : "Pflanzen zählen"} noch nicht.`;
   return (
     <LayerOpener
       id={PROGRESS_LAYER}

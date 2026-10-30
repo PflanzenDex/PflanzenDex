@@ -125,7 +125,7 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
     expect(status.textContent).toContain("„Bogenhanf“ ist jetzt „Lampe 3“");
     await openPlant("Bogenhanf");
     await openTab("Standort");
-    expect(await screen.findByText(/Lampe 3 \(von dir für dieses Exemplar gesetzt\)/)).toBeTruthy();
+    expect(await screen.findByText(/Lampe 3 \(von dir für diese Pflanze gesetzt\)/)).toBeTruthy();
   });
 
   it("US-LIC-02 starts at the current own zone", async () => {
