@@ -40,7 +40,7 @@ export function costPerUserText(c: CostPerUser): string {
   if (c.known)
     return `${moneyText(c.amountCents, c.currency)} (${monthText(c.month)}, manuell eingetragen)`;
   return c.reason === "no_figure"
-    ? "unbekannt: trage unten die Kosten eines Monats ein"
+    ? "unbekannt: trage die Kosten eines Monats ein"
     : "unbekannt: es gibt noch keine aktiven Nutzer";
 }
 
