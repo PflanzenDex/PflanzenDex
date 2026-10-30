@@ -28,6 +28,7 @@ const PANE_FRAMES: Record<string, readonly string[]> = {
   "collection/plants-screen/plant-layers/plant-layers.tsx": [COLLECTION],
   "components/routing/areas/today-area/today-area.tsx": [TODAY],
   "components/sammlung-header/view-layer/view-layer.tsx": [COLLECTION],
+  "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx": [COLLECTION],
   "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx": [
     COLLECTION,
   ],

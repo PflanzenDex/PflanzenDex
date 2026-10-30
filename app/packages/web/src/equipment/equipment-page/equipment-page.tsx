@@ -1,7 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router";
 import { LoadFrame, useFeature, useInvalidate } from "../../kernel";
-import { LAYER_SLOT } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { Button } from "@/components/ui/button/button";
 import { loadEquipment, type EquipmentData } from "../equipment-api";
 import { LampOutcome, useLampActions } from "./lamp-actions/lamp-actions";
@@ -34,7 +33,7 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
     </>
   );
   return (
-    <div className="grid min-w-0 content-start gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+    <div className="flex min-w-0 flex-col gap-3">
       {write.message ? (
         <p role="status" className="rounded-lg border border-border p-2">
           {write.message}
@@ -50,19 +49,16 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
         </p>
       ) : null}
       <EquipmentTiles data={props.data} />
-      {/* From 1024 px the layer is a pane beside the tiles (as in "Heute"); the shared pane host is #1048. */}
-      <div className={LAYER_SLOT}>
-        <EquipmentLayers
-          data={props.data}
-          lamps={lamps}
-          wishes={wishes}
-          prefill={prefill}
-          outcome={layered ? outcome : null}
-          running={write.running}
-          error={write.error}
-          onSend={send}
-        />
-      </div>
+      <EquipmentLayers
+        data={props.data}
+        lamps={lamps}
+        wishes={wishes}
+        prefill={prefill}
+        outcome={layered ? outcome : null}
+        running={write.running}
+        error={write.error}
+        onSend={send}
+      />
     </div>
   );
 }
