@@ -1,49 +1,21 @@
 import { useCallback, useEffect } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import type { DifficultyOverview, DifficultyRow } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
+import { PROFILE_BASE } from "@/components/shared/navigation/nav-model/navigation/navigation";
 import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { Pager } from "@/components/shared/responsive/pager/pager";
 import { useRowPageSize } from "@/components/shared/responsive/pager/row-page-size";
+import {
+  FactGrid,
+  unknownInEvery,
+} from "@/components/shared/responsive/responsive-table/fact-grid/fact-grid";
 import { Button } from "@/components/ui/button/button";
 import { LoadFrame } from "../../../kernel";
 import { loadDifficulty } from "../../insights/api/difficulty-api";
 import { DifficultyPageSkeleton } from "./difficulty-page.skeleton";
 import { PageFrame, Plain, Quiet, TITLE } from "../../specimens/cards/parts/parts";
-import { keepTogether } from "@/lib/format";
-import { zoneLabel } from "@pflanzendex/core";
-
-const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
-const UNKNOWN = "unbekannt";
-/** Unknown difficulty stays "unbekannt" (P-08), never "Leicht". */
-const level = (d: number | null): string => (d === null ? UNKNOWN : (LEVELS[d] ?? UNKNOWN));
-const OWN = " (dein Pflegeprofil)";
-
-/** The zone; my care-profile zone says where it comes from (US-BES-09, #306). */
-const zoneText = (r: DifficultyRow) =>
-  r.zone ? `${zoneLabel(r.zone.name)}${r.zoneSource === "profile" ? OWN : ""}` : UNKNOWN;
-
-/** My watering intervals from the care profile, else the catalog hint (US-BES-09, #306). */
-function wateringText(r: DifficultyRow): string {
-  const own = r.ownWatering;
-  if (!own) return r.wateringHint ?? UNKNOWN;
-  const parts = [
-    own.growthDays === null ? null : keepTogether(`alle ${own.growthDays} Tage`),
-    own.dormancyDays === null ? null : keepTogether(`in der Ruhe alle ${own.dormancyDays} Tage`),
-  ].filter((p): p is string => p !== null);
-  return `${parts.join(", ")}${OWN}`;
-}
-
-/** The values of one species in the order of the comparison; the layer shows them all, the entry the first ones (DS-24). */
-const COLUMNS: { key: string; header: string; cell: (r: DifficultyRow) => string }[] = [
-  { key: "botanical", header: "Botanischer Name", cell: (r) => r.botanicalName },
-  { key: "zone", header: "Lichtzone", cell: zoneText },
-  { key: "watering", header: "Gießregel", cell: wateringText },
-  { key: "substrate", header: "Substrat", cell: (r) => r.substrate ?? UNKNOWN },
-  { key: "pruning", header: "Schnitt", cell: (r) => r.pruning ?? UNKNOWN },
-  { key: "success", header: "Erfolgskriterium", cell: (r) => r.successCriteria ?? UNKNOWN },
-  { key: "difficulty", header: "Schwierigkeit", cell: (r) => level(r.difficulty) },
-];
+import { ENTRY_FACTS, entryLine, factsOf } from "./difficulty-page.values";
 
 /** The layer of one species of the comparison: `?sheet=compare-<id>` (US-QS-22). */
 const layerId = (r: DifficultyRow): string => `compare-${r.speciesId}`;
@@ -61,7 +33,7 @@ function ReportCaption({ host, count }: { host: Host | undefined; count: number 
 }
 
 /**
- * Species with an active specimen side by side, easiest first (US-BES-05); a missing value says "unbekannt" (P-08).
+ * Species with an active specimen side by side, easiest first (US-BES-05); a missing value folds into a count with its next step (P-08, US-QS-24).
  * The destination "Sammlung" shows it below its title as an arrangement of the species (US-QS-14): `host` drops the
  * card frame and the main heading, the section name stays for screen readers.
  */
@@ -105,7 +77,7 @@ function UnreadableNote({ count }: { count: number }) {
   );
 }
 
-function Entry({ row }: { row: DifficultyRow }) {
+function Entry({ row, hidden }: { row: DifficultyRow; hidden: readonly string[] }) {
   const { openLayer, open } = useLayer(layerId(row));
   return (
     <Button
@@ -119,9 +91,7 @@ function Entry({ row }: { row: DifficultyRow }) {
     >
       <span className="grid min-w-0 gap-0 break-words">
         <span className="font-semibold">{row.speciesName}</span>
-        <span className="text-sm font-normal text-muted-foreground">
-          {`${level(row.difficulty)} · ${zoneText(row)}`}
-        </span>
+        <span className="text-sm font-normal text-muted-foreground">{entryLine(row, hidden)}</span>
       </span>
       <span className="text-2xl leading-none text-muted-foreground" aria-hidden="true">
         ›
@@ -130,16 +100,17 @@ function Entry({ row }: { row: DifficultyRow }) {
   );
 }
 
+/** All values of one species; the unknown ones fold into one line with the next step (US-QS-24). */
 function Values({ row }: { row: DifficultyRow }) {
   return (
-    <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 break-words text-sm">
-      {COLUMNS.map((c) => (
-        <div key={c.key} className="contents">
-          <dt className="font-semibold">{c.header}</dt>
-          <dd className="m-0">{c.cell(row)}</dd>
-        </div>
-      ))}
-    </dl>
+    <FactGrid
+      facts={factsOf(row)}
+      next={
+        <Button asChild variant="outline" size="sm">
+          <Link to={`${PROFILE_BASE}/${row.speciesId}`}>Artprofil öffnen</Link>
+        </Button>
+      }
+    />
   );
 }
 
@@ -152,6 +123,7 @@ function DifficultyTable(props: {
   const size = useRowPageSize();
   const [params] = useSearchParams();
   const chosen = rows.find((r) => layerId(r) === params.get("sheet"));
+  const hidden = unknownInEvery(rows, ENTRY_FACTS);
   return (
     <section aria-labelledby="difficulty-title" className="flex min-w-0 flex-col gap-2">
       {host ? (
@@ -173,13 +145,16 @@ function DifficultyTable(props: {
       ) : (
         <>
           <Quiet>Deine Arten nach Schwierigkeit, die leichtesten zuerst.</Quiet>
+          {hidden.length > 0 ? (
+            <Quiet>{`Bei keiner Art angegeben, deshalb nicht in der Liste: ${hidden.join(", ")}.`}</Quiet>
+          ) : null}
           <Pager
             items={rows}
             pageSize={size}
             label="Artenvergleich"
             getKey={(r) => r.speciesId}
             listClassName="md:grid md:grid-cols-2"
-            renderItem={(r) => <Entry row={r} />}
+            renderItem={(r) => <Entry row={r} hidden={hidden} />}
           />
         </>
       )}
