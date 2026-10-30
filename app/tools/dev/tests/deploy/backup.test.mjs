@@ -12,10 +12,10 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { test } from "node:test";
 
-const deploy = new URL("../../../config/deploy/", import.meta.url).pathname;
+const deploy = new URL("../../../../config/deploy/", import.meta.url).pathname;
 const backup = join(deploy, "scripts/backup.sh");
 const stubDir = mkdtempSync(join(tmpdir(), "backup-stub-"));
 // Stub: pg_dump prints a fake dump, pg_restore -l reads it, psql says the sign-in database exists.
@@ -59,7 +59,7 @@ function run(env, script = backup) {
 // A copy of a deploy script in a folder of its own: a .env written next to it is the copy's, never the checkout's (#1010).
 function copyScript(name) {
   const root = mkdtempSync(join(tmpdir(), "deploy-copy-"));
-  mkdirSync(join(root, "scripts"));
+  mkdirSync(dirname(join(root, "scripts", name)), { recursive: true });
   copyFileSync(join(deploy, "scripts", name), join(root, "scripts", name));
   return { root, script: join(root, "scripts", name) };
 }
@@ -136,7 +136,7 @@ test("NFR-15 DEPLOY_ENV_FILE naming a missing file loads nothing, so the caller'
 
 // Runs restore.sh on a copy of the deploy scripts whose .env sets the owner role; returns the role it was called with.
 function restoreOwnerRole(env) {
-  const { root, script } = copyScript("restore.sh");
+  const { root, script } = copyScript("restore/restore.sh");
   writeFileSync(join(root, ".env"), "DB_OWNER_USER=from-host-env\n");
   const dump = join(root, "app.dump");
   writeFileSync(dump, "PGDMP fake dump");

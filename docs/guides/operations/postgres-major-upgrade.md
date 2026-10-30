@@ -106,8 +106,8 @@ Expected: `db running`, `db-roles exited exit=0`, `keycloak-db exited exit=0`. I
 ## 6. Restore both dumps
 
 ```bash
-CONFIRM=yes app/config/deploy/scripts/restore.sh "$APP_DUMP"
-CONFIRM=yes app/config/deploy/scripts/restore.sh "$KC_DUMP"
+CONFIRM=yes app/config/deploy/scripts/restore/restore.sh "$APP_DUMP"
+CONFIRM=yes app/config/deploy/scripts/restore/restore.sh "$KC_DUMP"
 ```
 
 `restore.sh` does the owner handling: the app dump is restored with `--no-owner --role=pflanzendex_owner`, so the objects belong to the schema owner and row-level security applies (P-04). The sign-in dump keeps its owner `keycloak`. Do not call `pg_restore` by hand: as the cluster user without `--role`, the objects would belong to the superuser again (see "DB roles in production" in `staging-deploy-and-backup.md`).
