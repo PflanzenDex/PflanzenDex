@@ -1,4 +1,4 @@
-import { CollectionPage } from "@/collection";
+import { PagedGroups } from "@/components/shared/responsive/paged-groups/paged-groups";
 import type { CarePhase, LightLocation, PhasesRow } from "@pflanzendex/core";
 import { useIsLg, useIsMd } from "@/lib/use-breakpoint";
 import { PHASE_TEXT } from "../../shared/text";
@@ -17,7 +17,7 @@ function usePageSize(): number {
 /**
  * The plants with a care phase as the grouping "Nach Pflegephase" (US-QS-19): the phase is chosen from a row with its
  * count and the plants of that phase page. "Jetzt umgestellt" and the group buttons work as in the list (US-PHA-03).
- * The paging comes from `collection` and loads with the plants, so it is no chunk of its own (QG-U6).
+ * The paging is the shared `PagedGroups`, which the plants use too.
  */
 export function PhasesPaged(props: {
   rows: readonly PhasesRow[];
@@ -33,8 +33,7 @@ export function PhasesPaged(props: {
   })).filter((g) => g.items.length > 0);
   return (
     <section aria-labelledby="care-phases-title" className="flex flex-col gap-3">
-      <CollectionPage
-        part="groups"
+      <PagedGroups
         choicesLabel="Pflegephase wählen"
         listLabel="Pflanzen mit Pflegephase"
         groups={groups}

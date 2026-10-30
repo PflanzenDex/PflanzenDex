@@ -240,7 +240,7 @@ Acceptance criteria:
 - Given `prefers-reduced-motion: reduce`, then layers and pages change without sliding.
 - Given a number with its unit or a count, then number and unit never break apart and digits in counts and measurements are tabular.
 
-State of implementation: the building blocks exist in `app/packages/web` (`LayerSheet` and `useLayer` for the layers, `Pager` for the pages, the opt-in `fit` mode of `AppShell` for the one-screen frame, touch defaults in the base layer; rules DS-58 to DS-63 in the design system reference), with tests and stories. No destination uses them yet, so every criterion stays open until the destinations are converted (the objects with tabs, the help text rule and the unit rule come with those conversions). Status 🟨 because the building blocks are in place. "Heute" is the first destination to use them (US-QS-18).
+State of implementation: the building blocks exist in `app/packages/web` (`LayerSheet` and `useLayer` for the layers, `Pager` for the pages, the attribute `data-fit-screen` for the one-screen frame (DS-61, CSS only; the shell knows no routes), `RouteFocus` ignoring `?sheet`, `?page` and `?lpage` so a layer or a page change never moves the focus to the heading (one fix, tested with Escape returning to the opener), touch defaults in the base layer; rules DS-58 to DS-63 in the design system reference), with tests and stories. No destination uses them yet, so every criterion stays open until the destinations are converted (the objects with tabs, the help text rule and the unit rule come with those conversions). Status 🟨 because the building blocks are in place. "Heute" is the first destination to use them (US-QS-18).
 
 ### US-QS-16 · "Heute" is the home screen · 🟨 new
 
@@ -290,7 +290,7 @@ Acceptance criteria:
 - Given the introduction of US-QS-16 applies (new account, calm hint, locked functions), then it still shows on "Heute"; the locked functions are one row "n Funktionen noch nicht geöffnet" that opens a layer (`?sheet=locked`) with the rows (US-ONB-05).
 - Given a wide screen (from 1024 px), then the open layer stands beside the overview as a pane.
 
-State of implementation: `TodayArea` (`web/src/components/routing/areas/today-area`) shows `TodayPage` (the `today` module: title, date, most urgent item, opener for the rest) with a summary and tiles (`today-overview`) and holds the layers `LayerSheet` for `treatments` (`TreatmentsPage host`), `watering` (`WateringList`) and `hints` (`HintsPage host`); their lists use `Pager`. The counts come from the same requests as the lists (the `count` mode of `TreatmentsPage`, `WateringList` and `HintsPage`, one cached copy each), so no new API route exists. `AppShell` runs in `fit` mode on `/today` only. `CollapsedLockedRows` (`shell/unlock`) is the row and its layer; it lives in the chunk of the introduction because the initial bundle has no headroom (QG-U6).
+State of implementation: `TodayArea` (`web/src/components/routing/areas/today-area`) shows `TodayPage` (the `today` module: title, date, most urgent item, opener for the rest) with a summary and tiles (`today-overview`) and holds the layers `LayerSheet` for `treatments` (`TreatmentsPage host`), `watering` (`WateringList`) and `hints` (`HintsPage host`); their lists use `Pager`. The counts come from the same requests as the lists (the `count` mode of `TreatmentsPage`, `WateringList` and `HintsPage`, one cached copy each), so no new API route exists. `TodayArea` marks its root with `data-fit-screen`. `CollapsedLockedRows` (`shell/unlock`) is the row and its layer; it lives in the chunk of the introduction because the initial bundle has no headroom (QG-U6).
 
 ### US-QS-19 · Sammlung "Pflanzen" fits one screen with paged tiles · 🟨 new
 
@@ -309,7 +309,7 @@ Acceptance criteria:
 - Given archived plants, then the insight row also leads to the archive in a layer (`?sheet=archive`), so nothing disappears silently (P-10).
 - Given no plant, loading or an error, then the mode shows that state with its next action (P-09, P-10).
 
-State of implementation: `PlantsScreen` (`web/src/collection/plants-screen`) with `PlantTile`, the layer "Ansicht" and the zone insight; `PagedGroups` (`components/shared/responsive/paged-groups`, with the row `GroupChoices`) holds the groups and their pages and is reused for the care phases; `Pager` got `listClassName` for a grid. The mode "Pflanzen" asks the frame to fit one screen with `data-fit-screen` (CSS `:has` in `tokens.css`), so the app shell needs no code for it (QG-U6).
+State of implementation: `PlantsScreen` (`web/src/collection/plants-screen`) with `PlantTile`, the layer "Ansicht" and the zone insight; `PagedGroups` (`components/shared/responsive/paged-groups`, with the row `GroupChoices`) holds the groups and their pages and is reused for the care phases; `Pager` got `listClassName` for a grid. The mode "Pflanzen" asks the frame to fit one screen with `data-fit-screen` (CSS `:has` in `tokens.css`), so the app shell needs no code for it (QG-U6). The module `collection` exports `CollectionPage`, `PlantsViewOpener` and `PlantsViewLayer` as plain lazy wrappers (no `part` switch); `care` imports `PagedGroups` directly.
 
 ### US-QS-20 · "Freunde" fits one screen and opens its parts as layers · 🟨 new
 
@@ -323,13 +323,13 @@ Acceptance criteria:
 - Given "Mehr erfahren", then the full explanation of friends and sharing opens as a layer (`?sheet=help`).
 - Given I choose "Freund hinzufügen", then a layer (`?sheet=add`) offers "Einladen" (create and copy the code, US-SOZ-01) and "Code eingeben" (send a request) as two tabs with the existing behaviour; a refused code shows its German text by code at the field (FR-QG-11, P-10).
 - Given I choose "Anfragen", "Neu bei Freunden", "Meine Freunde" or "Was Freunde sehen", then each opens as a layer (`?sheet=requests|news|friends|sharing`) with the existing content (US-SOZ-02 to US-SOZ-05); lists longer than the layer are paged with the pager (US-QS-15); a layer loads its data only while it is open.
-- Given "Tauschbörse" or "Passende Angebote", then they lead to their existing views.
+- Given "Tauschbörse" or "Passende Angebote", then they lead to their existing views and show the count of the open offers of friends and of the offers that match my wishlist; while a count loads or fails, the tile says so (P-10).
 - Given calm mode (US-ACH-08, US-TAU-07), then the tiles show their names without counts.
-- Given a function that is locked (US-ONB-05), then its tile keeps its place and leads to the lock page at its address, as the address does today; the tile carries no mark of its own (assumption: the first-load budget, QG-U6, leaves no room for passing the lock state into the tiles).
+- Given a function that is locked (US-ONB-05), then its tile keeps its place, carries the text mark of the navigation ("Noch gesperrt" or "Bald") instead of a count and leads to the lock page at its address, as the address does.
 - Given no friend yet, then the screen says so and names "Freund hinzufügen" as the next step (P-09); a part that is loading or fails to load shows that state (P-10).
 - Given a layer, then it has at most one filled primary action: "Annehmen" is the quiet filled kind of button and the other actions are outline buttons (US-QS-15).
 
-State of implementation: `FriendsPage` (`web/src/social/pages/friends-page`) with `friend-tiles` and `friend-layers`; calm mode arrives through `CalmGate` (`components/routing/areas/shared/simple-routes/calm-gate`, shared with the match deck), and the route of "Freunde" moved into `socialRoutes`. The shell frame stays in the scrolling mode: its opt-in `fit` is global to the app shell, so it is left off here and the overview fits by its own size. Status 🟨 until a real phone check.
+State of implementation: `FriendsPage` (`web/src/social/pages/friends-page`) with `friend-tiles` and `friend-layers`; calm mode arrives through `CalmGate` (`components/routing/areas/shared/simple-routes/calm-gate`, shared with the match deck), and the route of "Freunde" moved into `socialRoutes`. The page marks its root with `data-fit-screen`. The tiles "Tauschbörse" and "Passende Angebote" show the count of the open offers of friends (`GET /exchange/offers`) and of the matching cards (`GET /exchange/match`), the same existing requests as their views, none in calm mode and none while "Tauschen" is locked; the route keys in `socialRoutes` are `exchange`, `match` and `friends`. Status 🟨 until a real phone check.
 
 ### US-QS-21 · "Entdecken" fits one screen and opens its parts as layers · 🟨 new
 

@@ -1,9 +1,16 @@
-// Public interface of the `collection` module (ADR 0003): page for collection and create specimen. `CollectionPage` is also
-// the carrier of the parts of the plants that the app wires around it (US-QS-19, `part=`), because every export costs
-// bytes in the initial JavaScript (QG-U6).
+// Public interface of the `collection` module (ADR 0003): page for collection and create specimen, and the parts of the
+// plants that the app wires around it (the opener "Ansicht" and its layer, US-QS-19).
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 export const CollectionPage = lazyPage(() =>
-  import("./plants-screen/plants-parts/plants-parts").then((m) => ({ default: m.PlantsEntry })),
+  import("./collection-page/collection-page").then((m) => ({ default: m.CollectionPage })),
+);
+export const PlantsViewOpener = lazyPage(() =>
+  import("./plants-screen/plants-parts/view-opener/view-opener").then((m) => ({
+    default: m.PlantsViewOpener,
+  })),
+);
+export const PlantsViewLayer = lazyPage(() =>
+  import("./plants-screen/plants-parts/plants-parts").then((m) => ({ default: m.PlantsViewLayer })),
 );
 export const HintsPage = lazyPage(() =>
   import("./other-pages/hints-page/hints-page").then((m) => ({ default: m.HintsPage })),
