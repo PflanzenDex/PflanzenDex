@@ -414,6 +414,10 @@ describe("US-ACC-01 App", () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/light");
+    // The overview is a layer of the management (US-QS-19): it opens from its button first.
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Lichthunger und Einstufung" }),
+    );
     await userEvent.click(await screen.findByRole("button", { name: "Zur Sammlung" }));
     expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
