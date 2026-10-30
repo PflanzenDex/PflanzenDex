@@ -12,6 +12,7 @@ import {
   TodayIntro,
   UnlockPage,
   isShownLocked,
+  lockMark,
   useUnlocks,
 } from "./shell";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
@@ -30,13 +31,16 @@ type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 /** A function that is not open yet shows its lock page at its own address, never a blank page (US-ONB-05, FR-ONB-02). */
 function useLockPages(api: string, token: Token) {
-  const locked = new Set(
-    useUnlocks()
-      .entries.filter(isShownLocked)
-      .map((e) => e.id),
-  );
-  return (id: string) =>
-    locked.has(id) ? <UnlockPage api={api} token={token} id={id} /> : undefined;
+  const locked = useUnlocks().entries.filter(isShownLocked);
+  const ids = new Set(locked.map((e) => e.id));
+  return {
+    page: (id: string) =>
+      ids.has(id) ? <UnlockPage api={api} token={token} id={id} /> : undefined,
+    mark: (id: string) => {
+      const entry = locked.find((e) => e.id === id);
+      return entry ? lockMark(entry) : undefined;
+    },
+  };
 }
 
 /** "Heute" with the introduction around its sections (US-QS-16): the app wires the shell into the area. */
@@ -82,7 +86,7 @@ export function AppRoutes(props: {
   const roles = rolesOf(account);
   const social = roles.friends !== false;
   const { pathname } = useLocation();
-  const lockPageOf = useLockPages(api, s.token);
+  const locks = useLockPages(api, s.token);
   return (
     <RouteBoundary resetKey={pathname}>
       <AchievementNewsBanner api={api} token={s.token} />
@@ -105,7 +109,7 @@ export function AppRoutes(props: {
         {/* "Heute" is the home screen: the root address, old bookmarks and the brand lead there (US-QS-16). */}
         <Route path="/" element={<Navigate to={PATHS.today} replace />} />
         <Route path="/unlock/:id" element={<UnlockPage api={api} token={s.token} />} />
-        {social && socialRoutes(api, s.token, lockPageOf)}
+        {social && socialRoutes(api, s.token, locks.page, locks.mark)}
         <Route
           path={PATHS.today}
           element={<TodayRoute api={api} token={s.token} onOpen={props.onOpen} />}

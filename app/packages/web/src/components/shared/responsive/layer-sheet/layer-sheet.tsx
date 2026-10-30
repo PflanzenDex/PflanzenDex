@@ -39,8 +39,8 @@ export function useLayer(id: string): LayerControl {
       opener = from ?? (document.activeElement as HTMLElement | null);
       const next = new URLSearchParams(params);
       next.set(PARAM, id);
-      // `keepFocus`: the layer takes the focus itself, the view behind it must not move it to its heading (RouteFocus).
-      setParams(next, { state: { [FROM_APP]: true, keepFocus: true } });
+      // RouteFocus ignores `?sheet`, so the view behind the layer does not move the focus to its heading.
+      setParams(next, { state: { [FROM_APP]: true } });
     },
     closeLayer: () => {
       if (fromApp) {

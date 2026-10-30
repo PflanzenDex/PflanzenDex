@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { Button } from "@/components/ui/button/button";
+import { NavNote } from "@/components/shared/navigation/nav-model/nav-note/nav-note";
 
 /** A count that is still loading, failed to load, or is known (P-10); calm mode passes `hidden` (US-ACH-08). */
 export type TileCount = number | "loading" | "error" | "hidden";
@@ -43,12 +44,16 @@ export function LayerTile(props: { id: string; name: string; count?: TileCount }
   );
 }
 
-/** A tile that leads to an existing view; while its function is locked the address shows the lock page (US-ONB-05). */
-export function LinkTile(props: { to: string; name: string }) {
+/**
+ * A tile that leads to an existing view; while its function is locked the address shows the lock page (US-ONB-05), and
+ * the tile carries the text mark `note` ("Bald", "Noch gesperrt") like the navigation instead of a count.
+ */
+export function LinkTile(props: { to: string; name: string; count?: TileCount; note?: string }) {
   return (
     <Button asChild variant="outline" className={TILE}>
       <Link to={props.to}>
-        <Face name={props.name} />
+        <Face name={props.name} {...(props.count !== undefined ? { count: props.count } : {})} />
+        <NavNote text={props.note} />
       </Link>
     </Button>
   );

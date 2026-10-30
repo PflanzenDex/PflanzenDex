@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useNavigate } from "react-router";
+import { MemoryRouter, useNavigate, useSearchParams } from "react-router";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/lib/viewport-mock";
+import { AnnouncerProvider } from "@/platform/announcer/announcer";
+import { RouteFocus } from "@/components/routing/route-focus/route-focus";
 import { LayerOpener, LayerSheet } from "./layer-sheet";
 
 beforeAll(() => {
@@ -30,7 +32,46 @@ function Example({ at = "/" }: { at?: string }) {
   );
 }
 
+function Pager() {
+  const [, setParams] = useSearchParams();
+  return (
+    <button type="button" onClick={() => setParams({ page: "2" })}>
+      Seite 2
+    </button>
+  );
+}
+
 describe("LayerSheet (US-QS-15)", () => {
+  it("US-QS-15 with RouteFocus mounted, Escape returns the focus to the opener and a page change does not move it to the heading", async () => {
+    setViewportWidth(360);
+    render(
+      <AnnouncerProvider>
+        <MemoryRouter initialEntries={["/"]}>
+          <main id="inhalt" tabIndex={-1}>
+            <RouteFocus titleOf={() => "Start"} />
+            <h1>Start</h1>
+            <LayerOpener id="licht">Licht</LayerOpener>
+            <Pager />
+            <LayerSheet id="licht" title="Lichtzonen">
+              <p>Inhalt</p>
+            </LayerSheet>
+          </main>
+        </MemoryRouter>
+      </AnnouncerProvider>,
+    );
+    const opener = screen.getByRole("button", { name: "Licht" });
+    await userEvent.click(opener);
+    await screen.findByRole("dialog", { name: "Lichtzonen" });
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await new Promise((r) => setTimeout(r, 400));
+    expect(document.activeElement).toBe(opener);
+    const pager = screen.getByRole("button", { name: "Seite 2" });
+    await userEvent.click(pager);
+    await new Promise((r) => setTimeout(r, 400));
+    expect(document.activeElement).toBe(pager);
+  });
+
   it("US-QS-22 a closed layer mounts no content, so it loads nothing and holds no pager", () => {
     setViewportWidth(360);
     render(<Example />);

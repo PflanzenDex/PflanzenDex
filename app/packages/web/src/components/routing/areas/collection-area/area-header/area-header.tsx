@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { CollectionPage } from "@/collection";
+import { PlantsViewOpener } from "@/collection";
 import { SammlungHeader } from "@/components/sammlung-header/sammlung-header";
 import { SegmentedControl } from "@/components/segmented-control/segmented-control";
 import {
@@ -28,7 +28,7 @@ export function AreaHeader(props: {
         ? {
             action: (
               <Suspense fallback={null}>
-                <CollectionPage part="opener" />
+                <PlantsViewOpener />
               </Suspense>
             ),
           }

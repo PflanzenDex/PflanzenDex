@@ -1,6 +1,6 @@
 import { Suspense, useMemo, useState, type ReactNode } from "react";
 import type { Species, Specimen } from "@pflanzendex/core";
-import { CollectionPage, DifficultyPage } from "@/collection";
+import { CollectionPage, DifficultyPage, PlantsViewLayer } from "@/collection";
 import { LightPage } from "@/light";
 import { CarePhasesPage, MeasurePage } from "@/care";
 import { PokedexPage } from "@/pokedex";
@@ -104,7 +104,7 @@ function GroupLayer(props: {
 }) {
   return (
     <Suspense fallback={null}>
-      <CollectionPage part="layer" options={PLANT_GROUPS} {...props} />
+      <PlantsViewLayer options={PLANT_GROUPS} {...props} />
     </Suspense>
   );
 }

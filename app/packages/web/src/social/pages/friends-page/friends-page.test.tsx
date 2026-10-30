@@ -38,6 +38,9 @@ type Initial = {
   friends?: unknown[];
   /** The count of the news banner; `"fail"` makes the banner request fail. */
   news?: number | "fail";
+  /** Open offers of friends and cards of the match deck. */
+  offers?: number;
+  matching?: number;
 };
 type State = {
   incoming: Req[];
@@ -95,6 +98,20 @@ function write(
   return response(200, { status: body.decision === "accept" ? "confirmed" : "declined" });
 }
 
+/** The reads behind the counts of the exchange tiles. */
+function exchangeResponse(path: string, initial: Initial) {
+  if (path === "/exchange/offers")
+    return response(200, {
+      offers: Array.from({ length: initial.offers ?? 0 }, (_, i) => ({ id: `o${i}` })),
+    });
+  if (path === "/exchange/match")
+    return response(200, {
+      cards: Array.from({ length: initial.matching ?? 0 }, (_, i) => ({ offerId: `o${i}` })),
+      entries: [],
+    });
+  return undefined;
+}
+
 /** A fake server with the reads and writes of the page. */
 function fakeServer(initial: Initial = {}) {
   const state: State = {
@@ -128,6 +145,8 @@ function fakeServer(initial: Initial = {}) {
         events: [],
         hint: { text: "Nichts Neues.", nextAction: "Schau später wieder vorbei." },
       });
+    const exchange = exchangeResponse(path, initial);
+    if (exchange) return exchange;
     if (path === "/specimens") return response(200, { specimens: SPECIMENS });
     if (path === "/sharing") return response(200, { shared: state.shared });
     return response(404, {});
@@ -136,7 +155,7 @@ function fakeServer(initial: Initial = {}) {
   return { fetchFn, calls };
 }
 
-type Options = { calm?: boolean };
+type Options = { calm?: boolean; swapMark?: string };
 
 /** Renders the page at its address; `sheet` opens that layer as a reload or a copied link would (US-QS-15). */
 function show(sheet?: string, options: Options = {}, page = "") {
@@ -385,6 +404,8 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
       incoming: [req(), req({ id: "r2", otherName: "Cleo" })],
       friends: [friend(1)],
       news: 3,
+      offers: 4,
+      matching: 2,
     });
     show();
     expect(await screen.findByRole("heading", { name: "Freunde", level: 1 })).toBeTruthy();
@@ -398,12 +419,18 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
         "Neu bei Freunden3",
       ),
     );
-    expect(screen.getByRole("link", { name: "Tauschbörse" }).getAttribute("href")).toBe(
+    expect(screen.getByRole("link", { name: /^Tauschbörse/ }).getAttribute("href")).toBe(
       "/friends/exchange",
     );
-    expect(screen.getByRole("link", { name: "Passende Angebote" }).getAttribute("href")).toBe(
+    expect(screen.getByRole("link", { name: /^Passende Angebote/ }).getAttribute("href")).toBe(
       "/friends/match",
     );
+    await waitFor(() => {
+      expect(screen.getByRole("link", { name: /^Tauschbörse/ }).textContent).toBe("Tauschbörse4");
+      expect(screen.getByRole("link", { name: /^Passende Angebote/ }).textContent).toBe(
+        "Passende Angebote2",
+      );
+    });
     expect(screen.getByRole("button", { name: /^Meine Freunde/ }).textContent).toBe(
       "Meine Freunde1 Freund",
     );
@@ -418,12 +445,44 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(filled.map((b) => b.textContent)).toEqual(["Freund hinzufügen"]);
   });
 
-  it("US-QS-20 calm mode shows the tiles with their names but no counts", async () => {
-    fakeServer({ incoming: [req()], news: 3 });
+  it("US-QS-20 calm mode shows the tiles with their names but no counts, and asks for no offers", async () => {
+    const { fetchFn } = fakeServer({ incoming: [req()], news: 3, offers: 4, matching: 2 });
     show(undefined, { calm: true });
     expect((await screen.findByRole("button", { name: /^Anfragen/ })).textContent).toBe("Anfragen");
     expect(screen.getByRole("button", { name: /^Neu bei Freunden/ }).textContent).toBe(
       "Neu bei Freunden",
+    );
+    expect(screen.getByRole("link", { name: "Tauschbörse" }).textContent).toBe("Tauschbörse");
+    expect(screen.getByRole("link", { name: "Passende Angebote" }).textContent).toBe(
+      "Passende Angebote",
+    );
+    expect(fetchFn.mock.calls.some(([u]) => String(u).includes("/exchange/"))).toBe(false);
+  });
+
+  it("US-QS-20 · US-ONB-05 locked exchange tiles show the text mark, no count, and still lead to the lock page", async () => {
+    const { fetchFn } = fakeServer({ friends: [friend(1)], offers: 4, matching: 2 });
+    show(undefined, { swapMark: "Noch gesperrt" });
+    const exchange = await screen.findByRole("link", { name: /^Tauschbörse/ });
+    expect(exchange.textContent).toBe("Tauschbörse, Noch gesperrt");
+    expect(exchange.getAttribute("href")).toBe("/friends/exchange");
+    expect(screen.getByRole("link", { name: /^Passende Angebote/ }).textContent).toBe(
+      "Passende Angebote, Noch gesperrt",
+    );
+    expect(fetchFn.mock.calls.some(([u]) => String(u).includes("/exchange/"))).toBe(false);
+  });
+
+  it("US-QS-20 a count of the exchange that cannot load says so instead of showing a number (P-10)", async () => {
+    const { fetchFn } = fakeServer({});
+    vi.stubGlobal("fetch", (url: string, init?: RequestInit) =>
+      new URL(String(url)).pathname.startsWith("/exchange/")
+        ? response(500, {})
+        : fetchFn(url, init),
+    );
+    show();
+    await waitFor(() =>
+      expect(screen.getByRole("link", { name: /^Tauschbörse/ }).textContent).toBe(
+        "Tauschbörsenicht geladen",
+      ),
     );
   });
 

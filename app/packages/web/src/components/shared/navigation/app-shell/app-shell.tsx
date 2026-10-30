@@ -1,5 +1,4 @@
 import { useEffect, useRef, type MouseEvent, type ReactNode, type RefObject } from "react";
-import { cn } from "@/lib/utils";
 import { AnnouncerProvider } from "@/platform/announcer/announcer";
 import { useOnline } from "@/platform/network";
 import { RouteFocus } from "@/components/routing/route-focus/route-focus";
@@ -77,18 +76,11 @@ function skipToContent(event: MouseEvent<HTMLAnchorElement>) {
 export function AppShell({
   items,
   titleOf,
-  fit = false,
   children,
 }: {
   items: NavItem[];
   /** The page title of an address; with it the shell also moves the focus to the new view's heading (US-QS-09). */
   titleOf?: (pathname: string) => string;
-  /**
-   * Fit mode (US-QS-15, opt-in): the frame is exactly the viewport (`dvh`) and the page does not scroll; `main` takes
-   * the space between header and bottom bar and scrolls inside itself only when its content cannot fit (zoom, large
-   * text), without passing the scroll on to the page.
-   */
-  fit?: boolean;
   children: ReactNode;
 }) {
   const shell = useRef<HTMLDivElement>(null);
@@ -98,10 +90,7 @@ export function AppShell({
       <ToastProvider>
         <div
           ref={shell}
-          className={cn(
-            "flex flex-col overflow-x-clip bg-background text-foreground md:flex-row",
-            fit ? "h-dvh" : "min-h-dvh",
-          )}
+          className="flex min-h-dvh flex-col overflow-x-clip bg-background text-foreground md:flex-row"
         >
           <a
             href={`#${MAIN_ID}`}
@@ -111,15 +100,12 @@ export function AppShell({
             Zum Inhalt springen
           </a>
           <SideNav items={items} />
-          <div className={cn("flex min-w-0 flex-1 flex-col", fit && "min-h-0")}>
+          <div className="flex min-w-0 flex-1 flex-col">
             <GlobalHeader />
             <main
               id={MAIN_ID}
               tabIndex={-1}
-              className={cn(
-                "flex-1 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))] pt-4 md:px-6 md:pb-6 md:pt-6 xl:px-10",
-                fit && "overflow-y-auto overscroll-contain",
-              )}
+              className="flex-1 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))] pt-4 md:px-6 md:pb-6 md:pt-6 xl:px-10"
             >
               {titleOf ? <RouteFocus titleOf={titleOf} /> : null}
               <OfflineBanner />
