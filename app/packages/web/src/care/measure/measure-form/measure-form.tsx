@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/fields/textarea/textarea";
 import { currentTimeZone, type ApiError } from "../../../kernel";
 import { Field } from "../../shared/field/field";
 import { photoProblem } from "../measurement-header/measurement-photo";
+import { Folded } from "../measurement-header/measurement-header";
 import { RefusalAlert } from "../../shared/notices/notices";
 import type { MeasurementInput } from "../../shared/api/measurements-api";
 import {
@@ -22,6 +23,9 @@ import {
   type MeasurementFields,
 } from "../../shared/schemas";
 import { QUALITY_NAME } from "../../shared/text";
+
+/** The id of the measure form; the sticky footer submits it through the `form` attribute (US-WAC-01). */
+const FORM_ID = "measure-form";
 
 /**
  * "Wie erkennen?" at the quality choice (US-WAC-02): the etiolation signs of the species, collapsed so the form stays
@@ -111,10 +115,12 @@ function Fields(props: {
         )}
       </Field>
       <EtiolationSigns signs={props.etiolationSigns} />
-      <Field control={props.control} name="note" label="Notiz (optional)">
-        {(field) => <Textarea {...field} rows={2} maxLength={MEASUREMENT_LIMITS.note.max} />}
-      </Field>
-      {props.photo}
+      <Folded summary="Mehr Angaben">
+        <Field control={props.control} name="note" label="Notiz (optional)">
+          {(field) => <Textarea {...field} rows={2} maxLength={MEASUREMENT_LIMITS.note.max} />}
+        </Field>
+        {props.photo}
+      </Folded>
     </>
   );
 }
@@ -157,9 +163,10 @@ export function MeasureForm(props: {
   return (
     <Form {...form}>
       <FormRoot
+        id={FORM_ID}
         aria-label="Messung erfassen"
         onSubmit={submit}
-        className="flex max-w-xl flex-col gap-4"
+        className="flex max-w-xl flex-col gap-3"
       >
         <Fields
           control={form.control}
@@ -170,10 +177,19 @@ export function MeasureForm(props: {
           photo={<PhotoInput onPick={setPhoto} problem={problem} inputKey={inputKey} />}
         />
         {refusal && <RefusalAlert error={refusal} />}
-        <Button type="submit" size="touch" disabled={form.formState.isSubmitting}>
+      </FormRoot>
+      {/* The sticky footer keeps the one filled action in view while the page is longer than the screen (US-QS-15). */}
+      <div className="sticky bottom-0 z-10 bg-background py-1">
+        <Button
+          type="submit"
+          form={FORM_ID}
+          size="touch"
+          className="w-full"
+          disabled={form.formState.isSubmitting}
+        >
           Messung speichern
         </Button>
-      </FormRoot>
+      </div>
     </Form>
   );
 }

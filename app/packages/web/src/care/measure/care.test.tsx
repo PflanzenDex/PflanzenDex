@@ -1,10 +1,11 @@
 import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { createQueryClient } from "../../kernel";
 import { renderToString as render } from "react-dom/server";
 import type { MeasurementView, MeasurementRow } from "@pflanzendex/core";
 import { describe, expect, it, vi } from "vitest";
 import { measurementSchema, toMeasurementInput } from "../shared/schemas";
-import { MeasurementHeader } from "./measurement-header/measurement-header";
+import { MeasurementFacts, MeasurementHeader } from "./measurement-header/measurement-header";
 import { MeasureForm } from "./measure-form/measure-form";
 import { MeasurePage } from "./measure-page/measure-page";
 import { MeasurementList } from "./measurement-list/measurement-list";
@@ -12,6 +13,15 @@ import { recordMeasurement, loadMeasurementView } from "../shared/api/measuremen
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
 const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");
+/** The fact line and the facts together, as the measure view and its course layer show them. */
+function Both({ view }: { view: MeasurementView }) {
+  return (
+    <>
+      <MeasurementHeader view={view} />
+      <MeasurementFacts view={view} />
+    </>
+  );
+}
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 
@@ -123,7 +133,7 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
   it('shows "Was messen?", last measurement and last rating', () => {
     const m = measurement({ quality: "etiolated" });
     const html = renderToString(
-      <MeasurementHeader view={view({ measurements: [m], last: m, lastRating: "etiolated" })} />,
+      <Both view={view({ measurements: [m], last: m, lastRating: "etiolated" })} />,
     );
     expect(html).toContain("Was messen?");
     expect(html).toContain("Rosettendurchmesser");
@@ -133,7 +143,7 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
 
   it("US-WAC-05 the last assessment shows date and note of the last measurement", () => {
     const html = renderToString(
-      <MeasurementHeader
+      <Both
         view={view({
           last: measurement({ note: "Blätter wirken blass", quality: "etiolated" }),
           lastRating: "etiolated",
@@ -145,15 +155,27 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(html).toContain("Blätter wirken blass");
   });
 
+  it("US-WAC-01 the page shows one fact line (value and date); the facts are in the layer of the course", () => {
+    const m = measurement();
+    const v = view({ measurements: [m], last: m, lastRating: "healthy" });
+    const page = renderToString(<MeasurementHeader view={v} />);
+    expect(page).toContain("Letzte Messung");
+    expect(page).toContain("12,5\u00a0cm am 03.10.2026");
+    expect(page).not.toContain("Was messen?");
+    const facts = renderToString(<MeasurementFacts view={v} />);
+    expect(facts).toContain("Was messen?");
+    expect(facts).toContain("Letzte Bewertung");
+  });
+
   it("FR-WAC-05 a cutting is marked as Steckling in the growth view, a plant is not", () => {
-    const cutting = renderToString(<MeasurementHeader view={view({ status: "cutting" })} />);
+    const cutting = renderToString(<Both view={view({ status: "cutting" })} />);
     expect(cutting).toContain("Steckling");
-    const plant = renderToString(<MeasurementHeader view={view()} />);
+    const plant = renderToString(<Both view={view()} />);
     expect(plant).not.toContain("Steckling");
   });
 
   it('without measurement: "noch keine Messung", and without species the measure stays "unknown" (P-08)', () => {
-    const html = renderToString(<MeasurementHeader view={view({ growthMeasure: null })} />);
+    const html = renderToString(<Both view={view({ growthMeasure: null })} />);
     expect(html).toContain("noch keine Messung");
     expect(html).toContain("noch keine Bewertung");
     expect(html).toContain("unbekannt");
@@ -218,12 +240,14 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
   it('the page shows "wird geladen" first and offers the way back', () => {
     const html = renderToString(
       <QueryClientProvider client={createQueryClient()}>
-        <MeasurePage
-          api="http://api"
-          token={async () => "tok"}
-          specimen={{ id: "e1", name: "Bogenhanf" }}
-          onBack={vi.fn()}
-        />
+        <MemoryRouter>
+          <MeasurePage
+            api="http://api"
+            token={async () => "tok"}
+            specimen={{ id: "e1", name: "Bogenhanf" }}
+            onBack={vi.fn()}
+          />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
     expect(html).toContain("Messen: Bogenhanf");
