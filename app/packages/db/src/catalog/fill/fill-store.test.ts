@@ -7,10 +7,12 @@ import { findSchemaViolations } from "../../schema-check.ts";
 import {
   CatalogFillPostgres,
   CatalogGapsPostgres,
+  CatalogLoadPostgres,
   ReviewPostgres,
   SpeciesPostgres,
 } from "../index.ts";
 import type { FieldValueRecord, SnapshotRecord } from "./fill-store.ts";
+import type { LoadRecord } from "./catalog-load.ts";
 import type { SpeciesName, SpeciesValues } from "../species.ts";
 
 // US-BES-12, DM-BES-05, DM-BES-06, FR-BES-12, FR-BES-19: the database side of the catalog fill (`make db-up`).
@@ -256,5 +258,66 @@ describe("US-BES-13 gap list store", () => {
     expect(found?.values.germanName).toBeNull();
     expect(found?.checks).toEqual([{ source: "gbif", retrievedAt: "2026-10-18T10:00:00Z" }]);
     expect(rows.some((r) => r.id === proposal)).toBe(false);
+  });
+});
+
+describe("US-BES-12 operator batch store of the start catalog (#991)", () => {
+  const latin = `Batchgenus ${run}`;
+  const record = (name: string, german: string | null): LoadRecord => ({
+    latinName: name,
+    genus: name.split(" ")[0] ?? name,
+    epithet: name.split(" ")[1] ?? "x",
+    germanName: german,
+    englishName: null,
+    familyLatin: "Araceae",
+    familyGerman: null,
+    difficulty: 2,
+    standardLevel: 3,
+    lightDemandLux: 8000,
+    growthMeasure: "height",
+    etiolationSigns: "Lange Triebe.",
+    successCriteria: "Kompakt.",
+    source: "test",
+    names: [{ field: "latin", display: name, norm: name.toLowerCase() }],
+  });
+  const provenance = { license: "CC0-1.0", retrievedOn: "2026-10-30" };
+
+  afterAll(async () => {
+    const c = await admin.connect();
+    try {
+      await c.query("begin");
+      await c.query("set local session_replication_role = replica");
+      await c.query("delete from species where latin_name like $1", [`Batchgenus ${run}%`]);
+      await c.query("commit");
+    } finally {
+      c.release();
+    }
+  });
+
+  it("US-BES-12 the batch stores curated operator species with provenance, once, and skips present ones", async () => {
+    const batch = new CatalogLoadPostgres(owner);
+    const operatorAccount = operator;
+    const rows = [record(`${latin} alpha`, "Deutsch"), record(`${latin} beta`, null)];
+    expect(await batch.load(operatorAccount, rows, provenance)).toEqual(
+      rows.map((r) => r.latinName),
+    );
+    expect(await batch.load(operatorAccount, rows, provenance)).toEqual([]);
+    const present = await batch.presentLatin(rows.map((r) => r.names[0]?.norm ?? ""));
+    expect(present.size).toBe(2);
+    const stored = await admin.query(
+      `select count(*)::int as n from catalog_field_provenance f join species s on s.id = f.species_id
+        where s.latin_name like $1`,
+      [`${latin}%`],
+    );
+    expect(stored.rows[0]).toEqual({ n: 3 }); // two families and one German name; the unknown name has no row
+  });
+
+  it("US-BES-12 P-04 an account without the operator role cannot create operator species and nothing is stored", async () => {
+    const batch = new CatalogLoadPostgres(owner);
+    await expect(batch.load(anna, [record(`${latin} gamma`, null)], provenance)).rejects.toThrow(
+      /operator|reviewer|row-level security/,
+    );
+    const r = await admin.query("select 1 from species where latin_name = $1", [`${latin} gamma`]);
+    expect(r.rowCount).toBe(0);
   });
 });

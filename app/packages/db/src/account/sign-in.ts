@@ -73,3 +73,17 @@ export async function admitAccount(
   if (id) return id;
   return required ? null : findOrCreateAccount(pool, subject);
 }
+
+/**
+ * The account an operator batch acts as (#991): found or created by its subject, then given the `operator` role.
+ * The role is the operator's job and runs on the owner connection (the application role may not write `account_role`);
+ * the account cannot sign in, because no identity provider knows its subject. Idempotent.
+ */
+export async function ensureOperatorAccount(pool: Pool, subject: string): Promise<string> {
+  const id = await findOrCreateAccount(pool, subject);
+  await pool.query(
+    "insert into account_role (account, role) values ($1, 'operator') on conflict do nothing",
+    [id],
+  );
+  return id;
+}
