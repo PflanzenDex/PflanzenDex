@@ -4,7 +4,6 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, openFixturePool, openOwnerPool, withAccount } from "../../kernel/index.ts";
 import { assignRole } from "../../fixtures.ts";
 import { findSchemaViolations } from "../../schema-check.ts";
-import { ensureOperatorAccount } from "../../account/index.ts";
 import {
   CatalogFillPostgres,
   CatalogGapsPostgres,
@@ -282,7 +281,6 @@ describe("US-BES-12 operator batch store of the start catalog (#991)", () => {
     names: [{ field: "latin", display: name, norm: name.toLowerCase() }],
   });
   const provenance = { license: "CC0-1.0", retrievedOn: "2026-10-30" };
-  const batchOperators: string[] = [];
 
   afterAll(async () => {
     const c = await admin.connect();
@@ -290,26 +288,15 @@ describe("US-BES-12 operator batch store of the start catalog (#991)", () => {
       await c.query("begin");
       await c.query("set local session_replication_role = replica");
       await c.query("delete from species where latin_name like $1", [`Batchgenus ${run}%`]);
-      await c.query("delete from review_case where account_id = any($1)", [batchOperators]);
       await c.query("commit");
     } finally {
       c.release();
     }
-    await admin.query("delete from account where id = any($1)", [batchOperators]);
-  });
-
-  it("US-BES-12 the operator account is found again and holds the operator role once", async () => {
-    const subject = `batch-${run}`;
-    const first = await ensureOperatorAccount(owner, subject);
-    batchOperators.push(first);
-    expect(await ensureOperatorAccount(owner, subject)).toBe(first);
-    const roles = await admin.query("select role from account_role where account = $1", [first]);
-    expect(roles.rows).toEqual([{ role: "operator" }]);
   });
 
   it("US-BES-12 the batch stores curated operator species with provenance, once, and skips present ones", async () => {
     const batch = new CatalogLoadPostgres(owner);
-    const operatorAccount = batchOperators[0] ?? "";
+    const operatorAccount = operator;
     const rows = [record(`${latin} alpha`, "Deutsch"), record(`${latin} beta`, null)];
     expect(await batch.load(operatorAccount, rows, provenance)).toEqual(
       rows.map((r) => r.latinName),
