@@ -45,9 +45,9 @@ typecheck: ## Strict TypeScript in all packages
 docs-check: ## Lint markdown and check relative links (QG-U2)
 	cd $(APP) && npm run docs
 
-db-up: ## Start the test database (PostgreSQL 16 in Docker) unless it is running
+db-up: ## Start the test database (PostgreSQL 18 in Docker) unless it is running
 	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) \
-		-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pflanzendex_test -p 127.0.0.1:$(DB_PORT):5432 postgres:16-alpine >/dev/null
+		-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pflanzendex_test -p 127.0.0.1:$(DB_PORT):5432 postgres:18-alpine >/dev/null
 	@until docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test; do sleep 1; done
 
 db-down: ## Remove the test database
