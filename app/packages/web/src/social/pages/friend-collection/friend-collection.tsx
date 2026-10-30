@@ -1,7 +1,11 @@
 import { useCallback, useState } from "react";
 import { Link } from "react-router";
 import type { FriendCard as Card } from "@pflanzendex/core";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import {
+  LayerHost,
+  LayerSheet,
+  useLayer,
+} from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { useIsShort } from "@/components/shared/responsive/pager/card-page-size";
 import { Pager } from "@/components/shared/responsive/pager/pager";
 import { useIsLg, useIsMd } from "@/lib/use-breakpoint";
@@ -151,44 +155,44 @@ export function FriendCollectionPage(props: {
   const equipment = useLayer(EQUIPMENT_LAYER);
   const title = collectionTitle(loaded.value?.friend.name ?? null);
   return (
-    <div className="rounded-2xl border border-border bg-card px-4 py-4 text-card-foreground md:p-7">
-      <section aria-labelledby="friend-collection-title" className="flex min-w-0 flex-col gap-3">
-        <div className="flex gap-2">
-          <Button asChild variant="outline" size="touch" className="min-w-0 flex-1 px-2 text-sm">
-            <Link to="/friends">Zurück zu Freunde</Link>
-          </Button>
-          <EquipmentOpener />
-        </div>
-        <h1 id="friend-collection-title" className="text-2xl font-semibold">
-          {title}
-        </h1>
-        <LoadFrame
-          queryKey={queryKey}
-          token={props.token}
-          load={load}
-          loadingText="Sammlung wird geladen …"
-          loadingFallback={<FriendCollectionSkeleton label="Sammlung wird geladen …" />}
-          heading="Sammlung eines Freundes"
-        >
-          {(data) => (
-            <div className="flex min-w-0 gap-4">
-              <div className="min-w-0 flex-1">
+    <LayerHost>
+      <div className="rounded-2xl border border-border bg-card px-4 py-4 text-card-foreground md:p-7">
+        <section aria-labelledby="friend-collection-title" className="flex min-w-0 flex-col gap-3">
+          <div className="flex gap-2">
+            <Button asChild variant="outline" size="touch" className="min-w-0 flex-1 px-2 text-sm">
+              <Link to="/friends">Zurück zu Freunde</Link>
+            </Button>
+            <EquipmentOpener />
+          </div>
+          <h1 id="friend-collection-title" className="text-2xl font-semibold">
+            {title}
+          </h1>
+          <LoadFrame
+            queryKey={queryKey}
+            token={props.token}
+            load={load}
+            loadingText="Sammlung wird geladen …"
+            loadingFallback={<FriendCollectionSkeleton label="Sammlung wird geladen …" />}
+            heading="Sammlung eines Freundes"
+          >
+            {(data) => (
+              <>
                 <Body name={data.friend.name} cards={data.cards} api={api} token={props.token} />
-              </div>
-              <LayerSheet id={EQUIPMENT_LAYER} title={`Geräte von ${nameOf(data.friend.name)}`}>
-                {equipment.open ? (
-                  <FriendEquipment
-                    api={api}
-                    token={props.token}
-                    friendId={friendId}
-                    name={nameOf(data.friend.name)}
-                  />
-                ) : null}
-              </LayerSheet>
-            </div>
-          )}
-        </LoadFrame>
-      </section>
-    </div>
+                <LayerSheet id={EQUIPMENT_LAYER} title={`Geräte von ${nameOf(data.friend.name)}`}>
+                  {equipment.open ? (
+                    <FriendEquipment
+                      api={api}
+                      token={props.token}
+                      friendId={friendId}
+                      name={nameOf(data.friend.name)}
+                    />
+                  ) : null}
+                </LayerSheet>
+              </>
+            )}
+          </LoadFrame>
+        </section>
+      </div>
+    </LayerHost>
   );
 }

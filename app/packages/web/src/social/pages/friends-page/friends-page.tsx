@@ -106,35 +106,33 @@ function Body(props: {
   const add = useLayer("add");
   const open = data.requests.incoming.length;
   return (
-    <div className="flex min-w-0 gap-4">
-      <div className="flex min-w-0 flex-1 flex-col gap-4">
-        {data.friends.length === 0 && (
-          <p className="rounded-lg border border-dashed border-border p-3">
-            Noch keine Freunde. „Freund hinzufügen“ ist der nächste Schritt.
-          </p>
-        )}
-        <Button
-          type="button"
-          size="touch"
-          aria-haspopup="dialog"
-          aria-expanded={add.open}
-          onClick={(event) => add.openLayer(event.currentTarget)}
-        >
-          Freund hinzufügen
-        </Button>
-        <Tiles open={open} counts={{ news, offers, matching }} options={options} />
-        <div className="flex flex-col gap-2">
-          <LayerRow id="friends" name="Meine Freunde" state={friendsText(data.friends.length)} />
-          <LayerRow
-            id="sharing"
-            name="Was Freunde sehen"
-            state={sharingChoice(data.specimens, data.shared)}
-          />
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Ohne deine Freigabe sieht niemand etwas. <HelpOpener />
+    <div className="flex min-w-0 flex-col gap-4">
+      {data.friends.length === 0 && (
+        <p className="rounded-lg border border-dashed border-border p-3">
+          Noch keine Freunde. „Freund hinzufügen“ ist der nächste Schritt.
         </p>
+      )}
+      <Button
+        type="button"
+        size="touch"
+        aria-haspopup="dialog"
+        aria-expanded={add.open}
+        onClick={(event) => add.openLayer(event.currentTarget)}
+      >
+        Freund hinzufügen
+      </Button>
+      <Tiles open={open} counts={{ news, offers, matching }} options={options} />
+      <div className="flex flex-col gap-2">
+        <LayerRow id="friends" name="Meine Freunde" state={friendsText(data.friends.length)} />
+        <LayerRow
+          id="sharing"
+          name="Was Freunde sehen"
+          state={sharingChoice(data.specimens, data.shared)}
+        />
       </div>
+      <p className="text-sm text-muted-foreground">
+        Ohne deine Freigabe sieht niemand etwas. <HelpOpener />
+      </p>
       <AddFriendLayer api={api} token={token} onWritten={props.onWritten} />
       <ListLayers api={api} token={token} data={data} onWritten={props.onWritten} />
       <HelpLayer />

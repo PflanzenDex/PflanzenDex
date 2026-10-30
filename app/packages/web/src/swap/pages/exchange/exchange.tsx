@@ -2,7 +2,11 @@ import { useCallback } from "react";
 import { Link, useSearchParams } from "react-router";
 import type { OfferView } from "@pflanzendex/core";
 import { SegmentedControl } from "@/components/segmented-control/segmented-control";
-import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import {
+  LayerHost,
+  LayerSheet,
+  useLayer,
+} from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { Button } from "@/components/ui/button/button";
 import { errorText } from "@/lib/error-text";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
@@ -67,37 +71,35 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
   const layer = useLayer(OFFER_LAYER);
   const [part, choose] = usePart();
   return (
-    <div className="flex min-w-0 gap-4">
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        {withdraw.message && (
-          <p role="status" className="rounded-lg border border-border p-3">
-            {withdraw.message}
-          </p>
-        )}
-        {withdraw.error && (
-          <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
-            {errorText(withdraw.error.code)}
-          </p>
-        )}
-        <div className="flex flex-wrap items-center gap-2">
-          <SegmentedControl label="Bereich" options={PARTS} value={part} onChange={choose} />
-        </div>
-        {part === "mine" && (
-          <OfferList
-            offers={props.data.offers}
-            busy={withdraw.running}
-            onWithdraw={(o: OfferView) =>
-              void withdraw.run(
-                (t) => withdrawOffer(api, t, o.id),
-                `Das Angebot für ${o.specimenName ?? "die Pflanze"} ist zurückgezogen.`,
-              )
-            }
-          />
-        )}
-        {part === "requests" && <SwapRequests api={api} token={props.token} />}
-        {part === "friends" && <FriendOffers api={api} token={props.token} />}
-        {part === "history" && <SwapHistory api={api} token={props.token} />}
+    <div className="flex min-w-0 flex-col gap-2">
+      {withdraw.message && (
+        <p role="status" className="rounded-lg border border-border p-3">
+          {withdraw.message}
+        </p>
+      )}
+      {withdraw.error && (
+        <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
+          {errorText(withdraw.error.code)}
+        </p>
+      )}
+      <div className="flex flex-wrap items-center gap-2">
+        <SegmentedControl label="Bereich" options={PARTS} value={part} onChange={choose} />
       </div>
+      {part === "mine" && (
+        <OfferList
+          offers={props.data.offers}
+          busy={withdraw.running}
+          onWithdraw={(o: OfferView) =>
+            void withdraw.run(
+              (t) => withdrawOffer(api, t, o.id),
+              `Das Angebot für ${o.specimenName ?? "die Pflanze"} ist zurückgezogen.`,
+            )
+          }
+        />
+      )}
+      {part === "requests" && <SwapRequests api={api} token={props.token} />}
+      {part === "friends" && <FriendOffers api={api} token={props.token} />}
+      {part === "history" && <SwapHistory api={api} token={props.token} />}
       <LayerSheet id={OFFER_LAYER} title="Zum Tausch anbieten">
         {layer.open ? (
           <OfferForm
@@ -123,46 +125,50 @@ export function ExchangePage(props: { api: string; token: Token }) {
   const reload = useInvalidate(KEY);
   const load = useCallback((t: string) => loadExchange(api, t), [api]);
   return (
-    <div className="rounded-2xl border border-border bg-card px-4 py-3 text-card-foreground md:p-7">
-      <section aria-labelledby="exchange-title" className="flex min-w-0 flex-col gap-2">
-        <div className="flex gap-2">
-          <Button
-            asChild
-            variant="outline"
-            size="touch"
-            className="min-w-0 flex-1 px-1.5 text-[13px]"
+    <LayerHost>
+      <div className="rounded-2xl border border-border bg-card px-4 py-3 text-card-foreground md:p-7">
+        <section aria-labelledby="exchange-title" className="flex min-w-0 flex-col gap-2">
+          <div className="flex gap-2">
+            <Button
+              asChild
+              variant="outline"
+              size="touch"
+              className="min-w-0 flex-1 px-1.5 text-[13px]"
+            >
+              <Link to="/friends">Zurück zu Freunde</Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="touch"
+              className="min-w-0 flex-1 px-1.5 text-[13px]"
+            >
+              <Link to="/friends/match">Passende Angebote</Link>
+            </Button>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <h1 id="exchange-title" className="text-2xl font-semibold">
+              Tauschbörse
+            </h1>
+            <OfferOpener />
+          </div>
+          <p className="hidden text-muted-foreground md:block">
+            Nur deine Freunde sehen ein Angebot, und nur, was du für sie freigegeben hast.
+          </p>
+          <LoadFrame
+            queryKey={KEY}
+            token={token}
+            load={load}
+            loadingText="Tauschbörse wird geladen …"
+            loadingFallback={<ExchangeSkeleton label="Tauschbörse wird geladen …" />}
+            heading="Tauschbörse"
           >
-            <Link to="/friends">Zurück zu Freunde</Link>
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            size="touch"
-            className="min-w-0 flex-1 px-1.5 text-[13px]"
-          >
-            <Link to="/friends/match">Passende Angebote</Link>
-          </Button>
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          <h1 id="exchange-title" className="text-2xl font-semibold">
-            Tauschbörse
-          </h1>
-          <OfferOpener />
-        </div>
-        <p className="hidden text-muted-foreground md:block">
-          Nur deine Freunde sehen ein Angebot, und nur, was du für sie freigegeben hast.
-        </p>
-        <LoadFrame
-          queryKey={KEY}
-          token={token}
-          load={load}
-          loadingText="Tauschbörse wird geladen …"
-          loadingFallback={<ExchangeSkeleton label="Tauschbörse wird geladen …" />}
-          heading="Tauschbörse"
-        >
-          {(data: ExchangeData) => <Body data={data} api={api} token={token} onWritten={reload} />}
-        </LoadFrame>
-      </section>
-    </div>
+            {(data: ExchangeData) => (
+              <Body data={data} api={api} token={token} onWritten={reload} />
+            )}
+          </LoadFrame>
+        </section>
+      </div>
+    </LayerHost>
   );
 }
