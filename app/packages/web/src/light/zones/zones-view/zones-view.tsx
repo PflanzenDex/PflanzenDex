@@ -16,6 +16,7 @@ import {
   type ZoneFields,
 } from "../../shared/schemas";
 import { lux, ppfd } from "../../shared/texts";
+import { zoneLabel } from "@pflanzendex/core";
 
 export interface ZoneInput {
   name: string;
@@ -127,7 +128,7 @@ export function ZoneCard(props: {
     );
   return (
     <li className={ENTRY}>
-      <h3 className="text-lg font-semibold">{zone.name}</h3>
+      <h3 className="text-lg font-semibold">{zoneLabel(zone.name)}</h3>
       <p className="text-sm text-muted-foreground">
         bis {lux(zone.luxCeiling)} · {ppfd(zone.ppfd)} · Platz {zone.sortOrder}
       </p>

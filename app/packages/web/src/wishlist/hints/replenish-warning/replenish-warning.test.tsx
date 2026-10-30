@@ -19,21 +19,21 @@ const low: Replenishment = {
     {
       zoneId: "z3",
       zoneNumber: 3,
-      name: "Lampe 3",
+      name: "Zone 3",
       open: 1,
-      text: "Nachschub nötig: Lampe 3 (1 offener Kandidat)",
+      text: "Nachschub nötig: Zone 3 (1 offener Kandidat)",
     },
   ],
-  nextAction: "Erfasse einen Wunsch mit Ziel-Zone Lampe 3 (Formular „Wunsch erfassen“).",
+  nextAction: "Erfasse einen Wunsch mit Ziel-Zone Zone 3 (Formular „Wunsch erfassen“).",
 };
 
 describe("US-WUN-02 replenishment warning in the wishlist", () => {
   it("US-WUN-02 shows the warning per zone below the buffer with what to do next", () => {
     render(<ReplenishWarning replenishment={low} />);
     expect(screen.getByRole("status").textContent).toContain(
-      "Nachschub nötig: Lampe 3 (1 offener Kandidat)",
+      "Nachschub nötig: Zone 3 (1 offener Kandidat)",
     );
-    expect(screen.getByText(/Erfasse einen Wunsch mit Ziel-Zone Lampe 3/)).toBeTruthy();
+    expect(screen.getByText(/Erfasse einen Wunsch mit Ziel-Zone Zone 3/)).toBeTruthy();
   });
 
   it("US-WUN-02 shows nothing while every zone has the buffer", () => {
@@ -51,7 +51,7 @@ describe("US-ENT-07 Discover for the zone from the warning", () => {
         <ReplenishWarning replenishment={withDiscover} />
       </MemoryRouter>,
     );
-    const link = screen.getByRole("link", { name: "Entdecken für Lampe 3" });
+    const link = screen.getByRole("link", { name: "Entdecken für Zone 3" });
     expect(link.getAttribute("href")).toBe("/discover?view=suggestions&zone=3");
   });
 

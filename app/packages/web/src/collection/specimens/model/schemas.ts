@@ -7,7 +7,7 @@ export const MARKER_MISSING =
 export const MARKERS_MISSING =
   "Bitte vergib zuerst alle fehlenden Kennzeichen, bevor du speicherst.";
 export const REASON_MISSING =
-  "Bitte nenne einen Grund, damit du später noch weißt, warum das Exemplar im Archiv ist.";
+  "Bitte nenne einen Grund, damit du später noch weißt, warum die Pflanze im Archiv ist.";
 
 /** The create form (US-BES-02, US-BES-03, US-BES-04, FR-BES-04): all fields hold text, an empty text means unknown. */
 export const createSchema = (rule: { required: boolean; missing: readonly Sibling[] }) =>

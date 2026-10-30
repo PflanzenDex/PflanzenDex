@@ -53,7 +53,7 @@ export function EquipmentTiles({ data }: { data: EquipmentData }) {
       />
       <Tile
         id={WISHES_LAYER}
-        name="Wünsche"
+        name="Wunschliste"
         info={count(data.wishes.open.length, "offener", "offene")}
       />
     </div>

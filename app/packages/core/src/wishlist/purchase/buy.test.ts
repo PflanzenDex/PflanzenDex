@@ -64,7 +64,7 @@ describe("US-WUN-03 record a purchase", () => {
     if (!r.ok) throw new Error(r.error.code);
     expect(r.value.hint.text).toContain("Echte Aloe (Aloe vera)");
     expect(r.value.hint.text).toContain("Gekauft");
-    expect(r.value.hint.nextAction).toContain("Exemplar");
+    expect(r.value.hint.nextAction).toContain("Pflanze");
   });
 
   it("US-WUN-03 buying an already bought wish again changes nothing and says so (idempotent)", async () => {
@@ -136,6 +136,6 @@ describe("US-WUN-03 the history of bought wishes", () => {
     const history = await wishBought({ wishes }, "anna");
     expect(history.bought.map((w) => w.name)).toEqual(["Aloe vera", "Cereus"]);
     expect(history.hint.text).toBe("2 Wünsche sind als gekauft vermerkt.");
-    expect(history.hint.nextAction).toContain("Exemplar");
+    expect(history.hint.nextAction).toContain("Pflanze");
   });
 });

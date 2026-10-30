@@ -40,8 +40,8 @@ const riddle = {
   specimenId: "e1",
   specimenName: "Amaryllis",
   latinName: "Hippeastrum",
-  text: "„Amaryllis“ (Hippeastrum) hat noch keine bestimmte Art, das Exemplar zählt noch nicht.",
-  nextAction: "Bestimme die Art, dann zählt es.",
+  text: "„Amaryllis“ (Hippeastrum) hat noch keine bestimmte Art, die Pflanze zählt noch nicht.",
+  nextAction: "Bestimme die Art, dann zählt sie.",
 };
 const unidentified = [riddle];
 
@@ -83,7 +83,7 @@ describe("US-POK-06 page of the caught species", () => {
     const layer = await screen.findByRole("dialog", { name: "Opuntia microdasys" });
     expect(within(layer).getByText("Gattung: Opuntia")).toBeTruthy();
     expect(within(layer).getByText("'Albispina'")).toBeTruthy();
-    expect(within(layer).getByText("2 Exemplare")).toBeTruthy();
+    expect(within(layer).getByText("2 Pflanzen")).toBeTruthy();
   });
 
   it("US-POK-06 · US-QS-22 the progress row names the rank and the caught species in one row", async () => {
@@ -105,7 +105,7 @@ describe("US-POK-06 page of the caught species", () => {
     fakeServer(() => response(200, { ownership: { caught: [lemon], unidentified } }));
     view(<PokedexPage api="http://api" token={token} />, "/?sheet=uncounted");
     expect(await screen.findByText(riddle.text)).toBeTruthy();
-    expect(screen.getByText("Bestimme die Art, dann zählt es.")).toBeTruthy();
+    expect(screen.getByText("Bestimme die Art, dann zählt sie.")).toBeTruthy();
     expect(screen.getByRole("dialog", { name: "Noch nicht gezählt" })).toBeTruthy();
   });
 
@@ -113,7 +113,7 @@ describe("US-POK-06 page of the caught species", () => {
     fakeServer(() => response(200, { ownership: { caught: [lemon], unidentified } }));
     view(<PokedexPage api="http://api" token={token} />);
     const row = await screen.findByRole("button", { name: /· 1 gefangen/ });
-    expect(row.textContent).toContain("1 Exemplar zählt noch nicht");
+    expect(row.textContent).toContain("1 Pflanze zählt noch nicht");
     await userEvent.click(row);
     await userEvent.click(await screen.findByRole("button", { name: "Noch nicht gezählt (1)" }));
     expect(await screen.findByText(riddle.text)).toBeTruthy();
@@ -123,9 +123,9 @@ describe("US-POK-06 page of the caught species", () => {
     fakeServer(() => response(200, { ownership: { caught: [], unidentified: [] } }));
     view(<PokedexPage api="http://api" token={token} />);
     await screen.findByText(/Noch keine Art gefangen/);
-    expect(screen.getByText(/Lege ein Exemplar/).textContent).toContain("Exemplar");
+    expect(screen.getByText(/Lege eine Pflanze/).textContent).toContain("Pflanze");
     // DS-26, DS-48: the empty state carries the next step as a control, not only as text.
-    expect(screen.getByRole("link", { name: "Exemplar anlegen" }).getAttribute("href")).toBe(
+    expect(screen.getByRole("link", { name: "Pflanze anlegen" }).getAttribute("href")).toBe(
       "/collection",
     );
     expect(screen.queryByRole("list", { name: "Gefangene Arten" })).toBeNull();

@@ -21,7 +21,7 @@ export function OfferNotices(props: {
       {!p.shared && (
         <div className="rounded-lg border border-warning-border p-3">
           <p>
-            Dieses Exemplar ist nicht für Freunde freigegeben. Ein Angebot braucht diese Freigabe.
+            Diese Pflanze ist nicht für Freunde freigegeben. Ein Angebot braucht diese Freigabe.
           </p>
           <Button
             type="button"

@@ -25,6 +25,7 @@ import {
   SENSORS_LAYER,
   WISHES_LAYER,
 } from "../../tiles/equipment-tiles/equipment-tiles";
+import { zoneLabel } from "@pflanzendex/core";
 
 type Lamps = ReturnType<typeof useLampActions>;
 type Wishes = ReturnType<typeof useWishActions>;
@@ -36,7 +37,7 @@ function Nothing(props: { title: string; description: string }) {
 
 function Items(props: { data: EquipmentData; lamps: Lamps }) {
   const { data, lamps } = props;
-  const zoneNames = new Map(data.zones.zones.map((z) => [z.zoneId, z.name]));
+  const zoneNames = new Map(data.zones.zones.map((z) => [z.zoneId, zoneLabel(z.name)]));
   if (data.items.length === 0)
     return (
       <Nothing

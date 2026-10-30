@@ -17,7 +17,7 @@ export async function seedAnna(ctx: Ctx): Promise<{ specimens: Map<string, strin
   const { api, sub } = ctx;
   await setUp(ctx, "Anna", "few");
   const zones = await ensureZones(ctx);
-  const locations = await ensureLocations(ctx, zones, [{ name: "Zuhause", zone: "Lampe 2" }]);
+  const locations = await ensureLocations(ctx, zones, [{ name: "Zuhause", zone: "Zone 2" }]);
   const species = await speciesByLatin(ctx, PLANTS);
   const specimens = await ensureSpecimens(
     ctx,

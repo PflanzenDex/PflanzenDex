@@ -30,7 +30,7 @@ export function HandoverBox(props: {
     <div className="grid gap-2">
       {recipient && (
         <label className="grid gap-1 text-sm font-medium">
-          Kennzeichen für dein neues Exemplar (nur nötig, wenn du die Art schon hast)
+          Kennzeichen für dein neue Pflanze (nur nötig, wenn du die Art schon hast)
           <Input value={marker} maxLength={40} onChange={(e) => setMarker(e.target.value)} />
         </label>
       )}

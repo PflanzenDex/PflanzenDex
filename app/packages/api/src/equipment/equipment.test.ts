@@ -77,7 +77,7 @@ describe("US-EQU-01 record equipment through the API", () => {
     const r = await call(subA, "POST", "/equipment", {
       type: "Lamp",
       name: "Lampe 3",
-      lightZoneId: zoneA["Lampe 3"],
+      lightZoneId: zoneA["Zone 3"],
     });
     expect(r.status).toBe(201);
     expect(r.body["equipment"]).toMatchObject({

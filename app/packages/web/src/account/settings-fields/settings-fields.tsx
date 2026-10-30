@@ -67,9 +67,7 @@ function ThresholdsField({ control }: FieldProps) {
             <Input {...field} inputMode="numeric" autoComplete="off" />
           </FormControl>
           <FormDescription>
-            Vier Lux-Werte von hoch nach niedrig: ab dem ersten steht die Pflanze direkt unter der
-            Lampe, dann sehr nah, nah und in mittlerem Abstand. Vorgabe: {DEFAULTS.join(", ")} (eine
-            Annahme, du kannst sie anpassen). Die Übersicht „Lichthunger“ nutzt diese Werte.
+            Vier Lux-Werte von hoch nach niedrig. Vorgabe: {DEFAULTS.join(", ")} (eine Annahme).
           </FormDescription>
           <FormMessage />
         </FormItem>

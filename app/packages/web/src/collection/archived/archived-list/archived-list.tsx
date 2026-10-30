@@ -21,7 +21,7 @@ export function ArchivedList(props: {
         Archiv
       </h2>
       <Quiet className="mb-3">
-        Archivierte Exemplare fehlen in Liste und Auswertungen. Ihre Historie bleibt erhalten.
+        Archivierte Pflanzen fehlen in Liste und Auswertungen. Ihre Historie bleibt erhalten.
       </Quiet>
       <ul className={GRID}>
         {props.entries.map((e) => (

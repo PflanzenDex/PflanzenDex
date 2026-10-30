@@ -22,9 +22,9 @@ export function phaseChangeOccasions(rows: readonly PhasesRow[]): Occasion[] {
           {
             id: `phase_change:${r.specimenId}:${r.nextChange.date}`,
             occasion: "phase",
-            text: `„${r.name}“: heute beginnt die ${PHASE_NAME[r.nextChange.phase]}, das Exemplar steht noch am alten Standort.`,
+            text: `„${r.name}“: heute beginnt die ${PHASE_NAME[r.nextChange.phase]}, die Pflanze steht noch am alten Standort.`,
             nextAction:
-              "Stelle das Exemplar um und bestätige es unter Pflegephasen mit „Jetzt umgestellt“.",
+              "Stelle die Pflanze um und bestätige sie unter Pflegephasen mit „Jetzt umgestellt“.",
           },
         ]
       : [],

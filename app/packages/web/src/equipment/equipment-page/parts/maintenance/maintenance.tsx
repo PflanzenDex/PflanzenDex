@@ -7,6 +7,7 @@ import { currentTimeZone } from "../../../../kernel";
 import type { EquipmentRow } from "../../../equipment-api";
 import type { MaintenanceInput } from "../../../upkeep-api";
 import { wholeNumber } from "../../../lamp-light/parse";
+import { keepTogether } from "@/lib/format";
 
 const LABEL = "flex min-w-0 flex-col gap-1 text-sm";
 const UNKNOWN = "unbekannt";
@@ -43,12 +44,14 @@ function Values({ item }: { item: EquipmentRow }) {
       ? UNKNOWN
       : `${item.lifetimeValue} (Herstellerangabe, Quelle: ${item.lifetimeSource ?? UNKNOWN})`;
   return (
-    <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+    <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm tabular-nums">
       <dt>In Betrieb seit</dt>
       <dd className="m-0">{item.inOperationSince ?? UNKNOWN}</dd>
       <dt>Prüfintervall</dt>
       <dd className="m-0">
-        {item.checkIntervalDays === null ? "keins gesetzt" : `alle ${item.checkIntervalDays} Tage`}
+        {item.checkIntervalDays === null
+          ? "keins gesetzt"
+          : keepTogether(`alle ${item.checkIntervalDays} Tage`)}
       </dd>
       <dt>Zuletzt geprüft</dt>
       <dd className="m-0">{item.lastCheckedOn ?? "noch nie"}</dd>

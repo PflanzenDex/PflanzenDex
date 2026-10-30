@@ -69,7 +69,7 @@ export function Entry(props: {
         </p>
       )}
       {status === "location_missing" && !canSwitch && (
-        <p className="font-semibold">Weise dem Exemplar unter „Hinweise“ einen Standort zu.</p>
+        <p className="font-semibold">Weise der Pflanze unter „Hinweise“ einen Standort zu.</p>
       )}
       {status === "in_place" && z.targetLocationId === null && (
         <p className="font-semibold">

@@ -80,7 +80,7 @@ describe("US-BES-03 DS-48 invalid submission of the marker", () => {
     render(page(species));
     const marker = await screen.findByLabelText("Kennzeichen");
     await userEvent.clear(marker);
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await waitFor(() => expect(document.activeElement).toBe(marker));
     expect(marker.getAttribute("aria-invalid")).toBe("true");
     expect(describedText(marker)).toContain("Bitte gib ein Kennzeichen an");
@@ -92,7 +92,7 @@ describe("US-BES-03 DS-48 invalid submission of the marker", () => {
     render(page(species));
     const missing = await screen.findByLabelText("Kennzeichen für „Bogenhanf“");
     await userEvent.type(screen.getByLabelText("Kennzeichen"), "rot");
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await waitFor(() => expect(document.activeElement).toBe(missing));
     expect(describedText(missing)).toContain("fehlenden Kennzeichen");
     expect(posts).toHaveLength(0);
@@ -168,7 +168,7 @@ describe("US-BES-08 DS-26 an empty view offers the next action", () => {
     const open = vi.fn();
     render(<HintsPage api="http://api" token={async () => "tok"} onOpen={open} />);
     expect(await screen.findByText(/Keine Hinweise/)).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Zum Bestand" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zur Sammlung" }));
     expect(open).toHaveBeenCalledWith("collection");
   });
 
@@ -186,7 +186,7 @@ describe("US-BES-08 DS-26 an empty view offers the next action", () => {
         />
       </MemoryRouter>,
     );
-    await screen.findByText(/Du hast noch kein Exemplar/);
+    await screen.findByText(/Du hast noch keine Pflanze/);
     await userEvent.click(screen.getByRole("button", { name: "Art wählen" }));
     expect(choose).toHaveBeenCalledTimes(1);
   });

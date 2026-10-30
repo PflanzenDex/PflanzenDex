@@ -40,7 +40,7 @@ export function usePlanning(api: string, token: Token, onPlanned: () => void) {
   return { running, message, error, send };
 }
 
-const LOADING = "Exemplare werden geladen …";
+const LOADING = "Pflanzen werden geladen …";
 
 /** The form to plan, with what the last attempt said; without a specimen it points to the collection (P-09). */
 export function Planning(props: {
@@ -60,9 +60,9 @@ export function Planning(props: {
       skeleton={<TreatmentFormSkeleton label={LOADING} />}
       empty={
         <EmptyState
-          title="Du hast noch kein Exemplar."
-          description="Lege zuerst ein Exemplar im Bestand an."
-          action={{ label: "Zum Bestand", href: "/collection" }}
+          title="Du hast noch keine Pflanze."
+          description="Lege zuerst eine Pflanze in der Sammlung an."
+          action={{ label: "Zur Sammlung", href: "/collection" }}
         />
       }
       offline={request.offline}

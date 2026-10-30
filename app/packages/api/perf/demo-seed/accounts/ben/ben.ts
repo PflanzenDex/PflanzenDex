@@ -62,8 +62,8 @@ export async function seedBen(
   );
   await seedBenEquipment(ctx, zones);
   await ensureWishes(ctx, [
-    { name: "Anthurium clarinervium", zone: zones.get("Lampe 3") ?? "" },
-    { name: "Monstera adansonii", zone: zones.get("Lampe 3") ?? "" },
+    { name: "Anthurium clarinervium", zone: zones.get("Zone 3") ?? "" },
+    { name: "Monstera adansonii", zone: zones.get("Zone 3") ?? "" },
   ]);
   // The cutting offered to friends (swap) later in `links`; sharing it with friends is the precondition (US-SOZ-08).
   await shareSpecimens(ctx, pick("Pilea peperomioides|Ableger", "Monstera deliciosa|Ableger"));

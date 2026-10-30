@@ -15,13 +15,15 @@ const moment = (record: { ratePerYear: number } | null) =>
 describe("US-ACH-05 growth moment note", () => {
   it("US-ACH-05 shows N cm since the first measurement after saving", () => {
     render(<GrowthMomentNote moments={moment(null)} justSaved />);
-    expect(screen.getByRole("status").textContent).toBe("Wachstumsmoment: 30 cm seit 01.01.2025.");
+    expect(screen.getByRole("status").textContent).toBe(
+      "Wachstumsmoment: 30\u00a0cm seit 01.01.2025.",
+    );
   });
 
   it("US-ACH-05 names a new personal record with the yearly rate", () => {
     render(<GrowthMomentNote moments={moment({ ratePerYear: 30.04 })} justSaved />);
     expect(screen.getByRole("status").textContent).toContain(
-      "Neuer persönlicher Rekord: 30 cm/Jahr.",
+      "Neuer persönlicher Rekord: 30\u00a0cm/Jahr.",
     );
   });
 

@@ -44,9 +44,9 @@ function History(props: {
       loadingFallback={<TreatmentHistorySkeleton label="Verlauf wird geladen …" />}
       empty={{
         isEmpty: (rows: readonly TreatmentRow[]) => rows.length === 0,
-        title: "Noch keine erledigte Behandlung für dieses Exemplar.",
+        title: "Noch keine erledigte Behandlung für diese Pflanze.",
         description: "Hake oben einen offenen Termin mit „Erledigt“ ab, dann erscheint er hier.",
-        action: { label: "Anderes Exemplar wählen", onClick: props.onChoose },
+        action: { label: "Andere Pflanze wählen", onClick: props.onChoose },
       }}
     >
       {(rows: readonly TreatmentRow[]) => (
@@ -81,14 +81,14 @@ export function TreatmentHistory(props: {
         Erledigte Behandlungen
       </Title>
       <div className="flex max-w-xl flex-col gap-2">
-        <Label htmlFor="history-specimen">Exemplar für den Verlauf</Label>
+        <Label htmlFor="history-specimen">Pflanze für den Verlauf</Label>
         <Select
           id="history-specimen"
           ref={choice}
           value={specimen}
           onChange={(e) => setSpecimen(e.target.value)}
         >
-          <option value="">Exemplar wählen …</option>
+          <option value="">Pflanze wählen …</option>
           {props.specimens.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
@@ -98,7 +98,7 @@ export function TreatmentHistory(props: {
       </div>
       {specimen === "" ? (
         <p className="text-muted-foreground">
-          Wähle ein Exemplar, um erledigte Behandlungen zu sehen.
+          Wähle eine Pflanze, um erledigte Behandlungen zu sehen.
         </p>
       ) : (
         <History

@@ -44,7 +44,7 @@ export function ExportCard(props: { api: string; token: Token }) {
     <div className="flex min-w-0 max-w-xl flex-col gap-3 rounded-card bg-card p-5 shadow-elevation-1">
       <h3 className="m-0 text-lg font-semibold">Meine Daten herunterladen</h3>
       <p className="m-0 text-sm text-muted-foreground">
-        Du bekommst ein ZIP-Archiv mit allen deinen Daten: Exemplare, Messungen, Behandlungen,
+        Du bekommst ein ZIP-Archiv mit allen deinen Daten: Pflanzen, Messungen, Behandlungen,
         Wünsche, Equipment, Einstellungen, Freigaben, deine Seite der Freundschaften und Tausche
         sowie die KI-Verbindungen. Die Datei data.json ist ein offenes Format, deine Fotos liegen im
         Ordner photos. Gleiche Daten ergeben dieselbe Datei. Zugangsdaten für Push-Mitteilungen sind

@@ -45,7 +45,7 @@ function hintFor(friends: number, events: number, shared: number): Feed["hint"] 
     return {
       text: "Deine Freunde haben noch nichts freigegeben.",
       nextAction:
-        "Bitte sie, Exemplare unter „Was Freunde sehen“ freizugeben, und gib selbst etwas frei.",
+        "Bitte sie, Pflanzen unter „Was Freunde sehen“ freizugeben, und gib selbst etwas frei.",
     };
   if (events === 0)
     return {

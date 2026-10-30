@@ -49,7 +49,7 @@ export function SensorsView(props: { view: SensorView; actions: SensorActions })
                 onChange={(e) => actions.onTarget(s, toTarget(e.target.value))}
               >
                 <option value="">Keinem (nicht zugeordnet)</option>
-                <optgroup label="Exemplare">
+                <optgroup label="Pflanzen">
                   {view.specimens.map((x) => (
                     <option key={x.id} value={`specimen:${x.id}`}>
                       {x.name}

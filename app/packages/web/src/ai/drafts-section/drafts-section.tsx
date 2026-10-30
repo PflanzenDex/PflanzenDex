@@ -91,7 +91,7 @@ function List(props: { api: string; token: Token; rows: readonly AiDraftRow[] })
     <div className="flex max-w-xl flex-col gap-3">
       <p className="m-0 text-sm text-muted-foreground">
         Ergebnisse deines KI-Clients zählen erst, wenn du sie übernimmst. Offene Entwürfe verfallen
-        nach 14 Tagen und bleiben danach sichtbar.
+        nach 14&nbsp;Tagen und bleiben danach sichtbar.
       </p>
       {props.rows.length === 0 ? (
         <p className="m-0">Keine Entwürfe vorhanden.</p>

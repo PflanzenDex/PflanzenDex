@@ -12,6 +12,7 @@ import { CostForm, costPerUserText, moneyText, monthText } from "../operator-cos
 import { InvitationsArea, ModeSection } from "../operator-parts/operator-parts";
 import { OperatorPageSkeleton } from "./operator-page.skeleton";
 import { refusalText } from "../../refusal";
+import { keepTogether } from "@/lib/format";
 
 type Token = () => Promise<string | undefined>;
 const OPERATOR_KEY = ["account", "operator"] as const;
@@ -74,7 +75,9 @@ function Numbers(props: { overview: OperatorOverview }) {
       <dl className="m-0 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
         <dt className="text-sm text-muted-foreground sm:text-base">Konten</dt>
         <dd className="m-0 mb-2 font-semibold sm:mb-0">{o.accounts}</dd>
-        <dt className="text-sm text-muted-foreground sm:text-base">{`Aktive Nutzer (letzte ${o.activeWindowDays} Tage)`}</dt>
+        <dt className="text-sm text-muted-foreground sm:text-base">
+          {keepTogether(`Aktive Nutzer (letzte ${o.activeWindowDays} Tage)`)}
+        </dt>
         <dd className="m-0 mb-2 font-semibold sm:mb-0">{o.activeAccounts}</dd>
         <dt className="text-sm text-muted-foreground sm:text-base">Monatliche Kosten</dt>
         <dd className="m-0 mb-2 font-semibold [overflow-wrap:anywhere] sm:mb-0">

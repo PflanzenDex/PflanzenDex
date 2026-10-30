@@ -8,11 +8,12 @@ import { LoadFrame } from "../../../kernel";
 import { loadFeed, type FeedFilter } from "../../api/feed-api";
 import { dateText } from "../../parts/invite-card/invite-card";
 import { nameOf } from "../../parts/request-list/request-list";
+import { keepTogether } from "@/lib/format";
 
 const TYPE_TEXT: Record<FeedType, string> = {
   new_species: "Neue Art gefangen",
   new_cutting: "Neuer Steckling",
-  new_specimen: "Neues Exemplar",
+  new_specimen: "Neue Pflanze",
   potted: "Eingetopft",
   swapped: "Getauscht",
 };
@@ -29,8 +30,7 @@ function Event({ e }: { e: FeedEvent }) {
   return (
     <div className="grid break-words rounded-lg border border-border p-3">
       <span>
-        {nameOf(e.friendName)}: {e.count > 1 ? `${e.count} Exemplare` : "1 Exemplar"}{" "}
-        {speciesText(e)}
+        {nameOf(e.friendName)}: {e.count > 1 ? `${e.count} Pflanzen` : "1 Pflanze"} {speciesText(e)}
       </span>
       <span className="text-sm text-muted-foreground">
         {TYPE_TEXT[e.type]} · {e.date === null ? "Datum unbekannt" : dateText(`${e.date}T12:00:00`)}
@@ -71,7 +71,7 @@ function Filters(props: {
         >
           {PERIODS.map((d) => (
             <option key={d} value={d}>
-              Letzte {d} Tage
+              {keepTogether(`Letzte ${d} Tage`)}
             </option>
           ))}
         </Select>

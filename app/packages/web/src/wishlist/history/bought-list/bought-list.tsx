@@ -5,7 +5,7 @@ import { CreateSpecimenButton, type WishToPlant } from "../../actions/actions";
 /**
  * The bought wishes (US-WUN-03): they left the candidate list but are kept, so a purchase never disappears silently
  * (P-10). Says what to do next (P-09). A wish without a specimen offers the way to the plant (US-WUN-05); a linked one
- * says "Gekauft → Exemplar angelegt". Without bought wishes the section does not exist.
+ * says "Gekauft → Pflanze angelegt". Without bought wishes the section does not exist.
  */
 export function BoughtList(props: {
   bought: Bought;
@@ -33,7 +33,7 @@ export function BoughtList(props: {
           <div className="grid break-words rounded-lg border border-border p-3">
             <span>{w.title}</span>
             {w.specimenId !== null ? (
-              <span className="text-sm text-muted-foreground">Gekauft → Exemplar angelegt</span>
+              <span className="text-sm text-muted-foreground">Gekauft → Pflanze angelegt</span>
             ) : (
               onCreateSpecimen && (
                 <CreateSpecimenButton

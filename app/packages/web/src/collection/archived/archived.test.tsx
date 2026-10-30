@@ -131,12 +131,12 @@ describe("US-BES-07 archive on the collection page", () => {
     const { posts } = fakeServer();
     render(page());
     await userEvent.click(await findCardButton("Archivieren: Bogenhanf"));
-    const form = screen.getByRole("form", { name: "Exemplar archivieren" });
+    const form = screen.getByRole("form", { name: "Pflanze archivieren" });
     for (const g of ["eingegangen", "abgegeben", "getauscht", "verschenkt", "verkauft"])
       expect(within(form).getByRole("option", { name: g })).toBeTruthy();
     expect(within(form).getByRole("option", { name: "anderer Grund …" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
-    expect(screen.queryByRole("form", { name: "Exemplar archivieren" })).toBeNull();
+    expect(screen.queryByRole("form", { name: "Pflanze archivieren" })).toBeNull();
     expect(posts).toHaveLength(0);
   });
 
@@ -179,7 +179,7 @@ describe("US-BES-07 archive on the collection page", () => {
         JSON.stringify({
           error: {
             code: "specimen.already_archived",
-            text: "Dieses Exemplar ist schon archiviert.",
+            text: "Diese Pflanze ist schon archiviert.",
           },
         }),
         { status: 409 },
@@ -189,7 +189,7 @@ describe("US-BES-07 archive on the collection page", () => {
     await userEvent.click(await findCardButton("Archivieren: Bogenhanf"));
     await userEvent.click(screen.getByRole("button", { name: "Archivieren" }));
     expect((await screen.findByRole("alert")).textContent).toContain("schon archiviert");
-    expect(screen.getByRole("form", { name: "Exemplar archivieren" })).toBeTruthy();
+    expect(screen.getByRole("form", { name: "Pflanze archivieren" })).toBeTruthy();
   });
 });
 
@@ -249,7 +249,7 @@ describe("US-BES-07 archive and restore", () => {
       await screen.findByRole("button", { name: "Fangdatum korrigieren: Alter Ficus" }),
     );
     await userEvent.click(await screen.findByRole("button", { name: "Fangdatum speichern" }));
-    expect(await screen.findByText(/nach dem Tag, an dem das Exemplar archiviert/)).toBeTruthy();
+    expect(await screen.findByText(/nach dem Tag, an dem die Pflanze archiviert/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Fangdatum speichern" })).toBeTruthy();
   });
 

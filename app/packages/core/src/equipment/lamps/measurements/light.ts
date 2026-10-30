@@ -1,6 +1,7 @@
 import type { LightZone, ZoneStore } from "../../../light";
 import type { EquipmentStatus, EquipmentStore } from "../../store/types";
 import type { DeviationLimitStore, LampMeasurement, LampMeasurementStore } from "./types";
+import { zoneLabel } from "../../../light";
 
 /** "Check zone" (US-EQU-03): the last measurement deviates from the zone ceiling by more than the keeper's limit. */
 export interface ZoneCheck {
@@ -51,7 +52,7 @@ function checkOf(
   if (deviation <= limit) return null;
   return {
     deviationPercent: deviation,
-    text: `Die letzte Messung (${lux(last.lux)} am ${last.measuredOn}) weicht um ${deviation} % von der Obergrenze der Zone ${zone.name} (${lux(zone.luxCeiling)}) ab.`,
+    text: `Die letzte Messung (${lux(last.lux)} am ${last.measuredOn}) weicht um ${deviation} % von der Obergrenze der Zone ${zoneLabel(zone.name)} (${lux(zone.luxCeiling)}) ab.`,
     nextAction: "Prüfe die Zone: Miss nach oder ordne die Lampe der passenden Zone zu.",
   };
 }

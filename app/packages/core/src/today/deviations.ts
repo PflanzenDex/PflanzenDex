@@ -38,7 +38,7 @@ export async function etiolatedItems(
         specimenId: r.id,
         specimenName: r.name,
         text: `„${r.name}“: Die letzte Messung vom ${germanDate(last.date)} ist vergeilt/dünn.`,
-        nextAction: "Stelle das Exemplar heller und miss erneut, ob es gesund nachwächst.",
+        nextAction: "Stelle die Pflanze heller und miss erneut, ob sie gesund nachwächst.",
         target: "measurements",
       },
     ];

@@ -17,7 +17,7 @@ const actions: LightActions = {
   locationUpdate: nothing,
   zoneDerive: async () => ({ ok: true, value: { kind: "unknown", reason: "no_need" } }),
 };
-const zone = { id: "z1", name: "Lampe 2", luxCeiling: 15000, ppfd: 300, sortOrder: 2 };
+const zone = { id: "z1", name: "Zone 2", luxCeiling: 15000, ppfd: 300, sortOrder: 2 };
 const empty: LightData = { zones: [], locations: [], hints: [] };
 const html = (data: LightData) => renderToString(<LightView data={data} actions={actions} />);
 
@@ -25,13 +25,13 @@ describe("US-LIC-05 view locations and light zones", () => {
   it("empty account: says what to do (P-09), and offers the default", () => {
     const h = html(empty);
     expect(h).toContain("Noch keine Lichtzonen");
-    expect(h).toContain("Standard-Lampen übernehmen");
+    expect(h).toContain("Standard-Zonen übernehmen");
     expect(h).toContain("Noch keine Standorte");
   });
 
   it("shows zone with lux ceiling, PPFD and order; missing PPFD means unknown (P-08)", () => {
-    const h = html({ ...empty, zones: [zone, { ...zone, id: "z2", name: "Lampe 9", ppfd: null }] });
-    expect(h).toContain("bis 15.000 Lux");
+    const h = html({ ...empty, zones: [zone, { ...zone, id: "z2", name: "Zone 9", ppfd: null }] });
+    expect(h).toContain("bis 15.000\u00a0Lux");
     expect(h).toContain("PPFD 300 µmol/m²/s");
     expect(h).toContain("PPFD unbekannt");
   });
@@ -43,7 +43,7 @@ describe("US-LIC-05 view locations and light zones", () => {
       locations: [{ id: "s1", name: "Balkon", lightZoneId: "z1", kind: "outdoor" }],
     });
     expect(h).toContain("Balkon");
-    expect(h).toContain("Lampe 2 · außen");
+    expect(h).toContain("Zone 2 · außen");
   });
 
   it('location without zone: appears in "Hints" with the next action and offers assigning', () => {
@@ -95,7 +95,7 @@ describe("US-LIC-05 error message when deleting a used zone", () => {
     );
     expect(h).toContain('role="alert"');
     expect(h).toContain("Standort: Regal");
-    expect(h).toContain("Exemplar: Monstera Nr. 1");
+    expect(h).toContain("Pflanze: Monstera Nr. 1");
     expect(h).toContain("Art: Echinopsis");
     expect(h).toContain("Pflegeprofil der Art: Bogenhanf"); // US-BES-09: the zone override of a care profile
   });
@@ -144,9 +144,9 @@ describe("US-LIC-01 view: derive the zone of a species", () => {
   });
 
   it("US-LIC-01 result texts: zone with reason, unknown with next action (P-08, P-09)", () => {
-    const z = { id: "z2", name: "Lampe 2", luxCeiling: 15000, ppfd: 300, sortOrder: 2 };
+    const z = { id: "z2", name: "Zone 2", luxCeiling: 15000, ppfd: 300, sortOrder: 2 };
     expect(derivationText({ kind: "zone", zone: z, level: 2, reason: "soft_leaf" })).toEqual({
-      title: "Lichtzone: Lampe 2",
+      title: "Lichtzone: Zone 2",
       reason: expect.stringContaining("nicht automatisch"),
     });
     const u = derivationText({ kind: "unknown", reason: "no_need" });

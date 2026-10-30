@@ -22,9 +22,9 @@ export async function seedBenEquipment(ctx: Ctx, zones: Map<string, Id>): Promis
     },
   });
   await ensureEquipment(ctx, [
-    lamp("Regallampe 40 W", "Lampe 3", 40, 20000),
-    lamp("Growbox-Lampe 100 W", "Lampe 4", 100, 60000),
-    lamp("Stecklingslampe 15 W", "Lampe 1", 15, 3000),
+    lamp("Regallampe 40 W", "Zone 3", 40, 20000),
+    lamp("Growbox-Lampe 100 W", "Zone 4", 100, 60000),
+    lamp("Stecklingslampe 15 W", "Zone 1 · Stecklingslicht", 15, 3000),
     { type: "Timer", name: "Zeitschaltuhr Regal" },
     { type: "Sensor", name: "Bodenfeuchte-Sensor Monstera" },
     {

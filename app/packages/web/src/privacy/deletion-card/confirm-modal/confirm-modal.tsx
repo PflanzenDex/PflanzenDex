@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/fields/input/input";
 import { ResponsiveModal } from "@/components/shared/responsive/responsive-modal/responsive-modal";
+import { keepTogether } from "@/lib/format";
 
 /** The word the keeper types to confirm (US-ACC-04: deleting needs a confirmation). */
 export const CONFIRM_WORD = "LÖSCHEN";
@@ -13,7 +14,7 @@ export function WhatHappens() {
       <p className="m-0 font-semibold">Das wird gelöscht:</p>
       <ul className="m-0 list-disc pl-5">
         <li>
-          alle deine Exemplare, Messungen, Behandlungen, Wünsche und das Equipment mit allem, was
+          alle deine Pflanzen, Messungen, Behandlungen, Wünsche und das Equipment mit allem, was
           dazugehört
         </li>
         <li>alle deine Fotos im Speicher</li>
@@ -39,7 +40,7 @@ export function WhatHappens() {
         </li>
       </ul>
       <p className="m-0">
-        Nach der Bestätigung passiert 7 Tage lang nichts, du kannst die Löschung zurücknehmen.
+        Nach der Bestätigung passiert 7&nbsp;Tage lang nichts, du kannst die Löschung zurücknehmen.
         Danach ist sie endgültig. Lade vorher deine Daten herunter, wenn du sie behalten willst.
       </p>
     </div>
@@ -84,7 +85,7 @@ export function ConfirmModal(props: {
             disabled={typed.trim() !== CONFIRM_WORD || props.running}
             onClick={props.onConfirm}
           >
-            {props.running ? "Wird vorgemerkt …" : "Konto in 7 Tagen löschen"}
+            {props.running ? "Wird vorgemerkt …" : keepTogether("Konto in 7 Tagen löschen")}
           </Button>
           <Button type="button" variant="outline" onClick={() => props.onOpenChange(false)}>
             Abbrechen

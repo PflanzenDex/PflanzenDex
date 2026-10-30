@@ -19,7 +19,7 @@ export const GROUP_TITLES: Record<string, string> = {
 export function nextStepText(key: string, specimenName: string | null): string {
   switch (key) {
     case "first-measurement-photo.next":
-      return "Miss ein Exemplar und füge der Messung ein Foto hinzu.";
+      return "Miss eine Pflanze und füge der Messung ein Foto hinzu.";
     case "cutting-rooted.next":
       return "Topfe einen Steckling in einen eigenen Topf um, sobald er Wurzeln hat.";
     case "treatment-completed.next":
@@ -27,11 +27,11 @@ export function nextStepText(key: string, specimenName: string | null): string {
         ? `Hake das letzte offene Datum der Kur bei ${specimenName} ab.`
         : "Schließe eine Kur ab: Hake alle ihre Termine ab.";
     case "through-dormancy.next":
-      return "Pflege ein Exemplar durch eine ganze Ruhephase, vom Beginn bis zum Ende.";
+      return "Pflege eine Pflanze durch eine ganze Ruhephase, vom Beginn bis zum Ende.";
     case "healthy-for-a-year.next":
-      return "Miss ein Exemplar mindestens vier Mal über zwölf Monate und bewerte jede Messung mit „Gesund“.";
+      return "Miss eine Pflanze mindestens vier Mal über zwölf Monate und bewerte jede Messung mit „Gesund“.";
     case "first-handover.next":
-      return "Tausche oder verschenke ein Exemplar an einen Freund; beide bestätigen die Übergabe.";
+      return "Tausche oder verschenke eine Pflanze an einen Freund; beide bestätigen die Übergabe.";
     default:
       return "Dieser Erfolg hat noch keine Beschreibung.";
   }
@@ -41,11 +41,10 @@ export function nextStepText(key: string, specimenName: string | null): string {
 export const MISSING_TEXTS: Record<string, string> = {
   no_measurements: "Es gibt noch keine Messung.",
   no_photo: "Es gibt Messungen, aber noch keine mit Foto.",
-  too_few_measurements:
-    "Es sind noch nicht genug Messungen da (mindestens vier an einem Exemplar).",
+  too_few_measurements: "Es sind noch nicht genug Messungen da (mindestens vier an einer Pflanze).",
   no_treatment: "Es gibt noch keine Kur.",
-  no_catch_date: "Bei keinem Exemplar ist ein Fangdatum bekannt.",
-  no_dormancy_period: "Für keines deiner Exemplare ist eine Ruhephase bekannt.",
+  no_catch_date: "Bei keiner Pflanze ist ein Fangdatum bekannt.",
+  no_dormancy_period: "Für keine deiner Pflanzen ist eine Ruhephase bekannt.",
 };
 
 /** `2026-07-02` becomes `02.07.2026`: pure text, no time zone is involved (NFR-08). */

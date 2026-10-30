@@ -31,7 +31,7 @@ const treatmentItem = (t: TreatmentListRow): TodayItem => ({
   specimenId: t.specimenId,
   specimenName: t.specimenName,
   text: `„${t.specimenName}“: ${t.reason} – ${t.status.text}.`,
-  nextAction: "Behandle das Exemplar und hake den Termin als erledigt ab.",
+  nextAction: "Behandle die Pflanze und hake den Termin als erledigt ab.",
   target: "treatments",
 });
 
@@ -41,7 +41,7 @@ const deviationItem = (p: PhasesRow): TodayItem => ({
   specimenId: p.specimenId,
   specimenName: p.name,
   text: `„${p.name}“ steht nicht am Soll-Standort der ${PHASE_NAME[p.phase]}.`,
-  nextAction: "Stelle das Exemplar um und bestätige es unter Pflegephasen mit „Jetzt umgestellt“.",
+  nextAction: "Stelle die Pflanze um und bestätige sie unter Pflegephasen mit „Jetzt umgestellt“.",
   target: "care_phases",
 });
 
