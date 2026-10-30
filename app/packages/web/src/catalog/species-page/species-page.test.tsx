@@ -75,6 +75,23 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** Both steps of the proposal layer; the Latin name is typed first (US-QS-21). */
+async function toStepTwo(etiolation = "x", success = "y") {
+  await userEvent.type(screen.getByLabelText(/Lateinischer Name/), "Dracaena trifasciata");
+  await userEvent.selectOptions(screen.getByLabelText(/Wachstumsmaß/), "height");
+  await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), etiolation);
+  await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), success);
+  await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+  await screen.findByText(/Schritt 2 von 2/);
+}
+
+async function fillProposal(etiolation: string, success: string) {
+  await toStepTwo(etiolation, success);
+  await userEvent.selectOptions(await screen.findByLabelText(/Schwierigkeit/), "1");
+  await userEvent.selectOptions(screen.getByLabelText(/Standard-Stufe/), "2");
+  await userEvent.type(screen.getByLabelText(/Lichtbedarf/), "15000");
+}
+
 describe("US-BES-01 Seite Arten", () => {
   it('empty catalog: says what to do and offers "Art vorschlagen" (P-09)', async () => {
     fakeServer();
@@ -159,14 +176,7 @@ describe("US-BES-01 Seite Arten", () => {
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
     await screen.findByRole("dialog", { name: "Art vorschlagen" });
-    await userEvent.type(screen.getByLabelText(/Lateinischer Name/), "Dracaena trifasciata");
-    await userEvent.selectOptions(screen.getByLabelText(/Schwierigkeit/), "1");
-    await userEvent.selectOptions(screen.getByLabelText(/Standard-Stufe/), "2");
-    await userEvent.type(screen.getByLabelText(/Lichtbedarf/), "15000");
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    await userEvent.selectOptions(await screen.findByLabelText(/Wachstumsmaß/), "height");
-    await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), "Blätter kippen.");
-    await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), "Aufrecht.");
+    await fillProposal("Blätter kippen.", "Aufrecht.");
     await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
     expect((await screen.findByRole("status")).textContent).toContain("liegt in der Prüfliste");
     expect(await screen.findByRole("heading", { name: "Dracaena trifasciata" })).toBeTruthy();
@@ -179,6 +189,7 @@ describe("US-BES-01 Seite Arten", () => {
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
     await screen.findByRole("dialog", { name: "Art vorschlagen" });
+    await toStepTwo();
     const field = screen.getByLabelText(/Weichblättrige C3-Pflanze/) as HTMLSelectElement;
     expect(field.value).toBe("");
     expect(field.required).toBe(false);
@@ -201,14 +212,7 @@ describe("US-BES-01 Seite Arten", () => {
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
     await screen.findByRole("dialog", { name: "Art vorschlagen" });
-    await userEvent.type(screen.getByLabelText(/Lateinischer Name/), "Dracaena trifasciata");
-    await userEvent.selectOptions(screen.getByLabelText(/Schwierigkeit/), "1");
-    await userEvent.selectOptions(screen.getByLabelText(/Standard-Stufe/), "2");
-    await userEvent.type(screen.getByLabelText(/Lichtbedarf/), "15000");
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    await userEvent.selectOptions(await screen.findByLabelText(/Wachstumsmaß/), "height");
-    await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), "x");
-    await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), "y");
+    await fillProposal("x", "y");
     await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
     const message = await screen.findByRole("alert");
     expect(message.textContent).toContain(ERROR_TEXTS["species.duplicate"]);
@@ -231,10 +235,9 @@ describe("US-BES-01 Seite Arten", () => {
     await vi.waitFor(() => expect(document.activeElement).toBe(name));
     const message = screen.getByText("Bitte gib den lateinischen Namen an.");
     expect(name.getAttribute("aria-describedby")).toContain(message.id);
-    // P-08 (#1003): an empty difficulty stays unknown and is not an error.
-    expect(screen.getByLabelText(/Schwierigkeit/).getAttribute("aria-invalid")).not.toBe("true");
-    // The first step does not let go until its fields are valid; the growth fields have not been shown yet.
-    expect(screen.queryByLabelText(/Wachstumsmaß/)).toBeNull();
+    expect(screen.getByLabelText(/Wachstumsmaß/).getAttribute("aria-invalid")).toBe("true");
+    // The first step does not let go until its fields are valid; the optional light fields have not been shown yet.
+    expect(screen.queryByLabelText(/Schwierigkeit/)).toBeNull();
   });
 
   it("US-BES-01 · DS-48 a lux value outside the allowed range is refused before sending", async () => {
@@ -242,8 +245,11 @@ describe("US-BES-01 Seite Arten", () => {
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
     await screen.findByRole("dialog", { name: "Art vorschlagen" });
+    await toStepTwo();
     await userEvent.type(screen.getByLabelText(/Lichtbedarf/), "0");
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
+    // P-08 (#1003): an empty difficulty stays unknown and is not an error.
+    expect(screen.getByLabelText(/Schwierigkeit/).getAttribute("aria-invalid")).not.toBe("true");
     expect(await screen.findByText(/ganze Zahl zwischen 1 und 200.000/)).toBeTruthy();
     expect(vi.mocked(fetch).mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
   });
@@ -259,7 +265,7 @@ describe("US-POK-09 open a species profile from outside", () => {
 });
 
 describe("US-QS-14 · US-BES-09 a section of another module below the profile", () => {
-  it("US-QS-14 the section the app hands over shows below the profile of the species, with the species", async () => {
+  it("US-QS-14 the section the app hands over opens as a layer from the profile of the species, with the species", async () => {
     fakeServer();
     render(
       page({
@@ -267,6 +273,9 @@ describe("US-QS-14 · US-BES-09 a section of another module below the profile", 
         profileSection: (s) => <h2>{`Mein Pflegeprofil von ${s.germanName}`}</h2>,
       }),
     );
+    // The section is one layer away, so the profile stays on one screen (US-QS-21).
+    expect(screen.queryByRole("heading", { name: "Mein Pflegeprofil von Bogenhanf" })).toBeNull();
+    await userEvent.click(await screen.findByRole("button", { name: "Mein Pflegeprofil" }));
     expect(
       await screen.findByRole("heading", { name: "Mein Pflegeprofil von Bogenhanf" }),
     ).toBeTruthy();
@@ -312,14 +321,7 @@ describe("US-QS-21 the proposal opens as a layer", () => {
     fakeServer();
     render(at("/discover?view=catalog&sheet=propose"));
     await screen.findByRole("dialog", { name: "Art vorschlagen" });
-    await userEvent.type(screen.getByLabelText(/Lateinischer Name/), "Dracaena trifasciata");
-    await userEvent.selectOptions(screen.getByLabelText(/Schwierigkeit/), "1");
-    await userEvent.selectOptions(screen.getByLabelText(/Standard-Stufe/), "2");
-    await userEvent.type(screen.getByLabelText(/Lichtbedarf/), "15000");
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    await userEvent.selectOptions(await screen.findByLabelText(/Wachstumsmaß/), "height");
-    await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), "x");
-    await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), "y");
+    await fillProposal("x", "y");
     await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
     expect(await screen.findByRole("heading", { name: "Dracaena trifasciata" })).toBeTruthy();
     await vi.waitFor(() =>
@@ -336,14 +338,7 @@ describe("US-QS-21 the proposal opens as a layer", () => {
     });
     render(at("/discover?view=catalog&sheet=propose"));
     await screen.findByRole("dialog", { name: "Art vorschlagen" });
-    await userEvent.type(screen.getByLabelText(/Lateinischer Name/), "Dracaena trifasciata");
-    await userEvent.selectOptions(screen.getByLabelText(/Schwierigkeit/), "1");
-    await userEvent.selectOptions(screen.getByLabelText(/Standard-Stufe/), "2");
-    await userEvent.type(screen.getByLabelText(/Lichtbedarf/), "15000");
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    await userEvent.selectOptions(await screen.findByLabelText(/Wachstumsmaß/), "height");
-    await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), "x");
-    await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), "y");
+    await fillProposal("x", "y");
     await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain(ERROR_TEXTS["species.duplicate"]);
@@ -352,21 +347,20 @@ describe("US-QS-21 the proposal opens as a layer", () => {
 });
 
 describe("US-QS-21 propose in two steps", () => {
-  it("US-QS-21 step 1 asks for name and light, step 2 for growth and saves; Zurück keeps the entries", async () => {
+  it("US-QS-21 step 1 asks for the required fields, step 2 for the optional light and saves; Zurück keeps the entries", async () => {
     fakeServer();
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
     await screen.findByRole("dialog", { name: "Art vorschlagen" });
     expect(screen.getByText(/Schritt 1 von 2/)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Vorschlag speichern" })).toBeNull();
-    await userEvent.type(screen.getByLabelText(/Lateinischer Name/), "Aloe vera");
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await toStepTwo();
     expect(await screen.findByText(/Schritt 2 von 2/)).toBeTruthy();
     expect(screen.queryByLabelText(/Lateinischer Name/)).toBeNull();
     expect(screen.getByRole("button", { name: "Vorschlag speichern" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zurück" }));
     expect(((await screen.findByLabelText(/Lateinischer Name/)) as HTMLInputElement).value).toBe(
-      "Aloe vera",
+      "Dracaena trifasciata",
     );
   });
 
@@ -395,11 +389,7 @@ describe("US-QS-21 propose in two steps", () => {
     render(page());
     await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
     await screen.findByRole("dialog", { name: "Art vorschlagen" });
-    await userEvent.type(screen.getByLabelText(/Lateinischer Name/), "Dracaena trifasciata");
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    await userEvent.selectOptions(await screen.findByLabelText(/Wachstumsmaß/), "height");
-    await userEvent.type(screen.getByLabelText(/Vergeilung-Anzeichen/), "x");
-    await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), "y");
+    await toStepTwo();
     await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
     const name = await screen.findByLabelText(/Lateinischer Name/);
     expect(name.getAttribute("aria-invalid")).toBe("true");

@@ -362,9 +362,11 @@ describe("US-ACC-01 App", () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/species/a1");
+    // US-QS-21: the section is one layer away from the profile, so the profile fits one screen.
+    await userEvent.click(await screen.findByRole("button", { name: "Mein Pflegeprofil" }));
     expect(
-      await screen.findByRole("heading", { level: 2, name: "Mein Pflegeprofil" }),
-    ).toBeTruthy();
+      (await screen.findAllByRole("heading", { level: 2, name: "Mein Pflegeprofil" })).length,
+    ).toBeGreaterThan(0);
     expect(await screen.findByText(/Du hast noch keine Pflanze dieser Art/)).toBeTruthy();
   });
 

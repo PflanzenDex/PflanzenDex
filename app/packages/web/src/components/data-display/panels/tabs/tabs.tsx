@@ -13,6 +13,8 @@ export type TabsProps = {
   defaultValue?: string;
   onValueChange?: (value: string) => void;
   className?: string;
+  /** Classes of the panel, e.g. to let it scroll inside a frame of fixed height (US-QS-21). */
+  panelClassName?: string;
 };
 
 /** Index the key moves to (wrapping Left and Right), or undefined for other keys. */
@@ -55,6 +57,31 @@ function TabButton(props: TabButtonProps) {
     >
       {tab.label}
     </Button>
+  );
+}
+
+type TabPanelProps = {
+  id: string;
+  labelledBy: string;
+  className?: string;
+  children: React.ReactNode;
+};
+
+/** The focusable panel of the selected tab; `className` is the caller's (US-QS-21), the focus ring is ours. */
+function TabPanel(props: TabPanelProps) {
+  return (
+    <div
+      id={props.id}
+      role="tabpanel"
+      aria-labelledby={props.labelledBy}
+      tabIndex={0}
+      className={cn(
+        "mt-3 min-h-[44px] rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        props.className,
+      )}
+    >
+      {props.children}
+    </div>
   );
 }
 
@@ -111,15 +138,13 @@ export function Tabs(props: TabsProps) {
         ))}
       </div>
       {panel ? (
-        <div
+        <TabPanel
           id={idOf("panel", panel.value)}
-          role="tabpanel"
-          aria-labelledby={idOf("tab", panel.value)}
-          tabIndex={0}
-          className="mt-3 min-h-[44px] rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          labelledBy={idOf("tab", panel.value)}
+          className={props.panelClassName}
         >
           {panel.content}
-        </div>
+        </TabPanel>
       ) : null}
     </div>
   );

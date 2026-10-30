@@ -7,7 +7,7 @@ import type { ApiError } from "../../../kernel";
 import { duplicate } from "../form";
 import { MoreDetails } from "../more-details/more-details";
 import { refusalText } from "../../shared/refusal";
-import { GrowthStepFields, NameStepFields, NAME_STEP } from "../required-fields/required-fields";
+import { LightStepFields, RequiredFields, REQUIRED_STEP } from "../required-fields/required-fields";
 import {
   EMPTY_PROPOSAL,
   proposalSchema,
@@ -38,11 +38,13 @@ function useRefusal(error: ApiError | null, refuse: UseFormSetError<ProposalFiel
 function StepNotice({ step }: { step: 1 | 2 }) {
   return (
     <>
-      <p className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground">
-        Nur für dich sichtbar, bis die Prüfliste ihn freigibt. Wählen kannst du die Art schon jetzt.
+      <p className="rounded-lg border border-warning-border bg-warning p-2.5 text-sm text-warning-foreground">
+        Nur für dich sichtbar, bis die Prüfliste sie freigibt. Wählen kannst du die Art schon jetzt.
       </p>
       <p className="text-sm text-muted-foreground">
-        Schritt {step} von 2 · Pflichtfelder sind mit * markiert.
+        {step === 1
+          ? "Schritt 1 von 2 · Pflichtfelder sind mit * markiert."
+          : "Schritt 2 von 2 · alles hier ist optional."}
       </p>
     </>
   );
@@ -126,12 +128,12 @@ export function ProposalForm(props: {
   const submit = form.handleSubmit(async (values) => {
     const refused = await props.onSend(toProposalInput(values));
     // A refusal of a step-1 field brings that step back, so its field is on screen to take the focus.
-    if (refused && refusedFields(refused).some(({ field }) => NAME_STEP.includes(field)))
+    if (refused && refusedFields(refused).some(({ field }) => REQUIRED_STEP.includes(field)))
       setStep(1);
     setError(refused);
   });
   const next = async () => {
-    if (await form.trigger([...NAME_STEP], { shouldFocus: true })) setStep(2);
+    if (await form.trigger([...REQUIRED_STEP], { shouldFocus: true })) setStep(2);
   };
   return (
     <section className="flex min-w-0 flex-col gap-3">
@@ -143,10 +145,10 @@ export function ProposalForm(props: {
           className="grid gap-4 md:grid-cols-2"
         >
           {step === 1 ? (
-            <NameStepFields control={form.control} />
+            <RequiredFields control={form.control} />
           ) : (
             <>
-              <GrowthStepFields control={form.control} />
+              <LightStepFields control={form.control} />
               <MoreDetails control={form.control} />
             </>
           )}

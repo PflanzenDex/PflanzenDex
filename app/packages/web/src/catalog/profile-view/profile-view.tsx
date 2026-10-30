@@ -1,85 +1,59 @@
-import { Leaf } from "lucide-react";
+import type { ReactNode } from "react";
+import { ArrowLeft, Leaf } from "lucide-react";
 import { speciesHints, type Species } from "@pflanzendex/core";
 import { Badge } from "@/components/ui/display/badge/badge";
 import { Button } from "@/components/ui/button/button";
+import {
+  FactGrid,
+  type Fact,
+} from "@/components/shared/responsive/responsive-table/fact-grid/fact-grid";
 import { Tabs } from "@/components/data-display/panels/tabs/tabs";
 import {
   STATUS,
   UNKNOWN,
   growthText,
   lux,
-  orUnknown,
   dormancyPhase,
   difficultyText,
   levelText,
 } from "../shared/text";
 
-type Fact = [label: string, value: string];
+const known = (value: string | null | undefined): string | null => value ?? null;
+const text = (value: string): string | null => (value === UNKNOWN ? null : value);
 
-/** The short facts: they sit in a two-column grid (US-QS-21). */
+/** The short facts of the Steckbrief tab; `null` is unknown and folds into one line (P-08, P-10). */
 function basics(species: Species): Fact[] {
   return [
-    ["Deutscher Name", orUnknown(species.germanName)],
-    ["Englischer Name", orUnknown(species.englishName)],
-    ["Schwierigkeit", difficultyText(species.difficulty)],
-    ["Standard-Stufe", levelText(species.standardLevel)],
-    ["Lichtbedarf", lux(species.lightDemandLux)],
-    ["Ruhephase", dormancyPhase(species)],
-    ["Wachstumsmaß", growthText(species.growthMeasure)],
-    ["Standort-Hinweis", orUnknown(species.locationHint)],
+    { label: "Deutscher Name", value: known(species.germanName) },
+    { label: "Englischer Name", value: known(species.englishName) },
+    { label: "Schwierigkeit", value: text(difficultyText(species.difficulty)) },
+    { label: "Standard-Stufe", value: text(levelText(species.standardLevel)) },
+    { label: "Lichtbedarf", value: text(lux(species.lightDemandLux)) },
+    { label: "Ruhephase", value: text(dormancyPhase(species)) },
+    { label: "Wachstumsmaß", value: text(growthText(species.growthMeasure)) },
+    { label: "Standort-Hinweis", value: known(species.locationHint) },
   ];
 }
 
 function care(species: Species): Fact[] {
   return [
-    ["Gießhinweis", orUnknown(species.wateringHint)],
-    ["Substrat", orUnknown(species.substrate)],
-    ["Rückschnitt", orUnknown(species.pruning)],
-    ["Wuchs-Hacks", orUnknown(species.growthHacks)],
-    ["Vergeilung-Anzeichen", orUnknown(species.etiolationSigns)],
-    ["Erfolgskriterien", orUnknown(species.successCriteria)],
+    { label: "Gießhinweis", value: known(species.wateringHint) },
+    { label: "Substrat", value: known(species.substrate) },
+    { label: "Rückschnitt", value: known(species.pruning) },
+    { label: "Wuchs-Hacks", value: known(species.growthHacks) },
+    { label: "Vergeilung-Anzeichen", value: known(species.etiolationSigns) },
+    { label: "Erfolgskriterien", value: known(species.successCriteria) },
   ];
 }
 
 function origin(species: Species): Fact[] {
   const family = [species.familyGerman, species.familyLatin].filter(Boolean).join(" · ");
   return [
-    ["Familie", family || UNKNOWN],
-    ["Synonyme", species.synonyms.length > 0 ? species.synonyms.join(", ") : UNKNOWN],
-    ["Botanische Story", orUnknown(species.botanicalStory)],
-    ["Quelle", orUnknown(species.source)],
+    { label: "Familie", value: family || null },
+    { label: "Synonyme", value: species.synonyms.length > 0 ? species.synonyms.join(", ") : null },
+    { label: "Botanische Story", value: known(species.botanicalStory) },
+    { label: "Quelle", value: known(species.source) },
   ];
-}
-
-/**
- * One panel of the profile: the known facts as a grid, the unknown ones named in one line (P-08, P-10): nothing is
- * invented and nothing disappears silently. View-local until the shared folding of unknown values lands (issue 1030).
- */
-function FactPanel(props: { facts: Fact[]; columns: boolean }) {
-  const known = props.facts.filter(([, value]) => value !== UNKNOWN);
-  const unknown = props.facts.filter(([, value]) => value === UNKNOWN);
-  return (
-    <div className="flex min-w-0 flex-col gap-3">
-      {known.length > 0 && (
-        <dl className={`m-0 grid gap-x-4 gap-y-2 ${props.columns ? "grid-cols-2" : "grid-cols-1"}`}>
-          {known.map(([name, value]) => (
-            <div
-              key={name}
-              className="min-w-0 [&>dd]:m-0 [&>dd]:break-words [&>dd]:whitespace-pre-wrap"
-            >
-              <dt className="text-sm text-muted-foreground">{name}</dt>
-              <dd>{value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-      {unknown.length > 0 && (
-        <p className="m-0 text-sm text-muted-foreground">
-          Noch unbekannt: {unknown.map(([name]) => name).join(", ")}.
-        </p>
-      )}
-    </div>
-  );
 }
 
 /** Photo slot of fixed size; species carry no photo yet (DM-BES-01), so it shows a neutral mark, never an invented image. */
@@ -87,9 +61,9 @@ function PhotoSlot() {
   return (
     <span
       aria-hidden="true"
-      className="flex size-16 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground"
+      className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground"
     >
-      <Leaf className="size-8" />
+      <Leaf className="size-6" />
     </span>
   );
 }
@@ -98,22 +72,24 @@ function PhotoSlot() {
 function ProfileTabs({ species }: { species: Species }) {
   return (
     <Tabs
+      className="flex min-h-0 flex-1 flex-col"
+      panelClassName="min-h-0 flex-1 overflow-y-auto"
       label="Angaben zur Art"
       tabs={[
         {
           value: "basics",
           label: "Steckbrief",
-          content: <FactPanel facts={basics(species)} columns />,
+          content: <FactGrid facts={basics(species)} />,
         },
         {
           value: "care",
           label: "Pflege",
-          content: <FactPanel facts={care(species)} columns={false} />,
+          content: <FactGrid facts={care(species)} />,
         },
         {
           value: "origin",
           label: "Herkunft",
-          content: <FactPanel facts={origin(species)} columns={false} />,
+          content: <FactGrid facts={origin(species)} />,
         },
       ]}
     />
@@ -131,34 +107,44 @@ export function SpeciesProfile(props: {
   onBack?: () => void;
   /** Below a destination title the profile is a section: its name is then an h2 (US-QS-14). */
   embedded?: boolean | undefined;
+  /** A further action beside the primary one, e.g. the opener of "Mein Pflegeprofil" (US-BES-09), wired by the app. */
+  extra?: ReactNode;
 }) {
   const { species } = props;
   const Heading = props.embedded ? "h2" : "h1";
   return (
-    <article aria-labelledby="species-title" className="flex min-w-0 flex-col gap-3">
-      {props.onBack && (
-        <Button type="button" variant="secondary" className="self-start" onClick={props.onBack}>
-          Zurück zur Suche
-        </Button>
-      )}
+    <article aria-labelledby="species-title" className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
       <header className="flex min-w-0 items-center gap-3">
+        {props.onBack && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            aria-label="Zurück zur Suche"
+            title="Zurück zur Suche"
+            className="shrink-0"
+            onClick={props.onBack}
+          >
+            <ArrowLeft className="size-5" aria-hidden="true" />
+          </Button>
+        )}
         <PhotoSlot />
         <div className="flex min-w-0 flex-col items-start gap-1">
-          <Heading id="species-title" className="break-words text-2xl font-semibold">
+          <Heading id="species-title" className="break-words text-xl font-semibold leading-tight">
             <i>{species.latinName}</i>
           </Heading>
           <Badge variant="outline">{STATUS[species.reviewStatus]}</Badge>
         </div>
       </header>
-      {props.onChoose && (
-        <Button
-          type="button"
-          size="touch"
-          className="w-full sm:w-auto sm:self-start"
-          onClick={props.onChoose}
-        >
-          Diese Art wählen
-        </Button>
+      {(props.onChoose || props.extra) && (
+        <div className="flex flex-wrap gap-2 [&>*]:min-w-0 [&>*]:flex-1">
+          {props.onChoose && (
+            <Button type="button" size="touch" onClick={props.onChoose}>
+              Diese Art wählen
+            </Button>
+          )}
+          {props.extra}
+        </div>
       )}
       {speciesHints(species).map((h) => (
         <p

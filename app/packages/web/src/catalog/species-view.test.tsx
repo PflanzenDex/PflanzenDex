@@ -62,9 +62,10 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
     expect(h.indexOf("Diese Art wählen")).toBeGreaterThan(h.indexOf("<header"));
     expect(h.indexOf("Diese Art wählen")).toBeLessThan(h.indexOf("Steckbrief</button>") + 400);
     for (const tab of ["Steckbrief", "Pflege", "Herkunft"]) expect(h).toContain(`>${tab}<`);
-    expect(h).toContain("grid-cols-2");
-    // Unknown stays "unbekannt": named in one line, not an empty row each, and never filled in.
-    expect(h).toMatch(/Noch unbekannt: [^<]*Englischer Name[^<]*Ruhephase/);
+    expect(h).toContain("<dl");
+    // Unknown stays unknown: counted in one line with the names behind it, no empty row each, nothing filled in.
+    expect(h).toContain("3 Angaben fehlen");
+    expect(h).toContain("Englischer Name, Ruhephase, Standort-Hinweis");
     expect(h).not.toMatch(/Englischer Name<\/dt>/);
   });
 
@@ -72,10 +73,11 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
     mount(<SpeciesProfile species={species} onChoose={vi.fn()} />);
     await userEvent.click(screen.getByRole("tab", { name: "Pflege" }));
     expect(screen.getByText("Blätter kippen zur Seite.")).toBeTruthy();
-    expect(screen.getByText(/Noch unbekannt: Gießhinweis, Substrat/)).toBeTruthy();
+    expect(screen.getByText("4 Angaben fehlen")).toBeTruthy();
+    expect(screen.getByText("Gießhinweis, Substrat, Rückschnitt, Wuchs-Hacks")).toBeTruthy();
     await userEvent.click(screen.getByRole("tab", { name: "Herkunft" }));
     expect(screen.getByText("Sansevieria trifasciata")).toBeTruthy();
-    expect(screen.getByText(/Noch unbekannt: [^.]*Quelle/)).toBeTruthy();
+    expect(screen.getByText("Botanische Story, Quelle")).toBeTruthy();
     cleanup();
   });
 
@@ -86,7 +88,9 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
         onChoose={vi.fn()}
       />,
     );
-    expect(h).toMatch(/Noch unbekannt: [^<]*Schwierigkeit, Standard-Stufe, Lichtbedarf/);
+    expect(h).toContain(
+      "Englischer Name, Schwierigkeit, Standard-Stufe, Lichtbedarf, Ruhephase, Standort-Hinweis",
+    );
     expect(h).not.toContain("Einfach");
   });
 
@@ -97,7 +101,7 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
         onChoose={vi.fn()}
       />,
     );
-    expect(h).toMatch(/Noch unbekannt: [^<]*Wachstumsmaß/);
+    expect(h).toContain("Englischer Name, Ruhephase, Wachstumsmaß, Standort-Hinweis");
     // The care facts are on their own tab; opened there they are named as unknown too.
     mount(
       <SpeciesProfile
@@ -106,9 +110,8 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
       />,
     );
     return userEvent.click(screen.getByRole("tab", { name: "Pflege" })).then(() => {
-      expect(
-        screen.getByText(/Noch unbekannt: [^.]*Vergeilung-Anzeichen, Erfolgskriterien/),
-      ).toBeTruthy();
+      expect(screen.getByText("6 Angaben fehlen")).toBeTruthy();
+      expect(screen.getByText(/Vergeilung-Anzeichen, Erfolgskriterien/)).toBeTruthy();
       cleanup();
     });
   });
@@ -144,24 +147,19 @@ describe('US-BES-01 form "Propose species" (path without AI)', () => {
   const html = () =>
     renderToString(<ProposalForm start="Aloe" onSend={async () => null} onExisting={vi.fn()} />);
 
-  const growth = () =>
+  const light = () =>
     renderToString(
       <ProposalForm start="Aloe" onSend={async () => null} onExisting={vi.fn()} startStep={2} />,
     );
 
-  it("requires all required fields from DM-BES-01 (US-QS-21: the name on step 1, the growth fields on step 2)", () => {
-    expect(
-      html()
-        .split("<")
-        .find((tag) => tag.includes('name="latinName"')),
-    ).toContain("required");
-    const h = growth();
-    for (const name of ["growthMeasure", "etiolationSigns", "successCriteria"])
+  it("requires all required fields from DM-BES-01 (US-QS-21: all of them on step 1)", () => {
+    const h = html();
+    for (const name of ["latinName", "growthMeasure", "etiolationSigns", "successCriteria"])
       expect(h.split("<").find((tag) => tag.includes(`name="${name}"`))).toContain("required");
   });
 
   it('US-BES-01 P-08: difficulty, default level and lux need are optional and offer "Unbekannt" (#1003)', () => {
-    const h = html();
+    const h = light();
     for (const name of ["difficulty", "standardLevel", "lightDemandLux"])
       expect(h.split("<").find((tag) => tag.includes(`name="${name}"`))).not.toContain("required");
     expect(h).toContain("Unbekannt");
@@ -176,7 +174,7 @@ describe('US-BES-01 form "Propose species" (path without AI)', () => {
   });
 
   it("optional details are collapsed and recognizable as optional; numbers have input aids", () => {
-    const h = growth();
+    const h = light();
     expect(h).toContain("Weitere Angaben (optional)");
     expect(h).toContain('inputMode="numeric"');
   });
