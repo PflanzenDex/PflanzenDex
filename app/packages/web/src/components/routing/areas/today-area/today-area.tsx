@@ -1,8 +1,8 @@
 import { Suspense, useEffect, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router";
 import {
+  LayerHost,
   LayerSheet,
-  LAYER_SLOT,
   useLayer,
 } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
@@ -59,7 +59,7 @@ export function TodayArea(props: {
     if (view) props.onOpen(view);
   };
   return (
-    <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_auto]" data-fit-screen="">
+    <LayerHost contentClassName="gap-4" data-fit-screen="">
       <Suspense fallback={<TodaySkeleton />}>
         {props.intro ? (
           props.intro(<Tasks {...props} open={open} plan={plan.openLayer} />, <TodaySkeleton />)
@@ -67,7 +67,7 @@ export function TodayArea(props: {
           <Tasks {...props} open={open} plan={plan.openLayer} />
         )}
       </Suspense>
-    </div>
+    </LayerHost>
   );
 }
 
@@ -112,24 +112,22 @@ function Tasks(props: {
         <TodayOverview api={api} token={token} onOpen={props.onOpen} open={props.open} />
       </Suspense>
       <LazyAnniversaries api={api} token={token} onOpen={() => props.onOpen("collection")} />
-      <div className={LAYER_SLOT}>
-        <LayerSheet id="treatments" title="Behandlungen">
-          <InLayer loading="Behandlungen werden geladen …">
-            <TreatmentsPage api={api} token={token} host onPlan={props.plan} />
-          </InLayer>
-        </LayerSheet>
-        <LayerSheet id="watering" title="Gießen">
-          <InLayer loading="Gießliste wird geladen …">
-            <WateringList api={api} token={token} />
-          </InLayer>
-        </LayerSheet>
-        <LayerSheet id="hints" title="Fehlt noch">
-          <InLayer loading="Hinweise werden geladen …">
-            <HintsPage api={api} token={token} onOpen={props.onOpen} host />
-          </InLayer>
-        </LayerSheet>
-        <PlanLayer api={api} token={token} />
-      </div>
+      <LayerSheet id="treatments" title="Behandlungen">
+        <InLayer loading="Behandlungen werden geladen …">
+          <TreatmentsPage api={api} token={token} host onPlan={props.plan} />
+        </InLayer>
+      </LayerSheet>
+      <LayerSheet id="watering" title="Gießen">
+        <InLayer loading="Gießliste wird geladen …">
+          <WateringList api={api} token={token} />
+        </InLayer>
+      </LayerSheet>
+      <LayerSheet id="hints" title="Fehlt noch">
+        <InLayer loading="Hinweise werden geladen …">
+          <HintsPage api={api} token={token} onOpen={props.onOpen} host />
+        </InLayer>
+      </LayerSheet>
+      <PlanLayer api={api} token={token} />
     </>
   );
 }

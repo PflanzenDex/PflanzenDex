@@ -180,6 +180,8 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
     expect(await screen.findByText("1 Pflanze mit Pflegephase")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Ruhephase (1)" })).toBeTruthy();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    // US-QS-19: compact card, one line of facts and one line of places in the paged grouping.
+    expect(screen.getByText(/^Standort: .* · Soll-Standort: /)).toBeTruthy();
     await openView();
     expect(pressed("Nach Pflegephase")).toBe(true);
   });

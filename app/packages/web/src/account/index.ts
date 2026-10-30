@@ -1,5 +1,18 @@
 // Public interface of the `account` module (ADR 0003): sign-in, session, account view.
 import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
+/**
+ * The `?sheet=` ids of the settings layers, one per group (US-QS-17, US-QS-15). Defined here, a light public constant,
+ * so the Konto area reads them without loading the settings page (the page is a lazy part).
+ */
+export const SETTINGS_LAYER = {
+  profile: "profile",
+  notifications: "notifications",
+  privacy: "privacy",
+  style: "style",
+  wishlist: "wishlist",
+  light: "light",
+} as const;
+export const SETTINGS_LAYER_IDS: readonly string[] = Object.values(SETTINGS_LAYER);
 export const SettingsPage = lazyPage(() =>
   import("./settings-page/settings-page").then((m) => ({ default: m.SettingsPage })),
 );

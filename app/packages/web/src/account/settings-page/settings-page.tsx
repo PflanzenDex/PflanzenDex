@@ -1,9 +1,10 @@
 import { useCallback, type ReactNode } from "react";
-import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerHost, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { CalmModeSection, loadAchievementSettings } from "../../achievements";
 import { LoadFrame, useFeature, useRequest } from "../../kernel";
 import { loadProfile, type AccountProfile } from "../api/account-api";
 import { LightGroup, ProfileGroup, WishlistGroup } from "./groups/form-groups/form-groups";
+import { SETTINGS_LAYER } from "../index";
 import {
   UNKNOWN,
   lightValue,
@@ -46,27 +47,28 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
   const social = useFeature("social");
   const styleText = useStyleValue(props.api, props.token);
   const p = saver.saved;
+  const ids = SETTINGS_LAYER;
   const layers: readonly { id: string; title: string; value: string; body: ReactNode }[] = [
     {
-      id: "profile",
+      id: ids.profile,
       title: "Profil",
       value: profileValue(p),
       body: <ProfileGroup saver={saver} />,
     },
     {
-      id: "notifications",
+      id: ids.notifications,
       title: "Benachrichtigungen",
       value: notificationsValue(p, social),
       body: <NotificationsGroup saver={saver} />,
     },
     {
-      id: "privacy",
+      id: ids.privacy,
       title: "Datenschutz und Empfehlungen",
       value: privacyValue(p),
       body: <PrivacyGroup saver={saver} />,
     },
     {
-      id: "style",
+      id: ids.style,
       title: "Wie nutzt du die App?",
       value: styleText,
       body: (
@@ -77,12 +79,12 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
       ),
     },
     {
-      id: "wishlist",
+      id: ids.wishlist,
       title: "Wunschliste",
       value: wishlistValue(p),
       body: <WishlistGroup saver={saver} />,
     },
-    { id: "light", title: "Licht", value: lightValue(p), body: <LightGroup saver={saver} /> },
+    { id: ids.light, title: "Licht", value: lightValue(p), body: <LightGroup saver={saver} /> },
   ];
   return (
     <>
@@ -110,24 +112,27 @@ export function SettingsPage(props: { api: string; token: Token; host?: boolean 
   const load = useCallback((t: string) => loadProfile(props.api, t), [props.api]);
   const loading = "Einstellungen werden geladen …";
   return (
-    <div
-      className={
-        props.host === true
-          ? "flex min-w-0 flex-col gap-2 rounded-card bg-card p-2 shadow-elevation-1 lg:flex-row lg:items-start"
-          : "flex min-w-0 flex-col gap-4"
-      }
-    >
-      {props.host !== true && <h1 className="text-2xl font-semibold">Einstellungen</h1>}
-      <LoadFrame
-        queryKey={["account", "profile"]}
-        fresh
-        token={props.token}
-        load={load}
-        loadingText={loading}
-        loadingFallback={<SettingsPageSkeleton label={loading} />}
+    // The layers beside the card, not inside it (US-QS-15): the frame is outside the card.
+    <LayerHost>
+      <div
+        className={
+          props.host === true
+            ? "flex min-w-0 flex-col gap-2 rounded-card bg-card p-2 shadow-elevation-1 lg:flex-row lg:items-start"
+            : "flex min-w-0 flex-col gap-4"
+        }
       >
-        {(profile) => <Groups api={props.api} token={props.token} profile={profile} />}
-      </LoadFrame>
-    </div>
+        {props.host !== true && <h1 className="text-2xl font-semibold">Einstellungen</h1>}
+        <LoadFrame
+          queryKey={["account", "profile"]}
+          fresh
+          token={props.token}
+          load={load}
+          loadingText={loading}
+          loadingFallback={<SettingsPageSkeleton label={loading} />}
+        >
+          {(profile) => <Groups api={props.api} token={props.token} profile={profile} />}
+        </LoadFrame>
+      </div>
+    </LayerHost>
   );
 }
