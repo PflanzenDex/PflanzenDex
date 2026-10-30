@@ -1,13 +1,13 @@
 import { randomUUID } from "node:crypto";
-import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
-import type { Pool, PoolClient } from "pg";
+import { holdTaxonLock, migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
+import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../../app";
 
 // US-ENT-08: Discover through the AI interface (real PostgreSQL, `make db-up`).
 let pool: Pool;
 let admin: Pool;
-let lock: PoolClient | undefined;
+let releaseTaxa: (() => Promise<void>) | undefined;
 const suffix = randomUUID()
   .replace(/[^a-z]/g, "")
   .slice(0, 8);
@@ -16,7 +16,6 @@ const species = [`${genus} eins`, `${genus} zwei`, `${genus} drei`];
 const subA = `ent8-${randomUUID()}`;
 const subB = `ent8-${randomUUID()}`;
 const CLIENT = "https://claude.ai/oauth/mcp-oauth-client-metadata";
-const TAXON_LOCK = "select pg_advisory_lock(hashtext('pflanzendex-test-taxon'))";
 const web = (sub: string) => `valid:${sub}`;
 const ai = (sub: string, scope: string) => `ai|${sub}|${CLIENT}|${scope}`;
 let app: ReturnType<typeof createApp>;
@@ -68,8 +67,7 @@ const suggested = async (sub: string, scope = "pflanzen:read") => {
 beforeAll(async () => {
   pool = openOwnerPool();
   admin = openFixturePool();
-  lock = await admin.connect();
-  await lock.query(TAXON_LOCK);
+  releaseTaxa = await holdTaxonLock(admin);
   await migrate(pool);
   app = createApp({
     reviewer: async (t) =>
@@ -112,8 +110,7 @@ afterAll(async () => {
     );
     await admin.query("delete from account where subject = any($1)", [[subA, subB]]);
   } finally {
-    await lock?.query("select pg_advisory_unlock(hashtext('pflanzendex-test-taxon'))");
-    lock?.release();
+    await releaseTaxa?.();
     await pool.end();
     await admin.end();
   }

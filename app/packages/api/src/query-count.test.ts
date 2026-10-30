@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
+import { holdTaxonLock, migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import { createApp } from "./app";
 import { countingPool, type CountingPool } from "./count-queries";
 
@@ -35,6 +35,9 @@ const baseline = JSON.parse(
 let admin: Pool;
 let pool: Pool;
 let counter: CountingPool;
+// Seeds taxa and compares two measurements of the Pokedex endpoints: a parallel taxonomy build (exclusive holder of the
+// taxon lock) must not replace the `taxon` table in between (US-QG-01, #994).
+let releaseTaxa: (() => Promise<void>) | undefined;
 let app: ReturnType<typeof createApp>;
 const run = randomUUID()
   .replace(/[0-9-]/g, "")
@@ -127,6 +130,7 @@ async function measure(size: "small" | "large"): Promise<void> {
 
 beforeAll(async () => {
   admin = openFixturePool();
+  releaseTaxa = await holdTaxonLock(admin);
   const owner = openOwnerPool();
   await migrate(owner);
   counter = countingPool(owner);
@@ -162,6 +166,7 @@ afterAll(async () => {
   await admin.query("delete from account where subject = any($1)", [both]);
   await admin.query("delete from taxon where catalog_fingerprint = $1", [`qc-${run}`]);
   await pool.end();
+  await releaseTaxa?.();
   await admin.end();
 });
 
