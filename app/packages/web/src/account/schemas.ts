@@ -93,14 +93,6 @@ function thresholdsToSave(text: string, stored: number[] | null): number[] | nul
   return stored === null && sameNumbers(numbers, POSITION_THRESHOLD_DEFAULTS) ? null : numbers;
 }
 
-/** Fields of the settings form a server refusal can point at, in the order of the form. */
-export const PROFILE_REFUSABLE = [
-  "displayName",
-  "timeZone",
-  "replenishBuffer",
-  "positionThresholds",
-] as const;
-
 export const invitationCodeSchema = z.object({
   code: z.string().trim().min(1, "Bitte gib deinen Einladungscode ein."),
 });
