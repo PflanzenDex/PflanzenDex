@@ -65,23 +65,10 @@ function Choice(props: {
   );
 }
 
-function BasicFields(props: {
-  control: Control<TreatmentFields>;
-  specimens: readonly TreatableSpecimen[];
-  focusRef: FocusRef;
-}) {
-  const { control } = props;
+/** The reason, the optional agent and the first date of a plan (US-BEH-01); the planning layer shows them as one view. */
+export function TermFields({ control }: { control: Control<TreatmentFields> }) {
   return (
     <>
-      <FormField
-        control={control}
-        name="specimenIds"
-        render={({ field }) => (
-          <FormItem>
-            <Choice specimens={props.specimens} field={field} focusRef={props.focusRef} />
-          </FormItem>
-        )}
-      />
       <Field control={control} name="reason" label="Grund">
         {(field) => (
           <Input
@@ -102,7 +89,30 @@ function BasicFields(props: {
   );
 }
 
-function CourseFields({ control }: { control: Control<TreatmentFields> }) {
+function BasicFields(props: {
+  control: Control<TreatmentFields>;
+  specimens: readonly TreatableSpecimen[];
+  focusRef: FocusRef;
+}) {
+  const { control } = props;
+  return (
+    <>
+      <FormField
+        control={control}
+        name="specimenIds"
+        render={({ field }) => (
+          <FormItem>
+            <Choice specimens={props.specimens} field={field} focusRef={props.focusRef} />
+          </FormItem>
+        )}
+      />
+      <TermFields control={control} />
+    </>
+  );
+}
+
+/** "Kur planen": the count and the interval, only while the course is on (US-BEH-01). */
+export function CourseFields({ control }: { control: Control<TreatmentFields> }) {
   const isCourse = useWatch({ control, name: "isCourse" });
   return (
     <>

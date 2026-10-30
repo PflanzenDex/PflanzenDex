@@ -3,6 +3,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/components/shared/states/toast/toast-provider/toast-provider";
 import { TodayArea } from "./today-area";
 
 const response = (status: number, body: unknown) =>
@@ -39,11 +40,22 @@ type Setup = {
   treatments?: unknown[];
   hints?: unknown[];
   specimens?: unknown[];
+  /** The cards of the planning form: name and location of every plant (US-BEH-01). */
+  cards?: unknown[];
   hintsStatus?: number;
   items?: unknown[];
 };
 
 const SPECIMENS = [{ id: "s-a", name: "Aloe", status: "plant" }];
+const CARDS = [{ id: "s-a", name: "Aloe", location: "Fensterbank" }];
+/** Five plants on two pages on a phone, with two locations and one plant without one (US-BEH-01). */
+const FIVE = [
+  { id: "p1", name: "Aloe", location: "Fensterbank" },
+  { id: "p2", name: "Basilikum", location: "Fensterbank" },
+  { id: "p3", name: "Cyclamen", location: "Balkon" },
+  { id: "p4", name: "Dill", location: null },
+  { id: "p5", name: "Efeu", location: "Balkon" },
+];
 const LOCATIONS = [{ id: "l1", name: "Regal", lightZoneId: null }];
 
 /** A server for the three sections; it returns what is posted. */
@@ -69,6 +81,7 @@ function fakeServer(setup: Setup = {}) {
         "/specimens/count": () => response(200, { count: 1, archived: 0 }),
         "/onboarding/hints": () => response(200, { hint: null, guideEnded: false }),
         "/specimens": () => response(200, { specimens: setup.specimens ?? SPECIMENS }),
+        "/specimens/cards": () => response(200, { cards: setup.cards ?? setup.specimens ?? CARDS }),
         "/specimens/hints": hints,
         "/locations": () => response(200, { locations: LOCATIONS }),
         "/specimens/e1/location": () => response(200, {}),
@@ -93,10 +106,12 @@ function Address() {
 const address = () => screen.getByTestId("address").textContent;
 const show = (path = "/today", onOpen?: (v: string) => void) =>
   render(
-    <MemoryRouter initialEntries={[path]}>
-      {area(onOpen)}
-      <Address />
-    </MemoryRouter>,
+    <ToastProvider>
+      <MemoryRouter initialEntries={[path]}>
+        {area(onOpen)}
+        <Address />
+      </MemoryRouter>
+    </ToastProvider>,
   );
 const dialog = (name: string) => screen.findByRole("dialog", { name });
 
@@ -250,25 +265,85 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     expect(within(layer).getByText("Seite 1 von 2")).toBeTruthy();
   });
 
-  it("US-QS-18 · US-BEH-01 the planning form opens in a dialog from the layer and closes after saving", async () => {
-    const posts = fakeServer();
+  it("US-QS-18 · A-05 the layer Behandlungen switches between Offen and Erledigt; the history shows only under Erledigt", async () => {
+    fakeServer();
+    const user = userEvent.setup();
+    show("/today?sheet=treatments");
+    const layer = await dialog("Behandlungen");
+    const group = within(layer).getByRole("group", { name: "Behandlungen anzeigen" });
+    expect(within(group).getByRole("button", { name: "Offen" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    expect(within(layer).queryByLabelText("Pflanze für den Verlauf")).toBeNull();
+    await user.click(within(group).getByRole("button", { name: "Erledigt" }));
+    expect(await within(layer).findByLabelText("Pflanze für den Verlauf")).toBeTruthy();
+    expect(within(layer).queryByRole("button", { name: /als erledigt abhaken/ })).toBeNull();
+    // The heading of the history is no bigger than the layer title: it is only for screen readers (US-QS-18).
+    expect(
+      within(layer).getByRole("heading", { level: 3, name: "Erledigte Behandlungen" }).className,
+    ).toContain("sr-only");
+  });
+
+  it("US-BEH-01 · A-04 the planning is a layer with search, a location filter and pages of plants; saving returns to Behandlungen", async () => {
+    const posts = fakeServer({ cards: FIVE });
     const user = userEvent.setup();
     show("/today?sheet=treatments");
     await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
     const form = await dialog("Behandlung planen");
-    await user.click(within(form).getByRole("checkbox", { name: "Aloe" }));
+    // Four plants per page on a phone, the position in text, search and location filter above the list.
+    expect(within(form).getByRole("list", { name: "Pflanzen" }).children).toHaveLength(4);
+    expect(within(form).getByText("Seite 1 von 2")).toBeTruthy();
+    await user.type(within(form).getByRole("searchbox", { name: "Pflanze suchen" }), "EFE");
+    expect(within(form).queryByRole("checkbox", { name: /^Aloe/ })).toBeNull();
+    expect(within(form).getByRole("checkbox", { name: /^Efeu/ })).toBeTruthy();
+    await user.clear(within(form).getByRole("searchbox", { name: "Pflanze suchen" }));
+    await user.selectOptions(within(form).getByRole("combobox", { name: "Standort" }), "Balkon");
+    const balcony = within(form).getByRole("list", { name: "Pflanzen" });
+    expect(within(balcony).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(form).queryByText("Seite 1 von 2")).toBeNull();
+    await user.selectOptions(within(form).getByRole("combobox", { name: "Standort" }), "");
+    await user.click(within(form).getByRole("checkbox", { name: /^Aloe/ }));
+    // The date and the reason are one view further; the save button stays in the layer's footer.
+    await user.click(within(form).getByRole("button", { name: "Termin" }));
     await user.type(within(form).getByLabelText(/Grund/), "Läuse");
+    // The save button sits in the footer outside the scrolling list and submits the form by its id (sticky footer).
+    const save = within(form).getByRole("button", { name: "Behandlung speichern" });
+    expect(document.getElementById(save.getAttribute("form") ?? "")?.tagName).toBe("FORM");
     await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
     await waitFor(() => expect(posts).toContain("/treatments"));
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "Behandlung planen" })).toBeNull(),
     );
+    expect(address()).toBe("/today?sheet=treatments");
     expect(await screen.findByText(/Termin.* geplant/)).toBeTruthy();
   });
 
-  it("US-QS-18 · US-BEH-03 the history per plant stays reachable in the layer", async () => {
-    fakeServer();
+  it("US-BEH-01 · A-04 an invalid plan opens the view of the first missing entry: no plant, then no reason", async () => {
+    fakeServer({ cards: FIVE });
+    const user = userEvent.setup();
     show("/today?sheet=treatments");
+    await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
+    const form = await dialog("Behandlung planen");
+    await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
+    expect(await within(form).findByText(/Wähle mindestens eine Pflanze/)).toBeTruthy();
+    expect(
+      within(form).getByRole("button", { name: "Pflanzen (0)" }).getAttribute("aria-pressed"),
+    ).toBe("true");
+    // A plant is chosen, the reason is missing: the view moves to the reason and names it.
+    await user.click(within(form).getByRole("checkbox", { name: /^Aloe/ }));
+    await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
+    expect(await within(form).findByText(/Bitte nenne einen Grund/)).toBeTruthy();
+    expect(within(form).getByRole("button", { name: "Termin" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    expect(within(form).getByLabelText(/Grund/)).toBe(document.activeElement);
+  });
+
+  it("US-QS-18 · US-BEH-03 the history per plant stays reachable in the layer under Erledigt", async () => {
+    fakeServer();
+    const user = userEvent.setup();
+    show("/today?sheet=treatments");
+    await user.click(await screen.findByRole("button", { name: "Erledigt" }));
     expect(await screen.findByLabelText("Pflanze für den Verlauf")).toBeTruthy();
   });
 
