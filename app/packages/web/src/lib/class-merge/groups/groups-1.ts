@@ -86,6 +86,7 @@ export const GROUPS_1: Config<string, string>["classGroups"] = {
   grow: [{ grow: ["", isNumber, isArbitraryVariable, isArbitraryValue] }],
   order: [{ order: [isInteger, "first", "last", "none", isArbitraryVariable, isArbitraryValue] }],
   "text-overflow": ["truncate", "text-ellipsis", "text-clip"],
+  "line-clamp": [{ "line-clamp": [isNumber, "none"] }],
   "grid-rows": [{ "grid-rows": scaleGridTemplateColsRows() }],
   gap: [{ gap: scaleUnambiguousSpacing() }],
   "gap-x": [{ "gap-x": scaleUnambiguousSpacing() }],

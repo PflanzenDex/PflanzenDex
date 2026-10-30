@@ -48,7 +48,7 @@ export function SpeciesRow({ c }: { c: CaughtSpecies }) {
       aria-label={`Details zu ${c.species}`}
       aria-haspopup="dialog"
       aria-expanded={open}
-      className="h-auto w-full justify-between gap-2 whitespace-normal px-3 py-2 text-left"
+      className="h-auto w-full justify-between gap-2 whitespace-normal border-border px-3 py-1.5 text-left text-foreground"
       onClick={(event) => openLayer(event.currentTarget)}
     >
       <span className="grid min-w-0 gap-0 break-words">

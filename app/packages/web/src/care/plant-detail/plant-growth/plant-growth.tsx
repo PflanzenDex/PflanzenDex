@@ -10,10 +10,12 @@ type Token = () => Promise<string | undefined>;
 function GrowthLines({ growth }: { growth: GrowthTrend }) {
   const lines = growthLines(growth);
   return (
-    <div className="grid gap-0.5 text-sm text-muted-foreground">
-      <p>Wachstum: {lines.rate}</p>
-      <p>Trend: {lines.trend || "unbekannt"}</p>
-    </div>
+    // One line (US-QS-23); it wraps only when the trend sentence needs more room.
+    <p className="flex flex-wrap gap-x-2 text-sm text-muted-foreground">
+      <span>Wachstum: {lines.rate}</span>
+      <span aria-hidden="true">·</span>
+      <span>Trend: {lines.trend || "unbekannt"}</span>
+    </p>
   );
 }
 

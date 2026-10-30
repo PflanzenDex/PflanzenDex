@@ -16,7 +16,7 @@ import { useAccountValues } from "./account-values";
 type Token = () => Promise<string | undefined>;
 
 const ROW =
-  "flex min-h-14 w-full items-center gap-3 rounded-lg border-l-4 border-transparent px-3 py-2 text-left text-[15px] text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+  "flex min-h-11 w-full items-center gap-3 rounded-lg border-l-4 border-transparent px-3 py-1 text-left text-[15px] text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 const CURRENT = "border-primary bg-accent font-semibold text-accent-foreground hover:bg-accent";
 
 function Row(props: {
@@ -95,12 +95,12 @@ export function AccountIndex(props: {
   const name = props.account.displayName || props.account.email;
   return (
     <nav aria-label="Abschnitte von Konto">
-      <ul className="m-0 flex list-none flex-col gap-1 p-0">
+      <ul className="m-0 flex list-none flex-col gap-0 p-0">
         <li>
           <Row to="profile" id={rowId("profile")} current={props.current === "profile"}>
             <span
               aria-hidden="true"
-              className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-lg font-semibold text-accent-foreground"
+              className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-base font-semibold text-accent-foreground"
             >
               {name.slice(0, 1).toUpperCase()}
             </span>

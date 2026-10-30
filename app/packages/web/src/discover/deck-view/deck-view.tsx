@@ -20,7 +20,7 @@ function Actions(props: { onDecide: (d: Decision) => void }) {
         // Stays in view with the card (US-QS-14, NFR-13): above the phone bar (3.5 rem plus safe area, a little under
         // the bar's 59 px so no content shows in between), at the window bottom from `md`. A window too low for it
         // (400 % zoom) scrolls it like content.
-        "sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-10 border-t border-border bg-background py-2",
+        "sticky shrink-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-10 border-t border-border bg-background py-2",
         "md:bottom-0 [@media(max-height:30rem)]:static",
       )}
     >
@@ -145,7 +145,7 @@ function Cards(props: {
       />
     );
   return (
-    <div className="grid min-w-0 gap-3">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
       <p aria-live="polite" className="m-0 text-center text-sm text-muted-foreground">
         {`Vorschlag ${position + 1} von ${deck.suggestions.length}`}
       </p>
@@ -155,7 +155,7 @@ function Cards(props: {
         onSwipe={(side) => void decide(current.species, side === "right" ? "yes" : "no")}
       />
       {error !== null && <Banner variant="error">{error}</Banner>}
-      <p className="m-0 text-center text-sm text-muted-foreground">
+      <p className="sr-only">
         „Ja“ legt die Art auf die Wunschliste, „Nein“ verwirft sie dort, „Später“ speichert nichts.
       </p>
       <Actions onDecide={(d) => void decide(current.species, d)} />
@@ -166,7 +166,7 @@ function Cards(props: {
 export function DeckView(props: Parameters<typeof Cards>[0]) {
   const filter = props.deck.zoneFilter;
   return (
-    <div className="grid min-w-0 gap-3">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
       {filter !== null && <ZoneNotice filter={filter} offerProposal={props.deck.empty === null} />}
       <Cards {...props} />
     </div>

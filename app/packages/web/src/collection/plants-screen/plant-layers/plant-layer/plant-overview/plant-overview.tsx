@@ -45,7 +45,7 @@ export function PlantOverview(props: {
   const { card } = props;
   const state = tileState(card);
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-1.5">
       <div className="flex gap-3">
         <Photo card={card} access={props.access} compact />
         <div className="grid min-w-0 content-start gap-1 text-sm">
@@ -53,13 +53,17 @@ export function PlantOverview(props: {
         </div>
       </div>
       {props.growth ?? <Quiet>Trend: {UNKNOWN}</Quiet>}
-      <p>
-        Zustand: <strong data-attention={state.attention}>{state.text}</strong>
-      </p>
-      <Treatment card={card} />
-      <Quiet>
-        Art: {card.speciesName ?? UNKNOWN} · Status: {STATUS_TEXT[card.status]}
-      </Quiet>
+      <div className="grid gap-1.5 text-sm">
+        <Treatment card={card} />
+      </div>
+      <div className="flex flex-wrap items-baseline gap-x-3 text-sm">
+        <p>
+          Zustand: <strong data-attention={state.attention}>{state.text}</strong>
+        </p>
+        <Quiet>
+          Art: {card.speciesName ?? UNKNOWN} · Status: {STATUS_TEXT[card.status]}
+        </Quiet>
+      </div>
       <Provenance value={card.provenance} />
       <div className="grid grid-cols-2 gap-2">
         {props.water}

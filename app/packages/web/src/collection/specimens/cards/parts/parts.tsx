@@ -109,7 +109,7 @@ export function Photo({
       <div
         className={cn(
           "grid place-items-center rounded-lg border border-dashed border-border text-center text-muted-foreground",
-          compact ? "size-24 shrink-0 p-1 text-sm" : "min-h-[72px]",
+          compact ? "size-20 shrink-0 p-1 text-sm" : "min-h-[72px]",
         )}
       >
         <span>Noch kein Foto</span>
@@ -121,7 +121,7 @@ export function Photo({
     <a
       className={cn(
         "block overflow-hidden rounded-lg bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        compact ? "size-24 shrink-0" : "aspect-[4/3]",
+        compact ? "size-20 shrink-0" : "aspect-[4/3]",
       )}
       href={state}
       target="_blank"
