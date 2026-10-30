@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/fields/input/input";
+import { DateField } from "@/components/ui/fields/input/native-fields/date-field/date-field";
 import { dateText } from "@/lib/format";
 import { errorText } from "@/lib/error-text";
 import { useInvalidate, useWriteAction } from "../../../kernel";
@@ -48,11 +48,11 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
         </p>
         <label className="flex flex-col gap-1">
           Von
-          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <DateField value={from} onChange={(e) => setFrom(e.target.value)} />
         </label>
         <label className="flex flex-col gap-1">
           Bis (einschließlich)
-          <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} />
+          <DateField value={until} onChange={(e) => setUntil(e.target.value)} />
         </label>
         <Button type="button" onClick={submit} disabled={write.running} className="self-start">
           Pause eintragen

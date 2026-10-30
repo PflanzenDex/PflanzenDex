@@ -102,7 +102,7 @@ describe("US-MON-08 reminder settings screen", () => {
       await screen.findByLabelText("Gießen pausiert bis");
       await user.click(screen.getByRole("button", { name: "Gießen: eine Woche pausieren" }));
       expect(screen.getByLabelText<HTMLInputElement>("Gießen pausiert bis").value).toBe(
-        "2026-10-17",
+        "17.10.2026",
       );
     } finally {
       vi.useRealTimers();
