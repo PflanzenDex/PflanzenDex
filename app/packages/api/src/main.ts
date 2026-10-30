@@ -11,7 +11,7 @@ import { createApp } from "./app";
 import { createWikimediaDownload } from "./wishlist";
 import { createJobWorker, JOB_HANDLERS } from "./jobs";
 import { catalogFillEnabled, catalogFillJobHandlers, checkCatalogFill } from "./catalog";
-import { checkTaxonomy, pokedexJobHandlers, scheduleChecks } from "./pokedex";
+import { checkTaxonomy, pokedexJobHandlers, scheduleChecks, taxonomyBuildEnabled } from "./pokedex";
 import { reminderChannelFromEnv, remindersRuntime } from "./monitoring";
 import { reminderOccasionsFor } from "./today";
 import { measurementSourceFor } from "./care";
@@ -106,12 +106,13 @@ const worker = createJobWorker({
   },
 });
 worker.start();
-// The taxonomy build runs when the catalog differs from the stored tree (US-POK-03).
-scheduleChecks(
-  () => checkTaxonomy(pool, () => new Date()),
-  60 * 60 * 1000,
-  (error) => console.error("taxonomy check failed", error),
-);
+// The taxonomy build runs when the catalog differs from the stored tree (US-POK-03); `TAXONOMY_BUILD=off` stops it.
+if (taxonomyBuildEnabled(process.env))
+  scheduleChecks(
+    () => checkTaxonomy(pool, () => new Date()),
+    60 * 60 * 1000,
+    (error) => console.error("taxonomy check failed", error),
+  );
 // First start of the catalog fill: orders the job for the approved species with gaps, then re-checks hourly (starting
 // value, assumption) for species approved later. Without `CATALOG_FILL=on` nothing is ordered and no request leaves.
 if (catalogFill)

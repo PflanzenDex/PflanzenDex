@@ -2,3 +2,4 @@
 // background jobs of the taxonomy build (US-POK-03).
 export { POKEDEX_PATHS, pokedexRoutes } from "./pokedex-routes";
 export { checkTaxonomy, pokedexJobHandlers, scheduleChecks } from "./taxonomy-job";
+export { taxonomyBuildEnabled } from "./taxonomy-switch";
