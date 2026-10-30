@@ -30,7 +30,7 @@ make dev     # start API (port 3000) and web (Vite)
 make ci      # all gates: lint, types, boundaries, format, tests, build
 ```
 
-- **Node:** version 24 (`.nvmrc`). Vitest 5 does not officially support odd Node versions (e.g. 25).
+- **Node:** version 26 (`.nvmrc`). Vitest 5 does not officially support odd Node versions (e.g. 25).
 - **TypeScript 6.0.x** is pinned on purpose: `typescript-eslint` does not support TypeScript 7 yet (peer range `<6.1`).
 - **Exact versions:** every `package.json` names exact versions, never `^`/`~` ranges (`app/.npmrc` sets `save-exact`, Renovate uses `rangeStrategy: "pin"`). Workspace packages (`@pflanzendex/*`) stay `*`, which means the local workspace. Vulnerable transitive dependencies are fixed by updating the parent or refreshing the lock file, never with `overrides`; when no parent release has the fix yet, the advisory gets a dated entry in `config/gates/audit-allowlist.json` (QG-S2).
 - **Load measurement (NFR-12):** `npm run perf:measure -w @pflanzendex/api` seeds accounts with 100 and 1,000 specimens in a throw-away test database and prints response times and SQL statement counts per request as JSON. It is a measurement, not a gate, and not part of `make ci`; results: `docs/records/test-logs/nfr-12.md`.
@@ -67,6 +67,7 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 ## Demo seed for the dev accounts (US-DEV-01, #924)
 
 - **Command:** `PFLANZENDEX_ENV=local npm run seed:demo -w @pflanzendex/api` (from `app/`; the Makefile is a gate file, so there is no `make` target). Prerequisites: `make auth-up` (Keycloak, for the account ids), `make db-up` and `make migrate`. The command also adds the 51 catalog species of `npm run seed:catalog` (idempotent), because the demo plants point at them. Run it against the database the dev API uses (`DATABASE_URL`, default: the test database of `make db-up`).
+- **Catalog seed lock (#991):** `npm run seed:catalog` (51 dev species, superuser connection) now needs `PFLANZENDEX_ENV=local` or `test` like the demo seed and refuses `prod`. Production gets its catalog from `npm run catalog:load` (curated start catalog with operator provenance; recipe in `docs/guides/operations/release-and-rollback.md`).
 - **Hard lock:** it runs only when `PFLANZENDEX_ENV` is set to `local` or `test` AND `DATABASE_URL` points to this machine (`localhost`, `127.0.0.1`, `::1`, name without "prod", `NODE_ENV` not `production`). `prod`, an unset or an unknown value is refused with an error message and exit code 1 before anything is read or written (`perf/demo-seed/guard/guard.ts`, tested).
 - **Account ids:** the app keys an account by the Keycloak `sub`, which is random per realm import. The seed asks the Keycloak admin API for the ids of `test`, `test2` and `test3` (admin password from `app/config/dev/.env`, like `app/tools/keycloak/web-port.mjs`), so the first sign-in of these users finds the filled accounts. Without Keycloak: `DEMO_SEED_SUBJECTS=test=<sub>,test2=<sub>,test3=<sub>`.
 - **How:** in process through the real API routes (`createApp`, so core operations, `Idempotency-Key`, `withAccount` and the app role with row security), one account per call; no raw SQL of its own. It looks before it writes (names, markers, existing series), so a second run changes nothing; a failing call stops the run with route and error body.

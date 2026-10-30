@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { withAccount, migrate, openFixturePool, openOwnerPool } from "../kernel/index.ts";
-import { findOrCreateAccount } from "./index.ts";
+import { ensureOperatorAccount, findOrCreateAccount } from "./index.ts";
 
 // US-ACC-01, FR-ACC-01: account creation runs through its own path that sees only the account of the verified subject.
 let pool: Pool;
@@ -10,6 +10,7 @@ let pool: Pool;
 let admin: Pool;
 const subjectA = `test-${randomUUID()}`;
 const subjectB = `test-${randomUUID()}`;
+const subjectOperator = `test-${randomUUID()}`;
 
 beforeAll(async () => {
   pool = openOwnerPool();
@@ -17,7 +18,9 @@ beforeAll(async () => {
   await migrate(pool);
 });
 afterAll(async () => {
-  await admin.query("delete from account where subject = any($1)", [[subjectA, subjectB]]);
+  await admin.query("delete from account where subject = any($1)", [
+    [subjectA, subjectB, subjectOperator],
+  ]);
   await admin.end();
   await pool.end();
 });
@@ -74,5 +77,14 @@ describe("account creation via the subject of the sign-in service (US-ACC-01)", 
     );
     const viewB = await withAccount(pool, b, (c) => c.query("select * from account_data"));
     expect(viewB.rowCount).toBe(0);
+  });
+});
+
+describe("operator account of a batch (US-BES-12, #991)", () => {
+  it("is found again and holds the operator role exactly once", async () => {
+    const first = await ensureOperatorAccount(pool, subjectOperator);
+    expect(await ensureOperatorAccount(pool, subjectOperator)).toBe(first);
+    const roles = await admin.query("select role from account_role where account = $1", [first]);
+    expect(roles.rows).toEqual([{ role: "operator" }]);
   });
 });
