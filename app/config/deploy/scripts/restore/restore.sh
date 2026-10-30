@@ -3,7 +3,7 @@
 # Usage: restore.sh <backup.dump> [target-database]
 # Without a target database the production database (POSTGRES_DB) is overwritten; that requires CONFIRM=yes.
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 
 file="${1:-}"
 if [ -z "$file" ] || [ ! -s "$file" ]; then echo "usage: restore.sh <backup.dump> [target-database]" >&2; exit 2; fi

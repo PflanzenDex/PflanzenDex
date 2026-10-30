@@ -211,4 +211,4 @@ backup: ## Back up the database (app/config/deploy/backups)
 	$(APP)/config/deploy/scripts/backup.sh
 
 restore-test: ## Restore test in a throwaway container (needs Docker)
-	$(APP)/config/deploy/scripts/restore-test.sh
+	$(APP)/config/deploy/scripts/restore/restore-test.sh

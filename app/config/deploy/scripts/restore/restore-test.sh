@@ -3,7 +3,7 @@
 # database, then compare row count and checksum. Never touches the production database.
 # Requires Docker. Usage: make restore-test
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 
 name="pdx-restore-test-$$"
 workdir="$(mktemp -d)"
@@ -42,7 +42,7 @@ expected_kc="$(psql_q "$KEYCLOAK_DB_NAME" "select count(*) || ':' || md5(string_
 export BACKUP_DIR="$workdir/backups" BACKUP_REMOTE=""
 ./scripts/backup.sh
 dump="$(ls "$BACKUP_DIR"/pflanzendex-*.dump)"
-./scripts/restore.sh "$dump" pdx_restored
+./scripts/restore/restore.sh "$dump" pdx_restored
 
 owner="$(psql_q pdx_restored "select tableowner from pg_tables where tablename = 'specimen'")"
 if [ "$owner" != "pdxowner" ]; then
@@ -56,7 +56,7 @@ if [ "$expected" != "$actual" ]; then
 fi
 
 kc_dump="$(ls "$BACKUP_DIR"/keycloak-*.dump)"
-./scripts/restore.sh "$kc_dump" pdx_keycloak_restored
+./scripts/restore/restore.sh "$kc_dump" pdx_keycloak_restored
 actual_kc="$(psql_q pdx_keycloak_restored "select count(*) || ':' || md5(string_agg(username, ',' order by id)) from user_entity")"
 if [ "$expected_kc" != "$actual_kc" ]; then
   echo "ERROR: sign-in database restore differs (expected $expected_kc, actual $actual_kc)" >&2

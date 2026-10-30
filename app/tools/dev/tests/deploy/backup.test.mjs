@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 
-const deploy = new URL("../../../config/deploy/", import.meta.url).pathname;
+const deploy = new URL("../../../../config/deploy/", import.meta.url).pathname;
 const backup = join(deploy, "scripts/backup.sh");
 const stubDir = mkdtempSync(join(tmpdir(), "backup-stub-"));
 // Stub: pg_dump prints a fake dump, pg_restore -l reads it, psql says the sign-in database exists.
