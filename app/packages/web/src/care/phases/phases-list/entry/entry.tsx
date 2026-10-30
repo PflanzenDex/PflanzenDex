@@ -34,6 +34,65 @@ function SwitchAction(props: {
   );
 }
 
+/**
+ * The compact card of the paged grouping (US-QS-19): the name, one line of facts, one line of the place, one hint and the
+ * one action, so a page of cards fits the window. Every fact of the full card stays, only the boxes and repeats go.
+ */
+function CompactEntry(props: {
+  row: PhasesRow;
+  locations: readonly LightLocation[];
+  busy: boolean;
+  onConfirm: Confirm | undefined;
+}) {
+  const { row: z, locations } = props;
+  const status = phaseStatus(z);
+  const canSwitch = props.onConfirm !== undefined && needsSwitch(z);
+  const here = locationText(locations, z.locationId);
+  const target = locationText(locations, z.targetLocationId);
+  return (
+    <div className={`${CARD_CLASSES} flex flex-col gap-0.5 text-sm`}>
+      <h3 className="text-base font-semibold">{z.name}</h3>
+      <p>
+        <span>Soll-Phase heute: {PHASE_TEXT[z.phase]}</span> ·{" "}
+        <span>{nextChangeText(z.nextChange)}</span>
+      </p>
+      {status === "location_missing" ? (
+        <p className="font-semibold text-warning-foreground">
+          Standort fehlt · Soll-Standort: {target}
+        </p>
+      ) : (
+        <p className={status === "deviation" ? "font-semibold" : "text-muted-foreground"}>
+          Standort: {here} · Soll-Standort: {target}
+          {status === "deviation" ? " · Weicht ab" : ""}
+        </p>
+      )}
+      {z.nextChange === null && (
+        <p className="font-semibold">Prüfe den Ruhephasen-Zeitraum im Pflegeprofil der Art.</p>
+      )}
+      {status === "location_missing" && !canSwitch && (
+        <p className="font-semibold">Weise der Pflanze unter „Hinweise“ einen Standort zu.</p>
+      )}
+      {status === "in_place" && z.targetLocationId === null && (
+        <p className="font-semibold">
+          Wähle im Pflegeprofil der Art einen Soll-Standort für die {PHASE_TEXT[z.phase]}.
+        </p>
+      )}
+      {canSwitch && (
+        <Button
+          type="button"
+          size="touch"
+          className="mt-1 self-start"
+          disabled={props.busy}
+          aria-label={`Jetzt umgestellt: ${z.name}`}
+          onClick={() => props.onConfirm?.([z.specimenId], switchedText([z], locations))}
+        >
+          Jetzt umgestellt
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function Entry(props: {
   row: PhasesRow;
   locations: readonly LightLocation[];
@@ -42,6 +101,7 @@ export function Entry(props: {
   /** A `div` instead of a list item, for a host that already wraps the entry in one (US-QS-19). */
   bare?: boolean;
 }) {
+  if (props.bare) return <CompactEntry {...props} />;
   const { row: z, locations } = props;
   const Root = props.bare ? "div" : "li";
   const status = phaseStatus(z);

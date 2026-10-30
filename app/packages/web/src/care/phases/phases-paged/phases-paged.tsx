@@ -7,11 +7,11 @@ import { Entry } from "../phases-list/entry/entry";
 
 const PHASES: readonly CarePhase[] = ["dormancy", "growth"];
 
-/** Entries per page (starting values, assumption): a phase entry is a tall card with its own action. */
+/** Entries per page (starting values, assumption): a phase entry is a compact card with its own action. */
 function usePageSize(): number {
   const md = useIsMd();
   const lg = useIsLg();
-  return lg ? 6 : md ? 4 : 2;
+  return lg ? 8 : md ? 4 : 3;
 }
 
 /**
@@ -38,6 +38,7 @@ export function PhasesPaged(props: {
         listLabel="Pflanzen mit Pflegephase"
         groups={groups}
         pageSize={size}
+        listClassName="lg:grid lg:grid-cols-2"
         getKey={(z) => z.specimenId}
         intro={(g) => (
           <Groups
