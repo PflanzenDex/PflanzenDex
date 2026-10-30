@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Restore (NFR-15, TE-03): loads a backup into a database.
 # Usage: restore.sh <backup.dump> [target-database]
+# Environment: DEPLOY_ENV_FILE names the env file (default config/deploy/.env if present, empty or missing = none); PG_EXEC overrides how the Postgres container is reached (for tests).
 # Without a target database the production database (POSTGRES_DB) is overwritten; that requires CONFIRM=yes.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -8,8 +9,19 @@ cd "$(dirname "$0")/.."
 file="${1:-}"
 if [ -z "$file" ] || [ ! -s "$file" ]; then echo "usage: restore.sh <backup.dump> [target-database]" >&2; exit 2; fi
 
-if [ -f .env ]; then set -a; . ./.env; set +a; fi
-PG_EXEC="${PG_EXEC:-docker compose --env-file .env exec -T db}"
+# DEPLOY_ENV_FILE (#1010) names the env file: default .env in this folder; empty or missing loads none, so a caller
+# can keep the host's .env out of a run (restore-test does).
+env_file="${DEPLOY_ENV_FILE-.env}"
+compose_env=""
+if [ -n "$env_file" ] && [ -f "$env_file" ]; then
+  case "$env_file" in /* | ./*) env_path="$env_file" ;; *) env_path="./$env_file" ;; esac # `.` would search $PATH for a bare name
+  set -a
+  # shellcheck source=/dev/null
+  . "$env_path"
+  set +a
+  compose_env="--env-file $env_file"
+fi
+PG_EXEC="${PG_EXEC:-docker compose $compose_env exec -T db}"
 RESTORE_DB="${2:-}"
 KEYCLOAK_DB_NAME="${KEYCLOAK_DB_NAME:-keycloak}"
 
