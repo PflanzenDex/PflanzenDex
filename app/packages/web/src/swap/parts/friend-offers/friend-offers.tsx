@@ -14,6 +14,7 @@ import {
   type FriendOffersData,
   type RequestInput,
 } from "../../api/exchange-api";
+import { useCardPageSize } from "@/components/shared/responsive/pager/card-page-size";
 import { healthText, MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
 import { RequestForm } from "./request-form/request-form";
 
@@ -24,14 +25,14 @@ const title = (o: ExchangeOffer): string => o.speciesGerman ?? o.speciesLatin ??
 function Filters(props: { value: ExchangeFilters; onChange: (v: ExchangeFilters) => void }) {
   const { value } = props;
   return (
-    <div className="flex flex-wrap items-end gap-3">
+    <div className="flex flex-wrap items-center gap-x-3">
       <label className="grid gap-1 text-sm font-medium">
-        Art des Angebots
+        <span className="sr-only">Art des Angebots</span>
         <Select
           value={value.type}
           onChange={(e) => props.onChange({ ...value, type: e.target.value as OfferType | "" })}
         >
-          <option value="">Alle</option>
+          <option value="">Alle Arten</option>
           {(Object.keys(TYPE_TEXT) as OfferType[]).map((t) => (
             <option key={t} value={t}>
               {TYPE_TEXT[t]}
@@ -43,7 +44,7 @@ function Filters(props: { value: ExchangeFilters; onChange: (v: ExchangeFilters)
         checked={value.lack}
         onChange={(e) => props.onChange({ ...value, lack: e.target.checked })}
       >
-        Nur Arten, die mir fehlen
+        Fehlt mir
       </Checkbox>
     </div>
   );
@@ -113,6 +114,7 @@ function Offers(props: {
   onRequested: () => void;
 }) {
   const { data, api } = props;
+  const size = useCardPageSize();
   const [openId, setOpenId] = useState<string | null>(null);
   const write = useWriteAction(props.token, props.onRequested);
   useEffect(() => {
@@ -138,7 +140,7 @@ function Offers(props: {
       )}
       <Pager
         items={data.offers}
-        pageSize={3}
+        pageSize={size}
         label="Angebote von Freunden"
         getKey={(o) => o.offerId}
         renderItem={(o) => (
@@ -176,7 +178,7 @@ export function FriendOffers(props: { api: string; token: Token }) {
   const load = useCallback((t: string) => loadFriendOffers(api, t, filters), [api, filters]);
   return (
     <section aria-labelledby="friend-offers-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="friend-offers-title" className="text-xl font-semibold">
+      <h2 id="friend-offers-title" className="sr-only">
         Angebote von Freunden
       </h2>
       <Filters value={filters} onChange={setFilters} />

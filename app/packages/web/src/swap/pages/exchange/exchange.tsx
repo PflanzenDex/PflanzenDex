@@ -20,7 +20,7 @@ type Token = () => Promise<string | undefined>;
 const OFFER_LAYER = "offer";
 const PARTS = [
   { value: "mine", label: "Meine" },
-  { value: "friends", label: "Von Freunden" },
+  { value: "friends", label: "Freunde" },
   { value: "requests", label: "Anfragen" },
   { value: "history", label: "Verlauf" },
 ] as const;
@@ -45,49 +45,59 @@ function usePart(): [Part, (value: Part) => void] {
   return [part, choose];
 }
 
+/** "Zum Tausch anbieten" next to the heading: it opens the layer `?sheet=offer` that the loaded page holds. */
+function OfferOpener() {
+  const layer = useLayer(OFFER_LAYER);
+  return (
+    <Button
+      type="button"
+      size="touch"
+      className="w-auto"
+      aria-haspopup="dialog"
+      onClick={(event) => layer.openLayer(event.currentTarget)}
+    >
+      Zum Tausch anbieten
+    </Button>
+  );
+}
+
 function Body(props: { data: ExchangeData; api: string; token: Token; onWritten: () => void }) {
   const { api } = props;
   const withdraw = useWriteAction(props.token, props.onWritten);
   const layer = useLayer(OFFER_LAYER);
   const [part, choose] = usePart();
   return (
-    <div className="flex min-w-0 flex-col gap-3">
-      {withdraw.message && (
-        <p role="status" className="rounded-lg border border-border p-3">
-          {withdraw.message}
-        </p>
-      )}
-      {withdraw.error && (
-        <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
-          {errorText(withdraw.error.code)}
-        </p>
-      )}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          size="touch"
-          aria-haspopup="dialog"
-          onClick={(event) => layer.openLayer(event.currentTarget)}
-        >
-          Zum Tausch anbieten
-        </Button>
-        <SegmentedControl label="Bereich" options={PARTS} value={part} onChange={choose} />
+    <div className="flex min-w-0 gap-4">
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        {withdraw.message && (
+          <p role="status" className="rounded-lg border border-border p-3">
+            {withdraw.message}
+          </p>
+        )}
+        {withdraw.error && (
+          <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
+            {errorText(withdraw.error.code)}
+          </p>
+        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <SegmentedControl label="Bereich" options={PARTS} value={part} onChange={choose} />
+        </div>
+        {part === "mine" && (
+          <OfferList
+            offers={props.data.offers}
+            busy={withdraw.running}
+            onWithdraw={(o: OfferView) =>
+              void withdraw.run(
+                (t) => withdrawOffer(api, t, o.id),
+                `Das Angebot für ${o.specimenName ?? "die Pflanze"} ist zurückgezogen.`,
+              )
+            }
+          />
+        )}
+        {part === "requests" && <SwapRequests api={api} token={props.token} />}
+        {part === "friends" && <FriendOffers api={api} token={props.token} />}
+        {part === "history" && <SwapHistory api={api} token={props.token} />}
       </div>
-      {part === "mine" && (
-        <OfferList
-          offers={props.data.offers}
-          busy={withdraw.running}
-          onWithdraw={(o: OfferView) =>
-            void withdraw.run(
-              (t) => withdrawOffer(api, t, o.id),
-              `Das Angebot für ${o.specimenName ?? "die Pflanze"} ist zurückgezogen.`,
-            )
-          }
-        />
-      )}
-      {part === "requests" && <SwapRequests api={api} token={props.token} />}
-      {part === "friends" && <FriendOffers api={api} token={props.token} />}
-      {part === "history" && <SwapHistory api={api} token={props.token} />}
       <LayerSheet id={OFFER_LAYER} title="Zum Tausch anbieten">
         {layer.open ? (
           <OfferForm
@@ -113,20 +123,33 @@ export function ExchangePage(props: { api: string; token: Token }) {
   const reload = useInvalidate(KEY);
   const load = useCallback((t: string) => loadExchange(api, t), [api]);
   return (
-    <div className="rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7">
-      <section aria-labelledby="exchange-title" className="flex min-w-0 flex-col gap-3">
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline" size="touch">
+    <div className="rounded-2xl border border-border bg-card px-4 py-3 text-card-foreground md:p-7">
+      <section aria-labelledby="exchange-title" className="flex min-w-0 flex-col gap-2">
+        <div className="flex gap-2">
+          <Button
+            asChild
+            variant="outline"
+            size="touch"
+            className="min-w-0 flex-1 px-1.5 text-[13px]"
+          >
             <Link to="/friends">Zurück zu Freunde</Link>
           </Button>
-          <Button asChild variant="outline" size="touch">
+          <Button
+            asChild
+            variant="outline"
+            size="touch"
+            className="min-w-0 flex-1 px-1.5 text-[13px]"
+          >
             <Link to="/friends/match">Passende Angebote</Link>
           </Button>
         </div>
-        <h1 id="exchange-title" className="text-2xl font-semibold">
-          Tauschbörse
-        </h1>
-        <p className="text-muted-foreground">
+        <div className="flex items-center justify-between gap-2">
+          <h1 id="exchange-title" className="text-2xl font-semibold">
+            Tauschbörse
+          </h1>
+          <OfferOpener />
+        </div>
+        <p className="hidden text-muted-foreground md:block">
           Nur deine Freunde sehen ein Angebot, und nur, was du für sie freigegeben hast.
         </p>
         <LoadFrame

@@ -4,6 +4,7 @@ import { Pager } from "@/components/shared/responsive/pager/pager";
 import { Badge } from "@/components/ui/display/badge/badge";
 import { currentTimeZone, LoadFrame } from "../../../kernel";
 import { loadHistory } from "../../api/swaps-api";
+import { useCardPageSize } from "@/components/shared/responsive/pager/card-page-size";
 import { MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
 import { CAUSE_TEXT, STATUS_TEXT } from "../swap-requests/swap-text";
 
@@ -46,10 +47,11 @@ function Entry({ e }: { e: HistoryEntry }) {
  */
 export function SwapHistory(props: { api: string; token: Token }) {
   const { api, token } = props;
+  const size = useCardPageSize();
   const load = useCallback((t: string) => loadHistory(api, t), [api]);
   return (
     <section aria-labelledby="swap-history-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="swap-history-title" className="text-xl font-semibold">
+      <h2 id="swap-history-title" className="sr-only">
         Tauschverlauf
       </h2>
       <LoadFrame
@@ -67,7 +69,7 @@ export function SwapHistory(props: { api: string; token: Token }) {
           ) : (
             <Pager
               items={data.entries}
-              pageSize={3}
+              pageSize={size}
               label="Tauschverlauf"
               getKey={(e) => e.swapId}
               renderItem={(e) => <Entry e={e} />}

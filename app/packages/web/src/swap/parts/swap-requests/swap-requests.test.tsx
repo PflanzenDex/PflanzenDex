@@ -69,7 +69,7 @@ describe("US-SOZ-10 requests for my offers", () => {
   it("lists a request with the requester, species, counter-offer and the actions", async () => {
     server({ received: [side()] });
     show();
-    const list = await screen.findByRole("list", { name: "Anfragen an dich" });
+    const list = await screen.findByRole("list", { name: "Anfragen" });
     const text = within(list).getByRole("listitem").textContent ?? "";
     expect(text).toContain("Echte Aloe");
     expect(text).toContain("Ben");
@@ -135,13 +135,13 @@ describe("US-SOZ-10 requests for my offers", () => {
     );
     await screen.findByText(/Die Zusage ist zurückgezogen/);
     expect(posts[0]).toEqual({ path: "/swaps/a/answer", body: { action: "cancel" } });
-    const list = () => screen.findByRole("list", { name: "Anfragen an dich" });
-    const first = (await list()).textContent ?? "";
-    expect(first).toContain("Schon vergeben");
-    expect(first).toContain("Ihr seid nicht mehr befreundet");
-    // The fourth request is on the second page (US-QS-20).
+    const list = () => screen.findByRole("list", { name: "Anfragen" });
+    expect((await list()).textContent ?? "").toContain("Schon vergeben");
+    // The third and fourth request are on the second page (US-QS-20).
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect((await list()).textContent ?? "").toContain("Grund: Zu klein");
+    const second = (await list()).textContent ?? "";
+    expect(second).toContain("Ihr seid nicht mehr befreundet");
+    expect(second).toContain("Grund: Zu klein");
   });
 
   it("a refusal shows the German text of its code (P-10)", async () => {
@@ -179,7 +179,7 @@ describe("US-SOZ-10 requests I sent", () => {
       ],
     });
     show();
-    const list = await screen.findByRole("list", { name: "Deine Anfragen" });
+    const list = await screen.findByRole("list", { name: "Anfragen" });
     const text = list.textContent ?? "";
     expect(text).toContain("Vorschlag von Anna: Lieber eine Aloe");
     expect(text).toContain("Abgelehnt");

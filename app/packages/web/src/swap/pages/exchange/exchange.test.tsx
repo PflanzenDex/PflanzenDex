@@ -108,7 +108,7 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
     });
     view();
     const list = await screen.findByRole("list", { name: "Meine Angebote" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "Tauschverlauf" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Verlauf" }));

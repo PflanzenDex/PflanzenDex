@@ -2,10 +2,8 @@ import type { OfferView } from "@pflanzendex/core";
 import { Pager } from "@/components/shared/responsive/pager/pager";
 import { Badge } from "@/components/ui/display/badge/badge";
 import { Button } from "@/components/ui/button/button";
+import { useCardPageSize } from "@/components/shared/responsive/pager/card-page-size";
 import { healthText, MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
-
-/** Offers per page (starting value, assumption; the page size from the free height is #1029). */
-const PAGE_SIZE = 3;
 
 const STATUS_TEXT = {
   open: "Offen",
@@ -24,9 +22,10 @@ export function OfferList(props: {
   busy: boolean;
   onWithdraw: (o: OfferView) => void;
 }) {
+  const size = useCardPageSize();
   return (
     <section aria-labelledby="offer-list-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="offer-list-title" className="text-xl font-semibold">
+      <h2 id="offer-list-title" className="sr-only">
         Meine Angebote
       </h2>
       {props.offers.length === 0 ? (
@@ -37,7 +36,7 @@ export function OfferList(props: {
       ) : (
         <Pager
           items={props.offers}
-          pageSize={PAGE_SIZE}
+          pageSize={size}
           label="Meine Angebote"
           getKey={(o) => o.id}
           renderItem={(o) => {

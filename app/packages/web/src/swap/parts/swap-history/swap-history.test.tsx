@@ -82,14 +82,15 @@ describe("US-SOZ-13 swap history", () => {
     expect(items[0]).toContain("Übergeben");
     expect(items[1]).toContain("Erhalten von Cleo");
     expect(items[1]).toContain("Pflanze · Verschenken");
-    expect(items[2]).toContain("Abgelehnt");
-    expect(items[2]).toContain("Grund: Zu klein");
-    // The fourth entry is on the second page (US-QS-20).
+    // Entries three and four are on the second page (US-QS-20).
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    const last = within(screen.getByRole("list", { name: "Tauschverlauf" }))
+    const rest = within(screen.getByRole("list", { name: "Tauschverlauf" }))
       .getAllByRole("listitem")
       .map((i) => i.textContent ?? "");
-    items[3] = last[0] ?? "";
+    items[2] = rest[0] ?? "";
+    items[3] = rest[1] ?? "";
+    expect(items[2]).toContain("Abgelehnt");
+    expect(items[2]).toContain("Grund: Zu klein");
     expect(items[3]).toContain("Art unbekannt");
     expect(items[3]).toContain("einem Freund");
     expect(items[3]).toContain("Ihr seid nicht mehr befreundet");

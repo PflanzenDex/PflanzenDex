@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { SharingRow, SpecimenRow } from "@pflanzendex/core";
+import { useIsShort } from "@/components/shared/responsive/pager/card-page-size";
 import { Pager } from "@/components/shared/responsive/pager/pager";
 import { Button } from "@/components/ui/button/button";
 import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
@@ -8,6 +9,8 @@ type Specimen = Pick<SpecimenRow, "id" | "speciesId" | "name" | "status">;
 
 /** Switches per page in the layer (starting value, assumption; the page size from the free height is #1029; US-QS-20). */
 const PAGE_SIZE = 5;
+/** On a short phone (at most 700 px high) a page holds fewer switches. */
+const SHORT_PAGE_SIZE = 3;
 
 /** What the row "Was Freunde sehen" shows as the current choice: all private, or how many specimens are shared. */
 export function sharingChoice(
@@ -129,6 +132,7 @@ export function SharingPanel(props: {
   onSet: (specimenId: string, share: boolean) => void;
   onSetAll: (share: boolean) => void;
 }) {
+  const size = useIsShort() ? SHORT_PAGE_SIZE : PAGE_SIZE;
   const shared = new Set(props.shared.map((r) => r.specimenId));
   const rows = groups(props.specimens).flatMap((g) => g.items.map((s) => ({ s, title: g.title })));
   return (
@@ -144,14 +148,14 @@ export function SharingPanel(props: {
           <BulkBar count={rows.length} busy={props.busy} onSetAll={props.onSetAll} />
           <Pager
             items={rows}
-            pageSize={PAGE_SIZE}
+            pageSize={size}
             label="Pflanzen zum Teilen"
             getKey={(r) => r.s.id}
             renderItem={(r, i) => (
               <Row
                 row={r.s}
                 title={
-                  i % PAGE_SIZE === 0 || rows[i - 1]?.s.speciesId !== r.s.speciesId ? r.title : null
+                  i % size === 0 || rows[i - 1]?.s.speciesId !== r.s.speciesId ? r.title : null
                 }
                 checked={shared.has(r.s.id)}
                 busy={props.busy}

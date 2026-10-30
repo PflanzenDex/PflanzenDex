@@ -49,6 +49,7 @@ function OpenButtons(props: {
       <Button
         type="button"
         size="touch"
+        className="w-auto flex-1"
         disabled={props.busy}
         aria-label={`Annehmen: ${title}`}
         onClick={props.onAccept}
@@ -59,6 +60,7 @@ function OpenButtons(props: {
         type="button"
         size="touch"
         variant="outline"
+        className="w-auto flex-1"
         aria-label={`Ablehnen: ${title}`}
         onClick={() => props.onMode("decline")}
       >

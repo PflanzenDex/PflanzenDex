@@ -74,7 +74,7 @@ const EMPTY_TEXT: Record<EmptyReason, { title: string; description: string }> = 
   no_match: {
     title: "Zurzeit passt kein Angebot zu deiner Wunschliste.",
     description:
-      "Hier erscheinen offene Angebote deiner Freunde, deren Art auf deiner Wunschliste steht. Lege Wünsche an oder sieh dir alle Angebote in der Tauschbörse an.",
+      "Hier erscheinen offene Angebote deiner Freunde, deren Art auf deiner Wunschliste steht.",
   },
 };
 
@@ -86,6 +86,7 @@ export function Empty(props: { reason?: EmptyReason | null }) {
   return (
     <div className="grid gap-3">
       <EmptyState
+        className="gap-3 py-6"
         title={text.title}
         description={text.description}
         action={
