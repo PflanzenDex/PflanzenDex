@@ -64,16 +64,41 @@ export function openFixturePool(): pg.Pool {
 /**
  * Session lock for test files that own approved species or taxa in the shared test database. The taxonomy build
  * replaces the whole `taxon` table and its fingerprint covers every approved species, so a parallel file that approves
- * or deletes one would change the fingerprint between two builds (#633, #646). Returns the release function; call it
- * before ending `admin`.
+ * or deletes one, or seeds taxa, would be disturbed by a build, and the build by it (#633, #646).
+ *
+ * Two modes (US-QG-01, #994):
+ * - "shared" (default): every file that approves species or seeds its own taxa. They never disturb each other and run
+ *   in parallel; they only exclude a build.
+ * - "exclusive": the file that RUNS the taxonomy build. It needs the table to itself. It polls with `try` instead of
+ *   queueing: a queued exclusive request would hold back every shared request behind it for as long as the slowest
+ *   shared holder runs (20 s measured on a loaded machine), which pushed their `beforeAll` past the hook timeout.
+ *   Polling waits for a moment without shared holders (the end of the run at the latest); the caller must allow for
+ *   that wait in its own hook timeout.
+ *
+ * Returns the release function; call it before ending `admin`.
  */
-export async function holdTaxonLock(admin: pg.Pool): Promise<() => Promise<void>> {
+export async function holdTaxonLock(
+  admin: pg.Pool,
+  mode: "shared" | "exclusive" = "shared",
+): Promise<() => Promise<void>> {
   const lock = await admin.connect();
-  const key = "select pg_advisory_%s(hashtext('pflanzendex-test-taxon'))";
-  await lock.query(key.replace("%s", "lock"));
+  const key = "hashtext('pflanzendex-test-taxon')";
+  const unlock =
+    mode === "shared"
+      ? `select pg_advisory_unlock_shared(${key})`
+      : `select pg_advisory_unlock(${key})`;
+  try {
+    if (mode === "shared") await lock.query(`select pg_advisory_lock_shared(${key})`);
+    else
+      while (!(await lock.query(`select pg_try_advisory_lock(${key}) as got`)).rows[0]?.got)
+        await new Promise((resolve) => setTimeout(resolve, 50));
+  } catch (error) {
+    lock.release();
+    throw error;
+  }
   return async () => {
     try {
-      await lock.query(key.replace("%s", "unlock"));
+      await lock.query(unlock);
     } finally {
       lock.release();
     }
