@@ -4,7 +4,7 @@ import { useFeature } from "@/kernel";
 import { useAnnounce } from "@/platform/announcer/context";
 import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
 import { headingId } from "@/components/routing/areas/shared/area-section/use-section-anchor";
-import type { Account } from "@/account";
+import { SETTINGS_LAYER_IDS, type Account } from "@/account";
 import {
   PATHS,
   type AccountSection,
@@ -93,10 +93,12 @@ export function AccountArea(props: Props) {
   const { pathname, hash } = useLocation();
   const section = sectionOf(pathname);
   const ai = useFeature("ai");
-  // A layer beside the section (US-QS-15) needs the room of the index: on a wide screen the index yields while one is open.
-  const layered = useSearchParams()[0].has("sheet");
+  const sheet = useSearchParams()[0].get("sheet");
   const came = useRef<AccountSection | null>(null);
   const open = section === "unknown" ? undefined : section;
+  // A settings layer beside its list needs the room of the index: on a wide screen the index yields while one is open
+  // (US-QS-15). Only a real settings layer counts; any other `?sheet` leaves the index where it is.
+  const layered = open === "settings" && sheet !== null && SETTINGS_LAYER_IDS.includes(sheet);
   useEffect(() => {
     if (open) {
       came.current = open;

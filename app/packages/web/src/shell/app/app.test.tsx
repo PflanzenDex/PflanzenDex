@@ -623,20 +623,30 @@ describe("US-QS-07 browser history", () => {
   });
 });
 
-/** A layer of each destination, opened by its address at 1440 px (US-QS-15). */
-const LAYER_ADDRESSES: readonly (readonly [string, string])[] = [
-  ["Heute: Behandlungen", "/today?sheet=treatments"],
-  ["Heute: Fehlt noch", "/today?sheet=hints"],
-  ["Sammlung: Ansicht", "/collection?view=plants&sheet=view"],
-  ["Sammlung: Lichtzonen", "/collection?view=plants&sheet=zones"],
-  ["Sammlung: Arten, Sammlerkarten", "/collection?view=species&sheet=cards"],
-  ["Sammlung: Wunschliste, Gekauft", "/collection?view=wishlist&sheet=bought"],
-  ["Sammlung: Equipment", "/collection?view=equipment&sheet=items"],
-  ["Entdecken: Filter", "/discover?view=catalog&sheet=filters"],
-  ["Entdecken: Art vorschlagen", "/discover?view=catalog&sheet=propose"],
-  ["Freunde: Neu bei Freunden", "/friends?sheet=news"],
-  ["Einstellungen: Profil", "/account/settings?sheet=profile"],
+/**
+ * A layer of each destination, opened by its address at 1440 px, with the heading of the destination's own content
+ * (or, in the settings list, the title of its first group, because the section heading sits above the frame).
+ */
+const LAYER_ADDRESSES: readonly (readonly [string, string, string])[] = [
+  ["Heute: Behandlungen", "/today?sheet=treatments", "Heute"],
+  ["Heute: Fehlt noch", "/today?sheet=hints", "Heute"],
+  ["Sammlung: Ansicht", "/collection?view=plants&sheet=view", "Sammlung"],
+  ["Sammlung: Lichtzonen", "/collection?view=plants&sheet=zones", "Sammlung"],
+  ["Sammlung: Arten, Sammlerkarten", "/collection?view=species&sheet=cards", "Sammlung"],
+  ["Sammlung: Wunschliste, Gekauft", "/collection?view=wishlist&sheet=bought", "Sammlung"],
+  ["Sammlung: Equipment", "/collection?view=equipment&sheet=items", "Sammlung"],
+  ["Entdecken: Filter", "/discover?view=catalog&sheet=filters", "Entdecken"],
+  ["Entdecken: Art vorschlagen", "/discover?view=catalog&sheet=propose", "Entdecken"],
+  ["Freunde: Neu bei Freunden", "/friends?sheet=news", "Freunde"],
+  ["Einstellungen: Profil", "/account/settings?sheet=profile", "Benachrichtigungen"],
 ];
+
+/** The content column holds the destination's own content: its heading, or else the text of its list. */
+function expectOwnContent(content: HTMLElement, expected: string) {
+  const heading = content.querySelector("h1");
+  if (heading) expect(heading.textContent).toBe(expected);
+  else expect(content.textContent).toContain(expected);
+}
 
 describe("US-QS-15 a layer opens beside the content from 1024 px", () => {
   beforeEach(() => setViewportWidth(1440));
@@ -644,7 +654,7 @@ describe("US-QS-15 a layer opens beside the content from 1024 px", () => {
 
   it.each(LAYER_ADDRESSES)(
     "US-QS-15 %s: the pane is the second column of its destination's frame, the content is the first",
-    async (_name, address) => {
+    async (_name, address, expected) => {
       fakeServer(200, 1);
       mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
       const warn = vi.spyOn(console, "warn");
@@ -661,6 +671,7 @@ describe("US-QS-15 a layer opens beside the content from 1024 px", () => {
         expect(frame.hasAttribute("data-layer-host")).toBe(true);
         expect(frame.lastElementChild).toBe(slot);
         expect(slot.previousElementSibling).toBe(frame.firstElementChild);
+        expectOwnContent(frame.firstElementChild as HTMLElement, expected);
         // A layer outside a frame would stack below the list: the dev warning must not fire (US-QS-15).
         expect(warn).not.toHaveBeenCalledWith(
           expect.stringContaining("renders outside a LayerHost"),
