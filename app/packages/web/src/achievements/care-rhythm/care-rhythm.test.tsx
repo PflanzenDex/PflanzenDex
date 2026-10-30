@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../kernel";
 import { CareRhythmSection } from "./care-rhythm";
@@ -23,7 +24,8 @@ const answer = (over: object = {}) => ({
   ...over,
 });
 
-function show(status: number, body: unknown) {
+/** The section with one of its layers open by its address: "Pflegerhythmus" (`rhythm`) or "Pause eintragen" (`pause`). */
+function show(status: number, body: unknown, at = "/?sheet=rhythm") {
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url) => {
@@ -33,7 +35,9 @@ function show(status: number, body: unknown) {
   );
   return render(
     <QueryClientProvider client={createQueryClient()}>
-      <CareRhythmSection api="http://api" token={token} />
+      <MemoryRouter initialEntries={[at]}>
+        <CareRhythmSection api="http://api" token={token} />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }
@@ -95,7 +99,9 @@ describe("US-ACH-04 explicit pause", () => {
     );
     render(
       <QueryClientProvider client={createQueryClient()}>
-        <CareRhythmSection api="http://api" token={token} />
+        <MemoryRouter initialEntries={["/?sheet=pause"]}>
+          <CareRhythmSection api="http://api" token={token} />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
     return calls;
@@ -119,7 +125,7 @@ describe("US-ACH-04 explicit pause", () => {
         status: 201,
       });
     });
-    await screen.findByText(/Aktueller Rhythmus/);
+    await screen.findByLabelText("Von");
     fireEvent.change(screen.getByLabelText("Von"), { target: { value: "2026-07-01" } });
     fireEvent.change(screen.getByLabelText("Bis (einschließlich)"), {
       target: { value: "2026-07-14" },
@@ -137,7 +143,7 @@ describe("US-ACH-04 explicit pause", () => {
           status: 422,
         }),
     );
-    await screen.findByText(/Aktueller Rhythmus/);
+    await screen.findByLabelText("Von");
     fireEvent.change(screen.getByLabelText("Von"), { target: { value: "2026-07-01" } });
     fireEvent.change(screen.getByLabelText("Bis (einschließlich)"), {
       target: { value: "2026-09-01" },

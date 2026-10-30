@@ -608,6 +608,7 @@ Every component in `components/ui` and `components/shared` that exists today. Lo
 | `Navigation`      | `shared/navigation/nav-model/navigation/` | the navigation model: views, link targets and paths, not a visible component                                           |
 | `ResponsiveModal` | `shared/responsive/responsive-modal/`     | content a phone user fills in: bottom sheet below `md`, dialog from `md` (DS-23)                                       |
 | `LayerSheet`      | `shared/responsive/layer-sheet/`          | a topic or detail above an overview, bound to `?sheet=<id>`; also `useLayer` and `LayerOpener` (DS-58, DS-59)          |
+| `LayerPart`       | `shared/responsive/layer-sheet/layer-part/` | a row of a list that opens its layer (`LayerOpenRow`: name, value, chevron) and the layer beside it in one grid (`LAYER_SLOT`); its `primaryAction` is the sticky footer (US-QS-15, US-QS-17) |
 | `Pager`           | `shared/responsive/pager/`                | a list longer than its region as pages, `?page=n` (`?lpage=n` in a layer, `LAYER_PARAM`), buttons and swipe; `useRowPageSize` gives 4/8/10 compact rows per page (DS-60, US-QS-22) |
 | `PagedGroups`     | `shared/responsive/paged-groups/`         | groups chosen from a row with their counts (`GroupChoices`, `?part=`) and the chosen group as `Pager` pages (US-QS-19) |
 | `ResponsiveTable` | `shared/responsive/responsive-table/`     | a list of rows: cards below `md`, `Table` from `md`, one column definition (DS-24)                                     |
