@@ -53,7 +53,7 @@ function origin(species: Species): Fact[] {
 
 /**
  * One panel of the profile: the known facts as a grid, the unknown ones named in one line (P-08, P-10): nothing is
- * invented and nothing disappears silently. View-local until the shared folding of unknown values lands (#1030).
+ * invented and nothing disappears silently. View-local until the shared folding of unknown values lands (issue 1030).
  */
 function FactPanel(props: { facts: Fact[]; columns: boolean }) {
   const known = props.facts.filter(([, value]) => value !== UNKNOWN);
