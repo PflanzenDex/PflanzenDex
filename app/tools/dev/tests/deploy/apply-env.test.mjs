@@ -30,7 +30,12 @@ function setup(content) {
   }
   return { dir, env };
 }
-const run = (env, input) => spawnSync("bash", [script, env], { encoding: "utf8", input });
+const run = (env, input, extra = {}) =>
+  spawnSync("bash", [script, env], {
+    encoding: "utf8",
+    input,
+    env: { ...process.env, ALLOW_PASSWORD_ROTATION: "", ...extra },
+  });
 const backups = (dir) => readdirSync(dir).filter((f) => f.startsWith(".env.bak."));
 
 test("TE-19 apply-env replaces only the given keys and keeps comments, other lines and commented keys (#1013)", () => {
@@ -110,6 +115,7 @@ test("TE-19 apply-env refuses bad input and leaves the file and the folder untou
     "A=x\ty\n", // control character
     "A=x\ry\n",
     "A=it's\n", // single quote
+    "A=ends\\\n", // trailing backslash: Compose would read it as an escaped closing quote
     "A=1\nA=2\n", // key twice
     "A=1\nBAD LINE\n", // second line invalid, first must not be applied
     `A=${"x".repeat(4097)}\n`,
@@ -158,6 +164,9 @@ const excluded = {
     "stored in the cluster at creation; the .env value must match it, changing one side breaks the stack",
   POSTGRES_DB: "fixed when the database cluster is created",
   TS_AUTHKEY: "one-time key for the first start of the Funnel nodes, deleted afterwards (runbook)",
+  BACKUP_DIR: "where the dumps (password hashes, realm keys) are written is a host decision",
+  BACKUP_REMOTE:
+    "the rsync target of the dumps; from GitHub, a writer of the environment could send them elsewhere",
 };
 const envExample = readFileSync(join(deploy, ".env.example"), "utf8");
 const templateKeys = new Set([...envExample.matchAll(/^#?([A-Z][A-Z0-9_]*)=/gm)].map((m) => m[1]));
@@ -229,4 +238,100 @@ test("TE-19 the workflow sends values over stdin only, masks secrets and reads o
   for (const line of step.split("\n")) {
     if (/\$value|\$payload/.test(line) && /\becho\b/.test(line)) assert.match(line, /::add-mask::/);
   }
+});
+
+// --- Hardening (#1013 follow-up) ---------------------------------------------------------------------------------
+
+test("TE-19 the backup targets are never written from GitHub (#1013)", () => {
+  const names = allowlist.map(([key]) => key);
+  for (const key of ["BACKUP_DIR", "BACKUP_REMOTE"]) assert.ok(!names.includes(key), key);
+});
+
+test("TE-19 a value ending with a backslash is refused, one inside a value is kept (#1013)", () => {
+  const { env } = setup("A=orig\n");
+  assert.equal(run(env, "A=x\\y\n").status, 0);
+  assert.equal(readFileSync(env, "utf8"), "A='x\\y'\n");
+  const r = run(env, "A=x\\\n");
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /value of A ends with a backslash/);
+});
+
+test("TE-19 rotation guard: an equal password is unchanged, a missing or placeholder one is set (#1013)", () => {
+  const { env } = setup(
+    "POSTGRES_PASSWORD='hostvalue1'\nKEYCLOAK_ADMIN_PASSWORD=PUT_A_LONG_RANDOM_PASSWORD_HERE\nSMTP_PASSWORD=\n",
+  );
+  const r = run(
+    env,
+    "POSTGRES_PASSWORD=hostvalue1\nKEYCLOAK_ADMIN_PASSWORD=firstvalue\nSMTP_PASSWORD=smtpvalue\nKEYCLOAK_ADMIN_USER=admin2\n",
+  );
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(
+    readFileSync(env, "utf8"),
+    "POSTGRES_PASSWORD=hostvalue1\nKEYCLOAK_ADMIN_PASSWORD=firstvalue\nSMTP_PASSWORD=smtpvalue\nKEYCLOAK_ADMIN_USER=admin2\n",
+  );
+  assert.doesNotMatch(r.stdout + r.stderr, /hostvalue1|firstvalue|smtpvalue/);
+});
+
+test("TE-19 rotation guard: a different value for a guarded key stops the run without a change (#1013)", () => {
+  for (const key of [
+    "POSTGRES_USER",
+    "POSTGRES_PASSWORD",
+    "POSTGRES_DB",
+    "KEYCLOAK_ADMIN_USER",
+    "KEYCLOAK_ADMIN_PASSWORD",
+    "SMTP_PASSWORD",
+  ]) {
+    const { dir, env } = setup(`${key}=OLDSECRET1\nFEATURES=x\n`);
+    const r = run(env, `FEATURES=y\n${key}=NEWSECRET2\n`);
+    assert.equal(r.status, 1, key);
+    assert.ok(r.stderr.includes(`${key} differs from the host value`), key);
+    assert.match(r.stderr, /set ALLOW_PASSWORD_ROTATION=1 to override/);
+    assert.equal(readFileSync(env, "utf8"), `${key}=OLDSECRET1\nFEATURES=x\n`, key);
+    assert.deepEqual(backups(dir), [], key);
+    assert.doesNotMatch(r.stdout + r.stderr, /OLDSECRET1|NEWSECRET2/);
+  }
+});
+
+test("TE-19 rotation guard: passwords the one-shots set on every up are replaced (#1013)", () => {
+  const { env } = setup("DB_OWNER_PASSWORD=old1\nKEYCLOAK_DB_PASSWORD=old2\n");
+  const r = run(env, "DB_OWNER_PASSWORD=new1\nKEYCLOAK_DB_PASSWORD=new2\n");
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(readFileSync(env, "utf8"), "DB_OWNER_PASSWORD=new1\nKEYCLOAK_DB_PASSWORD=new2\n");
+  // Why they may be replaced: both one-shots run `alter role ... password` on every start.
+  const roles = readFileSync(join(deploy, "docker/db-roles/init-db-roles.sh"), "utf8");
+  const kc = readFileSync(join(deploy, "keycloak/init-db.sh"), "utf8");
+  assert.match(roles, /alter role %I with login .* password %L/);
+  assert.match(kc, /alter role %I with login .* password %L/);
+  const guard = readFileSync(script, "utf8")
+    .match(/^init_only="(.*)"$/m)[1]
+    .trim()
+    .split(" ");
+  for (const key of ["DB_OWNER_PASSWORD", "KEYCLOAK_DB_PASSWORD"])
+    assert.ok(!guard.includes(key), key);
+});
+
+test("TE-19 rotation guard: ALLOW_PASSWORD_ROTATION=1 replaces a guarded value (#1013)", () => {
+  const { dir, env } = setup("POSTGRES_PASSWORD=oldvalue\n");
+  const r = run(env, "POSTGRES_PASSWORD=rotated\n", { ALLOW_PASSWORD_ROTATION: "1" });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /POSTGRES_PASSWORD changed/);
+  assert.equal(readFileSync(env, "utf8"), "POSTGRES_PASSWORD=rotated\n");
+  assert.equal(backups(dir).length, 1);
+});
+
+test("TE-19 the workflow passes the rotation switch, masks per line and refuses NUL bytes (#1013)", () => {
+  const step = workflow.slice(
+    workflow.indexOf("- id: apply_env"),
+    workflow.indexOf("- id: deploy"),
+  );
+  assert.match(step, /ALLOW_PASSWORD_ROTATION: \$\{\{ vars\.ALLOW_PASSWORD_ROTATION \}\}/);
+  assert.match(step, /case "\$\{ALLOW_PASSWORD_ROTATION:-0\}" in 0 \| 1\)/);
+  assert.match(step, /remote="ALLOW_PASSWORD_ROTATION=\$rotation bash -c/);
+  assert.match(
+    step,
+    /while IFS= read -r part; do \[ -z "\$part" \] \|\| echo "::add-mask::\$part"; done <<< "\$value"/,
+  );
+  assert.match(step, /contains a NUL byte; not sent/);
+  // Masking comes before any check that could fail on the value.
+  assert.ok(step.indexOf("::add-mask::") < step.indexOf("contains a control character"));
 });
