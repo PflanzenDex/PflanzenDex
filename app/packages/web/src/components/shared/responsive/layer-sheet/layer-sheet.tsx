@@ -3,44 +3,11 @@ import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button/button";
 import { ResponsiveModal } from "@/components/shared/responsive/responsive-modal/responsive-modal";
 import { useIsLg } from "@/lib/use-breakpoint";
-import { cn } from "@/lib/utils";
 import { restoreFocus, useLayer } from "./use-layer";
+import { LayerHostContext } from "./layer-host/layer-host";
 
 export { useLayer } from "./use-layer";
-
-/** The pane column of a `LayerHost`: hidden while empty, so it adds no gap (US-QS-15, US-QS-18). */
-const PANE_SLOT = "hidden lg:flex lg:shrink-0 lg:flex-col lg:self-start lg:empty:hidden";
-
-type LayerHostState = { pane: HTMLDivElement | null } | null;
-const LayerHostContext = React.createContext<LayerHostState>(null);
-
-export type LayerHostProps = Omit<React.HTMLAttributes<HTMLDivElement>, "children"> & {
-  children: React.ReactNode;
-  /** Classes of the content column, e.g. its gap or its height; the frame itself takes `className`. */
-  contentClassName?: string;
-};
-
-/**
- * The frame of a destination with layers (US-QS-15, DS-59): the content in one column; from 1024 px the pane of an open
- * layer takes the second column beside it. Every `LayerSheet` inside renders its pane here, in whatever component it
- * sits, so a layer never stacks below the list. Render one frame at the top of each destination: the pane then starts
- * where the content starts and reaches to the bottom of the viewport.
- */
-export function LayerHost({ children, className, contentClassName, ...rest }: LayerHostProps) {
-  const [pane, setPane] = React.useState<HTMLDivElement | null>(null);
-  const value = React.useMemo(() => ({ pane }), [pane]);
-  const frame = cn("flex min-w-0 flex-col lg:flex-row lg:gap-4", className);
-  return (
-    <LayerHostContext.Provider value={value}>
-      <div data-layer-host="" {...rest} className={frame}>
-        <div className={cn("flex min-h-0 min-w-0 flex-1 flex-col", contentClassName)}>
-          {children}
-        </div>
-        <div ref={setPane} className={PANE_SLOT} />
-      </div>
-    </LayerHostContext.Provider>
-  );
-}
+export { LayerHost, type LayerHostProps } from "./layer-host/layer-host";
 
 /** A button that opens the layer `id` (US-QS-15); outline by default, because a layer owns the one filled action. */
 export function LayerOpener({
