@@ -6,6 +6,7 @@ import {
   type SegmentedOption,
 } from "@/components/segmented-control/segmented-control";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
+import { LayerHost } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { Pager } from "@/components/shared/responsive/pager/pager";
 import { useRowPageSize } from "@/components/shared/responsive/pager/row-page-size";
 import { LoadFrame, useInvalidate, useWriteAction, type Response } from "../../../kernel";
@@ -86,44 +87,42 @@ function ReviewBody(props: {
   const shown = list.entries.filter((e) => isBatch(e) === (show === "approved"));
   const summary = show === "open" ? summaryText(list, now) : "";
   return (
-    <div className="flex min-w-0 gap-4">
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <SegmentedControl
-          label="Welche Vorschläge"
-          options={SHOW_OPTIONS}
-          value={show}
-          onChange={choose}
-        />
-        {summary && <p className="text-sm">{summary}</p>}
-        {shown.length === 0 ? (
-          show === "open" ? (
-            <EmptyState
-              title="Keine offenen Vorschläge"
-              description="Es ist nichts zu prüfen."
-              action={{ label: "Liste neu laden", onClick: reload }}
-            />
-          ) : (
-            <EmptyState
-              title="Noch keine freigegebenen Chargen"
-              description="Betreiber-Chargen erscheinen hier, sobald sie freigegeben sind."
-              action={{ label: "Offene Vorschläge ansehen", onClick: () => choose("open") }}
-            />
-          )
-        ) : (
-          <Pager
-            items={shown}
-            pageSize={size}
-            label={show === "open" ? "Offene Vorschläge" : "Freigegebene Chargen"}
-            resetKey={show}
-            getKey={(e) => e.reviewCase.id}
-            renderItem={(e) => <ReviewRow entry={e} now={now} />}
+    <LayerHost contentClassName="gap-3">
+      <SegmentedControl
+        label="Welche Vorschläge"
+        options={SHOW_OPTIONS}
+        value={show}
+        onChange={choose}
+      />
+      {summary && <p className="text-sm">{summary}</p>}
+      {shown.length === 0 ? (
+        show === "open" ? (
+          <EmptyState
+            title="Keine offenen Vorschläge"
+            description="Es ist nichts zu prüfen."
+            action={{ label: "Liste neu laden", onClick: reload }}
           />
-        )}
-      </div>
+        ) : (
+          <EmptyState
+            title="Noch keine freigegebenen Chargen"
+            description="Betreiber-Chargen erscheinen hier, sobald sie freigegeben sind."
+            action={{ label: "Offene Vorschläge ansehen", onClick: () => choose("open") }}
+          />
+        )
+      ) : (
+        <Pager
+          items={shown}
+          pageSize={size}
+          label={show === "open" ? "Offene Vorschläge" : "Freigegebene Chargen"}
+          resetKey={show}
+          getKey={(e) => e.reviewCase.id}
+          renderItem={(e) => <ReviewRow entry={e} now={now} />}
+        />
+      )}
       {shown.map((e) => (
         <ReviewLayer key={e.reviewCase.id} entry={e} actions={actions} now={now} />
       ))}
-    </div>
+    </LayerHost>
   );
 }
 
