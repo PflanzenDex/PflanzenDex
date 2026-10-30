@@ -82,6 +82,7 @@ export function OfferFields(props: {
         <Label htmlFor="offer-wish">Wunsch (optional)</Label>
         <Textarea
           id="offer-wish"
+          rows={2}
           maxLength={200}
           value={value.wish}
           onChange={(e) => onChange({ ...value, wish: e.target.value })}
@@ -91,6 +92,7 @@ export function OfferFields(props: {
         <Label htmlFor="offer-note">Hinweis (optional)</Label>
         <Textarea
           id="offer-note"
+          rows={2}
           maxLength={500}
           value={value.note}
           onChange={(e) => onChange({ ...value, note: e.target.value })}

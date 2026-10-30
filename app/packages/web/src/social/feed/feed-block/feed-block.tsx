@@ -1,3 +1,4 @@
+import { useIsShort } from "@/components/shared/responsive/pager/card-page-size";
 import { useCallback, useState } from "react";
 import type { Feed, FeedEvent, FeedType } from "@pflanzendex/core";
 import { Pager } from "@/components/shared/responsive/pager/pager";
@@ -19,6 +20,8 @@ const TYPE_TEXT: Record<FeedType, string> = {
 };
 /** Events per page in the layer (starting value, assumption; US-QS-20). */
 const PAGE_SIZE = 3;
+/** On a short phone (at most 700 px high) a page holds fewer entries (#1029 replaces this). */
+const SHORT_PAGE_SIZE = 2;
 const PERIODS = [7, 30, 90] as const;
 
 const speciesText = (e: FeedEvent) =>
@@ -102,6 +105,7 @@ export function FeedBlock(props: {
     onlyNewSpecies: false,
   });
   const { api } = props;
+  const short = useIsShort();
   const load = useCallback((t: string) => loadFeed(api, t, filter), [api, filter]);
   return (
     <section aria-label="Neu bei Freunden" className="flex min-w-0 flex-col gap-3">
@@ -121,7 +125,7 @@ export function FeedBlock(props: {
             {feed.events.length > 0 && (
               <Pager
                 items={feed.events}
-                pageSize={PAGE_SIZE}
+                pageSize={short ? SHORT_PAGE_SIZE : PAGE_SIZE}
                 label="Neuigkeiten"
                 resetKey={`${filter.friendId}-${filter.days}-${filter.onlyNewSpecies}`}
                 getKey={(e, i) => `${e.friendId}-${i}`}

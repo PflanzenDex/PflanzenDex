@@ -75,7 +75,7 @@ export function MatchPage(props: { api: string; token: Token; calm?: boolean }) 
       <h1 id="match-page-title" className="text-2xl font-semibold">
         Passende Angebote
       </h1>
-      <p className="text-muted-foreground">
+      <p className="text-muted-foreground [@media(max-height:700px)]:hidden">
         Angebote deiner Freunde, deren Art auf deiner Wunschliste steht, eins nach dem anderen.
       </p>
       <LoadFrame
