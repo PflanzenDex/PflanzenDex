@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { Button } from "@/components/ui/button/button";
 import { LayerOpener, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { Pager } from "@/components/shared/responsive/pager/pager";
+import { useIsMd } from "@/lib/use-breakpoint";
 import { cn } from "@/lib/utils";
 import { dateText, keepTogether, overdueChip, withoutOverdue } from "@/lib/format";
 import { LoadFrame } from "../../kernel";
@@ -33,8 +34,8 @@ const GO: Record<TodayTarget, string> = {
 const CARD =
   "min-w-0 rounded-card bg-card p-3 text-card-foreground shadow-elevation-1 [overflow-wrap:anywhere]";
 const URGENT = "border-warning-border bg-warning text-warning-foreground";
-/** Items per page of the layer with the further tasks (starting value, assumption; US-QS-18). */
-const PAGE_SIZE = 3;
+/** Rows per page of the layer with the further tasks (starting values, assumption; US-QS-18): four, six from 768 px. */
+const PAGE_SIZE = { phone: 4, md: 6 } as const;
 const TASKS = "tasks";
 
 /** The state as a short chip ("10 Tage überfällig"), never a repeated heading and sentence (US-QS-18). */
@@ -42,34 +43,11 @@ function chipOf(item: TodayItem): string {
   return (item.kind === "treatment_overdue" ? overdueChip(item.text) : null) ?? LABEL[item.kind];
 }
 
-function Item(props: { item: TodayItem; onOpen: (d: TodayDestination) => void }) {
-  const { item } = props;
-  const urgent = item.kind === "treatment_overdue" || item.kind === "treatment_due";
-  return (
-    <div className={cn(CARD, "flex flex-col gap-1", urgent && URGENT)}>
-      <p className="w-fit rounded-control border border-current px-2 text-sm font-semibold tabular-nums">
-        {chipOf(item)}
-      </p>
-      <p>
-        {keepTogether(item.kind === "treatment_overdue" ? withoutOverdue(item.text) : item.text)}
-      </p>
-      <p className="text-sm">{item.nextAction}</p>
-      <Button
-        type="button"
-        variant="secondary"
-        className="mt-2 self-start"
-        // An item about the whole account (buffer, US-WUN-02) has no specimen; its text names the zone instead.
-        aria-label={`${GO[item.target]}: ${item.specimenName ?? item.text}`}
-        onClick={() => props.onOpen(item.target)}
-      >
-        {GO[item.target]}
-      </Button>
-    </div>
-  );
-}
-
-/** The most urgent item as one compact row: chip, short text, one action (US-QS-18). */
-function Row(props: { item: TodayItem; date: string; onOpen: (d: TodayDestination) => void }) {
+/**
+ * One item as a compact row: the state chip, the short text and one action (US-QS-18). The action sentence of the item
+ * is not repeated on every row; the action's name says where it leads. `date` is shown only for the most urgent item.
+ */
+function Row(props: { item: TodayItem; date?: string; onOpen: (d: TodayDestination) => void }) {
   const { item } = props;
   const urgent = item.kind === "treatment_overdue" || item.kind === "treatment_due";
   return (
@@ -79,7 +57,7 @@ function Row(props: { item: TodayItem; date: string; onOpen: (d: TodayDestinatio
           <p className="w-fit rounded-control border border-current px-2 text-sm font-semibold tabular-nums">
             {chipOf(item)}
           </p>
-          <p className="text-xs opacity-80">Stand: {props.date}</p>
+          {props.date && <p className="text-xs opacity-80">Stand: {props.date}</p>}
         </div>
         <p className="line-clamp-2 text-sm">
           {keepTogether(item.kind === "treatment_overdue" ? withoutOverdue(item.text) : item.text)}
@@ -107,6 +85,7 @@ const laterText = (n: number): string =>
 /** The single most urgent item; the rest opens as a layer (US-QS-18). */
 function Content(props: { list: TodayList; onOpen: (d: TodayDestination) => void }) {
   const { list } = props;
+  const pageSize = useIsMd() ? PAGE_SIZE.md : PAGE_SIZE.phone;
   const [first, ...rest] = list.items;
   return (
     <>
@@ -142,10 +121,10 @@ function Content(props: { list: TodayList; onOpen: (d: TodayDestination) => void
       <LayerSheet id={TASKS} title="Weitere Aufgaben">
         <Pager
           items={rest}
-          pageSize={PAGE_SIZE}
+          pageSize={pageSize}
           label="Weitere Aufgaben"
           getKey={(item) => item.id}
-          renderItem={(item) => <Item item={item} onOpen={props.onOpen} />}
+          renderItem={(item) => <Row item={item} onOpen={props.onOpen} />}
         />
       </LayerSheet>
     </>
