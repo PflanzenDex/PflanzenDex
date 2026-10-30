@@ -55,7 +55,10 @@ const open = async (onOpenSpecies?: (id: string) => void) => {
   );
   await screen.findByRole("heading", { level: 1, name: "Pokédex" });
 };
-const card = (name: string) => screen.getByRole("button", { name: `Details zu ${name}` });
+const card = (name: string) =>
+  screen.getByRole("button", {
+    name: (accessible) => accessible.startsWith(`${name} `) || accessible === name,
+  });
 const detail = () => screen.getByRole("region", { name: /Details/ });
 
 afterEach(() => {
@@ -115,7 +118,7 @@ describe("US-POK-09 view details of a species", () => {
       ),
     );
     view(<PokedexPage api="http://api" token={token} />);
-    await userEvent.click(await screen.findByRole("button", { name: "Details zu Aloe vera" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Aloe vera/ }));
     const link = within(detail()).getByRole("link", { name: /Quelle/ });
     expect(link.getAttribute("href")).toBe("https://example.org/aloe");
     expect(detail().innerHTML).not.toContain("geheim");
@@ -139,7 +142,7 @@ describe("US-POK-09 view details of a species", () => {
       ),
     );
     view(<PokedexPage api="http://api" token={token} />);
-    await userEvent.click(await screen.findByRole("button", { name: "Details zu Aloe vera" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Aloe vera/ }));
     const d = within(detail());
     expect(d.queryByRole("link", { name: /Quelle/ })).toBeNull();
     expect(d.getByText(/Quelle: javascript:alert\(1\)/)).toBeTruthy();
@@ -213,7 +216,8 @@ describe("US-POK-09 · US-QS-22 the layer of a species is in the address", () =>
   it("US-POK-09 every entry shows a visible tap marker (chevron), not only the hover state", async () => {
     await open();
     const marker = card("Ficus lyrata").closest("li")?.querySelector("[data-chevron]");
-    expect(marker?.textContent).toBe("›");
+    expect(marker?.className).toContain("after:content-['›']");
+    expect(marker?.textContent).toBe("");
     expect(marker?.getAttribute("aria-hidden")).toBe("true");
   });
 });

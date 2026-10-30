@@ -37,10 +37,9 @@ function Face({ card, access }: { card: SpecimenCard; access: PhotoAccess }) {
   ) : (
     <span
       aria-hidden="true"
-      className="grid size-14 shrink-0 place-items-center rounded-md bg-muted text-xl font-semibold text-muted-foreground"
-    >
-      {initial}
-    </span>
+      data-initial={initial}
+      className="grid size-14 shrink-0 place-items-center rounded-md bg-muted text-xl font-semibold text-muted-foreground after:content-[attr(data-initial)]"
+    />
   );
 }
 
@@ -56,7 +55,6 @@ export function PlantTile({ card, access }: { card: SpecimenCard; access: PhotoA
       type="button"
       variant="ghost"
       size="sm"
-      aria-label={`${card.name}, ${tileZone(card)}, ${state.text}`}
       aria-haspopup="dialog"
       aria-expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}
@@ -64,8 +62,8 @@ export function PlantTile({ card, access }: { card: SpecimenCard; access: PhotoA
     >
       <Face card={card} access={access} />
       <span className="grid min-w-0 gap-0.5">
-        <span className="truncate font-semibold">{card.name}</span>
-        <span className="truncate text-xs text-muted-foreground">{tileZone(card)}</span>
+        <span className="truncate font-semibold">{card.name}</span>{" "}
+        <span className="truncate text-xs text-muted-foreground">{tileZone(card)}</span>{" "}
         <span
           data-attention={state.attention}
           className={stateMark({ attention: state.attention })}

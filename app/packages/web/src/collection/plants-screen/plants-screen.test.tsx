@@ -72,10 +72,17 @@ const many = (n: number) => Array.from({ length: n }, (_, i) => card(i + 1));
 afterEach(cleanup);
 
 describe("US-QS-19 tiles of the plants", () => {
+  it("US-QS-08 · WCAG 2.5.3 the plant tile's accessible name is its visible text (no aria-label, no decorative glyph in the text)", () => {
+    screenWith([card(1, { name: "Aloe" })]);
+    const tile = screen.getByRole("button", { name: /^Aloe/ });
+    expect(tile.hasAttribute("aria-label")).toBe(false);
+    expect(tile.querySelector("[data-initial]")?.textContent).toBe("");
+  });
+
   it("US-QS-19 a tile shows the initial of the name, the name, the zone as text and one state", () => {
     screenWith([card(1, { name: "Aloe" })]);
-    const tile = screen.getByRole("button", { name: "Aloe, Zone 3, unbekannt" });
-    expect(within(tile).getByText("A")).toBeTruthy();
+    const tile = screen.getByRole("button", { name: "Aloe Zone 3 unbekannt" });
+    expect(tile.querySelector("[data-initial]")?.getAttribute("data-initial")).toBe("A");
     expect(within(tile).getByText("Aloe")).toBeTruthy();
     expect(within(tile).getByText("Zone 3")).toBeTruthy();
     expect(within(tile).getByText("unbekannt")).toBeTruthy();
@@ -83,7 +90,7 @@ describe("US-QS-19 tiles of the plants", () => {
 
   it("US-QS-19 · P-08 an unknown zone and an unknown state read unbekannt, nothing is invented", () => {
     screenWith([card(1, { lightZone: null, lightZoneSource: null })]);
-    const tile = screen.getByRole("button", { name: "Pflanze 1, unbekannt, unbekannt" });
+    const tile = screen.getByRole("button", { name: "Pflanze 1 unbekannt unbekannt" });
     expect(within(tile).getAllByText("unbekannt")).toHaveLength(2);
   });
 
@@ -103,9 +110,9 @@ describe("US-QS-19 tiles of the plants", () => {
       card(2, { lastMeasurement: measured("etiolated") }),
       card(3, { lastMeasurement: measured("healthy") }),
     ]);
-    expect(screen.getByRole("button", { name: "Pflanze 1, Zone 3, Behandeln" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Pflanze 2, Zone 3, Vergeilt/dünn" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Pflanze 3, Zone 3, Gesund" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Pflanze 1 Zone 3 Behandeln" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Pflanze 2 Zone 3 Vergeilt/dünn" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Pflanze 3 Zone 3 Gesund" })).toBeTruthy();
   });
 
   it("US-QS-19 the plants are paged, the page is in the address and a page out of range shows the nearest", async () => {
@@ -115,7 +122,7 @@ describe("US-QS-19 tiles of the plants", () => {
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(screen.getByTestId("address").textContent).toBe("?page=2");
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
-    expect(screen.getByRole("button", { name: /^Pflanze 7, / })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Pflanze 7 / })).toBeTruthy();
     cleanup();
     screenWith(many(8), {}, "/?page=9");
     expect(screen.getByText("Seite 2 von 2")).toBeTruthy();

@@ -117,7 +117,7 @@ describe("US-QS-19 the first screen of the plants", () => {
     expect(screen.getAllByRole("group", { name: "Ansicht der Sammlung" })).toHaveLength(1);
     expect(screen.getByRole("button", { name: "Lichtzonen ansehen" })).toBeTruthy();
     expect(screen.getAllByRole("listitem")).toHaveLength(4);
-    expect(screen.getByRole("button", { name: "Pflanze 2, unbekannt, unbekannt" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Pflanze 2 unbekannt unbekannt" })).toBeTruthy();
     // No grouping control, no distribution card and no plant card on the page itself.
     expect(screen.queryByRole("group", { name: "Gruppierung der Pflanzen" })).toBeNull();
     expect(screen.queryByText("Noch kein Foto")).toBeNull();

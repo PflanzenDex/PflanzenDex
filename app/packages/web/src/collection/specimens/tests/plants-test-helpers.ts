@@ -8,7 +8,10 @@ Element.prototype.releasePointerCapture ??= () => undefined;
 /** Opens the layer of a plant by choosing its tile (US-QS-19); the card with its actions is inside the layer. */
 export async function openPlant(name: string): Promise<void> {
   await userEvent.click(
-    await screen.findByRole("button", { name: (accessible) => accessible.startsWith(`${name}, `) }),
+    await screen.findByRole("button", {
+      name: (accessible) =>
+        accessible.startsWith(`${name} `) && !accessible.startsWith(`${name} – `),
+    }),
   );
 }
 

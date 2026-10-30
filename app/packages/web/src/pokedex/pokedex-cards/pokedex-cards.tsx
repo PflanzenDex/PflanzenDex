@@ -45,19 +45,21 @@ export function SpeciesRow({ c }: { c: CaughtSpecies }) {
       type="button"
       variant="outline"
       data-species={c.species}
-      aria-label={`Details zu ${c.species}`}
       aria-haspopup="dialog"
       aria-expanded={open}
       className="h-auto w-full justify-between gap-2 whitespace-normal px-3 py-2 text-left"
       onClick={(event) => openLayer(event.currentTarget)}
     >
       <span className="grid min-w-0 gap-0 break-words">
-        <span className="font-semibold">{c.species}</span>
+        <span className="font-semibold">{c.species}</span>{" "}
         <span className="text-sm font-normal text-muted-foreground">{second}</span>
       </span>
-      <span data-chevron className="text-2xl leading-none text-muted-foreground" aria-hidden="true">
-        ›
-      </span>
+      {/* Drawn by CSS, not in the text: the button's visible text stays the name and the date (WCAG 2.5.3, US-QS-08). */}
+      <span
+        data-chevron
+        className="text-2xl leading-none text-muted-foreground after:content-['›']"
+        aria-hidden="true"
+      />
     </Button>
   );
 }

@@ -224,9 +224,16 @@ describe("US-POK-09 · US-QS-22 the details of a species are a layer", () => {
     expect(screen.queryByText(/Familie unbekannt/)).toBeNull();
   });
 
+  it("US-QS-08 · WCAG 2.5.3 the species entry's accessible name is its visible text (no aria-label, no chevron in the text)", async () => {
+    await open();
+    const entry = screen.getByRole("button", { name: /^Aloe vera/ });
+    expect(entry.hasAttribute("aria-label")).toBe(false);
+    expect(entry.textContent).not.toContain("›");
+  });
+
   it("US-POK-09 · US-QS-22 a species opens its details in a layer and Escape returns the focus to its entry", async () => {
     await open();
-    const entry = screen.getByRole("button", { name: "Details zu Aloe vera" });
+    const entry = screen.getByRole("button", { name: /^Aloe vera/ });
     await userEvent.click(entry);
     const layer = await screen.findByRole("dialog", { name: "Echte Aloe" });
     expect(within(layer).getByText("Gattung: Aloe")).toBeTruthy();
