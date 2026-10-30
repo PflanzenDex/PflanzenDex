@@ -261,6 +261,28 @@ describe("TE-03 · container privileges and pinned images (#761, NFR-10)", () =>
       if (!ref.startsWith("cgr.dev/")) expect(ref, ref).toMatch(/:v?\d+\.\d+[-.@]/);
     }
   });
+
+  it("TE-03 the CI services, the test database, the scripts and the scanner use pinned images too", () => {
+    const fromRoot = (path: string) =>
+      readFileSync(new URL(`../../../../../../${path}`, import.meta.url), "utf8");
+    const texts = {
+      ci: fromRoot(".github/workflows/ci.yml"),
+      nightly: fromRoot(".github/workflows/nightly.yml"),
+      makefile: fromRoot("Makefile"),
+      restoreTest: read("deploy/scripts/restore-test.sh"),
+      deploy: read("deploy/scripts/deploy.sh"),
+      imageScan: fromRoot("tools/lint/image-scan.sh"),
+    };
+    const refs = Object.entries(texts).flatMap(([file, text]) =>
+      [...text.matchAll(/\b(?:postgres|alpine|anchore\/grype):v?\d[^\s"']*/g)].map((m) => [
+        file,
+        m[0],
+      ]),
+    );
+    expect(refs.length).toBeGreaterThanOrEqual(8);
+    for (const [file, ref] of refs)
+      expect(ref, `${file}: ${ref}`).toMatch(/^[a-z/]+:v?\d+\.\d+[\w.-]*@sha256:[0-9a-f]{64}$/);
+  });
 });
 
 describe("TE-03 · sign-in service in the stack", () => {
