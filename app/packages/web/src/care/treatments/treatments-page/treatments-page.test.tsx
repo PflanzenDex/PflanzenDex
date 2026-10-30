@@ -7,6 +7,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { deliverBuffered } from "@/platform/announcer/outbox";
 import { AnnouncerProvider } from "@/platform/announcer/announcer";
 import { TreatmentsPage } from "./treatments-page";
+import { OpenTreatments } from "../open-treatments/open-treatments";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -210,7 +211,7 @@ describe("US-BEH-02 offene Behandlungen", () => {
     expect(items[0]?.textContent).toContain("Neemöl");
     expect(items[0]?.textContent).toContain("01.10.2026");
     expect(items[0]?.textContent).toContain("2\u00a0Tage überfällig");
-    expect(items[1]?.textContent).toContain("Mittel: —");
+    expect(items[1]?.textContent).toContain("kein Mittel");
     expect(items[1]?.textContent).toContain("heute fällig");
     expect(items[2]?.textContent).toContain("20.10.2026");
   });
@@ -556,5 +557,48 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
     expect(screen.queryByRole("button", { name: "Behandlung speichern" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Behandlung planen" }));
     expect(await screen.findByRole("button", { name: "Behandlung speichern" })).toBeTruthy();
+  });
+});
+
+describe("US-QS-15 the open treatments fit a layer", () => {
+  it("US-QS-15 · US-BEH-03 a row is compact: reason and agent in one line, the chip, and an outline Erledigt that names the plant", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              treatments: [
+                {
+                  id: "a",
+                  specimenName: "Aloe",
+                  reason: "Läuse",
+                  agent: "Neemöl",
+                  dueAt: "2026-10-01",
+                  status: { kind: "overdue", text: "überfällig seit 2 Tagen" },
+                },
+              ],
+            }),
+            { status: 200 },
+          ),
+      ),
+    );
+    render(
+      <MemoryRouter>
+        <OpenTreatments
+          api="http://api"
+          token={async () => "tok"}
+          next={{ label: "Zur Sammlung", href: "/collection" }}
+          host
+        />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText("Läuse · Neemöl")).toBeTruthy();
+    expect(screen.getByText("2 Tage überfällig")).toBeTruthy();
+    // One heading, no sentence above the list (US-QS-15).
+    expect(screen.queryByText(/Behandle diese Pflanzen zuerst/)).toBeNull();
+    const done = screen.getByRole("button", { name: "Läuse bei Aloe als erledigt abhaken" });
+    expect(done.className).toContain("border-primary");
+    expect(done.className).not.toContain("bg-primary");
   });
 });
