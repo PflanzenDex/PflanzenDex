@@ -41,9 +41,6 @@ function SettingsContent(props: { api: string; token: Token }) {
   return (
     <>
       <SettingsPage api={props.api} token={props.token} host />
-      <p className="text-sm text-muted-foreground">
-        Standorte und Lichtzonen legst du in der Sammlung an und änderst sie dort.
-      </p>
       <Button asChild variant="secondary" className="self-start">
         <Link to={MANAGE_ADDRESS}>Standorte und Lichtzonen verwalten</Link>
       </Button>

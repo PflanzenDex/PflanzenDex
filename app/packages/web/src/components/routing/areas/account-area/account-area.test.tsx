@@ -190,7 +190,7 @@ describe("US-QS-17 Konto with its sections as views", () => {
 
   it("US-QS-17 · US-ACC-02 settings still save through the section Einstellungen", async () => {
     const puts = fakeServer();
-    show("/account/settings");
+    show("/account/settings?sheet=profile");
     const name = await screen.findByLabelText("Anzeigename");
     await userEvent.clear(name);
     await userEvent.type(name, "Lena L");
@@ -219,7 +219,7 @@ describe("US-QS-17 Konto with its sections as views", () => {
   it("US-QS-17 · US-LIC-01 the section Einstellungen has a link to Standorte und Lichtzonen in the Sammlung", async () => {
     fakeServer();
     show("/account/settings");
-    await screen.findByLabelText("Anzeigename");
+    await screen.findByRole("button", { name: /^Profil/ });
     const link = screen.getByRole("link", { name: "Standorte und Lichtzonen verwalten" });
     expect(link.getAttribute("href")).toBe("/collection?view=plants&manage=locations");
   });

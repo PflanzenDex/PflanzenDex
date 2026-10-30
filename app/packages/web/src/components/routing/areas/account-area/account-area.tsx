@@ -48,7 +48,7 @@ function SectionView(props: Props & { section: AccountSection }) {
   }, [id, key, info, announcer]);
   if (!info) return null;
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-2">
       <Link
         to={PATHS.account}
         state={{ keepFocus: true }}

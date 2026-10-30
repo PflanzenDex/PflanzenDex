@@ -235,7 +235,7 @@ Acceptance criteria:
 - Given one object (plant, friend, offer), when I open it, then its detail is a layer with tabs instead of one long column, and the active tab is in the address.
 - Given a layer, then it has at most one filled primary action; other actions are outline buttons, rows or tiles.
 - Given help text in a layer, then at most one line shows; more opens behind "Mehr erfahren".
-- Given free text longer than its region (privacy notice, accessibility statement, AI log), then only that region scrolls and it does not pass the scroll on to the page.
+- Given free text longer than its region (privacy notice, accessibility statement, AI log), then only that region scrolls and it does not pass the scroll on to the page. Forms are not an exception (owner decision 2026-10-30): a long form is split into groups that open as layers, as the settings do (US-QS-17).
 - Given 400 % zoom or 200 % text size, then content that no longer fits scrolls inside its region instead of being cut off (WCAG 1.4.4, 1.4.10); this is the one exception to "no page scroll".
 - Given `prefers-reduced-motion: reduce`, then layers and pages change without sliding.
 - Given a number with its unit or a count, then number and unit never break apart and digits in counts and measurements are tabular.
@@ -272,6 +272,9 @@ Acceptance criteria:
 - Given "Abmelden…", when I choose it, then a confirmation opens (sheet on a phone, dialog on a large screen) with "Abmelden", "Auf allen Geräten abmelden" and a way to cancel.
 - Given a wide screen (1280 px), then the index stands beside the open section and marks the current one by more than colour.
 - Given a section is loading, empty or failing, then it shows that state with its next action (P-09, P-10); each section loads as its own part (QG-U6).
+- Given the section "Einstellungen" (owner decision 2026-10-30, option B), then it fits 360x640 px without page scroll as a list of six groups, each row with its name and its current value: "Profil" (display name and time zone), "Benachrichtigungen" ("n von m an"), "Datenschutz und Empfehlungen" ("Standard" or what is on), "Wie nutzt du die App?" (the chosen style, with calm mode while it is on), "Wunschliste" ("mind. n je Zone") and "Licht" ("Standard-Schwellen" or "eigene Schwellen"), plus the link "Standorte und Lichtzonen verwalten"; an unknown value reads "unbekannt" (P-08). Forms are no exception to US-QS-15's rule of one screen: its single scroll exception stays long free text.
+- When I choose a group, then it opens as a layer (US-QS-15) at `?sheet=profile|notifications|privacy|style|wishlist|light`, so Back closes it and a reload or copied link reopens it; a closed layer loads nothing. Switches (notifications, privacy and recommendations, calm mode, the style choice) save at once and confirm it; "Profil", "Wunschliste" and "Licht" have their own "Speichern" and send the stored profile with only their fields changed (the API saves the profile as a whole). The privacy layer shows one line of help and the rest behind "Mehr erfahren".
+- Given a group is loading or failing, then the state shows in its row or layer only, with the German text of the error code (P-10); a refused save keeps the input or the switch where it was.
 - Given any view, then no footer line shows the version; the section "Was die App kann" shows the app version ("unbekannt" when it is not known, P-08).
 
 State of implementation: measured 2026-10-30: the index was 1.13 at 360×640; its rows are now denser (44 px targets, no gap) with a smaller profile row (#976).
