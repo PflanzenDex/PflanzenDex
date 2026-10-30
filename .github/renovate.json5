@@ -9,6 +9,8 @@
     ":timezone(Europe/Berlin)",
   ],
   baseBranchPatterns: ["dev"],
+  // Exact versions everywhere, never ^/~ ranges (app/.npmrc has save-exact for manual installs).
+  rangeStrategy: "pin",
   ignorePaths: ["**/node_modules/**", "docs/records/spikes/**"],
   schedule: ["before 6am on monday"],
   // Protection against compromised releases: new versions only after 3 days (starting value, an assumption).
