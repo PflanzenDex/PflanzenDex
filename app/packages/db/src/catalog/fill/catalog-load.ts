@@ -2,7 +2,8 @@ import type { Pool, PoolClient } from "pg";
 
 /**
  * A species ready to be stored: parsed and normalized by the caller (the `db` package does not parse names). It has no
- * difficulty, default level or lux need: the batch never writes them, so they stay unknown (P-08, #1003).
+ * difficulty, default level or lux need (#1003) and no growth measure, etiolation signs or success criteria (#1005): the
+ * batch never writes them, so they stay unknown (P-08).
  */
 export interface LoadRecord {
   readonly latinName: string;
@@ -12,9 +13,6 @@ export interface LoadRecord {
   readonly englishName: string | null;
   readonly familyLatin: string;
   readonly familyGerman: string | null;
-  readonly growthMeasure: "height" | "rosette_diameter" | "shoot_length";
-  readonly etiolationSigns: string;
-  readonly successCriteria: string;
   readonly source: string;
   /** Every searchable name: `latin`, `german`, `english`, `synonym`; `norm` is the normalized search key. */
   readonly names: readonly {
@@ -29,6 +27,12 @@ export interface LoadProvenance {
   readonly license: string;
   readonly retrievedOn: string;
 }
+
+/**
+ * A further write of the same batch that runs with owner rights inside the same transaction, after the species (for
+ * example the researched attributes of US-ENT-09, which belong to another module and are passed in by the caller).
+ */
+export type LoadExtraWrite = (client: PoolClient) => Promise<void>;
 
 const LOCK_KEY = "catalog-load";
 
@@ -51,11 +55,15 @@ export class CatalogLoadPostgres {
     return new Set(r.rows.map((x) => x.norm));
   }
 
-  /** Stores the species that are not in the catalog yet, all or nothing; returns the Latin names it created. */
+  /**
+   * Stores the species that are not in the catalog yet and runs `extra`, all or nothing; returns the Latin names it
+   * created.
+   */
   async load(
     operator: string,
     records: readonly LoadRecord[],
     provenance: LoadProvenance,
+    extra?: LoadExtraWrite,
   ): Promise<readonly string[]> {
     const client = await this.pool.connect();
     try {
@@ -72,6 +80,7 @@ export class CatalogLoadPostgres {
       // Back to the owner of the transaction for the provenance rows (no policy lets the application role write them).
       await client.query("reset role");
       for (const { id, record } of created) await saveProvenance(client, id, record, provenance);
+      if (extra) await extra(client);
       await client.query("commit");
       return created.map((c) => c.record.latinName);
     } catch (error) {
@@ -105,8 +114,8 @@ async function insertIfNew(
   );
   await client.query(
     `insert into species (id, created_by, latin_name, genus, epithet, german_name, english_name, family_latin,
-       family_german, growth_measure, etiolation_signs, success_criteria, source)
-     values ($1, 'operator', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+       family_german, source)
+     values ($1, 'operator', $2, $3, $4, $5, $6, $7, $8, $9)`,
     [
       id,
       r.latinName,
@@ -116,9 +125,6 @@ async function insertIfNew(
       r.englishName,
       r.familyLatin,
       r.familyGerman,
-      r.growthMeasure,
-      r.etiolationSigns,
-      r.successCriteria,
       r.source,
     ],
   );

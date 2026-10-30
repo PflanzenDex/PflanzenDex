@@ -6,7 +6,8 @@ import type { ReviewStore } from "../types";
 
 /**
  * Catalog fields that may be unknown ("unbekannt", P-08). The others are required on creation (DM-BES-01). Difficulty,
- * default level and lux demand may be unknown since #1003: no open source fills them, so their next step is research.
+ * default level and lux demand may be unknown since #1003, growth measure, etiolation signs and success criteria since
+ * #1005: no open source fills them, so their next step is research.
  */
 export const GAP_FIELDS = [
   "difficulty",
@@ -23,6 +24,9 @@ export const GAP_FIELDS = [
   "pruning",
   "growthHacks",
   "botanicalStory",
+  "growthMeasure",
+  "etiolationSigns",
+  "successCriteria",
 ] as const;
 export type GapField = (typeof GAP_FIELDS)[number];
 

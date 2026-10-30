@@ -19,8 +19,10 @@ export function MeasurementHeader({ view }: { view: MeasurementView }) {
       <div>
         <dt className="font-semibold">Was messen?</dt>
         <dd className="m-0 mt-0.5 text-muted-foreground">
-          {massName(view.growthMeasure)}. Miss immer dasselbe Maß an derselben Stelle, sonst sind
-          die Werte nicht vergleichbar.
+          {view.growthMeasure === null
+            ? "Wachstumsmaß unbekannt: Wähle selbst Höhe, Rosettendurchmesser oder Trieblänge und bleib dabei."
+            : `${massName(view.growthMeasure)}.`}{" "}
+          Miss immer dasselbe Maß an derselben Stelle, sonst sind die Werte nicht vergleichbar.
         </dd>
       </div>
       <div>

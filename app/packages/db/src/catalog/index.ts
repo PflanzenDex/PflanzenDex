@@ -11,4 +11,4 @@ export type { SourceClaimRecord } from "./fill/source-claims.ts";
 export { CatalogGapsPostgres } from "./gaps/index.ts";
 export { CorrectionPostgres } from "./corrections/index.ts";
 export { CatalogLoadPostgres } from "./fill/catalog-load.ts";
-export type { LoadRecord, LoadProvenance } from "./fill/catalog-load.ts";
+export type { LoadExtraWrite, LoadRecord, LoadProvenance } from "./fill/catalog-load.ts";

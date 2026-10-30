@@ -77,9 +77,13 @@ describe("US-BES-12 dev seed of the catalog", () => {
       difficulty: number | null;
       standard_level: number | null;
       light_demand_lux: number | null;
+      growth_measure: string | null;
+      etiolation_signs: string | null;
+      success_criteria: string | null;
     }>(
       `select v.status, s.source, s.created_by, (select count(*)::int from species_name n where n.species_id = s.id) as names,
-              s.difficulty, s.standard_level, s.light_demand_lux
+              s.difficulty, s.standard_level, s.light_demand_lux, s.growth_measure, s.etiolation_signs,
+              s.success_criteria
          from species s join review_case v on v.object_kind = 'species' and v.object_id = s.id
         where s.german_name = $1`,
       [rows[0]?.[1]],
@@ -93,6 +97,10 @@ describe("US-BES-12 dev seed of the catalog", () => {
         difficulty: null,
         standard_level: null,
         light_demand_lux: null,
+        // #1005: no generic care texts and no guessed growth measure either (P-08).
+        growth_measure: null,
+        etiolation_signs: null,
+        success_criteria: null,
       },
     ]);
   });

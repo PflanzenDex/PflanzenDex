@@ -271,9 +271,6 @@ describe("US-BES-12 operator batch store of the start catalog (#991)", () => {
     englishName: null,
     familyLatin: "Araceae",
     familyGerman: null,
-    growthMeasure: "height",
-    etiolationSigns: "Lange Triebe.",
-    successCriteria: "Kompakt.",
     source: "test",
     names: [{ field: "latin", display: name, norm: name.toLowerCase() }],
   });

@@ -4,6 +4,9 @@ import { checkDbRoles } from "@pflanzendex/db";
 import { applyLoad, planLoad } from "./catalog-loader.ts";
 import { START_SPECIES } from "./start-species.ts";
 import type { StartSpecies } from "./start-species.ts";
+import { checkAndReport, localDay } from "./research/check-cli.ts";
+import type { DataCheck, ResearchFile } from "./research/check-data.ts";
+import { readResearchData } from "./research/read-data.ts";
 
 export interface CliDeps {
   readonly argv: readonly string[];
@@ -13,6 +16,8 @@ export interface CliDeps {
   readonly now: () => Date;
   /** The curated list; tests pass their own. */
   readonly list?: readonly StartSpecies[];
+  /** The researched attribute data (US-ENT-09); default: the data folder of the repo. */
+  readonly readData?: () => readonly ResearchFile[];
 }
 
 const USAGE =
@@ -29,10 +34,6 @@ function option(argv: readonly string[], name: string): string | undefined {
   const i = argv.indexOf(name);
   return i >= 0 ? argv[i + 1] : undefined;
 }
-
-const two = (n: number) => String(n).padStart(2, "0");
-/** The operator's local calendar day (NFR-08), the date the entered values were "retrieved". */
-const localDay = (d: Date) => `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`;
 
 interface Request {
   readonly dryRun: boolean;
@@ -56,9 +57,52 @@ function readRequest(deps: CliDeps): Request | string {
   };
 }
 
+interface LoadContext {
+  readonly deps: CliDeps;
+  readonly request: Request;
+  readonly target: ReturnType<typeof describeTarget>;
+  readonly list: readonly StartSpecies[];
+  readonly facts: DataCheck["facts"];
+  readonly say: (line: string) => void;
+}
+
+/** Role check, summary, dry run or confirmed write; returns the exit code. */
+async function loadInto(pool: Pool, ctx: LoadContext): Promise<number> {
+  const { deps, request, target, list, say } = ctx;
+  say(`Catalog load, ${deps.now().toISOString()}`);
+  say(`Target: ${target.target}`);
+  // The owner role must be neither superuser nor BYPASSRLS: every write below runs under the row rules.
+  await checkDbRoles(pool, "enforce", say);
+  const plan = await planLoad(pool, list, ctx.facts);
+  say(`Curated list: ${plan.records.length} species`);
+  say(`New: ${plan.fresh.length}, already present: ${plan.present.length}`);
+  const a = plan.attributes;
+  say(`Attribute values: new ${a.fresh}, changed ${a.changed}, unchanged ${a.unchanged}`);
+  if (request.dryRun) {
+    say("Dry run: nothing was written.");
+    return 0;
+  }
+  if (request.confirm !== target.database) {
+    say(
+      `Refused: pass --confirm ${target.database} (or CATALOG_LOAD_CONFIRM=${target.database}) to write to this database.`,
+    );
+    return 1;
+  }
+  const created = await applyLoad(pool, plan, localDay(deps.now()));
+  for (const latin of created) say(`added ${latin}`);
+  say(
+    `Done: ${created.length} species added, ${plan.records.length - created.length} already present.`,
+  );
+  say(
+    `Attribute values written: ${a.write.length} (status "ungeprüft" until a reviewer confirms).`,
+  );
+  return 0;
+}
+
 /**
- * Operator command that loads the curated start catalog (#991, US-BES-12, US-ONB-01): summary first, `--dry-run`
- * changes nothing, a write needs the database name as confirmation, one transaction, protocol on stdout and in a file.
+ * Operator command that loads the curated start catalog (#991, US-BES-12, US-ONB-01) and the researched attributes
+ * (US-ENT-09, #1005): the data check runs first and refuses on any problem, then summary, `--dry-run` changes nothing,
+ * a write needs the database name as confirmation, one transaction, protocol on stdout and in a file.
  * Returns the exit code (0 done or dry run, 1 refused or failed); errors are never swallowed (P-10).
  */
 export async function runCatalogLoad(deps: CliDeps): Promise<number> {
@@ -78,6 +122,17 @@ export async function runCatalogLoad(deps: CliDeps): Promise<number> {
     say(request);
     return finish(1);
   }
+  const list = deps.list ?? START_SPECIES;
+  const data = checkAndReport(
+    (deps.readData ?? (() => readResearchData()))(),
+    list.map((s) => s.latin),
+    deps.now(),
+    say,
+  );
+  if (data.issues.length > 0) {
+    say("Refused: fix the research data first (npm run catalog:check-data); nothing was written.");
+    return finish(1);
+  }
   let target: ReturnType<typeof describeTarget>;
   try {
     target = describeTarget(request.databaseUrl);
@@ -87,29 +142,7 @@ export async function runCatalogLoad(deps: CliDeps): Promise<number> {
   }
   const pool = deps.openPool(request.databaseUrl);
   try {
-    say(`Catalog load, ${deps.now().toISOString()}`);
-    say(`Target: ${target.target}`);
-    // The owner role must be neither superuser nor BYPASSRLS: every write below runs under the row rules.
-    await checkDbRoles(pool, "enforce", say);
-    const plan = await planLoad(pool, deps.list ?? START_SPECIES);
-    say(`Curated list: ${plan.records.length} species`);
-    say(`New: ${plan.fresh.length}, already present: ${plan.present.length}`);
-    if (request.dryRun) {
-      say("Dry run: nothing was written.");
-      return finish(0);
-    }
-    if (request.confirm !== target.database) {
-      say(
-        `Refused: pass --confirm ${target.database} (or CATALOG_LOAD_CONFIRM=${target.database}) to write to this database.`,
-      );
-      return finish(1);
-    }
-    const created = await applyLoad(pool, plan, localDay(deps.now()));
-    for (const latin of created) say(`added ${latin}`);
-    say(
-      `Done: ${created.length} species added, ${plan.records.length - created.length} already present.`,
-    );
-    return finish(0);
+    return finish(await loadInto(pool, { deps, request, target, list, facts: data.facts, say }));
   } catch (error) {
     say(
       `Failed, no species was written: ${error instanceof Error ? error.message : String(error)}`,
