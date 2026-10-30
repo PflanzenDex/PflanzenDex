@@ -37,6 +37,13 @@ make ci      # all gates: lint, types, boundaries, format, tests, build
 - **Boundary check:** `npm run boundaries` (script and tests in `scripts/`); messages name the rule ID, file and line. Module rules AB-7 to AB-14 (FR-QG-19) read the module register `modules.config.mjs`; AB-10 and table ownership run in `findSchemaViolations` (db tests).
 - **Thresholds** (starting values, assumptions, E-15): file length ≤ 200, complexity ≤ 15, in `core` ≤ 10 (`eslint.config.js`).
 
+## Initial JavaScript of the web app (QG-U6, DS-08, US-QS-14)
+
+- Gate and report: `make bundle-report` lists the initial JavaScript per chunk and package; the budget gate (`bundle-budget`) fails above its limit. Keep new code out of the first load instead of raising the limit.
+- **Lazy parts:** every page and destination area (`lazy-areas.ts`, the `lazyPage` exports of each module), the route table itself (`AppRoutes` in `routes.tsx`, loaded by `shell/app/app.tsx` and prefetched while the session loads, so the sign-in screens do not carry it), the OIDC client and the heavy sections. Only the shell, the entry screens, the navigation and the shared states stay in the first load.
+- **Rule: a new page is added per `React.lazy`**, through `lazyPage` (`components/routing/lazy-page`), and rendered inside a `RouteBoundary`. It shows the skeleton while the chunk loads and "Erneut versuchen" when the chunk cannot be fetched (P-10). Do not import a page, area or heavy library statically from the shell, the navigation or `routes.tsx`.
+- **Class merging (`cn`):** `lib/class-merge/merge-config.ts` is a subset of the tailwind-merge default config (about 4 kB gzip smaller than the full config). `class-merge.test.ts` fails when a Tailwind class used in `src` has a group in the default config that the subset lacks: copy that group (and its conflicts) over from the tailwind-merge default config.
+
 ## Database and tenant isolation (TE-02)
 
 - **Test database:** `make db-up` starts PostgreSQL 18 in Docker (port 54329; `make test` and `make ci` do this themselves, in CI it runs as a service). Another server: `PFLANZENDEX_TEST_DATABASE_URL`.
