@@ -1,0 +1,41 @@
+[
+  {
+    "species": "Monstera deliciosa",
+    "attributes": {
+      "toxicToPets": {
+        "value": true,
+        "sourceUrl": "https://en.wikipedia.org/w/index.php?title=Monstera_deliciosa&oldid=1374208594",
+        "sourceName": "wikipedia",
+        "license": "CC-BY-SA-4.0",
+        "retrievedOn": "2026-10-30",
+        "note": "Section Toxicity: toxic to cats and dogs (insoluble calcium oxalate crystals). Wikidata and GBIF carry no structured value."
+      }
+    }
+  },
+  {
+    "species": "Epipremnum aureum",
+    "attributes": {
+      "toxicToPets": {
+        "value": true,
+        "sourceUrl": "https://en.wikipedia.org/w/index.php?title=Epipremnum_aureum&oldid=1379550525",
+        "sourceName": "wikipedia",
+        "license": "CC-BY-SA-4.0",
+        "retrievedOn": "2026-10-30",
+        "note": "Section Toxicity: listed as toxic to cats and dogs (insoluble raphides). Wikidata and GBIF carry no structured value."
+      }
+    }
+  },
+  {
+    "species": "Sansevieria trifasciata",
+    "attributes": {
+      "toxicToPets": {
+        "value": true,
+        "sourceUrl": "https://en.wikipedia.org/w/index.php?title=Dracaena_trifasciata&oldid=1381611614",
+        "sourceName": "wikipedia",
+        "license": "CC-BY-SA-4.0",
+        "retrievedOn": "2026-10-30",
+        "note": "Article under the accepted name Dracaena trifasciata: saponins, mildly toxic to dogs and cats. Wikidata and GBIF carry no structured value."
+      }
+    }
+  }
+]

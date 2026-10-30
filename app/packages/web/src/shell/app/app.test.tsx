@@ -512,9 +512,7 @@ describe("US-ACC-01 App", () => {
     renderApp();
     await userEvent.click(await findTab("Sammlung"));
     await userEvent.click(screen.getByRole("button", { name: "Arten" }));
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Details zu Dracaena trifasciata" }),
-    );
+    await userEvent.click(await screen.findByRole("button", { name: /^Dracaena trifasciata/ }));
     await userEvent.click(screen.getByRole("button", { name: "Zum Artprofil" }));
     await userEvent.click(await screen.findByRole("button", { name: "Diese Art wählen" }));
     await userEvent.click(await screen.findByRole("button", { name: "Zurück zur Art" }));

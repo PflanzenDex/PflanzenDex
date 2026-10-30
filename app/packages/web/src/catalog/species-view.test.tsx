@@ -71,6 +71,18 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
     expect(h).toMatch(/Lichtbedarf<\/dt><dd[^>]*>unbekannt<\/dd>/);
   });
 
+  it('US-BES-12 P-08: unknown growth measure, etiolation signs and success criteria read "unbekannt" (#1005)', () => {
+    const h = renderToString(
+      <SpeciesProfile
+        species={{ ...species, growthMeasure: null, etiolationSigns: null, successCriteria: null }}
+        onChoose={vi.fn()}
+      />,
+    );
+    expect(h).toMatch(/Wachstumsmaß<\/dt><dd[^>]*>unbekannt<\/dd>/);
+    expect(h).toMatch(/Vergeilung-Anzeichen<\/dt><dd[^>]*>unbekannt<\/dd>/);
+    expect(h).toMatch(/Erfolgskriterien<\/dt><dd[^>]*>unbekannt<\/dd>/);
+  });
+
   it("approved species: marked as reviewed, with a button to choose", () => {
     const h = renderToString(<SpeciesProfile species={species} onChoose={vi.fn()} />);
     expect(h).toContain("Geprüft");

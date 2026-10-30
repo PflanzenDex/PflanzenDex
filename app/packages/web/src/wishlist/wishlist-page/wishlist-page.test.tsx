@@ -121,6 +121,15 @@ describe("US-WUN-01 page of the candidate list", () => {
     expect(screen.getByText("Besorge diese Pflanze zuerst.")).toBeTruthy();
   });
 
+  it("US-QS-08 · WCAG 2.5.3 the wish row's details button name contains its visible rank, title and zone", async () => {
+    fakeServer(list([candidate()]));
+    view(<WishlistPage api="http://api" token={token} />);
+    const btn = await screen.findByRole("button", { name: /^1\. Korbmarante/ });
+    const label = btn.getAttribute("aria-label") ?? "";
+    for (const text of ["1. Korbmarante (Calathea orbifolia)", "Fenster 3 — 1 Pflanze", "Mittel"])
+      expect(label).toContain(text);
+  });
+
   it("US-WUN-01 · US-QS-22 a row opens the full card in a layer: reasoning, picture with source and the why", async () => {
     fakeServer(list([candidate()]));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=wish-w1");

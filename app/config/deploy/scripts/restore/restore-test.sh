@@ -39,6 +39,8 @@ psql_q "$KEYCLOAK_DB_NAME" "create table user_entity (id serial primary key, use
 psql_q "$KEYCLOAK_DB_NAME" "insert into user_entity (username) select 'user' || g from generate_series(1, 50) g"
 expected_kc="$(psql_q "$KEYCLOAK_DB_NAME" "select count(*) || ':' || md5(string_agg(username, ',' order by id)) from user_entity")"
 
+# The host's .env must not redirect the throwaway dumps into its real backup folder or to BACKUP_REMOTE (#1010).
+export DEPLOY_ENV_FILE=""
 export BACKUP_DIR="$workdir/backups" BACKUP_REMOTE=""
 ./scripts/backup.sh
 dump="$(ls "$BACKUP_DIR"/pflanzendex-*.dump)"

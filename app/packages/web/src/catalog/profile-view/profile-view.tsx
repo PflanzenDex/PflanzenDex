@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/display/badge/badge";
 import { Button } from "@/components/ui/button/button";
 import {
   STATUS,
-  GROWTH,
+  growthText,
   lux,
   orUnknown,
   dormancyPhase,
@@ -23,13 +23,13 @@ function rows(species: Species): [string, string][] {
     ["Lichtbedarf", lux(species.lightDemandLux)],
     ["Ruhephase", dormancyPhase(species)],
     ["Standort-Hinweis", orUnknown(species.locationHint)],
-    ["Wachstumsmaß", GROWTH[species.growthMeasure]],
-    ["Vergeilung-Anzeichen", species.etiolationSigns],
+    ["Wachstumsmaß", growthText(species.growthMeasure)],
+    ["Vergeilung-Anzeichen", orUnknown(species.etiolationSigns)],
     ["Gießhinweis", orUnknown(species.wateringHint)],
     ["Substrat", orUnknown(species.substrate)],
     ["Rückschnitt", orUnknown(species.pruning)],
     ["Wuchs-Hacks", orUnknown(species.growthHacks)],
-    ["Erfolgskriterien", species.successCriteria],
+    ["Erfolgskriterien", orUnknown(species.successCriteria)],
     ["Botanische Story", orUnknown(species.botanicalStory)],
     ["Quelle", orUnknown(species.source)],
   ];

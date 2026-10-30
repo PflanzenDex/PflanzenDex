@@ -50,7 +50,7 @@ export function DiscoverPage(props: {
   return (
     <section
       {...(embedded ? { "aria-label": "Vorschläge" } : { "aria-labelledby": "discover-title" })}
-      className="flex min-h-0 min-w-0 flex-1 flex-col"
+      className="flex min-w-0 flex-1 flex-col"
     >
       <LoadFrame
         queryKey={["discover", deck, zone ?? null]}

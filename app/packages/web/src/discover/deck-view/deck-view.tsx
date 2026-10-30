@@ -12,8 +12,17 @@ import { SuggestionCard } from "../suggestion-card/suggestion-card";
 /** What the keeper decided on a card (US-ENT-04): "Ja" and "Nein" are written at once, "Später" writes nothing. */
 type Decision = "no" | "later" | "yes";
 
+/**
+ * True when the text size is raised to 150 % or more (US-QS-21, WCAG 1.4.4). Media queries do not follow the root font
+ * size, so the row reads it: a sticky row would then cover the card, so it scrolls with the content instead.
+ */
+function largeText(): boolean {
+  return parseFloat(getComputedStyle(document.documentElement).fontSize) >= 24;
+}
+
 /** "Nein · Später · Ja" as buttons; they are the way without a swipe gesture (NFR-13). */
 function Actions(props: { onDecide: (d: Decision) => void }) {
+  const [large] = useState(largeText);
   return (
     <div
       className={cn(
@@ -22,13 +31,15 @@ function Actions(props: { onDecide: (d: Decision) => void }) {
         // (400 % zoom) scrolls it like content.
         "sticky shrink-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-10 border-t border-border bg-background py-2",
         "md:bottom-0 [@media(max-height:30rem)]:static",
+        // Static content ends under the phone bar otherwise: the area is as high as the screen, its overflow gets no padding.
+        large && "static mb-20 md:mb-0",
       )}
     >
-      <div className="mx-auto flex w-full max-w-md gap-2">
+      <div className="mx-auto flex w-full max-w-md flex-wrap gap-2">
         <Button
           variant="outline"
           size="touch"
-          className="flex-1"
+          className="min-w-24 flex-1"
           onClick={() => props.onDecide("no")}
         >
           Nein
@@ -36,12 +47,12 @@ function Actions(props: { onDecide: (d: Decision) => void }) {
         <Button
           variant="secondary"
           size="touch"
-          className="flex-1"
+          className="min-w-24 flex-1"
           onClick={() => props.onDecide("later")}
         >
           Später
         </Button>
-        <Button size="touch" className="flex-1" onClick={() => props.onDecide("yes")}>
+        <Button size="touch" className="min-w-24 flex-1" onClick={() => props.onDecide("yes")}>
           Ja
         </Button>
       </div>
@@ -145,7 +156,7 @@ function Cards(props: {
       />
     );
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
+    <div className="flex min-h-[21rem] min-w-0 flex-1 flex-col gap-2">
       <p aria-live="polite" className="m-0 text-center text-sm text-muted-foreground">
         {`Vorschlag ${position + 1} von ${deck.suggestions.length}`}
       </p>
@@ -166,7 +177,7 @@ function Cards(props: {
 export function DeckView(props: Parameters<typeof Cards>[0]) {
   const filter = props.deck.zoneFilter;
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
+    <div className="flex min-w-0 flex-1 flex-col gap-2">
       {filter !== null && <ZoneNotice filter={filter} offerProposal={props.deck.empty === null} />}
       <Cards {...props} />
     </div>

@@ -1,4 +1,4 @@
-import type { Pool } from "pg";
+import type { Pool, PoolClient } from "pg";
 
 // Same shape as `AttributeFact` in `core` (structurally equal; `db` does not import values from `core`).
 type Field = "humidity" | "minTemperature" | "growthSize" | "toxicToPets";
@@ -36,6 +36,32 @@ interface Row {
 }
 
 /**
+ * Replaces the facts of each field (new research wins; one row per species and field, US-ENT-09). Takes a pool or a
+ * client of a running transaction (the operator batch `catalog:load` writes them together with the species).
+ */
+export async function saveAttributeFacts(
+  db: Pick<Pool | PoolClient, "query">,
+  facts: readonly AttributeFactRecord[],
+): Promise<void> {
+  for (const f of facts)
+    await db.query(
+      `insert into taxon_attribute (latin_name, field, value, source, source_url, license, retrieved_on)
+       values ($1, $2, $3::jsonb, $4, $5, $6, $7)
+       on conflict (latin_name, field) do update set value = excluded.value, source = excluded.source,
+         source_url = excluded.source_url, license = excluded.license, retrieved_on = excluded.retrieved_on`,
+      [
+        f.species,
+        COLUMN[f.field],
+        JSON.stringify(f.value),
+        f.evidence.source,
+        f.evidence.url,
+        f.evidence.license,
+        f.evidence.retrievedAt,
+      ],
+    );
+}
+
+/**
  * Researched species attributes with source and license per field (US-ENT-09). Written by the worker with the owner
  * pool, read by the application role; the shared table has no account id (P-05).
  */
@@ -44,22 +70,7 @@ export class TaxonAttributesPostgres {
 
   /** Replaces the facts of the field (new research wins; one row per species and field). */
   async save(facts: readonly AttributeFactRecord[]): Promise<void> {
-    for (const f of facts)
-      await this.pool.query(
-        `insert into taxon_attribute (latin_name, field, value, source, source_url, license, retrieved_on)
-         values ($1, $2, $3::jsonb, $4, $5, $6, $7)
-         on conflict (latin_name, field) do update set value = excluded.value, source = excluded.source,
-           source_url = excluded.source_url, license = excluded.license, retrieved_on = excluded.retrieved_on`,
-        [
-          f.species,
-          COLUMN[f.field],
-          JSON.stringify(f.value),
-          f.evidence.source,
-          f.evidence.url,
-          f.evidence.license,
-          f.evidence.retrievedAt,
-        ],
-      );
+    await saveAttributeFacts(this.pool, facts);
   }
 
   /** The stored facts of the species; a species or field without a row is unknown. */

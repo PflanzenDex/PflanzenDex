@@ -32,7 +32,7 @@ export function WishRow(props: {
         size="sm"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`Details: ${c.title}`}
+        aria-label={`${rank}. ${c.title} ${c.zoneText} · ${level}`}
         className="h-auto min-w-0 flex-1 basis-32 flex-col items-start justify-start gap-0 whitespace-normal px-1 py-1 text-left"
         onClick={(event) => openLayer(event.currentTarget)}
       >

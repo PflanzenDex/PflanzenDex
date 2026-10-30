@@ -28,6 +28,9 @@ export class CatalogGapsPostgres {
         pruning: string | null;
         growthHacks: string | null;
         botanicalStory: string | null;
+        growthMeasure: string | null;
+        etiolationSigns: string | null;
+        successCriteria: string | null;
         checks: { source: "gbif" | "wikidata" | "wikipedia"; retrievedAt: string }[];
       }>(
         `select a.id, a.latin_name as "latinName", a.difficulty, a.standard_level as "standardLevel",
@@ -35,6 +38,8 @@ export class CatalogGapsPostgres {
                 a.family_german as "familyGerman", a.family_latin as "familyLatin", a.dormancy_from as dormancy,
                 a.location_hint as "locationHint", a.watering_hint as "wateringHint", a.substrate, a.pruning,
                 a.growth_hacks as "growthHacks", a.botanical_story as "botanicalStory",
+                a.growth_measure as "growthMeasure", a.etiolation_signs as "etiolationSigns",
+                a.success_criteria as "successCriteria",
                 coalesce((select json_agg(json_build_object('source', s.source,
                             'retrievedAt', to_char(s.retrieved_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')))
                             from catalog_source_snapshot s where s.species_id = a.id), '[]'::json) as checks

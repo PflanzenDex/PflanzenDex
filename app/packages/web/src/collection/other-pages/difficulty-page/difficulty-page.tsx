@@ -41,7 +41,7 @@ const COLUMNS: { key: string; header: string; cell: (r: DifficultyRow) => string
   { key: "watering", header: "Gießregel", cell: wateringText },
   { key: "substrate", header: "Substrat", cell: (r) => r.substrate ?? UNKNOWN },
   { key: "pruning", header: "Schnitt", cell: (r) => r.pruning ?? UNKNOWN },
-  { key: "success", header: "Erfolgskriterium", cell: (r) => r.successCriteria },
+  { key: "success", header: "Erfolgskriterium", cell: (r) => r.successCriteria ?? UNKNOWN },
   { key: "difficulty", header: "Schwierigkeit", cell: (r) => level(r.difficulty) },
 ];
 

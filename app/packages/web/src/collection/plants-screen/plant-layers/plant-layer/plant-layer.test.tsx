@@ -80,7 +80,7 @@ function show(cards: SpecimenCard[], extra: Extra = {}, at = "/") {
   );
 }
 const open = async () => {
-  await userEvent.click(await screen.findByRole("button", { name: /^Aloe, / }));
+  await userEvent.click(await screen.findByRole("button", { name: /^Aloe / }));
   return screen.findByRole("dialog", { name: "Aloe" });
 };
 
@@ -329,7 +329,7 @@ describe("US-QS-23 wide screen", () => {
     show([card()], {}, "/?sheet=plant-e1");
     const pane = await screen.findByRole("complementary", { name: "Aloe" });
     expect(pane).toBeTruthy();
-    expect(screen.getByRole("button", { name: /^Aloe, / })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Aloe / })).toBeTruthy();
     expect(within(pane).getAllByRole("tab")).toHaveLength(4);
   });
 });

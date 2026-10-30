@@ -91,7 +91,7 @@ make backup          # $BACKUP_DIR/pflanzendex-<UTC time>.dump and keycloak-<UTC
 
 `BACKUP_DIR` defaults to `~/pflanzendex-backups`, outside the repository: the dumps hold password hashes and the realm keys, and a folder inside the checkout could be committed by a `git add -A` on the host (#760). The script runs with `umask 077`, so the folder is 0700 and every dump 0600; dumps of earlier runs are tightened to 0600 on the next run. `.gitignore` also ignores the old folder `app/config/deploy/backups/` and every `*.dump`. A host whose `.env` still says `BACKUP_DIR=./backups` keeps working; move the folder and the setting when convenient (`mv app/config/deploy/backups ~/pflanzendex-backups`, then `BACKUP_DIR=${HOME}/pflanzendex-backups` in `.env`).
 
-Each run writes two files when the sign-in service exists: `pflanzendex-*.dump` (app data) and `keycloak-*.dump` (identities, sessions, realm settings; without it nobody could sign in after a restore). The script verifies the file with `pg_restore -l`, deletes backups older than `BACKUP_RETENTION_DAYS` and copies them to `BACKUP_REMOTE` with `rsync` if set (second location, R-11). An unreadable backup fails with an error (a backup that cannot be restored is an incident, NFR-15).
+Each run writes two files when the sign-in service exists: `pflanzendex-*.dump` (app data) and `keycloak-*.dump` (identities, sessions, realm settings; without it nobody could sign in after a restore). The script verifies the file with `pg_restore -l`, deletes backups older than `BACKUP_RETENTION_DAYS` and copies them to `BACKUP_REMOTE` with `rsync` if set (second location, R-11). An unreadable backup fails with an error (a backup that cannot be restored is an incident, NFR-15). `backup.sh` and `restore.sh` load the env file named by `DEPLOY_ENV_FILE` (default `app/config/deploy/.env`); `DEPLOY_ENV_FILE=` (empty) or a missing file loads none, so the values of the caller apply (#1010).
 
 ## Restore
 
@@ -107,7 +107,7 @@ docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-com
 
 ## Restore test (NFR-15)
 
-`make restore-test` starts a throwaway Postgres, creates 500 test rows, backs them up with `backup.sh`, restores them with `restore.sh` into a second database and compares row count and checksum. The production database stays untouched. Once a month, also run the "second database" path above on the host with a real backup and record the result.
+`make restore-test` starts a throwaway Postgres, creates 500 test rows, backs them up with `backup.sh`, restores them with `restore.sh` into a second database and compares row count and checksum. The production database stays untouched, and `make restore-test` ignores the host's `.env`: it sets `DEPLOY_ENV_FILE=` for both scripts, so a `BACKUP_DIR` or `BACKUP_REMOTE` in `.env` never receives the throwaway dumps (#1010). Once a month, also run the "second database" path above on the host with a real backup and record the result.
 
 Test log:
 
