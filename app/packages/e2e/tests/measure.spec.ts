@@ -54,8 +54,9 @@ test.describe("US-WAC-01 Messung erfassen", () => {
     await form.getByLabel("Notiz (optional)").fill("nach dem Umtopfen");
     await form.getByRole("button", { name: "Messung speichern" }).click();
 
-    await expect(page.getByText(/^Gespeichert: 12,5 cm am \d\d\.\d\d\.\d{4}\.$/)).toBeVisible();
-    await expect(page.getByRole("heading", { level: 3, name: /^12,5 cm · / })).toBeVisible();
+    // Value and unit are joined by a non-breaking space (US-QS-24); `\s` matches it.
+    await expect(page.getByText(/^Gespeichert: 12,5\scm am \d\d\.\d\d\.\d{4}\.$/)).toBeVisible();
+    await expect(page.getByRole("heading", { level: 3, name: /^12,5\scm · / })).toBeVisible();
     await expect(page.getByText("nach dem Umtopfen", { exact: true })).toBeVisible();
     await axeReport(page, info, "measure-erfasst");
 

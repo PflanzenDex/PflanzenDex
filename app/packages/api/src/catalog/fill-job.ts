@@ -1,8 +1,8 @@
 import {
   CATALOG_FILL_JOB_TYPE,
-  enqueueJob,
   orderCatalogFill,
   runCatalogFill,
+  orderOrThrow,
 } from "@pflanzendex/core";
 import type { CatalogFillStore, JobHandlers, SourceClient } from "@pflanzendex/core";
 import { CatalogFillPostgres, JobsPostgres } from "@pflanzendex/db";
@@ -43,9 +43,6 @@ export function checkCatalogFill(pool: Pool, now: () => Date) {
   const queue = new JobsPostgres(pool);
   return orderCatalogFill({
     store: catalogFillStore(pool),
-    order: async (type, dedupeKey) => {
-      const r = await enqueueJob({ queue, now }, { type, dedupeKey });
-      if (!r.ok) throw new Error(r.error.code);
-    },
+    order: orderOrThrow({ queue, now }),
   });
 }
