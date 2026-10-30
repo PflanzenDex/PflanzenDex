@@ -39,6 +39,10 @@ const PANE_FRAMES: Record<string, readonly string[]> = {
     "social/pages/friends-page/friends-page.tsx",
   ],
   "today/today-page/today-page.tsx": [TODAY],
+  "social/pages/friend-collection/friend-collection.tsx": [
+    "social/pages/friend-collection/friend-collection.tsx",
+  ],
+  "swap/pages/exchange/exchange.tsx": ["swap/pages/exchange/exchange.tsx"],
   "wishlist/wishlist-page/layers/wishlist-layers/wishlist-layers.tsx": [COLLECTION],
 };
 
