@@ -2,6 +2,7 @@ import type { IntroductionFigure, IntroductionFigures } from "@pflanzendex/core"
 import { useCallback } from "react";
 import { LoadFrame } from "../../../kernel";
 import { loadIntroduction } from "../../api/access-api";
+import { MoreHelp } from "@/components/ui/display/more-help/more-help";
 import { keepTogether } from "@/lib/format";
 
 type Token = () => Promise<string | undefined>;
@@ -39,27 +40,30 @@ function Figures(props: { figures: IntroductionFigures }) {
           {`${f.steps.value} · Ziel: höchstens 3 · ${f.steps.targetMet ? "erreicht" : "nicht erreicht"}`}
         </dd>
       </dl>
-      <p className="mt-3 text-sm text-muted-foreground">
-        {keepTogether(
-          `Gezählt werden Konten der letzten ${f.windowDays} Tage (${f.accounts ?? `unbekannt, weniger als ${f.minAccounts}`}). Die Zeit läuft von der Anlage des Kontos bis zur Anlage der ersten Pflanze, nicht ab dem ersten Öffnen. Eine Zahl erscheint erst ab ${f.minAccounts} Konten; es wird kein einzelnes Konto und kein Klick erfasst. Die Schritte ergeben sich aus dem Aufbau des Einstiegs.`,
+      <MoreHelp
+        className="mt-3"
+        more={keepTogether(
+          `Die Zeit läuft von der Anlage des Kontos bis zur Anlage der ersten Pflanze, nicht ab dem ersten Öffnen. Eine Zahl erscheint erst ab ${f.minAccounts} Konten; es wird kein einzelnes Konto und kein Klick erfasst. Die Schritte ergeben sich aus dem Aufbau des Einstiegs.`,
         )}
-      </p>
+      >
+        {keepTogether(
+          `Gezählt werden Konten der letzten ${f.windowDays} Tage (${f.accounts ?? `unbekannt, weniger als ${f.minAccounts}`}).`,
+        )}
+      </MoreHelp>
     </>
   );
 }
 
 /**
- * The figures of the introduction for the operator (US-ONB-08): derived from existing creation dates only, aggregated,
- * unknown below a minimum of accounts. A failure to load stays visible as text (P-10) and blocks nothing else.
+ * The figures of the introduction for the operator (US-ONB-08), in the layer "Einstieg": derived from existing creation
+ * dates only, aggregated, unknown below a minimum of accounts. A failure to load stays visible as text (P-10) and
+ * blocks nothing else. The layer gives the heading.
  */
 export function IntroductionSection(props: { api: string; token: Token }) {
   const { api, token } = props;
   const load = useCallback((t: string) => loadIntroduction(api, t), [api]);
   return (
-    <section aria-labelledby="introduction-title" className="flex flex-col gap-3">
-      <h2 id="introduction-title" className="text-xl font-semibold">
-        Einstieg
-      </h2>
+    <section aria-label="Einstieg" className="flex flex-col gap-3">
       <LoadFrame
         queryKey={["account", "operator", "introduction"]}
         token={token}

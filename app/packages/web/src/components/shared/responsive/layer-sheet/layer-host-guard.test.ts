@@ -20,6 +20,9 @@ const PROFILE = `${AREA}/collection-area/hand-over-routes/hand-over-routes.tsx`;
  * its layer in its frame" in app.test.tsx.
  */
 const PANE_FRAMES: Record<string, readonly string[]> = {
+  "account/operator/operator-page/operator-page.tsx": [
+    "account/operator/operator-page/operator-page.tsx",
+  ],
   "account/settings-page/settings-page.tsx": ["account/settings-page/settings-page.tsx"],
   "catalog/search-view/search-filters/search-filters.tsx": [DISCOVER],
   "catalog/species-page/species-page.tsx": [DISCOVER, PROFILE],
