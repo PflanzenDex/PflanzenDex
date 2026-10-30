@@ -2,6 +2,7 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
+import { errorText } from "@/lib/error-text";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/lib/viewport-mock";
 import { FriendsPage } from "./friends-page";
@@ -41,12 +42,17 @@ type Initial = {
   /** Open offers of friends and cards of the match deck. */
   offers?: number;
   matching?: number;
+  /** Replaces the specimens; `failSpecies` makes the bulk write for that species refuse. */
+  specimens?: { id: string; speciesId: string; name: string; status: string }[];
+  failSpecies?: string;
 };
 type State = {
   incoming: Req[];
   outgoing: Req[];
   friends: unknown[];
   shared: { specimenId: string; photos: boolean }[];
+  specimens: { id: string; speciesId: string; name: string; status: string }[];
+  failSpecies?: string;
 };
 const SPECIMENS = [
   { id: "s1", speciesId: "sp1", name: "Zebra – M1", status: "plant" },
@@ -74,8 +80,12 @@ function write(
   }
   if (path.startsWith("/sharing/")) {
     const id = path.split("/").pop() as string;
+    if (path.includes("/species/") && id === state.failSpecies)
+      return response(500, { error: { code: "internal", text: "raw" } });
     const ids = path.includes("/species/")
-      ? SPECIMENS.filter((s) => s.status !== "archived").map((s) => s.id)
+      ? state.specimens
+          .filter((s) => s.speciesId === id && s.status !== "archived")
+          .map((s) => s.id)
       : [id];
     state.shared =
       body.share === "friends"
@@ -119,6 +129,8 @@ function fakeServer(initial: Initial = {}) {
     outgoing: initial.outgoing ?? [],
     friends: initial.friends ?? [],
     shared: [],
+    specimens: initial.specimens ?? SPECIMENS,
+    ...(initial.failSpecies ? { failSpecies: initial.failSpecies } : {}),
   };
   const calls: { path: string; body: unknown }[] = [];
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
@@ -147,7 +159,7 @@ function fakeServer(initial: Initial = {}) {
       });
     const exchange = exchangeResponse(path, initial);
     if (exchange) return exchange;
-    if (path === "/specimens") return response(200, { specimens: SPECIMENS });
+    if (path === "/specimens") return response(200, { specimens: state.specimens });
     if (path === "/sharing") return response(200, { shared: state.shared });
     return response(404, {});
   });
@@ -378,6 +390,27 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     await userEvent.click(screen.getByRole("button", { name: "Alle zurückziehen" }));
     await userEvent.click(screen.getByRole("button", { name: "Ja, alle zurückziehen" }));
     expect(await screen.findByText(/Alle Pflanzen sind zurückgezogen/)).toBeTruthy();
+  });
+
+  it("US-SOZ-04 · US-QS-20 · P-10 a bulk action refused on the 2nd of 3 species says how far it got and the switches show the real state", async () => {
+    const specimens = ["sp1", "sp2", "sp3"].map((sp, n) => ({
+      id: `s${n}`,
+      speciesId: sp,
+      name: `Art${n} – M1`,
+      status: "plant",
+    }));
+    const { calls } = fakeServer({ specimens, failSpecies: "sp2" });
+    show("sharing");
+    await userEvent.click(await screen.findByRole("button", { name: "Alle teilen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Ja, alle teilen" }));
+    expect(await screen.findByText("1 von 3 Arten geändert, 2 nicht.")).toBeTruthy();
+    expect(screen.getByRole("alert").textContent).toBe(errorText("internal"));
+    expect(calls.map((c) => c.path)).toEqual(["/sharing/species/sp1", "/sharing/species/sp2"]);
+    const on = async (name: string) =>
+      ((await screen.findByRole("switch", { name })) as HTMLInputElement).checked;
+    await vi.waitFor(async () => expect(await on("Art0 – M1: mit Freunden teilen")).toBe(true));
+    expect(await on("Art1 – M1: mit Freunden teilen")).toBe(false);
+    expect(await on("Art2 – M1: mit Freunden teilen")).toBe(false);
   });
 
   it("US-SOZ-03 shows the number of shared caught species of a friend, and unknown without sharing (P-08)", async () => {

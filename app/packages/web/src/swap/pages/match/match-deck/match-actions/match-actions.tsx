@@ -78,7 +78,7 @@ const EMPTY_TEXT: Record<EmptyReason, { title: string; description: string }> = 
   },
 };
 
-/** The empty deck names the reason and the next step (US-TAU-07, P-09); the links lead to the places that fix it. */
+/** The empty deck names the reason and the next step (US-TAU-07, P-09); one filled action, the other ways stay as text links. */
 export function Empty(props: { reason?: EmptyReason | null }) {
   const reason = props.reason ?? "no_match";
   const text = EMPTY_TEXT[reason];
@@ -96,19 +96,19 @@ export function Empty(props: { reason?: EmptyReason | null }) {
               : { label: "Tauschbörse öffnen", href: EXCHANGE_PATH }
         }
       />
-      <div className="flex flex-wrap justify-center gap-2">
+      <div className="flex flex-wrap justify-center gap-x-4">
         {reason === "no_wishes" && (
-          <Button asChild variant="outline" size="touch">
+          <Button asChild variant="link" size="touch">
             <Link to={PATHS.discover}>Arten entdecken</Link>
           </Button>
         )}
         {!invite && reason !== "no_wishes" && (
-          <Button asChild variant="outline" size="touch">
+          <Button asChild variant="link" size="touch">
             <Link to={WISHLIST_MODE_ADDRESS}>Wunsch hinzufügen</Link>
           </Button>
         )}
         {!invite && (
-          <Button asChild variant="outline" size="touch">
+          <Button asChild variant="link" size="touch">
             <Link to={PATHS.friends}>Freunde einladen</Link>
           </Button>
         )}
