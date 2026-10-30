@@ -2,12 +2,15 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryLight } from "../../light/test-helpers";
 import { lightOverview } from "./light-overview";
+import { difficultyOverview } from "./difficulty-overview";
+import { effectiveZone } from "../placement/effective-zone";
 import { InMemorySpecimens, SpeciesStub, testSpecies } from "../shared/test-helpers";
 
 const SP_LOW = "11111111-1111-4111-8111-111111111111";
 const SP_MID = "22222222-2222-4222-8222-222222222222";
 const SP_HIGH = "33333333-3333-4333-8333-333333333333";
 const SP_FOREIGN = "99999999-9999-4999-8999-999999999999"; // visible only to ben
+const SP_UNKNOWN = "44444444-4444-4444-8444-444444444444"; // catalog knows no light need (P-08, #1003)
 
 const species = new SpeciesStub([
   { species: testSpecies(SP_LOW, { latinName: "Low", lightDemandLux: 3_999 }) },
@@ -16,6 +19,14 @@ const species = new SpeciesStub([
     species: testSpecies(SP_HIGH, { latinName: "High", lightDemandLux: 80_000, standardLevel: 3 }),
   },
   { species: testSpecies(SP_FOREIGN, { latinName: "Bens", lightDemandLux: 9_000 }), only: "ben" },
+  {
+    species: testSpecies(SP_UNKNOWN, {
+      latinName: "Unknown",
+      lightDemandLux: null,
+      standardLevel: null,
+      difficulty: null,
+    }),
+  },
 ]);
 
 const light = new InMemoryLight();
@@ -103,7 +114,7 @@ describe("US-LIC-03: light overview", () => {
     await plant("anna", SP_MID);
     const [row] = await overview("anna");
     expect(row?.zone).toBeNull();
-    expect(row?.position.category).toBe("very_close");
+    expect(row?.position?.category).toBe("very_close");
   });
 
   it("skips a species that the account cannot read", async () => {
@@ -131,8 +142,52 @@ describe("US-LIC-03 tenant: only own specimens and zones", () => {
 describe("US-LIC-03 adjustable thresholds (FR-LIC-05)", () => {
   it("uses the thresholds of the keeper for the position, the standard values without", async () => {
     await plant("anna", SP_MID);
-    expect((await overview("anna"))[0]?.position.category).toBe("very_close");
+    expect((await overview("anna"))[0]?.position?.category).toBe("very_close");
     const own = (await lightOverview(deps(), "anna", [100_000, 30_000, 20_000, 10_000])).rows;
-    expect(own[0]?.position.category).toBe("medium_distance");
+    expect(own[0]?.position?.category).toBe("medium_distance");
+  });
+});
+
+describe("US-LIC-01 P-08: a species without a light value is unknown in every derivation (#1003)", () => {
+  it("US-LIC-01: Given a species with unknown lux need and level, then light overview, difficulty comparison and effective zone say unknown, never a guessed zone", async () => {
+    await plant("anna", SP_MID);
+    await plant("anna", SP_UNKNOWN);
+    // Light overview: listed last, no lux, no position, zone unknown (not dropped, P-10).
+    const rows = await overview("anna");
+    expect(rows.map((r) => [r.speciesName, r.lightDemandLux, r.position, r.zone])).toEqual([
+      ["Mid", 15_000, expect.anything(), expect.anything()],
+      ["Unknown", null, null, null],
+    ]);
+    // Difficulty comparison: zone and difficulty unknown, sorted after every known difficulty.
+    const cmp = await difficultyOverview(deps(), "anna");
+    expect(cmp.rows.map((r) => [r.botanicalName, r.difficulty, r.zone, r.zoneSource])).toEqual([
+      ["Mid", 1, expect.anything(), "species"],
+      ["Unknown", null, null, null],
+    ]);
+    // Effective zone of the specimen (card and distribution): no zone from the species.
+    const row = specimens.rows.find((z) => z.speciesId === SP_UNKNOWN);
+    if (!row) throw new Error("no specimen");
+    const unknown = await species.findMany("anna", [SP_UNKNOWN]);
+    const ctx = {
+      zones: light.listZones("anna"),
+      locations: [],
+      species: new Map([[SP_UNKNOWN, unknown[0] ?? null]]),
+      overrides: new Map<string, string>(),
+    };
+    expect(effectiveZone(row, ctx)).toBeNull();
+  });
+
+  it("US-LIC-01: Given a known lux need but an unknown default level, then the zone stays unknown", async () => {
+    await plant("anna", SP_UNKNOWN);
+    const lux = testSpecies(SP_UNKNOWN, { lightDemandLux: 20_000, standardLevel: null });
+    const row = specimens.rows[0];
+    if (!row) throw new Error("no specimen");
+    const ctx = {
+      zones: light.listZones("anna"),
+      locations: [],
+      species: new Map([[SP_UNKNOWN, lux]]),
+      overrides: new Map<string, string>(),
+    };
+    expect(effectiveZone(row, ctx)).toBeNull();
   });
 });

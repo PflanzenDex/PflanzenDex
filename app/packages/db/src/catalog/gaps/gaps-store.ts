@@ -14,6 +14,9 @@ export class CatalogGapsPostgres {
       c.query<{
         id: string;
         latinName: string;
+        difficulty: number | null;
+        standardLevel: number | null;
+        lightDemandLux: number | null;
         germanName: string | null;
         englishName: string | null;
         familyGerman: string | null;
@@ -27,7 +30,8 @@ export class CatalogGapsPostgres {
         botanicalStory: string | null;
         checks: { source: "gbif" | "wikidata" | "wikipedia"; retrievedAt: string }[];
       }>(
-        `select a.id, a.latin_name as "latinName", a.german_name as "germanName", a.english_name as "englishName",
+        `select a.id, a.latin_name as "latinName", a.difficulty, a.standard_level as "standardLevel",
+                a.light_demand_lux as "lightDemandLux", a.german_name as "germanName", a.english_name as "englishName",
                 a.family_german as "familyGerman", a.family_latin as "familyLatin", a.dormancy_from as dormancy,
                 a.location_hint as "locationHint", a.watering_hint as "wateringHint", a.substrate, a.pruning,
                 a.growth_hacks as "growthHacks", a.botanical_story as "botanicalStory",

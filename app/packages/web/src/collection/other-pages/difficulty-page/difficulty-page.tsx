@@ -15,6 +15,8 @@ import { zoneLabel } from "@pflanzendex/core";
 
 const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
 const UNKNOWN = "unbekannt";
+/** Unknown difficulty stays "unbekannt" (P-08), never "Leicht". */
+const level = (d: number | null): string => (d === null ? UNKNOWN : (LEVELS[d] ?? UNKNOWN));
 const OWN = " (dein Pflegeprofil)";
 
 /** The zone; my care-profile zone says where it comes from (US-BES-09, #306). */
@@ -40,7 +42,7 @@ const COLUMNS: { key: string; header: string; cell: (r: DifficultyRow) => string
   { key: "substrate", header: "Substrat", cell: (r) => r.substrate ?? UNKNOWN },
   { key: "pruning", header: "Schnitt", cell: (r) => r.pruning ?? UNKNOWN },
   { key: "success", header: "Erfolgskriterium", cell: (r) => r.successCriteria },
-  { key: "difficulty", header: "Schwierigkeit", cell: (r) => LEVELS[r.difficulty] ?? UNKNOWN },
+  { key: "difficulty", header: "Schwierigkeit", cell: (r) => level(r.difficulty) },
 ];
 
 /** The layer of one species of the comparison: `?sheet=compare-<id>` (US-QS-22). */
@@ -118,7 +120,7 @@ function Entry({ row }: { row: DifficultyRow }) {
       <span className="grid min-w-0 gap-0 break-words">
         <span className="font-semibold">{row.speciesName}</span>
         <span className="text-sm font-normal text-muted-foreground">
-          {`${LEVELS[row.difficulty] ?? UNKNOWN} · ${zoneText(row)}`}
+          {`${level(row.difficulty)} · ${zoneText(row)}`}
         </span>
       </span>
       <span className="text-2xl leading-none text-muted-foreground" aria-hidden="true">

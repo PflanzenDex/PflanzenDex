@@ -1,7 +1,7 @@
 import type { SpeciesHit, NameField } from "@pflanzendex/core";
 import { Pager } from "@/components/shared/responsive/pager/pager";
 import { Button } from "@/components/ui/button/button";
-import { badge, DIFFICULTY, UNKNOWN } from "../../shared/text";
+import { badge, difficultyText } from "../../shared/text";
 
 /** Hits per page: three compact rows fit a 360 x 640 px screen with the search above (starting value, assumption; US-QS-21). */
 export const HITS_PER_PAGE = 3;
@@ -19,7 +19,7 @@ function fact(t: SpeciesHit): string {
   if (t.hit && t.hit.field !== "latin" && t.hit.field !== "german")
     return `Gefunden über ${FOUND[t.hit.field]}: ${t.hit.display}`;
   if (t.reviewStatus === "proposal" || t.reviewStatus === "rejected") return badge(t);
-  return `Schwierigkeit: ${DIFFICULTY[t.difficulty] ?? UNKNOWN}`;
+  return `Schwierigkeit: ${difficultyText(t.difficulty)}`;
 }
 
 function Hit({ t, onOpen }: { t: SpeciesHit; onOpen: (id: string) => void }) {

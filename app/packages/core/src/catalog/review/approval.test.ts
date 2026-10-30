@@ -54,9 +54,16 @@ describe("US-BES-10 approval readiness (FR-BES-05, FR-BES-14)", () => {
     expect(issues.every((i) => i.reason === "missing")).toBe(true);
   });
 
-  it("US-BES-10 a missing number is reported", () => {
-    const issues = checkApprovalReadiness({ ...base, lightDemandLux: Number.NaN });
-    expect(issues).toContainEqual({ field: "lightDemandLux", reason: "missing" });
+  it("US-BES-12 P-08: unknown difficulty, level and lux need do not block approval and need no source (#1003)", () => {
+    const unknown = { ...base, difficulty: null, standardLevel: null, lightDemandLux: null };
+    expect(checkApprovalReadiness(unknown)).toEqual([]);
+    expect(checkApprovalReadiness({ ...unknown, source: null })).toEqual([]);
+  });
+
+  it("US-BES-12 P-08: a known default level alone still needs a source (#1003)", () => {
+    expect(
+      checkApprovalReadiness({ ...base, lightDemandLux: null, standardLevel: 3, source: null }),
+    ).toEqual([{ field: "source", reason: "source_missing" }]);
   });
 
   it("US-BES-10 without a source for the light demand it is not ready", () => {
@@ -71,12 +78,13 @@ describe("US-BES-10 approval readiness (FR-BES-05, FR-BES-14)", () => {
   it("US-BES-10 a dormancy period needs the source as well", () => {
     const issues = checkApprovalReadiness({
       ...base,
-      lightDemandLux: Number.NaN,
+      lightDemandLux: null,
+      standardLevel: null,
       dormancyFrom: "11-01",
       dormancyUntil: "02-15",
       source: null,
     });
-    expect(issues.map((i) => i.field)).toEqual(["lightDemandLux", "source"]);
+    expect(issues.map((i) => i.field)).toEqual(["source"]);
   });
 });
 

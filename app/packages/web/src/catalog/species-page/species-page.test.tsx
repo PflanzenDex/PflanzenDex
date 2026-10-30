@@ -229,7 +229,9 @@ describe("US-BES-01 Seite Arten", () => {
     await vi.waitFor(() => expect(document.activeElement).toBe(name));
     const message = screen.getByText("Bitte gib den lateinischen Namen an.");
     expect(name.getAttribute("aria-describedby")).toContain(message.id);
-    expect(screen.getByLabelText(/Schwierigkeit/).getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getByLabelText(/Wachstumsmaß/).getAttribute("aria-invalid")).toBe("true");
+    // P-08 (#1003): an empty difficulty stays unknown and is not an error.
+    expect(screen.getByLabelText(/Schwierigkeit/).getAttribute("aria-invalid")).not.toBe("true");
   });
 
   it("US-BES-01 · DS-48 a lux value outside the allowed range is refused before sending", async () => {

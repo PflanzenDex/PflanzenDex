@@ -44,6 +44,19 @@ describe("US-LIC-03: light overview view", () => {
     expect(cells).toEqual(["Monstera deliciosa", "Zone 2", "15.000", "sehr nah (~10 cm)"]);
   });
 
+  it('US-LIC-01 P-08: an unknown lux need shows "unbekannt" and the next step, never 0 or a position (#1003)', () => {
+    show([row({ lightDemandLux: null, position: null, zone: null })]);
+    const cells = within(screen.getAllByRole("row")[1] as HTMLElement)
+      .getAllByRole("cell")
+      .map((c) => c.textContent);
+    expect(cells).toEqual([
+      "Monstera deliciosa",
+      "unbekannt",
+      "unbekannt",
+      "Lichtbedarf eintragen: Lichtzone im Pflegeprofil der Art festlegen",
+    ]);
+  });
+
   it("formats five-digit demands with the German thousands separator", () => {
     show([row({ lightDemandLux: 50000 }), row({ speciesId: "sp2", lightDemandLux: 110000 })]);
     expect(screen.getByText("50.000")).toBeTruthy();

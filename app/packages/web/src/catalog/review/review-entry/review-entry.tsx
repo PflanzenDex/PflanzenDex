@@ -5,7 +5,14 @@ import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/display/label/label";
 import { Textarea } from "@/components/ui/fields/textarea/textarea";
 import { ageText, issueText } from "../review-text";
-import { DIFFICULTY, GROWTH, dormancyPhase, lux, orUnknown } from "../../shared/text";
+import {
+  GROWTH,
+  difficultyText,
+  dormancyPhase,
+  levelText,
+  lux,
+  orUnknown,
+} from "../../shared/text";
 
 export interface ReviewActions {
   running: boolean;
@@ -25,9 +32,9 @@ function Facts(props: { entry: ReviewEntry }) {
   return (
     <dl className="m-0 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-[max-content_1fr] [&>dd]:m-0 [&>dd]:break-words [&>dt]:text-muted-foreground">
       <dt>Schwierigkeit</dt>
-      <dd>{DIFFICULTY[s.difficulty] ?? "unbekannt"}</dd>
+      <dd>{difficultyText(s.difficulty)}</dd>
       <dt>Standard-Stufe</dt>
-      <dd>{s.standardLevel}</dd>
+      <dd>{levelText(s.standardLevel)}</dd>
       <dt>Lichtbedarf</dt>
       <dd>{lux(s.lightDemandLux)}</dd>
       <dt>Ruhephase</dt>
