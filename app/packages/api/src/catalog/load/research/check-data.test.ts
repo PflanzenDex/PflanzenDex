@@ -25,6 +25,14 @@ const problems = (attributes: Record<string, unknown>) =>
   one(attributes).issues.map((i) => i.problem);
 
 describe("US-ENT-09 catalog:check-data, the check of the researched data", () => {
+  it("US-ENT-09: Given a light statement from the fixed value set, then it is accepted; outside the set it is refused", () => {
+    const light = (value: unknown) => ({ lightDescription: { ...good, value } });
+    expect(one(light("bright_indirect")).facts).toEqual([
+      expect.objectContaining({ field: "lightDescription", value: "bright_indirect" }),
+    ]);
+    expect(problems(light("sunny"))).toEqual(["attribute.value_invalid"]);
+  });
+
   it("US-ENT-09: Given a value with a citable source, https link, free license and date, then it is accepted as a fact", () => {
     const check = one({ toxicToPets: good, humidity: { ...good, value: "high" } });
     expect(check.issues).toEqual([]);

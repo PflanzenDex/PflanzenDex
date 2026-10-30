@@ -12,7 +12,25 @@ export interface SuggestionAttributes {
   readonly minTemperature: number | null;
   readonly toxicToPets: boolean | null;
   readonly growthSize: "small" | "medium" | "large" | null;
+  /**
+   * The light statement of a source (US-ENT-09), shown as "Licht laut Quelle". Assumption, decided by the PO: it never
+   * feeds the light zone derivation or the scoring (zones are numeric lux, a mapping would be an invented number, P-08).
+   */
+  readonly lightDescription: LightDescription | null;
 }
+
+/** All attributes unknown (FR-ENT-04): the start of every suggestion before stored facts are added. */
+export const NO_ATTRIBUTES: SuggestionAttributes = {
+  humidity: null,
+  minTemperature: null,
+  toxicToPets: null,
+  growthSize: null,
+  lightDescription: null,
+};
+
+/** Fixed value set of the light statement (assumption, decided by the PO, revisable). */
+export const LIGHT_DESCRIPTIONS = ["low", "medium", "bright_indirect", "direct_sun"] as const;
+export type LightDescription = (typeof LIGHT_DESCRIPTIONS)[number];
 
 /** Where one stored attribute value comes from (US-ENT-09, P-08): shown beside the value. */
 export interface AttributeSource {
@@ -33,6 +51,7 @@ export const ATTRIBUTE_FIELDS = [
   "minTemperature",
   "growthSize",
   "toxicToPets",
+  "lightDescription",
 ] as const;
 export type AttributeField = (typeof ATTRIBUTE_FIELDS)[number];
 
@@ -53,7 +72,16 @@ export interface AttributeEvidence {
   readonly retrievedAt: string;
 }
 
-export type AttributeValue = "low" | "medium" | "high" | "small" | "large" | number | boolean;
+export type AttributeValue =
+  | "low"
+  | "medium"
+  | "high"
+  | "small"
+  | "large"
+  | "bright_indirect"
+  | "direct_sun"
+  | number
+  | boolean;
 
 export interface AttributeFact {
   /** Latin name of the species, the key of the catalog tree. */
@@ -69,6 +97,7 @@ export const MIN_TEMPERATURE_RANGE = { min: -30, max: 30 } as const;
 const SCALE = {
   humidity: ["low", "medium", "high"],
   growthSize: ["small", "medium", "large"],
+  lightDescription: LIGHT_DESCRIPTIONS,
 } as const;
 
 export type AttributeProblem =
@@ -85,7 +114,7 @@ export type AttributeCheck =
   | { readonly ok: false; readonly problems: readonly AttributeProblem[] };
 
 function valueFits(field: unknown, value: unknown): boolean {
-  if (field === "humidity" || field === "growthSize")
+  if (field === "humidity" || field === "growthSize" || field === "lightDescription")
     return (SCALE[field] as readonly unknown[]).includes(value);
   if (field === "minTemperature")
     return (
@@ -156,6 +185,7 @@ export function attributesOf(facts: readonly AttributeFact[]): SuggestionAttribu
     minTemperature: value<number>("minTemperature"),
     toxicToPets: value<boolean>("toxicToPets"),
     growthSize: value<"small" | "medium" | "large">("growthSize"),
+    lightDescription: value<LightDescription>("lightDescription"),
   };
 }
 
@@ -166,29 +196,5 @@ export function sourcesOf(facts: readonly AttributeFact[]): AttributeSource[] {
     if (e === undefined) return [];
     const { source, url, license, retrievedAt } = e;
     return [{ field, source, url, license, retrievedAt, review: "unreviewed" as const }];
-  });
-}
-
-/**
- * Adds the stored facts with their sources to the cards (one read for all of them); a card without a fact keeps its
- * unknown attributes and gets no source (P-08). Without a source port every attribute stays unknown.
- */
-export async function withAttributes<
-  S extends {
-    readonly species: string;
-    readonly attributes: SuggestionAttributes;
-    readonly attributeSources?: readonly AttributeSource[];
-  },
->(
-  cards: readonly S[],
-  source: { forSpecies(names: readonly string[]): Promise<readonly AttributeFact[]> } | undefined,
-): Promise<S[]> {
-  if (source === undefined || cards.length === 0) return [...cards];
-  const facts = await source.forSpecies(cards.map((c) => c.species));
-  return cards.map((c) => {
-    const own = facts.filter((f) => f.species === c.species);
-    return own.length === 0
-      ? c
-      : { ...c, attributes: attributesOf(own), attributeSources: sourcesOf(own) };
   });
 }

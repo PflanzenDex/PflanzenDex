@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attributesOf, checkAttributeFact, type AttributeFact } from "./index";
+import { attributesOf, checkAttributeFact, sourcesOf, type AttributeFact } from "./index";
 
 // US-ENT-09, DM-ENT-01, P-08: every field carries source and license; unknown stays unknown.
 const evidence = {
@@ -60,6 +60,27 @@ describe("US-ENT-09 checkAttributeFact", () => {
   });
 });
 
+describe("US-ENT-09 lightDescription", () => {
+  it("US-ENT-09: Given a light statement of the fixed value set with a citable source, then it is accepted", () => {
+    for (const value of ["low", "medium", "bright_indirect", "direct_sun"])
+      expect(checkAttributeFact(fact({ field: "lightDescription", value })).ok).toBe(true);
+  });
+
+  it("US-ENT-09: Given a light statement outside the value set or without a source, then it is refused with every problem", () => {
+    for (const value of ["high", "sunny", "", 3, true, null])
+      expect(checkAttributeFact(fact({ field: "lightDescription", value }))).toEqual({
+        ok: false,
+        problems: ["attribute.value_invalid"],
+      });
+    const r = checkAttributeFact({
+      species: "Ficus benjamina",
+      field: "lightDescription",
+      value: "low",
+    });
+    expect(r.ok).toBe(false);
+  });
+});
+
 describe("US-ENT-09 attributesOf", () => {
   it("US-ENT-09 leaves fields without a fact unknown (FR-ENT-04)", () => {
     const facts = [fact(), fact({ field: "humidity", value: "low" })] as unknown as AttributeFact[];
@@ -68,12 +89,24 @@ describe("US-ENT-09 attributesOf", () => {
       minTemperature: null,
       toxicToPets: true,
       growthSize: null,
+      lightDescription: null,
     });
     expect(attributesOf([])).toEqual({
       humidity: null,
       minTemperature: null,
       toxicToPets: null,
       growthSize: null,
+      lightDescription: null,
     });
+  });
+
+  it("US-ENT-09 reads the light statement of a source as its own attribute, not as a light zone", () => {
+    const facts = [
+      fact({ field: "lightDescription", value: "bright_indirect" }),
+    ] as unknown as AttributeFact[];
+    expect(attributesOf(facts).lightDescription).toBe("bright_indirect");
+    expect(sourcesOf(facts).map((s) => [s.field, s.review])).toEqual([
+      ["lightDescription", "unreviewed"],
+    ]);
   });
 });

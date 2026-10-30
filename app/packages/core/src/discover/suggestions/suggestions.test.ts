@@ -87,6 +87,7 @@ describe("US-ENT-01 suggestions", () => {
       minTemperature: null,
       toxicToPets: null,
       growthSize: null,
+      lightDescription: null,
     });
   });
 
@@ -351,6 +352,7 @@ describe("US-ENT-09 attributes with their sources on the card", () => {
       minTemperature: null,
       toxicToPets: null,
       growthSize: "small",
+      lightDescription: null,
     });
     expect(aloe?.attributeSources).toEqual([
       {
@@ -364,6 +366,27 @@ describe("US-ENT-09 attributes with their sources on the card", () => {
     ]);
     expect(ficus?.attributes.growthSize).toBeNull();
     expect(ficus?.attributeSources).toBeUndefined();
+  });
+
+  it("US-ENT-09 a stored light statement changes neither light zone, order nor reasons (P-08)", async () => {
+    const attributes = {
+      forSpecies: async () => [
+        {
+          species: "Aloe vera",
+          field: "lightDescription" as const,
+          value: "direct_sun" as const,
+          evidence,
+        },
+      ],
+    };
+    const plain = await suggestions(deps, "anna", "Europe/Berlin");
+    const withLight = await suggestions({ ...deps, attributes }, "anna", "Europe/Berlin");
+    const strip = (d: typeof plain) =>
+      d.suggestions.map((s) => [s.species, s.lightZone, s.reasons, s.exploration]);
+    expect(strip(withLight)).toEqual(strip(plain));
+    expect(
+      withLight.suggestions.find((s) => s.species === "Aloe vera")?.attributes.lightDescription,
+    ).toBe("direct_sun");
   });
 
   it("US-ENT-09 without a store every attribute is unknown and no source is claimed (P-08)", async () => {

@@ -54,6 +54,15 @@ describe("US-ENT-09 species attributes in the database", () => {
     expect(await store.forSpecies([])).toEqual([]);
   });
 
+  it("US-ENT-09 stores the light statement of a source and refuses a value outside its value set", async () => {
+    await store.save([fact("lightDescription", "direct_sun")]);
+    expect((await store.forSpecies([SPECIES])).map((f) => [f.field, f.value])).toEqual([
+      ["lightDescription", "direct_sun"],
+    ]);
+    await expect(store.save([fact("lightDescription", "high")])).rejects.toThrow();
+    await expect(store.save([fact("lightDescription", 3 as never)])).rejects.toThrow();
+  });
+
   it("US-ENT-09 names the species that already have a fact for the field", async () => {
     await store.save([fact("growthSize", "small")]);
     expect(await store.speciesWith("growthSize")).toContain(SPECIES);

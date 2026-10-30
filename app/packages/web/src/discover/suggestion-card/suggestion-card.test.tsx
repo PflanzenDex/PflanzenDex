@@ -17,7 +17,13 @@ const suggestion = (extra: Partial<Suggestion> = {}): Suggestion => ({
   difficulty: 1,
   imageUrl: null,
   sourceUrl: "https://en.wikipedia.org/wiki/Aglaonema_commutatum",
-  attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
+  attributes: {
+    humidity: null,
+    minTemperature: null,
+    toxicToPets: null,
+    growthSize: null,
+    lightDescription: null,
+  },
   reasons: ["Diese Art hast du noch nicht gefangen."],
   exploration: false,
   ...extra,
@@ -107,6 +113,7 @@ describe("US-ENT-09 attributes show their source", () => {
           minTemperature: null,
           toxicToPets: null,
           growthSize: "small",
+          lightDescription: null,
         },
         attributeSources: [
           {
@@ -128,10 +135,36 @@ describe("US-ENT-09 attributes show their source", () => {
     );
   });
 
+  it("US-ENT-09 shows the light statement as 'Licht laut Quelle' with source and 'ungeprüft'", () => {
+    show(
+      suggestion({
+        attributes: { ...suggestion().attributes, lightDescription: "bright_indirect" },
+        attributeSources: [
+          {
+            field: "lightDescription",
+            source: "wikipedia",
+            url: "https://en.wikipedia.org/w/index.php?title=X&oldid=1",
+            license: "CC-BY-SA-4.0",
+            retrievedAt: "2026-10-30",
+            review: "unreviewed",
+          },
+        ],
+      }),
+    );
+    expect(
+      screen.getByText("Licht laut Quelle", { selector: "dt" }).nextElementSibling?.textContent,
+    ).toBe("helles indirektes Licht");
+    const list = screen.getByRole("list", { name: "Quellen der Merkmale" });
+    expect(list.textContent).toContain("Licht laut Quelle: Wikipedia");
+    expect(list.textContent).toContain("ungeprüft");
+    // The Lichtzone comes from the species, never from the statement (P-08).
+    expect(screen.getByText("Lichtzone").nextElementSibling?.textContent).toBe("Zone 3");
+  });
+
   it("US-ENT-09 lists no source and keeps every attribute unknown without a stored fact (P-08)", () => {
     show(suggestion());
     expect(screen.queryByRole("list", { name: "Quellen der Merkmale" })).toBeNull();
-    expect(screen.getAllByText("unbekannt")).toHaveLength(4);
+    expect(screen.getAllByText("unbekannt")).toHaveLength(5);
   });
 });
 

@@ -5,8 +5,9 @@ export {
   attributesOf,
   checkAttributeFact,
   sourcesOf,
-  withAttributes,
+  NO_ATTRIBUTES,
 } from "./attributes";
+export { withAttributes } from "./with-attributes";
 export type {
   AttributeCheck,
   AttributeFact,

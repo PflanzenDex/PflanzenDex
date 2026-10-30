@@ -12,7 +12,7 @@ How to research the species attributes of the start catalog (US-ENT-09, issue #1
 
 ## Which attribute, which source
 
-Only the attributes of DM-ENT-01; the light need is not part of this data (it belongs to DM-BES-01 and needs its own sourced entry).
+Only the attributes of DM-ENT-01. The light need of DM-BES-01 (light zone) is not part of this data; what a source says about light is the attribute `lightDescription`, a statement only that never sets a zone (P-08).
 
 | Attribute        | Values                                                | Where to look                                                                                                                                                                                                               |
 | ---------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -20,8 +20,9 @@ Only the attributes of DM-ENT-01; the light need is not part of this data (it be
 | `minTemperature` | °C, -30 to 30                                         | Wikipedia "Cultivation" (a stated minimum the plant tolerates). A hardiness zone alone is not a temperature. If the page gives several numbers (growth stops, frost kills), leave it out unless one is clearly the minimum. |
 | `humidity`       | `low` / `medium` / `high`                             | Wikipedia "Cultivation" with an explicit statement about air humidity. Native habitat ("humid forest") is not a care need.                                                                                                  |
 | `growthSize`     | `small` (< 0.5 m), `medium` (to 2 m), `large` (> 2 m) | Wikidata height (P2048) if present; else a Wikipedia statement about the size **indoors**. Wild heights do not count for a pot.                                                                                             |
+| `lightDescription` | `low` / `medium` / `bright_indirect` / `direct_sun` | Wikipedia "Cultivation" with an explicit statement about the light the plant needs indoors ("bright indirect light" = `bright_indirect`, "full sun" = `direct_sun`, "shade" or "low light" = `low`, "partial shade" = `medium`). Native habitat does not count. The value set is an assumption, revisable. |
 
-GBIF and Wikidata rarely hold these four as structured values (checked for Monstera deliciosa, Epipremnum aureum and Dracaena trifasciata on 2026-10-30: none). Check them first anyway, then Wikipedia.
+GBIF and Wikidata rarely hold these five as structured values (checked for Monstera deliciosa, Epipremnum aureum and Dracaena trifasciata on 2026-10-30: none). Check them first anyway, then Wikipedia.
 
 ## File format
 
