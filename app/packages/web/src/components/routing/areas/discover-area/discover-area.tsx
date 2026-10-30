@@ -4,6 +4,7 @@ import type { Species } from "@pflanzendex/core";
 import { DiscoverPage } from "@/discover";
 import { SpeciesPage } from "@/catalog";
 import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skeleton";
+import { LayerHost } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { SammlungHeader } from "@/components/sammlung-header/sammlung-header";
 import { DISCOVER_VIEWS, useDiscoverView } from "./discover-view";
 
@@ -34,7 +35,7 @@ export function DiscoverArea(props: {
   const { view, choose } = useDiscoverView();
   const zone = zoneOf(useSearchParams()[0].get("zone"));
   return (
-    <div className="flex h-full min-h-0 flex-col" data-fit-screen="" data-fit-fill="">
+    <LayerHost className="h-full min-h-0" data-fit-screen="" data-fit-fill="">
       <SammlungHeader
         title="Entdecken"
         switchLabel="Ansicht von Entdecken"
@@ -63,6 +64,6 @@ export function DiscoverArea(props: {
           />
         )}
       </Suspense>
-    </div>
+    </LayerHost>
   );
 }

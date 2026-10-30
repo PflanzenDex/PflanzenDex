@@ -1,8 +1,4 @@
-import {
-  LAYER_SLOT,
-  LayerOpener,
-  LayerSheet,
-} from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerOpener, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { isShownLocked } from "../../model/unlock-texts";
 import { useUnlocks } from "../../model/unlocks/unlocks";
 import { LockedRows } from "../locked-rows";
@@ -14,11 +10,9 @@ function CollapsedRows({ n }: { n: number }) {
       <LayerOpener id="locked" className="w-full justify-between">
         <span>{n === 1 ? "1\u00a0Funktion" : `${n}\u00a0Funktionen`} noch nicht geöffnet</span>
       </LayerOpener>
-      <div className={LAYER_SLOT}>
-        <LayerSheet id="locked" title="Weitere Funktionen">
-          <LockedRows />
-        </LayerSheet>
-      </div>
+      <LayerSheet id="locked" title="Weitere Funktionen">
+        <LockedRows />
+      </LayerSheet>
     </>
   );
 }
