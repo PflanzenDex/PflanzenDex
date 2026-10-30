@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { classificationRules, zoneLabel } from "@pflanzendex/core";
-import { Pager, LAYER_PARAM } from "@/components/shared/responsive/pager/pager";
+import { Pager } from "@/components/shared/responsive/pager/pager";
 import {
   ResponsiveTable,
   type ResponsiveColumn,
@@ -82,7 +82,7 @@ export function RulesView({ zones }: { zones: readonly LightZone[] }) {
         items={parts}
         pageSize={1}
         label="Teile der Einstufungsregeln"
-        param={LAYER_PARAM}
+        param="rpage"
         getKey={(_, i) => i}
         renderItem={(part) => part}
       />
