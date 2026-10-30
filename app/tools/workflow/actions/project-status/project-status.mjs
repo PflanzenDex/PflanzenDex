@@ -28,7 +28,23 @@ export async function loadItems(client) {
       status: i.status,
       priority: i.priority,
       epic: i.typ === "Epic",
+      typ: i.typ,
+      release: i.release,
     }));
+}
+
+/** The options of the project field Release in their board order (R0 first); the board, not a milestone, holds it. */
+export async function releaseOrder(client) {
+  const fields = await json(client, [
+    "project",
+    "field-list",
+    PROJECT_NUMBER,
+    "--owner",
+    OWNER,
+    "--format",
+    "json",
+  ]);
+  return (fields.fields.find((f) => f.name === "Release")?.options ?? []).map((o) => o.name);
 }
 
 /** Issue numbers among `numbers` that are open project items without a priority (epics need none). */

@@ -4,7 +4,7 @@
 # Environment: DEPLOY_ENV_FILE names the env file (default config/deploy/.env if present, empty or missing = none); PG_EXEC overrides how the Postgres container is reached (for tests).
 # Without a target database the production database (POSTGRES_DB) is overwritten; that requires CONFIRM=yes.
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 
 file="${1:-}"
 if [ -z "$file" ] || [ ! -s "$file" ]; then echo "usage: restore.sh <backup.dump> [target-database]" >&2; exit 2; fi

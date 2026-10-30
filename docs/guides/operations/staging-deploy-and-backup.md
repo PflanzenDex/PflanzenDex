@@ -97,11 +97,11 @@ Each run writes two files when the sign-in service exists: `pflanzendex-*.dump` 
 
 ```bash
 # into a second database (safe, for checking):
-app/config/deploy/scripts/restore.sh ~/pflanzendex-backups/<file>.dump pdx_check
+app/config/deploy/scripts/restore/restore.sh ~/pflanzendex-backups/<file>.dump pdx_check
 # over the production database (overwrites it; stop the API first; a keycloak-*.dump goes into the sign-in database,
 # stop `keycloak` first instead):
 docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml stop api
-CONFIRM=yes app/config/deploy/scripts/restore.sh ~/pflanzendex-backups/<file>.dump
+CONFIRM=yes app/config/deploy/scripts/restore/restore.sh ~/pflanzendex-backups/<file>.dump
 docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml start api
 ```
 
@@ -186,7 +186,7 @@ Registration is a per-installation switch, not part of the build (`invitation-ph
 
 ### Backup and restore
 
-`make backup` writes `pflanzendex-*.dump` and `keycloak-*.dump` (see "Backup"). Restore the sign-in database into a check database: `app/config/deploy/scripts/restore.sh ~/pflanzendex-backups/keycloak-<time>.dump kc_check`; over the live one: stop `keycloak`, `CONFIRM=yes app/config/deploy/scripts/restore.sh ~/pflanzendex-backups/keycloak-<time>.dump`, start `keycloak`. The restored objects keep their owner (the `keycloak` role). Restore app and sign-in dump from the same run so account subjects and identities match. `make restore-test` covers both databases.
+`make backup` writes `pflanzendex-*.dump` and `keycloak-*.dump` (see "Backup"). Restore the sign-in database into a check database: `app/config/deploy/scripts/restore/restore.sh ~/pflanzendex-backups/keycloak-<time>.dump kc_check`; over the live one: stop `keycloak`, `CONFIRM=yes app/config/deploy/scripts/restore/restore.sh ~/pflanzendex-backups/keycloak-<time>.dump`, start `keycloak`. The restored objects keep their owner (the `keycloak` role). Restore app and sign-in dump from the same run so account subjects and identities match. `make restore-test` covers both databases.
 
 ### Memory
 
@@ -379,6 +379,7 @@ Ticket TE-19 (#749). The workflow `.github/workflows/deploy.yml` ("Deploy") depl
 ```text
 Run workflow (environment, ref) -> guard on the runner -> joins the tailnet as a short-lived node tag:ci
   -> Tailscale SSH as user "deploy" to the host of that environment
+  -> app/config/deploy/scripts/apply-env.sh           (settings of the GitHub environment into the host .env, #1013)
   -> app/config/deploy/scripts/deploy.sh <full sha>   (backup, migrations, smoke test, automatic rollback)
 ```
 
@@ -438,8 +439,35 @@ Nothing below goes into the repo: hostnames, tailnet name and secrets stay with 
 5. **GitHub environments** (repository Settings, Environments). Both use the same names, set per environment: **secrets** `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`; **variables** `DEPLOY_HOST` (`<host>`, a MagicDNS name) and `DEPLOY_REPO_PATH` (`<repo-path>`, default if unset: `/opt/pflanzendex`).
    - `test`: "Deployment branches and tags" set to **all branches** (no restriction), because the test environment may deploy from any branch. Its secrets are still out of reach for fork pull requests: nothing on `pull_request` uses the environment, forks cannot dispatch workflows, and environment secrets are never given to fork runs.
    - `prod`: "Deployment branches and tags" limited to the branch `main` and the tag pattern `v*`; optionally add required reviewers so every prod deploy waits for an approval.
-6. **`.env` up to date:** compare the variable names of `app/config/deploy/.env.example` at the ref you deploy with the host's `.env` (names only, never print values); a missing required one stops `docker compose` and the deploy rolls back. Example: `DB_OWNER_PASSWORD` (#910), `openssl rand -hex 24`.
+6. **`.env` up to date:** either set the values in the GitHub environment (see "Settings from the GitHub environment" below) or compare the variable names of `app/config/deploy/.env.example` at the ref you deploy with the host's `.env` (names only, never print values); a missing required one stops `docker compose` and the deploy rolls back. Example: `DB_OWNER_PASSWORD` (#910), `openssl rand -hex 24`.
 7. **Check:** run "Deploy" for `test` with `dev`, then try `prod` with a branch and with `main` (both must be refused by the guard before the tailnet join), and later with a release tag.
+
+### Settings from the GitHub environment (#1013)
+
+Before `deploy.sh`, the step `apply_env` writes settings from the GitHub environment (`test` or `prod`) into the host's `app/config/deploy/.env`, so nobody edits that file by hand over SSH. Order in the job: guard, `apply_env`, `deploy`. A failing `apply_env` fails the run and the deploy does not start.
+
+- **What is sent:** only the names in `.github/deploy-env-allowlist.txt` (`<KEY> var|secret`), and only when the value is set and not empty. A **variable** (kind `var`) is read from the environment's variables, a **secret** (kind `secret`) from its secrets. Names that are not listed are never sent, whatever the environment holds. An empty value never overwrites anything on the host; to remove a setting, edit the host file.
+- **Allowlist and template stay in step:** `app/tools/dev/tests/deploy/apply-env.test.mjs` checks that every allowlisted key exists in `.env.example` and that every key of the template is either allowlisted or in the test's exclusion list with a reason (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`: fixed when the cluster is created; `TS_AUTHKEY`: one-time key; `BACKUP_DIR`, `BACKUP_REMOTE`: where the dumps go stays a host decision, so a writer of the GitHub environment cannot redirect them). Adding a key to `.env.example` fails the test until you add it to one of the two. Credentials must have the kind `secret`.
+- **Values never leak:** they travel through the SSH standard input only, never in a command line or log. Secrets get `::add-mask::` (one command per line of the value) before anything else happens in the step. The step output and the run summary list key names and `changed`, `added` or `unchanged` only. A value with a NUL byte, a control character (newline, tab, ...), a single quote or a trailing backslash (Compose would read it as an escaped closing quote and fail on the whole file) is refused, naming the key and not the value. Only the allowlisted secrets reach the step, each mapped by name (`SECRET_<KEY>: ${{ secrets.<KEY> }}`); the workflow never uses `toJSON(secrets)`, so other secrets (for example the Tailscale OAuth client) stay out of it. A new `secret` entry in the allowlist needs its line in the `apply_env` step too; a test enforces this (#1049).
+- **The host script** `app/config/deploy/scripts/apply-env.sh` comes from the workflow's checkout and is passed to the host as base64 text in the command (public code, not a secret), so it works on a host whose checkout is still older than the script. It checks key names (`[A-Z][A-Z0-9_]*`) and values completely before writing, replaces only the given keys (a commented `#KEY=` line stays), appends missing ones, and writes `KEY=value` as it is for plain values (letters, digits and `_@%+=:,./~-`) or `KEY='value'` for anything else (spaces, `$`, `#`), which the shell (`deploy.sh` sources the file) and Compose both read literally. If nothing changes, no file is written. Otherwise it copies the old file to `.env.bak.<UTC time>` (mode 0600, the newest 5 are kept), writes a temporary file next to it (0600) and moves it into place in one step.
+- **By hand on the host** (same checks): `printf 'FEATURES=social\n' | app/config/deploy/scripts/apply-env.sh` (optional argument: the path of the `.env`).
+- **Restore a previous `.env`:** `cp -p app/config/deploy/.env.bak.<time> app/config/deploy/.env`. The backups hold secrets like the `.env` itself and are ignored by Git (`.env.*`).
+- **Limits (assumptions):** the host script validates syntax only; the allowlist is enforced on the runner. Whoever can change the workflow on an accepted branch can change the allowlist (see "Security notes"). Values are limited to 4096 characters.
+
+**Existing hosts:** set each GitHub secret to the value that is in the host's `.env` today (`gh secret set NAME --env test`, paste the value when asked, so it stays out of the shell history). The next run reports `unchanged` for it. Variables: `gh variable set FEATURES --env test --body "social,ai"`. A GitHub value overrides the host line when it is set; to keep a host line on purpose, delete the GitHub value (`gh secret delete NAME --env test`).
+
+### Rotating a password
+
+Some keys take effect only when the database volume or the realm is created: `KEYCLOAK_ADMIN_USER`, `KEYCLOAK_ADMIN_PASSWORD` (bootstrap admin), `SMTP_PASSWORD` (the realm import skips an existing realm), and `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` (not allowlisted anyway). A new value in `.env` alone would split it from what the database or Keycloak holds. So `apply-env.sh` stops the run when the host has a real value for one of them (not empty, not a `PUT_A_` placeholder) and GitHub sends a different one: `KEYCLOAK_ADMIN_PASSWORD differs from the host value; ... set ALLOW_PASSWORD_ROTATION=1 to override`. Nothing is written then.
+
+`DB_OWNER_PASSWORD` and `KEYCLOAK_DB_PASSWORD` are not guarded: the one-shots `db-roles` and `keycloak-db` set the role password (`alter role ... password`) on every `up`, so a new value takes effect with the deploy. There is no app-role password (`pflanzendex_app` cannot log in).
+
+To rotate a guarded value on purpose:
+
+1. Change it where it lives (Keycloak admin console over the SSH tunnel for the admin user and SMTP; `\password` in `psql` for the cluster user).
+2. `gh secret set <NAME> --env test` with the new value, and `gh variable set ALLOW_PASSWORD_ROTATION --env test --body 1`.
+3. Run "Deploy" (the run shows a warning while the switch is on).
+4. `gh variable delete ALLOW_PASSWORD_ROTATION --env test`.
 
 ### First deploy of a host on an old version
 

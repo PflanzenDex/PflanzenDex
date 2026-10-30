@@ -269,7 +269,7 @@ describe("TE-03 · container privileges and pinned images (#761, NFR-10)", () =>
       ci: fromRoot(".github/workflows/ci.yml"),
       nightly: fromRoot(".github/workflows/nightly.yml"),
       makefile: fromRoot("Makefile"),
-      restoreTest: read("deploy/scripts/restore-test.sh"),
+      restoreTest: read("deploy/scripts/restore/restore-test.sh"),
       deploy: read("deploy/scripts/deploy.sh"),
       imageScan: fromRoot("tools/lint/image-scan.sh"),
     };
@@ -472,7 +472,7 @@ describe("US-DEV-07 · PostgreSQL 18 in the stack", () => {
   it("US-DEV-07 every PostgreSQL image in the repository is the same major, 18", () => {
     const texts = [
       compose,
-      read("deploy/scripts/restore-test.sh"),
+      read("deploy/scripts/restore/restore-test.sh"),
       readRoot(".github/workflows/ci.yml"),
       readRoot(".github/workflows/nightly.yml"),
       readRoot("Makefile"),
