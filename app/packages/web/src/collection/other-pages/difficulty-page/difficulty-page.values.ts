@@ -1,12 +1,13 @@
+/** The comparison values as cells, pure helpers without rendering: `null` = unknown (P-08, US-BES-05, US-QS-24). */
 import type { DifficultyRow } from "@pflanzendex/core";
 import { zoneLabel } from "@pflanzendex/core";
 import {
+  isUnknown,
   missingText,
   type Fact,
 } from "@/components/shared/responsive/responsive-table/fact-grid/fact-grid";
 import { keepTogether } from "@/lib/format";
 
-/** The comparison values as cells: `null` = unknown (P-08); pure helpers, no rendering (US-BES-05, US-QS-24). */
 const LEVELS: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
 /** Unknown difficulty is `null` (P-08), never "Leicht"; the fold shows it (US-QS-24). */
 const level = (d: number | null): string | null => (d === null ? null : (LEVELS[d] ?? null));
@@ -37,6 +38,8 @@ const FACTS: { header: string; value: (r: DifficultyRow) => string | null }[] = 
   { header: "Erfolgskriterium", value: (r) => r.successCriteria },
   { header: "Schwierigkeit", value: (r) => level(r.difficulty) },
 ];
+
+/** All values of one species for the layer; labels are unique (the header of each column). */
 export const factsOf = (r: DifficultyRow): Fact[] =>
   FACTS.map((c) => ({ label: c.header, value: c.value(r) }));
 
@@ -49,7 +52,7 @@ export const ENTRY_FACTS = (r: DifficultyRow): Fact[] => [
 /** The entry line: the known values, the unknown ones as one count (US-QS-24, P-08). */
 export function entryLine(r: DifficultyRow, hidden: readonly string[]): string {
   const shown = ENTRY_FACTS(r).filter((f) => !hidden.includes(f.label));
-  const known = shown.flatMap((f) => (f.value === null ? [] : [f.value]));
+  const known = shown.filter((f) => !isUnknown(f.value)).map((f) => f.value);
   const missing = shown.length - known.length;
   return [...known, missing > 0 ? missingText(missing) : null].filter(Boolean).join(" · ");
 }
