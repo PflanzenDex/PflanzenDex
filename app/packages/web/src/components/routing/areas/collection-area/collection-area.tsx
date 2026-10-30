@@ -7,6 +7,7 @@ import { PokedexPage } from "@/pokedex";
 import { WishlistPage, type WishToPlant } from "@/wishlist";
 import { EquipmentPage } from "@/equipment";
 import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skeleton";
+import { LayerHost } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { plantSlots } from "./plant-slots/plant-slots";
 import { AreaHeader } from "./area-header/area-header";
 import { Button } from "@/components/ui/button/button";
@@ -63,7 +64,7 @@ export function CollectionArea(props: {
   const own = view === "plants" && (measure !== null || fullView || managing);
   const plantsOnScreen = view === "plants" && !own;
   return (
-    <div className="flex min-h-0 gap-4" {...(own ? {} : { "data-fit-screen": "" })}>
+    <LayerHost className="min-h-0" {...(own ? {} : { "data-fit-screen": "" })}>
       <div className="min-w-0 flex-1">
         {own ? null : (
           <AreaHeader
@@ -92,7 +93,7 @@ export function CollectionArea(props: {
       {plantsOnScreen ? (
         <GroupLayer group={group} onGroup={chooseGroup} onManage={() => manage.setOpen(true)} />
       ) : null}
-    </div>
+    </LayerHost>
   );
 }
 

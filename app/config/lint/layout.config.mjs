@@ -25,6 +25,9 @@ export default {
     "CODEOWNERS",
     "Dockerfile",
   ],
+  // LY-3 exemption (owner decision 2026-10-30, issue #1077): Keycloak reads a login theme's message bundle only under
+  // this exact name (messages_<locale>.properties). Only these files are exempt from the name rule; nothing else.
+  nameExempt: ["app/config/dev/keycloak-theme/**/messages/messages_*.properties"],
   componentRoots: ["app/packages/web/src"],
   componentExempt: ["main", "routes"],
   // First match wins; "*" is one path segment. A collection has no entry limit but a name pattern (LY-2).
