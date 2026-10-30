@@ -335,3 +335,19 @@ test("TE-19 the workflow passes the rotation switch, masks per line and refuses 
   // Masking comes before any check that could fail on the value.
   assert.ok(step.indexOf("::add-mask::") < step.indexOf("contains a control character"));
 });
+
+test("TE-19 the workflow maps exactly the allowlisted secrets, never toJSON(secrets) (#1049)", () => {
+  const step = workflow.slice(
+    workflow.indexOf("- id: apply_env"),
+    workflow.indexOf("- id: deploy"),
+  );
+  assert.doesNotMatch(workflow, /toJSON\(\s*secrets\s*\)/);
+  const mapped = [
+    ...step.matchAll(/^\s+SECRET_([A-Z][A-Z0-9_]*): \$\{\{ secrets\.([A-Z][A-Z0-9_]*) \}\}$/gm),
+  ];
+  for (const [, envName, secretName] of mapped) assert.equal(envName, secretName);
+  const allowlisted = allowlist.filter(([, kind]) => kind === "secret").map(([key]) => key);
+  assert.deepEqual(mapped.map(([, name]) => name).sort(), allowlisted.sort());
+  // No other secret reaches this step.
+  assert.equal([...step.matchAll(/secrets\./g)].length, allowlisted.length);
+});
