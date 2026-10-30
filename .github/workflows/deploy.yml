@@ -117,8 +117,6 @@ jobs:
           VARS_JSON: ${{ toJSON(vars) }}
           SECRET_DB_OWNER_PASSWORD: ${{ secrets.DB_OWNER_PASSWORD }}
           SECRET_KEYCLOAK_DB_PASSWORD: ${{ secrets.KEYCLOAK_DB_PASSWORD }}
-          SECRET_KEYCLOAK_ADMIN_PASSWORD: ${{ secrets.KEYCLOAK_ADMIN_PASSWORD }}
-          SECRET_SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SECRET_MAIL_UI_HASH: ${{ secrets.MAIL_UI_HASH }}
         run: |
           set -euo pipefail

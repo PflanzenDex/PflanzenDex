@@ -1,7 +1,8 @@
 # Keys of app/config/deploy/.env that the Deploy workflow may write from the GitHub environment (TE-19, #1013).
 # Format: <KEY> <var|secret>. `var` comes from the environment's variables, `secret` from its secrets (masked in logs).
 # Every key of .env.example is listed here or in the exclusion list of app/tools/dev/tests/deploy/apply-env.test.mjs, so a new
-# key forces a decision. Names that are not listed are never sent to the host.
+# key forces a decision. Names that are not listed are never sent to the host. Backup targets and credentials that only
+# apply when the stack is first created stay host-only (#1058).
 DB_OWNER_USER var
 DB_OWNER_PASSWORD secret
 APP_URL var
@@ -15,8 +16,6 @@ HTTPS_PORT var
 KEYCLOAK_DB_PASSWORD secret
 KEYCLOAK_DB_NAME var
 KEYCLOAK_DB_USER var
-KEYCLOAK_ADMIN_USER var
-KEYCLOAK_ADMIN_PASSWORD secret
 KEYCLOAK_JAVA_HEAP var
 KEYCLOAK_ADMIN_PORT var
 SMTP_HOST var
@@ -24,7 +23,6 @@ SMTP_PORT var
 SMTP_FROM var
 SMTP_AUTH var
 SMTP_USER var
-SMTP_PASSWORD secret
 SMTP_STARTTLS var
 SMTP_SSL var
 MAIL_UI_USER var
@@ -33,9 +31,6 @@ TS_APP_NAME var
 TS_AUTH_NAME var
 TS_TAG var
 COMPOSE_FILE var
-BACKUP_DIR var
-BACKUP_RETENTION_DAYS var
-BACKUP_REMOTE var
 CATALOG_FILL var
 ATTRIBUTE_FILL var
 TAXONOMY_BUILD var

@@ -158,6 +158,16 @@ const excluded = {
     "stored in the cluster at creation; the .env value must match it, changing one side breaks the stack",
   POSTGRES_DB: "fixed when the database cluster is created",
   TS_AUTHKEY: "one-time key for the first start of the Funnel nodes, deleted afterwards (runbook)",
+  KEYCLOAK_ADMIN_USER:
+    "bootstrap admin, only used when the Keycloak database is created; a new value would not reach the stack (#1058)",
+  KEYCLOAK_ADMIN_PASSWORD:
+    "bootstrap admin, only used when the Keycloak database is created; a new value would not reach the stack (#1058)",
+  SMTP_PASSWORD: "only read by the realm import when the realm is created (#1058)",
+  BACKUP_DIR: "backup target: a GitHub environment writer must not redirect the dumps (#1058)",
+  BACKUP_REMOTE:
+    "backup target: a GitHub environment writer must not send the dumps to another server (#1058)",
+  BACKUP_RETENTION_DAYS:
+    "retention of the backups: a GitHub environment writer must not shorten it (#1058)",
 };
 const envExample = readFileSync(join(deploy, ".env.example"), "utf8");
 const templateKeys = new Set([...envExample.matchAll(/^#?([A-Z][A-Z0-9_]*)=/gm)].map((m) => m[1]));
