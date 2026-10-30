@@ -316,7 +316,9 @@ describe("US-QS-21 the proposal opens as a layer", () => {
     await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), "y");
     await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
     expect(await screen.findByRole("heading", { name: "Dracaena trifasciata" })).toBeTruthy();
-    expect(screen.getByTestId("address").textContent).not.toContain("sheet=");
+    await vi.waitFor(() =>
+      expect(screen.getByTestId("address").textContent).not.toContain("sheet="),
+    );
   }, 20_000);
 
   it("US-QS-21 a refusal by code shows its German text in the layer (FR-QG-11)", async () => {
