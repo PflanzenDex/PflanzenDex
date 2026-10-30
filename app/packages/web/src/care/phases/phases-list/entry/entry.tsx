@@ -34,6 +34,26 @@ function SwitchAction(props: {
   );
 }
 
+/** The first hint as a chip; further hints are counted and stay reachable as text and title (P-10). */
+function HintChip({ hints }: { hints: readonly string[] }) {
+  if (hints.length === 0) return null;
+  return (
+    <p
+      title={hints.join(" ")}
+      className="mt-1 w-fit rounded-full border border-warning-border bg-warning px-2 py-0.5 text-xs font-semibold text-warning-foreground"
+    >
+      {hints[0]}
+      {hints.length > 1 && (
+        <>
+          {" "}
+          <span>+{hints.length - 1} weitere</span>
+          <span className="sr-only">: {hints.slice(1).join(" ")}</span>
+        </>
+      )}
+    </p>
+  );
+}
+
 /**
  * The compact card of the paged grouping (US-QS-19): the name, one line of facts, one line of the place, one hint and the
  * one action, so a page of cards fits the window. Every fact of the full card stays, only the boxes and repeats go.
@@ -49,14 +69,15 @@ function CompactEntry(props: {
   const canSwitch = props.onConfirm !== undefined && needsSwitch(z);
   const here = locationText(locations, z.locationId);
   const target = locationText(locations, z.targetLocationId);
-  const hint =
-    z.nextChange === null
-      ? "Prüfe den Ruhephasen-Zeitraum im Pflegeprofil der Art."
-      : status === "location_missing" && !canSwitch
-        ? "Weise der Pflanze unter „Hinweise“ einen Standort zu."
-        : status === "in_place" && z.targetLocationId === null
-          ? `Wähle im Pflegeprofil der Art einen Soll-Standort für die ${PHASE_TEXT[z.phase]}.`
-          : null;
+  const hints = [
+    z.nextChange === null ? "Prüfe den Ruhephasen-Zeitraum im Pflegeprofil der Art." : null,
+    status === "location_missing" && !canSwitch
+      ? "Weise der Pflanze unter „Hinweise“ einen Standort zu."
+      : null,
+    status === "in_place" && z.targetLocationId === null
+      ? `Wähle im Pflegeprofil der Art einen Soll-Standort für die ${PHASE_TEXT[z.phase]}.`
+      : null,
+  ].filter((h): h is string => h !== null);
   return (
     <div className={`${CARD_CLASSES} flex flex-col gap-0 px-3 py-2 text-sm leading-snug`}>
       <div className="flex items-center justify-between gap-2">
@@ -89,11 +110,7 @@ function CompactEntry(props: {
           {status === "deviation" ? " · Weicht ab" : ""}
         </p>
       )}
-      {hint && (
-        <p className="mt-1 w-fit rounded-full border border-warning-border bg-warning px-2 py-0.5 text-xs font-semibold text-warning-foreground">
-          {hint}
-        </p>
-      )}
+      <HintChip hints={hints} />
     </div>
   );
 }
