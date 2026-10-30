@@ -18,10 +18,10 @@ function LampRow(props: {
 }) {
   const { lamp, zoneId, zones, actions } = props;
   return (
-    <li className="flex min-w-0 flex-col gap-2 rounded-lg border border-border p-3">
-      <span className="break-words font-semibold">{lamp.name}</span>
-      <div className="flex flex-wrap gap-3">
-        <label className="flex min-w-0 flex-col gap-1 text-sm">
+    <li className="flex min-w-0 flex-col gap-1">
+      <span className="break-words text-sm font-semibold">{lamp.name}</span>
+      <div className="grid grid-cols-2 gap-2">
+        <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
           Zustand
           <Select
             value={lamp.status}
@@ -35,7 +35,7 @@ function LampRow(props: {
             ))}
           </Select>
         </label>
-        <label className="flex min-w-0 flex-col gap-1 text-sm">
+        <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
           Lichtzone
           <Select
             value={zoneId}
@@ -57,44 +57,51 @@ function LampRow(props: {
 
 const plants = (n: number) => `${n} ${n === 1 ? "Pflanze" : "Pflanzen"}`;
 
-function ZoneCard(props: {
+function ZoneGroup(props: {
   zone: ZoneEquipment;
   all: readonly ZoneEquipment[];
   actions: LampActions;
 }) {
   const { zone, all, actions } = props;
   const warning = zone.note?.kind === "no_active_lamp";
+  const lamps = `${zone.lamps.length} ${zone.lamps.length === 1 ? "Lampe" : "Lampen"}`;
+  const counted = zone.specimens === null ? "Pflanzenzahl unbekannt" : plants(zone.specimens);
   return (
-    <li className="min-w-0 rounded-lg border border-border p-3">
-      <h3 className="font-semibold">{zoneLabel(zone.name)}</h3>
-      <p className="text-sm text-muted-foreground">
-        {zone.specimens === null ? "Pflanzenzahl unbekannt" : plants(zone.specimens)}
-      </p>
-      {zone.note ? (
-        <p
-          role={warning ? "alert" : "status"}
-          className={
-            warning
-              ? "my-2 rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
-              : "my-2 rounded-lg border border-border p-3"
-          }
-        >
-          {zone.note.text} <strong>{zone.note.nextAction}</strong>
-        </p>
-      ) : null}
-      {zone.lamps.length === 0 ? (
-        <p className="text-sm">Noch keine Lampe in dieser Zone.</p>
-      ) : (
-        <ul
-          className="m-0 mt-2 flex list-none flex-col gap-2 p-0"
-          aria-label={`Lampen in ${zoneLabel(zone.name)}`}
-        >
-          {zone.lamps.map((l) => (
-            <LampRow key={l.id} lamp={l} zoneId={zone.zoneId} zones={all} actions={actions} />
-          ))}
-        </ul>
-      )}
-    </li>
+    <details open={warning || undefined} className="min-w-0 rounded-lg border border-border">
+      <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2 p-3">
+        <span className="font-semibold">{zoneLabel(zone.name)}</span>
+        <span className="text-sm text-muted-foreground">
+          {lamps} · {counted}
+          {warning ? " · keine aktive Lampe" : ""}
+        </span>
+      </summary>
+      <div className="flex flex-col gap-2 px-3 pb-3">
+        {zone.note ? (
+          <p
+            role={warning ? "alert" : "status"}
+            className={
+              warning
+                ? "rounded-lg border border-warning-border bg-warning p-3 text-sm text-warning-foreground"
+                : "rounded-lg border border-border p-3 text-sm"
+            }
+          >
+            {zone.note.text} <strong>{zone.note.nextAction}</strong>
+          </p>
+        ) : null}
+        {zone.lamps.length === 0 ? (
+          <p className="text-sm">Noch keine Lampe in dieser Zone.</p>
+        ) : (
+          <ul
+            className="m-0 flex list-none flex-col gap-3 p-0"
+            aria-label={`Lampen in ${zoneLabel(zone.name)}`}
+          >
+            {zone.lamps.map((l) => (
+              <LampRow key={l.id} lamp={l} zoneId={zone.zoneId} zones={all} actions={actions} />
+            ))}
+          </ul>
+        )}
+      </div>
+    </details>
   );
 }
 
@@ -108,24 +115,26 @@ export function ZonesView(props: { view: ZoneEquipmentView; actions: LampActions
   if (view.zones.length === 0 && view.unassigned.length === 0) return null;
   return (
     <section aria-labelledby="equipment-zones-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="equipment-zones-title" className="text-xl font-semibold">
+      <h2 id="equipment-zones-title" className="text-base font-semibold">
         Lampen je Lichtzone
       </h2>
       {view.unassigned.length > 0 ? (
         <div className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground">
-          <p>Diese Lampen haben noch keine Lichtzone. Ordne jeder eine Zone zu.</p>
-          <ul className="m-0 mt-2 flex list-none flex-col gap-2 p-0 text-foreground">
+          <p className="text-sm">
+            Diese Lampen haben noch keine Lichtzone. Ordne jeder eine Zone zu.
+          </p>
+          <ul className="m-0 mt-2 flex list-none flex-col gap-3 p-0 text-foreground">
             {view.unassigned.map((l) => (
               <LampRow key={l.id} lamp={l} zoneId="" zones={view.zones} actions={actions} />
             ))}
           </ul>
         </div>
       ) : null}
-      <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="flex flex-col gap-2">
         {view.zones.map((z) => (
-          <ZoneCard key={z.zoneId} zone={z} all={view.zones} actions={actions} />
+          <ZoneGroup key={z.zoneId} zone={z} all={view.zones} actions={actions} />
         ))}
-      </ul>
+      </div>
     </section>
   );
 }

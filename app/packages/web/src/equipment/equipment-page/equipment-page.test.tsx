@@ -110,9 +110,10 @@ afterEach(() => {
 describe("US-EQU-01 equipment page", () => {
   it("US-EQU-01 shows missing values as unknown, never guessed (P-08)", async () => {
     fakeServer([item()]);
-    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
-    const card = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
-    expect(within(card).getByRole("heading", { name: "Zone 3" })).toBeTruthy();
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=item-e1");
+    const card = (await screen.findByRole("heading", { name: "Zone 3", level: 3 })).closest(
+      "div",
+    ) as HTMLElement;
     expect(card.textContent).toContain("Lampe · Aktiv");
     // Four on the card, two more in "Betrieb und Wartung" (since when it runs, lifetime; US-EQU-04).
     expect(card.textContent?.match(/unbekannt/g)).toHaveLength(6);
@@ -183,7 +184,7 @@ describe("US-EQU-01 equipment page", () => {
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("keine aktive Lampe");
     expect(alert.textContent).toContain("Ordne dieser Zone eine aktive Lampe zu.");
-    expect(screen.getByText("Pflanzenzahl unbekannt")).toBeTruthy();
+    expect(screen.getByText(/Pflanzenzahl unbekannt/)).toBeTruthy();
     expect(screen.getByText(/noch keine Lichtzone/)).toBeTruthy();
     expect(screen.getByText("Alte Lampe")).toBeTruthy();
   });
@@ -254,9 +255,7 @@ describe("US-EQU-01 equipment page", () => {
   it("US-EQU-03 a lamp without a measurement says not measured and shows the zone value", async () => {
     fakeServer([], undefined, NO_ZONES, { limit: null, lamps: [lightOf()] });
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=lamps");
-    const card = (await screen.findByRole("heading", { name: "Lampe Regal", level: 3 })).closest(
-      "li",
-    ) as HTMLElement;
+    const card = (await screen.findByText("Lampe Regal")).closest("details") as HTMLElement;
     expect(card.textContent).toContain("nicht gemessen");
     expect(card.textContent).toContain("Wert der Zone, nicht gemessen");
     expect(card.textContent).toContain("15.000 lx");
@@ -499,6 +498,10 @@ describe("US-QS-22 the equipment fits one screen", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Equipment erfassen" }));
     const layer = await screen.findByRole("dialog", { name: "Neues Equipment" });
     expect(within(layer).getByLabelText("Art")).toBeTruthy();
+    // The optional fields sit behind "Mehr Angaben" (US-QS-22).
+    const more = within(layer).getByText("Mehr Angaben").closest("details") as HTMLElement;
+    expect(more.contains(within(layer).getByLabelText("Preis in Euro (optional)"))).toBe(true);
+    expect(more.contains(within(layer).getByLabelText("Name"))).toBe(false);
   });
 
   it("US-QS-22 a tile opens its layer with the existing content; the layers mount only while open", async () => {
@@ -509,7 +512,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(screen.queryByText("Zone 3")).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: /^Equipment1 Teil/ }));
     const layer = await screen.findByRole("dialog", { name: "Equipment" });
-    expect(within(layer).getByRole("heading", { name: "Zone 3" })).toBeTruthy();
+    expect(within(layer).getByRole("button", { name: /Zone 3/ })).toBeTruthy();
   });
 
   it("US-QS-22 the list of what I own is paged inside its layer with its own address part", async () => {
@@ -517,12 +520,21 @@ describe("US-QS-22 the equipment fits one screen", () => {
       item({ id: "e1", name: "Zone 1 · Stecklingslicht" }),
       item({ id: "e2", name: "Zone 2" }),
       item({ id: "e3", name: "Zone 3" }),
+      ...[4, 5, 6, 7].map((n) => item({ id: `e${n}`, name: `Teil ${n}` })),
     ]);
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
     const layer = await screen.findByRole("dialog", { name: "Equipment" });
     expect(within(layer).getByText("Seite 1 von 2")).toBeTruthy();
     await userEvent.click(within(layer).getByRole("button", { name: "Weiter" }));
-    expect(await within(layer).findByRole("heading", { name: "Zone 3" })).toBeTruthy();
+    expect(await within(layer).findByRole("button", { name: /Teil 7/ })).toBeTruthy();
+  });
+
+  it("US-QS-22 a row of the list opens the record as its own layer", async () => {
+    fakeServer([item()]);
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
+    await userEvent.click(await screen.findByRole("button", { name: /Zone 3/ }));
+    const layer = await screen.findByRole("dialog", { name: "Zone 3" });
+    expect(within(layer).getByText("Hersteller und Modell")).toBeTruthy();
   });
 
   it("US-QS-22 · P-09 a part without records says so and names the next step", async () => {
