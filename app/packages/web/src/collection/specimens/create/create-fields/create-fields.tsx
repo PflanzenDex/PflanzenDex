@@ -1,5 +1,11 @@
 import { useWatch, type Control } from "react-hook-form";
-import { specimenName, type Species, type LightLocation } from "@pflanzendex/core";
+import {
+  specimenName,
+  type Species,
+  type LightLocation,
+  type LightZone,
+  zoneLabel,
+} from "@pflanzendex/core";
 import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
 import {
   FormControl,
@@ -14,9 +20,44 @@ import { CatchDateField } from "../../../markers/catch-date/catch-date-field/cat
 import { TITLE } from "../../cards/parts/parts";
 import type { CreateFields } from "../../model/schemas";
 
+/** The own light zone of the specimen, chosen from the own zones (US-LIC-02); empty = derived (P-08). */
+function ZoneField(props: {
+  control: Control<CreateFields>;
+  zones: { items: readonly LightZone[]; failed: boolean };
+}) {
+  return (
+    <FormField
+      control={props.control}
+      name="lightZoneId"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Eigene Lichtzone</FormLabel>
+          <FormControl>
+            <Select {...field}>
+              <option value="">Aus Standort und Art ableiten</option>
+              {props.zones.items.map((z) => (
+                <option key={z.id} value={z.id}>
+                  {zoneLabel(z.name)}
+                </option>
+              ))}
+            </Select>
+          </FormControl>
+          <FormDescription>
+            {props.zones.failed
+              ? "Die Lichtzonen konnten nicht geladen werden. Du kannst die Zone später setzen."
+              : "Ohne Auswahl wird die Zone abgeleitet."}
+          </FormDescription>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
 export function OtherFields(props: {
   control: Control<CreateFields>;
   locations: readonly LightLocation[];
+  zones: { items: readonly LightZone[]; failed: boolean };
   today: string;
 }) {
   return (
@@ -38,8 +79,7 @@ export function OtherFields(props: {
               </Checkbox>
             </FormControl>
             <FormDescription>
-              Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der
-              Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.
+              Ein Steckling steht unter Stecklingslicht und fehlt in Phasen und Lichtverteilung.
             </FormDescription>
           </FormItem>
         )}
@@ -60,11 +100,11 @@ export function OtherFields(props: {
                 ))}
               </Select>
             </FormControl>
-            <FormDescription>Ohne Auswahl bleibt der Standort unbekannt.</FormDescription>
             <FormMessage />
           </FormItem>
         )}
       />
+      <ZoneField control={props.control} zones={props.zones} />
       <CatchDateField control={props.control} today={props.today} />
     </>
   );
@@ -74,7 +114,7 @@ export function Heading({ species }: { species: Species }) {
   return (
     <>
       <h1 id="create-title" className={TITLE}>
-        Exemplar anlegen
+        Pflanze anlegen
       </h1>
       <p className="mb-5 text-muted-foreground">
         Art: <i>{species.latinName}</i>

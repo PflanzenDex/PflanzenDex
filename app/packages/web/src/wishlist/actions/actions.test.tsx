@@ -1,14 +1,23 @@
 // @vitest-environment jsdom
+import type { ReactElement } from "react";
 import { cleanup, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { WishlistPage } from "../wishlist-page/wishlist-page";
 
-// US-WUN-05: from the purchase to the plant: "Exemplar anlegen" after "Gekauft" and in the history, the link state, and
+// US-WUN-05: from the purchase to the plant: "Pflanze anlegen" after "Gekauft" and in the history, the link state, and
 // the action "Verwerfen".
+// The layers are dialogs and drawers; jsdom lacks pointer capture, which they use.
+Element.prototype.setPointerCapture ??= () => undefined;
+Element.prototype.releasePointerCapture ??= () => undefined;
+
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 const token = async () => "tok";
+/** Renders in a router, because the layers live in the address (US-QS-22); `url` opens a layer. */
+const view = (ui: ReactElement, url = "/") =>
+  render(<MemoryRouter initialEntries={[url]}>{ui}</MemoryRouter>);
 
 const candidate = {
   id: "w1",
@@ -39,7 +48,7 @@ const candidates = (open: unknown[]) => ({
 });
 const BOUGHT_HINT = {
   text: "„Korbmarante (Calathea orbifolia)“ ist als gekauft vermerkt.",
-  nextAction: "Tippe auf „Exemplar anlegen“.",
+  nextAction: "Tippe auf „Pflanze anlegen“.",
 };
 const DISCARD_HINT = {
   text: "„Korbmarante (Calathea orbifolia)“ ist verworfen. Der Wunsch bleibt unter „Verworfen“ gespeichert.",
@@ -113,15 +122,15 @@ afterEach(() => {
 });
 
 describe("US-WUN-05 the way from the purchase to the specimen", () => {
-  it("US-WUN-05 after 'Gekauft' the confirmation offers 'Exemplar anlegen' and hands the wish over", async () => {
+  it("US-WUN-05 after 'Gekauft' the confirmation offers 'Pflanze anlegen' and hands the wish over", async () => {
     server();
     const onCreateSpecimen = vi.fn();
-    render(<WishlistPage api="http://api" token={token} onCreateSpecimen={onCreateSpecimen} />);
+    view(<WishlistPage api="http://api" token={token} onCreateSpecimen={onCreateSpecimen} />);
     await userEvent.click(await screen.findByRole("button", { name: /^Gekauft: / }));
     const status = (await screen.findByText(BOUGHT_HINT.text)).closest(
       '[role="status"]',
     ) as HTMLElement;
-    await userEvent.click(within(status).getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(within(status).getByRole("button", { name: "Pflanze anlegen" }));
     expect(onCreateSpecimen).toHaveBeenCalledWith({
       id: "w1",
       name: "Calathea orbifolia",
@@ -129,37 +138,43 @@ describe("US-WUN-05 the way from the purchase to the specimen", () => {
     });
   });
 
-  it("US-WUN-05 the history offers 'Exemplar anlegen' for a bought wish without a specimen", async () => {
+  it("US-WUN-05 the history offers 'Pflanze anlegen' for a bought wish without a specimen", async () => {
     server({ open: [], bought: history([{ id: "w1", title: candidate.title, specimenId: null }]) });
     const onCreateSpecimen = vi.fn();
-    render(<WishlistPage api="http://api" token={token} onCreateSpecimen={onCreateSpecimen} />);
+    view(
+      <WishlistPage api="http://api" token={token} onCreateSpecimen={onCreateSpecimen} />,
+      "/?sheet=bought",
+    );
     const list = await screen.findByRole("list", { name: "Gekaufte Wünsche" });
     await userEvent.click(
-      within(list).getByRole("button", { name: `Exemplar anlegen: ${candidate.title}` }),
+      within(list).getByRole("button", { name: `Pflanze anlegen: ${candidate.title}` }),
     );
     expect(onCreateSpecimen).toHaveBeenCalledWith(expect.objectContaining({ id: "w1" }));
   });
 
-  it("US-WUN-05 a linked wish says so ('gekauft → Exemplar') and offers no second specimen", async () => {
+  it("US-WUN-05 a linked wish says so ('gekauft → Pflanze') and offers no second specimen", async () => {
     server({ open: [], bought: history([{ id: "w1", title: candidate.title, specimenId: "s1" }]) });
-    render(<WishlistPage api="http://api" token={token} onCreateSpecimen={vi.fn()} />);
+    view(
+      <WishlistPage api="http://api" token={token} onCreateSpecimen={vi.fn()} />,
+      "/?sheet=bought",
+    );
     const list = await screen.findByRole("list", { name: "Gekaufte Wünsche" });
-    expect(list.textContent).toContain("Gekauft → Exemplar angelegt");
+    expect(list.textContent).toContain("Gekauft → Pflanze angelegt");
     expect(within(list).queryByRole("button")).toBeNull();
   });
 
-  it("US-WUN-05 without a hand-over the page shows no 'Exemplar anlegen'", async () => {
+  it("US-WUN-05 without a hand-over the page shows no 'Pflanze anlegen'", async () => {
     server({ open: [], bought: history([{ id: "w1", title: candidate.title, specimenId: null }]) });
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />, "/?sheet=bought");
     await screen.findByRole("list", { name: "Gekaufte Wünsche" });
-    expect(screen.queryByRole("button", { name: /Exemplar anlegen/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Pflanze anlegen/ })).toBeNull();
   });
 });
 
 describe("US-WUN-05 'Verwerfen' sets a wish to discarded", () => {
   it("US-WUN-05 each open candidate offers 'Verwerfen'", async () => {
     server();
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     const item = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
     expect(
       within(item).getByRole("button", { name: `Verwerfen: ${candidate.title}` }),
@@ -168,7 +183,7 @@ describe("US-WUN-05 'Verwerfen' sets a wish to discarded", () => {
 
   it("US-WUN-05 'Verwerfen' asks first; 'Abbrechen' writes nothing", async () => {
     const f = server();
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: /^Verwerfen: / }));
     expect(screen.getByText(/Wirklich verwerfen\?/)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
@@ -178,7 +193,7 @@ describe("US-WUN-05 'Verwerfen' sets a wish to discarded", () => {
 
   it("US-WUN-05 confirming sends the action with a repeat-guard key, says what happened and keeps the wish under 'Verworfen'", async () => {
     const f = server();
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: /^Verwerfen: / }));
     await userEvent.click(
       screen.getByRole("button", { name: `Ja, verwerfen: ${candidate.title}` }),
@@ -188,22 +203,23 @@ describe("US-WUN-05 'Verwerfen' sets a wish to discarded", () => {
     const sent = posts(f);
     expect(sent).toHaveLength(1);
     expect(new Headers(sent[0]?.[1]?.headers).get("Idempotency-Key")).toBeTruthy();
+    await userEvent.click(await screen.findByRole("button", { name: "Verworfen (1)" }));
     const list = await screen.findByRole("list", { name: "Verworfene Wünsche" });
     expect(within(list).getByText(candidate.title)).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Verworfen" })).toBeTruthy();
+    expect(screen.getAllByRole("heading", { name: "Verworfen" }).length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: /^Verwerfen: / })).toBeNull();
   });
 
   it("US-WUN-05 without discarded wishes there is no 'Verworfen' section", async () => {
     server();
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await screen.findAllByRole("listitem");
     expect(screen.queryByRole("heading", { name: "Verworfen" })).toBeNull();
   });
 
   it("US-WUN-05 a refusal shows the German text of its code, never the raw server text (P-10)", async () => {
     server({ refusal: { status: 409, code: "wish.already_bought" } });
-    render(<WishlistPage api="http://api" token={token} />);
+    view(<WishlistPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: /^Verwerfen: / }));
     await userEvent.click(screen.getByRole("button", { name: /^Ja, verwerfen: / }));
     const alert = await screen.findByRole("alert");

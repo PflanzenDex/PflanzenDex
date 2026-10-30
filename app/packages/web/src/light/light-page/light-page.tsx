@@ -60,7 +60,7 @@ function buildActions(
     zoneUpdate: (id, e) => write("PUT", `/light-zones/${id}`, "Lichtzone gespeichert.", e),
     zoneDelete: (id) => write("DELETE", `/light-zones/${id}`, "Lichtzone gelöscht."),
     defaults: async () => {
-      const f = await write("POST", "/light-zones/defaults", "Standard-Lampen übernommen.", {});
+      const f = await write("POST", "/light-zones/defaults", "Standard-Zonen übernommen.", {});
       setLastError(f ?? undefined);
       return f;
     },

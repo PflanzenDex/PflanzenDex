@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import type { Suggestion } from "@pflanzendex/core";
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { SuggestionCard } from "./suggestion-card";
 
@@ -16,7 +17,13 @@ const suggestion = (extra: Partial<Suggestion> = {}): Suggestion => ({
   difficulty: 1,
   imageUrl: null,
   sourceUrl: "https://en.wikipedia.org/wiki/Aglaonema_commutatum",
-  attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
+  attributes: {
+    humidity: null,
+    minTemperature: null,
+    toxicToPets: null,
+    growthSize: null,
+    lightDescription: null,
+  },
   reasons: ["Diese Art hast du noch nicht gefangen."],
   exploration: false,
   ...extra,
@@ -94,5 +101,81 @@ describe("US-ENT-06 exploration cards are marked", () => {
     cleanup();
     show(suggestion());
     expect(screen.queryByText("Mal etwas anderes")).toBeNull();
+  });
+});
+
+describe("US-ENT-09 attributes show their source", () => {
+  it("US-ENT-09 shows a known value with source link, license, date and review status", () => {
+    show(
+      suggestion({
+        attributes: {
+          humidity: null,
+          minTemperature: null,
+          toxicToPets: null,
+          growthSize: "small",
+          lightDescription: null,
+        },
+        attributeSources: [
+          {
+            field: "growthSize",
+            source: "wikidata",
+            url: "https://www.wikidata.org/wiki/Q42",
+            license: "CC0-1.0",
+            retrievedAt: "2026-10-18",
+            review: "unreviewed",
+          },
+        ],
+      }),
+    );
+    expect(screen.getByText("Wuchsgröße").nextElementSibling?.textContent).toBe("klein");
+    const list = screen.getByRole("list", { name: "Quellen der Merkmale" });
+    expect(list.textContent).toContain("CC0-1.0, abgerufen am 18.10.2026), ungeprüft");
+    expect(screen.getByRole("link", { name: "Wikidata" }).getAttribute("href")).toBe(
+      "https://www.wikidata.org/wiki/Q42",
+    );
+  });
+
+  it("US-ENT-09 shows the light statement as 'Licht laut Quelle' with source and 'ungeprüft'", () => {
+    show(
+      suggestion({
+        attributes: { ...suggestion().attributes, lightDescription: "bright_indirect" },
+        attributeSources: [
+          {
+            field: "lightDescription",
+            source: "wikipedia",
+            url: "https://en.wikipedia.org/w/index.php?title=X&oldid=1",
+            license: "CC-BY-SA-4.0",
+            retrievedAt: "2026-10-30",
+            review: "unreviewed",
+          },
+        ],
+      }),
+    );
+    expect(
+      screen.getByText("Licht laut Quelle", { selector: "dt" }).nextElementSibling?.textContent,
+    ).toBe("helles indirektes Licht");
+    const list = screen.getByRole("list", { name: "Quellen der Merkmale" });
+    expect(list.textContent).toContain("Licht laut Quelle: Wikipedia");
+    expect(list.textContent).toContain("ungeprüft");
+    // The Lichtzone comes from the species, never from the statement (P-08).
+    expect(screen.getByText("Lichtzone").nextElementSibling?.textContent).toBe("Zone 3");
+  });
+
+  it("US-ENT-09 lists no source and keeps every attribute unknown without a stored fact (P-08)", () => {
+    show(suggestion());
+    expect(screen.queryByRole("list", { name: "Quellen der Merkmale" })).toBeNull();
+    expect(screen.getAllByText("unbekannt")).toHaveLength(5);
+  });
+});
+
+describe("US-QS-21 the card shows the essentials and opens the rest with Mehr", () => {
+  it("US-QS-21 Mehr and Weniger toggle the facts, sources and reasons", async () => {
+    show(suggestion());
+    const toggle = screen.getByRole("button", { name: "Mehr" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    await userEvent.click(toggle);
+    expect(screen.getByRole("button", { name: "Weniger" }).getAttribute("aria-expanded")).toBe(
+      "true",
+    );
   });
 });

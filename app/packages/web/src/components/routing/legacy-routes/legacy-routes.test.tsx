@@ -25,19 +25,19 @@ const open = (path: string) =>
   );
 
 describe("US-QS-14 old addresses keep working", () => {
-  it("US-QS-14 · US-BEH-02 /treatments leads to the section Behandlungen of Heute and keeps the focus handling to the section", () => {
+  it("US-QS-14 · US-QS-18 · US-BEH-02 /treatments leads to the layer Behandlungen of Heute and keeps the focus handling", () => {
     open("/treatments");
-    expect(screen.getByTestId("address").textContent).toBe("/today#behandlungen true");
+    expect(screen.getByTestId("address").textContent).toBe("/today?sheet=treatments true");
   });
 
-  it("US-QS-14 · US-BES-08 /hints leads to the section Fehlt noch of Heute", () => {
+  it("US-QS-14 · US-QS-18 · US-BES-08 /hints leads to the layer Fehlt noch of Heute", () => {
     open("/hints");
-    expect(screen.getByTestId("address").textContent).toBe("/today#fehlt-noch true");
+    expect(screen.getByTestId("address").textContent).toBe("/today?sheet=hints true");
   });
 
-  it("US-QS-14 · US-ACC-02 /settings leads to the section Einstellungen of Konto and keeps the focus handling to the section", () => {
+  it("US-QS-17 · US-ACC-02 /settings leads to the section Einstellungen of Konto and keeps the focus handling to the section", () => {
     open("/settings");
-    expect(screen.getByTestId("address").textContent).toBe("/account#einstellungen true");
+    expect(screen.getByTestId("address").textContent).toBe("/account/settings true");
   });
 
   it("US-QS-14 · US-WUN-01 /wishlist leads to the wishlist mode of the Sammlung and keeps the focus on the control", () => {

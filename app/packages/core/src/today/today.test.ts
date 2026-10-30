@@ -40,6 +40,7 @@ const locations: LightLocationStore = {
       : [],
   create: async () => "name_taken",
   update: async () => "not_found",
+  remove: async () => "not_found",
 };
 
 /** What `care` and `wishlist` deliver for a test: last measurement per specimen, open wishes, stock per zone 2 to 4. */
@@ -290,10 +291,10 @@ describe("US-QS-04 deviations become visible in the today list", () => {
       id: "buffer:z3",
       specimenId: null,
       specimenName: null,
-      text: "Nachschub nötig: Lampe 3 (1 offener Kandidat)",
+      text: "Nachschub nötig: Zone 3 (1 offener Kandidat)",
       target: "wishlist",
     });
-    expect(r.value.items[0]?.nextAction).toContain("Lampe 3");
+    expect(r.value.items[0]?.nextAction).toContain("Zone 3");
   });
 
   it("US-QS-04 with enough open candidates in every zone there is no buffer warning", async () => {

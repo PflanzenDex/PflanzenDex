@@ -87,6 +87,7 @@ describe("US-ENT-01 suggestions", () => {
       minTemperature: null,
       toxicToPets: null,
       growthSize: null,
+      lightDescription: null,
     });
   });
 
@@ -309,5 +310,87 @@ describe("US-ENT-07 deck filtered to a light zone", () => {
   it("US-ENT-07 without a filter the deck carries no zone filter", async () => {
     const deck = await suggestions(depsWith({ "Ficus a": 3 }), "anna", "Europe/Berlin");
     expect(deck.zoneFilter).toBeNull();
+  });
+});
+
+describe("US-ENT-09 attributes with their sources on the card", () => {
+  const deps = {
+    ownership: {
+      specimens: { list: async () => [] },
+      species: { find: async () => null, findMany: async () => [] },
+    },
+    tree: {
+      tree: async () => [row("Aloe vera", "Asphodelaceae"), row("Ficus a")],
+      facts: async () => [],
+      appRarity: async () => ({ participants: 0, owners: new Map() }),
+    },
+    wishes: new InMemoryWishes(),
+  };
+  const evidence = {
+    source: "wikidata",
+    url: "https://www.wikidata.org/wiki/Q42",
+    license: "CC0-1.0",
+    retrievedAt: "2026-10-18",
+  } as const;
+
+  it("US-ENT-09 shows a stored value with its source and marks it unreviewed; other species and fields stay unknown", async () => {
+    const asked: (readonly string[])[] = [];
+    const attributes = {
+      forSpecies: async (names: readonly string[]) => {
+        asked.push(names);
+        return [
+          { species: "Aloe vera", field: "growthSize" as const, value: "small" as const, evidence },
+        ];
+      },
+    };
+    const deck = await suggestions({ ...deps, attributes }, "anna", "Europe/Berlin");
+    const aloe = deck.suggestions.find((s) => s.species === "Aloe vera");
+    const ficus = deck.suggestions.find((s) => s.species === "Ficus a");
+    expect(asked).toHaveLength(1);
+    expect(aloe?.attributes).toEqual({
+      humidity: null,
+      minTemperature: null,
+      toxicToPets: null,
+      growthSize: "small",
+      lightDescription: null,
+    });
+    expect(aloe?.attributeSources).toEqual([
+      {
+        field: "growthSize",
+        source: "wikidata",
+        url: evidence.url,
+        license: "CC0-1.0",
+        retrievedAt: "2026-10-18",
+        review: "unreviewed",
+      },
+    ]);
+    expect(ficus?.attributes.growthSize).toBeNull();
+    expect(ficus?.attributeSources).toBeUndefined();
+  });
+
+  it("US-ENT-09 a stored light statement changes neither light zone, order nor reasons (P-08)", async () => {
+    const attributes = {
+      forSpecies: async () => [
+        {
+          species: "Aloe vera",
+          field: "lightDescription" as const,
+          value: "direct_sun" as const,
+          evidence,
+        },
+      ],
+    };
+    const plain = await suggestions(deps, "anna", "Europe/Berlin");
+    const withLight = await suggestions({ ...deps, attributes }, "anna", "Europe/Berlin");
+    const strip = (d: typeof plain) =>
+      d.suggestions.map((s) => [s.species, s.lightZone, s.reasons, s.exploration]);
+    expect(strip(withLight)).toEqual(strip(plain));
+    expect(
+      withLight.suggestions.find((s) => s.species === "Aloe vera")?.attributes.lightDescription,
+    ).toBe("direct_sun");
+  });
+
+  it("US-ENT-09 without a store every attribute is unknown and no source is claimed (P-08)", async () => {
+    const deck = await suggestions(deps, "anna", "Europe/Berlin");
+    expect(deck.suggestions.every((s) => s.attributeSources === undefined)).toBe(true);
   });
 });

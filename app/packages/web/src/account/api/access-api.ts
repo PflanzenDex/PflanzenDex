@@ -1,4 +1,9 @@
-import type { CreatedInvitation, OperatorCostFigure, OperatorOverview } from "@pflanzendex/core";
+import type {
+  CreatedInvitation,
+  IntroductionFigures,
+  OperatorCostFigure,
+  OperatorOverview,
+} from "@pflanzendex/core";
 import { call, createWrite, currentTimeZone, type Response } from "../../kernel";
 
 type FetchFn = typeof fetch;
@@ -10,6 +15,14 @@ export const loadOverview = (
   fetchFn: FetchFn = fetch,
 ): Promise<Response<OperatorOverview>> =>
   call<OperatorOverview>(fetchFn, `${api}/operator/overview`, token);
+
+/** The figures of the introduction against the targets for the operator (US-ONB-08); counts, never an account. */
+export const loadIntroduction = (
+  api: string,
+  token: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<IntroductionFigures>> =>
+  call<IntroductionFigures>(fetchFn, `${api}/operator/introduction`, token);
 
 /** Registration with or without invitation code; the repeat-guard key is created per call. */
 export async function setRegistrationMode(

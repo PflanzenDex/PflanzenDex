@@ -5,8 +5,8 @@ import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import { seedCatalog, SEED_SOURCE } from "./seed-catalog.ts";
 import type { SeedRow } from "./species-list.ts";
 
-// Dev seed for the catalog (US-BES-12, operator batch): visible to everybody as `curated`, idempotent, marked as
-// starting values (P-08). Real PostgreSQL (`make db-up`); the test seeds two species with names of its own.
+// Dev seed for the catalog (US-BES-12, operator batch): visible to everybody as `curated`, idempotent, without invented
+// difficulty or light need (P-08). Real PostgreSQL (`make db-up`); the test seeds two species with names of its own.
 let admin: Pool;
 let pool: Pool; // owner connection: migrations run as the owner, like in production
 let owner: string | undefined;
@@ -21,8 +21,6 @@ const rows: readonly SeedRow[] = [
     `Seed plant ${letters}`,
     "Araceae",
     "Aronstabgewächse",
-    1,
-    3,
   ],
   [
     `Seedgenus ${letters}altus`,
@@ -30,8 +28,6 @@ const rows: readonly SeedRow[] = [
     `Seed tall ${letters}`,
     "Araceae",
     "Aronstabgewächse",
-    2,
-    4,
   ],
 ];
 
@@ -69,7 +65,7 @@ afterAll(async () => {
 });
 
 describe("US-BES-12 dev seed of the catalog", () => {
-  it("US-BES-12: Given a species list, when it is seeded, then every species is curated with its names and the starting-value source", async () => {
+  it("US-BES-12: Given a species list, when it is seeded, then every species is curated with its names, its source and an unknown light need (P-08)", async () => {
     const first = await seedCatalog(admin, rows, `seed-test-${letters}`);
     owner = first.owner;
     expect(first.created).toBe(rows.length);
@@ -78,14 +74,34 @@ describe("US-BES-12 dev seed of the catalog", () => {
       source: string;
       created_by: string;
       names: number;
+      difficulty: number | null;
+      standard_level: number | null;
+      light_demand_lux: number | null;
+      growth_measure: string | null;
+      etiolation_signs: string | null;
+      success_criteria: string | null;
     }>(
-      `select v.status, s.source, s.created_by, (select count(*)::int from species_name n where n.species_id = s.id) as names
+      `select v.status, s.source, s.created_by, (select count(*)::int from species_name n where n.species_id = s.id) as names,
+              s.difficulty, s.standard_level, s.light_demand_lux, s.growth_measure, s.etiolation_signs,
+              s.success_criteria
          from species s join review_case v on v.object_kind = 'species' and v.object_id = s.id
         where s.german_name = $1`,
       [rows[0]?.[1]],
     );
     expect(r.rows).toEqual([
-      { status: "curated", source: SEED_SOURCE, created_by: "operator", names: 3 },
+      {
+        status: "curated",
+        source: SEED_SOURCE,
+        created_by: "operator",
+        names: 3,
+        difficulty: null,
+        standard_level: null,
+        light_demand_lux: null,
+        // #1005: no generic care texts and no guessed growth measure either (P-08).
+        growth_measure: null,
+        etiolation_signs: null,
+        success_criteria: null,
+      },
     ]);
   });
 

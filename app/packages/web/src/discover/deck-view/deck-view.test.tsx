@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { Suggestion, SuggestionDeck } from "@pflanzendex/core";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { DeckView } from "./deck-view";
 
 afterEach(cleanup);
@@ -16,7 +16,13 @@ const suggestion = (species: string): Suggestion => ({
   difficulty: null,
   imageUrl: null,
   sourceUrl: null,
-  attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
+  attributes: {
+    humidity: null,
+    minTemperature: null,
+    toxicToPets: null,
+    growthSize: null,
+    lightDescription: null,
+  },
   reasons: ["Diese Art hast du noch nicht gefangen."],
   exploration: false,
 });
@@ -30,6 +36,44 @@ const deck: SuggestionDeck = {
   zoneFilter: null,
   suggestions: [suggestion("Ficus lyrata"), suggestion("Aloe vera")],
 };
+
+describe("US-QS-21 the card takes the remaining height", () => {
+  it("US-QS-21 the card fills the space, scrolls inside itself, the photo shrinks first and the buttons stay in view", () => {
+    render(<DeckView deck={deck} onDecide={saveOk} onNewDeck={() => undefined} />);
+    const card = screen.getByRole("article");
+    expect(card.className).toContain("flex-1");
+    expect(card.className).toContain("overflow-y-auto");
+    const row = screen.getByRole("button", { name: "Nein" }).parentElement?.parentElement;
+    expect(row?.className).toContain("shrink-0");
+    expect(row?.parentElement?.lastElementChild).toBe(row);
+  });
+});
+
+describe("US-QS-21 large text scrolls instead of clipping (WCAG 1.4.4, 1.4.10)", () => {
+  const rowOf = () => screen.getByRole("button", { name: "Ja" }).parentElement;
+  it("US-QS-21 wraps the buttons, keeps their 44 px size and gives the card and the stack a minimum height", () => {
+    render(<DeckView deck={deck} onDecide={saveOk} onNewDeck={() => undefined} />);
+    expect(rowOf()?.className).toContain("flex-wrap");
+    for (const name of ["Nein", "Später", "Ja"]) {
+      const button = screen.getByRole("button", { name });
+      expect(button.className).toContain("min-w-24");
+      expect(button.className).toContain("min-h-[48px]");
+    }
+    expect(screen.getByRole("article").className).toContain("min-h-48");
+    expect(screen.getByRole("article").parentElement?.className).toContain("min-h-[21rem]");
+  });
+
+  it("US-QS-21 at 200 % text the row scrolls with the content and leaves room above the phone bar", () => {
+    const size = vi
+      .spyOn(window, "getComputedStyle")
+      .mockReturnValue({ fontSize: "32px" } as CSSStyleDeclaration);
+    render(<DeckView deck={deck} onDecide={saveOk} onNewDeck={() => undefined} />);
+    size.mockRestore();
+    const row = rowOf()?.parentElement;
+    expect(row?.className).toContain("static");
+    expect(row?.className).toContain("mb-20");
+  });
+});
 
 describe("US-QS-14 decision buttons stay with the card", () => {
   it("US-QS-14 keeps Nein, Später and Ja in a sticky row above the bar, at the bottom from md", () => {

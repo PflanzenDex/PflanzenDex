@@ -57,3 +57,14 @@ export async function enqueueJob(
     }),
   );
 }
+
+/**
+ * The `order` port of a periodic check (catalog fill, attribute fill, taxonomy build): queues the job by type and
+ * dedupe key and throws the error code when the queue refuses, so the check's caller sees it (P-10).
+ */
+export function orderOrThrow(deps: EnqueueDependencies) {
+  return async (type: string, dedupeKey: string): Promise<void> => {
+    const r = await enqueueJob(deps, { type, dedupeKey });
+    if (!r.ok) throw new Error(r.error.code);
+  };
+}

@@ -1,3 +1,4 @@
+import { zoneLabel } from "@pflanzendex/core";
 import type { Control } from "react-hook-form";
 import type {
   CareProfileChanges,
@@ -103,7 +104,8 @@ export function Places(props: Shared & { lists: Lists }) {
   const { entry, control, lists, busy } = props;
   const name = entry.speciesName;
   const p = entry.profile;
-  const zone = lists.zones.find((z) => z.id === p.lightZone.catalog)?.name ?? "unbekannt";
+  const zoneRaw = lists.zones.find((z) => z.id === p.lightZone.catalog)?.name;
+  const zone = zoneRaw === undefined ? "unbekannt" : zoneLabel(zoneRaw);
   return (
     <>
       {lists.locations.length > 0 &&

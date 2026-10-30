@@ -1,8 +1,18 @@
 // @vitest-environment jsdom
+import type { ReactElement } from "react";
 import { cleanup, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { EquipmentPage } from "./equipment-page";
+
+/** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
+const view = (ui: ReactElement, url = "/") =>
+  render(<MemoryRouter initialEntries={[url]}>{ui}</MemoryRouter>);
+
+// The layers are dialogs and drawers; jsdom lacks pointer capture, which they use.
+Element.prototype.setPointerCapture ??= () => undefined;
+Element.prototype.releasePointerCapture ??= () => undefined;
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -71,7 +81,7 @@ afterEach(() => {
 describe("US-EQU-04 US-EQU-05 US-EQU-06 upkeep writes from the equipment page", () => {
   it("US-EQU-04 'Jetzt geprüft' and the operation data are sent to the device", async () => {
     const fetchFn = fakeServer();
-    render(<EquipmentPage api="http://api" token={token} />);
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Jetzt geprüft: Timer A" }));
     expect((await lastPost(fetchFn)).path).toBe("/equipment/t1/checked");
@@ -86,7 +96,7 @@ describe("US-EQU-04 US-EQU-05 US-EQU-06 upkeep writes from the equipment page", 
 
   it("US-EQU-05 a tap sets the supply, the link text is saved and removable", async () => {
     const fetchFn = fakeServer();
-    render(<EquipmentPage api="http://api" token={token} />);
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Wird knapp" }));
     expect(await lastPost(fetchFn)).toMatchObject({
@@ -103,7 +113,7 @@ describe("US-EQU-04 US-EQU-05 US-EQU-06 upkeep writes from the equipment page", 
 
   it("US-EQU-06 choosing a specimen for a sensor sends the assignment", async () => {
     const fetchFn = fakeServer();
-    render(<EquipmentPage api="http://api" token={token} />);
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=sensors");
     await userEvent
       .setup()
       .selectOptions(await screen.findByLabelText("Zuordnung von Feuchtesensor"), "specimen:p1");

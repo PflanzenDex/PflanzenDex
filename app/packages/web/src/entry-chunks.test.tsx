@@ -7,14 +7,9 @@ vi.mock("./account/invitation-page/invitation-page", () => {
   loaded.pages.push("invitation");
   return { InvitationPage: () => null };
 });
-vi.mock("./shell/start-page/start-page", () => {
-  loaded.pages.push("start");
-  return { StartPage: () => null };
-});
-
-vi.mock("./light/views/setup-steps/setup-steps", () => {
-  loaded.pages.push("setup-steps");
-  return { LocationsStep: () => null, ZonesStep: () => null };
+vi.mock("./shell/today-intro/today-intro", () => {
+  loaded.pages.push("today-intro");
+  return { TodayIntro: () => null };
 });
 
 vi.mock("./pokedex/pokedex-page/pokedex-page", () => {
@@ -32,7 +27,7 @@ vi.mock("./care/treatments/treatments-page/treatments-page", () => {
   return { TreatmentsPage: () => null };
 });
 
-vi.mock("./collection/hints-page/hints-page", () => {
+vi.mock("./collection/other-pages/hints-page/hints-page", () => {
   loaded.pages.push("hints");
   return { HintsPage: () => null };
 });
@@ -42,7 +37,7 @@ vi.mock("./wishlist/wishlist-page/wishlist-page", () => {
   return { WishlistPage: () => null };
 });
 
-vi.mock("./collection/difficulty-page/difficulty-page", () => {
+vi.mock("./collection/other-pages/difficulty-page/difficulty-page", () => {
   loaded.pages.push("difficulty");
   return { DifficultyPage: () => null };
 });
@@ -78,14 +73,9 @@ describe("#451 · DS-08 the entry bundle stays small", () => {
     expect(loaded.pages).not.toContain("invitation");
   });
 
-  it("#451 the start page (with the onboarding forms) loads only when its route opens", async () => {
+  it("US-QS-16 · QG-U6 the onboarding parts of Heute (guide with its forms) load only when Heute opens", async () => {
     await import("./shell/app/app");
-    expect(loaded.pages).not.toContain("start");
-  });
-
-  it("#451 the onboarding steps (forms and validation) load only when a step opens", async () => {
-    await import("./shell/app/app");
-    expect(loaded.pages).not.toContain("setup-steps");
+    expect(loaded.pages).not.toContain("today-intro");
   });
 
   it("US-QS-14 · DS-08 the species page of the Sammlung loads only when Arten is chosen", async () => {

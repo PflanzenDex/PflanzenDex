@@ -4,7 +4,7 @@ import { account, accountRoutes } from "../../data/account-data";
 import { API, token } from "../../harness/fake-api.fixtures";
 import { pageParameters, screenStory, variants } from "../../harness/screen-story/screen-story";
 
-// Page stories of "Konto" (US-QS-14): profile and settings in the page frame, at 360 and 1280 px, light and dark.
+// Page stories of "Konto" (US-QS-17): the index with the profile row and the values, at 360 and 1280 px, light and dark.
 const meta = { title: "Seiten/Konto", parameters: pageParameters } satisfies Meta;
 export default meta;
 

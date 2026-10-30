@@ -83,7 +83,7 @@ export function measurementOverdue(
           s.lastMeasuredOn === null
             ? `„${s.name}“ wurde noch nie gemessen (seit mehr als ${days} Tagen).`
             : `„${s.name}“ wurde seit mehr als ${days} Tagen nicht gemessen.`,
-        nextAction: "Miss das Exemplar und trage die Messung ein.",
+        nextAction: "Miss die Pflanze und trage die Messung ein.",
       },
     ];
   });

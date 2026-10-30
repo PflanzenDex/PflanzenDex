@@ -5,6 +5,7 @@ import { configure } from "@testing-library/dom";
 import type { ReactNode } from "react";
 import { vi } from "vitest";
 import { createQueryClient } from "../../kernel";
+import { setViewportWidth } from "../viewport-mock";
 
 vi.mock("@testing-library/react", async (importOriginal) => {
   const rtl = await importOriginal<typeof import("@testing-library/react")>();
@@ -29,3 +30,15 @@ vi.mock("@testing-library/react", async (importOriginal) => {
 // 0.2 s alone needs more than that, which failed correct tests (#200). A longer wait costs nothing when the element
 // appears at once and still fails when it never does; it stays below the 5 s test timeout.
 configure({ asyncUtilTimeout: 4000 });
+
+// jsdom has no `matchMedia`; the layers and the paged tiles read the breakpoints, so a phone-sized viewport is the
+// default. A test that needs another width calls `setViewportWidth` itself.
+if (typeof window !== "undefined" && typeof window.matchMedia !== "function") setViewportWidth(360);
+
+// jsdom has no pointer capture; the bottom sheet (Vaul) calls it on a pointer press, which the phone-sized default
+// viewport opens, so a click in a sheet threw an unhandled error.
+if (typeof Element !== "undefined" && typeof Element.prototype.setPointerCapture !== "function") {
+  Element.prototype.setPointerCapture = () => undefined;
+  Element.prototype.releasePointerCapture = () => undefined;
+  Element.prototype.hasPointerCapture = () => false;
+}

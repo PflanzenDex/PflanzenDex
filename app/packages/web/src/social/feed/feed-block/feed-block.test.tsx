@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FeedBlock } from "./feed-block";
 
@@ -58,19 +59,27 @@ describe("US-SOZ-05 block 'Neu bei Freunden'", () => {
         }),
       ]),
     );
-    render(<FeedBlock api="http://api" token={token} friends={friends} />);
+    render(
+      <MemoryRouter>
+        <FeedBlock api="http://api" token={token} friends={friends} />
+      </MemoryRouter>,
+    );
     const list = await screen.findByRole("list", { name: "Neuigkeiten" });
     const [first, second] = within(list).getAllByRole("listitem");
-    expect(first?.textContent).toContain("Anna: 1 Exemplar Zebra-Haworthie (Haworthia fasciata)");
+    expect(first?.textContent).toContain("Anna: 1 Pflanze Zebra-Haworthie (Haworthia fasciata)");
     expect(first?.textContent).toContain("Neue Art gefangen · 04.10.2026");
-    expect(second?.textContent).toContain("Name unbekannt: 3 Exemplare Art unbekannt");
+    expect(second?.textContent).toContain("Name unbekannt: 3 Pflanzen Art unbekannt");
     expect(second?.textContent).toContain("Neuer Steckling · Datum unbekannt");
     expect(screen.getByText("Schau in die Sammlung.")).toBeTruthy();
   });
 
   it("US-SOZ-05 loads the last 30 days by default and sends the filters to the server", async () => {
     const fetchFn = server(feed([]));
-    render(<FeedBlock api="http://api" token={token} friends={friends} />);
+    render(
+      <MemoryRouter>
+        <FeedBlock api="http://api" token={token} friends={friends} />
+      </MemoryRouter>,
+    );
     await screen.findByText("Das ist neu.");
     expect(last(fetchFn).searchParams.get("days")).toBe("30");
     expect(last(fetchFn).searchParams.get("timeZone")).toBeTruthy();
@@ -89,7 +98,11 @@ describe("US-SOZ-05 block 'Neu bei Freunden'", () => {
         nextAction: "Lade jemanden mit einem Code ein.",
       }),
     );
-    render(<FeedBlock api="http://api" token={token} friends={[]} />);
+    render(
+      <MemoryRouter>
+        <FeedBlock api="http://api" token={token} friends={[]} />
+      </MemoryRouter>,
+    );
     expect(await screen.findByText("Lade jemanden mit einem Code ein.")).toBeTruthy();
     expect(screen.queryByRole("list", { name: "Neuigkeiten" })).toBeNull();
   });

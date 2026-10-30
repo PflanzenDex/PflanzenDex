@@ -41,6 +41,7 @@ function stubServer() {
         return response(200, {
           candidates: [],
           zones: [],
+          duplicates: [],
           unfit: [],
           hint: { text: "Keine offenen Kandidaten.", nextAction: "Erfasse einen Wunsch." },
           replenishment: {
@@ -85,13 +86,15 @@ const renderAt = (path: string) =>
 
 const radio = (name: string) => screen.getByRole("button", { name });
 const checked = (name: string) => radio(name).getAttribute("aria-pressed") === "true";
+const arrangement = () =>
+  screen.getByRole("combobox", { name: "Anordnung der Arten" }) as HTMLSelectElement;
 
 beforeAll(async () => {
   await Promise.all([
     import("./collection/collection-page/collection-page"),
     import("./pokedex/pokedex-page/pokedex-page"),
     import("./wishlist/wishlist-page/wishlist-page"),
-    import("./collection/difficulty-page/difficulty-page"),
+    import("./collection/other-pages/difficulty-page/difficulty-page"),
   ]);
 }, 30_000);
 
@@ -109,7 +112,7 @@ afterEach(() => {
 describe("US-QS-14 the destination Sammlung with its switch", () => {
   it("US-QS-14 · US-BES-02 without address and stored choice the plants show, under one heading Sammlung", async () => {
     renderAt("/collection");
-    expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
+    expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
     expect(checked("Pflanzen")).toBe(true);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Sammlung");
@@ -133,19 +136,19 @@ describe("US-QS-14 the destination Sammlung with its switch", () => {
   it("US-QS-14 the address wins over the stored choice", async () => {
     window.localStorage.setItem(VIEW_KEY, "species");
     renderAt("/collection?view=plants");
-    expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
+    expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
     expect(checked("Pflanzen")).toBe(true);
   });
 
   it("US-QS-14 an unknown value in the address or in the storage falls back to the plants", async () => {
     window.localStorage.setItem(VIEW_KEY, "unsinn");
     renderAt("/collection?view=unsinn");
-    expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
+    expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
   });
 
   it("US-QS-14 a click on Arten changes the address, remembers the choice, announces it and keeps the focus", async () => {
     renderAt("/collection");
-    await screen.findByText("Du hast noch kein Exemplar", { exact: false });
+    await screen.findByText("Du hast noch keine Pflanze", { exact: false });
     await userEvent.click(screen.getByText("Arten"));
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=species");
     expect(window.localStorage.getItem(VIEW_KEY)).toBe("species");
@@ -156,7 +159,9 @@ describe("US-QS-14 the destination Sammlung with its switch", () => {
 
   it("US-QS-14 the switch works from the keyboard and the focus stays on it", async () => {
     renderAt("/collection");
-    await screen.findByText("Du hast noch kein Exemplar", { exact: false });
+    await screen.findByText("Du hast noch keine Pflanze", { exact: false });
+    await userEvent.tab();
+    expect(document.activeElement).toBe(radio("Ansicht"));
     await userEvent.tab();
     expect(document.activeElement).toBe(radio("Pflanzen"));
     await userEvent.tab();
@@ -172,7 +177,7 @@ describe("US-QS-14 the destination Sammlung with its switch", () => {
 
   it("US-QS-14 history: back returns to the other mode", async () => {
     renderAt("/collection");
-    await screen.findByText("Du hast noch kein Exemplar", { exact: false });
+    await screen.findByText("Du hast noch keine Pflanze", { exact: false });
     await userEvent.click(screen.getByText("Arten"));
     await screen.findByText("1 gefangen");
     await act(async () => window.history.back());
@@ -188,7 +193,7 @@ describe("US-QS-14 the destination Sammlung with its switch", () => {
       throw new Error("blocked");
     });
     renderAt("/collection");
-    await screen.findByText("Du hast noch kein Exemplar", { exact: false });
+    await screen.findByText("Du hast noch keine Pflanze", { exact: false });
     await userEvent.click(screen.getByText("Arten"));
     await waitFor(() => expect(checked("Arten")).toBe(true));
     expect(await screen.findByText("1 gefangen")).toBeTruthy();
@@ -208,7 +213,7 @@ describe("US-QS-14 the third mode Wunschliste", () => {
 
   it("US-QS-14 the switch offers four modes in the order Pflanzen, Arten, Wunschliste, Equipment (US-EQU-01)", async () => {
     renderAt("/collection");
-    await screen.findByText("Du hast noch kein Exemplar", { exact: false });
+    await screen.findByText("Du hast noch keine Pflanze", { exact: false });
     const group = screen.getByRole("group", { name: "Ansicht der Sammlung" });
     expect(
       within(group)
@@ -219,7 +224,7 @@ describe("US-QS-14 the third mode Wunschliste", () => {
 
   it("US-QS-14 a click on Wunschliste changes the address, remembers it, announces it and keeps the focus", async () => {
     renderAt("/collection");
-    await screen.findByText("Du hast noch kein Exemplar", { exact: false });
+    await screen.findByText("Du hast noch keine Pflanze", { exact: false });
     await userEvent.click(screen.getByText("Wunschliste"));
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=wishlist");
     expect(window.localStorage.getItem(VIEW_KEY)).toBe("wishlist");
@@ -243,7 +248,7 @@ describe("US-QS-14 the third mode Wunschliste", () => {
     expect(await screen.findByText("0 offene Wünsche")).toBeTruthy();
     cleanup();
     renderAt("/collection?view=plants");
-    expect(await screen.findByText("Du hast noch kein Exemplar", { exact: false })).toBeTruthy();
+    expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
   });
 });
 
@@ -253,37 +258,40 @@ describe("US-QS-14 · US-BES-05 the comparison by difficulty in the Arten mode",
     expect(await screen.findByRole("heading", { level: 2, name: "Artenvergleich" })).toBeTruthy();
     expect(await screen.findByText("0 Arten im Vergleich")).toBeTruthy();
     expect(checked("Arten")).toBe(true);
-    expect(checked("Schwierigkeit")).toBe(true);
+    expect(arrangement().value).toBe("difficulty");
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(screen.getByText(/Lege im Bestand ein Exemplar an/)).toBeTruthy();
+    expect(screen.getByText(/Lege in der Sammlung eine Pflanze an/)).toBeTruthy();
   });
 
-  it("US-QS-14 the species mode offers the arrangement Pokédex and Schwierigkeit; the Pokédex is the default", async () => {
+  it("US-QS-14 the species mode offers the arrangement Pokédex and Schwierigkeit beside the title in one control; the Pokédex is the default", async () => {
     renderAt("/collection?view=species");
     expect(await screen.findByText("1 gefangen")).toBeTruthy();
-    expect(checked("Pokédex")).toBe(true);
-    expect(checked("Schwierigkeit")).toBe(false);
+    expect(arrangement().value).toBe("pokedex");
+    expect(Array.from(arrangement().options).map((o) => o.textContent)).toEqual([
+      "Pokédex",
+      "Schwierigkeit",
+    ]);
   });
 
   it("US-QS-14 choosing Schwierigkeit keeps the species mode, changes the address, announces it and keeps the focus", async () => {
     renderAt("/collection?view=species");
     await screen.findByText("1 gefangen");
-    await userEvent.click(radio("Schwierigkeit"));
+    await userEvent.selectOptions(arrangement(), "difficulty");
     expect(screen.getByTestId("address").textContent).toBe(
       "/collection?view=species&sort=difficulty",
     );
     expect(await screen.findByText("0 Arten im Vergleich")).toBeTruthy();
-    expect(document.activeElement).toBe(radio("Schwierigkeit"));
+    expect(document.activeElement).toBe(arrangement());
     expect(document.querySelector("[aria-live=polite]")?.textContent).toContain("Schwierigkeit");
-    await userEvent.click(radio("Pokédex"));
+    await userEvent.selectOptions(arrangement(), "pokedex");
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=species");
     expect(await screen.findByText("1 gefangen")).toBeTruthy();
   });
 
   it("US-QS-14 the arrangement is not offered in the other modes and an unknown sort shows the Pokédex", async () => {
     renderAt("/collection?view=plants&sort=difficulty");
-    await screen.findByText("Du hast noch kein Exemplar", { exact: false });
-    expect(screen.queryByRole("button", { name: "Schwierigkeit" })).toBeNull();
+    await screen.findByText("Du hast noch keine Pflanze", { exact: false });
+    expect(screen.queryByRole("combobox", { name: "Anordnung der Arten" })).toBeNull();
     cleanup();
     renderAt("/collection?view=species&sort=unsinn");
     expect(await screen.findByText("1 gefangen")).toBeTruthy();

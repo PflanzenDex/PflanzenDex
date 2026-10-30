@@ -9,6 +9,7 @@ import {
   authentication,
   operatorRoutes,
   registrationRoutes,
+  unlockRoutes,
   type TokenVerifier,
 } from "./account";
 import {
@@ -19,11 +20,20 @@ import {
   specimenZoneUsageFor,
   specimenRoutes,
 } from "./collection";
-import { SPECIES_PATHS, REVIEW_PATHS, speciesRoutes, reviewRoutes } from "./catalog";
+import {
+  CORRECTION_PATHS,
+  GAP_PATHS,
+  SPECIES_PATHS,
+  REVIEW_PATHS,
+  correctionRoutes,
+  gapRoutes,
+  speciesRoutes,
+  reviewRoutes,
+} from "./catalog";
 import { wishZoneUsageFor } from "./wishlist";
-import { equipmentZoneUsageFor } from "./equipment";
+import { equipmentLocationUsageFor, equipmentZoneUsageFor } from "./equipment";
 import { bindFriends } from "./friends-bindings";
-import { featureAccess, type FeatureAccess } from "./kernel";
+import { featureAccess, writeLimit, type FeatureAccess } from "./kernel";
 import { bindHealth } from "./health";
 import { LIGHT_PATHS, lightRoutes } from "./light";
 import { POKEDEX_PATHS, pokedexRoutes } from "./pokedex";
@@ -77,23 +87,32 @@ function bindApi(app: Hono, opt: AppOptions, reviewer: TokenVerifier, pool: Pool
   for (const path of LIGHT_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route(
     "/",
-    lightRoutes(pool, [
-      careProfileZoneUsageFor(pool),
-      specimenZoneUsageFor(pool),
-      wishZoneUsageFor(pool),
-      equipmentZoneUsageFor(pool),
-    ]),
+    lightRoutes(
+      pool,
+      [
+        careProfileZoneUsageFor(pool),
+        specimenZoneUsageFor(pool),
+        wishZoneUsageFor(pool),
+        equipmentZoneUsageFor(pool),
+      ],
+      [equipmentLocationUsageFor(pool)],
+    ),
   );
   for (const path of SPECIES_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", speciesRoutes(pool));
   for (const path of REVIEW_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", reviewRoutes(pool, COLLECTION_REPOINTERS));
+  for (const path of GAP_PATHS) app.use(path, auth);
+  app.route("/", gapRoutes(pool));
+  for (const path of CORRECTION_PATHS) app.use(path, auth).use(`${path}/*`, auth);
+  app.route("/", correctionRoutes(pool));
   for (const path of SPECIMEN_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", specimenRoutes(pool, { clock: opt.clock, ...careSources(pool, opt) }));
   for (const path of POKEDEX_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", pokedexRoutes(pool));
   app.route("/", discoverRoutes(pool, auth, opt.zoneStock));
   app.route("/", achievementsRoutes(pool, auth, opt.clock));
+  app.route("/", unlockRoutes(pool, auth, features, opt));
   app.route("/", monitoringRoutes(pool, auth));
   for (const path of CARE_PROFILE_PATHS) app.use(path, auth).use(`${path}/*`, auth);
   app.route("/", careProfileRoutes(pool));
@@ -132,6 +151,7 @@ export function createApp(opt: AppOptions = {}): Hono {
         exposeHeaders: ["Content-Disposition", "X-Missing-Photos"],
       }),
     );
+  if (opt.writeLimit) app.use("*", writeLimit(opt.writeLimit));
   bindHealth(app, { pool: opt.pool, version, commit, storage: opt.media !== undefined });
   if (opt.reviewer && opt.pool) bindApi(app, opt, opt.reviewer, opt.pool);
   return app;

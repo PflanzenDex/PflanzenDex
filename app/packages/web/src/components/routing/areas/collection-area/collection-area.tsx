@@ -1,20 +1,17 @@
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo, useState, type ReactNode } from "react";
 import type { Species, Specimen } from "@pflanzendex/core";
-import { CollectionPage, DifficultyPage } from "@/collection";
+import { CollectionPage, DifficultyPage, PlantsViewLayer } from "@/collection";
 import { LightPage } from "@/light";
 import { CarePhasesPage, MeasurePage } from "@/care";
 import { PokedexPage } from "@/pokedex";
 import { WishlistPage, type WishToPlant } from "@/wishlist";
 import { EquipmentPage } from "@/equipment";
 import { PageSkeleton } from "@/components/shared/states/page-skeleton/page-skeleton";
-import { SammlungHeader } from "@/components/sammlung-header/sammlung-header";
-import { PlantControls } from "@/components/sammlung-header/plant-controls/plant-controls";
+import { plantSlots } from "./plant-slots/plant-slots";
+import { AreaHeader } from "./area-header/area-header";
 import { Button } from "@/components/ui/button/button";
-import { SegmentedControl } from "@/components/segmented-control/segmented-control";
 import {
   PLANT_GROUPS,
-  SAMMLUNG_VIEWS,
-  SPECIES_SORTS,
   useManage,
   usePlantGroup,
   useSammlungView,
@@ -23,6 +20,14 @@ import {
 } from "../../../../sammlung-view";
 
 type Token = () => Promise<string | undefined>;
+
+/** What the shown mode reports to the area: its caption and whether it is a full view with its own heading. */
+function useHostState() {
+  const [caption, setCaption] = useState<string | null>(null);
+  const [fullView, setFullView] = useState(false);
+  const host = useMemo(() => ({ onCaption: setCaption, onFullView: setFullView }), []);
+  return { caption, fullView, host };
+}
 
 /**
  * The destination "Sammlung" (US-QS-14): a switch between the plants (`collection`, with measuring from `care`), the
@@ -38,10 +43,13 @@ export function CollectionArea(props: {
   token: Token;
   newSpecies: Species | null;
   onSpeciesChoose: () => void;
+  onAdd?: () => void;
   onCompleted: (specimen: Specimen) => void;
   onOpenSpecies?: (id: string) => void;
   /** Starts the way from a bought wish to its specimen (US-WUN-05); the app wires it. */
   onCreateSpecimen?: (wish: WishToPlant) => void;
+  /** The calm hint at the list of plants (US-ONB-07); the app wires it, because the shell is not imported here. */
+  renderHint?: (applicable: readonly string[]) => ReactNode;
 }) {
   const { view: chosen, choose } = useSammlungView();
   const { sort, choose: chooseSort } = useSpeciesSort();
@@ -50,49 +58,54 @@ export function CollectionArea(props: {
   // A species handed over from the catalog is created in the plants, whatever mode was remembered (US-BES-02).
   const view = props.newSpecies ? "plants" : chosen;
   const [measure, setMeasure] = useState<{ id: string; name: string } | null>(null);
-  const [caption, setCaption] = useState<string | null>(null);
-  const [fullView, setFullView] = useState(false);
-  const host = useMemo(() => ({ onCaption: setCaption, onFullView: setFullView }), []);
-  // A species handed over for a new specimen shows its form, not the management of the locations.
+  const { caption, fullView, host } = useHostState();
   const managing = view === "plants" && manage.open && !props.newSpecies;
   const own = view === "plants" && (measure !== null || fullView || managing);
-  // The pages are their own lazy parts: the title area stays and the skeleton shows below it (DS-55).
+  const plantsOnScreen = view === "plants" && !own;
   return (
-    <>
-      {own ? null : (
-        <SammlungHeader view={view} options={SAMMLUNG_VIEWS} onChoose={choose} caption={caption}>
-          {view === "species" ? (
-            <SegmentedControl
-              label="Anordnung der Arten"
-              options={SPECIES_SORTS}
-              value={sort}
-              onChange={chooseSort}
-            />
-          ) : null}
-          {view === "plants" ? (
-            <PlantControls
-              group={group}
-              options={PLANT_GROUPS}
-              onGroup={chooseGroup}
-              onManage={() => manage.setOpen(true)}
-            />
-          ) : null}
-        </SammlungHeader>
-      )}
-      <Suspense fallback={<PageSkeleton />}>
-        <Mode
-          {...props}
-          view={view}
-          sort={sort}
-          group={group}
-          managing={managing}
-          onCloseManage={() => manage.setOpen(false)}
-          host={host}
-          measure={measure}
-          setMeasure={setMeasure}
-        />
-      </Suspense>
-    </>
+    <div className="flex min-h-0 gap-4" {...(own ? {} : { "data-fit-screen": "" })}>
+      <div className="min-w-0 flex-1">
+        {own ? null : (
+          <AreaHeader
+            view={view}
+            caption={caption}
+            onChoose={choose}
+            sort={sort}
+            onSort={chooseSort}
+          />
+        )}
+        <Suspense fallback={<PageSkeleton />}>
+          <ModeBody
+            {...props}
+            view={view}
+            sort={sort}
+            group={group}
+            managing={managing}
+            onCloseManage={() => manage.setOpen(false)}
+            onOpenManage={() => manage.setOpen(true)}
+            host={host}
+            measure={measure}
+            setMeasure={setMeasure}
+          />
+        </Suspense>
+      </div>
+      {plantsOnScreen ? (
+        <GroupLayer group={group} onGroup={chooseGroup} onManage={() => manage.setOpen(true)} />
+      ) : null}
+    </div>
+  );
+}
+
+/** The layer "Ansicht" of the plants, loaded with the plants (US-QS-19). */
+function GroupLayer(props: {
+  group: PlantGroup;
+  onGroup: (g: PlantGroup) => void;
+  onManage: () => void;
+}) {
+  return (
+    <Suspense fallback={null}>
+      <PlantsViewLayer options={PLANT_GROUPS} {...props} />
+    </Suspense>
   );
 }
 
@@ -102,13 +115,13 @@ type ModeProps = Parameters<typeof CollectionArea>[0] & {
   group: PlantGroup;
   managing: boolean;
   onCloseManage: () => void;
+  onOpenManage: () => void;
   host: { onCaption: (t: string | null) => void; onFullView: (open: boolean) => void };
   measure: { id: string; name: string } | null;
   setMeasure: (m: { id: string; name: string } | null) => void;
 };
 
-/** The page of the chosen mode. */
-function Mode(p: ModeProps) {
+function ModeBody(p: ModeProps) {
   const { api, token, host } = p;
   if (p.view === "equipment") return <EquipmentPage api={api} token={token} host={host} />;
   if (p.view === "wishlist")
@@ -152,16 +165,27 @@ function Mode(p: ModeProps) {
     );
   if (p.group === "phase" && !p.newSpecies)
     return <CarePhasesPage api={api} token={token} host={host} />;
+  return <PlantsMode {...p} />;
+}
+
+/** The plants themselves, with the parts of other modules wired into the plant layer (US-QS-23). */
+function PlantsMode(p: ModeProps) {
+  const { api, token, host } = p;
+  const slots = plantSlots(api, token);
   return (
     <CollectionPage
       api={api}
       token={token}
       newSpecies={p.newSpecies}
       onSpeciesChoose={p.onSpeciesChoose}
+      {...(p.onAdd ? { onAdd: p.onAdd } : {})}
       onCompleted={p.onCompleted}
       host={host}
+      {...(p.renderHint ? { renderHint: p.renderHint } : {})}
       {...(p.group === "location" ? { groupBy: "location" as const } : {})}
       onMeasure={p.setMeasure}
+      onManage={p.onOpenManage}
+      plantSlots={slots}
     />
   );
 }

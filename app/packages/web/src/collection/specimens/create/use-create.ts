@@ -1,5 +1,7 @@
 import { useCallback, useState } from "react";
-import type { Species, Specimen } from "@pflanzendex/core";
+import type { LightZone, Species, Specimen } from "@pflanzendex/core";
+import { useRequest } from "../../../kernel";
+import { loadZones } from "../../../light";
 import type { ApiError } from "../../../kernel";
 import type { CreateInput } from "./create-input";
 import { createSpecimen } from "../model/specimens-api";
@@ -17,6 +19,7 @@ export function useCreate(
 ) {
   const [created, setCreated] = useState<Specimen | null>(null);
   const { after, clearMessages, completed } = on;
+  const zones = useZones(api, token, !!newSpecies);
   const send = useCallback(
     async (input: CreateInput): Promise<ApiError | null> => {
       const t = await token();
@@ -31,5 +34,20 @@ export function useCreate(
     },
     [api, token, newSpecies, after, clearMessages, completed],
   );
-  return { created, send };
+  return { created, send, zones };
+}
+
+/** The own light zones for the zone field of the create form; loaded only while the form is open (US-LIC-02). */
+export function useZones(api: string, token: Token, enabled: boolean) {
+  const request = useRequest({
+    queryKey: ["collection", "zones"],
+    token,
+    enabled,
+    fresh: true,
+    load: (t: string) => loadZones(api, t),
+  });
+  return {
+    items: request.value ?? ([] as readonly LightZone[]),
+    failed: request.status === "error",
+  };
 }

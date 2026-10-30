@@ -2,6 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../../kernel";
 import { WateringList } from "./watering-list";
@@ -47,7 +48,9 @@ function fakeServer(initial: unknown[]) {
 const show = () =>
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <WateringList api="http://api" token={token} />
+      <MemoryRouter>
+        <WateringList api="http://api" token={token} />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 afterEach(() => {
@@ -104,7 +107,7 @@ describe("US-MON-05 watering list", () => {
       vi.fn<typeof fetch>(async (url, init) =>
         init?.method === "POST"
           ? response(404, {
-              error: { code: "specimen.not_found", text: "Dieses Exemplar gibt es nicht." },
+              error: { code: "specimen.not_found", text: "Diese Pflanze gibt es nicht." },
             })
           : response(200, { due: [ficus] }),
       ),
@@ -112,7 +115,7 @@ describe("US-MON-05 watering list", () => {
     const user = userEvent.setup();
     show();
     await user.click(await screen.findByRole("button", { name: "Ficus als gegossen eintragen" }));
-    expect((await screen.findByRole("alert")).textContent).toBe("Dieses Exemplar gibt es nicht.");
+    expect((await screen.findByRole("alert")).textContent).toBe("Diese Pflanze gibt es nicht.");
     expect(screen.getByText("Ficus")).toBeTruthy();
   });
 });

@@ -8,7 +8,8 @@ name: pflanzendex-storage
 services:
   minio:
     # Upstream stopped publishing MinIO images (Docker Hub, quay.io); Chainguard builds the current release from source.
-    image: cgr.dev/chainguard/minio:latest
+    # Pinned by digest (US-DEV-03): `latest` is the only free tag. Update with `docker buildx imagetools inspect` (index digest).
+    image: cgr.dev/chainguard/minio:latest@sha256:3b6e40c30ecd5cea627e382ff0b82ca841f58c52294578787043ee80c8ef7c82
     container_name: pflanzendex-minio
     command: server /data --console-address ":9001"
     environment:

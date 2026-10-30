@@ -2,6 +2,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Species, SpecimenCard } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
+import { findCardButton, openPlant } from "./plants-test-helpers";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../../insights/distribution-test-helpers";
@@ -68,13 +70,15 @@ function fakeServer(opts: { repotError?: Response } = {}) {
   return { posts };
 }
 const page = (newSpecies: Species | null = null) => (
-  <CollectionPage
-    api="http://api"
-    token={async () => "tok"}
-    newSpecies={newSpecies}
-    onSpeciesChoose={vi.fn()}
-    onCompleted={vi.fn()}
-  />
+  <MemoryRouter>
+    <CollectionPage
+      api="http://api"
+      token={async () => "tok"}
+      newSpecies={newSpecies}
+      onSpeciesChoose={vi.fn()}
+      onCompleted={vi.fn()}
+    />
+  </MemoryRouter>
 );
 
 afterEach(() => {
@@ -117,11 +121,11 @@ describe("US-BES-04 create a cutting in the form", () => {
     render(page(species));
     const tick = await screen.findByRole("checkbox", { name: /Das ist ein Steckling/ });
     expect((tick as HTMLInputElement).checked).toBe(false);
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]?.body).not.toHaveProperty("status");
     await userEvent.click(tick);
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await vi.waitFor(() => expect(posts).toHaveLength(2));
     expect(posts[1]?.body["status"]).toBe("cutting");
   });
@@ -150,14 +154,18 @@ describe("US-BES-04 repotted on the card", () => {
   it("US-BES-04: only a cutting has 'Eingetopft'", async () => {
     fakeServer();
     render(page());
-    expect(await screen.findByRole("button", { name: "Eingetopft: Ableger" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Eingetopft: Alte Pflanze" })).toBeNull();
+    expect(await findCardButton("Eingetopft: Ableger")).toBeTruthy();
+    await userEvent.keyboard("{Escape}");
+    await userEvent.keyboard("{Escape}");
+    await openPlant("Alte Pflanze");
+    expect(await findCardButton("Archivieren: Alte Pflanze")).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: "Eingetopft" })).toBeNull();
   });
 
   it("US-BES-04: repotting sends the request, reloads and says what happens next (P-09)", async () => {
     const { posts } = fakeServer();
     render(page());
-    await userEvent.click(await screen.findByRole("button", { name: "Eingetopft: Ableger" }));
+    await userEvent.click(await findCardButton("Eingetopft: Ableger"));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toMatchObject({ path: "/specimens/e1/repot", body: {} });
     expect(posts[0]?.key).toBeTruthy();
@@ -165,7 +173,7 @@ describe("US-BES-04 repotted on the card", () => {
     expect(status.textContent).toContain("„Ableger“ ist eingetopft");
     expect(status.textContent).toContain("Lichtzone");
     await vi.waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Eingetopft: Ableger" })).toBeNull(),
+      expect(screen.queryByRole("menuitem", { name: "Eingetopft" })).toBeNull(),
     );
   });
 
@@ -173,14 +181,14 @@ describe("US-BES-04 repotted on the card", () => {
     fakeServer({
       repotError: new Response(
         JSON.stringify({
-          error: { code: "specimen.not_a_cutting", text: "Dieses Exemplar ist kein Steckling." },
+          error: { code: "specimen.not_a_cutting", text: "Diese Pflanze ist kein Steckling." },
         }),
         { status: 409 },
       ),
     });
     render(page());
-    await userEvent.click(await screen.findByRole("button", { name: "Eingetopft: Ableger" }));
+    await userEvent.click(await findCardButton("Eingetopft: Ableger"));
     expect((await screen.findByRole("alert")).textContent).toContain("kein Steckling");
-    expect(screen.getByRole("button", { name: "Eingetopft: Ableger" })).toBeTruthy();
+    expect(await findCardButton("Eingetopft: Ableger")).toBeTruthy();
   });
 });

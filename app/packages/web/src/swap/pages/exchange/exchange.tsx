@@ -30,32 +30,32 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
           {errorText(withdraw.error.code)}
         </p>
       )}
-      <OfferList
-        offers={props.data.offers}
-        busy={withdraw.running}
-        onWithdraw={(o: OfferView) =>
-          void withdraw.run(
-            (t) => withdrawOffer(api, t, o.id),
-            `Das Angebot für ${o.specimenName ?? "das Exemplar"} ist zurückgezogen.`,
-          )
-        }
-      />
-      <SwapRequests api={api} token={props.token} />
-      <FriendOffers api={api} token={props.token} />
-      <SwapHistory api={api} token={props.token} />
       <OfferForm
         api={api}
         token={props.token}
         specimens={props.data.specimens}
         onChanged={props.onWritten}
       />
+      <OfferList
+        offers={props.data.offers}
+        busy={withdraw.running}
+        onWithdraw={(o: OfferView) =>
+          void withdraw.run(
+            (t) => withdrawOffer(api, t, o.id),
+            `Das Angebot für ${o.specimenName ?? "die Pflanze"} ist zurückgezogen.`,
+          )
+        }
+      />
+      <SwapRequests api={api} token={props.token} />
+      <FriendOffers api={api} token={props.token} />
+      <SwapHistory api={api} token={props.token} />
     </div>
   );
 }
 
 /**
  * The exchange (US-SOZ-08, ADR 0012): my offers and the dialog to offer a specimen for swapping or giving away. The offers of
- * friends and requesting them (US-SOZ-09) sit above the dialog. Private by default: nothing is offered without the sharing of the
+ * friends and requesting them (US-SOZ-09) sit below the dialog: the next action comes first (P-09). Private by default: nothing is offered without the sharing of the
  * specimen (P-05), and there are no rankings (FR-SOZ-11).
  */
 export function ExchangePage(props: { api: string; token: Token }) {
@@ -65,16 +65,19 @@ export function ExchangePage(props: { api: string; token: Token }) {
   return (
     <div className="rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7">
       <section aria-labelledby="exchange-title" className="flex min-w-0 flex-col gap-3">
-        <div>
+        <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline" size="touch">
             <Link to="/friends">Zurück zu Freunde</Link>
+          </Button>
+          <Button asChild variant="outline" size="touch">
+            <Link to="/friends/match">Passende Angebote</Link>
           </Button>
         </div>
         <h1 id="exchange-title" className="text-2xl font-semibold">
           Tauschbörse
         </h1>
         <p className="text-muted-foreground">
-          Biete Exemplare zum Tausch oder zum Verschenken an. Nur deine Freunde sehen ein Angebot,
+          Biete Pflanzen zum Tausch oder zum Verschenken an. Nur deine Freunde sehen ein Angebot,
           und nur, was du für sie freigegeben hast.
         </p>
         <LoadFrame

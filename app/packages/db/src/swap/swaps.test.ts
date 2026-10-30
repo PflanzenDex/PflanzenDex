@@ -1,7 +1,12 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createAccountWithName, createFixtureSpecimen } from "../fixtures.ts";
+import {
+  createAccountWithName,
+  createFixtureSpecimen,
+  createSuperuserOwnerDatabase,
+  type SuperuserOwnerDatabase,
+} from "../fixtures.ts";
 import { migrate, openFixturePool, openOwnerPool, withAccount } from "../kernel/index.ts";
 import { MeasurementsPostgres, TreatmentsPostgres } from "../care/index.ts";
 import { SpecimenPostgres } from "../collection/index.ts";
@@ -675,5 +680,52 @@ describe("US-SOZ-11 the handover in one transaction", () => {
     expect(p.get(done.received)?.date).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect((await swaps.provenanceFor(anna, [done.received])).size).toBe(0);
     expect((await swaps.provenanceFor(ben, [])).size).toBe(0);
+  });
+});
+
+// #891: the `security definer` functions must give the same answer when the owner of the tables bypasses row security
+// (a superuser: the cluster user of the Docker image and of `make dev`). A scratch database owned by the superuser.
+describe("US-SOZ-09 / US-TAU-03 requesting a friend's offer with a superuser as table owner (#891)", () => {
+  const [clara, benno, fremd] = [randomUUID(), randomUUID(), randomUUID()];
+  let db: SuperuserOwnerDatabase;
+  let su: Pool;
+  beforeAll(async () => {
+    db = await createSuperuserOwnerDatabase("swap");
+    su = db.pool;
+    for (const id of [clara, benno, fremd])
+      await createAccountWithName(su, id, `S-${id.slice(0, 4)}`);
+  });
+  afterAll(async () => {
+    await db.drop();
+  });
+
+  async function suOffer(owner: string, name: string) {
+    const s = await createFixtureSpecimen(su, owner, name, su);
+    await new SharingPostgres(su).set(owner, s, true, false);
+    return (await new OffersPostgres(su).create(owner, {
+      specimenId: s,
+      type: "cutting",
+      mode: "swap",
+      wish: null,
+      note: null,
+    })) as { id: string };
+  }
+
+  it("US-SOZ-09 a friend can request the offer (not own_offer), a stranger's offer stays unknown, the own one is refused", async () => {
+    const f = new FriendsPostgres(su);
+    const code = newCode();
+    await f.createCode(benno, { code, expiresAt: new Date(Date.now() + 86_400_000).toISOString() });
+    await f.requestWithCode(clara, code);
+    await f.answer(benno, (await f.openRequests(benno))[0]?.id as string, true);
+    const bens = await suOffer(benno, "Bens Ableger");
+    const fremds = await suOffer(fremd, "Fremder Ableger");
+    const sw = new SwapsPostgres(su);
+    const listed = (await sw.friendOffers(clara)).map((o) => o.offerId);
+    expect(listed).toEqual([bens.id]);
+    expect((await sw.request(clara, fremds.id, null, null)).outcome).toBe("offer_unknown");
+    expect((await sw.request(benno, bens.id, null, null)).outcome).toBe("own_offer");
+    expect((await sw.request(clara, bens.id, null, "Gern gegen einen Ableger")).outcome).toBe(
+      "requested",
+    );
   });
 });

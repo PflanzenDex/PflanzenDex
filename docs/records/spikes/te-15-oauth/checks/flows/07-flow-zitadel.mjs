@@ -32,8 +32,8 @@ console.log("\n[A] resource + Scope pflanzen:read");
 let a = await authorize("openid offline_access pflanzen:read", RES, "ZA"); console.log("  Redirect parameters:", JSON.stringify({ ...a.res, code: a.res.code ? "…" : undefined }));
 let t = await exchange(a, RES); console.log("  Token:", JSON.stringify(show(t))); console.log("  Token-Antwort-Felder:", Object.keys(t.j || {}).join(","), "| scope:", t.j?.scope);
 const refresh = t.j?.refresh_token; const at = t.j?.access_token;
-if (at && fs.existsSync("../servers/zitadel/secrets/admin.pat")) {
-  const pat = fs.readFileSync("../servers/zitadel/secrets/admin.pat", "utf8").trim();
+const pat = (process.env.ZITADEL_ADMIN_PAT || "").trim(); // set from ../servers/zitadel/secrets/admin.pat by the caller; never read from disk here
+if (at && pat) {
   const ir = await fetch(meta.introspection_endpoint, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", authorization: `Bearer ${pat}` }, body: new URLSearchParams({ token: at }) });
   const ij = await ir.json().catch(() => ({})); console.log("  Introspection (with service user PAT) ->", ir.status, JSON.stringify({ active: ij.active, scope: ij.scope, aud: ij.aud, client_id: ij.client_id, azp: ij.azp, sub: ij.sub?.slice(0, 8) }));
 }

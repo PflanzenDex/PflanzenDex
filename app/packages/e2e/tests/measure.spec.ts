@@ -1,5 +1,5 @@
 import { axeReport } from "../support/axe";
-import { signIn, expect, test } from "../support/fixtures";
+import { openFirstPlant, signIn, expect, test } from "../support/fixtures";
 import type { Page } from "@playwright/test";
 
 // Core flow R1: record a measurement (US-WAC-01), signed in, against the real API and database.
@@ -19,8 +19,8 @@ async function withSpecimen(page: Page, species: string): Promise<void> {
   await proposal.getByRole("button", { name: "Vorschlag speichern" }).click();
   await page.getByRole("button", { name: "Diese Art wählen" }).click();
   await page
-    .getByRole("form", { name: "Exemplar anlegen" })
-    .getByRole("button", { name: "Exemplar anlegen" })
+    .getByRole("form", { name: "Pflanze anlegen" })
+    .getByRole("button", { name: "Pflanze anlegen" })
     .click();
   await expect(page.getByRole("heading", { level: 1, name: "Sammlung" })).toBeVisible();
 }
@@ -28,6 +28,7 @@ async function withSpecimen(page: Page, species: string): Promise<void> {
 /** From any view: the Sammlung, then the measuring view of the first plant. */
 async function measureFromCollection(page: Page): Promise<void> {
   await page.getByRole("link", { name: "Sammlung", exact: true }).click();
+  await openFirstPlant(page);
   await page.getByRole("button", { name: /^Messen: / }).click();
 }
 
@@ -38,6 +39,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
   }, info) => {
     await signIn(page, account);
     await withSpecimen(page, "Echeveria elegans");
+    await openFirstPlant(page);
     await page.getByRole("button", { name: /^Messen: / }).click();
 
     await expect(page.getByRole("heading", { level: 1, name: /^Messen: / })).toBeVisible();
@@ -52,8 +54,9 @@ test.describe("US-WAC-01 Messung erfassen", () => {
     await form.getByLabel("Notiz (optional)").fill("nach dem Umtopfen");
     await form.getByRole("button", { name: "Messung speichern" }).click();
 
-    await expect(page.getByText(/^Gespeichert: 12,5 cm am \d\d\.\d\d\.\d{4}\.$/)).toBeVisible();
-    await expect(page.getByRole("heading", { level: 3, name: /^12,5 cm · / })).toBeVisible();
+    // Value and unit are joined by a non-breaking space (US-QS-24); `\s` matches it.
+    await expect(page.getByText(/^Gespeichert: 12,5\scm am \d\d\.\d\d\.\d{4}\.$/)).toBeVisible();
+    await expect(page.getByRole("heading", { level: 3, name: /^12,5\scm · / })).toBeVisible();
     await expect(page.getByText("nach dem Umtopfen", { exact: true })).toBeVisible();
     await axeReport(page, info, "measure-erfasst");
 
@@ -77,6 +80,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
   test("US-WAC-01 an invalid input is rejected and writes nothing", async ({ page, account }) => {
     await signIn(page, account);
     await withSpecimen(page, "Aloe polyphylla");
+    await openFirstPlant(page);
     await page.getByRole("button", { name: /^Messen: / }).click();
     const form = page.getByRole("form", { name: "Messung erfassen" });
     for (const value of ["abc", "-3"]) {

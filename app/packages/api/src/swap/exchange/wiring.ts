@@ -2,9 +2,20 @@ import {
   speciesDisplayName,
   wishNameKey,
   type ExchangeDependencies,
+  type MatchContext,
   type OfferDependencies,
+  type WishHints,
 } from "@pflanzendex/core";
-import { SpeciesPostgres, SpecimenPostgres, SwapsPostgres, WishesPostgres } from "@pflanzendex/db";
+import {
+  FriendsPostgres,
+  MatchAnswersPostgres,
+  OffersPostgres,
+  SpeciesPostgres,
+  SpecimenPostgres,
+  SwapsPostgres,
+  WishesPostgres,
+  WishVisibilityPostgres,
+} from "@pflanzendex/db";
 import type { Pool } from "pg";
 
 /**
@@ -55,10 +66,84 @@ export function exchangeDependencies(pool: Pool, offer: OfferDependencies): Exch
         return names.filter((n): n is string => n !== null);
       },
     },
-    wishes: {
-      async onWishlist(userId, latinNames) {
-        const keys = new Set((await wishes.open(userId)).map((w) => wishNameKey(w.name)));
-        return new Set(latinNames.filter((n) => keys.has(wishNameKey(n))));
+    wishes: wishHints(wishes),
+  };
+}
+
+/**
+ * The wishlist answers a yes or no per species and the own reasoning of the wish, never its list (FR-WUN-07): a wish counts
+ * for a species when its folded name equals the folded Latin name (US-TAU-04).
+ */
+function wishHints(wishes: WishesPostgres): WishHints {
+  return {
+    async onWishlist(userId, latinNames) {
+      const keys = new Set((await wishes.open(userId)).map((w) => wishNameKey(w.name)));
+      return new Set(latinNames.filter((n) => keys.has(wishNameKey(n))));
+    },
+    async reasoningOf(userId, latinNames) {
+      const written = new Map(
+        (await wishes.open(userId)).flatMap((w) =>
+          w.reasoning !== null ? [[wishNameKey(w.name), w.reasoning] as const] : [],
+        ),
+      );
+      return new Map(
+        latinNames.flatMap((n) => {
+          const text = written.get(wishNameKey(n));
+          return text !== undefined ? [[n, text] as const] : [];
+        }),
+      );
+    },
+  };
+}
+
+/**
+ * What the match deck needs besides the exchange (US-TAU-02, US-TAU-05, US-TAU-07): the private answers, the clock, the
+ * counts that explain an empty deck, and the keeper's own open offers for "fits both ways". Everything is read as the
+ * keeper under the row rules (P-04); the species names of the own offers come from the same facts port as the exchange.
+ */
+export function matchContext(
+  pool: Pool,
+  deps: ExchangeDependencies,
+  clock: () => Date,
+): MatchContext {
+  const friends = new FriendsPostgres(pool);
+  const wishes = new WishesPostgres(pool);
+  const offers = new OffersPostgres(pool);
+  const visibility = new WishVisibilityPostgres(pool);
+  return {
+    answers: new MatchAnswersPostgres(pool),
+    clock,
+    // The marked wishes of friends answer only for the species of the keeper's own open offers (DM-TAU-02, FR-WUN-07).
+    friendWishes: {
+      async wantedBy(userId, latinNames) {
+        const byKey = new Map(latinNames.map((n) => [wishNameKey(n), n]));
+        const found = await visibility.friendWants(userId, [...byKey.keys()]);
+        return new Map(
+          [...found].map(([friend, keys]) => [
+            friend,
+            new Set([...keys].flatMap((k) => (byKey.has(k) ? [byKey.get(k) as string] : []))),
+          ]),
+        );
+      },
+    },
+    counts: {
+      friends: async (userId) => (await friends.friends(userId)).length,
+      wishes: async (userId) => (await wishes.open(userId)).length,
+    },
+    mine: {
+      async open(userId) {
+        const open = (await offers.list(userId)).filter((o) => o.status === "open");
+        const facts = await deps.facts.describe(
+          userId,
+          open.map((o) => o.specimenId),
+        );
+        const byId = new Map(facts.map((f) => [f.id, f]));
+        return open.map((o) => ({
+          offerId: o.id,
+          specimenId: o.specimenId,
+          speciesLatin: byId.get(o.specimenId)?.speciesLatin ?? null,
+          speciesGerman: byId.get(o.specimenId)?.speciesGerman ?? null,
+        }));
       },
     },
   };

@@ -1,6 +1,7 @@
 # Deploy with GitHub Actions (TE-19, #749, E-14, FR-QG-14): manual only. Pick the environment (`test` or `prod`) and
 # a ref; a GitHub-hosted runner joins the owner's tailnet as a short-lived node (`tag:ci`) and runs
-# `app/config/deploy/scripts/deploy.sh <sha>` on that environment's host over Tailscale SSH. The script backs up,
+# `app/config/deploy/scripts/deploy.sh <sha>` on that environment's host over Tailscale SSH (after `apply-env.sh` has
+# written the allowlisted GitHub environment settings into the host's .env, #1013). The script backs up,
 # migrates, smoke-tests and rolls back by itself; a non-zero exit turns this run red.
 #   test: any branch, tag or commit of this repository; snapshot versions (`git describe` = vX.Y.Z-N-g<sha>) are fine.
 #   prod: only a commit on `main` that carries a stable release tag `vX.Y.Z` (no suffix, not the seed tag v0.0.0).
@@ -99,6 +100,71 @@ jobs:
       # Tailscale SSH authenticates both sides through the tailnet (WireGuard node keys, policy rule tag:ci -> deploy),
       # so there is no key or password and no known_hosts file on the runner. `accept-new` records the host key on first
       # contact without asking; a changed key on a later contact would still be refused. `BatchMode` never prompts.
+      # Settings from the GitHub environment (#1013): variables and secrets whose names are in
+      # .github/deploy-env-allowlist.txt and that are set (non-empty) are written into the host's
+      # app/config/deploy/.env before deploy.sh runs. Unknown names are never sent. The values travel over the SSH
+      # stdin only (not in argv, not in a log); secrets are masked first. The host script is taken from this checkout and
+      # passed as base64 text, so it also works on a host whose checkout is older than the script (public code, not a
+      # secret). The step prints key names and changed/unchanged only. If it fails, the deploy step does not run.
+      # Secrets: only the `secret` entries of the allowlist are mapped below, one `SECRET_<KEY>` each (never the whole
+      # secrets context, which would hand every organization, repository and environment secret to this step, #1049).
+      # A test keeps this list equal to the allowlist. Variables are not secret and come in as `toJSON(vars)`.
+      - id: apply_env
+        env:
+          TARGET_ENV: ${{ inputs.environment }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_REPO_PATH: ${{ vars.DEPLOY_REPO_PATH }}
+          VARS_JSON: ${{ toJSON(vars) }}
+          SECRET_DB_OWNER_PASSWORD: ${{ secrets.DB_OWNER_PASSWORD }}
+          SECRET_KEYCLOAK_DB_PASSWORD: ${{ secrets.KEYCLOAK_DB_PASSWORD }}
+          SECRET_KEYCLOAK_ADMIN_PASSWORD: ${{ secrets.KEYCLOAK_ADMIN_PASSWORD }}
+          SECRET_SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SECRET_MAIL_UI_HASH: ${{ secrets.MAIL_UI_HASH }}
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::$1"; exit 1; }
+          repo_path="${DEPLOY_REPO_PATH:-/opt/pflanzendex}"
+          payload=""
+          count=0
+          while read -r key kind; do
+            case "$key" in "" | "#"*) continue ;; esac
+            printf '%s' "$key" | grep -Eq '^[A-Z][A-Z0-9_]{0,63}$' || fail "Invalid key in deploy-env-allowlist.txt."
+            case "$kind" in
+              secret)
+                secret_var="SECRET_$key"
+                [ -n "${!secret_var+set}" ] || fail "Secret $key is allowlisted but not mapped in the apply_env step."
+                value="${!secret_var}"
+                ;;
+              var) value="$(jq -r --arg k "$key" '.[$k] // ""' <<< "$VARS_JSON")" ;;
+              *) fail "Unknown kind for $key in deploy-env-allowlist.txt." ;;
+            esac
+            [ -n "$value" ] || continue
+            if [ "$kind" = secret ]; then echo "::add-mask::$value"; fi
+            if [[ "$value" =~ [[:cntrl:]] || "$value" == *"'"* ]]; then
+              fail "The value of $key contains a control character or a single quote; not sent."
+            fi
+            payload+="$key=$value"$'\n'
+            count=$((count + 1))
+          done < .github/deploy-env-allowlist.txt
+          if [ "$count" -eq 0 ]; then
+            echo "No allowlisted variable or secret is set in the environment $TARGET_ENV; the host .env stays as it is."
+            exit 0
+          fi
+          script_b64="$(base64 -w0 app/config/deploy/scripts/apply-env.sh)"
+          remote="bash -c \"\$(echo $script_b64 | base64 -d)\" apply-env $(printf '%q' "$repo_path/app/config/deploy/.env")"
+          status=0
+          printf '%s' "$payload" | ssh -o BatchMode=yes -o ConnectTimeout=30 -o StrictHostKeyChecking=accept-new \
+            "deploy@$DEPLOY_HOST" -- "$remote" > "$RUNNER_TEMP/apply-env.log" 2>&1 || status=$?
+          cat "$RUNNER_TEMP/apply-env.log"
+          {
+            echo "### Settings applied to the $TARGET_ENV host ($count keys sent)"
+            echo
+            echo '```text'
+            cat "$RUNNER_TEMP/apply-env.log"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          [ "$status" -eq 0 ] || fail "apply-env failed (exit $status); the deploy was not started."
+
       - id: deploy
         env:
           TARGET_ENV: ${{ inputs.environment }}

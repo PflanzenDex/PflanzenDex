@@ -11,10 +11,10 @@ import {
 import { DISPLAY_NAME, type NavItem } from "../nav-item";
 
 export type View =
-  "start" | "today" | "collection" | "discover" | "friends" | "review" | "operator" | "account";
+  "today" | "collection" | "discover" | "friends" | "review" | "operator" | "account";
 
 /** What a link inside the app can open: a destination, or one of the three views that moved into the Sammlung (US-QS-14). */
-export type LinkTarget = View | "species" | "light" | "carePhases" | "careProfile";
+export type LinkTarget = View | "species" | "light" | "carePhases" | "careProfile" | "addPlant";
 
 /** Pflegephasen, Pflegeprofil and Standorte und Licht are no destinations any more: they live in the Sammlung (US-QS-14). */
 const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
@@ -29,10 +29,11 @@ const ENTRIES: { id: View; text: string; icon: LucideIcon }[] = [
 
 /** The exchange (ADR 0012) lives below "Freunde", no destination of its own (US-SOZ-08). */
 export const EXCHANGE_PATH = "/friends/exchange";
+/** The match deck (epic TAU) is a mode of "Freunde" next to the exchange, no destination of its own (US-QS-14). */
+export const MATCH_PATH = "/friends/match";
 
 /** One URL path per view (English); the link texts above stay German. */
 export const PATHS: Record<View, string> = {
-  start: "/",
   today: "/today",
   collection: "/collection",
   discover: "/discover",
@@ -49,6 +50,8 @@ export const PATHS: Record<View, string> = {
  * (`/discover/species/:id`), so the navigation keeps "Entdecken" as the current destination; the old
  * `/species/:id` redirects there.
  */
+/** The quick flow for a further plant, below the Sammlung (US-ONB-01). */
+export const ADD_PLANT_PATH = `${PATHS.collection}/new`;
 export const LEGACY_SPECIES_PATH = "/species";
 export const CATALOG_ADDRESS = `${PATHS.discover}?view=catalog`;
 export const PROFILE_BASE = `${PATHS.discover}/species`;
@@ -70,30 +73,25 @@ export const SPECIES_MODE_ADDRESS = `${PATHS.collection}?view=species`;
 /** The former addresses of the destinations "Behandlung" and "Hinweise": they open the sections of "Heute" (US-QS-14). */
 export const LEGACY_TREATMENTS_PATH = "/treatments";
 export const LEGACY_HINTS_PATH = "/hints";
-/** The sections of "Heute" below "Jetzt dran" by the anchor in the address, e.g. `/today#behandlungen` (US-QS-14). */
-export const TODAY_SECTIONS = {
-  treatments: "behandlungen",
-  watering: "giessen",
-  hints: "fehlt-noch",
-} as const;
-export type TodaySection = keyof typeof TODAY_SECTIONS;
-export const todayAddress = (section: TodaySection) => `${PATHS.today}#${TODAY_SECTIONS[section]}`;
+/** The address that opens the layer of a topic of "Heute", e.g. `/today?sheet=treatments` (US-QS-18). */
+export type TodaySection = "treatments" | "watering" | "hints";
+export const todayAddress = (section: TodaySection) => `${PATHS.today}?sheet=${section}`;
 
 /** The former address of the destination "Einstellungen": it opens the section "Einstellungen" of "Konto" (US-QS-14). */
 export const LEGACY_SETTINGS_PATH = "/settings";
-/** The sections of "Konto" by the anchor in the address, e.g. `/account#einstellungen` (US-QS-14). */
-export const ACCOUNT_SECTIONS = {
-  profile: "profil",
-  settings: "einstellungen",
-  achievements: "erfolge",
-  reminders: "erinnerungen",
-  aiClients: "ki-clients",
-  measured: "gemessen",
-  data: "daten",
-} as const;
-export type AccountSection = keyof typeof ACCOUNT_SECTIONS;
+/** The sections of "Konto", each with its own address `/account/<segment>`, e.g. `/account/settings` (US-QS-17). */
+export type AccountSection =
+  | "profile"
+  | "settings"
+  | "achievements"
+  | "reminders"
+  | "aiClients"
+  | "measured"
+  | "functions"
+  | "data";
+/** The path segment of a section is its key in kebab-case (`aiClients` is `ai-clients`). */
 export const accountAddress = (section: AccountSection) =>
-  `${PATHS.account}#${ACCOUNT_SECTIONS[section]}`;
+  `${PATHS.account}/${section.replace(/[A-Z]/g, (c) => "-" + c.toLowerCase())}`;
 
 /** The former addresses of "Pflegephasen", "Pflegeprofil" and "Standorte und Licht" (US-QS-14). */
 export const LEGACY_CARE_PHASES_PATH = "/care-phases";
@@ -121,13 +119,17 @@ export const viewAddress = (v: LinkTarget): string =>
         ? PHASES_ADDRESS
         : v === "careProfile"
           ? SPECIES_MODE_ADDRESS
-          : PATHS[v];
+          : v === "addPlant"
+            ? ADD_PLANT_PATH
+            : PATHS[v];
 
 type Who = {
   reviewer?: boolean | undefined;
   operator?: boolean | undefined;
   /** `false` hides "Freunde" (the function group "social" is off for the account, US-DEV-06). */
   social?: boolean | undefined;
+  /** Destinations that are not open yet, with their text mark; they keep place, order and name (US-ONB-05, US-QS-09). */
+  locks?: Partial<Record<View, string>> | undefined;
 };
 
 const visible = (id: View, who: Who) =>
@@ -148,6 +150,7 @@ export function navItems(who: Who): NavItem[] {
     href: PATHS[e.id],
     label: e.text,
     icon: <e.icon aria-hidden="true" className="size-5 shrink-0" />,
+    ...(who.locks?.[e.id] ? { note: who.locks[e.id] } : {}),
   }));
 }
 
@@ -161,11 +164,15 @@ export const pageTitle = (view?: string) => (view ? `${view} – ${PRODUCT}` : P
  * agree; a species profile has its own address below `/discover/species`. Unknown addresses redirect, so they only get the product.
  */
 export function viewTitle(pathname: string): string {
-  // The start page is no destination (brand link, landing page) but keeps its page title.
-  if (pathname === PATHS.start) return pageTitle("Start");
-  const entry = ENTRIES.find((e) => PATHS[e.id] === pathname);
+  const entry = ENTRIES.find(
+    (e) =>
+      PATHS[e.id] === pathname || (e.id === "account" && pathname.startsWith(`${PATHS.account}/`)),
+  );
   if (entry) return pageTitle(entry.text);
+  if (pathname === ADD_PLANT_PATH) return pageTitle("Pflanze anlegen");
   if (pathname === EXCHANGE_PATH) return pageTitle("Tauschbörse");
+  if (pathname === MATCH_PATH) return pageTitle("Passende Angebote");
   if (pathname.startsWith(`${PATHS.friends}/`)) return pageTitle("Sammlung eines Freundes");
+  if (pathname.startsWith("/unlock/")) return pageTitle("Funktion freischalten");
   return pathname.startsWith(`${PROFILE_BASE}/`) ? pageTitle("Artenprofil") : pageTitle();
 }

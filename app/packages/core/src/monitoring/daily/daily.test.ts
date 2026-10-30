@@ -16,7 +16,7 @@ const treatment: Occasion = {
   id: "treatment:1",
   occasion: "treatment",
   text: "„Ficus“: gießen – heute fällig.",
-  nextAction: "Behandle das Exemplar.",
+  nextAction: "Behandle die Pflanze.",
 };
 const sub = { endpoint: "https://push.example/abc", p256dh: "k", auth: "a" };
 

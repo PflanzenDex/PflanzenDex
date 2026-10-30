@@ -17,9 +17,9 @@ vi.mock("./catalog/species-page/species-page", () => {
   loaded.pages.push("catalog");
   return { SpeciesPage: () => null };
 });
-vi.mock("./shell/start-page/start-page", () => {
-  loaded.pages.push("start");
-  return { StartPage: () => null };
+vi.mock("@/components/routing/areas/today-area/today-area", () => {
+  loaded.pages.push("today-area");
+  return { TodayArea: () => <h1>Heute</h1> };
 });
 vi.mock("./pokedex/pokedex-page/pokedex-page", () => {
   loaded.pages.push("pokedex");
@@ -49,6 +49,7 @@ const renderAt = (path: string) => {
           setNewSpecies: () => undefined,
           choose: () => undefined,
           toTheCatalog: () => undefined,
+          toAddPlant: () => undefined,
           onCreated: () => undefined,
           startFromWish: () => undefined,
         }}
@@ -98,8 +99,14 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
     );
   });
 
-  it("#451 · DS-08 the start route loads the start page chunk on demand", async () => {
+  it("US-QS-16 · DS-08 the root address leads to Heute, which loads its chunk on demand", async () => {
     renderAt("/");
-    await vi.waitFor(() => expect(loaded.pages).toContain("start"));
+    expect(await screen.findByRole("heading", { name: "Heute" })).toBeTruthy();
+    expect(loaded.pages).toContain("today-area");
+  });
+
+  it("US-QS-16 an unknown address leads to Heute", async () => {
+    renderAt("/gibt-es-nicht");
+    expect(await screen.findByRole("heading", { name: "Heute" })).toBeTruthy();
   });
 });

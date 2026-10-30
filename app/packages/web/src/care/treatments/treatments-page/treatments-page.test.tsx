@@ -2,10 +2,12 @@
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { deliverBuffered } from "@/platform/announcer/outbox";
 import { AnnouncerProvider } from "@/platform/announcer/announcer";
 import { TreatmentsPage } from "./treatments-page";
+import { OpenTreatments } from "../open-treatments/open-treatments";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -95,8 +97,8 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     cleanup();
     fakeServer([]);
     show();
-    expect(await screen.findByText(/Lege zuerst ein Exemplar im Bestand an/)).toBeTruthy();
-    const links = screen.getAllByRole("link", { name: "Zum Bestand" });
+    expect(await screen.findByText(/Lege zuerst eine Pflanze in der Sammlung an/)).toBeTruthy();
+    const links = screen.getAllByRole("link", { name: "Zur Sammlung" });
     expect(links.length).toBeGreaterThan(0);
     for (const link of links) expect(link.getAttribute("href")).toBe("/collection");
   });
@@ -129,7 +131,7 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     show();
     await user.click(await screen.findByRole("button", { name: "Behandlung speichern" }));
     const alerts = await screen.findAllByRole("alert");
-    expect(alerts.map((a) => a.textContent).join(" ")).toContain("Exemplar");
+    expect(alerts.map((a) => a.textContent).join(" ")).toContain("Pflanze");
     await user.click(screen.getByRole("checkbox", { name: "Bogenhanf" }));
     await user.click(screen.getByRole("button", { name: "Behandlung speichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Grund");
@@ -159,7 +161,7 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
   it("US-BEH-01 a refusal of the server stays visible with its text and keeps the input (P-10)", async () => {
     fakeServer([specimen("e1", "Bogenhanf")], () =>
       response(409, {
-        error: { code: "specimen.archived", text: "Dieses Exemplar ist archiviert." },
+        error: { code: "specimen.archived", text: "Diese Pflanze ist archiviert." },
       }),
     );
     const user = userEvent.setup();
@@ -190,7 +192,7 @@ const due = (
 });
 
 describe("US-BEH-02 offene Behandlungen", () => {
-  it("US-BEH-02 shows plant, reason, agent or a dash, due date and status in the order of the server", async () => {
+  it("US-BEH-02 · US-QS-18 shows plant, reason, agent or a dash, due date and status in the order of the server", async () => {
     fakeServer([specimen("e1", "Bogenhanf")], undefined, () =>
       response(200, {
         treatments: [
@@ -208,20 +210,20 @@ describe("US-BEH-02 offene Behandlungen", () => {
     expect(items[0]?.textContent).toContain("Grund a");
     expect(items[0]?.textContent).toContain("Neemöl");
     expect(items[0]?.textContent).toContain("01.10.2026");
-    expect(items[0]?.textContent).toContain("überfällig seit 2 Tagen");
-    expect(items[1]?.textContent).toContain("Mittel: —");
+    expect(items[0]?.textContent).toContain("2\u00a0Tage überfällig");
+    expect(items[1]?.textContent).toContain("kein Mittel");
     expect(items[1]?.textContent).toContain("heute fällig");
     expect(items[2]?.textContent).toContain("20.10.2026");
   });
 
-  it("US-QS-14 the status chip is a soft box, not a pill, so a wrapped status text keeps a calm shape", async () => {
+  it("US-QS-14 · US-QS-18 the status chip is a soft box, not a pill, so a wrapped status text keeps a calm shape", async () => {
     fakeServer([specimen("e1", "Bogenhanf")], undefined, () =>
       response(200, {
         treatments: [due("a", "Aloe", "2026-10-01", "overdue", "überfällig seit 13 Tagen")],
       }),
     );
     show();
-    const chip = await screen.findByText("überfällig seit 13 Tagen");
+    const chip = await screen.findByText("13 Tage überfällig");
     expect(chip.className).toContain("rounded-control");
     expect(chip.className).not.toContain("rounded-full");
   });
@@ -392,7 +394,7 @@ describe("US-BEH-03 Behandlung abhaken", () => {
   it("US-BEH-03 a refusal stays visible with its text and the row stays open (P-10)", async () => {
     doneServer(() =>
       response(409, {
-        error: { code: "specimen.archived", text: "Dieses Exemplar ist archiviert." },
+        error: { code: "specimen.archived", text: "Diese Pflanze ist archiviert." },
       }),
     );
     const user = userEvent.setup();
@@ -422,15 +424,15 @@ describe("US-BEH-03 Behandlung abhaken", () => {
   });
 });
 
-describe("US-BEH-03 Verlauf je Exemplar", () => {
+describe("US-BEH-03 Verlauf je Pflanze", () => {
   it("US-BEH-03 asks to choose a specimen first (P-09), then lists its done treatments with the done date", async () => {
     doneServer(undefined, [doneEntry("x", "2026-10-03", "Neemöl"), doneEntry("y", "2026-09-20")]);
     const user = userEvent.setup();
     show();
     expect(
-      await screen.findByText(/Wähle ein Exemplar, um erledigte Behandlungen zu sehen/),
+      await screen.findByText(/Wähle eine Pflanze, um erledigte Behandlungen zu sehen/),
     ).toBeTruthy();
-    await user.selectOptions(await screen.findByLabelText("Exemplar für den Verlauf"), "s-a");
+    await user.selectOptions(await screen.findByLabelText("Pflanze für den Verlauf"), "s-a");
     const list = await screen.findByRole("list", { name: "Erledigte Behandlungen" });
     const items = within(list).getAllByRole("listitem");
     expect(items).toHaveLength(2);
@@ -444,7 +446,7 @@ describe("US-BEH-03 Verlauf je Exemplar", () => {
     doneServer(undefined, []);
     const user = userEvent.setup();
     show();
-    await user.selectOptions(await screen.findByLabelText("Exemplar für den Verlauf"), "s-b");
+    await user.selectOptions(await screen.findByLabelText("Pflanze für den Verlauf"), "s-b");
     expect(await screen.findByText(/Noch keine erledigte Behandlung/)).toBeTruthy();
   });
 
@@ -453,7 +455,7 @@ describe("US-BEH-03 Verlauf je Exemplar", () => {
     doneServer(undefined, entries);
     const user = userEvent.setup();
     show();
-    await user.selectOptions(await screen.findByLabelText("Exemplar für den Verlauf"), "s-a");
+    await user.selectOptions(await screen.findByLabelText("Pflanze für den Verlauf"), "s-a");
     await screen.findByText(/Noch keine erledigte Behandlung/);
     entries.push(doneEntry("z", "2026-10-03"));
     await user.click(
@@ -523,7 +525,12 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
       onchange: null,
     })) as unknown as typeof window.matchMedia;
   });
-  const showHost = () => render(<TreatmentsPage api="http://api" token={token} host />);
+  const showHost = () =>
+    render(
+      <MemoryRouter>
+        <TreatmentsPage api="http://api" token={token} host />
+      </MemoryRouter>,
+    );
 
   it("US-QS-14 has no h1 and no title of its own; its headings are level 3", async () => {
     doneServer();
@@ -540,9 +547,7 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
     doneServer();
     showHost();
     const list = await screen.findByRole("list", { name: "Offene Behandlungen" });
-    expect(within(list).getByText("überfällig seit 2 Tagen").className).toContain(
-      "rounded-control",
-    );
+    expect(within(list).getByText("2 Tage überfällig").className).toContain("rounded-control");
   });
 
   it("US-QS-14 · US-BEH-01 the form is not on the page until Behandlung planen is chosen", async () => {
@@ -552,5 +557,48 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
     expect(screen.queryByRole("button", { name: "Behandlung speichern" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Behandlung planen" }));
     expect(await screen.findByRole("button", { name: "Behandlung speichern" })).toBeTruthy();
+  });
+});
+
+describe("US-QS-15 the open treatments fit a layer", () => {
+  it("US-QS-15 · US-BEH-03 a row is compact: reason and agent in one line, the chip, and an outline Erledigt that names the plant", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              treatments: [
+                {
+                  id: "a",
+                  specimenName: "Aloe",
+                  reason: "Läuse",
+                  agent: "Neemöl",
+                  dueAt: "2026-10-01",
+                  status: { kind: "overdue", text: "überfällig seit 2 Tagen" },
+                },
+              ],
+            }),
+            { status: 200 },
+          ),
+      ),
+    );
+    render(
+      <MemoryRouter>
+        <OpenTreatments
+          api="http://api"
+          token={async () => "tok"}
+          next={{ label: "Zur Sammlung", href: "/collection" }}
+          host
+        />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText("Läuse · Neemöl")).toBeTruthy();
+    expect(screen.getByText("2 Tage überfällig")).toBeTruthy();
+    // One heading, no sentence above the list (US-QS-15).
+    expect(screen.queryByText(/Behandle diese Pflanzen zuerst/)).toBeNull();
+    const done = screen.getByRole("button", { name: "Läuse bei Aloe als erledigt abhaken" });
+    expect(done.className).toContain("border-primary");
+    expect(done.className).not.toContain("bg-primary");
   });
 });

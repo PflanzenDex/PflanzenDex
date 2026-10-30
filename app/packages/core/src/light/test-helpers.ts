@@ -39,6 +39,7 @@ export class InMemoryLight {
       list: async (n) => this.listLocations(n),
       create: async (n, w) => this.locationCreate(n, w),
       update: async (n, id, w) => this.locationUpdate(n, id, w),
+      remove: async (n, id) => this.locationDelete(n, id),
     };
   }
 
@@ -104,6 +105,17 @@ export class InMemoryLight {
     const fresh = { ...alt, ...w };
     this.locations[i] = fresh;
     return fresh;
+  }
+
+  /** Specimens that stand at a location (tests set it); the real adapter has foreign keys. */
+  readonly occupied = new Set<string>();
+
+  private locationDelete(userId: string, id: string): "deleted" | "not_found" | "in_use" {
+    const i = this.locations.findIndex((s) => s.id === id && s.userId === userId);
+    if (i < 0) return "not_found";
+    if (this.occupied.has(id)) return "in_use";
+    this.locations.splice(i, 1);
+    return "deleted";
   }
 
   /** Usage source "locations", as `db` supplies it. */

@@ -128,7 +128,7 @@ describe("US-ACC-04 deleting the account", () => {
     const calls = fakeServer();
     show();
     await userEvent.click(await screen.findByRole("button", { name: "Konto löschen …" }));
-    const confirm = await screen.findByRole("button", { name: "Konto in 7 Tagen löschen" });
+    const confirm = await screen.findByRole("button", { name: "Konto in 7\u00a0Tagen löschen" });
     expect((confirm as HTMLButtonElement).disabled).toBe(true);
     await userEvent.type(screen.getByLabelText("Zur Bestätigung LÖSCHEN eingeben"), "löschen");
     expect((confirm as HTMLButtonElement).disabled).toBe(true);
@@ -168,7 +168,7 @@ describe("US-ACC-04 deleting the account", () => {
       await screen.findByLabelText("Zur Bestätigung LÖSCHEN eingeben"),
       "LÖSCHEN",
     );
-    await userEvent.click(screen.getByRole("button", { name: "Konto in 7 Tagen löschen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Konto in 7\u00a0Tagen löschen" }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/Eingabe/);
     expect(screen.queryByText(/Die Löschung ist vorgemerkt/)).toBeNull();
   });

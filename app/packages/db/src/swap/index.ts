@@ -1,5 +1,6 @@
 // Public interface of the module `swap` (ADR 0012).
 export { OffersPostgres } from "./offers.ts";
+export { MatchAnswersPostgres } from "./match-answers.ts";
 export { SwapsPostgres } from "./swaps.ts";
 export type {
   AnswerOutcome,

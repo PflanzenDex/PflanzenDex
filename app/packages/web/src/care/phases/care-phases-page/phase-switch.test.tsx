@@ -155,7 +155,7 @@ describe("US-PHA-03 'Jetzt umgestellt' on the page of the care phases", () => {
     await vi.waitFor(() => expect(posts(fetchFn)).toHaveLength(1));
     expect(sent(fetchFn).specimenIds).toEqual(["e1", "e2"]);
     expect((await screen.findByRole("status")).textContent).toContain(
-      "2 Exemplare stehen jetzt am Standort „Kühler Flur“.",
+      "2 Pflanzen stehen jetzt am Standort „Kühler Flur“.",
     );
     expect(screen.queryByRole("button", { name: /Alle 2 nach/ })).toBeNull();
   });

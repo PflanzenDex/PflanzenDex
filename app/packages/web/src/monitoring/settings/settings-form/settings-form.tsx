@@ -16,7 +16,7 @@ const { min, max } = REMINDER_LIMITS.measurementDays;
 /** A complaint about the input that the server would refuse too, in words that name the fix (P-09); `null` when fine. */
 function complaint(quietFrom: string, quietTo: string, days: string): string | null {
   if ((quietFrom === "") !== (quietTo === ""))
-    return "Ruhezeiten brauchen Beginn und Ende. Fülle beide Zeiten aus oder lösche beide.";
+    return "Die Erinnerungspause braucht Beginn und Ende. Fülle beide Zeiten aus oder lösche beide.";
   if (!/^\d+$/.test(days) || Number(days) < min || Number(days) > max)
     return `Die Tage bis zur überfälligen Messung sind eine ganze Zahl von ${min} bis ${max}.`;
   return null;
@@ -59,7 +59,7 @@ function TimeFields({ sendTime, quiet, days, on }: TimeFieldsProps) {
         </p>
       </div>
       <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-        <legend className="mb-1 text-sm font-medium">Ruhezeiten</legend>
+        <legend className="mb-1 text-sm font-medium">Erinnerungspause</legend>
         <div className="flex flex-wrap gap-3">
           <div className="flex flex-col gap-1">
             <Label htmlFor="quiet-from">Von</Label>
@@ -81,8 +81,8 @@ function TimeFields({ sendTime, quiet, days, on }: TimeFieldsProps) {
           </div>
         </div>
         <p className="m-0 text-sm text-muted-foreground">
-          In dieser Zeit kommt nichts an. Fällt die Uhrzeit in die Ruhezeit, wartet die Erinnerung
-          bis zu deren Ende und geht nicht verloren. Beide Zeiten leer: keine Ruhezeiten.
+          In dieser Zeit kommt nichts an; die Erinnerung wartet bis zum Ende. Beide Zeiten leer:
+          keine Pause.
         </p>
       </fieldset>
       <div className="flex flex-col gap-1">

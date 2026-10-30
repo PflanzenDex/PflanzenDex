@@ -13,6 +13,11 @@ export const FIXTURES_SWAP: Fixtures = {
     type: "cutting",
     mode: "swap",
   }),
+  swap_match_answer: async () => ({
+    offer_id: "00000000-0000-4000-8000-00000000fb03",
+    answer: "later",
+    answered_on: "2026-10-18",
+  }),
   swap: async ({ query }) => {
     await asAccount(query, OTHER_SIDE, () =>
       query.query("insert into account (id) values ($1) on conflict do nothing", [OTHER_SIDE]),

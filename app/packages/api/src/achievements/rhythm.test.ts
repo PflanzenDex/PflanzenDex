@@ -85,9 +85,12 @@ describe("US-ACH-04 care rhythm through the API logic", () => {
     expect(r.currentRun).toBe(0);
   });
 
-  it("US-ACH-04 a cutting is left out of the measurement tasks (E-11)", async () => {
-    const r = await run(deps([spec("c", "2026-01-01", { status: "cutting" })], { days: 30 }));
-    expect(r.hasTasks).toBe(false);
+  it("US-ACH-04 a cutting has the same measurement interval as a plant, like its reminder (E-11)", async () => {
+    const cutting = await run(deps([spec("c", "2026-08-01", { status: "cutting" })], { days: 30 }));
+    const plant = await run(deps([spec("p", "2026-08-01")], { days: 30 }));
+    expect(cutting.hasTasks).toBe(true);
+    expect(cutting.openTasks).toBe(1);
+    expect(cutting).toEqual(plant);
   });
 
   it("US-ACH-04 tasks still open when a specimen was archived are dropped (the archive ends the need)", async () => {

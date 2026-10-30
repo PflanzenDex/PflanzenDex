@@ -114,9 +114,9 @@ describe("US-LIC-02 Verteilung: Anmeldung", () => {
 describe("US-LIC-02 distribution: count and thinnest zone", () => {
   it("counts per zone 2 to 4, names the thinnest zone with the next action and leaves out cutting light", async () => {
     const zone = await defaults(subA);
-    const window = await location(subA, `Fenster ${run}`, zone["Lampe 2"] ?? null);
-    const shelf = await location(subA, `Regal ${run}`, zone["Lampe 3"] ?? null);
-    const corner = await location(subA, `Ecke ${run}`, zone["Lampe 1"] ?? null);
+    const window = await location(subA, `Fenster ${run}`, zone["Zone 2"] ?? null);
+    const shelf = await location(subA, `Regal ${run}`, zone["Zone 3"] ?? null);
+    const corner = await location(subA, `Ecke ${run}`, zone["Zone 1 · Stecklingslicht"] ?? null);
     const low = await newSpecies(subA, `Aloe${run} vera`, 15000, 2);
     await specimen(subA, `A1 ${run}`, low, window);
     await specimen(subA, `A2 ${run}`, low, window);
@@ -125,12 +125,12 @@ describe("US-LIC-02 distribution: count and thinnest zone", () => {
     const r = await distribution(subA);
     expect(r.status).toBe(200);
     expect(zahlen(r)).toEqual([
-      ["Lampe 2", 2],
-      ["Lampe 3", 1],
-      ["Lampe 4", 0],
+      ["Zone 2", 2],
+      ["Zone 3", 1],
+      ["Zone 4", 0],
     ]);
     expect(r.body["distribution"].thinnest.map((z: { name: string }) => z.name)).toEqual([
-      "Lampe 4",
+      "Zone 4",
     ]);
     expect(r.body["distribution"].notCounted.cuttingLight).toBe(1);
     expect(r.body["distribution"].hint.nextAction).not.toBe("");
@@ -141,9 +141,9 @@ describe("US-LIC-02 distribution: count and thinnest zone", () => {
     await specimen(subA, `Ohne Zone ${run}`, species);
     const r = await distribution(subA);
     expect(zahlen(r)).toEqual([
-      ["Lampe 2", 2],
-      ["Lampe 3", 2],
-      ["Lampe 4", 0],
+      ["Zone 2", 2],
+      ["Zone 3", 2],
+      ["Zone 4", 0],
     ]);
   });
 
@@ -160,9 +160,9 @@ describe("US-LIC-02 distribution: count and thinnest zone", () => {
     );
     const r = await distribution(subA);
     expect(zahlen(r)).toEqual([
-      ["Lampe 2", 1],
-      ["Lampe 3", 1],
-      ["Lampe 4", 0],
+      ["Zone 2", 1],
+      ["Zone 3", 1],
+      ["Zone 4", 0],
     ]);
     expect(r.body["distribution"].notCounted).toMatchObject({
       cuttingLight: 2,
@@ -174,19 +174,19 @@ describe("US-LIC-02 distribution: count and thinnest zone", () => {
 describe("US-LIC-02 Verteilung: Mandant", () => {
   it("an account sees only the distribution of its own specimens and zones, never foreign names", async () => {
     const zone = await defaults(subB);
-    const roof = await location(subB, `Dach ${run}`, zone["Lampe 4"] ?? null);
+    const roof = await location(subB, `Dach ${run}`, zone["Zone 4"] ?? null);
     const species = await newSpecies(subB, `Opuntia${run} ficus`, 110000, 4);
     await specimen(subB, `Bens Kaktus ${run}`, species, roof);
     const forBen = await distribution(subB);
     expect(zahlen(forBen)).toEqual([
-      ["Lampe 2", 0],
-      ["Lampe 3", 0],
-      ["Lampe 4", 1],
+      ["Zone 2", 0],
+      ["Zone 3", 0],
+      ["Zone 4", 1],
     ]);
     const forAnna = await distribution(subA);
     expect(JSON.stringify(forAnna.body)).not.toContain(`Dach ${run}`);
     expect(JSON.stringify(forAnna.body)).not.toContain("Bens Kaktus");
-    expect(zahlen(forAnna)[2]).toEqual(["Lampe 4", 0]);
+    expect(zahlen(forAnna)[2]).toEqual(["Zone 4", 0]);
   });
 
   it("an account without zones gets an empty distribution and the hint to create light zones", async () => {

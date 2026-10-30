@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import type { LightZone, Distribution } from "@pflanzendex/core";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../collection-page/collection-page";
 import { loadDistribution } from "./api/distribution-api";
@@ -24,7 +26,7 @@ const distribution = (extra: Partial<Distribution> = {}): Distribution => ({
   thinnest: [zone(3), zone(4)],
   notCounted: { cuttingLight: 0, archived: 0, zoneUnknown: 0 },
   hint: {
-    text: "Lampe 3 und Lampe 4 sind gleich dünn besetzt (je 1).",
+    text: "Zone 3 und Zone 4 sind gleich dünn besetzt (je 1).",
     nextAction: "Setze Arten für diese Zonen auf die Wunschliste.",
   },
   ...extra,
@@ -70,12 +72,12 @@ describe("US-LIC-02 client of the distribution API", () => {
 describe("US-LIC-02 view of the distribution", () => {
   it("shows the number of specimens per zone 2 to 4 and marks the thinnest zones", () => {
     render(<DistributionView distribution={distribution()} />);
-    const list = screen.getByRole("list", { name: "Exemplare je Lichtzone" });
+    const list = screen.getByRole("list", { name: "Pflanzen je Lichtzone" });
     const rows = within(list).getAllByRole("listitem");
     expect(rows.map((z) => z.textContent)).toEqual([
-      expect.stringContaining("Lampe 2: 3 Exemplare"),
-      expect.stringContaining("Lampe 3: 1 Exemplar"),
-      expect.stringContaining("Lampe 4: 1 Exemplar"),
+      expect.stringContaining("Zone 2: 3 Pflanzen"),
+      expect.stringContaining("Zone 3: 1 Pflanze"),
+      expect.stringContaining("Zone 4: 1 Pflanze"),
     ]);
     expect(rows[1]?.textContent).toContain("dünnste Zone");
     expect(rows[0]?.textContent).not.toContain("dünnste Zone");
@@ -83,7 +85,7 @@ describe("US-LIC-02 view of the distribution", () => {
 
   it("names the thinnest zone and the next action (P-09), with a tie with a hint to the wishlist", () => {
     render(<DistributionView distribution={distribution()} />);
-    expect(screen.getByText(/Lampe 3 und Lampe 4 sind gleich dünn besetzt/)).toBeTruthy();
+    expect(screen.getByText(/Zone 3 und Zone 4 sind gleich dünn besetzt/)).toBeTruthy();
     expect(screen.getByText(/auf die Wunschliste/)).toBeTruthy();
   });
 
@@ -143,7 +145,7 @@ describe("US-LIC-02 view of the distribution", () => {
         })}
       />,
     );
-    expect(screen.queryByRole("list", { name: "Exemplare je Lichtzone" })).toBeNull();
+    expect(screen.queryByRole("list", { name: "Pflanzen je Lichtzone" })).toBeNull();
     expect(screen.getByText(/Lege mindestens zwei Lichtzonen an/)).toBeTruthy();
   });
 });
@@ -189,13 +191,15 @@ describe("US-QS-07 · DS-32 distribution bars", () => {
 
 describe("US-LIC-02 collection page shows the distribution", () => {
   const page = () => (
-    <CollectionPage
-      api="http://api"
-      token={async () => "tok"}
-      newSpecies={null}
-      onSpeciesChoose={vi.fn()}
-      onCompleted={vi.fn()}
-    />
+    <MemoryRouter>
+      <CollectionPage
+        api="http://api"
+        token={async () => "tok"}
+        newSpecies={null}
+        onSpeciesChoose={vi.fn()}
+        onCompleted={vi.fn()}
+      />
+    </MemoryRouter>
   );
 
   it("loads cards, locations and distribution and shows the distribution above the list", async () => {
@@ -211,10 +215,11 @@ describe("US-LIC-02 collection page shows the distribution", () => {
       }),
     );
     render(page());
+    await userEvent.click(await screen.findByRole("button", { name: /Dünnste Zone: Zone 3/ }));
     expect(
       await screen.findByRole("heading", { name: "Verteilung auf die Lichtzonen" }),
     ).toBeTruthy();
-    expect(screen.getByText(/Lampe 3 und Lampe 4 sind gleich dünn besetzt/)).toBeTruthy();
+    expect(screen.getByText(/Zone 3 und Zone 4 sind gleich dünn besetzt/)).toBeTruthy();
   });
 
   it('if the distribution fails, nothing is shown half: error text and "Erneut versuchen"', async () => {

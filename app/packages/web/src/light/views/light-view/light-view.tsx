@@ -10,6 +10,7 @@ import {
 } from "../../zones/locations-view/locations-view";
 import { ErrorMessage } from "../../shared/ui/message/message";
 import { ZoneForm, ZoneCard, type ZoneInput } from "../../zones/zones-view/zones-view";
+import { MoreHelp } from "@/components/ui/display/more-help/more-help";
 
 type AppError = Promise<ApiError | null>;
 
@@ -62,8 +63,8 @@ function Zones(props: { data: LightData; actions: LightActions }) {
       {data.zones.length === 0 ? (
         <EmptyState
           title="Noch keine Lichtzonen"
-          description="Übernimm die vier Standard-Lampen oder lege unten eine eigene Zone an."
-          action={{ label: "Standard-Lampen übernehmen", onClick: () => void actions.defaults() }}
+          description="Übernimm die vier Standard-Zonen oder lege unten eine eigene Zone an."
+          action={{ label: "Standard-Zonen übernehmen", onClick: () => void actions.defaults() }}
         />
       ) : (
         <ul className={LIST}>
@@ -136,10 +137,9 @@ function Assignment({ actions }: { actions: LightActions }) {
       <h2 id="assignment" className={H2}>
         Zone einer Art ermitteln
       </h2>
-      <p className={QUIET}>
-        Die Zone folgt dem Lux-Bedarf der Art und deinen Lichtzonen. Stecklingslicht ist nie das
-        Ziel für erwachsene Pflanzen.
-      </p>
+      <MoreHelp className={QUIET} more="Stecklingslicht ist nie das Ziel für erwachsene Pflanzen.">
+        Die Zone folgt dem Lux-Bedarf der Art und deinen Lichtzonen.
+      </MoreHelp>
       <DerivationForm onDerive={actions.zoneDerive} />
     </section>
   );

@@ -81,17 +81,18 @@ const fixtures = (): Pool => (fixturePool ??= openFixturePool());
 // deleting an account must not take a used species with it because of `on delete restrict`.
 const FIXTURE_SPECIES_ACCOUNT = "00000000-0000-4000-8000-00000000fa02";
 
-export async function createFixtureSpeciesAt(): Promise<string> {
+/** `on`: another database than the suite's (a scratch database); the default is the superuser pool of the suite. */
+export async function createFixtureSpeciesAt(on: Pool = fixtures()): Promise<string> {
   // Every statement is repeatable on its own (on conflict do nothing), parallel test files do not disturb each other.
-  await fixtures().query("insert into account (id) values ($1) on conflict do nothing", [
+  await on.query("insert into account (id) values ($1) on conflict do nothing", [
     FIXTURE_SPECIES_ACCOUNT,
   ]);
-  await fixtures().query(
+  await on.query(
     `insert into review_case (account_id, object_kind, object_id, status)
      values ($1, 'species', $2, 'proposal') on conflict do nothing`,
     [FIXTURE_SPECIES_ACCOUNT, FIXTURE_SPECIES_ID],
   );
-  await fixtures().query(
+  await on.query(
     `insert into species (id, genus, latin_name, difficulty, standard_level, light_demand_lux,
        growth_measure, etiolation_signs, success_criteria, created_by)
      values ($1, 'Fixtureus', 'Fixtureus tenant_test', 1, 2, 100, 'height', 'v', 'e', 'user')
@@ -106,9 +107,10 @@ export async function createFixtureSpecimen(
   pool: Pool,
   account: string,
   name: string,
+  speciesOn?: Pool,
 ): Promise<string> {
   const r = await new SpecimenPostgres(pool).create(account, {
-    speciesId: await createFixtureSpeciesAt(),
+    speciesId: await createFixtureSpeciesAt(speciesOn),
     name,
     marker: null,
     locationId: null,
@@ -117,6 +119,13 @@ export async function createFixtureSpecimen(
   if (typeof r === "string") throw new Error(r);
   return r.id;
 }
+
+/** The ids of the specimens the application role sees as `account`, optionally after running `prelude` in the same transaction. */
+export const visibleSpecimenIds = (pool: Pool, account: string, prelude?: string) =>
+  withAccount(pool, account, async (c) => {
+    if (prelude) await c.query(prelude);
+    return (await c.query<{ id: string }>("select id from specimen")).rows.map((r) => r.id);
+  });
 
 /** Deleting a species with owner rights and as the application (AB-9: tests of foreign modules write no SQL on `species`). */
 export const deleteSpecies = (speciesId: string) =>
@@ -163,3 +172,10 @@ export async function deleteAccountsWithCatalog(accounts: readonly string[]): Pr
     client.release();
   }
 }
+
+// Superuser-owner mode and the friendship helper live in their own file (file length limit), same entry point (#907).
+export {
+  befriend,
+  createSuperuserOwnerDatabase,
+  type SuperuserOwnerDatabase,
+} from "./fixtures-superuser-owner.ts";

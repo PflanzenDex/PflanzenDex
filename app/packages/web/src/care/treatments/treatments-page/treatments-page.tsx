@@ -1,4 +1,5 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, type ReactNode } from "react";
+import { OpenCount as OpenCountOf, type OpenCount } from "../../shared/api/open-count/open-count";
 import { useInvalidate, useRequest } from "../../../kernel";
 import { OPEN_KEY, SPECIMENS_KEY } from "../../shared/api/query-keys";
 import { OpenTreatments } from "../open-treatments/open-treatments";
@@ -15,7 +16,24 @@ type Token = () => Promise<string | undefined>;
  * shows the new date. With `host` (a section of "Heute", US-QS-14) there is no title of its own, the headings are one
  * level lower and the form opens in a sheet or dialog.
  */
-export function TreatmentsPage(props: { api: string; token: Token; host?: boolean }) {
+export function TreatmentsPage(props: {
+  api: string;
+  token: Token;
+  host?: boolean;
+  /** With `count` the page renders nothing of its own and hands the open count to it (US-QS-18). */
+  count?: (open: OpenCount) => ReactNode;
+}) {
+  const { count, ...page } = props;
+  if (count)
+    return (
+      <OpenCountOf api={props.api} token={props.token}>
+        {count}
+      </OpenCountOf>
+    );
+  return <TreatmentsList {...page} />;
+}
+
+function TreatmentsList(props: { api: string; token: Token; host?: boolean }) {
   const { api, token } = props;
   const host = props.host === true;
   const firstField = useRef<HTMLInputElement | null>(null);
@@ -47,7 +65,7 @@ export function TreatmentsPage(props: { api: string; token: Token; host?: boolea
         next={
           canPlan
             ? { label: "Behandlung planen", onClick: plan }
-            : { label: "Zum Bestand", href: "/collection" }
+            : { label: "Zur Sammlung", href: "/collection" }
         }
       />
       {host ? (

@@ -42,7 +42,16 @@ const on = () =>
     ai: { resource: RESOURCE, issuer: "https://issuer.example", verifier: aiVerifier },
   });
 const web = (sub: string) => ({ authorization: `Bearer valid|${sub}` });
-const SOCIAL = ["/friends", "/feed", "/sharing", "/offers", "/swaps", "/equipment/sharing"];
+const SOCIAL = [
+  "/friends",
+  "/feed",
+  "/sharing",
+  "/offers",
+  "/swaps",
+  "/equipment/sharing",
+  "/exchange/offers",
+  "/exchange/match",
+];
 const aiToken = (sub: string) => ({ authorization: `Bearer ai|${sub}|${CLIENT}|pflanzen:read` });
 const json = async (res: Response) => (await res.json()) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 const open = (sub: string, feature: string) =>

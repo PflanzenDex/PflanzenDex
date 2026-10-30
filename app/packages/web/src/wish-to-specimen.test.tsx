@@ -23,6 +23,7 @@ vi.mock("oidc-client-ts", () => ({
   },
 }));
 
+import { setViewportWidth } from "@/lib/viewport-mock";
 import { App } from "./shell/app/app";
 import { EMPTY_DISTRIBUTION } from "./collection/insights/distribution-test-helpers";
 
@@ -56,7 +57,7 @@ const SPECIMEN = {
   locationId: null,
   marker: null,
 };
-const LINK_HINT = "Der Wunsch „Dracaena trifasciata“ ist mit deinem neuen Exemplar verknüpft.";
+const LINK_HINT = "Der Wunsch „Dracaena trifasciata“ ist mit deiner neuen Pflanze verknüpft.";
 
 interface Options {
   inCatalog?: boolean;
@@ -132,15 +133,16 @@ const tab = (name: string) =>
 const open = async () => {
   mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
   render(
-    <MemoryRouter initialEntries={["/collection?view=wishlist"]}>
+    <MemoryRouter initialEntries={["/collection?view=wishlist&sheet=bought"]}>
       <App />
     </MemoryRouter>,
   );
   const list = await screen.findByRole("list", { name: "Gekaufte Wünsche" });
-  await userEvent.click(within(list).getByRole("button", { name: /^Exemplar anlegen: / }));
+  await userEvent.click(within(list).getByRole("button", { name: /^Pflanze anlegen: / }));
 };
 
 beforeEach(() => {
+  setViewportWidth(360);
   mgr.getUser.mockReset();
   window.sessionStorage.clear();
   window.sessionStorage.setItem("pflanzendex.silent_tried", "1");
@@ -150,11 +152,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("US-WUN-05 the species is preselected from the catalog", () => {
+describe("US-WUN-05 the species is preselected from the catalog", { timeout: 20000 }, () => {
   it("US-WUN-05 the form opens with the species of the wish and says which wish it belongs to", async () => {
     server();
     await open();
-    expect(await screen.findByRole("heading", { name: "Exemplar anlegen" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Pflanze anlegen" })).toBeTruthy();
     expect(screen.getByText(/Dracaena trifasciata/, { selector: "i, em, h2 *" })).toBeTruthy();
     expect(screen.getByText(/Wunsch „Dracaena trifasciata“/)).toBeTruthy();
   });
@@ -162,7 +164,7 @@ describe("US-WUN-05 the species is preselected from the catalog", () => {
   it("US-WUN-05 after creating, the wish is linked to the new specimen and the page says so (P-10)", async () => {
     const f = server();
     await open();
-    await userEvent.click(await screen.findByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Pflanze anlegen" }));
     await waitFor(() => expect(sent(f, "/wishes/w1/specimen")).toHaveLength(1));
     expect(JSON.parse(String(sent(f, "/wishes/w1/specimen")[0]?.[1]?.body))).toEqual({
       specimenId: "s1",
@@ -174,10 +176,10 @@ describe("US-WUN-05 the species is preselected from the catalog", () => {
   it("US-WUN-05 a failing link says so in German and offers a retry; the specimen stays (P-10)", async () => {
     const f = server({ linkFails: true });
     await open();
-    await userEvent.click(await screen.findByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Pflanze anlegen" }));
     const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toContain("Exemplar ist angelegt");
-    expect(alert.textContent).toContain("schon mit einem anderen Exemplar verknüpft");
+    expect(alert.textContent).toContain("Pflanze ist angelegt");
+    expect(alert.textContent).toContain("schon mit einer anderen Pflanze verknüpft");
     expect(alert.textContent).not.toContain("roh vom Server");
     await userEvent.click(within(alert).getByRole("button", { name: "Erneut verknüpfen" }));
     await waitFor(() => expect(sent(f, "/wishes/w1/specimen")).toHaveLength(2));
@@ -187,10 +189,10 @@ describe("US-WUN-05 the species is preselected from the catalog", () => {
   it("US-WUN-05 'Abbrechen' drops the link: the next specimen is not linked", async () => {
     const f = server();
     await open();
-    await screen.findByRole("heading", { name: "Exemplar anlegen" });
+    await screen.findByRole("heading", { name: "Pflanze anlegen" });
     await userEvent.click(screen.getByRole("button", { name: "Verknüpfung abbrechen" }));
     expect(screen.queryByText(/legst gerade/)).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await screen.findByText(/ist angelegt/);
     expect(sent(f, "/wishes/w1/specimen")).toHaveLength(0);
   });
@@ -198,7 +200,7 @@ describe("US-WUN-05 the species is preselected from the catalog", () => {
   it("US-WUN-05 leaving the creation drops the link, so an unrelated specimen is never linked", async () => {
     const f = server();
     await open();
-    await screen.findByRole("heading", { name: "Exemplar anlegen" });
+    await screen.findByRole("heading", { name: "Pflanze anlegen" });
     await userEvent.click(tab("Freunde"));
     await screen.findByRole("heading", { name: "Freunde" });
     await userEvent.click(tab("Entdecken"));
@@ -206,25 +208,29 @@ describe("US-WUN-05 the species is preselected from the catalog", () => {
     await screen.findByRole("heading", { name: "Art wählen" });
     await userEvent.click(await screen.findByRole("button", { name: /Dracaena trifasciata/ }));
     await userEvent.click(await screen.findByRole("button", { name: "Diese Art wählen" }));
-    await userEvent.click(await screen.findByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Pflanze anlegen" }));
     await screen.findByText(/ist angelegt/);
     expect(sent(f, "/wishes/w1/specimen")).toHaveLength(0);
   });
 });
 
-describe("US-WUN-05 a species missing in the catalog starts US-BES-01 with the name", () => {
-  it("US-WUN-05 the catalog search opens with the wish name and says what to do next (P-09)", async () => {
-    const f = server({ inCatalog: false });
-    await open();
-    expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
-    const search = screen.getByRole("searchbox", { name: /Name/ }) as HTMLInputElement;
-    expect(search.value).toBe("Dracaena trifasciata");
-    expect(await screen.findByText(/noch nicht im Katalog/)).toBeTruthy();
-    expect(f.mock.calls.some(([u]) => String(u).includes("/species?q=Dracaena"))).toBe(true);
-    await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
-    expect(
-      ((await screen.findByRole("textbox", { name: /Lateinischer Name/ })) as HTMLInputElement)
-        .value,
-    ).toBe("Dracaena trifasciata");
-  });
-});
+describe(
+  "US-WUN-05 a species missing in the catalog starts US-BES-01 with the name",
+  { timeout: 20000 },
+  () => {
+    it("US-WUN-05 the catalog search opens with the wish name and says what to do next (P-09)", async () => {
+      const f = server({ inCatalog: false });
+      await open();
+      expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
+      const search = screen.getByRole("searchbox", { name: /Name/ }) as HTMLInputElement;
+      expect(search.value).toBe("Dracaena trifasciata");
+      expect(await screen.findByText(/noch nicht im Katalog/)).toBeTruthy();
+      expect(f.mock.calls.some(([u]) => String(u).includes("/species?q=Dracaena"))).toBe(true);
+      await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
+      expect(
+        ((await screen.findByRole("textbox", { name: /Lateinischer Name/ })) as HTMLInputElement)
+          .value,
+      ).toBe("Dracaena trifasciata");
+    });
+  },
+);

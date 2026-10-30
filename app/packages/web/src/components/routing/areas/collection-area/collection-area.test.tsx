@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
+import { findCardButton } from "../../../../collection/specimens/tests/plants-test-helpers";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { CollectionArea } from "./collection-area";
@@ -69,14 +70,10 @@ describe("US-WAC-01 collection wired with measuring", () => {
       </MemoryRouter>,
     );
     // The collection page is a lazy part; its first import can take longer than the default second under load.
-    const measure = await screen.findByRole(
-      "button",
-      { name: "Messen: Bogenhanf" },
-      { timeout: 5_000 },
-    );
-    await userEvent.click(measure);
+    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await userEvent.click(await findCardButton("Messen: Bogenhanf"));
     expect(await screen.findByRole("heading", { name: "Messen: Bogenhanf" })).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Zurück zum Bestand" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
     expect(await screen.findByRole("heading", { name: "Sammlung" })).toBeTruthy();
   });
 });

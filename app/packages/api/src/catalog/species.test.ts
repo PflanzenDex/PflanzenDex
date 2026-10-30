@@ -88,13 +88,10 @@ describe("US-BES-01 sign-in and input", () => {
     });
   });
 
-  it("missing required fields: 400 with all affected fields", async () => {
+  it("missing required fields: 400 with all affected fields; difficulty and light need may stay unknown (P-08, #1003)", async () => {
     const r = await call(subA, "POST", "/species", { latinName: "Aloe vera" });
     expect(r.status).toBe(400);
     expect(r.body["error"].details.map((d: { field: string }) => d.field)).toEqual([
-      "difficulty",
-      "standardLevel",
-      "lightDemandLux",
       "growthMeasure",
       "etiolationSigns",
       "successCriteria",

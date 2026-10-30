@@ -3,7 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { AppShell } from "../../app-shell/app-shell";
-import { BRAND_LINK_LABEL, DISPLAY_NAME } from "../nav-item";
+import { BRAND_HREF, BRAND_LINK_LABEL, DISPLAY_NAME } from "../nav-item";
 import {
   CATALOG_ADDRESS,
   DIFFICULTY_ADDRESS,
@@ -48,6 +48,31 @@ describe("US-BES-10 navigation", () => {
 });
 
 describe("US-DEV-06 navigation", () => {
+  it("US-ONB-05 a locked destination keeps its place, order and name and carries a text mark", () => {
+    const plain = navItems({});
+    const marked = navItems({ locks: { friends: "Noch gesperrt" } });
+    expect(marked.map((i) => i.label)).toEqual(plain.map((i) => i.label));
+    expect(marked.find((i) => i.label === "Freunde")?.note).toBe("Noch gesperrt");
+    expect(marked.filter((i) => i.note)).toHaveLength(1);
+    render(
+      <MemoryRouter>
+        <AppShell items={marked}>
+          <p>Inhalt</p>
+        </AppShell>
+      </MemoryRouter>,
+    );
+    const link = within(screen.getByRole("navigation", { name: "Hauptnavigation" })).getByRole(
+      "link",
+      { name: /Freunde/ },
+    );
+    expect(link.textContent).toContain("Noch gesperrt");
+  });
+
+  it("US-ONB-05 / FR-ONB-06 without locks (style many) the navigation is exactly as before", () => {
+    expect(navItems({ locks: {} })).toEqual(navItems({}));
+    expect(navItems({}).some((i) => i.note)).toBe(false);
+  });
+
   it("US-DEV-06 Freunde is hidden only while the function group social is off", () => {
     expect(labels({})).toContain("Freunde");
     expect(labels({ social: true } as never)).toContain("Freunde");
@@ -68,11 +93,7 @@ describe("US-ACC-05 navigation", () => {
 describe("US-QS-07 · DS-25 navigation items", () => {
   it("US-QS-07 · DS-25 every destination links to the address of its view", () => {
     const items = navItems({ reviewer: true, operator: true });
-    expect(items.map((i) => i.href).sort()).toEqual(
-      Object.values(PATHS)
-        .filter((p) => p !== PATHS.start)
-        .sort(),
-    );
+    expect(items.map((i) => i.href).sort()).toEqual(Object.values(PATHS).sort());
   });
 
   it("US-QS-07 · DS-25 the bottom bar shows at most 5 destinations, the rest sit in the drawer", () => {
@@ -91,10 +112,10 @@ describe("US-QS-07 · DS-25 navigation items", () => {
   });
 });
 
-describe("US-QS-14 · the start page is no destination", () => {
-  it("US-QS-14 · on / the brand link leads home and no destination is marked active", () => {
+describe("US-QS-16 · the brand leads to Heute", () => {
+  it("US-QS-16 · the brand link leads to Heute, and on a destination only that one is marked active", () => {
     render(
-      <MemoryRouter initialEntries={["/"]}>
+      <MemoryRouter initialEntries={["/collection"]}>
         <AppShell items={navItems({ reviewer: true, operator: true })}>
           <p>Inhalt</p>
         </AppShell>
@@ -103,20 +124,22 @@ describe("US-QS-14 · the start page is no destination", () => {
     for (const name of ["Navigation unten", "Navigation seitlich", "Hauptnavigation"]) {
       const nav = within(screen.getByRole("navigation", { name }));
       for (const link of nav.getAllByRole("link"))
-        expect(link.getAttribute("aria-current"), link.textContent ?? "").toBeNull();
+        expect(link.getAttribute("aria-current") === "page", link.textContent ?? "").toBe(
+          link.textContent === "Sammlung",
+        );
     }
     const brand = within(screen.getByRole("navigation", { name: "Hauptnavigation" })).getByRole(
       "link",
-      { name: "PflanzenDéx, zur Startseite" },
+      { name: "PflanzenDéx, zu Heute" },
     );
-    expect(brand.getAttribute("href")).toBe("/");
+    expect(brand.getAttribute("href")).toBe("/today");
   });
 });
 
 describe("US-QS-07 · DS-22 navigation icons", () => {
   it("US-QS-07 · DS-22 every destination has a decorative icon", () => {
     const items = navItems({ reviewer: true, operator: true });
-    expect(items.length).toBe(Object.values(PATHS).length - 1);
+    expect(items.length).toBe(Object.values(PATHS).length);
     for (const item of items) expect(item.icon, item.label).not.toBeNull();
   });
 
@@ -184,10 +207,11 @@ describe("US-QS-14 Behandlung and Hinweise are sections of Heute", () => {
     expect(Object.values(PATHS)).not.toContain("/hints");
   });
 
-  it("US-QS-14 the sections have addresses on Heute, and Heute keeps its title", () => {
-    expect(todayAddress("treatments")).toBe("/today#behandlungen");
-    expect(todayAddress("hints")).toBe("/today#fehlt-noch");
+  it("US-QS-14 · US-QS-18 the topics have layer addresses on Heute, and Heute keeps its title", () => {
+    expect(todayAddress("treatments")).toBe("/today?sheet=treatments");
+    expect(todayAddress("hints")).toBe("/today?sheet=hints");
     expect(viewTitle("/today")).toBe("Heute – PflanzenDéx");
+    expect(viewTitle("/unlock/equipment")).toBe("Funktion freischalten – PflanzenDéx");
   });
 });
 
@@ -201,7 +225,8 @@ describe("US-QS-14 the destination Sammlung", () => {
 describe("display name (US-QS-14)", () => {
   it("US-QS-14: the product is displayed as PflanzenDéx and titles end with it", () => {
     expect(DISPLAY_NAME).toBe("PflanzenDéx");
-    expect(BRAND_LINK_LABEL).toBe("PflanzenDéx, zur Startseite");
+    expect(BRAND_LINK_LABEL).toBe("PflanzenDéx, zu Heute");
+    expect(BRAND_HREF).toBe(PATHS.today);
     expect(pageTitle("X")).toBe("X – PflanzenDéx");
     expect(pageTitle()).toBe("PflanzenDéx");
   });
@@ -213,8 +238,8 @@ describe("US-QS-14 Konto and Einstellungen are one destination", () => {
     expect(labels).toContain("Konto");
     expect(labels).not.toContain("Einstellungen");
     expect(Object.values(PATHS)).not.toContain("/settings");
-    expect(accountAddress("settings")).toBe("/account#einstellungen");
-    expect(accountAddress("profile")).toBe("/account#profil");
+    expect(accountAddress("settings")).toBe("/account/settings");
+    expect(accountAddress("profile")).toBe("/account/profile");
     expect(viewTitle("/account")).toBe("Konto – PflanzenDéx");
   });
 });

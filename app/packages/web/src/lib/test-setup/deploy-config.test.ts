@@ -45,7 +45,7 @@ describe("TE-03 · reverse proxy in front of the host", () => {
 
   it("TE-03 routes /health and /api to the API (prefix removed) and the rest to web", () => {
     expect(proxy).toMatch(/handle \/health \{\s*reverse_proxy api:3000/);
-    expect(proxy).toMatch(/handle_path \/api\/\* \{\s*reverse_proxy api:3000/);
+    expect(proxy).toMatch(/handle_path \/api\/\* \{[\s\S]*?handle \{\s*reverse_proxy api:3000/);
     expect(proxy).toMatch(/handle \{\s*reverse_proxy web:8080/);
   });
 
@@ -73,7 +73,7 @@ describe("TE-03 · public test environment through Tailscale Funnel", () => {
   });
 
   it("TE-03 two Tailscale nodes in userspace mode, pinned image, state volumes and memory limits", () => {
-    expect(funnel).toMatch(/image: tailscale\/tailscale:v\d+\.\d+\.\d+\n/);
+    expect(funnel).toMatch(/image: tailscale\/tailscale:v\d+\.\d+\.\d+@sha256:[0-9a-f]{64}\n/);
     expect(funnel).toContain('TS_USERSPACE: "true"');
     expect(funnel).not.toMatch(/\/dev\/net\/tun|cap_add|privileged/);
     // Optional: after the first registration the state volume is enough and the key leaves .env.
@@ -108,6 +108,18 @@ describe("TE-03 · public test environment through Tailscale Funnel", () => {
     expect(envExample).toContain("TRUSTED_PROXIES=172.29.40.2/32 172.29.40.3/32");
   });
 
+  it("TE-03 the app host serves only the status of /health; the details stay inside the stack (#759)", () => {
+    const app = proxy.slice(
+      proxy.indexOf("{$CADDY_SCHEME}{$APP_HOST} {"),
+      proxy.indexOf("{$CADDY_SCHEME}{$AUTH_HOST} {"),
+    );
+    expect(app).toContain("handle /health/* {\n\t\trespond 404\n\t}");
+    expect(app).toMatch(/handle_path \/api\/\* \{\s*handle \/health\/\* \{\s*respond 404/);
+    expect(read("deploy/scripts/deploy.sh")).toContain(
+      "exec -T api wget -qO- http://127.0.0.1:3000/health/details",
+    );
+  });
+
   it("TE-03 the sign-in host denies Keycloak's admin, master realm and management paths", () => {
     const auth = proxy.slice(proxy.indexOf("{$CADDY_SCHEME}{$AUTH_HOST} {"));
     for (const path of ["/admin*", "/realms/master*", "/metrics*", "/health*"])
@@ -134,12 +146,151 @@ describe("TE-03 · public test environment through Tailscale Funnel", () => {
   });
 });
 
+describe("TE-03 · log size limits (#762)", () => {
+  const services = (text: string) =>
+    [...text.slice(text.indexOf("\nservices:\n")).matchAll(/^ {2}([a-z][a-z-]*):$/gm)]
+      .map((m) => m[1] as string)
+      .filter((name) => !["dbdata", "caddydata", "default"].includes(name));
+  const limit = /logging:\s+driver: json-file\s+options:\s+max-size: 10m\s+max-file: "3"/;
+
+  it("TE-03 every service of the base stack keeps at most 3 log files of 10 MB", () => {
+    expect(compose).toMatch(
+      /x-logging: &logging\s+driver: json-file\s+options:\s+max-size: 10m\s+max-file: "3"/,
+    );
+    const names = services(compose.slice(0, compose.indexOf("\nvolumes:")));
+    expect(names).toEqual([
+      "db",
+      "keycloak-db",
+      "db-roles",
+      "migrate",
+      "keycloak",
+      "api",
+      "web",
+      "proxy",
+    ]);
+    for (const name of names) expect(service(compose, name), name).toContain("logging: *logging");
+  });
+
+  it("TE-03 the services of the test and funnel overlays have the same limit", () => {
+    expect(service(testOverlay, "mailpit")).toMatch(limit);
+    const anchor = funnel.slice(funnel.indexOf("x-tailscale:"), funnel.indexOf("\nservices:"));
+    expect(anchor).toMatch(limit);
+    for (const name of ["ts-app", "ts-auth"])
+      expect(service(funnel, name)).toContain("<<: *tailscale");
+  });
+});
+
+describe("TE-03 · container privileges and pinned images (#761, NFR-10)", () => {
+  const hardened = /security_opt: \[no-new-privileges:true\]\n\s+cap_drop: \[ALL\]\n/;
+  const files = { compose, testOverlay, funnel };
+  const apiImage = read("deploy/docker/api.Dockerfile");
+  const webImage = read("deploy/docker/web.Dockerfile");
+  /** Names of the services a file defines with an image of its own (not the ones it only extends). */
+  const ownServices = (text: string) =>
+    [...text.slice(text.indexOf("\nservices:\n")).matchAll(/^ {2}([a-z][a-z-]*):$/gm)]
+      .map((m) => m[1] as string)
+      .filter((name) => /\n {4}(image: |build:|<<: )/.test(service(text, name)));
+
+  // How each service avoids root. A new service fails here until someone decides it.
+  const nonRoot: Record<string, () => void> = {
+    db: () => expect(service(compose, "db")).toContain("user: postgres\n"),
+    "keycloak-db": () => expect(service(compose, "keycloak-db")).toContain("user: postgres\n"),
+    "db-roles": () => expect(service(compose, "db-roles")).toContain("user: postgres\n"),
+    migrate: () => expect(apiImage).toMatch(/\nUSER node\n(?![\s\S]*\nUSER )/),
+    api: () => expect(apiImage).toMatch(/\nUSER node\n(?![\s\S]*\nUSER )/),
+    // The upstream image runs as uid 1000 (no `user:` needed); the version is pinned below.
+    keycloak: () => expect(service(compose, "keycloak")).not.toMatch(/\n {4}user: /),
+    web: () => expect(webImage).toMatch(/AS caddy\n[\s\S]*\nUSER caddy\n\nFROM caddy\n/),
+    proxy: () => {
+      expect(service(compose, "proxy")).toContain("target: caddy");
+      expect(service(compose, "proxy")).not.toMatch(/\n {4}image: /);
+    },
+    mailpit: () => expect(service(testOverlay, "mailpit")).toContain('user: "65534:65534"'),
+    // Documented exception: uid 0 for the root-owned registered state, but without any capability (funnel file).
+    "ts-app": () => expect(funnel).toContain("The nodes stay uid 0, but without any"),
+    "ts-auth": () => expect(funnel).toContain("The nodes stay uid 0, but without any"),
+  };
+
+  it("TE-03 every service sets no-new-privileges and drops every capability; none adds one back", () => {
+    for (const [file, text] of Object.entries(files)) {
+      expect(text, file).not.toMatch(/^\s+(cap_add|privileged|devices|network_mode|pid|ipc):/m);
+      for (const name of ownServices(text)) {
+        const block = service(text, name);
+        if (block.includes("<<: *tailscale")) continue;
+        expect(block, `${file}: ${name}`).toMatch(hardened);
+      }
+    }
+    const anchor = funnel.slice(funnel.indexOf("x-tailscale:"), funnel.indexOf("\nservices:"));
+    expect(anchor).toMatch(
+      /\n {2}security_opt: \[no-new-privileges:true\]\n {2}cap_drop: \[ALL\]\n/,
+    );
+  });
+
+  it("TE-03 every service runs as a non-root user (Tailscale: uid 0 without capabilities)", () => {
+    const all = Object.values(files).flatMap(ownServices);
+    expect(all.sort()).toEqual(Object.keys(nonRoot).sort());
+    for (const [name, check] of Object.entries(nonRoot)) {
+      try {
+        check();
+      } catch (error) {
+        throw new Error(`${name}: ${String(error)}`, { cause: error });
+      }
+    }
+  });
+
+  it("TE-03 Caddy runs from a copy of its binary without the file capability", () => {
+    // Under no-new-privileges a non-root user cannot execute a binary with file capabilities.
+    expect(webImage).toContain("cp /usr/bin/caddy /tmp/caddy && mv /tmp/caddy /usr/bin/caddy");
+    expect(webImage).toContain("chown -R caddy:caddy /data /config");
+  });
+
+  it("TE-03 every image is pinned to an exact version and a digest (deploy and development)", () => {
+    const dev = { dev: read("dev/compose.yaml"), storage: read("dev/storage.compose.yaml") };
+    const refs = [
+      ...Object.values({ ...files, ...dev }).flatMap((text) =>
+        [...text.matchAll(/^\s+image: (\S+)$/gm)].map((m) => m[1] as string),
+      ),
+      ...[apiImage, webImage].flatMap((text) =>
+        [...text.matchAll(/^FROM (\S+)/gm)].map((m) => m[1] as string).filter((r) => r !== "caddy"),
+      ),
+    ];
+    expect(refs.length).toBeGreaterThan(10);
+    for (const ref of refs) {
+      expect(ref, ref).toMatch(/^[a-z0-9./-]+:[\w.-]+@sha256:[0-9a-f]{64}$/);
+      // Chainguard's free images carry only `latest`; the digest is the pin there.
+      if (!ref.startsWith("cgr.dev/")) expect(ref, ref).toMatch(/:v?\d+\.\d+[-.@]/);
+    }
+  });
+
+  it("TE-03 the CI services, the test database, the scripts and the scanner use pinned images too", () => {
+    const fromRoot = (path: string) =>
+      readFileSync(new URL(`../../../../../../${path}`, import.meta.url), "utf8");
+    const texts = {
+      ci: fromRoot(".github/workflows/ci.yml"),
+      nightly: fromRoot(".github/workflows/nightly.yml"),
+      makefile: fromRoot("Makefile"),
+      restoreTest: read("deploy/scripts/restore/restore-test.sh"),
+      deploy: read("deploy/scripts/deploy.sh"),
+      imageScan: fromRoot("tools/lint/image-scan.sh"),
+    };
+    const refs = Object.entries(texts).flatMap(([file, text]) =>
+      [...text.matchAll(/\b(?:postgres|alpine|anchore\/grype):v?\d[^\s"']*/g)].map((m) => [
+        file,
+        m[0],
+      ]),
+    );
+    expect(refs.length).toBeGreaterThanOrEqual(8);
+    for (const [file, ref] of refs)
+      expect(ref, `${file}: ${ref}`).toMatch(/^[a-z/]+:v?\d+\.\d+[\w.-]*@sha256:[0-9a-f]{64}$/);
+  });
+});
+
 describe("TE-03 · sign-in service in the stack", () => {
   const keycloak = service(compose, "keycloak");
   const api = service(compose, "api");
 
   it("TE-03 runs Keycloak in production mode with its own database and forwarded headers", () => {
-    expect(keycloak).toContain("quay.io/keycloak/keycloak:26.8.0");
+    expect(keycloak).toContain("quay.io/keycloak/keycloak:26.8.1");
     expect(keycloak).toContain('command: ["start", "--import-realm"]');
     expect(keycloak).not.toContain("start-dev");
     expect(keycloak).toContain("KC_DB: postgres");
@@ -147,6 +298,14 @@ describe("TE-03 · sign-in service in the stack", () => {
     expect(keycloak).toContain("KC_HOSTNAME: ${AUTH_URL");
     expect(keycloak).toContain("KC_HEALTH_ENABLED");
     expect(keycloak).toMatch(/KC_BOOTSTRAP_ADMIN_PASSWORD: \$\{KEYCLOAK_ADMIN_PASSWORD:\?/);
+  });
+
+  it("TE-03 the deploy turns on brute-force protection in the master realm after Keycloak is healthy (#758)", () => {
+    const deploy = read("deploy/scripts/deploy.sh");
+    const healthy = deploy.indexOf("wait_healthy keycloak");
+    expect(healthy).toBeGreaterThan(-1);
+    expect(deploy.indexOf("./keycloak/master-realm.sh || return 1")).toBeGreaterThan(healthy);
+    expect(keycloak).toContain("KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER");
   });
 
   it("TE-03 the same Keycloak version as the development stack", () => {
@@ -235,7 +394,7 @@ describe("TE-03 · realm for deployments", () => {
     expect(web["webOrigins"]).toEqual(["${WEB_BASE_URL}"]);
   });
 
-  it("TE-03 keeps clients, audience mapper, token lifetimes, password policy and theme of the development realm", () => {
+  it("TE-03 keeps clients, audience mapper, token lifetimes and theme of the development realm", () => {
     const skip = ["rootUrl", "redirectUris", "webOrigins", "attributes"];
     const strip = (c: Client) =>
       Object.fromEntries(Object.entries(c).filter(([k]) => !skip.includes(k)));
@@ -246,10 +405,7 @@ describe("TE-03 · realm for deployments", () => {
     );
     for (const key of [
       "loginTheme",
-      "passwordPolicy",
       "accessTokenLifespan",
-      "ssoSessionIdleTimeout",
-      "ssoSessionMaxLifespan",
       "verifyEmail",
       "registrationAllowed",
       "bruteForceProtected",
@@ -258,10 +414,84 @@ describe("TE-03 · realm for deployments", () => {
       expect(realm[key], key).toEqual(devRealm[key]);
   });
 
+  // Deliberately stricter than the development realm, whose test users and their passwords stay as they are (#757).
+  it("TE-03 deployments get a stronger password policy, shorter sessions and login events (#757)", () => {
+    expect(realm["passwordPolicy"]).toBe(
+      "length(12) and maxLength(128) and notUsername and notEmail",
+    );
+    expect(devRealm["passwordPolicy"]).toBe("length(10)");
+    const day = 86400;
+    expect(realm).toMatchObject({
+      ssoSessionIdleTimeout: day,
+      ssoSessionMaxLifespan: 7 * day,
+      ssoSessionIdleTimeoutRememberMe: 7 * day,
+      ssoSessionMaxLifespanRememberMe: 30 * day,
+      eventsEnabled: true,
+      eventsExpiration: 30 * day,
+      adminEventsEnabled: true,
+      adminEventsDetailsEnabled: false,
+    });
+  });
+
+  it("TE-03 the runbook applies the same realm defaults to an existing realm with kcadm.sh (#757)", () => {
+    const runbook = readFileSync(
+      new URL(
+        "../../../../../../docs/guides/operations/staging-deploy-and-backup.md",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    expect(runbook).toContain(`-s 'passwordPolicy=${String(realm["passwordPolicy"])}'`);
+    for (const key of [
+      "ssoSessionIdleTimeout",
+      "ssoSessionMaxLifespan",
+      "ssoSessionIdleTimeoutRememberMe",
+      "ssoSessionMaxLifespanRememberMe",
+      "eventsEnabled",
+      "eventsExpiration",
+      "adminEventsEnabled",
+      "adminEventsDetailsEnabled",
+    ])
+      expect(runbook, key).toContain(`-s ${key}=${String(realm[key])}`);
+  });
+
   it("TE-03 ships no users and sends mail through a configurable server", () => {
     expect(realm["users"]).toBeUndefined();
     const smtp = realm["smtpServer"] as Record<string, string>;
     expect(smtp["host"]).toBe("${KC_SMTP_HOST}");
     expect(smtp["password"]).toBe("${KC_SMTP_PASSWORD}");
+  });
+});
+
+describe("US-DEV-07 · PostgreSQL 18 in the stack", () => {
+  const db = service(compose, "db");
+  const deployScript = read("deploy/scripts/deploy.sh");
+  const readRoot = (path: string) =>
+    readFileSync(new URL(`../../../../../../${path}`, import.meta.url), "utf8");
+
+  it("US-DEV-07 every PostgreSQL image in the repository is the same major, 18", () => {
+    const texts = [
+      compose,
+      read("deploy/scripts/restore/restore-test.sh"),
+      readRoot(".github/workflows/ci.yml"),
+      readRoot(".github/workflows/nightly.yml"),
+      readRoot("Makefile"),
+    ];
+    const majors = texts.flatMap((text) =>
+      [...text.matchAll(/postgres:(\d+)[.\d]*-alpine/g)].map((m) => m[1]),
+    );
+    expect(majors).toHaveLength(9);
+    expect(new Set(majors)).toEqual(new Set(["18"]));
+  });
+
+  it("US-DEV-07 the data volume is mounted one level up, where PostgreSQL 18 keeps its data", () => {
+    expect(db).toContain("- dbdata:/var/lib/postgresql\n");
+    expect(db).not.toContain("/var/lib/postgresql/data");
+  });
+
+  it("US-DEV-07 deploy.sh checks the data volume before the stack starts (P-10)", () => {
+    const check = deployScript.indexOf("check_db_volume || return 1");
+    expect(check).toBeGreaterThan(-1);
+    expect(check).toBeLessThan(deployScript.indexOf('"${compose[@]}" up -d --build'));
   });
 });

@@ -7,6 +7,7 @@ import { CollectionArea } from "./components/routing/areas/collection-area/colle
 import { EMPTY_DISTRIBUTION } from "./collection/insights/distribution-test-helpers";
 import { ToastProvider } from "./components/shared/states/toast/toast-provider/toast-provider";
 import { AnnouncerProvider } from "./platform/announcer/announcer";
+import "./collection/specimens/tests/plants-test-helpers";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -105,67 +106,119 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("US-QS-14 the plants can be grouped by care phase or by location", () => {
-  it("US-QS-14 the plants show all by default, with the grouping control and the manage action", async () => {
+const openView = async () =>
+  userEvent.click(await screen.findByRole("button", { name: "Ansicht" }));
+
+describe("US-QS-19 the first screen of the plants", () => {
+  it("US-QS-19 holds the heading with the count, one row of modes, one insight row and a page of tiles", async () => {
     renderAt("/collection?view=plants");
     expect(await screen.findByText("4 Pflanzen")).toBeTruthy();
-    expect(pressed("Alle")).toBe(true);
-    expect(screen.getByRole("group", { name: "Gruppierung der Pflanzen" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Standorte verwalten" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
+    expect(screen.getAllByRole("group", { name: "Ansicht der Sammlung" })).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Lichtzonen ansehen" })).toBeTruthy();
+    expect(screen.getAllByRole("listitem")).toHaveLength(4);
+    expect(screen.getByRole("button", { name: "Pflanze 2 unbekannt unbekannt" })).toBeTruthy();
+    // No grouping control, no distribution card and no plant card on the page itself.
+    expect(screen.queryByRole("group", { name: "Gruppierung der Pflanzen" })).toBeNull();
+    expect(screen.queryByText("Noch kein Foto")).toBeNull();
   });
 
-  it("US-QS-14 · US-LIC-01 grouped by location the plants sit below their location and zone; unknown values are named", async () => {
+  it("US-QS-19 · US-QS-22 the area asks the frame to fit one screen for every mode", async () => {
+    const { container } = renderAt("/collection?view=plants");
+    await screen.findByText("4 Pflanzen");
+    expect(container.querySelector("[data-fit-screen]")).not.toBeNull();
+    for (const mode of ["Arten", "Wunschliste"]) {
+      await userEvent.click(screen.getByRole("button", { name: mode }));
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: mode }).getAttribute("aria-pressed")).toBe(
+          "true",
+        ),
+      );
+      expect(container.querySelector("[data-fit-screen]")).not.toBeNull();
+    }
+  });
+});
+
+describe("US-QS-19 the plants can be grouped by care phase or by location", () => {
+  it("US-QS-19 the plants show all by default; the layer Ansicht holds the grouping and the manage action", async () => {
+    renderAt("/collection?view=plants");
+    expect(await screen.findByText("4 Pflanzen")).toBeTruthy();
+    expect(screen.queryByRole("group", { name: "Gruppierung der Pflanzen" })).toBeNull();
+    await openView();
+    expect(await screen.findByRole("dialog", { name: "Ansicht" })).toBeTruthy();
+    expect(pressed("Alle")).toBe(true);
+    expect(screen.getByRole("group", { name: "Gruppierung der Pflanzen" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Standorte und Lichtzonen verwalten" })).toBeTruthy();
+    expect(screen.getByTestId("address").textContent).toBe("/collection?view=plants&sheet=view");
+  });
+
+  it("US-QS-19 · US-LIC-01 grouped by location the groups are a row of choices with their count; unknown values are named", async () => {
     renderAt("/collection?view=plants&group=location");
+    const row = await screen.findByRole("group", { name: "Standort wählen" });
     expect(
-      await screen.findByRole("heading", { name: "Flur · Zone unbekannt · 1 Pflanze" }),
-    ).toBeTruthy();
-    const wohnzimmer = screen.getByRole("heading", { name: "Wohnzimmer · Zone 2 · 2 Pflanzen" });
-    expect(
-      within(wohnzimmer.closest("section") as HTMLElement).getAllByRole("listitem"),
-    ).toHaveLength(2);
-    expect(
-      screen.getByRole("heading", { name: "Standort unbekannt · Zone unbekannt · 1 Pflanze" }),
-    ).toBeTruthy();
+      within(row)
+        .getAllByRole("button")
+        .map((b) => b.textContent),
+    ).toEqual(["✓Flur (1)", "Wohnzimmer (2)", "Standort unbekannt (1)"]);
+    expect(screen.getByText("Flur · Zone unbekannt · 1 Pflanze")).toBeTruthy();
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    await userEvent.click(within(row).getByRole("button", { name: /Wohnzimmer/ }));
+    expect(screen.getByText("Wohnzimmer · Zone 2 · 2 Pflanzen")).toBeTruthy();
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.getByTestId("address").textContent).toBe(
+      "/collection?view=plants&group=location&part=Wohnzimmer",
+    );
+    await userEvent.click(within(row).getByRole("button", { name: /Standort unbekannt/ }));
+    expect(screen.getByText("Standort unbekannt · Zone unbekannt · 1 Pflanze")).toBeTruthy();
+    await openView();
     expect(pressed("Nach Standort")).toBe(true);
   });
 
-  it("US-QS-14 · US-PHA-01 grouped by care phase the phases of the plants show with their count line", async () => {
+  it("US-QS-19 · US-PHA-01 grouped by care phase the phase of the plants shows with its count line", async () => {
     renderAt("/collection?view=plants&group=phase");
     expect(await screen.findByText("Soll-Phase heute: Ruhephase")).toBeTruthy();
     expect(await screen.findByText("1 Pflanze mit Pflegephase")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ruhephase (1)" })).toBeTruthy();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    await openView();
     expect(pressed("Nach Pflegephase")).toBe(true);
   });
 
-  it("US-QS-14 choosing a grouping changes the address, keeps the focus on the control and announces it", async () => {
-    renderAt("/collection?view=plants");
+  it("US-QS-19 choosing a grouping changes the address, starts at page 1, returns the focus to Ansicht and announces it", async () => {
+    renderAt("/collection?view=plants&page=2");
     await screen.findByText("4 Pflanzen");
+    await openView();
     await userEvent.click(screen.getByRole("button", { name: "Nach Standort" }));
     expect(screen.getByTestId("address").textContent).toBe(
       "/collection?view=plants&group=location",
     );
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Nach Standort" }));
     expect(document.querySelector("[aria-live=polite]")?.textContent).toContain("Nach Standort");
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "Ansicht" })),
+    );
+    await openView();
     await userEvent.click(screen.getByRole("button", { name: "Alle" }));
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=plants");
   });
 
-  it("US-QS-14 an unknown group in the address shows all plants; the species mode has no plant controls", async () => {
+  it("US-QS-19 an unknown group in the address shows all plants; the species mode has no Ansicht", async () => {
     renderAt("/collection?view=plants&group=unsinn");
     expect(await screen.findByText("4 Pflanzen")).toBeTruthy();
+    await openView();
     expect(pressed("Alle")).toBe(true);
+    await userEvent.keyboard("{Escape}");
     await userEvent.click(screen.getByRole("button", { name: "Arten" }));
-    await waitFor(() =>
-      expect(screen.queryByRole("group", { name: "Gruppierung der Pflanzen" })).toBeNull(),
-    );
-    expect(screen.queryByRole("button", { name: "Standorte verwalten" })).toBeNull();
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Ansicht" })).toBeNull());
   });
 });
 
-describe("US-QS-14 Standorte verwalten opens the locations and light zones in the plants", () => {
-  it("US-QS-14 · US-LIC-01 the action opens the management with a way back that keeps the grouping", async () => {
+describe("US-QS-19 Standorte und Lichtzonen verwalten opens the management in the plants", () => {
+  it("US-QS-19 · US-LIC-01 the action opens the management with a way back that keeps the grouping", async () => {
     renderAt("/collection?view=plants&group=location");
-    await userEvent.click(await screen.findByRole("button", { name: "Standorte verwalten" }));
+    await openView();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Standorte und Lichtzonen verwalten" }),
+    );
     expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
     expect(screen.getByTestId("address").textContent).toBe(
       "/collection?view=plants&group=location&manage=locations",
@@ -188,5 +241,19 @@ describe("US-QS-14 Standorte verwalten opens the locations and light zones in th
     renderAt("/collection?view=plants&manage=locations");
     expect(await screen.findByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
+  });
+});
+
+describe("US-QS-19 the layer Ansicht follows the layer rules", () => {
+  it("US-QS-19 · DS-40 Escape closes the layer and the focus returns to Ansicht", async () => {
+    renderAt("/collection?view=plants");
+    await screen.findByText("4 Pflanzen");
+    const opener = screen.getByRole("button", { name: "Ansicht" });
+    opener.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(await screen.findByRole("dialog", { name: "Ansicht" })).toBeTruthy();
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Ansicht" })).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(opener));
   });
 });

@@ -1,5 +1,6 @@
 // Stable, machine-readable error codes `<domain>.<reason>` (FR-QG-11). Codes are never renamed.
-import { ACHIEVEMENT_ERROR_TEXTS } from "./error-texts/achievements";
+import { ONBOARDING_ERROR_TEXTS } from "./error-texts/onboarding";
+import { WUN_ERROR_TEXTS } from "./error-texts/wun";
 export const ERROR_TEXTS = {
   "input.invalid": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
   "access.not_signed_in": "Du bist nicht angemeldet. Bitte melde dich an.",
@@ -8,6 +9,8 @@ export const ERROR_TEXTS = {
   "idempotency.key_conflict":
     "Dieser Schlüssel wurde bereits mit anderen Angaben verwendet. Bitte versuche es neu.",
   "idempotency.in_progress": "Dieselbe Aktion läuft noch. Bitte warte einen Moment.",
+  "request.rate_limited":
+    "Zu viele Änderungen in kurzer Zeit. Warte eine Minute und versuche es dann erneut.",
   "system.unexpected":
     "Es ist ein unerwarteter Fehler aufgetreten. Bitte versuche es später erneut.",
   "invitation.invalid":
@@ -23,7 +26,7 @@ export const ERROR_TEXTS = {
   "review.merge_target_invalid":
     "Mit dieser Art lässt sich der Vorschlag nicht zusammenführen. Wähle eine bereits freigegebene Art, die nicht der Vorschlag selbst ist.",
   "review.merge_conflict":
-    "Das Zusammenführen ist nicht möglich, weil der Ersteller bei der Zielart schon ein Exemplar mit demselben Kennzeichen hat. Es wurde nichts geändert; lass ihn das Kennzeichen ändern oder gib den Vorschlag frei.",
+    "Das Zusammenführen ist nicht möglich, weil der Ersteller bei der Zielart schon eine Pflanze mit demselben Kennzeichen hat. Es wurde nichts geändert; lass ihn das Kennzeichen ändern oder gib den Vorschlag frei.",
   "review.merge_lock_failed":
     "Der Vorschlag konnte für das Zusammenführen gerade nicht gesperrt werden. Es wurde nichts geändert; versuche es gleich noch einmal.",
   "species.duplicate":
@@ -32,25 +35,25 @@ export const ERROR_TEXTS = {
   "catalog.name_hybrid":
     "Hybridzeichen (× oder x) gehören nicht in den Katalog. Trage die Art ohne Hybridzeichen ein, zum Beispiel „Citrus limon“ statt „Citrus x limon“.",
   "catalog.name_addition":
-    "Zusätze wie var., subsp., f. oder cv. gehören nicht in den Katalog. Trage nur Gattung und Art ein; den Zusatz hältst du beim Exemplar fest.",
+    "Zusätze wie var., subsp., f. oder cv. gehören nicht in den Katalog. Trage nur Gattung und Art ein; den Zusatz hältst du bei der Pflanze fest.",
   "specimen.name_taken":
-    "Ein Exemplar mit diesem Namen gibt es schon. Gib ein Kennzeichen an (zum Beispiel eine Farbe), damit du die Töpfe unterscheiden kannst.",
+    "Eine Pflanze mit diesem Namen gibt es schon. Gib ein Kennzeichen an (zum Beispiel eine Farbe), damit du die Töpfe unterscheiden kannst.",
   "specimen.marker_taken":
     "Dieses Kennzeichen gibt es bei dieser Art schon. Wähle ein anderes, damit du die Töpfe unterscheiden kannst.",
   "specimen.marker_required":
-    "Du hast schon ein Exemplar dieser Art. Gib dem neuen ein Kennzeichen, damit du die Töpfe unterscheiden kannst.",
+    "Du hast schon eine Pflanze dieser Art. Gib der neuen ein Kennzeichen, damit du die Töpfe unterscheiden kannst.",
   "specimen.markers_missing":
-    "Ab dem dritten Exemplar braucht jedes Exemplar der Art ein Kennzeichen. Vergib die fehlenden Kennzeichen, dann wird gespeichert.",
+    "Ab der dritten Pflanze braucht jede Pflanze der Art ein Kennzeichen. Vergib die fehlenden Kennzeichen, dann wird gespeichert.",
   "specimen.caught_in_future":
     "Das Fangdatum liegt in der Zukunft. Wähle heute oder ein früheres Datum.",
   "specimen.caught_after_archived":
-    "Das Fangdatum liegt nach dem Tag, an dem das Exemplar archiviert wurde. Wähle das Archivierungsdatum oder ein früheres Datum.",
-  "specimen.not_found": "Dieses Exemplar gibt es nicht.",
-  "specimen.not_a_cutting": "Dieses Exemplar ist kein Steckling und muss nicht eingetopft werden.",
-  "specimen.already_archived": "Dieses Exemplar ist schon archiviert.",
-  "specimen.not_archived": "Dieses Exemplar ist nicht archiviert.",
+    "Das Fangdatum liegt nach dem Tag, an dem die Pflanze archiviert wurde. Wähle das Archivierungsdatum oder ein früheres Datum.",
+  "specimen.not_found": "Diese Pflanze gibt es nicht.",
+  "specimen.not_a_cutting": "Diese Pflanze ist kein Steckling und muss nicht eingetopft werden.",
+  "specimen.already_archived": "Diese Pflanze ist schon archiviert.",
+  "specimen.not_archived": "Diese Pflanze ist nicht archiviert.",
   "specimen.archived":
-    "Dieses Exemplar ist archiviert. Stelle es zuerst wieder her, dann kannst du damit arbeiten.",
+    "Diese Pflanze ist archiviert. Stelle sie zuerst wieder her, dann kannst du damit arbeiten.",
   "measurement.not_found":
     "Für diesen Tag gibt es noch keine Messung. Erfasse zuerst die Messung, dann kannst du das Foto dazu speichern; es wurde nichts gespeichert.",
   "measurement.photo_not_found": "Zu dieser Messung gibt es kein Foto.",
@@ -86,11 +89,11 @@ export const ERROR_TEXTS = {
     "Diese Anfrage hast du schon anders beantwortet. Es wurde nichts geändert.",
   "friend.not_found": "Diesen Freund gibt es nicht. Lade die Liste neu.",
   "offer.not_shared":
-    "Dieses Exemplar ist nicht für Freunde freigegeben. Gib es zuerst unter „Was Freunde sehen“ frei, dann kannst du es anbieten.",
+    "Diese Pflanze ist nicht für Freunde freigegeben. Gib sie zuerst unter „Was Freunde sehen“ frei, dann kannst du sie anbieten.",
   "offer.already_open":
-    "Für dieses Exemplar gibt es schon ein offenes Angebot. Ziehe es zurück, bevor du ein neues erstellst.",
+    "Für diese Pflanze gibt es schon ein offenes Angebot. Ziehe es zurück, bevor du ein neues erstellst.",
   "offer.treatment_open":
-    "Für dieses Exemplar läuft noch eine Behandlung. Bestätige ausdrücklich, dass du es trotzdem anbieten willst.",
+    "Für diese Pflanze läuft noch eine Behandlung. Bestätige ausdrücklich, dass du sie trotzdem anbieten willst.",
   "swap.not_found": "Diese Anfrage gibt es nicht. Lade die Liste neu.",
   "swap.not_allowed":
     "Diese Antwort ist hier nicht möglich. Die Anfrage kann nur die andere Seite so beantworten.",
@@ -104,38 +107,20 @@ export const ERROR_TEXTS = {
   "swap.counter_not_allowed":
     "Zu einem Geschenk gibt es kein Gegenangebot. Frage ohne Gegenangebot an; es wurde nichts gesendet.",
   "swap.counter_not_shared":
-    "Dein Gegenangebot muss für Freunde freigegeben sein. Gib das Exemplar frei oder wähle ein anderes; es wurde nichts gesendet.",
+    "Dein Gegenangebot muss für Freunde freigegeben sein. Gib die Pflanze frei oder wähle eine andere; es wurde nichts gesendet.",
   "offer.not_found": "Dieses Angebot gibt es nicht. Lade die Liste neu.",
   "offer.not_active":
     "Dieses Angebot ist schon übergeben und kann nicht mehr zurückgezogen werden. Es wurde nichts geändert.",
   "discover.not_suggested":
     "Diese Art wird dir gerade nicht vorgeschlagen: Du hast sie schon gefangen oder sie fehlt im Katalog. Lade die Vorschläge neu.",
-  ...ACHIEVEMENT_ERROR_TEXTS,
-  "wish.name_taken":
-    "Einen Wunsch mit diesem Namen gibt es schon. Prüfe die Wunschliste, statt ihn doppelt anzulegen.",
-  "wish.image_source_unsupported":
-    "Das Bild kann nur von Wikimedia Commons gespeichert werden. Trage die Adresse einer Datei von commons.wikimedia.org ein; es wurde nichts gespeichert.",
-  "wish.image_not_found":
-    "Dieses Bild gibt es bei Wikimedia Commons nicht (mehr). Prüfe die Adresse; es wurde nichts gespeichert.",
-  "wish.image_license_unsupported":
-    "Die Lizenz dieses Bildes erlaubt kein Speichern oder ist nicht angegeben. Nimm ein Bild mit freier Lizenz (CC0, CC BY, CC BY-SA oder gemeinfrei); es wurde nichts gespeichert.",
-  "wish.not_found": "Diesen Wunsch gibt es nicht. Lade die Wunschliste neu.",
-  "wish.not_open":
-    "Dieser Wunsch ist verworfen und nicht mehr offen. Nur ein offener Wunsch kann als gekauft vermerkt werden; es wurde nichts geändert.",
-  "wish.already_bought":
-    "Dieser Wunsch ist schon als gekauft vermerkt und lässt sich nicht mehr verwerfen. Es wurde nichts geändert.",
-  "wish.not_bought":
-    "Dieser Wunsch ist nicht als gekauft vermerkt. Nur ein gekaufter Wunsch wird mit einem Exemplar verknüpft; es wurde nichts geändert.",
-  "wish.already_linked":
-    "Dieser Wunsch ist schon mit einem anderen Exemplar verknüpft, oder das Exemplar gehört schon zu einem anderen Wunsch. Es wurde nichts geändert.",
-  "wish.not_duplicate":
-    "Dieser Wunsch hat keinen doppelten Namen und lässt sich hier nicht umbenennen oder löschen. Lade die Wunschliste neu; es wurde nichts geändert.",
+  ...ONBOARDING_ERROR_TEXTS,
+  ...WUN_ERROR_TEXTS,
   "pokedex.not_caught":
     "Diese Art hast du noch nicht gefangen und kann deshalb nicht als gesehen vermerkt werden. Lade den Pokédex neu; es wurde nichts geändert.",
   "care.no_phase":
-    "Dieses Exemplar hat keine Pflegephase (Steckling oder Art ohne Ruhephasen-Zeitraum) und wird nicht umgestellt.",
+    "Diese Pflanze hat keine Pflegephase (Steckling oder Art ohne Ruhephasen-Zeitraum) und wird nicht umgestellt.",
   "care.target_unknown":
-    "Für dieses Exemplar ist noch kein Soll-Standort bekannt. Weise den Standort stattdessen selbst zu.",
+    "Für diese Pflanze ist noch kein Soll-Standort bekannt. Weise den Standort stattdessen selbst zu.",
   "location.name_taken": "Einen Standort mit diesem Namen gibt es schon.",
   "location.not_found": "Diesen Standort gibt es nicht.",
   "light_zone.name_taken": "Eine Lichtzone mit diesem Namen gibt es schon.",

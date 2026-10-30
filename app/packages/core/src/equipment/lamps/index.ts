@@ -1,6 +1,6 @@
 export { equipmentSetZone } from "./set-zone";
 export type { SetZoneDependencies } from "./set-zone";
-export { equipmentZoneUsage } from "./zone-usage";
+export { equipmentZoneUsage, equipmentLocationUsage } from "./zone-usage";
 export { zoneEquipment } from "./zones";
 export type {
   Lamp,

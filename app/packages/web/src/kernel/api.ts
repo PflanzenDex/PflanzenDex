@@ -1,5 +1,8 @@
 type FetchFn = typeof fetch;
 
+/** Fired on `window` after every write that succeeded, so quiet observers (lock states, achievement banner) can look again. */
+export const WRITE_SUCCEEDED = "pflanzendex:write-succeeded";
+
 /** API error with a stable code (FR-QG-11); `D` is the shape of optional extra data of the error. */
 export interface ApiError<D = unknown> {
   code: string;
@@ -50,12 +53,18 @@ export async function call<T, D = unknown>(
   }
 }
 
-/** Writes carry a fresh repeat-guard key per call (`Idempotency-Key`). */
+/**
+ * Writes carry a fresh repeat-guard key per call (`Idempotency-Key`). A write that succeeded tells quiet observers
+ * (lock states, achievement banner) to look again, whichever screen sent it (US-ONB-05).
+ */
 export const createWrite =
   <D = unknown>(api: string, token: string, fetchFn: FetchFn = fetch): Write<D> =>
-  (method, path, body) =>
-    call<unknown, D>(fetchFn, `${api}${path}`, token, {
+  async (method, path, body) => {
+    const r = await call<unknown, D>(fetchFn, `${api}${path}`, token, {
       method: method,
       body,
       key: crypto.randomUUID(),
     });
+    if (r.ok && typeof window !== "undefined") window.dispatchEvent(new Event(WRITE_SUCCEEDED));
+    return r;
+  };

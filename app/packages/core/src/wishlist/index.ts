@@ -55,3 +55,10 @@ export type {
   DuplicateWish,
   PriorityKind,
 } from "./candidates";
+export { wishVisibility, wishVisibleList } from "./visibility";
+export type {
+  WishVisibilityChange,
+  WishVisibilityDependencies,
+  WishVisibilityResult,
+  WishVisibilityStore,
+} from "./visibility";

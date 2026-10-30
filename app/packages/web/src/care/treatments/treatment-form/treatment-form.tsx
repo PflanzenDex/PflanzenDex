@@ -41,7 +41,7 @@ function Choice(props: {
       aria-describedby={error ? messageId : undefined}
       className="m-0 flex min-w-0 flex-col rounded-lg border-2 border-border px-3 pb-2 pt-1"
     >
-      <legend className="px-1 font-semibold">Exemplare</legend>
+      <legend className="px-1 font-semibold">Pflanzen</legend>
       {props.specimens.map((z, i) => (
         <Checkbox
           key={z.id}
@@ -148,16 +148,18 @@ export function TreatmentForm(props: {
   onSend: (input: TreatmentInput) => Promise<boolean>;
   /** Receives the first checkbox, so the empty list of open treatments can move the focus here. */
   focusRef?: React.MutableRefObject<HTMLInputElement | null>;
+  /** Specimens that are ticked at the start, e.g. the plant whose layer opened the form (US-QS-23). */
+  chosen?: readonly string[];
 }) {
   const today = localToday(new Date(), currentTimeZone());
   const form = useForm<TreatmentFields>({
     resolver: zodResolver(treatmentSchema),
-    defaultValues: treatmentDefaults(today),
+    defaultValues: { ...treatmentDefaults(today), specimenIds: [...(props.chosen ?? [])] },
   });
   const isCourse = useWatch({ control: form.control, name: "isCourse" });
   const submit = form.handleSubmit(async (values) => {
     if (await props.onSend(toTreatmentInput(values)))
-      form.reset({ ...values, specimenIds: [], reason: "", agent: "" });
+      form.reset({ ...values, specimenIds: [...(props.chosen ?? [])], reason: "", agent: "" });
   });
   return (
     <Form {...form}>

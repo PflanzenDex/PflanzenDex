@@ -12,21 +12,21 @@ function ChoiceFields({ control }: { control: Control<ProposalFields> }) {
         control={control}
         name="difficulty"
         label="Schwierigkeit"
-        required
+        emptyLabel="Unbekannt"
         options={Object.entries(DIFFICULTY)}
       />
       <ChoiceField
         control={control}
         name="standardLevel"
         label="Standard-Stufe (Lichtzone)"
-        required
+        emptyLabel="Unbekannt"
         options={LEVELS}
       />
       <TextField
         control={control}
         name="lightDemandLux"
         label="Lichtbedarf für maximales Wachstum (Lux)"
-        required
+        help="Nur mit Beleg in „Quelle“ eintragen; leer bleibt der Wert unbekannt."
         type="number"
         inputMode="numeric"
         min={1}
@@ -55,7 +55,10 @@ function ChoiceFields({ control }: { control: Control<ProposalFields> }) {
   );
 }
 
-/** The required fields from DM-BES-01 (FR-BES-05); everything else is in "More details". */
+/**
+ * The core fields from DM-BES-01 (FR-BES-05); everything else is in "More details". Difficulty, default level and lux
+ * need are optional: without a source they stay unknown (P-08, issue 1003).
+ */
 export function RequiredFields({ control }: { control: Control<ProposalFields> }) {
   return (
     <>

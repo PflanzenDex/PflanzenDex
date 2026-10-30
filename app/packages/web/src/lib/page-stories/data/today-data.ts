@@ -37,7 +37,7 @@ export const todayRoutes = {
       item("c", "Bogenhanf", {
         kind: "specimen_incomplete",
         text: "„Bogenhanf“ hat noch keinen Standort.",
-        nextAction: "Weise dem Exemplar einen Standort zu.",
+        nextAction: "Weise der Pflanze einen Standort zu.",
         target: "hints",
       }),
     ],
@@ -69,7 +69,7 @@ export const todayRoutes = {
         specimenName: "Bogenhanf",
         locationId: null,
         text: "„Bogenhanf“ hat noch keinen Standort.",
-        nextAction: "Weise dem Exemplar einen Standort zu.",
+        nextAction: "Weise der Pflanze einen Standort zu.",
       },
     ],
   },

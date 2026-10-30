@@ -15,6 +15,7 @@ export async function createSpecimen(
     /** Markers for existing specimens that have none yet, from the 3rd specimen on (US-BES-03). */
     markers?: { specimenId: string; marker: string }[];
     locationId?: string;
+    lightZoneId?: string;
     status?: "cutting";
     /** Back-dated catch date `YYYY-MM-DD` (FR-BES-04); without it the server uses today's local date. */
     catchDate?: string;
@@ -91,6 +92,24 @@ export async function correctCatchDate(
     "POST",
     `/specimens/${encodeURIComponent(input.id)}/catch-date`,
     { catchDate: input.catchDate, timeZone: currentTimeZone() },
+  );
+  return r.ok ? { ok: true, value: r.value as Specimen } : r;
+}
+
+/**
+ * Sets the own light zone of a specimen or, with `null`, clears it so the zone is derived again (US-LIC-02,
+ * US-BES-04). The zone is chosen by ID; the repeat-guard key is created per call.
+ */
+export async function setLightZone(
+  api: string,
+  token: string,
+  input: { id: string; lightZoneId: string | null },
+  fetchFn: FetchFn = fetch,
+): Promise<Response<Specimen>> {
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/specimens/${encodeURIComponent(input.id)}/light-zone`,
+    { lightZoneId: input.lightZoneId },
   );
   return r.ok ? { ok: true, value: r.value as Specimen } : r;
 }

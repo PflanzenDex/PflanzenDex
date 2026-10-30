@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router";
 import type { Species } from "@pflanzendex/core";
 import {
@@ -11,8 +11,8 @@ import {
   type State,
 } from "../../account";
 import { FeaturesProvider, useClearOnSignOut } from "../../kernel";
-import { AppRoutes } from "../../routes";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
+import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import { AppShell } from "../../components/shared/navigation/app-shell/app-shell";
 import {
   pageTitle,
@@ -24,10 +24,13 @@ import {
 } from "../../components/shared/navigation/nav-model/navigation/navigation";
 import { PathNotes } from "../../wishlist";
 import { useWishHandOver } from "../../wish-to-specimen";
+import { UnlocksProvider, isShownLocked, lockMark, useUnlocks } from "../unlock";
+
+/** The route table is its own chunk: the sign-in screens do not carry it (DS-08, US-QS-14). */
+const loadRoutes = () => import("../../routes").then((m) => ({ default: m.AppRoutes }));
+const AppRoutes = lazyPage(loadRoutes);
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
-
-const version = (import.meta.env as Record<string, string | undefined>)["VITE_APP_VERSION"];
 
 /** The active view comes from the address; going to a view is a navigation, so back and deep links work (US-QS-07). */
 function useViews() {
@@ -49,10 +52,34 @@ function useSpeciesHandOver(setView: (v: LinkTarget) => void) {
     setNewSpecies(null);
     setView("species");
   };
-  return { newSpecies, setNewSpecies, choose, toTheCatalog };
+  const toAddPlant = () => {
+    setNewSpecies(null);
+    setView("addPlant");
+  };
+  return { newSpecies, setNewSpecies, choose, toTheCatalog, toAddPlant };
 }
 
 type Session = ReturnType<typeof useSession>;
+type SignedInAccount = Extract<State, { kind: "signedIn" }>["account"];
+
+/** The shell with its navigation; a destination that is not open yet stays in place, marked with text (US-ONB-05). */
+function SignedInShell(props: { account: SignedInAccount; children: ReactNode }) {
+  const { account } = props;
+  const friends = useUnlocks().entries.find((e) => e.id === "friends");
+  return (
+    <AppShell
+      titleOf={viewTitle}
+      items={navItems({
+        reviewer: account.reviewer === true,
+        operator: account.operator === true,
+        social: account.features?.social,
+        locks: friends && isShownLocked(friends) ? { friends: lockMark(friends) } : {},
+      })}
+    >
+      {props.children}
+    </AppShell>
+  );
+}
 
 /** The page title before there is an account to work with (US-QS-09, WCAG 2.4.2); signed in, the shell sets it per view. */
 const ENTRY_TITLES: Record<Exclude<State["kind"], "signedIn">, string | undefined> = {
@@ -104,53 +131,46 @@ export function App() {
   // The way from a bought wish to its specimen (US-WUN-05): wishlist, catalog and collection are wired here.
   const wishPath = useWishHandOver(api, s.token, handOver);
   const z = s.state;
+  const { pathname } = useLocation();
+  // Fetch the route table while the session loads; a failure shows at the routes, with "Erneut versuchen" (P-10).
+  useEffect(() => void loadRoutes().catch(() => undefined), []);
   useClearOnSignOut(z.kind === "signedIn");
   useEntryTitle(z.kind);
-  const footer = (
-    <footer className="mt-8 text-center text-xs text-muted-foreground">
-      Version {version || "unbekannt"}
-    </footer>
-  );
   if (z.kind !== "signedIn")
     return (
       <main className="flex min-h-dvh flex-col items-center px-4 py-6 md:pt-20">
         <EntryStates state={z} session={s} />
-        {footer}
       </main>
     );
   return (
     <FeaturesProvider features={z.account.features}>
-      <AppShell
-        titleOf={viewTitle}
-        items={navItems({
-          reviewer: z.account.reviewer === true,
-          operator: z.account.operator === true,
-          social: z.account.features?.social,
-        })}
-      >
-        <div className="mx-auto w-full max-w-180">
-          {navState?.hint && (
-            <p role="alert" className="mb-3 rounded-lg border border-border p-3">
-              {navState.hint}
-            </p>
-          )}
-          {(wishPath.notes.wish || wishPath.notes.notice) && (
-            <Suspense fallback={null}>
-              <PathNotes {...wishPath.notes} />
-            </Suspense>
-          )}
-          <AppRoutes
-            api={api}
-            session={s}
-            account={z.account}
-            {...(z.error ? { error: z.error } : {})}
-            onOpen={setView}
-            onOpenProfile={openProfile}
-            handOver={wishPath.handOver}
-          />
-        </div>
-        {footer}
-      </AppShell>
+      <UnlocksProvider api={api} token={s.token}>
+        <SignedInShell account={z.account}>
+          <div className="mx-auto w-full max-w-180">
+            {navState?.hint && (
+              <p role="alert" className="mb-3 rounded-lg border border-border p-3">
+                {navState.hint}
+              </p>
+            )}
+            {(wishPath.notes.wish || wishPath.notes.notice) && (
+              <Suspense fallback={null}>
+                <PathNotes {...wishPath.notes} />
+              </Suspense>
+            )}
+            <RouteBoundary resetKey={pathname}>
+              <AppRoutes
+                api={api}
+                session={s}
+                account={z.account}
+                {...(z.error ? { error: z.error } : {})}
+                onOpen={setView}
+                onOpenProfile={openProfile}
+                handOver={wishPath.handOver}
+              />
+            </RouteBoundary>
+          </div>
+        </SignedInShell>
+      </UnlocksProvider>
     </FeaturesProvider>
   );
 }

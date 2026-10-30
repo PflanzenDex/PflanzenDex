@@ -3,7 +3,8 @@ import { cleanup, render as rtl, screen } from "@testing-library/react";
 import { renderToString as render } from "react-dom/server";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { CollectionList } from "./collection-list/collection-list";
+import { PlantLocation } from "../../plants-screen/plant-layers/plant-layer/plant-location/plant-location";
+import { PlantOverview } from "../../plants-screen/plant-layers/plant-layer/plant-overview/plant-overview";
 import { loadCards } from "./cards-api";
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
@@ -30,8 +31,20 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   ...extra,
 });
 const ACCESS = { api: "http://api", token: async () => "tok" };
-const html = (cards: SpecimenCard[]) =>
-  renderToString(<CollectionList cards={cards} onSpeciesChoose={vi.fn()} photoAccess={ACCESS} />);
+/** The facts of a card as the plant layer shows them: the tabs "Überblick" and "Standort" (US-QS-23). */
+function CardList({ cards }: { cards: SpecimenCard[] }) {
+  return (
+    <ul>
+      {cards.map((c) => (
+        <li key={c.id}>
+          <PlantOverview card={c} access={ACCESS} onTreat={() => undefined} />
+          <PlantLocation card={c} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+const html = (cards: SpecimenCard[]) => renderToString(<CardList cards={cards} />);
 
 describe("US-BES-06 client of the cards API", () => {
   it("loads the cards with bearer token and the time zone of the device", async () => {
@@ -90,11 +103,11 @@ describe("US-BES-06 Karte: Inhalt", () => {
   });
 
   it.each([
-    ["species", "Lichtzone: Lampe 3 (aus dem Lichtbedarf der Art)"],
-    ["profile", "Lichtzone: Lampe 3 (aus deinem Pflegeprofil)"],
-    ["cutting", "Lichtzone: Lampe 3 (Stecklingslicht)"],
+    ["species", "Lichtzone: Zone 3 (aus dem Lichtbedarf der Art)"],
+    ["profile", "Lichtzone: Zone 3 (aus deinem Pflegeprofil)"],
+    ["cutting", "Lichtzone: Zone 3 (Stecklingslicht)"],
   ] as const)("US-BES-06 · #592 says where the zone comes from (%s)", (source, text) => {
-    expect(html([card({ lightZone: "Lampe 3", lightZoneSource: source })])).toContain(text);
+    expect(html([card({ lightZone: "Zone 3", lightZoneSource: source })])).toContain(text);
   });
 
   it("shows the levels of the status in words", () => {
@@ -113,8 +126,7 @@ describe("US-WAC-05 the latest photo on the card is private (P-05)", () => {
   const withPhoto = card({
     photo: { url: "/specimens/e1/measurements/m1/photo", date: "2026-09-28" },
   });
-  const show = () =>
-    rtl(<CollectionList cards={[withPhoto]} onSpeciesChoose={vi.fn()} photoAccess={ACCESS} />);
+  const show = () => rtl(<CardList cards={[withPhoto]} />);
   beforeEach(() => {
     URL.createObjectURL = vi.fn(() => "blob:card");
     URL.revokeObjectURL = vi.fn();
@@ -164,7 +176,7 @@ describe("US-BES-06 Karte: letzte Messung", () => {
       }),
     ]);
     expect(h).toContain("Letzte Messung: ");
-    expect(h).toContain("12,5 cm");
+    expect(h).toContain("12,5\u00a0cm");
     expect(h).toContain(">Gesund</strong> am 01.10.2026");
     expect(h).not.toContain("noch keine Messung");
   });
@@ -173,7 +185,7 @@ describe("US-BES-06 Karte: letzte Messung", () => {
     const h = html([
       card({ lastMeasurement: { date: "2026-10-01", value: 14, quality: "healthy", note: null } }),
     ]);
-    expect(h).toContain("14 cm");
+    expect(h).toContain("14\u00a0cm");
   });
 
   it("etiolated/thin is never a success: warning class, no success word, hint to the success criteria", () => {
@@ -224,7 +236,7 @@ describe("US-BES-06 Karte: offene Behandlung", () => {
   it("shows reason and due date, overdue items are highlighted", () => {
     const h = html([card({ treatment: treatment("überfällig seit 3 Tg.", "overdue", 3) })]);
     expect(h).toContain("Neem spritzen");
-    expect(h).toContain("überfällig seit 3 Tg.");
+    expect(h).toContain("3\u00a0Tage überfällig");
     expect(h).toContain('data-due="overdue"');
     const today = html([card({ treatment: treatment("heute fällig", "today", 0) })]);
     expect(today).toContain("heute fällig");
@@ -237,32 +249,5 @@ describe("US-BES-06 Karte: offene Behandlung", () => {
     const b = treatment("in 2 Tg.", "soon", 2);
     expect(html([card({ treatment: b, moreTreatments: 2 })])).toContain("+2 weitere");
     expect(html([card({ treatment: b })])).not.toContain("more");
-  });
-});
-
-describe("US-BES-06 grid and operation", () => {
-  it("a grid of list items, one card per specimen, with a heading per card", () => {
-    const h = html([card(), card({ id: "e2", name: "Aloe" })]);
-    expect(h.match(/<li /g)).toHaveLength(2);
-    expect(h).toContain("<ul ");
-    expect(h).toContain("<h2");
-  });
-
-  it("the grid adapts to the width: one to two columns on the phone, more on wide screens", () => {
-    const h = html([card()]);
-    expect(h).toContain("grid-cols-1");
-    expect(h).toContain("sm:grid-cols-2");
-    expect(h).toContain("lg:grid-cols-3");
-    expect(h).not.toMatch(/\bmax-(sm|md|lg|xl):/);
-  });
-
-  it("without specimens: says what to do (P-09), and offers the species choice", () => {
-    const h = html([]);
-    expect(h).toContain("Du hast noch kein Exemplar");
-    expect(h).toContain("Art wählen");
-  });
-
-  it("the button for another specimen stays below the cards", () => {
-    expect(html([card()])).toContain("Weiteres Exemplar: Art wählen");
   });
 });

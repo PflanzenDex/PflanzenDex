@@ -37,3 +37,11 @@ IDs are never renumbered.
 - **Fix:** State each threshold once, in the gate configuration; documents refer to it instead of repeating the number (FR-QG-18).
 - **Can it become a gate?** Yes: a script that fails when the DoD contains a number differing from the configuration. Not implemented yet.
 - **Source:** Finding from the Tombola project, recorded in FR-QG-18 in `docs/specs/product/18-architecture-and-quality-gates.md`.
+
+## PF-004 Caddy does not start with every capability dropped
+
+- **Symptom:** a Caddy container with `no-new-privileges`, `cap_drop: [ALL]` and a non-root user exits at once with `exec /usr/bin/caddy: operation not permitted`.
+- **Cause:** the official image gives the binary the file capability `cap_net_bind_service=ep`. The kernel refuses to execute a binary whose file capabilities it cannot grant.
+- **Fix:** copy the binary in the image (`cp /usr/bin/caddy /tmp/caddy && mv /tmp/caddy /usr/bin/caddy`; a plain copy drops the capability). Ports below 1024 still work, because Docker lets unprivileged users bind them inside a container. An existing `/data` volume needs a one-time `chown` (runbook "Container privileges").
+- **Can it become a gate?** Already is: `deploy-config.test.ts` checks the copy, the non-root user and the dropped capabilities of every service.
+- **Source:** #761 (TE-03 hardening), found on 2026-10-30.

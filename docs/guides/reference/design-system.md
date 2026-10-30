@@ -83,7 +83,7 @@ Everything runs on the client. The rules keep the app fast on a phone, offline-t
 | ID    | Rule                                                                                                                                                                                                                                                                                                                                                                        |
 | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | DS-07 | No `"use client"` / `"use server"` directives; they are meaningless in a Vite SPA and mark code copied from Next.js examples. 🔒                                                                                                                                                                                                                                            |
-| DS-08 | **Split by route.** Each route-level page is loaded with `React.lazy` (the module's `index.ts` exports the lazy page) behind one `Suspense` boundary with a skeleton, so the first load contains only the shell and the current route. Initial JS budget: starting value 170 kB gzipped (assumption, checked with `lighthouse`).                                            |
+| DS-08 | **Split by route.** Each route-level page is loaded with `React.lazy` (the module's `index.ts` exports the lazy page) behind one `Suspense` boundary with a skeleton, so the first load contains only the shell and the current route. Initial JS: goal 125 kB gzipped, hard limit 140 kB (gate QG-U6, ADR 0018).                                                           |
 | DS-09 | **Data only through the module's `*-api.ts`**, never `fetch` inside a component. Every request has a pending, error and empty state (P-09, P-10). Dates are local calendar date strings (see the `date-and-timezone` skill). Server state is cached by one data layer (decision pending: TanStack Query or equivalent).                                                     |
 | DS-10 | **Device and browser APIs only through `src/platform/`** (camera, photo picker, notifications, share, geolocation, storage, haptics, clipboard, service worker). Components call the adapter; the PWA implementation uses the web API, a native shell swaps in the Capacitor plugin. No `navigator.*`, `localStorage`, `sessionStorage` or `Notification` in components. 🔒 |
 | DS-11 | **Offline and shell behavior.** Every view handles "offline" explicitly (show cached data with a note, queue writes with a visible state, never a silent failure, P-10). Navigation uses the router (back works, no reliance on browser chrome); no hover-only interactions; respect safe areas (DS-22); no `window.open`/`alert`/`confirm` (use `Dialog`/`Sheet`).         |
@@ -304,7 +304,7 @@ export function ResponsiveModal({
 }
 ```
 
-Since the Greenhouse redesign (ADR 0011, US-QS-14) the values of these tokens, the radius tokens (`radius-control` 14 px, `radius-tile` 16 px, `radius-card` 22 px, `radius-pill`; the Tailwind steps `lg`, `xl`, `2xl` map to control, tile and card), the elevation levels (`shadow-elevation-1`, `shadow-elevation-2`), the motion tokens (`--motion-fast`, `--motion-base`, `--motion-slow`, `ease-enter`, `ease-leave`; 0 ms under `prefers-reduced-motion`) and the type scale (`text-xs` to `text-4xl`, plus `text-label`) live in `styles/tokens.css`; the font is self-hosted Figtree (`font-sans`). The literal values in the sketch above are illustrative.
+Since the Greenhouse redesign (ADR 0011, US-QS-14) the values of these tokens, the radius tokens (`radius-control` 14 px, `radius-tile` 16 px, `radius-card` 22 px, `radius-pill`; the Tailwind steps `lg`, `xl`, `2xl` map to control, tile and card), the elevation levels (`shadow-elevation-1`, `shadow-elevation-2`), the motion tokens (`--motion-fast`, `--motion-base`, `--motion-slow`, `ease-enter`, `ease-leave`; 0 ms under `prefers-reduced-motion`) and the type scale (`text-xs` to `text-4xl`, plus `text-label`) live in `styles/tokens.css`; the font is self-hosted Figtree (`font-sans`). The literal values in the sketch above are illustrative. Since ADR 0017 the surfaces, quiet fills, borders, text greys and shadows are neutral; green (`primary`, `ring`, `accent`) marks intent only: the primary button, the outline button (text and border), links, focus, the selected navigation item, tab and chip, and progress. Never use a green token for the page, a card fill, a quiet or ghost button, a divider, body text or a shadow.
 
 Always pair a surface with its foreground: `bg-primary text-primary-foreground`, `bg-card text-card-foreground`, `bg-muted text-muted-foreground`.
 
@@ -547,6 +547,87 @@ export function SpecimenCardSkeleton() {
   );
 }
 ```
+
+### 4.4 Component inventory
+
+Every component in `components/ui` and `components/shared` that exists today. Look here before you build a new one; a new component gets its row in the same PR (`make reference-check`, rule RF-3, US-QG-10). The path is relative to `app/packages/web/src/components/`.
+
+| Component         | Path                                      | Use it for                                                                                                                                |
+| ----------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `Button`          | `ui/button/`                              | every button; variants by role, 44 px hit area on touch (DS-15, DS-34, DS-35)                                                             |
+| `Badge`           | `ui/display/badge/`                       | a short, non-interactive status label; text carries the meaning (DS-38)                                                                   |
+| `Label`           | `ui/display/label/`                       | the label of a form control (DS-36)                                                                                                       |
+| `MoreHelp`        | `ui/display/more-help/`                   | one line of help and the longer text behind "Mehr erfahren" (US-QS-24)                                                                    |
+| `Skeleton`        | `ui/display/skeleton/`                    | one placeholder block with the size of the content it mirrors; `SkeletonGroup` (DS-52, DS-56)                                             |
+| `Table`           | `ui/display/table/`                       | semantic table with its parts (`TableRow`, `TableCell`, …); on phones use `ResponsiveTable`                                               |
+| `Checkbox`        | `ui/fields/checkbox/`                     | styled native checkbox, the whole label row is the hit area                                                                               |
+| `Form`            | `ui/fields/form/`                         | the form family on react-hook-form + zod (section 4.2, DS-47, DS-48)                                                                      |
+| `Input`           | `ui/fields/input/`                        | single-line field; `fieldClasses` is the shared look of `Input`, `Textarea` and `Select`                                                  |
+| `Select`          | `ui/fields/select/`                       | styled native select (ADR 0007)                                                                                                           |
+| `Textarea`        | `ui/fields/textarea/`                     | multi-line field                                                                                                                          |
+| `Dialog`          | `ui/overlays/dialog/`                     | modal dialog with focus trap; for forms on phones use `ResponsiveModal` (DS-23, DS-40)                                                    |
+| `Sheet`           | `ui/overlays/sheet/`                      | bottom sheet, loaded on demand (DS-08)                                                                                                    |
+| `EmptyState`      | `shared/empty-state/`                     | empty or error state of a list or view with the next action (DS-26, P-09)                                                                 |
+| `AppShell`        | `shared/navigation/app-shell/`            | the frame of every signed-in page: header, sidebar, bottom bar; a destination makes it one screen with `data-fit-screen` (DS-61)                                         |
+| `GlobalHeader`    | `shared/navigation/global-header/`        | the top bar below `md` (DS-25)                                                                                                            |
+| `MobileNavBar`    | `shared/navigation/mobile-nav-bar/`       | the bottom bar, at most 5 slots (DS-25)                                                                                                   |
+| `SideNav`         | `shared/navigation/side-nav/`             | the sidebar from `md`                                                                                                                     |
+| `NavNote`         | `shared/navigation/nav-model/nav-note/`   | the text mark of a destination that is not open yet (US-ONB-05)                                                                           |
+| `Navigation`      | `shared/navigation/nav-model/navigation/` | the navigation model: views, link targets and paths, not a visible component                                                              |
+| `ResponsiveModal` | `shared/responsive/responsive-modal/`     | content a phone user fills in: bottom sheet below `md`, dialog from `md` (DS-23)                                                          |
+| `LayerSheet`      | `shared/responsive/layer-sheet/`          | a topic or detail above an overview, bound to `?sheet=<id>`; also `useLayer`, `LayerOpener` and the grid slot `LAYER_SLOT` (DS-58, DS-59) |
+| `Pager`           | `shared/responsive/pager/`                | a list longer than its region as pages, `?page=n`, buttons and swipe (DS-60)                                                              |
+| `ResponsiveTable` | `shared/responsive/responsive-table/`     | a list of rows: cards below `md`, `Table` from `md`, one column definition (DS-24)                                                        |
+| `Banner`          | `shared/states/banner/`                   | a page-level message with icon and text, optional action (DS-34, DS-38)                                                                   |
+| `PageSkeleton`    | `shared/states/page-skeleton/`            | Suspense fallback of a route page (DS-55, DS-56)                                                                                          |
+| `PlantLoader`     | `shared/states/plant-loader/`             | the growing-sprout loading indicator                                                                                                      |
+| `RequestState`    | `shared/states/request-state/`            | the one pattern for pending, error, empty and ready of a request (DS-09, DS-26)                                                           |
+| `ToastItem`       | `shared/states/toast/toast-item/`         | one toast; durations by kind (P-10)                                                                                                       |
+| `ToastProvider`   | `shared/states/toast/toast-provider/`     | provider for `useToast()`, the confirmation after a write                                                                                 |
+| Component         | Path                                      | Use it for                                                                                                             |
+| ----------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `Button`          | `ui/button/`                              | every button; variants by role, 44 px hit area on touch (DS-15, DS-34, DS-35)                                          |
+| `Badge`           | `ui/display/badge/`                       | a short, non-interactive status label; text carries the meaning (DS-38)                                                |
+| `Label`           | `ui/display/label/`                       | the label of a form control (DS-36)                                                                                    |
+| `MoreHelp`        | `ui/display/more-help/`                   | one line of help and the longer text behind "Mehr erfahren" (US-QS-24)                                                 |
+| `Skeleton`        | `ui/display/skeleton/`                    | one placeholder block with the size of the content it mirrors; `SkeletonGroup` (DS-52, DS-56)                          |
+| `Table`           | `ui/display/table/`                       | semantic table with its parts (`TableRow`, `TableCell`, …); on phones use `ResponsiveTable`                            |
+| `Checkbox`        | `ui/fields/checkbox/`                     | styled native checkbox, the whole label row is the hit area                                                            |
+| `Form`            | `ui/fields/form/`                         | the form family on react-hook-form + zod (section 4.2, DS-47, DS-48)                                                   |
+| `Input`           | `ui/fields/input/`                        | single-line field; `fieldClasses` is the shared look of `Input`, `Textarea` and `Select`                               |
+| `Select`          | `ui/fields/select/`                       | styled native select (ADR 0007)                                                                                        |
+| `Textarea`        | `ui/fields/textarea/`                     | multi-line field                                                                                                       |
+| `Dialog`          | `ui/overlays/dialog/`                     | modal dialog with focus trap; for forms on phones use `ResponsiveModal` (DS-23, DS-40)                                 |
+| `Sheet`           | `ui/overlays/sheet/`                      | bottom sheet, loaded on demand (DS-08)                                                                                 |
+| `EmptyState`      | `shared/empty-state/`                     | empty or error state of a list or view with the next action (DS-26, P-09)                                              |
+| `AppShell`        | `shared/navigation/app-shell/`            | the frame of every signed-in page: header, sidebar, bottom bar; a destination makes it one screen with `data-fit-screen` (DS-61)                      |
+| `GlobalHeader`    | `shared/navigation/global-header/`        | the top bar below `md` (DS-25)                                                                                         |
+| `MobileNavBar`    | `shared/navigation/mobile-nav-bar/`       | the bottom bar, at most 5 slots (DS-25)                                                                                |
+| `SideNav`         | `shared/navigation/side-nav/`             | the sidebar from `md`                                                                                                  |
+| `NavNote`         | `shared/navigation/nav-model/nav-note/`   | the text mark of a destination that is not open yet (US-ONB-05)                                                        |
+| `Navigation`      | `shared/navigation/nav-model/navigation/` | the navigation model: views, link targets and paths, not a visible component                                           |
+| `ResponsiveModal` | `shared/responsive/responsive-modal/`     | content a phone user fills in: bottom sheet below `md`, dialog from `md` (DS-23)                                       |
+| `LayerSheet`      | `shared/responsive/layer-sheet/`          | a topic or detail above an overview, bound to `?sheet=<id>`; also `useLayer` and `LayerOpener` (DS-58, DS-59)          |
+| `Pager`           | `shared/responsive/pager/`                | a list longer than its region as pages, `?page=n` (`?lpage=n` in a layer, `LAYER_PARAM`), buttons and swipe; `useRowPageSize` gives 4/8/10 compact rows per page (DS-60, US-QS-22) |
+| `PagedGroups`     | `shared/responsive/paged-groups/`         | groups chosen from a row with their counts (`GroupChoices`, `?part=`) and the chosen group as `Pager` pages (US-QS-19) |
+| `ResponsiveTable` | `shared/responsive/responsive-table/`     | a list of rows: cards below `md`, `Table` from `md`, one column definition (DS-24)                                     |
+| `Banner`          | `shared/states/banner/`                   | a page-level message with icon and text, optional action (DS-34, DS-38)                                                |
+| `PageSkeleton`    | `shared/states/page-skeleton/`            | Suspense fallback of a route page (DS-55, DS-56)                                                                       |
+| `PlantLoader`     | `shared/states/plant-loader/`             | the growing-sprout loading indicator                                                                                   |
+| `RequestState`    | `shared/states/request-state/`            | the one pattern for pending, error, empty and ready of a request (DS-09, DS-26)                                        |
+| `ToastItem`       | `shared/states/toast/toast-item/`         | one toast; durations by kind (P-10)                                                                                    |
+| `ToastProvider`   | `shared/states/toast/toast-provider/`     | provider for `useToast()`, the confirmation after a write                                                              |
+
+### 4.5 Layers and one screen (US-QS-15)
+
+| ID    | Rule                                                                                                                                                                                                                                                                                              |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DS-58 | A destination is an overview (summary, next action, at most 6 entries) that fits between app bar and navigation; topics and object details open as layers, never as a long column below. Long lists are paged, not scrolled.                                                                      |
+| DS-59 | A layer is `LayerSheet`: open state in `?sheet=<id>`, opened by pushing history (Back closes), a bottom sheet below `md`, a dialog from `md`, a pane beside the list from `lg`. Focus moves to the layer and returns to the opener; Escape closes; the scroll region has `overscroll-contain`.    |
+| DS-60 | Paging is `Pager`: `?page=n` (1-based, clamped), "Zurück" and "Weiter" (44 px), "Seite n von m" in a polite live region, swipe as an alternative; a changed filter passes a new `resetKey`. Pages change without sliding.                                                                         |
+| DS-61 | A one-screen destination marks its root element with `data-fit-screen`; this is the only mechanism (CSS `:has` in `tokens.css`, no code in the entry bundle, the shell knows no routes): the page does not scroll, `main` scrolls inside itself only when content cannot fit (400 % zoom, 200 % text), with `overscroll-contain`. Heute and Sammlung use it. |
+| DS-62 | A layer has at most one filled primary action (`primaryAction`); others are `outline` buttons, rows or tiles. Help text shows one line; more is behind "Mehr erfahren". Free text longer than its region scrolls in that region only.                                                             |
+| DS-63 | Controls carry `touch-action: manipulation` and a token-based tap highlight (base layer). A number and its unit never break apart (`whitespace-nowrap`), counts and measurements use `tabular-nums`.                                                                                              |
 
 ---
 

@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "@/kernel";
+import { setViewportWidth } from "@/lib/viewport-mock";
 import { AccountArea } from "./account-area";
 
 const response = (status: number, body: unknown) =>
@@ -67,6 +68,7 @@ function fakeServer(status = 200, calmMode = false) {
         });
       if (path === "/reminders/subscriptions") return response(200, { subscriptions: [] });
       if (path === "/achievements/settings") return response(200, { calmMode });
+      if (path === "/onboarding/style") return response(200, { style: "few", chosen: true });
       if (path === "/achievements")
         return response(200, {
           calmMode: false,
@@ -92,21 +94,32 @@ function fakeServer(status = 200, calmMode = false) {
   return puts;
 }
 
-const show = (path = "/account", props: { signOut?: () => void; error?: string } = {}) =>
+function Address() {
+  const { pathname, hash } = useLocation();
+  return <p data-testid="address">{pathname + hash}</p>;
+}
+
+const show = (
+  path = "/account",
+  props: { signOut?: () => void; error?: string; overview?: boolean } = {},
+) =>
   render(
     <MemoryRouter initialEntries={[path]}>
+      <Address />
       <AccountArea
         api="http://api"
         token={async () => "tok"}
         account={account}
         onSignOut={props.signOut ?? (() => undefined)}
         onEverywhereSignOut={() => undefined}
+        {...(props.overview ? { overview: <p>Übersicht</p> } : {})}
         {...(props.error ? { error: props.error } : {})}
       />
     </MemoryRouter>,
   );
 
 beforeAll(async () => {
+  setViewportWidth(390);
   await import("@/account/settings-page/settings-page"); // the section is a lazy part: loading it first keeps the waits on the data
 }, 30_000);
 
@@ -116,11 +129,12 @@ afterEach(() => {
 });
 
 describe("US-DEV-06 Konto without the AI function", () => {
-  it("US-DEV-06 the section KI-Clients and its entry are gone while ai is off, nothing is asked of /ai", async () => {
+  it("US-DEV-06 the row KI-Clients is gone while ai is off, its address leads to the index, nothing is asked of /ai", async () => {
     fakeServer();
     render(
       <FeaturesProvider features={{ social: true, ai: false, recommendations: false }}>
-        <MemoryRouter initialEntries={["/account"]}>
+        <MemoryRouter initialEntries={["/account/ai-clients"]}>
+          <Address />
           <AccountArea
             api="http://api"
             token={async () => "tok"}
@@ -131,73 +145,52 @@ describe("US-DEV-06 Konto without the AI function", () => {
         </MemoryRouter>
       </FeaturesProvider>,
     );
-    await screen.findByLabelText("Anzeigename");
-    await screen.findByRole("heading", { level: 2, name: "Erinnerungen" });
-    expect(screen.queryByRole("heading", { level: 2, name: "KI-Clients" })).toBeNull();
-    const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
-    expect(within(list).queryByRole("link", { name: "KI-Clients" })).toBeNull();
+    const list = await screen.findByRole("navigation", { name: "Abschnitte von Konto" });
+    expect(screen.getByTestId("address").textContent).toBe("/account");
+    await within(list).findByRole("link", { name: /^Erinnerungen/ });
+    expect(within(list).queryByRole("link", { name: /KI-Clients/ })).toBeNull();
     const asked = vi.mocked(fetch).mock.calls.map(([u]) => new URL(String(u)).pathname);
     expect(asked.some((path) => path.startsWith("/ai"))).toBe(false);
   });
 });
 
-describe("US-QS-14 Konto with its sections", () => {
-  it("US-QS-14 · US-ACC-01 one h1 Konto and the sections Profil, Einstellungen, Erinnerungen, Was wird gemessen? as h2 in this order", async () => {
+describe("US-QS-17 Konto with its sections as views", () => {
+  it("US-QS-17 · US-ACC-01 a section has one h1 with its name and a way back Konto", async () => {
     fakeServer();
-    show();
-    await screen.findByLabelText("Anzeigename");
-    await screen.findByRole("heading", { level: 2, name: "Erfolge" });
+    show("/account/reminders");
     expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
-      "Konto",
-    ]);
-    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
-      "Profil",
-      "Einstellungen",
-      "Erfolge",
       "Erinnerungen",
-      "KI-Clients",
-      "Was wird gemessen?",
-      "Meine Daten",
     ]);
+    expect(screen.getByRole("link", { name: "Konto" }).getAttribute("href")).toBe("/account");
+    await screen.findByRole("region", { name: "Erinnerungen" });
   });
 
-  it("US-ACH-08 in calm mode the section Erfolge and its entry in the list are gone", async () => {
-    fakeServer(200, true);
-    show();
-    await screen.findByLabelText("Anzeigename");
-    await screen.findByRole("checkbox", { name: "Ruhemodus" });
-    expect(screen.queryByRole("heading", { level: 2, name: "Erfolge" })).toBeNull();
-    const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
-    expect(within(list).queryByRole("link", { name: "Erfolge" })).toBeNull();
-  });
-
-  it("US-QS-14 · US-ACC-01 the section Profil shows name, e-mail and both ways to sign out", async () => {
+  it("US-QS-17 · US-ACC-01 the section Profil shows name, e-mail and both ways to sign out", async () => {
     fakeServer();
     const signOut = vi.fn();
-    show("/account", { signOut });
+    show("/account/profile", { signOut });
     const profileSection = screen.getByRole("region", { name: "Profil" });
-    expect(within(profileSection).getByText("Hallo, Lena")).toBeTruthy();
+    expect(await within(profileSection).findByText("Hallo, Lena")).toBeTruthy();
     expect(within(profileSection).getByText("lena@example.test")).toBeTruthy();
     await userEvent.click(within(profileSection).getByRole("button", { name: "Abmelden" }));
     expect(signOut).toHaveBeenCalledOnce();
     expect(
       within(profileSection).getByRole("button", { name: "Auf allen Geräten abmelden" }),
     ).toBeTruthy();
-    await screen.findByLabelText("Anzeigename");
   });
 
-  it("US-QS-14 · US-ACC-01 a sign-in error stays visible in the section Profil", async () => {
+  it("US-QS-17 · US-ACC-01 a sign-in error stays visible in the section Profil", async () => {
     fakeServer();
-    show("/account", { error: "Die Abmeldung ist fehlgeschlagen." });
+    show("/account/profile", { error: "Die Abmeldung ist fehlgeschlagen." });
     expect(
-      within(screen.getByRole("region", { name: "Profil" })).getByRole("alert").textContent,
+      (await within(screen.getByRole("region", { name: "Profil" })).findByRole("alert"))
+        .textContent,
     ).toContain("Abmeldung ist fehlgeschlagen");
-    await screen.findByLabelText("Anzeigename");
   });
 
-  it("US-QS-14 · US-ACC-02 settings still save through the composed page", async () => {
+  it("US-QS-17 · US-ACC-02 settings still save through the section Einstellungen", async () => {
     const puts = fakeServer();
-    show();
+    show("/account/settings?sheet=profile");
     const name = await screen.findByLabelText("Anzeigename");
     await userEvent.clear(name);
     await userEvent.type(name, "Lena L");
@@ -207,101 +200,127 @@ describe("US-QS-14 Konto with its sections", () => {
     expect(puts[0]?.["displayName"]).toBe("Lena L");
   });
 
-  it("US-QS-14 · P-09 the section Einstellungen shows a skeleton with one status while loading", () => {
+  it("US-QS-17 · P-09 the section Einstellungen shows a skeleton with one status while loading", () => {
     fakeServer();
-    show();
+    show("/account/settings");
     const section = screen.getByRole("region", { name: "Einstellungen" });
     expect(within(section).getByRole("status").textContent).toContain(
       "Einstellungen werden geladen",
     );
   });
 
-  it("US-QS-14 · P-10 failing settings show their error with a retry; the profile stays usable", async () => {
+  it("US-QS-17 · P-10 failing settings show their error with a retry", async () => {
     fakeServer(500);
-    show();
+    show("/account/settings");
     const section = screen.getByRole("region", { name: "Einstellungen" });
     expect(await within(section).findByRole("button", { name: /Erneut versuchen/ })).toBeTruthy();
-    expect(
-      within(screen.getByRole("region", { name: "Profil" })).getByText("Hallo, Lena"),
-    ).toBeTruthy();
-  });
-});
-
-describe("US-QS-14 the address points at a section", () => {
-  it.each([
-    ["#profil", "Profil"],
-    ["#einstellungen", "Einstellungen"],
-  ])("US-QS-14 /account%s focuses the heading %s", async (hash, name) => {
-    fakeServer();
-    show(`/account${hash}`);
-    const heading = screen.getByRole("heading", { level: 2, name });
-    await waitFor(() => expect(document.activeElement).toBe(heading));
-    await screen.findByLabelText("Anzeigename");
   });
 
-  it("US-QS-14 an unknown anchor changes nothing", async () => {
+  it("US-QS-17 · US-LIC-01 the section Einstellungen has a link to Standorte und Lichtzonen in the Sammlung", async () => {
     fakeServer();
-    show("/account#gibt-es-nicht");
-    await screen.findByLabelText("Anzeigename");
-    expect(document.activeElement).toBe(document.body);
-  });
-
-  it("US-QS-14 the section list links to the anchors, marks the current one and moves the focus to its heading", async () => {
-    fakeServer();
-    show();
-    const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
-    await within(list).findByRole("link", { name: "Erfolge" });
-    const links = within(list).getAllByRole("link");
-    expect(links.map((l) => l.textContent)).toEqual([
-      "Profil",
-      "Einstellungen",
-      "Erfolge",
-      "Erinnerungen",
-      "KI-Clients",
-      "Was wird gemessen?",
-      "Meine Daten",
-    ]);
-    expect(links[0]?.getAttribute("aria-current")).toBe("location");
-    await userEvent.click(links[1] as HTMLElement);
-    const heading = screen.getByRole("heading", { level: 2, name: "Einstellungen" });
-    await waitFor(() => expect(document.activeElement).toBe(heading));
-    expect(links[1]?.getAttribute("aria-current")).toBe("location");
-    expect(links[0]?.getAttribute("aria-current")).toBeNull();
-    await screen.findByLabelText("Anzeigename");
-  });
-});
-
-describe("US-QS-14 Konto links to the management of the locations", () => {
-  it("US-QS-14 · US-LIC-01 the section Einstellungen has a link to Standorte und Lichtzonen in the Sammlung", async () => {
-    fakeServer();
-    show();
-    await screen.findByLabelText("Anzeigename");
+    show("/account/settings");
+    await screen.findByRole("button", { name: /^Profil/ });
     const link = screen.getByRole("link", { name: "Standorte und Lichtzonen verwalten" });
     expect(link.getAttribute("href")).toBe("/collection?view=plants&manage=locations");
-    expect(
-      within(screen.getByRole("region", { name: "Einstellungen" })).getByRole("link", {
-        name: "Standorte und Lichtzonen verwalten",
-      }),
-    ).toBeTruthy();
   });
-});
 
-describe("US-QS-05 the page Was wird gemessen?", () => {
-  it("US-QS-05 names what is recorded about the use: no click counting, no analytics, the last activity as one date", async () => {
+  it("US-QS-17 · US-QS-05 the section Was wird gemessen? names what is recorded about the use", async () => {
     fakeServer();
-    show();
+    show("/account/measured");
     const section = within(screen.getByRole("region", { name: "Was wird gemessen?" }));
-    expect(section.getByText(/Keine Klickzählung und keine Nutzungsanalyse/)).toBeTruthy();
+    expect(await section.findByText(/Keine Klickzählung und keine Nutzungsanalyse/)).toBeTruthy();
     expect(section.getByText(/wann du zuletzt aktiv warst/)).toBeTruthy();
     expect(section.getByText(/nur die Zahl der aktiven Konten/)).toBeTruthy();
     expect(section.getByText(/Ort- und Kameradaten/)).toBeTruthy();
     expect(section.getByText(/Standort, Notizen, Behandlungen/)).toBeTruthy();
   });
 
-  it("US-QS-05 the address #gemessen leads to the section", async () => {
+  it("US-QS-17 · US-ONB-05 the app hands the locked rows of AI access and the achievement parts to their sections", async () => {
     fakeServer();
-    show("/account#gemessen");
-    const heading = screen.getByRole("heading", { level: 2, name: "Was wird gemessen?" });
+    const locks = (ids: readonly string[]) => <p>{`Zeile ${ids.join(",")}`}</p>;
+    const view = (path: string) =>
+      render(
+        <MemoryRouter initialEntries={[path]}>
+          <AccountArea
+            api="http://api"
+            token={async () => "tok"}
+            account={account}
+            onSignOut={() => undefined}
+            onEverywhereSignOut={() => undefined}
+            locks={locks}
+          />
+        </MemoryRouter>,
+      );
+    view("/account/ai-clients");
+    expect(await screen.findByText("Zeile ai_access")).toBeTruthy();
+    cleanup();
+    view("/account/achievements");
+    expect(await screen.findByText("Zeile care_rhythm,anniversaries,year_in_review")).toBeTruthy();
+  });
+
+  it("US-QS-17 · US-ONB-06 the section Was die App kann shows the overview of the shell", () => {
+    fakeServer();
+    show("/account/functions", { overview: true });
+    expect(
+      within(screen.getByRole("region", { name: "Was die App kann" })).getByText("Übersicht"),
+    ).toBeTruthy();
+  });
+
+  it("US-QS-17 · US-ONB-06 without an overview its address leads to the index", () => {
+    fakeServer();
+    show("/account/functions");
+    expect(screen.getByTestId("address").textContent).toBe("/account");
+  });
+});
+
+describe("US-QS-17 the address names a section", () => {
+  it.each([
+    ["profile", "Profil"],
+    ["settings", "Einstellungen"],
+    ["data", "Meine Daten"],
+  ])("US-QS-17 /account/%s focuses the heading %s", async (segment, name) => {
+    fakeServer();
+    show(`/account/${segment}`);
+    const heading = screen.getByRole("heading", { level: 1, name });
     await waitFor(() => expect(document.activeElement).toBe(heading));
+  });
+
+  it.each([
+    ["#profil", "/account/profile"],
+    ["#einstellungen", "/account/settings"],
+    ["#erfolge", "/account/achievements"],
+    ["#erinnerungen", "/account/reminders"],
+    ["#ki-clients", "/account/ai-clients"],
+    ["#gemessen", "/account/measured"],
+    ["#daten", "/account/data"],
+  ])(
+    "US-QS-17 the former address /account%s opens %s and replaces the address",
+    async (hash, to) => {
+      fakeServer();
+      show(`/account${hash}`);
+      expect(screen.getByTestId("address").textContent).toBe(to);
+    },
+  );
+
+  it("US-QS-17 an unknown anchor or section shows the index", () => {
+    fakeServer();
+    show("/account#gibt-es-nicht");
+    expect(screen.getByTestId("address").textContent).toBe("/account#gibt-es-nicht");
+    cleanup();
+    show("/account/gibt-es-nicht");
+    expect(screen.getByTestId("address").textContent).toBe("/account");
+  });
+
+  it("US-QS-17 Back to the index puts the focus on the row the keeper came from", async () => {
+    fakeServer();
+    show();
+    const row = await screen.findByRole("link", { name: /^Erinnerungen/ });
+    await userEvent.click(row);
+    const heading = await screen.findByRole("heading", { level: 1, name: "Erinnerungen" });
+    await waitFor(() => expect(document.activeElement).toBe(heading));
+    await userEvent.click(screen.getByRole("link", { name: "Konto" }));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole("link", { name: /^Erinnerungen/ })),
+    );
   });
 });

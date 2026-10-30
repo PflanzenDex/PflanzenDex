@@ -5,3 +5,4 @@ export type { TokenVerifier } from "./auth/token";
 export { accountRoutes } from "./account-routes";
 export { OPERATOR_PATHS, operatorRoutes } from "./operator-routes";
 export { registrationRoutes } from "./registration-routes";
+export { unlockRoutes } from "./unlock";

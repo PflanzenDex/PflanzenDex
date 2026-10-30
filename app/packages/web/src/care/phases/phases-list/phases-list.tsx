@@ -6,74 +6,14 @@ import {
 } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { Button } from "@/components/ui/button/button";
-import { CARD_CLASSES, LIST_CLASSES, WARNING_CLASSES } from "../../shared/notices/notices";
-import { PHASE_TEXT, locationText, nextChangeText } from "../../shared/text";
-import { needsSwitch, switchGroups, switchedText } from "../phase-groups";
+import { LIST_CLASSES } from "../../shared/notices/notices";
+import { locationText } from "../../shared/text";
+import { switchGroups, switchedText } from "../phase-groups";
+import { Entry, type Confirm } from "./entry/entry";
 
-/** Called with the specimens to switch and the text to show afterwards; without it the list only shows. */
-export type Confirm = (specimenIds: readonly string[], success: string) => void;
+export type { Confirm };
 
-function Entry(props: {
-  row: PhasesRow;
-  locations: readonly LightLocation[];
-  busy: boolean;
-  onConfirm: Confirm | undefined;
-}) {
-  const { row: z, locations } = props;
-  const status = phaseStatus(z);
-  const canSwitch = props.onConfirm !== undefined && needsSwitch(z);
-  return (
-    <li className={`${CARD_CLASSES} flex flex-col gap-1`}>
-      <h3 className="font-semibold">{z.name}</h3>
-      <p>Soll-Phase heute: {PHASE_TEXT[z.phase]}</p>
-      <p>{nextChangeText(z.nextChange)}</p>
-      {z.nextChange === null && (
-        <p className="font-semibold">Prüfe den Ruhephasen-Zeitraum im Pflegeprofil der Art.</p>
-      )}
-      {status === "location_missing" ? (
-        <p className={WARNING_CLASSES}>Standort fehlt</p>
-      ) : (
-        <p className="text-muted-foreground">Standort: {locationText(locations, z.locationId)}</p>
-      )}
-      <p className="text-muted-foreground">
-        Soll-Standort: {locationText(locations, z.targetLocationId)}
-      </p>
-      {status === "deviation" && (
-        <p className={WARNING_CLASSES}>
-          Weicht ab: steht am Standort „{locationText(locations, z.locationId)}“, Soll ist „
-          {locationText(locations, z.targetLocationId)}“.
-        </p>
-      )}
-      {status === "location_missing" && !canSwitch && (
-        <p className="font-semibold">Weise dem Exemplar unter „Hinweise“ einen Standort zu.</p>
-      )}
-      {status === "in_place" && z.targetLocationId === null && (
-        <p className="font-semibold">
-          Wähle im Pflegeprofil der Art einen Soll-Standort für die {PHASE_TEXT[z.phase]}.
-        </p>
-      )}
-      {canSwitch && (
-        <>
-          <p className="font-semibold">
-            Stelle die Pflanze an den Soll-Standort und tippe dann „Jetzt umgestellt“.
-          </p>
-          <Button
-            type="button"
-            size="touch"
-            className="mt-2"
-            disabled={props.busy}
-            aria-label={`Jetzt umgestellt: ${z.name}`}
-            onClick={() => props.onConfirm?.([z.specimenId], switchedText([z], locations))}
-          >
-            Jetzt umgestellt
-          </Button>
-        </>
-      )}
-    </li>
-  );
-}
-
-function Groups(props: {
+export function Groups(props: {
   rows: readonly PhasesRow[];
   locations: readonly LightLocation[];
   busy: boolean;
@@ -169,9 +109,9 @@ export function PhasesList(props: {
   if (props.rows.length === 0)
     return (
       <EmptyState
-        title="Noch kein Exemplar hat eine Phase."
-        description="Gelistet werden Pflanzen, deren Art einen Ruhephasen-Zeitraum hat. Lege im Bestand ein Exemplar einer solchen Art an."
-        action={{ label: "Zum Bestand", href: "/collection" }}
+        title="Noch keine Pflanze hat eine Phase."
+        description="Gelistet werden Pflanzen, deren Art einen Ruhephasen-Zeitraum hat. Lege in der Sammlung eine Pflanze einer solchen Art an."
+        action={{ label: "Zur Sammlung", href: "/collection" }}
       />
     );
   return (

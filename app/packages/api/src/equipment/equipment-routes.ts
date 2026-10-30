@@ -4,10 +4,12 @@ import {
   equipmentSetStatus,
   equipmentSetZone,
   equipmentZoneUsage,
+  equipmentLocationUsage,
   zoneEquipment,
   type EquipmentRow,
   type ZoneStockSource,
   type ZoneUsage,
+  type LocationUsage,
 } from "@pflanzendex/core";
 import { EquipmentPostgres, IdempotencyPostgres, ZonePostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
@@ -28,6 +30,11 @@ export const EQUIPMENT_PATHS = ["/equipment"] as const;
 /** The zone usage of the lamps for `lightRoutes`: a zone with a lamp is not deleted unnoticed (US-EQU-02, P-10). */
 export function equipmentZoneUsageFor(pool: Pool): ZoneUsage {
   return equipmentZoneUsage({ equipment: new EquipmentPostgres(pool) });
+}
+
+/** The location usage of the sensors for `lightRoutes`: a location with a sensor is not deleted unnoticed (P-10). */
+export function equipmentLocationUsageFor(pool: Pool): LocationUsage {
+  return equipmentLocationUsage({ equipment: new EquipmentPostgres(pool) });
 }
 
 /**

@@ -1,17 +1,21 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import type { Friend } from "@pflanzendex/core";
+import { Pager } from "@/components/shared/responsive/pager/pager";
 import { Avatar } from "@/components/data-display/avatar/avatar";
 import { Card } from "@/components/data-display/card/card";
 import { Button } from "@/components/ui/button/button";
 import { dateText } from "../invite-card/invite-card";
 import { nameOf } from "../request-list/request-list";
 
+/** Friends per page in the layer (starting value, assumption; US-QS-20). */
+const PAGE_SIZE = 3;
+
 function EndConfirm(props: { name: string; busy: boolean; onYes: () => void; onNo: () => void }) {
   return (
     <div
       role="group"
-      aria-label={`Freundschaft mit ${props.name} beenden`}
+      aria-label={`Freundschaft beenden: ${props.name}`}
       className="mt-2 flex flex-col gap-2"
     >
       <p>
@@ -42,7 +46,7 @@ function FriendRow(props: { friend: Friend; busy: boolean; onEnd: (friend: Frien
   const { friend: f } = props;
   const [asking, setAsking] = useState(false);
   return (
-    <li>
+    <div>
       <Card className="grid gap-2 break-words">
         <span className="flex items-center gap-3">
           <Avatar name={f.name ?? ""} decorative />
@@ -56,7 +60,7 @@ function FriendRow(props: { friend: Friend; busy: boolean; onEnd: (friend: Frien
         </span>
         <span className="mt-2 flex flex-wrap gap-2">
           <Button asChild variant="outline" size="touch">
-            <Link to={`/friends/${f.id}`} aria-label={`Sammlung von ${nameOf(f.name)} ansehen`}>
+            <Link to={`/friends/${f.id}`} aria-label={`Sammlung ansehen: ${nameOf(f.name)}`}>
               Sammlung ansehen
             </Link>
           </Button>
@@ -65,7 +69,7 @@ function FriendRow(props: { friend: Friend; busy: boolean; onEnd: (friend: Frien
               type="button"
               size="touch"
               variant="outline"
-              aria-label={`Freundschaft mit ${nameOf(f.name)} beenden`}
+              aria-label={`Freundschaft beenden: ${nameOf(f.name)}`}
               onClick={() => setAsking(true)}
             >
               Freundschaft beenden
@@ -84,7 +88,7 @@ function FriendRow(props: { friend: Friend; busy: boolean; onEnd: (friend: Frien
           />
         )}
       </Card>
-    </li>
+    </div>
   );
 }
 
@@ -100,20 +104,19 @@ export function FriendList(props: {
   onEnd: (friend: Friend) => void;
 }) {
   return (
-    <section aria-labelledby="friend-list-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="friend-list-title" className="text-xl font-semibold">
-        Meine Freunde
-      </h2>
+    <section aria-label="Meine Freunde" className="flex min-w-0 flex-col gap-3">
       {props.friends.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-3">
-          Noch keine Freunde. Nimm eine Anfrage an oder lade jemanden mit einem Code ein.
+          Noch keine Freunde. Mit „Freund hinzufügen“ lädst du jemanden ein.
         </p>
       ) : (
-        <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0" aria-label="Freunde">
-          {props.friends.map((f) => (
-            <FriendRow key={f.id} friend={f} busy={props.busy} onEnd={props.onEnd} />
-          ))}
-        </ul>
+        <Pager
+          items={props.friends}
+          pageSize={PAGE_SIZE}
+          label="Freunde"
+          getKey={(f) => f.id}
+          renderItem={(f) => <FriendRow friend={f} busy={props.busy} onEnd={props.onEnd} />}
+        />
       )}
     </section>
   );

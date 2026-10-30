@@ -15,12 +15,12 @@ import { expect, test } from "../../support/fixtures";
 /** Gives the account light zones and a location with a long name, so lists and cards are measured, not only empty states. */
 async function withSomeData(page: Page): Promise<void> {
   await openView(page, "/light");
-  await page.getByRole("button", { name: "Standard-Lampen übernehmen" }).click();
-  await expect(page.getByRole("heading", { level: 3, name: "Lampe 2" })).toBeVisible();
+  await page.getByRole("button", { name: "Standard-Zonen übernehmen" }).click();
+  await expect(page.getByRole("heading", { level: 3, name: "Zone 2" })).toBeVisible();
   await page.getByText("Neuer Standort").click();
   const form = page.getByRole("form", { name: "Standort anlegen" });
   await form.getByLabel("Name").fill("Fensterbank im Schlafzimmer nach Südsüdwest");
-  await form.getByLabel("Lichtzone").selectOption({ label: "Lampe 3" });
+  await form.getByLabel("Lichtzone").selectOption({ label: "Zone 3" });
   await form.getByRole("button", { name: "Standort anlegen" }).click();
   await expect(
     page.getByRole("heading", { level: 3, name: /Fensterbank im Schlafzimmer/ }),

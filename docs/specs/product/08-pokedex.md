@@ -30,7 +30,7 @@ As an **operator** I want to maintain the species catalog in one place; as a **p
 
 Acceptance criteria:
 
-- A catalog entry has `Name` (genus + epithet), `German`, `Difficulty` (1–3), `Light_Zone` (2–4), optional `Note`. Required fields are validated.
+- A catalog entry has `Name` (genus + epithet), `German`, `Difficulty` (1–3), `Light_Zone` (2–4), optional `Note`. Required fields are validated. Difficulty and light zone may be "unbekannt" when no source gives them; they are never filled with a starting value (P-08, DM-BES-01, #1003).
 - Names are normalized (`ficus BENJAMINA` → `Ficus benjamina`), duplicates are dropped, invalid ratings trigger a warning, a hybrid sign (`x`, `×`, `+`) or an addition (`var.`, `subsp.`, `ssp.`, `f.`, `cv.`) is refused in a catalog name (these belong to the specimen, US-POK-06), while a cultivar in quotation marks (`Ficus elastica 'Robusta'`) is accepted (DM-BES-01) and shown as a chip (US-POK-06); it does not change the species assignment of the Pokédex.
 - The catalog grows in batches (target size 600+ species; collector genera with 10–20 species, otherwise 1–3 per genus); each batch is proofread and usable without a "finished" catalog (prototype 🟡: 215 species).
 - User proposals (US-BES-01) land in the operator's review list (US-BES-10) and count only after approval.

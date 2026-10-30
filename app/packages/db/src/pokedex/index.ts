@@ -4,3 +4,5 @@ export { FIXTURES_POKEDEX } from "./fixtures.ts";
 export { TaxonomyPostgres } from "./taxonomy.ts";
 export { POKEDEX_TENANT_EXCEPTIONS } from "./tenant-exceptions.ts";
 export { ActiveSpeciesPostgres } from "./active-species.ts";
+export { TaxonAttributesPostgres, saveAttributeFacts } from "./taxon-attributes.ts";
+export type { AttributeFactRecord } from "./taxon-attributes.ts";

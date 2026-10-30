@@ -8,20 +8,25 @@
     "typecheck": "tsc --noEmit -p .",
     "test": "vitest run",
     "perf:measure": "tsx perf/measure.ts",
-    "seed:catalog": "tsx perf/catalog-seed/run-seed.ts"
+    "catalog:check-data": "tsx src/catalog/load/research/run-check.ts",
+    "catalog:load": "tsx src/catalog/load/run.ts",
+    "seed:catalog": "tsx perf/catalog-seed/run-seed.ts",
+    "seed:demo": "tsx perf/demo-seed/run-demo-seed.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1147.0",
-    "@hono/node-server": "^2.1.3",
+    "@aws-sdk/client-s3": "3.1156.0",
+    "@hono/node-server": "2.1.5",
     "@pflanzendex/core": "*",
     "@pflanzendex/db": "*",
-    "hono": "^4.13.12",
-    "jose": "^6.2.12",
-    "pg": "^8.23.1",
-    "sharp": "^0.35.5"
+    "hono": "4.13.14",
+    "jose": "6.2.13",
+    "pg": "8.23.1",
+    "sharp": "0.35.5",
+    "web-push": "3.6.7"
   },
   "devDependencies": {
-    "@types/pg": "^8.23.1",
-    "tsx": "^4.23.15"
+    "@types/pg": "8.23.1",
+    "@types/web-push": "3.6.4",
+    "tsx": "4.23.15"
   }
 }

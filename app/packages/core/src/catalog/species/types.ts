@@ -35,22 +35,27 @@ export interface SpeciesValues {
   readonly synonyms: readonly string[];
   readonly familyGerman: string | null;
   readonly familyLatin: string | null;
-  readonly difficulty: number;
-  readonly standardLevel: number;
-  readonly lightDemandLux: number;
+  /** Difficulty 1–3, default level 2–4 and lux need: `null` = unknown, never a starting value (P-08, US-BES-12). */
+  readonly difficulty: number | null;
+  readonly standardLevel: number | null;
+  readonly lightDemandLux: number | null;
   /** C3 plant with a soft leaf ("sun-loving"): the zone derivation never promotes it automatically (US-LIC-01). */
   readonly softLeaf: boolean;
   /** Month-day `MM-DD`; both or none. */
   readonly dormancyFrom: string | null;
   readonly dormancyUntil: string | null;
   readonly locationHint: string | null;
-  readonly growthMeasure: GrowthMeasure;
-  readonly etiolationSigns: string;
+  /**
+   * Growth measure, etiolation signs and success criteria: `null` = unknown (P-08, #1005). A proposal fills them
+   * (FR-BES-05); the operator batch and the dev seed leave them unknown instead of writing a generic text.
+   */
+  readonly growthMeasure: GrowthMeasure | null;
+  readonly etiolationSigns: string | null;
   readonly wateringHint: string | null;
   readonly substrate: string | null;
   readonly pruning: string | null;
   readonly growthHacks: string | null;
-  readonly successCriteria: string;
+  readonly successCriteria: string | null;
   readonly botanicalStory: string | null;
   readonly source: string | null;
 }

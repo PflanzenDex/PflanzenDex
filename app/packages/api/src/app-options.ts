@@ -14,6 +14,7 @@ import type {
 import type { TokenVerifier } from "./account";
 import type { AiAccessOptions } from "./ai";
 import type { WishImageSources } from "./wishlist";
+import type { WriteLimit } from "./kernel";
 
 export type AppOptions = {
   /** The global feature switch (US-DEV-06, env `FEATURES`); without it every function is on (development and tests). */
@@ -33,6 +34,8 @@ export type AppOptions = {
   invitationOnly?: boolean;
   /** The clock for "today" (NFR-08); defaults to system time. */
   clock?: () => Date;
+  /** Replaces the stored keeper style per account (tests; US-ONB-03). */
+  keeperStyle?: (userId: string) => Promise<"few" | "many">;
   /** Replaces the care profile as source of the target location of new specimens (tests). */
   targetLocation?: TargetLocationSource;
   /** Measurements and treatments for the specimen cards (US-BES-06); without it `care` supplies the measurements (WAC-01) and the planned treatments (BEH-01). */
@@ -48,6 +51,11 @@ export type AppOptions = {
   phaseLocation?: PhaseLocationSource;
   /** Replaces the light distribution as source of the stock per zone for the wishlist (tests); without it `collection` answers (US-LIC-02). */
   zoneStock?: ZoneStockSource;
+  /**
+   * Writes per client and window (TE-03, #762). The server (`main.ts`) passes `WRITE_LIMIT`; without it nothing is
+   * limited, because tests and the demo seed write through the app in process, many times per minute.
+   */
+  writeLimit?: WriteLimit;
   /** The operator's product catalog for equipment recommendations (US-EQU-10); without it nothing is recommended. */
   products?: readonly ProductEntry[];
 };

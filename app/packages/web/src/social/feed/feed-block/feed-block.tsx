@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import type { Feed, FeedEvent, FeedType } from "@pflanzendex/core";
+import { Pager } from "@/components/shared/responsive/pager/pager";
 import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
 import { Label } from "@/components/ui/display/label/label";
 import { Select } from "@/components/ui/fields/select/select";
@@ -7,14 +8,17 @@ import { LoadFrame } from "../../../kernel";
 import { loadFeed, type FeedFilter } from "../../api/feed-api";
 import { dateText } from "../../parts/invite-card/invite-card";
 import { nameOf } from "../../parts/request-list/request-list";
+import { keepTogether } from "@/lib/format";
 
 const TYPE_TEXT: Record<FeedType, string> = {
   new_species: "Neue Art gefangen",
   new_cutting: "Neuer Steckling",
-  new_specimen: "Neues Exemplar",
+  new_specimen: "Neue Pflanze",
   potted: "Eingetopft",
   swapped: "Getauscht",
 };
+/** Events per page in the layer (starting value, assumption; US-QS-20). */
+const PAGE_SIZE = 3;
 const PERIODS = [7, 30, 90] as const;
 
 const speciesText = (e: FeedEvent) =>
@@ -24,15 +28,14 @@ const speciesText = (e: FeedEvent) =>
 
 function Event({ e }: { e: FeedEvent }) {
   return (
-    <li className="grid break-words rounded-lg border border-border p-3">
+    <div className="grid break-words rounded-lg border border-border p-3">
       <span>
-        {nameOf(e.friendName)}: {e.count > 1 ? `${e.count} Exemplare` : "1 Exemplar"}{" "}
-        {speciesText(e)}
+        {nameOf(e.friendName)}: {e.count > 1 ? `${e.count} Pflanzen` : "1 Pflanze"} {speciesText(e)}
       </span>
       <span className="text-sm text-muted-foreground">
         {TYPE_TEXT[e.type]} · {e.date === null ? "Datum unbekannt" : dateText(`${e.date}T12:00:00`)}
       </span>
-    </li>
+    </div>
   );
 }
 
@@ -68,7 +71,7 @@ function Filters(props: {
         >
           {PERIODS.map((d) => (
             <option key={d} value={d}>
-              Letzte {d} Tage
+              {keepTogether(`Letzte ${d} Tage`)}
             </option>
           ))}
         </Select>
@@ -84,7 +87,7 @@ function Filters(props: {
 }
 
 /**
- * "Neu bei Freunden" (US-SOZ-05): what friends newly collected, newest first, derived from what they share (nothing
+ * "Neu bei Freunden" (US-SOZ-05), the content of the layer of that name (US-QS-20): what friends newly collected, newest first, derived from what they share (nothing
  * private ever shows up, P-05). Default period 30 days; filters by friend and "only new species". An unknown date says
  * "Datum unbekannt" (P-08). Every state says what to do next (P-09). No ranking and no comparison between friends.
  */
@@ -101,10 +104,7 @@ export function FeedBlock(props: {
   const { api } = props;
   const load = useCallback((t: string) => loadFeed(api, t, filter), [api, filter]);
   return (
-    <section aria-labelledby="friend-feed-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="friend-feed-title" className="text-xl font-semibold">
-        Neu bei Freunden
-      </h2>
+    <section aria-label="Neu bei Freunden" className="flex min-w-0 flex-col gap-3">
       <Filters friends={props.friends} value={filter} onChange={setFilter} />
       <LoadFrame
         queryKey={["social", "feed", filter.friendId, filter.days, filter.onlyNewSpecies]}
@@ -119,11 +119,14 @@ export function FeedBlock(props: {
             </p>
             <p className="text-sm text-muted-foreground">Stand: {dateText(feed.asOf)}</p>
             {feed.events.length > 0 && (
-              <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0" aria-label="Neuigkeiten">
-                {feed.events.map((e, i) => (
-                  <Event key={`${e.friendId}-${i}`} e={e} />
-                ))}
-              </ul>
+              <Pager
+                items={feed.events}
+                pageSize={PAGE_SIZE}
+                label="Neuigkeiten"
+                resetKey={`${filter.friendId}-${filter.days}-${filter.onlyNewSpecies}`}
+                getKey={(e, i) => `${e.friendId}-${i}`}
+                renderItem={(e) => <Event e={e} />}
+              />
             )}
           </>
         )}

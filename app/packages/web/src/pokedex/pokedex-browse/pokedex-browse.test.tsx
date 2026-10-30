@@ -1,8 +1,18 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import type { ReactElement } from "react";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PokedexPage } from "../pokedex-page/pokedex-page";
+
+/** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
+const view = (ui: ReactElement, url = "/") =>
+  render(<MemoryRouter initialEntries={[url]}>{ui}</MemoryRouter>);
+
+// The layers are dialogs and drawers; jsdom lacks pointer capture, which they use.
+Element.prototype.setPointerCapture ??= () => undefined;
+Element.prototype.releasePointerCapture ??= () => undefined;
 
 const species = (name: string, extra: Record<string, unknown> = {}) => ({
   species: name,
@@ -47,30 +57,34 @@ const open = async (list = caught) => {
       ),
     ),
   );
-  render(<PokedexPage api="http://api" token={token} />);
+  view(<PokedexPage api="http://api" token={token} />);
   await screen.findByRole("heading", { level: 1, name: "Pokédex" });
 };
 const shown = () =>
-  screen.queryAllByRole("listitem").flatMap((li) => {
-    const s = li.querySelector("[data-species]");
-    return s ? [s.textContent] : [];
-  });
+  [...document.querySelectorAll("[data-species]")].map((el) => el.getAttribute("data-species"));
 const search = (text: string) =>
   userEvent.type(screen.getByRole("searchbox", { name: /Suche/ }), text);
-const sortBy = (label: string) =>
-  userEvent.selectOptions(screen.getByRole("combobox", { name: "Sortierung" }), label);
+const openFilters = async () => {
+  await userEvent.click(screen.getByRole("button", { name: "Filter" }));
+  return screen.findByRole("dialog", { name: "Filter" });
+};
+const sortBy = async (label: string) => {
+  const layer = await openFilters();
+  await userEvent.selectOptions(within(layer).getByRole("combobox", { name: "Sortierung" }), label);
+  await userEvent.keyboard("{Escape}");
+};
 
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
 });
 
-describe("US-POK-08 · #593 layout on a phone", () => {
-  it("US-POK-08 the counter keeps the usual spacing to the search label below it", async () => {
+describe("US-QS-22 search and filter sit in one row", () => {
+  it("US-QS-22 the search field and the button 'Filter' share one row", async () => {
     await open();
-    const counter = screen.getByText("3 Arten gefangen");
-    expect(counter.className).toMatch(/(^|\s)mb-[1-9]/);
-    expect(counter.className).not.toMatch(/(^|\s)m-0(\s|$)/);
+    const searchbox = screen.getByRole("searchbox", { name: /Suche/ });
+    const filter = screen.getByRole("button", { name: "Filter" });
+    expect(searchbox.closest("div.flex")?.contains(filter)).toBe(true);
   });
 });
 
@@ -103,57 +117,49 @@ describe("US-POK-08 search", () => {
   });
 });
 
-describe("US-POK-08 filter", () => {
+describe("US-POK-08 filter in the layer 'Filter' (US-QS-22)", () => {
   it("US-POK-08 'Alle' and 'Gefangen' are available and the chosen one is marked", async () => {
     await open();
-    const all = screen.getByRole("button", { name: "Alle" });
+    const layer = await openFilters();
+    expect(screen.queryByText("Fehlend")).toBeNull();
+    const all = within(layer).getByRole("button", { name: "Alle" });
     expect(all.getAttribute("aria-pressed")).toBe("true");
     // The marker is a visible check mark, not only aria-pressed (US-POK-08, DS-19).
     expect(all.textContent).toContain("✓");
-    await userEvent.click(screen.getByRole("button", { name: "Gefangen" }));
-    expect(screen.getByRole("button", { name: "Gefangen" }).getAttribute("aria-pressed")).toBe(
-      "true",
-    );
-    expect(screen.getByRole("button", { name: "Gefangen" }).textContent).toContain("✓");
+    await userEvent.click(within(layer).getByRole("button", { name: "Gefangen" }));
+    const caughtChip = within(layer).getByRole("button", { name: "Gefangen" });
+    expect(caughtChip.getAttribute("aria-pressed")).toBe("true");
+    expect(caughtChip.textContent).toContain("✓");
     expect(all.getAttribute("aria-pressed")).toBe("false");
     expect(all.textContent).not.toContain("✓");
     expect(shown()).toHaveLength(3);
   });
 
-  it("US-POK-08 'Fehlend' is disabled with the reason: there is no catalog tree yet (P-08)", async () => {
+  it("US-POK-08 · US-QS-22 'Fehlend' is no chip; its reason stands in the layer: there is no catalog tree yet (P-08)", async () => {
     await open();
-    expect((screen.getByRole("button", { name: "Fehlend" }) as HTMLButtonElement).disabled).toBe(
-      true,
-    );
+    const layer = await openFilters();
+    expect(screen.queryByRole("button", { name: "Fehlend" })).toBeNull();
     expect(
-      screen.getByText(
+      within(layer).getByText(
         /Fehlende Arten zeigt der Pokédex erst, wenn der Artenkatalog aufgebaut ist/,
       ),
     ).toBeTruthy();
   });
 
-  it("US-POK-08 the disabled filters point to their visible reason and show no internal story ID", async () => {
+  it("US-POK-08 · US-QS-22 the filters that cannot be used yet show their reason as text and no internal story ID", async () => {
     await open([species("Ficus lyrata")]);
-    for (const [name, id] of [
-      ["Fehlend", "hint-missing"],
-      ["Artenarm", "hint-poor"],
-    ] as const) {
-      const id2 = screen.getByRole("button", { name }).getAttribute("aria-describedby");
-      expect(id2).toBe(id);
-      expect(document.getElementById(id)?.textContent).toContain("nicht verfügbar");
-    }
+    const layer = await openFilters();
+    expect(within(layer).queryByRole("button", { name: "Artenarm" })).toBeNull();
+    expect(within(layer).getByText(/„Artenarm“: braucht die Artenzahl der Gattungen/)).toBeTruthy();
     expect(screen.queryByText(/US-POK/)).toBeNull();
   });
 
-  it("US-POK-08 'Artenarm' is disabled while no genus species count is known, and works once one is", async () => {
-    await open([species("Ficus lyrata")]);
-    expect((screen.getByRole("button", { name: "Artenarm" }) as HTMLButtonElement).disabled).toBe(
-      true,
-    );
-    cleanup();
+  it("US-POK-08 'Artenarm' is a chip only once a genus species count is known, and then it works", async () => {
     await open();
-    await userEvent.click(screen.getByRole("button", { name: "Artenarm" }));
+    const layer = await openFilters();
+    await userEvent.click(within(layer).getByRole("button", { name: "Artenarm" }));
     expect(shown()).toEqual(["Aloe vera"]);
+    expect(within(layer).queryByText(/braucht die Artenzahl/)).toBeNull();
   });
 });
 
@@ -171,71 +177,68 @@ describe("US-POK-08 sort", () => {
 
   it("US-POK-08 by species count: ascending, and it says the count is unknown for all (P-08)", async () => {
     await open([species("Ficus lyrata"), species("Aloe vera")]);
-    await sortBy("Artenzahl");
+    const layer = await openFilters();
+    await userEvent.selectOptions(
+      within(layer).getByRole("combobox", { name: "Sortierung" }),
+      "Artenzahl",
+    );
     expect(shown()).toEqual(["Aloe vera", "Ficus lyrata"]);
-    expect(screen.getByText(/Artenzahl der Gattungen ist noch unbekannt/)).toBeTruthy();
+    expect(within(layer).getByText(/Artenzahl der Gattungen ist noch unbekannt/)).toBeTruthy();
   });
 
-  it("US-POK-08 by family: groups with 'n / unbekannt' that collapse and expand", async () => {
+  it("US-POK-08 · US-QS-22 by family: the family is chosen from a row with its count, 'n / unbekannt' is named", async () => {
     await open();
     await sortBy("Familie");
-    const moraceaeHeader = screen.getByRole("button", { name: /Moraceae/ });
-    expect(moraceaeHeader.textContent).toContain("Maulbeergewächse");
-    expect(moraceaeHeader.textContent).toContain("2 / unbekannt");
-    expect(moraceaeHeader.getAttribute("aria-expanded")).toBe("true");
-    expect(shown()).toEqual(["Aloe vera", "Ficus elastica", "Ficus lyrata"]);
-    await userEvent.click(moraceaeHeader);
-    expect(moraceaeHeader.getAttribute("aria-expanded")).toBe("false");
+    const choices = screen.getByRole("group", { name: "Familie wählen" });
+    expect(
+      within(choices)
+        .getAllByRole("button")
+        .map((b) => b.textContent),
+    ).toEqual(["✓Asphodelaceae (1)", "Moraceae (2)"]);
     expect(shown()).toEqual(["Aloe vera"]);
-    await userEvent.click(moraceaeHeader);
-    expect(shown()).toHaveLength(3);
+    await userEvent.click(within(choices).getByRole("button", { name: /Moraceae/ }));
+    expect(screen.getByText(/Moraceae \(Maulbeergewächse\) · 2 \/ unbekannt/)).toBeTruthy();
+    expect(shown()).toEqual(["Ficus elastica", "Ficus lyrata"]);
   });
 
   it("US-POK-08 a species without a known family is grouped under 'Ohne bekannte Familie', last", async () => {
     await open([species("Citrus limon"), ...caught]);
     await sortBy("Familie");
-    const headers = screen.getAllByRole("button", { name: /· \d/ }).map((b) => b.textContent);
-    expect(headers.at(-1)).toContain("Ohne bekannte Familie");
-    expect(screen.getByText("Citrus limon")).toBeTruthy();
+    const choices = screen.getByRole("group", { name: "Familie wählen" });
+    const labels = within(choices)
+      .getAllByRole("button")
+      .map((b) => b.textContent);
+    expect(labels.at(-1)).toContain("Ohne bekannte Familie");
+    await userEvent.click(within(choices).getByRole("button", { name: /Ohne bekannte Familie/ }));
+    expect(shown()).toEqual(["Citrus limon"]);
   });
 });
 
-describe("US-POK-08 follow-ups of the family groups (issue 297)", () => {
-  const detailCard = (name: string) => screen.getByRole("button", { name: `Details zu ${name}` });
-
-  it("US-POK-08 a collapsed family group stays collapsed after the detail view was opened and closed", async () => {
-    await open();
-    await sortBy("Familie");
-    await userEvent.click(screen.getByRole("button", { name: /Moraceae/ }));
-    await userEvent.click(detailCard("Aloe vera"));
-    await userEvent.click(screen.getByRole("button", { name: "Schließen" }));
-    expect(screen.getByRole("button", { name: /Moraceae/ }).getAttribute("aria-expanded")).toBe(
-      "false",
-    );
-    expect(
-      screen.getByRole("button", { name: /Asphodelaceae/ }).getAttribute("aria-expanded"),
-    ).toBe("true");
-    expect(shown()).toEqual(["Aloe vera"]);
-  });
-
-  it("US-POK-08 closing the detail view restores the scroll position of the list", async () => {
-    await open();
-    const scrollTo = vi.fn();
-    vi.stubGlobal("scrollTo", scrollTo);
-    const y = vi.spyOn(window, "scrollY", "get").mockReturnValue(420);
-    await userEvent.click(detailCard("Aloe vera"));
-    y.mockReturnValue(0);
-    await userEvent.click(screen.getByRole("button", { name: "Schließen" }));
-    await waitFor(() => expect(scrollTo).toHaveBeenLastCalledWith(0, 420));
-    y.mockRestore();
-  });
-
+describe("US-POK-09 · US-QS-22 the details of a species are a layer", () => {
   it("US-POK-08 the group without a known family reads 'Ohne bekannte Familie' and does not say 'unbekannt' twice", async () => {
     await open([species("Citrus limon")]);
     await sortBy("Familie");
-    const header = screen.getByRole("button", { name: /Ohne bekannte Familie/ });
-    expect(header.textContent).toContain("1 Art");
-    expect(header.textContent).not.toContain("unbekannt");
+    const title = screen.getByText(/Ohne bekannte Familie · /);
+    expect(title.textContent).toContain("1 Art");
+    expect(title.textContent).not.toContain("unbekannt");
     expect(screen.queryByText(/Familie unbekannt/)).toBeNull();
+  });
+
+  it("US-QS-08 · WCAG 2.5.3 the species entry's accessible name is its visible text (no aria-label, no chevron in the text)", async () => {
+    await open();
+    const entry = screen.getByRole("button", { name: /^Aloe vera/ });
+    expect(entry.hasAttribute("aria-label")).toBe(false);
+    expect(entry.textContent).not.toContain("›");
+  });
+
+  it("US-POK-09 · US-QS-22 a species opens its details in a layer and Escape returns the focus to its entry", async () => {
+    await open();
+    const entry = screen.getByRole("button", { name: /^Aloe vera/ });
+    await userEvent.click(entry);
+    const layer = await screen.findByRole("dialog", { name: "Echte Aloe" });
+    expect(within(layer).getByText("Gattung: Aloe")).toBeTruthy();
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(entry);
   });
 });

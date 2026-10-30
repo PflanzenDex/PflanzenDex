@@ -1,5 +1,4 @@
 import type { CaughtSpecies } from "@pflanzendex/core";
-import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Chips, catchText, countText } from "../pokedex-cards/pokedex-cards";
 
@@ -45,36 +44,23 @@ const family = (c: CaughtSpecies) =>
       : `${c.familyLatin} (${c.familyGerman})`;
 
 /**
- * The detail view of one caught species (US-POK-09): replaces the list, so at most one is open; "Schließen" and
- * Escape close it. Image and short text come with the taxonomy build (US-POK-03): until then they are shown as
- * unknown, nothing is invented (P-08).
+ * The details of one caught species (US-POK-09), the content of its layer (US-QS-22): "Schließen" and Escape belong to
+ * the layer. Image and short text come with the taxonomy build (US-POK-03): until then they are shown as unknown,
+ * nothing is invented (P-08).
  */
 export function SpeciesDetail(props: {
   species: CaughtSpecies;
-  onClose: () => void;
   onOpenSpecies?: (id: string) => void;
 }) {
-  const { species: c, onClose, onOpenSpecies } = props;
-  const title = useRef<HTMLHeadingElement>(null);
-  useEffect(() => title.current?.focus(), []);
-  useEffect(() => {
-    const close = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", close);
-    return () => document.removeEventListener("keydown", close);
-  }, [onClose]);
+  const { species: c, onOpenSpecies } = props;
   return (
     <section
-      className="mb-6 grid max-w-2xl min-w-0 gap-2 break-words [&_p]:m-0"
+      className="grid min-w-0 gap-2 break-words [&_p]:m-0"
       aria-label={`Details zu ${c.species}`}
     >
-      <div className="grid min-h-48 place-items-center rounded-xl border border-dashed border-border bg-card text-muted-foreground">
+      <div className="grid min-h-24 place-items-center rounded-xl border border-dashed border-border bg-card text-muted-foreground">
         Noch kein Bild vorhanden.
       </div>
-      <h2 ref={title} tabIndex={-1} className="m-0 text-xl font-semibold">
-        {c.germanName ?? c.species}
-      </h2>
       {c.germanName !== null && <p className="font-semibold">{c.species}</p>}
       <p>Kurztext: unbekannt</p>
       <p>{`Gattung: ${c.genus}`}</p>
@@ -84,16 +70,11 @@ export function SpeciesDetail(props: {
       <p className="text-sm">{catchText(c.caughtDate)}</p>
       <Chips chips={c.chips} />
       <Source source={c.source} />
-      <div className="flex flex-wrap gap-2">
-        {onOpenSpecies && (
-          <Button type="button" onClick={() => onOpenSpecies(c.speciesId)}>
-            Zum Artprofil
-          </Button>
-        )}
-        <Button type="button" variant="secondary" onClick={onClose}>
-          Schließen
+      {onOpenSpecies && (
+        <Button type="button" onClick={() => onOpenSpecies(c.speciesId)}>
+          Zum Artprofil
         </Button>
-      </div>
+      )}
     </section>
   );
 }

@@ -1,11 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import type { ReactNode } from "react";
 import { useForm } from "react-hook-form";
-import type { SpeciesHit, NameField } from "@pflanzendex/core";
-import { LoadMore } from "@/components/data-display/panels/pagination/load-more/load-more";
+import type { SpeciesHit } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Badge } from "@/components/ui/display/badge/badge";
-import { Button } from "@/components/ui/button/button";
+import { LayerOpener } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import {
   Form,
   FormControl,
@@ -18,68 +16,14 @@ import {
 import { Input } from "@/components/ui/fields/input/input";
 import { searchSchema, type SearchFields } from "../shared/schemas";
 import { SearchResultsSkeleton } from "./search-view.skeleton";
-import { badge } from "../shared/text";
-
-const FOUND: Record<NameField, string> = {
-  latin: "lateinischen Namen",
-  german: "deutschen Namen",
-  english: "englischen Namen",
-  synonym: "Synonym",
-};
-
-function Hit({ t, onOpen }: { t: SpeciesHit; onOpen: (id: string) => void }) {
-  // Searching by the own Latin/German name is self-evident; explain only what deviates.
-  const over = t.hit && t.hit.field !== "latin" && t.hit.field !== "german";
-  return (
-    <li className="rounded-xl border border-border bg-card text-card-foreground">
-      <Button
-        type="button"
-        variant="ghost"
-        className="grid h-auto min-h-16 w-full justify-items-start gap-0.5 px-3.5 py-3 text-left font-normal"
-        onClick={() => onOpen(t.id)}
-      >
-        <span className="text-lg font-semibold">
-          <i>{t.latinName}</i>
-        </span>
-        {t.germanName && <span className="text-sm text-muted-foreground">{t.germanName}</span>}
-        {over && t.hit && (
-          <span className="text-sm text-muted-foreground">
-            Gefunden über {FOUND[t.hit.field]}: {t.hit.display}
-          </span>
-        )}
-        <Badge variant="outline" className="mt-1 whitespace-normal">
-          {badge(t)}
-        </Badge>
-      </Button>
-    </li>
-  );
-}
-
-/** Hits shown per step; the API returns the whole list, so "Mehr laden" slices it on the client (US-QS-14). */
-export const HITS_PER_PAGE = 20;
-
-function HitList(props: { hit: readonly SpeciesHit[]; onOpen: (id: string) => void }) {
-  const [shown, setShown] = useState(HITS_PER_PAGE);
-  const visible = props.hit.slice(0, shown);
-  return (
-    <>
-      <ul className="m-0 grid list-none gap-2 p-0" aria-label="Treffer">
-        {visible.map((t) => (
-          <Hit key={t.id} t={t} onOpen={props.onOpen} />
-        ))}
-      </ul>
-      {props.hit.length > HITS_PER_PAGE && (
-        <LoadMore
-          loadedCount={visible.length}
-          totalCount={props.hit.length}
-          hasMore={visible.length < props.hit.length}
-          pending={false}
-          onLoadMore={() => setShown((n) => n + HITS_PER_PAGE)}
-        />
-      )}
-    </>
-  );
-}
+import { HitList } from "./hit-list/hit-list";
+import {
+  applyFilters,
+  FilterChips,
+  FILTERS_LAYER,
+  FiltersLayer,
+  useFilters,
+} from "./search-filters/search-filters";
 
 function Empty(props: { searchText: string; onPropose: () => void }) {
   const text = props.searchText.trim();
@@ -87,9 +31,21 @@ function Empty(props: { searchText: string; onPropose: () => void }) {
     <EmptyState
       title={text ? `Keine Art zu „${text}“ gefunden.` : "Der gemeinsame Katalog ist noch leer."}
       description={
-        text ? "Prüfe die Schreibweise oder schlage die Art vor." : "Schlage die erste Art vor."
+        text
+          ? "Prüfe die Schreibweise oder schlage die Art vor. Findest du ohne Suchtext auch nichts, ist der Katalog noch leer."
+          : "Schlage die erste Art vor oder bitte den Betreiber, den Start-Katalog zu laden."
       }
       action={{ label: "Art vorschlagen", onClick: props.onPropose }}
+    />
+  );
+}
+
+function NoMatch(props: { onClear: () => void }) {
+  return (
+    <EmptyState
+      title="Keine Art passt zu den Filtern."
+      description="Nimm einen Filter heraus, dann siehst du mehr Arten."
+      action={{ label: "Filter zurücksetzen", onClick: props.onClear }}
     />
   );
 }
@@ -101,19 +57,20 @@ function SearchField(props: { searchText: string; onSearch: (text: string) => vo
   });
   return (
     <Form {...form}>
-      <FormRoot role="search" className="max-w-xl">
+      <FormRoot role="search" className="min-w-0 flex-1">
         <FormField
           control={form.control}
           name="search"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Lateinischer oder deutscher Name</FormLabel>
+              <FormLabel className="sr-only">Lateinischer oder deutscher Name</FormLabel>
               <FormControl>
                 <Input
                   {...field}
                   type="search"
                   autoComplete="off"
                   maxLength={120}
+                  placeholder="Name der Art"
                   onChange={(e) => {
                     field.onChange(e);
                     props.onSearch(e.target.value);
@@ -129,7 +86,11 @@ function SearchField(props: { searchText: string; onSearch: (text: string) => vo
   );
 }
 
-/** Catalog search by Latin or German name and synonyms; without hits "Propose species" follows (P-09). */
+/**
+ * Catalog search by Latin or German name and synonyms (US-QS-21): the field, a page of compact results, the filters in
+ * a layer with the chosen ones as chips. Without hits "Propose species" follows (P-09). `children` are further layers
+ * of the page (the proposal), rendered beside the list so that a pane can take its own column.
+ */
 export function SpeciesSearch(props: {
   searchText: string;
   hit: readonly SpeciesHit[];
@@ -141,39 +102,51 @@ export function SpeciesSearch(props: {
   onPropose: () => void;
   /** Below a destination title the search is a section: its name is then an h2 (US-QS-14). */
   embedded?: boolean | undefined;
+  children?: ReactNode;
 }) {
   const Heading = props.embedded ? "h2" : "h1";
+  const { filters, change, clear, key, active } = useFilters();
+  const shown = applyFilters(props.hit, filters);
+  const hasHits = props.hit.length > 0;
   return (
-    <section aria-labelledby="search-title" className="flex min-w-0 flex-col gap-3">
-      <Heading id="search-title" className="text-2xl font-semibold">
-        Art wählen
-      </Heading>
-      <p className="text-muted-foreground">
-        Suche die Art deiner Pflanze im Katalog. Findest du sie nicht, schlage sie vor.
-      </p>
-      <SearchField searchText={props.searchText} onSearch={props.onSearch} />
-      {props.loading && props.hit.length === 0 && <SearchResultsSkeleton />}
-      {props.loading && props.hit.length > 0 && (
-        <p role="status" className="text-sm text-muted-foreground">
-          Suche läuft …
-        </p>
-      )}
-      {props.hit.length === 0 ? (
-        !props.loading &&
-        !props.failed && <Empty searchText={props.searchText} onPropose={props.onPropose} />
-      ) : (
-        <>
-          <HitList key={props.searchText.trim()} hit={props.hit} onOpen={props.onOpen} />
-          <Button
-            type="button"
-            variant="secondary"
-            className="self-start"
-            onClick={props.onPropose}
-          >
-            Nicht dabei? Art vorschlagen
-          </Button>
-        </>
-      )}
-    </section>
+    <div className="flex min-w-0 gap-4">
+      <section aria-labelledby="search-title" className="flex min-w-0 flex-1 flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <Heading id="search-title" className="text-2xl font-semibold">
+            Art wählen
+          </Heading>
+          {hasHits && <LayerOpener id="propose">Art vorschlagen</LayerOpener>}
+        </div>
+        <div className="flex items-start gap-2">
+          <SearchField searchText={props.searchText} onSearch={props.onSearch} />
+          {(hasHits || active > 0) && (
+            <LayerOpener id={FILTERS_LAYER}>
+              {active > 0 ? `Filter (${active})` : "Filter"}
+            </LayerOpener>
+          )}
+        </div>
+        <FilterChips filters={filters} onChange={change} />
+        {props.loading && !hasHits && <SearchResultsSkeleton />}
+        {props.loading && hasHits && (
+          <p role="status" className="text-sm text-muted-foreground">
+            Suche läuft …
+          </p>
+        )}
+        {!hasHits ? (
+          !props.loading &&
+          !props.failed && <Empty searchText={props.searchText} onPropose={props.onPropose} />
+        ) : shown.length === 0 ? (
+          <NoMatch onClear={clear} />
+        ) : (
+          <HitList
+            hit={shown}
+            onOpen={props.onOpen}
+            resetKey={`${props.searchText.trim()}|${key}`}
+          />
+        )}
+      </section>
+      <FiltersLayer filters={filters} onChange={change} />
+      {props.children}
+    </div>
   );
 }

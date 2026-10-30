@@ -3,6 +3,7 @@ import { Leaf } from "lucide-react";
 import { Link, NavLink } from "react-router";
 import { cn } from "@/lib/utils";
 import {
+  BRAND_HREF,
   BRAND_LINK_LABEL,
   DISPLAY_NAME,
   stackedItem,
@@ -10,6 +11,7 @@ import {
   stackedPill,
   type NavItem,
 } from "../nav-model/nav-item";
+import { NavNote } from "../nav-model/nav-note/nav-note";
 
 /** The first four destinations are the primary ones (the bottom bar); a hairline separates the rest in the sidebar. */
 const PRIMARY = 4;
@@ -31,7 +33,7 @@ function NavRail({ items, className }: { items: NavItem[]; className?: string })
       )}
     >
       <Link
-        to="/"
+        to={BRAND_HREF}
         aria-label={BRAND_LINK_LABEL}
         className="mx-auto mb-2 flex size-11 shrink-0 items-center justify-center rounded-control bg-primary text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
@@ -49,6 +51,7 @@ function NavRail({ items, className }: { items: NavItem[]; className?: string })
               <>
                 <span className={stackedPill(isActive)}>{item.icon}</span>
                 <span className="max-w-full break-words hyphens-auto">{item.label}</span>
+                <NavNote text={item.note} />
               </>
             )}
           </NavLink>
@@ -74,7 +77,7 @@ function NavSidebar({ items, className }: { items: NavItem[]; className?: string
       )}
     >
       <Link
-        to="/"
+        to={BRAND_HREF}
         aria-label={BRAND_LINK_LABEL}
         className="mb-3 flex min-h-[44px] shrink-0 items-center gap-3 rounded-control px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
@@ -103,6 +106,7 @@ function NavSidebar({ items, className }: { items: NavItem[]; className?: string
             >
               {item.icon}
               <span className="min-w-0 break-words">{item.label}</span>
+              <NavNote text={item.note} inline />
             </NavLink>
           </Fragment>
         ))}

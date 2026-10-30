@@ -18,12 +18,21 @@ test.describe("US-ACC-01 sign-in", () => {
     await signIn(page, account);
     await page.getByRole("link", { name: "Konto", exact: true }).click();
     await expect(page.getByRole("heading", { level: 1, name: "Konto" })).toBeVisible();
-    await expect(page.getByText(`Hallo, ${account.displayName}`)).toBeVisible();
-    await expect(page.getByText(account.email)).toBeVisible();
+    // The index shows name and e-mail in its profile row (US-QS-17); the greeting is in "Profil".
+    const index = page.getByRole("navigation", { name: "Abschnitte von Konto" });
+    await expect(index.getByText(account.displayName, { exact: true })).toBeVisible();
+    await expect(index.getByText(account.email, { exact: true })).toBeVisible();
     await axeReport(page, info, "account");
+    // Only the profile row shows the e-mail; "Einstellungen" shows the name as its value.
+    await index.getByRole("link", { name: account.email }).click();
+    await expect(page).toHaveURL(/\/account\/profile$/);
+    await expect(page.getByText(`Hallo, ${account.displayName}`)).toBeVisible();
+    // On a wide screen the index shows the e-mail too: check the e-mail in the profile card.
+    const card = page.locator("dl").filter({ hasText: `Hallo, ${account.displayName}` });
+    await expect(card.getByText(account.email, { exact: true })).toBeVisible();
     await page.reload();
-    // After reloading the app is back at the start view, without signing in again at the sign-in service.
-    await expect(page.getByRole("link", { name: "PflanzenDéx, zur Startseite" })).toBeVisible();
+    // After reloading the app is back on Heute, without signing in again at the sign-in service.
+    await expect(page.getByRole("link", { name: "PflanzenDéx, zu Heute" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Anmelden" })).toHaveCount(0);
   });
 
@@ -43,7 +52,8 @@ test.describe("US-ACC-01 sign-in", () => {
   test("US-ACC-01 signing out ends the session and says so", async ({ page, account }) => {
     await signIn(page, account);
     await page.getByRole("link", { name: "Konto", exact: true }).click();
-    await page.getByRole("button", { name: "Abmelden", exact: true }).click();
+    await page.getByRole("button", { name: "Abmelden…", exact: true }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Abmelden", exact: true }).click();
     await expect(page.getByText("Du bist abgemeldet.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Anmelden" })).toBeVisible();
   });

@@ -106,6 +106,7 @@ export function useManage(): { open: boolean; setOpen: (open: boolean) => void }
   const setOpen = (next: boolean) => {
     const query = new URLSearchParams(params);
     query.set(VIEW_PARAM, "plants");
+    query.delete("sheet");
     if (next) query.set(MANAGE_PARAM, "locations");
     else query.delete(MANAGE_PARAM);
     setParams(query);

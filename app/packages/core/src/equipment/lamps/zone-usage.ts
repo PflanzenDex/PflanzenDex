@@ -1,4 +1,4 @@
-import type { ZoneUsage } from "../../light";
+import type { LocationUsage, ZoneUsage } from "../../light";
 import type { EquipmentStore } from "../store/types";
 
 /**
@@ -15,5 +15,17 @@ export function equipmentZoneUsage(deps: {
         id: e.id,
         name: e.name,
       })),
+  };
+}
+
+/** Port "location usage" for sensors: a location with an assigned sensor is not deleted unnoticed (US-ONB-02, P-10). */
+export function equipmentLocationUsage(deps: {
+  equipment: Pick<EquipmentStore, "list">;
+}): LocationUsage {
+  return {
+    user: async (userId, locationId) =>
+      (await deps.equipment.list(userId))
+        .filter((e) => e.assignedLocationId === locationId)
+        .map((e) => ({ kind: "equipment" as const, id: e.id, name: e.name })),
   };
 }

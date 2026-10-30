@@ -14,6 +14,7 @@ Every table with user data carries `account_id` and an enforced row rule (P-04, 
 5. All application queries run through `withAccount(pool, accountId, fn)` (`app/packages/db/src/kernel/tenant.ts`), which sets the account per transaction. Never query user tables on a bare pool connection.
 6. Operation level (use the `spec-to-tests` skill): a test with two accounts where account B calls the operation on account A's object and gets `access.verweigert` or `<domain>.not_found`, and nothing changed. In the API package, assert the same through HTTP (403 or 404, see `app/packages/api/src/kernel/error-http.ts`).
 7. Existence must not leak: for foreign ids answer exactly like for missing ids (`not_found`) unless the spec says otherwise.
+8. A `security definer` function never relies on row security for its scope: a superuser or BYPASSRLS owner is not bound by it (#891, #907). Name the account in every read and write (`where account_id = ...`), register the function in `app/packages/db/src/security-definer-inventory.test.ts` (the test fails for an unregistered one) and add a test that runs in `createSuperuserOwnerDatabase()` (`app/packages/db/src/fixtures.ts`) with two or three accounts: friend, stranger, no flag. See `docs/guides/reference/security-definer-audit.md`.
 
 ## Check
 

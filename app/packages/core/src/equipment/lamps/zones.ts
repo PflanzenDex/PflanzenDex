@@ -1,6 +1,7 @@
 import type { LightZone, ZoneStore } from "../../light";
 import type { ZoneStock, ZoneStockSource } from "../../wishlist";
 import type { EquipmentRow, EquipmentStatus, EquipmentStore } from "../store/types";
+import { zoneLabel } from "../../light";
 
 export interface Lamp {
   readonly id: string;
@@ -50,13 +51,13 @@ function noteFor(zone: LightZone, count: number | null, lamps: readonly Lamp[]):
   if (count > 0 && !active)
     return {
       kind: "no_active_lamp",
-      text: `Die Lichtzone ${zone.name} hat ${plants(count)}, aber keine aktive Lampe.`,
+      text: `Die Lichtzone ${zoneLabel(zone.name)} hat ${plants(count)}, aber keine aktive Lampe.`,
       nextAction: "Ordne dieser Zone eine aktive Lampe zu oder erfasse eine neue Lampe.",
     };
   if (count === 0 && active)
     return {
       kind: "unused_capacity",
-      text: `Die Lampe der Lichtzone ${zone.name} leuchtet für keine Pflanze.`,
+      text: `Die Lampe der Lichtzone ${zoneLabel(zone.name)} leuchtet für keine Pflanze.`,
       nextAction:
         "Hier ist Platz: Setze eine Pflanze unter diese Lampe oder wünsche dir eine dafür.",
     };

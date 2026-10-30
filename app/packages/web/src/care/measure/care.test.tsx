@@ -74,7 +74,7 @@ describe("US-WAC-01 client of the measure API", () => {
   });
 
   it("an error of the API stays an error with code and text", async () => {
-    const error = { code: "specimen.not_found", text: "Das Exemplar gibt es nicht." };
+    const error = { code: "specimen.not_found", text: "Die Pflanze gibt es nicht." };
     const fetchFn = vi.fn<typeof fetch>(async () => response(404, { error }));
     const r = await recordMeasurement({ api: "http://api", token: "tok", fetchFn }, "e1", {
       value: 1,
@@ -127,7 +127,7 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     );
     expect(html).toContain("Was messen?");
     expect(html).toContain("Rosettendurchmesser");
-    expect(html).toContain("12,5 cm am 03.10.2026");
+    expect(html).toContain("12,5\u00a0cm am 03.10.2026");
     expect(html).toContain("Vergeilt/dünn");
   });
 
@@ -157,6 +157,8 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(html).toContain("noch keine Messung");
     expect(html).toContain("noch keine Bewertung");
     expect(html).toContain("unbekannt");
+    // US-BES-12 (#1005): an unknown growth measure names the next step instead of a guessed "Höhe" (P-09).
+    expect(html).toContain("Wähle selbst Höhe, Rosettendurchmesser oder Trieblänge");
   });
 
   it("the course names value, date, quality and note; when empty it says what to do (P-09)", () => {
@@ -168,7 +170,7 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
         onPhotoSaved={() => undefined}
       />,
     );
-    expect(list).toContain("12,5 cm · 03.10.2026");
+    expect(list).toContain("12,5\u00a0cm · 03.10.2026");
     expect(list).toContain("Gesund");
     expect(list).toContain("nach dem Umtopfen");
     expect(
@@ -226,6 +228,6 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     );
     expect(html).toContain("Messen: Bogenhanf");
     expect(html).toContain("Messungen werden geladen");
-    expect(html).toContain("Zurück zum Bestand");
+    expect(html).toContain("Zurück zur Sammlung");
   });
 });

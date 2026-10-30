@@ -17,7 +17,8 @@ import { VIEWS, openView } from "../../support/display";
 /** The management of locations and light zones, below the plants of the Sammlung (US-QS-14). */
 async function locationsByKeyboard(page: Page): Promise<void> {
   await openByKeyboard(page, "Sammlung");
-  await press(page, page.getByRole("button", { name: "Standorte verwalten" }));
+  await press(page, page.getByRole("button", { name: "Ansicht" }));
+  await press(page, page.getByRole("button", { name: "Standorte und Lichtzonen verwalten" }));
   await expect(
     page.getByRole("heading", { level: 1, name: /Standorte und Lichtzonen/ }),
   ).toBeVisible();
@@ -39,8 +40,8 @@ async function specimenByKeyboard(page: Page, species: string): Promise<void> {
   await typeInto(page, form.getByLabel(/^Erfolgskriterien/), "Dichte, flache Rosette.");
   await press(page, form.getByRole("button", { name: "Vorschlag speichern" }));
   await press(page, page.getByRole("button", { name: "Diese Art wählen" }));
-  const create = page.getByRole("form", { name: "Exemplar anlegen" });
-  await press(page, create.getByRole("button", { name: "Exemplar anlegen" }));
+  const create = page.getByRole("form", { name: "Pflanze anlegen" });
+  await press(page, create.getByRole("button", { name: "Pflanze anlegen" }));
   await expect(page.getByRole("heading", { level: 1, name: "Sammlung" })).toBeVisible();
 }
 
@@ -105,8 +106,8 @@ test.describe("US-QS-08 keyboard-only everyday flows: light and measuring", () =
   }) => {
     await signInByKeyboard(page, account);
     await locationsByKeyboard(page);
-    await press(page, page.getByRole("button", { name: "Standard-Lampen übernehmen" }));
-    await expect(page.getByRole("heading", { level: 3, name: "Lampe 2" })).toBeVisible();
+    await press(page, page.getByRole("button", { name: "Standard-Zonen übernehmen" }));
+    await expect(page.getByRole("heading", { level: 3, name: "Zone 2" })).toBeVisible();
     await press(page, page.locator("summary", { hasText: "Neuer Standort" }));
     const form = page.getByRole("form", { name: "Standort anlegen" });
     await typeInto(page, form.getByLabel("Name"), "Fensterbank");
@@ -119,13 +120,15 @@ test.describe("US-QS-08 keyboard-only everyday flows: light and measuring", () =
     test.setTimeout(120_000);
     await signInByKeyboard(page, account);
     await specimenByKeyboard(page, "Echeveria elegans");
+    await press(page, page.getByRole("list", { name: "Pflanzen" }).getByRole("button").first());
     await press(page, page.getByRole("button", { name: /^Messen: / }));
     await expect(page.getByRole("heading", { level: 1, name: /^Messen: / })).toBeVisible();
     const form = page.getByRole("form", { name: "Messung erfassen" });
     await typeInto(page, form.getByLabel(/^Messwert/), "12,5");
     await press(page, form.getByRole("button", { name: "Messung speichern" }));
-    await expect(page.getByText(/^Gespeichert: 12,5 cm am \d\d\.\d\d\.\d{4}\.$/)).toBeVisible();
-    await expect(page.getByRole("heading", { level: 3, name: /^12,5 cm · / })).toBeVisible();
+    // Value and unit are joined by a non-breaking space (US-QS-24); `\s` matches it.
+    await expect(page.getByText(/^Gespeichert: 12,5\scm am \d\d\.\d\d\.\d{4}\.$/)).toBeVisible();
+    await expect(page.getByRole("heading", { level: 3, name: /^12,5\scm · / })).toBeVisible();
   });
 });
 
@@ -138,6 +141,8 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
     await signInByKeyboard(page, account);
     await specimenByKeyboard(page, "Aloe polyphylla");
     await openByKeyboard(page, "Heute");
+    // The treatments are a layer above the overview of "Heute" (US-QS-18): the tile, named by its count and topic, opens it.
+    await press(page, page.getByRole("button", { name: /Behandeln$/ }));
     await press(page, page.getByRole("button", { name: "Behandlung planen" }).first());
     const plan = page.getByRole("form", { name: /Behandlung planen/ });
     await press(page, plan.getByRole("checkbox").first(), "Space");
@@ -164,6 +169,8 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
     await specimenByKeyboard(page, "Haworthia cooperi");
     // The hint "Standort fehlt" carries the action that sets the location (US-PHA-03).
     await openByKeyboard(page, "Heute");
+    // The hints are a layer above the overview of "Heute" (US-QS-18): the tile, named by its count and topic, opens it.
+    await press(page, page.getByRole("button", { name: /Fehlt noch$/ }));
     const select = page.getByLabel(/^Standort für „/);
     await chooseByArrows(page, select, 1);
     await press(page, page.getByRole("button", { name: /^Standort setzen: / }));
@@ -175,7 +182,7 @@ test.describe("US-QS-08 focus order", () => {
   test("US-QS-08 Shift+Tab walks back in the reverse order (2.4.3)", async ({ page, account }) => {
     await signInByKeyboard(page, account);
     await locationsByKeyboard(page);
-    const first = page.getByRole("button", { name: "Standard-Lampen übernehmen" });
+    const first = page.getByRole("button", { name: "Standard-Zonen übernehmen" });
     await tabTo(page, first);
     await page.keyboard.press("Tab");
     await page.keyboard.press("Shift+Tab");

@@ -1,8 +1,8 @@
-export { catalogReview } from "./review";
+export { catalogReview } from "./review/review";
 export { catalogCurate, catalogPropose } from "./propose";
-export { catalogList } from "./list";
-export { catalogMerge } from "./merge";
-export { checkApprovalReadiness } from "./approval";
+export { catalogList } from "./review/list";
+export { catalogMerge } from "./review/merge";
+export { checkApprovalReadiness } from "./review/approval";
 export type {
   ReviewStatus,
   ReviewCase,
@@ -11,8 +11,8 @@ export type {
   MergeMoved,
   MergeOutcome,
 } from "./types";
-export type { ReviewEntry, ReviewList, SimilarSpecies } from "./list";
-export type { ApprovalIssue } from "./approval";
+export type { ReviewEntry, ReviewList, SimilarSpecies } from "./review/list";
+export type { ApprovalIssue } from "./review/approval";
 export {
   SPECIES_LIMITS,
   GROWTH_MEASURES,
@@ -35,3 +35,61 @@ export type {
   NameField,
   GrowthMeasure,
 } from "./species";
+export {
+  CATALOG_FILL_JOB_TYPE,
+  FILLABLE_FIELDS,
+  FILL_SOURCES,
+  SOURCE_LICENSE,
+  deriveFields,
+  fetchSnapshots,
+  orderCatalogFill,
+  runCatalogFill,
+} from "./sources";
+export type {
+  CatalogFillStore,
+  FieldValue,
+  FillableField,
+  FillCandidate,
+  FillSource,
+  SourceSnapshot,
+} from "./sources";
+export { GAP_FIELDS, buildGapList, catalogGaps } from "./gaps";
+export type {
+  GapCheck,
+  GapEntry,
+  GapField,
+  GapList,
+  GapNextStep,
+  GapSpecies,
+  GapSpeciesEntry,
+  GapStore,
+} from "./gaps";
+export {
+  CORRECTION_FIELDS,
+  CORRECTION_LIMITS,
+  catalogCorrect,
+  catalogCorrectionAccept,
+  catalogCorrectionReject,
+  catalogCorrectionVote,
+  catalogCorrectionWithdraw,
+  catalogCorrections,
+  catalogFieldHistory,
+  catalogFieldRevert,
+  myCorrections,
+  speciesCorrections,
+  VOTES_PER_HOUR,
+} from "./corrections";
+export type {
+  Correction,
+  CorrectionEntry,
+  CorrectionField,
+  CorrectionReviewList,
+  CorrectionStatus,
+  CorrectionStore,
+  FieldVersion,
+  OpenCorrection,
+  Origin,
+  Vote,
+  VoteCounts,
+  VoteOutcome,
+} from "./corrections";

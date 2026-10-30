@@ -52,7 +52,7 @@ describe("US-ACH-03 quiet achievement banner", () => {
     const banner = await screen.findByRole("status");
     expect(banner.textContent).toContain("Erfolg: Steckling bewurzelt");
     expect(screen.getByRole("link", { name: "Zu den Erfolgen" }).getAttribute("href")).toBe(
-      "/account#erfolge",
+      "/account/achievements",
     );
     expect(s.posts).toEqual([]);
     await userEvent.click(screen.getByRole("button", { name: "Schließen" }));

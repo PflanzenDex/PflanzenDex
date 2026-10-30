@@ -11,6 +11,7 @@ import {
   type Tally,
 } from "../preferences";
 import { localToday } from "../../kernel";
+import { NO_ATTRIBUTES, withAttributes } from "../attributes";
 import { explorationPlan } from "../exploration";
 import {
   EXPLORATION_PER_DECK,
@@ -76,7 +77,7 @@ function suggestionOf(card: CollectorCard, reasons: readonly string[]): Suggesti
     difficulty: card.difficulty,
     imageUrl: card.imageUrl,
     sourceUrl: card.sourceUrl,
-    attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
+    attributes: NO_ATTRIBUTES,
     reasons,
     exploration: false,
   };
@@ -187,7 +188,11 @@ export async function suggestions(
   const plan = explorationPlan(cards, names, seed, EXPLORATION_PER_DECK).map((picks) =>
     zone === undefined ? picks : picks.filter((p) => p.card.lightZone === zone),
   );
-  const result = exploringDeckOf(inZone, plan, deck);
+  const picked = exploringDeckOf(inZone, plan, deck);
+  const result = {
+    ...picked,
+    suggestions: await withAttributes(picked.suggestions, deps.attributes),
+  };
   if (zone === undefined) return result;
   const buffer = (await deps.stock?.buffer?.(userId)) ?? REPLENISH_BUFFER;
   return { ...result, zoneFilter: zoneFilterOf(zone, inZone.length, buffer, stock) };

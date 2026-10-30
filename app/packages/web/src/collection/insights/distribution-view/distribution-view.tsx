@@ -3,6 +3,7 @@ import type { NotCounted, Distribution } from "@pflanzendex/core";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { NextAction, Quiet, SUBTITLE } from "../../specimens/cards/parts/parts";
+import { zoneLabel } from "@pflanzendex/core";
 
 /** The bar of the thinnest zone takes the warning token; the words "dünnste Zone" carry the meaning too (DS-38). */
 const barTone = cva("block h-full w-[calc(var(--value)*1%)] rounded-full", {
@@ -10,7 +11,7 @@ const barTone = cva("block h-full w-[calc(var(--value)*1%)] rounded-full", {
   defaultVariants: { thinnest: false },
 });
 
-const specimens = (n: number) => `${n} ${n === 1 ? "Exemplar" : "Exemplare"}`;
+const specimens = (n: number) => `${n} ${n === 1 ? "Pflanze" : "Pflanzen"}`;
 
 /** What was not counted and why; nothing disappears silently (P-10). Empty if everything is counted. */
 function notCounted(n: NotCounted): string | null {
@@ -41,11 +42,11 @@ export function DistributionView({ distribution }: { distribution: Distribution 
       <p>{distribution.hint.text}</p>
       <NextAction>{distribution.hint.nextAction}</NextAction>
       {distribution.zones.length > 0 && (
-        <ul aria-label="Exemplare je Lichtzone" className="m-0 my-3 grid list-none gap-2.5 p-0">
+        <ul aria-label="Pflanzen je Lichtzone" className="m-0 my-3 grid list-none gap-2.5 p-0">
           {distribution.zones.map(({ zone, count }) => (
             <li key={zone.id} className="grid gap-1 break-words">
               <span>
-                {zone.name}: {specimens(count)}
+                {zoneLabel(zone.name)}: {specimens(count)}
                 {thin.has(zone.id) && <strong> · dünnste Zone</strong>}
               </span>
               <span
@@ -63,7 +64,7 @@ export function DistributionView({ distribution }: { distribution: Distribution 
         </ul>
       )}
       <Quiet>
-        Stecklingslicht zählt nicht; es zählt die Zone des Standorts, sonst die der Art.
+        Stecklingslicht zählt nicht; es zählt die Zone der Pflanze, des Standorts, der Art.
       </Quiet>
       {rest && <Quiet>{rest}</Quiet>}
     </section>

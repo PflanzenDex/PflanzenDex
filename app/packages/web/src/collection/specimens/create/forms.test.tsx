@@ -2,11 +2,13 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Species, SpecimenCard } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
+import { findCardButton } from "../../specimens/tests/plants-test-helpers";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CareProfileSection } from "../../care-profile-page/care-profile-page";
 import { CollectionPage } from "../../collection-page/collection-page";
-import { DifficultyPage } from "../../difficulty-page/difficulty-page";
-import { HintsPage } from "../../hints-page/hints-page";
+import { DifficultyPage } from "../../other-pages/difficulty-page/difficulty-page";
+import { HintsPage } from "../../other-pages/hints-page/hints-page";
 import { EMPTY_DISTRIBUTION } from "../../insights/distribution-test-helpers";
 
 // DS-48 migration of the module (issue 318): invalid submissions focus the first invalid field and link the German
@@ -51,13 +53,15 @@ function fakeServer(cards: SpecimenCard[]) {
   return posts;
 }
 const page = (newSpecies: Species | null = null) => (
-  <CollectionPage
-    api="http://api"
-    token={async () => "tok"}
-    newSpecies={newSpecies}
-    onSpeciesChoose={vi.fn()}
-    onCompleted={vi.fn()}
-  />
+  <MemoryRouter>
+    <CollectionPage
+      api="http://api"
+      token={async () => "tok"}
+      newSpecies={newSpecies}
+      onSpeciesChoose={vi.fn()}
+      onCompleted={vi.fn()}
+    />
+  </MemoryRouter>
 );
 const describedText = (field: HTMLElement) =>
   (field.getAttribute("aria-describedby") ?? "")
@@ -76,7 +80,7 @@ describe("US-BES-03 DS-48 invalid submission of the marker", () => {
     render(page(species));
     const marker = await screen.findByLabelText("Kennzeichen");
     await userEvent.clear(marker);
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await waitFor(() => expect(document.activeElement).toBe(marker));
     expect(marker.getAttribute("aria-invalid")).toBe("true");
     expect(describedText(marker)).toContain("Bitte gib ein Kennzeichen an");
@@ -88,7 +92,7 @@ describe("US-BES-03 DS-48 invalid submission of the marker", () => {
     render(page(species));
     const missing = await screen.findByLabelText("Kennzeichen für „Bogenhanf“");
     await userEvent.type(screen.getByLabelText("Kennzeichen"), "rot");
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await waitFor(() => expect(document.activeElement).toBe(missing));
     expect(describedText(missing)).toContain("fehlenden Kennzeichen");
     expect(posts).toHaveLength(0);
@@ -97,9 +101,7 @@ describe("US-BES-03 DS-48 invalid submission of the marker", () => {
   it("US-BES-03 the marker form focuses the empty marker and links the German message", async () => {
     const posts = fakeServer([card("e1", null)]);
     render(page());
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Kennzeichen ändern: Bogenhanf" }),
-    );
+    await userEvent.click(await findCardButton("Kennzeichen ändern: Bogenhanf"));
     await userEvent.click(await screen.findByRole("button", { name: "Kennzeichen speichern" }));
     const marker = screen.getByLabelText("Kennzeichen");
     await waitFor(() => expect(document.activeElement).toBe(marker));
@@ -113,7 +115,7 @@ describe("US-BES-07 DS-48 invalid submission of the archive reason", () => {
   it("US-BES-07 an own reason left empty focuses its field and links the German message", async () => {
     const posts = fakeServer([card("e1", null)]);
     render(page());
-    await userEvent.click(await screen.findByRole("button", { name: "Archivieren: Bogenhanf" }));
+    await userEvent.click(await findCardButton("Archivieren: Bogenhanf"));
     await userEvent.selectOptions(await screen.findByLabelText("Grund"), "other");
     await userEvent.click(screen.getByRole("button", { name: "Archivieren" }));
     const own = screen.getByLabelText("Eigener Grund");
@@ -166,7 +168,7 @@ describe("US-BES-08 DS-26 an empty view offers the next action", () => {
     const open = vi.fn();
     render(<HintsPage api="http://api" token={async () => "tok"} onOpen={open} />);
     expect(await screen.findByText(/Keine Hinweise/)).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Zum Bestand" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zur Sammlung" }));
     expect(open).toHaveBeenCalledWith("collection");
   });
 
@@ -174,15 +176,17 @@ describe("US-BES-08 DS-26 an empty view offers the next action", () => {
     fakeServer([]);
     const choose = vi.fn();
     render(
-      <CollectionPage
-        api="http://api"
-        token={async () => "tok"}
-        newSpecies={null}
-        onSpeciesChoose={choose}
-        onCompleted={vi.fn()}
-      />,
+      <MemoryRouter>
+        <CollectionPage
+          api="http://api"
+          token={async () => "tok"}
+          newSpecies={null}
+          onSpeciesChoose={choose}
+          onCompleted={vi.fn()}
+        />
+      </MemoryRouter>,
     );
-    await screen.findByText(/Du hast noch kein Exemplar/);
+    await screen.findByText(/Du hast noch keine Pflanze/);
     await userEvent.click(screen.getByRole("button", { name: "Art wählen" }));
     expect(choose).toHaveBeenCalledTimes(1);
   });

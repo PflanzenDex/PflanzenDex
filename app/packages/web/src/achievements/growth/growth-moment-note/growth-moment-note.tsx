@@ -1,4 +1,4 @@
-import { dateText } from "@/lib/format";
+import { dateText, keepTogether } from "@/lib/format";
 import type { GrowthMoments } from "../use-growth-moments";
 
 const number = (n: number): string => n.toLocaleString("de-DE", { maximumFractionDigits: 1 });
@@ -17,15 +17,16 @@ export function GrowthMomentNote(props: { moments: GrowthMoments | null; justSav
   if (m.kind === "unknown") {
     return (
       <p role="status" className="m-0 text-sm text-muted-foreground">
-        Wachstumsmoment: unbekannt. Dafür braucht es mindestens zwei Messungen im Abstand von 90
+        Dein Wachstum ist noch unbekannt. Es zeigt sich nach einer zweiten Messung in mindestens 90
         Tagen.
       </p>
     );
   }
   return (
-    <p role="status" className="m-0 rounded-lg border border-border p-3">
-      {`Wachstumsmoment: ${number(m.growth)} cm seit ${dateText(m.since)}.`}
-      {m.record && ` Neuer persönlicher Rekord: ${number(m.record.ratePerYear)} cm/Jahr.`}
+    <p role="status" className="m-0 rounded-lg border border-border p-3 tabular-nums">
+      {keepTogether(`Wachstumsmoment: ${number(m.growth)} cm seit ${dateText(m.since)}.`)}
+      {m.record &&
+        keepTogether(` Neuer persönlicher Rekord: ${number(m.record.ratePerYear)} cm/Jahr.`)}
     </p>
   );
 }

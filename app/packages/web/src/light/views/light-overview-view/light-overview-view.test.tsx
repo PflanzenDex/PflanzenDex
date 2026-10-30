@@ -11,8 +11,8 @@ afterEach(() => {
   cleanup();
 });
 
-const zone2 = { id: "z2", name: "Lampe 2", luxCeiling: 15000, ppfd: 300, sortOrder: 1 };
-const zone3 = { id: "z3", name: "Lampe 3", luxCeiling: 100000, ppfd: 1600, sortOrder: 2 };
+const zone2 = { id: "z2", name: "Zone 2", luxCeiling: 15000, ppfd: 300, sortOrder: 1 };
+const zone3 = { id: "z3", name: "Zone 3", luxCeiling: 100000, ppfd: 1600, sortOrder: 2 };
 const row = (extra: Partial<LightOverviewRow> = {}): LightOverviewRow => ({
   speciesId: "sp1",
   speciesName: "Monstera deliciosa",
@@ -32,7 +32,7 @@ describe("US-LIC-03: light overview view", () => {
     const open = vi.fn();
     render(<LightOverviewView data={{ rows: [] }} onOpenCollection={open} />);
     expect(screen.getByText(/noch keine arten/i)).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Zum Bestand" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zur Sammlung" }));
     expect(open).toHaveBeenCalledTimes(1);
   });
 
@@ -41,7 +41,20 @@ describe("US-LIC-03: light overview view", () => {
     const cells = within(screen.getAllByRole("row")[1] as HTMLElement)
       .getAllByRole("cell")
       .map((c) => c.textContent);
-    expect(cells).toEqual(["Monstera deliciosa", "Lampe 2", "15.000", "sehr nah (~10 cm)"]);
+    expect(cells).toEqual(["Monstera deliciosa", "Zone 2", "15.000", "sehr nah (~10 cm)"]);
+  });
+
+  it('US-LIC-01 P-08: an unknown lux need shows "unbekannt" and the next step, never 0 or a position (#1003)', () => {
+    show([row({ lightDemandLux: null, position: null, zone: null })]);
+    const cells = within(screen.getAllByRole("row")[1] as HTMLElement)
+      .getAllByRole("cell")
+      .map((c) => c.textContent);
+    expect(cells).toEqual([
+      "Monstera deliciosa",
+      "unbekannt",
+      "unbekannt",
+      "Lichtbedarf eintragen: Lichtzone im Pflegeprofil der Art festlegen",
+    ]);
   });
 
   it("formats five-digit demands with the German thousands separator", () => {

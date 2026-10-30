@@ -53,7 +53,7 @@ export function CareProfileCard(props: {
         {name}
       </h3>
       <Quiet>
-        {`${entry.activeSpecimens} aktive${entry.activeSpecimens === 1 ? "s Exemplar" : " Exemplare"}`}
+        {`${entry.activeSpecimens} aktive${entry.activeSpecimens === 1 ? " Pflanze" : " Pflanzen"}`}
         {entry.deviates && " · "}
         {entry.deviates && <strong>Meine Abweichung gilt</strong>}
       </Quiet>

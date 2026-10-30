@@ -28,29 +28,29 @@
 @custom-variant dark (@media (prefers-color-scheme: dark));
 
 :root {
-  --background: #f2f6f3;
-  --foreground: #14201a;
+  --background: #fafafa;
+  --foreground: #18181b;
   --card: #ffffff;
   --card-foreground: var(--foreground);
   --popover: var(--card);
   --popover-foreground: var(--foreground);
   --primary: #1b6b4a;
   --primary-foreground: #ffffff;
-  --secondary: #e6eee8;
-  --secondary-foreground: #14201a;
-  --muted: #e6eee8;
-  --muted-foreground: #4b5c52;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #52525b;
   --accent: #d8eedf;
   --accent-foreground: #124a32;
   --destructive: #b3261e; /* invalid field border and error text */
   --destructive-foreground: #ffffff;
-  --border: #d3ded6; /* decorative lines of cards and dividers */
-  --input: #6b8274; /* field boundary: 3.8:1 on background, 4.1:1 on card (WCAG 1.4.11); --border stays decorative */
+  --border: #e4e4e7; /* decorative lines of cards and dividers */
+  --input: #71717a; /* field boundary: 4.6:1 on background, 4.8:1 on card (WCAG 1.4.11); --border stays decorative */
   --ring: #1b6b4a;
 
   /* Elevation (ADR 0011 decision 4) and motion (decision 5); radius, type scale and easing are in @theme below. */
-  --elevation-1: 0 1px 2px rgb(20 40 28 / 0.08), 0 6px 16px rgb(20 40 28 / 0.08);
-  --elevation-2: 0 8px 24px rgb(20 40 28 / 0.08); /* sheets, dialogs, floating action */
+  --elevation-1: 0 1px 2px rgb(0 0 0 / 0.06), 0 6px 16px rgb(0 0 0 / 0.06);
+  --elevation-2: 0 8px 24px rgb(0 0 0 / 0.06); /* sheets, dialogs, floating action */
   --elevation-2-border: transparent; /* dark mode draws a 1px border, where shadows are weak */
 
   --motion-fast: 120ms; /* press, toggle (starting values, assumption) */
@@ -75,21 +75,21 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f1612;
-    --foreground: #e6efe9;
-    --card: #18221c;
+    --background: #0b0b0c;
+    --foreground: #f4f4f5;
+    --card: #161618;
     --primary: #7bd3a0;
     --primary-foreground: #0b2316;
-    --secondary: #223028;
-    --secondary-foreground: #e6efe9;
-    --muted: #18221c;
-    --muted-foreground: #a5b6ab;
+    --secondary: #232326;
+    --secondary-foreground: #f4f4f5;
+    --muted: #1f1f22;
+    --muted-foreground: #a1a1aa;
     --accent: #1f3a2b;
     --accent-foreground: #a9e8c4;
     --destructive: #ff8a80; /* 8.0:1 on --background, 7.2:1 on --card */
     --destructive-foreground: #2a0a08;
-    --border: #2b3b31;
-    --input: #6f8c79; /* 5.0:1 on background, 4.4:1 on card */
+    --border: #27272a;
+    --input: #7c7c86; /* 4.8:1 on background, 4.4:1 on card */
     --ring: #7bd3a0;
     --elevation-1: 0 1px 2px rgb(0 0 0 / 0.35), 0 6px 16px rgb(0 0 0 / 0.35);
     --elevation-2: 0 8px 24px rgb(0 0 0 / 0.35);
@@ -226,6 +226,34 @@
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
+  }
+  /* Touch (US-QS-15): no double-tap zoom delay on controls, and a calm tap flash from the primary token. */
+  button,
+  a,
+  [role="button"],
+  summary,
+  label {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: color-mix(in oklab, var(--color-primary) 15%, transparent);
+  }
+  /*
+   * One screen (US-QS-15, DS-61, US-QS-19): a view that holds an element with `data-fit-screen` makes the frame exactly
+   * the viewport; the main content scrolls inside itself only when it cannot fit (zoom, large text). Done in CSS with
+   * `:has` (never nested: a `:has` inside `:has` is invalid and drops the whole rule), so the app shell needs no code and no route list for it and the initial JavaScript stays within its budget (QG-U6).
+   */
+  div:has(> div > main [data-fit-screen]) {
+    height: 100dvh;
+  }
+  div:has(> main [data-fit-screen]) {
+    min-height: 0;
+  }
+  /* A view that fills the height (`data-fit-fill`, e.g. the suggestion card) gets it through the wrapper of the route. */
+  main > div:has(> [data-fit-fill]) {
+    height: 100%;
+  }
+  main:has([data-fit-screen]) {
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 }
 

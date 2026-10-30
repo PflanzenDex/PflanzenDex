@@ -21,7 +21,14 @@ export const STATUS: Record<Species["reviewStatus"], string> = {
   merged: "Zusammengeführt",
 };
 
-export const lux = (n: number) => `${numberFormat.format(n)} Lux`;
+export const lux = (n: number | null) =>
+  n === null ? UNKNOWN : `${numberFormat.format(n)}\u00a0Lux`;
+/** Difficulty and default level may be unknown (P-08, #1003): never a guessed "Einfach" or "Stufe 2". */
+export const difficultyText = (d: number | null) =>
+  d === null ? UNKNOWN : (DIFFICULTY[d] ?? UNKNOWN);
+export const levelText = (l: number | null) => (l === null ? UNKNOWN : `Stufe ${l}`);
+/** The growth measure may be unknown (P-08, #1005): never a guessed "Höhe". */
+export const growthText = (m: GrowthMeasure | null) => (m === null ? UNKNOWN : GROWTH[m]);
 
 /** `MM-DD` as "15.11.". */
 const tag = (monthTag: string) => `${monthTag.slice(3)}.${monthTag.slice(0, 2)}.`;

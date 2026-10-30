@@ -2,6 +2,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Species, SpecimenCard } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
+import { findCardButton } from "../../specimens/tests/plants-test-helpers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setProfileTimeZone, type ApiError } from "../../../kernel";
 import { CollectionPage } from "../../collection-page/collection-page";
@@ -31,6 +33,7 @@ const show = (onSend = vi.fn(async (): Promise<ApiError | null> => null)) => {
       species={species}
       siblings={[]}
       locations={[]}
+      zones={{ items: [], failed: false }}
       onSend={onSend}
       onCancel={vi.fn()}
     />,
@@ -67,21 +70,21 @@ describe("US-BES-02 FR-BES-04 catch date field", () => {
 
   it("untouched, nothing is sent: the server uses today's local date", async () => {
     const onSend = show();
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     expect(onSend).toHaveBeenCalledWith({});
   });
 
   it("a back-dated value is sent as catchDate", async () => {
     const onSend = show();
     fireEvent.change(field(), { target: { value: "2022-02-03" } });
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     expect(onSend).toHaveBeenCalledWith({ catchDate: "2022-02-03" });
   });
 
   it("a cleared field sends nothing (default applies)", async () => {
     const onSend = show();
     fireEvent.change(field(), { target: { value: "" } });
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     expect(onSend).toHaveBeenCalledWith({});
   });
 
@@ -93,7 +96,7 @@ describe("US-BES-02 FR-BES-04 catch date field", () => {
     };
     const onSend = show(vi.fn(async () => error));
     fireEvent.change(field(), { target: { value: "2026-10-04" } });
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await waitFor(() => expect(document.activeElement).toBe(field()));
     expect(onSend).toHaveBeenCalledWith({ catchDate: "2026-10-04" });
     expect(field().getAttribute("aria-invalid")).toBe("true");
@@ -106,7 +109,7 @@ describe("US-BES-02 FR-BES-04 catch date field", () => {
   it("an error about something else does not mark the date field", async () => {
     const error: ApiError = { code: "species.not_found", text: "Diese Art gibt es nicht." };
     show(vi.fn(async () => error));
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     expect(field().getAttribute("aria-invalid")).not.toBe("true");
   });
 });
@@ -194,18 +197,18 @@ function fakeServer(cards: SpecimenCard[], answer: () => Promise<Response>) {
 }
 
 const page = () => (
-  <CollectionPage
-    api="http://api"
-    token={async () => "tok"}
-    newSpecies={null}
-    onSpeciesChoose={vi.fn()}
-    onCompleted={vi.fn()}
-  />
+  <MemoryRouter>
+    <CollectionPage
+      api="http://api"
+      token={async () => "tok"}
+      newSpecies={null}
+      onSpeciesChoose={vi.fn()}
+      onCompleted={vi.fn()}
+    />
+  </MemoryRouter>
 );
 const openForm = async () => {
-  await userEvent.click(
-    await screen.findByRole("button", { name: "Fangdatum korrigieren: Bogenhanf" }),
-  );
+  await userEvent.click(await findCardButton("Fangdatum korrigieren: Bogenhanf"));
   return screen.getByLabelText("Fangdatum") as HTMLInputElement;
 };
 
@@ -283,7 +286,7 @@ describe("US-BES-11 correct the catch date on the card", () => {
     await openForm();
     await userEvent.click(screen.getByRole("button", { name: "Fangdatum speichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain(
-      "Dieses Exemplar gibt es nicht.",
+      "Diese Pflanze gibt es nicht.",
     );
   });
 
@@ -292,7 +295,7 @@ describe("US-BES-11 correct the catch date on the card", () => {
     render(page());
     await openForm();
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
-    expect(await screen.findByRole("heading", { name: "Bestand" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Sammlung" })).toBeTruthy();
     expect(posts).toHaveLength(0);
   });
 });

@@ -1,6 +1,6 @@
 import type { Pool } from "pg";
 import { withAccount } from "../kernel/index.ts";
-import type { SpeciesRepointer } from "./repointer.ts";
+import type { SpeciesRepointer } from "./references/repointer.ts";
 
 // The shapes are the types of `core` (type-only import through its public entry, AB-2).
 import type { MergeOutcome, ReviewCase, ReviewStatus, Role } from "@pflanzendex/core";

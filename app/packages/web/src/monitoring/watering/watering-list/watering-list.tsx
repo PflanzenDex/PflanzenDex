@@ -1,17 +1,23 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { Button } from "@/components/ui/button/button";
+import { Pager } from "@/components/shared/responsive/pager/pager";
+import { keepTogether } from "@/lib/format";
 import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
+import { DueCountOf, WATERING_KEY, type DueCount } from "../../api/due-count/due-count";
 import { loadWateringDue, markWatered, type WateringDueRow } from "../../api/reminders-api";
 
 type Token = () => Promise<string | undefined>;
-const KEY = ["monitoring", "watering"] as const;
+const KEY = WATERING_KEY;
+
+/** Rows per page (starting value, assumption; US-QS-18). */
+const PAGE_SIZE = 3;
 
 const sinceText = (d: WateringDueRow) =>
   d.lastWateredOn === null
     ? "noch nie als gegossen eingetragen"
-    : `zuletzt vor ${d.daysSince} Tagen gegossen`;
+    : keepTogether(`zuletzt vor ${d.daysSince} Tagen gegossen`);
 
 function Row(props: {
   row: WateringDueRow;
@@ -22,12 +28,12 @@ function Row(props: {
 }) {
   const r = props.row;
   return (
-    <li className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3">
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3">
       <Checkbox checked={props.checked} onChange={props.onToggle} rowClassName="min-w-0 flex-1">
         <span>
           <span className="font-medium">{r.name}</span>
-          <span className="block text-sm text-muted-foreground">
-            {sinceText(r)}, Intervall alle {r.intervalDays} Tage
+          <span className="block text-sm tabular-nums text-muted-foreground">
+            {sinceText(r)}, Intervall alle {keepTogether(`${r.intervalDays} Tage`)}
           </span>
         </span>
       </Checkbox>
@@ -40,7 +46,7 @@ function Row(props: {
       >
         Gegossen
       </Button>
-    </li>
+    </div>
   );
 }
 
@@ -61,18 +67,21 @@ function Rows(props: { api: string; token: Token; rows: readonly WateringDueRow[
   const picked = props.rows.filter((r) => chosen.has(r.specimenId)).map((r) => r.specimenId);
   return (
     <div className="flex flex-col gap-3">
-      <ul aria-label="Zu gießen" className="m-0 flex list-none flex-col gap-2 p-0">
-        {props.rows.map((r) => (
+      <Pager
+        items={props.rows}
+        pageSize={PAGE_SIZE}
+        label="Zu gießen"
+        getKey={(r) => r.specimenId}
+        renderItem={(r) => (
           <Row
-            key={r.specimenId}
             row={r}
             checked={chosen.has(r.specimenId)}
             busy={write.running}
             onToggle={() => toggle(r.specimenId)}
             onWater={() => water([r.specimenId])}
           />
-        ))}
-      </ul>
+        )}
+      />
       <Button
         size="touch"
         className="self-start"
@@ -103,7 +112,22 @@ function Rows(props: { api: string; token: Token; rows: readonly WateringDueRow[
  * P-08), and the empty state says where to set it (P-09). "Gegossen" writes today's entry; several can be marked and
  * entered in one step.
  */
-export function WateringList(props: { api: string; token: Token }) {
+export function WateringList(props: {
+  api: string;
+  token: Token;
+  /** With `count` the list renders nothing of its own and hands the due count to it (US-QS-18). */
+  count?: (due: DueCount) => ReactNode;
+}) {
+  if (props.count)
+    return (
+      <DueCountOf api={props.api} token={props.token}>
+        {props.count}
+      </DueCountOf>
+    );
+  return <DueList api={props.api} token={props.token} />;
+}
+
+function DueList(props: { api: string; token: Token }) {
   const load = useCallback((t: string) => loadWateringDue(props.api, t), [props.api]);
   return (
     <LoadFrame

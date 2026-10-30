@@ -2,6 +2,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Species, SpecimenCard } from "@pflanzendex/core";
+import { MemoryRouter } from "react-router";
+import { findCardButton } from "../specimens/tests/plants-test-helpers";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../insights/distribution-test-helpers";
@@ -63,14 +65,16 @@ function fakeServer(cards: SpecimenCard[], answer?: () => Promise<Response>) {
 }
 
 const page = (extra: Partial<Parameters<typeof CollectionPage>[0]> = {}) => (
-  <CollectionPage
-    api="http://api"
-    token={async () => "tok"}
-    newSpecies={null}
-    onSpeciesChoose={vi.fn()}
-    onCompleted={vi.fn()}
-    {...extra}
-  />
+  <MemoryRouter>
+    <CollectionPage
+      api="http://api"
+      token={async () => "tok"}
+      newSpecies={null}
+      onSpeciesChoose={vi.fn()}
+      onCompleted={vi.fn()}
+      {...extra}
+    />
+  </MemoryRouter>
 );
 const apiError = (code: string, text: string) =>
   response(409, { error: { code, text, data: { name: "Bogenhanf", existing: [] } } });
@@ -125,7 +129,7 @@ describe("US-BES-03 form: the marker of the 2nd and 3rd specimen", () => {
     await userEvent.clear(field);
     await userEvent.type(field, "rot");
     expect(screen.getByText("Name: Bogenhanf – rot")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]?.body).toMatchObject({ speciesId: "a1", marker: "rot" });
     expect(posts[0]?.body["markers"]).toBeUndefined();
@@ -135,7 +139,7 @@ describe("US-BES-03 form: the marker of the 2nd and 3rd specimen", () => {
     const posts = fakeServer([card("e1", null)]);
     render(page({ newSpecies: species }));
     await userEvent.clear(await screen.findByLabelText("Kennzeichen"));
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Kennzeichen");
     expect(posts).toHaveLength(0);
   });
@@ -156,13 +160,13 @@ describe("US-BES-03 form: the marker of the 2nd and 3rd specimen", () => {
     expect(missing.required).toBe(true);
     await userEvent.type(screen.getByLabelText("Kennzeichen"), "rot");
 
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     expect(posts).toHaveLength(0);
     expect((await screen.findByRole("alert")).textContent).toContain("fehlenden Kennzeichen");
 
     await userEvent.type(missing, "blau");
     expect(screen.getByText(/„Bogenhanf“ heißt dann „Bogenhanf – blau“/)).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]?.body).toMatchObject({
       marker: "rot",
@@ -175,7 +179,7 @@ describe("US-BES-03 form: the marker of the 2nd and 3rd specimen", () => {
       apiError("specimen.marker_taken", "Dieses Kennzeichen gibt es bei dieser Art schon."),
     );
     render(page({ newSpecies: species }));
-    await userEvent.click(await screen.findByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Pflanze anlegen" }));
     expect((await screen.findByRole("alert")).textContent).toContain(
       "gibt es bei dieser Art schon",
     );
@@ -185,9 +189,7 @@ describe("US-BES-03 form: the marker of the 2nd and 3rd specimen", () => {
 
 describe("US-BES-03 rename: change the marker on the card", () => {
   const open = async () => {
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Kennzeichen ändern: Bogenhanf" }),
-    );
+    await userEvent.click(await findCardButton("Kennzeichen ändern: Bogenhanf"));
   };
 
   it("renames via the form, says the new name and reloads the list", async () => {
@@ -210,9 +212,7 @@ describe("US-BES-03 rename: change the marker on the card", () => {
   it("starts with the current marker", async () => {
     fakeServer([card("e2", "Klammer")]);
     render(page());
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Kennzeichen ändern: Bogenhanf – Klammer" }),
-    );
+    await userEvent.click(await findCardButton("Kennzeichen ändern: Bogenhanf – Klammer"));
     expect(((await screen.findByLabelText("Kennzeichen")) as HTMLInputElement).value).toBe(
       "Klammer",
     );
@@ -246,9 +246,7 @@ describe("US-BES-03 rename: change the marker on the card", () => {
     render(page());
     await open();
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
-    expect(
-      await screen.findByRole("button", { name: "Kennzeichen ändern: Bogenhanf" }),
-    ).toBeTruthy();
+    expect(await findCardButton("Kennzeichen ändern: Bogenhanf")).toBeTruthy();
     expect(posts).toHaveLength(0);
   });
 });

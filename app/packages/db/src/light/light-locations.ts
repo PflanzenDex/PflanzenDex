@@ -62,6 +62,23 @@ export class LocationPostgres {
     }
   }
 
+  /**
+   * Deletes a location unless something points to it (P-10). Specimens and care profiles are protected by their
+   * foreign keys; other modules report their usage through the port `LocationUsage` before this runs.
+   */
+  async remove(userId: string, id: string): Promise<"deleted" | "not_found" | "in_use"> {
+    try {
+      const r = await withAccount(this.pool, userId, async (c) => {
+        const gone = await c.query("delete from location where id = $1", [id]);
+        return gone.rowCount === 1 ? ("deleted" as const) : ("not_found" as const);
+      });
+      return r;
+    } catch (e) {
+      if (errorCode(e) === FOREIGN_KEY) return "in_use";
+      throw e;
+    }
+  }
+
   private translate(e: unknown): "name_taken" | "zone_unknown" {
     if (errorCode(e) === UNIQUE) return "name_taken";
     if (errorCode(e) === FOREIGN_KEY) return "zone_unknown";

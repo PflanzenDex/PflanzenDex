@@ -4,18 +4,35 @@ import {
   type ResponsiveColumn,
 } from "@/components/shared/responsive/responsive-table/responsive-table";
 import type { LightOverview, LightOverviewRow } from "../../shared/light-api/light-api";
+import { zoneLabel } from "@pflanzendex/core";
 
 const lux = new Intl.NumberFormat("de-DE");
 
 const COLUMNS: ResponsiveColumn<LightOverviewRow>[] = [
   { key: "species", header: "Art", cell: (r) => r.speciesName },
-  { key: "zone", header: "Lichtzone", cell: (r) => (r.zone ? r.zone.name : "unbekannt") },
+  {
+    key: "zone",
+    header: "Lichtzone",
+    cell: (r) => (r.zone ? zoneLabel(r.zone.name) : "unbekannt"),
+  },
   {
     key: "lux",
     header: "Lux-Bedarf",
-    cell: (r) => <span className="tabular-nums">{lux.format(r.lightDemandLux)}</span>,
+    cell: (r) =>
+      r.lightDemandLux === null ? (
+        "unbekannt"
+      ) : (
+        <span className="tabular-nums">{lux.format(r.lightDemandLux)}</span>
+      ),
   },
-  { key: "position", header: "Position", cell: (r) => r.position.description },
+  {
+    key: "position",
+    header: "Position",
+    // P-08/P-09: without a known lux need there is no position; the next step says how to get one.
+    cell: (r) =>
+      r.position?.description ??
+      "Lichtbedarf eintragen: Lichtzone im Pflegeprofil der Art festlegen",
+  },
 ];
 
 // US-LIC-03: species by light hunger with position recommendations
@@ -28,14 +45,15 @@ export function LightOverviewView(props: { data: LightOverview; onOpenCollection
       </h2>
       {data.rows.length === 0 ? (
         <EmptyState
-          title="Noch keine Arten mit aktivem Exemplar und gesetztem Lux-Bedarf"
-          description="Lege ein Exemplar an oder aktualisiere den Lux-Bedarf einer Art."
-          action={{ label: "Zum Bestand", onClick: onOpenCollection }}
+          title="Noch keine Arten mit aktiver Pflanze"
+          description="Lege eine Pflanze an, dann erscheint ihre Art hier."
+          action={{ label: "Zur Sammlung", onClick: onOpenCollection }}
         />
       ) : (
         <>
           <p className="text-sm text-muted-foreground">
-            Arten sortiert nach Lux-Bedarf mit Positionsempfehlung. Höher = näher zur Lampe nötig.
+            Arten nach Lux-Bedarf sortiert; höher heißt näher an die Lampe. Arten mit unbekanntem
+            Lux-Bedarf stehen am Ende.
           </p>
           <ResponsiveTable
             caption="Lichthunger der Arten"

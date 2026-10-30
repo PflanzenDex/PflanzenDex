@@ -4,12 +4,14 @@ import {
   isTimeZone,
   NO_APP_RARITY,
   suggestions,
+  type SuggestionsDependencies,
   type ZoneStockSource,
 } from "@pflanzendex/core";
 import {
   IdempotencyPostgres,
   SpeciesPostgres,
   SpecimenPostgres,
+  TaxonAttributesPostgres,
   TaxonomyPostgres,
   WishesPostgres,
 } from "@pflanzendex/db";
@@ -50,6 +52,11 @@ export function discoverDependencies(pool: Pool, stock: ZoneStockSource = zoneSt
     },
     wishes: new WishesPostgres(pool),
     stock,
+    // The researched attributes with their sources (US-ENT-09); the shared table is readable by every account.
+    // The cast only joins the `db` record and the `core` fact types, which are separate packages.
+    attributes: new TaxonAttributesPostgres(pool) as NonNullable<
+      SuggestionsDependencies["attributes"]
+    >,
   };
   return { deps, decide: discoverDecide({ ...deps, clock: () => new Date() }) };
 }

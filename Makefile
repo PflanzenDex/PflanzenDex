@@ -9,7 +9,7 @@ DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(DB_PORT))
 export PFLANZENDEX_TEST_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:$(DB_PORT)/pflanzendex_test
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check retro ci-reuse merge clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows audit release release-dry-run skills-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
+.PHONY: help setup dev lint format typecheck test coverage gates ci worktree claim board status-check retro ci-reuse merge migration clean repo-stats pr db-up db-down migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run skills-check reference-check spec-check docs-check release-tags-check changelog-check lighthouse browsers conformance e2e crap duplicates dup layout layout-baseline db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report
 
 help: ## List all targets with a one-line description
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -45,9 +45,9 @@ typecheck: ## Strict TypeScript in all packages
 docs-check: ## Lint markdown and check relative links (QG-U2)
 	cd $(APP) && npm run docs
 
-db-up: ## Start the test database (PostgreSQL 16 in Docker) unless it is running
+db-up: ## Start the test database (PostgreSQL 18 in Docker) unless it is running
 	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) \
-		-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pflanzendex_test -p 127.0.0.1:$(DB_PORT):5432 postgres:16-alpine >/dev/null
+		-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pflanzendex_test -p 127.0.0.1:$(DB_PORT):5432 postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5 >/dev/null
 	@until docker exec $(DB_CONTAINER) pg_isready -q -d pflanzendex_test; do sleep 1; done
 
 db-down: ## Remove the test database
@@ -55,6 +55,9 @@ db-down: ## Remove the test database
 
 migrate: ## Apply migrations (DATABASE_URL, otherwise the test database)
 	cd $(APP) && npm run migrate -w @pflanzendex/db
+
+migration: ## New migration with the next free number, seen from origin/dev and all open PRs (NAME=<module>_<short_name>, issue #831)
+	cd $(APP) && node tools/workflow/claim/migration/new-migration.mjs "$(NAME)"
 
 auth-up: ## Start the auth server (Keycloak) and mail catcher; admin password in app/config/dev/.env (not in the repo)
 	@test -f $(APP)/config/dev/.env || echo "KC_ADMIN_PASSWORD=$$(head -c 18 /dev/urandom | base64 | tr -dc A-Za-z0-9)" > $(APP)/config/dev/.env
@@ -105,6 +108,9 @@ spec-check: ## Spec consistency and story-to-test traceability (QG-T4)
 skills-check: ## Check agent skills in .agents/skills (trigger, paths, check command, links; US-DEV-04)
 	cd $(APP) && npm run skills
 
+reference-check: ## API routes and core operations named in app.md, shared components in design-system.md; baseline only shrinks (QG-T5, US-QG-10)
+	cd $(APP) && npm run reference
+
 storybook: ## Component catalog (Storybook) on http://localhost:6006, light/dark toolbar, 360 px viewport (TE-18)
 	cd $(APP) && npm run storybook
 
@@ -117,7 +123,7 @@ lighthouse: ## Lighthouse CI on the built web app, mobile, report only (QG-U1), 
 	tools/lighthouse/lighthouse-run.sh
 	tools/lighthouse/lighthouse-summary.sh | tee $(APP)/packages/web/.lighthouseci/summary.md
 
-bundle-report: ## Initial JS per chunk and package as Markdown, 140 kB working target; report only, never fails (QG-U6, FR-QG-10)
+bundle-report: ## Initial JS per chunk and package as Markdown against the 125 kB goal; report only, never fails (QG-U6, FR-QG-10)
 	@cd $(APP) && npm run --silent bundle-report
 
 release-tags-check: ## All v* tags come from the release workflow, no hand-set version (FR-DEV-05; needs gh auth)
@@ -128,6 +134,9 @@ secrets: ## Secret scan over the full git history (gitleaks, QG-S1)
 
 workflows: ## Lint GitHub workflows (actionlint)
 	tools/lint/actionlint.sh
+
+image-scan: ## Vulnerability scan of every container image (Grype), report only (#761, NFR-10); report in app/.cache/image-scan.md
+	tools/lint/image-scan.sh
 
 audit: ## Known high-severity vulnerabilities in dependencies (npm audit, QG-S2)
 	cd $(APP) && npm run audit
@@ -202,4 +211,4 @@ backup: ## Back up the database (app/config/deploy/backups)
 	$(APP)/config/deploy/scripts/backup.sh
 
 restore-test: ## Restore test in a throwaway container (needs Docker)
-	$(APP)/config/deploy/scripts/restore-test.sh
+	$(APP)/config/deploy/scripts/restore/restore-test.sh
