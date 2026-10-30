@@ -472,29 +472,52 @@ describe("US-WUN-02 settings page: buffer of the wishlist warning", () => {
 });
 
 describe("US-LIC-03 settings page: thresholds of the position recommendation", () => {
-  const field = async () =>
-    screen.findByLabelText<HTMLInputElement>(/Schwellen der Positionsempfehlung/);
+  const LABELS = ["Direkt unter der Lampe ab", "Sehr nah ab", "Nah ab", "Mittlerer Abstand ab"];
+  const fields = async () =>
+    Promise.all(LABELS.map((label) => screen.findByLabelText<HTMLInputElement>(label)));
+  const values = async () => (await fields()).map((input) => input.value);
+  const field = (label: string) => screen.findByLabelText<HTMLInputElement>(label);
 
-  it("shows the standard values as an assumption while none are set", async () => {
+  it("US-LIC-03 shows four labelled lux fields with German grouping and the standard values as an assumption", async () => {
     fakeServer();
     show("light");
-    expect((await field()).value).toBe("50000, 15000, 8000, 4000");
+    expect(await values()).toEqual(["50.000", "15.000", "8.000", "4.000"]);
+    expect(screen.getAllByText("Lux")).toHaveLength(4);
     expect(screen.getByText(/eine Annahme/)).toBeTruthy();
   });
 
-  it("saves four descending values with the profile", async () => {
+  it("US-LIC-03 'Speichern' is enabled before anything changed; an unchanged save answers with a message and sends nothing", async () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     show("light");
-    const input = await field();
-    await user.clear(input);
-    await user.type(input, "60000, 20000, 9000, 3000");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
-    expect((await screen.findByRole("status")).textContent).toBe("Einstellungen gespeichert.");
-    expect(puts[0]?.body["positionThresholds"]).toEqual([60000, 20000, 9000, 3000]);
+    await fields();
+    const save = screen.getByRole("button", { name: "Speichern" });
+    expect(save.hasAttribute("disabled")).toBe(false);
+    await user.click(save);
+    expect((await screen.findByRole("status")).textContent).toBe(
+      "Keine Änderung: Die Werte sind schon gespeichert.",
+    );
+    expect(puts).toHaveLength(0);
   });
 
-  it("keeps the standard values unset when only another setting changes", async () => {
+  it("US-LIC-03 saves four whole values as numbers with the profile, typed with or without grouping", async () => {
+    const puts = fakeServer();
+    const user = userEvent.setup();
+    show("light");
+    await fields();
+    const second = await field("Sehr nah ab");
+    await user.clear(second);
+    await user.type(second, "16000");
+    const fourth = await field("Mittlerer Abstand ab");
+    await user.clear(fourth);
+    await user.type(fourth, "3.000");
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    expect((await screen.findByRole("status")).textContent).toBe("Einstellungen gespeichert.");
+    expect(puts[0]?.body["positionThresholds"]).toEqual([50000, 16000, 8000, 3000]);
+    expect(await values()).toEqual(["50.000", "16.000", "8.000", "3.000"]);
+  });
+
+  it("US-LIC-03 keeps the standard values unset when only another setting changes", async () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     show("privacy");
@@ -503,22 +526,47 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
     expect(puts[0]?.body["positionThresholds"]).toBeNull();
   });
 
-  it.each(["1, 2, 3", "4000, 8000, 15000, 50000", "50000, 15000, 8000, 0", "a, b, c, d", ""])(
-    "refuses %j before sending and names the fix",
-    async (text) => {
+  it.each([
+    ["Sehr nah ab", "60000", "Der Wert muss kleiner sein als der Wert darüber."],
+    ["Mittlerer Abstand ab", "9000", "Der Wert muss kleiner sein als der Wert darüber."],
+    ["Nah ab", "abc", "Gib eine ganze Zahl von 1 bis 200.000 Lux ein."],
+    ["Direkt unter der Lampe ab", "250000", "Gib eine ganze Zahl von 1 bis 200.000 Lux ein."],
+  ])(
+    "US-LIC-03 refuses %j in '%s' before sending, names the field and answers the save",
+    async (label, text, message) => {
       const puts = fakeServer();
       const user = userEvent.setup();
       show("light");
-      const input = await field();
+      const input = await field(label);
       await user.clear(input);
-      if (text) await user.type(input, text);
+      await user.type(input, text);
       await user.click(screen.getByRole("button", { name: "Speichern" }));
-      expect((await screen.findAllByRole("alert"))[0]?.textContent).toContain(
-        "von hoch nach niedrig",
-      );
+      expect(await screen.findByText(message)).toBeTruthy();
+      expect(input.getAttribute("aria-invalid")).toBe("true");
+      expect(screen.getByText("Bitte prüfe die markierten Felder.")).toBeTruthy();
       expect(puts).toHaveLength(0);
     },
   );
+
+  it("US-LIC-03 a refusal that names the thresholds marks all four fields", async () => {
+    fakeServer(PROFILE, () =>
+      response(400, {
+        error: {
+          code: "input.invalid",
+          text: "x",
+          details: [{ field: "positionThresholds", code: "input.invalid" }],
+        },
+      }),
+    );
+    const user = userEvent.setup();
+    show("light");
+    const first = await field("Direkt unter der Lampe ab");
+    await user.clear(first);
+    await user.type(first, "60000");
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(first.getAttribute("aria-invalid")).toBe("true"));
+    for (const input of await fields()) expect(input.getAttribute("aria-invalid")).toBe("true");
+  });
 });
 
 describe("US-ACH-08 calm mode on the profile page", () => {
@@ -622,7 +670,7 @@ describe("US-QS-17 settings as a list of groups", () => {
     ["privacy", "Datenschutz und Empfehlungen", /Alles privat/],
     ["style", "Wie nutzt du die App?", /Ruhemodus/],
     ["wishlist", "Wunschliste", /Mindestzahl offener Wünsche/],
-    ["light", "Licht", /Schwellen der Positionsempfehlung/],
+    ["light", "Licht", /Direkt unter der Lampe ab/],
   ])("US-QS-17 the address ?sheet=%s opens the layer %s", async (sheet, title, content) => {
     fakeServer();
     show(sheet);
@@ -650,7 +698,7 @@ describe("US-QS-17 settings as a list of groups", () => {
     show();
     await user.click(await row("Licht"));
     expect(await screen.findByRole("dialog")).toBeTruthy();
-    expect(screen.getByLabelText(/Schwellen der Positionsempfehlung/)).toBeTruthy();
+    expect(screen.getByLabelText("Direkt unter der Lampe ab")).toBeTruthy();
     setViewportWidth(1024);
   });
 
@@ -691,9 +739,9 @@ describe("US-QS-17 settings as a list of groups", () => {
     );
     const user = userEvent.setup();
     show("light");
-    const input = await screen.findByLabelText(/Schwellen der Positionsempfehlung/);
+    const input = await screen.findByLabelText("Sehr nah ab");
     await user.clear(input);
-    await user.type(input, "60000, 20000, 9000, 3000");
+    await user.type(input, "16000");
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Die Eingabe ist ungültig");
     expect(document.body.textContent).not.toContain("RAW SERVER TEXT");
