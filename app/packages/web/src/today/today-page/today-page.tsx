@@ -98,7 +98,7 @@ function Content(props: { list: TodayList; onOpen: (d: TodayDestination) => void
               ? laterText(list.upcoming)
               : "Keine Behandlung ist fällig, keine Pflanze steht falsch und keine Angabe fehlt."
           }
-          action={{ label: "Zum Bestand", onClick: () => props.onOpen("collection") }}
+          action={{ label: "Zur Sammlung", onClick: () => props.onOpen("collection") }}
         />
       )}
       {first && list.upcoming > 0 && (

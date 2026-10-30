@@ -54,7 +54,7 @@ function useOfferForm(api: string, token: Token, onChanged: () => void) {
   const share = () =>
     void write.run(
       (t) => shareSpecimen(api, t, fields.specimenId),
-      "Freigegeben: Freunde sehen dieses Exemplar ab jetzt.",
+      "Freigegeben: Freunde sehen diese Pflanze ab jetzt.",
     );
   return {
     fields,
@@ -105,12 +105,12 @@ export function OfferForm(props: {
         <OfferFields specimens={props.specimens} value={s.fields} onChange={s.setFields} />
         {s.fields.specimenId === "" && (
           <p className="text-muted-foreground">
-            Wähle ein Exemplar, dann siehst du, was Freunde über es erfahren.
+            Wähle eine Pflanze, dann siehst du, was Freunde über sie erfahren.
           </p>
         )}
         {s.preview.status === "error" && (
           <p role="alert" className="text-destructive">
-            Die Angaben zum Exemplar konnten nicht geladen werden.
+            Die Angaben zur Pflanze konnten nicht geladen werden.
           </p>
         )}
         {s.p && (

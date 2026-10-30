@@ -17,9 +17,9 @@ export const WUN_ERROR_TEXTS = {
   "wish.already_bought":
     "Dieser Wunsch ist schon als gekauft vermerkt und lässt sich nicht mehr verwerfen. Es wurde nichts geändert.",
   "wish.not_bought":
-    "Dieser Wunsch ist nicht als gekauft vermerkt. Nur ein gekaufter Wunsch wird mit einem Exemplar verknüpft; es wurde nichts geändert.",
+    "Dieser Wunsch ist nicht als gekauft vermerkt. Nur ein gekaufter Wunsch wird mit einer Pflanze verknüpft; es wurde nichts geändert.",
   "wish.already_linked":
-    "Dieser Wunsch ist schon mit einem anderen Exemplar verknüpft, oder das Exemplar gehört schon zu einem anderen Wunsch. Es wurde nichts geändert.",
+    "Dieser Wunsch ist schon mit einer anderen Pflanze verknüpft, oder die Pflanze gehört schon zu einem anderen Wunsch. Es wurde nichts geändert.",
   "wish.not_duplicate":
     "Dieser Wunsch hat keinen doppelten Namen und lässt sich hier nicht umbenennen oder löschen. Lade die Wunschliste neu; es wurde nichts geändert.",
 } as const;

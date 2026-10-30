@@ -27,7 +27,7 @@ export function issueText(issue: ApprovalIssue): string {
 }
 
 const KIND: Record<string, [string, string]> = {
-  specimen: ["Exemplar", "Exemplare"],
+  specimen: ["Pflanze", "Pflanzen"],
   care_profile: ["Pflegeprofil", "Pflegeprofile"],
 };
 const noun = (kind: string, n: number) => (KIND[kind] ?? [kind, kind])[n === 1 ? 0 : 1];

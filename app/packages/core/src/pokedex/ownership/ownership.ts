@@ -14,7 +14,7 @@ import type {
   UnidentifiedSpecimen,
 } from "../types";
 
-const NEXT_ACTION = "Bestimme die Art, dann zählt es.";
+const NEXT_ACTION = "Bestimme die Art, dann zählt sie.";
 
 const unidentified = (z: SpecimenRow, latinName: string | null): UnidentifiedSpecimen => ({
   specimenId: z.id,
@@ -22,8 +22,8 @@ const unidentified = (z: SpecimenRow, latinName: string | null): UnidentifiedSpe
   latinName,
   text:
     latinName === null
-      ? `Die Art von „${z.name}“ ist nicht lesbar, das Exemplar zählt noch nicht.`
-      : `„${z.name}“ (${latinName}) hat noch keine bestimmte Art, das Exemplar zählt noch nicht.`,
+      ? `Die Art von „${z.name}“ ist nicht lesbar, die Pflanze zählt noch nicht.`
+      : `„${z.name}“ (${latinName}) hat noch keine bestimmte Art, die Pflanze zählt noch nicht.`,
   nextAction: NEXT_ACTION,
 });
 

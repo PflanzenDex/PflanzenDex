@@ -11,6 +11,7 @@ import type {
   PriorityKind,
 } from "./types";
 import type { WishRow, ZoneStock } from "../types";
+import { zoneLabel } from "../../light";
 
 const plants = (n: number): string => `${n} ${n === 1 ? "Pflanze" : "Pflanzen"}`;
 
@@ -27,7 +28,7 @@ function standing(zones: readonly ZoneStock[]): Standing {
   const least = Math.min(...zones.map((z) => z.count));
   return {
     least,
-    leastNames: zones.filter((z) => z.count === least).map((z) => z.name),
+    leastNames: zones.filter((z) => z.count === least).map((z) => zoneLabel(z.name)),
     tie: zones.length > 1 && zones.every((z) => z.count === least),
   };
 }
@@ -80,7 +81,7 @@ function candidate(w: WishRow, zones: readonly ZoneStock[], s: Standing): Candid
     zone: zone ? { id: zone.zoneId, name: zone.name } : null,
     stock: zone ? zone.count : null,
     zoneText: zone
-      ? `${zone.name} — ${plants(zone.count)}`
+      ? `${zoneLabel(zone.name)} — ${plants(zone.count)}`
       : w.targetZoneId
         ? "Ziel-Zone liegt außerhalb der Zonen 2 bis 4"
         : "Ziel-Zone unbekannt",
@@ -132,7 +133,7 @@ function hintFor(list: readonly Candidate[]): CandidateList["hint"] {
     };
   return {
     text: `Als Nächstes dran: ${first.title} (${first.zoneText}).`,
-    nextAction: nextActionFor(first, first.zone.name),
+    nextAction: nextActionFor(first, zoneLabel(first.zone.name)),
   };
 }
 

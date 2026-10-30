@@ -87,7 +87,8 @@ function List(props: {
     <div className="flex max-w-xl flex-col gap-3">
       <p className="m-0 text-sm text-muted-foreground">
         Ein Auftrag bittet deinen KI-Client um etwas, zum Beispiel ein Artprofil. Das Ergebnis kommt
-        als Entwurf und zählt erst, wenn du es übernimmst. Offene Aufträge verfallen nach 14 Tagen.
+        als Entwurf und zählt erst, wenn du es übernimmst. Offene Aufträge verfallen nach
+        14&nbsp;Tagen.
       </p>
       <NewTask api={props.api} token={props.token} connected={props.connected} onCreated={again} />
       {props.rows.length === 0 ? (

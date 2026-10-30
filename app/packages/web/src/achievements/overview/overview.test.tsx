@@ -101,7 +101,7 @@ describe("US-ACH-02 achievements overview", () => {
     });
     expect(
       await screen.findByText(
-        "Dein erster Schritt: Miss ein Exemplar und füge der Messung ein Foto hinzu.",
+        "Dein erster Schritt: Miss eine Pflanze und füge der Messung ein Foto hinzu.",
       ),
     ).toBeTruthy();
   });

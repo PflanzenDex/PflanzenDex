@@ -82,7 +82,7 @@ describe("US-WUN-05 the wishlist entry is linked to the specimen (bought -> spec
     const r = await link(ALOE, SPEC_A);
     if (!r.ok) throw new Error(r.error.code);
     expect(r.value.hint.text).toContain("Echte Aloe (Aloe vera)");
-    expect(r.value.hint.text).toContain("Exemplar");
+    expect(r.value.hint.text).toContain("Pflanze");
   });
 
   it("US-WUN-05 a wish keeps its first specimen: another one is wish.already_linked", async () => {
@@ -205,7 +205,7 @@ describe("US-WUN-05 the way to the plant", () => {
       { context: anna, input: { wishId: OPEN }, idempotencyKey: "buy" },
     );
     if (!r.ok) throw new Error(r.error.code);
-    expect(r.value.hint.nextAction).toContain("Exemplar");
+    expect(r.value.hint.nextAction).toContain("Pflanze");
     expect(r.value.wish.specimenId).toBeNull();
   });
 });

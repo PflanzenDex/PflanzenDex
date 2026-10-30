@@ -82,7 +82,7 @@ export const wateringOccasions = (due: readonly WateringDue[]): Occasion[] =>
       d.lastWateredOn === null
         ? `„${d.name}“ ist noch nie als gegossen eingetragen (Intervall: alle ${d.intervalDays} Tage).`
         : `„${d.name}“ wurde zuletzt vor ${d.daysSince} Tagen gegossen (Intervall: alle ${d.intervalDays} Tage).`,
-    nextAction: "Gieße das Exemplar und trage es als gegossen ein.",
+    nextAction: "Gieße die Pflanze und trage sie als gegossen ein.",
   }));
 
 export interface WateredDependencies {

@@ -22,6 +22,6 @@ describe("US-QS-14 · page story Heute", () => {
   it("US-QS-14 · the empty story says that nothing is due and offers the collection", async () => {
     await NothingDue.run();
     expect(await screen.findByText("Heute steht nichts an.")).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: "Zum Bestand" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: "Zur Sammlung" }).length).toBeGreaterThan(0);
   });
 });

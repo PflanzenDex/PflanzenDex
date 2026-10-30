@@ -96,8 +96,8 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     cleanup();
     fakeServer([]);
     show();
-    expect(await screen.findByText(/Lege zuerst ein Exemplar im Bestand an/)).toBeTruthy();
-    const links = screen.getAllByRole("link", { name: "Zum Bestand" });
+    expect(await screen.findByText(/Lege zuerst eine Pflanze in der Sammlung an/)).toBeTruthy();
+    const links = screen.getAllByRole("link", { name: "Zur Sammlung" });
     expect(links.length).toBeGreaterThan(0);
     for (const link of links) expect(link.getAttribute("href")).toBe("/collection");
   });
@@ -130,7 +130,7 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     show();
     await user.click(await screen.findByRole("button", { name: "Behandlung speichern" }));
     const alerts = await screen.findAllByRole("alert");
-    expect(alerts.map((a) => a.textContent).join(" ")).toContain("Exemplar");
+    expect(alerts.map((a) => a.textContent).join(" ")).toContain("Pflanze");
     await user.click(screen.getByRole("checkbox", { name: "Bogenhanf" }));
     await user.click(screen.getByRole("button", { name: "Behandlung speichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Grund");
@@ -160,7 +160,7 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
   it("US-BEH-01 a refusal of the server stays visible with its text and keeps the input (P-10)", async () => {
     fakeServer([specimen("e1", "Bogenhanf")], () =>
       response(409, {
-        error: { code: "specimen.archived", text: "Dieses Exemplar ist archiviert." },
+        error: { code: "specimen.archived", text: "Diese Pflanze ist archiviert." },
       }),
     );
     const user = userEvent.setup();
@@ -393,7 +393,7 @@ describe("US-BEH-03 Behandlung abhaken", () => {
   it("US-BEH-03 a refusal stays visible with its text and the row stays open (P-10)", async () => {
     doneServer(() =>
       response(409, {
-        error: { code: "specimen.archived", text: "Dieses Exemplar ist archiviert." },
+        error: { code: "specimen.archived", text: "Diese Pflanze ist archiviert." },
       }),
     );
     const user = userEvent.setup();
@@ -423,15 +423,15 @@ describe("US-BEH-03 Behandlung abhaken", () => {
   });
 });
 
-describe("US-BEH-03 Verlauf je Exemplar", () => {
+describe("US-BEH-03 Verlauf je Pflanze", () => {
   it("US-BEH-03 asks to choose a specimen first (P-09), then lists its done treatments with the done date", async () => {
     doneServer(undefined, [doneEntry("x", "2026-10-03", "Neemöl"), doneEntry("y", "2026-09-20")]);
     const user = userEvent.setup();
     show();
     expect(
-      await screen.findByText(/Wähle ein Exemplar, um erledigte Behandlungen zu sehen/),
+      await screen.findByText(/Wähle eine Pflanze, um erledigte Behandlungen zu sehen/),
     ).toBeTruthy();
-    await user.selectOptions(await screen.findByLabelText("Exemplar für den Verlauf"), "s-a");
+    await user.selectOptions(await screen.findByLabelText("Pflanze für den Verlauf"), "s-a");
     const list = await screen.findByRole("list", { name: "Erledigte Behandlungen" });
     const items = within(list).getAllByRole("listitem");
     expect(items).toHaveLength(2);
@@ -445,7 +445,7 @@ describe("US-BEH-03 Verlauf je Exemplar", () => {
     doneServer(undefined, []);
     const user = userEvent.setup();
     show();
-    await user.selectOptions(await screen.findByLabelText("Exemplar für den Verlauf"), "s-b");
+    await user.selectOptions(await screen.findByLabelText("Pflanze für den Verlauf"), "s-b");
     expect(await screen.findByText(/Noch keine erledigte Behandlung/)).toBeTruthy();
   });
 
@@ -454,7 +454,7 @@ describe("US-BEH-03 Verlauf je Exemplar", () => {
     doneServer(undefined, entries);
     const user = userEvent.setup();
     show();
-    await user.selectOptions(await screen.findByLabelText("Exemplar für den Verlauf"), "s-a");
+    await user.selectOptions(await screen.findByLabelText("Pflanze für den Verlauf"), "s-a");
     await screen.findByText(/Noch keine erledigte Behandlung/);
     entries.push(doneEntry("z", "2026-10-03"));
     await user.click(

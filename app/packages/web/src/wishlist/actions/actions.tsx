@@ -110,10 +110,10 @@ export function CreateSpecimenButton(props: {
       type="button"
       size="touch"
       className="mt-2"
-      aria-label={props.named ? `Exemplar anlegen: ${props.wish.title}` : "Exemplar anlegen"}
+      aria-label={props.named ? `Pflanze anlegen: ${props.wish.title}` : "Pflanze anlegen"}
       onClick={() => props.onCreate(props.wish)}
     >
-      Exemplar anlegen
+      Pflanze anlegen
     </Button>
   );
 }
@@ -168,7 +168,7 @@ export function PathNotes(props: {
         <div role="status" className="mb-3 grid gap-2 rounded-lg border border-primary p-3">
           <p>
             Du legst gerade die Pflanze zum Wunsch „{wish.title}“ an. Nach dem Anlegen wird der
-            Wunsch mit dem Exemplar verknüpft.
+            Wunsch mit der Pflanze verknüpft.
           </p>
           <div>
             <Button type="button" variant="outline" size="touch" onClick={onDrop}>

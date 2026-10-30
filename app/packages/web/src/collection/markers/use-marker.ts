@@ -26,7 +26,7 @@ export function useMarker(api: string, token: Token, after: () => void) {
       const r = await markSpecimen(api, t, { id: open.id, marker });
       if (!r.ok) return r.error;
       setMessage(
-        `„${open.name}“ heißt jetzt „${r.value.name}“. Die Historie bleibt beim Exemplar.`,
+        `„${open.name}“ heißt jetzt „${r.value.name}“. Die Historie bleibt bei der Pflanze.`,
       );
       setOpen(null);
       after();

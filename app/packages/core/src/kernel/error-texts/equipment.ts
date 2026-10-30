@@ -14,9 +14,9 @@ export const EQUIPMENT_ERROR_TEXTS = {
   "equipment.not_a_plant_agent":
     "Nur ein Pflanzenmittel lässt sich mit dem Mittel einer Behandlung verknüpfen. Es wurde nichts geändert.",
   "equipment.not_a_sensor":
-    "Nur ein Sensor wird einem Exemplar oder Standort zugeordnet. Dieses Equipment ist kein Sensor; es wurde nichts geändert.",
+    "Nur ein Sensor wird einer Pflanze oder einem Standort zugeordnet. Dieses Equipment ist kein Sensor; es wurde nichts geändert.",
   "equipment.target_unknown":
-    "Dieses Exemplar oder diesen Standort gibt es nicht. Lade die Auswahl neu.",
+    "Diese Pflanze oder diesen Standort gibt es nicht. Lade die Auswahl neu.",
   "equipment.no_status": "Verbrauchsmaterial hat keinen Betriebszustand. Es wurde nichts geändert.",
   "location.in_use":
     "Dieser Standort wird noch genutzt (Pflanzen, Pflegeprofile oder Sensoren) und kann nicht gelöscht werden. Ordne sie zuerst einem anderen Standort zu.",

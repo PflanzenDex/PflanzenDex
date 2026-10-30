@@ -13,7 +13,7 @@ const noLocation = {
   specimenName: "Bogenhanf",
   locationId: null,
   text: "„Bogenhanf“ hat noch keinen Standort.",
-  nextAction: "Weise dem Exemplar einen Standort zu.",
+  nextAction: "Weise der Pflanze einen Standort zu.",
 };
 const noZone = {
   kind: "location_without_zone",

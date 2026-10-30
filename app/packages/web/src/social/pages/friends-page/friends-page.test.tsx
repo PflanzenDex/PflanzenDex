@@ -330,7 +330,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(screen.getByText(/Alles ist privat, bis du es freigibst/)).toBeTruthy();
     await userEvent.click(box);
     expect(
-      await screen.findByText(/Freigegeben: Freunde sehen dieses Exemplar ab jetzt/),
+      await screen.findByText(/Freigegeben: Freunde sehen diese Pflanze ab jetzt/),
     ).toBeTruthy();
     expect(calls[0]).toEqual({ path: "/sharing/specimens/s1", body: { share: "friends" } });
     expect(
@@ -350,15 +350,15 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     show("sharing");
     await screen.findByRole("checkbox", { name: "Zebra – M2: mit Freunden teilen" });
     expect(screen.queryByRole("checkbox", { name: /M3/ })).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Alle Exemplare von Zebra teilen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Alle Pflanzen von Zebra teilen" }));
     expect(
-      await screen.findByText(/Alle Exemplare dieser Art sind für Freunde freigegeben/),
+      await screen.findByText(/Alle Pflanzen dieser Art sind für Freunde freigegeben/),
     ).toBeTruthy();
     expect(calls[0]).toEqual({ path: "/sharing/species/sp1", body: { share: "friends" } });
     await userEvent.click(
-      screen.getByRole("button", { name: "Alle Exemplare von Zebra zurückziehen" }),
+      screen.getByRole("button", { name: "Alle Pflanzen von Zebra zurückziehen" }),
     );
-    expect(await screen.findByText(/Alle Exemplare dieser Art sind zurückgezogen/)).toBeTruthy();
+    expect(await screen.findByText(/Alle Pflanzen dieser Art sind zurückgezogen/)).toBeTruthy();
   });
 
   it("US-SOZ-03 shows the number of shared caught species of a friend, and unknown without sharing (P-08)", async () => {
@@ -435,7 +435,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
       "Meine Freunde1 Freund",
     );
     expect(screen.getByRole("button", { name: /^Was Freunde sehen/ }).textContent).toBe(
-      "Was Freunde sehenNoch keine Exemplare".replace("Noch keine Exemplare", "Alles privat"),
+      "Was Freunde sehenNoch keine Pflanzen".replace("Noch keine Pflanzen", "Alles privat"),
     );
     expect(screen.getByText(/Ohne deine Freigabe sieht niemand etwas\./)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Mehr erfahren" })).toBeTruthy();

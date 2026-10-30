@@ -103,11 +103,11 @@ describe("US-BES-06 Karte: Inhalt", () => {
   });
 
   it.each([
-    ["species", "Lichtzone: Lampe 3 (aus dem Lichtbedarf der Art)"],
-    ["profile", "Lichtzone: Lampe 3 (aus deinem Pflegeprofil)"],
-    ["cutting", "Lichtzone: Lampe 3 (Stecklingslicht)"],
+    ["species", "Lichtzone: Zone 3 (aus dem Lichtbedarf der Art)"],
+    ["profile", "Lichtzone: Zone 3 (aus deinem Pflegeprofil)"],
+    ["cutting", "Lichtzone: Zone 3 (Stecklingslicht)"],
   ] as const)("US-BES-06 · #592 says where the zone comes from (%s)", (source, text) => {
-    expect(html([card({ lightZone: "Lampe 3", lightZoneSource: source })])).toContain(text);
+    expect(html([card({ lightZone: "Zone 3", lightZoneSource: source })])).toContain(text);
   });
 
   it("shows the levels of the status in words", () => {
@@ -176,7 +176,7 @@ describe("US-BES-06 Karte: letzte Messung", () => {
       }),
     ]);
     expect(h).toContain("Letzte Messung: ");
-    expect(h).toContain("12,5 cm");
+    expect(h).toContain("12,5\u00a0cm");
     expect(h).toContain(">Gesund</strong> am 01.10.2026");
     expect(h).not.toContain("noch keine Messung");
   });
@@ -185,7 +185,7 @@ describe("US-BES-06 Karte: letzte Messung", () => {
     const h = html([
       card({ lastMeasurement: { date: "2026-10-01", value: 14, quality: "healthy", note: null } }),
     ]);
-    expect(h).toContain("14 cm");
+    expect(h).toContain("14\u00a0cm");
   });
 
   it("etiolated/thin is never a success: warning class, no success word, hint to the success criteria", () => {

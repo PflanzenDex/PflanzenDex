@@ -148,7 +148,7 @@ describe("US-POK-06 ownership: derived from the specimens", () => {
     expect(o.unidentified).toEqual([
       expect.objectContaining({
         latinName: `Hippeastrum${run}`,
-        nextAction: "Bestimme die Art, dann zählt es.",
+        nextAction: "Bestimme die Art, dann zählt sie.",
       }),
     ]);
     expect(o.unidentified[0].text).toContain(`Amaryllis ${run}`);

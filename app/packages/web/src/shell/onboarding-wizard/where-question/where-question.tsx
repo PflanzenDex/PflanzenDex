@@ -7,6 +7,7 @@ import { errorText } from "@/lib/error-text";
 import { setSpecimenLocation } from "../../../collection";
 import { createWrite } from "../../../kernel";
 import { loadLocations, loadZones } from "../../../light";
+import { zoneLabel } from "@pflanzendex/core";
 
 type Token = () => Promise<string | undefined>;
 
@@ -46,7 +47,7 @@ function usePlaces(api: string, token: Token): Places | null {
 /** The location with the light it stands under, so the choice shows what it brings with it (P-10). */
 const zoneOf = (l: LightLocation, zones: readonly LightZone[]) => {
   const z = zones.find((x) => x.id === l.lightZoneId);
-  return z ? `${l.name} (${z.name})` : l.name;
+  return z ? `${l.name} (${zoneLabel(z.name)})` : l.name;
 };
 
 function ZoneChoice(props: {
@@ -66,7 +67,7 @@ function ZoneChoice(props: {
         <option value="">Keine Angabe</option>
         {props.zones.map((z) => (
           <option key={z.id} value={z.id}>
-            {z.name}
+            {zoneLabel(z.name)}
           </option>
         ))}
       </Select>
@@ -117,7 +118,7 @@ export function WhereQuestion(props: {
     setSaving(false);
     if (!r.ok) return setError(errorText(r.error.code));
     const zone = places.zones.find((z) => z.id === (chosen.lightZoneId ?? zoneId));
-    props.onDone(`Standort gespeichert: ${chosen.name}${zone ? `, ${zone.name}` : ""}.`);
+    props.onDone(`Standort gespeichert: ${chosen.name}${zone ? `, ${zoneLabel(zone.name)}` : ""}.`);
   };
   return (
     <section className="flex flex-col gap-3">

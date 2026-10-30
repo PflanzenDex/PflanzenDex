@@ -19,6 +19,7 @@ import {
 } from "../../shared/schemas";
 import { ENTRY } from "../zones-view/zones-view";
 import { kindText, zoneName } from "../../shared/texts";
+import { zoneLabel } from "@pflanzendex/core";
 
 export interface LocationInput {
   name: string;
@@ -61,7 +62,7 @@ export function LocationForm(props: {
           <option value="">Keine Lichtzone (erscheint in den Hinweisen)</option>
           {props.zones.map((z) => (
             <option key={z.id} value={z.id}>
-              {z.name}
+              {zoneLabel(z.name)}
             </option>
           ))}
         </SelectField>

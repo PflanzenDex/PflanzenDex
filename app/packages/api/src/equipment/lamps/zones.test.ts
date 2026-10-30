@@ -74,8 +74,8 @@ beforeAll(async () => {
   app = createApp({ reviewer, pool, zoneStock });
   zoneA = await defaults(subA);
   zoneB = await defaults(subB);
-  counts[zoneA["Lampe 2"] as string] = 3;
-  counts[zoneA["Lampe 3"] as string] = 0;
+  counts[zoneA["Zone 2"] as string] = 3;
+  counts[zoneA["Zone 3"] as string] = 0;
 });
 afterAll(async () => {
   const owned = "account_id in (select id from account where subject = any($1))";
@@ -88,47 +88,47 @@ afterAll(async () => {
 
 describe("US-EQU-02 lamps in light zones through the API", () => {
   it("US-EQU-02 warns for a zone with specimens but no active lamp (P-10)", async () => {
-    const z = await zoneNamed(subA, "Lampe 2");
+    const z = await zoneNamed(subA, "Zone 2");
     expect(z).toMatchObject({ specimens: 3, lamps: [], note: { kind: "no_active_lamp" } });
-    expect((await zoneNamed(subA, "Lampe 1")).specimens).toBeNull();
+    expect((await zoneNamed(subA, "Zone 1 · Stecklingslicht")).specimens).toBeNull();
   });
 
   it("US-EQU-02 assigns a lamp to a zone, shows it there and removes the warning", async () => {
-    const made = await lamp(subA, "Lampe Regal", zoneA["Lampe 2"] as string);
+    const made = await lamp(subA, "Lampe Regal", zoneA["Zone 2"] as string);
     expect(made.status).toBe(201);
-    const z = await zoneNamed(subA, "Lampe 2");
+    const z = await zoneNamed(subA, "Zone 2");
     expect(z.lamps).toEqual([{ id: expect.any(String), name: "Lampe Regal", status: "active" }]);
     expect(z.note).toBeNull();
   });
 
   it("US-EQU-02 a defective lamp brings the warning back; an active lamp over an empty zone is only a hint", async () => {
-    const id = (await view(subA))["zones"].find((z: ZoneRow) => z.name === "Lampe 2").lamps[0].id;
+    const id = (await view(subA))["zones"].find((z: ZoneRow) => z.name === "Zone 2").lamps[0].id;
     const r = await call(subA, "POST", `/equipment/${id}/status`, { status: "defective" });
     expect(r.status).toBe(200);
     expect(r.body["status"]).toBe("defective");
-    expect((await zoneNamed(subA, "Lampe 2")).note).toMatchObject({ kind: "no_active_lamp" });
-    await lamp(subA, "Lampe leer", zoneA["Lampe 3"] as string);
-    expect((await zoneNamed(subA, "Lampe 3")).note).toMatchObject({ kind: "unused_capacity" });
+    expect((await zoneNamed(subA, "Zone 2")).note).toMatchObject({ kind: "no_active_lamp" });
+    await lamp(subA, "Lampe leer", zoneA["Zone 3"] as string);
+    expect((await zoneNamed(subA, "Zone 3")).note).toMatchObject({ kind: "unused_capacity" });
   });
 
   it("US-EQU-02 refuses a lamp without a zone and a zone of another account", async () => {
     const none = await call(subA, "POST", "/equipment", { type: "Lamp", name: "Ohne" });
     expect(none.status).toBe(400);
-    const foreign = await lamp(subA, "Fremd", zoneB["Lampe 2"] as string);
+    const foreign = await lamp(subA, "Fremd", zoneB["Zone 2"] as string);
     expect(foreign.status).toBe(404);
     expect(foreign.body["error"].code).toBe("light_zone.not_found");
   });
 
   it("US-EQU-02 moves a lamp; another account cannot touch it (P-04)", async () => {
-    const made = await lamp(subA, "Wanderlampe", zoneA["Lampe 2"] as string);
+    const made = await lamp(subA, "Wanderlampe", zoneA["Zone 2"] as string);
     const id = made.body["equipment"].id as string;
     const moved = await call(subA, "POST", `/equipment/${id}/zone`, {
-      lightZoneId: zoneA["Lampe 3"],
+      lightZoneId: zoneA["Zone 3"],
     });
     expect(moved.status).toBe(200);
-    expect(moved.body["lightZoneId"]).toBe(zoneA["Lampe 3"]);
+    expect(moved.body["lightZoneId"]).toBe(zoneA["Zone 3"]);
     const stolen = await call(subB, "POST", `/equipment/${id}/zone`, {
-      lightZoneId: zoneB["Lampe 3"],
+      lightZoneId: zoneB["Zone 3"],
     });
     expect(stolen.status).toBe(404);
     expect(stolen.body["error"].code).toBe("equipment.not_found");
@@ -142,7 +142,7 @@ describe("US-EQU-02 lamps in light zones through the API", () => {
     const potId = pot.body["equipment"].id as string;
     const soilId = soil.body["equipment"].id as string;
     const zone = await call(subA, "POST", `/equipment/${potId}/zone`, {
-      lightZoneId: zoneA["Lampe 2"],
+      lightZoneId: zoneA["Zone 2"],
     });
     expect(zone.status).toBe(409);
     expect(zone.body["error"].code).toBe("equipment.not_a_lamp");
@@ -152,7 +152,7 @@ describe("US-EQU-02 lamps in light zones through the API", () => {
   });
 
   it("P-10 a zone with a lamp cannot be deleted and names the lamp", async () => {
-    const r = await call(subA, "DELETE", `/light-zones/${zoneA["Lampe 2"]}`);
+    const r = await call(subA, "DELETE", `/light-zones/${zoneA["Zone 2"]}`);
     expect(r.status).toBe(409);
     expect(r.body["error"].code).toBe("light_zone.in_use");
     expect(JSON.stringify(r.body)).toContain("equipment");

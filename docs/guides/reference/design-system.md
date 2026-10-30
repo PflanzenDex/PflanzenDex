@@ -557,6 +557,7 @@ Every component in `components/ui` and `components/shared` that exists today. Lo
 | `Button`          | `ui/button/`                              | every button; variants by role, 44 px hit area on touch (DS-15, DS-34, DS-35)                                                             |
 | `Badge`           | `ui/display/badge/`                       | a short, non-interactive status label; text carries the meaning (DS-38)                                                                   |
 | `Label`           | `ui/display/label/`                       | the label of a form control (DS-36)                                                                                                       |
+| `MoreHelp`        | `ui/display/more-help/`                   | one line of help and the longer text behind "Mehr erfahren" (US-QS-24)                                                                    |
 | `Skeleton`        | `ui/display/skeleton/`                    | one placeholder block with the size of the content it mirrors; `SkeletonGroup` (DS-52, DS-56)                                             |
 | `Table`           | `ui/display/table/`                       | semantic table with its parts (`TableRow`, `TableCell`, …); on phones use `ResponsiveTable`                                               |
 | `Checkbox`        | `ui/fields/checkbox/`                     | styled native checkbox, the whole label row is the hit area                                                                               |
@@ -588,6 +589,7 @@ Every component in `components/ui` and `components/shared` that exists today. Lo
 | `Button`          | `ui/button/`                              | every button; variants by role, 44 px hit area on touch (DS-15, DS-34, DS-35)                                          |
 | `Badge`           | `ui/display/badge/`                       | a short, non-interactive status label; text carries the meaning (DS-38)                                                |
 | `Label`           | `ui/display/label/`                       | the label of a form control (DS-36)                                                                                    |
+| `MoreHelp`        | `ui/display/more-help/`                   | one line of help and the longer text behind "Mehr erfahren" (US-QS-24)                                                 |
 | `Skeleton`        | `ui/display/skeleton/`                    | one placeholder block with the size of the content it mirrors; `SkeletonGroup` (DS-52, DS-56)                          |
 | `Table`           | `ui/display/table/`                       | semantic table with its parts (`TableRow`, `TableCell`, …); on phones use `ResponsiveTable`                            |
 | `Checkbox`        | `ui/fields/checkbox/`                     | styled native checkbox, the whole label row is the hit area                                                            |

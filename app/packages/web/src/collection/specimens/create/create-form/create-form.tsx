@@ -42,7 +42,7 @@ function ErrorBox({ text, error }: { text: string; error: ApiError }) {
           {conflict.existing.map((v) => (
             <p key={v.id}>Schon vorhanden: {v.name}</p>
           ))}
-          <p>Mit einem Kennzeichen heißt das neue Exemplar dann „{conflict.name} – Kennzeichen“.</p>
+          <p>Mit einem Kennzeichen heißt die neue Pflanze dann „{conflict.name} – Kennzeichen“.</p>
         </>
       )}
     </Warning>
@@ -106,7 +106,7 @@ export function CreateForm(props: {
       <Form {...form}>
         <FormRoot
           onSubmit={submit}
-          aria-label="Exemplar anlegen"
+          aria-label="Pflanze anlegen"
           className="flex max-w-xl flex-col gap-4"
         >
           <NamePreview control={form.control} speciesName={speciesName} />
@@ -124,7 +124,7 @@ export function CreateForm(props: {
           />
           {error && alertText !== null && <ErrorBox text={alertText} error={error} />}
           <FormButtons
-            submit="Exemplar anlegen"
+            submit="Pflanze anlegen"
             cancel="Zurück zur Art"
             pending={form.formState.isSubmitting}
             onCancel={props.onCancel}

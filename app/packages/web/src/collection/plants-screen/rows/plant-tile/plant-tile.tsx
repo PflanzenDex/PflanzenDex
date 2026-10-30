@@ -1,3 +1,4 @@
+import { zoneLabel } from "@pflanzendex/core";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { cva } from "class-variance-authority";
 import { Button } from "@/components/ui/button/button";
@@ -18,7 +19,8 @@ export function tileState(card: SpecimenCard): { text: string; attention: boolea
 }
 
 /** The zone as text without the source: the tile has room for the name only; unknown stays "unbekannt" (P-08). */
-export const tileZone = (card: SpecimenCard): string => card.lightZone ?? UNKNOWN;
+export const tileZone = (card: SpecimenCard): string =>
+  card.lightZone ? zoneLabel(card.lightZone) : UNKNOWN;
 
 /** Attention is marked by the warning tokens and the word, never by colour alone (DS-38). */
 const stateMark = cva("w-fit rounded-sm px-1 text-xs font-semibold", {

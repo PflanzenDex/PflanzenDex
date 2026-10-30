@@ -60,7 +60,7 @@ describe("US-MON-05 when a specimen is due", () => {
     expect(seen).toMatchObject({ id: "watering:s1", occasion: "watering" });
     expect(seen?.text).toContain("vor 7 Tagen");
     expect(never?.text).toContain("noch nie als gegossen eingetragen");
-    expect(seen?.nextAction).toContain("trage es als gegossen ein");
+    expect(seen?.nextAction).toContain("trage sie als gegossen ein");
   });
 });
 

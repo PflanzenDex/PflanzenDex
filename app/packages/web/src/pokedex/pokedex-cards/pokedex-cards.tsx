@@ -27,7 +27,7 @@ export function Chips(props: { chips: readonly string[] }) {
 }
 
 export { catchText };
-export const countText = (n: number) => `${n} ${n === 1 ? "Exemplar" : "Exemplare"}`;
+export const countText = (n: number) => `${n} ${n === 1 ? "Pflanze" : "Pflanzen"}`;
 
 export const SPECIES_LIST = "md:grid md:grid-cols-2";
 

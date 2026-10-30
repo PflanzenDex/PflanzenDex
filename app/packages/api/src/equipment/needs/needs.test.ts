@@ -82,7 +82,7 @@ describe("US-EQU-07 what is missing through the API", () => {
       id: string;
       name: string;
     }[];
-    const zone = zones.find((z) => z.name === "Lampe 3")?.id as string;
+    const zone = zones.find((z) => z.name === "Zone 3")?.id as string;
     const wish = await call(subA, "POST", "/wishes", {
       name: "Wunschpflanze Bedarf",
       targetZoneId: zone,

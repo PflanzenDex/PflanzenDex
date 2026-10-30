@@ -147,13 +147,13 @@ function HintList(props: {
         <EmptyState
           title="Keine Hinweise"
           level={props.host ? 3 : 2}
-          description="Jedes Exemplar hat eine Art, einen Standort und eine Lichtzone."
-          action={{ label: "Zum Bestand", onClick: () => props.onOpen("collection") }}
+          description="Jede Pflanze hat eine Art, einen Standort und eine Lichtzone."
+          action={{ label: "Zur Sammlung", onClick: () => props.onOpen("collection") }}
         />
       ) : (
         <>
           <Quiet className="mb-3">
-            Diese Exemplare sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung
+            Diese Pflanzen sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung
             auf die Lichtzonen.
           </Quiet>
           {props.host ? (
