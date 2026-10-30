@@ -1,6 +1,7 @@
 {
   "unreleased": [
     "Pflanze › Pflege und Messen: Die Pflege hat zwei Teile, „Behandlungen“ und „Pflegeprofil“; das Pflegeprofil bearbeitest du in einer eigenen Ebene, auf mehreren Seiten, mit „Speichern“ unten. Bei „Messen“ steht die letzte Messung mit Wert und Datum in einer Zeile, der Verlauf liegt in einer eigenen Ebene, und „Messung speichern“ bleibt unten stehen.",
+    "Standorte und Lichtzonen passen auf einen Bildschirm: Lichtzonen und Standorte stehen als kurze Zeilen in zwei Listen (auf dem Handy umschaltbar, am Desktop nebeneinander), „+“ legt etwas Neues an, „Ändern“ öffnet die Bearbeitung. Gelöscht wird nur dort, nach einer Rückfrage. Hinweise sowie Lichthunger und Einstufung öffnen sich in einer Ansicht.",
     "Konto › Einstellungen › Licht: Die vier Lux-Schwellen stehen jetzt in vier beschrifteten Feldern mit Tausender-Trennzeichen („10.000“) und dem Zusatz „Lux“. „Speichern“ ist sofort aktiv; ein Speichern ohne Änderung sagt, dass nichts zu speichern ist.",
     "Betreiber: Die Seite passt jetzt auf einen Bildschirm. Zahlen, Einstieg, Monatliche Kosten, Registrierung und Einladungscodes stehen untereinander als Zeilen mit ihrem aktuellen Wert. Jede Zeile öffnet sich über der Liste, mit der Eingabe der Kosten und dem Erstellen eines Codes. Die Einladungscodes stehen in Seiten zu je fünf.",
     "Datum, Foto und Monat sind überall auf Deutsch: Daten erscheinen als TT.MM.JJJJ, statt „Choose File“ steht „Foto wählen“, und der Monat im Betreiberbereich ist eine Auswahl mit deutschen Monatsnamen.",
