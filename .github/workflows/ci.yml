@@ -93,7 +93,7 @@ jobs:
     # Database tests (TE-02): real PostgreSQL as in production (E-01); same port as `make db-up`.
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:18-alpine
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: pflanzendex_test
@@ -186,7 +186,7 @@ jobs:
     timeout-minutes: 25
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:18-alpine
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: pflanzendex_test

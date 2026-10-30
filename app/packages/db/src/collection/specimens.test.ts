@@ -136,10 +136,14 @@ describe("US-BES-02 specimens in the database", () => {
   it("US-BES-02, AB-10, P-10: a used species cannot be deleted (on delete restrict), not even with owner rights", async () => {
     const z = await specimens.create(anna, { ...values, name: "Benutzt" });
     expect(typeof z).toBe("object");
-    await expect(deleteSpecies(species)).rejects.toMatchObject({
-      code: "23503",
-      constraint: "specimen_species",
-    });
+    // PostgreSQL 18 reports ON DELETE RESTRICT as restrict_violation (23001); 16 and 17 as foreign_key_violation (23503).
+    const refused = await deleteSpecies(species).then(
+      () => null,
+      (e: { code?: string; constraint?: string }) => e,
+    );
+    expect(refused).not.toBeNull();
+    expect(["23503", "23001"]).toContain(refused?.code);
+    expect(refused?.constraint).toBe("specimen_species");
     expect(await speciesExists(species)).toBe(true);
   });
 
