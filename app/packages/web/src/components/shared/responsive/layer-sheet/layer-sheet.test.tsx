@@ -2,11 +2,11 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useNavigate, useSearchParams } from "react-router";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/lib/viewport-mock";
 import { AnnouncerProvider } from "@/platform/announcer/announcer";
 import { RouteFocus } from "@/components/routing/route-focus/route-focus";
-import { LayerOpener, LayerSheet } from "./layer-sheet";
+import { LayerHost, LayerOpener, LayerSheet } from "./layer-sheet";
 
 beforeAll(() => {
   Element.prototype.setPointerCapture ??= () => undefined;
@@ -23,10 +23,12 @@ function Back() {
 function Example({ at = "/" }: { at?: string }) {
   return (
     <MemoryRouter initialEntries={["/start", at]} initialIndex={at === "/" ? 0 : 1}>
-      <LayerOpener id="licht">Licht</LayerOpener>
-      <LayerSheet id="licht" title="Lichtzonen" primaryAction={<button>Speichern</button>}>
-        <p>Inhalt</p>
-      </LayerSheet>
+      <LayerHost>
+        <LayerOpener id="licht">Licht</LayerOpener>
+        <LayerSheet id="licht" title="Lichtzonen" primaryAction={<button>Speichern</button>}>
+          <p>Inhalt</p>
+        </LayerSheet>
+      </LayerHost>
       <Back />
     </MemoryRouter>
   );
@@ -137,5 +139,67 @@ describe("LayerSheet (US-QS-15)", () => {
     expect(screen.getByRole("dialog", { name: "Lichtzonen" }).className).toContain(
       "-translate-x-1/2",
     );
+  });
+
+  it("US-QS-15 from 1024 px the pane takes the frame's second column, beside the content and top-aligned with it", () => {
+    setViewportWidth(1440);
+    render(<Example at="/?sheet=licht" />);
+    const pane = screen.getByRole("complementary", { name: "Lichtzonen" });
+    const slot = pane.parentElement;
+    const frame = slot?.parentElement;
+    expect(frame).toBeTruthy();
+    // The frame's first child is the content column (the opener sits in it), the slot is the second one.
+    expect(frame?.firstElementChild?.contains(screen.getByRole("button", { name: "Licht" }))).toBe(
+      true,
+    );
+    expect(slot?.previousElementSibling).toBe(frame?.firstElementChild);
+    expect(slot?.className).toContain("lg:self-start");
+  });
+
+  it("US-QS-15 a layer in a component deep inside the frame still opens in the frame's pane, not in its own place", () => {
+    setViewportWidth(1440);
+    function Deep() {
+      return (
+        <section>
+          <div>
+            <p>Tiefe Liste</p>
+            <LayerSheet id="licht" title="Lichtzonen">
+              <p>Inhalt</p>
+            </LayerSheet>
+          </div>
+        </section>
+      );
+    }
+    render(
+      <MemoryRouter initialEntries={["/?sheet=licht"]}>
+        <LayerHost>
+          <Deep />
+        </LayerHost>
+      </MemoryRouter>,
+    );
+    const pane = screen.getByRole("complementary", { name: "Lichtzonen" });
+    const frame = pane.parentElement?.parentElement;
+    expect(frame?.firstElementChild?.contains(screen.getByText("Tiefe Liste"))).toBe(true);
+    expect(frame?.lastElementChild).toBe(pane.parentElement);
+  });
+
+  it("US-QS-15 a LayerSheet outside a LayerHost warns in dev when it opens beside the content", () => {
+    setViewportWidth(1440);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    try {
+      render(
+        <MemoryRouter initialEntries={["/?sheet=licht"]}>
+          <LayerSheet id="licht" title="Lichtzonen">
+            <p>Inhalt</p>
+          </LayerSheet>
+        </MemoryRouter>,
+      );
+      expect(screen.getByRole("complementary", { name: "Lichtzonen" })).toBeTruthy();
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('"licht" renders outside a LayerHost'),
+      );
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

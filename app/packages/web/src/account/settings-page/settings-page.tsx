@@ -1,5 +1,5 @@
 import { useCallback, type ReactNode } from "react";
-import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerHost, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { CalmModeSection, loadAchievementSettings } from "../../achievements";
 import { LoadFrame, useFeature, useRequest } from "../../kernel";
 import { loadProfile, type AccountProfile } from "../api/account-api";
@@ -110,24 +110,27 @@ export function SettingsPage(props: { api: string; token: Token; host?: boolean 
   const load = useCallback((t: string) => loadProfile(props.api, t), [props.api]);
   const loading = "Einstellungen werden geladen …";
   return (
-    <div
-      className={
-        props.host === true
-          ? "flex min-w-0 flex-col gap-2 rounded-card bg-card p-2 shadow-elevation-1 lg:flex-row lg:items-start"
-          : "flex min-w-0 flex-col gap-4"
-      }
-    >
-      {props.host !== true && <h1 className="text-2xl font-semibold">Einstellungen</h1>}
-      <LoadFrame
-        queryKey={["account", "profile"]}
-        fresh
-        token={props.token}
-        load={load}
-        loadingText={loading}
-        loadingFallback={<SettingsPageSkeleton label={loading} />}
+    // The layers beside the card, not inside it (US-QS-15): the frame is outside the card.
+    <LayerHost>
+      <div
+        className={
+          props.host === true
+            ? "flex min-w-0 flex-col gap-2 rounded-card bg-card p-2 shadow-elevation-1 lg:flex-row lg:items-start"
+            : "flex min-w-0 flex-col gap-4"
+        }
       >
-        {(profile) => <Groups api={props.api} token={props.token} profile={profile} />}
-      </LoadFrame>
-    </div>
+        {props.host !== true && <h1 className="text-2xl font-semibold">Einstellungen</h1>}
+        <LoadFrame
+          queryKey={["account", "profile"]}
+          fresh
+          token={props.token}
+          load={load}
+          loadingText={loading}
+          loadingFallback={<SettingsPageSkeleton label={loading} />}
+        >
+          {(profile) => <Groups api={props.api} token={props.token} profile={profile} />}
+        </LoadFrame>
+      </div>
+    </LayerHost>
   );
 }

@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { Button } from "@/components/ui/button/button";
-import { useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { LayerHost, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { LoadFrame, useInvalidate, useRequest } from "../../../kernel";
 import { loadFriends, type FriendsData } from "../../api/friends-api";
 import { loadBanner } from "../../api/feed-api";
@@ -159,7 +159,7 @@ export function FriendsPage(props: {
   const reload = useInvalidate(KEY);
   const load = useCallback((t: string) => loadFriends(api, t), [api]);
   return (
-    <div className="min-w-0" data-fit-screen="">
+    <LayerHost data-fit-screen="">
       <section aria-labelledby="friends-title" className="flex min-w-0 flex-col gap-3">
         <h1 id="friends-title" className="text-2xl font-semibold">
           Freunde
@@ -176,6 +176,6 @@ export function FriendsPage(props: {
           )}
         </LoadFrame>
       </section>
-    </div>
+    </LayerHost>
   );
 }
