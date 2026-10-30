@@ -1,0 +1,43 @@
+[
+  {
+    "species": "Hedera helix",
+    "attributes": {}
+  },
+  {
+    "species": "Schlumbergera truncata",
+    "attributes": {}
+  },
+  {
+    "species": "Phalaenopsis amabilis",
+    "attributes": {}
+  },
+  {
+    "species": "Anthurium andraeanum",
+    "attributes": {}
+  },
+  {
+    "species": "Begonia rex",
+    "attributes": {}
+  },
+  {
+    "species": "Peperomia obtusifolia",
+    "attributes": {
+      "minTemperature": {
+        "value": 15,
+        "sourceUrl": "https://en.wikipedia.org/w/index.php?title=Peperomia_obtusifolia&oldid=1357886976",
+        "sourceName": "wikipedia",
+        "license": "CC-BY-SA-4.0",
+        "retrievedOn": "2026-10-30",
+        "note": "Section Cultivation: states a minimum temperature of 15 °C for growing it indoors."
+      },
+      "humidity": {
+        "value": "high",
+        "sourceUrl": "https://en.wikipedia.org/w/index.php?title=Peperomia_obtusifolia&oldid=1357886976",
+        "sourceName": "wikipedia",
+        "license": "CC-BY-SA-4.0",
+        "retrievedOn": "2026-10-30",
+        "note": "Section Cultivation: states that the plant needs high humidity."
+      }
+    }
+  }
+]
