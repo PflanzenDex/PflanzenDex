@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/lib/viewport-mock";
@@ -24,13 +25,21 @@ const row = (extra: Partial<LightOverviewRow> = {}): LightOverviewRow => ({
 const noop = () => undefined;
 const show = (rows: LightOverviewRow[]) => {
   const data: LightOverview = { rows };
-  render(<LightOverviewView data={data} onOpenCollection={noop} />);
+  render(
+    <MemoryRouter>
+      <LightOverviewView data={data} onOpenCollection={noop} />
+    </MemoryRouter>,
+  );
 };
 
 describe("US-LIC-03: light overview view", () => {
   it("shows the next step in the empty state and the button opens the collection (P-09)", async () => {
     const open = vi.fn();
-    render(<LightOverviewView data={{ rows: [] }} onOpenCollection={open} />);
+    render(
+      <MemoryRouter>
+        <LightOverviewView data={{ rows: [] }} onOpenCollection={open} />
+      </MemoryRouter>,
+    );
     expect(screen.getByText(/noch keine arten/i)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zur Sammlung" }));
     expect(open).toHaveBeenCalledTimes(1);

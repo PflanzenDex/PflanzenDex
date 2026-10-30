@@ -38,6 +38,9 @@ const PANE_FRAMES: Record<string, readonly string[]> = {
   "pokedex/pokedex-browse/pokedex-browse.tsx": [COLLECTION],
   "pokedex/pokedex-page/pokedex-page.tsx": [COLLECTION],
   "care/treatments/planning/plan-layer/plan-layer.tsx": [TODAY],
+  "light/views/light-view/light-layers/light-layers.tsx": [COLLECTION],
+  "light/zones/location-layer/location-layer.tsx": [COLLECTION],
+  "light/zones/zone-layer/zone-layer.tsx": [COLLECTION],
   "shell/unlock/locked-rows/collapsed-rows/collapsed-rows.tsx": [TODAY],
   "social/pages/friends-page/friend-layers/layer/layer.tsx": [
     "social/pages/friends-page/friends-page.tsx",
