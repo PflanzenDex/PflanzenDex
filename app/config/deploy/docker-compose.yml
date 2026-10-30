@@ -10,11 +10,19 @@ x-logging: &logging
   options:
     max-size: 10m
     max-file: "3"
+# Every service runs without extra privileges (TE-03, #761): `no-new-privileges` (no setuid escalation), every Linux
+# capability dropped, and a non-root user (from the image or `user:` below). Nothing needs a capability back: Docker lets
+# unprivileged users bind ports below 1024 inside a container, so the proxy listens on 80/443 as the user `caddy`.
+# Images are pinned to an exact version and a digest; Renovate keeps both current (FR-QG-15, `config:best-practices`).
 services:
   db:
     logging: *logging
-    image: postgres:18-alpine
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    image: postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
     restart: unless-stopped
+    # The image's own user (uid 70): the entrypoint skips its root-only steps; the data directory already belongs to it.
+    user: postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is missing}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is missing}
@@ -36,8 +44,11 @@ services:
   # volume). The role has no right on the app database, so tenant isolation stays untouched (P-04, TE-03).
   keycloak-db:
     logging: *logging
-    image: postgres:18-alpine
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    image: postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
     restart: "no"
+    user: postgres
     entrypoint: ["sh", "/init-db.sh"]
     environment:
       PGHOST: db
@@ -61,8 +72,11 @@ services:
   # `security definer` function ignore row-level security. Runs as the cluster user, which nothing else connects as.
   db-roles:
     logging: *logging
-    image: postgres:18-alpine
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    image: postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
     restart: "no"
+    user: postgres
     entrypoint: ["sh", "/db-roles/init-db-roles.sh"]
     environment:
       PGHOST: db
@@ -84,6 +98,8 @@ services:
   # A failing migration fails `up`, so deploy.sh rolls back the code and the api never serves a half-migrated schema.
   migrate:
     logging: *logging
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
     build:
       context: ../..
       dockerfile: config/deploy/docker/api.Dockerfile
@@ -111,7 +127,9 @@ services:
   # The realm is imported on the first start only; later changes to the file do not touch an existing realm.
   keycloak:
     logging: *logging
-    image: quay.io/keycloak/keycloak:26.8.1
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    image: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
     restart: unless-stopped
     command: ["start", "--import-realm"]
     environment:
@@ -168,6 +186,8 @@ services:
           memory: 900m
   api:
     logging: *logging
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
     build:
       context: ../..
       dockerfile: config/deploy/docker/api.Dockerfile
@@ -189,6 +209,11 @@ services:
       AI_RESOURCE_URL: ${APP_URL}/api/mcp
       # Global feature switches (US-DEV-06): e.g. `social,ai`. Empty: all off in production.
       FEATURES: ${FEATURES:-}
+      # Catalog jobs (#991): `on` starts the catalog fill from open sources (US-BES-12) and the attribute fill
+      # (US-ENT-09); `TAXONOMY_BUILD=off` stops the taxonomy check (US-POK-03, default on). Empty: fills stay off.
+      CATALOG_FILL: ${CATALOG_FILL:-}
+      ATTRIBUTE_FILL: ${ATTRIBUTE_FILL:-}
+      TAXONOMY_BUILD: ${TAXONOMY_BUILD:-}
     depends_on:
       db:
         condition: service_healthy
@@ -205,6 +230,8 @@ services:
           memory: 512m
   web:
     logging: *logging
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
     build:
       context: ../..
       dockerfile: config/deploy/docker/web.Dockerfile
@@ -221,7 +248,13 @@ services:
   # Public entry. CADDY_SCHEME=http:// (TLS ends at a proxy in front) or empty (Caddy gets certificates itself).
   proxy:
     logging: *logging
-    image: caddy:2-alpine
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    # The unprivileged Caddy stage of the web image (user `caddy`, web.Dockerfile); the Caddyfile stays a mount.
+    build:
+      context: ../..
+      dockerfile: config/deploy/docker/web.Dockerfile
+      target: caddy
     restart: unless-stopped
     environment:
       CADDY_SCHEME: ${CADDY_SCHEME:-}

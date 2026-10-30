@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import type { Suggestion } from "@pflanzendex/core";
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { SuggestionCard } from "./suggestion-card";
 
@@ -131,5 +132,17 @@ describe("US-ENT-09 attributes show their source", () => {
     show(suggestion());
     expect(screen.queryByRole("list", { name: "Quellen der Merkmale" })).toBeNull();
     expect(screen.getAllByText("unbekannt")).toHaveLength(4);
+  });
+});
+
+describe("US-QS-21 the card shows the essentials and opens the rest with Mehr", () => {
+  it("US-QS-21 Mehr and Weniger toggle the facts, sources and reasons", async () => {
+    show(suggestion());
+    const toggle = screen.getByRole("button", { name: "Mehr" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    await userEvent.click(toggle);
+    expect(screen.getByRole("button", { name: "Weniger" }).getAttribute("aria-expanded")).toBe(
+      "true",
+    );
   });
 });

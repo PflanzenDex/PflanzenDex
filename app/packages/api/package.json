@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit -p .",
     "test": "vitest run",
     "perf:measure": "tsx perf/measure.ts",
+    "catalog:load": "tsx src/catalog/load/run.ts",
     "seed:catalog": "tsx perf/catalog-seed/run-seed.ts",
     "seed:demo": "tsx perf/demo-seed/run-demo-seed.ts"
   },

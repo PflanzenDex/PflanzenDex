@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { PlantsViewOpener } from "@/collection";
 import { SammlungHeader } from "@/components/sammlung-header/sammlung-header";
-import { SegmentedControl } from "@/components/segmented-control/segmented-control";
+import { Select } from "@/components/ui/fields/select/select";
 import {
   SAMMLUNG_VIEWS,
   SPECIES_SORTS,
@@ -32,16 +32,25 @@ export function AreaHeader(props: {
               </Suspense>
             ),
           }
-        : {})}
-    >
-      {view === "species" ? (
-        <SegmentedControl
-          label="Anordnung der Arten"
-          options={SPECIES_SORTS}
-          value={props.sort}
-          onChange={props.onSort}
-        />
-      ) : null}
-    </SammlungHeader>
+        : view === "species"
+          ? {
+              // The arrangement sits beside the title instead of in a row of its own (US-QS-22).
+              action: (
+                <Select
+                  aria-label="Anordnung der Arten"
+                  className="w-auto"
+                  value={props.sort}
+                  onChange={(e) => props.onSort(e.target.value as SpeciesSort)}
+                >
+                  {SPECIES_SORTS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </Select>
+              ),
+            }
+          : {})}
+    />
   );
 }

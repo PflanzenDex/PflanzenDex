@@ -4,7 +4,7 @@ Ticket US-DEV-07 (#981). Basis: NFR-15 (a restorable backup before every change)
 
 ## What changes
 
-- The services `db`, `keycloak-db` and `db-roles` use `postgres:18-alpine` (`app/config/deploy/docker-compose.yml`). Only `db` holds data.
+- The services `db`, `keycloak-db` and `db-roles` use `postgres:18.6-alpine3.24`, pinned by digest (`app/config/deploy/docker-compose.yml`, #761). Only `db` holds data.
 - The volume `pflanzendex_dbdata` is mounted at `/var/lib/postgresql` (it was `/var/lib/postgresql/data`), because the 18 image keeps its data in `/var/lib/postgresql/18/docker`.
 - The two layouts do not fit into each other:
 

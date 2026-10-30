@@ -1,14 +1,15 @@
 # Local auth server (E-03: self-hosted Keycloak) plus a mail catcher for the confirmation email.
 # Development only: start-dev with H2. Credentials come from the environment (see `make auth-up`), never from the repo.
+# Images are pinned to an exact version and a digest, the same as the deployment (#761); Renovate keeps them current.
 name: pflanzendex-auth
 services:
   keycloak:
-    image: quay.io/keycloak/keycloak:26.8.1
+    image: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
     container_name: pflanzendex-keycloak
     command: start-dev --import-realm
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:?Passwort fehlt, bitte make auth-up benutzen}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:?password missing, use make auth-up}
       KC_HOSTNAME: http://localhost:18081
       KC_HTTP_PORT: "8080"
       KC_HEALTH_ENABLED: "true"
@@ -20,7 +21,7 @@ services:
     depends_on:
       - mailpit
   mailpit:
-    image: axllent/mailpit:v1.32.0
+    image: axllent/mailpit:v1.32.0@sha256:0790692be935ea4420d085694f7985b1f692ca6a8771ab0e0bd8ba75ac180498
     container_name: pflanzendex-mailpit
     ports:
       - "127.0.0.1:18025:8025"

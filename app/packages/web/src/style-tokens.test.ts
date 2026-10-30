@@ -187,3 +187,12 @@ describe("US-QS-14 · ADR 0011 decision 5 motion", () => {
     ]);
   });
 });
+
+describe("US-QS-15 the one-screen frame rule is valid CSS", () => {
+  it("US-QS-15 no selector nests `:has` in `:has` (browsers drop the whole rule, so no view would fit)", () => {
+    const selectors = [...css.matchAll(/^\s*([^{}\n/*]*:has\([^{\n]*)\{/gm)].map((m) => m[1] ?? "");
+    expect(selectors.length).toBeGreaterThan(0);
+    for (const sel of selectors) expect(sel).not.toMatch(/:has\([^)]*:has\(/);
+    expect(css).toContain("div:has(> div > main [data-fit-screen])");
+  });
+});

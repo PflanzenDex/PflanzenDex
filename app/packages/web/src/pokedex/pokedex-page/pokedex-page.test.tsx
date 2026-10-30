@@ -86,13 +86,15 @@ describe("US-POK-06 page of the caught species", () => {
     expect(within(layer).getByText("2 Pflanzen")).toBeTruthy();
   });
 
-  it("US-POK-06 · US-QS-22 the progress row names the rank and the caught species in one row", async () => {
+  it("US-POK-06 · US-QS-22 the progress row names the rank and the caught species in one line", async () => {
     fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
     view(<PokedexPage api="http://api" token={token} />);
     const row = await screen.findByRole("button", { name: /· 2 gefangen/ });
-    // Without the tree the total is unknown and one line says so (P-08).
-    expect(row.textContent).toContain("Die Gesamtzahl folgt");
+    // Without the tree the total is unknown: one line, no invented total; the layer says why (P-08, US-QS-22).
+    expect(row.textContent).toBe("Keimling · 2 gefangen");
     expect(row.textContent).not.toMatch(/\d+ von \d+ Arten/);
+    await userEvent.click(row);
+    expect(await screen.findByText(/Der Baum der Arten ist noch nicht aufgebaut/)).toBeTruthy();
   });
 
   it("US-POK-06 one caught species reads '1 gefangen' in the progress row", async () => {
@@ -270,6 +272,17 @@ describe("US-QS-22 the species fit one screen", () => {
     await screen.findByRole("list", { name: "Gefangene Arten" });
     expect(screen.queryByRole("button", { name: "Fehlend" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Artenarm" })).toBeNull();
-    expect(screen.getByRole("button", { name: /Die Gesamtzahl folgt/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /· 2 gefangen/ })).toBeTruthy();
+  });
+});
+
+describe("US-QS-22 neutral species entries", () => {
+  it("US-QS-22 a species entry has a neutral border and a chevron, no primary outline (ADR 0017)", async () => {
+    fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
+    view(<PokedexPage api="http://api" token={token} />);
+    const entry = (await screen.findAllByRole("button", { name: /^Details zu / }))[0];
+    expect(entry?.className).toContain("border-border");
+    expect(entry?.className).not.toMatch(/border-primary|text-primary/);
+    expect(entry?.querySelector("[data-chevron]")).toBeTruthy();
   });
 });
