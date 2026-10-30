@@ -27,6 +27,8 @@ export const NAME = {
   hints: "Eigene Hinweise",
 } as const;
 
+type PlaceField = "growth" | "dormancy" | "zone";
+
 export interface Lists {
   readonly locations: readonly LightLocation[];
   readonly zones: readonly LightZone[];
@@ -100,8 +102,10 @@ export function Dormancy(props: Shared) {
   );
 }
 
-export function Places(props: Shared & { lists: Lists }) {
+/** The locations and the zone of the profile; `fields` shows only some of them (a page of the profile, US-BES-09). */
+export function Places(props: Shared & { lists: Lists; fields?: readonly PlaceField[] }) {
   const { entry, control, lists, busy } = props;
+  const shown = (field: PlaceField) => !props.fields || props.fields.includes(field);
   const name = entry.speciesName;
   const p = entry.profile;
   const zoneRaw = lists.zones.find((z) => z.id === p.lightZone.catalog)?.name;
@@ -111,42 +115,46 @@ export function Places(props: Shared & { lists: Lists }) {
       {lists.locations.length > 0 &&
         (
           [
-            [NAME.growth, "growthLocationId", p.growthLocation.own],
-            [NAME.dormancy, "dormancyLocationId", p.dormancyLocation.own],
+            ["growth", NAME.growth, "growthLocationId", p.growthLocation.own],
+            ["dormancy", NAME.dormancy, "dormancyLocationId", p.dormancyLocation.own],
           ] as const
-        ).map(([label, key, own]) => (
-          <Row
-            key={key}
-            label={label}
-            species={name}
-            catalog="unbekannt"
-            hasOwn={own !== null}
-            busy={busy}
-            onReset={() => props.reset({ [key]: null }, label)}
-          >
-            <Choice
-              control={control}
-              name={key}
-              label={`${label} für „${name}“`}
-              items={lists.locations}
-            />
-          </Row>
-        ))}
-      <Row
-        label={NAME.zone}
-        species={name}
-        catalog={zone}
-        hasOwn={p.lightZone.own !== null}
-        busy={busy}
-        onReset={() => props.reset({ lightZoneId: null }, NAME.zone)}
-      >
-        <Choice
-          control={control}
-          name="lightZoneId"
-          label={`${NAME.zone} für „${name}“`}
-          items={lists.zones}
-        />
-      </Row>
+        )
+          .filter(([field]) => shown(field))
+          .map(([, label, key, own]) => (
+            <Row
+              key={key}
+              label={label}
+              species={name}
+              catalog="unbekannt"
+              hasOwn={own !== null}
+              busy={busy}
+              onReset={() => props.reset({ [key]: null }, label)}
+            >
+              <Choice
+                control={control}
+                name={key}
+                label={`${label} für „${name}“`}
+                items={lists.locations}
+              />
+            </Row>
+          ))}
+      {shown("zone") && (
+        <Row
+          label={NAME.zone}
+          species={name}
+          catalog={zone}
+          hasOwn={p.lightZone.own !== null}
+          busy={busy}
+          onReset={() => props.reset({ lightZoneId: null }, NAME.zone)}
+        >
+          <Choice
+            control={control}
+            name="lightZoneId"
+            label={`${NAME.zone} für „${name}“`}
+            items={lists.zones}
+          />
+        </Row>
+      )}
     </>
   );
 }
