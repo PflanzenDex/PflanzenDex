@@ -11,7 +11,7 @@ const PHASES: readonly CarePhase[] = ["dormancy", "growth"];
 function usePageSize(): number {
   const md = useIsMd();
   const lg = useIsLg();
-  return lg ? 8 : md ? 4 : 3;
+  return lg ? 8 : md ? 4 : 2;
 }
 
 /**

@@ -49,9 +49,32 @@ function CompactEntry(props: {
   const canSwitch = props.onConfirm !== undefined && needsSwitch(z);
   const here = locationText(locations, z.locationId);
   const target = locationText(locations, z.targetLocationId);
+  const hint =
+    z.nextChange === null
+      ? "Prüfe den Ruhephasen-Zeitraum im Pflegeprofil der Art."
+      : status === "location_missing" && !canSwitch
+        ? "Weise der Pflanze unter „Hinweise“ einen Standort zu."
+        : status === "in_place" && z.targetLocationId === null
+          ? `Wähle im Pflegeprofil der Art einen Soll-Standort für die ${PHASE_TEXT[z.phase]}.`
+          : null;
   return (
-    <div className={`${CARD_CLASSES} flex flex-col gap-0.5 text-sm`}>
-      <h3 className="text-base font-semibold">{z.name}</h3>
+    <div className={`${CARD_CLASSES} flex flex-col gap-0 px-3 py-2 text-sm leading-snug`}>
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="min-w-0 text-base font-semibold">{z.name}</h3>
+        {canSwitch && (
+          <Button
+            type="button"
+            size="touch"
+            variant="secondary"
+            className="shrink-0"
+            disabled={props.busy}
+            aria-label={`Jetzt umgestellt: ${z.name}`}
+            onClick={() => props.onConfirm?.([z.specimenId], switchedText([z], locations))}
+          >
+            Jetzt umgestellt
+          </Button>
+        )}
+      </div>
       <p>
         <span>Soll-Phase heute: {PHASE_TEXT[z.phase]}</span> ·{" "}
         <span>{nextChangeText(z.nextChange)}</span>
@@ -66,28 +89,10 @@ function CompactEntry(props: {
           {status === "deviation" ? " · Weicht ab" : ""}
         </p>
       )}
-      {z.nextChange === null && (
-        <p className="font-semibold">Prüfe den Ruhephasen-Zeitraum im Pflegeprofil der Art.</p>
-      )}
-      {status === "location_missing" && !canSwitch && (
-        <p className="font-semibold">Weise der Pflanze unter „Hinweise“ einen Standort zu.</p>
-      )}
-      {status === "in_place" && z.targetLocationId === null && (
-        <p className="font-semibold">
-          Wähle im Pflegeprofil der Art einen Soll-Standort für die {PHASE_TEXT[z.phase]}.
+      {hint && (
+        <p className="mt-1 w-fit rounded-full border border-warning-border bg-warning px-2 py-0.5 text-xs font-semibold text-warning-foreground">
+          {hint}
         </p>
-      )}
-      {canSwitch && (
-        <Button
-          type="button"
-          size="touch"
-          className="mt-1 self-start"
-          disabled={props.busy}
-          aria-label={`Jetzt umgestellt: ${z.name}`}
-          onClick={() => props.onConfirm?.([z.specimenId], switchedText([z], locations))}
-        >
-          Jetzt umgestellt
-        </Button>
       )}
     </div>
   );
