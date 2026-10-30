@@ -30,7 +30,7 @@ make dev     # start API (port 3000) and web (Vite)
 make ci      # all gates: lint, types, boundaries, format, tests, build
 ```
 
-- **Node:** version 24 (`.nvmrc`). Vitest 5 does not officially support odd Node versions (e.g. 25).
+- **Node:** version 26 (`.nvmrc`). Vitest 5 does not officially support odd Node versions (e.g. 25).
 - **TypeScript 6.0.x** is pinned on purpose: `typescript-eslint` does not support TypeScript 7 yet (peer range `<6.1`).
 - **Exact versions:** every `package.json` names exact versions, never `^`/`~` ranges (`app/.npmrc` sets `save-exact`, Renovate uses `rangeStrategy: "pin"`). Workspace packages (`@pflanzendex/*`) stay `*`, which means the local workspace. Vulnerable transitive dependencies are fixed by updating the parent or refreshing the lock file, never with `overrides`; when no parent release has the fix yet, the advisory gets a dated entry in `config/gates/audit-allowlist.json` (QG-S2).
 - **Load measurement (NFR-12):** `npm run perf:measure -w @pflanzendex/api` seeds accounts with 100 and 1,000 specimens in a throw-away test database and prints response times and SQL statement counts per request as JSON. It is a measurement, not a gate, and not part of `make ci`; results: `docs/records/test-logs/nfr-12.md`.
