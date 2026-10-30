@@ -1,7 +1,7 @@
 # API image (TE-03). Build context is `app/`. Reproducible: base image pinned to a major version, `npm ci` from the lock file.
 # The same image runs the migrations (`migrate` service in docker-compose.yml, #201): `db` ships its SQL files.
 # `core` is exported as TypeScript source, so the API runs through tsx (there is no separate build step).
-FROM node:24-alpine
+FROM node:26-alpine
 WORKDIR /srv/app
 COPY package.json package-lock.json ./
 COPY packages/core/package.json packages/core/
