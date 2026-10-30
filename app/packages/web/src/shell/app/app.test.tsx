@@ -303,6 +303,8 @@ describe("US-ACC-01 App", () => {
     renderApp();
     await userEvent.click(await findTab("Betreiber"));
     expect(await screen.findByRole("heading", { name: "Betreiber" })).toBeTruthy();
+    // The numbers are the layer of their row on the overview (US-QS-15).
+    await userEvent.click(await screen.findByRole("button", { name: /^Zahlen/ }));
     expect((await screen.findByText("Kosten pro Nutzer")).nextElementSibling?.textContent).toMatch(
       /^unbekannt/,
     );
@@ -437,6 +439,10 @@ describe("US-ACC-01 App", () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/light");
+    // The overview is a layer of the management (US-QS-19): it opens from its button first.
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Lichthunger und Einstufung" }),
+    );
     await userEvent.click(await screen.findByRole("button", { name: "Zur Sammlung" }));
     expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");

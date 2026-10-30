@@ -1,5 +1,7 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button/button";
+import { MoreHelp } from "@/components/ui/display/more-help/more-help";
+import { LayerPart } from "@/components/shared/responsive/layer-sheet/layer-part/layer-part";
 import { errorText } from "@/lib/error-text";
 import { SIGN_IN, type ApiError } from "../../kernel";
 import { fetchExport, saveFile } from "../privacy-api";
@@ -10,8 +12,9 @@ const ALERT =
   "rounded-lg border border-destructive p-3 text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 /**
- * The export of all own data (US-ACC-04): one tap prepares the archive and the browser saves it. The text says what
- * the file holds and what to do with it (P-09); a photo that is missing from the store is named, never dropped (P-10).
+ * The export of all own data (US-ACC-04) as a row of "Meine Daten" that opens its layer (US-QS-15): one tap in the layer
+ * prepares the archive and the browser saves it. The line says what the file holds (P-09), the rest is behind "Mehr
+ * erfahren"; a photo that is missing from the store is named, never dropped (P-10).
  */
 export function ExportCard(props: { api: string; token: Token }) {
   const [running, setRunning] = useState(false);
@@ -41,34 +44,31 @@ export function ExportCard(props: { api: string; token: Token }) {
   };
 
   return (
-    <div className="flex min-w-0 max-w-xl flex-col gap-3 rounded-card bg-card p-5 shadow-elevation-1">
-      <h3 className="m-0 text-lg font-semibold">Meine Daten herunterladen</h3>
-      <p className="m-0 text-sm text-muted-foreground">
-        Du bekommst ein ZIP-Archiv mit allen deinen Daten: Pflanzen, Messungen, Behandlungen,
-        Wünsche, Equipment, Einstellungen, Freigaben, deine Seite der Freundschaften und Tausche
-        sowie die KI-Verbindungen. Die Datei data.json ist ein offenes Format, deine Fotos liegen im
-        Ordner photos. Gleiche Daten ergeben dieselbe Datei. Zugangsdaten für Push-Mitteilungen sind
-        nicht enthalten.
-      </p>
-      <Button
-        type="button"
-        variant="secondary"
-        className="self-start"
-        disabled={running}
-        onClick={() => void download()}
-      >
-        {running ? "Archiv wird vorbereitet …" : "Daten herunterladen"}
-      </Button>
-      {error && (
-        <p role="alert" className={ALERT}>
-          {error.code === "network.not_reachable" ? error.text : errorText(error.code)}
-        </p>
-      )}
-      {message && (
-        <p role="status" className="rounded-lg border border-border p-3">
-          {message}
-        </p>
-      )}
-    </div>
+    <LayerPart
+      id="export"
+      title="Meine Daten herunterladen"
+      value="ZIP-Archiv mit allen deinen Daten"
+      primaryAction={
+        <Button type="button" className="w-full" disabled={running} onClick={() => void download()}>
+          {running ? "Archiv wird vorbereitet …" : "Daten herunterladen"}
+        </Button>
+      }
+    >
+      <div className="flex min-w-0 flex-col gap-3">
+        <MoreHelp more="Du bekommst ein ZIP-Archiv mit allen deinen Daten: Pflanzen, Messungen, Behandlungen, Wünsche, Equipment, Einstellungen, Freigaben, deine Seite der Freundschaften und Tausche sowie die KI-Verbindungen. Die Datei data.json ist ein offenes Format, deine Fotos liegen im Ordner photos. Gleiche Daten ergeben dieselbe Datei. Zugangsdaten für Push-Mitteilungen sind nicht enthalten.">
+          Ein ZIP-Archiv mit allen deinen Daten, deine Fotos liegen im Ordner photos.
+        </MoreHelp>
+        {error && (
+          <p role="alert" className={ALERT}>
+            {error.code === "network.not_reachable" ? error.text : errorText(error.code)}
+          </p>
+        )}
+        {message && (
+          <p role="status" className="rounded-lg border border-border p-3">
+            {message}
+          </p>
+        )}
+      </div>
+    </LayerPart>
   );
 }

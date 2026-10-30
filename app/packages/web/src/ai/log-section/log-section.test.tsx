@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../kernel";
 import { LogSection } from "./log-section";
@@ -12,7 +13,9 @@ const show = (log: unknown[]) => {
   );
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <LogSection api="http://api" token={async () => "tok"} />
+      <MemoryRouter>
+        <LogSection api="http://api" token={async () => "tok"} />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 };
