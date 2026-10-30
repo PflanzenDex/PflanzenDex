@@ -158,7 +158,7 @@ export function SuggestionCard(props: {
       onPointerUp={up}
       onPointerCancel={() => (start.current = null)}
       className={cn(
-        "mx-auto flex min-h-0 w-full min-w-0 max-w-md flex-1 touch-pan-y flex-col gap-2 overflow-y-auto break-words",
+        "mx-auto flex min-h-48 w-full min-w-0 max-w-md flex-1 basis-0 touch-pan-y flex-col gap-2 overflow-y-auto break-words",
         "rounded-xl border border-border bg-card p-3 text-card-foreground",
       )}
     >
