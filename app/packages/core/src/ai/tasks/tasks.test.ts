@@ -279,6 +279,10 @@ describe("US-KI-08 tasks from the app to the AI client", () => {
       "POST https://app.example/mcp/tasks/t1/claim",
       "GET https://app.example/mcp/measurements/m1/photo",
       "POST https://app.example/mcp/drafts",
+      'claim_task {"taskId": "t1"}',
+      'get_measurement_photo {"measurementId": "m1"}',
+      'propose_draft {"type": "photo_assessment", "taskId": "t1"',
+      "decline_task",
       "ausschließlich als Entwurf",
     ])
       expect(text).toContain(part);

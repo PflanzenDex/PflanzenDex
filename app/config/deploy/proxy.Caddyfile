@@ -43,6 +43,12 @@
 	handle /health/* {
 		respond 404
 	}
+	# The protected resource metadata of the AI interface (RFC 9728, E-04): clients that do not follow the address in the
+	# 401 challenge (/api/.well-known/...) look for it at the root, also path-inserted (/.well-known/...resource/api/mcp).
+	# The API serves both paths as they are; without this the SPA would answer with its index page.
+	handle /.well-known/oauth-protected-resource* {
+		reverse_proxy api:3000
+	}
 	handle_path /api/* {
 		handle /health/* {
 			respond 404

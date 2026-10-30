@@ -3,7 +3,7 @@ import { InMemoryObjectStore } from "@pflanzendex/core";
 import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createApp } from "../app";
+import { createApp } from "../../app";
 
 // US-KI-06: the daily limit per connection through the AI interface (real PostgreSQL, `make db-up`).
 let pool: Pool;

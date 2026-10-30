@@ -13,8 +13,8 @@ import {
 import { admitAccount } from "@pflanzendex/db";
 import type { MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
-import { errorBody, statusFor, type AuthEnv, type FeatureAccess } from "../kernel";
-import type { TokenVerifier } from "../account";
+import { errorBody, statusFor, type AuthEnv, type FeatureAccess } from "../../kernel";
+import type { TokenVerifier } from "../../account";
 
 export type AiEnv = {
   Variables: AuthEnv["Variables"] & { ai: Authorized };
@@ -57,6 +57,10 @@ const aiIsOff = async (opt: ClientGuardOptions, id: string) =>
 const challenge = (metadataUrl: string, extra = "") =>
   `Bearer ${extra}resource_metadata="${metadataUrl}"`;
 
+/** RFC 6750: a presented but unusable token (wrong audience, expired, forged) is `invalid_token`; none is no error. */
+const unauthorized = (metadataUrl: string, token: string | undefined) =>
+  challenge(metadataUrl, token ? 'error="invalid_token", ' : "");
+
 /**
  * The guard of the AI interface (US-KI-07, KI-R6, KI-R8): a valid access token for the AI audience, the account of its
  * subject, then the connection of the calling client with its rights. The server enforces rights and revocation on every
@@ -75,7 +79,7 @@ export function clientAuthentication(
     const data = claims && accountFromClaims(claims);
     if (!claims || !data)
       return c.json({ error: { code: "not_signed_in" } }, 401, {
-        "WWW-Authenticate": challenge(opt.metadataUrl),
+        "WWW-Authenticate": unauthorized(opt.metadataUrl, token),
       });
     const id = await admitAccount(opt.pool, data.subject);
     if (id === null) {

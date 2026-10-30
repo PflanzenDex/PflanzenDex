@@ -27,7 +27,7 @@ export function taskRoutes(
   interfaceUrl: string,
   clock: () => Date,
 ): Hono<AuthEnv> {
-  const base = new URL(interfaceUrl).origin;
+  const base = interfaceUrl.replace(/\/mcp\/?$/, ""); // the routes' prefix behind the proxy, e.g. https://host/api
   const deps = stores;
   const writes = { idempotency: new IdempotencyPostgres(pool) };
   const withPrompt = (t: AiTask) => ({
