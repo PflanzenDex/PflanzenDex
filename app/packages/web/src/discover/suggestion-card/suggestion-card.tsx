@@ -61,7 +61,7 @@ function Picture({ s }: { s: Suggestion }) {
     <img
       src={s.imageUrl}
       alt={`Bild von ${s.species}`}
-      className="h-56 w-full rounded-lg object-cover"
+      className="h-56 min-h-20 w-full shrink rounded-lg object-cover"
     />
   );
 }
@@ -138,7 +138,8 @@ export function SuggestionCard(props: {
       onPointerUp={up}
       onPointerCancel={() => (start.current = null)}
       className={cn(
-        "mx-auto grid w-full min-w-0 max-w-md touch-pan-y content-start gap-3 break-words",
+        // The card takes the remaining height; the photo shrinks first, the text scrolls inside the card (US-QS-21).
+        "mx-auto flex min-h-0 w-full min-w-0 max-w-md flex-1 touch-pan-y flex-col gap-3 overflow-y-auto break-words",
         "rounded-xl border border-border bg-card p-4 text-card-foreground",
       )}
     >

@@ -133,7 +133,7 @@ describe("US-QS-18 Heute fits one screen", () => {
     show();
     expect(await screen.findByRole("heading", { level: 1, name: "Heute" })).toBeTruthy();
     expect(await screen.findByText(/1 Behandlung offen, davon 1 überfällig/)).toBeTruthy();
-    expect(screen.getByText("Hake den Termin ab.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Zu Behandlung/ })).toBeTruthy();
     const tiles = within(screen.getByRole("list", { name: "Themen" }));
     expect((await tiles.findByRole("button", { name: /^Behandeln1$/ })).textContent).toBe(
       "Behandeln1",

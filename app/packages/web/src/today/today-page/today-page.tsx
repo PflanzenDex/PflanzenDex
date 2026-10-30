@@ -1,7 +1,6 @@
 import { useCallback, type ReactNode } from "react";
 import type { TodayItem, TodayKind, TodayList, TodayTarget } from "@pflanzendex/core";
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { SectionLabel } from "@/components/section-label/section-label";
 import { Button } from "@/components/ui/button/button";
 import { LayerOpener, LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { Pager } from "@/components/shared/responsive/pager/pager";
@@ -69,6 +68,37 @@ function Item(props: { item: TodayItem; onOpen: (d: TodayDestination) => void })
   );
 }
 
+/** The most urgent item as one compact row: chip, short text, one action (US-QS-18). */
+function Row(props: { item: TodayItem; date: string; onOpen: (d: TodayDestination) => void }) {
+  const { item } = props;
+  const urgent = item.kind === "treatment_overdue" || item.kind === "treatment_due";
+  return (
+    <div className={cn(CARD, "flex items-center gap-3", urgent && URGENT)}>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex flex-wrap items-center gap-x-2">
+          <p className="w-fit rounded-control border border-current px-2 text-sm font-semibold tabular-nums">
+            {chipOf(item)}
+          </p>
+          <p className="text-xs opacity-80">Stand: {props.date}</p>
+        </div>
+        <p className="line-clamp-2 text-sm">
+          {keepTogether(item.kind === "treatment_overdue" ? withoutOverdue(item.text) : item.text)}
+        </p>
+      </div>
+      <Button
+        type="button"
+        variant="secondary"
+        className="shrink-0"
+        // An item about the whole account (buffer, US-WUN-02) has no specimen; its text names the zone instead.
+        aria-label={`${GO[item.target]}: ${item.specimenName ?? item.text}`}
+        onClick={() => props.onOpen(item.target)}
+      >
+        {GO[item.target]}
+      </Button>
+    </div>
+  );
+}
+
 const laterText = (n: number): string =>
   n === 1
     ? "Ein weiterer Behandlungstermin steht später an."
@@ -81,14 +111,7 @@ function Content(props: { list: TodayList; onOpen: (d: TodayDestination) => void
   return (
     <>
       {first ? (
-        <>
-          <p className="font-semibold">
-            {list.items.length === 1
-              ? "1 Sache steht an."
-              : `${list.items.length} Dinge stehen an.`}
-          </p>
-          <Item item={first} onOpen={props.onOpen} />
-        </>
+        <Row item={first} date={dateText(list.date)} onOpen={props.onOpen} />
       ) : (
         <EmptyState
           title="Heute steht nichts an."
@@ -142,20 +165,17 @@ export function TodayPage(props: {
   const load = useCallback((t: string) => loadToday(api, t), [api]);
   const loading = "Heute wird geladen …";
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-2">
       <h1 id="today-title" className="text-2xl font-semibold">
         Heute
       </h1>
       {props.summary}
-      <section aria-labelledby="now-title" className="flex min-w-0 flex-col gap-3">
-        <SectionLabel id="now-title">Jetzt dran</SectionLabel>
+      <section aria-labelledby="now-title" className="flex min-w-0 flex-col gap-2">
+        <h2 id="now-title" className="sr-only">
+          Jetzt dran
+        </h2>
         <LoadFrame queryKey={KEY} token={props.token} load={load} loadingText={loading}>
-          {(list: TodayList) => (
-            <>
-              <p className="text-sm text-muted-foreground">Stand: {dateText(list.date)}</p>
-              <Content list={list} onOpen={props.onOpen} />
-            </>
-          )}
+          {(list: TodayList) => <Content list={list} onOpen={props.onOpen} />}
         </LoadFrame>
       </section>
       {props.tiles}

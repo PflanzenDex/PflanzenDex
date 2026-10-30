@@ -72,21 +72,21 @@ export function ProgressRow(props: {
 }) {
   const p = collectorProgress(props.caught, props.tree ?? null);
   const { species } = p;
-  const info =
+  // One line (US-QS-22): the total only when the tree knows it; why it is unknown and the bar are in the layer.
+  const caught =
     species.total === null
-      ? "Die Gesamtzahl folgt, sobald der Baum der Arten aufgebaut ist."
-      : `${species.caught} von ${species.total} Arten (${species.percent ?? 0} %)`;
+      ? `${props.caught} gefangen`
+      : `${species.caught} von ${species.total} Arten`;
   const uncounted =
     props.uncounted === 0
       ? ""
-      : ` ${props.uncounted} ${props.uncounted === 1 ? "Pflanze zählt" : "Pflanzen zählen"} noch nicht.`;
+      : ` · ${props.uncounted} ${props.uncounted === 1 ? "Pflanze zählt" : "Pflanzen zählen"} noch nicht`;
   return (
     <LayerOpener
       id={PROGRESS_LAYER}
-      className="h-auto w-full flex-col items-start gap-0 whitespace-normal py-2 text-left"
+      className="h-auto min-h-11 w-full justify-start gap-0 whitespace-normal py-2 text-left"
     >
-      <span className="font-semibold">{`${NAME[p.rank]} · ${props.caught} gefangen`}</span>
-      <span className="text-sm font-normal text-muted-foreground">{`${info}${uncounted}`}</span>
+      <span className="font-semibold">{`${NAME[p.rank]} · ${caught}${uncounted}`}</span>
     </LayerOpener>
   );
 }

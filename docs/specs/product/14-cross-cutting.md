@@ -240,7 +240,7 @@ Acceptance criteria:
 - Given `prefers-reduced-motion: reduce`, then layers and pages change without sliding.
 - Given a number with its unit or a count, then number and unit never break apart and digits in counts and measurements are tabular.
 
-State of implementation: the building blocks exist in `app/packages/web` (`LayerSheet` and `useLayer` for the layers, `Pager` for the pages, the attribute `data-fit-screen` for the one-screen frame (DS-61, CSS only; the shell knows no routes), `RouteFocus` ignoring `?sheet`, `?page` and `?lpage` so a layer or a page change never moves the focus to the heading (one fix, tested with Escape returning to the opener), touch defaults in the base layer; rules DS-58 to DS-63 in the design system reference), with tests and stories. No destination uses them yet, so every criterion stays open until the destinations are converted (the objects with tabs, the help text rule and the unit rule come with those conversions). Status 🟨 because the building blocks are in place. "Heute" is the first destination to use them (US-QS-18).
+State of implementation: the building blocks exist in `app/packages/web` (`LayerSheet` and `useLayer` for the layers, `Pager` for the pages, the attribute `data-fit-screen` for the one-screen frame (DS-61, CSS only; the shell knows no routes), `RouteFocus` ignoring `?sheet`, `?page` and `?lpage` so a layer or a page change never moves the focus to the heading (one fix, tested with Escape returning to the opener), touch defaults in the base layer; rules DS-58 to DS-63 in the design system reference), with tests and stories. No destination uses them yet, so every criterion stays open until the destinations are converted (the objects with tabs, the help text rule and the unit rule come with those conversions). Status 🟨 because the building blocks are in place. "Heute" is the first destination to use them (US-QS-18). Measured 2026-10-30 at 360×640 with 50 plants: the views did not yet fit (ratio of content to available height up to 1.78); fixed in #976, to be measured again after the merge.
 
 ### US-QS-16 · "Heute" is the home screen · 🟨 new
 
@@ -274,6 +274,8 @@ Acceptance criteria:
 - Given a section is loading, empty or failing, then it shows that state with its next action (P-09, P-10); each section loads as its own part (QG-U6).
 - Given any view, then no footer line shows the version; the section "Was die App kann" shows the app version ("unbekannt" when it is not known, P-08).
 
+State of implementation: measured 2026-10-30: the index was 1.13 at 360×640; its rows are now denser (44 px targets, no gap) with a smaller profile row (#976).
+
 ### US-QS-18 · "Heute" fits one screen and opens its topics as layers · 🟨 new
 
 As a **plant keeper** I want "Heute" to show what needs my care on one screen and open each topic as a layer, so that I see the day at a glance instead of scrolling through a long page.
@@ -290,7 +292,7 @@ Acceptance criteria:
 - Given the introduction of US-QS-16 applies (new account, calm hint, locked functions), then it still shows on "Heute"; the locked functions are one row "n Funktionen noch nicht geöffnet" that opens a layer (`?sheet=locked`) with the rows (US-ONB-05).
 - Given a wide screen (from 1024 px), then the open layer stands beside the overview as a pane.
 
-State of implementation: `TodayArea` (`web/src/components/routing/areas/today-area`) shows `TodayPage` (the `today` module: title, date, most urgent item, opener for the rest) with a summary and tiles (`today-overview`) and holds the layers `LayerSheet` for `treatments` (`TreatmentsPage host`), `watering` (`WateringList`) and `hints` (`HintsPage host`); their lists use `Pager`. The counts come from the same requests as the lists (the `count` mode of `TreatmentsPage`, `WateringList` and `HintsPage`, one cached copy each), so no new API route exists. `TodayArea` marks its root with `data-fit-screen`. `CollapsedLockedRows` (`shell/unlock`) is the row and its layer; it lives in the chunk of the introduction because the initial bundle has no headroom (QG-U6).
+State of implementation: `TodayArea` (`web/src/components/routing/areas/today-area`) shows `TodayPage` (the `today` module: title, date, most urgent item, opener for the rest) with a summary and tiles (`today-overview`) and holds the layers `LayerSheet` for `treatments` (`TreatmentsPage host`), `watering` (`WateringList`) and `hints` (`HintsPage host`); their lists use `Pager`. The counts come from the same requests as the lists (the `count` mode of `TreatmentsPage`, `WateringList` and `HintsPage`, one cached copy each), so no new API route exists. `TodayArea` marks its root with `data-fit-screen`. `CollapsedLockedRows` (`shell/unlock`) is the row and its layer; it lives in the chunk of the introduction because the initial bundle has no headroom (QG-U6). Measured 2026-10-30: 1.78 at 360×640; "Jetzt dran" is now one compact row (chip, short text, one action; the date once, small) and the repeated lines are gone, so the tiles stand above the fold (#976).
 
 ### US-QS-19 · Sammlung "Pflanzen" fits one screen with paged tiles · 🟨 new
 
@@ -344,7 +346,7 @@ Acceptance criteria:
 - Given "Vorschläge", then the deck stays as it is, its empty state names the next action (P-09), and help is one line.
 - Given no result, loading or an error, then the region shows that state with its next action (P-09, P-10).
 
-State of implementation: in the mode "Katalog" (`SpeciesSearch`, `HitList` with three rows per page as a starting value, `FiltersLayer` with difficulty and "Nur meine Vorschläge" applied to the loaded hits, `FilterChips`, the proposal in a `LayerSheet`) the criteria for the search, paging, filters, chips and the proposal layer are implemented and tested. The fit at 360x640 px was calculated from the row heights, not yet measured in a browser, and the mode "Vorschläge" was not changed (its deck fitted already), so the status stays 🟨.
+State of implementation: in the mode "Katalog" (`SpeciesSearch`, `HitList` with three rows per page as a starting value, `FiltersLayer` with difficulty and "Nur meine Vorschläge" applied to the loaded hits, `FilterChips`, the proposal in a `LayerSheet`) the criteria for the search, paging, filters, chips and the proposal layer are implemented and tested. The fit at 360x640 px was calculated from the row heights, not yet measured in a browser, and the mode "Vorschläge" was not changed (its deck fitted already), so the status stays 🟨. Measured 2026-10-30: 1.75 at 360×640; the card now takes the remaining height, the photo shrinks first, the text scrolls inside the card and "Nein / Später / Ja" stay in view (#976).
 
 ### US-QS-22 · Sammlung "Arten", "Wunschliste" and "Equipment" fit one screen · 🟨 new
 
@@ -367,7 +369,7 @@ Acceptance criteria:
 - Given a mode that is empty, loading or failing, then it shows that state with its next action (P-09, P-10): "Art fangen" or "Exemplar anlegen" for the species, "Wunsch erfassen" for the wishes, "Equipment erfassen" for the equipment.
 - Given a layer, then it has at most one filled primary action (US-QS-15).
 
-State of implementation: the modes use `Pager` and `LayerSheet`; the screens are `PokedexPage`, `DifficultyPage`, `WishlistPage` and `EquipmentPage` in their modules; `CollectionArea` asks the frame to fit one screen for every mode (`data-fit-screen`, as US-QS-19). Equipment belongs to the epic EQU and ships with R5; its screen layout ships with the other modes because the mode exists in the "Sammlung" already. Status 🟨 until a real phone check.
+State of implementation: the modes use `Pager` and `LayerSheet`; the screens are `PokedexPage`, `DifficultyPage`, `WishlistPage` and `EquipmentPage` in their modules; `CollectionArea` asks the frame to fit one screen for every mode (`data-fit-screen`, as US-QS-19). Equipment belongs to the epic EQU and ships with R5; its screen layout ships with the other modes because the mode exists in the "Sammlung" already. Status 🟨 until a real phone check. Measured 2026-10-30: 1.20 at 360×640; the progress is one line (details in its layer), the arrangement is a select beside the title, and species entries have a neutral border with a chevron (ADR 0017, #976).
 
 ### US-QS-23 · A plant opens as a layer with tabs · 🟨 new
 
@@ -387,7 +389,7 @@ Acceptance criteria:
 - Given a wide screen (from 1024 px), then the layer stands beside the tiles (US-QS-15).
 - Given the layer, then it has one filled primary action at most ("Messen", only on the overview); every write goes through the existing validating operation (P-03).
 
-State of implementation: `PlantLayer` (`web/src/collection/plants-screen/plant-layers/plant-layer`) with the tabs "Überblick", "Standort" and the frame of "Pflege". The parts that belong to other modules arrive as slots wired by `CollectionArea` (`PlantSlots`; `collection` does not know `care` or `monitoring`): `PlantGrowth`, `PlantHistory` and `PlantCare` (`care/plant-detail`) and `WaterAction` (`monitoring`). `Pager` got `param` and `replace` for a pager inside a layer; `TreatmentForm` got `chosen`. The facts of the former card (`Measurement`, `Treatment`, `Provenance`) are reused from `specimens/cards/specimen-card`. Status 🟨 until a real phone check of the fit at 360 x 640 px (jsdom has no layout, so the fit is checked by structure only: no scroll area inside the overview).
+State of implementation: `PlantLayer` (`web/src/collection/plants-screen/plant-layers/plant-layer`) with the tabs "Überblick", "Standort" and the frame of "Pflege". The parts that belong to other modules arrive as slots wired by `CollectionArea` (`PlantSlots`; `collection` does not know `care` or `monitoring`): `PlantGrowth`, `PlantHistory` and `PlantCare` (`care/plant-detail`) and `WaterAction` (`monitoring`). `Pager` got `param` and `replace` for a pager inside a layer; `TreatmentForm` got `chosen`. The facts of the former card (`Measurement`, `Treatment`, `Provenance`) are reused from `specimens/cards/specimen-card`. Status 🟨 until a real phone check of the fit at 360 x 640 px (jsdom has no layout, so the fit is checked by structure only: no scroll area inside the overview). Measured 2026-10-30: inner 1.12 at 360×640; growth and trend are one line, state and species share a row, and an overdue treatment reads "N Tage überfällig" through the shared helper (#976).
 
 ### US-QS-24 · One word per concept, one line of help, numbers that read well · 🟨 new
 

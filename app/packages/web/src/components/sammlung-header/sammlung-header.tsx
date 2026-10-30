@@ -19,7 +19,7 @@ export function SammlungHeader<V extends string>(props: {
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-3 flex flex-col gap-3">
+    <div className="mb-2 flex flex-col gap-2">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{props.title ?? "Sammlung"}</h1>
