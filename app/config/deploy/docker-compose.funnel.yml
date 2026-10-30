@@ -5,7 +5,7 @@
 # The serve config is docker/tailscale/serve.json.
 # Memory limits are starting values (assumption, TE-03); measure and adjust.
 x-tailscale: &tailscale
-  image: tailscale/tailscale:v1.102.3
+  image: tailscale/tailscale:v1.104.4
   restart: unless-stopped
   # The same log limit as the services of docker-compose.yml (TE-03, #762).
   logging:

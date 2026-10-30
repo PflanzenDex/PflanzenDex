@@ -3,7 +3,7 @@
 name: pflanzendex-auth
 services:
   keycloak:
-    image: quay.io/keycloak/keycloak:26.8.0
+    image: quay.io/keycloak/keycloak:26.8.1
     container_name: pflanzendex-keycloak
     command: start-dev --import-realm
     environment:
@@ -20,7 +20,7 @@ services:
     depends_on:
       - mailpit
   mailpit:
-    image: axllent/mailpit:v1.21
+    image: axllent/mailpit:v1.32.0
     container_name: pflanzendex-mailpit
     ports:
       - "127.0.0.1:18025:8025"

@@ -11,5 +11,5 @@ paths:
 - Access only through `withAccount(pool, accountId, ...)`: transaction, role `pflanzendex_app` (no BYPASSRLS), `app.account_id` set per transaction. Never query tenant tables with a raw pool.
 - Row-level security stays on; do not grant the app role more than needed. Roles are assigned administratively, never through the app.
 - `db` is for `api` only: `core` and `web` never import it.
-- DB tests need PostgreSQL 16 (`make db-up`, or `PFLANZENDEX_TEST_DATABASE_URL`). Test names carry story IDs.
+- DB tests need PostgreSQL 18 (`make db-up`, or `PFLANZENDEX_TEST_DATABASE_URL`). Test names carry story IDs.
 - Documentation of the schema decisions goes into `docs/guides/reference/app.md` (English), not into this file.

@@ -11,8 +11,8 @@ import {
   type State,
 } from "../../account";
 import { FeaturesProvider, useClearOnSignOut } from "../../kernel";
-import { AppRoutes } from "../../routes";
 import { RouteBoundary } from "@/components/routing/route-boundary/route-boundary";
+import { lazyPage } from "@/components/routing/lazy-page/lazy-page";
 import { AppShell } from "../../components/shared/navigation/app-shell/app-shell";
 import {
   pageTitle,
@@ -25,6 +25,10 @@ import {
 import { PathNotes } from "../../wishlist";
 import { useWishHandOver } from "../../wish-to-specimen";
 import { UnlocksProvider, isShownLocked, lockMark, useUnlocks } from "../unlock";
+
+/** The route table is its own chunk: the sign-in screens do not carry it (DS-08, US-QS-14). */
+const loadRoutes = () => import("../../routes").then((m) => ({ default: m.AppRoutes }));
+const AppRoutes = lazyPage(loadRoutes);
 
 const api = apiUrl(import.meta.env as Record<string, string | undefined>);
 
@@ -127,6 +131,9 @@ export function App() {
   // The way from a bought wish to its specimen (US-WUN-05): wishlist, catalog and collection are wired here.
   const wishPath = useWishHandOver(api, s.token, handOver);
   const z = s.state;
+  const { pathname } = useLocation();
+  // Fetch the route table while the session loads; a failure shows at the routes, with "Erneut versuchen" (P-10).
+  useEffect(() => void loadRoutes().catch(() => undefined), []);
   useClearOnSignOut(z.kind === "signedIn");
   useEntryTitle(z.kind);
   if (z.kind !== "signedIn")
@@ -150,15 +157,17 @@ export function App() {
                 <PathNotes {...wishPath.notes} />
               </Suspense>
             )}
-            <AppRoutes
-              api={api}
-              session={s}
-              account={z.account}
-              {...(z.error ? { error: z.error } : {})}
-              onOpen={setView}
-              onOpenProfile={openProfile}
-              handOver={wishPath.handOver}
-            />
+            <RouteBoundary resetKey={pathname}>
+              <AppRoutes
+                api={api}
+                session={s}
+                account={z.account}
+                {...(z.error ? { error: z.error } : {})}
+                onOpen={setView}
+                onOpenProfile={openProfile}
+                handOver={wishPath.handOver}
+              />
+            </RouteBoundary>
           </div>
         </SignedInShell>
       </UnlocksProvider>

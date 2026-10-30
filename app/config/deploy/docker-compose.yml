@@ -13,14 +13,16 @@ x-logging: &logging
 services:
   db:
     logging: *logging
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is missing}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is missing}
       POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is missing}
+    # PostgreSQL 18 keeps its data in <mount>/18/docker; PostgreSQL 16 kept it at the root of the volume. The volume is
+    # therefore mounted one level up. Upgrade from 16: docs/guides/operations/postgres-major-upgrade.md.
     volumes:
-      - dbdata:/var/lib/postgresql/data
+      - dbdata:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -34,7 +36,7 @@ services:
   # volume). The role has no right on the app database, so tenant isolation stays untouched (P-04, TE-03).
   keycloak-db:
     logging: *logging
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     restart: "no"
     entrypoint: ["sh", "/init-db.sh"]
     environment:
@@ -59,7 +61,7 @@ services:
   # `security definer` function ignore row-level security. Runs as the cluster user, which nothing else connects as.
   db-roles:
     logging: *logging
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     restart: "no"
     entrypoint: ["sh", "/db-roles/init-db-roles.sh"]
     environment:
@@ -109,7 +111,7 @@ services:
   # The realm is imported on the first start only; later changes to the file do not touch an existing realm.
   keycloak:
     logging: *logging
-    image: quay.io/keycloak/keycloak:26.8.0
+    image: quay.io/keycloak/keycloak:26.8.1
     restart: unless-stopped
     command: ["start", "--import-realm"]
     environment:
