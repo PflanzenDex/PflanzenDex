@@ -280,7 +280,7 @@ describe("US-QS-22 neutral species entries", () => {
   it("US-QS-22 a species entry has a neutral border and a chevron, no primary outline (ADR 0017)", async () => {
     fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
     view(<PokedexPage api="http://api" token={token} />);
-    const entry = (await screen.findAllByRole("button", { name: /^Details zu / }))[0];
+    const entry = (await screen.findAllByRole("button", { name: /^Opuntia microdasys/ }))[0];
     expect(entry?.className).toContain("border-border");
     expect(entry?.className).not.toMatch(/border-primary|text-primary/);
     expect(entry?.querySelector("[data-chevron]")).toBeTruthy();

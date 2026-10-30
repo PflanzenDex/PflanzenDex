@@ -62,7 +62,7 @@ function SpeciesGroup(props: {
           size="touch"
           variant="outline"
           disabled={props.busy}
-          aria-label={`Alle Pflanzen von ${g.title} teilen`}
+          aria-label={`Alle Pflanzen dieser Art teilen: ${g.title}`}
           onClick={() => props.onSetSpecies(g.speciesId, true)}
         >
           Alle Pflanzen dieser Art teilen
@@ -72,7 +72,7 @@ function SpeciesGroup(props: {
           size="touch"
           variant="outline"
           disabled={props.busy}
-          aria-label={`Alle Pflanzen von ${g.title} zurückziehen`}
+          aria-label={`Alle zurückziehen: ${g.title}`}
           onClick={() => props.onSetSpecies(g.speciesId, false)}
         >
           Alle zurückziehen

@@ -70,7 +70,7 @@ describe("US-WAC-01 collection wired with measuring", () => {
       </MemoryRouter>,
     );
     // The collection page is a lazy part; its first import can take longer than the default second under load.
-    await screen.findByRole("button", { name: /^Bogenhanf, / }, { timeout: 5_000 });
+    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
     expect(await screen.findByRole("heading", { name: "Messen: Bogenhanf" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
