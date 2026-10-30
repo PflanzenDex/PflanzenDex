@@ -39,9 +39,8 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
     void write.run((t) => addRhythmPause(api, t, { from, until }), "Pause eingetragen.");
   };
   return (
-    <details className="text-sm">
-      <summary className="cursor-pointer">Pause eintragen (Urlaub, Krankheit)</summary>
-      <div className="mt-2 flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-3 text-sm">
+      <div className="flex flex-col gap-2">
         <p className="m-0 text-muted-foreground">
           In einer Pause von höchstens 4 Wochen zählen fällige Termine nicht. Dein Rhythmus bleibt
           bestehen. Auch Tage, an denen alle deine Pflanzen ruhen, zählen nicht.
@@ -72,6 +71,6 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
           {write.message}
         </p>
       )}
-    </details>
+    </div>
   );
 }

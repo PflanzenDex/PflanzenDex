@@ -1,3 +1,4 @@
+import { LayerHost } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { useEffect, useRef, type ReactNode } from "react";
 import { Link, Navigate, useLocation, useSearchParams } from "react-router";
 import { useFeature } from "@/kernel";
@@ -135,9 +136,9 @@ export function AccountArea(props: Props) {
           />
         </div>
         {open !== undefined ? (
-          <div className="min-w-0 flex-1">
+          <LayerHost className="min-w-0 flex-1">
             <SectionView {...props} section={open} />
-          </div>
+          </LayerHost>
         ) : (
           <p className="m-0 hidden min-w-0 flex-1 text-muted-foreground xl:block">
             Wähle links einen Abschnitt.
