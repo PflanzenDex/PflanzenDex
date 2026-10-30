@@ -280,6 +280,8 @@ describe("US-ACC-01 App", () => {
     renderApp();
     await userEvent.click(await findTab("Betreiber"));
     expect(await screen.findByRole("heading", { name: "Betreiber" })).toBeTruthy();
+    // The numbers are the layer of their row on the overview (US-QS-15).
+    await userEvent.click(await screen.findByRole("button", { name: /^Zahlen/ }));
     expect((await screen.findByText("Kosten pro Nutzer")).nextElementSibling?.textContent).toMatch(
       /^unbekannt/,
     );
