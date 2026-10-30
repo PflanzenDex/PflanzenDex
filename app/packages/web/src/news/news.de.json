@@ -1,6 +1,7 @@
 {
   "unreleased": [
     "Konto › Einstellungen › Licht: Die vier Lux-Schwellen stehen jetzt in vier beschrifteten Feldern mit Tausender-Trennzeichen („10.000“) und dem Zusatz „Lux“. „Speichern“ ist sofort aktiv; ein Speichern ohne Änderung sagt, dass nichts zu speichern ist.",
+    "Equipment: Dein Equipment steht als Liste mit Zeilen; ein Tipp öffnet das ganze Teil. Lampen sind nach Lichtzonen eingeklappt, Kosten und Bedarf blättern seitenweise, und die weniger wichtigen Felder von „Neues Equipment“ liegen unter „Mehr Angaben“.",
     "Sammlung › Nach Pflegephase: Die Pflanzen stehen jetzt in kompakten Karten mit Soll-Phase, Standort und Soll-Standort in zwei Zeilen und einem Knopf „Jetzt umgestellt“; am Computer stehen sie in zwei Spalten. Mehrere Seiten blätterst du mit „Weiter“.",
     "Große Bildschirme: Die Fenster „Filter“, „Sammlerkarten“, „Neuer Wunsch“, „Neu bei Freunden“ und die übrigen öffnen sich ab 1024 Pixel jetzt neben dem Inhalt statt unter der Liste, oben bündig mit ihr. Die Liste wird dadurch nicht mehr zusammengedrückt, und die Einstellungen zeigen ihre sechs Gruppen weiter lesbar neben dem Fenster. Auf dem Handy bleibt alles wie bisher.",
     "Konto › Einstellungen: Die Einstellungen sind jetzt eine kurze Liste mit sechs Gruppen (Profil, Benachrichtigungen, Datenschutz und Empfehlungen, Wie nutzt du die App?, Wunschliste, Licht), jede mit ihrem aktuellen Wert. Eine Gruppe öffnet sich über der Liste; Schalter speichern sofort, Profil, Wunschliste und Licht haben ein eigenes „Speichern“. Zurück schließt die Gruppe wieder.",

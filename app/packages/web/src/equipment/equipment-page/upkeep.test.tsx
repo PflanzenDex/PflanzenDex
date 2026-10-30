@@ -81,7 +81,7 @@ afterEach(() => {
 describe("US-EQU-04 US-EQU-05 US-EQU-06 upkeep writes from the equipment page", () => {
   it("US-EQU-04 'Jetzt geprüft' and the operation data are sent to the device", async () => {
     const fetchFn = fakeServer();
-    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=item-t1");
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Jetzt geprüft: Timer A" }));
     expect((await lastPost(fetchFn)).path).toBe("/equipment/t1/checked");
@@ -96,7 +96,7 @@ describe("US-EQU-04 US-EQU-05 US-EQU-06 upkeep writes from the equipment page", 
 
   it("US-EQU-05 a tap sets the supply, the link text is saved and removable", async () => {
     const fetchFn = fakeServer();
-    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=item-a1");
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Wird knapp" }));
     expect(await lastPost(fetchFn)).toMatchObject({
