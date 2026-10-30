@@ -41,7 +41,7 @@ function Facts({ v }: { v: Year }) {
   if (!v.hasData) {
     return (
       <p className="m-0 text-sm text-muted-foreground">
-        {`Für ${v.year} liegen noch keine Daten vor. Fange eine Art, miss ein Exemplar oder erledige eine Behandlung, dann füllt sich der Rückblick.`}
+        {`Für ${v.year} liegen noch keine Daten vor. Fange eine Art, miss eine Pflanze oder erledige eine Behandlung, dann füllt sich der Rückblick.`}
       </p>
     );
   }
@@ -67,7 +67,8 @@ function Facts({ v }: { v: Year }) {
           <>
             Größtes gesundes Wachstum: unbekannt.{" "}
             <span className="text-sm text-muted-foreground">
-              Dafür braucht es mindestens zwei gesunde Messungen im Jahr mit etwa 90 Tagen Abstand.
+              Dafür braucht es mindestens zwei gesunde Messungen im Jahr mit etwa 90&nbsp;Tagen
+              Abstand.
             </span>
           </>
         )}

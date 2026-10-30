@@ -125,7 +125,7 @@ describe("US-POK-06 ownership derived from the specimens", () => {
     expect(r.unidentified.map((u) => u.specimenName)).toEqual(["Amaryllis", "Kugel"]);
     expect(r.unidentified[0]).toMatchObject({
       latinName: "Hippeastrum",
-      nextAction: "Bestimme die Art, dann zählt es.",
+      nextAction: "Bestimme die Art, dann zählt sie.",
     });
     expect(r.unidentified[0]?.text).toContain("Amaryllis");
   });

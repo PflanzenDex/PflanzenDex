@@ -51,7 +51,7 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
     expect(h).toContain("Bogenhanf");
     expect(h).toContain("Sansevieria trifasciata");
     expect(h).toContain("Einfach");
-    expect(h).toContain("15.000 Lux");
+    expect(h).toContain("15.000\u00a0Lux");
     expect(h).toContain("Höhe");
     expect(h).toContain("Blätter kippen zur Seite.");
     expect(h).toMatch(/Ruhephase<\/dt><dd>unbekannt/);

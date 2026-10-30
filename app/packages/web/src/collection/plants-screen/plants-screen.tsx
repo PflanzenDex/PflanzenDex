@@ -92,7 +92,7 @@ function Row(props: Props) {
       <Button
         type="button"
         size="icon"
-        aria-label="Weiteres Exemplar"
+        aria-label="Weitere Pflanze"
         onClick={props.onSpeciesChoose}
       >
         <Plus aria-hidden="true" className="size-5" />
@@ -110,7 +110,7 @@ export function PlantsScreen(props: Props) {
   const body =
     props.cards.length === 0 ? (
       <EmptyState
-        title="Du hast noch kein Exemplar."
+        title="Du hast noch keine Pflanze."
         description="Wähle zuerst eine Art aus dem Katalog."
         action={{ label: "Art wählen", onClick: props.onSpeciesChoose }}
       />
@@ -128,7 +128,7 @@ export function PlantsScreen(props: Props) {
           </h2>
         ) : (
           <h1 id="collection-title" className={TITLE}>
-            Bestand
+            Sammlung
           </h1>
         )}
         <Row {...props} />

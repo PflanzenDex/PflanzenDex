@@ -12,7 +12,7 @@ const render = (ui: React.ReactElement) => plainRender(<ToastProvider>{ui}</Toas
 const SIGNED_OUT = "Du bist nicht angemeldet. Bitte melde dich an.";
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
-const zone = { id: "z1", name: "Lampe 2", luxCeiling: 15000, ppfd: 300, sortOrder: 2 };
+const zone = { id: "z1", name: "Zone 2", luxCeiling: 15000, ppfd: 300, sortOrder: 2 };
 const location = { id: "s1", name: "Balkon", lightZoneId: null, kind: "outdoor" as const };
 
 type Data = { zones: unknown[]; locations: unknown[] };
@@ -109,7 +109,7 @@ describe("US-LIC-05 page locations and light zones", () => {
       <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
     );
     expect(screen.getByRole("status").textContent).toContain("werden geladen");
-    expect(await screen.findByRole("heading", { name: "Lampe 2" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Zone 2" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Balkon" })).toBeTruthy();
   });
 
@@ -122,7 +122,7 @@ describe("US-LIC-05 page locations and light zones", () => {
     token.mockResolvedValue("tok");
     fakeServer({ zones: [zone] });
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
-    expect(await screen.findByRole("heading", { name: "Lampe 2" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Zone 2" })).toBeTruthy();
   });
 
   it("a server error while loading is shown with its text, nothing is shown half", async () => {
@@ -154,7 +154,7 @@ describe("US-LIC-05 page locations and light zones", () => {
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Es ist ein Fehler aufgetreten",
     );
-    expect(screen.getByRole("heading", { name: "Lampe 2" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Zone 2" })).toBeTruthy();
     fetchFn.mockImplementation(normal);
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByText(/noch keine arten/i)).toBeTruthy();
@@ -189,7 +189,7 @@ describe("US-LIC-05 page locations and light zones", () => {
     render(
       <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
     );
-    await screen.findByRole("heading", { name: "Lampe 2" });
+    await screen.findByRole("heading", { name: "Zone 2" });
     await userEvent.type(
       screen.getByLabelText("Name", { selector: "form[aria-label='Standort anlegen'] input" }),
       "Fensterbank",
@@ -206,11 +206,9 @@ describe("US-LIC-05 page locations and light zones", () => {
     render(
       <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
     );
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Standard-Lampen übernehmen" }),
-    );
+    await userEvent.click(await screen.findByRole("button", { name: "Standard-Zonen übernehmen" }));
     expect((await screen.findAllByText(/Du hast schon Lichtzonen/)).length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: "Standard-Lampen übernehmen" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Standard-Zonen übernehmen" })).toBeTruthy();
   });
 
   it("changes a zone: the form shows the old values, after saving the new name is there", async () => {
@@ -220,15 +218,15 @@ describe("US-LIC-05 page locations and light zones", () => {
     );
     await userEvent.click(await screen.findByRole("button", { name: "Ändern" }));
     const name = screen.getByLabelText("Name", {
-      selector: "form[aria-label='Lampe 2 ändern'] input",
+      selector: "form[aria-label='Zone 2 ändern'] input",
     });
-    expect((name as HTMLInputElement).value).toBe("Lampe 2");
+    expect((name as HTMLInputElement).value).toBe("Zone 2");
     await userEvent.clear(name);
-    await userEvent.type(name, "Lampe 3");
+    await userEvent.type(name, "Zone 3");
     await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
-    expect(await screen.findByRole("heading", { name: "Lampe 3" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Zone 3" })).toBeTruthy();
     const put = calls.find((a) => a.method === "PUT");
-    expect(put?.body).toMatchObject({ name: "Lampe 3", luxCeiling: 15000, ppfd: 300 });
+    expect(put?.body).toMatchObject({ name: "Zone 3", luxCeiling: 15000, ppfd: 300 });
   });
 
   it("cancel while changing discards the input without a write call", async () => {
@@ -238,7 +236,7 @@ describe("US-LIC-05 page locations and light zones", () => {
     );
     await userEvent.click(await screen.findByRole("button", { name: "Ändern" }));
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
-    expect(screen.getByRole("heading", { name: "Lampe 2" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Zone 2" })).toBeTruthy();
     expect(calls.every((a) => a.method === "GET")).toBe(true);
   });
 
@@ -249,9 +247,9 @@ describe("US-LIC-05 page locations and light zones", () => {
     );
     await userEvent.click(await screen.findByRole("button", { name: "Löschen" }));
     expect(calls.some((a) => a.method === "DELETE")).toBe(false);
-    await userEvent.click(screen.getByRole("button", { name: "Ja, „Lampe 2“ löschen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Ja, „Zone 2“ löschen" }));
     expect((await screen.findAllByText(/wird noch genutzt/)).length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Lampe 2" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Zone 2" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Löschen" })).toBeTruthy();
   });
 
@@ -276,7 +274,7 @@ describe("US-LIC-05 page locations and light zones", () => {
       "z1",
     );
     await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
-    expect(await screen.findByText("Lampe 2 · außen")).toBeTruthy();
+    expect(await screen.findByText("Zone 2 · außen")).toBeTruthy();
     expect(calls.find((a) => a.url === "/locations/s1")?.body).toEqual({
       name: "Balkon",
       lightZoneId: "z1",
@@ -301,11 +299,9 @@ describe("US-QS-14 feedback on the light page", () => {
     render(
       <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
     );
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Standard-Lampen übernehmen" }),
-    );
+    await userEvent.click(await screen.findByRole("button", { name: "Standard-Zonen übernehmen" }));
     await screen.findByRole("alert");
-    expect(screen.queryByText("Standard-Lampen übernommen.")).toBeNull();
+    expect(screen.queryByText("Standard-Zonen übernommen.")).toBeNull();
   });
 
   it("US-QS-14 a location without light zone shows a banner that says what to do", async () => {
@@ -324,10 +320,10 @@ describe("US-LIC-01 determine the zone of a species on the page", () => {
     render(
       <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
     );
-    await screen.findByRole("heading", { name: "Lampe 2" });
+    await screen.findByRole("heading", { name: "Zone 2" });
     await userEvent.type(screen.getByLabelText("Lux-Bedarf der Art (Lux)"), "15000");
     await userEvent.click(screen.getByRole("button", { name: "Zone ermitteln" }));
-    expect(await screen.findByText("Lichtzone: Lampe 2")).toBeTruthy();
+    expect(await screen.findByText("Lichtzone: Zone 2")).toBeTruthy();
     const get = calls.find((a) => a.url === "/light-zones/derivation");
     expect(get?.method).toBe("GET");
   });
@@ -337,7 +333,7 @@ describe("US-LIC-01 determine the zone of a species on the page", () => {
     let signedIn = true;
     const token = async () => (signedIn ? "tok" : undefined);
     render(<LightPage api="http://api" token={token} onOpenCollection={() => undefined} />);
-    await screen.findByRole("heading", { name: "Lampe 2" });
+    await screen.findByRole("heading", { name: "Zone 2" });
     signedIn = false;
     await userEvent.type(screen.getByLabelText("Lux-Bedarf der Art (Lux)"), "15000");
     await userEvent.click(screen.getByRole("button", { name: "Zone ermitteln" }));
@@ -380,13 +376,13 @@ describe("US-LIC-05 · DS-48 forms and refusals", () => {
     const name = screen.getByLabelText("Name", {
       selector: "form[aria-label='Lichtzone anlegen'] input",
     });
-    await userEvent.type(name, "Lampe 2");
+    await userEvent.type(name, "Zone 2");
     await userEvent.type(screen.getByLabelText("Lux-Decke (Lux)"), "8000");
     await userEvent.click(screen.getByRole("button", { name: "Zone anlegen" }));
     expect(await screen.findByText("Eine Lichtzone mit diesem Namen gibt es schon.")).toBeTruthy();
     expect(screen.queryByText(/raw server text/)).toBeNull();
     expect(document.activeElement).toBe(name);
-    expect((name as HTMLInputElement).value).toBe("Lampe 2");
+    expect((name as HTMLInputElement).value).toBe("Zone 2");
   });
 
   it("no locations yet: the empty state offers to create the first one and moves the focus to its name", async () => {

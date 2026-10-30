@@ -268,7 +268,7 @@ describe("US-WAC-02 assess etiolation while measuring", () => {
   });
 });
 
-describe("US-BES-07 Messen: archivierte Exemplare", () => {
+describe("US-BES-07 Messen: archivierte Pflanzen", () => {
   it("an archived specimen is not measured (missing in growth), nothing is written", async () => {
     const r = await record(input(), anna, "archived", [E1]);
     expect(r).toMatchObject({ ok: false, error: { code: "specimen.archived" } });

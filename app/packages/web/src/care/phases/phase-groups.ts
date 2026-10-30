@@ -31,5 +31,5 @@ export function switchedText(
   const target = locationText(locations, rows[0]?.targetLocationId ?? null);
   return rows.length === 1
     ? `„${rows[0]?.name}“ steht jetzt am Standort „${target}“.`
-    : `${rows.length} Exemplare stehen jetzt am Standort „${target}“.`;
+    : `${rows.length} Pflanzen stehen jetzt am Standort „${target}“.`;
 }

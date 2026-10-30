@@ -53,10 +53,10 @@ export const nextChangeText = (change: NextPhaseChange | null): string =>
 export const locationText = (locations: readonly LightLocation[], id: string | null): string =>
   id === null ? UNKNOWN : (locations.find((s) => s.id === id)?.name ?? UNKNOWN);
 
-/** "3 Termine für 1 Exemplar geplant." and where to see them (P-09). */
+/** "3 Termine für 1 Pflanze geplant." and where to see them (P-09). */
 export function treatmentsPlannedText(rows: readonly TreatmentRow[]): string {
   const specimens = new Set(rows.map((r) => r.specimenId)).size;
   const dates = rows.length === 1 ? "1 Termin" : `${rows.length} Termine`;
-  const forWhom = specimens === 1 ? "1 Exemplar" : `${specimens} Exemplare`;
-  return `${dates} für ${forWhom} geplant. Den nächsten Termin siehst du auf der Karte im Bestand.`;
+  const forWhom = specimens === 1 ? "1 Pflanze" : `${specimens} Pflanzen`;
+  return `${dates} für ${forWhom} geplant. Den nächsten Termin siehst du auf der Karte in der Sammlung.`;
 }

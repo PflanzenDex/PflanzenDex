@@ -61,13 +61,13 @@ export function OfferFields(props: {
   return (
     <>
       <div className="flex flex-col gap-1">
-        <Label htmlFor="offer-specimen">Exemplar</Label>
+        <Label htmlFor="offer-specimen">Pflanze</Label>
         <Select
           id="offer-specimen"
           value={value.specimenId}
           onChange={(e) => onChange({ ...value, specimenId: e.target.value })}
         >
-          <option value="">Exemplar wählen</option>
+          <option value="">Pflanze wählen</option>
           {props.specimens
             .filter((s) => s.status !== "archived")
             .map((s) => (

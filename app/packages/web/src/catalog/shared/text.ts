@@ -21,7 +21,7 @@ export const STATUS: Record<Species["reviewStatus"], string> = {
   merged: "Zusammengeführt",
 };
 
-export const lux = (n: number) => `${numberFormat.format(n)} Lux`;
+export const lux = (n: number) => `${numberFormat.format(n)}\u00a0Lux`;
 
 /** `MM-DD` as "15.11.". */
 const tag = (monthTag: string) => `${monthTag.slice(3)}.${monthTag.slice(0, 2)}.`;

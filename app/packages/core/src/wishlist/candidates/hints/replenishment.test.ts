@@ -32,8 +32,8 @@ describe("US-WUN-02 warning before the list is empty", () => {
     const r = await replenishment();
     expect(r.buffer).toBe(2);
     expect(r.zones.map((z) => [z.zoneId, z.open, z.text])).toEqual([
-      ["z3", 1, "Nachschub nötig: Lampe 3 (1 offener Kandidat)"],
-      ["z4", 0, "Nachschub nötig: Lampe 4 (0 offene Kandidaten)"],
+      ["z3", 1, "Nachschub nötig: Zone 3 (1 offener Kandidat)"],
+      ["z4", 0, "Nachschub nötig: Zone 4 (0 offene Kandidaten)"],
     ]);
   });
 

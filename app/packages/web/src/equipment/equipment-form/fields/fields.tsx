@@ -1,5 +1,5 @@
 import { useWatch, type Control } from "react-hook-form";
-import { EQUIPMENT_LIMITS, EQUIPMENT_TYPES } from "@pflanzendex/core";
+import { EQUIPMENT_LIMITS, EQUIPMENT_TYPES, zoneLabel } from "@pflanzendex/core";
 import {
   FormControl,
   FormDescription,
@@ -66,7 +66,7 @@ export function ZoneField(props: {
               <option value="">Bitte wählen</option>
               {props.zones.map((z) => (
                 <option key={z.zoneId} value={z.zoneId}>
-                  {z.name}
+                  {zoneLabel(z.name)}
                 </option>
               ))}
             </Select>

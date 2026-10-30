@@ -4,13 +4,13 @@ import type { LocationDef, SpecimenDef } from "../common/shared.ts";
 // Ben (`test2`): a keeper with 50 specimens (#939). 38 of the 51 catalog species (every 4th is left out for
 // the others), plus 5 second specimens and 7 cuttings that carry a marker (US-BES-03).
 export const BEN_LOCATIONS: readonly LocationDef[] = [
-  { name: "Schlafzimmer", zone: "Lampe 2" },
-  { name: "Bad", zone: "Lampe 2" },
-  { name: "Wohnzimmer Fenster", zone: "Lampe 3" },
-  { name: "Regal mit Pflanzenlampe", zone: "Lampe 3" },
-  { name: "Growbox", zone: "Lampe 4" },
-  { name: "Balkon", zone: "Lampe 4", kind: "outdoor" },
-  { name: "Stecklingsbox", zone: "Lampe 1" },
+  { name: "Schlafzimmer", zone: "Zone 2" },
+  { name: "Bad", zone: "Zone 2" },
+  { name: "Wohnzimmer Fenster", zone: "Zone 3" },
+  { name: "Regal mit Pflanzenlampe", zone: "Zone 3" },
+  { name: "Growbox", zone: "Zone 4" },
+  { name: "Balkon", zone: "Zone 4", kind: "outdoor" },
+  { name: "Stecklingsbox", zone: "Zone 1 · Stecklingslicht" },
 ];
 const BY_LEVEL: Record<number, readonly string[]> = {
   2: ["Schlafzimmer", "Bad", "Regal mit Pflanzenlampe"],

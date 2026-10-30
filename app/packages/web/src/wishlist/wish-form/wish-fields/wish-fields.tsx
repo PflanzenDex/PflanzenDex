@@ -1,5 +1,5 @@
 import type { Control } from "react-hook-form";
-import { WISH_LIMITS, type ZoneStock } from "@pflanzendex/core";
+import { WISH_LIMITS, type ZoneStock, zoneLabel } from "@pflanzendex/core";
 import {
   FormControl,
   FormDescription,
@@ -64,7 +64,7 @@ export function ChoiceFields({ control, zones }: FieldProps & { zones: readonly 
                 <option value="">unbekannt</option>
                 {zones.map((z) => (
                   <option key={z.zoneId} value={z.zoneId}>
-                    {z.name} — {plants(z.count)}
+                    {zoneLabel(z.name)} — {plants(z.count)}
                   </option>
                 ))}
               </Select>

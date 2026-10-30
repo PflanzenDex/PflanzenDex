@@ -122,7 +122,7 @@ export function CollectorCard(props: { card: Card }) {
         {c.speciesPoor && <Badge variant="warning">Artenarm</Badge>}
       </span>
       {c.specimenCount > 1 && (
-        <span className="text-muted-foreground">{`${c.specimenCount} Exemplare`}</span>
+        <span className="text-muted-foreground">{`${c.specimenCount} Pflanzen`}</span>
       )}
       <WikipediaSource
         label="Quelle"

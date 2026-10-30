@@ -13,7 +13,7 @@ const noLocation = {
   specimenName: "Bogenhanf",
   locationId: null,
   text: "„Bogenhanf“ hat noch keinen Standort.",
-  nextAction: "Weise dem Exemplar einen Standort zu.",
+  nextAction: "Weise der Pflanze einen Standort zu.",
 };
 const noZone = {
   kind: "location_without_zone",
@@ -29,7 +29,7 @@ const noSpecies = {
   specimenName: "Rätsel",
   locationId: "s1",
   text: "Die Art von „Rätsel“ ist nicht lesbar.",
-  nextAction: "Wähle für das Exemplar eine Art aus dem Katalog.",
+  nextAction: "Wähle für die Pflanze eine Art aus dem Katalog.",
 };
 const serverError = { error: { code: "server.error", text: "Der Server antwortet nicht." } };
 
@@ -68,7 +68,7 @@ describe("US-BES-08 page of the hints about incomplete specimens", () => {
     render(<HintsPage api="http://api" token={token} onOpen={open} />);
     await userEvent.click(await screen.findByRole("button", { name: /Standorte verwalten/ }));
     expect(open).toHaveBeenLastCalledWith("light");
-    await userEvent.click(screen.getByRole("button", { name: /Zum Bestand/ }));
+    await userEvent.click(screen.getByRole("button", { name: /Zur Sammlung/ }));
     expect(open).toHaveBeenLastCalledWith("collection");
   });
 
@@ -76,7 +76,7 @@ describe("US-BES-08 page of the hints about incomplete specimens", () => {
     fakeServer(() => response(200, { hints: [] }));
     render(<HintsPage api="http://api" token={token} onOpen={noop} />);
     await screen.findByText(/Keine Hinweise/);
-    expect(screen.getByText(/Jedes Exemplar hat eine Art/).textContent).toContain("Standort");
+    expect(screen.getByText(/Jede Pflanze hat eine Art/).textContent).toContain("Standort");
     expect(screen.queryByRole("list")).toBeNull();
   });
 
@@ -135,7 +135,7 @@ describe("US-QS-14 · US-BES-08 the hints as a section of Heute (host)", () => {
       </MemoryRouter>,
     );
     expect(await screen.findByRole("heading", { level: 3, name: "Keine Hinweise" })).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Zum Bestand" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zur Sammlung" }));
     expect(open).toHaveBeenCalledWith("collection");
   });
 

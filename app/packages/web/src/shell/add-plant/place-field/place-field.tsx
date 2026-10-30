@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/display/label/label";
 import { Select } from "@/components/ui/fields/select/select";
 import { loadCards } from "../../../collection";
 import { loadLocations, loadZones } from "../../../light";
+import { zoneLabel } from "@pflanzendex/core";
 
 type Token = () => Promise<string | undefined>;
 
@@ -37,7 +38,7 @@ async function loadPlaces(api: string, token: Token): Promise<Places | null> {
 /** The place with the light it stands under, so the choice shows what it brings with it (P-10). */
 const label = (l: LightLocation, zones: readonly LightZone[]) => {
   const z = zones.find((x) => x.id === l.lightZoneId);
-  return z ? `${l.name} (${z.name})` : l.name;
+  return z ? `${l.name} (${zoneLabel(z.name)})` : l.name;
 };
 
 /** The own places for the flow of a further plant; `places` is `null` while they load or when they are not readable. */

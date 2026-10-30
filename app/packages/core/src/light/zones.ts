@@ -4,11 +4,24 @@ import type { LightZone, ZoneUsage, ZoneStore, ZoneValues } from "./types";
 
 /** Default light zones from the specification (03-light-and-locations.md), applies to new accounts. */
 export const ZONE_DEFAULT: readonly ZoneValues[] = [
-  { name: "Lampe 1", luxCeiling: 1_500, ppfd: 36, sortOrder: 1 },
-  { name: "Lampe 2", luxCeiling: 15_000, ppfd: 300, sortOrder: 2 },
-  { name: "Lampe 3", luxCeiling: 100_000, ppfd: 1_600, sortOrder: 3 },
-  { name: "Lampe 4", luxCeiling: 110_000, ppfd: 2_000, sortOrder: 4 },
+  { name: "Zone 1 · Stecklingslicht", luxCeiling: 1_500, ppfd: 36, sortOrder: 1 },
+  { name: "Zone 2", luxCeiling: 15_000, ppfd: 300, sortOrder: 2 },
+  { name: "Zone 3", luxCeiling: 100_000, ppfd: 1_600, sortOrder: 3 },
+  { name: "Zone 4", luxCeiling: 110_000, ppfd: 2_000, sortOrder: 4 },
 ];
+
+const DEFAULT_NAME = /^(?:Lampe|Zone) ([1-9])(?: · Stecklingslicht)?$/;
+
+/**
+ * How a light zone is named in a text (US-QS-24): a default-style name ("Lampe 2" of older accounts, "Zone 2")
+ * reads "Zone 2", the lowest one "Zone 1 · Stecklingslicht"; a name the keeper chose stays exactly as typed.
+ * Stored names are never rewritten, only the display changes.
+ */
+export function zoneLabel(name: string): string {
+  const m = DEFAULT_NAME.exec(name.trim());
+  if (!m) return name;
+  return m[1] === "1" ? "Zone 1 · Stecklingslicht" : `Zone ${m[1]}`;
+}
 
 const save = (r: LightZone | "name_taken" | "not_found"): Result<LightZone> => {
   if (r === "name_taken") return failed(appError("light_zone.name_taken"));

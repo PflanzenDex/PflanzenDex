@@ -1,5 +1,11 @@
 import { useWatch, type Control } from "react-hook-form";
-import { specimenName, type Species, type LightLocation, type LightZone } from "@pflanzendex/core";
+import {
+  specimenName,
+  type Species,
+  type LightLocation,
+  type LightZone,
+  zoneLabel,
+} from "@pflanzendex/core";
 import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
 import {
   FormControl,
@@ -31,7 +37,7 @@ function ZoneField(props: {
               <option value="">Aus Standort und Art ableiten</option>
               {props.zones.items.map((z) => (
                 <option key={z.id} value={z.id}>
-                  {z.name}
+                  {zoneLabel(z.name)}
                 </option>
               ))}
             </Select>
@@ -73,8 +79,7 @@ export function OtherFields(props: {
               </Checkbox>
             </FormControl>
             <FormDescription>
-              Ein Steckling steht unter Stecklingslicht und fehlt in den Phasen und in der
-              Lichtverteilung. Wenn du ihn eintopfst, tippe auf der Karte „Eingetopft“.
+              Ein Steckling steht unter Stecklingslicht und fehlt in Phasen und Lichtverteilung.
             </FormDescription>
           </FormItem>
         )}
@@ -109,7 +114,7 @@ export function Heading({ species }: { species: Species }) {
   return (
     <>
       <h1 id="create-title" className={TITLE}>
-        Exemplar anlegen
+        Pflanze anlegen
       </h1>
       <p className="mb-5 text-muted-foreground">
         Art: <i>{species.latinName}</i>

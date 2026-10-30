@@ -7,15 +7,27 @@ export function dateText(iso: string): string {
   return `${tag}.${month}.${jahr}`;
 }
 
+const NBSP = "\u00a0";
+
 /** "12,5 cm": the growth measures of the species are measured in centimetres (US-WAC-01). */
 export const valueText = (value: number): string =>
-  `${value.toLocaleString("de-DE", { maximumFractionDigits: 1 })} cm`;
+  `${value.toLocaleString("de-DE", { maximumFractionDigits: 1 })}${NBSP}cm`;
 
-const NBSP = " ";
+const UNITS =
+  "Tagen|Tage|Tag|Wochen|Woche|Monaten|Monate|Monat|Jahren|Jahre|Jahr|Stunden|Minuten|cm|Lux|lx|kB|MB|%";
+const NUMBER_UNIT = new RegExp(`(\\d(?:[\\d.,]*\\d)?) (${UNITS})(?![\\p{L}])`, "gu");
+const DATE_RANGE = /(\d{2}\.\d{2}\.\d{4}) (–|-|bis) (\d{2}\.\d{2}\.\d{4})/g;
 
-/** Number and unit never break apart (US-QS-15, US-QS-18): "10 Tage" gets a non-breaking space. */
+/**
+ * Number and unit, and the two ends of a date range, never break apart (US-QS-15, US-QS-18, US-QS-24):
+ * "10 Tage", "12,5 cm", "30.000 Lux" and "03.10.2026 – 05.10.2026" get non-breaking spaces.
+ */
 export const keepTogether = (text: string): string =>
-  text.replace(/(\d+) (Tagen|Tage|Tag|Wochen|Woche|cm)(?![\p{L}])/gu, `$1${NBSP}$2`);
+  text.replace(NUMBER_UNIT, `$1${NBSP}$2`).replace(DATE_RANGE, `$1${NBSP}$2${NBSP}$3`);
+
+/** A number with its unit as one unbreakable piece: `withUnit(30000, "Lux")` is "30.000 Lux" (US-QS-24). */
+export const withUnit = (value: number, unit: string): string =>
+  `${value.toLocaleString("de-DE", { maximumFractionDigits: 1 })}${NBSP}${unit}`;
 
 const OVERDUE_SINCE = /überfällig seit (\d+) Tag(?:en)?/;
 

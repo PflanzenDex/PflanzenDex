@@ -19,8 +19,8 @@ async function withSpecimen(page: Page, species: string): Promise<void> {
   await proposal.getByRole("button", { name: "Vorschlag speichern" }).click();
   await page.getByRole("button", { name: "Diese Art wählen" }).click();
   await page
-    .getByRole("form", { name: "Exemplar anlegen" })
-    .getByRole("button", { name: "Exemplar anlegen" })
+    .getByRole("form", { name: "Pflanze anlegen" })
+    .getByRole("button", { name: "Pflanze anlegen" })
     .click();
   await expect(page.getByRole("heading", { level: 1, name: "Sammlung" })).toBeVisible();
 }

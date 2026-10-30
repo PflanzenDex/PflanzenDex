@@ -52,7 +52,7 @@ describe("US-POK-01 collector card", () => {
   it("US-POK-01 a missing card keeps name and text visible and says it is not caught yet", () => {
     show(card());
     expect(screen.getByText("noch nicht gefangen")).toBeTruthy();
-    expect(screen.queryByText(/Exemplare/)).toBeNull();
+    expect(screen.queryByText(/^\d+ Pflanzen$/)).toBeNull();
   });
 
   it("US-POK-01 a caught card shows the catch chip and the number of specimens only above 1", () => {
@@ -62,9 +62,9 @@ describe("US-POK-01 collector card", () => {
     } as const;
     const { rerender } = show(card({ ...caught, specimenCount: 1 }));
     expect(screen.getByText("gefangen 05.03.2026")).toBeTruthy();
-    expect(screen.queryByText(/Exemplar/)).toBeNull();
+    expect(screen.queryByText(/^\d+ Pflanzen?$/)).toBeNull();
     rerender(<CollectorCard card={card({ ...caught, specimenCount: 3 })} />);
-    expect(screen.getByText("3 Exemplare")).toBeTruthy();
+    expect(screen.getByText("3 Pflanzen")).toBeTruthy();
   });
 
   it("US-POK-01 without text it says that no description is available", () => {
