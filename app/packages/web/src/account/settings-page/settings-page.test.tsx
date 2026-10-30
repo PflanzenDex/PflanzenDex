@@ -194,9 +194,9 @@ describe("US-ACC-02 settings page: time zone", () => {
     const alert = await screen.findByRole("alert");
     expect(alert.id).not.toBe("");
     expect(zone.getAttribute("aria-describedby")).toContain(alert.id);
-    expect(screen.getByLabelText("Anzeigename").getAttribute("aria-describedby")).not.toContain(
-      alert.id,
-    );
+    expect(
+      screen.getByLabelText("Anzeigename").getAttribute("aria-describedby") ?? "",
+    ).not.toContain(alert.id);
     expect(document.activeElement).toBe(zone);
   });
 

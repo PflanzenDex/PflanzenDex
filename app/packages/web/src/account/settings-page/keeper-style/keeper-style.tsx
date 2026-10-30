@@ -21,7 +21,7 @@ function StyleFieldset(props: { api: string; token: Token; state: KeeperStyleSta
   });
   return (
     <fieldset className="m-0 flex min-w-0 flex-col rounded-lg border-2 border-border px-3 pb-2 pt-1">
-      <legend className="px-1 font-semibold">Wie nutzt du die App?</legend>
+      <legend className="sr-only">Wie nutzt du die App?</legend>
       <StyleSelect value={style} disabled={saving} onPick={(s) => void save(s)} />
       <p className="mt-1 text-sm text-muted-foreground">
         Du kannst das jederzeit ändern. Was du schon geöffnet hast, bleibt offen.

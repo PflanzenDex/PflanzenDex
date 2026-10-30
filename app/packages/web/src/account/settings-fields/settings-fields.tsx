@@ -7,6 +7,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/fields/form/form";
+import { MoreHelp } from "@/components/ui/display/more-help/more-help";
 import { Input } from "@/components/ui/fields/input/input";
 import { POSITION_THRESHOLD_DEFAULTS as DEFAULTS } from "@pflanzendex/core";
 import { OCCASIONS, type Occasion } from "../api/account-api";
@@ -41,10 +42,9 @@ export function BufferField({ control }: FieldProps) {
           <FormControl>
             <Input {...field} inputMode="numeric" autoComplete="off" />
           </FormControl>
-          <FormDescription>
-            Die Wunschliste warnt, wenn eine Zone 2 bis 4 weniger offene Wünsche hat. Ganze Zahl von
-            0 bis 10, 2 ist die Vorgabe; 0 schaltet die Warnung aus.
-          </FormDescription>
+          <MoreHelp more="Die Wunschliste warnt, wenn eine Zone 2 bis 4 weniger offene Wünsche hat. Ganze Zahl von 0 bis 10, 2 ist die Vorgabe; 0 schaltet die Warnung aus.">
+            Die Wunschliste warnt bei zu wenigen offenen Wünschen.
+          </MoreHelp>
           <FormMessage />
         </FormItem>
       )}
@@ -64,9 +64,9 @@ export function ThresholdsField({ control }: FieldProps) {
           <FormControl>
             <Input {...field} inputMode="numeric" autoComplete="off" />
           </FormControl>
-          <FormDescription>
-            Vier Lux-Werte von hoch nach niedrig. Vorgabe: {DEFAULTS.join(", ")} (eine Annahme).
-          </FormDescription>
+          <MoreHelp more={`Vorgabe: ${DEFAULTS.join(", ")} (eine Annahme).`}>
+            Vier Lux-Werte von hoch nach niedrig.
+          </MoreHelp>
           <FormMessage />
         </FormItem>
       )}
@@ -86,10 +86,9 @@ export function NameFields({ control, fromDevice }: FieldProps & { fromDevice: b
             <FormControl>
               <Input {...field} autoComplete="nickname" maxLength={80} />
             </FormControl>
-            <FormDescription>
-              Du kannst jeden Namen wählen, er muss nicht einmalig sein, darf aber nicht leer sein.
-              Freunde finden dich über eine Einladung, nicht über den Namen.
-            </FormDescription>
+            <MoreHelp more="Freunde finden dich über eine Einladung, nicht über den Namen.">
+              Jeder Name geht, er darf aber nicht leer sein.
+            </MoreHelp>
             <FormMessage />
           </FormItem>
         )}
