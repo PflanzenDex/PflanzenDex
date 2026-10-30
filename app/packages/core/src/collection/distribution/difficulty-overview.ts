@@ -22,8 +22,8 @@ export interface DifficultyRow {
   readonly substrate: string | null;
   readonly pruning: string | null;
   readonly successCriteria: string;
-  /** 1 easy, 2 medium, 3 hard (DM-BES-01). */
-  readonly difficulty: number;
+  /** 1 easy, 2 medium, 3 hard (DM-BES-01); `null` = unknown, never a starting value (P-08). */
+  readonly difficulty: number | null;
 }
 
 export interface DifficultyOverview {
@@ -46,8 +46,11 @@ function ownWatering(p: CareProfile | undefined): DifficultyRow["ownWatering"] {
   return { growthDays: p.wateringGrowthDays, dormancyDays: p.wateringDormancyDays };
 }
 
+/** Unknown difficulty sorts after every known one: it is not "easy" (P-08). */
+const rank = (d: number | null) => d ?? 4;
+
 /**
- * One row per readable species with an active specimen, sorted by difficulty ascending and then by name. Archived
+ * One row per readable species with an active specimen, sorted by difficulty ascending (unknown last) and then by name. Archived
  * specimens do not count (US-BES-07); a species the account cannot read has no row, but is counted in `unreadable`.
  */
 export async function difficultyOverview(
@@ -96,7 +99,9 @@ export async function difficultyOverview(
     });
   }
   rows.sort(
-    (a, b) => a.difficulty - b.difficulty || a.botanicalName.localeCompare(b.botanicalName, "de"),
+    (a, b) =>
+      rank(a.difficulty) - rank(b.difficulty) ||
+      a.botanicalName.localeCompare(b.botanicalName, "de"),
   );
   return { rows, unreadable };
 }

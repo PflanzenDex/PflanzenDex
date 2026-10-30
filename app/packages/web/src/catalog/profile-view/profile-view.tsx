@@ -1,7 +1,15 @@
 import { speciesHints, type Species } from "@pflanzendex/core";
 import { Badge } from "@/components/ui/display/badge/badge";
 import { Button } from "@/components/ui/button/button";
-import { DIFFICULTY, STATUS, GROWTH, lux, orUnknown, dormancyPhase } from "../shared/text";
+import {
+  STATUS,
+  GROWTH,
+  lux,
+  orUnknown,
+  dormancyPhase,
+  difficultyText,
+  levelText,
+} from "../shared/text";
 
 function rows(species: Species): [string, string][] {
   const family = [species.familyGerman, species.familyLatin].filter(Boolean).join(" · ");
@@ -10,8 +18,8 @@ function rows(species: Species): [string, string][] {
     ["Englischer Name", orUnknown(species.englishName)],
     ["Synonyme", species.synonyms.length > 0 ? species.synonyms.join(", ") : "unbekannt"],
     ["Familie", family || "unbekannt"],
-    ["Schwierigkeit", DIFFICULTY[species.difficulty] ?? "unbekannt"],
-    ["Standard-Stufe", `Stufe ${species.standardLevel}`],
+    ["Schwierigkeit", difficultyText(species.difficulty)],
+    ["Standard-Stufe", levelText(species.standardLevel)],
     ["Lichtbedarf", lux(species.lightDemandLux)],
     ["Ruhephase", dormancyPhase(species)],
     ["Standort-Hinweis", orUnknown(species.locationHint)],

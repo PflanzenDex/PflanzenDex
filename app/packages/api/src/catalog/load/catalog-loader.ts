@@ -7,14 +7,14 @@ import type { StartSpecies } from "./start-species.ts";
 /** The account the batch acts as; it has the `operator` role and cannot sign in (no identity knows its subject). */
 export const OPERATOR_SUBJECT = "catalog-load";
 /**
- * Marks every loaded species (P-08): names and family are operator-entered taxonomic facts; difficulty and standard
- * level are starting values because the schema cannot hold "unknown" yet. The fill job adds sourced fields later.
+ * Marks every loaded species (P-08): names and family are operator-entered taxonomic facts; difficulty, default level
+ * and lux need stay unknown (null) until a value with a source is entered (#1003). The fill job adds sourced fields later.
+ * Same text as migration 0095 writes into rows it cleared.
  */
 export const START_SOURCE =
-  "Curated start catalog (operator): names and family are taxonomic facts, entered by the operator; difficulty and standard light level are starting values, not measured and not cited";
+  "Curated start catalog (operator): names and family are taxonomic facts, entered by the operator; difficulty and light need unknown until a source is given";
 /** The operator releases its own entries as CC0 (names and taxonomy are facts). Assumption, revisable by the PO (E-25). */
 export const START_LICENSE = "CC0-1.0";
-const LUX_BY_LEVEL = { 2: 3000, 3: 8000, 4: 20000 } as const; // assumption, not measured (same as the dev seed)
 const ETIOLATION_SIGNS = "Lange, helle Zwischenräume und blasse Triebe.";
 const SUCCESS_CRITERIA = "Kompakter Neuaustrieb ohne Streckung.";
 
@@ -45,9 +45,6 @@ export function prepareRecords(list: readonly StartSpecies[]): readonly LoadReco
       englishName: s.english,
       familyLatin: s.familyLatin,
       familyGerman: s.familyGerman,
-      difficulty: s.difficulty,
-      standardLevel: s.standardLevel,
-      lightDemandLux: LUX_BY_LEVEL[s.standardLevel],
       growthMeasure: "height",
       etiolationSigns: ETIOLATION_SIGNS,
       successCriteria: SUCCESS_CRITERIA,

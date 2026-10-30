@@ -30,6 +30,7 @@ Acceptance criteria:
 - Cutting light is **never** the target zone for adults.
 - Move up only if the demand reaches at least 80 % of the lux ceiling of the current level. If the demand is more than 30 % below the ceiling, the species stays there (more light brings stress).
 - C3 plants with soft leaves ("sun-loving") are not automatically classified into the strong zone.
+- Given a species whose lux demand or default level is unknown (P-08, DM-BES-01), when its zone is derived (card, distribution, light overview, comparison, care profile), then the zone reads "unbekannt", never a guessed zone, and the view names the next step "Lichtbedarf eintragen" (P-09); the keeper's own zone in the care profile still applies (US-BES-09).
 
 ### US-LIC-02 · Know where there is still room · ✅ (prototype ✅)
 
