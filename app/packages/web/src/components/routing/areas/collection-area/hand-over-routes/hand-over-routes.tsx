@@ -4,6 +4,7 @@ import { CareProfileSection } from "@/collection";
 import { loadSpecies, searchSpecies, SpeciesPage } from "@/catalog";
 import type { WishToPlant } from "@/wishlist";
 import { AddPlant, ContextHint } from "@/shell";
+import { LayerHost } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { AreaSection } from "../../shared/area-section/area-section";
 import { CollectionArea, DiscoverArea } from "../../shared/lazy-areas";
 import {
@@ -33,12 +34,15 @@ const careProfile = (api: string, token: Token) =>
 /** The species profile has its own address; the id comes from it (US-POK-09). */
 function SpeciesProfileRoute(props: { api: string; token: Token; onChoose: (s: Species) => void }) {
   const { profileId } = useParams();
+  // The profile has layers of its own (the catalog's "Art vorschlagen"), so it has a frame too (US-QS-15).
   return (
-    <SpeciesPage
-      {...props}
-      openId={profileId ?? null}
-      profileSection={careProfile(props.api, props.token)}
-    />
+    <LayerHost>
+      <SpeciesPage
+        {...props}
+        openId={profileId ?? null}
+        profileSection={careProfile(props.api, props.token)}
+      />
+    </LayerHost>
   );
 }
 

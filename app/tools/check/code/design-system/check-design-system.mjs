@@ -79,7 +79,7 @@ export function scan(webRoot, locations = new Map()) {
     const file = path.relative(src, full).split(path.sep).join("/");
     const content = fs.readFileSync(full, "utf8");
     if (language === "css" && file !== TOKEN_FILE) add("DS-33", file);
-    if (language === "tsx") scanFileRules(file, content, add, locations);
+    scanFileRules(file, content, add, locations);
     scanLines(file, language, content, add);
   }
   scanStack(webRoot, add);
