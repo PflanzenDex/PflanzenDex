@@ -145,6 +145,20 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(html).toContain("Blätter wirken blass");
   });
 
+  it("US-WAC-01 the page starts with one fact line (value and date), the other facts are folded behind Mehr Angaben", () => {
+    const m = measurement();
+    const html = renderToString(
+      <MeasurementHeader view={view({ measurements: [m], last: m, lastRating: "healthy" })} />,
+    );
+    const folded = html.indexOf("<details");
+    expect(folded).toBeGreaterThan(html.indexOf("Letzte Messung"));
+    expect(html.indexOf("12,5 cm am 03.10.2026")).toBeLessThan(folded);
+    expect(html.indexOf("Mehr Angaben")).toBeGreaterThan(folded);
+    expect(html.indexOf("Was messen?")).toBeGreaterThan(folded);
+    expect(html.indexOf("Letzte Bewertung")).toBeGreaterThan(folded);
+    expect(html).not.toContain("<details open");
+  });
+
   it("FR-WAC-05 a cutting is marked as Steckling in the growth view, a plant is not", () => {
     const cutting = renderToString(<MeasurementHeader view={view({ status: "cutting" })} />);
     expect(cutting).toContain("Steckling");
