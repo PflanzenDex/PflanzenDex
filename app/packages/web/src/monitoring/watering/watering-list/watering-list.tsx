@@ -32,7 +32,7 @@ function Row(props: {
       <Checkbox checked={props.checked} onChange={props.onToggle} rowClassName="min-w-0 flex-1">
         <span>
           <span className="font-medium">{r.name}</span>
-          <span className="block text-sm text-muted-foreground">
+          <span className="block text-sm tabular-nums text-muted-foreground">
             {sinceText(r)}, Intervall alle {keepTogether(`${r.intervalDays} Tage`)}
           </span>
         </span>

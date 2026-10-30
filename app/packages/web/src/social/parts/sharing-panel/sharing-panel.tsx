@@ -14,10 +14,10 @@ export function sharingChoice(
   shared: readonly SharingRow[],
 ): string {
   const active = specimens.filter((s) => s.status !== "archived");
-  if (active.length === 0) return "Noch keine Exemplare";
+  if (active.length === 0) return "Noch keine Pflanzen";
   const ids = new Set(shared.map((r) => r.specimenId));
   const count = active.filter((s) => ids.has(s.id)).length;
-  return count === 0 ? "Alles privat" : `${count} von ${active.length} Exemplaren geteilt`;
+  return count === 0 ? "Alles privat" : `${count} von ${active.length} Pflanzen geteilt`;
 }
 
 /** The species part of a specimen name (`Species – marker`, DM-BES-03): the marker is never needed here. */
@@ -62,17 +62,17 @@ function SpeciesGroup(props: {
           size="touch"
           variant="outline"
           disabled={props.busy}
-          aria-label={`Alle Exemplare von ${g.title} teilen`}
+          aria-label={`Alle Pflanzen von ${g.title} teilen`}
           onClick={() => props.onSetSpecies(g.speciesId, true)}
         >
-          Alle Exemplare dieser Art teilen
+          Alle Pflanzen dieser Art teilen
         </Button>
         <Button
           type="button"
           size="touch"
           variant="outline"
           disabled={props.busy}
-          aria-label={`Alle Exemplare von ${g.title} zurückziehen`}
+          aria-label={`Alle Pflanzen von ${g.title} zurückziehen`}
           onClick={() => props.onSetSpecies(g.speciesId, false)}
         >
           Alle zurückziehen
@@ -102,8 +102,8 @@ export function SharingPanel(props: {
       <p className="text-muted-foreground">Alles ist privat, bis du es freigibst.</p>
       {list.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-3">
-          Du hast noch keine Exemplare, die du freigeben könntest. Lege zuerst unter „Bestand“ ein
-          Exemplar an.
+          Du hast noch keine Pflanzen, die du freigeben könntest. Lege zuerst unter „Sammlung“ ein
+          Pflanze an.
         </p>
       ) : (
         <Pager

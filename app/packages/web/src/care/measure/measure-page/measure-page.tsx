@@ -68,7 +68,7 @@ export function MeasurePage(props: {
         )}
       </LoadFrame>
       <Button type="button" variant="secondary" size="touch" onClick={props.onBack}>
-        Zurück zum Bestand
+        Zurück zur Sammlung
       </Button>
     </section>
   );

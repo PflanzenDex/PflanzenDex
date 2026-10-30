@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { WishlistPage } from "../wishlist-page/wishlist-page";
 
-// US-WUN-05: from the purchase to the plant: "Exemplar anlegen" after "Gekauft" and in the history, the link state, and
+// US-WUN-05: from the purchase to the plant: "Pflanze anlegen" after "Gekauft" and in the history, the link state, and
 // the action "Verwerfen".
 // The layers are dialogs and drawers; jsdom lacks pointer capture, which they use.
 Element.prototype.setPointerCapture ??= () => undefined;
@@ -48,7 +48,7 @@ const candidates = (open: unknown[]) => ({
 });
 const BOUGHT_HINT = {
   text: "„Korbmarante (Calathea orbifolia)“ ist als gekauft vermerkt.",
-  nextAction: "Tippe auf „Exemplar anlegen“.",
+  nextAction: "Tippe auf „Pflanze anlegen“.",
 };
 const DISCARD_HINT = {
   text: "„Korbmarante (Calathea orbifolia)“ ist verworfen. Der Wunsch bleibt unter „Verworfen“ gespeichert.",
@@ -122,7 +122,7 @@ afterEach(() => {
 });
 
 describe("US-WUN-05 the way from the purchase to the specimen", () => {
-  it("US-WUN-05 after 'Gekauft' the confirmation offers 'Exemplar anlegen' and hands the wish over", async () => {
+  it("US-WUN-05 after 'Gekauft' the confirmation offers 'Pflanze anlegen' and hands the wish over", async () => {
     server();
     const onCreateSpecimen = vi.fn();
     view(<WishlistPage api="http://api" token={token} onCreateSpecimen={onCreateSpecimen} />);
@@ -130,7 +130,7 @@ describe("US-WUN-05 the way from the purchase to the specimen", () => {
     const status = (await screen.findByText(BOUGHT_HINT.text)).closest(
       '[role="status"]',
     ) as HTMLElement;
-    await userEvent.click(within(status).getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(within(status).getByRole("button", { name: "Pflanze anlegen" }));
     expect(onCreateSpecimen).toHaveBeenCalledWith({
       id: "w1",
       name: "Calathea orbifolia",
@@ -138,7 +138,7 @@ describe("US-WUN-05 the way from the purchase to the specimen", () => {
     });
   });
 
-  it("US-WUN-05 the history offers 'Exemplar anlegen' for a bought wish without a specimen", async () => {
+  it("US-WUN-05 the history offers 'Pflanze anlegen' for a bought wish without a specimen", async () => {
     server({ open: [], bought: history([{ id: "w1", title: candidate.title, specimenId: null }]) });
     const onCreateSpecimen = vi.fn();
     view(
@@ -147,27 +147,27 @@ describe("US-WUN-05 the way from the purchase to the specimen", () => {
     );
     const list = await screen.findByRole("list", { name: "Gekaufte Wünsche" });
     await userEvent.click(
-      within(list).getByRole("button", { name: `Exemplar anlegen: ${candidate.title}` }),
+      within(list).getByRole("button", { name: `Pflanze anlegen: ${candidate.title}` }),
     );
     expect(onCreateSpecimen).toHaveBeenCalledWith(expect.objectContaining({ id: "w1" }));
   });
 
-  it("US-WUN-05 a linked wish says so ('gekauft → Exemplar') and offers no second specimen", async () => {
+  it("US-WUN-05 a linked wish says so ('gekauft → Pflanze') and offers no second specimen", async () => {
     server({ open: [], bought: history([{ id: "w1", title: candidate.title, specimenId: "s1" }]) });
     view(
       <WishlistPage api="http://api" token={token} onCreateSpecimen={vi.fn()} />,
       "/?sheet=bought",
     );
     const list = await screen.findByRole("list", { name: "Gekaufte Wünsche" });
-    expect(list.textContent).toContain("Gekauft → Exemplar angelegt");
+    expect(list.textContent).toContain("Gekauft → Pflanze angelegt");
     expect(within(list).queryByRole("button")).toBeNull();
   });
 
-  it("US-WUN-05 without a hand-over the page shows no 'Exemplar anlegen'", async () => {
+  it("US-WUN-05 without a hand-over the page shows no 'Pflanze anlegen'", async () => {
     server({ open: [], bought: history([{ id: "w1", title: candidate.title, specimenId: null }]) });
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=bought");
     await screen.findByRole("list", { name: "Gekaufte Wünsche" });
-    expect(screen.queryByRole("button", { name: /Exemplar anlegen/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Pflanze anlegen/ })).toBeNull();
   });
 });
 

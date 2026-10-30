@@ -9,7 +9,7 @@ Ticket TE-03 (#40). Basis: E-01 (self-hosting, Docker Compose, one host), R-09, 
 | `proxy`       | Caddy: two hostnames (app, sign-in); plain HTTP behind a TLS-terminating proxy or HTTPS with automatic certificates; `/health` (status only) and `/api/*` (prefix removed) go to the API, `/health/*` and `/api/health/*` answer 404, the rest of the app host to web, the sign-in host to Keycloak |
 | `api`         | Hono API (Node 24, through tsx, because `core` is exported as TypeScript source)                                                                                                                                                                                                                    |
 | `web`         | static PWA (Vite build, Caddy)                                                                                                                                                                                                                                                                      |
-| `db`          | PostgreSQL 16, data in the `dbdata` volume                                                                                                                                                                                                                                                          |
+| `db`          | PostgreSQL 18, data in the `dbdata` volume (upgrade from 16: `postgres-major-upgrade.md`)                                                                                                                                                                                                           |
 | `migrate`     | one-shot, same image as `api`: applies pending SQL migrations, then exits (#201)                                                                                                                                                                                                                    |
 | `keycloak`    | sign-in service (Keycloak 26.8, production mode), data in its own database in `db`; imports the realm `pflanzendex` on its first start                                                                                                                                                              |
 | `db-roles`    | one-shot: creates the application role and the plain schema owner role, hands an existing database to it (#907, "DB roles in production")                                                                                                                                                           |
@@ -32,9 +32,9 @@ The database and Keycloak are not exposed. Only the proxy listens (ports from `H
 make deploy          # fetches origin/main, backs up the DB (if it runs), builds, starts, waits for /health
 ```
 
-To try another state: `app/config/deploy/scripts/deploy.sh origin/dev`. Builds are reproducible: `npm ci` from the lock file, every image pinned to an exact version and a digest (`postgres:16.15-alpine3.24@sha256:…`, #761); Renovate opens the update PRs (FR-QG-15). `GET /health/details` (inside the stack, see "Health check") shows the running version (`version` = commit hash).
+To try another state: `app/config/deploy/scripts/deploy.sh origin/dev`. Builds are reproducible: `npm ci` from the lock file, every image pinned to an exact version and a digest (`postgres:18.6-alpine3.24@sha256:…`, #761); Renovate opens the update PRs (FR-QG-15). A PostgreSQL major is never taken over by Renovate; the upgrade is the one-time runbook `postgres-major-upgrade.md`. `GET /health/details` (inside the stack, see "Health check") shows the running version (`version` = commit hash).
 Migrations run on every deploy: the one-shot `migrate` service (same image as `api`, `packages/db/migrations`) applies pending files before the `api` starts (`depends_on: service_completed_successfully`). They are forward only and guarded by an advisory lock and checksums. A failing migration fails `compose up`, so `deploy.sh` rolls back to the previous ref and the API never runs against a half-migrated schema. Check with `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml logs migrate`. Migrations are not rolled back; use the pre-deploy backup (restore below) for data problems. Manual run: `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml run --rm migrate`.
-Rollback: `app/config/deploy/scripts/deploy.sh <earlier commit>`; for data problems, restore (below).
+Rollback: `app/config/deploy/scripts/deploy.sh <earlier commit>`; for data problems, restore (below). Across a PostgreSQL major the automatic rollback is refused by the volume check; the steps are in `postgres-major-upgrade.md`.
 
 Trying it locally (without a domain): `.env` with `CADDY_SCHEME=` (empty), `APP_HOST=localhost`, `AUTH_HOST=auth.localhost`, `APP_URL=https://localhost:8443`, `AUTH_URL=https://auth.localhost:8443`, then `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml up -d --build` and `curl -k https://localhost:8443/health`.
 
@@ -48,7 +48,7 @@ Every service runs with `no-new-privileges` and without any Linux capability (`c
 docker run --rm -v pflanzendex_caddydata:/data caddy:2.11.7-alpine chown -R 10001:10001 /data
 ```
 
-The other volumes need nothing: the PostgreSQL entrypoint already gave `dbdata` to `postgres`, and the Tailscale state stays with root. A rollback to an older version keeps working (root can use the files).
+The other volumes need nothing: the PostgreSQL entrypoint already gave the data directory in `dbdata` (`18/docker`) to `postgres`, which is all `db` needs as that user (checked on a volume set up by the old root entrypoint and on a fresh one), and the Tailscale state stays with root. A rollback to an older version keeps working (root can use the files).
 
 ## Realm security defaults (#757)
 

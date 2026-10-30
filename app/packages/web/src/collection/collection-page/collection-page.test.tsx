@@ -91,11 +91,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("US-BES-02 Seite Bestand", () => {
+describe("US-BES-02 Seite Sammlung", () => {
   it("shows a loading state first, then the specimens with location names", async () => {
     fakeServer({ specimens: [specimen({ locationId: "s1" })] });
     render(page());
-    expect(screen.getByRole("status").textContent).toContain("Bestand wird geladen");
+    expect(screen.getByRole("status").textContent).toContain("Sammlung wird geladen");
     await openPlant("Bogenhanf");
     await openTab("Standort");
     expect(await screen.findByText("Standort: Regal Süd")).toBeTruthy();
@@ -136,7 +136,7 @@ describe("US-BES-02 Seite Bestand", () => {
     await userEvent.type(screen.getByLabelText("Kennzeichen (optional)"), "rot");
     expect(screen.getByText("Name: Bogenhanf – rot")).toBeTruthy();
     await userEvent.selectOptions(screen.getByLabelText("Standort"), "s1");
-    await userEvent.click(screen.getByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await vi.waitFor(() => expect(onCompleted).toHaveBeenCalledOnce());
     expect(posts).toHaveLength(1);
     expect(posts[0]?.body).toMatchObject({ speciesId: "a1", marker: "rot", locationId: "s1" });
@@ -146,7 +146,7 @@ describe("US-BES-02 Seite Bestand", () => {
   it("only the species is required: without a location it stays unknown and is not sent (P-08)", async () => {
     const { posts } = fakeServer();
     render(page({ newSpecies: species }));
-    await userEvent.click(await screen.findByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Pflanze anlegen" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]?.body["locationId"]).toBeUndefined();
     expect(posts[0]?.body["marker"]).toBeUndefined();
@@ -158,16 +158,16 @@ describe("US-BES-02 Seite Bestand", () => {
         response(409, {
           error: {
             code: "specimen.name_taken",
-            text: "Ein Exemplar mit diesem Namen gibt es schon.",
+            text: "Eine Pflanze mit diesem Namen gibt es schon.",
             data: { name: "Bogenhanf", existing: [{ id: "e1", name: "Bogenhanf" }] },
           },
         }),
     });
     const onCompleted = vi.fn();
     render(page({ newSpecies: species, onCompleted }));
-    await userEvent.click(await screen.findByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Pflanze anlegen" }));
     const box = await screen.findByRole("alert");
-    expect(box.textContent).toContain("Ein Exemplar mit diesem Namen gibt es schon.");
+    expect(box.textContent).toContain("Eine Pflanze mit diesem Namen gibt es schon.");
     expect(box.textContent).toContain("Schon vorhanden: Bogenhanf");
     expect(onCompleted).not.toHaveBeenCalled();
     // Typing in a marker clears the error: the next input counts.
@@ -183,11 +183,11 @@ describe("US-BES-02 Seite Bestand", () => {
     expect(onSpeciesChoose).toHaveBeenCalledOnce();
   });
 
-  it("US-ONB-01 Weiteres Exemplar opens the quick flow, not the species choice", async () => {
+  it("US-ONB-01 Weitere Pflanze opens the quick flow, not the species choice", async () => {
     fakeServer({ specimens: [specimen()] });
     const [onAdd, onSpeciesChoose] = [vi.fn(), vi.fn()];
     render(page({ onAdd, onSpeciesChoose }));
-    await userEvent.click(await screen.findByRole("button", { name: "Weiteres Exemplar" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Weitere Pflanze" }));
     expect(onAdd).toHaveBeenCalledOnce();
     expect(onSpeciesChoose).not.toHaveBeenCalled();
   });
@@ -195,7 +195,7 @@ describe("US-BES-02 Seite Bestand", () => {
   it("after creating with an unknown location the list says why it is unknown", async () => {
     fakeServer();
     const { rerender } = render(page({ newSpecies: species }));
-    await userEvent.click(await screen.findByRole("button", { name: "Exemplar anlegen" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Pflanze anlegen" }));
     await vi.waitFor(() =>
       expect(fetch).toHaveBeenCalledWith(
         "http://api/specimens",

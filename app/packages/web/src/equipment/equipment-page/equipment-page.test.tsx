@@ -22,7 +22,7 @@ const token = async () => "tok";
 const item = (extra: Record<string, unknown> = {}) => ({
   id: "e1",
   type: "Lamp",
-  name: "Lampe 3",
+  name: "Zone 3",
   status: "active",
   manufacturer: null,
   model: null,
@@ -51,7 +51,7 @@ const lampOf = (extra: Record<string, unknown> = {}) => ({
 });
 const zone = (extra: Record<string, unknown> = {}) => ({
   zoneId: "z2",
-  name: "Lampe 2",
+  name: "Zone 2",
   specimens: 3,
   lamps: [],
   note: null,
@@ -64,7 +64,7 @@ const lightOf = (extra: Record<string, unknown> = {}) => ({
   id: "l1",
   name: "Lampe Regal",
   status: "active",
-  zone: { id: "z2", name: "Lampe 2", luxCeiling: 15000 },
+  zone: { id: "z2", name: "Zone 2", luxCeiling: 15000 },
   powerW: null,
   manufacturerLux: null,
   last: null,
@@ -112,7 +112,7 @@ describe("US-EQU-01 equipment page", () => {
     fakeServer([item()]);
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
     const card = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
-    expect(within(card).getByRole("heading", { name: "Lampe 3" })).toBeTruthy();
+    expect(within(card).getByRole("heading", { name: "Zone 3" })).toBeTruthy();
     expect(card.textContent).toContain("Lampe · Aktiv");
     // Four on the card, two more in "Betrieb und Wartung" (since when it runs, lifetime; US-EQU-04).
     expect(card.textContent?.match(/unbekannt/g)).toHaveLength(6);
@@ -166,11 +166,16 @@ describe("US-EQU-01 equipment page", () => {
         zone({
           note: {
             kind: "no_active_lamp",
-            text: "Die Lichtzone Lampe 2 hat 3 Pflanzen, aber keine aktive Lampe.",
+            text: "Die Lichtzone Zone 2 hat 3 Pflanzen, aber keine aktive Lampe.",
             nextAction: "Ordne dieser Zone eine aktive Lampe zu.",
           },
         }),
-        zone({ zoneId: "z1", name: "Lampe 1", specimens: null, lamps: [lampOf()] }),
+        zone({
+          zoneId: "z1",
+          name: "Zone 1 · Stecklingslicht",
+          specimens: null,
+          lamps: [lampOf()],
+        }),
       ],
       unassigned: [lampOf({ id: "l2", name: "Alte Lampe" })],
     });
@@ -241,7 +246,7 @@ describe("US-EQU-01 equipment page", () => {
     await screen.findByLabelText("Art");
     const user = userEvent.setup();
     await user.selectOptions(screen.getByLabelText("Art"), "Timer");
-    await user.type(screen.getByLabelText("Name"), "Lampe 3");
+    await user.type(screen.getByLabelText("Name"), "Zone 3");
     await user.click(screen.getByRole("button", { name: "Equipment speichern" }));
     expect(await screen.findByText(/Dieses Equipment gibt es schon/)).toBeTruthy();
   });
@@ -289,7 +294,7 @@ describe("US-EQU-01 equipment page", () => {
     expect(alert.textContent).toContain("Prüfe die Zone.");
     const card = alert.closest("li") as HTMLElement;
     expect(card.textContent).toContain("20.000 lx");
-    expect(card.textContent).toContain("6.000 lx am 2026-10-01 (Abstand 30 cm, Luxmeter)");
+    expect(card.textContent).toContain("6.000 lx am 2026-10-01 (Abstand 30\u00a0cm, Luxmeter)");
     expect(card.textContent).toContain("6.000 lx (gemessen)");
   });
 
@@ -430,7 +435,7 @@ describe("US-EQU-01 equipment page", () => {
     const zones = {
       zones: [
         zone({ lamps: [lampOf()] }),
-        zone({ zoneId: "z3", name: "Lampe 3", specimens: 1, lamps: [] }),
+        zone({ zoneId: "z3", name: "Zone 3", specimens: 1, lamps: [] }),
       ],
       unassigned: [],
     };
@@ -438,7 +443,7 @@ describe("US-EQU-01 equipment page", () => {
     answerAll(fetchFn, zones, NO_LIGHT);
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=lamps");
     const user = userEvent.setup();
-    const list = await screen.findByRole("list", { name: "Lampen in Lampe 2" });
+    const list = await screen.findByRole("list", { name: "Lampen in Zone 2" });
     await user.selectOptions(within(list).getByLabelText("Lichtzone"), "z3");
     const post = await postsTo(fetchFn);
     expect(String(post[0])).toContain("/equipment/l1/zone");
@@ -485,7 +490,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(await tile("Kosten")).toContain("unbekannt");
     expect(await tile("Bedarf")).toContain("nichts fehlt");
     expect(await tile("Sensoren")).toContain("0 Sensoren");
-    expect(await tile("Wünsche")).toContain("0 offene");
+    expect(await tile("Wunschliste")).toContain("0 offene");
   });
 
   it("US-QS-22 'Equipment erfassen' is the one primary action and opens the form as a layer", async () => {
@@ -501,23 +506,23 @@ describe("US-QS-22 the equipment fits one screen", () => {
     view(<EquipmentPage api="http://api" token={token} />);
     await screen.findByRole("button", { name: /^Kosten/ });
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(screen.queryByText("Lampe 3")).toBeNull();
+    expect(screen.queryByText("Zone 3")).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: /^Equipment1 Teil/ }));
     const layer = await screen.findByRole("dialog", { name: "Equipment" });
-    expect(within(layer).getByRole("heading", { name: "Lampe 3" })).toBeTruthy();
+    expect(within(layer).getByRole("heading", { name: "Zone 3" })).toBeTruthy();
   });
 
   it("US-QS-22 the list of what I own is paged inside its layer with its own address part", async () => {
     fakeServer([
-      item({ id: "e1", name: "Lampe 1" }),
-      item({ id: "e2", name: "Lampe 2" }),
-      item({ id: "e3", name: "Lampe 3" }),
+      item({ id: "e1", name: "Zone 1 · Stecklingslicht" }),
+      item({ id: "e2", name: "Zone 2" }),
+      item({ id: "e3", name: "Zone 3" }),
     ]);
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
     const layer = await screen.findByRole("dialog", { name: "Equipment" });
     expect(within(layer).getByText("Seite 1 von 2")).toBeTruthy();
     await userEvent.click(within(layer).getByRole("button", { name: "Weiter" }));
-    expect(await within(layer).findByRole("heading", { name: "Lampe 3" })).toBeTruthy();
+    expect(await within(layer).findByRole("heading", { name: "Zone 3" })).toBeTruthy();
   });
 
   it("US-QS-22 · P-09 a part without records says so and names the next step", async () => {

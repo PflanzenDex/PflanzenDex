@@ -18,9 +18,9 @@ const schema = shape({ wishId: idField("wishId") });
 
 const ERROR = { not_found: "wish.not_found", not_open: "wish.not_open" } as const;
 
-// The guided path to the plant (US-WUN-05) starts from the action "Exemplar anlegen" on this answer.
+// The guided path to the plant (US-WUN-05) starts from the action "Pflanze anlegen" on this answer.
 const NEXT_ACTION =
-  "Tippe auf „Exemplar anlegen“: Die Art ist vorgewählt, und der Wunsch wird mit dem Exemplar verknüpft. So zählt die Pflanze in ihrer Lichtzone mit.";
+  "Tippe auf „Pflanze anlegen“: Die Art ist vorgewählt, und der Wunsch wird mit der Pflanze verknüpft. So zählt die Pflanze in ihrer Lichtzone mit.";
 
 function hintFor(wish: WishRow, changed: boolean): WishBuyResult["hint"] {
   const title = titleOf(wish);

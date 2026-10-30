@@ -19,7 +19,7 @@ describe("US-MON-02 reminder at the phase change", () => {
     expect(rest).toEqual([]);
     expect(o).toMatchObject({ id: "phase_change:s1:2026-11-01", occasion: "phase" });
     expect(o?.text).toBe(
-      "„Ficus“: heute beginnt die Ruhephase, das Exemplar steht noch am alten Standort.",
+      "„Ficus“: heute beginnt die Ruhephase, die Pflanze steht noch am alten Standort.",
     );
     expect(o?.nextAction).toContain("Jetzt umgestellt");
   });

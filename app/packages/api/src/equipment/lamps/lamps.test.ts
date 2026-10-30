@@ -74,7 +74,7 @@ afterAll(async () => {
 
 describe("US-EQU-03 measured light intensity through the API", () => {
   it("US-EQU-03 a lamp without a measurement is not measured and the zone value applies (FR-LIC-06)", async () => {
-    const id = await lampId(subA, "Lampe ohne Messung", zoneA["Lampe 2"] as string);
+    const id = await lampId(subA, "Lampe ohne Messung", zoneA["Zone 2"] as string);
     expect(await lampRow(subA, id)).toMatchObject({
       last: null,
       effective: { lux: 15000, basis: "zone" },
@@ -82,7 +82,7 @@ describe("US-EQU-03 measured light intensity through the API", () => {
   });
 
   it("US-EQU-03 records a measurement and shows it apart from the manufacturer's statement", async () => {
-    const id = await lampId(subA, "Lampe mit Messung", zoneA["Lampe 2"] as string);
+    const id = await lampId(subA, "Lampe mit Messung", zoneA["Zone 2"] as string);
     const stated = await call(subA, "POST", `/equipment/${id}/lamp-data`, {
       powerW: 40,
       luxStatement: 20000,
@@ -106,7 +106,7 @@ describe("US-EQU-03 measured light intensity through the API", () => {
   });
 
   it("US-EQU-03 Check zone appears only after the keeper sets a limit and the deviation exceeds it", async () => {
-    const id = await lampId(subA, "Lampe Abweichung", zoneA["Lampe 2"] as string);
+    const id = await lampId(subA, "Lampe Abweichung", zoneA["Zone 2"] as string);
     await call(subA, "POST", `/equipment/${id}/measurements`, {
       measuredOn: "2026-10-02",
       lux: 6000,
@@ -123,7 +123,7 @@ describe("US-EQU-03 measured light intensity through the API", () => {
   });
 
   it("US-EQU-03 refuses invalid input and a record that is not a lamp", async () => {
-    const id = await lampId(subA, "Lampe Eingabe", zoneA["Lampe 3"] as string);
+    const id = await lampId(subA, "Lampe Eingabe", zoneA["Zone 3"] as string);
     const bad = await call(subA, "POST", `/equipment/${id}/measurements`, {
       measuredOn: "2026-10-02",
     });
@@ -139,7 +139,7 @@ describe("US-EQU-03 measured light intensity through the API", () => {
   });
 
   it("P-04 another account sees no lamps and cannot measure or describe a foreign lamp", async () => {
-    const id = await lampId(subA, "Lampe privat", zoneA["Lampe 2"] as string);
+    const id = await lampId(subA, "Lampe privat", zoneA["Zone 2"] as string);
     expect(((await lights(subB))["lamps"] as LampRow[]).some((l) => l.id === id)).toBe(false);
     const measure = await call(subB, "POST", `/equipment/${id}/measurements`, {
       measuredOn: "2026-10-02",

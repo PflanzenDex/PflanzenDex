@@ -137,7 +137,7 @@ describe("US-QS-19 the layers of the plants", () => {
     await userEvent.click(screen.getByRole("button", { name: /Dünnste Zone: Zone 3/ }));
     const layer = await screen.findByRole("dialog", { name: "Lichtzonen" });
     expect(screen.getByTestId("address").textContent).toBe("?sheet=zones");
-    expect(within(layer).getByText(/Zone 3: 1 Exemplar/)).toBeTruthy();
+    expect(within(layer).getByText(/Zone 3: 1 Pflanze/)).toBeTruthy();
     expect(within(layer).getByText(/dünnste Zone/)).toBeTruthy();
     expect(within(layer).getByText(/Stecklingslicht zählt nicht/)).toBeTruthy();
     await userEvent.click(
@@ -177,7 +177,7 @@ describe("US-QS-19 the layers of the plants", () => {
   it("US-QS-19 · P-09 without a plant the mode says what to do next", () => {
     const onSpeciesChoose = vi.fn();
     screenWith([], { onSpeciesChoose });
-    expect(screen.getByText("Du hast noch kein Exemplar.")).toBeTruthy();
+    expect(screen.getByText("Du hast noch keine Pflanze.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Art wählen" }));
     expect(onSpeciesChoose).toHaveBeenCalledOnce();
   });
@@ -209,7 +209,7 @@ describe("US-QS-19 loading and error states of the plants", () => {
   it("US-QS-19 · P-10 while loading a skeleton says so, and an error offers Erneut versuchen", async () => {
     fail();
     render(page());
-    expect(screen.getByRole("status").textContent).toContain("Bestand wird geladen");
+    expect(screen.getByRole("status").textContent).toContain("Sammlung wird geladen");
     expect((await screen.findByRole("alert")).textContent).toContain("Der Server antwortet nicht.");
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
     vi.unstubAllGlobals();
@@ -227,7 +227,7 @@ describe("US-QS-19 loading and error states of the plants", () => {
       }),
     );
     render(page());
-    expect(await screen.findByText("Du hast noch kein Exemplar.")).toBeTruthy();
+    expect(await screen.findByText("Du hast noch keine Pflanze.")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Lichtzonen ansehen" })).toBeTruthy();
     vi.unstubAllGlobals();
   });

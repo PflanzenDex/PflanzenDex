@@ -65,7 +65,7 @@ function TreatmentsList(props: { api: string; token: Token; host?: boolean }) {
         next={
           canPlan
             ? { label: "Behandlung planen", onClick: plan }
-            : { label: "Zum Bestand", href: "/collection" }
+            : { label: "Zur Sammlung", href: "/collection" }
         }
       />
       {host ? (

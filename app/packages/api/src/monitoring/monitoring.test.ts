@@ -165,7 +165,7 @@ describe("US-MON-01 the daily job against the database", () => {
     id: "measurement:1",
     occasion: "measurement",
     text: "„Ficus“ wurde seit mehr als 30 Tagen nicht gemessen.",
-    nextAction: "Miss das Exemplar und trage die Messung ein.",
+    nextAction: "Miss die Pflanze und trage die Messung ein.",
   };
   const job = (userId: string, date: string, attempts = 1): JobRow => ({
     id: randomUUID(),

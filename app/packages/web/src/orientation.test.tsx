@@ -152,15 +152,15 @@ describe("US-QS-09 · a view with nothing to do says so and names the next step 
     expect(
       await within(layer).findByRole("heading", { level: 3, name: "Keine Hinweise" }),
     ).toBeTruthy();
-    expect(within(layer).getByRole("button", { name: "Zum Bestand" })).toBeTruthy();
+    expect(within(layer).getByRole("button", { name: "Zur Sammlung" })).toBeTruthy();
     // The page behind keeps its one main heading.
     expect(screen.getByRole("heading", { level: 1, name: "Heute", hidden: true })).toBeTruthy();
   });
 
   it("US-QS-09 the empty species comparison names what to do in its text", async () => {
     renderAt(DIFFICULTY_ADDRESS, empty);
-    await screen.findByRole("heading", { name: "Noch keine Art mit aktivem Exemplar" });
-    expect(screen.getByText(/Lege im Bestand ein Exemplar an/)).toBeTruthy();
+    await screen.findByRole("heading", { name: "Noch keine Art mit aktiver Pflanze" });
+    expect(screen.getByText(/Lege in der Sammlung eine Pflanze an/)).toBeTruthy();
   });
 
   it("US-QS-09 a view that failed to load shows its heading, the reason and a retry, not a blank page", async () => {

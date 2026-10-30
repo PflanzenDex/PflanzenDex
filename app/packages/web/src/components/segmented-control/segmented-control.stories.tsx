@@ -29,7 +29,7 @@ const TWO = [
 export const TwoChoices: Story = { render: () => <Demo options={TWO} /> };
 
 export const ThreeChoices: Story = {
-  render: () => <Demo options={[...TWO, { value: "wishes", label: "Wünsche" }]} />,
+  render: () => <Demo options={[...TWO, { value: "wishes", label: "Wunschliste" }]} />,
 };
 
 export const Focus: Story = {

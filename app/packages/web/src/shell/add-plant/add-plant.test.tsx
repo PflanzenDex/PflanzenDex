@@ -9,8 +9,8 @@ const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 const token = async () => "tok";
 const ZONES = [
-  { id: "z2", name: "Lampe 2", luxCeiling: 15000, ppfd: null, sortOrder: 2 },
-  { id: "z4", name: "Lampe 4", luxCeiling: 60000, ppfd: null, sortOrder: 4 },
+  { id: "z2", name: "Zone 2", luxCeiling: 15000, ppfd: null, sortOrder: 2 },
+  { id: "z4", name: "Zone 4", luxCeiling: 60000, ppfd: null, sortOrder: 4 },
 ];
 const LOCATIONS = [
   { id: "l1", name: "Zuhause", lightZoneId: null, kind: "indoor" },
@@ -94,7 +94,7 @@ describe("US-ONB-01 a further plant uses the two steps of the first plant (#896)
     view();
     await toSave();
     const place = (await screen.findByLabelText("Standort")) as HTMLSelectElement;
-    expect(await screen.findByRole("option", { name: "Balkon (Lampe 4)" })).toBeTruthy();
+    expect(await screen.findByRole("option", { name: "Balkon (Zone 4)" })).toBeTruthy();
     expect(place.value).toBe("l2");
     await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
     expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();

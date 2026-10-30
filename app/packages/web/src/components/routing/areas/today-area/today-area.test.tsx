@@ -23,7 +23,7 @@ const noLocation = {
   specimenName: "Bogenhanf",
   locationId: null,
   text: "„Bogenhanf“ hat noch keinen Standort.",
-  nextAction: "Weise dem Exemplar einen Standort zu.",
+  nextAction: "Weise der Pflanze einen Standort zu.",
 };
 const todayItem = {
   id: "t1",
@@ -213,7 +213,7 @@ describe("US-QS-18 Heute fits one screen", () => {
     fakeServer({ treatments: [], hints: [] });
     show();
     expect(await screen.findByText("Heute steht nichts an.")).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: "Zum Bestand" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: "Zur Sammlung" }).length).toBeGreaterThan(0);
     expect(await screen.findByRole("button", { name: /^Behandeln0$/ })).toBeTruthy();
   });
 });
@@ -269,7 +269,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
   it("US-QS-18 · US-BEH-03 the history per plant stays reachable in the layer", async () => {
     fakeServer();
     show("/today?sheet=treatments");
-    expect(await screen.findByLabelText("Exemplar für den Verlauf")).toBeTruthy();
+    expect(await screen.findByLabelText("Pflanze für den Verlauf")).toBeTruthy();
   });
 
   it("US-QS-18 · US-PHA-03 a plant without a location gets one inline in the layer Fehlt noch", async () => {
@@ -298,7 +298,7 @@ describe("US-QS-18 every category keeps its next action (P-09, P-10)", () => {
     show("/today?sheet=hints", open);
     const empty = await screen.findByRole("heading", { level: 3, name: "Keine Hinweise" });
     await user.click(
-      within(empty.parentElement as HTMLElement).getByRole("button", { name: "Zum Bestand" }),
+      within(empty.parentElement as HTMLElement).getByRole("button", { name: "Zur Sammlung" }),
     );
     expect(open).toHaveBeenCalledWith("collection");
   });
@@ -324,7 +324,7 @@ describe("US-QS-18 every category keeps its next action (P-09, P-10)", () => {
     });
     expect(
       within(empty.parentElement as HTMLElement)
-        .getByRole("link", { name: "Zum Bestand" })
+        .getByRole("link", { name: "Zur Sammlung" })
         .getAttribute("href"),
     ).toBe("/collection");
   });

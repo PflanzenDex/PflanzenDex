@@ -68,7 +68,7 @@ function Entry(props: { api: string; token: Token; item: AnniversaryItem; onOpen
 }
 
 /**
- * Anniversaries with the plant on the Today list (US-ACH-06): "<Exemplar> ist 1 Jahr bei dir" with the first and the
+ * Anniversaries with the plant on the Today list (US-ACH-06): "<Pflanze> ist 1 Jahr bei dir" with the first and the
  * latest photo, if there are any. Derived on the server from the catch date; the entry stays until the end of the
  * week of the anniversary. Calm mode, no anniversary or a read error show nothing (US-ACH-08): a side feature never
  * breaks the page. No push and no pressure (FR-ACH-06); the text says what happened, the button what to do next (P-09).

@@ -16,8 +16,8 @@ const name = (a: ReturnType<typeof derive>) => (a.kind === "zone" ? a.zone.name 
 
 describe("US-LIC-01 assign a species to the right light zone", () => {
   it("Given lux need and default level, when deriving, then the zone of the account applies", () => {
-    expect(name(derive(15_000, 2))).toBe("Lampe 2");
-    expect(name(derive(100_000, 3, true))).toBe("Lampe 3");
+    expect(name(derive(15_000, 2))).toBe("Zone 2");
+    expect(name(derive(100_000, 3, true))).toBe("Zone 3");
   });
 
   it("the zone is derived: a renamed zone of the account appears with its name", () => {
@@ -27,7 +27,7 @@ describe("US-LIC-01 assign a species to the right light zone", () => {
   });
 
   it("cutting light is never a target zone for adults (also with a small need)", () => {
-    for (const need of [1, 500, 1_500, 4_000]) expect(name(derive(need, 2))).toBe("Lampe 2");
+    for (const need of [1, 500, 1_500, 4_000]) expect(name(derive(need, 2))).toBe("Zone 2");
     expect(
       name(
         zoneDerive({ lightDemandLux: 500, standardLevel: 2, softLeaf: false }, [
@@ -39,23 +39,23 @@ describe("US-LIC-01 assign a species to the right light zone", () => {
 
   it("promote only from 80 % of the lux ceiling of the current level", () => {
     const decke3 = 100_000;
-    expect(name(derive(0.8 * decke3 - 1, 3))).toBe("Lampe 3");
-    expect(name(derive(0.8 * decke3, 3))).toBe("Lampe 4");
+    expect(name(derive(0.8 * decke3 - 1, 3))).toBe("Zone 3");
+    expect(name(derive(0.8 * decke3, 3))).toBe("Zone 4");
   });
 
   it("if the need is more than 30 % below the ceiling of the higher zone, the species stays there", () => {
     const a = derive(14_000, 2);
-    expect(name(a)).toBe("Lampe 2");
+    expect(name(a)).toBe("Zone 2");
     expect(a.kind === "zone" && a.reason).toBe("standard");
-    expect(name(derive(70_000, 2))).toBe("Lampe 3");
-    expect(name(derive(69_999, 2))).toBe("Lampe 2");
+    expect(name(derive(70_000, 2))).toBe("Zone 3");
+    expect(name(derive(69_999, 2))).toBe("Zone 2");
   });
 
   it("C3 plants with a soft leaf are not promoted automatically", () => {
     const a = derive(100_000, 2, true);
-    expect(name(a)).toBe("Lampe 2");
+    expect(name(a)).toBe("Zone 2");
     expect(a.kind === "zone" && a.reason).toBe("soft_leaf");
-    expect(name(derive(100_000, 2, false))).toBe("Lampe 4");
+    expect(name(derive(100_000, 2, false))).toBe("Zone 4");
   });
 
   it("without lux need the zone stays unknown, never guessed (P-08)", () => {
@@ -65,7 +65,7 @@ describe("US-LIC-01 assign a species to the right light zone", () => {
   it("if the account has fewer zones than the default level, the highest available applies", () => {
     const three = zones.slice(0, 3);
     const a = zoneDerive({ lightDemandLux: 100_000, standardLevel: 4, softLeaf: false }, three);
-    expect(a.kind === "zone" && a.zone.name).toBe("Lampe 3");
+    expect(a.kind === "zone" && a.zone.name).toBe("Zone 3");
   });
 
   it("checked input: invalid values yield input.invalid with the fields", () => {

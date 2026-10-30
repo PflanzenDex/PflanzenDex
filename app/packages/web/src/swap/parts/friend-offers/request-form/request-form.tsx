@@ -17,7 +17,7 @@ function CounterFields(props: {
   return (
     <>
       <label className="grid gap-1 text-sm font-medium">
-        Eigenes Exemplar als Gegenangebot
+        Eigene Pflanze als Gegenangebot
         <Select value={props.specimen} onChange={(e) => props.onSpecimen(e.target.value)}>
           <option value="">Offen lassen</option>
           {props.choices.map((c) => (
@@ -28,7 +28,7 @@ function CounterFields(props: {
         </Select>
       </label>
       <p className="text-sm text-muted-foreground">
-        Zur Wahl stehen nur Exemplare, die du für Freunde freigegeben hast.
+        Zur Wahl stehen nur Pflanzen, die du für Freunde freigegeben hast.
       </p>
       <label className="grid gap-1 text-sm font-medium">
         Was bietest du an? (optional)

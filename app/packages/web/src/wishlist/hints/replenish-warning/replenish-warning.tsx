@@ -1,6 +1,7 @@
 import type { Replenishment } from "@pflanzendex/core";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
+import { zoneLabel } from "@pflanzendex/core";
 
 /**
  * The warning before the candidate list runs empty (US-WUN-02): one line per zone 2 to 4 below the buffer and what to
@@ -19,7 +20,7 @@ export function ReplenishWarning({ replenishment }: { replenishment: Replenishme
               <Button asChild variant="outline" size="touch">
                 <Link
                   to={`/discover?view=suggestions&zone=${z.zoneNumber}`}
-                >{`Entdecken für ${z.name}`}</Link>
+                >{`Entdecken für ${zoneLabel(z.name)}`}</Link>
               </Button>
             ) : null}
           </li>

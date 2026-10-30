@@ -44,7 +44,7 @@ function locationHint(z: SpecimenRow, locations: ReadonlyMap<string, LightLocati
       "location_missing",
       z,
       `„${z.name}“ hat noch keinen Standort.`,
-      "Weise dem Exemplar einen Standort zu.",
+      "Weise der Pflanze einen Standort zu.",
     );
   if (location.lightZoneId !== null) return null;
   return hint(
@@ -81,7 +81,7 @@ export async function specimenHints(
             "species_missing",
             z,
             `Die Art von „${z.name}“ ist nicht lesbar.`,
-            "Wähle für das Exemplar eine Art aus dem Katalog.",
+            "Wähle für die Pflanze eine Art aus dem Katalog.",
           ),
         ]),
     ...[locationHint(z, locations)].filter((h) => h !== null),

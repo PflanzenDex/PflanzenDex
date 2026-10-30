@@ -19,7 +19,7 @@ services:
     logging: *logging
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
-    image: postgres:16.15-alpine3.24@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
+    image: postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
     restart: unless-stopped
     # The image's own user (uid 70): the entrypoint skips its root-only steps; the data directory already belongs to it.
     user: postgres
@@ -27,8 +27,10 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is missing}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is missing}
       POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is missing}
+    # PostgreSQL 18 keeps its data in <mount>/18/docker; PostgreSQL 16 kept it at the root of the volume. The volume is
+    # therefore mounted one level up. Upgrade from 16: docs/guides/operations/postgres-major-upgrade.md.
     volumes:
-      - dbdata:/var/lib/postgresql/data
+      - dbdata:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -44,7 +46,7 @@ services:
     logging: *logging
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
-    image: postgres:16.15-alpine3.24@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
+    image: postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
     restart: "no"
     user: postgres
     entrypoint: ["sh", "/init-db.sh"]
@@ -72,7 +74,7 @@ services:
     logging: *logging
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
-    image: postgres:16.15-alpine3.24@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
+    image: postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
     restart: "no"
     user: postgres
     entrypoint: ["sh", "/db-roles/init-db-roles.sh"]

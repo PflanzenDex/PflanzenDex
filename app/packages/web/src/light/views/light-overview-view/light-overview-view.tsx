@@ -4,12 +4,17 @@ import {
   type ResponsiveColumn,
 } from "@/components/shared/responsive/responsive-table/responsive-table";
 import type { LightOverview, LightOverviewRow } from "../../shared/light-api/light-api";
+import { zoneLabel } from "@pflanzendex/core";
 
 const lux = new Intl.NumberFormat("de-DE");
 
 const COLUMNS: ResponsiveColumn<LightOverviewRow>[] = [
   { key: "species", header: "Art", cell: (r) => r.speciesName },
-  { key: "zone", header: "Lichtzone", cell: (r) => (r.zone ? r.zone.name : "unbekannt") },
+  {
+    key: "zone",
+    header: "Lichtzone",
+    cell: (r) => (r.zone ? zoneLabel(r.zone.name) : "unbekannt"),
+  },
   {
     key: "lux",
     header: "Lux-Bedarf",
@@ -28,14 +33,14 @@ export function LightOverviewView(props: { data: LightOverview; onOpenCollection
       </h2>
       {data.rows.length === 0 ? (
         <EmptyState
-          title="Noch keine Arten mit aktivem Exemplar und gesetztem Lux-Bedarf"
-          description="Lege ein Exemplar an oder aktualisiere den Lux-Bedarf einer Art."
-          action={{ label: "Zum Bestand", onClick: onOpenCollection }}
+          title="Noch keine Arten mit aktiver Pflanze und gesetztem Lux-Bedarf"
+          description="Lege eine Pflanze an oder aktualisiere den Lux-Bedarf einer Art."
+          action={{ label: "Zur Sammlung", onClick: onOpenCollection }}
         />
       ) : (
         <>
           <p className="text-sm text-muted-foreground">
-            Arten sortiert nach Lux-Bedarf mit Positionsempfehlung. Höher = näher zur Lampe nötig.
+            Arten nach Lux-Bedarf sortiert; höher heißt näher an die Lampe.
           </p>
           <ResponsiveTable
             caption="Lichthunger der Arten"

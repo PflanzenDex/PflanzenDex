@@ -22,7 +22,7 @@ export function nextStepText(rows: readonly TreatmentListRow[]): string | null {
   if (overdue > 0)
     parts.push(overdue === 1 ? "1 Termin ist überfällig" : `${overdue} Termine sind überfällig`);
   if (today > 0) parts.push(today === 1 ? "1 ist heute fällig" : `${today} sind heute fällig`);
-  return `${parts.join(", ")}. Behandle diese Exemplare zuerst.`;
+  return `${parts.join(", ")}. Behandle diese Pflanzen zuerst.`;
 }
 
 /**

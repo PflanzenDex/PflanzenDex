@@ -7,6 +7,7 @@ import * as badge from "../display/badge/badge.stories";
 import * as button from "../button/button.stories";
 import * as dialog from "../overlays/dialog/dialog.stories";
 import * as label from "../display/label/label.stories";
+import * as moreHelp from "../display/more-help/more-help.stories";
 import * as sheet from "../overlays/sheet/sheet.stories";
 
 setProjectAnnotations([preview]);
@@ -15,6 +16,7 @@ const catalog = {
   Button: composeStories(button),
   Badge: composeStories(badge),
   Label: composeStories(label),
+  MoreHelp: composeStories(moreHelp),
   Dialog: composeStories(dialog),
   Sheet: composeStories(sheet),
 };

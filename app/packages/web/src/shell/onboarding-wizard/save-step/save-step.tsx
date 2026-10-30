@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { zoneDerive, type LightZone, type Species } from "@pflanzendex/core";
+import { zoneDerive, type LightZone, type Species, zoneLabel } from "@pflanzendex/core";
 import { Select } from "@/components/ui/fields/select/select";
 import { Label } from "@/components/ui/display/label/label";
 import { createWrite } from "../../../kernel";
@@ -90,7 +90,7 @@ export function SaveStep(props: {
         </option>
         {(zones ?? []).map((z) => (
           <option key={z.id} value={z.id}>
-            {z.name}
+            {zoneLabel(z.name)}
           </option>
         ))}
       </Select>
