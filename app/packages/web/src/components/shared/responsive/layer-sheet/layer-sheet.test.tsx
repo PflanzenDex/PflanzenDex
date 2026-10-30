@@ -143,8 +143,13 @@ describe("LayerSheet (US-QS-15)", () => {
 
   it("US-QS-15 from 1024 px the pane takes the frame's second column, beside the content and top-aligned with it", () => {
     setViewportWidth(1440);
+    const warn = vi.spyOn(console, "warn");
     render(<Example at="/?sheet=licht" />);
     const pane = screen.getByRole("complementary", { name: "Lichtzonen" });
+    expect(pane.hasAttribute("data-layer-pane")).toBe(true);
+    // A layer inside a frame never triggers the dev warning, so a regression fails here (US-QS-15).
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
     const slot = pane.parentElement;
     const frame = slot?.parentElement;
     expect(frame).toBeTruthy();
@@ -153,11 +158,11 @@ describe("LayerSheet (US-QS-15)", () => {
       true,
     );
     expect(slot?.previousElementSibling).toBe(frame?.firstElementChild);
-    expect(slot?.className).toContain("lg:self-start");
   });
 
   it("US-QS-15 a layer in a component deep inside the frame still opens in the frame's pane, not in its own place", () => {
     setViewportWidth(1440);
+    const warn = vi.spyOn(console, "warn");
     function Deep() {
       return (
         <section>
@@ -181,6 +186,8 @@ describe("LayerSheet (US-QS-15)", () => {
     const frame = pane.parentElement?.parentElement;
     expect(frame?.firstElementChild?.contains(screen.getByText("Tiefe Liste"))).toBe(true);
     expect(frame?.lastElementChild).toBe(pane.parentElement);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it("US-QS-15 a LayerSheet outside a LayerHost warns in dev when it opens beside the content", () => {

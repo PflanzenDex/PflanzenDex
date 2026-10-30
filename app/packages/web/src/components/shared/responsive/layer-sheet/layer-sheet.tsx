@@ -8,11 +8,8 @@ import { restoreFocus, useLayer } from "./use-layer";
 
 export { useLayer } from "./use-layer";
 
-/**
- * The second column of a `LayerHost` from 1024 px: the pane, top-aligned and kept in view while the page scrolls.
- * Below 1024 px it is empty and hidden, so the layers there are sheets or dialogs (US-QS-15, US-QS-18).
- */
-const PANE_SLOT = "empty:hidden lg:sticky lg:top-6 lg:flex lg:shrink-0 lg:flex-col lg:self-start";
+/** The pane column of a `LayerHost`: hidden while empty, so it adds no gap (US-QS-15, US-QS-18). */
+const PANE_SLOT = "hidden lg:flex lg:shrink-0 lg:flex-col lg:self-start lg:empty:hidden";
 
 type LayerHostState = { pane: HTMLDivElement | null } | null;
 const LayerHostContext = React.createContext<LayerHostState>(null);
@@ -32,9 +29,10 @@ export type LayerHostProps = Omit<React.HTMLAttributes<HTMLDivElement>, "childre
 export function LayerHost({ children, className, contentClassName, ...rest }: LayerHostProps) {
   const [pane, setPane] = React.useState<HTMLDivElement | null>(null);
   const value = React.useMemo(() => ({ pane }), [pane]);
+  const frame = cn("flex min-w-0 flex-col lg:flex-row lg:gap-4", className);
   return (
     <LayerHostContext.Provider value={value}>
-      <div {...rest} className={cn("flex min-w-0 flex-col lg:flex-row lg:gap-4", className)}>
+      <div data-layer-host="" {...rest} className={frame}>
         <div className={cn("flex min-h-0 min-w-0 flex-1 flex-col", contentClassName)}>
           {children}
         </div>
@@ -104,13 +102,14 @@ function LayerPane({
   closeLabel = "Schließen",
   onClose,
   children,
-}: LayerSheetProps & { onClose: () => void }) {
+}: LayerSheetProps & { primaryAction?: React.ReactNode | undefined; onClose: () => void }) {
   const heading = React.useRef<HTMLHeadingElement>(null);
   React.useEffect(() => {
     heading.current?.focus();
   }, []);
   return (
     <aside
+      data-layer-pane=""
       aria-labelledby={`layer-${id}`}
       onKeyDown={(event) => {
         if (event.key === "Escape") onClose();
@@ -173,7 +172,7 @@ export function LayerSheet({
       <LayerPane
         id={id}
         title={title}
-        {...(primaryAction === undefined ? {} : { primaryAction })}
+        primaryAction={primaryAction}
         closeLabel={closeLabel}
         onClose={closeLayer}
       >

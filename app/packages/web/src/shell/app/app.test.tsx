@@ -29,6 +29,7 @@ vi.mock("oidc-client-ts", () => ({
 }));
 
 import { BrowserRouter, MemoryRouter } from "react-router";
+import { setViewportWidth } from "@/lib/viewport-mock";
 import { App } from "./app";
 import { EMPTY_DISTRIBUTION } from "../../collection/insights/distribution-test-helpers";
 
@@ -153,6 +154,28 @@ const ANSWERS: Record<string, unknown> = {
   "/care-phases": { phases: [] },
   "/hints": { hints: [] },
   "/specimens/hints": { hints: SPECIMEN_HINTS },
+  "/pokedex/ownership": { ownership: { caught: [], unidentified: [] } },
+  "/friends": { friends: [] },
+  "/friends/requests": { incoming: [], outgoing: [] },
+  "/sharing": { shared: [] },
+  "/equipment": { equipment: [] },
+  "/equipment/zones": { zones: [], unassigned: [] },
+  "/equipment/lamps": { limit: null, lamps: [] },
+  "/equipment/sensors": { sensors: [], specimens: [], locations: [] },
+  "/equipment/needs": { needs: [] },
+  "/equipment/wishes": { open: [], bought: [], discarded: [] },
+  "/equipment/sharing": { shared: [] },
+  "/equipment/recommendations": { recommendations: [] },
+  "/account/profile": {
+    displayName: "Lena",
+    timeZone: "Europe/Berlin",
+    everythingPrivate: false,
+    noRecommendations: false,
+    notifications: {},
+    replenishBuffer: 2,
+    rarityConsent: false,
+    positionThresholds: null,
+  },
   "/specimens/light-overview": { rows: [] },
   "/specimens/difficulty": { rows: [] },
 };
@@ -598,4 +621,54 @@ describe("US-QS-07 browser history", () => {
     });
     await waitFor(() => expectHeute());
   });
+});
+
+/** A layer of each destination, opened by its address at 1440 px (US-QS-15). */
+const LAYER_ADDRESSES: readonly (readonly [string, string])[] = [
+  ["Heute: Behandlungen", "/today?sheet=treatments"],
+  ["Heute: Fehlt noch", "/today?sheet=hints"],
+  ["Sammlung: Ansicht", "/collection?view=plants&sheet=view"],
+  ["Sammlung: Lichtzonen", "/collection?view=plants&sheet=zones"],
+  ["Sammlung: Arten, Sammlerkarten", "/collection?view=species&sheet=cards"],
+  ["Sammlung: Wunschliste, Gekauft", "/collection?view=wishlist&sheet=bought"],
+  ["Sammlung: Equipment", "/collection?view=equipment&sheet=items"],
+  ["Entdecken: Filter", "/discover?view=catalog&sheet=filters"],
+  ["Entdecken: Art vorschlagen", "/discover?view=catalog&sheet=propose"],
+  ["Freunde: Neu bei Freunden", "/friends?sheet=news"],
+  ["Einstellungen: Profil", "/account/settings?sheet=profile"],
+];
+
+describe("US-QS-15 a layer opens beside the content from 1024 px", () => {
+  beforeEach(() => setViewportWidth(1440));
+  afterEach(() => setViewportWidth(360));
+
+  it.each(LAYER_ADDRESSES)(
+    "US-QS-15 %s: the pane is the second column of its destination's frame, the content is the first",
+    async (_name, address) => {
+      fakeServer(200, 1);
+      mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+      const warn = vi.spyOn(console, "warn");
+      try {
+        renderApp(address);
+        // The destinations are lazy parts: the first open of one may take a while on a cold import.
+        await waitFor(() => expect(document.querySelector("[data-layer-pane]")).not.toBeNull(), {
+          timeout: 15000,
+        });
+        const pane = document.querySelector("[data-layer-pane]") as HTMLElement;
+        const slot = pane.parentElement as HTMLElement;
+        const frame = slot.parentElement as HTMLElement;
+        expect(pane.closest("main")).not.toBeNull();
+        expect(frame.hasAttribute("data-layer-host")).toBe(true);
+        expect(frame.lastElementChild).toBe(slot);
+        expect(slot.previousElementSibling).toBe(frame.firstElementChild);
+        // A layer outside a frame would stack below the list: the dev warning must not fire (US-QS-15).
+        expect(warn).not.toHaveBeenCalledWith(
+          expect.stringContaining("renders outside a LayerHost"),
+        );
+      } finally {
+        warn.mockRestore();
+      }
+    },
+    20000,
+  );
 });

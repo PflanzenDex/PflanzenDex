@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { Link, Navigate, useLocation } from "react-router";
+import { Link, Navigate, useLocation, useSearchParams } from "react-router";
 import { useFeature } from "@/kernel";
 import { useAnnounce } from "@/platform/announcer/context";
 import { AreaSection } from "@/components/routing/areas/shared/area-section/area-section";
@@ -73,6 +73,15 @@ function SectionView(props: Props & { section: AccountSection }) {
 }
 
 /**
+ * The column of the index: beside an open section it shows from 1280 px, and it yields then while a layer of the section
+ * is open, so the section keeps the room a layer needs beside its list (US-QS-15).
+ */
+function indexClass(open: AccountSection | undefined, layered: boolean): string {
+  if (open === undefined) return "min-w-0 flex-1 xl:w-[300px] xl:flex-none";
+  return layered ? "hidden w-[300px] flex-none" : "hidden w-[300px] flex-none xl:block";
+}
+
+/**
  * The destination "Konto" (US-QS-17): an index of its sections like the settings app of a phone. `/account` shows the
  * index, `/account/<section>` the section as a view of its own with one main heading; on a wide screen (1280 px) the
  * index stands beside the open section. Back to the index puts the focus on the row the keeper came from. Former
@@ -84,6 +93,8 @@ export function AccountArea(props: Props) {
   const { pathname, hash } = useLocation();
   const section = sectionOf(pathname);
   const ai = useFeature("ai");
+  // A layer beside the section (US-QS-15) needs the room of the index: on a wide screen the index yields while one is open.
+  const layered = useSearchParams()[0].has("sheet");
   const came = useRef<AccountSection | null>(null);
   const open = section === "unknown" ? undefined : section;
   useEffect(() => {
@@ -110,13 +121,7 @@ export function AccountArea(props: Props) {
         <p className="m-0 hidden text-2xl font-semibold xl:block">Konto</p>
       )}
       <div className="flex min-w-0 gap-8">
-        <div
-          className={
-            open === undefined
-              ? "min-w-0 flex-1 xl:w-[300px] xl:flex-none"
-              : "hidden w-[300px] flex-none xl:block"
-          }
-        >
+        <div className={indexClass(open, layered)}>
           <AccountIndex
             api={props.api}
             token={props.token}
