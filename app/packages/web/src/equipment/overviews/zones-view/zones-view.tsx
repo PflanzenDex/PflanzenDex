@@ -67,13 +67,17 @@ function ZoneGroup(props: {
   const lamps = `${zone.lamps.length} ${zone.lamps.length === 1 ? "Lampe" : "Lampen"}`;
   const counted = zone.specimens === null ? "Pflanzenzahl unbekannt" : plants(zone.specimens);
   return (
-    <details open={warning || undefined} className="min-w-0 rounded-lg border border-border">
+    <details className="min-w-0 rounded-lg border border-border">
       <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2 px-3 py-2">
         <span className="font-semibold">{zoneLabel(zone.name)}</span>
         <span className="text-sm text-muted-foreground">
           {lamps} · {counted}
-          {warning ? " · keine aktive Lampe" : ""}
         </span>
+        {warning ? (
+          <span className="rounded bg-warning px-1.5 text-sm font-semibold text-warning-foreground">
+            keine aktive Lampe
+          </span>
+        ) : null}
       </summary>
       <div className="flex flex-col gap-2 px-3 pb-3">
         {zone.note ? (
@@ -89,7 +93,9 @@ function ZoneGroup(props: {
           </p>
         ) : null}
         {zone.lamps.length === 0 ? (
-          <p className="text-sm">Noch keine Lampe in dieser Zone.</p>
+          zone.note ? null : (
+            <p className="text-sm">Noch keine Lampe in dieser Zone.</p>
+          )
         ) : (
           <ul
             className="m-0 flex list-none flex-col gap-3 p-0"

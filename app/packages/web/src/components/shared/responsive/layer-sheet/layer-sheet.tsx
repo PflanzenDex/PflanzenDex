@@ -106,7 +106,8 @@ function LayerBody({
 }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
+      {/* Below lg the sheet or dialog around it scrolls, so a sticky bar inside sticks to that; from lg the pane scrolls this region. */}
+      <div className="min-h-0 flex-1 lg:overflow-y-auto lg:overscroll-contain">{children}</div>
       {primaryAction ? <div className="flex flex-col gap-2">{primaryAction}</div> : null}
     </div>
   );

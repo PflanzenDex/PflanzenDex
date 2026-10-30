@@ -505,6 +505,9 @@ describe("US-QS-22 the equipment fits one screen", () => {
     const more = within(layer).getByText("Mehr Angaben").closest("details") as HTMLElement;
     expect(more.contains(within(layer).getByLabelText("Preis in Euro (optional)"))).toBe(true);
     expect(more.contains(within(layer).getByLabelText("Name"))).toBe(false);
+    // The save button stays in view while the form scrolls inside the layer.
+    const save = within(layer).getByRole("button", { name: "Equipment speichern" });
+    expect(save.parentElement?.className).toContain("sticky");
   });
 
   it("US-QS-22 a tile opens its layer with the existing content; the layers mount only while open", async () => {
