@@ -6,6 +6,7 @@ import {
   type FriendsData,
 } from "../../../../api/friends-api";
 import { SharingPanel } from "../../../../parts/sharing-panel/sharing-panel";
+import { partialText } from "./sharing-text";
 import { Outcome } from "../outcome/outcome";
 
 /** The sharing panel with its own writes and their outcome (US-SOZ-04): one request at a time, the page reloads after each. */
@@ -39,7 +40,7 @@ export function SharingSection(props: {
         for (const speciesId of ids) {
           last = await setSpeciesSharing(api, t, { speciesId, share });
           if (!last.ok) {
-            setPartial(`${done} von ${ids.length} Arten geändert, ${ids.length - done} nicht.`);
+            setPartial(partialText(done, ids.length));
             return last;
           }
           done += 1;
