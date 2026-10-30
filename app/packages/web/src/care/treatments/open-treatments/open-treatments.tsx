@@ -98,7 +98,7 @@ function OpenList(props: {
     );
   return (
     <>
-      {next && <p className="font-semibold">{next}</p>}
+      {next && !props.host && <p className="font-semibold">{next}</p>}
       {props.host ? (
         <Pager
           items={rows}
@@ -153,7 +153,7 @@ export function OpenTreatments(props: {
   const load = useCallback((t: string) => loadOpenTreatments(api, t), [api]);
   return (
     <section aria-labelledby="open-treatments-title" className="flex flex-col gap-3">
-      <Title id="open-treatments-title" className="text-xl font-semibold">
+      <Title id="open-treatments-title" className={host ? "sr-only" : "text-xl font-semibold"}>
         Offene Behandlungen
       </Title>
       {completion.message && <StatusNote>{completion.message}</StatusNote>}

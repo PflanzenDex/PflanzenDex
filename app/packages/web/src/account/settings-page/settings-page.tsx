@@ -1,99 +1,110 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button/button";
-import { CalmModeSection } from "../../achievements";
-import { Form, FormRoot } from "@/components/ui/fields/form/form";
+import { useCallback, type ReactNode } from "react";
+import { LayerSheet } from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { CalmModeSection, loadAchievementSettings } from "../../achievements";
+import { LoadFrame, useFeature, useRequest } from "../../kernel";
+import { loadProfile, type AccountProfile } from "../api/account-api";
+import { LightGroup, ProfileGroup, WishlistGroup } from "./groups/form-groups/form-groups";
 import {
-  LoadFrame,
-  SIGN_IN,
-  deviceTimeZone,
-  setProfileTimeZone,
-  type ApiError,
-} from "../../kernel";
-import { loadProfile, saveProfile, type AccountProfile } from "../api/account-api";
+  UNKNOWN,
+  lightValue,
+  notificationsValue,
+  privacyValue,
+  profileValue,
+  styleValue,
+  wishlistValue,
+} from "./groups/group-values";
+import { useProfileSaver } from "./groups/profile-saver";
+import { SettingsRow } from "./groups/settings-row/settings-row";
+import { NotificationsGroup, PrivacyGroup } from "./groups/switch-groups/switch-groups";
 import { KeeperStyleSection } from "./keeper-style/keeper-style";
-import { ALERT_CLASSES, useServerRefusal } from "../refusal";
-import { PROFILE_REFUSABLE, profileSchema, toProfile, toProfileFields } from "../schemas";
-import type { ProfileFields as Fields } from "../schemas";
-import { ProfileFields, SwitchFields } from "../settings-fields/settings-fields";
+import { loadKeeperStyle } from "./keeper-style/keeper-style-api";
 import { SettingsPageSkeleton } from "./settings-page.skeleton";
 
 type Token = () => Promise<string | undefined>;
 
-/** The form fields a refusal names, in the order of the form: the first one gets the focus. */
-const refusedFields = (error: ApiError) => {
-  const named = error.details?.map((d) => d.field) ?? [];
-  return PROFILE_REFUSABLE.filter((f) => named.includes(f));
-};
-
-/** Saves one profile at a time (a double tap sends one); a refusal stays visible and keeps the input (P-10). */
-function SettingsForm(props: { api: string; token: Token; profile: AccountProfile }) {
-  const [saved, setSaved] = useState(props.profile);
-  const fromDevice = saved.timeZone === null;
-  const form = useForm<Fields>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: toProfileFields(props.profile, deviceTimeZone()),
+/** The value of the row "Wie nutzt du die App?": loaded on its own, so a failure shows here and nowhere else (P-10). */
+function useStyleValue(api: string, token: Token): string {
+  const style = useRequest({
+    queryKey: ["onboarding", "style"],
+    fresh: true,
+    token,
+    load: useCallback((t: string) => loadKeeperStyle(api, t), [api]),
   });
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<ApiError | null>(null);
-  const busy = useRef(false);
-  const { alertText, alertRef } = useServerRefusal<Fields>(error, form.setError, refusedFields);
-  const pending = form.formState.isSubmitting;
-
-  const send = form.handleSubmit(async (values) => {
-    if (busy.current) return;
-    busy.current = true;
-    const t = await props.token();
-    const r = t
-      ? await saveProfile(props.api, t, toProfile(values, saved))
-      : { ok: false as const, error: SIGN_IN };
-    busy.current = false;
-    setError(r.ok ? null : r.error);
-    setMessage(r.ok ? "Einstellungen gespeichert." : null);
-    if (!r.ok) return;
-    setSaved(r.value);
-    form.reset(toProfileFields(r.value, null));
-    setProfileTimeZone(r.value.timeZone);
+  const calm = useRequest({
+    queryKey: ["achievements", "settings"],
+    fresh: true,
+    token,
+    load: useCallback((t: string) => loadAchievementSettings(api, t), [api]),
   });
+  if (style.status === "pending") return "wird geladen …";
+  if (style.value === undefined) return UNKNOWN;
+  return styleValue(style.value.style, calm.value?.calmMode);
+}
 
+function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
+  const saver = useProfileSaver(props.api, props.token, props.profile);
+  const social = useFeature("social");
+  const styleText = useStyleValue(props.api, props.token);
+  const p = saver.saved;
+  const layers: readonly { id: string; title: string; value: string; body: ReactNode }[] = [
+    {
+      id: "profile",
+      title: "Profil",
+      value: profileValue(p),
+      body: <ProfileGroup saver={saver} />,
+    },
+    {
+      id: "notifications",
+      title: "Benachrichtigungen",
+      value: notificationsValue(p, social),
+      body: <NotificationsGroup saver={saver} />,
+    },
+    {
+      id: "privacy",
+      title: "Datenschutz und Empfehlungen",
+      value: privacyValue(p),
+      body: <PrivacyGroup saver={saver} />,
+    },
+    {
+      id: "style",
+      title: "Wie nutzt du die App?",
+      value: styleText,
+      body: (
+        <div className="flex flex-col gap-4">
+          <KeeperStyleSection api={props.api} token={props.token} />
+          <CalmModeSection api={props.api} token={props.token} />
+        </div>
+      ),
+    },
+    {
+      id: "wishlist",
+      title: "Wunschliste",
+      value: wishlistValue(p),
+      body: <WishlistGroup saver={saver} />,
+    },
+    { id: "light", title: "Licht", value: lightValue(p), body: <LightGroup saver={saver} /> },
+  ];
   return (
-    <Form {...form}>
-      <FormRoot
-        aria-label="Einstellungen"
-        onSubmit={send}
-        onChange={() => setMessage(null)}
-        className="flex max-w-xl flex-col gap-4"
-      >
-        <ProfileFields control={form.control} fromDevice={fromDevice} />
-        <SwitchFields control={form.control} />
-        {alertText !== null && (
-          <div role="alert" tabIndex={-1} ref={alertRef} className={ALERT_CLASSES}>
-            <p>{alertText}</p>
-          </div>
-        )}
-        {message && (
-          <p role="status" className="rounded-lg border border-border p-3">
-            {message}
-          </p>
-        )}
-        <Button
-          type="submit"
-          size="touch"
-          disabled={pending || !(form.formState.isDirty || fromDevice)}
-        >
-          {pending ? "Speichert …" : "Speichern"}
-        </Button>
-      </FormRoot>
-    </Form>
+    <>
+      <div className="flex min-w-0 max-w-xl flex-1 flex-col">
+        {layers.map((l) => (
+          <SettingsRow key={l.id} id={l.id} title={l.title} value={l.value} />
+        ))}
+      </div>
+      {layers.map((l) => (
+        <LayerSheet key={l.id} id={l.id} title={l.title}>
+          {l.body}
+        </LayerSheet>
+      ))}
+    </>
   );
 }
 
 /**
- * Profile and settings (US-ACC-02): display name, time zone (prefilled from the device until chosen), a switch per
- * notification occasion and the two global switches. The page says what happens next (P-09): the hint under the time
- * zone, the confirmation after saving, the refusal with its reason. With `host` (a section of "Konto", US-QS-14) the
- * page has no title of its own and sits in a card: the destination names the section.
+ * Profile and settings (US-ACC-02) as a list of six groups with their current values (US-QS-17): each opens as a
+ * layer (`?sheet=<group>`). Switches save at once; Profil, Wunschliste and Licht have their own "Speichern". With
+ * `host` (a section of "Konto", US-QS-14) the page has no title of its own and sits in a card: the destination names
+ * the section.
  */
 export function SettingsPage(props: { api: string; token: Token; host?: boolean }) {
   const load = useCallback((t: string) => loadProfile(props.api, t), [props.api]);
@@ -102,7 +113,7 @@ export function SettingsPage(props: { api: string; token: Token; host?: boolean 
     <div
       className={
         props.host === true
-          ? "flex min-w-0 max-w-xl flex-col gap-4 rounded-card bg-card p-5 shadow-elevation-1"
+          ? "flex min-w-0 flex-col gap-2 rounded-card bg-card p-2 shadow-elevation-1 lg:flex-row lg:items-start"
           : "flex min-w-0 flex-col gap-4"
       }
     >
@@ -115,13 +126,7 @@ export function SettingsPage(props: { api: string; token: Token; host?: boolean 
         loadingText={loading}
         loadingFallback={<SettingsPageSkeleton label={loading} />}
       >
-        {(profile) => (
-          <>
-            <SettingsForm api={props.api} token={props.token} profile={profile} />
-            <KeeperStyleSection api={props.api} token={props.token} />
-            <CalmModeSection api={props.api} token={props.token} />
-          </>
-        )}
+        {(profile) => <Groups api={props.api} token={props.token} profile={profile} />}
       </LoadFrame>
     </div>
   );

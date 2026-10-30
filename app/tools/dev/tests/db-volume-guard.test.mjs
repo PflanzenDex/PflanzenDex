@@ -114,3 +114,12 @@ test("US-DEV-07 the volume name follows the compose project name", () => {
   const r = run({ env: { COMPOSE_PROJECT_NAME: "pdx-check" }, files: { PG_VERSION: "16\n" } });
   assert.deepEqual(r.volumes, ["pdx-check_dbdata"]);
 });
+
+test("US-DEV-07 an image pinned to an exact version and a digest still names its major (#761)", () => {
+  // The stub lists `postgres:18.6-alpine`; the compose file has `postgres:18.6-alpine3.24@sha256:…`.
+  const major = "18.6";
+  assert.equal(run({ major, files: { "18/docker/PG_VERSION": "18\n" } }).status, 0);
+  const r = run({ major, files: { PG_VERSION: "16\n" } });
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /holds old 16 data, but this deploy starts postgres:18 /);
+});

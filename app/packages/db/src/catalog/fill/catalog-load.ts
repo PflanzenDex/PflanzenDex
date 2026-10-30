@@ -1,6 +1,9 @@
 import type { Pool, PoolClient } from "pg";
 
-/** A species ready to be stored: parsed and normalized by the caller (the `db` package does not parse names). */
+/**
+ * A species ready to be stored: parsed and normalized by the caller (the `db` package does not parse names). It has no
+ * difficulty, default level or lux need: the batch never writes them, so they stay unknown (P-08, #1003).
+ */
 export interface LoadRecord {
   readonly latinName: string;
   readonly genus: string;
@@ -9,9 +12,6 @@ export interface LoadRecord {
   readonly englishName: string | null;
   readonly familyLatin: string;
   readonly familyGerman: string | null;
-  readonly difficulty: number;
-  readonly standardLevel: number;
-  readonly lightDemandLux: number;
   readonly growthMeasure: "height" | "rosette_diameter" | "shoot_length";
   readonly etiolationSigns: string;
   readonly successCriteria: string;
@@ -105,9 +105,8 @@ async function insertIfNew(
   );
   await client.query(
     `insert into species (id, created_by, latin_name, genus, epithet, german_name, english_name, family_latin,
-       family_german, difficulty, standard_level, light_demand_lux, growth_measure, etiolation_signs,
-       success_criteria, source)
-     values ($1, 'operator', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+       family_german, growth_measure, etiolation_signs, success_criteria, source)
+     values ($1, 'operator', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
     [
       id,
       r.latinName,
@@ -117,9 +116,6 @@ async function insertIfNew(
       r.englishName,
       r.familyLatin,
       r.familyGerman,
-      r.difficulty,
-      r.standardLevel,
-      r.lightDemandLux,
       r.growthMeasure,
       r.etiolationSigns,
       r.successCriteria,

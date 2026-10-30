@@ -78,16 +78,18 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     const onOpen = vi.fn();
     render(<TodayPage api="http://api" token={token} onOpen={onOpen} />);
     expect(await screen.findByRole("heading", { level: 1, name: "Heute" })).toBeTruthy();
-    expect(await screen.findByText("3 Dinge stehen an.")).toBeTruthy();
-    expect(screen.getByText("Stand: 03.10.2026")).toBeTruthy();
+    // One compact row; the summary line already counts, so no repeated sentence or heading (US-QS-18).
+    expect(await screen.findByText("Stand: 03.10.2026")).toBeTruthy();
+    expect(screen.queryByText("3 Dinge stehen an.")).toBeNull();
+    expect(screen.queryByText("Jetzt dran")?.className).toBe("sr-only");
     // The chip says the state, number and unit joined by a non-breaking space; no heading and no repeated sentence.
     const chip = screen.getByText("10 Tage überfällig");
     expect(chip.textContent).toBe("10\u00a0Tage überfällig");
     expect(screen.queryByText("Überfällig")).toBeNull();
     expect(screen.queryByText(/überfällig seit/)).toBeNull();
-    expect(screen.getByText("Hake den Termin ab.")).toBeTruthy();
     expect(screen.queryByText("Efeu")).toBeNull();
-    expect(screen.getByText("2 weitere Behandlungstermine stehen später an.")).toBeTruthy();
+    // The further tasks and the later treatments share one row (US-QS-18).
+    expect(screen.getByRole("button", { name: /Weitere Aufgaben.*2 Termine später/ })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zu Behandlung: Aloe" }));
     expect(onOpen).toHaveBeenCalledWith("treatments");
   });

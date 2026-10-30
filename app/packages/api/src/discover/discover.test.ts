@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
-import type { Pool, PoolClient } from "pg";
+import { holdTaxonLock, migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
+import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../app";
 
@@ -22,8 +22,7 @@ const verifier = async (token: string) =>
 let app: ReturnType<typeof createApp>;
 // `taxon` is one shared table that the taxonomy build job replaces as a whole (US-POK-03). Both test files hold this
 // session lock while they own taxon rows, so a parallel build can neither wipe the rows seeded here nor add its own.
-const TAXON_LOCK = "select pg_advisory_lock(hashtext('pflanzendex-test-taxon'))";
-let lock: PoolClient | undefined;
+let releaseTaxa: (() => Promise<void>) | undefined;
 
 const get = (sub: string | null, query = "timeZone=Europe%2FBerlin") =>
   app.request(`/discover/suggestions?${query}`, {
@@ -49,8 +48,7 @@ const species = async (sub: string) => (await cards(sub)).map((s) => s.species);
 beforeAll(async () => {
   pool = openOwnerPool();
   admin = openFixturePool();
-  lock = await admin.connect();
-  await lock.query(TAXON_LOCK);
+  releaseTaxa = await holdTaxonLock(admin);
   await migrate(pool);
   app = createApp({ reviewer: verifier, pool });
   for (const latinName of [wished, open])
@@ -69,8 +67,7 @@ afterAll(async () => {
     );
     await admin.query("delete from account where subject = any($1)", [[keeper, other]]);
   } finally {
-    await lock?.query("select pg_advisory_unlock(hashtext('pflanzendex-test-taxon'))");
-    lock?.release();
+    await releaseTaxa?.();
     await pool.end();
     await admin.end();
   }

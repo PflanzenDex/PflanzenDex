@@ -32,11 +32,23 @@ The database and Keycloak are not exposed. Only the proxy listens (ports from `H
 make deploy          # fetches origin/main, backs up the DB (if it runs), builds, starts, waits for /health
 ```
 
-To try another state: `app/config/deploy/scripts/deploy.sh origin/dev`. Builds are reproducible: `npm ci` from the lock file, base images pinned to major versions (`node:26-alpine`, `postgres:18-alpine`, `caddy:2-alpine`). A PostgreSQL major is never taken over by Renovate; the upgrade is the one-time runbook `postgres-major-upgrade.md`. `GET /health/details` (inside the stack, see "Health check") shows the running version (`version` = commit hash).
+To try another state: `app/config/deploy/scripts/deploy.sh origin/dev`. Builds are reproducible: `npm ci` from the lock file, every image pinned to an exact version and a digest (`postgres:18.6-alpine3.24@sha256:…`, #761); Renovate opens the update PRs (FR-QG-15). A PostgreSQL major is never taken over by Renovate; the upgrade is the one-time runbook `postgres-major-upgrade.md`. `GET /health/details` (inside the stack, see "Health check") shows the running version (`version` = commit hash).
 Migrations run on every deploy: the one-shot `migrate` service (same image as `api`, `packages/db/migrations`) applies pending files before the `api` starts (`depends_on: service_completed_successfully`). They are forward only and guarded by an advisory lock and checksums. A failing migration fails `compose up`, so `deploy.sh` rolls back to the previous ref and the API never runs against a half-migrated schema. Check with `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml logs migrate`. Migrations are not rolled back; use the pre-deploy backup (restore below) for data problems. Manual run: `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml run --rm migrate`.
 Rollback: `app/config/deploy/scripts/deploy.sh <earlier commit>`; for data problems, restore (below). Across a PostgreSQL major the automatic rollback is refused by the volume check; the steps are in `postgres-major-upgrade.md`.
 
 Trying it locally (without a domain): `.env` with `CADDY_SCHEME=` (empty), `APP_HOST=localhost`, `AUTH_HOST=auth.localhost`, `APP_URL=https://localhost:8443`, `AUTH_URL=https://auth.localhost:8443`, then `docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml up -d --build` and `curl -k https://localhost:8443/health`.
+
+### Container privileges (#761)
+
+Every service runs with `no-new-privileges` and without any Linux capability (`cap_drop: [ALL]`), and none runs as root: `db`, `keycloak-db` and `db-roles` as `postgres` (uid 70), `migrate` and `api` as `node`, `keycloak` as uid 1000, `web` and `proxy` as `caddy` (uid 10001, the `caddy` stage of `web.Dockerfile`), `mailpit` as `nobody`. The Tailscale nodes stay uid 0, but without any capability (userspace networking needs none; their registered state belongs to root). `app/packages/web/src/lib/test-setup/deploy-config.test.ts` checks all of it. Check a running stack with `docker compose ... exec <service> grep Cap /proc/1/status` (all zero).
+
+**One-time step on a host that ran the stack before #761:** the volume `caddydata` still belongs to root, and Caddy as `caddy` cannot write it (the proxy keeps serving, but logs `permission denied` for `/data/caddy`; with `CADDY_SCHEME=` empty it could not store certificates). New volumes get the right owner from the image. Before the first deploy with #761, in `app/config/deploy`:
+
+```bash
+docker run --rm -v pflanzendex_caddydata:/data caddy:2.11.7-alpine chown -R 10001:10001 /data
+```
+
+The other volumes need nothing: the PostgreSQL entrypoint already gave the data directory in `dbdata` (`18/docker`) to `postgres`, which is all `db` needs as that user (checked on a volume set up by the old root entrypoint and on a fresh one), and the Tailscale state stays with root. A rollback to an older version keeps working (root can use the files).
 
 ## Realm security defaults (#757)
 
@@ -250,7 +262,7 @@ Start from `.env.example`; in addition to the variables of "Test environment beh
 Create the mail hash (no Caddy install needed) and keep the single quotes in `.env`; the hash contains `$`, which the shell scripts and Compose would otherwise expand:
 
 ```bash
-docker run --rm caddy:2-alpine caddy hash-password --plaintext 'the-password'
+docker run --rm caddy:2.11.7-alpine caddy hash-password --plaintext 'the-password'
 # .env:  MAIL_UI_HASH='$2a$14$...'
 ```
 
@@ -396,6 +408,7 @@ Nothing below goes into the repo: hostnames, tailnet name and secrets stay with 
    ```
 
    `tailscale up` prints a login link; approve it in the admin console. Create the Linux user `deploy`: member of the `docker` group, owner of the checkout and of `app/config/deploy/.env`, `git fetch` works from it. Give it **no** `sudo` (no group, no `/etc/sudoers.d` entry): whoever deploys gets a shell as `deploy`, and `deploy.sh` needs only Docker. Administer the host as another user or as root from the hypervisor.
+
 2. **Prod host (does not exist yet):** the same with `--advertise-tags=tag:pflanzendex-prod`. Until it exists, leave `DEPLOY_HOST` unset in the environment `prod`; the workflow then fails at once with a clear message.
 3. **Tailnet policy:** the tags, a network grant for port 22 only and one SSH rule per target; `tag:ci` gets nothing else. Merge into the existing policy (keep the Funnel tag and its `nodeAttrs`):
 

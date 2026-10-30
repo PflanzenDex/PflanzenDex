@@ -30,9 +30,10 @@ check_db_volume() {
   local volume="${COMPOSE_PROJECT_NAME:-pflanzendex}_dbdata" major layout state
   # A new host has no volume yet: nothing to protect.
   docker volume inspect "$volume" > /dev/null 2>&1 || return 0
-  major="$("${compose[@]}" config --images | sed -n 's/^postgres:\([0-9]*\)-.*/\1/p' | head -n 1)"
+  # The image is pinned as postgres:<major>.<minor>-alpine<x>@sha256:… (#761); the major ends at the first `.` or `-`.
+  major="$("${compose[@]}" config --images | sed -n 's/^postgres:\([0-9]*\)[.-].*/\1/p' | head -n 1)"
   if [ -z "$major" ]; then echo "ERROR: no postgres image in the compose file" >&2; return 1; fi
-  state="$(docker run --rm -v "$volume:/v:ro" alpine:3 sh -c '
+  state="$(docker run --rm -v "$volume:/v:ro" alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a sh -c '
     if [ -f /v/PG_VERSION ]; then echo "old $(cat /v/PG_VERSION)"
     elif ls /v/*/docker/PG_VERSION > /dev/null 2>&1; then echo "new $(cat /v/*/docker/PG_VERSION)"
     else echo empty; fi')" || { echo "ERROR: cannot read the database volume $volume" >&2; return 1; }

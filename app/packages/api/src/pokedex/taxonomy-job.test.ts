@@ -3,23 +3,23 @@ import { TAXONOMY_JOB_TYPE } from "@pflanzendex/core";
 import type { JobRow, SourceClient, SourceOutcome } from "@pflanzendex/core";
 import {
   ReviewPostgres,
+  holdTaxonLock,
   migrate,
   openFixturePool,
   openOwnerPool,
   withAccount,
 } from "@pflanzendex/db";
-import type { Pool, PoolClient } from "pg";
+import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createApp } from "../app";
-import { checkTaxonomy, pokedexJobHandlers, scheduleChecks } from "./index";
+import { checkTaxonomy, pokedexJobHandlers, scheduleChecks, taxonomyBuildEnabled } from "./index";
 
 // US-POK-03: the build job against real PostgreSQL; the sources are a fake (no network, no clock).
 let pool: Pool;
 let admin: Pool; // superuser fixture pool: setup and cleanup of shared rows (QG-D1)
 // The build job replaces the whole shared `taxon` table, so this file holds the same session lock as discover.test.ts
 // while it owns the table, and removes what the build wrote (also taxa of foreign species) in afterAll.
-const TAXON_LOCK = "select pg_advisory_lock(hashtext('pflanzendex-test-taxon'))";
-let lock: PoolClient | undefined;
+let releaseTaxa: (() => Promise<void>) | undefined;
 
 const account = randomUUID();
 const operator = randomUUID();
@@ -82,11 +82,13 @@ const sources: SourceClient = {
   },
 };
 
+// The exclusive taxon lock waits until no other file holds it (see `holdTaxonLock`): queue time behind the other
+// database files, not work of this hook, so the hook may wait as long as a complete run of the package (US-QG-01).
+const TAXON_LOCK_WAIT_MS = 300_000;
 beforeAll(async () => {
   pool = openOwnerPool();
   admin = openFixturePool();
-  lock = await admin.connect();
-  await lock.query(TAXON_LOCK);
+  releaseTaxa = await holdTaxonLock(admin, "exclusive");
   await migrate(pool);
   await admin.query("insert into account (id) values ($1)", [account]);
   await admin.query(
@@ -106,7 +108,7 @@ beforeAll(async () => {
     c.query<{ id: string }>("select id from review_case where object_id = $1", [speciesId]),
   );
   await new ReviewPostgres(pool).decide(operator, v.rows[0]?.id ?? "", "reviewed", null);
-});
+}, TAXON_LOCK_WAIT_MS);
 afterAll(async () => {
   try {
     await admin.query("delete from job where type = $1", [TAXONOMY_JOB_TYPE]);
@@ -120,8 +122,7 @@ afterAll(async () => {
     await admin.query("delete from review_case where object_id = $1", [speciesId]);
     await admin.query("delete from account where id = any($1)", [[account, operator]]);
   } finally {
-    await lock?.query("select pg_advisory_unlock(hashtext('pflanzendex-test-taxon'))");
-    lock?.release();
+    await releaseTaxa?.();
     await pool.end();
     await admin.end();
   }
@@ -230,5 +231,12 @@ describe("US-POK-03 taxonomy build job", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("US-POK-03 the taxonomy check runs by default and stops only with TAXONOMY_BUILD=off", () => {
+    expect(taxonomyBuildEnabled({})).toBe(true);
+    expect(taxonomyBuildEnabled({ TAXONOMY_BUILD: "on" })).toBe(true);
+    expect(taxonomyBuildEnabled({ TAXONOMY_BUILD: "off" })).toBe(false);
+    expect(() => taxonomyBuildEnabled({ TAXONOMY_BUILD: "no" })).toThrow(/TAXONOMY_BUILD/);
   });
 });

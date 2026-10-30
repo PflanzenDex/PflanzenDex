@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { MoreHelp } from "@/components/ui/display/more-help/more-help";
 import { Checkbox } from "@/components/ui/fields/checkbox/checkbox";
 import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 import { errorText } from "@/lib/error-text";
@@ -41,11 +42,16 @@ function CalmModeSwitch(props: { api: string; token: Token; settings: Achievemen
       <Checkbox name="calmMode" checked={calm} onChange={(e) => void change(e.target.checked)}>
         Ruhemodus
       </Checkbox>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {calm
-          ? "Erfolge, Glückwünsche und Rückblicke sind ausgeblendet. Deine Erfolge bleiben erhalten; schalte den Ruhemodus aus, um sie wieder zu sehen."
-          : "Der Ruhemodus blendet alle Erfolge, Glückwünsche und Rückblicke aus. Rang und Meilensteine im Pokédex bleiben unverändert."}
-      </p>
+      <MoreHelp
+        className="mt-1"
+        more={
+          calm
+            ? "Erfolge, Glückwünsche und Rückblicke sind ausgeblendet. Deine Erfolge bleiben erhalten; schalte den Ruhemodus aus, um sie wieder zu sehen."
+            : "Der Ruhemodus blendet alle Erfolge, Glückwünsche und Rückblicke aus. Rang und Meilensteine im Pokédex bleiben unverändert."
+        }
+      >
+        {calm ? "Erfolge und Rückblicke sind ausgeblendet." : "Blendet Erfolge und Rückblicke aus."}
+      </MoreHelp>
       {error && (
         <p role="alert" className={`${ALERT} mt-2`}>
           {error.code === "network.not_reachable" ? error.text : errorText(error.code)}

@@ -45,6 +45,13 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
     expect(icon).toContain("min-w-[44px]");
   });
 
+  it("US-QS-07 · DS-15 sm button has a 44 px minimum width (issue 970)", () => {
+    render(<Button size="sm">Ok</Button>);
+    const cls = screen.getByRole("button", { name: "Ok" }).className;
+    expect(cls).toContain("min-h-[44px]");
+    expect(cls).toContain("min-w-[44px]");
+  });
+
   it("US-QS-07 · DS-15 no size shrinks below 44 px on wider viewports", () => {
     for (const size of ["default", "sm", "lg", "touch", "icon"] as const) {
       render(

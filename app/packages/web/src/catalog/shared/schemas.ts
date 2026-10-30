@@ -17,14 +17,12 @@ const monthDay = optional.refine(
 export const proposalSchema = z
   .object({
     latinName: required("Bitte gib den lateinischen Namen an."),
-    difficulty: required("Bitte wähle die Schwierigkeit."),
-    standardLevel: required("Bitte wähle die Standard-Stufe."),
-    lightDemandLux: optional
-      .refine((v) => v !== "", "Bitte gib den Lichtbedarf in Lux an.")
-      .refine(
-        (v) => v === "" || (/^\d+$/.test(v) && Number(v) >= 1 && Number(v) <= LUX_MAX),
-        "Bitte gib den Lichtbedarf als ganze Zahl zwischen 1 und 200.000 Lux an.",
-      ),
+    difficulty: optional,
+    standardLevel: optional,
+    lightDemandLux: optional.refine(
+      (v) => v === "" || (/^\d+$/.test(v) && Number(v) >= 1 && Number(v) <= LUX_MAX),
+      "Bitte gib den Lichtbedarf als ganze Zahl zwischen 1 und 200.000 Lux an.",
+    ),
     softLeaf: z.enum(["", "yes", "no"]),
     growthMeasure: required("Bitte wähle das Wachstumsmaß."),
     etiolationSigns: required("Bitte beschreibe die Vergeilung-Anzeichen."),

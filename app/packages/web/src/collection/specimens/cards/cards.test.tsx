@@ -236,7 +236,7 @@ describe("US-BES-06 Karte: offene Behandlung", () => {
   it("shows reason and due date, overdue items are highlighted", () => {
     const h = html([card({ treatment: treatment("überfällig seit 3 Tg.", "overdue", 3) })]);
     expect(h).toContain("Neem spritzen");
-    expect(h).toContain("überfällig seit 3 Tg.");
+    expect(h).toContain("3\u00a0Tage überfällig");
     expect(h).toContain('data-due="overdue"');
     const today = html([card({ treatment: treatment("heute fällig", "today", 0) })]);
     expect(today).toContain("heute fällig");

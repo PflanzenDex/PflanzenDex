@@ -48,7 +48,7 @@ function SectionView(props: Props & { section: AccountSection }) {
   }, [id, key, info, announcer]);
   if (!info) return null;
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-2">
       <Link
         to={PATHS.account}
         state={{ keepFocus: true }}
@@ -103,7 +103,7 @@ export function AccountArea(props: Props) {
   if (section === "unknown" || off) return <Navigate to={PATHS.account} replace />;
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-3 lg:gap-6">
       {open === undefined ? (
         <h1 className="text-2xl font-semibold">Konto</h1>
       ) : (

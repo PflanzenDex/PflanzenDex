@@ -107,6 +107,15 @@ describe("US-BES-01 search", () => {
     await userEvent.click(screen.getByRole("button", { name: "Art vorschlagen" }));
     expect(onPropose).toHaveBeenCalled();
   });
+
+  it("US-ONB-01 an empty catalog says so and names the next step instead of a silent empty list (P-09, P-10)", () => {
+    search([], "/discover?view=catalog", "Zzyzx");
+    expect(screen.getByText(/ist der Katalog noch leer/)).toBeTruthy();
+    cleanup();
+    search([], "/discover?view=catalog", "");
+    expect(screen.getByText("Der gemeinsame Katalog ist noch leer.")).toBeTruthy();
+    expect(screen.getByText(/Betreiber, den Start-Katalog zu laden/)).toBeTruthy();
+  });
 });
 
 describe("US-QS-21 the catalog list is paged", () => {

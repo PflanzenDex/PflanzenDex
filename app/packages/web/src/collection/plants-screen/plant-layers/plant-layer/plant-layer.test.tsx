@@ -152,6 +152,23 @@ describe("US-QS-23 Überblick", () => {
     expect(panel.innerHTML).not.toMatch(/overflow-(y-)?(auto|scroll)/);
   });
 
+  it("US-QS-23 · US-QS-18 an overdue treatment reads '11 Tage überfällig' with the shared helper, never 'Tg.'", async () => {
+    setViewportWidth(360);
+    show([
+      card({
+        treatment: {
+          reason: "Wollläuse",
+          dueDate: { kind: "overdue", days: 11, text: "überfällig seit 11 Tg." },
+        },
+      }),
+    ]);
+    const layer = await open();
+    const panel = within(layer).getByRole("tabpanel");
+    expect(within(panel).getByText("11 Tage überfällig")).toBeTruthy();
+    expect(panel.textContent).not.toMatch(/Tg\./);
+    expect(within(panel).getByRole("button", { name: "Behandeln: Aloe" })).toBeTruthy();
+  });
+
   it("US-QS-23 · P-08 without a measurement and a trend the overview says unbekannt, nothing is invented", async () => {
     setViewportWidth(360);
     show([card({ lastMeasurement: null })], { slots: {} });

@@ -29,7 +29,7 @@ export const keepTogether = (text: string): string =>
 export const withUnit = (value: number, unit: string): string =>
   `${value.toLocaleString("de-DE", { maximumFractionDigits: 1 })}${NBSP}${unit}`;
 
-const OVERDUE_SINCE = /überfällig seit (\d+) Tag(?:en)?/;
+const OVERDUE_SINCE = /überfällig seit (\d+) (?:Tag(?:en)?|Tg\.)/;
 
 /** "10 Tage überfällig" for a text that says "überfällig seit 10 Tagen" (US-QS-18); `null` when it does not say so. */
 export function overdueChip(text: string): string | null {
@@ -42,5 +42,5 @@ export function overdueChip(text: string): string | null {
 /** The text without the "überfällig seit N Tagen" part the chip already says (US-QS-18). */
 export const withoutOverdue = (text: string): string =>
   text
-    .replace(/\s*[–-]\s*überfällig seit \d+ Tag(?:en)?/, "")
-    .replace(/\s+überfällig seit \d+ Tag(?:en)?/, "");
+    .replace(/\s*[–-]\s*überfällig seit \d+ (?:Tag(?:en)?|Tg\.)/, "")
+    .replace(/\s+überfällig seit \d+ (?:Tag(?:en)?|Tg\.)/, "");

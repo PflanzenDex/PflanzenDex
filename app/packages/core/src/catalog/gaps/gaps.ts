@@ -4,8 +4,14 @@ import { appError, failed, ok, type Result } from "../../kernel";
 import { FILLABLE_FIELDS, type FillSource } from "../sources";
 import type { ReviewStore } from "../types";
 
-/** Catalog fields that may be unknown ("unbekannt", P-08). The others are required on creation (DM-BES-01). */
+/**
+ * Catalog fields that may be unknown ("unbekannt", P-08). The others are required on creation (DM-BES-01). Difficulty,
+ * default level and lux demand may be unknown since #1003: no open source fills them, so their next step is research.
+ */
 export const GAP_FIELDS = [
+  "difficulty",
+  "standardLevel",
+  "lightDemandLux",
   "germanName",
   "englishName",
   "familyGerman",
@@ -38,7 +44,7 @@ export interface GapCheck {
 export interface GapSpecies {
   readonly id: string;
   readonly latinName: string;
-  readonly values: Readonly<Record<GapField, string | null>>;
+  readonly values: Readonly<Record<GapField, string | number | null>>;
   readonly checks: readonly GapCheck[];
 }
 

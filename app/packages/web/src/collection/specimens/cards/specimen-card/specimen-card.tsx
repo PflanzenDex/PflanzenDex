@@ -2,6 +2,7 @@ import { cva } from "class-variance-authority";
 import type { SpecimenCard, MeasurementQuality } from "@pflanzendex/core";
 import { Quiet } from "../parts/parts";
 import { dateText, valueText } from "../../model/text";
+import { overdueChip } from "@/lib/format";
 
 // The facts of a specimen card (US-BES-06): the last measurement, the open treatment and the provenance. The plant layer
 // (US-QS-23) places them in its tabs; derived data only.
@@ -78,7 +79,7 @@ export function Treatment({ card }: { card: SpecimenCard }) {
     <p>
       Behandlung: {b.reason} ·{" "}
       <span data-due={b.dueDate.kind} className={dueMark({ kind: b.dueDate.kind })}>
-        {b.dueDate.text}
+        {(b.dueDate.kind === "overdue" ? overdueChip(b.dueDate.text) : null) ?? b.dueDate.text}
       </span>
       {card.moreTreatments > 0 && (
         <span className="text-muted-foreground"> · +{card.moreTreatments} weitere</span>

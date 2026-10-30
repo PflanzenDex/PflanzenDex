@@ -8,8 +8,8 @@ export const GAP_MAX = { counter: 7, denominator: 10 } as const;
 export interface DerivationInput {
   /** Lux need for maximum growth (saturation point); `null` = unknown (P-08). */
   readonly lightDemandLux: number | null;
-  /** Default level 2–4 of the preset (catalog). */
-  readonly standardLevel: number;
+  /** Default level 2–4 of the preset (catalog); `null` = unknown (P-08). */
+  readonly standardLevel: number | null;
   /** C3 plant with a soft leaf ("sun-loving"): is not promoted automatically. */
   readonly softLeaf: boolean;
 }
@@ -38,7 +38,8 @@ const reached = (need: number, ceiling: number, f: { counter: number; denominato
 export function zoneDerive(input: DerivationInput, zones: readonly LightZone[]): Derivation {
   const adult = [...zones].sort((a, b) => a.sortOrder - b.sortOrder).slice(1);
   const need = input.lightDemandLux;
-  if (need === null) return { kind: "unknown", reason: "no_need" };
+  // The light need of a species is lux need plus default level; without both the zone is unknown, never guessed (P-08).
+  if (need === null || input.standardLevel === null) return { kind: "unknown", reason: "no_need" };
   if (adult.length === 0) return { kind: "unknown", reason: "no_adult_zone" };
 
   const start = Math.min(Math.max(input.standardLevel - 2, 0), adult.length - 1);

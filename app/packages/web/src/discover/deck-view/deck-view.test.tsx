@@ -31,6 +31,18 @@ const deck: SuggestionDeck = {
   suggestions: [suggestion("Ficus lyrata"), suggestion("Aloe vera")],
 };
 
+describe("US-QS-21 the card takes the remaining height", () => {
+  it("US-QS-21 the card fills the space, scrolls inside itself, the photo shrinks first and the buttons stay in view", () => {
+    render(<DeckView deck={deck} onDecide={saveOk} onNewDeck={() => undefined} />);
+    const card = screen.getByRole("article");
+    expect(card.className).toContain("flex-1");
+    expect(card.className).toContain("overflow-y-auto");
+    const row = screen.getByRole("button", { name: "Nein" }).parentElement?.parentElement;
+    expect(row?.className).toContain("shrink-0");
+    expect(row?.parentElement?.lastElementChild).toBe(row);
+  });
+});
+
 describe("US-QS-14 decision buttons stay with the card", () => {
   it("US-QS-14 keeps Nein, Später and Ja in a sticky row above the bar, at the bottom from md", () => {
     render(<DeckView deck={deck} onDecide={saveOk} onNewDeck={() => undefined} />);

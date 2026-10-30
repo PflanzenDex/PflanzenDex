@@ -4,24 +4,22 @@ import { normalize, parseLatin } from "@pflanzendex/core";
 import type { SeedRow } from "./species-list.ts";
 
 // Writes demo species as an operator batch (`curated`, FR-BES-11) on a superuser connection, which is the only way
-// to create `created_by = 'operator'` rows outside the application. Every value that is not a plain name is a
-// starting value and says so in `source` (P-08).
+// to create `created_by = 'operator'` rows outside the application. Difficulty, default level and lux need are never
+// written: without a source they stay unknown (P-08, #1003). Same text as migration 0095 writes into rows it cleared.
 export const SEED_SOURCE =
-  "Dev seed: names and family from common botanical knowledge, difficulty and light level are starting values";
-const LUX_BY_LEVEL = { 2: 3000, 3: 8000, 4: 20000 } as const; // assumption, not measured
+  "Dev seed: names and family from common botanical knowledge; difficulty and light need unknown";
 
 /** Inserts one species with its names and its `curated` review case (same transaction as the caller). */
 async function insertSpecies(
   client: PoolClient,
   owner: string,
-  [latin, german, english, famLatin, famGerman, difficulty, level]: SeedRow,
+  [latin, german, english, famLatin, famGerman]: SeedRow,
   parsed: NonNullable<ReturnType<typeof parseLatin>>,
 ): Promise<void> {
   const inserted = await client.query<{ id: string }>(
     `insert into species (created_by, latin_name, genus, epithet, german_name, english_name, family_latin,
-       family_german, difficulty, standard_level, light_demand_lux, growth_measure, etiolation_signs,
-       success_criteria, source)
-     values ('operator', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'height', $11, $12, $13) returning id`,
+       family_german, growth_measure, etiolation_signs, success_criteria, source)
+     values ('operator', $1, $2, $3, $4, $5, $6, $7, 'height', $8, $9, $10) returning id`,
     [
       parsed.display,
       parsed.genus,
@@ -30,9 +28,6 @@ async function insertSpecies(
       english,
       famLatin,
       famGerman,
-      difficulty,
-      level,
-      LUX_BY_LEVEL[level],
       "Lange, helle Zwischenräume und blasse Triebe.",
       "Kompakter Neuaustrieb ohne Streckung.",
       SEED_SOURCE,

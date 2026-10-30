@@ -245,7 +245,7 @@ describe("US-BES-06 cards on the collection page", () => {
     const photo = await screen.findByRole("link", { name: "Foto von Bogenhanf groß öffnen" });
     expect(photo.getAttribute("href")).toBe("blob:card");
     expect(screen.getByText(/kein Erfolgssignal/)).toBeTruthy();
-    expect(screen.getByText("überfällig seit 1 Tg.")).toBeTruthy();
+    expect(screen.getByText("1 Tag überfällig")).toBeTruthy();
     expect(screen.getByText(/\+2 weitere/)).toBeTruthy();
     const details = screen.getByText("Notiz der Messung").closest("details");
     expect(details?.open).toBe(false);

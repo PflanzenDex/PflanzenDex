@@ -80,7 +80,7 @@ describe("US-BES-01 Seite Arten", () => {
     fakeServer();
     render(page());
     expect(await screen.findByText("Der gemeinsame Katalog ist noch leer.")).toBeTruthy();
-    expect(screen.getByText("Schlage die erste Art vor.")).toBeTruthy();
+    expect(screen.getByText(/Schlage die erste Art vor/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Art vorschlagen" })).toBeTruthy();
   });
 
@@ -229,7 +229,9 @@ describe("US-BES-01 Seite Arten", () => {
     await vi.waitFor(() => expect(document.activeElement).toBe(name));
     const message = screen.getByText("Bitte gib den lateinischen Namen an.");
     expect(name.getAttribute("aria-describedby")).toContain(message.id);
-    expect(screen.getByLabelText(/Schwierigkeit/).getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getByLabelText(/Wachstumsmaß/).getAttribute("aria-invalid")).toBe("true");
+    // P-08 (#1003): an empty difficulty stays unknown and is not an error.
+    expect(screen.getByLabelText(/Schwierigkeit/).getAttribute("aria-invalid")).not.toBe("true");
   });
 
   it("US-BES-01 · DS-48 a lux value outside the allowed range is refused before sending", async () => {
@@ -316,7 +318,9 @@ describe("US-QS-21 the proposal opens as a layer", () => {
     await userEvent.type(screen.getByLabelText(/Erfolgskriterien/), "y");
     await userEvent.click(screen.getByRole("button", { name: "Vorschlag speichern" }));
     expect(await screen.findByRole("heading", { name: "Dracaena trifasciata" })).toBeTruthy();
-    expect(screen.getByTestId("address").textContent).not.toContain("sheet=");
+    await vi.waitFor(() =>
+      expect(screen.getByTestId("address").textContent).not.toContain("sheet="),
+    );
   }, 20_000);
 
   it("US-QS-21 a refusal by code shows its German text in the layer (FR-QG-11)", async () => {

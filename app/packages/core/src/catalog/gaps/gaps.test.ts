@@ -21,6 +21,25 @@ describe("US-BES-13 gap list", () => {
     expect(list.entries[0]?.gaps.map((g) => g.field)).toEqual(["germanName", "substrate"]);
   });
 
+  it("US-BES-13 P-08: an unknown difficulty, level or lux need is a gap whose next step is research, never the fill job (#1003)", () => {
+    const list = buildGapList([
+      species({
+        id: "a",
+        values: { ...known, difficulty: null, standardLevel: null, lightDemandLux: null },
+      }),
+      species({
+        id: "b",
+        values: { ...known, difficulty: 2, standardLevel: 3, lightDemandLux: 8000 },
+      }),
+    ]);
+    expect(list.species).toBe(1);
+    expect(list.entries[0]?.gaps).toEqual([
+      { field: "difficulty", nextStep: "research" },
+      { field: "standardLevel", nextStep: "research" },
+      { field: "lightDemandLux", nextStep: "research" },
+    ]);
+  });
+
   it("US-BES-13 names the source and time of the last check, or null when none was asked (P-08)", () => {
     const list = buildGapList([
       species({
