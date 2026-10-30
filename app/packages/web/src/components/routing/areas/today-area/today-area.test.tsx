@@ -243,7 +243,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     show("/today?sheet=treatments");
     const layer = await dialog("Behandlungen");
     const list = await within(layer).findByRole("list", { name: "Offene Behandlungen" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
     expect(within(list).getByText("10 Tage überfällig").textContent).toBe(
       "10\u00a0Tage überfällig",
     );

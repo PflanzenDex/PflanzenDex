@@ -12,7 +12,7 @@ type Token = () => Promise<string | undefined>;
 const KEY = WATERING_KEY;
 
 /** Rows per page (starting value, assumption; US-QS-18). */
-const PAGE_SIZE = 4;
+const PAGE_SIZE = 3;
 
 const sinceText = (d: WateringDueRow) =>
   d.lastWateredOn === null

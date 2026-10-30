@@ -5,7 +5,7 @@ import { ATTENTION_CLASSES } from "../../../shared/notices";
 import { dateText } from "../../../shared/text";
 
 /** Rows per page of the layer (starting value, assumption; US-QS-18). */
-export const PAGE_SIZE = 3;
+export const PAGE_SIZE = 2;
 
 /** The status chip of an overdue or due-today row: the status text says it first, the tint only underlines it (never by colour alone). */
 const CHIP = new Set(["overdue", "today"]);
