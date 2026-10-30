@@ -27,7 +27,7 @@ const buttonVariants = cva(
       },
       size: {
         default: "min-h-[44px] rounded-pill px-5 py-2",
-        sm: "min-h-[44px] rounded-control px-3",
+        sm: "min-h-[44px] min-w-[44px] rounded-control px-3",
         lg: "min-h-[48px] rounded-pill px-6 text-base",
         icon: "min-h-[44px] min-w-[44px] rounded-control",
         touch: "min-h-[48px] w-full rounded-pill px-4 sm:w-auto",
