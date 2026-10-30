@@ -39,3 +39,34 @@ export function matchDir(pattern, dir) {
   const b = dir.split("/");
   return a.length === b.length && a.every((s, i) => s === "*" || s === b[i]);
 }
+
+// Glob over whole paths: "**" matches zero or more segments, "*" any part of one segment. Segment-wise, so no
+// pattern becomes a regular expression.
+export function globMatch(pattern, path) {
+  return matchSegments(pattern.split("/"), path.split("/"));
+}
+
+function matchSegments(pattern, parts) {
+  if (pattern.length === 0) return parts.length === 0;
+  if (pattern[0] === "**")
+    return (
+      matchSegments(pattern.slice(1), parts) ||
+      (parts.length > 0 && matchSegments(pattern, parts.slice(1)))
+    );
+  if (parts.length === 0) return false;
+  return matchPart(pattern[0], parts[0]) && matchSegments(pattern.slice(1), parts.slice(1));
+}
+
+// One segment against a pattern with "*": the literal pieces must occur in order, the first at the start, the last at the end.
+function matchPart(pattern, name) {
+  const pieces = pattern.split("*");
+  if (pieces.length === 1) return pattern === name;
+  if (!name.startsWith(pieces[0])) return false;
+  let rest = name.slice(pieces[0].length);
+  for (const middle of pieces.slice(1, -1)) {
+    const at = rest.indexOf(middle);
+    if (at < 0) return false;
+    rest = rest.slice(at + middle.length);
+  }
+  return rest.endsWith(pieces.at(-1));
+}

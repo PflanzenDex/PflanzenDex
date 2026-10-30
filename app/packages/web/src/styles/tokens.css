@@ -237,6 +237,15 @@
     -webkit-tap-highlight-color: color-mix(in oklab, var(--color-primary) 15%, transparent);
   }
   /*
+   * Focus after navigation (US-QS-15, NFR-13, owner decision 2026-10-30, #1034): a heading or the main region that the
+   * app focuses after a navigation draws no frame while the last input was not the keyboard (`data-input`, set by
+   * RouteFocus). Chromium draws its ring on such a focus after an earlier key press, even when the navigation was a
+   * click. The DS-37 gate allows this one selector to set outline: none, and no other (#1066).
+   */
+  :root:not([data-input="keyboard"]) :is(h1, main)[tabindex="-1"]:focus {
+    outline: none;
+  }
+  /*
    * One screen (US-QS-15, DS-61, US-QS-19): a view that holds an element with `data-fit-screen` makes the frame exactly
    * the viewport; the main content scrolls inside itself only when it cannot fit (zoom, large text). Done in CSS with
    * `:has` (never nested: a `:has` inside `:has` is invalid and drops the whole rule), so the app shell needs no code and no route list for it and the initial JavaScript stays within its budget (QG-U6).
