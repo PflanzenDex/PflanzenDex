@@ -16,7 +16,7 @@ describe("US-QS-14 · page story Heute", () => {
     expect(await screen.findByText(/^Stand: /)).toBeTruthy();
     expect(screen.queryByText("3 Dinge stehen an.")).toBeNull();
     expect((await screen.findAllByText(/Läuse/)).length).toBeGreaterThan(0);
-    expect(await screen.findByRole("button", { name: /^Fehlt noch/ })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /Fehlt noch$/ })).toBeTruthy();
     expect(screen.queryByText(/wird geladen/)).toBeNull();
   });
 

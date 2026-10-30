@@ -1,5 +1,6 @@
 import type { AttributeSource, Suggestion, SuggestionAttributes } from "@pflanzendex/core";
-import { useRef, type PointerEvent } from "react";
+import { useRef, useState, type PointerEvent } from "react";
+import { Button } from "@/components/ui/button/button";
 import { Badge } from "@/components/ui/display/badge/badge";
 import { dateText } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -61,7 +62,7 @@ function Picture({ s }: { s: Suggestion }) {
     <img
       src={s.imageUrl}
       alt={`Bild von ${s.species}`}
-      className="h-56 min-h-20 w-full shrink rounded-lg object-cover"
+      className="h-56 min-h-12 w-full shrink rounded-lg object-cover"
     />
   );
 }
@@ -70,7 +71,7 @@ function Picture({ s }: { s: Suggestion }) {
  * The Wikipedia text keeps the language it was stored in. Where that is known, `lang` tells a screen reader to switch the
  * voice (WCAG 3.1.2) and a visible hint names a foreign language; where it is unknown no language is claimed (P-08).
  */
-function Summary({ s }: { s: Suggestion }) {
+function Summary({ s, more }: { s: Suggestion; more: boolean }) {
   if (s.summary === null) return <p className="m-0 text-sm">Keine Beschreibung vorhanden.</p>;
   const foreign = s.summaryLanguage === "en";
   return (
@@ -78,7 +79,7 @@ function Summary({ s }: { s: Suggestion }) {
       {foreign && <p className="m-0 text-xs text-muted-foreground">Text auf Englisch</p>}
       <p
         {...(s.summaryLanguage === null ? {} : { lang: s.summaryLanguage })}
-        className="m-0 text-sm"
+        className={cn("m-0 text-sm", !more && "line-clamp-3")}
       >
         {s.summary}
       </p>
@@ -111,6 +112,24 @@ function Facts({ s }: { s: Suggestion }) {
   );
 }
 
+/** Facts, sources and reasons after "Mehr"; collapsed, the card fits one screen (US-QS-21). */
+function Details({ s, more }: { s: Suggestion; more: boolean }) {
+  return (
+    <div className={cn("grid gap-3", !more && "hidden")}>
+      <Facts s={s} />
+      <AttributeSources sources={s.attributeSources ?? []} />
+      <section aria-label="Gründe">
+        <h3 className="m-0 mb-1 text-sm font-semibold">Warum diese Art?</h3>
+        <ul className="m-0 grid list-disc gap-1 pl-5 text-sm">
+          {s.reasons.map((r) => (
+            <li key={r}>{r}</li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  );
+}
+
 /**
  * One suggestion as a large card (US-ENT-01): image with source and license (FR-POK-07), names, text, zone, difficulty
  * and the attributes of DM-ENT-01, the reasons below. A swipe left or right decides like the buttons; the buttons stay
@@ -121,6 +140,7 @@ export function SuggestionCard(props: {
   onSwipe: (direction: "left" | "right") => void;
 }) {
   const s = props.suggestion;
+  const [more, setMore] = useState(false);
   const start = useRef<{ x: number; y: number } | null>(null);
   const down = (e: PointerEvent) => {
     start.current = { x: e.clientX, y: e.clientY };
@@ -138,9 +158,8 @@ export function SuggestionCard(props: {
       onPointerUp={up}
       onPointerCancel={() => (start.current = null)}
       className={cn(
-        // The card takes the remaining height; the photo shrinks first, the text scrolls inside the card (US-QS-21).
-        "mx-auto flex min-h-0 w-full min-w-0 max-w-md flex-1 touch-pan-y flex-col gap-3 overflow-y-auto break-words",
-        "rounded-xl border border-border bg-card p-4 text-card-foreground",
+        "mx-auto flex min-h-0 w-full min-w-0 max-w-md flex-1 touch-pan-y flex-col gap-2 overflow-y-auto break-words",
+        "rounded-xl border border-border bg-card p-3 text-card-foreground",
       )}
     >
       <Picture s={s} />
@@ -155,23 +174,23 @@ export function SuggestionCard(props: {
         </h2>
         <p className="m-0">{s.germanName ?? "Deutscher Name unbekannt"}</p>
       </div>
-      <Summary s={s} />
-      <Facts s={s} />
-      <AttributeSources sources={s.attributeSources ?? []} />
+      <Summary s={s} more={more} />
+      <Button
+        type="button"
+        variant="link"
+        aria-expanded={more}
+        className="w-fit"
+        onClick={() => setMore((m) => !m)}
+      >
+        {more ? "Weniger" : "Mehr"}
+      </Button>
+      <Details s={s} more={more} />
       <WikipediaSource
         label="Bild und Text"
         sourceUrl={s.sourceUrl}
         shown={s.summary !== null || s.imageUrl !== null}
         className="inline-flex min-h-11 items-center"
       />
-      <section aria-label="Gründe">
-        <h3 className="m-0 mb-1 text-sm font-semibold">Warum diese Art?</h3>
-        <ul className="m-0 grid list-disc gap-1 pl-5 text-sm">
-          {s.reasons.map((r) => (
-            <li key={r}>{r}</li>
-          ))}
-        </ul>
-      </section>
     </article>
   );
 }

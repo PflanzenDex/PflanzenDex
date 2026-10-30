@@ -135,11 +135,11 @@ describe("US-QS-18 Heute fits one screen", () => {
     expect(await screen.findByText(/1 Behandlung offen, davon 1 überfällig/)).toBeTruthy();
     expect(screen.getByRole("button", { name: /^Zu Behandlung/ })).toBeTruthy();
     const tiles = within(screen.getByRole("list", { name: "Themen" }));
-    expect((await tiles.findByRole("button", { name: /^Behandeln1$/ })).textContent).toBe(
-      "Behandeln1",
+    expect((await tiles.findByRole("button", { name: /^1Behandeln$/ })).textContent).toBe(
+      "1Behandeln",
     );
-    expect(tiles.getByRole("button", { name: /^Gießen0$/ })).toBeTruthy();
-    expect(tiles.getByRole("button", { name: /^Fehlt noch1$/ })).toBeTruthy();
+    expect(tiles.getByRole("button", { name: /^0Gießen$/ })).toBeTruthy();
+    expect(tiles.getByRole("button", { name: /^1Fehlt noch$/ })).toBeTruthy();
     // The topics are layers: no section of them stands on the page.
     expect(screen.queryByRole("heading", { level: 2, name: "Behandlungen" })).toBeNull();
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -149,7 +149,7 @@ describe("US-QS-18 Heute fits one screen", () => {
     fakeServer();
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("button", { name: /^Behandeln/ }));
+    await user.click(await screen.findByRole("button", { name: /Behandeln$/ }));
     const layer = await dialog("Behandlungen");
     expect(address()).toBe("/today?sheet=treatments");
     expect(
@@ -214,7 +214,7 @@ describe("US-QS-18 Heute fits one screen", () => {
     show();
     expect(await screen.findByText("Heute steht nichts an.")).toBeTruthy();
     expect(screen.getAllByRole("button", { name: "Zur Sammlung" }).length).toBeGreaterThan(0);
-    expect(await screen.findByRole("button", { name: /^Behandeln0$/ })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^0Behandeln$/ })).toBeTruthy();
   });
 });
 
@@ -334,9 +334,9 @@ describe("US-QS-18 every category keeps its next action (P-09, P-10)", () => {
     const user = userEvent.setup();
     show();
     const tiles = within(await screen.findByRole("list", { name: "Themen" }));
-    expect(await tiles.findByRole("button", { name: /^Fehlt noch.*nicht geladen$/ })).toBeTruthy();
+    expect(await tiles.findByRole("button", { name: /^nicht geladenFehlt noch$/ })).toBeTruthy();
     expect(screen.getByText(/Fehlt noch: nicht geladen|Hinweise: nicht geladen/)).toBeTruthy();
-    await user.click(tiles.getByRole("button", { name: /^Fehlt noch/ }));
+    await user.click(tiles.getByRole("button", { name: /Fehlt noch$/ }));
     const alert = await within(await dialog("Fehlt noch")).findByRole("alert");
     expect(within(alert).getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });

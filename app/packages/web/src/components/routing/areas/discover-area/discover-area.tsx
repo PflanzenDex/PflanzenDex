@@ -34,7 +34,7 @@ export function DiscoverArea(props: {
   const { view, choose } = useDiscoverView();
   const zone = zoneOf(useSearchParams()[0].get("zone"));
   return (
-    <div className="flex h-full min-h-0 flex-col" data-fit-screen="">
+    <div className="flex h-full min-h-0 flex-col" data-fit-screen="" data-fit-fill="">
       <SammlungHeader
         title="Entdecken"
         switchLabel="Ansicht von Entdecken"

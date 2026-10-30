@@ -13,7 +13,8 @@ export type CategoryCount = {
 };
 
 /** The look of a tile that opens a layer. */
-const TILE = "h-auto min-h-16 w-full flex-col items-start justify-between gap-1 px-3 py-2";
+const TILE =
+  "h-auto min-h-14 w-full flex-col items-center justify-center gap-0 px-2 py-1 text-center";
 const NBSP = " ";
 const count = (n: number, one: string, many: string) => `${n}${NBSP}${n === 1 ? one : many}`;
 
@@ -23,7 +24,6 @@ export function CategoryTile(props: { id: string; label: string; category: Categ
   return (
     <li>
       <LayerOpener id={props.id} className={TILE}>
-        <span>{props.label}</span>
         {category.status === "ready" ? (
           <span className="text-lg font-semibold tabular-nums">{category.count}</span>
         ) : category.status === "error" ? (
@@ -31,6 +31,7 @@ export function CategoryTile(props: { id: string; label: string; category: Categ
         ) : (
           <span className="text-sm text-muted-foreground">lädt …</span>
         )}
+        <span className="text-sm">{props.label}</span>
       </LayerOpener>
     </li>
   );
@@ -101,7 +102,7 @@ export function TodayOverview(props: {
                     <TodaySummary treatments={treatments} watering={watering} hints={hints} />
                   }
                   tiles={
-                    <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0" aria-label="Themen">
+                    <ul className="m-0 grid list-none grid-cols-3 gap-2 p-0" aria-label="Themen">
                       <CategoryTile id="treatments" label="Behandeln" category={treatments} />
                       <CategoryTile id="watering" label="Gießen" category={watering} />
                       <CategoryTile id="hints" label="Fehlt noch" category={hints} />

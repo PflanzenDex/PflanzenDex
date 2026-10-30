@@ -124,12 +124,18 @@ function Content(props: { list: TodayList; onOpen: (d: TodayDestination) => void
           action={{ label: "Zur Sammlung", onClick: () => props.onOpen("collection") }}
         />
       )}
-      {first && list.upcoming > 0 && (
+      {first && list.upcoming > 0 && rest.length === 0 && (
         <p className="text-sm text-muted-foreground">{laterText(list.upcoming)}</p>
       )}
       {rest.length > 0 && (
-        <LayerOpener id={TASKS} className="w-full justify-between">
-          <span>Weitere Aufgaben</span>
+        // One row: the further tasks and, small, the treatments that stand later (US-QS-18).
+        <LayerOpener id={TASKS} className="h-auto min-h-11 w-full justify-between py-1">
+          <span className="flex flex-col items-start text-left">
+            <span>Weitere Aufgaben</span>
+            {list.upcoming > 0 && (
+              <span className="text-xs font-normal">{`${list.upcoming} Termine später`}</span>
+            )}
+          </span>
           <span className="tabular-nums">{rest.length}</span>
         </LayerOpener>
       )}

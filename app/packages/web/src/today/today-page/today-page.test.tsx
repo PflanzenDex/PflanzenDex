@@ -88,7 +88,8 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     expect(screen.queryByText("Überfällig")).toBeNull();
     expect(screen.queryByText(/überfällig seit/)).toBeNull();
     expect(screen.queryByText("Efeu")).toBeNull();
-    expect(screen.getByText("2 weitere Behandlungstermine stehen später an.")).toBeTruthy();
+    // The further tasks and the later treatments share one row (US-QS-18).
+    expect(screen.getByRole("button", { name: /Weitere Aufgaben.*2 Termine später/ })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zu Behandlung: Aloe" }));
     expect(onOpen).toHaveBeenCalledWith("treatments");
   });
