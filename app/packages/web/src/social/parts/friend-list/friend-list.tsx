@@ -1,3 +1,4 @@
+import { useIsShort } from "@/components/shared/responsive/pager/card-page-size";
 import { useState } from "react";
 import { Link } from "react-router";
 import type { Friend } from "@pflanzendex/core";
@@ -10,6 +11,8 @@ import { nameOf } from "../request-list/request-list";
 
 /** Friends per page in the layer (starting value, assumption; US-QS-20). */
 const PAGE_SIZE = 3;
+/** On a short phone (at most 700 px high) a page holds fewer friends (#1029 replaces this). */
+const SHORT_PAGE_SIZE = 2;
 
 function EndConfirm(props: { name: string; busy: boolean; onYes: () => void; onNo: () => void }) {
   return (
@@ -47,7 +50,7 @@ function FriendRow(props: { friend: Friend; busy: boolean; onEnd: (friend: Frien
   const [asking, setAsking] = useState(false);
   return (
     <div>
-      <Card className="grid gap-2 break-words">
+      <Card className="grid gap-1 break-words">
         <span className="flex items-center gap-3">
           <Avatar name={f.name ?? ""} decorative />
           <span>{nameOf(f.name)}</span>
@@ -58,7 +61,7 @@ function FriendRow(props: { friend: Friend; busy: boolean; onEnd: (friend: Frien
             ? "Gemeinsame Arten: unbekannt (noch nichts freigegeben)"
             : `Gemeinsame Arten: ${f.sharedSpecies}`}
         </span>
-        <span className="mt-2 flex flex-wrap gap-2">
+        <span className="mt-1 flex flex-wrap gap-2">
           <Button asChild variant="outline" size="touch">
             <Link to={`/friends/${f.id}`} aria-label={`Sammlung ansehen: ${nameOf(f.name)}`}>
               Sammlung ansehen
@@ -103,6 +106,7 @@ export function FriendList(props: {
   busy: boolean;
   onEnd: (friend: Friend) => void;
 }) {
+  const short = useIsShort();
   return (
     <section aria-label="Meine Freunde" className="flex min-w-0 flex-col gap-3">
       {props.friends.length === 0 ? (
@@ -112,7 +116,7 @@ export function FriendList(props: {
       ) : (
         <Pager
           items={props.friends}
-          pageSize={PAGE_SIZE}
+          pageSize={short ? SHORT_PAGE_SIZE : PAGE_SIZE}
           label="Freunde"
           getKey={(f) => f.id}
           renderItem={(f) => <FriendRow friend={f} busy={props.busy} onEnd={props.onEnd} />}

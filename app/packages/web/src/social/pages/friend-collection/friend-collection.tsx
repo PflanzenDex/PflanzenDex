@@ -1,9 +1,17 @@
 import { useCallback, useState } from "react";
 import { Link } from "react-router";
 import type { FriendCard as Card } from "@pflanzendex/core";
+import {
+  LayerHost,
+  LayerSheet,
+  useLayer,
+} from "@/components/shared/responsive/layer-sheet/layer-sheet";
+import { useIsShort } from "@/components/shared/responsive/pager/card-page-size";
+import { Pager } from "@/components/shared/responsive/pager/pager";
+import { useIsLg, useIsMd } from "@/lib/use-breakpoint";
 import { SegmentedControl } from "@/components/segmented-control/segmented-control";
 import { Button } from "@/components/ui/button/button";
-import { LoadFrame, useWriteAction } from "../../../kernel";
+import { LoadFrame, useRequest, useWriteAction } from "../../../kernel";
 import { errorText } from "@/lib/error-text";
 import { addToWishlist, loadFriendCollection } from "../../api/friends-api";
 import { nameOf } from "../../parts/request-list/request-list";
@@ -11,12 +19,45 @@ import { FriendEquipment } from "./friend-equipment/friend-equipment";
 import { FriendCard } from "./friend-card/friend-card";
 import { FriendCollectionSkeleton } from "./friend-collection.skeleton";
 
+const EQUIPMENT_LAYER = "equipment";
+
+/** "Geräte" opens the devices the friend shares in a layer (US-EQU-12), so they no longer stand below the cards. */
+function EquipmentOpener() {
+  const layer = useLayer(EQUIPMENT_LAYER);
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="touch"
+      className="min-w-0 flex-1 px-2 text-sm"
+      aria-haspopup="dialog"
+      onClick={(event) => layer.openLayer(event.currentTarget)}
+    >
+      Geräte
+    </Button>
+  );
+}
+
 type Filter = "all" | "lack" | "both";
 const FILTERS = [
   { value: "all", label: "Alle" },
   { value: "lack", label: "Ich habe nicht" },
   { value: "both", label: "Wir haben beide" },
 ] as const;
+
+/** Cards per page (starting values, assumption; the page size from the free height is #1029): 2 columns below 768 px (2 cards on a short phone, 4 otherwise), 3 from 768 px, 4 from 1024 px. */
+function usePageSize(): number {
+  const md = useIsMd();
+  const lg = useIsLg();
+  const short = useIsShort();
+  return lg ? 16 : md ? 12 : short ? 2 : 4;
+}
+
+/** "Claras Sammlung", "Lars' Sammlung": the German genitive of a name; an unknown name stays unknown (P-08). */
+export const collectionTitle = (name: string | null): string =>
+  name === null || name.trim() === ""
+    ? "Sammlung eines Freundes"
+    : `${/[sßxz]$/i.test(name.trim()) ? `${name.trim()}'` : `${name.trim()}s`} Sammlung`;
 
 const visible = (cards: readonly Card[], filter: Filter) =>
   filter === "all" ? cards : cards.filter((c) => c.iHave === (filter === "both"));
@@ -52,12 +93,11 @@ function Body(props: {
   const [filter, setFilter] = useState<Filter>("all");
   const shown = visible(props.cards, filter);
   const name = nameOf(props.name);
+  const size = usePageSize();
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      <p className="text-muted-foreground">
-        Das ist die freigegebene Sammlung von {name}: nur Art, Anzahl und Fangdatum. Es gibt keine
-        Wertung und keinen Vergleich der Sammlungen untereinander. Die freigegebenen Geräte stehen
-        weiter unten.
+      <p className="text-sm text-muted-foreground">
+        Freigegeben von {name}: nur Art, Anzahl und Fangdatum, keine Wertung und keinen Vergleich.
       </p>
       <SegmentedControl label="Filter" options={FILTERS} value={filter} onChange={setFilter} />
       {wish.message && (
@@ -72,13 +112,15 @@ function Body(props: {
       )}
       <Next total={props.cards.length} shown={shown.length} filter={filter} name={name} />
       {shown.length > 0 && (
-        <ul
-          className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3"
-          aria-label={`Sammlung von ${name}`}
-        >
-          {shown.map((c) => (
+        <Pager
+          items={shown}
+          pageSize={size}
+          label={`Sammlung von ${name}`}
+          resetKey={filter}
+          getKey={(c) => c.speciesLatin ?? `${c.speciesGerman}-${c.firstCaught}`}
+          listClassName="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4"
+          renderItem={(c) => (
             <FriendCard
-              key={c.speciesLatin ?? `${c.speciesGerman}-${c.firstCaught}`}
               card={c}
               busy={wish.running}
               onWish={(card) =>
@@ -88,8 +130,8 @@ function Body(props: {
                 )
               }
             />
-          ))}
-        </ul>
+          )}
+        />
       )}
     </div>
   );
@@ -107,38 +149,50 @@ export function FriendCollectionPage(props: {
 }) {
   const { api, friendId } = props;
   const load = useCallback((t: string) => loadFriendCollection(api, t, friendId), [api, friendId]);
+  const queryKey = ["social", "friend-collection", friendId];
+  // The same request as the frame below shares one cached copy: the heading names the friend once it is there (US-QS-20).
+  const loaded = useRequest({ queryKey, token: props.token, load });
+  const equipment = useLayer(EQUIPMENT_LAYER);
+  const title = collectionTitle(loaded.value?.friend.name ?? null);
   return (
-    <div className="rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7">
-      <section aria-labelledby="friend-collection-title" className="flex min-w-0 flex-col gap-3">
-        <div>
-          <Button asChild variant="outline" size="touch">
-            <Link to="/friends">Zurück zu Freunde</Link>
-          </Button>
-        </div>
-        <h1 id="friend-collection-title" className="text-2xl font-semibold">
-          Sammlung eines Freundes
-        </h1>
-        <LoadFrame
-          queryKey={["social", "friend-collection", friendId]}
-          token={props.token}
-          load={load}
-          loadingText="Sammlung wird geladen …"
-          loadingFallback={<FriendCollectionSkeleton label="Sammlung wird geladen …" />}
-          heading="Sammlung eines Freundes"
-        >
-          {(data) => (
-            <>
-              <Body name={data.friend.name} cards={data.cards} api={api} token={props.token} />
-              <FriendEquipment
-                api={api}
-                token={props.token}
-                friendId={friendId}
-                name={nameOf(data.friend.name)}
-              />
-            </>
-          )}
-        </LoadFrame>
-      </section>
-    </div>
+    <LayerHost>
+      <div className="rounded-2xl border border-border bg-card px-4 py-4 text-card-foreground md:p-7">
+        <section aria-labelledby="friend-collection-title" className="flex min-w-0 flex-col gap-3">
+          <div className="flex gap-2">
+            <Button asChild variant="outline" size="touch" className="min-w-0 flex-1 px-2 text-sm">
+              <Link to="/friends">Zurück zu Freunde</Link>
+            </Button>
+            <EquipmentOpener />
+          </div>
+          <h1 id="friend-collection-title" className="text-2xl font-semibold">
+            {title}
+          </h1>
+          <LoadFrame
+            queryKey={queryKey}
+            token={props.token}
+            load={load}
+            loadingText="Sammlung wird geladen …"
+            loadingFallback={<FriendCollectionSkeleton label="Sammlung wird geladen …" />}
+            heading="Sammlung eines Freundes"
+          >
+            {(data) => (
+              <>
+                <Body name={data.friend.name} cards={data.cards} api={api} token={props.token} />
+                <LayerSheet id={EQUIPMENT_LAYER} title={`Geräte von ${nameOf(data.friend.name)}`}>
+                  {equipment.open ? (
+                    <FriendEquipment
+                      api={api}
+                      token={props.token}
+                      friendId={friendId}
+                      name={nameOf(data.friend.name)}
+                    />
+                  ) : null}
+                </LayerSheet>
+              </>
+            )}
+          </LoadFrame>
+        </section>
+      </div>
+    </LayerHost>
   );
 }
