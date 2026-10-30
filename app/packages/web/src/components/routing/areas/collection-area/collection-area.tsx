@@ -64,7 +64,7 @@ export function CollectionArea(props: {
   const own = view === "plants" && (measure !== null || fullView || managing);
   const plantsOnScreen = view === "plants" && !own;
   return (
-    <LayerHost className="min-h-0" {...(own ? {} : { "data-fit-screen": "" })}>
+    <LayerHost className="min-h-0" {...(own && !managing ? {} : { "data-fit-screen": "" })}>
       <div className="min-w-0 flex-1">
         {own ? null : (
           <AreaHeader
