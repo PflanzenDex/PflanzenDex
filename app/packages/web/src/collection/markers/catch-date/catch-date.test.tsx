@@ -45,8 +45,8 @@ const field = () => screen.getByLabelText("Fangdatum") as HTMLInputElement;
 describe("US-BES-02 FR-BES-04 catch date field", () => {
   it("is a labelled date input, preset to the keeper's local today and capped at it", () => {
     show();
-    expect(field().type).toBe("date");
-    expect(field().value).toBe("2026-10-03");
+    expect(field().placeholder).toBe("TT.MM.JJJJ");
+    expect(field().value).toBe("03.10.2026");
     expect(field().max).toBe("2026-10-03");
     expect(field().required).toBe(false);
   });
@@ -54,7 +54,7 @@ describe("US-BES-02 FR-BES-04 catch date field", () => {
   it("follows the profile time zone, not UTC", () => {
     setProfileTimeZone("America/New_York");
     show();
-    expect(field().value).toBe("2026-10-02");
+    expect(field().value).toBe("02.10.2026");
     expect(field().max).toBe("2026-10-02");
   });
 
@@ -218,8 +218,8 @@ describe("US-BES-11 correct the catch date on the card", () => {
     render(page());
     const input = await openForm();
     expect(screen.getByRole("heading", { name: "Fangdatum korrigieren" })).toBeTruthy();
-    expect(input.type).toBe("date");
-    expect(input.value).toBe("2026-09-01");
+    expect(input.placeholder).toBe("TT.MM.JJJJ");
+    expect(input.value).toBe("01.09.2026");
     expect(input.max).toBe("2026-10-03");
     expect(document.body.textContent).toContain("Bisher: 01.09.2026");
   });
@@ -228,7 +228,7 @@ describe("US-BES-11 correct the catch date on the card", () => {
     fakeServer([card({ caughtAt: null })], () => json(200, {}));
     render(page());
     const input = await openForm();
-    expect(input.value).toBe("2026-10-03");
+    expect(input.value).toBe("03.10.2026");
     expect(document.body.textContent).toContain("Bisher: unbekannt");
   });
 

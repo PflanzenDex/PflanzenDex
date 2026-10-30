@@ -157,8 +157,7 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
     const amount = screen.getByLabelText("Betrag");
     await userEvent.type(amount, "1.234,5");
     const month = screen.getByLabelText("Monat");
-    await userEvent.clear(month);
-    await userEvent.type(month, "2026-09");
+    await userEvent.selectOptions(month, "2026-09");
     await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
     expect(await screen.findByText("Monatliche Kosten gespeichert.")).toBeTruthy();
     const writes = calls.filter((c) => c.method === "PUT");
