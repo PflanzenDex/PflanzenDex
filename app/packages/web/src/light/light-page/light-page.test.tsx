@@ -107,8 +107,11 @@ describe("US-LIC-05 page locations and light zones", () => {
       <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
     );
     await userEvent.click(await screen.findByRole("button", { name: REFERENCE }));
+    await userEvent.click(screen.getByRole("button", { name: "Regeln" }));
     expect(await screen.findByRole("heading", { name: "Einstufungsregeln" })).toBeTruthy();
     expect(screen.getByRole("table", { name: "Deine Lichtzonen" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(screen.getByRole("heading", { name: "Warnzeichen" })).toBeTruthy();
   });
 
@@ -351,6 +354,7 @@ describe("US-LIC-01 determine the zone of a species on the page", () => {
     );
     await screen.findByRole("heading", { name: "Zone 2" });
     await userEvent.click(screen.getByRole("button", { name: REFERENCE }));
+    await userEvent.click(screen.getByRole("button", { name: "Art" }));
     await userEvent.type(screen.getByLabelText("Lux-Bedarf der Art (Lux)"), "15000");
     await userEvent.click(screen.getByRole("button", { name: "Zone ermitteln" }));
     expect(await screen.findByText("Lichtzone: Zone 2")).toBeTruthy();
@@ -365,6 +369,7 @@ describe("US-LIC-01 determine the zone of a species on the page", () => {
     render(<LightPage api="http://api" token={token} onOpenCollection={() => undefined} />);
     await screen.findByRole("heading", { name: "Zone 2" });
     await userEvent.click(screen.getByRole("button", { name: REFERENCE }));
+    await userEvent.click(screen.getByRole("button", { name: "Art" }));
     signedIn = false;
     await userEvent.type(screen.getByLabelText("Lux-Bedarf der Art (Lux)"), "15000");
     await userEvent.click(screen.getByRole("button", { name: "Zone ermitteln" }));
@@ -485,5 +490,38 @@ describe("US-QS-19 management on one screen", () => {
     expect(
       screen.getByLabelText("Name", { selector: "form[aria-label='Balkon ändern'] input" }),
     ).toBeTruthy();
+  });
+
+  it("US-QS-19 the reference layer shows one part at a time; on a phone the overview pages two rows a page", async () => {
+    setViewportWidth(360);
+    const { fetchFn } = fakeServer({ zones: [zone], locations: [] });
+    const normal = fetchFn.getMockImplementation() as typeof fetch;
+    const row = (id: string) => ({
+      speciesId: id,
+      speciesName: `Art ${id}`,
+      lightDemandLux: 15000,
+      position: null,
+      zone,
+    });
+    fetchFn.mockImplementation(async (url, init) =>
+      new URL(String(url)).pathname === "/specimens/light-overview"
+        ? response(200, { rows: [row("a"), row("b"), row("c")] })
+        : normal(url, init),
+    );
+    render(
+      <LightPage api="http://api" token={async () => "tok"} onOpenCollection={() => undefined} />,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: REFERENCE }));
+    expect(
+      (await screen.findByRole("button", { name: "Lichthunger" })).getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
+    expect(screen.getByText("Art a")).toBeTruthy();
+    expect(screen.queryByText("Art c")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    expect(screen.getByText("Art c")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Regeln" }));
+    expect(screen.queryByText("Art c")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Einstufungsregeln" })).toBeTruthy();
   });
 });

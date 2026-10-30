@@ -1,6 +1,8 @@
 import { EmptyState } from "@/components/shared/empty-state/empty-state";
 import { Banner } from "@/components/shared/states/banner/banner";
 import { MoreHelp } from "@/components/ui/display/more-help/more-help";
+import { useState } from "react";
+import { SegmentedControl } from "@/components/segmented-control/segmented-control";
 import { LayerSheet, useLayer } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { LightOverviewView } from "../../light-overview-view/light-overview-view";
 import { RulesView } from "../../rules-view";
@@ -95,7 +97,18 @@ function OverviewSection(props: {
   );
 }
 
-/** The reference of the light (US-LIC-03, US-LIC-04, US-LIC-01): loaded and shown only while the layer is open. */
+type Topic = "overview" | "rules" | "derive";
+const TOPICS: readonly { value: Topic; label: string }[] = [
+  { value: "overview", label: "Lichthunger" },
+  { value: "rules", label: "Regeln" },
+  { value: "derive", label: "Art" },
+];
+
+/**
+ * The reference of the light (US-LIC-03, US-LIC-04, US-LIC-01) as three segments, one part at a time, so each fits a
+ * layer at 360 x 640 (US-QS-19): the lux overview, the classification rules, the zone of a species. Loaded only while
+ * the layer is open.
+ */
 export function ReferenceLayer(props: {
   data: LightData;
   actions: LightActions;
@@ -103,27 +116,38 @@ export function ReferenceLayer(props: {
   onOpenCollection: () => void;
   onRetry: () => void;
 }) {
+  const [topic, setTopic] = useState<Topic>("overview");
   return (
     <LayerSheet id={REFERENCE} title="Lichthunger und Einstufung">
-      <div className="flex flex-col gap-6">
-        <OverviewSection
-          overview={props.overview}
-          onOpenCollection={props.onOpenCollection}
-          onRetry={props.onRetry}
+      <div className="flex flex-col gap-4">
+        <SegmentedControl
+          label="Teil der Lichtangaben"
+          options={TOPICS}
+          value={topic}
+          onChange={setTopic}
         />
-        <RulesView zones={props.data.zones} />
-        <section aria-labelledby="assignment" className="flex min-w-0 flex-col gap-3">
-          <h2 id="assignment" className="text-xl font-semibold">
-            Zone einer Art ermitteln
-          </h2>
-          <MoreHelp
-            className="text-sm text-muted-foreground"
-            more="Stecklingslicht ist nie das Ziel für erwachsene Pflanzen."
-          >
-            Die Zone folgt dem Lux-Bedarf der Art und deinen Lichtzonen.
-          </MoreHelp>
-          <DerivationForm onDerive={props.actions.zoneDerive} />
-        </section>
+        {topic === "overview" && (
+          <OverviewSection
+            overview={props.overview}
+            onOpenCollection={props.onOpenCollection}
+            onRetry={props.onRetry}
+          />
+        )}
+        {topic === "rules" && <RulesView zones={props.data.zones} />}
+        {topic === "derive" && (
+          <section aria-labelledby="assignment" className="flex min-w-0 flex-col gap-3">
+            <h2 id="assignment" className="text-xl font-semibold">
+              Zone einer Art ermitteln
+            </h2>
+            <MoreHelp
+              className="text-sm text-muted-foreground"
+              more="Stecklingslicht ist nie das Ziel für erwachsene Pflanzen."
+            >
+              Die Zone folgt dem Lux-Bedarf der Art und deinen Lichtzonen.
+            </MoreHelp>
+            <DerivationForm onDerive={props.actions.zoneDerive} />
+          </section>
+        )}
       </div>
     </LayerSheet>
   );

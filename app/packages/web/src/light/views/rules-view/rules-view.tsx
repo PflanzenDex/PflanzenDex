@@ -1,4 +1,6 @@
+import type { ReactNode } from "react";
 import { classificationRules, zoneLabel } from "@pflanzendex/core";
+import { Pager, LAYER_PARAM } from "@/components/shared/responsive/pager/pager";
 import {
   ResponsiveTable,
   type ResponsiveColumn,
@@ -26,15 +28,13 @@ const COLUMNS: ResponsiveColumn<LightZone>[] = [
 ];
 
 // US-LIC-04: reference on levels, indicators and warning signs. The collection table is the overview above (US-LIC-03).
+// Three parts, one per page (US-QS-19): the zone table, the indicators and the warning signs.
 export function RulesView({ zones }: { zones: readonly LightZone[] }) {
   const rules = classificationRules();
   const sorted = [...zones].sort((a, b) => a.sortOrder - b.sortOrder);
   const { promoteFromPercent, stayBelowGapPercent } = rules.thresholds;
-  return (
-    <section aria-labelledby="rules" className="flex min-w-0 flex-col gap-3">
-      <h2 id="rules" className={H2}>
-        Einstufungsregeln
-      </h2>
+  const parts: ReactNode[] = [
+    <div key="zones" className="flex min-w-0 flex-col gap-3">
       {sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Deine Stufentabelle erscheint hier, sobald du unten Lichtzonen übernommen oder angelegt
@@ -53,12 +53,16 @@ export function RulesView({ zones }: { zones: readonly LightZone[] }) {
       >
         Die niedrigste Zone ist Stecklingslicht und nie Ziel für erwachsene Pflanzen.
       </MoreHelp>
+    </div>,
+    <div key="indicators" className="flex min-w-0 flex-col gap-3">
       <h3 className={H3}>Indikatoren für höhere Stufen</h3>
       <ul className={LIST}>
         {rules.indicators.map((i) => (
           <li key={i.key}>{i.text}</li>
         ))}
       </ul>
+    </div>,
+    <div key="warnings" className="flex min-w-0 flex-col gap-3">
       <h3 className={H3}>Warnzeichen</h3>
       <ul className={LIST}>
         {rules.warnings.map((w) => (
@@ -67,6 +71,21 @@ export function RulesView({ zones }: { zones: readonly LightZone[] }) {
           </li>
         ))}
       </ul>
+    </div>,
+  ];
+  return (
+    <section aria-labelledby="rules" className="flex min-w-0 flex-col gap-3">
+      <h2 id="rules" className={H2}>
+        Einstufungsregeln
+      </h2>
+      <Pager
+        items={parts}
+        pageSize={1}
+        label="Teile der Einstufungsregeln"
+        param={LAYER_PARAM}
+        getKey={(_, i) => i}
+        renderItem={(part) => part}
+      />
     </section>
   );
 }

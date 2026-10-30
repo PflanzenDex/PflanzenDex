@@ -5,6 +5,16 @@ import {
 } from "@/components/shared/responsive/responsive-table/responsive-table";
 import type { LightOverview, LightOverviewRow } from "../../shared/light-api/light-api";
 import { zoneLabel } from "@pflanzendex/core";
+import { Pager, LAYER_PARAM } from "@/components/shared/responsive/pager/pager";
+import { useIsMd } from "@/lib/use-breakpoint";
+
+/** Rows per page of the overview (starting values, assumption): two on a phone, six from 768 px (US-QS-19). */
+const rowsPerPage = (md: boolean) => (md ? 6 : 2);
+/** The rows cut into pages; each page is one table. */
+const pagesOf = <T,>(rows: readonly T[], size: number): T[][] =>
+  Array.from({ length: Math.ceil(rows.length / size) }, (_, i) =>
+    rows.slice(i * size, (i + 1) * size),
+  );
 
 const lux = new Intl.NumberFormat("de-DE");
 
@@ -38,6 +48,7 @@ const COLUMNS: ResponsiveColumn<LightOverviewRow>[] = [
 // US-LIC-03: species by light hunger with position recommendations
 export function LightOverviewView(props: { data: LightOverview; onOpenCollection: () => void }) {
   const { data, onOpenCollection } = props;
+  const md = useIsMd();
   return (
     <section aria-labelledby="overview" className="flex min-w-0 flex-col gap-3">
       <h2 id="overview" className="text-xl font-semibold">
@@ -55,11 +66,20 @@ export function LightOverviewView(props: { data: LightOverview; onOpenCollection
             Arten nach Lux-Bedarf sortiert; höher heißt näher an die Lampe. Arten mit unbekanntem
             Lux-Bedarf stehen am Ende.
           </p>
-          <ResponsiveTable
-            caption="Lichthunger der Arten"
-            columns={COLUMNS}
-            rows={[...data.rows]}
-            getRowKey={(r) => r.speciesId}
+          <Pager
+            items={pagesOf(data.rows, rowsPerPage(md))}
+            pageSize={1}
+            label="Seiten der Lichthunger-Tabelle"
+            param={LAYER_PARAM}
+            getKey={(_, i) => i}
+            renderItem={(page) => (
+              <ResponsiveTable
+                caption="Lichthunger der Arten"
+                columns={COLUMNS}
+                rows={page}
+                getRowKey={(r) => r.speciesId}
+              />
+            )}
           />
         </>
       )}
