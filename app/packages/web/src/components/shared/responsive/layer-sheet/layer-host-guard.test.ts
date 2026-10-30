@@ -28,6 +28,7 @@ const PANE_FRAMES: Record<string, readonly string[]> = {
   "collection/plants-screen/plant-layers/plant-layers.tsx": [COLLECTION],
   "components/routing/areas/today-area/today-area.tsx": [TODAY],
   "components/sammlung-header/view-layer/view-layer.tsx": [COLLECTION],
+  "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx": [COLLECTION],
   "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx": [
     COLLECTION,
   ],
@@ -38,6 +39,10 @@ const PANE_FRAMES: Record<string, readonly string[]> = {
     "social/pages/friends-page/friends-page.tsx",
   ],
   "today/today-page/today-page.tsx": [TODAY],
+  "social/pages/friend-collection/friend-collection.tsx": [
+    "social/pages/friend-collection/friend-collection.tsx",
+  ],
+  "swap/pages/exchange/exchange.tsx": ["swap/pages/exchange/exchange.tsx"],
   "wishlist/wishlist-page/layers/wishlist-layers/wishlist-layers.tsx": [COLLECTION],
 };
 
