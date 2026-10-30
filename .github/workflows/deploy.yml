@@ -106,15 +106,20 @@ jobs:
       # stdin only (not in argv, not in a log); secrets are masked first. The host script is taken from this checkout and
       # passed as base64 text, so it also works on a host whose checkout is older than the script (public code, not a
       # secret). The step prints key names and changed/unchanged only. If it fails, the deploy step does not run.
-      # `toJSON(secrets)` puts every secret of the environment into this one step's environment; the loop below reads
-      # only the allowlisted names.
+      # Secrets: only the `secret` entries of the allowlist are mapped below, one `SECRET_<KEY>` each (never the whole
+      # secrets context, which would hand every organization, repository and environment secret to this step, #1049).
+      # A test keeps this list equal to the allowlist. Variables are not secret and come in as `toJSON(vars)`.
       - id: apply_env
         env:
           TARGET_ENV: ${{ inputs.environment }}
           DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
           DEPLOY_REPO_PATH: ${{ vars.DEPLOY_REPO_PATH }}
           VARS_JSON: ${{ toJSON(vars) }}
-          SECRETS_JSON: ${{ toJSON(secrets) }}
+          SECRET_DB_OWNER_PASSWORD: ${{ secrets.DB_OWNER_PASSWORD }}
+          SECRET_KEYCLOAK_DB_PASSWORD: ${{ secrets.KEYCLOAK_DB_PASSWORD }}
+          SECRET_KEYCLOAK_ADMIN_PASSWORD: ${{ secrets.KEYCLOAK_ADMIN_PASSWORD }}
+          SECRET_SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SECRET_MAIL_UI_HASH: ${{ secrets.MAIL_UI_HASH }}
         run: |
           set -euo pipefail
           fail() { echo "::error::$1"; exit 1; }
@@ -125,11 +130,14 @@ jobs:
             case "$key" in "" | "#"*) continue ;; esac
             printf '%s' "$key" | grep -Eq '^[A-Z][A-Z0-9_]{0,63}$' || fail "Invalid key in deploy-env-allowlist.txt."
             case "$kind" in
-              secret) source_json="$SECRETS_JSON" ;;
-              var) source_json="$VARS_JSON" ;;
+              secret)
+                secret_var="SECRET_$key"
+                [ -n "${!secret_var+set}" ] || fail "Secret $key is allowlisted but not mapped in the apply_env step."
+                value="${!secret_var}"
+                ;;
+              var) value="$(jq -r --arg k "$key" '.[$k] // ""' <<< "$VARS_JSON")" ;;
               *) fail "Unknown kind for $key in deploy-env-allowlist.txt." ;;
             esac
-            value="$(jq -r --arg k "$key" '.[$k] // ""' <<< "$source_json")"
             [ -n "$value" ] || continue
             if [ "$kind" = secret ]; then echo "::add-mask::$value"; fi
             if [[ "$value" =~ [[:cntrl:]] || "$value" == *"'"* ]]; then

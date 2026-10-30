@@ -230,3 +230,19 @@ test("TE-19 the workflow sends values over stdin only, masks secrets and reads o
     if (/\$value|\$payload/.test(line) && /\becho\b/.test(line)) assert.match(line, /::add-mask::/);
   }
 });
+
+test("TE-19 the workflow maps exactly the allowlisted secrets, never toJSON(secrets) (#1049)", () => {
+  const step = workflow.slice(
+    workflow.indexOf("- id: apply_env"),
+    workflow.indexOf("- id: deploy"),
+  );
+  assert.doesNotMatch(workflow, /toJSON\(\s*secrets\s*\)/);
+  const mapped = [
+    ...step.matchAll(/^\s+SECRET_([A-Z][A-Z0-9_]*): \$\{\{ secrets\.([A-Z][A-Z0-9_]*) \}\}$/gm),
+  ];
+  for (const [, envName, secretName] of mapped) assert.equal(envName, secretName);
+  const allowlisted = allowlist.filter(([, kind]) => kind === "secret").map(([key]) => key);
+  assert.deepEqual(mapped.map(([, name]) => name).sort(), allowlisted.sort());
+  // No other secret reaches this step.
+  assert.equal([...step.matchAll(/secrets\./g)].length, allowlisted.length);
+});
