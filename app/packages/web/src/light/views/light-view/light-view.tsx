@@ -1,16 +1,17 @@
-import { EmptyState } from "@/components/shared/empty-state/empty-state";
-import { Banner } from "@/components/shared/states/banner/banner";
-import { DerivationForm, type Derive } from "../../zones/derivation-view/derivation-view";
-import { Fresh, useFresh } from "../../shared/ui/fresh/fresh";
-import type { ApiError, LightData } from "../../shared/light-api/light-api";
-import {
-  LocationForm,
-  LocationCard,
-  type LocationInput,
-} from "../../zones/locations-view/locations-view";
+import type {
+  ApiError,
+  LightData,
+  LightOverview,
+  Response,
+} from "../../shared/light-api/light-api";
 import { ErrorMessage } from "../../shared/ui/message/message";
-import { ZoneForm, ZoneCard, type ZoneInput } from "../../zones/zones-view/zones-view";
-import { MoreHelp } from "@/components/ui/display/more-help/more-help";
+import { ZoneLayer } from "../../zones/zone-layer/zone-layer";
+import { LocationLayer } from "../../zones/location-layer/location-layer";
+import { CreateLayers, HintsLayer, ReferenceLayer } from "./light-layers/light-layers";
+import { ManageLists, Notices } from "./manage-lists/manage-lists";
+import type { ZoneInput } from "../../zones/zones-view/zones-view";
+import type { LocationInput } from "../../zones/locations-view/locations-view";
+import type { Derive } from "../../zones/derivation-view/derivation-view";
 
 type AppError = Promise<ApiError | null>;
 
@@ -24,139 +25,53 @@ export interface LightActions {
   zoneDerive: Derive;
 }
 
-const SECTION = "flex min-w-0 flex-col gap-3";
-const H2 = "text-xl font-semibold";
-const QUIET = "text-sm text-muted-foreground";
-const LIST = "m-0 flex min-w-0 list-none flex-col gap-3 p-0";
-
-/** Hints (US-BES-08): every hint says what to do (P-09). */
-function Hints({ data }: { data: LightData }) {
-  if (data.hints.length === 0) return null;
-  return (
-    <section
-      aria-labelledby="hints"
-
-      className="min-w-0 rounded-lg border border-warning-border bg-warning px-4 pb-3 pt-1 text-warning-foreground"
-    >
-      <h2 id="hints" className={`${H2} my-3`}>
-        Hinweise
-      </h2>
-      <ul className="m-0 list-disc pl-5">
-        {data.hints.map((h) => (
-          <li key={h.locationId}>
-            {h.text} {h.nextAction}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function Zones(props: { data: LightData; actions: LightActions }) {
+/**
+ * The management of the locations and light zones (US-QS-19, US-LIC-05) as one screen: the heading, the two lists
+ * (segments on a phone, two columns from 768 px) with compact rows, the notices and the reference as layers. Every
+ * change opens a layer; the layers are siblings of the page, so a layer stands beside the page from 1024 px.
+ */
+export function LightView(props: {
+  data: LightData;
+  actions: LightActions;
+  error?: ApiError;
+  overview: Response<LightOverview>;
+  onOpenCollection: () => void;
+  onRetry: () => void;
+}) {
   const { data, actions } = props;
-  const fresh = useFresh();
   return (
-    <section aria-labelledby="zones" className={SECTION}>
-      <h2 id="zones" className={H2}>
-        Lichtzonen
-      </h2>
-      {data.zones.length === 0 ? (
-        <EmptyState
-          title="Noch keine Lichtzonen"
-          description="Übernimm die vier Standard-Zonen oder lege unten eine eigene Zone an."
-          action={{ label: "Standard-Zonen übernehmen", onClick: () => void actions.defaults() }}
+    <div className="flex min-w-0 gap-4">
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
+        <h1 className="text-xl font-semibold">Standorte und Lichtzonen</h1>
+        {props.error && <ErrorMessage error={props.error} />}
+        <ManageLists data={data} actions={actions} />
+        <Notices data={data} />
+      </div>
+      {data.zones.map((z) => (
+        <ZoneLayer
+          key={z.id}
+          zone={z}
+          onUpdate={(e) => actions.zoneUpdate(z.id, e)}
+          onDelete={() => actions.zoneDelete(z.id)}
         />
-      ) : (
-        <ul className={LIST}>
-          {data.zones.map((z) => (
-            <ZoneCard
-              key={z.id}
-              zone={z}
-              onUpdate={(e) => actions.zoneUpdate(z.id, e)}
-              onDelete={() => actions.zoneDelete(z.id)}
-            />
-          ))}
-        </ul>
-      )}
-      <Fresh title="Neue Lichtzone" open={data.zones.length === 0} fresh={fresh}>
-        <ZoneForm onSave={actions.zoneCreate} />
-      </Fresh>
-    </section>
-  );
-}
-
-/** Names the locations whose light zone is unknown and what to do (US-QS-14, P-09, P-10). */
-function UnknownZoneBanner({ locations }: { locations: LightData["locations"] }) {
-  const open = locations.filter((l) => l.lightZoneId === null);
-  if (open.length === 0) return null;
-  return (
-    <Banner variant="warning" title="Lichtzone unbekannt">
-      Für {open.map((l) => l.name).join(", ")} fehlt die Lichtzone. Weise sie mit „Lichtzone
-      zuweisen“ zu, damit die Hinweise zum Licht stimmen.
-    </Banner>
-  );
-}
-
-function Locations(props: { data: LightData; actions: LightActions }) {
-  const { data, actions } = props;
-  const fresh = useFresh();
-  return (
-    <section aria-labelledby="locations" className={SECTION}>
-      <h2 id="locations" className={H2}>
-        Standorte
-      </h2>
-      <UnknownZoneBanner locations={data.locations} />
-      {data.locations.length === 0 ? (
-        <EmptyState
-          title="Noch keine Standorte"
-          description="Lege einen Platz an, z. B. „Fensterbank“, und ordne ihm eine Lichtzone zu."
-          action={{ label: "Ersten Standort anlegen", onClick: fresh.openAndFocus }}
+      ))}
+      {data.locations.map((s) => (
+        <LocationLayer
+          key={s.id}
+          location={s}
+          zones={data.zones}
+          onUpdate={(e) => actions.locationUpdate(s.id, e)}
         />
-      ) : (
-        <ul className={LIST}>
-          {data.locations.map((s) => (
-            <LocationCard
-              key={s.id}
-              location={s}
-              zones={data.zones}
-              onUpdate={(e) => actions.locationUpdate(s.id, e)}
-            />
-          ))}
-        </ul>
-      )}
-      <Fresh title="Neuer Standort" fresh={fresh}>
-        <LocationForm zones={data.zones} onSave={actions.locationCreate} />
-      </Fresh>
-    </section>
-  );
-}
-
-function Assignment({ actions }: { actions: LightActions }) {
-  return (
-    <section aria-labelledby="assignment" className={SECTION}>
-      <h2 id="assignment" className={H2}>
-        Zone einer Art ermitteln
-      </h2>
-      <MoreHelp className={QUIET} more="Stecklingslicht ist nie das Ziel für erwachsene Pflanzen.">
-        Die Zone folgt dem Lux-Bedarf der Art und deinen Lichtzonen.
-      </MoreHelp>
-      <DerivationForm onDerive={actions.zoneDerive} />
-    </section>
-  );
-}
-
-export function LightView(props: { data: LightData; actions: LightActions; error?: ApiError }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-6 rounded-lg border border-border bg-card p-4 text-card-foreground md:p-7">
-      <h1 className="text-2xl font-semibold">Standorte und Lichtzonen</h1>
-      <p>
-        Hier bildest du deinen Aufbau ab: wo deine Pflanzen stehen und wie viel Licht dort ankommt.
-      </p>
-      {props.error && <ErrorMessage error={props.error} />}
-      <Hints data={props.data} />
-      <Zones data={props.data} actions={props.actions} />
-      <Locations data={props.data} actions={props.actions} />
-      <Assignment actions={props.actions} />
+      ))}
+      <CreateLayers data={data} actions={actions} />
+      <HintsLayer data={data} />
+      <ReferenceLayer
+        data={data}
+        actions={actions}
+        overview={props.overview}
+        onOpenCollection={props.onOpenCollection}
+        onRetry={props.onRetry}
+      />
     </div>
   );
 }
