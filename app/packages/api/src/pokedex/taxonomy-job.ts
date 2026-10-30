@@ -1,6 +1,6 @@
 import {
   TAXONOMY_JOB_TYPE,
-  enqueueJob,
+  orderOrThrow,
   orderTaxonomyBuild,
   runTaxonomyBuild,
 } from "@pflanzendex/core";
@@ -35,10 +35,7 @@ export function checkTaxonomy(pool: Pool, now: () => Date) {
   const queue = new JobsPostgres(pool);
   return orderTaxonomyBuild({
     ...taxonomy(pool),
-    order: async (type, dedupeKey) => {
-      const r = await enqueueJob({ queue, now }, { type, dedupeKey });
-      if (!r.ok) throw new Error(r.error.code);
-    },
+    order: orderOrThrow({ queue, now }),
   });
 }
 

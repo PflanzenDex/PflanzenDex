@@ -1,8 +1,8 @@
 import {
   ATTRIBUTE_FILL_JOB_TYPE,
-  enqueueJob,
   orderAttributeFill,
   runAttributeFill,
+  orderOrThrow,
 } from "@pflanzendex/core";
 import type { AttributeFillStore, JobHandlers } from "@pflanzendex/core";
 import { CatalogSourceClaims, JobsPostgres, TaxonAttributesPostgres } from "@pflanzendex/db";
@@ -50,9 +50,6 @@ export function checkAttributeFill(pool: Pool, now: () => Date) {
   const queue = new JobsPostgres(pool);
   return orderAttributeFill({
     store: attributeFillStore(pool),
-    order: async (type, dedupeKey) => {
-      const r = await enqueueJob({ queue, now }, { type, dedupeKey });
-      if (!r.ok) throw new Error(r.error.code);
-    },
+    order: orderOrThrow({ queue, now }),
   });
 }
