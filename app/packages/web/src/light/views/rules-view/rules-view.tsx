@@ -48,13 +48,13 @@ export function RulesView({ zones }: { zones: readonly LightZone[] }) {
           getRowKey={(z) => z.id}
         />
       )}
+    </div>,
+    <div key="indicators" className="flex min-w-0 flex-col gap-3">
       <MoreHelp
         more={`Eine Art steigt auf, wenn ihr Bedarf mindestens ${promoteFromPercent}\u00a0% der Lux-Obergrenze ihrer Zone erreicht; liegt er mehr als ${stayBelowGapPercent}\u00a0% unter der Obergrenze der nächsten Zone, bleibt sie, denn mehr Licht bringt dann Stress.`}
       >
         Die niedrigste Zone ist Stecklingslicht und nie Ziel für erwachsene Pflanzen.
       </MoreHelp>
-    </div>,
-    <div key="indicators" className="flex min-w-0 flex-col gap-3">
       <h3 className={H3}>Indikatoren für höhere Stufen</h3>
       <ul className={LIST}>
         {rules.indicators.map((i) => (

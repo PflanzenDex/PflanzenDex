@@ -492,7 +492,7 @@ describe("US-QS-19 management on one screen", () => {
     ).toBeTruthy();
   });
 
-  it("US-QS-19 the reference layer shows one part at a time; on a phone the overview pages two rows a page", async () => {
+  it("US-QS-19 the reference layer shows one part at a time; on a phone the overview pages one row a page", async () => {
     setViewportWidth(360);
     const { fetchFn } = fakeServer({ zones: [zone], locations: [] });
     const normal = fetchFn.getMockImplementation() as typeof fetch;
@@ -515,9 +515,11 @@ describe("US-QS-19 management on one screen", () => {
     expect(
       (await screen.findByRole("button", { name: "Lichthunger" })).getAttribute("aria-pressed"),
     ).toBe("true");
-    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
+    expect(screen.getByText("Seite 1 von 3")).toBeTruthy();
     expect(screen.getByText("Art a")).toBeTruthy();
-    expect(screen.queryByText("Art c")).toBeNull();
+    expect(screen.queryByText("Art b")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    expect(screen.getByText("Art b")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(screen.getByText("Art c")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Regeln" }));

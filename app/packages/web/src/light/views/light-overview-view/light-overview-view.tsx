@@ -8,8 +8,8 @@ import { zoneLabel } from "@pflanzendex/core";
 import { Pager, LAYER_PARAM } from "@/components/shared/responsive/pager/pager";
 import { useIsMd } from "@/lib/use-breakpoint";
 
-/** Rows per page of the overview (starting values, assumption): two on a phone, six from 768 px (US-QS-19). */
-const rowsPerPage = (md: boolean) => (md ? 6 : 2);
+/** Rows per page of the overview (starting values, assumption): one on a phone, six from 768 px (US-QS-19). */
+const rowsPerPage = (md: boolean) => (md ? 6 : 1);
 /** The rows cut into pages; each page is one table. */
 const pagesOf = <T,>(rows: readonly T[], size: number): T[][] =>
   Array.from({ length: Math.ceil(rows.length / size) }, (_, i) =>
