@@ -7,6 +7,7 @@ import {
   CareRhythmSection,
   AchievementsOverviewSection,
   YearInReviewSection,
+  useAchievementsVisible,
 } from "@/achievements";
 import { AccountView, MeasuredView, SettingsPage } from "@/account";
 import type { Account } from "@/account";
@@ -22,6 +23,22 @@ export type Locks = (ids: readonly string[]) => ReactNode;
 
 function LocksHere(props: { locks: Locks | undefined; ids: readonly string[] }) {
   return props.locks ? <Suspense fallback={null}>{props.locks(props.ids)}</Suspense> : null;
+}
+
+/**
+ * The game parts of the achievements (US-ACH-02, US-ACH-04, US-ACH-07) as rows with their layers, in one grid so the
+ * layers stand beside the rows from 1024 px (US-QS-17). Calm mode shows none of them (US-ACH-08).
+ */
+function AchievementsParts(props: { api: string; token: Token }) {
+  const visible = useAchievementsVisible(props.api, props.token);
+  if (!visible) return null;
+  return (
+    <div className="grid min-w-0 gap-2 lg:grid-cols-[minmax(0,1fr)_auto]">
+      <AchievementsOverviewSection api={props.api} token={props.token} />
+      <CareRhythmSection api={props.api} token={props.token} />
+      <YearInReviewSection api={props.api} token={props.token} />
+    </div>
+  );
 }
 
 export type SectionProps = {
@@ -68,11 +85,9 @@ export function SectionContent({ section, ...p }: SectionProps & { section: Acco
       return <SettingsContent api={p.api} token={p.token} />;
     case "achievements":
       return (
-        <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-3">
           <LocksHere locks={p.locks} ids={["care_rhythm", "anniversaries", "year_in_review"]} />
-          <CareRhythmSection api={p.api} token={p.token} />
-          <AchievementsOverviewSection api={p.api} token={p.token} />
-          <YearInReviewSection api={p.api} token={p.token} />
+          <AchievementsParts api={p.api} token={p.token} />
         </div>
       );
     case "reminders":

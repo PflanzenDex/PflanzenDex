@@ -2,7 +2,7 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "@/kernel";
 import { setViewportWidth } from "@/lib/viewport-mock";
 import { AccountArea } from "./account-area";
@@ -322,5 +322,44 @@ describe("US-QS-17 the address names a section", () => {
     await waitFor(() =>
       expect(document.activeElement).toBe(screen.getByRole("link", { name: /^Erinnerungen/ })),
     );
+  });
+});
+
+describe("US-QS-15 the index yields while a settings layer is open, from 1280 px", () => {
+  beforeEach(() => setViewportWidth(1280));
+  afterEach(() => setViewportWidth(390));
+
+  /** The column of the index: the wrapper of its navigation; it is shown beside the section with `xl:block`. */
+  const indexColumn = () =>
+    screen.getByRole("navigation", { name: "Abschnitte von Konto" }).parentElement as HTMLElement;
+  const shownBesideSection = () => indexColumn().className.includes("xl:block");
+
+  it("US-QS-15 an open settings layer hides the index beside the section", async () => {
+    fakeServer();
+    show("/account/settings?sheet=profile");
+    await screen.findByRole("complementary", { name: "Profil" });
+    expect(shownBesideSection()).toBe(false);
+  });
+
+  it("US-QS-15 an address with an unknown sheet keeps the index beside the section", async () => {
+    fakeServer();
+    show("/account/settings?sheet=bogus");
+    await screen.findByRole("heading", { level: 1, name: "Einstellungen" });
+    expect(shownBesideSection()).toBe(true);
+  });
+
+  it("US-QS-15 a settings layer address of another section keeps the index beside it", async () => {
+    fakeServer();
+    show("/account/profile?sheet=profile");
+    await screen.findByRole("heading", { level: 1 });
+    expect(shownBesideSection()).toBe(true);
+  });
+
+  it("US-QS-15 closing the settings layer brings the index back beside the section", async () => {
+    fakeServer();
+    show("/account/settings?sheet=profile");
+    const pane = await screen.findByRole("complementary", { name: "Profil" });
+    await userEvent.click(within(pane).getByRole("button", { name: "Schließen" }));
+    await waitFor(() => expect(shownBesideSection()).toBe(true));
   });
 });

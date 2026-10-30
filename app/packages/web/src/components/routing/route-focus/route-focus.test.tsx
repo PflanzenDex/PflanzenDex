@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Suspense, lazy } from "react";
 import { Link, MemoryRouter, Route, Routes, useNavigate, useSearchParams } from "react-router";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AnnouncerProvider } from "@/platform/announcer/announcer";
 import { RouteFocus } from "./route-focus";
 
@@ -187,5 +187,27 @@ describe("US-QS-09 · RouteFocus (2.4.2, 2.4.3)", () => {
     await userEvent.click(opener);
     await new Promise((r) => setTimeout(r, 400));
     expect(document.activeElement).toBe(opener);
+  });
+});
+
+describe("US-QS-15 · no frame on the heading after navigation (NFR-13)", () => {
+  beforeEach(() => document.documentElement.removeAttribute("data-input"));
+
+  it("US-QS-15 after a click the heading takes the focus, and the page is marked as pointer input", async () => {
+    view();
+    await userEvent.click(screen.getByRole("link", { name: "Zweite" }));
+    const heading = await screen.findByRole("heading", { level: 1, name: "Zweite Seite" });
+    await waitFor(() => expect(document.activeElement).toBe(heading));
+    expect(document.documentElement.getAttribute("data-input")).toBe("pointer");
+  });
+
+  it("US-QS-15 after a key press the heading takes the focus, and the page is marked as keyboard input", async () => {
+    view();
+    await userEvent.tab();
+    await userEvent.tab();
+    await userEvent.keyboard("{Enter}");
+    const heading = await screen.findByRole("heading", { name: "Zweite Seite" });
+    await waitFor(() => expect(document.activeElement).toBe(heading));
+    expect(document.documentElement.getAttribute("data-input")).toBe("keyboard");
   });
 });

@@ -1,5 +1,13 @@
 // Rules LY-1 to LY-5 over a path list. Returns findings { rule, dir, value, items }.
-import { isKebab, buildTree, isIgnored, matchDir, stemOf, unitCount } from "./layout-tree.mjs";
+import {
+  buildTree,
+  globMatch,
+  isIgnored,
+  isKebab,
+  matchDir,
+  stemOf,
+  unitCount,
+} from "./layout-tree.mjs";
 
 const finding = (rule, dir, items) => ({
   rule,
@@ -13,6 +21,10 @@ function nameOk(name, kind, config) {
   if (kind === "file" && config.namedFiles.includes(name)) return true;
   return isKebab(kind === "dir" ? name : stemOf(name));
 }
+
+// Files a tool reads under a fixed name (config nameExempt, owner decision 2026-10-30): only the name rule is waived.
+const nameExempt = (dir, name, config) =>
+  (config.nameExempt ?? []).some((glob) => globMatch(glob, dir ? `${dir}/${name}` : name));
 
 function rootFindings(children, config) {
   const bad = [...children]
@@ -45,7 +57,9 @@ function dirFindings(dir, children, config) {
     return bad.length ? [...out, finding("LY-2", dir, bad)] : out;
   }
   out.push(...fanoutFindings(dir, children, rule, config));
-  const badNames = [...children].filter(([n, k]) => !nameOk(n, k, config)).map(([n]) => n);
+  const badNames = [...children]
+    .filter(([n, k]) => !nameOk(n, k, config) && !(k === "file" && nameExempt(dir, n, config)))
+    .map(([n]) => n);
   return badNames.length ? [...out, finding("LY-3", dir, badNames)] : out;
 }
 

@@ -1,13 +1,13 @@
 import { Suspense, useEffect, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router";
 import {
+  LayerHost,
   LayerSheet,
-  LAYER_SLOT,
   useLayer,
 } from "@/components/shared/responsive/layer-sheet/layer-sheet";
 import { Skeleton, SkeletonGroup } from "@/components/ui/display/skeleton/skeleton";
 import { HintsPage } from "@/collection";
-import { TreatmentsPage } from "@/care";
+import { PlanLayer, TreatmentsPage } from "@/care";
 import { WateringList } from "@/monitoring";
 import { LazyAnniversaries } from "@/components/routing/areas/shared/lazy-anniversaries/lazy-anniversaries";
 import { type TodayDestination } from "@/today";
@@ -50,6 +50,8 @@ export function TodayArea(props: {
   useFormerAnchors();
   const treatments = useLayer("treatments");
   const hints = useLayer("hints");
+  // The layer `plan` is the planning layer of the treatments (`PlanLayer`, its address value is `plan`).
+  const plan = useLayer("plan");
   const open = (d: TodayDestination) => {
     if (d === "treatments") return treatments.openLayer();
     if (d === "hints") return hints.openLayer();
@@ -57,15 +59,15 @@ export function TodayArea(props: {
     if (view) props.onOpen(view);
   };
   return (
-    <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_auto]" data-fit-screen="">
+    <LayerHost contentClassName="gap-4" data-fit-screen="">
       <Suspense fallback={<TodaySkeleton />}>
         {props.intro ? (
-          props.intro(<Tasks {...props} open={open} />, <TodaySkeleton />)
+          props.intro(<Tasks {...props} open={open} plan={plan.openLayer} />, <TodaySkeleton />)
         ) : (
-          <Tasks {...props} open={open} />
+          <Tasks {...props} open={open} plan={plan.openLayer} />
         )}
       </Suspense>
-    </div>
+    </LayerHost>
   );
 }
 
@@ -98,6 +100,8 @@ function Tasks(props: {
   token: Token;
   onOpen: (view: LinkTarget) => void;
   open: (d: TodayDestination) => void;
+  /** Opens the planning layer above the layer Behandlungen (US-QS-18). */
+  plan: () => void;
 }) {
   const { api, token } = props;
   // The counts come from the same requests and keys as the lists in the layers: both share one copy and a write
@@ -108,23 +112,22 @@ function Tasks(props: {
         <TodayOverview api={api} token={token} onOpen={props.onOpen} open={props.open} />
       </Suspense>
       <LazyAnniversaries api={api} token={token} onOpen={() => props.onOpen("collection")} />
-      <div className={LAYER_SLOT}>
-        <LayerSheet id="treatments" title="Behandlungen">
-          <InLayer loading="Behandlungen werden geladen …">
-            <TreatmentsPage api={api} token={token} host />
-          </InLayer>
-        </LayerSheet>
-        <LayerSheet id="watering" title="Gießen">
-          <InLayer loading="Gießliste wird geladen …">
-            <WateringList api={api} token={token} />
-          </InLayer>
-        </LayerSheet>
-        <LayerSheet id="hints" title="Fehlt noch">
-          <InLayer loading="Hinweise werden geladen …">
-            <HintsPage api={api} token={token} onOpen={props.onOpen} host />
-          </InLayer>
-        </LayerSheet>
-      </div>
+      <LayerSheet id="treatments" title="Behandlungen">
+        <InLayer loading="Behandlungen werden geladen …">
+          <TreatmentsPage api={api} token={token} host onPlan={props.plan} />
+        </InLayer>
+      </LayerSheet>
+      <LayerSheet id="watering" title="Gießen">
+        <InLayer loading="Gießliste wird geladen …">
+          <WateringList api={api} token={token} />
+        </InLayer>
+      </LayerSheet>
+      <LayerSheet id="hints" title="Fehlt noch">
+        <InLayer loading="Hinweise werden geladen …">
+          <HintsPage api={api} token={token} onOpen={props.onOpen} host />
+        </InLayer>
+      </LayerSheet>
+      <PlanLayer api={api} token={token} />
     </>
   );
 }

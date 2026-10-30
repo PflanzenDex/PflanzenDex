@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/fields/input/input";
+import { DateField } from "@/components/ui/fields/input/native-fields/date-field/date-field";
 import { dateText } from "@/lib/format";
 import { errorText } from "@/lib/error-text";
 import { useInvalidate, useWriteAction } from "../../../kernel";
@@ -39,20 +39,19 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
     void write.run((t) => addRhythmPause(api, t, { from, until }), "Pause eingetragen.");
   };
   return (
-    <details className="text-sm">
-      <summary className="cursor-pointer">Pause eintragen (Urlaub, Krankheit)</summary>
-      <div className="mt-2 flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-3 text-sm">
+      <div className="flex flex-col gap-2">
         <p className="m-0 text-muted-foreground">
           In einer Pause von höchstens 4 Wochen zählen fällige Termine nicht. Dein Rhythmus bleibt
           bestehen. Auch Tage, an denen alle deine Pflanzen ruhen, zählen nicht.
         </p>
         <label className="flex flex-col gap-1">
           Von
-          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <DateField value={from} onChange={(e) => setFrom(e.target.value)} />
         </label>
         <label className="flex flex-col gap-1">
           Bis (einschließlich)
-          <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} />
+          <DateField value={until} onChange={(e) => setUntil(e.target.value)} />
         </label>
         <Button type="button" onClick={submit} disabled={write.running} className="self-start">
           Pause eintragen
@@ -72,6 +71,6 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
           {write.message}
         </p>
       )}
-    </details>
+    </div>
   );
 }

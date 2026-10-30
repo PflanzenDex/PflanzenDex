@@ -114,6 +114,28 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     expect(await screen.findByRole("dialog", { name: "Weitere Aufgaben" })).toBeTruthy();
   });
 
+  it("US-QS-18 · A-02 the further tasks are compact rows: the action sentence is not repeated on every row, four per page on a phone", async () => {
+    const more = Array.from({ length: 5 }, (_, i) =>
+      item(
+        "phase_deviation",
+        "care_phases",
+        `Pflanze ${i + 1}`,
+        `„Pflanze ${i + 1}“ steht nicht am Soll-Standort.`,
+        "Stelle es um.",
+      ),
+    );
+    fakeServer(() => response(200, { date: "2026-10-03", upcoming: 0, items: [OVERDUE, ...more] }));
+    render(
+      <TodayPage api="http://api" token={token} onOpen={() => undefined} />,
+      "/today?sheet=tasks",
+    );
+    const layer = await screen.findByRole("dialog", { name: "Weitere Aufgaben" });
+    expect(within(layer).queryAllByText("Stelle es um.")).toHaveLength(0);
+    expect(within(layer).getAllByRole("listitem")).toHaveLength(4);
+    expect(within(layer).getByText("Seite 1 von 2")).toBeTruthy();
+    expect(within(layer).getByRole("button", { name: "Zu Pflegephasen: Pflanze 1" })).toBeTruthy();
+  });
+
   it("US-QS-04 · US-QS-18 an etiolated measurement and a zone below the buffer show their state word and lead to their place", async () => {
     fakeServer(() =>
       response(200, {

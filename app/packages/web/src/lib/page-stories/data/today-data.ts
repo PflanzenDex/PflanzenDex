@@ -61,6 +61,14 @@ export const todayRoutes = {
       { id: "s-c", name: "Bogenhanf", status: "plant" },
     ],
   },
+  // The planning layer reads the plants with their location (US-BEH-01).
+  "/specimens/cards": {
+    cards: [
+      { id: "s-a", name: "Aloe", location: "Fensterbank" },
+      { id: "s-b", name: "Monstera", location: "Wohnzimmer" },
+      { id: "s-c", name: "Bogenhanf", location: null },
+    ],
+  },
   "/specimens/hints": {
     hints: [
       {

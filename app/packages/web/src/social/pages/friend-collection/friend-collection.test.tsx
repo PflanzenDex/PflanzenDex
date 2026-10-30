@@ -3,7 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FriendCollectionPage } from "./friend-collection";
+import { collectionTitle, FriendCollectionPage } from "./friend-collection";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -32,13 +32,13 @@ const CARDS = [
 
 const NO_DEVICES = { friend: { name: "Anna" }, devices: [] };
 
-function show(body: unknown, status = 200, devices: unknown = NO_DEVICES) {
+function show(body: unknown, status = 200, devices: unknown = NO_DEVICES, path = "/") {
   const fetchFn = vi.fn<typeof fetch>(async (url) =>
     String(url).includes("/equipment/friends/") ? response(200, devices) : response(status, body),
   );
   vi.stubGlobal("fetch", fetchFn);
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[path]}>
       <FriendCollectionPage api="http://api" token={token} friendId="f1" />
     </MemoryRouter>,
   );
@@ -65,6 +65,17 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     expect(aloe?.textContent).toContain("Du hast sie nicht");
     expect(unknown?.textContent).toContain("Art unbekannt");
     expect(unknown?.textContent).toContain("Vergleich unbekannt");
+  });
+
+  it("US-SOZ-07 · US-QS-20 the heading names the friend in the genitive, the cards are paged", async () => {
+    const many = Array.from({ length: 8 }, (_, n) => card({ speciesLatin: `Art ${n}` }));
+    show({ friend: { name: "Clara" }, cards: many });
+    expect(await screen.findByRole("heading", { level: 1, name: "Claras Sammlung" })).toBeTruthy();
+    const list = await screen.findByRole("list", { name: "Sammlung von Clara" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(4);
+    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
+    expect(collectionTitle("Lars")).toBe("Lars' Sammlung");
+    expect(collectionTitle(null)).toBe("Sammlung eines Freundes");
   });
 
   it("US-SOZ-07 the filters 'Ich habe nicht' and 'Wir haben beide' narrow the cards", async () => {
@@ -143,27 +154,32 @@ describe("US-SOZ-07 a friend's shared collection", () => {
   });
 
   it("US-EQU-12 shows the devices a friend shares with type, model, light level and the note, and nothing else", async () => {
-    const fetchFn = show({ friend: { name: "Anna" }, cards: CARDS }, 200, {
-      friend: { name: "Anna" },
-      devices: [
-        {
-          id: "d1",
-          type: "Lamp",
-          name: "Lampe Alpha",
-          model: "GL-9",
-          luxCeiling: 15000,
-          note: "sehr hell",
-        },
-        {
-          id: "d2",
-          type: "Timer",
-          name: "Zeitschaltuhr",
-          model: null,
-          luxCeiling: null,
-          note: null,
-        },
-      ],
-    });
+    const fetchFn = show(
+      { friend: { name: "Anna" }, cards: CARDS },
+      200,
+      {
+        friend: { name: "Anna" },
+        devices: [
+          {
+            id: "d1",
+            type: "Lamp",
+            name: "Lampe Alpha",
+            model: "GL-9",
+            luxCeiling: 15000,
+            note: "sehr hell",
+          },
+          {
+            id: "d2",
+            type: "Timer",
+            name: "Zeitschaltuhr",
+            model: null,
+            luxCeiling: null,
+            note: null,
+          },
+        ],
+      },
+      "/?sheet=equipment",
+    );
     const list = await screen.findByRole("list", { name: "Geräte von Anna" });
     expect(fetchFn.mock.calls.some(([u]) => String(u) === "http://api/equipment/friends/f1")).toBe(
       true,
@@ -179,7 +195,15 @@ describe("US-SOZ-07 a friend's shared collection", () => {
   });
 
   it("US-EQU-12 a friend who shares no device says what to do next (P-09)", async () => {
+    show({ friend: { name: "Anna" }, cards: CARDS }, 200, NO_DEVICES, "/?sheet=equipment");
+    expect(await screen.findByText(/Anna hat noch kein Gerät freigegeben/)).toBeTruthy();
+  });
+
+  it("US-QS-20 the devices open from 'Geräte', not stacked below the cards", async () => {
     show({ friend: { name: "Anna" }, cards: CARDS });
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    expect(screen.queryByText(/Anna hat noch kein Gerät freigegeben/)).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Geräte" }));
     expect(await screen.findByText(/Anna hat noch kein Gerät freigegeben/)).toBeTruthy();
   });
 });
