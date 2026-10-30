@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/fields/form/form";
 import { Input } from "@/components/ui/fields/input/input";
+import { DateField } from "@/components/ui/fields/input/native-fields/date-field/date-field";
 import { Select } from "@/components/ui/fields/select/select";
 import { Textarea } from "@/components/ui/fields/textarea/textarea";
 import { TYPE_LABELS } from "../../labels";
@@ -150,7 +151,7 @@ export function OptionalFields({ control }: FieldProps) {
           <FormItem>
             <FormLabel>Kaufdatum (optional)</FormLabel>
             <FormControl>
-              <Input {...field} type="date" />
+              <DateField {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
