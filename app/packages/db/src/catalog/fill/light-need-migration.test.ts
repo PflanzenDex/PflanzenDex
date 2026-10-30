@@ -123,15 +123,16 @@ describe("US-BES-12 migration 0095: starting values become unknown (P-08, #1003)
     expect(await values(ROWS.start.id)).toEqual({
       ...UNKNOWN,
       source:
-        "Curated start catalog (operator): names and family are taxonomic facts, entered by the operator; difficulty and light need unknown until a source is given",
+        "Kuratierter Startkatalog (Betreiber): Namen und Familie sind taxonomische Fakten, vom Betreiber eingetragen; Schwierigkeit und Lichtbedarf unbekannt, bis eine Quelle genannt wird",
     });
   });
 
   it("US-BES-12: Given a species of the dev seed with starting values, when migrated, then its values are unknown", async () => {
     expect(await values(ROWS.seed.id)).toEqual({
       ...UNKNOWN,
+      // 0095 writes the English marker; the test migrates to the end, so 0098 (US-QS-24) has renamed it to German.
       source:
-        "Dev seed: names and family from common botanical knowledge; difficulty and light need unknown",
+        "Dev-Seed: Namen und Familie aus allgemeinem botanischem Wissen; Schwierigkeit und Lichtbedarf unbekannt",
     });
   });
 
