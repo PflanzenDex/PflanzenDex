@@ -1,8 +1,10 @@
 import { useCallback, useState } from "react";
 import type { SwapOverview, SwapSide } from "@pflanzendex/core";
+import { Pager } from "@/components/shared/responsive/pager/pager";
 import { errorText } from "@/lib/error-text";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../kernel";
 import { answerSwap, confirmHandover, loadSwaps, type AnswerInput } from "../../api/swaps-api";
+import { useCardPageSize } from "@/components/shared/responsive/pager/card-page-size";
 import { SwapCard } from "./swap-card/swap-card";
 import { swapTitle } from "./swap-text";
 
@@ -36,38 +38,39 @@ function handoverText(s: SwapSide, status: "waiting" | "handed_over"): string {
     : "Die Übergabe ist abgeschlossen. Deine Pflanze ist archiviert, der Freund hat ein neues.";
 }
 
+/** The requests for my offers and the ones I sent in one list, each marked, so one pager serves both (US-QS-20). */
 function Section(props: {
-  id: string;
-  title: string;
-  rows: readonly SwapSide[];
+  rows: readonly { s: SwapSide; caption: string }[];
+  size: number;
   busy: boolean;
   onAnswer: (s: SwapSide, a: AnswerInput) => void;
   onHandover: (s: SwapSide, marker: string | null) => void;
 }) {
-  if (props.rows.length === 0) return null;
   return (
-    <section aria-labelledby={props.id} className="flex min-w-0 flex-col gap-2">
-      <h3 id={props.id} className="text-lg font-semibold">
-        {props.title}
-      </h3>
-      <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0" aria-label={props.title}>
-        {props.rows.map((s) => (
+    <Pager
+      items={props.rows}
+      pageSize={props.size}
+      label="Anfragen"
+      getKey={(r) => r.s.swapId}
+      renderItem={({ s, caption }) => (
+        <div className="grid gap-1">
+          <span className="text-sm font-medium text-muted-foreground">{caption}</span>
           <SwapCard
-            key={s.swapId}
             s={s}
             busy={props.busy}
             onAnswer={(a) => props.onAnswer(s, a)}
             onHandover={(m) => props.onHandover(s, m)}
           />
-        ))}
-      </ul>
-    </section>
+        </div>
+      )}
+    />
   );
 }
 
 function Body(props: { data: SwapOverview; api: string; token: Token; onWritten: () => void }) {
   const { data, api } = props;
   const write = useWriteAction(props.token, props.onWritten);
+  const size = useCardPageSize();
   // The handover answers `waiting` or `handed_over`, so its message depends on the answer (P-09).
   const [handed, setHanded] = useState<string | null>(null);
   const answer = (s: SwapSide, a: AnswerInput) => {
@@ -102,17 +105,11 @@ function Body(props: { data: SwapOverview; api: string; token: Token; onWritten:
         </p>
       )}
       <Section
-        id="swaps-received"
-        title="Anfragen an dich"
-        rows={data.received}
-        busy={write.running}
-        onAnswer={answer}
-        onHandover={handover}
-      />
-      <Section
-        id="swaps-sent"
-        title="Deine Anfragen"
-        rows={data.sent}
+        rows={[
+          ...data.received.map((s) => ({ s, caption: "Anfrage an dich" })),
+          ...data.sent.map((s) => ({ s, caption: "Deine Anfrage" })),
+        ]}
+        size={size}
         busy={write.running}
         onAnswer={answer}
         onHandover={handover}
@@ -133,7 +130,7 @@ export function SwapRequests(props: { api: string; token: Token }) {
   const load = useCallback((t: string) => loadSwaps(api, t), [api]);
   return (
     <section aria-labelledby="swap-requests-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="swap-requests-title" className="text-xl font-semibold">
+      <h2 id="swap-requests-title" className="sr-only">
         Anfragen
       </h2>
       <LoadFrame queryKey={KEY} token={token} load={load} loadingText="Anfragen werden geladen …">
