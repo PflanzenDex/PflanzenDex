@@ -5,7 +5,8 @@
 #   test: any branch, tag or commit of this repository; snapshot versions (`git describe` = vX.Y.Z-N-g<sha>) are fine.
 #   prod: only a commit on `main` that carries a stable release tag `vX.Y.Z` (no suffix, not the seed tag v0.0.0).
 # The guard runs on the runner before anything connects. Secrets and variables live in the GitHub environments
-# `test` and `prod` (same names in both), never in the repo.
+# `test` and `prod` (same names in both), never in the repo. Before deploy.sh, the keys of .env.example that are set in
+# that environment are written into the host's .env (scripts/deploy.apply-env.sh, #1013).
 # Setup: docs/guides/operations/staging-deploy-and-backup.md, section "Deploying with GitHub Actions (TE-19)".
 name: Deploy
 
@@ -95,6 +96,47 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
+
+      # Values of the GitHub environment for the host's .env (#1013), before deploy.sh reads it. Only keys of the
+      # deployed commit's .env.example (minus its host-only line) with a non-empty variable or secret are sent; the rest
+      # of the host's .env stays. The values travel on SSH stdin only (never in arguments or logs); the host script
+      # deploy.apply-env.sh comes from this workflow's commit, checks every line again, backs up .env and writes it
+      # atomically. Any failure here stops the run before deploy.sh. toJSON(secrets) exists only in this step's env.
+      - id: env
+        env:
+          VARS_JSON: ${{ toJSON(vars) }}
+          SECRETS_JSON: ${{ toJSON(secrets) }}
+          SHA: ${{ steps.target.outputs.sha }}
+          WORKFLOW_SHA: ${{ github.sha }}
+          # Set to 1 only for one deploy after the rotation steps of the runbook, then delete it again.
+          ALLOW_PASSWORD_ROTATION: ${{ vars.ALLOW_PASSWORD_ROTATION }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_REPO_PATH: ${{ vars.DEPLOY_REPO_PATH }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$WORKFLOW_SHA" | grep -Eq '^[0-9a-f]{40}$' || { echo "::error::Workflow SHA is invalid."; exit 1; }
+          case "${ALLOW_PASSWORD_ROTATION:-}" in "" | 0) rotation=0 ;; 1) rotation=1 ;; *) echo "::error::ALLOW_PASSWORD_ROTATION must be 0 or 1."; exit 1 ;; esac
+          if [ "$rotation" = 1 ]; then echo "::warning::ALLOW_PASSWORD_ROTATION=1: init-only keys may replace host values. Delete the variable after this deploy."; fi
+          repo_path="${DEPLOY_REPO_PATH:-/opt/pflanzendex}"
+          example="$RUNNER_TEMP/env.example"
+          payload="$RUNNER_TEMP/env.payload"
+          trap 'rm -f "$payload"' EXIT
+          git show "$SHA:app/config/deploy/.env.example" > "$example"
+          node app/tools/workflow/actions/deploy/env-payload.mjs "$example" "$payload" \
+            || { echo "::error::Environment values refused; nothing deployed."; exit 1; }
+          unset VARS_JSON SECRETS_JSON
+          if [ ! -s "$payload" ]; then
+            echo "No values from the GitHub environment; the host's .env stays as it is."
+            exit 0
+          fi
+          q_repo="$(printf '%q' "$repo_path")"
+          remote="cd $q_repo && git fetch --quiet --tags origin && t=\$(mktemp -d) \
+            && git show $WORKFLOW_SHA:app/config/deploy/scripts/deploy.apply-env.sh > \"\$t/apply-env.sh\" \
+            && git show $SHA:app/config/deploy/.env.example > \"\$t/env.example\" \
+            && ALLOW_PASSWORD_ROTATION=$rotation bash \"\$t/apply-env.sh\" app/config/deploy \"\$t/env.example\"; s=\$?; rm -rf \"\$t\"; exit \$s"
+          ssh -o BatchMode=yes -o ConnectTimeout=30 -o StrictHostKeyChecking=accept-new \
+            "deploy@$DEPLOY_HOST" -- "$remote" < "$payload" \
+            || { echo "::error::Applying the environment values on the host failed; nothing deployed (see above)."; exit 1; }
 
       # Tailscale SSH authenticates both sides through the tailnet (WireGuard node keys, policy rule tag:ci -> deploy),
       # so there is no key or password and no known_hosts file on the runner. `accept-new` records the host key on first

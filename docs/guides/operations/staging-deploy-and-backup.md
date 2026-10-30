@@ -379,6 +379,7 @@ Ticket TE-19 (#749). The workflow `.github/workflows/deploy.yml` ("Deploy") depl
 ```text
 Run workflow (environment, ref) -> guard on the runner -> joins the tailnet as a short-lived node tag:ci
   -> Tailscale SSH as user "deploy" to the host of that environment
+  -> scripts/deploy.apply-env.sh   (values of the GitHub environment into the host's .env, over stdin; see below)
   -> app/config/deploy/scripts/deploy.sh <full sha>   (backup, migrations, smoke test, automatic rollback)
 ```
 
@@ -438,7 +439,7 @@ Nothing below goes into the repo: hostnames, tailnet name and secrets stay with 
 5. **GitHub environments** (repository Settings, Environments). Both use the same names, set per environment: **secrets** `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`; **variables** `DEPLOY_HOST` (`<host>`, a MagicDNS name) and `DEPLOY_REPO_PATH` (`<repo-path>`, default if unset: `/opt/pflanzendex`).
    - `test`: "Deployment branches and tags" set to **all branches** (no restriction), because the test environment may deploy from any branch. Its secrets are still out of reach for fork pull requests: nothing on `pull_request` uses the environment, forks cannot dispatch workflows, and environment secrets are never given to fork runs.
    - `prod`: "Deployment branches and tags" limited to the branch `main` and the tag pattern `v*`; optionally add required reviewers so every prod deploy waits for an approval.
-6. **`.env` up to date:** compare the variable names of `app/config/deploy/.env.example` at the ref you deploy with the host's `.env` (names only, never print values); a missing required one stops `docker compose` and the deploy rolls back. Example: `DB_OWNER_PASSWORD` (#910), `openssl rand -hex 24`.
+6. **`.env` up to date:** set the values in the GitHub environment (see "Values from the GitHub environment"), or compare the variable names of `app/config/deploy/.env.example` at the ref you deploy with the host's `.env` (names only, never print values); a missing required one stops `docker compose` and the deploy rolls back. Example: `DB_OWNER_PASSWORD` (#910), `openssl rand -hex 24`.
 7. **Check:** run "Deploy" for `test` with `dev`, then try `prod` with a branch and with `main` (both must be refused by the guard before the tailnet join), and later with a release tag.
 
 ### First deploy of a host on an old version
@@ -464,11 +465,40 @@ Disable the workflow (Actions, "Deploy", menu, "Disable workflow", or `gh workfl
 
 Open the run. A red "target" step is a guard or configuration failure (nothing was contacted). In the step "deploy" the last 60 lines of the `deploy.sh` output are printed and repeated in the summary. `deploy.sh` rolls back to the previous ref by itself when the build, a migration, the health checks or the smoke test fail, so the environment keeps running the previous version; the run is still red. Lines to look for: `ERROR: deploy of ... failed; rolling back`, then `ROLLBACK ok` (previous version live again) or `ROLLBACK FAILED` (manual intervention on the host, see `release-and-rollback.md`). Migrations are not rolled back (restore the pre-deploy backup for data problems). An SSH or Tailscale error before any `deploy.sh` output means a setup problem (policy, tag, revoked OAuth client, wrong `DEPLOY_HOST`); the host was not touched.
 
+### Values from the GitHub environment
+
+Before `deploy.sh`, the step "env" writes values of the GitHub environment (`test` or `prod`, never the other one) into the host's `app/config/deploy/.env` (#1013). `deploy.sh` still reads only that file.
+
+- **Which keys:** every key of `.env.example` of the deployed commit (`KEY=` or `#KEY=` at the start of a line), except the `# host-only:` line (`BACKUP_DIR`, `BACKUP_REMOTE`: where the dumps go stays a host decision). Any other name in GitHub (`DEPLOY_HOST`, `TS_OAUTH_*`, typos) is never sent. A new key means a new line in `.env.example`; a test keeps it in step with `docker-compose.yml`.
+- **Variable or secret:** passwords, hashes and auth keys (`*PASSWORD`, `*_HASH`, `*AUTHKEY`) must be **secrets**; as a variable the run fails. Everything else may be either; if both exist, the secret wins.
+- **Precedence:** a non-empty GitHub value replaces the host line. An empty or missing GitHub value leaves the host line as it is. To keep a host value on purpose, delete the GitHub value (`gh variable delete NAME --env test`, `gh secret delete NAME --env test`).
+- **Set:** `gh variable set FEATURES --env test --body "social,ai"`, `gh secret set DB_OWNER_PASSWORD --env test` (asks for the value, so it stays out of the shell history). Same for `--env prod`.
+- **Refused values:** line breaks and other control characters, single quotes and backslashes (the shell and `docker compose --env-file` would read them differently). Values with spaces, `$`, `#` or `"` are written in single quotes and read literally by both.
+- **On the host:** `deploy.apply-env.sh` checks every line again against the same allowlist and refuses the whole input on one bad line; nothing is written then. It sets only the given keys (other lines and comments stay; a key without an active line is appended at the end), backs up the old file as `.env.bak-<UTC time>` (mode 600, the newest 5 are kept), writes atomically with mode 600 and creates a missing `.env` from `.env.example` (then it names the keys that still hold a `PUT_A_` placeholder). A second run with the same values reports `unchanged` and writes nothing. To undo: `cp app/config/deploy/.env.bak-<time> app/config/deploy/.env`.
+- **Logs:** only key names and `changed`/`added`/`unchanged`; secret values are masked (`::add-mask::`). The values travel on the SSH connection's stdin, never in a command line.
+- **A failure here** (bad value, unknown key, rotation guard, SSH error) turns the run red before `deploy.sh`; nothing is deployed.
+
+**Existing hosts:** set each GitHub secret to the value that is in the host's `.env` today (read it on the host, `gh secret set NAME --env test`, paste). The next run then reports `unchanged` for it. Start with the init-only keys below; a different value there stops the run.
+
+### Rotating a password
+
+The `# init-only:` line of `.env.example` names the keys that take effect only when the database volume or the realm is created: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `KEYCLOAK_ADMIN_USER`, `KEYCLOAK_ADMIN_PASSWORD`, `SMTP_PASSWORD` (the realm import skips an existing realm). Changing only `.env` would split it from the database (backup, `db-roles` and health checks fail). So when the host has a real value (not empty, not a `PUT_A_` placeholder) and GitHub sends a different one, the run stops: `POSTGRES_PASSWORD differs from the host value; ... set ALLOW_PASSWORD_ROTATION=1 to override`.
+
+`DB_OWNER_PASSWORD` and `KEYCLOAK_DB_PASSWORD` are not guarded: the one-shots `db-roles` and `keycloak-db` set the role password (`alter role ... password`) on every `up`, so a new value from GitHub takes effect with the deploy. There is no app role password (`pflanzendex_app` has no login).
+
+To rotate a guarded one on purpose:
+
+1. Change it where it lives: `POSTGRES_PASSWORD` with `docker compose --env-file app/config/deploy/.env exec db psql -U <POSTGRES_USER> -d postgres -c '\password <POSTGRES_USER>'`; `KEYCLOAK_ADMIN_PASSWORD` and `SMTP_PASSWORD` in the Keycloak admin console (SSH tunnel).
+2. `gh secret set POSTGRES_PASSWORD --env test` with the new value, and `gh variable set ALLOW_PASSWORD_ROTATION --env test --body 1`.
+3. Run "Deploy" (the run shows a warning while the switch is on).
+4. `gh variable delete ALLOW_PASSWORD_ROTATION --env test`.
+
 ### Security notes
 
 - **Who can run code on a host:** whoever can edit the workflow on a branch the environment accepts, or holds the OAuth secret, can run commands as `deploy` (member of the `docker` group) on that host. Contained by the isolated network of the hosts (no inbound connections), the single SSH rule per target for `tag:ci`, the `prod` restriction to `main` and `v*` tags (changing `main` needs a pull request and a green `ci-status`; workflow files are gate files that the owner reviews), and optional required reviewers. The `test` environment accepts all branches, so a writer can deploy any branch there; that is the intended trade-off and why the test host holds no real data.
-- **Untrusted input:** the workflow never puts event data into a shell script; inputs arrive through `env:`, are validated (ref, host name, path, full SHA) and quoted. The runner checks out the repository only to read history and tags and runs no repository code; only the host runs `deploy.sh`.
+- **Untrusted input:** the workflow never puts event data into a shell script; inputs arrive through `env:`, are validated (ref, host name, path, full SHA) and quoted. The runner checks out the repository to read history and tags and runs one script of the workflow's own commit (`env-payload.mjs`); only the host runs `deploy.sh`.
 - **Blast radius of `tag:ci`:** it can open Tailscale SSH sessions as `deploy` on the tagged hosts and nothing else. The node is ephemeral and disappears after the run.
+- **Environment values:** `toJSON(vars)` and `toJSON(secrets)` exist only in the env of the step "env", which drops them before `ssh` starts; the step that runs `deploy.sh` never sees them. A writer who can change a GitHub variable or secret can change the host's `.env` within the allowlist (not where backups go). Before #1013 the same person could already deploy any branch to `test`.
 - **Host key:** Tailscale SSH authenticates the host by its tailnet node key. The workflow uses `StrictHostKeyChecking=accept-new` (the runner starts with an empty `known_hosts`; `yes` would fail on every run, `no` would also accept a changed key).
 
 ## DB roles in production
