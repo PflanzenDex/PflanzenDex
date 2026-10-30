@@ -11,7 +11,7 @@ import {
   type Tally,
 } from "../preferences";
 import { localToday } from "../../kernel";
-import { withAttributes } from "../attributes";
+import { NO_ATTRIBUTES, withAttributes } from "../attributes";
 import { explorationPlan } from "../exploration";
 import {
   EXPLORATION_PER_DECK,
@@ -77,7 +77,7 @@ function suggestionOf(card: CollectorCard, reasons: readonly string[]): Suggesti
     difficulty: card.difficulty,
     imageUrl: card.imageUrl,
     sourceUrl: card.sourceUrl,
-    attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
+    attributes: NO_ATTRIBUTES,
     reasons,
     exploration: false,
   };

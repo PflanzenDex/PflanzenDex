@@ -16,7 +16,13 @@ const suggestion = (
   difficulty: level.difficulty,
   imageUrl: null,
   sourceUrl: "https://de.wikipedia.org/wiki/Zimmerpflanze",
-  attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
+  attributes: {
+    humidity: null,
+    minTemperature: null,
+    toxicToPets: null,
+    growthSize: null,
+    lightDescription: null,
+  },
   reasons: [reason],
   exploration: false,
 });

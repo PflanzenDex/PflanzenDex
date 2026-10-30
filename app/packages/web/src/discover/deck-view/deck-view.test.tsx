@@ -16,7 +16,13 @@ const suggestion = (species: string): Suggestion => ({
   difficulty: null,
   imageUrl: null,
   sourceUrl: null,
-  attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
+  attributes: {
+    humidity: null,
+    minTemperature: null,
+    toxicToPets: null,
+    growthSize: null,
+    lightDescription: null,
+  },
   reasons: ["Diese Art hast du noch nicht gefangen."],
   exploration: false,
 });

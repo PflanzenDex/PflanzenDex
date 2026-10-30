@@ -1,7 +1,7 @@
 import type { Pool, PoolClient } from "pg";
 
 // Same shape as `AttributeFact` in `core` (structurally equal; `db` does not import values from `core`).
-type Field = "humidity" | "minTemperature" | "growthSize" | "toxicToPets";
+type Field = "humidity" | "minTemperature" | "growthSize" | "toxicToPets" | "lightDescription";
 export interface AttributeFactRecord {
   readonly species: string;
   readonly field: Field;
@@ -19,6 +19,7 @@ const COLUMN: Record<Field, string> = {
   minTemperature: "min_temperature",
   growthSize: "growth_size",
   toxicToPets: "toxic_to_pets",
+  lightDescription: "light_description",
 };
 const FIELD = Object.fromEntries(Object.entries(COLUMN).map(([k, v]) => [v, k])) as Record<
   string,

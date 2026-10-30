@@ -264,6 +264,32 @@ describe("US-BES-12 catalog:load, the curated start catalog (#991)", () => {
     ]);
   });
 
+  it("US-ENT-09: Given a light statement in the research data, when it is confirmed, then it is stored as light_description", async () => {
+    const json = [
+      {
+        species: `Loadgenus ${letters}alpha`,
+        attributes: { lightDescription: { ...FACT, value: "bright_indirect" } },
+      },
+    ];
+    const dry = await run(["--dry-run"], LIST, () => owner, [
+      { path: "batch-01/part-1.json", json },
+    ]);
+    expect(dry.out).toContain("Attribute values: new 1, changed 0, unchanged 0");
+    const light = async () => (await attributes()).filter((r) => r.field === "light_description");
+    expect(await light()).toEqual([]);
+    const { code } = await run(["--confirm", DATABASE], LIST, () => owner, [
+      { path: "batch-01/part-1.json", json },
+    ]);
+    expect(code).toBe(0);
+    expect((await light()).map((r) => [r.field, r.value])).toEqual([
+      ["light_description", "bright_indirect"],
+    ]);
+    await admin.query(
+      "delete from taxon_attribute where field = 'light_description' and latin_name like $1",
+      [`Loadgenus ${letters}%`],
+    );
+  });
+
   it("US-ENT-09: Given the same data again, then nothing changes; given a newer research, then the value is replaced, never duplicated", async () => {
     const again = await run(["--confirm", DATABASE], LIST, () => owner, researched());
     expect(again.out).toContain("Attribute values: new 0, changed 0, unchanged 1");

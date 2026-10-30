@@ -1,54 +1,11 @@
-import type { AttributeSource, Suggestion, SuggestionAttributes } from "@pflanzendex/core";
+import type { Suggestion } from "@pflanzendex/core";
 import { useRef, useState, type PointerEvent } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Badge } from "@/components/ui/display/badge/badge";
-import { dateText } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { swipeDirection } from "../swipe/swipe";
+import { AttributeSources, attributeRows, UNKNOWN } from "./attribute-view/attribute-view";
 import { DifficultyStars, WikipediaSource } from "@/components/collector-card/collector-card";
-
-const LEVEL = { low: "niedrig", medium: "mittel", high: "hoch" } as const;
-const SIZE = { small: "klein", medium: "mittel", large: "groß" } as const;
-const UNKNOWN = "unbekannt";
-const SOURCE = { gbif: "GBIF", wikipedia: "Wikipedia", wikidata: "Wikidata" } as const;
-const FIELD_NAME: Record<AttributeSource["field"], string> = {
-  humidity: "Luftfeuchte",
-  minTemperature: "Mindesttemperatur",
-  toxicToPets: "Haustiere",
-  growthSize: "Wuchsgröße",
-};
-
-/** Attributes of DM-ENT-01; a value the catalog does not know reads "unbekannt" (P-08, FR-ENT-04). */
-function attributeRows(a: SuggestionAttributes): [string, string][] {
-  const pets = a.toxicToPets === null ? UNKNOWN : a.toxicToPets ? "giftig" : "ungiftig";
-  return [
-    ["Luftfeuchte", a.humidity === null ? UNKNOWN : LEVEL[a.humidity]],
-    ["Mindesttemperatur", a.minTemperature === null ? UNKNOWN : `${a.minTemperature} °C`],
-    ["Haustiere", pets],
-    ["Wuchsgröße", a.growthSize === null ? UNKNOWN : SIZE[a.growthSize]],
-  ];
-}
-
-/**
- * Where each known attribute comes from (US-ENT-09, P-08): source as a link, license, retrieval date and the review
- * status. Nothing is listed for an unknown attribute, so no value shows up without its evidence.
- */
-function AttributeSources({ sources }: { sources: readonly AttributeSource[] }) {
-  if (sources.length === 0) return null;
-  return (
-    <ul aria-label="Quellen der Merkmale" className="m-0 grid list-none gap-1 p-0 text-xs">
-      {sources.map((a) => (
-        <li key={a.field} className="text-muted-foreground">
-          {FIELD_NAME[a.field]}:{" "}
-          <a href={a.url} target="_blank" rel="noopener noreferrer" className="underline">
-            {SOURCE[a.source]}
-          </a>{" "}
-          ({a.license}, abgerufen am {dateText(a.retrievedAt)}), ungeprüft
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 /** The image is a link to its source, not a copy (P-05); without one a neutral sprout stands in. */
 function Picture({ s }: { s: Suggestion }) {
