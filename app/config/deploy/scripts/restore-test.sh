@@ -13,7 +13,7 @@ trap cleanup EXIT
 export POSTGRES_USER=pdxtest POSTGRES_DB=pdx_source KEYCLOAK_DB_NAME=pdx_keycloak
 docker run -d --name "$name" -e POSTGRES_USER -e POSTGRES_DB \
   -e POSTGRES_PASSWORD="$(head -c 12 /dev/urandom | od -An -tx1 | tr -d ' \n')" \
-  postgres:18-alpine > /dev/null
+  postgres:18.6-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5 > /dev/null
 
 for _ in $(seq 1 60); do
   # pg_isready already reports "ready" for the init server; only a real query after the restart counts.
