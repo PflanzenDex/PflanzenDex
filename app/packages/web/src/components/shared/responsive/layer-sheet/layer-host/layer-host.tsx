@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 /** The pane column of a `LayerHost`: hidden while empty, so it adds no gap (US-QS-15, US-QS-18). */
 const PANE_SLOT = "hidden lg:flex lg:shrink-0 lg:flex-col lg:self-start lg:empty:hidden";
 
-/** The content column: at most 720 px and centred, so the pane beside it takes the rest (US-QS-18, #1027). */
+/** The content column: at most 720 px and centred, so the pane beside it takes the rest (US-QS-18, issue 1027). */
 const CONTENT_COLUMN = "mx-auto flex min-h-0 min-w-0 max-w-180 flex-1 flex-col";
 
 type LayerHostState = { pane: HTMLDivElement | null } | null;
@@ -21,7 +21,7 @@ export type LayerHostProps = Omit<React.HTMLAttributes<HTMLDivElement>, "childre
 
 /**
  * The frame of a destination with layers (US-QS-15, DS-59): the content in one column of at most 720 px, centred in the
- * frame (US-QS-18, #1027); from 1024 px the pane of an open layer takes the second column beside it and the content gives
+ * frame (US-QS-18, issue 1027); from 1024 px the pane of an open layer takes the second column beside it and the content gives
  * it its room. Every `LayerSheet` inside renders its pane here, in whatever component it sits, so a layer never stacks
  * below the list. Render one frame at the top of each destination: the pane then starts where the content starts and
  * reaches to the bottom of the viewport.

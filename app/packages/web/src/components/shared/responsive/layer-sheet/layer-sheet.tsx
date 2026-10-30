@@ -7,7 +7,7 @@ import { restoreFocus, useLayer } from "./use-layer";
 import { LayerHostContext } from "./layer-host/layer-host";
 
 export { useLayer } from "./use-layer";
-export { LayerHost, type LayerHostProps } from "./layer-host/layer-host";
+export { LayerHost } from "./layer-host/layer-host";
 
 /** A button that opens the layer `id` (US-QS-15); outline by default, because a layer owns the one filled action. */
 export function LayerOpener({
