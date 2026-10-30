@@ -115,8 +115,11 @@ describe("US-EQU-01 equipment page", () => {
       "div",
     ) as HTMLElement;
     expect(card.textContent).toContain("Lampe · Aktiv");
-    // Four on the card, two more in "Betrieb und Wartung" (since when it runs, lifetime; US-EQU-04).
-    expect(card.textContent?.match(/unbekannt/g)).toHaveLength(6);
+    // Unknown values fold into one line; two more in "Betrieb und Wartung" (since when it runs, lifetime; US-EQU-04).
+    expect(card.textContent).toContain(
+      "Noch unbekannt: Hersteller und Modell, Produkt-ID, Preis, Gekauft am",
+    );
+    expect(card.textContent?.match(/unbekannt/g)).toHaveLength(3);
     expect(card.textContent).toContain("ohne Zone");
   });
 
@@ -534,7 +537,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
     await userEvent.click(await screen.findByRole("button", { name: /Zone 3/ }));
     const layer = await screen.findByRole("dialog", { name: "Zone 3" });
-    expect(within(layer).getByText("Hersteller und Modell")).toBeTruthy();
+    expect(within(layer).getByText(/Noch unbekannt: Hersteller und Modell/)).toBeTruthy();
   });
 
   it("US-QS-22 · P-09 a part without records says so and names the next step", async () => {

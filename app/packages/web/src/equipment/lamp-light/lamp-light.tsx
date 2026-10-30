@@ -17,7 +17,7 @@ export interface LampLightActions {
 
 const UNKNOWN = "unbekannt";
 /** Lamps per page of the layer (starting value, assumption; the page size from the free height is #1029). */
-const LAMPS_PER_PAGE = 4;
+const LAMPS_PER_PAGE = 2;
 
 /** The measured value apart from the manufacturer's statement; without a measurement the zone value applies (FR-LIC-06). */
 function Values({ lamp }: { lamp: LampLight }) {
@@ -131,7 +131,7 @@ export function LampLightView({
   if (view.lamps.length === 0) return null;
   return (
     <section aria-labelledby="lamp-light-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="lamp-light-title" className="text-base font-semibold">
+      <h2 id="lamp-light-title" className="sr-only">
         Lichtstärke der Lampen
       </h2>
       <Pager

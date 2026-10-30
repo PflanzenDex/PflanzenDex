@@ -1,6 +1,9 @@
 import { equipmentCosts, type CostLine, type EquipmentRow } from "@pflanzendex/core";
+import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
 import { TYPE_LABELS } from "../../labels";
 
+/** Kinds per page (starting value, assumption; the page size from the free height is #1029). */
+const COSTS_PER_PAGE = 4;
 const UNKNOWN = "unbekannt";
 const euro = (sum: number | null) =>
   sum === null ? UNKNOWN : `${sum.toFixed(2).replace(".", ",")} €`;
@@ -23,20 +26,23 @@ export function CostsView(props: { items: readonly EquipmentRow[] }) {
         <span className="text-2xl font-semibold">{euro(view.total.sumEur)}</span>{" "}
         <span className="text-muted-foreground">{view.coverage}</span>
       </p>
-      <ul className="m-0 flex list-none flex-col p-0" aria-label="Kosten je Art">
-        {view.byType.map((l) => (
-          <li
-            key={l.type}
-            className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 border-b border-border py-2 last:border-b-0"
-          >
+      <Pager
+        items={view.byType}
+        pageSize={COSTS_PER_PAGE}
+        label="Kosten je Art"
+        param={LAYER_PARAM}
+        getKey={(l) => l.type}
+        listClassName="gap-0"
+        renderItem={(l) => (
+          <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 border-b border-border py-2">
             <span className="font-semibold">{TYPE_LABELS[l.type]}</span>
             <span>{euro(l.sumEur)}</span>
             <span className="w-full text-sm text-muted-foreground">
               Preis bekannt bei {coverage(l)}
             </span>
-          </li>
-        ))}
-      </ul>
+          </div>
+        )}
+      />
       {view.nextAction ? <p className="m-0 text-sm">{view.nextAction}</p> : null}
       <p className="m-0 text-sm text-muted-foreground">{view.note}</p>
     </section>

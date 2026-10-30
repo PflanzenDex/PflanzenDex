@@ -57,6 +57,17 @@ function hasOptional(prefill: EquipmentPrefill | null | undefined, refused: stri
   );
 }
 
+/** Sticky: the form may scroll inside the layer while the save button stays visible. */
+function SaveBar({ pending }: { pending: boolean }) {
+  return (
+    <div className="sticky bottom-0 bg-card py-2">
+      <Button type="submit" size="touch" className="w-full" disabled={pending}>
+        {pending ? "Speichert …" : "Equipment speichern"}
+      </Button>
+    </div>
+  );
+}
+
 /** The form to record equipment (US-EQU-01): only type and name are required, the rest stays unknown (P-08). */
 export function EquipmentForm(props: {
   zones: readonly { zoneId: string; name: string }[];
@@ -110,9 +121,7 @@ export function EquipmentForm(props: {
               <OptionalFields control={form.control} />
             </div>
           </details>
-          <Button type="submit" size="touch" disabled={pending}>
-            {pending ? "Speichert …" : "Equipment speichern"}
-          </Button>
+          <SaveBar pending={pending} />
         </FormRoot>
       </Form>
     </section>

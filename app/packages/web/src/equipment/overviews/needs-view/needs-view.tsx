@@ -2,7 +2,7 @@ import type { Need } from "@pflanzendex/core";
 import { LAYER_PARAM, Pager } from "@/components/shared/responsive/pager/pager";
 
 /** Needs per page of the layer (starting value, assumption; the page size from the free height is #1029). */
-const NEEDS_PER_PAGE = 3;
+const NEEDS_PER_PAGE = 2;
 
 /**
  * "Fehlt / Nachkaufen" (US-EQU-07): what is missing, each item with its reason, the source in the keeper's own data and

@@ -68,7 +68,7 @@ function ZoneGroup(props: {
   const counted = zone.specimens === null ? "Pflanzenzahl unbekannt" : plants(zone.specimens);
   return (
     <details open={warning || undefined} className="min-w-0 rounded-lg border border-border">
-      <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2 p-3">
+      <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2 px-3 py-2">
         <span className="font-semibold">{zoneLabel(zone.name)}</span>
         <span className="text-sm text-muted-foreground">
           {lamps} · {counted}
@@ -115,7 +115,7 @@ export function ZonesView(props: { view: ZoneEquipmentView; actions: LampActions
   if (view.zones.length === 0 && view.unassigned.length === 0) return null;
   return (
     <section aria-labelledby="equipment-zones-title" className="flex min-w-0 flex-col gap-3">
-      <h2 id="equipment-zones-title" className="text-base font-semibold">
+      <h2 id="equipment-zones-title" className="sr-only">
         Lampen je Lichtzone
       </h2>
       {view.unassigned.length > 0 ? (
@@ -130,7 +130,7 @@ export function ZonesView(props: { view: ZoneEquipmentView; actions: LampActions
           </ul>
         </div>
       ) : null}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1.5">
         {view.zones.map((z) => (
           <ZoneGroup key={z.zoneId} zone={z} all={view.zones} actions={actions} />
         ))}
